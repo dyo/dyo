@@ -440,16 +440,22 @@ function c(opts) {
 
         // create element
         function createElement(node) {
-            if (node === void 0) node = '';
+            if (node === void 0) {
+                node = '';
+            } else if (node.constructor === Boolean || node.constructor === Number) {
+                node = node+'';
+            }
+
             if (node.constructor === String)
-                return document.createTextNode(node);
+                return document.createTextNode(node+'');
 
             var el = document.createElement(node.type);
 
             setElementProps(el, node.props);
             addEventListeners(el, node.props);
 
-            node.children.map(createElement).forEach(el.appendChild.bind(el));
+            if(!!node.children)
+                node.children.map(createElement).forEach(el.appendChild.bind(el));
 
             return el;
         }
@@ -465,12 +471,13 @@ function c(opts) {
         }
 
         function update(parent, newNode, oldNode, index) {
-            index = index | 0;
+            index = index ? index : 0;
 
-            if (!oldNode && newNode)
+            if (!oldNode)
                 parent.appendChild(createElement(newNode));
-            else if (!newNode)
+            else if (!newNode) {
                 parent.removeChild(parent.childNodes[index]);
+            }
             else if (changed(newNode, oldNode))
                 parent.replaceChild(createElement(newNode), parent.childNodes[index]);
             else if (newNode.type) {
@@ -491,21 +498,26 @@ function c(opts) {
                 function(key, obj) {
                     var type = obj[key];
 
-                    if (type && type.constructor) type = type.constructor;
-                    else return;
+                    if (type && type.constructor) 
+                        type = type.constructor;
+                    else 
+                        return;
 
                     if (!!obj[key].toJSON) {
                         return obj[key]() + '';
                     } else if (
                         type === Function || 
                         type === Object || 
-                        type === Array || 
-                        type === Boolean
+                        type === Array ||
+                        type === Boolean || 
+                        type === Number
                     ) {
                         return obj[key];
-                    } else if (type === String) {
-                        return obj[key] ? obj[key] + '' : obj[key] + ' ';
-                    } else {
+                    }
+                    else if (type === String) {
+                        return obj[key] ? obj[key] : obj[key] + ' ';
+                    }
+                    else {
                         return obj[key] + '';
                     }
                 }
@@ -514,6 +526,8 @@ function c(opts) {
             return obj;
         };
 
+        var d = c.state, 
+            e = c.behavior;
 
         // vdom public interface
         function vdom() {
@@ -527,7 +541,7 @@ function c(opts) {
 
         vdom.prototype.mount = function(a) {
             this.obj = a;
-            this.res = res(clone(a));
+            this.res = res(clone(a(d, e)));
             return this;
         }
 
@@ -536,13 +550,13 @@ function c(opts) {
             return this;
         }
 
-        vdom.prototype.update = function(a) {
-            if (a) {
-                update(this.root, res(a), this.res);
-                this.mount(a);
-            } else {
-                update(this.root, res(clone(this.obj)), this.res);
-            }
+        vdom.prototype.update = function() {
+            var newNode = this.obj(d,e),
+                oldNode = this.res;
+
+            update(this.root, newNode, oldNode);
+            this.res = this.obj(d,e);
+
             return this;
         }
 
@@ -628,7 +642,9 @@ function c(opts) {
 
         // assign component
         if (this.component) {
-            this.component = this.component.constructor === Function ? this.component(this.state(), this.behavior) : this.component;
+            // this.component = this.component.bind({state: this.state(), evt: this.behavior});
+            // this.component = this.component.constructor === Function ? this.component(this.state(), this.behavior) : this.component;
+            // this.component = this.component.constructor === Function ? this.component : this.component;
         }
 
         // init and add to dom element
@@ -670,7 +686,7 @@ function c(opts) {
                 };
 
                 fps(function() {
-                    self.update();
+                    self.vdom.update();
 
                     if(a && window._raf.id === a)
                         cancelAnimationFrame(window._raf.id);

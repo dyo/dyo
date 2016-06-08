@@ -13,17 +13,17 @@
 	<script src="vdom.js"></script>
 
 	<script>
+
 		var test = c({
 				component: function(state, evt) {
-					var arr = [];
-					for (var i = 0; i < 1000; i++){
-						arr.push(i);
-					}
-
 					return (
 						h('ul',
 							h('button', {onClick: evt.test }, 'Click Me'),
-							arr.map((a) => { return h('li', {onClick: evt.test, checked: state.data}, state.data); })
+							state().list().map(
+								(a) => {
+									return h('li', {onClick: evt.test}, a + state().data());
+								}
+							)
 						)
 					);
 				},
@@ -31,18 +31,25 @@
 					{id: 'api1', type: 'GET', url: '?users/{id}'}
 				],
 				state: {
-					data: true
+					data: true,
+					list: ['hello', 'hello world']
 				},
 				behavior: function(state, update, req, loop, dom) {
 					this.constructor = function() {
-						req('api1', {id: 1234});
+						// req('api1', {id: 1234});
 						// dom('li');
 						// loop.start();
+						// loop.stop();
 					}
 					this.test = function() {
+						var arr = [];
+						for (var i = 0; i < 1000; i++){
+							arr.push(i);
+						}
+
 						state('data', new Date() + performance.now());
+						state('list', arr);
 						update();
-						// loop.stop();
 					}
 				}
 			});
