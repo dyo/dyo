@@ -21,7 +21,7 @@
 							h('button', {onClick: evt.test }, 'Click Me'),
 							state().list().map(
 								(a) => {
-									return h('li', {onClick: evt.test}, a + state().data());
+									return h('input', {onClick: evt.test}, a + state().data());
 								}
 							)
 						)
@@ -43,7 +43,7 @@
 					}
 					this.test = function() {
 						var arr = [];
-						for (var i = 0; i < 1000; i++){
+						for (var i = 0; i < 600; i++){
 							arr.push(i);
 						}
 

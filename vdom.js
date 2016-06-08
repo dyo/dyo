@@ -1,71 +1,4 @@
 /**
- * create virtual element : h()
- *
- * @global
- * @param  {String} type  `Element, i.e: div`
- * @param  {Object} props `optional properties`
- * @return {Object}       '{type, props, children}'
- *
- * @example
- * h('div', {class: 'close'}, 'Text Content')
- */
-function h(type, props) {
-    var len = arguments.length,
-        key = 2,
-        children = [],
-        child;
-
-    if (props && props.constructor !== Object) {
-        key = 1;
-    }
-
-    for (var i = key;i < len; i++) {
-        var child = arguments[i];
-
-        if (child && child.constructor === Array) {
-            for (var k = 0; k < child.length; k++)
-                children[ (i-key) + k ] = child[k];
-        } else
-            children[i - key] = child;
-    }
-
-    props = props && props.constructor === Object ? props : {};
-
-    function h(a, b, c) {
-        this.type = a,
-        this.props = b,
-        this.children = c;
-    };
-
-    return new h(type, props, children);
-}
-
-
-/**
- * create property/dynamic state p()
- * @param  {Any} a `set value`
- * @return {Any}   `value set`
- *
- * @example
- * var a = p(new Date());
- * a() // date object
- * a.toJSON() // string object
- */
-function p(a) {
-    return function (b) {
-        function prop() {
-            if (arguments.length) b = arguments[0];
-            return b;
-        }
-        prop.toJSON = function () {
-            return JSON.stringify(b);
-        }
-        return prop;
-    }(a);
-}
-
-
-/**
  * Polyfills
  *
  * @global Object.assign({}, obj, obj)
@@ -108,6 +41,77 @@ function p(a) {
 
 
 /**
+ * create virtual element : h()
+ *
+ * @global
+ * @param  {String} type  `Element, i.e: div`
+ * @param  {Object} props `optional properties`
+ * @return {Object}       '{type, props, children}'
+ *
+ * @example
+ * h('div', {class: 'close'}, 'Text Content')
+ */
+function h(type, props) {
+    var len = arguments.length,
+        key = 2,
+        children = [],
+        child,
+        _c = 'constructor';
+
+    if (props && props[_c] !== Object) {
+        key = 1;
+    }
+
+    for (var i = key;i < len; i++) {
+        var child = arguments[i];
+
+        if (child && child[_c] === Array) {
+            for (var k = 0; k < child.length; k++)
+                children[ (i-key) + k ] = child[k];
+        } else
+            children[i - key] = child;
+    }
+
+    props = props && props[_c] === Object ? props : {};
+
+    function h(a, b, c) {
+        this.type = a,
+        this.props = b,
+        this.children = c;
+    };
+
+    return new h(type, props, children);
+}
+
+
+/**
+ * create property/dynamic state p()
+ * @param  {Any} a `set value`
+ * @return {Any}   `value set`
+ *
+ * @example
+ * var a = p(new Date());
+ * a() // date object
+ * a.toJSON() // string object
+ */
+function p(a) {
+    return function (b) {
+        function prop() {
+            if (arguments.length) b = arguments[0];
+            return b;
+        }
+        prop.toJSON = function () {
+            return JSON.stringify(b);
+        }
+        return prop;
+    }(a);
+}
+
+
+/* -------------------------------------------------------------- */
+
+
+/**
  * create component : c()
  *
  * @global
@@ -129,6 +133,12 @@ function p(a) {
  */
 function c(opts) {
     'use strict';
+
+
+    // common method references
+    var _p = 'prototype',
+        _c = 'constructor';
+
 
     /**
      * requestAnimation loop
@@ -289,7 +299,7 @@ function c(opts) {
         if (settings.method !== 'GET')
             xhr.setRequestHeader(
                 'Content-Type', 
-                settings.data.constructor === Object ? 'application/json' : 'text/plain'
+                settings.data[_c] === Object ? 'application/json' : 'text/plain'
             );
 
         if (settings.method === 'POST') {
@@ -299,47 +309,6 @@ function c(opts) {
             xhr.send();
 
         return xhr;
-    }
-
-    /**
-     * clone objects
-     * @param  {Object} obj `object to clone`
-     * @return {Object}     `copy of object`
-     *
-     * @example
-     * clone({id: 1234});
-     */
-    function clone(obj) {
-        var copy;
-
-        // Handle the 3 simple types, and null or undefined
-        if (obj === null || typeof obj !== 'object') return obj;
-
-        // Handle Date
-        if (obj.constructor === Date) {
-            copy = new Date();
-            copy.setTime(obj.getTime());
-            return copy;
-        }
-        // Handle Array
-        else if (obj.constructor === Array) {
-            copy = [];
-            for (var i = 0, len = obj.length; i < len; i++) {
-                copy[i] = clone(obj[i]);
-            }
-            return copy;
-        }
-        // Handle Object
-        else if (typeof obj === 'object') {
-            copy = {};
-            for (var attr in obj) {
-                if (!!obj[attr]) 
-                    copy[attr] = clone(obj[attr]);
-            }
-            return copy;
-        }
-
-        throw new Error("Unable to copy obj!");
     }
 
     /**
@@ -385,11 +354,13 @@ function c(opts) {
                 if (isEventProp(name)) {
                     var cb = props[name];
 
-                    if (cb.constructor !== Function)
+                    if (cb[_c] !== Function) {
                         cb = !!c.behavior[cb] ? c.behavior[cb] : null;
+                    }
 
-                    if (cb)
+                    if (cb) {
                         target.addEventListener(extractEventName(name), cb, false);
+                    }
                 }
             }
         }
@@ -400,7 +371,7 @@ function c(opts) {
 
             var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
 
-            if (value.constructor === Boolean) {
+            if (value[_c] === Boolean) {
                 if (op === -1) {
                     target[attr](name);
                     target[name] = false;
@@ -408,9 +379,9 @@ function c(opts) {
                     if (value) {
                         target[attr](name, value);
                         target[name] = true;
-                    } 
-                    else
+                    } else {
                         target[name] = false;
+                    }
                 }
             } else {
                 return op === -1 ? target[attr](name) : target[attr](name, value);
@@ -418,23 +389,27 @@ function c(opts) {
         }
 
         function updateElementProp(target, name, newVal, oldVal) {
-            if (!newVal)
+            if (!newVal) {
                 prop(target, name, oldVal, -1);
-            else if (!oldVal || newVal !== oldVal)
+            } else if (!oldVal || newVal !== oldVal) {
                 prop(target, name, newVal, +1);
+            }
         }
 
         function updateElementProps(target, newProps) {
             var oldProps = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2],
-                props = Object.assign({}, newProps, oldProps);
 
-            for (var name in props)
+                props    = Object.assign({}, newProps, oldProps);
+
+            for (var name in props) {
                 updateElementProp(target, name, newProps[name], oldProps[name]);
+            }
         }
 
         function setElementProps(target, props) {
-            for (var name in props)
+            for (var name in props) {
                 prop(target, name, props[name], +1);
+            }
         }
 
 
@@ -442,12 +417,13 @@ function c(opts) {
         function createElement(node) {
             if (node === void 0) {
                 node = '';
-            } else if (node.constructor === Boolean || node.constructor === Number) {
+            } else if (node[_c] === Boolean || node[_c] === Number) {
                 node = node+'';
             }
 
-            if (node.constructor === String)
+            if (node[_c] === String) {
                 return document.createTextNode(node+'');
+            }
 
             var el = document.createElement(node.type);
 
@@ -463,8 +439,8 @@ function c(opts) {
 
         // main
         function changed(node1, node2) {
-            var isType  = node1.constructor !== node2.constructor,
-                isDiff  = node1.constructor === String && node1 !== node2,
+            var isType  = node1[_c] !== node2[_c],
+                isDiff  = node1[_c] === String && node1 !== node2,
                 hasType = node1.type !== node2.type;
 
             return isType || isDiff || hasType;
@@ -473,13 +449,13 @@ function c(opts) {
         function update(parent, newNode, oldNode, index) {
             index = index ? index : 0;
 
-            if (!oldNode)
+            if (!oldNode) {
                 parent.appendChild(createElement(newNode));
-            else if (!newNode) {
+            } else if (!newNode) {
                 parent.removeChild(parent.childNodes[index]);
-            }
-            else if (changed(newNode, oldNode))
+            } else if (changed(newNode, oldNode)) {
                 parent.replaceChild(createElement(newNode), parent.childNodes[index]);
+            }
             else if (newNode.type) {
                 updateElementProps(parent.childNodes[index], newNode.props, oldNode.props);
 
@@ -491,41 +467,7 @@ function c(opts) {
             }
         }
 
-
-        // resolve vdom objects
-        function res(obj) {
-            iterate(obj,
-                function(key, obj) {
-                    var type = obj[key];
-
-                    if (type && type.constructor) 
-                        type = type.constructor;
-                    else 
-                        return;
-
-                    if (!!obj[key].toJSON) {
-                        return obj[key]() + '';
-                    } else if (
-                        type === Function || 
-                        type === Object || 
-                        type === Array ||
-                        type === Boolean || 
-                        type === Number
-                    ) {
-                        return obj[key];
-                    }
-                    else if (type === String) {
-                        return obj[key] ? obj[key] : obj[key] + ' ';
-                    }
-                    else {
-                        return obj[key] + '';
-                    }
-                }
-            );
-
-            return obj;
-        };
-
+        // state, behaviour references
         var d = c.state, 
             e = c.behavior;
 
@@ -539,18 +481,20 @@ function c(opts) {
             }
         }
 
-        vdom.prototype.mount = function(a) {
+        vdom[_p].mount = function(a) {
             this.obj = a;
-            this.res = res(clone(a(d, e)));
+            this.res = a(d, e);
+
             return this;
         }
 
-        vdom.prototype.init = function() {
+        vdom[_p].init = function() {
             update(this.root, this.res);
+
             return this;
         }
 
-        vdom.prototype.update = function() {
+        vdom[_p].update = function() {
             var newNode = this.obj(d,e),
                 oldNode = this.res;
 
@@ -575,7 +519,7 @@ function c(opts) {
      */
     function cmp (opts) {
         // assign routes
-        if (opts.routes && opts.routes.constructor === Array) {
+        if (opts.routes && opts.routes[_c] === Array) {
             this.routes = {};
 
             for (var i = 0, a = opts.routes; i < a.length; i++)
@@ -595,7 +539,7 @@ function c(opts) {
      * @param  {Object} b  `optional update state object`
      * @return {Object}    `componet object`
      */
-    cmp.prototype.init = function(a, b) {
+    cmp[_p].init = function(a, b) {
         var self = this;
 
         if (!a)
@@ -604,7 +548,8 @@ function c(opts) {
             this.state(b);
 
         // set prop states
-        iterate(this.state(), 
+        iterate(
+            this.state(), 
             function(key, obj) {
                 return p(obj[key]); 
             }
@@ -617,22 +562,20 @@ function c(opts) {
                     function(a, b) {
                         var s = self.state();
 
-                        if (a && s[a]) return b ? s[a](b) : s[a]();
-                        else return s;
+                        if (a && s[a]) 
+                            return b ? s[a](b) : s[a]();
+                        else 
+                            return s;
                     }, 
                     // update
-                    function() {
-                        self.update();
-                    },
+                    function() { self.update(); },
                     // req
-                    function (a, b, c) {
-                        self.req(a, b, c);
-                    },
+                    function(a, b, c) { self.req(a, b, c); },
                     // loop
                     self.loop(),
                     function(a) {
                         return a ? 
-                            Array.prototype.slice.call(self.component.querySelectorAll(a)) : 
+                            Array[_p].slice.call(self.component.querySelectorAll(a)) : 
                             self.component;
                     }
                 );
@@ -640,20 +583,13 @@ function c(opts) {
             this.behavior = new behavior;
         }
 
-        // assign component
-        if (this.component) {
-            // this.component = this.component.bind({state: this.state(), evt: this.behavior});
-            // this.component = this.component.constructor === Function ? this.component(this.state(), this.behavior) : this.component;
-            // this.component = this.component.constructor === Function ? this.component : this.component;
-        }
-
         // init and add to dom element
         this.vdom = vdom(a, this.component, this);
 
         this.component = a;
 
-        if (this.behavior.constructor)
-            this.behavior.constructor();
+        if (this.behavior[_c])
+            this.behavior[_c]();
 
         return this;
     };
@@ -666,8 +602,10 @@ function c(opts) {
      * var cmp = c(opts).init();
      * cmp.update();
      */
-    cmp.prototype.update = function() {
-        this.vdom.update();
+    cmp[_p].update = function() {
+        if (!window['_raf'] || !window['_raf'].active) {
+            this.vdom.update();
+        }
     }
 
     /**
@@ -675,12 +613,12 @@ function c(opts) {
      * 
      * @return {Void 0}
      */
-    cmp.prototype.loop = function() {
+    cmp[_p].loop = function() {
         var self = this;
 
         return {
             start: function(a) {
-                window._raf = {
+                window['_raf'] = {
                     id: null,
                     active: null
                 };
@@ -688,13 +626,13 @@ function c(opts) {
                 fps(function() {
                     self.vdom.update();
 
-                    if(a && window._raf.id === a)
-                        cancelAnimationFrame(window._raf.id);
-                }, 60, window._raf);
+                    if(a && window['_raf'].id === a)
+                        cancelAnimationFrame(window['_raf'].id);
+                }, 60, window['_raf']);
             },
             stop: function() {
-                cancelAnimationFrame(window._raf.id);
-                window._raf.active = false;
+                cancelAnimationFrame(window['_raf'].id);
+                window['_raf'].active = false;
             }
         }
     }
@@ -712,7 +650,7 @@ function c(opts) {
      * // returns {done, success, error, ...} | xhr object
      * req('api', {person: 'Sultan'}, fn(data) => {})
      */
-    cmp.prototype.req = function(id, data, callback) {
+    cmp[_p].req = function(id, data, callback) {
         var settings, 
             route;
 
