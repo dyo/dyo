@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Playground</title>
+	<meta charset="utf-8">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+	<div id="root"></div>
+	<script src="vdom.js"></script>
+
+	<script>
+		var test = c({
+				component: function(state, evt) {
+					var arr = [];
+					for (var i = 0; i < 1000; i++){
+						arr.push(i);
+					}
+
+					return (
+						h('ul',
+							h('button', {onClick: evt.test }, 'Click Me'),
+							arr.map((a) => { return h('li', {onClick: evt.test, checked: state.data}, state.data); })
+						)
+					);
+				},
+				routes: [
+					{id: 'api1', type: 'GET', url: '?users/{id}'}
+				],
+				state: {
+					data: true
+				},
+				behavior: function(state, update, req, loop, dom) {
+					this.constructor = function() {
+						req('api1', {id: 1234});
+						// dom('li');
+						// loop.start();
+					}
+					this.test = function() {
+						state('data', new Date() + performance.now());
+						update();
+						// loop.stop();
+					}
+				}
+			});
+
+		test.init(document.getElementById('root'));
+		// console.log(test);
+	</script>
+
+</body>
+</html>
