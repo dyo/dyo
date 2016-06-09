@@ -432,25 +432,24 @@ function c(opts) {
 
         // create element
         function createElement(node) {
-            // can't see this ever happending, but just to be sure
-            if (node === void 0) {
+            // convert undefined to empty string
+            if (node === void 0 || node === null) 
                 node = '';
-            }
-            // create text node doesn't like non-string entries
-            // convert to string
-            else if (node[_c] === Boolean || node[_c] === Number) {
-                node = node+'';
-            }
+            // convert numbers to strings
+            else if (node[_c] === Boolean || node[_c] === Number) 
+                node = node + '';
 
-            // handle none node Nodes : text
-            if (node[_c] === String) {
+            // handle none node Nodes : textNodes
+            if (node[_c] === String)
                 return document.createTextNode(node+'');
-            }
 
 
+            // not a text node 
             var el = document.createElement(node.type);
 
+            // diff and update/add/remove props
             setElementProps(el, node.props);
+            // add events if any
             addEventListeners(el, node.props);
 
             // only map children arrays
@@ -474,9 +473,20 @@ function c(opts) {
             return isType || isDiff || hasType;
         }
 
+        function validate(a) {
+            // converts 0 | false to strings
+            if (a !== void 0 && (a === null || a === 0 || a === false))
+                a = a + '';
+
+            return a;
+        }
+
         // update
         function update(parent, newNode, oldNode, index) {
             index = index ? index : 0;
+
+            oldNode = validate(oldNode);
+            newNode = validate(newNode);
 
             // adding to the dom
             if (!oldNode) {
@@ -629,9 +639,12 @@ function c(opts) {
 
         // init and add to dom element
         this.vdom = vdom(a, this.component, this);
-
+        // update
+        this.update();
+        // reference dom root
         this.component = a;
-
+        
+        // process constructor behavior
         if (this.behavior[_c])
             this.behavior[_c]();
 
@@ -712,7 +725,7 @@ function c(opts) {
             data:     (data)         ? data          : null,
         };
         
-        // send
+        // process
         ajax(settings, callback);
     }
 

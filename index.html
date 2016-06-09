@@ -13,18 +13,18 @@
 	<script src="vdom.js"></script>
 
 	<script>
-
 		var test = c({
 				component: function(state, evt) {
 					return (
 						h('ul', {},
 							h('button', {onClick: evt.test}, 'Click Me'),
-							h('input', {onInput: evt.test, type: 'text', value: state().data()}),
+							h('input', {onInput: evt.test, type: 'text'}),
+							h('input', {type: 'checkbox', checked: false}),
 							h('br', {}, ''),
 
 							state().list().map(
 								(a) => {
-									return h('li', {onClick: evt.test}, a + state().data());
+									return h('li', {onClick: evt.test}, a);
 								}
 							)
 						)
@@ -39,26 +39,32 @@
 				},
 				behavior: function(state, update, req, loop, dom) {
 					this.constructor = function() {
-						// req('api1', {id: 1234});
+						req('api1', {id: 1234});
 						// dom('li');
-						// loop.start();
+						loop.start();
 						// loop.stop();
 					}
-					this.test = function() {
-						var arr = [];
-						for (var i = 0; i < 600; i++){
-							arr.push(i);
+					this.test = function(e) {
+						var arr = ['hello', 'hello world', false, true, undefined, null];
+
+						state().data(new Date() + performance.now());
+
+						if (e.target.value) {
+							state().data(e.target.value);
 						}
 
-						state('data', new Date() + performance.now());
-						state('list', arr);
-						update();
+						for (var i = 0; i < 1000; i++) {
+							arr.push(i + ' ' + state().data());
+						}
+
+						state().list(arr);
+						// update();
 					}
 				}
 			});
 
 		test.init(document.getElementById('root'));
-		// console.log(test);
+		console.log(test);
 	</script>
 
 </body>
