@@ -353,7 +353,7 @@ function c(opts) {
     /* -------------------------------------------------------------- */
 
 
-    function vdom(a, b, c) {
+    function vdom(a, b, c, d) {
         // events
         function isEventProp(name) {
             return name.substring(0,2) === 'on';
@@ -512,9 +512,9 @@ function c(opts) {
             }
         }
 
-        // state, behaviour references
-        var d = c.state, 
-            e = c.behavior;
+        // references
+        // c = state
+        // d = behaviors
 
         // vdom public interface
         function vdom() {
@@ -531,22 +531,18 @@ function c(opts) {
         // prep objects
         vdom[_p].mount = function(a) {
             this.raw = a;
-            this.h = a(d, e);
-
-            return this;
+            this.h = a(c, d);
         }
 
         // add to dom
         vdom[_p].init = function() {
             update(this.root, this.h);
-
-            return this;
         }
 
         // update dom
         vdom[_p].update = function() {
             // get latest change
-            var newNode = this.raw(d, e),
+            var newNode = this.raw(c, d),
             // get old copy
                 oldNode = this.h;
 
@@ -554,8 +550,6 @@ function c(opts) {
 
             // update old node
             this.h = newNode;
-
-            return this;
         }
 
         return new vdom;
@@ -613,24 +607,18 @@ function c(opts) {
         if (this.behavior) {
             var behavior = this.behavior.bind(this.behavior, 
                     // state
-                    function(a, b) {
-                        var s = self.state();
-
-                        if (a && s[a]) 
-                            return b ? s[a](b) : s[a]();
-                        else 
-                            return s;
-                    }, 
+                    self.state(), 
                     // update
                     function() { self.update(); },
                     // req
                     function(a, b, c) { self.req(a, b, c); },
                     // loop
                     self.loop(),
+                    // return dom root
                     function(a) {
                         return a ? 
-                            Array[_p].slice.call(self.component.querySelectorAll(a)) : 
-                            self.component;
+                            Array[_p].slice.call(self.vdom.root.querySelectorAll(a)) : 
+                            self.vdom.root;
                     }
                 );
 
@@ -638,12 +626,10 @@ function c(opts) {
         }
 
         // init and add to dom element
-        this.vdom = vdom(a, this.component, this);
+        this.vdom = vdom(a, this.component, this.state(), this.behavior);
         // update
         this.update();
-        // reference dom root
-        this.component = a;
-        
+
         // process constructor behavior
         if (this.behavior[_c])
             this.behavior[_c]();

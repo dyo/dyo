@@ -22,7 +22,7 @@
 							h('input', {type: 'checkbox', checked: false}),
 							h('br', {}, ''),
 
-							state().list().map(
+							state.list().map(
 								(a) => {
 									return h('li', {onClick: evt.test}, a);
 								}
@@ -40,24 +40,25 @@
 				behavior: function(state, update, req, loop, dom) {
 					this.constructor = function() {
 						req('api1', {id: 1234});
-						// dom('li');
+						console.log(dom());
+						console.log(dom('li'));
 						loop.start();
 						// loop.stop();
 					}
 					this.test = function(e) {
 						var arr = ['hello', 'hello world', false, true, undefined, null];
 
-						state().data(new Date() + performance.now());
+						state.data(new Date() + performance.now());
 
 						if (e.target.value) {
-							state().data(e.target.value);
+							state.data(e.target.value);
 						}
 
 						for (var i = 0; i < 1000; i++) {
-							arr.push(i + ' ' + state().data());
+							arr.push(i + ' ' + state.data());
 						}
 
-						state().list(arr);
+						state.list(arr);
 						// update();
 					}
 				}
