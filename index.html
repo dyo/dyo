@@ -9,26 +9,34 @@
 	<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
 <body>
-	<div id="root"></div>
-	<script src="vdom.js"></script>
+	<div id="root" class="root"></div>
 
+	<script src="vdom.js"></script>
 	<script>
 		var test = c({
 				component: function(state, evt) {
 					return (
 						h('ul', {},
-							h('button', {onClick: evt.test}, 'Click Me'),
+							h('button', {onclick: evt.test}, 'Click Me'),
+
 							h('input', {onInput: evt.test, type: 'text'}),
-							h('input', {type: 'checkbox', checked: false}),
+							h('input', {type: 'checkbox'}),
+
+							h('select', {}, 
+								h('option', {}, 'first option'),
+								h('option', {}, 'second option')
+							),
+
+							h('br', {}, ''),
 							h('br', {}, ''),
 
-							state.list().map(
+							state.list.map(
 								(a) => {
-									return h('li', {onClick: evt.test}, a);
+									return h('li', {onClick: evt.test}, a)
 								}
 							)
 						)
-					);
+					)
 				},
 				routes: [
 					{id: 'api1', type: 'GET', url: '?users/{id}'}
@@ -37,35 +45,36 @@
 					data: true,
 					list: ['hello', 'hello world']
 				},
-				behavior: function(state, update, req, loop, dom) {
+				behavior: function(state, update, req, loop) {
 					this.constructor = function() {
 						req('api1', {id: 1234});
-						console.log(dom());
-						console.log(dom('li'));
-						loop.start();
+						// loop.start();
 						// loop.stop();
 					}
 					this.test = function(e) {
-						var arr = ['hello', 'hello world', false, true, undefined, null];
+						// var arr = ['hello', 'hello world', false, true, undefined, null];
+						arr = [];
 
 						state.data(new Date() + performance.now());
 
-						if (e.target.value) {
+						if (e.target.tagName == 'INPUT') {
 							state.data(e.target.value);
 						}
 
 						for (var i = 0; i < 1000; i++) {
-							arr.push(i + ' ' + state.data());
+							arr.push(i + ' ' + state.data())
 						}
 
 						state.list(arr);
-						// update();
+						update()
 					}
 				}
 			});
 
-		test.init(document.getElementById('root'));
-		console.log(test);
+		test.mount(document.getElementById('root'));
+		// test.mount(document.querySelectorAll('.root'));
+		// test.mount(document);
+		console.log(test)
 	</script>
 
 </body>

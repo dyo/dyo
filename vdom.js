@@ -1,37 +1,33 @@
 /**
- * Polyfills
- *
- * @global Object.assign({}, obj, obj)
- * @global requestAnimationFrame(Function)
+ * requestAnimationFrame Polyfill
  */
 (function() {
-    // Object.assign Polyfill
-    if (typeof Object.assign !== 'function' ) {
-        Object.assign = function(target) {
-            target = Object(target);
+    var raf = 'requestAnimationFrame',
+        caf = 'cancelAnimationFrame',
+        lastTime = 0,
+        v = ['webkit', 'moz'],
+        vLen = v.length;
 
-            for (var i = 1; i < arguments.length; i++) {
-                var source = arguments[i];
+    for (var x = 0; x < vLen && !window[raf]; ++x) {
+        window[raf] = window[v[x]+'RequestAnimationFrame'];
+        window[caf] = window[v[x]+'CancelAnimationFrame']||window[v[x]+'CancelRequestAnimationFrame']
+    }
 
-                if (source !== null) {
-                    for (var key in source) {
-                        if (Object.prototype.hasOwnProperty.call(source, key))
-                            target[key] = source[key];
-                    }
-                }
-            }
-            return target;
+    if (!window[raf]) {
+        window[raf] = function(callback) {
+            var currTime = new Date().getTime(),
+                timeToCall = Math.max(0, 16 - (currTime - lastTime)),
+                id = window.setTimeout(function() { callback(currTime + timeToCall); }, timeToCall);
+
+                lastTime = currTime + timeToCall;
+
+            return id
         };
     }
 
-    // requestAnimationFrame Polyfill
-    var raf = 'requestAnimationFrame';
-
-    if (typeof window[raf] !== 'function' ) {
-        for(var x = 0; x < v.length && !window[raf]; ++x) {
-            window[raf] = window[v[x]+'RequestAnimationFrame'];
-            window.cancelAnimationFrame = window[v[x]+'CancelAnimationFrame'] 
-                                       || window[v[x]+'CancelRequestAnimationFrame'];
+    if (!window[caf]) {
+        window[caf] = function(id) {
+            clearTimeout(id)
         }
     }
 }());
@@ -60,19 +56,19 @@ function h(type, props) {
         _c = 'constructor';
 
     for (var i = key; i < len; i++) {
-        var child = arguments[i];
+        child = arguments[i];
 
         if (child && child[_c] === Array) {
             for (var k = 0; k < child.length; k++) {
-                children[ (i-key) + k ] = child[k];
+                children[ (i-key) + k ] = child[k]
             }
         } else {
-            children[i - key] = child;
+            children[i - key] = child
         }
     }
 
     if (props === null || props[_c] !== Object) {
-        props = {};
+        props = {}
     }
 
     return {
@@ -100,13 +96,13 @@ function p(a) {
     return function (b) {
         function prop() {
             if (arguments.length) b = arguments[0];
-            return b;
+            return b
         }
         prop.toJSON = function () {
-            return JSON.stringify(b);
+            return JSON.stringify(b)
         }
-        return prop;
-    }(a);
+        return prop
+    }(a)
 }
 
 
@@ -143,80 +139,6 @@ function c(opts) {
 
 
     /**
-     * requestAnimation loop
-     * @param  {Function} fn  `loop`
-     * @param  {fps}      fps `frames per second`
-     * @return {Object}       `raf object`
-     */
-    function fps(fn, fps, raf) {
-        var then = new Date().getTime();
-
-        // custom fps, otherwise fallback to 60
-        fps = fps || 60;
-        var interval = 1000 / fps;
-     
-        return (function loop(time){
-            raf.id = requestAnimationFrame(loop);
-            raf.active = true;
-
-            var now = new Date().getTime(),
-                delta = now - then;
-     
-            if (delta > interval) {
-                then = now - (delta % interval);
-                fn(time);
-            }
-        }(0));
-    };
-
-    /**
-     * template parser
-     * 
-     * @public
-     * @param  {String} a `string to parse`
-     * @return {Object}   `{data: (data) => {}}`
-     *
-     * * @example
-     * // returns 'Hello World'
-     * tmpl('Hello, {person}').data({person: 'World'})
-     */
-    function tmpl(a) {
-        return {
-            data: function(b) {
-                for (var item in b) {
-                    a = a.replace( 
-                        new RegExp('{'+item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +'}', 'g'),
-                        esc(b[item]) 
-                    );
-                }
-
-                return a;
-            }
-        }
-    }
-
-    /**
-     * escape string
-     * 
-     * @public
-     * @param  {String} a `string to escape`
-     * @return {String}   `escaped string`
-     */
-    function esc(a) {
-        return (a+'').replace(/[&<>"'\/]/g, function(i) {
-            var obj = {
-                '&':'&amp;',
-                '<':'&lt;',
-                '>': '&gt;',
-                '"':'&quot;',
-                "'":'&#39;',
-                '/':'&#x2F;'
-            };
-            return obj[i];
-        });
-    }
-
-    /**
      * serialize + encode object
      *
      * @private
@@ -234,10 +156,10 @@ function c(opts) {
             var v = a[d];
 
             c.push(typeof val == 'object' ? param(v, d) : 
-                encodeURIComponent(d) + '=' + encodeURIComponent(v));
+                encodeURIComponent(d) + '=' + encodeURIComponent(v))
         }
 
-        return c.join('&');
+        return c.join('&')
     }
 
     /**
@@ -269,12 +191,12 @@ function c(opts) {
         xhr.open(settings.method, settings.url, true);
 
         xhr.onerror = function() {
-            callback(this, true);
+            callback(this, true)
         };
 
         xhr.onload = function(res, response) {
             // no callback specified
-            if(!callback) return;
+            if (!callback) return;
 
             if (this.status >= 200 && this.status < 400) {
                 // determine return data type
@@ -285,45 +207,139 @@ function c(opts) {
 
                 // json
                 if (type === 'json') {
-                    response = JSON.parse(xhr.responseText);
+                    response = JSON.parse(xhr.responseText)
                 }
                 // html, create dom
                 else if (type === 'html') {
-                    response = (new DOMParser()).parseFromString(xhr.responseText, "text/html");
+                    response = (new DOMParser()).parseFromString(xhr.responseText, "text/html")
                 }
                 // just text
                 else {
-                    response = xhr.responseText;
+                    response = xhr.responseText
                 }
 
-                res = [response, false];
+                res = [response, false]
             } else {
-                res = [this, true];
+                res = [this, true]
             }
 
-            callback(res[0], res[1]);
+            callback(res[0], res[1])
         };
 
 
-        if (CORS)
-            xhr.withCredentials = true;
+        if (CORS) {
+            xhr.withCredentials = true
+        }
 
         if (settings.method !== 'GET') {
             // set type of data sent : text/json
             xhr.setRequestHeader(
                 'Content-Type', 
                 settings.data[_c] === Object ? 'application/json' : 'text/plain'
-            );
+            )
         }
 
         if (settings.method === 'POST') {
             xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-            xhr.send(param(settings)); 
+            xhr.send(param(settings))
         } else {
-            xhr.send();
+            xhr.send()
         }
 
-        return xhr;
+        return xhr
+    }
+
+    /**
+     * merge 2 objects
+     * 
+     * @param  {Object} a `empty object to add merged properties to`
+     * @param  {Object} b `first object`
+     * @param  {Object} c `second object`
+     * @return {Object}   `new merged object`
+     *
+     * @example
+     * // returns {a: 2, b: 2, c: 5}
+     * merge({}, {a: 1, b: 2}, {a: 2, c: 5})
+     */
+    function merge(a, b, c) {
+        for (var attrname in b) { a[attrname] = b[attrname] }
+        for (var attrname in c) { a[attrname] = c[attrname] }
+        return c
+    }
+
+    /**
+     * requestAnimation loop
+     * @param  {Function} fn  `loop`
+     * @param  {fps}      fps `frames per second`
+     * @return {Object}       `raf object`
+     */
+    function fps(fn, fps, raf) {
+        var then = new Date().getTime();
+
+        // custom fps, otherwise fallback to 60
+        fps = fps || 60;
+        var interval = 1000 / fps;
+     
+        return (function loop(time) {
+            raf.id = requestAnimationFrame(loop),
+            raf.active = true;
+
+            var now = new Date().getTime(),
+                delta = now - then;
+     
+            if (delta > interval) {
+                then = now - (delta % interval);
+                fn(time)
+            }
+        }(0));
+    };
+
+    /**
+     * template parser
+     * 
+     * @public
+     * @param  {String} a `string to parse`
+     * @return {Object}   `{data: (data) => {}}`
+     *
+     * * @example
+     * // returns 'Hello World'
+     * tmpl('Hello, {person}').data({person: 'World'})
+     */
+    function tmpl(a) {
+        return {
+            data: function(b) {
+                for (var item in b) {
+                    a = a.replace( 
+                        new RegExp('{'+item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +'}', 'g'),
+                        esc(b[item]) 
+                    )
+                }
+
+                return a
+            }
+        }
+    }
+
+    /**
+     * escape string
+     * 
+     * @public
+     * @param  {String} a `string to escape`
+     * @return {String}   `escaped string`
+     */
+    function esc(a) {
+        return (a+'').replace(/[&<>"'\/]/g, function(i) {
+            var obj = {
+                '&':'&amp;',
+                '<':'&lt;',
+                '>': '&gt;',
+                '"':'&quot;',
+                "'":'&#39;',
+                '/':'&#x2F;'
+            };
+
+            return obj[i]
+        })
     }
 
     /**
@@ -338,15 +354,52 @@ function c(opts) {
 
             if (result) {
                 var r = result(key, obj);
-                if (r) obj[key] = r;
+
+                if (r) {
+                    obj[key] = r
+                }
             }
 
             // Recurse into children
-            if (obj[key] !== null && typeof obj[key] === 'object')
-                iterate(obj[key], result);
+            if (obj[key] !== null && typeof obj[key] === 'object') {
+                iterate(obj[key], result)
+            }
         }
 
-        return obj;
+        return obj
+    }
+
+    /**
+     * forEach helper
+     * 
+     * @param  {Array|Object} a 
+     * @param  {Function}     b
+     * @return {Array|Object}  
+     */
+    function each(a, b) {
+        var i;
+
+        // Handle arrays
+        if (typeof a.length == 'number') {
+            var i = 0, 
+                l = a.length;
+
+            for (; i < l; ++i) { 
+                if ( b.call(a[i], a[i], i, a) === false ) {
+                    return a
+                }
+            }
+        }
+        // Handle objects 
+        else {
+            for (i in a) {
+                if ( b.call(a[i], a[i], i, a) === false ) {
+                    return a
+                }
+            }
+        }
+
+        return a
     }
 
 
@@ -356,11 +409,11 @@ function c(opts) {
     function vdom(a, b, c, d) {
         // events
         function isEventProp(name) {
-            return name.substring(0,2) === 'on';
+            return name.substring(0,2) === 'on'
         }
 
         function extractEventName(name) {
-            return name.substring(2, name.length).toLowerCase();
+            return name.substring(2, name.length).toLowerCase()
         }
 
         function addEventListeners(target, props) {
@@ -372,11 +425,11 @@ function c(opts) {
                     // not directly references, 
                     // check if string value is a defined behavior
                     if (cb[_c] !== Function) {
-                        cb = !!c.behavior[cb] ? c.behavior[cb] : null;
+                        cb = !!c.behavior[cb] ? c.behavior[cb] : null
                     }
 
                     if (cb) {
-                        target.addEventListener(extractEventName(name), cb, false);
+                        target.addEventListener(extractEventName(name), cb, false)
                     }
                 }
             }
@@ -384,14 +437,16 @@ function c(opts) {
 
         // assign/update/remove props
         function prop(target, name, value, op) {
-            if (isEventProp(name)) return;
+            if (isEventProp(name)) {
+                return
+            }
 
             // remove / add attribute reference
             var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
 
             // if the target has a attr as a property, change that aswell
             if (target[name] !== void 0) {
-                target[name] = value;
+                target[name] = value
             }
 
             return op === -1 ? target[attr](name) : target[attr](name, value);
@@ -400,10 +455,10 @@ function c(opts) {
         function updateElementProp(target, name, newVal, oldVal) {
             if (!newVal) {
                 // -1 : remove prop
-                prop(target, name, oldVal, -1);
+                prop(target, name, oldVal, -1)
             } else if (!oldVal || newVal !== oldVal) {
                 // + 1 : add/update prop
-                prop(target, name, newVal, +1);
+                prop(target, name, newVal, +1)
             }
         }
 
@@ -411,21 +466,21 @@ function c(opts) {
             oldProps  = oldProps !== void 0 ? oldProps : {};
 
             // copy old+new props into single object
-            var props = Object.assign({}, newProps, oldProps);
+            var props = merge({}, newProps, oldProps);
 
             // compare if props have been added/delete/updated
             // if name not in newProp[name] : deleted
             // if name not in oldProp[name] : added
             // if name in oldProp !== name in newProp : updated
             for (var name in props) {
-                updateElementProp(target, name, newProps[name], oldProps[name]);
+                updateElementProp(target, name, newProps[name], oldProps[name])
             }
         }
 
         function setElementProps(target, props) {
             for (var name in props) {
                 // initial creation, no checks, just set
-                prop(target, name, props[name], +1);
+                prop(target, name, props[name], +1)
             }
         }
 
@@ -433,15 +488,18 @@ function c(opts) {
         // create element
         function createElement(node) {
             // convert undefined to empty string
-            if (node === void 0 || node === null) 
-                node = '';
+            if (node === void 0 || node === null) {
+                node = ''
+            }
             // convert numbers to strings
-            else if (node[_c] === Boolean || node[_c] === Number) 
-                node = node + '';
+            else if (node[_c] === Boolean || node[_c] === Number) {
+                node = node + ''
+            }
 
             // handle none node Nodes : textNodes
-            if (node[_c] === String)
-                return document.createTextNode(node+'');
+            if (node[_c] === String) {
+                return document.createTextNode(node+'')
+            }
 
 
             // not a text node 
@@ -454,10 +512,10 @@ function c(opts) {
 
             // only map children arrays
             if (node.children[_c] === Array) {
-                node.children.map(createElement).forEach(el.appendChild.bind(el));
+                node.children.map(createElement).forEach(el.appendChild.bind(el))
             }
 
-            return el;
+            return el
         }
 
 
@@ -470,15 +528,16 @@ function c(opts) {
                 // diff dom type
                 hasType = node1.type !== node2.type;
 
-            return isType || isDiff || hasType;
+            return isType || isDiff || hasType
         }
 
         function validate(a) {
             // converts 0 | false to strings
-            if (a !== void 0 && (a === null || a === 0 || a === false))
-                a = a + '';
+            if (a !== void 0 && (a === null || a === 0 || a === false)) {
+                a = a + ''
+            }
 
-            return a;
+            return a
         }
 
         // update
@@ -490,15 +549,15 @@ function c(opts) {
 
             // adding to the dom
             if (!oldNode) {
-                parent.appendChild(createElement(newNode));
+                parent.appendChild(createElement(newNode))
             } 
             // removing from the dom
             else if (!newNode) {
-                parent.removeChild(parent.childNodes[index]);
+                parent.removeChild(parent.childNodes[index])
             }
             // replacing a node
             else if (changed(newNode, oldNode)) {
-                parent.replaceChild(createElement(newNode), parent.childNodes[index]);
+                parent.replaceChild(createElement(newNode), parent.childNodes[index])
             }
             // the lookup loop
             else if (newNode.type) {
@@ -507,52 +566,58 @@ function c(opts) {
                 var newLength = newNode.children.length,
                     oldLength = oldNode.children.length;
 
-                for (var i = 0; i < newLength || i < oldLength; i++)
-                    update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i);
+                for (var i = 0; i < newLength || i < oldLength; i++) {
+                    update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
+                }
             }
         }
 
-        // references
-        // c = state
-        // d = behaviors
+        // loop through parents/root elements and update them
+        function refresh(a, b, c) {
+            // mount
+            each(a, function(a) {
+                update(a, b, c)
+            })
+        }
+
+        function state(a) {
+            var state = {};
+
+            each(a, function(a,b,c) {
+                state[b] = a();
+            });
+
+            return state;
+        }
 
         // vdom public interface
         function vdom() {
-            this.root = a;
+            this.state = c,
+            this.behavior = d,
+            this.root = !!a.nodeType ? [a] : Array[_p].slice.call(a),
+            this.raw = b,
+            this.h = b(state(c), d);
 
-            // setting the root and initializing at the same time
-            // b is the virtual element
-            if (b) {
-                this.mount(b);
-                this.init();
-            }
+            // mount
+            refresh(this.root, this.h);
+            // update
+            this.update()
         }
 
-        // prep objects
-        vdom[_p].mount = function(a) {
-            this.raw = a;
-            this.h = a(c, d);
-        }
-
-        // add to dom
-        vdom[_p].init = function() {
-            update(this.root, this.h);
-        }
-
-        // update dom
+        // refresh/update dom
         vdom[_p].update = function() {
             // get latest change
-            var newNode = this.raw(c, d),
+            var newNode = this.raw(state(this.state), this.behavior),
             // get old copy
                 oldNode = this.h;
 
-            update(this.root, newNode, oldNode);
+            refresh(this.root, newNode, oldNode);
 
             // update old node
-            this.h = newNode;
+            this.h = newNode
         }
 
-        return new vdom;
+        return new vdom
     }
 
 
@@ -570,42 +635,48 @@ function c(opts) {
         if (opts.routes && opts.routes[_c] === Array) {
             this.routes = {};
 
-            for (var i = 0, a = opts.routes; i < a.length; i++)
-                this.routes[a[i].id] = a[i];
+            for (var a = opts.routes, i = a.length - 1; i >= 0; i--) {
+                this.routes[a[i].id] = a[i]
+            }
         }
 
         // assign initial objects
-        if (opts.state) this.state = p(opts.state);
-        if (opts.behavior) this.behavior = opts.behavior;
-        if (opts.component) this.component = opts.component;
+        if (opts.state) {
+            this.state = p(opts.state)
+        }
+        if (opts.behavior) {
+            this.behavior = opts.behavior
+        }
+        if (opts.component) {
+            this.component = opts.component
+        }
     }
 
     /**
      * initialize component
      * 
      * @param  {ELement} a `element to mount to`
-     * @param  {Object} b  `optional update state object`
+     * @param  {Object}  b `optional update state object`
      * @return {Object}    `componet object`
      */
-    cmp[_p].init = function(a, b) {
+    cmp[_p].mount = function(a, b) {
         var self = this;
 
-        if (!a)
-            throw 'Needs dom element to mount';
-        else if (b)
-            this.state(b);
+        if (!a) {
+            throw 'Needs dom element to mount'
+        }
+        else if (b) {
+            self.state(b)
+        }
 
         // set prop states
-        iterate(
-            this.state(), 
-            function(key, obj) {
-                return p(obj[key]); 
-            }
-        );
+        iterate(self.state(), function(key, obj) {
+            return p(obj[key])
+        });
 
         // assign behavior
-        if (this.behavior) {
-            var behavior = this.behavior.bind(this.behavior, 
+        if (self.behavior) {
+            var behavior = self.behavior.bind(self.behavior, 
                     // state
                     self.state(), 
                     // update
@@ -613,41 +684,35 @@ function c(opts) {
                     // req
                     function(a, b, c) { self.req(a, b, c); },
                     // loop
-                    self.loop(),
-                    // return dom root
-                    function(a) {
-                        return a ? 
-                            Array[_p].slice.call(self.vdom.root.querySelectorAll(a)) : 
-                            self.vdom.root;
-                    }
+                    self.loop()
                 );
 
-            this.behavior = new behavior;
+            self.behavior = new behavior
         }
 
         // init and add to dom element
-        this.vdom = vdom(a, this.component, this.state(), this.behavior);
-        // update
-        this.update();
+        self.component = vdom(a, this.component, self.state(), self.behavior);
 
         // process constructor behavior
-        if (this.behavior[_c])
-            this.behavior[_c]();
+        if (self.behavior[_c]) {
+            self.behavior[_c]()
+        }
 
-        return this;
+        return this
     };
 
     /**
      * update component
      * 
      * @return {Void 0}
+     * 
      * @example
      * var cmp = c(opts).init();
      * cmp.update();
      */
     cmp[_p].update = function() {
         if (!window['_raf'] || !window['_raf'].active) {
-            this.vdom.update();
+            this.component.update()
         }
     }
 
@@ -667,15 +732,16 @@ function c(opts) {
                 };
 
                 fps(function() {
-                    self.vdom.update();
+                    self.component.update();
 
-                    if(a && window['_raf'].id === a)
-                        cancelAnimationFrame(window['_raf'].id);
-                }, 60, window['_raf']);
+                    if(a && window['_raf'].id === a) {
+                        cancelAnimationFrame(window['_raf'].id)
+                    }
+                }, 60, window['_raf'])
             },
             stop: function() {
                 cancelAnimationFrame(window['_raf'].id);
-                window['_raf'].active = false;
+                window['_raf'].active = false
             }
         }
     }
@@ -697,23 +763,24 @@ function c(opts) {
         var settings, 
             route;
 
-        if (!!!this.routes[id])
-            throw 'unknown route:'+id;
+        if (!!!this.routes[id]) {
+            throw 'unknown route:'+id
+        }
 
         // prep request settings
-        route        = {};
-        route.type   = this.routes[id].type.toUpperCase();
+        route        = {},
+        route.type   = this.routes[id].type.toUpperCase(),
         route.url    = (this.routes[id].type === 'GET') ? tmpl(this.routes[id].url).data(data) : this.routes[id].url;
 
         settings = {
-            url:      (route.url)    ? route.url     : null,
-            method:   (route.type)   ? route.type    : 'GET',
-            data:     (data)         ? data          : null,
+            url: (route.url) ? route.url : null,
+            method: (route.type) ? route.type : 'GET',
+            data: (data) ? data : null,
         };
         
         // process
-        ajax(settings, callback);
+        ajax(settings, callback)
     }
 
-    return new cmp(opts);
+    return new cmp(opts)
 }
