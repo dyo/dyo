@@ -17,11 +17,14 @@
 		var test = c({
 				component: function(state, evt) {
 					return (
-						h('ul',
-							h('button', {onClick: evt.test }, 'Click Me'),
+						h('ul', {},
+							h('button', {onClick: evt.test}, 'Click Me'),
+							h('input', {onInput: evt.test, type: 'text', value: state().data()}),
+							h('br', {}, ''),
+
 							state().list().map(
 								(a) => {
-									return h('input', {onClick: evt.test}, a + state().data());
+									return h('li', {onClick: evt.test}, a + state().data());
 								}
 							)
 						)

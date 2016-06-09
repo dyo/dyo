@@ -50,6 +50,7 @@
  *
  * @example
  * h('div', {class: 'close'}, 'Text Content')
+ * h('div', null, h('h1', 'Text'));
  */
 function h(type, props) {
     var len = arguments.length,
@@ -58,34 +59,35 @@ function h(type, props) {
         child,
         _c = 'constructor';
 
-    if (props && props[_c] !== Object) {
-        key = 1;
-    }
-
-    for (var i = key;i < len; i++) {
+    for (var i = key; i < len; i++) {
         var child = arguments[i];
 
         if (child && child[_c] === Array) {
-            for (var k = 0; k < child.length; k++)
+            for (var k = 0; k < child.length; k++) {
                 children[ (i-key) + k ] = child[k];
-        } else
+            }
+        } else {
             children[i - key] = child;
+        }
     }
 
-    props = props && props[_c] === Object ? props : {};
+    if (props === null || props[_c] !== Object) {
+        props = {};
+    }
 
-    function h(a, b, c) {
-        this.type = a,
-        this.props = b,
-        this.children = c;
-    };
-
-    return new h(type, props, children);
+    return {
+        type: type,
+        props: props,
+        children: children
+    }
 }
 
 
 /**
  * create property/dynamic state p()
+ *
+ * The backbone is the cheap diffing we can do
+ * 
  * @param  {Any} a `set value`
  * @return {Any}   `value set`
  *
@@ -256,6 +258,7 @@ function c(opts) {
             a = document.createElement('a');
             a.href = settings.url;
 
+        // is this a CROSS ORIGIN REQUEST check
         var CORS = !(
             a.hostname === location.hostname &&
             a.port === location.port &&
@@ -270,20 +273,28 @@ function c(opts) {
         };
 
         xhr.onload = function(res, response) {
+            // no callback specified
             if(!callback) return;
 
             if (this.status >= 200 && this.status < 400) {
+                // determine return data type
                 var type = xhr.getResponseHeader("content-type"),
                     type = type.split(';'),
                     type = type[0].split('/'),
                     type = type[type.length-1];
 
-                if (type === 'json')
+                // json
+                if (type === 'json') {
                     response = JSON.parse(xhr.responseText);
-                else if (type === 'html')
+                }
+                // html, create dom
+                else if (type === 'html') {
                     response = (new DOMParser()).parseFromString(xhr.responseText, "text/html");
-                else
+                }
+                // just text
+                else {
                     response = xhr.responseText;
+                }
 
                 res = [response, false];
             } else {
@@ -293,20 +304,24 @@ function c(opts) {
             callback(res[0], res[1]);
         };
 
+
         if (CORS)
             xhr.withCredentials = true;
 
-        if (settings.method !== 'GET')
+        if (settings.method !== 'GET') {
+            // set type of data sent : text/json
             xhr.setRequestHeader(
                 'Content-Type', 
                 settings.data[_c] === Object ? 'application/json' : 'text/plain'
             );
+        }
 
         if (settings.method === 'POST') {
             xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
             xhr.send(param(settings)); 
-        } else
+        } else {
             xhr.send();
+        }
 
         return xhr;
     }
@@ -315,7 +330,6 @@ function c(opts) {
      * object iterate + update
      * 
      * @param  {Object}   obj       `object to change`
-     * @param  {Function} condition `when to change`
      * @param  {Function} result    `what to change`
      * @return {Object}             `changed object`
      */
@@ -342,7 +356,7 @@ function c(opts) {
     function vdom(a, b, c) {
         // events
         function isEventProp(name) {
-            return /^on/.test(name);
+            return name.substring(0,2) === 'on';
         }
 
         function extractEventName(name) {
@@ -352,8 +366,11 @@ function c(opts) {
         function addEventListeners(target, props) {
             for (var name in props) {
                 if (isEventProp(name)) {
+                    // callback
                     var cb = props[name];
 
+                    // not directly references, 
+                    // check if string value is a defined behavior
                     if (cb[_c] !== Function) {
                         cb = !!c.behavior[cb] ? c.behavior[cb] : null;
                     }
@@ -369,38 +386,37 @@ function c(opts) {
         function prop(target, name, value, op) {
             if (isEventProp(name)) return;
 
+            // remove / add attribute reference
             var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
 
-            if (value[_c] === Boolean) {
-                if (op === -1) {
-                    target[attr](name);
-                    target[name] = false;
-                } else {
-                    if (value) {
-                        target[attr](name, value);
-                        target[name] = true;
-                    } else {
-                        target[name] = false;
-                    }
-                }
-            } else {
-                return op === -1 ? target[attr](name) : target[attr](name, value);
+            // if the target has a attr as a property, change that aswell
+            if (target[name] !== void 0) {
+                target[name] = value;
             }
+
+            return op === -1 ? target[attr](name) : target[attr](name, value);
         }
 
         function updateElementProp(target, name, newVal, oldVal) {
             if (!newVal) {
+                // -1 : remove prop
                 prop(target, name, oldVal, -1);
             } else if (!oldVal || newVal !== oldVal) {
+                // + 1 : add/update prop
                 prop(target, name, newVal, +1);
             }
         }
 
-        function updateElementProps(target, newProps) {
-            var oldProps = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2],
+        function updateElementProps(target, newProps, oldProps) {
+            oldProps  = oldProps !== void 0 ? oldProps : {};
 
-                props    = Object.assign({}, newProps, oldProps);
+            // copy old+new props into single object
+            var props = Object.assign({}, newProps, oldProps);
 
+            // compare if props have been added/delete/updated
+            // if name not in newProp[name] : deleted
+            // if name not in oldProp[name] : added
+            // if name in oldProp !== name in newProp : updated
             for (var name in props) {
                 updateElementProp(target, name, newProps[name], oldProps[name]);
             }
@@ -408,6 +424,7 @@ function c(opts) {
 
         function setElementProps(target, props) {
             for (var name in props) {
+                // initial creation, no checks, just set
                 prop(target, name, props[name], +1);
             }
         }
@@ -415,47 +432,65 @@ function c(opts) {
 
         // create element
         function createElement(node) {
+            // can't see this ever happending, but just to be sure
             if (node === void 0) {
                 node = '';
-            } else if (node[_c] === Boolean || node[_c] === Number) {
+            }
+            // create text node doesn't like non-string entries
+            // convert to string
+            else if (node[_c] === Boolean || node[_c] === Number) {
                 node = node+'';
             }
 
+            // handle none node Nodes : text
             if (node[_c] === String) {
                 return document.createTextNode(node+'');
             }
+
 
             var el = document.createElement(node.type);
 
             setElementProps(el, node.props);
             addEventListeners(el, node.props);
 
-            if(!!node.children)
+            // only map children arrays
+            if (node.children[_c] === Array) {
                 node.children.map(createElement).forEach(el.appendChild.bind(el));
+            }
 
             return el;
         }
 
 
-        // main
+        // diffing (simple)
         function changed(node1, node2) {
+                // diff object type
             var isType  = node1[_c] !== node2[_c],
+                // diff content
                 isDiff  = node1[_c] === String && node1 !== node2,
+                // diff dom type
                 hasType = node1.type !== node2.type;
 
             return isType || isDiff || hasType;
         }
 
+        // update
         function update(parent, newNode, oldNode, index) {
             index = index ? index : 0;
 
+            // adding to the dom
             if (!oldNode) {
                 parent.appendChild(createElement(newNode));
-            } else if (!newNode) {
+            } 
+            // removing from the dom
+            else if (!newNode) {
                 parent.removeChild(parent.childNodes[index]);
-            } else if (changed(newNode, oldNode)) {
+            }
+            // replacing a node
+            else if (changed(newNode, oldNode)) {
                 parent.replaceChild(createElement(newNode), parent.childNodes[index]);
             }
+            // the lookup loop
             else if (newNode.type) {
                 updateElementProps(parent.childNodes[index], newNode.props, oldNode.props);
 
@@ -475,31 +510,40 @@ function c(opts) {
         function vdom() {
             this.root = a;
 
+            // setting the root and initializing at the same time
+            // b is the virtual element
             if (b) {
                 this.mount(b);
                 this.init();
             }
         }
 
+        // prep objects
         vdom[_p].mount = function(a) {
-            this.obj = a;
-            this.res = a(d, e);
+            this.raw = a;
+            this.h = a(d, e);
 
             return this;
         }
 
+        // add to dom
         vdom[_p].init = function() {
-            update(this.root, this.res);
+            update(this.root, this.h);
 
             return this;
         }
 
+        // update dom
         vdom[_p].update = function() {
-            var newNode = this.obj(d,e),
-                oldNode = this.res;
+            // get latest change
+            var newNode = this.raw(d, e),
+            // get old copy
+                oldNode = this.h;
 
             update(this.root, newNode, oldNode);
-            this.res = this.obj(d,e);
+
+            // update old node
+            this.h = newNode;
 
             return this;
         }
@@ -657,6 +701,7 @@ function c(opts) {
         if (!!!this.routes[id])
             throw 'unknown route:'+id;
 
+        // prep request settings
         route        = {};
         route.type   = this.routes[id].type.toUpperCase();
         route.url    = (this.routes[id].type === 'GET') ? tmpl(this.routes[id].url).data(data) : this.routes[id].url;
@@ -667,6 +712,7 @@ function c(opts) {
             data:     (data)         ? data          : null,
         };
         
+        // send
         ajax(settings, callback);
     }
 
