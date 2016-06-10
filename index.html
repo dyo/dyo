@@ -9,23 +9,17 @@
 	<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
 <body>
-	<div id="root" class="root"></div>
-
-	<script src="vdom.js"></script>
+	<div id="root"></div>
+	<script src="vdom.min.js"></script>
 	<script>
 		var test = c({
+				component: 'component',
 				component: function(state, evt) {
 					return (
 						h('ul', {},
 							h('button', {onclick: evt.test}, 'Click Me'),
-
 							h('input', {onInput: evt.test, type: 'text'}),
 							h('input', {type: 'checkbox'}),
-
-							h('select', {}, 
-								h('option', {}, 'first option'),
-								h('option', {}, 'second option')
-							),
 
 							h('br', {}, ''),
 							h('br', {}, ''),
@@ -42,27 +36,27 @@
 					{id: 'api1', type: 'GET', url: '?users/{id}'}
 				],
 				state: {
-					data: true,
-					list: ['hello', 'hello world']
+					data: 'true',
+					list: ['hello', 'hello world', 'other', 'last']
 				},
 				behavior: function(state, update, req, loop) {
 					this.constructor = function() {
-						req('api1', {id: 1234});
+						// req('api1', {id: 1234});
 						// loop.start();
 						// loop.stop();
 					}
 					this.test = function(e) {
-						// var arr = ['hello', 'hello world', false, true, undefined, null];
-						arr = [];
+						console.log('works');
 
+						arr = [];
 						state.data(new Date() + performance.now());
 
 						if (e.target.tagName == 'INPUT') {
 							state.data(e.target.value);
 						}
 
-						for (var i = 0; i < 1000; i++) {
-							arr.push(i + ' ' + state.data())
+						for (var i = 0; i < 400; i++) {
+							arr.push(i+ ' ' + state.data())
 						}
 
 						state.list(arr);
@@ -72,9 +66,6 @@
 			});
 
 		test.mount(document.getElementById('root'));
-		// test.mount(document.querySelectorAll('.root'));
-		// test.mount(document);
-		console.log(test)
 	</script>
 
 </body>

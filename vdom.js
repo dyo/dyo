@@ -355,7 +355,9 @@ function c(opts) {
             if (result) {
                 var r = result(key, obj);
 
-                if (r) {
+                if (r === false) {
+                    break;
+                } else if (r) {
                     obj[key] = r
                 }
             }
@@ -425,7 +427,7 @@ function c(opts) {
                     // not directly references, 
                     // check if string value is a defined behavior
                     if (cb[_c] !== Function) {
-                        cb = !!c.behavior[cb] ? c.behavior[cb] : null
+                        cb = !!d[cb] ? d[cb] : null
                     }
 
                     if (cb) {
@@ -512,7 +514,7 @@ function c(opts) {
 
             // only map children arrays
             if (node.children[_c] === Array) {
-                node.children.map(createElement).forEach(el.appendChild.bind(el))
+                each(node.children.map(createElement), el.appendChild.bind(el));
             }
 
             return el
@@ -583,7 +585,7 @@ function c(opts) {
         function state(a) {
             var state = {};
 
-            each(a, function(a,b,c) {
+            each(a, function(a, b) {
                 state[b] = a();
             });
 
@@ -592,14 +594,26 @@ function c(opts) {
 
         // vdom public interface
         function vdom() {
-            this.state = c,
-            this.behavior = d,
-            this.root = !!a.nodeType ? [a] : Array[_p].slice.call(a),
-            this.raw = b,
-            this.h = b(state(c), d);
+            // root reference
+            this.r = !!a.nodeType ? [a] : Array[_p].slice.call(a),
+
+            // prepare root for mount : clear
+            each(this.r, function(a) {
+                if (a.innerHTML.length !== 0)
+                    a.innerHTML = ''
+            });
+
+            // local copy of state reference
+            this.s = c, 
+            // local copy of behavior reference 
+            this.b = d, 
+            // local copy of dynamic virtual dom reference
+            this.raw = b, 
+            // local copy of static virtual dom refence
+            this.h = b(state(c), d); 
 
             // mount
-            refresh(this.root, this.h);
+            refresh(this.r, this.h);
             // update
             this.update()
         }
@@ -607,11 +621,11 @@ function c(opts) {
         // refresh/update dom
         vdom[_p].update = function() {
             // get latest change
-            var newNode = this.raw(state(this.state), this.behavior),
+            var newNode = this.raw(state(this.s), this.b),
             // get old copy
                 oldNode = this.h;
 
-            refresh(this.root, newNode, oldNode);
+            refresh(this.r, newNode, oldNode);
 
             // update old node
             this.h = newNode
@@ -676,22 +690,28 @@ function c(opts) {
 
         // assign behavior
         if (self.behavior) {
-            var behavior = self.behavior.bind(self.behavior, 
-                    // state
-                    self.state(), 
-                    // update
-                    function() { self.update(); },
-                    // req
-                    function(a, b, c) { self.req(a, b, c); },
-                    // loop
-                    self.loop()
-                );
+            var behavior = self.behavior.bind(
+                // this
+                self.behavior, 
+                // state
+                self.state(), 
+                // update
+                function() { 
+                    self.update() 
+                },
+                // req
+                function(a, b, c) { 
+                    self.req(a, b, c) 
+                },
+                // loop
+                self.loop()
+            );
 
             self.behavior = new behavior
         }
 
         // init and add to dom element
-        self.component = vdom(a, this.component, self.state(), self.behavior);
+        self.component = vdom(a, self.component, self.state(), self.behavior);
 
         // process constructor behavior
         if (self.behavior[_c]) {
