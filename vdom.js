@@ -764,8 +764,8 @@ function c (opts) {
     /**
      * component initialize
      * 
-     * @param  {ELement} a `component 'this' context`
-     * @param  {ELement} b `element to mount to`
+     * @param  {Element} a `component 'this' context`
+     * @param  {Element} b `element to mount to`
      * @return {Object}    `componet object`
      */
     function init (self, prototype, root, state, virtual, behavior) {
@@ -934,7 +934,7 @@ function c (opts) {
      * @param  {Object} opts `component options`
      * @return {Void 0}
      */
-    function cmp (opts, other) {
+    function cmp (opts) {
         if (!opts) return;
         // assign routes
         if (opts.routes && opts.routes[_c] === Array) {
