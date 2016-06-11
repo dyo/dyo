@@ -768,78 +768,52 @@ function c (opts) {
      * @param  {ELement} b `element to mount to`
      * @return {Object}    `componet object`
      */
-    function init (a, b, c) {
+    function init (self, prototype, root, state, virtual, behavior) {
         // set prop states
-        iterate(a.state(), function (key, obj) {
+        iterate(state(), function (key, obj) {
             return p(obj[key])
         });
 
         // assign behavior
-        if (a.behavior) {
-            var behavior = a.behavior.bind(
-                a.behavior, 
-                a.state(), 
+        if (behavior) {
+            var behavior = behavior.bind(
+                behavior, 
+                state(), 
                 function () { 
-                    a.update() 
+                    self.update() 
                 },
                 function (a, b, c) { 
-                    a.req(a, b, c) 
+                    self.req(a, b, c) 
                 },
-                a.loop()
+                self.loop()
             );
 
-            a.behavior = new behavior
+            behavior = new behavior
         }
 
         // init and add to dom element
-        a.component = vdom(b, a.component, a.state(), a.behavior);
+        prototype[_p].virtual = vdom(root, virtual, state(), behavior);
 
         // process constructor behavior
-        if (a.behavior[_c]) {
-            a.behavior[_c]()
+        if (behavior[_c]) {
+            behavior[_c]()
         }
 
-        return a
+        return self
     }
 
-    /**
-     * component constructor
-     * 
-     * @param  {Object} opts `component options`
-     * @return {Void 0}
-     */
-    function cmp (opts) {
-        // assign routes
-        if (opts.routes && opts.routes[_c] === Array) {
-            this.routes = {};
+    function c () {}
 
-            for (var a = opts.routes, i = a.length - 1; i >= 0; i--) {
-                this.routes[a[i].id] = a[i]
-            }
-        }
+    c[_p] = {
+        /**
+         * mount component to dom
+         * 
+         * @param  {ELement} a `element to mount to`
+         * @return {Object}    `componet object`
+         */
+        mount: function (a) {
+            var self = this;
 
-        // assign initial objects
-        if (opts.state) {
-            this.state = p(opts.state)
-        }
-        if (opts.behavior) {
-            this.behavior = opts.behavior
-        }
-        if (opts.component) {
-            this.component = opts.component
-        }
-    }
-
-    /**
-     * mount component to dom
-     * 
-     * @param  {ELement} a `element to mount to`
-     * @return {Object}    `componet object`
-     */
-    cmp[_p].mount = function (a) {
-        var self = this;
-
-        // if (!a) {
             document.onreadystatechange = function () {
                 if (document.readyState === "interactive") {
                     // check if is dom node
@@ -869,94 +843,128 @@ function c (opts) {
                     });
 
                     // initialize
-                    init(self, a)
+                    init(self, cmp, a, self.state, self.virtual, self.behavior)
                 }
             }
-        // }
+        },
 
+        /**
+         * update component
+         * 
+         * @return {Void 0}
+         * 
+         * @example
+         * var cmp = c(opts).init();
+         * cmp.update();
+         */
+        update: function () {
+            this.virtual.update();
+        },
 
-    };
+        /**
+         * redraw loop, redraws updates, throttled at 60fps
+         * 
+         * @return {Void 0}
+         */
+        loop: function () {
+            var self = this;
 
-    /**
-     * update component
-     * 
-     * @return {Void 0}
-     * 
-     * @example
-     * var cmp = c(opts).init();
-     * cmp.update();
-     */
-    cmp[_p].update = function () {
-        if (!window['_raf'] || !window['_raf'].active) {
-            this.component.update()
+            return {
+                start: function (a) {
+                    window['_raf'] = {
+                        id: null,
+                        active: null
+                    };
+
+                    fps(function () {
+                        self.update();
+
+                        if (a && window['_raf'].id === a) {
+                            cancelAnimationFrame(window['_raf'].id)
+                        }
+                    }, 60, window['_raf'])
+                },
+                stop: function () {
+                    cancelAnimationFrame(window['_raf'].id);
+                    window['_raf'].active = false
+                }
+            }
+        },
+
+        /**
+         * req
+         *
+         * @public
+         * @param  {String}   id       `id of route`
+         * @param  {Object}   data     `data to pass to request`
+         * @param  {Function} callback `function to run on success`
+         * @return {Object}            `xhr object / xhr promise`
+         *
+         * @example
+         * // returns {done, success, error, ...} | xhr object
+         * req('api', {person: 'Sultan'}, fn(data) => {})
+         */
+        req: function (id, data, callback) {
+            var settings, 
+                route;
+
+            if (!!!this.routes[id]) {
+                throw 'unknown route:'+id
+            }
+
+            // prep request settings
+            route        = {},
+            route.type   = this.routes[id].type.toUpperCase(),
+            route.url    = (this.routes[id].type === 'GET') ? tmpl(this.routes[id].url).data(data) : this.routes[id].url;
+
+            settings = {
+                url: (route.url) ? route.url : null,
+                method: (route.type) ? route.type : 'GET',
+                data: (data) ? data : null,
+            };
+            
+            // process
+            ajax(settings, callback)
         }
     }
 
     /**
-     * redraw loop, redraws updates, throttled at 60fps
+     * component constructor
      * 
+     * @param  {Object} opts `component options`
      * @return {Void 0}
      */
-    cmp[_p].loop = function () {
-        var self = this;
+    function cmp (opts, other) {
+        if (!opts) return;
+        // assign routes
+        if (opts.routes && opts.routes[_c] === Array) {
+            this.routes = {};
 
-        return {
-            start: function (a) {
-                window['_raf'] = {
-                    id: null,
-                    active: null
-                };
-
-                fps(function () {
-                    self.component.update();
-
-                    if (a && window['_raf'].id === a) {
-                        cancelAnimationFrame(window['_raf'].id)
-                    }
-                }, 60, window['_raf'])
-            },
-            stop: function () {
-                cancelAnimationFrame(window['_raf'].id);
-                window['_raf'].active = false
+            for (var a = opts.routes, i = a.length - 1; i >= 0; i--) {
+                this.routes[a[i].id] = a[i]
             }
         }
-    }
 
-    /**
-     * req
-     *
-     * @public
-     * @param  {String}   id       `id of route`
-     * @param  {Object}   data     `data to pass to request`
-     * @param  {Function} callback `function to run on success`
-     * @return {Object}            `xhr object / xhr promise`
-     *
-     * @example
-     * // returns {done, success, error, ...} | xhr object
-     * req('api', {person: 'Sultan'}, fn(data) => {})
-     */
-    cmp[_p].req = function (id, data, callback) {
-        var settings, 
-            route;
-
-        if (!!!this.routes[id]) {
-            throw 'unknown route:'+id
+        // assign initial objects
+        if (opts.state) {
+            this.state = p(opts.state)
         }
-
-        // prep request settings
-        route        = {},
-        route.type   = this.routes[id].type.toUpperCase(),
-        route.url    = (this.routes[id].type === 'GET') ? tmpl(this.routes[id].url).data(data) : this.routes[id].url;
-
-        settings = {
-            url: (route.url) ? route.url : null,
-            method: (route.type) ? route.type : 'GET',
-            data: (data) ? data : null,
-        };
-        
-        // process
-        ajax(settings, callback)
+        if (opts.behavior) {
+            this.behavior = opts.behavior
+        }
+        if (opts.component) {
+            cmp[_p].virtual = opts.component
+        }
     }
+
+    cmp[_p] = Object.create(c[_p], {
+        virtual : {
+            value: null, 
+            enumerable: true, 
+            configurable: true, 
+            writable: true 
+        }
+    });
 
     return new cmp(opts)
 }
