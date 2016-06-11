@@ -76,7 +76,7 @@ function c (opts) {
      * 
      * @param  {Object} a `object with opt props key`
      * @param  {Object} b `tag`
-     * @return {[Object]}   `{props, type}`
+     * @return {[Object]} `{props, type}`
      *
      * @example
      * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
@@ -244,6 +244,7 @@ function c (opts) {
             to.call(from, target)
         }
     }
+
 
     // add helper references to window object
     window.p = p,
