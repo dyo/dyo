@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="vdom.min.js"></script>
+		<script src="vdom.js"></script>
 
 		<style>
 			text {
@@ -59,7 +59,7 @@
 					behavior: function(state, update, req, loop) {
 						this.constructor = function() {
 							// console.log(test);
-							// req('api1', {id: 1234});
+							req('api1', {id: 1234});
 							// loop.start();
 							// loop.stop();
 						}
