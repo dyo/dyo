@@ -1,72 +1,84 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<title>Playground</title>
-	<meta charset="utf-8">
-	<meta http-equiv="x-ua-compatible" content="ie=edge">
-	<meta name="description" content="">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-</head>
-<body>
-	<div id="root"></div>
-	<script src="vdom.min.js"></script>
-	<script>
-		var test = c({
-				component: 'component',
-				component: function(state, evt) {
-					return (
-						h('ul', {},
-							h('button', {onclick: evt.test}, 'Click Me'),
-							h('input', {onInput: evt.test, type: 'text'}),
-							h('input', {type: 'checkbox'}),
+	<head>
+		<title>Playground</title>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<script src="vdom.min.js"></script>
 
-							h('br', {}, ''),
-							h('br', {}, ''),
+		<style>
+			text {
+				font-size: 22px;
+				fill: white;
+			}
+		</style>
 
-							state.list.map(
-								(a) => {
-									return h('li', {onClick: evt.test}, a)
-								}
+		<script>	
+			var test = c({
+					component: 'component',
+					component: function(state, evt) {
+						return (
+							h('ul', {},
+								h('button', {onclick: evt.test}, 'Click Me'),
+								h('input', {onInput: b('value', state.data)}), //evt.test, type: 'text'}),
+								h('input[type=checkbox]', {}, ''),
+
+
+
+								h('svg', {width: 800, height: 100}, 
+									h('rect/svg', {width: 800, height: 100, x: 0, fill: '#008d46'}),
+									h('text/svg', {x:0, y:40}, 'svg text & rect element ' + state.list()[0])
+								),
+
+								h('math', {}, 
+									h('msqrt/math', {}, 
+										h('mn/math', {}, 'Math element')
+									)
+								),
+
+								[1,2].map(()=>{ return h('br') }),
+
+								state.list().map(
+									(a) => {
+										return h('li', {onClick: evt.test}, a)
+									}
+								)
 							)
 						)
-					)
-				},
-				routes: [
-					{id: 'api1', type: 'GET', url: '?users/{id}'}
-				],
-				state: {
-					data: 'true',
-					list: ['hello', 'hello world', 'other', 'last']
-				},
-				behavior: function(state, update, req, loop) {
-					this.constructor = function() {
-						// req('api1', {id: 1234});
-						// loop.start();
-						// loop.stop();
-					}
-					this.test = function(e) {
-						console.log('works');
-
-						arr = [];
-						state.data(new Date() + performance.now());
-
-						if (e.target.tagName == 'INPUT') {
-							state.data(e.target.value);
+					},
+					routes: [
+						{id: 'api1', type: 'GET', url: '?users/{id}'}
+					],
+					state: {
+						data: 'true',
+						list: ['hello', '&times;', 'other', 'last']
+					},
+					behavior: function(state, update, req, loop) {
+						this.constructor = function() {
+							console.log(test);
+							// req('api1', {id: 1234});
+							// loop.start();
+							// loop.stop();
 						}
+						this.test = function(e) {
+							arr = [];
 
-						for (var i = 0; i < 400; i++) {
-							arr.push(i+ ' ' + state.data())
+							for (var i = 0; i < 1500; i++) {
+								arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
+							}
+
+							state.list(arr);
+							update();
 						}
-
-						state.list(arr);
-						update()
 					}
-				}
-			});
+				});
 
-		test.mount(document.getElementById('root'));
-	</script>
-
-</body>
+			test.mount(document);
+		</script>
+	</head>
+	<body>
+	</body>
 </html>
