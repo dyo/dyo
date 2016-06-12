@@ -1,7 +1,17 @@
 /**
- * requestAnimationFrame Polyfill
+ * Virtual Dom Library
+ *
+ * @author Sultan Tarimo <https://github.com/sultantarimo>
  */
+
+/* -------------------------------------------------------------- */
+
+
 (function () {
+    /**
+     * requestAnimationFrame Polyfill
+     */
+    
     var raf = 'requestAnimationFrame',
         caf = 'cancelAnimationFrame',
         lastTime = 0,
@@ -47,11 +57,11 @@
     *
     * @example
     * c({
-    *     element:     function(state, evt) { h('div', {onClick: evt.method}, state.default) },  
+    *     view:     function(state, evt) { h('div', {onClick: evt.method}, state.default) },  
     *     state:       {
     *         default: 0
     *     }
-    *     behavior:    fn() => {
+    *     method:    fn() => {
     *         this.constructor = fn;
     *         this.method = fn;
     *     }
@@ -429,7 +439,7 @@
         */
         function tmpl (a) {
             return {
-                data: function data (b) {
+                data: function(b) {
                     for (var item in b) {
                         a = a.replace( 
                             new RegExp('{'+item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +'}', 'g'),
@@ -465,35 +475,6 @@
         }
     
         /**
-        * object iterate + update
-        * 
-        * @param  {Object}   obj       `object to change`
-        * @param  {Function} result    `what to change`
-        * @return {Object}             `changed object`
-        */
-        function iterate (obj, result) {
-            for (var key in obj) {
-    
-                if (result) {
-                    var r = result(key, obj);
-    
-                    if (r === false) {
-                        break;
-                    } else if (r) {
-                        obj[key] = r
-                    }
-                }
-    
-                // Recurse into children
-                if (obj[key] !== null && typeof obj[key] === 'object') {
-                    iterate(obj[key], result)
-                }
-            }
-    
-            return obj
-        }
-    
-        /**
         * forEach helper
         * 
         * @param  {Array|Object} a 
@@ -502,26 +483,25 @@
         */
         function each (a, b) {
             var i;
-    
+
             // Handle arrays
-            if (!!a.length && a.length[_c] === Array) {
+            if (a[_c] === Array) {
                 var l = a.length;
-    
-                for (; i < l; ++i) { 
-                    if ( b.call(a[i], a[i], i, a) === false ) {
-                        return a
-                    }
+                    i = 0;
+
+                for(; i < l; ++i) {
+                    if ( b.call(a[i], a[i], i, a) === false ) 
+                        return a; 
                 }
             }
             // Handle objects 
             else {
                 for (i in a) {
-                    if ( b.call(a[i], a[i], i, a) === false ) {
-                        return a
-                    }
+                    if ( b.call(a[i], a[i], i, a) === false ) 
+                        return a; 
                 }
             }
-    
+
             return a
         }
     
@@ -535,7 +515,7 @@
         * @param  {Element}  a `root element`
         * @param  {Function} b `hyperscript function`
         * @param  {Object}   c `state`
-        * @param  {Object}   d `behavior`
+        * @param  {Object}   d `methods`
         * @return {Oject}      `vdom object`
         */
         function vdom (a, b, c, d) {
@@ -555,7 +535,7 @@
                         var cb = props[name];
     
                         // not directly references, 
-                        // check if string value is a defined behavior
+                        // check if string value is a defined methods
                         if (cb[_c] !== Function) {
                             cb = !!d[cb] ? d[cb] : null
                         }
@@ -735,7 +715,7 @@
                 this.raw = b, 
                 // local copy of state reference
                 this.s = c, 
-                // local copy of behavior reference 
+                // local copy of methods reference 
                 this.b = d, 
                 // local copy of static hyperscript refence
                 this.h = b(c, d); 
@@ -773,17 +753,17 @@
         * @param  {Element} b `element to mount to`
         * @return {Object}    `componet object`
         */
-        function init (self, prototype, root, state, virtual, behavior) {
+        function init (self, prototype, root, state, view, methods) {
             // set prop states
-            iterate(state(), function (key, obj) {
-                return p(obj[key])
+            each(state, function(a, b, c) {
+                c[b] = p(a)
             });
     
-            // assign behavior
-            if (behavior) {
-                var Behavior = behavior.bind(
-                    behavior, 
-                    state(), 
+            // assign methods
+            if (methods) {
+                var methods = methods.call(
+                    self,
+                    state, 
                     function () { 
                         self.update() 
                     },
@@ -791,20 +771,16 @@
                         self.req(a, b, c) 
                     },
                     self.loop()
-                );
-    
-                behavior = new Behavior
+                )
             }
     
             // init and add to dom element
-            prototype[_p].virtual = vdom(root, virtual, state(), behavior);
+            prototype[_p].view = vdom(root, view, state, methods);
     
-            // process constructor behavior
-            if (behavior[_c]) {
-                behavior[_c]()
+            // process constructor method
+            if (methods[_c]) {
+                methods[_c]()
             }
-    
-            return self
         }
     
         function _Cmp () {}
@@ -816,7 +792,7 @@
             * @param  {ELement} a `element to mount to`
             * @return {Object}    `componet object`
             */
-            mount: function mount (a) {
+            mount: function (a) {
                 var self = this;
     
                 document.onreadystatechange = function () {
@@ -848,7 +824,7 @@
                         });
     
                         // initialize
-                        init(self, Cmp, a, self.state, self.virtual, self.behavior)
+                        init(self, Cmp, a, self.state(), self.view, self.methods)
                     }
                 }
             },
@@ -862,8 +838,8 @@
             * var cmp = c(opts).init();
             * cmp.update();
             */
-            update: function mount () {
-                this.virtual.update();
+            update: function () {
+                this.view.update();
             },
     
             /**
@@ -871,11 +847,11 @@
             * 
             * @return {Void}
             */
-            loop: function loop () {
+            loop: function () {
                 var self = this;
     
                 return {
-                    start: function stop (a) {
+                    start: function (a) {
                         window['_raf'] = {
                             id: null,
                             active: null
@@ -889,7 +865,7 @@
                             }
                         }, 60, window['_raf'])
                     },
-                    stop: function start () {
+                    stop: function () {
                         cancelAnimationFrame(window['_raf'].id);
                         window['_raf'].active = false
                     }
@@ -909,11 +885,11 @@
             * // returns {done, success, error, ...} | xhr object
             * req('api', {person: 'Sultan'}, fn(data) => {})
             */
-            req: function req (id, data, callback) {
+            req: function (id, data, callback) {
                 var settings, 
                     route;
     
-                if (!!!this.routes[id]) {
+                if (!this.routes || !!!this.routes[id]) {
                     throw 'unknown route:'+id
                 }
     
@@ -954,16 +930,16 @@
             if (opts.state) {
                 this.state = p(opts.state)
             }
-            if (opts.behavior) {
-                this.behavior = opts.behavior
+            if (opts.methods) {
+                this.methods = opts.methods
             }
-            if (opts.component) {
-                Cmp[_p].virtual = opts.component
+            if (opts.view) {
+                Cmp[_p].view = opts.view
             }
         }
     
         Cmp[_p] = Object.create(_Cmp[_p], {
-            virtual : {
+            view : {
                 value: null, 
                 enumerable: true, 
                 configurable: true, 

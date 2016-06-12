@@ -18,63 +18,53 @@
 
 		<script>	
 			var test = c({
-					// component: 'component',
-					component: function(state, evt) {
-						return (
-							h('ul', {},
-								h('button', {onclick: evt.test}, 'Click Me'),
-								h('input', {onInput: b('value', state.data)}), //evt.test, type: 'text'}),
-								h('input[type=checkbox]', {}, ''),
-
-
-
-								h('svg', {width: 800, height: 100}, 
-									h('rect/svg', {width: 800, height: 100, x: 0, fill: '#008d46'}),
-									h('text/svg', {x:0, y:40}, 'svg text & rect element ' + state.list()[0])
-								),
-
-								h('math', {}, 
-									h('msqrt/math', {}, 
-										h('mn/math', {}, 'Math element')
-									)
-								),
-
-								[1,2].map(()=>{ return h('br') }),
-
-								state.list().map(
-									(a) => {
-										return h('li', {onClick: evt.test}, a)
-									}
+					view: (state, evt) => (
+						h('ul', {},
+							h('button', {onclick: evt.test}, 'Click Me'),
+							h('input', {onInput: b('value', state.data)}), //evt.test, type: 'text'}),
+							h('input[type=checkbox]', {}, ''),
+							h('svg', {width: 800, height: 100}, 
+								h('rect/svg', {width: 800, height: 100, x: 0, fill: '#008d46'}),
+								h('text/svg', {x:0, y:40}, 'svg text & rect element ' + state.list()[0])
+							),
+							h('math', {}, 
+								h('msqrt/math', {}, 
+									h('mn/math', {}, 'Math element')
 								)
+							),
+							[1,2].map(()=>{ return h('br') }),
+							state.list().map(
+								(a) => {
+									return h('li', {onClick: evt.test}, a)
+								}
 							)
 						)
-					},
-					routes: [
-						{id: 'api1', type: 'GET', url: '?users/{id}'}
-					],
+					),
 					state: {
 						data: 'true',
-						list: ['hello', '&times;', 'other', 'last']
+						list: ['hello', '&times;', 'other', 'last'],
+						length: 10
 					},
-					behavior: function(state, update, req, loop) {
-						this.constructor = function() {
-							// console.log(test);
-							req('api1', {id: 1234});
-							// loop.start();
-							// loop.stop();
-						}
-						this.test = function(e) {
-							arr = [];
+					methods: function (state, update, req, loop) {
+						console.log(this); // {methods, state, view, loop, mount, req, update}
 
-							for (var i = 0; i < 1000; i++) {
-								arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
+						return {
+							constructor: function () {
+								console.log(this); // {constructor, test}
+							},
+							test: function(e) {
+								arr = [];
+
+								for (var i = 0; i < 1000; i++) {
+									arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
+								}
+
+								state.list(arr);
+								update();
 							}
-
-							state.list(arr);
-							// console.log(test);
-							update();
 						}
-					}
+					},
+					// routes: [{id: 'api1', type: 'GET', url: '?users/{id}'}],
 				});
 
 			test.mount(document);
