@@ -4,6 +4,7 @@
  * @author Sultan Tarimo <https://github.com/sultantarimo>
  */
 
+
 /* -------------------------------------------------------------- */
 
 
@@ -11,7 +12,6 @@
     /**
      * requestAnimationFrame Polyfill
      */
-    
     var raf = 'requestAnimationFrame',
         caf = 'cancelAnimationFrame',
         lastTime = 0,
@@ -49,37 +49,37 @@
 
 (function () {
     /**
-    * Surl - create instance
-    *
-    * @global
-    * @param  {Object} options `descriping component`
-    * @return {Object}         `instance of created component`
-    *
-    * @example
-    * surl()
-    *     .view(view)
-    *     .methods(methods)
-    *     .state(state)
-    *     .routes(routes)
-    *     .mount(document)
-    *     
-    * view (state, methods) => {
-    *     return hyperscript object
-    * }
-    *
-    * methods (state, update, request, loop) => {
-    *     return methods object
-    * }
-    *
-    * state {
-    *     data: 12
-    *     data2: 232
-    * }
-    *
-    * routes [
-    *     {id: 'api1',type:'GET', url: '/api/{secret}'}
-    * ]
-    */
+     * Surl - create instance
+     *
+     * @global
+     * @param  {Object} options `descriping component`
+     * @return {Object}         `instance of created component`
+     *
+     * @example
+     * surl()
+     *     .view(view)
+     *     .methods(methods)
+     *     .state(state)
+     *     .routes(routes)
+     *     .mount(document)
+     *     
+     * view (state, methods) => {
+     *     return hyperscript object
+     * }
+     *
+     * methods (state, update, request, loop) => {
+     *     return methods object
+     * }
+     *
+     * state {
+     *     data: 12
+     *     data2: 232
+     * }
+     *
+     * routes [
+     *     {id: 'api1',type:'GET', url: '/api/{secret}'}
+     * ]
+     */
     function surl () {
         'use strict';
     
@@ -88,7 +88,8 @@
             _c = 'constructor',
             _namespace = {
                 math: 'http://www.w3.org/1998/Math/MathML',
-                svg: 'http://www.w3.org/2000/svg'
+                svg: 'http://www.w3.org/2000/svg',
+                xlink: 'http://www.w3.org/1999/xlink'
             }
     
     
@@ -96,16 +97,17 @@
 
     
         /**
-        * hyperscript tagger
-        * 
-        * @param  {Object} a `object with opt props key`
-        * @param  {Object} b `tag`
-        * @return {[Object]} `{props, type}`
-        *
-        * @example
-        * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
-        * tag('inpu#id[type=checkbox]')
-        */
+         * hyperscript tagger
+         *
+         * @private
+         * @param  {Object} a `object with opt props key`
+         * @param  {Object} b `tag`
+         * @return {[Object]} `{props, type}`
+         *
+         * @example
+         * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
+         * tag('inpu#id[type=checkbox]')
+         */
         function tag (obj) {
             var classes = [], 
                 match,
@@ -163,8 +165,9 @@
         }
 
         /**
-         * convert anything not an arrays, string or objects to a string
-         * 
+         * convert anything not an array, string or objects to a string
+         *
+         * @private
          * @param  {Any} a
          * @return {String|Array|Object}
          */
@@ -185,17 +188,17 @@
         }
     
         /**
-        * create virtual element : h()
-        *
-        * @global
-        * @param  {String} type  `Element, i.e: div`
-        * @param  {Object} props `optional properties`
-        * @return {Object}       '{type, props, children}'
-        *
-        * @example
-        * h('div', {class: 'close'}, 'Text Content')
-        * h('div', null, h('h1', 'Text'));
-        */
+         * create virtual element : h()
+         *
+         * @private
+         * @param  {String} type  `Element, i.e: div`
+         * @param  {Object} props `optional properties`
+         * @return {Object}       '{type, props, children}'
+         *
+         * @example
+         * h('div', {class: 'close'}, 'Text Content')
+         * h('div', null, h('h1', 'Text'));
+         */
         function hyperscript (type, props) {
             var len = arguments.length,
                 key = 2,
@@ -252,18 +255,18 @@
         }
     
         /**
-        * create property/dynamic state p()
-        *
-        * the backbone of the flow of data
-        * 
-        * @param  {Any} a `set value`
-        * @return {Any}   `value set`
-        *
-        * @example
-        * var a = p(new Date());
-        * a() // date object
-        * a.toJSON() // string object
-        */
+         * create property/dynamic state p()
+         * the backbone of the flow of data
+         *
+         * @private
+         * @param  {Any} a `set value`
+         * @return {Any}   `value set`
+         *
+         * @example
+         * var a = p(new Date());
+         * a() // date object
+         * a.toJSON() // string object
+         */
         function prop (a) {
             return function (b) {
                 function prop() {
@@ -278,16 +281,17 @@
         }
     
         /**
-        * bind to element
-        * 
-        * @param  {String}  val  `value to watch for in element`
-        * @param  {p}       to   `p() prop to update`
-        * @param  {Element} from `element bound to, defaults to element attached to`
-        * @return {Void}
-        *
-        * @example
-        * h('input[type=checkbox]', {onChange: b('checked', state.data)})
-        */
+         * bind to element
+         *
+         * @private
+         * @param  {String}  val  `value to watch for in element`
+         * @param  {p}       to   `p() prop to update`
+         * @param  {Element} from `element bound to, defaults to element attached to`
+         * @return {Void}
+         *
+         * @example
+         * h('input[type=checkbox]', {onChange: b('checked', state.data)})
+         */
         function bind (val, to, from) {
             return function (e) {
                 // default to window event if not passed
@@ -309,7 +313,12 @@
         }
     
     
-        // add helper references to window object
+        /**
+         * add helper references to window object
+         * for prop, hyperscript and bind
+         * 
+         * @type {Function}
+         */
         window.p = prop,
         window.h = hyperscript,
         window.b = bind;
@@ -319,16 +328,16 @@
     
     
         /**
-        * serialize + encode object
-        *
-        * @private
-        * @param  {Object}  a `object to serialize`
-        * @return {String}   serialized object
-        *
-        * @example
-        * // returns 'url=http%3A%2F%2F.com'
-        * param({url:'http://.com'})
-        */
+         * serialize + encode object
+         *
+         * @private
+         * @param  {Object}  a `object to serialize`
+         * @return {String}   serialized object
+         *
+         * @example
+         * // returns 'url=http%3A%2F%2F.com'
+         * param({url:'http://.com'})
+         */
         function param (a) {
             var c = [];
     
@@ -343,17 +352,17 @@
         }
     
         /**
-        * ajax helper
-        *
-        * @private
-        * @param  {Object}   settings `ajax settings object`
-        * @param  {Function} callback `function to run onload`
-        * @return {Void}
-        *
-        * @example
-        * // returns xhr Object
-        * ajax({url, method, data}, fn(res, err) => {})
-        */
+         * ajax helper
+         *
+         * @private
+         * @param  {Object}   settings `ajax settings object`
+         * @param  {Function} callback `function to run onload`
+         * @return {Void}
+         *
+         * @example
+         * // returns xhr Object
+         * ajax({url, method, data}, fn(res, err) => {})
+         */
         function ajax (settings, callback) {
             var xhr = new XMLHttpRequest(),
                 location = window.location,
@@ -367,6 +376,7 @@
                 a.protocol === location.protocol &&
                 location.protocol !== 'file:'
             );
+                a = null;
     
             xhr.open(settings.method, settings.url, true);
     
@@ -433,16 +443,16 @@
         }
     
         /**
-        * merge 2 objects
-        * 
-        * @param  {Object} a `empty object to add merged properties to`
-        * @param  {Object} b `first object`
-        * @param  {Object} c `second object`
-        * @return {Object}   `new merged object`
-        *
-        * @example
-        * // returns {a: 2, b: 2, c: 5}
-        * merge({}, {a: 1, b: 2}, {a: 2, c: 5})
+         * merge 2 objects
+         * 
+         * @param  {Object} a `empty object to add merged properties to`
+         * @param  {Object} b `first object`
+         * @param  {Object} c `second object`
+         * @return {Object}   `new merged object`
+         *
+         * @example
+         * // returns {a: 2, b: 2, c: 5}
+         * merge({}, {a: 1, b: 2}, {a: 2, c: 5})
         */
         function merge (a, b, c) {
             for (var name in b) { a[name] = b[name] }
@@ -451,16 +461,16 @@
         }
     
         /**
-        * template parser
-        * 
-        * @public
-        * @param  {String} a `string to parse`
-        * @return {Object}   `{data: (data) => {}}`
-        *
-        * * @example
-        * // returns 'Hello World'
-        * tmpl('Hello, {person}').data({person: 'World'})
-        */
+         * template parser
+         * 
+         * @private
+         * @param  {String} a `string to parse`
+         * @return {Object}   `{data: (data) => {}}`
+         *
+         * * @example
+         * // returns 'Hello World'
+         * tmpl('Hello, {person}').data({person: 'World'})
+         */
         function tmpl (a) {
             return {
                 data: function(b) {
@@ -477,12 +487,12 @@
         }
     
         /**
-        * escape string
-        * 
-        * @public
-        * @param  {String} a `string to escape`
-        * @return {String}   `escaped string`
-        */
+         * escape string
+         * 
+         * @private
+         * @param  {String} a `string to escape`
+         * @return {String}   `escaped string`
+         */
         function esc (a) {
             return (a+'').replace(/[&<>"'\/]/g, function(i) {
                 var obj = {
@@ -499,12 +509,13 @@
         }
     
         /**
-        * forEach helper
-        * 
-        * @param  {Array|Object} a 
-        * @param  {Function}     b
-        * @return {Array|Object}  
-        */
+         * forEach helper
+         *
+         * @private
+         * @param  {Array|Object} a 
+         * @param  {Function}     b
+         * @return {Array|Object}  
+         */
         function each (a, b) {
             var i;
 
@@ -534,10 +545,10 @@
     
     
         /**
-         * component constructor
-         * 
-         * @param  {Object} opts `component options`
-         * @return {Void}
+         * Surl constructor
+         *
+         * @public
+         * @return {Object}
          */
         function Surl () {
             var self = this;
@@ -572,14 +583,13 @@
 
         Surl[_p] = {
             /**
-            * Virtual Dom
-            * 
-            * @param  {Element}  a `root element`
-            * @param  {Function} b `hyperscript function`
-            * @param  {Object}   c `state`
-            * @param  {Object}   d `methods`
-            * @return {Oject}      `vdom object`
-            */
+             * Virtual Dom
+             *
+             * @public
+             * @param  {Element}  a `root element`
+             * @param  {Function} b `hyperscript function`
+             * @return {Oject}      `vdom object`
+             */
             vdom: function (dom, source) {
                 var self = this;
 
@@ -620,7 +630,8 @@
                     // remove / add attribute reference
                     var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
             
-                    // if the target has a attr as a property, change that aswell
+                    // if the target has an attr as a property, 
+                    // change that aswell
                     if (
                         target[name] !== void 0 && 
                         target.namespaceURI !== _namespace['svg'] && 
@@ -628,9 +639,18 @@
                     ) {
                         target[name] = value
                     }
+
+                    // set xlink:href attr
+                    if (name === 'xlink:href') {
+                        return target.setAttributeNS(_namespace['xlink'], 'href', value)
+                    }
             
-                    // don't set namespaced attrs
-                    if (value !== _namespace['svg'] && value !== _namespace['math']) {
+                    // don't set namespace attrs
+                    // keep the presented dom clean
+                    if (
+                        value !== _namespace['svg'] && 
+                        value !== _namespace['math']
+                    ) {
                         return op === -1 ? target[attr](name) : target[attr](name, value)
                     }
                 }
@@ -790,18 +810,18 @@
             },
 
             /**
-            * req
-            *
-            * @public
-            * @param  {String}   id       `id of route`
-            * @param  {Object}   data     `data to pass to request`
-            * @param  {Function} callback `function to run on success`
-            * @return {Object}            `xhr object / xhr promise`
-            *
-            * @example
-            * // returns {done, success, error, ...} | xhr object
-            * req('api', {person: 'Sultan'}, fn(data) => {})
-            */
+             * req
+             *
+             * @public
+             * @param  {String}   id       `id of route`
+             * @param  {Object}   data     `data to pass to request`
+             * @param  {Function} callback `function to run on success`
+             * @return {Object}            `xhr object / xhr promise`
+             *
+             * @example
+             * // returns {done, success, error, ...} | xhr object
+             * req('api', {person: 'Sultan'}, fn(data) => {})
+             */
             req: function (id, data, callback) {
                 var settings, 
                     route;
@@ -826,11 +846,12 @@
             },
 
             /**
-            * requestAnimation loop
-            * @param  {Function} fn  `loop`
-            * @param  {fps}      fps `frames per second`
-            * @return {Object}       `raf object`
-            */
+             * requestAnimation loop
+             *
+             * @param  {Function} fn  `loop`
+             * @param  {fps}      fps `frames per second`
+             * @return {Object}       `raf object`
+             */
             fps: function (fn, fps, raf) {
                 var then = new Date().getTime();
             
@@ -853,10 +874,11 @@
             },
 
             /**
-            * redraw loop, redraws updates, throttled at 60fps
-            * 
-            * @return {Void}
-            */
+             * redraw loop, redraws updates, throttled at 60fps
+             *
+             * @public
+             * @return {Void}
+             */
             loop: function () {
                 var self = this;
             
@@ -883,24 +905,26 @@
             },
 
             /**
-            * update component
-            * 
-            * @return {Void}
-            * 
-            * @example
-            * var cmp = c(opts).init();
-            * cmp.update();
-            */
+             * update component
+             *
+             * @public
+             * @return {Void}
+             * 
+             * @example
+             * var cmp = c(opts).init();
+             * cmp.update();
+             */
             update: function () {
                 this.view.update();
             },
 
             /**
-            * mount component to dom
-            * 
-            * @param  {ELement} a `element to mount to`
-            * @return {Object}    `componet object`
-            */
+             * mount component to dom
+             *
+             * @public
+             * @param  {ELement} a `element to mount to`
+             * @return {Object}    `componet object`
+             */
             mount: function (a) {
                 var self = this;
 
