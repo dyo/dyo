@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="vdom.js"></script>
+		<script src="vdom.min.js"></script>
 
 		<style>
 			text {
@@ -16,44 +16,44 @@
 			}
 		</style>
 
-		<script>	
+		<script>
 			var test = c({
-					view: (state, evt) => (
-						h('ul', {},
-							h('button', {onclick: evt.test}, 'Click Me'),
+					view: (state, methods) => 
+					h('ul', {},
+							h('button', {onclick: methods.test}, 'Click Me'),
 							h('input', {onInput: b('value', state.data)}), //evt.test, type: 'text'}),
 							h('input[type=checkbox]', {}, ''),
+
 							h('svg', {width: 800, height: 100}, 
 								h('rect/svg', {width: 800, height: 100, x: 0, fill: '#008d46'}),
 								h('text/svg', {x:0, y:40}, 'svg text & rect element ' + state.list()[0])
 							),
+
 							h('math', {}, 
 								h('msqrt/math', {}, 
 									h('mn/math', {}, 'Math element')
 								)
 							),
-							[1,2].map(()=>{ return h('br') }),
-							state.list().map(
-								(a) => {
-									return h('li', {onClick: evt.test}, a)
-								}
-							)
-						)
+
+							[1,2].map(() => h('br')),
+							h('h1', null, state.indexClicked() + ' clicked, 1000 items'),
+
+							state.list().map((a, i) => h('li', {onClick: methods.test.bind(null, i) }, a))
 					),
 					state: {
 						data: 'true',
 						list: ['hello', '&times;', 'other', 'last'],
-						length: 10
+						indexClicked: 0
 					},
-					methods: function (state, update, req, loop) {
-						console.log(this); // {methods, state, view, loop, mount, req, update}
-
+					methods: function (state,update,loop) {
 						return {
 							constructor: function () {
-								console.log(this); // {constructor, test}
 							},
-							test: function(e) {
+							test: function(index) {
 								arr = [];
+
+								var c = state.indexClicked()
+								state.indexClicked(index);
 
 								for (var i = 0; i < 1000; i++) {
 									arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
@@ -63,8 +63,8 @@
 								update();
 							}
 						}
-					},
-					// routes: [{id: 'api1', type: 'GET', url: '?users/{id}'}],
+					}
+					// , routes: [{id: 'api1', type: 'GET', url: '?users/{id}'}],
 				});
 
 			test.mount(document);

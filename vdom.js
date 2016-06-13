@@ -146,7 +146,6 @@
                 key = 2,
                 children = [],
                 child,
-                _c = 'constructor';
     
             // construct children
             for (var i = key; i < len; i++) {
@@ -154,10 +153,10 @@
     
                 if (child && child[_c] === Array) {
                     for (var k = 0; k < child.length; k++) {
-                        children[ (i-key) + k ] = child[k]
+                        children[(i-key) + k] = s(child[k])
                     }
                 } else {
-                    children[i - key] = child
+                    children[i - key] = s(child)
                 }
             }
     
@@ -165,25 +164,25 @@
             if (props === null || props === void 0 || props[_c] !== Object) {
                 props = {}
             }
+
+            // construct hyperscript
+            var hObj = {
+                type: type,
+                props: props,
+                children: children
+            }
     
             // set svg and math namespace
             if (type === 'svg' || type === 'math') {
-                props.xmlns = _ns[type];
+                hObj.props.xmlns = _ns[type];
             }
             // svg and math short hand declaration syntax
             // 'rect/svg' / 'msqrt/math'
             else if (type.indexOf('/') !== -1) {
                 var ns;
-                    ns = type.substr(type.indexOf("/") + 1),
-                    type = type.replace('/'+ns, ''),
-                    props.xmlns = !!_ns[ns] ? _ns[ns] : void 0
-            }
-    
-            // construct hyperscript
-            var hyperscript = {
-                type: type,
-                props: props,
-                children: children
+                    ns          = type.substr(type.indexOf("/") + 1),
+                    type        = type.replace('/'+ns, ''),
+                    hObj.props.xmlns = !!_ns[ns] ? _ns[ns] : void 0
             }
     
             // check if the type is a special calse i.e [type] | div.class | #id
@@ -194,10 +193,23 @@
                 type.indexOf('#') !== -1 || 
                 type.indexOf('.') !== -1
             ) {
-                hyperscript = tag(type, hyperscript)
+                hObj = tag(type, hObj)
             }
     
-            return hyperscript
+            return hObj
+        }
+        /**
+         * convert anything not an arrays, string or objects to string
+         * 
+         * @param  {Any} a
+         * @return {String|Array|Object}
+         */
+        function s(a) {
+            a = a !== void 0 && a !== null && (a[_c] === Object || a[_c] === String || a[_c] === Array) ? 
+                a : 
+                a + '';
+            a = a === 'null' || a === 'undefined' ? '' : a;
+            return a;
         }
     
         /**
@@ -603,24 +615,13 @@
                 }
             }
     
-    
             // create element
             function createElement (node) {
-                // convert undefined to empty string
-                if (node === void 0 || node === null) {
-                    node = ''
-                }
-                // convert numbers to strings
-                else if (node[_c] === Boolean || node[_c] === Number) {
-                    node = node + ''
-                }
-    
-                // handle none node Nodes : textNodes
+                // handle text nodes
                 if (node[_c] === String) {
-                    return document.createTextNode(node+'')
+                    return document.createTextNode(node)
                 }
-    
-                
+
                 var el,
                     ns = !!node.props.xmlns ? node.props.xmlns : null;
     
@@ -763,14 +764,15 @@
             if (methods) {
                 var methods = methods.call(
                     self,
+
                     state, 
                     function () { 
                         self.update() 
                     },
+                    self.loop(),
                     function (a, b, c) { 
                         self.req(a, b, c) 
-                    },
-                    self.loop()
+                    }
                 )
             }
     
