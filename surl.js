@@ -86,14 +86,14 @@
         // common references
         var _p = 'prototype',
             _c = 'constructor',
-            _ns = {
+            _namespace = {
                 math: 'http://www.w3.org/1998/Math/MathML',
                 svg: 'http://www.w3.org/2000/svg'
             }
     
     
         /* -------------------------------------------------------------- */
-    
+
     
         /**
         * hyperscript tagger
@@ -106,53 +106,82 @@
         * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
         * tag('inpu#id[type=checkbox]')
         */
-        function tag (a, b) {
+        function tag (obj) {
             var classes = [], 
                 match,
-                parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g;
-    
-            if (!b.props) {
-                b.props = {}
-            }
-    
-            while ((match = parser.exec(a))) {
-                if (match[1] === "" && match[2]) {
-                    b.type = match[2]
-                } else if (match[1] === "#") {
-                    b.props.id = match[2]
-                } else if (match[1] === ".") {
+                parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
+
+                // copy obj's props to abstract props and type
+                // incase obj.props is empty create new obj
+                // otherwise just add to already available object
+                // we will add this back to obj.props later
+                props = !obj.props ? {} : obj.props,
+
+                // since we use type in a while loop
+                // we will be updating obj.type directly
+                type = obj.type || 'div';   
+
+
+            // execute the regex and loop through the results
+            while ((match = parser.exec(type))) {
+                // no custom prop match
+                if (match[1] === '' && match[2]) {
+                    obj.type = match[2]
+                }
+                // matches id's - #id
+                else if (match[1] === '#') {
+                    props.id = match[2]
+                } 
+                // matches classes - div.classname
+                else if (match[1] === '.') {
                     classes.push(match[2])
-                } else if (match[3][0] === "[") {
-                    var val = match[6]
-                    if (val) {
-                        val = val.replace(/\\(["'])/g, "$1")
+                } 
+                // matches - [attr=value]
+                else if (match[3][0] === '[') {
+                    var attr = match[6];
+
+                    // make sure we have a non null|undefined|false value
+                    if (attr) {
+                        // remove the '[]'
+                        attr = attr.replace(/\\(["'])/g, '$1')
                     }
-                    b.props[match[4]] = val || true
+                    // if attr value is an empty string assign true
+                    props[match[4]] = attr || true
                 }
             }
-    
-            if (!b.type) {
-                b.type = 'div'
-            }
+
+            // add classes to obj.props if we have any
             if (classes.length > 0) {
-                b.props.class = classes.join(' ')
+                props.class = classes.join(' ')
             }
-    
-            return b
+
+            // as promised, update props
+            obj.props = props;
+            
+            // done
+            return obj
         }
 
         /**
-         * convert anything not an arrays, string or objects to string
+         * convert anything not an arrays, string or objects to a string
          * 
          * @param  {Any} a
          * @return {String|Array|Object}
          */
-        function set (a) {
+        function set (a, obj) {
+            // add obj.prop to children if they are none TextNodes
+            if (a && a[_c] === Object && obj.props.xmlns) {
+                a.props.xmlns = obj.props.xmlns
+            }
+
             a = a !== void 0 && a !== null && (a[_c] === Object || a[_c] === String || a[_c] === Array) ? 
                 a : 
                 a + '';
+            // convert the null, and undefined strings to empty strings
+            // we don't convert false since that could 
+            // be a valid value returned to the client
             a = a === 'null' || a === 'undefined' ? '' : a;
-            return a;
+            return a
         }
     
         /**
@@ -170,56 +199,53 @@
         function hyperscript (type, props) {
             var len = arguments.length,
                 key = 2,
-                children = [],
-                child;
-    
-            // construct children
-            for (var i = key; i < len; i++) {
-                child = arguments[i];
-    
-                if (child && child[_c] === Array) {
-                    for (var k = 0; k < child.length; k++) {
-                        children[(i-key) + k] = set(child[k])
-                    }
-                } else {
-                    children[i - key] = set(child)
+                child,
+                obj = {type: type, props: props, children: []};
+
+            // insure props is always an object
+            if (obj.props === null || obj.props === void 0 || obj.props[_c] !== Object) {
+                obj.props = {}
+            }
+
+            // check if the type is a special case i.e [type] | div.class | #id
+            // and alter the hyperscript
+            if (
+                obj.type.indexOf('[') !== -1 || 
+                obj.type.indexOf('#') !== -1 || 
+                obj.type.indexOf('.') !== -1
+            ) {
+                obj = tag(obj)
+            }
+
+            // auto set namespace for svg and math elements
+            // we will then check when setting it's children
+            // if the parent has a namespace we will set that
+            // to the children as well, if you set the
+            // xmlns prop we default to that instead of the 
+            // svg and math presets
+            if (obj.type === 'svg' || obj.type === 'math') {
+                // only add the namespace if it's not already set
+                if (!obj.props.xmlns) {
+                    obj.props.xmlns = _namespace[obj.type]
                 }
             }
     
-            // insure props is always an object
-            if (props === null || props === void 0 || props[_c] !== Object) {
-                props = {}
-            }
-    
-            // set svg and math namespace
-            if (type === 'svg' || type === 'math') {
-                props.xmlns = _ns[type];
-            }
-            // svg and math short hand declaration syntax
-            // 'rect/svg' / 'msqrt/math'
-            else if (type.indexOf('/') !== -1) {
-                var ns;
-                    ns          = type.substr(type.indexOf("/") + 1),
-                    type        = type.replace('/'+ns, ''),
-                    props.xmlns = !!_ns[ns] ? _ns[ns] : void 0
-            }
-
-            // construct hyperscript
-            var obj = {
-                type: type,
-                props: props,
-                children: children
-            }
-    
-            // check if the type is a special calse i.e [type] | div.class | #id
-            // and alter hyperscript
-            if ( 
-                !props.id && 
-                type.indexOf('[') !== -1 || 
-                type.indexOf('#') !== -1 || 
-                type.indexOf('.') !== -1
-            ) {
-                obj = tag(type, obj)
+            // construct children
+            for (var i = key; i < len; i++) {
+                // reference to current layer
+                child = arguments[i];
+        
+                // if the child is an array go deeper
+                // and set the 'arrays children' as children
+                if (child && child[_c] === Array) {
+                    for (var k = 0; k < child.length; k++) {
+                        obj.children[(i-key) + k] = set(child[k], obj)
+                    }
+                }
+                // deep enough, add this child to children
+                else {
+                    obj.children[i - key] = set(child, obj)
+                }
             }
     
             return obj
@@ -270,11 +296,11 @@
                 // current target
                 var current = e.current || this,
                     from = from || this,
-                // target has this value ?
+                    // target has this value ?
                     target = (val in current) ?
                     // true get prop value
                         current[val] :
-                    // get attribute instead
+                        // get attribute instead
                         current.getAttribute(val);
     
                 // update prop
@@ -285,7 +311,7 @@
     
         // add helper references to window object
         window.p = prop,
-        window.h = hyperscript;
+        window.h = hyperscript,
         window.b = bind;
     
     
@@ -597,14 +623,14 @@
                     // if the target has a attr as a property, change that aswell
                     if (
                         target[name] !== void 0 && 
-                        target.namespaceURI !== _ns['svg'] && 
-                        target.namespaceURI !== _ns['math']
+                        target.namespaceURI !== _namespace['svg'] && 
+                        target.namespaceURI !== _namespace['math']
                     ) {
                         target[name] = value
                     }
             
                     // don't set namespaced attrs
-                    if (value !== _ns['svg'] && value !== _ns['math']) {
+                    if (value !== _namespace['svg'] && value !== _namespace['math']) {
                         return op === -1 ? target[attr](name) : target[attr](name, value)
                     }
                 }
@@ -658,7 +684,7 @@
                     } else {
                         el = document.createElement(node.type)
                     }
-            
+                
                     // diff and update/add/remove props
                     setElementProps(el, node.props);
                     // add events if any
@@ -727,10 +753,10 @@
                 }
             
                 // loop through parents/root elements and update them
-                function refresh (a, b, c) {
+                function refresh (dom, newNode, oldNode) {
                     // mount
-                    each(a, function(a) {
-                        update(a, b, c)
+                    each(dom, function(dom) { 
+                        update(dom, newNode, oldNode)
                     })
                 }
             

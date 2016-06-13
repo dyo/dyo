@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="surl.min.js"></script>
+		<script src="surl.js"></script>
 
 		<style>
 			text {
@@ -18,19 +18,19 @@
 
 		<script>
 			var view = function (state, methods) {
-				return h('ul', {},
+				return h('ul', null,
 					h('button', {onclick: methods.test}, 'Click Me'),
 					h('input', {onInput: b('value', state.data)}), //evt.test, type: 'text'}),
 					h('input[type=checkbox]', {}, ''),
 
 					h('svg', {width: 800, height: 100}, 
-						h('rect/svg', {width: 800, height: 100, x: 0, fill: '#008d46'}),
-						h('text/svg', {x:0, y:40}, 'svg text & rect element ' + state.list()[0])
+						h('rect', {width: 800, height: 100, x: 0, fill: '#008d46'}),
+						h('text', {x:0, y:40}, 'svg text & rect element ' + state.list()[0])
 					),
 
-					h('math', {}, 
-						h('msqrt/math', {}, 
-							h('mn/math', {}, 'Math element')
+					h('math', null,
+						h('msqrt', null, 
+							h('mn', null, 'Math element')
 						)
 					),
 
@@ -58,15 +58,12 @@
 						var c = state.indexClicked();
 						state.indexClicked(index);
 
-						for (var i = 0; i < 1000; i++) {
+						for (var i = 0; i < 10; i++) {
 							arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
 						}
 
 						state.list(arr);
-
-						t1 = performance.now()
 						update()
-						t2 = performance.now()
 					}
 				}
 			}
