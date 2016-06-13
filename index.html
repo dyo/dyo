@@ -17,57 +17,74 @@
 		</style>
 
 		<script>
-			var test = c({
-					view: (state, methods) => 
-					h('ul', {},
-							h('button', {onclick: methods.test}, 'Click Me'),
-							h('input', {onInput: b('value', state.data)}), //evt.test, type: 'text'}),
-							h('input[type=checkbox]', {}, ''),
+			var view = function (state, methods) {
+				return h('ul', {},
+					h('button', {onclick: methods.test}, 'Click Me'),
+					h('input', {onInput: b('value', state.data)}), //evt.test, type: 'text'}),
+					h('input[type=checkbox]', {}, ''),
 
-							h('svg', {width: 800, height: 100}, 
-								h('rect/svg', {width: 800, height: 100, x: 0, fill: '#008d46'}),
-								h('text/svg', {x:0, y:40}, 'svg text & rect element ' + state.list()[0])
-							),
-
-							h('math', {}, 
-								h('msqrt/math', {}, 
-									h('mn/math', {}, 'Math element')
-								)
-							),
-
-							[1,2].map(() => h('br')),
-							h('h1', null, state.indexClicked() + ' clicked, 1000 items'),
-
-							state.list().map((a, i) => h('li', {onClick: methods.test.bind(null, i) }, a))
+					h('svg', {width: 800, height: 100}, 
+						h('rect/svg', {width: 800, height: 100, x: 0, fill: '#008d46'}),
+						h('text/svg', {x:0, y:40}, 'svg text & rect element ' + state.list()[0])
 					),
-					state: {
-						data: 'true',
-						list: ['hello', '&times;', 'other', 'last'],
-						indexClicked: 0
+
+					h('math', {}, 
+						h('msqrt/math', {}, 
+							h('mn/math', {}, 'Math element')
+						)
+					),
+
+					[1,2].map(() => h('br')),
+					h('h1', null, state.indexClicked() + ' clicked, 1000 items'),
+
+					state.list().map((a, i) => h('li', {onClick: methods.test.bind(null, i) }, a))
+				)
+			}
+
+			var state = {
+				data: 'true',
+				list: ['hello', '&times;', 'other', 'last'],
+				indexClicked: 0
+			}
+
+			var methods = function (state, update, request, loop) {
+				return {
+					constructor: function () {
+						// request('api1', {id: 1234})
 					},
-					methods: function (state,update,loop) {
-						return {
-							constructor: function () {
-							},
-							test: function(index) {
-								arr = [];
+					test: function(index) {
+						arr = [];
 
-								var c = state.indexClicked()
-								state.indexClicked(index);
+						var c = state.indexClicked();
+						state.indexClicked(index);
 
-								for (var i = 0; i < 1000; i++) {
-									arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
-								}
-
-								state.list(arr);
-								update();
-							}
+						for (var i = 0; i < 1000; i++) {
+							arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
 						}
-					}
-					// , routes: [{id: 'api1', type: 'GET', url: '?users/{id}'}],
-				});
 
-			test.mount(document);
+						state.list(arr);
+
+						t1 = performance.now()
+						update()
+						t2 = performance.now()
+					}
+				}
+			}
+
+			var routes = {
+				api1: {type: 'GET', url: '?users/{id}'}
+			}
+
+			var test = surl(true)
+						.routes(routes)
+						.view(view)
+						.state(state)
+						.methods(methods)
+						.mount(document)
+
+				console.log( test.state );
+
+			console.log(test);
 		</script>
 	</head>
 	<body>
