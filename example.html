@@ -7,21 +7,13 @@
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="surl.js"></script>
-
-		<style>
-			text {
-				font-size: 22px;
-				fill: white;
-			}
-		</style>
-
+		<script src="surl.min.js"></script>
 		<script>
 			var view = function (state, methods) {
 				return (
 					h('ul', {style: 'font-family:sans-serif;'},
 						h('button', {onClick: methods.test}, 'Click Me'),
-						h('input', {onInput: b('value', state.data)}), //evt.test, type: 'text'}),
+						h('input', {onInput: bind('value', state.data)}), //evt.test, type: 'text'}),
 						h('input[type=checkbox]', {checked:true}, ''),
 
 						h('svg', {width: 800, height: 100}, 
@@ -44,9 +36,13 @@
 				)
 			}
 
+			var routes = {
+				api1: {type: 'GET', url: '?users/{id}'}
+			}
+
 			var state = {
 				data: 'true',
-				list: ['hello', '&times;', 'other', 'last'],
+				list: ['hello', 'times', 'other', 'last'],
 				indexClicked: 0
 			}
 
@@ -61,30 +57,17 @@
 						var c = state.indexClicked();
 						state.indexClicked(index);
 
-						for (var i = 0; i < 1000; i++) {
+						for (var i = 0; i < 100; i++) {
 							arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
 						}
-
+						
 						state.list(arr);
 						update()
 					}
 				}
 			}
 
-			var routes = {
-				api1: {type: 'GET', url: '?users/{id}'}
-			}
-
-			var test = surl(true)
-						.routes(routes)
-						.view(view)
-						.state(state)
-						.methods(methods)
-						.mount(document)
-
-				console.log( test.state );
-
-			console.log(test);
+			var test = surl().routes(routes).state(state).methods(methods).view(view).mount(document)
 		</script>
 	</head>
 	<body>

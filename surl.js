@@ -320,8 +320,10 @@
          * @type {Function}
          */
         window.p = prop,
-        window.h = hyperscript,
-        window.b = bind;
+        window.prop = prop,
+        window.b = bind,
+        window.bind = bind,
+        window.h = hyperscript;
     
     
         /* -------------------------------------------------------------- */
@@ -417,8 +419,7 @@
         
                     callback(res[0], res[1])
                 }
-            };
-    
+            }
     
             if (CORS) {
                 xhr.withCredentials = true
@@ -539,10 +540,6 @@
 
             return a
         }
-    
-    
-        /* -------------------------------------------------------------- */
-    
     
         /**
          * Surl constructor
@@ -783,28 +780,28 @@
                 // vdom public interface
                 function Vdom () {
                     // root reference
-                    this.dom = dom,
+                    this.dom = dom;
                     // local copy of dynamic hyperscript reference
-                    this.source = source, 
+                    this.source = source;
                     // local copy of static hyperscript refence
-                    this.hyperscript = source(self.state, self.methods); 
+                    this.hyperscript = this.source(self.state, self.methods);
                     // mount
                     refresh(this.dom, this.hyperscript);
                     // update
                     this.update()
                 }
-                        // refresh/update dom
-                        Vdom[_p].update = function () {
-                            // get latest change
-                            var newNode = this.source(self.state, self.methods),
-                            // get old copy
-                                oldNode = this.hyperscript;
-                    
-                            refresh(this.dom, newNode, oldNode);
-                    
-                            // update old node
-                            this.hyperscript = newNode
-                        }
+                // refresh/update dom
+                Vdom[_p].update = function () {
+                    // get latest change
+                    var newNode = this.source(self.state, self.methods),
+                        // get old copy
+                        oldNode = this.hyperscript;
+
+                    refresh(this.dom, newNode, oldNode);
+            
+                    // update old node
+                    this.hyperscript = newNode
+                }
             
                 return new Vdom
             },
