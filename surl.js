@@ -1058,7 +1058,7 @@
                         // check if is dom node
                         if (a === document) {
                             a = document.body
-                        } else if (a[_c] === String) {
+                        } else if (a && a[_c] === String) {
                             a = document.querySelectorAll(a);
             
                             if (a.length === 0) {
