@@ -362,7 +362,7 @@
             } else if (this[_c] === String) {
                 className = this
             } else if (!className) {
-                className = 'active';
+                className = 'animation-active';
             }
 
             // we need an end state class and element to run
@@ -370,54 +370,79 @@
                 return
             }
 
+            // promote element to individual composite layer
+            element.style.willChange = 'transform';
             // get first state
             first = element.getBoundingClientRect();
             // assign last state
             element.classList.toggle(className);
             // get last state
             last = element.getBoundingClientRect();
-
             // get invert values
             invert.x = first.left - last.left;
             invert.y = first.top - last.top;
             invert.sx = first.width / last.width;
             invert.sy = first.height / last.height;
 
-            // animation
-            animation.first = 'translate('+invert.x+'px,'+invert.y+'px)'+' scale('+invert.sx+','+invert.sy+')',
+            // animation type
+            // if this is set we opt for the more performant
+            // web animations api
+            if (element.animate && element.animate[_c] === Function) {
+                var webAnimations = true
+            }
+
+            animation.first = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+' scale('+invert.sx+','+invert.sy+')',
             animation.first = transform ? animation.first + ' ' + transform : animation.first,
-            animation.last = 'translate(0,0) scale(1,1) rotate(0) skew(0)',
+            animation.last = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)',
             animation.duration = duration ? duration : 200,
             animation.easing = easing ? 'cubic-bezier('+easing+')' : 'cubic-bezier(0,0,0.32,1)',
-            // promote element to individual composite layer
-            element.style.willChange = 'transform',
-            element.style.transformOrigin = '0 0',
-            element.style.transform = animation.first;
-            element.classList.add('animating');
-            document.body.classList.add('animating');
-            // trigger repaint 
-            element.offsetWidth;
-            element.style.transition = 'transform '+animation.duration+'ms '+animation.easing,
-            element.style.transform = animation.last;
+            element.style.transformOrigin = '0 0';
+
+            // reflect animation state on dom
+            element.classList.add('animation-running');
+            document.body.classList.add('animation-running');
+            document.body.classList.toggle('animation-active');
+
+            // use native web animations api if present
+            // presents better performance
+            if (webAnimations) {
+                var player = element.animate([
+                  {transform: animation.first},
+                  {transform: animation.last}
+                ], {
+                    duration: animation.duration,
+                    easing: animation.easing
+                });
+
+                player.addEventListener('finish', onfinish);
+            } else {
+                element.style.transform = animation.first;
+                // trigger repaint 
+                element.offsetWidth;
+                element.style.transition = 'transform '+animation.duration+'ms '+animation.easing,
+                element.style.transform = animation.last;
+            }
 
             // cleanup
             function onfinish(e) {
-                // bubbled events
-                if (e.target != element) {
-                    return
+                if (!webAnimations) {
+                    // bubbled events
+                    if (e.target != element) {
+                        return
+                    }
+                    element.style.transition = null,
+                    element.style.transformOrigin = null,
+                    element.style.transform = null; 
                 }
-
-                element.style.transition      = null,
-                element.style.willChange      = null,
-                element.style.transformOrigin = null,
-                element.style.transform       = null;
-
-                element.classList.remove('animating');
-                document.body.classList.remove('animating');
+                element.style.willChange = null;
+                element.classList.remove('animation-running');
+                document.body.classList.remove('animation-running');
                 element.removeEventListener('transitionend', onfinish);
             }
 
-            element.addEventListener('transitionend', onfinish);
+            if (!webAnimations) {
+                element.addEventListener('transitionend', onfinish);
+            }
         }
     
     
@@ -710,16 +735,16 @@
                     for (var name in props) {
                         if (isEventProp(name)) {
                             // callback
-                            var cb = props[name];
+                            var callback = props[name];
             
                             // not directly references, 
                             // check if string value is a defined methods
-                            if (cb[_c] !== Function) {
-                                cb = !!d[cb] ? d[cb] : null
+                            if (callback[_c] !== Function) {
+                                callback = !!self.methods[callback] ? self.methods[callback] : null
                             }
             
-                            if (cb) {
-                                target.addEventListener(extractEventName(name), cb, false)
+                            if (callback) {
+                                target.addEventListener(extractEventName(name), callback, false)
                             }
                         }
                     }
@@ -738,8 +763,7 @@
                     // change that aswell
                     if (
                         target[name] !== void 0 && 
-                        target.namespaceURI !== _namespace['svg'] && 
-                        target.namespaceURI !== _namespace['math']
+                        target.namespaceURI !== _namespace['svg']
                     ) {
                         target[name] = value
                     }
@@ -798,13 +822,12 @@
                         return document.createTextNode(node)
                     }
 
-                    var el,
-                        ns = !!node.props.xmlns ? node.props.xmlns : null;
-            
+                    var el;
+
                     // not a text node 
                     // check if is namespaced
-                    if (ns) {
-                        el = document.createElementNS(ns, node.type)
+                    if (node.props && node.props.xmlns) {
+                        el = document.createElementNS(node.props.xmlns, node.type)
                     } else {
                         el = document.createElement(node.type)
                     }
@@ -815,8 +838,8 @@
                     addEventListeners(el, node.props);
             
                     // only map children arrays
-                    if (node.children[_c] === Array) {
-                        each(node.children.map(createElement), el.appendChild.bind(el));
+                    if (node.children && node.children[_c] === Array) {
+                        each(node.children.map(createElement), el.appendChild.bind(el))
                     }
             
                     return el
@@ -887,9 +910,9 @@
                 // vdom public interface
                 function Vdom () {
                     // root reference
-                    this.dom = dom;
+                    this.dom = dom,
                     // local copy of dynamic hyperscript reference
-                    this.source = source;
+                    this.source = source,
                     // local copy of static hyperscript refence
                     this.hyperscript = this.source(self.state, self.methods);
                     // mount
@@ -1046,7 +1069,7 @@
                             self.update() 
                         },
                         function (a, b, c) { 
-                            self.req(a, b, c) 
+                            self.req(a, b, c)
                         },
                         self.loop()
                     )

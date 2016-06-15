@@ -22,22 +22,25 @@
 			.card:nth-child(-n+2) {
 				background: #9C27B0;
 			}
-			.card.animating * { opacity: 0; }
-			.card.active {
+			.card.animation-running { box-shadow: none; }
+			.card.animation-running * { opacity: 0;}
+			.card.animation-active {
 				position: fixed;
 				height: 100%;
 				width: 100%;
 				bottom: 0;
 				left: 0;
-				z-index: 999;
+				z-index: 100;
+				box-shadow: none;
 			}
 			.card p { 
 				font-family:sans-serif; 
 				color:#FFF; 
 				pointer-events:none; 
 			}
+			body.animation-active { overflow: hidden; }
 		</style>
-		<script src="surl.min.js"></script>
+		<script src="surl.js"></script>
 		<script>
 			var view = function (state, methods) {
 				return (
@@ -60,15 +63,15 @@
 					// 	),
 
 					// 	h('math', null,
-					// 		h('msqrt', null, 
+					// 		h('msqrt', {width:200}, 
 					// 			h('mn', null, 'Math element')
 					// 		)
 					// 	),
 
 					// 	[1,2].map( function(){ return h('br'); } ),
-					// 	h('h1', null, state.indexClicked() + ' clicked, 1000 items'),
+					// 	h('h1', null, state.active() + ' clicked, 1000 items'),
 
-					// 	state.list().map( function(a, i) { return h('li', {onClick: methods.test.bind(null, i) }, a) })
+					// 	state.list().map( function(a, i) { return h('li', {onClick: methods.test.bind(null, i) }, a.value) })
 					// )
 				)
 			}
@@ -80,7 +83,7 @@
 			var state = {
 				data: 'click me',
 				list: [
-					{id:0,value:'Click me to add 1000 elements'}, 
+					{id:0,value:'Click me to add 500 elements'}, 
 					{id:1,value:'and me...'},
 					{id:2,value:'Click me to animate'},
 					{id:3,value:'and me...'}
@@ -92,16 +95,17 @@
 				return {
 					constructor: function () {
 						request('api1', {id: 1234})
+						loop.start();
 					},
 					test: function(e) {
 						arr = [];
 
-						for (var i = 0; i < 1000; i++) {
+						for (var i = 0; i < 500; i++) {
 							arr.push({id:i, value: new Date() + performance.now()})
 						}
 						
-						state.list(arr);
-						update()
+						state.list(arr)
+						// update()
 					}
 				}
 			}
