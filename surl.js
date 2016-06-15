@@ -394,10 +394,11 @@
                     return
                 }
                 element.style.transition = null,
-                element.style.transformOrigin = null,
-                element.style.transform = null; 
+                element.style.transform = null;
             }
+            element.style.transformOrigin = null,
             element.style.willChange = null;
+
             element.classList.remove('animation-running');
             document.body.classList.remove('animation-running');
             element.removeEventListener('transitionend', onfinish);
