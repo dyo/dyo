@@ -121,8 +121,10 @@
 
                 // since we use type in a while loop
                 // we will be updating obj.type directly
-                type = obj.type || 'div';   
+                type = obj.type;
 
+                // set default type to a div
+                obj.type = 'div';
 
             // execute the regex and loop through the results
             while ((match = parser.exec(type))) {
@@ -250,7 +252,7 @@
                     obj.children[i - key] = set(child, obj)
                 }
             }
-    
+
             return obj
         }
     
@@ -311,6 +313,112 @@
                 to.call(from, target)
             }
         }
+
+        /**
+         * animate component/element
+         * 
+         * - adds `animating` class to document.body and element passed
+         * while animating, removes them when the animation is done.
+         *
+         * @param  {Element} element   
+         * @param  {Array}   transforms 'describe additional transforms'
+         * @param  {Number}  duration   'duration of the animation'
+         * @param  {String}  className  'class that represents end state animating to'
+         * 
+         * @return {Void}
+         *
+         * @example
+         * h('.card', {onclick: animate}, h('p', null, a))
+         * // or 
+         * h('.card', {onclick: animate.bind(400, 'endClassName', '0,0,0,1.2')}, h('p', null, a))
+         * // or 
+         * animate(target, 'endClassName', 400, ['rotate(25deg)', 'translate(-20px)'])
+         */
+        function animate() {
+            // declare variables
+            var args, className, duration, transform, easing, element,
+                first, last, invert, animation, 
+                first = last = invert = animation = {},
+                // assign arguments
+                args = Array.prototype.slice.call(arguments);
+
+            for (var i = args.length - 1; i >= 0; i--) {
+                var arg = args[i];
+
+                if (arg[_c] === Array) {
+                    transform = arg.join(' ')
+                } else if (arg[_c] === Number) {
+                    duration = arg
+                } else if (arg[_c] === String) {
+                    if (arg.indexOf(',') !== -1) { easing = arg }
+                    else { className = arg }
+                } else if (!!arg.target) {
+                    element = arg.target
+                }
+            }
+
+            if (this[_c] === Number) {
+                duration = this
+            } else if (this[_c] === String) {
+                className = this
+            } else if (!className) {
+                className = 'active';
+            }
+
+            // we need an end state class and element to run
+            if (!className || !element) {
+                return
+            }
+
+            // get first state
+            first = element.getBoundingClientRect();
+            // assign last state
+            element.classList.toggle(className);
+            // get last state
+            last = element.getBoundingClientRect();
+
+            // get invert values
+            invert.x = first.left - last.left;
+            invert.y = first.top - last.top;
+            invert.sx = first.width / last.width;
+            invert.sy = first.height / last.height;
+
+            // animation
+            animation.first = 'translate('+invert.x+'px,'+invert.y+'px)'+' scale('+invert.sx+','+invert.sy+')',
+            animation.first = transform ? animation.first + ' ' + transform : animation.first,
+            animation.last = 'translate(0,0) scale(1,1) rotate(0) skew(0)',
+            animation.duration = duration ? duration : 200,
+            animation.easing = easing ? 'cubic-bezier('+easing+')' : 'cubic-bezier(0,0,0.32,1)',
+            // promote element to individual composite layer
+            element.style.willChange = 'transform',
+            element.style.transformOrigin = '0 0',
+            element.style.transform = animation.first;
+            element.classList.add('animating');
+            document.body.classList.add('animating');
+            // trigger repaint 
+            element.offsetWidth;
+            element.style.transition = 'transform '+animation.duration+'ms '+animation.easing,
+            element.style.transform = animation.last;
+
+            // cleanup
+            function onfinish(e) {
+                // bubbled events
+                if (e.target != element) {
+                    return
+                }
+
+                element.style.transition      = null,
+                element.style.willChange      = null,
+                element.style.transformOrigin = null,
+                element.style.transform       = null;
+
+                element.classList.remove('animating');
+                document.body.classList.remove('animating');
+                element.removeEventListener('transitionend', onfinish);
+            }
+
+            element.addEventListener('transitionend', onfinish);
+        }
     
     
         /**
@@ -319,11 +427,10 @@
          * 
          * @type {Function}
          */
-        window.p = prop,
-        window.prop = prop,
-        window.b = bind,
-        window.bind = bind,
+        window.p = window.prop = prop,
+        window.b = window.bind = bind,
         window.h = hyperscript;
+        window.animate = animate;
     
     
         /* -------------------------------------------------------------- */

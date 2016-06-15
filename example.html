@@ -7,32 +7,69 @@
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<style>
+			* { margin:0; padding:0; box-sizing: border-box; }
+
+			.card {
+				background: rgb(200,0,100);
+				width: 420px;
+				margin: auto;
+				padding: 20px;
+				box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+				position: relative;
+				overflow: hidden;
+			}
+			.card:nth-child(-n+2) {
+				background: #9C27B0;
+			}
+			.card.animating * { opacity: 0; }
+			.card.active {
+				position: fixed;
+				height: 100%;
+				width: 100%;
+				bottom: 0;
+				left: 0;
+				z-index: 999;
+			}
+			.card p { 
+				font-family:sans-serif; 
+				color:#FFF; 
+				pointer-events:none; 
+			}
+		</style>
 		<script src="surl.min.js"></script>
 		<script>
 			var view = function (state, methods) {
 				return (
-					h('ul', {style: 'font-family:sans-serif;'},
-						h('button', {onClick: methods.test}, 'Click Me'),
-						h('input', {onInput: bind('value', state.data)}), //evt.test, type: 'text'}),
-						h('input[type=checkbox]', {checked:true}, ''),
-
-						h('svg', {width: 800, height: 100}, 
-							h('rect', {onClick: methods.test, width: 800, height: 100, x: 0, fill: '#008d46'}),
-							h('text', {x:0, y:40}, 'svg text & rect element ' + state.list()[0]),
-							h('use', {'xlink:href': '#icon'})
-						),
-
-						h('math', null,
-							h('msqrt', null, 
-								h('mn', null, 'Math element')
+					h('main', null, 
+						state.list().map(function(a,i){
+							return h('.card', {onclick: i > 1 ? animate : methods.test, title: 'Click Me'}, 
+								h('p', null, h('h1', null, a.id), a.value)
 							)
-						),
-
-						[1,2].map( function(){ return h('br'); } ),
-						h('h1', null, state.indexClicked() + ' clicked, 1000 items'),
-
-						state.list().map( function(a, i) { return h('li', {onClick: methods.test.bind(null, i) }, a) })
+						})
 					)
+					// h('ul', {style: 'font-family:sans-serif;'},
+					// 	h('button', {onClick: methods.test}, 'Click Me'),
+					// 	h('input', {onInput: bind('value', state.data)}), //evt.test, type: 'text'}),
+					// 	h('input[type=checkbox]', {checked:true}, ''),
+
+					// 	h('svg', {width: 600, height: 100}, 
+					// 		h('rect', {onClick: methods.test, width: 800, height: 100, x: 0, fill: '#008d46'}),
+					// 		h('text', {x:0, y:40}, 'svg text & rect element ' + state.list()[0]),
+					// 		h('use', {'xlink:href': '#icon'})
+					// 	),
+
+					// 	h('math', null,
+					// 		h('msqrt', null, 
+					// 			h('mn', null, 'Math element')
+					// 		)
+					// 	),
+
+					// 	[1,2].map( function(){ return h('br'); } ),
+					// 	h('h1', null, state.indexClicked() + ' clicked, 1000 items'),
+
+					// 	state.list().map( function(a, i) { return h('li', {onClick: methods.test.bind(null, i) }, a) })
+					// )
 				)
 			}
 
@@ -41,24 +78,26 @@
 			}
 
 			var state = {
-				data: 'true',
-				list: ['hello', 'times', 'other', 'last'],
-				indexClicked: 0
+				data: 'click me',
+				list: [
+					{id:0,value:'Click me to add 1000 elements'}, 
+					{id:1,value:'and me...'},
+					{id:2,value:'Click me to animate'},
+					{id:3,value:'and me...'}
+				],
+				active: 0
 			}
 
 			var methods = function (state, update, request, loop) {
 				return {
 					constructor: function () {
-						// request('api1', {id: 1234})
+						request('api1', {id: 1234})
 					},
-					test: function(index) {
+					test: function(e) {
 						arr = [];
 
-						var c = state.indexClicked();
-						state.indexClicked(index);
-
-						for (var i = 0; i < 100; i++) {
-							arr.push(i+ ' ' + state.data() + ' ' + new Date() + performance.now())
+						for (var i = 0; i < 1000; i++) {
+							arr.push({id:i, value: new Date() + performance.now()})
 						}
 						
 						state.list(arr);
