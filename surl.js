@@ -475,7 +475,7 @@
         );
             a = null;
 
-        xhr.open(settings.method, settings.url, true);
+        xhr.open(settings.type, settings.url, true);
 
         xhr.onerror = function () {
             callback(this, true)
@@ -520,15 +520,7 @@
             xhr.withCredentials = true
         }
 
-        if (settings.method !== 'GET') {
-            // set type of data sent : text/json
-            xhr.setRequestHeader(
-                'Content-Type', 
-                settings.data[_c] === Object ? 'application/json' : 'text/plain'
-            )
-        }
-
-        if (settings.method === 'POST') {
+        if (settings.type === 'POST') {
             xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
             xhr.send(param(settings))
         } else {
@@ -554,50 +546,6 @@
         for (var name in b) { a[name] = b[name] }
         for (var name in c) { a[name] = c[name] }
         return c
-    }
-
-    /**
-     * template parser
-     * 
-     * @private
-     * @param  {String} a `string to parse`
-     * @return {Object}   `{data: (data) => {}}`
-     *
-     * * @example
-     * // returns 'Hello World'
-     * tmpl('Hello, {person}').data({person: 'World'})
-     */
-    function tmpl (a, b) {
-        for (var item in b) {
-            a = a.replace( 
-                new RegExp('{'+item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +'}', 'g'),
-                esc(b[item]) 
-            )
-        }
-
-        return a
-    }
-
-    /**
-     * escape string
-     * 
-     * @private
-     * @param  {String} a `string to escape`
-     * @return {String}   `escaped string`
-     */
-    function esc (a) {
-        return (a+'').replace(/[&<>"'\/]/g, function(i) {
-            var obj = {
-                '&':'&amp;',
-                '<':'&lt;',
-                '>': '&gt;',
-                '"':'&quot;',
-                "'":'&#39;',
-                '/':'&#x2F;'
-            };
-
-            return obj[i]
-        })
     }
 
     /**
@@ -633,6 +581,34 @@
     }
 
     /**
+     * requestAnimation loop
+     *
+     * @param  {Function} fn  `loop`
+     * @param  {fps}      fps `frames per second`
+     * @return {Object}       `raf object`
+     */
+    function fps (fn, fps, raf) {
+        var then = new Date().getTime();
+    
+        // custom fps, otherwise fallback to 60
+        fps = fps || 60;
+        var interval = 1000 / fps;
+    
+        return (function loop(time) {
+            raf.id = requestAnimationFrame(loop),
+            raf.active = true;
+    
+            var now = new Date().getTime(),
+                delta = now - then;
+    
+            if (delta > interval) {
+                then = now - (delta % interval);
+                fn(time)
+            }
+        }(0))
+    }
+
+    /**
      * Surl - create instance
      *
      * @global
@@ -647,12 +623,15 @@
      *     .routes(routes)
      *     .mount(document)
      *     
-     * view (state, methods) => {
+     * view (state, ctrl) => {
      *     return hyperscript object
      * }
      *
-     * methods (state, update, request, loop) => {
-     *     return methods object
+     * ctrl {
+     *     method: function () {
+     *         console.log(this)
+     *         // {req, loop, update, state, ctrl}
+     *     }
      * }
      *
      * state {
@@ -660,35 +639,32 @@
      *     data2: 232
      * }
      *
-     * routes [
-     *     {id: 'api1',type:'GET', url: '/api/{secret}'}
-     * ]
+     * routes {
+     *    id: { type:'GET', url: '/api/{secret}' }
+     * }
      */
-    function surl () {
-        var self = this;
+    function surl (a, b, c) {
+        var m, v, c;
 
-        return {
-            view: function(a) {
-                self.view = a;
-                return this
-            },
-            ctrl: function(a) {
-                self.ctrl = a;
-                return this
-            },
-            state: function(a) {
-                self.state = a;
-                return this
-            },
-            mount: function(a) {
-                self.mount(a)
-                return self
-            },
-            routes: function(a) {
-                self.routes = a
-                return this
-            }
+        if (a[_c] === Object) {
+            m = a.modal;
+            v = a.view,
+            c = a.ctrl;
+        } else {
+            m = a,
+            v = b,
+            c = c;
         }
+
+        if (m) this.modal = m;
+        if (v) this.view = v;
+        if (c) this.ctrl = c;
+
+        this.settings = {
+            modal: m
+        }
+
+        return this;
     }
 
     surl.prototype = {
@@ -720,7 +696,7 @@
         
                         // not directly references, 
                         // check if string value is a defined methods
-                        if (callback[_c] !== Function) {
+                        if (callback && callback[_c] !== Function) {
                             callback = !!self.ctrl[callback] ? self.ctrl[callback] : null
                         }
         
@@ -888,7 +864,7 @@
                 // local copy of dynamic hyperscript reference
                 this.fn = fn,
                 // local copy of static hyperscript refence
-                this.oldNode = this.fn(self.state, self.ctrl);
+                this.oldNode = this.fn(self.modal, self.ctrl);
                 // mount
                 update(this.root, this.oldNode);
                 // update
@@ -897,7 +873,7 @@
             // refresh/update dom
             vdom.prototype.update = function () {
                 // get latest change
-                var newNode = this.fn(self.state, self.ctrl),
+                var newNode = this.fn(self.modal, self.ctrl),
                     // get old copy
                     oldNode = this.oldNode;
 
@@ -914,64 +890,16 @@
          * req
          *
          * @public
-         * @param  {String}   id       `id of route`
          * @param  {Object}   data     `data to pass to request`
          * @param  {Function} callback `function to run on success`
-         * @return {Object}            `xhr object / xhr promise`
+         * @return {Object}            `xhr object`
          *
          * @example
          * // returns {done, success, error, ...} | xhr object
          * req('api', {person: 'Sultan'}, fn(data) => {})
          */
-        req: function (id, data, callback) {
-            var settings, 
-                route;
-        
-            if (!this.routes || !!!this.routes[id]) {
-                throw 'unknown route:'+id
-            }
-        
-            // prep request settings
-            route        = {},
-            route.type   = this.routes[id].type.toUpperCase(),
-            route.url    = (this.routes[id].type === 'GET') ? tmpl(this.routes[id].url, data) : this.routes[id].url;
-        
-            settings = {
-                url: (route.url) ? route.url : null,
-                method: (route.type) ? route.type : 'GET',
-                data: (data) ? data : null,
-            };
-            
-            // process
-            ajax(settings, callback)
-        },
-
-        /**
-         * requestAnimation loop
-         *
-         * @param  {Function} fn  `loop`
-         * @param  {fps}      fps `frames per second`
-         * @return {Object}       `raf object`
-         */
-        fps: function (fn, fps, raf) {
-            var then = new Date().getTime();
-        
-            // custom fps, otherwise fallback to 60
-            fps = fps || 60;
-            var interval = 1000 / fps;
-        
-            return (function loop(time) {
-                raf.id = requestAnimationFrame(loop),
-                raf.active = true;
-        
-                var now = new Date().getTime(),
-                    delta = now - then;
-        
-                if (delta > interval) {
-                    then = now - (delta % interval);
-                    fn(time)
-                }
-            }(0))
+        req: function (settings, callback) {
+            return ajax(settings, callback)
         },
 
         /**
@@ -980,28 +908,24 @@
          * @public
          * @return {Void}
          */
-        loop: function () {
+        loop: function (start) {
             var self = this;
-        
-            return {
-                start: function (a) {
-                    window._raf = {
-                        id: null,
-                        active: null
-                    }
-        
-                    self.fps(function () {
-                        self.update();
-        
-                        if (a && window._raf.id === a) {
-                            cancelAnimationFrame(window._raf.id)
-                        }
-                    }, 60, window._raf)
-                },
-                stop: function () {
+
+            if (start === true) {
+                window._raf = {
+                    id: null,
+                    active: null
+                }
+
+                fps(function () {
+                    self.update()
+                }, 60, window._raf)
+            } 
+            else if (start === false && !!window._raf) {
+                setTimeout(function () {
                     cancelAnimationFrame(window._raf.id);
                     window._raf.active = false
-                }
+                }, 0)
             }
         },
 
@@ -1019,6 +943,48 @@
             this.view.update()
         },
 
+        init: function (root) {
+            var self = this;
+            
+            // assign methods
+            if (this.ctrl) {
+                each(self.ctrl, function(a,b,c) {
+                    c[b] = a.bind(self)
+                })
+            }
+
+            // check if is element passed is a document node
+            if (root === document) {
+                root = document.body
+            } else if (root && root.constructor === String) {
+                root = document.querySelector(root)
+            }
+            
+            // can't the element
+            if (!root || !root.nodeType) {
+                throw 'please ensure mount element exists'
+            }
+            
+            // clear dom element for mount
+            if (root.innerHTML.length !== 0) {
+                root.innerHTML = ''
+            }
+
+            // process constructor method
+            if (self.ctrl && self.ctrl[_c]) {
+                self.ctrl[_c]()
+            }
+            
+            // initialize and add to dom element
+            if (self.view[_c] === Function) {
+                self.view = self.vdom(root, self.view)
+            } else {
+                self.view = self.vdom(root, self.view.fn)
+            }
+
+            return self
+        },
+
         /**
          * mount component to dom
          *
@@ -1029,61 +995,17 @@
         mount: function (root) {
             var self = this;
 
-            // set prop states
-            if (self.state) {
-                each(self.state, function(a, b, c) {
-                    c[b] = prop(a)
-                });
-            }
-            
-            // assign methods
-            if (self.ctrl) {
-                self.ctrl = self.ctrl.call(
-                    self,
-                    self.state, 
-                    function () { 
-                        self.update() 
-                    },
-                    function (a, b, c) { 
-                        self.req(a, b, c)
-                    },
-                    self.loop()
-                )
-            }
-
             // on document ready mount to dom element    
             document.onreadystatechange = function () {
                 if (document.readyState === 'interactive') {
-                    // check if is element passed is a document node
-                    if (root === document) {
-                        root = document.body
-                    } else if (root && root.constructor === String) {
-                        root = document.querySelector(root)
-                    } 
-                    
-                    // can't the element
-                    if (!root || !root.nodeType) {
-                        throw 'Please ensure the DOM element exists'
-                    }
-                    
-                    // clear dom element for mount
-                    if (root.innerHTML.length !== 0) {
-                        root.innerHTML = ''
-                    }
-
-                    // process constructor method
-                    if (self.ctrl[_c]) {
-                        self.ctrl[_c]()
-                    }
-        
-                    // initialize and add to dom element
-                    self.view = self.vdom(root, self.view);
+                    self.init(root)
                 }
+                console.log(document.readyState)
             }
         }
     }
     
-    window.surl = function(){
-        return new surl()
+    window.surl = function(a, b, c) {
+        return new surl(a, b, c)
     }
 }())
