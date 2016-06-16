@@ -47,8 +47,7 @@
     'use strict';
     
     // common references
-    var _p = 'prototype',
-        _c = 'constructor',
+    var _c = 'constructor',
         _namespace = {
             math: 'http://www.w3.org/1998/Math/MathML',
             svg: 'http://www.w3.org/2000/svg',
@@ -568,19 +567,15 @@
      * // returns 'Hello World'
      * tmpl('Hello, {person}').data({person: 'World'})
      */
-    function tmpl (a) {
-        return {
-            data: function(b) {
-                for (var item in b) {
-                    a = a.replace( 
-                        new RegExp('{'+item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +'}', 'g'),
-                        esc(b[item]) 
-                    )
-                }
-
-                return a
-            }
+    function tmpl (a, b) {
+        for (var item in b) {
+            a = a.replace( 
+                new RegExp('{'+item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +'}', 'g'),
+                esc(b[item]) 
+            )
         }
+
+        return a
     }
 
     /**
@@ -623,14 +618,14 @@
 
             for(; i < l; ++i) {
                 if ( b.call(a[i], a[i], i, a) === false ) 
-                    return a; 
+                    return a
             }
         }
         // Handle objects 
         else {
             for (i in a) {
                 if ( b.call(a[i], a[i], i, a) === false ) 
-                    return a; 
+                    return a
             }
         }
 
@@ -670,445 +665,425 @@
      * ]
      */
     function surl () {
-        function Surl () {
-            var self = this;
+        var self = this;
 
-            return {
-                view: function(a) {
-                    self.view = a;
-                    return this
-                },
-                methods: function(a) {
-                    self.methods = a;
-                    return this
-                },
-                state: function(a) {
-                    self.state = a;
-                    return this
-                },
-                mount: function(a) {
-                    self.mount(a)
-                    return self
-                },
-                routes: function(a) {
-                    self.routes = a
-                    return this
-                }
+        return {
+            view: function(a) {
+                self.view = a;
+                return this
+            },
+            ctrl: function(a) {
+                self.ctrl = a;
+                return this
+            },
+            state: function(a) {
+                self.state = a;
+                return this
+            },
+            mount: function(a) {
+                self.mount(a)
+                return self
+            },
+            routes: function(a) {
+                self.routes = a
+                return this
             }
         }
+    }
 
-        Surl[_p] = {
-            /**
-             * Virtual Dom
-             *
-             * @public
-             * @param  {Element}  a `root element`
-             * @param  {Function} b `hyperscript function`
-             * @return {Oject}      `vdom object`
-             */
-            vdom: function (dom, source) {
-                var self = this;
+    surl.prototype = {
+        /**
+         * Virtual Dom
+         *
+         * @public
+         * @param  {Element}  a `root element`
+         * @param  {Function} b `hyperscript function`
+         * @return {Oject}      `vdom object`
+         */
+        vdom: function (root, fn) {
+            var self = this;
 
-                // events
-                function isEventProp (name) {
-                    return name.substring(0,2) === 'on'
-                }
-            
-                function extractEventName (name) {
-                    return name.substring(2, name.length).toLowerCase()
-                }
-            
-                function addEventListeners (target, props) {
-                    for (var name in props) {
-                        if (isEventProp(name)) {
-                            // callback
-                            var callback = props[name];
-            
-                            // not directly references, 
-                            // check if string value is a defined methods
-                            if (callback[_c] !== Function) {
-                                callback = !!self.methods[callback] ? self.methods[callback] : null
-                            }
-            
-                            if (callback) {
-                                target.addEventListener(extractEventName(name), callback, false)
-                            }
-                        }
-                    }
-                }
-            
-                // assign/update/remove props
-                function prop (target, name, value, op) {
+            // events
+            function isEventProp (name) {
+                return name.substring(0,2) === 'on'
+            }
+        
+            function extractEventName (name) {
+                return name.substring(2, name.length).toLowerCase()
+            }
+        
+            function addEventListeners (target, props) {
+                for (var name in props) {
                     if (isEventProp(name)) {
-                        return
-                    }
-            
-                    // remove / add attribute reference
-                    var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
-            
-                    // if the target has an attr as a property, 
-                    // change that aswell
-                    if (
-                        target[name] !== void 0 && 
-                        target.namespaceURI !== _namespace['svg']
-                    ) {
-                        target[name] = value
-                    }
-
-                    // set xlink:href attr
-                    if (name === 'xlink:href') {
-                        return target.setAttributeNS(_namespace['xlink'], 'href', value)
-                    }
-            
-                    // don't set namespace attrs
-                    // keep the presented dom clean
-                    if (
-                        value !== _namespace['svg'] && 
-                        value !== _namespace['math']
-                    ) {
-                        return op === -1 ? target[attr](name) : target[attr](name, value)
-                    }
-                }
-            
-                function updateElementProp (target, name, newVal, oldVal) {
-                    if (!newVal) {
-                        // -1 : remove prop
-                        prop(target, name, oldVal, -1)
-                    } else if (!oldVal || newVal !== oldVal) {
-                        // + 1 : add/update prop
-                        prop(target, name, newVal, +1)
-                    }
-                }
-            
-                function updateElementProps (target, newProps, oldProps) {
-                    oldProps  = oldProps !== void 0 ? oldProps : {};
-            
-                    // copy old+new props into single object
-                    var props = merge({}, newProps, oldProps);
-            
-                    // compare if props have been added/delete/updated
-                    // if name not in newProp[name] : deleted
-                    // if name not in oldProp[name] : added
-                    // if name in oldProp !== name in newProp : updated
-                    for (var name in props) {
-                        updateElementProp(target, name, newProps[name], oldProps[name])
-                    }
-                }
-            
-                function setElementProps (target, props) {
-                    for (var name in props) {
-                        // initial creation, no checks, just set
-                        prop(target, name, props[name], +1)
-                    }
-                }
-            
-                // create element
-                function createElement (node) {
-                    // handle text nodes
-                    if (node[_c] === String) {
-                        return document.createTextNode(node)
-                    }
-
-                    var el;
-
-                    // not a text node 
-                    // check if is namespaced
-                    if (node.props && node.props.xmlns) {
-                        el = document.createElementNS(node.props.xmlns, node.type)
-                    } else {
-                        el = document.createElement(node.type)
-                    }
-                
-                    // diff and update/add/remove props
-                    setElementProps(el, node.props);
-                    // add events if any
-                    addEventListeners(el, node.props);
-            
-                    // only map children arrays
-                    if (node.children && node.children[_c] === Array) {
-                        each(node.children.map(createElement), el.appendChild.bind(el))
-                    }
-            
-                    return el
-                }
-            
-            
-                // diffing (simple)
-                function changed (node1, node2) {
-                    // diff object type
-                    var isType  = node1[_c] !== node2[_c],
-                        // diff content
-                        isDiff  = node1[_c] === String && node1 !== node2,
-                        // diff dom type
-                        hasType = node1.type !== node2.type;
-            
-                    return isType || isDiff || hasType
-                }
-            
-                function validate (a) {
-                    // converts 0 | false to strings
-                    if (a !== void 0 && (a === null || a === 0 || a === false)) {
-                        a = a + ''
-                    }
-            
-                    return a
-                }
-            
-                // update
-                function update (parent, newNode, oldNode, index) {
-                    index = index ? index : 0;
-            
-                    oldNode = validate(oldNode);
-                    newNode = validate(newNode);
-            
-                    // adding to the dom
-                    if (!oldNode) {
-                        parent.appendChild(createElement(newNode))
-                    } 
-                    // removing from the dom
-                    else if (!newNode) {
-                        parent.removeChild(parent.childNodes[index])
-                    }
-                    // replacing a node
-                    else if (changed(newNode, oldNode)) {
-                        parent.replaceChild(createElement(newNode), parent.childNodes[index])
-                    }
-                    // the lookup loop
-                    else if (newNode.type) {
-                        updateElementProps(parent.childNodes[index], newNode.props, oldNode.props);
-            
-                        var newLength = newNode.children.length,
-                            oldLength = oldNode.children.length;
-            
-                        for (var i = 0; i < newLength || i < oldLength; i++) {
-                            update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
+                        // callback
+                        var callback = props[name];
+        
+                        // not directly references, 
+                        // check if string value is a defined methods
+                        if (callback[_c] !== Function) {
+                            callback = !!self.ctrl[callback] ? self.ctrl[callback] : null
+                        }
+        
+                        if (callback) {
+                            target.addEventListener(extractEventName(name), callback, false)
                         }
                     }
                 }
-            
-                // loop through parents/root elements and update them
-                function refresh (dom, newNode, oldNode) {
-                    // mount
-                    each(dom, function(dom) { 
-                        update(dom, newNode, oldNode)
-                    })
+            }
+        
+            // assign/update/remove props
+            function prop (target, name, value, op) {
+                if (isEventProp(name)) {
+                    return
                 }
-            
-                // vdom public interface
-                function Vdom () {
-                    // root reference
-                    this.dom = dom,
-                    // local copy of dynamic hyperscript reference
-                    this.source = source,
-                    // local copy of static hyperscript refence
-                    this.hyperscript = this.source(self.state, self.methods);
-                    // mount
-                    refresh(this.dom, this.hyperscript);
-                    // update
-                    this.update()
+        
+                // remove / add attribute reference
+                var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
+        
+                // if the target has an attr as a property, 
+                // change that aswell
+                if (
+                    target[name] !== void 0 && 
+                    target.namespaceURI !== _namespace['svg']
+                ) {
+                    target[name] = value
                 }
-                // refresh/update dom
-                Vdom[_p].update = function () {
-                    // get latest change
-                    var newNode = this.source(self.state, self.methods),
-                        // get old copy
-                        oldNode = this.hyperscript;
 
-                    refresh(this.dom, newNode, oldNode);
-            
-                    // update old node
-                    this.hyperscript = newNode
+                // set xlink:href attr
+                if (name === 'xlink:href') {
+                    return target.setAttributeNS(_namespace['xlink'], 'href', value)
+                }
+        
+                // don't set namespace attrs
+                // keep the presented dom clean
+                if (
+                    value !== _namespace['svg'] && 
+                    value !== _namespace['math']
+                ) {
+                    return op === -1 ? target[attr](name) : target[attr](name, value)
+                }
+            }
+        
+            function updateElementProp (target, name, newVal, oldVal) {
+                if (!newVal) {
+                    // -1 : remove prop
+                    prop(target, name, oldVal, -1)
+                } else if (!oldVal || newVal !== oldVal) {
+                    // + 1 : add/update prop
+                    prop(target, name, newVal, +1)
+                }
+            }
+        
+            function updateElementProps (target, newProps, oldProps) {
+                oldProps  = oldProps !== void 0 ? oldProps : {};
+        
+                // copy old+new props into single object
+                var props = merge({}, newProps, oldProps);
+        
+                // compare if props have been added/delete/updated
+                // if name not in newProp[name] : deleted
+                // if name not in oldProp[name] : added
+                // if name in oldProp !== name in newProp : updated
+                for (var name in props) {
+                    updateElementProp(target, name, newProps[name], oldProps[name])
+                }
+            }
+        
+            function setElementProps (target, props) {
+                for (var name in props) {
+                    // initial creation, no checks, just set
+                    prop(target, name, props[name], +1)
+                }
+            }
+        
+            // create element
+            function createElement (node) {
+                // handle text nodes
+                if (node[_c] === String) {
+                    return document.createTextNode(node)
+                }
+
+                var el;
+
+                // not a text node 
+                // check if is namespaced
+                if (node.props && node.props.xmlns) {
+                    el = document.createElementNS(node.props.xmlns, node.type)
+                } else {
+                    el = document.createElement(node.type)
                 }
             
-                return new Vdom
-            },
-
-            /**
-             * req
-             *
-             * @public
-             * @param  {String}   id       `id of route`
-             * @param  {Object}   data     `data to pass to request`
-             * @param  {Function} callback `function to run on success`
-             * @return {Object}            `xhr object / xhr promise`
-             *
-             * @example
-             * // returns {done, success, error, ...} | xhr object
-             * req('api', {person: 'Sultan'}, fn(data) => {})
-             */
-            req: function (id, data, callback) {
-                var settings, 
-                    route;
-            
-                if (!this.routes || !!!this.routes[id]) {
-                    throw 'unknown route:'+id
+                // diff and update/add/remove props
+                setElementProps(el, node.props);
+                // add events if any
+                addEventListeners(el, node.props);
+        
+                // only map children arrays
+                if (node.children && node.children[_c] === Array) {
+                    each(node.children.map(createElement), el.appendChild.bind(el))
                 }
+        
+                return el
+            }
+        
+        
+            // diffing (simple)
+            function changed (node1, node2) {
+                // diff object type
+                var isType  = node1[_c] !== node2[_c],
+                    // diff content
+                    isDiff  = node1[_c] === String && node1 !== node2,
+                    // diff dom type
+                    hasType = node1.type !== node2.type;
+        
+                return isType || isDiff || hasType
+            }
             
-                // prep request settings
-                route        = {},
-                route.type   = this.routes[id].type.toUpperCase(),
-                route.url    = (this.routes[id].type === 'GET') ? tmpl(this.routes[id].url).data(data) : this.routes[id].url;
-            
-                settings = {
-                    url: (route.url) ? route.url : null,
-                    method: (route.type) ? route.type : 'GET',
-                    data: (data) ? data : null,
-                };
-                
-                // process
-                ajax(settings, callback)
-            },
-
-            /**
-             * requestAnimation loop
-             *
-             * @param  {Function} fn  `loop`
-             * @param  {fps}      fps `frames per second`
-             * @return {Object}       `raf object`
-             */
-            fps: function (fn, fps, raf) {
-                var then = new Date().getTime();
-            
-                // custom fps, otherwise fallback to 60
-                fps = fps || 60;
-                var interval = 1000 / fps;
-            
-                return (function loop(time) {
-                    raf.id = requestAnimationFrame(loop),
-                    raf.active = true;
-            
-                    var now = new Date().getTime(),
-                        delta = now - then;
-            
-                    if (delta > interval) {
-                        then = now - (delta % interval);
-                        fn(time)
+            // validate
+            function validate (a) {
+                // converts 0 | false to strings
+                if (a !== void 0 && (a === null || a === 0 || a === false)) {
+                    a = a + ''
+                }
+        
+                return a
+            }
+        
+            // update
+            function update (parent, newNode, oldNode, index) {
+                index = index ? index : 0;
+        
+                oldNode = validate(oldNode);
+                newNode = validate(newNode);
+        
+                // adding to the dom
+                if (!oldNode) {
+                    parent.appendChild(createElement(newNode))
+                } 
+                // removing from the dom
+                else if (!newNode) {
+                    parent.removeChild(parent.childNodes[index])
+                }
+                // replacing a node
+                else if (changed(newNode, oldNode)) {
+                    parent.replaceChild(createElement(newNode), parent.childNodes[index])
+                }
+                // the lookup loop
+                else if (newNode.type) {
+                    updateElementProps(parent.childNodes[index], newNode.props, oldNode.props);
+        
+                    var newLength = newNode.children.length,
+                        oldLength = oldNode.children.length;
+        
+                    for (var i = 0; i < newLength || i < oldLength; i++) {
+                        update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
                     }
-                }(0));
-            },
-
-            /**
-             * redraw loop, redraws updates, throttled at 60fps
-             *
-             * @public
-             * @return {Void}
-             */
-            loop: function () {
-                var self = this;
-            
-                return {
-                    start: function (a) {
-                        window['_raf'] = {
-                            id: null,
-                            active: null
-                        };
-            
-                        self.fps(function () {
-                            self.update();
-            
-                            if (a && window['_raf'].id === a) {
-                                cancelAnimationFrame(window['_raf'].id)
-                            }
-                        }, 60, window['_raf'])
-                    },
-                    stop: function () {
-                        cancelAnimationFrame(window['_raf'].id);
-                        window['_raf'].active = false
-                    }
                 }
-            },
+            }
+        
+            // vdom public interface
+            function vdom () {
+                // root reference
+                this.root = root,
+                // local copy of dynamic hyperscript reference
+                this.fn = fn,
+                // local copy of static hyperscript refence
+                this.oldNode = this.fn(self.state, self.ctrl);
+                // mount
+                update(this.root, this.oldNode);
+                // update
+                this.update()
+            }
+            // refresh/update dom
+            vdom.prototype.update = function () {
+                // get latest change
+                var newNode = this.fn(self.state, self.ctrl),
+                    // get old copy
+                    oldNode = this.oldNode;
 
-            /**
-             * update component
-             *
-             * @public
-             * @return {Void}
-             * 
-             * @example
-             * var cmp = c(opts).init();
-             * cmp.update();
-             */
-            update: function () {
-                this.view.update();
-            },
+                update(this.root, newNode, oldNode);
+        
+                // update old node
+                this.oldNode = newNode
+            }
+        
+            return new vdom
+        },
 
-            /**
-             * mount component to dom
-             *
-             * @public
-             * @param  {ELement} a `element to mount to`
-             * @return {Object}    `componet object`
-             */
-            mount: function (a) {
-                var self = this;
+        /**
+         * req
+         *
+         * @public
+         * @param  {String}   id       `id of route`
+         * @param  {Object}   data     `data to pass to request`
+         * @param  {Function} callback `function to run on success`
+         * @return {Object}            `xhr object / xhr promise`
+         *
+         * @example
+         * // returns {done, success, error, ...} | xhr object
+         * req('api', {person: 'Sultan'}, fn(data) => {})
+         */
+        req: function (id, data, callback) {
+            var settings, 
+                route;
+        
+            if (!this.routes || !!!this.routes[id]) {
+                throw 'unknown route:'+id
+            }
+        
+            // prep request settings
+            route        = {},
+            route.type   = this.routes[id].type.toUpperCase(),
+            route.url    = (this.routes[id].type === 'GET') ? tmpl(this.routes[id].url, data) : this.routes[id].url;
+        
+            settings = {
+                url: (route.url) ? route.url : null,
+                method: (route.type) ? route.type : 'GET',
+                data: (data) ? data : null,
+            };
+            
+            // process
+            ajax(settings, callback)
+        },
 
-                // set prop states
+        /**
+         * requestAnimation loop
+         *
+         * @param  {Function} fn  `loop`
+         * @param  {fps}      fps `frames per second`
+         * @return {Object}       `raf object`
+         */
+        fps: function (fn, fps, raf) {
+            var then = new Date().getTime();
+        
+            // custom fps, otherwise fallback to 60
+            fps = fps || 60;
+            var interval = 1000 / fps;
+        
+            return (function loop(time) {
+                raf.id = requestAnimationFrame(loop),
+                raf.active = true;
+        
+                var now = new Date().getTime(),
+                    delta = now - then;
+        
+                if (delta > interval) {
+                    then = now - (delta % interval);
+                    fn(time)
+                }
+            }(0))
+        },
+
+        /**
+         * redraw loop, redraws updates, throttled at 60fps
+         *
+         * @public
+         * @return {Void}
+         */
+        loop: function () {
+            var self = this;
+        
+            return {
+                start: function (a) {
+                    window._raf = {
+                        id: null,
+                        active: null
+                    }
+        
+                    self.fps(function () {
+                        self.update();
+        
+                        if (a && window._raf.id === a) {
+                            cancelAnimationFrame(window._raf.id)
+                        }
+                    }, 60, window._raf)
+                },
+                stop: function () {
+                    cancelAnimationFrame(window._raf.id);
+                    window._raf.active = false
+                }
+            }
+        },
+
+        /**
+         * update component
+         *
+         * @public
+         * @return {Void}
+         * 
+         * @example
+         * var cmp = c(opts).init();
+         * cmp.update();
+         */
+        update: function () {
+            this.view.update()
+        },
+
+        /**
+         * mount component to dom
+         *
+         * @public
+         * @param  {ELement} a `element to mount to`
+         * @return {Object}    `componet object`
+         */
+        mount: function (root) {
+            var self = this;
+
+            // set prop states
+            if (self.state) {
                 each(self.state, function(a, b, c) {
                     c[b] = prop(a)
                 });
-                
-                // assign methods
-                if (self.methods) {
-                    self.methods = self.methods.call(
-                        self,
-                        self.state, 
-                        function () { 
-                            self.update() 
-                        },
-                        function (a, b, c) { 
-                            self.req(a, b, c)
-                        },
-                        self.loop()
-                    )
-                }
+            }
+            
+            // assign methods
+            if (self.ctrl) {
+                self.ctrl = self.ctrl.call(
+                    self,
+                    self.state, 
+                    function () { 
+                        self.update() 
+                    },
+                    function (a, b, c) { 
+                        self.req(a, b, c)
+                    },
+                    self.loop()
+                )
+            }
 
-                // on document ready mount to dom element    
-                document.onreadystatechange = function () {
-                    if (document.readyState === 'interactive') {
-                        // check if is dom node
-                        if (a === document) {
-                            a = document.body
-                        } else if (a && a[_c] === String) {
-                            a = document.querySelectorAll(a);
-            
-                            if (a.length === 0) {
-                                a = null;
-                            }
-                        } 
-            
-                        // can't find DOM element
-                        if (!a) {
-                            throw 'Please ensure the DOM element exists'
-                        }
-            
-                        // convert to array
-                        a = !!a.nodeType ? [a] : Array[_p].slice.call(a);
-            
-                        // clear dom element for mount
-                        each(a, function(a) {
-                            if (a.innerHTML.length !== 0) {
-                                a.innerHTML = ''
-                            }
-                        });
-            
-                        // initialize and add to dom element
-                        self.view = self.vdom(a, self.view);
+            // on document ready mount to dom element    
+            document.onreadystatechange = function () {
+                if (document.readyState === 'interactive') {
+                    // check if is element passed is a document node
+                    if (root === document) {
+                        root = document.body
+                    } else if (root && root.constructor === String) {
+                        root = document.querySelector(root)
+                    } 
                     
-                        // process constructor method
-                        if (self.methods[_c]) {
-                            self.methods[_c]()
-                        } 
+                    // can't the element
+                    if (!root || !root.nodeType) {
+                        throw 'Please ensure the DOM element exists'
                     }
+                    
+                    // clear dom element for mount
+                    if (root.innerHTML.length !== 0) {
+                        root.innerHTML = ''
+                    }
+
+                    // process constructor method
+                    if (self.ctrl[_c]) {
+                        self.ctrl[_c]()
+                    }
+        
+                    // initialize and add to dom element
+                    self.view = self.vdom(root, self.view);
                 }
             }
         }
-
-
-        /* -------------------------------------------------------------- */
-
-    
-        return new Surl()
     }
     
-    window.surl = surl
+    window.surl = function(){
+        return new surl()
+    }
 }())
