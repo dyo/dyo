@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Playground</title>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		
+		<style>
+			* { margin:0; padding:0; box-sizing: border-box; }
+
+			.app {
+				font-family:sans-serif; 
+			}
+
+			.-simple section,
+			.-page h1 {
+				max-width: 420px;
+				margin: 0 auto;
+				padding-top: 20px;
+			}
+			.-simple input { padding: 10px; width: 100%; margin: 20px 0; }
+
+			.card {
+				background: rgb(200,0,100);
+				width: 100%;
+				max-width: 420px;
+				margin: auto;
+				padding: 20px;
+				box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+				position: relative;
+				overflow: hidden;
+			}
+			.card:nth-child(-n+3) {
+				background: #9C27B0;
+			}
+			.card.animation-running { box-shadow: none; }
+			.card.animation-running * { opacity: 0;}
+			.card.animation-active {
+				position: fixed;
+				height: 100%;
+				max-width: 100%;
+				bottom: 0;
+				left: 0;
+				z-index: 100;
+				box-shadow: none;
+			}
+			.card p { 
+				
+				color:#FFF; 
+				pointer-events:none; 
+			}
+			body.animation-active { overflow: hidden; }
+		</style>
+	</head>
+	<body>
+		<div class="app"></div>
+
+		<script src="surl.min.js"></script>
+		<script>
+			var list = {
+				render: function () {
+					return h('main', null, 
+								this.list.map(function (a,i) {
+									return h('.card', {onclick: i > 2 ? animate : this.test,}, 
+												h('p', null, h('h1', null, a.id), a.value)
+											)
+								}.bind(this))
+							)
+				},
+				data: 'click me',
+				list: [
+					{id:0,value:'Click me 2**** to add 500 elements'}, 
+					{id:1,value:'and me...'},
+					{id:2,value:'Click me to animate'},
+					{id:3,value:'and me...'}
+				],
+				active: 0,
+				test: function() {
+					arr = [];
+					arr.push({id: '--', value: '?hello route'});
+
+					for (var i = 0; i < 1000; i++) {
+						arr.push({id:i, value: new Date() + performance.now()})
+					}
+					
+					this.list = arr
+				}
+			}
+
+			var simple = {
+				render: function (cmp) {
+					return h('main', null, 
+								h('section', null, 
+									h('h1', {onclick: this.test}, this.data),
+									h('input', {onchange: this.input})
+								),
+								cmp.list
+							);
+				},
+				data: 'This is the /simple view, click me to change view',
+				test: function () {
+					router.nav('/page')
+				},
+				input: function (e) {
+					this.data = e.currentTarget.value
+				} 
+			}
+
+			var page = {
+				render: function () {
+					return h('section', null,
+								h('h1', {onclick: this.goback}, 'This is the /page view, click me to change view')
+							)
+				},
+				goback: function () {
+					router.nav('/simple')
+				}
+			}
+
+			surl.add({
+				simple: simple, 
+				list: list,
+				page: page
+			})
+				.mount('.app')
+				.init();
+
+			router.on('/simple', 'simple')
+			router.on('/page', 'page')
+			router.nav('/simple')
+		</script>
+	</body>
+</html>
