@@ -10,6 +10,6 @@ simple vdom implementation.
 - hyperscript helper
 - fast.
 
-source code self documented, see index.html. 3kb min+gziped, 6.8kb min. 
+for the most part source code is self documented, see index.html. 3kb min+gziped, 6.8kb min. 
 
-###Supports: Chrome, Firefox, Safari, IE9+ (for now router is only IE10+)
+###Supports: Chrome, Firefox, Safari, IE9+ (for now the router only supports IE10+)
