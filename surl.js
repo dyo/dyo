@@ -615,7 +615,7 @@
                     };
 
                     // create and bind render
-                    cmp.render.fn = cmp.render.fn.bind(cmp, this.components),
+                    cmp.render.fn = cmp.render.fn.bind(cmp),
                     cmp.render    = this.__vdom(cmp.render.parent, cmp.render.fn);
 
                     cmp.render.init();
