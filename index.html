@@ -56,7 +56,7 @@
 	</head>
 	<body>
 		<div class="app"></div>
-		<script src="surl.min.js"></script>
+		<script src="surl.js"></script>
 		<script>
 			var app = new surl('.app');
 
@@ -125,62 +125,15 @@
 				}
 			});
 
-			app.router.on('/', simple);
-			app.router.on('/page', page);
+			// app.router.on('/', simple);
+			// app.router.on('/page', page);
 
-			// var element = document.createElement('div');
-			// 	   element.classList.add('app');
-			// you can mount an element like this
-			// app.parent = element;
-			// app.mount(simple)
-			// 
-			// or you can mount to a element like this
-			// app.mount(simple, element);
-			// 
-			// you can also pass a third element arg to mount to the route
-			// app.router.on('/', simple, element)
-			// app.router.on('/page', page, element)
-			// 
-			// or you can just
-			// app.parent = element;
-			// app.router.on('/', simple)
-			// 
-			// or when you init app
-			// var app = new surl(element) 
-			// you can also pass a selector
-			// var app = new surl('.app')
-			// then 
-			// app.mount(simple)
-			// 
-			// a component can be any object that has a render function that
-			// returns a virtual node
-			// {
-			// 		type: 'div'
-			// 		props: {},
-			// 		children.... | 'Text' | ...component
-			// }
-			// you can also use the build in hyperscript helper
-			// h('div', {}, ...children | 'Text' | ...component)
-			// 
-			// the router has 4 methods
-			// .on('url', callback/componentObject, ?element) // optional element
-			// .nav('url')
-			// .back()
-			// .foward()
-			// .go(-Number) || .go(+Number)
-			// 
-			// you can also set app.settings.loop = false
-			// to disable auto updates
-			// you can then trigger an update in a method i.e
-			// 
-			// var component = {
-			// 		render: function {},
-			// 		method: function {
-			// 			this.render.update()
-			// 			// you can also enbable auto auto udates
-			// 			this.render.loop(true)
-			// 		}
-			// }
+			app.router.on({
+				'/': simple,
+				'/page': page
+			})
+
+			// app.router.destroy();
 
 			console.log(app);
 		</script>

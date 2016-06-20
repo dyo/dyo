@@ -104,6 +104,7 @@ var component = {
 ```javascript
 // ? = optional
 - .on('url', callback/'component object', element?) 
+- .on({'/': simple, ...})
 - .nav('url')
 - .back()
 - .foward()

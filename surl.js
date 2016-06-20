@@ -171,8 +171,6 @@
 
             self.settings   = { loop: true },
             self.router     = {
-                routes: {},
-                raf: {id: 0},
                 nav: function (url) {
                     history.pushState(null, null, url)
                 },
@@ -185,10 +183,18 @@
                 go: function (index) {
                     history.go(index)
                 },
+                destroy: function () {
+                    this.routes = {};
+                    cancelAnimationFrame(this.raf.id);
+                },
                 listen: function () {
                     var self      = this,
                         loc       = window.location;
                         self.url  = self.url | loc.pathname;
+
+                    if (!self.raf) {
+                        self.raf = {id: 0}
+                    }
 
                     raf(function () {
                         var url  = loc.href.replace(loc.protocol+'//'+loc.hostname, '');
@@ -200,14 +206,32 @@
                     }, 60, self.raf)
                 },
                 on: function (url, callback, element) {
-                    if (this.interval === void 0) {
-                        this.url = window.location.pathname;
-                        this.listen()
+                    var self = this;
+
+                    if (!self.routes) {
+                        self.routes = {}
                     }
 
-                    this.routes[url] = {
-                        element: element,
-                        callback: callback
+                    // start listening for routeson the first .on()
+                    if (self.interval === void 0) {
+                        self.url = window.location.pathname;
+                        self.listen()
+                    }
+
+                    // an object of routes
+                    if (url[_c] === Object) {
+                        each(url, function (value, name) {
+                            self.routes[name] = {
+                                callback: value
+                            }
+                        })
+                    }
+                    // single routes
+                    else {
+                        self.routes[url] = {
+                            element: element,
+                            callback: callback
+                        }
                     }
                 },
                 changed: function () {
@@ -581,7 +605,7 @@
                 }
                 // can't find parent to mount to
                 else {
-                    throw 'The element to mount to does not exist'
+                    throw 'the element to mount to does not exist'
                 }
             },
 
