@@ -983,6 +983,8 @@
             } 
             else if (this[_c] === String) {
                 className = this
+            } else if (!className) {
+                className = 'animation-active';
             }
 
             // we need an end state class and element to run
