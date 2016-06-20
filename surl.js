@@ -21,10 +21,10 @@
         // references
         var raf = 'requestAnimationFrame',
             caf = 'cancelAnimationFrame',
-            v   = ['webkit', 'moz'],
+            v   = ['ms', 'moz', 'webkit'],
             vl  = v.length,
             af  = 'AnimationFrame',
-            lt = 0; 
+            lt  = 0;
             // last time
 
         // normalize vendors
@@ -39,7 +39,7 @@
                 var currTime   = new Date().getTime(),
                     timeToCall = Math.max(0, 16 - (currTime - lt)),
                     id         = window.setTimeout(function() { 
-                                    callback(currTime + timeToCall); 
+                                    callback(currTime + timeToCall)
                                  }, timeToCall);
 
                     lt = currTime + timeToCall;
@@ -120,53 +120,127 @@
     }
 
     /**
-     * Surl
-     *
-     * surl.settings.loop = false; //to disable loop, when you want to use this.render.update() 
-     * surl.add({ simple: componentA, list: componentB }) // add components
-     * surl.mount(document) // mount to document
-     * surl.init('simple') // initialize 'simple' as the base component
-     *
-     * component = {
-     *     render: function (components) {
-     *         return h('div')
-     *     }
-     *     ...
-     * } // made up of any number of properties
-     *   // a render property function is required
-     *   // that should return a hyperscript object
-     *   // example: {type: 'div', props: {}, ...children}
-     *   // you can access components in the render function
-     *   // from the first argument passed to the function i.e
-     *   //
-     *   // function (components) {
-     *   //     return h('main', null, 
-     *                     components.list
-     *                     h('h1', null, 'Another child')
-     *                 )
-     *   // }
-     *   // will set the list component as a child of h('main') before h('h1')
-     *   //
-     *   // you can also use this.render.update() to manualy trigger a render loop
-     *   // if you set the surl.settings.loop to false, by default it is true
-     *   // which enables the render loop... so manually you'd do something like
-     *   // 
-     *   // function () {
-     *   //     this.data = false
-     *   //     this.render.update() 
-     *   //     // triggers a render loop that updates the dom if it has changed
-     *   //     // which is this case it has since we updated the this.data value to false
-     *   //     // assuming it was at true to begin with.
-     *   // }
-     *
-     * 
+     * serialize + encode object
+     * @param  {Object}  a `object to serialize`
+     * @return {String}   serialized object
+     * @example
+     * // returns 'url=http%3A%2F%2F.com'
+     * param({url:'http://.com'})
      */
+    function param (a) {
+        var c = [];
+    
+        for (var d in a) {
+            var v = a[d];
+    
+            c.push(typeof v == 'object' ? param(v, d) : 
+                encodeURIComponent(d) + '=' + encodeURIComponent(v))
+        }
+    
+        return c.join('&')
+    }
+    
+    /**
+     * ajax helper
+     * @param  {Object}   settings `ajax settings object`
+     * @param  {Function} callback `function to run onload`
+     * @example
+     * // returns xhr Object
+     * ajax({url, method, data}, fn(res, err) => {})
+     */
+    function ajax (settings, callback) {
+        var xhr      = new XMLHttpRequest(),
+            location = window.location,
+            url      = settings.url,
+            callback = settings.callback,
+            method   = settings.method,
+            a        = document.createElement('a');
+            a.href   = url;
+    
+        // is this a CROSS ORIGIN REQUEST check
+        var CORS = !(
+            a.hostname === location.hostname &&
+            a.port === location.port &&
+            a.protocol === location.protocol &&
+            location.protocol !== 'file:'
+        );
+            a = null;
+    
+        xhr.open(method, url, true);
+    
+        xhr.onerror = function () {
+            callback(this, true)
+        };
+    
+        xhr.onload = function () {
+            // callback specified
+            if (callback) {
+                var params, response;
+    
+                if (this.status >= 200 && this.status < 400) {
+                    // determine return data type
+                    var type    = xhr.getResponseHeader("content-type"),
+                        typeArr = type.split(';');
+
+                        typeArr = type[0].split('/');
+                        type    = typeArr[typeArr.length-1];
+    
+                    // json
+                    if (type === 'json') {
+                        response = JSON.parse(xhr.responseText)
+                    }
+                    // html, create dom
+                    else if (type === 'html') {
+                        response = (new DOMParser()).parseFromString(xhr.responseText, "text/html")
+                    }
+                    // just text
+                    else {
+                        response = xhr.responseText
+                    }
+    
+                    params = [response, false]
+                } else {
+                    params = [this, true]
+                }
+    
+                callback(params[0], params[1])
+            }
+        }
+    
+        if (CORS) {
+            xhr.withCredentials = true
+        }
+    
+        if (method !== 'GET') {
+            // set type of data sent : text/json
+            xhr.setRequestHeader(
+                'Content-Type', 
+                settings.data[_c] === Object ? 'application/json' : 'text/plain'
+            )
+        }
+    
+        if (method === 'POST') {
+            xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            xhr.send(param(settings))
+        } else {
+            xhr.send()
+        }
+    
+        return xhr
+    }
+
+    // surl core
     window.surl = (function () {
+        /**
+         * surl
+         * @param  {Element?} parent - optional parent element
+         * @return {surl}
+         */
         function surl (parent) {
             var self = this;
 
             if (parent) {
-                self.parent = self.$(parent);
+                self.parent = self.__$(parent);
             }
 
             self.settings   = { loop: true },
@@ -191,15 +265,11 @@
                     var self      = this,
                         loc       = window.location;
                         self.url  = null;
-
-                    // create raf object
-                    if (!self.raf) {
-                        self.raf = {id: 0}
-                    }
+                        self.raf  = {id: 0};
 
                     // start listening for a a change in the url
                     raf(function () {
-                        var url  = loc.href.replace(loc.protocol+'//'+loc.hostname, '');
+                        var url = loc.href;
 
                         if (self.url !== url) {
                             self.url = url;
@@ -208,20 +278,25 @@
                     }, 60, self.raf)
                 },
                 on: function (url, callback) {
-                    var self = this;
+                    var self = this,
+                        routes;
 
                     // create routes object if it doesn't exist
                     if (!self.routes) {
                         self.routes = {}
                     }
 
+                    // start listening for route changes
+                    if (!self.raf) {
+                        self.listen()
+                    }
+
                     // normalize args for ({obj}) and (url, callback) styles
-                    var routes;
                     if (url[_c] !== Object) {
                         var args   = arguments;
                             routes = {};
                             routes[args[0]] = args[1];
-                    } 
+                    }
                     else {
                         routes = url;
                     }
@@ -557,7 +632,12 @@
                 return new vdom
             },
 
-            $: function (element) {
+            /**
+             * get element
+             * @param  {Selector|Element} element - an element or string
+             * @return {Element|Void}
+             */
+            __$: function (element) {
                 // can't use document, use body instead
                 if (element === document) {
                     element = element.body
@@ -568,6 +648,37 @@
                 }
 
                 return element && element.nodeType ? element : void 0;
+            },
+
+            /**
+             * make ajax requests
+             * @return {Object} xhr object
+             */
+            req: function () {
+                var args     = arguments,
+                    settings = {};
+
+                each(args, function (val) {
+                    if (val[_c] === Object) {
+                        settings.data = val
+                    }
+                    else if (val[_c] === Function) {
+                        settings.callback = val
+                    }
+                    else if (val[_c] === String) {
+                        var type = val.toUpperCase();
+
+                        if (type === 'POST' || type === 'GET') {
+                            settings.method = type
+                        } 
+                        else {
+                            settings.url = val
+                        }  
+                    }
+                });
+                
+                // process
+                ajax(settings)
             },
 
             /**

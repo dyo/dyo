@@ -144,3 +144,15 @@ render: function () {
 	)
 }
 ```
+
+##ajax
+
+```javascript
+app.req('/', 'GET', function (res, err) {
+
+})
+
+app.req('/', 'POST', {id: 1245}, function (res, err) {
+
+})
+```
