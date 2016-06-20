@@ -109,6 +109,7 @@ var component = {
 - .back()
 - .foward()
 - .go(-Number) || .go(+Number)
+- .destroy()
 ```
 example
 

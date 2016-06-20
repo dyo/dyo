@@ -103,7 +103,7 @@
         var then = new Date().getTime();
     
         // custom fps, otherwise fallback to 60
-        fps = fps | 60;
+        fps = fps || 60;
         var interval = 1000 / fps;
     
         return (function loop(time) {
@@ -190,12 +190,14 @@
                 listen: function () {
                     var self      = this,
                         loc       = window.location;
-                        self.url  = self.url | loc.pathname;
+                        self.url  = null;
 
+                    // create raf object
                     if (!self.raf) {
                         self.raf = {id: 0}
                     }
 
+                    // start listening for a a change in the url
                     raf(function () {
                         var url  = loc.href.replace(loc.protocol+'//'+loc.hostname, '');
 
@@ -205,66 +207,36 @@
                         }
                     }, 60, self.raf)
                 },
-                on: function (url, callback, element) {
+                on: function (url, callback) {
                     var self = this;
 
+                    // create routes object if it doesn't exist
                     if (!self.routes) {
                         self.routes = {}
                     }
 
-                    // start listening for routeson the first .on()
-                    if (self.interval === void 0) {
-                        self.url = window.location.pathname;
-                        self.listen()
-                    }
-
-                    // an object of routes
-                    if (url[_c] === Object) {
-                        each(url, function (value, name) {
-                            self.routes[name] = {
-                                callback: value
-                            }
-                        })
-                    }
-                    // single routes
+                    // normalize args for ({obj}) and (url, callback) styles
+                    var routes;
+                    if (url[_c] !== Object) {
+                        var args   = arguments;
+                            routes = {};
+                            routes[args[0]] = args[1];
+                    } 
                     else {
-                        self.routes[url] = {
-                            element: element,
-                            callback: callback
-                        }
+                        routes = url;
                     }
-                },
-                changed: function () {
-                    var _self = this;
 
-                    // we start of a route that looks like
-                    // routes = {
-                    //      '/:user/:id': fn
-                    // }
-                    each(_self.routes, function (value, name) {
-                        var callback = value.callback,
-                            element  = value.element;
-
-                        // lets not waste anyones time
-                        if (!callback || callback[_c] !== Function && callback[_c] !== Object) {
-                            throw 'please use a component or function'
-                        }
-
-                        var pattern   = name,
-                            url       = _self.url,
-                            variables = [],
+                    // assign routes
+                    each(routes, function (value, name) {
+                        var variables = [],
                             regex     = /([:*])(\w+)|([\*])/g,
-                            match;
-
-                        // given the following
-                        // /:user/:id/*
-                        // /simple/1234/what
-                        pattern = pattern.replace(regex, function () {
+                            // given the following /:user/:id/*
+                            pattern = name.replace(regex, function () {
                                         var args = arguments,
                                             id   = args[2];
                                             // 'user', 'id', undefned
 
-                                        // if undefined 
+                                        // if not a variable 
                                         if (!id) {
                                             return '(?:.*)'
                                         }
@@ -275,8 +247,25 @@
                                         }
                                     });
 
+                        self.routes[name] = {
+                            callback:  value,
+                            pattern:   pattern,
+                            variables: variables
+                        }
+                    })
+                },
+                changed: function () {
+                    var _self = this;
+
+                    each(_self.routes, function (val) {
+                        var callback  = val.callback,
+                            pattern   = val.pattern,
+                            variables = val.variables,
+                            url       = _self.url,
+                            match;
+
                         // exec pattern on url
-                        match   = url.match(new RegExp(pattern));
+                        match = url.match(new RegExp(pattern));
 
                         // we have a match
                         if (match) {
@@ -301,7 +290,7 @@
                             }
                             // callback is a component, mount
                             else if (!!callback.render) {
-                                self.mount(callback, element, args)
+                                self.mount(callback, null, args)
                             }
                             // can't process
                             else {
@@ -382,7 +371,8 @@
                     if (!newVal) {
                         // -1 : remove prop
                         prop(target, name, oldVal, -1)
-                    } else if (!oldVal || newVal !== oldVal) {
+                    } 
+                    else if (!oldVal || newVal !== oldVal) {
                         // + 1 : add/update prop
                         prop(target, name, newVal, +1)
                     }
@@ -426,7 +416,8 @@
                         // check if is namespaced
                         if (node.props && node.props.xmlns) {
                             el = document.createElementNS(node.props.xmlns, node.type)
-                        } else {
+                        } 
+                        else {
                             el = document.createElement(node.type)
                         }
                         
@@ -720,7 +711,7 @@
                         attr = attr.replace(/\\(["'])/g, '$1')
                     }
                     // if attr value is an empty string assign true
-                    props[match[4]] = attr | true
+                    props[match[4]] = attr || true
                 }
             }
 
@@ -859,22 +850,28 @@
 
                 if (arg[_c] === Array) {
                     transform = arg.join(' ')
-                } else if (arg[_c] === Number) {
+                } 
+                else if (arg[_c] === Number) {
                     duration = arg
-                } else if (arg[_c] === String) {
-                    if (arg.indexOf(',') !== -1) { easing = arg }
-                    else { className = arg }
-                } else if (!!arg.target) {
+                } 
+                else if (arg[_c] === String) {
+                    if (arg.indexOf(',') !== -1) { 
+                        easing = arg 
+                    }
+                    else { 
+                        className = arg 
+                    }
+                } 
+                else if (!!arg.target) {
                     element = arg.target
                 }
             }
 
             if (this[_c] === Number) {
                 duration = this
-            } else if (this[_c] === String) {
+            } 
+            else if (this[_c] === String) {
                 className = this
-            } else if (!className) {
-                className = 'animation-active';
             }
 
             // we need an end state class and element to run

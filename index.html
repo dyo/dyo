@@ -125,13 +125,11 @@
 				}
 			});
 
-			// app.router.on('/', simple);
-			// app.router.on('/page', page);
-
 			app.router.on({
-				'/': simple,
+				'/*': simple,
 				'/page': page
 			})
+			app.router.listen();
 
 			// app.router.destroy();
 
