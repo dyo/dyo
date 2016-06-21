@@ -2,16 +2,16 @@
 -
 
 - safe templates,  
-- animations.
+- animations helper.
 - router.
 - components.
-- fast.
 - hyperscript.
 - opt in/out auto render. 
+- ajax helper
 
 #####Supports: Chrome, Firefox, Safari, IE10+
 
-3.4kb minified+gzipped, 7.2kb minified. 
+4kb minified+gzipped, 8.8kb minified. 
 
 
 

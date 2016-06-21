@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "module": "amd",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outFile": "../dist/surl.js",
+        "sourceMap": true,
+        "target": "es5"
+    },
+    "files": [
+        "surl.ts"
+    ]
+}

@@ -13,7 +13,7 @@
      * -------------------------------------------------------------- */
 
     // polyfills
-    (function () {
+    (function (window: any) {
         /**
          * requestAnimationFrame Polyfill
          */
@@ -35,7 +35,7 @@
 
         // raf doesn't exist, polyfill it
         if (!window[raf]) {
-            window[raf] = function(callback) {
+            window[raf] = function(callback: Function) {
                 var currTime   = new Date().getTime(),
                     timeToCall = Math.max(0, 16 - (currTime - lt)),
                     id         = window.setTimeout(function() { 
@@ -49,17 +49,16 @@
         }
 
         if (!window[caf]) {
-            window[caf] = function(id) {
+            window[caf] = function(id: number) {
                 clearTimeout(id)
             }
         }
-    }());
+    }(window));
 
     // references
-    var _c         = 'constructor',
-        _namespace = {
-            math: 'http://www.w3.org/1998/Math/MathML',
-            svg: 'http://www.w3.org/2000/svg',
+    var namespaces: any = {
+            math:  'http://www.w3.org/1998/Math/MathML',
+            svg:   'http://www.w3.org/2000/svg',
             xlink: 'http://www.w3.org/1999/xlink'
         };
 
@@ -69,28 +68,31 @@
      * @param  {Function}     b
      * @return {Array|Object}
      */
-    function each (a, b) {
-        var i;
+    function each (arg: any[]|any, callback: Function) {
+        let index: number = 0,
+            name: string;
 
         // Handle arrays
-        if (a[_c] === Array) {
-            var l = a.length;
-                i = 0;
+        if (arg.constructor === Array) {
+            let arr: any[]     = arg,
+                length: number = arr.length;
 
-            for(; i < l; ++i) {
-                if ( b.call(a[i], a[i], i, a) === false ) 
-                    return a
+            for (; index < length; ++index) {
+                if (callback.call(arr[index], arr[index], index, arr) === false) {
+                    return arr
+                }
             }
         }
         // Handle objects 
         else {
-            for (i in a) {
-                if ( b.call(a[i], a[i], i, a) === false ) 
-                    return a
+            let obj: any = arg;
+            
+            for (name in obj) {
+                if (callback.call(obj[name], obj[name], name, obj) === false) {
+                    return obj
+                }
             }
         }
-
-        return a
     }
 
     /**
@@ -99,22 +101,22 @@
      * @param  {Number}   fps - frames per second
      * @param  {Object}   raf - object to request animation frame reference
      */
-    function raf (fn, fps, raf) {
-        var then = new Date().getTime();
+    function raf (callback: Function, fps: number, raf: any) {
+        let then = new Date().getTime();
     
         // custom fps, otherwise fallback to 60
         fps = fps || 60;
-        var interval = 1000 / fps;
+        let interval = 1000 / fps;
     
-        return (function loop(time) {
-            raf.id = requestAnimationFrame(loop)
+        return (function loop(time: number) {
+            raf.id    = requestAnimationFrame(loop)
 
-            var now = new Date().getTime(),
+            var now   = new Date().getTime(),
                 delta = now - then;
     
             if (delta > interval) {
                 then = now - (delta % interval);
-                fn(time)
+                callback(time)
             }
         }(0))
     }
@@ -127,17 +129,17 @@
      * // returns 'url=http%3A%2F%2F.com'
      * param({url:'http://.com'})
      */
-    function param (a) {
-        var c = [];
+    function param (arg: any): string {
+        let arr: any[] = [];
     
-        for (var d in a) {
-            var v = a[d];
+        for (let name in arg) {
+            let value = arg[name];
     
-            c.push(typeof v == 'object' ? param(v, d) : 
-                encodeURIComponent(d) + '=' + encodeURIComponent(v))
+            arr.push(typeof value == 'object' ? param(value) : 
+                encodeURIComponent(name) + '=' + encodeURIComponent(value))
         }
     
-        return c.join('&')
+        return arr.join('&')
     }
     
     /**
@@ -148,12 +150,13 @@
      * // returns xhr Object
      * ajax({url, method, data}, fn(res, err) => {})
      */
-    function ajax (settings, callback) {
+    function ajax (settings: {url: string, method: string, data: any, callback: Function}) {
         var xhr      = new XMLHttpRequest(),
             location = window.location,
             url      = settings.url,
             callback = settings.callback,
             method   = settings.method,
+            data     = settings.data,
             a        = document.createElement('a');
             a.href   = url;
     
@@ -175,11 +178,12 @@
         xhr.onload = function () {
             // callback specified
             if (callback) {
-                var params, response;
+                let params: any[], 
+                    response: string|Node;
     
                 if (this.status >= 200 && this.status < 400) {
                     // determine return data type
-                    var type    = xhr.getResponseHeader("content-type"),
+                    let type    = xhr.getResponseHeader("content-type"),
                         typeArr = type.split(';');
 
                         typeArr = type[0].split('/');
@@ -215,7 +219,7 @@
             // set type of data sent : text/json
             xhr.setRequestHeader(
                 'Content-Type', 
-                settings.data[_c] === Object ? 'application/json' : 'text/plain'
+                data.constructor === Object ? 'application/json' : 'text/plain'
             )
         }
     
@@ -230,14 +234,14 @@
     }
 
     // surl core
-    window.surl = (function () {
+    let surl = (function () {
         /**
          * surl
          * @param  {Element?} parent - optional parent element
          * @return {surl}
          */
-        function surl (parent) {
-            var self = this;
+        function surl (parent: string|Element) {
+            let self = this;
 
             if (parent) {
                 self.parent = self.__$(parent);
@@ -245,16 +249,16 @@
 
             self.settings   = { loop: true },
             self.router     = {
-                nav: function (url) {
+                nav: function (url: string) {
                     history.pushState(null, null, url)
                 },
                 back: function () {
                     history.back()
                 },
                 foward: function () {
-                    history.foward()
+                    (history as any).foward()
                 },
-                go: function (index) {
+                go: function (index: number) {
                     history.go(index)
                 },
                 destroy: function () {
@@ -262,14 +266,14 @@
                     cancelAnimationFrame(this.raf.id);
                 },
                 listen: function () {
-                    var self      = this,
+                    let self      = this,
                         loc       = window.location;
                         self.url  = null;
                         self.raf  = {id: 0};
 
                     // start listening for a a change in the url
                     raf(function () {
-                        var url = loc.href;
+                        let url = loc.href;
 
                         if (self.url !== url) {
                             self.url = url;
@@ -277,9 +281,9 @@
                         }
                     }, 60, self.raf)
                 },
-                on: function (url, callback) {
-                    var self = this,
-                        routes;
+                on: function (url: string|any, callback: Function) {
+                    let self = this,
+                        routes: any;
 
                     // create routes object if it doesn't exist
                     if (!self.routes) {
@@ -292,8 +296,8 @@
                     }
 
                     // normalize args for ({obj}) and (url, callback) styles
-                    if (url[_c] !== Object) {
-                        var args   = arguments;
+                    if (url.constructor !== Object) {
+                        let args   = arguments;
                             routes = {};
                             routes[args[0]] = args[1];
                     }
@@ -302,12 +306,12 @@
                     }
 
                     // assign routes
-                    each(routes, function (value, name) {
-                        var variables = [],
+                    each(routes, function (callback: Function, name: string) {
+                        let variables: any[] = [],
                             regex     = /([:*])(\w+)|([\*])/g,
                             // given the following /:user/:id/*
                             pattern = name.replace(regex, function () {
-                                        var args = arguments,
+                                        let args = arguments,
                                             id   = args[2];
                                             // 'user', 'id', undefned
 
@@ -323,21 +327,21 @@
                                     });
 
                         self.routes[name] = {
-                            callback:  value,
+                            callback:  callback,
                             pattern:   pattern,
                             variables: variables
                         }
                     })
                 },
                 changed: function () {
-                    var _self = this;
+                    let _self = this;
 
-                    each(_self.routes, function (val) {
-                        var callback  = val.callback,
+                    each(_self.routes, function (val: {callback: Function, pattern: string, variables: any[]}) {
+                        let callback  = val.callback,
                             pattern   = val.pattern,
                             variables = val.variables,
                             url       = _self.url,
-                            match;
+                            match: any[];
 
                         // exec pattern on url
                         match = url.match(new RegExp(pattern));
@@ -346,7 +350,7 @@
                         if (match) {
                             // create params object to pass to callback
                             // i.e {user: "simple", id: "1234"}
-                            var args = match
+                            let args = match
                                 // remove the first(url) value in the array
                                 .slice(1, match.length)
                                 .reduce(function (args, val, i) {
@@ -360,11 +364,11 @@
                                 }, null);
 
                             // callback is a function, exec with args
-                            if (callback[_c] === Function) {
+                            if (callback.constructor === Function) {
                                 callback(args)
                             }
                             // callback is a component, mount
-                            else if (!!callback.render) {
+                            else if (callback.hasOwnProperty('render')) {
                                 self.mount(callback, null, args)
                             }
                             // can't process
@@ -386,21 +390,21 @@
              */
             __vdom: function () {
                 // events
-                function isEventProp (name) {
+                function isEventProp (name: string) {
                     // checks if the first two characters are on
                     return name.substring(0,2) === 'on'
                 }
             
-                function extractEventName (name) {
+                function extractEventName (name: string) {
                     // removes the first two characters and converts to lowercase
                     return name.substring(2, name.length).toLowerCase()
                 }
             
-                function addEventListeners (target, props) {
-                    for (var name in props) {
+                function addEventListeners (target: Element, props: any) {
+                    for (let name in props) {
                         if (isEventProp(name)) {
                             // callback
-                            var callback = props[name];
+                            let callback = props[name];
             
                             if (callback) {
                                 target.addEventListener(extractEventName(name), callback, false)
@@ -410,39 +414,39 @@
                 }
             
                 // assign/update/remove props
-                function prop (target, name, value, op) {
+                function prop (target: any, name: string, value: string|boolean, op: number) {
                     if (isEventProp(name)) {
                         return
                     }
             
                     // remove / add attribute reference
-                    var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
+                    let attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
             
                     // if the target has an attr as a property, 
                     // change that aswell
                     if (
                         target[name] !== void 0 && 
-                        target.namespaceURI !== _namespace['svg']
+                        target.namespaceURI !== namespaces['svg']
                     ) {
                         target[name] = value
                     }
 
                     // set xlink:href attr
                     if (name === 'xlink:href') {
-                        return target.setAttributeNS(_namespace['xlink'], 'href', value)
+                        return target.setAttributeNS(namespaces['xlink'], 'href', value)
                     }
             
                     // don't set namespace attrs
                     // keep the presented dom clean
                     if (
-                        value !== _namespace['svg'] && 
-                        value !== _namespace['math']
+                        value !== namespaces['svg'] && 
+                        value !== namespaces['math']
                     ) {
                         return op === -1 ? target[attr](name) : target[attr](name, value)
                     }
                 }
             
-                function updateElementProp (target, name, newVal, oldVal) {
+                function updateElementProp (target: Element, name: string, newVal: string, oldVal: string) {
                     if (!newVal) {
                         // -1 : remove prop
                         prop(target, name, oldVal, -1)
@@ -453,11 +457,11 @@
                     }
                 }
             
-                function updateElementProps (target, newProps, oldProps) {
+                function updateElementProps (target: any, newProps: any, oldProps: any) {
                     oldProps  = oldProps !== void 0 ? oldProps : {};
 
                     // merge old and new props
-                    var props = {};
+                    var props: any = {};
                     for (var name in newProps) { props[name] = newProps[name] }
                     for (var name in oldProps) { props[name] = oldProps[name] }
             
@@ -465,26 +469,26 @@
                     // if name not in newProp[name] : deleted
                     // if name not in oldProp[name] : added
                     // if name in oldProp !== name in newProp : updated
-                    for (var name in props) {
+                    for (let name in props) {
                         updateElementProp(target, name, newProps[name], oldProps[name])
                     }
                 }
             
-                function setElementProps (target, props) {
-                    for (var name in props) {
+                function setElementProps (target: Element, props: any) {
+                    for (let name in props) {
                         // initial creation, no checks, just set
                         prop(target, name, props[name], +1)
                     }
                 }
             
                 // create element
-                function createElement (node) {
+                function createElement (node: any): Node {
                     // handle text nodes
-                    if (node[_c] === String) {
+                    if (node.constructor === String) {
                         return document.createTextNode(node)
                     }
 
-                    var el;
+                    let el: Element;
 
                     if (!node.render) {
                         // not a text node 
@@ -502,7 +506,7 @@
                         addEventListeners(el, node.props);
                         
                         // only map children arrays
-                        if (node.children && node.children[_c] === Array) {
+                        if (node.children && node.children.constructor === Array) {
                             each(node.children.map(createElement), el.appendChild.bind(el))
                         }
                     }
@@ -515,11 +519,11 @@
             
             
                 // diffing a node
-                function changed (node1, node2) {
+                function changed (node1: any, node2: any) {
                         // diff object type
-                    var isDiffType  = node1[_c] !== node2[_c],
+                    let isDiffType  = node1.constructor !== node1.constructor,
                         // diff text content
-                        isDiffText  = node1[_c] === String && node1 !== node2,
+                        isDiffText  = node1.constructor === String && node1 !== node2,
                         // diff dom type
                         isDiffDom   = node1.type !== node2.type;
             
@@ -527,22 +531,22 @@
                 }
                 
                 // validate
-                function validate (a) {
+                function validate (arg: any) {
                     // converts 0 | false to strings
-                    if (a !== void 0 && (a === null || a === 0 || a === false)) {
-                        a = a + ''
+                    if (arg !== void 0 && (arg === null || arg === 0 || arg === false)) {
+                        arg = arg + ''
                     }
             
-                    return a
+                    return arg
                 }
             
                 // update
-                function update (parent, newNode, oldNode, index) {
+                function update (parent: Node, newNode: any, oldNode?: any, index?: number) {
                     index = index ? index : 0;
             
                     oldNode = validate(oldNode);
                     newNode = validate(newNode);
-            
+
                     // adding to the dom
                     if (!oldNode) {
                         parent.appendChild(createElement(newNode))
@@ -561,77 +565,80 @@
                         updateElementProps(parent.childNodes[index], newNode.props, oldNode.props);
                         
                         // loop through all children
-                        var newLength = newNode.children.length,
-                            oldLength = oldNode.children.length;
+                        let newLength: number = newNode.children.length,
+                            oldLength: number = oldNode.children.length;
             
-                        for (var i = 0; i < newLength || i < oldLength; i++) {
+                        for (let i = 0; i < newLength || i < oldLength; i++) {
                             update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
                         }
                     }
                 }
                 
-                // get and assign arguments
-                var args   = arguments,
-                    parent = args[0],
-                    render = args[1];
-
-                // vdom public interface
-                function vdom () {
-                    // root reference
-                    this.parent = parent,
-                    // local copy of dynamic hyperscript reference
-                    this.fn = render,
-                    // raf
-                    this.raf = null;
-                }
-                // refresh/update dom
-                vdom.prototype.update = function () {
-                    // get latest change
-                    var newNode = this.fn(),
-                        // get old copy
-                        oldNode = this.old;
-
-                    update(this.parent, newNode, oldNode);
-            
-                    // update old node
-                    this.old = newNode
-                }
-                // init mount to dom
-                vdom.prototype.init = function () {
-                    // local copy of static hyperscript refence
-                    this.old = this.fn();
-                    // initial mount
-                    update(this.parent, this.old)
-                }
-                // activate requestAnimationframe loop
-                vdom.prototype.auto = function (start) {
-                    var self = this;
-
-                    // start
-                    if (start) {
-                        self.raf = {
-                            id:1
-                        };
-
-                        // requestAnimationFrame at 60 fps
-                        raf(function () {
-                            self.update()
-                        }, 60, self.raf)
+                // vdom object
+                class vdom {
+                    parent: Element;
+                    fn: Function;
+                    raf: any;
+                    old: any;
+                    
+                    constructor(parent: any, render: any) {
+                        // root reference
+                        this.parent = parent,
+                        // local copy of dynamic hyperscript reference
+                        this.fn = render
                     }
-                    // stop
-                    else {
-                        // push to the end of the callstack
-                        // lets the current update trigger
-                        // before stopping
-                        setTimeout(function () {
-                            cancelAnimationFrame(self.raf.id)
-                        }, 0);
+                    
+                    // refresh/update dom
+                    update () {
+                        // get latest change
+                        let newNode = this.fn(),
+                            // get old copy
+                            oldNode = this.old;
 
-                        return self.raf.id
+                        update(this.parent, newNode, oldNode);
+                    
+                        // update old node
+                        this.old = newNode
+                    }
+                    
+                    // init mount to dom
+                    init () {
+                        // local copy of static hyperscript refence
+                        this.old = this.fn();
+                        // initial mount
+                        update(this.parent, this.old)
+                    }
+                    
+                    // activate requestAnimationframe loop
+                    auto (start: boolean) {
+                        let self = this;
+
+                        // start
+                        if (start) {
+                            self.raf = {
+                                id:1
+                            };
+
+                            // requestAnimationFrame at 60 fps
+                            raf(function () {
+                                self.update()
+                            }, 60, self.raf)
+                        }
+                        // stop
+                        else {
+                            // push to the end of the callstack
+                            // lets the current update trigger
+                            // before stopping
+                            setTimeout(function () {
+                                cancelAnimationFrame(self.raf.id)
+                            }, 0);
+
+                            return self.raf.id
+                        }
                     }
                 }
             
-                return new vdom
+                return vdom
             },
 
             /**
@@ -639,13 +646,13 @@
              * @param  {Selector|Element} element - an element or string
              * @return {Element|Void}
              */
-            __$: function (element) {
+            __$: function (element: any): Element|void {
                 // can't use document, use body instead
                 if (element === document) {
                     element = element.body
                 }
                 // query selector if string
-                else if (element[_c] === String) {
+                else if (element.constructor === String) {
                     element = document.querySelector(element)
                 }
 
@@ -657,17 +664,22 @@
              * @return {Object} xhr object
              */
             req: function () {
-                var args     = arguments,
-                    settings = {};
+                let args = arguments,
+                    settings = {
+                        method: 'GET',
+                        data: {},
+                        callback: function(){},
+                        url: ''
+                    };
 
-                each(args, function (val) {
-                    if (val[_c] === Object) {
+                each(args, function (val: any) {
+                    if (val.constructor === Object) {
                         settings.data = val
                     }
-                    else if (val[_c] === Function) {
+                    else if (val.constructor === Function) {
                         settings.callback = val
                     }
-                    else if (val[_c] === String) {
+                    else if (val.constructor === String) {
                         var type = val.toUpperCase();
 
                         if (type === 'POST' || type === 'GET') {
@@ -687,7 +699,7 @@
              * initialize 
              * @param {String} id - base component to mount to dom
              */
-            mount: function (cmp, element, args) {
+            mount: function (cmp: any, element: Element, args: any) {
                 var self = this;
 
                 // add parent now
@@ -718,11 +730,11 @@
              * @param  {Object} component - component object
              * @return {Object}           - component
              */
-            component: function (cmp) {
+            component: function (cmp: any) {
                 // bind the component scope to all functions that are not 'render'
-                each(cmp, function(a, b, c) {
-                    if (b !== 'render' && a[_c] === Function) {
-                        c[b] = a.bind(cmp)
+                each(cmp, function(value: any, name: string, obj: any) {
+                    if (name !== 'render' && value.constructor === Function) {
+                        obj[name] = value.bind(cmp)
                     }
                 })
 
@@ -735,7 +747,7 @@
                 }
 
                 // initialize render
-                if (cmp.render[_c] === Function) {
+                if (cmp.render.constructor === Function) {
                     // assign parent
                     cmp.render = {
                         fn:     cmp.render,
@@ -743,9 +755,13 @@
                     };
 
                     // create and bind render
-                    cmp.render.fn = cmp.render.fn.bind(cmp),
-                    cmp.render    = this.__vdom(cmp.render.parent, cmp.render.fn);
+                    cmp.render.fn = cmp.render.fn.bind(cmp);
 
+                    // get vdom
+                    let vdom = this.__vdom();
+                    // instantiate vdom
+                    cmp.render = new vdom(cmp.render.parent, cmp.render.fn);
+                    // initialize                    
                     cmp.render.init();
 
                     // activate loop, if settings.loop = true
@@ -772,7 +788,7 @@
 
 
     // hyperscript helper
-    window.h = (function () {
+    let h = (function () {
         /**
          * hyperscript tagger
          * @param  {Object} a - object with opt props key
@@ -782,9 +798,9 @@
          * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
          * tag('inpu#id[type=checkbox]')
          */
-        function tag (obj) {
-            var classes = [], 
-                match,
+        function tag (obj: any) {
+            var classes: any[] = [], 
+                match: any,
                 parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
 
                 // copy obj's props to abstract props and type
@@ -845,20 +861,25 @@
          * @param  {Any} a
          * @return {String|Array|Object}
          */
-        function set (a, obj) {
+        function set (arg: any, obj: any) {
             // add obj.prop to children if they are none TextNodes
-            if (a && a[_c] === Object && obj.props.xmlns) {
-                a.props.xmlns = obj.props.xmlns
+            if (arg && arg.constructor === Object && obj.props.xmlns) {
+                arg.props.xmlns = obj.props.xmlns
             }
 
-            a = a !== void 0 && a !== null && (a[_c] === Object || a[_c] === String || a[_c] === Array) ? 
-                a : 
-                a + '';
+            arg = arg !== void 0 && 
+                arg !== null && 
+                (arg.constructor === Object || 
+                arg.constructor === String || 
+                arg.constructor === Array) ? 
+            
+                arg : 
+                arg + '';
             // convert the null, and undefined strings to empty strings
             // we don't convert false since that could 
             // be a valid value returned to the client
-            a = a === 'null' || a === 'undefined' ? '' : a;
-            return a
+            arg = arg === 'null' || arg === 'undefined' ? '' : arg;
+            return arg
         }
 
         /**
@@ -870,14 +891,13 @@
          * h('div', {class: 'close'}, 'Text Content')
          * h('div', null, h('h1', 'Text'));
          */
-        function hyperscript (type, props) {
+        function hyperscript (type: string, props: any) {
             var len = arguments.length,
                 key = 2,
-                child,
-                obj = {type: type, props: props, children: []};
+                obj: {children: any[], type: string, props: any} = {type: type, props: props, children: []};
 
             // insure props is always an object
-            if (obj.props === null || obj.props === void 0 || obj.props[_c] !== Object) {
+            if (obj.props === null || obj.props === void 0 || obj.props.constructor !== Object) {
                 obj.props = {}
             }
 
@@ -900,18 +920,18 @@
             if (obj.type === 'svg' || obj.type === 'math') {
                 // only add the namespace if it's not already set
                 if (!obj.props.xmlns) {
-                    obj.props.xmlns = _namespace[obj.type]
+                    obj.props.xmlns = namespaces[obj.type]
                 }
             }
 
             // construct children
             for (var i = key; i < len; i++) {
                 // reference to current layer
-                child = arguments[i];
+                let child = arguments[i];
         
                 // if the child is an array go deeper
                 // and set the 'arrays children' as children
-                if (child && child[_c] === Array) {
+                if (child && child.constructor === Array) {
                     for (var k = 0; k < child.length; k++) {
                         obj.children[(i-key) + k] = set(child[k], obj)
                     }
@@ -929,7 +949,7 @@
     }());
 
     // animate helper
-    window.animate = (function () {
+    let animate = (function () {
         /**
          * animate component/element
          * 
@@ -952,8 +972,18 @@
          */
         function animate() {
             // declare variables
-            var args, className, duration, transform, easing, element,
-                first, last, invert, animation, webAnimations,
+            var args: any[], 
+                className: string, 
+                duration: number, 
+                transform: any[], 
+                easing: string, 
+                element: any,
+                first: any, 
+                last: any, 
+                invert: any, 
+                animation: any, 
+                webAnimations: boolean;
+                
                 first = last = invert = animation = {},
                 // assign arguments
                 args = Array.prototype.slice.call(arguments);
@@ -961,13 +991,13 @@
             for (var i = args.length - 1; i >= 0; i--) {
                 var arg = args[i];
 
-                if (arg[_c] === Array) {
+                if (arg.constructor === Array) {
                     transform = arg.join(' ')
                 } 
-                else if (arg[_c] === Number) {
+                else if (arg.constructor === Number) {
                     duration = arg
                 } 
-                else if (arg[_c] === String) {
+                else if (arg.constructor === String) {
                     if (arg.indexOf(',') !== -1) { 
                         easing = arg 
                     }
@@ -980,10 +1010,10 @@
                 }
             }
 
-            if (this[_c] === Number) {
+            if (this.constructor === Number) {
                 duration = this
             } 
-            else if (this[_c] === String) {
+            else if (this.constructor === String) {
                 className = this
             } else if (!className) {
                 className = 'animation-active';
@@ -1011,8 +1041,8 @@
             // animation type
             // if this is set we opt for the more performant
             // web animations api
-            if (element.animate && element.animate[_c] === Function) {
-                var webAnimations = true
+            if (element.animate && element.animate.constructor === Function) {
+                webAnimations = true
             }
 
             animation.first = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+' scale('+invert.sx+','+invert.sy+')',
@@ -1048,7 +1078,7 @@
             }
 
             // cleanup
-            function onfinish(e) {
+            function onfinish(e: Event) {
                 if (!webAnimations) {
                     // bubbled events
                     if (e.target != element) {
@@ -1072,4 +1102,8 @@
 
         return animate
     }());
+    
+    (window as any).surl = surl;
+    (window as any).h = h;
+    (window as any).animate = animate;
 }())
