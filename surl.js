@@ -514,16 +514,16 @@
                 }
             
             
-                // diffing (simple)
+                // diffing a node
                 function changed (node1, node2) {
-                    // diff object type
-                    var isType  = node1[_c] !== node2[_c],
-                        // diff content
-                        isDiff  = node1[_c] === String && node1 !== node2,
+                        // diff object type
+                    var isDiffType  = node1[_c] !== node2[_c],
+                        // diff text content
+                        isDiffText  = node1[_c] === String && node1 !== node2,
                         // diff dom type
-                        hasType = node1.type !== node2.type;
+                        isDiffDom   = node1.type !== node2.type;
             
-                    return isType || isDiff || hasType
+                    return isDiffType || isDiffText || isDiffDom
                 }
                 
                 // validate
@@ -557,8 +557,10 @@
                     }
                     // the lookup loop
                     else if (newNode.type) {
+                        // diff, update props
                         updateElementProps(parent.childNodes[index], newNode.props, oldNode.props);
-            
+                        
+                        // loop through all children
                         var newLength = newNode.children.length,
                             oldLength = oldNode.children.length;
             

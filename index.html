@@ -65,7 +65,7 @@
 				render: function () {
 					return h('main', null, 
 								this.list.map(function (a,i) {
-									return h('.card', {onmousedown: i > 2 ? animate : this.test}, 
+									return h('.card', {onmousedown: i > 2 ? animate.bind('animation-active', 220) : this.test}, 
 												h('p', null, h('h1', null, a.id), a.value)
 											)
 								}.bind(this))
