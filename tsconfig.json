@@ -1,14 +1,15 @@
 {
+    "compileOnSave": true,
     "compilerOptions": {
         "module": "amd",
         "noImplicitAny": true,
         "removeComments": true,
         "preserveConstEnums": true,
-        "outFile": "../dist/surl.js",
+        "outFile": "dist/surl.js",
         "sourceMap": true,
         "target": "es5"
     },
     "files": [
-        "surl.ts"
+        "src/surl.ts"
     ]
 }
