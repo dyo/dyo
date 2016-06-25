@@ -592,56 +592,59 @@
                 // raf
                 this.raf = null;
             }
-            // refresh/update dom
-            vdom.prototype.update = function () {
-                // get latest change
-                var newNode = this.render(),
-                    // get old copy
-                    oldNode = this.old;
+            vdom.prototype = {
+                // refresh/update dom
+                update: function () {
+                    // get latest change
+                    var newNode = this.render(),
+                        // get old copy
+                        oldNode = this.old;
 
-                diff(this.parent, newNode, oldNode);
-        
-                // update old node
-                this.old = newNode
-            }
-            // init mount to dom
-            vdom.prototype.init = function () {
-                // local copy of static hyperscript refence
-                this.old = this.render();
-                // initial mount
-                diff(this.parent, this.old)
-            }
-            vdom.prototype.destroy = function () {
-                this.auto(false);
+                    diff(this.parent, newNode, oldNode);
+            
+                    // update old node
+                    this.old = newNode
+                },
+                // init mount to dom
+                init: function () {
+                    // local copy of static hyperscript refence
+                    this.old = this.render();
+                    // initial mount
+                    diff(this.parent, this.old)
+                },
+                // destory
+                destroy: function () {
+                    this.auto(false);
 
-                this.old    = void 0,
-                this.render = void 0,
-                this.raf    = void 0,
-                this.parent = void 0;
-            }
-            // activate requestAnimationframe loop
-            vdom.prototype.auto = function (start) {
-                var self = this;
+                    this.old    = void 0,
+                    this.render = void 0,
+                    this.raf    = void 0,
+                    this.parent = void 0;
+                },
+                // activate requestAnimationframe loop
+                auto: function (start) {
+                    var self = this;
 
-                // start
-                if (start) {
-                    self.raf = {
-                        id:1
-                    };
+                    // start
+                    if (start) {
+                        self.raf = {
+                            id:1
+                        };
 
-                    // requestAnimationFrame at 60 fps
-                    raf(function () {
-                        self.update()
-                    }, 60, self.raf)
-                }
-                // stop
-                else {
-                    // push to the end of the callstack
-                    // lets the current update trigger
-                    // before stopping
-                    cancelAnimationFrame(self.raf.id)
+                        // requestAnimationFrame at 60 fps
+                        raf(function () {
+                            self.update()
+                        }, 60, self.raf)
+                    }
+                    // stop
+                    else {
+                        // push to the end of the callstack
+                        // lets the current update trigger
+                        // before stopping
+                        cancelAnimationFrame(self.raf.id)
 
-                    return self.raf.id
+                        return self.raf.id
+                    }
                 }
             }
         
@@ -698,20 +701,20 @@
         },
 
         /**
-         * initialize 
+         * initialize/mount
          * @param {String} id - base component to mount to dom
          */
-        mount: function (cmp, el, params) {
+        mount: function (cmp, element, params) {
             var self = this,
                 params;
 
             // add parent element
-            if (el) {
-                if (el[_c] === String) {
-                    self.parent = document.querySelector(el)
+            if (element) {
+                if (element[_c] === String) {
+                    self.parent = document.querySelector(element)
                 }
-                else if (el.nodeType) {
-                    self.parent = el
+                else if (element.nodeType) {
+                    self.parent = element
                 }
             }
 
@@ -736,7 +739,7 @@
                 self.vdom.init();
 
                 // activate loop, if settings.loop = true
-                if (!!this.settings.loop) {
+                if (!!self.settings.loop) {
                     self.vdom.auto(true)
                 }
             }
@@ -773,10 +776,10 @@
             each(['Props', 'State'], function (method) {
                 var methodRef = method.toLowerCase();
 
-                cmpClass.prototype['set'+method] = function (obj) {
+                cmpClass.prototype['set'+method] = function (setter) {
                     var self = this;
 
-                    each(obj, function (value, name) {
+                    each(setter, function (value, name) {
                         self[methodRef][name] = value
                     })
                 }
