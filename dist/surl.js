@@ -243,6 +243,7 @@
         }
 
         self.settings   = { loop: true },
+
         self.router     = {
             nav: function (url) {
                 history.pushState(null, null, url)
@@ -358,13 +359,9 @@
                                 return args
                             }, null);
 
-                        // callback is a function, exec with args
-                        if (callback[_c] === Function) {
-                            callback(args)
-                        }
-                        // callback is a component, mount
-                        else if (!!callback.render) {
-                            self.mount(callback, null, args)
+                        // callback is a function, mount
+                        if (callback && callback[_c] === Function) {
+                            self.mount(callback)
                         }
                         // can't process
                         else {
@@ -442,11 +439,11 @@
             }
         
             function updateElementProp (target, name, newVal, oldVal) {
-                if (!newVal) {
+                if (newVal === void 0 || newVal === null) {
                     // -1 : remove prop
                     prop(target, name, oldVal, -1)
                 } 
-                else if (!oldVal || newVal !== oldVal) {
+                else if (oldVal === void 0 || oldVal === null || newVal !== oldVal) {
                     // + 1 : add/update prop
                     prop(target, name, newVal, +1)
                 }
@@ -464,6 +461,7 @@
                 // if name not in newProp[name] : deleted
                 // if name not in oldProp[name] : added
                 // if name in oldProp !== name in newProp : updated
+
                 for (var name in props) {
                     updateElementProp(target, name, newProps[name], oldProps[name])
                 }
@@ -485,28 +483,23 @@
 
                 var el;
 
-                if (!node.render) {
-                    // not a text node 
-                    // check if is namespaced
-                    if (node.props && node.props.xmlns) {
-                        el = document.createElementNS(node.props.xmlns, node.type)
-                    } 
-                    else {
-                        el = document.createElement(node.type)
-                    }
-                    
-                    // diff and update/add/remove props
-                    setElementProps(el, node.props);
-                    // add events if any
-                    addEventListeners(el, node.props);
-                    
-                    // only map children arrays
-                    if (node.children && node.children[_c] === Array) {
-                        each(node.children.map(createElement), el.appendChild.bind(el))
-                    }
-                }
+                // not a text node 
+                // check if is namespaced
+                if (node.props && node.props.xmlns) {
+                    el = document.createElementNS(node.props.xmlns, node.type)
+                } 
                 else {
-                    el = node.render.parent
+                    el = document.createElement(node.type)
+                }
+                
+                // diff and update/add/remove props
+                setElementProps(el, node.props);
+                // add events if any
+                addEventListeners(el, node.props);
+                
+                // only map children arrays
+                if (node.children && node.children[_c] === Array) {
+                    each(node.children.map(createElement), el.appendChild.bind(el))
                 }
         
                 return el
@@ -543,12 +536,17 @@
                 newNode = validate(newNode);
         
                 // adding to the dom
-                if (!oldNode) {
+                if (oldNode === void 0) {
                     parent.appendChild(createElement(newNode))
                 } 
                 // removing from the dom
-                else if (!newNode) {
-                    parent.removeChild(parent.childNodes[index])
+                else if (newNode === void 0) {
+                    var node = parent.childNodes[index];
+
+                    // send to the end of the event queue
+                    setTimeout(function () {
+                        parent.removeChild(node)
+                    }, 0)
                 }
                 // replacing a node
                 else if (changed(newNode, oldNode)) {
@@ -562,7 +560,8 @@
                     // loop through all children
                     var newLength = newNode.children.length,
                         oldLength = oldNode.children.length;
-        
+            
+                    
                     for (var i = 0; i < newLength || i < oldLength; i++) {
                         update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
                     }
@@ -570,23 +569,23 @@
             }
             
             // get and assign arguments
-            var args   = arguments,
-                parent = args[0],
-                render = args[1];
+            // var args   = arguments,
+                // parent = args[0],
+                // render = args[1];
 
             // vdom public interface
-            function vdom () {
+            function vdom (parent, render) {
                 // root reference
                 this.parent = parent,
                 // local copy of dynamic hyperscript reference
-                this.fn = render,
+                this.render = render,
                 // raf
                 this.raf = null;
             }
             // refresh/update dom
             vdom.prototype.update = function () {
                 // get latest change
-                var newNode = this.fn(),
+                var newNode = this.render(),
                     // get old copy
                     oldNode = this.old;
 
@@ -598,9 +597,17 @@
             // init mount to dom
             vdom.prototype.init = function () {
                 // local copy of static hyperscript refence
-                this.old = this.fn();
+                this.old = this.render();
                 // initial mount
                 update(this.parent, this.old)
+            }
+            vdom.prototype.destroy = function () {
+                this.auto(false);
+
+                this.old    = void 0,
+                this.render = void 0,
+                this.raf    = void 0,
+                this.parent = void 0;
             }
             // activate requestAnimationframe loop
             vdom.prototype.auto = function (start) {
@@ -622,15 +629,13 @@
                     // push to the end of the callstack
                     // lets the current update trigger
                     // before stopping
-                    setTimeout(function () {
-                        cancelAnimationFrame(self.raf.id)
-                    }, 0);
+                    cancelAnimationFrame(self.raf.id)
 
                     return self.raf.id
                 }
             }
         
-            return new vdom
+            return vdom
         },
 
         /**
@@ -698,12 +703,19 @@
             if (self.parent) {
                 // clear dom
                 self.parent.innerHTML = '';
-                // add to dom
-                self.parent.appendChild(cmp.render.parent)
+                
+                if (self.vdom) {
+                    self.vdom.destroy();
+                }
 
-                // exec __constructor
-                if (cmp.__constructor) {
-                    cmp.__constructor(args);
+                // activate vdom
+                self.vdom = this.__vdom();
+                self.vdom = new self.vdom(self.parent, cmp)
+                self.vdom.init();
+
+                // activate loop, if settings.loop = true
+                if (!!this.settings.loop) {
+                    self.vdom.auto(true)
                 }
             }
             // can't find parent to mount to
@@ -717,43 +729,67 @@
          * @param  {Object} component - component object
          * @return {Object}           - component
          */
-        component: function (cmp) {
-            // bind the component scope to all functions that are not 'render'
-            each(cmp, function(a, b, c) {
-                if (b !== 'render' && a[_c] === Function) {
-                    c[b] = a.bind(cmp)
+        component: function (opts) {
+            // add props, state namespace
+            opts.props = opts.props || {}
+            opts.state = opts.state || {}
+
+            // create component
+            var cmp = Object.create({
+                setState: function (obj) {
+                    var self = this;
+
+                    each(obj, function (value, name) {
+                        self.state[name] = value
+                    })
+                }
+            });
+
+            var cmp = function () {
+                var self = this;
+                // add props to component
+                each(opts, function (value, name) {
+                    // bind the component scope to all methods that are not the 'render' method
+                    if (name !== 'render' && value[_c] === Function) {
+                        value = value.bind(self)
+                    }
+
+                    self[name] = value
+                })
+            }
+
+            each(['Props', 'State'], function (method) {
+                var methodRef = method.toLowerCase();
+
+                cmp.prototype['set'+method] = function (obj) {
+                    var self = this;
+
+                    each(obj, function (value, name) {
+                        self[methodRef][name] = value
+                    })
                 }
             })
 
-            // define parent element
-            var parent = document.createElement('div');
-            
-            // add class namespace
-            if (cmp.namespace) {
-                parent.classList.add(cmp.namespace)
+            cmp = new cmp;
+
+            if (cmp.__constructor) {
+                cmp.__constructor()
             }
 
-            // initialize render
-            if (cmp.render[_c] === Function) {
-                // assign parent
-                cmp.render = {
-                    fn:     cmp.render,
-                    parent: parent
-                };
-
-                // create and bind render
-                cmp.render.fn = cmp.render.fn.bind(cmp),
-                cmp.render    = this.__vdom(cmp.render.parent, cmp.render.fn);
-
-                cmp.render.init();
-
-                // activate loop, if settings.loop = true
-                if (!!this.settings.loop) {
-                    cmp.render.auto(true)
+            // return cmp
+            return function (props) {
+                if (props) {
+                    each(props, function (value, name) {
+                        cmp.props[name] = value
+                    })
                 }
-            }
 
-            return cmp
+                return cmp.render()
+            }
+        },
+
+        createClass: function (opts) {
+            return this.component(opts)
         }
     }
 
@@ -839,20 +875,20 @@
      * @param  {Any} a
      * @return {String|Array|Object}
      */
-    function set (a, obj) {
+    function set (child, obj) {
         // add obj.prop to children if they are none TextNodes
-        if (a && a[_c] === Object && obj.props.xmlns) {
-            a.props.xmlns = obj.props.xmlns
+        if (child && child[_c] === Object && obj.props.xmlns) {
+            child.props.xmlns = obj.props.xmlns
         }
 
-        a = a !== void 0 && a !== null && (a[_c] === Object || a[_c] === String || a[_c] === Array) ? 
-            a : 
-            a + '';
+        child = child !== void 0 && child !== null && (child[_c] === Object || child[_c] === String || child[_c] === Array) ? 
+            child : 
+            child + '';
         // convert the null, and undefined strings to empty strings
         // we don't convert false since that could 
         // be a valid value returned to the client
-        a = a === 'null' || a === 'undefined' ? '' : a;
-        return a
+        child = child === 'null' || child === 'undefined' ? '' : child;
+        return child
     }
 
     /**
@@ -865,15 +901,26 @@
      * h('div', null, h('h1', 'Text'));
      */
     function hyperscript (type, props) {
-        var len = arguments.length,
+        var args = arguments,
+            len = args.length,
             key = 2,
-            child,
-            obj = {type: type, props: props, children: []};
+            child;
 
-        // insure props is always an object
-        if (obj.props === null || obj.props === void 0 || obj.props[_c] !== Object) {
-            obj.props = {}
+        // no props specified default 2nd arg to children
+        if (
+            props && 
+            (props.hs || props[_c] === String || props[_c] === Array)
+        ) {
+            key = 1,
+            props = {}
         }
+        // insure props is always an object
+        else if (props === null || props === void 0 || props[_c] !== Object) {
+            props = {}
+        }
+
+        // declare hyperscript object
+        var obj = {type: type, props: props, children: [], hs: true};
 
         // check if the type is a special case i.e [type] | div.class | #id
         // and alter the hyperscript
@@ -901,7 +948,7 @@
         // construct children
         for (var i = key; i < len; i++) {
             // reference to current layer
-            child = arguments[i];
+            child = args[i];
     
             // if the child is an array go deeper
             // and set the 'arrays children' as children

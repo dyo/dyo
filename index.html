@@ -56,17 +56,17 @@
 	</head>
 	<body>
 		<div class="app"></div>
-		<script src="/dist/surl.min.js"></script>
+		<script src="/dist/surl.js"></script>
 		<script>
 			var app = new surl('.app');
 
 			var list = app.component({
-				namespace: 'list',
 				render: function () {
-					return h('main', null, 
+					return h('main.list', null, 
 								this.list.map(function (a,i) {
 									return h('.card', {onmousedown: i > 2 ? animate.bind('animation-active', 220) : this.test}, 
-												h('p', null, h('h1', null, a.id), a.value)
+												h('p', null, 
+													h('h1', null, a.id), a.value)
 											)
 								}.bind(this))
 							)
@@ -79,9 +79,9 @@
 				],
 				test: function() {
 					arr = [];
-					arr.push({id: '--', value: '?hello route'});
+					arr.push({id: '-', value: '?hello route'});
 
-					for (var i = 0; i < 500; i++) {
+					for (var i = 0; i < 2000; i++) {
 						arr.push({id:i, value: new Date() + performance.now()})
 					}
 					
@@ -90,16 +90,15 @@
 			});
 
 			var simple = app.component({
-				namespace: 'simple',
-				render: function (cmp) {
-					return h('main', null, 
+				render: function () {
+					return h('main.simple', null, 
 								h('section', null, 
 									h('h1', {onclick: this.test}, this.data),
 									h('input', {onchange: this.input})
 								),
 								// embed the list component
-								list
-							);
+								list()
+							)
 				},
 				data: 'This is the /simple view, click me to change view',
 				test: function () {
@@ -114,9 +113,8 @@
 			});
 
 			var page = app.component({
-				namespace: 'page',
 				render: function () {
-					return h('section', null,
+					return h('section.page', null,
 								h('h1', {onclick: this.nav}, 'This is the /page view, click me to change view')
 							)
 				},
@@ -133,6 +131,8 @@
 			app.req('/', 'get', function (a, b) {
 			
 			});
+
+			app.mount(simple)
 		</script>
 	</body>
 </html>
