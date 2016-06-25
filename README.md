@@ -5,17 +5,12 @@
 - animations.
 - router.
 - components.
-- fast.
 - hyperscript.
 - opt in/out auto render. 
 
 #####Supports: Chrome, Firefox, Safari, IE10+
 
-3.8kb minified+gzipped, 8.3kb minified.
-
-2.4kb minified+gzipped without the router, and ajax helper.
-
-
+4kb minified+gzipped, 8.8kb minified.
 
 ##core
 
@@ -37,13 +32,6 @@ or you can mount to an element like this
 
 ```javascript
 app.mount(simple, element);
-```
-
-you can also pass a third element arg to mount to when a route updates
-
-```javascript
-app.router.on('/', simple, element)
-app.router.on('/page', page, element)
 ```
 
 or you can just
@@ -73,32 +61,60 @@ a component can be any object that has a render function that
 returns a virtual node i.e
 
 ```javascript
-{
-	type: 'div'
-	props: {},
-	children.... | 'Text' | ...component
+var app = new surl(Element|Selector)
+
+var obj = {
+	render: function(){
+		return {
+			type: 'div'
+			props: {},
+			children: Array | 'String' | ...component()
+		}
+	}
 }
+
+app.createClass(obj)
+//or
+app.component(obj)
+
 ```
 you can also use the built in hyperscript helper 
 
 ```javascript
 h('div', {}, ...children | 'Text' | ...component)
 ```
-you can also set `app.settings.loop = false`
+when adding a component as a child of another you can pass props to that component that will be added to `this.props`
+
+```javascript
+h('div', component({products: [1,2,3]}))
+
+component = ..createClass({
+	render: function () {
+		console.log(this.props) // {products: [1,2,3]}
+		return ('div')
+	}
+})
+```
+
+You can if need be set `app.settings.loop = false`
 to disable auto updates
 you can then manually trigger an update in a method i.e
 
 ```javascript
-var component = {
-	render: function () {return h('div', null, this.data)}},
+var app = new surl('.app');
+
+var component = app.component({
+	render: function () {return h('div', this.data)}},
 	method: function () {
 		this.data = 'Changed'
-		this.render.update()
+		app.vdom.update()
 		// you can also enable auto updates
-		this.render.loop(true)
+		app.vdom.loop(true)
 	}
 	data: 'Text'
-}
+})
+
+app.mount(component)
 ```
 
 ##router
@@ -141,8 +157,8 @@ can be used within a render follows
 ```javascript
 render: function () {
 	return h('.card', 
-	{onclick: animate.bind(Class|Duration, ['scale(2)', 'skew(20deg)'], '0,0,0,0.3')}, 
-	'Text'
+	{onclick: animate.bind(Class|Duration, ['scale(2)'...], '0,0,0,0.3')}, 
+	''
 	)
 }
 ```
@@ -151,10 +167,11 @@ render: function () {
 
 ```javascript
 app.req('/', 'GET', function (res, err) {
-
+	res{Element|JSON|Text}
+	err{Boolean}
 })
 
 app.req('/', 'POST', {id: 1245}, function (res, err) {
-
+	
 })
 ```

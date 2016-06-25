@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>Playground</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+	</head>
+	<body>
+		<div class="app"></div>
+
+		<script src="/dist/surl.js"></script>
+		<script>
+			var app = new surl('.app');
+
+			var PRODUCTS = [
+		  		{category: 'Sporting Goods', price: '$49.99', stocked: true, name: 'Football'},
+		  		{category: 'Sporting Goods', price: '$9.99', stocked: true, name: 'Baseball'},
+		  		{category: 'Sporting Goods', price: '$29.99', stocked: false, name: 'Basketball'},
+		  		{category: 'Electronics', price: '$99.99', stocked: true, name: 'iPod Touch'},
+		  		{category: 'Electronics', price: '$399.99', stocked: false, name: 'iPhone 5'},
+		  		{category: 'Electronics', price: '$199.99', stocked: true, name: 'Nexus 7'}
+			];
+
+			var ProductCategoryRow = app.createClass({
+		  		render: function() {
+		    		return h('tr', h('th[colspan=2]', this.props.category))
+		  		}
+			});
+
+			var ProductRow = app.createClass({
+		  		render: function() {
+			    	var name = this.props.product.stocked ? this.props.product.name : h('span[style="color:red"]', this.props.product.name);
+
+				    return h('tr', 
+				    			h('td', name),
+				    			h('td', this.props.product.price)
+			    			)
+		  		}
+			});
+
+			var ProductTable = app.createClass({
+		  		render: function() {
+				    var rows = [],
+				    	lastCategory = null;
+
+				    this.props.products.forEach(function(product) {
+			      		if (
+			      			product.name.toLowerCase().indexOf(this.props.filterText) === -1 || 
+			      			(!product.stocked && this.props.inStockOnly)
+		      			) {
+			        		return
+			      		}
+			      		if (product.category !== lastCategory) {
+			      			rows.push(ProductCategoryRow({category: product.category}))
+			      		}
+			      		rows.push(ProductRow({product: product}))
+			      		lastCategory = product.category
+				    }.bind(this));
+
+				    return h('table', 
+				    			h('thead', 
+				    				h('tr', 
+				    					h('th', 'Name'), 
+				    					h('th', 'Price')
+			    					)
+			    				),
+			    				h('tbody',
+			    					rows
+		    					)
+			    			)
+		  		}
+			});
+
+			var SearchBar = app.createClass({
+		  		handleChange: function(event) {
+		  			var el   = event.target,
+		  				type = el.getAttribute('type').toLowerCase();
+
+		  			if (type === 'checkbox') {
+		  				this.props.onUserInput(undefined, el.checked)
+		  			}
+		  			else if (type === 'text') {
+		  				this.props.onUserInput(el.value, undefined)
+		  			}
+		  		},
+			  	render: function() {
+				    return h('div',
+				    			h('input[type="text"]', {
+				    				placeholder: 'Search', 
+				    				value: this.props.filterText, 
+				    				oninput: this.handleChange
+				    			}),
+				    			h('div',
+				    				h('label', 
+					    				h('input[type="checkbox"]', {
+					    					checked: false, 
+					    					onchange: this.handleChange
+					    				}),
+					    				' Only show products in stock'
+				    				)
+			    				)
+				    		)
+		  		}
+			});
+
+
+			var FilterableProductTable = app.createClass({
+				__constructor: function () {
+					this.setProps({products: PRODUCTS});
+				},
+		  		state: {
+	      			filterText: '',
+	      			inStockOnly: false
+		  		},
+		  		handleUserInput: function(filter, stock) {
+		  			if (filter !== undefined) {
+		  				this.setState({
+		  					filterText: filter
+		  				})
+		  			}
+		  			else if (stock !== undefined) {
+		  				this.setState({
+		  					inStockOnly: stock
+		  				})
+		  			}	    		
+		  		},
+		  		render: function() {
+		  			return h('div',
+			  					SearchBar({
+			  						filterText: this.state.filterText,
+					          		inStockOnly: this.state.inStockOnly,
+					          		onUserInput: this.handleUserInput
+			  					}),
+			  					ProductTable ({
+			  						products: this.props.products,
+	  					          	filterText: this.state.filterText,
+	  					          	inStockOnly: this.state.inStockOnly
+			  					})
+		  					)
+		  		}
+			});
+
+			app.mount(FilterableProductTable);
+		</script>
+	</body>
+</html>

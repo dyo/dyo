@@ -173,11 +173,18 @@
                 if (this.status >= 200 && this.status < 400) {
                     // determine return data type
                     var type    = xhr.getResponseHeader("content-type"),
-                        typeArr = type.split(';');
+                        __type;
 
-                        typeArr = type[0].split('/');
-                        type    = typeArr[typeArr.length-1];
-    
+                    if (type.indexOf(';') !== -1) {
+                        __type = type.split(';');
+                        __type = __type[0].split('/')
+                    }
+                    else {
+                        __type = type.split('/')
+                    }
+
+                    type = __type[1];
+
                     // json
                     if (type === 'json') {
                         response = JSON.parse(xhr.responseText)
@@ -245,8 +252,10 @@
         self.settings   = { loop: true },
 
         self.router     = {
+            url: null,
             nav: function (url) {
-                history.pushState(null, null, url)
+                history.pushState(null, null, url);
+                window.dispatchEvent(new Event('popstate'))
             },
             back: function () {
                 history.back()
@@ -269,7 +278,7 @@
 
                 // start listening for a a change in the url
                 raf(function () {
-                    var url = loc.href;
+                    var url = loc.pathname;
 
                     if (self.url !== url) {
                         self.url = url;
@@ -361,7 +370,14 @@
 
                         // callback is a function, exec
                         if (callback && callback[_c] === Function) {
-                            callback(args)
+                            // component function
+                            if (callback.cmp) {
+                                self.mount(callback, void 0, args)
+                            }
+                            // normal function
+                            else {
+                                callback(args)
+                            }
                         }
                         // can't process
                         else {
@@ -410,10 +426,15 @@
                 if (isEventProp(name)) {
                     return
                 }
-        
+
                 // remove / add attribute reference
                 var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
-        
+            
+                // set xlink:href attr
+                if (name === 'xlink:href') {
+                    return target.setAttributeNS(_namespace['xlink'], 'href', value)
+                }
+
                 // if the target has an attr as a property, 
                 // change that aswell
                 if (
@@ -422,15 +443,9 @@
                 ) {
                     target[name] = value
                 }
-
-                // set xlink:href attr
-                if (name === 'xlink:href') {
-                    return target.setAttributeNS(_namespace['xlink'], 'href', value)
-                }
-        
-                // don't set namespace attrs
-                // keep the presented dom clean
-                if (
+                // don't set namespace attrs and properties that
+                // can be set via target[name]
+                else if (
                     value !== _namespace['svg'] && 
                     value !== _namespace['math']
                 ) {
@@ -508,7 +523,7 @@
         
             // diffing a node
             function changed (node1, node2) {
-                    // diff object type
+                // diff object type
                 var isDiffType  = node1[_c] !== node2[_c],
                     // diff text content
                     isDiffText  = node1[_c] === String && node1 !== node2,
@@ -528,8 +543,8 @@
                 return a
             }
         
-            // update
-            function update (parent, newNode, oldNode, index) {
+            // diff
+            function diff (parent, newNode, oldNode, index) {
                 index = index ? index : 0;
         
                 oldNode = validate(oldNode);
@@ -563,15 +578,10 @@
             
                     
                     for (var i = 0; i < newLength || i < oldLength; i++) {
-                        update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
+                        diff(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
                     }
                 }
             }
-            
-            // get and assign arguments
-            // var args   = arguments,
-                // parent = args[0],
-                // render = args[1];
 
             // vdom public interface
             function vdom (parent, render) {
@@ -589,7 +599,7 @@
                     // get old copy
                     oldNode = this.old;
 
-                update(this.parent, newNode, oldNode);
+                diff(this.parent, newNode, oldNode);
         
                 // update old node
                 this.old = newNode
@@ -599,7 +609,7 @@
                 // local copy of static hyperscript refence
                 this.old = this.render();
                 // initial mount
-                update(this.parent, this.old)
+                diff(this.parent, this.old)
             }
             vdom.prototype.destroy = function () {
                 this.auto(false);
@@ -691,12 +701,18 @@
          * initialize 
          * @param {String} id - base component to mount to dom
          */
-        mount: function (cmp, element) {
-            var self = this;
+        mount: function (cmp, el, params) {
+            var self = this,
+                params;
 
-            // add parent now
-            if (element) {
-                self.parent = element
+            // add parent element
+            if (el) {
+                if (el[_c] === String) {
+                    self.parent = document.querySelector(el)
+                }
+                else if (el.nodeType) {
+                    self.parent = el
+                }
             }
 
             // has parent to mount to
@@ -704,13 +720,19 @@
                 // clear dom
                 self.parent.innerHTML = '';
                 
+                // destroy the current vdom if it already exists
                 if (self.vdom) {
-                    self.vdom.destroy();
+                    self.vdom.destroy()
+                }
+
+                if (cmp.__constructor) {
+                    cmp.__constructor(params)
                 }
 
                 // activate vdom
-                self.vdom = this.__vdom();
-                self.vdom = new self.vdom(self.parent, cmp)
+                self.vdom = this.__vdom(),
+                self.vdom = new self.vdom(self.parent, cmp);
+
                 self.vdom.init();
 
                 // activate loop, if settings.loop = true
@@ -735,22 +757,12 @@
             opts.state = opts.state || {}
 
             // create component
-            var cmp = Object.create({
-                setState: function (obj) {
-                    var self = this;
-
-                    each(obj, function (value, name) {
-                        self.state[name] = value
-                    })
-                }
-            });
-
-            var cmp = function () {
+            var cmpClass = function () {
                 var self = this;
                 // add props to component
                 each(opts, function (value, name) {
-                    // bind the component scope to all methods that are not the 'render' method
-                    if (name !== 'render' && value[_c] === Function) {
+                    // bind the component scope to all methods
+                    if (value[_c] === Function) {
                         value = value.bind(self)
                     }
 
@@ -761,31 +773,36 @@
             each(['Props', 'State'], function (method) {
                 var methodRef = method.toLowerCase();
 
-                cmp.prototype['set'+method] = function (obj) {
+                cmpClass.prototype['set'+method] = function (obj) {
                     var self = this;
 
                     each(obj, function (value, name) {
                         self[methodRef][name] = value
                     })
                 }
-            })
+            });
 
-            cmp = new cmp;
+            // create component object
+            var cmpObj = new cmpClass;
 
-            if (cmp.__constructor) {
-                cmp.__constructor()
-            }
-
-            // return cmp
-            return function (props) {
+            // create component returned value
+            var cmpFn = function (props) {
                 if (props) {
-                    each(props, function (value, name) {
-                        cmp.props[name] = value
-                    })
+                    cmpObj.setProps(props)
                 }
 
-                return cmp.render()
+                return cmpObj.render()
             }
+
+            // attach constructor
+            if (cmpObj.__constructor) {
+                cmpFn.__constructor = cmpObj.__constructor
+            }
+
+            // differentiate between other functions and this
+            cmpFn.cmp = true;
+
+            return cmpFn
         },
 
         createClass: function (opts) {

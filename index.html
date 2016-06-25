@@ -102,17 +102,14 @@
 				},
 				data: 'This is the /simple view, click me to change view',
 				test: function () {
-					app.router.nav('/page')
+					app.router.nav('/sultan/1234')
 				},
 				input: function (e) {
 					this.data = e.currentTarget.value
-				},
-				__constructor: function(args) {
-					// console.log(args);
 				}
 			});
 
-			var page = app.component({
+			var user = app.component({
 				render: function () {
 					return h('section.page', null,
 								h('h1', {onclick: this.nav}, 'This is the /page view, click me to change view')
@@ -120,21 +117,20 @@
 				},
 				nav: function () {
 					app.router.nav('/')
+				},
+				__constructor: function(args) {
+					console.log(args);
 				}
 			});
 
 			app.router.on({
-				'/': function (args) {
-					app.mount(simple)
-				},
-				'/page': function (args) {
-					app.mount(page)
-				}
+				'/': simple,
+				'/:username/:id': user
 			})
 
-			app.req('/', 'get', function (a, b) {
-			
-			});
+			// app.req('http://jsonplaceholder.typicode.com/users/1', 'get', function (response, err) {
+				// console.log(response, err)
+			// });
 
 			// app.mount(simple)
 		</script>
