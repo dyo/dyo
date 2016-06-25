@@ -81,7 +81,7 @@
 					arr = [];
 					arr.push({id: '-', value: '?hello route'});
 
-					for (var i = 0; i < 2000; i++) {
+					for (var i = 0; i < 500; i++) {
 						arr.push({id:i, value: new Date() + performance.now()})
 					}
 					
@@ -124,15 +124,19 @@
 			});
 
 			app.router.on({
-				'/': simple,
-				'/page': page
+				'/': function (args) {
+					app.mount(simple)
+				},
+				'/page': function (args) {
+					app.mount(page)
+				}
 			})
 
 			app.req('/', 'get', function (a, b) {
 			
 			});
 
-			app.mount(simple)
+			// app.mount(simple)
 		</script>
 	</body>
 </html>

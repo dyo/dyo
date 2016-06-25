@@ -359,9 +359,9 @@
                                 return args
                             }, null);
 
-                        // callback is a function, mount
+                        // callback is a function, exec
                         if (callback && callback[_c] === Function) {
-                            self.mount(callback)
+                            callback(args)
                         }
                         // can't process
                         else {
@@ -691,7 +691,7 @@
          * initialize 
          * @param {String} id - base component to mount to dom
          */
-        mount: function (cmp, element, args) {
+        mount: function (cmp, element) {
             var self = this;
 
             // add parent now
