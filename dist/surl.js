@@ -9,7 +9,7 @@
     /**
      * requestAnimationFrame Polyfill
      */
-    function rafPoly () {
+    function rafPoly() {
         // references
         var raf = 'requestAnimationFrame',
             caf = 'cancelAnimationFrame',
@@ -249,14 +249,10 @@
             self.parent = self.__$(parent);
         }
 
-        self.settings   = { loop: true },
-
+        self.settings   = {
+            loop: true 
+        },
         self.router     = {
-            url: null,
-            nav: function (url) {
-                history.pushState(null, null, url);
-                window.dispatchEvent(new Event('popstate'))
-            },
             back: function () {
                 history.back()
             },
@@ -270,15 +266,32 @@
                 this.routes = {};
                 cancelAnimationFrame(this.raf.id);
             },
+            nav: function (url) {
+                var root = this.settings.root;
+                    url  = root ? root + url : url;
+
+                history.pushState(null, null, url);
+            },
+            config: function (obj) {
+                var self = this;
+
+                // add settings object if it doesn't exist
+                if (!self.settings) {
+                    self.settings = {}
+                }
+
+                each(obj, function(value, name) {
+                    self.settings[name] = value
+                })
+            },
             listen: function () {
-                var self      = this,
-                    loc       = window.location;
+                var self      = this;
                     self.url  = null;
                     self.raf  = {id: 0};
 
                 // start listening for a a change in the url
                 raf(function () {
-                    var url = loc.pathname;
+                    var url = window.location.pathname;
 
                     if (self.url !== url) {
                         self.url = url;
@@ -286,7 +299,7 @@
                     }
                 }, 60, self.raf)
             },
-            on: function (url) {
+            on: function (args) {
                 var self = this,
                     routes;
 
@@ -301,19 +314,20 @@
                 }
 
                 // normalize args for ({obj}) and (url, callback) styles
-                if (url[_c] !== Object) {
+                if (args[_c] !== Object) {
                     var args   = arguments;
                         routes = {};
                         routes[args[0]] = args[1];
                 }
                 else {
-                    routes = url;
+                    routes = args;
                 }
 
                 // assign routes
                 each(routes, function (value, name) {
-                    var variables = [],
-                        regex     = /([:*])(\w+)|([\*])/g,
+                    var root = self.settings.root,
+                        variables = [],
+                        regex = /([:*])(\w+)|([\*])/g,
                         // given the following /:user/:id/*
                         pattern = name.replace(regex, function () {
                                     var args = arguments,
@@ -333,19 +347,19 @@
 
                     self.routes[name] = {
                         callback:  value,
-                        pattern:   pattern,
+                        pattern:   root ? root + pattern : pattern,
                         variables: variables
                     }
                 })
             },
             changed: function () {
-                var _self = this;
+                var url    = this.url,
+                    routes = this.routes;
 
-                each(_self.routes, function (val) {
+                each(routes, function (val) {
                     var callback  = val.callback,
                         pattern   = val.pattern,
                         variables = val.variables,
-                        url       = _self.url,
                         match;
 
                     // exec pattern on url
@@ -384,7 +398,7 @@
                             throw 'could not find the render method'
                         }
                     }
-                }.bind(this))
+                })
             }
         }
     }
@@ -628,7 +642,7 @@
                     // start
                     if (start) {
                         self.raf = {
-                            id:1
+                            id: 1
                         };
 
                         // requestAnimationFrame at 60 fps
@@ -728,8 +742,8 @@
                     self.vdom.destroy()
                 }
 
-                if (cmp.__constructor) {
-                    cmp.__constructor(params)
+                if (cmp.componentWillMount) {
+                    cmp.componentWillMount(params)
                 }
 
                 // activate vdom
@@ -754,16 +768,16 @@
          * @param  {Object} component - component object
          * @return {Object}           - component
          */
-        component: function (opts) {
+        component: function (args) {
             // add props, state namespace
-            opts.props = opts.props || {}
-            opts.state = opts.state || {}
+            args.props = args.props || {}
+            args.state = args.state || {}
 
             // create component
             var cmpClass = function () {
                 var self = this;
                 // add props to component
-                each(opts, function (value, name) {
+                each(args, function (value, name) {
                     // bind the component scope to all methods
                     if (value[_c] === Function) {
                         value = value.bind(self)
@@ -788,8 +802,24 @@
             // create component object
             var cmpObj = new cmpClass;
 
+            // set initial state
+            if (cmpObj.getInitalState) {
+                cmpObj.setState(cmpObj.getInitalState())
+            }
+            // set default props 
+            if (cmpObj.getDefaultProps) {
+                cmpObj.setProps(cmpObj.getDefaultProps())
+            }
+
             // create component returned value
-            var cmpFn = function (props) {
+            var cmpFn = function (props, children) {
+                // set children
+                // specified by parent cmp
+                if (children) {
+                    cmpObj.setProps({children: children})   
+                }
+                // set props 
+                // specified by parent cmp
                 if (props) {
                     cmpObj.setProps(props)
                 }
@@ -798,8 +828,8 @@
             }
 
             // attach constructor
-            if (cmpObj.__constructor) {
-                cmpFn.__constructor = cmpObj.__constructor
+            if (cmpObj.componentWillMount) {
+                cmpFn.componentWillMount = cmpObj.componentWillMount
             }
 
             // differentiate between other functions and this
@@ -808,8 +838,11 @@
             return cmpFn
         },
 
-        createClass: function (opts) {
-            return this.component(opts)
+        createClass: function (args) {
+            return this.component(args)
+        },
+        createComponent: function (args) {
+            return this.component(args)
         }
     }
 
@@ -929,7 +962,7 @@
         // no props specified default 2nd arg to children
         if (
             props && 
-            (props.hs || props[_c] === String || props[_c] === Array)
+            (props.__hs || props[_c] === String || props[_c] === Array)
         ) {
             key = 1,
             props = {}
@@ -940,7 +973,7 @@
         }
 
         // declare hyperscript object
-        var obj = {type: type, props: props, children: [], hs: true};
+        var obj = {type: type, props: props, children: [], __hs: true};
 
         // check if the type is a special case i.e [type] | div.class | #id
         // and alter the hyperscript

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>Playground</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<script src="/dist/surl.js"></script>
+	</head>
+	<body>
+		<div class="app"></div>
+		<script>
+			var app = new surl('.app');
+
+			var TodoBanner = app.createClass({
+				render: function () {
+					return h('h3', 'Todo')
+				}
+			});
+
+			var TodoListItem = app.createClass({
+				render: function () {
+					return h('li', this.props.children)
+				}
+			});
+
+			var TodoList = app.createClass({
+				render: function () {
+					var createItem = function (itemText) {
+						return TodoListItem(null, itemText)
+					}
+					return h('ul', this.props.items.map(createItem))
+				}
+			});
+
+			var TodoForm = app.createClass({
+				getInitalState: function () {
+					return {item: ''}
+				},
+				handleSubmit: function (e) {
+					e.preventDefault();
+					this.props.onFormSubmit(this.state.item);
+					this.setState({item: ''})
+				},
+				onChange: function (e) {
+					this.setState({
+						item: e.target.value
+					})
+				},
+				render: function () {
+					return h('form', {onsubmit: this.handleSubmit},
+								h('input[type=text]', {oninput: this.onChange, value: this.state.item}),
+								h('input[type=submit]', {value: 'Add'})
+							)
+				}
+			});
+
+			var TodoApp = app.createClass({
+				getInitalState: function () {
+					return {items: ['Todo item #1', 'Todo item #2']};
+				},
+				updateItems: function (newItem) {
+					if (newItem) {
+						var allItems = this.state.items.concat([newItem]);
+						this.setState({items: allItems});
+					}
+				},
+				render: function () {
+					return h('div',
+								TodoBanner(),
+								TodoList({items: this.state.items}),
+								TodoForm({onFormSubmit: this.updateItems})
+							)
+				}
+			});
+
+			app.mount(TodoApp)
+		</script>
+	</body>
+</html>

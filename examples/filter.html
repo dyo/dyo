@@ -7,11 +7,10 @@
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<script src="/dist/surl.js"></script>
 	</head>
 	<body>
 		<div class="app"></div>
-
-		<script src="/dist/surl.js"></script>
 		<script>
 			var app = new surl('.app');
 
@@ -32,7 +31,7 @@
 
 			var ProductRow = app.createClass({
 		  		render: function() {
-			    	var name = this.props.product.stocked ? this.props.product.name : h('span[style="color:red"]', this.props.product.name);
+			    	var name = this.props.product.stocked ? this.props.product.name : h('span[style=color:red]', this.props.product.name);
 
 				    return h('tr', 
 				    			h('td', name),
@@ -88,7 +87,7 @@
 		  		},
 			  	render: function() {
 				    return h('div',
-				    			h('input[type="text"]', {
+				    			h('input[type=text]', {
 				    				placeholder: 'Search', 
 				    				value: this.props.filterText, 
 				    				oninput: this.handleChange
@@ -108,7 +107,7 @@
 
 
 			var FilterableProductTable = app.createClass({
-				__constructor: function () {
+				componentWillMount: function () {
 					this.setProps({products: PRODUCTS});
 				},
 		  		state: {

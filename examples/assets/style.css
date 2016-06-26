@@ -1,0 +1,44 @@
+* { margin:0; padding:0; box-sizing: border-box; }
+
+.app {
+	font-family: sans-serif; 
+}
+
+.simple section,
+.page h1 {
+	max-width: 420px;
+	margin: 0 auto;
+	padding-top: 20px;
+}
+.simple input { padding: 10px; width: 100%; margin: 20px 0; }
+
+.card {
+	background: rgb(200,0,100);
+	width: 100%;
+	max-width: 420px;
+	margin: auto;
+	padding: 20px;
+	box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+	position: relative;
+	overflow: hidden;
+}
+.card:nth-child(-n+3) {
+	background: #9C27B0;
+}
+.card.animation-running { box-shadow: none; }
+.card.animation-running * { opacity: 0;}
+.card.animation-active {
+	position: fixed;
+	height: 100%;
+	max-width: 100%;
+	bottom: 0;
+	left: 0;
+	z-index: 100;
+	box-shadow: none;
+}
+.card p { 
+	
+	color:#FFF; 
+	pointer-events:none; 
+}
+body.animation-active { overflow: hidden; }

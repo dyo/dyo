@@ -7,56 +7,11 @@
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<style>
-			* { margin:0; padding:0; box-sizing: border-box; }
-
-			.app {
-				font-family: sans-serif; 
-			}
-
-			.simple section,
-			.page h1 {
-				max-width: 420px;
-				margin: 0 auto;
-				padding-top: 20px;
-			}
-			.simple input { padding: 10px; width: 100%; margin: 20px 0; }
-
-			.card {
-				background: rgb(200,0,100);
-				width: 100%;
-				max-width: 420px;
-				margin: auto;
-				padding: 20px;
-				box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
-				position: relative;
-				overflow: hidden;
-			}
-			.card:nth-child(-n+3) {
-				background: #9C27B0;
-			}
-			.card.animation-running { box-shadow: none; }
-			.card.animation-running * { opacity: 0;}
-			.card.animation-active {
-				position: fixed;
-				height: 100%;
-				max-width: 100%;
-				bottom: 0;
-				left: 0;
-				z-index: 100;
-				box-shadow: none;
-			}
-			.card p { 
-				
-				color:#FFF; 
-				pointer-events:none; 
-			}
-			body.animation-active { overflow: hidden; }
-		</style>
+		<script src="/dist/surl.js"></script>
+		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
 		<div class="app"></div>
-		<script src="/dist/surl.js"></script>
 		<script>
 			var app = new surl('.app');
 
@@ -118,11 +73,16 @@
 				nav: function () {
 					app.router.nav('/')
 				},
-				__constructor: function(args) {
+				componentWillMount: function(args) {
 					console.log(args)
+				},
+				componentDidMount: function(el) {
+					
 				}
 			});
 
+			app.router.config({root: '/examples'});
+			// app.router.nav('/test');
 			app.router.on({
 				'/': simple,
 				'/:username/:id': user
