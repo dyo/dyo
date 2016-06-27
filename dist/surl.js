@@ -6,48 +6,6 @@
 (function () {
     'use strict';
 
-    /**
-     * requestAnimationFrame Polyfill
-     */
-    function rafPoly() {
-        // references
-        var raf = 'requestAnimationFrame',
-            caf = 'cancelAnimationFrame',
-            v   = ['ms', 'moz', 'webkit'],
-            vl  = v.length,
-            af  = 'AnimationFrame',
-            lt  = 0,
-            w   = window;
-            // last time
-
-        // normalize vendors
-        for (var x = 0; x < vl && !w[raf]; ++x) {
-            w[raf] = w[v[x]+'Request'+af];
-            w[caf] = w[v[x]+'Cancel'+af]||w[v[x]+'CancelRequest'+af]
-        }
-
-        // raf doesn't exist, polyfill it
-        if (!w[raf]) {
-            w[raf] = function(callback) {
-                var currTime   = new Date().getTime(),
-                    timeToCall = Math.max(0, 16 - (currTime - lt)),
-                    id         = w.setTimeout(function() { 
-                                    callback(currTime + timeToCall)
-                                 }, timeToCall);
-
-                    lt = currTime + timeToCall;
-
-                return id
-            };
-        }
-
-        if (!w[caf]) {
-            w[caf] = function(id) {
-                clearTimeout(id)
-            }
-        }
-    }
-
     // references
     var _c         = 'constructor',
         _namespace = {
@@ -65,8 +23,10 @@
     function each (a, b) {
         var i;
 
-        // Handle arrays
-        if (a[_c] === Array) {
+        if (a === null || a === void 0) return;
+
+        // Handle arrays, and array like objects
+        if (a[_c] === Array || a.length && a.length[_c] === Number && a[0]) {
             var l = a.length;
                 i = 0;
 
@@ -215,7 +175,7 @@
             // set type of data sent : text/json
             xhr.setRequestHeader(
                 'Content-Type', 
-                settings.data[_c] === Object ? 'application/json' : 'text/plain'
+                settings.data && settings.data[_c] === Object ? 'application/json' : 'text/plain'
             )
         }
     
@@ -246,7 +206,7 @@
         var self = this;
 
         if (parent) {
-            self.parent = self.__$(parent);
+            self.mount(parent)
         }
 
         self.settings   = {
@@ -386,7 +346,7 @@
                         if (callback && callback[_c] === Function) {
                             // component function
                             if (callback.cmp) {
-                                self.mount(callback, void 0, args)
+                                self.render(callback, void 0, args)
                             }
                             // normal function
                             else {
@@ -448,7 +408,6 @@
                 if (name === 'xlink:href') {
                     return target.setAttributeNS(_namespace['xlink'], 'href', value)
                 }
-
                 // if the target has an attr as a property, 
                 // change that aswell
                 if (
@@ -463,7 +422,12 @@
                     value !== _namespace['svg'] && 
                     value !== _namespace['math']
                 ) {
-                    return op === -1 ? target[attr](name) : target[attr](name, value)
+                    if (op === -1) {
+                        target[attr](name)
+                    }
+                    else {
+                        target[attr](name, value)
+                    }
                 }
             }
         
@@ -509,6 +473,22 @@
                 if (node[_c] === String) {
                     return document.createTextNode(node)
                 }
+                else if (!node.__hs) {
+                    return document.createTextNode(JSON.stringify(node))
+                }
+                else if (node.trust && node.__hs) {
+                    var div  = document.createElement('div'),
+                        frag = document.createDocumentFragment();
+
+                    div.innerHTML = node.children[0];
+                    var nodes = Array.prototype.slice.call(div.childNodes);
+
+                    each(nodes, function (value) {
+                        frag.appendChild(value)
+                    });
+
+                    return frag;
+                }
 
                 var el;
 
@@ -534,7 +514,6 @@
                 return el
             }
         
-        
             // diffing a node
             function changed (node1, node2) {
                 // diff object type
@@ -553,14 +532,14 @@
                 if (a !== void 0 && (a === null || a === 0 || a === false)) {
                     a = a + ''
                 }
-        
+
                 return a
             }
         
             // diff
             function diff (parent, newNode, oldNode, index) {
                 index = index ? index : 0;
-        
+                
                 oldNode = validate(oldNode);
                 newNode = validate(newNode);
         
@@ -633,7 +612,7 @@
                     this.old    = void 0,
                     this.render = void 0,
                     this.raf    = void 0,
-                    this.parent = void 0;
+                    this.parent = void 0
                 },
                 // activate requestAnimationframe loop
                 auto: function (start) {
@@ -666,30 +645,12 @@
         },
 
         /**
-         * get element
-         * @param  {Selector|Element} element - an element or string
-         * @return {Element|Void}
-         */
-        __$: function (element) {
-            // can't use document, use body instead
-            if (element === document) {
-                element = element.body
-            }
-            // query selector if string
-            else if (element[_c] === String) {
-                element = document.querySelector(element)
-            }
-
-            return element && element.nodeType ? element : void 0;
-        },
-
-        /**
          * make ajax requests
          * @return {Object} xhr object
          */
         req: function () {
             var args     = arguments,
-                settings = {};
+                settings = {method: 'GET'};
 
             each(args, function (val) {
                 if (val[_c] === Object) {
@@ -703,7 +664,7 @@
 
                     if (type === 'POST' || type === 'GET') {
                         settings.method = type
-                    } 
+                    }
                     else {
                         settings.url = val
                     }  
@@ -715,10 +676,34 @@
         },
 
         /**
+         * set mount to element
+         * @param  {Selector|Element} element - the element to mount to
+         */
+        mount: function (element) {
+            var self = this;
+
+            // can't use document, use body instead
+            if (element === document) {
+                element = element.body
+            }
+            // query selector if string
+            else if (element[_c] === String) {
+                element = document.querySelector(element)
+            }
+
+            if (element && element.nodeType) {
+                self.parent = element
+            }
+            else {
+                self.parent = void 0
+            }
+        },
+
+        /**
          * initialize/mount
          * @param {String} id - base component to mount to dom
          */
-        mount: function (cmp, element, params) {
+        render: function (cmp, element, params) {
             var self = this,
                 params;
 
@@ -734,13 +719,14 @@
 
             // has parent to mount to
             if (self.parent) {
-                // clear dom
-                self.parent.innerHTML = '';
-                
                 // destroy the current vdom if it already exists
                 if (self.vdom) {
-                    self.vdom.destroy()
+                    self.vdom.destroy();
+                    self.vdom = void 0;
                 }
+
+                // clear dom
+                self.parent.innerHTML = '';
 
                 if (cmp.componentWillMount) {
                     cmp.componentWillMount(params)
@@ -793,9 +779,11 @@
                 cmpClass.prototype['set'+method] = function (setter) {
                     var self = this;
 
-                    each(setter, function (value, name) {
-                        self[methodRef][name] = value
-                    })
+                    if (setter) {
+                        each(setter, function (value, name) {
+                            self[methodRef][name] = value
+                        })
+                    }
                 }
             });
 
@@ -803,8 +791,8 @@
             var cmpObj = new cmpClass;
 
             // set initial state
-            if (cmpObj.getInitalState) {
-                cmpObj.setState(cmpObj.getInitalState())
+            if (cmpObj.getInitialState) {
+                cmpObj.setState(cmpObj.getInitialState())
             }
             // set default props 
             if (cmpObj.getDefaultProps) {
@@ -855,6 +843,26 @@
      * 
      * -------------------------------------------------------------- */
 
+
+    /**
+     * two-way data binding
+     * 
+     * @param  {String} prop - the property/attr to look for in the element
+     * @param  {Object} obj  - the object to update
+     * @param  {String} key  - the key in the object to update
+     */
+    function bind (prop, obj, key) {
+        return function () {
+            // assign element
+            var el  = this,
+                // get key from element
+                val = (prop in el) ? el[prop] : el.getAttribute(prop);
+
+                if (val !== void 0 && val !== null) {
+                    obj[key] = val
+                }
+        }
+    }
 
     /**
      * hyperscript tagger
@@ -934,13 +942,27 @@
             child.props.xmlns = obj.props.xmlns
         }
 
-        child = child !== void 0 && child !== null && (child[_c] === Object || child[_c] === String || child[_c] === Array) ? 
-            child : 
-            child + '';
-        // convert the null, and undefined strings to empty strings
-        // we don't convert false since that could 
-        // be a valid value returned to the client
-        child = child === 'null' || child === 'undefined' ? '' : child;
+        if (
+            !(
+                child !== void 0 && 
+                child !== null && 
+                (
+                    child[_c] === Object || 
+                    child[_c] === String || 
+                    child[_c] === Array
+                )
+            )
+        ) {
+            child = child + '';
+
+            // convert the null, and undefined strings to empty strings
+            // we don't convert false since that could 
+            // be a valid value returned to the client
+            if (child === 'null' || child === 'undefined') {
+                child = ''
+            }
+        }
+        
         return child
     }
 
@@ -961,8 +983,12 @@
 
         // no props specified default 2nd arg to children
         if (
-            props && 
-            (props.__hs || props[_c] === String || props[_c] === Array)
+            props !== void 0 &&
+            props !== null &&
+            (
+                props[_c] === Object && props.__hs ||
+                props[_c] !== Object && props[_c] !== Function
+            )
         ) {
             key = 1,
             props = {}
@@ -1159,10 +1185,68 @@
         }
     }
 
+    /**
+     * decode html entities
+     * @param  {String} text - content to convert
+     * @return {String}
+     */
+    function trust (text) {
+        return {type: 'p', props: {}, children: [text], trust: true, __hs: true}
+    }
 
-    rafPoly();
+
+    /* --------------------------------------------------------------
+     * 
+     * Exports
+     * 
+     * -------------------------------------------------------------- */
+
+
+    /**
+     * requestAnimationFrame Polyfill
+     */
+    (function () {
+        // references
+        var raf = 'requestAnimationFrame',
+            caf = 'cancelAnimationFrame',
+            v   = ['ms', 'moz', 'webkit'],
+            vl  = v.length,
+            af  = 'AnimationFrame',
+            lt  = 0,
+            // last time
+            w   = window;
+
+        // normalize vendors
+        for (var x = 0; x < vl && !w[raf]; ++x) {
+            w[raf] = w[v[x]+'Request'+af];
+            w[caf] = w[v[x]+'Cancel'+af]||w[v[x]+'CancelRequest'+af]
+        }
+
+        // raf doesn't exist, polyfill it
+        if (!w[raf]) {
+            w[raf] = function(callback) {
+                var currTime   = new Date().getTime(),
+                    timeToCall = Math.max(0, 16 - (currTime - lt)),
+                    id         = w.setTimeout(function() { 
+                                    callback(currTime + timeToCall)
+                                 }, timeToCall);
+
+                    lt = currTime + timeToCall;
+
+                return id
+            };
+        }
+
+        if (!w[caf]) {
+            w[caf] = function(id) {
+                clearTimeout(id)
+            }
+        }
+    }());
     
     window.h       = hyperscript,
+    window.bind    = bind,
+    window.trust   = trust,
     window.animate = animate,
     window.surl    = surl;
 }());

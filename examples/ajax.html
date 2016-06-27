@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>surl.js - Ajax Example</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<script src="/dist/surl.js"></script>
+	</head>
+	<body>
+		<div class="app"></div>
+		<script>
+			var app = new surl(),
+
+				User = app.createClass({
+					render: function () {
+						var createItem = function (user) {
+							return  !user ? '' :
+									h('div',
+										Object.keys(user).map(function(value) {
+									   		var item = user[value];
+
+									   		if (item.constructor !== Object) {
+									   			return h('li', value+': ', h('a', value === 'email' || value === 'website' ? {href: '#'} : {}, item))
+									   		}
+									   		else {
+									   			var arr = [];
+									   			Object.keys(item).map(function(value){
+									   				var __item = item[value];
+									   				if (__item.constructor !== Object) {
+									   					arr.push( h('li', __item) )
+									   				}
+									   			})
+
+									   			return h('ul', arr)
+									   		}
+										})
+									)
+						}
+						return h('div',
+								 	createItem(this.props.user),
+								 	h('hr')
+								)
+					}
+				});
+
+				Users = app.createClass({
+					componentWillMount: function () {
+						var self = this;
+						app.req('http://jsonplaceholder.typicode.com/users/', function (res, err) {
+							self.setProps({users: res})
+						})
+					},
+					render: function () {
+						return h('div',
+								 	h('h1', 'User List'),
+								 	this.props.users ? this.props.users.map(function (user) {
+								 		return User({user: user})
+								 	}) : 'loading ...'
+								) 
+					}
+				})
+
+				app.render(Users, '.app');
+		</script>
+	</body>
+</html>

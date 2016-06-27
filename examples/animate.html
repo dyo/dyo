@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>surl.js - Animation Example</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<script src="/dist/surl.js"></script>
+		<link rel="stylesheet" href="assets/style.css">
+	</head>
+	<body>
+		<div class="app"></div>
+		<script>
+			var app = new surl(),
+
+				List = app.createClass({
+					componentWillMount: function() {
+						var items = [];
+
+						for (var i = 0; i < 500; i++) {
+							items.push({id: i, value: new Date() + performance.now()})
+						}
+						
+						this.setProps({items: items})
+					},
+					render: function () {
+						var createItem = function (item) {
+							return h('.card', {onmousedown: animate.bind('animation-active', 220)}, 
+										h('p', 
+											h('h1', item.id), 
+											item.value
+										)
+									)
+						};
+
+						return h('main.list', 
+									this.props.items.map(createItem)
+								)
+					}
+				});
+
+			app.render(List, '.app');
+		</script>
+	</body>
+</html>

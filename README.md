@@ -148,11 +148,14 @@ h('.card[checked]', {data-id: 1234}, 'Text')
 will create ```<div class="card" data-id="1234" checked>Text<div>```
 
 ##animation
+
+given an end state "a class", you can "FLIP" animate an Element.
+
 ```javascript
 animate(El, [](transforms), 200(time), 'end'(class), '0,0.2,0.2,0'(cubic-easing))
 ```
 
-can be used within a render follows
+can be used within a render as follows
 
 ```javascript
 render: function () {
@@ -163,7 +166,9 @@ render: function () {
 }
 ```
 
-##ajax
+##req
+
+make ajax requests
 
 ```javascript
 app.req('/', 'GET', function (res, err) {
@@ -174,4 +179,27 @@ app.req('/', 'GET', function (res, err) {
 app.req('/', 'POST', {id: 1245}, function (res, err) {
 	
 })
+```
+
+##bind
+
+two way data binding
+
+```javascript
+h('input' {oninput: bind('value', this.state, 'text')})
+// bind('propName/attrName', object, 'objects key to update')
+
+// this.state = {
+//    text: [value]
+// }
+```
+
+##trust
+
+opt out of safe templates
+
+```javascript
+trust("Home Page &amp; <script></script>")
+// Home Page &
+// + will add the script tag to the dom
 ```

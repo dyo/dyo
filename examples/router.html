@@ -3,96 +3,40 @@
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
-		<title>Playground</title>
-		<meta name="description" content="">
+		<title>surl.js - Router Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 		<script src="/dist/surl.js"></script>
-		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = new surl('.app');
+			var app = new surl(),
 
-			var list = app.component({
-				render: function () {
-					return h('main.list', null, 
-								this.list.map(function (a,i) {
-									return h('.card', {onmousedown: i > 2 ? animate.bind('animation-active', 220) : this.test}, 
-												h('p', null, 
-													h('h1', null, a.id), a.value)
-											)
-								}.bind(this))
-							)
-				},
-				list: [
-					{id:0,value:'Click me to add 1000 elements'}, 
-					{id:1,value:'and me...'},
-					{id:2,value:'and me...'},
-					{id:3,value:'Click me to animate'}
-				],
-				test: function() {
-					arr = [];
-					arr.push({id: '-', value: '?hello route'});
-
-					for (var i = 0; i < 500; i++) {
-						arr.push({id:i, value: new Date() + performance.now()})
+				Home = app.createClass({
+					render: function () {
+						return h('h1', {onclick: function(){app.router.nav('/user/sultan')}}, trust("Home Page &amp;"))
 					}
-					
-					this.list = arr
-				}
-			});
+				}),
 
-			var simple = app.component({
-				render: function () {
-					return h('main.simple', null, 
-								h('section', null, 
-									h('h1', {onclick: this.test}, this.data),
-									h('input', {onchange: this.input})
-								),
-								// embed the list component
-								list()
-							)
-				},
-				data: 'This is the /simple view, click me to change view',
-				test: function () {
-					app.router.nav('/sultan/1234')
-				},
-				input: function (e) {
-					this.data = e.currentTarget.value
-				}
-			});
+				User = app.createClass({
+					componentWillMount: function(args) {
+						this.setState(args)
+					},
+					render: function () {
+						return h('h1', {onclick: function(){app.router.nav('/router.html')}}, 
+									this.state.page + " Page",
+									h('p', {}, 'Hello ' + this.state.name)
+								)
+					}
+				});
 
-			var user = app.component({
-				render: function () {
-					return h('section.page', null,
-								h('h1', {onclick: this.nav}, 'This is the /page view, click me to change view')
-							)
-				},
-				nav: function () {
-					app.router.nav('/')
-				},
-				componentWillMount: function(args) {
-					console.log(args)
-				},
-				componentDidMount: function(el) {
-					
-				}
-			});
-
+			app.mount('.app')
 			app.router.config({root: '/examples'});
-			// app.router.nav('/test');
 			app.router.on({
-				'/': simple,
-				'/:username/:id': user
-			})
-
-			// app.req('http://jsonplaceholder.typicode.com/users/1', 'get', function (response, err) {
-				// console.log(response, err)
-			// });
-
-			// app.mount(simple)
+				'/': Home,
+				'/:page/:name': User
+			});
 		</script>
 	</body>
 </html>
