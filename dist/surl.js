@@ -210,7 +210,7 @@
 		}
 
 		self.settings   = {
-			loop: true 
+			auto: true 
 		},
 		self.router     = {
 			back: function () {
@@ -345,13 +345,7 @@
 						// callback is a function, exec
 						if (callback && callback[_c] === Function) {
 							// component function
-							if (callback.cmp) {
-								self.render(callback, void 0, args)
-							}
-							// normal function
-							else {
-								callback(args)
-							}
+							self.render(callback, void 0, args)
 						}
 						// can't process
 						else {
@@ -362,6 +356,12 @@
 			}
 		}
 	}
+
+	// references
+	var getInitialState    = 'getInitialState',
+		getDefaultProps    = 'getDefaultProps',
+		componentWillMount = 'componentWillMount',
+		componentDidMount  = 'componentDidMount';
 
 	surl.prototype = {
 		/**
@@ -473,30 +473,28 @@
 				if (node[_c] === String) {
 					return document.createTextNode(node)
 				}
-				else if (!node.__hs) {
-					return document.createTextNode(JSON.stringify(node))
-				}
+				// trusted text content
 				else if (node.trust && node.__hs) {
 					var div  = document.createElement('div'),
 						frag = document.createDocumentFragment();
 
 					div.innerHTML = node.children[0];
-					var nodes = Array.prototype.slice.call(div.childNodes);
+					var nodes     = Array.prototype.slice.call(div.childNodes);
 
 					each(nodes, function (value) {
 						frag.appendChild(value)
 					});
 
-					return frag;
+					return frag
 				}
 
 				var el;
 
 				// not a text node 
-				// check if is namespaced
+				// check if it is namespaced
 				if (node.props && node.props.xmlns) {
 					el = document.createElementNS(node.props.xmlns, node.type)
-				} 
+				}
 				else {
 					el = document.createElement(node.type)
 				}
@@ -728,18 +726,23 @@
 				// clear dom
 				self.parent.innerHTML = '';
 
-				if (cmp.componentWillMount) {
-					cmp.componentWillMount(params)
+				// before mounting to dom, run once
+				if (cmp[componentWillMount]) {
+					cmp[componentWillMount](params)
 				}
 
 				// activate vdom
 				self.vdom = this.__vdom(),
 				self.vdom = new self.vdom(self.parent, cmp);
-
 				self.vdom.init();
 
-				// activate loop, if settings.loop = true
-				if (!!self.settings.loop) {
+				// after mounting to dom, run once
+				if (cmp[componentDidMount]) {
+					cmp[componentDidMount]()
+				}
+
+				// activate loop, if settings.auto = true
+				if (!!self.settings.auto) {
 					self.vdom.auto(true)
 				}
 			}
@@ -774,14 +777,17 @@
 			}
 
 			each(['Props', 'State'], function (method) {
-				var methodRef = method.toLowerCase();
+				// state/props
+				var type = method.toLowerCase();
 
-				cmpClass.prototype['set'+method] = function (setter) {
+				// .prototype.setState/setProps
+				cmpClass.prototype['set'+method] = function (obj) {
 					var self = this;
 
-					if (setter) {
-						each(setter, function (value, name) {
-							self[methodRef][name] = value
+					// this.setState({obj})
+					if (obj) {
+						each(obj, function (value, name) {
+							self[type][name] = value
 						})
 					}
 				}
@@ -791,12 +797,12 @@
 			var cmpObj = new cmpClass;
 
 			// set initial state
-			if (cmpObj.getInitialState) {
-				cmpObj.setState(cmpObj.getInitialState())
+			if (cmpObj[getInitialState]) {
+				cmpObj.setState(cmpObj[getInitialState]())
 			}
-			// set default props 
-			if (cmpObj.getDefaultProps) {
-				cmpObj.setProps(cmpObj.getDefaultProps())
+			// set default props
+			if (cmpObj[getDefaultProps]) {
+				cmpObj.setProps(cmpObj[getDefaultProps]())
 			}
 
 			// create component returned value
@@ -815,13 +821,13 @@
 				return cmpObj.render()
 			}
 
-			// attach constructor
-			if (cmpObj.componentWillMount) {
-				cmpFn.componentWillMount = cmpObj.componentWillMount
+			// attach component lifecycle methods
+			if (cmpObj[componentWillMount]) {
+				cmpFn[componentWillMount] = cmpObj[componentWillMount]
 			}
-
-			// differentiate between other functions and this
-			cmpFn.cmp = true;
+			if (cmpObj[componentDidMount]) {
+				cmpFn[componentDidMount] = cmpObj[componentDidMount]
+			}
 
 			return cmpFn
 		},
@@ -846,7 +852,6 @@
 
 	/**
 	 * two-way data binding
-	 * 
 	 * @param  {String} prop - the property/attr to look for in the element
 	 * @param  {Object} obj  - the object to update
 	 * @param  {String} key  - the key in the object to update
@@ -862,6 +867,15 @@
 					obj[key] = val
 				}
 		}
+	}
+
+	/**
+	 * decode html entities
+	 * @param  {String} text - content to convert
+	 * @return {String}
+	 */
+	function trust (text) {
+		return {type: 'p', props: {}, children: [text], trust: true, __hs: true}
 	}
 
 	/**
@@ -932,7 +946,7 @@
 	}
 
 	/**
-	 * convert anything not an array, string or objects to a string
+	 * hyperscript set children
 	 * @param  {Any} a
 	 * @return {String|Array|Object}
 	 */
@@ -1183,15 +1197,6 @@
 		if (!webAnimations) {
 			element.addEventListener('transitionend', onfinish);
 		}
-	}
-
-	/**
-	 * decode html entities
-	 * @param  {String} text - content to convert
-	 * @return {String}
-	 */
-	function trust (text) {
-		return {type: 'p', props: {}, children: [text], trust: true, __hs: true}
 	}
 
 

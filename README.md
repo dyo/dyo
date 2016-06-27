@@ -96,7 +96,7 @@ component = ..createClass({
 })
 ```
 
-You can if need be set `app.settings.loop = false`
+You can if need be set `app.settings.auto = false`
 to disable auto updates
 you can then manually trigger an update in a method i.e
 

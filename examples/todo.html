@@ -14,6 +14,12 @@
 			var app = new surl(),
 
 				TodoList = app.createClass({
+					componentWillReceiveProps: function () {
+						console.log(1)
+					},
+					componentWillUpdate: function () {
+						console.log(2)
+					},
 			  		render: function() {
 				    	var createItem = function(item) {
 				    		return h('li', item.text)
@@ -25,6 +31,15 @@
 				TodoApp = app.createClass({
 			  		getInitialState: function() {
 			    		return {items: [], text: ''}
+			  		},
+			  		componentDidMount: function () {
+			  			console.log('mounted')
+			  			var el = document.querySelector('h3');
+			  			console.log(el, this, app.parent);
+			  		},
+			  		componentWillMount: function () {
+			  			var el = document.querySelector('h3');
+			  			console.log(el);
 			  		},
 			  		handleSubmit: function(e) {
 			    		e.preventDefault();
