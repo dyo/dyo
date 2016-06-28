@@ -14,13 +14,8 @@
 			var app = new surl(),
 
 				TodoList = app.createClass({
-					componentWillReceiveProps: function () {
-						console.log(1)
-					},
-					componentWillUpdate: function () {
-						console.log(2)
-					},
 			  		render: function() {
+			  			console.log(this.props)
 				    	var createItem = function(item) {
 				    		return h('li', item.text)
 				    	};
@@ -33,13 +28,10 @@
 			    		return {items: [], text: ''}
 			  		},
 			  		componentDidMount: function () {
-			  			console.log('mounted')
 			  			var el = document.querySelector('h3');
-			  			console.log(el, this, app.parent);
 			  		},
 			  		componentWillMount: function () {
 			  			var el = document.querySelector('h3');
-			  			console.log(el);
 			  		},
 			  		handleSubmit: function(e) {
 			    		e.preventDefault();
@@ -54,7 +46,7 @@
 			  						h('h3', 'TODO'),
 			  						TodoList({items: this.state.items}),
 			  						h('form', {onsubmit: this.handleSubmit},
-			  							h('input', {oninput: bind('value', this.state, 'text'), value: this.state.text}),
+			  							h('input', {oninput: bind('value', this.setState, 'text'), value: this.state.text}),
 			  							h('button', 'Add #' + (this.state.items.length+1))
 	  								)
 			  					)

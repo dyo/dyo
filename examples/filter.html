@@ -106,7 +106,7 @@
 
 				FilterableProductTable = app.createClass({
 					componentWillMount: function () {
-						this.setProps({products: PRODUCTS});
+						this.setState({products: PRODUCTS});
 					},
 			  		state: {
 		      			filterText: '',
@@ -132,7 +132,7 @@
 						          		onUserInput: this.handleUserInput
 				  					}),
 				  					ProductTable ({
-				  						products: this.props.products,
+				  						products: this.state.products,
 		  					          	filterText: this.state.filterText,
 		  					          	inStockOnly: this.state.inStockOnly
 				  					})

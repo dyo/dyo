@@ -22,7 +22,7 @@
 							items.push({id: i, value: new Date() + performance.now()})
 						}
 						
-						this.setProps({items: items})
+						this.setState({items: items})
 					},
 					render: function () {
 						var createItem = function (item) {
@@ -35,7 +35,7 @@
 						};
 
 						return h('main.list', 
-									this.props.items.map(createItem)
+									this.state.items.map(createItem)
 								)
 					}
 				});

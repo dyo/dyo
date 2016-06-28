@@ -49,13 +49,13 @@
 					componentWillMount: function () {
 						var self = this;
 						app.req('http://jsonplaceholder.typicode.com/users/', function (res, err) {
-							self.setProps({users: res})
+							self.setState({users: res})
 						})
 					},
 					render: function () {
 						return h('div',
 								 	h('h1', 'User List'),
-								 	this.props.users ? this.props.users.map(function (user) {
+								 	this.state.users ? this.state.users.map(function (user) {
 								 		return User({user: user})
 								 	}) : 'loading ...'
 								) 

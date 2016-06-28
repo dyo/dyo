@@ -96,27 +96,6 @@ component = ..createClass({
 })
 ```
 
-You can if need be set `app.settings.auto = false`
-to disable auto updates
-you can then manually trigger an update in a method i.e
-
-```javascript
-var app = new surl('.app');
-
-var component = app.component({
-	render: function () {return h('div', this.data)}},
-	method: function () {
-		this.data = 'Changed'
-		app.vdom.update()
-		// you can also enable auto updates
-		app.vdom.loop(true)
-	}
-	data: 'Text'
-})
-
-app.mount(component)
-```
-
 ##router
 
 ```javascript
@@ -203,3 +182,36 @@ trust("Home Page &amp; <script></script>")
 // Home Page &
 // + will add the script tag to the dom
 ```
+
+##lifecycle
+
+A react like lifecycle
+
+- `getInitialState()`
+- `getDefaultProps()`
+- `componentWillMount()`
+- `componentDidMount()`
+
+components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.
+
+##settings
+
+```javascript
+var app = new surl()
+app.settings = {
+	auto: false
+}
+```
+
+If you change `app.settings.auto` to true, it will default to requestAnimationFrame for updates, this means that that whether you call this.setState or not, the component will render 60fps everytime and update the dom anytime there is a change. With this you can model you app in any way. i.e
+
+```javascript
+var app = new surl('.app'),
+	Foo = app.createClass({
+		test: 'Hello World'
+		render: function(){
+			return h('div', {onclick: bind('innerText', this, 'test')}, this.test)
+		}
+	})
+```
+You would normally need to call `this.setState({test: 'newValue'})` and the test variable that holds some data would be within an object state: {test: ''} when you set it with the return value of `setInitialState()`. But in this case since the diffing is running all the time it doesn't need `this.setState` to trigger a render.

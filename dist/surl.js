@@ -210,7 +210,7 @@
 		}
 
 		self.settings   = {
-			auto: true 
+			auto: false 
 		},
 		self.router     = {
 			back: function () {
@@ -718,9 +718,8 @@
 			// has parent to mount to
 			if (self.parent) {
 				// destroy the current vdom if it already exists
-				if (self.vdom) {
-					self.vdom.destroy();
-					self.vdom = void 0;
+				if (self.settings.auto && self.vdom) {
+					self.vdom.destroy()
 				}
 
 				// clear dom
@@ -742,7 +741,7 @@
 				}
 
 				// activate loop, if settings.auto = true
-				if (!!self.settings.auto) {
+				if (self.settings.auto) {
 					self.vdom.auto(true)
 				}
 			}
@@ -758,6 +757,8 @@
 		 * @return {Object}           - component
 		 */
 		component: function (args) {
+			var that = this;
+
 			// add props, state namespace
 			args.props = args.props || {}
 			args.state = args.state || {}
@@ -781,24 +782,30 @@
 				var type = method.toLowerCase();
 
 				// .prototype.setState/setProps
-				cmpClass.prototype['set'+method] = function (obj) {
+				cmpClass.prototype['set'+method] = function (obj, update) {
 					var self = this;
 
-					// this.setState({obj})
+					// the obj passed in setState({obj}) / setProps({obj})
 					if (obj) {
 						each(obj, function (value, name) {
 							self[type][name] = value
-						})
+						});
+
+						if (type === 'state' && !update && !that.settings.auto && that.vdom) {
+							that.vdom.update()
+						}
 					}
 				}
 			});
 
 			// create component object
-			var cmpObj = new cmpClass;
+			var cmpObj          = new cmpClass;
+				cmpObj.setState = cmpObj.setState.bind(cmpObj);
+				cmpObj.setProps = cmpObj.setProps.bind(cmpObj);
 
 			// set initial state
 			if (cmpObj[getInitialState]) {
-				cmpObj.setState(cmpObj[getInitialState]())
+				cmpObj.setState(cmpObj[getInitialState](), false)
 			}
 			// set default props
 			if (cmpObj[getDefaultProps]) {
@@ -856,7 +863,7 @@
 	 * @param  {Object} obj  - the object to update
 	 * @param  {String} key  - the key in the object to update
 	 */
-	function bind (prop, obj, key) {
+	function bind (prop, setter, key) {
 		return function () {
 			// assign element
 			var el  = this,
@@ -864,7 +871,11 @@
 				val = (prop in el) ? el[prop] : el.getAttribute(prop);
 
 				if (val !== void 0 && val !== null) {
-					obj[key] = val
+					var obj      = {};
+						obj[key] = val;
+
+					setter(obj);
+					// obj[key] = val
 				}
 		}
 	}
