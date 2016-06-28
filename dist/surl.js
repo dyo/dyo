@@ -371,6 +371,8 @@
 		 * @return {Object}     - vdom object
 		 */
 		__vdom: function () {
+			var self = this;
+
 			// events
 			function isEventProp (name) {
 				// checks if the first two characters are on
@@ -605,7 +607,9 @@
 				},
 				// destory
 				destroy: function () {
-					this.auto(false);
+					if (self.settings.auto) {
+						this.auto(false)
+					}
 
 					this.old    = void 0,
 					this.render = void 0,
@@ -718,8 +722,9 @@
 			// has parent to mount to
 			if (self.parent) {
 				// destroy the current vdom if it already exists
-				if (self.settings.auto && self.vdom) {
-					self.vdom.destroy()
+				if (self.vdom) {
+					self.vdom.destroy();
+					self.vdom = void 0
 				}
 
 				// clear dom
