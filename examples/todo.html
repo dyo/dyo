@@ -6,7 +6,7 @@
 		<title>surl.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/surl.min.js"></script>
 	</head>
 	<body>
 		<div class="app"></div>
@@ -15,7 +15,6 @@
 
 				TodoList = app.createClass({
 			  		render: function() {
-			  			console.log(this.props)
 				    	var createItem = function(item) {
 				    		return h('li', item.text)
 				    	};
@@ -34,6 +33,7 @@
 			  			var el = document.querySelector('h3');
 			  		},
 			  		handleSubmit: function(e) {
+			  			console.log(this.refs);
 			    		e.preventDefault();
 			    		var text = this.state.text;
 		    			if (text) {
@@ -46,7 +46,7 @@
 			  						h('h3', 'TODO'),
 			  						TodoList({items: this.state.items}),
 			  						h('form', {onsubmit: this.handleSubmit},
-			  							h('input', {oninput: bind('value', this.setState, 'text'), value: this.state.text}),
+			  							h('input', {oninput: bind('value', this, 'text'), value: this.state.text}),
 			  							h('button', 'Add #' + (this.state.items.length+1))
 	  								)
 			  					)

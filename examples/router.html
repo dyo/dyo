@@ -22,7 +22,6 @@
 				User = app.createClass({
 					componentWillMount: function(args) {
 						this.setState(args)
-						console.log(args)
 					},
 					render: function () {
 						return h('h1', {onclick: function(){ app.router.nav('/router.html') }}, 

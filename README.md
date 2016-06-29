@@ -10,7 +10,8 @@
 
 #####Supports: Chrome, Firefox, Safari, IE10+
 
-~4kb minified+gzipped, ~10kb minified.
+- *~4kb minified+gzipped.*  
+- *~9kb minified.*
 
 ##core
 
@@ -112,7 +113,7 @@ example
 
 ```javascript
 var app = new surl(document)
-var a = app.component({render, state, ...methods})
+var a = app.createClass({render, state, ...methods})
 a.router.on('/', a)
 a.router.on('/:user/:action', (args) => {console.log(args.user, args.action)})
 ```

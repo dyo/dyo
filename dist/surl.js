@@ -1,18 +1,99 @@
 /**
- * Surl - Virtual Dom Library
- *
+ * Surl - a react like virtual dom library
  * @author Sultan Tarimo <https://github.com/sultantarimo>
  */
 (function () {
 	'use strict';
 
-	// references
-	var _c         = 'constructor',
-		_namespace = {
-			math: 'http://www.w3.org/1998/Math/MathML',
-			svg: 'http://www.w3.org/2000/svg',
+	// references for better minification
+	var __namespace          = {
+			math:  'http://www.w3.org/1998/Math/MathML',
+			svg:   'http://www.w3.org/2000/svg',
 			xlink: 'http://www.w3.org/1999/xlink'
-		};
+		},
+		__document           = document,
+		__window             = window,
+		__constructor        = 'constructor',
+		__prototype          = 'prototype',
+		__length             = 'length',
+		__number             = Number,
+		__array              = Array,
+		__object             = Object,
+		__function           = Function,
+		__string             = String,
+		__date               = Date,
+		__XMLHttpRequest     = XMLHttpRequest,
+		__Math               = Math,
+		__null               = null,
+		__false              = false,
+		__true               = true,
+		__undefined          = void 0,
+		__encodeURIComponent = encodeURIComponent,
+		__getInitialState    = 'getInitialState',
+		__getDefaultProps    = 'getDefaultProps',
+		__componentWillMount = 'componentWillMount',
+		__componentDidMount  = 'componentDidMount';
+
+
+	/**
+	 * requestAnimationFrame Polyfill
+	 */
+	(function () {
+		// references
+		var requestAnimationFrame = 'requestAnimationFrame',
+			cancelAnimationFrame  = 'cancelAnimationFrame',
+			vendors               = ['ms', 'moz', 'webkit'],
+			vendorsLength         = vendors[__length],
+			animationFrame        = 'AnimationFrame',
+			lastTime              = 0;
+			// last time
+
+		// normalize vendors
+		for (var i = 0; i < vendorsLength && !__window[requestAnimationFrame]; ++i) {
+			__window[requestAnimationFrame] = __window[vendors[i]+'Request'+animationFrame],
+			__window[cancelAnimationFrame]  = __window[vendors[i]+'Cancel'+animationFrame]||__window[vendors[i]+'CancelRequest'+animationFrame]
+		}
+
+		// requestAnimationFrame doesn't exist, polyfill it
+		if (!__window[requestAnimationFrame]) {
+			__window[requestAnimationFrame] = function (callback) {
+				var currTime   = new __date().getTime(),
+					timeToCall = __Math.max(0, 16 - (currTime - lastTime)),
+					id         = __window.setTimeout(function () { 
+									callback(currTime + timeToCall)
+								}, timeToCall);
+
+					lastTime   = currTime + timeToCall;
+
+				return id
+			}
+		}
+
+		// cancelAnimationFrame doesn't exist, polyfill it
+		if (!__window[cancelAnimationFrame]) {
+			__window[cancelAnimationFrame] = function (id) {
+				clearTimeout(id)
+			}
+		}
+	}());
+
+
+	/**
+	 * check Object type
+	 * @param  {Any}  obj  - object to check for type
+	 * @param  {Any}  type - type to check for
+	 * @return {Boolean}   - true/false
+	 */
+	function isType (obj, type) {
+		// has a constructor
+		if (obj) {
+			return obj[__constructor] === type
+		}
+		// doesn't, return false
+		else {
+			return __false
+		}
+	}
 
 	/**
 	 * 'forEach' shortcut
@@ -21,25 +102,29 @@
 	 * @return {Array|Object}
 	 */
 	function each (a, b) {
+		// index {Number}
 		var i;
 
-		if (a === null || a === void 0) return;
-
-		// Handle arrays, and array like objects
-		if (a[_c] === Array || a.length && a.length[_c] === Number && a[0]) {
-			var l = a.length;
+		// Handle arrays, and array-like Objects
+		if (isType(a, __array) || a[__length] && isType(a[__length], __number) && a[0]) {
+			// length {Number}
+			var l = a[__length];
 				i = 0;
 
-			for(; i < l; ++i) {
-				if ( b.call(a[i], a[i], i, a) === false ) 
+			for (; i < l; ++i) {
+				// break if b() returns false
+				if (b.call(a[i], a[i], i, a) === __false) {
 					return a
+				}
 			}
 		}
 		// Handle objects 
 		else {
 			for (i in a) {
-				if ( b.call(a[i], a[i], i, a) === false ) 
+				// break if b() returns false
+				if (b.call(a[i], a[i], i, a) === __false) {
 					return a
+				}
 			}
 		}
 
@@ -50,19 +135,20 @@
 	 * requestAnimationFrame helper
 	 * @param  {Function} fn  - function to run on each frame update
 	 * @param  {Number}   fps - frames per second
-	 * @param  {Object}   raf - object to request animation frame reference
+	 * @param  {Object}   raf - object to store raf reference
 	 */
 	function raf (fn, fps, raf) {
-		var then = new Date().getTime();
+		var then = new __date().getTime();
 	
-		// custom fps, otherwise fallback to 60
+		// use custom fps if supplied, otherwise fallback to 60fps
 		fps = fps || 60;
 		var interval = 1000 / fps;
 	
-		return (function loop(time) {
-			raf.id = requestAnimationFrame(loop)
+		return (function loop (time) {
+			// assign reference to raf
+			raf.id    = requestAnimationFrame(loop)
 
-			var now = new Date().getTime(),
+			var now   = new __date().getTime(),
 				delta = now - then;
 	
 			if (delta > interval) {
@@ -74,23 +160,29 @@
 
 	/**
 	 * serialize + encode object
-	 * @param  {Object}  a `object to serialize`
+	 * @param  {Object}  obj    - `object to serialize`
+	 * @param  {Object}  prefix
 	 * @return {String}   serialized object
 	 * @example
 	 * // returns 'url=http%3A%2F%2F.com'
 	 * param({url:'http://.com'})
 	 */
-	function param (a) {
-		var c = [];
-	
-		for (var d in a) {
-			var v = a[d];
-	
-			c.push(typeof v == 'object' ? param(v, d) : 
-				encodeURIComponent(d) + '=' + encodeURIComponent(v))
+	function param (obj, prefix) {
+		var arr = [];
+
+		for (var key in obj) {
+		    var __prefix = prefix ? prefix + '[' + key + ']' : key,
+		    	value    = obj[key];
+
+		    // when the value is equal to an object that means that we have something like
+		    // data = {name:'John', addr: {...}}
+		    // so we re-run param on addr to serialize 'addr: {...}'
+		    arr.push(typeof value == 'object' ? 
+		    	param(value, __prefix) :
+		    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value));
 		}
-	
-		return c.join('&')
+
+		return arr.join('&');
 	}
 	
 	/**
@@ -102,87 +194,104 @@
 	 * ajax({url, method, data}, fn(res, err) => {})
 	 */
 	function ajax (settings, callback) {
-		var xhr      = new XMLHttpRequest(),
-			location = window.location,
+		var xhr      = new __XMLHttpRequest(),
+			location = __window.location,
 			url      = settings.url,
 			callback = settings.callback,
 			method   = settings.method,
-			a        = document.createElement('a');
+			data     = settings.data || {};
+		// create anchor element to extract usefull information
+		var a        = __document.createElement('a');
 			a.href   = url;
 	
-		// is this a CROSS ORIGIN REQUEST check
+		// check if is this a cross origin request check
 		var CORS = !(
-			a.hostname === location.hostname &&
-			a.port === location.port &&
-			a.protocol === location.protocol &&
+			a.hostname        === location.hostname &&
+			a.port            === location.port     &&
+			a.protocol        === location.protocol &&
 			location.protocol !== 'file:'
 		);
-			a = null;
-	
-		xhr.open(method, url, true);
-	
+			// destroy created element
+			a = __null;
+		
+		// open request
+		xhr.open(method, url, __true);
+		
+		// assign on error callback
 		xhr.onerror = function () {
-			callback(this, true)
-		};
-	
+			callback(this, __true)
+		}
+		
+		// assign on load callback
 		xhr.onload = function () {
-			// callback specified
+			// is callback specified?
 			if (callback) {
-				var params, response;
-	
+				var params,
+					response,
+					responseText = xhr.responseText;
+				
+				// success
 				if (this.status >= 200 && this.status < 400) {
-					// determine return data type
-					var type    = xhr.getResponseHeader("content-type"),
-						__type;
+					// get response header
+					var resHeader = xhr.getResponseHeader("content-type"),
+						resType;
 
-					if (type.indexOf(';') !== -1) {
-						__type = type.split(';');
-						__type = __type[0].split('/')
+					// formate response header
+					if (resHeader.indexOf(';') !== -1) {
+						resType = resHeader.split(';');
+						resType = resType[0].split('/')
 					}
 					else {
-						__type = type.split('/')
+						resType = resHeader.split('/')
 					}
 
-					type = __type[1];
+					// extract response type 'html/json/text'
+					resType = resType[1];
 
-					// json
-					if (type === 'json') {
-						response = JSON.parse(xhr.responseText)
+					// json, parse json
+					if (resType === 'json') {
+						response = JSON.parse(responseText)
 					}
 					// html, create dom
-					else if (type === 'html') {
-						response = (new DOMParser()).parseFromString(xhr.responseText, "text/html")
+					else if (resType === 'html') {
+						response = (new DOMParser()).parseFromString(responseText, "text/html")
 					}
-					// just text
+					// text, leave as is.
 					else {
-						response = xhr.responseText
+						response = responseText
 					}
-	
-					params = [response, false]
-				} else {
-					params = [this, true]
+					
+					params = [response, __false]
 				}
-	
+				// failed
+				else {
+					params = [this, __true]
+				}
+				
+				// (response{String|Object|Node}, error{Boolean})
 				callback(params[0], params[1])
 			}
 		}
-	
+		
+		// set for this is a cross origin request
 		if (CORS) {
-			xhr.withCredentials = true
+			xhr.withCredentials = __true
 		}
-	
+		
+		// config non GET requests
 		if (method !== 'GET') {
-			// set type of data sent : text/json
-			xhr.setRequestHeader(
-				'Content-Type', 
-				settings.data && settings.data[_c] === Object ? 'application/json' : 'text/plain'
-			)
+			// set the type of the data sent to either text/json
+			xhr.setRequestHeader('Content-Type', isType(data, __object) ? 'application/json' : 'text/plain')
 		}
-	
+		
+		// serialize settings for POST request
 		if (method === 'POST') {
 			xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-			xhr.send(param(settings))
-		} else {
+			// i.e for {name: 'Foo'} Request Payload will be name=Foo
+			xhr.send(param(data))
+		}
+		// non POST request 
+		else {
 			xhr.send()
 		}
 	
@@ -199,18 +308,19 @@
 
 	/**
 	 * surl
-	 * @param  {Element?} parent - optional parent element
-	 * @return {surl}
+	 * @param  {Element?} mount - optional parent element
+	 * @return {surl}           - {settings, parent, router, vdom}
 	 */
-	function surl (parent) {
+	function surl (mount) {
 		var self = this;
 
-		if (parent) {
-			self.mount(parent)
+		// set mount element
+		if (mount) {
+			self.mount(mount)
 		}
 
 		self.settings   = {
-			auto: false 
+			auto: __false 
 		},
 		self.router     = {
 			back: function () {
@@ -230,7 +340,7 @@
 				var root = this.settings.root;
 					url  = root ? root + url : url;
 
-				history.pushState(null, null, url);
+				history.pushState(__null, __null, url);
 			},
 			config: function (obj) {
 				var self = this;
@@ -246,12 +356,12 @@
 			},
 			listen: function () {
 				var self      = this;
-					self.url  = null;
+					self.url  = __null;
 					self.raf  = {id: 0};
 
 				// start listening for a a change in the url
 				raf(function () {
-					var url = window.location.pathname;
+					var url = __window.location.pathname;
 
 					if (self.url !== url) {
 						self.url = url;
@@ -274,7 +384,7 @@
 				}
 
 				// normalize args for ({obj}) and (url, callback) styles
-				if (args[_c] !== Object) {
+				if (!isType(args, __object)) {
 					var args   = arguments;
 						routes = {};
 						routes[args[0]] = args[1];
@@ -331,7 +441,7 @@
 						// i.e {user: "simple", id: "1234"}
 						var args = match
 							// remove the first(url) value in the array
-							.slice(1, match.length)
+							.slice(1, match[__length])
 							.reduce(function (args, val, i) {
 								if (!args) {
 									args = {}
@@ -340,16 +450,16 @@
 								// i.e user: 'simple'
 								args[variables[i]] = val;
 								return args
-							}, null);
+							}, __null);
 
 						// callback is a function, exec
-						if (callback && callback[_c] === Function) {
+						if (isType(callback, __function)) {
 							// component function
-							self.render(callback, void 0, args)
+							self.render(callback, __undefined, args)
 						}
 						// can't process
 						else {
-							throw 'could not find the render method'
+							throw 'could not find render method'
 						}
 					}
 				})
@@ -357,13 +467,7 @@
 		}
 	}
 
-	// references
-	var getInitialState    = 'getInitialState',
-		getDefaultProps    = 'getDefaultProps',
-		componentWillMount = 'componentWillMount',
-		componentDidMount  = 'componentDidMount';
-
-	surl.prototype = {
+	surl[__prototype] = {
 		/**
 		 * Virtual Dom
 		 * @param  {Element}  a - parent element
@@ -371,8 +475,6 @@
 		 * @return {Object}     - vdom object
 		 */
 		__vdom: function () {
-			var self = this;
-
 			// events
 			function isEventProp (name) {
 				// checks if the first two characters are on
@@ -381,7 +483,7 @@
 		
 			function extractEventName (name) {
 				// removes the first two characters and converts to lowercase
-				return name.substring(2, name.length).toLowerCase()
+				return name.substring(2, name[__length]).toLowerCase()
 			}
 		
 			function addEventListeners (target, props) {
@@ -391,7 +493,7 @@
 						var callback = props[name];
 		
 						if (callback) {
-							target.addEventListener(extractEventName(name), callback, false)
+							target.addEventListener(extractEventName(name), callback, __false)
 						}
 					}
 				}
@@ -399,7 +501,7 @@
 		
 			// assign/update/remove props
 			function prop (target, name, value, op) {
-				if (isEventProp(name)) {
+				if (isEventProp(name) || name === 'ref') {
 					return
 				}
 
@@ -408,21 +510,21 @@
 			
 				// set xlink:href attr
 				if (name === 'xlink:href') {
-					return target.setAttributeNS(_namespace['xlink'], 'href', value)
+					return target.setAttributeNS(__namespace['xlink'], 'href', value)
 				}
 				// if the target has an attr as a property, 
 				// change that aswell
 				if (
-					target[name] !== void 0 && 
-					target.namespaceURI !== _namespace['svg']
+					target[name] !== __undefined && 
+					target.namespaceURI !== __namespace['svg']
 				) {
 					target[name] = value
 				}
 				// don't set namespace attrs and properties that
 				// can be set via target[name]
 				else if (
-					value !== _namespace['svg'] && 
-					value !== _namespace['math']
+					value !== __namespace['svg'] && 
+					value !== __namespace['math']
 				) {
 					if (op === -1) {
 						target[attr](name)
@@ -434,18 +536,18 @@
 			}
 		
 			function updateElementProp (target, name, newVal, oldVal) {
-				if (newVal === void 0 || newVal === null) {
+				if (newVal === __undefined || newVal === __null) {
 					// -1 : remove prop
 					prop(target, name, oldVal, -1)
 				} 
-				else if (oldVal === void 0 || oldVal === null || newVal !== oldVal) {
+				else if (oldVal === __undefined || oldVal === __null || newVal !== oldVal) {
 					// + 1 : add/update prop
 					prop(target, name, newVal, +1)
 				}
 			}
 		
 			function updateElementProps (target, newProps, oldProps) {
-				oldProps  = oldProps !== void 0 ? oldProps : {};
+				oldProps  = oldProps !== __undefined ? oldProps : {};
 
 				// merge old and new props
 				var props = {};
@@ -470,18 +572,18 @@
 			}
 		
 			// create element
-			function createElement (node) {
+			function createElement (node, cmpFn) {
 				// handle text nodes
-				if (node[_c] === String) {
-					return document.createTextNode(node)
+				if (isType(node, __string)) {
+					return __document.createTextNode(node)
 				}
 				// trusted text content
 				else if (node.trust && node.__hs) {
-					var div  = document.createElement('div'),
-						frag = document.createDocumentFragment();
+					var div  = __document.createElement('div'),
+						frag = __document.createDocumentFragment();
 
-					div.innerHTML = node.children[0];
-					var nodes     = Array.prototype.slice.call(div.childNodes);
+					div.innerHTML = node.content;
+					var nodes     = __array[__prototype].slice.call(div.childNodes);
 
 					each(nodes, function (value) {
 						frag.appendChild(value)
@@ -495,10 +597,10 @@
 				// not a text node 
 				// check if it is namespaced
 				if (node.props && node.props.xmlns) {
-					el = document.createElementNS(node.props.xmlns, node.type)
+					el = __document.createElementNS(node.props.xmlns, node.type)
 				}
 				else {
-					el = document.createElement(node.type)
+					el = __document.createElement(node.type)
 				}
 				
 				// diff and update/add/remove props
@@ -507,8 +609,29 @@
 				addEventListeners(el, node.props);
 				
 				// only map children arrays
-				if (node.children && node.children[_c] === Array) {
-					each(node.children.map(createElement), el.appendChild.bind(el))
+				if (isType(node.children, __array)) {
+					each(node.children, function (child) {
+						el.appendChild(createElement(child, cmpFn))
+					})
+				}
+
+				// add refs on the initial mount
+				if (isType(cmpFn, __function)) {
+					var props = node.props,
+						ref   = props ? props.ref : __undefined;
+
+					// component has a ref add to parent component
+					if (ref) {
+						var cmp      = cmpFn(__undefined, __undefined, true);
+							cmp.refs = {};
+
+						if (isType(ref, __function)) {
+							ref(el)
+						}
+						else if (isType(ref, __string)) {
+							cmp.refs[ref] = el
+						}
+					}
 				}
 		
 				return el
@@ -517,9 +640,9 @@
 			// diffing a node
 			function changed (node1, node2) {
 				// diff object type
-				var isDiffType  = node1[_c] !== node2[_c],
+				var isDiffType  = node1[__constructor] !== node2[__constructor],
 					// diff text content
-					isDiffText  = node1[_c] === String && node1 !== node2,
+					isDiffText  = isType(node1, __string) && node1 !== node2,
 					// diff dom type
 					isDiffDom   = node1.type !== node2.type;
 		
@@ -529,7 +652,7 @@
 			// validate
 			function validate (a) {
 				// converts 0 | false to strings
-				if (a !== void 0 && (a === null || a === 0 || a === false)) {
+				if (a !== __undefined && (a === __null || a === 0 || a === __false)) {
 					a = a + ''
 				}
 
@@ -538,17 +661,17 @@
 		
 			// diff
 			function diff (parent, newNode, oldNode, index) {
-				index = index ? index : 0;
+				index = index || 0;
 				
 				oldNode = validate(oldNode);
 				newNode = validate(newNode);
 		
 				// adding to the dom
-				if (oldNode === void 0) {
-					parent.appendChild(createElement(newNode))
+				if (oldNode === __undefined) {
+					parent.appendChild(createElement(newNode, index))
 				} 
 				// removing from the dom
-				else if (newNode === void 0) {
+				else if (newNode === __undefined) {
 					var node = parent.childNodes[index];
 
 					// send to the end of the event queue
@@ -566,8 +689,8 @@
 					updateElementProps(parent.childNodes[index], newNode.props, oldNode.props);
 					
 					// loop through all children
-					var newLength = newNode.children.length,
-						oldLength = oldNode.children.length;
+					var newLength = newNode.children[__length],
+						oldLength = oldNode.children[__length];
 			
 					
 					for (var i = 0; i < newLength || i < oldLength; i++) {
@@ -583,9 +706,9 @@
 				// local copy of dynamic hyperscript reference
 				this.render = render,
 				// raf
-				this.raf = null;
+				this.raf = __null;
 			}
-			vdom.prototype = {
+			vdom[__prototype] = {
 				// refresh/update dom
 				update: function () {
 					// get latest change
@@ -603,18 +726,7 @@
 					// local copy of static hyperscript refence
 					this.old = this.render();
 					// initial mount
-					diff(this.parent, this.old)
-				},
-				// destory
-				destroy: function () {
-					if (self.settings.auto) {
-						this.auto(false)
-					}
-
-					this.old    = void 0,
-					this.render = void 0,
-					this.raf    = void 0,
-					this.parent = void 0
+					diff(this.parent, this.old, __undefined, this.render)
 				},
 				// activate requestAnimationframe loop
 				auto: function (start) {
@@ -633,12 +745,7 @@
 					}
 					// stop
 					else {
-						// push to the end of the callstack
-						// lets the current update trigger
-						// before stopping
 						cancelAnimationFrame(self.raf.id)
-
-						return self.raf.id
 					}
 				}
 			}
@@ -654,19 +761,26 @@
 			var args     = arguments,
 				settings = {method: 'GET'};
 
+			// get and assign method, url and callback
+			// from arguments based on type
 			each(args, function (val) {
-				if (val[_c] === Object) {
+				// objects are data
+				if (isType(val, __object)) {
 					settings.data = val
 				}
-				else if (val[_c] === Function) {
+				// functions are callbacks
+				else if (isType(val, __function)) {
 					settings.callback = val
 				}
-				else if (val[_c] === String) {
+				// strings are url/method
+				else if (isType(val, __string)) {
 					var type = val.toUpperCase();
 
+					// methods
 					if (type === 'POST' || type === 'GET') {
 						settings.method = type
 					}
+					// url
 					else {
 						settings.url = val
 					}  
@@ -685,19 +799,20 @@
 			var self = this;
 
 			// can't use document, use body instead
-			if (element === document) {
+			if (element === __document) {
 				element = element.body
 			}
 			// query selector if string
-			else if (element[_c] === String) {
-				element = document.querySelector(element)
+			else if (isType(element, __string)) {
+				element = __document.querySelector(element)
 			}
 
+			// assign mount if element
 			if (element && element.nodeType) {
-				self.parent = element
+				self.mountElement = element
 			}
 			else {
-				self.parent = void 0
+				self.mountElement = __undefined
 			}
 		},
 
@@ -711,57 +826,53 @@
 
 			// add parent element
 			if (element) {
-				if (element[_c] === String) {
-					self.parent = document.querySelector(element)
+				// string? query element
+				if (isType(element, __string)) {
+					self.mountElement = __document.querySelector(element)
 				}
+				// element? add
 				else if (element.nodeType) {
-					self.parent = element
+					self.mountElement = element
 				}
 			}
 
 			// has parent to mount to
-			if (self.parent) {
-				// destroy the current vdom if it already exists
-				if (self.vdom) {
-					self.vdom.destroy();
-					self.vdom = void 0
-				}
-
+			if (self.mountElement) {
 				// clear dom
-				self.parent.innerHTML = '';
+				self.mountElement.innerHTML = '';
 
-				// before mounting to dom, run once
-				if (cmp[componentWillMount]) {
-					cmp[componentWillMount](params)
+				// before mounting to dom, run once if set
+				if (cmp[__componentWillMount]) {
+					cmp[__componentWillMount](params)
 				}
 
 				// activate vdom
 				self.vdom = this.__vdom(),
-				self.vdom = new self.vdom(self.parent, cmp);
+				self.vdom = new self.vdom(self.mountElement, cmp);
 				self.vdom.init();
 
-				// after mounting to dom, run once
-				if (cmp[componentDidMount]) {
-					cmp[componentDidMount]()
+				// after mounting to dom, run once if set
+				if (cmp[__componentDidMount]) {
+					cmp[__componentDidMount]()
 				}
 
 				// activate loop, if settings.auto = true
 				if (self.settings.auto) {
-					self.vdom.auto(true)
+					self.vdom.auto(__true)
 				}
 			}
 			// can't find parent to mount to
 			else {
-				throw 'the element to mount to does not exist'
+				throw 'element to mount does not exist'
 			}
 		},
 
 		/**
-		 * create a component
+		 * create a component class
 		 * @param  {Object} component - component object
 		 * @return {Object}           - component
 		 */
-		component: function (args) {
+		createClass: function (args) {
 			var that = this;
 
 			// add props, state namespace
@@ -774,20 +885,22 @@
 				// add props to component
 				each(args, function (value, name) {
 					// bind the component scope to all methods
-					if (value[_c] === Function) {
+					if (isType(value, __function)) {
 						value = value.bind(self)
 					}
 
+					// assign property/method
 					self[name] = value
 				})
 			}
 
+			// add setState and setProps methods to prototype
 			each(['Props', 'State'], function (method) {
 				// state/props
 				var type = method.toLowerCase();
 
-				// .prototype.setState/setProps
-				cmpClass.prototype['set'+method] = function (obj, update) {
+				// cmpClass.prototype.setState/setProps
+				cmpClass[__prototype]['set'+method] = function (obj, update) {
 					var self = this;
 
 					// the obj passed in setState({obj}) / setProps({obj})
@@ -796,6 +909,7 @@
 							self[type][name] = value
 						});
 
+						// only trigger render for setState() if settings.auto = false (the default)
 						if (type === 'state' && !update && !that.settings.auto && that.vdom) {
 							that.vdom.update()
 						}
@@ -805,50 +919,48 @@
 
 			// create component object
 			var cmpObj          = new cmpClass;
-				cmpObj.setState = cmpObj.setState.bind(cmpObj);
-				cmpObj.setProps = cmpObj.setProps.bind(cmpObj);
 
-			// set initial state
-			if (cmpObj[getInitialState]) {
-				cmpObj.setState(cmpObj[getInitialState](), false)
+			// get and set initial state
+			if (cmpObj[__getInitialState]) {
+				cmpObj.setState(cmpObj[__getInitialState](), __false)
 			}
-			// set default props
-			if (cmpObj[getDefaultProps]) {
-				cmpObj.setProps(cmpObj[getDefaultProps]())
+			// get and set default props
+			if (cmpObj[__getDefaultProps]) {
+				cmpObj.setProps(cmpObj[__getDefaultProps]())
 			}
 
-			// create component returned value
-			var cmpFn = function (props, children) {
+			// create component returned function
+			var cmpFn = function (props, children, cmp) {
 				// set children
-				// specified by parent cmp
+				// specified by parent cmp, i.e Foo(null, 'Text')
 				if (children) {
 					cmpObj.setProps({children: children})   
 				}
 				// set props 
-				// specified by parent cmp
+				// specified by parent cmp, i.e Foo({prop: 'Value'})
 				if (props) {
 					cmpObj.setProps(props)
 				}
 
-				return cmpObj.render()
+				if (cmp) {
+					// return component object
+					return cmpObj;
+				}
+				else {
+					// return hyperscript
+					return cmpObj.render()
+				}
 			}
 
-			// attach component lifecycle methods
-			if (cmpObj[componentWillMount]) {
-				cmpFn[componentWillMount] = cmpObj[componentWillMount]
+			// attach component lifecycle methods if set
+			if (cmpObj[__componentWillMount]) {
+				cmpFn[__componentWillMount] = cmpObj[__componentWillMount]
 			}
-			if (cmpObj[componentDidMount]) {
-				cmpFn[componentDidMount] = cmpObj[componentDidMount]
+			if (cmpObj[__componentDidMount]) {
+				cmpFn[__componentDidMount] = cmpObj[__componentDidMount]
 			}
 
 			return cmpFn
-		},
-
-		createClass: function (args) {
-			return this.component(args)
-		},
-		createComponent: function (args) {
-			return this.component(args)
 		}
 	}
 
@@ -863,35 +975,53 @@
 
 
 	/**
-	 * two-way data binding
+	 * two-way data binding, not to be confused with Function.bind
 	 * @param  {String} prop - the property/attr to look for in the element
 	 * @param  {Object} obj  - the object to update
 	 * @param  {String} key  - the key in the object to update
 	 */
-	function bind (prop, setter, key) {
+	function bind (prop, cmp, key) {
+		// the idea is that when you attach a function to an event,
+		// i.e el.addEventListener('eventName', fn)
+		// when that event is dispatched the function will execute
+		// making the this context of this function the element 
+		// that the event was attached to
+		// we can then extract the prop, and run the setter(setState/setProps)
+		// with the object {[key]: this[prop]}
+		// to bind a state/prop to an element
 		return function () {
 			// assign element
 			var el  = this,
 				// get key from element
-				val = (prop in el) ? el[prop] : el.getAttribute(prop);
+				// either the prop is a property of the element object
+				// or an attribute
+				value = (prop in el) ? el[prop] : el.getAttribute(prop);
 
-				if (val !== void 0 && val !== null) {
+				// just if(value) doesn't work if the value is false
+				// and some prop values can be false
+				// null and undefined = prop/attr doesn't exist
+				if (value !== __undefined && value !== __null) {
+					// round about way to do obj = {[key]: value}
 					var obj      = {};
-						obj[key] = val;
+						obj[key] = value;
 
-					setter(obj);
-					// obj[key] = val
+					// run the components setState
+					cmp.setState(obj);
 				}
 		}
 	}
 
 	/**
-	 * decode html entities
+	 * flag as a trusted element
 	 * @param  {String} text - content to convert
 	 * @return {String}
 	 */
 	function trust (text) {
-		return {type: 'p', props: {}, children: [text], trust: true, __hs: true}
+		return {
+			content: text, 
+			trust: __true, 
+			__hs: __true
+		}
 	}
 
 	/**
@@ -945,12 +1075,12 @@
 					attr = attr.replace(/\\(["'])/g, '$1')
 				}
 				// if attr value is an empty string assign true
-				props[match[4]] = attr || true
+				props[match[4]] = attr || __true
 			}
 		}
 
 		// add classes to obj.props if we have any
-		if (classes.length > 0) {
+		if (classes[__length] > 0) {
 			props.class = classes.join(' ')
 		}
 
@@ -968,19 +1098,15 @@
 	 */
 	function set (child, obj) {
 		// add obj.prop to children if they are none TextNodes
-		if (child && child[_c] === Object && obj.props.xmlns) {
+		if (isType(child, __object) && obj.props.xmlns) {
 			child.props.xmlns = obj.props.xmlns
 		}
 
 		if (
 			!(
-				child !== void 0 && 
-				child !== null && 
-				(
-					child[_c] === Object || 
-					child[_c] === String || 
-					child[_c] === Array
-				)
+				isType(child, __object) || 
+				isType(child, __string) || 
+				isType(child, __array)
 			)
 		) {
 			child = child + '';
@@ -1007,36 +1133,33 @@
 	 */
 	function hyperscript (type, props) {
 		var args = arguments,
-			len = args.length,
+			len = args[__length],
 			key = 2,
 			child;
 
 		// no props specified default 2nd arg to children
+		// is an hyperscript object or not an object (null,undefined,string,array,bool)
 		if (
-			props !== void 0 &&
-			props !== null &&
-			(
-				props[_c] === Object && props.__hs ||
-				props[_c] !== Object && props[_c] !== Function
-			)
+			(isType(props, __object) && props.__hs) ||
+			!isType(props, __object)
 		) {
 			key = 1,
 			props = {}
 		}
 		// insure props is always an object
-		else if (props === null || props === void 0 || props[_c] !== Object) {
+		else if (props === __null || props === __undefined || !isType(props, __object)) {
 			props = {}
 		}
 
 		// declare hyperscript object
-		var obj = {type: type, props: props, children: [], __hs: true};
+		var obj = {type: type, props: props, children: [], __hs: __true};
 
 		// check if the type is a special case i.e [type] | div.class | #id
 		// and alter the hyperscript
 		if (
-			obj.type.indexOf('[') !== -1 || 
-			obj.type.indexOf('#') !== -1 || 
-			obj.type.indexOf('.') !== -1
+			type.indexOf('[') !== -1 ||
+			type.indexOf('#') !== -1 || 
+			type.indexOf('.') !== -1
 		) {
 			obj = tag(obj)
 		}
@@ -1050,7 +1173,7 @@
 		if (obj.type === 'svg' || obj.type === 'math') {
 			// only add the namespace if it's not already set
 			if (!obj.props.xmlns) {
-				obj.props.xmlns = _namespace[obj.type]
+				obj.props.xmlns = __namespace[obj.type]
 			}
 		}
 
@@ -1061,8 +1184,8 @@
 	
 			// if the child is an array go deeper
 			// and set the 'arrays children' as children
-			if (child && child[_c] === Array) {
-				for (var k = 0; k < child.length; k++) {
+			if (isType(child, __array)) {
+				for (var k = 0; k < child[__length]; k++) {
 					obj.children[(i-key) + k] = set(child[k], obj)
 				}
 			}
@@ -1089,129 +1212,112 @@
 	 * @return {Void}
 	 *
 	 * @example
-	 * h('.card', {onclick: animate}, h('p', null, a))
+	 * h('.card', {onclick: animate}, h('p', null, a)) 
+	 * // className defaults to animation-active end class
+	 * // duration defaults to 220ms
 	 * // or 
-	 * h('.card', {onclick: animate.bind(400, 'endClassName', '0,0,0,1.2')}, h('p', null, a))
+	 * h('.card', {onclick: animate(400, 'active-state', null, 'linear')})
 	 * // or 
-	 * animate(target, 'endClassName', 400, ['rotate(25deg)', 'translate(-20px)'])
+	 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
 	 */
-	function animate() {
-		// declare variables
-		var args, className, duration, transform, easing, element,
-			first, last, invert, animation, webAnimations,
-			first = last = invert = animation = {},
-			// assign arguments
-			args = Array.prototype.slice.call(arguments);
+	function animate (duration, className, transform, transformOrigin, easing) {
+		return function (element) {
+			var first, 
+				last, 
+				webAnimations, 
+				invert           = {},
+				element          = element.currentTarget || element,
+				style            = element.style,
+				elementClassList = element.classList,
+				bodyClassList    = __document.body.classList,
+				runningClass     = 'animation-running',
+				transEvtEnd      = 'transitionend';
 
-		for (var i = args.length - 1; i >= 0; i--) {
-			var arg = args[i];
-
-			if (arg[_c] === Array) {
-				transform = arg.join(' ')
-			} 
-			else if (arg[_c] === Number) {
-				duration = arg
-			} 
-			else if (arg[_c] === String) {
-				if (arg.indexOf(',') !== -1) { 
-					easing = arg 
-				}
-				else { 
-					className = arg 
-				}
-			} 
-			else if (!!arg.target) {
-				element = arg.target
+			// can't animate without an end state class
+			if(!className) {
+				return
 			}
-		}
 
-		if (this[_c] === Number) {
-			duration = this
-		} 
-		else if (this[_c] === String) {
-			className = this
-		} else if (!className) {
-			className = 'animation-active';
-		}
+			// animation type
+			// if this is set we opt for the more performant
+			// web animations api
+			if (isType(element.animate, __function)) {
+				webAnimations = __true
+			}
 
-		// we need an end state class and element to run
-		if (!className || !element) {
-			return
-		}
+			// promote element to individual composite layer
+			style.willChange = 'transform';
 
-		// promote element to individual composite layer
-		element.style.willChange = 'transform';
-		// get first state
-		first = element.getBoundingClientRect();
-		// assign last state
-		element.classList.toggle(className);
-		// get last state
-		last = element.getBoundingClientRect();
-		// get invert values
-		invert.x = first.left - last.left;
-		invert.y = first.top - last.top;
-		invert.sx = first.width / last.width;
-		invert.sy = first.height / last.height;
+			// get first state
+			first = element.getBoundingClientRect(element);
+			// assign last state
+			elementClassList.toggle(className);
+			// get last state
+			last  = element.getBoundingClientRect(element);
 
-		// animation type
-		// if this is set we opt for the more performant
-		// web animations api
-		if (element.animate && element.animate[_c] === Function) {
-			var webAnimations = true
-		}
+			// get invert values
+			invert.x  = first.left   - last.left,
+			invert.y  = first.top    - last.top,
+			invert.sx = first.width  / last.width,
+			invert.sy = first.height / last.height,
 
-		animation.first = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+' scale('+invert.sx+','+invert.sy+')',
-		animation.first = transform ? animation.first + ' ' + transform : animation.first,
-		animation.last = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)',
-		animation.duration = duration ? duration : 200,
-		animation.easing = easing ? 'cubic-bezier('+easing+')' : 'cubic-bezier(0,0,0.32,1)',
-		element.style.transformOrigin = '0 0';
+			duration  = duration || 200,
+			easing    = easing   || 'cubic-bezier(0,0,0.32,1)',
+			first     = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+
+						' scale('+invert.sx+','+invert.sy+')',
+			first     = transform ? first + ' ' + transform : first,
+			last      = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
 
-		// reflect animation state on dom
-		element.classList.add('animation-running');
-		document.body.classList.add('animation-running');
-		document.body.classList.toggle('animation-active');
+			// assign transform origin if set
+			if (transformOrigin) {
+				style.transformOrigin = transformOrigin
+			}
 
-		// use native web animations api if present
-		// presents better performance
-		if (webAnimations) {
-			var player = element.animate([
-			  {transform: animation.first},
-			  {transform: animation.last}
-			], {
-				duration: animation.duration,
-				easing: animation.easing
-			});
+			// reflect animation state on dom
+			elementClassList.add(runningClass);
+			bodyClassList.add(runningClass);
 
-			player.addEventListener('finish', onfinish);
-		} else {
-			element.style.transform = animation.first;
-			// trigger repaint 
-			element.offsetWidth;
-			element.style.transition = 'transform '+animation.duration+'ms '+animation.easing,
-			element.style.transform = animation.last;
-		}
+			// use native web animations api if present
+			// presents better performance
+			if (webAnimations) {
+				var player = element.animate([
+				  {transform: first},
+				  {transform: last}
+				], {
+					duration: duration,
+					easing:   easing
+				});
 
-		// cleanup
-		function onfinish(e) {
+				player.addEventListener('finish', onfinish)
+			} else {
+				style.transform  = first;
+				// trigger repaint 
+				element.offsetWidth;
+				style.transition = 'transform '+duration+'ms '+easing,
+				style.transform  = last
+			}
+
+			// cleanup
+			function onfinish (e) {
+				if (!webAnimations) {
+					// bubbled events
+					if (e.target !== element) {
+						return
+					}
+					style.transition  = __null,
+					style.transform   = __null;
+				}
+				style.transformOrigin = __null,
+				style.willChange      = __null;
+
+				elementClassList.remove(runningClass);
+				bodyClassList.remove(runningClass);
+				element.removeEventListener(transEvtEnd, onfinish)
+			}
+
 			if (!webAnimations) {
-				// bubbled events
-				if (e.target != element) {
-					return
-				}
-				element.style.transition = null,
-				element.style.transform = null;
+				element.addEventListener(transEvtEnd, onfinish)
 			}
-			element.style.transformOrigin = null,
-			element.style.willChange = null;
-
-			element.classList.remove('animation-running');
-			document.body.classList.remove('animation-running');
-			element.removeEventListener('transitionend', onfinish);
-		}
-
-		if (!webAnimations) {
-			element.addEventListener('transitionend', onfinish);
 		}
 	}
 
@@ -1222,52 +1328,10 @@
 	 * 
 	 * -------------------------------------------------------------- */
 
-
-	/**
-	 * requestAnimationFrame Polyfill
-	 */
-	(function () {
-		// references
-		var raf = 'requestAnimationFrame',
-			caf = 'cancelAnimationFrame',
-			v   = ['ms', 'moz', 'webkit'],
-			vl  = v.length,
-			af  = 'AnimationFrame',
-			lt  = 0,
-			// last time
-			w   = window;
-
-		// normalize vendors
-		for (var x = 0; x < vl && !w[raf]; ++x) {
-			w[raf] = w[v[x]+'Request'+af];
-			w[caf] = w[v[x]+'Cancel'+af]||w[v[x]+'CancelRequest'+af]
-		}
-
-		// raf doesn't exist, polyfill it
-		if (!w[raf]) {
-			w[raf] = function(callback) {
-				var currTime   = new Date().getTime(),
-					timeToCall = Math.max(0, 16 - (currTime - lt)),
-					id         = w.setTimeout(function() { 
-									callback(currTime + timeToCall)
-								 }, timeToCall);
-
-					lt = currTime + timeToCall;
-
-				return id
-			};
-		}
-
-		if (!w[caf]) {
-			w[caf] = function(id) {
-				clearTimeout(id)
-			}
-		}
-	}());
 	
-	window.h       = hyperscript,
-	window.bind    = bind,
-	window.trust   = trust,
-	window.animate = animate,
-	window.surl    = surl;
+	__window.h       = hyperscript,
+	__window.bind    = bind,
+	__window.trust   = trust,
+	__window.animate = animate,
+	__window.surl    = surl;
 }());

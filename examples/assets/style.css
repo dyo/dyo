@@ -5,6 +5,9 @@
 	padding:0; 
 	box-sizing: border-box; 
 }
+body.animation-active { 
+	overflow: hidden; 
+}
 .app {
 	font-family: sans-serif; 
 }
@@ -17,30 +20,37 @@
 	box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
 	position: relative;
 	overflow: hidden;
-}
-.card:nth-child(4n) {
-	background: #9C27B0;
+	transform-origin: 0 0;
 }
 .card p { 
 	color:#FFF; 
 	pointer-events:none; 
 }
 .card.animation-running { 
-	box-shadow: none; 
-	z-index: 9999; 
+	z-index: 9999;
 }
-.card.animation-running * { 
-	opacity: 0;
-}
-.card.animation-active {
+
+.card.scaled {
 	position: fixed;
 	height: 100%;
 	max-width: 100%;
 	bottom: 0;
 	left: 0;
 	z-index: 100;
-	box-shadow: none;
 }
-body.animation-active { 
-	overflow: hidden; 
+.card.moveTop {
+	top: -60px;
+	z-index: 100;
+}
+.card.moveBottom {
+	bottom: -60px;
+	z-index: 100;
+}
+.card.moveLeft {
+	left: -25%;
+	z-index: 100;
+}
+.card.moveRight {
+	right: -25%;
+	z-index: 100;
 }

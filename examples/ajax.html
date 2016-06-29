@@ -48,8 +48,14 @@
 				Users = app.createClass({
 					componentWillMount: function () {
 						var self = this;
-						app.req('http://jsonplaceholder.typicode.com/users/', function (res, err) {
-							self.setState({users: res})
+						// app.req('http://jsonplaceholder.typicode.com/users/', function (res, err) {
+						app.req('/', 'GET', function (res, err) {
+							if (err) {
+								self.setState({users: [{error: 'request failed'}]})
+							}
+							else {
+								self.setState({users: [{error: 'request failed'}]})//res})
+							}
 						})
 					},
 					render: function () {
@@ -63,6 +69,8 @@
 				})
 
 				app.render(Users, '.app');
+
+				console.log(app);
 		</script>
 	</body>
 </html>
