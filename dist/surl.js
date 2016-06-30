@@ -555,12 +555,6 @@
 				if (name === 'xlink:href') {
 					return target.setAttributeNS(__namespace['xlink'], 'href', value)
 				}
-				// xmlns:xlink="http://www.w3.org/1999/xlink"
-				// but "http://www.w3.org/1999/xlink" is not a valid namespace
-				// for setAttributeNS()
-				else if (name === 'xmlns:xlink') {
-					return
-				}
 
 				// if the target has an attr as a property, 
 				// change that aswell
@@ -911,7 +905,7 @@
 			});
 			
 			// process
-			ajax(settings)
+			return ajax(settings)
 		},
 
 		/**
