@@ -85,14 +85,15 @@
 			});
 
 			// mount to dom
-			app.Render(TodoApp, '.app')
+			app.Render(TodoApp, '.app');
 
 			// activate shortcut dom references
 			// i.e h('div', 'Text')
 			// becomes
 			// div('Text')
 			app.DOM();
-			console.log(input('Text', 'Text'))
+			console.log(input('Text', 'Text'));
+			console.log(TodoApp());
 			console.log(app)
 		</script>
 	</body>
