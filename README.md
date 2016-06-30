@@ -32,14 +32,14 @@ app.mount(simple)
 or you can mount to an element like this
 
 ```javascript
-app.mount(simple, element);
+app.Mount(simple, element);
 ```
 
 or you can just
 
 ```javascript
 app.parent = element;
-app.router.on('/', simple)
+app.Router.on('/', simple)
 ```
 
 or when you init app
@@ -55,7 +55,7 @@ var app = new surl('.app')
 then 
 
 ```javascript
-app.mount(simple)
+app.Mount(simple)
 
 ```
 a component can be any object that has a render function that
@@ -74,9 +74,7 @@ var obj = {
 	}
 }
 
-app.createClass(obj)
-//or
-app.component(obj)
+app.Component(obj)
 
 ```
 you can also use the built in hyperscript helper 
@@ -89,7 +87,7 @@ when adding a component as a child of another you can pass props to that compone
 ```javascript
 h('div', component({products: [1,2,3]}))
 
-component = ..createClass({
+component = app.Component({
 	render: function () {
 		console.log(this.props) // {products: [1,2,3]}
 		return ('div')
@@ -100,6 +98,8 @@ component = ..createClass({
 ##router
 
 ```javascript
+app.Router
+
 // ? = optional
 - .on('url', callback/'component object', element?) 
 - .on({'/': simple, ...})
@@ -124,6 +124,8 @@ hyperscript `h(type, props, children)`
 
 ```javascript
 h('.card[checked]', {data-id: 1234}, 'Text')
+//or
+app.Element('.card[checked]', {data-id: 1234}, 'Text')
 ```
 will create ```<div class="card" data-id="1234" checked>Text<div>```
 
@@ -151,25 +153,26 @@ render: function () {
 make ajax requests
 
 ```javascript
-app.req('/', 'GET', function (res, err) {
+app.Req('/', 'GET', function (res, err) {
 	res{Element|JSON|Text}
 	err{Boolean}
 })
 
-app.req('/', 'POST', {id: 1245}, function (res, err) {
+app.Req('/', 'POST', {id: 1245}, function (res, err) {
 	
 })
 ```
 
 ##bind
 
-two way data binding
+two way state data binding
 
 ```javascript
-h('input' {oninput: bind('value', this.state, 'text')})
-// bind('propName/attrName', object, 'objects key to update')
+h('input' {oninput: bind('value', this, 'text')})
+// bind('propName/attrName', component, 'objects key to update')
 
-// this.state = {
+// will change the components state to
+// {
 //    text: [value]
 // }
 ```
@@ -188,10 +191,14 @@ trust("Home Page &amp; <script></script>")
 
 A react like lifecycle
 
-- `getInitialState()`
-- `getDefaultProps()`
-- `componentWillMount()`
-- `componentDidMount()`
+```javascript
+componentWillMount: function()
+componentDidMount: function()
+componentWillReceiveProps: function(nextProps)
+componentWillUpdate: function(nextProps, nextState)
+componentDidUpdate: function(prevProps, prevState)
+componentWillUnmount: function()
+```
 
 components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.
 
@@ -208,7 +215,7 @@ If you change `app.settings.auto` to true, it will default to requestAnimationFr
 
 ```javascript
 var app = new surl('.app'),
-	Foo = app.createClass({
+	Foo = app.Component({
 		test: 'Hello World'
 		render: function(){
 			return h('div', {onclick: bind('innerText', this, 'test')}, this.test)

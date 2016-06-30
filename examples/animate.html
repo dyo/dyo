@@ -15,7 +15,7 @@
 		<script>
 			var app = new surl(),
 
-				List = app.createClass({
+				List = app.Component({
 					render: function () {
 						var createItem = function (item, className, transform, easing, transformOrigin) {
 							return h('.card', {
@@ -49,7 +49,9 @@
 					}
 				});
 
-			app.render(List, '.app');
+			app.Render(List, '.app');
+
+			console.log(app)
 		</script>
 	</body>
 </html>

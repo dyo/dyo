@@ -11,32 +11,34 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = new surl(),
+			var app = surl,
 
-				Home = app.createClass({
+				Home = app.Component({
 					render: function () {
-						return h('h1', {onclick: function(){app.router.nav('/user/sultan')}}, trust("Home Page &amp;"))
+						return h('h1', {onclick: function(){app.Router.nav('/user/sultan')}}, trust("Home Page &amp;"))
 					}
 				}),
-
-				User = app.createClass({
+				User = app.Component({
 					componentWillMount: function(args) {
 						this.setState(args)
 					},
 					render: function () {
-						return h('h1', {onclick: function(){ app.router.nav('/router.html') }}, 
+						return h('h1', {onclick: function(){ app.Router.nav('/router.html') }}, 
 									this.state.page + " Page",
 									h('p', {}, 'Hello ' + this.state.name)
 								)
 					}
 				});
 
-			app.mount('.app')
-			app.router.config({root: '/examples'});
-			app.router.on({
+			app.Mount('.app')
+			
+			app.Router.config({root: '/examples'});
+			app.Router.on({
 				'/': Home,
 				'/:page/:name': User
 			});
+
+			console.log(app)
 		</script>
 	</body>
 </html>

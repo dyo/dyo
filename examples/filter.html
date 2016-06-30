@@ -22,13 +22,12 @@
 
 			var app = new surl(),
 
-				ProductCategoryRow = app.createClass({
+				ProductCategoryRow = app.Component({
 			  		render: function() {
 			    		return h('tr', h('th[colspan=2]', this.props.category))
 			  		}
 				}),
-
-				ProductRow = app.createClass({
+				ProductRow = app.Component({
 			  		render: function() {
 				    	var name = this.props.product.stocked ? this.props.product.name : h('span[style=color:red]', this.props.product.name);
 
@@ -38,8 +37,7 @@
 				    			)
 			  		}
 				}),
-
-				ProductTable = app.createClass({
+				ProductTable = app.Component({
 			  		render: function() {
 					    var rows = [],
 					    	lastCategory = null;
@@ -71,8 +69,7 @@
 				    			)
 			  		}
 				}),
-
-				SearchBar = app.createClass({
+				SearchBar = app.Component({
 			  		handleChange: function(event) {
 			  			var el   = event.target,
 			  				type = el.getAttribute('type').toLowerCase();
@@ -103,8 +100,7 @@
 					    		)
 			  		}
 				}),
-
-				FilterableProductTable = app.createClass({
+				FilterableProductTable = app.Component({
 					componentWillMount: function () {
 						this.setState({products: PRODUCTS});
 					},
@@ -140,7 +136,9 @@
 			  		}
 				});
 
-			app.render(FilterableProductTable, '.app');
+			app.Render(FilterableProductTable, '.app');
+
+			console.log(app)
 		</script>
 	</body>
 </html>

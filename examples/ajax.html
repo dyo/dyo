@@ -13,7 +13,7 @@
 		<script>
 			var app = new surl(),
 
-				User = app.createClass({
+				User = app.Component({
 					render: function () {
 						var createItem = function (user) {
 							return  !user ? '' :
@@ -43,13 +43,12 @@
 								 	h('hr')
 								)
 					}
-				});
-
-				Users = app.createClass({
+				}),
+				Users = app.Component({
 					componentWillMount: function () {
 						var self = this;
-						// app.req('http://jsonplaceholder.typicode.com/users/', function (res, err) {
-						app.req('/', 'GET', function (res, err) {
+						// app.Req('http://jsonplaceholder.typicode.com/users/', function (res, err) {
+						app.Req('/', 'GET', function (res, err) {
 							if (err) {
 								self.setState({users: [{error: 'request failed'}]})
 							}
@@ -68,9 +67,9 @@
 					}
 				})
 
-				app.render(Users, '.app');
+				app.Render(Users, '.app');
 
-				console.log(app);
+				console.log(app)
 		</script>
 	</body>
 </html>

@@ -6,34 +6,52 @@
 		<title>surl.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.min.js"></script>
+		<script src="/dist/surl.js"></script>
 	</head>
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = new surl(),
+			var app = surl,
 
-				TodoList = app.createClass({
+				TodoItem = app.Component({
+					componentDidMount: function() {
+						console.log('componentDidMount: ', arguments)
+					},
+					componentWillReceiveProps: function(nextProps) {
+						console.log('componentWillReceiveProps: ', arguments)
+					},
+					componentWillUpdate: function(nextProps, nextState) {
+						console.log('componentWillUpdate: ', arguments)
+					},
+					componentDidUpdate: function(prevProps, prevState) {
+						console.log('componentDidUpdate: ', arguments)
+					},
+					componentWillUnmount: function() {
+						console.log('componentDidUpdate:', arguments)
+					},
+					render: function () {
+						var item = this.props.item;
+						return h('li', {onclick: this.props.delete, id: item.id, dd: Date.now(), style: 'cursor:pointer;'}, item.text)
+					}
+				}),
+				TodoList = app.Component({
 			  		render: function() {
-				    	var createItem = function(item) {
-				    		return h('li', item.text)
-				    	};
-				    	return h('ul', this.props.items.map(createItem))
+			  			var self = this;
+				    	return h('ul', 
+				    				this.props.items.map(function (value) {
+				    					return TodoItem({item: value, delete: self.props.delete})
+				    				})
+		    					)
 			  		}
 				}),
-
-				TodoApp = app.createClass({
+				TodoApp = app.Component({
+					componentWillMount: function() {
+						console.log('componentDidUpdate:', arguments)
+					},
 			  		getInitialState: function() {
 			    		return {items: [], text: ''}
 			  		},
-			  		componentDidMount: function () {
-			  			var el = document.querySelector('h3');
-			  		},
-			  		componentWillMount: function () {
-			  			var el = document.querySelector('h3');
-			  		},
-			  		handleSubmit: function(e) {
-			  			console.log(this.refs);
+			  		handleSubmit: function (e) {
 			    		e.preventDefault();
 			    		var text = this.state.text;
 		    			if (text) {
@@ -41,10 +59,22 @@
 			    			this.setState({items: nextItems, text: ''})
 		    			}
 			  		},
-			  		render: function() {
+			  		handleDelete: function (e) {
+			  			var value = e.currentTarget.id,
+			  				items = this.state.items;
+
+			  			items.forEach(function(a,b){
+			  				if (a.id == value) {
+								items.splice(b, 1)		  					
+			  				}
+			  			});
+
+			  			this.setState({items: items});
+			  		},
+			  		render: function () {
 			  			return h('div',
 			  						h('h3', 'TODO'),
-			  						TodoList({items: this.state.items}),
+			  						TodoList({items: this.state.items, delete: this.handleDelete}),
 			  						h('form', {onsubmit: this.handleSubmit},
 			  							h('input', {oninput: bind('value', this, 'text'), value: this.state.text}),
 			  							h('button', 'Add #' + (this.state.items.length+1))
@@ -53,7 +83,9 @@
 			  		}
 				});
 
-			app.render(TodoApp, '.app')
+			app.Render(TodoApp, '.app')
+
+			console.log(app)
 		</script>
 	</body>
 </html>

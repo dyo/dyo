@@ -3,37 +3,45 @@
  * @author Sultan Tarimo <https://github.com/sultantarimo>
  */
 (function () {
+	// strict mode, tell the runtime not to suppress my silent mistakes
+	// globals, undefined variables etc.
 	'use strict';
 
 	// references for better minification
+	// so instead of obj.constructor we would do obj[__constructor]
+	// the minifier will be able to minify that to something like
+	// o[c] while it can't do the same for the former
 	var __namespace          = {
 			math:  'http://www.w3.org/1998/Math/MathML',
-			svg:   'http://www.w3.org/2000/svg',
-			xlink: 'http://www.w3.org/1999/xlink'
+			xlink: 'http://www.w3.org/1999/xlink',
+			svg:   'http://www.w3.org/2000/svg'
 		},
-		__document           = document,
-		__window             = window,
-		__constructor        = 'constructor',
-		__prototype          = 'prototype',
-		__length             = 'length',
-		__number             = Number,
-		__array              = Array,
-		__object             = Object,
-		__function           = Function,
-		__string             = String,
-		__date               = Date,
-		__XMLHttpRequest     = XMLHttpRequest,
-		__Math               = Math,
-		__null               = null,
-		__false              = false,
-		__true               = true,
-		__undefined          = void 0,
-		__encodeURIComponent = encodeURIComponent,
-		__getInitialState    = 'getInitialState',
-		__getDefaultProps    = 'getDefaultProps',
-		__componentWillMount = 'componentWillMount',
-		__componentDidMount  = 'componentDidMount';
-
+		__document                  = document,
+		__window                    = window,
+		__constructor               = 'constructor',
+		__prototype                 = 'prototype',
+		__length                    = 'length',
+		__number                    = Number,
+		__array                     = Array,
+		__object                    = Object,
+		__function                  = Function,
+		__string                    = String,
+		__date                      = Date,
+		__XMLHttpRequest            = XMLHttpRequest,
+		__Math                      = Math,
+		__null                      = null,
+		__false                     = false,
+		__true                      = true,
+		__undefined                 = void 0,
+		__encodeURIComponent        = encodeURIComponent,
+		__getInitialState           = 'getInitialState',
+		__getDefaultProps           = 'getDefaultProps',
+		__componentWillReceiveProps = 'componentWillReceiveProps',
+		__componentDidMount         = 'componentDidMount',
+		__componentWillMount        = 'componentWillMount',
+		__componentWillUnmount      = 'componentWillUnmount',
+		__componentWillUpdate       = 'componentWillUpdate',
+		__componentDidUpdate        = 'componentDidUpdate';
 
 	/**
 	 * requestAnimationFrame Polyfill
@@ -44,14 +52,15 @@
 			cancelAnimationFrame  = 'cancelAnimationFrame',
 			vendors               = ['ms', 'moz', 'webkit'],
 			vendorsLength         = vendors[__length],
+			// greedy save a few bytes on declaring RequestAnimationFrame variations multple times
 			animationFrame        = 'AnimationFrame',
 			lastTime              = 0;
-			// last time
 
-		// normalize vendors
+		// default to vendors if the standard version is missing
 		for (var i = 0; i < vendorsLength && !__window[requestAnimationFrame]; ++i) {
 			__window[requestAnimationFrame] = __window[vendors[i]+'Request'+animationFrame],
-			__window[cancelAnimationFrame]  = __window[vendors[i]+'Cancel'+animationFrame]||__window[vendors[i]+'CancelRequest'+animationFrame]
+			__window[cancelAnimationFrame]  = __window[vendors[i]+'Cancel'+animationFrame] ||
+											  __window[vendors[i]+'CancelRequest'+animationFrame]
 		}
 
 		// requestAnimationFrame doesn't exist, polyfill it
@@ -59,6 +68,7 @@
 			__window[requestAnimationFrame] = function (callback) {
 				var currTime   = new __date().getTime(),
 					timeToCall = __Math.max(0, 16 - (currTime - lastTime)),
+
 					id         = __window.setTimeout(function () { 
 									callback(currTime + timeToCall)
 								}, timeToCall);
@@ -85,50 +95,64 @@
 	 * @return {Boolean}   - true/false
 	 */
 	function isType (obj, type) {
-		// has a constructor
-		if (obj) {
-			return obj[__constructor] === type
+		// only check if obj is not a falsey value
+		if (!type) {
+			if (obj) {
+				return true
+			}
+			else {
+				return false
+			}
 		}
-		// doesn't, return false
+		// check object type
 		else {
-			return __false
+			// onj has a constructor
+			if (obj !== __undefined && obj !== __null) {
+				return obj[__constructor] === type
+			}
+			// doesn't, probably null or undefined 
+			// that don't have constructors methods, return false
+			else {
+				return __false
+			}
 		}
 	}
 
 	/**
 	 * 'forEach' shortcut
 	 * @param  {Array|Object} a 
-	 * @param  {Function}     b
+	 * @param  {Function}     fn
 	 * @return {Array|Object}
 	 */
-	function each (a, b) {
+	function each (arr, fn) {
 		// index {Number}
-		var i;
+		var index;
 
-		// Handle arrays, and array-like Objects
-		if (isType(a, __array) || a[__length] && isType(a[__length], __number) && a[0]) {
+		// Handle arrays, and array-like Objects, 
+		// array-like objects (have prop .length that is a number) and numbers for keys [0]
+		if (isType(arr, __array) || arr[__length] && isType(arr[__length], __number) && arr[0]) {
 			// length {Number}
-			var l = a[__length];
-				i = 0;
+			var length = arr[__length];
+				index = 0;
 
-			for (; i < l; ++i) {
-				// break if b() returns false
-				if (b.call(a[i], a[i], i, a) === __false) {
-					return a
+			for (; index < length; ++index) {
+				// break if fn() returns false
+				if (fn.call(arr[index], arr[index], index, arr) === __false) {
+					return arr
 				}
 			}
 		}
 		// Handle objects 
 		else {
-			for (i in a) {
-				// break if b() returns false
-				if (b.call(a[i], a[i], i, a) === __false) {
-					return a
+			for (index in arr) {
+				// break if fn() returns false
+				if (fn.call(arr[index], arr[index], index, arr) === __false) {
+					return arr
 				}
 			}
 		}
 
-		return a
+		return arr
 	}
 
 	/**
@@ -311,170 +335,189 @@
 	 * @param  {Element?} mount - optional parent element
 	 * @return {surl}           - {settings, parent, router, vdom}
 	 */
-	function surl (mount) {
+	var surl = function (mount) {
+		// we are going to be doing this alot when we use this alot
+		// it allows the minified to then convert all self to shorter alternatives
+		// since you can't minify 'this' or Fn.bind
 		var self = this;
 
+		// element specified on instantiation
 		// set mount element
 		if (mount) {
 			self.mount(mount)
 		}
 
-		self.settings   = {
+		// default to auto:false settings
+		// auto:true settings activates a constant render diff
+		// the default is to run a render diff on when this.setState()
+		// is invoked
+		self.settings = {
 			auto: __false 
-		},
-		self.router     = {
-			back: function () {
-				history.back()
-			},
-			foward: function () {
-				history.foward()
-			},
-			go: function (index) {
-				history.go(index)
-			},
-			destroy: function () {
-				this.routes = {};
-				cancelAnimationFrame(this.raf.id);
-			},
-			nav: function (url) {
-				var root = this.settings.root;
-					url  = root ? root + url : url;
-
-				history.pushState(__null, __null, url);
-			},
-			config: function (obj) {
-				var self = this;
-
-				// add settings object if it doesn't exist
-				if (!self.settings) {
-					self.settings = {}
-				}
-
-				each(obj, function(value, name) {
-					self.settings[name] = value
-				})
-			},
-			listen: function () {
-				var self      = this;
-					self.url  = __null;
-					self.raf  = {id: 0};
-
-				// start listening for a a change in the url
-				raf(function () {
-					var url = __window.location.pathname;
-
-					if (self.url !== url) {
-						self.url = url;
-						self.changed()
-					}
-				}, 60, self.raf)
-			},
-			on: function (args) {
-				var self = this,
-					routes;
-
-				// create routes object if it doesn't exist
-				if (!self.routes) {
-					self.routes = {}
-				}
-
-				// start listening for route changes
-				if (!self.raf) {
-					self.listen()
-				}
-
-				// normalize args for ({obj}) and (url, callback) styles
-				if (!isType(args, __object)) {
-					var args   = arguments;
-						routes = {};
-						routes[args[0]] = args[1];
-				}
-				else {
-					routes = args;
-				}
-
-				// assign routes
-				each(routes, function (value, name) {
-					var root = self.settings.root,
-						variables = [],
-						regex = /([:*])(\w+)|([\*])/g,
-						// given the following /:user/:id/*
-						pattern = name.replace(regex, function () {
-									var args = arguments,
-										id   = args[2];
-										// 'user', 'id', undefned
-
-									// if not a variable 
-									if (!id) {
-										return '(?:.*)'
-									}
-									// capture
-									else {
-										variables.push(id);
-										return '([^\/]+)'
-									}
-								});
-
-					self.routes[name] = {
-						callback:  value,
-						pattern:   root ? root + pattern : pattern,
-						variables: variables
-					}
-				})
-			},
-			changed: function () {
-				var url    = this.url,
-					routes = this.routes;
-
-				each(routes, function (val) {
-					var callback  = val.callback,
-						pattern   = val.pattern,
-						variables = val.variables,
-						match;
-
-					// exec pattern on url
-					match = url.match(new RegExp(pattern));
-
-					// we have a match
-					if (match) {
-						// create params object to pass to callback
-						// i.e {user: "simple", id: "1234"}
-						var args = match
-							// remove the first(url) value in the array
-							.slice(1, match[__length])
-							.reduce(function (args, val, i) {
-								if (!args) {
-									args = {}
-								}
-								// var name: value
-								// i.e user: 'simple'
-								args[variables[i]] = val;
-								return args
-							}, __null);
-
-						// callback is a function, exec
-						if (isType(callback, __function)) {
-							// component function
-							self.render(callback, __undefined, args)
-						}
-						// can't process
-						else {
-							throw 'could not find render method'
-						}
-					}
-				})
-			}
 		}
 	}
 
 	surl[__prototype] = {
+		Router: {
+				// history back
+				back: function () {
+					history.back()
+				},
+				// history foward
+				foward: function () {
+					history.foward()
+				},
+				// history go
+				go: function (index) {
+					history.go(index)
+				},
+				// kills the rAf animation loop and clears the routes
+				destroy: function () {
+					this.routes = {};
+					cancelAnimationFrame(this.raf.id);
+				},
+				// navigate to a view
+				nav: function (url) {
+					var root = this.settings.root;
+						url  = root ? root + url : url;
+
+					history.pushState(__null, __null, url);
+				},
+				// configure defualts
+				config: function (obj) {
+					var self = this;
+
+					// add settings object if it doesn't exist
+					if (!self.settings) {
+						self.settings = {}
+					}
+
+					each(obj, function(value, name) {
+						self.settings[name] = value
+					})
+				},
+				// start listening for url changes
+				listen: function () {
+					var self      = this;
+						self.url  = __null;
+						self.raf  = {id: 0};
+
+					// start listening for a a change in the url
+					raf(function () {
+						var url = __window.location.pathname;
+
+						if (self.url !== url) {
+							self.url = url;
+							self.changed()
+						}
+					}, 60, self.raf)
+				},
+				// register routes
+				on: function (args) {
+					var self = this,
+						routes;
+
+					// create routes object if it doesn't exist
+					if (!self.routes) {
+						self.routes = {}
+					}
+
+					// start listening for route changes
+					if (!self.raf) {
+						self.listen()
+					}
+
+					// normalize args for ({obj}) and (url, callback) styles
+					if (!isType(args, __object)) {
+						var args   = arguments;
+							routes = {};
+							routes[args[0]] = args[1];
+					}
+					else {
+						routes = args;
+					}
+
+					// assign routes
+					each(routes, function (value, name) {
+						var root = self.settings.root,
+							variables = [],
+							regex = /([:*])(\w+)|([\*])/g,
+							// given the following /:user/:id/*
+							pattern = name.replace(regex, function () {
+										var args = arguments,
+											id   = args[2];
+											// 'user', 'id', undefned
+
+										// if not a variable 
+										if (!id) {
+											return '(?:.*)'
+										}
+										// capture
+										else {
+											variables.push(id);
+											return '([^\/]+)'
+										}
+									});
+
+						self.routes[name] = {
+							callback:  value,
+							pattern:   root ? root + pattern : pattern,
+							variables: variables
+						}
+					})
+				},
+				changed: function () {
+					// references
+					var self   = this,
+						url    = self.url,
+						routes = self.routes;
+
+					each(routes, function (val) {
+						var callback  = val.callback,
+							pattern   = val.pattern,
+							variables = val.variables,
+							match;
+
+						// exec pattern on url
+						match = url.match(new RegExp(pattern));
+
+						// we have a match
+						if (match) {
+							// create params object to pass to callback
+							// i.e {user: "simple", id: "1234"}
+							var args = match
+								// remove the first(url) value in the array
+								.slice(1, match[__length])
+								.reduce(function (args, val, i) {
+									if (!args) {
+										args = {}
+									}
+									// var name: value
+									// i.e user: 'simple'
+									args[variables[i]] = val;
+									return args
+								}, __null);
+
+							// callback is a function, exec
+							if (isType(callback, __function)) {
+								// component function
+								__window.surl.Render(callback, __undefined, args)
+							}
+							// can't process
+							else {
+								throw 'could not find render method'
+							}
+						}
+					})
+				}
+		},
+
 		/**
 		 * Virtual Dom
 		 * @param  {Element}  a - parent element
 		 * @param  {Function} b - render function
 		 * @return {Object}     - vdom object
 		 */
-		__vdom: function () {
+		DOM: (function () {
 			// events
 			function isEventProp (name) {
 				// checks if the first two characters are on
@@ -512,10 +555,17 @@
 				if (name === 'xlink:href') {
 					return target.setAttributeNS(__namespace['xlink'], 'href', value)
 				}
+				// xmlns:xlink="http://www.w3.org/1999/xlink"
+				// but "http://www.w3.org/1999/xlink" is not a valid namespace
+				// for setAttributeNS()
+				else if (name === 'xmlns:xlink') {
+					return
+				}
+
 				// if the target has an attr as a property, 
 				// change that aswell
 				if (
-					target[name] !== __undefined && 
+					target[name]        !== __undefined && 
 					target.namespaceURI !== __namespace['svg']
 				) {
 					target[name] = value
@@ -534,51 +584,96 @@
 					}
 				}
 			}
-		
-			function updateElementProp (target, name, newVal, oldVal) {
-				if (newVal === __undefined || newVal === __null) {
-					// -1 : remove prop
-					prop(target, name, oldVal, -1)
-				} 
-				else if (oldVal === __undefined || oldVal === __null || newVal !== oldVal) {
-					// + 1 : add/update prop
-					prop(target, name, newVal, +1)
+
+			function didElementPropChange (name, newVal, oldVal) {
+				var remove  = newVal === __undefined || newVal === __null,
+					// (newVal !== oldVal && !isEventProp(name))
+					// says only diff this if it's not an event i.e onClick...
+					add     = oldVal === __undefined || oldVal === __null || (newVal !== oldVal && !isEventProp(name));
+
+				// return how a prop has changed
+				if (remove) {
+					return -1
+				}
+				else if (add) {
+					return +1
 				}
 			}
-		
-			function updateElementProps (target, newProps, oldProps) {
-				oldProps  = oldProps !== __undefined ? oldProps : {};
+			
+			function updateElementProps (target, newProps, oldProps, newNode) {
+				var changes  = [];
+					oldProps = oldProps !== __undefined ? oldProps : {};
 
 				// merge old and new props
 				var props = {};
 				for (var name in newProps) { props[name] = newProps[name] }
 				for (var name in oldProps) { props[name] = oldProps[name] }
-		
+			
 				// compare if props have been added/delete/updated
 				// if name not in newProp[name] : deleted
 				// if name not in oldProp[name] : added
 				// if name in oldProp !== name in newProp : updated
-
 				for (var name in props) {
-					updateElementProp(target, name, newProps[name], oldProps[name])
+					var oldVal = oldProps[name],
+						newVal = newProps[name],
+					// returns true/false if the prop has changed from it's prev value
+						change = didElementPropChange(name, newVal, oldVal),
+						val    = change === -1 ? oldVal : newVal;
+
+					if (change) {
+						// we can then add this to the changes arr
+						// that we can check later to see if any props have changed
+						changes.push({
+							target: target, 
+							name:   name, 
+							val:    val, 
+							change: change
+						})
+					}
+				}
+
+				// console.log(changes.length, changes, oldProps, newProps)
+
+				// if there are any changes, 
+				// register that the component has updated
+				if (changes[__length]) {
+					// before component is updated
+					if (newNode[__componentWillUpdate]) {
+						var cmp = newNode[__componentWillUpdate].getCmp();
+						newNode[__componentWillUpdate](cmp.props, cmp.state)
+					}
+
+					// update all components changed props
+					each(changes, function (obj) {
+						// add/remove prop
+						prop(obj.target, obj.name, obj.val, obj.change)
+					});
+
+					// after component is updated
+					if (newNode[__componentDidUpdate]) {
+						var cmp = newNode[__componentDidUpdate].getCmp();
+						newNode[__componentDidUpdate](cmp.props, cmp.state)
+					}
 				}
 			}
-		
+			
+			// initial creation of props, 
+			// no checks, just set
 			function setElementProps (target, props) {
 				for (var name in props) {
-					// initial creation, no checks, just set
+					
 					prop(target, name, props[name], +1)
 				}
 			}
 		
 			// create element
-			function createElement (node, cmpFn) {
+			function createElement (node, render) {
 				// handle text nodes
 				if (isType(node, __string)) {
 					return __document.createTextNode(node)
 				}
 				// trusted text content
-				else if (node.trust && node.__hs) {
+				else if (node.trust && node.$) {
 					var div  = __document.createElement('div'),
 						frag = __document.createDocumentFragment();
 
@@ -611,18 +706,18 @@
 				// only map children arrays
 				if (isType(node.children, __array)) {
 					each(node.children, function (child) {
-						el.appendChild(createElement(child, cmpFn))
+						el.appendChild(createElement(child, render))
 					})
 				}
 
 				// add refs on the initial mount
-				if (isType(cmpFn, __function)) {
+				if (isType(render, __function)) {
 					var props = node.props,
 						ref   = props ? props.ref : __undefined;
 
 					// component has a ref add to parent component
 					if (ref) {
-						var cmp      = cmpFn(__undefined, __undefined, true);
+						var cmp      = render(__undefined, __undefined, true);
 							cmp.refs = {};
 
 						if (isType(ref, __function)) {
@@ -637,20 +732,22 @@
 				return el
 			}
 		
-			// diffing a node
-			function changed (node1, node2) {
+			// diffing two nodes
+			function nodeChanged (node1, node2) {
 				// diff object type
-				var isDiffType  = node1[__constructor] !== node2[__constructor],
-					// diff text content
-					isDiffText  = isType(node1, __string) && node1 !== node2,
-					// diff dom type
-					isDiffDom   = node1.type !== node2.type;
+				var objectChanged      = node1[__constructor] !== node2[__constructor],
+				// diff text content
+					textContentChanged = isType(node1, __string) && node1 !== node2,
+				// diff dom type
+					elementTypeChanged = node1.type !== node2.type;
 		
-				return isDiffType || isDiffText || isDiffDom
+				return  objectChanged      || 
+						textContentChanged || 
+						elementTypeChanged
 			}
 			
 			// validate
-			function validate (a) {
+			function validateNode (a) {
 				// converts 0 | false to strings
 				if (a !== __undefined && (a === __null || a === 0 || a === __false)) {
 					a = a + ''
@@ -660,55 +757,80 @@
 			}
 		
 			// diff
-			function diff (parent, newNode, oldNode, index) {
-				index = index || 0;
-				
-				oldNode = validate(oldNode);
-				newNode = validate(newNode);
+			function diff (parent, newNode, oldNode, index, render) {
+				index   = index || 0,
+				oldNode = validateNode(oldNode),
+				newNode = validateNode(newNode);
 		
 				// adding to the dom
 				if (oldNode === __undefined) {
-					parent.appendChild(createElement(newNode, index))
+					parent.appendChild(createElement(newNode, render));
+
+					// after mounting component to dom
+					// we run componentWillMount on once in surl:render before
+					// before mounting the parent component to the dom
+					// there difference between this and componentWillMount
+					// is that componentWillMount will only run on parent components
+					// whil componentDidMount will run on all components
+					if (newNode[__componentDidMount]) {
+						newNode[__componentDidMount]()
+					}
 				} 
 				// removing from the dom
 				else if (newNode === __undefined) {
 					var node = parent.childNodes[index];
 
 					// send to the end of the event queue
+					// ensures the dom is always up to date
+					// before we run removeChild
 					setTimeout(function () {
-						parent.removeChild(node)
+						parent.removeChild(node);
+
+						// after unmounting component from dom
+						if (oldNode[__componentWillUnmount]) {
+							oldNode[__componentWillUnmount]()
+						}
 					}, 0)
 				}
 				// replacing a node
-				else if (changed(newNode, oldNode)) {
+				else if (nodeChanged(newNode, oldNode)) {
+					// before component is updated
+					if (newNode[__componentWillUpdate]) {
+						var cmp = newNode[__componentDidUpdate].getCmp();
+						newNode[__componentWillUpdate](cmp.props, cmp.state)
+					}
 					parent.replaceChild(createElement(newNode), parent.childNodes[index])
+					// after component is updated
+					if (newNode[__componentDidUpdate]) {
+						var cmp = newNode[__componentDidUpdate].getCmp();
+						newNode[__componentDidUpdate](cmp.props, cmp.state)
+					}
 				}
 				// the lookup loop
 				else if (newNode.type) {
 					// diff, update props
-					updateElementProps(parent.childNodes[index], newNode.props, oldNode.props);
+					updateElementProps(parent.childNodes[index], newNode.props, oldNode.props, newNode);
 					
 					// loop through all children
 					var newLength = newNode.children[__length],
 						oldLength = oldNode.children[__length];
-			
 					
 					for (var i = 0; i < newLength || i < oldLength; i++) {
-						diff(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
+						diff(parent.childNodes[index], newNode.children[i], oldNode.children[i], i, render)
 					}
 				}
 			}
 
 			// vdom public interface
-			function vdom (parent, render) {
+			function DOM (parent, render) {
 				// root reference
-				this.parent = parent,
-				// local copy of dynamic hyperscript reference
-				this.render = render,
+				this.mount = parent,
 				// raf
-				this.raf = __null;
+				this.raf = __null,
+				// local copy of cmp
+				this.render = render
 			}
-			vdom[__prototype] = {
+			DOM[__prototype] = {
 				// refresh/update dom
 				update: function () {
 					// get latest change
@@ -716,7 +838,7 @@
 						// get old copy
 						oldNode = this.old;
 
-					diff(this.parent, newNode, oldNode);
+					diff(this.mount, newNode, oldNode, __undefined, this.render);
 			
 					// update old node
 					this.old = newNode
@@ -724,9 +846,10 @@
 				// init mount to dom
 				init: function () {
 					// local copy of static hyperscript refence
-					this.old = this.render();
+					this.old = this.render(),
+					this.new = this.old;
 					// initial mount
-					diff(this.parent, this.old, __undefined, this.render)
+					diff(this.mount, this.old, __undefined, __undefined, this.render)
 				},
 				// activate requestAnimationframe loop
 				auto: function (start) {
@@ -750,14 +873,14 @@
 				}
 			}
 		
-			return vdom
-		},
+			return DOM
+		}()),
 
 		/**
 		 * make ajax requests
 		 * @return {Object} xhr object
 		 */
-		req: function () {
+		Req: function Req () {
 			var args     = arguments,
 				settings = {method: 'GET'};
 
@@ -795,7 +918,7 @@
 		 * set mount to element
 		 * @param  {Selector|Element} element - the element to mount to
 		 */
-		mount: function (element) {
+		Mount: function Mount (element) {
 			var self = this;
 
 			// can't use document, use body instead
@@ -809,10 +932,13 @@
 
 			// assign mount if element
 			if (element && element.nodeType) {
-				self.mountElement = element
+				self.parent = element
 			}
+			// for references sake
+			// incase you want to see all the properties
+			// of an instance
 			else {
-				self.mountElement = __undefined
+				self.parent = __undefined
 			}
 		},
 
@@ -820,7 +946,7 @@
 		 * initialize/mount
 		 * @param {String} id - base component to mount to dom
 		 */
-		render: function (cmp, element, params) {
+		Render: function Render (cmp, element, params) {
 			var self = this,
 				params;
 
@@ -828,37 +954,47 @@
 			if (element) {
 				// string? query element
 				if (isType(element, __string)) {
-					self.mountElement = __document.querySelector(element)
+					self.parent = __document.querySelector(element)
 				}
 				// element? add
 				else if (element.nodeType) {
-					self.mountElement = element
+					self.parent = element
 				}
 			}
 
 			// has parent to mount to
-			if (self.mountElement) {
+			if (self.parent) {
 				// clear dom
-				self.mountElement.innerHTML = '';
+				self.parent.innerHTML = '';
+
+				// probably a plain hyperscript object
+				// create class with render fn that returns it
+				if (isType(cmp, __object)) {
+					// hyperscript object
+					var hs = cmp;
+					// create component
+						cmp = self.Component({render: function () { return hs } });
+				}
+
+				var cmpObj = cmp(__undefined, __undefined, true);
 
 				// before mounting to dom, run once if set
-				if (cmp[__componentWillMount]) {
-					cmp[__componentWillMount](params)
+				if (cmpObj[__componentWillMount]) {
+					cmpObj[__componentWillMount](params)
 				}
 
 				// activate vdom
-				self.vdom = this.__vdom(),
-				self.vdom = new self.vdom(self.mountElement, cmp);
-				self.vdom.init();
+				self.virtual = new self.DOM(self.parent, cmp);
+				self.virtual.init();
 
 				// after mounting to dom, run once if set
-				if (cmp[__componentDidMount]) {
-					cmp[__componentDidMount]()
-				}
+				// if (cmpObj[__componentDidMount]) {
+				// 	cmpObj[__componentDidMount]()
+				// }
 
 				// activate loop, if settings.auto = true
 				if (self.settings.auto) {
-					self.vdom.auto(__true)
+					self.virtual.auto(__true)
 				}
 			}
 			// can't find parent to mount to
@@ -872,7 +1008,7 @@
 		 * @param  {Object} component - component object
 		 * @return {Object}           - component
 		 */
-		createClass: function (args) {
+		Component: function Component (args) {
 			var that = this;
 
 			// add props, state namespace
@@ -905,20 +1041,25 @@
 
 					// the obj passed in setState({obj}) / setProps({obj})
 					if (obj) {
+						// obj is a function that returns the setState({obj})
+						if (isType(obj, __function)) {
+							obj = obj(self.state, self.props)
+						}
+
 						each(obj, function (value, name) {
 							self[type][name] = value
 						});
 
 						// only trigger render for setState() if settings.auto = false (the default)
-						if (type === 'state' && !update && !that.settings.auto && that.vdom) {
-							that.vdom.update()
+						if (type === 'state' && !update && !that.settings.auto && that.virtual) {
+							that.virtual.update()
 						}
 					}
 				}
 			});
 
 			// create component object
-			var cmpObj          = new cmpClass;
+			var cmpObj = new cmpClass;
 
 			// get and set initial state
 			if (cmpObj[__getInitialState]) {
@@ -929,8 +1070,38 @@
 				cmpObj.setProps(cmpObj[__getDefaultProps]())
 			}
 
+			// create components render returned hyperscript object
+			function Element (obj) {
+				this.type     = obj.type,
+				this.props    = obj.props,
+				this.children = obj.children,
+				this.$     = true;
+			}
+			// add lifecycle methods to render
+			each(cmpObj, function (value, name) {
+				if (
+					name === __componentWillMount        || 
+					name === __componentWillUnmount      || 
+					name === __componentWillReceiveProps || 
+					name === __componentWillUpdate       || 
+					name === __componentDidMount         ||
+					name === __componentDidUpdate
+				) {
+					value.getCmp = function () {
+						return cmpObj
+					};
+					Element[__prototype][name] = value
+				}
+			});
+			// re add default object constructor
+			Element[__prototype][__constructor] = __object;
+
+			cmpObj.render = function () {
+				return new Element(this())
+			}.bind(cmpObj.render);
+
 			// create component returned function
-			var cmpFn = function (props, children, cmp) {
+			var cmpFn = function (props, children, getCmpObj) {
 				// set children
 				// specified by parent cmp, i.e Foo(null, 'Text')
 				if (children) {
@@ -942,9 +1113,28 @@
 					cmpObj.setProps(props)
 				}
 
-				if (cmp) {
+				// componentWillReceiveProps
+				// check if props or children are passed to component
+				// we include children because they are also one type of a property
+				// also check if componentWillReceiveProps() function is declared
+				if ((props || children) && cmpObj[__componentWillReceiveProps]) {
+					// if there both children and props are set
+					if (props && children) {
+						props.children = children
+					}
+					// just children set
+					else if (!props && children) {
+						props = {},
+						props.children = children
+					}
+					console.log(props)
+					// defaults to just props set
+					cmpObj[__componentWillReceiveProps](props);
+				}
+
+				if (getCmpObj) {
 					// return component object
-					return cmpObj;
+					return cmpObj
 				}
 				else {
 					// return hyperscript
@@ -952,18 +1142,184 @@
 				}
 			}
 
-			// attach component lifecycle methods if set
-			if (cmpObj[__componentWillMount]) {
-				cmpFn[__componentWillMount] = cmpObj[__componentWillMount]
-			}
-			if (cmpObj[__componentDidMount]) {
-				cmpFn[__componentDidMount] = cmpObj[__componentDidMount]
-			}
-
 			return cmpFn
-		}
-	}
+		},
 
+		Element: (function () {
+			/**
+			 * hyperscript tagger
+			 * @param  {Object} a - object with opt props key
+			 * @param  {Object} b - tag
+			 * @return {[Object]} - {props, type}
+			 * @example
+			 * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
+			 * tag('inpu#id[type=checkbox]')
+			 */
+			function tag (obj) {
+				var classes = [], 
+					match,
+					parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
+
+					// copy obj's props to abstract props and type
+					// incase obj.props is empty create new obj
+					// otherwise just add to already available object
+					// we will add this back to obj.props later
+					props = !obj.props ? {} : obj.props,
+
+					// since we use type in a while loop
+					// we will be updating obj.type directly
+					type = obj.type;
+
+					// set default type to a div
+					obj.type = 'div';
+
+				// execute the regex and loop through the results
+				while ((match = parser.exec(type))) {
+					// no custom prop match
+					if (match[1] === '' && match[2]) {
+						obj.type = match[2]
+					}
+					// matches id's - #id
+					else if (match[1] === '#') {
+						props.id = match[2]
+					} 
+					// matches classes - div.classname
+					else if (match[1] === '.') {
+						classes.push(match[2])
+					} 
+					// matches - [attr=value]
+					else if (match[3][0] === '[') {
+						var attr = match[6];
+
+						// make sure we have a non null|undefined|false value
+						if (attr) {
+							// remove the '[]'
+							attr = attr.replace(/\\(["'])/g, '$1')
+						}
+						// if attr value is an empty string assign true
+						props[match[4]] = attr || __true
+					}
+				}
+
+				// add classes to obj.props if we have any
+				if (classes[__length] > 0) {
+					props.class = classes.join(' ')
+				}
+
+				// as promised, update props
+				obj.props = props;
+				
+				// done
+				return obj
+			}
+
+			/**
+			 * hyperscript set children
+			 * @param  {Any} a
+			 * @return {String|Array|Object}
+			 */
+			function set (child, obj) {
+				// add obj.prop to children if they are none TextNodes
+				if (isType(child, __object) && obj.props.xmlns) {
+					child.props.xmlns = obj.props.xmlns
+				}
+
+				if (
+					!(
+						isType(child, __object) || 
+						isType(child, __string) || 
+						isType(child, __array)
+					)
+				) {
+					child = child + '';
+
+					// convert the null, and undefined strings to empty strings
+					// we don't convert false since that could 
+					// be a valid value returned to the client
+					if (child === 'null' || child === 'undefined') {
+						child = ''
+					}
+				}
+				
+				return child
+			}
+
+			/**
+			 * create virtual element : h()
+			 * @param  {String} type  - Element, i.e: div
+			 * @param  {Object} props - optional properties
+			 * @return {Object}       - {type, props, children}
+			 * @example
+			 * h('div', {class: 'close'}, 'Text Content')
+			 * h('div', null, h('h1', 'Text'));
+			 */
+			function Element (type, props) {
+				var args   = arguments,
+					length = args[__length],
+					key    = 2,
+					child;
+
+				// no props specified default 2nd arg to children
+				// is an hyperscript object or not an object (null,undefined,string,array,bool)
+				if ((props && props.$) || !isType(props, __object)) {
+					key   = 1,
+					props = {}
+				}
+				// insure props is always an object
+				else if (props === __null || props === __undefined || !isType(props, __object)) {
+					props = {}
+				}
+
+				// declare hyperscript object
+				var obj = {type: type, props: props, children: [], $: __true};
+
+				// check if the type is a special case i.e [type] | div.class | #id
+				// and alter the hyperscript
+				if (
+					type.indexOf('[') !== -1 ||
+					type.indexOf('#') !== -1 || 
+					type.indexOf('.') !== -1
+				) {
+					obj = tag(obj)
+				}
+
+				// auto set namespace for svg and math elements
+				// we will then check when setting it's children
+				// if the parent has a namespace we will set that
+				// to the children as well, if you set the
+				// xmlns prop we default to that instead of the 
+				// svg and math presets
+				if (obj.type === 'svg' || obj.type === 'math') {
+					// only add the namespace if it's not already set
+					if (!obj.props.xmlns) {
+						obj.props.xmlns = __namespace[obj.type]
+					}
+				}
+
+				// construct children
+				for (var i = key; i < length; i++) {
+					// reference to current layer
+					child = args[i];
+			
+					// if the child is an array go deeper
+					// and set the 'arrays children' as children
+					if (isType(child, __array)) {
+						for (var k = 0; k < child[__length]; k++) {
+							obj.children[(i-key) + k] = set(child[k], obj)
+						}
+					}
+					// deep enough, add this child to children
+					else {
+						obj.children[i - key] = set(child, obj)
+					}
+				}
+
+				return obj
+			}
+
+			return Element
+		}())
+	}
 
 	/* --------------------------------------------------------------
 	 * 
@@ -1020,182 +1376,8 @@
 		return {
 			content: text, 
 			trust: __true, 
-			__hs: __true
+			$: __true
 		}
-	}
-
-	/**
-	 * hyperscript tagger
-	 * @param  {Object} a - object with opt props key
-	 * @param  {Object} b - tag
-	 * @return {[Object]} - {props, type}
-	 * @example
-	 * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
-	 * tag('inpu#id[type=checkbox]')
-	 */
-	function tag (obj) {
-		var classes = [], 
-			match,
-			parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
-
-			// copy obj's props to abstract props and type
-			// incase obj.props is empty create new obj
-			// otherwise just add to already available object
-			// we will add this back to obj.props later
-			props = !obj.props ? {} : obj.props,
-
-			// since we use type in a while loop
-			// we will be updating obj.type directly
-			type = obj.type;
-
-			// set default type to a div
-			obj.type = 'div';
-
-		// execute the regex and loop through the results
-		while ((match = parser.exec(type))) {
-			// no custom prop match
-			if (match[1] === '' && match[2]) {
-				obj.type = match[2]
-			}
-			// matches id's - #id
-			else if (match[1] === '#') {
-				props.id = match[2]
-			} 
-			// matches classes - div.classname
-			else if (match[1] === '.') {
-				classes.push(match[2])
-			} 
-			// matches - [attr=value]
-			else if (match[3][0] === '[') {
-				var attr = match[6];
-
-				// make sure we have a non null|undefined|false value
-				if (attr) {
-					// remove the '[]'
-					attr = attr.replace(/\\(["'])/g, '$1')
-				}
-				// if attr value is an empty string assign true
-				props[match[4]] = attr || __true
-			}
-		}
-
-		// add classes to obj.props if we have any
-		if (classes[__length] > 0) {
-			props.class = classes.join(' ')
-		}
-
-		// as promised, update props
-		obj.props = props;
-		
-		// done
-		return obj
-	}
-
-	/**
-	 * hyperscript set children
-	 * @param  {Any} a
-	 * @return {String|Array|Object}
-	 */
-	function set (child, obj) {
-		// add obj.prop to children if they are none TextNodes
-		if (isType(child, __object) && obj.props.xmlns) {
-			child.props.xmlns = obj.props.xmlns
-		}
-
-		if (
-			!(
-				isType(child, __object) || 
-				isType(child, __string) || 
-				isType(child, __array)
-			)
-		) {
-			child = child + '';
-
-			// convert the null, and undefined strings to empty strings
-			// we don't convert false since that could 
-			// be a valid value returned to the client
-			if (child === 'null' || child === 'undefined') {
-				child = ''
-			}
-		}
-		
-		return child
-	}
-
-	/**
-	 * create virtual element : h()
-	 * @param  {String} type  - Element, i.e: div
-	 * @param  {Object} props - optional properties
-	 * @return {Object}       - {type, props, children}
-	 * @example
-	 * h('div', {class: 'close'}, 'Text Content')
-	 * h('div', null, h('h1', 'Text'));
-	 */
-	function hyperscript (type, props) {
-		var args = arguments,
-			len = args[__length],
-			key = 2,
-			child;
-
-		// no props specified default 2nd arg to children
-		// is an hyperscript object or not an object (null,undefined,string,array,bool)
-		if (
-			(isType(props, __object) && props.__hs) ||
-			!isType(props, __object)
-		) {
-			key = 1,
-			props = {}
-		}
-		// insure props is always an object
-		else if (props === __null || props === __undefined || !isType(props, __object)) {
-			props = {}
-		}
-
-		// declare hyperscript object
-		var obj = {type: type, props: props, children: [], __hs: __true};
-
-		// check if the type is a special case i.e [type] | div.class | #id
-		// and alter the hyperscript
-		if (
-			type.indexOf('[') !== -1 ||
-			type.indexOf('#') !== -1 || 
-			type.indexOf('.') !== -1
-		) {
-			obj = tag(obj)
-		}
-
-		// auto set namespace for svg and math elements
-		// we will then check when setting it's children
-		// if the parent has a namespace we will set that
-		// to the children as well, if you set the
-		// xmlns prop we default to that instead of the 
-		// svg and math presets
-		if (obj.type === 'svg' || obj.type === 'math') {
-			// only add the namespace if it's not already set
-			if (!obj.props.xmlns) {
-				obj.props.xmlns = __namespace[obj.type]
-			}
-		}
-
-		// construct children
-		for (var i = key; i < len; i++) {
-			// reference to current layer
-			child = args[i];
-	
-			// if the child is an array go deeper
-			// and set the 'arrays children' as children
-			if (isType(child, __array)) {
-				for (var k = 0; k < child[__length]; k++) {
-					obj.children[(i-key) + k] = set(child[k], obj)
-				}
-			}
-			// deep enough, add this child to children
-			else {
-				obj.children[i - key] = set(child, obj)
-			}
-		}
-
-		return obj
 	}
 
 	/**
@@ -1328,10 +1510,9 @@
 	 * 
 	 * -------------------------------------------------------------- */
 
-	
-	__window.h       = hyperscript,
+	__window.surl    = new surl,
+	__window.h       = __window.surl.Element,
 	__window.bind    = bind,
 	__window.trust   = trust,
-	__window.animate = animate,
-	__window.surl    = surl;
+	__window.animate = animate;
 }());
