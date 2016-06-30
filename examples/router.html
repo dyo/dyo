@@ -11,28 +11,32 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = surl,
+			var app = surl
 
-				Home = app.Component({
-					render: function () {
-						return h('h1', {onclick: function(){app.Router.nav('/user/sultan')}}, trust("Home Page &amp;"))
-					}
-				}),
-				User = app.Component({
-					componentWillMount: function(args) {
-						this.setState(args)
-					},
-					render: function () {
-						return h('h1', {onclick: function(){ app.Router.nav('/router.html') }}, 
-									this.state.page + " Page",
-									h('p', {}, 'Hello ' + this.state.name)
-								)
-					}
-				});
+			var // define components
+			Home = app.Component({
+				render: function () {
+					return h('h1', {onclick: function(){app.Router.nav('/user/sultan')}}, trust("Home Page &amp;"))
+				}
+			}),
+			User = app.Component({
+				componentWillMount: function(args) {
+					this.setState(args)
+				},
+				render: function () {
+					return h('h1', {onclick: function(){ app.Router.nav('/router.html') }}, 
+								this.state.page + " Page",
+								h('p', {}, 'Hello ' + this.state.name)
+							)
+				}
+			});
 
+			// mount to dom
 			app.Mount('.app')
 			
+			// config router (optional)
 			app.Router.config({root: '/examples'});
+			// define routes
 			app.Router.on({
 				'/': Home,
 				'/:page/:name': User

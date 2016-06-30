@@ -13,42 +13,44 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = new surl(),
+			var app = surl;
 
-				List = app.Component({
-					render: function () {
-						var createItem = function (item, className, transform, easing, transformOrigin) {
-							return h('.card', {
-										onmousedown: animate(220, className, transform, easing, transformOrigin)
-									}, 
-										h('p', 
-											h('h1', item.id), 
-											item.value
-										)
+			var // define components
+			List = app.Component({
+				render: function () {
+					var createItem = function (item, className, transform, easing, transformOrigin) {
+						return h('.card', {
+									onmousedown: animate(220, className, transform, easing, transformOrigin)
+								}, 
+									h('p', 
+										h('h1', item.id), 
+										item.value
 									)
-						};
-
-						return h('main.list',
-									createItem({id: 'state', value: 'scaled'}, 'scaled'),
-
-									createItem({id: 'scale', value: 'scaleUp'}, 'scaledUp', 'scale(1.2)', '50% 50%'),
-									createItem({id: 'scale', value: 'scaleDown'}, 'scaledDown', 'scale(0.8)', '50% 50%'),
-
-									createItem({id: 'translate', value: 'top'}, 'moveTop'),
-									createItem({id: 'translate', value: 'bottom'}, 'moveBottom'),
-
-									createItem({id: 'translate', value: 'right'}, 'moveRight'),
-									createItem({id: 'translate', value: 'left'}, 'moveLeft'),
-
-									createItem({id: 'rotate', value: '180deg'}, 'rotateRight', 'rotate(180deg)', '50% 50%'),
-									createItem({id: 'rotate', value: '-180deg'}, 'rotateLeft', 'rotate(-180deg)', '50% 50%'),
-
-									createItem({id: 'skew', value: '180deg'}, 'skewRight', 'skew(60deg)', '50% 50%'),
-									createItem({id: 'skew', value: '-180deg'}, 'skewLeft', 'skew(-60deg)', '50% 50%')
 								)
-					}
-				});
+					};
 
+					return h('main.list',
+								createItem({id: 'state', value: 'scaled'}, 'scaled'),
+
+								createItem({id: 'scale', value: 'scaleUp'}, 'scaledUp', 'scale(1.2)', '50% 50%'),
+								createItem({id: 'scale', value: 'scaleDown'}, 'scaledDown', 'scale(0.8)', '50% 50%'),
+
+								createItem({id: 'translate', value: 'top'}, 'moveTop'),
+								createItem({id: 'translate', value: 'bottom'}, 'moveBottom'),
+
+								createItem({id: 'translate', value: 'right'}, 'moveRight'),
+								createItem({id: 'translate', value: 'left'}, 'moveLeft'),
+
+								createItem({id: 'rotate', value: '180deg'}, 'rotateRight', 'rotate(180deg)', '50% 50%'),
+								createItem({id: 'rotate', value: '-180deg'}, 'rotateLeft', 'rotate(-180deg)', '50% 50%'),
+
+								createItem({id: 'skew', value: '180deg'}, 'skewRight', 'skew(60deg)', '50% 50%'),
+								createItem({id: 'skew', value: '-180deg'}, 'skewLeft', 'skew(-60deg)', '50% 50%')
+							)
+				}
+			});
+
+			// mount to dom
 			app.Render(List, '.app');
 
 			console.log(app)

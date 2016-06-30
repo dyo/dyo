@@ -517,7 +517,7 @@
 		 * @param  {Function} b - render function
 		 * @return {Object}     - vdom object
 		 */
-		DOM: (function () {
+		VDOM: (function () {
 			// events
 			function isEventProp (name) {
 				// checks if the first two characters are on
@@ -625,8 +625,6 @@
 						})
 					}
 				}
-
-				// console.log(changes.length, changes, oldProps, newProps)
 
 				// if there are any changes, 
 				// register that the component has updated
@@ -816,7 +814,7 @@
 			}
 
 			// vdom public interface
-			function DOM (parent, render) {
+			function VDOM (parent, render) {
 				// root reference
 				this.mount = parent,
 				// raf
@@ -824,7 +822,7 @@
 				// local copy of cmp
 				this.render = render
 			}
-			DOM[__prototype] = {
+			VDOM[__prototype] = {
 				// refresh/update dom
 				update: function () {
 					// get latest change
@@ -867,7 +865,7 @@
 				}
 			}
 		
-			return DOM
+			return VDOM
 		}()),
 
 		/**
@@ -978,7 +976,7 @@
 				}
 
 				// activate vdom
-				self.virtual = new self.DOM(self.parent, cmp);
+				self.virtual = new self.VDOM(self.parent, cmp);
 				self.virtual.init();
 
 				// after mounting to dom, run once if set
@@ -1121,7 +1119,6 @@
 						props = {},
 						props.children = children
 					}
-					console.log(props)
 					// defaults to just props set
 					cmpObj[__componentWillReceiveProps](props);
 				}
@@ -1312,7 +1309,30 @@
 			}
 
 			return Element
-		}())
+		}()),
+
+		DOM: function () {
+			each(['doctype','a','abbr','address','area','article','aside','audio','b','base','bdi','bdo',
+			'blockquote','body','br','button','canvas','caption','cite','code','col','colgroup','command',
+			'datalist','dd','del','details','dfn','div','dl','dt','em','embed','fieldset','figcaption',
+			'figure','footer','form','h1','h2','h3','h4','h5','h6','head','header',
+			'hgroup','hr','html','i','iframe','img','input','ins', 'kbd','keygen','label','legend',
+			'li','link','map','mark','menu','meta','meter','nav','noscript','object','ol',
+			'optgroup','option','output','p','param','pre','progress','q','rp','rt','ruby','s',
+			'samp','script','section','select','small','source','span','strong','style','sub',
+			'summary','sup','table','tbody','td','textarea','tfoot','th','thead','time','title',
+			'tr','track','u','ul','var','video','wbr'], function (name) {
+				__window[name] = function Element () {
+					// convert args to array
+					var args = __array[__prototype].slice.call(arguments);
+						// add name as first arg
+						// which represents the tag in hyperscript
+						args.unshift(name);
+
+					return h.apply(null, args)
+				}
+			})
+		}
 	}
 
 	/* --------------------------------------------------------------

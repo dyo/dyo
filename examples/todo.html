@@ -11,80 +11,88 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = surl,
+			var app = surl;
 
-				TodoItem = app.Component({
-					componentDidMount: function() {
-						console.log('componentDidMount: ', arguments)
-					},
-					componentWillReceiveProps: function(nextProps) {
-						console.log('componentWillReceiveProps: ', arguments)
-					},
-					componentWillUpdate: function(nextProps, nextState) {
-						console.log('componentWillUpdate: ', arguments)
-					},
-					componentDidUpdate: function(prevProps, prevState) {
-						console.log('componentDidUpdate: ', arguments)
-					},
-					componentWillUnmount: function() {
-						console.log('componentDidUpdate:', arguments)
-					},
-					render: function () {
-						var item = this.props.item;
-						return h('li', {onclick: this.props.delete, id: item.id, dd: Date.now(), style: 'cursor:pointer;'}, item.text)
-					}
-				}),
-				TodoList = app.Component({
-			  		render: function() {
-			  			var self = this;
-				    	return h('ul', 
-				    				this.props.items.map(function (value) {
-				    					return TodoItem({item: value, delete: self.props.delete})
-				    				})
-		    					)
-			  		}
-				}),
-				TodoApp = app.Component({
-					componentWillMount: function() {
-						console.log('componentDidUpdate:', arguments)
-					},
-			  		getInitialState: function() {
-			    		return {items: [], text: ''}
-			  		},
-			  		handleSubmit: function (e) {
-			    		e.preventDefault();
-			    		var text = this.state.text;
-		    			if (text) {
-		    				var nextItems = this.state.items.concat([{text: text, id: Date.now()}]);
-			    			this.setState({items: nextItems, text: ''})
-		    			}
-			  		},
-			  		handleDelete: function (e) {
-			  			var value = e.currentTarget.id,
-			  				items = this.state.items;
+			var // define components
+			TodoItem = app.Component({
+				componentDidMount: function() {
+					// console.log('componentDidMount: ', arguments)
+				},
+				componentWillReceiveProps: function(nextProps) {
+					// console.log('componentWillReceiveProps: ', arguments)
+				},
+				componentWillUpdate: function(nextProps, nextState) {
+					// console.log('componentWillUpdate: ', arguments)
+				},
+				componentDidUpdate: function(prevProps, prevState) {
+					// console.log('componentDidUpdate: ', arguments)
+				},
+				componentWillUnmount: function() {
+					// console.log('componentDidUpdate:', arguments)
+				},
+				render: function () {
+					var item = this.props.item;
+					return h('li', {onclick: this.props.delete, id: item.id, dd: Date.now(), style: 'cursor:pointer;'}, item.text)
+				}
+			}),
+			TodoList = app.Component({
+		  		render: function() {
+		  			var self = this;
+			    	return h('ul', 
+			    				this.props.items.map(function (value) {
+			    					return TodoItem({item: value, delete: self.props.delete})
+			    				})
+	    					)
+		  		}
+			}),
+			TodoApp = app.Component({
+				componentWillMount: function() {
+					// console.log('componentDidUpdate:', arguments)
+				},
+		  		getInitialState: function() {
+		    		return {items: [], text: ''}
+		  		},
+		  		handleSubmit: function (e) {
+		    		e.preventDefault();
+		    		var text = this.state.text;
+	    			if (text) {
+	    				var nextItems = this.state.items.concat([{text: text, id: Date.now()}]);
+		    			this.setState({items: nextItems, text: ''})
+	    			}
+		  		},
+		  		handleDelete: function (e) {
+		  			var value = e.currentTarget.id,
+		  				items = this.state.items;
 
-			  			items.forEach(function(a,b){
-			  				if (a.id == value) {
-								items.splice(b, 1)		  					
-			  				}
-			  			});
+		  			items.forEach(function(a,b){
+		  				if (a.id == value) {
+							items.splice(b, 1)		  					
+		  				}
+		  			});
 
-			  			this.setState({items: items});
-			  		},
-			  		render: function () {
-			  			return h('div',
-			  						h('h3', 'TODO'),
-			  						TodoList({items: this.state.items, delete: this.handleDelete}),
-			  						h('form', {onsubmit: this.handleSubmit},
-			  							h('input', {oninput: bind('value', this, 'text'), value: this.state.text}),
-			  							h('button', 'Add #' + (this.state.items.length+1))
-	  								)
-			  					)
-			  		}
-				});
+		  			this.setState({items: items});
+		  		},
+		  		render: function () {
+		  			return h('div',
+		  						h('h3', 'TODO'),
+		  						TodoList({items: this.state.items, delete: this.handleDelete}),
+		  						h('form', {onsubmit: this.handleSubmit},
+		  							h('input', {oninput: bind('value', this, 'text'), value: this.state.text}),
+		  							h('button', 'Add #' + (this.state.items.length+1))
+  								)
+		  					)
+		  		}
+			});
 
+			// mount to dom
 			app.Render(TodoApp, '.app')
 
+			// activate shortcut dom references
+			// i.e h('div', 'Text')
+			// becomes
+			// div('Text')
+			app.DOM();
+			console.log(input('Text', 'Text'))
 			console.log(app)
 		</script>
 	</body>
