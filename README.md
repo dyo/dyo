@@ -16,7 +16,7 @@
 ##core
 
 ```javascript
-var app = new surl(Selector|Element|Empty)
+var app = new surl(selector|Element|Empty)
 ```
 
 ```javascript
@@ -27,7 +27,7 @@ you can then mount an element in the following way
 
 ```javascript
 app.parent = element;
-app.mount(simple)
+app.Mount(simple)
 ```
 or you can mount to an element like this
 
@@ -35,17 +35,10 @@ or you can mount to an element like this
 app.Mount(simple, element);
 ```
 
-or you can just
+or when you init
 
 ```javascript
-app.parent = element;
-app.Router.on('/', simple)
-```
-
-or when you init app
-
-```javascript
-var app = new surl(element) 
+var app = new surl(element|selector) 
 ```
 you can also pass a selector
 
@@ -69,7 +62,7 @@ var obj = {
 		return {
 			type: 'div'
 			props: {},
-			children: Array | 'String' | ...component()
+			children: Array | 'String'
 		}
 	}
 }
@@ -85,11 +78,13 @@ h('div', {}, ...children | 'Text' | ...component)
 when adding a component as a child of another you can pass props to that component that will be added to `this.props`
 
 ```javascript
-h('div', component({products: [1,2,3]}))
+h('div', component({products: [1,2,3]}, 1))
 
 component = app.Component({
 	render: function () {
-		console.log(this.props) // {products: [1,2,3]}
+		console.log(this.props)    // {products: [1,2,3]}
+		console.log(this.children) // 1
+		
 		return ('div')
 	}
 })
@@ -101,8 +96,6 @@ component = app.Component({
 app.Router
 
 // ? = optional
-- .on('url', callback/'component object', element?) 
-- .on({'/': simple, ...})
 - .nav('url')
 - .back()
 - .foward()
@@ -113,10 +106,29 @@ example
 
 ```javascript
 var app = new surl(document)
-var a = app.createClass({render, state, ...methods})
-a.router.on('/', a)
-a.router.on('/:user/:action', (args) => {console.log(args.user, args.action)})
+var a = app.Component({render, state, ...methods})
+
+app.router.on('/', a)
+app.router.on('/:user/:action', (args) => {console.log(args.user, args.action)})
+
+app.Route({
+	routes: {
+		'/', ComponentA
+		'/:user/:action', ComponentB
+	}
+	mount?: 'selector'|Element
+	addrs?: 'root address, i.e /directory'
+	init?: 'nav to this route on init, i.e /'
+})
+
+app.nav('/user/delete')
+// will navigate to 'url.com/user/delete'
+// if you set addrs: 'example' it will nav to
+// 'url.com/example/user/delete'
+
 ```
+
+
 -
 ##hyperscript
 
@@ -127,14 +139,18 @@ h('.card[checked]', {data-id: 1234}, 'Text')
 //or
 app.Element('.card[checked]', {data-id: 1234}, 'Text')
 ```
-will create ```<div class="card" data-id="1234" checked>Text<div>```
+will create 
+
+```html
+<div class="card" data-id="1234" checked>Text<div>
+```
 
 ##animation
 
 given an end state "a class", you can "FLIP" animate an Element.
 
 ```javascript
-animate(El, [](transforms), 200(time), 'end'(class), '0,0.2,0.2,0'(cubic-easing))
+animate(duration, className, transform, transformOrigin, easing)(Element)
 ```
 
 can be used within a render as follows
@@ -142,11 +158,16 @@ can be used within a render as follows
 ```javascript
 render: function () {
 	return h('.card', 
-	{onclick: animate.bind(Class|Duration, ['scale(2)'...], '0,0,0,0.3')}, 
+	{onclick: animate(200, 'active-state')}, 
 	''
 	)
 }
 ```
+since animate(...) returns a function this is the same as
+
+```javascript
+animate(200, 'active-state')(Element)
+``` 
 
 ##req
 
@@ -154,8 +175,8 @@ make ajax requests
 
 ```javascript
 app.Req('/', 'GET', function (res, err) {
-	res{Element|JSON|Text}
-	err{Boolean}
+	// res{Element|JSON|Text}
+	// err{Boolean}
 })
 
 app.Req('/', 'POST', {id: 1245}, function (res, err) {
@@ -179,13 +200,19 @@ h('input' {oninput: bind('value', this, 'text')})
 
 ##trust
 
-opt out of safe templates
+print html entities
 
 ```javascript
 trust("Home Page &amp; <script></script>")
 // Home Page &
 // + will add the script tag to the dom
 ```
+so that can be used in a render i.e
+
+```javascript
+h('div', trust('<script>alert('Hello World')</script>'))
+```
+
 
 ##lifecycle
 
@@ -202,24 +229,23 @@ componentWillUnmount: function()
 
 components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.
 
-##settings
+##DOM
+
+if you want to save a few keystrokes you can do
 
 ```javascript
 var app = new surl()
-app.settings = {
-	auto: false
-}
+app.DOM()
 ```
-
-If you change `app.settings.auto` to true, it will default to requestAnimationFrame for updates, this means that that whether you call this.setState or not, the component will render 60fps everytime and update the dom anytime there is a change. With this you can model you app in any way. i.e
+and that will expose all html elements to the window so you can
 
 ```javascript
-var app = new surl('.app'),
-	Foo = app.Component({
-		test: 'Hello World'
-		render: function(){
-			return h('div', {onclick: bind('innerText', this, 'test')}, this.test)
-		}
-	})
+// instead of
+h('input', {value: 'hello'})
+// you could do
+input({value: 'hello'})
+// but this also means you can't do
+h('input[checked]')
+// to replicate that in the nodeName() format you will have to do do
+input({checked: true})
 ```
-You would normally need to call `this.setState({test: 'newValue'})` and the test variable that holds some data would be within an object state: {test: ''} when you set it with the return value of `setInitialState()`. But in this case since the diffing is running all the time it doesn't need `this.setState` to trigger a render.
