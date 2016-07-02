@@ -507,13 +507,13 @@
 	 */
 	lifecycle = (function () {
 		function lifecycle (node, stage, props, state, isCmp) {
-			var cmp = isCmp ? node : node.cmp;
+			var Component = isCmp ? node : node.Component;
 
-			if (cmp && cmp[stage]) {
-				props = props ? (is(props, __object) ? props : cmp.props) : props,
-				state = state ? (is(state, __object) ? state : cmp.state) : state;
+			if (Component && Component[stage]) {
+				props = props ? (is(props, __object) ? props : Component.props) : props,
+				state = state ? (is(state, __object) ? state : Component.state) : state;
 
-				return cmp[stage](props, state)
+				return Component[stage](props, state)
 			}
 		}
 
@@ -531,7 +531,7 @@
 		function VDOM (parent, render) {
 			// root reference
 			this.mount = parent,
-			// local copy of cmp
+			// local copy of Component
 			this.render = render
 		}
 
@@ -708,14 +708,14 @@
 
 				// component has a ref add to parent component
 				if (ref) {
-					var cmp      = render(__undefined, __undefined, true);
-						cmp.refs = {};
+					var Component      = render(__undefined, __undefined, true);
+						Component.refs = {};
 
 					if (is(ref, __function)) {
 						ref(el)
 					}
 					else if (is(ref, __string)) {
-						cmp.refs[ref] = el
+						Component.refs[ref] = el
 					}
 				}
 			}
@@ -929,7 +929,7 @@
 			 * initialize/mount
 			 * @param {String} id - base component to mount to dom
 			 */
-			Render: function Render (cmp, element, params) {
+			Render: function Render (Component, element, params) {
 				var self = this,
 					params;
 
@@ -952,20 +952,18 @@
 
 					// probably a plain hyperscript object
 					// create class with render fn that returns it
-					if (is(cmp, __object)) {
+					if (is(Component, __object)) {
 						// hyperscript object
-						var hyperscript = cmp;
+						var hyperscript = Component;
 						// create component
-						cmp = self.Component({render: function () { return hyperscript } });
+						Component = self.Component({render: function () { return hyperscript } });
 					}
 
-					var cmpObj = cmp(__undefined, __undefined, true);
-
 					// before mounting to dom, run once if set
-					lifecycle(cmpObj, __componentWillMount, params, __undefined, true);
+					lifecycle(Component(__undefined, __undefined, true), __componentWillMount, params, __undefined, true);
 
 					// activate vdom
-					self.virtual = new vdom(self.parent, cmp);
+					self.virtual = new vdom(self.parent, Component);
 					self.virtual.init()
 				}
 				// can't find parent to mount to
@@ -991,7 +989,7 @@
 				args.state = args.state || {}
 
 				// create component
-				var Component = function () {
+				function ComponentClass () {
 					var self = this;
 					// add props to component
 					each(args, function (value, name) {
@@ -1011,7 +1009,7 @@
 					var type = method.toLowerCase();
 
 					// cmpClass.prototype.setState/setProps
-					Component[__prototype]['set'+method] = function (obj, update) {
+					ComponentClass[__prototype]['set'+method] = function (obj, update) {
 						var self = this;
 
 						// the obj passed in setState({obj}) / setProps({obj})
@@ -1034,21 +1032,21 @@
 				});
 
 				// create component object
-				var cmpObj = new Component;
+				var ComponentObject = new ComponentClass;
 
 				// we need render to render
 				// publish error
-				if (!cmpObj.render) {
+				if (!ComponentObject.render) {
 					throw 'no render method'
 				}
 
 				// get and set initial state
-				if (cmpObj[__getInitialState]) {
-					cmpObj.setState(cmpObj[__getInitialState](), __false)
+				if (ComponentObject[__getInitialState]) {
+					ComponentObject.setState(ComponentObject[__getInitialState](), __false)
 				}
 				// get and set default props
-				if (cmpObj[__getDefaultProps]) {
-					cmpObj.setProps(cmpObj[__getDefaultProps](), __false)
+				if (ComponentObject[__getDefaultProps]) {
+					ComponentObject.setProps(ComponentObject[__getDefaultProps](), __false)
 				}
 
 				// create components render returned hyperscript object
@@ -1058,24 +1056,24 @@
 					this.children = obj.children;
 				}
 				// add lifecycle methods to render
-				each(cmpObj, function (value, name) {
-					hyperscript[__prototype].cmp = cmpObj
+				each(ComponentObject, function (value, name) {
+					hyperscript[__prototype].cmp = ComponentObject
 				});
 				// re add default object constructor
 				hyperscript[__prototype][__constructor] = __object;
 				// re-create render function with new hyperscript obj
-				var render = cmpObj.render;
-				cmpObj.render = function () {
+				var render = ComponentObject.render;
+				ComponentObject.render = function () {
 					return new hyperscript(render())
 				}
 
 				// create component returned function
-				var cmpFn = function (props, children, getCmpObj) {
+				function Component (props, children, getCmpObj) {
 					// first publish that the component
 					// will receive props that are not children
 					// if props is set
 					if (props) {
-						lifecycle(cmpObj, __componentWillReceiveProps, props, __undefined, __true)
+						lifecycle(ComponentObject, __componentWillReceiveProps, props, __undefined, __true)
 					}
 
 					// we have both props and children
@@ -1094,21 +1092,21 @@
 					// we have props to set?
 					// set them
 					if (props) {
-						cmpObj.setProps(props)
+						ComponentObject.setProps(props)
 					}
 
 
 					if (getCmpObj) {
 						// return component object
-						return cmpObj
+						return ComponentObject
 					}
 					else {
 						// return hyperscript
-						return cmpObj.render()
+						return ComponentObject.render()
 					}
 				}
 
-				return cmpFn
+				return Component
 			},
 
 			/**
@@ -1356,7 +1354,7 @@
 	 * @param  {String} key  - the key in the object to update
 	 */
 	bind = (function () {
-		function bind (prop, cmp, key) {
+		function bind (prop, Component, key) {
 			// the idea is that when you attach a function to an event,
 			// i.e el.addEventListener('eventName', fn)
 			// when that event is dispatched the function will execute
@@ -1382,7 +1380,7 @@
 							obj[key] = value;
 
 						// run the components setState
-						cmp.setState(obj);
+						Component.setState(obj);
 					}
 			}
 		}

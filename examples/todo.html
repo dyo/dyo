@@ -59,16 +59,10 @@
 		    		e.preventDefault();
 		    		var text = this.state.text;
 
-    				if (window.raf) {
-    					cancelAnimationFrame(window.raf)
-    				}
-
     				if (text) {
 	    				var nextItems = this.state.items.concat([{text: text, id: Date.now()}]);
 		    			this.setState({items: nextItems, text: ''})
 	    			}
-
-	    			console.log(this.state)
 		  		},
 		  		handleDelete: function (e) {
 		  			var value = e.currentTarget.id,
