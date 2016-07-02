@@ -8,12 +8,12 @@
 - hyperscript.
 - opt in/out auto render. 
 
-#####Supports: Chrome, Firefox, Safari, IE10+
+####Supports: Chrome, Firefox, Safari, IE10+
 
 - *~4kb minified+gzipped.*  
 - *~9kb minified.*
 
-##core
+##.Mount
 
 ```javascript
 var app = new surl(selector|Element|Empty)
@@ -51,6 +51,9 @@ then
 app.Mount(simple)
 
 ```
+
+##.Component
+
 a component can be any object that has a render function that
 returns a virtual node i.e
 
@@ -75,7 +78,7 @@ you can also use the built in hyperscript helper
 ```javascript
 h('div', {}, ...children | 'Text' | ...component)
 ```
-when adding a component as a child of another you can pass props to that component that will be added to `this.props`
+when adding a component as a child of another you can pass props to that component which will be added to its `this.props`
 
 ```javascript
 h('div', component({products: [1,2,3]}, 1))
@@ -90,7 +93,37 @@ component = app.Component({
 })
 ```
 
-##router
+other ways to create a component
+
+```javascript
+function FunctionStyle () {
+	var onClick = function () {
+		app.route.nav('/router.html')
+	}
+
+	return {
+		render: function () {
+			return h('h1', {onclick: onClick}, this.props.id)
+		}
+	}
+}
+// mount
+app.Mount(app.Component(FuncStyle), '.app')
+
+function PrototypeStyle () {
+	this.onClick = function () {
+		app.route.nav('/router.html')
+	}
+
+	this.render = function () {
+		return h('h1', {onclick: this.onClick}, this.props.id)
+	}
+}
+// mount
+app.Mount(app.Component(new PrototypeStyle), '.app')
+```
+
+##.Route
 
 ```javascript
 app.Router
@@ -128,9 +161,22 @@ app.nav('/user/delete')
 
 ```
 
+##.Req
 
--
-##hyperscript
+make ajax requests
+
+```javascript
+app.Req('/', 'GET', function (res, err) {
+	// res{Element|JSON|Text}
+	// err{Boolean}
+})
+
+app.Req('/', 'POST', {id: 1245}, function (res, err) {
+	
+})
+```
+
+##.Element
 
 hyperscript `h(type, props, children)`
 
@@ -145,7 +191,28 @@ will create
 <div class="card" data-id="1234" checked>Text<div>
 ```
 
-##animation
+##.DOM
+
+if you want to save a few keystrokes you can do
+
+```javascript
+var app = new surl()
+app.DOM()
+```
+and that will expose all html elements to the window so you can
+
+```javascript
+// instead of
+h('input', {value: 'hello'})
+// you could do
+input({value: 'hello'})
+// but this also means you can't do
+h('input[checked]')
+// to replicate that in the nodeName() format you will have to do do
+input({checked: true})
+```
+
+##animate
 
 given an end state "a class", you can "FLIP" animate an Element.
 
@@ -168,21 +235,6 @@ since animate(...) returns a function this is the same as
 ```javascript
 animate(200, 'active-state')(Element)
 ``` 
-
-##req
-
-make ajax requests
-
-```javascript
-app.Req('/', 'GET', function (res, err) {
-	// res{Element|JSON|Text}
-	// err{Boolean}
-})
-
-app.Req('/', 'POST', {id: 1245}, function (res, err) {
-	
-})
-```
 
 ##bind
 
@@ -228,24 +280,3 @@ componentWillUnmount: function()
 ```
 
 components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.
-
-##DOM
-
-if you want to save a few keystrokes you can do
-
-```javascript
-var app = new surl()
-app.DOM()
-```
-and that will expose all html elements to the window so you can
-
-```javascript
-// instead of
-h('input', {value: 'hello'})
-// you could do
-input({value: 'hello'})
-// but this also means you can't do
-h('input[checked]')
-// to replicate that in the nodeName() format you will have to do do
-input({checked: true})
-```

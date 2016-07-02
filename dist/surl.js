@@ -50,7 +50,6 @@
 	__XMLHttpRequest            = XMLHttpRequest,
 	__encodeURIComponent        = encodeURIComponent,
 
-
 	/**
 	 * check Object type
 	 * @param  {Any}  obj  - object to check for type
@@ -61,12 +60,7 @@
 		function is (obj, type) {
 			// only check if obj is not a falsey value
 			if (!type) {
-				if (obj) {
-					return true
-				}
-				else {
-					return false
-				}
+				return obj ? true : false
 			}
 			// check object type
 			else {
@@ -291,7 +285,7 @@
 
 			// no props specified default 2nd arg to children
 			// is an hyperscript object or not an object (null,undefined,string,array,bool)
-			if ((props && props.$) || !is(props, __object)) {
+			if (isHyperscriptObject(props) || !is(props, __object)) {
 				key   = 1,
 				props = {}
 			}
@@ -301,7 +295,7 @@
 			}
 
 			// declare hyperscript object
-			var obj = {type: type, props: props, children: [], $: __true};
+			var obj = {type: type, props: props, children: []};
 
 			// check if the type is a special case i.e [type] | div.class | #id
 			// and alter the hyperscript
@@ -345,6 +339,69 @@
 			}
 
 			return obj
+		}
+
+		function isHyperscriptObject (obj) {
+			// object exists
+			// has type, children and props
+			// props is always and object
+			var maybe = obj &&
+					    obj.type &&
+					    obj.children &&
+					    obj.props
+
+			// end quickly
+			// the object is definatly not
+			// a hyperscript object
+			if (!maybe) return __false
+
+			// well, it probably is
+			// but just to be sure
+			// we check if it only has 3 properties
+			var length = 0;
+			for (var name in obj) {
+				if (length > 3) {
+					break
+				}
+				if (obj.hasOwnProperty(name)) {
+					length++
+				}
+			}
+
+			return length === 3
+		}
+
+		/**
+		 * hyperscript set children
+		 * @param  {Any} a
+		 * @return {String|Array|Object}
+		 */
+		function set (child, obj) {
+			// add obj.prop to children if they are none TextNodes
+			if (is(child.props, __object) && obj.props.xmlns) {
+				child.props.xmlns = obj.props.xmlns
+			}
+
+			// convert to string non hyperscript children
+			if (!(is(child, __object) && isHyperscriptObject(child))) {
+				// we don't want [object Object] strings
+				if (is(child, __object)) {
+					child = JSON.stringify(child)
+				}
+				// for non objects adding a strings is enough 
+				else {
+					child = child + ''
+				}
+
+				// convert the null, and undefined strings to empty strings
+				// we don't convert false since that could 
+				// be a valid textnode value returned to the client
+				if (child === 'null' || child === 'undefined') {
+					child = ''
+				}
+			}
+			
+			return child
 		}
 
 		/**
@@ -414,37 +471,6 @@
 			return obj
 		}
 
-		/**
-		 * hyperscript set children
-		 * @param  {Any} a
-		 * @return {String|Array|Object}
-		 */
-		function set (child, obj) {
-			// add obj.prop to children if they are none TextNodes
-			if (is(child, __object) && obj.props.xmlns) {
-				child.props.xmlns = obj.props.xmlns
-			}
-
-			if (
-				!(
-					is(child, __object) || 
-					is(child, __string) || 
-					is(child, __array)
-				)
-			) {
-				child = child + '';
-
-				// convert the null, and undefined strings to empty strings
-				// we don't convert false since that could 
-				// be a valid value returned to the client
-				if (child === 'null' || child === 'undefined') {
-					child = ''
-				}
-			}
-			
-			return child
-		}
-
 		return Element
 	}()),
 	
@@ -458,11 +484,11 @@
 	 */
 	lifecycle = (function () {
 		function lifecycle (node, stage, props, state, isCmp) {
-			var cmp = isCmp ? node : node.__;
+			var cmp = isCmp ? node : node.cmp;
 
 			if (cmp && cmp[stage]) {
-				props = props ? cmp.props : props,
-				state = state ? cmp.state : state;
+				props = props ? (is(props, __object) ? props : cmp.props) : props,
+				state = state ? (is(state, __object) ? state : cmp.state) : state;
 
 				cmp[stage](props, state)
 			}
@@ -552,7 +578,7 @@
 				lifecycle(newNode, __componentDidUpdate, true, true)
 			}
 			// the lookup loop
-			else if (newNode.type) {
+			else if (newNode.type && !newNode.trust) {
 				// diff, update props
 				var propChanges = getChangesToElementProps(parent.childNodes[index], newNode.props, oldNode.props, newNode);
 
@@ -609,11 +635,11 @@
 				return __document.createTextNode(node)
 			}
 			// trusted text content
-			else if (node.trust && node.$) {
+			else if (node.trust) {				
 				var div  = __document.createElement('div'),
 					frag = __document.createDocumentFragment();
 
-				div.innerHTML = node.content;
+				div.innerHTML = node.children[0];
 				var nodes     = __array[__prototype].slice.call(div.childNodes);
 
 				each(nodes, function (value) {
@@ -799,7 +825,7 @@
 			// element specified on instantiation
 			// set mount element
 			if (mount) {
-				self.mount(mount)
+				self.Mount(mount)
 			}
 		}
 
@@ -927,12 +953,16 @@
 			Component: function Component (args) {
 				var that = this;
 
+				if (is(args, __function)) {
+					return that.Component(args())
+				}
+
 				// add props, state namespace
 				args.props = args.props || {}
 				args.state = args.state || {}
 
 				// create component
-				var cmpClass = function () {
+				var Component = function () {
 					var self = this;
 					// add props to component
 					each(args, function (value, name) {
@@ -952,7 +982,7 @@
 					var type = method.toLowerCase();
 
 					// cmpClass.prototype.setState/setProps
-					cmpClass[__prototype]['set'+method] = function (obj, update) {
+					Component[__prototype]['set'+method] = function (obj, update) {
 						var self = this;
 
 						// the obj passed in setState({obj}) / setProps({obj})
@@ -975,7 +1005,13 @@
 				});
 
 				// create component object
-				var cmpObj = new cmpClass;
+				var cmpObj = new Component;
+
+				// we need render to render
+				// publish error
+				if (!cmpObj.render) {
+					throw 'no render method'
+				}
 
 				// get and set initial state
 				if (cmpObj[__getInitialState]) {
@@ -983,27 +1019,26 @@
 				}
 				// get and set default props
 				if (cmpObj[__getDefaultProps]) {
-					cmpObj.setProps(cmpObj[__getDefaultProps]())
+					cmpObj.setProps(cmpObj[__getDefaultProps](), __false)
 				}
 
 				// create components render returned hyperscript object
-				function hyperscript (obj) {
+				function hs (obj) {
 					this.type     = obj.type,
 					this.props    = obj.props,
-					this.children = obj.children,
-					this.$        = true;
+					this.children = obj.children;
 				}
 				// add lifecycle methods to render
 				each(cmpObj, function (value, name) {
-					hyperscript[__prototype].__ = cmpObj
+					hs[__prototype].cmp = cmpObj
 				});
 				// re add default object constructor
-				hyperscript[__prototype][__constructor] = __object;
-
+				hs[__prototype][__constructor] = __object;
 				// re-create render function with new hyperscript obj
+				var render = cmpObj.render;
 				cmpObj.render = function () {
-					return new hyperscript(this())
-				}.bind(cmpObj.render);
+					return new hs(render())
+				}
 
 				// create component returned function
 				var cmpFn = function (props, children, getCmpObj) {
@@ -1330,11 +1365,16 @@
 	 */
 	trust = (function () {
 		function trust (text) {
-			return {
-				content: text, 
-				trust: __true, 
-				$: __true
+			function hs () {
+				this.type = 'p',
+				this.props = {},
+				this.children = [text]
 			}
+
+			hs[__prototype].trust = __true,
+			hs[__prototype][__constructor] = __object;
+
+			return new hs
 		}
 
 		return trust

@@ -53,7 +53,8 @@
 								self.setState({users: [{error: 'request failed'}]})
 							}
 							else {
-								self.setState({users: [{error: 'request failed'}]})//res})
+								// self.setState({users: res})
+								self.setState({users: [{error: 'requests disabled'}]})
 							}
 						})
 					},

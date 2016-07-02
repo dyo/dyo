@@ -6,7 +6,7 @@
 		<title>surl.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.min.js"></script>
+		<script src="/dist/surl.js"></script>
 	</head>
 	<body>
 		<div class="app"></div>
@@ -16,19 +16,19 @@
 			var // define components
 			TodoItem = app.Component({
 				componentDidMount: function() {
-					console.log('componentDidMount: ', this, arguments)
+					// console.log('componentDidMount: ', this, arguments)
 				},
 				componentWillReceiveProps: function(nextProps) {
-					console.log('componentWillReceiveProps: ', this, arguments)
+					// console.log('componentWillReceiveProps: ', this, arguments)
 				},
 				componentWillUpdate: function(nextProps, nextState) {
-					console.log('componentWillUpdate: ', this, arguments)
+					// console.log('componentWillUpdate: ', this, arguments)
 				},
 				componentDidUpdate: function(prevProps, prevState) {
-					console.log('componentDidUpdate: ', this, arguments)
+					// console.log('componentDidUpdate: ', this, arguments)
 				},
 				componentWillUnmount: function() {
-					console.log('componentWillUnmount:', this, arguments)
+					// console.log('componentWillUnmount:', this, arguments)
 				},
 				render: function () {
 					var item = this.props.item;
@@ -47,7 +47,7 @@
 			}),
 			TodoApp = app.Component({
 				componentWillMount: function() {
-					console.log('componentWillMount:', this, arguments)
+					// console.log('componentWillMount:', this, arguments)
 				},
 		  		getInitialState: function() {
 		    		return {items: [], text: ''}
