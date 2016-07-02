@@ -92,8 +92,12 @@
 			var index;
 
 			// Handle arrays, and array-like Objects, 
-			// array-like objects (have prop .length that is a number) and numbers for keys [0]
-			if (is(arr, __array) || arr[__length] && is(arr[__length], __number) && arr[0]) {
+			// array-like objects (have prop .length 
+			// that is a number) and numbers for keys [0]
+			if (
+				is(arr, __array) || arr[__length] && 
+				is(arr[__length], __number) && arr[0]
+			) {
 				// length {Number}
 				var length = arr[__length];
 					index = 0;
@@ -284,13 +288,18 @@
 				child;
 
 			// no props specified default 2nd arg to children
-			// is an hyperscript object or not an object (null,undefined,string,array,bool)
+			// is an hyperscript object or not 
+			// an object (null,undefined,string,array,bool)
 			if (isHyperscriptObject(props) || !is(props, __object)) {
 				key   = 1,
 				props = {}
 			}
 			// insure props is always an object
-			else if (props === __null || props === __undefined || !is(props, __object)) {
+			else if (
+				props === __null || 
+				props === __undefined || 
+				!is(props, __object)
+			) {
 				props = {}
 			}
 
@@ -414,9 +423,11 @@
 		 * tag('inpu#id[type=checkbox]')
 		 */
 		function tag (obj) {
-			var classes = [], 
-				match,
-				parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
+			var 
+			classes = [], 
+			match,
+			// regex to parse type/tag
+			re = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
 
 				// copy obj's props to abstract props and type
 				// incase obj.props is empty create new obj
@@ -432,7 +443,7 @@
 				obj.type = 'div';
 
 			// execute the regex and loop through the results
-			while ((match = parser.exec(type))) {
+			while ((match = re.exec(type))) {
 				// no custom prop match
 				if (match[1] === '' && match[2]) {
 					obj.type = match[2]
@@ -925,9 +936,9 @@
 					// create class with render fn that returns it
 					if (is(cmp, __object)) {
 						// hyperscript object
-						var hs = cmp;
+						var hyperscript = cmp;
 						// create component
-							cmp = self.Component({render: function () { return hs } });
+						cmp = self.Component({render: function () { return hyperscript } });
 					}
 
 					var cmpObj = cmp(__undefined, __undefined, true);
@@ -1023,21 +1034,21 @@
 				}
 
 				// create components render returned hyperscript object
-				function hs (obj) {
+				function hyperscript (obj) {
 					this.type     = obj.type,
 					this.props    = obj.props,
 					this.children = obj.children;
 				}
 				// add lifecycle methods to render
 				each(cmpObj, function (value, name) {
-					hs[__prototype].cmp = cmpObj
+					hyperscript[__prototype].cmp = cmpObj
 				});
 				// re add default object constructor
-				hs[__prototype][__constructor] = __object;
+				hyperscript[__prototype][__constructor] = __object;
 				// re-create render function with new hyperscript obj
 				var render = cmpObj.render;
 				cmpObj.render = function () {
-					return new hs(render())
+					return new hyperscript(render())
 				}
 
 				// create component returned function
@@ -1046,7 +1057,7 @@
 					// will receive props that are not children
 					// if props is set
 					if (props) {
-						lifecycle(cmpObj, __componentWillReceiveProps, props, __undefined, true)
+						lifecycle(cmpObj, __componentWillReceiveProps, props, __undefined, __true)
 					}
 
 					// we have both props and children
@@ -1088,15 +1099,18 @@
 			 * div({}, 'Text')
 			 */
 			DOM: function DOM () {
-				each(['doctype','a','abbr','address','area','article','aside','audio','b','base','bdi','bdo',
-				'blockquote','body','br','button','canvas','caption','cite','code','col','colgroup','command',
-				'datalist','dd','del','details','dfn','div','dl','dt','em','embed','fieldset','figcaption',
-				'figure','footer','form','h1','h2','h3','h4','h5','h6','head','header',
-				'hgroup','hr','html','i','iframe','img','input','ins', 'kbd','keygen','label','legend',
-				'li','link','map','mark','menu','meta','meter','nav','noscript','object','ol',
-				'optgroup','option','output','p','param','pre','progress','q','rp','rt','ruby','s',
-				'samp','script','section','select','small','source','span','strong','style','sub',
-				'summary','sup','table','tbody','td','textarea','tfoot','th','thead','time','title',
+				each(['doctype','a','abbr','address','area','article','aside',
+				'audio','b','base','bdi','bdo','blockquote','body','br','button',
+				'canvas','caption','cite','code','col','colgroup','command',
+				'datalist','dd','del','details','dfn','div','dl','dt','em','embed',
+				'fieldset','figcaption','figure','footer','form','h1','h2','h3',
+				'h4','h5','h6','head','header','hgroup','hr','html','i','iframe',
+				'img','input','ins', 'kbd','keygen','label','legend','li','link',
+				'map','mark','menu','meta','meter','nav','noscript','object','ol',
+				'optgroup','option','output','p','param','pre','progress','q','rp',
+				'rt','ruby','s','samp','script','section','select','small','source',
+				'span','strong','style','sub','summary','sup','table','tbody','td',
+				'textarea','tfoot','th','thead','time','title',
 				'tr','track','u','ul','var','video','wbr'], function (name) {
 					__window[name] = function Element () {
 						// convert args to array
@@ -1365,16 +1379,16 @@
 	 */
 	trust = (function () {
 		function trust (text) {
-			function hs () {
+			function hyperscript () {
 				this.type = 'p',
 				this.props = {},
 				this.children = [text]
 			}
 
-			hs[__prototype].trust = __true,
-			hs[__prototype][__constructor] = __object;
+			hyperscript[__prototype].trust = __true,
+			hyperscript[__prototype][__constructor] = __object;
 
-			return new hs
+			return new hyperscript
 		}
 
 		return trust
@@ -1433,7 +1447,9 @@
 				}
 
 				// promote element to individual composite layer
-				style.willChange = 'transform';
+				if (style.willChange) {
+					style.willChange = 'transform'
+				}
 
 				// get first state
 				first = element.getBoundingClientRect(element);
@@ -1457,7 +1473,7 @@
 
 				// assign transform origin if set
 				if (transformOrigin) {
-					style.transformOrigin = transformOrigin
+					prefix(style, 'transformOrigin', transformOrigin)
 				}
 
 				// reflect animation state on dom
@@ -1477,11 +1493,12 @@
 
 					player.addEventListener('finish', onfinish)
 				} else {
-					style.transform  = first;
+					prefix(style, 'transform', first)
 					// trigger repaint 
 					element.offsetWidth;
-					style.transition = 'transform '+duration+'ms '+easing,
-					style.transform  = last
+
+					prefix(style, 'transition', 'transform '+duration+'ms '+easing);
+					prefix(style, 'transform', last)
 				}
 
 				// cleanup
@@ -1491,11 +1508,15 @@
 						if (e.target !== element) {
 							return
 						}
-						style.transition  = __null,
-						style.transform   = __null;
+
+						prefix(style, 'transition', __null);
+						prefix(style, 'transform', __null)
 					}
-					style.transformOrigin = __null,
-					style.willChange      = __null;
+					prefix(style, 'transformOrigin', __null);
+					
+					if (style.willChange) {
+						style.willChange = __null
+					}
 
 					elementClassList.remove(runningClass);
 					bodyClassList.remove(runningClass);
@@ -1506,6 +1527,35 @@
 					element.addEventListener(transEvtEnd, onfinish)
 				}
 			}
+		}
+
+		/**
+		 * prefix css props
+		 * @param  {Object} style - the elements style object
+		 * @param  {String} prop  - prop to set
+		 * @param  {String} value - value of the prop
+		 */
+		function prefix (style, prop, value) {
+			// exit early if we support un-prefixed prop
+	  		if (style && style[prop] === null) {
+	  			// chrome, safari, mozila, ie
+    			var vendors = ['webkit','Webkit','Moz','ms'];
+
+	      		for (var i = 0; i < vendors.length; i++) {
+	      			// vendor + capitalized prop
+	      			prop = vendors[i] + prop[0].toUpperCase() + prop.slice(1);
+
+	      			// add prop if vendor prop exists
+  					if (style[prop] !== undefined) {
+  						style[prop] = value
+  					}
+	      		}
+    		}
+    		// set un-prefixed prop
+    		else {
+    			style[prop] = value
+    		}
+  			
 		}
 
 		return animate
