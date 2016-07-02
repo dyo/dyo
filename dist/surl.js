@@ -2,7 +2,18 @@
  * Surl - a react like virtual dom library
  * @author Sultan Tarimo <https://github.com/sultantarimo>
  */
-(function () {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define([], factory);
+    } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
+        // CommonJS
+        factory(exports);
+    } else {
+        // Browser globals
+        factory(root);
+    }
+}(this, function (exports) {
 	// strict mode, tell the runtime not to suppress my silent mistakes
 	// globals, undefined variables etc.
 	'use strict';
@@ -40,6 +51,7 @@
 	__componentWillUnmount      = 'componentWillUnmount',
 	__componentWillUpdate       = 'componentWillUpdate',
 	__componentDidUpdate        = 'componentDidUpdate',
+	__shouldComponentUpdate     = 'shouldComponentUpdate',
 
 	// functions
 	__number                    = Number,
@@ -501,7 +513,7 @@
 				props = props ? (is(props, __object) ? props : cmp.props) : props,
 				state = state ? (is(state, __object) ? state : cmp.state) : state;
 
-				cmp[stage](props, state)
+				return cmp[stage](props, state)
 			}
 		}
 
@@ -551,7 +563,13 @@
 			index   = index || 0,
 			oldNode = validateNode(oldNode),
 			newNode = validateNode(newNode);
-		
+			
+			// should component update
+			// if false exit quickly
+			if (lifecycle(newNode, __shouldComponentUpdate, __true, __true) === __false) {
+				return
+			}
+
 			// adding to the dom
 			if (oldNode === __undefined) {
 				parent.appendChild(createElement(newNode, render));
@@ -581,12 +599,12 @@
 			// replacing a node
 			else if (nodeChanged(newNode, oldNode)) {
 				// before component is updated
-				lifecycle(newNode, __componentWillUpdate, true, true)
+				lifecycle(newNode, __componentWillUpdate, __true, __true)
 
 				parent.replaceChild(createElement(newNode), parent.childNodes[index])
 
 				// after component is updated
-				lifecycle(newNode, __componentDidUpdate, true, true)
+				lifecycle(newNode, __componentDidUpdate, __true, __true)
 			}
 			// the lookup loop
 			else if (newNode.type && !newNode.trust) {
@@ -597,14 +615,14 @@
 				// update component
 				if (propChanges[__length]) {
 					// before props change
-					lifecycle(newNode, __componentWillUpdate, true, true);
+					lifecycle(newNode, __componentWillUpdate, __true, __true);
 
 					each(propChanges, function (obj) {
 						updateProp(obj.target, obj.name, obj.value, obj.op)
 					});
 
 					// after props change
-					lifecycle(newNode, __componentDidUpdate, true, true)
+					lifecycle(newNode, __componentDidUpdate, __true, __true)
 				}
 				
 				// loop through all children
@@ -1569,9 +1587,9 @@
 	 * -------------------------------------------------------------- */
 
 
-	__window.surl    = surl,
-	__window.h       = element,
-	__window.bind    = bind,
-	__window.trust   = trust,
-	__window.animate = animate;
-}());
+	exports.surl    = surl,
+	exports.h       = element,
+	exports.bind    = bind,
+	exports.trust   = trust,
+	exports.animate = animate;
+}));

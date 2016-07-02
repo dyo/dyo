@@ -271,6 +271,7 @@ h('div', trust('<script>alert('Hello World')</script>'))
 A react like lifecycle
 
 ```javascript
+shouldComponentUpdate: function(nextProps, nextState)
 componentWillMount: function()
 componentDidMount: function()
 componentWillReceiveProps: function(nextProps)

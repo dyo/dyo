@@ -15,6 +15,9 @@
 
 			var // define components
 			TodoItem = app.Component({
+				shouldComponentUpdate: function (nextProps, nextState) {
+					// console.log('componentDidMount: ', this, arguments)
+				},
 				componentDidMount: function() {
 					// console.log('componentDidMount: ', this, arguments)
 				},
@@ -32,7 +35,7 @@
 				},
 				render: function () {
 					var item = this.props.item;
-					return h('li', {onclick: this.props.delete, id: item.id, dd: Date.now(), style: 'cursor:pointer;'}, item.text)
+					return h('li', {onclick: this.props.delete, id: item.id, className: item.id, style: 'cursor:pointer;'}, item.text)
 				}
 			}),
 			TodoList = app.Component({
@@ -55,10 +58,17 @@
 		  		handleSubmit: function (e) {
 		    		e.preventDefault();
 		    		var text = this.state.text;
-	    			if (text) {
+
+    				if (window.raf) {
+    					cancelAnimationFrame(window.raf)
+    				}
+
+    				if (text) {
 	    				var nextItems = this.state.items.concat([{text: text, id: Date.now()}]);
 		    			this.setState({items: nextItems, text: ''})
 	    			}
+
+	    			console.log(this.state)
 		  		},
 		  		handleDelete: function (e) {
 		  			var value = e.currentTarget.id,
@@ -75,11 +85,11 @@
 		  		render: function () {
 		  			return h('div',
 		  						h('h3', 'TODO'),
-		  						TodoList({items: this.state.items, delete: this.handleDelete}),
 		  						h('form', {onsubmit: this.handleSubmit},
 		  							h('input', {oninput: bind('value', this, 'text'), value: this.state.text}),
 		  							h('button', 'Add #' + (this.state.items.length+1))
-  								)
+  								),
+  								TodoList({items: this.state.items, delete: this.handleDelete})
 		  					)
 		  		}
 			});
@@ -87,14 +97,7 @@
 			// mount to dom
 			app.Render(TodoApp, '.app');
 
-			// activate shortcut dom references
-			// i.e h('div', 'Text')
-			// becomes
-			// div('Text')
-			app.DOM();
-
-			// console.log(app)
-			// console.log(input('Text', 'Text'));
+			console.log(app)
 		</script>
 	</body>
 </html>
