@@ -554,16 +554,16 @@
 				var stage = Component[stage];
 
 				if (props && !state) {
-					stage(props)
+					return stage(props)
 				}
 				else if (!props && state) {
-					stage(__undefined, state)
+					return stage(__undefined, state)
 				}
 				else if (props && state) {
 					return stage(props, state)
 				}
 				else {
-					state()
+					return state()
 				}
 			}
 		}
@@ -634,7 +634,7 @@
 			// adding to the dom
 			if (oldNode === __undefined) {
 				var node = createElement(newNode, render);
-				
+
 				lifecycle(newNode, componentWillMount, node);
 
 				parent.appendChild(node);
