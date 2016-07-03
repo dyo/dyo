@@ -1,21 +1,27 @@
-/**
- * Surl - a react like virtual dom library
- * @author Sultan Tarimo <https://github.com/sultantarimo>
+/*!
+ * surl.js 
+ * a react like virtual dom library
+ * @author Sultan Tarimo <https://github.com/thysultan>
+ * @license MIT
  */
+
 (function (root, factory) {
+	'use strict';
+
+	// amd
     if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define([], factory);
-    } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
-        // CommonJS
-        factory(exports);
-    } else {
-        // Browser globals
-        factory(root);
+        // register as an anonymous module
+        define([], factory)
+    }
+    // commonjs
+    else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
+        factory(exports)
+    } 
+    // browser globals
+    else {
+        factory(root)
     }
 }(this, function (exports) {
-	// strict mode, tell the runtime not to suppress my silent mistakes
-	// globals, undefined variables etc.
 	'use strict';
 
 	// references for better minification
@@ -43,21 +49,24 @@
 	__constructor               = 'constructor',
 	__prototype                 = 'prototype',
 	__length                    = 'length',
-	__getInitialState           = 'getInitialState',
-	__getDefaultProps           = 'getDefaultProps',
-	__componentWillReceiveProps = 'componentWillReceiveProps',
-	__componentDidMount         = 'componentDidMount',
-	__componentWillMount        = 'componentWillMount',
-	__componentWillUnmount      = 'componentWillUnmount',
-	__componentWillUpdate       = 'componentWillUpdate',
-	__componentDidUpdate        = 'componentDidUpdate',
-	__shouldComponentUpdate     = 'shouldComponentUpdate',
+
+	// lifecycle properties
+	getInitialState           = 'getInitialState',
+	getDefaultProps           = 'getDefaultProps',
+	componentWillReceiveProps = 'componentWillReceiveProps',
+	componentDidMount         = 'componentDidMount',
+	componentWillMount        = 'componentWillMount',
+	componentWillUnmount      = 'componentWillUnmount',
+	componentWillUpdate       = 'componentWillUpdate',
+	componentDidUpdate        = 'componentDidUpdate',
+	shouldComponentUpdate     = 'shouldComponentUpdate',
 
 	// functions
 	__number                    = Number,
 	__array                     = Array,
 	__object                    = Object,
 	__function                  = Function,
+	__boolean                   = Boolean,
 	__string                    = String,
 	__XMLHttpRequest            = XMLHttpRequest,
 	__encodeURIComponent        = encodeURIComponent,
@@ -302,7 +311,7 @@
 			// no props specified default 2nd arg to children
 			// is an hyperscript object or not 
 			// an object (null,undefined,string,array,bool)
-			if (isHyperscriptObject(props) || !is(props, __object)) {
+			if (isElement(props) || !is(props, __object)) {
 				key   = 1,
 				props = {}
 			}
@@ -325,7 +334,7 @@
 				type.indexOf('#') !== -1 || 
 				type.indexOf('.') !== -1
 			) {
-				obj = tag(obj)
+				obj = parseElementType(obj)
 			}
 
 			// auto set namespace for svg and math elements
@@ -350,29 +359,28 @@
 				// and set the 'arrays children' as children
 				if (is(child, __array)) {
 					for (var k = 0; k < child[__length]; k++) {
-						obj.children[(i-key) + k] = set(child[k], obj)
+						obj.children[(i-key) + k] = setChild(child[k], obj)
 					}
 				}
 				// deep enough, add this child to children
 				else {
-					obj.children[i - key] = set(child, obj)
+					obj.children[i - key] = setChild(child, obj)
 				}
 			}
 
 			return obj
 		}
 
-		function isHyperscriptObject (obj) {
+		function isElement (obj) {
 			// object exists
 			// has type, children and props
-			// props is always and object
 			var maybe = obj &&
 					    obj.type &&
 					    obj.children &&
 					    obj.props
 
 			// end quickly
-			// the object is definatly not
+			// the object is not
 			// a hyperscript object
 			if (!maybe) return __false
 
@@ -381,10 +389,16 @@
 			// we check if it only has 3 properties
 			var length = 0;
 			for (var name in obj) {
+				// end quickly
+				// we don't need to loop through
+				// all the objects props
+				// we now know it's not an object
 				if (length > 3) {
 					break
 				}
-				if (obj.hasOwnProperty(name)) {
+				// add 1 to length if the object
+				// has the prop
+				else if (obj.hasOwnProperty(name)) {
 					length++
 				}
 			}
@@ -397,14 +411,14 @@
 		 * @param  {Any} a
 		 * @return {String|Array|Object}
 		 */
-		function set (child, obj) {
+		function setChild (child, obj) {
 			// add obj.prop to children if they are none TextNodes
 			if (is(child.props, __object) && obj.props.xmlns) {
 				child.props.xmlns = obj.props.xmlns
 			}
 
 			// convert to string non hyperscript children
-			if (!(is(child, __object) && isHyperscriptObject(child))) {
+			if (!(is(child, __object) && isElement(child))) {
 				// we don't want [object Object] strings
 				if (is(child, __object)) {
 					child = JSON.stringify(child)
@@ -434,7 +448,7 @@
 		 * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
 		 * tag('inpu#id[type=checkbox]')
 		 */
-		function tag (obj) {
+		function parseElementType (obj) {
 			var 
 			classes = [], 
 			match,
@@ -506,14 +520,51 @@
 	 * @params {Boolean}        isCmp - weather this is a component or not
 	 */
 	lifecycle = (function () {
-		function lifecycle (node, stage, props, state, isCmp) {
-			var Component = isCmp ? node : node.Component;
+		function lifecycle (node, stage, props, state, isComponent) {
+			// end quickly
+			// node is not an object
+			// so it can't possibly be a
+			// hyperscript object
+			if (!is(node, __object)) {
+				return
+			}
+
+			// if node is component then Component = node
+			// otherwise Component = node.Component
+			// if the node is not a components parent
+			// Element .Component will not exist which means
+			// no lifecycle methods exist as well
+			// so the next if (Component ...) block will end quickly
+			var Component = isComponent ? node : node.Component;
 
 			if (Component && Component[stage]) {
-				props = props ? (is(props, __object) ? props : Component.props) : props,
-				state = state ? (is(state, __object) ? state : Component.state) : state;
+				// is props/state truthy if so check if it is not a boolean
+				// if so default to the value in props/state passed, 
+				// if it is default to the Components props
+				// if props/state is falsey default 
+				// to what the value of props was before,
+				// which is undefined
+				props = props ? (!is(props, __boolean) ? props : Component.props) : __undefined,
+				state = state ? (!is(state, __boolean) ? state : Component.state) : __undefined;
 
-				return Component[stage](props, state)
+				// componentShouldUpdate returns a Boolean
+				// so we publish the lifecycle return values
+				// which we can use in the vdom - diff () function
+				// to see if we should update or not
+				var stage = Component[stage];
+
+				if (props && !state) {
+					stage(props)
+				}
+				else if (!props && state) {
+					stage(__undefined, state)
+				}
+				else if (props && state) {
+					return stage(props, state)
+				}
+				else {
+					state()
+				}
 			}
 		}
 
@@ -528,11 +579,15 @@
 	 * @return {Object}     - vdom object
 	 */
 	vdom = (function () {
-		function VDOM (parent, render) {
+		function VDOM (parent, render, data) {
 			// root reference
 			this.mount = parent,
 			// local copy of Component
-			this.render = render
+			this.render = render;
+
+			if (data) {
+				this.data = data
+			}
 		}
 
 		VDOM[__prototype] = {
@@ -550,9 +605,15 @@
 			},
 			// init mount to dom
 			init: function () {
-				// local copy of static hyperscript refence
-				this.old = this.render(),
+				if (this.data) {
+					this.old = this.render(this.data)
+				}
+				else {
+					this.old = this.render()
+				}
+
 				this.new = this.old;
+
 				// initial mount
 				diff(this.mount, this.old, __undefined, __undefined, this.render)
 			}
@@ -566,63 +627,72 @@
 			
 			// should component update
 			// if false exit quickly
-			if (lifecycle(newNode, __shouldComponentUpdate, __true, __true) === __false) {
+			if (lifecycle(newNode, shouldComponentUpdate, __true, __true) === __false) {
 				return
 			}
 
 			// adding to the dom
 			if (oldNode === __undefined) {
-				parent.appendChild(createElement(newNode, render));
+				var node = createElement(newNode, render);
 
-				// after mounting component to dom
-				// we run componentWillMount on once in surl:render before
-				// before mounting the parent component to the dom
-				// there difference between this and componentWillMount
-				// is that componentWillMount will only run on parent components
-				// whil componentDidMount will run on all components
-				lifecycle(newNode, __componentDidMount)
+				lifecycle(newNode, componentWillMount, node);
+
+				parent.appendChild(node);
+
+				lifecycle(newNode, componentDidMount, node)
 			} 
 			// removing from the dom
 			else if (newNode === __undefined) {
-				var node = parent.childNodes[index];
+				var 
+				node = parent.childNodes[index],
+
+				// after unmounting component from dom
+				time = lifecycle(oldNode, componentWillUnmount, node) || 0;
+
+				// time is not a number, default back to 0
+				if (!is(time, __number)) {
+					time = 0
+				}
 
 				// send to the end of the event queue
 				// ensures the dom is always up to date
 				// before we run removeChild
 				setTimeout(function () {
-					parent.removeChild(node);
-
-					// after unmounting component from dom
-					lifecycle(oldNode, __componentWillUnmount)
-				}, 0)
+					parent.removeChild(node)
+				}, time)
 			}
 			// replacing a node
 			else if (nodeChanged(newNode, oldNode)) {
 				// before component is updated
-				lifecycle(newNode, __componentWillUpdate, __true, __true)
+				lifecycle(newNode, componentWillUpdate, __true, __true)
 
 				parent.replaceChild(createElement(newNode), parent.childNodes[index])
 
 				// after component is updated
-				lifecycle(newNode, __componentDidUpdate, __true, __true)
+				lifecycle(newNode, componentDidUpdate, __true, __true)
 			}
 			// the lookup loop
 			else if (newNode.type && !newNode.trust) {
 				// diff, update props
-				var propChanges = getChangesToElementProps(parent.childNodes[index], newNode.props, oldNode.props, newNode);
+				var propChanges = getChangesToElementProps(
+					parent.childNodes[index], 
+					newNode.props, 
+					oldNode.props, 
+					newNode
+				);
 
 				// if there are any changes,
 				// update component
 				if (propChanges[__length]) {
 					// before props change
-					lifecycle(newNode, __componentWillUpdate, __true, __true);
+					lifecycle(newNode, componentWillUpdate, __true, __true);
 
 					each(propChanges, function (obj) {
 						updateProp(obj.target, obj.name, obj.value, obj.op)
 					});
 
 					// after props change
-					lifecycle(newNode, __componentDidUpdate, __true, __true)
+					lifecycle(newNode, componentDidUpdate, __true, __true)
 				}
 				
 				// loop through all children
@@ -630,7 +700,13 @@
 					oldLength = oldNode.children[__length];
 				
 				for (var i = 0; i < newLength || i < oldLength; i++) {
-					diff(parent.childNodes[index], newNode.children[i], oldNode.children[i], i, render)
+					diff(
+						parent.childNodes[index], 
+						newNode.children[i], 
+						oldNode.children[i], 
+						i, 
+						render
+					)
 				}
 			}
 		}
@@ -929,9 +1005,8 @@
 			 * initialize/mount
 			 * @param {String} id - base component to mount to dom
 			 */
-			Render: function Render (Component, element, params) {
-				var self = this,
-					params;
+			Render: function Render (Component, element, data) {
+				var self = this;
 
 				// add parent element
 				if (element) {
@@ -959,11 +1034,8 @@
 						Component = self.Component({render: function () { return hyperscript } });
 					}
 
-					// before mounting to dom, run once if set
-					lifecycle(Component(__undefined, __undefined, true), __componentWillMount, params, __undefined, true);
-
 					// activate vdom
-					self.virtual = new vdom(self.parent, Component);
+					self.virtual = new vdom(self.parent, Component, data);
 					self.virtual.init()
 				}
 				// can't find parent to mount to
@@ -1041,12 +1113,12 @@
 				}
 
 				// get and set initial state
-				if (ComponentObject[__getInitialState]) {
-					ComponentObject.setState(ComponentObject[__getInitialState](), __false)
+				if (ComponentObject[getInitialState]) {
+					ComponentObject.setState(ComponentObject[getInitialState](), __false)
 				}
 				// get and set default props
-				if (ComponentObject[__getDefaultProps]) {
-					ComponentObject.setProps(ComponentObject[__getDefaultProps](), __false)
+				if (ComponentObject[getDefaultProps]) {
+					ComponentObject.setProps(ComponentObject[getDefaultProps](), __false)
 				}
 
 				// create components render returned hyperscript object
@@ -1057,7 +1129,7 @@
 				}
 				// add lifecycle methods to render
 				each(ComponentObject, function (value, name) {
-					hyperscript[__prototype].cmp = ComponentObject
+					hyperscript[__prototype].Component = ComponentObject
 				});
 				// re add default object constructor
 				hyperscript[__prototype][__constructor] = __object;
@@ -1073,7 +1145,13 @@
 					// will receive props that are not children
 					// if props is set
 					if (props) {
-						lifecycle(ComponentObject, __componentWillReceiveProps, props, __undefined, __true)
+						lifecycle(
+							ComponentObject, 
+							componentWillReceiveProps, 
+							props, 
+							__undefined, 
+							__true
+						)
 					}
 
 					// we have both props and children
@@ -1278,23 +1356,23 @@
 							if (match) {
 								// create params object to pass to callback
 								// i.e {user: "simple", id: "1234"}
-								var args = match
+								var data = match
 									// remove the first(url) value in the array
 									.slice(1, match[__length])
-									.reduce(function (args, val, i) {
-										if (!args) {
-											args = {}
+									.reduce(function (data, val, i) {
+										if (!data) {
+											data = {}
 										}
 										// var name: value
 										// i.e user: 'simple'
-										args[variables[i]] = val;
-										return args
+										data[variables[i]] = val;
+										return data
 									}, __null);
 
 								// callback is a function, exec
 								if (is(callback, __function)) {
 									// component function
-									self.Render(callback, __undefined, args)
+									self.Render(callback, __undefined, data)
 								}
 								// can't process
 								else {
@@ -1427,7 +1505,7 @@
 	 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
 	 */
 	animate = (function () {
-		function animate (duration, className, transform, transformOrigin, easing) {
+		function animate (className, duration, transform, transformOrigin, easing) {
 			return function (element) {
 				// get element if selector
 				if (is(element, __string)) {
@@ -1447,13 +1525,8 @@
 					style            = element.style,
 					elementClassList = element.classList,
 					bodyClassList    = __document.body.classList,
-					runningClass     = 'animation-running',
+					runningClass     = 'animate-running',
 					transEvtEnd      = 'transitionend';
-
-				// can't animate without an end state class
-				if(!className) {
-					return
-				}
 
 				// animation type
 				// if this is set we opt for the more performant
@@ -1469,10 +1542,13 @@
 
 				// get first state
 				first = element.getBoundingClientRect(element);
-				// assign last state
-				elementClassList.toggle(className);
-				// get last state
-				last  = element.getBoundingClientRect(element);
+				// assign last state if there is an end class
+				if (className) {
+					elementClassList.toggle(className);
+				}
+				// get last state, if there is not end clas
+				// then nothing has changed so use the first state
+				last  = className ? element.getBoundingClientRect(element) : first;
 
 				// get invert values
 				invert.x  = first.left   - last.left,

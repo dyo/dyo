@@ -10,8 +10,8 @@
 
 ####Supports: Chrome, Firefox, Safari, IE10+
 
-- *~4kb minified+gzipped.*  
-- *~9kb minified.*
+- *5kb minified+gzipped.*  
+- *10kb minified.*
 
 ##.Mount
 
@@ -212,7 +212,38 @@ h('input[checked]')
 input({checked: true})
 ```
 
-##animate
+##lifecycles
+
+A react like lifecycle
+
+```javascript
+shouldComponentUpdate: function(nextProps, nextState)
+componentWillMount: function(node)
+componentDidMount: function(node)
+componentWillReceiveProps: function(nextProps)
+componentWillUpdate: function(nextProps, nextState)
+componentDidUpdate: function(prevProps, prevState)
+componentWillUnmount: function(node)
+```
+
+The only difference is the `componentWillUnmount` and `componentDidMount` lifecycle with which you can optionally return a duration number(in ms) back to it and it will remove the element from the dom only after that amount of time has passed. This allows you to do animations on that node before the node is removed/added.
+
+>Why not `componentWillMount`?
+
+I reason that it probably doesn't make sense to do any animation on a node that does not exist in the dom yet. If you want to animate a node in to the dom, you could set the node to be at a default state/class, then when mounted to the dom have a mounted state/class which you can add/remove on `componentDidMount`
+
+components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.
+
+
+## helpers
+
+
+- animate()
+- bind()
+- trust()
+
+
+###animate
 
 given an end state "a class", you can "FLIP" animate an Element.
 
@@ -236,7 +267,7 @@ since animate(...) returns a function this is the same as
 animate(200, 'active-state')(Element)
 ``` 
 
-##bind
+###bind
 
 two way state data binding
 
@@ -250,7 +281,7 @@ h('input' {oninput: bind('value', this, 'text')})
 // }
 ```
 
-##trust
+###trust
 
 print html entities
 
@@ -264,20 +295,3 @@ so that can be used in a render i.e
 ```javascript
 h('div', trust('<script>alert('Hello World')</script>'))
 ```
-
-
-##lifecycle
-
-A react like lifecycle
-
-```javascript
-shouldComponentUpdate: function(nextProps, nextState)
-componentWillMount: function()
-componentDidMount: function()
-componentWillReceiveProps: function(nextProps)
-componentWillUpdate: function(nextProps, nextState)
-componentDidUpdate: function(prevProps, prevState)
-componentWillUnmount: function()
-```
-
-components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.

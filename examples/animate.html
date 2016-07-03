@@ -6,7 +6,7 @@
 		<title>surl.js - Animation Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/surl.min.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -17,9 +17,9 @@
 			var // define components
 			List = app.Component({
 				render: function () {
-					var createItem = function (item, className, transform, easing, transformOrigin) {
+					var createItem = function (item, className, transform, transformOrigin, easing) {
 						return h('.card', {
-									onmousedown: animate(220, className, transform, easing, transformOrigin)
+									onmousedown: animate(className, 220,  transform, transformOrigin, easing)
 								}, 
 									h('p', 
 										h('h1', item.id), 
@@ -31,17 +31,17 @@
 					return h('main.list',
 								createItem({id: 'state', value: 'scaled'}, 'scaled'),
 
-								createItem({id: 'scale', value: 'scaleUp'}, 'scaledUp', 'scale(1.2)', '50% 50%'),
-								createItem({id: 'scale', value: 'scaleDown'}, 'scaledDown', 'scale(0.8)', '50% 50%'),
+								createItem({id: 'scale', value: 'scaleUp'}, '', 'scale(1.2)', '50% 50%'),
+								createItem({id: 'scale', value: 'scaleDown'}, '', 'scale(0.8)', '50% 50%'),
 
-								createItem({id: 'translate', value: 'top'}, 'moveTop'),
-								createItem({id: 'translate', value: 'bottom'}, 'moveBottom'),
+								createItem({id: 'translate', value: 'top'}, ''),
+								createItem({id: 'translate', value: 'bottom'}, ''),
 
-								createItem({id: 'translate', value: 'right'}, 'moveRight'),
-								createItem({id: 'translate', value: 'left'}, 'moveLeft'),
+								createItem({id: 'translate', value: 'right'}, ''),
+								createItem({id: 'translate', value: 'left'}, ''),
 
-								createItem({id: 'rotate', value: '180deg'}, 'rotateRight', 'rotate(180deg)', '50% 50%'),
-								createItem({id: 'rotate', value: '-180deg'}, 'rotateLeft', 'rotate(-180deg)', '50% 50%'),
+								createItem({id: 'rotate', value: '180deg'}, '', 'rotate(180deg)', '50% 50%'),
+								createItem({id: 'rotate', value: '-180deg'}, '', 'rotate(-180deg)', '50% 50%'),
 
 								createItem({id: 'skew', value: '180deg'}, 'skewRight', 'skew(60deg)', '50% 50%'),
 								createItem({id: 'skew', value: '-180deg'}, 'skewLeft', 'skew(-60deg)', '50% 50%')
@@ -53,6 +53,37 @@
 			app.Render(List, '.app');
 
 			console.log(app)
+
+			// how i think promises work
+			function b () {
+				// we create an address in memory
+				var obj = {};
+
+				setTimeout(function (){
+					// we update the value of the address in the future
+					// i.e in 1 second 
+					// now it is {then: true}
+					obj['then'] = true
+				}, 1000)
+
+				// we return a reference to the address
+				return obj
+			}
+
+			// var "a" stores it's own reference to that address
+			var a = b()
+
+			// the current value in that address is at the moment an empty object {}
+			// note 1 second has not yet elapsed
+			console.log(a)
+
+			// in 2 seconds we log the value in that address
+			setTimeout(function (){
+				// the current value in that address is now {then: true}
+				// since after 1 second we update the value in that address
+				// in the previous setTimeout block
+				console.log(a)
+			}, 2000)
 		</script>
 	</body>
 </html>

@@ -23,20 +23,16 @@
 				}
 			}),
 			User = app.Component({
-				componentWillMount: function(args) {
-					this.setState(args)
-				},
 				onClick: function () {
 					app.route.nav('/router.html')
 				},
 				render: function () {
 					return h('h1', {onclick: this.onClick},
-								this.state.page + " Page",
-								h('p', {}, 'Hello ' + this.state.name)
+								this.props.page + " Page",
+								h('p', {}, 'Hello ' + this.props.name)
 							)
 				}
 			});
-
 
 			// define router
 			app.Route({
@@ -47,33 +43,6 @@
 					'/:page/:name': User
 				}
 			});
-
-			
-			function FuncStyle () {
-				var onClick = function () {
-					app.route.nav('/router.html')
-				}
-
-				return {
-					render: function () {
-						return h('h1', {onclick: onClick}, this.props.id)
-					}
-				}
-			}
-
-			console.log(app.Component(FuncStyle)({id: 1}))
-
-			function ClassStyle () {
-				this.onClick = function () {
-					app.route.nav('/router.html')
-				}
-
-				this.render = function () {
-					return h('h1', {onclick: this.onClick}, this.props.id)
-				}
-			}
-
-			console.log(app.Component(new ClassStyle)({id: 1}))
 		</script>
 	</body>
 </html>

@@ -1,15 +1,18 @@
 /* animate example */
+body.animate-active { 
+	overflow: hidden; 
+}
+* {
+	position: relative;
+}
 
-* { 
+.cards {
+	font-family: sans-serif; 
+}
+.cards * {
 	margin:0; 
 	padding:0; 
 	box-sizing: border-box; 
-}
-body.animation-active { 
-	overflow: hidden; 
-}
-.app {
-	font-family: sans-serif; 
 }
 .card {
 	background: rgb(200,0,100);
@@ -18,7 +21,6 @@ body.animation-active {
 	margin: auto;
 	padding: 20px;
 	box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
-	position: relative;
 	overflow: hidden;
 	transform-origin: 0 0;
 }
@@ -26,11 +28,12 @@ body.animation-active {
 	color:#FFF; 
 	pointer-events:none; 
 }
-.card.animation-running { 
+
+/* animation states */
+.animate-running {
 	z-index: 9999;
 }
-
-.card.scaled {
+.scaled {
 	position: fixed;
 	height: 100%;
 	max-width: 100%;
@@ -38,19 +41,24 @@ body.animation-active {
 	left: 0;
 	z-index: 100;
 }
-.card.moveTop {
+.moveTop {
 	top: -60px;
 	z-index: 100;
 }
-.card.moveBottom {
+.moveBottom {
 	bottom: -60px;
 	z-index: 100;
 }
-.card.moveLeft {
+.moveLeft {
 	left: -25%;
 	z-index: 100;
 }
-.card.moveRight {
+.moveRight {
 	right: -25%;
 	z-index: 100;
 }
+.fade {
+	animation: 300ms fade-out;
+}
+
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; }  }

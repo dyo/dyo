@@ -7,6 +7,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 		<script src="/dist/surl.js"></script>
+		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
 		<div class="app"></div>
@@ -18,8 +19,11 @@
 				shouldComponentUpdate: function (nextProps, nextState) {
 					// console.log('componentDidMount: ', this, arguments)
 				},
-				componentDidMount: function() {
-					// console.log('componentDidMount: ', this, arguments)
+				componentWillMount: function(node) {
+					console.log('componentWillMount:', this, arguments, node)
+				},
+				componentDidMount: function(node) {
+					console.log('componentDidMount: ', this, arguments, node)
 				},
 				componentWillReceiveProps: function(nextProps) {
 					// console.log('componentWillReceiveProps: ', this, arguments)
@@ -30,8 +34,11 @@
 				componentDidUpdate: function(prevProps, prevState) {
 					// console.log('componentDidUpdate: ', this, arguments)
 				},
-				componentWillUnmount: function() {
-					// console.log('componentWillUnmount:', this, arguments)
+				componentWillUnmount: function(node) {
+					animate('fade')(node);
+
+					console.log('componentWillUnmount:', this, arguments, node)
+					return 200
 				},
 				render: function () {
 					var item = this.props.item;
@@ -49,11 +56,11 @@
 		  		}
 			}),
 			TodoApp = app.Component({
-				componentWillMount: function() {
-					// console.log('componentWillMount:', this, arguments)
+				componentWillMount: function(node) {
+					console.log('componentWillMount:', this, arguments, node)
 				},
 		  		getInitialState: function() {
-		    		return {items: [], text: ''}
+		    		return {items: [{id: 1234, text: 'Default'}], text: ''}
 		  		},
 		  		handleSubmit: function (e) {
 		    		e.preventDefault();
@@ -92,6 +99,51 @@
 			app.Render(TodoApp, '.app');
 
 			console.log(app)
+		</script>
+
+
+		<script>
+			function Promise (fn) {
+		  		var 
+		  		state = 'pending',
+		  		value,
+		  		deferred;
+
+		  		function resolve (newValue) {
+		    		value = newValue;
+		    		state = 'resolved';
+
+		    		if (deferred) {
+	     		 		handle(deferred);
+		    		}
+		  		}
+
+		  		function handle (onResolved) {
+		    		if(state === 'pending') {
+		      			deferred = onResolved;
+		      			return
+		    		}
+
+		    		onResolved(value);
+		  		}
+
+		  		this.then = function (onResolved) {
+		    		handle(onResolved);
+		  		};
+
+		  		fn(resolve);
+			}
+
+			function doSomething() {
+		  		return new Promise(function(resolve) {
+			    	var value = 42;
+			    	resolve(value);
+		  		});
+			}
+
+			doSomething().then(function(){
+				console.log(1);
+			})
 		</script>
 	</body>
 </html>
