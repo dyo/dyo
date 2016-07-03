@@ -1492,7 +1492,7 @@
 	 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
 	 */
 	animate = (function () {
-		function animate (className, duration, transform, transformOrigin, easing) {
+		function animate (className, duration, transformations, transformOrigin, easing) {
 			return function (element) {
 				// get element if selector
 				if (is(element, __string)) {
@@ -1504,16 +1504,20 @@
 					throw 'can\'t animate without an element'
 				}
 
-				var first, 
-					last, 
-					webAnimations, 
-					invert           = {},
-					element          = element.currentTarget || element,
-					style            = element.style,
-					elementClassList = element.classList,
-					bodyClassList    = __document.body.classList,
-					runningClass     = 'animate-running',
-					transEvtEnd      = 'transitionend';
+				var
+				first, 
+				last,
+				webAnimations,
+				transform        = {},
+				opacity          = {},
+				invert           = {},
+				transformations  = transformations || '',
+				element          = element.currentTarget || element,
+				style            = element.style,
+				elementClassList = element.classList,
+				bodyClassList    = __document.body.classList,
+				runningClass     = 'animate-running',
+				transEvtEnd      = 'transitionend';
 
 				// animation type
 				// if this is set we opt for the more performant
@@ -1527,15 +1531,20 @@
 					style.willChange = 'transform'
 				}
 
-				// get first state
-				first = element.getBoundingClientRect(element);
+				// get first opacity state
+				opacity['1'] = getComputedStyle(element)['opacity'],
+				// get first rect state
+				first        = element.getBoundingClientRect(element);
 				// assign last state if there is an end class
 				if (className) {
-					elementClassList.toggle(className);
+					elementClassList.toggle(className)
 				}
-				// get last state, if there is not end clas
-				// then nothing has changed so use the first state
-				last  = className ? element.getBoundingClientRect(element) : first;
+				// get last rect state, 
+				// if there is not end class
+				// then nothing has changed, save a reflow and just use the first state
+				last         = className ? element.getBoundingClientRect(element) : first,
+				// get last opacity state
+				opacity['2'] = getComputedStyle(element)['opacity'],
 
 				// get invert values
 				invert.x  = first.left   - last.left,
@@ -1545,10 +1554,10 @@
 
 				duration  = duration || 200,
 				easing    = easing   || 'cubic-bezier(0,0,0.32,1)',
-				first     = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+
-							' scale('+invert.sx+','+invert.sy+')',
-				first     = transform ? first + ' ' + transform : first,
-				last      = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
+
+				transform['1'] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+' scale('+invert.sx+','+invert.sy+')',
+				transform['1'] = transform['1'] + ' ' + transformations,
+				transform['2'] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
 
 				// assign transform origin if set
 				if (transformOrigin) {
@@ -1559,25 +1568,39 @@
 				elementClassList.add(runningClass);
 				bodyClassList.add(runningClass);
 
-				// use native web animations api if present
-				// presents better performance
+				// use native web animations api if present for better performance
 				if (webAnimations) {
 					var player = element.animate([
-					  {transform: first},
-					  {transform: last}
+					  {transform: transform['1'], opacity: opacity['1']},
+					  {transform: transform['2'], opacity: opacity['2']}
 					], {
 						duration: duration,
 						easing:   easing
 					});
 
 					player.addEventListener('finish', onfinish)
-				} else {
-					prefix(style, 'transform', first)
-					// trigger repaint 
-					element.offsetWidth;
+				}
+				// use css transitions
+				else {
+					// set first state
+					style.opacity = opacity['1'];
+					prefix(style, 'transform', transform['1']);
 
-					prefix(style, 'transition', 'transform '+duration+'ms '+easing);
-					prefix(style, 'transform', last)
+					// trigger repaint
+					element.offsetWidth;
+					
+					// setup to animate when we change to the last state
+					// will only transition transforms and opacity
+					prefix(
+						style, 
+						'transition', 
+						'transform '+duration+'ms '+easing + ', '+
+						'opacity '+duration+'ms '+easing
+					);
+
+					// set last state
+					style.opacity = opacity['2'];
+					prefix(style, 'transform', transform['2']);
 				}
 
 				// cleanup
@@ -1605,6 +1628,8 @@
 				if (!webAnimations) {
 					element.addEventListener(transEvtEnd, onfinish)
 				}
+
+				return duration
 			}
 		}
 

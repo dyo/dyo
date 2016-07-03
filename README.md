@@ -217,20 +217,18 @@ input({checked: true})
 A react like lifecycle
 
 ```javascript
-shouldComponentUpdate: function(nextProps, nextState)
-componentWillMount: function(node)
-componentDidMount: function(node)
+shouldComponentUpdate:     function(nextProps, nextState)
 componentWillReceiveProps: function(nextProps)
-componentWillUpdate: function(nextProps, nextState)
-componentDidUpdate: function(prevProps, prevState)
-componentWillUnmount: function(node)
+componentWillUpdate:       function(nextProps, nextState)
+componentDidUpdate:        function(prevProps, prevState)
+componentWillMount:        function(node)
+componentDidMount:         function(node)
+componentWillUnmount:      function(node)
 ```
 
-The only difference is the `componentWillUnmount` and `componentDidMount` lifecycle with which you can optionally return a duration number(in ms) back to it and it will remove the element from the dom only after that amount of time has passed. This allows you to do animations on that node before the node is removed/added.
+The main difference is the `componentWillUnmount`, `componentDidMount` and `componentWillMount` lifecycles will have access to the node with which you can optionally animate.
 
->Why not `componentWillMount`?
-
-I reason that it probably doesn't make sense to do any animation on a node that does not exist in the dom yet. If you want to animate a node in to the dom, you could set the node to be at a default state/class, then when mounted to the dom have a mounted state/class which you can add/remove on `componentDidMount`
+Additionally with `componentWillUnmount` you can return a duration number(in ms) back to it and it will remove the element from the dom only after that amount of time has passed. This allows you to do animations on that node before the node is removed/added, this works well with the `animate()` helper
 
 components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.
 
@@ -248,7 +246,7 @@ components also have the react like `this.setState(obj)` which triggers a re-ren
 given an end state "a class", you can "FLIP" animate an Element.
 
 ```javascript
-animate(duration, className, transform, transformOrigin, easing)(Element)
+animate(className, duration, transform, transformOrigin, easing)(Element)
 ```
 
 can be used within a render as follows
@@ -256,7 +254,7 @@ can be used within a render as follows
 ```javascript
 render: function () {
 	return h('.card', 
-	{onclick: animate(200, 'active-state')}, 
+	{onclick: animate('active-state', 200)}, 
 	''
 	)
 }
@@ -264,7 +262,7 @@ render: function () {
 since animate(...) returns a function this is the same as
 
 ```javascript
-animate(200, 'active-state')(Element)
+animate('active-state', 200)(Element) // returns duration
 ``` 
 
 ###bind
@@ -273,11 +271,14 @@ two way state data binding
 
 ```javascript
 h('input' {oninput: bind('value', this, 'text')})
-// bind('propName/attrName', component, 'objects key to update')
+// bind('propName/attrName', component, 'state key to update')
+// which reads like
+// bind this inputs value prop to this components state['text'] prop
 
-// will change the components state to
+// will thus change the components state to
 // {
-//    text: [value]
+//    ...
+//    text: [inputs value]
 // }
 ```
 

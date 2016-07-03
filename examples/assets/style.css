@@ -58,8 +58,6 @@ body.animate-active {
 	right: -25%;
 	z-index: 100;
 }
-.fade {
-	animation: 300ms fade-out;
+.fadeOut {
+	opacity: 0;
 }
-
-@keyframes fade-out { from { opacity: 1; } to { opacity: 0; }  }

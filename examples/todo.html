@@ -36,31 +36,39 @@
 				},
 				componentWillUnmount: function(node) {
 					// console.log('componentWillUnmount:', this, arguments, node)
-					
-					// fade the node out
-					animate('fade')(node);
-					// remove the node in 200ms
-					return 200
+
+					// this does two things
+					// 1. animates the node that is about to be removed from the dom
+					// 2. tells the render process to remove this node after 400(ms)
+					// It works in one line because animate('className', duration)(node)
+					// returns the duration value, so you also do it like
+					// animate('fadeOut', 400)(node)
+					// return 400
+					return animate('fadeOut', 400)(node)
 				},
 				render: function () {
 					var item = this.props.item;
-					return h('li', {onclick: this.props.delete, id: item.id, className: item.id, style: 'cursor:pointer;'}, item.text)
+					return h('li',
+								{onclick: this.props.handleDelete, id: item.id, className: item.id, style: 'cursor:pointer;'}, 
+								item.text
+							)
 				}
 			}),
+
 			TodoList = app.Component({
 		  		render: function() {
-		  			var self = this;
+		  			var items = this.props.items,
+		  				handleDelete = this.props.handleDelete;
+
 			    	return h('ul', 
-			    				this.props.items.map(function (value) {
-			    					return TodoItem({item: value, delete: self.props.delete})
+			    				items.map(function (value) {
+			    					return TodoItem({item: value, handleDelete: handleDelete})
 			    				})
 	    					)
 		  		}
 			}),
+
 			TodoApp = app.Component({
-				componentWillMount: function(node) {
-					console.log('componentWillMount:', this, arguments, node)
-				},
 		  		getInitialState: function() {
 		    		return {items: [{id: 1234, text: 'Default'}], text: ''}
 		  		},
@@ -92,7 +100,7 @@
 		  							h('input', {oninput: bind('value', this, 'text'), value: this.state.text}),
 		  							h('button', 'Add #' + (this.state.items.length+1))
   								),
-  								TodoList({items: this.state.items, delete: this.handleDelete})
+  								TodoList({items: this.state.items, handleDelete: this.handleDelete})
 		  					)
 		  		}
 			});
@@ -101,51 +109,6 @@
 			app.Render(TodoApp, '.app');
 
 			console.log(app)
-		</script>
-
-
-		<script>
-			function Promise (fn) {
-		  		var 
-		  		state = 'pending',
-		  		value,
-		  		deferred;
-
-		  		function resolve (newValue) {
-		    		value = newValue;
-		    		state = 'resolved';
-
-		    		if (deferred) {
-	     		 		handle(deferred);
-		    		}
-		  		}
-
-		  		function handle (onResolved) {
-		    		if(state === 'pending') {
-		      			deferred = onResolved;
-		      			return
-		    		}
-
-		    		onResolved(value);
-		  		}
-
-		  		this.then = function (onResolved) {
-		    		handle(onResolved);
-		  		};
-
-		  		fn(resolve);
-			}
-
-			function doSomething() {
-		  		return new Promise(function(resolve) {
-			    	var value = 42;
-			    	resolve(value);
-		  		});
-			}
-
-			doSomething().then(function(){
-				console.log(1);
-			})
 		</script>
 	</body>
 </html>
