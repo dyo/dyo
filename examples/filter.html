@@ -103,13 +103,9 @@
 		  		}
 			}),
 			FilterableProductTable = app.Component({
-				componentWillMount: function () {
-					this.setState({products: PRODUCTS});
+				getInitialState: function () {
+					return {products: PRODUCTS, filterText: '', inStockOnly: false}
 				},
-		  		state: {
-	      			filterText: '',
-	      			inStockOnly: false
-		  		},
 		  		handleUserInput: function(filter, stock) {
 		  			if (filter !== undefined) {
 		  				this.setState({

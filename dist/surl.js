@@ -634,7 +634,7 @@
 			// adding to the dom
 			if (oldNode === __undefined) {
 				var node = createElement(newNode, render);
-
+				
 				lifecycle(newNode, componentWillMount, node);
 
 				parent.appendChild(node);
