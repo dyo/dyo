@@ -551,20 +551,7 @@
 				// so we publish the lifecycle return values
 				// which we can use in the vdom - diff () function
 				// to see if we should update or not
-				var stage = Component[stage];
-
-				if (props && !state) {
-					return stage(props)
-				}
-				else if (!props && state) {
-					return stage(__undefined, state)
-				}
-				else if (props && state) {
-					return stage(props, state)
-				}
-				else {
-					return state()
-				}
+				return Component[stage](props, state);
 			}
 		}
 
