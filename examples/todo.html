@@ -20,10 +20,10 @@
 					// console.log('componentDidMount: ', this, arguments)
 				},
 				componentWillMount: function(node) {
-					console.log('componentWillMount:', this, arguments, node)
+					// console.log('componentWillMount:', this, arguments, node)
 				},
 				componentDidMount: function(node) {
-					console.log('componentDidMount: ', this, arguments, node)
+					// console.log('componentDidMount: ', this, arguments, node)
 				},
 				componentWillReceiveProps: function(nextProps) {
 					// console.log('componentWillReceiveProps: ', this, arguments)
@@ -35,9 +35,11 @@
 					// console.log('componentDidUpdate: ', this, arguments)
 				},
 				componentWillUnmount: function(node) {
+					// console.log('componentWillUnmount:', this, arguments, node)
+					
+					// fade the node out
 					animate('fade')(node);
-
-					console.log('componentWillUnmount:', this, arguments, node)
+					// remove the node in 200ms
 					return 200
 				},
 				render: function () {
