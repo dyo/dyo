@@ -10,8 +10,8 @@
 
 ####Supports: Chrome, Firefox, Safari, IE10+
 
-- *5kb minified+gzipped.*  
-- *10kb minified.*
+- *~5kb minified+gzipped.*  
+- *~10kb minified.*
 
 ##.Mount
 
