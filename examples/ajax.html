@@ -48,15 +48,8 @@
 				Users = app.Component({
 					componentWillMount: function () {
 						var self = this;
-						// app.Req('http://jsonplaceholder.typicode.com/users/', function (res, err) {
-						app.Req('/', 'GET', function (res, err) {
-							if (err) {
-								self.setState({users: [{error: 'request failed'}]})
-							}
-							else {
-								// self.setState({users: res})
-								self.setState({users: [{error: 'requests disabled'}]})
-							}
+						app.Req('http://jsonplaceholder.typicode.com/users/').then(function (res) {
+							self.setState({users: res})
 						})
 					},
 					render: function () {
