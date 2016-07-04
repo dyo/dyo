@@ -105,12 +105,22 @@
 	 * 'forEach' shortcut
 	 * @param  {Array|Object} a 
 	 * @param  {Function}     fn
+	 * @param  {Boolean}      multiple
 	 * @return {Array|Object}
 	 */
 	each = (function () {
-		function each (arr, fn) {
+		function each (arr, fn, multiple) {
 			// index {Number}
 			var index;
+
+			// nested arr
+			// i.e each([arr1, arr2], fn)
+			// such that i want to loop through arr1, and arr2
+			if (multiple) {
+				return each(arr, function (value) {
+					each(value, fn)
+				})
+			}
 
 			// Handle arrays, and array-like Objects, 
 			// array-like objects (have prop .length 
@@ -120,8 +130,8 @@
 				is(arr[__length], __number) && arr[0]
 			) {
 				// length {Number}
-				var length = arr[__length];
-					index = 0;
+				var length = arr[__length]
+					index = 0
 
 				for (; index < length; ++index) {
 					// break if fn() returns false
@@ -156,17 +166,17 @@
 	  		var
 	  		value,
 	  		state = 'pending',
-	  		deferred = __null;
+	  		deferred = __null
 
 	  		function resolve (newValue) {
 	  			try {
 	  				if (newValue && is(newValue.then, __function)) {
-		  			    newValue.then(resolve);
+		  			    newValue.then(resolve)
 		  			    return
 				  	}
 				  	
-		    		value = newValue;
-		    		state = 'resolved';
+		    		value = newValue
+		    		state = 'resolved'
 
 		    		if (deferred) {
 		      			handle(deferred)
@@ -178,7 +188,7 @@
 
 	  		function handle (handler) {
 	    		if (state === 'pending') {
-	      			deferred = handler;
+	      			deferred = handler
 	      			return
 	    		}
 
@@ -224,7 +234,7 @@
 	  		}
 
 	  		this.done = function (onFulfilled, onRejected) {
-  		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this;
+  		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this
 
   		  		self.then(__null, function (err) {
   		    		setTimeout(function () {
@@ -254,14 +264,14 @@
 				var 
 				xhr      = new __XMLHttpRequest(),
 				location = __window.location,
-				sent;
+				sent
 
-				data     = data || {};
+				data     = data || {}
 
 				// create anchor element to extract usefull information
 				var 
-				a        = __document.createElement('a');	
-				a.href   = url;
+				a        = __document.createElement('a')	
+				a.href   = url
 
 				// check if is this a cross origin request check
 				var
@@ -270,13 +280,13 @@
 					a.port            === location.port     &&
 					a.protocol        === location.protocol &&
 					location.protocol !== 'file:'
-				);
+				)
 
 				// destroy created element
-				a = __null;
+				a = __null
 				
 				// open request
-				xhr.open(method, url, __true);
+				xhr.open(method, url, __true)
 				
 				// assign on load callback
 				xhr.onload = function () {
@@ -350,12 +360,12 @@
 
 				// serialize settings for POST request
 				if (method === 'POST') {
-					xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+					xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
 					sent = param(data)
 				}
 				// stringify non GET requests i.e PUT/DELETE...
 				else if (method !== 'GET') {
-					xhr.setRequestHeader('Content-Type', is(data, __object) ? 'application/json' : 'text/plain');
+					xhr.setRequestHeader('Content-Type', is(data, __object) ? 'application/json' : 'text/plain')
 					sent = JSON.stringify(data)
 				}
 
@@ -377,14 +387,14 @@
 
 			for (var key in obj) {
 			    var __prefix = prefix ? prefix + '[' + key + ']' : key,
-			    	value    = obj[key];
+			    	value    = obj[key]
 
 			    // when the value is equal to an object that means that we have something like
 			    // data = {name:'John', addr: {...}}
 			    // so we re-run param on addr to serialize 'addr: {...}'
 			    arr.push(typeof value == 'object' ? 
 			    	param(value, __prefix) :
-			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value));
+			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value))
 			}
 
 			return arr.join('&');
@@ -565,10 +575,10 @@
 
 				// since we use type in a while loop
 				// we will be updating obj.type directly
-				type = obj.type;
+				type = obj.type
 
 				// set default type to a div
-				obj.type = 'div';
+				obj.type = 'div'
 
 			// execute the regex and loop through the results
 			while ((match = re.exec(type))) {
@@ -604,7 +614,7 @@
 			}
 
 			// as promised, update props
-			obj.props = props;
+			obj.props = props
 			
 			// done
 			return obj
@@ -647,13 +657,13 @@
 				// to what the value of props was before,
 				// which is undefined
 				props = props ? (!is(props, __boolean) ? props : Component.props) : __undefined,
-				state = state ? (!is(state, __boolean) ? state : Component.state) : __undefined;
+				state = state ? (!is(state, __boolean) ? state : Component.state) : __undefined
 
 				// componentShouldUpdate returns a Boolean
 				// so we publish the lifecycle return values
 				// which we can use in the vdom - diff () function
 				// to see if we should update or not
-				return Component[stage](props, state);
+				return Component[stage](props, state)
 			}
 		}
 
@@ -662,54 +672,16 @@
 
 
 	/**
-	 * Virtual Dom
-	 * @param  {Element}  a - parent element
-	 * @param  {Function} b - render function
-	 * @return {Object}     - vdom object
+	 * diff virtual component
+	 * @param {Element} parent   - dom mount node
+	 * @param {Object}  newNode  - virtual element of components current state
+	 * @param {Object}  oldNode? - virtual element of compoents previous state
+	 * @param {Number}  index? 
+	 * @param {Object}  render?  - component object
 	 */
-	vdom = (function () {
-		function vdom (parent, render, data) {
-			// root reference
-			this.mount = parent,
-			// local copy of Component
-			this.render = render;
-
-			if (data) {
-				this.data = data
-			}
-		}
-
-		vdom[__prototype] = {
-			// refresh/update dom
-			update: function () {
-				// get latest change
-				var newNode = this.render(),
-					// get old copy
-					oldNode = this.old;
-
-				diff(this.mount, newNode, oldNode, __undefined, this.render);
-		
-				// update old node
-				this.old = newNode
-			},
-			// init mount to dom
-			init: function () {
-				if (this.data) {
-					this.old = this.render(this.data)
-				}
-				else {
-					this.old = this.render()
-				}
-
-				this.new = this.old;
-
-				// initial mount
-				diff(this.mount, this.old, __undefined, __undefined, this.render)
-			}
-		}
-
+	diff = (function () {
 		// diff
-		function diff (parent, newNode, oldNode, index, render) {
+		function diff (parent, newNode, oldNode, index, Component) {
 			index   = index || 0,
 			oldNode = validateNode(oldNode),
 			newNode = validateNode(newNode);
@@ -722,7 +694,7 @@
 
 			// adding to the dom
 			if (oldNode === __undefined) {
-				var node = createElement(newNode, render);
+				var node = createElement(newNode, Component);
 
 				lifecycle(newNode, componentWillMount, node);
 
@@ -768,7 +740,7 @@
 					newNode.props, 
 					oldNode.props, 
 					newNode
-				);
+				)
 
 				// if there are any changes,
 				// update component
@@ -778,23 +750,23 @@
 
 					each(propChanges, function (obj) {
 						updateProp(obj.target, obj.name, obj.value, obj.op)
-					});
+					})
 
 					// after props change
 					lifecycle(newNode, componentDidUpdate, __true, __true)
 				}
 				
 				// loop through all children
-				var newLength = newNode.children[__length],
-					oldLength = oldNode.children[__length];
+				var 
+				newLength = newNode.children[__length],	
+				oldLength = oldNode.children[__length]
 				
 				for (var i = 0; i < newLength || i < oldLength; i++) {
 					diff(
 						parent.childNodes[index], 
 						newNode.children[i], 
 						oldNode.children[i], 
-						i, 
-						render
+						i
 					)
 				}
 			}
@@ -817,33 +789,34 @@
 				// diff text content
 				textContentChanged = is(node1, __string) && node1 !== node2,
 				// diff dom type
-				elementTypeChanged = node1.type !== node2.type;
+				elementTypeChanged = node1.type !== node2.type
 		
 			return objectChanged || textContentChanged || elementTypeChanged
 		}
 
 		// create element
-		function createElement (node, render) {
+		function createElement (node, Component) {
 			// handle text nodes
 			if (is(node, __string)) {
 				return __document.createTextNode(node)
 			}
 			// trusted text content
 			else if (node.trust) {				
-				var div  = __document.createElement('div'),
-					frag = __document.createDocumentFragment();
+				var 
+				div  = __document.createElement('div'),
+				frag = __document.createDocumentFragment()
 
 				div.innerHTML = node.children[0];
-				var nodes     = __array[__prototype].slice.call(div.childNodes);
+				var nodes     = __array[__prototype].slice.call(div.childNodes)
 
 				each(nodes, function (value) {
 					frag.appendChild(value)
-				});
+				})
 
 				return frag
 			}
 
-			var el;
+			var el
 
 			// not a text node 
 			// check if it is namespaced
@@ -855,30 +828,38 @@
 			}
 			
 			// diff and update/add/remove props
-			setElementProps(el, node.props);
+			setElementProps(el, node.props)
 			// add events if any
-			addEventListeners(el, node.props);
+			addEventListeners(el, node.props)
 			
 			// only map children arrays
 			if (is(node.children, __array)) {
 				each(node.children, function (child) {
-					el.appendChild(createElement(child, render))
+					el.appendChild(createElement(child, Component))
 				})
 			}
 
-			// add refs on the initial mount
-			if (is(render, __function)) {
-				var props = node.props,
-					ref   = props ? props.ref : __undefined;
+			// add refs
+			// Component is only present
+			// on the initial render
+			// so this will only run once
+			if (Component) {
+				var 
+				props = node.props,
+				ref   = props ? props.ref : __undefined
 
 				// component has a ref add to parent component
 				if (ref) {
-					var Component      = render(__undefined, __undefined, true);
-						Component.refs = {};
+					// if we have already set a refs object
+					// use the same object
+					Component.refs = Component.refs || {}
 
+					// ref is a function run it
+					// passing the el to it
 					if (is(ref, __function)) {
 						ref(el)
 					}
+					// add ref to component
 					else if (is(ref, __string)) {
 						Component.refs[ref] = el
 					}
@@ -916,11 +897,13 @@
 		
 		// update props
 		function getChangesToElementProps (target, newProps, oldProps, newNode) {
-			var changes  = [];
-				oldProps = oldProps !== __undefined ? oldProps : {};
+			var changes  = []
+
+			oldProps = oldProps !== __undefined ? oldProps : {}
 
 			// merge old and new props
-			var props    = {};
+			var props = {}
+
 			for (var name in newProps) { props[name] = newProps[name] }
 			for (var name in oldProps) { props[name] = oldProps[name] }
 		
@@ -936,7 +919,7 @@
 					// says only diff this if it's not an event i.e onClick...
 					add    = oldVal === __undefined || oldVal === __null || (newVal !== oldVal && !isEventProp(name, props[name])),
 					// store value
-					value  = remove === -1 ? oldVal : newVal;
+					value  = remove === -1 ? oldVal : newVal
 
 				// something changed
 				if (add || remove) {
@@ -1000,7 +983,7 @@
 			}
 		}
 
-		return vdom
+		return diff
 	}()),
 
 
@@ -1052,13 +1035,13 @@
 
 				// assign mount if element
 				if (element && element.nodeType) {
-					self.parent = element
+					self.mount = element
 				}
 				// for references sake
 				// incase you want to see all the properties
 				// of an instance
 				else {
-					self.parent = __undefined
+					self.mount = __undefined
 				}
 			},
 
@@ -1067,24 +1050,24 @@
 			 * @param {String} id - base component to mount to dom
 			 */
 			Render: function Render (Component, element, data) {
-				var self = this;
+				var self = this
 
 				// add parent element
 				if (element) {
 					// string? query element
 					if (is(element, __string)) {
-						self.parent = __document.querySelector(element)
+						self.mount = __document.querySelector(element)
 					}
 					// element? add
 					else if (element.nodeType) {
-						self.parent = element
+						self.mount = element
 					}
 				}
 
 				// has parent to mount to
-				if (self.parent) {
+				if (self.mount) {
 					// clear dom
-					self.parent.innerHTML = '';
+					self.mount.innerHTML = ''
 
 					// probably a plain hyperscript object
 					// create class with render fn that returns it
@@ -1092,14 +1075,29 @@
 						// hyperscript object
 						var hyperscript = Component;
 						// create component
-						Component = self.Component({render: function () { return hyperscript } });
+						Component = self.Component({render: function () { return hyperscript } })
 					}
 
-					// activate vdom
-					self.virtual = new vdom(self.parent, Component, data);
-					self.virtual.init()
+					Component = Component || self.component
+					// add vdom objects
+					self.render = Component(data)
+					self.component = Component
+
+					// initial mount to dom
+					// we don't specify a old node here
+					// which just means everything is new
+					// so there will be no diffing involved
+					// we also pass the Component Object
+					// which we can use to add refs if set
+					diff(
+						self.mount, 
+						self.render, 
+						__undefined, 
+						__undefined, 
+						Component(__undefined, __undefined, __true)
+					)
 				}
-				// can't find parent to mount to
+				// can't find element to mount to
 				else {
 					throw 'element to mount does not exist'
 				}
@@ -1154,11 +1152,20 @@
 
 							each(obj, function (value, name) {
 								self[type][name] = value
-							});
+							})
 
 							// only trigger render for setState()
-							if (type === 'state' && !update && that.virtual) {
-								that.virtual.update()
+							if (type === 'state' && !update && that.render) {
+								// new node
+								var newNode = self.component()
+
+								// diff new vs old node
+								diff(that.mount, newNode, that.render)
+
+								// set the old node to the new node
+								// we will use this in the next render
+								// as the old node
+								that.render = newNode
 							}
 						}
 					}
@@ -1188,14 +1195,18 @@
 					this.props    = obj.props,
 					this.children = obj.children;
 				}
+
 				// add lifecycle methods to render
 				each(ComponentObject, function (value, name) {
 					hyperscript[__prototype].Component = ComponentObject
-				});
+				})
+
 				// re add default object constructor
 				hyperscript[__prototype][__constructor] = __object;
+
 				// re-create render function with new hyperscript obj
 				var render = ComponentObject.render;
+
 				ComponentObject.render = function () {
 					return new hyperscript(render())
 				}
@@ -1227,13 +1238,11 @@
 						props.children = children
 					}
 
-
 					// we have props to set?
 					// set them
 					if (props) {
 						ComponentObject.setProps(props)
 					}
-
 
 					if (getCmpObj) {
 						// return component object
@@ -1314,15 +1323,16 @@
 					},
 					// navigate to a view
 					this.nav = function (url) {
-						var addr = this.settings.addr;
-							url  = addr ? addr + url : url;
+						var addr = this.settings.addr
+						
+						url  = addr ? addr + url : url
 
-						history.pushState(__null, __null, url);
+						history.pushState(__null, __null, url)
 					},
 					// kills the rAf animation loop and clears the routes
 					this.destroy = function () {
-						this.routes = {};
-						clearInterval(this.interval);
+						this.routes = {}
+						clearInterval(this.interval)
 					},
 					// configure defualts
 					this.config = function (obj) {
@@ -1334,17 +1344,18 @@
 					},
 					// start listening for url changes
 					this.init = function () {
-						var self = this;
-						var fn = function (){
-							var url = __window.location.pathname;
+						var 
+						self = this,
+						fn   = function () {
+							var url = __window.location.pathname
 
 							if (self.url !== url) {
-								self.url = url;
+								self.url = url
 								self.changed()
 							}
 						}
 
-						clearInterval(self.interval);
+						clearInterval(self.interval)
 						// start listening for a change in the url
 						self.interval = setInterval(fn, 50)
 					},
@@ -1360,12 +1371,13 @@
 
 						// normalize args for ({obj}) and (url, callback) styles
 						if (!is(args, __object)) {
-							var args   = arguments;
-								routes = {};
-								routes[args[0]] = args[1];
+							var args   = arguments
+
+							routes = {}
+							routes[args[0]] = args[1]
 						}
 						else {
-							routes = args;
+							routes = args
 						}
 
 						// assign routes
@@ -1385,12 +1397,12 @@
 											}
 											// capture
 											else {
-												variables.push(id);
+												variables.push(id)
 												return '([^\/]+)'
 											}
 										}),
 								// lock pattern
-								pattern = pattern + '$';
+								pattern = pattern + '$'
 
 							self.routes[name] = {
 								callback:  value,
@@ -1401,8 +1413,9 @@
 					},
 					this.changed = function () {
 						// references
-						var url    = this.url,
-							routes = this.routes;
+						var 
+						url    = this.url,
+						routes = this.routes
 
 						each(routes, function (val) {
 							var callback  = val.callback,
@@ -1411,7 +1424,7 @@
 								match;
 
 							// exec pattern on url
-							match = url.match(new RegExp(pattern));
+							match = url.match(new RegExp(pattern))
 
 							// we have a match
 							if (match) {
@@ -1426,9 +1439,9 @@
 										}
 										// var name: value
 										// i.e user: 'simple'
-										data[variables[i]] = val;
+										data[variables[i]] = val
 										return data
-									}, __null);
+									}, __null)
 
 								// callback is a function, exec
 								if (is(callback, __function)) {
@@ -1444,12 +1457,13 @@
 					}
 				}
 
-				var self   = this,
-					mount  = args.mount,
-					addr   = args.addr,
-					nav    = args.init,
-					routes = args.routes,
-					router = new Router;
+				var 
+				self   = this,
+				mount  = args.mount,
+				addr   = args.addr,
+				nav    = args.init,
+				routes = args.routes,
+				router = new Router
 
 				// mount to dom
 				if (mount) {
@@ -1473,7 +1487,7 @@
 				}
 
 				// assign router to object
-				self.route = router;
+				self.route = router
 			},
 
 			/**
@@ -1508,18 +1522,19 @@
 					// get key from element
 					// either the prop is a property of the element object
 					// or an attribute
-					value = (prop in el) ? el[prop] : el.getAttribute(prop);
+					value = (prop in el) ? el[prop] : el.getAttribute(prop)
 
 					// just if(value) doesn't work if the value is false
 					// and some prop values can be false
 					// null and undefined = prop/attr doesn't exist
 					if (value !== __undefined && value !== __null) {
 						// round about way to do obj = {[key]: value}
-						var obj      = {};
-							obj[key] = value;
+						var 
+						obj      = {}
+						obj[key] = value
 
 						// run the components setState
-						Component.setState(obj);
+						Component.setState(obj)
 					}
 			}
 		}
@@ -1541,7 +1556,7 @@
 			}
 
 			hyperscript[__prototype].trust = __true,
-			hyperscript[__prototype][__constructor] = __object;
+			hyperscript[__prototype][__constructor] = __object
 
 			return new hyperscript
 		}
@@ -1568,7 +1583,7 @@
 	animate = (function () {
 		function animate (className, duration, transformations, transformOrigin, easing) {
 			return function (element) {
-				transformations  = transformations || '';
+				transformations  = transformations || ''
 
 				// get element if selector
 				if (is(element, __string)) {
@@ -1592,7 +1607,7 @@
 				elementClassList = element.classList,
 				bodyClassList    = __document.body.classList,
 				runningClass     = 'animate-running',
-				transEvtEnd      = 'transitionend';
+				transEvtEnd      = 'transitionend'
 
 				// animation type
 				// if this is set we opt for the more performant
@@ -1609,7 +1624,7 @@
 				// get first opacity state
 				opacity['1'] = getComputedStyle(element)['opacity'],
 				// get first rect state
-				first        = element.getBoundingClientRect(element);
+				first        = getBoundingClientRect(element)
 				// assign last state if there is an end class
 				if (className) {
 					elementClassList.toggle(className)
@@ -1617,7 +1632,7 @@
 				// get last rect state, 
 				// if there is not end class
 				// then nothing has changed, save a reflow and just use the first state
-				last         = className ? element.getBoundingClientRect(element) : first,
+				last         = className ? getBoundingClientRect(element) : first,
 				// get last opacity state
 				opacity['2'] = getComputedStyle(element)['opacity'],
 
@@ -1625,16 +1640,21 @@
 				invert.x  = first.left   - last.left,
 				invert.y  = first.top    - last.top,
 				invert.sx = first.width  / last.width,
-				invert.sy = first.height / last.height,
+				invert.sy = first.height / last.height
+
+				// make sure we don't have an Infinity value
+				each(invert, function (value, name, obj) {
+					if (!isFinite(value)) {
+						obj[name] = 0
+					}
+				})
 
 				duration  = duration || 200,
-				easing    = easing   || 'cubic-bezier(0,0,0.32,1)',
+				easing    = easing   || 'ease',
 
 				transform['1'] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+' scale('+invert.sx+','+invert.sy+')',
 				transform['1'] = transform['1'] + ' ' + transformations,
-				transform['2'] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
-
-				console.log(transformations)
+				transform['2'] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)'
 
 				// assign transform origin if set
 				if (transformOrigin) {
@@ -1642,8 +1662,8 @@
 				}
 
 				// reflect animation state on dom
-				elementClassList.add(runningClass);
-				bodyClassList.add(runningClass);
+				elementClassList.add(runningClass)
+				bodyClassList.add(runningClass)
 
 				// use native web animations api if present for better performance
 				if (webAnimations) {
@@ -1653,31 +1673,31 @@
 					], {
 						duration: duration,
 						easing:   easing
-					});
+					})
 
 					player.addEventListener('finish', onfinish)
 				}
 				// use css transitions
 				else {
 					// set first state
-					style.opacity = opacity['1'];
-					prefix(style, 'transform', transform['1']);
+					style.opacity = opacity['1']
+					prefix(style, 'transform', transform['1'])
 
 					// trigger repaint
-					element.offsetWidth;
+					element.offsetWidth
 					
 					// setup to animate when we change to the last state
 					// will only transition transforms and opacity
 					prefix(
 						style, 
 						'transition', 
-						'transform '+duration+'ms '+easing + ', '+
+						'all '+duration+'ms '+easing + ', '+
 						'opacity '+duration+'ms '+easing
-					);
+					)
 
 					// set last state
 					style.opacity = opacity['2'];
-					prefix(style, 'transform', transform['2']);
+					prefix(style, 'transform', transform['2'])
 				}
 
 				// cleanup
@@ -1688,17 +1708,17 @@
 							return
 						}
 
-						prefix(style, 'transition', __null);
+						prefix(style, 'transition', __null)
 						prefix(style, 'transform', __null)
 					}
-					prefix(style, 'transformOrigin', __null);
+					prefix(style, 'transformOrigin', __null)
 					
 					if (style.willChange) {
 						style.willChange = __null
 					}
 
-					elementClassList.remove(runningClass);
-					bodyClassList.remove(runningClass);
+					elementClassList.remove(runningClass)
+					bodyClassList.remove(runningClass)
 					element.removeEventListener(transEvtEnd, onfinish)
 				}
 
@@ -1707,6 +1727,24 @@
 				}
 
 				return duration
+			}
+		}
+
+
+		/**
+		 * get elements client rect and return a mutable object
+		 * with top, left, width, and height values
+		 * @param  {Element} element - element to run getBoundingClientRect on
+		 * @return {Object}          - {top, left, width, height}
+		 */
+		function getBoundingClientRect (element) {
+			var rect = element.getBoundingClientRect()
+
+			return {
+				top: rect.top,
+				left: rect.left,
+				width: rect.width,
+				height: rect.height
 			}
 		}
 
@@ -1720,11 +1758,11 @@
 			// exit early if we support un-prefixed prop
 	  		if (style && style[prop] === __null) {
 	  			// chrome, safari, mozila, ie
-    			var vendors = ['webkit','Webkit','Moz','ms'];
+    			var vendors = ['webkit','Webkit','Moz','ms']
 
 	      		for (var i = 0; i < vendors[__length]; i++) {
 	      			// vendor + capitalized prop
-	      			prop = vendors[i] + prop[0].toUpperCase() + prop.slice(1);
+	      			prop = vendors[i] + prop[0].toUpperCase() + prop.slice(1)
 
 	      			// add prop if vendor prop exists
   					if (style[prop] !== __undefined) {
@@ -1770,10 +1808,10 @@
 	 * -------------------------------------------------------------- */
 
 
- 	exports.prop    = prop;
+ 	exports.prop    = prop,
 	exports.surl    = surl,
 	exports.h       = element,
 	exports.bind    = bind,
 	exports.trust   = trust,
-	exports.animate = animate;
+	exports.animate = animate
 }));

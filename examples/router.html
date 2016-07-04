@@ -6,7 +6,7 @@
 		<title>surl.js - Router Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/surl.min.js"></script>
 	</head>
 	<body>
 		<div class="app"></div>
@@ -25,6 +25,7 @@
 			
 			User = app.Component({
 				onClick: function () {
+					console.log(app.route)
 					app.route.nav('/router.html')
 				},
 				render: function () {
@@ -44,6 +45,8 @@
 					'/:page/:name': User
 				}
 			});
+
+			console.log(app)
 		</script>
 	</body>
 </html>
