@@ -146,6 +146,99 @@
 		return each
 	}()),
 
+	/**
+	 * simple promise implementation
+	 * @param {Function} 
+	 * @return {Object} {then, done}
+	 */
+	promise = (function () { 
+		function promise (fn) {
+	  		var
+	  		value,
+	  		state = 'pending',
+	  		deferred = __null;
+
+	  		function resolve (newValue) {
+	  			try {
+	  				if (newValue && is(newValue.then, __function)) {
+		  			    newValue.then(resolve);
+		  			    return
+				  	}
+				  	
+		    		value = newValue;
+		    		state = 'resolved';
+
+		    		if (deferred) {
+		      			handle(deferred)
+		    		}
+	  			} catch (e) {
+	  				reject(e)
+	  			}
+	  		}
+
+	  		function handle (handler) {
+	    		if (state === 'pending') {
+	      			deferred = handler;
+	      			return
+	    		}
+
+	    		setTimeout(function () {
+		    		var handlerCallback;
+
+	    		    if (state === 'resolved') {
+			      		handlerCallback = handler.onResolved
+	    		    } 
+	    		    else {
+			      		handlerCallback = handler.onRejected
+	    		    }
+
+	    		    if (!handlerCallback) {
+			      		if (state === 'resolved') {
+			        		handler.resolve(value)
+			      		} 
+			      		else {
+			        		handler.reject(value)
+			      		}
+
+			      		return
+	    		    }
+
+	    		    var ret;
+		            try {
+		                ret = handlerCallback(value);
+		                handler.resolve(ret)
+		            } 
+		            catch (e) {
+		                handler.reject(e)
+		            }
+	    		}, 0)
+	  		}
+
+	  		this.then = function (onResolved) {
+	    		return new promise (function(resolve) {
+		      		handle({
+		        		onResolved: onResolved,
+		        		resolve: resolve
+		      		})
+	    		})
+	  		}
+
+	  		this.done = function (onFulfilled, onRejected) {
+  		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this;
+
+  		  		self.then(__null, function (err) {
+  		    		setTimeout(function () {
+  		      			throw err
+  		    		}, 0)
+  		  		})
+	  		};
+
+	  		fn(resolve)
+		}
+
+		return promise
+	}()),
+
 
 	/**
 	 * ajax helper
@@ -156,42 +249,40 @@
 	 * ajax({url, method, data}, fn(res, err) => {})
 	 */
 	ajax = (function () {
-		function ajax (settings, callback) {
-			var xhr      = new __XMLHttpRequest(),
+		function ajax (url, method, data) {
+			return new promise(function (resolve) {
+				var 
+				xhr      = new __XMLHttpRequest(),
 				location = __window.location,
-				url      = settings.url,
-				callback = settings.callback,
-				method   = settings.method,
-				data     = settings.data || {};
-			// create anchor element to extract usefull information
-			var a        = __document.createElement('a');
+				sent;
+
+				data     = data || {};
+
+				// create anchor element to extract usefull information
+				var 
+				a        = __document.createElement('a');	
 				a.href   = url;
-		
-			// check if is this a cross origin request check
-			var CORS = !(
-				a.hostname        === location.hostname &&
-				a.port            === location.port     &&
-				a.protocol        === location.protocol &&
-				location.protocol !== 'file:'
-			);
+
+				// check if is this a cross origin request check
+				var
+				CORS = !(
+					a.hostname        === location.hostname &&
+					a.port            === location.port     &&
+					a.protocol        === location.protocol &&
+					location.protocol !== 'file:'
+				);
+
 				// destroy created element
 				a = __null;
-			
-			// open request
-			xhr.open(method, url, __true);
-			
-			// assign on error callback
-			xhr.onerror = function () {
-				callback(this, __true)
-			}
-			
-			// assign on load callback
-			xhr.onload = function () {
-				// is callback specified?
-				if (callback) {
-					var params,
-						response,
-						responseText = xhr.responseText;
+				
+				// open request
+				xhr.open(method, url, __true);
+				
+				// assign on load callback
+				xhr.onload = function () {
+					var 
+					response,
+					responseText = xhr.responseText;
 					
 					// success
 					if (this.status >= 200 && this.status < 400) {
@@ -223,42 +314,41 @@
 						else {
 							response = responseText
 						}
-						
-						params = [response, __false]
+
+						// resolve promise
+						resolve(response)
 					}
 					// failed
 					else {
-						params = [this, __true]
+
+						// resolve promise
+						reject(xhr.statusText)
 					}
-					
-					// (response{String|Object|Node}, error{Boolean})
-					callback(params[0], params[1])
 				}
-			}
-			
-			// set for this is a cross origin request
-			if (CORS) {
-				xhr.withCredentials = __true
-			}
-			
-			// config non GET requests
-			if (method !== 'GET') {
-				// set the type of the data sent to either text/json
-				xhr.setRequestHeader('Content-Type', is(data, __object) ? 'application/json' : 'text/plain')
-			}
-			
-			// serialize settings for POST request
-			if (method === 'POST') {
-				xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-				// i.e for {name: 'Foo'} Request Payload will be name=Foo
-				xhr.send(param(data))
-			}
-			// non POST request 
-			else {
-				xhr.send()
-			}
-		
-			return xhr
+
+				// assign on error callback
+				xhr.onerror = function () {
+					reject(xhr.statusText)
+				}
+				
+				// set for this is a cross origin request
+				if (CORS) {
+					xhr.withCredentials = __true
+				}
+
+				// serialize settings for POST request
+				if (method === 'POST') {
+					xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+					sent = param(data)
+				}
+				// stringify non GET requests i.e PUT/DELETE...
+				else if (method !== 'GET') {
+					xhr.setRequestHeader('Content-Type', is(data, __object) ? 'application/json' : 'text/plain');
+					sent = JSON.stringify(data)
+				}
+
+				xhr.send(sent)
+			})		
 		}
 
 		/**
@@ -302,7 +392,7 @@
 	 * h('div', null, h('h1', 'Text'));
 	 */
 	element = (function () {
-		function Element (type, props) {
+		function element (type, props) {
 			var args   = arguments,
 				length = args[__length],
 				key    = 2,
@@ -508,7 +598,7 @@
 			return obj
 		}
 
-		return Element
+		return element
 	}()),
 	
 	/**
@@ -566,7 +656,7 @@
 	 * @return {Object}     - vdom object
 	 */
 	vdom = (function () {
-		function VDOM (parent, render, data) {
+		function vdom (parent, render, data) {
 			// root reference
 			this.mount = parent,
 			// local copy of Component
@@ -577,7 +667,7 @@
 			}
 		}
 
-		VDOM[__prototype] = {
+		vdom[__prototype] = {
 			// refresh/update dom
 			update: function () {
 				// get latest change
@@ -898,7 +988,7 @@
 			}
 		}
 
-		return VDOM
+		return vdom
 	}()),
 
 
@@ -926,38 +1016,10 @@
 			 * make ajax requests
 			 * @return {Object} xhr object
 			 */
-			Req: function Req () {
-				var args     = arguments,
-					settings = {method: 'GET'};
-
-				// get and assign method, url and callback
-				// from arguments based on type
-				each(args, function (val) {
-					// objects are data
-					if (is(val, __object)) {
-						settings.data = val
-					}
-					// functions are callbacks
-					else if (is(val, __function)) {
-						settings.callback = val
-					}
-					// strings are url/method
-					else if (is(val, __string)) {
-						var type = val.toUpperCase();
-
-						// methods
-						if (type === 'POST' || type === 'GET') {
-							settings.method = type
-						}
-						// url
-						else {
-							settings.url = val
-						}  
-					}
-				});
-				
-				// process
-				return ajax(settings)
+			Req: function Req (url, method, data) {
+				method = method || 'GET';
+				// return ajax promise
+				return ajax(url, method.toUpperCase(), data)
 			},
 
 			/**
@@ -1641,16 +1703,16 @@
 		 */
 		function prefix (style, prop, value) {
 			// exit early if we support un-prefixed prop
-	  		if (style && style[prop] === null) {
+	  		if (style && style[prop] === __null) {
 	  			// chrome, safari, mozila, ie
     			var vendors = ['webkit','Webkit','Moz','ms'];
 
-	      		for (var i = 0; i < vendors.length; i++) {
+	      		for (var i = 0; i < vendors[__length]; i++) {
 	      			// vendor + capitalized prop
 	      			prop = vendors[i] + prop[0].toUpperCase() + prop.slice(1);
 
 	      			// add prop if vendor prop exists
-  					if (style[prop] !== undefined) {
+  					if (style[prop] !== __undefined) {
   						style[prop] = value
   					}
 	      		}
@@ -1663,6 +1725,26 @@
 		}
 
 		return animate
+	}()),
+
+	prop = (function () {
+		function prop (store) {
+			function prop () {
+				if (arguments[__length]) {
+					store = arguments[0]
+				}
+
+				return store
+			}
+
+			prop.toJSON = function () {
+				return store
+			}
+
+			return prop
+		}
+
+		return prop
 	}());
 
 
@@ -1673,6 +1755,7 @@
 	 * -------------------------------------------------------------- */
 
 
+ 	exports.prop    = prop;
 	exports.surl    = surl,
 	exports.h       = element,
 	exports.bind    = bind,

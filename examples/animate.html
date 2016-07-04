@@ -6,7 +6,7 @@
 		<title>surl.js - Animation Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.min.js"></script>
+		<script src="/dist/surl.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -52,38 +52,7 @@
 			// mount to dom
 			app.Render(List, '.app');
 
-			console.log(app)
-
-			// how i think promises work
-			function b () {
-				// we create an address in memory
-				var obj = {};
-
-				setTimeout(function (){
-					// we update the value of the address in the future
-					// i.e in 1 second 
-					// now it is {then: true}
-					obj['then'] = true
-				}, 1000)
-
-				// we return a reference to the address
-				return obj
-			}
-
-			// var "a" stores it's own reference to that address
-			var a = b()
-
-			// the current value in that address is at the moment an empty object {}
-			// note 1 second has not yet elapsed
-			console.log(a)
-
-			// in 2 seconds we log the value in that address
-			setTimeout(function (){
-				// the current value in that address is now {then: true}
-				// since after 1 second we update the value in that address
-				// in the previous setTimeout block
-				console.log(a)
-			}, 2000)
+			console.log(app);
 		</script>
 	</body>
 </html>

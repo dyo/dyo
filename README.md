@@ -166,15 +166,19 @@ app.nav('/user/delete')
 make ajax requests
 
 ```javascript
-app.Req('/', 'GET', function (res, err) {
-	// res{Element|JSON|Text}
-	// err{Boolean}
-})
+app.Req('url', 'METHOD', {data})
+//returns a promise, {then, done}
 
-app.Req('/', 'POST', {id: 1245}, function (res, err) {
-	
-})
 ```
+
+for example
+
+```javascript
+var a = prop('Hello');
+app.Req('/user/id').then(a).done( ()=>console.log(a()) )
+```
+will log the response from `/user/id`
+
 
 ##.Element
 
@@ -295,4 +299,13 @@ so that can be used in a render i.e
 
 ```javascript
 h('div', trust('<script>alert('Hello World')</script>'))
+```
+
+###prop
+
+```javascript
+var a = prop('value')
+console.log(a()) // value
+a('new value')
+a() // new value
 ```
