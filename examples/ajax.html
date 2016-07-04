@@ -51,6 +51,10 @@
 						app.Req('http://jsonplaceholder.typicode.com/users/').then(function (res) {
 							self.setState({users: res})
 						})
+
+						// app.Req('http://jsonplaceholder.typicode.com/users/', 'GET', {}, function(res){
+						// 	self.setState({users: res})
+						// })
 					},
 					render: function () {
 						return h('div',

@@ -249,7 +249,7 @@
 	 * ajax({url, method, data}, fn(res, err) => {})
 	 */
 	ajax = (function () {
-		function ajax (url, method, data) {
+		function ajax (url, method, data, callback) {
 			return new promise(function (resolve) {
 				var 
 				xhr      = new __XMLHttpRequest(),
@@ -282,7 +282,8 @@
 				xhr.onload = function () {
 					var 
 					response,
-					responseText = xhr.responseText;
+					responseText = xhr.responseText,
+					statusText   = xhr.statusText;
 					
 					// success
 					if (this.status >= 200 && this.status < 400) {
@@ -315,14 +316,25 @@
 							response = responseText
 						}
 
-						// resolve promise
-						resolve(response)
+						if (callback) {
+							// use callbacks
+							callback(response)
+						}
+						else {
+							// resolve promise
+							resolve(response)
+						}
 					}
 					// failed
 					else {
-
-						// resolve promise
-						reject(xhr.statusText)
+						if (callback) {
+							// use callbacks
+							callback(statusText)
+						}
+						else {
+							// resolve promise
+							reject(statusText)
+						}
 					}
 				}
 
@@ -1016,10 +1028,10 @@
 			 * make ajax requests
 			 * @return {Object} xhr object
 			 */
-			Req: function Req (url, method, data) {
+			Req: function Req (url, method, data, callback) {
 				method = method || 'GET';
 				// return ajax promise
-				return ajax(url, method.toUpperCase(), data)
+				return ajax(url, method.toUpperCase(), data, callback)
 			},
 
 			/**
