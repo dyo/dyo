@@ -18,6 +18,7 @@
 			List = app.Component({
 				render: function () {
 					var createItem = function (item, className, transform, transformOrigin, easing) {
+						console.log(transform)
 						return h('.card', {
 									onmousedown: animate(className, 220,  transform, transformOrigin, easing)
 								}, 
@@ -31,8 +32,8 @@
 					return h('main.cards',
 								createItem({id: 'state', value: 'scaled'}, 'scaled'),
 
-								createItem({id: 'scale', value: 'scaleUp'}, '', 'scale(1.2)', '50% 50%'),
-								createItem({id: 'scale', value: 'scaleDown'}, '', 'scale(0.8)', '50% 50%'),
+								createItem({id: 'scale', value: 'scaleUp'}, 'scaleUp', 'scale(1.2)', '50% 50%'),
+								createItem({id: 'scale', value: 'scaleDown'}, 'scaleDown', 'scale(0.8)', '50% 50%'),
 
 								createItem({id: 'translate', value: 'top'}, 'moveTop'),
 								createItem({id: 'translate', value: 'bottom'}, 'moveBottom'),

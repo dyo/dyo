@@ -1556,6 +1556,8 @@
 	animate = (function () {
 		function animate (className, duration, transformations, transformOrigin, easing) {
 			return function (element) {
+				transformations  = transformations || '';
+
 				// get element if selector
 				if (is(element, __string)) {
 					element = document.querySelector(element)
@@ -1573,7 +1575,6 @@
 				transform        = {},
 				opacity          = {},
 				invert           = {},
-				transformations  = transformations || '',
 				element          = element.currentTarget || element,
 				style            = element.style,
 				elementClassList = element.classList,
@@ -1620,6 +1621,8 @@
 				transform['1'] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+' scale('+invert.sx+','+invert.sy+')',
 				transform['1'] = transform['1'] + ' ' + transformations,
 				transform['2'] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
+
+				console.log(transformations)
 
 				// assign transform origin if set
 				if (transformOrigin) {
