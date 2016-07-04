@@ -795,7 +795,7 @@
 				// diff dom type
 				elementTypeChanged = node1.type !== node2.type,
 				// diff key
-				keyChanged         = node1.props ? node1.props.key !== node2.props.key : false
+				keyChanged         = node1.props ? node1.props.key !== node2.props.key : __false
 
 				// console.log(node1, node2, keyChanged)
 
