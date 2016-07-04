@@ -680,7 +680,6 @@
 	 * @param {Object}  render?  - component object
 	 */
 	diff = (function () {
-		// diff
 		function diff (parent, newNode, oldNode, index, Component) {
 			index   = index || 0,
 			oldNode = validateNode(oldNode),
@@ -694,43 +693,48 @@
 
 			// adding to the dom
 			if (oldNode === __undefined) {
-				var node = createElement(newNode, Component);
+				var 
+				nextNode = createElement(newNode, Component)
 
-				lifecycle(newNode, componentWillMount, node);
+				// before mount (next node)
+				lifecycle(newNode, componentWillMount, nextNode)
 
-				parent.appendChild(node);
+				parent.appendChild(nextNode);
 
-				lifecycle(newNode, componentDidMount, node)
+				// after mount (next node)
+				lifecycle(newNode, componentDidMount, nextNode)
 			} 
 			// removing from the dom
 			else if (newNode === __undefined) {
 				var 
-				node = parent.childNodes[index],
+				nextNode = parent.childNodes[index]
 
-				// after unmounting component from dom
-				time = lifecycle(oldNode, componentWillUnmount, node) || 0;
+				// before unmount (previous node)
+				lifecycle(oldNode, componentWillUnmount, nextNode) || 0;
 
-				// time is not a number, default back to 0
-				if (!is(time, __number)) {
-					time = 0
-				}
-
-				// send to the end of the event queue
+				// push to the end of the event queue
 				// ensures the dom is always up to date
 				// before we run removeChild
 				setTimeout(function () {
-					parent.removeChild(node)
-				}, time)
+					parent.removeChild(nextNode)
+				}, 0)
 			}
 			// replacing a node
 			else if (nodeChanged(newNode, oldNode)) {
-				// before component is updated
-				lifecycle(newNode, componentWillUpdate, __true, __true)
+				var 
+				prevNode = parent.childNodes[index],
+				nextNode = createElement(newNode)
 
-				parent.replaceChild(createElement(newNode), parent.childNodes[index])
+				// before unmount (previous node)
+				lifecycle(oldNode, componentWillUnmount, prevNode) || 0
 
-				// after component is updated
-				lifecycle(newNode, componentDidUpdate, __true, __true)
+				// before mount (next node)
+				lifecycle(newNode, componentWillMount, nextNode)
+
+				parent.replaceChild(nextNode, prevNode)
+
+				// after mount (next node)
+				lifecycle(newNode, componentDidMount, nextNode)
 			}
 			// the lookup loop
 			else if (newNode.type && !newNode.trust) {
@@ -785,13 +789,18 @@
 		// diffing two nodes
 		function nodeChanged (node1, node2) {
 			// diff object type
-			var objectChanged = node1[__constructor] !== node2[__constructor],
+			var objectChanged      = node1[__constructor] !== node2[__constructor],
 				// diff text content
 				textContentChanged = is(node1, __string) && node1 !== node2,
 				// diff dom type
-				elementTypeChanged = node1.type !== node2.type
+				elementTypeChanged = node1.type !== node2.type,
+				// diff key
+				keyChanged         = node1.props ? node1.props.key !== node2.props.key : false
+
+				// console.log(node1, node2, keyChanged)
+
 		
-			return objectChanged || textContentChanged || elementTypeChanged
+			return objectChanged || textContentChanged || elementTypeChanged || keyChanged
 		}
 
 		// create element
@@ -1137,7 +1146,7 @@
 				// add setState and setProps methods to prototype
 				each(['Props', 'State'], function (method) {
 					// state/props
-					var type = method.toLowerCase();
+					var type = method.toLowerCase()
 
 					// cmpClass.prototype.setState/setProps
 					ComponentClass[__prototype]['set'+method] = function (obj, update) {
@@ -1157,7 +1166,7 @@
 							// only trigger render for setState()
 							if (type === 'state' && !update && that.render) {
 								// new node
-								var newNode = self.component()
+								var newNode = that.component()
 
 								// diff new vs old node
 								diff(that.mount, newNode, that.render)

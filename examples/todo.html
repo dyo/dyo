@@ -34,22 +34,19 @@
 				componentDidUpdate: function(prevProps, prevState) {
 					// console.log('componentDidUpdate: ', this, arguments)
 				},
-				componentWillUnmount: function(node) {
-					// console.log('componentWillUnmount:', this, arguments, node)
-
-					// this does two things
-					// 1. animates the node that is about to be removed from the dom
-					// 2. tells the render process to remove this node after 400(ms)
-					// It works in one line because animate('className', duration)(node)
-					// returns the duration value, so you also do it like
-					// animate('fadeOut', 400)(node)
-					// return 400
+				componentWillUnmount: function (node) {
 					return animate('fadeOut', 400)(node)
 				},
 				render: function () {
 					var item = this.props.item;
 					return h('li',
-								{onclick: this.props.handleDelete, id: item.id, className: item.id, style: 'cursor:pointer;'}, 
+								{
+									onclick: this.props.handleDelete, 
+									id: item.id, 
+									className: item.id, 
+									style: 'cursor:pointer;',
+									key: item.id
+								}, 
 								item.text
 							)
 				}
@@ -70,7 +67,11 @@
 
 			TodoApp = app.Component({
 		  		getInitialState: function() {
-		    		return {items: [{id: 1234, text: 'Default'}], text: ''}
+		    		return {items: [
+		    			{id: 1234, text: 'Default'},
+		    			{id: 0234, text: 'Something'},
+		    			{id: 4234, text: 'Else....'}
+	    			], text: ''}
 		  		},
 		  		handleSubmit: function (e) {
 		    		e.preventDefault();
