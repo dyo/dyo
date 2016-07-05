@@ -1287,7 +1287,7 @@
 				// create components render returned hyperscript object
 				function hyperscript (obj) {
 					var 
-					self = this
+					self          = this
 					self.type     = obj.type,
 					self.props    = obj.props,
 					self.children = obj.children

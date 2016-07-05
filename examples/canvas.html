@@ -6,7 +6,7 @@
 		<title>surl.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.min.js"></script>
+		<script src="/dist/surl.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -16,22 +16,54 @@
 
 			var // define components
 			CanvasComponent = app.Component({
-			    componentDidMount: function () {
-			    	console.log(this.props)
-			        this.updateCanvas()
-			    },
-			    updateCanvas: function () {
-			        var 
-			        ctx = this.refs.canvas.getContext('2d')
+				getInitialState: function () {
+					return {
+						isDrawing: false, 
+						ctx: null
+					}
+				},
+				componentDidMount: function () {
+					var
+					self = this
 
-			        ctx.fillRect(0,0, 100, 100)
+					self.setState({ctx: self.refs.canvas.getContext('2d')})
+				},
+			    mouseDown: function (e) {
+			    	var
+			    	ctx = this.state.ctx
+
+			    	ctx.lineWidth = 10
+			    	ctx.lineJoin  = this.state.ctx.lineCap = 'round'
+			    	ctx.moveTo(e.clientX, e.clientY)
+
+			    	this.setState({ctx: ctx, isDrawing: true})
+			    },
+			    mouseMove: function (e) {
+			    	if (this.state.isDrawing) {
+			    		var 
+			    		ctx = this.state.ctx
+
+			    		ctx.lineTo(e.clientX, e.clientY)
+			    		ctx.stroke()
+			    		this.setState({ctx: ctx})
+			    	}
+			    },
+			    mouseUp: function () {
+			    	this.setState({isDrawing: false})
 			    },
 			    render: function () {
-			        return h('canvas', {ref: 'canvas', width: 300, height: 300})
+			        return h('canvas', {
+			        	ref: 'canvas',
+			        	width: window.innerWidth - 4, 
+			        	height: window.innerHeight - 4,
+			        	onMousedown: this.mouseDown,
+			        	onMouseMove: this.mouseMove,
+			        	onMouseUp: this.mouseUp
+			        })
 			    }
-			})
+			})			
 
-			app.Render(CanvasComponent, '.app', {rect: [0,0,100,100]})
+			app.Render(CanvasComponent, '.app')
 
 			console.log(app)
 		</script>
