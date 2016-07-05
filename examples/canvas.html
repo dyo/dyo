@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>surl.js - Todo App Example</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<script src="/dist/surl.min.js"></script>
+		<link rel="stylesheet" href="assets/style.css">
+	</head>
+	<body>
+		<div class="app"></div>
+		<script>
+			var app = new surl();
+
+			var // define components
+			CanvasComponent = app.Component({
+			    componentDidMount: function () {
+			    	console.log(this.props)
+			        this.updateCanvas()
+			    },
+			    updateCanvas: function () {
+			        var 
+			        ctx = this.refs.canvas.getContext('2d')
+
+			        ctx.fillRect(0,0, 100, 100)
+			    },
+			    render: function () {
+			        return h('canvas', {ref: 'canvas', width: 300, height: 300})
+			    }
+			})
+
+			app.Render(CanvasComponent, '.app', {rect: [0,0,100,100]})
+
+			console.log(app)
+		</script>
+	</body>
+</html>
