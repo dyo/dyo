@@ -71,6 +71,8 @@ var obj = {
 }
 
 app.Component(obj)
+// or
+app.createClass(obj)
 
 ```
 you can also use the built in hyperscript helper 
@@ -121,6 +123,12 @@ function PrototypeStyle () {
 }
 // mount
 app.Mount(app.Component(new PrototypeStyle), '.app')
+```
+
+##.Render
+```
+var app = new surl
+app.Render(UserComponent, '.selector', {prop: 1, prop2: 2})
 ```
 
 ##.Route
@@ -188,6 +196,8 @@ hyperscript `h(type, props, children)`
 h('.card[checked]', {data-id: 1234}, 'Text')
 //or
 app.Element('.card[checked]', {data-id: 1234}, 'Text')
+//or
+app.createElement(...)
 ```
 will create 
 
@@ -225,9 +235,10 @@ shouldComponentUpdate:     function(nextProps, nextState)
 componentWillReceiveProps: function(nextProps)
 componentWillUpdate:       function(nextProps, nextState)
 componentDidUpdate:        function(prevProps, prevState)
-componentWillMount:        function(node)
-componentDidMount:         function(node)
-componentWillUnmount:      function(node)
+
+componentWillMount:        function()
+componentDidMount:         function()
+componentWillUnmount:      function()
 ```
 
 The main difference is the `componentWillUnmount`, `componentDidMount` and `componentWillMount` lifecycles will have access to the node with which you can optionally animate.
@@ -245,20 +256,22 @@ components also have the react like `this.setState(obj)` which triggers a re-ren
 - trust()
 
 
-###animate
+### animate
 
 given an end state "a class", you can "FLIP" animate an Element.
 
 ```javascript
-animate(className, duration, transform, transformOrigin, easing)(Element)
+animate.flip(className, duration, transform, transformOrigin, easing)(Element)
+
+animate.transition(className)(node, callback)
 ```
 
-can be used within a render as follows
+for example animate.flip can be used within a render as follows
 
 ```javascript
 render: function () {
 	return h('.card', 
-	{onclick: animate('active-state', 200)}, 
+	{onclick: animate.flip('active-state', 200)}, 
 	''
 	)
 }
@@ -269,7 +282,23 @@ since animate(...) returns a function this is the same as
 animate('active-state', 200)(Element) // returns duration
 ``` 
 
-###bind
+another is animate.transition
+
+```javascript
+// within a method
+handleDelete: function () {
+	var 
+	node = e.currentTarget,
+	self = this
+	
+	// animate node out then update state
+	animate.transition('slideUp')(node, function(){
+		self.setState({items: items})
+	})
+}
+```
+
+### bind
 
 two way state data binding
 
@@ -286,7 +315,7 @@ h('input' {oninput: bind('value', this, 'text')})
 // }
 ```
 
-###trust
+### trust
 
 print html entities
 
@@ -301,11 +330,12 @@ so that can be used in a render i.e
 h('div', trust('<script>alert('Hello World')</script>'))
 ```
 
-###prop
+### prop
 
 ```javascript
 var a = prop('value')
-console.log(a()) // value
+console.log(a()) // => value
 a('new value')
-a() // new value
+a() // => new value
+JSON.stringify(a) // => new value
 ```
