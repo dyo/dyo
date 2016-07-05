@@ -47,15 +47,11 @@
 				
 				Users = app.Component({
 					componentWillMount: function () {
-						var self = this;
-						app.Req('?test').then(function(res) {
+						var 
+						self = this
 						app.Req('http://jsonplaceholder.typicode.com/users/').then(function (res) {
 							self.setState({users: res})
 						})
-
-						// app.Req('http://jsonplaceholder.typicode.com/users/', 'GET', {}, function(res){
-						// 	self.setState({users: res})
-						// })
 					},
 					render: function () {
 						return h('div',
