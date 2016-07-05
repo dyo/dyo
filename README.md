@@ -126,7 +126,8 @@ app.Mount(app.Component(new PrototypeStyle), '.app')
 ```
 
 ##.Render
-```
+
+```javascript
 var app = new surl
 app.Render(UserComponent, '.selector', {prop: 1, prop2: 2})
 ```
