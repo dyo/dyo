@@ -109,18 +109,10 @@
 	 * @return {Array|Object}
 	 */
 	each = (function () {
-		function each (arr, fn, multiple) {
+		function each (arr, fn) {
 			// index {Number}
-			var index;
-
-			// nested arr
-			// i.e each([arr1, arr2], fn)
-			// such that i want to loop through arr1, and arr2
-			if (multiple) {
-				return each(arr, function (value) {
-					each(value, fn)
-				})
-			}
+			var 
+			index
 
 			// Handle arrays, and array-like Objects, 
 			// array-like objects (have prop .length 
@@ -130,8 +122,9 @@
 				is(arr[__length], __number) && arr[0]
 			) {
 				// length {Number}
-				var length = arr[__length]
-					index = 0
+				var 
+				length = arr[__length]
+				index = 0
 
 				for (; index < length; ++index) {
 					// break if fn() returns false
