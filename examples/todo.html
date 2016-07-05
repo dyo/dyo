@@ -6,7 +6,7 @@
 		<title>surl.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/surl.min.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -16,15 +16,9 @@
 
 			var // define components
 			TodoItem = app.Component({
-				shouldComponentUpdate: function (nextProps, nextState) {
-					// console.log('componentDidMount: ', this, arguments)
-				},
-				componentWillMount: function(node) {
-					// console.log('componentWillMount:', this, arguments, node)
-				},
-				componentDidMount: function(node) {
-					// console.log('componentDidMount: ', this, arguments, node)
-				},
+				// shouldComponentUpdate: function (nextProps, nextState) {
+				// 	console.log('shouldComponentUpdate: ', this, arguments)
+				// },
 				componentWillReceiveProps: function(nextProps) {
 					// console.log('componentWillReceiveProps: ', this, arguments)
 				},
@@ -34,19 +28,19 @@
 				componentDidUpdate: function(prevProps, prevState) {
 					// console.log('componentDidUpdate: ', this, arguments)
 				},
-				componentWillUnmount: function (node) {
-					return animate('fadeOut', 400)(node)
-				},
 				render: function () {
-					var item = this.props.item;
+					// references
+					var 
+					item = this.props.item
+
 					return h('li',
 								{
 									onclick: this.props.handleDelete, 
 									id: item.id, 
-									className: item.id, 
+									className: Date.now(), 
 									style: 'cursor:pointer;',
 									key: item.id
-								}, 
+								},
 								item.text
 							)
 				}
@@ -54,10 +48,14 @@
 
 			TodoList = app.Component({
 		  		render: function() {
-		  			var items = this.props.items,
-		  				handleDelete = this.props.handleDelete;
+		  			// references
+		  			var 
+		  			self = this
+		  			items = self.props.items,
+		  			handleDelete = self.props.handleDelete
 
 			    	return h('ul', 
+			    				// for each item return a TodoItem Component
 			    				items.map(function (value) {
 			    					return TodoItem({item: value, handleDelete: handleDelete})
 			    				})
@@ -66,33 +64,69 @@
 			}),
 
 			TodoApp = app.Component({
+				componentWillMount: function() {
+					// console.log('componentWillMount:', this, arguments)
+				},
+				componentDidMount: function(node) {
+					// console.log('componentDidMount: ', this, arguments, node)
+				},
+				componentWillUnmount: function (node) {
+					// console.log('componentWillUnmount', this, arguments, node)
+				},
 		  		getInitialState: function() {
-		    		return {items: [
-		    			{id: 1234, text: 'Default'},
-		    			{id: 0234, text: 'Something'},
-		    			{id: 4234, text: 'Else....'}
-	    			], text: ''}
+		  			// initial data
+		    		return {items: 
+		    			[
+			    			{id: 1234, text: 'Default'},
+			    			{id: 0234, text: 'Something'},
+			    			{id: 4234, text: 'Else....'},
+			    			{id: 9303, text: 0},
+			    			{id: 9103, text: null},
+			    			{id: 9803, text: void 0},
+			    			{id: 9903, text: false}
+	    				], 
+	    				text: ''
+	    			}
 		  		},
 		  		handleSubmit: function (e) {
-		    		e.preventDefault();
-		    		var text = this.state.text;
+		  			// prevent default form submit behaviour
+		    		e.preventDefault()
+
+		    		// references
+		    		var
+		    		self = this,
+		    		text = self.state.text
 
     				if (text) {
-	    				var nextItems = this.state.items.concat([{text: text, id: Date.now()}]);
-		    			this.setState({items: nextItems, text: ''})
+    					// add item to items array
+	    				var 
+	    				nextItems = self.state.items.concat({text: text, id: Date.now()})
+
+	    				// update state
+		    			self.setState({items: nextItems, text: ''})
 	    			}
 		  		},
 		  		handleDelete: function (e) {
-		  			var value = e.currentTarget.id,
-		  				items = this.state.items;
+		  			// references
+		  			var 
+		  			self = this,
+		  			node = e.currentTarget,
+		  			id   = node.id
 
-		  			items.forEach(function(a,b){
-		  				if (a.id == value) {
-							items.splice(b, 1)		  					
+		  			self.state.items.forEach(function(value, index, arr){
+		  				if (value.id == id) {
+		  					// get part of array from 0 to item's index
+		  					// then skip the element we want to delete and add 
+		  					// everything else after that
+		  					var 
+		  					items = arr.slice(0, index).concat(arr.slice(index+1))
+
+		  					// animate node out then update state
+		  					animate.transition('slideUp')(node, function(){
+		  						self.setState({items: items})
+		  					})
 		  				}
-		  			});
-
-		  			this.setState({items: items});
+		  			})
 		  		},
 		  		render: function () {
 		  			return h('div',

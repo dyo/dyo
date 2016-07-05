@@ -48,6 +48,7 @@
 				Users = app.Component({
 					componentWillMount: function () {
 						var self = this;
+						app.Req('?test').then(function(res) {
 						app.Req('http://jsonplaceholder.typicode.com/users/').then(function (res) {
 							self.setState({users: res})
 						})

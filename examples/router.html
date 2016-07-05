@@ -6,7 +6,7 @@
 		<title>surl.js - Router Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.min.js"></script>
+		<script src="/dist/surl.js"></script>
 	</head>
 	<body>
 		<div class="app"></div>
@@ -15,6 +15,12 @@
 
 			var // define components
 			Home = app.Component({
+				componentWillMount: function () {
+					console.log('mount')
+				},
+				componentWillUnmount: function () {
+					console.log('unmount')
+				},
 				onClick: function () {
 					app.route.nav('/user/sultan')
 				},
@@ -24,6 +30,12 @@
 			}),
 			
 			User = app.Component({
+				componentWillMount: function () {
+					console.log('mount')
+				},
+				componentWillUnmount: function () {
+					console.log('unmount')
+				},
 				onClick: function () {
 					console.log(app.route)
 					app.route.nav('/router.html')

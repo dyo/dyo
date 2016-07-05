@@ -156,99 +156,6 @@
 		return each
 	}()),
 
-	/**
-	 * simple promise implementation
-	 * @param {Function} 
-	 * @return {Object} {then, done}
-	 */
-	promise = (function () { 
-		function promise (fn) {
-	  		var
-	  		value,
-	  		state = 'pending',
-	  		deferred = __null
-
-	  		function resolve (newValue) {
-	  			try {
-	  				if (newValue && is(newValue.then, __function)) {
-		  			    newValue.then(resolve)
-		  			    return
-				  	}
-				  	
-		    		value = newValue
-		    		state = 'resolved'
-
-		    		if (deferred) {
-		      			handle(deferred)
-		    		}
-	  			} catch (e) {
-	  				reject(e)
-	  			}
-	  		}
-
-	  		function handle (handler) {
-	    		if (state === 'pending') {
-	      			deferred = handler
-	      			return
-	    		}
-
-	    		setTimeout(function () {
-		    		var handlerCallback;
-
-	    		    if (state === 'resolved') {
-			      		handlerCallback = handler.onResolved
-	    		    } 
-	    		    else {
-			      		handlerCallback = handler.onRejected
-	    		    }
-
-	    		    if (!handlerCallback) {
-			      		if (state === 'resolved') {
-			        		handler.resolve(value)
-			      		} 
-			      		else {
-			        		handler.reject(value)
-			      		}
-
-			      		return
-	    		    }
-
-	    		    var ret;
-		            try {
-		                ret = handlerCallback(value);
-		                handler.resolve(ret)
-		            } 
-		            catch (e) {
-		                handler.reject(e)
-		            }
-	    		}, 0)
-	  		}
-
-	  		this.then = function (onResolved) {
-	    		return new promise (function(resolve) {
-		      		handle({
-		        		onResolved: onResolved,
-		        		resolve: resolve
-		      		})
-	    		})
-	  		}
-
-	  		this.done = function (onFulfilled, onRejected) {
-  		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this
-
-  		  		self.then(__null, function (err) {
-  		    		setTimeout(function () {
-  		      			throw err
-  		    		}, 0)
-  		  		})
-	  		};
-
-	  		fn(resolve)
-		}
-
-		return promise
-	}()),
-
 
 	/**
 	 * ajax helper
@@ -260,13 +167,11 @@
 	 */
 	ajax = (function () {
 		function ajax (url, method, data, callback) {
-			return new promise(function (resolve) {
+			return new promise(function (resolve, reject) {
 				var 
 				xhr      = new __XMLHttpRequest(),
 				location = __window.location,
 				sent
-
-				data     = data || {}
 
 				// create anchor element to extract usefull information
 				var 
@@ -296,12 +201,16 @@
 					statusText   = xhr.statusText;
 					
 					// success
-					if (this.status >= 200 && this.status < 400) {
+					if (xhr.status >= 200 && xhr.status < 400) {
 						// get response header
-						var resHeader = xhr.getResponseHeader("content-type"),
-							resType;
+						var 
+						resHeader = xhr.getResponseHeader("content-type"),
+						resType
 
-						// formate response header
+						// format response header
+						// to get the type of response
+						// that we can use to format the data
+						// if needed i.e create dom/parse json
 						if (resHeader.indexOf(';') !== -1) {
 							resType = resHeader.split(';');
 							resType = resType[0].split('/')
@@ -311,7 +220,7 @@
 						}
 
 						// extract response type 'html/json/text'
-						resType = resType[1];
+						resType = resType[1]
 
 						// json, parse json
 						if (resType === 'json') {
@@ -321,28 +230,28 @@
 						else if (resType === 'html') {
 							response = (new DOMParser()).parseFromString(responseText, "text/html")
 						}
-						// text, leave as is.
+						// text, as is
 						else {
 							response = responseText
 						}
 
+						// use callbacks
 						if (callback) {
-							// use callbacks
 							callback(response)
 						}
+						// otherwise resolve promise
 						else {
-							// resolve promise
 							resolve(response)
 						}
 					}
 					// failed
 					else {
+						// use callbacks
 						if (callback) {
-							// use callbacks
 							callback(statusText)
 						}
+						// otherwise resolve promise
 						else {
-							// resolve promise
 							reject(statusText)
 						}
 					}
@@ -369,8 +278,9 @@
 					sent = JSON.stringify(data)
 				}
 
+				// send request
 				xhr.send(sent)
-			})		
+			})	
 		}
 
 		/**
@@ -383,13 +293,15 @@
 		 * param({url:'http://.com'})
 		 */
 		function param (obj, prefix) {
-			var arr = [];
+			var arr = []
 
 			for (var key in obj) {
-			    var __prefix = prefix ? prefix + '[' + key + ']' : key,
-			    	value    = obj[key]
+			    var 
+			    __prefix = prefix ? prefix + '[' + key + ']' : key,
+			    value    = obj[key]
 
-			    // when the value is equal to an object that means that we have something like
+			    // when the value is equal to an object 
+			    // that means that we have something like
 			    // data = {name:'John', addr: {...}}
 			    // so we re-run param on addr to serialize 'addr: {...}'
 			    arr.push(typeof value == 'object' ? 
@@ -398,6 +310,107 @@
 			}
 
 			return arr.join('&');
+		}
+
+		/**
+		 * simple promise implementation
+		 * @param {Function} 
+		 * @return {Object} {then, done}
+		 */
+		function promise (fn) {
+	  		var
+	  		value,
+	  		state = 'pending',
+	  		deferred = __null
+
+	  		function reject (reason) {
+	  		    state = 'rejected';
+	  		    value = reason
+
+	  		    if(deferred) {
+  		      		handle(deferred)
+	  		    }
+  		  	}
+
+	  		function resolve (newValue) {
+	  			try {
+	  				if (newValue && is(newValue.then, __function)) {
+		  			    newValue.then(resolve, reject)
+		  			    return
+				  	}
+				  	
+		    		value = newValue
+		    		state = 'resolved'
+
+		    		if (deferred) {
+		      			handle(deferred)
+		    		}
+	  			} catch (e) {
+	  				reject(e)
+	  			}
+	  		}
+
+	  		function handle (handler) {
+	    		if (state === 'pending') {
+	      			deferred = handler
+	      			return
+	    		}
+
+	    		setTimeout(function () {
+		    		var 
+		    		handlerCallback
+
+	    		    if (state === 'resolved') {
+			      		handlerCallback = handler.onResolved
+	    		    } 
+	    		    else {
+			      		handlerCallback = handler.onRejected
+	    		    }
+
+	    		    if (!handlerCallback) {
+			      		if (state === 'resolved') {
+			        		handler.resolve(value)
+			      		} 
+			      		else {
+			        		handler.reject(value)
+			      		}
+
+			      		return
+	    		    }
+
+	    		    var ret
+		            try {
+		                ret = handlerCallback(value);
+		                handler.resolve(ret)
+		            } 
+		            catch (e) {
+		                handler.reject(e)
+		            }
+	    		}, 0)
+	  		}
+
+	  		this.then = function (onResolved, onRejected) {
+	    		return new promise (function(resolve, reject) {
+		      		handle({
+		        		onResolved: onResolved,
+		        		onRejected: onRejected,
+		        		resolve: resolve,
+		        		reject: reject
+		      		})
+	    		})
+	  		}
+
+	  		this.done = function (onFulfilled, onRejected) {
+  		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this
+
+  		  		self.then(__null, function (err) {
+  		    		setTimeout(function () {
+  		      			throw err
+  		    		}, 0)
+  		  		})
+	  		}
+
+	  		fn(resolve, reject)
 		}
 
 		return ajax
@@ -418,7 +431,7 @@
 			var args   = arguments,
 				length = args[__length],
 				key    = 2,
-				child;
+				child
 
 			// no props specified default 2nd arg to children
 			// is an hyperscript object or not 
@@ -465,7 +478,7 @@
 			// construct children
 			for (var i = key; i < length; i++) {
 				// reference to current layer
-				child = args[i];
+				child = args[i]
 		
 				// if the child is an array go deeper
 				// and set the 'arrays children' as children
@@ -525,7 +538,7 @@
 		 */
 		function setChild (child, obj) {
 			// add obj.prop to children if they are none TextNodes
-			if (is(child.props, __object) && obj.props.xmlns) {
+			if (child && is(child.props, __object) && obj.props.xmlns) {
 				child.props.xmlns = obj.props.xmlns
 			}
 
@@ -634,20 +647,19 @@
 	lifecycle = (function () {
 		function lifecycle (node, stage, props, state, isComponent) {
 			// end quickly
-			// node is not an object
-			// so it can't possibly be a
-			// hyperscript object
-			if (!is(node, __object)) {
+			// if node is not a Component or hyperscript object
+			if (!node || (!node.Component && !node.render)) {
 				return
 			}
 
-			// if node is component then Component = node
+			// if node is a component then Component = node
 			// otherwise Component = node.Component
 			// if the node is not a components parent
 			// Element .Component will not exist which means
 			// no lifecycle methods exist as well
 			// so the next if (Component ...) block will end quickly
-			var Component = isComponent ? node : node.Component;
+			var 
+			Component = isComponent ? node : node.Component;
 
 			if (Component && Component[stage]) {
 				// is props/state truthy if so check if it is not a boolean
@@ -661,8 +673,8 @@
 
 				// componentShouldUpdate returns a Boolean
 				// so we publish the lifecycle return values
-				// which we can use in the vdom - diff () function
-				// to see if we should update or not
+				// which we can use in the draw - update () function
+				// to see if we should skip an element or not
 				return Component[stage](props, state)
 			}
 		}
@@ -672,18 +684,26 @@
 
 
 	/**
-	 * diff virtual component
+	 * diff virtual component and update dom
 	 * @param {Element} parent   - dom mount node
 	 * @param {Object}  newNode  - virtual element of components current state
 	 * @param {Object}  oldNode? - virtual element of compoents previous state
 	 * @param {Number}  index? 
 	 * @param {Object}  render?  - component object
 	 */
-	diff = (function () {
-		function diff (parent, newNode, oldNode, index, Component) {
-			index   = index || 0,
-			oldNode = validateNode(oldNode),
-			newNode = validateNode(newNode);
+	draw = (function () {
+		// draw interface
+		function draw (mount, newNode, oldNode, Component) {
+			if (Component) {
+				lifecycle(newNode, componentWillMount)
+			}
+
+			update(mount, newNode, oldNode, __undefined, Component)
+		}
+
+		// diff and update dom loop
+		function update (parent, newNode, oldNode, index, Component) {
+			index = index || 0
 			
 			// should component update
 			// if false exit quickly
@@ -696,28 +716,33 @@
 				var 
 				nextNode = createElement(newNode, Component)
 
-				// before mount (next node)
-				lifecycle(newNode, componentWillMount, nextNode)
-
-				parent.appendChild(nextNode);
-
-				// after mount (next node)
-				lifecycle(newNode, componentDidMount, nextNode)
+				if (Component) {
+					lifecycle(newNode, componentDidMount, nextNode)
+				}
+				parent.appendChild(nextNode)
 			} 
 			// removing from the dom
 			else if (newNode === __undefined) {
 				var 
 				nextNode = parent.childNodes[index]
 
-				// before unmount (previous node)
-				lifecycle(oldNode, componentWillUnmount, nextNode) || 0;
+				function remove () {
+					// insure the node we are trying to remove
+					// actually still exists
+					if (nextNode) {
+						parent.removeChild(nextNode)
+					}
+				}
 
-				// push to the end of the event queue
-				// ensures the dom is always up to date
+				// push to the end of the event/render stack
+				// ensuring the dom is always up to date
 				// before we run removeChild
-				setTimeout(function () {
-					parent.removeChild(nextNode)
-				}, 0)
+				if (is(requestAnimationFrame, __function)) {
+					requestAnimationFrame(remove)
+				}
+				else {
+					setTimeout(remove, 0)
+				}
 			}
 			// replacing a node
 			else if (nodeChanged(newNode, oldNode)) {
@@ -725,32 +750,25 @@
 				prevNode = parent.childNodes[index],
 				nextNode = createElement(newNode)
 
-				// before unmount (previous node)
-				lifecycle(oldNode, componentWillUnmount, prevNode) || 0
-
-				// before mount (next node)
-				lifecycle(newNode, componentWillMount, nextNode)
-
+				// same thing, end of the event stack
 				parent.replaceChild(nextNode, prevNode)
-
-				// after mount (next node)
-				lifecycle(newNode, componentDidMount, nextNode)
 			}
 			// the lookup loop
 			else if (newNode.type && !newNode.trust) {
-				// diff, update props
-				var propChanges = getChangesToElementProps(
+				var 
+				// get changes to props/attrs
+				propChanges = getPropChanges(
 					parent.childNodes[index], 
 					newNode.props, 
 					oldNode.props, 
 					newNode
 				)
 
-				// if there are any changes,
-				// update component
+				// if there are any prop changes,
+				// update component props
 				if (propChanges[__length]) {
 					// before props change
-					lifecycle(newNode, componentWillUpdate, __true, __true);
+					lifecycle(newNode, componentWillUpdate, __true, __true)
 
 					each(propChanges, function (obj) {
 						updateProp(obj.target, obj.name, obj.value, obj.op)
@@ -761,47 +779,49 @@
 				}
 				
 				// loop through all children
-				var 
+				var
 				newLength = newNode.children[__length],	
 				oldLength = oldNode.children[__length]
-				
+
 				for (var i = 0; i < newLength || i < oldLength; i++) {
-					diff(
-						parent.childNodes[index], 
-						newNode.children[i], 
-						oldNode.children[i], 
-						i
-					)
+					update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
 				}
 			}
-		}
-
-		// validate node
-		function validateNode (a) {
-			// converts 0 | false to strings
-			if (a !== __undefined && (a === __null || a === 0 || a === __false)) {
-				a = a + ''
-			}
-
-			return a
 		}
 
 		// diffing two nodes
 		function nodeChanged (node1, node2) {
+			var 
 			// diff object type
-			var objectChanged      = node1[__constructor] !== node2[__constructor],
-				// diff text content
-				textContentChanged = is(node1, __string) && node1 !== node2,
-				// diff dom type
-				elementTypeChanged = node1.type !== node2.type,
-				// diff key
-				keyChanged         = false
+			obj = node1[__constructor] !== node2[__constructor],
 
-				if (node1.props && node2.props) {
-					node1.props.key !== node2.props.key
-				}
-		
-			return objectChanged || textContentChanged || elementTypeChanged || keyChanged
+			// diff text content
+			// if this is text content diff it's string content
+			text   = is(node1, __string) && node1 !== node2,
+
+			// diff node type
+			// if this is an element diff it's type
+			// i.e node.type: div !== node.type: h2
+			// will return true, signaling that we should
+			// replace the node
+			type   = node1.type !== node2.type,
+
+			// diff key (assign default state of false)
+			key    = __false
+
+			// not textNode
+			if (node1.props && node2.props) {
+				// check if keys are the same
+				// if there is no keys property in props
+				// this will just be undefined !== undefined
+				// which will be false/same as if the keys where the same
+				key = node1.props.key !== node2.props.key
+			}
+			
+			// if either key/text/type/object constructor has changed
+			// this will return true
+			// thus signaling that we should replace the node
+			return key || text || type || obj
 		}
 
 		// create element
@@ -894,7 +914,8 @@
 		// add event
 		function addEventListeners (target, props) {
 			for (var name in props) {
-				var value = props[name];
+				var 
+				value = props[name]
 
 				if (isEventProp(name, value)) {
 					// is a callback
@@ -906,13 +927,14 @@
 		}
 		
 		// update props
-		function getChangesToElementProps (target, newProps, oldProps, newNode) {
+		function getPropChanges (target, newProps, oldProps, newNode) {
 			var changes  = []
 
 			oldProps = oldProps !== __undefined ? oldProps : {}
 
 			// merge old and new props
-			var props = {}
+			var
+			props = {}
 
 			for (var name in newProps) { props[name] = newProps[name] }
 			for (var name in oldProps) { props[name] = oldProps[name] }
@@ -922,14 +944,18 @@
 			// if name not in oldProp[name] : added
 			// if name in oldProp !== name in newProp : updated
 			for (var name in props) {
-				var oldVal = oldProps[name],
-					newVal = newProps[name],
-					// returns true/false if the prop has changed from it's prev value
-					remove = newVal === __undefined || newVal === __null,
-					// says only diff this if it's not an event i.e onClick...
-					add    = oldVal === __undefined || oldVal === __null || (newVal !== oldVal && !isEventProp(name, props[name])),
-					// store value
-					value  = remove === -1 ? oldVal : newVal
+				var 
+				oldVal = oldProps[name],
+				newVal = newProps[name],
+				// returns true/false if the prop has changed from it's prev value
+				remove = newVal === __undefined || newVal === __null,
+				// says only diff this if it's not an event i.e onClick...
+				add    = oldVal === __undefined || 
+						oldVal === __null || 
+						(newVal !== oldVal && !isEventProp(name, props[name])),
+
+				// store value
+				value  = remove === -1 ? oldVal : newVal
 
 				// something changed
 				if (add || remove) {
@@ -958,12 +984,14 @@
 
 		// assign/update/remove prop
 		function updateProp (target, name, value, op) {
-			if (isEventProp(name, value) || name === 'ref') {
+			// don't add events/refs/keys as props/attrs
+			if (isEventProp(name, value) || name === 'ref' || name === 'key') {
 				return
 			}
 
 			// remove / add attribute reference
-			var attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
+			var 
+			attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
 		
 			// set xlink:href attr
 			if (name === 'xlink:href') {
@@ -993,7 +1021,7 @@
 			}
 		}
 
-		return diff
+		return draw
 	}()),
 
 
@@ -1022,7 +1050,9 @@
 			 * @return {Object} xhr object
 			 */
 			Req: function Req (url, method, data, callback) {
-				method = method || 'GET';
+				method = method || 'GET'
+				data   = data || {}
+
 				// return ajax promise
 				return ajax(url, method.toUpperCase(), data, callback)
 			},
@@ -1076,6 +1106,21 @@
 
 				// has parent to mount to
 				if (self.mount) {
+					var
+					currentComponent = self.component
+
+					if (currentComponent) {
+						currentComponent = currentComponent(__undefined, __undefined, true)
+
+						lifecycle(
+							currentComponent, 
+							componentWillUnmount, 
+							__undefined, 
+							__undefined, 
+							__true
+						)
+					}
+
 					// clear dom
 					self.mount.innerHTML = ''
 
@@ -1099,11 +1144,10 @@
 					// so there will be no diffing involved
 					// we also pass the Component Object
 					// which we can use to add refs if set
-					diff(
-						self.mount, 
-						self.render, 
-						__undefined, 
-						__undefined, 
+					draw(
+						self.mount,
+						self.render,
+						__undefined,
 						Component(__undefined, __undefined, __true)
 					)
 				}
@@ -1119,19 +1163,32 @@
 			 * @return {Object}           - component
 			 */
 			Component: function Component (args) {
-				var that = this;
+				var 
+				that = this
 
+				// allows us to do something like
+				// function Users(){
+				// 		function onClick () {
+				// 		}
+				// 		return {
+				// 			render: function () {
+				// 				return h('div', {onClick: onClick})
+				// 			}
+				// 		}
+				// }
+				// .render(.Component(Users), element)
 				if (is(args, __function)) {
 					return that.Component(args())
 				}
 
 				// add props, state namespace
-				args.props = args.props || {}
-				args.state = args.state || {}
+				args.props = {}
+				args.state = {}
 
 				// create component
 				function ComponentClass () {
-					var self = this;
+					var 
+					self = this
 					// add props to component
 					each(args, function (value, name) {
 						// bind the component scope to all methods
@@ -1145,44 +1202,71 @@
 				}
 
 				// add setState and setProps methods to prototype
-				each(['Props', 'State'], function (method) {
+				each(['Props', 'State', 'forceUpdate'], function (method) {
 					// state/props
-					var type = method.toLowerCase()
+					var 
+					type = method.toLowerCase()
 
-					// cmpClass.prototype.setState/setProps
-					ComponentClass[__prototype]['set'+method] = function (obj, update) {
-						var self = this;
+					// add setters
+					if (method === 'Props' || method === 'State') {
+						// cmpClass.prototype.setState/setProps
+						ComponentClass[__prototype]['set'+method] = function (obj, callback, update) {
+							var 
+							self = this
 
-						// the obj passed in setState({obj}) / setProps({obj})
-						if (obj) {
-							// obj is a function that returns the setState({obj})
-							if (is(obj, __function)) {
-								obj = obj(self.state, self.props)
-							}
+							// the obj passed in setState({obj}) / setProps({obj})
+							if (obj) {
+								// obj is a function that returns the setState({obj})
+								if (is(obj, __function)) {
+									// get the returned value
+									obj = obj(self.state, self.props)
+								}
 
-							each(obj, function (value, name) {
-								self[type][name] = value
-							})
+								// exit early if obj is not an object
+								if (!is(obj, __object)) {
+									throw 'setState() takes an object or a function that returns an object'
+								}
 
-							// only trigger render for setState()
-							if (type === 'state' && !update && that.render) {
-								// new node
-								var newNode = that.component()
+								each(obj, function (value, name) {
+									self[type][name] = value
+								})
 
-								// diff new vs old node
-								diff(that.mount, newNode, that.render)
+								// only trigger render for setState()
+								// !update also allows us to call setState without
+								// triggering a re-render
+								// that.render is to make sure we have a base
+								// component to render
+								if (type === 'state' && !update && that.render) {
+									// new node
+									var 
+									newNode = that.component()
 
-								// set the old node to the new node
-								// we will use this in the next render
-								// as the old node
-								that.render = newNode
+									// diff new vs old node
+									draw(that.mount, newNode, that.render)
+
+									// set the old node to the new node
+									// we will use this in the next render
+									// as the old node
+									that.render = newNode
+								}
 							}
 						}
 					}
-				});
+					// add forceUpdate method
+					else if (method === 'forceUpdate') {
+						ComponentClass[__prototype]['forceUpdate'] = function (callback) {
+							draw(that.mount, that.component(), that.render)
+							
+							if (is(callback, __function)) {
+								callback()
+							}
+						}
+					}
+				})
 
 				// create component object
-				var ComponentObject = new ComponentClass;
+				var 
+				ComponentObject = new ComponentClass
 
 				// we need render to render
 				// publish error
@@ -1192,18 +1276,28 @@
 
 				// get and set initial state
 				if (ComponentObject[getInitialState]) {
-					ComponentObject.setState(ComponentObject[getInitialState](), __false)
+					ComponentObject.setState(
+						ComponentObject[getInitialState](), 
+						__undefined, 
+						__false
+					)
 				}
 				// get and set default props
 				if (ComponentObject[getDefaultProps]) {
-					ComponentObject.setProps(ComponentObject[getDefaultProps](), __false)
+					ComponentObject.setProps(
+						ComponentObject[getDefaultProps](), 
+						__undefined, 
+						__false
+					)
 				}
 
 				// create components render returned hyperscript object
 				function hyperscript (obj) {
-					this.type     = obj.type,
-					this.props    = obj.props,
-					this.children = obj.children;
+					var 
+					self = this
+					self.type     = obj.type,
+					self.props    = obj.props,
+					self.children = obj.children
 				}
 
 				// add lifecycle methods to render
@@ -1212,10 +1306,11 @@
 				})
 
 				// re add default object constructor
-				hyperscript[__prototype][__constructor] = __object;
+				hyperscript[__prototype][__constructor] = __object
 
 				// re-create render function with new hyperscript obj
-				var render = ComponentObject.render;
+				var
+				render = ComponentObject.render
 
 				ComponentObject.render = function () {
 					return new hyperscript(render())
@@ -1230,8 +1325,8 @@
 						lifecycle(
 							ComponentObject, 
 							componentWillReceiveProps, 
-							props, 
-							__undefined, 
+							props,
+							__undefined,
 							__true
 						)
 					}
@@ -1398,7 +1493,7 @@
 								// given the following /:user/:id/*
 								pattern = name.replace(regex, function () {
 											var args = arguments,
-												id   = args[2];
+												id   = args[2]
 												// 'user', 'id', undefned
 
 											// if not a variable 
@@ -1505,6 +1600,15 @@
 			 * @type {Function}
 			 */
 			Element: element,
+			createElement: element,
+
+			/**
+			 * Component creator reference
+			 * @type {Function}
+			 */
+			createClass: function (obj) {
+				return this.Component(obj)
+			}
 		}
 
 		return surl
@@ -1575,24 +1679,28 @@
 	}()),
 
 	/**
-	 * animate component/element
-	 * @param  {Element} element   
-	 * @param  {Array}   transforms 'describe additional transforms'
-	 * @param  {Number}  duration   'duration of the animation'
-	 * @param  {String}  className  'class that represents end state animating to'
-	 * @return {Void}
-	 * @example
-	 * h('.card', {onclick: animate}, h('p', null, a)) 
-	 * // className defaults to animation-active end class
-	 * // duration defaults to 220ms
-	 * // or 
-	 * h('.card', {onclick: animate(400, 'active-state', null, 'linear')})
-	 * // or 
-	 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
+	 * flip and transition animation helper
+	 * @type {Object} {flip, animate}
 	 */
 	animate = (function () {
-		function animate (className, duration, transformations, transformOrigin, easing) {
-			return function (element) {
+		/**
+		 * flip animate component/element
+		 * @param  {Element} element   
+		 * @param  {Array}   transforms 'describe additional transforms'
+		 * @param  {Number}  duration   'duration of the animation'
+		 * @param  {String}  className  'class that represents end state animating to'
+		 * @return {Void}
+		 * @example
+		 * h('.card', {onclick: animate}, h('p', null, a)) 
+		 * // className defaults to animation-active end class
+		 * // duration defaults to 220ms
+		 * // or 
+		 * h('.card', {onclick: animate(400, 'active-state', null, 'linear')})
+		 * // or 
+		 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
+		 */
+		function flip (className, duration, transformations, transformOrigin, easing) {
+			return function (element, callback) {
 				transformations  = transformations || ''
 
 				// get element if selector
@@ -1610,13 +1718,11 @@
 				last,
 				webAnimations,
 				transform        = {},
-				opacity          = {},
 				invert           = {},
 				element          = element.currentTarget || element,
 				style            = element.style,
-				elementClassList = element.classList,
-				bodyClassList    = __document.body.classList,
-				runningClass     = 'animate-running',
+				body             = document.body,
+				runningClass     = 'animation-running',
 				transEvtEnd      = 'transitionend'
 
 				// animation type
@@ -1631,38 +1737,28 @@
 					style.willChange = 'transform'
 				}
 
-				// get first opacity state
-				opacity['1'] = getComputedStyle(element)['opacity'],
 				// get first rect state
 				first        = getBoundingClientRect(element)
 				// assign last state if there is an end class
 				if (className) {
-					elementClassList.toggle(className)
+					element.classList.toggle(className)
 				}
 				// get last rect state, 
 				// if there is not end class
 				// then nothing has changed, save a reflow and just use the first state
-				last         = className ? getBoundingClientRect(element) : first,
-				// get last opacity state
-				opacity['2'] = getComputedStyle(element)['opacity'],
+				last         = className ? getBoundingClientRect(element) : first
 
 				// get invert values
 				invert.x  = first.left   - last.left,
 				invert.y  = first.top    - last.top,
-				invert.sx = first.width  / last.width,
-				invert.sy = first.height / last.height
-
-				// make sure we don't have an Infinity value
-				each(invert, function (value, name, obj) {
-					if (!isFinite(value)) {
-						obj[name] = 0
-					}
-				})
+				invert.sx = last.width  !== 0 ? first.width  / last.width  : 1,
+				invert.sy = last.height !== 0 ? first.height / last.height : 1
 
 				duration  = duration || 200,
-				easing    = easing   || 'ease',
+				easing    = easing   || 'cubic-bezier(0,0,0.32,1)',
 
-				transform['1'] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+' scale('+invert.sx+','+invert.sy+')',
+				transform['1'] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+
+								' scale('+invert.sx+','+invert.sy+')',
 				transform['1'] = transform['1'] + ' ' + transformations,
 				transform['2'] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)'
 
@@ -1672,14 +1768,15 @@
 				}
 
 				// reflect animation state on dom
-				elementClassList.add(runningClass)
-				bodyClassList.add(runningClass)
+				element.classList.add(runningClass)
+				body.classList.add(runningClass)
 
 				// use native web animations api if present for better performance
 				if (webAnimations) {
-					var player = element.animate([
-					  {transform: transform['1'], opacity: opacity['1']},
-					  {transform: transform['2'], opacity: opacity['2']}
+					var 
+					player = element.animate([
+				  		{transform: transform['1']},
+				  		{transform: transform['2']}
 					], {
 						duration: duration,
 						easing:   easing
@@ -1690,7 +1787,6 @@
 				// use css transitions
 				else {
 					// set first state
-					style.opacity = opacity['1']
 					prefix(style, 'transform', transform['1'])
 
 					// trigger repaint
@@ -1701,12 +1797,11 @@
 					prefix(
 						style, 
 						'transition', 
-						'all '+duration+'ms '+easing + ', '+
+						'transform '+duration+'ms '+easing + ', '+
 						'opacity '+duration+'ms '+easing
 					)
 
 					// set last state
-					style.opacity = opacity['2'];
 					prefix(style, 'transform', transform['2'])
 				}
 
@@ -1727,9 +1822,13 @@
 						style.willChange = __null
 					}
 
-					elementClassList.remove(runningClass)
-					bodyClassList.remove(runningClass)
+					element.classList.remove(runningClass)
+					body.classList.remove(runningClass)
 					element.removeEventListener(transEvtEnd, onfinish)
+
+					if (callback) {
+						callback(element)
+					}
 				}
 
 				if (!webAnimations) {
@@ -1740,6 +1839,40 @@
 			}
 		}
 
+		/**
+		 * transition an element then run call back after
+		 * the transition is complete
+		 */
+		function transition (className) {
+			return function (element, callback) {
+				// add transition class
+				// this will start the transtion
+				element.classList.add(className)
+
+				var
+				// duration starts at 0
+				// for every time we find in transition-duration we add it to duration
+				duration   = 0,
+				// get transition duration and remove 's' and spaces
+				// we will get from this '0.4s, 0.2s' to '0.4,0.2'
+				// we then split it to an array ['0.4','0.2']
+				// note: the numbers are still in string format
+				transition = getComputedStyle(element)['transition-duration']
+															.replace(/s| /g, '')
+															.split(',')
+
+				// increament duration (in ms), also convert all values to a number
+				each(transition, function (value) {
+					duration += parseFloat(value) * 1000
+				})
+
+				// run callback after duration of transition
+				// has elapsed
+				setTimeout(function () {
+					callback(element)
+				}, duration)
+			}
+		}
 
 		/**
 		 * get elements client rect and return a mutable object
@@ -1748,7 +1881,8 @@
 		 * @return {Object}          - {top, left, width, height}
 		 */
 		function getBoundingClientRect (element) {
-			var rect = element.getBoundingClientRect()
+			var 
+			rect = element.getBoundingClientRect()
 
 			return {
 				top: rect.top,
@@ -1784,22 +1918,58 @@
     		else {
     			style[prop] = value
     		}
-  			
 		}
 
-		return animate
+		return {
+			flip: flip,
+			transition: transition
+		}
 	}()),
+	
 
+	/**
+	 * props utility
+	 * @param {Any} store - value
+	 */
 	prop = (function () {
+		/**
+		 * props allows use to create getter and setters
+		 * @param  {Any} store - value to store
+		 * @return {Function}  - getter,setter function
+		 * @example
+		 * var a = prop(1)
+		 * a() // => 1
+		 * a('changed')
+		 * a() // => 'changed'
+		 * this becomes very usefull when coupled with
+		 * callbacks that pass a value to the callback
+		 * i.e
+		 * app.Req('/url').then(a)
+		 * when the request is done a will now have have
+		 * response of the request 
+		 */
 		function prop (store) {
+			// create the getter/setter
 			function prop () {
-				if (arguments[__length]) {
-					store = arguments[0]
+				// we could use a name argument
+				// but then again the value can be a falsy value
+				// so if(value) wouldn't validate if the user passed a value
+				// rather we check if the arguments object is not of length 0
+				// which is what it will be if we don't pass an argument
+				var
+				args = arguments
+
+				if (args[__length]) {
+					store = args[0]
 				}
 
 				return store
 			}
 
+			// define .toJSON
+			// so if we call JSON.stringify()
+			// on the returned getter/setter
+			// it returns the stored value
 			prop.toJSON = function () {
 				return store
 			}
@@ -1808,7 +1978,7 @@
 		}
 
 		return prop
-	}());
+	}())
 
 
 	/* --------------------------------------------------------------

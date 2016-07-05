@@ -1,8 +1,5 @@
 body {margin-top:0;margin-bottom:0;}
 /* animate example */
-body.animate-active { 
-	overflow: hidden; 
-}
 * {
 	position: relative;
 }
@@ -30,8 +27,12 @@ body.animate-active {
 	pointer-events:none; 
 }
 
+li {
+	background: #CCC;
+}
+
 /* animation states */
-.animate-running {
+.animation-running {
 	z-index: 9999;
 }
 .scaled {
@@ -58,6 +59,9 @@ body.animate-active {
 	right: -25%;
 	z-index: 100;
 }
-.fadeOut {
-	opacity: 0;
+.slideUp {
+	pointer-events: none;
+	transition: transform 220ms ease, margin-top 220ms 220ms;
+	transform: scale(1,0);
+	margin-top: -18px;
 }
