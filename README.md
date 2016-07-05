@@ -267,7 +267,7 @@ animate.flip(className, duration, transform, transformOrigin, easing)(Element)
 animate.transition(className)(node, callback)
 ```
 
-for example animate.flip can be used within a render as follows
+for example `animate.flip` can be used within a render as follows
 
 ```javascript
 render: function () {
@@ -277,13 +277,13 @@ render: function () {
 	)
 }
 ```
-since animate(...) returns a function this is the same as
+since `animate.flip(...)` returns a function this is the same as
 
 ```javascript
 animate('active-state', 200)(Element) // returns duration
 ``` 
 
-another is animate.transition
+another animation helper being `animate.transition`
 
 ```javascript
 // within a method
