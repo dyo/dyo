@@ -1,6 +1,6 @@
 # surl.js
 
-##### a light performant (~5kb) framework that mimics most of the reacts api's with some additions.
+##### a light performant (~6kb) framework that mimics most of the reacts api's with some additions.
 
 - animations (flip & transition)
 - requests (with callbacks / promises)
