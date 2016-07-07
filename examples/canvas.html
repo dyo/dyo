@@ -30,22 +30,28 @@
 				},
 			    mouseDown: function (e) {
 			    	var
-			    	ctx = this.state.ctx
+			    	self = this
+			    	ctx = self.state.ctx
 
-			    	ctx.lineWidth = 10
-			    	ctx.lineJoin  = this.state.ctx.lineCap = 'round'
+			    	ctx.strokeStyle = '#FF5722'
+			    	ctx.lineWidth = 4
+			    	ctx.lineJoin  = ctx.lineCap = 'round'
 			    	ctx.moveTo(e.clientX, e.clientY)
 
-			    	this.setState({ctx: ctx, isDrawing: true})
+			    	console.log(ctx)
+
+			    	self.setState({ctx: ctx, isDrawing: true})
 			    },
 			    mouseMove: function (e) {
-			    	if (this.state.isDrawing) {
-			    		var 
-			    		ctx = this.state.ctx
+			    	var 
+			    	self = this
+			    	ctx = self.state.ctx
+			    	isDrawing = self.state.isDrawing
 
+			    	if (isDrawing) {
 			    		ctx.lineTo(e.clientX, e.clientY)
 			    		ctx.stroke()
-			    		this.setState({ctx: ctx})
+			    		self.setState({ctx: ctx})
 			    	}
 			    },
 			    mouseUp: function () {
@@ -63,7 +69,7 @@
 			    }
 			})			
 
-			app.Render(CanvasComponent, '.app')
+			app.render(CanvasComponent, '.app')
 
 			console.log(app)
 		</script>

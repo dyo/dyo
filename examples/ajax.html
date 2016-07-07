@@ -49,7 +49,7 @@
 					componentWillMount: function () {
 						var 
 						self = this
-						app.Req('http://jsonplaceholder.typicode.com/users/').then(function (res) {
+						app.req('http://jsonplaceholder.typicode.com/users/').then(function (res) {
 							self.setState({users: res})
 						})
 					},
@@ -63,7 +63,7 @@
 					}
 				})
 
-				app.Render(Users, '.app');
+				app.render(Users, '.app');
 
 				console.log(app)
 		</script>

@@ -1,56 +1,33 @@
 # surl.js
--
 
-- safe templates,  
-- animations.
-- router.
-- components.
-- hyperscript.
-- opt in/out auto render. 
+#### a light (~5kb) framework that mimics most of the reacts api's with some additions.
+
+- animation helpers (flip & transition)
+- ajax requests (callbacks & promises)
+- router
+- store (redux-ish)
+- two-way data binding
+- component...mount lifecycles are passed a node
+- return a number(ms) within componentWillUnmount to delay the unmount
+- props and state are passed to render(props, state)
 
 ####Supports: Chrome, Firefox, Safari, IE10+
 
 - *~5kb minified+gzipped.*  
-- *~10kb minified.*
+- *~12kb minified.*
 
-##.Mount
+--
 
-```javascript
-var app = new surl(selector|Element|Empty)
-```
+#### "Hello World"
 
 ```javascript
-var element = document.createElement('div');
-	element.classList.add('app');
-```
-you can then mount an element in the following way
-
-```javascript
-app.parent = element;
-app.Mount(simple)
-```
-or you can mount to an element like this
-
-```javascript
-app.Mount(simple, element);
-```
-
-or when you init
-
-```javascript
-var app = new surl(element|selector) 
-```
-you can also pass a selector
-
-```javascript
-var app = new surl('.app')
-```
-then 
-
-```javascript
-app.Mount(simple)
+var 
+app = new surl,
+cmp = app.createClass({render: ()=>{return h('div#id','Hello World')}})
+app.render(cmp, document)
 
 ```
+
 
 ##.Component
 
@@ -125,70 +102,6 @@ function PrototypeStyle () {
 app.Mount(app.Component(new PrototypeStyle), '.app')
 ```
 
-##.Render
-
-```javascript
-var app = new surl
-app.Render(UserComponent, '.selector', {prop: 1, prop2: 2})
-```
-
-##.Route
-
-```javascript
-app.Router
-
-// ? = optional
-- .nav('url')
-- .back()
-- .foward()
-- .go(-Number) || .go(+Number)
-- .destroy()
-```
-example
-
-```javascript
-var app = new surl(document)
-var a = app.Component({render, state, ...methods})
-
-app.router.on('/', a)
-app.router.on('/:user/:action', (args) => {console.log(args.user, args.action)})
-
-app.Route({
-	routes: {
-		'/', ComponentA
-		'/:user/:action', ComponentB
-	}
-	mount?: 'selector'|Element
-	addrs?: 'root address, i.e /directory'
-	init?: 'nav to this route on init, i.e /'
-})
-
-app.nav('/user/delete')
-// will navigate to 'url.com/user/delete'
-// if you set addrs: 'example' it will nav to
-// 'url.com/example/user/delete'
-
-```
-
-##.Req
-
-make ajax requests
-
-```javascript
-app.Req('url', 'METHOD', {data})
-//returns a promise, {then, done}
-
-```
-
-for example
-
-```javascript
-var a = prop('Hello');
-app.Req('/user/id').then(a).done( ()=>console.log(a()) )
-```
-will log the response from `/user/id`
-
-
 ##.Element
 
 hyperscript `h(type, props, children)`
@@ -227,6 +140,79 @@ h('input[checked]')
 input({checked: true})
 ```
 
+##.render
+
+```javascript
+var app = new surl
+app.render(UserComponent, '.selector', {prop: 1, prop2: 2})
+```
+
+You can also specify them mount before like
+
+```
+var app = new surl('.app')
+// or
+var app = new surl
+app.mount('.app')
+
+app.render(UserComponent, null, {prop: 1, prop2: 2})
+```
+
+##.route
+
+```javascript
+app.router({routes, mount?, addrs?, init?})
+
+// then access the router with
+app.router
+- .nav('url')
+- .back()
+- .foward()
+- .go(-Number) || .go(+Number)
+- .destroy()
+```
+example
+
+```javascript
+var app = new surl(document)
+var a = app.Component({render, state, ...methods})
+
+app.route({
+	routes: {
+		'/', ComponentA
+		'/:user/:action', ComponentB
+	}
+	mount?: 'selector'|Element
+	addrs?: 'root address, i.e /directory'
+	init?: 'nav to this route on init, i.e /'
+})
+
+app.router.nav('/user/delete')
+// will navigate to 'url.com/user/delete'
+// if you set addrs: 'example' it will nav to
+// 'url.com/example/user/delete'
+
+```
+
+##.req
+
+make ajax requests
+
+```javascript
+app.req('url', 'METHOD', {data}, callback?)
+//returns a promise if you don't pass a callback, {then, done}
+
+```
+
+for example
+
+```javascript
+var a = prop('Hello');
+app.req('/user/id').then(a).done( ()=>console.log(a()) )
+```
+will log the response from `/user/id`
+
+
 ##lifecycles
 
 A react like lifecycle
@@ -237,14 +223,14 @@ componentWillReceiveProps: function(nextProps)
 componentWillUpdate:       function(nextProps, nextState)
 componentDidUpdate:        function(prevProps, prevState)
 
-componentWillMount:        function()
-componentDidMount:         function()
-componentWillUnmount:      function()
+componentWillMount:        function(node)
+componentDidMount:         function(node)
+componentWillUnmount:      function(node)
 ```
 
-The main difference is the `componentWillUnmount`, `componentDidMount` and `componentWillMount` lifecycles will have access to the node with which you can optionally animate.
+The main difference is the `componentDidMount` and `componentWillMount` lifecycles will have access to the node.
 
-Additionally with `componentWillUnmount` you can return a duration number(in ms) back to it and it will remove the element from the dom only after that amount of time has passed. This allows you to do animations on that node before the node is removed/added, this works well with the `animate()` helper
+Additionally with `componentWillUnmount` you can return a duration number(in ms) back to it with which it will use to remove the element from the dom only after that amount of time has elapsed. This allows you to do animations on that node before the node is removed/added, this works well with the `animate.flip()` helper, be advised you can probably do all this with the `animation.transition('className', callback)` helper, where by you call the setState method within the callback that triggers only after the any transitions that have been added through that className are complete.
 
 components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.
 
@@ -259,7 +245,6 @@ components also have the react like `this.setState(obj)` which triggers a re-ren
 
 ### animate
 
-given an end state "a class", you can "FLIP" animate an Element.
 
 ```javascript
 animate.flip(className, duration, transform, transformOrigin, easing)(Element)

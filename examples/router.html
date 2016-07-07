@@ -11,7 +11,8 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = new surl();
+			var 
+			app = new surl()
 
 			var // define components
 			Home = app.Component({
@@ -22,7 +23,7 @@
 					console.log('unmount')
 				},
 				onClick: function () {
-					app.route.nav('/user/sultan')
+					app.router.nav('/user/sultan')
 				},
 				render: function () {
 					return h('h1', {onclick: this.onClick}, trust("Home Page &amp;"))
@@ -37,26 +38,25 @@
 					console.log('unmount')
 				},
 				onClick: function () {
-					console.log(app.route)
-					app.route.nav('/router.html')
+					app.router.nav('/router.html')
 				},
-				render: function () {
+				render: function (props) {
 					return h('h1', {onclick: this.onClick},
-								this.props.page + " Page",
-								h('p', {}, 'Hello ' + this.props.name)
+								props.page + " Page",
+								h('p', {}, 'Hello ' + props.name)
 							)
 				}
-			});
+			})
 
 			// define router
-			app.Route({
+			app.route({
 				mount: '.app',
 				addr: '/examples',
 				routes: {
 					'/router.html': Home,
 					'/:page/:name': User
 				}
-			});
+			})
 
 			console.log(app)
 		</script>

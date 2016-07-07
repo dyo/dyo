@@ -11,14 +11,27 @@
 	</head>
 	<body>
 		<div class="app"></div>
+		<br><br>
+		<div id="counter"></div>
+
 		<script>
-			var app = new surl();
+			var 
+			app = new surl()
 
 			var // define components
 			TodoItem = app.Component({
 				// shouldComponentUpdate: function (nextProps, nextState) {
 				// 	console.log('shouldComponentUpdate: ', this, arguments)
 				// },
+				componentWillMount: function() {
+					// console.log('componentWillMount:', this, arguments)
+				},
+				componentDidMount: function(node) {
+					// console.log('componentDidMount: ', this, arguments, node)
+				},
+				componentWillUnmount: function (node) {
+					// console.log('componentWillUnmount', this, arguments, node)
+				},
 				componentWillReceiveProps: function(nextProps) {
 					// console.log('componentWillReceiveProps: ', this, arguments)
 				},
@@ -28,17 +41,18 @@
 				componentDidUpdate: function(prevProps, prevState) {
 					// console.log('componentDidUpdate: ', this, arguments)
 				},
-				render: function () {
+				render: function (props, state) {
 					// references
 					var 
-					item = this.props.item
+					item = props.item
 
 					return h('li',
 								{
-									onclick: this.props.handleDelete, 
+									onclick: props.handleDelete, 
 									id: item.id, 
-									className: Date.now(), 
+									class: Date.now(),
 									style: 'cursor:pointer;',
+									className: {what: true, something: false},
 									key: item.id
 								},
 								item.text
@@ -47,12 +61,11 @@
 			}),
 
 			TodoList = app.Component({
-		  		render: function() {
+		  		render: function(props) {
 		  			// references
 		  			var 
-		  			self = this
-		  			items = self.props.items,
-		  			handleDelete = self.props.handleDelete
+		  			items = props.items,
+		  			handleDelete = props.handleDelete
 
 			    	return h('ul', 
 			    				// for each item return a TodoItem Component
@@ -94,16 +107,15 @@
 
 		    		// references
 		    		var
-		    		self = this,
-		    		text = self.state.text
+		    		text = this.state.text
 
     				if (text) {
     					// add item to items array
 	    				var 
-	    				nextItems = self.state.items.concat({text: text, id: Date.now()})
+	    				nextItems = this.state.items.concat({text: text, id: Date.now()})
 
 	    				// update state
-		    			self.setState({items: nextItems, text: ''})
+		    			this.setState({items: nextItems, text: ''})
 	    			}
 		  		},
 		  		handleDelete: function (e) {
@@ -128,22 +140,48 @@
 		  				}
 		  			})
 		  		},
-		  		render: function () {
+		  		render: function (props, state) {
 		  			return h('div',
 		  						h('h3', 'TODO'),
 		  						h('form', {onsubmit: this.handleSubmit},
-		  							h('input', {oninput: bind('value', this, 'text'), value: this.state.text}),
-		  							h('button', 'Add #' + (this.state.items.length+1))
+		  							h('input', {oninput: bind('value', this, 'text'), value: state.text}),
+		  							h('button', 'Add #' + (state.items.length+1))
   								),
-  								TodoList({items: this.state.items, handleDelete: this.handleDelete})
+  								TodoList({items: state.items, handleDelete: this.handleDelete})
 		  					)
 		  		}
-			});
+			})
 
 			// mount to dom
-			app.Render(TodoApp, '.app');
+			app.render(TodoApp, '.app')
 
-			console.log(app)
+
+			// flux/reduxy stuff
+			var 
+			store = app.createStore(function (state, action) {
+				state = state || 0
+
+				switch (action.type) {
+					case 'INCREMENT':
+						return state + 1;
+					case 'DECREMENT':
+						return state - 1;
+					default:
+						return state;
+				}
+			})
+
+			var
+			render = function () {
+				document.getElementById('counter').innerText = store.getState()
+			}
+
+			store.subscribe(render)
+			render()
+
+			document.addEventListener('click', function () {
+				store.dispatch({type: 'INCREMENT'})
+			})
 		</script>
 	</body>
 </html>

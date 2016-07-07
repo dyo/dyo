@@ -51,15 +51,15 @@
 	__length                    = 'length',
 
 	// lifecycle properties
-	getInitialState           = 'getInitialState',
-	getDefaultProps           = 'getDefaultProps',
-	componentWillReceiveProps = 'componentWillReceiveProps',
-	componentDidMount         = 'componentDidMount',
-	componentWillMount        = 'componentWillMount',
-	componentWillUnmount      = 'componentWillUnmount',
-	componentWillUpdate       = 'componentWillUpdate',
-	componentDidUpdate        = 'componentDidUpdate',
-	shouldComponentUpdate     = 'shouldComponentUpdate',
+	__getInitialState           = 'getInitialState',
+	__getDefaultProps           = 'getDefaultProps',
+	__componentWillReceiveProps = 'componentWillReceiveProps',
+	__componentDidMount         = 'componentDidMount',
+	__componentWillMount        = 'componentWillMount',
+	__componentWillUnmount      = 'componentWillUnmount',
+	__componentWillUpdate       = 'componentWillUpdate',
+	__componentDidUpdate        = 'componentDidUpdate',
+	__shouldComponentUpdate     = 'shouldComponentUpdate',
 
 	// functions
 	__number                    = Number,
@@ -685,12 +685,13 @@
 	 * @param {Object}  render?  - component object
 	 */
 	draw = (function () {
+		// references for better minification
+		var
+		__childNodes = 'childNodes',
+		__children   = 'children'
+
 		// draw interface
 		function draw (mount, newNode, oldNode, Component) {
-			if (Component) {
-				lifecycle(newNode, componentWillMount)
-			}
-
 			update(mount, newNode, oldNode, __undefined, Component)
 		}
 
@@ -700,121 +701,175 @@
 			
 			// should component update
 			// if false exit quickly
-			if (lifecycle(newNode, shouldComponentUpdate, __true, __true) === __false) {
+			if (lifecycle(newNode, __shouldComponentUpdate, __true, __true) === __false) {
 				return
 			}
+
 
 			// adding to the dom
 			if (oldNode === __undefined) {
 				var 
 				nextNode = createElement(newNode, Component)
 
-				if (Component) {
-					lifecycle(newNode, componentDidMount, nextNode)
-				}
-				parent.appendChild(nextNode)
+				appendChild(parent, nextNode, newNode)
 			} 
 			// removing from the dom
 			else if (newNode === __undefined) {
 				var 
-				nextNode = parent.childNodes[index]
+				nextNode = parent[__childNodes][index]
 
-				function remove () {
-					// insure the node we are trying to remove
-					// actually still exists
-					if (nextNode) {
-						parent.removeChild(nextNode)
-					}
-				}
+				removeChild(parent, nextNode, oldNode)
+			}
+			// removing/replacing a node
+			// here we check if the nodes keys are the same
+			// if they are different then the node that existed here before is now gone
+			// so we remove it
+			else if (newNode.props && oldNode.props && newNode.props.key !== oldNode.props.key) {
+				var
+				nextNode = parent[__childNodes][index]
 
-				// push to the end of the event/render stack
-				// ensuring the dom is always up to date
-				// before we run removeChild
-				if (is(requestAnimationFrame, __function)) {
-					requestAnimationFrame(remove)
-				}
-				else {
-					setTimeout(remove, 0)
-				}
+				removeChild(parent, nextNode, oldNode)
+
+				return __true
 			}
 			// replacing a node
 			else if (nodeChanged(newNode, oldNode)) {
 				var 
-				prevNode = parent.childNodes[index],
+				prevNode = parent[__childNodes][index],
 				nextNode = createElement(newNode)
-
-				// same thing, end of the event stack
-				parent.replaceChild(nextNode, prevNode)
+				
+				replaceChild(parent, nextNode, prevNode, newNode)		
 			}
 			// the lookup loop
-			else if (newNode.type && !newNode.trust) {
-				var 
-				// get changes to props/attrs
-				propChanges = getPropChanges(
-					parent.childNodes[index], 
-					newNode.props, 
-					oldNode.props, 
-					newNode
-				)
+			else if (newNode.type) {
+				handlePropChanges(parent[__childNodes][index], newNode, oldNode)
 
-				// if there are any prop changes,
-				// update component props
-				if (propChanges[__length]) {
-					// before props change
-					lifecycle(newNode, componentWillUpdate, __true, __true)
-
-					each(propChanges, function (obj) {
-						updateProp(obj.target, obj.name, obj.value, obj.op)
-					})
-
-					// after props change
-					lifecycle(newNode, componentDidUpdate, __true, __true)
-				}
-				
 				// loop through all children
 				var
-				newLength = newNode.children[__length],	
-				oldLength = oldNode.children[__length]
+				newLength = newNode[__children][__length],	
+				oldLength = oldNode[__children][__length]
 
 				for (var i = 0; i < newLength || i < oldLength; i++) {
-					update(parent.childNodes[index], newNode.children[i], oldNode.children[i], i)
-				}
+					// only replace returns a non falsy value
+					// we will use that change to do some extra
+					// checks on replaced elements
+					if (
+						update(
+							parent[__childNodes][index], 
+							newNode[__children][i], 
+							oldNode[__children][i], 
+							i
+						)
+					) {
+						// if newNodes children length is large than the old one
+						// remove the item in the children array
+						// that was replaced
+						// and decreement the newLength number
+						if (newLength > oldLength) {
+							newNode[__children].splice(i,1)
+							newLength--
+						}
+						// the same as above but for oldNodes children
+						else if (newLength < oldLength) {
+							oldNode[__children].splice(i,1)
+							oldLength--
+						}
+					}
+				}	
 			}
+		}
+
+		function debounce (fn, duration) {
+			// when we want to send a custom duration
+			// to setTimeout
+			duration = duration || 0
+
+			// push to the end of the event/render stack
+			// ensuring the dom is always up to date
+			// before we run any of the 
+			// removeChild/appendChild/replaceChild
+			// operations
+			// we use requestAnimationFrame if it's
+			// available
+			// and fallback to setTimeout otherwise
+			if (duration === 0 && is(requestAnimationFrame, __function)) {
+				requestAnimationFrame(fn)
+			}
+			else {
+				setTimeout(fn, duration)
+			}
+		}
+
+		// remove element
+		function removeChild (parent, nextNode, oldNode) {
+			// check if componentWillUnmount returns somethings
+			var 
+			duration = lifecycle(oldNode, __componentWillUnmount, nextNode)
+
+			// if what it returns is not a number
+			// default to undefined
+			if (!is(duration, __number)) {
+				duration = __undefined
+			}
+
+			debounce(function () {
+				// insure the node we are trying to remove
+				// actually still exists
+				if (nextNode) {
+					parent.removeChild(nextNode)
+				}
+			}, duration)
+		}
+
+		// add element
+		function appendChild (parent, nextNode, newNode) {
+			lifecycle(newNode, __componentWillMount)
+
+			parent.appendChild(nextNode)
+
+			debounce(function () {
+				if (nextNode) {
+					parent.appendChild(nextNode)
+				}
+			})
+
+			lifecycle(newNode, __componentDidMount, nextNode)
+		}
+
+		// replace element
+		function replaceChild (parent, nextNode, prevNode, newNode) {
+			lifecycle(newNode, __componentWillUpdate)
+
+			debounce(function () {
+				if (nextNode && prevNode) {
+					parent.replaceChild(nextNode, prevNode)
+				}
+			})
+
+			lifecycle(newNode, __componentDidUpdate)
 		}
 
 		// diffing two nodes
 		function nodeChanged (node1, node2) {
 			var 
 			// diff object type
-			obj = node1[__constructor] !== node2[__constructor],
+			obj  = node1[__constructor] !== node2[__constructor],
 
 			// diff text content
 			// if this is text content diff it's string content
-			text   = is(node1, __string) && node1 !== node2,
+			text = is(node1, __string) && node1 !== node2,
 
 			// diff node type
 			// if this is an element diff it's type
 			// i.e node.type: div !== node.type: h2
 			// will return true, signaling that we should
 			// replace the node
-			type   = node1.type !== node2.type,
-
-			// diff key (assign default state of false)
-			key    = __false
-
-			// not textNode
-			if (node1.props && node2.props) {
-				// check if keys are the same
-				// if there is no keys property in props
-				// this will just be undefined !== undefined
-				// which will be false/same as if the keys where the same
-				key = node1.props.key !== node2.props.key
-			}
+			type = node1.type !== node2.type
 			
-			// if either key/text/type/object constructor has changed
+			// if either text/type/object constructor has changed
 			// this will return true
 			// thus signaling that we should replace the node
-			return key || text || type || obj
+			return text || type || obj
 		}
 
 		// create element
@@ -892,6 +947,7 @@
 			return el
 		}
 
+
 		// check if props is event
 		function isEventProp (name, value) {
 			// checks if the first two characters are on
@@ -918,9 +974,33 @@
 				}
 			}
 		}
+
+		function handlePropChanges (target, newNode, oldNode) {
+			// get changes to props/attrs
+			var
+			propChanges = getPropChanges(
+				target, 
+				newNode.props, 
+				oldNode.props
+			)
+
+			// if there are any prop changes,
+			// update component props
+			if (propChanges[__length]) {
+				// before props change
+				lifecycle(newNode, __componentWillUpdate, __true, __true)
+
+				each(propChanges, function (obj) {
+					updateProp(obj.target, obj.name, obj.value, obj.op)
+				})
+
+				// after props change
+				lifecycle(newNode, __componentDidUpdate, __true, __true)
+			}
+		}
 		
 		// update props
-		function getPropChanges (target, newProps, oldProps, newNode) {
+		function getPropChanges (target, newProps, oldProps) {
 			var changes  = []
 
 			oldProps = oldProps !== __undefined ? oldProps : {}
@@ -997,7 +1077,37 @@
 				target[name]        !== __undefined && 
 				target.namespaceURI !== __namespace['svg']
 			) {
-				target[name] = value
+				// value is an object
+				// add each of it's properties to the
+				// target elements attribute
+				if (is(value, __object)) {
+					// styles and other object type props
+					if (name !== 'className' && name !== 'class') {
+						each(value, function (content, index) {
+							if (target[name][index] !== __undefined) {
+								target[name][index] = content
+							}
+						})	
+					}
+					// classess
+					else {
+						each(value, function (content, index) {
+							// get what operation we will run
+							// if the value is empty/false/undefined/null
+							// we remove
+							// if the values length is more than 0
+							// or true or anything not of a falsy value
+							// we add
+							var type = !content ? 'remove' : 'add'
+
+							// add/remove class
+							target.classList[type](index)
+						})
+					}
+				}
+				else {
+					target[name] = value
+				}
 			}
 			// don't set namespace attrs and properties that
 			// can be set via target[name]
@@ -1024,7 +1134,7 @@
 	 * @return {surl}           - {settings, parent, router, vdom}
 	 */
 	surl = (function () {
-		function surl (mount) {
+		function surl (parent) {
 			// we are going to be doing this alot when we use this alot
 			// it allows the minified to then convert all self to shorter alternatives
 			// since you can't minify 'this' or Fn.bind
@@ -1032,8 +1142,8 @@
 
 			// element specified on instantiation
 			// set mount element
-			if (mount) {
-				self.Mount(mount)
+			if (parent) {
+				self.mount(parent)
 			}
 		}
 
@@ -1042,7 +1152,7 @@
 			 * make ajax requests
 			 * @return {Object} xhr object
 			 */
-			Req: function Req (url, method, data, callback) {
+			req: function Req (url, method, data, callback) {
 				method = method || 'GET'
 				data   = data || {}
 
@@ -1054,7 +1164,7 @@
 			 * set mount to element
 			 * @param  {Selector|Element} element - the element to mount to
 			 */
-			Mount: function Mount (element) {
+			mount: function Mount (element) {
 				var self = this;
 
 				// can't use document, use body instead
@@ -1068,13 +1178,13 @@
 
 				// assign mount if element
 				if (element && element.nodeType) {
-					self.mount = element
+					self.parent = element
 				}
 				// for references sake
 				// incase you want to see all the properties
 				// of an instance
 				else {
-					self.mount = __undefined
+					self.parent = __undefined
 				}
 			},
 
@@ -1082,40 +1192,32 @@
 			 * initialize/mount
 			 * @param {String} id - base component to mount to dom
 			 */
-			Render: function Render (Component, element, data) {
+			render: function Render (Component, element, data) {
 				var self = this
 
 				// add parent element
 				if (element) {
 					// string? query element
 					if (is(element, __string)) {
-						self.mount = __document.querySelector(element)
+						self.parent = __document.querySelector(element)
 					}
 					// element? add
 					else if (element.nodeType) {
-						self.mount = element
+						self.parent = element
 					}
 				}
 
 				// has parent to mount to
-				if (self.mount) {
-					var
-					currentComponent = self.component
-
-					if (currentComponent) {
-						currentComponent = currentComponent(__undefined, __undefined, true)
-
-						lifecycle(
-							currentComponent, 
-							componentWillUnmount, 
-							__undefined, 
-							__undefined, 
-							__true
-						)
+				if (self.parent) {
+					// if there is a component already mounted
+					// call it's componentWillUnmount before we clear the
+					// mount dom element
+					if (self.componentRender) {
+						lifecycle(self.componentRender, __componentWillUnmount)
 					}
 
 					// clear dom
-					self.mount.innerHTML = ''
+					self.parent.innerHTML = ''
 
 					// probably a plain hyperscript object
 					// create class with render fn that returns it
@@ -1128,7 +1230,7 @@
 
 					Component = Component || self.component
 					// add vdom objects
-					self.render = Component(data)
+					self.componentRender = Component(data)
 					self.component = Component
 
 					// initial mount to dom
@@ -1138,8 +1240,8 @@
 					// we also pass the Component Object
 					// which we can use to add refs if set
 					draw(
-						self.mount,
-						self.render,
+						self.parent,
+						self.componentRender,
 						__undefined,
 						Component(__undefined, __undefined, __true)
 					)
@@ -1159,34 +1261,43 @@
 				var 
 				that = this
 
-				// allows us to do something like
-				// function Users(){
-				// 		function onClick () {
-				// 		}
-				// 		return {
-				// 			render: function () {
-				// 				return h('div', {onClick: onClick})
-				// 			}
-				// 		}
-				// }
-				// .render(.Component(Users), element)
+
 				if (is(args, __function)) {
+					// The below allows us to do something like
+					// 
+					// function Users(){
+					// 		function onClick () {
+					// 		}
+					// 		return {
+					// 			render: function () {
+					// 				return h('div', {onClick: onClick})
+					// 			}
+					// 		}
+					// }
+					// .render(.Component(Users), element)
 					return that.Component(args())
 				}
 
-				// add props, state namespace
-				args.props = {}
-				args.state = {}
 
 				// create component
 				function ComponentClass () {
 					var 
 					self = this
+
+					// add props, state namespace
+					self.props = {}
+					self.state = {}
+
 					// add props to component
 					each(args, function (value, name) {
 						// bind the component scope to all methods
 						if (is(value, __function)) {
-							value = value.bind(self)
+							if (name === 'render') {
+								value = value.bind(self, self.props, self.state)
+							}
+							else {
+								value = value.bind(self)
+							}
 						}
 
 						// assign property/method
@@ -1229,18 +1340,18 @@
 								// triggering a re-render
 								// that.render is to make sure we have a base
 								// component to render
-								if (type === 'state' && !update && that.render) {
+								if (type === 'state' && !update && that.componentRender) {
 									// new node
 									var 
 									newNode = that.component()
 
 									// diff new vs old node
-									draw(that.mount, newNode, that.render)
+									draw(that.parent, newNode, that.componentRender)
 
 									// set the old node to the new node
 									// we will use this in the next render
 									// as the old node
-									that.render = newNode
+									that.componentRender = newNode
 								}
 							}
 						}
@@ -1248,7 +1359,7 @@
 					// add forceUpdate method
 					else if (method === 'forceUpdate') {
 						ComponentClass[__prototype]['forceUpdate'] = function (callback) {
-							draw(that.mount, that.component(), that.render)
+							draw(that.parent, that.component(), that.componentRender)
 							
 							if (is(callback, __function)) {
 								callback()
@@ -1268,17 +1379,17 @@
 				}
 
 				// get and set initial state
-				if (ComponentObject[getInitialState]) {
+				if (ComponentObject[__getInitialState]) {
 					ComponentObject.setState(
-						ComponentObject[getInitialState](), 
+						ComponentObject[__getInitialState](), 
 						__undefined, 
 						__false
 					)
 				}
 				// get and set default props
-				if (ComponentObject[getDefaultProps]) {
+				if (ComponentObject[__getDefaultProps]) {
 					ComponentObject.setProps(
-						ComponentObject[getDefaultProps](), 
+						ComponentObject[__getDefaultProps](), 
 						__undefined, 
 						__false
 					)
@@ -1317,7 +1428,7 @@
 					if (props) {
 						lifecycle(
 							ComponentObject, 
-							componentWillReceiveProps, 
+							__componentWillReceiveProps, 
 							props,
 							__undefined,
 							__true
@@ -1390,7 +1501,7 @@
 			 * Creates a router interface
 			 * @param {Object} args - {mount, addr?, init?, routes}
 			 * @example
-			 * app.Route({
+			 * app.route({
 			 * 		mount: '.app'     // selector|element
 			 * 		addr: '/example', // string
 			 * 		init: '/user/id'  // initial route, defaults to current uri
@@ -1400,27 +1511,31 @@
 			 * 		}
 			 * })
 			 */
-			Route: function (args) {
+			route: function Route (args) {
 				function Router () {
+					// references
+					var
+					self = this
+
 					// data
-					this.settings = {},
-					this.url = __null,
-					this.interval = __null,
+					self.settings = {},
+					self.url = __null,
+					self.interval = __null,
 
 					// history back
-					this.back = function () {
+					self.back = function () {
 						history.back()
 					},
 					// history foward
-					this.foward = function () {
+					self.foward = function () {
 						history.foward()
 					},
 					// history go
-					this.go = function (index) {
+					self.go = function (index) {
 						history.go(index)
 					},
 					// navigate to a view
-					this.nav = function (url) {
+					self.nav = function (url) {
 						var addr = this.settings.addr
 						
 						url  = addr ? addr + url : url
@@ -1428,12 +1543,12 @@
 						history.pushState(__null, __null, url)
 					},
 					// kills the rAf animation loop and clears the routes
-					this.destroy = function () {
+					self.destroy = function () {
 						this.routes = {}
 						clearInterval(this.interval)
 					},
 					// configure defualts
-					this.config = function (obj) {
+					self.config = function (obj) {
 						var self = this;
 
 						each(obj, function(value, name) {
@@ -1441,7 +1556,7 @@
 						})
 					},
 					// start listening for url changes
-					this.init = function () {
+					self.init = function () {
 						var 
 						self = this,
 						fn   = function () {
@@ -1458,7 +1573,7 @@
 						self.interval = setInterval(fn, 50)
 					},
 					// register routes
-					this.on = function (args) {
+					self.on = function (args) {
 						var self = this,
 							routes;
 
@@ -1509,7 +1624,7 @@
 							}
 						})
 					},
-					this.changed = function () {
+					self.changed = function () {
 						// references
 						var 
 						url    = this.url,
@@ -1544,7 +1659,7 @@
 								// callback is a function, exec
 								if (is(callback, __function)) {
 									// component function
-									self.Render(callback, __undefined, data)
+									that.render(callback, __undefined, data)
 								}
 								// can't process
 								else {
@@ -1556,16 +1671,16 @@
 				}
 
 				var 
-				self   = this,
-				mount  = args.mount,
+				that   = this,
+				parent = args.mount,
 				addr   = args.addr,
 				nav    = args.init,
 				routes = args.routes,
 				router = new Router
 
 				// mount to dom
-				if (mount) {
-					self.Mount(mount)
+				if (parent) {
+					that.mount(parent)
 				}
 				// define root address
 				if (addr) {
@@ -1577,7 +1692,7 @@
 				}
 
 				// initialize listener
-				router.init();
+				router.init()
 
 				// navigate to initial uri
 				if (nav) {
@@ -1585,7 +1700,7 @@
 				}
 
 				// assign router to object
-				self.route = router
+				that.router = router
 			},
 
 			/**
@@ -1599,8 +1714,39 @@
 			 * Component creator reference
 			 * @type {Function}
 			 */
-			createClass: function (obj) {
+			createClass: function createClass (obj) {
 				return this.Component(obj)
+			},
+
+			createStore: function (reducer) {
+				var
+				state,
+				listeners = [],
+				getState = function () {
+					return state
+				},
+				dispatch = function (action) {
+					state = reducer(state, action)
+					listeners.forEach(function (listener) {
+						return listener()
+					})
+				},
+				subscribe = function (listener) {
+					listeners.push(listener)
+					return function () {
+						listeners = listeners.filter(function (l) {
+							return l !== listener
+						})
+					}
+				}
+
+				dispatch({})
+
+				return {
+					getState: getState, 
+					dispatch: dispatch, 
+					subscribe: subscribe
+				}
 			}
 		}
 
@@ -1937,7 +2083,7 @@
 		 * this becomes very usefull when coupled with
 		 * callbacks that pass a value to the callback
 		 * i.e
-		 * app.Req('/url').then(a)
+		 * app.req('/url').then(a)
 		 * when the request is done a will now have have
 		 * response of the request 
 		 */
