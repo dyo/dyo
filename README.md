@@ -38,7 +38,7 @@ returns a virtual node i.e
 var app = new surl(Element|Selector)
 
 var obj = {
-	render: function(){
+	render: function(props, state){
 		return {
 			type: 'div'
 			props: {},
@@ -60,12 +60,12 @@ h('div', {}, ...children | 'Text' | ...component)
 when adding a component as a child of another you can pass props to that component which will be added to its `this.props`
 
 ```javascript
-h('div', component({products: [1,2,3]}, 1))
+h('div', UserComponent({products: [1,2,3]}, 'child))
 
 component = app.Component({
 	render: function () {
 		console.log(this.props)    // {products: [1,2,3]}
-		console.log(this.children) // 1
+		console.log(this.children) // 'child'
 		
 		return ('div')
 	}
@@ -87,7 +87,7 @@ function FunctionStyle () {
 	}
 }
 // mount
-app.Mount(app.Component(FuncStyle), '.app')
+app.mount(app.Component(FuncStyle), '.app')
 
 function PrototypeStyle () {
 	this.onClick = function () {
@@ -99,7 +99,7 @@ function PrototypeStyle () {
 	}
 }
 // mount
-app.Mount(app.Component(new PrototypeStyle), '.app')
+app.mount(app.Component(new PrototypeStyle), '.app')
 ```
 
 ##.Element
@@ -324,4 +324,17 @@ console.log(a()) // => value
 a('new value')
 a() // => new value
 JSON.stringify(a) // => new value
+```
+
+### toHTML
+
+```javascript
+document.write(toHTML(app.vdom))
+// => prints html to page
+```
+
+on a Component
+
+```javascript
+document.write(toHTML(app.Component({...props})))
 ```

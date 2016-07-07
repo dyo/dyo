@@ -2194,6 +2194,109 @@
 		}
 
 		return prop
+	}()),
+
+	/**
+	 * converts a hyperscript vdom object to html string
+	 * for server-side rendering
+	 * @param {Object} hyperscript - hyperscript object
+	 */
+	toHTML = (function () {
+		// void elements that do not have a close </tag> 
+		var
+		voidElements = {
+			'area': __true,'base': __true,'br': __true,'!doctype': __true,
+			'col': __true,'embed': __true,'wbr': __true,'track': __true,
+			'hr': __true,'img': __true,'input': __true,'keygen': __true,
+			'link': __true,'meta': __true,'param': __true,'source': __true
+		}
+
+		// print node
+		function toHTML (hyperscript, level) {
+			// not a hyperscript object
+			if (is(hyperscript, __string)) {
+				return hyperscript
+			}
+
+			// references
+			var 
+			// i.e 'div'
+			type = hyperscript.type,
+			// i.e {id: 123, class: 'one two'}
+			props = hyperscript.props,
+			// i.e [obj, obj]
+			children = hyperscript.children
+
+			// print voidElements
+			if (voidElements[type]) {
+				// <type ...props>
+				return '<'+type+Props(props)+'>';
+			}
+
+			// otherwise...
+			// <type ...props>...children</type>
+			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>'
+		}
+
+		// print props
+		function Props (props) {
+			props = __object.keys(props)
+							// remove any falsey value
+							.filter(function (name) {
+								return  props[name] !== __undefined &&
+										props[name] !== __null &&
+										props[name] !== __false
+							})
+							// 
+							.map(function (name) {
+								// <type name="value">
+								var 
+								value = props[name]
+
+								// don't add events, keys or refs
+								if (!is(value, __function) && name !== 'key' && name !== 'ref') {
+									// if the value is a falsey/truefy value
+									// print just the name
+									// i.e checkbox=true
+									// will print <type checkbox>
+									// otherwise <type value="">
+									return value === __true ? name : name+'="'+value+'"'
+								}
+							})
+							// create string, remove trailing space
+							// <type ...props > => <type ...props>
+							.join(' ').replace(/\s+$/g, '')
+
+			// not empty?
+			if (props) {
+				return props
+			}
+
+			return ''
+		}
+
+		// print children
+		function Children(children, level) {
+			// empty
+			if (children[__length] === 0) {
+				return ''
+			}
+
+			// indent level
+			level      = level || 0
+
+			// print tabs
+			var 
+			indent     = '\t'.repeat(level + 1),
+			lastIndent = '\t'.repeat(level)
+
+			// iterate through and print each child
+			return '\n'+indent+children.map(function (child) {
+				return toHTML(child, level + 1)
+			}).join('\n'+indent)+'\n'+lastIndent
+		}
+
+		return toHTML
 	}())
 
 
@@ -2204,6 +2307,7 @@
 	 * -------------------------------------------------------------- */
 
 
+	exports.toHTML  = toHTML,
  	exports.prop    = prop,
 	exports.surl    = surl,
 	exports.h       = element,
