@@ -159,29 +159,33 @@
 
 			// flux/reduxy stuff
 			var 
-			store = app.createStore(function (state, action) {
-				state = state || 0
+			store = app.createStore({
+				counter: function (state, action) {
+					state = state || 0
 
-				switch (action.type) {
-					case 'INCREMENT':
-						return state + 1;
-					case 'DECREMENT':
-						return state - 1;
-					default:
-						return state;
+					switch (action.type) {
+						case 'INCREMENT':
+							return state + 1;
+						case 'DECREMENT':
+							return state - 1;
+						default:
+							return state;
+					}
 				}
 			})
 
+
 			var
 			render = function () {
-				document.getElementById('counter').innerText = store.getState()
+				document.getElementById('counter').innerText = store.counter.getState()
 			}
 
-			store.subscribe(render)
+			store.counter.subscribe(render)
 			render()
 
+			var stop = true
 			document.addEventListener('click', function () {
-				store.dispatch({type: 'INCREMENT'})
+				store.counter.dispatch({type: 'INCREMENT'})
 			})
 		</script>
 	</body>

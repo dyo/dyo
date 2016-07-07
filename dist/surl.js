@@ -1228,7 +1228,7 @@
 			 * set mount to element
 			 * @param  {Selector|Element} element - the element to mount to
 			 */
-			mount: function Mount (element) {
+			mount: function mount (element) {
 				var self = this;
 
 				// can't use document, use body instead
@@ -1256,7 +1256,7 @@
 			 * initialize/mount
 			 * @param {String} id - base component to mount to dom
 			 */
-			render: function Render (Component, element, data) {
+			render: function render (Component, element, data) {
 				var self = this
 
 				// add parent element
@@ -1289,7 +1289,11 @@
 						// hyperscript object
 						var hyperscript = Component;
 						// create component
-						Component = self.Component({render: function () { return hyperscript } })
+						Component = self.Component({
+							render: function () { 
+								return hyperscript 
+							} 
+						})
 					}
 
 					Component = Component || self.cmp
@@ -1591,7 +1595,7 @@
 			 * 		}
 			 * })
 			 */
-			route: function Route (args) {
+			route: function route (args) {
 				function Router () {
 					// references
 					var
@@ -1798,47 +1802,115 @@
 				return this.Component(obj)
 			},
 
-			createStore: function (reducer) {
-				var
-				state,
-				listeners = [],
-				getState = function () {
-					return state
-				},
-				dispatch = function (action) {
-					if (!is(action, __object)) {
-						throw 'action must be plain object'
-					}
-					if (action.type === __undefined) {
-						throw 'actions must have a type'
-					}
-
-					state = reducer(state, action)
-
-					each(listeners, function (listener) {
-						return listener()
+			createStore: function (arg) {
+				if (is(arg, __object)) {
+					each(arg, function (value, name) {
+						arg[name] = create(value)
 					})
-				},
-				subscribe = function (listener) {
-					if (!is(listener, __function)) {
-				  		throw 'listener should be a function'
-					}
 
-					listeners.push(listener)
-
-					return function unsubscribe () {
-						listeners = listeners.filter(function (l) {
-							return l !== listener
-						})
-					}
+					return arg
+				}
+				else {
+					return create(arg)
 				}
 
-				dispatch({type: '@@surl/INIT'})
+				function create (reducer) {
+					var
+					state,
+					listeners = [],
+					dispatchers = [],
+					range = 5
 
-				return {
-					getState: getState, 
-					dispatch: dispatch, 
-					subscribe: subscribe
+					// return the state
+					function getState () {
+						return state
+					}
+
+					// dispatch an action
+					function dispatch (action, timetravel) {
+						if (!is(action, __object)) {
+							throw 'action must be plain object'
+						}
+						if (action.type === __undefined) {
+							throw 'actions must have a type'
+						}
+
+						// get state from reducer
+						state = reducer(state, action)
+
+						// dispatch to all listeners
+						each(listeners, function (listener) {
+							return listener()
+						})
+
+						// don't save dispatches when time traveling
+						if (!timetravel) {
+							// save last 5 dispatches for timetravel
+							if (dispatchers[__length] < range) {
+								dispatchers.push(action)
+							}
+							// dispatches are at their max length
+							// overwrite old ones
+							// thus we always have the most recent actions to time travel to
+							else {
+								// remove first action
+								dispatchers.shift()
+								// add new action
+								dispatchers.push(action)
+							}
+						}
+					}
+
+					function subscribe (listener) {
+						if (!is(listener, __function)) {
+					  		throw 'listener should be a function'
+						}
+
+						listeners.push(listener)
+
+						return function unsubscribe () {
+							listeers = listeners.filter(function (l) {
+								return l !== listener
+							})
+						}
+					}
+
+					function timetravel (distance) {
+						// default distance
+						distance = distance || 0
+
+						// get length of dispatches
+						var
+						length = dispatchers[__length]
+
+						// get actual distance we will travel
+						// relative to dispatches length
+						distance = (length - distance) - 1
+
+						// make sure the distance is not greater than the
+						// range we can timetravel
+						// and not smaller than 0
+						distance = distance > range ? range : distance < 0 ? 0 : distance
+
+						var
+						action = dispatchers[distance]
+
+						// timetravel if we have an action to 
+						// dispatch
+						if (action) {
+							dispatch(action, __true)
+						}
+						
+					}
+
+					dispatch({type: '@@surl/INIT'})
+
+					return {
+						getState: getState, 
+						dispatch: dispatch, 
+						subscribe: subscribe,
+						timetravel: timetravel
+					}
 				}
 			}
 		}
@@ -2324,11 +2396,11 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.toHTML  = toHTML,
- 	exports.prop    = prop,
 	exports.surl    = surl,
 	exports.h       = element,
+	exports.animate = animate,
+	exports.prop    = prop,
 	exports.bind    = bind,
 	exports.trust   = trust,
-	exports.animate = animate
+	exports.toHTML  = toHTML
 }));
