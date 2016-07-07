@@ -1008,13 +1008,13 @@
 		// check if props is event
 		function isEventProp (name, value) {
 			// checks if the first two characters are on
-			return name.substring(0,2) === 'on' && is(value, __function)
+			return name.substr(0,2) === 'on' && is(value, __function)
 		}
 		
 		// get event name
 		function extractEventName (name) {
 			// removes the first two characters and converts to lowercase
-			return name.substring(2, name[__length]).toLowerCase()
+			return name.substr(2, name[__length]).toLowerCase()
 		}
 		
 		// add event
@@ -1551,10 +1551,26 @@
 				'tr','track','u','ul','var','video','wbr'], function (name) {
 					__window[name] = function Element () {
 						// convert args to array
-						var args = __array[__prototype].slice.call(arguments);
-							// add name as first arg
-							// which represents the tag in hyperscript
-							args.unshift(name);
+						var 
+						args = __array[__prototype].slice.call(arguments),
+						first = args[0]
+
+						// i.e div('#id', {}, 'Children')
+						if (
+							is(first, __string) &&
+							(
+								first.substr(0,1) === '#' ||
+								first.substr(0,1) === '.' ||
+								first.substr(0,1) === '['
+							)
+						) {
+							// name will now = 'div#id'
+							name += first
+							args.shift(first)
+						}
+						// add name as first arg
+						// which represents the tag in hyperscript
+						args.unshift(name)
 
 						return h.apply(null, args)
 					}
@@ -1798,7 +1814,8 @@
 					}
 
 					state = reducer(state, action)
-					listeners.forEach(function (listener) {
+
+					each(listeners, function (listener) {
 						return listener()
 					})
 				},
