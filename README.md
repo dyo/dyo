@@ -1,17 +1,14 @@
 # surl.js
 
-#### a light (~5kb) framework that mimics most of the reacts api's with some additions.
+##### a light performant (~5kb) framework that mimics most of the reacts api's with some additions.
 
-- animation helpers (flip & transition)
-- ajax requests (callbacks & promises)
+- animations (flip & transition)
+- requests (with callbacks / promises)
 - router
 - store (redux-ish)
-- two-way data binding
-- component...mount lifecycles are passed a node
-- return a number(ms) within componentWillUnmount to delay the unmount
-- props and state are passed to render(props, state)
 
-####Supports: Chrome, Firefox, Safari, IE10+
+
+#####Supports: Chrome, Firefox, Safari, IE10+
 
 - *6.2kb minified+gzipped.*  
 - *13.6kb minified.*
@@ -102,6 +99,7 @@ function PrototypeStyle () {
 // mount
 app.mount(app.Component(new PrototypeStyle), '.app')
 ```
+**note:** props and state are passed to `render(props, state)`
 
 ##.Element
 
