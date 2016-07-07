@@ -13,8 +13,8 @@
 
 ####Supports: Chrome, Firefox, Safari, IE10+
 
-- *~5kb minified+gzipped.*  
-- *~12kb minified.*
+- *5.9kb minified+gzipped.*  
+- *12.9kb minified.*
 
 --
 

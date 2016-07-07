@@ -50,9 +50,8 @@
 								{
 									onclick: props.handleDelete, 
 									id: item.id, 
-									class: Date.now(),
+									className: Date.now(),
 									style: 'cursor:pointer;',
-									className: {what: true, something: false},
 									key: item.id
 								},
 								item.text
@@ -154,6 +153,8 @@
 
 			// mount to dom
 			app.render(TodoApp, '.app')
+
+			console.log(app)
 
 
 			// flux/reduxy stuff

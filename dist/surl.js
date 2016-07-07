@@ -70,6 +70,7 @@
 	__string                    = String,
 	__XMLHttpRequest            = XMLHttpRequest,
 	__encodeURIComponent        = encodeURIComponent,
+	__setTimeout                = __window.setTimeout,
 
 	/**
 	 * check Object type
@@ -81,7 +82,7 @@
 		function is (obj, type) {
 			// only check if obj is not a falsey value
 			if (!type) {
-				return obj ? true : false
+				return obj ? __true : __false
 			}
 			// check object type
 			else {
@@ -129,7 +130,7 @@
 				for (; index < length; ++index) {
 					// break if fn() returns false
 					if (fn.call(arr[index], arr[index], index, arr) === __false) {
-						return arr
+						return
 					}
 				}
 			}
@@ -138,17 +139,73 @@
 				for (index in arr) {
 					// break if fn() returns false
 					if (fn.call(arr[index], arr[index], index, arr) === __false) {
-						return arr
+						return
 					}
 				}
 			}
-
-			return arr
 		}
 
 		return each
 	}()),
 
+
+	classList = (function () {
+		// references
+		var
+		__classList = 'classList',
+		__className = 'className'
+
+		function hasClass (element, value) {
+			// default to native Element.classList()
+		    if (element[__classList]) {
+		        return element[__classList].contains(value)
+		    } 
+		    else {
+		    	// this will return true if indexOf does not
+		    	// find our class in the className string 
+		        return element[__className].indexOf(value) > -1
+		    }
+		}
+
+		function add (element, value) {
+			// default to native Element.classList()
+			if (element[__classList]) {
+		        element[__classList].add(value)
+		    }
+		    // exit early if the class is already added
+		    else if (!hasClass(element, value)) {
+		    	// create array of current classList
+		        var 
+		        classes = element[__className].split(" ")
+		        // add our new class
+		        classes.push(value)
+		        // join our classes array and re-assign to className
+		        element[__className] = classes.join(" ")
+		    }
+		}
+
+		function remove (element, value) {
+			// default to native Element.classList()
+		    if (element[__classList]) {
+		        element[__classList].remove(value)
+		    }
+		    else {
+		    	// create array of current classList
+		        var
+		        classes = element[__className].split(" ")
+		        // remove the className on this index
+		        classes.splice(classes.indexOf(value), 1)
+		        // join our classes array and re-ssign to className
+		        element[__className] = classes.join(" ")
+		    }
+		}
+
+		return {
+			add: add,
+			remove: remove,
+			hasClass: hasClass
+		}
+	}()),
 
 	/**
 	 * ajax helper
@@ -349,7 +406,7 @@
 	      			return
 	    		}
 
-	    		setTimeout(function () {
+	    		__setTimeout(function () {
 		    		var 
 		    		handlerCallback
 
@@ -397,7 +454,7 @@
   		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this
 
   		  		self.then(__null, function (err) {
-  		    		setTimeout(function () {
+  		    		__setTimeout(function () {
   		      			throw err
   		    		}, 0)
   		  		})
@@ -421,10 +478,11 @@
 	 */
 	element = (function () {
 		function element (type, props) {
-			var args   = arguments,
-				length = args[__length],
-				key    = 2,
-				child
+			var 
+			args   = arguments,
+			length = args[__length],
+			key    = 2,
+			child
 
 			// no props specified default 2nd arg to children
 			// is an hyperscript object or not 
@@ -443,7 +501,8 @@
 			}
 
 			// declare hyperscript object
-			var obj = {type: type, props: props, children: []};
+			var 
+			obj = {type: type, props: props, children: []};
 
 			// check if the type is a special case i.e [type] | div.class | #id
 			// and alter the hyperscript
@@ -685,7 +744,7 @@
 	 * @param {Object}  render?  - component object
 	 */
 	draw = (function () {
-		// references for better minification
+		// references
 		var
 		__childNodes = 'childNodes',
 		__children   = 'children'
@@ -796,7 +855,7 @@
 				requestAnimationFrame(fn)
 			}
 			else {
-				setTimeout(fn, duration)
+				__setTimeout(fn, duration)
 			}
 		}
 
@@ -824,8 +883,6 @@
 		// add element
 		function appendChild (parent, nextNode, newNode) {
 			lifecycle(newNode, __componentWillMount)
-
-			parent.appendChild(nextNode)
 
 			debounce(function () {
 				if (nextNode) {
@@ -1081,16 +1138,8 @@
 				// add each of it's properties to the
 				// target elements attribute
 				if (is(value, __object)) {
-					// styles and other object type props
-					if (name !== 'className' && name !== 'class') {
-						each(value, function (content, index) {
-							if (target[name][index] !== __undefined) {
-								target[name][index] = content
-							}
-						})	
-					}
-					// classess
-					else {
+					// classes
+					if (name === 'className' || name === 'class') {
 						each(value, function (content, index) {
 							// get what operation we will run
 							// if the value is empty/false/undefined/null
@@ -1098,11 +1147,26 @@
 							// if the values length is more than 0
 							// or true or anything not of a falsy value
 							// we add
-							var type = !content ? 'remove' : 'add'
+							var 
+							type = !content ? 'remove' : 'add'
 
 							// add/remove class
-							target.classList[type](index)
+							// target.classList[type](index)
+							classList[type](target, index)
 						})
+					}
+					// styles and other object type props
+					else {
+						each(value, function (content, index) {
+							if (target[name][index] !== __undefined) {
+								target[name][index] = content
+							}
+						})	
+					}
+				}
+				else if (is(value, __array)) {
+					if (name === 'className' || name === 'class') {
+						target[name] = value.join(' ')
 					}
 				}
 				else {
@@ -1178,13 +1242,13 @@
 
 				// assign mount if element
 				if (element && element.nodeType) {
-					self.parent = element
+					self.dom = element
 				}
 				// for references sake
 				// incase you want to see all the properties
 				// of an instance
 				else {
-					self.parent = __undefined
+					self.dom = __undefined
 				}
 			},
 
@@ -1199,25 +1263,25 @@
 				if (element) {
 					// string? query element
 					if (is(element, __string)) {
-						self.parent = __document.querySelector(element)
+						self.dom = __document.querySelector(element)
 					}
 					// element? add
 					else if (element.nodeType) {
-						self.parent = element
+						self.dom = element
 					}
 				}
 
 				// has parent to mount to
-				if (self.parent) {
+				if (self.dom) {
 					// if there is a component already mounted
 					// call it's componentWillUnmount before we clear the
 					// mount dom element
-					if (self.componentRender) {
-						lifecycle(self.componentRender, __componentWillUnmount)
+					if (self.vdom) {
+						lifecycle(self.vdom, __componentWillUnmount)
 					}
 
 					// clear dom
-					self.parent.innerHTML = ''
+					self.dom.innerHTML = ''
 
 					// probably a plain hyperscript object
 					// create class with render fn that returns it
@@ -1228,10 +1292,10 @@
 						Component = self.Component({render: function () { return hyperscript } })
 					}
 
-					Component = Component || self.component
+					Component = Component || self.cmp
 					// add vdom objects
-					self.componentRender = Component(data)
-					self.component = Component
+					self.vdom = Component(data)
+					self.cmp = Component
 
 					// initial mount to dom
 					// we don't specify a old node here
@@ -1240,8 +1304,8 @@
 					// we also pass the Component Object
 					// which we can use to add refs if set
 					draw(
-						self.parent,
-						self.componentRender,
+						self.dom,
+						self.vdom,
 						__undefined,
 						Component(__undefined, __undefined, __true)
 					)
@@ -1340,18 +1404,18 @@
 								// triggering a re-render
 								// that.render is to make sure we have a base
 								// component to render
-								if (type === 'state' && !update && that.componentRender) {
+								if (type === 'state' && !update && that.vdom) {
 									// new node
 									var 
-									newNode = that.component()
+									newNode = that.cmp()
 
 									// diff new vs old node
-									draw(that.parent, newNode, that.componentRender)
+									draw(that.dom, newNode, that.vdom)
 
 									// set the old node to the new node
 									// we will use this in the next render
 									// as the old node
-									that.componentRender = newNode
+									that.vdom = newNode
 								}
 							}
 						}
@@ -1359,7 +1423,7 @@
 					// add forceUpdate method
 					else if (method === 'forceUpdate') {
 						ComponentClass[__prototype]['forceUpdate'] = function (callback) {
-							draw(that.parent, that.component(), that.componentRender)
+							draw(that.dom, that.cmp(), that.vdom)
 							
 							if (is(callback, __function)) {
 								callback()
@@ -1726,21 +1790,33 @@
 					return state
 				},
 				dispatch = function (action) {
+					if (!is(action, __object)) {
+						throw 'action must be plain object'
+					}
+					if (action.type === __undefined) {
+						throw 'actions must have a type'
+					}
+
 					state = reducer(state, action)
 					listeners.forEach(function (listener) {
 						return listener()
 					})
 				},
 				subscribe = function (listener) {
+					if (!is(listener, __function)) {
+				  		throw 'listener should be a function'
+					}
+
 					listeners.push(listener)
-					return function () {
+
+					return function unsubscribe () {
 						listeners = listeners.filter(function (l) {
 							return l !== listener
 						})
 					}
 				}
 
-				dispatch({})
+				dispatch({type: '@@surl/INIT'})
 
 				return {
 					getState: getState, 
@@ -1880,7 +1956,7 @@
 				first        = getBoundingClientRect(element)
 				// assign last state if there is an end class
 				if (className) {
-					element.classList.toggle(className)
+					classList.add(element, className)
 				}
 				// get last rect state, 
 				// if there is not end class
@@ -1907,8 +1983,8 @@
 				}
 
 				// reflect animation state on dom
-				element.classList.add(runningClass)
-				body.classList.add(runningClass)
+				classList.add(element, runningClass)
+				classList.add(body, runningClass)
 
 				// use native web animations api if present for better performance
 				if (webAnimations) {
@@ -1961,8 +2037,9 @@
 						style.willChange = __null
 					}
 
-					element.classList.remove(runningClass)
-					body.classList.remove(runningClass)
+					classList.remove(element, runningClass)
+					classList.remove(body, runningClass)
+
 					element.removeEventListener(transEvtEnd, onfinish)
 
 					if (callback) {
@@ -1986,7 +2063,7 @@
 			return function (element, callback) {
 				// add transition class
 				// this will start the transtion
-				element.classList.add(className)
+				classList.add(element, className)
 
 				var
 				// duration starts at 0
@@ -2007,7 +2084,7 @@
 
 				// run callback after duration of transition
 				// has elapsed
-				setTimeout(function () {
+				__setTimeout(function () {
 					callback(element)
 				}, duration)
 			}
