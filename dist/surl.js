@@ -930,7 +930,7 @@
 		}
 
 		// create element
-		function createElement (node, Component) {
+		function createElement (node, Component, isChildren) {
 			// handle text nodes
 			if (is(node, __string)) {
 				return __document.createTextNode(node)
@@ -970,7 +970,7 @@
 			// only map children arrays
 			if (is(node.children, __array)) {
 				each(node.children, function (child) {
-					el.appendChild(createElement(child, Component))
+					el.appendChild(createElement(child, Component, __true))
 				})
 			}
 
