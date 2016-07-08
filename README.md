@@ -40,7 +40,7 @@ var render = s.render(TodoApp, '.app')
 var render = s.render((props) => h('div', props.children), '.app')
 
 // call it anytime you want to render to the dom
-render(...props, children, forceUpdate?)
+render(...props, state, forceUpdate?)
 
 // forceUpdate{Boolean} tells the render to force an initial mount
 // which clears the element and mounts to it.
