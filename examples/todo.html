@@ -18,18 +18,8 @@
 			// ------------------------- initializers ------------------------- //
 
 
-			var router = s.router({
-				root: '/examples',
-				routes: {
-					'/router.html': function () {
-						console.log(arguments)
-					}
-				}
-			})
-
 			var render  = s.render(TodoApp, '.app')
 
-			s.request.get('?url')
 
 			// ------------------------- store ------------------------- //
 
