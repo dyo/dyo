@@ -117,16 +117,14 @@ myrouter
 ```
 ## s.request
 
-create an http helper
+a http helper
 
 ```javascript
-var request = s.request()
-
-request.get('/url/id', callback)
-request.post('/url/id', {data:1}, callback)
+s.request.get('/url/id', callback)
+s.request.post('/url/id', {data:1}, callback)
 
 var a = prop('hello')
-request.get('/url/id').then(a).done(()=>console.log(a))
+s.request.get('/url/id').then(a).done(()=>console.log(a))
 // a => response
 
 ```
