@@ -34,7 +34,7 @@ var TodoApp = {
 	}
 }
 
-// create a render mapper
+// create a render instance
 var render = s.render(TodoApp, '.app')
 // or
 var render = s.render((props) => h('div', props.children), '.app')
