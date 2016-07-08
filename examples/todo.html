@@ -95,8 +95,12 @@
 		    		e.preventDefault()
 		    		var 
 		    		value = text()
-	    			store.dispatch({type:'ADD', id: Date.now(), value: value})
-	    			input().value = ''
+		    		el    = input()
+
+		    		if (value == el.value) {
+		    			store.dispatch({type:'ADD', id: Date.now(), value: value})
+		    			el.value = ''
+		    		}
 		  		}
 		  		function handleDelete () {
 		  			var node = this
