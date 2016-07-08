@@ -11,7 +11,7 @@
 	</head>
 	<body>
 		<div class="app"></div>
-		
+
 		<script>
 			function CanvasComponent () {
 				var
@@ -19,42 +19,42 @@
 				canvas    = s.prop(null)
 				ctx       = s.prop(null)
 
+			    function mouseDown (e) {
+			    	ctx().strokeStyle = '#FF5722'
+			    	ctx().lineWidth = 4
+			    	ctx().lineJoin  = ctx.lineCap = 'round'
+			    	ctx().moveTo(e.clientX, e.clientY)
+			    	isDrawing(true)
+			    }
+			    function mouseMove (e) {
+			    	if (isDrawing()) {
+			    		ctx().lineTo(e.clientX, e.clientY)
+			    		ctx().stroke()
+			    	}
+			    }
+			    function mouseUp () {
+			    	isDrawing(false)
+			    }
+
 				return {
 					componentDidMount: function () {
 						ctx(canvas().getContext('2d'))
 					},
-				    mouseDown: function (e) {
-				    	ctx().strokeStyle = '#FF5722'
-				    	ctx().lineWidth = 4
-				    	ctx().lineJoin  = ctx.lineCap = 'round'
-				    	ctx().moveTo(e.clientX, e.clientY)
-				    	isDrawing(true)
-				    },
-				    mouseMove: function (e) {
-				    	if (isDrawing()) {
-				    		ctx().lineTo(e.clientX, e.clientY)
-				    		ctx().stroke()
-				    	}
-				    },
-				    mouseUp: function () {
-				    	isDrawing(false)
-				    },
 				    render: function () {
 				        return h('canvas', {
 				        	ref: canvas,
-
 				        	width: window.innerWidth - 4, 
 				        	height: window.innerHeight - 4,
-
-				        	onMousedown: this.mouseDown,
-				        	onMouseMove: this.mouseMove,
-				        	onMouseUp: this.mouseUp
+				        	onMouseDown: mouseDown,
+				        	onMouseMove: mouseMove,
+				        	onMouseUp: mouseUp
 				        })
 				    }
 				}
 			}	
-
-			var render = s.render(CanvasComponent, '.app')
+			var 
+			render = s.render(CanvasComponent, '.app')
+			render()
 		</script>
 	</body>
 </html>
