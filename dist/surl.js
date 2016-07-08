@@ -1,6 +1,5 @@
 /*!
  * surl.js 
- * a react like virtual dom library
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @license MIT
  */
