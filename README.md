@@ -50,7 +50,7 @@ render(...props, state, forceUpdate?)
 
 ## s.render
 
-create a render function that can be called anytime you need to render to the dom, s.render doesn't really care if you wrap your component in `s.comp(User)` or if it's just a function that returns a vdom node when executed.
+create a render function that can be called anytime you need to render to the dom.
 
 ```javascript
 var Sidebar = s.render(User, '.side-bar')
