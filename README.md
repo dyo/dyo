@@ -1,6 +1,6 @@
 # surl.js
 
-##### a light performant (~6kb) vdom framework.s.
+##### a light performant (~6kb) vdom framework.
 
 - animations (flip & transition)
 - requests (with callbacks / promises)
