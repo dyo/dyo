@@ -11,11 +11,8 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var 
-			app = new surl()
-
 			var // define components
-			Home = app.Component({
+			Home = s.comp({
 				componentWillMount: function () {
 					console.log('mount')
 				},
@@ -23,14 +20,14 @@
 					console.log('unmount')
 				},
 				onClick: function () {
-					app.router.nav('/user/sultan')
+					router.nav('/user/sultan')
 				},
 				render: function () {
-					return h('h1', {onclick: this.onClick}, trust("Home Page &amp;"))
+					return h('h1', {onclick: this.onClick}, s.trust("Home Page &amp;"))
 				}
 			}),
 			
-			User = app.Component({
+			User = s.comp({
 				componentWillMount: function () {
 					console.log('mount')
 				},
@@ -38,7 +35,7 @@
 					console.log('unmount')
 				},
 				onClick: function () {
-					app.router.nav('/router.html')
+					router.nav('/router.html')
 				},
 				render: function (props) {
 					return h('h1', {onclick: this.onClick},
@@ -48,17 +45,20 @@
 				}
 			})
 
+			function Base (props) {
+				console.log(props)
+			}
+
+			var render = s.render(Base,'.app')
+
 			// define router
-			app.route({
-				mount: '.app',
-				addr: '/examples',
+			var router = s.router({
+				root: '/examples',
 				routes: {
-					'/router.html': Home,
-					'/:page/:name': User
+					'/router.html': function (data) { render({data: data}, Home) },
+					'/:page/:name': function (data) { render({data: data}, User) }
 				}
 			})
-
-			console.log(app)
 		</script>
 	</body>
 </html>

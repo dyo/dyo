@@ -6,7 +6,7 @@
  */
 
 (function (root, factory) {
-	'use strict';
+	'use strict'
 
 	// amd
     if (typeof define === 'function' && define.amd) {
@@ -22,7 +22,7 @@
         factory(root)
     }
 }(this, function (exports) {
-	'use strict';
+	'use strict'
 
 	// references for better minification
 	// so instead of obj.constructor we would do obj[__constructor]
@@ -49,6 +49,10 @@
 	__constructor               = 'constructor',
 	__prototype                 = 'prototype',
 	__length                    = 'length',
+	__childNodes                = 'childNodes',
+	__children                  = 'children',
+	__classList                 = 'classList',
+	__className                 = 'className',
 
 	// lifecycle properties
 	__getInitialState           = 'getInitialState',
@@ -70,91 +74,10 @@
 	__string                    = String,
 	__XMLHttpRequest            = XMLHttpRequest,
 	__encodeURIComponent        = encodeURIComponent,
-	__setTimeout                = __window.setTimeout,
-
-	/**
-	 * check Object type
-	 * @param  {Any}  obj  - object to check for type
-	 * @param  {Any}  type - type to check for
-	 * @return {Boolean}   - true/false
-	 */
-	is = (function () {
-		function is (obj, type) {
-			// only check if obj is not a falsey value
-			if (!type) {
-				return obj ? __true : __false
-			}
-			// check object type
-			else {
-				// onj has a constructor
-				if (obj !== __undefined && obj !== __null) {
-					return obj[__constructor] === type
-				}
-				// doesn't, probably null or undefined 
-				// that don't have constructors methods, return false
-				else {
-					return __false
-				}
-			}
-		}
-
-		return is
-	}()),
+	__setTimeout                = __window.setTimeout
 
 
-	/**
-	 * 'forEach' shortcut
-	 * @param  {Array|Object} a 
-	 * @param  {Function}     fn
-	 * @param  {Boolean}      multiple
-	 * @return {Array|Object}
-	 */
-	each = (function () {
-		function each (arr, fn) {
-			// index {Number}
-			var 
-			index
-
-			// Handle arrays, and array-like Objects, 
-			// array-like objects (have prop .length 
-			// that is a number) and numbers for keys [0]
-			if (
-				is(arr, __array) || arr[__length] && 
-				is(arr[__length], __number) && arr[0]
-			) {
-				// length {Number}
-				var 
-				length = arr[__length]
-				index = 0
-
-				for (; index < length; ++index) {
-					// break if fn() returns false
-					if (fn.call(arr[index], arr[index], index, arr) === __false) {
-						return
-					}
-				}
-			}
-			// Handle objects 
-			else {
-				for (index in arr) {
-					// break if fn() returns false
-					if (fn.call(arr[index], arr[index], index, arr) === __false) {
-						return
-					}
-				}
-			}
-		}
-
-		return each
-	}()),
-
-
-	classList = (function () {
-		// references
-		var
-		__classList = 'classList',
-		__className = 'className'
-
+	function classList (prop) {
 		function hasClass (element, value) {
 			// default to native Element.classList()
 		    if (element[__classList]) {
@@ -205,266 +128,7 @@
 			remove: remove,
 			hasClass: hasClass
 		}
-	}()),
-
-	/**
-	 * ajax helper
-	 * @param  {Object}   settings `ajax settings object`
-	 * @param  {Function} callback `function to run onload`
-	 * @example
-	 * // returns xhr Object
-	 * ajax({url, method, data}, fn(res, err) => {})
-	 */
-	ajax = (function () {
-		function ajax (url, method, data, callback) {
-			return new promise(function (resolve, reject) {
-				var 
-				xhr      = new __XMLHttpRequest(),
-				location = __window.location,
-				sent
-
-				// create anchor element to extract usefull information
-				var 
-				a        = __document.createElement('a')	
-				a.href   = url
-
-				// check if is this a cross origin request check
-				var
-				CORS = !(
-					a.hostname        === location.hostname &&
-					a.port            === location.port     &&
-					a.protocol        === location.protocol &&
-					location.protocol !== 'file:'
-				)
-
-				// destroy created element
-				a = __null
-				
-				// open request
-				xhr.open(method, url, __true)
-				
-				// assign on load callback
-				xhr.onload = function () {
-					var 
-					response,
-					responseText = xhr.responseText,
-					statusText   = xhr.statusText;
-					
-					// success
-					if (xhr.status >= 200 && xhr.status < 400) {
-						// get response header
-						var 
-						resHeader = xhr.getResponseHeader("content-type"),
-						resType
-
-						// format response header
-						// to get the type of response
-						// that we can use to format the data
-						// if needed i.e create dom/parse json
-						if (resHeader.indexOf(';') !== -1) {
-							resType = resHeader.split(';');
-							resType = resType[0].split('/')
-						}
-						else {
-							resType = resHeader.split('/')
-						}
-
-						// extract response type 'html/json/text'
-						resType = resType[1]
-
-						// json, parse json
-						if (resType === 'json') {
-							response = JSON.parse(responseText)
-						}
-						// html, create dom
-						else if (resType === 'html') {
-							response = (new DOMParser()).parseFromString(responseText, "text/html")
-						}
-						// text, as is
-						else {
-							response = responseText
-						}
-
-						// use callbacks
-						if (callback) {
-							callback(response)
-						}
-						// otherwise resolve promise
-						else {
-							resolve(response)
-						}
-					}
-					// failed
-					else {
-						// use callbacks
-						if (callback) {
-							callback(statusText)
-						}
-						// otherwise resolve promise
-						else {
-							reject(statusText)
-						}
-					}
-				}
-
-				// assign on error callback
-				xhr.onerror = function () {
-					reject(xhr.statusText)
-				}
-				
-				// set for this is a cross origin request
-				if (CORS) {
-					xhr.withCredentials = __true
-				}
-
-				// serialize settings for POST request
-				if (method === 'POST') {
-					xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
-					sent = param(data)
-				}
-				// stringify non GET requests i.e PUT/DELETE...
-				else if (method !== 'GET') {
-					xhr.setRequestHeader('Content-Type', is(data, __object) ? 'application/json' : 'text/plain')
-					sent = JSON.stringify(data)
-				}
-
-				// send request
-				xhr.send(sent)
-			})	
-		}
-
-		/**
-		 * serialize + encode object
-		 * @param  {Object}  obj    - `object to serialize`
-		 * @param  {Object}  prefix
-		 * @return {String}   serialized object
-		 * @example
-		 * // returns 'url=http%3A%2F%2F.com'
-		 * param({url:'http://.com'})
-		 */
-		function param (obj, prefix) {
-			var arr = []
-
-			for (var key in obj) {
-			    var 
-			    __prefix = prefix ? prefix + '[' + key + ']' : key,
-			    value    = obj[key]
-
-			    // when the value is equal to an object 
-			    // that means that we have something like
-			    // data = {name:'John', addr: {...}}
-			    // so we re-run param on addr to serialize 'addr: {...}'
-			    arr.push(typeof value == 'object' ? 
-			    	param(value, __prefix) :
-			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value))
-			}
-
-			return arr.join('&');
-		}
-
-		/**
-		 * simple promise implementation
-		 * @param {Function} 
-		 * @return {Object} {then, done}
-		 */
-		function promise (fn) {
-	  		var
-	  		value,
-	  		state = 'pending',
-	  		deferred = __null
-
-	  		function reject (reason) {
-	  		    state = 'rejected';
-	  		    value = reason
-
-	  		    if(deferred) {
-  		      		handle(deferred)
-	  		    }
-  		  	}
-
-	  		function resolve (newValue) {
-	  			try {
-	  				if (newValue && is(newValue.then, __function)) {
-		  			    newValue.then(resolve, reject)
-		  			    return
-				  	}
-				  	
-		    		value = newValue
-		    		state = 'resolved'
-
-		    		if (deferred) {
-		      			handle(deferred)
-		    		}
-	  			} catch (e) {
-	  				reject(e)
-	  			}
-	  		}
-
-	  		function handle (handler) {
-	    		if (state === 'pending') {
-	      			deferred = handler
-	      			return
-	    		}
-
-	    		__setTimeout(function () {
-		    		var 
-		    		handlerCallback
-
-	    		    if (state === 'resolved') {
-			      		handlerCallback = handler.onResolved
-	    		    } 
-	    		    else {
-			      		handlerCallback = handler.onRejected
-	    		    }
-
-	    		    if (!handlerCallback) {
-			      		if (state === 'resolved') {
-			        		handler.resolve(value)
-			      		} 
-			      		else {
-			        		handler.reject(value)
-			      		}
-
-			      		return
-	    		    }
-
-	    		    var ret
-		            try {
-		                ret = handlerCallback(value);
-		                handler.resolve(ret)
-		            } 
-		            catch (e) {
-		                handler.reject(e)
-		            }
-	    		}, 0)
-	  		}
-
-	  		this.then = function (onResolved, onRejected) {
-	    		return new promise (function(resolve, reject) {
-		      		handle({
-		        		onResolved: onResolved,
-		        		onRejected: onRejected,
-		        		resolve: resolve,
-		        		reject: reject
-		      		})
-	    		})
-	  		}
-
-	  		this.done = function (onFulfilled, onRejected) {
-  		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this
-
-  		  		self.then(__null, function (err) {
-  		    		__setTimeout(function () {
-  		      			throw err
-  		    		}, 0)
-  		  		})
-	  		}
-
-	  		fn(resolve, reject)
-		}
-
-		return ajax
-	}()),
+	}
 
 
 	/**
@@ -476,8 +140,8 @@
 	 * h('div', {class: 'close'}, 'Text Content')
 	 * h('div', null, h('h1', 'Text'));
 	 */
-	element = (function () {
-		function element (type, props) {
+	function element () {
+		function h (type, props) {
 			var 
 			args   = arguments,
 			length = args[__length],
@@ -487,7 +151,7 @@
 			// no props specified default 2nd arg to children
 			// is an hyperscript object or not 
 			// an object (null,undefined,string,array,bool)
-			if (isElement(props) || !is(props, __object)) {
+			if (isH(props) || !is(props, __object)) {
 				key   = 1,
 				props = {}
 			}
@@ -548,7 +212,7 @@
 			return obj
 		}
 
-		function isElement (obj) {
+		function isH (obj) {
 			// object exists
 			// has type, children and props
 			var maybe = obj &&
@@ -595,7 +259,7 @@
 			}
 
 			// convert to string non hyperscript children
-			if (!(is(child, __object) && isElement(child))) {
+			if (!(is(child, __object) && isH(child))) {
 				// we don't want [object Object] strings
 				if (is(child, __object)) {
 					child = JSON.stringify(child)
@@ -685,9 +349,79 @@
 			return obj
 		}
 
-		return element
-	}()),
+		return h
+	}
+
 	
+	/**
+	 * 'forEach' shortcut
+	 * @param  {Array|Object} a 
+	 * @param  {Function}     fn
+	 * @param  {Boolean}      multiple
+	 * @return {Array|Object}
+	 */
+	function each (arr, fn) {
+		// index {Number}
+		var 
+		index
+
+		// Handle arrays, and array-like Objects, 
+		// array-like objects (have prop .length 
+		// that is a number) and numbers for keys [0]
+		if (
+			is(arr, __array) || arr[__length] && 
+			is(arr[__length], __number) && arr[0]
+		) {
+			// length {Number}
+			var 
+			length = arr[__length]
+			index = 0
+
+			for (; index < length; ++index) {
+				// break if fn() returns false
+				if (fn.call(arr[index], arr[index], index, arr) === __false) {
+					return
+				}
+			}
+		}
+		// Handle objects 
+		else {
+			for (index in arr) {
+				// break if fn() returns false
+				if (fn.call(arr[index], arr[index], index, arr) === __false) {
+					return
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * check Object type
+	 * @param  {Any}  obj  - object to check for type
+	 * @param  {Any}  type - type to check for
+	 * @return {Boolean}   - true/false
+	 */
+	function is (obj, type) {
+		// only check if obj is not a falsey value
+		if (!type) {
+			return obj ? __true : __false
+		}
+		// check object type
+		else {
+			// onj has a constructor
+			if (obj !== __undefined && obj !== __null) {
+				return obj[__constructor] === type
+			}
+			// doesn't, probably null or undefined 
+			// that don't have constructors methods, return false
+			else {
+				return __false
+			}
+		}
+	}
+	
+
 	/**
 	 * component lifecycle trigger
 	 * @param  {Object}         node  - component, or hyperscript
@@ -696,66 +430,76 @@
 	 * @param  {Boolean|Object} state - weather to pass sate to stage
 	 * @params {Boolean}        isCmp - weather this is a component or not
 	 */
-	lifecycle = (function () {
-		function lifecycle (node, stage, props, state, isComponent) {
-			// end quickly
-			// if node is not a Component or hyperscript object
-			if (!node || (!node.Component && !node.render)) {
-				return
-			}
-
-			// if node is a component then Component = node
-			// otherwise Component = node.Component
-			// if the node is not a components parent
-			// Element .Component will not exist which means
-			// no lifecycle methods exist as well
-			// so the next if (Component ...) block will end quickly
-			var 
-			Component = isComponent ? node : node.Component;
-
-			if (Component && Component[stage]) {
-				// is props/state truthy if so check if it is not a boolean
-				// if so default to the value in props/state passed, 
-				// if it is default to the Components props
-				// if props/state is falsey default 
-				// to what the value of props was before,
-				// which is undefined
-				props = props ? (!is(props, __boolean) ? props : Component.props) : __undefined,
-				state = state ? (!is(state, __boolean) ? state : Component.state) : __undefined
-
-				// componentShouldUpdate returns a Boolean
-				// so we publish the lifecycle return values
-				// which we can use in the draw - update () function
-				// to see if we should skip an element or not
-				return Component[stage](props, state)
-			}
+	function lifecycle (node, stage, props, state, iscomp) {
+		// end quickly
+		// if node is not a Component or hyperscript object
+		if (!node || (!node.internal && !node.render)) {
+			return
 		}
 
-		return lifecycle
-	}()),
+		// if node is a component then Component = node
+		// otherwise Component = node.Component
+		// if the node is not a components parent
+		// Element .Component will not exist which means
+		// no lifecycle methods exist as well
+		// so the next if (Component ...) block will end quickly
+		var
+		component = iscomp ? node : node.internal;
+
+		if (component && component[stage]) {
+			// is props/state truthy if so check if it is not a boolean
+			// if so default to the value in props/state passed, 
+			// if it is default to the Components props
+			// if props/state is falsey default 
+			// to what the value of props was before,
+			// which is undefined
+			props = props ? (!is(props, __boolean) ? props : component.props) : __undefined,
+			state = state ? (!is(state, __boolean) ? state : component.state) : __undefined
+
+			// componentShouldUpdate returns a Boolean
+			// so we publish the lifecycle return values
+			// which we can use in the draw - update () function
+			// to see if we should skip an element or not
+			return component[stage](props, state)
+		}
+	}
+
+
+	function debounce (fn, duration) {
+		// when we want to send a custom duration
+		// to setTimeout
+		duration = duration || 0
+
+		// push to the end of the event/render stack
+		// ensuring the dom is always up to date
+		// before we run any of the 
+		// removeChild/appendChild/replaceChild
+		// operations
+		// we use requestAnimationFrame if it's
+		// available
+		// and fallback to setTimeout otherwise
+		if (duration === 0 && is(requestAnimationFrame, __function)) {
+			requestAnimationFrame(fn)
+		}
+		else {
+			__setTimeout(fn, duration)
+		}
+	}
 
 
 	/**
 	 * diff virtual component and update dom
-	 * @param {Element} parent   - dom mount node
-	 * @param {Object}  newNode  - virtual element of components current state
-	 * @param {Object}  oldNode? - virtual element of compoents previous state
+	 * @param {Element} parent   - dom node
+	 * @param {Object}  newNode
+	 * @param {Object}  oldNode?
 	 * @param {Number}  index? 
-	 * @param {Object}  render?  - component object
+	 * @param {Object}  component?
 	 */
-	draw = (function () {
-		// references
-		var
-		__childNodes = 'childNodes',
-		__children   = 'children'
-
-		// draw interface
-		function draw (mount, newNode, oldNode, Component) {
-			update(mount, newNode, oldNode, __undefined, Component)
-		}
+	function vdomToDOM (parent, newNode, oldNode, component) {
+		update(parent, newNode, oldNode, __undefined, component)		
 
 		// diff and update dom loop
-		function update (parent, newNode, oldNode, index, Component) {
+		function update (parent, newNode, oldNode, index, component) {
 			index = index || 0
 			
 			// should component update
@@ -768,8 +512,7 @@
 			// adding to the dom
 			if (oldNode === __undefined) {
 				var 
-				nextNode = createElement(newNode, Component)
-
+				nextNode = createElement(newNode, component)
 				appendChild(parent, nextNode, newNode)
 			} 
 			// removing from the dom
@@ -835,27 +578,6 @@
 						}
 					}
 				}	
-			}
-		}
-
-		function debounce (fn, duration) {
-			// when we want to send a custom duration
-			// to setTimeout
-			duration = duration || 0
-
-			// push to the end of the event/render stack
-			// ensuring the dom is always up to date
-			// before we run any of the 
-			// removeChild/appendChild/replaceChild
-			// operations
-			// we use requestAnimationFrame if it's
-			// available
-			// and fallback to setTimeout otherwise
-			if (duration === 0 && is(requestAnimationFrame, __function)) {
-				requestAnimationFrame(fn)
-			}
-			else {
-				__setTimeout(fn, duration)
 			}
 		}
 
@@ -930,7 +652,7 @@
 		}
 
 		// create element
-		function createElement (node, Component, isChildren) {
+		function createElement (node, component) {
 			// handle text nodes
 			if (is(node, __string)) {
 				return __document.createTextNode(node)
@@ -970,7 +692,7 @@
 			// only map children arrays
 			if (is(node.children, __array)) {
 				each(node.children, function (child) {
-					el.appendChild(createElement(child, Component, __true))
+					el.appendChild(createElement(child, component))
 				})
 			}
 
@@ -978,7 +700,7 @@
 			// Component is only present
 			// on the initial render
 			// so this will only run once
-			if (Component) {
+			if (component) {
 				var 
 				props = node.props,
 				ref   = props ? props.ref : __undefined
@@ -987,7 +709,7 @@
 				if (ref) {
 					// if we have already set a refs object
 					// use the same object
-					Component.refs = Component.refs || {}
+					component.refs = component.refs || {}
 
 					// ref is a function run it
 					// passing the el to it
@@ -996,14 +718,13 @@
 					}
 					// add ref to component
 					else if (is(ref, __string)) {
-						Component.refs[ref] = el
+						component.refs[ref] = el
 					}
 				}
 			}
 		
 			return el
 		}
-
 
 		// check if props is event
 		function isEventProp (name, value) {
@@ -1104,8 +825,7 @@
 			return changes
 		}
 		
-		// initial creation of props, 
-		// no checks, just set
+		// initial creation of props, no checks, just set
 		function setElementProps (target, props) {
 			for (var name in props) {
 				updateProp(target, name, props[name], +1)
@@ -1187,806 +907,117 @@
 				}
 			}
 		}
-
-		return draw
-	}()),
+	}
 
 
 	/**
-	 * surl
-	 * @param  {Element?} mount - optional parent element
-	 * @return {surl}           - {settings, parent, router, vdom}
+	 * server-side interface converts a hyperscript vdom object to html string
+	 * @param {Object} hyperscript - hyperscript object
 	 */
-	surl = (function () {
-		function surl (parent) {
-			// we are going to be doing this alot when we use this alot
-			// it allows the minified to then convert all self to shorter alternatives
-			// since you can't minify 'this' or Fn.bind
-			var self = this;
-
-			// element specified on instantiation
-			// set mount element
-			if (parent) {
-				self.mount(parent)
-			}
+	function vdomToHTML (vdom) {
+		// void elements that do not have a close </tag> 
+		var
+		element = {
+			'area': __true,'base': __true,'br': __true,'!doctype': __true,
+			'col': __true,'embed': __true,'wbr': __true,'track': __true,
+			'hr': __true,'img': __true,'input': __true,'keygen': __true,
+			'link': __true,'meta': __true,'param': __true,'source': __true
 		}
 
-		surl[__prototype] = {
-			/**
-			 * make ajax requests
-			 * @return {Object} xhr object
-			 */
-			req: function Req (url, method, data, callback) {
-				method = method || 'GET'
-				data   = data || {}
-
-				// return ajax promise
-				return ajax(url, method.toUpperCase(), data, callback)
-			},
-
-			/**
-			 * set mount to element
-			 * @param  {Selector|Element} element - the element to mount to
-			 */
-			mount: function mount (element) {
-				var self = this;
-
-				// can't use document, use body instead
-				if (element === __document) {
-					element = element.body
-				}
-				// query selector if string
-				else if (is(element, __string)) {
-					element = __document.querySelector(element)
-				}
-
-				// assign mount if element
-				if (element && element.nodeType) {
-					self.dom = element
-				}
-				// for references sake
-				// incase you want to see all the properties
-				// of an instance
-				else {
-					self.dom = __undefined
-				}
-			},
-
-			/**
-			 * initialize/mount
-			 * @param {String} id - base component to mount to dom
-			 */
-			render: function render (Component, element, data) {
-				var self = this
-
-				// add parent element
-				if (element) {
-					// string? query element
-					if (is(element, __string)) {
-						self.dom = __document.querySelector(element)
-					}
-					// element? add
-					else if (element.nodeType) {
-						self.dom = element
-					}
-				}
-
-				// has parent to mount to
-				if (self.dom) {
-					// if there is a component already mounted
-					// call it's componentWillUnmount before we clear the
-					// mount dom element
-					if (self.vdom) {
-						lifecycle(self.vdom, __componentWillUnmount)
-					}
-
-					// clear dom
-					self.dom.innerHTML = ''
-
-					// probably a plain hyperscript object
-					// create class with render fn that returns it
-					if (is(Component, __object)) {
-						// hyperscript object
-						var hyperscript = Component;
-						// create component
-						Component = self.Component({
-							render: function () { 
-								return hyperscript 
-							} 
-						})
-					}
-
-					Component = Component || self.cmp
-					// add vdom objects
-					self.vdom = Component(data)
-					self.cmp = Component
-
-					// initial mount to dom
-					// we don't specify a old node here
-					// which just means everything is new
-					// so there will be no diffing involved
-					// we also pass the Component Object
-					// which we can use to add refs if set
-					draw(
-						self.dom,
-						self.vdom,
-						__undefined,
-						Component(__undefined, __undefined, __true)
-					)
-				}
-				// can't find element to mount to
-				else {
-					throw 'element to mount does not exist'
-				}
-			},
-
-			/**
-			 * create a component class
-			 * @param  {Object} component - component object
-			 * @return {Object}           - component
-			 */
-			Component: function Component (args) {
-				var 
-				that = this
-
-
-				if (is(args, __function)) {
-					// The below allows us to do something like
-					// 
-					// function Users(){
-					// 		function onClick () {
-					// 		}
-					// 		return {
-					// 			render: function () {
-					// 				return h('div', {onClick: onClick})
-					// 			}
-					// 		}
-					// }
-					// .render(.Component(Users), element)
-					return that.Component(args())
-				}
-
-
-				// create component
-				function ComponentClass () {
-					var 
-					self = this
-
-					// add props, state namespace
-					self.props = {}
-					self.state = {}
-
-					// add props to component
-					each(args, function (value, name) {
-						// bind the component scope to all methods
-						if (is(value, __function)) {
-							if (name === 'render') {
-								value = value.bind(self, self.props, self.state)
-							}
-							else {
-								value = value.bind(self)
-							}
-						}
-
-						// assign property/method
-						self[name] = value
-					})
-				}
-
-				// add setState and setProps methods to prototype
-				each(['Props', 'State', 'forceUpdate'], function (method) {
-					// state/props
-					var 
-					type = method.toLowerCase()
-
-					// add setters
-					if (method === 'Props' || method === 'State') {
-						// cmpClass.prototype.setState/setProps
-						ComponentClass[__prototype]['set'+method] = function (obj, callback, update) {
-							var 
-							self = this
-
-							// the obj passed in setState({obj}) / setProps({obj})
-							if (obj) {
-								// obj is a function that returns the setState({obj})
-								if (is(obj, __function)) {
-									// get the returned value
-									obj = obj(self.state, self.props)
-								}
-
-								// exit early if obj is not an object
-								if (!is(obj, __object)) {
-									throw 'setState() takes an object or a function that returns an object'
-								}
-
-								each(obj, function (value, name) {
-									self[type][name] = value
-								})
-
-								// only trigger render for setState()
-								// !update also allows us to call setState without
-								// triggering a re-render
-								// that.render is to make sure we have a base
-								// component to render
-								if (type === 'state' && !update && that.vdom) {
-									// new node
-									var 
-									newNode = that.cmp()
-
-									// diff new vs old node
-									draw(that.dom, newNode, that.vdom)
-
-									// set the old node to the new node
-									// we will use this in the next render
-									// as the old node
-									that.vdom = newNode
-								}
-							}
-						}
-					}
-					// add forceUpdate method
-					else if (method === 'forceUpdate') {
-						ComponentClass[__prototype]['forceUpdate'] = function (callback) {
-							draw(that.dom, that.cmp(), that.vdom)
-							
-							if (is(callback, __function)) {
-								callback()
-							}
-						}
-					}
-				})
-
-				// create component object
-				var 
-				ComponentObject = new ComponentClass
-
-				// we need render to render
-				// publish error
-				if (!ComponentObject.render) {
-					throw 'no render method'
-				}
-
-				// get and set initial state
-				if (ComponentObject[__getInitialState]) {
-					ComponentObject.setState(
-						ComponentObject[__getInitialState](), 
-						__undefined, 
-						__false
-					)
-				}
-				// get and set default props
-				if (ComponentObject[__getDefaultProps]) {
-					ComponentObject.setProps(
-						ComponentObject[__getDefaultProps](), 
-						__undefined, 
-						__false
-					)
-				}
-
-				// create components render returned hyperscript object
-				function hyperscript (obj) {
-					var 
-					self          = this
-					self.type     = obj.type,
-					self.props    = obj.props,
-					self.children = obj.children
-				}
-
-				// add lifecycle methods to render
-				each(ComponentObject, function (value, name) {
-					hyperscript[__prototype].Component = ComponentObject
-				})
-
-				// re add default object constructor
-				hyperscript[__prototype][__constructor] = __object
-
-				// re-create render function with new hyperscript obj
-				var
-				render = ComponentObject.render
-
-				ComponentObject.render = function () {
-					return new hyperscript(render())
-				}
-
-				// create component returned function
-				function Component (props, children, getCmpObj) {
-					// first publish that the component
-					// will receive props that are not children
-					// if props is set
-					if (props) {
-						lifecycle(
-							ComponentObject, 
-							__componentWillReceiveProps, 
-							props,
-							__undefined,
-							__true
-						)
-					}
-
-					// we have both props and children
-					// merge them
-					if (props && children) {
-						props.children = children
-					}
-					// we only have children
-					// create props obj with children child
-					else if (!props && children) {
-						props = {},
-						props.children = children
-					}
-
-					// we have props to set?
-					// set them
-					if (props) {
-						ComponentObject.setProps(props)
-					}
-
-					if (getCmpObj) {
-						// return component object
-						return ComponentObject
-					}
-					else {
-						// return hyperscript
-						return ComponentObject.render()
-					}
-				}
-
-				return Component
-			},
-
-			/**
-			 * DOM creates html hyperscript functions to the global scope
-			 * such that h('div', {}, 'Text') can be written as
-			 * div({}, 'Text')
-			 */
-			DOM: function DOM () {
-				each(['doctype','a','abbr','address','area','article','aside',
-				'audio','b','base','bdi','bdo','blockquote','body','br','button',
-				'canvas','caption','cite','code','col','colgroup','command',
-				'datalist','dd','del','details','dfn','div','dl','dt','em','embed',
-				'fieldset','figcaption','figure','footer','form','h1','h2','h3',
-				'h4','h5','h6','head','header','hgroup','hr','html','i','iframe',
-				'img','input','ins', 'kbd','keygen','label','legend','li','link',
-				'map','mark','menu','meta','meter','nav','noscript','object','ol',
-				'optgroup','option','output','p','param','pre','progress','q','rp',
-				'rt','ruby','s','samp','script','section','select','small','source',
-				'span','strong','style','sub','summary','sup','table','tbody','td',
-				'textarea','tfoot','th','thead','time','title',
-				'tr','track','u','ul','var','video','wbr'], function (name) {
-					__window[name] = function Element () {
-						// convert args to array
-						var 
-						args = __array[__prototype].slice.call(arguments),
-						first = args[0]
-
-						// i.e div('#id', {}, 'Children')
-						if (
-							is(first, __string) &&
-							(
-								first.substr(0,1) === '#' ||
-								first.substr(0,1) === '.' ||
-								first.substr(0,1) === '['
-							)
-						) {
-							// name will now = 'div#id'
-							name += first
-							args.shift(first)
-						}
-						// add name as first arg
-						// which represents the tag in hyperscript
-						args.unshift(name)
-
-						return h.apply(null, args)
-					}
-				})
-			},
-
-			/**
-			 * Creates a router interface
-			 * @param {Object} args - {mount, addr?, init?, routes}
-			 * @example
-			 * app.route({
-			 * 		mount: '.app'     // selector|element
-			 * 		addr: '/example', // string
-			 * 		init: '/user/id'  // initial route, defaults to current uri
-			 * 		routes: {
-			 * 			'/route.html': Home, // where Home/User is a component
-			 * 			'/:page/:name': User
-			 * 		}
-			 * })
-			 */
-			route: function route (args) {
-				function Router () {
-					// references
-					var
-					self = this
-
-					// data
-					self.settings = {},
-					self.url = __null,
-					self.interval = __null,
-
-					// history back
-					self.back = function () {
-						history.back()
-					},
-					// history foward
-					self.foward = function () {
-						history.foward()
-					},
-					// history go
-					self.go = function (index) {
-						history.go(index)
-					},
-					// navigate to a view
-					self.nav = function (url) {
-						var addr = this.settings.addr
-						
-						url  = addr ? addr + url : url
-
-						history.pushState(__null, __null, url)
-					},
-					// kills the rAf animation loop and clears the routes
-					self.destroy = function () {
-						this.routes = {}
-						clearInterval(this.interval)
-					},
-					// configure defualts
-					self.config = function (obj) {
-						var self = this;
-
-						each(obj, function(value, name) {
-							self.settings[name] = value
-						})
-					},
-					// start listening for url changes
-					self.init = function () {
-						var 
-						self = this,
-						fn   = function () {
-							var url = __window.location.pathname
-
-							if (self.url !== url) {
-								self.url = url
-								self.changed()
-							}
-						}
-
-						clearInterval(self.interval)
-						// start listening for a change in the url
-						self.interval = setInterval(fn, 50)
-					},
-					// register routes
-					self.on = function (args) {
-						var self = this,
-							routes;
-
-						// create routes object if it doesn't exist
-						if (!self.routes) {
-							self.routes = {}
-						}
-
-						// normalize args for ({obj}) and (url, callback) styles
-						if (!is(args, __object)) {
-							var args   = arguments
-
-							routes = {}
-							routes[args[0]] = args[1]
-						}
-						else {
-							routes = args
-						}
-
-						// assign routes
-						each(routes, function (value, name) {
-							var addr = self.settings.addr,
-								variables = [],
-								regex = /([:*])(\w+)|([\*])/g,
-								// given the following /:user/:id/*
-								pattern = name.replace(regex, function () {
-											var args = arguments,
-												id   = args[2]
-												// 'user', 'id', undefned
-
-											// if not a variable 
-											if (!id) {
-												return '(?:.*)'
-											}
-											// capture
-											else {
-												variables.push(id)
-												return '([^\/]+)'
-											}
-										}),
-								// lock pattern
-								pattern = pattern + '$'
-
-							self.routes[name] = {
-								callback:  value,
-								pattern:   addr ? addr + pattern : pattern,
-								variables: variables
-							}
-						})
-					},
-					self.changed = function () {
-						// references
-						var 
-						url    = this.url,
-						routes = this.routes
-
-						each(routes, function (val) {
-							var callback  = val.callback,
-								pattern   = val.pattern,
-								variables = val.variables,
-								match;
-
-							// exec pattern on url
-							match = url.match(new RegExp(pattern))
-
-							// we have a match
-							if (match) {
-								// create params object to pass to callback
-								// i.e {user: "simple", id: "1234"}
-								var data = match
-									// remove the first(url) value in the array
-									.slice(1, match[__length])
-									.reduce(function (data, val, i) {
-										if (!data) {
-											data = {}
-										}
-										// var name: value
-										// i.e user: 'simple'
-										data[variables[i]] = val
-										return data
-									}, __null)
-
-								// callback is a function, exec
-								if (is(callback, __function)) {
-									// component function
-									that.render(callback, __undefined, data)
-								}
-								// can't process
-								else {
-									throw 'could not find render method'
-								}
-							}
-						})
-					}
-				}
-
-				var 
-				that   = this,
-				parent = args.mount,
-				addr   = args.addr,
-				nav    = args.init,
-				routes = args.routes,
-				router = new Router
-
-				// mount to dom
-				if (parent) {
-					that.mount(parent)
-				}
-				// define root address
-				if (addr) {
-					router.config({addr: addr})
-				}
-				// assign routes
-				if (routes) {
-					router.on(routes)
-				}
-
-				// initialize listener
-				router.init()
-
-				// navigate to initial uri
-				if (nav) {
-					router.nav(nav)
-				}
-
-				// assign router to object
-				that.router = router
-			},
-
-			/**
-			 * hyperscript creator reference
-			 * @type {Function}
-			 */
-			Element: element,
-			createElement: element,
-
-			/**
-			 * Component creator reference
-			 * @type {Function}
-			 */
-			createClass: function createClass (obj) {
-				return this.Component(obj)
-			},
-
-			createStore: function (arg) {
-				if (is(arg, __object)) {
-					each(arg, function (value, name) {
-						arg[name] = create(value)
-					})
-
-					return arg
-				}
-				else {
-					return create(arg)
-				}
-
-				function create (reducer) {
-					var
-					state,
-					listeners = [],
-					dispatchers = [],
-					range = 5
-
-					// return the state
-					function getState () {
-						return state
-					}
-
-					// dispatch an action
-					function dispatch (action, timetravel) {
-						if (!is(action, __object)) {
-							throw 'action must be plain object'
-						}
-						if (action.type === __undefined) {
-							throw 'actions must have a type'
-						}
-
-						// get state from reducer
-						state = reducer(state, action)
-
-						// dispatch to all listeners
-						each(listeners, function (listener) {
-							return listener()
-						})
-
-						// don't save dispatches when time traveling
-						if (!timetravel) {
-							// save last 5 dispatches for timetravel
-							if (dispatchers[__length] < range) {
-								dispatchers.push(action)
-							}
-							// dispatches are at their max length
-							// overwrite old ones
-							// thus we always have the most recent actions to time travel to
-							else {
-								// remove first action
-								dispatchers.shift()
-								// add new action
-								dispatchers.push(action)
-							}
-						}
-					}
-
-					function subscribe (listener) {
-						if (!is(listener, __function)) {
-					  		throw 'listener should be a function'
-						}
-
-						listeners.push(listener)
-
-						return function unsubscribe () {
-							listeers = listeners.filter(function (l) {
-								return l !== listener
+		// print node
+		function ToHTML (vdom, level) {
+			// not a hyperscript object
+			if (is(vdom, __string)) {
+				return vdom
+			}
+
+			// references
+			var 
+			// i.e 'div'
+			type = vdom.type,
+			// i.e {id: 123, class: 'one two'}
+			props = vdom.props,
+			// i.e [obj, obj]
+			children = vdom.children
+
+			// print voidElements
+			if (element[type]) {
+				// <type ...props>
+				return '<'+type+Props(props)+'>';
+			}
+
+			// otherwise...
+			// <type ...props>...children</type>
+			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>'
+		}
+
+		// print props
+		function Props (props) {
+			props = __object.keys(props)
+							// remove any falsey value
+							.filter(function (name) {
+								return  props[name] !== __undefined &&
+										props[name] !== __null &&
+										props[name] !== __false
 							})
-						}
-					}
+							// 
+							.map(function (name) {
+								// <type name="value">
+								var 
+								value = props[name]
 
-					function timetravel (distance) {
-						// default distance
-						distance = distance || 0
+								// don't add events, keys or refs
+								if (!is(value, __function) && name !== 'key' && name !== 'ref') {
+									// if the value is a falsey/truefy value
+									// print just the name
+									// i.e checkbox=true
+									// will print <type checkbox>
+									// otherwise <type value="">
+									return value === __true ? name : name+'="'+value+'"'
+								}
+							})
+							// create string, remove trailing space
+							// <type ...props > => <type ...props>
+							.join(' ').replace(/\s+$/g, '')
 
-						// get length of dispatches
-						var
-						length = dispatchers[__length]
-
-						// get actual distance we will travel
-						// relative to dispatches length
-						distance = (length - distance) - 1
-
-						// make sure the distance is not greater than the
-						// range we can timetravel
-						// and not smaller than 0
-						distance = distance > range ? range : distance < 0 ? 0 : distance
-
-						var
-						action = dispatchers[distance]
-
-						// timetravel if we have an action to 
-						// dispatch
-						if (action) {
-							dispatch(action, __true)
-						}
-						
-					}
-
-					dispatch({type: '@@surl/INIT'})
-
-					return {
-						getState: getState, 
-						dispatch: dispatch, 
-						subscribe: subscribe,
-						timetravel: timetravel
-					}
-				}
-			}
-		}
-
-		return surl
-	}()),
-
-	/**
-	 * two-way data binding, not to be confused with Function.bind
-	 * @param  {String} prop - the property/attr to look for in the element
-	 * @param  {Object} obj  - the object to update
-	 * @param  {String} key  - the key in the object to update
-	 */
-	bind = (function () {
-		function bind (prop, Component, key) {
-			// the idea is that when you attach a function to an event,
-			// i.e el.addEventListener('eventName', fn)
-			// when that event is dispatched the function will execute
-			// making the this context of this function the element 
-			// that the event was attached to
-			// we can then extract the prop, and run the setter(setState/setProps)
-			// with the object {[key]: this[prop]}
-			// to bind a state/prop to an element
-			return function () {
-				// assign element
-				var el  = this,
-					// get key from element
-					// either the prop is a property of the element object
-					// or an attribute
-					value = (prop in el) ? el[prop] : el.getAttribute(prop)
-
-					// just if(value) doesn't work if the value is false
-					// and some prop values can be false
-					// null and undefined = prop/attr doesn't exist
-					if (value !== __undefined && value !== __null) {
-						// round about way to do obj = {[key]: value}
-						var 
-						obj      = {}
-						obj[key] = value
-
-						// run the components setState
-						Component.setState(obj)
-					}
-			}
-		}
-
-		return bind
-	}()),
-
-	/**
-	 * flag as a trusted element
-	 * @param  {String} text - content to convert
-	 * @return {String}
-	 */
-	trust = (function () {
-		function trust (text) {
-			function hyperscript () {
-				this.type = 'p',
-				this.props = {},
-				this.children = [text]
+			// not empty?
+			if (props) {
+				return props
 			}
 
-			hyperscript[__prototype].trust = __true,
-			hyperscript[__prototype][__constructor] = __object
-
-			return new hyperscript
+			return ''
 		}
 
-		return trust
-	}()),
+		// print children
+		function Children(children, level) {
+			// empty
+			if (children[__length] === 0) {
+				return ''
+			}
+
+			// indent level
+			level      = level || 0
+
+			// print tabs
+			var 
+			indent     = '\t'.repeat(level + 1),
+			lastIndent = '\t'.repeat(level)
+
+			// iterate through and print each child
+			return '\n'+indent+children.map(function (child) {
+				return ToHTML(child, level + 1)
+			}).join('\n'+indent)+'\n'+lastIndent
+		}
+
+		return ToHTML(vdom)
+	}
+
 
 	/**
-	 * flip and transition animation helper
-	 * @type {Object} {flip, animate}
+	 * animate interface
+	 * @return {Object} {flip, animate}
 	 */
-	animate = (function () {
+	function animate () {
 		/**
 		 * flip animate component/element
 		 * @param  {Element} element   
@@ -2225,168 +1256,912 @@
     		}
 		}
 
+		// classList helper
+		classList = classList()
+
 		return {
 			flip: flip,
 			transition: transition
 		}
-	}()),
-	
+	}
+
+
+	/**
+	 * trust interface
+	 * @param  {String} text - content to convert
+	 */
+	function trust (text) {
+		function h () {
+			this.type = 'p',
+			this.props = {},
+			this.children = [text]
+		}
+
+		h[__prototype].trust = __true,
+		h[__prototype][__constructor] = __object
+
+		return new h
+	}
+
 
 	/**
 	 * props utility
 	 * @param {Any} store - value
 	 */
-	prop = (function () {
-		/**
-		 * props allows use to create getter and setters
-		 * @param  {Any} store - value to store
-		 * @return {Function}  - getter,setter function
-		 * @example
-		 * var a = prop(1)
-		 * a() // => 1
-		 * a('changed')
-		 * a() // => 'changed'
-		 * this becomes very usefull when coupled with
-		 * callbacks that pass a value to the callback
-		 * i.e
-		 * app.req('/url').then(a)
-		 * when the request is done a will now have have
-		 * response of the request 
-		 */
-		function prop (store) {
-			// create the getter/setter
-			function prop () {
-				// we could use a name argument
-				// but then again the value can be a falsy value
-				// so if(value) wouldn't validate if the user passed a value
-				// rather we check if the arguments object is not of length 0
-				// which is what it will be if we don't pass an argument
-				var
-				args = arguments
+	function prop (store) {
+		// create the getter/setter
+		function prop () {
+			// we could use a name argument
+			// but then again the value can be a falsy value
+			// so if(value) wouldn't validate if the user passed a value
+			// rather we check if the arguments object is not of length 0
+			// which is what it will be if we don't pass an argument
+			var
+			args = arguments
 
-				if (args[__length]) {
-					store = args[0]
-				}
-
-				return store
+			if (args[__length]) {
+				store = args[0]
 			}
 
-			// define .toJSON
-			// so if we call JSON.stringify()
-			// on the returned getter/setter
-			// it returns the stored value
-			prop.toJSON = function () {
-				return store
-			}
+			return store
+		}
 
-			return prop
+		// define .toJSON
+		// so if we call JSON.stringify()
+		// on the returned getter/setter
+		// it returns the stored value
+		prop.toJSON = function () {
+			return store
 		}
 
 		return prop
-	}()),
+	}
+
 
 	/**
-	 * converts a hyperscript vdom object to html string
-	 * for server-side rendering
-	 * @param {Object} hyperscript - hyperscript object
+	 * DOM interface, creates html hyperscript functions to the global scope
+	 * such that h('div', {}, 'Text') written as div({}, 'Text')
 	 */
-	toHTML = (function () {
-		// void elements that do not have a close </tag> 
-		var
-		voidElements = {
-			'area': __true,'base': __true,'br': __true,'!doctype': __true,
-			'col': __true,'embed': __true,'wbr': __true,'track': __true,
-			'hr': __true,'img': __true,'input': __true,'keygen': __true,
-			'link': __true,'meta': __true,'param': __true,'source': __true
-		}
+	function DOM () {
+		each(['doctype','a','abbr','address','area','article','aside',
+		'audio','b','base','bdi','bdo','blockquote','body','br','button',
+		'canvas','caption','cite','code','col','colgroup','command',
+		'datalist','dd','del','details','dfn','div','dl','dt','em','embed',
+		'fieldset','figcaption','figure','footer','form','h1','h2','h3',
+		'h4','h5','h6','head','header','hgroup','hr','html','i','iframe',
+		'img','input','ins', 'kbd','keygen','label','legend','li','link',
+		'map','mark','menu','meta','meter','nav','noscript','object','ol',
+		'optgroup','option','output','p','param','pre','progress','q','rp',
+		'rt','ruby','s','samp','script','section','select','small','source',
+		'span','strong','style','sub','summary','sup','table','tbody','td',
+		'textarea','tfoot','th','thead','time','title',
+		'tr','track','u','ul','var','video','wbr'], function (name) {
+			__window[name] = function Element () {
+				// convert args to array
+				var 
+				args = __array[__prototype].slice.call(arguments),
+				first = args[0]
 
-		// print node
-		function toHTML (hyperscript, level) {
-			// not a hyperscript object
-			if (is(hyperscript, __string)) {
-				return hyperscript
+				// i.e div('#id', {}, 'Children')
+				if (
+					is(first, __string) &&
+					(
+						first.substr(0,1) === '#' ||
+						first.substr(0,1) === '.' ||
+						first.substr(0,1) === '['
+					)
+				) {
+					// name will now = 'div#id'
+					name += first
+					args.shift(first)
+				}
+				// add name as first arg
+				// which represents the tag in hyperscript
+				args.unshift(name)
+
+				return h.apply(null, args)
 			}
+		})
+	}
 
+
+	/**
+	 * router interface
+	 * @param {Object}
+	 * @example
+	 * router({
+	 * 		root: '/example',
+	 * 		nav: '/user/id'
+	 * 		routes: {
+	 * 			'/:page/:name': () => {}
+	 * 		}
+	 * })
+	 */
+	function router (args) {
+		function Router () {
 			// references
-			var 
-			// i.e 'div'
-			type = hyperscript.type,
-			// i.e {id: 123, class: 'one two'}
-			props = hyperscript.props,
-			// i.e [obj, obj]
-			children = hyperscript.children
+			var
+			self = this
 
-			// print voidElements
-			if (voidElements[type]) {
-				// <type ...props>
-				return '<'+type+Props(props)+'>';
-			}
+			// data
+			self.settings = {},
+			self.url = __null,
+			self.interval = __null,
 
-			// otherwise...
-			// <type ...props>...children</type>
-			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>'
-		}
+			// history back
+			self.back = function () {
+				history.back()
+			},
+			// history foward
+			self.foward = function () {
+				history.foward()
+			},
+			// history go
+			self.go = function (index) {
+				history.go(index)
+			},
+			// navigate to a view
+			self.nav = function (url) {
+				var 
+				root = this.settings.root
+				
+				url  = root ? root + url : url
 
-		// print props
-		function Props (props) {
-			props = __object.keys(props)
-							// remove any falsey value
-							.filter(function (name) {
-								return  props[name] !== __undefined &&
-										props[name] !== __null &&
-										props[name] !== __false
-							})
-							// 
-							.map(function (name) {
-								// <type name="value">
-								var 
-								value = props[name]
+				history.pushState(__null, __null, url)
+			},
+			// configure defualts
+			self.config = function (obj) {
+				var self = this;
 
-								// don't add events, keys or refs
-								if (!is(value, __function) && name !== 'key' && name !== 'ref') {
-									// if the value is a falsey/truefy value
-									// print just the name
-									// i.e checkbox=true
-									// will print <type checkbox>
-									// otherwise <type value="">
-									return value === __true ? name : name+'="'+value+'"'
+				each(obj, function(value, name) {
+					self.settings[name] = value
+				})
+			},
+			// start listening for url changes
+			self.init = function () {
+				var 
+				self = this,
+				fn   = function () {
+					var url = __window.location.pathname
+
+					if (self.url !== url) {
+						self.url = url
+						self.changed()
+					}
+				}
+
+				clearInterval(self.interval)
+				// start listening for a change in the url
+				self.interval = setInterval(fn, 50)
+			},
+			// register routes
+			self.on = function (args) {
+				var self = this,
+					routes;
+
+				// create routes object if it doesn't exist
+				if (!self.routes) {
+					self.routes = {}
+				}
+
+				// normalize args for ({obj}) and (url, callback) styles
+				if (!is(args, __object)) {
+					var args   = arguments
+
+					routes = {}
+					routes[args[0]] = args[1]
+				}
+				else {
+					routes = args
+				}
+
+				// assign routes
+				each(routes, function (value, name) {
+					var 
+					root = self.settings.root,
+					variables = [],
+					regex = /([:*])(\w+)|([\*])/g,
+					// given the following /:user/:id/*
+					pattern = name.replace(regex, function () {
+								var args = arguments,
+									id   = args[2]
+									// 'user', 'id', undefned
+
+								// if not a variable 
+								if (!id) {
+									return '(?:.*)'
 								}
-							})
-							// create string, remove trailing space
-							// <type ...props > => <type ...props>
-							.join(' ').replace(/\s+$/g, '')
+								// capture
+								else {
+									variables.push(id)
+									return '([^\/]+)'
+								}
+							}),
+					// lock pattern
+					pattern = pattern + '$'
 
-			// not empty?
-			if (props) {
-				return props
+					self.routes[name] = {
+						callback:  value,
+						pattern:   root ? root + pattern : pattern,
+						variables: variables
+					}
+				})
+			},
+			self.changed = function () {
+				// references
+				var 
+				url    = this.url,
+				routes = this.routes
+
+				each(routes, function (val) {
+					var callback  = val.callback,
+						pattern   = val.pattern,
+						variables = val.variables,
+						match;
+
+					// exec pattern on url
+					match = url.match(new RegExp(pattern))
+
+					// we have a match
+					if (match) {
+						// create params object to pass to callback
+						// i.e {user: "simple", id: "1234"}
+						var data = match
+							// remove the first(url) value in the array
+							.slice(1, match[__length])
+							.reduce(function (data, val, i) {
+								if (!data) {
+									data = {}
+								}
+								// var name: value
+								// i.e user: 'simple'
+								data[variables[i]] = val
+								return data
+							}, __null)
+
+						// callback is a function, exec
+						if (is(callback, __function)) {
+							// component function
+							callback(data)
+						}
+						// can't process
+						else {
+							throw 'could not find render method'
+						}
+					}
+				})
 			}
-
-			return ''
 		}
 
-		// print children
-		function Children(children, level) {
-			// empty
-			if (children[__length] === 0) {
-				return ''
+		var
+		root   = args.root,
+		nav    = args.init,
+		routes = args.routes,
+		router = new Router
+
+		// define root address
+		if (root) {
+			router.config({root: root})
+		}
+		// assign routes
+		if (routes) {
+			router.on(routes)
+		}
+
+		// initialize listener
+		router.init()
+
+		// navigate to initial uri
+		if (nav) {
+			router.nav(nav)
+		}
+
+		// assign router to object
+		return router
+	}
+
+
+	/**
+	 * request interface
+	 */
+	function request () {
+		/**
+		 * http interface
+		 * @param {String}
+		 * @param {String}
+		 * @param {Object}
+		 * @param {Function}
+		 */
+		function http (url, method, data, callback) {
+			return new promise(function (resolve, reject) {
+				var 
+				xhr      = new __XMLHttpRequest(),
+				location = __window.location,
+				sent
+
+				// create anchor element to extract usefull information
+				var 
+				a        = __document.createElement('a')	
+				a.href   = url
+
+				// check if is this a cross origin request check
+				var
+				CORS = !(
+					a.hostname        === location.hostname &&
+					a.port            === location.port     &&
+					a.protocol        === location.protocol &&
+					location.protocol !== 'file:'
+				)
+
+				// destroy created element
+				a = __null
+				
+				// open request
+				xhr.open(method, url, __true)
+				
+				// assign on load callback
+				xhr.onload = function () {
+					var 
+					response,
+					responseText = xhr.responseText,
+					statusText   = xhr.statusText;
+					
+					// success
+					if (xhr.status >= 200 && xhr.status < 400) {
+						// get response header
+						var 
+						resHeader = xhr.getResponseHeader("content-type"),
+						resType
+
+						// format response header
+						// to get the type of response
+						// that we can use to format the data
+						// if needed i.e create dom/parse json
+						if (resHeader.indexOf(';') !== -1) {
+							resType = resHeader.split(';');
+							resType = resType[0].split('/')
+						}
+						else {
+							resType = resHeader.split('/')
+						}
+
+						// extract response type 'html/json/text'
+						resType = resType[1]
+
+						// json, parse json
+						if (resType === 'json') {
+							response = JSON.parse(responseText)
+						}
+						// html, create dom
+						else if (resType === 'html') {
+							response = (new DOMParser()).parseFromString(responseText, "text/html")
+						}
+						// text, as is
+						else {
+							response = responseText
+						}
+
+						// use callbacks
+						if (callback) {
+							callback(response)
+						}
+						// otherwise resolve promise
+						else {
+							resolve(response)
+						}
+					}
+					// failed
+					else {
+						// use callbacks
+						if (callback) {
+							callback(statusText)
+						}
+						// otherwise resolve promise
+						else {
+							reject(statusText)
+						}
+					}
+				}
+
+				// assign on error callback
+				xhr.onerror = function () {
+					reject(xhr.statusText)
+				}
+				
+				// set for this is a cross origin request
+				if (CORS) {
+					xhr.withCredentials = __true
+				}
+
+				// serialize settings for POST request
+				if (method === 'POST') {
+					xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+					sent = param(data)
+				}
+				// stringify non GET requests i.e PUT/DELETE...
+				else if (method !== 'GET') {
+					xhr.setRequestHeader('Content-Type', is(data, __object) ? 'application/json' : 'text/plain')
+					sent = JSON.stringify(data)
+				}
+
+				// send request
+				xhr.send(sent)
+			})	
+		}
+
+		/**
+		 * serialize + encode object
+		 * @param  {Object}  obj   
+		 * @param  {Object}  prefix
+		 * @return {String}  serialized object
+		 * @example
+		 * // returns 'url=http%3A%2F%2F.com'
+		 * param({url:'http://.com'})
+		 */
+		function param (obj, prefix) {
+			var arr = []
+
+			for (var key in obj) {
+			    var 
+			    __prefix = prefix ? prefix + '[' + key + ']' : key,
+			    value    = obj[key]
+
+			    // when the value is equal to an object 
+			    // that means that we have something like
+			    // data = {name:'John', addr: {...}}
+			    // so we re-run param on addr to serialize 'addr: {...}'
+			    arr.push(typeof value == 'object' ? 
+			    	param(value, __prefix) :
+			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value))
 			}
 
-			// indent level
-			level      = level || 0
+			return arr.join('&');
+		}
 
-			// print tabs
+		/**
+		 * promise interface
+		 * @param {Function} 
+		 * @return {Object} {then, done}
+		 */
+		function promise (fn) {
+	  		var
+	  		value,
+	  		state = 'pending',
+	  		deferred = __null
+
+	  		function reject (reason) {
+	  		    state = 'rejected';
+	  		    value = reason
+
+	  		    if(deferred) {
+  		      		handle(deferred)
+	  		    }
+  		  	}
+
+	  		function resolve (newValue) {
+	  			try {
+	  				if (newValue && is(newValue.then, __function)) {
+		  			    newValue.then(resolve, reject)
+		  			    return
+				  	}
+				  	
+		    		value = newValue
+		    		state = 'resolved'
+
+		    		if (deferred) {
+		      			handle(deferred)
+		    		}
+	  			} catch (e) {
+	  				reject(e)
+	  			}
+	  		}
+
+	  		function handle (handler) {
+	    		if (state === 'pending') {
+	      			deferred = handler
+	      			return
+	    		}
+
+	    		__setTimeout(function () {
+		    		var 
+		    		handlerCallback
+
+	    		    if (state === 'resolved') {
+			      		handlerCallback = handler.onResolved
+	    		    } 
+	    		    else {
+			      		handlerCallback = handler.onRejected
+	    		    }
+
+	    		    if (!handlerCallback) {
+			      		if (state === 'resolved') {
+			        		handler.resolve(value)
+			      		} 
+			      		else {
+			        		handler.reject(value)
+			      		}
+
+			      		return
+	    		    }
+
+	    		    var ret
+		            try {
+		                ret = handlerCallback(value);
+		                handler.resolve(ret)
+		            } 
+		            catch (e) {
+		                handler.reject(e)
+		            }
+	    		}, 0)
+	  		}
+
+	  		this.then = function (onResolved, onRejected) {
+	    		return new promise (function(resolve, reject) {
+		      		handle({
+		        		onResolved: onResolved,
+		        		onRejected: onRejected,
+		        		resolve: resolve,
+		        		reject: reject
+		      		})
+	    		})
+	  		}
+
+	  		this.done = function (onFulfilled, onRejected) {
+  		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this
+
+  		  		self.then(__null, function (err) {
+  		    		__setTimeout(function () {
+  		      			throw err
+  		    		}, 0)
+  		  		})
+	  		}
+
+	  		fn(resolve, reject)
+		}
+
+		/**
+		 * request interface
+		 * @param {String}
+		 * @param {Object}
+		 * @param {Function}
+		 */
+		function request (method) {
+			return function (url, data, callback) {
+				if (is(data, __function)) {
+					callback = data
+				}
+
+				// return ajax promise
+				return http(url, method.toUpperCase(), data, callback)
+			}
+		}
+
+		return {
+			get: request('GET'),
+			post: request('POST')
+		}
+	}
+
+
+	/**
+	 * render interface
+	 * @return {Function}
+	 * @example
+	 * render = s.render(Component, '.selector')
+	 * render()
+	 */
+	function render () {
+		var
+		component,
+		newNode,
+		oldNode,
+		element,
+		props,
+		internal,
+		initial = __true,
+		args = __array[__prototype].slice.call(arguments)
+
+		// assign args
+		each(args, function (value) {
+			// props
+			if (!value.render && is(value, __object)) {
+				props = value
+			}
+			// component
+			else if (is(value, __function)) {
+				component = value
+			}
+			// element
+			else if (value.nodeType) {
+				element = value
+			}
+			// element selector
+			else if (is(value, __string)) {
+				element = __document.querySelector(value)
+			}
+		})
+
+		// has parent to mount to
+		if (element) {
+			return function (props, children) {
+				// initial render
+				if (initial) {
+					// get a fresh copy of the vdom
+					newNode = component(props, children)
+					// clear dom
+					element.innerHTML = ''
+
+					internal = component(__undefined, __undefined, __true)
+
+					if (internal) {
+						if (internal[__getInitialState]) {
+							setState(internal, internal[__getInitialState]())
+						}
+						if (internal[__getDefaultProps]) {
+							setProps(internal, internal[__getDefaultProps]())
+						}
+					}
+
+					if (newNode) {
+						vdomToDOM(element, newNode, __undefined, internal)
+
+						// publish that the initial render has taken place
+						initial = __false
+						// this newNode = the next renders oldNode
+						oldNode = newNode
+					}
+				}
+				// updates
+				else {
+					// get a fresh copy of the vdom
+					newNode = component(props, children)
+
+					if (newNode) {
+						// add to the event stack
+						debounce(function () {
+							vdomToDOM(element, newNode, oldNode)
+							// this newNode = the next renders oldNode
+							oldNode = newNode
+						})
+					}
+				}
+
+				return newNode
+			}
+		}
+		// can't find element to mount to
+		else {
+			throw 'element to mount does not exist'
+		}
+	}
+
+
+	/**
+	 * component interface
+	 * use this to extend (es6)
+	 * i.e Users extends s.Component {
+	 * 
+	 * }
+	 * note: does not auto-bind
+	 */
+	function Component () {
+		// immutable internal props & state
+		this.props = {}
+		this.state = {}
+	}
+
+	// set internal props & state
+	Component[__prototype] = {
+		setState: function (obj) {
+			setState(this, obj)
+		},
+		setProps: function (obj) {
+			setProps(this, obj)
+		}
+	}
+
+	// create component
+	function comp (obj) {
+		// create new component object
+		var component = new Component
+
+		// maybe the object is a function that returns an object
+		if (is(obj, __function)) {
+			obj = obj()
+		}
+
+		// add the properties to the component instance
+		// also bind functions to the component scope
+		each(obj, function (value, name) {
+			if (is(value, __function)) {
+				component[name] = value.bind(component)
+			}
+			else {
+				component[name] = value
+			}
+		})
+
+		// create a hyperscript object
+		// that has a reference to the components instance
+		// or internals
+		function h (obj) {
 			var 
-			indent     = '\t'.repeat(level + 1),
-			lastIndent = '\t'.repeat(level)
+			self          = this
+			self.type     = obj.type,
+			self.props    = obj.props,
+			self.children = obj.children
+		}
+		h[__prototype].internal = component
+		h[__prototype].toHTML   = function () {
+			console.log(vdomToHTML(this))
+		}
+		// re-add default object constructor
+		// insures obj.constructor will return Object
+		h[__prototype][__constructor] = __object
 
-			// iterate through and print each child
-			return '\n'+indent+children.map(function (child) {
-				return toHTML(child, level + 1)
-			}).join('\n'+indent)+'\n'+lastIndent
+		// reference the render function
+		var
+		render = component.render
+
+		// return a function that when called
+		// returns the components vdom representation
+		// i.e User(props) -> {type: 'div', props: {..props}, children: ...}
+		return function (props, children, internal) {
+			// insure the render function returns the newly
+			// created hyperscript object
+			component.render = function (props) {
+				return new h(render(props))
+			}
+
+			if (children) {
+				props.children = children
+			}
+
+			if (props) {
+				lifecycle(component, __componentWillReceiveProps, __true, __undefined, __true)
+			}
+
+			// expose the components internals
+			// when requested
+			return internal ? component : component.render(props)
+		}
+	}
+
+	// set component props
+	function setProps (self, obj) {
+		// set props
+		each(obj, function (value, name) {
+			self.props[name] = value
+		})
+	}
+
+	// set component state
+	function setState (self, obj) {
+		// if the object is a function that returns an object
+		if (is(obj, __function)) {
+			obj = obj()
+		}
+		// set state
+		each(obj, function (value, name) {
+			self.state[name] = value
+		})
+	}
+
+
+	/**
+	 * store interface
+	 * @param  {[type]} reducer [description]
+	 * @param {Number} range - timetravel/undo range
+ 	 * @return {Object} {connect, dispatch, getState, subscribe, timetravel}
+	 */
+	function store (reducer, range) {
+		var
+		self = this,
+		range = range || 2
+
+		// if the reducer is an object of reducers (multiple)
+		// lets create one for each
+		// and return the object back with stores
+		if (is(reducer, __object)) {
+			each(reducer, function (value, name) {
+				reducer[name] = create(value)
+			})
+
+			return reducer
+		}
+		// single reducer
+		else {
+			return create(reducer)
 		}
 
-		return toHTML
-	}())
+		// create store
+		function create (reducer) {
+			var
+			state,
+			listeners = [],
+			states = []
+
+			// return the state
+			function getState () {
+				return state
+			}
+
+			// dispatch an action
+			function dispatch (action, timetravel) {
+				// there are no actions when we are time traveling
+				if (!timetravel) {
+					if (!is(action, __object)) {
+						throw 'action must be plain object'
+					}
+					if (action.type === __undefined) {
+						throw 'actions must have a type'
+					}
+
+					// get state from reducer
+					state = reducer(state, action)
+				}
+				// timetraveler
+				else {
+					state = timetravel
+				}
+
+				// dispatch to all listeners
+				each(listeners, function (listener) {
+					return listener.call(self, state)
+				})
+
+				// don't update our states store
+				// when timetraveling
+				if (!timetravel) {
+					// save last 5 dispatches for timetravel
+					if (states[__length] < range) {
+						states.push(state)
+					}
+					// dispatches are at their max length
+					// overwrite old ones
+					else {
+						// remove first action
+						states.shift()
+						// add new action
+						states.push(state)
+					}
+				}
+			}
+
+			// subscribe to a store
+			function subscribe (listener) {
+				if (!is(listener, __function)) {
+			  		throw 'listener should be a function'
+				}
+
+				listeners.push(listener)
+
+				return function unsubscribe () {
+					listener = listeners.filter(function (l) {
+						return l !== listener
+					})
+				}
+			}
+
+			// auto subscribe a component to a store
+			function connect (render, element) {
+				render(getState())
+
+				subscribe(function () {
+					render(getState())
+				})
+			}
+
+			dispatch({type: '@@surl/INIT'})
+
+			return {
+				getState: getState, 
+				dispatch: dispatch, 
+				subscribe: subscribe,
+				connect: connect
+			}
+		}
+	}
 
 
 	/* --------------------------------------------------------------
@@ -2396,11 +2171,17 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.surl    = surl,
-	exports.h       = element,
-	exports.animate = animate,
-	exports.prop    = prop,
-	exports.bind    = bind,
-	exports.trust   = trust,
-	exports.toHTML  = toHTML
+	exports.h = element()
+	exports.s = {
+		render: render,
+		router: router,
+		request: request,
+		comp: comp,
+		Component: Component,
+		store: store,
+		trust: trust,
+		prop: prop,
+		animate: animate,
+		DOM: DOM
+	}
 }));

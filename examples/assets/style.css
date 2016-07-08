@@ -61,7 +61,7 @@ li {
 }
 .slideUp {
 	pointer-events: none;
-	transition: transform 220ms ease, margin-top 220ms 220ms;
+	transition: transform 120ms ease, margin-top 120ms 120ms;
 	transform: scale(1,0);
 	margin-top: -18px;
 }

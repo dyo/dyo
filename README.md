@@ -1,17 +1,17 @@
 # surl.js
 
-##### a light performant (~6kb) framework that mimics most of the reacts api's with some additions.
+##### a light performant (~6kb) vdom framework.s.
 
 - animations (flip & transition)
 - requests (with callbacks / promises)
 - router
-- store (redux-ish)
+- store
 
 
 #####Supports: Chrome, Firefox, Safari, IE10+
 
-- *6.3kb minified+gzipped.*  
-- *13.7kb minified.*
+- *~6kb minified+gzipped.*  
+- *~13kb minified.*
 
 
 --
@@ -19,202 +19,139 @@
 #### "Hello World"
 
 ```javascript
-var 
-app = new surl,
-cmp = app.createClass({render: ()=>{return h('div#id','Hello World')}})
-app.render(cmp, document)
-
-```
-
-
-##.Component
-
-a component can be any object that has a render function that
-returns a virtual node i.e
-
-```javascript
-var app = new surl(Element|Selector)
-
-var obj = {
-	render: function(props, state){
-		return {
-			type: 'div'
-			props: {},
-			children: Array | 'String'
-		}
-	}
-}
-
-app.Component(obj)
-// or
-app.createClass(obj)
-
-```
-you can also use the built in hyperscript helper 
-
-```javascript
-h('div', {}, ...children | 'Text' | ...component)
-```
-when adding a component as a child of another you can pass props to that component which will be added to its `this.props`
-
-```javascript
-h('div', UserComponent({products: [1,2,3]}, 'child))
-
-component = app.Component({
-	render: function () {
-		console.log(this.props)    // {products: [1,2,3]}
-		console.log(this.children) // 'child'
-		
-		return ('div')
-	}
-})
-```
-
-other ways to create a component
-
-```javascript
-function FunctionStyle () {
-	var onClick = function () {
-		app.route.nav('/router.html')
-	}
-
+// a function that returns a object with render
+function TodoApp () {
 	return {
-		render: function () {
-			return h('h1', {onclick: onClick}, this.props.id)
+		render: function (props) {
+		
 		}
 	}
 }
-// mount
-app.mount(app.Component(FuncStyle), '.app')
-
-function PrototypeStyle () {
-	this.onClick = function () {
-		app.route.nav('/router.html')
-	}
-
-	this.render = function () {
-		return h('h1', {onclick: this.onClick}, this.props.id)
+// or a plain object
+var TodoApp = {
+	render: function (props) {
 	}
 }
-// mount
-app.mount(app.Component(new PrototypeStyle), '.app')
+
+// create a render mapper
+var render = s.render(s.comp(TodoApp), '.app')
+// or
+var render = s.render((props) => h('div', props.children), 'app')
+
+// call it anytime you want to render to the dom
+render(...props, children, internal?)
+
+// internal{Boolean} tells the render to return the component
+// instead of the vdom node
+
 ```
-**note:** props and state are passed to `render(props, state)`
 
-##.Element
+## s.render
 
-hyperscript `h(type, props, children)`
+create a render function that can be called anytime you need to render to the dom, s.render doesn't really care if you wrap your component in `s.comp(User)` or if it's just a function that returns a vdom node when executed.
+
+```javascript
+var Sidebar = s.render(s.comp(User), '.side-bar')
+var Header = s.render(s.comp(Header), '.header')
+
+// where User & Header are either functions that return 
+// an object with a render method or an object with a render method
+```
+
+
+## h(type, props, children)
+
+creates vdom nodes
 
 ```javascript
 h('.card[checked]', {data-id: 1234}, 'Text')
-//or
-app.Element('.card[checked]', {data-id: 1234}, 'Text')
-//or
-app.createElement(...)
 ```
-will create 
+creates
 
 ```html
 <div class="card" data-id="1234" checked>Text<div>
 ```
 
-##.DOM
+## s.DOM
 
-if you want to save a few keystrokes you can do
+save a few keystrokes
 
 ```javascript
-var app = new surl()
-app.DOM()
+
+s.DOM()
 ```
-and that will expose all html elements to the window so you can
+and that will expose all html elements to the window
 
 ```javascript
 // instead of
 h('input', {value: 'hello'})
 // you could do
 input({value: 'hello'})
-// but this also means you can't do
-h('input[checked]')
-// to replicate that in the nodeName() format you will have to do do
-input({checked: true})
 ```
 
-##.render
+
+## s.route
+
+create a router
 
 ```javascript
-var app = new surl
-app.render(UserComponent, '.selector', {prop: 1, prop2: 2})
-```
-
-You can also specify them mount before like
-
-```
-var app = new surl('.app')
-// or
-var app = new surl
-app.mount('.app')
-
-app.render(UserComponent, null, {prop: 1, prop2: 2})
-```
-
-##.route
-
-```javascript
-app.router({routes, mount?, addrs?, init?})
+var myrouter = s.router({
+	root: '/examples',
+	nav: '/start',
+	routes: {
+		'/:user/:id': () => {}
+	}
+})
 
 // then access the router with
-app.router
+myrouter
 - .nav('url')
 - .back()
 - .foward()
 - .go(-Number) || .go(+Number)
-- .destroy()
 ```
-example
+## s.request
+
+create an http helper
 
 ```javascript
-var app = new surl(document)
-var a = app.Component({render, state, ...methods})
+var request = s.request()
 
-app.route({
-	routes: {
-		'/', ComponentA
-		'/:user/:action', ComponentB
-	}
-	mount?: 'selector'|Element
-	addrs?: 'root address, i.e /directory'
-	init?: 'nav to this route on init, i.e /'
-})
+request.get('/url/id', callback)
+request.post('/url/id', {data:1}, callback)
 
-app.router.nav('/user/delete')
-// will navigate to 'url.com/user/delete'
-// if you set addrs: 'example' it will nav to
-// 'url.com/example/user/delete'
+var a = prop('hello')
+request.get('/url/id').then(a).done(()=>console.log(a))
+// a => response
 
 ```
 
-##.req
-
-make ajax requests
+## s.store
 
 ```javascript
-app.req('url', 'METHOD', {data}, callback?)
-//returns a promise if you don't pass a callback, {then, done}
+var render = s.render(MyComponent, '.app')
+
+var store = s.store(reducer => {})
+store.subscribe(() => { render(store.getState()) })
+store.dispatch({type: 'ADD'})
+// render will mount/render/update
+// anytime you dispatch an action
+
+// or all that in one line
+store.connect(render)
+
+// will mount the component to the dom with the initial state
+// returned by .getState()
+// an keep it update to date anytime an action is dispatched
+// to the store
 
 ```
 
-for example
-
-```javascript
-var a = prop('Hello');
-app.req('/user/id').then(a).done( ()=>console.log(a()) )
-```
-will log the response from `/user/id`
 
 
-##lifecycles
+## lifecycles
 
-A react like lifecycle
+react like lifecycle
 
 ```javascript
 shouldComponentUpdate:     function(nextProps, nextState)
@@ -227,11 +164,9 @@ componentDidMount:         function(node)
 componentWillUnmount:      function(node)
 ```
 
-The main difference is the `componentDidMount` and `componentWillMount` lifecycles will have access to the node.
+`componentDidMount` and `componentWillMount` lifecycles have access to the node.
 
-Additionally with `componentWillUnmount` you can return a duration number(in ms) back to it with which it will use to remove the element from the dom only after that amount of time has elapsed. This allows you to do animations on that node before the node is removed/added, this works well with the `animate.flip()` helper, be advised you can probably do all this with the `animation.transition('className', callback)` helper, where by you call the setState method within the callback that triggers only after the any transitions that have been added through that className are complete.
-
-components also have the react like `this.setState(obj)` which triggers a re-render that updates the dom only if something has changed. There is also an additional `this.setProps(obj)` though unlike setState it does not trigger a re-render.
+`componentWillUnmount` can receieve(return) a duration number(in ms) back to it used to remove the element from the dom only after that amount of time has elapsed. This allows you to do animations on that node before the node is removed/added, this works well with the `animate.flip()` helper, though be advised you can probably do all this with the `animation.transition('className', callback)` helper.
 
 
 ## helpers
@@ -246,6 +181,8 @@ components also have the react like `this.setState(obj)` which triggers a re-ren
 
 
 ```javascript
+var animate = s.animate()
+
 animate.flip(className, duration, transform, transformOrigin, easing)(Element)
 
 animate.transition(className)(node, callback)
@@ -278,62 +215,40 @@ handleDelete: function () {
 	
 	// animate node out then update state
 	animate.transition('slideUp')(node, function(){
-		self.setState({items: items})
+		store.dispatch({type: 'DELETE', id: 1234})
 	})
 }
 ```
 
-### bind
-
-two way state data binding
-
-```javascript
-h('input' {oninput: bind('value', this, 'text')})
-// bind('propName/attrName', component, 'state key to update')
-// which reads like
-// bind this inputs value prop to this components state['text'] prop
-
-// will thus change the components state to
-// {
-//    ...
-//    text: [inputs value]
-// }
-```
-
-### trust
+### s.trust
 
 print html entities
 
 ```javascript
-trust("Home Page &amp; <script></script>")
+s.trust("Home Page &amp; <script></script>")
 // Home Page &
 // + will add the script tag to the dom
 ```
-so that can be used in a render i.e
+i.e
 
 ```javascript
 h('div', trust('<script>alert('Hello World')</script>'))
 ```
 
-### prop
+### s.prop
 
 ```javascript
-var a = prop('value')
+var a = s.prop('value')
 console.log(a()) // => value
 a('new value')
 a() // => new value
 JSON.stringify(a) // => new value
 ```
 
-### toHTML
+### .toHTML
 
 ```javascript
-document.write(toHTML(app.vdom))
-// => prints html to page
-```
-
-on a Component
-
-```javascript
-document.write(toHTML(app.Component({...props})))
+var render = s.render(s.comp(MyComponent), '.className')
+document.write(render(...props).toHTML())
+// => the components html to the page
 ```

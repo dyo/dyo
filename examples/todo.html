@@ -11,182 +11,124 @@
 	</head>
 	<body>
 		<div class="app"></div>
-		<br><br>
-		<div id="counter"></div>
 
 		<script>
-			var 
-			app = new surl()
-
-			var // define components
-			TodoItem = app.Component({
-				// shouldComponentUpdate: function (nextProps, nextState) {
-				// 	console.log('shouldComponentUpdate: ', this, arguments)
-				// },
-				componentWillMount: function() {
-					// console.log('componentWillMount:', this, arguments)
-				},
-				componentDidMount: function(node) {
-					// console.log('componentDidMount: ', this, arguments, node)
-				},
-				componentWillUnmount: function (node) {
-					// console.log('componentWillUnmount', this, arguments, node)
-				},
-				componentWillReceiveProps: function(nextProps) {
-					// console.log('componentWillReceiveProps: ', this, arguments)
-				},
-				componentWillUpdate: function(nextProps, nextState) {
-					// console.log('componentWillUpdate: ', this, arguments)
-				},
-				componentDidUpdate: function(prevProps, prevState) {
-					// console.log('componentDidUpdate: ', this, arguments)
-				},
-				render: function (props, state) {
-					// references
-					var 
-					item = props.item
-
-					return h('li',
-								{
-									onclick: props.handleDelete, 
-									id: item.id, 
-									className: Date.now(),
-									style: 'cursor:pointer;',
-									key: item.id
-								},
-								item.text
-							)
-				}
-			}),
-
-			TodoList = app.Component({
-		  		render: function(props) {
-		  			// references
-		  			var 
-		  			items = props.items,
-		  			handleDelete = props.handleDelete
-
-			    	return h('ul', 
-			    				// for each item return a TodoItem Component
-			    				items.map(function (value) {
-			    					return TodoItem({item: value, handleDelete: handleDelete})
-			    				})
-	    					)
-		  		}
-			}),
-
-			TodoApp = app.Component({
-				componentWillMount: function() {
-					// console.log('componentWillMount:', this, arguments)
-				},
-				componentDidMount: function(node) {
-					// console.log('componentDidMount: ', this, arguments, node)
-				},
-				componentWillUnmount: function (node) {
-					// console.log('componentWillUnmount', this, arguments, node)
-				},
-		  		getInitialState: function() {
-		  			// initial data
-		    		return {items: 
-		    			[
-			    			{id: 1234, text: 'Default'},
-			    			{id: 0234, text: 'Something'},
-			    			{id: 4234, text: 'Else....'},
-			    			{id: 9303, text: 0},
-			    			{id: 9103, text: null},
-			    			{id: 9803, text: void 0},
-			    			{id: 9903, text: false}
-	    				], 
-	    				text: ''
-	    			}
-		  		},
-		  		handleSubmit: function (e) {
-		  			// prevent default form submit behaviour
-		    		e.preventDefault()
-
-		    		// references
-		    		var
-		    		text = this.state.text
-
-    				if (text) {
-    					// add item to items array
-	    				var 
-	    				nextItems = this.state.items.concat({text: text, id: Date.now()})
-
-	    				// update state
-		    			this.setState({items: nextItems, text: ''})
-	    			}
-		  		},
-		  		handleDelete: function (e) {
-		  			// references
-		  			var 
-		  			self = this,
-		  			node = e.currentTarget,
-		  			id   = node.id
-
-		  			self.state.items.forEach(function(value, index, arr){
-		  				if (value.id == id) {
-		  					// get part of array from 0 to item's index
-		  					// then skip the element we want to delete and add 
-		  					// everything else after that
-		  					var 
-		  					items = arr.slice(0, index).concat(arr.slice(index+1))
-
-		  					// animate node out then update state
-		  					animate.transition('slideUp')(node, function(){
-		  						self.setState({items: items})
-		  					})
-		  				}
-		  			})
-		  		},
-		  		render: function (props, state) {
-		  			return h('div',
-		  						h('h3', 'TODO'),
-		  						h('form', {onsubmit: this.handleSubmit},
-		  							h('input', {oninput: bind('value', this, 'text'), value: state.text}),
-		  							h('button', 'Add #' + (state.items.length+1))
-  								),
-  								TodoList({items: state.items, handleDelete: this.handleDelete})
-		  					)
-		  		}
-			})
-
-			// mount to dom
-			app.render(TodoApp, '.app')
-
-			console.log(app)
 
 
-			// flux/reduxy stuff
-			var 
-			store = app.createStore({
-				counter: function (state, action) {
-					state = state || 0
+			// ------------------------- initializers ------------------------- //
 
-					switch (action.type) {
-						case 'INCREMENT':
-							return state + 1;
-						case 'DECREMENT':
-							return state - 1;
-						default:
-							return state;
+
+			var router = s.router({
+				root: '/examples',
+				routes: {
+					'/router.html': function () {
+						console.log(arguments)
 					}
 				}
 			})
 
+			var render  = s.render(s.comp(TodoApp), '.app')
+			var request = s.request()
+							request.get('?url')
+							
+			var animate = s.animate()
 
-			var
-			render = function () {
-				document.getElementById('counter').innerText = store.counter.getState()
-			}
 
-			store.counter.subscribe(render)
-			render()
+			// ------------------------- store ------------------------- //
 
-			var stop = true
-			document.addEventListener('click', function () {
-				store.counter.dispatch({type: 'INCREMENT'})
+
+			var store = s.store(function (state, action) {
+				state = state || {items: []}
+
+				switch (action.type) {
+					case 'ADD':
+						return Object.assign({}, state, {
+							items: state.items.concat({
+								id: action.id,
+								value: action.value, 
+								completed: false
+							})
+						})
+					case 'TOGGLE':
+						return state.map(function (item) {
+							if (item.id !== action.id) {
+								return todo
+							}
+
+							return Object.assign({}, item, {completed: !item.completed})
+						})
+					case 'REMOVE':
+						return Object.assign({}, state, {
+							items: state.items.filter(function (item) {
+								if (item.id != action.id) {
+									return item
+								}
+							})
+						})
+					case 'FILTER':
+						return Object.assign({}, state, {
+							items: state.items.filter(function (item) {
+								var 
+								keys   = Object.keys(action).slice(1)
+								length = keys.length
+
+								for (var i = 0, value = keys[i]; i < length; i++) {
+									return action[value] == item[value]
+								}
+							})
+						})
+					default:
+						return state
+				}
 			})
+
+
+			store.connect(render)
+
+
+			// ------------------------- components ------------------------- //
+
+
+			function TodoItem (props) {
+				return h('li', {onclick: props.handleDelete, id: props.item.id, style: 'cursor:pointer;', key: props.item.id}, props.item.value)
+			}
+			function TodoList (props) {
+		    	return h('ul', props.items.map(function (value) {
+		    					return TodoItem({item: value, handleDelete: props.handleDelete})
+		    				})
+    					)
+			}
+			function TodoApp (props) {
+		  		function handleSubmit (e) {
+		  			
+		    		e.preventDefault()
+
+		    		var value = this.refs.input.value
+
+	    			store.dispatch({type:'ADD', id: Date.now(), value: value})
+		  		}
+		  		function handleDelete (e) {
+		  			var node = e.currentTarget
+		  			animate.transition('slideUp')(node, function(){
+		  				store.dispatch({type: 'REMOVE', id: node.id})
+		  			})
+		  		}
+		  		function render (props) {
+		  			return h('div',
+		  						h('h3', 'TODO'),
+		  						h('form', {onsubmit: this.handleSubmit},
+		  							h('input', {ref: 'input'}),
+		  							h('button', 'Add #' + (props.items.length+1))
+  								),
+  								TodoList({items: props.items, handleDelete: this.handleDelete})
+		  					)
+		  		}
+		  		return {
+		  			render: render,
+		  			handleSubmit: handleSubmit,
+		  			handleDelete: handleDelete
+		  		}
+			}
 		</script>
 	</body>
 </html>
