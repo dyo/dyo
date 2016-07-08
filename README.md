@@ -185,27 +185,25 @@ componentWillUnmount:      function(node)
 
 
 ```javascript
-var animate = s.animate()
+s.animate.flip(className, duration, transform, transformOrigin, easing)(Element)
 
-animate.flip(className, duration, transform, transformOrigin, easing)(Element)
-
-animate.transition(className)(node, callback)
+s.animate.transition(className)(node, callback)
 ```
 
-for example `animate.flip` can be used within a render as follows
+for example `s.animate.flip` can be used within a render as follows
 
 ```javascript
 render: function () {
 	return h('.card', 
-	{onclick: animate.flip('active-state', 200)}, 
+	{onclick: s.animate.flip('active-state', 200)}, 
 	''
 	)
 }
 ```
-since `animate.flip(...)` returns a function this is the same as
+since `s.animate.flip(...)` returns a function this is the same as
 
 ```javascript
-animate('active-state', 200)(Element) // returns duration
+s.animate('active-state', 200)(Element) // returns duration
 ``` 
 
 another animation helper being `animate.transition`
@@ -218,7 +216,7 @@ handleDelete: function () {
 	self = this
 	
 	// animate node out then update state
-	animate.transition('slideUp')(node, function(){
+	s.animate.transition('slideUp')(node, function(){
 		store.dispatch({type: 'DELETE', id: 1234})
 	})
 }
@@ -252,16 +250,8 @@ JSON.stringify(a) // => new value
 ### .toHTML
 
 ```javascript
-var render = s.render(MyComponent, '.className')
-document.write(render(props, state, forceUpdate, true).toHTML())
-// or simple
+var render = s.render(Users, '.app')
 document.write(render(props, state, 'html'))
-// => prints the components html to the page without mount
+// => prints the components html to the page without mounting
 // it to the dom
-
-// The second one is just a shorter syntax for the first
-// note: the first 'render(props, state, .., true)' just
-// returns the render hyperscript
-// but every render's parent hyperscript has a .toHTML
-// that converts it to html
 ```
