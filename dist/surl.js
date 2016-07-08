@@ -184,7 +184,7 @@
 
 			// declare hyperscript object
 			var 
-			obj = {type: type, props: props, children: []};
+			obj = {type: type, props: props, children: []}
 
 			// check if the type is a special case i.e [type] | div.class | #id
 			// and alter the hyperscript
@@ -623,11 +623,9 @@
 		function appendChild (parent, nextNode, newNode) {
 			lifecycle(newNode, __componentWillMount)
 
-			debounce(function () {
-				if (nextNode) {
-					parent.appendChild(nextNode)
-				}
-			})
+			if (nextNode) {
+				parent.appendChild(nextNode)
+			}
 
 			lifecycle(newNode, __componentDidMount, nextNode)
 		}
@@ -1870,12 +1868,12 @@
 
 		// has parent to mount to
 		if (element) {
+			// update
 			function update (props, state) {
 				// get a fresh copy of the vdom
 				newNode = component(props, state)
 
 				if (newNode) {
-					// add to the event stack
 					debounce(function () {
 						vdomToDOM(element, newNode, oldNode)
 						// this newNode = the next renders oldNode
@@ -1884,6 +1882,7 @@
 				}
 			}
 
+			// initial mount
 			function mount (props, state) {
 				internal = component(__undefined, __undefined, __true)
 
@@ -1929,16 +1928,14 @@
 				element.innerHTML = ''
 
 				if (newNode) {
-					// add to the event stack
-					debounce(function () {
-						vdomToDOM(element, newNode, __undefined, internal)
-						// this newNode = the next renders oldNode
-						oldNode = newNode
-						initial = __false
-					})
+					vdomToDOM(element, newNode, __undefined, internal)
+					// this newNode = the next renders oldNode
+					oldNode = newNode
+					initial = __false
 				}
 			}
 
+			// return function that runs update/mount when executed
 			return function (props, state, forceUpdate, vdom) {
 				// don't render to dom, if vdom is requested
 				if (vdom) {
@@ -2085,16 +2082,17 @@
 			obj = obj()
 		}
 
+		// make sure we have something to update
 		if (obj) {
 			// set state
 			each(obj, function (value, name) {
 				self.state[name] = value
 			})
-		}
 
-		// update if this component is a render instance
-		if (self['render()']) {
-			self['render()'](self.props, self.state)
+			// update if this component is a render instance
+			if (self['render()']) {
+				self['render()'](self.props, self.state)
+			}
 		}
 	}
 

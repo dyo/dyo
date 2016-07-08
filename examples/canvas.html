@@ -6,60 +6,46 @@
 		<title>surl.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/surl.min.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
 		<div class="app"></div>
+		
 		<script>
 			function CanvasComponent () {
-				return {
-					getInitialState: function () {
-						return {
-							isDrawing: false, 
-							ctx: null
-						}
-					},
-					componentDidMount: function () {
-						var
-						self = this
+				var
+				isDrawing = s.prop(false),
+				canvas    = s.prop(null)
+				ctx       = s.prop(null)
 
-						self.setState({ctx: self.refs.canvas.getContext('2d')})
+				return {
+					componentDidMount: function () {
+						ctx(canvas().getContext('2d'))
 					},
 				    mouseDown: function (e) {
-				    	var
-				    	self = this
-				    	ctx = self.state.ctx
-
-				    	ctx.strokeStyle = '#FF5722'
-				    	ctx.lineWidth = 4
-				    	ctx.lineJoin  = ctx.lineCap = 'round'
-				    	ctx.moveTo(e.clientX, e.clientY)
-
-				    	self.setState({ctx: ctx, isDrawing: true})
+				    	ctx().strokeStyle = '#FF5722'
+				    	ctx().lineWidth = 4
+				    	ctx().lineJoin  = ctx.lineCap = 'round'
+				    	ctx().moveTo(e.clientX, e.clientY)
+				    	isDrawing(true)
 				    },
 				    mouseMove: function (e) {
-				    	var 
-				    	self = this
-				    	ctx = self.state.ctx
-				    	isDrawing = self.state.isDrawing
-
-				    	if (isDrawing) {
-				    		ctx.lineTo(e.clientX, e.clientY)
-				    		ctx.stroke()
-				    		self.setState({ctx: ctx})
+				    	if (isDrawing()) {
+				    		ctx().lineTo(e.clientX, e.clientY)
+				    		ctx().stroke()
 				    	}
 				    },
 				    mouseUp: function () {
-				    	this.setState({isDrawing: false})
+				    	isDrawing(false)
 				    },
 				    render: function () {
-				    	// console.log(this)
-
 				        return h('canvas', {
-				        	ref: 'canvas',
+				        	ref: canvas,
+
 				        	width: window.innerWidth - 4, 
 				        	height: window.innerHeight - 4,
+
 				        	onMousedown: this.mouseDown,
 				        	onMouseMove: this.mouseMove,
 				        	onMouseUp: this.mouseUp
@@ -69,8 +55,6 @@
 			}	
 
 			var render = s.render(CanvasComponent, '.app')
-				render()
-			// console.log(app)
 		</script>
 	</body>
 </html>
