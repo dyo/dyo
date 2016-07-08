@@ -11,61 +11,60 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = new surl(),
+				function User (props) {
+					var createItem = function (user) {
+						return  !user ? '' :
+								h('div',
+									Object.keys(user).map(function(value) {
+								   		var item = user[value];
 
-				User = app.Component({
-					render: function () {
-						var createItem = function (user) {
-							return  !user ? '' :
-									h('div',
-										Object.keys(user).map(function(value) {
-									   		var item = user[value];
+								   		if (item.constructor !== Object) {
+								   			return h('li', value+': ', h('a', value === 'email' || value === 'website' ? {href: '#'} : {}, item))
+								   		}
+								   		else {
+								   			var arr = [];
+								   			Object.keys(item).map(function(value){
+								   				var __item = item[value];
+								   				if (__item.constructor !== Object) {
+								   					arr.push( h('li', __item) )
+								   				}
+								   			})
 
-									   		if (item.constructor !== Object) {
-									   			return h('li', value+': ', h('a', value === 'email' || value === 'website' ? {href: '#'} : {}, item))
-									   		}
-									   		else {
-									   			var arr = [];
-									   			Object.keys(item).map(function(value){
-									   				var __item = item[value];
-									   				if (__item.constructor !== Object) {
-									   					arr.push( h('li', __item) )
-									   				}
-									   			})
-
-									   			return h('ul', arr)
-									   		}
-										})
-									)
-						}
-						return h('div',
-								 	createItem(this.props.user),
-								 	h('hr')
+								   			return h('ul', arr)
+								   		}
+									})
 								)
 					}
-				}),
+
+					return h('div',
+							 	createItem(props.user),
+							 	h('hr')
+							)
+				}
 				
-				Users = app.Component({
-					componentWillMount: function () {
-						var 
-						self = this
-						app.req('http://jsonplaceholder.typicode.com/users/').then(function (res) {
-							self.setState({users: res})
-						})
-					},
-					render: function () {
-						return h('div',
-								 	h('h1', 'User List'),
-								 	this.state.users ? this.state.users.map(function (user) {
-								 		return User({user: user})
-								 	}) : 'loading ...'
-								) 
+				function Users () {
+					return {
+						componentWillMount: function () {
+							var 
+							self = this
+							s.request.get('http://jsonplaceholder.typicode.com/users/').then(function (res) {
+								self.setState({users: res})
+							})
+						},
+						render: function () {
+							return h('div',
+									 	h('h1', 'User List'),
+									 	this.state.users ? this.state.users.map(function (user) {
+									 		return User({user: user})
+									 	}) : 'loading ...'
+									) 
+						}
 					}
-				})
+				}
 
-				app.render(Users, '.app');
+				var render = s.render(Users, '.app');
 
-				console.log(app)
+				render()
 		</script>
 	</body>
 </html>

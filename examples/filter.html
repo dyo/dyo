@@ -20,129 +20,118 @@
 		  		{category: 'Electronics', price: '$199.99', stocked: true, name: 'Nexus 7'}
 			];
 
+			function ProductCategoryRow (props) {
+	    		return h('tr', h('th[colspan=2]', props.category))
+			}
 
-			var 
-			app = new surl()
+			function ProductRow (props) {
+		    	var name = props.product.stocked ? 
+		    				props.product.name : h('span[style=color:red]', props.product.name);
 
-			var // define components
-			ProductCategoryRow = app.Component({
-		  		render: function() {
-		    		return h('tr', h('th[colspan=2]', this.props.category))
-		  		}
-			}),
+			    return h('tr', 
+			    			h('td', name),
+			    			h('td', props.product.price)
+		    			)
+		  	}
 
-			ProductRow = app.Component({
-		  		render: function() {
-			    	var name = this.props.product.stocked ? this.props.product.name : h('span[style=color:red]', this.props.product.name);
+		  	function ProductTable (props) {
+			    var rows = [],
+			    	lastCategory = null;
 
-				    return h('tr', 
-				    			h('td', name),
-				    			h('td', this.props.product.price)
-			    			)
-		  		}
-			}),
+			    props.products.forEach(function(product) {
+		      		if (
+		      			product.name.toLowerCase().indexOf(props.filterText) === -1 || 
+		      			(!product.stocked && props.inStockOnly)
+	      			) {
+		        		return
+		      		}
+		      		if (product.category !== lastCategory) {
+		      			rows.push(ProductCategoryRow({category: product.category}))
+		      		}
+		      		rows.push(ProductRow({product: product}))
+		      		lastCategory = product.category
+			    }.bind(this));
 
-			ProductTable = app.Component({
-		  		render: function() {
-				    var rows = [],
-				    	lastCategory = null;
-
-				    this.props.products.forEach(function(product) {
-			      		if (
-			      			product.name.toLowerCase().indexOf(this.props.filterText) === -1 || 
-			      			(!product.stocked && this.props.inStockOnly)
-		      			) {
-			        		return
-			      		}
-			      		if (product.category !== lastCategory) {
-			      			rows.push(ProductCategoryRow({category: product.category}))
-			      		}
-			      		rows.push(ProductRow({product: product}))
-			      		lastCategory = product.category
-				    }.bind(this));
-
-				    return h('table', 
-				    			h('thead', 
-				    				h('tr', 
-				    					h('th', 'Name'), 
-				    					h('th', 'Price')
-			    					)
-			    				),
-			    				h('tbody',
-			    					rows
+			    return h('table', 
+			    			h('thead', 
+			    				h('tr', 
+			    					h('th', 'Name'), 
+			    					h('th', 'Price')
 		    					)
-			    			)
-		  		}
-			}),
+		    				),
+		    				h('tbody',
+		    					rows
+	    					)
+		    			)
+			}
 
-			SearchBar = app.Component({
-		  		handleChange: function(event) {
+			function SearchBar (props) {
+		  		function handleChange (event) {
 		  			var el   = event.target,
 		  				type = el.getAttribute('type').toLowerCase();
 
 		  			if (type === 'checkbox') {
-		  				this.props.onUserInput(undefined, el.checked)
+		  				props.onUserInput(undefined, el.checked)
 		  			}
 		  			else if (type === 'text') {
-		  				this.props.onUserInput(el.value, undefined)
+		  				props.onUserInput(el.value, undefined)
 		  			}
-		  		},
-			  	render: function() {
-				    return h('div',
-				    			h('input[type=text]', {
-				    				placeholder: 'Search', 
-				    				value: this.props.filterText, 
-				    				oninput: this.handleChange
-				    			}),
-				    			h('div',
-				    				h('label', 
-					    				h('input[type="checkbox"]', {
-					    					checked: false, 
-					    					onchange: this.handleChange
-					    				}),
-					    				' Only show products in stock'
-				    				)
+		  		}
+
+			    return h('div',
+			    			h('input[type=text]', {
+			    				placeholder: 'Search', 
+			    				value: props.filterText, 
+			    				oninput: handleChange
+			    			}),
+			    			h('div',
+			    				h('label', 
+				    				h('input[type="checkbox"]', {
+				    					checked: false, 
+				    					onchange: handleChange
+				    				}),
+				    				' Only show products in stock'
 			    				)
-				    		)
-		  		}
-			}),
+		    				)
+			    		)
+			}
 			
-			FilterableProductTable = app.Component({
-				getInitialState: function () {
-					return {products: PRODUCTS, filterText: '', inStockOnly: false}
-				},
-		  		handleUserInput: function(filter, stock) {
-		  			if (filter !== undefined) {
-		  				this.setState({
-		  					filterText: filter
-		  				})
-		  			}
-		  			else if (stock !== undefined) {
-		  				this.setState({
-		  					inStockOnly: stock
-		  				})
-		  			}	    		
-		  		},
-		  		render: function() {
-		  			return h('div',
-			  					SearchBar({
-			  						filterText: this.state.filterText,
-					          		inStockOnly: this.state.inStockOnly,
-					          		onUserInput: this.handleUserInput
-			  					}),
-			  					ProductTable ({
-			  						products: this.state.products,
-	  					          	filterText: this.state.filterText,
-	  					          	inStockOnly: this.state.inStockOnly
-			  					})
-		  					)
-		  		}
-			});
+			function FilterableProductTable () {
+ 				return {
+	 				getInitialState: function () {
+						return {products: PRODUCTS, filterText: '', inStockOnly: false}
+					},
+			  		handleUserInput: function (filter, stock) {
+			  			if (filter !== undefined) {
+			  				this.setState({
+			  					filterText: filter
+			  				})
+			  			}
+			  			else if (stock !== undefined) {
+			  				this.setState({
+			  					inStockOnly: stock
+			  				})
+			  			}	    		
+			  		},
+			  		render: function() {
+			  			return h('div',
+				  					SearchBar({
+				  						filterText: this.state.filterText,
+						          		inStockOnly: this.state.inStockOnly,
+						          		onUserInput: this.handleUserInput
+				  					}),
+				  					ProductTable ({
+				  						products: this.state.products,
+		  					          	filterText: this.state.filterText,
+		  					          	inStockOnly: this.state.inStockOnly
+				  					})
+			  					)
+			  		}
+ 				}
+			}
 
-			// mount to dom
-			app.render(FilterableProductTable, '.app');
-
-			console.log(app)
+			var render = s.render(FilterableProductTable, '.app');
+			render()
 		</script>
 	</body>
 </html>

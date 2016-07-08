@@ -12,47 +12,45 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = new surl();
-
-			var // define components
-			List = app.Component({
-				render: function () {
-					var createItem = function (item, className, transform, transformOrigin, easing) {
-						return h('.card', {
-									onmousedown: animate.flip(className, 400,  transform, transformOrigin, easing)
-								}, 
-									h('p', 
-										h('h1', item.id), 
-										item.value
+			function List () {
+				return {
+					render: function () {
+						var createItem = function (item, className, transform, transformOrigin, easing) {
+							return h('.card', {
+										onmousedown: s.animate.flip(className, 400,  transform, transformOrigin, easing)
+									}, 
+										h('p', 
+											h('h1', item.id), 
+											item.value
+										)
 									)
+						}
+
+						return h('main.cards',
+									createItem({id: 'flip state', value: 'scaled'}, 'scaled'),
+
+									createItem({id: 'scale', value: 'scaleUp'}, 'scaleUp', 'scale(1.2)', '50% 50%'),
+									createItem({id: 'scale', value: 'scaleDown'}, 'scaleDown', 'scale(0.8)', '50% 50%'),
+
+									createItem({id: 'translate', value: 'top'}, 'moveTop'),
+									createItem({id: 'translate', value: 'bottom'}, 'moveBottom'),
+
+									createItem({id: 'translate', value: 'right'}, 'moveRight'),
+									createItem({id: 'translate', value: 'left'}, 'moveLeft'),
+
+									createItem({id: 'rotate', value: '180deg'}, '', 'rotate(180deg)', '50% 50%'),
+									createItem({id: 'rotate', value: '-180deg'}, '', 'rotate(-180deg)', '50% 50%'),
+
+									createItem({id: 'skew', value: '180deg'}, 'skewRight', 'skew(60deg)', '50% 50%'),
+									createItem({id: 'skew', value: '-180deg'}, 'skewLeft', 'skew(-60deg)', '50% 50%')
 								)
-					};
-
-					return h('main.cards',
-								createItem({id: 'flip state', value: 'scaled'}, 'scaled'),
-
-								createItem({id: 'scale', value: 'scaleUp'}, 'scaleUp', 'scale(1.2)', '50% 50%'),
-								createItem({id: 'scale', value: 'scaleDown'}, 'scaleDown', 'scale(0.8)', '50% 50%'),
-
-								createItem({id: 'translate', value: 'top'}, 'moveTop'),
-								createItem({id: 'translate', value: 'bottom'}, 'moveBottom'),
-
-								createItem({id: 'translate', value: 'right'}, 'moveRight'),
-								createItem({id: 'translate', value: 'left'}, 'moveLeft'),
-
-								createItem({id: 'rotate', value: '180deg'}, '', 'rotate(180deg)', '50% 50%'),
-								createItem({id: 'rotate', value: '-180deg'}, '', 'rotate(-180deg)', '50% 50%'),
-
-								createItem({id: 'skew', value: '180deg'}, 'skewRight', 'skew(60deg)', '50% 50%'),
-								createItem({id: 'skew', value: '-180deg'}, 'skewLeft', 'skew(-60deg)', '50% 50%')
-							)
+					}
 				}
-			});
+			}
 
-			// mount to dom
-			app.render(List, '.app');
+			var render = s.render(List, '.app')
 
-			console.log(app);
+			render()
 		</script>
 	</body>
 </html>

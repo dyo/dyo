@@ -12,66 +12,65 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var app = new surl();
+			function CanvasComponent () {
+				return {
+					getInitialState: function () {
+						return {
+							isDrawing: false, 
+							ctx: null
+						}
+					},
+					componentDidMount: function () {
+						var
+						self = this
 
-			var // define components
-			CanvasComponent = app.Component({
-				getInitialState: function () {
-					return {
-						isDrawing: false, 
-						ctx: null
-					}
-				},
-				componentDidMount: function () {
-					var
-					self = this
+						self.setState({ctx: self.refs.canvas.getContext('2d')})
+					},
+				    mouseDown: function (e) {
+				    	var
+				    	self = this
+				    	ctx = self.state.ctx
 
-					self.setState({ctx: self.refs.canvas.getContext('2d')})
-				},
-			    mouseDown: function (e) {
-			    	var
-			    	self = this
-			    	ctx = self.state.ctx
+				    	ctx.strokeStyle = '#FF5722'
+				    	ctx.lineWidth = 4
+				    	ctx.lineJoin  = ctx.lineCap = 'round'
+				    	ctx.moveTo(e.clientX, e.clientY)
 
-			    	ctx.strokeStyle = '#FF5722'
-			    	ctx.lineWidth = 4
-			    	ctx.lineJoin  = ctx.lineCap = 'round'
-			    	ctx.moveTo(e.clientX, e.clientY)
+				    	self.setState({ctx: ctx, isDrawing: true})
+				    },
+				    mouseMove: function (e) {
+				    	var 
+				    	self = this
+				    	ctx = self.state.ctx
+				    	isDrawing = self.state.isDrawing
 
-			    	console.log(ctx)
+				    	if (isDrawing) {
+				    		ctx.lineTo(e.clientX, e.clientY)
+				    		ctx.stroke()
+				    		self.setState({ctx: ctx})
+				    	}
+				    },
+				    mouseUp: function () {
+				    	this.setState({isDrawing: false})
+				    },
+				    render: function () {
+				    	// console.log(this)
 
-			    	self.setState({ctx: ctx, isDrawing: true})
-			    },
-			    mouseMove: function (e) {
-			    	var 
-			    	self = this
-			    	ctx = self.state.ctx
-			    	isDrawing = self.state.isDrawing
+				        return h('canvas', {
+				        	ref: 'canvas',
+				        	width: window.innerWidth - 4, 
+				        	height: window.innerHeight - 4,
+				        	onMousedown: this.mouseDown,
+				        	onMouseMove: this.mouseMove,
+				        	onMouseUp: this.mouseUp
+				        })
+				    }
+				}
+			}	
 
-			    	if (isDrawing) {
-			    		ctx.lineTo(e.clientX, e.clientY)
-			    		ctx.stroke()
-			    		self.setState({ctx: ctx})
-			    	}
-			    },
-			    mouseUp: function () {
-			    	this.setState({isDrawing: false})
-			    },
-			    render: function () {
-			        return h('canvas', {
-			        	ref: 'canvas',
-			        	width: window.innerWidth - 4, 
-			        	height: window.innerHeight - 4,
-			        	onMousedown: this.mouseDown,
-			        	onMouseMove: this.mouseMove,
-			        	onMouseUp: this.mouseUp
-			        })
-			    }
-			})			
-
-			app.render(CanvasComponent, '.app')
-
-			console.log(app)
+			var render = s.render(CanvasComponent, '.app')
+				render()
+			// console.log(app)
 		</script>
 	</body>
 </html>

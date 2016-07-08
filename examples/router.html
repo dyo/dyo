@@ -11,52 +11,41 @@
 	<body>
 		<div class="app"></div>
 		<script>
-			var // define components
-			Home = s.comp({
-				componentWillMount: function () {
-					console.log('mount')
-				},
-				componentWillUnmount: function () {
-					console.log('unmount')
-				},
-				onClick: function () {
-					router.nav('/user/sultan')
-				},
-				render: function () {
-					return h('h1', {onclick: this.onClick}, s.trust("Home Page &amp;"))
+			function Home () {
+				return {
+					onClick: function () {
+						router.nav('/user/sultan')
+					},
+					render: function () {
+						return h('h1', {key: '1234', onClick: this.onClick}, s.trust("Home Page &amp;"))
+					}
 				}
-			}),
+			}
 			
-			User = s.comp({
-				componentWillMount: function () {
-					console.log('mount')
-				},
-				componentWillUnmount: function () {
-					console.log('unmount')
-				},
-				onClick: function () {
-					router.nav('/router.html')
-				},
-				render: function (props) {
-					return h('h1', {onclick: this.onClick},
-								props.page + " Page",
-								h('p', {}, 'Hello ' + props.name)
-							)
+			function User () {
+				return {
+					onClick: function () {
+						router.nav('/router.html')
+					},
+					render: function (props) {
+						return h('h1', {key: '1000', onClick: this.onClick},
+									props.page + " Page",
+									h('p', {}, 'Hello ' + props.name)
+								)
+					}
 				}
-			})
-
-			function Base (props) {
-				console.log(props)
 			}
 
-			var render = s.render(Base,'.app')
-
-			// define router
 			var router = s.router({
+				mount: '.app',
 				root: '/examples',
 				routes: {
-					'/router.html': function (data) { render({data: data}, Home) },
-					'/:page/:name': function (data) { render({data: data}, User) }
+					'/router.html': function (data) {
+						s.render(Home, '.app')(data)
+					},
+					'/:page/:name': function (data) {
+						s.render(User, '.app')(data)
+					}
 				}
 			})
 		</script>

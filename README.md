@@ -34,16 +34,17 @@ var TodoApp = {
 }
 
 // create a render mapper
-var render = s.render(s.comp(TodoApp), '.app')
+var render = s.render(TodoApp, '.app')
 // or
-var render = s.render((props) => h('div', props.children), 'app')
+var render = s.render((props) => h('div', props.children), '.app')
 
 // call it anytime you want to render to the dom
-render(...props, children, internal?)
+render(...props, children, forceUpdate?)
 
-// internal{Boolean} tells the render to return the component
-// instead of the vdom node
-
+// forceUpdate{Boolean} tells the render to force an initial mount
+// which clears the element and mounts to it.
+// this is by default executated on the initial render/ first time you
+// call the render instance
 ```
 
 ## s.render
@@ -51,8 +52,8 @@ render(...props, children, internal?)
 create a render function that can be called anytime you need to render to the dom, s.render doesn't really care if you wrap your component in `s.comp(User)` or if it's just a function that returns a vdom node when executed.
 
 ```javascript
-var Sidebar = s.render(s.comp(User), '.side-bar')
-var Header = s.render(s.comp(Header), '.header')
+var Sidebar = s.render(User, '.side-bar')
+var Header = s.render(Header, '.header')
 
 // where User & Header are either functions that return 
 // an object with a render method or an object with a render method
@@ -95,11 +96,14 @@ input({value: 'hello'})
 create a router
 
 ```javascript
+var myrender = s.render(Function, 'selector|element')
 var myrouter = s.router({
 	root: '/examples',
 	nav: '/start',
 	routes: {
-		'/:user/:id': () => {}
+		'/:user/:id': (data) => {
+			myrender(data)
+		}
 	}
 })
 
@@ -248,7 +252,16 @@ JSON.stringify(a) // => new value
 ### .toHTML
 
 ```javascript
-var render = s.render(s.comp(MyComponent), '.className')
-document.write(render(...props).toHTML())
-// => the components html to the page
+var render = s.render(MyComponent, '.className')
+document.write(render(props, state, forceUpdate, true).toHTML())
+// or simple
+document.write(render(props, state, 'html'))
+// => prints the components html to the page without mount
+// it to the dom
+
+// The second one is just a shorter syntax for the first
+// note: the first 'render(props, state, .., true)' just
+// returns the render hyperscript
+// but every render's parent hyperscript has a .toHTML
+// that converts it to html
 ```

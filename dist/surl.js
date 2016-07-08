@@ -91,7 +91,7 @@
 		}
 
 		function add (element, value) {
-			// default to native Element.classList()
+			// default to native Element.classList.remove()
 			if (element[__classList]) {
 		        element[__classList].add(value)
 		    }
@@ -108,7 +108,7 @@
 		}
 
 		function remove (element, value) {
-			// default to native Element.classList()
+			// default to native Element.classList.remove()
 		    if (element[__classList]) {
 		        element[__classList].remove(value)
 		    }
@@ -123,10 +123,28 @@
 		    }
 		}
 
+		function toggle (element, value) {
+			// default to native Element.classList.toggle()
+		    if (element[__classList]) {
+		        element[__classList].toggle(value)
+		    }
+		    else {
+		    	// if has class, remove
+		    	if (hasClass(element, value)) {
+		    		remove(element, value)
+		    	}
+		    	// if does not have class, add
+		    	else {
+		    		add(element, value)
+		    	}
+		    }
+		}
+
 		return {
 			add: add,
 			remove: remove,
-			hasClass: hasClass
+			hasClass: hasClass,
+			toggle: toggle
 		}
 	}
 
@@ -507,7 +525,6 @@
 			if (lifecycle(newNode, __shouldComponentUpdate, __true, __true) === __false) {
 				return
 			}
-
 
 			// adding to the dom
 			if (oldNode === __undefined) {
@@ -1076,7 +1093,7 @@
 				first        = getBoundingClientRect(element)
 				// assign last state if there is an end class
 				if (className) {
-					classList.add(element, className)
+					classList.toggle(element, className)
 				}
 				// get last rect state, 
 				// if there is not end class
@@ -1285,40 +1302,6 @@
 
 
 	/**
-	 * props utility
-	 * @param {Any} store - value
-	 */
-	function prop (store) {
-		// create the getter/setter
-		function prop () {
-			// we could use a name argument
-			// but then again the value can be a falsy value
-			// so if(value) wouldn't validate if the user passed a value
-			// rather we check if the arguments object is not of length 0
-			// which is what it will be if we don't pass an argument
-			var
-			args = arguments
-
-			if (args[__length]) {
-				store = args[0]
-			}
-
-			return store
-		}
-
-		// define .toJSON
-		// so if we call JSON.stringify()
-		// on the returned getter/setter
-		// it returns the stored value
-		prop.toJSON = function () {
-			return store
-		}
-
-		return prop
-	}
-
-
-	/**
 	 * DOM interface, creates html hyperscript functions to the global scope
 	 * such that h('div', {}, 'Text') written as div({}, 'Text')
 	 */
@@ -1494,10 +1477,11 @@
 				routes = this.routes
 
 				each(routes, function (val) {
-					var callback  = val.callback,
-						pattern   = val.pattern,
-						variables = val.variables,
-						match;
+					var 
+					callback  = val.callback,
+					pattern   = val.pattern,
+					variables = val.variables,
+					match
 
 					// exec pattern on url
 					match = url.match(new RegExp(pattern))
@@ -1522,7 +1506,7 @@
 						// callback is a function, exec
 						if (is(callback, __function)) {
 							// component function
-							callback(data)
+							callback(data, self.url)
 						}
 						// can't process
 						else {
@@ -1534,10 +1518,15 @@
 		}
 
 		var
+		mount  = args.mount,
 		root   = args.root,
 		nav    = args.init,
 		routes = args.routes,
 		router = new Router
+
+		if (mount) {
+			router.config({mount: mount})
+		}
 
 		// define root address
 		if (root) {
@@ -1842,7 +1831,6 @@
 		}
 	}
 
-
 	/**
 	 * render interface
 	 * @return {Function}
@@ -1883,47 +1871,93 @@
 
 		// has parent to mount to
 		if (element) {
-			return function (props, children) {
-				// initial render
-				if (initial) {
-					// get a fresh copy of the vdom
-					newNode = component(props, children)
-					// clear dom
-					element.innerHTML = ''
+			function update (props, state) {
+				// get a fresh copy of the vdom
+				newNode = component(props, state)
 
-					internal = component(__undefined, __undefined, __true)
-
-					if (internal) {
-						if (internal[__getInitialState]) {
-							setState(internal, internal[__getInitialState]())
-						}
-						if (internal[__getDefaultProps]) {
-							setProps(internal, internal[__getDefaultProps]())
-						}
-					}
-
-					if (newNode) {
-						vdomToDOM(element, newNode, __undefined, internal)
-
-						// publish that the initial render has taken place
-						initial = __false
+				if (newNode) {
+					// add to the event stack
+					debounce(function () {
+						vdomToDOM(element, newNode, oldNode)
 						// this newNode = the next renders oldNode
 						oldNode = newNode
+					})
+				}
+			}
+
+			function mount (props, state) {
+				internal = component(__undefined, __undefined, __true)
+
+				if (internal) {
+					// get initial state if set
+					if (internal[__getInitialState]) {
+						setState(internal, internal[__getInitialState]())
+						// remove method
+						delete internal[__getInitialState]
 					}
+					// get default props if set
+					if (internal[__getDefaultProps]) {
+						setProps(internal, internal[__getDefaultProps]())
+						// remove method
+						delete internal[__getInitialState]
+					}
+
+					// reference render, we can then call this
+					// in this.setState
+					if (!internal['render()']) {
+						internal['render()'] = update	
+					}
+				}
+				// not a component or pure function that returns an object
+				// throw error
+				else {
+					throw 'if you are using pure functions please make sure ' + 
+						  'you return an object with a render method'
+				}
+				
+				// not a component, convert to one
+				// this means allows us to use pure functions
+				// and just send them through render i.e
+				// var render = s.render(() => {render: () => {return h('div')}}, '.app')
+				if (!internal.setState) {
+					component = comp(internal)
+					internal  = component(__undefined, __undefined, __true)
+				}
+
+				// get a fresh copy of the vdom
+				newNode = component(props, state)
+				// clear dom
+				element.innerHTML = ''
+
+				if (newNode) {
+					// add to the event stack
+					debounce(function () {
+						vdomToDOM(element, newNode, __undefined, internal)
+						// this newNode = the next renders oldNode
+						oldNode = newNode
+						initial = __false
+					})
+				}
+			}
+
+			return function (props, state, forceUpdate, vdom) {
+				// don't render to dom, if vdom is requested
+				if (vdom) {
+					return component(props, state)
+				}
+				else if (forceUpdate === 'html' || forceUpdate === 'HTML') {
+					return component(props, state).toHTML()
+				}
+				
+
+				// initial render
+				if (initial || forceUpdate) {
+					// mount and publish that the initial render has taken place
+					mount(props, state)
 				}
 				// updates
 				else {
-					// get a fresh copy of the vdom
-					newNode = component(props, children)
-
-					if (newNode) {
-						// add to the event stack
-						debounce(function () {
-							vdomToDOM(element, newNode, oldNode)
-							// this newNode = the next renders oldNode
-							oldNode = newNode
-						})
-					}
+					update(props, state)
 				}
 
 				return newNode
@@ -1944,17 +1978,19 @@
 	 * }
 	 * note: does not auto-bind
 	 */
-	function Component () {
+	function Comp () {
 		// immutable internal props & state
 		this.props = {}
 		this.state = {}
 	}
 
 	// set internal props & state
-	Component[__prototype] = {
+	Comp[__prototype] = {
+		// i.e this.setState({})
 		setState: function (obj) {
 			setState(this, obj)
 		},
+		// i.e this.setProps({})
 		setProps: function (obj) {
 			setProps(this, obj)
 		}
@@ -1963,7 +1999,7 @@
 	// create component
 	function comp (obj) {
 		// create new component object
-		var component = new Component
+		var component = new Comp
 
 		// maybe the object is a function that returns an object
 		if (is(obj, __function)) {
@@ -1986,15 +2022,18 @@
 		// or internals
 		function h (obj) {
 			var 
-			self          = this
+			self = this
+
 			self.type     = obj.type,
 			self.props    = obj.props,
 			self.children = obj.children
 		}
+		// prototype methods
 		h[__prototype].internal = component
 		h[__prototype].toHTML   = function () {
-			console.log(vdomToHTML(this))
+			return vdomToHTML(this)
 		}
+
 		// re-add default object constructor
 		// insures obj.constructor will return Object
 		h[__prototype][__constructor] = __object
@@ -2006,45 +2045,58 @@
 		// return a function that when called
 		// returns the components vdom representation
 		// i.e User(props) -> {type: 'div', props: {..props}, children: ...}
-		return function (props, children, internal) {
+		return function (props, state, internal) {
 			// insure the render function returns the newly
 			// created hyperscript object
-			component.render = function (props) {
-				return new h(render(props))
+			component.render = function (props, state) {
+				return new h(render(props, state))
 			}
 
-			if (children) {
-				props.children = children
-			}
-
+			// publish componentWillReceiveProps lifecycle
 			if (props) {
 				lifecycle(component, __componentWillReceiveProps, __true, __undefined, __true)
 			}
 
 			// expose the components internals
 			// when requested
-			return internal ? component : component.render(props)
+			return internal ? component : component.render(props, state)
 		}
 	}
 
 	// set component props
 	function setProps (self, obj) {
-		// set props
-		each(obj, function (value, name) {
-			self.props[name] = value
-		})
+		// assign props to {} if it's undefined
+		self.props = self.props || {}
+
+		if (obj) {
+			// set props
+			each(obj, function (value, name) {
+				self.props[name] = value
+			})
+		}
 	}
 
 	// set component state
 	function setState (self, obj) {
+		// assign state to {} if it's undefined
+		self.state = self.state || {}
+
 		// if the object is a function that returns an object
 		if (is(obj, __function)) {
 			obj = obj()
 		}
-		// set state
-		each(obj, function (value, name) {
-			self.state[name] = value
-		})
+
+		if (obj) {
+			// set state
+			each(obj, function (value, name) {
+				self.state[name] = value
+			})
+		}
+
+		// update if this component is a render instance
+		if (self['render()']) {
+			self['render()'](self.props, self.state)
+		}
 	}
 
 
@@ -2164,6 +2216,94 @@
 	}
 
 
+	/**
+	 * two-way data binding, not to be confused with Function.bind
+	 * @param  {String} props  - the property/attr to look for in the element
+	 * @param  {Object} setter - the object to update/setter to execute
+	 */
+	function bind (props, setter) {
+		function update (el, prop, setter) {
+			// get key from element
+			// either the prop is a property of the element object
+			// or an attribute
+			var
+			value = (prop in el) ? el[prop] : el.getAttribute(prop)
+
+			// just an <if(value)> doesn't work since the value can be false
+			// null or undefined = prop/attr doesn't exist
+			if (value !== __undefined && value !== __null) {
+				// if the setter is a string
+				// we use it to set the elements own properties
+				if (is(setter, __string)) {
+					(prop in el) ? el[prop] = value : el.setAttribute(prop, value)
+				}
+				else {
+					// run the setter
+					setter(value)
+				}
+			}
+		}
+
+		// the idea is that when you attach a function to an event,
+		// i.e el.addEventListener('eventName', fn)
+		// when that event is dispatched the function will execute
+		// making the this context of this function the element 
+		// that the event was attached to
+		// we can then extract the value, and run the prop setter(value)
+		// to change it's value
+		return function () {
+			// assign element
+			var 
+			el  = this
+
+			// array of bindings
+			if (is(props, __array)) {
+				each(props, function(value, index) {
+					update(el, value, setter[index])
+				})
+			}
+			// singles
+			else {
+				update(el, props, setter)
+			}
+		}
+	}
+
+
+	/**
+	 * props/getter,setter utility
+	 * @param {Any} store - value
+	 */
+	function prop (store) {
+		// create the getter/setter
+		function prop () {
+			// we could use a name argument
+			// but then again the value can be a falsy value
+			// so if(value) wouldn't validate if the user passed a value
+			// rather we check if the arguments object is not of length 0
+			// which is what it will be if we don't pass an argument
+			var
+			args = arguments
+
+			if (args[__length]) {
+				store = args[0]
+			}
+
+			return store
+		}
+
+		// define .toJSON
+		// so if we call JSON.stringify()
+		// on the returned getter/setter
+		// it returns the stored value
+		prop.toJSON = function () {
+			return store
+		}
+
+		return prop
+	}
+
+
 	/* --------------------------------------------------------------
 	 * 
 	 * Exports
@@ -2173,15 +2313,14 @@
 
 	exports.h = element()
 	exports.s = {
+		animate: animate(),
+		request: request(),
 		render: render,
 		router: router,
-		request: request,
-		comp: comp,
-		Component: Component,
 		store: store,
 		trust: trust,
 		prop: prop,
-		animate: animate,
-		DOM: DOM
+		bind: bind,
+		DOM: DOM,
 	}
 }));

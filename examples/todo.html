@@ -27,18 +27,15 @@
 				}
 			})
 
-			var render  = s.render(s.comp(TodoApp), '.app')
-			var request = s.request()
-							request.get('?url')
-							
-			var animate = s.animate()
+			var render  = s.render(TodoApp, '.app')
 
+			s.request.get('?url')
 
 			// ------------------------- store ------------------------- //
 
 
 			var store = s.store(function (state, action) {
-				state = state || {items: []}
+				state = state || {items: [], text: ''}
 
 				switch (action.type) {
 					case 'ADD':
@@ -99,17 +96,21 @@
     					)
 			}
 			function TodoApp (props) {
+				var 
+				text = s.prop(''),
+				input = s.prop('')
+				// will always contain the value of input.value oninput
+
 		  		function handleSubmit (e) {
-		  			
 		    		e.preventDefault()
-
-		    		var value = this.refs.input.value
-
+		    		var 
+		    		value = text()
 	    			store.dispatch({type:'ADD', id: Date.now(), value: value})
+	    			input().value = ''
 		  		}
-		  		function handleDelete (e) {
-		  			var node = e.currentTarget
-		  			animate.transition('slideUp')(node, function(){
+		  		function handleDelete () {
+		  			var node = this
+		  			s.animate.transition('slideUp')(node, function(){
 		  				store.dispatch({type: 'REMOVE', id: node.id})
 		  			})
 		  		}
@@ -117,18 +118,19 @@
 		  			return h('div',
 		  						h('h3', 'TODO'),
 		  						h('form', {onsubmit: this.handleSubmit},
-		  							h('input', {ref: 'input'}),
+		  							h('input', {ref: input, oninput: s.bind(['value'], [text])}),
 		  							h('button', 'Add #' + (props.items.length+1))
   								),
-  								TodoList({items: props.items, handleDelete: this.handleDelete})
+  								TodoList({items: props.items, handleDelete: handleDelete})
 		  					)
 		  		}
 		  		return {
 		  			render: render,
-		  			handleSubmit: handleSubmit,
-		  			handleDelete: handleDelete
+		  			handleSubmit: handleSubmit
 		  		}
 			}
+
+			console.log(render({items: []}, null, 'html'))
 		</script>
 	</body>
 </html>
