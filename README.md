@@ -23,13 +23,14 @@
 function TodoApp () {
 	return {
 		render: function (props) {
-		
+			return h('h1', 'Hello World')
 		}
 	}
 }
 // or a plain object
 var TodoApp = {
 	render: function (props) {
+		return h('h1', 'Hello World')
 	}
 }
 

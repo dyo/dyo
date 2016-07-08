@@ -1844,20 +1844,19 @@
 		newNode,
 		oldNode,
 		element,
-		props,
 		internal,
 		initial = __true,
 		args = __array[__prototype].slice.call(arguments)
 
 		// assign args
 		each(args, function (value) {
-			// props
-			if (!value.render && is(value, __object)) {
-				props = value
-			}
-			// component
-			else if (is(value, __function)) {
+			// component (function)
+			if (is(value, __function)) {
 				component = value
+			}
+			// component (object)
+			else if (is(value, __object)) {
+				component = function () { return value }
 			}
 			// element
 			else if (value.nodeType) {
