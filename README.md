@@ -135,6 +135,7 @@ s.request.get('/url/id').then(a).done(()=>console.log(a))
 var render = s.render(MyComponent, '.app')
 
 var store = s.store(reducer => {})
+
 store.subscribe(() => { render(store.getState()) })
 store.dispatch({type: 'ADD'})
 // render will mount/render/update
