@@ -2113,7 +2113,7 @@
 			return function (state, action) {
 				state = state || {}
 
-				return Object.keys(reducers).reduce(function (nextState, key) {
+				return __object.keys(reducers).reduce(function (nextState, key) {
 					nextState[key] = reducers[key](state[key], action)
 					return nextState
 				}, {})
