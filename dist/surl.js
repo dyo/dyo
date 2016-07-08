@@ -1940,7 +1940,7 @@
 				if (vdom) {
 					return component(props, state)
 				}
-				else if (forceUpdate === 'html' || forceUpdate === 'HTML') {
+				else if (forceUpdate === 'html') {
 					return component(props, state).toHTML()
 				}
 				
@@ -1967,11 +1967,6 @@
 
 	/**
 	 * component interface
-	 * use this to extend (es6)
-	 * i.e Users extends s.Component {
-	 * 
-	 * }
-	 * note: does not auto-bind
 	 */
 	function Comp () {
 		// immutable internal props & state
@@ -2102,32 +2097,34 @@
 	 * @param {Number} range - timetravel/undo range
  	 * @return {Object} {connect, dispatch, getState, subscribe, timetravel}
 	 */
-	function store (reducer, range) {
-		var
-		self = this,
-		range = range || 2
-
+	function store (reducer) {
 		// if the reducer is an object of reducers (multiple)
-		// lets create one for each
-		// and return the object back with stores
+		// lets combine the reducers
 		if (is(reducer, __object)) {
-			each(reducer, function (value, name) {
-				reducer[name] = create(value)
-			})
-
-			return reducer
+			return create(combine(reducer))
 		}
 		// single reducer
 		else {
 			return create(reducer)
 		}
 
+		// combine reducers
+		function combine (reducers) {
+			return function (state, action) {
+				state = state || {}
+
+				return Object.keys(reducers).reduce(function (nextState, key) {
+					nextState[key] = reducers[key](state[key], action)
+					return nextState
+				}, {})
+			}
+		}
+
 		// create store
 		function create (reducer) {
 			var
 			state,
-			listeners = [],
-			states = []
+			listeners = []
 
 			// return the state
 			function getState () {
@@ -2137,43 +2134,20 @@
 			// dispatch an action
 			function dispatch (action, timetravel) {
 				// there are no actions when we are time traveling
-				if (!timetravel) {
-					if (!is(action, __object)) {
-						throw 'action must be plain object'
-					}
-					if (action.type === __undefined) {
-						throw 'actions must have a type'
-					}
+				if (!is(action, __object)) {
+					throw 'action must be plain object'
+				}
+				if (action.type === __undefined) {
+					throw 'actions must have a type'
+				}
 
-					// get state from reducer
-					state = reducer(state, action)
-				}
-				// timetraveler
-				else {
-					state = timetravel
-				}
+				// get state from reducer
+				state = reducer(state, action)
 
 				// dispatch to all listeners
 				each(listeners, function (listener) {
-					return listener.call(self, state)
+					return listener(state)
 				})
-
-				// don't update our states store
-				// when timetraveling
-				if (!timetravel) {
-					// save last 5 dispatches for timetravel
-					if (states[__length] < range) {
-						states.push(state)
-					}
-					// dispatches are at their max length
-					// overwrite old ones
-					else {
-						// remove first action
-						states.shift()
-						// add new action
-						states.push(state)
-					}
-				}
 			}
 
 			// subscribe to a store

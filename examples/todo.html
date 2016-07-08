@@ -23,9 +23,10 @@
 
 			// ------------------------- store ------------------------- //
 
-
-			var store = s.store(function (state, action) {
+			var store = s.store(function TodoStore (state, action) {
 				state = state || {items: [], text: ''}
+
+				console.log(Date.now())
 
 				switch (action.type) {
 					case 'ADD':
@@ -124,8 +125,6 @@
 		  			handleSubmit: handleSubmit
 		  		}
 			}
-
-			console.log(render({items: []}, null, 'html'))
 		</script>
 	</body>
 </html>
