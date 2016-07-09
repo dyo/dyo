@@ -1303,45 +1303,59 @@
 	 * such that h('div', {}, 'Text') written as div({}, 'Text')
 	 */
 	function DOM () {
-		each(['doctype','a','abbr','address','area','article','aside',
-		'audio','b','base','bdi','bdo','blockquote','body','br','button',
-		'canvas','caption','cite','code','col','colgroup','command',
-		'datalist','dd','del','details','dfn','div','dl','dt','em','embed',
-		'fieldset','figcaption','figure','footer','form','h1','h2','h3',
-		'h4','h5','h6','head','header','hgroup','hr','html','i','iframe',
-		'img','input','ins', 'kbd','keygen','label','legend','li','link',
-		'map','mark','menu','meta','meter','nav','noscript','object','ol',
-		'optgroup','option','output','p','param','pre','progress','q','rp',
-		'rt','ruby','s','samp','script','section','select','small','source',
-		'span','strong','style','sub','summary','sup','table','tbody','td',
-		'textarea','tfoot','th','thead','time','title',
-		'tr','track','u','ul','var','video','wbr'], function (name) {
-			__window[name] = function Element () {
-				// convert args to array
-				var 
-				args = __array[__prototype].slice.call(arguments),
-				first = args[0]
+		function expose (elements) {
+			each(elements, function (name) {
+				__window[name] = function Element () {
+					// convert args to array
+					var 
+					args = __array[__prototype].slice.call(arguments),
+					first = args[0]
 
-				// i.e div('#id', {}, 'Children')
-				if (
-					is(first, __string) &&
-					(
-						first.substr(0,1) === '#' ||
-						first.substr(0,1) === '.' ||
-						first.substr(0,1) === '['
-					)
-				) {
-					// name will now = 'div#id'
-					name += first
-					args.shift(first)
+					// i.e div('#id', {}, 'Children')
+					if (
+						is(first, __string) &&
+						(
+							first.substr(0,1) === '#' ||
+							first.substr(0,1) === '.' ||
+							first.substr(0,1) === '['
+						)
+					) {
+						// name will now = 'div#id'
+						name += first
+						args.shift(first)
+					}
+					// add name as first arg
+					// which represents the tag in hyperscript
+					args.unshift(name)
+
+					return h.apply(null, args)
 				}
-				// add name as first arg
-				// which represents the tag in hyperscript
-				args.unshift(name)
+			})
+		}
 
-				return h.apply(null, args)
-			}
-		})
+		var
+		args = arguments
+
+		// expose just a specific few
+		if (args[__length]) {
+			expose(__array[__prototype].slice.call(args))
+		}
+		// expose all elements
+		else {
+			expose(['doctype','a','abbr','address','area','article','aside',
+			'audio','b','base','bdi','bdo','blockquote','body','br','button',
+			'canvas','caption','cite','code','col','colgroup','command',
+			'datalist','dd','del','details','dfn','div','dl','dt','em','embed',
+			'fieldset','figcaption','figure','footer','form','h1','h2','h3',
+			'h4','h5','h6','head','header','hgroup','hr','html','i','iframe',
+			'img','input','ins', 'kbd','keygen','label','legend','li','link',
+			'map','mark','menu','meta','meter','nav','noscript','object','ol',
+			'optgroup','option','output','p','param','pre','progress','q','rp',
+			'rt','ruby','s','samp','script','section','select','small','source',
+			'span','strong','style','sub','summary','sup','table','tbody','td',
+			'textarea','tfoot','th','thead','time','title',
+			'tr','track','u','ul','var','video','wbr'])
+		}
 	}
 
 
@@ -1931,8 +1945,8 @@
 				if (vdom) {
 					return component(props, children)
 				}
-				else if (forceUpdate === 'html') {
-					return component(props, children).toHTML()
+				if (forceUpdate === 'html') {
+					return vdomToHTML(component(props, children))
 				}
 				
 
@@ -2024,9 +2038,6 @@
 		}
 		// prototype methods
 		h[__prototype].internal = component
-		h[__prototype].toHTML   = function () {
-			return vdomToHTML(this)
-		}
 
 		// re-add default object constructor
 		// insures obj.constructor will return Object
@@ -2304,5 +2315,6 @@
 		prop: prop,
 		bind: bind,
 		DOM: DOM,
+		toHTML: vdomToHTML
 	}
 }));

@@ -36,17 +36,18 @@ var TodoApp = {
 
 // create a render instance
 var render = s.render(TodoApp, '.app')
-// or
-var render = s.render((props) => h('div', props.children), '.app')
 
-// call it anytime you want to render to the dom
+// call it when you want to render to the dom
 render(...props, state, forceUpdate?)
 
 // forceUpdate{Boolean} tells the render to force an initial mount
-// which clears the element and mounts to it.
+// which clears the element and does an initial mount to it.
 // this is by default executated on the initial render/ first time you
 // call the render instance
 ```
+
+--
+
 
 ## s.render
 
@@ -80,9 +81,14 @@ save a few keystrokes
 
 ```javascript
 
+// exposes all html elements to the global namespace
 s.DOM()
+
+// exposes only the input element to the global namespace
+s.DOM('input')
+
 ```
-and that will expose all html elements to the window
+
 
 ```javascript
 // instead of
