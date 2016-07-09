@@ -1849,11 +1849,11 @@
 		each(args, function (value) {
 			// component (function)
 			if (is(value, __function)) {
-				component = value
+				component = comp(value())
 			}
 			// component (object)
 			else if (is(value, __object)) {
-				component = function () { return value }
+				component = comp(value)
 			}
 			// element
 			else if (value.nodeType) {
@@ -1866,11 +1866,13 @@
 		})
 
 		// has parent to mount to
-		if (element) {
+		if (element && component) {
+			internal = component(__undefined, __undefined, __true)
+
 			// update
-			function update (props, state) {
+			function update (props, children) {
 				// get a fresh copy of the vdom
-				newNode = component(props, state)
+				newNode = component(props, children)
 
 				if (newNode) {
 					debounce(function () {
@@ -1882,9 +1884,7 @@
 			}
 
 			// initial mount
-			function mount (props, state) {
-				internal = component(__undefined, __undefined, __true)
-
+			function mount (props, children) {
 				if (internal) {
 					// get initial state if set
 					if (internal[__getInitialState]) {
@@ -1896,7 +1896,7 @@
 					if (internal[__getDefaultProps]) {
 						setProps(internal, internal[__getDefaultProps]())
 						// remove method
-						delete internal[__getInitialState]
+						delete internal[__getDefaultProps]
 					}
 
 					// reference render, we can then call this
@@ -1911,18 +1911,9 @@
 					throw 'if you are using pure functions please make sure ' + 
 						  'you return an object with a render method'
 				}
-				
-				// not a component, convert to one
-				// this means allows us to use pure functions
-				// and just send them through render i.e
-				// var render = s.render(() => {render: () => {return h('div')}}, '.app')
-				if (!internal.setState) {
-					component = comp(internal)
-					internal  = component(__undefined, __undefined, __true)
-				}
 
 				// get a fresh copy of the vdom
-				newNode = component(props, state)
+				newNode = component(props, children)
 				// clear dom
 				element.innerHTML = ''
 
@@ -1935,24 +1926,24 @@
 			}
 
 			// return function that runs update/mount when executed
-			return function (props, state, forceUpdate, vdom) {
+			return function (props, children, forceUpdate, vdom) {
 				// don't render to dom, if vdom is requested
 				if (vdom) {
-					return component(props, state)
+					return component(props, children)
 				}
 				else if (forceUpdate === 'html') {
-					return component(props, state).toHTML()
+					return component(props, children).toHTML()
 				}
 				
 
 				// initial render
 				if (initial || forceUpdate) {
 					// mount and publish that the initial render has taken place
-					mount(props, state)
+					mount(props, children)
 				}
 				// updates
 				else {
-					update(props, state)
+					update(props, children)
 				}
 
 				return newNode
@@ -1960,7 +1951,7 @@
 		}
 		// can't find element to mount to
 		else {
-			throw 'element to mount does not exist'
+			throw 'either the element to mount does not exist or the component is invalid'
 		}
 	}
 
@@ -1989,18 +1980,31 @@
 	// create component
 	function comp (obj) {
 		// create new component object
-		var component = new Comp
+		var 
+		component = new Comp
 
 		// maybe the object is a function that returns an object
 		if (is(obj, __function)) {
 			obj = obj()
 		}
 
+		// invalid component
+		if (!obj.render) {
+			throw 'can\'t find render, invalid component'
+		}
+
 		// add the properties to the component instance
 		// also bind functions to the component scope
 		each(obj, function (value, name) {
 			if (is(value, __function)) {
-				component[name] = value.bind(component)
+				// pass props and state to render
+				if (name === 'render') {
+					component[name] = value.bind(component, component.props, component.state)
+				}
+				// every other method
+				else {
+					component[name] = value.bind(component)
+				}
 			}
 			else {
 				component[name] = value
@@ -2035,21 +2039,29 @@
 		// return a function that when called
 		// returns the components vdom representation
 		// i.e User(props) -> {type: 'div', props: {..props}, children: ...}
-		return function (props, state, internal) {
+		return function (props, children, internal) {
 			// insure the render function returns the newly
 			// created hyperscript object
-			component.render = function (props, state) {
-				return new h(render(props, state))
+			component.render = function () {
+				return new h(render())
+			}
+
+			// add children to props if set
+			if (children) {
+				props = props || {}
+				props.children = children
 			}
 
 			// publish componentWillReceiveProps lifecycle
 			if (props) {
 				lifecycle(component, __componentWillReceiveProps, __true, __undefined, __true)
+				// set props
+				setProps(component, props)
 			}
 
 			// expose the components internals
 			// when requested
-			return internal ? component : component.render(props, state)
+			return internal ? component : component.render()
 		}
 	}
 

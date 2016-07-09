@@ -6,7 +6,7 @@
 		<title>surl.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/surl.min.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -25,8 +25,6 @@
 
 			var store = s.store(function TodoStore (state, action) {
 				state = state || {items: [], text: ''}
-
-				console.log(Date.now())
 
 				switch (action.type) {
 					case 'ADD':

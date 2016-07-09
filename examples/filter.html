@@ -113,17 +113,17 @@
 			  				})
 			  			}	    		
 			  		},
-			  		render: function() {
+			  		render: function (props, state) {
 			  			return h('div',
 				  					SearchBar({
-				  						filterText: this.state.filterText,
-						          		inStockOnly: this.state.inStockOnly,
+				  						filterText: state.filterText,
+						          		inStockOnly: state.inStockOnly,
 						          		onUserInput: this.handleUserInput
 				  					}),
 				  					ProductTable ({
-				  						products: this.state.products,
-		  					          	filterText: this.state.filterText,
-		  					          	inStockOnly: this.state.inStockOnly
+				  						products: state.products,
+		  					          	filterText: state.filterText,
+		  					          	inStockOnly: state.inStockOnly
 				  					})
 			  					)
 			  		}
