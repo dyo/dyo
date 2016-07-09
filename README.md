@@ -43,7 +43,7 @@ render(...props, state, forceUpdate?)
 // forceUpdate{Boolean} tells the render to force an initial mount
 // which clears the element and does an initial mount to it.
 // this is by default executated on the initial render/ first time you
-// call the render instance
+// call the render instance.
 ```
 
 --
@@ -59,6 +59,13 @@ var Header = s.render(Header, '.header')
 
 // where User & Header are either functions that return 
 // an object with a render method or an object with a render method
+// or alternatively it could just be a function that returns a
+// hyperscript object.
+
+Sidebar(props, children)
+// renders Sidebar to .side-bar passing in props and children
+// however there is a third param{Boolean} you can pass
+// that explicity forces an update/initial mount.
 ```
 
 

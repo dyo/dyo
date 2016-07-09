@@ -1863,7 +1863,7 @@
 		each(args, function (value) {
 			// component (function)
 			if (is(value, __function)) {
-				component = comp(value())
+				component = comp(value)
 			}
 			// component (object)
 			else if (is(value, __object)) {
@@ -1964,8 +1964,10 @@
 			}
 		}
 		// can't find element to mount to
+		// or can't find a component
 		else {
-			throw 'either the element to mount does not exist or the component is invalid'
+			if (!element) throw 'can\'t find the element'
+			if (!component) throw 'can\'t find the component'
 		}
 	}
 
@@ -1988,24 +1990,46 @@
 		// i.e this.setProps({})
 		setProps: function (obj) {
 			setProps(this, obj)
+		},
+		// force update public method
+		forceUpdate: function () {
+			forceUpdate(this)
 		}
 	}
 
 	// create component
-	function comp (obj) {
+	function comp (arg) {
+		var 
+		obj
+
+		// invalid component if the component is an object
+		// without a render method
+		if (is(arg, __object) && !arg.render) {
+			throw 'can\'t find render, invalid component'
+		}
+		// maybe the arg is a function that returns an object
+		else if (is(arg, __function)) {
+			obj = arg()
+		}
+
+		// invalid component?
+		// there's no such think as an invalid component
+		// normally we would check if the returned value of the function
+		// has a render method, but it could just as much return a hyperscript
+		// object directy, so lets just check if it does return a render method
+		// if not then return it as it is, assuming the function
+		// will return a hyperscript object
+		if (!obj.render) {
+			return arg
+		}
+
+		// everything checks out i.e
+		// - obj has a render method
+		// - or arg() returns an object that has a render method
+		// 
 		// create new component object
 		var 
 		component = new Comp
-
-		// maybe the object is a function that returns an object
-		if (is(obj, __function)) {
-			obj = obj()
-		}
-
-		// invalid component
-		if (!obj.render) {
-			throw 'can\'t find render, invalid component'
-		}
 
 		// add the properties to the component instance
 		// also bind functions to the component scope
@@ -2106,10 +2130,15 @@
 				self.state[name] = value
 			})
 
-			// update if this component is a render instance
-			if (self['render()']) {
-				self['render()'](self.props, self.state)
-			}
+			forceUpdate(self)
+		}
+	}
+
+	// force update
+	function forceUpdate (self) {
+		// update only if this component is a render instance
+		if (self['render()']) {
+			self['render()']()
 		}
 	}
 
