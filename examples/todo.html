@@ -11,7 +11,7 @@
 	</head>
 	<body>
 		<div class="app"></div>
-		
+
 		<script>
 			// ------------------------- initializers ------------------------- //
 
@@ -95,9 +95,9 @@
 		    		value = text()
 		    		el    = input()
 
-		    		if (value == el.value) {
+		    		if (value != '') {
 		    			store.dispatch({type:'ADD', id: Date.now(), value: value})
-		    			el.value = ''
+		    			el.value = text('')
 		    		}
 		  		}
 		  		function handleDelete () {
