@@ -38,11 +38,11 @@ var TodoApp = {
 var render = s.render(TodoApp, '.app')
 
 // call it when you want to render to the dom
-render(...props, state, forceUpdate?)
+render(...props?, children?, forceUpdate?)
 
 // forceUpdate{Boolean} tells the render to force an initial mount
 // which clears the element and does an initial mount to it.
-// this is by default executated on the initial render/ first time you
+// this is by default only executated on the initial render/ first time you
 // call the render instance.
 ```
 
