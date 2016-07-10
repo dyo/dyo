@@ -50,7 +50,7 @@ render(...props?, children?, forceUpdate?)
 --
 
 
-## s.render
+## dio.render
 
 create a render function that can be called anytime you need to render to the dom.
 
@@ -235,7 +235,7 @@ handleDelete: function () {
 }
 ```
 
-### s.trust
+### dio.trust
 
 print html entities
 
@@ -250,7 +250,7 @@ i.e
 h('div', trust('<script>alert('Hello World')</script>'))
 ```
 
-### s.prop
+### dio.prop
 
 ```javascript
 var a = dio.prop('value')
