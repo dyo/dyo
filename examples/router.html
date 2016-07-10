@@ -6,7 +6,7 @@
 		<title>surl.js - Router Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/dio.js"></script>
 	</head>
 	<body>
 		<div class="app"></div>
@@ -36,15 +36,15 @@
 				}
 			}
 
-			var router = s.router({
+			var router = dio.router({
 				mount: '.app',
-				root: '/projects/surl.js',
+				root: '/examples/dio.js',
 				routes: {
 					'/router.html': function (data) {
-						s.render(Home, '.app')(data)
+						dio.render(Home, '.app')(data)
 					},
 					'/:page/:name': function (data) {
-						s.render(User, '.app')(data)
+						dio.render(User, '.app')(data)
 					}
 				}
 			})

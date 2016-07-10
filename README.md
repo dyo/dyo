@@ -37,6 +37,8 @@ var TodoApp = {
 // create a render instance
 var render = s.render(TodoApp, '.app')
 
+var render = Surl.render(TodoApp, '.app')
+
 // call it when you want to render to the dom
 render(...props?, children?, forceUpdate?)
 

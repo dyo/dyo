@@ -6,7 +6,7 @@
 		<title>surl.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/dio.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -15,9 +15,9 @@
 		<script>
 			function CanvasComponent () {
 				var
-				isDrawing = s.prop(false),
-				canvas    = s.prop(null)
-				ctx       = s.prop(null)
+				isDrawing = dio.prop(false),
+				canvas    = dio.prop(null)
+				ctx       = dio.prop(null)
 
 			    function mouseDown (e) {
 			    	ctx().strokeStyle = '#FF5722'
@@ -53,7 +53,7 @@
 				}
 			}	
 			var 
-			render = s.render(CanvasComponent, '.app')
+			render = dio.render(CanvasComponent, '.app')
 			render()
 		</script>
 	</body>

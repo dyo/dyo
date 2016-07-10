@@ -1,9 +1,8 @@
 /*!
- * surl.js 
+ * dio.js 
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @license MIT
  */
-
 (function (root, factory) {
 	'use strict'
 
@@ -2354,8 +2353,9 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.h = element()
-	exports.s = {
+	exports.h   = element()
+
+	exports.dio = {
 		animate: animate(),
 		request: request(),
 		render: render,

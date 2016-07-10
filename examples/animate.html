@@ -6,7 +6,7 @@
 		<title>surl.js - Animation Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/surl.js"></script>
+		<script src="/dist/dio.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -17,7 +17,7 @@
 					render: function () {
 						var createItem = function (item, className, transform, transformOrigin, easing) {
 							return h('.card', {
-										onmousedown: s.animate.flip(className, 400,  transform, transformOrigin, easing)
+										onmousedown: dio.animate.flip(className, 400,  transform, transformOrigin, easing)
 									}, 
 										h('p', 
 											h('h1', item.id), 
@@ -48,7 +48,7 @@
 				}
 			}
 
-			var render = s.render(List, '.app')
+			var render = dio.render(List, '.app')
 
 			render()
 		</script>
