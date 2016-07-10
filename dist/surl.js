@@ -1572,12 +1572,11 @@
 		 * @param {Object}
 		 * @param {Function}
 		 */
-		function http (url, method, data, callback) {
+		function http (url, method, payload, enctype, callback) {
 			return new promise(function (resolve, reject) {
 				var 
 				xhr      = new __XMLHttpRequest(),
-				location = __window.location,
-				sent
+				location = __window.location
 
 				// create anchor element to extract usefull information
 				var 
@@ -1597,7 +1596,7 @@
 				a = __null
 				
 				// open request
-				xhr.open(method, url, __true)
+				xhr.open(method, url)
 				
 				// assign on load callback
 				xhr.onload = function () {
@@ -1615,7 +1614,7 @@
 
 						// format response header
 						// to get the type of response
-						// that we can use to format the data
+						// that we can use to format the response body
 						// if needed i.e create dom/parse json
 						if (resHeader.indexOf(';') !== -1) {
 							resType = resHeader.split(';');
@@ -1673,19 +1672,19 @@
 					xhr.withCredentials = __true
 				}
 
-				// serialize settings for POST request
-				if (method === 'POST') {
-					xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
-					sent = param(data)
-				}
-				// stringify non GET requests i.e PUT/DELETE...
-				else if (method !== 'GET') {
-					xhr.setRequestHeader('Content-Type', is(data, __object) ? 'application/json' : 'text/plain')
-					sent = JSON.stringify(data)
+				if (method === 'POST' || method === 'PUT') {
+					xhr.setRequestHeader('Content-type', enctype)
+
+					if (enctype.indexOf('x-www-form-urlencoded') > -1) {
+						payload = param(payload)
+					}
+					else if (enctype.indexOf('json') > -1) {
+						payload = JSON.stringify(payload)
+					}
 				}
 
 				// send request
-				xhr.send(sent)
+				xhr.send(payload)
 			})	
 		}
 
@@ -1826,13 +1825,33 @@
 		 * @param {Function}
 		 */
 		function request (method) {
-			return function (url, data, callback) {
-				if (is(data, __function)) {
-					callback = data
+			return function (url, payload, enctype, callback) {
+				// if enctype is a function
+				// then enctype === callback
+				// and enctype will default to the value in callback
+				// we don't use arguments[arguments.length-1]
+				// because callback may not be passed thus making the
+				// length of arguments 3 instead of 4
+				if (is(enctype, __function)) {
+					var
+					placeholder = callback
+					callback = enctype
+					enctype = placeholder
+				}
+
+				// enctype syntactial sugar
+				if (enctype) {
+					if      (enctype === 'json') enctype = 'application/json'
+					else if (enctype === 'text') enctype = 'text/plain'
+					else if (enctype === 'file') enctype = 'multipart/form-data'
+				}
+				else {
+					// defaults
+					enctype = 'application/x-www-form-urlencoded'
 				}
 
 				// return ajax promise
-				return http(url, method.toUpperCase(), data, callback)
+				return http(url, method.toUpperCase(), payload, enctype, callback)
 			}
 		}
 
