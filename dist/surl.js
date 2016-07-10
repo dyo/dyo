@@ -1857,7 +1857,9 @@
 
 		return {
 			get: request('GET'),
-			post: request('POST')
+			post: request('POST'),
+			put: request('PUT'),
+			delete: request('DELETE')
 		}
 	}
 
