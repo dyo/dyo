@@ -76,7 +76,7 @@
 
 
 	/**
-	 * conver arguments to arrays
+	 * convert arguments to arrays
 	 * @param  {arugments} arg array like object
 	 * @return {Array}
 	 */
