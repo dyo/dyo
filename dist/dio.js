@@ -75,7 +75,22 @@
 	__setTimeout                = __window.setTimeout
 
 
-	function classList (prop) {
+	/**
+	 * conver arguments to arrays
+	 * @param  {arugments} arg array like object
+	 * @return {Array}
+	 */
+	function toArray (arg) {
+		return __array[__prototype].slice.call(arg)
+	}
+
+	/**
+	 * classList helper
+	 * @param  {Element} element
+	 * @param  {String}  value
+	 * @return {Object} {add, remove, toggle, hasClass}
+	 */
+	function classList () {
 		function hasClass (element, value) {
 			// default to native Element.classList()
 		    if (element[__classList]) {
@@ -677,7 +692,7 @@
 				frag = __document.createDocumentFragment()
 
 				div.innerHTML = node.children[0];
-				var nodes     = __array[__prototype].slice.call(div.childNodes)
+				var nodes     = toArray(div.childNodes)
 
 				each(nodes, function (value) {
 					frag.appendChild(value)
@@ -1307,7 +1322,7 @@
 				__window[name] = function Element () {
 					// convert args to array
 					var 
-					args = __array[__prototype].slice.call(arguments),
+					args = toArray(arguments),
 					first = args[0]
 
 					// i.e div('#id', {}, 'Children')
@@ -1337,7 +1352,7 @@
 
 		// expose just a specific few
 		if (args[__length]) {
-			expose(__array[__prototype].slice.call(args))
+			expose(toArray(args))
 		}
 		// expose all elements
 		else {
@@ -1877,7 +1892,7 @@
 		element,
 		internal,
 		initial = __true,
-		args = __array[__prototype].slice.call(arguments)
+		args = toArray(arguments)
 
 		// assign args
 		each(args, function (value) {
