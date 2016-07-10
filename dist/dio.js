@@ -1,4 +1,11 @@
 /*!
+ * 
+ *  ___ __ __  
+ * (   (  /  \ 
+ *  ) ) )( () )
+ * (___(__\__/ 
+ * 
+ * 
  * dio.js 
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @license MIT
@@ -2015,7 +2022,13 @@
 	Comp[__prototype] = {
 		// i.e this.setState({})
 		setState: function (obj) {
-			setState(this, obj)
+			// set state
+			// if the state is changed
+			// setState will return true
+			if (setState(this, obj)) {
+				// update render
+				forceUpdate(self)
+			}
 		},
 		// i.e this.setProps({})
 		setProps: function (obj) {
@@ -2023,7 +2036,10 @@
 		},
 		// force update public method
 		forceUpdate: function () {
-			forceUpdate(this)
+			// update only if this component is a render instance
+			if (this['render()']) {
+				this['render()']()
+			}
 		}
 	}
 
@@ -2160,15 +2176,7 @@
 				self.state[name] = value
 			})
 
-			forceUpdate(self)
-		}
-	}
-
-	// force update
-	function forceUpdate (self) {
-		// update only if this component is a render instance
-		if (self['render()']) {
-			self['render()']()
+			return __true
 		}
 	}
 
@@ -2364,7 +2372,6 @@
 
 
 	exports.h   = element()
-
 	exports.dio = {
 		animate: animate(),
 		request: request(),
