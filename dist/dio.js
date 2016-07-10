@@ -1,10 +1,8 @@
 /*!
- * 
  *  ___ __ __  
  * (   (  /  \ 
  *  ) ) )( () )
  * (___(__\__/ 
- * 
  * 
  * dio.js 
  * @author Sultan Tarimo <https://github.com/thysultan>
