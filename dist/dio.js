@@ -84,81 +84,89 @@
 		return __array[__prototype].slice.call(arg)
 	}
 
+
+	
 	/**
-	 * classList helper
-	 * @param  {Element} element
-	 * @param  {String}  value
-	 * @return {Object} {add, remove, toggle, hasClass}
+	 * 'forEach' shortcut
+	 * @param  {Array|Object} a 
+	 * @param  {Function}     fn
+	 * @param  {Boolean}      multiple
+	 * @return {Array|Object}
 	 */
-	function classList () {
-		function hasClass (element, value) {
-			// default to native Element.classList()
-		    if (element[__classList]) {
-		        return element[__classList].contains(value)
-		    } 
-		    else {
-		    	// this will return true if indexOf does not
-		    	// find our class in the className string 
-		        return element[__className].indexOf(value) > -1
-		    }
-		}
+	function each (arr, fn) {
+		// index {Number}
+		var 
+		index
 
-		function add (element, value) {
-			// default to native Element.classList.remove()
-			if (element[__classList]) {
-		        element[__classList].add(value)
-		    }
-		    // exit early if the class is already added
-		    else if (!hasClass(element, value)) {
-		    	// create array of current classList
-		        var 
-		        classes = element[__className].split(" ")
-		        // add our new class
-		        classes.push(value)
-		        // join our classes array and re-assign to className
-		        element[__className] = classes.join(" ")
-		    }
-		}
+		// Handle arrays, and array-like Objects, 
+		// array-like objects (have prop .length 
+		// that is a number) and numbers for keys [0]
+		if (
+			is(arr, __array) || arr[__length] && 
+			is(arr[__length], __number) && arr[0]
+		) {
+			// length {Number}
+			var 
+			length = arr[__length]
+			index = 0
 
-		function remove (element, value) {
-			// default to native Element.classList.remove()
-		    if (element[__classList]) {
-		        element[__classList].remove(value)
-		    }
-		    else {
-		    	// create array of current classList
-		        var
-		        classes = element[__className].split(" ")
-		        // remove the className on this index
-		        classes.splice(classes.indexOf(value), 1)
-		        // join our classes array and re-ssign to className
-		        element[__className] = classes.join(" ")
-		    }
+			for (; index < length; ++index) {
+				// break if fn() returns false
+				if (fn.call(arr[index], arr[index], index, arr) === __false) {
+					return
+				}
+			}
 		}
+		// Handle objects 
+		else {
+			for (index in arr) {
+				// break if fn() returns false
+				if (fn.call(arr[index], arr[index], index, arr) === __false) {
+					return
+				}
+			}
+		}
+	}
 
-		function toggle (element, value) {
-			// default to native Element.classList.toggle()
-		    if (element[__classList]) {
-		        element[__classList].toggle(value)
-		    }
-		    else {
-		    	// if has class, remove
-		    	if (hasClass(element, value)) {
-		    		remove(element, value)
-		    	}
-		    	// if does not have class, add
-		    	else {
-		    		add(element, value)
-		    	}
-		    }
-		}
 
-		return {
-			add: add,
-			remove: remove,
-			hasClass: hasClass,
-			toggle: toggle
+	/**
+	 * check Object type
+	 * @param  {Any}  obj  - object to check for type
+	 * @param  {Any}  type - type to check for
+	 * @return {Boolean}   - true/false
+	 */
+	function is (obj, type) {
+		// only check if obj is not a falsey value
+		if (!type) {
+			return obj ? __true : __false
 		}
+		// check object type
+		else {
+			// onj has a constructor
+			if (obj !== __undefined && obj !== __null) {
+				return obj[__constructor] === type
+			}
+			// doesn't, probably null or undefined 
+			// that don't have constructors methods, return false
+			else {
+				return __false
+			}
+		}
+	}
+
+
+	/**
+	 * push task to the event stack
+	 * @param  {Function} fn      
+	 * @param  {Number?}  duration - delay
+	 */
+	function debounce (fn, duration) {
+		// when we want to send a custom duration
+		// to setTimeout
+		duration = duration || 0
+
+		// push to the end of the event stack
+		__setTimeout(fn, duration)
 	}
 
 
@@ -382,75 +390,6 @@
 
 		return h
 	}
-
-	
-	/**
-	 * 'forEach' shortcut
-	 * @param  {Array|Object} a 
-	 * @param  {Function}     fn
-	 * @param  {Boolean}      multiple
-	 * @return {Array|Object}
-	 */
-	function each (arr, fn) {
-		// index {Number}
-		var 
-		index
-
-		// Handle arrays, and array-like Objects, 
-		// array-like objects (have prop .length 
-		// that is a number) and numbers for keys [0]
-		if (
-			is(arr, __array) || arr[__length] && 
-			is(arr[__length], __number) && arr[0]
-		) {
-			// length {Number}
-			var 
-			length = arr[__length]
-			index = 0
-
-			for (; index < length; ++index) {
-				// break if fn() returns false
-				if (fn.call(arr[index], arr[index], index, arr) === __false) {
-					return
-				}
-			}
-		}
-		// Handle objects 
-		else {
-			for (index in arr) {
-				// break if fn() returns false
-				if (fn.call(arr[index], arr[index], index, arr) === __false) {
-					return
-				}
-			}
-		}
-	}
-
-
-	/**
-	 * check Object type
-	 * @param  {Any}  obj  - object to check for type
-	 * @param  {Any}  type - type to check for
-	 * @return {Boolean}   - true/false
-	 */
-	function is (obj, type) {
-		// only check if obj is not a falsey value
-		if (!type) {
-			return obj ? __true : __false
-		}
-		// check object type
-		else {
-			// onj has a constructor
-			if (obj !== __undefined && obj !== __null) {
-				return obj[__constructor] === type
-			}
-			// doesn't, probably null or undefined 
-			// that don't have constructors methods, return false
-			else {
-				return __false
-			}
-		}
-	}
 	
 
 	/**
@@ -492,28 +431,6 @@
 			// which we can use in the draw - update () function
 			// to see if we should skip an element or not
 			return component[stage](props, state)
-		}
-	}
-
-
-	function debounce (fn, duration) {
-		// when we want to send a custom duration
-		// to setTimeout
-		duration = duration || 0
-
-		// push to the end of the event/render stack
-		// ensuring the dom is always up to date
-		// before we run any of the 
-		// removeChild/appendChild/replaceChild
-		// operations
-		// we use requestAnimationFrame if it's
-		// available
-		// and fallback to setTimeout otherwise
-		if (duration === 0 && is(requestAnimationFrame, __function)) {
-			requestAnimationFrame(fn)
-		}
-		else {
-			__setTimeout(fn, duration)
 		}
 	}
 
@@ -1290,6 +1207,84 @@
 		return {
 			flip: flip,
 			transition: transition
+		}
+	}
+
+
+	/**
+	 * classList helper
+	 * @param  {Element} element
+	 * @param  {String}  value
+	 * @return {Object} {add, remove, toggle, hasClass}
+	 */
+	function classList () {
+		function hasClass (element, value) {
+			// default to native Element.classList()
+		    if (element[__classList]) {
+		        return element[__classList].contains(value)
+		    } 
+		    else {
+		    	// this will return true if indexOf does not
+		    	// find our class in the className string 
+		        return element[__className].indexOf(value) > -1
+		    }
+		}
+
+		function add (element, value) {
+			// default to native Element.classList.remove()
+			if (element[__classList]) {
+		        element[__classList].add(value)
+		    }
+		    // exit early if the class is already added
+		    else if (!hasClass(element, value)) {
+		    	// create array of current classList
+		        var 
+		        classes = element[__className].split(" ")
+		        // add our new class
+		        classes.push(value)
+		        // join our classes array and re-assign to className
+		        element[__className] = classes.join(" ")
+		    }
+		}
+
+		function remove (element, value) {
+			// default to native Element.classList.remove()
+		    if (element[__classList]) {
+		        element[__classList].remove(value)
+		    }
+		    else {
+		    	// create array of current classList
+		        var
+		        classes = element[__className].split(" ")
+		        // remove the className on this index
+		        classes.splice(classes.indexOf(value), 1)
+		        // join our classes array and re-ssign to className
+		        element[__className] = classes.join(" ")
+		    }
+		}
+
+		function toggle (element, value) {
+			// default to native Element.classList.toggle()
+		    if (element[__classList]) {
+		        element[__classList].toggle(value)
+		    }
+		    else {
+		    	// if has class, remove
+		    	if (hasClass(element, value)) {
+		    		remove(element, value)
+		    	}
+		    	// if does not have class, add
+		    	else {
+		    		add(element, value)
+		    	}
+		    }
+		}
+
+		return {
+			add: add,
+			remove: remove,
+			hasClass: hasClass,
+			toggle: toggle
 		}
 	}
 
