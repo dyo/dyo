@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
-		<title>surl.js - Router Example</title>
+		<title>dio.js - Router Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 		<script src="/dist/dio.js"></script>
@@ -17,7 +17,7 @@
 						router.nav('/user/sultan')
 					},
 					render: function () {
-						return h('h1', {key: '1234', onClick: this.onClick}, s.trust("Home Page &amp;"))
+						return h('h1', {key: '1234', onClick: this.onClick}, dio.trust("Home Page &amp;"))
 					}
 				}
 			}
@@ -38,7 +38,7 @@
 
 			var router = dio.router({
 				mount: '.app',
-				root: '/examples/dio.js',
+				root: '/examples',
 				routes: {
 					'/router.html': function (data) {
 						dio.render(Home, '.app')(data)

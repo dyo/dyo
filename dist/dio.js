@@ -2246,7 +2246,7 @@
 				})
 			}
 
-			dispatch({type: '@@surl/INIT'})
+			dispatch({type: '@@dio/INIT'})
 
 			return {
 				getState: getState, 

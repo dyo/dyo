@@ -1,4 +1,4 @@
-# surl.js
+# dio.js
 
 ##### a light performant (~6kb) vdom framework.
 
@@ -35,9 +35,8 @@ var TodoApp = {
 }
 
 // create a render instance
-var render = s.render(TodoApp, '.app')
+var render = dio.render(TodoApp, '.app')
 
-var render = Surl.render(TodoApp, '.app')
 
 // call it when you want to render to the dom
 render(...props?, children?, forceUpdate?)
@@ -56,8 +55,8 @@ render(...props?, children?, forceUpdate?)
 create a render function that can be called anytime you need to render to the dom.
 
 ```javascript
-var Sidebar = s.render(User, '.side-bar')
-var Header = s.render(Header, '.header')
+var Sidebar = dio.render(User, '.side-bar')
+var Header = dio.render(Header, '.header')
 
 // where User & Header are either functions that return 
 // an object with a render method or an object with a render method
@@ -84,17 +83,17 @@ creates
 <div class="card" data-id="1234" checked>Text<div>
 ```
 
-## s.DOM
+## dio.DOM
 
 save a few keystrokes
 
 ```javascript
 
 // exposes all html elements to the global namespace
-s.DOM()
+dio.DOM()
 
 // exposes only the input element to the global namespace
-s.DOM('input')
+dio.DOM('input')
 
 ```
 
@@ -107,13 +106,13 @@ input({value: 'hello'})
 ```
 
 
-## s.route
+## dio.route
 
 create a router
 
 ```javascript
-var myrender = s.render(Function, 'selector|element')
-var myrouter = s.router({
+var myrender = dio.render(Function, 'selector|element')
+var myrouter = dio.router({
 	root: '/examples',
 	nav: '/start',
 	routes: {
@@ -130,26 +129,25 @@ myrouter
 - .foward()
 - .go(-Number) || .go(+Number)
 ```
-## s.request
+## dio.request
 
 a http helper
 
 ```javascript
-s.request.get('/url/id', callback)
-s.request.post('/url/id', {data:1}, callback)
+dio.request.get('/url/id', callback)
+dio.request.post('/url/id', {data:1}, callback)
 
 var a = prop('hello')
-s.request.get('/url/id').then(a).done(()=>console.log(a))
+dio.request.get('/url/id').then(a).done(()=>console.log(a))
 // a => response
 
 ```
 
-## s.store
+## dio.store
 
 ```javascript
-var render = s.render(MyComponent, '.app')
-
-var store = s.store(reducer => {})
+var render = dio.render(MyComponent, '.app')
+var store = dio.store(reducer => {})
 
 store.subscribe(() => { render(store.getState()) })
 store.dispatch({type: 'ADD'})
@@ -200,9 +198,9 @@ componentWillUnmount:      function(node)
 
 
 ```javascript
-s.animate.flip(className, duration, transform, transformOrigin, easing)(Element)
+dio.animate.flip(className, duration, transform, transformOrigin, easing)(Element)
 
-s.animate.transition(className)(node, callback)
+dio.animate.transition(className)(node, callback)
 ```
 
 for example `s.animate.flip` can be used within a render as follows
@@ -210,15 +208,15 @@ for example `s.animate.flip` can be used within a render as follows
 ```javascript
 render: function () {
 	return h('.card', 
-	{onclick: s.animate.flip('active-state', 200)}, 
-	''
+		{onclick: dio.animate.flip('active-state', 200)}, 
+		''
 	)
 }
 ```
-since `s.animate.flip(...)` returns a function this is the same as
+since `dio.animate.flip(...)` returns a function this is the same as
 
 ```javascript
-s.animate('active-state', 200)(Element) // returns duration
+dio.animate('active-state', 200)(Element) // returns duration
 ``` 
 
 another animation helper being `animate.transition`
@@ -231,7 +229,7 @@ handleDelete: function () {
 	self = this
 	
 	// animate node out then update state
-	s.animate.transition('slideUp')(node, function(){
+	dio.animate.transition('slideUp')(node, function(){
 		store.dispatch({type: 'DELETE', id: 1234})
 	})
 }
@@ -242,7 +240,7 @@ handleDelete: function () {
 print html entities
 
 ```javascript
-s.trust("Home Page &amp; <script></script>")
+dio.trust("Home Page &amp; <script></script>")
 // Home Page &
 // + will add the script tag to the dom
 ```
@@ -255,7 +253,7 @@ h('div', trust('<script>alert('Hello World')</script>'))
 ### s.prop
 
 ```javascript
-var a = s.prop('value')
+var a = dio.prop('value')
 console.log(a()) // => value
 a('new value')
 a() // => new value
@@ -265,7 +263,7 @@ JSON.stringify(a) // => new value
 ### .toHTML
 
 ```javascript
-var render = s.render(Users, '.app')
+var render = dio.render(Users, '.app')
 document.write(render(props, state, 'html'))
 // => prints the components html to the page without mounting
 // it to the dom
