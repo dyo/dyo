@@ -449,10 +449,10 @@
 	 * @param {Object}  component?
 	 */
 	function vdomToDOM (parent, newNode, oldNode, component) {
-		update(parent, newNode, oldNode, __undefined, component)		
+		update(parent, newNode, oldNode, __undefined, component)
 
 		// diff and update dom loop
-		function update (parent, newNode, oldNode, index, component) {
+		function update (parent, newNode, oldNode, index, component, newChildren, oldChildren) {
 			index = index || 0
 			
 			// should component update
@@ -463,119 +463,156 @@
 
 			// adding to the dom
 			if (oldNode === __undefined) {
-				var 
+				var
 				nextNode = createElement(newNode, component)
 				appendChild(parent, nextNode, newNode)
-			} 
+			}
 			// removing from the dom
 			else if (newNode === __undefined) {
 				var 
 				nextNode = parent[__childNodes][index]
-
 				removeChild(parent, nextNode, oldNode)
 			}
-			// removing/replacing a node
-			// here we check if the nodes keys are the same
-			// if they are different then the node that existed here before is now gone
-			// so we remove it
-			else if (newNode.props && oldNode.props && newNode.props.key !== oldNode.props.key) {
-				var
-				nextNode = parent[__childNodes][index]
+			// update keyed elements
+			else if (
+				(newNode.props && oldNode.props) && 
+				(newNode.props.key || oldNode.props.key) &&
+				(newNode.props.key !== oldNode.props.key)
+			) {
+				var 
+				newLength    = newChildren[__length],
+				oldLength    = oldChildren[__length],
+				op,
+				nextNode
 
-				removeChild(parent, nextNode, oldNode)
+				// element added
+				if (newLength > oldLength) { op = +1 }
+				// element remove
+				else if (newLength < oldLength ) { op = -1 }
 
-				return __true
+				return updateKeyedElements(parent, newChildren, oldChildren, op, index, newNode)
 			}
 			// replacing a node
 			else if (nodeChanged(newNode, oldNode)) {
 				var 
 				prevNode = parent[__childNodes][index],
 				nextNode = createElement(newNode)
-				
 				replaceChild(parent, nextNode, prevNode, newNode)		
 			}
 			// the lookup loop
 			else if (newNode.type) {
-				handlePropChanges(parent[__childNodes][index], newNode, oldNode)
+				var 
+				parentChildren = parent[__childNodes]
 
-				// loop through all children
+				// update props
+				handlePropChanges(parentChildren[index], newNode, oldNode)
+
 				var
 				newLength = newNode[__children][__length],	
 				oldLength = oldNode[__children][__length]
 
+				// loop through children
 				for (var i = 0; i < newLength || i < oldLength; i++) {
-					// only replace returns a non falsy value
-					// we will use that change to do some extra
-					// checks on replaced elements
-					if (
-						update(
-							parent[__childNodes][index], 
-							newNode[__children][i], 
-							oldNode[__children][i], 
-							i
+					var 
+					newChildren = newNode[__children],
+					oldChildren = oldNode[__children]
+
+					var
+					key = update(
+							parentChildren[index], 
+							newChildren[i], 
+							oldChildren[i],
+							i,
+							__undefined,
+							newChildren,
+							oldChildren
 						)
-					) {
-						// if newNodes children length is large than the old one
-						// remove the item in the children array
-						// that was replaced
-						// and decreement the newLength number
-						if (newLength > oldLength) {
-							newNode[__children].splice(i,1)
-							newLength--
-						}
-						// the same as above but for oldNodes children
-						else if (newLength < oldLength) {
-							oldNode[__children].splice(i,1)
-							oldLength--
-						}
+
+					if (key !== __undefined) {
+						newLength += key
+						oldLength += key
 					}
 				}	
 			}
 		}
 
-		// remove element
-		function removeChild (parent, nextNode, oldNode) {
-			// check if componentWillUnmount returns somethings
+		// update/remove/add keyed elements
+		function updateKeyedElements (parent, newChildren, oldChildren, op, index, newNode) {
 			var 
-			duration = lifecycle(oldNode, __componentWillUnmount, nextNode)
+			nextNode,
+			currentNode = parent[__childNodes][index]
 
-			// if what it returns is not a number
-			// default to undefined
-			if (!is(duration, __number)) {
-				duration = __undefined
+			// create next node for addition and replace opreations
+			if (op > 0 || !op) { 
+				nextNode = createElement(newNode) 
 			}
 
-			debounce(function () {
-				// insure the node we are trying to remove
-				// actually still exists
-				if (nextNode) {
-					parent.removeChild(nextNode)
-				}
-			}, duration)
+			// element added
+			if (op > 0) {
+				oldChildren.splice(index, 0, __undefined)
+				prependChild(parent, nextNode, currentNode, newNode)
+				return -1
+			}
+			// element removed
+			else if (op < 0) {
+				oldChildren.splice(index, 1)
+				removeChild(parent, currentNode, newNode)
+				return -1
+			}
+			// replace
+			else {
+				replaceChild(parent, nextNode, currentNode, newNode)
+			}
 		}
 
-		// add element
-		function appendChild (parent, nextNode, newNode) {
-			lifecycle(newNode, __componentWillMount)
-
+		// remove element
+		function removeChild (parent, nextNode, oldNode) {
 			if (nextNode) {
-				parent.appendChild(nextNode)
-			}
+				// run and check if componentWillUnmount returns somethings
+				var 
+				duration = lifecycle(oldNode, __componentWillUnmount, nextNode)
 
-			lifecycle(newNode, __componentDidMount, nextNode)
+				// if what it returns is not a number default to 0
+				if (!is(duration, __number)) {
+					duration = 0
+				}
+
+				debounce(function () {
+					// since we debounce this action
+					// we check again to see if nextNode is still actually in the dom
+					// when this is run
+					if (nextNode) {
+						parent.removeChild(nextNode)
+					}
+				}, duration)
+			}
+		}
+
+		// add element to the end
+		function appendChild (parent, nextNode, newNode) {
+			if (nextNode) {
+				lifecycle(newNode, __componentWillMount)
+				parent.appendChild(nextNode)
+				lifecycle(newNode, __componentDidMount, nextNode)
+			}
+		}
+
+		// add element at the beginning
+		function prependChild (parent, nextNode, beforeNode, newNode) {
+			if (nextNode) {
+				lifecycle(newNode, __componentWillMount)			
+				parent.insertBefore(nextNode, beforeNode)
+				lifecycle(newNode, __componentDidMount, nextNode)
+			}
 		}
 
 		// replace element
 		function replaceChild (parent, nextNode, prevNode, newNode) {
-			lifecycle(newNode, __componentWillUpdate)
-
-			debounce(function () {
-				if (nextNode && prevNode) {
-					parent.replaceChild(nextNode, prevNode)
-				}
-			})
-
-			lifecycle(newNode, __componentDidUpdate)
+			if (nextNode && prevNode) {	
+				lifecycle(newNode, __componentWillUpdate)
+				parent.replaceChild(nextNode, prevNode)
+				lifecycle(newNode, __componentDidUpdate)
+			}
 		}
 
 		// diffing two nodes
@@ -594,11 +631,22 @@
 			// will return true, signaling that we should
 			// replace the node
 			type = node1.type !== node2.type
+
+			// diff keys if they are set
+			// key = __false
+
+			// if (node1.props || node2.props) {
+			// 	var
+			// 	key1 = node1.props ? node1.props.key : __undefined,
+			// 	key2 = node2.props ? node2.props.key : __undefined
+
+			// 	key = key1 !== key2
+			// }
 			
 			// if either text/type/object constructor has changed
 			// this will return true
 			// thus signaling that we should replace the node
-			return text || type || obj
+			return text || type || obj //|| key
 		}
 
 		// create element
@@ -2025,7 +2073,7 @@
 			// setState will return true
 			if (setState(this, obj)) {
 				// update render
-				forceUpdate(self)
+				this.forceUpdate()
 			}
 		},
 		// i.e this.setProps({})

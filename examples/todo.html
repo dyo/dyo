@@ -22,16 +22,46 @@
 			// ------------------------- store ------------------------- //
 
 			var store = dio.store(function TodoStore (state, action) {
-				state = state || {items: [], text: ''}
+				state = state || {
+					items: [
+						{id: '1234', value: 'one', completed: false},
+						{id: '0000', value: 'two', completed: false},
+						{id: '1254', value: 'three', completed: false},
+						{id: '0090', value: 'four', completed: false},
+						{id: '12A4', value: 'five', completed: false},
+						{id: '00C0', value: 'six', completed: false}
+					]
+				}
 
 				switch (action.type) {
 					case 'ADD':
+						var item = {id: action.id, value: action.value, completed: false}
+						var middle = state.items.slice(0)
+							middle.pop()
+							middle.shift()
+							middle = middle.concat(item)
+
+						var items = [state.items[0]].concat(middle).concat(state.items[state.items.length-1])
+
 						return Object.assign({}, state, {
-							items: state.items.concat({
-								id: action.id,
-								value: action.value, 
-								completed: false
-							})
+							// add to start
+							items: [{id: action.id, value: action.value, completed: false}].concat(state.items)
+
+							// add to end
+							// items: state.items.concat({id: action.id, value: action.value, completed: false})
+
+							// add to middle
+							// items: items
+						})
+					case 'REMOVE':
+						var items = state.items.filter(function (item) {
+							if (item.id != action.id) {
+								return item
+							}
+						})
+
+						return Object.assign({}, state, {
+							items: items
 						})
 					case 'TOGGLE':
 						return state.map(function (item) {
@@ -40,14 +70,6 @@
 							}
 
 							return Object.assign({}, item, {completed: !item.completed})
-						})
-					case 'REMOVE':
-						return Object.assign({}, state, {
-							items: state.items.filter(function (item) {
-								if (item.id != action.id) {
-									return item
-								}
-							})
 						})
 					case 'FILTER':
 						return Object.assign({}, state, {
@@ -66,7 +88,7 @@
 				}
 			})
 
-
+			console.log(store.getState())
 			store.connect(render)
 
 
@@ -83,6 +105,8 @@
     					)
 			}
 			function TodoApp (props) {
+				console.log(props)
+
 				var 
 				text = dio.prop(''),
 				// will always contain the value of input.value oninput
@@ -110,7 +134,7 @@
 		  			return h('div',
 		  						h('h3', 'TODO'),
 		  						h('form', {onsubmit: this.handleSubmit},
-		  							h('input', {ref: input, oninput: dio.bind(['value'], [text])}),
+		  							h('input', {ref: input, oninput: dio.bind('value', text)}),
 		  							h('button', 'Add #' + (props.items.length+1))
   								),
   								TodoList({items: props.items, handleDelete: handleDelete})
