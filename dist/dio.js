@@ -1191,9 +1191,7 @@
 				// we will get from this '0.4s, 0.2s' to '0.4,0.2'
 				// we then split it to an array ['0.4','0.2']
 				// note: the numbers are still in string format
-				transition = getComputedStyle(element)['transition-duration']
-															.replace(/s| /g, '')
-															.split(',')
+				transition = getComputedStyle(element)['transition-duration'].replace(/s| /g, '').split(',')
 
 				// increament duration (in ms), also convert all values to a number
 				each(transition, function (value) {
