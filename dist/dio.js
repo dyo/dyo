@@ -101,7 +101,7 @@
 	function each (arr, fn) {
 		// index {Number}
 		var 
-		index
+		index;
 
 		// Handle arrays, and array-like Objects, 
 		// array-like objects (have prop .length 
@@ -113,7 +113,7 @@
 			// length {Number}
 			var 
 			length = arr[__length]
-			index = 0
+			index = 0;
 
 			for (; index < length; ++index) {
 				// break if fn() returns false
@@ -168,7 +168,7 @@
 	function debounce (fn, duration) {
 		// when we want to send a custom duration
 		// to setTimeout
-		duration = duration || 0
+		duration = duration || 0;
 
 		// push to the end of the event stack
 		__setTimeout(fn, duration)
@@ -190,7 +190,7 @@
 			args   = arguments,
 			length = args[__length],
 			key    = 2,
-			child
+			child;
 
 			// no props specified default 2nd arg to children
 			// is an hyperscript object or not 
@@ -210,7 +210,7 @@
 
 			// declare hyperscript object
 			var 
-			obj = {type: type, props: props, children: []}
+			obj = {type: type, props: props, children: []};
 
 			// check if the type is a special case i.e [type] | div.class | #id
 			// and alter the hyperscript
@@ -238,7 +238,7 @@
 			// construct children
 			for (var i = key; i < length; i++) {
 				// reference to current layer
-				child = args[i]
+				child = args[i];
 		
 				// if the child is an array go deeper
 				// and set the 'arrays children' as children
@@ -263,7 +263,7 @@
 			maybe = obj &&
 				    obj.type &&
 				    obj.children &&
-				    obj.props
+				    obj.props;
 
 			// end quickly
 			// the object is not
@@ -276,7 +276,7 @@
 			// but just to be sure
 			// we check if it only has 3 properties
 			var 
-			length = 0
+			length = 0;
 
 			for (var name in obj) {
 				// end quickly
@@ -344,19 +344,16 @@
 			match,
 			// regex to parse type/tag
 			re = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
-
-				// copy obj's props to abstract props and type
-				// incase obj.props is empty create new obj
-				// otherwise just add to already available object
-				// we will add this back to obj.props later
-				props = !obj.props ? {} : obj.props,
-
-				// since we use type in a while loop
-				// we will be updating obj.type directly
-				type = obj.type
-
-				// set default type to a div
-				obj.type = 'div'
+			// copy obj's props to abstract props and type
+			// incase obj.props is empty create new obj
+			// otherwise just add to already available object
+			// we will add this back to obj.props later
+			props = !obj.props ? {} : obj.props,
+			// since we use type in a while loop
+			// we will be updating obj.type directly
+			type = obj.type
+			// set default type to a div
+			obj.type = 'div';
 
 			// execute the regex and loop through the results
 			while ((match = re.exec(type))) {
@@ -375,7 +372,7 @@
 				// matches - [attr=value]
 				else if (match[3][0] === '[') {
 					var 
-					attr = match[6]
+					attr = match[6];
 
 					// make sure we have a non null|undefined|false value
 					if (attr) {
@@ -393,7 +390,7 @@
 			}
 
 			// as promised, update props
-			obj.props = props
+			obj.props = props;
 			
 			// done
 			return obj
@@ -425,7 +422,7 @@
 		// no lifecycle methods exist as well
 		// so the next if (Component ...) block will end quickly
 		var
-		component = iscomp ? node : node.internal
+		component = iscomp ? node : node.internal;
 
 		if (component && component[stage]) {
 			// is props/state truthy if so check if it is not a boolean
@@ -435,7 +432,7 @@
 			// to what the value of props was before,
 			// which is undefined
 			props = props ? (!is(props, __boolean) ? props : component.props) : __undefined,
-			state = state ? (!is(state, __boolean) ? state : component.state) : __undefined
+			state = state ? (!is(state, __boolean) ? state : component.state) : __undefined;
 
 			// componentShouldUpdate returns a Boolean
 			// so we publish the lifecycle return values
@@ -455,11 +452,11 @@
 	 * @param {Object}  component?
 	 */
 	function vdomToDOM (parent, newNode, oldNode, component) {
-		update(parent, newNode, oldNode, __undefined, component)
+		update(parent, newNode, oldNode, __undefined, component);
 
 		// diff and update dom loop
 		function update (parent, newNode, oldNode, index, component, newChildren, oldChildren) {
-			index = index || 0
+			index = index || 0;
 			
 			// should component update
 			// if false exit quickly
@@ -470,13 +467,15 @@
 			// adding to the dom
 			if (oldNode === __undefined) {
 				var
-				nextNode = createElement(newNode, component)
+				nextNode = createElement(newNode, component);
+
 				appendChild(parent, nextNode, newNode)
 			}
 			// removing from the dom
 			else if (newNode === __undefined) {
 				var 
-				nextNode = parent[__childNodes][index]
+				nextNode = parent[__childNodes][index];
+
 				removeChild(parent, nextNode, oldNode)
 			}
 			// update keyed elements
@@ -489,12 +488,16 @@
 				newLength    = newChildren[__length],
 				oldLength    = oldChildren[__length],
 				op,
-				nextNode
+				nextNode;
 
 				// element added
-				if (newLength > oldLength) { op = +1 }
+				if (newLength > oldLength) { 
+					op = +1 
+				}
 				// element remove
-				else if (newLength < oldLength ) { op = -1 }
+				else if (newLength < oldLength ) { 
+					op = -1 
+				}
 
 				return updateKeyedElements(parent, newChildren, oldChildren, op, index, newNode)
 			}
@@ -502,28 +505,26 @@
 			else if (nodeChanged(newNode, oldNode)) {
 				var 
 				prevNode = parent[__childNodes][index],
-				nextNode = createElement(newNode)
+				nextNode = createElement(newNode);
+
 				replaceChild(parent, nextNode, prevNode, newNode)		
 			}
 			// the lookup loop
 			else if (newNode.type) {
 				var 
-				parentChildren = parent[__childNodes]
+				parentChildren = parent[__childNodes],
+				newLength = newNode[__children][__length],	
+				oldLength = oldNode[__children][__length];
 
 				// update props
-				handlePropChanges(parentChildren[index], newNode, oldNode)
-
-				var
-				newLength = newNode[__children][__length],	
-				oldLength = oldNode[__children][__length]
+				handlePropChanges(parentChildren[index], newNode, oldNode);				
 
 				// loop through children
 				for (var i = 0; i < newLength || i < oldLength; i++) {
 					var 
 					newChildren = newNode[__children],
-					oldChildren = oldNode[__children]
+					oldChildren = oldNode[__children],
 
-					var
 					key = update(
 							parentChildren[index], 
 							newChildren[i], 
@@ -532,10 +533,10 @@
 							__undefined,
 							newChildren,
 							oldChildren
-						)
+						);
 
 					if (key !== __undefined) {
-						newLength += key
+						newLength += key,
 						oldLength += key
 					}
 				}	
@@ -546,7 +547,7 @@
 		function updateKeyedElements (parent, newChildren, oldChildren, op, index, newNode) {
 			var 
 			nextNode,
-			currentNode = parent[__childNodes][index]
+			currentNode = parent[__childNodes][index];
 
 			// create next node for addition and replace opreations
 			if (op > 0 || !op) { 
@@ -555,14 +556,14 @@
 
 			// element added
 			if (op > 0) {
-				oldChildren.splice(index, 0, __undefined)
-				prependChild(parent, nextNode, currentNode, newNode)
+				oldChildren.splice(index, 0, __undefined);
+				prependChild(parent, nextNode, currentNode, newNode);
 				return -1
 			}
 			// element removed
 			else if (op < 0) {
-				oldChildren.splice(index, 1)
-				removeChild(parent, currentNode, newNode)
+				oldChildren.splice(index, 1);
+				removeChild(parent, currentNode, newNode);
 				return -1
 			}
 			// replace
@@ -576,7 +577,7 @@
 			if (nextNode) {
 				// run and check if componentWillUnmount returns somethings
 				var 
-				duration = lifecycle(oldNode, __componentWillUnmount, nextNode)
+				duration = lifecycle(oldNode, __componentWillUnmount, nextNode);
 
 				// if what it returns is not a number default to 0
 				if (!is(duration, __number)) {
@@ -597,27 +598,27 @@
 		// add element to the end
 		function appendChild (parent, nextNode, newNode) {
 			if (nextNode) {
-				lifecycle(newNode, __componentWillMount)
-				parent.appendChild(nextNode)
-				lifecycle(newNode, __componentDidMount, nextNode)
+				lifecycle(newNode, __componentWillMount);
+				parent.appendChild(nextNode);
+				lifecycle(newNode, __componentDidMount, nextNode);
 			}
 		}
 
 		// add element at the beginning
 		function prependChild (parent, nextNode, beforeNode, newNode) {
 			if (nextNode) {
-				lifecycle(newNode, __componentWillMount)			
-				parent.insertBefore(nextNode, beforeNode)
-				lifecycle(newNode, __componentDidMount, nextNode)
+				lifecycle(newNode, __componentWillMount);			
+				parent.insertBefore(nextNode, beforeNode);
+				lifecycle(newNode, __componentDidMount, nextNode);
 			}
 		}
 
 		// replace element
 		function replaceChild (parent, nextNode, prevNode, newNode) {
 			if (nextNode && prevNode) {	
-				lifecycle(newNode, __componentWillUpdate)
-				parent.replaceChild(nextNode, prevNode)
-				lifecycle(newNode, __componentDidUpdate)
+				lifecycle(newNode, __componentWillUpdate);
+				parent.replaceChild(nextNode, prevNode);
+				lifecycle(newNode, __componentDidUpdate);
 			}
 		}
 
@@ -636,23 +637,11 @@
 			// i.e node.type: div !== node.type: h2
 			// will return true, signaling that we should
 			// replace the node
-			type = node1.type !== node2.type
-
-			// diff keys if they are set
-			// key = __false
-
-			// if (node1.props || node2.props) {
-			// 	var
-			// 	key1 = node1.props ? node1.props.key : __undefined,
-			// 	key2 = node2.props ? node2.props.key : __undefined
-
-			// 	key = key1 !== key2
-			// }
+			type = node1.type !== node2.type;
 			
 			// if either text/type/object constructor has changed
-			// this will return true
-			// thus signaling that we should replace the node
-			return text || type || obj //|| key
+			// this will return true signaling that we should replace the node
+			return text || type || obj
 		}
 
 		// create element
@@ -665,10 +654,12 @@
 			else if (node.trust) {				
 				var 
 				div  = __document.createElement('div'),
-				frag = __document.createDocumentFragment()
+				frag = __document.createDocumentFragment();
 
-				div.innerHTML = node.children[0]
-				var nodes     = toArray(div.childNodes)
+				div.innerHTML = node.children[0];
+
+				var 
+				nodes = toArray(div.childNodes);
 
 				each(nodes, function (value) {
 					frag.appendChild(value)
@@ -677,7 +668,8 @@
 				return frag
 			}
 
-			var el
+			var 
+			el;
 
 			// not a text node 
 			// check if it is namespaced
@@ -689,9 +681,9 @@
 			}
 			
 			// diff and update/add/remove props
-			setElementProps(el, node.props)
+			setElementProps(el, node.props);
 			// add events if any
-			addEventListeners(el, node.props)
+			addEventListeners(el, node.props);
 			
 			// only map children arrays
 			if (is(node.children, __array)) {
@@ -707,13 +699,13 @@
 			if (component) {
 				var 
 				props = node.props,
-				ref   = props ? props.ref : __undefined
+				ref   = props ? props.ref : __undefined;
 
 				// component has a ref add to parent component
 				if (ref) {
 					// if we have already set a refs object
 					// use the same object
-					component.refs = component.refs || {}
+					component.refs = component.refs || {};
 
 					// ref is a function run it
 					// passing the el to it
@@ -746,7 +738,7 @@
 		function addEventListeners (target, props) {
 			for (var name in props) {
 				var 
-				value = props[name]
+				value = props[name];
 
 				if (isEventProp(name, value)) {
 					// is a callback
@@ -770,7 +762,7 @@
 			// update component props
 			if (propChanges[__length]) {
 				// before props change
-				lifecycle(newNode, __componentWillUpdate, __true, __true)
+				lifecycle(newNode, __componentWillUpdate, __true, __true);
 
 				each(propChanges, function (obj) {
 					updateProp(obj.target, obj.name, obj.value, obj.op)
@@ -783,9 +775,10 @@
 		
 		// update props
 		function getPropChanges (target, newProps, oldProps) {
-			var changes  = []
+			var 
+			changes  = []
 
-			oldProps = oldProps !== __undefined ? oldProps : {}
+			oldProps = oldProps !== __undefined ? oldProps : {};
 
 			// merge old and new props
 			var
@@ -805,12 +798,11 @@
 				// returns true/false if the prop has changed from it's prev value
 				remove = newVal === __undefined || newVal === __null,
 				// says only diff this if it's not an event i.e onClick...
-				add    = oldVal === __undefined || 
-						oldVal === __null || 
+				add    = oldVal === __undefined || oldVal === __null || 
 						(newVal !== oldVal && !isEventProp(name, props[name])),
 
 				// store value
-				value  = remove === -1 ? oldVal : newVal
+				value  = remove === -1 ? oldVal : newVal;
 
 				// something changed
 				if (add || remove) {
@@ -845,7 +837,7 @@
 
 			// remove / add attribute reference
 			var 
-			attr = (op === -1 ? 'remove' : 'set') + 'Attribute'
+			attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
 		
 			// set xlink:href attr
 			if (name === 'xlink:href') {
@@ -872,7 +864,7 @@
 							// or true or anything not of a falsy value
 							// we add
 							var 
-							type = !content ? 'remove' : 'add'
+							type = !content ? 'remove' : 'add';
 
 							// add/remove class
 							// target.classList[type](index)
@@ -968,7 +960,7 @@
 							.map(function (name) {
 								// <type name="value">
 								var 
-								value = props[name]
+								value = props[name];
 
 								// don't add events, keys or refs
 								if (!is(value, __function) && name !== 'key' && name !== 'ref') {
@@ -1000,12 +992,12 @@
 			}
 
 			// indent level
-			level      = level || 0
+			level      = level || 0;
 
 			// print tabs
 			var 
 			indent     = '\t'.repeat(level + 1),
-			lastIndent = '\t'.repeat(level)
+			lastIndent = '\t'.repeat(level);
 
 			// iterate through and print each child
 			return '\n'+indent+children.map(function (child) {
@@ -1040,7 +1032,7 @@
 		 */
 		function flip (className, duration, transformations, transformOrigin, easing) {
 			return function (element, callback) {
-				transformations  = transformations || ''
+				transformations  = transformations || '';
 
 				// get element if selector
 				if (is(element, __string)) {
@@ -1062,7 +1054,7 @@
 				style            = element.style,
 				body             = document.body,
 				runningClass     = 'animation-running',
-				transEvtEnd      = 'transitionend'
+				transEvtEnd      = 'transitionend';
 
 				// animation type
 				// if this is set we opt for the more performant
@@ -1077,7 +1069,7 @@
 				}
 
 				// get first rect state
-				first        = getBoundingClientRect(element)
+				first     = getBoundingClientRect(element);
 				// assign last state if there is an end class
 				if (className) {
 					classList.toggle(element, className)
@@ -1085,13 +1077,13 @@
 				// get last rect state, 
 				// if there is not end class
 				// then nothing has changed, save a reflow and just use the first state
-				last         = className ? getBoundingClientRect(element) : first
+				last      = className ? getBoundingClientRect(element) : first;
 
 				// get invert values
 				invert.x  = first.left   - last.left,
 				invert.y  = first.top    - last.top,
 				invert.sx = last.width  !== 0 ? first.width  / last.width  : 1,
-				invert.sy = last.height !== 0 ? first.height / last.height : 1
+				invert.sy = last.height !== 0 ? first.height / last.height : 1,
 
 				duration  = duration || 200,
 				easing    = easing   || 'cubic-bezier(0,0,0.32,1)',
@@ -1099,7 +1091,7 @@
 				transform['1'] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+
 								' scale('+invert.sx+','+invert.sy+')',
 				transform['1'] = transform['1'] + ' ' + transformations,
-				transform['2'] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)'
+				transform['2'] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
 
 				// assign transform origin if set
 				if (transformOrigin) {
@@ -1107,8 +1099,8 @@
 				}
 
 				// reflect animation state on dom
-				classList.add(element, runningClass)
-				classList.add(body, runningClass)
+				classList.add(element, runningClass);
+				classList.add(body, runningClass);
 
 				// use native web animations api if present for better performance
 				if (webAnimations) {
@@ -1119,17 +1111,17 @@
 					], {
 						duration: duration,
 						easing:   easing
-					})
+					});
 
 					player.addEventListener('finish', onfinish)
 				}
 				// use css transitions
 				else {
 					// set first state
-					prefix(style, 'transform', transform['1'])
+					prefix(style, 'transform', transform['1']);
 
 					// trigger repaint
-					element.offsetWidth
+					element.offsetWidth;
 					
 					// setup to animate when we change to the last state
 					// will only transition transforms and opacity
@@ -1138,7 +1130,7 @@
 						'transition', 
 						'transform '+duration+'ms '+easing + ', '+
 						'opacity '+duration+'ms '+easing
-					)
+					);
 
 					// set last state
 					prefix(style, 'transform', transform['2'])
@@ -1152,19 +1144,20 @@
 							return
 						}
 
-						prefix(style, 'transition', __null)
+						prefix(style, 'transition', __null);
 						prefix(style, 'transform', __null)
 					}
-					prefix(style, 'transformOrigin', __null)
+
+					prefix(style, 'transformOrigin', __null);
 					
 					if (style.willChange) {
 						style.willChange = __null
 					}
 
-					classList.remove(element, runningClass)
-					classList.remove(body, runningClass)
+					classList.remove(element, runningClass);
+					classList.remove(body, runningClass);
 
-					element.removeEventListener(transEvtEnd, onfinish)
+					element.removeEventListener(transEvtEnd, onfinish);
 
 					if (callback) {
 						callback(element)
@@ -1187,7 +1180,7 @@
 			return function (element, callback) {
 				// add transition class
 				// this will start the transtion
-				classList.add(element, className)
+				classList.add(element, className);
 
 				var
 				// duration starts at 0
@@ -1197,12 +1190,12 @@
 				// we will get from this '0.4s, 0.2s' to '0.4,0.2'
 				// we then split it to an array ['0.4','0.2']
 				// note: the numbers are still in string format
-				transition = getComputedStyle(element)['transition-duration'].replace(/s| /g, '').split(',')
+				transition = getComputedStyle(element)['transition-duration'].replace(/s| /g, '').split(',');
 
 				// increament duration (in ms), also convert all values to a number
 				each(transition, function (value) {
 					duration += parseFloat(value) * 1000
-				})
+				});
 
 				// run callback after duration of transition
 				// has elapsed
@@ -1220,7 +1213,7 @@
 		 */
 		function getBoundingClientRect (element) {
 			var 
-			rect = element.getBoundingClientRect()
+			rect = element.getBoundingClientRect();
 
 			return {
 				top: rect.top,
@@ -1240,11 +1233,12 @@
 			// exit early if we support un-prefixed prop
 	  		if (style && style[prop] === __null) {
 	  			// chrome, safari, mozila, ie
-    			var vendors = ['webkit','Webkit','Moz','ms']
+    			var 
+    			vendors = ['webkit','Webkit','Moz','ms'];
 
 	      		for (var i = 0; i < vendors[__length]; i++) {
 	      			// vendor + capitalized prop
-	      			prop = vendors[i] + prop[0].toUpperCase() + prop.slice(1)
+	      			prop = vendors[i] + prop[0].toUpperCase() + prop.slice(1);
 
 	      			// add prop if vendor prop exists
   					if (style[prop] !== __undefined) {
@@ -1259,7 +1253,7 @@
 		}
 
 		// classList helper
-		classList = classList()
+		classList = classList();
 
 		return {
 			flip: flip,
@@ -1296,9 +1290,9 @@
 		    else if (!hasClass(element, value)) {
 		    	// create array of current classList
 		        var 
-		        classes = element[__className].split(" ")
+		        classes = element[__className].split(" ");
 		        // add our new class
-		        classes.push(value)
+		        classes.push(value);
 		        // join our classes array and re-assign to className
 		        element[__className] = classes.join(" ")
 		    }
@@ -1312,9 +1306,9 @@
 		    else {
 		    	// create array of current classList
 		        var
-		        classes = element[__className].split(" ")
+		        classes = element[__className].split(" ");
 		        // remove the className on this index
-		        classes.splice(classes.indexOf(value), 1)
+		        classes.splice(classes.indexOf(value), 1);
 		        // join our classes array and re-ssign to className
 		        element[__className] = classes.join(" ")
 		    }
@@ -1375,7 +1369,7 @@
 					// convert args to array
 					var 
 					args = toArray(arguments),
-					first = args[0]
+					first = args[0];
 
 					// i.e div('#id', {}, 'Children')
 					if (
@@ -1387,12 +1381,12 @@
 						)
 					) {
 						// name will now = 'div#id'
-						name += first
+						name += first;
 						args.shift(first)
 					}
 					// add name as first arg
 					// which represents the tag in hyperscript
-					args.unshift(name)
+					args.unshift(name);
 
 					return h.apply(null, args)
 				}
@@ -1400,7 +1394,7 @@
 		}
 
 		var
-		args = arguments
+		args = arguments;
 
 		// expose just a specific few
 		if (args[__length]) {
@@ -1441,13 +1435,12 @@
 		function Router () {
 			// references
 			var
-			self = this
+			self = this;
 
 			// data
 			self.settings = {},
 			self.url = __null,
 			self.interval = __null,
-
 			// history back
 			self.back = function () {
 				history.back()
@@ -1463,16 +1456,16 @@
 			// navigate to a view
 			self.nav = function (url) {
 				var 
-				root = this.settings.root
+				root = this.settings.root;
 				
-				url  = root ? root + url : url
+				url  = root ? root + url : url;
 
 				history.pushState(__null, __null, url)
 			},
 			// configure defualts
 			self.config = function (obj) {
 				var 
-				self = this
+				self = this;
 
 				each(obj, function(value, name) {
 					self.settings[name] = value
@@ -1481,19 +1474,19 @@
 			// start listening for url changes
 			self.init = function () {
 				var 
-				self = this,
-				fn   = function () {
-					var url = __window.location.pathname
+				self = this;
+
+				clearInterval(self.interval);
+				// start listening for a change in the url
+				self.interval = setInterval(function () {
+					var 
+					url = __window.location.pathname;
 
 					if (self.url !== url) {
-						self.url = url
+						self.url = url;
 						self.changed()
 					}
-				}
-
-				clearInterval(self.interval)
-				// start listening for a change in the url
-				self.interval = setInterval(fn, 50)
+				}, 50)
 			},
 			// register routes
 			self.on = function (args) {
@@ -1508,9 +1501,10 @@
 
 				// normalize args for ({obj}) and (url, callback) styles
 				if (!is(args, __object)) {
-					var args   = arguments
+					var 
+					args   = arguments;
 
-					routes = {}
+					routes = {};
 					routes[args[0]] = args[1]
 				}
 				else {
@@ -1540,7 +1534,7 @@
 								}
 							}),
 					// lock pattern
-					pattern = pattern + '$'
+					pattern = pattern + '$';
 
 					self.routes[name] = {
 						callback:  value,
@@ -1553,23 +1547,24 @@
 				// references
 				var 
 				url    = this.url,
-				routes = this.routes
+				routes = this.routes;
 
 				each(routes, function (val) {
 					var 
 					callback  = val.callback,
 					pattern   = val.pattern,
 					variables = val.variables,
-					match
+					match;
 
 					// exec pattern on url
-					match = url.match(new RegExp(pattern))
+					match = url.match(new RegExp(pattern));
 
 					// we have a match
 					if (match) {
 						// create params object to pass to callback
 						// i.e {user: "simple", id: "1234"}
-						var data = match
+						var 
+						data = match
 							// remove the first(url) value in the array
 							.slice(1, match[__length])
 							.reduce(function (data, val, i) {
@@ -1579,8 +1574,9 @@
 								// var name: value
 								// i.e user: 'simple'
 								data[variables[i]] = val
+
 								return data
-							}, __null)
+							}, __null);
 
 						// callback is a function, exec
 						if (is(callback, __function)) {
@@ -1601,7 +1597,7 @@
 		root   = args.root,
 		nav    = args.init,
 		routes = args.routes,
-		router = new Router
+		router = new Router;
 
 		if (mount) {
 			router.config({mount: mount})
@@ -1644,12 +1640,12 @@
 			return new promise(function (resolve, reject) {
 				var 
 				xhr      = new __XMLHttpRequest(),
-				location = __window.location
+				location = __window.location;
 
 				// create anchor element to extract usefull information
 				var 
 				a        = __document.createElement('a')	
-				a.href   = url
+				a.href   = url;
 
 				// check if is this a cross origin request check
 				var
@@ -1658,34 +1654,34 @@
 					a.port            === location.port     &&
 					a.protocol        === location.protocol &&
 					location.protocol !== 'file:'
-				)
+				);
 
 				// destroy created element
-				a = __null
+				a = __null;
 				
 				// open request
-				xhr.open(method, url)
+				xhr.open(method, url);
 				
 				// assign on load callback
 				xhr.onload = function () {
 					var 
 					response,
 					responseText = xhr.responseText,
-					statusText   = xhr.statusText
+					statusText   = xhr.statusText;
 					
 					// success
 					if (xhr.status >= 200 && xhr.status < 400) {
 						// get response header
 						var 
 						resHeader = xhr.getResponseHeader("content-type"),
-						resType
+						resType;
 
 						// format response header
 						// to get the type of response
 						// that we can use to format the response body
 						// if needed i.e create dom/parse json
 						if (resHeader.indexOf(';') !== -1) {
-							resType = resHeader.split(';')
+							resType = resHeader.split(';');
 							resType = resType[0].split('/')
 						}
 						else {
@@ -1693,7 +1689,7 @@
 						}
 
 						// extract response type 'html/json/text'
-						resType = resType[1]
+						resType = resType[1];
 
 						// json, parse json
 						if (resType === 'json') {
@@ -1741,7 +1737,7 @@
 				}
 
 				if (method === 'POST' || method === 'PUT') {
-					xhr.setRequestHeader('Content-type', enctype)
+					xhr.setRequestHeader('Content-type', enctype);
 
 					if (enctype.indexOf('x-www-form-urlencoded') > -1) {
 						payload = param(payload)
@@ -1766,12 +1762,13 @@
 		 * param({url:'http://.com'})
 		 */
 		function param (obj, prefix) {
-			var arr = []
+			var 
+			arr = [];
 
 			for (var key in obj) {
 			    var 
 			    __prefix = prefix ? prefix + '[' + key + ']' : key,
-			    value    = obj[key]
+			    value    = obj[key];
 
 			    // when the value is equal to an object 
 			    // that means that we have something like
@@ -1794,13 +1791,13 @@
 	  		var
 	  		value,
 	  		state = 'pending',
-	  		deferred = __undefined
+	  		deferred = __undefined;
 
 	  		function reject (reason) {
-	  		    state = 'rejected'
-	  		    value = reason
+	  		    state = 'rejected';
+	  		    value = reason;
 
-	  		    if(deferred) {
+	  		    if (deferred) {
   		      		handle(deferred)
 	  		    }
   		  	}
@@ -1808,12 +1805,12 @@
 	  		function resolve (newValue) {
 	  			try {
 	  				if (newValue && is(newValue.then, __function)) {
-		  			    newValue.then(resolve, reject)
+		  			    newValue.then(resolve, reject);
 		  			    return
 				  	}
 				  	
-		    		value = newValue
-		    		state = 'resolved'
+		    		value = newValue;
+		    		state = 'resolved';
 
 		    		if (deferred) {
 		      			handle(deferred)
@@ -1825,13 +1822,13 @@
 
 	  		function handle (handler) {
 	    		if (state === 'pending') {
-	      			deferred = handler
+	      			deferred = handler;
 	      			return
 	    		}
 
 	    		__setTimeout(function () {
 		    		var 
-		    		handlerCallback
+		    		handlerCallback;
 
 	    		    if (state === 'resolved') {
 			      		handlerCallback = handler.onResolved
@@ -1851,9 +1848,11 @@
 			      		return
 	    		    }
 
-	    		    var ret
+	    		    var 
+	    		    ret;
+
 		            try {
-		                ret = handlerCallback(value)
+		                ret = handlerCallback(value);
 		                handler.resolve(ret)
 		            } 
 		            catch (e) {
@@ -1880,7 +1879,7 @@
 	  		this.done = function (onFulfilled, onRejected) {
 	  			var 
 	  			args = arguments,
-  		  		self = args[__length] ? this.then.apply(this, args) : this
+  		  		self = args[__length] ? this.then.apply(this, args) : this;
 
   		  		self.then(__undefined, function (err) {
   		  			debounce(function () {
@@ -1908,9 +1907,10 @@
 				// length of arguments 3 instead of 4
 				if (is(enctype, __function)) {
 					var
-					placeholder = callback
-					callback = enctype
-					enctype = placeholder
+					placeholder = callback;
+
+					callback = enctype;
+					enctype = placeholder;
 				}
 
 				// enctype syntactial sugar
@@ -1952,7 +1952,7 @@
 		element,
 		internal,
 		initial = __true,
-		args = toArray(arguments)
+		args = toArray(arguments);
 
 		// assign args
 		each(args, function (value) {
@@ -1976,16 +1976,16 @@
 
 		// has parent to mount to
 		if (element && component) {
-			internal = component(__undefined, __undefined, __true)
+			internal = component(__undefined, __undefined, __true);
 
 			// update
 			function update (props, children) {
 				// get a fresh copy of the vdom
-				newNode = component(props, children)
+				newNode = component(props, children);
 
 				if (newNode) {
 					debounce(function () {
-						vdomToDOM(element, newNode, oldNode)
+						vdomToDOM(element, newNode, oldNode);
 						// this newNode = the next renders oldNode
 						oldNode = newNode
 					})
@@ -1997,13 +1997,13 @@
 				if (internal) {
 					// get initial state if set
 					if (internal[__getInitialState]) {
-						setState(internal, internal[__getInitialState]())
+						setState(internal, internal[__getInitialState]());
 						// remove method
 						delete internal[__getInitialState]
 					}
 					// get default props if set
 					if (internal[__getDefaultProps]) {
-						setProps(internal, internal[__getDefaultProps]())
+						setProps(internal, internal[__getDefaultProps]());
 						// remove method
 						delete internal[__getDefaultProps]
 					}
@@ -2022,14 +2022,14 @@
 				}
 
 				// get a fresh copy of the vdom
-				newNode = component(props, children)
+				newNode = component(props, children);
 				// clear dom
-				element.innerHTML = ''
+				element.innerHTML = '';
 
 				if (newNode) {
-					vdomToDOM(element, newNode, __undefined, internal)
+					vdomToDOM(element, newNode, __undefined, internal);
 					// this newNode = the next renders oldNode
-					oldNode = newNode
+					oldNode = newNode;
 					initial = __false
 				}
 			}
@@ -2061,8 +2061,12 @@
 		// can't find element to mount to
 		// or can't find a component
 		else {
-			if (!element) throw 'can\'t find the element'
-			if (!component) throw 'can\'t find the component'
+			if (!element) {
+				throw 'can\'t find the element'
+			}
+			if (!component) {
+				throw 'can\'t find the component'
+			}
 		}
 	}
 
@@ -2104,7 +2108,7 @@
 	// create component
 	function comp (arg) {
 		var 
-		obj
+		obj;
 
 		// invalid component if the component is an object
 		// without a render method
@@ -2133,7 +2137,7 @@
 		// 
 		// create new component object
 		var 
-		component = new Comp
+		component = new Comp;
 
 		// add the properties to the component instance
 		// also bind functions to the component scope
@@ -2165,15 +2169,15 @@
 			self.children = obj.children
 		}
 		// prototype methods
-		h[__prototype].internal = component
+		h[__prototype].internal = component;
 
 		// re-add default object constructor
 		// insures obj.constructor will return Object
-		h[__prototype][__constructor] = __object
+		h[__prototype][__constructor] = __object;
 
 		// reference the render function
 		var
-		render = component.render
+		render = component.render;
 
 		// return a function that when called
 		// returns the components vdom representation
@@ -2187,13 +2191,13 @@
 
 			// add children to props if set
 			if (children) {
-				props = props || {}
+				props = props || {};
 				props.children = children
 			}
 
 			// publish componentWillReceiveProps lifecycle
 			if (props) {
-				lifecycle(component, __componentWillReceiveProps, __true, __undefined, __true)
+				lifecycle(component, __componentWillReceiveProps, __true, __undefined, __true);
 				// set props
 				setProps(component, props)
 			}
@@ -2207,7 +2211,7 @@
 	// set component props
 	function setProps (self, obj) {
 		// assign props to {} if it's undefined
-		self.props = self.props || {}
+		self.props = self.props || {};
 
 		if (obj) {
 			// set props
@@ -2220,7 +2224,7 @@
 	// set component state
 	function setState (self, obj) {
 		// assign state to {} if it's undefined
-		self.state = self.state || {}
+		self.state = self.state || {};
 
 		// if the object is a function that returns an object
 		if (is(obj, __function)) {
@@ -2232,7 +2236,7 @@
 			// set state
 			each(obj, function (value, name) {
 				self.state[name] = value
-			})
+			});
 
 			return __true
 		}
@@ -2259,10 +2263,10 @@
 		// combine reducers
 		function combine (reducers) {
 			return function (state, action) {
-				state = state || {}
+				state = state || {};
 
 				return __object.keys(reducers).reduce(function (nextState, key) {
-					nextState[key] = reducers[key](state[key], action)
+					nextState[key] = reducers[key](state[key], action);
 					return nextState
 				}, {})
 			}
@@ -2272,7 +2276,7 @@
 		function create (reducer) {
 			var
 			state,
-			listeners = []
+			listeners = [];
 
 			// return the state
 			function getState () {
@@ -2290,7 +2294,7 @@
 				}
 
 				// get state from reducer
-				state = reducer(state, action)
+				state = reducer(state, action);
 
 				// dispatch to all listeners
 				each(listeners, function (listener) {
@@ -2304,7 +2308,7 @@
 			  		throw 'listener should be a function'
 				}
 
-				listeners.push(listener)
+				listeners.push(listener);
 
 				return function unsubscribe () {
 					listener = listeners.filter(function (l) {
@@ -2315,14 +2319,14 @@
 
 			// auto subscribe a component to a store
 			function connect (render, element) {
-				render(getState())
+				render(getState());
 
 				subscribe(function () {
 					render(getState())
 				})
 			}
 
-			dispatch({type: '@@dio/INIT'})
+			dispatch({type: '@@dio/INIT'});
 
 			return {
 				getState: getState, 
@@ -2345,7 +2349,7 @@
 			// either the prop is a property of the element object
 			// or an attribute
 			var
-			value = (prop in el) ? el[prop] : el.getAttribute(prop)
+			value = (prop in el) ? el[prop] : el.getAttribute(prop);
 
 			// just an <if(value)> doesn't work since the value can be false
 			// null or undefined = prop/attr doesn't exist
@@ -2372,7 +2376,7 @@
 		return function () {
 			// assign element
 			var 
-			el  = this
+			el  = this;
 
 			// array of bindings
 			if (is(props, __array)) {
@@ -2399,10 +2403,10 @@
 		 */
 		function prop () {
 			var
-			args = arguments
+			args = arguments;
 
 			if (args[__length]) {
-				store = args[0]
+				store = args[0];
 				internal ? internal = __undefined : ''
 			}
 
@@ -2423,7 +2427,7 @@
 		/**
 		 * map another value to this values store
 		 * @param  {Function} reducer
-		 * @return {Stream}        
+		 * @return {Stream}  
 		 */
 		prop.map = function (reducer) {
 			return stream(function () {
@@ -2444,9 +2448,9 @@
 	stream.combine = function (reducer) {
 		var
 		// convert arguments an array
-		args = toArray(arguments)
+		args = toArray(arguments);
 		// remove reducer
-		args.shift()
+		args.shift();
 
 		return stream(function () {
 			return reducer.apply(__undefined, args)
@@ -2461,7 +2465,8 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.h   = element()
+	exports.h   = element();
+	
 	exports.dio = {
 		animate: animate(),
 		request: request(),
