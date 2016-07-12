@@ -6,7 +6,7 @@
 		<title>dio.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/dio.min.js"></script>
+		<script src="/dist/dio.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -88,7 +88,6 @@
 				}
 			})
 
-			console.log(store.getState())
 			store.connect(render)
 
 
@@ -96,7 +95,13 @@
 
 
 			function TodoItem (props) {
-				return h('li', {onclick: props.handleDelete, id: props.item.id, style: 'cursor:pointer;', key: props.item.id}, props.item.value)
+				return h('li', {
+					onclick: props.handleDelete, 
+					id: props.item.id, 
+					// style: 'cursor:pointer;', 
+					style: {cursor: 'pointer'},
+					key: props.item.id
+				}, props.item.value)
 			}
 			function TodoList (props) {
 		    	return h('ul', props.items.map(function (value) {
@@ -105,12 +110,10 @@
     					)
 			}
 			function TodoApp (props) {
-				console.log(props)
-
 				var 
-				text = dio.prop(''),
+				text = dio.stream(''),
 				// will always contain the value of input.value oninput
-				input = dio.prop('')
+				input = dio.stream('')
 				// reference to the input dom element
 
 		  		function handleSubmit (e) {

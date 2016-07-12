@@ -250,21 +250,58 @@ i.e
 h('div', trust('<script>alert('Hello World')</script>'))
 ```
 
-### dio.prop
+### dio.stream
 
 ```javascript
-var a = dio.prop('value')
+var a = dio.stream('value')
 console.log(a()) // => value
 a('new value')
 a() // => new value
 JSON.stringify(a) // => new value
 ```
+usefull examples
 
-### .toHTML
+```javascript
+var a = dio.stream(1234, String)
+a() // => '1234'
+
+// note that this returns a string instead of a number
+// because we specified a processor that returns a processed 
+// stored value, the above is equivalent to
+
+String(a())
+
+// maps, creates a link to a stream, value
+// being the current value of the stream we are mapping onto
+var b = a.map(function (value) {
+		return value + 'mapper'
+	})
+	
+b() // => '1234 mapper'
+a('changed') // => changed
+b() // => 'changed mapper'
+
+// a map on two streams
+var c = dio.stream.combine(function(a, b){
+	return a() + '' + b() + ' combiner '
+}, a, b)
+
+c() //=> 'changed changed mapper combiner' 
+```
+
+
+### toHTML
 
 ```javascript
 var render = dio.render(Users, '.app')
-document.write(render(props, state, 'html'))
+document.write(render(props, children, 'html'))
 // => prints the components html to the page without mounting
 // it to the dom
+```
+You can also use `dio.toHTML(h('div'))` on a hyperscript object.
+
+On the otherhand if you want render() to return a vnode instead of rendering to the dom or html as above
+
+```javascript
+render(props, children,'vnode')
 ```

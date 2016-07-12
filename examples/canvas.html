@@ -15,9 +15,9 @@
 		<script>
 			function CanvasComponent () {
 				var
-				isDrawing = dio.prop(false),
-				canvas    = dio.prop(null)
-				ctx       = dio.prop(null)
+				isDrawing = dio.stream(false),
+				canvas    = dio.stream(null)
+				ctx       = dio.stream(null)
 
 			    function mouseDown (e) {
 			    	ctx().strokeStyle = '#FF5722'

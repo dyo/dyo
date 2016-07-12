@@ -182,7 +182,7 @@
 	 * @return {Object}       - {type, props, children}
 	 * @example
 	 * h('div', {class: 'close'}, 'Text Content')
-	 * h('div', null, h('h1', 'Text'));
+	 * h('div', null, h('h1', 'Text'))
 	 */
 	function element () {
 		function h (type, props) {
@@ -259,20 +259,25 @@
 		function isH (obj) {
 			// object exists
 			// has type, children and props
-			var maybe = obj &&
-					    obj.type &&
-					    obj.children &&
-					    obj.props
+			var 
+			maybe = obj &&
+				    obj.type &&
+				    obj.children &&
+				    obj.props
 
 			// end quickly
 			// the object is not
 			// a hyperscript object
-			if (!maybe) return __false
+			if (!maybe) {
+				return __false
+			}
 
 			// well, it probably is
 			// but just to be sure
 			// we check if it only has 3 properties
-			var length = 0;
+			var 
+			length = 0
+
 			for (var name in obj) {
 				// end quickly
 				// we don't need to loop through
@@ -369,7 +374,8 @@
 				} 
 				// matches - [attr=value]
 				else if (match[3][0] === '[') {
-					var attr = match[6];
+					var 
+					attr = match[6]
 
 					// make sure we have a non null|undefined|false value
 					if (attr) {
@@ -419,7 +425,7 @@
 		// no lifecycle methods exist as well
 		// so the next if (Component ...) block will end quickly
 		var
-		component = iscomp ? node : node.internal;
+		component = iscomp ? node : node.internal
 
 		if (component && component[stage]) {
 			// is props/state truthy if so check if it is not a boolean
@@ -661,7 +667,7 @@
 				div  = __document.createElement('div'),
 				frag = __document.createDocumentFragment()
 
-				div.innerHTML = node.children[0];
+				div.innerHTML = node.children[0]
 				var nodes     = toArray(div.childNodes)
 
 				each(nodes, function (value) {
@@ -839,7 +845,7 @@
 
 			// remove / add attribute reference
 			var 
-			attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
+			attr = (op === -1 ? 'remove' : 'set') + 'Attribute'
 		
 			// set xlink:href attr
 			if (name === 'xlink:href') {
@@ -875,9 +881,9 @@
 					}
 					// styles and other object type props
 					else {
-						each(value, function (content, index) {
-							if (target[name][index] !== __undefined) {
-								target[name][index] = content
+						each(value, function (value, index) {
+							if (!is(target[name][index])) {
+								target[name][index] = value
 							}
 						})	
 					}
@@ -912,7 +918,7 @@
 	 * server-side interface converts a hyperscript vdom object to html string
 	 * @param {Object} hyperscript - hyperscript object
 	 */
-	function vdomToHTML (vdom) {
+	function vdomToHTML (vnode) {
 		// void elements that do not have a close </tag> 
 		var
 		element = {
@@ -923,25 +929,25 @@
 		}
 
 		// print node
-		function ToHTML (vdom, level) {
+		function ToHTML (vnode, level) {
 			// not a hyperscript object
-			if (is(vdom, __string)) {
-				return vdom
+			if (is(vnode, __string)) {
+				return vnode
 			}
 
 			// references
 			var 
 			// i.e 'div'
-			type = vdom.type,
+			type = vnode.type,
 			// i.e {id: 123, class: 'one two'}
-			props = vdom.props,
+			props = vnode.props,
 			// i.e [obj, obj]
-			children = vdom.children
+			children = vnode.children
 
 			// print voidElements
 			if (element[type]) {
 				// <type ...props>
-				return '<'+type+Props(props)+'>';
+				return '<'+type+Props(props)+'>'
 			}
 
 			// otherwise...
@@ -1007,7 +1013,7 @@
 			}).join('\n'+indent)+'\n'+lastIndent
 		}
 
-		return ToHTML(vdom)
+		return ToHTML(vnode)
 	}
 
 
@@ -1465,7 +1471,8 @@
 			},
 			// configure defualts
 			self.config = function (obj) {
-				var self = this;
+				var 
+				self = this
 
 				each(obj, function(value, name) {
 					self.settings[name] = value
@@ -1490,8 +1497,9 @@
 			},
 			// register routes
 			self.on = function (args) {
-				var self = this,
-					routes;
+				var 
+				self = this,
+				routes
 
 				// create routes object if it doesn't exist
 				if (!self.routes) {
@@ -1663,7 +1671,7 @@
 					var 
 					response,
 					responseText = xhr.responseText,
-					statusText   = xhr.statusText;
+					statusText   = xhr.statusText
 					
 					// success
 					if (xhr.status >= 200 && xhr.status < 400) {
@@ -1677,7 +1685,7 @@
 						// that we can use to format the response body
 						// if needed i.e create dom/parse json
 						if (resHeader.indexOf(';') !== -1) {
-							resType = resHeader.split(';');
+							resType = resHeader.split(';')
 							resType = resType[0].split('/')
 						}
 						else {
@@ -1774,7 +1782,7 @@
 			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value))
 			}
 
-			return arr.join('&');
+			return arr.join('&')
 		}
 
 		/**
@@ -1789,7 +1797,7 @@
 	  		deferred = __null
 
 	  		function reject (reason) {
-	  		    state = 'rejected';
+	  		    state = 'rejected'
 	  		    value = reason
 
 	  		    if(deferred) {
@@ -1845,7 +1853,7 @@
 
 	    		    var ret
 		            try {
-		                ret = handlerCallback(value);
+		                ret = handlerCallback(value)
 		                handler.resolve(ret)
 		            } 
 		            catch (e) {
@@ -2021,12 +2029,12 @@
 			}
 
 			// return function that runs update/mount when executed
-			return function (props, children, forceUpdate, vdom) {
+			return function (props, children, forceUpdate) {
 				// don't render to dom, if vdom is requested
-				if (vdom) {
+				if (forceUpdate === 'vnode') {
 					return component(props, children)
 				}
-				if (forceUpdate === 'html') {
+				else if (forceUpdate === 'html') {
 					return vdomToHTML(component(props, children))
 				}
 				
@@ -2378,33 +2386,65 @@
 	 * props/getter,setter utility
 	 * @param {Any} store - value
 	 */
-	function prop (store) {
-		// create the getter/setter
+	function stream (store, processor, internal) {
+		/**
+		 * create the getter/setter
+		 * @return {Any}
+		 */
 		function prop () {
-			// we could use a name argument
-			// but then again the value can be a falsy value
-			// so if(value) wouldn't validate if the user passed a value
-			// rather we check if the arguments object is not of length 0
-			// which is what it will be if we don't pass an argument
 			var
 			args = arguments
 
 			if (args[__length]) {
 				store = args[0]
+				internal ? internal = __undefined : ''
 			}
 
-			return store
+			if (!internal) {
+				// the processor processors our store before we return it
+				// or returns a processored store
+				// i.e var a = steam(true, String)
+				// a() => 'true' {String}
+				return !processor ? store : processor(store)
+			}
+			// below map creates a prop that
+			// we want to run whenever we try to retrieve it
+			else {
+				return store()
+			}
 		}
 
-		// define .toJSON
-		// so if we call JSON.stringify()
-		// on the returned getter/setter
-		// it returns the stored value
+		/**
+		 * map another value to this values store
+		 * @param  {Function} reducer
+		 * @return {Stream}        
+		 */
+		prop.map = function (reducer) {
+			return stream(function () {
+				return reducer(store)
+			}, __undefined, __true)
+		}
+
+		/**
+		 * define .toJSON to allow JSON.stringify(stream) to return the stored value
+		 * @return {Any}
+		 */
 		prop.toJSON = function () {
 			return store
 		}
 
 		return prop
+	}
+	stream.combine = function (reducer) {
+		var
+		// convert arguments an array
+		args = toArray(arguments)
+		// remove reducer
+		args.shift()
+
+		return stream(function () {
+			return reducer.apply(__undefined, args)
+		}, __undefined, __true)
 	}
 
 
@@ -2423,7 +2463,7 @@
 		router: router,
 		store: store,
 		trust: trust,
-		prop: prop,
+		stream: stream,
 		bind: bind,
 		DOM: DOM,
 		toHTML: vdomToHTML
