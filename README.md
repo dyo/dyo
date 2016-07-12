@@ -159,7 +159,7 @@ store.connect(render)
 
 // will mount the component to the dom with the initial state
 // returned by .getState()
-// an keep it update to date anytime an action is dispatched
+// and keep it update to date anytime an action is dispatched
 // to the store
 
 ```
