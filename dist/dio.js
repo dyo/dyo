@@ -1794,7 +1794,7 @@
 	  		var
 	  		value,
 	  		state = 'pending',
-	  		deferred = __null
+	  		deferred = __undefined
 
 	  		function reject (reason) {
 	  		    state = 'rejected'
@@ -1873,13 +1873,19 @@
 	    		})
 	  		}
 
-	  		this.done = function (onFulfilled, onRejected) {
-  		  		var self = arguments[__length] ? this.then.apply(this, arguments) : this
+	  		this.catch = function (onRejected) {
+	  			return this.then(__undefined, onRejected)
+	  		}
 
-  		  		self.then(__null, function (err) {
-  		    		__setTimeout(function () {
-  		      			throw err
-  		    		}, 0)
+	  		this.done = function (onFulfilled, onRejected) {
+	  			var 
+	  			args = arguments,
+  		  		self = args[__length] ? this.then.apply(this, args) : this
+
+  		  		self.then(__undefined, function (err) {
+  		  			debounce(function () {
+  		  				throw err
+  		  			})
   		  		})
 	  		}
 
