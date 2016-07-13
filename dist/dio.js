@@ -86,7 +86,7 @@
 	 * @return {Array}
 	 */
 	function toArray (arg) {
-		return __array[__prototype].slice.call(arg)
+		return __array[__prototype].slice.call(arg);
 	}
 
 	
@@ -117,7 +117,7 @@
 			for (; index < length; ++index) {
 				// break if fn() returns false
 				if (fn.call(arr[index], arr[index], index, arr) === __false) {
-					return
+					return;
 				}
 			}
 		}
@@ -126,7 +126,7 @@
 			for (index in arr) {
 				// break if fn() returns false
 				if (fn.call(arr[index], arr[index], index, arr) === __false) {
-					return
+					return;
 				}
 			}
 		}
@@ -142,18 +142,18 @@
 	function is (obj, type) {
 		// only check if obj is not a falsey value
 		if (!type) {
-			return obj ? __true : __false
+			return obj ? __true : __false;
 		}
 		// check object type
 		else {
 			// onj has a constructor
 			if (obj !== __undefined && obj !== __null) {
-				return obj[__constructor] === type
+				return obj[__constructor] === type;
 			}
 			// doesn't, probably null or undefined 
 			// that don't have constructors methods, return false
 			else {
-				return __false
+				return __false;
 			}
 		}
 	}
@@ -170,7 +170,7 @@
 		duration = duration || 0;
 
 		// push to the end of the event stack
-		__setTimeout(fn, duration)
+		__setTimeout(fn, duration);
 	}
 
 
@@ -196,7 +196,7 @@
 			// an object (null,undefined,string,array,bool)
 			if (isH(props) || !is(props, __object)) {
 				key   = 1,
-				props = {}
+				props = {};
 			}
 			// insure props is always an object
 			else if (
@@ -204,7 +204,7 @@
 				props === __undefined || 
 				!is(props, __object)
 			) {
-				props = {}
+				props = {};
 			}
 
 			// declare hyperscript object
@@ -218,7 +218,7 @@
 				type.indexOf('#') !== -1 || 
 				type.indexOf('.') !== -1
 			) {
-				obj = parseElementType(obj)
+				obj = parseElementType(obj);
 			}
 
 			// auto set namespace for svg and math elements
@@ -230,7 +230,7 @@
 			if (obj.type === 'svg' || obj.type === 'math') {
 				// only add the namespace if it's not already set
 				if (!obj.props.xmlns) {
-					obj.props.xmlns = __namespace[obj.type]
+					obj.props.xmlns = __namespace[obj.type];
 				}
 			}
 
@@ -243,16 +243,16 @@
 				// and set the 'arrays children' as children
 				if (is(child, __array)) {
 					for (var k = 0; k < child[__length]; k++) {
-						obj.children[(i-key) + k] = setChild(child[k], obj)
+						obj.children[(i-key) + k] = setChild(child[k], obj);
 					}
 				}
 				// deep enough, add this child to children
 				else {
-					obj.children[i - key] = setChild(child, obj)
+					obj.children[i - key] = setChild(child, obj);
 				}
 			}
 
-			return obj
+			return obj;
 		}
 
 		function isH (obj) {
@@ -268,7 +268,7 @@
 			// the object is not
 			// a hyperscript object
 			if (!maybe) {
-				return __false
+				return __false;
 			}
 
 			// well, it probably is
@@ -283,16 +283,16 @@
 				// all the objects props
 				// we now know it's not an object
 				if (length > 3) {
-					break
+					break;
 				}
 				// add 1 to length if the object
 				// has the prop
 				else if (obj.hasOwnProperty(name)) {
-					length++
+					length++;
 				}
 			}
 
-			return length === 3
+			return length === 3;
 		}
 
 		/**
@@ -303,29 +303,29 @@
 		function setChild (child, obj) {
 			// add obj.prop to children if they are none TextNodes
 			if (child && child.props && obj.props.xmlns) {
-				child.props.xmlns = obj.props.xmlns
+				child.props.xmlns = obj.props.xmlns;
 			}
 
 			// convert to string non hyperscript children
 			if (!(is(child, __object) && isH(child))) {
 				// we don't want [object Object] strings
 				if (is(child, __object)) {
-					child = JSON.stringify(child)
+					child = JSON.stringify(child);
 				}
 				// for non objects adding a strings is enough 
 				else {
-					child = child + ''
+					child = child + '';
 				}
 
 				// convert the null, and undefined strings to empty strings
 				// we don't convert false since that could 
 				// be a valid textnode value returned to the client
 				if (child === 'null' || child === 'undefined') {
-					child = ''
+					child = '';
 				}
 			}
 			
-			return child
+			return child;
 		}
 
 		/**
@@ -358,15 +358,15 @@
 			while ((match = re.exec(type))) {
 				// no custom prop match
 				if (match[1] === '' && match[2]) {
-					obj.type = match[2]
+					obj.type = match[2];
 				}
 				// matches id's - #id
 				else if (match[1] === '#') {
-					props.id = match[2]
+					props.id = match[2];
 				} 
 				// matches classes - div.classname
 				else if (match[1] === '.') {
-					classes.push(match[2])
+					classes.push(match[2]);
 				} 
 				// matches - [attr=value]
 				else if (match[3][0] === '[') {
@@ -376,26 +376,26 @@
 					// make sure we have a non null|undefined|false value
 					if (attr) {
 						// remove the '[]'
-						attr = attr.replace(/\\(["'])/g, '$1')
+						attr = attr.replace(/\\(["'])/g, '$1');
 					}
 					// if attr value is an empty string assign true
-					props[match[4]] = attr || __true
+					props[match[4]] = attr || __true;
 				}
 			}
 
 			// add classes to obj.props if we have any
 			if (classes[__length] > 0) {
-				props.class = classes.join(' ')
+				props.class = classes.join(' ');
 			}
 
 			// as promised, update props
 			obj.props = props;
 			
 			// done
-			return obj
+			return obj;
 		}
 
-		return h
+		return h;
 	}
 	
 
@@ -411,7 +411,7 @@
 		// end quickly
 		// if node is not a Component or hyperscript object
 		if (!node || (!node.internal && !node.render)) {
-			return
+			return;
 		}
 
 		// if node is a component then Component = node
@@ -437,7 +437,7 @@
 			// so we publish the lifecycle return values
 			// which we can use in the draw - update () function
 			// to see if we should skip an element or not
-			return component[stage](props, state)
+			return component[stage](props, state);
 		}
 	}
 
@@ -460,22 +460,20 @@
 			// should component update
 			// if false exit quickly
 			if (lifecycle(newNode, __shouldComponentUpdate, __true, __true) === __false) {
-				return
+				return;
 			}
 
 			// adding to the dom
 			if (oldNode === __undefined) {
 				var
 				nextNode = createElement(newNode, component);
-
-				appendChild(parent, nextNode, newNode)
+				appendChild(parent, nextNode, newNode);
 			}
 			// removing from the dom
 			else if (newNode === __undefined) {
 				var 
 				nextNode = parent[__childNodes][index];
-
-				removeChild(parent, nextNode, oldNode)
+				removeChild(parent, nextNode, oldNode);
 			}
 			// update keyed elements
 			else if (
@@ -491,14 +489,14 @@
 
 				// element added
 				if (newLength > oldLength) { 
-					op = +1 
+					op = +1;
 				}
 				// element remove
 				else if (newLength < oldLength ) { 
-					op = -1 
+					op = -1;
 				}
 
-				return updateKeyedElements(parent, newChildren, oldChildren, op, index, newNode)
+				return updateKeyedElements(parent, newChildren, oldChildren, op, index, newNode);
 			}
 			// replacing a node
 			else if (nodeChanged(newNode, oldNode)) {
@@ -506,7 +504,7 @@
 				prevNode = parent[__childNodes][index],
 				nextNode = createElement(newNode);
 
-				replaceChild(parent, nextNode, prevNode, newNode)		
+				replaceChild(parent, nextNode, prevNode, newNode);	
 			}
 			// the lookup loop
 			else if (newNode.type) {
@@ -536,7 +534,7 @@
 
 					if (key !== __undefined) {
 						newLength += key,
-						oldLength += key
+						oldLength += key;
 					}
 				}	
 			}
@@ -550,7 +548,7 @@
 
 			// create next node for addition and replace opreations
 			if (op > 0 || !op) { 
-				nextNode = createElement(newNode) 
+				nextNode = createElement(newNode) ;
 			}
 
 			// element added
@@ -563,11 +561,11 @@
 				oldChildren.splice(index, 1);
 				removeChild(parent, currentNode, newNode);
 				// we have to decreement the children length (newLength/oldLength):515-516
-				return -1
+				return -1;
 			}
 			// replace
 			else {
-				replaceChild(parent, nextNode, currentNode, newNode)
+				replaceChild(parent, nextNode, currentNode, newNode);
 			}
 		}
 
@@ -580,7 +578,7 @@
 
 				// if what it returns is not a number default to 0
 				if (!is(duration, __number)) {
-					duration = 0
+					duration = 0;
 				}
 
 				debounce(function () {
@@ -588,9 +586,9 @@
 					// we check again to see if nextNode is still actually in the dom
 					// when this is run
 					if (nextNode) {
-						parent.removeChild(nextNode)
+						parent.removeChild(nextNode);
 					}
-				}, duration)
+				}, duration);
 			}
 		}
 
@@ -599,7 +597,7 @@
 			if (nextNode) {
 				lifecycle(newNode, __componentWillMount);
 				parent.appendChild(nextNode);
-				lifecycle(newNode, __componentDidMount, nextNode)
+				lifecycle(newNode, __componentDidMount, nextNode);
 			}
 		}
 
@@ -608,7 +606,7 @@
 			if (nextNode) {
 				lifecycle(newNode, __componentWillMount);			
 				parent.insertBefore(nextNode, beforeNode);
-				lifecycle(newNode, __componentDidMount, nextNode)
+				lifecycle(newNode, __componentDidMount, nextNode);
 			}
 		}
 
@@ -617,7 +615,7 @@
 			if (nextNode && prevNode) {	
 				lifecycle(newNode, __componentWillUpdate);
 				parent.replaceChild(nextNode, prevNode);
-				lifecycle(newNode, __componentDidUpdate)
+				lifecycle(newNode, __componentDidUpdate);
 			}
 		}
 
@@ -640,14 +638,14 @@
 			
 			// if either text/type/object constructor has changed
 			// this will return true signaling that we should replace the node
-			return text || type || obj
+			return text || type || obj;
 		}
 
 		// create element
 		function createElement (node, component) {
 			// handle text nodes
 			if (is(node, __string)) {
-				return __document.createTextNode(node)
+				return __document.createTextNode(node);
 			}
 			// trusted text content
 			else if (node.trust) {				
@@ -657,14 +655,14 @@
 
 				div.innerHTML = node.children[0];
 
-				var 
+				var
 				nodes = toArray(div.childNodes);
 
 				each(nodes, function (value) {
 					frag.appendChild(value)
 				});
 
-				return frag
+				return frag;
 			}
 
 			var 
@@ -673,10 +671,10 @@
 			// not a text node 
 			// check if it is namespaced
 			if (node.props && node.props.xmlns) {
-				el = __document.createElementNS(node.props.xmlns, node.type)
+				el = __document.createElementNS(node.props.xmlns, node.type);
 			}
 			else {
-				el = __document.createElement(node.type)
+				el = __document.createElement(node.type);
 			}
 			
 			// diff and update/add/remove props
@@ -687,8 +685,8 @@
 			// only map children arrays
 			if (is(node.children, __array)) {
 				each(node.children, function (child) {
-					el.appendChild(createElement(child, component))
-				})
+					el.appendChild(createElement(child, component));
+				});
 			}
 
 			// add refs
@@ -709,28 +707,28 @@
 					// ref is a function run it
 					// passing the el to it
 					if (is(ref, __function)) {
-						ref(el)
+						ref(el);
 					}
 					// add ref to component
 					else if (is(ref, __string)) {
-						component.refs[ref] = el
+						component.refs[ref] = el;
 					}
 				}
 			}
 		
-			return el
+			return el;
 		}
 
 		// check if props is event
 		function isEventProp (name, value) {
 			// checks if the first two characters are on
-			return name.substr(0,2) === 'on' && is(value, __function)
+			return name.substr(0,2) === 'on' && is(value, __function);
 		}
 		
 		// get event name
 		function extractEventName (name) {
 			// removes the first two characters and converts to lowercase
-			return name.substr(2, name[__length]).toLowerCase()
+			return name.substr(2, name[__length]).toLowerCase();
 		}
 		
 		// add event
@@ -742,7 +740,7 @@
 				if (isEventProp(name, value)) {
 					// is a callback
 					if (value) {
-						target.addEventListener(extractEventName(name), value, __false)
+						target.addEventListener(extractEventName(name), value, __false);
 					}
 				}
 			}
@@ -764,27 +762,31 @@
 				lifecycle(newNode, __componentWillUpdate, __true, __true);
 
 				each(propChanges, function (obj) {
-					updateProp(obj.target, obj.name, obj.value, obj.op)
+					updateProp(obj.target, obj.name, obj.value, obj.op);
 				});
 
 				// after props change
-				lifecycle(newNode, __componentDidUpdate, __true, __true)
+				lifecycle(newNode, __componentDidUpdate, __true, __true);
 			}
 		}
 		
 		// update props
 		function getPropChanges (target, newProps, oldProps) {
 			var 
-			changes  = []
+			changes  = [];
 
 			oldProps = oldProps !== __undefined ? oldProps : {};
 
 			// merge old and new props
 			var
-			props = {}
+			props = {};
 
-			for (var name in newProps) { props[name] = newProps[name] }
-			for (var name in oldProps) { props[name] = oldProps[name] }
+			for (var name in newProps) { 
+				props[name] = newProps[name];
+			}
+			for (var name in oldProps) { 
+				props[name] = oldProps[name];
+			}
 		
 			// compare if props have been added/delete/updated
 			// if name not in newProp[name] : deleted
@@ -813,17 +815,17 @@
 						name:   name, 
 						value:  value,
 						op: add || remove
-					})
+					});
 				}
 			}
 
-			return changes
+			return changes;
 		}
 		
 		// initial creation of props, no checks, just set
 		function setElementProps (target, props) {
 			for (var name in props) {
-				updateProp(target, name, props[name], +1)
+				updateProp(target, name, props[name], +1);
 			}
 		}
 
@@ -831,7 +833,7 @@
 		function updateProp (target, name, value, op) {
 			// don't add events/refs/keys as props/attrs
 			if (isEventProp(name, value) || name === 'ref' || name === 'key') {
-				return
+				return;
 			}
 
 			// remove / add attribute reference
@@ -840,7 +842,7 @@
 		
 			// set xlink:href attr
 			if (name === 'xlink:href') {
-				return target.setAttributeNS(__namespace['xlink'], 'href', value)
+				return target.setAttributeNS(__namespace['xlink'], 'href', value);
 			}
 
 			// if the target has an attr as a property, 
@@ -867,25 +869,25 @@
 
 							// add/remove class
 							// target.classList[type](index)
-							classList[type](target, index)
-						})
+							classList[type](target, index);
+						});
 					}
 					// styles and other object type props
 					else {
 						each(value, function (value, index) {
 							if (!is(target[name][index])) {
-								target[name][index] = value
+								target[name][index] = value;
 							}
-						})	
+						});
 					}
 				}
 				else if (is(value, __array)) {
 					if (name === 'className' || name === 'class') {
-						target[name] = value.join(' ')
+						target[name] = value.join(' ');
 					}
 				}
 				else {
-					target[name] = value
+					target[name] = value;
 				}
 			}
 			// don't set namespace attrs and properties that
@@ -895,10 +897,10 @@
 				value !== __namespace['math']
 			) {
 				if (op === -1) {
-					target[attr](name)
+					target[attr](name);
 				}
 				else {
-					target[attr](name, value)
+					target[attr](name, value);
 				}
 			}
 		}
@@ -917,13 +919,13 @@
 			'col': __true,'embed': __true,'wbr': __true,'track': __true,
 			'hr': __true,'img': __true,'input': __true,'keygen': __true,
 			'link': __true,'meta': __true,'param': __true,'source': __true
-		}
+		};
 
 		// print node
 		function ToHTML (vnode, level) {
 			// not a hyperscript object
 			if (is(vnode, __string)) {
-				return vnode
+				return vnode;
 			}
 
 			// references
@@ -933,17 +935,17 @@
 			// i.e {id: 123, class: 'one two'}
 			props = vnode.props,
 			// i.e [obj, obj]
-			children = vnode.children
+			children = vnode.children;
 
 			// print voidElements
 			if (element[type]) {
 				// <type ...props>
-				return '<'+type+Props(props)+'>'
+				return '<'+type+Props(props)+'>';
 			}
 
 			// otherwise...
 			// <type ...props>...children</type>
-			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>'
+			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
 		}
 
 		// print props
@@ -968,26 +970,26 @@
 									// i.e checkbox=true
 									// will print <type checkbox>
 									// otherwise <type value="">
-									return value === __true ? name : name+'="'+value+'"'
+									return value === __true ? name : name+'="'+value+'"';
 								}
 							})
 							// create string, remove trailing space
 							// <type ...props > => <type ...props>
-							.join(' ').replace(/\s+$/g, '')
+							.join(' ').replace(/\s+$/g, '');
 
 			// not empty?
 			if (props) {
-				return props
+				return props;
 			}
 
-			return ''
+			return '';
 		}
 
 		// print children
 		function Children(children, level) {
 			// empty
 			if (children[__length] === 0) {
-				return ''
+				return '';
 			}
 
 			// indent level
@@ -1000,11 +1002,11 @@
 
 			// iterate through and print each child
 			return '\n'+indent+children.map(function (child) {
-				return ToHTML(child, level + 1)
-			}).join('\n'+indent)+'\n'+lastIndent
+				return ToHTML(child, level + 1);
+			}).join('\n'+indent)+'\n'+lastIndent;
 		}
 
-		return ToHTML(vnode)
+		return ToHTML(vnode);
 	}
 
 
@@ -1035,7 +1037,7 @@
 
 				// get element if selector
 				if (is(element, __string)) {
-					element = document.querySelector(element)
+					element = document.querySelector(element);
 				}
 
 				// check if element exists
@@ -1059,24 +1061,24 @@
 				// if this is set we opt for the more performant
 				// web animations api
 				if (is(element.animate, __function)) {
-					webAnimations = __true
+					webAnimations = __true;
 				}
 
 				// promote element to individual composite layer
 				if (style.willChange) {
-					style.willChange = 'transform'
+					style.willChange = 'transform';
 				}
 
 				// get first rect state
-				first     = getBoundingClientRect(element);
+				first = getBoundingClientRect(element);
 				// assign last state if there is an end class
 				if (className) {
-					classList.toggle(element, className)
+					classList.toggle(element, className);
 				}
 				// get last rect state, 
 				// if there is not end class
 				// then nothing has changed, save a reflow and just use the first state
-				last      = className ? getBoundingClientRect(element) : first;
+				last = className ? getBoundingClientRect(element) : first;
 
 				// get invert values
 				invert.x  = first.left   - last.left,
@@ -1094,7 +1096,7 @@
 
 				// assign transform origin if set
 				if (transformOrigin) {
-					prefix(style, 'transformOrigin', transformOrigin)
+					prefix(style, 'transformOrigin', transformOrigin);
 				}
 
 				// reflect animation state on dom
@@ -1112,7 +1114,7 @@
 						easing:   easing
 					});
 
-					player.addEventListener('finish', onfinish)
+					player.addEventListener('finish', onfinish);
 				}
 				// use css transitions
 				else {
@@ -1132,7 +1134,7 @@
 					);
 
 					// set last state
-					prefix(style, 'transform', transform['2'])
+					prefix(style, 'transform', transform['2']);
 				}
 
 				// cleanup
@@ -1140,17 +1142,17 @@
 					if (!webAnimations) {
 						// bubbled events
 						if (e.target !== element) {
-							return
+							return;
 						}
 
 						prefix(style, 'transition', __null);
-						prefix(style, 'transform', __null)
+						prefix(style, 'transform', __null);
 					}
 
 					prefix(style, 'transformOrigin', __null);
 					
 					if (style.willChange) {
-						style.willChange = __null
+						style.willChange = __null;
 					}
 
 					classList.remove(element, runningClass);
@@ -1159,15 +1161,15 @@
 					element.removeEventListener(transEvtEnd, onfinish);
 
 					if (callback) {
-						callback(element)
+						callback(element);
 					}
 				}
 
 				if (!webAnimations) {
-					element.addEventListener(transEvtEnd, onfinish)
+					element.addEventListener(transEvtEnd, onfinish);
 				}
 
-				return duration
+				return duration;
 			}
 		}
 
@@ -1193,14 +1195,14 @@
 
 				// increament duration (in ms), also convert all values to a number
 				each(transition, function (value) {
-					duration += parseFloat(value) * 1000
+					duration += parseFloat(value) * 1000;
 				});
 
 				// run callback after duration of transition
 				// has elapsed
 				__setTimeout(function () {
-					callback(element)
-				}, duration)
+					callback(element);
+				}, duration);
 			}
 		}
 
@@ -1219,7 +1221,7 @@
 				left: rect.left,
 				width: rect.width,
 				height: rect.height
-			}
+			};
 		}
 
 		/**
@@ -1241,13 +1243,13 @@
 
 	      			// add prop if vendor prop exists
   					if (style[prop] !== __undefined) {
-  						style[prop] = value
+  						style[prop] = value;
   					}
 	      		}
     		}
     		// set un-prefixed prop
     		else {
-    			style[prop] = value
+    			style[prop] = value;
     		}
 		}
 
@@ -1257,7 +1259,7 @@
 		return {
 			flip: flip,
 			transition: transition
-		}
+		};
 	}
 
 
@@ -1271,19 +1273,19 @@
 		function hasClass (element, value) {
 			// default to native Element.classList()
 		    if (element[__classList]) {
-		        return element[__classList].contains(value)
+		        return element[__classList].contains(value);
 		    } 
 		    else {
 		    	// this will return true if indexOf does not
 		    	// find our class in the className string 
-		        return element[__className].indexOf(value) > -1
+		        return element[__className].indexOf(value) > -1;
 		    }
 		}
 
 		function add (element, value) {
 			// default to native Element.classList.remove()
 			if (element[__classList]) {
-		        element[__classList].add(value)
+		        element[__classList].add(value);
 		    }
 		    // exit early if the class is already added
 		    else if (!hasClass(element, value)) {
@@ -1300,7 +1302,7 @@
 		function remove (element, value) {
 			// default to native Element.classList.remove()
 		    if (element[__classList]) {
-		        element[__classList].remove(value)
+		        element[__classList].remove(value);
 		    }
 		    else {
 		    	// create array of current classList
@@ -1309,23 +1311,23 @@
 		        // remove the className on this index
 		        classes.splice(classes.indexOf(value), 1);
 		        // join our classes array and re-ssign to className
-		        element[__className] = classes.join(" ")
+		        element[__className] = classes.join(" ");
 		    }
 		}
 
 		function toggle (element, value) {
 			// default to native Element.classList.toggle()
 		    if (element[__classList]) {
-		        element[__classList].toggle(value)
+		        element[__classList].toggle(value);
 		    }
 		    else {
 		    	// if has class, remove
 		    	if (hasClass(element, value)) {
-		    		remove(element, value)
+		    		remove(element, value);
 		    	}
 		    	// if does not have class, add
 		    	else {
-		    		add(element, value)
+		    		add(element, value);
 		    	}
 		    }
 		}
@@ -1335,7 +1337,7 @@
 			remove: remove,
 			hasClass: hasClass,
 			toggle: toggle
-		}
+		};
 	}
 
 
@@ -1353,7 +1355,7 @@
 		h[__prototype].trust = __true,
 		h[__prototype][__constructor] = __object;
 
-		return new h
+		return new h;
 	}
 
 
@@ -1397,7 +1399,7 @@
 
 		// expose just a specific few
 		if (args[__length]) {
-			expose(toArray(args))
+			expose(toArray(args));
 		}
 		// expose all elements
 		else {
@@ -1413,7 +1415,7 @@
 			'rt','ruby','s','samp','script','section','select','small','source',
 			'span','strong','style','sub','summary','sup','table','tbody','td',
 			'textarea','tfoot','th','thead','time','title',
-			'tr','track','u','ul','var','video','wbr'])
+			'tr','track','u','ul','var','video','wbr']);
 		}
 	}
 
@@ -1442,15 +1444,15 @@
 			self.interval = __null,
 			// history back
 			self.back = function () {
-				history.back()
+				history.back();
 			},
 			// history foward
 			self.foward = function () {
-				history.foward()
+				history.foward();
 			},
 			// history go
 			self.go = function (index) {
-				history.go(index)
+				history.go(index);
 			},
 			// navigate to a view
 			self.nav = function (url) {
@@ -1459,7 +1461,7 @@
 				
 				url  = root ? root + url : url;
 
-				history.pushState(__null, __null, url)
+				history.pushState(__null, __null, url);
 			},
 			// configure defualts
 			self.config = function (obj) {
@@ -1467,8 +1469,8 @@
 				self = this;
 
 				each(obj, function(value, name) {
-					self.settings[name] = value
-				})
+					self.settings[name] = value;
+				});
 			},
 			// start listening for url changes
 			self.init = function () {
@@ -1483,9 +1485,9 @@
 
 					if (self.url !== url) {
 						self.url = url;
-						self.changed()
+						self.changed();
 					}
-				}, 50)
+				}, 50);
 			},
 			// register routes
 			self.on = function (args) {
@@ -1495,7 +1497,7 @@
 
 				// create routes object if it doesn't exist
 				if (!self.routes) {
-					self.routes = {}
+					self.routes = {};
 				}
 
 				// normalize args for ({obj}) and (url, callback) styles
@@ -1504,10 +1506,10 @@
 					args   = arguments;
 
 					routes = {};
-					routes[args[0]] = args[1]
+					routes[args[0]] = args[1];
 				}
 				else {
-					routes = args
+					routes = args;
 				}
 
 				// assign routes
@@ -1539,7 +1541,7 @@
 						callback:  value,
 						pattern:   root ? root + pattern : pattern,
 						variables: variables
-					}
+					};
 				})
 			},
 			self.changed = function () {
@@ -1580,11 +1582,11 @@
 						// callback is a function, exec
 						if (is(callback, __function)) {
 							// component function
-							callback(data, self.url)
+							callback(data, self.url);
 						}
 						// can't process
 						else {
-							throw 'could not find render method'
+							throw 'could not find render method';
 						}
 					}
 				})
@@ -1599,16 +1601,16 @@
 		router = new Router;
 
 		if (mount) {
-			router.config({mount: mount})
+			router.config({mount: mount});
 		}
 
 		// define root address
 		if (root) {
-			router.config({root: root})
+			router.config({root: root});
 		}
 		// assign routes
 		if (routes) {
-			router.on(routes)
+			router.on(routes);
 		}
 
 		// initialize listener
@@ -1616,11 +1618,11 @@
 
 		// navigate to initial uri
 		if (nav) {
-			router.nav(nav)
+			router.nav(nav);
 		}
 
 		// assign router to object
-		return router
+		return router;
 	}
 
 
@@ -1681,10 +1683,10 @@
 						// if needed i.e create dom/parse json
 						if (resHeader.indexOf(';') !== -1) {
 							resType = resHeader.split(';');
-							resType = resType[0].split('/')
+							resType = resType[0].split('/');
 						}
 						else {
-							resType = resHeader.split('/')
+							resType = resHeader.split('/');
 						}
 
 						// extract response type 'html/json/text'
@@ -1692,62 +1694,62 @@
 
 						// json, parse json
 						if (resType === 'json') {
-							response = JSON.parse(responseText)
+							response = JSON.parse(responseText);
 						}
 						// html, create dom
 						else if (resType === 'html') {
-							response = (new DOMParser()).parseFromString(responseText, "text/html")
+							response = (new DOMParser()).parseFromString(responseText, "text/html");
 						}
 						// text, as is
 						else {
-							response = responseText
+							response = responseText;
 						}
 
 						// use callbacks
 						if (callback) {
-							callback(response)
+							callback(response);
 						}
 						// otherwise resolve promise
 						else {
-							resolve(response)
+							resolve(response);
 						}
 					}
 					// failed
 					else {
 						// use callbacks
 						if (callback) {
-							callback(statusText)
+							callback(statusText);
 						}
 						// otherwise resolve promise
 						else {
-							reject(statusText)
+							reject(statusText);
 						}
 					}
 				}
 
 				// assign on error callback
 				xhr.onerror = function () {
-					reject(xhr.statusText)
+					reject(xhr.statusText);
 				}
 				
 				// set for this is a cross origin request
 				if (CORS) {
-					xhr.withCredentials = __true
+					xhr.withCredentials = __true;
 				}
 
 				if (method === 'POST' || method === 'PUT') {
 					xhr.setRequestHeader('Content-type', enctype);
 
 					if (enctype.indexOf('x-www-form-urlencoded') > -1) {
-						payload = param(payload)
+						payload = param(payload);
 					}
 					else if (enctype.indexOf('json') > -1) {
-						payload = JSON.stringify(payload)
+						payload = JSON.stringify(payload);
 					}
 				}
 
 				// send request
-				xhr.send(payload)
+				xhr.send(payload);
 			})	
 		}
 
@@ -1775,10 +1777,10 @@
 			    // so we re-run param on addr to serialize 'addr: {...}'
 			    arr.push(typeof value == 'object' ? 
 			    	param(value, __prefix) :
-			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value))
+			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value));
 			}
 
-			return arr.join('&')
+			return arr.join('&');
 		}
 
 		/**
@@ -1797,7 +1799,7 @@
 	  		    value = reason;
 
 	  		    if (deferred) {
-  		      		handle(deferred)
+  		      		handle(deferred);
 	  		    }
   		  	}
 
@@ -1805,24 +1807,24 @@
 	  			try {
 	  				if (newValue && is(newValue.then, __function)) {
 		  			    newValue.then(resolve, reject);
-		  			    return
+		  			    return;
 				  	}
 				  	
 		    		value = newValue;
 		    		state = 'resolved';
 
 		    		if (deferred) {
-		      			handle(deferred)
+		      			handle(deferred);
 		    		}
 	  			} catch (e) {
-	  				reject(e)
+	  				reject(e);
 	  			}
 	  		}
 
 	  		function handle (handler) {
 	    		if (state === 'pending') {
 	      			deferred = handler;
-	      			return
+	      			return;
 	    		}
 
 	    		__setTimeout(function () {
@@ -1830,18 +1832,18 @@
 		    		handlerCallback;
 
 	    		    if (state === 'resolved') {
-			      		handlerCallback = handler.onResolved
+			      		handlerCallback = handler.onResolved;
 	    		    } 
 	    		    else {
-			      		handlerCallback = handler.onRejected
+			      		handlerCallback = handler.onRejected;
 	    		    }
 
 	    		    if (!handlerCallback) {
 			      		if (state === 'resolved') {
-			        		handler.resolve(value)
+			        		handler.resolve(value);
 			      		} 
 			      		else {
-			        		handler.reject(value)
+			        		handler.reject(value);
 			      		}
 
 			      		return
@@ -1852,12 +1854,12 @@
 
 		            try {
 		                ret = handlerCallback(value);
-		                handler.resolve(ret)
+		                handler.resolve(ret);
 		            } 
 		            catch (e) {
-		                handler.reject(e)
+		                handler.reject(e);
 		            }
-	    		}, 0)
+	    		}, 0);
 	  		}
 
 	  		this.then = function (onResolved, onRejected) {
@@ -1867,12 +1869,12 @@
 		        		onRejected: onRejected,
 		        		resolve: resolve,
 		        		reject: reject
-		      		})
-	    		})
+		      		});
+	    		});
 	  		}
 
 	  		this.catch = function (onRejected) {
-	  			return this.then(__undefined, onRejected)
+	  			return this.then(__undefined, onRejected);
 	  		}
 
 	  		this.done = function (onFulfilled, onRejected) {
@@ -1883,11 +1885,11 @@
   		  		self.then(__undefined, function (err) {
   		  			debounce(function () {
   		  				throw err
-  		  			})
-  		  		})
+  		  			});
+  		  		});
 	  		}
 
-	  		fn(resolve, reject)
+	  		fn(resolve, reject);
 		}
 
 		/**
@@ -1909,28 +1911,28 @@
 					placeholder = callback;
 
 					callback = enctype;
-					enctype = placeholder
+					enctype = placeholder;
 				}
 
 				// enctype syntactial sugar
 				if (enctype) {
 					if (enctype === 'json') {
-						enctype = 'application/json'
+						enctype = 'application/json';
 					}
 					else if (enctype === 'text') {
-						enctype = 'text/plain'
+						enctype = 'text/plain';
 					}
 					else if (enctype === 'file') {
-						enctype = 'multipart/form-data'
+						enctype = 'multipart/form-data';
 					}
 				}
 				else {
 					// defaults
-					enctype = 'application/x-www-form-urlencoded'
+					enctype = 'application/x-www-form-urlencoded';
 				}
 
 				// return ajax promise
-				return http(url, method.toUpperCase(), payload, enctype, callback)
+				return http(url, method.toUpperCase(), payload, enctype, callback);
 			}
 		}
 
@@ -1939,7 +1941,7 @@
 			post: request('POST'),
 			put: request('PUT'),
 			delete: request('DELETE')
-		}
+		};
 	}
 
 	/**
@@ -1963,19 +1965,19 @@
 		each(args, function (value) {
 			// component (function)
 			if (is(value, __function)) {
-				component = comp(value)
+				component = comp(value);
 			}
 			// component (object)
 			else if (is(value, __object)) {
-				component = comp(value)
+				component = comp(value);
 			}
 			// element
 			else if (value.nodeType) {
-				element = value
+				element = value;
 			}
 			// element selector
 			else if (is(value, __string)) {
-				element = __document.querySelector(value)
+				element = __document.querySelector(value);
 			}
 		});
 
@@ -1992,8 +1994,8 @@
 					debounce(function () {
 						vdomToDOM(element, newNode, oldNode);
 						// this newNode = the next renders oldNode
-						oldNode = newNode
-					})
+						oldNode = newNode;
+					});
 				}
 			}
 
@@ -2004,26 +2006,26 @@
 					if (internal[__getInitialState]) {
 						setState(internal, internal[__getInitialState]());
 						// remove method
-						delete internal[__getInitialState]
+						delete internal[__getInitialState];
 					}
 					// get default props if set
 					if (internal[__getDefaultProps]) {
 						setProps(internal, internal[__getDefaultProps]());
 						// remove method
-						delete internal[__getDefaultProps]
+						delete internal[__getDefaultProps];
 					}
 
 					// reference render, we can then call this
 					// in this.setState
 					if (!internal['render()']) {
-						internal['render()'] = update	
+						internal['render()'] = update;	
 					}
 				}
 				// not a component or pure function that returns an object
 				// throw error
 				else {
 					throw 'if you are using pure functions please make sure ' + 
-						  'you return an object with a render method'
+						  'you return an object with a render method';
 				}
 
 				// get a fresh copy of the vdom
@@ -2035,7 +2037,7 @@
 					vdomToDOM(element, newNode, __undefined, internal);
 					// this newNode = the next renders oldNode
 					oldNode = newNode;
-					initial = __false
+					initial = __false;
 				}
 			}
 
@@ -2043,34 +2045,34 @@
 			return function (props, children, forceUpdate) {
 				// don't render to dom, if vdom is requested
 				if (forceUpdate === 'vnode') {
-					return component(props, children)
+					return component(props, children);
 				}
 				else if (forceUpdate === 'html') {
-					return vdomToHTML(component(props, children))
+					return vdomToHTML(component(props, children));
 				}
 				
 
 				// initial render
 				if (initial || forceUpdate) {
 					// mount and publish that the initial render has taken place
-					mount(props, children)
+					mount(props, children);
 				}
 				// updates
 				else {
-					update(props, children)
+					update(props, children);
 				}
 
-				return newNode
+				return newNode;
 			}
 		}
 		// can't find element to mount to
 		// or can't find a component
 		else {
 			if (!element) {
-				throw 'can\'t find the element'
+				throw 'can\'t find the element';
 			}
 			if (!component) {
-				throw 'can\'t find the component'
+				throw 'can\'t find the component';
 			}
 		}
 	}
@@ -2081,8 +2083,8 @@
 	 */
 	function Comp () {
 		// immutable internal props & state
-		this.props = {}
-		this.state = {}
+		this.props = {},
+		this.state = {};
 	}
 
 	// set internal props & state
@@ -2094,18 +2096,18 @@
 			// setState will return true
 			if (setState(this, obj)) {
 				// update render
-				this.forceUpdate()
+				this.forceUpdate();
 			}
 		},
 		// i.e this.setProps({})
 		setProps: function (obj) {
-			setProps(this, obj)
+			setProps(this, obj);
 		},
 		// force update public method
 		forceUpdate: function () {
 			// update only if this component is a render instance
 			if (this['render()']) {
-				this['render()']()
+				this['render()']();
 			}
 		}
 	}
@@ -2118,11 +2120,11 @@
 		// invalid component if the component is an object
 		// without a render method
 		if (is(arg, __object) && !arg.render) {
-			throw 'can\'t find render, invalid component'
+			throw 'can\'t find render, invalid component';
 		}
 		// maybe the arg is a function that returns an object
 		else if (is(arg, __function)) {
-			obj = arg()
+			obj = arg();
 		}
 
 		// invalid component?
@@ -2133,7 +2135,7 @@
 		// if not then return it as it is, assuming the function
 		// will return a hyperscript object
 		if (!obj.render) {
-			return arg
+			return arg;
 		}
 
 		// everything checks out i.e
@@ -2150,15 +2152,15 @@
 			if (is(value, __function)) {
 				// pass props and state to render
 				if (name === 'render') {
-					component[name] = value.bind(component, component.props, component.state)
+					component[name] = value.bind(component, component.props, component.state);
 				}
 				// every other method
 				else {
-					component[name] = value.bind(component)
+					component[name] = value.bind(component);
 				}
 			}
 			else {
-				component[name] = value
+				component[name] = value;
 			}
 		});
 
@@ -2167,11 +2169,11 @@
 		// or internals
 		function h (obj) {
 			var 
-			self = this
+			self = this;
 
 			self.type     = obj.type,
 			self.props    = obj.props,
-			self.children = obj.children
+			self.children = obj.children;
 		}
 		// prototype methods
 		h[__prototype].internal = component;
@@ -2191,25 +2193,25 @@
 			// insure the render function returns the newly
 			// created hyperscript object
 			component.render = function () {
-				return new h(render())
+				return new h(render());
 			}
 
 			// add children to props if set
 			if (children) {
 				props = props || {};
-				props.children = children
+				props.children = children;
 			}
 
 			// publish componentWillReceiveProps lifecycle
 			if (props) {
 				lifecycle(component, __componentWillReceiveProps, __true, __undefined, __true);
 				// set props
-				setProps(component, props)
+				setProps(component, props);
 			}
 
 			// expose the components internals
 			// when requested
-			return internal ? component : component.render()
+			return internal ? component : component.render();
 		}
 	}
 
@@ -2221,8 +2223,8 @@
 		if (obj) {
 			// set props
 			each(obj, function (value, name) {
-				self.props[name] = value
-			})
+				self.props[name] = value;
+			});
 		}
 	}
 
@@ -2233,17 +2235,17 @@
 
 		// if the object is a function that returns an object
 		if (is(obj, __function)) {
-			obj = obj()
+			obj = obj();
 		}
 
 		// make sure we have something to update
 		if (obj) {
 			// set state
 			each(obj, function (value, name) {
-				self.state[name] = value
+				self.state[name] = value;
 			});
 
-			return __true
+			return __true;
 		}
 	}
 
@@ -2258,11 +2260,11 @@
 		// if the reducer is an object of reducers (multiple)
 		// lets combine the reducers
 		if (is(reducer, __object)) {
-			return create(combine(reducer))
+			return create(combine(reducer));
 		}
 		// single reducer
 		else {
-			return create(reducer)
+			return create(reducer);
 		}
 
 		// combine reducers
@@ -2272,8 +2274,9 @@
 
 				return __object.keys(reducers).reduce(function (nextState, key) {
 					nextState[key] = reducers[key](state[key], action);
-					return nextState
-				}, {})
+
+					return nextState;
+				}, {});
 			}
 		}
 
@@ -2285,17 +2288,17 @@
 
 			// return the state
 			function getState () {
-				return state
+				return state;
 			}
 
 			// dispatch an action
 			function dispatch (action, timetravel) {
 				// there are no actions when we are time traveling
 				if (!is(action, __object)) {
-					throw 'action must be plain object'
+					throw 'action must be plain object';
 				}
 				if (action.type === __undefined) {
-					throw 'actions must have a type'
+					throw 'actions must have a type';
 				}
 
 				// get state from reducer
@@ -2303,22 +2306,22 @@
 
 				// dispatch to all listeners
 				each(listeners, function (listener) {
-					return listener(state)
+					return listener(state);
 				})
 			}
 
 			// subscribe to a store
 			function subscribe (listener) {
 				if (!is(listener, __function)) {
-			  		throw 'listener should be a function'
+			  		throw 'listener should be a function';
 				}
 
 				listeners.push(listener);
 
 				return function unsubscribe () {
 					listener = listeners.filter(function (l) {
-						return l !== listener
-					})
+						return l !== listener;
+					});
 				}
 			}
 
@@ -2327,8 +2330,8 @@
 				render(getState());
 
 				subscribe(function () {
-					render(getState())
-				})
+					render(getState());
+				});
 			}
 
 			dispatch({type: '@@dio/INIT'});
@@ -2338,7 +2341,7 @@
 				dispatch: dispatch, 
 				subscribe: subscribe,
 				connect: connect
-			}
+			};
 		}
 	}
 
@@ -2362,11 +2365,11 @@
 				// if the setter is a string
 				// we use it to set the elements own properties
 				if (is(setter, __string)) {
-					(prop in el) ? el[prop] = value : el.setAttribute(prop, value)
+					(prop in el) ? el[prop] = value : el.setAttribute(prop, value);
 				}
 				else {
 					// run the setter
-					setter(value)
+					setter(value);
 				}
 			}
 		}
@@ -2386,12 +2389,12 @@
 			// array of bindings
 			if (is(props, __array)) {
 				each(props, function(value, index) {
-					update(el, value, setter[index])
-				})
+					update(el, value, setter[index]);
+				});
 			}
 			// singles
 			else {
-				update(el, props, setter)
+				update(el, props, setter);
 			}
 		}
 	}
@@ -2412,7 +2415,7 @@
 
 			if (args[__length]) {
 				store = args[0];
-				internal ? internal = __undefined : ''
+				internal ? internal = __undefined : '';
 			}
 
 			if (!internal) {
@@ -2420,12 +2423,12 @@
 				// or returns a processored store
 				// i.e var a = steam(true, String)
 				// a() => 'true' {String}
-				return !processor ? store : processor(store)
+				return !processor ? store : processor(store);
 			}
 			// below map creates a prop that
 			// we want to run whenever we try to retrieve it
 			else {
-				return store()
+				return store();
 			}
 		}
 
@@ -2436,8 +2439,8 @@
 		 */
 		prop.map = function (reducer) {
 			return stream(function () {
-				return reducer(store)
-			}, __undefined, __true)
+				return reducer(store);
+			}, __undefined, __true);
 		}
 
 		/**
@@ -2445,10 +2448,10 @@
 		 * @return {Any}
 		 */
 		prop.toJSON = function () {
-			return store
+			return store;
 		}
 
-		return prop
+		return prop;
 	}
 	stream.combine = function (reducer) {
 		var
@@ -2458,8 +2461,8 @@
 		args.shift();
 
 		return stream(function () {
-			return reducer.apply(__undefined, args)
-		}, __undefined, __true)
+			return reducer.apply(__undefined, args);
+		}, __undefined, __true);
 	}
 
 
@@ -2483,5 +2486,5 @@
 		bind: bind,
 		DOM: DOM,
 		toHTML: vdomToHTML
-	}
+	};
 }));
