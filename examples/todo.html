@@ -165,7 +165,8 @@
 		  							h('input', {ref: input, oninput: dio.bind('value', text)}),
 		  							h('button', 'Add #' + (props.items.length+1))
   								),
-  								TodoList({items: props.items, handleDelete: handleDelete})
+  								TodoList({items: props.items, handleDelete: handleDelete}),
+  								h('svg', {test: 'dsds'}, h('text', 'text'))
 		  					)
 		  		}
 

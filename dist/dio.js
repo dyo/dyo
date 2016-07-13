@@ -836,12 +836,7 @@
 
 			// if the target has an attr as a property, 
 			// change that aswell
-			if (
-				target[name]        !== __undefined &&
-				// make sure it's not a css declarations object (which is readonly)
-				target[name]['zoom']=== __undefined && 
-				target.namespaceURI !== __namespace['svg']
-			) {
+			if (target[name] !== __undefined) {
 				// value is an object
 				// add each of it's properties to the
 				// target elements attribute
@@ -872,21 +867,21 @@
 						});
 					}
 				}
-				else if (is(value, __array)) {
-					if (name === 'className' || name === 'class') {
-						target[name] = value.join(' ');
-					}
+				// this allows us to set classess like 
+				// className: ['class1', 'class2']
+				else if (is(value, __array) && (name === 'className' || name === 'class')) {
+					target[name] = value.join(' ');
 				}
 				else {
-					target[name] = value;
+					// swallow erros when trying to set readonly properties
+					try {
+						target[name] = value;
+					} catch (e) {}
 				}
 			}
-			// don't set namespace attrs and properties that
-			// can be set via target[name]
-			else if (
-				value !== __namespace['svg'] && 
-				value !== __namespace['math']
-			) {
+			// don't set xmlns namespace attributes we set only that when
+			// we create an element
+			else if (value !== __namespace['svg'] && value !== __namespace['math']) {
 				if (op === -1) {
 					target[attr](name);
 				}
