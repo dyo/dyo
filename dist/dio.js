@@ -9,23 +9,23 @@
  * @license MIT
  */
 (function (root, factory) {
-	'use strict'
+	'use strict';
 
 	// amd
     if (typeof define === 'function' && define.amd) {
         // register as an anonymous module
-        define([], factory)
+        define([], factory);
     }
     // commonjs
     else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
-        factory(exports)
+        factory(exports);
     } 
     // browser globals
     else {
-        factory(root)
+        factory(root);
     }
 }(this, function (exports) {
-	'use strict'
+	'use strict';
 
 	// references for better minification
 	// so instead of obj.constructor we would do obj[__constructor]
@@ -77,7 +77,7 @@
 	__string                    = String,
 	__XMLHttpRequest            = XMLHttpRequest,
 	__encodeURIComponent        = encodeURIComponent,
-	__setTimeout                = __window.setTimeout
+	__setTimeout                = __window.setTimeout;
 
 
 	/**
@@ -88,7 +88,6 @@
 	function toArray (arg) {
 		return __array[__prototype].slice.call(arg)
 	}
-
 
 	
 	/**
@@ -303,7 +302,7 @@
 		 */
 		function setChild (child, obj) {
 			// add obj.prop to children if they are none TextNodes
-			if (child && is(child.props, __object) && obj.props.xmlns) {
+			if (child && child.props && obj.props.xmlns) {
 				child.props.xmlns = obj.props.xmlns
 			}
 
@@ -558,12 +557,12 @@
 			if (op > 0) {
 				oldChildren.splice(index, 0, __undefined);
 				prependChild(parent, nextNode, currentNode, newNode);
-				return -1
 			}
 			// element removed
 			else if (op < 0) {
 				oldChildren.splice(index, 1);
 				removeChild(parent, currentNode, newNode);
+				// we have to decreement the children length (newLength/oldLength):515-516
 				return -1
 			}
 			// replace
@@ -600,7 +599,7 @@
 			if (nextNode) {
 				lifecycle(newNode, __componentWillMount);
 				parent.appendChild(nextNode);
-				lifecycle(newNode, __componentDidMount, nextNode);
+				lifecycle(newNode, __componentDidMount, nextNode)
 			}
 		}
 
@@ -609,7 +608,7 @@
 			if (nextNode) {
 				lifecycle(newNode, __componentWillMount);			
 				parent.insertBefore(nextNode, beforeNode);
-				lifecycle(newNode, __componentDidMount, nextNode);
+				lifecycle(newNode, __componentDidMount, nextNode)
 			}
 		}
 
@@ -618,7 +617,7 @@
 			if (nextNode && prevNode) {	
 				lifecycle(newNode, __componentWillUpdate);
 				parent.replaceChild(nextNode, prevNode);
-				lifecycle(newNode, __componentDidUpdate);
+				lifecycle(newNode, __componentDidUpdate)
 			}
 		}
 
@@ -663,7 +662,7 @@
 
 				each(nodes, function (value) {
 					frag.appendChild(value)
-				})
+				});
 
 				return frag
 			}
@@ -766,7 +765,7 @@
 
 				each(propChanges, function (obj) {
 					updateProp(obj.target, obj.name, obj.value, obj.op)
-				})
+				});
 
 				// after props change
 				lifecycle(newNode, __componentDidUpdate, __true, __true)
@@ -1352,7 +1351,7 @@
 		}
 
 		h[__prototype].trust = __true,
-		h[__prototype][__constructor] = __object
+		h[__prototype][__constructor] = __object;
 
 		return new h
 	}
@@ -1492,7 +1491,7 @@
 			self.on = function (args) {
 				var 
 				self = this,
-				routes
+				routes;
 
 				// create routes object if it doesn't exist
 				if (!self.routes) {
@@ -1613,7 +1612,7 @@
 		}
 
 		// initialize listener
-		router.init()
+		router.init();
 
 		// navigate to initial uri
 		if (nav) {
@@ -1910,14 +1909,20 @@
 					placeholder = callback;
 
 					callback = enctype;
-					enctype = placeholder;
+					enctype = placeholder
 				}
 
 				// enctype syntactial sugar
 				if (enctype) {
-					if      (enctype === 'json') enctype = 'application/json'
-					else if (enctype === 'text') enctype = 'text/plain'
-					else if (enctype === 'file') enctype = 'multipart/form-data'
+					if (enctype === 'json') {
+						enctype = 'application/json'
+					}
+					else if (enctype === 'text') {
+						enctype = 'text/plain'
+					}
+					else if (enctype === 'file') {
+						enctype = 'multipart/form-data'
+					}
 				}
 				else {
 					// defaults
@@ -1972,7 +1977,7 @@
 			else if (is(value, __string)) {
 				element = __document.querySelector(value)
 			}
-		})
+		});
 
 		// has parent to mount to
 		if (element && component) {
@@ -2155,7 +2160,7 @@
 			else {
 				component[name] = value
 			}
-		})
+		});
 
 		// create a hyperscript object
 		// that has a reference to the components instance
@@ -2466,7 +2471,7 @@
 
 
 	exports.h   = element();
-	
+
 	exports.dio = {
 		animate: animate(),
 		request: request(),
