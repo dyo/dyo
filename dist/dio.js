@@ -689,30 +689,21 @@
 				});
 			}
 
-			// add refs
-			// Component is only present
-			// on the initial render
-			// so this will only run once
-			if (component) {
-				var 
-				props = node.props,
-				ref   = props ? props.ref : __undefined;
+			// check if refs are defined?
+			if (node.props && node.props.ref) {
+				var
+				ref = node.props.ref
 
-				// component has a ref add to parent component
-				if (ref) {
-					// if we have already set a refs object
-					// use the same object
-					component.refs = component.refs || {};
-
-					// ref is a function run it
-					// passing the el to it
-					if (is(ref, __function)) {
-						ref(el);
-					}
-					// add ref to component
-					else if (is(ref, __string)) {
-						component.refs[ref] = el;
-					}
+				// we have a component and string ref
+				if (component && is(ref, __string)) {
+					// create the refs object if it doesn't already exist
+					component.refs = component.refs || {}
+					// set string refs
+					component.refs[ref] = el;
+				}
+				// function ref execute and pass the element as a parameter
+				else if (is(ref, __function)) {
+					ref(el);
 				}
 			}
 		
@@ -1958,17 +1949,14 @@
 		oldNode,
 		element,
 		internal,
+		stateless,
 		initial = __true,
 		args = toArray(arguments);
 
 		// assign args
 		each(args, function (value) {
-			// component (function)
-			if (is(value, __function)) {
-				component = comp(value);
-			}
-			// component (object)
-			else if (is(value, __object)) {
+			// component (function) / (object)
+			if (is(value, __function) || is(value, __object)) {
 				component = comp(value);
 			}
 			// element
@@ -1983,7 +1971,15 @@
 
 		// has parent to mount to
 		if (element && component) {
-			internal = component(__undefined, __undefined, __true);
+			// determine if the component is stateless
+			if (component.stateless) {
+				stateless = __true;
+			}
+
+			// don't try to get it's internals if it's stateless
+			if (!stateless) {
+				internal = component(__undefined, __undefined, __true);
+			}
 
 			// update
 			function update (props, children) {
@@ -2001,7 +1997,8 @@
 
 			// initial mount
 			function mount (props, children) {
-				if (internal) {
+				// don't try to set it's internals if it's statless
+				if (!stateless && internal) {
 					// get initial state if set
 					if (internal[__getInitialState]) {
 						setState(internal, internal[__getInitialState]());
@@ -2020,12 +2017,6 @@
 					if (!internal['render()']) {
 						internal['render()'] = update;	
 					}
-				}
-				// not a component or pure function that returns an object
-				// throw error
-				else {
-					throw 'if you are using pure functions please make sure ' + 
-						  'you return an object with a render method';
 				}
 
 				// get a fresh copy of the vdom
@@ -2134,7 +2125,8 @@
 		// object directy, so lets just check if it does return a render method
 		// if not then return it as it is, assuming the function
 		// will return a hyperscript object
-		if (!obj.render) {
+		if (!obj || !obj.render) {
+			arg.stateless = __true
 			return arg;
 		}
 

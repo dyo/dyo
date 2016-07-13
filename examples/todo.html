@@ -6,7 +6,7 @@
 		<title>dio.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dist/dio.min.js"></script>
+		<script src="/dist/dio.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -45,13 +45,13 @@
 
 						return Object.assign({}, state, {
 							// add to start
-							// items: [{id: action.id, value: action.value, completed: false}].concat(state.items)
+							items: [{id: action.id, value: action.value, completed: false}].concat(state.items)
 
 							// add to end
 							// items: state.items.concat({id: action.id, value: action.value, completed: false})
 
 							// add to middle
-							items: items
+							// items: items
 						})
 					case 'REMOVE':
 						var items = state.items.filter(function (item) {
@@ -109,6 +109,7 @@
 		    				})
     					)
 			}
+
 			function TodoApp (props) {
 				var 
 				text = dio.stream(''),
@@ -136,16 +137,23 @@
 		  		function render (props) {
 		  			return h('div',
 		  						h('h3', 'TODO'),
-		  						h('form', {onsubmit: this.handleSubmit},
+		  						h('form', {onsubmit: handleSubmit},
 		  							h('input', {ref: input, oninput: dio.bind('value', text)}),
 		  							h('button', 'Add #' + (props.items.length+1))
   								),
   								TodoList({items: props.items, handleDelete: handleDelete})
 		  					)
 		  		}
+
+		  		if (props) {
+		  			// return render(props)
+		  		}
+		  		// or can just return an object with the render method
+		  		// and not worry to collect the props on the components function TodoApp (props) {
+		  		// 
+		  		// i.e
 		  		return {
-		  			render: render,
-		  			handleSubmit: handleSubmit
+		  				render: render
 		  		}
 			}
 		</script>
