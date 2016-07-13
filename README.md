@@ -285,7 +285,7 @@ componentWillUnmount:      function(node)
 
 `componentDidMount` and `componentWillMount` lifecycles have access to the node.
 
-`componentWillUnmount` can receieve(return) a duration number(in ms) back to it used to remove the element from the dom only after that amount of time has elapsed. This allows you to do animations on that node before the node is removed/added, this works well with the `animate.flip()` helper, though be advised you can probably do all this with the `animation.transition('className', callback)` helper.
+`componentWillUnmount` can receive(return) a duration number(in ms) back to it used to remove the element from the dom only after that amount of time has elapsed. This allows you to do animations on that node before the node is removed/added, this works well with the `animate.flip()` helper, though be advised you can probably do all this with the `animation.transition('className', callback)` helper.
 
 
 ## helpers
@@ -362,8 +362,14 @@ document.write(render(props, children, 'html'))
 ```
 You can also use `dio.toHTML(h('div'))` on a hyperscript object.
 
-On the otherhand if you want render() to return a vnode instead of rendering to the dom or html as above
+On the otherhand if you want a render() instance to return a vnode instead of rendering to the dom or returning html as above you could call it with a 'vnode' string as the third parameter
 
 ```javascript
 render(props, children,'vnode')
+```
+
+which meas that you could alternatively print html like
+
+```javascript
+dio.toHTML(render(props, children,'vnode'))
 ```
