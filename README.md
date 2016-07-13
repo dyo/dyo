@@ -171,7 +171,7 @@ create, combine and map streams.
 ```javascript
 create:   dio.stream(value)
 map:      streamA.map((streamA)=>{})
-combined: dio.stream((steamA, streamB)=>{}, streamA, streamB)
+combine: dio.stream.combine((steamA, streamB)=>{}, streamA, streamB)
 ```
 
 create a stream
