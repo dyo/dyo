@@ -2334,7 +2334,7 @@
 				});
 			}
 
-			dispatch({type: '@@dio'});
+			dispatch({type: '@@dio/INIT'});
 
 			return {
 				getState: getState, 
@@ -2407,8 +2407,8 @@
 	function stream () {
 		var
 		signature = '@@dio',
-		mapsig    = '/mapper',
-		propsig   = '/prop'
+		mapsig    = '/MAPPER',
+		propsig   = '/PROP'
 
 
 		/**
