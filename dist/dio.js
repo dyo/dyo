@@ -451,8 +451,6 @@
 	 * @param {Object}  component?
 	 */
 	function vdomToDOM (parent, newNode, oldNode, component) {
-		update(parent, newNode, oldNode, __undefined, component);
-
 		// diff and update dom loop
 		function update (parent, newNode, oldNode, index, component, newChildren, oldChildren) {
 			index = index || 0;
@@ -839,7 +837,8 @@
 			// if the target has an attr as a property, 
 			// change that aswell
 			if (
-				target[name]        !== __undefined && 
+				target[name]        !== __undefined &&
+				target[name]['zoom']=== __undefined && 
 				target.namespaceURI !== __namespace['svg']
 			) {
 				// value is an object
@@ -895,6 +894,8 @@
 				}
 			}
 		}
+
+		update(parent, newNode, oldNode, __undefined, component);
 	}
 
 
@@ -903,15 +904,6 @@
 	 * @param {Object} hyperscript - hyperscript object
 	 */
 	function vdomToHTML (vnode) {
-		// void elements that do not have a close </tag> 
-		var
-		element = {
-			'area': __true,'base': __true,'br': __true,'!doctype': __true,
-			'col': __true,'embed': __true,'wbr': __true,'track': __true,
-			'hr': __true,'img': __true,'input': __true,'keygen': __true,
-			'link': __true,'meta': __true,'param': __true,'source': __true
-		};
-
 		// print node
 		function ToHTML (vnode, level) {
 			// not a hyperscript object
@@ -996,6 +988,15 @@
 				return ToHTML(child, level + 1);
 			}).join('\n'+indent)+'\n'+lastIndent;
 		}
+
+		// void elements that do not have a close </tag> 
+		var
+		element = {
+			'area': __true,'base': __true,'br': __true,'!doctype': __true,
+			'col': __true,'embed': __true,'wbr': __true,'track': __true,
+			'hr': __true,'img': __true,'input': __true,'keygen': __true,
+			'link': __true,'meta': __true,'param': __true,'source': __true
+		};
 
 		return ToHTML(vnode);
 	}
@@ -1139,6 +1140,11 @@
 						prefix(style, 'transition', __null);
 						prefix(style, 'transform', __null);
 					}
+					else {
+						transEvtEnd = 'finish'
+					}
+
+					element.removeEventListener(transEvtEnd, onfinish);
 
 					prefix(style, 'transformOrigin', __null);
 					
@@ -1148,8 +1154,6 @@
 
 					classList.remove(element, runningClass);
 					classList.remove(body, runningClass);
-
-					element.removeEventListener(transEvtEnd, onfinish);
 
 					if (callback) {
 						callback(element);
@@ -1182,7 +1186,9 @@
 				// we will get from this '0.4s, 0.2s' to '0.4,0.2'
 				// we then split it to an array ['0.4','0.2']
 				// note: the numbers are still in string format
-				transition = getComputedStyle(element)['transition-duration'].replace(/s| /g, '').split(',');
+				transition = getComputedStyle(element)
+				transition = transition['transitionDuration'];
+				transition = transition.replace(/s| /g, '').split(',');
 
 				// increament duration (in ms), also convert all values to a number
 				each(transition, function (value) {
@@ -1943,6 +1949,57 @@
 	 * render()
 	 */
 	function render () {
+		// update
+		function update (props, children) {
+			// get a fresh copy of the vdom
+			newNode = component(props, children);
+
+			if (newNode) {
+				debounce(function () {
+					vdomToDOM(element, newNode, oldNode);
+					// this newNode = the next renders oldNode
+					oldNode = newNode;
+				});
+			}
+		}
+
+		// initial mount
+		function mount (props, children) {
+			// don't try to set it's internals if it's statless
+			if (!stateless && internal) {
+				// get initial state if set
+				if (internal[__getInitialState]) {
+					setState(internal, internal[__getInitialState]());
+					// remove method
+					delete internal[__getInitialState];
+				}
+				// get default props if set
+				if (internal[__getDefaultProps]) {
+					setProps(internal, internal[__getDefaultProps]());
+					// remove method
+					delete internal[__getDefaultProps];
+				}
+
+				// reference render, we can then call this
+				// in this.setState
+				if (!internal['render()']) {
+					internal['render()'] = update;	
+				}
+			}
+
+			// get a fresh copy of the vdom
+			newNode = component(props, children);
+			// clear dom
+			element.innerHTML = '';
+
+			if (newNode) {
+				vdomToDOM(element, newNode, __undefined, internal);
+				// this newNode = the next renders oldNode
+				oldNode = newNode;
+				initial = __false;
+			}
+		}
+
 		var
 		component,
 		newNode,
@@ -1979,57 +2036,6 @@
 			// don't try to get it's internals if it's stateless
 			if (!stateless) {
 				internal = component(__undefined, __undefined, __true);
-			}
-
-			// update
-			function update (props, children) {
-				// get a fresh copy of the vdom
-				newNode = component(props, children);
-
-				if (newNode) {
-					debounce(function () {
-						vdomToDOM(element, newNode, oldNode);
-						// this newNode = the next renders oldNode
-						oldNode = newNode;
-					});
-				}
-			}
-
-			// initial mount
-			function mount (props, children) {
-				// don't try to set it's internals if it's statless
-				if (!stateless && internal) {
-					// get initial state if set
-					if (internal[__getInitialState]) {
-						setState(internal, internal[__getInitialState]());
-						// remove method
-						delete internal[__getInitialState];
-					}
-					// get default props if set
-					if (internal[__getDefaultProps]) {
-						setProps(internal, internal[__getDefaultProps]());
-						// remove method
-						delete internal[__getDefaultProps];
-					}
-
-					// reference render, we can then call this
-					// in this.setState
-					if (!internal['render()']) {
-						internal['render()'] = update;	
-					}
-				}
-
-				// get a fresh copy of the vdom
-				newNode = component(props, children);
-				// clear dom
-				element.innerHTML = '';
-
-				if (newNode) {
-					vdomToDOM(element, newNode, __undefined, internal);
-					// this newNode = the next renders oldNode
-					oldNode = newNode;
-					initial = __false;
-				}
 			}
 
 			// return function that runs update/mount when executed
