@@ -838,6 +838,7 @@
 			// change that aswell
 			if (
 				target[name]        !== __undefined &&
+				// make sure it's not a css declarations object (which is readonly)
 				target[name]['zoom']=== __undefined && 
 				target.namespaceURI !== __namespace['svg']
 			) {
