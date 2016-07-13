@@ -1,6 +1,6 @@
 # dio.js
 
-##### a light (~6kb) vdom framework.
+##### a light (~6kb) Virtual DOM framework.
 
 - animations (flip & transition)
 - requests (with callbacks / promises)
