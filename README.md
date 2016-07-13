@@ -124,10 +124,10 @@ var myrouter = dio.router({
 
 // then access the router with
 myrouter
-- .nav('url')
-- .back()
-- .foward()
-- .go(-Number) || .go(+Number)
+  .nav('url')
+  .back()
+  .foward()
+  .go(-Number) || .go(+Number)
 ```
 ## dio.request
 
@@ -164,6 +164,108 @@ store.connect(render)
 
 ```
 
+## dio.stream
+
+create, combine and map streams.
+
+```javascript
+create:   dio.stream(value)
+map:      streamA.map((streamA)=>{})
+combined: dio.stream((steamA, streamB)=>{}, streamA, streamB)
+```
+
+create a stream
+
+```javascript
+var a = dio.stream('value')
+console.log(a()) // => value
+a('new value')
+a() // => new value
+JSON.stringify(a) // => new value
+```
+This becomes more powerfull the further we take it.
+For example imagine i want to create a stream that carries a value that
+should always be of a string type:
+
+```javascript
+var a = dio.stream(1234, String)
+a() // => '1234'
+
+// note that this returns a string instead of a number
+// because we specified a processor that returns a processed 
+// stored value, the above is equivalent to
+
+String(a())
+
+```
+I could then pass this stream `a` to a promise i.e
+
+```javascript
+fetch('...').then(a)
+```
+That will update the value of `a` when a response is returned, 
+assuming the response is a number, this value will now be the 
+new value of `a` at a future time, we can then map values to `a` that return other values using the current value of `a` at that time such
+that when `a` changes their respective returned values use the up-to-date
+value of `a`
+
+```javascript
+// create a link/map to a stream
+var b = a.map(function (value) {
+		return value + ' mapper'
+	})
+	
+b()  // => '1234 mapper'
+
+// (time elapsed) the fetch response has returned a response 5000{Number}
+
+b()  // => '5000 mapper'
+
+// if b's map contents was: 'return value + 1000' the value of b()
+// should be '50001000' and not 6000
+// since we specified that 'a' should
+// always return a string
+```
+We can take this further to then create a stream that is linked or mapped
+to one or more streams
+
+```javascript
+// a stream that returns value linked to two streams
+var c = dio.stream.combine(function(a, b){
+	return a + ' ' + b + ' combiner '
+}, a, b)
+
+c() //=> '5000 50001000 combiner' 
+```
+
+other advanced examples
+
+```javascript
+var stream = dio.stream
+var foo = stream('hello ');
+var bar = foo.map(function(value){
+	return '[bar] ' + value;
+});
+
+console.log(bar());        // => [bar] hello 
+foo('changed');
+console.log(bar())         // => [bar] changed
+
+var baz = bar.map(function (value){
+	return '[baz] ' + value;
+});
+var faz = baz.map(function (value){
+  return '[faz] ' + value;
+});
+var combined = stream.combine(function (foo, faz) {
+	return foo + ' ' + faz;
+}, foo, faz)
+
+console.log(baz());      // => [baz] [bar] changed
+console.log(faz());      // => [faz] [baz] [bar] changed
+console.log(combined()); // => changed [faz] [baz] [bar] changed
+```
+
 
 
 ## lifecycles
@@ -194,7 +296,7 @@ componentWillUnmount:      function(node)
 - trust()
 
 
-### animate
+### dio.animate
 
 
 ```javascript
@@ -249,46 +351,6 @@ i.e
 ```javascript
 h('div', trust('<script>alert('Hello World')</script>'))
 ```
-
-### dio.stream
-
-```javascript
-var a = dio.stream('value')
-console.log(a()) // => value
-a('new value')
-a() // => new value
-JSON.stringify(a) // => new value
-```
-usefull examples
-
-```javascript
-var a = dio.stream(1234, String)
-a() // => '1234'
-
-// note that this returns a string instead of a number
-// because we specified a processor that returns a processed 
-// stored value, the above is equivalent to
-
-String(a())
-
-// maps, creates a link to a stream, value
-// being the current value of the stream we are mapping onto
-var b = a.map(function (value) {
-		return value + 'mapper'
-	})
-	
-b() // => '1234 mapper'
-a('changed') // => changed
-b() // => 'changed mapper'
-
-// a map on two streams
-var c = dio.stream.combine(function(a, b){
-	return a() + '' + b() + ' combiner '
-}, a, b)
-
-c() //=> 'changed changed mapper combiner' 
-```
-
 
 ### toHTML
 

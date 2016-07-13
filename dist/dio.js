@@ -2334,7 +2334,7 @@
 				});
 			}
 
-			dispatch({type: '@@dio/INIT'});
+			dispatch({type: '@@dio'});
 
 			return {
 				getState: getState, 
@@ -2399,70 +2399,118 @@
 		}
 	}
 
-
+	
 	/**
-	 * props/getter,setter utility
-	 * @param {Any} store - value
+	 * streams utility
+	 * @return {Stream}
 	 */
-	function stream (store, processor, internal) {
-		/**
-		 * create the getter/setter
-		 * @return {Any}
-		 */
-		function prop () {
-			var
-			args = arguments;
-
-			if (args[__length]) {
-				store = args[0];
-				internal ? internal = __undefined : '';
-			}
-
-			if (!internal) {
-				// the processor processors our store before we return it
-				// or returns a processored store
-				// i.e var a = steam(true, String)
-				// a() => 'true' {String}
-				return !processor ? store : processor(store);
-			}
-			// below map creates a prop that
-			// we want to run whenever we try to retrieve it
-			else {
-				return store();
-			}
-		}
-
-		/**
-		 * map another value to this values store
-		 * @param  {Function} reducer
-		 * @return {Stream}  
-		 */
-		prop.map = function (reducer) {
-			return stream(function () {
-				return reducer(store);
-			}, __undefined, __true);
-		}
-
-		/**
-		 * define .toJSON to allow JSON.stringify(stream) to return the stored value
-		 * @return {Any}
-		 */
-		prop.toJSON = function () {
-			return store;
-		}
-
-		return prop;
-	}
-	stream.combine = function (reducer) {
+	function stream () {
 		var
-		// convert arguments an array
-		args = toArray(arguments);
-		// remove reducer
-		args.shift();
+		signature = '@@dio',
+		mapsig    = '/mapper',
+		propsig   = '/prop'
 
-		return stream(function () {
-			return reducer.apply(__undefined, args);
-		}, __undefined, __true);
+
+		/**
+		 * props/getter,setter utility
+		 * @param {Any} store - value
+		 * @param {Function} processor
+		 */
+		function stream (store, processor) {
+			/**
+			 * create the getter/setter
+			 * @return {Any}
+			 */
+			function prop () {
+				var
+				args = arguments;
+
+				// a value is passed
+				// update the stream store
+				if (args[__length]) {
+					store = args[0];
+				}
+		         
+		        // is this stream created internally?
+		        if (store && store.id === signature + mapsig) {
+		            return store();
+		        }
+		        else {
+					return !processor ? store : processor(store);
+				}
+			}
+		  
+
+			/**
+			 * map another value to this values store
+			 * @param  {Function} reducer
+			 * @return {Stream}  
+			 */
+			function map (reducer) {
+				function mapper () {
+					// store is a mapper stream
+		            if (store && store.id === signature + mapsig) {
+		          		return reducer(store());
+		            }
+		            // normal stream
+		            else {
+		          		return reducer(store);
+		            }
+		        }
+		        // add signature that says this stream was created internally
+		        mapper.id = signature + mapsig;
+
+				return stream(mapper);
+			}
+
+
+			/**
+			 * define .toJSON to allow 
+		     * JSON.stringify(stream) to return the stored value
+			 * @return {Any}
+			 */
+			function toJSON () {
+				return store;
+			}
+
+			prop.map    = map;
+			prop.toJSON = toJSON;
+			prop.id     = signature + propsig
+
+			return prop;
+		}
+
+
+		/**
+		 * combine two streams
+		 * @param  {Function} reducer
+		 * @return {Stream}
+		 */
+		stream.combine = function (reducer) {
+			var
+			// convert arguments an array
+			args = Array.prototype.slice.call(arguments);
+			// remove reducer
+			args.shift();
+
+			function mapper () {
+				// get combined streams stores
+				args.forEach(function (value, index) {
+					if (is(value, __function), value.id === signature + propsig) {
+						args[index] = value();
+					}
+				});
+
+				// give access to the reducer
+				return reducer.apply(__undefined, args);
+			}
+			// add signature that says this stream was created internally
+			mapper.id = signature + mapsig;
+
+			return stream(mapper)
+		};
+
+		return stream;
 	}
 
 
@@ -2482,7 +2530,7 @@
 		router: router,
 		store: store,
 		trust: trust,
-		stream: stream,
+		stream: stream(),
 		bind: bind,
 		DOM: DOM,
 		toHTML: vdomToHTML
