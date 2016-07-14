@@ -68,15 +68,14 @@
 		  					)
 		  		}
 
-		  		if (props) {
-		  			return render(props)
+		  		return {
+	  				render: render
 		  		}
-		  		// or can just return an object with the render method
-		  		// and not worry to collect the props on the components function TodoApp (props) {
-		  		// 
+
+		  		// or can just return a hyperscript object
 		  		// i.e
-		  		// return {
-		  		// 		render: render
+		  		// if (props) {
+		  		// 	return render(props)
 		  		// }
 			}
 
