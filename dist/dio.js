@@ -2442,14 +2442,12 @@
 			 */
 			function map (reducer) {
 				function mapper () {
-					// store is a mapper stream
+					// store is a mapper stream, extract it's value
 		            if (store && store.id === signature + mapsig) {
-		          		return reducer(store());
+		            	store = store();
 		            }
-		            // normal stream
-		            else {
-		          		return reducer(store);
-		            }
+
+		            return reducer(store);
 		        }
 		        // add signature that says this stream was created internally
 		        mapper.id = signature + mapsig;
@@ -2490,11 +2488,10 @@
 			function mapper () {
 				// get combined streams stores
 				args.forEach(function (value, index) {
-					if (is(value, __function), value.id === signature + propsig) {
+					if (is(value, __function) && value.id === signature + propsig) {
 						args[index] = value();
 					}
 				});
-
 				// give access to the reducer
 				return reducer.apply(__undefined, args);
 			}
