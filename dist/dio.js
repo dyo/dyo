@@ -576,11 +576,13 @@
 		// remove element
 		function removeChild (parent, nextNode, oldNode) {
 			if (nextNode) {
-				// run and check if componentWillUnmount returns somethings
+				// execute componentWillUnmount lifecycle, store it's return into durtion
+				// we can use this to delay unmounting a node from the dom
+				// if a time{Number} in milliseconds is returned.
 				var 
 				duration = lifecycle(oldNode, __componentWillUnmount, nextNode);
 
-				// if what it returns is not a number default to 0
+				// either duration is a number or it's default 0
 				if (!is(duration, __number)) {
 					duration = 0;
 				}
@@ -588,7 +590,7 @@
 				debounce(function () {
 					// since we debounce this action
 					// we check again to see if nextNode is still actually in the dom
-					// when this is run
+					// when this is executed
 					if (nextNode) {
 						parent.removeChild(nextNode);
 					}
