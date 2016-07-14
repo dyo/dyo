@@ -2446,16 +2446,6 @@
 				}
 		         
 		        return getStore();
-		  //       // is this stream created internally?
-		  //       if (store && store.id === signature + mapperSignature) {
-		  //           return store();
-		  //       }
-		  //       // no, check if the there is a processor
-		  //       // if so run that through the store and return the value
-		  //       // otherwise just return the store
-		  //       else {
-				// 	return !processor ? store : processor(store);
-				// }
 			}
 
 
