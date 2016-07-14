@@ -13,34 +13,72 @@
 		<div class="app"></div>
 	
 		<script>
-			// object assign poly
-			if (typeof Object.assign != 'function') {
-		  		Object.assign = function(target) {
-				    'use strict';
-				    if (target == null) {
-			      		throw new TypeError('Cannot convert undefined or null to object');
-				    }
+			// ------------------------- components ------------------------- //
 
-				    target = Object(target);
-				    for (var index = 1; index < arguments.length; index++) {
-			      		var source = arguments[index];
-			      		if (source != null) {
-			        		for (var key in source) {
-				          		if (Object.prototype.hasOwnProperty.call(source, key)) {
-				            		target[key] = source[key];
-				          		}
-			        		}
-			      		}
-				    }
-				    return target;
-		  		};
+
+			function TodoItem (props) {
+				return h('li', {
+					onclick: props.handleDelete, 
+					id: props.item.id, 
+					// style: 'cursor:pointer;', 
+					style: {cursor: 'pointer'},
+					key: props.item.id
+				}, props.item.value)
 			}
-		</script>
-		<script>
-			// ------------------------- initializers ------------------------- //
+			function TodoList (props) {
+		    	return h('ul', props.items.map(function (value) {
+		    					return TodoItem({item: value, handleDelete: props.handleDelete})
+		    				})
+    					)
+			}
 
+			function TodoApp (props) {
+				var 
+				text = dio.stream(''),
+				// will always contain the value of input.value oninput
+				input = dio.stream('')
+				// reference to the input dom element
 
-			var render  = dio.render(TodoApp, '.app')
+		  		function handleSubmit (e) {
+		    		e.preventDefault()
+		    		var 
+		    		value = text()
+		    		el    = input()
+
+		    		if (value != '') {
+		    			store.dispatch({type:'ADD', id: Date.now(), value: value})
+		    			el.value = text('')
+		    		}
+		  		}
+		  		function handleDelete () {
+		  			var node = this
+		  			dio.animate.transition('slideUp')(node, function(){
+		  				store.dispatch({type: 'REMOVE', id: node.id})
+		  			})
+		  		}
+		  		function render (props) {
+		  			return h('div',
+		  						h('h3', 'TODO'),
+		  						h('form', {onsubmit: handleSubmit},
+		  							h('input', {ref: input, oninput: dio.bind('value', text)}),
+		  							h('button', 'Add #' + (props.items.length+1))
+  								),
+  								TodoList({items: props.items, handleDelete: handleDelete}),
+  								h('svg', {test: 'dsds'}, h('text', 'text'))
+		  					)
+		  		}
+
+		  		if (props) {
+		  			return render(props)
+		  		}
+		  		// or can just return an object with the render method
+		  		// and not worry to collect the props on the components function TodoApp (props) {
+		  		// 
+		  		// i.e
+		  		// return {
+		  		// 		render: render
+		  		// }
+			}
 
 
 			// ------------------------- store ------------------------- //
@@ -112,75 +150,84 @@
 				}
 			})
 
+			// ------------------------- initializers ------------------------- //
+
+
+			var render  = dio.render(TodoApp, '.app')
 			store.connect(render)
 
-
-			// ------------------------- components ------------------------- //
-
-
-			function TodoItem (props) {
-				return h('li', {
-					onclick: props.handleDelete, 
-					id: props.item.id, 
-					// style: 'cursor:pointer;', 
-					style: {cursor: 'pointer'},
-					key: props.item.id
-				}, props.item.value)
-			}
-			function TodoList (props) {
-		    	return h('ul', props.items.map(function (value) {
-		    					return TodoItem({item: value, handleDelete: props.handleDelete})
-		    				})
-    					)
-			}
-
-			function TodoApp (props) {
+			
+			var xhrStream = dio.stream(void 0, void 0, function (value, listener, error) {
 				var 
-				text = dio.stream(''),
-				// will always contain the value of input.value oninput
-				input = dio.stream('')
-				// reference to the input dom element
+				xhr = value ? value.currentTarget : void 0;
+				xhr = xhr && xhr.constructor === XMLHttpRequest ? xhr : void 0;
 
-		  		function handleSubmit (e) {
-		    		e.preventDefault()
-		    		var 
-		    		value = text()
-		    		el    = input()
+				// xhr request
+				if (xhr) {
+					// success
+					if (xhr.status >= 200 && xhr.status < 400) {
+						return listener(xhr.response);
+					}
+					// failed
+					else if (error && error.constructor === Function) {
+						error(xhr.statusText, xhr.status);
+					}	
+				}
+				// not xhr
+				else {
+					return listener(value)
+				}
+			});
 
-		    		if (value != '') {
-		    			store.dispatch({type:'ADD', id: Date.now(), value: value})
-		    			el.value = text('')
-		    		}
-		  		}
-		  		function handleDelete () {
-		  			var node = this
-		  			dio.animate.transition('slideUp')(node, function(){
-		  				store.dispatch({type: 'REMOVE', id: node.id})
-		  			})
-		  		}
-		  		function render (props) {
-		  			return h('div',
-		  						h('h3', 'TODO'),
-		  						h('form', {onsubmit: handleSubmit},
-		  							h('input', {ref: input, oninput: dio.bind('value', text)}),
-		  							h('button', 'Add #' + (props.items.length+1))
-  								),
-  								TodoList({items: props.items, handleDelete: handleDelete}),
-  								h('svg', {test: 'dsds'}, h('text', 'text'))
-		  					)
-		  		}
 
-		  		if (props) {
-		  			return render(props)
-		  		}
-		  		// or can just return an object with the render method
-		  		// and not worry to collect the props on the components function TodoApp (props) {
-		  		// 
-		  		// i.e
-		  		// return {
-		  		// 		render: render
-		  		// }
+			var foo = dio.stream();
+
+			xhrStream
+				.then(foo)
+				.then(function(value){
+					return 1;
+				})
+				.then(function(value){
+					console.log(xhrStream())
+					return value + 10
+				})
+				.then(function(value){
+					console.log(value)
+					throw '...sdsd'
+				})
+				.catch(function(value){
+					console.log(value)
+				})
+
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', '?sd');
+
+			xhr.onload = function () {
+				// pass the xhr object to request
+				xhrStream(this)
 			}
+			xhr.onerror = function (e) {
+				// the request object is still in memory address?
+				if (xhrStream) {
+					var 
+					self = this;
+
+					// the request is still chainable?
+					if (xhrStream.then) {
+						// when we update xhrStream this will run and throw an error
+						// containing the statusText which we can catch within 
+						// the .catch block
+						xhrStream.then(function () {
+							throw self.statusText
+						});
+					}
+
+					// update request object's value with xhr object 
+					xhrStream(self)
+				}
+			}
+			xhr.send()
+
 		</script>
 	</body>
 </html>

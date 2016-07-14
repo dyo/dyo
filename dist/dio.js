@@ -876,7 +876,10 @@
 					// swallow erros when trying to set readonly properties
 					try {
 						target[name] = value;
-					} catch (e) {}
+					} 
+					catch (e) {
+
+					}
 				}
 			}
 			// don't set xmlns namespace attributes we set only that when
@@ -2399,10 +2402,11 @@
 	 * @return {Stream}
 	 */
 	function stream () {
+		// signature references
 		var
-		signature = '@@dio',
-		mapsig    = '/MAPPER',
-		propsig   = '/PROP'
+		signature       = '@@dio',
+		mapperSignature = '/MAPPER',
+		propSignature   = '/PROP';
 
 
 		/**
@@ -2410,7 +2414,16 @@
 		 * @param {Any} store - value
 		 * @param {Function} processor
 		 */
-		function stream (store, processor) {
+		function stream (store, processor, handler) {
+			var
+			// listeners
+			listeners = [],
+			// data
+			data = store,
+			// error handler
+			errorHandler,
+			catched;
+
 			/**
 			 * create the getter/setter
 			 * @return {Any}
@@ -2422,13 +2435,41 @@
 				// a value is passed
 				// update the stream store
 				if (args[__length]) {
-					store = args[0];
+					data = store = args[0];
+					
+					// check if we have any listeners
+					if (listeners[__length]) {
+						each(listeners, function (listener) {
+							data = listener(data) || data
+						});
+					}
 				}
 		         
+		        return getStore();
+		  //       // is this stream created internally?
+		  //       if (store && store.id === signature + mapperSignature) {
+		  //           return store();
+		  //       }
+		  //       // no, check if the there is a processor
+		  //       // if so run that through the store and return the value
+		  //       // otherwise just return the store
+		  //       else {
+				// 	return !processor ? store : processor(store);
+				// }
+			}
+
+
+			/**
+			 * retrieve the store
+			 */
+			function getStore () {
 		        // is this stream created internally?
-		        if (store && store.id === signature + mapsig) {
+		        if (store && store.id === signature + mapperSignature) {
 		            return store();
 		        }
+		        // otherwise check if the there is a processor
+		        // if so run that through the store and return the value
+		        // otherwise just return the store
 		        else {
 					return !processor ? store : processor(store);
 				}
@@ -2442,15 +2483,11 @@
 			 */
 			function map (reducer) {
 				function mapper () {
-					// store is a mapper stream, extract it's value
-		            if (store && store.id === signature + mapsig) {
-		            	store = store();
-		            }
-
+					getStore();
 		            return reducer(store);
 		        }
 		        // add signature that says this stream was created internally
-		        mapper.id = signature + mapsig;
+		        mapper.id = signature + mapperSignature;
 
 				return stream(mapper);
 			}
@@ -2465,9 +2502,85 @@
 				return store;
 			}
 
-			prop.map    = map;
-			prop.toJSON = toJSON;
-			prop.id     = signature + propsig
+			/**
+			 * map to when the store changes
+			 * @param  {Function} listener
+			 * @param  {Boolean} end     
+			 * @return {Stream}         
+			 */
+			function then (listener, end) {
+				// make sure the callback is indeed a function
+				if (is(listener, __function)) {
+					// add a function that will call the listener 
+					// whenever the value of store changes
+					listeners.push(function (value) {
+						try {
+							// do we have a handler that will process the change, use that
+							if (handler) {
+								var
+								ret;
+
+								if (!catched) {
+									// store the returned value
+									ret = handler(value, listener, errorHandler);
+									// cleanup error (only run once)
+									catched = __true;
+								}
+								else {
+									ret = handler(value, listener)
+								}
+
+								// return value
+								return ret;
+							}
+							// else just call the listener passing the current value
+							else {
+								return listener(value);
+							}
+						}
+						// swallow error and send them to the .catch error handler
+						// if it exists
+						catch (e) {
+							if (is(errorHandler, __function)) {
+								errorHandler(e)
+							}
+						}
+					});
+				}
+
+				// the second argument is the error handler when set
+				if (is(end, __function)) {
+					errorHandler = end
+				}
+
+				// return the chain only if end is falsey
+				if (!end) {
+					return this;
+				}
+			}
+
+			/**
+			 * catch then errors, syntax sugar for .then(null, fn())
+			 * @param  {Function} listener 
+			 */
+			function error (listener) {
+				then(__undefined, listener)
+			}
+
+			/**
+			 * syntax sugar for .then(fn(), true) to end the chain
+			 * @return {Function} [description]
+			 */
+			function done (listener) {
+				then(listener, __true)
+			}
+
+			prop.map    = map,
+			prop.toJSON = toJSON,
+			prop.then   = then,
+			prop.done   = done,
+			prop.catch  = error,
+			prop.id     = signature + propSignature;
 
 			return prop;
 		}
@@ -2496,7 +2609,7 @@
 				return reducer.apply(__undefined, args);
 			}
 			// add signature that says this stream was created internally
-			mapper.id = signature + mapsig;
+			mapper.id = signature + mapperSignature;
 
 			return stream(mapper)
 		};
