@@ -33,6 +33,12 @@
 	// o[c] while it can't do the same for the former
 	var
 
+	// signatures
+	signatureBase               = '@@dio',
+	mapperSignature             = signatureBase + '/MAPPER',
+	propSignature               = signatureBase + '/PROP',
+	storeSignature              = signatureBase + '/INIT',
+
 	// objects
 	__namespace 				= {
 		math:  'http://www.w3.org/1998/Math/MathML',
@@ -1634,119 +1640,155 @@
 		 * @param {Function}
 		 */
 		function http (url, method, payload, enctype, callback) {
-			return new promise(function (resolve, reject) {
+			function getResponse (xhr) {			
 				var 
-				xhr      = new __XMLHttpRequest(),
-				location = __window.location;
+				response,
+				responseType,
+				responseText   = xhr.responseText,
+				responseHeader = xhr.getResponseHeader("content-type");
 
-				// create anchor element to extract usefull information
-				var 
-				a        = __document.createElement('a')	
-				a.href   = url;
+				// format response header
+				// to get the type of response
+				// that we can use to format the response body
+				// if needed i.e create dom/parse json
+				if (responseHeader.indexOf(';') !== -1) {
+					responseType = responseHeader.split(';');
+					responseType = responseType[0].split('/');
+				}
+				else {
+					responseType = responseHeader.split('/');
+				}
 
-				// check if is this a cross origin request check
+				// extract response type 'html/json/text'
+				responseType = responseType[1];
+
+				// json, parse json
+				if (responseType === 'json') {
+					response = JSON.parse(responseText);
+				}
+				// html, create dom
+				else if (responseType === 'html') {
+					response = (new DOMParser()).parseFromString(responseText, "text/html");
+				}
+				// text, as is
+				else {
+					response = responseText;
+				}
+
+				return response;
+			}
+
+			// create xhr stream
+			var
+			xhrStream = stream(__undefined, __undefined, function (value, listener, error) {
 				var
-				CORS = !(
-					a.hostname        === location.hostname &&
-					a.port            === location.port     &&
-					a.protocol        === location.protocol &&
-					location.protocol !== 'file:'
-				);
+				xhr;
 
-				// destroy created element
-				a = __null;
-				
-				// open request
-				xhr.open(method, url);
-				
-				// assign on load callback
-				xhr.onload = function () {
-					var 
-					response,
-					responseText = xhr.responseText,
-					statusText   = xhr.statusText;
-					
+				// value exists i.e not undefined
+				if (value) {
+					var
+					target = value.currentTarget;
+
+					// check if it's an event object
+					// if so check if currentTarget is an XMLHttpRequest object
+					if (is(target, __XMLHttpRequest)) {
+						xhr = target;
+					}
+					// check if it's a XMLHttpRequest object
+					else if (is(value, __XMLHttpRequest)) {
+						xhr = value;
+					}
+				}
+
+				// xhr request
+				if (xhr) {
 					// success
 					if (xhr.status >= 200 && xhr.status < 400) {
-						// get response header
-						var 
-						resHeader = xhr.getResponseHeader("content-type"),
-						resType;
-
-						// format response header
-						// to get the type of response
-						// that we can use to format the response body
-						// if needed i.e create dom/parse json
-						if (resHeader.indexOf(';') !== -1) {
-							resType = resHeader.split(';');
-							resType = resType[0].split('/');
-						}
-						else {
-							resType = resHeader.split('/');
-						}
-
-						// extract response type 'html/json/text'
-						resType = resType[1];
-
-						// json, parse json
-						if (resType === 'json') {
-							response = JSON.parse(responseText);
-						}
-						// html, create dom
-						else if (resType === 'html') {
-							response = (new DOMParser()).parseFromString(responseText, "text/html");
-						}
-						// text, as is
-						else {
-							response = responseText;
-						}
-
-						// use callbacks
-						if (callback) {
-							callback(response);
-						}
-						// otherwise resolve promise
-						else {
-							resolve(response);
-						}
+						return listener(getResponse(xhr));
 					}
 					// failed
-					else {
-						// use callbacks
-						if (callback) {
-							callback(statusText);
-						}
-						// otherwise resolve promise
-						else {
-							reject(statusText);
-						}
+					else if (is(error, __function)) {
+						error(xhr.statusText);
+					}	
+				}
+				// not xhr
+				else {
+					return listener(value);
+				}
+			}),
+
+			// create xhr object 
+			xhr      = new __XMLHttpRequest(),
+			// get window location to check fo CORS
+			location = __window.location,
+			// create anchor element and extract url information
+			a        = __document.createElement('a');		
+
+			a.href   = url;
+
+			// check if is this a cross origin request check
+			var
+			CORS = !(
+				a.hostname        === location.hostname &&
+				a.port            === location.port     &&
+				a.protocol        === location.protocol &&
+				location.protocol !== 'file:'
+			);
+
+			// destroy created element
+			a = __undefined;
+			
+			// open request
+			xhr.open(method, url);
+			
+			// on success update the xhrStream
+			xhr.onload = function () {
+				// pass the xhr object to request
+				xhrStream(this)
+			}
+			// on fail also update the xhrStream but also
+			// add a .then to the chain that
+			// throws an error with the statusText
+			xhr.onerror = function (e) {
+				// the request object is still in memory address?
+				if (xhrStream) {
+					var 
+					self = this;
+					// the request is still chainable?
+					if (xhrStream.then) {
+						// when we update xhrStream this will run and throw an error
+						// containing the statusText which we can catch within 
+						// the .catch block
+						xhrStream.then(function () {
+							throw self.statusText;
+						});
 					}
+					// update request object's value with xhr object 
+					xhrStream(self);
 				}
+			}
+			
+			// cross origin request
+			if (CORS) {
+				xhr.withCredentials = __true;
+			}
 
-				// assign on error callback
-				xhr.onerror = function () {
-					reject(xhr.statusText);
+			// set content type and payload
+			if (method === 'POST' || method === 'PUT') {
+				xhr.setRequestHeader('Content-type', enctype);
+
+				if (enctype.indexOf('x-www-form-urlencoded') > -1) {
+					payload = param(payload);
 				}
-				
-				// set for this is a cross origin request
-				if (CORS) {
-					xhr.withCredentials = __true;
+				else if (enctype.indexOf('json') > -1) {
+					payload = JSON.stringify(payload);
 				}
+			}
 
-				if (method === 'POST' || method === 'PUT') {
-					xhr.setRequestHeader('Content-type', enctype);
+			// send request
+			xhr.send(payload);
 
-					if (enctype.indexOf('x-www-form-urlencoded') > -1) {
-						payload = param(payload);
-					}
-					else if (enctype.indexOf('json') > -1) {
-						payload = JSON.stringify(payload);
-					}
-				}
-
-				// send request
-				xhr.send(payload);
-			})	
+			return xhrStream;
 		}
 
 		/**
@@ -1762,15 +1804,15 @@
 			var 
 			arr = [];
 
+			// loop through object and create a serialized representation
 			for (var key in obj) {
 			    var 
 			    __prefix = prefix ? prefix + '[' + key + ']' : key,
 			    value    = obj[key];
 
 			    // when the value is equal to an object 
-			    // that means that we have something like
-			    // data = {name:'John', addr: {...}}
-			    // so we re-run param on addr to serialize 'addr: {...}'
+			    // that means we have data = {name:'John', addr: {...}}
+			    // so we re-run param on addr to serialize 'addr: {...}' as well
 			    arr.push(typeof value == 'object' ? 
 			    	param(value, __prefix) :
 			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value));
@@ -1779,114 +1821,6 @@
 			return arr.join('&');
 		}
 
-		/**
-		 * promise interface
-		 * @param {Function} 
-		 * @return {Object} {then, done}
-		 */
-		function promise (fn) {
-	  		var
-	  		value,
-	  		state = 'pending',
-	  		deferred = __undefined;
-
-	  		function reject (reason) {
-	  		    state = 'rejected';
-	  		    value = reason;
-
-	  		    if (deferred) {
-  		      		handle(deferred);
-	  		    }
-  		  	}
-
-	  		function resolve (newValue) {
-	  			try {
-	  				if (newValue && is(newValue.then, __function)) {
-		  			    newValue.then(resolve, reject);
-		  			    return;
-				  	}
-				  	
-		    		value = newValue;
-		    		state = 'resolved';
-
-		    		if (deferred) {
-		      			handle(deferred);
-		    		}
-	  			} catch (e) {
-	  				reject(e);
-	  			}
-	  		}
-
-	  		function handle (handler) {
-	    		if (state === 'pending') {
-	      			deferred = handler;
-	      			return;
-	    		}
-
-	    		__setTimeout(function () {
-		    		var 
-		    		handlerCallback;
-
-	    		    if (state === 'resolved') {
-			      		handlerCallback = handler.onResolved;
-	    		    } 
-	    		    else {
-			      		handlerCallback = handler.onRejected;
-	    		    }
-
-	    		    if (!handlerCallback) {
-			      		if (state === 'resolved') {
-			        		handler.resolve(value);
-			      		} 
-			      		else {
-			        		handler.reject(value);
-			      		}
-
-			      		return
-	    		    }
-
-	    		    var 
-	    		    ret;
-
-		            try {
-		                ret = handlerCallback(value);
-		                handler.resolve(ret);
-		            } 
-		            catch (e) {
-		                handler.reject(e);
-		            }
-	    		}, 0);
-	  		}
-
-	  		this.then = function (onResolved, onRejected) {
-	    		return new promise (function(resolve, reject) {
-		      		handle({
-		        		onResolved: onResolved,
-		        		onRejected: onRejected,
-		        		resolve: resolve,
-		        		reject: reject
-		      		});
-	    		});
-	  		}
-
-	  		this.catch = function (onRejected) {
-	  			return this.then(__undefined, onRejected);
-	  		}
-
-	  		this.done = function (onFulfilled, onRejected) {
-	  			var 
-	  			args = arguments,
-  		  		self = args[__length] ? this.then.apply(this, args) : this;
-
-  		  		self.then(__undefined, function (err) {
-  		  			debounce(function () {
-  		  				throw err
-  		  			});
-  		  		});
-	  		}
-
-	  		fn(resolve, reject);
-		}
 
 		/**
 		 * request interface
@@ -1906,8 +1840,8 @@
 					var
 					placeholder = callback;
 
-					callback = enctype;
-					enctype = placeholder;
+					callback    = enctype;
+					enctype     = placeholder;
 				}
 
 				// enctype syntactial sugar
@@ -1924,7 +1858,7 @@
 				}
 				else {
 					// defaults
-					enctype = 'application/x-www-form-urlencoded';
+					enctype     = 'application/x-www-form-urlencoded';
 				}
 
 				// return ajax promise
@@ -1933,9 +1867,9 @@
 		}
 
 		return {
-			get: request('GET'),
-			post: request('POST'),
-			put: request('PUT'),
+			get:    request('GET'),
+			post:   request('POST'),
+			put:    request('PUT'),
 			delete: request('DELETE')
 		};
 	}
@@ -2083,6 +2017,7 @@
 		this.state = {};
 	}
 
+
 	// set internal props & state
 	Comp[__prototype] = {
 		// i.e this.setState({})
@@ -2107,6 +2042,7 @@
 			}
 		}
 	}
+
 
 	// create component
 	function comp (arg) {
@@ -2212,6 +2148,7 @@
 		}
 	}
 
+
 	// set component props
 	function setProps (self, obj) {
 		// assign props to {} if it's undefined
@@ -2224,6 +2161,7 @@
 			});
 		}
 	}
+
 
 	// set component state
 	function setState (self, obj) {
@@ -2331,7 +2269,7 @@
 				});
 			}
 
-			dispatch({type: '@@dio/INIT'});
+			dispatch({type: storeSignature});
 
 			return {
 				getState: getState, 
@@ -2398,221 +2336,213 @@
 
 	
 	/**
-	 * streams utility
+	 * streams utility - getter/setter
+	 * @param {Any} store - value
+	 * @param {Function} processor
 	 * @return {Stream}
 	 */
-	function stream () {
-		// signature references
+	function stream (store, processor, handler) {
 		var
-		signature       = '@@dio',
-		mapperSignature = '/MAPPER',
-		propSignature   = '/PROP';
-
+		// .then(fn()=>{}) listeners
+		listeners = [],
+		// stream of data to pass across the .then() chain
+		data = store,
+		// address for error handler
+		errorHandler,
+		// status of weather an error has been handled already
+		errorHandled;
 
 		/**
-		 * props/getter,setter utility
-		 * @param {Any} store - value
-		 * @param {Function} processor
+		 * create the getter/setter
+		 * @return {Any}
 		 */
-		function stream (store, processor, handler) {
+		function prop () {
 			var
-			// .then(fn()=>{}) listeners
-			listeners = [],
-			// stream of data to pass across the .then() chain
-			data = store,
-			// address for error handler
-			errorHandler,
-			// status of weather an error has been handled already
-			errorHandled;
+			args = arguments;
 
-			/**
-			 * create the getter/setter
-			 * @return {Any}
-			 */
-			function prop () {
-				var
-				args = arguments;
-
-				// a value is passed
-				// update the stream store
-				if (args[__length]) {
-					data = store = args[0];
-					
-					// check if we have any listeners
-					// then execute them in the order they where specified
-					// passing the returned value of the last one to the next
-					if (listeners[__length]) {
-						each(listeners, function (listener) {
-							data = listener(data) || data
-						});
-					}
-				}
-		         
-		        return getStore();
-			}
-
-
-			/**
-			 * retrieve the store
-			 */
-			function getStore () {
-		        // is this stream created internally?
-		        if (store && store.id === signature + mapperSignature) {
-		            return store();
-		        }
-		        // otherwise check if the there is a processor
-		        // if so run that through the store and return the value
-		        // otherwise just return the store
-		        else {
-					return !processor ? store : processor(store);
-				}
-			}
-		  
-
-			/**
-			 * map another value to this values store
-			 * @param  {Function} reducer
-			 * @return {Stream}  
-			 */
-			function map (reducer) {
-				function mapper () {
-					getStore();
-		            return reducer(store);
-		        }
-		        // add signature that says this stream was created internally
-		        mapper.id = signature + mapperSignature;
-
-				return stream(mapper);
-			}
-
-
-			/**
-			 * map to when the store changes
-			 * @param  {Function} listener
-			 * @param  {Function|Boolean} end     
-			 * @return {Stream}         
-			 */
-			function then (listener, error) {
-				// make sure the callback is indeed a function
-				if (is(listener, __function)) {
-					// add a function that will call the listener 
-					// whenever the value of store changes
-					listeners.push(function (value) {
-						try {
-							// do we have a handler that will process the change, use that
-							if (handler) {
-								var
-								ret;
-
-								if (!errorHandled) {
-									// store the returned value
-									ret = handler(value, listener, errorHandler);
-									// cleanup error (only run once)
-									errorHandled = __true;
-								}
-								else {
-									ret = handler(value, listener)
-								}
-
-								// return value
-								return ret;
-							}
-							// else just call the listener passing the current value
-							else {
-								return listener(value);
-							}
-						}
-						// swallow error and send them to the .catch error handler
-						// if it exists
-						catch (e) {
-							if (is(errorHandler, __function)) {
-								errorHandler(e)
-							}
-						}
+			// a value is passed
+			// update the stream store
+			if (args[__length]) {
+				data = store = args[0];
+				
+				// check if we have any listeners
+				// then execute them in the order they where specified
+				// passing the returned value of the last one to the next
+				if (listeners[__length]) {
+					each(listeners, function (listener) {
+						data = listener(data) || data
 					});
 				}
-
-				// the second argument is the error handler when set
-				if (is(error, __function)) {
-					errorHandler = error
-				}
-
-				// return the chain only if error/ 
-				// a catch block is falsey/not set
-				if (!error) {
-					return this;
-				}
 			}
-
-			/**
-			 * catch then errors, syntax sugar for .then(null, fn()=>{})
-			 * @param  {Function} listener 
-			 */
-			function error (listener) {
-				then(__undefined, listener)
-			}
-
-
-			/**
-			 * syntax sugar for .then(fn()=>{}, true) to error the chain
-			 * @return {Function} [description]
-			 */
-			function done (listener) {
-				then(listener, __true)
-			}
-
-
-			/**
-			 * define .toJSON to allow 
-		     * JSON.stringify(stream) to return the stored value
-			 * @return {Any}
-			 */
-			function toJSON () {
-				return getStore();
-			}
-
-				
-			prop.map    = map,
-			prop.toJSON = toJSON,
-			prop.then   = then,
-			prop.done   = done,
-			prop.catch  = error,
-			prop.id     = signature + propSignature;
-
-			return prop;
+	         
+	        return getStore();
 		}
 
 
 		/**
-		 * combine two streams
-		 * @param  {Function} reducer
-		 * @return {Stream}
+		 * retrieve the store
 		 */
-		stream.combine = function (reducer) {
-			var
-			// convert arguments an array
-			args = Array.prototype.slice.call(arguments);
-			// remove reducer
-			args.shift();
-
-			function mapper () {
-				// get combined streams stores
-				args.forEach(function (value, index) {
-					if (is(value, __function) && value.id === signature + propsig) {
-						args[index] = value();
-					}
-				});
-				// give access to the reducer
-				return reducer.apply(__undefined, args);
+		function getStore () {
+	        // is this stream created internally?
+	        if (store && store.id === mapperSignature) {
+	            return store();
+	        }
+	        // otherwise check if the there is a processor
+	        // if so run that through the store and return the value
+	        // otherwise just return the store
+	        else {
+				return !processor ? store : processor(store);
 			}
-			// add signature that says this stream was created internally
-			mapper.id = signature + mapperSignature;
+		}
+	  
 
-			return stream(mapper)
-		};
+		/**
+		 * map another value to this values store
+		 * @param  {Function} reducer
+		 * @return {Stream}  
+		 */
+		function map (reducer) {
+			function mapper () {
+				getStore();
+	            return reducer(store);
+	        }
+	        // add signature that says this stream was created internally
+	        mapper.id = mapperSignature;
 
-		return stream;
+			return stream(mapper);
+		}
+
+
+		/**
+		 * map to when the store changes
+		 * @param  {Function} listener
+		 * @param  {Function|Boolean} end     
+		 * @return {Stream}         
+		 */
+		function then (listener, error) {
+			// make sure the callback is indeed a function
+			if (is(listener, __function)) {
+				// add a function that will call the listener 
+				// whenever the value of store changes
+				listeners.push(function (value) {
+					var
+					ret;
+
+					try {
+						// do we have a handler that will process the change, use that
+						if (handler) {
+							if (!errorHandled) {
+								// store the returned value
+								ret = handler(value, listener, errorHandler);
+								// cleanup error (only run once)
+								errorHandled = __true;
+							}
+							else {
+								ret = handler(value, listener);
+							}
+						}
+						// else just call the listener passing the current value
+						else {
+							var 
+							ret = listener(value);
+						}
+					}
+					// swallow error and send them to the .catch error handler
+					// if it exists
+					catch (e) {
+						if (is(errorHandler, __function)) {
+							errorHandler(e);
+						}
+					}
+
+					// end of chain, clear listeners
+					if (error) {
+						listeners = data = errorHandler = __undefined;
+					}
+
+					return ret;
+				});
+			}
+
+			// the second argument is the error handler when set
+			if (is(error, __function)) {
+				errorHandler = error;
+			}
+
+			// return the chain only if error/ 
+			// a catch block is falsey/not set
+			if (!error) {
+				return this;
+			}
+		}
+
+
+		/**
+		 * catch then errors, syntax sugar for .then(null, fn()=>{})
+		 * @param  {Function} listener 
+		 */
+		function error (listener) {
+			then(__undefined, listener);
+		}
+
+
+		/**
+		 * syntax sugar for .then(fn()=>{}, true) to error the chain
+		 * @return {Function} [description]
+		 */
+		function done (listener, error) {
+			error = error || __true;
+			then(listener, error);
+		}
+
+
+		/**
+		 * define .toJSON to allow 
+	     * JSON.stringify(stream) to return the stored value
+		 * @return {Any}
+		 */
+		function toJSON () {
+			return getStore();
+		}
+
+
+		prop.map    = map,
+		prop.toJSON = toJSON,
+		prop.then   = then,
+		prop.done   = done,
+		prop.catch  = error,
+		prop.id     = propSignature;
+
+		return prop;
 	}
+
+	/**
+	 * combine two streams
+	 * @param  {Function} reducer
+	 * @return {Stream}
+	 */
+	stream.combine = function (reducer) {
+		var
+		// convert arguments an array
+		args = Array.prototype.slice.call(arguments);
+		// remove reducer
+		args.shift();
+
+		function mapper () {
+			// get combined streams stores
+			args.forEach(function (value, index) {
+				if (is(value, __function) && value.id === propSignature) {
+					args[index] = value();
+				}
+			});
+			// call and pass streams to the reducer
+			return reducer.apply(__undefined, args);
+		}
+		// add signature that says this stream was created internally
+		mapper.id = mapperSignature;
+
+		return stream(mapper);
+	};
 
 
 	/* --------------------------------------------------------------
@@ -2622,8 +2552,7 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.h   = element();
-
+	exports.h = element();
 	exports.dio = {
 		animate: animate(),
 		request: request(),
@@ -2631,7 +2560,7 @@
 		router: router,
 		store: store,
 		trust: trust,
-		stream: stream(),
+		stream: stream,
 		bind: bind,
 		DOM: DOM,
 		toHTML: vdomToHTML

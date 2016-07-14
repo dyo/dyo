@@ -169,9 +169,10 @@ store.connect(render)
 create, combine and map streams.
 
 ```javascript
-create:   dio.stream(value)
-map:      streamA.map((streamA)=>{})
-combine:  dio.stream.combine((steamA, streamB)=>{}, streamA, streamB)
+create:   A = dio.stream(value)
+map:      A.map((a)=>{})
+combine:  dio.stream.combine((A, B)=>{}, A, B)
+then:     A.then((a)=>{})
 ```
 
 create a stream
@@ -241,15 +242,16 @@ c() //=> '5000 50001000 combiner'
 other advanced examples
 
 ```javascript
+// .map
 var stream = dio.stream
 var foo = stream('hello ');
 var bar = foo.map(function(value){
 	return '[bar] ' + value;
 });
 
-console.log(bar());        // => [bar] hello 
+bar();      // => [bar] hello 
 foo('changed');
-console.log(bar())         // => [bar] changed
+bar();      // => [bar] changed
 
 var baz = bar.map(function (value){
 	return '[baz] ' + value;
@@ -257,13 +259,24 @@ var baz = bar.map(function (value){
 var faz = baz.map(function (value){
   return '[faz] ' + value;
 });
+
+// .combine
 var combined = stream.combine(function (foo, faz) {
 	return foo + ' ' + faz;
 }, foo, faz)
 
-console.log(baz());      // => [baz] [bar] changed
-console.log(faz());      // => [faz] [baz] [bar] changed
-console.log(combined()); // => changed [faz] [baz] [bar] changed
+baz();      // => [baz] [bar] changed
+faz();      // => [faz] [baz] [bar] changed
+combined(); // => changed [faz] [baz] [bar] changed
+
+// .then
+var foo = dio.stream('initial value')
+foo.then(function(value){
+  console.log(value)
+})
+
+foo('new value') // => 'new value'
+
 ```
 
 
