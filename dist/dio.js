@@ -2416,13 +2416,14 @@
 		 */
 		function stream (store, processor, handler) {
 			var
-			// listeners
+			// .then(fn()=>{}) listeners
 			listeners = [],
-			// data
+			// stream of data to pass across the .then() chain
 			data = store,
-			// error handler
+			// address for error handler
 			errorHandler,
-			catched;
+			// status of weather an error has been handled already
+			errorHandled;
 
 			/**
 			 * create the getter/setter
@@ -2438,6 +2439,8 @@
 					data = store = args[0];
 					
 					// check if we have any listeners
+					// then execute them in the order they where specified
+					// passing the returned value of the last one to the next
 					if (listeners[__length]) {
 						each(listeners, function (listener) {
 							data = listener(data) || data
@@ -2484,21 +2487,12 @@
 
 
 			/**
-			 * define .toJSON to allow 
-		     * JSON.stringify(stream) to return the stored value
-			 * @return {Any}
-			 */
-			function toJSON () {
-				return store;
-			}
-
-			/**
 			 * map to when the store changes
 			 * @param  {Function} listener
-			 * @param  {Boolean} end     
+			 * @param  {Function|Boolean} end     
 			 * @return {Stream}         
 			 */
-			function then (listener, end) {
+			function then (listener, error) {
 				// make sure the callback is indeed a function
 				if (is(listener, __function)) {
 					// add a function that will call the listener 
@@ -2510,11 +2504,11 @@
 								var
 								ret;
 
-								if (!catched) {
+								if (!errorHandled) {
 									// store the returned value
 									ret = handler(value, listener, errorHandler);
 									// cleanup error (only run once)
-									catched = __true;
+									errorHandled = __true;
 								}
 								else {
 									ret = handler(value, listener)
@@ -2539,32 +2533,45 @@
 				}
 
 				// the second argument is the error handler when set
-				if (is(end, __function)) {
-					errorHandler = end
+				if (is(error, __function)) {
+					errorHandler = error
 				}
 
-				// return the chain only if end is falsey
-				if (!end) {
+				// return the chain only if error/ 
+				// a catch block is falsey/not set
+				if (!error) {
 					return this;
 				}
 			}
 
 			/**
-			 * catch then errors, syntax sugar for .then(null, fn())
+			 * catch then errors, syntax sugar for .then(null, fn()=>{})
 			 * @param  {Function} listener 
 			 */
 			function error (listener) {
 				then(__undefined, listener)
 			}
 
+
 			/**
-			 * syntax sugar for .then(fn(), true) to end the chain
+			 * syntax sugar for .then(fn()=>{}, true) to error the chain
 			 * @return {Function} [description]
 			 */
 			function done (listener) {
 				then(listener, __true)
 			}
 
+
+			/**
+			 * define .toJSON to allow 
+		     * JSON.stringify(stream) to return the stored value
+			 * @return {Any}
+			 */
+			function toJSON () {
+				return getStore();
+			}
+
+				
 			prop.map    = map,
 			prop.toJSON = toJSON,
 			prop.then   = then,

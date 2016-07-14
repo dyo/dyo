@@ -156,11 +156,27 @@
 			var render  = dio.render(TodoApp, '.app')
 			store.connect(render)
 
-			
+
+			// ------------------------- streams playground ------------------------- //
+
+
+			// lets try to create a xhr.then()....catch() based object
 			var xhrStream = dio.stream(void 0, void 0, function (value, listener, error) {
-				var 
-				xhr = value ? value.currentTarget : void 0;
-				xhr = xhr && xhr.constructor === XMLHttpRequest ? xhr : void 0;
+				var
+				xhr;
+
+				// value exists i.e not undefined
+				if (value) {
+					// check if it's an event object
+					// if so check if currentTarget is an XMLHttpRequest object
+					if (value.currentTarget && value.currentTarget.constructor === XMLHttpRequest) {
+						xhr = value.currentTarget;
+					}
+					// check if it's a XMLHttpRequest object
+					else if (value.constructor === XMLHttpRequest) {
+						xhr = value;
+					}
+				}
 
 				// xhr request
 				if (xhr) {
@@ -175,43 +191,47 @@
 				}
 				// not xhr
 				else {
-					return listener(value)
+					return listener(value);
 				}
 			});
-
 
 			var foo = dio.stream();
 
 			xhrStream
-				.then(foo)
+				.then(foo) // foo with now contain the response of the XMLHttpRequest
 				.then(function(value){
 					return 1;
 				})
 				.then(function(value){
-					console.log(xhrStream())
+					console.log(xhrStream()) // XMLHttpRequest object
 					return value + 10
 				})
 				.then(function(value){
-					console.log(value)
-					throw '...sdsd'
+					// console.log(value)
+					// throw '...sdsd'
 				})
 				.catch(function(value){
-					console.log(value)
-				})
+					// console.log(value)
+				});
 
-			var xhr = new XMLHttpRequest();
+			// create xhr object
+			var 
+			xhr = new XMLHttpRequest();
 			xhr.open('GET', '?sd');
 
+			// on success update the xhrStream
 			xhr.onload = function () {
 				// pass the xhr object to request
 				xhrStream(this)
 			}
+			// on fail also update the xhrStream but also
+			// add a .then to the chain that
+			// throws an error with the statusText
 			xhr.onerror = function (e) {
 				// the request object is still in memory address?
 				if (xhrStream) {
 					var 
 					self = this;
-
 					// the request is still chainable?
 					if (xhrStream.then) {
 						// when we update xhrStream this will run and throw an error
@@ -221,11 +241,12 @@
 							throw self.statusText
 						});
 					}
-
 					// update request object's value with xhr object 
 					xhrStream(self)
 				}
 			}
+
+			// send the request
 			xhr.send()
 
 		</script>
