@@ -50,13 +50,13 @@ render(...props?, children?, forceUpdate?)
 --
 
 
-## dio.render
+## dio.createRender
 
 create a render function that can be called anytime you need to render to the dom.
 
 ```javascript
-var Sidebar = dio.render(User, '.side-bar')
-var Header = dio.render(Header, '.header')
+var Sidebar = dio.createRender(User, '.side-bar')
+var Header = dio.createRender(Header, '.header')
 
 // where User & Header are either functions that return 
 // an object with a render method or an object with a render method
@@ -111,8 +111,8 @@ input({value: 'hello'})
 create a router
 
 ```javascript
-var myrender = dio.render(Function, 'selector|element')
-var myrouter = dio.router({
+var myrender = dio.createRender(Function, 'selector|element')
+var myrouter = dio.createRouter({
 	root: '/examples',
 	nav: '/start',
 	routes: {
@@ -146,8 +146,8 @@ dio.request.get('/url/id').then(a).done(()=>console.log(a))
 ## dio.store
 
 ```javascript
-var render = dio.render(MyComponent, '.app')
-var store = dio.store(reducer => {})
+var render = dio.createRender(MyComponent, '.app')
+var store = dio.createStore(reducer => {})
 
 store.subscribe(() => { render(store.getState()) })
 store.dispatch({type: 'ADD'})
@@ -156,6 +156,9 @@ store.dispatch({type: 'ADD'})
 
 // or all that in one line
 store.connect(render)
+
+// get state
+store.getState()
 
 // will mount the component to the dom with the initial state
 // returned by .getState()
@@ -202,7 +205,7 @@ String(a())
 I could then pass this stream `a` to a promise i.e
 
 ```javascript
-fetch('...').then(a)
+dio.request('/url/').then(a)
 ```
 That will update the value of `a` when a response is returned, 
 assuming the response is a number, this value will now be the 
@@ -314,7 +317,6 @@ componentWillUnmount:      function(node)
 
 ```javascript
 dio.animate.flip(className, duration, transform, transformOrigin, easing)(Element)
-
 dio.animate.transition(className)(node, callback)
 ```
 

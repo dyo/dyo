@@ -863,7 +863,7 @@
 
 							// add/remove class
 							// target.classList[type](index)
-							classList[type](target, index);
+							classList(type, target, index);
 						});
 					}
 					// styles and other object type props
@@ -1072,7 +1072,7 @@
 				first = getBoundingClientRect(element);
 				// assign last state if there is an end class
 				if (className) {
-					classList.toggle(element, className);
+					classList('toggle', element, className);
 				}
 				// get last rect state, 
 				// if there is not end class
@@ -1099,8 +1099,8 @@
 				}
 
 				// reflect animation state on dom
-				classList.add(element, runningClass);
-				classList.add(body, runningClass);
+				classList('add', element, runningClass);
+				classList('add', body, runningClass);
 
 				// use native web animations api if present for better performance
 				if (webAnimations) {
@@ -1159,8 +1159,8 @@
 						style.willChange = __null;
 					}
 
-					classList.remove(element, runningClass);
-					classList.remove(body, runningClass);
+					classList('remove', element, runningClass);
+					classList('remove', body, runningClass);
 
 					if (callback) {
 						callback(element);
@@ -1183,7 +1183,7 @@
 			return function (element, callback) {
 				// add transition class
 				// this will start the transtion
-				classList.add(element, className);
+				classList('add', element, className);
 
 				var
 				// duration starts at 0
@@ -1257,9 +1257,6 @@
     		}
 		}
 
-		// classList helper
-		classList = classList();
-
 		return {
 			flip: flip,
 			transition: transition
@@ -1273,7 +1270,7 @@
 	 * @param  {String}  value
 	 * @return {Object} {add, remove, toggle, hasClass}
 	 */
-	function classList () {
+	function classList (type, element, value) {
 		function hasClass (element, value) {
 			// default to native Element.classList()
 		    if (element[__classList]) {
@@ -1336,12 +1333,15 @@
 		    }
 		}
 
-		return {
+		var 
+		methods = {
 			add: add,
 			remove: remove,
 			hasClass: hasClass,
 			toggle: toggle
 		};
+
+		return methods[type](element, value);
 	}
 
 
@@ -2336,9 +2336,9 @@
 		}
 	}
 
-	
+
 	/**
-	 * streams utility - getter/setter
+	 * streams utility getter/setter
 	 * @param {Any} store - value
 	 * @param {Function} processor
 	 * @return {Stream}
@@ -2554,17 +2554,20 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.h = element();
-	exports.dio = {
-		animate: animate(),
-		request: request(),
-		render: render,
-		router: router,
-		store: store,
-		trust: trust,
-		stream: stream,
-		bind: bind,
-		DOM: DOM,
-		toHTML: vdomToHTML
+	exports.h       = element(),
+	exports.dio     = {
+		animate:      animate(),
+		request:      request(),
+		stream:       stream,
+
+		trust:        trust,
+		bind:         bind,
+
+		createRender: render,
+		createRouter: router,
+		createStore:  store,
+
+		DOM:          DOM,
+		toHTML:       vdomToHTML
 	};
 }));

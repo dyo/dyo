@@ -11,7 +11,6 @@
 	</head>
 	<body>
 		<div class="app"></div>
-	
 		<script>
 			// ------------------------- components ------------------------- //
 
@@ -46,14 +45,14 @@
 		    		el    = input()
 
 		    		if (value != '') {
-		    			store.dispatch({type:'ADD', id: Date.now(), value: value})
+		    			TodoStore.dispatch({type:'ADD', id: Date.now(), value: value})
 		    			el.value = text('')
 		    		}
 		  		}
 		  		function handleDelete () {
 		  			var node = this
 		  			dio.animate.transition('slideUp')(node, function(){
-		  				store.dispatch({type: 'REMOVE', id: node.id})
+		  				TodoStore.dispatch({type: 'REMOVE', id: node.id})
 		  			})
 		  		}
 		  		function render (props) {
@@ -82,7 +81,8 @@
 
 			// ------------------------- store ------------------------- //
 
-			var store = dio.store(function TodoStore (state, action) {
+			
+			function TodoStoreReducer (state, action) {
 				state = state || {
 					items: [
 						{id: '1234', value: 'one', completed: false},
@@ -147,13 +147,17 @@
 					default:
 						return state
 				}
-			})
+			}
+
 
 			// ------------------------- initializers ------------------------- //
 
 
-			var render  = dio.render(TodoApp, '.app')
-			store.connect(render)
+			var 
+			TodoStore = dio.createStore(TodoStoreReducer),
+			Render    = dio.createRender(TodoApp, '.app');
+
+			TodoStore.connect(Render)
 		</script>
 	</body>
 </html>

@@ -14,7 +14,7 @@
 			function Home () {
 				return {
 					onClick: function () {
-						router.nav('/user/sultan')
+						Router.nav('/user/sultan')
 					},
 					render: function () {
 						return h('h1', {key: '1234', onClick: this.onClick}, dio.trust("Home Page &amp;"))
@@ -25,7 +25,7 @@
 			function User () {
 				return {
 					onClick: function () {
-						router.nav('/router.html')
+						Router.nav('/router.html')
 					},
 					render: function (props) {
 						return h('h1', {key: '1000', onClick: this.onClick},
@@ -36,18 +36,19 @@
 				}
 			}
 
-			var router = dio.router({
+			var 
+			Router = dio.createRouter({
 				mount: '.app',
 				root: '/examples',
 				routes: {
 					'/router.html': function (data) {
-						dio.render(Home, '.app')(data)
+						dio.createRender(Home, '.app')(data)
 					},
 					'/:page/:name': function (data) {
-						dio.render(User, '.app')(data)
+						dio.createRender(User, '.app')(data)
 					}
 				}
-			})
+			});
 		</script>
 	</body>
 </html>
