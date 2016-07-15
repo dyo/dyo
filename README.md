@@ -76,11 +76,16 @@ creates vdom nodes
 
 ```javascript
 h('.card[checked]', {data-id: 1234}, 'Text')
+
+h('div', {dangerouslySetInnerHTML: '<h1>Hello</h1>'})
 ```
 creates
 
 ```html
 <div class="card" data-id="1234" checked>Text<div>
+<div>
+    <h1>Hello</h1>
+</div>
 ```
 
 ## dio.DOM
@@ -350,21 +355,6 @@ handleDelete: function () {
 		store.dispatch({type: 'DELETE', id: 1234})
 	})
 }
-```
-
-### dio.trust
-
-print html entities
-
-```javascript
-dio.trust("Home Page &amp; <script></script>")
-// Home Page &
-// + will add the script tag to the dom
-```
-i.e
-
-```javascript
-h('div', trust('<script>alert('Hello World')</script>'))
 ```
 
 ### toHTML

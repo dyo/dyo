@@ -55,20 +55,27 @@
 		  				TodoStore.dispatch({type: 'REMOVE', id: node.id})
 		  			})
 		  		}
+
+		  		function rawMarkup () {
+		  			return '<h2>'+Date.now()+'</h2>'; 
+		  		}
+
 		  		function render (props) {
 		  			return h('div',
 		  						h('h3', 'TODO'),
-		  						h('form', {onsubmit: handleSubmit},
+		  						h('form', {onsubmit: this.handleSubmit},
 		  							h('input', {ref: input, oninput: dio.bind('value', text)}),
 		  							h('button', 'Add #' + (props.items.length+1))
   								),
   								TodoList({items: props.items, handleDelete: handleDelete}),
-  								h('svg', {test: 'dsds'}, h('text', 'text'))
+  								h('hr'),
+  								h('div[contenteditable]', {dangerouslySetInnerHTML: rawMarkup()})
 		  					)
 		  		}
 
 		  		return {
-	  				render: render
+	  				render: render,
+	  				handleSubmit: handleSubmit
 		  		}
 
 		  		// or can just return a hyperscript object

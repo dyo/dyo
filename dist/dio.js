@@ -73,6 +73,7 @@
 	__componentWillUpdate       = 'componentWillUpdate',
 	__componentDidUpdate        = 'componentDidUpdate',
 	__shouldComponentUpdate     = 'shouldComponentUpdate',
+	__dangerouslySetInnerHTML   = 'dangerouslySetInnerHTML',
 
 	// functions
 	__number                    = Number,
@@ -152,7 +153,7 @@
 		}
 		// check object type
 		else {
-			// onj has a constructor
+			// onj has a constructor and avoid null values since null is also an object
 			if (obj !== __undefined && obj !== __null) {
 				return obj[__constructor] === type;
 			}
@@ -177,6 +178,49 @@
 
 		// push to the end of the event stack
 		__setTimeout(fn, duration);
+	}
+
+
+	/**
+	 * component lifecycle trigger
+	 * @param  {Object}         node  - component, or hyperscript
+	 * @param  {String}         state - stage of the lifecycle
+	 * @param  {Boolean|Object} props - weather to pass props to stage
+	 * @param  {Boolean|Object} state - weather to pass sate to stage
+	 * @params {Boolean}        isCmp - weather this is a component or not
+	 */
+	function lifecycle (node, stage, props, state, iscomp) {
+		// end quickly
+		// if node is not a Component or hyperscript object
+		if (!node || (!node.internal && !node.render)) {
+			return;
+		}
+
+		// if node is a component then Component = node
+		// otherwise Component = node.Component
+		// if the node is not a components parent
+		// Element .Component will not exist which means
+		// no lifecycle methods exist as well
+		// so the next if (Component ...) block will end quickly
+		var
+		component = iscomp ? node : node.internal;
+
+		if (component && component[stage]) {
+			// is props/state truthy if so check if it is not a boolean
+			// if so default to the value in props/state passed, 
+			// if it is default to the Components props
+			// if props/state is falsey default 
+			// to what the value of props was before,
+			// which is undefined
+			props = props ? (!is(props, __boolean) ? props : component.props) : __undefined,
+			state = state ? (!is(state, __boolean) ? state : component.state) : __undefined;
+
+			// componentShouldUpdate returns a Boolean
+			// so we publish the lifecycle return values
+			// which we can use in the draw - update () function
+			// to see if we should skip an element or not
+			return component[stage](props, state);
+		}
 	}
 
 
@@ -403,49 +447,6 @@
 
 		return h;
 	}
-	
-
-	/**
-	 * component lifecycle trigger
-	 * @param  {Object}         node  - component, or hyperscript
-	 * @param  {String}         state - stage of the lifecycle
-	 * @param  {Boolean|Object} props - weather to pass props to stage
-	 * @param  {Boolean|Object} state - weather to pass sate to stage
-	 * @params {Boolean}        isCmp - weather this is a component or not
-	 */
-	function lifecycle (node, stage, props, state, iscomp) {
-		// end quickly
-		// if node is not a Component or hyperscript object
-		if (!node || (!node.internal && !node.render)) {
-			return;
-		}
-
-		// if node is a component then Component = node
-		// otherwise Component = node.Component
-		// if the node is not a components parent
-		// Element .Component will not exist which means
-		// no lifecycle methods exist as well
-		// so the next if (Component ...) block will end quickly
-		var
-		component = iscomp ? node : node.internal;
-
-		if (component && component[stage]) {
-			// is props/state truthy if so check if it is not a boolean
-			// if so default to the value in props/state passed, 
-			// if it is default to the Components props
-			// if props/state is falsey default 
-			// to what the value of props was before,
-			// which is undefined
-			props = props ? (!is(props, __boolean) ? props : component.props) : __undefined,
-			state = state ? (!is(state, __boolean) ? state : component.state) : __undefined;
-
-			// componentShouldUpdate returns a Boolean
-			// so we publish the lifecycle return values
-			// which we can use in the draw - update () function
-			// to see if we should skip an element or not
-			return component[stage](props, state);
-		}
-	}
 
 
 	/**
@@ -468,7 +469,7 @@
 			}
 
 			// adding to the dom
-			if (oldNode === __undefined) {
+			if (oldNode === __undefined && newNode) {
 				var
 				nextNode = createElement(newNode, component);
 				appendChild(parent, nextNode, newNode);
@@ -639,36 +640,29 @@
 			// if this is an element diff it's type
 			// i.e node.type: div !== node.type: h2
 			// will return true, signaling that we should
-			// replace the node
-			type = node1.type !== node2.type;
+			// replace the node, if it's a text node
+			type = node1.type !== node2.type,
+
+			// dangerouslySetInnerHTML
+			innerHTML = __false;
+
+			if (
+				node1 && node2 && node1.props && node2.props &&
+				(node1.props[__dangerouslySetInnerHTML] || node2.props[__dangerouslySetInnerHTML])
+			) { 
+				innerHTML = node1.props[__dangerouslySetInnerHTML] !== node2.props[__dangerouslySetInnerHTML]
+			}
 			
 			// if either text/type/object constructor has changed
 			// this will return true signaling that we should replace the node
-			return text || type || obj;
+			return text || type || obj ||innerHTML;
 		}
 
 		// create element
-		function createElement (node, component) {
+		function createElement (node, component) {			
 			// handle text nodes
 			if (is(node, __string)) {
 				return __document.createTextNode(node);
-			}
-			// trusted text content
-			else if (node.trust) {				
-				var 
-				div  = __document.createElement('div'),
-				frag = __document.createDocumentFragment();
-
-				div.innerHTML = node.children[0];
-
-				var
-				nodes = toArray(div.childNodes);
-
-				each(nodes, function (value) {
-					frag.appendChild(value)
-				});
-
-				return frag;
 			}
 
 			var 
@@ -681,18 +675,6 @@
 			}
 			else {
 				el = __document.createElement(node.type);
-			}
-			
-			// diff and update/add/remove props
-			setElementProps(el, node.props);
-			// add events if any
-			addEventListeners(el, node.props);
-			
-			// only map children arrays
-			if (is(node.children, __array)) {
-				each(node.children, function (child) {
-					el.appendChild(createElement(child, component));
-				});
 			}
 
 			// check if refs are defined?
@@ -711,6 +693,27 @@
 				else if (is(ref, __function)) {
 					ref(el);
 				}
+			}
+
+			// diff and update/add/remove props
+			setElementProps(el, node.props);
+			// add events if any
+			addEventListeners(el, node.props);
+
+			// trusted html content
+			if (
+				node.props && 
+				node.props[__dangerouslySetInnerHTML]
+			) {
+				el.innerHTML = node.props[__dangerouslySetInnerHTML];
+				return el;
+			}
+			
+			// only map children arrays
+			if (is(node.children, __array)) {
+				each(node.children, function (child) {
+					el.appendChild(createElement(child, component));
+				});
 			}
 		
 			return el;
@@ -829,7 +832,12 @@
 		// assign/update/remove prop
 		function updateProp (target, name, value, op) {
 			// don't add events/refs/keys as props/attrs
-			if (isEventProp(name, value) || name === 'ref' || name === 'key') {
+			if (
+				isEventProp(name, value) || 
+				name === 'ref' || 
+				name === 'key' || 
+				name === 'dangerouslySetInnerHTML'
+			) {
 				return;
 			}
 
@@ -1270,65 +1278,86 @@
 	 * @param  {String}  value
 	 * @return {Object} {add, remove, toggle, hasClass}
 	 */
-	function classList (type, element, value) {
-		function hasClass (element, value) {
+	function classList (type, element, className) {
+		/**
+		 * check if the element has the class/className
+		 * @param  {Element}  element   - target element
+		 * @param  {String}   className - className to check for
+		 * @return {Boolean}
+		 */
+		function hasClass (element, className) {
 			// default to native Element.classList()
 		    if (element[__classList]) {
-		        return element[__classList].contains(value);
+		        return element[__classList].contains(className);
 		    } 
 		    else {
 		    	// this will return true if indexOf does not
 		    	// find our class in the className string 
-		        return element[__className].indexOf(value) > -1;
+		        return element[__className].indexOf(className) > -1;
 		    }
 		}
 
-		function add (element, value) {
+		/**
+		 * add a className to an element
+		 * @param  {Element}  element   - target element
+		 * @param  {String}   className - className to add
+		 */
+		function add (element, className) {
 			// default to native Element.classList.remove()
 			if (element[__classList]) {
-		        element[__classList].add(value);
+		        element[__classList].add(className);
 		    }
 		    // exit early if the class is already added
-		    else if (!hasClass(element, value)) {
+		    else if (!hasClass(element, className)) {
 		    	// create array of current classList
 		        var 
 		        classes = element[__className].split(" ");
 		        // add our new class
-		        classes.push(value);
+		        classes.push(className);
 		        // join our classes array and re-assign to className
 		        element[__className] = classes.join(" ")
 		    }
 		}
 
-		function remove (element, value) {
+		/**
+		 * remove a className from an element
+		 * @param  {Element}  element   - target element
+		 * @param  {String}   className - className to remove
+		 */
+		function remove (element, className) {
 			// default to native Element.classList.remove()
 		    if (element[__classList]) {
-		        element[__classList].remove(value);
+		        element[__classList].remove(className);
 		    }
 		    else {
 		    	// create array of current classList
 		        var
 		        classes = element[__className].split(" ");
 		        // remove the className on this index
-		        classes.splice(classes.indexOf(value), 1);
+		        classes.splice(classes.indexOf(className), 1);
 		        // join our classes array and re-ssign to className
 		        element[__className] = classes.join(" ");
 		    }
 		}
 
-		function toggle (element, value) {
+		/**
+		 * toggle a className on an element
+		 * @param  {Element}  element   - target element
+		 * @param  {String}   className - classname to toggle
+		 */
+		function toggle (element, className) {
 			// default to native Element.classList.toggle()
 		    if (element[__classList]) {
-		        element[__classList].toggle(value);
+		        element[__classList].toggle(className);
 		    }
 		    else {
 		    	// if has class, remove
-		    	if (hasClass(element, value)) {
-		    		remove(element, value);
+		    	if (hasClass(element, className)) {
+		    		remove(element, className);
 		    	}
 		    	// if does not have class, add
 		    	else {
-		    		add(element, value);
+		    		add(element, className);
 		    	}
 		    }
 		}
@@ -1341,25 +1370,7 @@
 			toggle: toggle
 		};
 
-		return methods[type](element, value);
-	}
-
-
-	/**
-	 * trust interface
-	 * @param  {String} text - content to convert
-	 */
-	function trust (text) {
-		function h () {
-			this.type = 'p',
-			this.props = {},
-			this.children = [text]
-		}
-
-		h[__prototype].trust = __true,
-		h[__prototype][__constructor] = __object;
-
-		return new h;
+		return methods[type](element, className);
 	}
 
 
@@ -1889,13 +1900,9 @@
 			// get a fresh copy of the vdom
 			newNode = component(props, children);
 
-			if (newNode) {
-				debounce(function () {
-					vdomToDOM(element, newNode, oldNode);
-					// this newNode = the next renders oldNode
-					oldNode = newNode;
-				});
-			}
+			vdomToDOM(element, newNode, oldNode);
+			// this newNode = the next renders oldNode
+			oldNode = newNode;
 		}
 
 		// initial mount
@@ -2285,28 +2292,34 @@
 
 	/**
 	 * two-way data binding, not to be confused with Function.bind
-	 * @param  {String} props  - the property/attr to look for in the element
-	 * @param  {Object} setter - the object to update/setter to execute
+	 * @param  {String|String[]} props      - the property/attr to look for in the element
+	 * @param  {Function|Function[]} setter - the object to update/setter to execute
 	 */
 	function bind (props, setter) {
 		function update (el, prop, setter) {
-			// get key from element
-			// either the prop is a property of the element object
-			// or an attribute
 			var
-			value = (prop in el) ? el[prop] : el.getAttribute(prop);
+			value;
 
-			// just an <if(value)> doesn't work since the value can be false
-			// null or undefined = prop/attr doesn't exist
-			if (value !== __undefined && value !== __null) {
-				// if the setter is a string
-				// we use it to set the elements own properties
-				if (is(setter, __string)) {
-					(prop in el) ? el[prop] = value : el.setAttribute(prop, value);
-				}
-				else {
+			// prop is a string, get value from element
+			if (is(prop, __string)) {
+				// get key from element
+				// either the prop is a property of the element object
+				// or an attribute
+				value = (prop in el) ? el[prop] : el.getAttribute(prop);
+
+				// just an <if(value)> doesn't work since the value can be false
+				// null or undefined = prop/attr doesn't exist
+				if (value !== __undefined && value !== __null) {
 					// run the setter
 					setter(value);
+				}
+			}
+			// setter is a string, get value from stream
+			else {
+				value = prop()
+				
+				if (value !== __undefined && value !== __null) {
+					(setter in el) ? el[setter] = value : el.setAttribute(setter, value);
 				}
 			}
 		}
@@ -2508,15 +2521,18 @@
 		}
 
 
-		prop.map    = map,
-		prop.toJSON = toJSON,
-		prop.then   = then,
-		prop.done   = done,
-		prop.catch  = error,
-		prop.id     = propSignature;
+		prop.map      = map,
+		prop.toJSON   = toJSON,
+		prop.valueOf  = valueOf,
+		prop.toString = toString,
+		prop.then     = then,
+		prop.done     = done,
+		prop.catch    = error,
+		prop.id       = propSignature;
 
 		return prop;
 	}
+
 
 	/**
 	 * combine two streams
@@ -2559,14 +2575,10 @@
 		animate:      animate(),
 		request:      request(),
 		stream:       stream,
-
-		trust:        trust,
 		bind:         bind,
-
 		createRender: render,
 		createRouter: router,
 		createStore:  store,
-
 		DOM:          DOM,
 		toHTML:       vdomToHTML
 	};
