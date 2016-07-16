@@ -1,6 +1,37 @@
-body {margin:0;}
-/* animate example */
 * {
+	box-sizing: border-box; 
+	position: relative;
+}
+
+html, 
+body, 
+.app {
+	height:100%;
+	padding: 0;
+	margin: 0;
+}
+
+.MarkdownEditor .input, 
+.MarkdownEditor .output {
+	padding: 20px;
+	width: 50%;
+	height: 100%;
+	float: left;
+}
+
+.MarkdownEditor textarea {
+	width: 100%;
+	outline: none;
+	resize: none;
+	border: none;
+	font-family: Helvetica, arial, sans-serif;
+	line-height: 1.6;
+	color: #333;
+	overflow: hidden;
+}
+
+/* animate example */
+.cards * {
 	position: relative;
 }
 
@@ -27,7 +58,7 @@ body {margin:0;}
 	pointer-events:none; 
 }
 
-li {
+.TodoApp li {
 	background: #CCC;
 }
 

@@ -217,7 +217,7 @@
 			// so we publish the lifecycle return values
 			// which we can use in the vdomToDOM / update () function
 			// to see if we should skip an element or not
-			return component[stage](props, state);
+			return component[stage](props, state, component);
 		}
 	}
 
@@ -1650,7 +1650,7 @@
 		 * @param {Object}
 		 * @param {Function}
 		 */
-		function http (url, method, payload, enctype, callback) {
+		function http (url, method, payload, enctype, callback, withCredentials) {
 			function getResponse (xhr) {			
 				var 
 				response,
@@ -1780,7 +1780,7 @@
 			}
 			
 			// cross origin request
-			if (CORS) {
+			if (CORS && withCredentials) {
 				xhr.withCredentials = __true;
 			}
 
@@ -1840,7 +1840,7 @@
 		 * @param {Function}
 		 */
 		function request (method) {
-			return function (url, payload, enctype, callback) {
+			return function (url, payload, enctype, callback, withCredentials) {
 				// if enctype is a function
 				// then enctype === callback
 				// and enctype will default to the value in callback
@@ -1873,7 +1873,7 @@
 				}
 
 				// return ajax promise
-				return http(url, method.toUpperCase(), payload, enctype, callback);
+				return http(url, method.toUpperCase(), payload, enctype, callback, withCredentials);
 			}
 		}
 
@@ -2047,6 +2047,18 @@
 			if (this['render()']) {
 				this['render()']();
 			}
+		},
+		withAttr: function (props, setters, callback) {
+			var
+			self = this;
+
+			if (!is(callback, __function)) {
+				callback = function () {
+					self.forceUpdate.call(self);
+				}
+			}
+
+			return withAttr(props, setters, callback.bind(self))
 		}
 	}
 
@@ -2092,7 +2104,7 @@
 			if (is(value, __function)) {
 				// pass props and state to render
 				if (name === 'render') {
-					component[name] = value.bind(component, component.props, component.state);
+					component[name] = value.bind(component, component.props, component.state, component);
 				}
 				// every other method
 				else {
@@ -2193,6 +2205,71 @@
 
 
 	/**
+	 * two-way data binding, not to be confused with Function.bind
+	 * @param  {String|String[]} props      - the property/attr to look for in the element
+	 * @param  {Function|Function[]} setter - the object to update/setter to execute
+	 */
+	function withAttr (props, setters, callback) {
+		function update (el, prop, setter) {
+			var
+			value;
+
+			// prop is a string, get value from element
+			if (is(prop, __string)) {
+				// get key from element
+				// either the prop is a property of the element object
+				// or an attribute
+				value = (prop in el) ? el[prop] : el.getAttribute(prop);
+
+				// just an <if(value)> doesn't work since the value can be false
+				// null or undefined = prop/attr doesn't exist
+				if (value !== __undefined && value !== __null) {
+					// run the setter
+					setter(value);
+				}
+			}
+			// setter is a string, get value from stream
+			else {
+				value = prop()
+				
+				if (value !== __undefined && value !== __null) {
+					(setter in el) ? el[setter] = value : el.setAttribute(setter, value);
+				}
+			}
+		}
+
+		// the idea is that when you attach a function to an event,
+		// i.e el.addEventListener('eventName', fn)
+		// when that event is dispatched the function will execute
+		// making the this context of this function the element 
+		// that the event was attached to
+		// we can then extract the value, and run the prop setter(value)
+		// to change it's value
+		return function () {
+			// assign element
+			var 
+			el  = this;
+
+			// array of bindings
+			if (is(props, __array)) {
+				each(props, function(value, index) {
+					update(el, value, setters[index]);
+				});
+			}
+			// singles
+			else {
+				update(el, props, setters);
+			}
+
+			// execute callback if specified
+			if (callback) {
+				callback()
+			}
+		}
+	}
+
+
+	/**
 	 * store interface
 	 * @param  {[type]} reducer [description]
 	 * @param {Number} range - timetravel/undo range
@@ -2284,66 +2361,6 @@
 				subscribe: subscribe,
 				connect: connect
 			};
-		}
-	}
-
-
-	/**
-	 * two-way data binding, not to be confused with Function.bind
-	 * @param  {String|String[]} props      - the property/attr to look for in the element
-	 * @param  {Function|Function[]} setter - the object to update/setter to execute
-	 */
-	function bind (props, setter) {
-		function update (el, prop, setter) {
-			var
-			value;
-
-			// prop is a string, get value from element
-			if (is(prop, __string)) {
-				// get key from element
-				// either the prop is a property of the element object
-				// or an attribute
-				value = (prop in el) ? el[prop] : el.getAttribute(prop);
-
-				// just an <if(value)> doesn't work since the value can be false
-				// null or undefined = prop/attr doesn't exist
-				if (value !== __undefined && value !== __null) {
-					// run the setter
-					setter(value);
-				}
-			}
-			// setter is a string, get value from stream
-			else {
-				value = prop()
-				
-				if (value !== __undefined && value !== __null) {
-					(setter in el) ? el[setter] = value : el.setAttribute(setter, value);
-				}
-			}
-		}
-
-		// the idea is that when you attach a function to an event,
-		// i.e el.addEventListener('eventName', fn)
-		// when that event is dispatched the function will execute
-		// making the this context of this function the element 
-		// that the event was attached to
-		// we can then extract the value, and run the prop setter(value)
-		// to change it's value
-		return function () {
-			// assign element
-			var 
-			el  = this;
-
-			// array of bindings
-			if (is(props, __array)) {
-				each(props, function(value, index) {
-					update(el, value, setter[index]);
-				});
-			}
-			// singles
-			else {
-				update(el, props, setter);
-			}
 		}
 	}
 
@@ -2573,7 +2590,6 @@
 		animate:      animate(),
 		request:      request(),
 		stream:       stream,
-		bind:         bind,
 		createRender: render,
 		createRouter: router,
 		createStore:  store,

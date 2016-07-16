@@ -22,14 +22,14 @@
 // a function that returns a object with render
 function TodoApp () {
 	return {
-		render: function (props) {
+		render: function (props, state, component) {
 			return h('h1', 'Hello World')
 		}
 	}
 }
 // or a plain object
 var TodoApp = {
-	render: function (props) {
+	render: function (props, state, component) {
 		return h('h1', 'Hello World')
 	}
 }
@@ -66,7 +66,7 @@ var Header = dio.createRender(Header, '.header')
 Sidebar(props, children)
 // renders Sidebar to .side-bar passing in props and children
 // however there is a third param{Boolean} you can pass
-// that explicity forces an update/initial mount.
+// that explicitly forces an update/initial mount.
 ```
 
 
@@ -373,7 +373,7 @@ On the otherhand if you want a render() instance to return a vnode instead of re
 render(props, children,'vnode')
 ```
 
-which meas that you could alternatively print html like
+which means that you could alternatively print html like
 
 ```javascript
 dio.toHTML(render(props, children,'vnode'))

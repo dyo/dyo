@@ -56,20 +56,14 @@
 		  			})
 		  		}
 
-		  		function rawMarkup () {
-		  			return '<h2>'+Date.now()+'</h2>'; 
-		  		}
-
 		  		function render (props) {
-		  			return h('div',
+		  			return h('div.TodoApp',
 		  						h('h3', 'TODO'),
 		  						h('form', {onsubmit: this.handleSubmit},
-		  							h('input', {ref: input, oninput: dio.bind('value', text)}),
+		  							h('input', {ref: input, oninput: this.withAttr('value', text)}),
 		  							h('button', 'Add #' + (props.items.length+1))
   								),
-  								TodoList({items: props.items, handleDelete: handleDelete}),
-  								h('hr'),
-  								h('div[contenteditable]', {dangerouslySetInnerHTML: rawMarkup()})
+  								TodoList({items: props.items, handleDelete: handleDelete})
 		  					)
 		  		}
 
