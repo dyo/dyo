@@ -43,7 +43,8 @@
 	__namespace 				= {
 		math:  'http://www.w3.org/1998/Math/MathML',
 		xlink: 'http://www.w3.org/1999/xlink',
-		svg:   'http://www.w3.org/2000/svg'
+		svg:   'http://www.w3.org/2000/svg',
+		html:  'http://www.w3.org/1999/xhtml'
 	},
 	__document                  = document,
 	__window                    = window,
@@ -670,7 +671,6 @@
 			// check if it is namespaced
 			if (ns) {
 				el = __document.createElementNS(ns, node.type);
-				console.log(el)
 			}
 			else {
 				el = __document.createElement(node.type);
@@ -883,19 +883,30 @@
 				}
 				// is an array of classes
 				// this allows us to set classess like 
-				// className: ['class1', 'class2']
+				// class: ['class1', 'class2']
 				else if (is(value, __array) && (name === 'className' || name === 'class')) {
 					target[name] = value.join(' ');
 				}
 				// everything else
 				else {
-					// swallow errors when trying to set readonly properties
+					// make sure to swallow errors when trying to set readonly properties
 					try {
-						if (op === -1) {
-							target[attr](name);
+						name = name === 'className' ? 'class' : name;
+
+						// if the name is as follows: 'stroke-width'
+						// or is not found as property of the target
+						// or is not in the html namespace
+						// we default to using remove/setAttribute
+						if (
+							name.indexOf('-') > -1 || 
+							target[name] === __undefined ||
+							target.namespaceURI !== __namespace['html']
+						) {
+							// -1 => remove, else set
+							op === -1 ? target[attr](name) : target[attr](name, value)
 						}
 						else {
-							target[attr](name, value);
+							target[name] = value;
 						}
 					} 
 					catch (e) {

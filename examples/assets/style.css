@@ -9,6 +9,7 @@ body,
 	height:100%;
 	padding: 0;
 	margin: 0;
+	font-family: sans-serif;
 }
 
 .MarkdownEditor .input, 
@@ -96,3 +97,15 @@ body,
 	transform: scale(1,0);
 	margin-top: -18px;
 }
+
+
+svg path,
+svg text { cursor: pointer; transition: opacity 0.1s linear; }
+svg.faded path { opacity: 0.25; }
+svg path.active { opacity: 1 !important; }
+path.animate {
+		stroke-dasharray: 1000;
+		stroke-dashoffset: 1000;
+		animation: dash 5s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+}
+@keyframes dash { to { stroke-dashoffset: 0; } }
