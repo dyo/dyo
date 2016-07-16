@@ -115,17 +115,20 @@ creates
 </div>
 ```
 
-## dio.DOM
+## dio.exposeElements
 
 save a few keystrokes
 
 ```javascript
 
 // exposes all html elements to the global namespace
-dio.DOM()
+dio.exposeElements()
 
 // exposes only the input element to the global namespace
-dio.DOM('input')
+dio.exposeElements('input')
+
+// exposes only the input and div elements
+dio.exposeElements('input, div')
 
 ```
 

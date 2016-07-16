@@ -856,7 +856,7 @@
 				// target elements attribute
 				if (is(value, __object)) {
 					// classes
-					if (name === 'className' || name === 'class') {
+					if (name === __className || name === 'class') {
 						each(value, function (content, index) {
 							// get what operation we will run
 							// if the value is empty/false/undefined/null
@@ -884,7 +884,7 @@
 				// is an array of classes
 				// this allows us to set classess like 
 				// class: ['class1', 'class2']
-				else if (is(value, __array) && (name === 'className' || name === 'class')) {
+				else if (is(value, __array) && (name === __className || name === 'class')) {
 					target[name] = value.join(' ');
 				}
 				// everything else
@@ -899,8 +899,8 @@
 						target.namespaceURI !== __namespace['html']
 					) {
 						// the className property of svg elements are of a different kind
-						if (name === 'className') {
-							name = 'class'
+						if (name === __className) {
+							name = 'class';
 						}
 						// -1 => remove, else set
 						op === -1 ? target[attr](name) : target[attr](name, value)
@@ -1387,7 +1387,7 @@
 	 * DOM interface, creates html hyperscript functions to the global scope
 	 * such that h('div', {}, 'Text') written as div({}, 'Text')
 	 */
-	function DOM () {
+	function exposeDOM () {
 		function expose (elements) {
 			each(elements, function (name) {
 				__window[name] = function Element () {
@@ -1456,7 +1456,7 @@
 	 * 		}
 	 * })
 	 */
-	function router (args) {
+	function createRouter (args) {
 		function Router () {
 			// references
 			var
@@ -1897,13 +1897,13 @@
 	}
 
 	/**
-	 * render interface
+	 * creates a render interface
 	 * @return {Function}
 	 * @example
-	 * render = s.render(Component, '.selector')
+	 * render = dio.createRender(Component, '.selector')
 	 * render()
 	 */
-	function render () {
+	function createRender () {
 		// update
 		function update (props, children) {
 			// get a fresh copy of the vdom
@@ -2290,7 +2290,7 @@
 	 * @param {Number} range - timetravel/undo range
  	 * @return {Object} {connect, dispatch, getState, subscribe, timetravel}
 	 */
-	function store (reducer) {
+	function createStore (reducer) {
 		// if the reducer is an object of reducers (multiple)
 		// lets combine the reducers
 		if (is(reducer, __object)) {
@@ -2352,6 +2352,10 @@
 
 				listeners.push(listener);
 
+				// return a unsubscribe function that we can 
+				// use to unsubscribe as follows: i.e
+				// var sub = store.subscribe()
+				// sub() // un-subscribes
 				return function unsubscribe () {
 					listener = listeners.filter(function (l) {
 						return l !== listener;
@@ -2368,6 +2372,7 @@
 				});
 			}
 
+			// dispath initial action
 			dispatch({type: storeSignature});
 
 			return {
@@ -2571,10 +2576,8 @@
 	 */
 	stream.combine = function (reducer) {
 		var
-		// convert arguments an array
-		args = Array.prototype.slice.call(arguments);
-		// remove reducer
-		args.shift();
+		// convert arguments an array, excluding reducer
+		args = __array[__prototype].slice.call(arguments, 1);		
 
 		function mapper () {
 			// get combined streams stores
@@ -2605,10 +2608,11 @@
 		animate:      animate(),
 		request:      request(),
 		stream:       stream,
-		createRender: render,
-		createRouter: router,
-		createStore:  store,
-		DOM:          DOM,
+
+		createRender: createRender,
+		createRouter: createRouter,
+		createStore:  createStore,
+		exposeDOM:    exposeDOM,
 		toHTML:       vdomToHTML
 	};
 }));
