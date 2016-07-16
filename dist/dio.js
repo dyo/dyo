@@ -889,28 +889,29 @@
 				}
 				// everything else
 				else {
-					// make sure to swallow errors when trying to set readonly properties
-					try {
-						// if the name is as follows: 'stroke-width'
-						// or is not found as property of the target
-						// or is not in the html namespace
-						// we default to using remove/setAttribute
-						if (
-							name.indexOf('-') > -1 || 
-							target[name] === __undefined ||
-							target.namespaceURI !== __namespace['html']
-						) {
-							// className of svg elements are of a different kind
-							name = name === 'className' ? 'class' : name;
-							// -1 => remove, else set
-							op === -1 ? target[attr](name) : target[attr](name, value)
-						}
-						else {
+					// if the name is as follows: 'stroke-width'
+					// or is not found as property of the target
+					// or is not in the html namespace
+					// we default to using remove/setAttribute
+					if (
+						name.indexOf('-') > -1 || 
+						target[name] === __undefined ||
+						target.namespaceURI !== __namespace['html']
+					) {
+						// className of svg elements are of a different kind
+						name = name === 'className' ? 'class' : name;
+						// -1 => remove, else set
+						op === -1 ? target[attr](name) : target[attr](name, value)
+					}
+					else {
+						// make sure to swallow errors 
+						// if we try to set readonly properties
+						try {
 							target[name] = value;
 						}
-					} 
-					catch (e) {
+						catch (e) {
 
+						}
 					}
 				}
 			}

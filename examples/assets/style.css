@@ -100,9 +100,9 @@ body,
 
 
 svg path,
-svg text { cursor: pointer; transition: opacity 0.1s linear; }
+svg text { transition: opacity 0.1s linear; }
 svg.faded path { opacity: 0.25; }
-svg path.active { opacity: 1 !important; }
+svg path.active { opacity: 1 !important; cursor: pointer; }
 path.animate {
 		stroke-dasharray: 1000;
 		stroke-dashoffset: 1000;
