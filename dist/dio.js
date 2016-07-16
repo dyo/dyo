@@ -28,9 +28,9 @@
 	'use strict';
 
 	// references for better minification
-	// so instead of obj.constructor we would do obj[__constructor]
-	// the minifier will be able to minify that to something like
-	// o[c] while it can't do the same for the former
+	// so instead of obj.constructor we would do obj[__constructor].
+	// the minifier will then be able to minify that to something like
+	// o[c] og which it can't quite do the the former baked in.
 	var
 
 	// signatures
@@ -89,7 +89,7 @@
 
 	/**
 	 * convert arguments to arrays
-	 * @param  {arugments} arg array like object
+	 * @param  {arugments} arg - array like object
 	 * @return {Array}
 	 */
 	function toArray (arg) {
@@ -143,22 +143,22 @@
 	/**
 	 * check Object type
 	 * @param  {Any}  obj  - object to check for type
-	 * @param  {Any}  type - type to check for
+	 * @param  {Any}? type - type to check for
 	 * @return {Boolean}   - true/false
 	 */
 	function is (obj, type) {
-		// only check if obj is not a falsey value
+		// check if the object is falsey/truethy
 		if (!type) {
 			return obj ? __true : __false;
 		}
-		// check object type
+		// check if the object of the specified type
 		else {
-			// onj has a constructor and avoid null values since null is also an object
+			// obj has a constructor, 
+			// we also avoid null values since null has an object constructor
 			if (obj !== __undefined && obj !== __null) {
 				return obj[__constructor] === type;
 			}
-			// doesn't, probably null or undefined 
-			// that don't have constructors methods, return false
+			// doesn't have a constructor, is undefined 
 			else {
 				return __false;
 			}
@@ -172,8 +172,7 @@
 	 * @param  {Number?}  duration - delay
 	 */
 	function debounce (fn, duration) {
-		// when we want to send a custom duration
-		// to setTimeout
+		// we may want a custom duration for setTimeout
 		duration = duration || 0;
 
 		// push to the end of the event stack
@@ -196,28 +195,27 @@
 			return;
 		}
 
-		// if node is a component then Component = node
-		// otherwise Component = node.Component
+		// if node is a component then component = node
+		// otherwise component = node.internal
 		// if the node is not a components parent
-		// Element .Component will not exist which means
+		// Element .internal will not exist which means
 		// no lifecycle methods exist as well
 		// so the next if (Component ...) block will end quickly
 		var
 		component = iscomp ? node : node.internal;
 
 		if (component && component[stage]) {
-			// is props/state truthy if so check if it is not a boolean
+			// is the props/state truthy? if so check if it is not a boolean
 			// if so default to the value in props/state passed, 
-			// if it is default to the Components props
-			// if props/state is falsey default 
-			// to what the value of props was before,
-			// which is undefined
+			// if it is default to the components own props.
+			// if props/state is falsey value, 
+			// default to undefined
 			props = props ? (!is(props, __boolean) ? props : component.props) : __undefined,
 			state = state ? (!is(state, __boolean) ? state : component.state) : __undefined;
 
 			// componentShouldUpdate returns a Boolean
 			// so we publish the lifecycle return values
-			// which we can use in the draw - update () function
+			// which we can use in the vdomToDOM / update () function
 			// to see if we should skip an element or not
 			return component[stage](props, state);
 		}
