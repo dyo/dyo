@@ -688,7 +688,7 @@
 					// set string refs
 					component.refs[ref] = el;
 				}
-				// function ref execute and pass the element as a parameter
+				// function ref, execute and pass the element as a parameter
 				else if (is(ref, __function)) {
 					ref(el);
 				}
