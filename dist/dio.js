@@ -835,7 +835,7 @@
 				isEventProp(name, value) || 
 				name === 'ref' || 
 				name === 'key' || 
-				name === 'dangerouslySetInnerHTML'
+				name === __dangerouslySetInnerHTML
 			) {
 				return;
 			}
@@ -898,8 +898,10 @@
 						target[name] === __undefined ||
 						target.namespaceURI !== __namespace['html']
 					) {
-						// className of svg elements are of a different kind
-						name = name === 'className' ? 'class' : name;
+						// the className property of svg elements are of a different kind
+						if (name === 'className') {
+							name = 'class'
+						}
 						// -1 => remove, else set
 						op === -1 ? target[attr](name) : target[attr](name, value)
 					}
