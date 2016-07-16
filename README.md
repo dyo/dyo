@@ -49,6 +49,33 @@ render(...props?, children?, forceUpdate?)
 
 --
 
+## components schema
+
+```javascript
+{
+	// lifecycle methods
+	shouldComponentUpdate:     (nextProps, nextState, this)
+	componentWillReceiveProps: (nextProps, null, this)
+	componentWillUpdate:       (nextProps, nextState, this)
+	componentDidUpdate:        (prevProps, prevState, this)
+	componentWillMount:        (node, null, this)
+	componentDidMount:         (node, null, this)
+	componentWillUnmount:      (node, null, this)
+	
+	// this.methods
+	withAttr                   ({String|String[]}, {Function|Function[]})
+	// where the string is the elements attribute and
+	// the Function is a setter to map to
+	// this can be in-reverse as well i.e
+	// mapping getters to element attributes
+	
+	forceUpdate:               ()
+	setState:                  ({Object}) 
+	// setState executes forceUpdate after updating the state
+	setProps:                  ({Object})
+}
+```
+
 
 ## dio.createRender
 
@@ -309,15 +336,7 @@ componentWillUnmount:      function(node)
 `componentWillUnmount` can receive(return) a duration number(in ms) back to it used to remove the element from the dom only after that amount of time has elapsed. This allows you to do animations on that node before the node is removed/added, this works well with the `animate.flip()` helper, though be advised you can probably do all this with the `animation.transition('className', callback)` helper.
 
 
-## helpers
-
-
-- animate()
-- bind()
-- trust()
-
-
-### dio.animate
+## dio.animate
 
 
 ```javascript
@@ -357,7 +376,7 @@ handleDelete: function () {
 }
 ```
 
-### toHTML
+## dio.toHTML
 
 ```javascript
 var render = dio.render(Users, '.app')
