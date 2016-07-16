@@ -348,12 +348,7 @@
 		 * @param  {Any} a
 		 * @return {String|Array|Object}
 		 */
-		function setChild (child, obj) {
-			// add obj.prop to children if they are none TextNodes
-			if (child && child.props && obj.props.xmlns) {
-				child.props.xmlns = obj.props.xmlns;
-			}
-
+		function setChild (child) {
 			// convert to string non hyperscript children
 			if (!(is(child, __object) && isH(child))) {
 				// we don't want [object Object] strings
@@ -657,19 +652,25 @@
 		}
 
 		// create element
-		function createElement (node, component) {			
+		function createElement (node, component, ns) {			
 			// handle text nodes
 			if (is(node, __string)) {
 				return __document.createTextNode(node);
 			}
 
 			var 
-			el;
+			el,
+			ns;
 
-			// not a text node 
-			// check if it is namespaced
+			// assign namespace if set
 			if (node.props && node.props.xmlns) {
-				el = __document.createElementNS(node.props.xmlns, node.type);
+				ns = node.props.xmlns;
+			}
+
+			// check if it is namespaced
+			if (ns) {
+				el = __document.createElementNS(ns, node.type);
+				console.log(el)
 			}
 			else {
 				el = __document.createElement(node.type);
@@ -710,7 +711,7 @@
 			// only map children arrays
 			if (is(node.children, __array)) {
 				each(node.children, function (child) {
-					el.appendChild(createElement(child, component));
+					el.appendChild(createElement(child, component, ns));
 				});
 			}
 		
@@ -848,9 +849,8 @@
 				return target.setAttributeNS(__namespace['xlink'], 'href', value);
 			}
 
-			// if the target has an attr as a property, 
-			// change that aswell
-			if (target[name] !== __undefined) {
+			// don't set xmlns namespace attributes we create an element
+			if (value !== __namespace['svg'] && value !== __namespace['math']) {
 				// value is an object
 				// add each of it's properties to the
 				// target elements attribute
@@ -881,29 +881,26 @@
 						});
 					}
 				}
+				// is an array of classes
 				// this allows us to set classess like 
 				// className: ['class1', 'class2']
 				else if (is(value, __array) && (name === 'className' || name === 'class')) {
 					target[name] = value.join(' ');
 				}
+				// everything else
 				else {
-					// swallow erros when trying to set readonly properties
+					// swallow errors when trying to set readonly properties
 					try {
-						target[name] = value;
+						if (op === -1) {
+							target[attr](name);
+						}
+						else {
+							target[attr](name, value);
+						}
 					} 
 					catch (e) {
 
 					}
-				}
-			}
-			// don't set xmlns namespace attributes we set only that when
-			// we create an element
-			else if (value !== __namespace['svg'] && value !== __namespace['math']) {
-				if (op === -1) {
-					target[attr](name);
-				}
-				else {
-					target[attr](name, value);
 				}
 			}
 		}
@@ -2122,6 +2119,10 @@
 		function h (obj) {
 			var 
 			self = this;
+
+			if (!obj) {
+				throw 'render() should return a hyperscript object'
+			}
 
 			self.type     = obj.type,
 			self.props    = obj.props,
