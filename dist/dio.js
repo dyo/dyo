@@ -1977,6 +1977,8 @@
 			}
 		});
 
+		console.log(component)
+
 		// has parent to mount to
 		if (element && component) {
 			// determine if the component is stateless
@@ -2087,18 +2089,17 @@
 		// maybe the arg is a function that returns an object
 		else if (is(arg, __function)) {
 			obj = arg();
-		}
 
-		// invalid component?
-		// there's no such think as an invalid component
-		// normally we would check if the returned value of the function
-		// has a render method, but it could just as much return a hyperscript
-		// object directy, so lets just check if it does return a render method
-		// if not then return it as it is, assuming the function
-		// will return a hyperscript object
-		if (!obj || !obj.render) {
-			arg.stateless = __true
-			return arg;
+			if (!obj) {
+				throw 'stateless components should should return a hyperscript object or render() method'
+			}
+			else if (obj.render) {
+				arg.stateless = __true
+				return arg;
+			}
+		}
+		else {
+			obj = arg;
 		}
 
 		// everything checks out i.e
@@ -2133,10 +2134,6 @@
 		function h (obj) {
 			var 
 			self = this;
-
-			if (!obj) {
-				throw 'render() should return a hyperscript object'
-			}
 
 			self.type     = obj.type,
 			self.props    = obj.props,
