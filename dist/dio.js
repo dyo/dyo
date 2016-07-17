@@ -1069,7 +1069,7 @@
 				invert           = {},
 				element          = element.currentTarget || element,
 				style            = element.style,
-				body             = document.body,
+				body             = __document.body,
 				runningClass     = 'animation-running',
 				transEvtEnd      = 'transitionend';
 
