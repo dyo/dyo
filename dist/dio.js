@@ -1969,7 +1969,7 @@
 			}
 			// element
 			else if (value.nodeType) {
-				element = value;
+				element = value === __document ? value.body : value;
 			}
 			// element selector
 			else if (is(value, __string)) {
