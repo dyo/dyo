@@ -52,6 +52,7 @@ pre {
 	margin: 0 auto;
 	padding: 36px 30px;
 	margin: 20px auto 120px auto;
+	overflow: auto;
 }
 pre .key{
 	color:#AA0C91;
