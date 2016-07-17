@@ -8,9 +8,10 @@ body {
 	font-family: 'Helvetica Neue', sans-serif;
 }
 .wrap { 
-	max-width: 340px; 
+	max-width: 380px; 
 	width: 100%;
-	margin: 0 auto
+	margin: 0 auto;
+	padding:0 20px;
 }
 .logo {
 	margin: 50px 0;
