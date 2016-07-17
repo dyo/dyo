@@ -141,7 +141,7 @@ input({value: 'hello'})
 ```
 
 
-## dio.route
+## dio.createRoute
 
 create a router
 
@@ -178,7 +178,7 @@ dio.request.get('/url/id').then(a).done(()=>console.log(a))
 
 ```
 
-## dio.store
+## dio.createStore
 
 ```javascript
 var render = dio.createRender(MyComponent, '.app')
