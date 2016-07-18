@@ -1,24 +1,39 @@
 # Getting Started
 
-hello [World](#)
+Dio is a lightweight (~6kb) Virtual DOM framework. This getting started guide will cover the following
+in order.
 
-## Guide
+- hello world
+- animations (flip & transition)
+- requests
+- router
+- stores
+- streams
+- server-side rendering
+- lifecycles
 
-Something else
+## Hello World
 
-> Lorem ipsum dolor sit amaet.
-
-```
-function main () {
+```javascript
+// a function that returns a object with render
+function TodoApp () {
 	return {
-		render: function (props) {
-			return h('h1', props.value)
+		render: function (props, state, component) {
+			return h('h1', 'Hello World')
 		}
 	}
 }
+// or a plain object
+var TodoApp = {
+	render: function (props, state, component) {
+		return h('h1', 'Hello World')
+	}
+}
 
-var
-render = dio.createRender(main, "body");
-render({value: "Hello World"})
+// create a render instance
+var render = dio.render(TodoApp, '.app')
+
+// call it when you want to render to the dom
+render(...props?, children?, forceUpdate?)
 ```
 

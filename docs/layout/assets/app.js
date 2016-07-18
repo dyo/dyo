@@ -23,7 +23,7 @@ function TableOfContents (props) {
 function Documentation () {
 	var 
 	markdown   = dio.stream(),
-	remarkable = window.Remarkable ? new Remarkable() : function () {}
+	remarkable = new Remarkable();
 
 	function rawMarkup () {
 		return remarkable.render(markdown());
@@ -32,7 +32,11 @@ function Documentation () {
 	function getDocument (url, callback) {
 		dio.request.get(url)
 			.then(markdown)
-			.then(callback);
+			.then(callback)
+			.catch(function () {
+				markdown('# 404 | document not found')
+				callback()
+			});
 	}
 
 	function update (self) {
@@ -48,26 +52,33 @@ function Documentation () {
 
 			var
 			element = e.currentTarget;
-			href    = element.getAttribute('href'),
-			nav     = [];
+			href    = element.getAttribute('href');
 
-			self.props.nav.forEach(function (value) {
-				var
-				item = Object.assign({}, value, {active: value.href !== href ? false : true});
-				nav.push(item);
-			});
-
-			self.setProps({nav: nav});
-			self.forceUpdate();
-			getDocument(href, update(self));
+			activateLink(self, href);
 		}
+	}
+
+	function activateLink (self, href) {
+		var
+		nav = [];
+
+		self.props.nav.forEach(function (value) {
+			var
+			item = Object.assign({}, value, {active: value.href !== href ? false : true});
+			nav.push(item);
+		});
+
+		self.setProps({nav: nav});
+		self.forceUpdate();
+		getDocument(href, update(self));
+		window.location.hash = href.replace('../', '').replace('.md', '');
 	}
 
 	return {
 		getDefaultProps: function () {
 			return {
 				nav: [
-					{text: 'Installation', href: '../installation.md', active: true},
+					{text: 'Installation', href: '../installation.md'},
 					{text: 'Getting Started', href: '../getting-started.md'},
 					{text: 'Examples', href: '../examples.md'},
 					{text: 'API Reference', href: '../api.md'}
@@ -75,7 +86,8 @@ function Documentation () {
 			}
 		},
 		componentWillReceiveProps: function (props) {
-			getDocument(props.page, update(this));
+			getDocument(props.url, update(this));
+			activateLink(this, props.url)
 		},
 		render: function (props, _, self) {
 			return h('.documentation',
@@ -106,9 +118,8 @@ function Welcome () {
 	}
 
 	return {
-		componentDidMount: function (_, _, self) {
-			console.log(arguments)
-			dio.request.get('../welcome.md')
+		componentDidMount: function (props, _, self) {
+			dio.request.get(props.url)
 				.then(rawMarkup)
 				.then(function () {
 					rawMarkup(remarkable.render(rawMarkup()))
@@ -127,20 +138,22 @@ function Welcome () {
 	}
 }
 
-
-var
-remarkable = new Remarkable();
-
 var
 router = dio.createRouter({
 	mount: '.app',
 	root: '/docs/layout',
 	routes: {
 		'/': function () {
-			dio.createRender(Welcome, '.container')();
+			dio.createRender(Welcome, '.container')({url: '../welcome.md'});
 		},
 		'/documentation': function () {
-			dio.createRender(Documentation, '.container')({page: '../installation.md'});
+			var 
+			section = window.location.hash.toLowerCase().replace('#', '');
+
+			section = section || 'installation';
+			section = '../'+ section + '.md';
+
+			dio.createRender(Documentation, '.container')({url: section});
 		}
 	}
 });

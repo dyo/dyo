@@ -598,7 +598,7 @@
 			if (nextNode) {
 				lifecycle(newNode, __componentWillMount, __true, __true);
 				parent.appendChild(nextNode);
-				lifecycle(newNode, __componentDidMount, nextNode);
+				lifecycle(newNode, __componentDidMount, __true, __true);
 			}
 		}
 
@@ -607,7 +607,7 @@
 			if (nextNode) {
 				lifecycle(newNode, __componentWillMount, __true, __true);			
 				parent.insertBefore(nextNode, beforeNode);
-				lifecycle(newNode, __componentDidMount, nextNode);
+				lifecycle(newNode, __componentDidMount, __true, __true);
 			}
 		}
 

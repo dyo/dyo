@@ -3,58 +3,63 @@
 	margin: 0; 
 	padding: 0;
 }
+
 body {
 	background: #F8F5F2;
 	font-family: 'Helvetica Neue', sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
-.wrap{ 
+
+.container {
+	padding-bottom: 80px;
+}
+
+.container > div > *:not(pre):not(div),
+.wrap { 
 	max-width: 400px; 
 	width: 100%;
 	margin: 0 auto;
 	padding:0 20px;
 }
 
-.container > div > *:not(pre):not(div) { 
-	max-width: 400px; 
-	width: 100%;
-	margin: 0 auto;
-	padding:0 20px;
-}
 
 .header { 
 	padding-top: 40px;
 	padding-bottom: 30px;
 	min-height: 203px; 
 }
+
+
 .logo {
 	margin-bottom: 40px;
 	display: block;
 }
+
+
 .nav {
 	font-weight: bold;
 }
+
 .nav li {
 	display: inline-block;
 }
+
 .nav li:not(:last-child) a {
 	margin-right: 16px;
 }
+
+
 a {
 	color: #332E22;
 	font-size: 19px;
 	text-decoration: none;
 }
+
 a[title=github] {
 	font-weight: bold;
 }
 
-p {
-	font-size: 19px;
-	color: #535353;
-	line-height: 38px;
-}
 
 a[title=button] {
 	background:rgb(52,46,33);
@@ -65,6 +70,12 @@ a[title=button] {
 	margin: 20px 0 40px 0;
 	display: inline-block;
 	font-weight: bold;
+}
+
+p {
+	font-size: 19px;
+	color: #535353;
+	line-height: 38px;
 }
 
 pre {
@@ -80,7 +91,7 @@ pre code {
 	box-shadow:0px 1px 4px rgba(216,211,206,0.3);
 	border: 1px solid rgba(217,211,205,0.6);
 	background: #FFF;
-	padding: 36px 30px;
+	padding: 26px 30px;
 	overflow: auto;
 }
 
@@ -88,16 +99,33 @@ h1 {
 	font-size: 38px;
 	margin-bottom: 34px;
 }
-h2, h3 {
+
+h2, 
+h3,
+h4,
+h5,
+h6 {
 	font-size: 28px;
 	margin-bottom: 20px;
 }
+
+h4,
+h5,
+h6 {
+	font-size: 18px;
+}
+
+hr {
+	border: none;
+	border-top: 1px dashed #CCC;
+	margin-bottom: 20px;
+}
+
 .content {
 	padding-left: 220px;
 	padding-right: 20px;
 	margin: 0 auto;
     max-width: 800px;
-    padding-bottom: 80px;
 }
 .content ul {
     padding: 0;
@@ -122,8 +150,20 @@ h2, h3 {
 	padding-left: 20px;
 	border-left: 4px solid #535353;
 }
+
 .content pre {
 	padding: 0;
+}
+
+.content ul {
+	display: block;
+	margin: 40px 0;
+}
+
+.content ul li {
+	margin: 10px 0;
+	color: #535353;
+	font-size: 19px;
 }
 
 .table-of-contents {
