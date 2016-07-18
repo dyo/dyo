@@ -3,11 +3,11 @@ function Header () {
 	header = dio.stream();
 
 	return {
-		componentWillMount: function () {
+		componentWillMount: function (props) {
 			var
 			self = this;
 
-			dio.request.get('header.md')
+			dio.request.get(props.url)
 				.then(header)
 				.then(function(){
 					self.forceUpdate();
@@ -92,4 +92,4 @@ if (ContentElement && TableOfContentsElement) {
 	TableOfContentsRender = dio.createRender(TableOfContents, TableOfContentsElement);
 }
 
-HeaderRender();
+HeaderRender({url: 'header.txt'});
