@@ -22,8 +22,7 @@ function TableOfContents (props) {
 
 function Documentation () {
 	var 
-	markdown   = dio.stream(),
-	remarkable = new Remarkable();
+	markdown   = dio.stream();
 
 	function rawMarkup () {
 		return remarkable.render(markdown());
@@ -139,8 +138,10 @@ function Welcome () {
 }
 
 var
+remarkable = new Remarkable();
+
+var
 router = dio.createRouter({
-	mount: '.app',
 	root: '/docs/layout',
 	routes: {
 		'/': function () {

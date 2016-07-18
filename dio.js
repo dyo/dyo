@@ -1619,15 +1619,10 @@
 		}
 
 		var
-		mount  = args.mount,
 		root   = args.root,
 		nav    = args.init,
 		routes = args.routes,
 		router = new Router;
-
-		if (mount) {
-			router.config({mount: mount});
-		}
 
 		// define root address
 		if (root) {
