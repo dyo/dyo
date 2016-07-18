@@ -93,8 +93,8 @@
 	 * @param  {arugments} arg - array like object
 	 * @return {Array}
 	 */
-	function toArray (arg) {
-		return __array[__prototype].slice.call(arg);
+	function toArray (arg, index) {
+		return __array[__prototype].slice.call(arg, index);
 	}
 
 	
@@ -1457,192 +1457,139 @@
 	 * 		}
 	 * })
 	 */
-	function createRouter (args) {
-		function Router () {
-			// references
-			var
-			self = this;
+	function createRouter (root, routes) {
+		var
+		interval,
+		currentUrl,
+		root;
 
-			// data
-			self.settings = {},
-			self.url = __null,
-			self.interval = __null,
+		/**
+		 * listens for changes to the url
+		 */
+		function startListening () {
+			// clear the interval if it's already set
+			clearInterval(interval);
+
+			// start listening for a change in the url
+			interval = setInterval(function () {
+				var 
+				pathname = __window.location.pathname;
+
+				// if our store of the current url does not 
+				// equal the url of the browser, something has changed
+				if (currentUrl !== pathname) {
+					// update the currentUrl
+					currentUrl = pathname;
+					// trigger a routeChange
+					triggerRouteChange();
+				}
+			}, 50);
+		}
+
+		/**
+		 * register routes
+		 */
+		function registerRoutes () {
+			// assign routes
+			each(routes, function (value, name) {
+				// where we store the variables
+				// i.e in /:user/:id - user, id are variables
+				var 
+				vars = [],
+				regex     = /([:*])(\w+)|([\*])/g,
+
+				// given the following /:user/:id/*
+				pattern = name.replace(regex, function () {
+							var 
+							// 'user', 'id', undefned
+							args = arguments,
+							id   = args[2];
+
+							// if not a variable 
+							if (!id) {
+								return '(?:.*)'
+							}
+							// capture
+							else {
+								vars.push(id)
+								return '([^\/]+)'
+							}
+						}),
+
+				pattern      = pattern + '$';
+				routes[name] = [value, root ? root + pattern : pattern, vars]
+			})
+		}
+
+		/**
+		 * called when the listener detects a route change
+		 */
+		function triggerRouteChange () {
+			each(routes, function (val) {
+				var 
+				callback = val[0],
+				pattern  = val[1],
+				vars     = val[2],
+				match;
+
+				// exec pattern on url
+				match    = currentUrl.match(new RegExp(pattern));
+
+				// we have a match
+				if (match) {
+					// create params object to pass to callback
+					// i.e {user: "simple", id: "1234"}
+					var 
+					data = match
+						// remove the first(url) value in the array
+						.slice(1, match[__length])
+						.reduce(function (data, val, i) {
+							if (!data) {
+								data = {}
+							}
+							// var name: value
+							// i.e user: 'simple'
+							data[vars[i]] = val
+
+							return data
+						}, __null);
+
+					// callback is a function, exec
+					if (is(callback, __function)) {
+						// component function
+						callback(data, currentUrl);
+					}
+					// can't process
+					else {
+						throw 'could not find render method';
+					}
+				}
+			})
+		}
+
+		registerRoutes();
+		startListening();
+		
+		return {
 			// history back
-			self.back = function () {
+			back: function () {
 				history.back();
 			},
 			// history foward
-			self.foward = function () {
+			foward: function () {
 				history.foward();
 			},
 			// history go
-			self.go = function (index) {
+			go: function (index) {
 				history.go(index);
 			},
 			// navigate to a view
-			self.nav = function (url) {
-				var 
-				root = this.settings.root;
-				
+			nav: function (url) {
 				url  = root ? root + url : url;
 
-				history.pushState(__null, __null, url);
-			},
-			// configure defualts
-			self.config = function (obj) {
-				var 
-				self = this;
-
-				each(obj, function(value, name) {
-					self.settings[name] = value;
-				});
-			},
-			// start listening for url changes
-			self.init = function () {
-				var 
-				self = this;
-
-				clearInterval(self.interval);
-				// start listening for a change in the url
-				self.interval = setInterval(function () {
-					var 
-					url = __window.location.pathname;
-
-					if (self.url !== url) {
-						self.url = url;
-						self.changed();
-					}
-				}, 50);
-			},
-			// register routes
-			self.on = function (args) {
-				var 
-				self = this,
-				routes;
-
-				// create routes object if it doesn't exist
-				if (!self.routes) {
-					self.routes = {};
-				}
-
-				// normalize args for ({obj}) and (url, callback) styles
-				if (!is(args, __object)) {
-					var 
-					args   = arguments;
-
-					routes = {};
-					routes[args[0]] = args[1];
-				}
-				else {
-					routes = args;
-				}
-
-				// assign routes
-				each(routes, function (value, name) {
-					var 
-					root = self.settings.root,
-					variables = [],
-					regex = /([:*])(\w+)|([\*])/g,
-					// given the following /:user/:id/*
-					pattern = name.replace(regex, function () {
-								var args = arguments,
-									id   = args[2]
-									// 'user', 'id', undefned
-
-								// if not a variable 
-								if (!id) {
-									return '(?:.*)'
-								}
-								// capture
-								else {
-									variables.push(id)
-									return '([^\/]+)'
-								}
-							}),
-					// lock pattern
-					pattern = pattern + '$';
-
-					self.routes[name] = {
-						callback:  value,
-						pattern:   root ? root + pattern : pattern,
-						variables: variables
-					};
-				})
-			},
-			self.changed = function () {
-				// references
-				var 
-				url    = this.url,
-				routes = this.routes;
-
-				each(routes, function (val) {
-					var 
-					callback  = val.callback,
-					pattern   = val.pattern,
-					variables = val.variables,
-					match;
-
-					// exec pattern on url
-					match = url.match(new RegExp(pattern));
-
-					// we have a match
-					if (match) {
-						// create params object to pass to callback
-						// i.e {user: "simple", id: "1234"}
-						var 
-						data = match
-							// remove the first(url) value in the array
-							.slice(1, match[__length])
-							.reduce(function (data, val, i) {
-								if (!data) {
-									data = {}
-								}
-								// var name: value
-								// i.e user: 'simple'
-								data[variables[i]] = val
-
-								return data
-							}, __null);
-
-						// callback is a function, exec
-						if (is(callback, __function)) {
-							// component function
-							callback(data, self.url);
-						}
-						// can't process
-						else {
-							throw 'could not find render method';
-						}
-					}
-				})
+				history.pushState(__undefined, __undefined, url);
 			}
 		}
-
-		var
-		root   = args.root,
-		nav    = args.init,
-		routes = args.routes,
-		router = new Router;
-
-		// define root address
-		if (root) {
-			router.config({root: root});
-		}
-		// assign routes
-		if (routes) {
-			router.on(routes);
-		}
-
-		// initialize listener
-		router.init();
-
-		// navigate to initial uri
-		if (nav) {
-			router.nav(nav);
-		}
-
-		// assign router to object
-		return router;
 	}
 
 
@@ -2596,6 +2543,37 @@
 		return stream(mapper);
 	};
 
+	function curry (fn, arg, event) {
+		var
+		arr;
+
+		// convert arg to array if it's not one
+		if (!is(arg, __array)) {
+			arr = [arg];
+		}
+		else {
+			arr = arg;
+		}
+
+		// return a function that executes
+		// our passed function with the arguments passed
+		return function (e) {
+			// auto prevent default behaviour for events when
+			// event parameter is set
+			if (event) {
+				e.preventDefault();
+
+				// default to current arguments
+				// if args is a 0 length array of falsy value
+				if (!arr[__length] || !arg) {
+					arr = arguments;
+				}
+			}
+
+			return fn.apply(this, arr);
+		}
+	}
+
 
 	/* --------------------------------------------------------------
 	 * 
@@ -2609,6 +2587,7 @@
 		animate:      animate(),
 		request:      request(),
 		stream:       stream,
+		curry:        curry,
 
 		createRender: createRender,
 		createRouter: createRouter,

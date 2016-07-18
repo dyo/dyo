@@ -45,21 +45,11 @@ function Documentation () {
 		}
 	}
 
-	function onClick (self) {
-		return function (e) {
-			e.preventDefault();
-
-			var
-			element = e.currentTarget;
-			href    = element.getAttribute('href');
-
-			activateLink(self, href);
-		}
-	}
-
 	function activateLink (self, href) {
+		href   = href || this.getAttribute('href');
+
 		var
-		nav = [];
+		nav    = [];
 
 		self.props.nav.forEach(function (value) {
 			var
@@ -93,7 +83,7 @@ function Documentation () {
 						Content({html: rawMarkup()}),
 						TableOfContents({
 							nav: props.nav,
-							onClick: onClick(self)
+							onClick: dio.curry(activateLink, [self], true)
 						})
 					)
 		}
@@ -104,15 +94,12 @@ function Welcome () {
 	var 
 	rawMarkup = dio.stream('');
 
-	function onClick (e) {
-		e.preventDefault();
-
+	function handleClick (e) {
 		var
-		target = e.target,
-		href   = target.href ? target.getAttribute('href') : void 0;
-		
+		href = e.target.getAttribute('href');
+
 		if (href) {
-			router.nav(href);
+			router.nav(href.replace('.',''));
 		}
 	}
 
@@ -130,7 +117,7 @@ function Welcome () {
 		},
 		render: function () {
 			return h('.welcome', {
-				onClick: onClick,
+				onClick: dio.curry(handleClick, null, true),
 				dangerouslySetInnerHTML: rawMarkup()
 			});
 		}
@@ -141,9 +128,7 @@ var
 remarkable = new Remarkable();
 
 var
-router = dio.createRouter({
-	root: '/docs/layout',
-	routes: {
+router = dio.createRouter('/docs/layout', {
 		'/': function () {
 			dio.createRender(Welcome, '.container')({url: '../welcome.md'});
 		},
@@ -156,5 +141,6 @@ router = dio.createRouter({
 
 			dio.createRender(Documentation, '.container')({url: section});
 		}
-	}
-});
+	});
+
+document.querySelector('.logo a').addEventListener('click', dio.curry(router.nav, ['/'], true))
