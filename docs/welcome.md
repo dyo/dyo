@@ -1,14 +1,6 @@
-# Examples
+Dio is a lightweight (~6kb) Virtual DOM framework.
 
-hello [World](#)
-
-## Guide
-
-[Play on JSBIN](http://jsbin.com/hezuyu/embed?js,output)
-
-Something else
-
-> Lorem ipsum dolor sit amaet.
+[Install v0.1.0](/documentation "button")
 
 ```
 function main () {
@@ -23,4 +15,3 @@ var
 render = dio.createRender(main, "body");
 render({value: "Hello World"})
 ```
-

@@ -1,49 +1,49 @@
-function Header () {
-	var
-	header = dio.stream();
-
-	return {
-		componentWillMount: function (props) {
-			var
-			self = this;
-
-			dio.request.get(props.url)
-				.then(header)
-				.then(function(){
-					self.forceUpdate();
-				});
-		},
-		render: function () {
-			return h('div', {dangerouslySetInnerHTML: header() })
-		}
-	}
+function Content (props) {
+	return h('div.content', {dangerouslySetInnerHTML: props.html});
 }
 
-function Content () {
+function TableOfContents (props) {
+	return h('.table-of-contents',
+				h('ul', 
+					props.nav.map(function (value) {
+						return h('li', 
+									h('a[href='+ value.href +']', 
+										{
+											class: value.active ? 'active' : '',
+											onClick: props.onClick
+										},
+										value.text
+									)
+								)
+					})
+				)
+			)
+}
+
+function Documentation () {
 	var 
 	markdown   = dio.stream(),
 	remarkable = window.Remarkable ? new Remarkable() : function () {}
 
 	function rawMarkup () {
-		document.querySelector('.content').innerHTML = remarkable.render(markdown());
-		highlighter('pre code');
+		return remarkable.render(markdown());
 	}
 
-	return {
-		componentWillReceiveProps: function (props) {
-			dio.request.get(props.page)
-				.then(markdown)
-				.then(rawMarkup);
-		},
-		render: function () {
-			return h('div', {dangerouslySetInnerHTML: rawMarkup() })
+	function getDocument (url, callback) {
+		dio.request.get(url)
+			.then(markdown)
+			.then(callback);
+	}
+
+	function update (self) {
+		return function () {
+			self.forceUpdate();
+			highlighter();
 		}
 	}
-}
 
-function TableOfContents () {
-	return {
-		onClick: function (e) {
+	function onClick (self) {
+		return function (e) {
 			e.preventDefault();
 
 			var
@@ -51,45 +51,96 @@ function TableOfContents () {
 			href    = element.getAttribute('href'),
 			nav     = [];
 
-			this.props.nav.forEach(function (value) {
+			self.props.nav.forEach(function (value) {
 				var
 				item = Object.assign({}, value, {active: value.href !== href ? false : true});
 				nav.push(item);
 			});
 
-			this.setProps({nav: nav});
-			this.forceUpdate();
-			ContentRender({page: href});
+			self.setProps({nav: nav});
+			self.forceUpdate();
+			getDocument(href, update(self));
+		}
+	}
+
+	return {
+		getDefaultProps: function () {
+			return {
+				nav: [
+					{text: 'Installation', href: '../installation.md', active: true},
+					{text: 'Getting Started', href: '../getting-started.md'},
+					{text: 'Examples', href: '../examples.md'},
+					{text: 'API Reference', href: '../api.md'}
+				]
+			}
+		},
+		componentWillReceiveProps: function (props) {
+			getDocument(props.page, update(this));
 		},
 		render: function (props, _, self) {
-			return h('ul',
-						props.nav.map(function (value) {
-							return h('li', 
-								h('a[href='+ value.href +']', 
-									{
-										class: value.active ? 'active' : '',
-										onClick: self.onClick
-									},
-									value.text
-								)
-							)
+			return h('.documentation',
+						Content({html: rawMarkup()}),
+						TableOfContents({
+							nav: props.nav,
+							onClick: onClick(self)
 						})
 					)
 		}
 	}
 }
 
-var
-HeaderElement          = document.querySelector('.header'),
-ContentElement         = document.querySelector('.content'),
-TableOfContentsElement = document.querySelector('.table-of-contents');
+function Welcome () {
+	var 
+	rawMarkup = dio.stream('');
 
-var
-HeaderRender = dio.createRender(Header, HeaderElement);
+	function onClick (e) {
+		e.preventDefault();
 
-if (ContentElement && TableOfContentsElement) {
-	ContentRender         = dio.createRender(Content, ContentElement);
-	TableOfContentsRender = dio.createRender(TableOfContents, TableOfContentsElement);
+		var
+		target = e.target,
+		href   = target.href ? target.getAttribute('href') : void 0;
+		
+		if (href) {
+			router.nav(href);
+		}
+	}
+
+	return {
+		componentDidMount: function (_, _, self) {
+			console.log(arguments)
+			dio.request.get('../welcome.md')
+				.then(rawMarkup)
+				.then(function () {
+					rawMarkup(remarkable.render(rawMarkup()))
+					self.forceUpdate();
+				});
+		},
+		componentDidUpdate: function () {
+			highlighter();
+		},
+		render: function () {
+			return h('.welcome', {
+				onClick: onClick,
+				dangerouslySetInnerHTML: rawMarkup()
+			});
+		}
+	}
 }
 
-HeaderRender({url: 'header.txt'});
+
+var
+remarkable = new Remarkable();
+
+var
+router = dio.createRouter({
+	mount: '.app',
+	root: '/docs/layout',
+	routes: {
+		'/': function () {
+			dio.createRender(Welcome, '.container')();
+		},
+		'/documentation': function () {
+			dio.createRender(Documentation, '.container')({page: '../installation.md'});
+		}
+	}
+});

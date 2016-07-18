@@ -705,7 +705,6 @@
 				node.props[__dangerouslySetInnerHTML]
 			) {
 				el.innerHTML = node.props[__dangerouslySetInnerHTML];
-				return el;
 			}
 			
 			// only map children arrays
@@ -2041,29 +2040,34 @@
 	// set internal props & state
 	Comp[__prototype] = {
 		// i.e this.setState({})
-		setState: function (obj) {
+		setState: function (obj, self) {
+			self = self || this;
+
 			// set state
 			// if the state is changed
 			// setState will return true
-			if (setState(this, obj)) {
+			if (setState(self, obj)) {
 				// update render
-				this.forceUpdate();
+				self.forceUpdate();
 			}
 		},
 		// i.e this.setProps({})
-		setProps: function (obj) {
-			setProps(this, obj);
+		setProps: function (obj, self) {
+			self = self || this;
+
+			setProps(self, obj);
 		},
 		// force update public method
-		forceUpdate: function () {
+		forceUpdate: function (self) {
+			self = self || this;
+
 			// update only if this component is a render instance
-			if (this['render()']) {
-				this['render()']();
+			if (self['render()']) {
+				self['render()']();
 			}
 		},
-		withAttr: function (props, setters, callback) {
-			var
-			self = this;
+		withAttr: function (props, setters, callback, self) {
+			self = self || this;
 
 			if (!is(callback, __function)) {
 				callback = function () {

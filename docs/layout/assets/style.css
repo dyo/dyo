@@ -9,12 +9,20 @@ body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
-.wrap { 
+.wrap{ 
 	max-width: 400px; 
 	width: 100%;
 	margin: 0 auto;
 	padding:0 20px;
 }
+
+.container > div > *:not(pre):not(div) { 
+	max-width: 400px; 
+	width: 100%;
+	margin: 0 auto;
+	padding:0 20px;
+}
+
 .header { 
 	padding-top: 40px;
 	padding-bottom: 30px;
@@ -38,22 +46,27 @@ a {
 	font-size: 19px;
 	text-decoration: none;
 }
+a[title=github] {
+	font-weight: bold;
+}
 
 p {
 	font-size: 19px;
 	color: #535353;
 	line-height: 38px;
 }
-.btn {
+
+a[title=button] {
 	background:rgb(52,46,33);
 	box-shadow:0px 1px 0px rgba(0,0,0,0.2);
 	color: #FFF;
 	font-size: 16px;
-	padding: 16px 24px;
+	padding: 8px 24px;
 	margin: 20px 0 40px 0;
 	display: inline-block;
 	font-weight: bold;
 }
+
 pre {
 	padding: 0 20px;
 	position: relative;
@@ -70,7 +83,6 @@ pre code {
 	padding: 36px 30px;
 	overflow: auto;
 }
-
 
 h1 {
 	font-size: 38px;

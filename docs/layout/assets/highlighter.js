@@ -47,6 +47,7 @@ function highlighter (selector) {
     }
 
     var 
+    selector  = selector || 'pre code',
     comments  = 'comment',
     keys      = 'key',
     newline   = 'newline',
