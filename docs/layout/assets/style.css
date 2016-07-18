@@ -1,0 +1,145 @@
+* {
+	box-sizing: border-box; 
+	margin: 0; 
+	padding: 0;
+}
+body {
+	background: #F8F5F2;
+	font-family: 'Helvetica Neue', sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+.wrap { 
+	max-width: 400px; 
+	width: 100%;
+	margin: 0 auto;
+	padding:0 20px;
+}
+.header { 
+	padding-top: 40px;
+	padding-bottom: 30px;
+	min-height: 203px; 
+}
+.logo {
+	margin-bottom: 40px;
+	display: block;
+}
+.nav {
+	font-weight: bold;
+}
+.nav li {
+	display: inline-block;
+}
+.nav li:not(:last-child) a {
+	margin-right: 16px;
+}
+a {
+	color: #332E22;
+	font-size: 19px;
+	text-decoration: none;
+}
+
+p {
+	font-size: 19px;
+	color: #535353;
+	line-height: 38px;
+}
+.btn {
+	background:rgb(52,46,33);
+	box-shadow:0px 1px 0px rgba(0,0,0,0.2);
+	color: #FFF;
+	font-size: 16px;
+	padding: 16px 24px;
+	margin: 20px 0 40px 0;
+	display: inline-block;
+	font-weight: bold;
+}
+pre {
+	padding: 0 20px;
+	position: relative;
+	max-width: 580px;
+	display: block;
+	margin: 0 auto;
+	margin-bottom: 20px;
+}
+pre code {
+	display: block;
+	box-shadow:0px 1px 4px rgba(216,211,206,0.3);
+	border: 1px solid rgba(217,211,205,0.6);
+	background: #FFF;
+	padding: 36px 30px;
+	overflow: auto;
+}
+
+
+h1 {
+	font-size: 38px;
+	margin-bottom: 34px;
+}
+h2, h3 {
+	font-size: 28px;
+	margin-bottom: 20px;
+}
+.content {
+	padding-left: 220px;
+	padding-right: 20px;
+	margin: 0 auto;
+    max-width: 800px;
+    padding-bottom: 80px;
+}
+.content ul {
+    padding: 0;
+    list-style-position: inside;
+}
+.content ul li {
+    margin-bottom: 10px;
+}
+.content p {
+	margin-top: 30px;
+	margin-bottom: 30px;
+	line-height: 26px;
+}
+.content a {
+	text-decoration: underline;
+	font-weight: normal;
+	font-size: inherit;
+	color: #E1574E;
+}
+.content blockquote {
+	margin: 30px 0;
+	padding-left: 20px;
+	border-left: 4px solid #535353;
+}
+.content pre {
+	padding: 0;
+}
+
+.table-of-contents {
+	position: fixed;
+	top: 208px;
+	left: 40px;
+}
+.table-of-contents li {
+	display: block;
+}
+.table-of-contents a {
+	display: block;
+	position: relative;
+	font-size: 19px;
+	line-height: 30px;
+	text-decoration: none;
+	transition: color .1s ease-in-out;
+}
+.table-of-contents a.active {
+    text-decoration: line-through;
+}
+
+@media (max-width: 620px) {
+	.table-of-contents {
+	    display: none;
+	}
+	.content {
+		margin: 0 auto;
+		padding-left: 20px;
+	}
+}

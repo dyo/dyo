@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<meta name="description" content="Dio is a lightweight (~6kb) Virtual DOM framework.">
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width">
-	<title>Dio.js</title>
-	<link rel="stylesheet" href="style.css">
-</head>
-<body>
-	<div class="wrap">
-		<div class="logo">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82 64" version="1.1" xml:space="preserve" x="0px" y="0px" width="82px" height="64px" background-color="#ffffff00"><defs><linearGradient id="gradient1" x1="50%" y1="0%" x2="50%" y2="100%"><stop stop-color="#e1564e" stop-opacity="1" offset="0%"/><stop stop-color="#ef8f5a" stop-opacity="1" offset="100%"/></linearGradient></defs><g id="Layer%201"><path d="M65.4726 64C67.491 64 69.8271 62.5201 70.6906 60.6944L80.385 40.1963C82.5436 35.6322 82.5376 28.2353 80.3715 23.6747L70.6959 3.303C69.8295 1.4788 67.491 0 65.4726 0L63.8536 0C61.8353 0 59.4991 1.48 58.6357 3.3056L48.9413 23.8037C46.7827 28.3678 46.7887 35.7647 48.9547 40.3253L58.6303 60.6969C59.4968 62.5212 61.8353 64 63.8536 64L65.4726 64ZM30.8936 10.1846L37.0332 23.5083C39.1613 29.1812 39.1658 34.723 37.0432 40.3979L30.883 53.8112C28.6371 59.4384 31.725 64 37.7801 64L44.2198 64C50.275 64 53.3629 59.4384 51.117 53.8112L44.9568 40.3979C42.8342 34.723 42.8387 29.1812 44.9668 23.5083L51.1064 10.1846C53.3581 4.5597 50.275 0 44.2198 0L37.7801 0C31.725 0 28.6419 4.5597 30.8936 10.1846ZM0.7437 10.1846L9.2109 28.6281C10.0535 30.4634 10.0553 33.4399 9.2149 35.2763L0.733 53.8112C-1.5128 59.4384 1.5751 64 7.6302 64L14.5738 64C18.6106 64 23.2828 61.0401 25.0096 57.3888L33.1407 40.1963C35.2993 35.6322 35.2933 28.2353 33.1272 23.6747L25.0205 6.6061C23.2876 2.9576 18.6106 0 14.5738 0L7.6302 0C1.5751 0-1.508 4.5597 0.7437 10.1846Z" fill="url(#gradient1)"/></g></svg>
+	<head>
+		<meta name="description" content="Dio is a lightweight (~6kb) Virtual DOM framework.">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
+		<title>Dio.js</title>
+		<link rel="stylesheet" href="assets/style.css">
+		<script src="../../dio.js"></script>
+	</head>
+	<body>
+		<div class="header"></div>
+
+		<div class="wrap">
+			<p>Dio is a lightweight (~6kb) Virtual DOM framework.</p>
+			<a class="btn" href="documentation.html">Install v0.1.0</a>
 		</div>
-		</div>
-	
-	<div class="wrap">
-	  <div class="nav">
-	    <ul>
-	      <li><a href="https://github.com/thysultan/dio.js">Github</a></li>
-	    </ul>
-	  </div>
-	  <p>Dio is a lightweight (~6kb) 
-Virtual DOM framework.</p>
-	  <a href="https://raw.githubusercontent.com/thysultan/dio.js/master/dio.min.js">Install v0.1.0</a>
-	</div>
-<pre><code><span class="key">function</span> main () {
-    <span class="key">return</span> {
-        render: <span class="key">function</span> (props) {
-	    <span class="key">return</span> h(<span class="string">'h1'</span>, props.value)
-        }
-    }
+
+<pre>
+<code>
+function main () {
+	return {
+		render: function (props) {
+			return h('h1', props.value)
+		}
+	}
 }
 
-<span class="key">var</span>
-render = dio.createRender(main, <span class="string">"body"</span>);
-render({value: <span class="string">"Hello World"</span>})</code></pre>
-</body>
+var
+render = dio.createRender(main, "body");
+render({value: "Hello World"})
+</code>
+</pre>
+		<script src="../../dio.js"></script>
+		<script src="assets/highlighter.js"></script>
+		<script src="assets/app.js"></script>
+		<script>
+			highlighter('pre code');
+		</script>
+	</body>
 </html>

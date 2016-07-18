@@ -596,7 +596,7 @@
 		// add element to the end
 		function appendChild (parent, nextNode, newNode) {
 			if (nextNode) {
-				lifecycle(newNode, __componentWillMount);
+				lifecycle(newNode, __componentWillMount, __true, __true);
 				parent.appendChild(nextNode);
 				lifecycle(newNode, __componentDidMount, nextNode);
 			}
@@ -605,7 +605,7 @@
 		// add element at the beginning
 		function prependChild (parent, nextNode, beforeNode, newNode) {
 			if (nextNode) {
-				lifecycle(newNode, __componentWillMount);			
+				lifecycle(newNode, __componentWillMount, __true, __true);			
 				parent.insertBefore(nextNode, beforeNode);
 				lifecycle(newNode, __componentDidMount, nextNode);
 			}
@@ -614,9 +614,9 @@
 		// replace element
 		function replaceChild (parent, nextNode, prevNode, newNode) {
 			if (nextNode && prevNode) {	
-				lifecycle(newNode, __componentWillUpdate);
+				lifecycle(newNode, __componentWillUpdate, __true, __true);
 				parent.replaceChild(nextNode, prevNode);
-				lifecycle(newNode, __componentDidUpdate);
+				lifecycle(newNode, __componentDidUpdate, __true, __true);
 			}
 		}
 
@@ -1221,9 +1221,11 @@
 
 				// run callback after duration of transition
 				// has elapsed
-				__setTimeout(function () {
-					callback(element);
-				}, duration);
+				if (callback) {
+					__setTimeout(function () {
+						callback(element);
+					}, duration);
+				}
 			}
 		}
 
@@ -1977,8 +1979,6 @@
 			}
 		});
 
-		console.log(component)
-
 		// has parent to mount to
 		if (element && component) {
 			// determine if the component is stateless
@@ -2079,7 +2079,8 @@
 	// create component
 	function comp (arg) {
 		var 
-		obj;
+		obj,
+		errorMessage = 'could not identify the hyperscript object or render() method';
 
 		// invalid component if the component is an object
 		// without a render method
@@ -2091,9 +2092,9 @@
 			obj = arg();
 
 			if (!obj) {
-				throw 'stateless components should should return a hyperscript object or render() method'
+				throw errorMessage
 			}
-			else if (obj.render) {
+			else if (!obj.render) {
 				arg.stateless = __true
 				return arg;
 			}
@@ -2135,6 +2136,10 @@
 			var 
 			self = this;
 
+			if (!obj) {
+				throw errorMessage;
+			}
+
 			self.type     = obj.type,
 			self.props    = obj.props,
 			self.children = obj.children;
@@ -2168,7 +2173,7 @@
 
 			// publish componentWillReceiveProps lifecycle
 			if (props) {
-				lifecycle(component, __componentWillReceiveProps, __true, __undefined, __true);
+				lifecycle(component, __componentWillReceiveProps, props, __true, __true);
 				// set props
 				setProps(component, props);
 			}
