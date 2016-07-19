@@ -84,6 +84,7 @@
 	__boolean                   = Boolean,
 	__string                    = String,
 	__XMLHttpRequest            = XMLHttpRequest,
+	__RegExp                    = RegExp,
 	__encodeURIComponent        = encodeURIComponent,
 	__setTimeout                = __window.setTimeout;
 
@@ -1385,215 +1386,6 @@
 
 
 	/**
-	 * DOM interface, creates html hyperscript functions to the global scope
-	 * such that h('div', {}, 'Text') written as div({}, 'Text')
-	 */
-	function exposeDOM () {
-		function expose (elements) {
-			each(elements, function (name) {
-				__window[name] = function Element () {
-					// convert args to array
-					var 
-					args = toArray(arguments),
-					first = args[0];
-
-					// i.e div('#id', {}, 'Children')
-					if (
-						is(first, __string) &&
-						(
-							first.substr(0,1) === '#' ||
-							first.substr(0,1) === '.' ||
-							first.substr(0,1) === '['
-						)
-					) {
-						// name will now = 'div#id'
-						name += first;
-						args.shift(first)
-					}
-					// add name as first arg
-					// which represents the tag in hyperscript
-					args.unshift(name);
-
-					return h.apply(null, args)
-				}
-			})
-		}
-
-		var
-		args = arguments;
-
-		// expose just a specific few
-		if (args[__length]) {
-			expose(toArray(args));
-		}
-		// expose all elements
-		else {
-			expose(['doctype','a','abbr','address','area','article','aside',
-			'audio','b','base','bdi','bdo','blockquote','body','br','button',
-			'canvas','caption','cite','code','col','colgroup','command',
-			'datalist','dd','del','details','dfn','div','dl','dt','em','embed',
-			'fieldset','figcaption','figure','footer','form','h1','h2','h3',
-			'h4','h5','h6','head','header','hgroup','hr','html','i','iframe',
-			'img','input','ins', 'kbd','keygen','label','legend','li','link',
-			'map','mark','menu','meta','meter','nav','noscript','object','ol',
-			'optgroup','option','output','p','param','pre','progress','q','rp',
-			'rt','ruby','s','samp','script','section','select','small','source',
-			'span','strong','style','sub','summary','sup','table','tbody','td',
-			'textarea','tfoot','th','thead','time','title',
-			'tr','track','u','ul','var','video','wbr']);
-		}
-	}
-
-
-	/**
-	 * router interface
-	 * @param {Object}
-	 * @example
-	 * router({
-	 * 		root: '/example',
-	 * 		nav: '/user/id'
-	 * 		routes: {
-	 * 			'/:page/:name': () => {}
-	 * 		}
-	 * })
-	 */
-	function createRouter (root, routes) {
-		var
-		interval,
-		currentUrl,
-		root;
-
-		/**
-		 * listens for changes to the url
-		 */
-		function startListening () {
-			// clear the interval if it's already set
-			clearInterval(interval);
-
-			// start listening for a change in the url
-			interval = setInterval(function () {
-				var 
-				pathname = __window.location.pathname;
-
-				// if our store of the current url does not 
-				// equal the url of the browser, something has changed
-				if (currentUrl !== pathname) {
-					// update the currentUrl
-					currentUrl = pathname;
-					// trigger a routeChange
-					triggerRouteChange();
-				}
-			}, 50);
-		}
-
-		/**
-		 * register routes
-		 */
-		function registerRoutes () {
-			// assign routes
-			each(routes, function (value, name) {
-				// where we store the variables
-				// i.e in /:user/:id - user, id are variables
-				var 
-				vars = [],
-				regex     = /([:*])(\w+)|([\*])/g,
-
-				// given the following /:user/:id/*
-				pattern = name.replace(regex, function () {
-							var 
-							// 'user', 'id', undefned
-							args = arguments,
-							id   = args[2];
-
-							// if not a variable 
-							if (!id) {
-								return '(?:.*)'
-							}
-							// capture
-							else {
-								vars.push(id)
-								return '([^\/]+)'
-							}
-						}),
-
-				pattern      = pattern + '$';
-				routes[name] = [value, root ? root + pattern : pattern, vars]
-			})
-		}
-
-		/**
-		 * called when the listener detects a route change
-		 */
-		function triggerRouteChange () {
-			each(routes, function (val) {
-				var 
-				callback = val[0],
-				pattern  = val[1],
-				vars     = val[2],
-				match;
-
-				// exec pattern on url
-				match    = currentUrl.match(new RegExp(pattern));
-
-				// we have a match
-				if (match) {
-					// create params object to pass to callback
-					// i.e {user: "simple", id: "1234"}
-					var 
-					data = match
-						// remove the first(url) value in the array
-						.slice(1, match[__length])
-						.reduce(function (data, val, i) {
-							if (!data) {
-								data = {}
-							}
-							// var name: value
-							// i.e user: 'simple'
-							data[vars[i]] = val
-
-							return data
-						}, __null);
-
-					// callback is a function, exec
-					if (is(callback, __function)) {
-						// component function
-						callback(data, currentUrl);
-					}
-					// can't process
-					else {
-						throw 'could not find render method';
-					}
-				}
-			})
-		}
-
-		registerRoutes();
-		startListening();
-		
-		return {
-			// history back
-			back: function () {
-				history.back();
-			},
-			// history foward
-			foward: function () {
-				history.foward();
-			},
-			// history go
-			go: function (index) {
-				history.go(index);
-			},
-			// navigate to a view
-			nav: function (url) {
-				url  = root ? root + url : url;
-
-				history.pushState(__undefined, __undefined, url);
-			}
-		}
-	}
-
-
-	/**
 	 * request interface
 	 */
 	function request () {
@@ -1839,6 +1631,319 @@
 		};
 	}
 
+
+	/**
+	 * DOM interface, creates html hyperscript functions to the global scope
+	 * such that h('div', {}, 'Text') written as div({}, 'Text')
+	 */
+	function exposeDOM () {
+		function expose (elements) {
+			each(elements, function (name) {
+				__window[name] = function Element () {
+					// convert args to array
+					var 
+					args = toArray(arguments),
+					first = args[0];
+
+					// i.e div('#id', {}, 'Children')
+					if (
+						is(first, __string) &&
+						(
+							first.substr(0,1) === '#' ||
+							first.substr(0,1) === '.' ||
+							first.substr(0,1) === '['
+						)
+					) {
+						// name will now = 'div#id'
+						name += first;
+						args.shift(first)
+					}
+					// add name as first arg
+					// which represents the tag in hyperscript
+					args.unshift(name);
+
+					return h.apply(null, args)
+				}
+			})
+		}
+
+		var
+		args = arguments;
+
+		// expose just a specific few
+		if (args[__length]) {
+			expose(toArray(args));
+		}
+		// expose all elements
+		else {
+			expose(['doctype','a','abbr','address','area','article','aside',
+			'audio','b','base','bdi','bdo','blockquote','body','br','button',
+			'canvas','caption','cite','code','col','colgroup','command',
+			'datalist','dd','del','details','dfn','div','dl','dt','em','embed',
+			'fieldset','figcaption','figure','footer','form','h1','h2','h3',
+			'h4','h5','h6','head','header','hgroup','hr','html','i','iframe',
+			'img','input','ins', 'kbd','keygen','label','legend','li','link',
+			'map','mark','menu','meta','meter','nav','noscript','object','ol',
+			'optgroup','option','output','p','param','pre','progress','q','rp',
+			'rt','ruby','s','samp','script','section','select','small','source',
+			'span','strong','style','sub','summary','sup','table','tbody','td',
+			'textarea','tfoot','th','thead','time','title',
+			'tr','track','u','ul','var','video','wbr']);
+		}
+	}
+
+
+	/**
+	 * store interface
+	 * @param  {[type]} reducer [description]
+	 * @param {Number} range - timetravel/undo range
+ 	 * @return {Object} {connect, dispatch, getState, subscribe, timetravel}
+	 */
+	function createStore (reducer) {
+		// if the reducer is an object of reducers (multiple)
+		// lets combine the reducers
+		if (is(reducer, __object)) {
+			return create(combine(reducer));
+		}
+		// single reducer
+		else {
+			return create(reducer);
+		}
+
+		// combine reducers
+		function combine (reducers) {
+			return function (state, action) {
+				state = state || {};
+
+				return __object.keys(reducers).reduce(function (nextState, key) {
+					nextState[key] = reducers[key](state[key], action);
+
+					return nextState;
+				}, {});
+			}
+		}
+
+		// create store
+		function create (reducer) {
+			var
+			state,
+			listeners = [];
+
+			// return the state
+			function getState () {
+				return state;
+			}
+
+			// dispatch an action
+			function dispatch (action, timetravel) {
+				// there are no actions when we are time traveling
+				if (!is(action, __object)) {
+					throw 'action must be a plain object';
+				}
+				if (action.type === __undefined) {
+					throw 'actions must have a type';
+				}
+
+				// get state from reducer
+				state = reducer(state, action);
+
+				// dispatch to all listeners
+				each(listeners, function (listener) {
+					return listener(state);
+				})
+			}
+
+			// subscribe to a store
+			function subscribe (listener) {
+				if (!is(listener, __function)) {
+			  		throw 'listener should be a function';
+				}
+
+				listeners.push(listener);
+
+				// return a unsubscribe function that we can 
+				// use to unsubscribe as follows: i.e
+				// var sub = store.subscribe()
+				// sub() // un-subscribes
+				return function unsubscribe () {
+					listener = listeners.filter(function (l) {
+						return l !== listener;
+					});
+				}
+			}
+
+			// auto subscribe a component to a store
+			function connect (render, element) {
+				render(getState());
+
+				subscribe(function () {
+					render(getState());
+				});
+			}
+
+			// dispath initial action
+			dispatch({type: storeSignature});
+
+			return {
+				getState: getState, 
+				dispatch: dispatch, 
+				subscribe: subscribe,
+				connect: connect
+			};
+		}
+	}
+
+
+	/**
+	 * router interface
+	 * @param {Object} routes
+	 * @param {String} rootAddress 
+	 * @param {String} onInitNavigateTo
+	 * @example
+	 * router({
+	 * 		'/:page/:name': () => {}
+	 * }, '/example', '/user/id')
+	 */
+	function createRouter () {
+		function router (routes, rootAddress, onInitNavigateTo) {
+			/**
+			 * listens for changes to the url
+			 */
+			function startListening () {
+				// clear the interval if it's already set
+				clearInterval(interval);
+
+				// start listening for a change in the url
+				interval = setInterval(function () {
+					var 
+					path = __window.location.pathname;
+
+					// if our store of the current url does not 
+					// equal the url of the browser, something has changed
+					if (currentPath !== path) {
+						// update the currentPath
+						currentPath = path;
+						// trigger a routeChange
+						triggerRouteChange();
+					}
+				}, 50);
+			}
+
+			/**
+			 * register routes
+			 */
+			function registerRoutes () {
+				// assign routes
+				each(routes, function (value, name) {
+					// where we store the variables
+					// i.e in /:user/:id - user, id are variables
+					var 
+					vars = [],
+					regex     = /([:*])(\w+)|([\*])/g,
+
+					// given the following /:user/:id/*
+					pattern = name.replace(regex, function () {
+								var 
+								// 'user', 'id', undefned
+								args = arguments,
+								id   = args[2];
+
+								// if not a variable 
+								if (!id) {
+									return '(?:.*)'
+								}
+								// capture
+								else {
+									vars.push(id)
+									return '([^\/]+)'
+								}
+							}),
+
+					pattern      = pattern + '$';
+					routes[name] = [value, rootAddress ? rootAddress + pattern : pattern, vars]
+				})
+			}
+
+			/**
+			 * called when the listener detects a route change
+			 */
+			function triggerRouteChange () {
+				each(routes, function (val) {
+					var 
+					callback = val[0],
+					pattern  = val[1],
+					vars     = val[2],
+					match;
+
+					// exec pattern on url
+					match    = currentPath.match(new __RegExp(pattern));
+
+					// we have a match
+					if (match) {
+						// create params object to pass to callback
+						// i.e {user: "simple", id: "1234"}
+						var 
+						data = match
+							// remove the first(url) value in the array
+							.slice(1, match[__length])
+							.reduce(function (data, val, i) {
+								if (!data) {
+									data = {}
+								}
+								// var name: value
+								// i.e user: 'simple'
+								data[vars[i]] = val
+
+								return data
+							}, __null);
+
+						// callback is a function, exec
+						if (is(callback, __function)) {
+							// component function
+							callback(data);
+						}
+					}
+				})
+			}
+
+			/**
+			 * navigate to path
+			 */
+			function navigateToPath (path) {
+				if (rootAddress) {
+					path = rootAddress + path;
+				}
+
+				history.pushState(__undefined, __undefined, path);
+			}
+
+			var
+			currentPath,
+			interval;
+
+			registerRoutes();
+			startListening();
+
+			if (onInitNavigateTo) {
+				navigateToPath(onInitNavigateTo);
+			}
+
+			return {
+				// navigate to a view
+				nav: navigateToPath,
+				// history back
+				back: history.back,
+				// history foward
+				foward: history.foward,
+				// history go
+				go: history.go
+			};
+		}
+
+		return router.apply(__undefined, toArray(arguments));
+	}
+
+
 	/**
 	 * creates a render interface
 	 * @return {Function}
@@ -1894,6 +1999,30 @@
 			}
 		}
 
+		// return function that runs update/mount when executed
+		function render (props, children, forceUpdate) {
+			// don't render to dom, if vdom is requested
+			if (forceUpdate === 'vnode') {
+				return component(props, children);
+			}
+			else if (forceUpdate === 'html') {
+				return vdomToHTML(component(props, children));
+			}
+			
+
+			// initial render
+			if (initial || forceUpdate) {
+				// mount and publish that the initial render has taken place
+				mount(props, children);
+			}
+			// updates
+			else {
+				update(props, children);
+			}
+
+			return render;
+		}
+
 		var
 		component,
 		newNode,
@@ -1908,7 +2037,7 @@
 		each(args, function (value) {
 			// component (function) / (object)
 			if (is(value, __function) || is(value, __object)) {
-				component = comp(value);
+				component = createComponent(value);
 			}
 			// element
 			else if (value.nodeType) {
@@ -1932,29 +2061,7 @@
 				internal = component(__undefined, __undefined, __true);
 			}
 
-			// return function that runs update/mount when executed
-			return function (props, children, forceUpdate) {
-				// don't render to dom, if vdom is requested
-				if (forceUpdate === 'vnode') {
-					return component(props, children);
-				}
-				else if (forceUpdate === 'html') {
-					return vdomToHTML(component(props, children));
-				}
-				
-
-				// initial render
-				if (initial || forceUpdate) {
-					// mount and publish that the initial render has taken place
-					mount(props, children);
-				}
-				// updates
-				else {
-					update(props, children);
-				}
-
-				return newNode;
-			}
+			return render;
 		}
 		// can't find element to mount to
 		// or can't find a component
@@ -1970,60 +2077,11 @@
 
 
 	/**
-	 * component interface
+	 * creates a component
+	 * @param  {Function|Object} arg - component
+	 * @return {Function}
 	 */
-	function Comp () {
-		// immutable internal props & state
-		this.props = {},
-		this.state = {};
-	}
-
-
-	// set internal props & state
-	Comp[__prototype] = {
-		// i.e this.setState({})
-		setState: function (obj, self) {
-			self = self || this;
-
-			// set state
-			// if the state is changed
-			// setState will return true
-			if (setState(self, obj)) {
-				// update render
-				self.forceUpdate();
-			}
-		},
-		// i.e this.setProps({})
-		setProps: function (obj, self) {
-			self = self || this;
-
-			setProps(self, obj);
-		},
-		// force update public method
-		forceUpdate: function (self) {
-			self = self || this;
-
-			// update only if this component is a render instance
-			if (self['render()']) {
-				self['render()']();
-			}
-		},
-		withAttr: function (props, setters, callback, self) {
-			self = self || this;
-
-			if (!is(callback, __function)) {
-				callback = function () {
-					self.forceUpdate.call(self);
-				}
-			}
-
-			return withAttr(props, setters, callback.bind(self))
-		}
-	}
-
-
-	// create component
-	function comp (arg) {
+	function createComponent (arg) {
 		var 
 		obj,
 		errorMessage = 'could not identify the hyperscript object or render() method';
@@ -2055,7 +2113,7 @@
 		// 
 		// create new component object
 		var 
-		component = new Comp;
+		component = new componentClass;
 
 		// add the properties to the component instance
 		// also bind functions to the component scope
@@ -2127,6 +2185,60 @@
 			// expose the components internals
 			// when requested
 			return internal ? component : component.render();
+		}
+	}
+
+
+	/**
+	 * component interface
+	 */
+	function componentClass () {
+		// immutable internal props & state
+		this.props = {},
+		this.state = {};
+	}
+
+	/**
+	 * component interface methods
+	 */
+	componentClass[__prototype] = {
+		// i.e this.setState({})
+		setState: function (obj, self) {
+			self = self || this;
+
+			// set state
+			// if the state is changed
+			// setState will return true
+			if (setState(self, obj)) {
+				// update render
+				self.forceUpdate();
+			}
+		},
+		// i.e this.setProps({})
+		setProps: function (obj, self) {
+			self = self || this;
+
+			setProps(self, obj);
+		},
+		// force update public method
+		forceUpdate: function (self) {
+			self = self || this;
+
+			// update only if this component is a render instance
+			if (self['render()']) {
+				self['render()']();
+			}
+		},
+		withAttr: function (props, setters, callback, self) {
+			self = self || this;
+
+			if (!is(callback, __function)) {
+				callback = function () {
+					self.forceUpdate.call(self);
+				}
+			}
+
+			return withAttr(props, setters, callback.bind(self))
 		}
 	}
 
@@ -2228,107 +2340,6 @@
 			if (callback) {
 				callback()
 			}
-		}
-	}
-
-
-	/**
-	 * store interface
-	 * @param  {[type]} reducer [description]
-	 * @param {Number} range - timetravel/undo range
- 	 * @return {Object} {connect, dispatch, getState, subscribe, timetravel}
-	 */
-	function createStore (reducer) {
-		// if the reducer is an object of reducers (multiple)
-		// lets combine the reducers
-		if (is(reducer, __object)) {
-			return create(combine(reducer));
-		}
-		// single reducer
-		else {
-			return create(reducer);
-		}
-
-		// combine reducers
-		function combine (reducers) {
-			return function (state, action) {
-				state = state || {};
-
-				return __object.keys(reducers).reduce(function (nextState, key) {
-					nextState[key] = reducers[key](state[key], action);
-
-					return nextState;
-				}, {});
-			}
-		}
-
-		// create store
-		function create (reducer) {
-			var
-			state,
-			listeners = [];
-
-			// return the state
-			function getState () {
-				return state;
-			}
-
-			// dispatch an action
-			function dispatch (action, timetravel) {
-				// there are no actions when we are time traveling
-				if (!is(action, __object)) {
-					throw 'action must be plain object';
-				}
-				if (action.type === __undefined) {
-					throw 'actions must have a type';
-				}
-
-				// get state from reducer
-				state = reducer(state, action);
-
-				// dispatch to all listeners
-				each(listeners, function (listener) {
-					return listener(state);
-				})
-			}
-
-			// subscribe to a store
-			function subscribe (listener) {
-				if (!is(listener, __function)) {
-			  		throw 'listener should be a function';
-				}
-
-				listeners.push(listener);
-
-				// return a unsubscribe function that we can 
-				// use to unsubscribe as follows: i.e
-				// var sub = store.subscribe()
-				// sub() // un-subscribes
-				return function unsubscribe () {
-					listener = listeners.filter(function (l) {
-						return l !== listener;
-					});
-				}
-			}
-
-			// auto subscribe a component to a store
-			function connect (render, element) {
-				render(getState());
-
-				subscribe(function () {
-					render(getState());
-				});
-			}
-
-			// dispath initial action
-			dispatch({type: storeSignature});
-
-			return {
-				getState: getState, 
-				dispatch: dispatch, 
-				subscribe: subscribe,
-				connect: connect
-			};
 		}
 	}
 
@@ -2543,14 +2554,27 @@
 		return stream(mapper);
 	};
 
-	function curry (fn, arg, event) {
-		var
-		arr;
 
-		// convert arg to array if it's not one
-		if (!is(arg, __array)) {
+	/**
+	 * curry a function
+	 * @param  {Function} fn    function to curry
+	 * @param  {Any}      arg   arguments to pass to function
+	 * @param  {Boolean}  event auto preventDefault for events
+	 * @return {Function}       curried function
+	 */
+	function curry (fn, arg, preventDefault) {
+		var
+		arr = [];
+
+		// arg is preventDefault if it is a boolean type
+		if (is(arg, __boolean)) {
+			preventDefault = arg;
+		}
+		// otherwise convert arg to array if it's not one
+		else if (!is(arg, __array)) {
 			arr = [arg];
 		}
+		// args is already an array, use as is
 		else {
 			arr = arg;
 		}
@@ -2559,15 +2583,15 @@
 		// our passed function with the arguments passed
 		return function (e) {
 			// auto prevent default behaviour for events when
-			// event parameter is set
-			if (event) {
+			// preventDefault parameter is set
+			if (e && e.preventDefault && preventDefault) {
 				e.preventDefault();
+			}
 
-				// default to current arguments
-				// if args is a 0 length array of falsy value
-				if (!arr[__length] || !arg) {
-					arr = arguments;
-				}
+			// default to current arguments
+			// if args is a 0 length array of falsy value
+			if (!arr[__length] || !arg) {
+				arr = arguments;
 			}
 
 			return fn.apply(this, arr);
@@ -2592,6 +2616,7 @@
 		createRender: createRender,
 		createRouter: createRouter,
 		createStore:  createStore,
+		
 		exposeDOM:    exposeDOM,
 		toHTML:       vdomToHTML
 	};

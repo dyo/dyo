@@ -22,7 +22,7 @@ function TableOfContents (props) {
 
 function Documentation () {
 	var 
-	markdown   = dio.stream();
+	markdown = dio.stream();
 
 	function rawMarkup () {
 		return remarkable.render(markdown());
@@ -83,7 +83,7 @@ function Documentation () {
 						Content({html: rawMarkup()}),
 						TableOfContents({
 							nav: props.nav,
-							onClick: dio.curry(activateLink, [self], true)
+							onClick: dio.curry(activateLink, self, true)
 						})
 					)
 		}
@@ -92,9 +92,9 @@ function Documentation () {
 
 function Welcome () {
 	var 
-	rawMarkup = dio.stream('');
+	rawMarkup   = dio.stream('');
 
-	function handleClick (e) {
+	function Install (e) {
 		var
 		href = e.target.getAttribute('href');
 
@@ -117,18 +117,29 @@ function Welcome () {
 		},
 		render: function () {
 			return h('.welcome', {
-				onClick: dio.curry(handleClick, null, true),
+				onClick: dio.curry(Install, true),
 				dangerouslySetInnerHTML: rawMarkup()
 			});
 		}
 	}
 }
 
+function Header () {
+	return h('.wrap', 
+				h('.logo',
+					h('a[href=./]', {onClick: dio.curry(router.nav, '/', true)}, h('img[src=assets/logo.svg]'))
+				),
+				h('.nav',
+					h('ul', h('li', h('a[href=https://github.com/thysultan/dio.js]', 'Github')))
+				)
+			)
+}
+
 var
 remarkable = new Remarkable();
 
 var
-router = dio.createRouter('/docs/layout', {
+router = dio.createRouter({
 		'/': function () {
 			dio.createRender(Welcome, '.container')({url: '../welcome.md'});
 		},
@@ -141,6 +152,7 @@ router = dio.createRouter('/docs/layout', {
 
 			dio.createRender(Documentation, '.container')({url: section});
 		}
-	});
+	}, '/docs/layout');
 
-document.querySelector('.logo a').addEventListener('click', dio.curry(router.nav, ['/'], true))
+var
+header = dio.createRender(Header, '.header')();
