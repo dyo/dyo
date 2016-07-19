@@ -150,7 +150,7 @@ remarkable = new Remarkable();
 
 var
 router = dio.createRouter({
-		'/$': function () {
+		'/': function () {
 			dio.createRender(Welcome, '.container')({url: '../welcome.md'});
 		},
 		'/documentation': function () {
@@ -165,5 +165,3 @@ router = dio.createRouter({
 	}, '/docs/layout');
 
 dio.createRender(Header, '.header')();
-
-console.log(dio.createHTML(dio.createRender(Header, '.container')));
