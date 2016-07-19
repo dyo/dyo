@@ -1,65 +1,31 @@
 # Getting Started
 
-Dio is a lightweight (~6kb) Virtual DOM framework. This getting started guide will cover the following
-in order.
+Dio is a lightweight (~6kb) Virtual DOM framework 
+built around the concept that any function/object can be a component.
 
-- hello world
-- components schema
+Components in Dio share the same api's as react components with a few additions.
+This getting started guide will show you how to go from zero to hello world.
 
-## Hello World
+
+## Hello world
 
 ```javascript
-// a function that returns a object with render
-function TodoApp () {
-	return {
-		render: function (props, state, component) {
-			return h('h1', 'Hello World')
+<div class="app"></div>
+
+<script src="dio.min.js"></script>
+<script>
+	function HelloWorld () {
+		return {
+			render: function (props) {
+				return h('h1', props.text);
+				// or
+				return {type: 'h1', props: {}, children: [props.text]};
+			}
 		}
 	}
-}
-// or a plain object
-var TodoApp = {
-	render: function (props, state, component) {
-		return h('h1', 'Hello World')
-	}
-}
-
-// create a render instance
-var 
-render = dio.createRender(TodoApp, '.app')
-
-// call it when you want to render to the dom
-render(...props?, children?, forceUpdate?)
-
-// alternatively you can just call it when you create it
-var
-render = dio.createRender(TodoApp, '.app')()
+	
+	dio.createRender(HelloWorld, '.app')({text: 'Hello World'})
+</script>
 ```
 
-## components schema
-
-```javascript
-{
-	// lifecycle methods
-	shouldComponentUpdate:     (nextProps, nextState, this)
-	componentWillReceiveProps: (nextProps, null, this)
-	componentWillUpdate:       (nextProps, nextState, this)
-	componentDidUpdate:        (prevProps, prevState, this)
-	componentWillMount:        (node, null, this)
-	componentDidMount:         (node, null, this)
-	componentWillUnmount:      (node, null, this)
-	
-	// this.methods
-	withAttr                   ({String|String[]}, {Function|Function[]})
-	// where the string is the elements attribute and
-	// the Function is a setter to map to
-	// this can be in-reverse as well i.e
-	// mapping getters to element attributes
-	
-	forceUpdate:               ()
-	setState:                  ({Object}) 
-	// setState executes forceUpdate after updating the state
-	setProps:                  ({Object})
-}
-```
-
+Will mount a h1 element onto the .app div the contents of which will be 'Hello World'.

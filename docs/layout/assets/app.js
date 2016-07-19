@@ -165,3 +165,5 @@ router = dio.createRouter({
 	}, '/docs/layout');
 
 dio.createRender(Header, '.header')();
+
+console.log(dio.createHTML(dio.createRender(Header, '.container')));

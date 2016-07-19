@@ -190,7 +190,7 @@
 	 * @param  {Boolean|Object} state - weather to pass sate to stage
 	 * @params {Boolean}        isCmp - weather this is a component or not
 	 */
-	function lifecycle (node, stage, props, state, iscomp) {
+	function lifecycle (node, stage, iscomp, props, state) {
 		// end quickly
 		// if node is not a Component or hyperscript object
 		if (!node || (!node.internal && !node.render)) {
@@ -927,109 +927,6 @@
 
 
 	/**
-	 * server-side interface converts a hyperscript vdom object to html string
-	 * @param {Object} hyperscript - hyperscript object
-	 */
-	function vdomToHTML (vnode) {
-		// print node
-		function ToHTML (vnode, level) {
-			// not a hyperscript object
-			if (is(vnode, __string)) {
-				return vnode;
-			}
-
-			// references
-			var 
-			// i.e 'div'
-			type = vnode.type,
-			// i.e {id: 123, class: 'one two'}
-			props = vnode.props,
-			// i.e [obj, obj]
-			children = vnode.children;
-
-			// print voidElements
-			if (element[type]) {
-				// <type ...props>
-				return '<'+type+Props(props)+'>';
-			}
-
-			// otherwise...
-			// <type ...props>...children</type>
-			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
-		}
-
-		// print props
-		function Props (props) {
-			props = __object.keys(props)
-							// remove any falsey value
-							.filter(function (name) {
-								return  props[name] !== __undefined &&
-										props[name] !== __null &&
-										props[name] !== __false
-							})
-							// 
-							.map(function (name) {
-								// <type name="value">
-								var 
-								value = props[name];
-
-								// don't add events, keys or refs
-								if (!is(value, __function) && name !== 'key' && name !== 'ref') {
-									// if the value is a falsey/truefy value
-									// print just the name
-									// i.e checkbox=true
-									// will print <type checkbox>
-									// otherwise <type value="">
-									return value === __true ? name : name+'="'+value+'"';
-								}
-							})
-							// create string, remove trailing space
-							// <type ...props > => <type ...props>
-							.join(' ').replace(/\s+$/g, '');
-
-			// not empty?
-			if (props) {
-				return props;
-			}
-
-			return '';
-		}
-
-		// print children
-		function Children(children, level) {
-			// empty
-			if (children[__length] === 0) {
-				return '';
-			}
-
-			// indent level
-			level      = level || 0;
-
-			// print tabs
-			var 
-			indent     = '\t'.repeat(level + 1),
-			lastIndent = '\t'.repeat(level);
-
-			// iterate through and print each child
-			return '\n'+indent+children.map(function (child) {
-				return ToHTML(child, level + 1);
-			}).join('\n'+indent)+'\n'+lastIndent;
-		}
-
-		// void elements that do not have a close </tag> 
-		var
-		element = {
-			'area': __true,'base': __true,'br': __true,'!doctype': __true,
-			'col': __true,'embed': __true,'wbr': __true,'track': __true,
-			'hr': __true,'img': __true,'input': __true,'keygen': __true,
-			'link': __true,'meta': __true,'param': __true,'source': __true
-		};
-
-		return ToHTML(vnode);
-	}
-
-
-	/**
 	 * animate interface
 	 * @return {Object} {flip, animate}
 	 */
@@ -1697,6 +1594,112 @@
 
 
 	/**
+	 * server-side interface converts a hyperscript vdom object to html string
+	 * @param {Object} hyperscript - hyperscript object
+	 */
+	function createHTML (arg, props, children) {
+		// print node
+		function toHTML (vnode, level) {
+			// not a hyperscript object
+			if (is(vnode, __string)) {
+				return vnode;
+			}
+
+			// references
+			var 
+			// i.e 'div'
+			type = vnode.type,
+			// i.e {id: 123, class: 'one two'}
+			props = vnode.props,
+			// i.e [obj, obj]
+			children = vnode.children;
+
+			// print voidElements
+			if (element[type]) {
+				// <type ...props>
+				return '<'+type+Props(props)+'>';
+			}
+
+			// otherwise...
+			// <type ...props>...children</type>
+			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
+		}
+
+		// print props
+		function Props (props) {
+			props = __object.keys(props)
+							// remove any falsey value
+							.filter(function (name) {
+								return  props[name] !== __undefined &&
+										props[name] !== __null &&
+										props[name] !== __false
+							})
+							// 
+							.map(function (name) {
+								// <type name="value">
+								var 
+								value = props[name];
+
+								// don't add events, keys or refs
+								if (!is(value, __function) && name !== 'key' && name !== 'ref') {
+									// if the value is a falsey/truefy value
+									// print just the name
+									// i.e checkbox=true
+									// will print <type checkbox>
+									// otherwise <type value="">
+									return value === __true ? name : name+'="'+value+'"';
+								}
+							})
+							// create string, remove trailing space
+							// <type ...props > => <type ...props>
+							.join(' ').replace(/\s+$/g, '');
+
+			// not empty?
+			if (props) {
+				return props;
+			}
+
+			return '';
+		}
+
+		// print children
+		function Children(children, level) {
+			// empty
+			if (children[__length] === 0) {
+				return '';
+			}
+
+			// indent level
+			level      = level || 0;
+
+			// print tabs
+			var 
+			indent     = '\t'.repeat(level + 1),
+			lastIndent = '\t'.repeat(level);
+
+			// iterate through and print each child
+			return '\n'+indent+children.map(function (child) {
+				return toHTML(child, level + 1);
+			}).join('\n'+indent)+'\n'+lastIndent;
+		}
+
+		// void elements that do not have a close </tag> 
+		var
+		element = {
+			'area': __true,'base': __true,'br': __true,'!doctype': __true,
+			'col': __true,'embed': __true,'wbr': __true,'track': __true,
+			'hr': __true,'img': __true,'input': __true,'keygen': __true,
+			'link': __true,'meta': __true,'param': __true,'source': __true
+		};
+
+		var
+		vnode = is(arg, __function) ? arg(props, children, signatureBase) : arg;
+
+		return toHTML(vnode);
+	}
+
+
+	/**
 	 * store interface
 	 * @param  {[type]} reducer [description]
 	 * @param {Number} range - timetravel/undo range
@@ -2005,13 +2008,9 @@
 		// return function that runs update/mount when executed
 		function render (props, children, forceUpdate) {
 			// don't render to dom, if vdom is requested
-			if (forceUpdate === 'vnode') {
+			if (forceUpdate === signatureBase) {
 				return component(props, children);
 			}
-			else if (forceUpdate === 'html') {
-				return vdomToHTML(component(props, children));
-			}
-			
 
 			// initial render
 			if (initial || forceUpdate) {
@@ -2180,7 +2179,7 @@
 
 			// publish componentWillReceiveProps lifecycle
 			if (props) {
-				lifecycle(component, __componentWillReceiveProps, props, __true, __true);
+				lifecycle(component, __componentWillReceiveProps, __true, props);
 				// set props
 				setProps(component, props);
 			}
@@ -2623,12 +2622,11 @@
 		request:      request(),
 		stream:       stream,
 		curry:        curry,
+		exposeDOM:    exposeDOM,
 
 		createRender: createRender,
 		createRouter: createRouter,
 		createStore:  createStore,
-
-		exposeDOM:    exposeDOM,
-		toHTML:       vdomToHTML
+		createHTML:   createHTML
 	};
 }));

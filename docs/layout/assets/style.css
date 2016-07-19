@@ -95,9 +95,25 @@ pre code {
 	overflow: auto;
 }
 
+p code {
+    background: #DDD;
+    padding: 2px 2px;
+    border-radius: 4px;
+    color: #332E22;
+}
+
 h1 {
 	font-size: 38px;
 	margin-bottom: 34px;
+}
+
+h1:not(:first-child),
+h2,
+h3,
+h4,
+h5,
+h6 {
+	margin-top: 34px;
 }
 
 h2, 
