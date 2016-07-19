@@ -60,10 +60,12 @@ function Documentation () {
 	}
 
 	function activateLink (self, href) {
-		href   = href || this.getAttribute('href');
+		href = href || this.getAttribute('href');
+
+		if (this.className === 'active') return;
 
 		var
-		nav    = [];
+		nav = [];
 
 		self.props.nav.forEach(function (value) {
 			var
@@ -71,15 +73,11 @@ function Documentation () {
 			nav.push(item);
 		});
 
-		hash      = href.replace('../', '').replace('.md', '');
+		hash = href.replace('../', '').replace('.md', '');
 
 		self.setProps({nav: nav});
-		self.forceUpdate();
-		
-		if (window.location.hash.replace('#', '') !== hash) {
-			window.location.hash = hash;
-			getDocument(href, update(self));
-		}
+		getDocument(href, update(self));
+		window.location.hash = hash;
 	}
 
 	return {
@@ -94,7 +92,6 @@ function Documentation () {
 			}
 		},
 		componentWillReceiveProps: function (props) {
-			getDocument(props.url, update(this));
 			activateLink(this, props.url);
 		},
 		render: function (props) {
@@ -143,7 +140,6 @@ function Welcome () {
 		}
 	}
 }
-
 
 var
 remarkable = new Remarkable();

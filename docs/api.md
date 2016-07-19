@@ -15,7 +15,7 @@
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})
-	this.forceUpdate:          ({Object})
+	this.forceUpdate:          (this?: {Object})
 	this.setState:             ({Object})
 	this.setProps:             ({Object})
 
@@ -126,6 +126,8 @@ myrouter.back()
 myrouter.forward()
 ```
 
+---
+
 ## dio.createStore
 
 Alot like redux createStore, inface it's exactly like redux createStore
@@ -136,6 +138,9 @@ that updates your component on state changes.
 
 ```
 var store = dio.createStore(reducer)
+
+store.dispatch({type: '' ...})
+// dispatch an action
 
 store.getState()
 // returns the current state
@@ -150,6 +155,8 @@ store.connect(render: {Function|Object}, element: '.myapp')
 // proceed to create a render instance.
 ```
 
+---
+
 ## dio.createHTML
 
 Like the name suggests this methods outputs the html 
@@ -160,6 +167,8 @@ to it
 dio.createHTML(component, props, children)
 // you can also use this on plain hyperscript objects
 ```
+
+---
 
 ## dio.exposeDOM
 
@@ -178,10 +187,122 @@ input({value: 'Hello World'})
 dio.exposeDOM('input', 'div', 'svg')
 ```
 
-## dio.animate
+---
 
 ## dio.request
 
+make ajax requests
+
+```
+// returns a stream
+dio.request(
+	url: {String}, 
+	payload?: {Object},
+	enctype?: {String}, 
+	// 'file' | 'json' | 'text', default: 'application/x-www-form-urlencoded'
+	callback?: {Function}, 
+	withCredentials?: {Boolean} 
+	// true/false for CORS requests 
+)
+
+// example
+
+dio.request('/url')
+	.then((res)=>{return res})
+	.then((res)=>{'do something'})
+	.catch((err)=>{throw err});
+
+```
+
+---
+
 ## dio.stream
 
+```
+var foo = dio.stream('initial value')
+foo('changed value')
+foo() // => 'changed value'
+
+// map
+var bar = foo.map(function(fooValue){
+	return fooValue + ' and bar';
+});
+
+bar() // => 'changed value and bar';
+foo('hello world')
+bar() // => 'hello world and bar'
+
+// combine two or more streams
+var faz = dio.stream.combine(function(fooValue, barValue){
+	return foo + bar;
+}, foo, bar);
+
+foo(1)
+bar(2)
+
+faz() // => 3
+
+// listen for changes to a value
+faz.then(function(fazValue){
+	console.log(fazValue)
+});
+
+faz('changed') // => 'changed'
+
+// or chained
+faz.then(fn).then(fn)....
+```
+
+---
+
 ## dio.curry
+
+```
+var foo = dio.curry((a, b)=>{}, ['a', 'b'], event: {Boolean})
+// setting the event argument does a preventDefault if the caller is an event
+// for example:
+
+onClick: dio.curry((a) => {'look no e.preventDefault()'}, ['a'], true)
+
+```
+
+---
+
+## dio.animate
+
+```javascript
+dio.animate.flip(className, duration, transform, transformOrigin, easing)(Element)
+dio.animate.transition(className)(node, callback)
+```
+
+for example `dio.animate.flip` can be used within a render as follows
+
+```javascript
+render: function () {
+	return h('.card', 
+		{onclick: dio.animate.flip('active-state', 200)}, 
+		''
+	)
+}
+```
+since `dio.animate.flip(...)` returns a function this is the same as
+
+```javascript
+dio.animate('active-state', 200)(Element) // returns duration
+``` 
+
+another animation helper is `animate.transition`
+
+```javascript
+// within a method
+handleDelete: function (e) {
+	var 
+	node = e.currentTarget,
+	self = this
+	
+	// animate node out then update state
+	dio.animate.transition('slideUp')(node, function(){
+		store.dispatch({type: 'DELETE', id: 1234})
+	})
+}
+```

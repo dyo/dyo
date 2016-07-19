@@ -18,5 +18,5 @@ bower install dio.js
 npm install git://github.com/thysultan/dio.js --save
 ```
 
-You can also play with dio.js on this [jsbin.](http://jsbin.com/lobavo/edit?js,output)
+You can also play with dio.js on this [jsbin](http://jsbin.com/lobavo/edit?js,output).
 

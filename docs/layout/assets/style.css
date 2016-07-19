@@ -15,7 +15,7 @@ body {
 	padding-bottom: 80px;
 }
 
-.container > div > *:not(pre):not(div),
+.container > .welcome > *:not(pre):not(div),
 .wrap { 
 	max-width: 600px; 
 	width: 100%;
