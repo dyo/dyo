@@ -37,14 +37,8 @@ var TodoApp = {
 // create a render instance
 var render = dio.render(TodoApp, '.app')
 
-
 // call it when you want to render to the dom
 render(...props?, children?, forceUpdate?)
-
-// forceUpdate{Boolean} tells the render to force an initial mount
-// which clears the element and does an initial mount to it.
-// this is by default only executated on the initial render/ first time you
-// call the render instance.
 ```
 
 --

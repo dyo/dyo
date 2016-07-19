@@ -207,11 +207,16 @@
 		component = iscomp ? node : node.internal;
 
 		if (component && component[stage]) {
+			// is the props/state truthy? if so check if it is not a boolean
+			// if so default to the value in props/state passed, 
+			// if it is default to the components own props.
+			// if props/state is falsey value, 
+			// default to undefined
+
 			// props is either the value of the props passed as an argument
-			// or the value of the components props
+			// or the value of the components
 			props = props || component.props,
 			state = state || component.state;
-
 
 			// componentShouldUpdate returns a Boolean
 			// so we publish the lifecycle return values
@@ -1921,6 +1926,8 @@
 
 			registerRoutes();
 			startListening();
+
+			console.log(onInitNavigateTo)
 
 			if (onInitNavigateTo) {
 				navigateToPath(onInitNavigateTo);

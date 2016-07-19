@@ -72,13 +72,12 @@ function Documentation () {
 		});
 
 		hash      = href.replace('../', '').replace('.md', '');
-		location  = window.location;
 
 		self.setProps({nav: nav});
 		self.forceUpdate();
 		
-		if (location.hash.replace('#', '') !== hash) {
-			location.hash = hash;
+		if (window.location.hash.replace('#', '') !== hash) {
+			window.location.hash = hash;
 			getDocument(href, update(self));
 		}
 	}
@@ -96,19 +95,20 @@ function Documentation () {
 		},
 		componentWillReceiveProps: function (props) {
 			getDocument(props.url, update(this));
-			activateLink(this, props.url)
+			activateLink(this, props.url);
 		},
-		render: function (props, _, self) {
+		render: function (props) {
 			return h('.documentation',
 						Content({html: rawMarkup()}),
 						TableOfContents({
 							nav: props.nav,
-							onClick: dio.curry(activateLink, self, true)
+							onClick: dio.curry(activateLink, this, true)
 						})
 					)
 		}
 	}
 }
+
 
 function Welcome () {
 	var 
@@ -150,7 +150,7 @@ remarkable = new Remarkable();
 
 var
 router = dio.createRouter({
-		'/': function () {
+		'/$': function () {
 			dio.createRender(Welcome, '.container')({url: '../welcome.md'});
 		},
 		'/documentation': function () {
@@ -164,5 +164,4 @@ router = dio.createRouter({
 		}
 	}, '/docs/layout');
 
-var
-header = dio.createRender(Header, '.header')();
+dio.createRender(Header, '.header')();

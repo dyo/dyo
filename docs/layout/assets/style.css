@@ -17,7 +17,7 @@ body {
 
 .container > div > *:not(pre):not(div),
 .wrap { 
-	max-width: 400px; 
+	max-width: 600px; 
 	width: 100%;
 	margin: 0 auto;
 	padding:0 20px;
@@ -81,7 +81,7 @@ p {
 pre {
 	padding: 0 20px;
 	position: relative;
-	max-width: 580px;
+	max-width: 780px;
 	display: block;
 	margin: 0 auto;
 	margin-bottom: 20px;
@@ -125,7 +125,7 @@ hr {
 	padding-left: 220px;
 	padding-right: 20px;
 	margin: 0 auto;
-    max-width: 800px;
+    max-width: 1000px;
 }
 .content ul {
     padding: 0;
