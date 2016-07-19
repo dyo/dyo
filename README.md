@@ -140,7 +140,7 @@ dio.createRender(componentPlaceholder)
 
 Now lets go over some mount examples
 
-```
+```javascript
 document || document.querySelector('.myapp')
 '.myapp'
 
@@ -157,12 +157,13 @@ dio.createRender(__, mountPlaceholder)
 
 ## dio.createRouter
 
-```
+```javascript
 dio.createRouter(routes: {Object}, rootAddress?: {String}, onInitNavTo?: {String})
 ```
 
 example router
-```
+
+```javascript
 dio.createRouter({
 	'/': function () {
 		dio.createRender(home)()
@@ -185,7 +186,7 @@ dio.createRouter({
 
 You can then assign this route to a variable and use it to navigate across views
 
-```
+```javascript
 var myrouter = ...
 
 myrouter.nav('/user/sultan')
@@ -204,7 +205,7 @@ will mount with which to update everytime the store is updated.
 Which is mostly a short hand for creating a listerner with `.subscribe`
 that updates your component on state changes.
 
-```
+```javascript
 var store = dio.createStore(reducer)
 
 store.dispatch({type: '' ...})
@@ -231,7 +232,7 @@ Like the name suggests this methods outputs the html
 of a specific component/render instance with the props passed
 to it
 
-```
+```javascript
 dio.createHTML(component, props, children)
 // you can also use this on plain hyperscript objects
 ```
@@ -243,7 +244,7 @@ dio.createHTML(component, props, children)
 This method exposes all html elements to the global namespace or
 only the elements supplied to it.
 
-```
+```javascript
 // before
 h('input', {value: 'Hello World'})
 
@@ -261,7 +262,7 @@ dio.exposeDOM('input', 'div', 'svg')
 
 make ajax requests
 
-```
+```javascript
 // returns a stream
 dio.request(
 	url: {String}, 
@@ -286,7 +287,7 @@ dio.request('/url')
 
 ## dio.stream
 
-```
+```javascript
 var foo = dio.stream('initial value')
 foo('changed value')
 foo() // => 'changed value'
@@ -325,7 +326,7 @@ faz.then(fn).then(fn)....
 
 ## dio.curry
 
-```
+```javascript
 var foo = dio.curry((a, b)=>{}, ['a', 'b'], event: {Boolean})
 // setting the event argument does a preventDefault if the caller is an event
 // for example:
