@@ -1,3 +1,4 @@
+// stateless components
 function Content (props) {
 	return h('div.content', {dangerouslySetInnerHTML: props.html});
 }
@@ -20,6 +21,19 @@ function TableOfContents (props) {
 			)
 }
 
+function Header () {
+	return h('.wrap', 
+				h('.logo',
+					h('a[href=./]', {onClick: dio.curry(router.nav, '/', true)}, h('img[src=assets/logo.svg]'))
+				),
+				h('.nav',
+					h('ul', h('li', h('a[href=https://github.com/thysultan/dio.js]', 'Github')))
+				)
+			)
+}
+
+
+// state components
 function Documentation () {
 	var 
 	markdown = dio.stream();
@@ -57,10 +71,16 @@ function Documentation () {
 			nav.push(item);
 		});
 
+		hash      = href.replace('../', '').replace('.md', '');
+		location  = window.location;
+
 		self.setProps({nav: nav});
 		self.forceUpdate();
-		getDocument(href, update(self));
-		window.location.hash = href.replace('../', '').replace('.md', '');
+		
+		if (location.hash.replace('#', '') !== hash) {
+			location.hash = hash;
+			getDocument(href, update(self));
+		}
 	}
 
 	return {
@@ -124,16 +144,6 @@ function Welcome () {
 	}
 }
 
-function Header () {
-	return h('.wrap', 
-				h('.logo',
-					h('a[href=./]', {onClick: dio.curry(router.nav, '/', true)}, h('img[src=assets/logo.svg]'))
-				),
-				h('.nav',
-					h('ul', h('li', h('a[href=https://github.com/thysultan/dio.js]', 'Github')))
-				)
-			)
-}
 
 var
 remarkable = new Remarkable();
