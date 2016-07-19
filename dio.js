@@ -207,13 +207,11 @@
 		component = iscomp ? node : node.internal;
 
 		if (component && component[stage]) {
-			// is the props/state truthy? if so check if it is not a boolean
-			// if so default to the value in props/state passed, 
-			// if it is default to the components own props.
-			// if props/state is falsey value, 
-			// default to undefined
-			props = props ? (!is(props, __boolean) ? props : component.props) : __undefined,
-			state = state ? (!is(state, __boolean) ? state : component.state) : __undefined;
+			// props is either the value of the props passed as an argument
+			// or the value of the components props
+			props = props || component.props,
+			state = state || component.state;
+
 
 			// componentShouldUpdate returns a Boolean
 			// so we publish the lifecycle return values
@@ -459,7 +457,7 @@
 			
 			// should component update
 			// if false exit quickly
-			if (lifecycle(newNode, __shouldComponentUpdate, __true, __true) === __false) {
+			if (lifecycle(newNode, __shouldComponentUpdate) === __false) {
 				return;
 			}
 
@@ -597,27 +595,27 @@
 		// add element to the end
 		function appendChild (parent, nextNode, newNode) {
 			if (nextNode) {
-				lifecycle(newNode, __componentWillMount, __true, __true);
+				lifecycle(newNode, __componentWillMount);
 				parent.appendChild(nextNode);
-				lifecycle(newNode, __componentDidMount, __true, __true);
+				lifecycle(newNode, __componentDidMount);
 			}
 		}
 
 		// add element at the beginning
 		function prependChild (parent, nextNode, beforeNode, newNode) {
 			if (nextNode) {
-				lifecycle(newNode, __componentWillMount, __true, __true);			
+				lifecycle(newNode, __componentWillMount);			
 				parent.insertBefore(nextNode, beforeNode);
-				lifecycle(newNode, __componentDidMount, __true, __true);
+				lifecycle(newNode, __componentDidMount);
 			}
 		}
 
 		// replace element
 		function replaceChild (parent, nextNode, prevNode, newNode) {
 			if (nextNode && prevNode) {	
-				lifecycle(newNode, __componentWillUpdate, __true, __true);
+				lifecycle(newNode, __componentWillUpdate);
 				parent.replaceChild(nextNode, prevNode);
-				lifecycle(newNode, __componentDidUpdate, __true, __true);
+				lifecycle(newNode, __componentDidUpdate);
 			}
 		}
 
@@ -758,14 +756,14 @@
 			// update component props
 			if (propChanges[__length]) {
 				// before props change
-				lifecycle(newNode, __componentWillUpdate, __true, __true);
+				lifecycle(newNode, __componentWillUpdate);
 
 				each(propChanges, function (obj) {
 					updateProp(obj.target, obj.name, obj.value, obj.op);
 				});
 
 				// after props change
-				lifecycle(newNode, __componentDidUpdate, __true, __true);
+				lifecycle(newNode, __componentDidUpdate);
 			}
 		}
 		
@@ -2203,22 +2201,22 @@
 	 */
 	componentClass[__prototype] = {
 		// i.e this.setState({})
-		setState: function (obj, self) {
+		setState: function (data, self) {
 			self = self || this;
 
 			// set state
 			// if the state is changed
 			// setState will return true
-			if (setState(self, obj)) {
+			if (setState(self, data)) {
 				// update render
 				self.forceUpdate();
 			}
 		},
 		// i.e this.setProps({})
-		setProps: function (obj, self) {
+		setProps: function (data, self) {
 			self = self || this;
 
-			setProps(self, obj);
+			setProps(self, data);
 		},
 		// force update public method
 		forceUpdate: function (self) {
@@ -2243,34 +2241,42 @@
 	}
 
 
-	// set component props
-	function setProps (self, obj) {
+	/**
+	 * set/update a components props
+	 * @param {Object} self components object
+	 * @param {Object} data data with which to update the components props
+	 */
+	function setProps (self, data) {
 		// assign props to {} if it's undefined
 		self.props = self.props || {};
 
-		if (obj) {
+		if (data) {
 			// set props
-			each(obj, function (value, name) {
+			each(data, function (value, name) {
 				self.props[name] = value;
 			});
 		}
 	}
 
 
-	// set component state
-	function setState (self, obj) {
+	/**
+	 * set/update a components state
+	 * @param {Object} self components object
+	 * @param {Object} data data with which to update the components state
+	 */
+	function setState (self, data) {
 		// assign state to {} if it's undefined
 		self.state = self.state || {};
 
 		// if the object is a function that returns an object
-		if (is(obj, __function)) {
-			obj = obj();
+		if (is(data, __function)) {
+			data = data();
 		}
 
 		// make sure we have something to update
-		if (obj) {
+		if (data) {
 			// set state
-			each(obj, function (value, name) {
+			each(data, function (value, name) {
 				self.state[name] = value;
 			});
 
@@ -2529,7 +2535,7 @@
 
 
 	/**
-	 * combine two streams
+	 * combine two or more streams
 	 * @param  {Function} reducer
 	 * @return {Stream}
 	 */
@@ -2616,7 +2622,7 @@
 		createRender: createRender,
 		createRouter: createRouter,
 		createStore:  createStore,
-		
+
 		exposeDOM:    exposeDOM,
 		toHTML:       vdomToHTML
 	};
