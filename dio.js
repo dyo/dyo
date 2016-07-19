@@ -1927,8 +1927,6 @@
 			registerRoutes();
 			startListening();
 
-			console.log(onInitNavigateTo)
-
 			if (onInitNavigateTo) {
 				navigateToPath(onInitNavigateTo);
 			}
