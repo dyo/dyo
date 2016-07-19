@@ -1780,6 +1780,11 @@
 
 			// auto subscribe a component to a store
 			function connect (render, element) {
+				// create a render instance of not one
+				if (element) {
+					render = createRender(render, element);
+				}
+
 				render(getState());
 
 				subscribe(function () {
@@ -2043,7 +2048,7 @@
 			}
 			// element
 			else if (value.nodeType) {
-				element = value === __document ? value.body : value;
+				element = value === __document ? __document.body : value;
 			}
 			// element selector
 			else if (is(value, __string)) {
@@ -2051,8 +2056,13 @@
 			}
 		});
 
+		// default to body
+		if (!element) {
+			element = __document.body;
+		}
+
 		// has parent to mount to
-		if (element && component) {
+		if (component) {
 			// determine if the component is stateless
 			if (component.stateless) {
 				stateless = __true;
@@ -2068,12 +2078,7 @@
 		// can't find element to mount to
 		// or can't find a component
 		else {
-			if (!element) {
-				throw 'can\'t find the element';
-			}
-			if (!component) {
-				throw 'can\'t find the component';
-			}
+			throw 'can\'t find the component';
 		}
 	}
 
@@ -2085,36 +2090,33 @@
 	 */
 	function createComponent (arg) {
 		var 
-		obj,
-		errorMessage = 'could not identify the hyperscript object or render() method';
+		obj;
 
-		// invalid component if the component is an object
-		// without a render method
-		if (is(arg, __object) && !arg.render) {
-			throw 'can\'t find render, invalid component';
-		}
 		// maybe the arg is a function that returns an object
-		else if (is(arg, __function)) {
+		if (is(arg, __function)) {
 			obj = arg();
 
 			if (!obj) {
-				throw errorMessage
+				throw 'no render'
 			}
 			else if (!obj.render) {
 				arg.stateless = __true
 				return arg;
 			}
 		}
+		else if (is(arg, __object)) {
+			obj = arg.render ? arg : {render: function () { return arg } };
+		}
 		else {
-			obj = arg;
+			throw 'invalid component';
 		}
 
 		// everything checks out i.e
 		// - obj has a render method
 		// - or arg() returns an object that has a render method
 		// 
-		// create new component object
-		var 
+		// create new component object 
+		var
 		component = new componentClass;
 
 		// add the properties to the component instance
@@ -2143,7 +2145,7 @@
 			self = this;
 
 			if (!obj) {
-				throw errorMessage;
+				throw 'not a hyperscript';
 			}
 
 			self.type     = obj.type,
