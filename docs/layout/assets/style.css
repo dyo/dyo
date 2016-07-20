@@ -223,8 +223,8 @@ hr {
 .loading:after {
 	z-index: 100;
 	position: fixed;
-	left: 50%;
-	top: 50%;
+	left: 30px;
+	top: 54px;
 	margin-left: 10px;
 	margin-top: 10px;
 	content: ' ';

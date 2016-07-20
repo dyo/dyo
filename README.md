@@ -30,7 +30,7 @@ npm install git://github.com/thysultan/dio.js --save
 
 You can also play with dio.js on this [jsbin](http://jsbin.com/lobavo/edit?js,output).
 
---
+---
 
 # Getting Started
 
@@ -64,7 +64,40 @@ This getting started guide will show you how to go from zero to hello world.
 
 Will mount a h1 element onto the .app div the contents of which will be 'Hello World'.
 
---
+---
+
+## creating hyperscript objects
+
+```javascript
+h(
+	tag: {String}, 
+	props?|children?: {Object} | {Array|Object}...,
+	children?: {Array|Object}...
+)
+
+h('.wrap')
+// <div class=wrap></div>
+
+h('input[type=checkbox]')
+// <input type=checkbox>
+
+h('input', {value: 'text', onInput: ()=>{}})
+// <input value=text>
+
+h('div', 'Text')
+// <div>Text</div>
+
+h('div', h('span', 'Text'))
+// <div><span>Text</span></div>
+
+h('div', [h('h1', '1st'), h('h1', '2nd'), ...])
+// <div><h1>1st</h1><h1>2nd</h1></div>
+
+h('div', {dangerouslySetInnerHTML: '<script>alert('hello')</script>'});
+// <div><script>alert('hello')</script></div>
+```
+
+---
 
 # API Reference
 

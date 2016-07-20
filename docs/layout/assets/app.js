@@ -78,7 +78,7 @@ function Documentation () {
 
 		self.setProps({nav: nav, loading: true});
 		self.forceUpdate();
-		
+
 		getDocument(href, update(self));
 		window.location.hash = hash;
 	}
@@ -98,7 +98,7 @@ function Documentation () {
 			activateLink(this, props.url);
 		},
 		render: function (props) {
-			return h('.documentation'+(props.loading ? '.loading' : ' '),
+			return h('.documentation'+(props.loading ? '.loading' : ''),
 						Content({html: rawMarkup()}),
 						TableOfContents({
 							nav: props.nav,
