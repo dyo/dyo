@@ -54,6 +54,7 @@ function Documentation () {
 
 	function update (self) {
 		return function () {
+			self.setProps({loading: false});
 			self.forceUpdate();
 			highlighter();
 		}
@@ -75,7 +76,9 @@ function Documentation () {
 
 		hash = href.replace('../', '').replace('.md', '');
 
-		self.setProps({nav: nav});
+		self.setProps({nav: nav, loading: true});
+		self.forceUpdate();
+		
 		getDocument(href, update(self));
 		window.location.hash = hash;
 	}
@@ -95,7 +98,7 @@ function Documentation () {
 			activateLink(this, props.url);
 		},
 		render: function (props) {
-			return h('.documentation',
+			return h('.documentation'+(props.loading ? '.loading' : ' '),
 						Content({html: rawMarkup()}),
 						TableOfContents({
 							nav: props.nav,

@@ -1,6 +1,6 @@
 # API Reference
 
-## a components schema
+## components schema
 
 ```javascript
 {
@@ -24,12 +24,45 @@
 }
 ```
 
+## creating hyperscript objects
+
+```javascript
+h(
+	tag: {String}, 
+	props?|children?: {Object} | {Array|Object}...,
+	children?: {Array|Object}...
+)
+
+h('.wrap')
+// <div class=wrap></div>
+
+h('input[type=checkbox]')
+// <input type=checkbox>
+
+h('input', {value: 'text', onInput: ()=>{}})
+// <input value=text>
+
+h('div', 'Text')
+// <div>Text</div>
+
+h('div', h('span', 'Text'))
+// <div><span>Text</span></div>
+
+h('div', [h('h1', '1st'), h('h1', '2nd'), ...])
+// <div><h1>1st</h1><h1>2nd</h1></div>
+
+h('div', {dangerouslySetInnerHTML: '<script>alert('hello')</script>'});
+// <div><script>alert('hello')</script></div>
+```
+
+
 ## dio.createRender
 
 ```javascript
 dio.createRender(component: {Function|Object}, mount?: {String|Element})
 // where component is either a hyperscript object 
-// or an object with a render method that returns a hyperscript object 
+// or an object with a render method that 
+// returns a hyperscript object 
 // or a function that returns one of the above.
 
 // While mount is either a selector or element reference
@@ -79,10 +112,6 @@ document || document.querySelector('.myapp')
 dio.createRender(__, mountPlaceholder)
 
 // note that the default for mount is document.body
-// and when you pass document to the mount it defaults to document.body
-// since you can't mount elements directly to the document
-// so if you ever want to pass document / .body as a mount leave it blank
-// and the default would be document.body
 ```
 
 ---
@@ -90,7 +119,11 @@ dio.createRender(__, mountPlaceholder)
 ## dio.createRouter
 
 ```
-dio.createRouter(routes: {Object}, rootAddress?: {String}, onInitNavTo?: {String})
+dio.createRouter(
+	routes: {Object}, 
+	rootAddress?: {String}, 
+	onInitNavTo?: {String}
+)
 ```
 
 example router
@@ -132,12 +165,15 @@ myrouter.forward()
 
 Alot like redux createStore, inface it's exactly like redux createStore
 with the addition of `.connect` that accepts a render insance of component
-will mount with which to update everytime the store is updated.
+and mount with which to update everytime the store is updated.
 Which is mostly a short hand for creating a listerner with `.subscribe`
 that updates your component on state changes.
 
 ```
-var store = dio.createStore(reducer)
+var store = dio.createStore(reducer: {Function})
+// or
+var store = dio.createStore(object of reducers: {Object})
+
 
 store.dispatch({type: '' ...})
 // dispatch an action

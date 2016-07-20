@@ -211,3 +211,34 @@ hr {
 		padding-left: 20px;
 	}
 }
+
+
+@keyframes rotate {
+	0% { transform: translateY(0%); }
+	30% { transform: translateY(-0.25em); }
+	50% { transform: translateY(0%); }
+	70% { transform: translateY(0.25em); }
+}
+.loading:before, 
+.loading:after {
+	z-index: 100;
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	margin-left: 10px;
+	margin-top: 10px;
+	content: ' ';
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	color: rgb(52,46,33);
+	border: 1px solid currentColor;
+	border-radius: 50%;
+	background-color: currentColor;
+	transform-origin: 50%;
+	animation: 0.75s rotate infinite linear;
+}
+.loading:after {
+ 	animation-delay: 0.375s;
+ 	margin-left: 30px;
+}
