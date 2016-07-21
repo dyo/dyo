@@ -1,6 +1,6 @@
 # dio.js
 
-<a href="https://thysultan.com/dio">
+<a href="http://thysultan.com/dio">
 	<img alt="dio.js" title="dio.js" src="https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg">
 </a>
 
