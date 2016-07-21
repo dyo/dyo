@@ -277,7 +277,7 @@ bar() // => 'hello world and bar'
 
 // combine two or more streams
 var faz = dio.createStream.combine(function(fooValue, barValue){
-	return foo + bar;
+	return fooValue() + barValue();
 }, foo, bar);
 
 foo(1)
@@ -286,6 +286,8 @@ bar(2)
 faz() // => 3
 
 // listen for changes to a value
+// note: this behaves kind of like a promise but it is not a promise
+// ergo no polyfill needed.
 faz.then(function(fazValue){
 	console.log(fazValue)
 });
