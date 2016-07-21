@@ -2303,7 +2303,7 @@
 	 * @param {Function} processor
 	 * @return {Stream}
 	 */
-	function createStream (store, processor, handler) {
+	function createStream (store, processor, middleware) {
 		var
 		// .then(fn()=>{}) listeners
 		listeners,
@@ -2396,16 +2396,16 @@
 					ret;
 
 					try {
-						// do we have a handler that will process the change, use that
-						if (handler) {
+						// do we have a middleware that will process the change, use that
+						if (middleware) {
 							if (!errorHandled) {
 								// store the returned value
-								ret = handler(value, listener, errorHandler);
+								ret = middleware(value, listener, errorHandler);
 								// cleanup error (only run once)
 								errorHandled = __true;
 							}
 							else {
-								ret = handler(value, listener);
+								ret = middleware(value, listener);
 							}
 						}
 						// else just call the listener passing the current value
