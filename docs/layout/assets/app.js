@@ -138,7 +138,7 @@ function Welcome () {
 		render: function () {
 			return h('.welcome', {
 				onClick: dio.curry(Install, true),
-				dangerouslySetInnerHTML: rawMarkup()
+				innerHTML: rawMarkup()
 			});
 		}
 	}

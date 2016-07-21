@@ -74,7 +74,6 @@
 	__componentWillUpdate       = 'componentWillUpdate',
 	__componentDidUpdate        = 'componentDidUpdate',
 	__shouldComponentUpdate     = 'shouldComponentUpdate',
-	__dangerouslySetInnerHTML   = 'dangerouslySetInnerHTML',
 
 	// functions
 	__number                    = Number,
@@ -390,7 +389,7 @@
 			classes = [], 
 			match,
 			// regex to parse type/tag
-			re = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
+			regex = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
 			// copy obj's props to abstract props and type
 			// incase obj.props is empty create new obj
 			// otherwise just add to already available object
@@ -403,37 +402,43 @@
 			obj.type = 'div';
 
 			// execute the regex and loop through the results
-			while ((match = re.exec(type))) {
+			while ((match = regex.exec(type))) {
+				var 
+				matchedType      = match[1],
+				matchedValue     = match[2],
+				matchedProp      = match[3],
+				matchedPropKey   = match[4],
+				matchedPropValue = match[6];
+
 				// no custom prop match
-				if (match[1] === '' && match[2]) {
-					obj.type = match[2];
+				if (matchedType === '' && matchedValue !== '') {
+					obj.type = matchedValue;
 				}
 				// matches id's - #id
-				else if (match[1] === '#') {
-					props.id = match[2];
+				else if (matchedType === '#') {
+					props.id = matchedValue;
 				} 
 				// matches classes - div.classname
-				else if (match[1] === '.') {
-					classes.push(match[2]);
+				else if (matchedType === '.') {
+					classes.push(matchedValue);
 				} 
-				// matches - [attr=value]
-				else if (match[3][0] === '[') {
+				// matches - [prop=value]
+				else if (matchedProp[0] === '[') {
 					var 
-					attr = match[6];
+					prop = matchedPropValue;
 
-					// make sure we have a non null|undefined|false value
-					if (attr) {
-						// remove the '[]'
-						attr = attr.replace(/\\(["'])/g, '$1');
+					// make sure we have a prop value
+					if (prop) {
+						prop = prop.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
 					}
-					// if attr value is an empty string assign true
-					props[match[4]] = attr || __true;
+					// if prop value is an empty string assign true
+					props[matchedPropKey] = prop || __true;
 				}
 			}
 
 			// add classes to obj.props if we have any
 			if (classes[__length] > 0) {
-				props.class = classes.join(' ');
+				props.className = classes.join(' ');
 			}
 
 			// as promised, update props
@@ -639,21 +644,11 @@
 			// i.e node.type: div !== node.type: h2
 			// will return true, signaling that we should
 			// replace the node, if it's a text node
-			type = node1.type !== node2.type,
-
-			// dangerouslySetInnerHTML
-			innerHTML = __false;
-
-			if (
-				node1 && node2 && node1.props && node2.props &&
-				(node1.props[__dangerouslySetInnerHTML] || node2.props[__dangerouslySetInnerHTML])
-			) { 
-				innerHTML = node1.props[__dangerouslySetInnerHTML] !== node2.props[__dangerouslySetInnerHTML]
-			}
+			type = node1.type !== node2.type;
 			
 			// if either text/type/object constructor has changed
 			// this will return true signaling that we should replace the node
-			return text || type || obj ||innerHTML;
+			return text || type || obj;
 		}
 
 		// create element
@@ -702,14 +697,6 @@
 			setElementProps(el, node.props);
 			// add events if any
 			addEventListeners(el, node.props);
-
-			// trusted html content
-			if (
-				node.props && 
-				node.props[__dangerouslySetInnerHTML]
-			) {
-				el.innerHTML = node.props[__dangerouslySetInnerHTML];
-			}
 			
 			// only map children arrays
 			if (is(node.children, __array)) {
@@ -837,29 +824,33 @@
 			if (
 				isEventProp(name, value) || 
 				name === 'ref' || 
-				name === 'key' || 
-				name === __dangerouslySetInnerHTML
+				name === 'key'
 			) {
 				return;
 			}
 
-			// remove / add attribute reference
-			var 
-			attr = (op === -1 ? 'remove' : 'set') + 'Attribute';
+			// prop operation type, either remove / set
+			op = (op === -1 ? 'remove' : 'set') + 'Attribute';
 		
 			// set xlink:href attr
 			if (name === 'xlink:href') {
-				return target.setAttributeNS(__namespace['xlink'], 'href', value);
+				return target[op+'NS'](__namespace['xlink'], 'href', value);
 			}
 
 			// don't set xmlns namespace attributes we create an element
 			if (value !== __namespace['svg'] && value !== __namespace['math']) {
+				// the className property of svg elements are of a different kind
+				// lets normalize it
+				if (name === __className) {
+					name = 'class';
+				}
+
 				// value is an object
 				// add each of it's properties to the
 				// target elements attribute
 				if (is(value, __object)) {
 					// classes
-					if (name === __className || name === 'class') {
+					if (name === 'class') {
 						each(value, function (content, index) {
 							// get what operation we will run
 							// if the value is empty/false/undefined/null
@@ -875,7 +866,7 @@
 							classList(type, target, index);
 						});
 					}
-					// styles and other object type props
+					// styles and other object {} type props
 					else {
 						each(value, function (value, index) {
 							if (!is(target[name][index])) {
@@ -887,8 +878,8 @@
 				// is an array of classes
 				// this allows us to set classess like 
 				// class: ['class1', 'class2']
-				else if (is(value, __array) && (name === __className || name === 'class')) {
-					target[name] = value.join(' ');
+				else if (is(value, __array) && (name === 'class')) {
+					target[op](name, value.join(' '));
 				}
 				// everything else
 				else {
@@ -901,12 +892,8 @@
 						target[name] === __undefined ||
 						target.namespaceURI !== __namespace['html']
 					) {
-						// the className property of svg elements are of a different kind
-						if (name === __className) {
-							name = 'class';
-						}
 						// -1 => remove, else set
-						op === -1 ? target[attr](name) : target[attr](name, value)
+						target[op](name, value);
 					}
 					else {
 						// make sure to swallow errors 
@@ -2377,7 +2364,7 @@
 		 * create the getter/setter
 		 * @return {Any}
 		 */
-		function prop () {
+		function stream () {
 			var
 			args = arguments;
 
@@ -2430,7 +2417,7 @@
 	        // add signature that says this stream was created internally
 	        mapper.id = mapperSignature;
 
-			return stream(mapper);
+			return createStream(mapper);
 		}
 
 
@@ -2526,17 +2513,19 @@
 			return getStore();
 		}
 
+		// using global defined
+		// window.valueOf && window.toString
+		stream.valueOf  = valueOf,
+		stream.toString = toString,
 
-		prop.map      = map,
-		prop.toJSON   = toJSON,
-		prop.valueOf  = valueOf,
-		prop.toString = toString,
-		prop.then     = then,
-		prop.done     = done,
-		prop.catch    = error,
-		prop.id       = propSignature;
+		stream.map      = map,
+		stream.toJSON   = toJSON,
+		stream.then     = then,
+		stream.done     = done,
+		stream.catch    = error,
+		stream.id       = propSignature;
 
-		return prop;
+		return stream;
 	}
 
 
@@ -2563,7 +2552,7 @@
 		// add signature that says this stream was created internally
 		mapper.id = mapperSignature;
 
-		return stream(mapper);
+		return createStream(mapper);
 	};
 
 
