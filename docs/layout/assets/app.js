@@ -79,8 +79,10 @@ function Documentation () {
 		self.setProps({nav: nav, loading: true});
 		self.forceUpdate();
 
-		getDocument(href, update(self));
-		window.location.hash = hash;
+		setTimeout(function () {
+			getDocument(href, update(self));
+			window.location.hash = hash;
+		}, 600);
 	}
 
 	return {
