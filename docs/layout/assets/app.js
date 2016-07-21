@@ -1,6 +1,6 @@
 // stateless components
 function Content (props) {
-	return h('div.content', {dangerouslySetInnerHTML: props.html});
+	return h('div.content', {innerHTML: props.html});
 }
 
 function TableOfContents (props) {
