@@ -16,7 +16,7 @@
 
 #### direct download
 
-```
+```javascript
 <script src="dio.min.js"></script>
 ```
 
