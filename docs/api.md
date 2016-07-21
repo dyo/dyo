@@ -53,7 +53,7 @@ h('div', h('span', 'Text'))
 h('div', [h('h1', '1st'), h('h1', '2nd'), ...])
 // <div><h1>1st</h1><h1>2nd</h1></div>
 
-h('div', {dangerouslySetInnerHTML: '<script>alert('hello')</script>'});
+h('div', {innerHTML: '<script>alert('hello')</script>'});
 // <div><script>alert('hello')</script></div>
 ```
 
