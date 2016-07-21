@@ -1,7 +1,5 @@
 # dio.js
 
-![Logo](https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)
-
 <a href="https://thysultan.com/dio">
 	<img alt="dio.js" title="dio.js" src="https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg">
 </a>
