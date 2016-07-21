@@ -11,7 +11,7 @@
 	componentDidUpdate:        (props, state, this) => {}
 	componentWillMount:        (props, state, this) => {}
 	componentDidMount:         (props, state, this) => {}
-	componentWillUnmount:      (node)
+	componentWillUnmount:      (node) => {}
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})

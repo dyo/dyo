@@ -83,7 +83,7 @@ Will mount a h1 element onto the .app div the contents of which will be 'Hello W
 	componentDidUpdate:        (props, state, this) => {}
 	componentWillMount:        (props, state, this) => {}
 	componentDidMount:         (props, state, this) => {}
-	componentWillUnmount:      (node)
+	componentWillUnmount:      (node) => {}
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})
