@@ -37,7 +37,8 @@
 	signatureBase               = '@@dio',
 	mapperSignature             = signatureBase + '/MAPPER',
 	propSignature               = signatureBase + '/PROP',
-	storeSignature              = signatureBase + '/INIT',
+	storeSignature              = signatureBase + '/STORE',
+	componentSignature          = signatureBase + '/COMPONENT',
 
 	// objects
 	__namespace 				= {
@@ -1612,10 +1613,10 @@
 		// void elements that do not have a close </tag> 
 		var
 		element = {
-			'area': __true,'base': __true,'br': __true,'!doctype': __true,
-			'col': __true,'embed': __true,'wbr': __true,'track': __true,
-			'hr': __true,'img': __true,'input': __true,'keygen': __true,
-			'link': __true,'meta': __true,'param': __true,'source': __true
+			'area': __true,'base':  __true,'br':    __true,'!doctype': __true,
+			'col':  __true,'embed': __true,'wbr':   __true,'track':    __true,
+			'hr':   __true,'img':   __true,'input': __true,'keygen':   __true,
+			'link': __true,'meta':  __true,'param': __true,'source':   __true
 		};
 
 		var
@@ -1973,9 +1974,12 @@
 		args = toArray(arguments);
 
 		// assign args
-		each(args, function (value) {
-			// component (function) / (object)
-			if (is(value, __function) || is(value, __object)) {
+		each(args, function (value) {	
+			if (is(value, __function) && value.id === componentSignature) {
+				component = value;
+			}
+			// function / object
+			else if (is(value, __function) || is(value, __object)) {
 				component = createComponent(value);
 			}
 			// element
@@ -2095,10 +2099,11 @@
 		var
 		render = component.render;
 
-		// return a function that when called
+		// we will return a function that when called
 		// returns the components vdom representation
 		// i.e User(props) -> {type: 'div', props: {..props}, children: ...}
-		return function (props, children, internal) {
+		// this is that function
+		function Component (props, children, internal) {
 			// insure the render function returns the newly
 			// created hyperscript object
 			component.render = function () {
@@ -2122,6 +2127,9 @@
 			// when requested
 			return internal ? component : component.render();
 		}
+		Component.id = componentSignature;
+
+		return Component;
 	}
 
 
@@ -2508,21 +2516,21 @@
 	 * @param  {Boolean}  event auto preventDefault for events
 	 * @return {Function}       curried function
 	 */
-	function createFunction (fn, arg, preventDefault) {
+	function createFunction (fn, args, preventDefault) {
 		var
-		arr = [];
+		argsArray = [];
 
-		// arg is preventDefault if it is a boolean type
-		if (is(arg, __boolean)) {
-			preventDefault = arg;
+		// args is preventDefault if it is a boolean type
+		if (is(args, __boolean)) {
+			preventDefault = args;
 		}
-		// otherwise convert arg to array if it's not one
-		else if (!is(arg, __array)) {
-			arr = [arg];
+		// otherwise convert args to array if it's not one
+		else if (!is(args, __array)) {
+			argsArray = [args];
 		}
 		// args is already an array, use as is
 		else {
-			arr = arg;
+			argsArray = args;
 		}
 
 		// return a function that executes
@@ -2536,11 +2544,11 @@
 
 			// default to current arguments
 			// if args is a 0 length array of falsy value
-			if (!arr[__length] || !arg) {
-				arr = arguments;
+			if (!argsArray[__length] || !args) {
+				argsArray = toArray(arguments);
 			}
 
-			return fn.apply(this, arr);
+			return fn.apply(this, argsArray);
 		}
 	}
 
@@ -2552,16 +2560,17 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.h       = element(),
-	exports.dio     = {
-		animate:        animate(),
-		request:        request(),
+	exports.h = element(),
+	exports.dio = {
+		animate: animate(),
+		request: request(),
 
+		createComponent: createComponent,
 		createFunction: createFunction,
-		createStream:   createStream,
-		createRender:   createRender,
-		createRouter:   createRouter,
-		createStore:    createStore,
-		createHTML:     createHTML
+		createStream: createStream,
+		createRender: createRender,
+		createRouter: createRouter,
+		createStore: createStore,
+		createHTML: createHTML
 	};
 }));

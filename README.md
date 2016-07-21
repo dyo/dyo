@@ -70,6 +70,34 @@ Will mount a h1 element onto the .app div the contents of which will be 'Hello W
 
 ---
 
+# API Reference
+
+## components schema
+
+```javascript
+{
+	// lifecycle methods
+	shouldComponentUpdate:     (props, state, this) => {}
+	componentWillReceiveProps: (props, state, this) => {}
+	componentWillUpdate:       (props, state, this) => {}
+	componentDidUpdate:        (props, state, this) => {}
+	componentWillMount:        (props, state, this) => {}
+	componentDidMount:         (props, state, this) => {}
+	componentWillUnmount:      (node)
+	
+	// this.methods
+	this.withAttr              ({String|String[]}, {Function|Function[]})
+	this.forceUpdate:          (this?: {Object})
+	this.setState:             ({Object})
+	this.setProps:             ({Object})
+
+	// render method
+	render:                    (props, state, this) => {}
+}
+```
+
+---
+
 ## creating hyperscript objects
 
 ```javascript
@@ -103,31 +131,26 @@ h('div', {dangerouslySetInnerHTML: '<script>alert('hello')</script>'});
 
 ---
 
-# API Reference
+## dio.createComponent
 
-## a components schema
-
-```javascript
-{
-	// lifecycle methods
-	shouldComponentUpdate:     (props, state, this) => {}
-	componentWillReceiveProps: (props, state, this) => {}
-	componentWillUpdate:       (props, state, this) => {}
-	componentDidUpdate:        (props, state, this) => {}
-	componentWillMount:        (props, state, this) => {}
-	componentDidMount:         (props, state, this) => {}
-	componentWillUnmount:      (node)
-	
-	// this.methods
-	this.withAttr              ({String|String[]}, {Function|Function[]})
-	this.forceUpdate:          (this?: {Object})
-	this.setState:             ({Object})
-	this.setProps:             ({Object})
-
-	// render method
-	render:                    (props, state, this) => {}
-}
 ```
+dio.createComponent({Function|Object})
+
+// for example
+var myComponent = dio.createComponent({
+	render: () => { return h('div') }
+});
+
+// or with a function
+var myComponent = dio.createComponent(function () {
+	return {
+		render: () => { return h('div') }
+	};
+});
+
+```
+
+---
 
 ## dio.createRender
 
@@ -303,10 +326,10 @@ dio.request('/url')
 
 ---
 
-## dio.stream
+## dio.createStream
 
 ```javascript
-var foo = dio.stream('initial value')
+var foo = dio.createStream('initial value')
 foo('changed value')
 foo() // => 'changed value'
 
@@ -320,7 +343,7 @@ foo('hello world')
 bar() // => 'hello world and bar'
 
 // combine two or more streams
-var faz = dio.stream.combine(function(fooValue, barValue){
+var faz = dio.createStream.combine(function(fooValue, barValue){
 	return foo + bar;
 }, foo, bar);
 

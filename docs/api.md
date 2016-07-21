@@ -24,6 +24,8 @@
 }
 ```
 
+---
+
 ## creating hyperscript objects
 
 ```javascript
@@ -55,13 +57,37 @@ h('div', {dangerouslySetInnerHTML: '<script>alert('hello')</script>'});
 // <div><script>alert('hello')</script></div>
 ```
 
+---
+
+## dio.createComponent
+
+```
+dio.createComponent({Function|Object})
+
+// for example
+var myComponent = dio.createComponent({
+	render: () => { return h('div') }
+});
+
+// or with a function
+var myComponent = dio.createComponent(function () {
+	return {
+		render: () => { return h('div') }
+	};
+});
+
+```
+
+---
 
 ## dio.createRender
 
 ```javascript
 dio.createRender(component: {Function|Object}, mount?: {String|Element})
-// where component is either a hyperscript object 
-// or an object with a render method that 
+// where component is either a component
+// created with dio.createComponent, 
+// a hyperscript object 
+// an object with a render method that 
 // returns a hyperscript object 
 // or a function that returns one of the above.
 
@@ -233,10 +259,10 @@ dio.request('/url')
 
 ---
 
-## dio.stream
+## dio.createStream
 
 ```
-var foo = dio.stream('initial value')
+var foo = dio.createStream('initial value')
 foo('changed value')
 foo() // => 'changed value'
 
@@ -250,7 +276,7 @@ foo('hello world')
 bar() // => 'hello world and bar'
 
 // combine two or more streams
-var faz = dio.stream.combine(function(fooValue, barValue){
+var faz = dio.createStream.combine(function(fooValue, barValue){
 	return foo + bar;
 }, foo, bar);
 
