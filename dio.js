@@ -668,10 +668,11 @@
 				ns = node.props.xmlns;
 			}
 
-			// check if it is namespaced
+			// namespaced
 			if (ns) {
 				el = __document.createElementNS(ns, node.type);
 			}
+			// default
 			else {
 				el = __document.createElement(node.type);
 			}
