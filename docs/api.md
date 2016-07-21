@@ -206,25 +206,6 @@ dio.createHTML(component, props, children)
 
 ---
 
-## dio.exposeDOM
-
-This method exposes all html elements to the global namespace or
-only the elements supplied to it.
-
-```
-// before
-h('input', {value: 'Hello World'})
-
-dio.exposeDOM()
-// after
-input({value: 'Hello World'})
-
-// you can also specify a specific set of elements to expose
-dio.exposeDOM('input', 'div', 'svg')
-```
-
----
-
 ## dio.request
 
 make ajax requests
@@ -291,14 +272,14 @@ faz.then(fn).then(fn)....
 
 ---
 
-## dio.curry
+## dio.createFunction
 
 ```
-var foo = dio.curry((a, b)=>{}, ['a', 'b'], event: {Boolean})
+var foo = dio.createFunction((a, b)=>{}, ['a', 'b'], event: {Boolean})
 // setting the event argument does a preventDefault if the caller is an event
 // for example:
 
-onClick: dio.curry((a) => {'look no e.preventDefault()'}, ['a'], true)
+onClick: dio.createFunction((a) => {'look no e.preventDefault()'}, ['a'], true)
 
 ```
 

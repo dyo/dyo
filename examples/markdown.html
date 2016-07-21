@@ -15,10 +15,10 @@
 		<script>
 			function MarkdownEditor () {
 				var 
-				markdownInput = dio.stream('Type some *markdown* here!'),
+				markdownInput = dio.createStream('Type some *markdown* here!'),
 				remarkable    = new Remarkable(),
-				content       = dio.stream();
-				textarea      = dio.stream();
+				content       = dio.createStream();
+				textarea      = dio.createStream();
 
 				function rawMarkup () {
 					return remarkable.render(markdownInput());

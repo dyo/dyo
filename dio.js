@@ -1324,7 +1324,7 @@
 
 			// create xhr stream
 			var
-			xhrStream = stream(__undefined, __undefined, function (value, listener, error) {
+			xhrStream = createStream(__undefined, __undefined, function (value, listener, error) {
 				var
 				xhr;
 
@@ -1516,67 +1516,6 @@
 			put:    request('PUT'),
 			delete: request('DELETE')
 		};
-	}
-
-
-	/**
-	 * DOM interface, creates html hyperscript functions to the global scope
-	 * such that h('div', {}, 'Text') written as div({}, 'Text')
-	 */
-	function exposeDOM () {
-		function expose (elements) {
-			each(elements, function (name) {
-				__window[name] = function Element () {
-					// convert args to array
-					var 
-					args = toArray(arguments),
-					first = args[0];
-
-					// i.e div('#id', {}, 'Children')
-					if (
-						is(first, __string) &&
-						(
-							first.substr(0,1) === '#' ||
-							first.substr(0,1) === '.' ||
-							first.substr(0,1) === '['
-						)
-					) {
-						// name will now = 'div#id'
-						name += first;
-						args.shift(first)
-					}
-					// add name as first arg
-					// which represents the tag in hyperscript
-					args.unshift(name);
-
-					return h.apply(null, args)
-				}
-			})
-		}
-
-		var
-		args = arguments;
-
-		// expose just a specific few
-		if (args[__length]) {
-			expose(toArray(args));
-		}
-		// expose all elements
-		else {
-			expose(['doctype','a','abbr','address','area','article','aside',
-			'audio','b','base','bdi','bdo','blockquote','body','br','button',
-			'canvas','caption','cite','code','col','colgroup','command',
-			'datalist','dd','del','details','dfn','div','dl','dt','em','embed',
-			'fieldset','figcaption','figure','footer','form','h1','h2','h3',
-			'h4','h5','h6','head','header','hgroup','hr','html','i','iframe',
-			'img','input','ins', 'kbd','keygen','label','legend','li','link',
-			'map','mark','menu','meta','meter','nav','noscript','object','ol',
-			'optgroup','option','output','p','param','pre','progress','q','rp',
-			'rt','ruby','s','samp','script','section','select','small','source',
-			'span','strong','style','sub','summary','sup','table','tbody','td',
-			'textarea','tfoot','th','thead','time','title',
-			'tr','track','u','ul','var','video','wbr']);
-		}
 	}
 
 
@@ -1918,6 +1857,12 @@
 			var
 			currentPath,
 			interval;
+
+			// normalize rootAddress formate
+			// i.e '/url/' -> '/url'
+			if (rootAddress.substr(-1) === '/') {
+				rootAddress = rootAddress.substr(0, rootAddress[__length] - 1);
+			}
 
 			registerRoutes();
 			startListening();
@@ -2349,7 +2294,7 @@
 	 * @param {Function} processor
 	 * @return {Stream}
 	 */
-	function stream (store, processor, handler) {
+	function createStream (store, processor, handler) {
 		var
 		// .then(fn()=>{}) listeners
 		listeners = [],
@@ -2534,7 +2479,7 @@
 	 * @param  {Function} reducer
 	 * @return {Stream}
 	 */
-	stream.combine = function (reducer) {
+	createStream.combine = function (reducer) {
 		var
 		// convert arguments an array, excluding reducer
 		args = __array[__prototype].slice.call(arguments, 1);		
@@ -2557,13 +2502,13 @@
 
 
 	/**
-	 * curry a function
+	 * curry / create / return a function with set arguments
 	 * @param  {Function} fn    function to curry
 	 * @param  {Any}      arg   arguments to pass to function
 	 * @param  {Boolean}  event auto preventDefault for events
 	 * @return {Function}       curried function
 	 */
-	function curry (fn, arg, preventDefault) {
+	function createFunction (fn, arg, preventDefault) {
 		var
 		arr = [];
 
@@ -2609,15 +2554,14 @@
 
 	exports.h       = element(),
 	exports.dio     = {
-		animate:      animate(),
-		request:      request(),
-		stream:       stream,
-		curry:        curry,
-		exposeDOM:    exposeDOM,
+		animate:        animate(),
+		request:        request(),
 
-		createRender: createRender,
-		createRouter: createRouter,
-		createStore:  createStore,
-		createHTML:   createHTML
+		createFunction: createFunction,
+		createStream:   createStream,
+		createRender:   createRender,
+		createRouter:   createRouter,
+		createStore:    createStore,
+		createHTML:     createHTML
 	};
 }));

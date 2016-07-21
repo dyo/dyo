@@ -33,9 +33,9 @@
 
 			function TodoApp (props) {
 				var 
-				text = dio.stream(''),
+				text = dio.createStream(''),
 				// will always contain the value of input.value oninput
-				input = dio.stream('')
+				input = dio.createStream('')
 				// reference to the input dom element
 
 		  		function handleSubmit (e) {

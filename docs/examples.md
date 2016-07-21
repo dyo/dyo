@@ -6,6 +6,6 @@
 - [Canvas](../../examples/canvas.html)
 - [Ajax](../../examples/ajax.html)
 - [Svg](../../examples/svg.html)
-- [Route](../../examples/route.html)
+- [Route](../../examples/router.html)
 - [Animation](../../examples/animate.html)
 - [This website](https://github.com/thysultan/dio.js/tree/master/docs/layout)

@@ -24,7 +24,7 @@ function TableOfContents (props) {
 function Header () {
 	return h('.wrap', 
 				h('.logo',
-					h('a[href=./]', {onClick: dio.curry(router.nav, '/', true)}, h('img[src=assets/logo.svg]'))
+					h('a[href=./]', {onClick: dio.createFunction(router.nav, '/', true)}, h('img[src=assets/logo.svg]'))
 				),
 				h('.nav',
 					h('ul', h('li', h('a[href=https://github.com/thysultan/dio.js]', 'Github')))
@@ -36,7 +36,7 @@ function Header () {
 // state components
 function Documentation () {
 	var 
-	markdown = dio.stream();
+	markdown = dio.createStream();
 
 	function rawMarkup () {
 		return remarkable.render(markdown());
@@ -104,7 +104,7 @@ function Documentation () {
 						Content({html: rawMarkup()}),
 						TableOfContents({
 							nav: props.nav,
-							onClick: dio.curry(activateLink, this, true)
+							onClick: dio.createFunction(activateLink, this, true)
 						})
 					)
 		}
@@ -114,7 +114,7 @@ function Documentation () {
 
 function Welcome () {
 	var 
-	rawMarkup   = dio.stream('');
+	rawMarkup   = dio.createStream('');
 
 	function Install (e) {
 		var
@@ -139,7 +139,7 @@ function Welcome () {
 		},
 		render: function () {
 			return h('.welcome', {
-				onClick: dio.curry(Install, true),
+				onClick: dio.createFunction(Install, true),
 				innerHTML: rawMarkup()
 			});
 		}
