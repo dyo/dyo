@@ -66,7 +66,7 @@ This getting started guide will show you how to go from zero to hello world.
 </script>
 ```
 
-Will mount a h1 element onto the .app div the contents of which will be 'Hello World'.
+Will mount a h1 element onto the `.app` div the contents of which will be 'Hello World'.
 
 ---
 
