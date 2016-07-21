@@ -1,5 +1,7 @@
 # dio.js
 
+![Logo](docs/layout/assets/logo.svg)
+
 ##### Dio is a lightweight (~6kb) Virtual DOM framework.
 
 - *~6kb minified+gzipped.*  
