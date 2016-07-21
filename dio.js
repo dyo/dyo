@@ -2306,7 +2306,7 @@
 	function createStream (store, processor, handler) {
 		var
 		// .then(fn()=>{}) listeners
-		listeners = [],
+		listeners,
 		// stream of data to pass across the .then() chain
 		data = store,
 		// address for error handler
@@ -2326,15 +2326,16 @@
 			// update the stream store
 			if (args[__length]) {
 				data = store = args[0];
-				
-				// check if we have any listeners
-				// then execute them in the order they where specified
-				// passing the returned value of the last one to the next
-				if (listeners[__length]) {
-					each(listeners, function (listener) {
-						data = listener(data) || data
-					});
-				}
+
+					// check if we have any listeners
+					// then execute them in the order they where specified
+					// passing the returned value of the last one to the next
+					if (listeners && listeners[__length]) {
+						each(listeners, function (listener) {
+							data = (data && data.id === propSignature) ? data() : data;
+							data = listener(data) || data;
+						});
+					}
 			}
 	         
 	        return getStore();
@@ -2382,6 +2383,10 @@
 		 * @return {Stream}         
 		 */
 		function then (listener, error) {
+			if (!listeners) {
+				listeners = [];
+			}
+
 			// make sure the callback is indeed a function
 			if (is(listener, __function)) {
 				// add a function that will call the listener 
@@ -2489,19 +2494,45 @@
 	 * @return {Stream}
 	 */
 	createStream.combine = function (reducer) {
-		var
 		// convert arguments an array, excluding reducer
-		args = __array[__prototype].slice.call(arguments, 1);		
+		var
+		dependencies = __array[__prototype].slice.call(arguments, 1),
+
+		dependencyStore = [],
+		reducerStore = __false,
+		changed;
+
+		// inital value of dependencies
+		each(dependencies, function (value, index) {
+			dependencyStore[index] = value();
+		});
 
 		function mapper () {
-			// get combined streams stores
-			args.forEach(function (value, index) {
-				if (is(value, __function) && value.id === propSignature) {
-					args[index] = value();
+			// refersh changed state to default
+			changed = __false;
+
+			// get dependecies current state
+			// and compare with our inital values
+			each(dependencies, function (value, index) {
+				value = value();
+
+				// a dependency has changed
+				// publish a state to update
+				if (dependencyStore[index] !== value && !changed) {
+					changed = __true;
 				}
+
+				// update our dependency store
+				dependencyStore[index] = value;
 			});
-			// call and pass streams to the reducer
-			return reducer.apply(__undefined, args);
+
+			// refresh the store eveytime we have a change
+			if (!(!changed && reducerStore !== __false)) {
+				reducerStore = reducer.apply(__undefined, dependencies);
+			}
+
+			// otherwise just return the current store
+			return reducerStore
 		}
 		// add signature that says this stream was created internally
 		mapper.id = mapperSignature;
