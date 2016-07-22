@@ -2653,10 +2653,9 @@
 		animate: animate(),
 		request: request(),
 
-		combineStreams: createStream.combine,
-		createStream: createStream,
 		createComponent: createComponent,
 		createFunction: createFunction,
+		createStream: createStream,
 		createRender: createRender,
 		createRouter: createRouter,
 		createStore: createStore,
