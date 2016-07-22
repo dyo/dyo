@@ -2392,16 +2392,21 @@
 		 * retrieve the store
 		 */
 		function getStore () {
+			var 
+			storeValue;
+
 	        // is this stream created internally?
 	        if (store && store.id === mapperSignature) {
-	            return store();
+	            storeValue = store();
 	        }
-	        // otherwise check if the there is a processor
-	        // if so run that through the store and return the value
-	        // otherwise just return the store
 	        else {
-				return !processor ? store : processor(store);
-			}
+	        	storeValue = store;
+	        }
+	        
+	        // check if the there is a processor
+	        // if so run that through the storeValue and return it
+	        // otherwise just return the storeValue
+			return !processor ? storeValue : processor(storeValue);
 		}
 	  
 
