@@ -8,6 +8,8 @@
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 	</head>
 	<body>
+		<div class="container"></div>
+
 		<script src="/dio.js"></script>
 		<script src="test.js"></script>
 		<script>
@@ -35,10 +37,10 @@
 				foo(2);
 
 			    ok(foo() + bar() === 4, '.createStream()');
-			    ok(fooMap() === 12, '.createStream().map()' );
 			    ok(pro() === 100, '.createStream(__, processor)');
 			    ok(combine() === 4, '.createStream.combine()');
-			    ok(fn.called, '.createStream().then()');
+			    ok(fooMap() === 12, 'stream.map()' );
+			    ok(fn.called, 'stream.then()');
 
 			    end();
 			});
@@ -68,6 +70,163 @@
 
 				end();
 			});
+
+			test('dio.createFunction', function (ok, eq, spy, end) {
+				function fn (a, b) {
+					return a + b;
+				};
+
+				var e = {
+					preventDefault: spy()
+				};
+
+				function event () {}
+
+				var simple = dio.createFunction(fn, [1, 2]);
+				var str = dio.createFunction('return fn(a, b)', [fn, 1, 2], null, 'fn, a, b');
+				var evt = dio.createFunction(event, null, true);
+
+				evt(e);
+
+				ok(simple() === 3, '.createFunction(fn, [a, b])');
+				ok(str() === 3, ".createFunction('return fn(a, b)', [fn, a, b]), __, 'fn, a, b'");
+				ok(e.preventDefault.called, '.createFunction(fn, __, true)');
+
+				end();
+			});
+
+			test('dio.createComponent', function (ok, eq, spy, end) {
+				var hyperscript = h('div', {class: 'foo' }, 'hello world');
+
+				function render () {
+					return hyperscript
+				}
+				var obj = dio.createComponent({
+					render: render
+				});
+				var fn = dio.createComponent(function () {
+					return {
+						render: render
+					};
+				});
+
+
+				function isComponent (a) {
+					a = a(0,0,1);
+
+					var props = [
+						'withAttr', 'setState', 'setProps', 
+						'forceUpdate', 'state', 'props', 'render'
+					];
+
+					var state = props.filter(function (value) {
+						return !!a[value];
+					});
+
+					return !!state.length;
+				}
+
+				ok(eq(fn(), hyperscript), '.createCompoent({Object})');
+				ok(eq(obj(), hyperscript), '.createCompoent({Function})');
+				ok(eq(obj(), fn()) && isComponent(obj), '.createCompoent({Object}|{Function})');
+				ok(isComponent(fn), '.createCompoent({Function})(__, __, true)')
+				ok(isComponent(obj), '.createCompoent({Object})(__, __, true)')
+
+				end();
+			});
+
+			test('dio.createStore', function (ok, eq, spy, end) {
+				function reducer (state, action) {
+					state = state || {items: [1,2,3,4]}
+
+					switch (action.type) {
+						case 'ADD':
+							return Object.assign({}, state, {items: state.items.concat([action.item])})
+						default:
+							return state;
+					}
+				}
+
+				var store = dio.createStore(reducer);
+
+				function isStore (a) {
+					var props = ['connect', 'dispatch', 'getState', 'subscribe'];
+
+					var state = props.filter(function (value) {
+						return !!a[value];
+					});
+
+					return !!state.length;
+				}
+
+				var renderSpy = spy();
+				var subscribeSpy = spy();
+
+				ok(isStore(store), '.createStore({Function})');
+				ok(eq(store.getState(), {items: [1,2,3,4]}), 'store.getState()');
+
+				store.dispatch({type: 'ADD', item: 10});
+
+				ok(eq(store.getState(), {items: [1,2,3,4,10]}), 'store.dispatch()');
+
+				store.subscribe(subscribeSpy);
+				store.dispatch({type: 'ADD', item: 14});
+
+				ok(subscribeSpy.called, 'store.subscribe(fn)');
+
+				store.connect(renderSpy);
+				store.dispatch({type: 'ADD', item: 33});
+
+				ok(renderSpy.called, 'store.connect({createRender})');
+
+				end();
+			});
+
+			test('dio.createRender', function (ok, eq, spy, end) {
+				var container = document.querySelector('.container');
+				var hyperscript = h('pre', {style: 'display:none;'}, '.createRender works');
+
+				var render = dio.createRender({
+					render: function () {
+						return hyperscript;
+					}
+				}, container);
+
+				var getHScriptFromRender = render(null,null,'@@dio');
+
+				render();
+
+				ok(container.children.length, '.createRender({Object}, element)');
+
+				var propsSpy = spy();
+				var childrenSpy = spy();
+
+				var render = dio.createRender({
+					render: function (props) {
+						if (props.id) {
+							propsSpy()
+						}
+
+						if (this.props.children) {
+							childrenSpy()
+						}
+
+						return hyperscript;
+					}
+				}, '.container');
+
+				render({id:1}, {item1: 'Text'});
+
+				ok(container.children.length, '.createRender({Object}, selector)');
+				ok(container.children.length, 'render()');
+				ok(propsSpy.called, 'render(props, __)');
+				ok(childrenSpy.called, 'render(__, children)');
+				ok(eq(getHScriptFromRender, hyperscript), "render(__, __, '@@dio')");
+				
+				end();
+			});
+
+
 		</script>
 	</body>
 </html>
