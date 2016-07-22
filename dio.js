@@ -1552,7 +1552,7 @@
 
 			// otherwise...
 			// <type ...props>...children</type>
-			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
+			return '<'+type+' '+Props(props)+'>' + Children(children, level) + '</'+type+'>';
 		}
 
 		// print props
@@ -1582,7 +1582,7 @@
 							})
 							// create string, remove trailing space
 							// <type ...props > => <type ...props>
-							.join(' ').replace(/\s+$/g, '');
+							.join(' ').replace(/\s+$/g, ' ');
 
 			// not empty?
 			if (props) {
@@ -1623,7 +1623,24 @@
 		};
 
 		var
-		vnode = is(arg, __function) ? arg(props, children, signatureBase) : arg;
+		vnode;
+
+		// either a render function or component function
+		if (is(arg, __function)) {
+			// component functions expose their internals
+			// when we pass a third param, on the other hand
+			// render functions expose their hyperscript output
+			// when we pass a third param
+			vnode = arg(
+				props, 
+				children, 
+				(arg.id === componentSignature) ? __undefined : signatureBase
+			)
+		}
+		// probably default hyperscript
+		else {
+			vnode = arg;
+		}
 
 		return toHTML(vnode);
 	}
@@ -2402,7 +2419,7 @@
 	        else {
 	        	storeValue = store;
 	        }
-	        
+
 	        // check if the there is a processor
 	        // if so run that through the storeValue and return it
 	        // otherwise just return the storeValue

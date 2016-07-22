@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="description" content="Dio is a lightweight (~6kb) Virtual DOM framework.">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
+		<title>Dio.js</title>
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+	</head>
+	<body>
+		<script src="/dio.js"></script>
+		<script src="test.js"></script>
+		<script>
+			test('dio.createStream', function(ok, eq, spy, end) {
+				var foo = dio.createStream(3);
+				var bar = dio.createStream(2);
+				var faz = dio.createStream('string');
+				var pro = dio.createStream('100', Number);
+				var the = dio.createStream('initial');
+
+				var fooMap = foo.map(function (value) {
+					return value + 10;
+				});
+				
+				var combine = dio.createStream.combine(function (a, b) {
+					return a() + b();
+				}, foo, bar);
+
+				var fn  = spy();
+
+				the.then(fn);
+
+				the('changed');
+
+				foo(2);
+
+			    ok(foo() + bar() === 4, '.createStream()');
+			    ok(fooMap() === 12, '.createStream().map()' );
+			    ok(pro() === 100, '.createStream(__, processor)');
+			    ok(combine() === 4, '.createStream.combine()');
+			    ok(fn.called, '.createStream().then()');
+
+			    end();
+			});
+
+			test('dio.createHTML', function (ok, eq, spy, end) {
+				var hyperscript = h('div', {class: 'foo' }, 'hello world');
+				var render = dio.createRender({
+					render: function () {
+						return hyperscript;
+					}
+				});
+				var component = dio.createComponent({
+					render: function () {
+						return hyperscript;
+					}
+				});
+
+				var expectedOutput = '<div class="foo">hello world</div>';
+
+				var hyperscriptHTML = dio.createHTML(hyperscript).replace(/\n|\t+/g, '');
+				var renderHTML      = dio.createHTML(render).replace(/\n|\t+/g, '');
+				var componentHTML   = dio.createHTML(component).replace(/\n|\t+/g, '');
+
+				ok(hyperscriptHTML === expectedOutput, '.createHTML(hyperscript)');
+				ok(renderHTML      === expectedOutput, '.createHTML(createRender)');
+				ok(componentHTML   === expectedOutput, '.createHTML(createComponent)');
+
+				end();
+			});
+		</script>
+	</body>
+</html>
