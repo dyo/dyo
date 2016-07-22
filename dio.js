@@ -2412,8 +2412,7 @@
 		 */
 		function map (reducer) {
 			function mapper () {
-				getStore();
-	            return reducer(store);
+	            return reducer(getStore());
 	        }
 	        // add signature that says this stream was created internally
 	        mapper.id = mapperSignature;
