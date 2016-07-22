@@ -280,6 +280,11 @@ var faz = dio.createStream.combine(function(fooValue, barValue){
 	return fooValue() + barValue();
 }, foo, bar);
 
+// or
+var faz = dio.combineStreams(function(fooValue, barValue){
+	return fooValue() + barValue();
+}, foo, bar);
+
 foo(1)
 bar(2)
 

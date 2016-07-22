@@ -247,7 +247,7 @@
 			// no props specified default 2nd arg to children
 			// is an hyperscript object or not 
 			// an object (null,undefined,string,array,bool)
-			if (isH(props) || !is(props, __object)) {
+			if (isHyperscriptObject(props) || !is(props, __object)) {
 				key   = 1,
 				props = {};
 			}
@@ -308,7 +308,7 @@
 			return obj;
 		}
 
-		function isH (obj) {
+		function isHyperscriptObject (obj) {
 			// object exists
 			// has type, children and props
 			var 
@@ -355,7 +355,7 @@
 		 */
 		function setChild (child) {
 			// convert to string non hyperscript children
-			if (!(is(child, __object) && isH(child))) {
+			if (!(is(child, __object) && isHyperscriptObject(child))) {
 				// we don't want [object Object] strings
 				if (is(child, __object)) {
 					child = JSON.stringify(child);
@@ -685,7 +685,7 @@
 				// we have a component and string ref
 				if (component && is(ref, __string)) {
 					// create the refs object if it doesn't already exist
-					component.refs = component.refs || {}
+					component.refs = component.refs || {};
 					// set string refs
 					component.refs[ref] = el;
 				}
@@ -970,7 +970,7 @@
 				}
 
 				// promote element to individual composite layer
-				if (style.willChange) {
+				if (style.willChange !== __undefined) {
 					style.willChange = 'transform';
 				}
 
@@ -981,7 +981,7 @@
 					classList('toggle', element, className);
 				}
 				// get last rect state, 
-				// if there is not end class
+				// if there is no end class
 				// then nothing has changed, save a reflow and just use the first state
 				last = className ? getBoundingClientRect(element) : first;
 
@@ -1294,9 +1294,9 @@
 				responseHeader = xhr.getResponseHeader("content-type");
 
 				// format response header
-				// to get the type of response
-				// that we can use to format the response body
-				// if needed i.e create dom/parse json
+				// get the type of response
+				// so we can use that to format the response body
+				// if needed i.e create a dom/parse json
 				if (responseHeader.indexOf(';') !== -1) {
 					responseType = responseHeader.split(';');
 					responseType = responseType[0].split('/');
@@ -1324,7 +1324,7 @@
 				return response;
 			}
 
-			// create xhr stream
+			// create xhr stream with a custom middleware
 			var
 			xhrStream = createStream(__undefined, __undefined, function (value, listener, error) {
 				var
@@ -1335,12 +1335,11 @@
 					var
 					target = value.currentTarget;
 
-					// check if it's an event object
-					// if so check if currentTarget is an XMLHttpRequest object
+					// check if target is an event object
 					if (is(target, __XMLHttpRequest)) {
 						xhr = target;
 					}
-					// check if it's a XMLHttpRequest object
+					// check if it (the value) is a XMLHttpRequest object
 					else if (is(value, __XMLHttpRequest)) {
 						xhr = value;
 					}
@@ -1372,7 +1371,7 @@
 
 			a.href   = url;
 
-			// check if is this a cross origin request check
+			// check if is this a cross origin request
 			var
 			CORS = !(
 				a.hostname        === location.hostname &&
@@ -1389,18 +1388,21 @@
 			
 			// on success update the xhrStream
 			xhr.onload = function () {
-				// pass the xhr object to request
-				xhrStream(this)
+				// the stream still exists?
+				if (xhrStream) {
+					// pass the xhr object to request
+					xhrStream(this)
+				}
 			}
 			// on fail also update the xhrStream but also
 			// add a .then to the chain that
 			// throws an error with the statusText
 			xhr.onerror = function (e) {
-				// the request object is still in memory address?
+				// the stream still exists?
 				if (xhrStream) {
 					var 
 					self = this;
-					// the request is still chainable?
+					// the stream is still chainable?
 					if (xhrStream.then) {
 						// when we update xhrStream this will run and throw an error
 						// containing the statusText which we can catch within 
@@ -1414,7 +1416,7 @@
 				}
 			}
 			
-			// cross origin request
+			// cross origin request cookies
 			if (CORS && withCredentials) {
 				xhr.withCredentials = __true;
 			}
@@ -1434,6 +1436,7 @@
 			// send request
 			xhr.send(payload);
 
+			// return the thenable stream
 			return xhrStream;
 		}
 
@@ -1490,7 +1493,7 @@
 					enctype     = placeholder;
 				}
 
-				// enctype syntactial sugar
+				// enctype syntax sugar
 				if (enctype) {
 					if (enctype === 'json') {
 						enctype = 'application/json';
@@ -1708,13 +1711,15 @@
 
 			// auto subscribe a component to a store
 			function connect (render, element) {
-				// create a render instance of not one
+				// create a render instance if not one
 				if (element) {
 					render = createRender(render, element);
 				}
 
+				// trigger initial render
 				render(getState());
 
+				// trigger subsequent renders on state updates
 				subscribe(function () {
 					render(getState());
 				});
@@ -1774,11 +1779,11 @@
 			function registerRoutes () {
 				// assign routes
 				each(routes, function (value, name) {
-					// where we store the variables
+					// vars = where we store the variables
 					// i.e in /:user/:id - user, id are variables
 					var 
 					vars = [],
-					regex     = /([:*])(\w+)|([\*])/g,
+					regex = /([:*])(\w+)|([\*])/g,
 
 					// given the following /:user/:id/*
 					pattern = name.replace(regex, function () {
@@ -1789,18 +1794,18 @@
 
 								// if not a variable 
 								if (!id) {
-									return '(?:.*)'
+									return '(?:.*)';
 								}
 								// capture
 								else {
 									vars.push(id)
-									return '([^\/]+)'
+									return '([^\/]+)';
 								}
 							}),
 
 					pattern      = pattern + '$';
 					routes[name] = [value, rootAddress ? rootAddress + pattern : pattern, vars]
-				})
+				});
 			}
 
 			/**
@@ -1827,18 +1832,17 @@
 							.slice(1, match[__length])
 							.reduce(function (data, val, i) {
 								if (!data) {
-									data = {}
+									data = {};
 								}
 								// var name: value
 								// i.e user: 'simple'
-								data[vars[i]] = val
+								data[vars[i]] = val;
 
-								return data
+								return data;
 							}, __null);
 
 						// callback is a function, exec
 						if (is(callback, __function)) {
-							// component function
 							callback(data);
 						}
 					}
@@ -1975,11 +1979,12 @@
 		args = toArray(arguments);
 
 		// assign args
-		each(args, function (value) {	
+		each(args, function (value) {
+			// a component
 			if (is(value, __function) && value.id === componentSignature) {
 				component = value;
 			}
-			// function / object
+			// a pure function / object
 			else if (is(value, __function) || is(value, __object)) {
 				component = createComponent(value);
 			}
@@ -1998,7 +2003,7 @@
 			element = __document.body;
 		}
 
-		// has parent to mount to
+		// a component exists
 		if (component) {
 			// determine if the component is stateless
 			if (component.stateless) {
@@ -2012,8 +2017,7 @@
 
 			return render;
 		}
-		// can't find element to mount to
-		// or can't find a component
+		// can't find a component
 		else {
 			throw 'can\'t find the component';
 		}
@@ -2036,13 +2040,31 @@
 			if (!obj) {
 				throw 'no render'
 			}
+			// a stateless component
+			// we assume it returns a hyperscript object
+			// rather than a render method
 			else if (!obj.render) {
 				arg.stateless = __true
 				return arg;
 			}
 		}
+		// we have an object
 		else if (is(arg, __object)) {
-			obj = arg.render ? arg : {render: function () { return arg } };
+			// does the object have a render method
+			// if not create one that returns 'arg' which we 
+			// assume is a hyperscript object thus a stateless component
+			if (arg.render) {
+				obj = arg;
+			}
+			// stateless
+			else {
+				function __arg () { 
+					return arg;
+				}
+				__arg.stateless = __true;
+
+				return __arg;
+			}
 		}
 		else {
 			throw 'invalid component';
@@ -2051,6 +2073,7 @@
 		// everything checks out i.e
 		// - obj has a render method
 		// - or arg() returns an object that has a render method
+		// stateless components never reach here
 		// 
 		// create new component object 
 		var
@@ -2059,6 +2082,7 @@
 		// add the properties to the component instance
 		// also bind functions to the component scope
 		each(obj, function (value, name) {
+			// methods
 			if (is(value, __function)) {
 				// pass props and state to render
 				if (name === 'render') {
@@ -2069,6 +2093,7 @@
 					component[name] = value.bind(component);
 				}
 			}
+			// objects
 			else {
 				component[name] = value;
 			}
@@ -2149,11 +2174,16 @@
 	componentClass[__prototype] = {
 		// i.e this.setState({})
 		setState: function (data, self) {
+			// this allows us to run setState
+			// from outside the components namespace
+			// i.e this.setState({}, context)
 			self = self || this;
 
 			// set state
 			// if the state is changed
 			// setState will return true
+			// thus force and update when
+			// that happens
 			if (setState(self, data)) {
 				// update render
 				self.forceUpdate();
@@ -2161,8 +2191,10 @@
 		},
 		// i.e this.setProps({})
 		setProps: function (data, self) {
+			// same thing
 			self = self || this;
 
+			// set props does not trigger an redraw/update
 			setProps(self, data);
 		},
 		// force update public method
@@ -2196,6 +2228,11 @@
 	function setProps (self, data) {
 		// assign props to {} if it's undefined
 		self.props = self.props || {};
+
+		// if the object is a function that returns an object
+		if (is(data, __function)) {
+			data = data();
+		}
 
 		if (data) {
 			// set props
@@ -2236,6 +2273,16 @@
 	 * two-way data binding, not to be confused with Function.bind
 	 * @param  {String|String[]} props      - the property/attr to look for in the element
 	 * @param  {Function|Function[]} setter - the object to update/setter to execute
+	 * 
+	 * @example
+	 * 
+	 * direction of binding element ----> setter
+	 * this.withAttr(['prop1-from-el', 'prop2-from-el'], to-prop1-setter, to-prop2-setter)
+	 * direction of binding element <---- setter
+	 * this.withAttr([to-prop1-setter, to-prop2-setter], ['prop1-from-el', 'prop2-from-el'])
+	 *
+	 * setters are always an array of: functions
+	 * and element props: strings
 	 */
 	function withAttr (props, setters, callback) {
 		function update (el, prop, setter) {
@@ -2495,11 +2542,18 @@
 	 */
 	createStream.combine = function (reducer) {
 		// convert arguments an array, excluding reducer
+		// these are the streams we are combining
 		var
 		dependencies = __array[__prototype].slice.call(arguments, 1),
 
+		// store of dependencies values that we use to determine
+		// wheather to run the reducer or use the cached value
+		// for the previous computation of the reducer
 		dependencyStore = [],
-		reducerStore = __false,
+		// reducer store, this will be updated
+		// evertime a dependency changes
+		reducerStore    = __false,
+		// status of weather a dependency has changed
 		changed;
 
 		// inital value of dependencies
@@ -2508,7 +2562,7 @@
 		});
 
 		function mapper () {
-			// refersh changed state to default
+			// always refresh changed state to a default false
 			changed = __false;
 
 			// get dependecies current state
@@ -2518,6 +2572,8 @@
 
 				// a dependency has changed
 				// publish a state to update
+				// of the state has already been set to update
+				// do nothing
 				if (dependencyStore[index] !== value && !changed) {
 					changed = __true;
 				}
@@ -2531,7 +2587,7 @@
 				reducerStore = reducer.apply(__undefined, dependencies);
 			}
 
-			// otherwise just return the current store
+			// otherwise just return the current cache of the reducer store
 			return reducerStore
 		}
 		// add signature that says this stream was created internally
@@ -2597,9 +2653,10 @@
 		animate: animate(),
 		request: request(),
 
+		combineStreams: createStream.combine,
+		createStream: createStream,
 		createComponent: createComponent,
 		createFunction: createFunction,
-		createStream: createStream,
 		createRender: createRender,
 		createRouter: createRouter,
 		createStore: createStore,
