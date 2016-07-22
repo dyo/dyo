@@ -81,7 +81,6 @@
 	__array                     = Array,
 	__object                    = Object,
 	__function                  = Function,
-	__boolean                   = Boolean,
 	__string                    = String,
 	__XMLHttpRequest            = XMLHttpRequest,
 	__RegExp                    = RegExp,
@@ -2604,21 +2603,22 @@
 	 * @param  {Boolean}  event auto preventDefault for events
 	 * @return {Function}       curried function
 	 */
-	function createFunction (fn, args, preventDefault) {
+	function createFunction (fn, args, preventDefault, argsNames) {
 		var
 		argsArray = [];
 
-		// args is preventDefault if it is a boolean type
-		if (is(args, __boolean)) {
-			preventDefault = args;
-		}
-		// otherwise convert args to array if it's not one
-		else if (!is(args, __array)) {
+		// convert args to array if it's not one
+		if (!is(args, __array)) {
 			argsArray = [args];
 		}
 		// args is already an array, use as is
 		else {
 			argsArray = args;
+		}
+
+		// function is a create, create
+		if (is(fn, __string)) {
+			fn = new __function(argsNames, fn);
 		}
 
 		// return a function that executes

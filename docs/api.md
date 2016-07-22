@@ -232,33 +232,6 @@ dio.createHTML(component, props, children)
 
 ---
 
-## dio.request
-
-make ajax requests
-
-```
-// returns a stream
-dio.request(
-	url: {String}, 
-	payload?: {Object},
-	enctype?: {String}, 
-	// 'file' | 'json' | 'text', default: 'application/x-www-form-urlencoded'
-	callback?: {Function}, 
-	withCredentials?: {Boolean} 
-	// true/false for CORS requests 
-)
-
-// example
-
-dio.request('/url')
-	.then((res)=>{return res})
-	.then((res)=>{'do something'})
-	.catch((err)=>{throw err});
-
-```
-
----
-
 ## dio.createStream
 
 ```
@@ -303,11 +276,82 @@ faz.then(fn).then(fn)....
 ## dio.createFunction
 
 ```
-var foo = dio.createFunction((a, b)=>{}, ['a', 'b'], event: {Boolean})
-// setting the event argument does a preventDefault if the caller is an event
+var foo = dio.createFunction(
+	fn: {Function|String}, 
+	argumentsPassed: {Any[]|Any}, 
+	event: {Boolean}, 
+	argumentNames? // used when fn is a string
+)
+// setting the event argument triggers e.preventDefault() 
+// if the caller is an event
 // for example:
 
-onClick: dio.createFunction((a) => {'look no e.preventDefault()'}, ['a'], true)
+onClick: dio.createFunction(
+		(a) => {'look no e.preventDefault()'}, 
+		['a'], 
+		true
+	)
+
+// you could also pass a string as the function argument
+onInput: dio.createFunction(
+		'console.log(a, b, c)', 
+		[1, 2, 3], 
+		true, 
+		'a, b, c'
+	)
+// logs 1, 2, 3
+
+// which allows us to do something like
+function DoesOneThing (component, arg1, arg2) {
+	// ... do something with arg1 and arg2
+	// 'this' is the element that was clicked
+	component.setState({...})
+}
+
+// one way
+...h('input', {
+	onInput: dio.createFunction(DoesOneThing, [this, 1, 2], true)
+})
+// another
+...h('input', {
+	onInput: dio.createFunction(
+		'DoesOneThing(a,b+20,c+10)', 
+		[this, 1, 2], 
+		true, 
+		'a,b,c'
+	)
+})
+```
+
+---
+
+## dio.request
+
+make ajax requests
+
+```javascript
+// returns a stream
+dio.request(
+	url: {String}, 
+	payload?: {Object},
+
+	// 'file' | 'json' | 'text', default: 'application/x-www-form-urlencoded'
+	enctype?: {String}, 
+	callback?: {Function}, 
+
+	// true/false
+	// that indicates whether CORS requests should be made 
+	// using credentials such as cookies, 
+	// authorization headers or TLS client certificates.
+	withCredentials?: {Boolean} 
+)
+
+// example
+
+dio.request.post('/url', {id: 1234}, 'json')
+	.then((res)=>{return res})
+	.then((res)=>{'do something'})
+	.catch((err)=>{throw err});
 
 ```
 
