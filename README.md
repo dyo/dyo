@@ -342,7 +342,7 @@ faz.then(fn).then(fn)....
 
 ## dio.createFunction
 
-```
+```javascript
 var foo = dio.createFunction(
 	fn: {Function|String}, 
 	argumentsPassed: {Any[]|Any}, 
