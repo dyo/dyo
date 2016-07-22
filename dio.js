@@ -1582,7 +1582,7 @@
 							})
 							// create string, remove trailing space
 							// <type ...props > => <type ...props>
-							.join(' ').replace(/\s+$/g, ' ');
+							.join(' ').replace(/\s+$/g, '');
 
 			// not empty?
 			if (props) {
