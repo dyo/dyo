@@ -193,18 +193,18 @@
 	function lifecycle (node, stage, iscomp, props, state) {
 		// end quickly
 		// if node is not a Component or hyperscript object
-		if (!node || (!node.internal && !node.render)) {
+		if (!node || (!node[componentSignature] && !node.render)) {
 			return;
 		}
 
 		// if node is a component then component = node
-		// otherwise component = node.internal
+		// otherwise component = node[componentSignature]
 		// if the node is not a components parent
-		// Element .internal will not exist which means
+		// Element [componentSignature] will not exist which means
 		// no lifecycle methods exist as well
 		// so the next if (Component ...) block will end quickly
 		var
-		component = iscomp ? node : node.internal;
+		component = iscomp ? node : node[componentSignature];
 
 		if (component && component[stage]) {
 			// is the props/state truthy? if so check if it is not a boolean
@@ -469,9 +469,8 @@
 		function update (parent, newNode, oldNode, index, component, newChildren, oldChildren) {
 			index = index || 0;
 			
-			// should component update
-			// if false exit quickly
-			if (lifecycle(newNode, __shouldComponentUpdate) === __false) {
+			// should component update?
+			if (newNode && newNode[__shouldComponentUpdate] === __false) {
 				return;
 			}
 
@@ -642,8 +641,7 @@
 			obj  = node1[__constructor] !== node2[__constructor],
 
 			// diff text content
-			// if this is text content diff it's string content
-			text = is(node1, __string) && node1 !== node2,
+			text = !is(node1, __object) && node1 !== node2,
 
 			// diff node type
 			// if this is an element diff it's type
@@ -2157,7 +2155,8 @@
 			self.children = obj.children;
 		}
 		// prototype methods
-		h[__prototype].internal = component;
+		h[__prototype][componentSignature]      = component;
+		h[__prototype][__shouldComponentUpdate] = __true;
 
 		// re-add default object constructor
 		// insures obj.constructor will return Object
@@ -2167,21 +2166,39 @@
 		var
 		render = component.render;
 
+		// insure the render function returns the newly
+		// created hyperscript object
+		component.render = function () {
+			return new h(render());
+		}
+
+		// hyperscript cache
+		var
+		cache;
+
 		// we will return a function that when called
 		// returns the components vdom representation
 		// i.e User(props) -> {type: 'div', props: {..props}, children: ...}
 		// this is that function
 		function Component (props, children, internal) {
-			// insure the render function returns the newly
-			// created hyperscript object
-			component.render = function () {
-				return new h(render());
-			}
-
 			// add children to props if set
 			if (children) {
 				props = props || {};
 				props.children = children;
+			}
+
+			// make sure this is not the first render
+			// if it is there will be no cached copy
+			if (cache) {
+				// shouldComponentUpdate?
+				// if false, add signal, and return cached copy
+				if (lifecycle(component, __shouldComponentUpdate, __true, props) === __false) {
+					cache[__shouldComponentUpdate] = __false;
+					return cache;
+				}
+				else {
+					cache[__shouldComponentUpdate] = __true;
+				}
 			}
 
 			// publish componentWillReceiveProps lifecycle
@@ -2191,9 +2208,13 @@
 				setProps(component, props);
 			}
 
-			// expose the components internals
-			// when requested
-			return internal ? component : component.render();
+			if (internal) {
+				return component;
+			}
+			else {
+				cache = component.render();
+				return cache;
+			}			
 		}
 		Component.id = componentSignature;
 

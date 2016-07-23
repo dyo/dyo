@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="description" content="DBMON Dio.js">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
+		<title>dbmon (Dio.js)</title>
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+	</head>
+	<body>
+		<div id="dbmon"></div>
+			
+		<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
+		<script src="/dio.js"></script>
+			
+		<!-- ENV.js -->
+		<script>
+			function Query(elapsed, query) {
+			  this.elapsed = elapsed;
+			  this.query = query;
+			}
+
+			var EMPTY_QUERY = new Query(0.0, '');
+
+			Query.rand = function() {
+			  var elapsed = Math.random() * 15;
+			  var query = 'SELECT blah FROM something';
+
+			  if (Math.random() < 0.2) {
+			    query = '<IDLE> in transaction';
+			  }
+
+			  if (Math.random() < 0.1) {
+			    query = 'vacuum';
+			  }
+
+			  return new Query(elapsed, query);
+			};
+
+			var _nextId = 0;
+
+			function Database(name) {
+			  this.name = name;
+			  this.queries = null;
+
+			  this.update();
+			}
+
+			Database.prototype.update = function() {
+			  var queries = [];
+
+			  var r = Math.floor((Math.random() * 10) + 1);
+			  for (var j = 0; j < r; j++) {
+			    queries.push(Query.rand());
+			  }
+
+			  this.queries = queries;
+			};
+
+			Database.prototype.getTopFiveQueries = function() {
+			  var qs = this.queries.slice();
+			  qs.sort(function(a, b) {
+			    return a.elapsed - b.elapsed;
+			  });
+			  qs = qs.slice(0, 5);
+			  while (qs.length < 5) {
+			    qs.push(EMPTY_QUERY);
+			  }
+			  return qs;
+			};
+
+			function DatabaseList(n) {
+			  this.dbs = [];
+
+			  for (var i = 0; i < n; i++) {
+			    this.dbs.push(new Database('cluster' + i));
+			    this.dbs.push(new Database('cluster' + i + 'slave'));
+			  }
+			}
+
+			DatabaseList.prototype.update = function() {
+			  var dbs = this.dbs;
+			  for (var i = 0; i < dbs.length; i++) {
+			    dbs[i] = new Database(dbs[i].name);
+			  }
+			};
+
+			DatabaseList.prototype.randomUpdate = function(r) {
+			  var dbs = this.dbs;
+			  for (var i = 0; i < dbs.length; i++) {
+			    if (Math.random() < r) {
+			      dbs[i] = new Database(dbs[i].name);
+			    }
+			  }
+			};
+		</script>
+	
+		<!-- dio.js -->
+		<script>
+			function formatElapsed(v) {
+		  		if (!v) return '';
+
+		  		var str = parseFloat(v).toFixed(2);
+
+		  		if (v > 60) {
+		    		var minutes = Math.floor(v / 60);
+		    		var comps = (v % 60).toFixed(2).split('.');
+		    		var seconds = comps[0];
+		    		var ms = comps[1];
+		    		str = minutes + ':' + seconds + '.' + ms;
+		  		}
+
+			  return str;
+			}
+
+			function counterClasses(count) {
+			  if (count >= 20) {
+			    return 'label label-important';
+			  } else if (count >= 10) {
+			    return 'label label-warning';
+			  }
+			  return 'label label-success';
+			}
+
+			function queryClasses(elapsed) {
+		  		if (elapsed >= 10.0) {
+		    		return 'Query elapsed warn_long';
+		  		} else if (elapsed >= 1.0) {
+		   		 	return 'Query elapsed warn';
+		  		}
+			  return 'Query elapsed short';
+			}
+
+			var _arrow = {
+				type: 'div',
+				props: {className: 'arrow'},
+				children: []
+			}
+
+			var Popover = dio.createComponent({
+			  shouldComponentUpdate(nextProps) {
+			    // return (this.props.query !== nextProps.query);
+			  },
+
+			  render() {
+			    return (
+			    	h('div', {className: 'popover left'},
+			    		h('div', {className: 'popover-content'}, this.props.query),
+			    		_arrow
+		    		)
+
+			        // {
+			        // 	type: 'div',
+			        // 	props: {className: 'popover left'},
+			        // 	children: [
+			        // 		{
+			        // 			type: 'div',
+			        // 			props: {className: 'popover-content'},
+			        // 			children: [
+			        // 				this.props.query
+			        // 			]
+			        // 		},
+			        // 		_arrow
+			        // 	]
+			        // }
+			    );
+			  }
+			});
+
+			var _Query = dio.createComponent({
+			  shouldComponentUpdate(nextProps) {
+			    // return (this.props.query !== nextProps.query);
+			  },
+
+			  render() {
+			    var query = this.props.query;
+			    var elapsed = query.elapsed;
+			    return (
+			    	h('td', {className: queryClasses(elapsed)},
+			    		formatElapsed(elapsed),
+			    		Popover({query: query.query})
+	    			)
+			        // {
+			        // 	type: 'td',
+			        // 	props: {className: queryClasses(elapsed)},
+			        // 	children: [
+			        // 		formatElapsed(elapsed),
+			        // 		Popover({query: query.query})
+			        // 	]
+			        // }
+			    );
+			  }
+			});
+
+			var _emptyQuery = _Query({query: EMPTY_QUERY});
+
+			var _Database = dio.createComponent({
+			  shouldComponentUpdate(nextProps) {
+			    // return (this.props.db !== nextProps.db);
+			  },
+
+			  render() {
+			    var db = this.props.db;
+			    var topFiveQueries = db.getTopFiveQueries();
+			    var count = db.queries.length;
+
+			    var children = new Array(7);
+			    // children[0] = {
+			    // 	type: 'td',
+			    // 	props: {className: 'dbname'},
+			    // 	children: [db.name]
+			    // }
+			    children[0] = h('td', {className: 'dbname'}, db.name)
+			    // children[1] = {
+			    // 	type: 'td',
+			    // 	props: {className: 'query-count'},
+			    // 	children: [
+			    // 		{
+			    // 			type: 'span',
+			    // 			props: {className: counterClasses(count)},
+			    // 			children: [count]
+			    // 		}
+			    // 	]
+			    // }
+			    children[1] = h('td', {className: 'query-count'}, 
+			    					h('span', {className: counterClasses(count)}, count)
+	    						)
+
+			    for (var i = 0; i < 5; i++) {
+		      		var query = topFiveQueries[i];
+		      		if (query !== EMPTY_QUERY) {
+        				children[i+2] = _Query({query: topFiveQueries[i]});
+		      		} else {
+        				children[i+2] = _emptyQuery;
+		      		}
+			    }
+
+			    // return {
+			    // 	type: 'tr',
+			    // 	props: {},
+			    // 	children: children
+			    // }
+			    return h('tr', children)
+			  }
+			})
+
+			var App = dio.createRender({
+			  render() {
+			    var dbs = this.props.dbs;
+
+			    var children = new Array(dbs.length);
+			    for (var i = 0; i < dbs.length; i++) {
+		      		children[i] = _Database({key: i, db: dbs[i]});
+			    }
+
+			    return (
+			    	h('div', 
+			    		h('table', {className: 'table table-striped latest-data'},
+			    			h('tbody', children)
+		    			)
+		    		)
+
+				    // {
+				    // 	type: 'div',
+				    // 	props: {},
+				    // 	children: [
+				    // 		{
+				    // 			type: 'table',
+				    // 			props: {className: 'table table-striped latest-data'},
+				    // 			children: [
+				    // 				{
+				    // 					type: 'tbody',
+				    // 					props: {},
+				    // 					children: children
+				    // 				}
+				    // 			]
+				    // 		}
+				    // 	]	
+				    // }
+		    	)
+			  }
+			}, document.getElementById('dbmon'));
+
+			var MUTATIONS = 0.5;
+			var N = 50;
+
+			document.addEventListener('DOMContentLoaded', function() {
+			  perfMonitor.startFPSMonitor();
+			  perfMonitor.startMemMonitor();
+			  perfMonitor.initProfiler('data update');
+			  perfMonitor.initProfiler('view update');
+
+			  var dbs = new DatabaseList(N);
+
+			  var sliderContainer = document.createElement('div');
+			  sliderContainer.style.display = 'flex';
+			  var slider = document.createElement('input');
+			  slider.type = 'range';
+			  slider.style.marginBottom = '10px';
+			  slider.style.marginTop = '5px';
+			  var text = document.createElement('label');
+			  text.textContent = 'mutations : ' + (MUTATIONS * 100).toFixed(0) + '%';
+
+			  slider.addEventListener('change', function(e) {
+			    MUTATIONS = e.target.value / 100;
+			    text.textContent = 'mutations : ' + (MUTATIONS * 100).toFixed(0) + '%';
+			  });
+			  sliderContainer.appendChild(text);
+			  sliderContainer.appendChild(slider);
+			  document.body.insertBefore(sliderContainer, document.body.firstChild);
+
+			  function update() {
+			    perfMonitor.startProfile('data update');
+			    dbs.randomUpdate(MUTATIONS);
+			    perfMonitor.endProfile('data update');
+
+			    perfMonitor.startProfile('view update');
+			    App({dbs: dbs.dbs});
+
+			    perfMonitor.endProfile('view update');
+
+			    requestAnimationFrame(update);
+			  }
+
+			  requestAnimationFrame(update);
+			});
+		</script>
+	
+		<!-- styles -->
+		<style>
+			body {color:#333;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857143;margin:0;}
+			label {display:inline-block;font-weight:700;margin-bottom:5px;}
+			input[type=range] {display:block;width:100%;}
+			table {border-collapse:collapse;border-spacing:0;}
+			:before,:after {box-sizing: border-box;}
+
+			.table > thead > tr > th,.table > tbody > tr > th,.table > tfoot > tr > th,.table > thead > tr > td,.table > tbody > tr > td,.table > tfoot > tr > td {border-top:1px solid #ddd;line-height:1.42857143;padding:8px;vertical-align:top;}
+			.table {width:100%;}
+			.table-striped > tbody > tr:nth-child(odd) > td,.table-striped > tbody > tr:nth-child(odd) > th {background:#f9f9f9;}
+
+			.label {border-radius:.25em;color:#fff;display:inline;font-size:75%;font-weight:700;line-height:1;padding:.2em .6em .3em;text-align:center;vertical-align:baseline;white-space:nowrap;}
+			.label-success {background-color:#5cb85c;}
+			.label-warning {background-color:#f0ad4e;}
+
+			.popover {background-color:#fff;background-clip:padding-box;border:1px solid #ccc;border:1px solid rgba(0,0,0,.2);border-radius:6px;box-shadow:0 5px 10px rgba(0,0,0,.2);display:none;left:0;max-width:276px;padding:1px;position:absolute;text-align:left;top:0;white-space:normal;z-index:1010;}
+			.popover>.arrow:after {border-width:10px;content:"";}
+			.popover.left {margin-left:-10px;}
+			.popover.left > .arrow {border-right-width:0;border-left-color:rgba(0,0,0,.25);margin-top:-11px;right:-11px;top:50%;}
+			.popover.left > .arrow:after {border-left-color:#fff;border-right-width:0;bottom:-10px;content:" ";right:1px;}
+			.popover > .arrow {border-width:11px;}
+			.popover > .arrow,.popover>.arrow:after {border-color:transparent;border-style:solid;display:block;height:0;position:absolute;width:0;}
+
+			.popover-content {padding:9px 14px;}
+
+			.Query {position:relative;}
+			.Query:hover .popover {display:block;left:-100%;width:100%;}
+		</style>
+	</body>
+</html>
