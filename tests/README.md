@@ -50,14 +50,14 @@ test('name of test', function(ok, eq, spy, end) {
 	ok(spy.called, '.method({Object})')
 	
 	// calling end() indicates the end of the test
-	// this then will log the test with all it's assertions
+	// this will then log the test
 	end();
 	
 	// inspecting the console you will see something like
 	// > name of test (2/2 passed)
 	// click on it to see the details of the test
 	// tests that have failed assertions will be open
-	// by default
+	// by default.
 	
 	// async tests?
 	setTimeout(function(){
