@@ -167,7 +167,7 @@
 
 				store.dispatch({type: 'ADD', item: 10});
 
-				ok(eq(store.getState(), {items: [1,2,3,4,10]}), 'store.dispatch()');
+				ok(eq(store.getState(), {items: [1,2,3,4,10]}), 'store.dispatch({Object})');
 
 				store.subscribe(subscribeSpy);
 				store.dispatch({type: 'ADD', item: 14});

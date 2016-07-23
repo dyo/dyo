@@ -125,7 +125,7 @@ h('div', h('span', 'Text'))
 h('div', [h('h1', '1st'), h('h1', '2nd'), ...])
 // <div><h1>1st</h1><h1>2nd</h1></div>
 
-h('div', {innerHTML: '<script>alert('hello')</script>'});
+h('div', {innerHTML: "<script>alert('hello')</script>"});
 // <div><script>alert('hello')</script></div>
 ```
 
@@ -195,10 +195,38 @@ h('div', 'Hello World')
 	}
 }
 
+// create component with object
+dio.createComponent({
+	render: function () {
+		return h('div', 'Hello World')
+	}
+})
+
+// create component with function
+dio.createComponent(function () {
+	return  {
+		render: function () {
+			return h('div', 'Hello World')
+		}
+	}
+})
+
 dio.createRender(componentPlaceholder)
 ```
 
-Now lets go over some mount examples
+Components created with `dio.createComponent` that feature a
+render method either returned from a function or within the
+object passed to `.createComponent` are statefull by default.
+
+Another thing to note is that is that in the Hello World
+example we begin with we did not `dio.createComponent()`
+but rather just used a pure function that we passed
+to `dio.createRender(here)` this is because
+`.createRender` creates a statefull component out of the object/function
+we pass to it if it fits the criterion of a statefull component
+and a stateless component if it does'nt.
+
+Ok lets quickly go over some mount examples.
 
 ```javascript
 document || document.querySelector('.myapp')
@@ -207,10 +235,54 @@ document || document.querySelector('.myapp')
 dio.createRender(__, mountPlaceholder)
 
 // note that the default for mount is document.body
-// and when you pass document to the mount it defaults to document.body
-// since you can't mount elements directly to the document
-// so if you ever want to pass document / .body as a mount leave it blank
-// and the default would be document.body
+```
+
+With that out of the way we progress into 
+
+> How do i render one component within another?
+
+So since components are just functions(statefull/stateless),
+to render them just execute them were needed.
+note: 'render instances are not components'
+
+```
+// stateless
+function Foo (props) {
+	return h('h1', props.text)
+}
+
+// statefull
+var Bar = dio.createComponent({
+	render: function (props) {
+		return h('h2', props.text)
+	}
+});
+
+// parent component
+function () {
+	var elementHolder = dio.createStream()
+
+	return {
+		render: function () {
+			return h('div', {ref: elementHolder},
+						Foo({text: 'Hello'}),
+						Bar({text: 'World'})
+					)
+		}
+	}
+}
+
+// In the above parent component we additionally assign
+// a ref prop to our parent div, the ref works
+// as it would in react, if it is a string
+// you can access it with this.ref.name
+// if it is a function the element/node is passsed to the function
+// but since elementHolder is a stream
+// when the element node is passed to it
+// elementHolder will now container the element
+// thus executing it elementHolder() will return
+// the element
+
 ```
 
 ---
@@ -234,7 +306,7 @@ dio.createRouter({
 }, '/backend', '/user/sultan')
 
 // The above firstly defines a set of routes
-// '/' & '/user/:id' the second of which feature s data attribute
+// '/' and '/user/:id' the second of which feature s data attribute
 // that is passed to the callback function (data) in the form
 // {id: value} i.e /user/sultan will output {id: 'sultan'}
 // '/backend' specifies the root address to be used
