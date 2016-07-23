@@ -226,7 +226,30 @@
 				end();
 			});
 
+			test('dio.request', function (ok, eq, spy, end) {
+				var spyer = spy();
+				var requestJSON = dio.request.get('http://jsonplaceholder.typicode.com/users');
 
+				requestJSON.then(spyer).then(function (value) {
+					ok(true, '.get()');
+					ok(true, '.then()');
+					ok(value.length === spyer.called[0][0].length, '.get(CORS)');
+
+					throw 'error';
+				}).catch(function (e) {
+					ok(e === 'error', '.catch(e => e)');
+					// a request would naturally take the longest
+					// lets end the test here.
+					end();
+				});
+
+
+				dio.request.post('?', {id: 1234}, null, function () {
+					ok(true, '(__, __, __, callback)');
+				}).then(function (value) {
+					ok(value.nodeType, '.post()')
+				});
+			});
 		</script>
 	</body>
 </html>

@@ -1387,10 +1387,15 @@
 			
 			// on success update the xhrStream
 			xhr.onload = function () {
+				// not a .then callback function exists?
+				if (callback) {
+					callback(this);
+				}
+				
 				// the stream still exists?
 				if (xhrStream) {
 					// pass the xhr object to request
-					xhrStream(this)
+					xhrStream(this);
 				}
 			}
 			// on fail also update the xhrStream but also
@@ -1524,8 +1529,15 @@
 
 
 	/**
-	 * server-side interface converts a hyperscript vdom object to html string
-	 * @param {Object} hyperscript - hyperscript object
+	 * server-side interface converts a hyperscript/component/render to html string
+	 * @param {Object} hyperscript - hyperscript object/render/component
+	 * @param {Object} props - props to pass to component/render
+	 * @param {Object} children - children to pass to component/render
+	 * @return {String} html string ouput
+	 *
+	 * @example
+	 * createHTML(h('div', 'Hello World'));
+	 * createHTML(component/render, {id:1234}, {item:'first'});
 	 */
 	function createHTML (arg, props, children) {
 		// print node
@@ -1552,7 +1564,7 @@
 
 			// otherwise...
 			// <type ...props>...children</type>
-			return '<'+type+' '+Props(props)+'>' + Children(children, level) + '</'+type+'>';
+			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
 		}
 
 		// print props
@@ -1584,16 +1596,17 @@
 							// <type ...props > => <type ...props>
 							.join(' ').replace(/\s+$/g, '');
 
-			// not empty?
-			if (props) {
-				return props;
-			}
-
-			return '';
+			// if props is falsey just return an empty string
+			// otherwise return ' ' + ...props
+			// this prevents us from having a case of
+			// <divclass=a></div>, 
+			// so we add a space before props giving us
+			// <div class=a></div>
+			return props ? (' ' + props) : '';
 		}
 
 		// print children
-		function Children(children, level) {
+		function Children (children, level) {
 			// empty
 			if (children[__length] === 0) {
 				return '';
@@ -1637,7 +1650,7 @@
 				(arg.id === componentSignature) ? __undefined : signatureBase
 			)
 		}
-		// probably default hyperscript
+		// probably hyperscript
 		else {
 			vnode = arg;
 		}
