@@ -1,5 +1,6 @@
 # Examples
 
+- [Benchmark](../../examples/benchmark.html)
 - [Todos](../../examples/todo.html)
 - [Filter](../../examples/filter.html)
 - [Markdown](../../examples/markdown.html)

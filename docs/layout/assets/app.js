@@ -139,7 +139,7 @@ function Welcome () {
 		},
 		render: function () {
 			return h('.welcome', {
-				onClick: dio.createFunction(Install, true),
+				onClick: dio.createFunction(Install, [], true),
 				innerHTML: rawMarkup()
 			});
 		}

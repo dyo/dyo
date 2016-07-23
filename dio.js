@@ -82,6 +82,7 @@
 	__object                    = Object,
 	__function                  = Function,
 	__string                    = String,
+	__boolean                   = Boolean,
 	__XMLHttpRequest            = XMLHttpRequest,
 	__RegExp                    = RegExp,
 	__encodeURIComponent        = encodeURIComponent,
@@ -246,7 +247,10 @@
 			// no props specified default 2nd arg to children
 			// is an hyperscript object or not 
 			// an object (null,undefined,string,array,bool)
-			if (isHyperscriptObject(props) || !is(props, __object)) {
+			if (
+				isHyperscriptObject(props) ||
+				!is(props, __object)
+			) {
 				key   = 1,
 				props = {};
 			}
@@ -294,8 +298,8 @@
 				// if the child is an array go deeper
 				// and set the 'arrays children' as children
 				if (is(child, __array)) {
-					for (var k = 0; k < child[__length]; k++) {
-						obj.children[(i-key) + k] = setChild(child[k], obj);
+					for (var j = 0; j < child[__length]; j++) {
+						obj.children[(i-key) + j] = setChild(child[j], obj);
 					}
 				}
 				// deep enough, add this child to children
@@ -353,16 +357,16 @@
 		 * @return {String|Array|Object}
 		 */
 		function setChild (child) {
-			// convert to string non hyperscript children
-			if (!(is(child, __object) && isHyperscriptObject(child))) {
-				// we don't want [object Object] strings
-				if (is(child, __object)) {
-					child = JSON.stringify(child);
-				}
+			// convert non string children
+			// to strings
+			if (
+				is(child, __number) || 
+				is(child, __boolean) ||
+				child === __null ||
+				child === __undefined
+			) {
 				// for non objects adding a strings is enough 
-				else {
-					child = child + '';
-				}
+				child = child + '';
 
 				// convert the null, and undefined strings to empty strings
 				// we don't convert false since that could 
@@ -479,7 +483,7 @@
 			}
 			// removing from the dom
 			else if (newNode === __undefined) {
-				var 
+				var
 				nextNode = parent[__childNodes][index];
 				removeChild(parent, nextNode, oldNode);
 			}
@@ -504,7 +508,7 @@
 					op = -1;
 				}
 
-				return updateKeyedElements(parent, newChildren, oldChildren, op, index, newNode);
+				return updateKeyedElements(parent, oldChildren, op, index, newNode);
 			}
 			// replacing a node
 			else if (nodeChanged(newNode, oldNode)) {
@@ -512,17 +516,19 @@
 				prevNode = parent[__childNodes][index],
 				nextNode = createElement(newNode);
 
-				replaceChild(parent, nextNode, prevNode, newNode);	
+				replaceChild(parent, nextNode, prevNode, newNode);
 			}
 			// the lookup loop
 			else if (newNode.type) {
 				var 
 				parentChildren = parent[__childNodes],
-				newLength = newNode[__children][__length],	
-				oldLength = oldNode[__children][__length];
+				nextNode       = parentChildren[index],
+				newLength      = newNode[__children][__length],	
+				oldLength      = oldNode[__children][__length];
+
 
 				// update props
-				handlePropChanges(parentChildren[index], newNode, oldNode);				
+				handlePropChanges(nextNode, newNode, oldNode);
 
 				// loop through children
 				for (var i = 0; i < newLength || i < oldLength; i++) {
@@ -531,7 +537,7 @@
 					oldChildren = oldNode[__children],
 
 					key = update(
-							parentChildren[index], 
+							nextNode, 
 							newChildren[i], 
 							oldChildren[i],
 							i,
@@ -549,7 +555,7 @@
 		}
 
 		// update/remove/add keyed elements
-		function updateKeyedElements (parent, newChildren, oldChildren, op, index, newNode) {
+		function updateKeyedElements (parent, oldChildren, op, index, newNode) {
 			var 
 			nextNode,
 			currentNode = parent[__childNodes][index];
@@ -654,7 +660,14 @@
 		// create element
 		function createElement (node, component, ns) {			
 			// handle text nodes
-			if (is(node, __string)) {
+			if (
+				node &&
+				node[__constructor] === __string ||
+				node[__constructor] === __number ||
+				node[__constructor] === __boolean ||
+				// undefined and null
+				!node
+			) {
 				return __document.createTextNode(node);
 			}
 
@@ -700,7 +713,7 @@
 			addEventListeners(el, node.props);
 			
 			// only map children arrays
-			if (is(node.children, __array)) {
+			if (node.children[__constructor] === __array) {
 				each(node.children, function (child) {
 					el.appendChild(createElement(child, component, ns));
 				});
@@ -743,7 +756,7 @@
 				target, 
 				newNode.props, 
 				oldNode.props
-			)
+			);
 
 			// if there are any prop changes,
 			// update component props
@@ -765,7 +778,7 @@
 			var 
 			changes  = [];
 
-			oldProps = oldProps !== __undefined ? oldProps : {};
+			oldProps = oldProps || {};
 
 			// merge old and new props
 			var
@@ -777,7 +790,7 @@
 			for (var name in oldProps) { 
 				props[name] = oldProps[name];
 			}
-		
+
 			// compare if props have been added/delete/updated
 			// if name not in newProp[name] : deleted
 			// if name not in oldProp[name] : added
@@ -823,9 +836,9 @@
 		function updateProp (target, name, value, op) {
 			// don't add events/refs/keys as props/attrs
 			if (
-				isEventProp(name, value) || 
 				name === 'ref' || 
-				name === 'key'
+				name === 'key' ||
+				isEventProp(name, value)
 			) {
 				return;
 			}

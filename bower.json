@@ -24,6 +24,7 @@
 		"bower_components",
 		"test",
 		"tests",
+		"docs",
 		"examples",
 		"package.json",
 		"README.md",
