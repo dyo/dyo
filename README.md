@@ -240,7 +240,7 @@ With that out of the way we progress into
 > How do i render one component within another?
 
 So since components are just functions(statefull/stateless),
-to render them just execute them were needed.
+to render them just execute them where needed.
 note: 'render instances are not components'
 
 ```javascript
