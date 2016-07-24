@@ -14,45 +14,6 @@
 		<script src="test.js"></script>
 	
 		<script>
-			// var p1 = Promise.resolve(3);
-			// var p2 = 1337;
-			// var p3 = new Promise(function (resolve, reject) {
-			// 	setTimeout(reject, 100, 'foo');
-			// });
-
-			// Promise.all([p1, p2, p3]).then(function (values) {
-			// 	console.log(values); // [3,13337, 'foo']
-			// }, function (reason) {
-			// 	console.log(reason);
-			// });
-
-			// var a1 = dio.createStream(3).then(function (value) {
-			// 	// console.log(value);
-			// });
-			// var a2 = 1337;
-			// var a3 = dio.createStream();
-
-			// a3.then(function () {
-			// 	throw 'test';
-			// });
-
-			// setTimeout(a3, 100, 'foo');
-
-			// var a4 = dio.createStream.all([a1, a2, a3]);
-
-			// a1(2);
-
-			// a4
-			// 	.then(function (values) {
-			// 		console.log('then:', values);
-			// 	})
-			// 	.catch(function (reason) {
-			// 		console.log('catch:', reason);
-			// 	});
-
-		</script>
-
-		<script>
 			test('dio.createStream', function(ok, eq, spy, end) {
 				var foo = dio.createStream(3);
 				var bar = dio.createStream(2);
@@ -149,7 +110,6 @@
 						render: render
 					};
 				});
-
 
 				function isComponent (a) {
 					a = a(0,0,1);
