@@ -149,8 +149,8 @@ Components created with `dio.createComponent` that feature a
 render method either returned from a function or within the
 object passed to `.createComponent` are statefull by default.
 
-Another thing to note is that in the Hello World
-example we begin with we did not `dio.createComponent()`
+One thing to note is that in the 'Hello World'
+example that we began with we did not `dio.createComponent()`
 but rather just used a pure function that we passed
 to `dio.createRender(here)` this is because
 `.createRender` creates a statefull component out of the object/function
