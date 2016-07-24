@@ -97,9 +97,9 @@ dio.createRender(component: {Function|Object}, mount?: {String|Element})
 
 Components that do not return an object with a render function
 or are itself an object with a render function will not feature
-the component lifecycles and methods as presented above in the schema
+the component lifecycles and methods as presented above in the schema.
 
-Now lets go over some component examples.
+Lets go over some component examples.
 
 ```javascript
 // function that returns a hyperscript object
@@ -149,7 +149,7 @@ Components created with `dio.createComponent` that feature a
 render method either returned from a function or within the
 object passed to `.createComponent` are statefull by default.
 
-Another thing to note is that is that in the Hello World
+Another thing to note is that in that in the Hello World
 example we begin with we did not `dio.createComponent()`
 but rather just used a pure function that we passed
 to `dio.createRender(here)` this is because
