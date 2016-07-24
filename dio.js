@@ -237,24 +237,25 @@
 	 * h('div', null, h('h1', 'Text'))
 	 */
 	function element () {
-		function h (type, props) {
+		function h (type, props) {			
 			var 
 			args   = arguments,
 			length = args[__length],
+			// position where children elements start
 			key    = 2,
 			child;
 
-			// no props specified default 2nd arg to children
-			// is an hyperscript object or not 
-			// an object (null,undefined,string,array,bool)
+			// no props specified default 2nd arg to 
+			// the position that children elements start
+			// and default props to an empty object
 			if (
 				isHyperscriptObject(props) ||
 				!is(props, __object)
 			) {
-				key   = 1,
+				key   = 1;
 				props = {};
 			}
-			// insure props is always an object
+			// otherwise just insure props is always an object
 			else if (
 				props === __null || 
 				props === __undefined || 
@@ -270,24 +271,17 @@
 			// check if the type is a special case i.e [type] | div.class | #id
 			// and alter the hyperscript
 			if (
-				type.indexOf('[') !== -1 ||
-				type.indexOf('#') !== -1 || 
-				type.indexOf('.') !== -1
+				type.indexOf('[') > -1 ||
+				type.indexOf('#') > -1 || 
+				type.indexOf('.') > -1
 			) {
 				obj = parseElementType(obj);
 			}
 
 			// auto set namespace for svg and math elements
-			// we will then check when setting it's children
-			// if the parent has a namespace we will set that
-			// to the children as well, if you set the
-			// xmlns prop we default to that instead of the 
-			// svg and math presets
-			if (obj.type === 'svg' || obj.type === 'math') {
-				// only add the namespace if it's not already set
-				if (!obj.props.xmlns) {
-					obj.props.xmlns = __namespace[obj.type];
-				}
+			// but only if it's not already set
+			if ((obj.type === 'svg' || obj.type === 'math') && !obj.props.xmlns) {
+				obj.props.xmlns = __namespace[obj.type];
 			}
 
 			// construct children
@@ -298,13 +292,16 @@
 				// if the child is an array go deeper
 				// and set the 'arrays children' as children
 				if (is(child, __array)) {
-					for (var j = 0; j < child[__length]; j++) {
-						obj.children[(i-key) + j] = setChild(child[j], obj);
+					var 
+					childLength = child[__length];
+
+					for (var j = 0; j < childLength; j++) {
+						obj.children[(i - key) + j] = setChild(child[j]);
 					}
 				}
 				// deep enough, add this child to children
 				else {
-					obj.children[i - key] = setChild(child, obj);
+					obj.children[i - key] = setChild(child);
 				}
 			}
 
@@ -360,10 +357,10 @@
 			// convert non string children
 			// to strings
 			if (
+				// checks if it is null/undefined
+				!is(child) ||
 				is(child, __number) || 
-				is(child, __boolean) ||
-				child === __null ||
-				child === __undefined
+				is(child, __boolean)
 			) {
 				// for non objects adding a strings is enough 
 				child = child + '';
@@ -442,7 +439,7 @@
 
 			// add classes to obj.props if we have any
 			if (classes[__length] > 0) {
-				props.className = classes.join(' ');
+				props.class = classes.join(' ');
 			}
 
 			// as promised, update props
@@ -469,22 +466,22 @@
 		function update (parent, newNode, oldNode, index, component, newChildren, oldChildren) {
 			index = index || 0;
 			
-			// should component update?
-			if (newNode && newNode[__shouldComponentUpdate] === __false) {
+			// should component update? if so skip it
+			if (
+				newNode &&
+				newNode[__shouldComponentUpdate] &&
+				newNode[__shouldComponentUpdate][0] === __false
+			) {
 				return;
 			}
 
 			// adding to the dom
 			if (oldNode === __undefined && newNode) {
-				var
-				nextNode = createElement(newNode, component);
-				appendChild(parent, nextNode, newNode);
+				appendChild(parent, createElement(newNode, component), newNode);
 			}
 			// removing from the dom
 			else if (newNode === __undefined) {
-				var
-				nextNode = parent[__childNodes][index];
-				removeChild(parent, nextNode, oldNode);
+				removeChild(parent, nextNode = parent[__childNodes][index], oldNode);
 			}
 			// update keyed elements
 			else if (
@@ -524,7 +521,6 @@
 				nextNode       = parentChildren[index],
 				newLength      = newNode[__children][__length],	
 				oldLength      = oldNode[__children][__length];
-
 
 				// update props
 				handlePropChanges(nextNode, newNode, oldNode);
@@ -660,11 +656,11 @@
 			// handle text nodes
 			if (
 				node &&
-				node[__constructor] === __string ||
-				node[__constructor] === __number ||
-				node[__constructor] === __boolean ||
-				// undefined and null
-				!node
+				(
+					node[__constructor] === __string ||
+					node[__constructor] === __number ||
+					node[__constructor] === __boolean
+				)
 			) {
 				return __document.createTextNode(node);
 			}
@@ -711,7 +707,7 @@
 			addEventListeners(el, node.props);
 			
 			// only map children arrays
-			if (node.children[__constructor] === __array) {
+			if (is(node.children, __array)) {
 				each(node.children, function (child) {
 					el.appendChild(createElement(child, component, ns));
 				});
@@ -1658,7 +1654,7 @@
 			vnode = arg(
 				props, 
 				children, 
-				(arg.id === componentSignature) ? __undefined : signatureBase
+				(arg.id === componentSignature) ? __undefined : componentSignature
 			)
 		}
 		// probably hyperscript
@@ -1991,7 +1987,7 @@
 		// return function that runs update/mount when executed
 		function render (props, children, forceUpdate) {
 			// don't render to dom, if vdom is requested
-			if (forceUpdate === signatureBase) {
+			if (forceUpdate === componentSignature) {
 				return component(props, children);
 			}
 
@@ -2156,7 +2152,7 @@
 		}
 		// prototype methods
 		h[__prototype][componentSignature]      = component;
-		h[__prototype][__shouldComponentUpdate] = __true;
+		h[__prototype][__shouldComponentUpdate] = [true];
 
 		// re-add default object constructor
 		// insures obj.constructor will return Object
@@ -2181,6 +2177,10 @@
 		// i.e User(props) -> {type: 'div', props: {..props}, children: ...}
 		// this is that function
 		function Component (props, children, internal) {
+			if (internal) {
+				return component;
+			}
+
 			// add children to props if set
 			if (children) {
 				props = props || {};
@@ -2193,11 +2193,11 @@
 				// shouldComponentUpdate?
 				// if false, add signal, and return cached copy
 				if (lifecycle(component, __shouldComponentUpdate, __true, props) === __false) {
-					cache[__shouldComponentUpdate] = __false;
+					cache[__shouldComponentUpdate][0] = __false;
 					return cache;
 				}
 				else {
-					cache[__shouldComponentUpdate] = __true;
+					cache[__shouldComponentUpdate][0] = __true;
 				}
 			}
 
@@ -2207,14 +2207,9 @@
 				// set props
 				setProps(component, props);
 			}
-
-			if (internal) {
-				return component;
-			}
-			else {
-				cache = component.render();
-				return cache;
-			}			
+			
+			cache = component.render();
+			return cache;
 		}
 		Component.id = componentSignature;
 
