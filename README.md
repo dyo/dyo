@@ -133,7 +133,7 @@ h('div', {innerHTML: "<script>alert('hello')</script>"});
 
 ## dio.createComponent
 
-```
+```javascript
 dio.createComponent({Function|Object})
 
 // for example
@@ -245,7 +245,7 @@ So since components are just functions(statefull/stateless),
 to render them just execute them were needed.
 note: 'render instances are not components'
 
-```
+```javascript
 // stateless
 function Foo (props) {
 	return h('h1', props.text)
