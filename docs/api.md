@@ -153,11 +153,9 @@ One thing to note is that in the 'Hello World'
 example that we began with, we did not create a component with `dio.createComponent()`
 but rather just used a pure function that we passed
 to `dio.createRender(here)` this is because
-`.createRender` creates a statefull component out of the object/function
-we pass to it if it fits the criterion of a statefull component
-and a stateless component if it does'nt.
+`.createRender` will create a component if what was passed to it was not a component.
 
-Ok lets quickly go over some mount examples.
+Lets quickly go over some mount examples.
 
 ```javascript
 document || document.querySelector('.myapp')
