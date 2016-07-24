@@ -350,10 +350,12 @@ faz.then(fn).then(fn)....
 dio.createStream.all([dep1, dep2]).then(fn);
 
 // access resolve and reject
-```
+
 var async = dio.createStream(function (resolve, reject) {
 	setTimeout(resolve, 500, 'value');
 });
+```
+
 ---
 
 ## dio.createFunction
