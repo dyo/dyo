@@ -371,6 +371,16 @@ dio.createHTML(component, props, children)
 ## dio.createStream
 
 ```javascript
+dio.createStream(store: {Any|Function}, mapper);
+// if you specify a mapper/processor
+// the store will be passed to mapper everytime you
+// retrieve a store
+// this means you do
+
+var alwaysString = dio.createStream(100, String);
+alwaysString() // => '100' {String}
+
+
 var foo = dio.createStream('initial value')
 foo('changed value')
 foo() // => 'changed value'
@@ -395,10 +405,9 @@ bar(2)
 faz() // => 3
 
 // listen for changes to a value
-// note: this behaves kind of like a promise but it is not a promise
-// ergo no polyfill needed.
-faz.then(function(fazValue){
-	console.log(fazValue)
+// note: this behaves like a promise but it is not a promise
+faz.then(function(faz){
+	console.log(faz)
 });
 
 faz('changed') // => 'changed'
@@ -413,6 +422,38 @@ dio.createStream.all([dep1, dep2]).then(fn);
 var async = dio.createStream(function (resolve, reject) {
 	setTimeout(resolve, 500, 'value');
 });
+
+// resolve(value) assigns a value to the stream
+// reject(reason) signals a rejection within the stream
+
+// for example
+var async = dio.createStream(function () {
+	setTimeout(reject, 500, 'just because');
+}).then(function (value) {
+	console.log(value + 'resolved')
+}).catch(function (reason) {
+	console.log('why:' + reason)
+});
+
+// In the above code only the catch block will run
+// .catch and .then blocks can return values that are
+// passed to the next .catch / .then block.
+// For example
+var foo = dio.createStream(function (resolve, reject) {
+	//...create xhr request object
+	xhr.onload  = resolve;
+	xhr.onerror = reject;
+	xhr.send();
+});
+foo
+.then(function (value) { return 100 })
+.then(function (value) { console.log(value+20) }) // => 120
+.catch(function (value) { return 100 })
+.catch(function (value) { console.log(value+200) }) // => 300
+
+// in the above if there are no errors the then blocks will execute
+// in order the first passing it's return value to the next
+// the same happens if there is an error but with the catch blocks
 ```
 
 ---

@@ -2444,7 +2444,7 @@
 		// add a then listener
 		stream.then  = function (listener, error) {
 			if (error) {
-				stream.push('catch', error);
+				stream.catch(error)
 			}
 
 			if (listener) {
