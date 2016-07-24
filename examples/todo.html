@@ -46,7 +46,7 @@
 
 		    		if (value != '') {
 		    			TodoStore.dispatch({type:'ADD', id: Date.now(), value: value})
-		    			el.value = text('')
+		    			el.value = text('')()
 		    		}
 		  		}
 		  		function handleDelete () {

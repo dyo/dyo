@@ -2371,6 +2371,8 @@
 			if (args[__length]) {
 				store = args[0];
 				dispatch('then', store);
+
+				return stream;
 			}
 
 			// the value we will return
@@ -2502,12 +2504,15 @@
 	 * @return {Array} dependecies
 	 */
 	createStream.combine = function (reducer, deps) {
-		var
-		args = arguments;
-		if (args[__length] > 2) {
-			deps = toArray(args, 1);
+		// if deps are not in a single array
+		// create deps from arguments
+		if (!is(deps, __array)) {
+			deps = toArray(arguments, 1);
 		}
 
+		// creating a stream with the second argument as true
+		// allows us to pass a function a the streams store
+		// that will be run anytime we retreive it
 		return createStream(function (resolve) {
 			resolve(function () {
 				return reducer.apply(__null, deps);
@@ -2524,6 +2529,10 @@
 		var
 		resolved = [];
 
+		// pushes a value to the resolved array
+		// and compares if resolved length is equal to deps
+		// this will tell us wheather all dependencies
+		// have resolved
 		function resolver (value, resolve) {
 			resolved.push(value);
 
@@ -2533,6 +2542,9 @@
 		}
 
 		return createStream(function (resolve, reject) {
+			// check all dependencies
+			// if a dependecy is a stream attach a listerner
+			// reject / resolve as nessessary.
 			each(deps, function (value, index, arr) {
 				if (value.id === streamSignature) {
 					value.done(function (value) {
@@ -2547,6 +2559,32 @@
 			});
 		});
 	};
+
+	/**
+	 * creates a new stream that accumulator everytime it is called
+	 * @param  {Function} reducer
+	 * @param  {Any}      accumulator 
+	 * @param  {Function} stream     
+	 * @return {Function} stream  
+	 *
+	 * @example
+	 * 
+	 * var foo = {Stream}
+	 * var bar = stream.scan((sum, n) => { sum+n }, 0, foo) 
+	 * foo(1)(1)(2)
+	 * // bar => 4
+	 */
+	createStream.scan = function (reducer, accumulator, stream) {
+		return createStream(function (resolve) {
+			// attach a listener to stream and update
+			// the accumulator with the returned value of the reducer
+			// proceed to resolve the store of the stream we return back
+			stream.then(function () {
+				accumulator = reducer(accumulator, stream);
+				resolve(accumulator);
+			});
+		});
+	}
 
 
 	/**

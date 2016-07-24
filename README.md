@@ -382,8 +382,12 @@ alwaysString() // => '100' {String}
 
 
 var foo = dio.createStream('initial value')
-foo('changed value')
-foo() // => 'changed value'
+// => changes the store and returns the stream
+foo('changed value') 
+// thus you  can chain
+foo('changed')('again')
+
+foo() // => 'again'
 
 // map
 var bar = foo.map(function(foo){
@@ -454,6 +458,15 @@ foo
 // in the above if there are no errors the then blocks will execute
 // in order the first passing it's return value to the next
 // the same happens if there is an error but with the catch blocks
+
+// .scan
+var numbers = createStream();
+var sum = createStream.scan(function(sum, numbers) { 
+	return sum + numbers();
+}, 0, numbers);
+
+numbers(2)(3)(5);
+sum(); // => 10
 ```
 
 ---

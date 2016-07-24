@@ -319,8 +319,12 @@ alwaysString() // => '100' {String}
 
 
 var foo = dio.createStream('initial value')
-foo('changed value')
-foo() // => 'changed value'
+// => changes the store and returns the stream
+foo('changed value') 
+// thus you  can chain
+foo('changed')('again')
+
+foo() // => 'again'
 
 // map
 var bar = foo.map(function(foo){
