@@ -313,8 +313,8 @@ foo('changed value')
 foo() // => 'changed value'
 
 // map
-var bar = foo.map(function(fooValue){
-	return fooValue + ' and bar';
+var bar = foo.map(function(foo){
+	return foo() + ' and bar';
 });
 
 bar() // => 'changed value and bar';
@@ -322,8 +322,8 @@ foo('hello world')
 bar() // => 'hello world and bar'
 
 // combine two or more streams
-var faz = dio.createStream.combine(function(fooValue, barValue){
-	return fooValue() + barValue();
+var faz = dio.createStream.combine(function(foo, bar){
+	return foo() + bar();
 }, foo, bar); // or an array
 
 foo(1)
