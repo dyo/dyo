@@ -35,8 +35,7 @@
 
 	// signatures
 	signatureBase               = '@@dio',
-	mapperSignature             = signatureBase + '/MAPPER',
-	propSignature               = signatureBase + '/PROP',
+	streamSignature             = signatureBase + '/STREAM',
 	storeSignature              = signatureBase + '/STORE',
 	componentSignature          = signatureBase + '/COMPONENT',
 
@@ -1285,6 +1284,50 @@
 	 */
 	function request () {
 		/**
+		 * return the response in it's right type
+		 * i.e json as {}, text/html as a document...
+		 * @param  {{Object}} xhr
+		 * @return {Any} 
+		 */
+		function getResponse (xhr) {			
+			var 
+			response,
+			responseType,
+			responseText   = xhr.responseText,
+			responseHeader = xhr.getResponseHeader("content-type");
+
+			// format response header
+			// get the type of response
+			// so we can use that to format the response body
+			// if needed i.e create a dom/parse json
+			if (responseHeader.indexOf(';') !== -1) {
+				responseType = responseHeader.split(';');
+				responseType = responseType[0].split('/');
+			}
+			else {
+				responseType = responseHeader.split('/');
+			}
+
+			// extract response type 'html/json/text'
+			responseType = responseType[1];
+
+			// json, parse json
+			if (responseType === 'json') {
+				response = JSON.parse(responseText);
+			}
+			// html, create dom
+			else if (responseType === 'html') {
+				response = (new DOMParser()).parseFromString(responseText, "text/html");
+			}
+			// text, as is
+			else {
+				response = responseText;
+			}
+
+			return response;
+		}
+
+		/**
 		 * http interface
 		 * @param {String}
 		 * @param {String}
@@ -1292,163 +1335,62 @@
 		 * @param {Function}
 		 */
 		function http (url, method, payload, enctype, callback, withCredentials) {
-			function getResponse (xhr) {			
-				var 
-				response,
-				responseType,
-				responseText   = xhr.responseText,
-				responseHeader = xhr.getResponseHeader("content-type");
-
-				// format response header
-				// get the type of response
-				// so we can use that to format the response body
-				// if needed i.e create a dom/parse json
-				if (responseHeader.indexOf(';') !== -1) {
-					responseType = responseHeader.split(';');
-					responseType = responseType[0].split('/');
-				}
-				else {
-					responseType = responseHeader.split('/');
-				}
-
-				// extract response type 'html/json/text'
-				responseType = responseType[1];
-
-				// json, parse json
-				if (responseType === 'json') {
-					response = JSON.parse(responseText);
-				}
-				// html, create dom
-				else if (responseType === 'html') {
-					response = (new DOMParser()).parseFromString(responseText, "text/html");
-				}
-				// text, as is
-				else {
-					response = responseText;
-				}
-
-				return response;
-			}
-
-			// create xhr stream with a custom middleware
-			var
-			xhrStream = createStream(__undefined, __undefined, function (value, listener, error) {
+			// return a a stream
+			return createStream(function (resolve, reject) {
+				// create xhr object 
 				var
-				xhr;
+				xhr      = new __XMLHttpRequest(),
+				// get window location to check fo CORS
+				location = __window.location,
+				// create anchor element and extract url information
+				a        = __document.createElement('a');		
 
-				// value exists i.e not undefined
-				if (value) {
-					var
-					target = value.currentTarget;
+				a.href   = url;
 
-					// check if target is an event object
-					if (is(target, __XMLHttpRequest)) {
-						xhr = target;
-					}
-					// check if it (the value) is a XMLHttpRequest object
-					else if (is(value, __XMLHttpRequest)) {
-						xhr = value;
-					}
-				}
+				// check if is this a cross origin request
+				var
+				CORS = !(
+					a.hostname        === location.hostname &&
+					a.port            === location.port     &&
+					a.protocol        === location.protocol &&
+					location.protocol !== 'file:'
+				);
 
-				// xhr request
-				if (xhr) {
-					// success
-					if (xhr.status >= 200 && xhr.status < 400) {
-						return listener(getResponse(xhr));
-					}
-					// failed
-					else if (is(error, __function)) {
-						error(xhr.statusText);
-					}	
-				}
-				// not xhr
-				else {
-					return listener(value);
-				}
-			}),
-
-			// create xhr object 
-			xhr      = new __XMLHttpRequest(),
-			// get window location to check fo CORS
-			location = __window.location,
-			// create anchor element and extract url information
-			a        = __document.createElement('a');		
-
-			a.href   = url;
-
-			// check if is this a cross origin request
-			var
-			CORS = !(
-				a.hostname        === location.hostname &&
-				a.port            === location.port     &&
-				a.protocol        === location.protocol &&
-				location.protocol !== 'file:'
-			);
-
-			// destroy created element
-			a = __undefined;
-			
-			// open request
-			xhr.open(method, url);
-			
-			// on success update the xhrStream
-			xhr.onload = function () {
-				// not a .then callback function exists?
-				if (callback) {
-					callback(this);
-				}
+				// destroy created element
+				a = __undefined;
 				
-				// the stream still exists?
-				if (xhrStream) {
-					// pass the xhr object to request
-					xhrStream(this);
+				// open request
+				xhr.open(method, url);
+				
+				// on success update the xhrStream
+				xhr.onload = function () {
+					resolve(getResponse(this));
+				};
+
+				xhr.onerror = function () {
+					reject(this.statusText);
+				};
+				
+				// cross origin request cookies
+				if (CORS && withCredentials) {
+					xhr.withCredentials = __true;
 				}
-			}
-			// on fail also update the xhrStream but also
-			// add a .then to the chain that
-			// throws an error with the statusText
-			xhr.onerror = function (e) {
-				// the stream still exists?
-				if (xhrStream) {
-					var 
-					self = this;
-					// the stream is still chainable?
-					if (xhrStream.then) {
-						// when we update xhrStream this will run and throw an error
-						// containing the statusText which we can catch within 
-						// the .catch block
-						xhrStream.then(function () {
-							throw self.statusText;
-						});
+
+				// set content type and payload
+				if (method === 'POST' || method === 'PUT') {
+					xhr.setRequestHeader('Content-type', enctype);
+
+					if (enctype.indexOf('x-www-form-urlencoded') > -1) {
+						payload = param(payload);
 					}
-					// update request object's value with xhr object 
-					xhrStream(self);
+					else if (enctype.indexOf('json') > -1) {
+						payload = JSON.stringify(payload);
+					}
 				}
-			}
-			
-			// cross origin request cookies
-			if (CORS && withCredentials) {
-				xhr.withCredentials = __true;
-			}
 
-			// set content type and payload
-			if (method === 'POST' || method === 'PUT') {
-				xhr.setRequestHeader('Content-type', enctype);
-
-				if (enctype.indexOf('x-www-form-urlencoded') > -1) {
-					payload = param(payload);
-				}
-				else if (enctype.indexOf('json') > -1) {
-					payload = JSON.stringify(payload);
-				}
-			}
-
-			// send request
-			xhr.send(payload);
-
-			// return the thenable stream
-			return xhrStream;
+				// send request
+				xhr.send(payload);
+			});
 		}
 
 		/**
@@ -2404,258 +2346,198 @@
 
 	/**
 	 * streams utility getter/setter
-	 * @param {Any} store - value
+	 * @param {Any} store value
 	 * @param {Function} processor
-	 * @return {Stream}
+	 * @return {Function} a stream
 	 */
-	function createStream (store, processor, middleware) {
+	function createStream (value, mapper) {
 		var
-		// .then(fn()=>{}) listeners
-		listeners,
-		// stream of data to pass across the .then() chain
-		data = store,
-		// address for error handler
-		errorHandler,
-		// status of weather an error has been handled already
-		errorHandled;
+		store,
+		chain = {
+			then: __null,
+			catch: __null
+		},
+		listeners = {
+			catch: [],
+			then: []
+		};
 
-		/**
-		 * create the getter/setter
-		 * @return {Any}
-		 */
 		function stream () {
-			var
-			args = arguments;
+			return update(arguments);
+		}
 
-			// a value is passed
-			// update the stream store
+		function update (args) {
+			// update the stream
 			if (args[__length]) {
-				data = store = args[0];
-
-					// check if we have any listeners
-					// then execute them in the order they where specified
-					// passing the returned value of the last one to the next
-					if (listeners && listeners[__length]) {
-						each(listeners, function (listener) {
-							data = (data && data.id === propSignature) ? data() : data;
-							data = listener(data) || data;
-						});
-					}
-			}
-	         
-	        return getStore();
-		}
-
-
-		/**
-		 * retrieve the store
-		 */
-		function getStore () {
-			var 
-			storeValue;
-
-	        // is this stream created internally?
-	        if (store && store.id === mapperSignature) {
-	            storeValue = store();
-	        }
-	        else {
-	        	storeValue = store;
-	        }
-
-	        // check if the there is a processor
-	        // if so run that through the storeValue and return it
-	        // otherwise just return the storeValue
-			return !processor ? storeValue : processor(storeValue);
-		}
-	  
-
-		/**
-		 * map another value to this values store
-		 * @param  {Function} reducer
-		 * @return {Stream}  
-		 */
-		function map (reducer) {
-			function mapper () {
-	            return reducer(getStore());
-	        }
-	        // add signature that says this stream was created internally
-	        mapper.id = mapperSignature;
-
-			return createStream(mapper);
-		}
-
-
-		/**
-		 * map to when the store changes
-		 * @param  {Function} listener
-		 * @param  {Function|Boolean} end     
-		 * @return {Stream}         
-		 */
-		function then (listener, error) {
-			if (!listeners) {
-				listeners = [];
+				store = args[0];
+				dispatch('then', store);
 			}
 
-			// make sure the callback is indeed a function
-			if (is(listener, __function)) {
-				// add a function that will call the listener 
-				// whenever the value of store changes
-				listeners.push(function (value) {
-					var
-					ret;
+			// the value we will return
+			var
+			ret;
 
+			// special store
+			if (mapper === __true) {
+				ret = store()
+			}
+			else {
+				// we have a mapper, run the store through it
+				if (is(mapper, __function)) {
+					ret = mapper(store)
+				}
+				// return the store as is
+				else {
+					ret = store;
+				}
+			}
+
+			// return the store
+			return ret;      
+		}
+
+		function dispatch (type, value) {
+			if (listeners[type][__length]) {
+				each(listeners[type], function (listener) {
 					try {
-						// do we have a middleware that will process the change, use that
-						if (middleware) {
-							if (!errorHandled) {
-								// store the returned value
-								ret = middleware(value, listener, errorHandler);
-								// cleanup error (only run once)
-								errorHandled = __true;
-							}
-							else {
-								ret = middleware(value, listener);
-							}
-						}
-						// else just call the listener passing the current value
-						else {
-							var 
-							ret = listener(value);
-						}
-					}
-					// swallow error and send them to the .catch error handler
-					// if it exists
-					catch (e) {
-						if (is(errorHandler, __function)) {
-							errorHandler(e);
-						}
-					}
+						// a link in the .then / .catch chain
+						var
+						link = listener(chain[type] || value);
 
-					// end of chain, clear listeners
-					if (error) {
-						listeners = data = errorHandler = __undefined;
+						// listerner returned a value, add to chain
+						// the next .then / .catch listerner
+						// will receieve this
+						if (link) {
+							chain[type] = link;
+						}
+					} catch (e) {
+						stream.reject(e);
 					}
-
-					return ret;
 				});
 			}
+		}
 
-			// the second argument is the error handler when set
-			if (is(error, __function)) {
-				errorHandler = error;
+		// ...JSON.strinfigy()
+		stream.toJSON = function () {
+			return store;
+		};
+
+		// resolve a value
+		stream.resolve = function (value) {
+			return stream(value);
+		};
+
+		// reject with a reason
+		stream.reject = function (reason) {
+			dispatch('catch', reason);
+		};
+
+		// push a listener
+		stream.push = function (to, listener, end) {
+			listeners[to].push(function (chain) {
+				return listener(chain);
+			});
+
+			return !end ? stream : __undefined;
+		};
+
+		// add a then listener
+		stream.then  = function (listener, error) {
+			if (error) {
+				stream.push('catch', error);
 			}
 
-			// return the chain only if error/ 
-			// a catch block is falsey/not set
-			if (!error) {
-				return this;
+			if (listener) {
+				return stream.push('then', listener, error);
 			}
+		};
+
+		// add a done listener, ends the chain
+		stream.done = function (listener, error) {
+			stream.then(listener, error || __true);
+		};
+
+		// add a catch listener
+		stream.catch = function (listener) {
+			return stream.push('catch', listener);
+		};
+
+		// create a map
+		stream.map = function (map) {
+			var 
+			dep  = stream;
+
+			return createStream(function (resolve) {
+				resolve(function () {
+					return map(dep);
+				});
+			}, __true);
+		};
+
+		// a way to distinguish between normal functions
+		// and streams
+		stream.id = streamSignature;
+
+		if (is(value, __function)) {
+			value(stream.resolve, stream.reject);
 		}
-
-
-		/**
-		 * catch then errors, syntax sugar for .then(null, fn()=>{})
-		 * @param  {Function} listener 
-		 */
-		function error (listener) {
-			then(__undefined, listener);
+		else {
+			stream(value);
 		}
-
-
-		/**
-		 * syntax sugar for .then(fn()=>{}, true) to error the chain
-		 * @return {Function} [description]
-		 */
-		function done (listener, error) {
-			error = error || __true;
-			then(listener, error);
-		}
-
-
-		/**
-		 * define .toJSON to allow 
-	     * JSON.stringify(stream) to return the stored value
-		 * @return {Any}
-		 */
-		function toJSON () {
-			return getStore();
-		}
-
-		// using global defined
-		// window.valueOf && window.toString
-		stream.valueOf  = valueOf,
-		stream.toString = toString,
-
-		stream.map      = map,
-		stream.toJSON   = toJSON,
-		stream.then     = then,
-		stream.done     = done,
-		stream.catch    = error,
-		stream.id       = propSignature;
 
 		return stream;
 	}
 
-
 	/**
 	 * combine two or more streams
 	 * @param  {Function} reducer
-	 * @return {Stream}
+	 * @return {Array} dependecies
 	 */
-	createStream.combine = function (reducer) {
-		// convert arguments an array, excluding reducer
-		// these are the streams we are combining
+	createStream.combine = function (reducer, deps) {
 		var
-		dependencies = __array[__prototype].slice.call(arguments, 1),
-
-		// store of dependencies values that we use to determine
-		// wheather to run the reducer or use the cached value
-		// for the previous computation of the reducer
-		dependencyStore = [],
-		// reducer store, this will be updated
-		// evertime a dependency changes
-		reducerStore    = __false,
-		// status of weather a dependency has changed
-		changed;
-
-		// inital value of dependencies
-		each(dependencies, function (value, index) {
-			dependencyStore[index] = value();
-		});
-
-		function mapper () {
-			// always refresh changed state to a default false
-			changed = __false;
-
-			// get dependecies current state
-			// and compare with our inital values
-			each(dependencies, function (value, index) {
-				value = value();
-
-				// a dependency has changed
-				// publish a state to update
-				// of the state has already been set to update
-				// do nothing
-				if (dependencyStore[index] !== value && !changed) {
-					changed = __true;
-				}
-
-				// update our dependency store
-				dependencyStore[index] = value;
-			});
-
-			// refresh the store eveytime we have a change
-			if (!(!changed && reducerStore !== __false)) {
-				reducerStore = reducer.apply(__undefined, dependencies);
-			}
-
-			// otherwise just return the current cache of the reducer store
-			return reducerStore
+		args = arguments;
+		if (args[__length] > 2) {
+			deps = toArray(args, 1);
 		}
-		// add signature that says this stream was created internally
-		mapper.id = mapperSignature;
 
-		return createStream(mapper);
+		return createStream(function (resolve) {
+			resolve(function () {
+				return reducer.apply(__null, deps);
+			});
+		}, __true);
+	};
+
+	/**
+	 * do something after all dependecies have resolve
+	 * @param  {Array} dependecies
+	 * @return {Function} a stream
+	 */
+	createStream.all = function (deps) {
+		var
+		resolved = [];
+
+		function resolver (value, resolve) {
+			resolved.push(value);
+
+			if (resolved[__length] === deps[__length]) {
+				resolve(resolved)
+			}
+		}
+
+		return createStream(function (resolve, reject) {
+			each(deps, function (value, index, arr) {
+				if (value.id === streamSignature) {
+					value.done(function (value) {
+						resolver(value, resolve);
+					}, function (reason) {
+						reject(reason);
+					});
+				}
+				else {
+					resolver(value, resolve);
+				}
+			});
+		});
 	};
 
 

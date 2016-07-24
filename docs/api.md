@@ -327,7 +327,7 @@ bar() // => 'hello world and bar'
 // combine two or more streams
 var faz = dio.createStream.combine(function(fooValue, barValue){
 	return fooValue() + barValue();
-}, foo, bar);
+}, foo, bar); // or an array
 
 foo(1)
 bar(2)
@@ -345,8 +345,15 @@ faz('changed') // => 'changed'
 
 // or chained
 faz.then(fn).then(fn)....
-```
 
+// .all
+dio.createStream.all([dep1, dep2]).then(fn);
+
+// access resolve and reject
+```
+var async = dio.createStream(function (resolve, reject) {
+	setTimeout(resolve, 500, 'value');
+});
 ---
 
 ## dio.createFunction
