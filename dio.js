@@ -2474,6 +2474,14 @@
 			}, __true);
 		};
 
+		// end/reset a stream
+		stream.end = function () {
+			chain.then      = __null;
+			chain.catch     = __null;
+			listeners.catch = [];
+			listeners.then  = [];
+		};
+
 		// a way to distinguish between normal functions
 		// and streams
 		stream.id = streamSignature;
