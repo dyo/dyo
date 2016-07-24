@@ -166,11 +166,9 @@ dio.createRender(__, mountPlaceholder)
 // note that the default mount is document.body if nothing is passed.
 ```
 
-With that out of the way we progress into 
+> But how do i render one component within another
 
-> How do i render one component within another
-
-So since components are just functions(statefull/stateless),
+Components are just functions(statefull/stateless),
 to render them just execute them where needed.
 
 _note: render instances are not components_
