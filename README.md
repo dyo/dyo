@@ -277,7 +277,7 @@ function () {
 // but since elementHolder is a stream
 // when the element node is passed to it
 // elementHolder will now container the element
-// thus executing it elementHolder() will return
+// thus executing elementHolder() will return
 // the element
 
 ```
