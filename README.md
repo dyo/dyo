@@ -241,7 +241,8 @@ With that out of the way we progress into
 
 So since components are just functions(statefull/stateless),
 to render them just execute them where needed.
-note: 'render instances are not components'
+
+_note: render instances are not components_
 
 ```javascript
 // stateless
