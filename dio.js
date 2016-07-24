@@ -2367,7 +2367,7 @@
 		}
 
 		function update (args) {
-			// update the stream
+			// update the stream when a value is passed
 			if (args[__length]) {
 				store = args[0];
 				dispatch('then', store);
