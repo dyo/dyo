@@ -163,7 +163,7 @@ document || document.querySelector('.myapp')
 
 dio.createRender(__, mountPlaceholder)
 
-// note that the default for mount is document.body
+// note that the default mount is document.body if nothing is passed.
 ```
 
 With that out of the way we progress into 
