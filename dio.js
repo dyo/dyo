@@ -1334,7 +1334,7 @@
 		 * @param {Object}
 		 * @param {Function}
 		 */
-		function http (url, method, payload, enctype, callback, withCredentials) {
+		function http (url, method, payload, enctype, withCredentials) {
 			// return a a stream
 			return createStream(function (resolve, reject) {
 				// create xhr object 
@@ -1431,21 +1431,7 @@
 		 * @param {Function}
 		 */
 		function request (method) {
-			return function (url, payload, enctype, callback, withCredentials) {
-				// if enctype is a function
-				// then enctype === callback
-				// and enctype will default to the value in callback
-				// we don't use arguments[arguments.length-1]
-				// because callback may not be passed thus making the
-				// length of arguments 3 instead of 4
-				if (is(enctype, __function)) {
-					var
-					placeholder = callback;
-
-					callback    = enctype;
-					enctype     = placeholder;
-				}
-
+			return function (url, payload, enctype, withCredentials) {
 				// enctype syntax sugar
 				if (enctype) {
 					if (enctype === 'json') {
@@ -1464,7 +1450,7 @@
 				}
 
 				// return ajax promise
-				return http(url, method.toUpperCase(), payload, enctype, callback, withCredentials);
+				return http(url, method.toUpperCase(), payload, enctype, withCredentials);
 			}
 		}
 

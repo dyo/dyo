@@ -463,8 +463,7 @@ dio.request(
 
 	// 'file' | 'json' | 'text', default: 'application/x-www-form-urlencoded'
 	enctype?: {String}, 
-	callback?: {Function}, 
-
+	
 	// true/false
 	// that indicates whether CORS requests should be made 
 	// using credentials such as cookies, 
