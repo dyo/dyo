@@ -2547,7 +2547,7 @@
 	};
 
 	/**
-	 * creates a new stream that accumulator everytime it is called
+	 * creates a new stream that accumulates everytime it is called
 	 * @param  {Function} reducer
 	 * @param  {Any}      accumulator 
 	 * @param  {Function} stream     
