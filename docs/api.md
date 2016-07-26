@@ -11,16 +11,23 @@
 	componentDidUpdate:        (props, state, this) => {}
 	componentWillMount:        (props, state, this) => {}
 	componentDidMount:         (props, state, this) => {}
-	componentWillUnmount:      (node) => {}
+	
+	// if this method returns a value {Number} in milliseconds
+	// the node will be remove only after the specified
+	// time has elapsed
+	componentWillUnmount:      (props, state, this, node) => {}
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})
 	this.forceUpdate:          (this?: {Object})
+
+	// setState is synchronous
+	// setState also triggers this.forceUpdate
 	this.setState:             ({Object})
 	this.setProps:             ({Object})
 
 	// displayName is auto created when you create a component
-	// dio.createComponent({Function}) with a function
+	// with a function like dio.createComponent({Function})
 	// i.e function Foo () {} the displayName will be Foo
 	// you can also set this manually {
 	// 		displayName: 'something'

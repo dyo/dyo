@@ -190,7 +190,7 @@
 	 * @param  {Boolean|Object} state - weather to pass sate to stage
 	 * @params {Boolean}        isCmp - weather this is a component or not
 	 */
-	function lifecycle (node, stage, isComponent, props, state) {
+	function lifecycle (node, stage, isComponent, props, state, wildcard) {
 		// end quickly
 		// if node is not a Component or hyperscript object
 		if (!node || 
@@ -236,7 +236,7 @@
 			// so we publish the lifecycle return values
 			// which we can use in the vdomToDOM / update () function
 			// to see if we should skip an element or not
-			return component[stage](props, state, component);
+			return component[stage](props, state, component, wildcard);
 		}
 	}
 
@@ -564,11 +564,19 @@
 		// remove element
 		function removeChild (parent, nextNode, oldNode) {
 			if (nextNode) {
+
 				// execute componentWillUnmount lifecycle, store it's return into durtion
 				// we can use this to delay unmounting a node from the dom
 				// if a time{Number} in milliseconds is returned.
 				var 
-				duration = lifecycle(oldNode, __componentWillUnmount, nextNode);
+				duration = lifecycle(
+					oldNode, 
+					__componentWillUnmount, 
+					__undefined, 
+					__undefined, 
+					__undefined,
+					nextNode
+				);
 
 				// either duration is a number or it's default 0
 				if (!is(duration, __number)) {

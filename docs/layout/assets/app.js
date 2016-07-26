@@ -163,6 +163,6 @@ router = dio.createRouter({
 			section = '../'+ section + '.md';
 			dio.createRender(Documentation, '.container')({url: section});
 		}
-	}, '/dio');
+	}, '/docs/layout');
 
 dio.createRender(Header, '.header')();
