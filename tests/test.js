@@ -45,7 +45,7 @@
 			style   = failed ? styles.failed() : styles.passed();
 
 			// if failed console.error else .log
-			console[failed ? 'error' : 'log']('%c%s', style, status, message);
+			console[failed ? 'error' : 'log']('%c%s', style, (failed ? '✘' : '✔') + ' ' + status, message);
 		});
 
 		// end group
@@ -65,7 +65,7 @@
 			// ok assertions send this handler
 			// a status: {String} 'passed'|'failed'
 			// and the corresponding message: {String}
-				function handler (status, message) {
+			function handler (status, message) {
 			    results.push([status, message]);
 			}
 
