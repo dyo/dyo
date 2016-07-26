@@ -235,6 +235,19 @@ function Foo () {
 	// this component is also optimized to use the 
 	// compiled {type: '', props: {}, children: ''} hyperscript object
 	// rather than h('')...
+	// i.e it will be like creating a component like
+	 
+	var css = dio.createComponent({
+		displayName: 'Style',
+		shouldComponentUpdate: false,
+		render: function () {
+			return {
+				type: 'style',
+				props: {type: 'text/css'},
+				children: ['p{color:red;}'...]
+			}
+		}
+	});
 
 	return {
 		render: function () {

@@ -465,14 +465,14 @@
 		function update (parent, newNode, oldNode, index, component, newChildren, oldChildren) {
 			index = index || 0;
 			
-			// should component update? if so skip it
-			if (
-				newNode &&
-				newNode[__shouldComponentUpdate] &&
-				newNode[__shouldComponentUpdate][0] === __false
-			) {
-				return;
-			}
+			// // should component update? if so skip it
+			// if (
+			// 	newNode &&
+			// 	newNode[__shouldComponentUpdate] &&
+			// 	newNode[__shouldComponentUpdate][0] === __false
+			// ) {
+			// 	return;
+			// }
 
 			// adding to the dom
 			if (oldNode === __undefined && newNode) {
@@ -529,15 +529,18 @@
 					var 
 					newChildren = newNode[__children],
 					oldChildren = oldNode[__children],
+					newChild    = newChildren[i],
+					oldChild    = oldChildren[i];
 
+					// should component update? if so skip it
+					if (shouldComponentUpdate(newChild)) {
+						return;
+					}
+
+					var
 					key = update(
-							nextNode, 
-							newChildren[i], 
-							oldChildren[i],
-							i,
-							__undefined,
-							newChildren,
-							oldChildren
+							nextNode, newChild, oldChild, i, 
+							__undefined, newChildren, oldChildren
 						);
 
 					if (key !== __undefined) {
@@ -546,6 +549,14 @@
 					}
 				}	
 			}
+		}
+
+		function shouldComponentUpdate (newNode) {
+			return (
+				newNode &&
+				newNode[__shouldComponentUpdate] &&
+				newNode[__shouldComponentUpdate][0] === __false
+			);
 		}
 
 		// update/remove/add keyed elements
@@ -895,8 +906,8 @@
 					// or is not in the html namespace
 					// we default to using remove/setAttribute
 					if (
-						name.indexOf('-') > -1 || 
 						target[name] === __undefined ||
+						name.indexOf('-') > -1 ||
 						target.namespaceURI !== __namespace['html']
 					) {
 						// -1 => remove, else set
@@ -1995,7 +2006,8 @@
 	 */
 	function createComponent (arg) {
 		var 
-		obj;
+		obj,
+		displayName;
 
 		// maybe the arg is a function that returns an object
 		if (is(arg, __function)) {
@@ -2011,6 +2023,10 @@
 				arg.stateless = __true
 				return arg;
 			}
+
+			// get displayName from function
+			// i.e a function Foo () { ... } // => Foo
+ 			displayName = /function ([^(]*)/.exec(arg.valueOf())[1];
 		}
 		// we have an object
 		else if (is(arg, __object)) {
@@ -2041,7 +2057,7 @@
 		// 
 		// create new component object 
 		var
-		component = new componentClass;
+		component = new componentClass(displayName);
 
 		// add the properties to the component instance
 		// also bind functions to the component scope
@@ -2120,7 +2136,10 @@
 			if (cache) {
 				// shouldComponentUpdate?
 				// if false, add signal, and return cached copy
-				if (lifecycle(component, __shouldComponentUpdate, __true, props) === __false) {
+				if (
+					component[__shouldComponentUpdate] === __false ||
+					lifecycle(component, __shouldComponentUpdate, __true, props) === __false
+				) {
 					cache[__shouldComponentUpdate][0] = __false;
 					return cache;
 				}
@@ -2148,10 +2167,16 @@
 	/**
 	 * component interface
 	 */
-	function componentClass () {
+	function componentClass (displayName) {
 		// immutable internal props & state
 		this.props = {},
 		this.state = {};
+
+		// add displayName if available
+		// this will make for better debugging
+		if (displayName) {
+			this.displayName = displayName;
+		}
 	}
 
 	/**
