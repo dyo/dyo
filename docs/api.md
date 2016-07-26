@@ -19,9 +19,13 @@
 	this.setState:             ({Object})
 	this.setProps:             ({Object})
 
-	// is auto create when you create a component with a function
+	// displayName is auto created when you create a component
+	// dio.createComponent({Function}) with a function
 	// i.e function Foo () {} the displayName will be Foo
-	// you can also set this manually
+	// you can also set this manually {
+	// 		displayName: 'something'
+	// }
+	// it is however an optional property so you do not need to set it,
 	this.displayName           {String}
 
 	// render method
