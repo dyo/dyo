@@ -19,6 +19,11 @@
 	this.setState:             ({Object})
 	this.setProps:             ({Object})
 
+	// is auto create when you create a component with a function
+	// i.e function Foo () {} the displayName will be Foo
+	// you can also set this manually
+	this.displayName           {String}
+
 	// render method
 	render:                    (props, state, this) => {}
 }
