@@ -217,3 +217,32 @@ function stylesheet (store) {
 }
 
 ```
+
+or another route that involves the following
+
+```javascript
+function Foo () {
+	var css = dio.stylesheet({'p': {'color': 'red'}});
+
+	css() 
+	// calling css() will return  a component that
+	// that is a <style></style> element
+	// with it's text content as the css defined above
+	// this component will however have a shoudComponentUpdate
+	// method that always returns false
+	// this ensures that this component is ever only updated/added
+	// on the initial mount and never touch again.
+	// this component is also optimized to use the 
+	// compiled {type: '', props: {}, children: ''} hyperscript object
+	// rather than h('')...
+
+	return {
+		render: function () {
+			return h('Foo'
+						'Content',
+						css()
+					)
+		}
+	}
+}
+```
