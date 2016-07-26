@@ -34,19 +34,19 @@ var css = stylesheet({
 });
 
 // pretty much anything you can do with css
-// however one benefit to this is the 
+// however one benefit to this is that the 
 // amount of bytes you send to the client
 // is less compared to i.e a sass/less compiled css
-// since it is the same as sending a source sass file to the client
+// since it is like sending a source sass file to the client
 // rather than a compiled one.
 
 // here i render the stylesheet with namespaces body and .app
 css(['body', '.app']);
 
-// this will render a stylesheet with content like
+// this will render a stylesheet with the following content:
 // body p, .app p {...} body p:before, .app p:before {...}
 
-// re-render : preserves the previous namespaces
+// re-render/update : preserves the previous namespaces
 css();
 // removes the stylesheet from the page
 css.remove();
