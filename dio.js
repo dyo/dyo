@@ -34,10 +34,11 @@
 	var
 
 	// signatures
-	signatureBase               = '@@dio',
-	streamSignature             = signatureBase + '/STREAM',
-	storeSignature              = signatureBase + '/STORE',
-	componentSignature          = signatureBase + '/COMPONENT',
+	__signatureBase             = '@@dio',
+	__streamSignature           = __signatureBase + '/STREAM',
+	__storeSignature            = __signatureBase + '/STORE',
+	__componentSignature        = __signatureBase + '/COMPONENT',
+	__hyperscriptSignature      = __signatureBase + '/HYPERSCRIPT',
 
 	// objects
 	__namespace 				= {
@@ -189,21 +190,35 @@
 	 * @param  {Boolean|Object} state - weather to pass sate to stage
 	 * @params {Boolean}        isCmp - weather this is a component or not
 	 */
-	function lifecycle (node, stage, iscomp, props, state) {
+	function lifecycle (node, stage, isComponent, props, state) {
 		// end quickly
 		// if node is not a Component or hyperscript object
-		if (!node || (!node[componentSignature] && !node.render)) {
+		if (!node || 
+			(
+				node && node[__hyperscriptSignature] && 
+				!node[__hyperscriptSignature][__componentSignature] &&
+				!node.render
+			)
+		) {
 			return;
 		}
 
-		// if node is a component then component = node
-		// otherwise component = node[componentSignature]
-		// if the node is not a components parent
-		// Element [componentSignature] will not exist which means
-		// no lifecycle methods exist as well
-		// so the next if (Component ...) block will end quickly
-		var
-		component = iscomp ? node : node[componentSignature];
+		var 
+		component;
+		
+		// node is the component
+		if (isComponent) {
+			component = node;
+		}
+		// node is a hyperscript object
+		// check if it has a component reference
+		else if (
+			node && 
+			node[__hyperscriptSignature] && 
+			node[__hyperscriptSignature][__componentSignature]
+		) {
+			component = node[__hyperscriptSignature][__componentSignature];
+		}
 
 		if (component && component[stage]) {
 			// is the props/state truthy? if so check if it is not a boolean
@@ -248,7 +263,7 @@
 			// the position that children elements start
 			// and default props to an empty object
 			if (
-				isHyperscriptObject(props) ||
+				(props && props[__hyperscriptSignature]) ||
 				!is(props, __object)
 			) {
 				key   = 1;
@@ -263,9 +278,9 @@
 				props = {};
 			}
 
-			// declare hyperscript object
-			var 
-			obj = {type: type, props: props, children: []};
+			// declare the hyperscript object
+			var
+			obj = new hyperscriptClass({type: type, props: props, children: []});
 
 			// check if the type is a special case i.e [type] | div.class | #id
 			// and alter the hyperscript
@@ -305,46 +320,6 @@
 			}
 
 			return obj;
-		}
-
-		function isHyperscriptObject (obj) {
-			// object exists
-			// has type, children and props
-			var 
-			maybe = obj &&
-				    obj.type &&
-				    obj.children &&
-				    obj.props;
-
-			// end quickly
-			// the object is not
-			// a hyperscript object
-			if (!maybe) {
-				return __false;
-			}
-
-			// well, it probably is
-			// but just to be sure
-			// we check if it only has 3 properties
-			var 
-			length = 0;
-
-			for (var name in obj) {
-				// end quickly
-				// we don't need to loop through
-				// all the objects props
-				// we now know it's not an object
-				if (length > 3) {
-					break;
-				}
-				// add 1 to length if the object
-				// has the prop
-				else if (obj.hasOwnProperty(name)) {
-					length++;
-				}
-			}
-
-			return length === 3;
 		}
 
 		/**
@@ -448,6 +423,9 @@
 			return obj;
 		}
 
+		var 
+		hyperscriptClass = getHyperscriptClass();
+
 		return h;
 	}
 
@@ -464,15 +442,6 @@
 		// diff and update dom loop
 		function update (parent, newNode, oldNode, index, component, newChildren, oldChildren) {
 			index = index || 0;
-			
-			// // should component update? if so skip it
-			// if (
-			// 	newNode &&
-			// 	newNode[__shouldComponentUpdate] &&
-			// 	newNode[__shouldComponentUpdate][0] === __false
-			// ) {
-			// 	return;
-			// }
 
 			// adding to the dom
 			if (oldNode === __undefined && newNode) {
@@ -539,8 +508,12 @@
 
 					var
 					key = update(
-							nextNode, newChild, oldChild, i, 
-							__undefined, newChildren, oldChildren
+							nextNode, 
+							newChild, 
+							oldChild, i, 
+							__undefined, 
+							newChildren, 
+							oldChildren
 						);
 
 					if (key !== __undefined) {
@@ -555,7 +528,7 @@
 			return (
 				newNode &&
 				newNode[__shouldComponentUpdate] &&
-				newNode[__shouldComponentUpdate][0] === __false
+				newNode[__shouldComponentUpdate] === __false
 			);
 		}
 
@@ -665,7 +638,7 @@
 		function createElement (node, component, ns) {			
 			// handle text nodes
 			if (
-				node &&
+				node !== __undefined &&
 				(
 					node[__constructor] === __string ||
 					node[__constructor] === __number ||
@@ -1593,7 +1566,7 @@
 			vnode = arg(
 				props, 
 				children, 
-				(arg.id === componentSignature) ? __undefined : componentSignature
+				(arg.id === __componentSignature) ? __undefined : __componentSignature
 			)
 		}
 		// probably hyperscript
@@ -1701,7 +1674,7 @@
 			}
 
 			// dispath initial action
-			dispatch({type: storeSignature});
+			dispatch({type: __storeSignature});
 
 			return {
 				getState: getState, 
@@ -1890,19 +1863,6 @@
 		function mount (props, children) {
 			// don't try to set it's internals if it's statless
 			if (!stateless && internal) {
-				// get initial state if set
-				if (internal[__getInitialState]) {
-					setState(internal, internal[__getInitialState]());
-					// remove method
-					delete internal[__getInitialState];
-				}
-				// get default props if set
-				if (internal[__getDefaultProps]) {
-					setProps(internal, internal[__getDefaultProps]());
-					// remove method
-					delete internal[__getDefaultProps];
-				}
-
 				// reference render, we can then call this
 				// in this.setState
 				if (!internal['render()']) {
@@ -1926,10 +1886,10 @@
 		// return function that runs update/mount when executed
 		function render (props, children, forceUpdate) {
 			// don't render to dom, if vdom is requested
-			if (forceUpdate === componentSignature) {
+			if (forceUpdate === __componentSignature) {
 				return component(props, children);
 			}
-
+			
 			// initial render
 			if (initial || forceUpdate) {
 				// mount and publish that the initial render has taken place
@@ -1956,7 +1916,7 @@
 		// assign args
 		each(args, function (value) {
 			// a component
-			if (is(value, __function) && value.id === componentSignature) {
+			if (is(value, __function) && value.id === __componentSignature) {
 				component = value;
 			}
 			// a pure function / object
@@ -2050,6 +2010,7 @@
 			throw 'invalid component';
 		}
 
+
 		// everything checks out i.e
 		// - obj has a render method
 		// - or arg() returns an object that has a render method
@@ -2065,11 +2026,7 @@
 			// methods
 			if (is(value, __function)) {
 				// pass props and state to render
-				if (name === 'render') {
-					component[name] = value.bind(component, component.props, component.state, component);
-				}
-				// every other method
-				else {
+				if (name !== 'render') {
 					component[name] = value.bind(component);
 				}
 			}
@@ -2079,32 +2036,24 @@
 			}
 		});
 
-		// create a hyperscript object
-		// that has a reference to the components instance
-		// or internals
-		function h (obj) {
-			var 
-			self = this;
-
-			if (!obj) {
-				throw 'not a hyperscript';
-			}
-
-			self.type     = obj.type,
-			self.props    = obj.props,
-			self.children = obj.children;
+		// set initial state
+		if (component[__getInitialState]) {
+			component.state = component[__getInitialState]();
 		}
-		// prototype methods
-		h[__prototype][componentSignature]      = component;
-		h[__prototype][__shouldComponentUpdate] = [true];
+		// set default props
+		if (component[__getDefaultProps]) {
+			component.props = component[__getDefaultProps]();
+		}
 
-		// re-add default object constructor
-		// insures obj.constructor will return Object
-		h[__prototype][__constructor] = __object;
+		var 
+		h = getHyperscriptClass([
+			[__componentSignature, component], 
+			[__shouldComponentUpdate, __true]
+		]);
 
-		// reference the render function
+		// get the render method
 		var
-		render = component.render;
+		render = obj.render.bind(component, component.props, component.state, component);;
 
 		// insure the render function returns the newly
 		// created hyperscript object
@@ -2140,11 +2089,11 @@
 					component[__shouldComponentUpdate] === __false ||
 					lifecycle(component, __shouldComponentUpdate, __true, props) === __false
 				) {
-					cache[__shouldComponentUpdate][0] = __false;
+					cache[__hyperscriptSignature][__shouldComponentUpdate] = __false;
 					return cache;
 				}
 				else {
-					cache[__shouldComponentUpdate][0] = __true;
+					cache[__hyperscriptSignature][__shouldComponentUpdate] = __true;
 				}
 			}
 
@@ -2154,13 +2103,40 @@
 				// set props
 				setProps(component, props);
 			}
-			
+
 			cache = component.render();
 			return cache;
 		}
-		Component.id = componentSignature;
+		Component.id = __componentSignature;
 
 		return Component;
+	}
+
+	function getHyperscriptClass (args) {
+		function h (obj) {
+			if (!obj) {
+				throw 'not a hyperscript';
+			}
+
+			var 
+			self = this;
+
+			self.type     = obj.type,
+			self.props    = obj.props,
+			self.children = obj.children;
+		}
+
+		h[__prototype][__hyperscriptSignature] = {};
+
+		if (args) {
+			each(args, function (value, index) {
+				h[__prototype][__hyperscriptSignature][value[0]] = value[1];
+			});
+		}
+
+		h[__prototype][__constructor] = __object;
+
+		return h;
 	}
 
 
@@ -2497,7 +2473,7 @@
 
 		// a way to distinguish between normal functions
 		// and streams
-		stream.id = streamSignature;
+		stream.id = __streamSignature;
 
 		if (is(value, __function)) {
 			value(stream.resolve, stream.reject);
@@ -2557,7 +2533,7 @@
 			// if a dependecy is a stream attach a listerner
 			// reject / resolve as nessessary.
 			each(deps, function (value, index, arr) {
-				if (value.id === streamSignature) {
+				if (value.id === __streamSignature) {
 					value.done(function (value) {
 						resolver(value, resolve);
 					}, function (reason) {
@@ -2643,6 +2619,74 @@
 	}
 
 
+	function createStyle () {
+		function createSelectorBlock (selector, declaration, result) {
+			result = result || {};
+
+			each(declaration, function (value, property) {
+				value = is(value, __function) ? value () : value;
+
+				if (is(value, __object)) {
+					var
+					seperator = property.substr(0,1) === ':' ? '' : ' ';
+
+					createSelectorBlock(selector + seperator + property, value, result);
+					return __false;
+				}
+				else {
+					result[selector] = property + ':' + value;
+				}
+			});
+
+			return result;
+		}
+
+		function createSelectorArray (stylsheet) {
+			var result = [];
+		    each(stylsheet, function (declaration, index, arr) {
+		    		var 
+		    		selector = createSelectorBlock(index, declaration);
+
+		    		each(selector, function (__, name) {
+		    			var 
+		    			child = {};
+
+		    			child[name] = selector[name];
+		    			result.push(name + '{' + selector[name] + '}');
+		    		});
+		    })
+		    return result;
+		}
+
+		var
+		h = getHyperscriptClass([[__shouldComponentUpdate, __false]]);
+
+		return function (stylsheet, prefixes) {
+			var 
+			children = createSelectorArray(stylsheet);
+
+			if (!is(prefixes, __array)) {
+				prefixes = toArray(arguments, 1);
+			}
+
+			each(children, function (__, index, arr) {
+				var 
+				child = [];
+				each(prefixes, function (prefix) {
+					child.push(prefix + ' ' + arr[index]);
+				})
+				arr[index] = child.join();
+			});
+
+			return new h({
+				type: 'style',
+				props: {type: 'text/css'},
+				children: children
+			});
+		}
+	}
+
+
 	/* --------------------------------------------------------------
 	 * 
 	 * Exports
@@ -2661,6 +2705,7 @@
 		createRender: createRender,
 		createRouter: createRouter,
 		createStore: createStore,
-		createHTML: createHTML
+		createHTML: createHTML,
+		createStyle: createStyle()
 	};
 }));

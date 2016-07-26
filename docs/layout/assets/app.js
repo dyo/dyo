@@ -92,7 +92,8 @@ function Documentation () {
 					{text: 'Installation', href: '../installation.md'},
 					{text: 'Getting Started', href: '../getting-started.md'},
 					{text: 'Examples', href: '../examples.md'},
-					{text: 'API Reference', href: '../api.md'}
+					{text: 'API Reference', href: '../api.md'},
+					{text: 'SFC', href: '../single-file-components.md'}
 				]
 			}
 		},
@@ -126,7 +127,7 @@ function Welcome () {
 	}
 
 	return {
-		componentDidMount: function (props, _, self) {
+		componentWillMount: function (props, __, self) {
 			dio.request.get(props.url)
 				.then(rawMarkup)
 				.then(function () {
@@ -160,9 +161,8 @@ router = dio.createRouter({
 
 			section = section || 'installation';
 			section = '../'+ section + '.md';
-
 			dio.createRender(Documentation, '.container')({url: section});
 		}
-	}, '/docs/layout');
+	}, '/dio');
 
 dio.createRender(Header, '.header')();
