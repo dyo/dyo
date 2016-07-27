@@ -253,7 +253,7 @@ function () {
 
 ## dio.createRouter
 
-```
+```javascript
 dio.createRouter(
 	routes: {Object}, 
 	rootAddress?: {String}, 
@@ -262,7 +262,8 @@ dio.createRouter(
 ```
 
 example router
-```
+
+```javascript
 dio.createRouter({
 	'/': function () {
 		dio.createRender(home)()
@@ -273,7 +274,7 @@ dio.createRouter({
 }, '/backend', '/user/sultan')
 
 // The above firstly defines a set of routes
-// '/' and '/user/:id' the second of which feature s data attribute
+// '/' and '/user/:id' the second of which features data attribute
 // that is passed to the callback function (data) in the form
 // {id: value} i.e /user/sultan will output {id: 'sultan'}
 // '/backend' specifies the root address to be used
@@ -304,7 +305,7 @@ and mount with which to update everytime the store is updated.
 Which is mostly a short hand for creating a listerner with `.subscribe`
 that updates your component on state changes.
 
-```
+```javascript
 var store = dio.createStore(reducer: {Function})
 // or
 var store = dio.createStore(object of reducers: {Object})
