@@ -416,14 +416,18 @@ myrouter.forward()
 
 ## dio.createStore
 
-Alot like redux createStore, inface it's exactly like redux createStore
+Alot like redux createStore or rather it's exactly like redux createStore
 with the addition of `.connect` that accepts a render insance of component
 will mount with which to update everytime the store is updated.
 Which is mostly a short hand for creating a listerner with `.subscribe`
 that updates your component on state changes.
 
 ```javascript
-var store = dio.createStore(reducer)
+var store = dio.createStore(reducer: {Function})
+// or
+var store = dio.createStore(object of reducers: {Object})
+// the same as doing a .combineReducers in redux
+
 
 store.dispatch({type: '' ...})
 // dispatch an action
@@ -432,7 +436,9 @@ store.getState()
 // returns the current state
 
 store.subscribe(listener: {Function})
-// called everytime the state is updated
+// called everytime the state is updated with the current
+// state as the only argument passed to it... as in
+// function (state) {  }
 
 store.connect(render: {Function})
 store.connect(render: {Function|Object}, element: '.myapp')
