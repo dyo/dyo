@@ -353,7 +353,7 @@ dio.createStream(store: {Any|Function}, mapper);
 // if you specify a mapper/processor
 // the store will be passed to mapper everytime you
 // retrieve a store
-// this means you do
+// this means you can do
 
 var alwaysString = dio.createStream(100, String);
 alwaysString() // => '100' {String}
