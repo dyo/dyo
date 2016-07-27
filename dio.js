@@ -1912,6 +1912,12 @@
 			return render;
 		}
 
+		// removes the component from the container
+		// or also removes the container as-well
+		render.remove = function (all) {
+			all ? element.parentNode.removeChild(element) : element.innerHTML = ''
+		};
+
 		var
 		component,
 		newNode,
@@ -2709,7 +2715,7 @@
 		}
 
 		// adds the prefix namespace to children
-		function prefixNamespace (children, prefixes) {
+		function addPrefixNamespaces (children, prefixes) {
 			// no prefixes default
 			if (!prefixes) {
 				prefixes = [''];
@@ -2724,7 +2730,7 @@
 				child = [];
 				each(prefixes, function (prefix) {
 					child.push(prefix + ' ' + arr[index]);
-				})
+				});
 				arr[index] = child.join();
 			});
 
@@ -2744,64 +2750,30 @@
 			else if (is(stylsheet, __string)) {
 				// remove whitespace
 				stylsheet = stylsheet.replace(/ /g, '');
+
 				// add a delimiter to where we 
 				// would like the split to take place
 				// since we don't want to mutate 
 				// the string by using a delimiter
 				// already within the string.
 				stylsheet = stylsheet.replace(/}/g,'}'+__signatureBase);
+
 				// create an array of the stylesheet string
 				// split by the delimiter we added, 
 				// removing the delimiter in the process.
 				// also remove the last item in the array, it is an empty value
 				children  = toArray(stylsheet.split(__signatureBase), 0, -1);
 			}
-
 			return children;
 		}
 
-		function getMountElemnet (mount) {
-			// insure a mount exists
-			if (mount) {
-				mount = mount.nodeType ? mount : __document.querySelector(mount);
-				
-				if (!mount) {
-					throw 'invalid element to mount style';
-				}
-			}
-			// default
-			else {
-				mount = __document.createElement('div');
-				__document.body.appendChild(mount);
-			}
-
-			return mount;
-		}
-
-		function createStyleChildren (stylesheet, prefixes) {
-			return prefixNamespace(createStyleArray(stylesheet), prefixes);
-		}
-
-		return function (stylesheet, prefixes, mount) {
-			var 
-			children;
-
-			mount    = getMountElemnet(mount);
-			children = createStyleChildren(stylesheet, prefixes);
-
-			// creates a render instance of the style element
-			return createRender({
-				componentWillReceiveProps: function (props) {
-					this.setState({children: createStyleChildren(props, prefixes)});
-				},
-				render: function (__, state) {
-					return {
-						type: 'style',
-						props: {type: 'text/css'},
-						children: state[__children] ? children.concat(state[__children]) : children
-					}
-				}
-			}, mount);
+		return function (stylesheet, prefixes) {
+			var
+			children = addPrefixNamespaces(createStyleArray(stylesheet), prefixes),
+			element  = {type: 'style', props: {type: 'text/css'}, children: children};
+			
+			element  = createHTML(element);
+			__document.head.insertAdjacentHTML('beforeend', element);
 		}
 	}
 
