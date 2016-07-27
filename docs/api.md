@@ -397,7 +397,7 @@ faz('changed') // => 'changed'
 // or chained
 faz.then(fn).then(fn)....
 
-// .all
+// like Promise.all, will run 'fn' after all dependencies have resolved
 dio.createStream.all([dep1, dep2]).then(fn);
 
 // access resolve and reject
