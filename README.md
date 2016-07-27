@@ -552,7 +552,7 @@ foo
 	.catch(function (value) { console.log(value+200) }) // => 300
 
 // in the above if there are no errors the then blocks will execute
-// in order the first passing it's return value to the next
+// in order, the first passing it's return value to the next
 // the same happens if there is an error but with the catch blocks
 
 // .scan
