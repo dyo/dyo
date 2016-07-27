@@ -391,7 +391,7 @@ dio.createRouter({
 }, '/backend', '/user/sultan')
 
 // The above firstly defines a set of routes
-// '/' and '/user/:id' the second of which features data attribute
+// '/' and '/user/:id' the second of which features a data attribute
 // that is passed to the callback function (data) in the form
 // {id: value} i.e /user/sultan will output {id: 'sultan'}
 // '/backend' specifies the root address to be used
