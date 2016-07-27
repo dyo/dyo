@@ -280,7 +280,7 @@ dio.createRouter({
 // '/backend' specifies the root address to be used
 // i.e your app lives in url.com/backend rather than on the root /
 // and the third argument '/user/sultan' specifies
-// an initial route to address that is navigated to
+// an initial route address to navigate to
 // initially. The last two arguments are optional.
 ```
 
