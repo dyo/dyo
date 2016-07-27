@@ -227,6 +227,22 @@ dio.createRender(component: {Function|Object}, mount?: {String|Element})
 
 // While mount is either a selector or element reference
 // if left blank this defaults to document.body
+
+// dio.createRender(...) returns a render instance that can be executed anytime
+// you require a render, which will either update the already rendered
+// component or mount it for an initial render.
+// This render instance{Function} accepts 3 optional arguments
+var instance = dio.createRender(Component)
+instance(props: {Object}, children: {Any}, forceUpdate: {Boolean})
+// forceUpdate forces a mount stage render
+// props passes props to the parent Component
+// children sets this.props.children in the parent Component
+// if you supply forceUpdate with '@@dio/COMPONENT' as in
+instance(__, __, '@@dio/COMPONENT')
+// this will return the hyperscript object of the parent component
+// this is how .createHTML can accept render instances
+// it extracts the resulting hyperscript object using the above method
+// and converts that to a string representing the component
 ```
 
 Components that do not return an object with a render function
