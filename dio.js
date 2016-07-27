@@ -2714,7 +2714,7 @@
 				prefixes = [''];
 			}
 			else if (is(prefixes, __string)) {
-				prefixes = [string];
+				prefixes = [prefixes];
 			}
 
 			// add prefixes to all declarations
