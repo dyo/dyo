@@ -2476,7 +2476,7 @@
 
 			return createStream(function (resolve) {
 				resolve(function () {
-					return map(dep);
+					return map(dep());
 				});
 			}, __true);
 		};

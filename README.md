@@ -486,7 +486,7 @@ foo() // => 'again'
 
 // map
 var bar = foo.map(function(foo){
-	return foo() + ' and bar';
+	return foo + ' and bar';
 });
 
 bar() // => 'changed value and bar';
