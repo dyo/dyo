@@ -7,7 +7,7 @@
 ##### Dio is a lightweight (~6kb) Virtual DOM framework.
 
 - *~6kb minified+gzipped.*  
-- *~13kb minified.*
+- *~14kb minified.*
 
 
 ---
@@ -583,7 +583,7 @@ function DoesOneThing (component, arg1, arg2) {
 		true, 
 		'a,b,c'
 	)
-})
+});
 ```
 
 ---
@@ -594,12 +594,16 @@ creates a hyperscript style object that can be rendered with components,
 see __Single File Components__ section for more examples.
 
 ```javascript
-dio.createStyle(css: {Object}, namespaces: {Array}...);
+dio.createStyle(css: {Object|Array|String}, namespaces: {Array}...);
 
 // as in
 dio.createStyle({'p': {color:'red'}}, ['.class', '#id'...]);
-// or
+// or nested with arguments as namespaces instead of an array
 dio.createStyle({'p': {':before': {'color': 'blue'}}}, '.a-class', '#an-id');
+// or an array of styles and no namespace
+dio.createStyle(['p{color:red;}', 'h1{color:red;}']);
+// or a string
+dio.createStyle('p{color:red}h1{color:blue;}')
 ```
 
 ---

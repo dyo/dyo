@@ -94,8 +94,8 @@
 	 * @param  {arugments} arg - array like object
 	 * @return {Array}
 	 */
-	function toArray (arg, index) {
-		return __array[__prototype].slice.call(arg, index);
+	function toArray (arg, index, end) {
+		return __array[__prototype].slice.call(arg, index, end);
 	}
 
 	
@@ -2120,7 +2120,13 @@
 		return Component;
 	}
 
+	/**
+	 * hyperscript class
+	 * @param  {Array} args arugments to add to the prototype object
+	 * @return {Function}
+	 */
 	function getHyperscriptClass (args) {
+		// interface
 		function h (obj) {
 			if (!obj) {
 				throw 'not a hyperscript';
@@ -2134,6 +2140,7 @@
 			self.children = obj.children;
 		}
 
+		// data placeholder for storing internal data
 		h[__prototype][__hyperscriptSignature] = {};
 
 		if (args) {
@@ -2142,6 +2149,9 @@
 			});
 		}
 
+		// we want the constructor of the resulting created object
+		// from new hyperscript()... to be the Object interface
+		// and not our h () interface above
 		h[__prototype][__constructor] = __object;
 
 		return h;
@@ -2626,31 +2636,61 @@
 		}
 	}
 
-
+	/**
+	 * create a hyperscript style object
+	 * with shouldComponentUpdate always = false
+	 * @return {Object} a hyperscript object 
+	 */
 	function createStyle () {
+		// given a selector block this returns a style block
+		// property: value as in  margin: 20px
 		function createSelectorBlock (selector, declaration, result) {
 			result = result || {};
 
 			each(declaration, function (value, property) {
+				// extract value from function values
 				value = is(value, __function) ? value () : value;
 
+				// nested style
 				if (is(value, __object)) {
+					// this insures that
+					// h1:hover {} is joint and
+					// h1 div {} is separated by a space
 					var
 					seperator = property.substr(0,1) === ':' ? '' : ' ';
 
-					createSelectorBlock(selector + seperator + property, value, result);
+					// run through createSelectorBlock again
+					// we keep doing this so long as the selector is nested within
+					// another selector, this converts something like
+					// h1 { h2: {} } --> h1 {} h1 h2 {}
+					createSelectorBlock(selector+seperator+property, value, result);
+
+					// exit out of the loop quickly
 					return __false;
 				}
+				// perfect
 				else {
-					result[selector] = property + ':' + value;
+					var 
+					propVal = property + ':' + value + ';';
+
+					if (result[selector]) {
+						result[selector] += propVal;
+					} 
+					else {
+						result[selector] = propVal;
+					}
 				}
 			});
 
 			return result;
 		}
 
+		// returns an array of textNodes like
+		// ['selector{property:value;}'...]
 		function createSelectorArray (stylsheet) {
-			var result = [];
+			var 
+			result = [];
+
 		    each(stylsheet, function (declaration, index, arr) {
 		    		var 
 		    		selector = createSelectorBlock(index, declaration);
@@ -2662,21 +2702,61 @@
 		    			child[name] = selector[name];
 		    			result.push(name + '{' + selector[name] + '}');
 		    		});
-		    })
+		    });
+
 		    return result;
 		}
 
+		// get the hyperscript interface/class.
+		// we want one that is always on a shouldComponentUpdate: false
+		// state since we only want to add the element to the dom
+		// once on initial mount and never need to update it on subsequent renders
 		var
 		h = getHyperscriptClass([[__shouldComponentUpdate, __false]]);
 
 		return function (stylsheet, prefixes) {
 			var 
-			children = createSelectorArray(stylsheet);
+			children;
 
-			if (!is(prefixes, __array)) {
+			// this allows us to accept 
+			// strings, arrays or objects
+			// as stylesheets
+			if (is(stylsheet, __object)) {
+				children = createSelectorArray(stylsheet);
+			}
+			else if (is(stylsheet, __array)) {
+				children = stylsheet;
+			}
+			else if (is(stylsheet, __string)) {
+				// remove whitespace
+				stylsheet = stylsheet.replace(/ /g, '');
+				// add a delimiter to where we 
+				// would like the split to take place
+				// since we don't want to mutate 
+				// the string by using a delimiter
+				// already within the string.
+				stylsheet = stylsheet.replace(/}/g,'}'+__signatureBase);
+				// create an array of the stylesheet string
+				// split by the delimiter we added, 
+				// removing the delimiter in the process.
+				// also remove the last item in the array, it is an empty value
+				children  = toArray(stylsheet.split(__signatureBase), 0, -1);
+			}
+
+			// no prefixes default
+			if (!prefixes) {
+				prefixes = [''];
+			}
+			// prefixes as arguments
+			// this allows use set prefixes either by
+			// (stylesheet, '.ns1', '.ns2')
+			// or 
+			// (stylesheet, ['.ns1', '.ns2'])
+			else if (!is(prefixes, __array)) {
 				prefixes = toArray(arguments, 1);
 			}
 
+			// add prefixes to all declarations
 			each(children, function (__, index, arr) {
 				var 
 				child = [];
@@ -2686,6 +2766,9 @@
 				arr[index] = child.join();
 			});
 
+			// return a hyperscript that
+			// creates a <style type="text/css"> with
+			// the css as it's textContent
 			return new h({
 				type: 'style',
 				props: {type: 'text/css'},
