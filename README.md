@@ -573,7 +573,8 @@ var foo = dio.createFunction(
 	fn: {Function|String}, 
 	argumentsPassed: {Any[]|Any}, 
 	event: {Boolean}, 
-	argumentNames? // used when fn is a string
+	// used when fn is a string
+	argumentNames? 
 )
 // setting the event argument triggers e.preventDefault() 
 // if the caller is an event
