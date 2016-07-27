@@ -115,13 +115,13 @@
 		// array-like objects (have prop .length 
 		// that is a number) and numbers for keys [0]
 		if (
-			is(arr, __array) || arr[__length] && 
-			is(arr[__length], __number) && arr[0]
+			is(arr, __array) ||
+			arr[__length] && is(arr[__length], __number) && arr[0]
 		) {
 			// length {Number}
 			var 
 			length = arr[__length]
-			index = 0;
+			index  = 0;
 
 			for (; index < length; ++index) {
 				// break if fn() returns false
