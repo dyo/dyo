@@ -427,11 +427,12 @@ var foo = dio.createStream(function (resolve, reject) {
 	xhr.onerror = reject;
 	xhr.send();
 });
+
 foo
-.then(function (value) { return 100 })
-.then(function (value) { console.log(value+20) }) // => 120
-.catch(function (value) { return 100 })
-.catch(function (value) { console.log(value+200) }) // => 300
+	.then(function (value) { return 100 })
+	.then(function (value) { console.log(value+20) }) // => 120
+	.catch(function (value) { return 100 })
+	.catch(function (value) { console.log(value+200) }) // => 300
 
 // in the above if there are no errors the then blocks will execute
 // in order the first passing it's return value to the next
