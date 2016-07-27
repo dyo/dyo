@@ -47,25 +47,20 @@ This getting started guide will show you how to go from zero to hello world.
 ## Hello world
 
 ```javascript
-<div class="app"></div>
-<script src="dio.min.js"></script>
-
-<script>
-	function HelloWorld () {
-		return {
-			render: function (props) {
-				return h('h1', props.text);
-				// or
-				return {type: 'h1', props: {}, children: [props.text]};
-			}
+function HelloWorld () {
+	return {
+		render: function (props) {
+			return h('h1', props.text);
+			// or
+			// return {type: 'h1', props: {}, children: [props.text]};
 		}
 	}
-	
-	dio.createRender(HelloWorld, '.app')({text: 'Hello World'})
-</script>
+}
+
+dio.createRender(HelloWorld)({text: 'Hello World'})
 ```
 
-Will mount a h1 element onto the `.app` div the contents of which will be 'Hello World'.
+Will mount a h1 element onto the `.app` div the contents of which will be 'Hello World.
 
 ---
 
@@ -74,47 +69,41 @@ Will mount a h1 element onto the `.app` div the contents of which will be 'Hello
 Single file components are self contained components including within them their own css stylesheets.
 
 ```javascript
-<div class="app"></div>
-<script src="dio.min.js"></script>
-
-<script>
-	function HelloWorld () {
-		var styles = {
-			'h1': {
-				'font-size': '40px',
-				
-				// takes the return value of the function
-				width: function () {
-					return window.innerWidth
-				},
-				
-				// state
-				':hover': {
-					color: 'blue'
-				},
-				
-				// pseudo element
-				':after': {
-					content: ' '
-				}
-			}
-		}
+var namespace = '#id';
+var styles = {
+	'h1': {
+		'font-size': '40px',
 		
-		return {
-			getInitialState: function () {
-				return {styles: dio.createStyle(styles, '#'+this.displayName)};
-			},
-			render: function (props) {
-				return h('div', {id: this.displayName}
-							h('h1', props.text),
-							this.state.styles
-						)
-			}
+		// takes the return value of the function
+		width: function () {
+			return window.innerWidth
+		},
+		
+		// state
+		':hover': {
+			color: 'blue'
+		},
+		
+		// pseudo element
+		':after': {
+			content: ' '
 		}
 	}
-	
-	dio.createRender(HelloWorld, '.app')({text: 'Hello World'})
-</script>
+}
+
+dio.createStyle(styles, namespace)();
+
+function HelloWorld () {
+	return {
+		render: function (props) {
+			return h('div'+namespace,
+						h('h1', props.text)
+					)
+		}
+	}
+}
+
+dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
 ```
 ---
 
@@ -621,20 +610,22 @@ function DoesOneThing (component, arg1, arg2) {
 
 ## dio.createStyle
 
-creates a hyperscript style object that can be rendered with components,
-see __Single File Components__ section for more examples.
+creates a render intances that when called mounts to the passed mount or default document.head,
+see __Single File Components__ section for an example.
 
 ```javascript
-dio.createStyle(css: {Object|Array|String}, namespaces: {Array}...);
+dio.createStyle(css: {Object|Array|String}, namespaces?: {Array|String}, mount?: {String|Element});
 
 // as in
 dio.createStyle({'p': {color:'red'}}, ['.class', '#id'...]);
 // or nested with arguments as namespaces instead of an array
-dio.createStyle({'p': {':before': {'color': 'blue'}}}, '.a-class', '#an-id');
+dio.createStyle({'p': {':before': {'color': 'blue'}}}, '.a-class');
 // or an array of styles and no namespace
 dio.createStyle(['p{color:red;}', 'h1{color:red;}']);
 // or a string
-dio.createStyle('p{color:red}h1{color:blue;}')
+dio.createStyle('p{color:red}h1{color:blue;}');
+// or pass a mount
+dio.createStyle('p{color:red}h1{color:blue;}', null, 'body');
 ```
 
 ---

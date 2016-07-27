@@ -1932,7 +1932,7 @@
 				component = createComponent(value);
 			}
 			// element
-			else if (value.nodeType) {
+			else if (value && value.nodeType) {
 				element = value === __document ? __document.body : value;
 			}
 			// element selector
@@ -2707,17 +2707,30 @@
 		    return result;
 		}
 
-		// get the hyperscript interface/class.
-		// we want one that is always on a shouldComponentUpdate: false
-		// state since we only want to add the element to the dom
-		// once on initial mount and never need to update it on subsequent renders
-		var
-		h = getHyperscriptClass([[__shouldComponentUpdate, __false]]);
+		// adds the prefix namespace to children
+		function prefixNamespace (children, prefixes) {
+			// no prefixes default
+			if (!prefixes) {
+				prefixes = [''];
+			}
+			else if (is(prefixes, __string)) {
+				prefixes = [string];
+			}
 
-		return function (stylsheet, prefixes) {
-			var 
-			children;
+			// add prefixes to all declarations
+			each(children, function (__, index, arr) {
+				var 
+				child = [];
+				each(prefixes, function (prefix) {
+					child.push(prefix + ' ' + arr[index]);
+				})
+				arr[index] = child.join();
+			});
 
+			return children;
+		}
+
+		function createStyleArray (stylsheet, children) {
 			// this allows us to accept 
 			// strings, arrays or objects
 			// as stylesheets
@@ -2743,37 +2756,50 @@
 				children  = toArray(stylsheet.split(__signatureBase), 0, -1);
 			}
 
-			// no prefixes default
-			if (!prefixes) {
-				prefixes = [''];
+			return children;
+		}
+
+		function getMountElemnet (mount) {
+			// insure a mount exists
+			if (mount) {
+				mount = mount.nodeType ? mount : __document.querySelector(mount);
+				
+				if (!mount) {
+					throw 'invalid element to mount style';
+				}
 			}
-			// prefixes as arguments
-			// this allows use set prefixes either by
-			// (stylesheet, '.ns1', '.ns2')
-			// or 
-			// (stylesheet, ['.ns1', '.ns2'])
-			else if (!is(prefixes, __array)) {
-				prefixes = toArray(arguments, 1);
+			// default to document head
+			else {
+				mount = __document.head;
 			}
 
-			// add prefixes to all declarations
-			each(children, function (__, index, arr) {
-				var 
-				child = [];
-				each(prefixes, function (prefix) {
-					child.push(prefix + ' ' + arr[index]);
-				})
-				arr[index] = child.join();
-			});
+			return mount;
+		}
 
-			// return a hyperscript that
-			// creates a <style type="text/css"> with
-			// the css as it's textContent
-			return new h({
-				type: 'style',
-				props: {type: 'text/css'},
-				children: children
-			});
+		function createStyleChildren (stylesheet, prefixes) {
+			return prefixNamespace(createStyleArray(stylesheet), prefixes);
+		}
+
+		return function (stylesheet, prefixes, mount) {
+			var 
+			children;
+
+			mount    = getMountElemnet(mount);
+			children = createStyleChildren(stylesheet, prefixes);
+
+			// creates a render instance of the style element
+			return createRender({
+				componentWillReceiveProps: function (props) {
+					this.setState({children: createStyleChildren(props, prefixes)});
+				},
+				render: function (__, state) {
+					return {
+						type: 'style',
+						props: {type: 'text/css'},
+						children: state.children ? children.concat(state.children) : children
+					}
+				}
+			}, mount);
 		}
 	}
 

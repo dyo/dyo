@@ -10,22 +10,17 @@ This getting started guide will show you how to go from zero to hello world.
 ## Hello world
 
 ```javascript
-<div class="app"></div>
-
-<script src="dio.min.js"></script>
-<script>
-	function HelloWorld () {
-		return {
-			render: function (props) {
-				return h('h1', props.text);
-				// or
-				return {type: 'h1', props: {}, children: [props.text]};
-			}
+function HelloWorld () {
+	return {
+		render: function (props) {
+			return h('h1', props.text);
+			// or
+			// return {type: 'h1', props: {}, children: [props.text]};
 		}
 	}
-	
-	dio.createRender(HelloWorld, '.app')({text: 'Hello World'})
-</script>
+}
+
+dio.createRender(HelloWorld)({text: 'Hello World'})
 ```
 
-Will mount a h1 element onto the `.app` div the contents of which will be 'Hello World'.
+Will mount a h1 element onto the page contents of which will be 'Hello World'.

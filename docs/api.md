@@ -496,20 +496,22 @@ function DoesOneThing (component, arg1, arg2) {
 
 ## dio.createStyle
 
-creates a hyperscript style object that can be rendered with components,
-see __Single File Components__ section for more examples.
+creates a render intances that when called mounts to the passed mount or default document.head,
+see __Single File Components__ section for an example.
 
 ```javascript
-dio.createStyle(css: {Object|Array|String}, namespaces: {Array}...);
+dio.createStyle(css: {Object|Array|String}, namespaces?: {Array|String}, mount?: {String|Element});
 
 // as in
 dio.createStyle({'p': {color:'red'}}, ['.class', '#id'...]);
 // or nested with arguments as namespaces instead of an array
-dio.createStyle({'p': {':before': {'color': 'blue'}}}, '.a-class', '#an-id');
+dio.createStyle({'p': {':before': {'color': 'blue'}}}, '.a-class');
 // or an array of styles and no namespace
 dio.createStyle(['p{color:red;}', 'h1{color:red;}']);
 // or a string
-dio.createStyle('p{color:red}h1{color:blue;}')
+dio.createStyle('p{color:red}h1{color:blue;}');
+// or pass a mount
+dio.createStyle('p{color:red}h1{color:blue;}', null, 'body');
 ```
 
 ---
