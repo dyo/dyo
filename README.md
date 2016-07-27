@@ -213,6 +213,13 @@ var myComponent = dio.createComponent(function () {
 	};
 });
 
+// pass true as the third argument to access the 
+// internal methods of a component created with .createComponent i.e
+myComponent(__,__,true)
+// returns {
+// 		render: function ...
+// }
+
 ```
 
 ---
