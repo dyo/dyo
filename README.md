@@ -1,5 +1,7 @@
 # dio.js
 
+[![Join the chat at https://gitter.im/thysultan/dio.js](https://badges.gitter.im/thysultan/dio.js.svg)](https://gitter.im/thysultan/dio.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 <a href="http://thysultan.com/dio">
 	<img alt="dio.js" title="dio.js" src="https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg">
 </a>
