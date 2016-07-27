@@ -310,12 +310,12 @@
 					childLength = child[__length];
 
 					for (var j = 0; j < childLength; j++) {
-						obj.children[(i - key) + j] = setChild(child[j]);
+						obj[__children][(i - key) + j] = setChild(child[j]);
 					}
 				}
 				// deep enough, add this child to children
 				else {
-					obj.children[i - key] = setChild(child);
+					obj[__children][i - key] = setChild(child);
 				}
 			}
 
@@ -698,8 +698,8 @@
 			addEventListeners(el, node.props);
 			
 			// only map children arrays
-			if (is(node.children, __array)) {
-				each(node.children, function (child) {
+			if (is(node[__children], __array)) {
+				each(node[__children], function (child) {
 					el.appendChild(createElement(child, component, ns));
 				});
 			}
@@ -1481,7 +1481,7 @@
 			// i.e {id: 123, class: 'one two'}
 			props = vnode.props,
 			// i.e [obj, obj]
-			children = vnode.children;
+			children = vnode[__children];
 
 			// print voidElements
 			if (element[type]) {
@@ -1880,6 +1880,7 @@
 
 			// get a fresh copy of the vdom
 			newNode = component(props, children);
+
 			// clear dom
 			element.innerHTML = '';
 
@@ -2085,7 +2086,7 @@
 			// add children to props if set
 			if (children) {
 				props = props || {};
-				props.children = children;
+				props[__children] = children;
 			}
 
 			// make sure this is not the first render
@@ -2135,9 +2136,9 @@
 			var 
 			self = this;
 
-			self.type     = obj.type,
-			self.props    = obj.props,
-			self.children = obj.children;
+			self.type        = obj.type,
+			self.props       = obj.props,
+			self[__children] = obj[__children];
 		}
 
 		// data placeholder for storing internal data
@@ -2768,9 +2769,10 @@
 					throw 'invalid element to mount style';
 				}
 			}
-			// default to document head
+			// default
 			else {
-				mount = __document.head;
+				mount = __document.createElement('div');
+				__document.body.appendChild(mount);
 			}
 
 			return mount;
@@ -2796,7 +2798,7 @@
 					return {
 						type: 'style',
 						props: {type: 'text/css'},
-						children: state.children ? children.concat(state.children) : children
+						children: state[__children] ? children.concat(state[__children]) : children
 					}
 				}
 			}, mount);
