@@ -457,7 +457,8 @@ to it
 
 ```javascript
 dio.createHTML(component, props, children)
-// you can also use this on plain hyperscript objects
+// you can also use this on plain hyperscript objects, as in
+dio.createHTML(h('div', 'Text'));
 ```
 
 ---

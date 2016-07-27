@@ -338,9 +338,10 @@ Like the name suggests this methods outputs the html
 of a specific component/render instance with the props passed
 to it
 
-```
+```javascript
 dio.createHTML(component, props, children)
-// you can also use this on plain hyperscript objects
+// you can also use this on plain hyperscript objects, as in
+dio.createHTML(h('div', 'Text'));
 ```
 
 ---
