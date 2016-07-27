@@ -154,7 +154,7 @@ Single file components are self contained components including within them their
 	// 		displayName: 'something'
 	// }
 	// it is however an optional property so you do not need to set it,
-	displayName:           {String}
+	displayName:               {String}
 
 	// render method
 	render:                    (props, state, this) => {}
