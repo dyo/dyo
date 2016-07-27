@@ -2,6 +2,7 @@
 
 - [Benchmark](../../examples/benchmark.html)
 - [Todos](../../examples/todo.html)
+- [Sortable List](../../examples/sortable.html)
 - [Filter](../../examples/filter.html)
 - [Markdown](../../examples/markdown.html)
 - [Canvas](../../examples/canvas.html)

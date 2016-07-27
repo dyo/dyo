@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="description" content="Dio is a lightweight (~6kb) Virtual DOM framework.">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
+		<title>dio.js - Sortable List Example</title>
+		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<script src="/dio.js"></script>
+		<style>
+			* {box-sizing: border-box;}
+			body {
+			  margin: 0 auto;
+			  padding: 0;
+			  font-family: "Helvetica Neue", Arial;
+			  font-size: 13px;
+			}
+			ol {
+			  list-style: none;
+			  margin:0;
+			  width: 200px;
+			  float: left;
+			  padding:0;
+			  background:#ddd;
+			}
+			li {
+			  padding: 10px;
+			  color: #666;
+			}
+			li.dragging {
+			  background: #eee;
+			}
+			pre {float:left; width: 340px; padding: 10px; margin: 0 0 0 10px; background: antiquewhite}
+
+		</style>
+	</head>
+	<body>
+		<div class="container"></div>
+		<script>
+			function Sortable () {
+				return {
+					items: {
+				    	dragging: dio.createStream(),
+				    	colors: dio.createStream([
+				    		"Gold",
+				    		"Crimson",
+				    		"Hotpink",
+				    		"Blueviolet",
+				    		"Cornflowerblue",
+				    		"Skyblue",
+				    		"Aquamarine",
+				    		"Burlywood"
+			    		])
+					},
+				    // items: new Sortable.ListItems(),
+				    sort: function(colors, dragging) {
+				        this.items.colors(colors);
+				        this.items.dragging(dragging);
+				    },
+				    dragStart: function(e) {
+			      		this.dragged = Number(e.currentTarget.dataset.id);
+			      		e.dataTransfer.effectAllowed = 'move';
+			      		e.dataTransfer.setData('text/html', null);
+				    },
+				    dragOver: function(e) {
+			      		e.preventDefault();
+			      		var over = e.currentTarget,
+			          		dragging = this.items.dragging(),
+			          		from = isFinite(dragging) ? dragging : this.dragged,
+			          		to = Number(over.dataset.id);
+			      		if((e.clientY - over.offsetTop) > (over.offsetHeight / 2)) to++;
+			      		if(from < to) to--;
+				      
+			      		var colors = this.items.colors();
+			      		colors.splice(to, 0, colors.splice(from, 1)[0]);
+			      		this.sort(colors, to);
+				    },
+				    dragEnd: function(e) {
+				        this.sort(this.items.colors(), undefined);
+				    },
+					render: function (props, state, self) {
+					    return h('div.drag-n-drop', [
+						        h('ol',
+					          		this.items.colors().map(function(item, i) {
+					            		var dragging = (i == this.items.dragging()) ? 'dragging' : '';
+
+					            		return h('li', {
+						                	'data-id': i,
+						                	class: dragging,
+						                	draggable: 'true',
+						                	ondragstart: this.dragStart.bind(this),
+						                	ondragover: this.dragOver.bind(this),
+						                	ondragend: this.dragEnd.bind(this, self)
+					            		}, [item]);
+					          		}, this)
+								),
+					      		h('pre', ['App State:' + JSON.stringify(this.items,0,2)])
+					    ]);
+					}
+				};
+			};
+
+			var 
+			render = dio.createRender(Sortable, '.container');
+
+			setInterval(function (){
+				render();
+			}, 1000/60);
+		</script>
+	</body>
+</html>
