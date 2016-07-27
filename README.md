@@ -1,3 +1,5 @@
+[![Join the chat at https://gitter.im/thysultan/dio.js](https://badges.gitter.im/thysultan/dio.js.svg)](https://gitter.im/thysultan/dio.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 # dio.js
 
 [![dio.js](https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
@@ -6,8 +8,6 @@
 
 - *~6kb minified+gzipped.*  
 - *~14kb minified.*
-
-[![Join the chat at https://gitter.im/thysultan/dio.js](https://badges.gitter.im/thysultan/dio.js.svg)](https://gitter.im/thysultan/dio.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ---
 
