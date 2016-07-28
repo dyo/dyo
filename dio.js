@@ -2814,7 +2814,8 @@
 		return function (stylesheet, namespaces) {
 			var
 			children = addNamespaces(createStyleArray(stylesheet), namespaces),
-			element = '<style>' + children.join('\n') + '</style>'
+			element = '<style>' + children.join('\n') + '</style>';
+			
 			__document.head.insertAdjacentHTML('beforeend', element);
 		}
 	}
