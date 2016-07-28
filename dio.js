@@ -478,9 +478,18 @@
 			else if (nodeChanged(newNode, oldNode)) {
 				var 
 				prevNode = parent[__childNodes][index],
-				nextNode = createElement(newNode);
+				isTextNode;
 
-				replaceChild(parent, nextNode, prevNode, newNode);
+				// textContent optimization
+				if (is(newNode, __string) && prevNode.nodeType === 3) {
+					nextNode   = newNode;
+					isTextNode = __true;
+				}
+				else {
+					nextNode = createElement(newNode);
+				}
+
+				replaceChild(parent, nextNode, prevNode, newNode, isTextNode);
 			}
 			// the lookup loop
 			else if (newNode.type) {
@@ -552,7 +561,7 @@
 			else if (op < 0) {
 				oldChildren.splice(index, 1);
 				removeChild(parent, currentNode, newNode);
-				// we have to decreement the children length (newLength/oldLength):515-516
+				// we have to decreement the children length
 				return -1;
 			}
 			// replace
@@ -565,7 +574,8 @@
 		function removeChild (parent, nextNode, oldNode) {
 			if (nextNode) {
 
-				// execute componentWillUnmount lifecycle, store it's return into durtion
+				// execute componentWillUnmount lifecycle, 
+				// store it's return into durtion
 				// we can use this to delay unmounting a node from the dom
 				// if a time{Number} in milliseconds is returned.
 				var 
@@ -613,11 +623,19 @@
 		}
 
 		// replace element
-		function replaceChild (parent, nextNode, prevNode, newNode) {
+		function replaceChild (parent, nextNode, prevNode, newNode, isTextNode) {
 			if (nextNode && prevNode) {	
-				lifecycle(newNode, __componentWillUpdate);
-				parent.replaceChild(nextNode, prevNode);
-				lifecycle(newNode, __componentDidUpdate);
+				// textNodes do not have attributes
+				// so we can just update the textContent property,
+				// which is faster
+				if (isTextNode) {
+					prevNode.textContent = nextNode;
+				}
+				else {
+					lifecycle(newNode, __componentWillUpdate);
+					parent.replaceChild(nextNode, prevNode);
+					lifecycle(newNode, __componentDidUpdate);
+				}
 			}
 		}
 
@@ -737,11 +755,7 @@
 		function handlePropChanges (target, newNode, oldNode) {
 			// get changes to props/attrs
 			var
-			propChanges = getPropChanges(
-				target, 
-				newNode.props, 
-				oldNode.props
-			);
+			propChanges = getPropChanges(newNode.props, oldNode.props);
 
 			// if there are any prop changes,
 			// update component props
@@ -750,7 +764,7 @@
 				lifecycle(newNode, __componentWillUpdate);
 
 				each(propChanges, function (obj) {
-					updateProp(obj.target, obj.name, obj.value, obj.op);
+					updateProp(target, obj.name, obj.value, obj.op);
 				});
 
 				// after props change
@@ -759,7 +773,7 @@
 		}
 		
 		// update props
-		function getPropChanges (target, newProps, oldProps) {
+		function getPropChanges (newProps, oldProps) {
 			var 
 			changes  = [];
 
@@ -799,7 +813,6 @@
 					// that we can check later to see if any props have changed
 					// and update the props that have changed
 					changes.push({
-						target: target, 
 						name:   name, 
 						value:  value,
 						op: add || remove
@@ -829,7 +842,12 @@
 			}
 
 			// prop operation type, either remove / set
-			op = (op === -1 ? 'remove' : 'set') + 'Attribute';
+			if (op === -1) {
+				op = 'removeAttribute';
+			}
+			else {
+				op = 'setAttribute';
+			}
 		
 			// set xlink:href attr
 			if (name === 'xlink:href') {
@@ -882,27 +900,14 @@
 				}
 				// everything else
 				else {
-					// if the name is as follows: 'stroke-width'
-					// or is not found as property of the target
-					// or is not in the html namespace
-					// we default to using remove/setAttribute
 					if (
-						target[name] === __undefined ||
-						name.indexOf('-') > -1 ||
-						target.namespaceURI !== __namespace['html']
+						target[name]       !== __undefined &&
+						target.namespaceURI == __namespace['html']
 					) {
-						// -1 => remove, else set
-						target[op](name, value);
+						target[name] = value;
 					}
 					else {
-						// make sure to swallow errors 
-						// if we try to set readonly properties
-						try {
-							target[name] = value;
-						}
-						catch (e) {
-
-						}
+						target[op](name, value);
 					}
 				}
 			}
@@ -2771,7 +2776,7 @@
 			var
 			children = addPrefixNamespaces(createStyleArray(stylesheet), prefixes),
 			element  = {type: 'style', props: {type: 'text/css'}, children: children};
-			
+
 			element  = createHTML(element);
 			__document.head.insertAdjacentHTML('beforeend', element);
 		}
