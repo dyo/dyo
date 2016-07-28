@@ -2654,6 +2654,29 @@
 	 * @return {Object} a hyperscript object 
 	 */
 	function createStyle () {
+		var
+		vendors     = ['webkit', 'moz', 'ms'],
+		prefixCache = ['transform', 'appearance', 'animation'];
+
+		function prefixProperty (property) {
+			var
+			result;
+
+			each(prefixCache, function (prefix) {
+				if (property.indexOf(prefix+':') > -1) {
+					result = '';
+
+					each(vendors, function (vendor, index, arr) {
+						result += '-' + vendor + '-' + property + '\t';
+					});
+
+					result += property;
+				}
+			});
+
+			return result || property;
+		}
+
 		// given a selector block this returns a style block
 		// property: value as in  margin: 20px
 		function createSelectorBlock (selector, declaration, result) {
@@ -2665,25 +2688,31 @@
 
 				// nested style
 				if (is(value, __object)) {
+					
 					// this insures that
 					// h1:hover {} is joint and
 					// h1 div {} is separated by a space
 					var
-					seperator = property.substr(0,1) === ':' ? '' : ' ';
+					seperator = ' ';
+
+					// & will remove the space between h div {}
+					// to be h1div{}, which works well if the div
+					// is a :hover
+					if (property.substr(0,1) === '&') {
+						property  = property.substr(1);
+						seperator = '';
+					}
 
 					// run through createSelectorBlock again
 					// we keep doing this so long as the selector is nested within
 					// another selector, this converts something like
 					// h1 { h2: {} } --> h1 {} h1 h2 {}
 					createSelectorBlock(selector+seperator+property, value, result);
-
-					// exit out of the loop quickly
-					return __false;
 				}
 				// perfect
 				else {
 					var 
-					propVal = property + ':' + value + ';';
+					propVal = '\t'+prefixProperty(property + ': ' + value + ';\n');
 
 					if (result[selector]) {
 						result[selector] += propVal;
@@ -2712,7 +2741,7 @@
 		    			child = {};
 
 		    			child[name] = selector[name];
-		    			result.push(name + '{' + selector[name] + '}');
+		    			result.push(name + ' {\n' + selector[name] + '}\n');
 		    		});
 		    });
 
@@ -2720,23 +2749,32 @@
 		}
 
 		// adds the prefix namespace to children
-		function addPrefixNamespaces (children, prefixes) {
+		function addNamespaces (children, namespaces) {
 			// no prefixes default
-			if (!prefixes) {
-				prefixes = [''];
+			if (!namespaces) {
+				namespaces = [''];
 			}
-			else if (is(prefixes, __string)) {
-				prefixes = [prefixes];
+			else if (is(namespaces, __string)) {
+				namespaces = [namespaces];
 			}
 
 			// add prefixes to all declarations
-			each(children, function (__, index, arr) {
+			each(children, function (value, index, arr) {
 				var 
 				child = [];
-				each(prefixes, function (prefix) {
-					child.push(prefix + ' ' + arr[index]);
-				});
-				arr[index] = child.join();
+
+				if (value.substr(0,1) === '@') {
+					each(vendors, function (prefix) {
+						arr[index] += value.substr(0,1) + '-'+prefix+'-' + value.substr(1);
+					});
+				}
+				else {
+					each(namespaces, function (namespace) {
+						child.push(namespace + ' ' + value);
+					});
+
+					arr[index] = child.join();
+				}
 			});
 
 			return children;
@@ -2769,15 +2807,14 @@
 				// also remove the last item in the array, it is an empty value
 				children  = toArray(stylsheet.split(__signatureBase), 0, -1);
 			}
+
 			return children;
 		}
 
-		return function (stylesheet, prefixes) {
+		return function (stylesheet, namespaces) {
 			var
-			children = addPrefixNamespaces(createStyleArray(stylesheet), prefixes),
-			element  = {type: 'style', props: {type: 'text/css'}, children: children};
-
-			element  = createHTML(element);
+			children = addNamespaces(createStyleArray(stylesheet), namespaces),
+			element = '<style>' + children.join('\n') + '</style>'
 			__document.head.insertAdjacentHTML('beforeend', element);
 		}
 	}
