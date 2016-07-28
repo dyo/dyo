@@ -1,6 +1,6 @@
 # Single File Components
 
-Single file components are self contained components including within them their own css stylesheets.
+Single file components are self contained components including within them their own stylesheets.
 
 ```javascript
 var namespace = '#id';
@@ -14,13 +14,19 @@ var styles = {
 		},
 		
 		// state
-		':hover': {
+		'&:hover': {
 			color: 'blue'
 		},
 		
 		// pseudo element
-		':after': {
+		'&:after': {
 			content: ' '
+		},
+
+		'@keyframes MyAnimation': {
+			'0%': 'left 0',
+			'50%': 'left 200px',
+			'100%': 'left 20px'
 		}
 	}
 }

@@ -2667,7 +2667,7 @@
 					result = '';
 
 					each(vendors, function (vendor, index, arr) {
-						result += '-' + vendor + '-' + property + '\t';
+						result += '-' + vendor + '-' + property;
 					});
 
 					result += property;
@@ -2679,7 +2679,7 @@
 
 		// given a selector block this returns a style block
 		// property: value as in  margin: 20px
-		function createSelectorBlock (selector, declaration, result) {
+		function createSelectorBlock (selector, declaration, result, end) {
 			result = result || {};
 
 			each(declaration, function (value, property) {
@@ -2707,12 +2707,20 @@
 					// we keep doing this so long as the selector is nested within
 					// another selector, this converts something like
 					// h1 { h2: {} } --> h1 {} h1 h2 {}
-					createSelectorBlock(selector+seperator+property, value, result);
+					if (selector.substr(0,1) === '@') {
+						value = createSelectorBlock(property, value, {});
+						value[property] = '{' + value[property] + '}';
+
+						createSelectorBlock(selector, value, result, ' ');
+					}
+					else {
+						createSelectorBlock(selector+seperator+property, value, result);
+					}
 				}
 				// perfect
 				else {
 					var 
-					propVal = '\t'+prefixProperty(property + ': ' + value + ';\n');
+					propVal = prefixProperty(property + ': ' + value + (end || ';'));
 
 					if (result[selector]) {
 						result[selector] += propVal;
@@ -2741,7 +2749,7 @@
 		    			child = {};
 
 		    			child[name] = selector[name];
-		    			result.push(name + ' {\n' + selector[name] + '}\n');
+		    			result.push(name + ' {' + selector[name] + '}');
 		    		});
 		    });
 
@@ -2815,8 +2823,10 @@
 			var
 			children = addNamespaces(createStyleArray(stylesheet), namespaces),
 			element = '<style>' + children.join('\n') + '</style>';
-			
+
 			__document.head.insertAdjacentHTML('beforeend', element);
+			
+			return element;
 		}
 	}
 

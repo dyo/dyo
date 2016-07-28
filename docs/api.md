@@ -496,8 +496,9 @@ function DoesOneThing (component, arg1, arg2) {
 
 ## dio.createStyle
 
-creates a render intances that when called mounts to the passed mount or default document.head,
-see __Single File Components__ section for an example.
+creates a style element that is mounted to document.head,
+the output is auto prefixes and resembles sass/scss in the use of the "&" character
+in nested styles, see __Single File Components__ section for an example.
 
 ```javascript
 dio.createStyle(css: {Object|Array|String}, namespaces?: {Array|String}, mount?: {String|Element});
@@ -505,7 +506,7 @@ dio.createStyle(css: {Object|Array|String}, namespaces?: {Array|String}, mount?:
 // as in
 dio.createStyle({'p': {color:'red'}}, ['.class', '#id'...]);
 // or nested with arguments as namespaces instead of an array
-dio.createStyle({'p': {':before': {'color': 'blue'}}}, '.a-class');
+dio.createStyle({'p': {'&:before': {'color': 'blue'}}}, '.a-class');
 // or an array of styles and no namespace
 dio.createStyle(['p{color:red;}', 'h1{color:red;}']);
 // or a string
