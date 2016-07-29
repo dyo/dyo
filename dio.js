@@ -1936,7 +1936,7 @@
 		element   = (element && element.nodeType) ? element : __document.querySelector(element);
 
 		// default element to body
-		if (!element) {
+		if (!element || element === __document) {
 			element = __document.body;
 		}
 
