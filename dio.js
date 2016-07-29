@@ -42,13 +42,13 @@
 
 	// objects
 	__namespace 				= {
-		math:  'http://www.w3.org/1998/Math/MathML',
+		math:  '1998/Math/MathML',
 		xlink: 'http://www.w3.org/1999/xlink',
 		svg:   'http://www.w3.org/2000/svg',
 		html:  'http://www.w3.org/1999/xhtml'
 	},
-	__document                  = document,
 	__window                    = window,
+	__document                  = __window.document,
 
 	// types
 	__null                      = null,
@@ -77,12 +77,12 @@
 	__shouldComponentUpdate     = 'shouldComponentUpdate',
 
 	// functions
-	__number                    = Number,
-	__array                     = Array,
-	__object                    = Object,
-	__function                  = Function,
-	__string                    = String,
-	__boolean                   = Boolean,
+	__Number                    = Number,
+	__Array                     = Array,
+	__Object                    = Object,
+	__Function                  = Function,
+	__String                    = String,
+	__Boolean                   = Boolean,
 	__XMLHttpRequest            = XMLHttpRequest,
 	__RegExp                    = RegExp,
 	__encodeURIComponent        = encodeURIComponent,
@@ -95,7 +95,7 @@
 	 * @return {Array}
 	 */
 	function toArray (arg, index, end) {
-		return __array[__prototype].slice.call(arg, index, end);
+		return __Array[__prototype].slice.call(arg, index, end);
 	}
 
 	
@@ -115,8 +115,8 @@
 		// array-like objects (have prop .length 
 		// that is a number) and numbers for keys [0]
 		if (
-			is(arr, __array) ||
-			arr[__length] && is(arr[__length], __number) && arr[0]
+			is(arr, __Array) ||
+			arr[__length] && is(arr[__length], __Number) && arr[0]
 		) {
 			// length {Number}
 			var 
@@ -264,7 +264,7 @@
 			// and default props to an empty object
 			if (
 				(props && props[__hyperscriptSignature]) ||
-				!is(props, __object)
+				!is(props, __Object)
 			) {
 				key   = 1;
 				props = {};
@@ -273,7 +273,7 @@
 			else if (
 				props === __null || 
 				props === __undefined || 
-				!is(props, __object)
+				!is(props, __Object)
 			) {
 				props = {};
 			}
@@ -305,7 +305,7 @@
 		
 				// if the child is an array go deeper
 				// and set the 'arrays children' as children
-				if (is(child, __array)) {
+				if (is(child, __Array)) {
 					var 
 					childLength = child[__length];
 
@@ -333,8 +333,8 @@
 			if (
 				// checks if it is null/undefined
 				!is(child) ||
-				is(child, __number) || 
-				is(child, __boolean)
+				is(child, __Number) || 
+				is(child, __Boolean)
 			) {
 				// for non objects adding a strings is enough 
 				child = child + '';
@@ -481,7 +481,7 @@
 				isTextNode;
 
 				// textContent optimization
-				if (is(newNode, __string) && prevNode.nodeType === 3) {
+				if (is(newNode, __String) && prevNode.nodeType === 3) {
 					nextNode   = newNode;
 					isTextNode = __true;
 				}
@@ -589,7 +589,7 @@
 				);
 
 				// either duration is a number or it's default 0
-				if (!is(duration, __number)) {
+				if (!is(duration, __Number)) {
 					duration = 0;
 				}
 
@@ -646,7 +646,7 @@
 			obj  = node1[__constructor] !== node2[__constructor],
 
 			// diff text content
-			text = !is(node1, __object) && node1 !== node2,
+			text = !is(node1, __Object) && node1 !== node2,
 
 			// diff node type
 			// if this is an element diff it's type
@@ -666,9 +666,9 @@
 			if (
 				node !== __undefined &&
 				(
-					node[__constructor] === __string ||
-					node[__constructor] === __number ||
-					node[__constructor] === __boolean
+					node[__constructor] === __String ||
+					node[__constructor] === __Number ||
+					node[__constructor] === __Boolean
 				)
 			) {
 				return __document.createTextNode(node);
@@ -698,14 +698,14 @@
 				ref = node.props.ref
 
 				// we have a component and string ref
-				if (component && is(ref, __string)) {
+				if (component && is(ref, __String)) {
 					// create the refs object if it doesn't already exist
 					component.refs = component.refs || {};
 					// set string refs
 					component.refs[ref] = el;
 				}
 				// function ref, execute and pass the element as a parameter
-				else if (is(ref, __function)) {
+				else if (is(ref, __Function)) {
 					ref(el);
 				}
 			}
@@ -716,7 +716,7 @@
 			addEventListeners(el, node.props);
 			
 			// only map children arrays
-			if (is(node[__children], __array)) {
+			if (is(node[__children], __Array)) {
 				each(node[__children], function (child) {
 					el.appendChild(createElement(child, component, ns));
 				});
@@ -728,7 +728,7 @@
 		// check if props is event
 		function isEventProp (name, value) {
 			// checks if the first two characters are on
-			return name.substr(0,2) === 'on' && is(value, __function);
+			return name.substr(0,2) === 'on' && is(value, __Function);
 		}
 		
 		// get event name
@@ -865,7 +865,7 @@
 				// value is an object
 				// add each of it's properties to the
 				// target elements attribute
-				if (is(value, __object)) {
+				if (is(value, __Object)) {
 					// classes
 					if (name === 'class') {
 						each(value, function (content, index) {
@@ -895,7 +895,7 @@
 				// is an array of classes
 				// this allows us to set classess like 
 				// class: ['class1', 'class2']
-				else if (is(value, __array) && (name === 'class')) {
+				else if (is(value, __Array) && (name === 'class')) {
 					target[op](name, value.join(' '));
 				}
 				// everything else
@@ -943,7 +943,7 @@
 				transformations  = transformations || '';
 
 				// get element if selector
-				if (is(element, __string)) {
+				if (is(element, __String)) {
 					element = document.querySelector(element);
 				}
 
@@ -967,7 +967,7 @@
 				// animation type
 				// if this is set we opt for the more performant
 				// web animations api
-				if (is(element.animate, __function)) {
+				if (is(element.animate, __Function)) {
 					webAnimations = __true;
 				}
 
@@ -1475,7 +1475,7 @@
 		// print node
 		function toHTML (vnode, level) {
 			// not a hyperscript object
-			if (is(vnode, __string)) {
+			if (is(vnode, __String)) {
 				return vnode;
 			}
 
@@ -1501,7 +1501,7 @@
 
 		// print props
 		function Props (props) {
-			props = __object.keys(props)
+			props = __Object.keys(props)
 							// remove any falsey value
 							.filter(function (name) {
 								return  props[name] !== __undefined &&
@@ -1515,7 +1515,7 @@
 								value = props[name];
 
 								// don't add events, keys or refs
-								if (!is(value, __function) && name !== 'key' && name !== 'ref') {
+								if (!is(value, __Function) && name !== 'key' && name !== 'ref') {
 									// if the value is a falsey/truefy value
 									// print just the name
 									// i.e checkbox=true
@@ -1571,7 +1571,7 @@
 		vnode;
 
 		// either a render function or component function
-		if (is(arg, __function)) {
+		if (is(arg, __Function)) {
 			// component functions expose their internals
 			// when we pass a third param, on the other hand
 			// render functions expose their hyperscript output
@@ -1600,7 +1600,7 @@
 	function createStore (reducer) {
 		// if the reducer is an object of reducers (multiple)
 		// lets combine the reducers
-		if (is(reducer, __object)) {
+		if (is(reducer, __Object)) {
 			return create(combine(reducer));
 		}
 		// single reducer
@@ -1613,7 +1613,7 @@
 			return function (state, action) {
 				state = state || {};
 
-				return __object.keys(reducers).reduce(function (nextState, key) {
+				return __Object.keys(reducers).reduce(function (nextState, key) {
 					nextState[key] = reducers[key](state[key], action);
 
 					return nextState;
@@ -1635,7 +1635,7 @@
 			// dispatch an action
 			function dispatch (action, timetravel) {
 				// there are no actions when we are time traveling
-				if (!is(action, __object)) {
+				if (!is(action, __Object)) {
 					throw 'action must be a plain object';
 				}
 				if (action.type === __undefined) {
@@ -1653,7 +1653,7 @@
 
 			// subscribe to a store
 			function subscribe (listener) {
-				if (!is(listener, __function)) {
+				if (!is(listener, __Function)) {
 			  		throw 'listener should be a function';
 				}
 
@@ -1803,7 +1803,7 @@
 							}, __null);
 
 						// callback is a function, exec
-						if (is(callback, __function)) {
+						if (is(callback, __Function)) {
 							callback(data);
 						}
 					}
@@ -1861,7 +1861,7 @@
 	 * render = dio.createRender(Component, '.selector')
 	 * render()
 	 */
-	function createRender () {
+	function createRender (component, element) {
 		// update
 		function update (props, children) {
 			// get a fresh copy of the vdom
@@ -1920,7 +1920,7 @@
 		// removes the component from the container
 		// or also removes the container as-well
 		render.remove = function (all) {
-			all ? element.parentNode.removeChild(element) : element.innerHTML = ''
+			all ? element.parentNode.removeChild(element) : element.innerHTML = '';
 		};
 
 		var
@@ -1930,30 +1930,12 @@
 		element,
 		internal,
 		stateless,
-		initial = __true,
-		args = toArray(arguments);
+		initial = __true;
 
-		// assign args
-		each(args, function (value) {
-			// a component
-			if (is(value, __function) && value.id === __componentSignature) {
-				component = value;
-			}
-			// a pure function / object
-			else if (is(value, __function) || is(value, __object)) {
-				component = createComponent(value);
-			}
-			// element
-			else if (value && value.nodeType) {
-				element = value === __document ? __document.body : value;
-			}
-			// element selector
-			else if (is(value, __string)) {
-				element = __document.querySelector(value);
-			}
-		});
+		component = createComponent(component);
+		element   = (element && element.nodeType) ? element : __document.querySelector(element);
 
-		// default to body
+		// default element to body
 		if (!element) {
 			element = __document.body;
 		}
@@ -1990,7 +1972,12 @@
 		displayName;
 
 		// maybe the arg is a function that returns an object
-		if (is(arg, __function)) {
+		if (is(arg, __Function)) {
+			// already a component
+			if (arg.id === __componentSignature) {
+				return arg;
+			}
+
 			obj = arg();
 
 			if (!obj) {
@@ -2009,7 +1996,7 @@
  			displayName = /function ([^(]*)/.exec(arg.valueOf())[1];
 		}
 		// we have an object
-		else if (is(arg, __object)) {
+		else if (is(arg, __Object)) {
 			// does the object have a render method
 			// if not create one that returns 'arg' which we 
 			// assume is a hyperscript object thus a stateless component
@@ -2044,7 +2031,7 @@
 		// also bind functions to the component scope
 		each(obj, function (value, name) {
 			// methods
-			if (is(value, __function)) {
+			if (is(value, __Function)) {
 				// pass props and state to render
 				if (name !== 'render') {
 					component[name] = value.bind(component);
@@ -2164,7 +2151,7 @@
 		// we want the constructor of the resulting created object
 		// from new hyperscript()... to be the Object interface
 		// and not our h () interface above
-		h[__prototype][__constructor] = __object;
+		h[__prototype][__constructor] = __Object;
 
 		return h;
 	}
@@ -2226,7 +2213,7 @@
 		withAttr: function (props, setters, callback, self) {
 			self = self || this;
 
-			if (!is(callback, __function)) {
+			if (!is(callback, __Function)) {
 				callback = function () {
 					self.forceUpdate.call(self);
 				}
@@ -2247,7 +2234,7 @@
 		self.props = self.props || {};
 
 		// if the object is a function that returns an object
-		if (is(data, __function)) {
+		if (is(data, __Function)) {
 			data = data();
 		}
 
@@ -2270,7 +2257,7 @@
 		self.state = self.state || {};
 
 		// if the object is a function that returns an object
-		if (is(data, __function)) {
+		if (is(data, __Function)) {
 			data = data();
 		}
 
@@ -2307,7 +2294,7 @@
 			value;
 
 			// prop is a string, get value from element
-			if (is(prop, __string)) {
+			if (is(prop, __String)) {
 				// get key from element
 				// either the prop is a property of the element object
 				// or an attribute
@@ -2343,7 +2330,7 @@
 			el  = this;
 
 			// array of bindings
-			if (is(props, __array)) {
+			if (is(props, __Array)) {
 				each(props, function(value, index) {
 					update(el, value, setters[index]);
 				});
@@ -2402,7 +2389,7 @@
 			}
 			else {
 				// we have a mapper, run the store through it
-				if (is(mapper, __function)) {
+				if (is(mapper, __Function)) {
 					ret = mapper(store)
 				}
 				// return the store as is
@@ -2505,7 +2492,7 @@
 		// and streams
 		stream.id = __streamSignature;
 
-		if (is(value, __function)) {
+		if (is(value, __Function)) {
 			value(stream.resolve, stream.reject);
 		}
 		else {
@@ -2523,7 +2510,7 @@
 	createStream.combine = function (reducer, deps) {
 		// if deps are not in a single array
 		// create deps from arguments
-		if (!is(deps, __array)) {
+		if (!is(deps, __Array)) {
 			deps = toArray(arguments, 1);
 		}
 
@@ -2616,7 +2603,7 @@
 		argsArray = [];
 
 		// convert args to array if it's not one
-		if (!is(args, __array)) {
+		if (!is(args, __Array)) {
 			argsArray = [args];
 		}
 		// args is already an array, use as is
@@ -2625,8 +2612,8 @@
 		}
 
 		// function is a create, create
-		if (is(fn, __string)) {
-			fn = new __function(argsNames, fn);
+		if (is(fn, __String)) {
+			fn = new __Function(argsNames, fn);
 		}
 
 		// return a function that executes
@@ -2649,184 +2636,232 @@
 	}
 
 	/**
-	 * create a hyperscript style object
-	 * with shouldComponentUpdate always = false
-	 * @return {Object} a hyperscript object 
+	 * creates a style element
+	 * and inserts to document.head if document exists
+	 * @param {Object} stylesheet
+	 * @returns {String} compiled style string
 	 */
 	function createStyle () {
+		// references
 		var
 		vendors     = ['webkit', 'moz', 'ms'],
-		prefixCache = ['transform', 'appearance', 'animation'];
+		properties  = ['animation', 'transform', 'appearance', 'transition', 'box-shadow', 'linear-gradient'],
+		namespace   = '';
 
-		function prefixProperty (property) {
+		function prefix (property, value) {
 			var
 			result;
 
-			each(prefixCache, function (prefix) {
-				if (property.indexOf(prefix+':') > -1) {
+			// check if the property is one we should prefix
+			each(properties, function (prefix) {
+				// if it is
+				if (property.indexOf(prefix) > -1) {
 					result = '';
 
-					each(vendors, function (vendor, index, arr) {
-						result += '-' + vendor + '-' + property;
+					// add all the vendors
+					vendors.forEach(function (vendor, index, arr) {
+						result += '-' + vendor + '-' + property + ': ' + value + ';\n\t';
 					});
 
 					result += property;
 				}
 			});
 
-			return result || property;
+			// result will not be empty if we
+			// added prefixes
+			if (result) {
+				return result + ': ' + value;
+			}
+			else {
+				return property + ': ' + value;
+			}
 		}
 
-		// given a selector block this returns a style block
-		// property: value as in  margin: 20px
-		function createSelectorBlock (selector, declaration, result, end) {
-			result = result || {};
-
-			each(declaration, function (value, property) {
-				// extract value from function values
-				value = is(value, __function) ? value () : value;
-
-				// nested style
-				if (is(value, __object)) {
-					
-					// this insures that
-					// h1:hover {} is joint and
-					// h1 div {} is separated by a space
-					var
-					seperator = ' ';
-
-					// & will remove the space between h div {}
-					// to be h1div{}, which works well if the div
-					// is a :hover
-					if (property.substr(0,1) === '&') {
-						property  = property.substr(1);
-						seperator = '';
-					}
-
-					// run through createSelectorBlock again
-					// we keep doing this so long as the selector is nested within
-					// another selector, this converts something like
-					// h1 { h2: {} } --> h1 {} h1 h2 {}
-					if (selector.substr(0,1) === '@') {
-						value = createSelectorBlock(property, value, {});
-						value[property] = '{' + value[property] + '}';
-
-						createSelectorBlock(selector, value, result, ' ');
-					}
-					else {
-						createSelectorBlock(selector+seperator+property, value, result);
-					}
-				}
-				// perfect
-				else {
-					var 
-					propVal = prefixProperty(property + ': ' + value + (end || ';'));
-
-					if (result[selector]) {
-						result[selector] += propVal;
-					} 
-					else {
-						result[selector] = propVal;
-					}
-				}
-			});
-
-			return result;
-		}
-
-		// returns an array of textNodes like
-		// ['selector{property:value;}'...]
-		function createSelectorArray (stylsheet) {
+		function iterate (obj, stack, tree) {
 			var 
-			result = [];
+			result = '';
 
-		    each(stylsheet, function (declaration, index, arr) {
-		    		var 
-		    		selector = createSelectorBlock(index, declaration);
+	        // for (var property in obj) {
+	        each(obj, function (value, property, obj) {
+	            if (obj.hasOwnProperty(property)) {
+	                if (is(value, __Object)) {
+	                	// keep going down the stack
+                		iterate(value, stack + ' ' + property, tree);
+	                } else {
+	                	// extract function
+	                	if (is(value, __Function)) {
+	                		value = value ()
+	                	}
 
-		    		each(selector, function (__, name) {
-		    			var 
-		    			child = {};
+	                	// handle arrays
+	                	if (is(value, __Array)) {
+	                		value  = '{' + value.join(':') + ';}';
+	                	}
 
-		    			child[name] = selector[name];
-		    			result.push(name + ' {' + selector[name] + '}');
-		    		});
-		    });
+	                	var
+	                	joint = ' { ';
 
-		    return result;
-		}
+	                	// check if the property is camelCase as in
+	                	// marginTop !== margintop, but
+	                	// margin-top === margin-top
+	                	// if so convert to dash-case
+	                	if (property !== property.toLowerCase()) {
+	                		property = dash(property);
+	                	}
 
-		// adds the prefix namespace to children
-		function addNamespaces (children, namespaces) {
-			// no prefixes default
-			if (!namespaces) {
-				namespaces = [''];
-			}
-			else if (is(namespaces, __string)) {
-				namespaces = [namespaces];
-			}
+	                	// add unites to numbers
+	                	if (is(value, __Number)) {
+	                		value += 'px';
+	                	}
 
-			// add prefixes to all declarations
-			each(children, function (value, index, arr) {
-				var 
-				child = [];
+	                	// namespace animations
+	                	if (property === 'animation' || property === 'animation-name') {
+	                		value = escape(namespace) + value;
+	                	}
 
-				if (value.substr(0,1) === '@') {
-					each(vendors, function (prefix) {
-						arr[index] += value.substr(0,1) + '-'+prefix+'-' + value.substr(1);
+	                	var 
+	                	trace  = stack + joint + prefix(property, value);
+
+	                	// fix keyframes
+	                	// 0%: {} <-- removes :
+	                	if (stack.indexOf('@keyframes') > -1) {
+	                		trace = trace.replace(/%:/g, '%');
+	                	}
+	                	// default
+	                	if (trace.substr(-1) !== '}') {
+	                		trace += ';';
+	                	}
+
+	                	var
+	                	split  = trace.split(joint);
+
+	                	var
+	                	// remove & and space in the beginning of a selector
+	                	parent = split[0].replace(/ &|^ /g, ''),
+	                	child  = split[1],
+	                	block  = tree[parent];
+	                	child  = '\t' + child;
+
+	                	block = block ? block + child : child;
+	                	tree[parent] =  block + '\n';
+	                }
+	            }
+	        });
+
+	        return result;
+	    }
+
+	    // converts camelCase to dash-case
+	    function dash (value) {
+	    	return value.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+	    }
+
+	    // escapes #ids and .classes for css use
+	    function escape (value) {
+	    	var
+	    	firstLetter = value.substr(0, 1);
+
+	    	if (firstLetter === '#' || firstLetter === '.') {
+	    		value = '\\' +value;
+	    	}
+
+	    	return value;
+	    }
+		
+		// creates the style tree
+		function create (children) {
+			// references
+		    var
+		    tree  = {},
+		    style = '',
+		    // create this here so that
+		    // we don't have to create it in a for loop block
+		    vendorsPlusEmpty = vendors.concat(['']);
+
+		    // the tree object will become populated with our style tree
+			iterate(children, '', tree);
+
+			// builds a string representation of the tree
+			each(tree, function (body, selector) {
+				// var
+				// body = tree[selector];
+				// .selector { ... }
+				body = selector + ' {\n' + body + '}\n';
+
+				// since keyframes are not values
+				// we could not prefix them in the prefix() function
+				// lets do it now
+				var
+				keyframesKey     = '@keyframes',
+				keyframesLength  = keyframesKey[__length],
+				// check if the block has @keyframes in it
+				// if it does keyFramesPos will be larger that -1
+				keyFramesPos     = body.indexOf(keyframesKey),
+				keyFramesBodyPos = keyFramesPos + keyframesLength;
+
+				// is a keyframe block
+				if (keyFramesPos > -1) {
+					var 
+					arr = [];
+					vendors.push();
+
+					each(vendorsPlusEmpty, function (prefix) {
+						prefix = prefix ? '-'+prefix+'-' : prefix;
+
+						var
+						prefixed  = body.substr(0,1) + prefix + body.substr(1, keyFramesBodyPos);
+						prefixed += escape(namespace) + body.substr(keyFramesBodyPos+1);
+						arr.push(escape(prefixed));
 					});
+
+					body = arr.join('');
 				}
 				else {
-					each(namespaces, function (namespace) {
-						child.push(namespace + ' ' + value);
-					});
+					// handle , as in
+					// h1, h2 will turn into something like
+					// #namespace h1, #namespace h2 {}
+					if (selector.indexOf(',') > -1) {
+						var
+						selectorNamespaced = selector.split(',');
+						selectorNamespaced.forEach(function (value, index) {
+							var 
+							space = index > 0 ? '' : ' ';
+							selectorNamespaced[index] = namespace + space + value;
+						});
+						selectorNamespaced = selectorNamespaced.join(', ');
 
-					arr[index] = child.join();
+						body = body.replace(new __RegExp(selector, 'g'), selectorNamespaced);
+					}
+					// default
+					else {
+						body = namespace + ' ' + body;
+					}
 				}
+
+				style +=  body;
 			});
-
-			return children;
-		}
-
-		function createStyleArray (stylsheet, children) {
-			// this allows us to accept 
-			// strings, arrays or objects
-			// as stylesheets
-			if (is(stylsheet, __object)) {
-				children = createSelectorArray(stylsheet);
-			}
-			else if (is(stylsheet, __array)) {
-				children = stylsheet;
-			}
-			else if (is(stylsheet, __string)) {
-				// remove whitespace
-				stylsheet = stylsheet.replace(/ /g, '');
-
-				// add a delimiter to where we 
-				// would like the split to take place
-				// since we don't want to mutate 
-				// the string by using a delimiter
-				// already within the string.
-				stylsheet = stylsheet.replace(/}/g,'}'+__signatureBase);
-
-				// create an array of the stylesheet string
-				// split by the delimiter we added, 
-				// removing the delimiter in the process.
-				// also remove the last item in the array, it is an empty value
-				children  = toArray(stylsheet.split(__signatureBase), 0, -1);
-			}
-
-			return children;
-		}
-
-		return function (stylesheet, namespaces) {
-			var
-			children = addNamespaces(createStyleArray(stylesheet), namespaces),
-			element = '<style>' + children.join('\n') + '</style>';
-
-			__document.head.insertAdjacentHTML('beforeend', element);
 			
-			return element;
+			var 
+			name = namespace ? ' data-id=' + namespace : '';
+
+			return '<style'+name+'>\n' + style + '</style>';
+		}
+
+		return function (stylesheet, Namespace) {
+			namespace = Namespace;
+
+			var
+			style = create(stylesheet);
+
+			// for enviroments that do not have a document
+			// this will not try an insert it to the dom
+			// rather we will just return a string of the style element
+			// below
+			if (__document) {
+				__document.head.insertAdjacentHTML('beforeend', style);
+			}
+
+			return style;
 		}
 	}
 

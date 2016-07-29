@@ -23,16 +23,9 @@ var styles = {
 			content: ' '
 		},
 
-		'@keyframes MyAnimation': {
-			'0%': {
-				'left': '0'
-			},
-			'50%': {
-				'left': '200px'
-			},
-			'100%': {
-				'left': '20px'
-			}
+		'@keyframes blink': {
+			'0%': ['background-color: blue'],
+			'50%': ['background-color: black']
 		}
 	}
 }
