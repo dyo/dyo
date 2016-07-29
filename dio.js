@@ -1917,12 +1917,6 @@
 			return render;
 		}
 
-		// removes the component from the container
-		// or also removes the container as-well
-		render.remove = function (all) {
-			all ? element.parentNode.removeChild(element) : element.innerHTML = '';
-		};
-
 		var
 		component,
 		newNode,

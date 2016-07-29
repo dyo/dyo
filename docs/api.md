@@ -129,6 +129,15 @@ instance(__, __, '@@dio/COMPONENT')
 // this is how .createHTML can accept render instances
 // it extracts the resulting hyperscript object using the above method
 // and converts that to a string representing the component
+
+// render instances also have a .remove method attached to them
+// this will remove the dom element it mounted from the dom
+// if you pass it true {Boolean} it will also remove the container
+// element it was mounted to
+instance.remove();
+
+// removes the container aswell
+instance.remove(true);
 ```
 
 Components that do not return an object with a render function
