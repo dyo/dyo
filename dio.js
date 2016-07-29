@@ -2834,7 +2834,12 @@
 					}
 					// default
 					else {
-						body = namespace + ' ' + body;
+						if (body.substr(0,1) === ':') {
+							body = namespace + body;
+						}
+						else {
+							body = namespace + ' ' + body;
+						}
 					}
 				}
 
