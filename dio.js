@@ -449,7 +449,7 @@
 			}
 			// removing from the dom
 			else if (newNode === __undefined) {
-				removeChild(parent, nextNode = parent[__childNodes][index], oldNode);
+				removeChild(parent, parent[__childNodes][index], oldNode);
 			}
 			// update keyed elements
 			else if (
