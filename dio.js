@@ -519,8 +519,9 @@
 					key = update(
 							nextNode, 
 							newChild, 
-							oldChild, i, 
-							__undefined, 
+							oldChild, 
+							i, 
+							__undefined,
 							newChildren, 
 							oldChildren
 						);
@@ -549,7 +550,7 @@
 
 			// create next node for addition and replace opreations
 			if (op > 0 || !op) { 
-				nextNode = createElement(newNode) ;
+				nextNode = createElement(newNode);
 			}
 
 			// element added
