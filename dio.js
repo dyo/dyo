@@ -494,21 +494,20 @@
 			// the lookup loop
 			else if (newNode.type) {
 				var 
-				parentChildren = parent[__childNodes],
-				nextNode       = parentChildren[index],
-				newLength      = newNode[__children][__length],	
-				oldLength      = oldNode[__children][__length];
+				nextNode    = parent[__childNodes][index],
+				newChildren = newNode[__children],
+				oldChildren = oldNode[__children],
+				newLength   = newChildren[__length],	
+				oldLength   = oldChildren[__length];
 
 				// update props
 				handlePropChanges(nextNode, newNode, oldNode);
 
 				// loop through children
 				for (var i = 0; i < newLength || i < oldLength; i++) {
-					var 
-					newChildren = newNode[__children],
-					oldChildren = oldNode[__children],
-					newChild    = newChildren[i],
-					oldChild    = oldChildren[i];
+					var
+					newChild = newChildren[i],
+					oldChild = oldChildren[i];
 
 					// should component update? if so skip it
 					if (shouldComponentUpdate(newChild)) {
@@ -2000,12 +1999,13 @@
 			}
 			// stateless
 			else {
-				function __arg () { 
+				var 
+				statelessComponent = function () { 
 					return arg;
-				}
-				__arg.stateless = __true;
+				};
+				statelessComponent.stateless = __true;
 
-				return __arg;
+				return statelessComponent;
 			}
 		}
 		else {

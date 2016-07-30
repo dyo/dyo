@@ -11,7 +11,7 @@
 		<div id="dbmon"></div>
 			
 		<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
-		<script src="/dio.min.js"></script>
+		<script src="/dio.js"></script>
 			
 		<!-- ENV.js -->
 		<script>
@@ -138,7 +138,7 @@
 			}
 
 			var Popover = dio.createComponent({
-			  render() {
+			  render: function () {
 			    return (
 			    	h('div', {className: 'popover left'},
 			    		h('div', {className: 'popover-content'}, this.props.query),
@@ -164,7 +164,7 @@
 			});
 
 			var _Query = dio.createComponent({
-			  render() {
+			  render: function () {
 			    var query = this.props.query;
 			    var elapsed = query.elapsed;
 			    return (
@@ -187,7 +187,7 @@
 			var _emptyQuery = _Query({query: EMPTY_QUERY});
 
 			var _Database = dio.createComponent({
-			  render() {
+			  render: function () {
 			    var db = this.props.db;
 			    var topFiveQueries = db.getTopFiveQueries();
 			    var count = db.queries.length;
@@ -233,7 +233,7 @@
 			})
 
 			var App = dio.createRender({
-			  render() {
+			  render: function () {
 			    var dbs = this.props.dbs;
 
 			    var children = new Array(dbs.length);
