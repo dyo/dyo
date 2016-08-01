@@ -11,11 +11,8 @@
 	componentDidUpdate:        (props, state, this) => {}
 	componentWillMount:        (props, state, this) => {}
 	componentDidMount:         (props, state, this) => {}
-	
-	// if this method returns a value {Number} in milliseconds
-	// the node will be remove only after the specified
-	// time has elapsed
-	componentWillUnmount:      (props, state, this, node) => {}
+	componentWillUnmount:      (props, state, this) => {}
+	componentDidUnmount:       (props, state, this) => {}
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})

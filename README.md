@@ -51,8 +51,6 @@ function HelloWorld () {
 	return {
 		render: function (props) {
 			return h('h1', props.text);
-			// or
-			// return {type: 'h1', props: {}, children: [props.text]};
 		}
 	}
 }
@@ -125,11 +123,8 @@ dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
 	componentDidUpdate:        (props, state, this) => {}
 	componentWillMount:        (props, state, this) => {}
 	componentDidMount:         (props, state, this) => {}
-	
-	// if this method returns a value {Number} in milliseconds
-	// the node will be remove only after the specified
-	// time has elapsed
-	componentWillUnmount:      (props, state, this, node) => {}
+	componentWillUnmount:      (props, state, this) => {}
+	componentDidUnmount:       (props, state, this) => {}
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})

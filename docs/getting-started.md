@@ -14,8 +14,6 @@ function HelloWorld () {
 	return {
 		render: function (props) {
 			return h('h1', props.text);
-			// or
-			// return {type: 'h1', props: {}, children: [props.text]};
 		}
 	}
 }

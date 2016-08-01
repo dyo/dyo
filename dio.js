@@ -48,7 +48,7 @@
 		html:  'http://www.w3.org/1999/xhtml'
 	},
 	__window                    = window,
-	__document                  = __window.document,
+	__document                  = window.document,
 
 	// types
 	__null                      = null,
@@ -60,8 +60,8 @@
 	__constructor               = 'constructor',
 	__prototype                 = 'prototype',
 	__length                    = 'length',
-	__childNodes                = 'childNodes',
 	__children                  = 'children',
+	__childNodes                = 'childNodes',
 	__classList                 = 'classList',
 	__className                 = 'className',
 
@@ -72,6 +72,7 @@
 	__componentDidMount         = 'componentDidMount',
 	__componentWillMount        = 'componentWillMount',
 	__componentWillUnmount      = 'componentWillUnmount',
+	__componentDidUnmount       = 'componentDidUnmount',
 	__componentWillUpdate       = 'componentWillUpdate',
 	__componentDidUpdate        = 'componentDidUpdate',
 	__shouldComponentUpdate     = 'shouldComponentUpdate',
@@ -82,11 +83,10 @@
 	__Object                    = Object,
 	__Function                  = Function,
 	__String                    = String,
-	__Boolean                   = Boolean,
 	__XMLHttpRequest            = XMLHttpRequest,
 	__RegExp                    = RegExp,
 	__encodeURIComponent        = encodeURIComponent,
-	__setTimeout                = __window.setTimeout;
+	__setTimeout                = setTimeout;
 
 
 	/**
@@ -114,18 +114,15 @@
 		// Handle arrays, and array-like Objects, 
 		// array-like objects (have prop .length 
 		// that is a number) and numbers for keys [0]
-		if (
-			is(arr, __Array) ||
-			arr[__length] && is(arr[__length], __Number) && arr[0]
-		) {
+		if (is(arr, __Array)) {
 			// length {Number}
 			var 
-			length = arr[__length]
+			length = arr[__length];
 			index  = 0;
 
 			for (; index < length; ++index) {
 				// break if fn() returns false
-				if (fn.call(arr[index], arr[index], index, arr) === __false) {
+				if (fn(arr[index], index, arr) === __false) {
 					return;
 				}
 			}
@@ -134,7 +131,7 @@
 		else {
 			for (index in arr) {
 				// break if fn() returns false
-				if (fn.call(arr[index], arr[index], index, arr) === __false) {
+				if (fn(arr[index], index, arr) === __false) {
 					return;
 				}
 			}
@@ -165,20 +162,6 @@
 				return __false;
 			}
 		}
-	}
-
-
-	/**
-	 * push task to the event stack
-	 * @param  {Function} fn      
-	 * @param  {Number?}  duration - delay
-	 */
-	function debounce (fn, duration) {
-		// we may want a custom duration for setTimeout
-		duration = duration || 0;
-
-		// push to the end of the event stack
-		__setTimeout(fn, duration);
 	}
 
 
@@ -310,12 +293,12 @@
 					childLength = child[__length];
 
 					for (var j = 0; j < childLength; j++) {
-						obj[__children][(i - key) + j] = setChild(child[j]);
+						obj[__children][(i - key) + j] = setChild(child[j], obj);
 					}
 				}
 				// deep enough, add this child to children
 				else {
-					obj[__children][i - key] = setChild(child);
+					obj[__children][i - key] = setChild(child, obj);
 				}
 			}
 
@@ -327,24 +310,10 @@
 		 * @param  {Any} a
 		 * @return {String|Array|Object}
 		 */
-		function setChild (child) {
-			// convert non string children
-			// to strings
-			if (
-				// checks if it is null/undefined
-				!is(child) ||
-				is(child, __Number) || 
-				is(child, __Boolean)
-			) {
-				// for non objects adding a strings is enough 
-				child = child + '';
-
-				// convert the null, and undefined strings to empty strings
-				// we don't convert false since that could 
-				// be a valid textnode value returned to the client
-				if (child === 'null' || child === 'undefined') {
-					child = '';
-				}
+		function setChild (child, parent) {
+			// textNodes
+			if (!is(child, __Object)) {
+				child = {type: 'text', props: null, children: child};
 			}
 			
 			return child;
@@ -438,258 +407,240 @@
 	 * @param {Number}  index? 
 	 * @param {Object}  component?
 	 */
+
+	// diff and patch entry point
 	function vdomToDOM (parent, newNode, oldNode, component) {
-		// diff and update dom loop
-		function update (parent, newNode, oldNode, index, component, newChildren, oldChildren) {
-			index = index || 0;
+		// update
+		if (oldNode) {
+			patch(
+				parent, 
+				newNode, oldNode, 
+				0, component, 
+				newNode, oldNode,
+				newNode[__children][__length], oldNode[__children][__length],
+				newNode[__children], oldNode[__children]
+			);
+		}
+		// mount
+		else {
+			patch(
+				parent, 
+				newNode, oldNode, 
+				0, component
+			);
+		}
+	}
 
-			// adding to the dom
-			if (oldNode === __undefined && newNode) {
-				appendChild(parent, createElement(newNode, component), newNode);
+	// patch
+	function patch (
+		parent,
+		newNode, oldNode,
+		index, component,
+		newParentNode, oldParentNode,
+		newChildrenLength, oldChildrenLength,
+		newChildren, oldChildren
+	) {
+		index = index || 0;
+
+		// adding to the dom
+		if (oldNode === __undefined) {
+			var
+			nextNode = createElement(newNode, component);
+			appendChild(parent, nextNode, newNode);
+			
+			if (oldParentNode) {
+				oldParentNode[__childNodes].splice(index, 0, nextNode);
 			}
-			// removing from the dom
-			else if (newNode === __undefined) {
-				removeChild(parent, parent[__childNodes][index], oldNode);
+		}
+		// removing from the dom
+		else if (newNode === __undefined) {
+			removeChild(parent, oldParentNode[__childNodes][index], oldNode);
+		}
+		else if (keysChanged(newNode, oldNode)) {
+			var
+			currentNode = parent[__childNodes][index];
+
+			// remove
+			if (newChildrenLength < oldChildrenLength) {
+				removeChild(parent, currentNode, newNode);
+
+				oldChildren.splice(index, 1);
+				oldParentNode[__childNodes].splice(index, 1);
+				return -1;
 			}
-			// update keyed elements
-			else if (
-				(newNode.props && oldNode.props) && 
-				(newNode.props.key || oldNode.props.key) &&
-				(newNode.props.key !== oldNode.props.key)
-			) {
+			else {
 				var 
-				newLength    = newChildren[__length],
-				oldLength    = oldChildren[__length],
-				op,
-				nextNode;
+				nextNode = createElement(newNode, __undefined, __undefined, oldNode);
 
-				// element added
-				if (newLength > oldLength) { 
-					op = +1;
+				// add
+				if (newChildrenLength > oldChildrenLength) {
+					prependChild(parent, currentNode, nextNode, newNode);
+					oldChildren.splice(index, 0, newNode);
+					oldParentNode[__childNodes].splice(index, 0, nextNode);
 				}
-				// element remove
-				else if (newLength < oldLength ) { 
-					op = -1;
+				// replace
+				else {
+					replaceChild(parent, prevNode, nextNode, newNode);
+					oldParentNode[__childNodes][index] = nextNode;
 				}
-
-				return updateKeyedElements(parent, oldChildren, op, index, newNode);
 			}
-			// replacing a node
-			else if (nodeChanged(newNode, oldNode)) {
-				var 
-				prevNode = parent[__childNodes][index],
-				isTextNode;
+		}
+		// replacing a node
+		else if (nodeChanged(newNode, oldNode)) {
+			var
+			prevNode = oldNode.dom;
 
-				// textContent optimization
-				if (is(newNode, __String) && prevNode.nodeType === 3) {
-					nextNode   = newNode;
-					isTextNode = __true;
+			// text node
+			if (oldNode.type === 'text' && newNode.type === 'text') {
+				prevNode.nodeValue = newNode[__children];
+			}
+			else {
+				var
+				nextNode = createElement(newNode, __undefined, __undefined, oldNode);
+				replaceChild(parent, prevNode, nextNode, newNode);
+
+				oldParentNode[__childNodes][index] = nextNode;
+				oldChildren[index] = newNode;
+			}
+		}
+		// the lookup loop
+		else if (is(newNode[__children], __Array) && is(oldNode[__children], __Array)) {
+			var
+			nextNode          = oldNode.dom || oldParentNode[__childNodes][index],
+			newChildren       = newNode[__children],
+			oldChildren       = oldNode[__children],
+			newChildrenLength = newChildren[__length],
+			oldChildrenLength = oldChildren[__length];
+
+			// update props
+			handlePropChanges(nextNode, newNode, oldNode);
+
+			// loop through children
+			for (var i = 0; i < newChildrenLength || i < oldChildrenLength; i++) {
+				if (shouldComponentUpdate(newChild)) {
+					return;
 				}
 				else {
-					nextNode = createElement(newNode);
-				}
-
-				replaceChild(parent, nextNode, prevNode, newNode, isTextNode);
-			}
-			// the lookup loop
-			else if (newNode.type) {
-				var 
-				nextNode    = parent[__childNodes][index],
-				newChildren = newNode[__children],
-				oldChildren = oldNode[__children],
-				newLength   = newChildren[__length],	
-				oldLength   = oldChildren[__length];
-
-				// update props
-				handlePropChanges(nextNode, newNode, oldNode);
-
-				// loop through children
-				for (var i = 0; i < newLength || i < oldLength; i++) {
 					var
 					newChild = newChildren[i],
 					oldChild = oldChildren[i];
 
-					// should component update? if so skip it
-					if (shouldComponentUpdate(newChild)) {
-						return;
-					}
-
 					var
-					key = update(
-							nextNode, 
-							newChild, 
-							oldChild, 
-							i, 
-							__undefined,
-							newChildren, 
-							oldChildren
-						);
+					op = patch(
+						nextNode,
+						newChild, oldChild,
+						i, __undefined,
+						newNode, oldNode,
+						newChildrenLength, oldChildrenLength,
+						newChildren, oldChildren
+					);
 
-					if (key !== __undefined) {
-						newLength += key,
-						oldLength += key;
+					if (op !== __undefined) {
+						newChildrenLength += op,
+						oldChildrenLength += op;
 					}
-				}	
-			}
-		}
-
-		function shouldComponentUpdate (newNode) {
-			return (
-				newNode &&
-				newNode[__shouldComponentUpdate] &&
-				newNode[__shouldComponentUpdate] === __false
-			);
-		}
-
-		// update/remove/add keyed elements
-		function updateKeyedElements (parent, oldChildren, op, index, newNode) {
-			var 
-			nextNode,
-			currentNode = parent[__childNodes][index];
-
-			// create next node for addition and replace opreations
-			if (op > 0 || !op) { 
-				nextNode = createElement(newNode);
-			}
-
-			// element added
-			if (op > 0) {
-				oldChildren.splice(index, 0, __undefined);
-				prependChild(parent, nextNode, currentNode, newNode);
-			}
-			// element removed
-			else if (op < 0) {
-				oldChildren.splice(index, 1);
-				removeChild(parent, currentNode, newNode);
-				// we have to decreement the children length
-				return -1;
-			}
-			// replace
-			else {
-				replaceChild(parent, nextNode, currentNode, newNode);
-			}
-		}
-
-		// remove element
-		function removeChild (parent, nextNode, oldNode) {
-			if (nextNode) {
-
-				// execute componentWillUnmount lifecycle, 
-				// store it's return into durtion
-				// we can use this to delay unmounting a node from the dom
-				// if a time{Number} in milliseconds is returned.
-				var 
-				duration = lifecycle(
-					oldNode, 
-					__componentWillUnmount, 
-					__undefined, 
-					__undefined, 
-					__undefined,
-					nextNode
-				);
-
-				// either duration is a number or it's default 0
-				if (!is(duration, __Number)) {
-					duration = 0;
-				}
-
-				debounce(function () {
-					// since we debounce this action
-					// we check again to see if nextNode is still actually in the dom
-					// when this is executed
-					if (nextNode) {
-						parent.removeChild(nextNode);
-					}
-				}, duration);
-			}
-		}
-
-		// add element to the end
-		function appendChild (parent, nextNode, newNode) {
-			if (nextNode) {
-				lifecycle(newNode, __componentWillMount);
-				parent.appendChild(nextNode);
-				lifecycle(newNode, __componentDidMount);
-			}
-		}
-
-		// add element at the beginning
-		function prependChild (parent, nextNode, beforeNode, newNode) {
-			if (nextNode) {
-				lifecycle(newNode, __componentWillMount);			
-				parent.insertBefore(nextNode, beforeNode);
-				lifecycle(newNode, __componentDidMount);
-			}
-		}
-
-		// replace element
-		function replaceChild (parent, nextNode, prevNode, newNode, isTextNode) {
-			if (nextNode && prevNode) {	
-				// textNodes do not have attributes
-				// so we can just update the textContent property,
-				// which is faster
-				if (isTextNode) {
-					prevNode.textContent = nextNode;
-				}
-				else {
-					lifecycle(newNode, __componentWillUpdate);
-					parent.replaceChild(nextNode, prevNode);
-					lifecycle(newNode, __componentDidUpdate);
 				}
 			}
 		}
 
-		// diffing two nodes
-		function nodeChanged (node1, node2) {
-			var 
-			// diff object type
-			obj  = node1[__constructor] !== node2[__constructor],
+		normalize(newNode, oldNode);
+	}
 
-			// diff text content
-			text = !is(node1, __Object) && node1 !== node2,
-
-			// diff node type
-			// if this is an element diff it's type
-			// i.e node.type: div !== node.type: h2
-			// will return true, signaling that we should
-			// replace the node, if it's a text node
-			type = node1.type !== node2.type;
-			
-			// if either text/type/object constructor has changed
-			// this will return true signaling that we should replace the node
-			return text || type || obj;
+	// normalize old and new nodes dom references
+	function normalize (newNode, oldNode) {
+		if (oldNode && newNode) {
+			newNode.dom        = oldNode.dom;
+			newNode[__childNodes] = oldNode[__childNodes];
 		}
+	}
+	// check for keyed nodes changes
+	function keysChanged (newNode, oldNode) {
+		return (
+			newNode && oldNode &&
+			newNode.props && oldNode.props &&
+			newNode.props.key !== oldNode.props.key
+		);
+	}
+	// check if the component should update
+	function shouldComponentUpdate (newNode) {
+		return (
+			newNode &&
+			newNode[__shouldComponentUpdate] &&
+			newNode[__shouldComponentUpdate] === __false
+		);
+	}
+	// remove element
+	function removeChild (parent, nextNode, oldNode) {
+		lifecycle(oldNode, __componentWillUnmount);
+		parent.removeChild(nextNode);
+		lifecycle(oldNode, __componentDidUnmount);
+	}
+	// add element to the end
+	function appendChild (parent, nextNode, newNode) {
+		lifecycle(newNode, __componentWillMount);
+		parent.appendChild(nextNode);
+		lifecycle(newNode, __componentDidMount);
+	}
+	// add element at the beginning
+	function prependChild (parent, beforeNode, nextNode, newNode) {
+		lifecycle(newNode, __componentWillMount);			
+		parent.insertBefore(nextNode, beforeNode);
+		lifecycle(newNode, __componentDidMount);
+	}
+	// replace element
+	function replaceChild (parent, prevNode, nextNode, newNode) {
+		lifecycle(newNode, __componentWillUpdate);
+		parent.replaceChild(nextNode, prevNode);
+		lifecycle(newNode, __componentDidUpdate);
+	}
+	// diffing two nodes
+	function nodeChanged (newNode, oldNode) {
+		var
+		// textNode
+		text = newNode.type === 'text' && newNode[__children] !== oldNode[__children],
+		// element type
+		type = newNode.type !== oldNode.type;
 
-		// create element
-		function createElement (node, component, ns) {			
-			// handle text nodes
-			if (
-				node !== __undefined &&
-				(
-					node[__constructor] === __String ||
-					node[__constructor] === __Number ||
-					node[__constructor] === __Boolean
-				)
-			) {
-				return __document.createTextNode(node);
+		return text || type;
+	}
+	// create element
+	function createElement (node, component, namespace, oldNode) {
+		var 
+		element;
+
+		// handle text nodes
+		if (node.type === 'text' && !node.props) {
+			element = node[__children];
+
+			if (!is(element, __String)) {
+				element += '';
 			}
 
+			element = __document.createTextNode(element);
+		}
+		else {
 			var 
-			el,
-			ns;
+			element,
+			children = node[__children];
+
+			node[__childNodes] = [];
 
 			// assign namespace if set
 			if (node.props && node.props.xmlns) {
-				ns = node.props.xmlns;
+				namespace = node.props.xmlns;
 			}
 
 			// namespaced
-			if (ns) {
-				el = __document.createElementNS(ns, node.type);
+			if (namespace) {
+				element = __document.createElementNS(namespace, node.type);
+
+				if (!node.props.xmlns) {
+					node.props.xmlns = namespace;
+				}
 			}
 			// default
 			else {
-				el = __document.createElement(node.type);
+				element = __document.createElement(node.type);
 			}
 
 			// check if refs are defined?
@@ -702,218 +653,217 @@
 					// create the refs object if it doesn't already exist
 					component.refs = component.refs || {};
 					// set string refs
-					component.refs[ref] = el;
+					component.refs[ref] = element;
 				}
 				// function ref, execute and pass the element as a parameter
 				else if (is(ref, __Function)) {
-					ref(el);
+					ref(element);
 				}
 			}
 
 			// diff and update/add/remove props
-			setElementProps(el, node.props);
+			setElementProps(element, node.props);
 			// add events if any
-			addEventListeners(el, node.props);
+			addEventListeners(element, node.props);
 			
 			// only map children arrays
-			if (is(node[__children], __Array)) {
-				each(node[__children], function (child) {
-					el.appendChild(createElement(child, component, ns));
+			if (is(children, __Array)) {
+				each(children, function (child) {
+					if (child.type) {
+						var 
+						nextNode = createElement(child, component, namespace, oldNode);
+						node[__childNodes].push(nextNode);
+						element.appendChild(nextNode);
+					}
 				});
 			}
-		
-			return el;
 		}
 
-		// check if props is event
-		function isEventProp (name, value) {
-			// checks if the first two characters are on
-			return name.substr(0,2) === 'on' && is(value, __Function);
-		}
-		
-		// get event name
-		function extractEventName (name) {
-			// removes the first two characters and converts to lowercase
-			return name.substr(2, name[__length]).toLowerCase();
-		}
-		
-		// add event
-		function addEventListeners (target, props) {
-			for (var name in props) {
-				var 
-				value = props[name];
+		node.dom = element;
 
-				if (isEventProp(name, value)) {
-					// is a callback
-					if (value) {
-						target.addEventListener(extractEventName(name), value, __false);
-					}
+		if (oldNode) {
+			oldNode.dom = node.dom,
+			oldNode[__childNodes] = node[__childNodes];
+		}
+
+		return element;
+	}
+	// check if props is event
+	function isEventProp (name, value) {
+		// checks if the first two characters are on
+		return name.substr(0,2) === 'on' && is(value, __Function);
+	}
+	// get event name
+	function extractEventName (name) {
+		// removes the first two characters and converts to lowercase
+		return name.substr(2, name[__length]).toLowerCase();
+	}
+	// add event
+	function addEventListeners (target, props) {
+		for (var name in props) {
+			var 
+			value = props[name];
+
+			if (isEventProp(name, value)) {
+				// is a callback
+				if (value) {
+					target.addEventListener(extractEventName(name), value, __false);
 				}
 			}
 		}
+	}
+	// create list of changed props
+	function handlePropChanges (target, newNode, oldNode) {
+		// get changes to props/attrs
+		var
+		propChanges = getPropChanges(newNode.props, oldNode.props);
 
-		function handlePropChanges (target, newNode, oldNode) {
-			// get changes to props/attrs
-			var
-			propChanges = getPropChanges(newNode.props, oldNode.props);
+		// if there are any prop changes
+		if (propChanges[__length]) {
+			// before props change
+			lifecycle(newNode, __componentWillUpdate);
 
-			// if there are any prop changes,
-			// update component props
-			if (propChanges[__length]) {
-				// before props change
-				lifecycle(newNode, __componentWillUpdate);
+			each(propChanges, function (obj) {
+				updateElementProps(target, obj.name, obj.value, obj.op, newNode.props.xmlns);
+			});
 
-				each(propChanges, function (obj) {
-					updateProp(target, obj.name, obj.value, obj.op);
-				});
-
-				// after props change
-				lifecycle(newNode, __componentDidUpdate);
-			}
+			// after props change
+			lifecycle(newNode, __componentDidUpdate);
 		}
-		
-		// update props
-		function getPropChanges (newProps, oldProps) {
+	}
+	// update props
+	function getPropChanges (newProps, oldProps) {
+		var 
+		changes = [];
+		oldProps = oldProps || {};
+
+		// merge old and new props
+		var
+		props = {};
+
+		for (var name in newProps) { 
+			props[name] = newProps[name];
+		}
+		for (var name in oldProps) { 
+			props[name] = oldProps[name];
+		}
+
+		// compare if props have been added/delete/updated
+		for (var name in props) {
 			var 
-			changes  = [];
+			oldVal = oldProps[name],
+			newVal = newProps[name],
+			// returns true/false if the prop has changed from it's prev value
+			remove = newVal === __undefined || newVal === __null,
+			// says only diff this if it's not an event i.e onClick...
+			add = oldVal === __undefined || oldVal === __null || newVal !== oldVal;
 
-			oldProps = oldProps || {};
-
-			// merge old and new props
-			var
-			props = {};
-
-			for (var name in newProps) { 
-				props[name] = newProps[name];
-			}
-			for (var name in oldProps) { 
-				props[name] = oldProps[name];
-			}
-
-			// compare if props have been added/delete/updated
-			// if name not in newProp[name] : deleted
-			// if name not in oldProp[name] : added
-			// if name in oldProp !== name in newProp : updated
-			for (var name in props) {
+			// something changed
+			if (add || remove) {
 				var 
-				oldVal = oldProps[name],
-				newVal = newProps[name],
-				// returns true/false if the prop has changed from it's prev value
-				remove = newVal === __undefined || newVal === __null,
-				// says only diff this if it's not an event i.e onClick...
-				add    = oldVal === __undefined || oldVal === __null || 
-						(newVal !== oldVal && !isEventProp(name, props[name])),
-
-				// store value
 				value  = remove === -1 ? oldVal : newVal;
 
-				// something changed
-				if (add || remove) {
-					// we can then add this to the changes arr
-					// that we can check later to see if any props have changed
-					// and update the props that have changed
-					changes.push({
-						name:   name, 
-						value:  value,
-						op: add || remove
-					});
-				}
-			}
-
-			return changes;
-		}
-		
-		// initial creation of props, no checks, just set
-		function setElementProps (target, props) {
-			for (var name in props) {
-				updateProp(target, name, props[name], +1);
+				changes.push({
+					name: name, 
+					value: value,
+					op: add || remove
+				});
 			}
 		}
 
-		// assign/update/remove prop
-		function updateProp (target, name, value, op) {
-			// don't add events/refs/keys as props/attrs
+		return changes;
+	}
+	// initial creation of props, no checks, just set
+	function setElementProps (target, props, newNode) {
+		for (var name in props) {
+			updateElementProps(target, name, props[name], +1, props.xmlns);
+		}
+	}
+	// assign/update/remove prop
+	function updateElementProps (target, name, value, op, namespace) {
+		// don't add events/refs/keys as props/attrs
+		if (
+			name === 'ref' || 
+			name === 'key' ||
+			isEventProp(name, value)
+		) {
+			return;
+		}
+
+		// prop operation type, either remove / set
+		if (op === -1) {
+			op = 'removeAttribute';
+		}
+		else {
+			op = 'setAttribute';
+		}
+
+		// set xlink:href attr
+		if (name === 'xlink:href') {
+			return target[op+'NS'](__namespace['xlink'], 'href', value);
+		}
+
+		// don't set xmlns namespace attributes we set them when we create an element
+		if (value === __namespace['svg'] || value === __namespace['math']) {
+			return;
+		}
+
+
+		// normalize class/className references
+		if (namespace === __namespace['svg']) {
+			// svg className is not the same as html
+			// default to 'class' if  'className'
+			if (name === 'className') {
+				name = 'class'
+			}
+		}
+		else {
+			// in html elements 
+			// accessing className directly is faster 
+			// that setAttribute('class', value)
+			// default to className if 'class'
+			if (name === 'class') {
+				name = 'className'
+			}
+		}
+
+		// objects
+		if (is(value, __Object)) {
+			// classes
+			if (name === __className || name === 'class') {
+				each(value, function (content, index) {
+					var 
+					type = !content ? 'remove' : 'add';
+
+					// add/remove class
+					classList(type, target, index);
+				});
+			}
+			// styles and other object {} type props
+			else {
+				each(value, function (value, index) {
+					if (!is(target[name][index])) {
+						target[name][index] = value;
+					}
+				});
+			}
+		}
+		// array of classes
+		else if (is(value, __Array) && (name === __className || name === 'class')) {
+			target[op](name, value.join(' '));
+		}
+		// everything else
+		else {
 			if (
-				name === 'ref' || 
-				name === 'key' ||
-				isEventProp(name, value)
+				target[name] !== __undefined &&
+				namespace    !== __namespace['svg']
 			) {
-				return;
-			}
-
-			// prop operation type, either remove / set
-			if (op === -1) {
-				op = 'removeAttribute';
+				target[name] = value;
 			}
 			else {
-				op = 'setAttribute';
-			}
-		
-			// set xlink:href attr
-			if (name === 'xlink:href') {
-				return target[op+'NS'](__namespace['xlink'], 'href', value);
-			}
-
-			// don't set xmlns namespace attributes we create an element
-			if (value !== __namespace['svg'] && value !== __namespace['math']) {
-				// the className property of svg elements are of a different kind
-				// lets normalize it
-				if (name === __className) {
-					name = 'class';
-				}
-
-				// value is an object
-				// add each of it's properties to the
-				// target elements attribute
-				if (is(value, __Object)) {
-					// classes
-					if (name === 'class') {
-						each(value, function (content, index) {
-							// get what operation we will run
-							// if the value is empty/false/undefined/null
-							// we remove
-							// if the values length is more than 0
-							// or true or anything not of a falsy value
-							// we add
-							var 
-							type = !content ? 'remove' : 'add';
-
-							// add/remove class
-							// target.classList[type](index)
-							classList(type, target, index);
-						});
-					}
-					// styles and other object {} type props
-					else {
-						each(value, function (value, index) {
-							if (!is(target[name][index])) {
-								target[name][index] = value;
-							}
-						});
-					}
-				}
-				// is an array of classes
-				// this allows us to set classess like 
-				// class: ['class1', 'class2']
-				else if (is(value, __Array) && (name === 'class')) {
-					target[op](name, value.join(' '));
-				}
-				// everything else
-				else {
-					if (
-						target[name]       !== __undefined &&
-						target.namespaceURI == __namespace['html']
-					) {
-						target[name] = value;
-					}
-					else {
-						target[op](name, value);
-					}
-				}
+				target[op](name, value);
 			}
 		}
-
-		update(parent, newNode, oldNode, __undefined, component);
 	}
 
 
@@ -1494,9 +1444,16 @@
 				return '<'+type+Props(props)+'>';
 			}
 
+			var isTextNode = type === 'text' && !props ? __true : __false;
+
 			// otherwise...
 			// <type ...props>...children</type>
-			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
+			if (isTextNode) {
+				return children;
+			} 
+			else {
+				return '<'+type+ Props(props) +'>' + Children(children, level) + '</'+type+'>';
+			}
 		}
 
 		// print props
@@ -1866,7 +1823,6 @@
 		function update (props, children) {
 			// get a fresh copy of the vdom
 			newNode = component(props, children);
-
 			vdomToDOM(element, newNode, oldNode);
 			// this newNode = the next renders oldNode
 			oldNode = newNode;

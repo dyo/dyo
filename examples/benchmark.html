@@ -8,310 +8,403 @@
 		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 	</head>
 	<body>
-		<div id="dbmon"></div>
-			
+		<div id="app"></div>
+		
+		<!-- performance.now polyfill -->
+		<script>
+			(function(){
+
+			  if ("performance" in window == false) {
+			      window.performance = {};
+			  }
+			  
+			  Date.now = (Date.now || function () {  // thanks IE8
+				  return new Date().getTime();
+			  });
+
+			  if ("now" in window.performance == false){
+			    
+			    var nowOffset = Date.now();
+			    
+			    if (performance.timing && performance.timing.navigationStart){
+			      nowOffset = performance.timing.navigationStart
+			    }
+
+			    window.performance.now = function now(){
+			      return Date.now() - nowOffset;
+			    }
+			  }
+
+			})();
+		</script>
+
 		<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
-		<script src="/dio.js"></script>
+		<script src="/dio.min.js"></script>
 			
 		<!-- ENV.js -->
 		<script>
-			function Query(elapsed, query) {
-			  this.elapsed = elapsed;
-			  this.query = query;
-			}
+			var ENV = ENV || (function() {
 
-			var EMPTY_QUERY = new Query(0.0, '');
-
-			Query.rand = function() {
-			  var elapsed = Math.random() * 15;
-			  var query = 'SELECT blah FROM something';
-
-			  if (Math.random() < 0.2) {
-			    query = '<IDLE> in transaction';
-			  }
-
-			  if (Math.random() < 0.1) {
-			    query = 'vacuum';
-			  }
-
-			  return new Query(elapsed, query);
-			};
-
-			var _nextId = 0;
-
-			function Database(name) {
-			  this.name = name;
-			  this.queries = null;
-
-			  this.update();
-			}
-
-			Database.prototype.update = function() {
-			  var queries = [];
-
-			  var r = Math.floor((Math.random() * 10) + 1);
-			  for (var j = 0; j < r; j++) {
-			    queries.push(Query.rand());
-			  }
-
-			  this.queries = queries;
-			};
-
-			Database.prototype.getTopFiveQueries = function() {
-			  var qs = this.queries.slice();
-			  qs.sort(function(a, b) {
-			    return a.elapsed - b.elapsed;
+			  var first = true;
+			  var counter = 0;
+			  var data;
+			  var _base;
+			  (_base = String.prototype).lpad || (_base.lpad = function(padding, toLength) {
+			    return padding.repeat((toLength - this.length) / padding.length).concat(this);
 			  });
-			  qs = qs.slice(0, 5);
-			  while (qs.length < 5) {
-			    qs.push(EMPTY_QUERY);
+
+			  function formatElapsed(value) {
+			    str = parseFloat(value).toFixed(2);
+			    if (value > 60) {
+			      minutes = Math.floor(value / 60);
+			      comps = (value % 60).toFixed(2).split('.');
+			      seconds = comps[0].lpad('0', 2);
+			      ms = comps[1];
+			      str = minutes + ":" + seconds + "." + ms;
+			    }
+			    return str;
 			  }
-			  return qs;
-			};
 
-			function DatabaseList(n) {
-			  this.dbs = [];
-
-			  for (var i = 0; i < n; i++) {
-			    this.dbs.push(new Database('cluster' + i));
-			    this.dbs.push(new Database('cluster' + i + 'slave'));
+			  function getElapsedClassName(elapsed) {
+			    var className = 'Query elapsed';
+			    if (elapsed >= 10.0) {
+			      className += ' warn_long';
+			    }
+			    else if (elapsed >= 1.0) {
+			      className += ' warn';
+			    }
+			    else {
+			      className += ' short';
+			    }
+			    return className;
 			  }
-			}
 
-			DatabaseList.prototype.update = function() {
-			  var dbs = this.dbs;
-			  for (var i = 0; i < dbs.length; i++) {
-			    dbs[i] = new Database(dbs[i].name);
+			  function countClassName(queries) {
+			    var countClassName = "label";
+			    if (queries >= 20) {
+			      countClassName += " label-important";
+			    }
+			    else if (queries >= 10) {
+			      countClassName += " label-warning";
+			    }
+			    else {
+			      countClassName += " label-success";
+			    }
+			    return countClassName;
 			  }
-			};
 
-			DatabaseList.prototype.randomUpdate = function(r) {
-			  var dbs = this.dbs;
-			  for (var i = 0; i < dbs.length; i++) {
-			    if (Math.random() < r) {
-			      dbs[i] = new Database(dbs[i].name);
+			  function updateQuery(object) {
+			    if (!object) {
+			      object = {};
+			    }
+			    var elapsed = Math.random() * 15;
+			    object.elapsed = elapsed;
+			    object.formatElapsed = formatElapsed(elapsed);
+			    object.elapsedClassName = getElapsedClassName(elapsed);
+			    object.query = "SELECT blah FROM something";
+			    object.waiting = Math.random() < 0.5;
+			    if (Math.random() < 0.2) {
+			      object.query = "<IDLE> in transaction";
+			    }
+			    if (Math.random() < 0.1) {
+			      object.query = "vacuum";
+			    }
+			    return object;
+			  }
+
+			  function cleanQuery(value) {
+			    if (value) {
+			      value.formatElapsed = "";
+			      value.elapsedClassName = "";
+			      value.query = "";
+			      value.elapsed = null;
+			      value.waiting = null;
+			    } else {
+			      return {
+			        query: "***",
+			        formatElapsed: "",
+			        elapsedClassName: ""
+			      };
 			    }
 			  }
-			};
+
+			  function generateRow(object, keepIdentity, counter) {
+			    var nbQueries = Math.floor((Math.random() * 10) + 1);
+			    if (!object) {
+			      object = {};
+			    }
+			    object.lastMutationId = counter;
+			    object.nbQueries = nbQueries;
+			    if (!object.lastSample) {
+			      object.lastSample = {};
+			    }
+			    if (!object.lastSample.topFiveQueries) {
+			      object.lastSample.topFiveQueries = [];
+			    }
+			    if (keepIdentity) {
+			      // for Angular optimization
+			      if (!object.lastSample.queries) {
+			        object.lastSample.queries = [];
+			        for (var l = 0; l < 12; l++) {
+			          object.lastSample.queries[l] = cleanQuery();
+			        }
+			      }
+			      for (var j in object.lastSample.queries) {
+			        var value = object.lastSample.queries[j];
+			        if (j <= nbQueries) {
+			          updateQuery(value);
+			        } else {
+			          cleanQuery(value);
+			        }
+			      }
+			    } else {
+			      object.lastSample.queries = [];
+			      for (var j = 0; j < 12; j++) {
+			        if (j < nbQueries) {
+			          var value = updateQuery(cleanQuery());
+			          object.lastSample.queries.push(value);
+			        } else {
+			          object.lastSample.queries.push(cleanQuery());
+			        }
+			      }
+			    }
+			    for (var i = 0; i < 5; i++) {
+			      var source = object.lastSample.queries[i];
+			      object.lastSample.topFiveQueries[i] = source;
+			    }
+			    object.lastSample.nbQueries = nbQueries;
+			    object.lastSample.countClassName = countClassName(nbQueries);
+			    return object;
+			  }
+
+			  function getData(keepIdentity) {
+			    var oldData = data;
+			    if (!keepIdentity) { // reset for each tick when !keepIdentity
+			      data = [];
+			      for (var i = 1; i <= ENV.rows; i++) {
+			        data.push({ dbname: 'cluster' + i, query: "", formatElapsed: "", elapsedClassName: "" });
+			        data.push({ dbname: 'cluster' + i + ' slave', query: "", formatElapsed: "", elapsedClassName: "" });
+			      }
+			    }
+			    if (!data) { // first init when keepIdentity
+			      data = [];
+			      for (var i = 1; i <= ENV.rows; i++) {
+			        data.push({ dbname: 'cluster' + i });
+			        data.push({ dbname: 'cluster' + i + ' slave' });
+			      }
+			      oldData = data;
+			    }
+			    for (var i in data) {
+			      var row = data[i];
+			      if (!keepIdentity && oldData && oldData[i]) {
+			        row.lastSample = oldData[i].lastSample;
+			      }
+			      if (!row.lastSample || Math.random() < ENV.mutations()) {
+			        counter = counter + 1;
+			        if (!keepIdentity) {
+			          row.lastSample = null;
+			        }
+			        generateRow(row, keepIdentity, counter);
+			      } else {
+			        data[i] = oldData[i];
+			      }
+			    }
+			    first = false;
+			    return {
+			      toArray: function() {
+			        return data;
+			      }
+			    };
+			  }
+
+			  var mutationsValue = 0.5;
+
+			  function mutations(value) {
+			    if (value) {
+			      mutationsValue = value;
+			      return mutationsValue;
+			    } else {
+			      return mutationsValue;
+			    }
+			  }
+
+			  var body = document.querySelector('body');
+			  var theFirstChild = body.firstChild;
+
+			  var sliderContainer = document.createElement( 'div' );
+			  sliderContainer.style.cssText = "display: flex";
+			  var slider = document.createElement('input');
+			  var text = document.createElement('label');
+			  text.innerHTML = 'mutations : ' + (mutationsValue * 100).toFixed(0) + '%';
+			  text.id = "ratioval";
+			  slider.setAttribute("type", "range");
+			  slider.style.cssText = 'margin-bottom: 10px; margin-top: 5px';
+			  slider.addEventListener('change', function(e) {
+			    ENV.mutations(e.target.value / 100);
+			    document.querySelector('#ratioval').innerHTML = 'mutations : ' + (ENV.mutations() * 100).toFixed(0) + '%';
+			  });
+			  sliderContainer.appendChild( text );
+			  sliderContainer.appendChild( slider );
+			  body.insertBefore( sliderContainer, theFirstChild );
+
+			  return  {
+			    generateData: getData,
+			    rows: 50,
+			    timeout: 0,
+			    mutations: mutations
+			  };
+			})();
 		</script>
 	
 		<!-- dio.js -->
 		<script>
-			function formatElapsed(v) {
-		  		if (!v) return '';
+			"use strict"
 
-		  		var str = parseFloat(v).toFixed(2);
+			perfMonitor.startFPSMonitor()
+			perfMonitor.startMemMonitor()
+			perfMonitor.initProfiler("render")
 
-		  		if (v > 60) {
-		    		var minutes = Math.floor(v / 60);
-		    		var comps = (v % 60).toFixed(2).split('.');
-		    		var seconds = comps[0];
-		    		var ms = comps[1];
-		    		str = minutes + ':' + seconds + '.' + ms;
-		  		}
+			var data = [];
 
-			  return str;
-			}
+			var DBMon = dio.createComponent({
+				render: function() {
+					// return h("div",
+					// 	h("table", {className: "table table-striped latest-data"},
+					// 		h("tbody",
+					// 			data.map(function(db) {
+					// 				return h("tr", {key: db.dbname},
+					// 					h("td", {className: "dbname"}, db.dbname),
+					// 					h("td", {className: "query-count"},
+					// 						h("span", {className: db.lastSample.countClassName}, db.lastSample.nbQueries)
+					// 					),
+					// 					db.lastSample.topFiveQueries.map(function(query, i) {
+					// 						return h("td", {key: i, className: query.elapsedClassName},
+					// 							query.formatElapsed,
+					// 							h("div", {className: "popover left"},
+					// 								h("div", {className: "popover-content"}, query.query),
+					// 								h("div", {className: "arrow"})
+					// 							)
+					// 						)
+					// 					})
+					// 				)
+					// 			})
+					// 		)
+					// 	)
+					// )
 
-			function counterClasses(count) {
-			  if (count >= 20) {
-			    return 'label label-important';
-			  } else if (count >= 10) {
-			    return 'label label-warning';
-			  }
-			  return 'label label-success';
-			}
+					return {
+						type: 'div',
+						props: {},
+						children: [
+							{
+								type: 'table',
+								props: {className: 'table table-striped latest-data'},
+								children: [
+									{
+										type: 'tbody',
+										props: {},
+										children: data.map(function (db) {
+											var 
+											children = new Array(7);
 
-			function queryClasses(elapsed) {
-		  		if (elapsed >= 10.0) {
-		    		return 'Query elapsed warn_long';
-		  		} else if (elapsed >= 1.0) {
-		   		 	return 'Query elapsed warn';
-		  		}
-			  return 'Query elapsed short';
-			}
+											children[0] = {
+												type: 'td',
+												props: {className: 'dbname'},
+												children: [
+													{
+														type: 'text',
+														props: null,
+														children: db.dbname+''
+													}
+												]
+											}
 
-			var _arrow = {
-				type: 'div',
-				props: {className: 'arrow'},
-				children: []
-			}
+											children[1] = {
+												type: 'td',
+												props: {className: 'query-count'},
+												children: [
+													{
+														type: 'span',
+														props: {className: db.lastSample.countClassName},
+														children: [
+															{
+																type: 'text',
+																props: null,
+																children: db.lastSample.nbQueries+''
+															}
+														]
+													}
+												]
+											}
 
-			var Popover = dio.createComponent({
-			  render: function () {
-			    return (
-			    	h('div', {className: 'popover left'},
-			    		h('div', {className: 'popover-content'}, this.props.query),
-			    		_arrow
-		    		)
+											var length = db.lastSample.topFiveQueries.length;
 
-			        // {
-			        // 	type: 'div',
-			        // 	props: {className: 'popover left'},
-			        // 	children: [
-			        // 		{
-			        // 			type: 'div',
-			        // 			props: {className: 'popover-content'},
-			        // 			children: [
-			        // 				this.props.query
-			        // 			]
-			        // 		},
-			        // 		_arrow
-			        // 	]
-			        // }
-			    );
-			  }
-			});
+											for (var i = 0; i < length; i++) {
+												var query = db.lastSample.topFiveQueries[i];
 
-			var _Query = dio.createComponent({
-			  render: function () {
-			    var query = this.props.query;
-			    var elapsed = query.elapsed;
-			    return (
-			    	h('td', {className: queryClasses(elapsed)},
-			    		formatElapsed(elapsed),
-			    		Popover({query: query.query})
-	    			)
-			        // {
-			        // 	type: 'td',
-			        // 	props: {className: queryClasses(elapsed)},
-			        // 	children: [
-			        // 		formatElapsed(elapsed),
-			        // 		Popover({query: query.query})
-			        // 	]
-			        // }
-			    );
-			  }
-			});
+												children[i+2] = {
+													type: 'td',
+													props: {key: i, className: query.elapsedClassName},
+													children: [
+														{
+															type: 'text',
+															props: null,
+															children: query.formatElapsed
+														},
+														{
+															type: 'div',
+															props: {className: 'popover left'},
+															children: [
+																{
+																	type: 'div',
+																	props: {className: 'popover-content'},
+																	children: [
+																		{
+																			type: 'text',
+																			props: null,
+																			children: query.query
+																		}
+																	]
+																},
+																{
+																	type: 'div',
+																	props: {className: 'arrow'},
+																	children: []
+																}
+															]
+														}
+													]
+												};
+											}
 
-			var _emptyQuery = _Query({query: EMPTY_QUERY});
-
-			var _Database = dio.createComponent({
-			  render: function () {
-			    var db = this.props.db;
-			    var topFiveQueries = db.getTopFiveQueries();
-			    var count = db.queries.length;
-
-			    var children = new Array(7);
-			    // children[0] = {
-			    // 	type: 'td',
-			    // 	props: {className: 'dbname'},
-			    // 	children: [db.name]
-			    // }
-			    children[0] = h('td', {className: 'dbname'}, db.name)
-			    // children[1] = {
-			    // 	type: 'td',
-			    // 	props: {className: 'query-count'},
-			    // 	children: [
-			    // 		{
-			    // 			type: 'span',
-			    // 			props: {className: counterClasses(count)},
-			    // 			children: [count]
-			    // 		}
-			    // 	]
-			    // }
-			    children[1] = h('td', {className: 'query-count'}, 
-			    					h('span', {className: counterClasses(count)}, count)
-	    						)
-
-			    for (var i = 0; i < 5; i++) {
-		      		var query = topFiveQueries[i];
-		      		if (query !== EMPTY_QUERY) {
-        				children[i+2] = _Query({query: topFiveQueries[i]});
-		      		} else {
-        				children[i+2] = _emptyQuery;
-		      		}
-			    }
-
-			    // return {
-			    // 	type: 'tr',
-			    // 	props: {},
-			    // 	children: children
-			    // }
-			    return h('tr', children)
-			  }
+											return {
+												type: 'tr',
+												props: {key: db.dbname},
+												children: children
+											}
+										})
+									}	
+								]
+							}
+						]
+					}
+				}
 			})
 
-			var App = dio.createRender({
-			  render: function () {
-			    var dbs = this.props.dbs;
+			var render = dio.createRender(DBMon, '#app');
 
-			    var children = new Array(dbs.length);
-			    for (var i = 0; i < dbs.length; i++) {
-		      		children[i] = _Database({key: i, db: dbs[i]});
-			    }
+			function update() {
+				data = ENV.generateData().toArray()
+				perfMonitor.startProfile("render")
+				
+				render();
 
-			    return (
-			    	h('div', 
-			    		h('table', {className: 'table table-striped latest-data'},
-			    			h('tbody', children)
-		    			)
-		    		)
+				perfMonitor.endProfile("render")
 
-				    // {
-				    // 	type: 'div',
-				    // 	props: {},
-				    // 	children: [
-				    // 		{
-				    // 			type: 'table',
-				    // 			props: {className: 'table table-striped latest-data'},
-				    // 			children: [
-				    // 				{
-				    // 					type: 'tbody',
-				    // 					props: {},
-				    // 					children: children
-				    // 				}
-				    // 			]
-				    // 		}
-				    // 	]	
-				    // }
-		    	)
-			  }
-			}, document.getElementById('dbmon'));
+				setTimeout(update, ENV.timeout)
+			}
 
-			var MUTATIONS = 0.5;
-			var N = 50;
-
-			document.addEventListener('DOMContentLoaded', function() {
-			  perfMonitor.startFPSMonitor();
-			  perfMonitor.startMemMonitor();
-			  perfMonitor.initProfiler('data update');
-			  perfMonitor.initProfiler('view update');
-
-			  var dbs = new DatabaseList(N);
-
-			  var sliderContainer = document.createElement('div');
-			  sliderContainer.style.display = 'flex';
-			  var slider = document.createElement('input');
-			  slider.type = 'range';
-			  slider.style.marginBottom = '10px';
-			  slider.style.marginTop = '5px';
-			  var text = document.createElement('label');
-			  text.textContent = 'mutations : ' + (MUTATIONS * 100).toFixed(0) + '%';
-
-			  slider.addEventListener('change', function(e) {
-			    MUTATIONS = e.target.value / 100;
-			    text.textContent = 'mutations : ' + (MUTATIONS * 100).toFixed(0) + '%';
-			  });
-			  sliderContainer.appendChild(text);
-			  sliderContainer.appendChild(slider);
-			  document.body.insertBefore(sliderContainer, document.body.firstChild);
-
-			  function update() {
-			    perfMonitor.startProfile('data update');
-			    dbs.randomUpdate(MUTATIONS);
-			    perfMonitor.endProfile('data update');
-
-			    perfMonitor.startProfile('view update');
-			    App({dbs: dbs.dbs});
-
-			    perfMonitor.endProfile('view update');
-
-			    requestAnimationFrame(update);
-			  }
-
-			  requestAnimationFrame(update);
-			});
+			update();
 		</script>
 	
 		<!-- styles -->
