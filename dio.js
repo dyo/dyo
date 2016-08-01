@@ -313,7 +313,7 @@
 		function setChild (child, parent) {
 			// textNodes
 			if (!is(child, __Object)) {
-				child = {type: 'text', props: null, children: child};
+				child += '';
 			}
 			
 			return child;
@@ -400,15 +400,19 @@
 
 
 	/**
+	 * ------------------------------------------------------------------------------------
+	 * <vdom to html>
+	 * ------------------------------------------------------------------------------------
+	 */
+
+
+	/**
 	 * diff virtual component and update dom
 	 * @param {Element} parent   - dom node
 	 * @param {Object}  newNode
 	 * @param {Object}  oldNode?
-	 * @param {Number}  index? 
 	 * @param {Object}  component?
 	 */
-
-	// diff and patch entry point
 	function vdomToDOM (parent, newNode, oldNode, component) {
 		// update
 		if (oldNode) {
@@ -488,11 +492,11 @@
 		// replacing a node
 		else if (nodeChanged(newNode, oldNode)) {
 			var
-			prevNode = oldNode.dom;
+			prevNode = oldParentNode[__childNodes][index];
 
 			// text node
-			if (oldNode.type === 'text' && newNode.type === 'text') {
-				prevNode.nodeValue = newNode[__children];
+			if (!oldNode.type && !newNode.type) {
+				prevNode.nodeValue = newNode;
 			}
 			else {
 				var
@@ -548,11 +552,12 @@
 
 	// normalize old and new nodes dom references
 	function normalize (newNode, oldNode) {
-		if (oldNode && newNode) {
-			newNode.dom        = oldNode.dom;
+		if (oldNode && newNode && oldNode.type && newNode.type) {
+			newNode.dom           = oldNode.dom;
 			newNode[__childNodes] = oldNode[__childNodes];
 		}
 	}
+
 	// check for keyed nodes changes
 	function keysChanged (newNode, oldNode) {
 		return (
@@ -561,6 +566,7 @@
 			newNode.props.key !== oldNode.props.key
 		);
 	}
+
 	// check if the component should update
 	function shouldComponentUpdate (newNode) {
 		return (
@@ -569,54 +575,60 @@
 			newNode[__shouldComponentUpdate] === __false
 		);
 	}
+
 	// remove element
 	function removeChild (parent, nextNode, oldNode) {
 		lifecycle(oldNode, __componentWillUnmount);
 		parent.removeChild(nextNode);
 		lifecycle(oldNode, __componentDidUnmount);
 	}
+
 	// add element to the end
 	function appendChild (parent, nextNode, newNode) {
 		lifecycle(newNode, __componentWillMount);
 		parent.appendChild(nextNode);
 		lifecycle(newNode, __componentDidMount);
 	}
+
 	// add element at the beginning
 	function prependChild (parent, beforeNode, nextNode, newNode) {
 		lifecycle(newNode, __componentWillMount);			
 		parent.insertBefore(nextNode, beforeNode);
 		lifecycle(newNode, __componentDidMount);
 	}
+
 	// replace element
 	function replaceChild (parent, prevNode, nextNode, newNode) {
 		lifecycle(newNode, __componentWillUpdate);
 		parent.replaceChild(nextNode, prevNode);
 		lifecycle(newNode, __componentDidUpdate);
 	}
+
 	// diffing two nodes
 	function nodeChanged (newNode, oldNode) {
 		var
-		// textNode
-		text = newNode.type === 'text' && newNode[__children] !== oldNode[__children],
+		// text node
+		text = !newNode.type && newNode !== oldNode,
 		// element type
 		type = newNode.type !== oldNode.type;
 
 		return text || type;
 	}
+
 	// create element
 	function createElement (node, component, namespace, oldNode) {
 		var 
 		element;
 
-		// handle text nodes
-		if (node.type === 'text' && !node.props) {
-			element = node[__children];
+		// text nodes
+		if (!node.type) {
+			element = node;
 
 			if (!is(element, __String)) {
 				element += '';
 			}
 
-			element = __document.createTextNode(element);
+			return __document.createTextNode(element);
 		}
 		else {
 			var 
@@ -669,35 +681,32 @@
 			// only map children arrays
 			if (is(children, __Array)) {
 				each(children, function (child) {
-					if (child.type) {
-						var 
-						nextNode = createElement(child, component, namespace, oldNode);
-						node[__childNodes].push(nextNode);
-						element.appendChild(nextNode);
-					}
+					var 
+					nextNode = createElement(child, component, namespace, oldNode);
+
+					node[__childNodes].push(nextNode);
+					element.appendChild(nextNode);
 				});
 			}
 		}
 
 		node.dom = element;
 
-		if (oldNode) {
-			oldNode.dom = node.dom,
-			oldNode[__childNodes] = node[__childNodes];
-		}
-
 		return element;
 	}
+
 	// check if props is event
 	function isEventProp (name, value) {
 		// checks if the first two characters are on
 		return name.substr(0,2) === 'on' && is(value, __Function);
 	}
+
 	// get event name
 	function extractEventName (name) {
 		// removes the first two characters and converts to lowercase
 		return name.substr(2, name[__length]).toLowerCase();
 	}
+
 	// add event
 	function addEventListeners (target, props) {
 		for (var name in props) {
@@ -712,6 +721,7 @@
 			}
 		}
 	}
+
 	// create list of changed props
 	function handlePropChanges (target, newNode, oldNode) {
 		// get changes to props/attrs
@@ -720,17 +730,18 @@
 
 		// if there are any prop changes
 		if (propChanges[__length]) {
-			// before props change
+			// before all props change
 			lifecycle(newNode, __componentWillUpdate);
 
 			each(propChanges, function (obj) {
 				updateElementProps(target, obj.name, obj.value, obj.op, newNode.props.xmlns);
 			});
 
-			// after props change
+			// after all props change
 			lifecycle(newNode, __componentDidUpdate);
 		}
 	}
+
 	// update props
 	function getPropChanges (newProps, oldProps) {
 		var 
@@ -773,12 +784,14 @@
 
 		return changes;
 	}
+
 	// initial creation of props, no checks, just set
-	function setElementProps (target, props, newNode) {
+	function setElementProps (target, props) {
 		for (var name in props) {
 			updateElementProps(target, name, props[name], +1, props.xmlns);
 		}
 	}
+
 	// assign/update/remove prop
 	function updateElementProps (target, name, value, op, namespace) {
 		// don't add events/refs/keys as props/attrs
@@ -865,6 +878,13 @@
 			}
 		}
 	}
+
+
+	/**
+	 * ------------------------------------------------------------------------------------
+	 * </vdom to html>
+	 * ------------------------------------------------------------------------------------
+	 */
 
 
 	/**
@@ -1444,16 +1464,9 @@
 				return '<'+type+Props(props)+'>';
 			}
 
-			var isTextNode = type === 'text' && !props ? __true : __false;
-
 			// otherwise...
 			// <type ...props>...children</type>
-			if (isTextNode) {
-				return children;
-			} 
-			else {
-				return '<'+type+ Props(props) +'>' + Children(children, level) + '</'+type+'>';
-			}
+			return '<'+type+ Props(props) +'>' + Children(children, level) + '</'+type+'>';
 		}
 
 		// print props
@@ -2011,7 +2024,7 @@
 
 		// get the render method
 		var
-		render = obj.render.bind(component, component.props, component.state, component);;
+		render = obj.render.bind(component, component.props, component.state, component);
 
 		// insure the render function returns the newly
 		// created hyperscript object
@@ -2596,7 +2609,9 @@
 		// references
 		var
 		vendors     = ['webkit', 'moz', 'ms'],
-		properties  = ['animation', 'transform', 'appearance', 'transition', 'box-shadow', 'linear-gradient'],
+		properties  = [
+			'animation', 'transform', 'appearance', 'transition', 'box-shadow', 'linear-gradient'
+		],
 		namespace   = '';
 
 		function prefix (property, value) {

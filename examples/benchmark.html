@@ -310,13 +310,14 @@
 											children[0] = {
 												type: 'td',
 												props: {className: 'dbname'},
-												children: [
-													{
-														type: 'text',
-														props: null,
-														children: db.dbname+''
-													}
-												]
+												children: [db.dbname]
+												// [
+												// 	{
+												// 		type: 'text',
+												// 		props: null,
+												// 		children: db.dbname
+												// 	}
+												// ]
 											}
 
 											children[1] = {
@@ -326,13 +327,14 @@
 													{
 														type: 'span',
 														props: {className: db.lastSample.countClassName},
-														children: [
-															{
-																type: 'text',
-																props: null,
-																children: db.lastSample.nbQueries+''
-															}
-														]
+														children: [db.lastSample.nbQueries] 
+														// [
+														// 	{
+														// 		type: 'text',
+														// 		props: null,
+														// 		children: db.lastSample.nbQueries
+														// 	}
+														// ]
 													}
 												]
 											}
@@ -346,11 +348,12 @@
 													type: 'td',
 													props: {key: i, className: query.elapsedClassName},
 													children: [
-														{
-															type: 'text',
-															props: null,
-															children: query.formatElapsed
-														},
+														query.formatElapsed,
+														// {
+														// 	type: 'text',
+														// 	props: null,
+														// 	children: query.formatElapsed
+														// },
 														{
 															type: 'div',
 															props: {className: 'popover left'},
@@ -359,11 +362,12 @@
 																	type: 'div',
 																	props: {className: 'popover-content'},
 																	children: [
-																		{
-																			type: 'text',
-																			props: null,
-																			children: query.query
-																		}
+																		query.query
+																		// {
+																		// 	type: 'text',
+																		// 	props: null,
+																		// 	children: query.query
+																		// }
 																	]
 																},
 																{

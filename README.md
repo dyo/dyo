@@ -62,6 +62,10 @@ Will mount a h1 element onto the `.app` div the contents of which will be 'Hello
 
 ---
 
+# Performance
+
+- [See the dbmon implementation](thysultan.com/examples/benchmark.html) 
+
 # Single File Components
 
 Single file components are self contained components including within them their own stylesheets.
