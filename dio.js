@@ -42,7 +42,7 @@
 
 	// objects
 	__namespace 				= {
-		math:  '1998/Math/MathML',
+		math:  'http://www.w3.org/1998/Math/MathML',
 		xlink: 'http://www.w3.org/1999/xlink',
 		svg:   'http://www.w3.org/2000/svg',
 		html:  'http://www.w3.org/1999/xhtml'
