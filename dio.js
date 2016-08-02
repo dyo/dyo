@@ -478,7 +478,7 @@
 
 				// add
 				if (newChildrenLength > oldChildrenLength) {
-					prependChild(parent, currentNode, nextNode, newNode);
+					insertBefore(parent, currentNode, nextNode, newNode);
 					oldChildren.splice(index, 0, newNode);
 					oldParentNode[__childNodes].splice(index, 0, nextNode);
 				}
@@ -551,6 +551,7 @@
 	}
 
 	// normalize old and new nodes dom references
+	// so that newNode retains the dom references of oldNode
 	function normalize (newNode, oldNode) {
 		if (oldNode && newNode && oldNode.type && newNode.type) {
 			newNode.dom           = oldNode.dom;
@@ -590,8 +591,8 @@
 		lifecycle(newNode, __componentDidMount);
 	}
 
-	// add element at the beginning
-	function prependChild (parent, beforeNode, nextNode, newNode) {
+	// add element before another element
+	function insertBefore (parent, beforeNode, nextNode, newNode) {
 		lifecycle(newNode, __componentWillMount);			
 		parent.insertBefore(nextNode, beforeNode);
 		lifecycle(newNode, __componentDidMount);
@@ -604,7 +605,7 @@
 		lifecycle(newNode, __componentDidUpdate);
 	}
 
-	// diffing two nodes
+	// diffing if two nodes have changed
 	function nodeChanged (newNode, oldNode) {
 		var
 		// text node
@@ -1248,6 +1249,11 @@
 
 	/**
 	 * request interface
+	 * @param {String}  url, 
+	 * @param {Any}     payload, 
+	 * @param {String}  enctype, 
+	 * @param {Boolean} withCredentials
+	 * @return {Object} {get, post, put, delete}
 	 */
 	function request () {
 		/**
@@ -1329,11 +1335,12 @@
 				// open request
 				xhr.open(method, url);
 				
-				// on success update the xhrStream
+				// on success resolve the xhrStream
 				xhr.onload = function () {
 					resolve(getResponse(this));
 				};
 
+				// on error send a reject signal to the xhrStream
 				xhr.onerror = function () {
 					reject(this.statusText);
 				};
@@ -1734,7 +1741,9 @@
 								}
 							}),
 
+					// close the pattern
 					pattern      = pattern + '$';
+					// assign a route item
 					routes[name] = [value, rootAddress ? rootAddress + pattern : pattern, vars]
 				});
 			}
@@ -1746,12 +1755,12 @@
 				each(routes, function (val) {
 					var 
 					callback = val[0],
-					pattern  = val[1],
-					vars     = val[2],
+					pattern = val[1],
+					vars = val[2],
 					match;
 
 					// exec pattern on url
-					match    = currentPath.match(new __RegExp(pattern));
+					match = currentPath.match(new __RegExp(pattern));
 
 					// we have a match
 					if (match) {
@@ -1781,7 +1790,7 @@
 			}
 
 			/**
-			 * navigate to path
+			 * navigate to a path
 			 */
 			function navigateToPath (path) {
 				if (rootAddress) {
@@ -1845,8 +1854,10 @@
 		function mount (props, children) {
 			// don't try to set it's internals if it's statless
 			if (!stateless && internal) {
-				// reference render, we can then call this
+				// reference render, so we can then call this
 				// in this.setState
+				// this only applied to parent components passed to
+				// .createRender(here, ...);
 				if (!internal['render()']) {
 					internal['render()'] = update;	
 				}
@@ -1896,7 +1907,7 @@
 		initial = __true;
 
 		component = createComponent(component);
-		element   = (element && element.nodeType) ? element : __document.querySelector(element);
+		element = (element && element.nodeType) ? element : __document.querySelector(element);
 
 		// default element to body
 		if (!element || element === __document) {
@@ -2016,6 +2027,8 @@
 			component.props = component[__getDefaultProps]();
 		}
 
+		// creates a hyperscript class
+		// with the passed values in the array as it's prototypes
 		var 
 		h = getHyperscriptClass([
 			[__componentSignature, component], 
@@ -2614,6 +2627,8 @@
 		],
 		namespace   = '';
 
+		// returns a prefixed version of a property 
+		// if the property is one of the above listed
 		function prefix (property, value) {
 			var
 			result;
@@ -2643,20 +2658,22 @@
 			}
 		}
 
+		// iterate through the stylesheet object
+		// and create a stack representation of
+		// a selectors children
 		function iterate (obj, stack, tree) {
 			var 
 			result = '';
 
-	        // for (var property in obj) {
 	        each(obj, function (value, property, obj) {
 	            if (obj.hasOwnProperty(property)) {
 	                if (is(value, __Object)) {
 	                	// keep going down the stack
                 		iterate(value, stack + ' ' + property, tree);
 	                } else {
-	                	// extract function
+	                	// extract functions
 	                	if (is(value, __Function)) {
-	                		value = value ()
+	                		value = value ();
 	                	}
 
 	                	// handle arrays
@@ -2685,15 +2702,17 @@
 	                		value = escape(namespace) + value;
 	                	}
 
+	                	// create a stack trace of the selector
 	                	var 
 	                	trace  = stack + joint + prefix(property, value);
 
 	                	// fix keyframes
-	                	// 0%: {} <-- removes :
+	                	// 0%: {} <-- removes ':'
 	                	if (stack.indexOf('@keyframes') > -1) {
 	                		trace = trace.replace(/%:/g, '%');
 	                	}
-	                	// default
+
+	                	// add closing ;
 	                	if (trace.substr(-1) !== '}') {
 	                		trace += ';';
 	                	}
@@ -2703,17 +2722,31 @@
 
 	                	var
 	                	// remove & and space in the beginning of a selector
+	                	// so that h1&:hover becomes h1:hover
+	                	// and ' h1' becomes 'h1'
 	                	parent = split[0].replace(/ &|^ /g, ''),
 	                	child  = split[1],
 	                	block  = tree[parent];
+
+	                	// tab selectors children as in
+	                	// selector {
+	                	// 		children: value;
+	                	// }
 	                	child  = '\t' + child;
 
 	                	block = block ? block + child : child;
+
+	                	// add a newline after every block, a block is something like
+	                	// selector {
+	                	// 		...block-1,
+	                	// 		...block-2
+	                	// }
 	                	tree[parent] =  block + '\n';
 	                }
 	            }
 	        });
 
+	        // this returns a object
 	        return result;
 	    }
 
@@ -2723,6 +2756,7 @@
 	    }
 
 	    // escapes #ids and .classes for css use
+	    // so that #id becomes \#id or .class becomes \.class
 	    function escape (value) {
 	    	var
 	    	firstLetter = value.substr(0, 1);
@@ -2740,66 +2774,92 @@
 		    var
 		    tree  = {},
 		    style = '',
+
 		    // create this here so that
 		    // we don't have to create it in a for loop block
-		    vendorsPlusEmpty = vendors.concat(['']);
+		    // this is for when we want to add vendors we
+		    // add an empty vendor that represents the un-prefixed version
+		    vendorsPlusDefault = vendors.concat(['']);
 
 		    // the tree object will become populated with our style tree
 			iterate(children, '', tree);
 
 			// builds a string representation of the tree
 			each(tree, function (body, selector) {
-				// var
-				// body = tree[selector];
-				// .selector { ... }
+				// creates something like
+				// 
+				// .selector { 
+				// 		... 
+				// }
+				// 
 				body = selector + ' {\n' + body + '}\n';
 
-				// since keyframes are not values
+				// since keyframes are not properties of a selector
 				// we could not prefix them in the prefix() function
-				// lets do it now
+				// so let us do it now
 				var
 				keyframesKey     = '@keyframes',
 				keyframesLength  = keyframesKey[__length],
 				// check if the block has @keyframes in it
 				// if it does keyFramesPos will be larger that -1
 				keyFramesPos     = body.indexOf(keyframesKey),
+				// this is the position of what comes after @keyframes
+				// so the pos of where the word @keyframes starts 
+				// plus its length
 				keyFramesBodyPos = keyFramesPos + keyframesLength;
 
 				// is a keyframe block
 				if (keyFramesPos > -1) {
 					var 
 					arr = [];
-					vendors.push();
 
-					each(vendorsPlusEmpty, function (prefix) {
-						prefix = prefix ? '-'+prefix+'-' : prefix;
+					each(vendorsPlusDefault, function (prefix) {
+						// there is an empty vendor in the array so
+						// we want to only add prefixes for the vendors
+						// and not the empty that represents an un-prefixed version
+						prefix = prefix ? '-' + prefix + '-' : prefix;
 
+						// creates something like
+						// @-prefix-keyframes ...
 						var
 						prefixed  = body.substr(0,1) + prefix + body.substr(1, keyFramesBodyPos);
+						// escapes namespaces, as in id's #id and classes .class
 						prefixed += escape(namespace) + body.substr(keyFramesBodyPos+1);
-						arr.push(escape(prefixed));
+						arr.push(prefixed);
 					});
 
+					// extract string from our array of prefixed values
 					body = arr.join('');
 				}
 				else {
-					// handle , as in
+					// handle ','' as in
 					// h1, h2 will turn into something like
 					// #namespace h1, #namespace h2 {}
 					if (selector.indexOf(',') > -1) {
+						// first we split it
 						var
 						selectorNamespaced = selector.split(',');
-						selectorNamespaced.forEach(function (value, index) {
+
+						// then we add the namespaces
+						each(selectorNamespaced, function (value, index) {
 							var 
 							space = index > 0 ? '' : ' ';
 							selectorNamespaced[index] = namespace + space + value;
 						});
+
+						// put it back together
 						selectorNamespaced = selectorNamespaced.join(', ');
 
+						// then replace the selector in selector block
+						// with the namespaced version
 						body = body.replace(new __RegExp(selector, 'g'), selectorNamespaced);
 					}
 					// default
 					else {
+						// ensure that '#namespace' + ':hover' is 
+						// joined as 'namespace:hover'
+						// and that '#namespace' + 'h1' is
+						// joined as '#namespace h1'
 						if (body.substr(0,1) === ':') {
 							body = namespace + body;
 						}
@@ -2809,6 +2869,7 @@
 					}
 				}
 
+				// add this style block to the string that contains all our styles
 				style +=  body;
 			});
 			
@@ -2825,7 +2886,7 @@
 			style = create(stylesheet);
 
 			// for enviroments that do not have a document
-			// this will not try an insert it to the dom
+			// this will not try to insert it to the dom
 			// rather we will just return a string of the style element
 			// below
 			if (__document) {
