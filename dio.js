@@ -456,10 +456,13 @@
 				oldParentNode[__childNodes].splice(index, 0, nextNode);
 			}
 		}
+
 		// removing from the dom
 		else if (newNode === __undefined) {
 			removeChild(parent, oldParentNode[__childNodes][index], oldNode);
 		}
+
+		// updating keyed items
 		else if (keysChanged(newNode, oldNode)) {
 			var
 			currentNode = parent[__childNodes][index];
@@ -489,6 +492,7 @@
 				}
 			}
 		}
+
 		// replacing a node
 		else if (nodeChanged(newNode, oldNode)) {
 			var
@@ -507,7 +511,8 @@
 				oldChildren[index] = newNode;
 			}
 		}
-		// the lookup loop
+
+		// the lookup loop down the stack
 		else if (is(newNode[__children], __Array) && is(oldNode[__children], __Array)) {
 			var
 			nextNode          = oldNode.dom || oldParentNode[__childNodes][index],
@@ -716,9 +721,7 @@
 
 			if (isEventProp(name, value)) {
 				// is a callback
-				if (value) {
-					target.addEventListener(extractEventName(name), value, __false);
-				}
+				target.addEventListener(extractEventName(name), value, __false);
 			}
 		}
 	}
@@ -2335,8 +2338,8 @@
 		var
 		store,
 		chain = {
-			then: __null,
-			catch: __null
+			then: __undefined,
+			catch: __undefined
 		},
 		listeners = {
 			catch: [],
@@ -2459,8 +2462,8 @@
 
 		// end/reset a stream
 		stream.end = function () {
-			chain.then      = __null;
-			chain.catch     = __null;
+			chain.then      = __undefined;
+			chain.catch     = __undefined;
 			listeners.catch = [];
 			listeners.then  = [];
 		};
@@ -2496,7 +2499,7 @@
 		// that will be run anytime we retreive it
 		return createStream(function (resolve) {
 			resolve(function () {
-				return reducer.apply(__null, deps);
+				return reducer.apply(__undefined, deps);
 			});
 		}, __true);
 	};
