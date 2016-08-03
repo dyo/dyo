@@ -460,20 +460,25 @@
 
 		// removing from the dom
 		else if (newNode === __undefined) {
-			var 
-			prevNode = oldParentNode[__childNodes][index];
-			removeChild(parent, prevNode, oldNode);
+			var
+			prevNode = oldNode.dom;
 
-			// remove the node from parent children in the next browser update cycle
-			__setTimeout(function () {
+			if (oldParentNode && prevNode) {
+				removeChild(parent, prevNode, oldNode);
 				oldParentNode[__childNodes].splice(index, 1);
-			});
+			}
+			else {
+				removeChild(parent, oldParentNode[__childNodes][index], oldNode);
+				__setTimeout(function () {
+					oldParentNode[__childNodes].splice(index, 1);
+				});
+			}
 		}
 
 		// updating keyed items
 		else if (keysChanged(newNode, oldNode)) {
 			var
-			currentNode = parent[__childNodes][index];
+			currentNode = oldParentNode[__childNodes][index];
 
 			// remove
 			if (newChildrenLength < oldChildrenLength) {
@@ -483,6 +488,7 @@
 				oldChildren.splice(index, 1);
 				// update the parentNodes children array to remove the child
 				oldParentNode[__childNodes].splice(index, 1);
+
 				// reduce the length of newChildrenLength
 				return -1;
 			}
