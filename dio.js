@@ -452,6 +452,7 @@
 			nextNode = createElement(newNode, component);
 			appendChild(parent, nextNode, newNode);
 			
+			// add the parents child nodes
 			if (oldParentNode) {
 				oldParentNode[__childNodes].splice(index, 0, nextNode);
 			}
@@ -459,7 +460,14 @@
 
 		// removing from the dom
 		else if (newNode === __undefined) {
-			removeChild(parent, oldParentNode[__childNodes][index], oldNode);
+			var 
+			prevNode = oldParentNode[__childNodes][index];
+			removeChild(parent, prevNode, oldNode);
+
+			// remove the node from parent children in the next browser update cycle
+			__setTimeout(function () {
+				oldParentNode[__childNodes].splice(index, 1);
+			});
 		}
 
 		// updating keyed items
@@ -469,10 +477,13 @@
 
 			// remove
 			if (newChildrenLength < oldChildrenLength) {
+				// dom operation, remove node
 				removeChild(parent, currentNode, newNode);
-
+				// update the oldChildren array to remove the old node
 				oldChildren.splice(index, 1);
+				// update the parentNodes children array to remove the child
 				oldParentNode[__childNodes].splice(index, 1);
+				// reduce the length of newChildrenLength
 				return -1;
 			}
 			else {
@@ -481,13 +492,18 @@
 
 				// add
 				if (newChildrenLength > oldChildrenLength) {
+					// dom operation, insert node
 					insertBefore(parent, currentNode, nextNode, newNode);
+					// update the oldChildren array to include the new node
 					oldChildren.splice(index, 0, newNode);
+					// update the parentNodes children array to include the child
 					oldParentNode[__childNodes].splice(index, 0, nextNode);
 				}
 				// replace
 				else {
-					replaceChild(parent, prevNode, nextNode, newNode);
+					// dom operation, replace node
+					replaceChild(parent, currentNode, nextNode, newNode);
+					// update the parentNodes children array, replacing the child
 					oldParentNode[__childNodes][index] = nextNode;
 				}
 			}
