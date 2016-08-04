@@ -1,6 +1,6 @@
 # Getting Started
 
-Dio is a lightweight (~6kb) Virtual DOM framework 
+Dio is a lightweight (~7kb) Virtual DOM framework 
 built around the concept that any function/object can be a component.
 
 Components in Dio share the same api's as react components with a few additions.

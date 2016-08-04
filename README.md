@@ -4,10 +4,10 @@
 
 [![dio.js](https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
 
-##### Dio is a lightweight (~6kb) Virtual DOM framework.
+##### Dio is a lightweight (~7kb) Virtual DOM framework.
 
-- *~6kb minified+gzipped.*  
-- *~14kb minified.*
+- *~7kb minified+gzipped.*  
+- *~15kb minified.*
 
 ---
 
@@ -92,8 +92,15 @@ var styles = {
 		},
 
 		'@keyframes blink': {
-			'0%': ['background-color: blue'],
-			'50%': ['background-color: black']
+			0: {
+				backgroundColor: 'blue'
+			},
+			50: {
+				backgroundColor: 'black'
+			}
+			// values can also be written as arrays
+			// 0: ['background-color: blue;'],
+			// 50: ['background-color: black;']
 		}
 	}
 }

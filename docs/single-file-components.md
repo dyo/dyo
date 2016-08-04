@@ -24,8 +24,15 @@ var styles = {
 		},
 
 		'@keyframes blink': {
-			'0%': ['background-color: blue'],
-			'50%': ['background-color: black']
+			0: {
+				backgroundColor: 'blue'
+			},
+			50: {
+				backgroundColor: 'black'
+			}
+			// values can also be written as arrays
+			// 0: ['background-color: blue;'],
+			// 50: ['background-color: black;']
 		}
 	}
 }

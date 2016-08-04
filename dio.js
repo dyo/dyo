@@ -2651,7 +2651,8 @@
 			'animation', 'transform', 'appearance', 'transition', 'box-shadow', 'linear-gradient'
 		],
 		namespace    = '',
-		keyframesKey = '@keyframes';
+		keyframesKey = '@keyframes',
+		atRootKey    = '@at-root';
 
 		// returns a prefixed version of a property 
 		// if the property is one of the above listed
@@ -2693,6 +2694,7 @@
 
 	        each(stylesheet, function (value, property, obj) {
 	            if (obj.hasOwnProperty(property)) {
+	            	// handle @keyframes properties
 	            	// allows us to specify either
 	            	// %: ['color: blue'] or
 					// 0%: {'color': 'black' }
@@ -2700,8 +2702,18 @@
             	   	if (
             	   		!is(value, __Array) &&
             	   		stack.indexOf(keyframesKey) > -1 && 
-            	   		property.indexOf('%') > -1
+            	   		(property.indexOf('%') > -1 || !isNaN(property))
         	   		) {
+        	   			// allows us to specify number as percent as in
+        	   			// {
+        	   			// 		0: {...}
+        	   			// 		50: {...}
+        	   			// 		100: {...}
+        	   			// }
+        	   			if (!isNaN(property)) {
+        	   				property += '%';
+        	   			}
+
         	   			// we could easily do the below
         	   			// JSON.stringify().replace()...
         	   			// but since values are sometimes functions we want to extract the
@@ -2845,18 +2857,11 @@
 				// 
 				body = selector + ' {\n' + body + '}\n';
 
-				// since keyframes are not properties of a selector
-				// we could not prefix them in the prefix() function
-				// so let us do it now
-				var
-				keyframesLength  = keyframesKey[__length],
-				// check if the block has @keyframes in it
-				// if it does keyFramesPos will be larger that -1
-				keyFramesPos     = body.indexOf(keyframesKey);
-				
-				// is a keyframe block
-				if (keyFramesPos > -1) {
-					var 
+				// check if the block has '@keyframes' in it
+				// if so then this is a keyframe block
+				if (body.indexOf(keyframesKey) > -1) {
+					var
+					keyframesLength = keyframesKey[__length],
 					arr = [];
 
 					// for when a keyframe is nested
@@ -2873,6 +2878,9 @@
 					var
 					keyFramesBodyPos = body.indexOf(keyframesKey) + keyframesLength;
 
+					// since keyframes are not properties of a selector
+					// we could not prefix them in the prefix() function
+					// so let us do it now
 					each(vendorsPlusDefault, function (prefix) {
 						// there is an empty vendor in the array so
 						// we want to only add prefixes for the vendors
@@ -2890,6 +2898,10 @@
 
 					// extract string from our array of prefixed values
 					body = arr.join('');
+				}
+				// handle sass like @at-rule
+				else if (body.indexOf(atRootKey) > -1) {
+					body = body.split(atRootKey)[1].replace(' ', '');
 				}
 				else {
 					// handle ','' as in
@@ -2949,7 +2961,7 @@
 			// this will not try to insert it to the dom
 			// rather we will just return a string of the style element
 			// below
-			if (__document) {
+			if (__document && __document.head) {
 				__document.head.insertAdjacentHTML('beforeend', style);
 			}
 
