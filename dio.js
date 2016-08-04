@@ -2646,11 +2646,12 @@
 	function createStyle () {
 		// references
 		var
-		vendors     = ['webkit', 'moz', 'ms'],
-		properties  = [
+		vendors      = ['webkit', 'moz', 'ms'],
+		properties   = [
 			'animation', 'transform', 'appearance', 'transition', 'box-shadow', 'linear-gradient'
 		],
-		namespace   = '';
+		namespace    = '',
+		keyframesKey = '@keyframes';
 
 		// returns a prefixed version of a property 
 		// if the property is one of the above listed
@@ -2686,15 +2687,40 @@
 		// iterate through the stylesheet object
 		// and create a stack representation of
 		// a selectors children
-		function iterate (obj, stack, tree) {
+		function iterate (stylesheet, stack, tree) {
 			var 
 			result = '';
 
-	        each(obj, function (value, property, obj) {
+	        each(stylesheet, function (value, property, obj) {
 	            if (obj.hasOwnProperty(property)) {
+	            	// allows us to specify either
+	            	// %: ['color: blue'] or
+					// 0%: {'color': 'black' }
+					// for keyframe animations
+            	   	if (
+            	   		!is(value, __Array) &&
+            	   		stack.indexOf(keyframesKey) > -1 && 
+            	   		property.indexOf('%') > -1
+        	   		) {
+        	   			// we could easily do the below
+        	   			// JSON.stringify().replace()...
+        	   			// but since values are sometimes functions we want to extract the
+        	   			// return value of the function to do that we do a 'for (...){}'
+        	   			var 
+        	   			newValue = '';
+            	   		each(value, function (value, name) {
+            	   			if (is(value, __Function)) {
+            	   				value = value ();
+            	   			}
+            	   			newValue += name + ':' + value + ';';
+            	   		});
+
+            	   		value = '{' + newValue + '}';
+        			}
+
 	                if (is(value, __Object)) {
-	                	// keep going down the stack
-                		iterate(value, stack + ' ' + property, tree);
+                		// keep going down the stack
+            			iterate(value, stack + ' ' + property, tree);
 	                } else {
 	                	// extract functions
 	                	if (is(value, __Function)) {
@@ -2733,7 +2759,7 @@
 
 	                	// fix keyframes
 	                	// 0%: {} <-- removes ':'
-	                	if (stack.indexOf('@keyframes') > -1) {
+	                	if (stack.indexOf(keyframesKey) > -1) {
 	                		trace = trace.replace(/%:/g, '%');
 	                	}
 
@@ -2823,7 +2849,6 @@
 				// we could not prefix them in the prefix() function
 				// so let us do it now
 				var
-				keyframesKey     = '@keyframes',
 				keyframesLength  = keyframesKey[__length],
 				// check if the block has @keyframes in it
 				// if it does keyFramesPos will be larger that -1
@@ -2915,7 +2940,7 @@
 		}
 
 		return function (stylesheet, Namespace) {
-			namespace = Namespace;
+			namespace = Namespace || '';
 
 			var
 			style = create(stylesheet);
