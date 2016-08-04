@@ -244,7 +244,7 @@
 				});
 
 
-				dio.request.post('./', {id: 1234}, null, function () {
+				dio.request.post('./index.html', {id: 1234}, null, function () {
 					ok(true, '(__, __, __, callback)');
 				}).then(function (value) {
 					ok(value.nodeType, '.post()')
