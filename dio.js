@@ -952,7 +952,7 @@
 				first, 
 				last,
 				webAnimations,
-				transform        = {},
+				transform        = [],
 				invert           = {},
 				element          = element.currentTarget || element,
 				style            = element.style,
@@ -992,10 +992,10 @@
 				duration  = duration || 200,
 				easing    = easing   || 'cubic-bezier(0,0,0.32,1)',
 
-				transform['1'] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+
+				transform[0] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+
 								' scale('+invert.sx+','+invert.sy+')',
-				transform['1'] = transform['1'] + ' ' + transformations,
-				transform['2'] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
+				transform[0] = transform[0] + ' ' + transformations,
+				transform[1] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
 
 				// assign transform origin if set
 				if (transformOrigin) {
@@ -1010,8 +1010,8 @@
 				if (webAnimations) {
 					var 
 					player = element.animate([
-				  		{transform: transform['1']},
-				  		{transform: transform['2']}
+				  		{transform: transform[0]},
+				  		{transform: transform[1]}
 					], {
 						duration: duration,
 						easing:   easing
@@ -1022,7 +1022,7 @@
 				// use css transitions
 				else {
 					// set first state
-					prefix(style, 'transform', transform['1']);
+					prefix(style, 'transform', transform[0]);
 
 					// trigger repaint
 					element.offsetWidth;
@@ -1037,7 +1037,7 @@
 					);
 
 					// set last state
-					prefix(style, 'transform', transform['2']);
+					prefix(style, 'transform', transform[1]);
 				}
 
 				// cleanup
@@ -1092,7 +1092,7 @@
 				var
 				// duration starts at 0
 				// for every time we find in transition-duration we add it to duration
-				duration   = 0,
+				duration = 0,
 				// get transition duration and remove 's' and spaces
 				// we will get from this '0.4s, 0.2s' to '0.4,0.2'
 				// we then split it to an array ['0.4','0.2']
@@ -2827,16 +2827,26 @@
 				keyframesLength  = keyframesKey[__length],
 				// check if the block has @keyframes in it
 				// if it does keyFramesPos will be larger that -1
-				keyFramesPos     = body.indexOf(keyframesKey),
-				// this is the position of what comes after @keyframes
-				// so the pos of where the word @keyframes starts 
-				// plus its length
-				keyFramesBodyPos = keyFramesPos + keyframesLength;
-
+				keyFramesPos     = body.indexOf(keyframesKey);
+				
 				// is a keyframe block
 				if (keyFramesPos > -1) {
 					var 
 					arr = [];
+
+					// for when a keyframe is nested
+					// i.e h1: {
+					// 		'@keyframes:' {
+					// 			...
+					// 		}
+					// }
+					body = keyframesKey + body.split(keyframesKey)[1];
+
+					// this is the position of what comes after @keyframes
+					// so the pos of where the word @keyframes starts 
+					// plus its length
+					var
+					keyFramesBodyPos = body.indexOf(keyframesKey) + keyframesLength;
 
 					each(vendorsPlusDefault, function (prefix) {
 						// there is an empty vendor in the array so
