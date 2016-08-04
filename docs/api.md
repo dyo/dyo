@@ -383,7 +383,7 @@ foo('hello world')
 bar() // => 'hello world and bar'
 
 // combine two or more streams
-var faz = dio.createStream.combine(function(foo, bar){
+var faz = dio.createStream.combine(function(foo, bar, prevValueOfFaz){
 	return foo() + bar();
 }, foo, bar); // or an array
 

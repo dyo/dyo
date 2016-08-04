@@ -2430,6 +2430,11 @@
 			return store;
 		};
 
+		// {Function}.valueOf()
+		stream.valueOf = function () {
+			return store;
+		};
+
 		// resolve a value
 		stream.resolve = function (value) {
 			return stream(value);
@@ -2515,13 +2520,28 @@
 		if (!is(deps, __Array)) {
 			deps = toArray(arguments, 1);
 		}
+		// we later use .push so we don't want to mutate
+		// the deps array that is passed as an arg 
+		else {
+			deps = toArray(deps);
+		}
+
+		// add an address for the prev store
+		deps.push(__undefined);
+
+		// the previous store will always be the 
+		// last item in the list of dependencies
+		var
+		prevStoreAddress = deps[__length] - 1;
 
 		// creating a stream with the second argument as true
 		// allows us to pass a function a the streams store
 		// that will be run anytime we retreive it
 		return createStream(function (resolve) {
 			resolve(function () {
-				return reducer.apply(__undefined, deps);
+				// extract return value of reducer
+				// return it and also set the value of the prevStore to it
+				return deps[prevStoreAddress] = reducer.apply(__undefined, deps);
 			});
 		}, __true);
 	};
