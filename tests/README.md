@@ -5,7 +5,7 @@
 ## running tests
 
 Open `index.html` in a browser, inspect the console for more details.
-You should see something like the below block of code that you can click into to check the details of each test, by default tests without failed assertions are collapsed.
+The console should look like the below block of code that you can click into to check the details of each test, by default tests without failed assertions are collapsed. Here is an example of how it should look: [https://rawgit.com/thysultan/dio.js/master/tests/index.html](https://rawgit.com/thysultan/dio.js/master/tests/index.html)
 
 ```javascript
 // collapsed
