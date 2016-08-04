@@ -2495,7 +2495,7 @@
 		stream.id = __streamSignature;
 
 		if (is(value, __Function)) {
-			value(stream.resolve, stream.reject);
+			value(stream.resolve, stream.reject, stream);
 		}
 		else {
 			stream(value);
