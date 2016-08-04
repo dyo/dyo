@@ -17,6 +17,13 @@
 }(this, function (exports) {
 	'use strict';
 
+	var div = document.createElement('div');
+			  document.body.appendChild(div);
+
+	div.style.fontSize   = '16px';
+	div.style.fontFamily = 'sans-serif';
+	div.style.margin     ='0 auto';
+
 	function logger (name, results) {
 		var 
 		styles = {
@@ -30,9 +37,15 @@
 			return value[0].toLowerCase().indexOf('fail') > -1
 		});
 
+		var failedResultsFraction = (results.length-failedResults.length) + '/' + results.length;
+
 		// open group
 		console[failedResults.length ? 'group' : 'groupCollapsed']
-		(name + ' (' + (results.length-failedResults.length) + '/' + results.length + ' passed)');
+		(name + ' (' + failedResultsFraction + ' passed)');
+
+		var groupDiv = document.createElement('div');
+
+		groupDiv.insertAdjacentHTML('afterbegin', '<h1>' + name + ' <small>('+failedResultsFraction+' passed)</small></h1>');
 
 		// iterate through results
 		results.forEach(function (value) {
@@ -42,14 +55,27 @@
 			// it is a failed test if we can find fail in the status
 			failed  = status.toLowerCase().indexOf('fail') > -1,
 			// get the corresponding style
-			style   = failed ? styles.failed() : styles.passed();
+			style   = failed ? styles.failed() : styles.passed(),
+			status  = (failed ? '✘' : '✔') + ' ' + status;
 
 			// if failed console.error else .log
-			console[failed ? 'error' : 'log']('%c%s', style, (failed ? '✘' : '✔') + ' ' + status, message);
+			console[failed ? 'error' : 'log']('%c%s', style, status, message);
+
+			groupDiv.insertAdjacentHTML(
+				'beforeend',
+				'<p style="line-height:180%;border-bottom:1px dashed #CCC;padding-bottom:8px;' + 
+				style + 
+				'">' + 
+				status + 
+				' ' + 
+				message + 
+				'</p>'
+			);
 		});
 
 		// end group
 		console.groupEnd();
+		div.appendChild(groupDiv);
 	}
 
 	function test (name, fn) {

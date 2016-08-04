@@ -4,7 +4,7 @@
 
 ## running tests
 
-Open `index.html` in a browser and inspect the console.
+Open `index.html` in a browser, inspect the console for more details.
 You should see something like the below block of code that you can click into to check the details of each test, by default tests without failed assertions are collapsed.
 
 ```javascript
