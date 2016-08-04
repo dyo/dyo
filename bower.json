@@ -18,5 +18,18 @@
 		"dom"
 	],
 	"license": "MIT",
-	"ignore": ["./!(dio.js)"]
+	"ignore": [
+		"**/.*",
+		"*.md"
+		"node_modules",
+		"bower_components",
+		"test",
+		"tests",
+		"docs",
+		"examples",
+		"package.json",
+		"bower.json",
+		"gulp.js",
+		"LICENSE"
+	]
 }
