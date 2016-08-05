@@ -790,7 +790,7 @@
 			// returns true/false if the prop has changed from it's prev value
 			remove = newVal === __undefined || newVal === __null,
 			// says only diff this if it's not an event i.e onClick...
-			add = oldVal === __undefined || oldVal === __null || newVal !== oldVal;
+			add    = oldVal === __undefined || oldVal === __null || newVal !== oldVal;
 
 			// something changed
 			if (add || remove) {
@@ -2474,8 +2474,10 @@
 
 		// create a map
 		stream.map = function (map) {
+			// the dependency as in
+			// var bar = a.map(fn) a will be dep
 			var 
-			dep  = stream;
+			dep = stream;
 
 			return createStream(function (resolve) {
 				resolve(function () {
@@ -2970,6 +2972,11 @@
 
 		return function (stylesheet, Namespace) {
 			namespace = Namespace || '';
+
+			// extract returned value of stylesheet is a function
+			if (is(stylesheet, __Function)) {
+				stylesheet = stylesheet();
+			}
 
 			var
 			style = create(stylesheet);
