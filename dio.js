@@ -295,7 +295,7 @@
 				}
 				// deep enough, add this child to children
 				else {
-					obj[__children].push(setChild(child))
+					obj[__children].push(setChild(child));
 				}
 			}
 
