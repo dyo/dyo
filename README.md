@@ -64,7 +64,7 @@ Will mount a h1 element onto the `.app` div the contents of which will be 'Hello
 
 # Performance
 
-- [See the dbmon implementation](thysultan.com/examples/benchmark.html) 
+- [See the dbmon implementation](https://thysultan.com/examples/benchmark.html) 
 
 # Single File Components
 
