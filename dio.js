@@ -289,16 +289,13 @@
 				// if the child is an array go deeper
 				// and set the 'arrays children' as children
 				if (is(child, __Array)) {
-					var 
-					childLength = child[__length];
-
-					for (var j = 0; j < childLength; j++) {
-						obj[__children][(i - key) + j] = setChild(child[j], obj);
-					}
+					each(child, function (child) {
+						obj[__children].push(setChild(child));
+					});
 				}
 				// deep enough, add this child to children
 				else {
-					obj[__children][i - key] = setChild(child, obj);
+					obj[__children].push(setChild(child))
 				}
 			}
 
