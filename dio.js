@@ -1889,7 +1889,7 @@
 			newNode = component(props, children);
 
 			// clear dom
-			element.innerHTML = '';
+			element.textContent = '';
 
 			if (newNode) {
 				vdomToDOM(element, newNode, __undefined, internal);
