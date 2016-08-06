@@ -20,6 +20,7 @@
 				var faz = dio.createStream('string');
 				var pro = dio.createStream('100', Number);
 				var the = dio.createStream('initial');
+				var spye = spy();
 
 				var fooMap = foo.map(function (value) {
 					return value + 10;
@@ -27,6 +28,11 @@
 				
 				var combine = dio.createStream.combine(function (a, b) {
 					return a() + b();
+				}, [foo, bar]);
+
+				var combinePrev = dio.createStream.combine(function (a, b, prev) {
+					spye(prev);
+					return a();
 				}, [foo, bar]);
 
 				var fn  = spy();
@@ -37,11 +43,15 @@
 
 				foo(2);
 
+				combinePrev();
+				combinePrev();
+				
 			    ok(foo() + bar() === 4, '.createStream()');
 			    ok(pro() === 100, '.createStream(__, processor)');
 			    ok(combine() === 4, '.createStream.combine()');
 			    ok(fooMap() === 12, 'stream.map()' );
 			    ok(fn.called, 'stream.then()');
+			    ok(spye.called[1][0] === 2, '.combine(fn(a,b, prevValue))');
 
 			    end();
 			});
