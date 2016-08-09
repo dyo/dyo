@@ -2948,7 +2948,7 @@
 
 						// then replace the selector in selector block
 						// with the namespaced version
-						body = body.replace(new __RegExp(selector, 'g'), selectorNamespaced);
+						body = body.replace(new __RegExp(selector), selectorNamespaced);
 					}
 					// default
 					else {
