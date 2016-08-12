@@ -374,7 +374,11 @@ function () {
 ## dio.createRouter
 
 ```javascript
-dio.createRouter(routes: {Object}, rootAddress?: {String}, onInitNavTo?: {String})
+dio.createRouter(
+	routes: {Function|Object},
+	rootAddress?: {String}, 
+	onInitNavTo?: {String}
+)
 ```
 
 example router
@@ -398,6 +402,7 @@ dio.createRouter({
 // and the third argument '/user/sultan' specifies
 // an initial route address to navigate to
 // initially. The last two arguments are optional.
+// you can also pass a function that retuns an object of routes.
 ```
 
 You can then assign this route to a variable and use it to navigate across views

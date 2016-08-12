@@ -47,8 +47,8 @@
 		svg:   'http://www.w3.org/2000/svg',
 		html:  'http://www.w3.org/1999/xhtml'
 	},
-	__window                    = window,
-	__document                  = window.document,
+	__window                    = window || exports,
+	__document                  = __window.document,
 
 	// types
 	__null                      = null,
@@ -1713,7 +1713,7 @@
 	 * 		'/:page/:name': () => {}
 	 * }, '/example', '/user/id')
 	 */
-	function createRouter () {
+	function createRouter (routes, rootAddress, onInitNavigateTo) {
 		function router (routes, rootAddress, onInitNavigateTo) {
 			/**
 			 * listens for changes to the url
@@ -1856,7 +1856,7 @@
 			};
 		}
 
-		return router.apply(__undefined, toArray(arguments));
+		return router(is(routes, __Function) ? routes() : routes, rootAddress, onInitNavigateTo);
 	}
 
 
