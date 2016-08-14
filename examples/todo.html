@@ -51,7 +51,7 @@
 		  		}
 		  		function handleDelete () {
 		  			var node = this
-		  			dio.animate.transition('slideUp')(node, function(){
+		  			dio.animateWith.transitions('slideUp')(node, function(){
 		  				TodoStore.dispatch({type: 'REMOVE', id: node.id})
 		  			})
 		  		}

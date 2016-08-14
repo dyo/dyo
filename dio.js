@@ -30,7 +30,7 @@
 	// references for better minification
 	// so instead of obj.constructor we would do obj[__constructor].
 	// the minifier will then be able to minify that to something like
-	// o[c] og which it can't quite do the the former baked in.
+	// o[c] but it can't quite do the the former.
 	var
 
 	// signatures
@@ -39,6 +39,7 @@
 	__storeSignature            = __signatureBase + '/STORE',
 	__componentSignature        = __signatureBase + '/COMPONENT',
 	__hyperscriptSignature      = __signatureBase + '/HYPERSCRIPT',
+	__renderSignature           = __signatureBase + '/RENDER',
 
 	// objects
 	__namespace 				= {
@@ -175,10 +176,17 @@
 	 */
 	function lifecycle (node, stage, isComponent, props, state, wildcard) {
 		// end quickly
-		// if node is not a Component or hyperscript object
-		if (!node || 
+		// if node is not from statefull component
+		if (
+			// no node
+			!node ||
+
+			// without .componentSignature and .render
+			// the hyperscript object is thus from
+			// a stateless component
 			(
-				node && node[__hyperscriptSignature] && 
+				node && 
+				node[__hyperscriptSignature] && 
 				!node[__hyperscriptSignature][__componentSignature] &&
 				!node.render
 			)
@@ -189,15 +197,15 @@
 		var 
 		component;
 		
-		// node is the component
+		// when we know that node is a component
+		// we passed isComponent as true
 		if (isComponent) {
 			component = node;
 		}
 		// node is a hyperscript object
 		// check if it has a component reference
 		else if (
-			node && 
-			node[__hyperscriptSignature] && 
+			node[__hyperscriptSignature] &&
 			node[__hyperscriptSignature][__componentSignature]
 		) {
 			component = node[__hyperscriptSignature][__componentSignature];
@@ -238,13 +246,14 @@
 			var 
 			args   = arguments,
 			length = args[__length],
-			// position where children elements start
+			// the position that children elements start
+			// example case: h('tag', {}, ...children)
 			key    = 2,
 			child;
 
-			// no props specified default 2nd arg to 
-			// the position that children elements start
-			// and default props to an empty object
+			// if what was suppose to be the position
+			// for props is actually a child (hyperscript or any non object value)
+			// example case: h('tag', ...children)
 			if (
 				(props && props[__hyperscriptSignature]) ||
 				!is(props, __Object)
@@ -252,18 +261,14 @@
 				key   = 1;
 				props = {};
 			}
-			// otherwise just insure props is always an object
-			else if (
-				props === __null || 
-				props === __undefined || 
-				!is(props, __Object)
-			) {
+			// otherwise just insure props are always an object
+			else if (!is(props, __Object)) {
 				props = {};
 			}
 
 			// declare the hyperscript object
 			var
-			obj = new hyperscriptClass({type: type, props: props, children: []});
+			hyperscript = new hyperscriptClass({type: type, props: props, children: []});
 
 			// check if the type is a special case i.e [type] | div.class | #id
 			// and alter the hyperscript
@@ -272,13 +277,13 @@
 				type.indexOf('#') > -1 || 
 				type.indexOf('.') > -1
 			) {
-				obj = parseElementType(obj);
+				hyperscript = parseElementType(hyperscript);
 			}
 
 			// auto set namespace for svg and math elements
 			// but only if it's not already set
-			if ((obj.type === 'svg' || obj.type === 'math') && !obj.props.xmlns) {
-				obj.props.xmlns = __namespace[obj.type];
+			if ((hyperscript.type === 'svg' || hyperscript.type === 'math') && !hyperscript.props.xmlns) {
+				hyperscript.props.xmlns = __namespace[hyperscript.type];
 			}
 
 			// construct children
@@ -290,16 +295,16 @@
 				// and set the 'arrays children' as children
 				if (is(child, __Array)) {
 					each(child, function (child) {
-						obj[__children].push(setChild(child));
+						hyperscript[__children].push(setChild(child));
 					});
 				}
 				// deep enough, add this child to children
 				else {
-					obj[__children].push(setChild(child));
+					hyperscript[__children].push(setChild(child));
 				}
 			}
 
-			return obj;
+			return hyperscript;
 		}
 
 		/**
@@ -308,7 +313,8 @@
 		 * @return {String|Array|Object}
 		 */
 		function setChild (child, parent) {
-			// textNodes
+			// if the child is not an object it is a textNodes
+			// string, bool, number ...etc, so we convert them to strings values
 			if (!is(child, __Object)) {
 				child += '';
 			}
@@ -329,16 +335,21 @@
 			var 
 			classes = [], 
 			match,
+
 			// regex to parse type/tag
 			regex = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
+
 			// copy obj's props to abstract props and type
 			// incase obj.props is empty create new obj
 			// otherwise just add to already available object
 			// we will add this back to obj.props later
 			props = !obj.props ? {} : obj.props,
+
 			// since we use type in a while loop
 			// we will be updating obj.type directly
+			// lets keep a copy of the value
 			type = obj.type
+
 			// set default type to a div
 			obj.type = 'div';
 
@@ -398,7 +409,9 @@
 
 	/**
 	 * ------------------------------------------------------------------------------------
-	 * <vdom to html>
+	 * 
+	 * <vdom to dom>
+	 * 
 	 * ------------------------------------------------------------------------------------
 	 */
 
@@ -415,10 +428,14 @@
 		if (oldNode) {
 			patch(
 				parent, 
-				newNode, oldNode, 
-				0, component, 
-				newNode, oldNode,
-				newNode[__children][__length], oldNode[__children][__length],
+				newNode, 
+				oldNode, 
+				0, 
+				component, 
+				newNode, 
+				oldNode,
+				newNode[__children][__length], 
+				oldNode[__children][__length],
 				newNode[__children], oldNode[__children]
 			);
 		}
@@ -426,8 +443,10 @@
 		else {
 			patch(
 				parent, 
-				newNode, oldNode, 
-				0, component
+				newNode, 
+				oldNode, 
+				0, 
+				component
 			);
 		}
 	}
@@ -435,10 +454,14 @@
 	// patch
 	function patch (
 		parent,
-		newNode, oldNode,
-		index, component,
-		newParentNode, oldParentNode,
-		newChildrenLength, oldChildrenLength,
+		newNode, 
+		oldNode,
+		index, 
+		component,
+		newParentNode, 
+		oldParentNode,
+		newChildrenLength, 
+		oldChildrenLength,
 		newChildren, oldChildren
 	) {
 		index = index || 0;
@@ -556,11 +579,16 @@
 					var
 					op = patch(
 						nextNode,
-						newChild, oldChild,
-						i, __undefined,
-						newNode, oldNode,
-						newChildrenLength, oldChildrenLength,
-						newChildren, oldChildren
+						newChild, 
+						oldChild,
+						i,
+						__undefined,
+						newNode, 
+						oldNode,
+						newChildrenLength, 
+						oldChildrenLength,
+						newChildren, 
+						oldChildren
 					);
 
 					if (op !== __undefined) {
@@ -905,7 +933,9 @@
 
 	/**
 	 * ------------------------------------------------------------------------------------
-	 * </vdom to html>
+	 * 
+	 * </vdom to dom>
+	 * 
 	 * ------------------------------------------------------------------------------------
 	 */
 
@@ -914,203 +944,18 @@
 	 * animate interface
 	 * @return {Object} {flip, animate}
 	 */
-	function animate () {
+	function animateWith () {
 		/**
-		 * flip animate component/element
-		 * @param  {Element} element   
-		 * @param  {Array}   transforms 'describe additional transforms'
-		 * @param  {Number}  duration   'duration of the animation'
-		 * @param  {String}  className  'class that represents end state animating to'
-		 * @return {Void}
-		 * @example
-		 * h('.card', {onclick: animate}, h('p', null, a)) 
-		 * // className defaults to animation-active end class
-		 * // duration defaults to 220ms
-		 * // or 
-		 * h('.card', {onclick: animate(400, 'active-state', null, 'linear')})
-		 * // or 
-		 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
+		 * add / remove event Listeners
+		 * @param  {Element}  element 
+		 * @param  {Array}    events
+		 * @param  {Function} listener
+		 * @param  {String}   type     'add' | 'remove'
 		 */
-		function flip (className, duration, transformations, transformOrigin, easing) {
-			return function (element, callback) {
-				transformations  = transformations || '';
-
-				// get element if selector
-				if (is(element, __String)) {
-					element = document.querySelector(element);
-				}
-
-				// check if element exists
-				if (!element && element.nodeType) {
-					throw 'can\'t animate without an element'
-				}
-
-				var
-				first, 
-				last,
-				webAnimations,
-				transform        = [],
-				invert           = {},
-				element          = element.currentTarget || element,
-				style            = element.style,
-				body             = __document.body,
-				runningClass     = 'animation-running',
-				transEvtEnd      = 'transitionend';
-
-				// animation type
-				// if this is set we opt for the more performant
-				// web animations api
-				if (is(element.animate, __Function)) {
-					webAnimations = __true;
-				}
-
-				// promote element to individual composite layer
-				if (style.willChange !== __undefined) {
-					style.willChange = 'transform';
-				}
-
-				// get first rect state
-				first = getBoundingClientRect(element);
-				// assign last state if there is an end class
-				if (className) {
-					classList('toggle', element, className);
-				}
-				// get last rect state, 
-				// if there is no end class
-				// then nothing has changed, save a reflow and just use the first state
-				last = className ? getBoundingClientRect(element) : first;
-
-				// get invert values
-				invert.x  = first.left   - last.left,
-				invert.y  = first.top    - last.top,
-				invert.sx = last.width  !== 0 ? first.width  / last.width  : 1,
-				invert.sy = last.height !== 0 ? first.height / last.height : 1,
-
-				duration  = duration || 200,
-				easing    = easing   || 'cubic-bezier(0,0,0.32,1)',
-
-				transform[0] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+
-								' scale('+invert.sx+','+invert.sy+')',
-				transform[0] = transform[0] + ' ' + transformations,
-				transform[1] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
-
-				// assign transform origin if set
-				if (transformOrigin) {
-					prefix(style, 'transformOrigin', transformOrigin);
-				}
-
-				// reflect animation state on dom
-				classList('add', element, runningClass);
-				classList('add', body, runningClass);
-
-				// use native web animations api if present for better performance
-				if (webAnimations) {
-					var 
-					player = element.animate([
-				  		{transform: transform[0]},
-				  		{transform: transform[1]}
-					], {
-						duration: duration,
-						easing:   easing
-					});
-
-					player.addEventListener('finish', onfinish);
-				}
-				// use css transitions
-				else {
-					// set first state
-					prefix(style, 'transform', transform[0]);
-
-					// trigger repaint
-					element.offsetWidth;
-					
-					// setup to animate when we change to the last state
-					// will only transition transforms and opacity
-					prefix(
-						style, 
-						'transition', 
-						'transform '+duration+'ms '+easing + ', '+
-						'opacity '+duration+'ms '+easing
-					);
-
-					// set last state
-					prefix(style, 'transform', transform[1]);
-				}
-
-				// cleanup
-				function onfinish (e) {
-					if (!webAnimations) {
-						// bubbled events
-						if (e.target !== element) {
-							return;
-						}
-
-						prefix(style, 'transition', __null);
-						prefix(style, 'transform', __null);
-					}
-					else {
-						transEvtEnd = 'finish'
-					}
-
-					element.removeEventListener(transEvtEnd, onfinish);
-
-					prefix(style, 'transformOrigin', __null);
-					
-					if (style.willChange) {
-						style.willChange = __null;
-					}
-
-					classList('remove', element, runningClass);
-					classList('remove', body, runningClass);
-
-					if (callback) {
-						callback(element);
-					}
-				}
-
-				if (!webAnimations) {
-					element.addEventListener(transEvtEnd, onfinish);
-				}
-
-				return duration;
-			}
-		}
-
-		/**
-		 * transition an element then run call back after
-		 * the transition is complete
-		 */
-		function transition (className) {
-			return function (element, callback) {
-				// add transition class
-				// this will start the transtion
-				classList('add', element, className);
-
-				var
-				// duration starts at 0
-				// for every time we find in transition-duration we add it to duration
-				duration = 0,
-				// get transition duration and remove 's' and spaces
-				// we will get from this '0.4s, 0.2s' to '0.4,0.2'
-				// we then split it to an array ['0.4','0.2']
-				// note: the numbers are still in string format
-				transition = getComputedStyle(element)
-				transition = transition['transitionDuration'];
-				transition = transition.replace(/s| /g, '').split(',');
-
-				// increament duration (in ms), also convert all values to a number
-				each(transition, function (value) {
-					duration += parseFloat(value) * 1000;
-				});
-
-				// run callback after duration of transition
-				// has elapsed
-				if (callback) {
-					__setTimeout(function () {
-						callback(element);
-					}, duration);
-				}
-			}
+		function eventListener (element, events, listener, type) {
+			each(events, function (event) {
+				element[type+'EventListener'](event, listener);
+			});
 		}
 
 		/**
@@ -1139,7 +984,7 @@
 		 */
 		function prefix (style, prop, value) {
 			// exit early if we support un-prefixed prop
-	  		if (style && style[prop] === __null) {
+	  		if (style && (style[prop] === __null || style[prop] === __undefined)) {
 	  			// chrome, safari, mozila, ie
     			var 
     			vendors = ['webkit','Webkit','Moz','ms'];
@@ -1160,9 +1005,241 @@
     		}
 		}
 
+		/**
+		 * First, Last, Invert, Play
+		 * flip animate an element
+		 * 
+		 * @param  {Element} element   
+		 * @param  {Array}   transforms 'describe additional transforms'
+		 * @param  {Number}  duration   'duration of the animation'
+		 * @param  {String}  className  'class that represents end state animating to'
+		 * @return {Void}
+		 * @example
+		 * h('.card', {onclick: animate}, h('p', null, a)) 
+		 * // className defaults to animation-active end class
+		 * // duration defaults to 220ms
+		 * // or 
+		 * h('.card', {onclick: animate(400, 'active-state', null, 'linear')})
+		 * // or 
+		 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
+		 */
+		function flip (className, duration, transformations, transformOrigin, easing) {
+			return function (element, callback) {
+				transformations  = transformations || '';
+
+				// get element if selector
+				if (is(element, __String)) {
+					element = __document.querySelector(element);
+				}
+
+				// check if element exists
+				if (!element && element.nodeType) {
+					throw 'can\'t animate without an element';
+				}
+
+				var
+				first, 
+				last,
+				webAnimations,
+				transform    = [],
+				invert       = {},
+				element      = element.currentTarget || element,
+				style        = element.style,
+				body         = __document.body,
+				runningClass = 'animation-running',
+				transEvtEnd  = 'transitionend';
+
+				// animation type
+				// if this is set we opt for the more performant
+				// web animations api
+				if (is(element.animate, __Function)) {
+					webAnimations = __true;
+				}
+
+				// get the first rect state of the element
+				first = getBoundingClientRect(element);
+				// assign last state if there is an end class
+				if (className) {
+					classList('toggle', element, className);
+				}
+				// get last rect state of the elemenet, 
+				// if there is no end class
+				// then nothing has changed, save a reflow and just use the first state
+				last = className ? getBoundingClientRect(element) : first;
+
+				// invert values
+				invert.x  = first.left - last.left,
+				invert.y  = first.top  - last.top,
+				invert.sx = last.width  !== 0 ? first.width  / last.width  : 1,
+				invert.sy = last.height !== 0 ? first.height / last.height : 1,
+
+				// flesh out animation details
+				duration  = duration || 200,
+				easing    = easing   || 'cubic-bezier(0,0,0.32,1)',
+
+				// the 0% state of the animation
+				transform[0] = 'translate('+invert.x+'px,'+invert.y+'px) translateZ(0)'+
+								' scale('+invert.sx+','+invert.sy+')',
+
+				// if there are any extra transformations passesd we add then here
+				transform[0] = transform[0] + ' ' + transformations,
+
+				// this is the 100% state of the animation
+				transform[1] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
+
+				// assign transform origin if set
+				if (transformOrigin) {
+					prefix(style, 'transformOrigin', transformOrigin);
+				}
+
+				// reflect animation state on dom
+				classList('add', element, runningClass);
+				classList('add', body, runningClass);
+
+				// use native web animations api if present for better performance
+				if (webAnimations) {
+					var 
+					player = element.animate([
+				  		{transform: transform[0]},
+				  		{transform: transform[1]}
+					], {
+						duration: duration,
+						easing:   easing
+					});
+
+					player.addEventListener('finish', onfinish);
+				}
+				// use css transitions
+				else {
+					// listen for the transition end event
+					// we can then do cleanup after the animation
+					eventListener(element, [transEvtEnd], onfinish, 'add')
+
+					// set first state
+					prefix(style, 'transform', transform[0]);
+
+					// trigger repaint
+					element.offsetWidth;
+					
+					// setup to animate when we change to the last state,
+					// limited only to transition transforms and opacity
+					// to avoid reflows
+					prefix(
+						style, 
+						'transition', 
+						'transform ' + duration + 'ms ' + easing + ', ' +
+						'opacity ' + duration + 'ms ' + easing
+					);
+
+					// set last state
+					// the animation will playout at this point
+					// when it's done onfinish will get called
+					prefix(style, 'transform', transform[1]);
+				}
+
+				// the cleanup
+				function onfinish (e) {
+					if (webAnimations) {
+						// the name of the event listener we will remove
+						// in the case of when we use the webAnimations api
+						transEvtEnd = 'finish';
+					}
+					else {
+						// bubbled events
+						if (e.target !== element) {
+							return;
+						}
+
+						// clear transition and transform styles
+						prefix(style, 'transition', __undefined);
+						prefix(style, 'transform', __undefined);
+					}
+
+					// remove the event listener
+					element.removeEventListener(transEvtEnd, onfinish);
+
+					// clear transform origin styles
+					prefix(style, 'transformOrigin', __undefined);
+
+					// clear animation running styles
+					classList('remove', element, runningClass);
+					classList('remove', body, runningClass);
+
+					// execute callback if set
+					if (callback) {
+						callback(element);
+					}
+				}
+
+				// the duration of the animation
+				return duration;
+			}
+		}
+
+		/**
+		 * css transitions/animations for an element then run the callback after
+		 * the transition/animation is complete
+		 */
+		function css (type) {			
+			return function keyframe (className, classListMethod) {
+				// the default is to add the class
+				classListMethod = classListMethod || 'add';
+
+				// remove class if less than 0 or a falsey value or 'remove'
+				if (
+					classListMethod < 0 || 
+					(classListMethod !== __undefined && !classListMethod)
+				) {
+					classListMethod = 'remove';
+				}
+
+				return function (element, callback) {
+					// push to next event-cycle/frame
+					__setTimeout(function () {
+						// add transition class
+						// this will start the transtion
+						classList(classListMethod, element, className);
+
+						// no callback,
+						// exit early
+						if (!callback) {
+							return;
+						}
+
+						var
+						// duration starts at 0
+						// for every 'time' we find in transition-duration we add it to duration
+						duration = 0,
+						// get transition duration and remove 's' and spaces
+						// we will get from this '0.4s, 0.2s' to '0.4,0.2'
+						// we then split it to an array ['0.4','0.2']
+						// note: the numbers are still in string format
+						transitionData = getComputedStyle(element)
+						transitionData = transitionData[type+'Duration'];
+						transitionData = transitionData.replace(/s| /g, '').split(',');
+
+						// convert all values to a number
+						// increament duration (in ms)
+						each(transitionData, function (value) {
+							duration += parseFloat(value) * 1000;
+						});
+
+						// run callback after duration of transition
+						// has elapsed
+						if (callback) {
+							__setTimeout(function () {
+								callback(element, keyframe);
+							}, duration);
+						}
+					});
+				}
+			}
+		}
+
 		return {
 			flip: flip,
-			transition: transition
+			transitions: css('transition'),
+			animations: css('animation')
 		};
 	}
 
@@ -1713,7 +1790,7 @@
 	 * 		'/:page/:name': () => {}
 	 * }, '/example', '/user/id')
 	 */
-	function createRouter (routes, rootAddress, onInitNavigateTo) {
+	function createRouter (routes, rootAddress, onInitNavigateTo, mount) {
 		function router (routes, rootAddress, onInitNavigateTo) {
 			/**
 			 * listens for changes to the url
@@ -1769,9 +1846,12 @@
 							}),
 
 					// close the pattern
-					pattern      = pattern + '$';
+					pattern = pattern + '$';
+					pattern = rootAddress ? rootAddress + pattern : pattern;
+					pattern = new __RegExp(pattern);
+
 					// assign a route item
-					routes[name] = [value, rootAddress ? rootAddress + pattern : pattern, vars]
+					routes[name] = [value, pattern, vars];
 				});
 			}
 
@@ -1782,12 +1862,12 @@
 				each(routes, function (val) {
 					var 
 					callback = val[0],
-					pattern = val[1],
-					vars = val[2],
+					pattern  = val[1],
+					vars     = val[2],
 					match;
 
 					// exec pattern on url
-					match = currentPath.match(new __RegExp(pattern));
+					match = currentPath.match(pattern);
 
 					// we have a match
 					if (match) {
@@ -1806,7 +1886,7 @@
 								data[vars[i]] = val;
 
 								return data;
-							}, __null);
+							}, __undefined);
 
 						// callback is a function, exec
 						if (is(callback, __Function)) {
@@ -1856,7 +1936,30 @@
 			};
 		}
 
-		return router(is(routes, __Function) ? routes() : routes, rootAddress, onInitNavigateTo);
+		// get return value if function
+		if (is(routes, __Function)) {
+			routes = routes();
+		}
+
+		if (mount) {
+			each(routes, function (value, index) {
+				var 
+				renderInstance;
+
+				if (value.id !== __renderSignature) {
+					renderInstance = createRender(value, mount);
+				}
+				else {
+					renderInstance = value;
+				}
+
+				routes[index] = function (data) {
+					renderInstance(data, __null, __true);
+				}
+			});
+		}
+
+		return router(routes, rootAddress, onInitNavigateTo);
 	}
 
 
@@ -1924,6 +2027,8 @@
 			return render;
 		}
 
+		render.id = __renderSignature;
+
 		var
 		component,
 		newNode,
@@ -1959,6 +2064,43 @@
 		else {
 			throw 'can\'t find the component';
 		}
+	}
+
+	/**
+	 * hyperscript class
+	 * @param  {Array} args arugments to add to the prototype object
+	 * @return {Function}
+	 */
+	function getHyperscriptClass (args) {
+		// interface
+		function h (obj) {
+			if (!obj) {
+				throw 'not a hyperscript';
+			}
+
+			var 
+			self = this;
+
+			self.type        = obj.type,
+			self.props       = obj.props,
+			self[__children] = obj[__children];
+		}
+
+		// data placeholder for storing internal data
+		h[__prototype][__hyperscriptSignature] = {};
+
+		if (args) {
+			each(args, function (value, index) {
+				h[__prototype][__hyperscriptSignature][value[0]] = value[1];
+			});
+		}
+
+		// we want the constructor of the resulting created object
+		// from new hyperscript()... to be the Object interface
+		// and not our h () interface above
+		h[__prototype][__constructor] = __Object;
+
+		return h;
 	}
 
 
@@ -2121,43 +2263,6 @@
 		Component.id = __componentSignature;
 
 		return Component;
-	}
-
-	/**
-	 * hyperscript class
-	 * @param  {Array} args arugments to add to the prototype object
-	 * @return {Function}
-	 */
-	function getHyperscriptClass (args) {
-		// interface
-		function h (obj) {
-			if (!obj) {
-				throw 'not a hyperscript';
-			}
-
-			var 
-			self = this;
-
-			self.type        = obj.type,
-			self.props       = obj.props,
-			self[__children] = obj[__children];
-		}
-
-		// data placeholder for storing internal data
-		h[__prototype][__hyperscriptSignature] = {};
-
-		if (args) {
-			each(args, function (value, index) {
-				h[__prototype][__hyperscriptSignature][value[0]] = value[1];
-			});
-		}
-
-		// we want the constructor of the resulting created object
-		// from new hyperscript()... to be the Object interface
-		// and not our h () interface above
-		h[__prototype][__constructor] = __Object;
-
-		return h;
 	}
 
 
@@ -2618,50 +2723,6 @@
 
 
 	/**
-	 * curry / create / return a function with set arguments
-	 * @param  {Function} fn    function to curry
-	 * @param  {Any}      arg   arguments to pass to function
-	 * @param  {Boolean}  event auto preventDefault for events
-	 * @return {Function}       curried function
-	 */
-	function createFunction (fn, args, preventDefault, argsNames) {
-		var
-		argsArray = [];
-
-		// convert args to array if it's not one
-		if (!is(args, __Array)) {
-			argsArray = [args];
-		}
-		// args is already an array, use as is
-		else {
-			argsArray = args;
-		}
-
-		// function is a create, create
-		if (is(fn, __String)) {
-			fn = new __Function(argsNames, fn);
-		}
-
-		// return a function that executes
-		// our passed function with the arguments passed
-		return function (e) {
-			// auto prevent default behaviour for events when
-			// preventDefault parameter is set
-			if (e && e.preventDefault && preventDefault) {
-				e.preventDefault();
-			}
-
-			// default to current arguments
-			// if args is a 0 length array of falsy value
-			if (!argsArray[__length] || !args) {
-				argsArray = toArray(arguments);
-			}
-
-			return fn.apply(this, argsArray);
-		}
-	}
-
-	/**
 	 * creates a style element
 	 * and inserts to document.head if document exists
 	 * @param {Object} stylesheet
@@ -2691,7 +2752,7 @@
 					result = '';
 
 					// add all the vendors
-					vendors.forEach(function (vendor, index, arr) {
+					each(vendors, function (vendor, index, arr) {
 						result += '-' + vendor + '-' + property + ': ' + value + ';\n\t';
 					});
 
@@ -2999,6 +3060,33 @@
 	}
 
 
+	/**
+	 * curry / create / return a function with set arguments
+	 * @param  {Function} fn  function to curry
+	 * @param  {Any}      arg arguments to pass to function
+	 * @param  {Boolean}      auto preventDefault events
+	 * @return {Function}     curried function
+	 */
+	function curryFunction (fn, args, preventDefault) {
+		// return a function that executes
+		// our passed function with the arguments passed
+		return function (e) {
+			// auto prevent default behaviour for events when
+			// preventDefault parameter is set
+			if (e && e.preventDefault && preventDefault) {
+				e.preventDefault();
+			}
+
+			// empty arguments provided
+			if (!args || !args[__length]) {
+				return fn.call(this, e);
+			}
+
+			return fn.apply(this, args);
+		}
+	}
+
+
 	/* --------------------------------------------------------------
 	 * 
 	 * Exports
@@ -3006,18 +3094,17 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.h = element(),
+	exports.h = element();
 	exports.dio = {
-		animate: animate(),
-		request: request(),
-
-		createComponent: createComponent,
-		createFunction: createFunction,
-		createStream: createStream,
-		createRender: createRender,
-		createRouter: createRouter,
-		createStore: createStore,
-		createHTML: createHTML,
-		createStyle: createStyle()
+		request:         request(),
+		animateWith:     animateWith(),
+		curryFunction:   curryFunction,
+		createStyle:     createStyle(),
+		createStream:    createStream,
+		createRender:    createRender,
+		createStore:     createStore,
+		createRouter:    createRouter,
+		createHTML:      createHTML,
+		createComponent: createComponent
 	};
 }));

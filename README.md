@@ -377,7 +377,8 @@ function () {
 dio.createRouter(
 	routes: {Function|Object},
 	rootAddress?: {String}, 
-	onInitNavTo?: {String}
+	onInitNavTo?: {String},
+	mount?: {String|Element}
 )
 ```
 
@@ -403,6 +404,12 @@ dio.createRouter({
 // an initial route address to navigate to
 // initially. The last two arguments are optional.
 // you can also pass a function that retuns an object of routes.
+
+// you can also pass component functions or render functions, as in
+dio.createRouter({
+	'/': ComponentA,
+	'/user/:id': ComponentA
+}, null, null, document.body);
 ```
 
 You can then assign this route to a variable and use it to navigate across views
@@ -670,41 +677,71 @@ dio.request.post('/url', {id: 1234}, 'json')
 
 ---
 
-## dio.animate
+## dio.animateWith
 
 ```javascript
-dio.animate.flip(className, duration, transform, transformOrigin, easing)(Element)
-dio.animate.transition(className)(node, callback)
+dio.animateWith.flip(
+	className:       {String}, 
+	duration:        {Number}, 
+	transform:       {String}, 
+	transformOrigin: {String}, 
+	easing:          {String}
+)(
+element: {Element|String}
+)
+
+dio.animateWith.transitions(
+	className: {String},
+	type?:     {String|Number|Boolean}
+)(
+element: {Element}, 
+callback: {Function} => (element: {Element}, transitions: {Function})
+)
+// where type can be a falsey or less than 0 or 'remove' 
+// to indicate a removal of the class, the default being add
+dio.animateWith.animations(...)
+// the same as .transitions but for the css animations 
+// triggered with animation: ... property 
+// instead of the css transition: ... property
 ```
 
-for example `dio.animate.flip` can be used within a render as follows
+for example `dio.animateWith.flip` can be used within a render as follows
 
 ```javascript
 render: function () {
 	return h('.card', 
-		{onclick: dio.animate.flip('active-state', 200)}, 
+		{
+			onclick: dio.animateWith.flip('active-state', 200)
+		}, 
 		''
 	)
 }
 ```
-since `dio.animate.flip(...)` returns a function this is the same as
+since `dio.animateWith.flip(...)` returns a function this is the same as
 
 ```javascript
-dio.animate('active-state', 200)(Element) // returns duration
+dio.animateWith.flip('active-state', 200)(Element) // returns the duration
 ``` 
 
-another animation helper is `animate.transition`
+another animation helper is `animateWith.transitions` and `animateWith.animations`
 
 ```javascript
 // within a method
 handleDelete: function (e) {
 	var 
-	node = e.currentTarget,
+	element = e.currentTarget,
 	self = this
 	
-	// animate node out then update state
-	dio.animate.transition('slideUp')(node, function(){
-		store.dispatch({type: 'DELETE', id: 1234})
+	// animate element out then update state
+	dio.animateWith.transitions('slideUp')(element, function(el, next) {
+		store.dispatch({type: 'DELETE', id: 1234});
+		// we can also nest another transtion using the second arg
+		// el will be the element we passed to it
+		next('slideLeft')(el, function (el, next) {
+			// we can also trigger the animation 
+			// that results in removing the class
+			next('slideLeft', -1)(el);
+		});
 	})
 }
 ```

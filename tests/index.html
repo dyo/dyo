@@ -82,7 +82,7 @@
 				end();
 			});
 
-			test('dio.createFunction', function (ok, eq, spy, end) {
+			test('dio.curryFunction', function (ok, eq, spy, end) {
 				function fn (a, b) {
 					return a + b;
 				};
@@ -93,15 +93,13 @@
 
 				function event () {}
 
-				var simple = dio.createFunction(fn, [1, 2]);
-				var str = dio.createFunction('return fn(a, b)', [fn, 1, 2], null, 'fn, a, b');
-				var evt = dio.createFunction(event, null, true);
+				var simple = dio.curryFunction(fn, [1, 2]);
+				var evt = dio.curryFunction(event, null, true);
 
 				evt(e);
 
-				ok(simple() === 3, '.createFunction(fn, [a, b])');
-				ok(str() === 3, ".createFunction('return fn(a, b)', [fn, a, b]), __, 'fn, a, b'");
-				ok(e.preventDefault.called, '.createFunction(fn, __, true)');
+				ok(simple() === 3, '.curryFunction(fn, [a, b])');
+				ok(e.preventDefault.called, '.curryFunction(fn, __, true)');
 
 				end();
 			});

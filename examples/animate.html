@@ -17,7 +17,7 @@
 					render: function () {
 						var createItem = function (item, className, transform, transformOrigin, easing) {
 							return h('.card', {
-										onmousedown: dio.animate.flip(className, 400,  transform, transformOrigin, easing)
+										onmousedown: dio.animateWith.flip(className, 400,  transform, transformOrigin, easing)
 									}, 
 										h('p', 
 											h('h1', item.id), 

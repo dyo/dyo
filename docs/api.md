@@ -263,7 +263,8 @@ function () {
 dio.createRouter(
 	routes: {Function|Object},
 	rootAddress?: {String}, 
-	onInitNavTo?: {String}
+	onInitNavTo?: {String},
+	mount?: {String|Element}
 )
 ```
 
@@ -289,6 +290,12 @@ dio.createRouter({
 // an initial route address to navigate to
 // initially. The last two arguments are optional.
 // you can also pass a function that retuns an object of routes.
+
+// you can also pass component functions or render functions, as in
+dio.createRouter({
+	'/': ComponentA,
+	'/user/:id': ComponentA
+}, null, null, document.body);
 ```
 
 You can then assign this route to a variable and use it to navigate across views
@@ -448,54 +455,33 @@ foo
 
 ---
 
-## dio.createFunction
+## dio.curryFunction
 
 ```javascript
-var foo = dio.createFunction(
+var foo = dio.curryFunction(
 	fn: {Function|String}, 
-	argumentsPassed: {Any[]|Any}, 
-	event: {Boolean}, 
-	// used when fn is a string
-	argumentNames? 
+	args...: {Any[]}, 
+	preventDefault: {Boolean}, 
 )
-// setting the event argument triggers e.preventDefault() 
-// if the caller is an event
+// passing preventDefault triggers e.preventDefault() 
+// if function is called as an event listener
 // for example:
-
-onClick: dio.createFunction(
+onClick: dio.curryFunction(
 		(a) => {'look no e.preventDefault()'}, 
 		['a'], 
 		true
 	)
 
-// you could also pass a string as the function argument
-onInput: dio.createFunction(
-		'console.log(a, b, c)', 
-		[1, 2, 3], 
-		true, 
-		'a, b, c'
-	)
-// logs 1, 2, 3
-
-// which allows us to do something like
+// which us to do something like
 function DoesOneThing (component, arg1, arg2) {
 	// ... do something with arg1 and arg2
-	// 'this' is the element that was clicked
-	component.setState({...})
+	// 'this' is the element that triggered the event
+	component.setState({...});
 }
 
-// one way
-...h('input', {
+// then in render
+h('input', {
 	onInput: dio.createFunction(DoesOneThing, [this, 1, 2], true)
-})
-// another
-...h('input', {
-	onInput: dio.createFunction(
-		'DoesOneThing(a,b+20,c+10)', 
-		[this, 1, 2], 
-		true, 
-		'a,b,c'
-	)
 })
 ```
 
@@ -547,41 +533,71 @@ dio.request.post('/url', {id: 1234}, 'json')
 
 ---
 
-## dio.animate
+## dio.animateWith
 
 ```javascript
-dio.animate.flip(className, duration, transform, transformOrigin, easing)(Element)
-dio.animate.transition(className)(node, callback)
+dio.animateWith.flip(
+	className:       {String}, 
+	duration:        {Number}, 
+	transform:       {String}, 
+	transformOrigin: {String}, 
+	easing:          {String}
+)(
+element: {Element|String}
+)
+
+dio.animateWith.transitions(
+	className: {String},
+	type?:     {String|Number|Boolean}
+)(
+element: {Element}, 
+callback: {Function} => (element: {Element}, transitions: {Function})
+)
+// where type can be a falsey or less than 0 or 'remove' 
+// to indicate a removal of the class, the default being add
+dio.animateWith.animations(...)
+// the same as .transitions but for the css animations 
+// triggered with animation: ... property 
+// instead of the css transition: ... property
 ```
 
-for example `dio.animate.flip` can be used within a render as follows
+for example `dio.animateWith.flip` can be used within a render as follows
 
 ```javascript
 render: function () {
 	return h('.card', 
-		{onclick: dio.animate.flip('active-state', 200)}, 
+		{
+			onclick: dio.animateWith.flip('active-state', 200)
+		}, 
 		''
 	)
 }
 ```
-since `dio.animate.flip(...)` returns a function this is the same as
+since `dio.animateWith.flip(...)` returns a function this is the same as
 
 ```javascript
-dio.animate('active-state', 200)(Element) // returns duration
+dio.animateWith.flip('active-state', 200)(Element) // returns the duration
 ``` 
 
-another animation helper is `animate.transition`
+another animation helper is `animateWith.transitions` and `animateWith.animations`
 
 ```javascript
 // within a method
 handleDelete: function (e) {
 	var 
-	node = e.currentTarget,
+	element = e.currentTarget,
 	self = this
 	
-	// animate node out then update state
-	dio.animate.transition('slideUp')(node, function(){
-		store.dispatch({type: 'DELETE', id: 1234})
+	// animate element out then update state
+	dio.animateWith.transitions('slideUp')(element, function(el, next) {
+		store.dispatch({type: 'DELETE', id: 1234});
+		// we can also nest another transtion using the second arg
+		// el will be the element we passed to it
+		next('slideLeft')(el, function (el, next) {
+			// we can also trigger the animation 
+			// that results in removing the class
+			next('slideLeft', -1)(el);
+		});
 	})
 }
 ```
