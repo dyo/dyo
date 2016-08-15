@@ -1361,9 +1361,9 @@
 		 * @param  {{Object}} xhr
 		 * @return {Any} 
 		 */
-		function getResponse (xhr) {			
+		function response (xhr) {			
 			var 
-			response,
+			responseBody,
 			responseType,
 			responseText   = xhr.responseText,
 			responseHeader = xhr.getResponseHeader("content-type");
@@ -1385,18 +1385,18 @@
 
 			// json, parse json
 			if (responseType === 'json') {
-				response = JSON.parse(responseText);
+				responseBody = JSON.parse(responseText);
 			}
 			// html, create dom
 			else if (responseType === 'html') {
-				response = (new DOMParser()).parseFromString(responseText, "text/html");
+				responseBody = (new DOMParser()).parseFromString(responseText, "text/html");
 			}
 			// text, as is
 			else {
-				response = responseText;
+				responseBody = responseText;
 			}
 
-			return response;
+			return responseBody;
 		}
 
 		/**
@@ -1436,7 +1436,7 @@
 				
 				// on success resolve the xhrStream
 				xhr.onload = function () {
-					resolve(getResponse(this));
+					resolve(response(this));
 				};
 
 				// on error send a reject signal to the xhrStream
@@ -1503,7 +1503,7 @@
 		 * @param {Object}
 		 * @param {Function}
 		 */
-		function request (method) {
+		function create (method) {
 			return function (url, payload, enctype, withCredentials) {
 				// enctype syntax sugar
 				if (enctype) {
@@ -1532,12 +1532,21 @@
 			}
 		}
 
-		return {
-			get:    request('GET'),
-			post:   request('POST'),
-			put:    request('PUT'),
-			delete: request('DELETE')
-		};
+		function request (obj) {
+			return request[obj.method.toLowerCase()](
+				obj.url, 
+				obj.payload, 
+				obj.enctype, 
+				obj.withCredentials
+			);
+		}
+
+		request.get    = create('GET');
+		request.post   = create('POST');
+		request.put    = create('PUT');
+		request.delete = create('DELETE');
+
+		return request;
 	}
 
 
@@ -3036,7 +3045,7 @@
 			return '<style'+name+'>\n' + style + '</style>';
 		}
 
-		return function (stylesheet, Namespace) {
+		return function (stylesheet, Namespace, onlyOutputString) {
 			namespace = Namespace || '';
 
 			// extract returned value of stylesheet is a function
@@ -3048,10 +3057,11 @@
 			style = create(stylesheet);
 
 			// for enviroments that do not have a document
+			// or if we pass the html arg
 			// this will not try to insert it to the dom
 			// rather we will just return a string of the style element
 			// below
-			if (__document && __document.head) {
+			if (__document && __document.head && !onlyOutputString) {
 				__document.head.insertAdjacentHTML('beforeend', style);
 			}
 

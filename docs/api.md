@@ -529,6 +529,17 @@ dio.request.post('/url', {id: 1234}, 'json')
 	.then((res)=>{'do something'})
 	.catch((err)=>{throw err});
 
+// request can also accept an opbject descriping the request
+
+dio.request({
+	method: 'GET',
+	url: '/url',
+	payload: {id: 1234},
+	enctype: 'json',
+	withCredentials: false
+})
+.then((res)=>{return res})
+.catch((err)=>{throw err});
 ```
 
 ---
