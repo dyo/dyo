@@ -578,55 +578,34 @@ sum(); // => 10
 
 ---
 
-## dio.createFunction
+## dio.curry
 
 ```javascript
-var foo = dio.createFunction(
+var foo = dio.curry(
 	fn: {Function|String}, 
-	argumentsPassed: {Any[]|Any}, 
-	event: {Boolean}, 
-	// used when fn is a string
-	argumentNames? 
+	args...: {Any[]}, 
+	preventDefault: {Boolean}, 
 )
-// setting the event argument triggers e.preventDefault() 
-// if the caller is an event
+// passing preventDefault triggers e.preventDefault() 
+// if function is called as an event listener
 // for example:
-
-onClick: dio.createFunction(
+onClick: dio.curry(
 		(a) => {'look no e.preventDefault()'}, 
 		['a'], 
 		true
 	)
 
-// you could also pass a string as the function argument
-onInput: dio.createFunction(
-		'console.log(a, b, c)', 
-		[1, 2, 3], 
-		true, 
-		'a, b, c'
-	)
-// logs 1, 2, 3
-
-// which allows us to do something like
+// which us to do something like
 function DoesOneThing (component, arg1, arg2) {
 	// ... do something with arg1 and arg2
-	// 'this' is the element that the event was dispatched for
-	component.setState({...})
+	// 'this' is the element that triggered the event
+	component.setState({...});
 }
 
-// one way
-...h('input', {
-	onInput: dio.createFunction(DoesOneThing, [this, 1, 2], true)
+// then in render
+h('input', {
+	onInput: dio.curry(DoesOneThing, [this, 1, 2], true)
 })
-// another
-...h('input', {
-	onInput: dio.createFunction(
-		'DoesOneThing(a,b+20,c+10)', 
-		[this, 1, 2], 
-		true, 
-		'a,b,c'
-	)
-});
 ```
 
 ---

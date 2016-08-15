@@ -3067,7 +3067,7 @@
 	 * @param  {Boolean}      auto preventDefault events
 	 * @return {Function}     curried function
 	 */
-	function curryFunction (fn, args, preventDefault) {
+	function curry (fn, args, preventDefault) {
 		// return a function that executes
 		// our passed function with the arguments passed
 		return function (e) {
@@ -3097,8 +3097,8 @@
 	exports.h = element();
 	exports.dio = {
 		request:         request(),
+		curry:           curry,
 		animateWith:     animateWith(),
-		curryFunction:   curryFunction,
 		createStyle:     createStyle(),
 		createStream:    createStream,
 		createRender:    createRender,

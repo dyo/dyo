@@ -24,7 +24,7 @@ function TableOfContents (props) {
 function Header () {
 	return h('.wrap', 
 				h('.logo',
-					h('a[href=./]', {onClick: dio.curryFunction(router.nav, ['/'], true)}, h('img[src=assets/logo.svg]'))
+					h('a[href=./]', {onClick: dio.curry(router.nav, ['/'], true)}, h('img[src=assets/logo.svg]'))
 				),
 				h('.nav',
 					h('ul', h('li', h('a[href=https://github.com/thysultan/dio.js]', 'Github')))
@@ -105,7 +105,7 @@ function Documentation () {
 						Content({html: rawMarkup()}),
 						TableOfContents({
 							nav: props.nav,
-							onClick: dio.curryFunction(activateLink, [this], true)
+							onClick: dio.curry(activateLink, [this], true)
 						})
 					)
 		}
@@ -140,7 +140,7 @@ function Welcome () {
 		},
 		render: function () {
 			return h('.welcome', {
-				onClick: dio.curryFunction(Install, [], true),
+				onClick: dio.curry(Install, [], true),
 				innerHTML: rawMarkup()
 			});
 		}

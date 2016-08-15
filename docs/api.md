@@ -455,10 +455,10 @@ foo
 
 ---
 
-## dio.curryFunction
+## dio.curry
 
 ```javascript
-var foo = dio.curryFunction(
+var foo = dio.curry(
 	fn: {Function|String}, 
 	args...: {Any[]}, 
 	preventDefault: {Boolean}, 
@@ -466,7 +466,7 @@ var foo = dio.curryFunction(
 // passing preventDefault triggers e.preventDefault() 
 // if function is called as an event listener
 // for example:
-onClick: dio.curryFunction(
+onClick: dio.curry(
 		(a) => {'look no e.preventDefault()'}, 
 		['a'], 
 		true
@@ -481,7 +481,7 @@ function DoesOneThing (component, arg1, arg2) {
 
 // then in render
 h('input', {
-	onInput: dio.createFunction(DoesOneThing, [this, 1, 2], true)
+	onInput: dio.curry(DoesOneThing, [this, 1, 2], true)
 })
 ```
 
