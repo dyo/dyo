@@ -287,7 +287,13 @@
 	 * h('div', {class: 'close'}, 'Text Content')
 	 * h('div', null, h('h1', 'Text'))
 	 */
-	function h (type, props) {			
+	function h (type, props, children) {
+		// support
+		// h(Component, props, children)
+		if (is(type, __Function)) {
+			return type(props, children);
+		}
+
 		var 
 		args   = arguments,
 		length = args[__length],
