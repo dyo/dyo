@@ -466,7 +466,7 @@ Like the name suggests this methods outputs the html
 of a specific component/render instance with the props passed
 to it, this is normally used within the context of server-side rendering.
 When used add the attribute `data-hydrate=true` to the container
-you wish to ouput the html, this will tell dio to not
+you wish to ouput the html, this will tell dio not to
 initialize a fresh mount and rather hydrate the current dom.
 
 ```javascript
