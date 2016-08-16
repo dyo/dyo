@@ -88,6 +88,7 @@
 	__XMLHttpRequest            = XMLHttpRequest,
 	__RegExp                    = RegExp,
 	__encodeURIComponent        = encodeURIComponent,
+	__encodeURI                 = encodeURI,
 	__setTimeout                = setTimeout,
 
 	// other
@@ -200,7 +201,9 @@
 	 * @param  {Object} a - object with opt props key
 	 * @param  {Object} b - tag
 	 * @return {[Object]} - {props, type}
+	 * 
 	 * @example
+	 * 
 	 * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
 	 * tag('inpu#id[type=checkbox]')
 	 */
@@ -278,7 +281,9 @@
 	 * @param  {String} type  - Element, i.e: div
 	 * @param  {Object} props - optional properties
 	 * @return {Object}       - {type, props, children}
+	 * 
 	 * @example
+	 * 
 	 * h('div', {class: 'close'}, 'Text Content')
 	 * h('div', null, h('h1', 'Text'))
 	 */
@@ -1037,7 +1042,9 @@
 	/**
 	 * creates a render interface
 	 * @return {Function}
+	 * 
 	 * @example
+	 * 
 	 * render = dio.createRender(Component, '.selector')
 	 * render()
 	 */
@@ -1729,12 +1736,16 @@
 		 * @param  {Number}  duration   'duration of the animation'
 		 * @param  {String}  className  'class that represents end state animating to'
 		 * @return {Void}
+		 * 
 		 * @example
+		 * 
 		 * h('.card', {onclick: animate}, h('p', null, a)) 
 		 * // className defaults to animation-active end class
 		 * // duration defaults to 220ms
 		 * // or 
+		 * 
 		 * h('.card', {onclick: animate(400, 'active-state', null, 'linear')})
+		 * 
 		 * // or 
 		 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
 		 */
@@ -2084,7 +2095,9 @@
 		 * @param  {Object}  obj   
 		 * @param  {Object}  prefix
 		 * @return {String}  serialized object
+		 * 
 		 * @example
+		 * 
 		 * // returns 'url=http%3A%2F%2F.com'
 		 * param({url:'http://.com'})
 		 */
@@ -2111,7 +2124,7 @@
 
 
 		/**
-		 * request interface
+		 * create request
 		 * @param {String}
 		 * @param {Object}
 		 * @param {Function}
@@ -2140,11 +2153,21 @@
 					url += '?' + param(payload);
 				}
 
+				// encode the url
+				url = __encodeURI(url);
+
 				// return ajax promise
 				return http(url, method, payload, enctype, withCredentials);
 			}
 		}
 
+		/**
+		 * request interface
+		 * request({method: 'GET', url: '?'})
+		 * is the same as
+		 * request.get('?')
+		 * @param  {Object} obj - details of the request
+		 */
 		function request (obj) {
 			return request[obj.method.toLowerCase()](
 				obj.url, 
@@ -2154,9 +2177,9 @@
 			);
 		}
 
-		request.get    = create('GET');
-		request.post   = create('POST');
-		request.put    = create('PUT');
+		request.get    = create('GET'),
+		request.post   = create('POST'),
+		request.put    = create('PUT'),
 		request.delete = create('DELETE');
 
 		return request;
@@ -2276,10 +2299,16 @@
 	 * @param {Object} routes
 	 * @param {String} rootAddress 
 	 * @param {String} onInitNavigateTo
+	 * 
 	 * @example
+	 * 
 	 * router({
 	 * 		'/:page/:name': () => {}
 	 * }, '/example', '/user/id')
+	 * 
+	 * router({
+	 * 		'/:page/:name': Component
+	 * })
 	 */
 	function createRouter (routes, rootAddress, onInitNavigateTo, mount) {
 		function router (routes, rootAddress, onInitNavigateTo) {
@@ -2727,6 +2756,7 @@
 	 * @return {String} html string ouput
 	 *
 	 * @example
+	 * 
 	 * createHTML(h('div', 'Hello World'));
 	 * createHTML(component/render, {id:1234}, {item:'first'});
 	 */
