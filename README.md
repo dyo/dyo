@@ -443,8 +443,8 @@ myrouter.forward()
 ## dio.createStore
 
 Alot like redux createStore or rather it's exactly like redux createStore
-with the addition of `.connect` that accepts a render insance of component
-will mount with which to update everytime the store is updated.
+with the addition of `.connect` that accepts a render insance or a component 
+and mount with which to update everytime the store is updated.
 Which is mostly a short hand for creating a listerner with `.subscribe`
 that updates your component on state changes.
 
@@ -453,7 +453,6 @@ var store = dio.createStore(reducer: {Function})
 // or
 var store = dio.createStore(object of reducers: {Object})
 // the same as doing a .combineReducers in redux
-
 
 store.dispatch({type: '' ...})
 // dispatch an action
@@ -613,7 +612,7 @@ onClick: dio.curry(
 		true
 	)
 
-// which us to do something like
+// which allows us to do something like
 function DoesOneThing (component, arg1, arg2) {
 	// ... do something with arg1 and arg2
 	// 'this' is the element that triggered the event
@@ -630,9 +629,9 @@ h('input', {
 
 ## dio.createStyle
 
-creates a style element that is mounted to document.head,
+creates a style element that is mounted to `document.head`,
 the output is auto prefixed and resembles sass/scss in the use of the "&" character
-in nested styles, see __Single File Components__ section for an example.
+in nested styles. See the __Single File Components__ section for an example.
 
 ```javascript
 dio.createStyle(css: {Object}, namespace?: {String});
@@ -649,7 +648,8 @@ dio.createStyle({'p': {color:'red'}}, '#id');
 dio.createFactory(any[]|...arguments);
 ```
 
-exposes a function to the window that produces a hyperscript elements of a given type.
+createFactory returns or exposes a function to the window that 
+produces a hyperscript element of a given type.
 
 If the last argument is a Boolean true 
 the element factories are added to the global namespace
@@ -671,12 +671,12 @@ input({value: 'empty'});
 
 // multiple elements
 dio.createFactory('div', 'input', true);
-// or
+// or object destructuring
 var {div, input} = dio.createFactory('div', 'input');
 
 // single element
 var div = dio.createFactory('div');
-// or
+// or global
 dio.createFactory('div', true);
 ```
 
@@ -684,7 +684,7 @@ dio.createFactory('div', true);
 
 ## dio.request
 
-make ajax requests
+a http helper that makes ajax requests.
 
 ```javascript
 // returns a stream
@@ -772,6 +772,8 @@ dio.animateWith.flip('active-state', 200)(Element) // returns the duration
 ``` 
 
 another animation helper is `animateWith.transitions` and `animateWith.animations`
+the callback function supplied after the element will execute after the
+resulting animation/transition from adding/removing the class completes.
 
 ```javascript
 // within a method
