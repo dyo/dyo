@@ -2148,13 +2148,13 @@
 					enctype = 'application/x-www-form-urlencoded';
 				}
 
+				// encode the url
+				url = __encodeURI(url);
+
 				// for .get requests pass payload as query string if present
 				if (payload && method === 'GET') {
 					url += '?' + param(payload);
 				}
-
-				// encode the url
-				url = __encodeURI(url);
 
 				// return ajax promise
 				return http(url, method, payload, enctype, withCredentials);
