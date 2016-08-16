@@ -362,9 +362,13 @@
 	function hydrate (parent, newNode, component, index, newParentNode) {
 		index = index || 0;
 
+		var 
+		nextNode;
+
 		if (newNode[__children]) {
+			nextNode          = parent[__childNodes][index];
+
 			var
-			nextNode          = parent[__childNodes][index],
 			newChildren       = newNode[__children],
 			newChildrenLength = newChildren[__length];
 
@@ -402,7 +406,6 @@
 			parent.replaceChild(fragment, parent[__childNodes][index]);
 		}
 
-		var 
 		nextNode = parent[__childNodes][index];
 
 		if (newParentNode) {
