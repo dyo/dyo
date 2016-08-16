@@ -4,7 +4,7 @@
 
 [![dio.js](https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
 
-##### Dio is the smallest (~7kb) full feature Virtual DOM framework.
+##### Dio is a lightweight (~7kb) full feature Virtual DOM framework.
 
 - *~7kb minified+gzipped.*  
 - *~15kb minified.*
@@ -37,7 +37,7 @@ You can also play with dio.js on this [jsbin](http://jsbin.com/lobavo/edit?js,ou
 
 # Getting Started
 
-Dio is the smallest (~7kb) full feature Virtual DOM framework
+Dio is a lightweight (~7kb) full feature Virtual DOM framework
 built around the concept that any function/object can become a component.
 
 Components in Dio share the same api's as react with a few additions, 
