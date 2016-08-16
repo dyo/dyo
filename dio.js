@@ -385,7 +385,7 @@
 			// case in point
 			// h('h1', 'Hello', 'World')
 			// output: <h1>HelloWorld</h1>
-			// but HelloWorld is on text node in the dom
+			// but HelloWorld is one text node in the dom
 			// while two in the vnode
 			var 
 			fragment = __document.createDocumentFragment();
