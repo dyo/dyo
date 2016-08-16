@@ -4,7 +4,7 @@
 
 [![dio.js](https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
 
-##### Dio is a lightweight (~7kb) Virtual DOM framework.
+##### Dio is the smallest (~7kb) full feature Virtual DOM framework.
 
 - *~7kb minified+gzipped.*  
 - *~15kb minified.*
