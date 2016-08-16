@@ -40,6 +40,7 @@
 	__componentSignature        = __signatureBase + '/COMPONENT',
 	__hyperscriptSignature      = __signatureBase + '/HYPERSCRIPT',
 	__renderSignature           = __signatureBase + '/RENDER',
+	__hydrateSignature          = 'data-hydrate',
 
 	// objects
 	__namespace 				= {
@@ -90,6 +91,16 @@
 	__setTimeout                = setTimeout;
 
 
+	/* --------------------------------------------------------------
+	 * 
+	 * toArray - convert to array, 
+	 * each    - iterator, 
+	 * is      - type checker
+	 * h       - hyperscript helper
+	 * 
+	 * -------------------------------------------------------------- */
+
+
 	/**
 	 * convert arguments to arrays
 	 * @param  {arugments} arg - array like object
@@ -101,7 +112,7 @@
 
 	
 	/**
-	 * 'forEach' shortcut
+	 * 'forEach' helper
 	 * @param  {Array|Object} a 
 	 * @param  {Function}     fn
 	 * @param  {Boolean}      multiple
@@ -141,7 +152,7 @@
 
 
 	/**
-	 * check Object type
+	 * type checker
 	 * @param  {Any}  obj  - object to check for type
 	 * @param  {Any}? type - type to check for
 	 * @return {Boolean}   - true/false
@@ -167,72 +178,6 @@
 
 
 	/**
-	 * component lifecycle trigger
-	 * @param  {Object}         node  - component, or hyperscript
-	 * @param  {String}         state - stage of the lifecycle
-	 * @param  {Boolean|Object} props - weather to pass props to stage
-	 * @param  {Boolean|Object} state - weather to pass sate to stage
-	 * @params {Boolean}        isCmp - weather this is a component or not
-	 */
-	function lifecycle (node, stage, isComponent, props, state, wildcard) {
-		// end quickly
-		// if node is not from statefull component
-		if (
-			// no node
-			!node ||
-
-			// without .componentSignature and .render
-			// the hyperscript object is thus from
-			// a stateless component
-			(
-				node && 
-				node[__hyperscriptSignature] && 
-				!node[__hyperscriptSignature][__componentSignature] &&
-				!node.render
-			)
-		) {
-			return;
-		}
-
-		var 
-		component;
-		
-		// when we know that node is a component
-		// we passed isComponent as true
-		if (isComponent) {
-			component = node;
-		}
-		// node is a hyperscript object
-		// check if it has a component reference
-		else if (
-			node[__hyperscriptSignature] &&
-			node[__hyperscriptSignature][__componentSignature]
-		) {
-			component = node[__hyperscriptSignature][__componentSignature];
-		}
-
-		if (component && component[stage]) {
-			// is the props/state truthy? if so check if it is not a boolean
-			// if so default to the value in props/state passed, 
-			// if it is default to the components own props.
-			// if props/state is falsey value, 
-			// default to undefined
-
-			// props is either the value of the props passed as an argument
-			// or the value of the components
-			props = props || component.props,
-			state = state || component.state;
-
-			// componentShouldUpdate returns a Boolean
-			// so we publish the lifecycle return values
-			// which we can use in the vdomToDOM / update () function
-			// to see if we should skip an element or not
-			return component[stage](props, state, component, wildcard);
-		}
-	}
-
-
-	/**
 	 * create virtual element : h()
 	 * @param  {String} type  - Element, i.e: div
 	 * @param  {Object} props - optional properties
@@ -241,71 +186,9 @@
 	 * h('div', {class: 'close'}, 'Text Content')
 	 * h('div', null, h('h1', 'Text'))
 	 */
-	function element () {
-		function h (type, props) {			
-			var 
-			args   = arguments,
-			length = args[__length],
-			// the position that children elements start
-			// example case: h('tag', {}, ...children)
-			key    = 2,
-			child;
-
-			// if what was suppose to be the position
-			// for props is actually a child (hyperscript or any non object value)
-			// example case: h('tag', ...children)
-			if (
-				(props && props[__hyperscriptSignature]) ||
-				!is(props, __Object)
-			) {
-				key   = 1;
-				props = {};
-			}
-			// otherwise just insure props are always an object
-			else if (!is(props, __Object)) {
-				props = {};
-			}
-
-			// declare the hyperscript object
-			var
-			hyperscript = new hyperscriptClass({type: type, props: props, children: []});
-
-			// check if the type is a special case i.e [type] | div.class | #id
-			// and alter the hyperscript
-			if (
-				type.indexOf('[') > -1 ||
-				type.indexOf('#') > -1 || 
-				type.indexOf('.') > -1
-			) {
-				hyperscript = parseElementType(hyperscript);
-			}
-
-			// auto set namespace for svg and math elements
-			// but only if it's not already set
-			if ((hyperscript.type === 'svg' || hyperscript.type === 'math') && !hyperscript.props.xmlns) {
-				hyperscript.props.xmlns = __namespace[hyperscript.type];
-			}
-
-			// construct children
-			for (var i = key; i < length; i++) {
-				// reference to current layer
-				child = args[i];
-		
-				// if the child is an array go deeper
-				// and set the 'arrays children' as children
-				if (is(child, __Array)) {
-					each(child, function (child) {
-						hyperscript[__children].push(setChild(child));
-					});
-				}
-				// deep enough, add this child to children
-				else {
-					hyperscript[__children].push(setChild(child));
-				}
-			}
-
-			return hyperscript;
-		}
+	function h () {
+		var 
+		hyperscriptClass = createHyperscriptClass();
 
 		/**
 		 * hyperscript set children
@@ -400,25 +283,146 @@
 			return obj;
 		}
 
-		var 
-		hyperscriptClass = getHyperscriptClass();
+		return function h (type, props) {			
+			var 
+			args   = arguments,
+			length = args[__length],
+			// the position that children elements start
+			// example case: h('tag', {}, ...children)
+			key    = 2,
+			child;
 
-		return h;
+			// if what was suppose to be the position
+			// for props is actually a child (hyperscript or any non object value)
+			// example case: h('tag', ...children)
+			if (
+				(props && props[__hyperscriptSignature]) ||
+				!is(props, __Object)
+			) {
+				key   = 1;
+				props = {};
+			}
+			// otherwise just insure props are always an object
+			else if (!is(props, __Object)) {
+				props = {};
+			}
+
+			// declare the hyperscript object
+			var
+			hyperscript = new hyperscriptClass({type: type, props: props, children: []});
+
+			// check if the type is a special case i.e [type] | div.class | #id
+			// and alter the hyperscript
+			if (
+				type.indexOf('[') > -1 ||
+				type.indexOf('#') > -1 || 
+				type.indexOf('.') > -1
+			) {
+				hyperscript = parseElementType(hyperscript);
+			}
+
+			// auto set namespace for svg and math elements
+			// but only if it's not already set
+			if ((hyperscript.type === 'svg' || hyperscript.type === 'math') && !hyperscript.props.xmlns) {
+				hyperscript.props.xmlns = __namespace[hyperscript.type];
+			}
+
+			// construct children
+			for (var i = key; i < length; i++) {
+				// reference to current layer
+				child = args[i];
+		
+				// if the child is an array go deeper
+				// and set the 'arrays children' as children
+				if (is(child, __Array)) {
+					each(child, function (child) {
+						hyperscript[__children].push(setChild(child));
+					});
+				}
+				// deep enough, add this child to children
+				else {
+					hyperscript[__children].push(setChild(child));
+				}
+			}
+
+			return hyperscript;
+		}
 	}
 
 
-	/**
-	 * ------------------------------------------------------------------------------------
+	/* --------------------------------------------------------------
+	 *
+	 * hydrate   - absorb a dom structure to vdom
+	 * vdomToDOM - render vdom to dom
+	 * patch     - patch the dom
 	 * 
-	 * <vdom to dom>
-	 * 
-	 * ------------------------------------------------------------------------------------
-	 */
+	 * -------------------------------------------------------------- */
 
+
+	function hydrate (parent, newNode, component, index, newParentNode) {
+		index = index || 0;
+
+		if (newNode[__children]) {
+			var
+			nextNode          = parent[__childNodes][index],
+			newChildren       = newNode[__children],
+			newChildrenLength = newChildren[__length];
+
+			for (var i = 0; i < newChildrenLength; i++) {
+				hydrate(nextNode, newChildren[i], component, i, newNode);
+			}
+
+			newNode.dom = nextNode;
+		}
+
+		if (is(newNode, __String)) {
+			// fragment to use to replace a single textNode
+			// with multiple text nodes
+			// case in point
+			// h('h1', 'Hello', 'World')
+			// output: <h1>HelloWorld</h1>
+			// but HelloWorld is on text node in the dom
+			// while two in the vnode
+			var 
+			fragment = __document.createDocumentFragment();
+
+			// look ahead of this nodes siblings
+			// add any that is not an object aka 'textNode'/'string' to
+			// the fragment 
+			each(newParentNode[__children].slice(index), function (value) {
+				// exit quickly once we encounter a non text/string node
+				if (is(value, __Object)) {
+					return __false;
+				}
+
+				fragment.appendChild(createElement(value));
+			});
+
+			// replace the textNode with a set of textNodes
+			parent.replaceChild(fragment, parent[__childNodes][index]);
+		}
+
+		var 
+		nextNode = parent[__childNodes][index];
+
+		if (newParentNode) {
+			newParentNode[__childNodes] = newParentNode[__childNodes] || [];
+			newParentNode[__childNodes].push(nextNode);
+		}
+
+		if (!is(newNode, __String)) {
+			// set refs
+			setRefs(newNode, nextNode, component);
+			// add events if any
+			addEventListeners(nextNode, newNode.props);
+		}
+
+		return newNode;
+	}
 
 	/**
 	 * diff virtual component and update dom
-	 * @param {Element} parent   - dom node
+	 * @param {Element} parent - dom node
 	 * @param {Object}  newNode
 	 * @param {Object}  oldNode?
 	 * @param {Object}  component?
@@ -708,24 +712,8 @@
 				element = __document.createElement(node.type);
 			}
 
-			// check if refs are defined?
-			if (node.props && node.props.ref) {
-				var
-				ref = node.props.ref
-
-				// we have a component and string ref
-				if (component && is(ref, __String)) {
-					// create the refs object if it doesn't already exist
-					component.refs = component.refs || {};
-					// set string refs
-					component.refs[ref] = element;
-				}
-				// function ref, execute and pass the element as a parameter
-				else if (is(ref, __Function)) {
-					ref(element);
-				}
-			}
-
+			// set refs
+			setRefs(node, element, component);
 			// diff and update/add/remove props
 			setElementProps(element, node.props);
 			// add events if any
@@ -746,6 +734,25 @@
 		node.dom = element;
 
 		return element;
+	}
+
+	function setRefs (node, element, component) {
+		if (node.props && node.props.ref) {
+			var
+			ref = node.props.ref;
+
+			// we have a component and string ref
+			if (component && is(ref, __String)) {
+				// create the refs object if it doesn't already exist
+				component.refs = component.refs || {};
+				// set string refs
+				component.refs[ref] = element;
+			}
+			// function ref, execute and pass the element as a parameter
+			else if (is(ref, __Function)) {
+				ref(element);
+			}
+		}
 	}
 
 	// check if props is event
@@ -931,13 +938,702 @@
 	}
 
 
+	/* --------------------------------------------------------------
+	 * 
+	 * lifecycle              - execute lifecycle methods
+	 * createRender           - create a render instance
+	 * createHyperscriptClass - create hyperscript class
+	 * createComponent        - create a component
+	 * componentClass         - components class / interface / blueprint
+	 * setProps               - update a components props
+	 * setState               - update a components state
+	 * withAttr               - two-way data binding helper
+	 * 
+	 * -------------------------------------------------------------- */
+
+
 	/**
-	 * ------------------------------------------------------------------------------------
-	 * 
-	 * </vdom to dom>
-	 * 
-	 * ------------------------------------------------------------------------------------
+	 * component lifecycle trigger
+	 * @param  {Object}         node  - component, or hyperscript
+	 * @param  {String}         state - stage of the lifecycle
+	 * @param  {Boolean|Object} props - weather to pass props to stage
+	 * @param  {Boolean|Object} state - weather to pass sate to stage
+	 * @params {Boolean}        isCmp - weather this is a component or not
 	 */
+	function lifecycle (node, stage, isComponent, props, state, wildcard) {
+		// end quickly
+		// if node is not from statefull component
+		if (
+			// no node
+			!node ||
+
+			// without .componentSignature and .render
+			// the hyperscript object is thus from
+			// a stateless component
+			(
+				node && 
+				node[__hyperscriptSignature] && 
+				!node[__hyperscriptSignature][__componentSignature] &&
+				!node.render
+			)
+		) {
+			return;
+		}
+
+		var 
+		component;
+		
+		// when we know that node is a component
+		// we passed isComponent as true
+		if (isComponent) {
+			component = node;
+		}
+		// node is a hyperscript object
+		// check if it has a component reference
+		else if (
+			node[__hyperscriptSignature] &&
+			node[__hyperscriptSignature][__componentSignature]
+		) {
+			component = node[__hyperscriptSignature][__componentSignature];
+		}
+
+		if (component && component[stage]) {
+			// is the props/state truthy? if so check if it is not a boolean
+			// if so default to the value in props/state passed, 
+			// if it is default to the components own props.
+			// if props/state is falsey value, 
+			// default to undefined
+
+			// props is either the value of the props passed as an argument
+			// or the value of the components
+			props = props || component.props,
+			state = state || component.state;
+
+			// componentShouldUpdate returns a Boolean
+			// so we publish the lifecycle return values
+			// which we can use in the vdomToDOM / update () function
+			// to see if we should skip an element or not
+			return component[stage](props, state, component, wildcard);
+		}
+	}
+
+
+	/**
+	 * creates a render interface
+	 * @return {Function}
+	 * @example
+	 * render = dio.createRender(Component, '.selector')
+	 * render()
+	 */
+	function createRender (component, element) {
+		// update
+		function update (props, children) {
+			// get a fresh copy of the vdom
+			newNode = component(props, children);
+			vdomToDOM(element, newNode, oldNode);
+			// this newNode = the next renders oldNode
+			oldNode = newNode;
+		}
+
+		// initial mount
+		function mount (props, children) {
+			// don't try to set it's internals if it's statless
+			if (!stateless && internal) {
+				// reference render, so we can then call this
+				// in this.setState
+				// this only applied to parent components passed to
+				// .createRender(here, ...);
+				if (!internal['render()']) {
+					internal['render()'] = update;	
+				}
+			}
+
+			// get a fresh copy of the vdom
+			newNode = component(props, children);
+			
+			// clear mount
+			if (newNode && !element.hasAttribute(__hydrateSignature)) {
+				// clear container
+				element.textContent = '';
+				// initial mount
+				vdomToDOM(element, newNode, __undefined, internal);
+			}
+			// hydration mount
+			else {
+				element.removeAttribute(__hydrateSignature);
+				hydrate(element, newNode, internal);
+			}
+
+			// this newNode is equal to the next renders oldNode
+			oldNode = newNode;
+			// publish that the initial mount has taken place
+			initial = __false;
+		}
+
+		// return function that runs update/mount when executed
+		function render (props, children, forceUpdate) {
+			// don't render to dom, if vdom is requested
+			if (forceUpdate === __componentSignature) {
+				return component(props, children);
+			}
+			
+			// initial render
+			if (initial || forceUpdate) {
+				// mount and publish that the initial render has taken place
+				mount(props, children);
+			}
+			// updates
+			else {
+				update(props, children);
+			}
+
+			return render;
+		}
+
+		render.id = __renderSignature;
+
+		var
+		component,
+		newNode,
+		oldNode,
+		element,
+		internal,
+		stateless,
+		initial = __true;
+
+		component = createComponent(component);
+		element = (element && element.nodeType) ? element : __document.querySelector(element);
+
+		// default element to body
+		if (!element || element === __document) {
+			element = __document.body;
+		}
+
+		// a component exists
+		if (component) {
+			// determine if the component is stateless
+			if (component.stateless) {
+				stateless = __true;
+			}
+
+			// don't try to get it's internals if it's stateless
+			if (!stateless) {
+				internal = component(__undefined, __undefined, __true);
+			}
+
+			return render;
+		}
+		// can't find a component
+		else {
+			throw 'can\'t find the component';
+		}
+	}
+
+	/**
+	 * hyperscript class
+	 * @param  {Array} args arugments to add to the prototype object
+	 * @return {Function}
+	 */
+	function createHyperscriptClass (args) {
+		// interface
+		function h (obj) {
+			if (!obj) {
+				throw 'not a hyperscript';
+			}
+
+			var 
+			self = this;
+
+			self.type        = obj.type,
+			self.props       = obj.props,
+			self[__children] = obj[__children];
+		}
+
+		// data placeholder for storing internal data
+		h[__prototype][__hyperscriptSignature] = {};
+
+		if (args) {
+			each(args, function (value, index) {
+				h[__prototype][__hyperscriptSignature][value[0]] = value[1];
+			});
+		}
+
+		// we want the constructor of the resulting created object
+		// from new hyperscript()... to be the Object interface
+		// and not our h () interface above
+		h[__prototype][__constructor] = __Object;
+
+		return h;
+	}
+
+
+	/**
+	 * creates a component
+	 * @param  {Function|Object} arg - component
+	 * @return {Function}
+	 */
+	function createComponent (arg) {
+		var 
+		obj,
+		displayName;
+
+		// maybe the arg is a function that returns an object
+		if (is(arg, __Function)) {
+			// already a component
+			if (arg.id === __componentSignature) {
+				return arg;
+			}
+
+			obj = arg();
+
+			if (!obj) {
+				throw 'no render'
+			}
+			// a stateless component
+			// we assume it returns a hyperscript object
+			// rather than a render method
+			else if (!obj.render) {
+				arg.stateless = __true
+				return arg;
+			}
+
+			// get displayName from function
+			// i.e a function Foo () { ... } // => Foo
+ 			displayName = /function ([^(]*)/.exec(arg.valueOf())[1];
+		}
+		// we have an object
+		else if (is(arg, __Object)) {
+			// does the object have a render method
+			// if not create one that returns 'arg' which we 
+			// assume is a hyperscript object thus a stateless component
+			if (arg.render) {
+				obj = arg;
+			}
+			// stateless
+			else {
+				var 
+				statelessComponent = function () { 
+					return arg;
+				};
+				statelessComponent.stateless = __true;
+
+				return statelessComponent;
+			}
+		}
+		else {
+			throw 'invalid component';
+		}
+
+
+		// everything checks out i.e
+		// - obj has a render method
+		// - or arg() returns an object that has a render method
+		// stateless components never reach here
+		// 
+		// create new component object 
+		var
+		component = new componentClass(displayName);
+
+		// add the properties to the component instance
+		// also bind functions to the component scope
+		each(obj, function (value, name) {
+			// methods
+			if (is(value, __Function)) {
+				// pass props and state to render
+				if (name !== 'render') {
+					component[name] = value.bind(component);
+				}
+			}
+			// objects
+			else {
+				component[name] = value;
+			}
+		});
+
+		// set initial state
+		if (component[__getInitialState]) {
+			component.state = component[__getInitialState]();
+		}
+		// set default props
+		if (component[__getDefaultProps]) {
+			component.props = component[__getDefaultProps]();
+		}
+
+		// creates a hyperscript class
+		// with the passed values in the array as it's prototypes
+		var 
+		h = createHyperscriptClass([
+			[__componentSignature, component], 
+			[__shouldComponentUpdate, __true]
+		]);
+
+		// get the render method
+		var
+		render = obj.render.bind(component, component.props, component.state, component);
+
+		// insure the render function returns the newly
+		// created hyperscript object
+		component.render = function () {
+			return new h(render());
+		}
+
+		// hyperscript cache
+		var
+		cache;
+
+		// we will return a function that when called
+		// returns the components vdom representation
+		// i.e User(props) -> {type: 'div', props: {..props}, children: ...}
+		// this is that function
+		function Component (props, children, internal) {
+			if (internal) {
+				return component;
+			}
+
+			// add children to props if set
+			if (children) {
+				props = props || {};
+				props[__children] = children;
+			}
+
+			// make sure this is not the first render
+			// if it is there will be no cached copy
+			if (cache) {
+				// shouldComponentUpdate?
+				// if false, add signal, and return cached copy
+				if (
+					component[__shouldComponentUpdate] === __false ||
+					lifecycle(component, __shouldComponentUpdate, __true, props) === __false
+				) {
+					cache[__hyperscriptSignature][__shouldComponentUpdate] = __false;
+					return cache;
+				}
+				else {
+					cache[__hyperscriptSignature][__shouldComponentUpdate] = __true;
+				}
+			}
+
+			// publish componentWillReceiveProps lifecycle
+			if (props) {
+				lifecycle(component, __componentWillReceiveProps, __true, props);
+				// set props
+				setProps(component, props);
+			}
+
+			cache = component.render();
+			return cache;
+		}
+		Component.id = __componentSignature;
+
+		return Component;
+	}
+
+
+	/**
+	 * component interface
+	 */
+	function componentClass (displayName) {
+		// immutable internal props & state
+		this.props = {},
+		this.state = {};
+
+		// add displayName if available
+		// this will make for better debugging
+		if (displayName) {
+			this.displayName = displayName;
+		}
+	}
+
+	/**
+	 * component interface methods
+	 */
+	componentClass[__prototype] = {
+		// i.e this.setState({})
+		setState: function (data, self) {
+			// this allows us to run setState
+			// from outside the components namespace
+			// i.e this.setState({}, context)
+			self = self || this;
+
+			// set state
+			// if the state is changed
+			// setState will return true
+			// thus force and update when
+			// that happens
+			if (setState(self, data)) {
+				// update render
+				self.forceUpdate();
+			}
+		},
+		// i.e this.setProps({})
+		setProps: function (data, self) {
+			// same thing
+			self = self || this;
+
+			// set props does not trigger an redraw/update
+			setProps(self, data);
+		},
+		// force update public method
+		forceUpdate: function (self) {
+			self = self || this;
+
+			// update only if this component is a render instance
+			if (self['render()']) {
+				self['render()']();
+			}
+		},
+		withAttr: function (props, setters, callback, self) {
+			self = self || this;
+
+			if (!is(callback, __Function)) {
+				callback = function () {
+					self.forceUpdate.call(self);
+				}
+			}
+
+			return withAttr(props, setters, callback.bind(self))
+		}
+	}
+
+
+	/**
+	 * set/update a components props
+	 * @param {Object} self components object
+	 * @param {Object} data data with which to update the components props
+	 */
+	function setProps (self, data) {
+		// assign props to {} if it's undefined
+		self.props = self.props || {};
+
+		// if the object is a function that returns an object
+		if (is(data, __Function)) {
+			data = data();
+		}
+
+		if (data) {
+			// set props
+			each(data, function (value, name) {
+				self.props[name] = value;
+			});
+		}
+	}
+
+
+	/**
+	 * set/update a components state
+	 * @param {Object} self components object
+	 * @param {Object} data data with which to update the components state
+	 */
+	function setState (self, data) {
+		// assign state to {} if it's undefined
+		self.state = self.state || {};
+
+		// if the object is a function that returns an object
+		if (is(data, __Function)) {
+			data = data();
+		}
+
+		// make sure we have something to update
+		if (data) {
+			// set state
+			each(data, function (value, name) {
+				self.state[name] = value;
+			});
+
+			return __true;
+		}
+	}
+
+
+	/**
+	 * two-way data binding, not to be confused with Function.bind
+	 * @param  {String|String[]} props      - the property/attr to look for in the element
+	 * @param  {Function|Function[]} setter - the object to update/setter to execute
+	 * 
+	 * @example
+	 * 
+	 * direction of binding element ----> setter
+	 * this.withAttr(['prop1-from-el', 'prop2-from-el'], to-prop1-setter, to-prop2-setter)
+	 * direction of binding element <---- setter
+	 * this.withAttr([to-prop1-setter, to-prop2-setter], ['prop1-from-el', 'prop2-from-el'])
+	 *
+	 * setters are always an array of: functions
+	 * and element props: strings
+	 */
+	function withAttr (props, setters, callback) {
+		function update (el, prop, setter) {
+			var
+			value;
+
+			// prop is a string, get value from element
+			if (is(prop, __String)) {
+				// get key from element
+				// either the prop is a property of the element object
+				// or an attribute
+				value = (prop in el) ? el[prop] : el.getAttribute(prop);
+
+				// just an <if(value)> doesn't work since the value can be false
+				// null or undefined = prop/attr doesn't exist
+				if (value !== __undefined && value !== __null) {
+					// run the setter
+					setter(value);
+				}
+			}
+			// setter is a string, get value from stream
+			else {
+				value = prop()
+				
+				if (value !== __undefined && value !== __null) {
+					(setter in el) ? el[setter] = value : el.setAttribute(setter, value);
+				}
+			}
+		}
+
+		// the idea is that when you attach a function to an event,
+		// i.e el.addEventListener('eventName', fn)
+		// when that event is dispatched the function will execute
+		// making the this context of this function the element 
+		// that the event was attached to
+		// we can then extract the value, and run the prop setter(value)
+		// to change it's value
+		return function () {
+			// assign element
+			var 
+			el  = this;
+
+			// array of bindings
+			if (is(props, __Array)) {
+				each(props, function(value, index) {
+					update(el, value, setters[index]);
+				});
+			}
+			// singles
+			else {
+				update(el, props, setters);
+			}
+
+			// execute callback if specified
+			if (callback) {
+				callback()
+			}
+		}
+	}
+
+
+	/* --------------------------------------------------------------
+	 * 
+	 * animateWith  - animation helper
+	 * request      - http helper
+	 * createStore  - redux-like store
+	 * createRouter - router helper
+	 * createStream - create stream
+	 * createHTML   - ouput html from vdom
+	 * createStyle  - create stylesheet
+	 * curry        - curry helper
+	 * 
+	 * -------------------------------------------------------------- */
+
+
+	/**
+	 * classList helper
+	 * @param  {Element} element
+	 * @param  {String}  value
+	 * @return {Object} {add, remove, toggle, hasClass}
+	 */
+	function classList (type, element, className) {
+		/**
+		 * check if the element has the class/className
+		 * @param  {Element}  element   - target element
+		 * @param  {String}   className - className to check for
+		 * @return {Boolean}
+		 */
+		function hasClass (element, className) {
+			// default to native Element.classList()
+		    if (element[__classList]) {
+		        return element[__classList].contains(className);
+		    } 
+		    else {
+		    	// this will return true if indexOf does not
+		    	// find our class in the className string 
+		        return element[__className].indexOf(className) > -1;
+		    }
+		}
+
+		/**
+		 * add a className to an element
+		 * @param  {Element}  element   - target element
+		 * @param  {String}   className - className to add
+		 */
+		function add (element, className) {
+			// default to native Element.classList.remove()
+			if (element[__classList]) {
+		        element[__classList].add(className);
+		    }
+		    // exit early if the class is already added
+		    else if (!hasClass(element, className)) {
+		    	// create array of current classList
+		        var 
+		        classes = element[__className].split(" ");
+		        // add our new class
+		        classes.push(className);
+		        // join our classes array and re-assign to className
+		        element[__className] = classes.join(" ")
+		    }
+		}
+
+		/**
+		 * remove a className from an element
+		 * @param  {Element}  element   - target element
+		 * @param  {String}   className - className to remove
+		 */
+		function remove (element, className) {
+			// default to native Element.classList.remove()
+		    if (element[__classList]) {
+		        element[__classList].remove(className);
+		    }
+		    else {
+		    	// create array of current classList
+		        var
+		        classes = element[__className].split(" ");
+		        // remove the className on this index
+		        classes.splice(classes.indexOf(className), 1);
+		        // join our classes array and re-ssign to className
+		        element[__className] = classes.join(" ");
+		    }
+		}
+
+		/**
+		 * toggle a className on an element
+		 * @param  {Element}  element   - target element
+		 * @param  {String}   className - classname to toggle
+		 */
+		function toggle (element, className) {
+			// default to native Element.classList.toggle()
+		    if (element[__classList]) {
+		        element[__classList].toggle(className);
+		    }
+		    else {
+		    	// if has class, remove
+		    	if (hasClass(element, className)) {
+		    		remove(element, className);
+		    	}
+		    	// if does not have class, add
+		    	else {
+		    		add(element, className);
+		    	}
+		    }
+		}
+
+		var 
+		methods = {
+			add: add,
+			remove: remove,
+			hasClass: hasClass,
+			toggle: toggle
+		};
+
+		return methods[type](element, className);
+	}
 
 
 	/**
@@ -1245,108 +1941,6 @@
 
 
 	/**
-	 * classList helper
-	 * @param  {Element} element
-	 * @param  {String}  value
-	 * @return {Object} {add, remove, toggle, hasClass}
-	 */
-	function classList (type, element, className) {
-		/**
-		 * check if the element has the class/className
-		 * @param  {Element}  element   - target element
-		 * @param  {String}   className - className to check for
-		 * @return {Boolean}
-		 */
-		function hasClass (element, className) {
-			// default to native Element.classList()
-		    if (element[__classList]) {
-		        return element[__classList].contains(className);
-		    } 
-		    else {
-		    	// this will return true if indexOf does not
-		    	// find our class in the className string 
-		        return element[__className].indexOf(className) > -1;
-		    }
-		}
-
-		/**
-		 * add a className to an element
-		 * @param  {Element}  element   - target element
-		 * @param  {String}   className - className to add
-		 */
-		function add (element, className) {
-			// default to native Element.classList.remove()
-			if (element[__classList]) {
-		        element[__classList].add(className);
-		    }
-		    // exit early if the class is already added
-		    else if (!hasClass(element, className)) {
-		    	// create array of current classList
-		        var 
-		        classes = element[__className].split(" ");
-		        // add our new class
-		        classes.push(className);
-		        // join our classes array and re-assign to className
-		        element[__className] = classes.join(" ")
-		    }
-		}
-
-		/**
-		 * remove a className from an element
-		 * @param  {Element}  element   - target element
-		 * @param  {String}   className - className to remove
-		 */
-		function remove (element, className) {
-			// default to native Element.classList.remove()
-		    if (element[__classList]) {
-		        element[__classList].remove(className);
-		    }
-		    else {
-		    	// create array of current classList
-		        var
-		        classes = element[__className].split(" ");
-		        // remove the className on this index
-		        classes.splice(classes.indexOf(className), 1);
-		        // join our classes array and re-ssign to className
-		        element[__className] = classes.join(" ");
-		    }
-		}
-
-		/**
-		 * toggle a className on an element
-		 * @param  {Element}  element   - target element
-		 * @param  {String}   className - classname to toggle
-		 */
-		function toggle (element, className) {
-			// default to native Element.classList.toggle()
-		    if (element[__classList]) {
-		        element[__classList].toggle(className);
-		    }
-		    else {
-		    	// if has class, remove
-		    	if (hasClass(element, className)) {
-		    		remove(element, className);
-		    	}
-		    	// if does not have class, add
-		    	else {
-		    		add(element, className);
-		    	}
-		    }
-		}
-
-		var 
-		methods = {
-			add: add,
-			remove: remove,
-			hasClass: hasClass,
-			toggle: toggle
-		};
-
-		return methods[type](element, className);
-	}
-
-
-	/**
 	 * request interface
 	 * @param {String}  url, 
 	 * @param {Any}     payload, 
@@ -1547,137 +2141,6 @@
 		request.delete = create('DELETE');
 
 		return request;
-	}
-
-
-	/**
-	 * server-side interface converts a hyperscript/component/render to html string
-	 * @param {Object} hyperscript - hyperscript object/render/component
-	 * @param {Object} props - props to pass to component/render
-	 * @param {Object} children - children to pass to component/render
-	 * @return {String} html string ouput
-	 *
-	 * @example
-	 * createHTML(h('div', 'Hello World'));
-	 * createHTML(component/render, {id:1234}, {item:'first'});
-	 */
-	function createHTML (arg, props, children) {
-		// print node
-		function toHTML (vnode, level) {
-			// not a hyperscript object
-			if (is(vnode, __String)) {
-				return vnode;
-			}
-
-			// references
-			var 
-			// i.e 'div'
-			type = vnode.type,
-			// i.e {id: 123, class: 'one two'}
-			props = vnode.props,
-			// i.e [obj, obj]
-			children = vnode[__children];
-
-			// print voidElements
-			if (element[type]) {
-				// <type ...props>
-				return '<'+type+Props(props)+'>';
-			}
-
-			// otherwise...
-			// <type ...props>...children</type>
-			return '<'+type+ Props(props) +'>' + Children(children, level) + '</'+type+'>';
-		}
-
-		// print props
-		function Props (props) {
-			props = __Object.keys(props)
-							// remove any falsey value
-							.filter(function (name) {
-								return  props[name] !== __undefined &&
-										props[name] !== __null &&
-										props[name] !== __false
-							})
-							// 
-							.map(function (name) {
-								// <type name="value">
-								var 
-								value = props[name];
-
-								// don't add events, keys or refs
-								if (!is(value, __Function) && name !== 'key' && name !== 'ref') {
-									// if the value is a falsey/truefy value
-									// print just the name
-									// i.e checkbox=true
-									// will print <type checkbox>
-									// otherwise <type value="">
-									return value === __true ? name : name+'="'+value+'"';
-								}
-							})
-							// create string, remove trailing space
-							// <type ...props > => <type ...props>
-							.join(' ').replace(/\s+$/g, '');
-
-			// if props is falsey just return an empty string
-			// otherwise return ' ' + ...props
-			// this prevents us from having a case of
-			// <divclass=a></div>, 
-			// so we add a space before props giving us
-			// <div class=a></div>
-			return props ? (' ' + props) : '';
-		}
-
-		// print children
-		function Children (children, level) {
-			// empty
-			if (children[__length] === 0) {
-				return '';
-			}
-
-			// indent level
-			level      = level || 0;
-
-			// print tabs
-			var 
-			indent     = '\t'.repeat(level + 1),
-			lastIndent = '\t'.repeat(level);
-
-			// iterate through and print each child
-			return '\n'+indent+children.map(function (child) {
-				return toHTML(child, level + 1);
-			}).join('\n'+indent)+'\n'+lastIndent;
-		}
-
-		// void elements that do not have a close </tag> 
-		var
-		element = {
-			'area': __true,'base':  __true,'br':    __true,'!doctype': __true,
-			'col':  __true,'embed': __true,'wbr':   __true,'track':    __true,
-			'hr':   __true,'img':   __true,'input': __true,'keygen':   __true,
-			'link': __true,'meta':  __true,'param': __true,'source':   __true
-		};
-
-		var
-		vnode;
-
-		// either a render function or component function
-		if (is(arg, __Function)) {
-			// component functions expose their internals
-			// when we pass a third param, on the other hand
-			// render functions expose their hyperscript output
-			// when we pass a third param
-			vnode = arg(
-				props, 
-				children, 
-				(arg.id === __componentSignature) ? __undefined : __componentSignature
-			)
-		}
-		// probably hyperscript
-		else {
-			vnode = arg;
-		}
-
-		return toHTML(vnode);
 	}
 
 
@@ -1973,500 +2436,6 @@
 
 
 	/**
-	 * creates a render interface
-	 * @return {Function}
-	 * @example
-	 * render = dio.createRender(Component, '.selector')
-	 * render()
-	 */
-	function createRender (component, element) {
-		// update
-		function update (props, children) {
-			// get a fresh copy of the vdom
-			newNode = component(props, children);
-			vdomToDOM(element, newNode, oldNode);
-			// this newNode = the next renders oldNode
-			oldNode = newNode;
-		}
-
-		// initial mount
-		function mount (props, children) {
-			// don't try to set it's internals if it's statless
-			if (!stateless && internal) {
-				// reference render, so we can then call this
-				// in this.setState
-				// this only applied to parent components passed to
-				// .createRender(here, ...);
-				if (!internal['render()']) {
-					internal['render()'] = update;	
-				}
-			}
-
-			// get a fresh copy of the vdom
-			newNode = component(props, children);
-
-			// clear dom
-			element.textContent = '';
-
-			if (newNode) {
-				vdomToDOM(element, newNode, __undefined, internal);
-				// this newNode = the next renders oldNode
-				oldNode = newNode;
-				initial = __false;
-			}
-		}
-
-		// return function that runs update/mount when executed
-		function render (props, children, forceUpdate) {
-			// don't render to dom, if vdom is requested
-			if (forceUpdate === __componentSignature) {
-				return component(props, children);
-			}
-			
-			// initial render
-			if (initial || forceUpdate) {
-				// mount and publish that the initial render has taken place
-				mount(props, children);
-			}
-			// updates
-			else {
-				update(props, children);
-			}
-
-			return render;
-		}
-
-		render.id = __renderSignature;
-
-		var
-		component,
-		newNode,
-		oldNode,
-		element,
-		internal,
-		stateless,
-		initial = __true;
-
-		component = createComponent(component);
-		element = (element && element.nodeType) ? element : __document.querySelector(element);
-
-		// default element to body
-		if (!element || element === __document) {
-			element = __document.body;
-		}
-
-		// a component exists
-		if (component) {
-			// determine if the component is stateless
-			if (component.stateless) {
-				stateless = __true;
-			}
-
-			// don't try to get it's internals if it's stateless
-			if (!stateless) {
-				internal = component(__undefined, __undefined, __true);
-			}
-
-			return render;
-		}
-		// can't find a component
-		else {
-			throw 'can\'t find the component';
-		}
-	}
-
-	/**
-	 * hyperscript class
-	 * @param  {Array} args arugments to add to the prototype object
-	 * @return {Function}
-	 */
-	function getHyperscriptClass (args) {
-		// interface
-		function h (obj) {
-			if (!obj) {
-				throw 'not a hyperscript';
-			}
-
-			var 
-			self = this;
-
-			self.type        = obj.type,
-			self.props       = obj.props,
-			self[__children] = obj[__children];
-		}
-
-		// data placeholder for storing internal data
-		h[__prototype][__hyperscriptSignature] = {};
-
-		if (args) {
-			each(args, function (value, index) {
-				h[__prototype][__hyperscriptSignature][value[0]] = value[1];
-			});
-		}
-
-		// we want the constructor of the resulting created object
-		// from new hyperscript()... to be the Object interface
-		// and not our h () interface above
-		h[__prototype][__constructor] = __Object;
-
-		return h;
-	}
-
-
-	/**
-	 * creates a component
-	 * @param  {Function|Object} arg - component
-	 * @return {Function}
-	 */
-	function createComponent (arg) {
-		var 
-		obj,
-		displayName;
-
-		// maybe the arg is a function that returns an object
-		if (is(arg, __Function)) {
-			// already a component
-			if (arg.id === __componentSignature) {
-				return arg;
-			}
-
-			obj = arg();
-
-			if (!obj) {
-				throw 'no render'
-			}
-			// a stateless component
-			// we assume it returns a hyperscript object
-			// rather than a render method
-			else if (!obj.render) {
-				arg.stateless = __true
-				return arg;
-			}
-
-			// get displayName from function
-			// i.e a function Foo () { ... } // => Foo
- 			displayName = /function ([^(]*)/.exec(arg.valueOf())[1];
-		}
-		// we have an object
-		else if (is(arg, __Object)) {
-			// does the object have a render method
-			// if not create one that returns 'arg' which we 
-			// assume is a hyperscript object thus a stateless component
-			if (arg.render) {
-				obj = arg;
-			}
-			// stateless
-			else {
-				var 
-				statelessComponent = function () { 
-					return arg;
-				};
-				statelessComponent.stateless = __true;
-
-				return statelessComponent;
-			}
-		}
-		else {
-			throw 'invalid component';
-		}
-
-
-		// everything checks out i.e
-		// - obj has a render method
-		// - or arg() returns an object that has a render method
-		// stateless components never reach here
-		// 
-		// create new component object 
-		var
-		component = new componentClass(displayName);
-
-		// add the properties to the component instance
-		// also bind functions to the component scope
-		each(obj, function (value, name) {
-			// methods
-			if (is(value, __Function)) {
-				// pass props and state to render
-				if (name !== 'render') {
-					component[name] = value.bind(component);
-				}
-			}
-			// objects
-			else {
-				component[name] = value;
-			}
-		});
-
-		// set initial state
-		if (component[__getInitialState]) {
-			component.state = component[__getInitialState]();
-		}
-		// set default props
-		if (component[__getDefaultProps]) {
-			component.props = component[__getDefaultProps]();
-		}
-
-		// creates a hyperscript class
-		// with the passed values in the array as it's prototypes
-		var 
-		h = getHyperscriptClass([
-			[__componentSignature, component], 
-			[__shouldComponentUpdate, __true]
-		]);
-
-		// get the render method
-		var
-		render = obj.render.bind(component, component.props, component.state, component);
-
-		// insure the render function returns the newly
-		// created hyperscript object
-		component.render = function () {
-			return new h(render());
-		}
-
-		// hyperscript cache
-		var
-		cache;
-
-		// we will return a function that when called
-		// returns the components vdom representation
-		// i.e User(props) -> {type: 'div', props: {..props}, children: ...}
-		// this is that function
-		function Component (props, children, internal) {
-			if (internal) {
-				return component;
-			}
-
-			// add children to props if set
-			if (children) {
-				props = props || {};
-				props[__children] = children;
-			}
-
-			// make sure this is not the first render
-			// if it is there will be no cached copy
-			if (cache) {
-				// shouldComponentUpdate?
-				// if false, add signal, and return cached copy
-				if (
-					component[__shouldComponentUpdate] === __false ||
-					lifecycle(component, __shouldComponentUpdate, __true, props) === __false
-				) {
-					cache[__hyperscriptSignature][__shouldComponentUpdate] = __false;
-					return cache;
-				}
-				else {
-					cache[__hyperscriptSignature][__shouldComponentUpdate] = __true;
-				}
-			}
-
-			// publish componentWillReceiveProps lifecycle
-			if (props) {
-				lifecycle(component, __componentWillReceiveProps, __true, props);
-				// set props
-				setProps(component, props);
-			}
-
-			cache = component.render();
-			return cache;
-		}
-		Component.id = __componentSignature;
-
-		return Component;
-	}
-
-
-	/**
-	 * component interface
-	 */
-	function componentClass (displayName) {
-		// immutable internal props & state
-		this.props = {},
-		this.state = {};
-
-		// add displayName if available
-		// this will make for better debugging
-		if (displayName) {
-			this.displayName = displayName;
-		}
-	}
-
-	/**
-	 * component interface methods
-	 */
-	componentClass[__prototype] = {
-		// i.e this.setState({})
-		setState: function (data, self) {
-			// this allows us to run setState
-			// from outside the components namespace
-			// i.e this.setState({}, context)
-			self = self || this;
-
-			// set state
-			// if the state is changed
-			// setState will return true
-			// thus force and update when
-			// that happens
-			if (setState(self, data)) {
-				// update render
-				self.forceUpdate();
-			}
-		},
-		// i.e this.setProps({})
-		setProps: function (data, self) {
-			// same thing
-			self = self || this;
-
-			// set props does not trigger an redraw/update
-			setProps(self, data);
-		},
-		// force update public method
-		forceUpdate: function (self) {
-			self = self || this;
-
-			// update only if this component is a render instance
-			if (self['render()']) {
-				self['render()']();
-			}
-		},
-		withAttr: function (props, setters, callback, self) {
-			self = self || this;
-
-			if (!is(callback, __Function)) {
-				callback = function () {
-					self.forceUpdate.call(self);
-				}
-			}
-
-			return withAttr(props, setters, callback.bind(self))
-		}
-	}
-
-
-	/**
-	 * set/update a components props
-	 * @param {Object} self components object
-	 * @param {Object} data data with which to update the components props
-	 */
-	function setProps (self, data) {
-		// assign props to {} if it's undefined
-		self.props = self.props || {};
-
-		// if the object is a function that returns an object
-		if (is(data, __Function)) {
-			data = data();
-		}
-
-		if (data) {
-			// set props
-			each(data, function (value, name) {
-				self.props[name] = value;
-			});
-		}
-	}
-
-
-	/**
-	 * set/update a components state
-	 * @param {Object} self components object
-	 * @param {Object} data data with which to update the components state
-	 */
-	function setState (self, data) {
-		// assign state to {} if it's undefined
-		self.state = self.state || {};
-
-		// if the object is a function that returns an object
-		if (is(data, __Function)) {
-			data = data();
-		}
-
-		// make sure we have something to update
-		if (data) {
-			// set state
-			each(data, function (value, name) {
-				self.state[name] = value;
-			});
-
-			return __true;
-		}
-	}
-
-
-	/**
-	 * two-way data binding, not to be confused with Function.bind
-	 * @param  {String|String[]} props      - the property/attr to look for in the element
-	 * @param  {Function|Function[]} setter - the object to update/setter to execute
-	 * 
-	 * @example
-	 * 
-	 * direction of binding element ----> setter
-	 * this.withAttr(['prop1-from-el', 'prop2-from-el'], to-prop1-setter, to-prop2-setter)
-	 * direction of binding element <---- setter
-	 * this.withAttr([to-prop1-setter, to-prop2-setter], ['prop1-from-el', 'prop2-from-el'])
-	 *
-	 * setters are always an array of: functions
-	 * and element props: strings
-	 */
-	function withAttr (props, setters, callback) {
-		function update (el, prop, setter) {
-			var
-			value;
-
-			// prop is a string, get value from element
-			if (is(prop, __String)) {
-				// get key from element
-				// either the prop is a property of the element object
-				// or an attribute
-				value = (prop in el) ? el[prop] : el.getAttribute(prop);
-
-				// just an <if(value)> doesn't work since the value can be false
-				// null or undefined = prop/attr doesn't exist
-				if (value !== __undefined && value !== __null) {
-					// run the setter
-					setter(value);
-				}
-			}
-			// setter is a string, get value from stream
-			else {
-				value = prop()
-				
-				if (value !== __undefined && value !== __null) {
-					(setter in el) ? el[setter] = value : el.setAttribute(setter, value);
-				}
-			}
-		}
-
-		// the idea is that when you attach a function to an event,
-		// i.e el.addEventListener('eventName', fn)
-		// when that event is dispatched the function will execute
-		// making the this context of this function the element 
-		// that the event was attached to
-		// we can then extract the value, and run the prop setter(value)
-		// to change it's value
-		return function () {
-			// assign element
-			var 
-			el  = this;
-
-			// array of bindings
-			if (is(props, __Array)) {
-				each(props, function(value, index) {
-					update(el, value, setters[index]);
-				});
-			}
-			// singles
-			else {
-				update(el, props, setters);
-			}
-
-			// execute callback if specified
-			if (callback) {
-				callback()
-			}
-		}
-	}
-
-
-	/**
 	 * streams utility getter/setter
 	 * @param {Any} store value
 	 * @param {Function} processor
@@ -2728,6 +2697,130 @@
 				resolve(accumulator);
 			});
 		});
+	}
+
+
+	/**
+	 * server-side interface converts a hyperscript/component/render to html string
+	 * @param {Object} hyperscript - hyperscript object/render/component
+	 * @param {Object} props - props to pass to component/render
+	 * @param {Object} children - children to pass to component/render
+	 * @return {String} html string ouput
+	 *
+	 * @example
+	 * createHTML(h('div', 'Hello World'));
+	 * createHTML(component/render, {id:1234}, {item:'first'});
+	 */
+	function createHTML (arg, props, children) {
+		// print node
+		function toHTML (vnode, level) {
+			// not a hyperscript object
+			if (is(vnode, __String)) {
+				return vnode;
+			}
+
+			// references
+			var 
+			// i.e 'div'
+			type = vnode.type,
+			// i.e {id: 123, class: 'one two'}
+			props = vnode.props,
+			// i.e [obj, obj]
+			children = vnode[__children];
+
+			// print voidElements
+			if (element[type]) {
+				// <type ...props>
+				return '<'+type+Props(props)+'>';
+			}
+
+			// otherwise...
+			// <type ...props>...children</type>
+			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
+		}
+
+		// print props
+		function Props (props) {
+			props = __Object.keys(props)
+							// remove any falsey value
+							.filter(function (name) {
+								return  props[name] !== __undefined &&
+										props[name] !== __null &&
+										props[name] !== __false
+							})
+							// 
+							.map(function (name) {
+								// <type name="value">
+								var 
+								value = props[name];
+
+								// don't add events, keys or refs
+								if (!is(value, __Function) && name !== 'key' && name !== 'ref') {
+									// if the value is a falsey/truefy value
+									// print just the name
+									// i.e checkbox=true
+									// will print <type checkbox>
+									// otherwise <type value="">
+									return value === __true ? name : name+'="'+value+'"';
+								}
+							})
+							// create string
+							.join(' ')
+							// convert all multi-spaces to a single space
+							.replace(/  +/g, ' ')
+							.trim();
+
+			// if props is falsey just return an empty string
+			// otherwise return ' ' + ...props
+			// this prevents us from having a case of
+			// <divclass=a></div>, 
+			// so we add a space before props giving us
+			// <div class=a></div>
+			return props ? (' ' + props) : '';
+		}
+
+		// print children
+		function Children (children) {
+			// empty
+			if (children[__length] === 0) {
+				return '';
+			}
+
+			return children.map(function (child) {
+				return toHTML(child);
+			}).join('');
+		}
+
+		// void elements that do not have a close </tag> 
+		var
+		element = {
+			'area': __true,'base':  __true,'br':    __true,'!doctype': __true,
+			'col':  __true,'embed': __true,'wbr':   __true,'track':    __true,
+			'hr':   __true,'img':   __true,'input': __true,'keygen':   __true,
+			'link': __true,'meta':  __true,'param': __true,'source':   __true
+		};
+
+		var
+		vnode;
+
+		// either a render function or component function
+		if (is(arg, __Function)) {
+			// component functions expose their internals
+			// when we pass a third param, on the other hand
+			// render functions expose their hyperscript output
+			// when we pass a third param
+			vnode = arg(
+				props, 
+				children, 
+				(arg.id === __componentSignature) ? __undefined : __componentSignature
+			)
+		}
+		// probably hyperscript
+		else {
+			vnode = arg;
+		}
+
+		return toHTML(vnode);
 	}
 
 
@@ -3099,12 +3192,13 @@
 
 	/* --------------------------------------------------------------
 	 * 
-	 * Exports
+	 * exports
 	 * 
 	 * -------------------------------------------------------------- */
 
 
-	exports.h = element();
+	exports.h = h(),
+
 	exports.dio = {
 		request:         request(),
 		curry:           curry,

@@ -464,10 +464,13 @@ store.connect(render: {Function|Object}, element: '.myapp')
 
 Like the name suggests this methods outputs the html 
 of a specific component/render instance with the props passed
-to it
+to it, this is normally used within the context of server-side rendering.
+When used add the attribute `data-hydrate=true` to the container
+you wish to ouput the html, this will tell dio to not
+initialize a fresh mount and rather hydrate the current dom.
 
 ```javascript
-dio.createHTML(component, props, children)
+dio.createHTML(component, props, children);
 // you can also use this on plain hyperscript objects, as in
 dio.createHTML(h('div', 'Text'));
 ```
