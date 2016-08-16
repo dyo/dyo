@@ -505,6 +505,45 @@ dio.createStyle({'p': {color:'red'}}, '#id');
 
 ---
 
+## dio.createFactory
+
+```javascript
+dio.createFactory(any[]|...arguments);
+```
+
+exposes a function to the window that produces a hyperscript elements of a given type.
+
+If the last argument is a Boolean true 
+the element factories are added to the global namespace
+otherwise an object of the element factories are returned.
+
+If only one element is specified, only that factory is returned and not an object,
+if this is coupled with true as the second argument, the factory is added to
+the global namespace instead.
+
+```javascript
+dio.createFactory('div', 'input', true);
+
+// now instead of
+h('div', 'Hello World');
+// i can instead do
+div('Hello World');
+// and
+input({value: 'empty'});
+
+// multiple elements
+dio.createFactory('div', 'input', true);
+// or
+var {div, input} = dio.createFactory('div', 'input');
+
+// single element
+var div = dio.createFactory('div');
+// or
+dio.createFactory('div', true);
+```
+
+---
+
 ## dio.request
 
 make ajax requests

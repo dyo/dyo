@@ -37,12 +37,18 @@ You can also play with dio.js on this [jsbin](http://jsbin.com/lobavo/edit?js,ou
 
 # Getting Started
 
-Dio is a lightweight (~7kb) Virtual DOM framework 
-built around the concept that any function/object can be a component.
+Dio is the smallest (~7kb) full feature Virtual DOM framework
+built around the concept that any function/object can become a component.
 
-Components in Dio share the same api's as react components with a few additions.
-This getting started guide will show you how to go from zero to hello world.
+Components in Dio share the same api's as react with a few additions, 
+this means that you can easily port both ways between Dio and React as and when needed
+without any significant changes to the code base, 
+the minimal change in most cases being a simple `React, ReactDOM = dio`.
 
+Having said that dio can be used as just a "view" library but it does come
+self containeed with everything you would need to build an application.
+
+In that respect this getting started guide aims to show you how to go from zero to hello world in Dio.
 
 ## Hello world
 
@@ -199,6 +205,10 @@ h('div', {innerHTML: "<script>alert('hello')</script>"});
 
 ```javascript
 dio.createComponent({Function|Object})
+// or
+dio.createClass({Function|Object})
+// or
+dio.Component({Function|Object})
 
 // for example
 var myComponent = dio.createComponent({
@@ -227,6 +237,9 @@ myComponent(__,__,true)
 
 ```javascript
 dio.createRender(component: {Function|Object}, mount?: {String|Element})
+// or
+dio.render(component: {Function|Object}, mount?: {String|Element})
+
 // where component is either a hyperscript object 
 // or an object with a render method that returns a hyperscript object 
 // or a function that returns one of the above.
@@ -624,6 +637,45 @@ dio.createStyle(css: {Object}, namespace?: {String});
 
 // as in
 dio.createStyle({'p': {color:'red'}}, '#id');
+```
+
+---
+
+## dio.createFactory
+
+```javascript
+dio.createFactory(any[]|...arguments);
+```
+
+exposes a function to the window that produces a hyperscript elements of a given type.
+
+If the last argument is a Boolean true 
+the element factories are added to the global namespace
+otherwise an object of the element factories are returned.
+
+If only one element is specified, only that factory is returned and not an object,
+if this is coupled with true as the second argument, the factory is added to
+the global namespace instead.
+
+```javascript
+dio.createFactory('div', 'input', true);
+
+// now instead of
+h('div', 'Hello World');
+// i can instead do
+div('Hello World');
+// and
+input({value: 'empty'});
+
+// multiple elements
+dio.createFactory('div', 'input', true);
+// or
+var {div, input} = dio.createFactory('div', 'input');
+
+// single element
+var div = dio.createFactory('div');
+// or
+dio.createFactory('div', true);
 ```
 
 ---

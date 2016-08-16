@@ -49,7 +49,7 @@
 		svg:   'http://www.w3.org/2000/svg',
 		html:  'http://www.w3.org/1999/xhtml'
 	},
-	__window                    = window || exports,
+	__window                    = exports,
 	__document                  = __window.document,
 
 	// types
@@ -88,7 +88,10 @@
 	__XMLHttpRequest            = XMLHttpRequest,
 	__RegExp                    = RegExp,
 	__encodeURIComponent        = encodeURIComponent,
-	__setTimeout                = setTimeout;
+	__setTimeout                = setTimeout,
+
+	// other
+	hyperscriptClass            = createHyperscriptClass();
 
 
 	/* --------------------------------------------------------------
@@ -178,6 +181,99 @@
 
 
 	/**
+	 * hyperscript set children
+	 * @param  {Any} a
+	 * @return {String|Array|Object}
+	 */
+	function setHyperscriptChild (child, parent) {
+		// if the child is not an object it is a textNodes
+		// string, bool, number ...etc, so we convert them to strings values
+		if (!is(child, __Object)) {
+			child += '';
+		}
+		
+		return child;
+	}
+
+	/**
+	 * hyperscript tagger
+	 * @param  {Object} a - object with opt props key
+	 * @param  {Object} b - tag
+	 * @return {[Object]} - {props, type}
+	 * @example
+	 * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
+	 * tag('inpu#id[type=checkbox]')
+	 */
+	function parseHyperscriptType (obj) {
+		var 
+		classes = [], 
+		match,
+
+		// regex to parse type/tag
+		regex = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
+
+		// copy obj's props to abstract props and type
+		// incase obj.props is empty create new obj
+		// otherwise just add to already available object
+		// we will add this back to obj.props later
+		props = !obj.props ? {} : obj.props,
+
+		// since we use type in a while loop
+		// we will be updating obj.type directly
+		// lets keep a copy of the value
+		type = obj.type
+
+		// set default type to a div
+		obj.type = 'div';
+
+		// execute the regex and loop through the results
+		while ((match = regex.exec(type))) {
+			var 
+			matchedType      = match[1],
+			matchedValue     = match[2],
+			matchedProp      = match[3],
+			matchedPropKey   = match[4],
+			matchedPropValue = match[6];
+
+			// no custom prop match
+			if (matchedType === '' && matchedValue !== '') {
+				obj.type = matchedValue;
+			}
+			// matches id's - #id
+			else if (matchedType === '#') {
+				props.id = matchedValue;
+			} 
+			// matches classes - div.classname
+			else if (matchedType === '.') {
+				classes.push(matchedValue);
+			} 
+			// matches - [prop=value]
+			else if (matchedProp[0] === '[') {
+				var 
+				prop = matchedPropValue;
+
+				// make sure we have a prop value
+				if (prop) {
+					prop = prop.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
+				}
+				// if prop value is an empty string assign true
+				props[matchedPropKey] = prop || __true;
+			}
+		}
+
+		// add classes to obj.props if we have any
+		if (classes[__length] > 0) {
+			props.class = classes.join(' ');
+		}
+
+		// as promised, update props
+		obj.props = props;
+		
+		// done
+		return obj;
+	}
+
+	/**
 	 * create virtual element : h()
 	 * @param  {String} type  - Element, i.e: div
 	 * @param  {Object} props - optional properties
@@ -186,167 +282,69 @@
 	 * h('div', {class: 'close'}, 'Text Content')
 	 * h('div', null, h('h1', 'Text'))
 	 */
-	function h () {
+	function h (type, props) {			
 		var 
-		hyperscriptClass = createHyperscriptClass();
+		args   = arguments,
+		length = args[__length],
+		// the position that children elements start
+		// example case: h('tag', {}, ...children)
+		key    = 2,
+		child;
 
-		/**
-		 * hyperscript set children
-		 * @param  {Any} a
-		 * @return {String|Array|Object}
-		 */
-		function setChild (child, parent) {
-			// if the child is not an object it is a textNodes
-			// string, bool, number ...etc, so we convert them to strings values
-			if (!is(child, __Object)) {
-				child += '';
-			}
-			
-			return child;
+		// if what was suppose to be the position
+		// for props is actually a child (hyperscript or any non object value)
+		// example case: h('tag', ...children)
+		if (
+			(props && props[__hyperscriptSignature]) ||
+			!is(props, __Object)
+		) {
+			key   = 1;
+			props = {};
+		}
+		// otherwise just insure props are always an object
+		else if (!is(props, __Object)) {
+			props = {};
 		}
 
-		/**
-		 * hyperscript tagger
-		 * @param  {Object} a - object with opt props key
-		 * @param  {Object} b - tag
-		 * @return {[Object]} - {props, type}
-		 * @example
-		 * // return {type: 'input', props: {id: 'id', type: 'checkbox'}}
-		 * tag('inpu#id[type=checkbox]')
-		 */
-		function parseElementType (obj) {
-			var 
-			classes = [], 
-			match,
+		// declare the hyperscript object
+		var
+		hyperscript = new hyperscriptClass({type: type, props: props, children: []});
 
-			// regex to parse type/tag
-			regex = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g,
-
-			// copy obj's props to abstract props and type
-			// incase obj.props is empty create new obj
-			// otherwise just add to already available object
-			// we will add this back to obj.props later
-			props = !obj.props ? {} : obj.props,
-
-			// since we use type in a while loop
-			// we will be updating obj.type directly
-			// lets keep a copy of the value
-			type = obj.type
-
-			// set default type to a div
-			obj.type = 'div';
-
-			// execute the regex and loop through the results
-			while ((match = regex.exec(type))) {
-				var 
-				matchedType      = match[1],
-				matchedValue     = match[2],
-				matchedProp      = match[3],
-				matchedPropKey   = match[4],
-				matchedPropValue = match[6];
-
-				// no custom prop match
-				if (matchedType === '' && matchedValue !== '') {
-					obj.type = matchedValue;
-				}
-				// matches id's - #id
-				else if (matchedType === '#') {
-					props.id = matchedValue;
-				} 
-				// matches classes - div.classname
-				else if (matchedType === '.') {
-					classes.push(matchedValue);
-				} 
-				// matches - [prop=value]
-				else if (matchedProp[0] === '[') {
-					var 
-					prop = matchedPropValue;
-
-					// make sure we have a prop value
-					if (prop) {
-						prop = prop.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
-					}
-					// if prop value is an empty string assign true
-					props[matchedPropKey] = prop || __true;
-				}
-			}
-
-			// add classes to obj.props if we have any
-			if (classes[__length] > 0) {
-				props.class = classes.join(' ');
-			}
-
-			// as promised, update props
-			obj.props = props;
-			
-			// done
-			return obj;
+		// check if the type is a special case i.e [type] | div.class | #id
+		// and alter the hyperscript
+		if (
+			type.indexOf('[') > -1 ||
+			type.indexOf('#') > -1 || 
+			type.indexOf('.') > -1
+		) {
+			hyperscript = parseHyperscriptType(hyperscript);
 		}
 
-		return function h (type, props) {			
-			var 
-			args   = arguments,
-			length = args[__length],
-			// the position that children elements start
-			// example case: h('tag', {}, ...children)
-			key    = 2,
-			child;
-
-			// if what was suppose to be the position
-			// for props is actually a child (hyperscript or any non object value)
-			// example case: h('tag', ...children)
-			if (
-				(props && props[__hyperscriptSignature]) ||
-				!is(props, __Object)
-			) {
-				key   = 1;
-				props = {};
-			}
-			// otherwise just insure props are always an object
-			else if (!is(props, __Object)) {
-				props = {};
-			}
-
-			// declare the hyperscript object
-			var
-			hyperscript = new hyperscriptClass({type: type, props: props, children: []});
-
-			// check if the type is a special case i.e [type] | div.class | #id
-			// and alter the hyperscript
-			if (
-				type.indexOf('[') > -1 ||
-				type.indexOf('#') > -1 || 
-				type.indexOf('.') > -1
-			) {
-				hyperscript = parseElementType(hyperscript);
-			}
-
-			// auto set namespace for svg and math elements
-			// but only if it's not already set
-			if ((hyperscript.type === 'svg' || hyperscript.type === 'math') && !hyperscript.props.xmlns) {
-				hyperscript.props.xmlns = __namespace[hyperscript.type];
-			}
-
-			// construct children
-			for (var i = key; i < length; i++) {
-				// reference to current layer
-				child = args[i];
-		
-				// if the child is an array go deeper
-				// and set the 'arrays children' as children
-				if (is(child, __Array)) {
-					each(child, function (child) {
-						hyperscript[__children].push(setChild(child));
-					});
-				}
-				// deep enough, add this child to children
-				else {
-					hyperscript[__children].push(setChild(child));
-				}
-			}
-
-			return hyperscript;
+		// auto set namespace for svg and math elements
+		// but only if it's not already set
+		if ((hyperscript.type === 'svg' || hyperscript.type === 'math') && !hyperscript.props.xmlns) {
+			hyperscript.props.xmlns = __namespace[hyperscript.type];
 		}
+
+		// construct children
+		for (var i = key; i < length; i++) {
+			// reference to current layer
+			child = args[i];
+	
+			// if the child is an array go deeper
+			// and set the 'arrays children' as children
+			if (is(child, __Array)) {
+				each(child, function (child) {
+					hyperscript[__children].push(setHyperscriptChild(child));
+				});
+			}
+			// deep enough, add this child to children
+			else {
+				hyperscript[__children].push(setHyperscriptChild(child));
+			}
+		}
+
+		return hyperscript;
 	}
 
 
@@ -359,6 +357,48 @@
 	 * -------------------------------------------------------------- */
 
 
+	/**
+	 * diff virtual component and update dom
+	 * @param {Element} parent - dom node
+	 * @param {Object}  newNode
+	 * @param {Object}  oldNode?
+	 * @param {Object}  component?
+	 */
+	function vdomToDOM (parent, newNode, oldNode, component) {
+		// update
+		if (oldNode) {
+			patch(
+				parent, 
+				newNode, 
+				oldNode, 
+				0, 
+				component, 
+				newNode, 
+				oldNode,
+				newNode[__children][__length], 
+				oldNode[__children][__length],
+				newNode[__children], oldNode[__children]
+			);
+		}
+		// mount
+		else {
+			patch(
+				parent, 
+				newNode, 
+				oldNode, 
+				0, 
+				component
+			);
+		}
+	}
+
+	/**
+	 * hydrate
+	 * @param  {[type]} parent
+	 * @param  {[type]} newNode
+	 * @param  {Object} component
+	 * @return {Object} vnode
+	 */
 	function hydrate (parent, newNode, component, index, newParentNode) {
 		index = index || 0;
 
@@ -415,47 +455,12 @@
 
 		if (!is(newNode, __String)) {
 			// set refs
-			setRefs(newNode, nextNode, component);
+			setRefs(newNode, nextNode);
 			// add events if any
 			addEventListeners(nextNode, newNode.props);
 		}
 
 		return newNode;
-	}
-
-	/**
-	 * diff virtual component and update dom
-	 * @param {Element} parent - dom node
-	 * @param {Object}  newNode
-	 * @param {Object}  oldNode?
-	 * @param {Object}  component?
-	 */
-	function vdomToDOM (parent, newNode, oldNode, component) {
-		// update
-		if (oldNode) {
-			patch(
-				parent, 
-				newNode, 
-				oldNode, 
-				0, 
-				component, 
-				newNode, 
-				oldNode,
-				newNode[__children][__length], 
-				oldNode[__children][__length],
-				newNode[__children], oldNode[__children]
-			);
-		}
-		// mount
-		else {
-			patch(
-				parent, 
-				newNode, 
-				oldNode, 
-				0, 
-				component
-			);
-		}
 	}
 
 	// patch
@@ -469,7 +474,8 @@
 		oldParentNode,
 		newChildrenLength, 
 		oldChildrenLength,
-		newChildren, oldChildren
+		newChildren, 
+		oldChildren
 	) {
 		index = index || 0;
 
@@ -606,12 +612,12 @@
 			}
 		}
 
-		normalize(newNode, oldNode);
+		normalizeNodes(newNode, oldNode);
 	}
 
 	// normalize old and new nodes dom references
 	// so that newNode retains the dom references of oldNode
-	function normalize (newNode, oldNode) {
+	function normalizeNodes (newNode, oldNode) {
 		if (oldNode && newNode && oldNode.type && newNode.type) {
 			newNode.dom           = oldNode.dom;
 			newNode[__childNodes] = oldNode[__childNodes];
@@ -716,7 +722,7 @@
 			}
 
 			// set refs
-			setRefs(node, element, component);
+			setRefs(node, element);
 			// diff and update/add/remove props
 			setElementProps(element, node.props);
 			// add events if any
@@ -739,8 +745,15 @@
 		return element;
 	}
 
-	function setRefs (node, element, component) {
-		if (node.props && node.props.ref) {
+	function setRefs (node, element) {
+		var
+		component;
+
+		if (node[__hyperscriptSignature]) {
+			component = node[__hyperscriptSignature][__componentSignature];
+		}
+
+		if (component && node.props && node.props.ref) {
 			var
 			ref = node.props.ref;
 
@@ -1333,7 +1346,10 @@
 
 
 	/**
-	 * component interface
+	 * componentClass
+	 * component interface/blueprint
+	 * @param {String} - displayName
+	 * @return {Object} {props, state, setState, setProps, forceUpdate, withAttr}
 	 */
 	function componentClass (displayName) {
 		// immutable internal props & state
@@ -1348,7 +1364,7 @@
 	}
 
 	/**
-	 * component interface methods
+	 * componentClass prototype
 	 */
 	componentClass[__prototype] = {
 		// i.e this.setState({})
@@ -3193,6 +3209,46 @@
 	}
 
 
+	function createFactory (elements, expose) {
+		function factory (element) {
+			return function (props, children) {
+				return h.call(__null, element, props, toArray(arguments, 1));
+			}
+		}
+
+		// convert arguments to array of elements
+		if (!is(elements, __Array)) {
+			elements = toArray(arguments);
+		}
+
+		var 
+		length = elements[__length];
+
+		// if there is only one element return it
+		if (length === 1) {
+			var 
+			elementFactory = factory(elements[0]);
+
+			if (elements[length-1] === __true) {
+				__window[elements[0]] = elementFactory;
+			}
+			else {
+				return elementFactory;
+			}
+		}
+		// multiple elements
+		else {
+			var obj = elements[length-1] === __true ? __window : {};
+
+			each(elements, function (element) {
+				obj[element] = factory(element);
+			});
+
+			return obj;
+		}
+	}
+
+
 	/* --------------------------------------------------------------
 	 * 
 	 * exports
@@ -3200,18 +3256,27 @@
 	 * -------------------------------------------------------------- */
 
 
-	exports.h = h(),
-
+	exports.h = h,
 	exports.dio = {
-		request:         request(),
-		curry:           curry,
-		animateWith:     animateWith(),
-		createStyle:     createStyle(),
-		createStream:    createStream,
-		createRender:    createRender,
-		createStore:     createStore,
-		createRouter:    createRouter,
-		createHTML:      createHTML,
-		createComponent: createComponent
+		request: request(),
+		curry: curry,
+
+		animateWith: animateWith(),
+		createStyle: createStyle(),
+		createStream: createStream,
+		createRouter: createRouter,
+		createHTML: createHTML,
+
+		createElement: h,
+
+		createStore: createStore,
+		createFactory: createFactory,
+
+		createRender: createRender,
+		render: createRender,
+
+		createComponent: createComponent,
+		createClass: createComponent,
+		Component: createComponent
 	};
 }));
