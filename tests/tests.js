@@ -202,11 +202,11 @@
 			return !!state.length;
 		}
 
-		ok(eq(fn(), hyperscript), '.createCompoent({Object})');
-		ok(eq(obj(), hyperscript), '.createCompoent({Function})');
-		ok(eq(obj(), fn()) && isComponent(obj), '.createCompoent({Object}|{Function})');
-		ok(isComponent(fn), '.createCompoent({Function})(__, __, true)')
-		ok(isComponent(obj), '.createCompoent({Object})(__, __, true)')
+		ok(eq(fn(), hyperscript), '.createComponent({Object})');
+		ok(eq(obj(), hyperscript), '.createComponent({Function})');
+		ok(eq(obj(), fn()) && isComponent(obj), '.createComponent({Object}|{Function})');
+		ok(isComponent(fn), '.createComponent({Function})(__, __, true)')
+		ok(isComponent(obj), '.createComponent({Object})(__, __, true)')
 
 		end();
 	});
