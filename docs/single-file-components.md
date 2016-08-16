@@ -1,6 +1,8 @@
 # Single File Components
 
-Single file components are self contained components including within them their own stylesheets.
+Single file components are self contained components with their own stylesheets,
+this is possible with the use of `dio.createStyle` allowing us to create a component
+within one file or function that has no external dependencies.
 
 ```javascript
 var namespace = '#id';
