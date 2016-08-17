@@ -6,8 +6,16 @@
 
 ##### Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 
-- *~7kb minified+gzipped.*  
-- *~15kb minified.*
+- ~7kb minified+gzipped
+- ~15kb minified
+
+## Browser Support
+
+* Edge
+* IE 9+
+* Chrome
+* Firefox
+* Safari
 
 ---
 
