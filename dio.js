@@ -310,12 +310,12 @@
 			key   = 1;
 			props = {};
 		}
-		// otherwise just insure props are always an object
+		// otherwise just insure props is always an object
 		else if (!is(props, __Object)) {
 			props = {};
 		}
 
-		// declare the hyperscript object
+		// create the hyperscript object
 		var
 		hyperscript = new hyperscriptClass({type: type, props: props, children: []});
 
