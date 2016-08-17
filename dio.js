@@ -116,7 +116,7 @@
 
 	
 	/**
-	 * 'forEach' helper
+	 * forEach helper
 	 * @param  {Array|Object} a 
 	 * @param  {Function}     fn
 	 * @param  {Boolean}      multiple
@@ -127,9 +127,7 @@
 		var 
 		index;
 
-		// Handle arrays, and array-like Objects, 
-		// array-like objects (have prop .length 
-		// that is a number) and numbers for keys [0]
+		// Handle arrays
 		if (is(arr, __Array)) {
 			// length {Number}
 			var 
