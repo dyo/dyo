@@ -285,19 +285,14 @@
 	 * h('div', {class: 'close'}, 'Text Content')
 	 * h('div', null, h('h1', 'Text'))
 	 */
-	function h (type, props, children) {
-		// support
-		// h(Component, props, children)
-		if (is(type, __Function)) {
-			return type(props, children);
-		}
-
+	function h (type, props) {
 		var 
-		args   = arguments,
-		length = args[__length],
+		args     = arguments,
+		length   = args[__length],
+		children = [],
 		// the position that children elements start from
 		// example case: h('tag', {}, ...children)
-		key    = 2,
+		key      = 2,
 		child;
 
 		// if what was suppose to be the position
@@ -315,24 +310,10 @@
 			props = {};
 		}
 
-		// create the hyperscript object
-		var
-		hyperscript = new hyperscriptClass({type: type, props: props, children: []});
-
-		// check if the type is a special case i.e [type] | div.class | #id
-		// and alter the hyperscript
-		if (
-			type.indexOf('[') > -1 ||
-			type.indexOf('#') > -1 || 
-			type.indexOf('.') > -1
-		) {
-			hyperscript = parseHyperscriptType(hyperscript);
-		}
-
 		// auto set namespace for svg and math elements
 		// but only if it's not already set
-		if ((hyperscript.type === 'svg' || hyperscript.type === 'math') && !hyperscript.props.xmlns) {
-			hyperscript.props.xmlns = __namespace[hyperscript.type];
+		if ((type === 'svg' || type === 'math') && !props.xmlns) {
+			props.xmlns = __namespace[type];
 		}
 
 		// construct children
@@ -344,13 +325,33 @@
 			// and set the 'arrays children' as children
 			if (is(child, __Array)) {
 				each(child, function (child) {
-					hyperscript[__children].push(setHyperscriptChild(child));
+					children.push(setHyperscriptChild(child));
 				});
 			}
 			// deep enough, add this child to children
 			else {
-				hyperscript[__children].push(setHyperscriptChild(child));
+				children.push(setHyperscriptChild(child));
 			}
+		}
+
+		// support for passing a component as the type argument
+		// h(Component, props, children)
+		if (is(type, __Function)) {
+			return type(props, children);
+		}
+
+		// create the hyperscript object
+		var
+		hyperscript = new hyperscriptClass({type: type, props: props, children: children});
+
+		// check if the type is a special case i.e [type] | div.class | #id
+		// and alter the hyperscript
+		if (
+			type.indexOf('[') > -1 ||
+			type.indexOf('#') > -1 || 
+			type.indexOf('.') > -1
+		) {
+			hyperscript = parseHyperscriptType(hyperscript);
 		}
 
 		return hyperscript;
@@ -1052,12 +1053,12 @@
 	 * render = dio.createRender(Component, '.selector')
 	 * render()
 	 */
-	function createRender (component, element) {
+	function createRender (componentArg, mountArg) {
 		// update
 		function update (props, children) {
 			// get a fresh copy of the vdom
 			newNode = component(props, children);
-			vdomToDOM(element, newNode, oldNode);
+			vdomToDOM(mountElement, newNode, oldNode);
 			// this newNode = the next renders oldNode
 			oldNode = newNode;
 		}
@@ -1065,13 +1066,13 @@
 		// initial mount
 		function mount (props, children) {
 			// don't try to set it's internals if it's statless
-			if (!stateless && internal) {
+			if (!isStatelessComponent && componentsObj) {
 				// reference render, so we can then call this
 				// in this.setState
 				// this only applied to parent components passed to
 				// .createRender(here, ...);
-				if (!internal['render()']) {
-					internal['render()'] = update;	
+				if (!componentsObj['render()']) {
+					componentsObj['render()'] = update;	
 				}
 			}
 
@@ -1079,22 +1080,22 @@
 			newNode = component(props, children);
 			
 			// clear mount
-			if (newNode && !element.hasAttribute(__hydrateSignature)) {
+			if (newNode && !mountElement.hasAttribute(__hydrateSignature)) {
 				// clear container
-				element.textContent = '';
+				mountElement.textContent = '';
 				// initial mount
-				vdomToDOM(element, newNode, __undefined, internal);
+				vdomToDOM(mountElement, newNode, __undefined, componentsObj);
 			}
 			// hydration mount
 			else {
-				element.removeAttribute(__hydrateSignature);
-				hydrate(element, newNode, internal);
+				mountElement.removeAttribute(__hydrateSignature);
+				hydrate(mountElement, newNode, componentsObj);
 			}
 
 			// this newNode is equal to the next renders oldNode
 			oldNode = newNode;
 			// publish that the initial mount has taken place
-			initial = __false;
+			initialRender = __false;
 		}
 
 		// return function that runs update/mount when executed
@@ -1105,7 +1106,7 @@
 			}
 			
 			// initial render
-			if (initial || forceUpdate) {
+			if (initialRender || forceUpdate) {
 				// mount and publish that the initial render has taken place
 				mount(props, children);
 			}
@@ -1123,32 +1124,45 @@
 		component,
 		newNode,
 		oldNode,
-		element,
-		internal,
-		stateless,
-		initial = __true;
+		mountElement,
+		componentsObj,
+		isStatelessComponent,
+		initialRender = __true;
 
-		component = createComponent(component);
-		element = (element && element.nodeType) ? element : __document.querySelector(element);
+		// set mountElement
+		if (mountArg) {
+			mountElement = mountArg.nodeType ? mountArg : __document.querySelector(mountArg);
+		}
 
 		// default element to body
-		if (!element || element === __document) {
-			element = __document.body;
+		if (!mountElement || mountElement === __document) {
+			mountElement = __document.body;
 		}
+
+		component = createComponent(componentArg);
 
 		// a component exists
 		if (component) {
 			// determine if the component is stateless
 			if (component.stateless) {
-				stateless = __true;
+				isStatelessComponent = __true;
 			}
 
 			// don't try to get it's internals if it's stateless
-			if (!stateless) {
-				internal = component(__undefined, __undefined, __true);
+			if (!isStatelessComponent) {
+				componentsObj = component(__undefined, __undefined, __true);
 			}
 
-			return render;
+			// react-like behaviour
+			// i.e h(Component, {...props}, ...children) behaviour
+			if (componentArg.type) {
+				return render();
+			}
+			// normal behaviour
+			// i.e render(Component, mount)({...props}, [children])
+			else {
+				return render;
+			}
 		}
 		// can't find a component
 		else {
@@ -1214,7 +1228,7 @@
 			obj = arg();
 
 			if (!obj) {
-				throw 'no render'
+				throw 'no render';
 			}
 			// a stateless component
 			// we assume it returns a hyperscript object
@@ -1224,9 +1238,9 @@
 				return arg;
 			}
 
-			// get displayName from function
+			// get displayName from obj or function
 			// i.e a function Foo () { ... } // => Foo
- 			displayName = /function ([^(]*)/.exec(arg.valueOf())[1];
+ 			displayName = obj.displayName || /function ([^(]*)/.exec(arg.valueOf())[1];
 		}
 		// we have an object
 		else if (is(arg, __Object)) {
@@ -1235,6 +1249,13 @@
 			// assume is a hyperscript object thus a stateless component
 			if (arg.render) {
 				obj = arg;
+			}
+			// a hyperscript object with a component reference
+			else if (
+				arg[__hyperscriptSignature] &&
+				arg[__hyperscriptSignature][__componentSignature]
+			) {				
+				obj = arg[__hyperscriptSignature][__componentSignature];
 			}
 			// stateless
 			else {
@@ -1251,57 +1272,64 @@
 			throw 'invalid component';
 		}
 
-
 		// everything checks out i.e
 		// - obj has a render method
 		// - or arg() returns an object that has a render method
 		// stateless components never reach here
-		// 
-		// create new component object 
-		var
-		component = new componentClass(displayName);
 
-		// add the properties to the component instance
-		// also bind functions to the component scope
-		each(obj, function (value, name) {
-			// methods
-			if (is(value, __Function)) {
-				// pass props and state to render
-				if (name !== 'render') {
-					component[name] = value.bind(component);
+		// the component object
+		var
+		component;
+
+		// already a component
+		if (obj.setState && obj.state && obj.props) {
+			component = obj;
+		}
+		else {
+			component = new componentClass(displayName);
+
+			// add the properties to the component instance
+			// also bind functions to the component scope
+			each(obj, function (value, name) {
+				// methods
+				if (is(value, __Function)) {
+					// pass props and state to render
+					if (name !== 'render') {
+						component[name] = value.bind(component);
+					}
 				}
+				// objects
+				else {
+					component[name] = value;
+				}
+			});
+
+			// set initial state
+			if (component[__getInitialState]) {
+				component.state = component[__getInitialState]();
 			}
-			// objects
-			else {
-				component[name] = value;
+			// set default props
+			if (component[__getDefaultProps]) {
+				component.props = component[__getDefaultProps]();
 			}
-		});
 
-		// set initial state
-		if (component[__getInitialState]) {
-			component.state = component[__getInitialState]();
-		}
-		// set default props
-		if (component[__getDefaultProps]) {
-			component.props = component[__getDefaultProps]();
-		}
+			// creates a hyperscript class
+			// with the passed values in the array as it's prototypes
+			var 
+			h = createHyperscriptClass([
+				[__componentSignature, component], 
+				[__shouldComponentUpdate, __true]
+			]);
 
-		// creates a hyperscript class
-		// with the passed values in the array as it's prototypes
-		var 
-		h = createHyperscriptClass([
-			[__componentSignature, component], 
-			[__shouldComponentUpdate, __true]
-		]);
+			// get the render method
+			var
+			render = obj.render.bind(component, component.props, component.state, component);
 
-		// get the render method
-		var
-		render = obj.render.bind(component, component.props, component.state, component);
-
-		// insure the render function returns the newly
-		// created hyperscript object
-		component.render = function () {
-			return new h(render());
+			// insure the render function returns the newly
+			// created hyperscript object
+			component.render = function () {
+				return new h(render());
+			}
 		}
 
 		// hyperscript cache

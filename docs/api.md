@@ -103,7 +103,16 @@ myComponent(__,__,true)
 ## dio.createRender
 
 ```javascript
-dio.createRender(component: {Function|Object}, mount?: {String|Element})
+dio.createRender(
+	component: {Function|Object}, 
+	mount?: {String|Element}
+)
+// or
+dio.render(
+	component: {Function|Object},
+	mount?: {String|Element}
+)
+
 // where component is either a hyperscript object 
 // or an object with a render method that returns a hyperscript object 
 // or a function that returns one of the above.
@@ -127,14 +136,12 @@ instance(__, __, '@@dio/COMPONENT')
 // it extracts the resulting hyperscript object using the above method
 // and converts that to a string representing the component
 
-// render instances also have a .remove method attached to them
-// this will remove the dom element it mounted from the dom
-// if you pass it true {Boolean} it will also remove the container
-// element it was mounted to
-instance.remove();
+// you can also create a render in the following ways
+// react-like
+dio.createRender(h(Component, {...props}, ...children));
 
-// removes the container aswell
-instance.remove(true);
+// or like
+dio.createRender(Component, mount, {...props}, [...children]);
 ```
 
 Components that do not return an object with a render function

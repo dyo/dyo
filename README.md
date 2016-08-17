@@ -246,9 +246,15 @@ myComponent(__,__,true)
 ## dio.createRender
 
 ```javascript
-dio.createRender(component: {Function|Object}, mount?: {String|Element})
+dio.createRender(
+	component: {Function|Object}, 
+	mount?: {String|Element}
+)
 // or
-dio.render(component: {Function|Object}, mount?: {String|Element})
+dio.render(
+	component: {Function|Object},
+	mount?: {String|Element}
+)
 
 // where component is either a hyperscript object 
 // or an object with a render method that returns a hyperscript object 
@@ -272,6 +278,13 @@ instance(__, __, '@@dio/COMPONENT')
 // this is how .createHTML can accept render instances
 // it extracts the resulting hyperscript object using the above method
 // and converts that to a string representing the component
+
+// you can also create a render in the following ways
+// react-like
+dio.createRender(h(Component, {...props}, ...children));
+
+// or like
+dio.createRender(Component, mount, {...props}, [...children]);
 ```
 
 Components that do not return an object with a render function
