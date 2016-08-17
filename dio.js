@@ -295,7 +295,7 @@
 		var 
 		args   = arguments,
 		length = args[__length],
-		// the position that children elements start
+		// the position that children elements start from
 		// example case: h('tag', {}, ...children)
 		key    = 2,
 		child;
