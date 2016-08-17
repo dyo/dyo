@@ -494,7 +494,7 @@
 			nextNode = createElement(newNode, component);
 			appendChild(parent, nextNode, newNode);
 			
-			// add the parents child nodes
+			// add to parents child nodes to keep in sync
 			if (oldParentNode) {
 				oldParentNode[__childNodes].splice(index, 0, nextNode);
 			}
