@@ -164,14 +164,14 @@
 		if (!type) {
 			return obj ? __true : __false;
 		}
-		// check if the object of the specified type
+		// check if the object is the specified type
 		else {
 			// obj has a constructor, 
 			// we also avoid null values since null has an object constructor
 			if (obj !== __undefined && obj !== __null) {
 				return obj[__constructor] === type;
 			}
-			// doesn't have a constructor, is undefined 
+			// doesn't have a constructor, is undefined, or is null 
 			else {
 				return __false;
 			}
@@ -185,8 +185,8 @@
 	 * @return {String|Array|Object}
 	 */
 	function setHyperscriptChild (child, parent) {
-		// if the child is not an object it is a textNodes
-		// string, bool, number ...etc, so we convert them to strings values
+		// if the child is not an object it is a textNode
+		// string, bool, number ...etc, so we convert them to string values
 		if (!is(child, __Object)) {
 			child += '';
 		}
