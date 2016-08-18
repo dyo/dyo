@@ -3,6 +3,7 @@
 node_modules
 bower_components
 test
+tests
 docs
 examples
 bower.json
