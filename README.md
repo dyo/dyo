@@ -1,6 +1,4 @@
-[![Join the chat at https://gitter.im/thysultan/dio.js](https://badges.gitter.im/thysultan/dio.js.svg)](https://gitter.im/thysultan/dio.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-# dio.js
+# dio.js 
 
 [![dio.js](https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
 
@@ -8,6 +6,8 @@ Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 
 - ~7kb minified+gzipped
 - ~15kb minified
+
+[![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![dependencies](https://img.shields.io/badge/dependencies-none-green.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Join the chat at https://gitter.im/thysultan/dio.js](https://img.shields.io/badge/chat-gitter-green.svg?style=flat)](https://gitter.im/thysultan/dio.js)
 
 ## Browser Support
 
@@ -18,6 +18,7 @@ Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 * Safari
 
 ---
+
 
 # Installation
 
