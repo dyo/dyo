@@ -1,0 +1,12 @@
+.*
+**/.*
+node_modules
+bower_components
+test
+docs
+examples
+bower.json
+gulp.js
+LICENSE.md
+LICENSE
+*.html
