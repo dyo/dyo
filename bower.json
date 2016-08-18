@@ -1,23 +1,30 @@
 {
 	"name": "dio.js",
 	"main": "dio.js",
-	"version": "0.1.0",
+	"description": "Dio is a lightweight (~7kb) feature rich Virtual DOM framework",
+	"version": "1.0.0",
 	"homepage": "https://github.com/thysultan/dio.js",
+	"license": "MIT",
 	"authors": [
 		"Sultan Tarimo <https://github.com/thysultan>"
 	],
-	"description": "Dio is a lightweight (~6kb) Virtual DOM framework.",
 	"moduleType": [
 		"amd",
 		"globals",
 		"node"
 	],
 	"keywords": [
-		"lightweight",
-		"virtual",
-		"dom"
+		"vdom", 
+		"virtual", 
+		"dom",
+		"virtual dom", 
+		"react", 
+		"dio", 
+		"framework", 
+		"html", 
+		"server", 
+		"browser"
 	],
-	"license": "MIT",
 	"ignore": [
 		"**/.*",
 		"*.md",
@@ -30,6 +37,8 @@
 		"package.json",
 		"bower.json",
 		"gulp.js",
-		"LICENSE"
+		"LICENSE",
+		"LICENSE.md",
+		"*.html"
 	]
 }

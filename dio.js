@@ -4,7 +4,8 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio.js 
+ * dio.js v0.1.0 - a lightweight (~7kb) feature rich Virtual DOM framework
+ *
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @license MIT
  */
@@ -18,13 +19,13 @@
     }
     // commonjs
     else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
-        factory(exports);
+        factory(exports, root);
     } 
     // browser globals
     else {
-        factory(root);
+        factory(root, root);
     }
-}(this, function (exports) {
+}(this, function (exports, root) {
 	'use strict';
 
 	// references for better minification
@@ -32,26 +33,6 @@
 	// the minifier will then be able to minify that to something like
 	// o[c] but it can't quite do the the former.
 	var
-
-	// signatures
-	__signatureBase             = '@@dio',
-	__streamSignature           = __signatureBase + '/STREAM',
-	__storeSignature            = __signatureBase + '/STORE',
-	__componentSignature        = __signatureBase + '/COMPONENT',
-	__hyperscriptSignature      = __signatureBase + '/HYPERSCRIPT',
-	__renderSignature           = __signatureBase + '/RENDER',
-	__hydrateSignature          = 'data-hydrate',
-
-	// objects
-	__namespace 				= {
-		math:  'http://www.w3.org/1998/Math/MathML',
-		xlink: 'http://www.w3.org/1999/xlink',
-		svg:   'http://www.w3.org/2000/svg',
-		html:  'http://www.w3.org/1999/xhtml'
-	},
-	__window                    = exports,
-	__document                  = __window.document,
-
 	// types
 	__null                      = null,
 	__false                     = false,
@@ -66,6 +47,18 @@
 	__childNodes                = 'childNodes',
 	__classList                 = 'classList',
 	__className                 = 'className',
+	__toLowerCase               = 'toLowerCase',
+	__toUpperCase               = 'toUpperCase',
+	__substr                    = 'substr',
+	__state                     = 'state',
+	__props                     = 'props',
+	__type                      = 'type',
+	__slice                     = 'slice',
+	__splice                    = 'splice',
+	__replace                   = 'replace',
+	__join                      = 'join',
+	__split                     = 'split',
+	__push                      = 'push',
 
 	// lifecycle properties
 	__getInitialState           = 'getInitialState',
@@ -79,20 +72,37 @@
 	__componentDidUpdate        = 'componentDidUpdate',
 	__shouldComponentUpdate     = 'shouldComponentUpdate',
 
+	// signatures
+	__signatureBase             = '@@dio',
+	__streamSignature           = __signatureBase + '/STREAM',
+	__storeSignature            = __signatureBase + '/STORE',
+	__componentSignature        = __signatureBase + '/COMPONENT',
+	__hyperscriptSignature      = __signatureBase + '/HYPERSCRIPT',
+	__renderSignature           = __signatureBase + '/RENDER',
+	__hydrateSignature          = 'data-hydrate',
+	__w3URL                     = 'http://www.w3.org/',
+
 	// functions
 	__Number                    = Number,
 	__Array                     = Array,
 	__Object                    = Object,
 	__Function                  = Function,
 	__String                    = String,
-	__XMLHttpRequest            = XMLHttpRequest,
 	__RegExp                    = RegExp,
 	__encodeURIComponent        = encodeURIComponent,
 	__encodeURI                 = encodeURI,
 	__setTimeout                = setTimeout,
+	__hyperscriptClass          = createHyperscriptClass(),
 
-	// other
-	hyperscriptClass            = createHyperscriptClass();
+	// objects
+	__window                    = root,
+	__document                  = __window.document,
+	__namespace 				= {
+		math:  __w3URL + '1998/Math/MathML',
+		xlink: __w3URL + '1999/xlink',
+		svg:   __w3URL + '2000/svg',
+		html:  __w3URL + '1999/xhtml'
+	};
 
 
 	/* --------------------------------------------------------------
@@ -111,7 +121,7 @@
 	 * @return {Array}
 	 */
 	function toArray (arg, index, end) {
-		return __Array[__prototype].slice.call(arg, index, end);
+		return __Array[__prototype][__slice].call(arg, index, end);
 	}
 
 	
@@ -160,21 +170,14 @@
 	 * @return {Boolean}   - true/false
 	 */
 	function is (obj, type) {
-		// check if the object is falsey/truethy
-		if (!type) {
-			return obj ? __true : __false;
+		// obj has a constructor, 
+		// we also avoid null values since null has an object constructor
+		if (obj !== __undefined && obj !== __null) {
+			return obj[__constructor] === type;
 		}
-		// check if the object is the specified type
+		// doesn't have a constructor, is undefined, or is null 
 		else {
-			// obj has a constructor, 
-			// we also avoid null values since null has an object constructor
-			if (obj !== __undefined && obj !== __null) {
-				return obj[__constructor] === type;
-			}
-			// doesn't have a constructor, is undefined, or is null 
-			else {
-				return __false;
-			}
+			return __false;
 		}
 	}
 
@@ -217,15 +220,15 @@
 		// incase obj.props is empty create new obj
 		// otherwise just add to already available object
 		// we will add this back to obj.props later
-		props = !obj.props ? {} : obj.props,
+		props = !obj[__props] ? {} : obj[__props],
 
 		// since we use type in a while loop
 		// we will be updating obj.type directly
 		// lets keep a copy of the value
-		type = obj.type
+		type = obj[__type]
 
 		// set default type to a div
-		obj.type = 'div';
+		obj[__type] = 'div';
 
 		// execute the regex and loop through the results
 		while ((match = regex.exec(type))) {
@@ -238,7 +241,7 @@
 
 			// no custom prop match
 			if (matchedType === '' && matchedValue !== '') {
-				obj.type = matchedValue;
+				obj[__type] = matchedValue;
 			}
 			// matches id's - #id
 			else if (matchedType === '#') {
@@ -246,7 +249,7 @@
 			} 
 			// matches classes - div.classname
 			else if (matchedType === '.') {
-				classes.push(matchedValue);
+				classes[__push](matchedValue);
 			} 
 			// matches - [prop=value]
 			else if (matchedProp[0] === '[') {
@@ -255,7 +258,7 @@
 
 				// make sure we have a prop value
 				if (prop) {
-					prop = prop.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
+					prop = prop[__replace](/\\(["'])/g, '$1')[__replace](/\\\\/g, "\\");
 				}
 				// if prop value is an empty string assign true
 				props[matchedPropKey] = prop || __true;
@@ -264,11 +267,11 @@
 
 		// add classes to obj.props if we have any
 		if (classes[__length] > 0) {
-			props.class = classes.join(' ');
+			props.class = classes[__join](' ');
 		}
 
 		// as promised, update props
-		obj.props = props;
+		obj[__props] = props;
 		
 		// done
 		return obj;
@@ -325,12 +328,12 @@
 			// and set the 'arrays children' as children
 			if (is(child, __Array)) {
 				each(child, function (child) {
-					children.push(setHyperscriptChild(child));
+					children[__push](setHyperscriptChild(child));
 				});
 			}
 			// deep enough, add this child to children
 			else {
-				children.push(setHyperscriptChild(child));
+				children[__push](setHyperscriptChild(child));
 			}
 		}
 
@@ -342,7 +345,7 @@
 
 		// create the hyperscript object
 		var
-		hyperscript = new hyperscriptClass({type: type, props: props, children: children});
+		hyperscript = new __hyperscriptClass({type: type, props: props, children: children});
 
 		// check if the type is a special case i.e [type] | div.class | #id
 		// and alter the hyperscript
@@ -443,31 +446,31 @@
 			// look ahead of this nodes siblings
 			// add any that is not an object aka 'textNode'/'string' to
 			// the fragment 
-			each(newParentNode[__children].slice(index), function (value) {
+			each(newParentNode[__children][__slice](index), function (value) {
 				// exit quickly once we encounter a non text/string node
 				if (is(value, __Object)) {
 					return __false;
 				}
 
-				fragment.appendChild(createElement(value));
+				appendChild(fragment, createElement(value));
 			});
 
 			// replace the textNode with a set of textNodes
-			parent.replaceChild(fragment, parent[__childNodes][index]);
+			replaceChild(fragment, parent[__childNodes][index]);
 		}
 
 		nextNode = parent[__childNodes][index];
 
 		if (newParentNode) {
 			newParentNode[__childNodes] = newParentNode[__childNodes] || [];
-			newParentNode[__childNodes].push(nextNode);
+			newParentNode[__childNodes][__push](nextNode);
 		}
 
 		if (!is(newNode, __String)) {
 			// set refs
-			setRefs(newNode, nextNode);
+			setRefs(newNode, nextNode, component);
 			// add events if any
-			addEventListeners(nextNode, newNode.props);
+			addEventListeners(nextNode, newNode[__props]);
 		}
 
 		return newNode;
@@ -493,29 +496,23 @@
 		if (oldNode === __undefined) {
 			var
 			nextNode = createElement(newNode, component);
-			appendChild(parent, nextNode, newNode);
-			
+
 			// add to parents child nodes to keep in sync
 			if (oldParentNode) {
-				oldParentNode[__childNodes].splice(index, 0, nextNode);
+				spliceNode(oldParentNode[__childNodes], index, 0, nextNode);
 			}
+
+			appendChild(parent, nextNode, newNode);
 		}
 
 		// removing from the dom
 		else if (newNode === __undefined) {
 			var
-			prevNode = oldNode.dom;
+			prevNode = oldNode.dom || oldParentNode[__childNodes][index];
 
-			if (oldParentNode && prevNode) {
-				removeChild(parent, prevNode, oldNode);
-				oldParentNode[__childNodes].splice(index, 1);
-			}
-			else {
-				removeChild(parent, oldParentNode[__childNodes][index], oldNode);
-				__setTimeout(function () {
-					oldParentNode[__childNodes].splice(index, 1);
-				});
-			}
+			spliceNode(oldParentNode[__childNodes], index, 1);
+
+			removeChild(parent, prevNode, oldNode);
 		}
 
 		// updating keyed items
@@ -525,12 +522,14 @@
 
 			// remove
 			if (newChildrenLength < oldChildrenLength) {
+				// update the oldChildren array to remove the old node
+				spliceNode(oldChildren, index, 1);
+
+				// update the parentNodes children array to remove the child
+				spliceNode(oldParentNode[__childNodes], index, 1);
+
 				// dom operation, remove node
 				removeChild(parent, currentNode, newNode);
-				// update the oldChildren array to remove the old node
-				oldChildren.splice(index, 1);
-				// update the parentNodes children array to remove the child
-				oldParentNode[__childNodes].splice(index, 1);
 
 				// reduce the length of newChildrenLength
 				return -1;
@@ -541,17 +540,20 @@
 
 				// add
 				if (newChildrenLength > oldChildrenLength) {
+					// update the oldChildren array to include the new node
+					spliceNode(oldChildren, index, 0, newNode);
+
+					// update the parentNodes children array to include the child
+					spliceNode(oldParentNode[__childNodes], index, 0, nextNode);
+
 					// dom operation, insert node
 					insertBefore(parent, currentNode, nextNode, newNode);
-					// update the oldChildren array to include the new node
-					oldChildren.splice(index, 0, newNode);
-					// update the parentNodes children array to include the child
-					oldParentNode[__childNodes].splice(index, 0, nextNode);
 				}
 				// replace
 				else {
 					// dom operation, replace node
 					replaceChild(parent, currentNode, nextNode, newNode);
+
 					// update the parentNodes children array, replacing the child
 					oldParentNode[__childNodes][index] = nextNode;
 				}
@@ -564,16 +566,17 @@
 			prevNode = oldParentNode[__childNodes][index];
 
 			// text node
-			if (!oldNode.type && !newNode.type) {
+			if (!oldNode[__type] && !newNode[__type]) {
 				prevNode.nodeValue = newNode;
 			}
 			else {
 				var
 				nextNode = createElement(newNode, __undefined, __undefined, oldNode);
+
 				replaceChild(parent, prevNode, nextNode, newNode);
 
 				oldParentNode[__childNodes][index] = nextNode;
-				oldChildren[index] = newNode;
+				oldChildren[index]                 = newNode;
 			}
 		}
 
@@ -625,10 +628,19 @@
 		normalizeNodes(newNode, oldNode);
 	}
 
+	function spliceNode (arr, index, length, item) {
+		if (item) {
+			arr[__splice](index, length, item);
+		}
+		else {
+			arr[__splice](index, length);
+		}
+	}
+
 	// normalize old and new nodes dom references
 	// so that newNode retains the dom references of oldNode
 	function normalizeNodes (newNode, oldNode) {
-		if (oldNode && newNode && oldNode.type && newNode.type) {
+		if (oldNode && newNode && oldNode[__type] && newNode[__type]) {
 			newNode.dom           = oldNode.dom;
 			newNode[__childNodes] = oldNode[__childNodes];
 		}
@@ -638,8 +650,8 @@
 	function keysChanged (newNode, oldNode) {
 		return (
 			newNode && oldNode &&
-			newNode.props && oldNode.props &&
-			newNode.props.key !== oldNode.props.key
+			newNode[__props] && oldNode[__props] &&
+			newNode[__props].key !== oldNode[__props].key
 		);
 	}
 
@@ -684,9 +696,9 @@
 	function nodeChanged (newNode, oldNode) {
 		var
 		// text node
-		text = !newNode.type && newNode !== oldNode,
+		text = !newNode[__type] && newNode !== oldNode,
 		// element type
-		type = newNode.type !== oldNode.type;
+		type = newNode[__type] !== oldNode[__type];
 
 		return text || type;
 	}
@@ -697,7 +709,7 @@
 		element;
 
 		// text nodes
-		if (!node.type) {
+		if (!node[__type]) {
 			element = node;
 
 			if (!is(element, __String)) {
@@ -714,29 +726,29 @@
 			node[__childNodes] = [];
 
 			// assign namespace if set
-			if (node.props && node.props.xmlns) {
-				namespace = node.props.xmlns;
+			if (node[__props] && node[__props].xmlns) {
+				namespace = node[__props].xmlns;
 			}
 
 			// namespaced
 			if (namespace) {
-				element = __document.createElementNS(namespace, node.type);
+				element = __document.createElementNS(namespace, node[__type]);
 
-				if (!node.props.xmlns) {
-					node.props.xmlns = namespace;
+				if (!node[__props].xmlns) {
+					node[__props].xmlns = namespace;
 				}
 			}
 			// default
 			else {
-				element = __document.createElement(node.type);
+				element = __document.createElement(node[__type]);
 			}
 
 			// set refs
-			setRefs(node, element);
+			setRefs(node, element, component);
 			// diff and update/add/remove props
-			setElementProps(element, node.props);
+			setElementProps(element, node[__props]);
 			// add events if any
-			addEventListeners(element, node.props);
+			addEventListeners(element, node[__props]);
 			
 			// only map children arrays
 			if (is(children, __Array)) {
@@ -744,8 +756,8 @@
 					var 
 					nextNode = createElement(child, component, namespace, oldNode);
 
-					node[__childNodes].push(nextNode);
-					element.appendChild(nextNode);
+					node[__childNodes][__push](nextNode);
+					appendChild(element, nextNode, child);
 				});
 			}
 		}
@@ -755,17 +767,17 @@
 		return element;
 	}
 
-	function setRefs (node, element) {
-		var
-		component;
-
-		if (node[__hyperscriptSignature]) {
+	function setRefs (node, element, component) {
+		if (
+			node[__hyperscriptSignature] &&
+			node[__hyperscriptSignature][__componentSignature]
+		) {
 			component = node[__hyperscriptSignature][__componentSignature];
 		}
 
-		if (component && node.props && node.props.ref) {
+		if (component && node[__props] && node[__props].ref) {
 			var
-			ref = node.props.ref;
+			ref = node[__props].ref;
 
 			// we have a component and string ref
 			if (component && is(ref, __String)) {
@@ -784,13 +796,13 @@
 	// check if props is event
 	function isEventProp (name, value) {
 		// checks if the first two characters are on
-		return name.substr(0,2) === 'on' && is(value, __Function);
+		return name[__substr](0,2) === 'on' && is(value, __Function);
 	}
 
 	// get event name
 	function extractEventName (name) {
 		// removes the first two characters and converts to lowercase
-		return name.substr(2, name[__length]).toLowerCase();
+		return name[__substr](2, name[__length])[__toLowerCase]();
 	}
 
 	// add event
@@ -810,7 +822,7 @@
 	function handlePropChanges (target, newNode, oldNode) {
 		// get changes to props/attrs
 		var
-		propChanges = getPropChanges(newNode.props, oldNode.props);
+		propChanges = getPropChanges(newNode[__props], oldNode[__props]);
 
 		// if there are any prop changes
 		if (propChanges[__length]) {
@@ -818,7 +830,7 @@
 			lifecycle(newNode, __componentWillUpdate);
 
 			each(propChanges, function (obj) {
-				updateElementProps(target, obj.name, obj.value, obj.op, newNode.props.xmlns);
+				updateElementProps(target, obj.name, obj.value, obj.op, newNode[__props].xmlns);
 			});
 
 			// after all props change
@@ -858,7 +870,7 @@
 				var 
 				value  = remove === -1 ? oldVal : newVal;
 
-				changes.push({
+				changes[__push]({
 					name: name, 
 					value: value,
 					op: add || remove
@@ -947,7 +959,7 @@
 		}
 		// array of classes
 		else if (is(value, __Array) && (name === __className || name === 'class')) {
-			target[op](name, value.join(' '));
+			target[op](name, value[__join](' '));
 		}
 		// everything else
 		else {
@@ -1032,8 +1044,8 @@
 
 			// props is either the value of the props passed as an argument
 			// or the value of the components
-			props = props || component.props,
-			state = state || component.state;
+			props = props || component[__props],
+			state = state || component[__state];
 
 			// componentShouldUpdate returns a Boolean
 			// so we publish the lifecycle return values
@@ -1071,8 +1083,8 @@
 				// in this.setState
 				// this only applied to parent components passed to
 				// .createRender(here, ...);
-				if (!componentsObj['render()']) {
-					componentsObj['render()'] = update;	
+				if (!componentsObj['()']) {
+					componentsObj['()'] = update;	
 				}
 			}
 
@@ -1155,7 +1167,7 @@
 
 			// react-like behaviour
 			// i.e h(Component, {...props}, ...children) behaviour
-			if (componentArg.type) {
+			if (componentArg[__type]) {
 				return render();
 			}
 			// normal behaviour
@@ -1166,7 +1178,7 @@
 		}
 		// can't find a component
 		else {
-			throw 'can\'t find the component';
+			throw 'not component';
 		}
 	}
 
@@ -1179,14 +1191,14 @@
 		// interface
 		function h (obj) {
 			if (!obj) {
-				throw 'not a hyperscript';
+				throw 'not hyperscript';
 			}
 
 			var 
 			self = this;
 
-			self.type        = obj.type,
-			self.props       = obj.props,
+			self[__type]     = obj[__type],
+			self[__props]    = obj[__props],
 			self[__children] = obj[__children];
 		}
 
@@ -1282,7 +1294,7 @@
 		component;
 
 		// already a component
-		if (obj.setState && obj.state && obj.props) {
+		if (obj.setState && obj[__state] && obj[__props]) {
 			component = obj;
 		}
 		else {
@@ -1306,11 +1318,11 @@
 
 			// set initial state
 			if (component[__getInitialState]) {
-				component.state = component[__getInitialState]();
+				component[__state] = component[__getInitialState]();
 			}
 			// set default props
 			if (component[__getDefaultProps]) {
-				component.props = component[__getDefaultProps]();
+				component[__props] = component[__getDefaultProps]();
 			}
 
 			// creates a hyperscript class
@@ -1323,7 +1335,7 @@
 
 			// get the render method
 			var
-			render = obj.render.bind(component, component.props, component.state, component);
+			render = obj.render.bind(component, component[__props], component[__state], component);
 
 			// insure the render function returns the newly
 			// created hyperscript object
@@ -1334,7 +1346,9 @@
 
 		// hyperscript cache
 		var
-		cache;
+		cache,
+		// should we check prop types
+		shouldValidatePropTypes = !!component.propTypes && !!root && root.NODE_ENV !== 'production';
 
 		// we will return a function that when called
 		// returns the components vdom representation
@@ -1343,12 +1357,6 @@
 		function Component (props, children, internal) {
 			if (internal) {
 				return component;
-			}
-
-			// add children to props if set
-			if (children) {
-				props = props || {};
-				props[__children] = children;
 			}
 
 			// make sure this is not the first render
@@ -1368,8 +1376,18 @@
 				}
 			}
 
+			// add children to props if set
+			if (children) {
+				props = props || {};
+				props[__children] = children;
+			}
+
 			// publish componentWillReceiveProps lifecycle
 			if (props) {
+				if (shouldValidatePropTypes) {
+					validatePropTypes(props, component.propTypes, displayName);
+				}
+
 				lifecycle(component, __componentWillReceiveProps, __true, props);
 				// set props
 				setProps(component, props);
@@ -1384,6 +1402,79 @@
 	}
 
 
+	function logValidationError (error) {
+		var 
+		type = 'error';
+
+		if (console && is(console[type], __Function)) {
+			console[type]('Warning: Failed propType: ' + error + '`.');
+		}
+	}
+
+	function validatePropTypes (props, propTypes, displayName) {
+		each(propTypes, function (typeValidator, propName) {
+			var 
+			validationResult = typeValidator(props, propName, displayName);
+
+			if (validationResult) {
+				logValidationError(validationResult);
+			}
+		});
+	}
+
+	function createPropTypes () {
+		var
+		types        = ['number', 'string', 'bool', 'array', 'object', 'func'],
+		propTypesObj = {};
+
+		function createTypeValidator (name, isRequired) {
+			function typeValidator (props, propName, displayName) {
+				var 
+				propValue = props[propName];
+
+				if (propValue) {
+					if (
+						!is(
+							propValue, 
+							root[
+								name[__substr](0,1)[__toUpperCase]() + 
+								name[__substr](1)
+							]
+						)
+					) {
+						return new Error(
+							'Invalid prop `' + propName +
+							'` of type `' + propValue[__constructor].name[__toLowerCase]() + 
+							'` supplied to `' +
+							displayName +
+							'`, expected `' + name
+						);
+					}
+				}
+				else if (isRequired) {
+					return new Error(
+						'Required prop `' +
+						propName + '` not specified in `' + 
+						displayName
+					);
+				}
+			}
+
+			if (!isRequired) {
+				typeValidator.isRequired = createTypeValidator(name, __true);
+			}
+
+			return typeValidator;
+		}
+
+		each(types, function (name) {
+			propTypesObj[name] = createTypeValidator(name);
+		});
+
+		return propTypesObj;
+	}
+
+
 	/**
 	 * componentClass
 	 * component interface/blueprint
@@ -1392,8 +1483,8 @@
 	 */
 	function componentClass (displayName) {
 		// immutable internal props & state
-		this.props = {},
-		this.state = {};
+		this[__props] = {},
+		this[__state] = {};
 
 		// add displayName if available
 		// this will make for better debugging
@@ -1436,8 +1527,8 @@
 			self = self || this;
 
 			// update only if this component is a render instance
-			if (self['render()']) {
-				self['render()']();
+			if (self['()']) {
+				self['()']();
 			}
 		},
 		withAttr: function (props, setters, callback, self) {
@@ -1461,7 +1552,7 @@
 	 */
 	function setProps (self, data) {
 		// assign props to {} if it's undefined
-		self.props = self.props || {};
+		self[__props] = self[__props] || {};
 
 		// if the object is a function that returns an object
 		if (is(data, __Function)) {
@@ -1471,7 +1562,7 @@
 		if (data) {
 			// set props
 			each(data, function (value, name) {
-				self.props[name] = value;
+				self[__props][name] = value;
 			});
 		}
 	}
@@ -1484,7 +1575,7 @@
 	 */
 	function setState (self, data) {
 		// assign state to {} if it's undefined
-		self.state = self.state || {};
+		self[__state] = self[__state] || {};
 
 		// if the object is a function that returns an object
 		if (is(data, __Function)) {
@@ -1495,7 +1586,7 @@
 		if (data) {
 			// set state
 			each(data, function (value, name) {
-				self.state[name] = value;
+				self[__state][name] = value;
 			});
 
 			return __true;
@@ -1631,11 +1722,11 @@
 		    else if (!hasClass(element, className)) {
 		    	// create array of current classList
 		        var 
-		        classes = element[__className].split(" ");
+		        classes = element[__className][__split](" ");
 		        // add our new class
-		        classes.push(className);
+		        classes[__push](className);
 		        // join our classes array and re-assign to className
-		        element[__className] = classes.join(" ")
+		        element[__className] = classes[__join](" ")
 		    }
 		}
 
@@ -1652,11 +1743,11 @@
 		    else {
 		    	// create array of current classList
 		        var
-		        classes = element[__className].split(" ");
+		        classes = element[__className][__split](" ");
 		        // remove the className on this index
-		        classes.splice(classes.indexOf(className), 1);
+		        classes[__splice](classes.indexOf(className), 1);
 		        // join our classes array and re-ssign to className
-		        element[__className] = classes.join(" ");
+		        element[__className] = classes[__join](" ");
 		    }
 		}
 
@@ -1745,7 +1836,7 @@
 
 	      		for (var i = 0; i < vendors[__length]; i++) {
 	      			// vendor + capitalized prop
-	      			prop = vendors[i] + prop[0].toUpperCase() + prop.slice(1);
+	      			prop = vendors[i] + prop[0][__toUpperCase]() + prop[__slice](1);
 
 	      			// add prop if vendor prop exists
   					if (style[prop] !== __undefined) {
@@ -1781,7 +1872,7 @@
 		 * // or 
 		 * animate(duration{400},'endClassName'{'.class'},'extra transforms'{'rotate(25deg)')})
 		 */
-		function flip (className, duration, transformations, transformOrigin, easing) {
+		function flipAnimation (className, duration, transformations, transformOrigin, easing) {
 			return function (element, callback) {
 				transformations  = transformations || '';
 
@@ -1938,7 +2029,7 @@
 		 * css transitions/animations for an element then run the callback after
 		 * the transition/animation is complete
 		 */
-		function css (type) {			
+		function cssAnimation (type) {			
 			return function keyframe (className, classListMethod) {
 				// the default is to add the class
 				classListMethod = classListMethod || 'add';
@@ -1974,7 +2065,7 @@
 						// note: the numbers are still in string format
 						transitionData = getComputedStyle(element)
 						transitionData = transitionData[type+'Duration'];
-						transitionData = transitionData.replace(/s| /g, '').split(',');
+						transitionData = transitionData[__replace](/s| /g, '')[__split](',');
 
 						// convert all values to a number
 						// increament duration (in ms)
@@ -1995,9 +2086,9 @@
 		}
 
 		return {
-			flip: flip,
-			transitions: css('transition'),
-			animations: css('animation')
+			flip: flipAnimation,
+			transitions: cssAnimation('transition'),
+			animations: cssAnimation('animation')
 		};
 	}
 
@@ -2022,18 +2113,18 @@
 			responseBody,
 			responseType,
 			responseText   = xhr.responseText,
-			responseHeader = xhr.getResponseHeader("content-type");
+			responseHeader = xhr.getResponseHeader("Content-Type");
 
 			// format response header
 			// get the type of response
 			// so we can use that to format the response body
 			// if needed i.e create a dom/parse json
 			if (responseHeader.indexOf(';') !== -1) {
-				responseType = responseHeader.split(';');
-				responseType = responseType[0].split('/');
+				responseType = responseHeader[__split](';');
+				responseType = responseType[0][__split]('/');
 			}
 			else {
-				responseType = responseHeader.split('/');
+				responseType = responseHeader[__split]('/');
 			}
 
 			// extract response type 'html/json/text'
@@ -2067,7 +2158,7 @@
 			return createStream(function (resolve, reject) {
 				// create xhr object 
 				var
-				xhr      = new __XMLHttpRequest(),
+				xhr      = new XMLHttpRequest(),
 				// get window location to check fo CORS
 				location = __window.location,
 				// create anchor element and extract url information
@@ -2107,7 +2198,7 @@
 
 				// set content type and payload
 				if (method === 'POST' || method === 'PUT') {
-					xhr.setRequestHeader('Content-type', enctype);
+					xhr.setRequestHeader('Content-Type', enctype);
 
 					if (enctype.indexOf('x-www-form-urlencoded') > -1) {
 						payload = param(payload);
@@ -2146,12 +2237,12 @@
 			    // when the value is equal to an object 
 			    // that means we have data = {name:'John', addr: {...}}
 			    // so we re-run param on addr to serialize 'addr: {...}' as well
-			    arr.push(typeof value == 'object' ? 
+			    arr[__push](typeof value == 'object' ? 
 			    	param(value, __prefix) :
 			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value));
 			}
 
-			return arr.join('&');
+			return arr[__join]('&');
 		}
 
 
@@ -2201,7 +2292,7 @@
 		 * @param  {Object} obj - details of the request
 		 */
 		function request (obj) {
-			return request[obj.method.toLowerCase()](
+			return request[obj.method[__toLowerCase]()](
 				obj.url, 
 				obj.payload, 
 				obj.enctype, 
@@ -2221,8 +2312,7 @@
 	/**
 	 * store interface
 	 * @param  {[type]} reducer [description]
-	 * @param {Number} range - timetravel/undo range
- 	 * @return {Object} {connect, dispatch, getState, subscribe, timetravel}
+ 	 * @return {Object} {connect, dispatch, getState, subscribe}
 	 */
 	function createStore (reducer) {
 		// if the reducer is an object of reducers (multiple)
@@ -2260,12 +2350,12 @@
 			}
 
 			// dispatch an action
-			function dispatch (action, timetravel) {
+			function dispatch (action) {
 				// there are no actions when we are time traveling
 				if (!is(action, __Object)) {
 					throw 'action must be a plain object';
 				}
-				if (action.type === __undefined) {
+				if (action[__type] === __undefined) {
 					throw 'actions must have a type';
 				}
 
@@ -2284,7 +2374,7 @@
 			  		throw 'listener should be a function';
 				}
 
-				listeners.push(listener);
+				listeners[__push](listener);
 
 				// return a unsubscribe function that we can 
 				// use to unsubscribe as follows: i.e
@@ -2380,7 +2470,7 @@
 					regex = /([:*])(\w+)|([\*])/g,
 
 					// given the following /:user/:id/*
-					pattern = name.replace(regex, function () {
+					pattern = name[__replace](regex, function () {
 								var 
 								// 'user', 'id', undefned
 								args = arguments,
@@ -2392,7 +2482,7 @@
 								}
 								// capture
 								else {
-									vars.push(id)
+									vars[__push](id)
 									return '([^\/]+)';
 								}
 							}),
@@ -2425,10 +2515,8 @@
 					if (match) {
 						// create params object to pass to callback
 						// i.e {user: "simple", id: "1234"}
-						var 
-						data = match
-							// remove the first(url) value in the array
-							.slice(1, match[__length])
+						var
+						data = match[__slice](1, match[__length]) 
 							.reduce(function (data, val, i) {
 								if (!data) {
 									data = {};
@@ -2465,8 +2553,8 @@
 
 			// normalize rootAddress formate
 			// i.e '/url/' -> '/url'
-			if (rootAddress.substr(-1) === '/') {
-				rootAddress = rootAddress.substr(0, rootAddress[__length] - 1);
+			if (rootAddress[__substr](-1) === '/') {
+				rootAddress = rootAddress[__substr](0, rootAddress[__length] - 1);
 			}
 
 			registerRoutes();
@@ -2612,7 +2700,7 @@
 
 		// push a listener
 		stream.push = function (to, listener, end) {
-			listeners[to].push(function (chain) {
+			listeners[to][__push](function (chain) {
 				return listener(chain);
 			});
 
@@ -2694,7 +2782,7 @@
 		}
 
 		// add an address for the prev store
-		deps.push(__undefined);
+		deps[__push](__undefined);
 
 		// the previous store will always be the 
 		// last item in the list of dependencies
@@ -2727,7 +2815,7 @@
 		// this will tell us wheather all dependencies
 		// have resolved
 		function resolver (value, resolve) {
-			resolved.push(value);
+			resolved[__push](value);
 
 			if (resolved[__length] === deps[__length]) {
 				resolve(resolved)
@@ -2803,9 +2891,9 @@
 			// references
 			var 
 			// i.e 'div'
-			type = vnode.type,
+			type = vnode[__type],
 			// i.e {id: 123, class: 'one two'}
-			props = vnode.props,
+			props = vnode[__props],
 			// i.e [obj, obj]
 			children = vnode[__children];
 
@@ -2846,9 +2934,9 @@
 								}
 							})
 							// create string
-							.join(' ')
+							[__join](' ')
 							// convert all multi-spaces to a single space
-							.replace(/  +/g, ' ')
+							[__replace](/  +/g, ' ')
 							.trim();
 
 			// if props is falsey just return an empty string
@@ -2869,16 +2957,16 @@
 
 			return children.map(function (child) {
 				return toHTML(child);
-			}).join('');
+			})[__join]('');
 		}
 
 		// void elements that do not have a close </tag> 
 		var
 		element = {
-			'area': __true,'base':  __true,'br':    __true,'!doctype': __true,
-			'col':  __true,'embed': __true,'wbr':   __true,'track':    __true,
-			'hr':   __true,'img':   __true,'input': __true,'keygen':   __true,
-			'link': __true,'meta':  __true,'param': __true,'source':   __true
+			'area': __true, 'base':  __true, 'br':    __true, '!doctype': __true,
+			'col':  __true, 'embed': __true, 'wbr':   __true, 'track':    __true,
+			'hr':   __true, 'img':   __true, 'input': __true, 'keygen':   __true,
+			'link': __true, 'meta':  __true, 'param': __true, 'source':   __true
 		};
 
 		var
@@ -3009,7 +3097,7 @@
 
 	                	// handle arrays
 	                	if (is(value, __Array)) {
-	                		value  = '{' + value.join(':') + ';}';
+	                		value  = '{' + value[__join](':') + ';}';
 	                	}
 
 	                	var
@@ -3019,7 +3107,7 @@
 	                	// marginTop !== margintop, but
 	                	// margin-top === margin-top
 	                	// if so convert to dash-case
-	                	if (property !== property.toLowerCase()) {
+	                	if (property !== property[__toLowerCase]()) {
 	                		property = dash(property);
 	                	}
 
@@ -3040,22 +3128,22 @@
 	                	// fix keyframes
 	                	// 0%: {} <-- removes ':'
 	                	if (stack.indexOf(keyframesKey) > -1) {
-	                		trace = trace.replace(/%:/g, '%');
+	                		trace = trace[__replace](/%:/g, '%');
 	                	}
 
 	                	// add closing ;
-	                	if (trace.substr(-1) !== '}') {
+	                	if (trace[__substr](-1) !== '}') {
 	                		trace += ';';
 	                	}
 
 	                	var
-	                	split  = trace.split(joint);
+	                	split  = trace[__split](joint);
 
 	                	var
 	                	// remove & and space in the beginning of a selector
 	                	// so that h1&:hover becomes h1:hover
 	                	// and ' h1' becomes 'h1'
-	                	parent = split[0].replace(/ &|^ /g, ''),
+	                	parent = split[0][__replace](/ &|^ /g, ''),
 	                	child  = split[1],
 	                	block  = tree[parent];
 
@@ -3083,14 +3171,14 @@
 
 	    // converts camelCase to dash-case
 	    function dash (value) {
-	    	return value.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+	    	return value[__replace](/([a-z])([A-Z])/g, '$1-$2')[__toLowerCase]();
 	    }
 
 	    // escapes #ids and .classes for css use
 	    // so that #id becomes \#id or .class becomes \.class
 	    function escape (value) {
 	    	var
-	    	firstLetter = value.substr(0, 1);
+	    	firstLetter = value[__substr](0, 1);
 
 	    	if (firstLetter === '#' || firstLetter === '.') {
 	    		value = '\\' +value;
@@ -3138,7 +3226,7 @@
 					// 			...
 					// 		}
 					// }
-					body = keyframesKey + body.split(keyframesKey)[1];
+					body = keyframesKey + body[__split](keyframesKey)[1];
 
 					// this is the position of what comes after @keyframes
 					// so the pos of where the word @keyframes starts 
@@ -3158,18 +3246,18 @@
 						// creates something like
 						// @-prefix-keyframes ...
 						var
-						prefixed  = body.substr(0,1) + prefix + body.substr(1, keyFramesBodyPos);
+						prefixed  = body[__substr](0,1) + prefix + body[__substr](1, keyFramesBodyPos);
 						// escapes namespaces, as in id's #id and classes .class
-						prefixed += escape(namespace) + body.substr(keyFramesBodyPos+1);
-						arr.push(prefixed);
+						prefixed += escape(namespace) + body[__substr](keyFramesBodyPos+1);
+						arr[__push](prefixed);
 					});
 
 					// extract string from our array of prefixed values
-					body = arr.join('');
+					body = arr[__join]('');
 				}
 				// handle sass like @at-rule
 				else if (body.indexOf(atRootKey) > -1) {
-					body = body.split(atRootKey)[1].replace(' ', '');
+					body = body[__split](atRootKey)[1][__replace](' ', '');
 				}
 				else {
 					// handle ','' as in
@@ -3178,7 +3266,7 @@
 					if (selector.indexOf(',') > -1) {
 						// first we split it
 						var
-						selectorNamespaced = selector.split(',');
+						selectorNamespaced = selector[__split](',');
 
 						// then we add the namespaces
 						each(selectorNamespaced, function (value, index) {
@@ -3188,11 +3276,11 @@
 						});
 
 						// put it back together
-						selectorNamespaced = selectorNamespaced.join(', ');
+						selectorNamespaced = selectorNamespaced[__join](', ');
 
 						// then replace the selector in selector block
 						// with the namespaced version
-						body = body.replace(new __RegExp(selector), selectorNamespaced);
+						body = body[__replace](new __RegExp(selector), selectorNamespaced);
 					}
 					// default
 					else {
@@ -3200,7 +3288,7 @@
 						// joined as 'namespace:hover'
 						// and that '#namespace' + 'h1' is
 						// joined as '#namespace h1'
-						if (body.substr(0,1) === ':') {
+						if (body[__substr](0,1) === ':') {
 							body = namespace + body;
 						}
 						else {
@@ -3271,6 +3359,12 @@
 	}
 
 
+	/**
+	 * create element factory
+	 * @param  {Array|String} elements - list of elements
+	 * @param  {Boolean}      expose   - expose to global namespace?
+	 * @return {Function}
+	 */
 	function createFactory (elements, expose) {
 		function factory (element) {
 			return function (props, children) {
@@ -3339,6 +3433,7 @@
 
 		createComponent: createComponent,
 		createClass: createComponent,
-		Component: createComponent
+		Component: createComponent,
+		propTypes: createPropTypes()
 	};
 }));

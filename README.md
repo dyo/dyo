@@ -152,6 +152,7 @@ dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
 	componentDidMount:         (props, state, this) => {}
 	componentWillUnmount:      (props, state, this) => {}
 	componentDidUnmount:       (props, state, this) => {}
+	propTypes:                 {}
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})
@@ -815,4 +816,34 @@ handleDelete: function (e) {
 		});
 	})
 }
+```
+
+---
+
+## dio.propTypes
+
+Validates props passed to components insuring they are of the the specificied type,
+works just like it would in react-land.
+The build in validtors are `[number, string, bool, array, object, func]`
+and you can also create your own validators.
+
+```javascript
+dio.createComponent({
+	propTypes: {
+		// required
+		id: dio.propTypes.string.isRequired,
+		// no required/optional
+		name: dio.propTypes.string,
+		// build a custom validator
+		custom: function (props, propName, componentName) {
+			if (!/matchme/.test(props[propName])) {
+	        	return new Error(
+		          	'Invalid prop `' + propName + '` supplied to' +
+		          	' `' + componentName + '`. Validation failed.'
+	        	);
+	      	}
+		}
+	}
+	...
+})
 ```
