@@ -24,8 +24,14 @@ Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 
 #### direct download
 
-```javascript
-<script src="dio.min.js"></script>
+```html
+<script src=dio.min.js></script>
+```
+
+#### CDN
+
+```html
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.0.0/dio.min.js></script>
 ```
 
 #### bower
@@ -37,10 +43,10 @@ bower install dio.js
 #### npm
 
 ```
-npm install thysultan/dio.js --save
+npm install dio.js --save
 ```
 
-You can also play with dio.js on this [jsbin](http://jsbin.com/lobavo/edit?js,output).
+You can also play with Dio [on this jsbin](http://jsbin.com/lobavo/edit?js,output)
 
 ---
 
