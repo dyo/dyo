@@ -107,10 +107,10 @@
 
 						return Object.assign({}, state, {
 							// add to start
-							// items: [{id: action.id, value: action.value, completed: false}].concat(state.items)
+							items: [{id: action.id, value: action.value, completed: false}].concat(state.items)
 
 							// add to end
-							items: state.items.concat({id: action.id, value: action.value, completed: false})
+							// items: state.items.concat({id: action.id, value: action.value, completed: false})
 
 							// add to middle
 							// items: items
