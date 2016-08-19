@@ -940,7 +940,6 @@
 			return;
 		}
 
-
 		// normalize class/className references
 		if (namespace === __namespace['svg']) {
 			// svg className is not the same as html
@@ -973,8 +972,8 @@
 			}
 			// styles and other object {} type props
 			else {
-				each(value, function (value, index) {
-					if (!is(target[name][index])) {
+				each(value, function (value, index) {					
+					if (index in target[name]) {
 						target[name][index] = value;
 					}
 				});
