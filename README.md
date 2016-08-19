@@ -1,6 +1,6 @@
 # dio.js 
 
-[![dio.js](https://rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
+[![dio.js](https://cdn.rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
 
 Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 

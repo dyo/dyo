@@ -2,7 +2,7 @@
 	"name": "dio.js",
 	"main": "dio.js",
 	"description": "Dio is a lightweight (~7kb) feature rich Virtual DOM framework",
-	"version": "1.0.0",
+	"version": "1.0.6",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",
 	"authors": [
@@ -26,19 +26,7 @@
 		"browser"
 	],
 	"ignore": [
-		"**/.*",
-		"*.md",
-		"node_modules",
-		"bower_components",
-		"test",
-		"tests",
-		"docs",
-		"examples",
-		"package.json",
-		"bower.json",
-		"gulp.js",
-		"LICENSE",
-		"LICENSE.md",
-		"*.html"
+		"*",
+		"!dio.*"
 	]
 }
