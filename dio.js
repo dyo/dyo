@@ -95,8 +95,8 @@
 	__hyperscriptClass          = createHyperscriptClass(),
 
 	// objects
-	__window                    = window || root,
-	__document                  = __window.document,
+	__window                    = root,
+	__document                  = root ? root.document : __undefined,
 	__namespace 				= {
 		math:  __w3URL + '1998/Math/MathML',
 		xlink: __w3URL + '1999/xlink',
