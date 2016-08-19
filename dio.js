@@ -95,7 +95,7 @@
 	__hyperscriptClass          = createHyperscriptClass(),
 
 	// objects
-	__window                    = root,
+	__window                    = window || root,
 	__document                  = __window.document,
 	__namespace 				= {
 		math:  __w3URL + '1998/Math/MathML',
@@ -170,6 +170,9 @@
 	 * @return {Boolean}   - true/false
 	 */
 	function is (obj, type) {
+		if (!type) {
+			return obj !== __undefined && obj !== __null;
+		}
 		// obj has a constructor, 
 		// we also avoid null values since null has an object constructor
 		if (obj !== __undefined && obj !== __null) {
@@ -628,12 +631,34 @@
 		normalizeNodes(newNode, oldNode);
 	}
 
-	function spliceNode (arr, index, length, item) {
+	function spliceNode (arr, index, deleteCount, item) {
 		if (item) {
-			arr[__splice](index, length, item);
+			// prepend using faster .unshift if start of array
+			if (index === 0) {
+				arr.unshift(item);
+			}
+			// append using faster .push if end of array
+			else if (index >= arr.length - 1) {
+				arr[__push](item);
+			}
+			// insert
+			else {
+				arr[__splice](index, deleteCount, item);
+			}
 		}
 		else {
-			arr[__splice](index, length);
+			// faster .shift if start of array
+			if (index === 0) {
+				arr.shift();
+			}
+			// faster .pop if end of array
+			else if (index >= arr.length - 1) {
+				arr.pop();
+			}
+			// insert
+			else {
+				arr[__splice](index, deleteCount);
+			}
 		}
 	}
 
@@ -841,6 +866,7 @@
 	// update props
 	function getPropChanges (newProps, oldProps) {
 		var 
+		op,
 		changes = [];
 		oldProps = oldProps || {};
 
@@ -859,21 +885,23 @@
 		for (var name in props) {
 			var 
 			oldVal = oldProps[name],
-			newVal = newProps[name],
-			// returns true/false if the prop has changed from it's prev value
-			remove = newVal === __undefined || newVal === __null,
-			// says only diff this if it's not an event i.e onClick...
-			add    = oldVal === __undefined || oldVal === __null || newVal !== oldVal;
+			newVal = newProps[name];
 
-			// something changed
-			if (add || remove) {
-				var 
-				value  = remove === -1 ? oldVal : newVal;
+			// ++
+			if (!is(oldVal)) {
+				op = __true;
+			}
+			// --
+			if (!is(newVal)) {
+				op = __false;
+			}
 
+			// something has changed
+			if (is(op) || oldVal !== newVal) {
 				changes[__push]({
 					name: name, 
-					value: value,
-					op: add || remove
+					value: newVal,
+					op: op === __undefined ? __true : op
 				});
 			}
 		}
@@ -884,7 +912,7 @@
 	// initial creation of props, no checks, just set
 	function setElementProps (target, props) {
 		for (var name in props) {
-			updateElementProps(target, name, props[name], +1, props.xmlns);
+			updateElementProps(target, name, props[name], __true, props.xmlns);
 		}
 	}
 
@@ -900,12 +928,7 @@
 		}
 
 		// prop operation type, either remove / set
-		if (op === -1) {
-			op = 'removeAttribute';
-		}
-		else {
-			op = 'setAttribute';
-		}
+		op = op ? 'setAttribute' : 'removeAttribute';
 
 		// set xlink:href attr
 		if (name === 'xlink:href') {
@@ -1112,6 +1135,24 @@
 
 		// return function that runs update/mount when executed
 		function render (props, children, forceUpdate) {
+			// return html if there is no document to mount to
+			if (!__document) {
+				return function (props, children) {
+					return createHTML(component, props, children);
+				}
+			}
+
+			// when the mountArg is a function
+			if (mountElementIsFunction) {
+				mountElement = mountElementIsFunction();
+
+				if (oldMountElement !== mountElement) {
+					forceUpdate = __true;
+				}
+
+				oldMountElement = mountElement;
+			}
+
 			// don't render to dom, if vdom is requested
 			if (forceUpdate === __componentSignature) {
 				return component(props, children);
@@ -1130,27 +1171,46 @@
 			return render;
 		}
 
+		// set mount element
+		function setMountElement (mountArg) {
+			if (__document) {
+				// element
+				if (mountArg && mountArg.nodeType) {
+					mountElement = mountArg;
+				}
+				// string
+				else if (is(mountArg, __String)) {
+					mountElement = __document.querySelector(mountArg);
+				}
+				// function/stream
+				else if (is(mountArg, __Function)) {
+					mountElementIsFunction = mountArg;
+				}
+
+				// default element
+				if (!mountElement || mountElement === __document) {
+					mountElement = __document.body;
+				}
+			}
+		}
+
 		render.id = __renderSignature;
 
 		var
 		component,
 		newNode,
 		oldNode,
+		oldMountElement,
 		mountElement,
+		mountElementIsFunction,
 		componentsObj,
 		isStatelessComponent,
 		initialRender = __true;
 
-		// set mountElement
-		if (mountArg) {
-			mountElement = mountArg.nodeType ? mountArg : __document.querySelector(mountArg);
-		}
+		// get mountElement
+		setMountElement(mountArg);
 
-		// default element to body
-		if (!mountElement || mountElement === __document) {
-			mountElement = __document.body;
-		}
-
+		// create parent component
 		component = createComponent(componentArg);
 
 		// a component exists
@@ -1178,7 +1238,7 @@
 		}
 		// can't find a component
 		else {
-			throw 'not component';
+			throw 'no component found';
 		}
 	}
 
@@ -1191,7 +1251,7 @@
 		// interface
 		function h (obj) {
 			if (!obj) {
-				throw 'not hyperscript';
+				throw 'no hyperscript found';
 			}
 
 			var 

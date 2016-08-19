@@ -105,20 +105,22 @@ myComponent(__,__,true)
 ```javascript
 dio.createRender(
 	component: {Function|Object}, 
-	mount?: {String|Element}
+	mount?: {String|Element|Function}
 )
 // or
 dio.render(
 	component: {Function|Object},
-	mount?: {String|Element}
+	mount?: {String|Element|Function}
 )
 
 // where component is either a hyperscript object 
 // or an object with a render method that returns a hyperscript object 
 // or a function that returns one of the above.
 
-// While mount is either a selector or element reference
-// if left blank this defaults to document.body
+// While mount is either a selector, element
+// or a function that returns an element
+// if left blank this defaults to document.body within the browser context
+// server-side this will return a function that returns html ouput
 
 // dio.createRender(...) returns a render instance that can be executed anytime
 // you require a render, which will either update the already rendered
