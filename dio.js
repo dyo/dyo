@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio.js v0.1.0 - a lightweight (~7kb) feature rich Virtual DOM framework
+ * dio.js - a lightweight (~7kb) feature rich Virtual DOM framework
  *
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @license MIT
@@ -82,6 +82,16 @@
 	__hydrateSignature          = 'data-hydrate',
 	__w3URL                     = 'http://www.w3.org/',
 
+	// objects
+	__window                    = root,
+	__document                  = !!__window && __window.document,
+	__namespace 				= {
+		math:  __w3URL + '1998/Math/MathML',
+		xlink: __w3URL + '1999/xlink',
+		svg:   __w3URL + '2000/svg',
+		html:  __w3URL + '1999/xhtml'
+	},
+
 	// functions
 	__Number                    = Number,
 	__Array                     = Array,
@@ -93,16 +103,7 @@
 	__encodeURI                 = encodeURI,
 	__setTimeout                = setTimeout,
 	__hyperscriptClass          = createHyperscriptClass(),
-
-	// objects
-	__window                    = root,
-	__document                  = root ? root.document : __undefined,
-	__namespace 				= {
-		math:  __w3URL + '1998/Math/MathML',
-		xlink: __w3URL + '1999/xlink',
-		svg:   __w3URL + '2000/svg',
-		html:  __w3URL + '1999/xhtml'
-	};
+	__XMLHttpRequest            = !!__window && __window.XMLHttpRequest;
 
 
 	/* --------------------------------------------------------------
@@ -497,15 +498,17 @@
 
 		// adding to the dom
 		if (oldNode === __undefined) {
+			// dom operation, create node
 			var
 			nextNode = createElement(newNode, component);
+
+			// dom operation, append node
+			appendChild(parent, nextNode, newNode);
 
 			// add to parents child nodes to keep in sync
 			if (oldParentNode) {
 				spliceNode(oldParentNode[__childNodes], index, 0, nextNode);
 			}
-
-			appendChild(parent, nextNode, newNode);
 		}
 
 		// removing from the dom
@@ -513,9 +516,10 @@
 			var
 			prevNode = oldNode.dom || oldParentNode[__childNodes][index];
 
-			spliceNode(oldParentNode[__childNodes], index, 1);
-
+			// dom operation, remove node
 			removeChild(parent, prevNode, oldNode);
+			// remove from parents child nodes to keep in synce
+			spliceNode(oldParentNode[__childNodes], index, 1);
 		}
 
 		// updating keyed items
@@ -525,32 +529,33 @@
 
 			// remove
 			if (newChildrenLength < oldChildrenLength) {
+				// dom operation, remove node
+				removeChild(parent, currentNode, newNode);
+
 				// update the oldChildren array to remove the old node
 				spliceNode(oldChildren, index, 1);
 
 				// update the parentNodes children array to remove the child
 				spliceNode(oldParentNode[__childNodes], index, 1);
 
-				// dom operation, remove node
-				removeChild(parent, currentNode, newNode);
-
 				// reduce the length of newChildrenLength
 				return -1;
 			}
 			else {
+				// dom operation, create node
 				var 
 				nextNode = createElement(newNode, __undefined, __undefined, oldNode);
 
 				// add
 				if (newChildrenLength > oldChildrenLength) {
+					// dom operation, insert node
+					insertBefore(parent, currentNode, nextNode, newNode);
+
 					// update the oldChildren array to include the new node
 					spliceNode(oldChildren, index, 0, newNode);
 
 					// update the parentNodes children array to include the child
 					spliceNode(oldParentNode[__childNodes], index, 0, nextNode);
-
-					// dom operation, insert node
-					insertBefore(parent, currentNode, nextNode, newNode);
 				}
 				// replace
 				else {
@@ -570,12 +575,15 @@
 
 			// text node
 			if (!oldNode[__type] && !newNode[__type]) {
+				// dom operation, replace value
 				prevNode.nodeValue = newNode;
 			}
 			else {
+				// dom operation, create node
 				var
 				nextNode = createElement(newNode, __undefined, __undefined, oldNode);
 
+				// dom operation, replace node
 				replaceChild(parent, prevNode, nextNode, newNode);
 
 				oldParentNode[__childNodes][index] = nextNode;
@@ -1008,6 +1016,9 @@
 	 * setProps               - update a components props
 	 * setState               - update a components state
 	 * withAttr               - two-way data binding helper
+	 * logValidationError     - log validation results
+	 * validatePropTypes      - validate prop types
+	 * createPropTypes        - create primitive prop types
 	 * 
 	 * -------------------------------------------------------------- */
 
@@ -1134,10 +1145,22 @@
 
 		// return function that runs update/mount when executed
 		function render (props, children, forceUpdate) {
+			// return hyperscript if requested
+			if (forceUpdate === __hyperscriptSignature) {
+				return component(props, children);
+			}
+			// return component if requested
+			else if (forceUpdate === __componentSignature) {
+				return component(props, children, __true);
+			}
+
 			// return html if there is no document to mount to
 			if (!__document) {
+				var 
+				cache = component(props, children);
+
 				return function (props, children) {
-					return createHTML(component, props, children);
+					return createHTML(!!props && !!children ? component(props, children) : cache);
 				}
 			}
 
@@ -1150,11 +1173,6 @@
 				}
 
 				oldMountElement = mountElement;
-			}
-
-			// don't render to dom, if vdom is requested
-			if (forceUpdate === __componentSignature) {
-				return component(props, children);
 			}
 			
 			// initial render
@@ -1486,21 +1504,23 @@
 		types        = ['number', 'string', 'bool', 'array', 'object', 'func'],
 		propTypesObj = {};
 
+		function isValidType (propValue, name) {
+			return is(
+				propValue, 
+				root[
+					name[__substr](0,1)[__toUpperCase]() + 
+					name[__substr](1)
+				] || function () {}
+			);
+		};
+
 		function createTypeValidator (name, isRequired) {
 			function typeValidator (props, propName, displayName) {
 				var 
 				propValue = props[propName];
 
-				if (propValue) {
-					if (
-						!is(
-							propValue, 
-							root[
-								name[__substr](0,1)[__toUpperCase]() + 
-								name[__substr](1)
-							]
-						)
-					) {
+				if (is(propValue)) {
+					if (!isValidType(propValue, name)) {
 						return new Error(
 							'Invalid prop `' + propName +
 							'` of type `' + propValue[__constructor].name[__toLowerCase]() + 
@@ -1527,7 +1547,11 @@
 		}
 
 		each(types, function (name) {
-			propTypesObj[name] = createTypeValidator(name);
+			var 
+			type = name[__substr](0,1) === 'b' ? name + 'ean' :
+				   name[__substr](0,1) === 'f' ? name + 'tion' : name;
+
+			propTypesObj[name] = createTypeValidator(type);
 		});
 
 		return propTypesObj;
@@ -1730,14 +1754,17 @@
 
 	/* --------------------------------------------------------------
 	 * 
-	 * animateWith  - animation helper
-	 * request      - http helper
-	 * createStore  - redux-like store
-	 * createRouter - router helper
-	 * createStream - create stream
-	 * createHTML   - ouput html from vdom
-	 * createStyle  - create stylesheet
-	 * curry        - curry helper
+	 * animateWith            - animation helper
+	 * request                - http helper
+	 * createStore            - redux-like store
+	 * createRouter           - router helper
+	 * createStream           - create stream
+	 * createHTML             - ouput html from vdom
+	 * createStyle            - create stylesheet
+	 * curry                  - curry helper
+	 * createFactory          - create element factory
+	 * injectWindowDependency - inject a mock window
+	 * getObjectKeys          - get object keys
 	 * 
 	 * -------------------------------------------------------------- */
 
@@ -1781,11 +1808,11 @@
 		    else if (!hasClass(element, className)) {
 		    	// create array of current classList
 		        var 
-		        classes = element[__className][__split](" ");
+		        classes = element[__className][__split](' ');
 		        // add our new class
 		        classes[__push](className);
 		        // join our classes array and re-assign to className
-		        element[__className] = classes[__join](" ")
+		        element[__className] = classes[__join](' ')
 		    }
 		}
 
@@ -1802,11 +1829,11 @@
 		    else {
 		    	// create array of current classList
 		        var
-		        classes = element[__className][__split](" ");
+		        classes = element[__className][__split](' ');
 		        // remove the className on this index
 		        classes[__splice](classes.indexOf(className), 1);
 		        // join our classes array and re-ssign to className
-		        element[__className] = classes[__join](" ");
+		        element[__className] = classes[__join](' ');
 		    }
 		}
 
@@ -2172,7 +2199,7 @@
 			responseBody,
 			responseType,
 			responseText   = xhr.responseText,
-			responseHeader = xhr.getResponseHeader("Content-Type");
+			responseHeader = xhr.getResponseHeader('Content-Type');
 
 			// format response header
 			// get the type of response
@@ -2195,7 +2222,7 @@
 			}
 			// html, create dom
 			else if (responseType === 'html') {
-				responseBody = (new DOMParser()).parseFromString(responseText, "text/html");
+				responseBody = (new DOMParser()).parseFromString(responseText, 'text/html');
 			}
 			// text, as is
 			else {
@@ -2215,9 +2242,13 @@
 		function http (url, method, payload, enctype, withCredentials) {
 			// return a a stream
 			return createStream(function (resolve, reject) {
+				if (!__XMLHttpRequest) {
+					return;
+				}
+
 				// create xhr object 
 				var
-				xhr      = new XMLHttpRequest(),
+				xhr      = new __XMLHttpRequest(),
 				// get window location to check fo CORS
 				location = __window.location,
 				// create anchor element and extract url information
@@ -2389,7 +2420,7 @@
 			return function (state, action) {
 				state = state || {};
 
-				return __Object.keys(reducers).reduce(function (nextState, key) {
+				return getObjectKeys(reducers).reduce(function (nextState, key) {
 					nextState[key] = reducers[key](state[key], action);
 
 					return nextState;
@@ -2573,7 +2604,7 @@
 					// we have a match
 					if (match) {
 						// create params object to pass to callback
-						// i.e {user: "simple", id: "1234"}
+						// i.e {user: 'simple', id: '1234'}
 						var
 						data = match[__slice](1, match[__length]) 
 							.reduce(function (data, val, i) {
@@ -2969,34 +3000,36 @@
 
 		// print props
 		function Props (props) {
-			props = __Object.keys(props)
-							// remove any falsey value
-							.filter(function (name) {
-								return  props[name] !== __undefined &&
-										props[name] !== __null &&
-										props[name] !== __false
-							})
-							// 
-							.map(function (name) {
-								// <type name="value">
-								var 
-								value = props[name];
+			if (is(props, __Object)) {
+				props = getObjectKeys(props)
+								// remove any falsey value
+								.filter(function (name) {
+									return  props[name] !== __undefined &&
+											props[name] !== __null &&
+											props[name] !== __false
+								})
+								// 
+								.map(function (name) {
+									// <type name=value>
+									var 
+									value = props[name];
 
-								// don't add events, keys or refs
-								if (!is(value, __Function) && name !== 'key' && name !== 'ref') {
-									// if the value is a falsey/truefy value
-									// print just the name
-									// i.e checkbox=true
-									// will print <type checkbox>
-									// otherwise <type value="">
-									return value === __true ? name : name+'="'+value+'"';
-								}
-							})
-							// create string
-							[__join](' ')
-							// convert all multi-spaces to a single space
-							[__replace](/  +/g, ' ')
-							.trim();
+									// don't add events, keys or refs
+									if (!is(value, __Function) && name !== 'key' && name !== 'ref') {
+										// if the value is a falsey/truefy value
+										// print just the name
+										// i.e checkbox=true
+										// will print <type checkbox>
+										// otherwise <type value="">
+										return value === __true ? name : name+'="'+value+'"';
+									}
+								})
+								// create string
+								[__join](' ')
+								// convert all multi-spaces to a single space
+								[__replace](/  +/g, ' ')
+								.trim();
+			}
 
 			// if props is falsey just return an empty string
 			// otherwise return ' ' + ...props
@@ -3009,6 +3042,8 @@
 
 		// print children
 		function Children (children) {
+			if (!is(children)) return '';
+
 			// empty
 			if (children[__length] === 0) {
 				return '';
@@ -3033,15 +3068,14 @@
 
 		// either a render function or component function
 		if (is(arg, __Function)) {
-			// component functions expose their internals
-			// when we pass a third param, on the other hand
-			// render functions expose their hyperscript output
-			// when we pass a third param
-			vnode = arg(
-				props, 
-				children, 
-				(arg.id === __componentSignature) ? __undefined : __componentSignature
-			)
+			vnode = arg(props, children);
+
+			// render functions return functions
+			if (is(vnode, __Function)) {
+				vnode = vnode(props, children, vnode.id === __renderSignature ? __hyperscriptSignature : __undefined);
+			}
+
+			return is(vnode, __Object) ? createHTML(vnode) : vnode;
 		}
 		// probably hyperscript
 		else {
@@ -3464,6 +3498,42 @@
 	}
 
 
+	/**
+	 * injects a mock window object
+	 * @param  {Object} obj window object
+	 * @return {Object}     window object     
+	 */
+	function injectWindowDependency (obj) {
+		if (obj) {
+			__window         = obj,
+			__document       = __window.document,
+			__XMLHttpRequest = __window.XMLHttpRequest;
+		}
+
+		return obj;
+	}
+
+
+	/**
+	 * gets all the keys of the an object
+	 * @param  {Object} obj object to extract keys from
+	 * @return {Array}      array of keys
+	 */
+	function getObjectKeys (obj) {
+	    var 
+
+	    keys = [];
+	    for (var key in obj) {
+	        if (!obj.hasOwnProperty(key)) {
+	            continue;
+	        }
+	        keys[__push](key);
+	    }
+
+	    return keys;
+	}
+
+
 	/* --------------------------------------------------------------
 	 * 
 	 * exports
@@ -3493,6 +3563,7 @@
 		createComponent: createComponent,
 		createClass: createComponent,
 		Component: createComponent,
-		propTypes: createPropTypes()
+		propTypes: createPropTypes(),
+		injectWindowDependency: injectWindowDependency
 	};
 }));

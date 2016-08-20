@@ -17,17 +17,45 @@
 }(this, function (exports, root) {
 	'use strict';
 
-	var filename = 'test.lib.js';
-	var document = root ? root.document : undefined;
+	var tests      = [];
+	var testsCount = 0;
+	var failures   = [];
+	var assertions = 0;
+
+	var filename = 'test.js';
 	var div;
 
-	if (document) {
-		div = document.createElement('div');
-			  document.body.appendChild(div);
+	// NODE_ENV
+	var reset = '';
+	var format = {
+		reset: '\x1b[0m',
+		green: '\x1b[32m',
+		red: '\x1b[31m',
+		yellow: '\x1b[33m',
+		underline: '\x1b[4m',
+		dim: '\x1b[2m',
+		bold: '\x1b[1m',
+		clear: '\x1Bc\n'
+	}
 
+	var 
+	styles = {
+		base: 'font-weight:bold;',
+		failed: function () { return this.base+'color:red;'},
+		passed: function () { return this.base+'color:green;'}
+	};
+	var stylesId = '%c%s';
+
+	// BROWSER_ENV
+	if (typeof document === 'object' && document.nodeType === 9) {
+		div = document.createElement('div');
 		div.style.fontSize   = '16px';
 		div.style.fontFamily = 'sans-serif';
 		div.style.margin     ='0 auto';
+
+		setTimeout(function () {
+			document.body.appendChild(div);
+		});
 	}
 
 	function each (arr, fn) {
@@ -47,30 +75,29 @@
 		}
 	} 
 
-	function logger (name, results) {
-		var 
-		styles = {
-			base: 'font-weight:bold;',
-			failed: function () { return this.base+'color:red;'},
-			passed: function () { return this.base+'color:green;'}
-		};
-
-		var stylesId = '%c%s';
-
+	function logger (name, results, onlyDom) {
 		// count number of failed resutls
 		var failedResults = results.filter(function(value){
 			return value[0].toLowerCase().indexOf('fail') > -1
 		});
 
 		var failedResultsFraction = (results.length-failedResults.length) + '/' + results.length;
-
-		// open group
-		console[failedResults.length ? 'group' : 'groupCollapsed']
-			(name + ' (' + failedResultsFraction + ' passed)');
-
 		var groupDiv;
 
+		if (failedResults.length) {
+			failures.push({
+				results: failedResults, 
+				failed: failedResultsFraction, 
+				name: name
+			});
+		}
+		
+
+		// BROWSER_ENV
 		if (div) {
+			// open group
+			console[failedResults.length ? 'group' : 'groupCollapsed'](name + ' (' + failedResultsFraction + ' passed)');
+
 			groupDiv = document.createElement('div');
 			groupDiv.insertAdjacentHTML('afterbegin', '<h1>' + name + 
 				' <small>('+failedResultsFraction+' passed)</small></h1>');
@@ -89,6 +116,7 @@
 			style   = failed ? styles.failed() : styles.passed(),
 			status  = (failed ? '✘' : '✔') + ' ' + status;
 
+			// BROWSER_ENV
 			if (groupDiv) {
 				groupDiv.insertAdjacentHTML(
 					'beforeend',
@@ -117,34 +145,57 @@
 				var stack = [];
 
 				each(status.stack.split('\n'), function (value) {
-					if (value.indexOf(filename) === -1) {
+					if (!div) {
+						if (value.indexOf('✘ failed') > -1) {
+							value = format.bold + value + format.reset + format.red;
+						}
+
+						if (value.indexOf('at Object.<anonymous>') > -1) {
+							value = format.dim + value + format.reset;
+						}
+					}
+
+					if (
+						value.indexOf(filename) === -1 &&
+						value.indexOf('at Module._compile') === -1
+					) {
 						stack.push(value);
 					}
 				});
 
 				stack = stack.join('\n');
 				status = stack;
+				status = status.replace('Error: ', '');
 				message = '';
 			}
 
+			// NODE_ENV
 			if (!div) {
-				stylesId = '',
-				style = '\x1b[31m';
+				stylesId = '';
+				
+				if (failed) {
+					style = format.red
+				}
+				else {
+					style = format.green;
+				}
 			}
 
 			// if failed console.error else .log
-			console[failed ? 'error' : 'log'](stylesId, style, status, message);
+			console[failed ? 'error' : 'log'](stylesId, style, status, message, reset);
 		});
 
-		// end group
-		console.groupEnd();
-
+		// BROWSER_ENV
 		if (div) {
 			div.appendChild(groupDiv);
+			// end group
+			console.groupEnd();
 		}
 	}
 
 	function test (name, fn) {
+		testsCount++;
+
 		function tester () {
 			// a store of test resutls
 			var
@@ -173,6 +224,8 @@
 				} else {
 					handler(failed, message);
 				}
+
+				assertions += results.length;
 			}
 
 			// deep-equal function
@@ -248,7 +301,12 @@
 
 			// execute logger at the end of all tests
 			function end () {
-				logger(name, results);
+				if (div) {
+					logger(name, results, true);
+				}
+				else {
+					tests.push({name: name, results: results});
+				}
 			}
 
 			// execute test enviroment
@@ -259,5 +317,37 @@
 		tester();
 	}
 
+	function start () {
+
+
+		if (!tests.length) {
+			return;
+		}
+
+		// NODE_ENV
+		if (!console.clear) {
+			reset = format.reset;
+			console.clear = function () {
+		  		return console.log(format.clear+'    '+format.underline+'Test Results\n'+reset);
+			}
+		}
+
+		console.clear();
+
+		var start = new Date().getTime();
+
+		each(tests, function (value) {
+			logger(value.name, value.results);
+		});
+		
+		var end = new Date().getTime();
+		console.log((!div ? '\n    ' : '') + assertions + ' assertions completed in: ' + Math.round(end - start) + 'ms\n');
+
+		if (!div && failures.length) {
+			process.exit(1);
+		}
+	}
+
+	test.start = start;
 	exports.test = test;
 }));

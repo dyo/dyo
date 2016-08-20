@@ -49,4 +49,4 @@ doesAnotherThing;
 var doesSomthing, doesAnotherThing;
 ```
 
-Try to make functions names, variables names and comments descriptive if possible.
+Try to make function names, variable names and comments descriptive where possible.

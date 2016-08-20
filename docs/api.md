@@ -670,7 +670,7 @@ handleDelete: function (e) {
 
 ## dio.propTypes
 
-Validates props passed to components insuring they are of the the specificied type,
+validates props passed to components insuring they are of the the specificied type,
 works just like it would in react-land.
 The build in validtors are `[number, string, bool, array, object, func]`
 and you can also create your own validators.
@@ -694,4 +694,15 @@ dio.createComponent({
 	}
 	...
 })
+```
+
+## dio.injectWindowDependency
+
+injects a mock window object to be used for writting tests for 
+features that do not exist outside of the browser enviroment,
+like `XMLHttpRequest` and other `#document` operations.
+
+```javascript
+dio.injectWindowDependency({Object})
+// returns whatever is passed to it
 ```

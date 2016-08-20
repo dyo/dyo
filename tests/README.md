@@ -5,7 +5,9 @@
 ## running tests
 
 Open `index.html` in a browser, inspect the console for more details.
-The console should look like the below block of code that you can click into to check the details of each test, by default tests without failed assertions are collapsed. Here is an example of how it should look: [https://rawgit.com/thysultan/dio.js/master/tests/index.html](https://rawgit.com/thysultan/dio.js/master/tests/index.html)
+The console should look like the below block of code that you can click into to check the details of each test, by default tests without failed assertions are collapsed. Here is an example of how it should look: [https://rawgit.com/thysultan/dio.js/master/tests/index.html](https://rawgit.com/thysultan/dio.js/master/tests/index.html).
+
+You can also run these tests in node with `npm test`.
 
 ```javascript
 // collapsed
@@ -49,8 +51,7 @@ test('name of test', function(ok, eq, spy, end) {
 	// for example
 	ok(spy.called, '.method({Object})')
 	
-	// calling end() indicates the end of the test
-	// this will then log the test
+	// calling end() indicates the end of this test
 	end();
 	
 	// inspecting the console you will see something like
@@ -64,5 +65,8 @@ test('name of test', function(ok, eq, spy, end) {
 		ok(true, 'async test');
 		end();
 	}, 100);
+
+	// this will start to run all the defined tests
+	test.start();
 });
 ```
