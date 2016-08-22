@@ -19,13 +19,13 @@
     }
     // commonjs
     else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
-        factory(exports, root);
+        factory(exports);
     } 
     // browser globals
     else {
-        factory(root, root);
+        factory(root);
     }
-}(this, function (exports, root) {
+}(this, function (exports) {
 	'use strict';
 
 	// references for better minification
@@ -83,8 +83,8 @@
 	__w3URL                     = 'http://www.w3.org/',
 
 	// objects
-	__window                    = root,
-	__document                  = !!__window && __window.document,
+	__window                    = typeof global === 'object' ? global : exports,
+	__document                  = __window.document,
 	__namespace 				= {
 		math:  __w3URL + '1998/Math/MathML',
 		xlink: __w3URL + '1999/xlink',
@@ -1425,7 +1425,11 @@
 		var
 		cache,
 		// should we check prop types
-		shouldValidatePropTypes = !!component.propTypes && !!root && root.NODE_ENV !== 'production';
+		shouldValidatePropTypes = (
+			!!component.propTypes &&
+			typeof NODE_ENV === 'string' &&
+			NODE_ENV !== 'production'
+		);
 
 		// we will return a function that when called
 		// returns the components vdom representation
@@ -1462,7 +1466,7 @@
 			// publish componentWillReceiveProps lifecycle
 			if (props) {
 				if (shouldValidatePropTypes) {
-					validatePropTypes(props, component.propTypes, displayName);
+					validatePropTypes(props, component.propTypes, component.displayName);
 				}
 
 				lifecycle(component, __componentWillReceiveProps, __true, props);
@@ -1479,85 +1483,6 @@
 	}
 
 
-	function logValidationError (error) {
-		var 
-		type = 'error';
-
-		if (console && is(console[type], __Function)) {
-			console[type]('Warning: Failed propType: ' + error + '`.');
-		}
-	}
-
-	function validatePropTypes (props, propTypes, displayName) {
-		each(propTypes, function (typeValidator, propName) {
-			var 
-			validationResult = typeValidator(props, propName, displayName);
-
-			if (validationResult) {
-				logValidationError(validationResult);
-			}
-		});
-	}
-
-	function createPropTypes () {
-		var
-		types        = ['number', 'string', 'bool', 'array', 'object', 'func'],
-		propTypesObj = {};
-
-		function isValidType (propValue, name) {
-			return is(
-				propValue, 
-				root[
-					name[__substr](0,1)[__toUpperCase]() + 
-					name[__substr](1)
-				] || function () {}
-			);
-		};
-
-		function createTypeValidator (name, isRequired) {
-			function typeValidator (props, propName, displayName) {
-				var 
-				propValue = props[propName];
-
-				if (is(propValue)) {
-					if (!isValidType(propValue, name)) {
-						return new Error(
-							'Invalid prop `' + propName +
-							'` of type `' + propValue[__constructor].name[__toLowerCase]() + 
-							'` supplied to `' +
-							displayName +
-							'`, expected `' + name
-						);
-					}
-				}
-				else if (isRequired) {
-					return new Error(
-						'Required prop `' +
-						propName + '` not specified in `' + 
-						displayName
-					);
-				}
-			}
-
-			if (!isRequired) {
-				typeValidator.isRequired = createTypeValidator(name, __true);
-			}
-
-			return typeValidator;
-		}
-
-		each(types, function (name) {
-			var 
-			type = name[__substr](0,1) === 'b' ? name + 'ean' :
-				   name[__substr](0,1) === 'f' ? name + 'tion' : name;
-
-			propTypesObj[name] = createTypeValidator(type);
-		});
-
-		return propTypesObj;
-	}
-
-
 	/**
 	 * componentClass
 	 * component interface/blueprint
@@ -1566,14 +1491,9 @@
 	 */
 	function componentClass (displayName) {
 		// immutable internal props & state
-		this[__props] = {},
-		this[__state] = {};
-
-		// add displayName if available
-		// this will make for better debugging
-		if (displayName) {
-			this.displayName = displayName;
-		}
+		this[__props]    = {},
+		this[__state]    = {},
+		this.displayName = displayName || '';
 	}
 
 	/**
@@ -1749,6 +1669,86 @@
 				callback()
 			}
 		}
+	}
+
+
+	function logValidationError (error) {
+		var 
+		type = 'error';
+
+		if (console && is(console[type], __Function)) {
+			console[type]('Warning: Failed propType: ' + error + '`.');
+		}
+	}
+
+	function validatePropTypes (props, propTypes, displayName) {
+		each(propTypes, function (typeValidator, propName) {
+			var 
+			validationResult = typeValidator(props, propName, displayName);
+
+			if (validationResult) {
+				logValidationError(validationResult);
+			}
+		});
+	}
+
+	function createPropTypes () {
+		var
+		types        = ['number', 'string', 'bool', 'array', 'object', 'func'],
+		propTypesObj = {};
+
+		function isValidType (propValue, name) {
+			var 
+			type = name[__substr](0,1)[__toUpperCase]() + name[__substr](1);
+
+			return is(
+				propValue,
+				__window[type] || function () {}
+			);
+		};
+
+		function createTypeValidator (name, isRequired) {
+			function typeValidator (props, propName, displayName) {
+				var 
+				propValue = props[propName];
+				displayName = displayName || '#unknown';
+
+				if (is(propValue)) {
+					if (!isValidType(propValue, name)) {
+						return new Error(
+							'Invalid prop `' + propName +
+							'` of type `' + propValue[__constructor].name[__toLowerCase]() + 
+							'` supplied to `' +
+							displayName +
+							'`, expected `' + name
+						);
+					}
+				}
+				else if (isRequired) {
+					return new Error(
+						'Required prop `' +
+						propName + '` not specified in `' + 
+						displayName
+					);
+				}
+			}
+
+			if (!isRequired) {
+				typeValidator.isRequired = createTypeValidator(name, __true);
+			}
+
+			return typeValidator;
+		}
+
+		each(types, function (name) {
+			var 
+			type = name[__substr](0,1) === 'b' ? name + 'ean' :
+				   name[__substr](0,1) === 'f' ? name + 'tion' : name;
+
+			propTypesObj[name] = createTypeValidator(type);
+		});
+
+		return propTypesObj;
 	}
 
 
@@ -3521,8 +3521,8 @@
 	 */
 	function getObjectKeys (obj) {
 	    var 
-
 	    keys = [];
+	    
 	    for (var key in obj) {
 	        if (!obj.hasOwnProperty(key)) {
 	            continue;

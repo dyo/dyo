@@ -672,8 +672,10 @@ handleDelete: function (e) {
 
 validates props passed to components insuring they are of the the specificied type,
 works just like it would in react-land.
-The build in validtors are `[number, string, bool, array, object, func]`
+The built in validtors are `[number, string, bool, array, object, func]`
 and you can also create your own validators.
+note that propTypes are only evaluated when NODE_ENV
+is defined and its value is not set to 'production'.
 
 ```javascript
 dio.createComponent({

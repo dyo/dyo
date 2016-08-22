@@ -32,7 +32,7 @@ Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.0.7/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.0.8/dio.min.js></script>
 ```
 
 #### bower
@@ -834,8 +834,10 @@ handleDelete: function (e) {
 
 validates props passed to components insuring they are of the the specificied type,
 works just like it would in react-land.
-The build in validtors are `[number, string, bool, array, object, func]`
+The built in validtors are `[number, string, bool, array, object, func]`
 and you can also create your own validators.
+note that propTypes are only evaluated when NODE_ENV
+is defined and its value is not set to 'production'.
 
 ```javascript
 dio.createComponent({

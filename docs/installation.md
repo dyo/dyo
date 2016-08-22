@@ -9,7 +9,7 @@
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.0.7/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.0.8/dio.min.js></script>
 ```
 
 #### bower
@@ -24,5 +24,5 @@ bower install dio.js
 npm install dio.js --save
 ```
 
-You can also play with Dio [on this jsbin](http://jsbin.com/lobavo/edit?js,output)
+You can also play with Dio [on JS Bin](http://jsbin.com/lobavo/edit?js,output)
 

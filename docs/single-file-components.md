@@ -54,4 +54,4 @@ function HelloWorld () {
 dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
 ```
 
-You can play with this [on this jsbin](http://jsbin.com/yayuxox/edit?js,console,output)
+You can also play with this [on JS Bin](http://jsbin.com/yayuxox/edit?js,console,output)
