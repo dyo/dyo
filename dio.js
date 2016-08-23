@@ -1672,48 +1672,77 @@
 	}
 
 
+	/**
+	 * logs validation errors for .propTypes
+	 * @param  {String} error 
+	 */
 	function logValidationError (error) {
-		var 
-		type = 'error';
-
-		if (console && is(console[type], __Function)) {
-			console[type]('Warning: Failed propType: ' + error + '`.');
-		}
+		console['error']('Warning: Failed propType: ' + error + '`.');
 	}
 
+
+	/**
+	 * check and validate prop types
+	 * @param  {Object} props       
+	 * @param  {Object} propTypes   
+	 * @param  {String} displayName - components display name/function name
+	 */
 	function validatePropTypes (props, propTypes, displayName) {
+		// for each of the prop types specified
 		each(propTypes, function (typeValidator, propName) {
+			// execute the validator function
 			var 
 			validationResult = typeValidator(props, propName, displayName);
 
+			// an error has occured only if the validator
+			// has returned something
 			if (validationResult) {
+				// log validation error
 				logValidationError(validationResult);
 			}
 		});
 	}
 
+
+	/**
+	 * create the .propTypes object
+	 * @return {Object}
+	 */
 	function createPropTypes () {
 		var
 		types        = ['number', 'string', 'bool', 'array', 'object', 'func'],
 		propTypesObj = {};
 
+		// check if the type is valid
 		function isValidType (propValue, name) {
+			// convert something like `function` to `Function`
+			// since function is not a constructor that we can 
+			// find on the root/window object but 
+			// Function, Array, String, Function... are
 			var 
 			type = name[__substr](0,1)[__toUpperCase]() + name[__substr](1);
 
+			// we then check if the propValue is of this type
+			// if window[type] yields nothing we default to a function
+			// that propValue could not possible have it\s constructor
+			// set to it.
 			return is(
 				propValue,
 				__window[type] || function () {}
 			);
-		};
+		}
 
+		// factory that creates a type validator
 		function createTypeValidator (name, isRequired) {
 			function typeValidator (props, propName, displayName) {
 				var 
 				propValue = props[propName];
+				// if the displayName is not set we show #unknown
 				displayName = displayName || '#unknown';
 
+				// a prop was passed, as in it's not undefined
 				if (is(propValue)) {
+					// if it's not of the valid type
 					if (!isValidType(propValue, name)) {
 						return new Error(
 							'Invalid prop `' + propName +
@@ -1724,6 +1753,10 @@
 						);
 					}
 				}
+				// if it is a required prop
+				// isRequired is only set for
+				// i.e propTypes.bool.isRequired
+				// and not for propTypes.bool
 				else if (isRequired) {
 					return new Error(
 						'Required prop `' +
@@ -1733,6 +1766,9 @@
 				}
 			}
 
+			// add the isRequired validator
+			// also avoid a infinite call stack
+			// by checking that isRequired has not yet been set
 			if (!isRequired) {
 				typeValidator.isRequired = createTypeValidator(name, __true);
 			}
@@ -1740,11 +1776,14 @@
 			return typeValidator;
 		}
 
+		// for all these types
 		each(types, function (name) {
+			// if the type is bool / func -> boolean / function
 			var 
 			type = name[__substr](0,1) === 'b' ? name + 'ean' :
 				   name[__substr](0,1) === 'f' ? name + 'tion' : name;
 
+			// add the validator
 			propTypesObj[name] = createTypeValidator(type);
 		});
 
