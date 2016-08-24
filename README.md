@@ -32,7 +32,7 @@ Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.0.8/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.1.0/dio.min.js></script>
 ```
 
 #### bower
@@ -160,7 +160,6 @@ dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
 	componentDidMount:         (props, state, this) => {}
 	componentWillUnmount:      (props, state, this) => {}
 	componentDidUnmount:       (props, state, this) => {}
-	propTypes:                 {}
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})
@@ -179,6 +178,9 @@ dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
 	// }
 	// it is however an optional property so you do not need to set it,
 	displayName:               {String}
+
+	// adds validation for props
+	propTypes:                 {Object}
 
 	// render method
 	render:                    (props, state, this) => {}
@@ -226,8 +228,8 @@ h('div', {innerHTML: "<script>alert('hello')</script>"});
 dio.createComponent({Function|Object})
 // or
 dio.createClass({Function|Object})
-// or
-dio.Component({Function|Object})
+// or ES6
+class Component extends dio.Component {}
 
 // for example
 var myComponent = dio.createComponent({
@@ -302,7 +304,7 @@ Components that do not return an object with a render function
 or are itself an object with a render function will not feature
 the component lifecycles and methods as presented above in the schema.
 
-Lets go over some component examples.
+component examples.
 
 ```javascript
 // function that returns a hyperscript object
@@ -345,7 +347,16 @@ dio.createComponent(function () {
 	}
 })
 
-dio.createRender(componentPlaceholder)
+// extend Component
+class Component extends dio.Component {
+	constructor(props) {
+		super(props)
+	}
+	render() {
+		return h('div', 'Hello World')
+	}
+}
+
 ```
 
 Components created with `dio.createComponent` that feature a
@@ -356,20 +367,23 @@ One thing to note is that in the 'Hello World'
 example that we began with, we did not create a component with `dio.createComponent()`
 but rather just used a pure function that we passed
 to `dio.createRender(here)` this is because
-`.createRender` will create a component if what was passed to it was not a component.
+`.createRender` will create a component if what is passed to it is not already a component.
 
-Lets quickly go over some mount examples.
+mount examples.
 
 ```javascript
-document || document.querySelector('.myapp')
-'.myapp'
+document // the document
+document.body // a dom node
+document.querySelector('.myapp') // a dom node
+'.myapp' // a selector
+document.createElement('div') // a created element
 
-dio.createRender(__, mountPlaceholder)
+dio.createRender(__, mount)
 
 // note that the default mount is document.body if nothing is passed.
 ```
 
-> But how do i render one component within another?
+> How do i render one component within another?
 
 Components are just functions(statefull/stateless),
 to render them just execute them where needed.
@@ -474,7 +488,7 @@ myrouter.forward()
 
 ## dio.createStore
 
-Alot like redux createStore or rather it's exactly like redux createStore
+Alot like the redux createStore or rather it's exactly like redux createStore
 with the addition of `.connect` that accepts a render insance or a component 
 and mount with which to update everytime the store is updated.
 Which is mostly a short hand for creating a listerner with `.subscribe`
@@ -836,8 +850,8 @@ validates props passed to components insuring they are of the the specificied ty
 works just like it would in react-land.
 The built in validtors are `[number, string, bool, array, object, func]`
 and you can also create your own validators.
-note that propTypes are only evaluated when NODE_ENV
-is defined and its value is not set to 'production'.
+note that propTypes/validations are only evaluated when `NODE_ENV` or `process.env.NODE_ENV`
+are defined and set to 'development'.
 
 ```javascript
 dio.createComponent({
@@ -847,17 +861,46 @@ dio.createComponent({
 		// no required/optional
 		name: dio.propTypes.string,
 		// build a custom validator
-		custom: function (props, propName, componentName) {
+		custom: function (
+			props, 
+			propName, 
+			displayName, 
+
+			createInvalidPropTypeError, 
+			createRequiredPropTypeError
+		) {
 			if (!/matchme/.test(props[propName])) {
 	        	return new Error(
 		          	'Invalid prop `' + propName + '` supplied to' +
-		          	' `' + componentName + '`. Validation failed.'
+		          	' `' + displayName + '`. Validation failed.'
 	        	);
 	      	}
 		}
 	}
 	...
 })
+
+// where `createInvalidPropTypeError` and `createInvalidPropTypeError`
+// are helper functions that that you can use to create an error message
+createInvalidPropTypeError(
+	propName: {String}, 
+	propValue: {Any}, 
+	displayName: {String}, 
+	expectedType: {String}
+)
+
+createRequiredPropTypeError(
+	propName: {String}, 
+	displayName: {String}
+)
+// 
+// so instead of the above
+return new Error(
+  	'Invalid prop `' + propName + '` supplied to' +
+  	' `' + componentName + '`. Validation failed.'
+);
+// we could do
+return createInvalidPropTypeError(propName, props[propName], displayName, 'expected type')
 ```
 
 ## dio.injectWindowDependency
