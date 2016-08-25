@@ -5,7 +5,7 @@
 Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 
 - ~7kb minified+gzipped
-- ~17kb minified
+- ~18kb minified
 
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
  ![dependencies](https://img.shields.io/badge/dependencies-none-green.svg?style=flat) [![Join the chat at https://gitter.im/thysultan/dio.js](https://img.shields.io/badge/chat-gitter-green.svg?style=flat)](https://gitter.im/thysultan/dio.js)
@@ -59,10 +59,12 @@ built around the concept that any function/object can become a component.
 Components in Dio share the same api's as react with a few additions, 
 this means that you can easily port both ways between Dio and React as and when needed
 without any significant changes to the code base, 
-the minimal change in most cases being a simple `React, ReactDOM = dio`.
+the minimal change in most cases being `React, ReactDOM = dio`,
+ergo if you know react then you probably already know Dio and vice-versa.
 
 Having said that dio can be used as just a "view" library but it does come
-self containeed with everything you would need to build an application.
+self containeed with everything you would need to build an application,
+from routing, http requests, server-side rendering to testing, state stores, animations and more.
 
 In that respect this getting started guide aims to show you how to go from zero to hello world in Dio.
 
@@ -80,13 +82,13 @@ function HelloWorld () {
 dio.createRender(HelloWorld)({text: 'Hello World'})
 ```
 
-Will mount a h1 element onto the `.app` div the contents of which will be 'Hello World.
+Will mount a h1 element onto the page the contents of which will be 'Hello World'.
 
 ---
 
 # Performance
 
-- [See the dbmon implementation](https://thysultan.com/examples/benchmark.html) 
+- [Dio's dbmon implementation](https://thysultan.com/examples/benchmark.html)
 
 # Single File Components
 
@@ -218,6 +220,12 @@ h('div', [h('h1', '1st'), h('h1', '2nd'), ...])
 
 h('div', {innerHTML: "<script>alert('hello')</script>"});
 // <div><script>alert('hello')</script></div>
+
+h(Component, {who: 'World'}, 1, 2, 3, 4)
+// passes {who: ...} as props and 1, 2, 3, 4 as children to Component
+
+h('div', Component)
+// is identical to h('div', h(Component))
 ```
 
 ---
@@ -226,10 +234,19 @@ h('div', {innerHTML: "<script>alert('hello')</script>"});
 
 ```javascript
 dio.createComponent({Function|Object})
+
 // or
 dio.createClass({Function|Object})
-// or ES6
-class Component extends dio.Component {}
+
+// or ES6 classes
+// the only difference to react is that
+// this works exactly like you would expect of
+// .createClass
+class Component extends dio.Component {
+	render() {
+
+	}
+}
 
 // for example
 var myComponent = dio.createComponent({
@@ -244,7 +261,8 @@ var myComponent = dio.createComponent(function () {
 });
 
 // pass true as the third argument to access the 
-// internal methods of a component created with .createComponent i.e
+// internal methods of a component created with 
+// .createComponent/.createClass i.e
 myComponent(__,__,true)
 // returns {
 // 		render: function ...
@@ -356,18 +374,49 @@ class Component extends dio.Component {
 		return h('div', 'Hello World')
 	}
 }
-
 ```
 
-Components created with `dio.createComponent` that feature a
-render method either returned from a function or within the
-object passed to `.createComponent` are statefull by default.
+Components create with `.createClass/.createComponent/.Component` are
+statefull by default. There are also other scenarios that pure functions
+may become statefull, below are some examples.
 
-One thing to note is that in the 'Hello World'
-example that we began with, we did not create a component with `dio.createComponent()`
+```javascript
+function Pure () {
+	return {
+		render: function () {
+			return h('h1');
+		}
+	}
+}
+
+function Parent () {
+	return {
+		render: function () {
+			return h('div', Pure);
+		}
+	}
+}
+
+var render = dio.createRender(Pure);
+// or
+var render = dio.createRender(Parent);
+
+// since pure returns an object with a render method
+// it will now become a statefull component.
+// this means that from within Pure if we call this.forceUpdate
+// it will update Pure's corresponding dom element
+
+// so if a pure function that returns an object with a render method
+// is placed as is into either .createRender, .createClass, .createComponent 
+// or even in h() it then will be a statefull component.
+```
+
+Note that in the getting started section 'Hello World'
+we did not create a component with `dio.createComponent()`
 but rather just used a pure function that we passed
 to `dio.createRender(here)` this is because
-`.createRender` will create a component if what is passed to it is not already a component.
+`.createRender` will create a component if 
+what is passed to it is not already a component as detailed above.
 
 mount examples.
 
@@ -378,6 +427,20 @@ document.querySelector('.myapp') // a dom node
 '.myapp' // a selector
 document.createElement('div') // a created element
 
+// or even a function
+function el () {
+	// if we change the element we return
+	// calling the render instance will
+	// update accordingly, for example
+	// the next time render instance is called
+	// if the element it gets from this function
+	// is different from the element it recieved
+	// on the previous call it will execute
+	// a fresh mount to the new element, on the other hand
+	// if it the same it will run a patch update
+	return document.body;
+}
+
 dio.createRender(__, mount)
 
 // note that the default mount is document.body if nothing is passed.
@@ -385,10 +448,13 @@ dio.createRender(__, mount)
 
 > How do i render one component within another?
 
-Components are just functions(statefull/stateless),
-to render them just execute them where needed.
+Components are for the most part functions(statefull/stateless),
+to render call them `h('div', A())` or place them `h('div', A)`
+as needed with the exception of classes created with
+`class B extends dio.Component` that should only use placement
+`h('div', B)`
 
-_note: render instances are not components_
+_note: render instances(created with .createRender) are not components_
 
 ```javascript
 // stateless
@@ -684,6 +750,11 @@ dio.createStyle(css: {Object}, namespace?: {String});
 
 // as in
 dio.createStyle({'p': {color:'red'}}, '#id');
+
+// if you run the above with the same namespace
+// it will check if a style with that namespace
+// has already been added and only create and add
+// one if it has not.
 ```
 
 ---
@@ -851,7 +922,7 @@ works just like it would in react-land.
 The built in validtors are `[number, string, bool, array, object, func]`
 and you can also create your own validators.
 note that propTypes/validations are only evaluated when `NODE_ENV` or `process.env.NODE_ENV`
-are defined and set to 'development'.
+are defined and set to `'development'`.
 
 ```javascript
 dio.createComponent({
@@ -877,7 +948,9 @@ dio.createComponent({
 	      	}
 		}
 	}
-	...
+	render: function () {
+		// ...
+	}
 })
 
 // where `createInvalidPropTypeError` and `createInvalidPropTypeError`
@@ -900,7 +973,9 @@ return new Error(
   	' `' + componentName + '`. Validation failed.'
 );
 // we could do
-return createInvalidPropTypeError(propName, props[propName], displayName, 'expected type')
+return createInvalidPropTypeError(
+	propName, props[propName], displayName, 'expected type'
+)
 ```
 
 ## dio.injectWindowDependency

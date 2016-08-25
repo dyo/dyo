@@ -343,7 +343,7 @@ zep(['../dio.js'], function (utili, deps) {
 			}
 		};
 		var expectedOutput = '<style> h1 {color: red;} h1 span {color: blue;}</style>';
-		var expectedNSOutput = '<style data-id=#ns>#ns h1 {color: red;}#ns h1 span {color: blue;}</style>';
+		var expectedNSOutput = '<style id=#ns@@dio>#ns h1 {color: red;}#ns h1 span {color: blue;}</style>';
 
 		var stylesheet = dio.createStyle(style, null, true).replace(/\t|\n+/g, '');
 		var stylesheetNS = dio.createStyle(style, '#ns', true).replace(/\t|\n+/g, '');

@@ -71,6 +71,12 @@ h('div', [h('h1', '1st'), h('h1', '2nd'), ...])
 
 h('div', {innerHTML: "<script>alert('hello')</script>"});
 // <div><script>alert('hello')</script></div>
+
+h(Component, {who: 'World'}, 1, 2, 3, 4)
+// passes {who: ...} as props and 1, 2, 3, 4 as children to Component
+
+h('div', Component)
+// is identical to h('div', h(Component))
 ```
 
 ---
@@ -79,10 +85,19 @@ h('div', {innerHTML: "<script>alert('hello')</script>"});
 
 ```javascript
 dio.createComponent({Function|Object})
+
 // or
 dio.createClass({Function|Object})
-// or ES6
-class Component extends dio.Component {}
+
+// or ES6 classes
+// the only difference to react is that
+// this works exactly like you would expect of
+// .createClass
+class Component extends dio.Component {
+	render() {
+
+	}
+}
 
 // for example
 var myComponent = dio.createComponent({
@@ -97,7 +112,8 @@ var myComponent = dio.createComponent(function () {
 });
 
 // pass true as the third argument to access the 
-// internal methods of a component created with .createComponent i.e
+// internal methods of a component created with 
+// .createComponent/.createClass i.e
 myComponent(__,__,true)
 // returns {
 // 		render: function ...
@@ -209,18 +225,49 @@ class Component extends dio.Component {
 		return h('div', 'Hello World')
 	}
 }
-
 ```
 
-Components created with `dio.createComponent` that feature a
-render method either returned from a function or within the
-object passed to `.createComponent` are statefull by default.
+Components create with `.createClass/.createComponent/.Component` are
+statefull by default. There are also other scenarios that pure functions
+may become statefull, below are some examples.
 
-One thing to note is that in the 'Hello World'
-example that we began with, we did not create a component with `dio.createComponent()`
+```javascript
+function Pure () {
+	return {
+		render: function () {
+			return h('h1');
+		}
+	}
+}
+
+function Parent () {
+	return {
+		render: function () {
+			return h('div', Pure);
+		}
+	}
+}
+
+var render = dio.createRender(Pure);
+// or
+var render = dio.createRender(Parent);
+
+// since pure returns an object with a render method
+// it will now become a statefull component.
+// this means that from within Pure if we call this.forceUpdate
+// it will update Pure's corresponding dom element
+
+// so if a pure function that returns an object with a render method
+// is placed as is into either .createRender, .createClass, .createComponent 
+// or even in h() it then will be a statefull component.
+```
+
+Note that in the getting started section 'Hello World'
+we did not create a component with `dio.createComponent()`
 but rather just used a pure function that we passed
 to `dio.createRender(here)` this is because
-`.createRender` will create a component if what is passed to it is not already a component.
+`.createRender` will create a component if 
+what is passed to it is not already a component as detailed above.
 
 mount examples.
 
@@ -231,6 +278,20 @@ document.querySelector('.myapp') // a dom node
 '.myapp' // a selector
 document.createElement('div') // a created element
 
+// or even a function
+function el () {
+	// if we change the element we return
+	// calling the render instance will
+	// update accordingly, for example
+	// the next time render instance is called
+	// if the element it gets from this function
+	// is different from the element it recieved
+	// on the previous call it will execute
+	// a fresh mount to the new element, on the other hand
+	// if it the same it will run a patch update
+	return document.body;
+}
+
 dio.createRender(__, mount)
 
 // note that the default mount is document.body if nothing is passed.
@@ -238,10 +299,13 @@ dio.createRender(__, mount)
 
 > How do i render one component within another?
 
-Components are just functions(statefull/stateless),
-to render them just execute them where needed.
+Components are for the most part functions(statefull/stateless),
+to render call them `h('div', A())` or place them `h('div', A)`
+as needed with the exception of classes created with
+`class B extends dio.Component` that should only use placement
+`h('div', B)`
 
-_note: render instances are not components_
+_note: render instances(created with .createRender) are not components_
 
 ```javascript
 // stateless
@@ -537,6 +601,11 @@ dio.createStyle(css: {Object}, namespace?: {String});
 
 // as in
 dio.createStyle({'p': {color:'red'}}, '#id');
+
+// if you run the above with the same namespace
+// it will check if a style with that namespace
+// has already been added and only create and add
+// one if it has not.
 ```
 
 ---
