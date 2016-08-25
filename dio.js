@@ -103,7 +103,6 @@
 		html:  __w3URL + '1999/xhtml'
 	},
 
-
 	// functions
 	__Number                    = Number,
 	__Array                     = Array,
@@ -117,7 +116,6 @@
 	__setTimeout                = setTimeout,
 	__XMLHttpRequest            = !!__window && __window.XMLHttpRequest,
 	__hyperscriptClass          = createHyperscriptClass(),
-
 
 	// other
 	parseHyperscriptTypeRegExp = new __RegExp(
