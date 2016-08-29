@@ -13,20 +13,21 @@
 	'use strict';
 
 	// amd
-    if (typeof define === 'function' && define.amd) {
-        // register as an anonymous module
-        define([], factory);
-    }
-    // commonjs
-    else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
-        factory(exports);
-    } 
-    // browser globals
-    else {
-        factory(root);
-    }
+	if (typeof define === 'function' && define.amd) {
+		// register as an anonymous module
+		define([], factory);
+	}
+	// commonjs
+	else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
+		factory(exports);
+	} 
+	// browser globals
+	else {
+		factory(root);
+	}
 }(this, function (exports) {
 	'use strict';
+
 
 	// references for better minification
 	// so instead of obj.constructor we would do obj[__constructor].
@@ -34,12 +35,15 @@
 	// o[c] but it can't quite do that with the former without setting
 	// it to mangle props of which you will then have to specifiy which props
 	// to not mangle since all the api's will also get mangled indiscriminately
+	
+
 	var
 	// primitives
 	__null                      = null,
 	__false                     = false,
 	__true                      = true,
 	__undefined                 = void 0,
+
 
 	// properties
 	__constructor               = 'constructor',
@@ -70,6 +74,7 @@
 	__stateless                 = 'stateless',
 	__addEventListener          = 'addEventListener',
 
+
 	// lifecycle properties
 	__getInitialState           = 'getInitialState',
 	__getDefaultProps           = 'getDefaultProps',
@@ -82,6 +87,7 @@
 	__componentDidUpdate        = 'componentDidUpdate',
 	__shouldComponentUpdate     = 'shouldComponentUpdate',
 
+
 	// signatures
 	__signatureBase             = '@@dio',
 	__streamSignature           = __signatureBase + '/STREAM',
@@ -93,6 +99,7 @@
 	__w3URL                     = 'http://www.w3.org/',
 	__isDevEnv,
 
+
 	// objects
 	__window                    = typeof global === 'object' ? global : exports,
 	__document                  = __window.document,
@@ -103,8 +110,8 @@
 		html:  __w3URL + '1999/xhtml'
 	},
 
+
 	// functions
-	__Number                    = Number,
 	__Array                     = Array,
 	__Object                    = Object,
 	__Function                  = Function,
@@ -282,17 +289,17 @@
 	 * @return {Array}      array of keys
 	 */
 	function getObjectKeys (obj) {
-	    var 
-	    keys = [];
-	    
-	    for (var key in obj) {
-	        if (!obj.hasOwnProperty(key)) {
-	            continue;
-	        }
-	        keys[__push](key);
-	    }
+		var 
+		keys = [];
+		
+		for (var key in obj) {
+			if (!obj.hasOwnProperty(key)) {
+				continue;
+			}
+			keys[__push](key);
+		}
 
-	    return keys;
+		return keys;
 	}
 
 
@@ -392,13 +399,11 @@
 			// and set the 'arrays children' as children
 			if (is(child, __Array)) {
 				each(child, function (child) {
-					// children[__push](setHyperscriptChild(child));
 					setHyperscriptChild(child, children);
 				});
 			}
 			// deep enough, add this child to children
 			else {
-				// children[__push](setHyperscriptChild(child));
 				setHyperscriptChild(child, children);
 			}
 		}
@@ -441,7 +446,7 @@
 		// if the child is not an object it is a textNode
 		// string, bool, number ...etc, so we convert them to string values
 		else if (!is(child, __Object)) {
-			child += '';
+			child = child + '';
 		}
 		
 		children[__push](child);
@@ -487,7 +492,7 @@
 			matchedPropKey   = match[4],
 			matchedPropValue = match[6];
 
-			// no custom prop match
+			// no special match, set type
 			if (matchedType === '' && matchedValue !== '') {
 				obj[__type] = matchedValue;
 			}
@@ -646,6 +651,7 @@
 		}
 	}
 
+
 	/**
 	 * hydrate
 	 * 
@@ -742,7 +748,23 @@
 		return newNode;
 	}
 
-	// patch
+
+	/**
+	 * patch dom
+	 * 
+	 * @param  {Element} parent
+	 * @param  {Object}  newNode
+	 * @param  {Object}  oldNode
+	 * @param  {Number}  index
+	 * @param  {Object}  component
+	 * @param  {Object}  newParentNode
+	 * @param  {Object}  oldParentNode
+	 * @param  {Number}  newChildrenLength
+	 * @param  {Number}  oldChildrenLength
+	 * @param  {Array}   newChildren
+	 * @param  {Array}   oldChildren
+	 * @return {Void}
+	 */
 	function patch (
 		parent,
 		newNode, 
@@ -890,8 +912,8 @@
 					);
 
 					if (op !== __undefined) {
-						newChildrenLength += op,
-						oldChildrenLength += op;
+						newChildrenLength = newChildrenLength + op,
+						oldChildrenLength = oldChildrenLength + op;
 					}
 				}
 			}
@@ -899,6 +921,7 @@
 
 		normalizeNodes(newNode, oldNode);
 	}
+
 
 	/**
 	 * remove/insert a node uses shift/unshift/pop/push when optimal
@@ -940,8 +963,14 @@
 		}
 	}
 
-	// normalize old and new nodes dom references
-	// so that newNode retains the dom references of oldNode
+
+	/**
+	 * normalize old and new nodes dom references
+	 * 
+	 * @param  {Object} newNode
+	 * @param  {Object} oldNode
+	 * @return {Void}  
+	 */
 	function normalizeNodes (newNode, oldNode) {
 		if (oldNode && newNode && oldNode[__type] && newNode[__type]) {
 			newNode.dom           = oldNode.dom;
@@ -949,7 +978,14 @@
 		}
 	}
 
-	// check for keyed nodes changes
+
+	/**
+	 * check if keyed nodes have changed
+	 * 
+	 * @param  {Object}  newNode
+	 * @param  {Object}  oldNode
+	 * @return {Boolean}
+	 */
 	function keysChanged (newNode, oldNode) {
 		return (
 			newNode && oldNode &&
@@ -958,44 +994,14 @@
 		);
 	}
 
-	// check if the component should update
-	function shouldComponentUpdate (newNode) {
-		return (
-			newNode &&
-			newNode[__shouldComponentUpdate] &&
-			newNode[__shouldComponentUpdate] === __false
-		);
-	}
 
-	// remove element
-	function removeChild (parent, nextNode, oldNode) {
-		lifecycle(oldNode, __componentWillUnmount);
-		parent.removeChild(nextNode);
-		lifecycle(oldNode, __componentDidUnmount);
-	}
-
-	// add element to the end
-	function appendChild (parent, nextNode, newNode) {
-		lifecycle(newNode, __componentWillMount);
-		parent.appendChild(nextNode);
-		lifecycle(newNode, __componentDidMount);
-	}
-
-	// add element before another element
-	function insertBefore (parent, beforeNode, nextNode, newNode) {
-		lifecycle(newNode, __componentWillMount);			
-		parent.insertBefore(nextNode, beforeNode);
-		lifecycle(newNode, __componentDidMount);
-	}
-
-	// replace element
-	function replaceChild (parent, prevNode, nextNode, newNode) {
-		lifecycle(newNode, __componentWillUpdate);
-		parent.replaceChild(nextNode, prevNode);
-		lifecycle(newNode, __componentDidUpdate);
-	}
-
-	// diffing if two nodes have changed
+	/**
+	 * check if two nodes have changed
+	 * 
+	 * @param  {[Object]} newNode
+	 * @param  {Object} oldNode
+	 * @return {Void}
+	 */
 	function nodeChanged (newNode, oldNode) {
 		var
 		// text node
@@ -1006,7 +1012,92 @@
 		return text || type;
 	}
 
-	// create element
+
+	/**
+	 * check if the component should update
+	 * 
+	 * @param  {Object} newNode
+	 * @return {Boolean}
+	 */
+	function shouldComponentUpdate (newNode) {
+		return (
+			newNode &&
+			newNode[__shouldComponentUpdate] &&
+			newNode[__shouldComponentUpdate] === __false
+		);
+	}
+
+
+	/**
+	 * remove element from dom
+	 * 
+	 * @param  {Element} parent
+	 * @param  {Element} nextNode
+	 * @param  {Object}  oldNode
+	 * @return {Void}
+	 */
+	function removeChild (parent, nextNode, oldNode) {
+		lifecycle(oldNode, __componentWillUnmount);
+		parent.removeChild(nextNode);
+		lifecycle(oldNode, __componentDidUnmount);
+	}
+
+
+	/**
+	 * append element to the dom
+	 * 
+	 * @param  {Element} parent
+	 * @param  {Element} nextNode
+	 * @param  {Object}  newNode
+	 * @return {Void}
+	 */
+	function appendChild (parent, nextNode, newNode) {
+		lifecycle(newNode, __componentWillMount);
+		parent.appendChild(nextNode);
+		lifecycle(newNode, __componentDidMount);
+	}
+
+
+	/**
+	 * insert an element to the dom at a posiiton
+	 * 
+	 * @param  {Element} parent
+	 * @param  {Element} beforeNode
+	 * @param  {Element} nextNode
+	 * @param  {Object}  newNode
+	 * @return {Void}
+	 */
+	function insertBefore (parent, beforeNode, nextNode, newNode) {
+		lifecycle(newNode, __componentWillMount);			
+		parent.insertBefore(nextNode, beforeNode);
+		lifecycle(newNode, __componentDidMount);
+	}
+
+
+	/**
+	 * replace an element in the dom
+	 * 
+	 * @param  {Element} parent 
+	 * @param  {Element} prevNode
+	 * @param  {Element} nextNode
+	 * @param  {Object}  newNode
+	 * @return {Void}
+	 */
+	function replaceChild (parent, prevNode, nextNode, newNode) {
+		lifecycle(newNode, __componentWillUpdate);
+		parent.replaceChild(nextNode, prevNode);
+		lifecycle(newNode, __componentDidUpdate);
+	}
+
+
+	/**
+	 * create an element
+	 * @param  {Object|String} node
+	 * @param  {Object}        component
+	 * @param  {String}        namespace
+	 * @param  {Object}        oldNode
+	 * @return {Element}
+	 */
 	function createElement (node, component, namespace, oldNode) {
 		var 
 		element;
@@ -1016,7 +1107,7 @@
 			element = node;
 
 			if (!is(element, __String)) {
-				element += '';
+				element = element + '';
 			}
 
 			return __document.createTextNode(element);
@@ -1070,7 +1161,14 @@
 		return element;
 	}
 
-	// set refs, adds node's dom reference to component
+
+	/**
+	 * adds node's dom reference to component
+	 * 
+	 * @param {Object}  node
+	 * @param {Element} element
+	 * @param {Object}  component
+	 */
 	function setRefs (node, element, component) {
 		if (
 			node[__hyperscriptSignature] &&
@@ -1097,19 +1195,40 @@
 		}
 	}
 
-	// check if props is event
+
+	/**
+	 * check if a prop is an event
+	 * 
+	 * @param  {String}  name
+	 * @param  {Any}     value
+	 * @return {Boolean}
+	 */
 	function isEventProp (name, value) {
 		// checks if the first two characters are on
 		return name[__substr](0,2) === 'on' && is(value, __Function);
 	}
 
-	// get event name
+
+	/**
+	 * extract event name from prop name
+	 * 
+	 * i.e onClick -> click || onclick -> click
+	 * 
+	 * @param  {String} name
+	 * @return {String}
+	 */
 	function extractEventName (name) {
 		// removes the first two characters and converts to lowercase
 		return name[__substr](2, name[__length])[__toLowerCase]();
 	}
 
-	// add event
+
+	/**
+	 * add event listeners
+	 * 
+	 * @param {Element} target
+	 * @param {Object} props
+	 */
 	function addEventListeners (target, props) {
 		for (var name in props) {
 			var 
@@ -1122,7 +1241,15 @@
 		}
 	}
 
-	// create list of changed props
+
+	/**
+	 * handle prop changes
+	 * 
+	 * @param  {Element} target
+	 * @param  {Object}  newNode
+	 * @param  {Object}  oldNode
+	 * @return {Void}
+	 */
 	function handlePropChanges (target, newNode, oldNode) {
 		// get changes to props/attrs
 		var
@@ -1142,7 +1269,14 @@
 		}
 	}
 
-	// update props
+
+	/**
+	 * get list of changed props
+	 * 
+	 * @param  {Object} newProps
+	 * @param  {Object} oldProps
+	 * @return {Array}
+	 */
 	function getPropChanges (newProps, oldProps) {
 		var 
 		op,
@@ -1188,14 +1322,31 @@
 		return changes;
 	}
 
-	// initial creation of props, no checks, just set
+
+	/**
+	 * set props when element is created
+	 * 
+	 * @param  {Element} target
+	 * @param  {Object}  props
+	 * @return {Void}
+	 */
 	function setElementProps (target, props) {
 		for (var name in props) {
 			updateElementProps(target, name, props[name], __true, props.xmlns);
 		}
 	}
 
-	// assign/update/remove prop
+
+	/**
+	 * assign/update/remove prop
+	 * 
+	 * @param  {Element} target
+	 * @param  {String}  name
+	 * @param  {Any}     value
+	 * @param  {Number}  op       
+	 * @param  {String}  namespace
+	 * @return {Void}
+	 */
 	function updateElementProps (target, name, value, op, namespace) {
 		// don't add events/refs/keys as props/attrs
 		if (
@@ -1259,7 +1410,7 @@
 			}
 		}
 		// array of classes
-		else if (is(value, __Array) && (name === __className || name === 'class')) {
+		else if (is(value, __Array) && name === __className) {
 			target[op](name, value[__join](' '));
 		}
 		// everything else
@@ -1641,7 +1792,7 @@
 
 			// get displayName from obj or function
 			// i.e a function Foo () { ... } // => Foo
- 			displayName = obj[__displayName] || getFunctionDisplayName(arg);
+			displayName = obj[__displayName] || getFunctionDisplayName(arg);
 		}
 		// we have an object
 		else if (is(arg, __Object)) {
@@ -2089,10 +2240,10 @@
 	function logValidationError (error) {
 		console['error']('Warning: Failed propType: ' + error + '`.');
 		try {
-	  		// this error is thrown as a convenience so that you can use this stack
-	  		// to find the callsite that caused this warning to fire.
-	  		// i.e in chrome > dev tools > sources > pause on exceptions
-	  		throwError(error);
+			// this error is thrown as a convenience so that you can use this stack
+			// to find the callsite that caused this warning to fire.
+			// i.e in chrome > dev tools > sources > pause on exceptions
+			throwError(error);
 		} catch (e) {}
 	}
 
@@ -2312,14 +2463,14 @@
 		 */
 		function hasClass (element, className) {
 			// default to native Element.classList()
-		    if (element[__classList]) {
-		        return element[__classList].contains(className);
-		    } 
-		    else {
-		    	// this will return true if indexOf does not
-		    	// find our class in the className string 
-		        return element[__className].indexOf(className) > -1;
-		    }
+			if (element[__classList]) {
+				return element[__classList].contains(className);
+			} 
+			else {
+				// this will return true if indexOf does not
+				// find our class in the className string 
+				return element[__className].indexOf(className) > -1;
+			}
 		}
 
 		/**
@@ -2330,18 +2481,18 @@
 		function add (element, className) {
 			// default to native Element.classList.remove()
 			if (element[__classList]) {
-		        element[__classList].add(className);
-		    }
-		    // exit early if the class is already added
-		    else if (!hasClass(element, className)) {
-		    	// create array of current classList
-		        var 
-		        classes = element[__className][__split](' ');
-		        // add our new class
-		        classes[__push](className);
-		        // join our classes array and re-assign to className
-		        element[__className] = classes[__join](' ')
-		    }
+				element[__classList].add(className);
+			}
+			// exit early if the class is already added
+			else if (!hasClass(element, className)) {
+				// create array of current classList
+				var 
+				classes = element[__className][__split](' ');
+				// add our new class
+				classes[__push](className);
+				// join our classes array and re-assign to className
+				element[__className] = classes[__join](' ')
+			}
 		}
 
 		/**
@@ -2351,18 +2502,18 @@
 		 */
 		function remove (element, className) {
 			// default to native Element.classList.remove()
-		    if (element[__classList]) {
-		        element[__classList].remove(className);
-		    }
-		    else {
-		    	// create array of current classList
-		        var
-		        classes = element[__className][__split](' ');
-		        // remove the className on this index
-		        classes[__splice](classes.indexOf(className), 1);
-		        // join our classes array and re-ssign to className
-		        element[__className] = classes[__join](' ');
-		    }
+			if (element[__classList]) {
+				element[__classList].remove(className);
+			}
+			else {
+				// create array of current classList
+				var
+				classes = element[__className][__split](' ');
+				// remove the className on this index
+				classes[__splice](classes.indexOf(className), 1);
+				// join our classes array and re-ssign to className
+				element[__className] = classes[__join](' ');
+			}
 		}
 
 		/**
@@ -2372,19 +2523,19 @@
 		 */
 		function toggle (element, className) {
 			// default to native Element.classList.toggle()
-		    if (element[__classList]) {
-		        element[__classList].toggle(className);
-		    }
-		    else {
-		    	// if has class, remove
-		    	if (hasClass(element, className)) {
-		    		remove(element, className);
-		    	}
-		    	// if does not have class, add
-		    	else {
-		    		add(element, className);
-		    	}
-		    }
+			if (element[__classList]) {
+				element[__classList].toggle(className);
+			}
+			else {
+				// if has class, remove
+				if (hasClass(element, className)) {
+					remove(element, className);
+				}
+				// if does not have class, add
+				else {
+					add(element, className);
+				}
+			}
 		}
 
 		var 
@@ -2414,29 +2565,29 @@
 		 */
 		function prefix (style, prop, value) {
 			// exit early if we support un-prefixed prop
-	  		if (style && (style[prop] === __null || style[prop] === __undefined)) {
-	  			// chrome, safari, mozila, ie
-    			var 
-    			vendors = ['webkit','Webkit','Moz','ms'];
+			if (style && (style[prop] === __null || style[prop] === __undefined)) {
+				// chrome, safari, mozila, ie
+				var 
+				vendors = ['webkit','Webkit','Moz','ms'];
 
-	      		for (var i = 0; i < vendors[__length]; i++) {
-	      			// vendor + capitalized prop
-	      			prop = (
-	      				vendors[i] + 
-	      				prop[__substr](0,1)[__toUpperCase]() + 
-	      				prop[__slice](1)
-      				);
+				for (var i = 0; i < vendors[__length]; i++) {
+					// vendor + capitalized prop
+					prop = (
+						vendors[i] + 
+						prop[__substr](0,1)[__toUpperCase]() + 
+						prop[__slice](1)
+					);
 
-	      			// add prop if vendor prop exists
-  					if (style[prop] !== __undefined) {
-  						style[prop] = value;
-  					}
-	      		}
-    		}
-    		// set un-prefixed prop
-    		else {
-    			style[prop] = value;
-    		}
+					// add prop if vendor prop exists
+					if (style[prop] !== __undefined) {
+						style[prop] = value;
+					}
+				}
+			}
+			// set un-prefixed prop
+			else {
+				style[prop] = value;
+			}
 		}
 
 		/**
@@ -2545,8 +2696,8 @@
 				if (webAnimations) {
 					var 
 					player = element.animate([
-				  		{transform: transform[0]},
-				  		{transform: transform[1]}
+						{transform: transform[0]},
+						{transform: transform[1]}
 					], {
 						duration: duration,
 						easing:   easing
@@ -2669,7 +2820,7 @@
 						// convert all values to a number
 						// increament duration (in ms)
 						each(transitionData, function (value) {
-							duration += parseFloat(value) * 1000;
+							duration = duration + (parseFloat(value) * 1000);
 						});
 
 						// run callback after duration of transition
@@ -2834,16 +2985,16 @@
 
 			// loop through object and create a serialized representation
 			for (var key in obj) {
-			    var 
-			    __prefix = prefix ? prefix + '[' + key + ']' : key,
-			    value    = obj[key];
+				var 
+				__prefix = prefix ? prefix + '[' + key + ']' : key,
+				value    = obj[key];
 
-			    // when the value is equal to an object 
-			    // that means we have data = {name:'John', addr: {...}}
-			    // so we re-run param on addr to serialize 'addr: {...}' as well
-			    arr[__push](typeof value == 'object' ? 
-			    	param(value, __prefix) :
-			    	__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value));
+				// when the value is equal to an object 
+				// that means we have data = {name:'John', addr: {...}}
+				// so we re-run param on addr to serialize 'addr: {...}' as well
+				arr[__push](typeof value == 'object' ? 
+					param(value, __prefix) :
+					__encodeURIComponent(__prefix) + '=' + __encodeURIComponent(value));
 			}
 
 			return arr[__join]('&');
@@ -2880,7 +3031,7 @@
 
 				// for .get requests pass payload as query string if present
 				if (payload && method === 'GET') {
-					url += '?' + param(payload);
+					url = url + '?' + param(payload);
 				}
 
 				// return ajax promise
@@ -2917,7 +3068,7 @@
 	 * store interface
 	 * 
 	 * @param  {Function} reducer
- 	 * @return {Object}
+	 * @return {Object}
 	 */
 	function createStore (reducer) {
 		// if the reducer is an object of reducers (multiple)
@@ -2976,7 +3127,7 @@
 			// subscribe to a store
 			function subscribe (listener) {
 				if (!is(listener, __Function)) {
-			  		throwError('listener should be function');
+					throwError('listener should be function');
 				}
 
 				listeners[__push](listener);
@@ -3653,10 +3804,10 @@
 
 					// add all the vendors
 					each(vendors, function (vendor, index, arr) {
-						result += '-' + vendor + '-' + property + ': ' + value + ';\n\t';
+						result = result + '-' + vendor + '-' + property + ': ' + value + ';\n\t';
 					});
 
-					result += property;
+					result = result + property;
 				}
 			});
 
@@ -3677,159 +3828,159 @@
 			var 
 			result = '';
 
-	        each(stylesheet, function (value, property, obj) {
-	            if (obj.hasOwnProperty(property)) {
-	            	// handle @keyframes properties
-	            	// allows us to specify either
-	            	// %: ['color: blue'] or
+			each(stylesheet, function (value, property, obj) {
+				if (obj.hasOwnProperty(property)) {
+					// handle @keyframes properties
+					// allows us to specify either
+					// %: ['color: blue'] or
 					// 0%: {'color': 'black' }
 					// for keyframe animations
-            	   	if (
-            	   		!is(value, __Array) &&
-            	   		stack.indexOf(keyframesKey) > -1 && 
-            	   		(property.indexOf('%') > -1 || !isNaN(property))
-        	   		) {
-        	   			// allows us to specify number as percent as in
-        	   			// {
-        	   			// 		0: {...}
-        	   			// 		50: {...}
-        	   			// 		100: {...}
-        	   			// }
-        	   			if (!isNaN(property)) {
-        	   				property += '%';
-        	   			}
+					if (
+						!is(value, __Array) &&
+						stack.indexOf(keyframesKey) > -1 && 
+						(property.indexOf('%') > -1 || !isNaN(property))
+					) {
+						// allows us to specify number as percent as in
+						// {
+						// 		0: {...}
+						// 		50: {...}
+						// 		100: {...}
+						// }
+						if (!isNaN(property)) {
+							property = property + '%';
+						}
 
-        	   			// we could easily do the below
-        	   			// JSON.stringify().replace()...
-        	   			// but since values are sometimes functions we want to extract the
-        	   			// return value of the function to do that we do a 'for (...){}'
-        	   			var 
-        	   			newValue = '';
-            	   		each(value, function (value, name) {
-            	   			if (is(value, __Function)) {
-            	   				value = value ();
-            	   			}
-            	   			newValue += name + ':' + value + ';';
-            	   		});
+						// we could easily do the below
+						// JSON.stringify().replace()...
+						// but since values are sometimes functions we want to extract the
+						// return value of the function to do that we do a 'for (...){}'
+						var 
+						newValue = '';
+						each(value, function (value, name) {
+							if (is(value, __Function)) {
+								value = value ();
+							}
+							newValue = newValue + name + ':' + value + ';';
+						});
 
-            	   		value = '{' + newValue + '}';
-        			}
+						value = '{' + newValue + '}';
+					}
 
-	                if (is(value, __Object)) {
-                		// keep going down the stack
-            			iterate(value, stack + ' ' + property, tree);
-	                } else {
-	                	// extract functions
-	                	if (is(value, __Function)) {
-	                		value = value ();
-	                	}
+					if (is(value, __Object)) {
+						// keep going down the stack
+						iterate(value, stack + ' ' + property, tree);
+					} else {
+						// extract functions
+						if (is(value, __Function)) {
+							value = value ();
+						}
 
-	                	// handle arrays
-	                	if (is(value, __Array)) {
-	                		value  = '{' + value[__join](':') + ';}';
-	                	}
+						// handle arrays
+						if (is(value, __Array)) {
+							value  = '{' + value[__join](':') + ';}';
+						}
 
-	                	var
-	                	joint = ' { ';
+						var
+						joint = ' { ';
 
-	                	// check if the property is camelCase as in
-	                	// marginTop !== margintop, but
-	                	// margin-top === margin-top
-	                	// if so convert to dash-case
-	                	if (property !== property[__toLowerCase]()) {
-	                		property = dash(property);
-	                	}
+						// check if the property is camelCase as in
+						// marginTop !== margintop, but
+						// margin-top === margin-top
+						// if so convert to dash-case
+						if (property !== property[__toLowerCase]()) {
+							property = dash(property);
+						}
 
-	                	// add unites to numbers
-	                	if (is(value, __Number)) {
-	                		value += 'px';
-	                	}
+						// add unites to numbers
+						if (typeof value === 'number') {
+							value = value + 'px';
+						}
 
-	                	// namespace animations
-	                	if (property === 'animation' || property === 'animation-name') {
-	                		value = escape(namespace) + value;
-	                	}
+						// namespace animations
+						if (property === 'animation' || property === 'animation-name') {
+							value = escape(namespace) + value;
+						}
 
-	                	// create a stack trace of the selector
-	                	var 
-	                	trace  = stack + joint + prefix(property, value);
+						// create a stack trace of the selector
+						var 
+						trace  = stack + joint + prefix(property, value);
 
-	                	// fix keyframes
-	                	// 0%: {} <-- removes ':'
-	                	if (stack.indexOf(keyframesKey) > -1) {
-	                		trace = trace[__replace](/%:/g, '%');
-	                	}
+						// fix keyframes
+						// 0%: {} <-- removes ':'
+						if (stack.indexOf(keyframesKey) > -1) {
+							trace = trace[__replace](/%:/g, '%');
+						}
 
-	                	// add closing ;
-	                	if (trace[__substr](-1) !== '}') {
-	                		trace += ';';
-	                	}
+						// add closing ;
+						if (trace[__substr](-1) !== '}') {
+							trace = trace + ';';
+						}
 
-	                	var
-	                	split  = trace[__split](joint);
+						var
+						split  = trace[__split](joint);
 
-	                	var
-	                	// remove & and space in the beginning of a selector
-	                	// so that h1&:hover becomes h1:hover
-	                	// and ' h1' becomes 'h1'
-	                	parent = split[0][__replace](/ &|^ /g, ''),
-	                	child  = split[1],
-	                	block  = tree[parent];
+						var
+						// remove & and space in the beginning of a selector
+						// so that h1&:hover becomes h1:hover
+						// and ' h1' becomes 'h1'
+						parent = split[0][__replace](/ &|^ /g, ''),
+						child  = split[1],
+						block  = tree[parent];
 
-	                	// tab selectors children as in
-	                	// selector {
-	                	// 		children: value;
-	                	// }
-	                	child  = '\t' + child;
+						// tab selectors children as in
+						// selector {
+						// 		children: value;
+						// }
+						child  = '\t' + child;
 
-	                	block = block ? block + child : child;
+						block = block ? block + child : child;
 
-	                	// add a newline after every block, a block is something like
-	                	// selector {
-	                	// 		...block-1,
-	                	// 		...block-2
-	                	// }
-	                	tree[parent] =  block + '\n';
-	                }
-	            }
-	        });
+						// add a newline after every block, a block is something like
+						// selector {
+						// 		...block-1,
+						// 		...block-2
+						// }
+						tree[parent] =  block + '\n';
+					}
+				}
+			});
 
-	        // this returns a object
-	        return result;
-	    }
+			// this returns a object
+			return result;
+		}
 
-	    // converts camelCase to dash-case
-	    function dash (value) {
-	    	return value[__replace](/([a-z])([A-Z])/g, '$1-$2')[__toLowerCase]();
-	    }
+		// converts camelCase to dash-case
+		function dash (value) {
+			return value[__replace](/([a-z])([A-Z])/g, '$1-$2')[__toLowerCase]();
+		}
 
-	    // escapes #ids and .classes for css use
-	    // so that #id becomes \#id or .class becomes \.class
-	    function escape (value) {
-	    	var
-	    	firstLetter = value[__substr](0, 1);
+		// escapes #ids and .classes for css use
+		// so that #id becomes \#id or .class becomes \.class
+		function escape (value) {
+			var
+			firstLetter = value[__substr](0, 1);
 
-	    	if (firstLetter === '#' || firstLetter === '.') {
-	    		value = '\\' +value;
-	    	}
+			if (firstLetter === '#' || firstLetter === '.') {
+				value = '\\' +value;
+			}
 
-	    	return value;
-	    }
+			return value;
+		}
 		
 		// creates the style tree
 		function create (children) {
 			// references
-		    var
-		    tree  = {},
-		    style = '',
+			var
+			tree  = {},
+			style = '',
 
-		    // create this here so that
-		    // we don't have to create it in a for loop block
-		    // this is for when we want to add vendors we
-		    // add an empty vendor that represents the un-prefixed version
-		    vendorsPlusDefault = vendors.concat(['']);
+			// create this here so that
+			// we don't have to create it in a for loop block
+			// this is for when we want to add vendors we
+			// add an empty vendor that represents the un-prefixed version
+			vendorsPlusDefault = vendors.concat(['']);
 
-		    // the tree object will become populated with our style tree
+			// the tree object will become populated with our style tree
 			iterate(children, '', tree);
 
 			// builds a string representation of the tree
@@ -3880,7 +4031,7 @@
 									body[__substr](1, keyFramesBodyPos);
 
 						// escapes namespaces, as in id's #id and classes .class
-						prefixed += escape(namespace) + 
+						prefixed = prefixed + escape(namespace) + 
 									body[__substr](keyFramesBodyPos+1);
 
 						arr[__push](prefixed);
@@ -3935,7 +4086,7 @@
 				}
 
 				// add this style block to the string that contains all our styles
-				style +=  body;
+				style = style + body;
 			});
 			
 			var 
