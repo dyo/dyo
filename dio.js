@@ -29,12 +29,12 @@
 
 	var
 	// signatures
-	__signatureBase        = '@@dio',
-	__streamSignature      = __signatureBase + '/STREAM',
-	__storeSignature       = __signatureBase + '/STORE',
-	__componentSignature   = __signatureBase + '/COMPONENT',
-	__hyperscriptSignature = __signatureBase + '/HYPERSCRIPT',
-	__renderSignature      = __signatureBase + '/RENDER',
+	__signatureBase             = '@@dio',
+	__streamSignature           = __signatureBase + '/STREAM',
+	__storeSignature            = __signatureBase + '/STORE',
+	__componentSignature        = __signatureBase + '/COMPONENT',
+	__hyperscriptSignature      = __signatureBase + '/HYPERSCRIPT',
+	__renderSignature           = __signatureBase + '/RENDER',
 
 	// component lifecycle
 	__componentWillReceiveProps = 'componentWillReceiveProps',
@@ -57,18 +57,18 @@
 	},
 
 	// functions
-	__XMLHttpRequest        = __window && __window.XMLHttpRequest,
-	__hyperscriptClass      = createHyperscriptClass(),
+	__XMLHttpRequest            = __window && __window.XMLHttpRequest,
+	__hyperscriptClass          = createHyperscriptClass(),
 
 	// other
 	__isDevEnv,
-	__setAttribute          = 'setAttribute',
-	__removeAttribute       = 'removeAttribute',
-	__emptyString           = '',
-	__requestAnimationFrame = __window.requestAnimationFrame,
+	__setAttribute              = 'setAttribute',
+	__removeAttribute           = 'removeAttribute',
+	__emptyString               = '',
+	__requestAnimationFrame     = __window.requestAnimationFrame,
 	// 1000/60 ~16.6 round^ ~17, a whole number for 
 	// setTimeout fallback if requestAnimationFrame is not support
-	__frameRate             = 17,
+	__frameRate                 = 17,
 	// placeholder for regex that is used
 	// only when special type selectors are used
 	// we will create the regex and cache it the 
@@ -84,7 +84,8 @@
 	 * 
 	 * toArray                       - convert to array
 	 * throwError                    - throw/create error object
-	 * each                          - iterator
+	 * forEach                       - iterator
+	 * map                           - faster `[].map()`
 	 * isFunction                    - checks if `a` is a function
 	 * isString                      - checks if `a` is a string
 	 * isArray                       - checks if `a` is an array
@@ -171,7 +172,7 @@
 
 
 	/**
-	 * A faster `[].map()` implementation.
+	 * faster `[].map()`
 	 *
 	 * @param  {Array}    subject
 	 * @param  {Function} fn
