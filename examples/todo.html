@@ -5,8 +5,7 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
-		<script src="/dio.min.js"></script>
+		<script src="/dio.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -97,13 +96,18 @@
 
 				switch (action.type) {
 					case 'ADD':
-						var item = {id: action.id, value: action.value, completed: false}
-						var middle = state.items.slice(0)
-							middle.pop()
-							middle.shift()
-							middle = middle.concat(item)
+						var item = {id: action.id, value: action.value, completed: false};
 
-						var items = [state.items[0]].concat(middle).concat(state.items[state.items.length-1]);
+						var items;
+						
+						// if (state.items.length > 2) {
+						// 	var middle = state.items.slice(0);
+						// 		middle.pop();
+						// 		middle.shift();
+						// 		middle = middle.concat(item);
+
+						// 	items = [state.items[0]].concat(middle).concat(state.items[state.items.length-1]);
+						// }
 
 						return Object.assign({}, state, {
 							// add to start
@@ -113,7 +117,7 @@
 							// items: state.items.concat({id: action.id, value: action.value, completed: false})
 
 							// add to middle
-							// items: items
+							// items: items ? items : state.items.concat({id: action.id, value: action.value, completed: false})
 						})
 					case 'REMOVE':
 						var items = state.items.filter(function (item) {

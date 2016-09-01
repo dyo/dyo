@@ -47,16 +47,15 @@ function Documentation () {
 			.then(markdown)
 			.then(callback)
 			.catch(function () {
-				markdown('# 404 | document not found')
-				callback()
+				markdown('# 404 | document not found');
+				callback();
 			});
 	}
 
 	function update (self) {
 		return function () {
 			self.setProps({loading: false});
-			self.forceUpdate();
-			highlighter();
+			self.forceUpdate(null, highlighter);
 		}
 	}
 

@@ -94,15 +94,19 @@ function highlighter (selector) {
     .map(function (value) { return '.' + prefix + value + ';}' })
     .join('') + selector + '{font:14px/1.8em menlo,monospace;tab-size:4;}';
 
-    var
-    head  = document.querySelector('head'),
-    style = document.createElement('style');
+    style = document.getElementById('highlighter-style');
 
-    style.textContent = styleContent;
+    if (style) {
+        style.textContent = styleContent;
+    }
+    else {
+        style = document.createElement('style');
+        style.textContent = styleContent;
+        style.id = 'highlighter-style';
+        document.head.appendChild(style);
+    }
 
-    head.appendChild(style);
-
-	Array.prototype.slice.call(document.querySelectorAll(selector)).forEach(function (element) {
-		highlight(element);
+    Array.prototype.slice.call(document.querySelectorAll(selector)).forEach(function (element) {
+        highlight(element);
 	});
 }

@@ -10,4 +10,5 @@
 - [Svg](../../examples/svg.html)
 - [Router](../../examples/router.html)
 - [Animation](../../examples/animate.html)
+- [Hyrdation](../../examples/hydration.html)
 - [This website](https://github.com/thysultan/dio.js/tree/master/docs/layout)

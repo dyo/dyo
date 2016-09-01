@@ -17,7 +17,7 @@ in which case you could send a PR for it.
 [See ./tests](https://github.com/thysultan/dio.js/tree/master/tests). 
 100% test coverage is a work in progress. PR's for tests are welcome.
 
-## Code Conventions
+## Code Suggestions
 
 * Use semicolons `;`
 * Commas last `,`
@@ -39,6 +39,19 @@ function name(){
 // declared and name() for where the function
 // is used
 
+// ...this
+if (1 > 2) {
+	return 2;
+}
+else {
+	return 1;
+}
+
+// not this
+if (1 > 2)
+	return 2;
+else
+	return 1
 
 // this...
 var

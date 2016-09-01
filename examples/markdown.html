@@ -5,7 +5,6 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Markdown Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 		<link rel="stylesheet" href="assets/style.css">
 		<script src="/dio.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.6.2/remarkable.min.js"></script>
@@ -38,7 +37,7 @@
 
 				return {
 					componentWillMount: function (_, _, self) {
-						dio.request.get('https://raw.githubusercontent.com/thysultan/dio.js/master/README.md')
+						dio.request.get('https://cdn.rawgit.com/thysultan/dio.js/master/README.md')
 							.then(markdownInput)
 							.then(function () {
 								self.forceUpdate();

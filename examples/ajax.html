@@ -5,7 +5,6 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Ajax Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 		<script src="/dio.min.js"></script>
 	</head>
 	<body>
@@ -47,7 +46,7 @@
 						componentWillMount: function () {
 							var 
 							self = this
-							dio.request.get('http://jsonplaceholder.typicode.com/users/').then(function (res) {
+							dio.request.get('https://jsonplaceholder.typicode.com/users/').then(function (res) {
 								self.setState({users: res})
 							})
 						},

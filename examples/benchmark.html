@@ -5,7 +5,6 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<meta name="viewport" content="width=device-width">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 		<title>dbmon (Dio.js)</title>
 	</head>
 	<body>
@@ -311,14 +310,14 @@
 											children[0] = {
 												type: 'td',
 												props: {className: 'dbname'},
-												children: [db.dbname]
-												// [
-												// 	{
-												// 		type: 'text',
-												// 		props: null,
-												// 		children: db.dbname
-												// 	}
-												// ]
+												children:
+												[
+													{
+														type: 'text',
+														props: undefined,
+														children: [db.dbname]
+													}
+												]
 											}
 
 											children[1] = {
@@ -328,14 +327,14 @@
 													{
 														type: 'span',
 														props: {className: db.lastSample.countClassName},
-														children: [db.lastSample.nbQueries] 
-														// [
-														// 	{
-														// 		type: 'text',
-														// 		props: null,
-														// 		children: db.lastSample.nbQueries
-														// 	}
-														// ]
+														children:
+														[
+															{
+																type: 'text',
+																props: undefined,
+																children: [db.lastSample.nbQueries]
+															}
+														]
 													}
 												]
 											}
@@ -349,12 +348,11 @@
 													type: 'td',
 													props: {key: i, className: query.elapsedClassName},
 													children: [
-														query.formatElapsed,
-														// {
-														// 	type: 'text',
-														// 	props: null,
-														// 	children: query.formatElapsed
-														// },
+														{
+															type: 'text',
+															props: undefined,
+															children: [query.formatElapsed]
+														},
 														{
 															type: 'div',
 															props: {className: 'popover left'},
@@ -363,12 +361,11 @@
 																	type: 'div',
 																	props: {className: 'popover-content'},
 																	children: [
-																		query.query
-																		// {
-																		// 	type: 'text',
-																		// 	props: null,
-																		// 	children: query.query
-																		// }
+																		{
+																			type: 'text',
+																			props: undefined,
+																			children: [query.query]
+																		}
 																	]
 																},
 																{

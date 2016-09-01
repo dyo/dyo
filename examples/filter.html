@@ -5,7 +5,6 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Filter Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 		<script src="/dio.min.js"></script>
 	</head>
 	<body>
@@ -74,7 +73,7 @@
 		  				props.onUserInput(undefined, el.checked)
 		  			}
 		  			else if (type === 'text') {
-		  				props.onUserInput(el.value, undefined)
+		  				props.onUserInput(el.value.toLowerCase(), undefined)
 		  			}
 		  		}
 

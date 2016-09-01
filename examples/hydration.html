@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>dio.js - Hydration Example</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<script src="/dio.min.js"></script>
+		<link rel="stylesheet" href="assets/style.css">
+	</head>
+	<body>
+		<div class="app" data-hydrate></div>
+		<script>
+			function Component () {
+				return {
+					render: function (props, state, self) {
+						return h('ul', {
+									onClick: function () {
+										self.forceUpdate();
+									}
+								},
+								h('li', Date.now()),
+								h('li', 'Second Year'),
+								h('li', 'Third Year')
+							)
+					}
+				}
+			}
+
+			// server-Side render mock
+			document.querySelector('.app').innerHTML = dio.createHTML(Component);
+
+			dio.createRender(Component, '.app')();
+		</script>
+	</body>
+</html>
