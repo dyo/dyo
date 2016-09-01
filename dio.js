@@ -200,8 +200,8 @@
 	/**
 	 * checks if `a` is a function
 	 * 
-	 * @param  {*}       a  - object to check for type
-	 * @return {boolean}    - true/false
+	 * @param  {*}       a - object to check for type
+	 * @return {boolean}
 	 */
 	function isFunction (a) {
 		return !!a && typeof a === 'function';
@@ -212,7 +212,7 @@
 	 * checks if `a` is a string
 	 * 
 	 * @param  {*}       a - object to check for type
-	 * @return {boolean}   - true/false
+	 * @return {boolean}
 	 */
 	function isString (a) {
 		return !!a && typeof a === 'string';
@@ -223,7 +223,7 @@
 	 * checks if `a` is an array
 	 * 
 	 * @param  {*}       a - object to check for type
-	 * @return {boolean}   - true/false
+	 * @return {boolean}
 	 */
 	function isArray (a) {
 		return !!a && a.constructor === Array;
@@ -233,8 +233,8 @@
 	/**
 	 * checks if `a` is an Object
 	 * 
-	 * @param  {*}     a - object to check for type
-	 * @return {boolean} - true/false
+	 * @param  {*}       a - object to check for type
+	 * @return {boolean}
 	 */
 	function isObject (a) {
 		return !!a && a.constructor === Object;
@@ -245,7 +245,7 @@
 	 * checks if object is defined
 	 * 
 	 * @param  {*}       a - object to check for type
-	 * @return {boolean}   - true/false
+	 * @return {boolean}
 	 */
 	function isDefined (a) {
 		return a !== undefined && a !== null;
@@ -286,8 +286,8 @@
 	/**
 	 * gets all the keys of the an object
 	 * 
-	 * @param  {Object} obj object to extract keys from
-	 * @return {Array}      array of keys
+	 * @param  {Object} obj - object to extract keys from
+	 * @return {Array}      - array of keys
 	 */
 	function ObjectKeys (obj) {
 		var 
@@ -352,9 +352,9 @@
 	/**
 	 * create virtual element
 	 * 
-	 * @param  {(string|Function|Object)} type  - Element, i.e: div
-	 * @param  {Object} props - optional properties
-	 * @return {Object} hyperscript - {type, props, children}
+	 * @param  {(string|Function|Object)} type        - Element, i.e: div
+	 * @param  {Object}                   props       - optional properties
+	 * @return {Object}                   hyperscript - {type, props, children}
 	 * 
 	 * @example
 	 * 
@@ -631,10 +631,10 @@
 	/**
 	 * hydrate
 	 * 
-	 * @param  {Node}    parent
-	 * @param  {Object}  newNode
-	 * @param  {Object}  component
-	 * @return {Object}  vnode
+	 * @param  {Node}   parent
+	 * @param  {Object} newNode
+	 * @param  {Object} component
+	 * @return {Object} vnode
 	 */
 	function hydrate (parent, newNode, component, index, newNodeParent) {
 		var 
@@ -710,10 +710,10 @@
 	/**
 	 * diff virtual component and update dom
 	 * 
-	 * @param {Node}    parent - dom node
-	 * @param {Object}  newNode
-	 * @param {Object}  oldNode
-	 * @param {Object}  component
+	 * @param {Node}   parent - dom node
+	 * @param {Object} newNode
+	 * @param {Object} oldNode
+	 * @param {Object} component
 	 */
 	function vdomToDOM (parent, newNode, oldNode, component) {
 		// update
@@ -751,15 +751,15 @@
 	/**
 	 * patch dom
 	 * 
-	 * @param  {Node}    parent
-	 * @param  {Object}  newNode
-	 * @param  {Object}  oldNode
-	 * @param  {number}  index
-	 * @param  {Object}  component
-	 * @param  {Array}   newNodeChildren
-	 * @param  {Array}   oldNodeChildren
-	 * @param  {number}  newNodeChildrenLength
-	 * @param  {number}  oldNodeChildrenLength
+	 * @param  {Node}   parent
+	 * @param  {Object} newNode
+	 * @param  {Object} oldNode
+	 * @param  {number} index
+	 * @param  {Object} component
+	 * @param  {Array}  newNodeChildren
+	 * @param  {Array}  oldNodeChildren
+	 * @param  {number} newNodeChildrenLength
+	 * @param  {number} oldNodeChildrenLength
 	 */
 	function patch (
 		parent,
@@ -991,9 +991,9 @@
 	/**
 	 * remove element from dom
 	 * 
-	 * @param  {Node}    parent
-	 * @param  {Node}    nextNode
-	 * @param  {Object}  oldNode
+	 * @param  {Node}   parent
+	 * @param  {Node}   nextNode
+	 * @param  {Object} oldNode
 	 */
 	function removeChild (parent, nextNode, oldNode) {
 		lifecycle(oldNode, __componentWillUnmount);
@@ -1005,9 +1005,9 @@
 	/**
 	 * append element to the dom
 	 * 
-	 * @param  {Node}    parent
-	 * @param  {Node}    nextNode
-	 * @param  {Object}  newNode
+	 * @param  {Node}   parent
+	 * @param  {Node}   nextNode
+	 * @param  {Object} newNode
 	 */
 	function appendChild (parent, nextNode, newNode) {
 		lifecycle(newNode, __componentWillMount);
@@ -1019,10 +1019,10 @@
 	/**
 	 * insert an element to the dom at a posiiton
 	 * 
-	 * @param  {Node}    parent
-	 * @param  {Node}    beforeNode
-	 * @param  {Node}    nextNode
-	 * @param  {Object}  newNode
+	 * @param  {Node}   parent
+	 * @param  {Node}   beforeNode
+	 * @param  {Node}   nextNode
+	 * @param  {Object} newNode
 	 */
 	function insertBefore (parent, beforeNode, nextNode, newNode) {
 		lifecycle(newNode, __componentWillMount);			
@@ -1034,10 +1034,10 @@
 	/**
 	 * replace an element in the dom
 	 * 
-	 * @param  {Node}    parent 
-	 * @param  {Node}    prevNode
-	 * @param  {Node}    nextNode
-	 * @param  {Object}  newNode
+	 * @param  {Node}   parent 
+	 * @param  {Node}   prevNode
+	 * @param  {Node}   nextNode
+	 * @param  {Object} newNode
 	 */
 	function replaceChild (parent, prevNode, nextNode, newNode) {
 		lifecycle(newNode, __componentWillUpdate);
@@ -1048,9 +1048,9 @@
 
 	/**
 	 * create an element
-	 * @param  {Object|string} newNode
-	 * @param  {Object}        component
-	 * @param  {string}        namespace
+	 * @param  {(Object|string)} newNode
+	 * @param  {Object}          component
+	 * @param  {string}          namespace
 	 * @return {Node}
 	 */
 	function createElement (newNode, component, namespace) {
@@ -1116,9 +1116,9 @@
 	/**
 	 * adds node's dom reference to component
 	 * 
-	 * @param {Object}  node
-	 * @param {Node}    element
-	 * @param {Object}  component
+	 * @param {Object} node
+	 * @param {Node}   element
+	 * @param {Object} component
 	 */
 	function setRefs (node, element, component) {
 		if (
@@ -1196,9 +1196,9 @@
 	/**
 	 * handle prop changes
 	 * 
-	 * @param  {Node}    target
-	 * @param  {Object}  newNode
-	 * @param  {Object}  oldNode
+	 * @param  {Node}   target
+	 * @param  {Object} newNode
+	 * @param  {Object} oldNode
 	 */
 	function handlePropChanges (target, newNode, oldNode) {
 		// get changes to props/attrs
@@ -1313,11 +1313,11 @@
 	/**
 	 * assign/update/remove prop
 	 * 
-	 * @param  {Node}    target
-	 * @param  {string}  name
-	 * @param  {*}       value
-	 * @param  {string}  action       
-	 * @param  {string}  namespace
+	 * @param  {Node}   target
+	 * @param  {string} name
+	 * @param  {*}      value
+	 * @param  {string} action       
+	 * @param  {string} namespace
 	 */
 	function updateElementProps (target, name, value, action, namespace) {
 		// don't add events/refs/keys as props/attrs
@@ -1425,11 +1425,11 @@
 	/**
 	 * component lifecycle trigger
 	 * 
-	 * @param  {Object}  node  - component, or hyperscript
-	 * @param  {string}  stage - stage of the lifecycle
+	 * @param  {Object}  node        - component, or hyperscript
+	 * @param  {string}  stage       - stage of the lifecycle
 	 * @param  {boolean} isComponent - weather this is a component or not
-	 * @param  {Object}  props - weather to pass props to stage
-	 * @param  {Object}  state - weather to pass sate to stage
+	 * @param  {Object}  props       - weather to pass props to stage
+	 * @param  {Object}  state       - weather to pass sate to stage
 	 */
 	function lifecycle (node, stage, isComponent, props, state) {
 		// end quickly
@@ -1521,13 +1521,13 @@
 
 	/**
 	 * creates a render interface
-	 * 
-	 * @return {Function}
-	 * 
-	 * @example
+
+	 * example
 	 * 
 	 * render = dio.createRender(Component, '.selector')
 	 * render()
+	 *
+	 * @return {Function}
 	 */
 	function createRender (componentArg, mountArg) {
 		// update
@@ -1703,7 +1703,7 @@
 	/**
 	 * hyperscript class
 	 * 
-	 * @param  {Array} args arugments to add to the prototype object
+	 * @param  {Array}    args - arugments to add to the prototype object
 	 * @return {Function}
 	 */
 	function createHyperscriptClass (args) {
@@ -1967,9 +1967,9 @@
 	/**
 	 * components class
 	 * 
-	 * @param  {Object} props?
-	 * @param  {Object} state?
-	 * @param  {string} displayname?
+	 * @param  {Object} props
+	 * @param  {Object} state
+	 * @param  {string} displayname
 	 * @return {Object}
 	 */
 	function componentClass (props, state, displayName) {
@@ -2067,8 +2067,8 @@
 	/**
 	 * set/update a components props
 	 * 
-	 * @param  {Object} self - components object
-	 * @param  {Object} data - data with which to update the components props
+	 * @param {Object} self - components object
+	 * @param {Object} data - data with which to update the components props
 	 */
 	function setProps (self, data) {
 		// assign props to {} if it's undefined
@@ -2092,8 +2092,8 @@
 	/**
 	 * set/update a components state
 	 * 
-	 * @param  {Object} self - components object
-	 * @param  {Object} data - data with which to update the components state
+	 * @param {Object} self - components object
+	 * @param {Object} data - data with which to update the components state
 	 */
 	function setState (self, data) {
 		// assign state to {} if it's undefined
@@ -2119,11 +2119,7 @@
 	/**
 	 * two-way data binding, not to be confused with Function.bind
 	 * 
-	 * @param  {(string|string[])}     props  - the property/attr to look for in the element
-	 * @param  {(Function|Function[])} setter - the object to update/setter to execute
-	 * @return {Function}
-	 * 
-	 * @example
+	 * example
 	 * 
 	 * direction of binding element ----> setter
 	 * this.withAttr(['prop1-from-el', 'prop2-from-el'], to-prop1-setter, to-prop2-setter)
@@ -2132,6 +2128,10 @@
 	 *
 	 * setters are always an array of: functions
 	 * and element props: strings
+	 * 
+	 * @param  {(string|string[])}     props  - the property/attr to look for in the element
+	 * @param  {(Function|Function[])} setter - the object to update/setter to execute
+	 * @return {Function}
 	 */
 	function withAttr (props, setters, callback) {
 		function update (el, prop, setter) {
@@ -2214,7 +2214,7 @@
 	/**
 	 * log validation errors for propTypes
 	 * 
-	 * @param  {string} error 
+	 * @param {string} error 
 	 */
 	function logValidationError (error) {
 		console.error('Warning: Failed propType: ' + error + '`.');
@@ -2385,8 +2385,8 @@
 	/**
 	 * injects a mock window object
 	 * 
-	 * @param  {Object} obj window object
-	 * @return {Object}     window object     
+	 * @param  {Object} obj - window object
+	 * @return {Object}     - window object     
 	 */
 	function injectWindowDependency (obj) {
 		if (obj) {
@@ -2425,15 +2425,16 @@
 	/**
 	 * classList helper
 	 * 
-	 * @param  {Node}    element
-	 * @param  {string}  value
+	 * @param  {Node}   element
+	 * @param  {string} value
 	 * @return {Object}
 	 */
 	function classList (type, element, className) {
 		/**
 		 * check if the element has the class/className
-		 * @param  {Node}     element   - target element
-		 * @param  {string}   className - className to check for
+		 * 
+		 * @param  {Node}    element   - target element
+		 * @param  {string}  className - className to check for
 		 * @return {boolean}
 		 */
 		function hasClass (element, className) {
@@ -2450,8 +2451,9 @@
 
 		/**
 		 * add a className to an element
-		 * @param  {Node}     element   - target element
-		 * @param  {string}   className - className to add
+		 * 
+		 * @param {Node}   element   - target element
+		 * @param {string} className - className to add
 		 */
 		function add (element, className) {
 			// default to native Element.classList.remove()
@@ -2472,8 +2474,9 @@
 
 		/**
 		 * remove a className from an element
-		 * @param  {Node}     element   - target element
-		 * @param  {string}   className - className to remove
+		 * 
+		 * @param {Node}   element   - target element
+		 * @param {string} className - className to remove
 		 */
 		function remove (element, className) {
 			// default to native Element.classList.remove()
@@ -2493,8 +2496,9 @@
 
 		/**
 		 * toggle a className on an element
-		 * @param  {Node}     element   - target element
-		 * @param  {string}   className - classname to toggle
+		 * 
+		 * @param {Node}   element   - target element
+		 * @param {string} className - classname to toggle
 		 */
 		function toggle (element, className) {
 			// default to native Element.classList.toggle()
@@ -2534,9 +2538,9 @@
 		/**
 		 * prefix css props
 		 * 
-		 * @param  {Object} style - the elements style object
-		 * @param  {string} prop  - prop to set
-		 * @param  {string} value - value of the prop
+		 * @param {Object} style - the elements style object
+		 * @param {string} prop  - prop to set
+		 * @param {string} value - value of the prop
 		 */
 		function prefix (style, prop, value) {
 			// exit early if we support un-prefixed prop
@@ -2568,12 +2572,7 @@
 		/**
 		 * First, Last, Invert, Play, flip animate an element
 		 * 
-		 * @param  {Node}    element   
-		 * @param  {Array}   transforms 'describe additional transforms'
-		 * @param  {number}  duration   'duration of the animation'
-		 * @param  {string}  className  'class that represents end state animating to'
-		 * 
-		 * @example
+		 * example
 		 * 
 		 * h('.card', {onclick: animate}, h('p', null, a)) 
 		 * // className defaults to animation-active end class
@@ -2587,6 +2586,11 @@
 		 *   duration{400},'endClassName'{'.class'},
 		 *   'extra transforms'{'rotate(25deg)')}
 		 * )
+		 * 
+		 * @param {Node}   element   
+		 * @param {Array}  transforms - describe additional transforms
+		 * @param {number} duration   - duration of the animation
+		 * @param {string} className  - class that represents end state animating to
 		 */
 		function flipAnimation (
 			className, 
@@ -2749,7 +2753,7 @@
 		/**
 		 * css transitions/animations for an element callback on finish
 		 * 
-		 * @param {string}
+		 * @param  {string}
 		 * @return {Function}
 		 */
 		function cssAnimation (type) {			
@@ -2820,9 +2824,9 @@
 	/**
 	 * request interface
 	 * 
-	 * @param  {string}  url, 
-	 * @param  {*}       payload, 
-	 * @param  {string}  enctype, 
+	 * @param  {string}  url
+	 * @param  {*}       payload 
+	 * @param  {string}  enctype 
 	 * @param  {boolean} withCredentials
 	 * @return {Object}
 	 */
@@ -2830,6 +2834,7 @@
 		/**
 		 * return the response in it's right type
 		 * i.e json as {}, text/html as a document...
+		 * 
 		 * @param  {{Object}} xhr
 		 * @return {*} 
 		 */
@@ -2873,10 +2878,13 @@
 
 		/**
 		 * http interface
-		 * @param {string}
-		 * @param {string}
-		 * @param {Object}
-		 * @param {Function}
+		 * 
+		 * @param  {string}
+		 * @param  {string}
+		 * @param  {Object}
+		 * @param  {string}
+		 * @param  {string}
+		 * @return {Function}
 		 */
 		function http (url, method, payload, enctype, withCredentials) {
 			// return a a stream
@@ -2944,14 +2952,15 @@
 
 		/**
 		 * serialize + encode object
-		 * @param  {Object}  obj   
-		 * @param  {Object}  prefix
-		 * @return {string}  serialized object
 		 * 
-		 * @example
+		 * example
 		 * 
 		 * // returns 'url=http%3A%2F%2F.com'
 		 * param({url:'http://.com'})
+		 * 
+		 * @param  {Object} obj   
+		 * @param  {Object} prefix
+		 * @return {string} serialized object
 		 */
 		function param (obj, prefix) {
 			var 
@@ -2977,6 +2986,7 @@
 
 		/**
 		 * create request
+		 * 
 		 * @param {string}
 		 * @param {Object}
 		 * @param {Function}
@@ -3015,9 +3025,11 @@
 
 		/**
 		 * request interface
+		 * 
 		 * request({method: 'GET', url: '?'})
 		 * is the same as
 		 * request.get('?')
+		 * 
 		 * @param  {Object} obj - details of the request
 		 */
 		function request (obj) {
@@ -3149,12 +3161,7 @@
 	/**
 	 * router interface
 	 * 
-	 * @param  {Object} routes
-	 * @param  {string} rootAddress 
-	 * @param  {string} onInitNavigateTo
-	 * @return {Object}
-	 * 
-	 * @example
+	 * example
 	 * 
 	 * router({
 	 * 		'/:page/:name': () => {}
@@ -3163,6 +3170,11 @@
 	 * router({
 	 * 		'/:page/:name': Component
 	 * })
+	 *
+	 * @param  {Object} routes
+	 * @param  {string} rootAddress 
+	 * @param  {string} onInitNavigateTo
+	 * @return {Object}
 	 */
 	function createRouter (routes, rootAddress, onInitNavigateTo, mount) {
 		function router (routes, rootAddress, onInitNavigateTo) {
@@ -3338,7 +3350,7 @@
 	/**
 	 * streams utility getter/setter
 	 * 
-	 * @param  {*}        value - store value
+	 * @param  {*}        value  - store value
 	 * @param  {Function} mapper - processor
 	 * @return {Function}
 	 */
@@ -3581,18 +3593,18 @@
 
 	/**
 	 * creates a new stream that accumulates everytime it is called
-	 * 
-	 * @param  {Function} reducer
-	 * @param  {*}        accumulator 
-	 * @param  {Function} stream     
-	 * @return {Function} stream  
 	 *
-	 * @example
+	 * example
 	 * 
 	 * var foo = {Stream}
 	 * var bar = stream.scan((sum, n) => { sum+n }, 0, foo) 
 	 * foo(1)(1)(2)
 	 * // bar => 4
+	 *
+	 * @param  {Function} reducer
+	 * @param  {*}        accumulator
+	 * @param  {Function} stream 
+	 * @return {Function} stream
 	 */
 	createStream.scan = function (reducer, accumulator, stream) {
 		return createStream(function (resolve) {
@@ -3609,16 +3621,16 @@
 
 	/**
 	 * server-side interface converts a hyperscript/component/render to html string
+	 *
+	 * example
 	 * 
+	 * createHTML(h('div', 'Hello World'));
+	 * createHTML(component/render, {id:1234}, {item:'first'});
+	 *
 	 * @param  {(Object|Function)} arg      - hyperscript/render/component
 	 * @param  {Object}            props    - props to pass to component/render
 	 * @param  {Object}            children - children to pass to component/render
 	 * @return {string}
-	 *
-	 * @example
-	 * 
-	 * createHTML(h('div', 'Hello World'));
-	 * createHTML(component/render, {id:1234}, {item:'first'});
 	 */
 	function createHTML (arg, props, children) {
 		// print node
