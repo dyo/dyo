@@ -2306,7 +2306,7 @@
 			// if window[type] yields nothing we default to a function
 			// that propValue could not possible have it\s constructor
 			// set to it.
-			return propValue && propValue.constructor === __window[type] || function () {}
+			return isDefined(propValue) && propValue.constructor === __window[type];
 		}
 
 		// factory that creates a type validator
