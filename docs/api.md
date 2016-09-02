@@ -16,11 +16,25 @@
 	
 	// this.methods
 	this.withAttr              ({String|String[]}, {Function|Function[]})
-	this.forceUpdate:          (this?: {Object})
+
+	// this refers to the component to update, the default
+	// is the context of the component it is called from i.e `this`
+	// but can also be another component, if called
+	// from a non-parent component the the update will
+	// be granular to only that component alone,
+	// which is the reason the is props and children as optional
+	// 2nd and 3rd arguments that can pass data to an outside
+	// component to update
+	this.forceUpdate:          (
+		this?: {Object}, 
+		props|callback: {Object|Function},
+		children?: {Any}
+	)
 
 	// setState is synchronous
-	// setState also triggers this.forceUpdate
-	this.setState:             ({Object})
+	// setState also calls this.forceUpdate
+	// setState will execute the callback before this.forceUpdate
+	this.setState:             ({Object}, callback: {Function})
 	this.setProps:             ({Object})
 
 	// displayName is auto created when you create a component

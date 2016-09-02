@@ -44,7 +44,6 @@
 	__componentDidUnmount       = 'componentDidUnmount',
 	__componentWillUpdate       = 'componentWillUpdate',
 	__componentDidUpdate        = 'componentDidUpdate',
-	__shouldComponentUpdate     = 'shouldComponentUpdate',
 
 	// objects
 	__window    = typeof global === 'object' ? global : exports,
@@ -65,10 +64,6 @@
 	__setAttribute              = 'setAttribute',
 	__removeAttribute           = 'removeAttribute',
 	__emptyString               = '',
-	__requestAnimationFrame     = __window.requestAnimationFrame,
-	// 1000/60 ~16.6 round^ ~17, a whole number for 
-	// setTimeout fallback if requestAnimationFrame is not support
-	__frameRate                 = 17,
 	// placeholder for regex that is used
 	// only when special type selectors are used
 	// we will create the regex and cache it the 
@@ -256,20 +251,22 @@
 	 * set the __isDevEnv variable
 	 */
 	function setEnviroment () {
-		// first check if __isDevEnv is set
-		// if it is exit the if block quickly since we have already have a
-		// stored cached value of what the dev enviroment is
-		// 1.if it is not set, proceed to check first 
-		// if NODE_ENV is set, a string and not 'production'
-		// 2.otherwise check for process.env.NODE_ENV !== 'production'
-		// if any of 1 || 2 returns true set __isDevEnv to true, 
-		// thus caching it for future reference
-		// meaning that everything within the if block
-		//  will only compute once and never again
-		// this may look like a micro-optimization if looked 
-		// in isolation but if you are creating more than
-		// 100,000 components each with propTypes it beomces evidence that checking for
-		// the node enviroment everytime is anywhere from 100% to 1000% slower
+		/*
+			first check if __isDevEnv is set
+			if it is exit the if block quickly since we have already have a
+			stored cached value of what the dev enviroment is
+			1.if it is not set, proceed to check first 
+			if NODE_ENV is set, a string and not 'production'
+			2.otherwise check for process.env.NODE_ENV !== 'production'
+			if any of 1 || 2 returns true set __isDevEnv to true, 
+			thus caching it for future reference
+			meaning that everything within the if block
+			 will only compute once and never again
+			this may look like a micro-optimization if looked 
+			in isolation but if you are creating more than
+			100,000 components each with propTypes it beomces evidence that checking for
+			the node enviroment everytime is anywhere from 100% to 1000% slower
+		 */
 		var 
 		enviroment = typeof process  === 'object' && process.env ? process.env.NODE_ENV : 
 					 typeof NODE_ENV === 'string' ? NODE_ENV : undefined;
@@ -314,20 +311,24 @@
 	 * @return {string}
 	 */
 	function getFunctionDisplayName (func) {
-		// the regex may return nothing
-		// [,''] insures that the )[1] can always retrieve
-		// something even if it's an empty string
+		/*
+			the regex may return nothing
+			[,''] insures that the )[1] can always retrieve
+			something even if it's an empty string
+		 */
 		var 
 		displayName = (
 			/function ([^(]*)/.exec(func.valueOf()) || 
 			[,'']
 		)[1];
 
-		// we may not find the func's name
-		// i.e annonymous functions or class extenders
-		// so we also try to get the name from func.name if it exists
-		// however this name maybe obscured if a minifier is used on the codebase,
-		// but something is better than nothing
+		/*
+			we may not find the func's name
+			i.e annonymous functions or class extenders
+			so we also try to get the name from func.name if it exists
+			however this name maybe obscured if a minifier is used on the codebase,
+			but something is better than nothing
+		 */
 		return !displayName && func.name ? func.name : displayName;
 	}
 
@@ -371,7 +372,7 @@
 		position = 2,
 		child;
 
-		// if what was suppose to the props position
+		// if what was suppose to be the props position
 		// is a child (hyperscript or any non object value)
 		// example case: h('tag', ...children)
 		if (!isObject(props) || props[__hyperscriptSignature]) {
@@ -655,23 +656,27 @@
 			newNode.dom = nextNode;
 		}
 
-		// when we reach a string vnode child, assume the dom 
-		// is a single textNode, do a look ahead of the 
-		// vnode child and create + append each textNode child 
-		// to a documentFragment starting from the current child 
-		// till we reach a non textNode child such that on 
-		// h('p', 'foo', 'bar') foo and bar are two different 
-		// textNodes in the fragment, then do replaceChild of the 
-		// textNode with the fragment converting the single 
-		// textNode to multiple textNodes
+		/*
+			when we reach a string vnode child, assume the dom 
+			is a single textNode, do a look ahead of the 
+			vnode child and create + append each textNode child 
+			to a documentFragment starting from the current child 
+			till we reach a non textNode child such that on 
+			h('p', 'foo', 'bar') foo and bar are two different 
+			textNodes in the fragment, then do replaceChild of the 
+			textNode with the fragment converting the single 
+			textNode to multiple textNodes
+		 */
 		if (!newNode.props && newNode.type === 'text') {
-			// fragment to use to replace a single textNode
-			// with multiple text nodes
-			// case in point
-			// h('h1', 'Hello', 'World')
-			// output: <h1>HelloWorld</h1>
-			// but HelloWorld is one text node in the dom
-			// while two in the vnode
+			/*
+				fragment to use to replace a single textNode
+				with multiple text nodes
+				case in point
+				h('h1', 'Hello', 'World')
+				output: <h1>HelloWorld</h1>
+				but HelloWorld is one text node in the dom
+				while two in the vnode
+			 */
 			var 
 			fragment = __document.createDocumentFragment();
 
@@ -867,7 +872,11 @@
 			handlePropChanges(nextNode, newNode, oldNode);
 
 			// loop through children
-			for (var i = 0|0; i < newNodeChildrenLength || i < oldNodeChildrenLength; i = i + 1) {
+			for (
+				var i = 0;
+				i < newNodeChildrenLength || i < oldNodeChildrenLength; 
+				i = i + 1
+			) {
 				var
 				newNodeChild = newNodeChildren[i],
 				oldNodeChild = oldNodeChildren[i];
@@ -1121,11 +1130,8 @@
 	 * @param {Object} component
 	 */
 	function setRefs (node, element, component) {
-		if (
-			node[__hyperscriptSignature] &&
-			node[__hyperscriptSignature][__componentSignature]
-		) {
-			component = node[__hyperscriptSignature][__componentSignature];
+		if (isObject(node[__hyperscriptSignature])) {
+			component = node[__hyperscriptSignature];
 		}
 
 		if (component && node.props && node.props.ref) {
@@ -1201,21 +1207,23 @@
 	 * @param  {Object} oldNode
 	 */
 	function handlePropChanges (target, newNode, oldNode) {
-		// get changes to props/attrs
+		// get prop changs
 		var
-		changes   = getPropChanges(newNode.props, oldNode.props);
+		changes = getPropChanges(newNode.props, oldNode.props);
 
 		// if there are any prop changes
-		if (changes.length) {			
+		if (changes.length) {
 			// before updating all the props that have changed
 			lifecycle(newNode, __componentWillUpdate);
 
 			var 
-			namespace = newNode.props.xmlns;
+			namespace = newNode.props.xmlns,
+			index     = 0,
+			length    = changes.length;
 
-			for (var i = 0, l = changes.length; i < l; i = i + 1) {
+			for (; index < length; index = index + 1) {
 				var 
-				prop = changes[i];
+				prop = changes[index];
 
 				updateElementProps(
 					target,
@@ -1231,69 +1239,52 @@
 		}
 	}
 
-
 	/**
 	 * get list of changed props
 	 * 
-	 * @param  {Object} newProps
-	 * @param  {Object} oldProps
-	 * @return {Array}
+	 * @param  {Object}  newProps
+	 * @param  {Object}  oldProps
+	 * @return {Array[]} [0: action, 1: name, 2: value]
 	 */
 	function getPropChanges (newProps, oldProps) {
-		var 
-		action,
-		index = 0,
-		changedProps = [];
-
-		// merge old and new props
+		// buffer to store diff changes
 		var
-		props = {};
+		changes = [];
 
-		// add props, old and new to one object
-		for (var name in newProps) { 
-			props[name] = newProps[name];
-		}
-		for (var name in oldProps) { 
-			props[name] = oldProps[name];
-		}
-
-		// compare if props have been added/delete/updated
-		// this checks if the value in props is in oldProps/newProps
-		// if it's not in oldProps, it is an added prop
-		// if it is not in newProps it has been removed
-		// if it is both in oldProps and newProps
-		// we check if the prop value has changed
-		for (var name in props) {			
+		// go through all newProps
+		// if there is a prop that is not in oldProps
+		// or a value that is but is not the same
+		// as the prop in newProps then set it
+		for (var name in newProps) {
 			var 
-			oldVal = oldProps[name],
-			newVal = newProps[name];
+			oldValue = oldProps[name],
+			newValue = newProps[name];
 
-			// is oldVal undefined, set
-			if (oldVal !== undefined) {
-				action = __setAttribute;
-			}
-
-			// is newVal undefined, remove
-			if (newVal !== undefined) {
-				action = __removeAttribute;
-			}
-
-			// something has changed if op is not undefined (true/false)
-			// or if oldVal is not equal to newVal if defined
-			if (!action || oldVal !== newVal) {
-				var 
-				prop    = new Array(3);
-				prop[0] = name,
-				prop[1] = newVal || __emptyString,
-				prop[2] = action ? action : __setAttribute;
-
-				changedProps[index] = prop;
-
-				index = index + 1;
+			if (!isDefined(oldValue) || (isDefined(oldValue) && (oldValue !== newValue))) {
+				changes[changes.length] = [__setAttribute, name, newValue];
 			}
 		}
 
-		return changedProps;
+		// go through all oldProps
+		// if there is a prop in oldProps
+		// that is not also in newProps, remove it
+		for (var name in oldProps) {
+			var 
+			oldValue = oldProps[name],
+			newValue = newProps[name];
+
+			if (!isDefined(oldValue)) {
+				// we add __emptyString to 1 make sure there are always
+				// 3 values in the array and in the base case that
+				// they are all strings, 
+				// constant length + constant type makes it easier for
+				// the compiler to do some ahead of time optimizations.
+				changes[changes.length] = [__removeAttribute, name, __emptyString];
+			}
+		}
+
+		// return our changes
+		return changes;
 	}
 
 
@@ -1305,7 +1296,7 @@
 	 */
 	function setElementProps (target, props) {
 		for (var name in props) {
-			updateElementProps(target, name, props[name], __setAttribute, props.xmlns);
+			updateElementProps(target, __setAttribute, name, props[name], props.xmlns);
 		}
 	}
 
@@ -1319,7 +1310,7 @@
 	 * @param  {string} action       
 	 * @param  {string} namespace
 	 */
-	function updateElementProps (target, name, value, action, namespace) {
+	function updateElementProps (target, action, name, value, namespace) {
 		// don't add events/refs/keys as props/attrs
 		if (
 			name === 'ref' || 
@@ -1403,17 +1394,18 @@
 	 * ---------------------------------------------------------------------------------
 	 *
 	 * 
-	 * lifecycle                     - execute lifecycle methods
-	 * createRender                  - create a render instance
-	 * createHyperscriptClass        - create hyperscript class
-	 * createComponent               - create a component
+	 * lifecycle                     - executes a lifecycle methods
+	 * createRender                  - creates a render instance
+	 * createHyperscriptClass        - creates hyperscript class
+	 * createStateLessComponent      - creates a stateless component
+	 * createComponent               - creates a component
 	 * componentClass                - components class / interface / blueprint
-	 * setProps                      - update a components props
-	 * setState                      - update a components state
+	 * setProps                      - updates a components props
+	 * setState                      - updates a components state
 	 * withAttr                      - two-way data binding helper
 	 * logValidationError            - log validation results
 	 * validatePropTypes             - validate prop types
-	 * createPropTypes               - create primitive prop types
+	 * createPropTypes               - creates primitive prop types
 	 *
 	 * 
 	 * ---------------------------------------------------------------------------------
@@ -1432,23 +1424,10 @@
 	 * @param  {Object}  state       - weather to pass sate to stage
 	 */
 	function lifecycle (node, stage, isComponent, props, state) {
-		// end quickly
-		// if node is not from statefull component
-		if (
-			!isComponent &&
-			(
-				// no node
-				!node ||
-				// without componentSignature and render
-				// the hyperscript object is thus from
-				// a stateless component
-				(
-					node[__hyperscriptSignature] && 
-					!node[__hyperscriptSignature][__componentSignature] &&
-					!node.render
-				)
-			)
-		) {
+		// end quickly if node is not from statefull component
+		// since all state less components do not 
+		// feature lifecyclem methods
+		if (!isComponent && (!node || (!node[__hyperscriptSignature] && !node.render))) {
 			return;
 		}
 
@@ -1462,59 +1441,30 @@
 		}
 		// node is a hyperscript object
 		// check if it has a component reference
-		else if (
-			node[__hyperscriptSignature] &&
-			node[__hyperscriptSignature][__componentSignature]
-		) {
-			component = node[__hyperscriptSignature][__componentSignature];
+		else if (isObject(node[__hyperscriptSignature])) {
+			component = node[__hyperscriptSignature];
 		}
 
 		if (component && component[stage]) {
-			// is the props/state truthy? if so check if it is not a boolean
-			// if so default to the value in props/state passed, 
-			// if it is default to the components own props.
-			// if props/state is falsey value, 
-			// default to undefined
-
-			// props is either the value of the props passed as an argument
-			// or the value of the components
+			/*
+				is the props/state truthy? if so check if it is not a boolean
+				if so default to the value in props/state passed, 
+				if it is default to the components own props.
+				if props/state is falsey value, 
+				default to undefined
+				props is either the value of the props passed as an argument
+				or the value of the components
+			 */
 			props = props || component.props,
 			state = state || component.state;
 
-			// componentShouldUpdate returns a Boolean
-			// so we publish the lifecycle return values
-			// which we can use in the vdomToDOM / update () function
-			// to see if we should skip an element or not
+			/*
+				componentShouldUpdate returns a Boolean
+				so we publish the lifecycle return values
+				which we can use in the vdomToDOM / update () function
+				to see if we should skip an element or not
+			 */
 			return component[stage](props, state, component);
-		}
-	}
-
-
-	function throttle (update) {
-		var
-		then = 0|0,
-		delta = 0|0;
-
-		if (__requestAnimationFrame) {
-			return function (props, children, callback) {
-				__requestAnimationFrame(function (time) {					
-					delta = (time|0 - then|0)|0;
-
-					if (delta|0 > __frameRate|0) {
-						update(props, children);
-						then = (time|0 - (delta|0 % __frameRate|0)|0)|0;
-
-						if (callback) {
-							callback();
-						}
-					}
-				});
-			}
-		}
-		else {
-			return function (props, children) {
-				setTimeout(update, __frameRate|0, props, children);
-			}
 		}
 	}
 
@@ -1529,7 +1479,7 @@
 	 *
 	 * @return {Function}
 	 */
-	function createRender (componentArg, mountArg) {
+	function createRender (componentBlueprint, mountBlueprint) {
 		// update
 		function update (props, children) {
 			// get a fresh copy of the vdom
@@ -1542,13 +1492,12 @@
 		// initial mount
 		function mount (props, children) {
 			// don't try to set it's internals if it's statless
-			if (!isStatelessComponent && componentsObj) {
-				// reference render, so we can then call this
-				// in this.setState
+			if (!isStatelessComponent && componentObject) {
+				// reference render, so we can then call this in this.setState, 
 				// this only applied to parent components passed to
 				// .createRender(here, ...);
-				if (!componentsObj.render__) {
-					componentsObj.render__ = redraw;
+				if (!componentObject.$render) {
+					componentObject.$render = update;
 				}
 			}
 
@@ -1558,13 +1507,13 @@
 			// configured to hydrate the dom into vdom
 			if (isHydrateElement) {
 				mountElement.removeAttribute('data-hydrate');
-				hydrate(mountElement, newNode, componentsObj, 0);				
+				hydrate(mountElement, newNode, componentObject, 0);				
 			}
 			else {
 				// clear container
 				mountElement.textContent = '';
 				// execute initial mount
-				vdomToDOM(mountElement, newNode, undefined, componentsObj);
+				vdomToDOM(mountElement, newNode, undefined, componentObject);
 			}
 
 			// this newNode is equal to the next renders oldNode
@@ -1575,13 +1524,15 @@
 
 		// return function that runs update/mount when executed
 		function render (props, children, forceUpdate) {
-			// return hyperscript if requested
-			if (forceUpdate === __hyperscriptSignature) {
-				return component(props, children);
-			}
-			// return component if requested
-			else if (forceUpdate === __componentSignature) {
-				return component(props, children, true);
+			if (forceUpdate) {
+				// return hyperscript if requested
+				if (forceUpdate === __hyperscriptSignature) {
+					return component(props, children);
+				}
+				// return component if requested
+				else if (forceUpdate === __componentSignature) {
+					return component(props, children, true);
+				}
 			}
 
 			// return html if there is no document to mount to
@@ -1596,7 +1547,7 @@
 				}
 			}
 
-			// when the mountArg is a function
+			// when the mountBlueprint is a function
 			if (mountElementIsFunction) {
 				mountElement = mountElementIsFunction();
 
@@ -1614,26 +1565,26 @@
 			}
 			// updates
 			else {
-				redraw(props, children);
+				update(props, children);
 			}
 
 			return render;
 		}
 
 		// set mount element
-		function setMountElement (mountArg) {
+		function setMountElement (mountBlueprint) {
 			if (__document) {
 				// element
-				if (mountArg && mountArg.nodeType) {
-					mountElement = mountArg;
+				if (mountBlueprint && mountBlueprint.nodeType) {
+					mountElement = mountBlueprint;
 				}
 				// string
-				else if (mountArg && isString(mountArg)) {
-					mountElement = __document.querySelector(mountArg);
+				else if (isString(mountBlueprint)) {
+					mountElement = __document.querySelector(mountBlueprint);
 				}
 				// function/stream
-				else if (isString(mountArg)) {
-					mountElementIsFunction = mountArg;
+				else if (isFunction(mountBlueprint)) {
+					mountElementIsFunction = mountBlueprint;
 				}
 
 				// default element
@@ -1657,33 +1608,32 @@
 		oldMountElement,
 		mountElement,
 		mountElementIsFunction,
-		componentsObj,
+		componentObject,
 		isStatelessComponent,
 		isHydrateElement,
-		initialRender = true,
-		redraw = throttle(update);
+		initialRender = true;
 
 		// get mountElement
-		setMountElement(mountArg);
+		setMountElement(mountBlueprint);
 
 		// create parent component
-		component = createComponent(componentArg);
+		component = createComponent(componentBlueprint);
 
 		// a component exists
 		if (component) {
 			// determine if the component is stateless
-			if (component.stateless) {
+			if (component.stateLess) {
 				isStatelessComponent = true;
 			}
 
 			// don't try to get it's internals if it's stateless
 			if (!isStatelessComponent) {
-				componentsObj = component(undefined, undefined, true);
+				componentObject = component(undefined, undefined, true);
 			}
 
 			// react-like behaviour
 			// i.e h(Component, {...props}, ...children) behaviour
-			if (componentArg.type) {
+			if (componentBlueprint.type) {
 				return render();
 			}
 			// normal behaviour
@@ -1706,7 +1656,7 @@
 	 * @param  {Array}    args - arugments to add to the prototype object
 	 * @return {Function}
 	 */
-	function createHyperscriptClass (args) {
+	function createHyperscriptClass (component) {
 		// interface
 		function h (obj) {
 			if (!obj) {
@@ -1715,30 +1665,33 @@
 				throwError('no hyperscript found');
 			}
 
-			var 
-			self             = this;
-			self.type     = obj.type,
-			self.props    = obj.props,
-			self.children = obj.children;
+			this.type     = obj.type,
+			this.props    = obj.props,
+			this.children = obj.children;
 		}
 
-		if (args) {
-			h.prototype[__hyperscriptSignature] = {};
-
-			forEach(args, function (value) {
-				h.prototype[__hyperscriptSignature][value[0]] = value[1];
-			});
-		}
-		else {
-			h.prototype[__hyperscriptSignature] = true;
-		}
-
+		h.prototype[__hyperscriptSignature] = component || true;
 		// we want the constructor of the resulting created object
 		// from new hyperscript()... to use the Object constructor
-		// and not our h () constructor above
 		h.prototype.constructor = Object;
 
 		return h;
+	}
+
+
+	/**
+	 * creates a state less component
+	 *
+	 * @param {Object} hyperscript
+	 */
+	function createStateLessComponent (hyperscript) {
+		function Component () {
+			return hyperscript;
+		}
+
+		Component.stateLess = true;
+
+		return Component;
 	}
 
 
@@ -1748,32 +1701,32 @@
 	 * @param  {(Function|Object)} arg - component
 	 * @return {Function}
 	 */
-	function createComponent (arg) {
+	function createComponent (componentBlueprint) {
 		var 
-		obj,
+		componentInterface,
 		displayName;
 
 		// maybe the arg is a function that returns an object
-		if (isFunction(arg)) {
+		if (isFunction(componentBlueprint)) {
 			// already a component
-			if (arg.id === __componentSignature) {
-				return arg;
+			if (componentBlueprint.id === __componentSignature) {
+				return componentBlueprint;
 			}
 
 			// a component created with class extends dio.Component
-			if (arg.prototype.render) {
-				obj = new arg(arg.defaultProps);
+			if (componentBlueprint.prototype.render) {
+				componentInterface = new componentBlueprint(componentBlueprint.defaultProps);
 
-				if (arg.propTypes) {
-					obj.propTypes = arg.propTypes;
+				if (componentBlueprint.propTypes) {
+					componentInterface.propTypes = componentBlueprint.propTypes;
 				}
 			}
 			// pure function
 			else {
-				obj = arg();
+				componentInterface = componentBlueprint();
 			}
 
-			if (!obj) {
+			if (!componentInterface) {
 				// make sure your component functions return
 				// something i.e hyperscript/object with render method
 				throwError('no render');
@@ -1781,36 +1734,32 @@
 			// a stateless component
 			// we assume it returns a hyperscript object
 			// rather than a render method
-			else if (!obj.render) {
-				arg.stateless = true
-				return arg;
+			else if (!componentInterface.render) {
+				componentBlueprint.stateLess = true;
+				return componentBlueprint;
 			}
 
-			// get displayName from obj or function
+			// get displayName from componentInterface or function
 			// i.e a function Foo () { ... } // => Foo
-			displayName = obj.displayName || getFunctionDisplayName(arg);
+			displayName = (
+				componentInterface.displayName || getFunctionDisplayName(componentBlueprint)
+			);
 		}
 		// we have an object
-		else if (isObject(arg)) {
+		else if (isObject(componentBlueprint)) {
 			// does the object have a render method
-			// if not create one that returns 'arg' which we 
+			// if not create one that returns 'componentBlueprint' which we 
 			// assume is a hyperscript object thus a stateless component
-			if (arg.render) {
-				obj = arg;
+			if (componentBlueprint.render) {
+				componentInterface = componentBlueprint;
 			}
 			// a hyperscript object with a component reference
-			else if (
-				arg[__hyperscriptSignature] && 
-				arg[__hyperscriptSignature][__componentSignature]
-			) {				
-				obj = arg[__hyperscriptSignature][__componentSignature];
+			else if (isObject(componentBlueprint[__hyperscriptSignature])) {				
+				componentInterface = componentBlueprint[__hyperscriptSignature];
 			}
-			// arg is a hyperscript object, create a stateless component
+			// componentBlueprint is a hyperscript object, create a stateless component
 			else {
-				var 
-				statelessComponent = function () { return arg; };
-				statelessComponent.stateless = true;
-				return statelessComponent;
+				return createStateLessComponent(componentBlueprint);
 			}
 		}
 		else {
@@ -1819,8 +1768,8 @@
 		}
 
 		// everything checks out i.e
-		// - obj has a render method
-		// - or arg() returns an object that has a render method
+		// - componentInterface has a render method
+		// - or componentBlueprint() returns an object that has a render method
 		// stateless components never reach here
 
 		// the component object
@@ -1828,20 +1777,24 @@
 		component;
 
 		// instance of the componentClass
-		if (obj.id === __componentSignature) {
-			component = obj;
+		if (componentInterface.id === __componentSignature) {
+			component = componentInterface;
 		}
 		// not an instance of the componentClass
 		// create new
 		else {
-			component = new componentClass(obj.props, obj.state, displayName);
+			component = new componentClass(
+				componentInterface.props, 
+				componentInterface.state, 
+				displayName
+			);
 		}
 
 		// add the properties from the object describing
 		// the component to the component instance
 		// and bind methods to the component scope
 		// we bind .render later on.
-		forEach(obj, function (value, name) {
+		forEach(componentInterface, function (value, name) {
 			// methods
 			if (isFunction(value)) {
 				// pass props and state to render
@@ -1864,27 +1817,26 @@
 			component.props = component.getDefaultProps();
 		}
 
-		// creates a hyperscript class
-		// with the passed values in the array as it's prototypes
-		// such that it looks like
-		// {
-		// 		type: '...', 
-		// 		props: {...}, 
-		// 		children: ...,
-		// 		shouldComponentUpdate: true,
-		// 		@@dio/COMPONENT: component
-		// }
-		// by default a component is always set to update, as in true
-		// untill changed in a shouldComponentUpdate method
+		/*
+			creates a hyperscript class
+			with the passed values in the array as it's prototypes
+			such that it looks like
+			{
+					type: '...', 
+					props: {...}, 
+					children: ...,
+					shouldComponentUpdate: true,
+					@@dio/COMPONENT: component
+			}
+			by default a component is always set to update, as in true
+			untill changed in a shouldComponentUpdate method
+		 */
 		var 
-		hyperscript = createHyperscriptClass([
-			[__componentSignature, component], 
-			[__shouldComponentUpdate, true]
-		]);
+		hyperscript = createHyperscriptClass(component);
 
 		// get the render method bound to the component
 		var
-		render = obj.render.bind(
+		render = componentInterface.render.bind(
 			component,
 			component.props,
 			component.state,
@@ -1901,6 +1853,7 @@
 		var
 		shouldComponentUpdate     = !!component.shouldComponentUpdate,
 		componentWillReceiveProps = !!component.componentWillReceiveProps,
+
 		// if this is a dev enviroment and the component has propTypes assigned.
 		// signal that validation should take place
 		// we cache this value now so we don't need to do this later
@@ -1918,14 +1871,18 @@
 			}
 
 			// check if cached hyperscript
-			if (shouldComponentUpdate) {
-				if (
-					component.hyperscript__ &&
-					lifecycle(component, __shouldComponentUpdate, true, props) === false
-				) {
-					component.hyperscript__[__hyperscriptSignature].shouldComponentUpdate = false;
-					return cache;
-				}
+			if (
+				shouldComponentUpdate &&
+				component.$hyperscript &&
+				isDefined(
+					component.shouldComponentUpdate(
+						component.props, 
+						component.state, 
+						component
+					)
+				)
+			) {
+				return component.$hyperscript;
 			}
 
 			// add children to props if set
@@ -1938,11 +1895,7 @@
 			if (props) {
 				// the cached value we where talking about
 				if (shouldValidatePropTypes) {
-					validatePropTypes(
-						props, 
-						component.propTypes, 
-						component.displayName
-					);
+					validatePropTypes(props, component.propTypes, component.displayName);
 				}
 				// execute componentWillReceiveProps lifecycle
 				if (componentWillReceiveProps) {
@@ -1953,7 +1906,7 @@
 			}
 
 			// extract and add cached copy of hyperscript
-			return component.hyperscript__ = component.render();
+			return component.$hyperscript = component.render();
 		}
 
 		// add a signature by which we can identify that this function
@@ -1974,11 +1927,11 @@
 	 */
 	function componentClass (props, state, displayName) {
 		// immutable internal props & state
-		this.props       = props || {},
-		this.state       = state || {},
+		this.props       = props       || {},
+		this.state       = state       || {},
 		this.displayName = displayName || '';
 
-		if (__isDevEnv === undefined) {
+		if (!isDefined(__isDevEnv)) {
 			setEnviroment();
 		}	
 	}
@@ -1991,14 +1944,20 @@
 		id: __componentSignature,
 		// i.e this.setState({})
 		setState: function (data, callback) {
-			// set state
-			// if the state is changed
-			// setState will return true
-			// thus force and update when
-			// that happens
+			/*
+				set state
+				if the state is changed
+				setState will return true
+				thus force and update when
+				that happens
+			*/
 			if (setState(this, data)) {
-				// update render
-				this.forceUpdate(undefined, callback);
+				if (callback) {
+					callback(this.state);
+				}
+
+				// redraw only if and after state changes
+				this.forceUpdate();
 			}
 		},
 		// i.e this.setProps({})
@@ -2007,7 +1966,7 @@
 			setProps(this, data);
 		},
 		// force update public method
-		forceUpdate: function (self, callback) {
+		forceUpdate: function (self, props, children) {
 			// same thing
 			self = self || this;
 
@@ -2015,11 +1974,11 @@
 			if (isFunction(self)) {
 				// function with component reference, extract
 				if (self[__componentSignature]) {
-					self = self[__componentSignature](undefined, undefined, true);
+					self = self[__componentSignature](props, children, true);
 				}
 				// component, extract
 				else if (self.id === __componentSignature) {
-					self = self(undefined, undefined, true);
+					self = self(props, children, true);
 				}
 				// pure function, create component
 				else {
@@ -2030,22 +1989,38 @@
 			// self is defined
 			if (self) {
 				// parent component / render instance
-				if (self.render__) {
-					self.render__(undefined, undefined, callback);
+				if (self.$render) {
+					self.$render();
 				}
-				// child component, 
-				// do a granular update
-				// this allows to pass a component to forceUpdate
-				// to single it out and update it
-				// or to call this.setState/forceUpdate
-				// on a child component and update only itself
-				else if (self.hyperscript__ && self.hyperscript__.dom) {
+				/*
+					child component!
+					do a granular update
+					this allows us to pass a component to forceUpdate
+					to single it out and update it from another component
+					i.e this.forceUpdate(ComponentA)
+					will extract the contents of ComponentA
+					get it's last rendered state
+					get it's next render state
+					then do a granular update of just that component
+					this allows for things such as updating a different
+					component from within one component without
+					needing to have a central store or even
+					or having that component nested as a child and
+					passing it the forceUpdate function to call
+				*/
+				else if (self.$hyperscript && self.$hyperscript.dom) {
 					var
-					parent  = self.hyperscript__.dom,
+					parent  = self.$hyperscript.dom,
 					newNode = self.render(),
-					oldNode = self.hyperscript__;
+					oldNode = self.$hyperscript;
 
 					vdomToDOM(parent, newNode, oldNode, 0, self);
+				}
+
+				// if the second argument props is a callback
+				// executre it
+				if (isFunction(props)) {
+					props();
 				}
 			}
 		},
@@ -2122,15 +2097,22 @@
 	 * example
 	 * 
 	 * direction of binding element ----> setter
-	 * this.withAttr(['prop1-from-el', 'prop2-from-el'], to-prop1-setter, to-prop2-setter)
+	 * this.withAttr(
+	 * 		['prop1-from-el', 'prop2-from-el'], 
+	 * 		to-prop1-setter, to-prop2-setter
+	 * )
+	 * 
 	 * direction of binding element <---- setter
-	 * this.withAttr([to-prop1-setter, to-prop2-setter], ['prop1-from-el', 'prop2-from-el'])
+	 * this.withAttr(
+	 * 		[to-prop1-setter, to-prop2-setter], 
+	 *   	['prop1-from-el', 'prop2-from-el']
+	 * )
 	 *
 	 * setters are always an array of: functions
 	 * and element props: strings
 	 * 
-	 * @param  {(string|string[])}     props  - the property/attr to look for in the element
-	 * @param  {(Function|Function[])} setter - the object to update/setter to execute
+	 * @param  {(string|string[])}     props  - attr to look for in the element
+	 * @param  {(Function|Function[])} setter - object to update/setter to execute
 	 * @return {Function}
 	 */
 	function withAttr (props, setters, callback) {
@@ -2162,13 +2144,15 @@
 			}
 		}
 
-		// the idea is that when you attach a function to an event,
-		// i.e el.addEventListener('eventName', fn)
-		// when that event is dispatched the function will execute
-		// making the this context of this function the element 
-		// that the event was attached to
-		// we can then extract the value, and run the prop setter(value)
-		// to change it's value
+		/*
+			the idea is that when you attach a function to an event,
+			i.e el.addEventListener('eventName', fn)
+			when that event is dispatched the function will execute
+			making the this context of this function the element 
+			that the event was attached to
+			we can then extract the value, and run the prop setter(value)
+			to change it's value
+		 */
 		return function () {
 			// assign element
 			var 
@@ -3689,12 +3673,14 @@
 						.join(' ').replace(/  +/g, ' ').trim();			
 			}
 
-			// if props is falsey just return an empty string
-			// otherwise return ' ' + ...props
-			// this prevents us from having a case of
-			// <divclass=a></div>, 
-			// so we add a space before props giving us
-			// <div class=a></div>
+			/*
+				if props is falsey just return an empty string
+				otherwise return ' ' + ...props
+				this prevents us from having a case of
+				<divclass=a></div>, 
+				so we add a space before props giving us
+				<div class=a></div>
+			 */
 			return props ? (' ' + props) : '';
 		}
 
@@ -3787,7 +3773,10 @@
 
 					// adds all the vendors
 					forEach(vendors, function (vendor) {
-						result = result + '-' + vendor + '-' + property + ': ' + value + ';\n\t';
+						result = (
+							result + '-' + vendor + '-' + 
+							property + ': ' + value + ';\n\t'
+						);
 					});
 
 					result = result + property;
@@ -3970,11 +3959,9 @@
 			// builds a string representation of the tree
 			forEach(tree, function (body, selector) {
 				// creates something like
-				// 
 				// .selector { 
 				// 		... 
 				// }
-				// 
 				body = selector + ' {\n' + body + '}\n';
 
 				// check if the block has '@keyframes' in it
@@ -4105,8 +4092,7 @@
 			// for enviroments that do not have a document
 			// or if we pass the html arg
 			// this will not try to insert it to the dom
-			// rather we will just return a string of the style element
-			// below
+			// rather we will just return a string of the style element below
 			if (__document && __document.head && !onlyOutputString) {
 				__document.head.insertAdjacentHTML('beforeend', style);
 			}
