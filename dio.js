@@ -319,7 +319,7 @@
 		var 
 		displayName = (
 			/function ([^(]*)/.exec(func.valueOf()) || 
-			[,'']
+			[,__emptyString]
 		)[1];
 
 		/*
@@ -451,7 +451,7 @@
 			child = {
 				type: 'text',
 				props: undefined,
-				children: [child + '']
+				children: [child + __emptyString]
 			}
 		}
 		
@@ -509,7 +509,7 @@
 			matchedPropValue = match[6];
 
 			// no special match, set type
-			if (matchedType === '' && matchedValue !== '') {
+			if (matchedType === __emptyString && matchedValue !== __emptyString) {
 				obj.type = matchedValue;
 			}
 			// matches id's - #id
@@ -1063,18 +1063,16 @@
 	 * @return {Node}
 	 */
 	function createElement (newNode, component, namespace) {
-		var 
-		element;
-
 		// text nodes
 		if (!newNode.props) {
-			element = newNode.children[0];
+			var
+			textContent = newNode.children[0];
 
-			if (!isString(element)) {
-				element = element + '';
+			if (!isString(textContent)) {
+				textContent = textContent + __emptyString;
 			}
 
-			newNode.dom = __document.createTextNode(element);
+			newNode.dom = __document.createTextNode(textContent);
 		}
 		else {
 			var 
@@ -1260,7 +1258,13 @@
 			oldValue = oldProps[name],
 			newValue = newProps[name];
 
-			if (!isDefined(oldValue) || (isDefined(oldValue) && (oldValue !== newValue))) {
+			// if newValue is defined(!null/undefined) 
+			// and
+			// either oldValue is not defined(null/undefined)
+			// or 
+			// oldValue is defined but is not equal
+			// to newValue
+			if (isDefined(newValue) && (!isDefined(oldValue) || oldValue !== newValue)) {
 				changes[changes.length] = [__setAttribute, name, newValue];
 			}
 		}
@@ -1269,15 +1273,13 @@
 		// if there is a prop in oldProps
 		// that is not also in newProps, remove it
 		for (var name in oldProps) {
-			var 
-			oldValue = oldProps[name],
-			newValue = newProps[name];
-
-			if (!isDefined(oldValue)) {
+			// if there is no value of the same
+			// name in newProps
+			if (!isDefined(newProps[name])) {
 				// we add __emptyString to 1 make sure there are always
-				// 3 values in the array and in the base case that
+				// 3 values in the array and in the best case that
 				// they are all strings, 
-				// constant length + constant type makes it easier for
+				// constant length + constant type can possibly make it easier for
 				// the compiler to do some ahead of time optimizations.
 				changes[changes.length] = [__removeAttribute, name, __emptyString];
 			}
@@ -1332,18 +1334,18 @@
 
 		// normalize class/className references
 		if (namespace === __namespace['svg']) {
-			// svg className is not the same as html
-			// default to 'class' if  'className'
 			if (name === 'className') {
-				name = 'class'
+				// svg className is not the same as html
+				// so we default to 'class'
+				name = 'class';
 			}
 		}
 		else {
-			// in html elements 
-			// accessing className directly is faster 
-			// that setAttribute('class', value)
-			// default to className if 'class'
 			if (name === 'class') {
+				// in html elements 
+				// accessing className directly is faster 
+				// that setAttribute('class', value)
+				// default to className if 'class'
 				name = 'className'
 			}
 		}
@@ -1382,6 +1384,16 @@
 				target[name] = value;
 			}
 			else {
+				// remove values that are false/null/undefined
+				if (!isDefined(value) || value === false) {
+					action = __removeAttribute;
+				}
+				// reduce value to an empty string if true
+				// so that checked=true, becomes just checked
+				else if (value === true) {
+					value = __emptyString;
+				}
+
 				target[action](name, value);
 			}
 		}
@@ -1511,7 +1523,7 @@
 			}
 			else {
 				// clear container
-				mountElement.textContent = '';
+				mountElement.textContent = __emptyString;
 				// execute initial mount
 				vdomToDOM(mountElement, newNode, undefined, componentObject);
 			}
@@ -1929,7 +1941,7 @@
 		// immutable internal props & state
 		this.props       = props       || {},
 		this.state       = state       || {},
-		this.displayName = displayName || '';
+		this.displayName = displayName || __emptyString;
 
 		if (!isDefined(__isDevEnv)) {
 			setEnviroment();
@@ -2583,7 +2595,7 @@
 			transformOrigin, 
 			easing) {
 			return function (element, callback) {
-				transformations  = transformations || '';
+				transformations  = transformations || __emptyString;
 
 				// get element if selector
 				if (isString(element)) {
@@ -2777,7 +2789,9 @@
 						// note: the numbers are still in string format
 						transitionData = getComputedStyle(element)
 						transitionData = transitionData[type+'Duration'];
-						transitionData = transitionData.replace(/s| /g, '').split(',');
+						transitionData = (
+							transitionData.replace(/s| /g, __emptyString).split(',')
+						);
 
 						// convert all values to a number
 						// increament duration (in ms)
@@ -2883,7 +2897,7 @@
 				// get window location to check fo CORS
 				location = __window.location,
 				// create anchor element and extract url information
-				a        = __document.createElement('a');		
+				a        = __document.createElement('a');
 
 				a.href   = url;
 
@@ -3681,23 +3695,19 @@
 				so we add a space before props giving us
 				<div class=a></div>
 			 */
-			return props ? (' ' + props) : '';
+			return props ? (' ' + props) : __emptyString;
 		}
 
 		// print children
 		function Children (children) {
-			if (!isDefined(children)) {
-				return '';
-			}
-
-			// empty
-			if (children.length === 0) {
-				return '';
+			// null/undefined or empty
+			if (!isDefined(children) || children.length === 0) {
+				return __emptyString;
 			}
 
 			return map(children, function (child) {
 				return toHTML(child);
-			}).join('');
+			}).join(__emptyString);
 		}
 
 		// void elements that do not have a close </tag> 
@@ -3755,7 +3765,7 @@
 			'animation', 'transform', 'appearance', 
 			'transition', 'box-shadow', 'linear-gradient'
 		],
-		namespace    = '',
+		namespace    = __emptyString,
 		keyframesKey = '@keyframes',
 		atRootKey    = '@at-root';
 
@@ -3769,7 +3779,7 @@
 			forEach(properties, function (prefix) {
 				// if it is
 				if (property.indexOf(prefix) > -1) {
-					result = '';
+					result = __emptyString;
 
 					// adds all the vendors
 					forEach(vendors, function (vendor) {
@@ -3798,7 +3808,7 @@
 		// a selectors children
 		function iterate (stylesheet, stack, tree) {
 			var 
-			result = '';
+			result = __emptyString;
 
 			forEach(stylesheet, function (value, property, obj) {
 				if (obj.hasOwnProperty(property)) {
@@ -3827,7 +3837,7 @@
 						// but since values are sometimes functions we want to extract the
 						// return value of the function to do that we do a 'for (...){}'
 						var 
-						newValue = '';
+						newValue = __emptyString;
 
 						forEach(value, function (value, name) {
 							if (isFunction(value)) {
@@ -3896,7 +3906,7 @@
 						// remove & and space in the beginning of a selector
 						// so that h1&:hover becomes h1:hover
 						// and ' h1' becomes 'h1'
-						parent = split[0].replace(/ &|^ /g, ''),
+						parent = split[0].replace(/ &|^ /g, __emptyString),
 						child  = split[1],
 						block  = tree[parent];
 
@@ -3945,16 +3955,16 @@
 			// references
 			var
 			tree  = {},
-			style = '',
+			style = __emptyString,
 
 			// create this here so that
 			// we don't have to create it in a for loop block
 			// this is for when we want to add vendors we
 			// add an empty vendor that represents the un-prefixed version
-			vendorsPlusDefault = vendors.concat(['']);
+			vendorsPlusDefault = vendors.concat([__emptyString]);
 
 			// the tree object will become populated with our style tree
-			iterate(children, '', tree);
+			iterate(children, __emptyString, tree);
 
 			// builds a string representation of the tree
 			forEach(tree, function (body, selector) {
@@ -4009,11 +4019,11 @@
 					});
 
 					// extract string from our array of prefixed values
-					body = arr.join('');
+					body = arr.join(__emptyString);
 				}
 				// handle sass like @at-rule
 				else if (body.indexOf(atRootKey) > -1) {
-					body = body.split(atRootKey)[1].replace(' ', '');
+					body = body.split(atRootKey)[1].replace(' ', __emptyString);
 				}
 				else {
 					// handle ','' as in
@@ -4027,7 +4037,7 @@
 						// then we add the namespaces
 						forEach(selectorNamespaced, function (value, index) {
 							var 
-							space = index > 0 ? '' : ' ';
+							space = index > 0 ? __emptyString : ' ';
 							selectorNamespaced[index] = namespace + space + value;
 						});
 
@@ -4061,13 +4071,13 @@
 			});
 			
 			var 
-			name = namespace ? ' id=' + (namespace + __signatureBase) : '';
+			name = namespace ? ' id=' + (namespace + __signatureBase) : __emptyString;
 
 			return '<style'+name+'>\n' + style + '</style>';
 		}
 
 		return function (stylesheet, id, onlyOutputString) {
-			namespace = id || '';
+			namespace = id || __emptyString;
 
 			// exit early if the stylesheet has already been added
 			// this allows use to call dio.createStyle

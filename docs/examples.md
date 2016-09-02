@@ -1,6 +1,7 @@
 # Examples
 
-- [Benchmark](../../examples/benchmark.html)
+- [DBmon Benchmark](../../examples/benchmark.html)
+- [Benchmark Table Test](../../examples/benchmark-table-test.html)
 - [Todos](../../examples/todo.html)
 - [Sortable List](../../examples/sortable.html)
 - [Filter](../../examples/filter.html)
