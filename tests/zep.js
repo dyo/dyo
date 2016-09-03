@@ -1,12 +1,9 @@
 /*!
- *
  * ____  ____  ___  
  *  / / | |_  | |_) 
  * /_/_ |_|__ |_|  
- *
  * 
  * zep.js - a javascript server and browser testing library
- *
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @license MIT
  */
@@ -68,7 +65,7 @@
 		}
 	};
 
-	function each (arr, fn) {
+	function forEach (arr, fn) {
 		// index {Number}
 		var 
 		index;
@@ -123,8 +120,8 @@
 		xhr.open(method, url);
 		
 		xhr.onload = callback;
-		xhr.onerror = function () {
-			console.log(arguments);
+		xhr.onerror = function (err) {
+			console.error(err);
 		};
 
 		xhr.send();
@@ -182,7 +179,7 @@
 			var 
 			dependencyMap = {};
 
-			each(windowKeysAfter.keys, function (name) {
+			forEach(windowKeysAfter.keys, function (name) {
 				var propertyBefore = windowKeysBefore.map[name];
 
 				if (propertyBefore === undefined) {
@@ -195,7 +192,7 @@
 		}
 	}
 
-	function utilities (results) {
+	function utilities () {
 		return {
 			spy: spy,
 			describe: describe
@@ -409,7 +406,7 @@
 				dependencyStore = [];
 			}
 
-			each(dependencies, function (url) {
+			forEach(dependencies, function (url) {
 				// browser
 				if (isBrowserEnv()) {
 					// make http request for dependency
@@ -444,7 +441,7 @@
 						var 
 						dependencyStoreExported = {};
 
-						each(dependencyStore, function (value, index) {
+						forEach(dependencyStore, function (value, index) {
 							for (var key in value) {
 								dependencyStoreExported[key] = value[key];
 							}
@@ -486,7 +483,7 @@
 
 		startTime = new Date().getTime();
 
-		each(tests, function (test, index) {
+		forEach(tests, function (test, index) {
 			var 
 			workspace = test.workspace,
 			assert    = assertFactory(test);
@@ -530,7 +527,7 @@
 		var failCount   = 0;
 		var assertCount = 0;
 
-		each(test.assertions, function (result) {
+		forEach(test.assertions, function (result) {
 			messages.push([result.status, result.message]);
 
 			if (result.status.indexOf(failed) > -1) {
@@ -614,7 +611,7 @@
 
 		log('log', name);
 
-		each(messages, function (message) {
+		forEach(messages, function (message) {
 			var 
 			status = message[0],
 			message = message[1],

@@ -1,7 +1,5 @@
 # Tests
 
-
-
 ## running tests
 
 Open `index.html` in a browser, inspect the console for more details. Here is an example of how it should look: [https://rawgit.com/thysultan/dio.js/master/tests/index.html](https://rawgit.com/thysultan/dio.js/master/tests/index.html).

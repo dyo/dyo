@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<title>uibench (Dio.js)</title>
+		<link rel="stylesheet" href="https://localvoid.github.io/uibench-base/0.1.0/styles.css">
+		<script src="https://localvoid.github.io/uibench-base/0.1.0/uibench.js"></script>
+		<script src="/dio.min.js"></script>
+	</head>
+	<body>
+		<div id="App"></div>
+
+		<script>
+			const TableCell = dio.createClass({
+		  		getInitialState: function (props) {
+		  			var self = this;
+			    	return {
+			      		onClick: function(e) {
+			        		console.log('Clicked' + self.props.text);
+			        		e.stopPropagation();
+			      		}
+			    	};
+		  		},
+
+			  	render: function (props, state) {
+		    		return h('td', {className: 'TableCell', onClick: state.onClick}, props.text)
+			  	}
+			});
+
+
+			function TableRow (props) {
+			    const data = props.data;
+			    let classes = 'TableRow';
+
+			    if (data.active) {
+		      		classes = 'TableRow active';
+			    }
+
+			    const cells = data.props;
+
+			    const children = [TableCell({text: '#' + data.id})];
+
+			    for (let i = 0; i < cells.length; i++) {
+		      		children.push(TableCell({text: cells[i]}));
+			    }
+
+		    	return h('tr', {className: classes, 'data-id': data.id}, children);
+			}
+
+			function Table (props) {
+		    	const items = props.data.items;
+
+		    	const children = [];
+	    		for (let i = 0; i < items.length; i++) {
+					const item = items[i];
+					children.push(TableRow({key: item.id, data: item}));
+	    		}
+
+		    	return h('tabel', {className: 'Table'}, h('tbody', children));
+			}
+
+			function AnimBox (props) {
+	    		const data = props.data;
+		    	const time = data.time;
+	    		const style = `border-radius:${time % 10}px;background:rgba(0,0,0,${0.5 + ((time % 10) / 10)})`;
+
+	    		return h('div', {className: 'AnimBox', 'data-id': data.id, style: style});
+			}
+
+			function Anim (props) {
+	    		const data = props.data;
+		    	const items = data.items;
+
+	    		const children = [];
+	    		for (let i = 0; i < items.length; i++) {
+	      			const item = items[i];
+	      			children.push(AnimBox({key: item.id, data: item}));
+	    		}
+
+		    	return h('div', {className: 'Anim'}, children);
+			}
+
+			function TreeLeaf (props) {
+		    	return h('li', {className: 'TreeLeaf'}, props.data.id);
+			}
+
+			function TreeNode (props) {
+			    const data = props.data;
+			    const children = [];
+
+			    for (let i = 0; i < data.children.length; i++) {
+		      		const n = data.children[i];
+
+		      		if (n.container) {
+			        	children.push(TreeNode({key: n.id, data: n}));
+		      		} else {
+			        	children.push(TreeLeaf({key: n.id, data: n}));
+		      		}
+			    }
+
+			    return h('ul', {className: 'TreeNode'}, children);
+			}
+
+			function Tree (props) {
+		    	return h('div', {className: 'Tree'}, TreeNode({data: props.data.root}));
+			}
+
+			function Main () {
+			    return {
+			    	render: function (props) {
+	    			    const data = props.data;
+	    			    const location = data.location;
+
+	    			    let section = null;
+	    			    if (location === 'table') {
+	    		      		section = Table({data: data.table});
+	    			    } else if (location === 'anim') {
+	    		      		section = Anim({data: data.anim});
+	    			    } else if (location === 'tree') {
+	    		      		section = Tree({data: data.tree});
+	    			    }
+
+	    			    return h('div', {className: 'Main'}, section);
+			    	}
+			    }
+			}
+
+			uibench.init('DIO', '1.1.4');
+
+			document.addEventListener('DOMContentLoaded', function (e) {
+		  		const container = document.querySelector('#App');
+		  		var render = dio.createRender(Main, container);
+
+			  	uibench.run(
+				    function(state) {
+				      	render({data: state});
+				    },
+				    function(samples) {
+				    	dio.createRender(
+							h('pre', JSON.stringify(samples, null, ' ')), container
+			    		)();
+				    }
+		  		);
+			});
+		</script>
+	</body>
+</html>
