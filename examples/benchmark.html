@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<title>dbmon (Dio.js)</title>
+		<title>dbmon (DIO.js)</title>
 	</head>
 	<body>
 		<div id="app"></div>
@@ -267,30 +267,6 @@
 
 			var DBMon = dio.createComponent({
 				render: function() {
-					// return h("div",
-					// 	h("table", {className: "table table-striped latest-data"},
-					// 		h("tbody",
-					// 			data.map(function(db) {
-					// 				return h("tr", {key: db.dbname},
-					// 					h("td", {className: "dbname"}, db.dbname),
-					// 					h("td", {className: "query-count"},
-					// 						h("span", {className: db.lastSample.countClassName}, db.lastSample.nbQueries)
-					// 					),
-					// 					db.lastSample.topFiveQueries.map(function(query, i) {
-					// 						return h("td", {key: i, className: query.elapsedClassName},
-					// 							query.formatElapsed,
-					// 							h("div", {className: "popover left"},
-					// 								h("div", {className: "popover-content"}, query.query),
-					// 								h("div", {className: "arrow"})
-					// 							)
-					// 						)
-					// 					})
-					// 				)
-					// 			})
-					// 		)
-					// 	)
-					// )
-
 					return {
 						type: 'div',
 						props: {},

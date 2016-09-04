@@ -705,7 +705,7 @@
 			// set refs
 			setRefs(newNode, nextNode, component);
 			// add events if any
-			addEventListeners(nextNode, newNode.props);
+			setElementProps(nextNode, newNode.props, true);
 		}
 
 		return newNode;
@@ -776,7 +776,7 @@
 		oldNodeChildren,
 		newNodeChildrenLength, 
 		oldNodeChildrenLength
-	) {		
+	) {
 		// adding to the dom
 		if (oldNode === undefined) {
 			// dom operation, create node
@@ -854,7 +854,6 @@
 
 		// the lookup loop down the stack
 		else if (
-			newNode.shouldComponentUpdate !== false &&
 			newNode.props &&
 			oldNode.props &&
 			newNodeChildren &&
@@ -870,6 +869,19 @@
 
 			// update props
 			handlePropChanges(nextNode, newNode, oldNode);
+			
+			// if newNode's children length is 0, exit quickly
+			if (newNodeChildrenLength === 0) {
+				// clear the newNodes children 
+				// if newNodeChildrenLength is 0
+				// while oldNodeChildrenLength is not
+				if (oldNodeChildrenLength > 0) {
+					oldNode.dom.textContent = __emptyString;
+				}
+				
+				// normalize dom references and exit
+				return normalizeNodes(newNode, oldNode);
+			}
 
 			// loop through children
 			for (
@@ -910,12 +922,17 @@
 		}
 
 		// normalize dom references
-		if (
-			oldNode && 
-			newNode && 
-			oldNode.type && 
-			newNode.type
-		) {
+		normalizeNodes(newNode, oldNode);
+	}
+
+
+	/**
+	 * normalize nodes
+	 * @param {Object} oldNode
+	 * @param {Object} newNode
+	 */
+	function normalizeNodes (newNode, oldNode) {
+		if (oldNode && newNode && oldNode.type && newNode.type) {
 			newNode.dom = oldNode.dom;
 		}
 	}
@@ -1004,9 +1021,9 @@
 	 * @param  {Node}   nextNode
 	 * @param  {Object} oldNode
 	 */
-	function removeChild (parent, nextNode, oldNode) {
+	function removeChild (parent, prevNode, oldNode) {
 		lifecycle(oldNode, __componentWillUnmount);
-		parent.removeChild(nextNode);
+		parent.removeChild(prevNode);
 		lifecycle(oldNode, __componentDidUnmount);
 	}
 
@@ -1101,15 +1118,11 @@
 			setRefs(newNode, element, component);
 			// diff and update/add/remove props
 			setElementProps(element, newNode.props);
-			// add events if any
-			addEventListeners(element, newNode.props);
-			
+
 			// only map children arrays
 			if (isArray(children)) {
 				forEach(children, function (newNodechild) {
-					var 
-					nextNode = createElement(newNodechild, component, namespace);
-					appendChild(element, nextNode, newNodechild);
+					appendChild(element, createElement(newNodechild, component, namespace), newNodechild);
 				});
 			}
 
@@ -1179,25 +1192,6 @@
 
 
 	/**
-	 * add event listeners
-	 * 
-	 * @param {Node}   target
-	 * @param {Object} props
-	 */
-	function addEventListeners (target, props) {
-		for (var name in props) {
-			var 
-			value = props[name];
-
-			if (isEventProp(name, value)) {
-				// is a callback
-				target.addEventListener(extractEventName(name), value, false);
-			}
-		}
-	}
-
-
-	/**
 	 * handle prop changes
 	 * 
 	 * @param  {Node}   target
@@ -1236,6 +1230,30 @@
 			lifecycle(newNode, __componentDidUpdate);
 		}
 	}
+
+
+	/**
+	 * set props when element is created
+	 * 
+	 * @param  {Node}    target
+	 * @param  {Object}  props
+	 */
+	function setElementProps (target, props, onlyEvents) {
+		for (var name in props) {
+			var 
+			value = props[name];
+
+			// add events
+			if (isEventProp(name, value)) {
+				target.addEventListener(extractEventName(name), value, false);
+			}
+			// add attributes
+			else {
+				updateElementProps(target, __setAttribute, name, value, props.xmlns);
+			}
+		}
+	}
+
 
 	/**
 	 * get list of changed props
@@ -1287,19 +1305,6 @@
 
 		// return our changes
 		return changes;
-	}
-
-
-	/**
-	 * set props when element is created
-	 * 
-	 * @param  {Node}    target
-	 * @param  {Object}  props
-	 */
-	function setElementProps (target, props) {
-		for (var name in props) {
-			updateElementProps(target, __setAttribute, name, props[name], props.xmlns);
-		}
 	}
 
 
@@ -1822,11 +1827,19 @@
 
 		// if this method is set, set the initial state
 		if (component.getInitialState) {
-			component.state = component.getInitialState();
+			component.state = component.getInitialState(
+				component.props, 
+				component.state, 
+				component
+			);
 		}
 		// if this method is set, set the default props
 		if (component.getDefaultProps) {
-			component.props = component.getDefaultProps();
+			component.props = component.getDefaultProps(
+				component.props, 
+				component.state, 
+				component
+			);
 		}
 
 		/*
@@ -1886,13 +1899,7 @@
 			if (
 				shouldComponentUpdate &&
 				component.$hyperscript &&
-				isDefined(
-					component.shouldComponentUpdate(
-						component.props, 
-						component.state, 
-						component
-					)
-				)
+				component.shouldComponentUpdate(props, component.state, component) === false
 			) {
 				return component.$hyperscript;
 			}
