@@ -84,7 +84,7 @@
 	 * toArray                       - convert array like object to an array
 	 * throwError                    - throw/return an error
 	 * forEach                       - for each iterator for arrays and objects
-	 * map                           - faster `[].map()`
+	 * ArrayMap                      - faster `[].map()`
 	 * isFunction                    - checks if a value is a function
 	 * isString                      - checks if a value is a string
 	 * isArray                       - checks if a value is an array
@@ -135,32 +135,32 @@
 
 	
 	/**
-	 * for each element in the list execute callback
+	 * for each element in the `subject` execute callback
 	 * 
-	 * @param  {(Array|Object)} list
+	 * @param  {(Array|Object)} subject
 	 * @param  {Function}       callback
 	 */
-	function forEach (list, callback) {
+	function forEach (subject, callback) {
 		// arrays
-		if (isArray(list)) {
+		if (isArray(subject)) {
 			var 
-			length = list.length,
+			length = subject.length,
 			index  = 0;
 
 			for (; index < length; index = index + 1) {
 				// break if `callback` returns false
-				// passing currentValue, index, list{Array}
-				if (callback(list[index], index, list) === false) {
+				// passing currentValue, index, subject{Array}
+				if (callback(subject[index], index, subject) === false) {
 					return;
 				}
 			}
 		}
 		// objects 
 		else {
-			for (var index in list) {
+			for (var index in subject) {
 				// break if callback() returns false
-				// passing currentValue, index, list{Object}
-				if (callback(list[index], index, list) === false) {
+				// passing currentValue, index, subject{Object}
+				if (callback(subject[index], index, subject) === false) {
 					return;
 				}
 			}
@@ -169,22 +169,21 @@
 
 
 	/**
-	 * for each element in the list execute callback 
+	 * for each element in the `subject` execute callback 
 	 * adding the returned value to an array that is the output
 	 *
-	 * @param  {Array}    list
+	 * @param  {Array}    subject
 	 * @param  {Function} callback
 	 * @return {Array}    output
 	 */
-	function map (list, callback) {
-		var 
-		length = list.length,
+	function ArrayMap (subject, callback) {
+		var
 		output = [],
 		index  = 0,
 		value;
 
-		for (; index < length; index = index + 1) {
-			value = callback(list[index], index, list);
+		for (var length = subject.length; index < length; index = index + 1) {
+			value = callback(subject[index], index, subject);
 
 			if (isDefined(value)) {
 				output[index] = value;
@@ -196,13 +195,80 @@
 
 
 	/**
+	 * [].reduce applies a function against an accumulator and each 
+	 * value of the array to reduce it to a single value
+	 * 
+	 * @param  {Array}    subject
+	 * @param  {Function} callback
+	 * @param  {*}        initialValue
+	 * @return {*}
+	 */
+	function ArrayReduce (subject, callback, initialValue) {
+		if (Array.prototype.reduce) {
+			return subject.reduce(callback, initialValue);
+		}
+		else {
+			var
+			key   = 0,
+			value = initialValue;
+
+			for (var length = subject.length; key < length; key = key + 1) {
+		  		if (key in subject) {
+		  			value = callback(value, subject[key], key, subject);
+		  		}
+			}
+
+			return value;
+		}
+	}
+
+
+	/**
+	 * get all the keys of the an object as an array
+	 * 
+	 * @param  {Object} subject - object to extract keys from
+	 * @return {Array}  keys    - array of keys
+	 */
+	function ObjectKeys (subject) {
+		var 
+		keys = [];
+		
+		for (var key in subject) {
+			if (!subject.hasOwnProperty(key)) {
+				continue;
+			}
+
+			keys.push(key);
+		}
+
+		return keys;
+	}
+
+
+	/**
+	 * addEventListener
+	 * @param {Node}     target
+	 * @param {string}   event
+	 * @param {Function} callback
+	 */
+	function addEventListener (target, event, callback) {
+   		if (target.addEventListener) {
+      		target.addEventListener(event, callback);
+   		}
+   		else if (target.attachEvent) {
+      		target.attachEvent(('on' + event), callback);
+   		}
+	}
+
+
+	/**
 	 * checks if `subject` is a function
 	 * 
 	 * @param  {*}       subject - subject for type checking
 	 * @return {boolean}
 	 */
 	function isFunction (subject) {
-		return !!subject && typeof subject === 'function';
+		return subject && typeof subject === 'function';
 	}
 
 
@@ -213,7 +279,7 @@
 	 * @return {boolean}
 	 */
 	function isString (subject) {
-		return !!subject && typeof subject === 'string';
+		return subject && typeof subject === 'string';
 	}
 
 
@@ -224,7 +290,7 @@
 	 * @return {boolean}
 	 */
 	function isArray (subject) {
-		return !!subject && subject.constructor === Array;
+		return (!!subject && subject.constructor === Array) ? true : false; 
 	}
 
 
@@ -235,7 +301,7 @@
 	 * @return {boolean}
 	 */
 	function isObject (subject) {
-		return !!subject && subject.constructor === Object;
+		return (!!subject && subject.constructor === Object) ? true : false; 
 	}
 
 
@@ -277,28 +343,6 @@
 		else {
 			__isDevEnv = false;
 		}
-	}
-
-
-	/**
-	 * get all the keys of the an object as an array
-	 * 
-	 * @param  {Object} obj  - object to extract keys from
-	 * @return {Array}  keys - array of keys
-	 */
-	function ObjectKeys (obj) {
-		var 
-		keys = [];
-		
-		for (var key in obj) {
-			if (!obj.hasOwnProperty(key)) {
-				continue;
-			}
-
-			keys.push(key);
-		}
-
-		return keys;
 	}
 
 
@@ -368,8 +412,7 @@
 		children = [],
 		// the position that children elements start from
 		// as in h('tag', {}, ...children) -> h(0, 1, 2);
-		position = 2,
-		child;
+		position = 2;
 
 		// if what was suppose to be the props position
 		// is a child (hyperscript or any non object value)
@@ -394,6 +437,7 @@
 		// construct children
 		for (var index = position; index < length; index = index + 1) {
 			// reference to current current child
+			var
 			child = args[index];
 	
 			// if the child is an array go deeper
@@ -440,22 +484,30 @@
 	 * @param  {Array} children - the children array to add it to
 	 */
 	function setHyperscriptChild (child, children) {
+		var 
+		childNode;
+
 		// support for child component
 		// h('', {}, ComponentA, ComponentB)
 		if (isFunction(child)) {
-			child = extract(child);
+			childNode = extract(child);
 		}
 		// if the child is not an object it is a textNode
 		// string, bool, number ...etc, so we convert them to string values
 		else if (!isObject(child)) {
-			child = {
+			childNode = {
 				type: 'text',
 				props: undefined,
-				children: [child + __emptyString]
-			}
+				children: [
+					isString(child) ? child : (__emptyString + child)
+				]
+			};
 		}
-		
-		children.push(child);
+		else {
+			childNode = child;
+		}
+
+		children.push(childNode);
 	}
 
 
@@ -860,7 +912,7 @@
 			prevNode = oldNode.dom;
 
 			// text node
-			if (!oldNode.props &&!newNode.props) {
+			if (!oldNode.props && !newNode.props) {
 				// assuming a textnode is not empty
 				// it is faster to change it's nodeValue
 				// than textContent/replacing it with
@@ -1285,7 +1337,7 @@
 
 			// add events
 			if (isEventProp(name, value)) {
-				target.addEventListener(extractEventName(name), value, false);
+				addEventListener(target, extractEventName(name), value);
 			}
 			// add attributes
 			else {
@@ -2749,13 +2801,13 @@
 						easing:   easing
 					});
 
-					player.addEventListener('finish', onfinish);
+					addEventListener(player, 'finish', onfinish);
 				}
 				// use css transitions
 				else {
 					// listen for the transition end event
 					// we can then do cleanup after the animation
-					element.addEventListener(transEvtEnd, onfinish);
+					addEventListener(element, transEvtEnd, onfinish);
 
 					// set first state
 					prefix(style, 'transform', transform[0]);
@@ -2841,6 +2893,11 @@
 				}
 
 				return function (element, callback) {
+					// exit early in the absence of an element
+					if (!element || !element.nodeType) {
+						return callback(element, keyframe);
+					}
+
 					// push to next event-cycle/frame
 					setTimeout(function () {
 						// add transition class
@@ -2862,8 +2919,14 @@
 						// we will get from this '0.4s, 0.2s' to '0.4,0.2'
 						// we then split it to an array ['0.4','0.2']
 						// note: the numbers are still in string format
-						transitionData = getComputedStyle(element)
+						transitionData = getComputedStyle(element);
 						transitionData = transitionData[type+'Duration'];
+
+						// if the duration property does not exist, exit
+						if (!transitionData) {
+							return callback(element, keyframe);
+						}
+
 						transitionData = (
 							transitionData.replace(/s| /g, __emptyString).split(',')
 						);
@@ -3114,10 +3177,10 @@
 			);
 		}
 
-		request.get    = create('GET'),
-		request.post   = create('POST'),
-		request.put    = create('PUT'),
-		request.delete = create('DELETE');
+		request.get       = create('GET'),
+		request.post      = create('POST'),
+		request.put       = create('PUT'),
+		request['delete'] = create('DELETE');
 
 		return request;
 	}
@@ -3145,7 +3208,7 @@
 			return function (state, action) {
 				state = state || {};
 
-				return ObjectKeys(reducers).reduce(function (nextState, key) {
+				ArrayReduce(ObjectKeys(reducers), function (nextState, key) {
 					nextState[key] = reducers[key](state[key], action);
 
 					return nextState;
@@ -3333,17 +3396,17 @@
 						// create params object to pass to callback
 						// i.e {user: 'simple', id: '1234'}
 						var
-						data = match.slice(1, match.length) 
-							.reduce(function (data, val, i) {
-								if (!data) {
-									data = {};
-								}
-								// var name: value
-								// i.e user: 'simple'
-								data[vars[i]] = val;
+						data = match.slice(1, match.length);
+						data = ArrayReduce(data, function (nextState, value, index) {
+							if (!nextState) {
+								nextState = {};
+							}
+							// var name: value
+							// i.e user: 'simple'
+							nextState[vars[index]] = value;
 
-								return data;
-							}, undefined);
+							return nextState;
+						}, undefined);
 
 						// callback is a function, exec
 						if (isFunction(callback)) {
@@ -3431,12 +3494,12 @@
 		var
 		store,
 		chain = {
-			then: undefined,
-			catch: undefined
+			then:    undefined,
+			'catch': undefined
 		},
 		listeners = {
-			catch: [],
-			then: []
+			then:    [],
+			'catch': [],
 		};
 
 		function stream () {
@@ -3528,7 +3591,7 @@
 		// add a then listener
 		stream.then  = function (listener, error) {
 			if (error) {
-				stream.catch(error)
+				stream['catch'](error)
 			}
 
 			if (listener) {
@@ -3542,7 +3605,7 @@
 		};
 
 		// add a catch listener
-		stream.catch = function (listener) {
+		stream['catch'] = function (listener) {
 			return stream.push('catch', listener);
 		};
 
@@ -3562,10 +3625,10 @@
 
 		// end/reset a stream
 		stream.end = function () {
-			chain.then      = undefined;
-			chain.catch     = undefined;
-			listeners.catch = [];
-			listeners.then  = [];
+			chain.then         = undefined;
+			chain['catch']     = undefined;
+			listeners.then     = [];
+			listeners['catch'] = [];
 		};
 
 		// a way to distinguish between normal functions
@@ -3736,7 +3799,7 @@
 		// print props
 		function Props (props) {
 			if (isObject(props)) {
-				props = map(ObjectKeys(props), function (name) {
+				props = ArrayMap(ObjectKeys(props), function (name) {
 							if (isDefined(props[name]) && props[name] !== false) {
 								// <type name=value>
 								var 
@@ -3780,7 +3843,7 @@
 				return __emptyString;
 			}
 
-			return map(children, function (child) {
+			return ArrayMap(children, function (child) {
 				return toHTML(child);
 			}).join(__emptyString);
 		}
@@ -4128,10 +4191,10 @@
 					}
 					// default
 					else {
-						// ensure that '#namespace' + ':hover' is 
-						// joined as 'namespace:hover'
-						// and that '#namespace' + 'h1' is
-						// joined as '#namespace h1'
+						// ensure that namespace + :hover is 
+						// joined as namespace:hover'
+						// and that namespace + h1 is
+						// joined as namespace h1
 						if (body.substr(0,1) === ':') {
 							body = namespace + body;
 						}

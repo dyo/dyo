@@ -5,7 +5,7 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="/dio.js"></script>
+		<script src="/dio.min.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -24,7 +24,7 @@
 				}, props.item.value)
 			}
 			function TodoList (props) {
-		    	return h('ul', props.items.map(function (value) {
+		    	return h('ul', null, props.items.map(function (value) {
 		    					return TodoItem({item: value, handleDelete: props.handleDelete})
 		    				})
     					)
@@ -38,29 +38,31 @@
 				// reference to the input dom element
 
 		  		function handleSubmit (e) {
-		    		e.preventDefault()
+		    		e.preventDefault();
+
 		    		var 
-		    		value = text()
-		    		el    = input()
+		    		value = text();
+
+		    		el    = input();
 
 		    		if (value != '') {
 		    			TodoStore.dispatch({type:'ADD', id: Date.now(), value: value})
-		    			el.value = text('')()
+		    			el.value = text('')();
 		    		}
 		  		}
 		  		function handleDelete () {
-		  			var node = this
+		  			var node = this;
 		  			dio.animateWith.transitions('slideUp')(node, function(){
 		  				TodoStore.dispatch({type: 'REMOVE', id: node.id})
 		  			})
 		  		}
 
 		  		function render (props) {
-		  			return h('div.TodoApp',
-		  						h('h3', 'TODO'),
+		  			return h('div.TodoApp', null,
+		  						h('h3', null, 'TODO'),
 		  						h('form', {onsubmit: this.handleSubmit},
 		  							h('input', {ref: input, oninput: this.withAttr('value', text)}),
-		  							h('button', 'Add #' + (props.items.length+1))
+		  							h('button', null, 'Add #' + (props.items.length+1))
   								),
   								TodoList({items: props.items, handleDelete: handleDelete})
 		  					)
