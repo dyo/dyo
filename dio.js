@@ -259,8 +259,12 @@
 			// On ie8 there is no equivalent to .currentTarget
 			// so we emulate .currentTarget and add .target
 			target.attachEvent('on' + eventName, function (event) {
-				event.currentTarget = target;
-				event.target = event.srcElement;
+				event.currentTarget    = target,
+				event.target           = event.srcElement,
+				event.preventDefault   = function () {
+					event.returnValue  = false,
+					event.cancelBubble = true;
+				};
 
 				// we then call the callback with the currentTarget
 				// as the this context
