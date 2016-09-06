@@ -13,7 +13,7 @@ Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 ## Browser Support
 
 * Edge
-* IE 9+
+* IE 8+
 * Chrome
 * Firefox
 * Safari
@@ -32,11 +32,11 @@ Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.1.4/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.1.5/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/1.1.4/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/1.1.5/dio.min.js></script>
 ```
 
 #### bower
@@ -331,9 +331,6 @@ instance(__, __, '@@dio/COMPONENT')
 // you can also create a render in the following ways
 // react-like
 dio.createRender(h(Component, {...props}, ...children));
-
-// or like
-dio.createRender(Component, mount, {...props}, [...children]);
 ```
 
 Components that do not return an object with a render function
@@ -933,7 +930,7 @@ handleDelete: function (e) {
 
 ---
 
-## dio.propTypes
+## dio.PropTypes
 
 validates props passed to components insuring they are of the the specificied type,
 works just like it would in react-land.
@@ -946,9 +943,9 @@ are defined and set to `'development'`.
 dio.createComponent({
 	propTypes: {
 		// required
-		id: dio.propTypes.string.isRequired,
+		id: dio.PropTypes.string.isRequired,
 		// no required/optional
-		name: dio.propTypes.string,
+		name: dio.PropTypes.string,
 		// build a custom validator
 		custom: function (
 			props, 

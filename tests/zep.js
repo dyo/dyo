@@ -1,9 +1,11 @@
 /*!
+ * 
  * ____  ____  ___  
  *  / / | |_  | |_) 
  * /_/_ |_|__ |_|  
  * 
  * zep.js - a javascript server and browser testing library
+ * 
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @license MIT
  */
