@@ -251,12 +251,21 @@
 	 * @param {string}   event
 	 * @param {Function} callback
 	 */
-	function addEventListener (target, event, callback) {
+	function addEventListener (target, eventName, callback) {
    		if (target.addEventListener) {
-      		target.addEventListener(event, callback);
+      		target.addEventListener(eventName, callback);
    		}
    		else if (target.attachEvent) {
-      		target.attachEvent(('on' + event), callback);
+			// On ie8 there is no equivalent to .currentTarget
+			// so we emulate .currentTarget and add .target
+			target.attachEvent('on' + eventName, function (event) {
+				event.currentTarget = target;
+				event.target = event.srcElement;
+
+				// we then call the callback with the currentTarget
+				// as the this context
+				callback.call(target, event);
+      		});
    		}
 	}
 
