@@ -68,6 +68,7 @@
 	__removeAttribute           = 'removeAttribute',
 	__emptyString               = '',
 	__hasFunctionBind           = !!Function.prototype.bind,
+	__hasAddEventListener       = !!Element.prototype.addEventListener,
 	// placeholder for regex that is used
 	// only when special type selectors are used
 	// we will create the regex and cache it the 
@@ -247,12 +248,13 @@
 
 	/**
 	 * addEventListener
+	 * 
 	 * @param {Node}     target
 	 * @param {string}   event
 	 * @param {Function} callback
 	 */
 	function addEventListener (target, eventName, callback) {
-   		if (target.addEventListener) {
+   		if (__hasAddEventListener) {
       		target.addEventListener(eventName, callback);
    		}
    		else if (target.attachEvent) {
