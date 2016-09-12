@@ -1066,7 +1066,7 @@ _: {
 	
 	assign,      // Object.assign
 	keys,        // Object.Keys
-	forEach,     // forEach
+	forEach,     // for each for arrays/objects
 	reduce,      // [].reduce
 	reduceRight, // [].reduceRight
 	filter       // [].filter
