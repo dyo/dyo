@@ -4456,7 +4456,10 @@
 
 			// pure function
 			if (vnode && vnode.render) {
-				props.children = children;
+				if (isObject(props)) {
+					props.children = children;
+				}
+				
 				vnode = vnode.render(props);
 			}
 
