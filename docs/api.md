@@ -899,3 +899,30 @@ like `XMLHttpRequest` and other `#document` operations.
 dio.injectWindowDependency({Object})
 // returns whatever is passed to it
 ```
+
+## Utilities
+
+```javascript
+_: {
+	addEventListener: addEventListener,
+	
+	assign,      // Object.assign
+	keys,        // Object.Keys
+	forEach,     // forEach
+	reduce,      // [].reduce
+	reduceRight, // [].reduceRight
+	filter       // [].filter
+	map,         // [].map
+
+	toArray,     
+	// clone array/convert array like objects to arrays
+	
+	isObject,
+	isFunction,
+	isString,
+	isArray,
+
+	isDefined
+	// (not null and undefined)
+}
+```

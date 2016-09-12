@@ -4976,14 +4976,14 @@
 		// utilities
 		_: {
 			addEventListener: addEventListener,
-			
+
 			assign: objectAssign,
+			keys: objectKeys,
 			forEach: forEach,
 			reduce: arrayReduce,
 			reduceRight: arrayReduceRight,
 			filter: arrayFilter,
 			map: arrayMap,
-			keys: objectKeys,
 
 			toArray: toArray,
 			
