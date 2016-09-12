@@ -16,6 +16,10 @@
 <script src=https://cdn.jsdelivr.net/dio/1.1.5/dio.min.js></script>
 ```
 
+```html
+<script src=https://unpkg.com/dio.js@1.1.5/dio.min.js></script>
+```
+
 #### bower
 
 ```

@@ -2,10 +2,10 @@
 
 [![dio.js](https://cdn.rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
 
-Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
+Dio is a fast and lightweight (~9kb) feature rich Virtual DOM framework.
 
-- ~7kb minified+gzipped
-- ~18kb minified
+- ~9kb minified+gzipped
+- ~20kb minified
 
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
  ![dependencies](https://img.shields.io/badge/dependencies-none-green.svg?style=flat) [![Join the chat at https://gitter.im/thysultan/dio.js](https://img.shields.io/badge/chat-gitter-green.svg?style=flat)](https://gitter.im/thysultan/dio.js)
@@ -39,6 +39,10 @@ Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework.
 <script src=https://cdn.jsdelivr.net/dio/1.1.5/dio.min.js></script>
 ```
 
+```html
+<script src=https://unpkg.com/dio.js@1.1.5/dio.min.js></script>
+```
+
 #### bower
 
 ```
@@ -57,7 +61,7 @@ You can also play with Dio [on this jsbin](http://jsbin.com/lobavo/edit?js,outpu
 
 # Getting Started
 
-Dio is a fast and lightweight (~7kb) feature rich Virtual DOM framework
+Dio is a fast and lightweight (~9kb) feature rich Virtual DOM framework
 built around the concept that any function/object can become a component.
 
 Components in Dio share the same api's as react with a few additions, 
@@ -242,8 +246,31 @@ h('div', {innerHTML: "<script>alert('hello')</script>"});
 h(Component, {who: 'World'}, 1, 2, 3, 4)
 // passes {who: ...} as props and 1, 2, 3, 4 as children to Component
 
+h('div', ComponentFunction)
+// ComponentFunction will become a Component
+
 h('div', Component)
 // is identical to h('div', h(Component))
+
+h('@fragment', 'Hello', 'World')
+// you can also create a fragment of elements by
+// starting the type with a '@'
+// so the above could also be
+
+h('@foo', 'Hello', 'World')
+
+// returning an array of elements for example
+render: function () {
+	return [
+		'Hello',
+		'Workd'
+	];
+}
+
+// is equivalent to
+render: function () {
+	h('@', 'Hello', 'World');
+}
 ```
 
 ---
@@ -266,12 +293,12 @@ class Component extends dio.Component {
 	}
 }
 
-// for example
+// examples
 var myComponent = dio.createComponent({
 	render: () => { return h('div') }
 });
 
-// or with a function
+// with a function
 var myComponent = dio.createComponent(function () {
 	return {
 		render: () => { return h('div') }
@@ -569,6 +596,20 @@ myrouter.forward()
 
 ## dio.createStore
 
+```javascript
+dio.createStore(
+	reducer: {Function|Object}, 
+	// single or multiple reducers
+	// if an object of reducers, combineReducers called
+	initalState: {Any}          
+	// initialState/middleware
+	enhancer: {Function}        
+	// middleware, applyMiddleware is called 
+	// on the enhancer function internally
+)
+```
+
+
 Alot like the redux createStore or rather it's exactly like redux createStore
 with the addition of `.connect` that accepts a render insance or a component 
 and mount with which to update everytime the store is updated.
@@ -579,7 +620,7 @@ that updates your component on state changes.
 var store = dio.createStore(reducer: {Function})
 // or
 var store = dio.createStore(object of reducers: {Object})
-// the same as doing a .combineReducers in redux
+// auto .combineReducers
 
 store.dispatch({type: '' ...})
 // dispatch an action
@@ -606,14 +647,21 @@ store.connect(render: {Function|Object}, element: '.myapp')
 Like the name suggests this methods outputs the html 
 of a specific component/render instance with the props passed
 to it, this is normally used within the context of server-side rendering.
-When used add the attribute `data-hydrate=true` to the container
-you wish to ouput the html, this will tell dio not to
-initialize a fresh mount and rather hydrate the current dom.
+When used as a server-side tool add the attribute `data-hydrate` 
+to the container you wish to ouput the html, this will tell DIO not to
+hydrate the current dom on initial mount.
 
 ```javascript
+// component or pure function
 dio.createHTML(component, props, children);
 // you can also use this on plain hyperscript objects, as in
 dio.createHTML(h('div', 'Text'));
+// or on render instances
+dio.createHTML(renderInstance, props, children);
+
+// aliases
+renderToString();
+renderToStaticMarkup();
 ```
 
 ---
@@ -932,11 +980,16 @@ handleDelete: function (e) {
 
 ## dio.PropTypes
 
-validates props passed to components insuring they are of the the specificied type,
-works just like it would in react-land.
-The built in validtors are `[number, string, bool, array, object, func]`
-and you can also create your own validators.
-note that propTypes/validations are only evaluated when `NODE_ENV` or `process.env.NODE_ENV`
+validates props passed to components insuring they are of the the specificied type. The built in validtors work exactly as they do in react land namely.
+
+```javascript
+[
+	number, string, bool, array, object, func, element, node
+	any, shape, instanceOf, oneOf, oneOfType, arrayOf, objectOf
+]
+```
+
+and you can also create your own validators though it should be noted that propTypes/validations are only evaluated when `NODE_ENV` or `process.env.NODE_ENV`
 are defined and set to `'development'`.
 
 ```javascript
@@ -981,13 +1034,14 @@ createRequiredPropTypeError(
 	propName: {String}, 
 	displayName: {String}
 )
-// 
+
 // so instead of the above
 return new Error(
   	'Invalid prop `' + propName + '` supplied to' +
   	' `' + componentName + '`. Validation failed.'
 );
-// we could do
+
+// we could instead do
 return createInvalidPropTypeError(
 	propName, props[propName], displayName, 'expected type'
 )

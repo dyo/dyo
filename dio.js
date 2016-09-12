@@ -1,10 +1,10 @@
-/**
+/*!
  *  ___ __ __  
  * (   (  /  \ 
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * DIO.js - a fast and lightweight (~7kb) feature rich Virtual DOM framework.
+ * DIO.js - a fast and lightweight (~9kb) feature rich Virtual DOM framework.
  * 
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @licence MIT
@@ -29,29 +29,44 @@
 	'use strict';
 
 	var
-	version                     = '1.1.5',
+	VERSION                   = '1.2.0',
 
 	// signatures
-	__signatureBase             = '@@dio',
-	__streamSignature           = __signatureBase + '/STREAM',
-	__storeSignature            = __signatureBase + '/STORE',
-	__componentSignature        = __signatureBase + '/COMPONENT',
-	__hyperscriptSignature      = __signatureBase + '/HYPERSCRIPT',
-	__renderSignature           = __signatureBase + '/RENDER',
+	SIGNATURE_BASE            = '@@dio',
+	SIGNATURE_STREAM          = SIGNATURE_BASE + '/STREAM',
+	SIGNATURE_STORE           = SIGNATURE_BASE + '/STORE',
+	SIGNATURE_COMPONENT       = SIGNATURE_BASE + '/COMPONENT',
+	SIGNATURE_HYPERSCRIPT     = SIGNATURE_BASE + '/HYPERSCRIPT',
+	SIGNATURE_RENDER          = SIGNATURE_BASE + '/RENDER',
+	SIGNATURE_FRAGMENT        = '@',
 
-	// component lifecycle
-	__componentWillReceiveProps = 'componentWillReceiveProps',
-	__componentDidMount         = 'componentDidMount',
-	__componentWillMount        = 'componentWillMount',
-	__componentWillUnmount      = 'componentWillUnmount',
-	__componentDidUnmount       = 'componentDidUnmount',
-	__componentWillUpdate       = 'componentWillUpdate',
-	__componentDidUpdate        = 'componentDidUpdate',
+	// component lifecycles
+	componentWillReceiveProps = 'componentWillReceiveProps',
+	componentDidMount         = 'componentDidMount',
+	componentWillMount        = 'componentWillMount',
+	componentWillUnmount      = 'componentWillUnmount',
+	componentDidUnmount       = 'componentDidUnmount',
+	componentWillUpdate       = 'componentWillUpdate',
+	componentDidUpdate        = 'componentDidUpdate',
+
+	// other
+	hasFunctionBind           = !!Function.prototype.bind,
+	hasAddEventListener       = typeof Element === 'function' && !!Element.prototype.addEventListener,
+
+	// placeholder for the enviroment namespace
+	// we will create it the first time a component is created
+	isDevelopmentEnviroment,
+	
+	// placeholder for regex that is used
+	// only when special type selectors are used
+	// we will create the regex and cache it the 
+	// first time a special selector is used
+	parseSelectorRegExp,
 
 	// objects
-	__window    = typeof global === 'object' ? global : exports,
-	__document  = __window.document,
-	__namespace = {
+	window                   = typeof global === 'object' ? global : exports,
+	document                 = window.document,
+	documentNamespace        = {
 		math:  'http://www.w3.org/1998/Math/MathML',
 		xlink: 'http://www.w3.org/1999/xlink',
 		svg:   'http://www.w3.org/2000/svg',
@@ -59,21 +74,10 @@
 	},
 
 	// functions
-	__XMLHttpRequest            = __window && __window.XMLHttpRequest,
-	__hyperscriptClass          = createHyperscriptClass(),
-
-	// other
-	__isDevEnv,
-	__setAttribute              = 'setAttribute',
-	__removeAttribute           = 'removeAttribute',
-	__emptyString               = '',
-	__hasFunctionBind           = !!Function.prototype.bind,
-	__hasAddEventListener       = !!Element.prototype.addEventListener,
-	// placeholder for regex that is used
-	// only when special type selectors are used
-	// we will create the regex and cache it the 
-	// first time that a special selector is used
-	__parseSelectorRegExp;
+	XMLHttpRequest           = window && window.XMLHttpRequest,
+	objectHasOwnProperty     = Object.prototype.hasOwnProperty,
+	arraySlice               = Array.prototype.slice,
+	HyperscriptClass         = createHyperscriptClass();
 
 
 
@@ -82,17 +86,24 @@
 	 * ---------------------------------------------------------------------------------
 	 *
 	 * 
-	 * toArray                       - convert array like object to an array
+	 * toArray                       - convert array like object
 	 * throwError                    - throw/return an error
-	 * forEach                       - for each iterator for arrays and objects
-	 * ArrayMap                      - faster `[].map()`
+	 * forEach                       - [] & {} for each iterator
+	 * arrayMap                      - faster `[].map()`
+	 * arrayFilter                   - faster `[].filter()`
+	 * arrayReduce                   - faster `[].reduce()`
+	 * arrayReduceRight              - faster `[].reduceRight()`
+	 * objectKeys                    - get all keys of an object
+	 * objectAssign                  - shallow clone object
+	 * addEventListener              - add event listener
 	 * isFunction                    - checks if a value is a function
 	 * isString                      - checks if a value is a string
 	 * isArray                       - checks if a value is an array
 	 * isObject                      - checks if a value is an Object
 	 * isDefined                     - checks if a value is is defined
+	 * isFragment                    - checks if the hyperscript is a fragment
+	 * isValidElement                - checks if the object is a hyperscript object
 	 * setEnviroment                 - set the enviroment namespace
-	 * ObjectKeys                    - get all the keys of the an object as an array
 	 * getFunctionDisplayName        - get a functions displayName
 	 * 
 	 * 
@@ -105,13 +116,13 @@
 	/**
 	 * convert array like object to an array
 	 * 
-	 * @param  {IArrayLike<?>} value - array like object
-	 * @param  {number=}       start - index start
-	 * @param  {number=}       end   - index end
-	 * @return {Array}
+	 * @param  {IArrayLike<?>} subject    - array like object
+	 * @param  {number=}       startIndex - index start
+	 * @param  {number=}       endIndex   - index end
+	 * @return {any[]}
 	 */
-	function toArray (value, start, end) {
-		return Array.prototype.slice.call(value, start, end);
+	function toArray (subject, startIndex, endIndex) {
+		return arraySlice.call(subject, startIndex || 0, endIndex);
 	}
 
 
@@ -138,20 +149,21 @@
 	/**
 	 * for each element in the `subject` execute callback
 	 * 
-	 * @param  {(Array|Object)} subject
-	 * @param  {Function}       callback
+	 * @param  {(any[]|Object)} subject
+	 * @param  {function}       callback
+	 * @param  {*=}             thisArg
 	 */
-	function forEach (subject, callback) {
+	function forEach (subject, callback, thisArg) {
 		// arrays
 		if (isArray(subject)) {
 			var 
-			length = subject.length,
+			length = subject.length|0,
 			index  = 0;
 
 			for (; index < length; index = index + 1) {
 				// break if `callback` returns false
-				// passing currentValue, index, subject{Array}
-				if (callback(subject[index], index, subject) === false) {
+				// passing currentValue, index, subject{any[]}
+				if (callback.call(thisArg, subject[index], index, subject) === false) {
 					return;
 				}
 			}
@@ -161,7 +173,7 @@
 			for (var index in subject) {
 				// break if callback() returns false
 				// passing currentValue, index, subject{Object}
-				if (callback(subject[index], index, subject) === false) {
+				if (callback.call(thisArg, subject[index], index, subject) === false) {
 					return;
 				}
 			}
@@ -171,23 +183,48 @@
 
 	/**
 	 * for each element in the `subject` execute callback 
-	 * adding the returned value to an array that is the output
+	 * adding the returned value to an array that is output
 	 *
-	 * @param  {Array}    subject
-	 * @param  {Function} callback
-	 * @return {Array}    output
+	 * @param  {any[]}    subject
+	 * @param  {function} callback
+	 * @param  {*=}       thisArg
+	 * @return {any[]}    output
 	 */
-	function ArrayMap (subject, callback) {
+	function arrayMap (subject, callback, thisArg) {
 		var
+		length = subject.length|0,
+		output = new Array(length),
+		index  = 0;
+
+		for (; index < length; index = index + 1) {
+			output[index] = callback.call(thisArg, subject[index], index, subject);
+		}
+
+		return output;
+	}
+
+
+	/**
+	 * creates a new array with all elements that 
+	 * pass the test implemented by the provided function.
+	 *
+	 * @param  {any[]}    subject
+	 * @param  {function} callback
+	 * @param  {*=}       thisArg
+	 * @return {any[]}    output
+	 */
+	function arrayFilter (subject, callback, thisArg) {
+		var
+		length = subject.length|0,
 		output = [],
-		index  = 0,
-		value;
+		index  = 0;
 
-		for (var length = subject.length; index < length; index = index + 1) {
-			value = callback(subject[index], index, subject);
+		for (; index < length; index = index + 1) {
+			var 
+			value = subject[index];
 
-			if (isDefined(value)) {
-				output[index] = value;
+			if (callback.call(thisArg, value, index, subject)) {
+				output[output.length] = value;
 			}
 		}
 
@@ -199,28 +236,49 @@
 	 * [].reduce applies a function against an accumulator and each 
 	 * value of the array to reduce it to a single value
 	 * 
-	 * @param  {Array}    subject
-	 * @param  {Function} callback
+	 * @param  {any[]}    subject
+	 * @param  {function} callback
 	 * @param  {*}        initialValue
 	 * @return {*}
 	 */
-	function ArrayReduce (subject, callback, initialValue) {
-		if (Array.prototype.reduce) {
-			return subject.reduce(callback, initialValue);
-		}
-		else {
-			var
-			key   = 0,
-			value = initialValue;
+	function arrayReduce (subject, callback, initialValue) {
+		var
+		value  = initialValue,
+		length = subject.length|0,
+		index  = 0;
 
-			for (var length = subject.length; key < length; key = key + 1) {
-		  		if (key in subject) {
-		  			value = callback(value, subject[key], key, subject);
-		  		}
-			}
-
-			return value;
+		for (; index < length; index = index + 1) {
+	  		if (index in subject) {
+	  			value = callback(value, subject[index], index, subject);
+	  		}
 		}
+
+		return value;
+	}
+
+
+	/**
+	 * [].reduce applies a function against an accumulator and each 
+	 * value of the array(from right-to-left) to reduce it to a single value
+	 * 
+	 * @param  {any[]}    subject
+	 * @param  {function} callback
+	 * @param  {*}        initialValue
+	 * @return {*}
+	 */
+	function arrayReduceRight (subject, callback, initialValue) {
+		var
+		value  = initialValue,
+		length = subject.length|0,
+		index  = length - 1;
+
+		for (; index >= 0; index = index - 1) {
+	  		if (index in subject) {
+	  			value = callback(value, subject[index], index, subject);
+	  		}
+		}
+
+		return value;
 	}
 
 
@@ -228,21 +286,40 @@
 	 * get all the keys of the an object as an array
 	 * 
 	 * @param  {Object} subject - object to extract keys from
-	 * @return {Array}  keys    - array of keys
+	 * @return {any[]}  keys    - array of keys
 	 */
-	function ObjectKeys (subject) {
+	function objectKeys (subject) {
 		var 
 		keys = [];
 		
 		for (var key in subject) {
-			if (!subject.hasOwnProperty(key)) {
+			if (!objectHasOwnProperty.call(subject, key)) {
 				continue;
 			}
 
-			keys.push(key);
+			keys[keys.length] = key;
 		}
 
 		return keys;
+	}
+
+
+	/**
+	 * shallow clone object
+	 * 
+	 * @param  {Object} target
+	 * @return {Object} target
+	 */
+	function objectAssign (target) {
+		forEach(toArray(arguments, 1), function (source) {
+			for (var name in source) {
+				if (objectHasOwnProperty.call(source, name)) {
+					target[name] = source[name];
+				}
+			}
+		});
+
+		return target;
 	}
 
 
@@ -251,14 +328,14 @@
 	 * 
 	 * @param {Node}     target
 	 * @param {string}   event
-	 * @param {Function} callback
+	 * @param {function} callback
 	 */
 	function addEventListener (target, eventName, callback) {
-   		if (__hasAddEventListener) {
+   		if (hasAddEventListener) {
       		target.addEventListener(eventName, callback);
    		}
    		else if (target.attachEvent) {
-			// On ie8 there is no equivalent to .currentTarget
+			// on ie8 there is no equivalent to .currentTarget
 			// so we emulate .currentTarget and add .target
 			target.attachEvent('on' + eventName, function (event) {
 				event.currentTarget    = target,
@@ -279,55 +356,88 @@
 	/**
 	 * checks if `subject` is a function
 	 * 
-	 * @param  {*}       subject - subject for type checking
+	 * @param  {*}       subject
 	 * @return {boolean}
 	 */
 	function isFunction (subject) {
-		return subject && typeof subject === 'function';
+		return subject && typeof subject === 'function' ? true : false;
 	}
 
 
 	/**
 	 * checks if `subject` is a string
 	 * 
-	 * @param  {*}       subject - subject for type checking
+	 * @param  {*}       subject
 	 * @return {boolean}
 	 */
 	function isString (subject) {
-		return subject && typeof subject === 'string';
+		return subject && typeof subject === 'string' ? true : false;
 	}
 
 
 	/**
 	 * checks if `subject` is an array
 	 * 
-	 * @param  {*}       subject - subject for type checking
+	 * @param  {*}       subject
 	 * @return {boolean}
 	 */
 	function isArray (subject) {
-		return (!!subject && subject.constructor === Array) ? true : false; 
+		return subject && subject.constructor === Array ? true : false; 
 	}
 
 
 	/**
 	 * checks if `subject` is an Object
 	 * 
-	 * @param  {*}       subject - subject for type checking
+	 * @param  {*}       subject
 	 * @return {boolean}
 	 */
 	function isObject (subject) {
-		return (!!subject && subject.constructor === Object) ? true : false; 
+		return subject && subject.constructor === Object ? true : false; 
 	}
 
 
 	/**
 	 * checks if `subject` is defined/(!null and !undefined)
 	 * 
-	 * @param  {*}       subject - subject for type checking
+	 * @param  {*}       subject
 	 * @return {boolean}
 	 */
 	function isDefined (subject) {
-		return subject !== undefined && subject !== null;
+		return subject !== undefined && subject !== null ? true : false;
+	}
+
+
+	/**
+	 * checks if subject is a fragment node
+	 * 
+	 * @param  {Object}  subject
+	 * @return {Boolean}
+	 */
+	function isFragment (subject) {
+		return subject.type.charAt(0) == SIGNATURE_FRAGMENT ? true : false;
+	}
+
+
+	/**
+	 * checks if subject is a hyperscript node
+	 * 
+	 * @param  {*}       subject
+	 * @return {boolean}
+	 */
+	function isValidElement (subject) {
+		if (
+			subject &&
+			(
+				subject[SIGNATURE_HYPERSCRIPT] ||
+				(isString(subject.type) && isArray(subject.children))
+			)
+		) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
 
@@ -337,7 +447,7 @@
 	 */
 	function setEnviroment () {
 		/*
-			first check if __isDevEnv is set
+			first check if isDevelopmentEnviroment is set
 			if it is exit the if block quickly since we already
 			a cached value of what the dev enviroment is
 
@@ -345,18 +455,18 @@
 			if NODE_ENV is set, a string and not 'production'
 
 			2. otherwise check for process.env.NODE_ENV !== 'production'
-			if any of 1 || 2 returns true set __isDevEnv to true, 
+			if any of 1 || 2 returns true set isDevelopmentEnviroment to true, 
 			thus caching it for future reference
 		 */
-		var 
+		var
 		enviroment = typeof process  === 'object' && process.env ? process.env.NODE_ENV : 
 					 typeof NODE_ENV === 'string' ? NODE_ENV : undefined;
 
 		if (enviroment === 'development') {
-			__isDevEnv = true;
+			isDevelopmentEnviroment = true;
 		}
 		else {
-			__isDevEnv = false;
+			isDevelopmentEnviroment = false;
 		}
 	}
 
@@ -367,16 +477,16 @@
 	 * i.e in function Name () {}
 	 * Name is the displayName
 	 * 
-	 * @param  {Function} func - function to extract displayName from
+	 * @param  {function} func - function to extract displayName from
 	 * @return {string}
 	 */
 	function getFunctionDisplayName (func) {
 		// the regex may return nothing[,''] insures that the )[1] 
 		// can always retrieve something even if it's an empty string
-		var 
+		var
 		displayName = (
 			/function ([^(]*)/.exec(func.valueOf()) || 
-			[,__emptyString]
+			[,'']
 		)[1];
 
 		/*
@@ -410,7 +520,7 @@
 	/**
 	 * create virtual element
 	 * 
-	 * @param  {(string|Function|Object)} type        - element type/component
+	 * @param  {(string|function|Object)} type        - element type/component
 	 * @param  {Object=}                  props       - properties
 	 * @param  {...*}                     children
 	 * @return {Object}                   hyperscript - {type, props, children}
@@ -432,7 +542,7 @@
 		// if what was suppose to be the props position
 		// is a child (hyperscript or any non object value)
 		// example case: h('tag', ...children)
-		if (!isObject(props) || props[__hyperscriptSignature]) {
+		if (!isObject(props) || props[SIGNATURE_HYPERSCRIPT]) {
 			// only change the position key
 			// when props is something other than undefined/null
 			if (isDefined(props)) {
@@ -446,7 +556,7 @@
 		// auto set xmlns namespaces for svg and math elements
 		// but only if it's not already set
 		if ((type === 'svg' || type === 'math') && !props.xmlns) {
-			props.xmlns = __namespace[type];
+			props.xmlns = documentNamespace[type];
 		}
 
 		// construct children
@@ -475,8 +585,8 @@
 		}
 
 		// create the hyperscript object
-		var 
-		hyperscript = new __hyperscriptClass({type: type, props: props, children: children});
+		var
+		hyperscript = new HyperscriptClass({type: type, props: props, children: children});
 
 		// check if the type is a special case i.e [type] | div.class | #id
 		// and alter the hyperscript accordingly
@@ -496,7 +606,7 @@
 	 * set hyperscript children
 	 * 
 	 * @param  {*}     child    - the child to add
-	 * @param  {Array} children - the children array to add it to
+	 * @param  {any[]} children - the children array to add it to
 	 */
 	function setHyperscriptChild (child, children) {
 		var 
@@ -514,7 +624,7 @@
 				type: 'text',
 				props: undefined,
 				children: [
-					isString(child) ? child : (__emptyString + child)
+					isString(child) ? child : ('' + child)
 				]
 			};
 		}
@@ -522,7 +632,7 @@
 			childNode = child;
 		}
 
-		children.push(childNode);
+		children[children.length] = childNode;
 	}
 
 
@@ -558,8 +668,8 @@
 		// but doing it here insures we are not creating a
 		// RegExp that is not being used 
 		// if there is no use of special type tags
-		if (!__parseSelectorRegExp) {
-			__parseSelectorRegExp   = new RegExp(
+		if (!parseSelectorRegExp) {
+			parseSelectorRegExp = new RegExp(
 				"(?:(^|#|\\.)([^#\\.\\[\\]]+))|" +
 				"(\\[(.+?)(?:\\s*=\\s*(\"|'|)((?:\\\\[\"'\\]]|.)*?)\\5)?\\])",
 				"g"
@@ -567,7 +677,7 @@
 		}
 
 		// execute the regex and iterate through the results
-		while ((match = __parseSelectorRegExp.exec(type))) {
+		while ((match = parseSelectorRegExp.exec(type))) {
 			var 
 			matchedType      = match[1],
 			matchedValue     = match[2],
@@ -576,7 +686,7 @@
 			matchedPropValue = match[6];
 
 			// type match
-			if (matchedType === __emptyString && matchedValue !== __emptyString) {
+			if (matchedType === '' && matchedValue !== '') {
 				hyperscript.type = matchedValue;
 			}
 			// id match
@@ -585,10 +695,10 @@
 			} 
 			// class(es) match
 			else if (matchedType === '.') {
-				classes.push(matchedValue);
+				classes[classes.length] = matchedValue;
 			} 
 			// attribute match
-			else if (matchedProp.substr(0,1) === '[') {
+			else if (matchedProp.charAt(0) === '[') {
 				var 
 				prop = matchedPropValue;
 
@@ -624,7 +734,7 @@
 	 * 
 	 * we do two things
 	 * 
-	 * 1. check if the function has a __componentSignature, if it does
+	 * 1. check if the function has a SIGNATURE_COMPONENT, if it does
 	 *    extract and return that.
 	 *    
 	 * 2. if it does not, we check if it is a class or just a function
@@ -634,14 +744,14 @@
 	 *    if it does createComponent, extract and return, otherwise return
 	 *    
 	 *    in both cases we store the resulting component from createComponent
-	 *    to a __componentSignature property of the function passed
+	 *    to a SIGNATURE_COMPONENT property of the function passed
 	 *    so that the next time we come across the same function we do
 	 *    not need to createComponent again, but can rather
 	 *    just extract and return as seen in point 1.
 	 * 
-	 * @param  {Function} func        - the function to extract
+	 * @param  {function} func        - the function to extract
 	 * @param  {Object}   props       - the passed props argument
-	 * @param  {Array}    children    - the passed children argument
+	 * @param  {any[]}    children    - the passed children argument
 	 * @return {Object}   hyperscript - {type: '', props: {}, children: []}
 	 */
 	function extract (func, props, children) {
@@ -649,19 +759,18 @@
 		hyperscript;
 
 		// if there is a cache of the component, use that
-		if (func[__componentSignature]) {
+		if (func[SIGNATURE_COMPONENT]) {
 			// extract and return the hyperscript
 			// passing props and children
-			hyperscript = func[__componentSignature](props, children);
+			hyperscript = func[SIGNATURE_COMPONENT](props, children);
 		}
 		else {
 			// components created with
-			// ... extends dio.Component { }
+			// ... extends dio.Component {...}
 			if (func.prototype.render) {
 				// create and cache the component
-				func[__componentSignature] = createComponent(func);
 				// call the component and hold onto the returned hyperscript object
-				hyperscript = func[__componentSignature](props, children);
+				hyperscript = createComponent(func)(props, children);
 			}
 			// functions(stateless components) 
 			// or components created with .createClass / .createComponent 
@@ -669,18 +778,43 @@
 				hyperscript = func(props, children);
 
 				// components, stateless/otherwise always return hyperscript
-				// given the values passed to it above.
-				// if hyperscript has a render method 
-				// it is safe to assume it is
-				// a statefull component blueprint
+				// given the values passed to it above. if hyperscript has a render method 
+				// it is safe to assume it is a statefull component blueprint
 				// so we create its component now, once, and cache it.
 				if (hyperscript.render) {
 					// create and cache the component
-					func[__componentSignature] = createComponent(func);
 					// call the component and hold onto the returned hyperscript object
-					hyperscript = func[__componentSignature](props, children);
+					hyperscript = createComponent(func)(props, children);
 				}
 			}
+		}
+
+		return hyperscript;
+	}
+
+
+	/**
+	 * clone and return a new hyperscript having the original element's props 
+	 * with new props merged in shallowly and new children replacing existing ones.
+	 * 
+	 * @param  {Object} hyperscript
+	 * @param  {Object} props
+	 * @param  {any[]}  children
+	 * @return {Object}
+	 */
+	function cloneElement (hyperscript, props, children) {
+		if (!isValidElement(hyperscript)) {
+			throwError('not a hyperscript');
+		}
+
+		objectAssign(hyperscript.props, props);
+
+		if (isArray(children)) {
+			hyperscript.children = [];
+
+			forEach(children, function (child) {
+				setHyperscriptChild(child, hyperscript.children);
+			});
 		}
 
 		return hyperscript;
@@ -693,7 +827,7 @@
 	 * ---------------------------------------------------------------------------------
 	 *
 	 * 
-	 * hydrate                       - hydrates a server-side rendered dom structure
+	 * hydrate                       - hydrates server-side rendered
 	 * vdomToDOM                     - render vdom to dom
 	 * patch                         - patch the dom
 	 *
@@ -715,19 +849,27 @@
 	 */
 	function hydrate (parent, newNode, component, index, parentNode) {
 		var 
-		nextNode;
+		nextNode = parent.childNodes[index];
 
 		// if the node is not a textNode and
 		// has children hydrate each of its children
 		if (newNode.props && newNode.children) {
-			nextNode = parent.childNodes[index];
-
 			var
 			newNodeChildren       = newNode.children,
-			newNodeChildrenLength = newNodeChildren.length;
+			newNodeChildrenLength = newNodeChildren.length,
+			isFragmentNode        = isFragment(newNode);
+
+			if (isFragmentNode) {
+				nextNode = parent;
+			}
 
 			for (var i = 0; i < newNodeChildrenLength; i = i + 1) {
 				hydrate(nextNode, newNodeChildren[i], component, i, newNode);
+			}
+
+			// exit 
+			if (isFragmentNode) {
+				return;
 			}
 
 			// hydrate the dom element to the virtual element
@@ -756,12 +898,12 @@
 				while two in the vnode
 			 */
 			var 
-			fragment = __document.createDocumentFragment();
+			fragment = document.createDocumentFragment();
 
 			// look ahead of this nodes siblings
 			// and add all textNodes to the the fragment.
 			// exit when a non text node is encounted
-			forEach(parentNode.children.slice(index), function (textNode) {
+			forEach(toArray(parentNode.children, index), function (textNode) {
 				// exit quickly once we encounter a non text/string node
 				if (textNode.props) {
 					return false;
@@ -781,9 +923,6 @@
 			// replace the textNode with a set of textNodes
 			replaceChild(parent, parent.childNodes[index], fragment);
 		}
-
-		// dom node
-		nextNode = parent.childNodes[index];
 
 		// add event listeners to non textNodes
 		// and add set refs
@@ -972,7 +1111,7 @@
 				// having childNodes to having none 
 				// indicating that the all childNodes have been removed
 				if (oldNodeChildrenLength > 0) {
-					oldNode.dom.textContent = __emptyString;
+					oldNode.dom.textContent = '';
 				}
 				
 				// normalize dom references and exit
@@ -1042,7 +1181,7 @@
 	/**
 	 * remove/insert a node uses shift/unshift/pop/push where optimal
 	 * 
-	 * @param  {Array}  arr         - array to mutate
+	 * @param  {any[]}  arr         - array to mutate
 	 * @param  {number} index       - position index
 	 * @param  {number} deleteCount - number of items to delete
 	 * @param  {Object} item        - item to add
@@ -1055,7 +1194,7 @@
 			}
 			// append using faster push if end of array
 			else if (index >= arr.length - 1) {
-				arr.push(item);
+				arr[arr.length] = item;
 			}
 			// insert at index
 			else {
@@ -1122,9 +1261,9 @@
 	 * @param  {Object} oldNode
 	 */
 	function removeChild (parent, prevNode, oldNode) {
-		lifecycle(oldNode, __componentWillUnmount);
+		lifecycle(oldNode, componentWillUnmount);
 		parent.removeChild(prevNode);
-		lifecycle(oldNode, __componentDidUnmount);
+		lifecycle(oldNode, componentDidUnmount);
 	}
 
 
@@ -1136,9 +1275,9 @@
 	 * @param  {Object} newNode
 	 */
 	function appendChild (parent, nextNode, newNode) {
-		lifecycle(newNode, __componentWillMount);
+		lifecycle(newNode, componentWillMount);
 		parent.appendChild(nextNode);
-		lifecycle(newNode, __componentDidMount);
+		lifecycle(newNode, componentDidMount);
 	}
 
 
@@ -1151,9 +1290,9 @@
 	 * @param  {Object} newNode
 	 */
 	function insertBefore (parent, beforeNode, nextNode, newNode) {
-		lifecycle(newNode, __componentWillMount);			
+		lifecycle(newNode, componentWillMount);			
 		parent.insertBefore(nextNode, beforeNode);
-		lifecycle(newNode, __componentDidMount);
+		lifecycle(newNode, componentDidMount);
 	}
 
 
@@ -1166,9 +1305,9 @@
 	 * @param  {Object} newNode
 	 */
 	function replaceChild (parent, prevNode, nextNode, newNode) {
-		lifecycle(newNode, __componentWillUpdate);
+		lifecycle(newNode, componentWillUpdate);
 		parent.replaceChild(nextNode, prevNode);
-		lifecycle(newNode, __componentDidUpdate);
+		lifecycle(newNode, componentDidUpdate);
 	}
 
 
@@ -1180,17 +1319,17 @@
 	 * @param  {string} namespace
 	 * @return {Node}
 	 */
-	function createElement (newNode, component, namespace) {
+	function createElement (newNode, component, namespace) {		
 		// text nodes
 		if (!newNode.props) {
 			var
 			textContent = newNode.children[0];
 
 			if (!isString(textContent)) {
-				textContent = textContent + __emptyString;
+				textContent = textContent + '';
 			}
 
-			newNode.dom = __document.createTextNode(textContent);
+			newNode.dom = document.createTextNode(textContent);
 		}
 		else {
 			var 
@@ -1202,17 +1341,23 @@
 				namespace = newNode.props.xmlns;
 			}
 
+			// default
+			if (!namespace) {
+				// fragments
+				if (!isFragment(newNode)) {
+					element = document.createElement(newNode.type);
+				}
+				else {
+					element = document.createDocumentFragment();
+				}
+			}
 			// namespaced
-			if (namespace) {
-				element = __document.createElementNS(namespace, newNode.type);
+			else {
+				element = document.createElementNS(namespace, newNode.type);
 
 				if (!newNode.props.xmlns) {
 					newNode.props.xmlns = namespace;
 				}
-			}
-			// default
-			else {
-				element = __document.createElement(newNode.type);
 			}
 
 			// set refs
@@ -1247,8 +1392,8 @@
 	 */
 	function setRefs (node, element, component) {
 		// a child node may have a reference to its own component
-		if (isObject(node[__hyperscriptSignature])) {
-			component = node[__hyperscriptSignature];
+		if (isObject(node[SIGNATURE_HYPERSCRIPT])) {
+			component = node[SIGNATURE_HYPERSCRIPT];
 		}
 
 		if (component && node.props && node.props.ref) {
@@ -1280,7 +1425,12 @@
 	function isEventProp (name, value) {
 		// checks if the first two characters are `on`
 		// and the value of the property is a function
-		return name.substr(0,2) === 'on' && isFunction(value);
+		// charAt it very fast, a lot more than substr
+		return (
+			name.charAt(0) === 'o' &&
+			name.charAt(1) === 'n' &&
+			isFunction(value)
+		)
 	}
 
 
@@ -1313,7 +1463,7 @@
 		// if there are any prop changes
 		if (changes.length) {
 			// before updating props
-			lifecycle(newNode, __componentWillUpdate);
+			lifecycle(newNode, componentWillUpdate);
 
 			var 
 			namespace = newNode.props.xmlns,
@@ -1334,7 +1484,7 @@
 			}
 
 			// after updating props
-			lifecycle(newNode, __componentDidUpdate);
+			lifecycle(newNode, componentDidUpdate);
 		}
 	}
 
@@ -1356,7 +1506,7 @@
 			}
 			// add attributes
 			else {
-				updateElementProps(target, __setAttribute, name, value, props.xmlns);
+				updateElementProps(target, 'setAttribute', name, value, props.xmlns);
 			}
 		}
 	}
@@ -1390,7 +1540,7 @@
 			// oldValue is defined but is not equal
 			// to newValue
 			if (isDefined(newValue) && (!isDefined(oldValue) || oldValue !== newValue)) {
-				changes[changes.length] = [__setAttribute, name, newValue];
+				changes[changes.length] = ['setAttribute', name, newValue];
 			}
 		}
 
@@ -1401,12 +1551,12 @@
 			// if there is no value of the same
 			// name in newProps
 			if (!isDefined(newProps[name])) {
-				// we add __emptyString to 1 make sure there are always
+				// we add an empty string to make sure there are always
 				// 3 values in the array and in the best case that
 				// they are all strings, 
 				// constant length + constant type can possibly make it easier for
 				// the compiler to better optimization
-				changes[changes.length] = [__removeAttribute, name, __emptyString];
+				changes[changes.length] = ['removeAttribute', name, ''];
 			}
 		}
 
@@ -1432,8 +1582,8 @@
 			isEventProp(name, value) ||
 			// we do not set xmlns namespace props 
 			// because we set them when we create elements
-			value === __namespace['svg'] || 
-			value === __namespace['math']
+			value === documentNamespace['svg'] || 
+			value === documentNamespace['math']
 		) {
 			return;
 		}
@@ -1442,12 +1592,12 @@
 		// since it is a namespaced prop
 		// we have to use setAttributeNS/removeAttributeNS
 		if (name === 'xlink:href') {
-			return target[action + 'NS'](__namespace['xlink'], 'href', value);
+			return target[action + 'NS'](documentNamespace['xlink'], 'href', value);
 		}
 
 		// normalize class/className references
 		// className means something different in the svg namespace
-		if (namespace === __namespace['svg']) {
+		if (namespace === documentNamespace['svg']) {
 			if (name === 'className') {
 				// svg className is not the same as html
 				// so we default to 'class'
@@ -1495,19 +1645,19 @@
 
 			if (
 				target[name] !== undefined &&
-				namespace    !== __namespace['svg']
+				namespace    !== documentNamespace['svg']
 			) {
 				target[name] = value;
 			}
 			else {
 				// remove values that are false/null/undefined
 				if (!isDefined(value) || value === false) {
-					action = __removeAttribute;
+					action = 'removeAttribute';
 				}
 				// reduce value to an empty string if true
 				// so that checked=true, becomes just checked
 				else if (value === true) {
-					value = __emptyString;
+					value = '';
 				}
 
 				target[action](name, value);
@@ -1527,7 +1677,7 @@
 	 * createHyperscriptClass        - creates hyperscript class
 	 * createStateLessComponent      - creates a stateless component
 	 * createComponent               - creates a component
-	 * componentClass                - components class / interface / blueprint
+	 * componentClass                - components class
 	 * setProps                      - updates a components props
 	 * setState                      - updates a components state
 	 * withAttr                      - two-way data binding helper
@@ -1558,7 +1708,7 @@
 		// feature lifecyclem methods
 		if (
 			!isComponent &&
-			(!node || (!node[__hyperscriptSignature] && !node.render))
+			(!node || (!node[SIGNATURE_HYPERSCRIPT] && !node.render))
 		) {
 			return;
 		}
@@ -1573,8 +1723,8 @@
 		}
 		// node is a hyperscript object
 		// check if it has a component reference
-		else if (isObject(node[__hyperscriptSignature])) {
-			component = node[__hyperscriptSignature];
+		else if (isObject(node[SIGNATURE_HYPERSCRIPT])) {
+			component = node[SIGNATURE_HYPERSCRIPT];
 		}
 
 		if (component && component[stage]) {
@@ -1608,9 +1758,9 @@
 	 * 
 	 * render = dio.createRender(Component, '.selector')
 	 *
-	 * @param  {Object|Function}           componentBlueprint
-	 * @param  {(Element|String|Function)} mountBlueprint
-	 * @return {Function}                  render
+	 * @param  {Object|function}           componentBlueprint
+	 * @param  {(Element|string|function)} mountBlueprint
+	 * @return {function}                  render
 	 */
 	function createRender (componentBlueprint, mountBlueprint) {
 		// update
@@ -1629,8 +1779,8 @@
 				// reference render, so we can then call this in this.setState, 
 				// this only applied to parent components passed to
 				// .createRender(here, ...);
-				if (!componentObject.$render) {
-					componentObject.$render = update;
+				if (!componentObject.$$render) {
+					componentObject.$$render = update;
 				}
 			}
 
@@ -1644,7 +1794,7 @@
 			}
 			else {
 				// clear container
-				mountElement.textContent = __emptyString;
+				mountElement.textContent = '';
 				// execute initial mount
 				vdomToDOM(mountElement, newNode, undefined, componentObject);
 			}
@@ -1659,17 +1809,17 @@
 		function render (props, children, forceUpdate) {
 			if (forceUpdate) {
 				// return hyperscript if requested
-				if (forceUpdate === __hyperscriptSignature) {
+				if (forceUpdate === SIGNATURE_HYPERSCRIPT) {
 					return component(props, children);
 				}
 				// return component if requested
-				else if (forceUpdate === __componentSignature) {
+				else if (forceUpdate === SIGNATURE_COMPONENT) {
 					return component(props, children, true);
 				}
 			}
 
 			// return html if there is no document to mount to
-			if (!__document) {
+			if (!document) {
 				var 
 				cache = component(props, children);
 
@@ -1706,14 +1856,14 @@
 
 		// set mount element
 		function setMountElement (mountBlueprint) {
-			if (__document) {
+			if (document) {
 				// element
 				if (mountBlueprint && mountBlueprint.nodeType) {
 					mountElement = mountBlueprint;
 				}
 				// string
 				else if (isString(mountBlueprint)) {
-					mountElement = __document.querySelector(mountBlueprint);
+					mountElement = document.querySelector(mountBlueprint);
 				}
 				// function/stream
 				else if (isFunction(mountBlueprint)) {
@@ -1721,8 +1871,8 @@
 				}
 
 				// default element
-				if (!mountElement || mountElement === __document) {
-					mountElement = __document.body;
+				if (!mountElement || mountElement === document) {
+					mountElement = document.body;
 				}
 
 				// check if the mount element is setup for hydration
@@ -1732,7 +1882,7 @@
 			}
 		}
 
-		render.id = __renderSignature;
+		render.$$id = SIGNATURE_RENDER;
 
 		var
 		component,
@@ -1786,24 +1936,36 @@
 	/**
 	 * hyperscript class
 	 * 
-	 * @param  {Array}    component - component reference
-	 * @return {Function} h         - hyperscript class
+	 * @param  {any[]}    component - component reference
+	 * @return {function} h         - hyperscript class
 	 */
 	function createHyperscriptClass (component) {
 		// interface
-		function h (obj) {
+		function h (obj) {			
 			if (!obj) {
 				// make sure your render method 
 				// returns a hyperscript object
 				throwError('no hyperscript found');
 			}
 
-			this.type     = obj.type,
-			this.props    = obj.props,
-			this.children = obj.children;
+			var
+			type     = obj.type     || SIGNATURE_FRAGMENT,
+			props    = obj.props    || {},
+			children = obj.children || [];
+
+			// fragments
+			if (obj.length|0 && !obj.type) {
+				forEach(obj, function (child) {
+					setHyperscriptChild(child, children);
+				});
+			}
+
+			this.type     = type,
+			this.props    = props,
+			this.children = children;
 		}
 
-		h.prototype[__hyperscriptSignature] = component || true;
+		h.prototype[SIGNATURE_HYPERSCRIPT] = component || true;
 		// we want the constructor of the resulting created object
 		// from new hyperscript()... to use the Object constructor
 		h.prototype.constructor = Object;
@@ -1816,7 +1978,7 @@
 	 * creates a state less component
 	 *
 	 * @param  {Object}   hyperscript
-	 * @return {Function} Component
+	 * @return {function} Component
 	 */
 	function createStateLessComponent (hyperscript) {
 		function Component () {
@@ -1832,8 +1994,8 @@
 	/**
 	 * creates a component
 	 * 
-	 * @param  {(Function|Object)} componentBlueprint
-	 * @return {Function}          Component
+	 * @param  {(function|Object)} componentBlueprint
+	 * @return {function}          Component
 	 */
 	function createComponent (componentBlueprint) {
 		var 
@@ -1843,8 +2005,12 @@
 		// maybe the arg is a function that returns an object
 		if (isFunction(componentBlueprint)) {
 			// already a component
-			if (componentBlueprint.id === __componentSignature) {
+			if (componentBlueprint.$$id === SIGNATURE_COMPONENT) {
 				return componentBlueprint;
+			}
+			// component already created
+			else if (componentBlueprint[SIGNATURE_COMPONENT]) {
+				return componentBlueprint[SIGNATURE_COMPONENT];
 			}
 
 			// a component created with class extends dio.Component
@@ -1888,8 +2054,11 @@
 				componentInterface = componentBlueprint;
 			}
 			// a hyperscript object with a component reference
-			else if (isObject(componentBlueprint[__hyperscriptSignature])) {				
-				componentInterface = componentBlueprint[__hyperscriptSignature];
+			else if (
+				isObject(componentBlueprint[SIGNATURE_HYPERSCRIPT]) &&
+				isFunction(componentBlueprint[SIGNATURE_HYPERSCRIPT].$$component)
+			) {
+				return componentBlueprint[SIGNATURE_HYPERSCRIPT].$$component;
 			}
 			// componentBlueprint is a hyperscript object, create a stateless component
 			else {
@@ -1912,7 +2081,7 @@
 		componentRender;
 
 		// instance of the componentClass
-		if (componentInterface.id === __componentSignature) {
+		if (componentInterface.$$id === SIGNATURE_COMPONENT) {
 			component = componentInterface;
 		}
 		// not an instance of the componentClass
@@ -1938,7 +2107,7 @@
 			else if (isFunction(value)) {
 				// bind methods
 				component[name] = (
-					__hasFunctionBind ? value.bind(component) : function () {
+					hasFunctionBind ? value.bind(component) : function () {
 						value.apply(component, toArray(arguments));
 					}
 				);
@@ -1968,19 +2137,16 @@
 
 		/*
 			creates a hyperscript class
-			with the passed values in the array as it's prototypes
-			such that it looks like
+			such that the output hyperscript object
+			looks something like
 			{
-					type: '...', 
-					props: {...}, 
-					children: ...,
-					shouldComponentUpdate: true,
-					@@dio/COMPONENT: component
+				type: '', props: {}, children: [],
+				__proto__: {
+					@@dio/HYPERSCRIPT: component,
+				}
 			}
-			by default a component is always set to update, as in true
-			untill changed in a shouldComponentUpdate method
 		 */
-		var 
+		var
 		hyperscript = createHyperscriptClass(component),
 
 		// check presence of 
@@ -1988,14 +2154,14 @@
 		// componentWillReceiveProps, 
 		// shouldValidatePropTypes
 		// and cache the results for later us.
-		shouldComponentUpdate     = !!component.shouldComponentUpdate,
-		componentWillReceiveProps = !!component.componentWillReceiveProps,
+		hasShouldComponentUpdate     = !!component.shouldComponentUpdate,
+		hasComponentWillReceiveProps = !!component.componentWillReceiveProps,
 
 		// if this is a dev enviroment and the component has propTypes assigned.
 		// signal that validation should take place
 		// we cache this value now so we don't need to do this later
 		// whenever a component is called
-		shouldValidatePropTypes   = !!__isDevEnv && !!component.propTypes;
+		shouldValidatePropTypes   = !!isDevelopmentEnviroment && !!component.propTypes;
 
 		// define render
 		function render () {
@@ -2026,11 +2192,11 @@
 
 			// check if cached hyperscript
 			if (
-				shouldComponentUpdate &&
-				component.$hyperscript &&
+				hasShouldComponentUpdate &&
+				component.$$hyperscript &&
 				component.shouldComponentUpdate(props, component.state, component) === false
 			) {
-				return component.$hyperscript;
+				return component.$$hyperscript;
 			}
 
 			// add children to props if set
@@ -2046,20 +2212,31 @@
 					validatePropTypes(props, component.propTypes, component.displayName);
 				}
 				// execute componentWillReceiveProps lifecycle
-				if (componentWillReceiveProps) {
-					lifecycle(component, __componentWillReceiveProps, true, props);
+				if (hasComponentWillReceiveProps) {
+					lifecycle(component, componentWillReceiveProps, true, props);
 				}
 				// set props
 				setProps(component, props);
 			}
 
 			// extract and add cached copy of hyperscript
-			return component.$hyperscript = component.render();
+			return component.$$hyperscript = component.render();
 		}
 
 		// add a signature by which we can identify that this function
 		// is a component
-		Component.id = __componentSignature;
+		Component.$$id        = SIGNATURE_COMPONENT;
+		component.$$component = Component;
+
+		if (component.statics && isObject(component.statics)) {
+			forEach(component.statics, function (method, name) {
+				Component[name] = method;
+			});
+		}
+
+		if (isFunction(componentBlueprint)) {
+			componentBlueprint[SIGNATURE_COMPONENT] = Component;
+		}
 
 		return Component;
 	}
@@ -2077,7 +2254,7 @@
 		// immutable internal props & state
 		this.props       = props       || {},
 		this.state       = state       || {},
-		this.displayName = displayName || __emptyString;
+		this.displayName = displayName || '';
 
 		/*
 			the first time that a component is created
@@ -2086,7 +2263,7 @@
 			NODE_ENV can get set after dio is loaded and parsed
 			we only ever do this once when the first component is created
 		 */
-		if (!isDefined(__isDevEnv)) {
+		if (!isDefined(isDevelopmentEnviroment)) {
 			setEnviroment();
 		}	
 	}
@@ -2096,7 +2273,7 @@
 	 * components class prototype
 	 */
 	componentClass.prototype = {
-		id: __componentSignature,
+		id: SIGNATURE_COMPONENT,
 		setState: function (data, callback) {
 			/*
 				set state
@@ -2125,15 +2302,15 @@
 			// if a component function is passed
 			if (isFunction(self)) {
 				// function with component reference
-				if (self[__componentSignature]) {
-					self = self[__componentSignature](props, children, true);
+				if (self[SIGNATURE_COMPONENT]) {
+					self = self[SIGNATURE_COMPONENT](props, children, true);
 				}
 				// component
-				else if (self.id === __componentSignature) {
+				else if (self.$$id === SIGNATURE_COMPONENT) {
 					self = self(props, children, true);
 				}
 				// render instance
-				else if (self.id === __renderSignature) {
+				else if (self.$$id === SIGNATURE_RENDER) {
 					self = self(props, children);
 				}
 				// pure function, create component
@@ -2145,8 +2322,8 @@
 			// self is defined
 			if (self) {
 				// parent component / render instance
-				if (self.$render) {
-					self.$render();
+				if (self.$$render) {
+					self.$$render();
 				}
 				/*
 					child component!
@@ -2164,11 +2341,11 @@
 					having that component nested as a child and
 					passing it the forceUpdate function to call
 				*/
-				else if (self.$hyperscript && self.$hyperscript.dom) {
+				else if (self.$$hyperscript && self.$$hyperscript.dom) {
 					var
-					parent  = self.$hyperscript.dom,
+					parent  = self.$$hyperscript.dom,
 					newNode = self.render(),
-					oldNode = self.$hyperscript;
+					oldNode = self.$$hyperscript;
 
 					vdomToDOM(parent, newNode, oldNode, 0, self);
 				}
@@ -2280,8 +2457,8 @@
 	 * and element props: strings
 	 * 
 	 * @param  {(string|string[])}     props  - attr to look for in the element
-	 * @param  {(Function|Function[])} setter - object to update/setter to execute
-	 * @return {Function}
+	 * @param  {(function|function[])} setter - object to update/setter to execute
+	 * @return {function}
 	 */
 	function withAttr (props, setters, callback) {
 		function update (target, prop, setter) {
@@ -2352,7 +2529,13 @@
 	 *
 	 * 
 	 * logValidationError            - log validation results
+	 * createInvalidPropTypeError    - ouput invalid prop type error
+	 * createRequiredPropTypeError   - output required prop type error
 	 * validatePropTypes             - validate prop types
+	 * isValidPropType               - check if propValue is a valid type
+	 * primitiveTypeValidator        - check validity of primitive types
+	 * createTypeValidator           - creates a type validator
+	 * createMapOfTypeValidator      - createa a type validator for has maps
 	 * createPropTypes               - create primitive prop types
 	 * injectWindowDependency        - inject a mock window
 	 * 
@@ -2454,67 +2637,144 @@
 
 
 	/**
-	 * creates the propTypes object
+	 * check if the type is valid
+	 * 
+	 * @param  {*}  propValue
+	 * @param  {*}  expectedType
+	 * @return {Boolean}
+	 */
+	function isValidPropType (propValue, expectedType) {
+		// convert something like `function` to `Function` since function
+		// is not a constructor that we can find on the root/window object but 
+		// Function, Array, String, Function... are
+		expectedType = (
+			expectedType.charAt(0).toUpperCase() + 
+			expectedType.substr(1, expectedType.length)
+		);
+
+		// check if the propValue is of this type
+		return isDefined(propValue) && propValue.constructor === window[expectedType];
+	}
+
+
+	/**
+	 * validates primitive types
+	 * 
+	 * @param  {Object}  props
+	 * @param  {string}  propName
+	 * @param  {*}       propValue
+	 * @param  {string=} displayName
+	 * @param  {*}       expectedType
+	 * @return {Error|undefined}
+	 */
+	function primitiveTypeValidator (propValue, expectedType) {
+		// if it's not of the valid type
+		if (!isValidPropType(propValue, expectedType)) {
+			return true;
+		}
+	}
+
+
+	/**
+	 * creates a type validator
+	 * 
+	 * @param  {*}         expectedType
+	 * @param  {boolean}   isRequired
+	 * @param  {function=} validator
+	 * @return {function}
+	 */
+	function createTypeValidator (expectedType, isRequired, validator) {
+		validator = validator || primitiveTypeValidator;
+
+		function typeValidator (props, propName, displayName) {
+			var 
+			propValue = props[propName];
+			// if the displayName is not default to #unknown
+			displayName = displayName || '#unknown';
+
+			// a prop was passed, as in it's not undefined
+			if (isDefined(propValue)) {
+				if (validator(propValue, expectedType, props, propName, displayName)) {
+					return createInvalidPropTypeError(
+						propName,
+						propValue,
+						displayName, 
+						expectedType
+					);
+				}
+			}
+			// if it is a required prop
+			// isRequired is only set for
+			// i.e propTypes.bool.isRequired
+			// and not for propTypes.bool
+			else if (isRequired) {
+				return createRequiredPropTypeError(
+					propName, 
+					displayName
+				);
+			}
+		}
+
+		// add the isRequired validator
+		// also avoid a infinite call stack
+		// by checking that isRequired has not yet been set
+		if (!isRequired) {
+			typeValidator.isRequired = createTypeValidator(expectedType, true, validator);
+		}
+
+		typeValidator.$$id = expectedType;
+
+		return typeValidator;
+	}
+
+
+	/**
+	 * creates a typeOf validator for hasMaps (arrays/objects)
+	 * 
+	 * @param  {string} type
+	 * @return {function}
+	 */
+	function createMapOfTypeValidator (type) {
+		return function (validator) {
+			var
+			expectedTypeName = validator.$$id + type;
+
+			return createTypeValidator(
+				expectedTypeName,
+				undefined,
+				function (propValue, expectedType, props, propName, displayName) {
+					// fail and exit early if not array
+					if(!isArray(propValue)) {
+						return true;
+					}
+
+					var
+					failed;
+
+					// check if every item in the array of the expectedType
+					forEach(propValue, function (value, index) {
+						if (validator(propValue, index, displayName)) {
+							// trigger failed and exit forEach
+							return !(failed = true);
+						}
+					});
+
+					return failed;
+				}
+			);
+		};
+	}
+
+
+	/**
+	 * creates the PropTypes object
 	 * 
 	 * @return {Object}
 	 */
 	function createPropTypes () {
 		var
-		primitivesTypes    = ['number', 'string', 'bool', 'array', 'object', 'func'],
-		propTypesObj       = {};
-
-		// check if the type is valid
-		function isValidType (propValue, expectedType) {
-			// convert something like `function` to `Function` since function
-			// is not a constructor that we can find on the root/window object but 
-			// Function, Array, String, Function... are
-			expectedType = expectedType.substr(0,1).toUpperCase() + expectedType.substr(1);
-
-			// check if the propValue is of this type
-			return isDefined(propValue) && propValue.constructor === __window[expectedType];
-		}
-
-		// factory that creates a type validator
-		function createTypeValidator (expectedType, isRequired) {
-			function typeValidator (props, propName, displayName) {
-				var 
-				propValue = props[propName];
-				// if the displayName is not default to #unknown
-				displayName = displayName || '#unknown';
-
-				// a prop was passed, as in it's not undefined
-				if (isDefined(propValue)) {
-					// if it's not of the valid type
-					if (!isValidType(propValue, expectedType)) {
-						return createInvalidPropTypeError(
-							propName, 
-							propValue, 
-							displayName, 
-							expectedType
-						);
-					}
-				}
-				// if it is a required prop
-				// isRequired is only set for
-				// i.e propTypes.bool.isRequired
-				// and not for propTypes.bool
-				else if (isRequired) {
-					return createRequiredPropTypeError(
-						propName, 
-						displayName
-					);
-				}
-			}
-
-			// add the isRequired validator
-			// also avoid a infinite call stack
-			// by checking that isRequired has not yet been set
-			if (!isRequired) {
-				typeValidator.isRequired = createTypeValidator(expectedType, true);
-			}
-
-			return typeValidator;
-		}
+		primitivesTypes = ['number', 'string', 'bool', 'array', 'object', 'func', 'symbol'],
+		propTypesObj    = {};
 
 		// for all these types
 		forEach(primitivesTypes, function (name) {
@@ -2528,6 +2788,156 @@
 			propTypesObj[name] = createTypeValidator(primitiveType);
 		});
 
+		// hyperscript elements
+		propTypesObj.element = createTypeValidator(
+			'element',
+			undefined,
+			function (propValue) {
+				if (!isValidElement(propValue)) {
+					return true;
+				}
+			}
+		);
+
+		// number, string, element ...or array of those
+		propTypesObj.node = createTypeValidator(
+			'node',
+			undefined,
+			function (propValue) {
+				if (!isString(propValue) && isNaN(propValue) && !isValidElement(propValue)) {
+					return true;
+				}
+			}
+		);
+
+		// any defined data type
+		propTypesObj.any = createTypeValidator(
+			'any',
+			undefined,
+			function (propValue) {
+				if (!isDefined(propValue)) {
+					return true;
+				}
+			}
+		);
+
+		// instance of a constructor
+		propTypesObj.instanceOf = function (constructor) {
+			var 
+			expectedTypeName = getFunctionDisplayName(constructor);
+
+			return createTypeValidator(
+				expectedTypeName,
+				undefined,
+				function (propValue, expectedType) {
+					if (!(propValue instanceof constructor)) {
+						return true;
+					}
+				}
+			);
+		};
+
+		// object of a certain shape
+		propTypesObj.shape = function (shape) {
+			var 
+			shapeKeys        = objectKeys(shape),
+			expectedTypeName = '{\n\t' + arrayMap(shapeKeys, function (name) {
+					return name + ': ' + shape[name].$$id;
+			}).join(', \n\t') + '\n}';
+
+			return createTypeValidator(
+				expectedTypeName,
+				undefined,
+				function (propValue, expectedType, props, propName, displayName) {
+					// fail if propValue is not an object
+					if (!isObject(propValue)) {
+						return true;
+					}
+
+					var
+					propValueKeys = objectKeys(propValue);
+
+					// fail if object has different number of keys
+					if (propValueKeys.length !== shapeKeys.length) {
+						return true;
+					}
+
+					var 
+					failed;
+
+					// check if object has the same keys
+					forEach(shape, function (validator, name) {
+						if (!propValue[name] || validator(propValue, name, displayName)) {
+							// trigger failed an exit forEach
+							return !(failed = true);
+						}
+					});
+
+					return failed;
+				}
+			);
+		};
+
+		// limited to certain values
+		propTypesObj.oneOf = function (values) {
+			var
+			expectedTypeName = values.join(' or ');
+
+			return createTypeValidator(
+				expectedTypeName,
+				undefined,
+				function (propValue) {
+					// failed is the default state
+					var
+					failed = true;
+
+					// check if propValue is one of the values
+					forEach(values, function (value) {
+						if (value === propValue) {
+							// trigger passed and exit forEach
+							return !!(failed = false);
+						}
+					});
+
+					return failed;
+				}
+			);
+		};
+
+		// limited to certain types
+		propTypesObj.oneOfType = function (types) {
+			var
+			expectedTypeName = arrayMap(types, function (type) {
+				return type.$$id;
+			}).join(' or ');
+
+			return createTypeValidator(
+				expectedTypeName,
+				undefined,
+				function (propValue, expectedType, props, propName, displayName) {
+					// failed is the default state
+					var
+					failed = true;
+
+					// check if propValue is of one of the types
+					forEach(types, function (validator) {
+						if (!validator(props, propName, displayName)) {
+							// trigger passed and exit forEach
+							return !!(failed = false);
+						}
+					});
+
+					return failed;
+				}
+			);
+		};
+
+		// an array with values of a certain type
+		propTypesObj.arrayOf = createMapOfTypeValidator('[]');
+		// an object with property values of a certain type
+		propTypesObj.objectOf = createMapOfTypeValidator('{}');
+
+
 		return propTypesObj;
 	}
 
@@ -2535,17 +2945,17 @@
 	/**
 	 * injects a mock window object
 	 * 
-	 * @param  {Object} obj - window object
-	 * @return {Object}     - window object     
+	 * @param  {Object} mockWindow - window object
+	 * @return {Object}            - window object     
 	 */
-	function injectWindowDependency (obj) {
-		if (obj) {
-			__window         = obj,
-			__document       = __window.document,
-			__XMLHttpRequest = __window.XMLHttpRequest;
+	function injectWindowDependency (mockWindow) {
+		if (mockWindow) {
+			window           = mockWindow,
+			document         = window.document,
+			XMLHttpRequest   = window.XMLHttpRequest;
 		}
 
-		return obj;
+		return mockWindow;
 	}
 
 
@@ -2612,7 +3022,7 @@
 			var 
 			classes = element.className.split(' ');
 			// add our new class
-			classes.push(className);
+			classes[classes.length] = className;
 			// join our classes array and re-assign to className
 			element.className = classes.join(' ');
 		}
@@ -2688,7 +3098,7 @@
 					// vendor + capitalized prop
 					prop = (
 						vendors[i] + 
-						prop.substr(0,1).toUpperCase() + 
+						prop.charAt(0).toUpperCase() + 
 						prop.slice(1)
 					);
 
@@ -2723,7 +3133,7 @@
 		 * )
 		 * 
 		 * @param {Node}   element   
-		 * @param {Array}  transforms - describe additional transforms
+		 * @param {any[]}  transforms - describe additional transforms
 		 * @param {number} duration   - duration of the animation
 		 * @param {string} className  - class that represents end state animating to
 		 */
@@ -2734,11 +3144,11 @@
 			transformOrigin, 
 			easing) {
 			return function (element, callback) {
-				transformations  = transformations || __emptyString;
+				transformations  = transformations || '';
 
 				// get element if selector
 				if (isString(element)) {
-					element = __document.querySelector(element);
+					element = document.querySelector(element);
 				}
 
 				// check if element exists
@@ -2754,7 +3164,7 @@
 				invert       = {},
 				element      = element.currentTarget || element,
 				style        = element.style,
-				body         = __document.body,
+				body         = document.body,
 				runningClass = 'animation-running',
 				transEvtEnd  = 'transitionend';
 
@@ -2889,7 +3299,7 @@
 		 * css transitions/animations for an element callback on finish
 		 * 
 		 * @param  {string}
-		 * @return {Function}
+		 * @return {function}
 		 */
 		function cssAnimation (type) {			
 			return function keyframe (className, classListMethod) {
@@ -2943,7 +3353,7 @@
 						}
 
 						transitionData = (
-							transitionData.replace(/s| /g, __emptyString).split(',')
+							transitionData.replace(/s| /g, '').split(',')
 						);
 
 						// convert all values to a number
@@ -3035,22 +3445,22 @@
 		 * @param  {Object}
 		 * @param  {string}
 		 * @param  {string}
-		 * @return {Function}
+		 * @return {function}
 		 */
 		function http (url, method, payload, enctype, withCredentials) {
 			// return a a stream
 			return createStream(function (resolve, reject) {
-				if (!__XMLHttpRequest) {
+				if (!XMLHttpRequest) {
 					return;
 				}
 
 				// create xhr object 
 				var
-				xhr      = new __XMLHttpRequest(),
+				xhr      = new XMLHttpRequest(),
 				// get window location to check fo CORS
-				location = __window.location,
+				location = window.location,
 				// create anchor element and extract url information
-				a        = __document.createElement('a');
+				a        = document.createElement('a');
 
 				a.href   = url;
 
@@ -3126,9 +3536,10 @@
 				// when the value is equal to an object 
 				// that means we have data = {name:'John', addr: {...}}
 				// so we re-run param on addr to serialize 'addr: {...}' as well
-				arr.push(typeof value == 'object' ? 
+				arr[arr.length] = (typeof value == 'object' ? 
 					param(value, __prefix) :
-					encodeURIComponent(__prefix) + '=' + encodeURIComponent(value));
+					encodeURIComponent(__prefix) + '=' + encodeURIComponent(value)
+				);
 			}
 
 			return arr.join('&');
@@ -3140,7 +3551,7 @@
 		 * 
 		 * @param {string}
 		 * @param {Object}
-		 * @param {Function}
+		 * @param {function}
 		 */
 		function create (method) {
 			return function (url, payload, enctype, withCredentials) {
@@ -3202,28 +3613,105 @@
 
 
 	/**
-	 * store interface
+	 * create store interface
 	 * 
-	 * @param  {Function} reducer
-	 * @return {Object}
+	 * @param  {function}  reducer
+	 * @param  {*}         initialState
+	 * @param  {function=} enhancer
+	 * @return {Object}    {getState, dispatch, subscribe, connect, replaceReducer}
 	 */
-	function createStore (reducer) {
-		// if the reducer is an object of reducers (multiple)
-		// lets combine the reducers
-		if (isObject(reducer)) {
-			return create(combine(reducer));
-		}
-		// single reducer
-		else {
-			return create(reducer);
+	function createStore () {
+		/**
+		 * composes single-argument functions from right to left. The right most
+		 * function can take multiple arguments as it provides the signature for
+		 * the resulting composite function
+		 *
+		 * @param  {...Function} funcs - functions to compose
+		 * @return {function}          - function obtained by composing the argument functions
+		 * from right to left. for example, compose(f, g, h) is identical to doing
+		 * (...args) => f(g(h(...args))).
+		 */
+		function compose () {
+		    var 
+		    funcs = toArray(arguments);
+
+		    // no functions passed
+		    if (funcs.length === 0) {
+		        return function (arg) {
+		            return arg;
+		        }
+		    }
+		    else {
+		        var
+		        // remove and retrieve last function
+		        last = funcs.pop();
+
+		        return function () {
+		            return arrayReduceRight(funcs, function (composed, func) {
+		                return func(composed);
+		            }, last.apply(undefined, arguments));
+		        }
+		    }
 		}
 
-		// combine reducers
-		function combine (reducers) {
+
+		/**
+		 * creates a store enhancer
+		 *
+		 * @param   {...function} middlewares
+		 * @return  {function}                - a store enhancer
+		 */
+		function applyMiddleware () {
+		    var
+		    middlewares = toArray(arguments);
+
+		    return function (createStore) {
+		        return function (reducer, initialState, enhancer) {
+		            var
+		            // create store
+		            store         = createStore(reducer, initialState, enhancer),
+		            dispatch      = store.dispatch,
+		            chain         = [],
+		            middlewareAPI = {
+		                getState: store.getState,
+		                dispatch: function (action) {
+		                	return dispatch(action);
+		                }
+		            };
+
+		            // create chain
+					chain    = arrayMap(middlewares, function (middleware) {
+						return middleware(middlewareAPI);
+					});
+
+					// compose dispatcher
+		            dispatch = compose.apply(undefined, toArray(chain))(store.dispatch);
+
+		            // return store with composed dispatcher
+		            return objectAssign({}, store, {
+		            	dispatch: dispatch
+		            });
+		        }
+		    }
+		}
+
+
+		/**
+		 * combines a set of reducers
+		 * 
+		 * @param  {Object} reducers - reducers to combine
+		 * @return {function}        - combined reducers
+		 */
+		function combineReducers (reducers) {
+			var
+			reducerKeys = objectKeys(reducers);
+
+			// create and return a single reducer
+			// that executes all the reducers
 			return function (state, action) {
 				state = state || {};
 
-				ArrayReduce(ObjectKeys(reducers), function (nextState, key) {
+				return arrayReduce(reducerKeys, function (nextState, key) {
 					nextState[key] = reducers[key](state[key], action);
 
 					return nextState;
@@ -3231,53 +3719,73 @@
 			}
 		}
 
-		// create store
-		function create (reducer) {
-			var
-			state,
-			listeners = [];
 
-			// return the state
+		/**
+		 * create store initializer
+		 * 
+		 * @param  {function} reducer
+		 * @param  {*}        initialState
+		 * @return {Object}   {getState, dispatch, subscribe, connect, replaceReducer}
+		 */
+		function create (reducer, initialState) {
+			var
+			currentState = initialState,
+			listeners    = [];
+
+			// state getter, retrieves the current state
 			function getState () {
-				return state;
+				return currentState;
 			}
 
-			// dispatch an action
+			// dispatchs a action
 			function dispatch (action) {
-				// there are no actions when we are time traveling
 				if (!isObject(action)) {
-					throwError('action must be plain object');
+					throwError('actions not plain object');
 				}
-				if (!isDefined(action.type)) {
-					throwError('actions must have type');
+				if (!action.type) {
+					throwError('actions without type');
 				}
 
-				// get state from reducer
-				state = reducer(state, action);
+				// update the state with the returned
+				// value of the reducer
+		  		currentState  = reducer(currentState, action);
 
 				// dispatch to all listeners
 				forEach(listeners, function (listener) {
-					return listener(state);
-				})
+					return listener(currentState);
+				});
 			}
 
 			// subscribe to a store
 			function subscribe (listener) {
 				if (!isFunction(listener)) {
-					throwError('listener should be function');
+					throwError('listener should be a function');
 				}
 
-				listeners.push(listener);
+				listeners[listeners.length] = listener;
 
 				// return a unsubscribe function that we can 
 				// use to unsubscribe as follows: 
 				// i.e - var sub = store.subscribe()
 				// sub() // un-subscribes
 				return function () {
-					listener = listeners.filter(function (l) {
-						return l !== listener;
+					listeners = arrayFilter(listeners, function ($listener) {
+						return $listener !== listener;
 					});
 				}
+			}
+
+			function replaceReducer (nextReducer) {
+				// exit if reducer is not a function
+		  		if (!isFunction(nextReducer)) {
+			    	throwError('nextReducer should be a function');
+		  		}
+
+		  		// replace reducer
+		  		reducer = nextReducer;
+
+		  		// dispath initial action
+		  		dispatch({type: SIGNATURE_STORE});
 			}
 
 			// auto subscribe a component to a store
@@ -3297,14 +3805,58 @@
 			}
 
 			// dispath initial action
-			dispatch({type: __storeSignature});
+			dispatch({type: SIGNATURE_STORE});
 
 			return {
-				getState: getState, 
-				dispatch: dispatch, 
-				subscribe: subscribe,
-				connect: connect
+				getState:       getState, 
+				dispatch:       dispatch, 
+				subscribe:      subscribe,
+				connect:        connect,
+				replaceReducer: replaceReducer
 			};
+		}
+
+
+		/**
+		 * create store interface
+		 * 
+		 * @param  {function}  reducer
+		 * @param  {*}         initialState
+		 * @param  {function=} enhancer
+		 * @return {Object}    {getState, dispatch, subscribe, connect, replaceReducer}
+		 */
+		return function createStore (reducer, initialState, enhancer) {
+			// exit early if the reducer is not a function
+			if (!isFunction(reducer)) {
+		  		throwError('reducer should be a function');
+			}
+
+			// if initialState is a function and enhancer is undefined
+			// we assume that initialState is an enhancer
+			if (isFunction(initialState) && !isDefined(enhancer)) {
+			  	enhancer     = initialState,
+			  	initialState = undefined;
+			}
+
+			// delegate to enhancer if defined
+			if (isDefined(enhancer)) {
+				// exit if enhancer is not a function
+		  		if (!isFunction(enhancer)) {
+		    		throwError('enhancer should be a function');
+		  		}
+
+		  		return applyMiddleware(enhancer)(create)(reducer, initialState);
+			}
+
+			// if the reducer is an object of reducers (multiple)
+			// lets combine the reducers
+			if (isObject(reducer)) {
+				return create(combineReducers(reducer));
+			}
+			// single reducer
+			else {
+				return create(reducer);
+			}
 		}
 	}
 
@@ -3339,7 +3891,7 @@
 				// start listening for a change in the url
 				interval = setInterval(function () {
 					var 
-					path = __window.location.pathname;
+					path = window.location.pathname;
 
 					// if our store of the current url does not 
 					// equal the url of the browser, something has changed
@@ -3377,7 +3929,7 @@
 								}
 								// capture
 								else {
-									vars.push(id)
+									vars[vars.length] = id;
 									return '([^\/]+)';
 								}
 							}),
@@ -3412,7 +3964,7 @@
 						// i.e {user: 'simple', id: '1234'}
 						var
 						data = match.slice(1, match.length);
-						data = ArrayReduce(data, function (nextState, value, index) {
+						data = arrayReduce(data, function (nextState, value, index) {
 							if (!nextState) {
 								nextState = {};
 							}
@@ -3481,7 +4033,7 @@
 				var 
 				renderInstance;
 
-				if (value.id !== __renderSignature) {
+				if (value.$$id !== SIGNATURE_RENDER) {
 					renderInstance = createRender(value, mount);
 				}
 				else {
@@ -3502,8 +4054,8 @@
 	 * streams utility getter/setter
 	 * 
 	 * @param  {*}        value  - store value
-	 * @param  {Function} mapper - processor
-	 * @return {Function}
+	 * @param  {function} mapper - processor
+	 * @return {function}
 	 */
 	function createStream (value, mapper) {
 		var
@@ -3561,8 +4113,8 @@
 						var
 						link = listener(chain[type] || value);
 
-						// listerner returned a value, add to chain
-						// the next .then / .catch listerner
+						// listener returned a value, add to chain
+						// the next .then / .catch listener
 						// will receieve this
 						if (link) {
 							chain[type] = link;
@@ -3579,7 +4131,7 @@
 			return store;
 		};
 
-		// {Function}.valueOf()
+		// {function}.valueOf()
 		stream.valueOf = function () {
 			return store;
 		};
@@ -3648,7 +4200,7 @@
 
 		// a way to distinguish between normal functions
 		// and streams
-		stream.id = __streamSignature;
+		stream.$$id = SIGNATURE_STREAM;
 
 		if (isFunction(value)) {
 			value(stream.resolve, stream.reject, stream);
@@ -3664,8 +4216,8 @@
 	/**
 	 * combine two or more streams
 	 * 
-	 * @param  {Function} reducer - reducer
-	 * @return {Array}    deps    - dependecies
+	 * @param  {function} reducer - reducer
+	 * @return {any[]}    deps    - dependecies
 	 */
 	createStream.combine = function (reducer, deps) {
 		// if deps are not in a single array
@@ -3680,7 +4232,7 @@
 		}
 
 		// add an address for the prev store
-		deps.push(undefined);
+		deps[deps.length] = undefined;
 
 		// the previous store will always be the 
 		// last item in the list of dependencies
@@ -3703,8 +4255,8 @@
 	/**
 	 * do something after all dependecies have resolve
 	 * 
-	 * @param  {Array}    deps - dependecies
-	 * @return {Function}
+	 * @param  {any[]}    deps - dependecies
+	 * @return {function}
 	 */
 	createStream.all = function (deps) {
 		var
@@ -3715,7 +4267,7 @@
 		// this will tell us wheather all dependencies
 		// have resolved
 		function resolver (value, resolve) {
-			resolved.push(value);
+			resolved[resolved.length] = value;
 
 			if (resolved.length === deps.length) {
 				resolve(resolved)
@@ -3724,10 +4276,10 @@
 
 		return createStream(function (resolve, reject) {
 			// check all dependencies
-			// if a dependecy is a stream attach a listerner
+			// if a dependecy is a stream attach a listener
 			// reject / resolve as nessessary.
 			forEach(deps, function (value) {
-				if (value.id === __streamSignature) {
+				if (value.$$id === SIGNATURE_STREAM) {
 					value.done(function (value) {
 						resolver(value, resolve);
 					}, function (reason) {
@@ -3752,10 +4304,10 @@
 	 * foo(1)(1)(2)
 	 * // bar => 4
 	 *
-	 * @param  {Function} reducer
+	 * @param  {function} reducer
 	 * @param  {*}        accumulator
-	 * @param  {Function} stream 
-	 * @return {Function} stream
+	 * @param  {function} stream 
+	 * @return {function} stream
 	 */
 	createStream.scan = function (reducer, accumulator, stream) {
 		return createStream(function (resolve) {
@@ -3778,12 +4330,12 @@
 	 * createHTML(h('div', 'Hello World'));
 	 * createHTML(component/render, {id:1234}, {item:'first'});
 	 *
-	 * @param  {(Object|Function)} arg      - hyperscript/render/component
+	 * @param  {(Object|function)} subject  - hyperscript/render/component
 	 * @param  {Object}            props    - props to pass to component/render
 	 * @param  {Object}            children - children to pass to component/render
 	 * @return {string}
 	 */
-	function createHTML (arg, props, children) {
+	function createHTML (subject, props, children) {
 		// print node
 		function toHTML (vnode, level) {
 			// not a hyperscript object
@@ -3800,44 +4352,63 @@
 			// i.e [obj, obj]
 			children = vnode.children;
 
-			// print voidElements
-			if (element[type]) {
+			// fragments
+			if (type.charAt(0) === SIGNATURE_FRAGMENT) {
+				return Children(children, level);
+			}
+			// voidElements
+			else if (voidElements[type]) {
 				// <type ...props>
 				return '<'+type+Props(props)+'>';
 			}
-
-			// otherwise...
-			// <type ...props>...children</type>
-			return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
+			// default
+			else {
+				// <type ...props>...children</type>
+				return '<'+type+Props(props)+'>' + Children(children, level) + '</'+type+'>';
+			}
 		}
 
 		// print props
 		function Props (props) {
 			if (isObject(props)) {
-				props = ArrayMap(ObjectKeys(props), function (name) {
-							if (isDefined(props[name]) && props[name] !== false) {
-								// <type name=value>
-								var 
-								value = props[name];
+				var
+				propsFilter = [];
 
-								// don't add events, keys or refs
-								if (
-									!isFunction(value) && 
-									name !== 'key' && 
-									name !== 'ref'
-								) {
-									// if the value is a falsey/truefy value
-									// print just the name
-									// i.e checkbox=true
-									// will print <type checkbox>
-									// otherwise <type value="">
-									return value === true ? name : name + '="' + value + '"';
-								}
+				for (var name in props) {
+					if (isDefined(props[name]) && props[name] !== false) {
+						// <type name=value>
+						var 
+						value = props[name];
+
+						// do not add events, keys or refs
+						if (!isFunction(value) && name !== 'key' && name !== 'ref') {
+							var
+							output;
+							/*
+								if the value is a falsey/truefy value
+								print just the name
+								i.e checkbox=true
+								will print <type checkbox>
+								otherwise <type value="">
+							*/
+							if (value === true) {
+								output = name;
 							}
-						})
-						// create string 
-						// and convert all multi-spaces to a single space
-						.join(' ').replace(/  +/g, ' ').trim();			
+							else {
+								output = name + '="' + value + '"'
+							}
+
+							propsFilter[propsFilter.length] = output;
+						}
+					}
+				}
+
+				// create string
+				// and convert all multi-spaces to a single space
+				var 
+				propsString = propsFilter.join(' ').replace(/  +/g, ' ').trim();	
+
+				return propsString ? (' ' + propsString) : '';			
 			}
 
 			/*
@@ -3848,24 +4419,24 @@
 				so we add a space before props giving us
 				<div class=a></div>
 			 */
-			return props ? (' ' + props) : __emptyString;
+			return props ? (' ' + props) : '';
 		}
 
 		// print children
 		function Children (children) {
 			// null/undefined or empty
 			if (!isDefined(children) || children.length === 0) {
-				return __emptyString;
+				return '';
 			}
 
-			return ArrayMap(children, function (child) {
+			return arrayMap(children, function (child) {
 				return toHTML(child);
-			}).join(__emptyString);
+			}).join('');
 		}
 
 		// void elements that do not have a close </tag> 
 		var
-		element = {
+		voidElements = {
 			'area': true, 'base':  true, 'br':    true, '!doctype': true,
 			'col':  true, 'embed': true, 'wbr':   true, 'track':    true,
 			'hr':   true, 'img':   true, 'input': true, 'keygen':   true,
@@ -3876,26 +4447,33 @@
 		vnode;
 
 		// either a render function or component function
-		if (isFunction(arg)) {
-			vnode = arg(props, children);
+		if (isFunction(subject)) {
+			vnode = subject(
+				props,
+				children,
+				subject.$$id === SIGNATURE_RENDER ? SIGNATURE_HYPERSCRIPT : undefined
+			);
 
-			// render functions return functions
-			if (isFunction(vnode)) {
-				vnode = vnode(
-					props,
-					children,
-					vnode.id === __renderSignature ? __hyperscriptSignature : undefined
-				);
-			}
-			else if (vnode.render) {
-				vnode = vnode.render(props, children);
+			// pure function
+			if (vnode && vnode.render) {
+				props.children = children;
+				vnode = vnode.render(props);
 			}
 
-			return isObject(vnode) ? createHTML(vnode) : vnode;
+			// if vnode is not a hyperscript object
+			if (!isValidElement(vnode)) {
+				throwError('no hyperscript found');
+			}
+			else {
+				return createHTML(vnode);
+			}
+		}
+		else if (subject.render) {
+			vnode = subject.render(props, children);
 		}
 		// probably hyperscript
 		else {
-			vnode = arg;
+			vnode = subject;
 		}
 
 		return toHTML(vnode);
@@ -3918,7 +4496,7 @@
 			'animation', 'transform', 'appearance', 
 			'transition', 'box-shadow', 'linear-gradient'
 		],
-		namespace    = __emptyString,
+		namespace    = '',
 		keyframesKey = '@keyframes',
 		atRootKey    = '@at-root';
 
@@ -3932,7 +4510,7 @@
 			forEach(properties, function (prefix) {
 				// if it is
 				if (property.indexOf(prefix) > -1) {
-					result = __emptyString;
+					result = '';
 
 					// adds all the vendors
 					forEach(vendors, function (vendor) {
@@ -3961,10 +4539,10 @@
 		// a selectors children
 		function iterate (stylesheet, stack, tree) {
 			var 
-			result = __emptyString;
+			result = '';
 
 			forEach(stylesheet, function (value, property, obj) {
-				if (obj.hasOwnProperty(property)) {
+				if (objectHasOwnProperty.call(obj, property)) {
 					// handle @keyframes properties
 					// allows us to specify either
 					// %: ['color: blue'] or
@@ -3990,7 +4568,7 @@
 						// but since values are sometimes functions we want to extract the
 						// return value of the function to do that we do a 'for (...){}'
 						var 
-						newValue = __emptyString;
+						newValue = '';
 
 						forEach(value, function (value, name) {
 							if (isFunction(value)) {
@@ -4059,7 +4637,7 @@
 						// remove & and space in the beginning of a selector
 						// so that h1&:hover becomes h1:hover
 						// and ' h1' becomes 'h1'
-						parent = split[0].replace(/ &|^ /g, __emptyString),
+						parent = split[0].replace(/ &|^ /g, ''),
 						child  = split[1],
 						block  = tree[parent];
 
@@ -4094,7 +4672,7 @@
 		// so that #id becomes \#id or .class becomes \.class
 		function escape (value) {
 			var
-			firstLetter = value.substr(0, 1);
+			firstLetter = value.charAt(0);
 
 			if (firstLetter === '#' || firstLetter === '.') {
 				value = '\\' +value;
@@ -4108,16 +4686,16 @@
 			// references
 			var
 			tree  = {},
-			style = __emptyString,
+			style = '',
 
 			// create this here so that
 			// we don't have to create it in a for loop block
 			// this is for when we want to add vendors we
 			// add an empty vendor that represents the un-prefixed version
-			vendorsPlusDefault = vendors.concat([__emptyString]);
+			vendorsPlusDefault = vendors.concat(['']);
 
 			// the tree object will become populated with our style tree
-			iterate(children, __emptyString, tree);
+			iterate(children, '', tree);
 
 			// builds a string representation of the tree
 			forEach(tree, function (body, selector) {
@@ -4160,23 +4738,23 @@
 						// creates something like
 						// @-prefix-keyframes ...
 						var
-						prefixed  = body.substr(0,1) + 
+						prefixed  = body.charAt(0) + 
 									prefix + 
 									body.substr(1, keyFramesBodyPos);
 
 						// escapes namespaces, as in id's #id and classes .class
 						prefixed = prefixed + escape(namespace) + 
-									body.substr(keyFramesBodyPos+1);
+									body.substr(keyFramesBodyPos + 1);
 
-						arr.push(prefixed);
+						arr[arr.length] = prefixed;
 					});
 
 					// extract string from our array of prefixed values
-					body = arr.join(__emptyString);
+					body = arr.join('');
 				}
 				// handle sass like @at-rule
 				else if (body.indexOf(atRootKey) > -1) {
-					body = body.split(atRootKey)[1].replace(' ', __emptyString);
+					body = body.split(atRootKey)[1].replace(' ', '');
 				}
 				else {
 					// handle ','' as in
@@ -4190,7 +4768,7 @@
 						// then we add the namespaces
 						forEach(selectorNamespaced, function (value, index) {
 							var 
-							space = index > 0 ? __emptyString : ' ';
+							space = index > 0 ? '' : ' ';
 							selectorNamespaced[index] = namespace + space + value;
 						});
 
@@ -4210,7 +4788,7 @@
 						// joined as namespace:hover'
 						// and that namespace + h1 is
 						// joined as namespace h1
-						if (body.substr(0,1) === ':') {
+						if (body.charAt(0) === ':') {
 							body = namespace + body;
 						}
 						else {
@@ -4224,13 +4802,13 @@
 			});
 			
 			var 
-			name = namespace ? ' id=' + (namespace + __signatureBase) : __emptyString;
+			name = namespace ? ' id=' + (namespace + SIGNATURE_BASE) : '';
 
 			return '<style'+name+'>\n' + style + '</style>';
 		}
 
 		return function (stylesheet, id, onlyOutputString) {
-			namespace = id || __emptyString;
+			namespace = id || '';
 
 			// exit early if the stylesheet has already been added
 			// this allows use to call dio.createStyle
@@ -4238,8 +4816,8 @@
 			// insuring that what follows after this
 			// is only ever computed once for each namespaced style
 			if (
-				namespace && __document &&
-				__document.getElementById(namespace + __signatureBase)
+				namespace && document &&
+				document.getElementById(namespace + SIGNATURE_BASE)
 			) {
 				return;
 			}
@@ -4256,8 +4834,8 @@
 			// or if we pass the html arg
 			// this will not try to insert it to the dom
 			// rather we will just return a string of the style element below
-			if (__document && __document.head && !onlyOutputString) {
-				__document.head.insertAdjacentHTML('beforeend', style);
+			if (document && document.head && !onlyOutputString) {
+				document.head.insertAdjacentHTML('beforeend', style);
 			}
 
 			return style;
@@ -4268,10 +4846,10 @@
 	/**
 	 * curry / create / return a function with set arguments
 	 * 
-	 * @param  {Function} fn             - function to curry
+	 * @param  {function} fn             - function to curry
 	 * @param  {*}        arg            - arguments to pass to function
 	 * @param  {boolean}  preventDefault - auto preventDefault events
-	 * @return {Function}
+	 * @return {function}
 	 */
 	function curry (fn, args, preventDefault) {
 		// return a function that executes
@@ -4296,8 +4874,8 @@
 	/**
 	 * create element factory
 	 * 
-	 * @param  {Array|string} elements - list of elements
-	 * @return {Function}
+	 * @param  {any[]|string} elements - list of elements
+	 * @return {function}
 	 */
 	function createFactory (elements) {
 		function factory (element) {
@@ -4320,7 +4898,7 @@
 			elementFactory = factory(elements[0]);
 
 			if (elements[length-1] === true) {
-				__window[elements[0]] = elementFactory;
+				window[elements[0]] = elementFactory;
 			}
 			else {
 				return elementFactory;
@@ -4329,7 +4907,7 @@
 		// multiple elements
 		else {
 			var 
-			obj = elements[length-1] === true ? __window : {};
+			obj = elements[length-1] === true ? window : {};
 
 			forEach(elements, function (element) {
 				obj[element] = factory(element);
@@ -4354,25 +4932,64 @@
 
 
 
-
 	exports.h = h;
-	exports.dio = {};
-	exports.dio.version = version;
-	exports.dio.createElement = h;
-	exports.dio.createComponent = createComponent;
-	exports.dio.createClass = createComponent;
-	exports.dio.request = request();
-	exports.dio.curry = curry;
-	exports.dio.animateWith = animateWith();
-	exports.dio.createStyle = createStyle();
-	exports.dio.createStream = createStream;
-	exports.dio.createRouter = createRouter;
-	exports.dio.createHTML = createHTML;
-	exports.dio.createStore = createStore;
-	exports.dio.createFactory = createFactory;
-	exports.dio.createRender = createRender;
-	exports.dio.render = createRender;
-	exports.dio.Component = componentClass;
-	exports.dio.PropTypes = createPropTypes();
-	exports.dio.injectWindowDependency = injectWindowDependency;
+	exports.dio = {
+		version: VERSION,
+
+		// elements
+		createElement: h,
+		createFactory: createFactory,
+		isValidElement: isValidElement,
+		cloneElement: cloneElement,
+
+		// render
+		createRender: createRender,
+		render: createRender,
+
+		// components
+		Component: componentClass,
+		createComponent: createComponent,
+		createClass: createComponent,
+
+		// http
+		request: request(),
+		createRouter: createRouter,
+
+		// stores
+		createStream: createStream,
+		createStore: createStore(),
+
+		// helpers
+		curry: curry,
+		animateWith: animateWith(),
+		createStyle: createStyle(),
+
+		// server-side
+		createHTML: createHTML,
+		renderToString: createHTML,
+		renderToStaticMarkup: createHTML,
+
+		// testing
+		PropTypes: createPropTypes(),
+		injectWindowDependency: injectWindowDependency,
+
+		// utilities
+		_: {
+			assign: objectAssign,
+			forEach: forEach,
+			reduce: arrayReduce,
+			reduceRight: arrayReduceRight,
+			filter: arrayFilter,
+			map: arrayMap,
+			keys: objectKeys,
+
+			toArray: toArray,
+			
+			isObject: isObject,
+			isFunction: isFunction,
+			isString: isString,
+			isArray: isArray,
+			isDefined: isDefined
+		}
+	};
 }));
