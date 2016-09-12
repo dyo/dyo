@@ -4975,6 +4975,8 @@
 
 		// utilities
 		_: {
+			addEventListener: addEventListener,
+			
 			assign: objectAssign,
 			forEach: forEach,
 			reduce: arrayReduce,

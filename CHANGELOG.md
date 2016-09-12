@@ -21,7 +21,7 @@
 ### API
 
 - Added `version, isValidElement, cloneElement, renderToString, renderToStaticMarkup`
-- Exposes internal utilities to `dio._`
+- Exposes internal utilities to `dio._` that are used to get out-the-box support for IE8+
 
 ``` javascript
 toArray
@@ -37,4 +37,5 @@ isFunction
 isString
 isArray
 isDefined
+addEventListener
 ```
