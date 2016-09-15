@@ -4086,7 +4086,7 @@
 				}
 
 				routes[index] = function (data) {
-					renderInstance(data, null, true);
+					renderInstance(data, undefined, true);
 				}
 			});
 		}

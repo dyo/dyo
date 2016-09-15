@@ -39,10 +39,10 @@
 			var 
 			Router = dio.createRouter({
 					'/router.html': function (data) {
-						dio.createRender(Home, '.app')(data)
+						dio.createRender(Home, '.app')(data, undefined, true);
 					},
 					'/:page/:name': function (data) {
-						dio.createRender(User, '.app')(data)
+						dio.createRender(User, '.app')(data, undefined, true);
 					}
 			}, '/examples');
 		</script>
