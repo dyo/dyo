@@ -90,7 +90,8 @@ function Documentation () {
 					{text: 'Getting Started', href: '../getting-started.md'},
 					{text: 'Examples', href: '../examples.md'},
 					{text: 'API Reference', href: '../api.md'},
-					{text: 'SFC', href: '../single-file-components.md'}
+					{text: 'SFC', href: '../single-file-components.md'},
+					{text: 'Change Log', href: '../../CHANGELOG.md'}
 				]
 			}
 		},
