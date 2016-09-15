@@ -1,15 +1,14 @@
 ## 1.2.2 (September 15, 2016)
 
-- added caching to .createRender
+- added caching to .createRender/.render
 
 ```javascript
-dio.createRender(Component, '.app')();
-dio.createRender(Component, '.app')();
-// the second one will not try to create 
-// a component out of Component or a render instance
-// but will rather return a cache of the 
-// first created render instance
-// except if the mount is different
+dio.render(Component, '.app')();
+dio.render(Component, '.app')();
+// on the above code the second example will avoid 
+// creating a component and render instance a second time
+// and will rather return a cache of the render instance
+// except in the case that the mount is different
 ```
 
 ## 1.2.1 (September 15, 2016)
