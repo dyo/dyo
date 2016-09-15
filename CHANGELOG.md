@@ -1,3 +1,8 @@
+## 1.2.1 (September 15, 2016)
+
+- Improve performance
+- componentWillUpdate & componentDidUpdate now also fire when a parent component re-renders
+
 ## 1.2.0 (September 12, 2016)
 
 - Improves performance in various ways.
@@ -5,7 +10,7 @@
 
 ### dio.PropTypes
 
-- Added all the react land PropTypes 
+- Added all the react land PropTypes
 
 ```javascript
 [

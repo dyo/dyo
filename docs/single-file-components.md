@@ -39,12 +39,12 @@ var styles = {
 	}
 }
 
-dio.createStyle(styles, namespace)();
+dio.createStyle(styles, namespace);
 
 function HelloWorld () {
 	return {
 		render: function (props) {
-			return h('div', {id: this.displayName}
+			return h('div'+namespace,
 						h('h1', props.text)
 					)
 		}

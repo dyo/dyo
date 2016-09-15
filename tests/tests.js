@@ -279,7 +279,7 @@ zep(['../dio.js'], function (utili, deps) {
 		var childrenSpy = spy();
 
 		var render = dio.createRender({
-			render: function (props) {
+			render: function (props) {				
 				if (props.id) {
 					propsSpy()
 				}

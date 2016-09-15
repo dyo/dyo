@@ -2,6 +2,7 @@
 
 - [DBmon Benchmark](../../examples/benchmark.html)
 - [Benchmark Table Test](../../examples/benchmark-table-test.html)
+- [JS Framework Benchmark](../../examples/js-framework-benchmark.html)
 - [UI Bench Benchmark](https://localvoid.github.io/uibench/)
 - [Todos](../../examples/todo.html)
 - [Sortable List](../../examples/sortable.html)

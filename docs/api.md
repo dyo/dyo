@@ -19,11 +19,11 @@
 
 	// this refers to the component to update, the default
 	// is the context of the component it is called from i.e `this`
-	// but can also be another component, if called
+	// but could also be another component. If called
 	// from a non-parent component the the update will
 	// be granular to only that component alone,
-	// which is the reason the is props and children as optional
-	// 2nd and 3rd arguments that can pass data to an outside
+	// this is the reason there are `props` and `children` as optional
+	// 2nd and 3rd arguments that one can pass data to an outside
 	// component to update
 	this.forceUpdate:          (
 		this?: {Object}, 

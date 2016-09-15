@@ -29,29 +29,30 @@
 	'use strict';
 
 	var
-	VERSION                   = '1.2.0',
+	VERSION                    = '1.2.1',
 
 	// signatures
-	SIGNATURE_BASE            = '@@dio',
-	SIGNATURE_STREAM          = SIGNATURE_BASE + '/STREAM',
-	SIGNATURE_STORE           = SIGNATURE_BASE + '/STORE',
-	SIGNATURE_COMPONENT       = SIGNATURE_BASE + '/COMPONENT',
-	SIGNATURE_HYPERSCRIPT     = SIGNATURE_BASE + '/HYPERSCRIPT',
-	SIGNATURE_RENDER          = SIGNATURE_BASE + '/RENDER',
-	SIGNATURE_FRAGMENT        = '@',
+	SIGNATURE_BASE             = '@@dio',
+	SIGNATURE_STREAM           = SIGNATURE_BASE + '/STREAM',
+	SIGNATURE_STORE            = SIGNATURE_BASE + '/STORE',
+	SIGNATURE_COMPONENT        = SIGNATURE_BASE + '/COMPONENT',
+	SIGNATURE_HYPERSCRIPT      = SIGNATURE_BASE + '/HYPERSCRIPT',
+	SIGNATURE_RENDER           = SIGNATURE_BASE + '/RENDER',
+	SIGNATURE_FRAGMENT         = '@',
 
 	// component lifecycles
-	componentWillReceiveProps = 'componentWillReceiveProps',
-	componentDidMount         = 'componentDidMount',
-	componentWillMount        = 'componentWillMount',
-	componentWillUnmount      = 'componentWillUnmount',
-	componentDidUnmount       = 'componentDidUnmount',
-	componentWillUpdate       = 'componentWillUpdate',
-	componentDidUpdate        = 'componentDidUpdate',
+	componentDidMount          = 'componentDidMount',
+	componentWillMount         = 'componentWillMount',
+	componentWillUnmount       = 'componentWillUnmount',
+	componentDidUnmount        = 'componentDidUnmount',
+	componentWillUpdate        = 'componentWillUpdate',
+	componentDidUpdate         = 'componentDidUpdate',
 
 	// other
-	hasFunctionBind           = !!Function.prototype.bind,
-	hasAddEventListener       = typeof Element === 'function' && !!Element.prototype.addEventListener,
+	hasFunctionBind            = !!Function.prototype.bind,
+	hasAddEventListener        = (
+		typeof Element === 'function' && !!Element.prototype.addEventListener
+	),
 
 	// placeholder for the enviroment namespace
 	// we will create it the first time a component is created
@@ -64,9 +65,9 @@
 	parseSelectorRegExp,
 
 	// objects
-	window                   = typeof global === 'object' ? global : exports,
-	document                 = window.document,
-	documentNamespace        = {
+	window                    = typeof global === 'object' ? global : exports,
+	document                  = window.document,
+	documentNamespace         = {
 		math:  'http://www.w3.org/1998/Math/MathML',
 		xlink: 'http://www.w3.org/1999/xlink',
 		svg:   'http://www.w3.org/2000/svg',
@@ -74,10 +75,12 @@
 	},
 
 	// functions
-	XMLHttpRequest           = window && window.XMLHttpRequest,
-	objectHasOwnProperty     = Object.prototype.hasOwnProperty,
-	arraySlice               = Array.prototype.slice,
-	HyperscriptClass         = createHyperscriptClass();
+	XMLHttpRequest            = window && window.XMLHttpRequest,
+	objectHasOwnProperty      = Object.prototype.hasOwnProperty,
+	objectGetPrototypeOf      = Object.getPrototypeOf,
+	objectGetOwnPropertyNames = Object.getOwnPropertyNames,
+	arraySlice                = Array.prototype.slice,
+	HyperscriptClass          = createHyperscriptClass();
 
 
 
@@ -350,6 +353,20 @@
 				callback.call(target, event);
       		});
    		}
+	}
+
+
+	/**
+	 * simple Function.bind that supports IE8
+	 *
+	 * @param  {function} func
+	 * @param  {*}        thisArg
+	 * @return {function}
+	 */
+	function functionBind (func, thisArg) {
+		return hasFunctionBind ? func.bind(thisArg) : function () {
+			func.apply(thisArg, toArray(arguments));
+		}
 	}
 
 
@@ -946,6 +963,8 @@
 	 * @param {Object} component
 	 */
 	function vdomToDOM (parent, newNode, oldNode, component) {
+		lifecycle(newNode, componentWillUpdate);
+
 		// this is an entry point so if oldNode
 		// is defined we can be sure that this is an update patch
 		// opertation
@@ -977,6 +996,8 @@
 				component
 			);
 		}
+
+		lifecycle(newNode, componentDidUpdate);
 	}
 
 
@@ -1695,58 +1716,31 @@
 	/**
 	 * component lifecycle trigger
 	 * 
-	 * @param  {Object}              node        - component, or hyperscript
+	 * @param  {Object}              subject     - component, or hyperscript
 	 * @param  {string}              stage       - stage of the lifecycle
 	 * @param  {boolean}             isComponent - weather this is a component or not
-	 * @param  {Object}              props       - weather to pass props to stage
-	 * @param  {Object}              state       - weather to pass sate to stage
 	 * @return {(undefined|boolean)}
 	 */
-	function lifecycle (node, stage, isComponent, props, state) {
-		// end quickly if node is not from statefull component
-		// since all state less components do not 
-		// feature lifecyclem methods
-		if (
-			!isComponent &&
-			(!node || (!node[SIGNATURE_HYPERSCRIPT] && !node.render))
-		) {
+	function lifecycle (subject, stage, isComponent) {
+		// end quickly if the subject is not from statefull component
+		// since all state less components do not feature lifecycle methods
+		if (!isComponent && (!subject || !subject[SIGNATURE_HYPERSCRIPT])) {
 			return;
 		}
 
-		var 
-		component;
+		// if subject is a component use that
+		// else look for the component in SIGNATURE_HYPERSCRIPT
+		var
+		component = isComponent ? subject : subject[SIGNATURE_HYPERSCRIPT];
 
-		// when we know that node is a component
-		// we passed isComponent as true
-		if (isComponent) {
-			component = node;
-		}
-		// node is a hyperscript object
-		// check if it has a component reference
-		else if (isObject(node[SIGNATURE_HYPERSCRIPT])) {
-			component = node[SIGNATURE_HYPERSCRIPT];
-		}
-
-		if (component && component[stage]) {
-			/*
-				is the props/state truthy? if so check if it is not a boolean
-				if so default to the value in props/state passed, 
-				if it is default to the components own props.
-				if props/state is falsey value, 
-				default to undefined
-				props is either the value of the props passed as an argument
-				or the value of the components
-			 */
-			props = props || component.props,
-			state = state || component.state;
-
-			/*
-				componentShouldUpdate returns a Boolean
-				so we publish the lifecycle return values
-				which we can use in the vdomToDOM / update () function
-				to see if we should skip an element or not
-			 */
-			return component[stage](props, state, component);
+		if (component[stage]) {	
+			// componentShouldUpdate returns a Boolean so we publish the lifecycle return values
+			// which we can use to see if we should skip an update
+			return component[stage](
+				component.props,
+				component.state,
+				component
+			);
 		}
 	}
 
@@ -2027,7 +2021,7 @@
 			}
 
 			if (!componentInterface) {
-				// make sure your component functions return
+				// make sure the component functions returns
 				// something i.e hyperscript/object with render method
 				throwError('no render');
 			}
@@ -2055,8 +2049,8 @@
 			}
 			// a hyperscript object with a component reference
 			else if (
-				isObject(componentBlueprint[SIGNATURE_HYPERSCRIPT]) &&
-				isFunction(componentBlueprint[SIGNATURE_HYPERSCRIPT].$$component)
+				componentBlueprint[SIGNATURE_HYPERSCRIPT] &&
+				componentBlueprint[SIGNATURE_HYPERSCRIPT].$$component
 			) {
 				return componentBlueprint[SIGNATURE_HYPERSCRIPT].$$component;
 			}
@@ -2071,64 +2065,84 @@
 		}
 
 		// everything checks out i.e
-		// - componentInterface has a render method
+		// - componentBlueprint has a render method
 		// - or componentBlueprint() returns an object that has a render method
 		// stateless components never reach here
 
 		// the component object
 		var
 		component,
-		componentRender;
+		// get the render method
+		componentRender = componentInterface.render;
 
 		// instance of the componentClass
 		if (componentInterface.$$id === SIGNATURE_COMPONENT) {
-			component = componentInterface;
+			var 
+			componentInterfaceProto = objectGetPrototypeOf(componentInterface);
+			component               = componentInterface;
+
+			/**
+			 * we look for all methods, check if they have already been bounded
+			 * by checking if the prototype method === object method
+			 * if not we bind them to the component this context
+			 * add non-methods as is.
+			 */
+			forEach(objectGetOwnPropertyNames(componentBlueprint.prototype), function (name) {
+				var
+				property      = componentInterface[name];
+				protoProperty = componentInterfaceProto[name];
+
+				// bounded method not created
+				if (property === protoProperty && isFunction(property)) {
+					component[name] = functionBind(property, component);
+				}
+				// bounded method already created
+				else {
+					component[name] = property;
+				}
+			});
 		}
 		// not an instance of the componentClass
 		// create new
 		else {
 			component = new componentClass(
 				componentInterface.props, 
-				componentInterface.state, 
+				componentInterface.state,
 				displayName
 			);
+
+			// add the properties from the object describing
+			// the component to the component instance
+			// and bind methods to the component scope
+			forEach(componentInterface, function (value, name) {
+				if (name !== 'render') {
+					// methods
+					if (isFunction(value)) {
+						// bind methods
+						component[name] = functionBind(value, component);
+					}
+					// everything else
+					else {
+						component[name] = value;
+					}
+				}
+			});
 		}
 
-		// add the properties from the object describing
-		// the component to the component instance
-		// and bind methods to the component scope
-		// we bind .render later on.
-		forEach(componentInterface, function (value, name) {
-			// extract render method
-			if (name === 'render') {
-				componentRender = value;
-			}
-			// methods
-			else if (isFunction(value)) {
-				// bind methods
-				component[name] = (
-					hasFunctionBind ? value.bind(component) : function () {
-						value.apply(component, toArray(arguments));
-					}
-				);
-			}
-			// everything else
-			else {
-				component[name] = value;
-			}
-		});
-
-		// if this method is set, set the initial state
+		// if this method is set, set initial state
 		if (component.getInitialState) {
-			component.state = component.getInitialState(
+			component.state = component.getInitialState.call(
+				component,
 				component.props, 
 				component.state, 
 				component
 			);
 		}
-		// if this method is set, set the default props
+
+		// if this method is set, set initial props
 		if (component.getDefaultProps) {
-			component.props = component.getDefaultProps(
+			component.props = component.getDefaultProps.call(
+				component,
 				component.props, 
 				component.state, 
 				component
@@ -2161,24 +2175,20 @@
 		// signal that validation should take place
 		// we cache this value now so we don't need to do this later
 		// whenever a component is called
-		shouldValidatePropTypes   = !!isDevelopmentEnviroment && !!component.propTypes;
+		shouldValidatePropTypes     = !!isDevelopmentEnviroment && !!component.propTypes;
 
 		// define render
 		function render () {
-			return componentRender.call(
-				component, 
+			return new hyperscript(componentRender.call(
+				component,
 				component.props,
 				component.state,
 				component
-			);
+			));
 		}
 
-		// reset the render method to one that
-		// insures the render function returns the newly
-		// created hyperscript object
-		component.render = function () {
-			return new hyperscript(render());
-		};
+		// add render to component
+		component.render = render;
 
 		// we will return a function that when called
 		// returns the components vdom representation
@@ -2190,19 +2200,23 @@
 				return component;
 			}
 
-			// check if cached hyperscript
-			if (
-				hasShouldComponentUpdate &&
-				component.$$hyperscript &&
-				component.shouldComponentUpdate(props, component.state, component) === false
-			) {
-				return component.$$hyperscript;
-			}
-
 			// add children to props if set
 			if (children) {
 				props = props || {};
 				props.children = children;
+			}
+
+			// check if cached hyperscript
+			if (
+				hasShouldComponentUpdate &&
+				component.$$hyperscript &&
+				component.shouldComponentUpdate(
+					props || {}, 
+					component.state, 
+					component
+				) === false
+			) {
+				return component.$$hyperscript;
 			}
 
 			// publish componentWillReceiveProps lifecycle
@@ -2213,14 +2227,15 @@
 				}
 				// execute componentWillReceiveProps lifecycle
 				if (hasComponentWillReceiveProps) {
-					lifecycle(component, componentWillReceiveProps, true, props);
+					component.componentWillReceiveProps(props, component.state, component);
 				}
+
 				// set props
 				setProps(component, props);
 			}
 
 			// extract and add cached copy of hyperscript
-			return component.$$hyperscript = component.render();
+			return component.$$hyperscript = render();
 		}
 
 		// add a signature by which we can identify that this function
@@ -2252,8 +2267,8 @@
 	 */
 	function componentClass (props, state, displayName) {
 		// immutable internal props & state
-		this.props       = props       || {},
-		this.state       = state       || {},
+		this.props       = props || {},
+		this.state       = state || {},
 		this.displayName = displayName || '';
 
 		/*
@@ -2273,16 +2288,16 @@
 	 * components class prototype
 	 */
 	componentClass.prototype = {
-		id: SIGNATURE_COMPONENT,
-		setState: function (data, callback) {
+		$$id: SIGNATURE_COMPONENT,
+		setState: function (newState, callback) {
 			/*
 				set state
 				if the state is changed
 				setState will return true
-				thus force and update when
+				thus force an update when
 				that happens
 			*/
-			if (setState(this, data)) {
+			if (setState(this, newState)) {
 				if (callback) {
 					callback(this.state);
 				}
@@ -2291,39 +2306,37 @@
 				this.forceUpdate();
 			}
 		},
-		setProps: function (data) {
+		setProps: function (newProps) {
 			// set props does not trigger a redraw/render
-			setProps(this, data);
+			setProps(this, newProps);
 		},
-		forceUpdate: function (self, props, children) {
-			// same thing
-			self = self || this;
+		forceUpdate: function (component, props, children) {
+			component = component || this;
 
 			// if a component function is passed
 			if (isFunction(self)) {
 				// function with component reference
-				if (self[SIGNATURE_COMPONENT]) {
-					self = self[SIGNATURE_COMPONENT](props, children, true);
+				if (component[SIGNATURE_COMPONENT]) {
+					component = component[SIGNATURE_COMPONENT](props, children, true);
 				}
 				// component
-				else if (self.$$id === SIGNATURE_COMPONENT) {
-					self = self(props, children, true);
+				else if (component.$$id === SIGNATURE_COMPONENT) {
+					component = component(props, children, true);
 				}
 				// render instance
-				else if (self.$$id === SIGNATURE_RENDER) {
-					self = self(props, children);
+				else if (component.$$id === SIGNATURE_RENDER) {
+					component = component(props, children);
 				}
 				// pure function, create component
 				else {
-					self = extract(self);
+					component = extract(component);
 				}
 			}
 
-			// self is defined
-			if (self) {
-				// parent component / render instance
-				if (self.$$render) {
-					self.$$render();
+			if (component) {
+				// parent component of render instance
+				if (component.$$render) {
+					component.$$render();
 				}
 				/*
 					child component!
@@ -2341,28 +2354,27 @@
 					having that component nested as a child and
 					passing it the forceUpdate function to call
 				*/
-				else if (self.$$hyperscript && self.$$hyperscript.dom) {
+				else if (component.$$hyperscript && component.$$hyperscript.dom) {
 					var
-					parent  = self.$$hyperscript.dom,
-					newNode = self.render(),
-					oldNode = self.$$hyperscript;
+					parent  = component.$$hyperscript.dom,
+					newNode = component.render(),
+					oldNode = component.$$hyperscript;
 
-					vdomToDOM(parent, newNode, oldNode, 0, self);
+					vdomToDOM(parent, newNode, oldNode, 0, component);
 				}
 
-				// if the second argument props is a callback
-				// executre it
+				// if the second argument `props` is a callback execute it
 				if (isFunction(props)) {
 					props();
 				}
 			}
 		},
-		withAttr: function (props, setters, callback, self) {
-			self = self || this;
+		withAttr: function (props, setters, callback, component) {
+			component = component || this;
 
 			// default to forceUpdate without a callback
 			if (!isFunction(callback)) {
-				callback = self.forceUpdate;
+				callback = component.forceUpdate;
 			}
 
 			return withAttr(
@@ -2371,9 +2383,9 @@
 				// preserve the `this` context by
 				// passing a callback function
 				// that calls the callback with the
-				// this context of self
+				// this context of component
 				function () {
-					callback.call(self);
+					callback.call(component);
 				}
 			)
 		}
@@ -2383,56 +2395,56 @@
 	/**
 	 * set/update a components props
 	 * 
-	 * @param {Object} self - components object
-	 * @param {Object} data - data with which to update the components props
+	 * @param {Object} component
+	 * @param {Object} newProps
 	 */
-	function setProps (self, data) {
+	function setProps (component, newProps) {
 		// if the object is a function that returns an object
-		if (isFunction(data)) {
-			data = data();
+		if (isFunction(newProps)) {
+			newProps = newProps();
 		}
 
-		// assign props to {} if it's undefined
-		if (!self.props) {
-			self.props = {};
+		// exit early if there is nothing to update
+		if (!newProps) {
+			return;
 		}
 
-		// make sure we have something to update
-		if (data) {
-			// set props
-			forEach(data, function (value, name) {
-				self.props[name] = value;
-			});
-		}
+		var
+		props = component.props;
+
+		forEach(newProps, function (newValue, name) {
+			props[name] = newValue;
+		});
 	}
 
 
 	/**
 	 * set/update a components state
 	 * 
-	 * @param {Object} self - components object
-	 * @param {Object} data - data with which to update the components state
+	 * @param {Object} component
+	 * @param {Object} newState
 	 */
-	function setState (self, data) {
-		// if the object is a function that returns an object
-		if (isFunction(data)) {
-			data = data();
+	function setState (component, newState) {
+		// if newState is a function that returns an object
+		if (isFunction(newState)) {
+			newState = newState();
 		}
 
-		// assign state to {} if it's undefined
-		if (!self.state) {
-			self.state = {};
+		// exit early if there is nothing to update
+		if (!newState) {
+			return;
 		}
 
-		// make sure we have something to update
-		if (data) {
-			// set state
-			forEach(data, function (value, name) {
-				self.state[name] = value;
-			});
+		var
+		state = component.state;
 
-			return true;
-		}
+		// set/update state
+		forEach(newState, function (newValue, name) {
+			state[name] = newValue;
+		});
+
+		// signal update status
+		return true;
 	}
 
 
@@ -4270,7 +4282,7 @@
 			resolved[resolved.length] = value;
 
 			if (resolved.length === deps.length) {
-				resolve(resolved)
+				resolve(resolved);
 			}
 		}
 
@@ -4459,7 +4471,7 @@
 				if (isObject(props)) {
 					props.children = children;
 				}
-				
+
 				vnode = vnode.render(props);
 			}
 

@@ -32,15 +32,15 @@ Dio is a fast and lightweight (~9kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.2.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.2.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/1.2.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/1.2.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@1.2.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@1.2.1/dio.min.js></script>
 ```
 
 #### bower
@@ -96,7 +96,10 @@ Will mount a h1 element onto the page the contents of which will be 'Hello World
 
 # Performance
 
-- [Dio's dbmon implementation](https://thysultan.com/examples/benchmark.html)
+- [DBmon Benchmark](../../examples/benchmark.html)
+- [Benchmark Table Test](../../examples/benchmark-table-test.html)
+- [JS Framework Benchmark](../../examples/js-framework-benchmark.html)
+- [UI Bench Benchmark](https://localvoid.github.io/uibench/)
 
 # Single File Components
 
@@ -153,6 +156,9 @@ function HelloWorld () {
 
 dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
 ```
+
+You can also play with this [on JS Bin](http://jsbin.com/yayuxox/edit?js,output)
+
 ---
 
 # API Reference
@@ -176,11 +182,11 @@ dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
 
 	// this refers to the component to update, the default
 	// is the context of the component it is called from i.e `this`
-	// but can also be another component, if called
+	// but could also be another component. If called
 	// from a non-parent component the the update will
 	// be granular to only that component alone,
-	// which is the reason the is props and children as optional
-	// 2nd and 3rd arguments that can pass data to an outside
+	// this is the reason there are `props` and `children` as optional
+	// 2nd and 3rd arguments that one can pass data to an outside
 	// component to update
 	this.forceUpdate:          (
 		this?: {Object}, 
