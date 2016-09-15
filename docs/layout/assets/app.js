@@ -67,9 +67,9 @@ function Documentation () {
 		var
 		nav = [];
 
-		self.props.nav.forEach(function (value) {
+		dio._.forEach(self.props.nav, function (value) {
 			var
-			item = Object.assign({}, value, {active: value.href !== href ? false : true});
+			item = dio._.assign({}, value, {active: value.href !== href ? false : true});
 			nav.push(item);
 		});
 
@@ -78,10 +78,8 @@ function Documentation () {
 		self.setProps({nav: nav, loading: true});
 		self.forceUpdate();
 
-		setTimeout(function () {
-			getDocument(href, update(self));
-			window.location.hash = hash;
-		}, 600);
+		getDocument(href, update(self));
+		window.location.hash = hash;
 	}
 
 	return {
@@ -152,7 +150,7 @@ remarkable = new Remarkable();
 var
 router = dio.createRouter({
 		'/': function () {
-			dio.createRender(Welcome, '.container')({url: '../welcome.md'});
+			dio.createRender(Welcome, '.container')({url: '../welcome.md'}, null, true);
 		},
 		'/documentation': function () {
 			var 
@@ -160,7 +158,7 @@ router = dio.createRouter({
 
 			section = section || 'installation';
 			section = '../'+ section + '.md';
-			dio.createRender(Documentation, '.container')({url: section});
+			dio.createRender(Documentation, '.container')({url: section}, null, true);
 		}
 	}, '/docs/layout');
 

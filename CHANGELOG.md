@@ -1,3 +1,17 @@
+## 1.2.2 (September 15, 2016)
+
+- added caching to .createRender
+
+```javascript
+dio.createRender(Component, '.app')();
+dio.createRender(Component, '.app')();
+// the second one will not try to create 
+// a component out of Component or a render instance
+// but will rather return a cache of the 
+// first created render instance
+// except if the mount is different
+```
+
 ## 1.2.1 (September 15, 2016)
 
 - Improve performance

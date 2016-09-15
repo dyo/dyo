@@ -29,7 +29,7 @@
 	'use strict';
 
 	var
-	VERSION                    = '1.2.1',
+	VERSION                    = '1.2.2',
 
 	// signatures
 	SIGNATURE_BASE             = '@@dio',
@@ -1757,6 +1757,22 @@
 	 * @return {function}                  render
 	 */
 	function createRender (componentBlueprint, mountBlueprint) {
+		// if there is a render cache
+		// and the mount is different
+		if (
+			componentBlueprint.$$render &&
+			componentBlueprint.$$mount !== mountBlueprint
+		) {
+			return (
+				componentBlueprint.type ? 
+					componentBlueprint.$$render(
+						componentBlueprint.props,
+						componentBlueprint.children
+					) : 
+					componentBlueprint.$$render
+			);
+		}
+
 		// update
 		function update (props, children) {
 			// get a fresh copy of the vdom
@@ -1773,8 +1789,8 @@
 				// reference render, so we can then call this in this.setState, 
 				// this only applied to parent components passed to
 				// .createRender(here, ...);
-				if (!componentObject.$$render) {
-					componentObject.$$render = update;
+				if (!componentObject.$$update) {
+					componentObject.$$update = update;
 				}
 			}
 
@@ -1809,6 +1825,10 @@
 				// return component if requested
 				else if (forceUpdate === SIGNATURE_COMPONENT) {
 					return component(props, children, true);
+				}
+				// updating the mountElement
+				else if (forceUpdate.nodeType) {
+					mountElement = forceUpdate;
 				}
 			}
 
@@ -1876,8 +1896,6 @@
 			}
 		}
 
-		render.$$id = SIGNATURE_RENDER;
-
 		var
 		component,
 		newNode,
@@ -1908,16 +1926,24 @@
 				componentObject = component(undefined, undefined, true);
 			}
 
+
+			render.$$id = SIGNATURE_RENDER;
+			componentBlueprint.$$render = render;
+
 			// react-like behaviour
 			// i.e h(Component, {...props}, ...children) behaviour
-			if (componentBlueprint.type) {
-				return render();
-			}
+			// `render()`
 			// normal behaviour
 			// i.e render(Component, mount)({...props}, [children])
-			else {
-				return render;
-			}
+			// `render`
+			return (
+					componentBlueprint.type ? 
+					render(
+						componentBlueprint.props,
+						componentBlueprint.children
+					) :
+					render
+			);
 		}
 		// can't find the parent component
 		else {
@@ -2335,8 +2361,8 @@
 
 			if (component) {
 				// parent component of render instance
-				if (component.$$render) {
-					component.$$render();
+				if (component.$$update) {
+					component.$$update();
 				}
 				/*
 					child component!
@@ -3888,11 +3914,11 @@
 	 *
 	 * @param  {Object} routes
 	 * @param  {string} rootAddress 
-	 * @param  {string} onInitNavigateTo
+	 * @param  {string} onInit
 	 * @return {Object}
 	 */
-	function createRouter (routes, rootAddress, onInitNavigateTo, mount) {
-		function router (routes, rootAddress, onInitNavigateTo) {
+	function createRouter (routes, rootAddress, onInit, mount) {
+		function router (routes, rootAddress, onInit) {
 			/**
 			 * listens for changes to the url
 			 */
@@ -4019,8 +4045,15 @@
 			registerRoutes();
 			startListening();
 
-			if (onInitNavigateTo) {
-				navigateToPath(onInitNavigateTo);
+			if (onInit) {
+				// init function
+				if (isFunction(onInit)) {
+					onInit(rootAddress);
+				}
+				// init path
+				else if (isString(onInit)) {
+					navigateToPath(onInit);
+				}
 			}
 
 			return {
@@ -4058,7 +4091,7 @@
 			});
 		}
 
-		return router(routes, rootAddress, onInitNavigateTo);
+		return router(routes, rootAddress, onInit);
 	}
 
 
