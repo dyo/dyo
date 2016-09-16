@@ -29,7 +29,7 @@
 	'use strict';
 
 	var
-	VERSION                    = '1.2.2',
+	VERSION                    = '1.2.3',
 
 	// signatures
 	SIGNATURE_BASE             = '@@dio',
@@ -1761,7 +1761,7 @@
 		// and the mount is different
 		if (
 			componentBlueprint.$$render &&
-			componentBlueprint.$$mount !== mountBlueprint
+			componentBlueprint.$$mount === mountBlueprint
 		) {
 			return (
 				componentBlueprint.type ? 
@@ -1927,15 +1927,15 @@
 			}
 
 
-			render.$$id = SIGNATURE_RENDER;
+			render.$$id                 = SIGNATURE_RENDER;
 			componentBlueprint.$$render = render;
+			componentBlueprint.$$mount  = mountBlueprint;
 
-			// react-like behaviour
-			// i.e h(Component, {...props}, ...children) behaviour
-			// `render()`
-			// normal behaviour
-			// i.e render(Component, mount)({...props}, [children])
-			// `render`
+			// 1. render(h(Component, {...props}, ...children), mount)
+			// - render()
+			// 
+			// 2. render(Component, mount)({...props}, [children])
+			// - render
 			return (
 					componentBlueprint.type ? 
 					render(
@@ -1969,12 +1969,16 @@
 			}
 
 			var
-			type     = obj.type     || SIGNATURE_FRAGMENT,
-			props    = obj.props    || {},
-			children = obj.children || [];
+			type     = obj.type,
+			props    = obj.props,
+			children = obj.children;
 
 			// fragments
-			if (obj.length|0 && !obj.type) {
+			if (obj.length && !obj.type) {
+				type     = SIGNATURE_FRAGMENT,
+				props    = {},
+				children = [];
+
 				forEach(obj, function (child) {
 					setHyperscriptChild(child, children);
 				});

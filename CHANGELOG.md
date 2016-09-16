@@ -1,3 +1,7 @@
+## 1.2.3 (September 16, 2016)
+
+- patch .createRender/.render caching
+
 ## 1.2.2 (September 15, 2016)
 
 - added caching to .createRender/.render
