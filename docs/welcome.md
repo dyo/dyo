@@ -3,7 +3,7 @@ Dio is a fast and lightweight (~9kb) feature rich Virtual DOM framework.
 [Install v1.2.3](./documentation "button")
 
 ```javascript
-function main () {
+function Main () {
 	return {
 		render: function (props) {
 			return h('h1', props.value)
@@ -11,5 +11,5 @@ function main () {
 	}
 }
 
-dio.createRender(main, "body")({value: "Hello World"});
+dio.render(Main, 'body')({value: 'Hello World'})
 ```

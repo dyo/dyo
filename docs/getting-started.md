@@ -26,7 +26,7 @@ function HelloWorld () {
 	}
 }
 
-dio.createRender(HelloWorld)({text: 'Hello World'})
+dio.render(HelloWorld)({text: 'Hello World'})
 ```
 
 Will mount a h1 element onto the page the contents of which will be 'Hello World'.

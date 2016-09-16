@@ -51,7 +51,7 @@ function HelloWorld () {
 	}
 }
 
-dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
+dio.render(HelloWorld, '.app')({text: 'Hello World'});
 ```
 
 You can also play with this [on JS Bin](http://jsbin.com/yayuxox/edit?js,output)
