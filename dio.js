@@ -2028,11 +2028,11 @@
 
 		// maybe the arg is a function that returns an object
 		if (isFunction(componentBlueprint)) {
-			// already a component
+			// is already a component
 			if (componentBlueprint.$$id === SIGNATURE_COMPONENT) {
 				return componentBlueprint;
 			}
-			// component already created
+			// hyperscript with component reference
 			else if (componentBlueprint[SIGNATURE_COMPONENT]) {
 				return componentBlueprint[SIGNATURE_COMPONENT];
 			}
