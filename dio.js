@@ -1758,7 +1758,7 @@
 	 */
 	function createRender (componentBlueprint, mountBlueprint) {
 		// if there is a render cache
-		// and the mount is different
+		// and the mount is the same
 		if (
 			componentBlueprint.$$render &&
 			componentBlueprint.$$mount === mountBlueprint
