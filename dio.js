@@ -1724,8 +1724,13 @@
 			interval  = 1000/60;
 
 		// caching
-		node.type._render = reconciler._render = reconciler;
-		node.type._mount  = reconciler._mount  = target;
+		reconciler._render = reconciler;
+		reconciler._mount  = target;
+
+		if (typeof node.type === 'function') {
+			node.type._render = reconciler;
+			node.type._mount = target;
+		}
 
 		// hydration
 	   	if (element.hasAttribute('data-hydrate')) {
