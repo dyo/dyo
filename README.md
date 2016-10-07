@@ -97,6 +97,7 @@ Will mount a h1 element onto the page the contents of which will be 'Hello World
 # Performance
 
 - [DBmon Benchmark](../../examples/benchmark.html)
+- [Js Repaint Perfs](https://mathieuancelin.github.io/js-repaint-perfs/dio/index.html)
 - [Benchmark Table Test](../../examples/benchmark-table-test.html)
 - [JS Framework Benchmark](../../examples/benchmark-js-framework.html)
 - [UI Bench Benchmark](https://localvoid.github.io/uibench/)
