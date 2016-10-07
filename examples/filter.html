@@ -6,132 +6,172 @@
 		<title>dio.js - Filter Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<script src="/dio.min.js"></script>
+		<style>
+			*, :before, :after {
+			    -webkit-box-sizing: border-box;
+			    -moz-box-sizing: border-box;
+			    box-sizing: border-box;
+			}
+			body {
+				font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+				font: 14px/1.42857143 sans-serif;
+				color: #333;
+				padding: 20px;
+				margin: 0;
+			}
+			button, input, optgroup, select, textarea { margin: 0; font: inherit; color: inherit;}
+			input[type=radio], input[type=checkbox] { margin: 4px 0 0; line-height: normal; }
+			input[type=checkbox], input[type=radio] { padding: 0; }
+			table { border-spacing: 0; border-collapse: collapse; }
+			th { text-align: left; }
+			td, th { padding: 0; }
+			p { margin: 0 0 10px; }
+		</style>
 	</head>
 	<body>
-		<div class="app"></div>
+		<div id="container"></div>
 		<script>
-			var PRODUCTS = [
-		  		{category: 'Sporting Goods', price: '$49.99', stocked: true, name: 'Football'},
-		  		{category: 'Sporting Goods', price: '$9.99', stocked: true, name: 'Baseball'},
-		  		{category: 'Sporting Goods', price: '$29.99', stocked: false, name: 'Basketball'},
-		  		{category: 'Electronics', price: '$99.99', stocked: true, name: 'iPod Touch'},
-		  		{category: 'Electronics', price: '$399.99', stocked: false, name: 'iPhone 5'},
-		  		{category: 'Electronics', price: '$199.99', stocked: true, name: 'Nexus 7'}
-			];
+			React = ReactDOM = dio;
 
-			function ProductCategoryRow (props) {
-	    		return h('tr', h('th[colspan=2]', props.category))
-			}
-
-			function ProductRow (props) {
-		    	var name = props.product.stocked ? 
-		    				props.product.name : h('span[style=color:red]', props.product.name);
-
-			    return h('tr', 
-			    			h('td', name),
-			    			h('td', props.product.price)
-		    			)
-		  	}
-
-		  	function ProductTable (props) {
-			    var rows = [],
-			    	lastCategory = null;
-
-			    props.products.forEach(function(product) {
-		      		if (
-		      			product.name.toLowerCase().indexOf(props.filterText) === -1 || 
-		      			(!product.stocked && props.inStockOnly)
-	      			) {
-		        		return
-		      		}
-		      		if (product.category !== lastCategory) {
-		      			rows.push(ProductCategoryRow({category: product.category}))
-		      		}
-		      		rows.push(ProductRow({product: product}))
-		      		lastCategory = product.category
-			    }.bind(this));
-
-			    return h('table', 
-			    			h('thead', 
-			    				h('tr', 
-			    					h('th', 'Name'), 
-			    					h('th', 'Price')
-		    					)
-		    				),
-		    				h('tbody',
-		    					rows
-	    					)
-		    			)
-			}
-
-			function SearchBar (props) {
-		  		function handleChange (event) {
-		  			var el   = event.target,
-		  				type = el.getAttribute('type').toLowerCase();
-
-		  			if (type === 'checkbox') {
-		  				props.onUserInput(undefined, el.checked)
-		  			}
-		  			else if (type === 'text') {
-		  				props.onUserInput(el.value.toLowerCase(), undefined)
-		  			}
+			var ProductCategoryRow = React.createClass({
+		  		render: function () {
+		  			return (
+		  				h('tr', h('th', {'colSpan': '2'}, this.props.category))
+	  				);
 		  		}
+			});
 
-			    return h('div',
-			    			h('input[type=text]', {
-			    				placeholder: 'Search', 
-			    				value: props.filterText, 
-			    				oninput: handleChange
-			    			}),
-			    			h('div',
-			    				h('label', 
-				    				h('input[type="checkbox"]', {
-				    					checked: false, 
-				    					onchange: handleChange
-				    				}),
-				    				' Only show products in stock'
-			    				)
+			var ProductRow = React.createClass({
+			  	render: function () {
+				    var name = this.props.product.stocked ?
+			      		this.props.product.name :
+			      		h('span', {style: {color: 'red'}}, this.props.product.name);
+
+				    return (
+				    	h('tr', h('td', name), h('td', this.props.product.price))
+				    );
+			  	}
+			});
+
+			var ProductTable = React.createClass({
+		  		render: function () {		  			
+				    var rows = [];
+				    var lastCategory = null;
+
+				    this.props.products.forEach(function(product) {
+				    	if (product.name.indexOf(this.props.filterText) === -1 || (!product.stocked && this.props.inStockOnly)) {
+			    	  		return;
+				    	}
+			      		if (product.category !== lastCategory) {
+		        			rows.push(h(ProductCategoryRow, {category: product.category, key: product.category}));
+			      		}
+
+			      		rows.push(h(ProductRow, {product: product, key: product.name}));
+			      		lastCategory = product.category;
+				    }.bind(this));
+
+				    return (
+						h('table', 
+							h('thead', 
+								h('tr', 
+									h('th', 'Name'), 
+									h('th', 'Price')
+								)
+							),
+							h('tbody', rows)
+						)
+				    );
+			  	}
+			});
+
+			var SearchBar = React.createClass({
+				handleChange: function() {
+			  		this.props.onUserInput(
+				    	this.refs.filterTextInput.value,
+				    	this.refs.inStockOnlyInput.checked
+			  		);
+				},
+		  		render: function () {
+			    	return (
+			    		h('form', 
+			    			h('input', 
+			    				{
+			    					type: 'text', 
+			    					placeholder: 'Search...', 
+			    					value: this.props.filterText, 
+			    					ref: 'filterTextInput',
+			    					onInput: this.handleChange.bind(this)
+			    				}
+		    				),
+			    			h('p', 
+			    				h('input', 
+			    					{
+			    						type: 'checkbox', 
+			    						checked: this.props.inStockOnly,
+			    						ref: 'inStockOnlyInput',
+			    						onChange: this.handleChange.bind(this)
+		    						}
+		    					), 
+			    				' ',
+			    				'Only show products in stock'
 		    				)
-			    		)
-			}
-			
-			function FilterableProductTable () {
- 				return {
-	 				getInitialState: function () {
-						return {products: PRODUCTS, filterText: '', inStockOnly: false}
-					},
-			  		handleUserInput: function (filter, stock) {
-			  			if (filter !== undefined) {
-			  				this.setState({
-			  					filterText: filter
-			  				})
-			  			}
-			  			else if (stock !== undefined) {
-			  				this.setState({
-			  					inStockOnly: stock
-			  				})
-			  			}	    		
-			  		},
-			  		render: function (props, state) {
-			  			return h('div',
-				  					SearchBar({
-				  						filterText: state.filterText,
-						          		inStockOnly: state.inStockOnly,
-						          		onUserInput: this.handleUserInput
-				  					}),
-				  					ProductTable ({
-				  						products: state.products,
-		  					          	filterText: state.filterText,
-		  					          	inStockOnly: state.inStockOnly
-				  					})
-			  					)
-			  		}
- 				}
-			}
+		    			)
+		    		);
+		  		}
+			});
 
-			var 
-			Render = dio.createRender(FilterableProductTable, '.app');
-			Render();
+			var FilterableProductTable = React.createClass({
+				getInitialState: function() {
+			  		return {
+			    		filterText: '',
+			    		inStockOnly: false
+			  		};
+				},
+
+				handleUserInput: function(filterText, inStockOnly) {
+			  		this.setState({
+			    		filterText: filterText,
+			    		inStockOnly: inStockOnly
+			  		});
+				},
+
+		  		render: function () {		  			
+			    	return (
+			    		h('div',
+			    			h(SearchBar,
+			    				{
+			    					filterText: this.state.filterText,
+			    					inStockOnly: this.state.inStockOnly,
+						          	onUserInput: this.handleUserInput.bind(this)
+			    				}
+			    			),
+			    			h(ProductTable, 
+			    				{
+			    					products: this.props.products,
+			    					filterText: this.state.filterText,
+			    					inStockOnly: this.state.inStockOnly
+			    				}
+			    			)
+		    			)
+			    	);
+		  		}
+			});
+
+
+
+			var PRODUCTS = [
+			  {category: 'Sporting Goods', price: '$49.99', stocked: true, name: 'Football'},
+			  {category: 'Sporting Goods', price: '$9.99', stocked: true, name: 'Baseball'},
+			  {category: 'Sporting Goods', price: '$29.99', stocked: false, name: 'Basketball'},
+			  {category: 'Electronics', price: '$99.99', stocked: true, name: 'iPod Touch'},
+			  {category: 'Electronics', price: '$399.99', stocked: false, name: 'iPhone 5'},
+			  {category: 'Electronics', price: '$199.99', stocked: true, name: 'Nexus 7'}
+			];
+			 
+			ReactDOM.render(
+				h(FilterableProductTable, {products: PRODUCTS}),
+		  		document.getElementById('container')
+			);
 		</script>
 	</body>
 </html>

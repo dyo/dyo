@@ -1,42 +1,140 @@
 // stateless components
 function Content (props) {
-	return h('div.content', {innerHTML: props.html});
+	return {
+		nodeType: 1,
+		type: 'div',
+		props: {
+			className: 'content',
+			innerHTML: props.html
+		},
+		children: []
+	};
 }
 
 function TableOfContents (props) {
-	return h('.table-of-contents',
-				h('ul', 
-					props.nav.map(function (value) {
-						return h('li', 
-									h('a[href='+ value.href +']', 
-										{
-											class: value.active ? 'active' : '',
-											onClick: props.onClick
-										},
-										value.text
-									)
-								)
-					})
-				)
-			)
+	return {
+		nodeType: 1,
+		type: 'div',
+		props: {
+			className: 'table-of-contents'
+		},
+		children: [
+			{
+				nodeType: 1,
+				type: 'ul',
+				props: {},
+				children: props.nav.map(function (value) {
+					return {
+						nodeType: 1,
+						type: 'li',
+						props: {},
+						children: [
+							{
+								nodeType: 1,
+								type: 'a',
+								props: {
+									href: value.href,
+									className: value.active ? 'active' : '',
+									onClick: props.onClick
+								},
+								children: [
+									{
+										nodeType: 3,
+										type: 'text',
+										props: {},
+										children: [value.text]
+									}
+								]
+							}
+						]
+					}
+				})
+			}
+		]
+	}
 }
 
 function Header () {
-	return h('.wrap', 
-				h('.logo',
-					h('a[href=./]', {onClick: dio.curry(router.nav, ['/'], true)}, h('img[src=assets/logo.svg]'))
-				),
-				h('.nav',
-					h('ul', h('li', h('a[href=https://github.com/thysultan/dio.js]', 'Github')))
-				)
-			)
+	return {
+		nodeType: 1,
+		type: 'div',
+		props: {
+			className: 'wrap'
+		},
+		children: [
+			{
+				nodeType: 1,
+				type: 'div',
+				props: {
+					className: 'logo'
+				},
+				children: [
+					{
+						nodeType: 1,
+						type: 'a',
+						props: {
+							href: './',
+							onClick: dio.curry(router.nav, ['/'], true)
+						},
+						children: [
+							{
+								nodeType: 1,
+								type: 'img',
+								props: {
+									src: 'assets/logo.svg',
+								},
+								children: []
+							}
+						]
+					}
+				]
+			},
+			{
+				nodeType: 1,
+				type: 'div',
+				props: {
+					className: 'nav'
+				},
+				children: [
+					{
+						nodeType: 1,
+						type: 'ul',
+						props: {},
+						children: [
+							{
+								nodeType: 1,
+								type: 'li',
+								props: {},
+								children: [
+									{
+										nodeType: 1,
+										type: 'a',
+										props: {
+											href: 'https://github.com/thysultan/dio.js'
+										},
+										children: [
+											{
+												nodeType: 3,
+												type: 'text',
+												props: {},
+												children: ['Github']
+											}
+										]
+									}
+								]
+							}
+						]
+					}
+				]
+			}
+		]
+	}
 }
 
 
 // state components
 function Documentation () {
-	var 
-	markdown = dio.createStream();
+	var markdown = dio.stream();
 
 	function rawMarkup () {
 		return remarkable.render(markdown());
@@ -54,43 +152,39 @@ function Documentation () {
 
 	function update (self) {
 		return function () {
-			self.setProps({loading: false});
-			self.forceUpdate(null, highlighter);
+			self.setState({loading: false}, highlighter);
 		}
 	}
 
 	function activateLink (self, href) {
 		href = href || this.getAttribute('href');
 
-		if (this.className === 'active') return;
+		if (this.className === 'active') {
+			return;
+		}
 
-		var
-		nav = [];
+		var nav = [];
 
-		dio._.forEach(self.props.nav, function (value) {
-			var
-			item = dio._.assign({}, value, {active: value.href !== href ? false : true});
+		dio.forEach(self.state.nav, function (value) {
+			var item = dio.assign({}, value, {active: value.href !== href ? false : true});
 			nav.push(item);
 		});
 
 		hash = href.replace('../', '').replace('.md', '');
-
-		self.setProps({nav: nav, loading: true});
-		self.forceUpdate();
+		self.setState({nav: nav, loading: true});
 
 		getDocument(href, update(self));
 		window.location.hash = hash;
 	}
 
 	return {
-		getDefaultProps: function () {
+		getInitialState: function () {
 			return {
 				nav: [
 					{text: 'Installation', href: '../installation.md'},
 					{text: 'Getting Started', href: '../getting-started.md'},
 					{text: 'Examples', href: '../examples.md'},
 					{text: 'API Reference', href: '../api.md'},
-					{text: 'SFC', href: '../single-file-components.md'},
 					{text: 'Change Log', href: '../../CHANGELOG.md'}
 				]
 			}
@@ -99,25 +193,30 @@ function Documentation () {
 			activateLink(this, props.url);
 		},
 		render: function (props) {
-			return h('.documentation'+(props.loading ? '.loading' : ''),
-						Content({html: rawMarkup()}),
-						TableOfContents({
-							nav: props.nav,
-							onClick: dio.curry(activateLink, [this], true)
-						})
-					)
+			return {
+				nodeType: 1,
+				type: 'div',
+				props: {
+					className: 'documentation'+(this.state.loading ? '.loading' : ''),
+				},
+				children: [
+					Content({html: rawMarkup()}),
+					TableOfContents({
+						nav: this.state.nav,
+						onClick: dio.curry(activateLink, [this], true)
+					})
+				]
+			}
 		}
 	}
 }
 
 
 function Welcome () {
-	var 
-	rawMarkup   = dio.createStream('');
+	var rawMarkup   = dio.stream('');
 
 	function Install (e) {
-		var
-		href = e.target.getAttribute('href');
+		var href = e.target.getAttribute('href');
 
 		if (href) {
 			router.nav(href.replace('.',''));
@@ -125,8 +224,10 @@ function Welcome () {
 	}
 
 	return {
-		componentWillMount: function (props, __, self) {
-			dio.request.get(props.url)
+		componentWillMount: function () {
+			var self = this;
+
+			dio.request.get(this.props.url)
 				.then(rawMarkup)
 				.then(function () {
 					rawMarkup(remarkable.render(rawMarkup()))
@@ -137,30 +238,33 @@ function Welcome () {
 			highlighter();
 		},
 		render: function () {
-			return h('.welcome', {
-				onClick: dio.curry(Install, [], true),
-				innerHTML: rawMarkup()
-			});
+			return {
+				nodeType: 1,
+				type: 'div',
+				props: {
+					className: 'welcome',
+					onClick: dio.curry(Install, [], true),
+					innerHTML: rawMarkup()
+				},
+				children: []
+			}
 		}
 	}
 }
 
-var
-remarkable = new Remarkable();
+var remarkable = new Remarkable();
+var routes = {
+	'/': function () {
+		dio.render({nodeType: 1, type: Welcome, props: {url: '../welcome.md'}, children: []}, '.container');
+	},
+	'/documentation': function () {
+		var section = window.location.hash.toLowerCase().replace('#', '');
 
-var
-router = dio.createRouter({
-		'/': function () {
-			dio.createRender(Welcome, '.container')({url: '../welcome.md'}, null, true);
-		},
-		'/documentation': function () {
-			var 
-			section = window.location.hash.toLowerCase().replace('#', '');
+		section = section || 'installation';
+		section = '../'+ section + '.md';
+		dio.render({nodeType: 1, type: Documentation, props: {url: section}, children: []}, '.container');
+	}
+};
+var router = dio.router(routes, '/docs/layout');
 
-			section = section || 'installation';
-			section = '../'+ section + '.md';
-			dio.createRender(Documentation, '.container')({url: section}, null, true);
-		}
-	}, '/docs/layout');
-
-dio.createRender(Header, '.header')();
+dio.render(Header, '.header');

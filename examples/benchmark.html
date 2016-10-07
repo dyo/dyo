@@ -38,7 +38,7 @@
 		</script>
 
 		<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
-		<script src="/dio.min.js"></script>
+		<script src="/dio.js"></script>
 			
 		<!-- ENV.js -->
 		<script>
@@ -265,113 +265,150 @@
 
 			var data = [];
 
-			var DBMon = dio.createComponent({
+			var propsDbname = {className: 'dbname'},
+				propsQueryCount = {className: 'query-count'},
+				propsPopoverLeft = {className: 'popover left'},
+				propsPopoverContent = {className: 'popover-content'},
+				propsArrow = {className: 'arrow'},
+				propsTable = {className: 'table table-striped latest-data'},
+				emptyObj = {};
+
+			var arrowDiv = {
+				nodeType: 1,
+				type: 'div',
+				props: {className: 'arrow'},
+				children: []
+			}
+
+			var DBMon = dio.createClass({
 				render: function() {
-					return {
-						type: 'div',
-						props: {},
-						children: [
-							{
-								type: 'table',
-								props: {className: 'table table-striped latest-data'},
+
+					var length = data.length;
+					var $children = new Array(length);
+
+					for (var i = 0; i < length; i = i + 1) {
+						var db = data[i];
+						var children = new Array(7);
+
+						children[0] = {
+							nodeType: 1,
+							type: 'td',
+							props: propsDbname,
+							children:
+							[
+								{
+									nodeType: 3,
+									type: 'text',
+									props: emptyObj,
+									children: [db.dbname]
+								}
+							]
+						}
+
+						children[1] = {
+							nodeType: 1,
+							type: 'td',
+							props: propsQueryCount,
+							children: [
+								{
+									nodeType: 1,
+									type: 'span',
+									props: {className: db.lastSample.countClassName},
+									children:
+									[
+										{
+											nodeType: 3,
+											type: 'text',
+											props: emptyObj,
+											children: [db.lastSample.nbQueries]
+										}
+									]
+								}
+							]
+						}
+
+						var topFiveQueries = db.lastSample.topFiveQueries;
+
+						for (var j = 0, len = topFiveQueries.length; j < len; j = j + 1) {
+							var query = topFiveQueries[j];
+
+							children[j+2] = {
+								nodeType: 1,
+								type: 'td',
+								props: {key: j, className: query.elapsedClassName},
 								children: [
 									{
-										type: 'tbody',
-										props: {},
-										children: data.map(function (db) {
-											var 
-											children = new Array(7);
-
-											children[0] = {
-												type: 'td',
-												props: {className: 'dbname'},
-												children:
-												[
-													{
-														type: 'text',
-														props: undefined,
-														children: [db.dbname]
-													}
-												]
-											}
-
-											children[1] = {
-												type: 'td',
-												props: {className: 'query-count'},
+										nodeType: 3,
+										type: 'text',
+										props: emptyObj,
+										children: [query.formatElapsed]
+									},
+									{
+										nodeType: 1,
+										type: 'div',
+										props: propsPopoverLeft,
+										children: [
+											{
+												nodeType: 1,
+												type: 'div',
+												props: propsPopoverContent,
 												children: [
 													{
-														type: 'span',
-														props: {className: db.lastSample.countClassName},
-														children:
-														[
-															{
-																type: 'text',
-																props: undefined,
-																children: [db.lastSample.nbQueries]
-															}
-														]
+														nodeType: 3,
+														type: 'text',
+														props: emptyObj,
+														children: [query.query]
 													}
 												]
-											}
+											},
+											arrowDiv
+										]
+									}
+								]
+							};
+						}
 
-											var length = db.lastSample.topFiveQueries.length;
+						$children[i] = {
+							nodeType: 1,
+							type: 'tr',
+							props: {key: db.dbname},
+							children: children
+						}
+					}
 
-											for (var i = 0; i < length; i++) {
-												var query = db.lastSample.topFiveQueries[i];
-
-												children[i+2] = {
-													type: 'td',
-													props: {key: i, className: query.elapsedClassName},
-													children: [
-														{
-															type: 'text',
-															props: undefined,
-															children: [query.formatElapsed]
-														},
-														{
-															type: 'div',
-															props: {className: 'popover left'},
-															children: [
-																{
-																	type: 'div',
-																	props: {className: 'popover-content'},
-																	children: [
-																		{
-																			type: 'text',
-																			props: undefined,
-																			children: [query.query]
-																		}
-																	]
-																},
-																{
-																	type: 'div',
-																	props: {className: 'arrow'},
-																	children: []
-																}
-															]
-														}
-													]
-												};
-											}
-
-											return {
-												type: 'tr',
-												props: {key: db.dbname},
-												children: children
-											}
-										})
+					return {
+						nodeType: 1,
+						type: 'div',
+						props: emptyObj,
+						children: [
+							{
+								nodeType: 1,
+								type: 'table',
+								props: propsTable,
+								children: [
+									{
+										nodeType: 1,
+										type: 'tbody',
+										props: emptyObj,
+										children: $children
 									}	
 								]
 							}
 						]
 					}
 				}
-			})
+			});
+			
+			var render = dio.render({
+				nodeType: 1,
+				type: DBMon,
+				props: {},
+				children: []
+			}, '#app');
 
-			var render = dio.createRender(DBMon, '#app');
 
 			function update() {
-				data = ENV.generateData().toArray()
+				data = ENV.generateData().toArray();
 				perfMonitor.startProfile("render")
 				
 				render();

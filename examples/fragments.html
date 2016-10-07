@@ -12,17 +12,21 @@
 		<div class="app"></div>
 
 		<script>
-			dio.render({
-				render: function (props, state, self) {
-					return (
-						[
-							h('h1', { onClick: function () { self.forceUpdate(); }}, 'Hello'), 
-							'World ',
-							performance.now()
-						]
-					)
+			function Main () {
+				return {
+					render: function (props, state, self) {
+						return (
+							h('@',
+								h('h1', { onClick: function () { self.forceUpdate(); }}, 'Hello'), 
+								'World ',
+								performance.now()
+							)
+						)
+					}
 				}
-			}, '.container')();
+			}
+
+			dio.render({nodeType: 1, type: Main, props: {}, children: []}, '.app');
 		</script>
 	</body>
 </html>

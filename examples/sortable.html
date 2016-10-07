@@ -39,8 +39,8 @@
 			function Sortable () {
 				return {
 					items: {
-				    	dragging: dio.createStream(),
-				    	colors: dio.createStream([
+				    	dragging: dio.stream(),
+				    	colors: dio.stream([
 				    		"Gold",
 				    		"Crimson",
 				    		"Hotpink",
@@ -99,8 +99,7 @@
 				};
 			};
 
-			var 
-			render = dio.createRender(Sortable, '.container');
+			var render = dio.render({nodeType: 1, type: Sortable, props: {}, children: []}, '.container');
 
 			setInterval(function (){
 				render();

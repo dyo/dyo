@@ -5,7 +5,6 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Router Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 		<script src="/dio.min.js"></script>
 	</head>
 	<body>
@@ -14,10 +13,16 @@
 			function Home () {
 				return {
 					onClick: function () {
-						Router.nav('/user/sultan')
+						router.nav('/user/sultan');
 					},
 					render: function () {
-						return h('h1', {key: '1234', onClick: this.onClick}, "Home Page")
+						return h('h1', 
+							{
+								key: '1234', 
+								onClick: this.onClick
+							}, 
+							'Home Page'
+						)
 					}
 				}
 			}
@@ -25,10 +30,15 @@
 			function User () {
 				return {
 					onClick: function () {
-						Router.nav('/router.html')
+						router.nav('/router.html');
 					},
 					render: function (props) {
-						return h('h1', {key: '1000', onClick: this.onClick},
+						return h('h1', 
+									{
+										key: '1000', 
+										onClick: this.onClick
+									},
+
 									props.page + " Page",
 									h('p', {}, 'Hello ' + props.name)
 								)
@@ -36,15 +46,22 @@
 				}
 			}
 
-			var 
-			Router = dio.createRouter({
-					'/router.html': function (data) {
-						dio.createRender(Home, '.app')(data, undefined, true);
-					},
-					'/:page/:name': function (data) {
-						dio.createRender(User, '.app')(data, undefined, true);
-					}
-			}, '/examples');
+			// var router = dio.router({
+			// 		'/router.html': function (data) {
+			// 			dio.render({nodeType: 1, type: Home, props: data, children: []}, '.app');
+			// 		},
+			// 		'/:page/:name': function (data) {
+			// 			dio.render({nodeType: 1, type: User, props: data, children: []}, '.app');
+			// 		}
+			// }, '/examples');
+
+			var router = dio.router({
+					'/router.html': Home,
+					'/:page/:name': User
+			}, {
+				mount: '.app',
+				root: '/examples'
+			});
 		</script>
 	</body>
 </html>

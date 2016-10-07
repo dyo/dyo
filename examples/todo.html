@@ -16,34 +16,32 @@
 
 			function TodoItem (props) {
 				return h('li', {
-					onclick: props.handleDelete, 
+					onClick: props.handleDelete, 
 					id: props.item.id, 
-					// style: 'cursor:pointer;', 
 					style: {cursor: 'pointer'},
 					key: props.item.id
 				}, props.item.value)
 			}
+
 			function TodoList (props) {
-		    	return h('ul', null, props.items.map(function (value) {
+		    	return h('ul', props.items.map(function (value) {
 		    					return TodoItem({item: value, handleDelete: props.handleDelete})
 		    				})
     					)
 			}
 
 			function TodoApp (props) {
-				var 
-				text = dio.createStream(''),
 				// will always contain the value of input.value oninput
-				input = dio.createStream('')
-				// reference to the input dom element
+				var text = dio.stream(''),
+					// reference to the input dom element
+					input = dio.stream('')
 
 		  		function handleSubmit (e) {
 		    		e.preventDefault();
 
-		    		var 
-		    		value = text();
+		    		var value = text();
 
-		    		el    = input();
+		    		el = input();
 
 		    		if (value != '') {
 		    			TodoStore.dispatch({type:'ADD', id: Date.now(), value: value})
@@ -52,17 +50,18 @@
 		  		}
 		  		function handleDelete () {
 		  			var node = this;
+		  			console.log(node);
 		  			dio.animateWith.transitions('slideUp')(node, function(){
-		  				TodoStore.dispatch({type: 'REMOVE', id: node.id})
+		  				TodoStore.dispatch({type: 'REMOVE', id: node.id});
 		  			})
 		  		}
 
 		  		function render (props) {
-		  			return h('div.TodoApp', null,
-		  						h('h3', null, 'TODO'),
+		  			return h('div.TodoApp',
+		  						h('h3', 'TODO'),
 		  						h('form', {onsubmit: this.handleSubmit},
 		  							h('input', {ref: input, oninput: this.withAttr('value', text)}),
-		  							h('button', null, 'Add #' + (props.items.length+1))
+		  							h('button', 'Add #' + (props.items.length+1))
   								),
   								TodoList({items: props.items, handleDelete: handleDelete})
 		  					)
@@ -72,12 +71,6 @@
 	  				render: render,
 	  				handleSubmit: handleSubmit
 		  		}
-
-		  		// or can just return a hyperscript object
-		  		// i.e
-		  		// if (props) {
-		  		// 	return render(props)
-		  		// }
 			}
 
 
@@ -160,11 +153,8 @@
 			// ------------------------- initializers ------------------------- //
 
 
-			var 
-			TodoStore = dio.createStore(TodoStoreReducer),
-			Render    = dio.createRender(TodoApp, '.app');
-
-			TodoStore.connect(Render)
+			var TodoStore = dio.createStore(TodoStoreReducer);
+			TodoStore.connect(TodoApp, '.app');
 		</script>
 	</body>
 </html>

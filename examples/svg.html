@@ -28,16 +28,14 @@
 				}
 
 				function arc (x, y, radius, startAngle, endAngle) {
-				    var 
-				    start    = polarToCartesian(x, y, radius, startAngle),
-				    end      = polarToCartesian(x, y, radius, endAngle),
-				    arcSweep = endAngle - startAngle <= 180 ? '0' : '1';
+				    var start    = polarToCartesian(x, y, radius, startAngle),
+				    	end      = polarToCartesian(x, y, radius, endAngle),
+				    	arcSweep = endAngle - startAngle <= 180 ? '0' : '1';
 				    return ['M', start.x, start.y, 'A', radius, radius, 0, arcSweep, 1, end.x, end.y].join(' ');
 				}
 
 				function polarToCartesian (centerX, centerY, radius, angleInDegrees) {
-				    var 
-				    angleInRadians = (angleInDegrees - 90) * Math.PI / 180;
+				    var angleInRadians = (angleInDegrees - 90) * Math.PI / 180;
 
 				    return {
 				        x: centerX + radius * Math.cos(angleInRadians),
@@ -46,43 +44,48 @@
 				}
 
 				function createPaths (values) {
-					var
-					size       = 300,
-					stroke     = 14,
-					padding    = 6,
-					center     = size / 2,
-					mainColor  = 'rgb(235, 235, 235)',
-					mainRadius = size / 2,
-					itemPaths  = [];
+					var size       = 300,
+						stroke     = 14,
+						padding    = 6,
+						center     = size / 2,
+						mainColor  = 'rgb(235, 235, 235)',
+						mainRadius = size / 2,
+						itemPaths  = [];
 
 					values.forEach(function (value, index) {
-						var 
-						indent    = 2,
-						radius    = mainRadius - stroke * index - padding * (index + indent),
-						bgPath    = path(center, stroke, radius, 359, mainColor),
-						name      = value[0],
-						percent   = value[1],
-						color     = value[2],
-						itemPath  = path(center, stroke, radius, (Math.max(1, Math.min(100, percent)) * 3.59), color, ['filter: url(#dropshadow);']),
-						itemLabel = h('text', {
-							    x: (mainRadius - stroke * 1.25) + 3,
-							    y: stroke * (index + 0.5) + padding * (index + indent),
-							    'text-anchor': 'end',
-							    'font-size': stroke,
-							    'data-index': index,
-							    'fill': '#000'
-							}, name
-						),
-						percentLabel = h('text', {
-							    x: (mainRadius - stroke * 0.25) + 3,
-							    y: stroke * (index + 0.5) + padding * (index + indent) - 2,
-							    'font-size': stroke - 3,
-							    'font-weight': 'bold',
-							    'data-index': index,
-							    'fill': '#000'
-							},
-							percent + '%'
-						);
+						var indent    = 2,
+							radius    = mainRadius - stroke * index - padding * (index + indent),
+							bgPath    = path(center, stroke, radius, 359, mainColor),
+							name      = value[0],
+							percent   = value[1],
+							color     = value[2],
+							itemPath  = path(
+								center, 
+								stroke, 
+								radius, 
+								(Math.max(1, Math.min(100, percent)) * 3.59), 
+								color, 
+								['filter: url(#dropshadow);']
+							),
+							itemLabel = h('text', {
+								    x: (mainRadius - stroke * 1.25) + 3,
+								    y: stroke * (index + 0.5) + padding * (index + indent),
+								    'text-anchor': 'end',
+								    'font-size': stroke,
+								    'data-index': index,
+								    'fill': '#000'
+								}, name
+							),
+							percentLabel = h('text', {
+								    x: (mainRadius - stroke * 0.25) + 3,
+								    y: stroke * (index + 0.5) + padding * (index + indent) - 2,
+								    'font-size': stroke - 3,
+								    'font-weight': 'bold',
+								    'data-index': index,
+								    'fill': '#000'
+								},
+								percent + '%'
+							);
 
 						bgPath.props['data-index']   = index;
 
@@ -103,8 +106,7 @@
 					element.classList[type]('active');
 				}
 
-				var
-				svgElement = dio.createStream();
+				var svgElement = dio.stream();
 
 				return {
 					render: function (props) {
@@ -139,11 +141,7 @@
 				}
 			}
 
-			var 
-			Render = dio.createRender(SvgChart, '.app');
-
-			var 
-			values = [
+			var values = [
 	    		['carbohydrates', 35, 'rgb(230, 70, 255)'],
 	    		['protein', 20, 'rgb(85, 210, 255)'],
 	    		['fat', 45, 'rgb(50, 250, 220)'],
@@ -151,7 +149,7 @@
 	    		['vitaminA', 22, 'rgb(150, 250, 0)']
 			];
 
-			Render({values: values});
+			dio.render(h(SvgChart, {values: values}), '.app');
 		</script>
 	</body>
 </html>

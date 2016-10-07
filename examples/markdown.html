@@ -13,44 +13,41 @@
 		<div class="app"></div>
 		<script>
 			function MarkdownEditor () {
-				var 
-				markdownInput = dio.createStream('Type some *markdown* here!'),
-				remarkable    = new Remarkable(),
-				content       = dio.createStream();
-				textarea      = dio.createStream();
+				var markdownInput = dio.stream('Type some *markdown* here!'),
+					remarkable    = new Remarkable(),
+					content       = dio.stream();
+					textarea      = dio.stream();
 
 				function rawMarkup () {
 					return remarkable.render(markdownInput());
 				}
 
-				function updateTextarea () {
-					var 
-					contentHeight  = content().getBoundingClientRect().height;
-					textareaHeight = textarea().getBoundingClientRect().height;
+				function updateTextarea (thisArg) {
+					thisArg.forceUpdate();
+
+					var contentHeight  = content().getBoundingClientRect().height;
+						textareaHeight = textarea().getBoundingClientRect().height;
 
 					if (contentHeight !== textareaHeight) {
 						textarea().style.height = contentHeight+'px';
 					}
-
-					this.forceUpdate();
 				}
 
 				return {
-					componentWillMount: function (_, _, self) {
+					componentWillMount: function () {
+						var thisArg = this;
+
 						dio.request.get('https://cdn.rawgit.com/thysultan/dio.js/master/README.md')
 							.then(markdownInput)
-							.then(function () {
-								self.forceUpdate();
-								updateTextarea();
-							});
+							.then(function () { updateTextarea(thisArg); });
 					},
-					render: function (_, _, self) {
+					render: function () {
 						return h('.MarkdownEditor',
 									h('.input', 
 										h('h3', 'Input'),
 										h('textarea', {
 											ref: textarea, 
-											onInput: self.withAttr('value', markdownInput, updateTextarea),
+											onInput: this.withAttr('value', markdownInput, updateTextarea),
 											value: markdownInput()
 										})
 									),
@@ -66,9 +63,7 @@
 				}
 			}
 
-			var 
-			Render = dio.createRender(MarkdownEditor, '.app');
-			Render();
+			dio.render({nodeType: 1, type: MarkdownEditor, props: {}, children: []}, '.app');
 		</script>
 	
 		<!-- github markdown css -->

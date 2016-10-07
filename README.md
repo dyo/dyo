@@ -1,11 +1,11 @@
-# dio.js 
+# DIO.js 
 
 [![dio.js](https://cdn.rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
 
-Dio is a fast and lightweight (~9kb) feature rich Virtual DOM framework.
+Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
 
 - ~9kb minified+gzipped
-- ~20kb minified
+- ~24kb minified
 
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
  ![dependencies](https://img.shields.io/badge/dependencies-none-green.svg?style=flat) [![Join the chat at https://gitter.im/thysultan/dio.js](https://img.shields.io/badge/chat-gitter-green.svg?style=flat)](https://gitter.im/thysultan/dio.js)
@@ -32,15 +32,15 @@ Dio is a fast and lightweight (~9kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/1.2.3/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.0.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/1.2.3/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/2.0.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@1.2.3/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@2.0.0/dio.min.js></script>
 ```
 
 #### bower
@@ -61,20 +61,20 @@ You can also play with Dio [on this jsbin](http://jsbin.com/lobavo/edit?js,outpu
 
 # Getting Started
 
-Dio is a fast and lightweight (~9kb) feature rich Virtual DOM framework
+Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework
 built around the concept that any function/object can become a component.
 
 Components in Dio share the same api's as react with a few additions, 
 this means that you can easily port both ways between Dio and React as and when needed
 without any significant changes to the code base, 
-the minimal change in most cases being `React, ReactDOM = dio`,
-ergo if you know react then you probably already know Dio and vice-versa.
+the minimal change in most cases being a simple `React, ReactDOM = dio`.
 
-Having said that dio can be used as just a "view" library but it does come
+Having said that Dio can be used as just a "view" library but it does come
 self containeed with everything you would need to build an application,
 from routing, http requests, server-side rendering to testing, state stores, animations and more.
 
 In that respect this getting started guide aims to show you how to go from zero to hello world in Dio.
+
 
 ## Hello world
 
@@ -87,7 +87,7 @@ function HelloWorld () {
 	}
 }
 
-dio.createRender(HelloWorld)({text: 'Hello World'})
+dio.render(HelloWorld)({text: 'Hello World'});
 ```
 
 Will mount a h1 element onto the page the contents of which will be 'Hello World'.
@@ -101,66 +101,6 @@ Will mount a h1 element onto the page the contents of which will be 'Hello World
 - [JS Framework Benchmark](../../examples/benchmark-js-framework.html)
 - [UI Bench Benchmark](https://localvoid.github.io/uibench/)
 
-# Single File Components
-
-Single file components are self contained components with their own stylesheets,
-this is possible with the use of `dio.createStyle` allowing us to create a component
-within one file or function that has no external dependencies.
-
-```javascript
-var namespace = '#id';
-var styles = {
-	'h1': {
-		'font-size': '40px',
-		
-		// takes the return value of the function
-		width: function () {
-			return window.innerWidth
-		},
-		
-		// state
-		'&:hover': {
-			color: 'blue'
-		},
-		
-		// pseudo element
-		'&:after': {
-			content: ' '
-		},
-
-		'@keyframes blink': {
-			0: {
-				backgroundColor: 'blue'
-			},
-			50: {
-				backgroundColor: 'black'
-			}
-			// values can also be written as arrays
-			// 0: ['background-color: blue;'],
-			// 50: ['background-color: black;']
-		}
-	}
-}
-
-dio.createStyle(styles, namespace);
-
-function HelloWorld () {
-	return {
-		render: function (props) {
-			return h('div'+namespace,
-						h('h1', props.text)
-					)
-		}
-	}
-}
-
-dio.createRender(HelloWorld, '.app')({text: 'Hello World'});
-```
-
-You can also play with this [on JS Bin](http://jsbin.com/yayuxox/edit?js,output)
-
----
-
 # API Reference
 
 ## components schema
@@ -168,49 +108,40 @@ You can also play with this [on JS Bin](http://jsbin.com/yayuxox/edit?js,output)
 ```javascript
 {
 	// lifecycle methods
-	shouldComponentUpdate:     (props, state, this) => {}
-	componentWillReceiveProps: (props, state, this) => {}
-	componentWillUpdate:       (props, state, this) => {}
-	componentDidUpdate:        (props, state, this) => {}
-	componentWillMount:        (props, state, this) => {}
-	componentDidMount:         (props, state, this) => {}
-	componentWillUnmount:      (props, state, this) => {}
-	componentDidUnmount:       (props, state, this) => {}
+	shouldComponentUpdate:     (newProps, newState) => {}
+	componentWillReceiveProps: (newProps) => {}
+	componentWillUpdate:       (newProps, newState) => {}
+	componentDidUpdate:        (oldProps, oldState) => {}
+	componentWillMount:        () => {}
+	componentDidMount:         () => {}
+	componentWillUnmount:      () => {}
 	
 	// this.methods
-	this.withAttr              ({String|String[]}, {Function|Function[]})
+	this.withAttr              ({string|string[]}, {function|function[]})
 
-	// this refers to the component to update, the default
-	// is the context of the component it is called from i.e `this`
-	// but could also be another component. If called
-	// from a non-parent component the the update will
-	// be granular to only that component alone,
-	// this is the reason there are `props` and `children` as optional
-	// 2nd and 3rd arguments that one can pass data to an outside
-	// component to update
-	this.forceUpdate:          (
-		this?: {Object}, 
-		props|callback: {Object|Function},
-		children?: {Any}
-	)
+	this.forceUpdate:          ()
 
 	// setState is synchronous
 	// setState also calls this.forceUpdate
 	// setState will execute the callback before this.forceUpdate
-	this.setState:             ({Object}, callback: {Function})
+	this.setState:             ({Object}, callback: {function=})
 	this.setProps:             ({Object})
 
 	// displayName is auto created when you create a component
-	// with a function like dio.createComponent({Function})
+	// with a function like dio.createClass({Function})
 	// i.e function Foo () {} the displayName will be Foo
 	// you can also set this manually {
 	// 		displayName: 'something'
 	// }
 	// it is however an optional property so you do not need to set it,
-	displayName:               {String}
+	displayName:               {string}
 
 	// adds validation for props
 	propTypes:                 {Object}
+
+	// adds static methods to the component, 
+	// i.e var Parent = dio.createClass({statics: {meth1: ...}}) Parent.meth1();
+	statics:                   {Object}
 
 	// render method
 	render:                    (props, state, this) => {}
@@ -259,34 +190,37 @@ h('div', Component)
 // is identical to h('div', h(Component))
 
 h('@fragment', 'Hello', 'World')
-// you can also create a fragment of elements by
-// starting the type with a '@'
-// so the above could also be
+// the only requirement here is that the first
+// letter be a '@' thus so the above could also be re-written as
 
 h('@foo', 'Hello', 'World')
 
-// returning an array of elements for example
-render: function () {
-	return [
-		'Hello',
-		'Workd'
-	];
+// you could also write all of the above by hand in its compiled form
+// when trying to skews the most out of performance.
+
+{
+	nodeType: 1, // where nodeType is either 1 'Element' or 3 'TextNode'
+	type: 'div',
+	props: {},
+	children: [
+		{
+			nodeType: 3,
+			type: 'text',
+			props: {},
+			children: ['Hello World']
+		}
+	]
 }
 
-// is equivalent to
-render: function () {
-	h('@', 'Hello', 'World');
-}
+// is the compiled form that .createElement/h will output
+h('div', 'Hello World');
 ```
 
 ---
 
-## dio.createComponent
+## dio.createClass
 
 ```javascript
-dio.createComponent({Function|Object})
-
-// or
 dio.createClass({Function|Object})
 
 // or ES6 classes
@@ -300,75 +234,50 @@ class Component extends dio.Component {
 }
 
 // examples
-var myComponent = dio.createComponent({
+var myComponent = dio.createClass({
 	render: () => { return h('div') }
 });
 
 // with a function
-var myComponent = dio.createComponent(function () {
+var myComponent = dio.createClass(function () {
 	return {
 		render: () => { return h('div') }
 	};
 });
 
-// pass true as the third argument to access the 
-// internal methods of a component created with 
-// .createComponent/.createClass i.e
-myComponent(__,__,true)
-// returns {
-// 		render: function ...
-// }
+// with a class
+class myComponent extends dio.Component {
+	render() {
+		return h('div')
+	}
+}
 
 ```
 
 ---
 
-## dio.createRender
+## dio.render
 
 ```javascript
-dio.createRender(
-	component: {Function|Object}, 
-	mount?: {String|Element|Function}
-)
-// or
-dio.render(
-	component: {Function|Object},
-	mount?: {String|Element|Function}
-)
+dio.render(component: {function|Object},mount?: {string|Element})
 
 // where component is either a hyperscript object 
 // or an object with a render method that returns a hyperscript object 
 // or a function that returns one of the above.
 
 // While mount is either a selector, element
-// or a function that returns an element
 // if left blank this defaults to document.body within the browser context
 // server-side this will return a function that returns html ouput
 
-// dio.createRender(...) returns a render instance that can be executed anytime
-// you require a render, which will either update the already rendered
-// component or mount it for an initial render.
-// This render instance{Function} accepts 3 optional arguments
-var instance = dio.createRender(Component)
-instance(props: {Object}, children: {Any}, forceUpdate: {Boolean})
-// forceUpdate forces a mount stage render
-// props passes props to the parent Component
-// children sets this.props.children in the parent Component
-// if you supply forceUpdate with '@@dio/COMPONENT' as in
-instance(__, __, '@@dio/COMPONENT')
-// this will return the hyperscript object of the parent component
-// this is how .createHTML can accept render instances
-// it extracts the resulting hyperscript object using the above method
-// and converts that to a string representing the component
+// dio.render(...) returns a render instance that can be executed anytime
+// you require a re-render, this render instance{Function} 
+// accepts 1 optional argument
+var instance = dio.render(Component);
+instance(props: {Object});
 
 // you can also create a render in the following ways
-// react-like
-dio.createRender(h(Component, {...props}, ...children));
+dio.render(h(Component, {...props}, ...children));
 ```
-
-Components that do not return an object with a render function
-or are itself an object with a render function will not feature
-the component lifecycles and methods as presented above in the schema.
 
 component examples.
 
@@ -388,7 +297,7 @@ function () {
 }
 
 // hyperscript
-h('div', 'Hello World')
+h('div', 'Hello World');
 
 // object with render method 
 {
@@ -398,14 +307,14 @@ h('div', 'Hello World')
 }
 
 // create component with object
-dio.createComponent({
+dio.createClass({
 	render: function () {
 		return h('div', 'Hello World')
 	}
 })
 
 // create component with function
-dio.createComponent(function () {
+dio.createClass(function () {
 	return  {
 		render: function () {
 			return h('div', 'Hello World')
@@ -424,7 +333,7 @@ class Component extends dio.Component {
 }
 ```
 
-Components create with `.createClass/.createComponent/.Component` are
+Components created with `.createClass/extends dio.Component` are
 statefull by default. There are also other scenarios that pure functions
 may become statefull, below are some examples.
 
@@ -445,9 +354,9 @@ function Parent () {
 	}
 }
 
-var render = dio.createRender(Pure);
+var render = dio.render(Pure);
 // or
-var render = dio.createRender(Parent);
+var render = dio.render(Parent);
 
 // since pure returns an object with a render method
 // it will now become a statefull component.
@@ -455,71 +364,48 @@ var render = dio.createRender(Parent);
 // it will update Pure's corresponding dom element
 
 // so if a pure function that returns an object with a render method
-// is placed as is into either .createRender, .createClass, .createComponent 
-// or even in h() it then will be a statefull component.
+// is placed as is into either .render, .createClass, .createClass 
+// or even in h() children it will become a statefull component.
 ```
 
 Note that in the getting started section 'Hello World'
-we did not create a component with `dio.createComponent()`
+we did not create a component with `dio.createClass()`
 but rather just used a pure function that we passed
-to `dio.createRender(here)` this is because
-`.createRender` will create a component if 
+to `dio.render(here)` this is because
+`.render` will create a component if 
 what is passed to it is not already a component as detailed above.
 
 mount examples.
 
 ```javascript
-document // the document
+document // the document, defaults to document.body
 document.body // a dom node
 document.querySelector('.myapp') // a dom node
 '.myapp' // a selector
 document.createElement('div') // a created element
+document.createDocumentFragment(); // a document fragment
 
 // or even a function
 function el () {
-	// if we change the element we return
-	// calling the render instance will
-	// update accordingly, for example
-	// the next time render instance is called
-	// if the element it gets from this function
-	// is different from the element it recieved
-	// on the previous call it will execute
-	// a fresh mount to the new element, on the other hand
-	// if it the same it will run a patch update
 	return document.body;
 }
 
-dio.createRender(__, mount)
-
+dio.render(__, mount);
 // note that the default mount is document.body if nothing is passed.
 ```
 
 > How do i render one component within another?
 
 Components are for the most part functions(statefull/stateless),
-to render call them `h('div', A())` or place them `h('div', A)`
-as needed with the exception of classes created with
-`class B extends dio.Component` that should only use placement
-`h('div', B)`
+to render place them `h('div', A)` or `h('div', h(A, {}, []))`.
 
-_note: render instances(created with .createRender) are not components_
+_note: render instances(created with .render) are not components_
 
 ```javascript
-// stateless
-function Foo (props) {
-	return h('h1', props.text)
-}
+// note about refs
 
-// statefull
-var Bar = dio.createComponent({
-	render: function (props) {
-		return h('h2', props.text)
-	}
-});
-
-// parent component
 function () {
-	var elementHolder = dio.createStream()
+	var elementHolder = dio.stream();
 
 	return {
 		render: function () {
@@ -539,33 +425,44 @@ function () {
 // but since elementHolder is a stream
 // when the element node is passed to it
 // elementHolder will now container the element
-// thus executing elementHolder() will return
-// the element
+// thus executing elementHolder() will return the element
 
 ```
 
 ---
 
-## dio.createRouter
+## dio.router
 
 ```javascript
-dio.createRouter(
-	routes: {Function|Object},
-	rootAddress?: {String}, 
-	onInitNavTo?: {String},
-	mount?: {String|Element}
+dio.router(
+	routes: {(function|Object)},
+	rootAddress: {string=}, 
+	onInit: {(string|function)=},
+	mount: {(string|Node)=}
+	middleware: {function} 
+	// arguments passed: component/callback, data, mount, uri
 )
+
+// or
+dio.router({(function|Object)}, {
+	root: {string=}, 
+	init: {(string|function)=},
+	mount: {(string|Node)=}
+	middleware: {function}
+})
+
+// routes is a object of key -> component/callback pairs
 ```
 
 example router
 
 ```javascript
-dio.createRouter({
-	'/': function () {
-		dio.createRender(home)()
+dio.router({
+	'/': function (data) {
+		dio.render(h(home, data))
 	},
 	'/user/:id': function (data) {
-		dio.createRender(user)(data)
+		dio.render(H(user, data));
 	}
 }, '/backend', '/user/sultan')
 
@@ -580,11 +477,13 @@ dio.createRouter({
 // initially. The last two arguments are optional.
 // you can also pass a function that retuns an object of routes.
 
-// you can also pass component functions or render functions, as in
-dio.createRouter({
+// uri -> component example
+dio.router({
 	'/': ComponentA,
 	'/user/:id': ComponentA
-}, null, null, document.body);
+}, {
+	mount: document.body
+});
 ```
 
 You can then assign this route to a variable and use it to navigate across views
@@ -604,88 +503,80 @@ myrouter.forward()
 
 ```javascript
 dio.createStore(
-	reducer: {Function|Object}, 
 	// single or multiple reducers
-	// if an object of reducers, combineReducers called
-	initalState: {Any}          
+	// if an object of reducers, combineReducers is called to combine them
+	reducer: {(function|Object)}, 
 	// initialState/middleware
-	enhancer: {Function}        
+	initalState: {Any}          
 	// middleware, applyMiddleware is called 
 	// on the enhancer function internally
+	enhancer: {Function}        
 )
 ```
 
 
-Alot like the redux createStore or rather it's exactly like redux createStore
-with the addition of `.connect` that accepts a render insance or a component 
-and mount with which to update everytime the store is updated.
+Rather exactly like redux createStore
+with the different of `.connect` that accepts a component & mount/callback
+with which to update everytime the store is updated.
 Which is mostly a short hand for creating a listerner with `.subscribe`
 that updates your component on state changes.
 
 ```javascript
 var store = dio.createStore(reducer: {Function})
 // or
-var store = dio.createStore(object of reducers: {Object})
+
 // auto .combineReducers
+var store = dio.createStore(object of reducers: {Object})
 
-store.dispatch({type: '' ...})
 // dispatch an action
+store.dispatch({type: '' ...})
 
-store.getState()
 // returns the current state
+store.getState()
 
-store.subscribe(listener: {Function})
 // called everytime the state is updated with the current
 // state as the only argument passed to it... as in
 // function (state) {  }
+store.subscribe(listener: {Function})
 
-store.connect(render: {Function})
-store.connect(render: {Function|Object}, element: '.myapp')
-// if you provide an element to .connect it assumes the render
-// passed is not a render instance but a component and will then
-// proceed to create a render instance.
+// if the callback is a component, a render will get auto created
+// if element is passed the callback will be treated as a component
+// and it follows that a render will get auto created
+store.connect(callback: {function})
+store.connect(callback: {(function|Object)}, element: {(string|Node)})
 ```
 
 ---
 
-## dio.createHTML
+## dio.renderToString
 
 Like the name suggests this methods outputs the html 
-of a specific component/render instance with the props passed
+of a specific component with the props passed
 to it, this is normally used within the context of server-side rendering.
 When used as a server-side tool add the attribute `data-hydrate` 
-to the container you wish to ouput the html, this will tell DIO not to
+to the container you wish to ouput the html, this will allow DIO to
 hydrate the current dom on initial mount.
 
 ```javascript
-// component or pure function
-dio.createHTML(component, props, children);
-// you can also use this on plain hyperscript objects, as in
-dio.createHTML(h('div', 'Text'));
-// or on render instances
-dio.createHTML(renderInstance, props, children);
-
-// aliases
-renderToString();
-renderToStaticMarkup();
+dio.renderToString(h('div', 'Text'));
 ```
 
 ---
 
-## dio.createStream
+## dio.stream
 
 ```javascript
-dio.createStream(store: {Any|Function}, mapper);
+dio.stream(store: {Any|Function}, mapper);
 // if you specify a mapper/processor
 // the store will be passed to mapper everytime you
 // retrieve a store
 // this means you can do
 
-var alwaysString = dio.createStream(100, String);
+var alwaysString = dio.stream(100, String);
 alwaysString() // => '100' {String}
 
 
-var foo = dio.createStream('initial value')
+var foo = dio.stream('initial value')
 // => changes the store and returns the stream
 foo('changed value') 
 // thus you  can chain
@@ -703,7 +594,7 @@ foo('hello world')
 bar() // => 'hello world and bar'
 
 // combine two or more streams
-var faz = dio.createStream.combine(function(foo, bar, prevValueOfFaz){
+var faz = dio.stream.combine(function(foo, bar, prevValueOfFaz){
 	return foo() + bar();
 }, foo, bar); // or an array
 
@@ -715,7 +606,7 @@ faz() // => 3
 // listen for changes to a value
 // note: this behaves like a promise but it is not a promise
 faz.then(function(faz){
-	console.log(faz)
+	console.log(faz);
 });
 
 faz('changed') // => 'changed'
@@ -724,10 +615,10 @@ faz('changed') // => 'changed'
 faz.then(fn).then(fn)....
 
 // like Promise.all, will run 'fn' after all dependencies have resolved
-dio.createStream.all([dep1, dep2]).then(fn);
+dio.stream.all([dep1, dep2]).then(fn);
 
 // access resolve and reject
-var async = dio.createStream(function (resolve, reject) {
+var async = dio.stream(function (resolve, reject) {
 	setTimeout(resolve, 500, 'value');
 });
 
@@ -735,7 +626,7 @@ var async = dio.createStream(function (resolve, reject) {
 // reject(reason) signals a rejection within the stream
 
 // for example
-var async = dio.createStream(function () {
+var async = dio.stream(function () {
 	setTimeout(reject, 500, 'just because');
 }).then(function (value) {
 	console.log(value + 'resolved')
@@ -747,15 +638,14 @@ var async = dio.createStream(function () {
 // .catch and .then blocks can return values that are
 // passed to the next .catch / .then block.
 // For example
-var foo = dio.createStream(function (resolve, reject) {
+var foo = dio.stream(function (resolve, reject) {
 	//...create xhr request object
 	xhr.onload  = resolve;
 	xhr.onerror = reject;
 	xhr.send();
 });
 
-foo
-	.then(function (value) { return 100 })
+foo.then(function (value) { return 100 })
 	.then(function (value) { console.log(value+20) }) // => 120
 	.catch(function (value) { return 100 })
 	.catch(function (value) { console.log(value+200) }) // => 300
@@ -765,8 +655,8 @@ foo
 // the same happens if there is an error but with the catch blocks
 
 // .scan
-var numbers = createStream();
-var sum = createStream.scan(function(sum, numbers) { 
+var numbers = stream();
+var sum = stream.scan(function(sum, numbers) { 
 	return sum + numbers();
 }, 0, numbers);
 
@@ -780,9 +670,9 @@ sum(); // => 10
 
 ```javascript
 var foo = dio.curry(
-	fn: {Function|String}, 
-	args...: {Any[]}, 
-	preventDefault: {Boolean}, 
+	fn: {function}, 
+	args...: {any[]}, 
+	preventDefault: {boolean}, 
 )
 // passing preventDefault triggers e.preventDefault() 
 // if function is called as an event listener
@@ -808,62 +698,22 @@ h('input', {
 
 ---
 
-## dio.createStyle
-
-creates a style element that is mounted to `document.head`,
-the output is auto prefixed and resembles sass/scss in the use of the "&" character
-in nested styles. See the __Single File Components__ section for an example.
-
-```javascript
-dio.createStyle(css: {Object}, namespace?: {String});
-
-// as in
-dio.createStyle({'p': {color:'red'}}, '#id');
-
-// if you run the above with the same namespace
-// it will check if a style with that namespace
-// has already been added and only create and add
-// one if it has not.
-```
-
----
-
 ## dio.createFactory
 
 ```javascript
-dio.createFactory(any[]|...arguments);
+dio.createFactory(element);
 ```
 
-createFactory returns or exposes a function to the window that 
-produces a hyperscript element of a given type.
-
-If the last argument is a Boolean true 
-the element factories are added to the global namespace
-otherwise an object of the element factories are returned.
-
-If only one element is specified, only that factory is returned and not an object,
-if this is coupled with true as the second argument, the factory is added to
-the global namespace instead.
+Like it would work in react createFactory returns a function that 
+produces a hyperscript element of a single given type.
 
 ```javascript
-dio.createFactory('div', 'input', true);
+var div = dio.createFactory('div');
 
 // now instead of
 h('div', 'Hello World');
-// i can instead do
+// it becomes possible to use the following
 div('Hello World');
-// and
-input({value: 'empty'});
-
-// multiple elements
-dio.createFactory('div', 'input', true);
-// or object destructuring
-var {div, input} = dio.createFactory('div', 'input');
-
-// single element
-var div = dio.createFactory('div');
-// or global
-dio.createFactory('div', true);
 ```
 
 ---
@@ -896,17 +746,14 @@ dio.request.post('/url', {id: 1234}, 'json')
 	.then((res)=>{'do something'})
 	.catch((err)=>{throw err});
 
-// request can also accept an opbject descriping the request
-
+// request also accepts an opbject descriping the request
 dio.request({
 	method: 'GET',
 	url: '/url',
 	payload: {id: 1234},
 	enctype: 'json',
 	withCredentials: false
-})
-.then((res)=>{return res})
-.catch((err)=>{throw err});
+}).then((res)=>{return res}).catch((err)=>{throw err});
 ```
 
 ---
@@ -915,21 +762,21 @@ dio.request({
 
 ```javascript
 dio.animateWith.flip(
-	className:       {String}, 
-	duration:        {Number}, 
-	transform:       {String}, 
-	transformOrigin: {String}, 
-	easing:          {String}
+	className:       {string}, 
+	duration:        {number}, 
+	transform:       {string}, 
+	transformOrigin: {string}, 
+	easing:          {string}
 )(
-element: {Element|String}
+	element: {(Node|string)}
 )
 
 dio.animateWith.transitions(
-	className: {String},
-	type?:     {String|Number|Boolean}
+	className: {string},
+	type?:     {(string|number|boolean)}
 )(
-element: {Element}, 
-callback: {Function} => (element: {Element}, transitions: {Function})
+	element: {Node}, 
+	callback: {function} => (element: {Node}, transitions: {function})
 )
 // where type can be a falsey or less than 0 or 'remove' 
 // to indicate a removal of the class, the default being add
@@ -954,22 +801,22 @@ render: function () {
 since `dio.animateWith.flip(...)` returns a function this is the same as
 
 ```javascript
-dio.animateWith.flip('active-state', 200)(Element) // returns the duration
+dio.animateWith.flip('active-state', 200)(elementNode) // returns duration
 ``` 
 
-another animation helper is `animateWith.transitions` and `animateWith.animations`
-the callback function supplied after the element will execute after the
+another animation helper is `animateWith.transitions` 
+and `animateWith.animations` the callback function 
+supplied after the element will execute after the
 resulting animation/transition from adding/removing the class completes.
 
 ```javascript
 // within a method
 handleDelete: function (e) {
-	var 
-	element = e.currentTarget,
-	self = this
+	var element = e.currentTarget,
+		self = this
 	
 	// animate element out then update state
-	dio.animateWith.transitions('slideUp')(element, function(el, next) {
+	dio.animateWith.transitions('slideUp')(element, function(next, el) {
 		store.dispatch({type: 'DELETE', id: 1234});
 		// we can also nest another transtion using the second arg
 		// el will be the element we passed to it
@@ -986,7 +833,9 @@ handleDelete: function (e) {
 
 ## dio.PropTypes
 
-validates props passed to components insuring they are of the the specificied type. The built in validtors work exactly as they do in react land namely.
+validates props passed to components insuring they are 
+of the the specificied type. The built in validtors work 
+exactly as they do in react land namely.
 
 ```javascript
 [
@@ -995,11 +844,12 @@ validates props passed to components insuring they are of the the specificied ty
 ]
 ```
 
-and you can also create your own validators though it should be noted that propTypes/validations are only evaluated when `NODE_ENV` or `process.env.NODE_ENV`
-are defined and set to `'development'`.
+and you can also create your own validators though 
+it should be noted that propTypes/validations are only evaluated 
+when `NODE_ENV` or `process.env.NODE_ENV` are defined and set to `'development'`.
 
 ```javascript
-dio.createComponent({
+dio.createClass({
 	propTypes: {
 		// required
 		id: dio.PropTypes.string.isRequired,
@@ -1060,33 +910,34 @@ features that do not exist outside of the browser enviroment,
 like `XMLHttpRequest` and other `#document` operations.
 
 ```javascript
+// returns whatever is passed
 dio.injectWindowDependency({Object})
-// returns whatever is passed to it
 ```
 
 ## Utilities
 
 ```javascript
-_: {
-	addEventListener: addEventListener,
-	
-	assign,      // Object.assign
-	keys,        // Object.Keys
-	forEach,     // for each for arrays/objects
-	reduce,      // [].reduce
-	reduceRight, // [].reduceRight
-	filter       // [].filter
-	map,         // [].map
+addEventListener: // cross-browser addEventListener
 
-	toArray,     
-	// clone array/convert array like objects to arrays
-	
-	isObject,
-	isFunction,
-	isString,
-	isArray,
+bind,             // cross-browser Function.bind
+assign,           // cross-browser Object.assign
+keys,             // cross-browser Object.keys
 
-	isDefined
-	// (not null and undefined)
-}
+assign,           // cross-browser Object.assign
+keys,             // cross-browser Object.Keys
+reduce,           // cross-browser [].reduce
+reduceRight,      // cross-browser [].reduceRight
+filter            // cross-browser [].filter
+map,              // cross-browser [].map
+
+forEach,          // for each for arrays/objects
+slice,            // [].slice
+splice            // [].splice, uses pop/shift/push/unshift when optimal
+flatten           // flattens an array of any depts
+
+isObject,
+isFunction,
+isString,
+isArray,
+isDefined // (not null and undefined)
 ```

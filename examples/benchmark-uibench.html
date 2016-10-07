@@ -7,228 +7,223 @@
 		<title>uibench (Dio.js)</title>
 		<link rel="stylesheet" href="https://localvoid.github.io/uibench-base/0.1.0/styles.css">
 		<script src="https://localvoid.github.io/uibench-base/0.1.0/uibench.js"></script>
-		<script src="/dio.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/dio/1.2.3/dio.min.js"></script>
+		<!-- <script src="/dio.js"></script> -->
 	</head>
 	<body>
 		<div id="App"></div>
 
 		<script>
-			const TableCell = dio.createClass({
-		  		getInitialState: function (props, state, self) {
-			    	return {
-			      		onClick: function(e) {
-			        		console.log('Clicked' + self.props.text);
-			        		e.stopPropagation();
-			      		}
-			    	};
-		  		},
-			  	render: function (props, state) {
-		    		// return h('td', {className: 'TableCell', onClick: state.onClick}, props.text)
-		    		return {
-		    			type: 'td',
-		    			props: {className: 'TableCell', onClick: state.onClick},
-		    			children: [
-		    				{
-		    					type: 'text',
-		    					props: null,
-		    					children: [props.text]
-		    				}
-	    				]
-		    		}
-			  	}
-			});
+			function TableCell (props) {
+				function onClick (e) {
+					console.log('Clicked' + props.text);
+	        		e.stopPropagation();
+				}
 
+				return {
+	    			nodeType: 1,
+	    			type: 'td',
+	    			props: {className: 'TableCell', onClick: onClick},
+	    			children: [
+	    				{
+	    					nodeType: 3,
+	    					type: 'text',
+	    					props: {},
+	    					children: [props.text]
+	    				}
+    				]
+	    		}
+			}
 
-			const TableRow = dio.createClass({
-			    render: function (props) {
-	    		    const data = props.data;
-	    		    let classes = 'TableRow';
+			function TableRow (props) {
+			    var data = props.data;
+			    var classes = 'TableRow';
 
-	    		    if (data.active) {
-	    	      		classes = 'TableRow active';
-	    		    }
-
-	    		    const cells = data.props;
-	    		    const length = cells.length;
-	    		    const children = new Array(length+1);
-	    		    children[0] = TableCell({text: '#' + data.id});
-
-	    		    for (let i = 0; i < length; i++) {
-	    	      		children[i+1] = TableCell({text: cells[i]});
-	    		    }
-
-	    	    	// return h('tr', {className: classes, 'data-id': data.id}, children);
-	    	    	return {
-	    	    		type: 'tr',
-	    	    		props: {className: classes, 'data-id': data.id},
-	    	    		children: children
-	    	    	}
+			    if (data.active) {
+		      		classes = 'TableRow active';
 			    }
-			});
 
-			const Table = dio.createClass({
-				render: function (props) {
-			    	const items = props.data.items;
-			    	const length = items.length;
-			    	const children = new Array(length);
+			    var cells = data.props;
+			    var length = cells.length;
+			    var children = new Array(length+1);
 
-		    		for (let i = 0; i < length; i++) {
-						const item = items[i];
-						children[i] = TableRow({key: item.id, data: item});
-		    		}
+			    children[0] = TableCell({text: '#' + data.id});
 
-			    	// return h('table', {className: 'Table'}, h('tbody', children));
-			    	return {
-			    		type: 'table',
-			    		props: {className: 'Table'},
-			    		children: [
-			    			{
-			    				type: 'tbody',
-			    				props: {},
-			    				children: children
-			    			}
-			    		]
-			    	}
-				}
-			});
-
-			const AnimBox = dio.createClass({
-				render: function (props) {
-		    		const data = props.data;
-			    	const time = data.time;
-		    		const style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+');';
-
-		    		return h('div', {className: 'AnimBox', 'data-id': data.id, style: style});
-		    		return {
-		    			type: 'div',
-		    			props: {className: 'AnimBox', 'data-id': data.id, style: style},
-		    			children: []
-		    		}
-				}
-			});
-
-			const Anim = dio.createComponent({
-				render: function (props) {
-		    		const data = props.data;
-			    	const items = data.items;
-			    	const length = items.length;
-
-		    		const children = new Array(length);
-
-		    		for (let i = 0; i < length; i++) {
-		      			const item = items[i];
-		      			children[i] = AnimBox({key: item.id, data: item});
-		    		}
-
-			    	// return h('div', {className: 'Anim'}, children);
-			    	return {
-			    		type: 'div',
-			    		props: {className: 'Anim'},
-			    		children: children
-			    	}
-				}
-			});
-
-			const TreeLeaf = dio.createClass({
-				render: function (props) {
-			    	// return h('li', {className: 'TreeLeaf'}, props.data.id);
-			    	return {
-			    		type: 'li',
-			    		props: {className: 'TreeLeaf'},
-			    		children: [
-			    			{
-			    				type: 'text',
-			    				props: null,
-			    				children: [props.data.id]
-			    			}
-			    		]
-			    	}
-				}
-			});
-
-			const TreeNode = dio.createClass({
-				render: function (props) {
-				    const data = props.data;
-				    const dataChildren = data.children;
-				    const length = dataChildren.length;
-				    const children = new Array(length);
-
-				    for (let i = 0; i < length; i++) {
-			      		const n = dataChildren[i];
-
-			      		if (n.container) {
-				        	children[i] = TreeNode({key: n.id, data: n});
-			      		} else {
-				        	children[i] = TreeLeaf({key: n.id, data: n});
-			      		}
-				    }
-
-				    // return h('ul', {className: 'TreeNode'}, children);
-				    return {
-				    	type: 'ul',
-				    	props: {className: 'TreeNode'},
-				    	children: children
-				    }
-				}
-			});
-
-			const Tree = dio.createClass({
-				render: function (props) {
-			    	// return h('div', {className: 'Tree'}, TreeNode({data: props.data.root}));
-			    	return {
-			    		type: 'div',
-			    		props: {className: 'Tree'},
-			    		children: [
-			    			TreeNode({data: props.data.root})
-			    		]
-			    	}
+			    for (var i = 0; i < length; i++) {
+		      		children[i+1] = TableCell({text: cells[i]});
 			    }
-			});
 
-			const Main = dio.createClass({
-		    	render: function (props) {
-    			    const data = props.data;
-    			    const location = data.location;
+		    	return {
+		    		nodeType: 1,
+		    		type: 'tr',
+		    		props: {className: classes, 'data-id': data.id},
+		    		children: children
+	    		}
+			}
 
-    			    let section = null;
+			function Table (props) {
+				var items    = props.data.items;
+		    	var length   = items.length;
+		    	var children = new Array(length);
 
-    			    if (location === 'table') {
-    		      		section = Table({data: data.table});
-    			    } else if (location === 'anim') {
-    		      		section = Anim({data: data.anim});
-    			    } else if (location === 'tree') {
-    		      		section = Tree({data: data.tree});
-    			    }
+	    		for (var i = 0; i < length; i++) {
+					var item = items[i];
 
-    			    let children = [];
+					children[i] = TableRow({key: item.id, data: item});
+	    		}
 
-    			    if (section) {
-    			    	children[0] = section;
-    			    }
-
-    			    // return h('div', {className: 'Main'}, section);
-    			    return {
-    			    	type: 'div', 
-    			    	props: {className: 'Main'}, 
-    			    	children: children
-    			    };
+		    	return {
+		    		nodeType: 1,
+		    		type: 'table',
+		    		props: {className: 'Table'},
+		    		children: [
+		    			{
+		    				nodeType: 1,
+		    				type: 'tbody',
+		    				props: {},
+		    				children: children
+		    			}
+		    		]
 		    	}
-		    });
+			}
+
+			function AnimBox (props) {
+				var data = props.data;
+		    	var time = data.time;
+	    		var style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+');';
+
+				return {
+					nodeType: 1,
+					type: 'div',
+					props: {className: 'AnimBox', 'data-id': data.id, style: style},
+					children: []
+				}
+			}
+
+			function Anim (props) {
+	    		var data   = props.data;
+		    	var items  = data.items;
+		    	var length = items.length;
+
+	    		var children = new Array(length);
+
+	    		for (let i = 0; i < length; i++) {
+	      			var item = items[i];
+	      			children[i] = AnimBox({key: item.id, data: item});
+	    		}
+
+		    	return {
+		    		nodeType: 1,
+		    		type: 'div',
+		    		props: {className: 'Anim'},
+		    		children: children
+		    	}
+			}
+
+			function TreeLeaf (props) {
+				return {
+					nodeType: 1,
+					type: 'li',
+					props: {className: 'TreeLeaf'},
+					children: [
+						{
+							nodeType: 3,
+							type: 'text',
+							props: {},
+							children: [props.data.id]
+						}
+					]
+				}
+			}
+
+			function TreeNode (props) {
+			    var data = props.data;
+			    var dataChildren = data.children;
+			    var length = dataChildren.length;
+			    var children = new Array(length);
+
+			    for (let i = 0; i < length; i++) {
+		      		var n = dataChildren[i];
+
+		      		if (n.container) {
+			        	children[i] = TreeNode({key: n.id, data: n});
+		      		} else {
+			        	children[i] = TreeLeaf({key: n.id, data: n});
+		      		}
+			    }
+
+			    return {
+			    	nodeType: 1,
+			    	type: 'ul',
+			    	props: {className: 'TreeNode'},
+			    	children: children
+			    }
+			}
+
+			function Tree (props) {
+				return {
+					nodeType: 1,
+					type: 'div',
+					props: {className: 'Tree'},
+					children: [
+						TreeNode({data: props.data.root})
+					]
+				}
+			}
+
+		 	function Main (data) {
+			    var location = data.location;
+
+			    var section;
+
+			    if (location === 'table') {
+		      		section = Table({data: data.table});
+			    } else if (location === 'anim') {
+		      		section = Anim({data: data.anim});
+			    } else if (location === 'tree') {
+		      		section = Tree({data: data.tree});
+			    }
+
+			    var children = [];
+
+			    if (section) {
+			    	children[0] = section;
+			    }
+
+			    return {
+			    	nodeType: 1,
+			    	type: 'div', 
+			    	props: {className: 'Main'}, 
+			    	children: children
+			    };
+		    }
+
+		    function Output (samples) {
+		    	return {
+					type: 'pre',
+					props: {},
+					children: [
+						{
+							nodeType: 3,
+							type: 'text',
+							props: {},
+							children: [JSON.stringify(samples, null, ' ')]
+						}
+					]
+				}
+		    }
 
 			uibench.init('DIO', dio.version);
 
 			document.addEventListener('DOMContentLoaded', function (e) {
-		  		const container = document.querySelector('#App');
-		  		var render = dio.createRender(Main, container);
+		  		var container = document.querySelector('#App');
 
 			  	uibench.run(
 				    function(state) {
-				      	render({data: state});
+				    	dio.render(Main(state), container);
 				    },
 				    function(samples) {
-				    	dio.createRender(
-							h('pre', JSON.stringify(samples, null, ' ')), container
-			    		)();
+				    	dio.render(Output(samples), container);
 				    }
 		  		);
 			});

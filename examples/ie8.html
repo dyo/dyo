@@ -65,7 +65,12 @@
 				}
 			}
 
-			dio.createRender(Component, '.app')();
+			dio.render({
+				nodeType: 1,
+				type: Component,
+				props: {},
+				children: []
+			}, '.app');
 		</script>
 	</body>
 </html>

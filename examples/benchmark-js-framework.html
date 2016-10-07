@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <title>dio v1.2.2</title>
+        <title>dio v2.0.0</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 		<style>
 			body {padding: 10px 0 0 0;margin: 0;overflow-y: scroll;}
@@ -14,7 +14,7 @@
 			.preloadicon {position: absolute;top:-20px;left:-20px;}
 			.col-sm-6.smallpad {padding: 5px;}
 		</style>
-		<script src="/dio.min.js"></script>
+		<script src="/dio.js"></script>
 	</head>
 	<body>
 		<div id='main'></div>
@@ -33,6 +33,7 @@
 			    startTime = performance.now();
 			    lastMeasure = name;
 			}
+
 			function stopMeasure () {
 			    var last = lastMeasure;
 			    if (lastMeasure) {
@@ -117,173 +118,279 @@
 			window.rowsUpdated = 0;
 			window.rowsMounted = 0;
 
+			// --------------------------------------
+
+			var colMd1       = {className: 'col-md-1'};
+			var colMd4       = {className: 'col-md-4'};
+			var colMd6       = {className: 'col-md-6'};
+			var colSm6       = {className: 'col-sm-6 smallpad'};
+			var tableClasses = {className: 'table table-hover table-striped test-data'};
+
+			var RowEmpty = {
+				nodeType: 1,
+				type: 'td',
+				props: colMd6,
+				children: []
+			}
+
+			var RowDeleteIcon = {
+				nodeType: 1,
+				type: 'span',
+				props: {className: 'glyphicon glyphicon-remove', 'aria-hidden': 'true'},
+				children: []
+			}
+
+			// class Row extends dio.Component {
+			// 	onDelete() {
+			// 		this.props.onDelete(this.props.id);
+			// 	}
+			// 	onClick() {
+			// 		this.props.onClick(this.props.id);
+			// 	}
+			// 	render() {
+			// 		return (
+			// 			{
+			// 				nodeType: 1,
+			// 				type: 'tr',
+			// 				props: {className: this.props.styleClass},
+			// 				children: [
+			// 					{
+			// 						nodeType: 1,
+			// 						type: 'td',
+			// 						props: colMd1,
+			// 						children: [
+			// 							{
+			// 								nodeType: 3,
+			// 								type: 'text',
+			// 								props: {},
+			// 								children: [this.props.id]
+			// 							}
+			// 						]
+			// 					},
+			// 					{
+			// 						nodeType: 1,
+			// 						type: 'td',
+			// 						props: colMd4,
+			// 						children: [
+			// 							{
+			// 								nodeType: 1,
+			// 								type: 'a',
+			// 								props: {onClick: this.onClick.bind(this)},
+			// 								children: [
+			// 									{
+			// 										nodeType: 3,
+			// 										type: 'text',
+			// 										props: {},
+			// 										children: [this.props.label]
+			// 									}
+			// 								]
+			// 							}
+			// 						]
+			// 					},
+			// 					{
+			// 						nodeType: 1,
+			// 						type: 'td',
+			// 						props: colMd1,
+			// 						children: [
+			// 							{
+			// 								nodeType: 1,
+			// 								type: 'a',
+			// 								props: {onClick: this.onDelete.bind(this)},
+			// 								children: [
+			// 									RowDeleteIcon
+			// 								]
+			// 							}
+			// 						]
+			// 					},
+			// 					RowEmpty
+			// 				]
+			// 			}
+			// 		);
+			// 	}
+			// }
+
 			function Row (props) {
-				function onDelete () {
-					props.onDelete(props.key);
-				}
-
-				function onClick () {
-					props.onClick(props.key);
-				}
-
 				return (
 					{
+						nodeType: 1,
 						type: 'tr',
 						props: {className: props.styleClass},
 						children: [
 							{
+								nodeType: 1,
 								type: 'td',
-								props: {className: 'col-md-1'},
+								props: colMd1,
 								children: [
 									{
+										nodeType: 3,
 										type: 'text',
-										props: null,
-										children: [props.data.id]
+										props: {},
+										children: [props.id]
 									}
 								]
 							},
 							{
+								nodeType: 1,
 								type: 'td',
-								props: {className: 'col-md-4'},
+								props: colMd4,
 								children: [
 									{
+										nodeType: 1,
 										type: 'a',
-										props: {onClick: onClick},
+										props: {onClick: function () {
+											props.onClick(props.id);
+										}},
 										children: [
 											{
+												nodeType: 3,
 												type: 'text',
-												props: null,
-												children: [props.data.label]
+												props: {},
+												children: [props.label]
 											}
 										]
 									}
 								]
 							},
 							{
+								nodeType: 1,
 								type: 'td',
-								props: {className: 'col-md-1'},
+								props: colMd1,
 								children: [
 									{
+										nodeType: 1,
 										type: 'a',
-										props: {onClick: onDelete},
+										props: {onClick: function () {
+											props.onDelete(props.id);
+										}},
 										children: [
-											{
-												type: 'span',
-												props: {className: 'glyphicon glyphicon-remove', 'aria-hidden': 'true'},
-												children: []
-											}
+											RowDeleteIcon
 										]
 									}
 								]
 							},
-							{
-								type: 'td',
-								props: {className: 'col-md-6'},
-								children: []
-							}
+							RowEmpty
 						]
 					}
 				);
-			};
+			}
 
-			// var store = new Store();
-
-			var Main = dio.createComponent({
-				getInitialState: function () {
-					return {
-						store: new Store()
-					}
-				},
+			class Main extends dio.Component {
 			    printDuration() {
 			        stopMeasure();
-			    },
+			    }
 			    componentDidUpdate() {
 			        this.printDuration();
-			    },
+			    }
 			    componentDidMount() {
 			        this.printDuration();
-			    },
+			    }
 			    run() {
 			        startMeasure("run");
 			        this.state.store.run();
 			        this.forceUpdate();
-			    },
+			    }
 			    add() {
 			        startMeasure("add");
 			        this.state.store.add();
 			        this.forceUpdate();
-			    },
+			    }
 			    update() {
 			        startMeasure("update");
 			        this.state.store.update();
 			        this.forceUpdate();
-			    },
+			    }
 			    select(id) {
 			        startMeasure("select");
 			        this.state.store.select(id);
 			        this.forceUpdate();
-			    },
+			    }
 			    delete(id) {
 			        startMeasure("delete");
 			        this.state.store.delete(id);
 			        this.forceUpdate();
-			    },
+			    }
 			    runLots() {
 			        startMeasure("runLots");
 			        this.state.store.runLots();
 			        this.forceUpdate();
-			    },
+			    }
 			    clear() {
 			        startMeasure("clear");
 			        this.state.store.clear();
 			        this.forceUpdate();
-			    },
+			    }
 			    swapRows() {
 			        startMeasure("swapRows");
 			        this.state.store.swapRows();
 			        this.forceUpdate();
-			    },
-			    render (props, state, self) {
-			    	var data   = this.state.store.data;
+			    }
+			    constructor() {
+			    	super();
+			    	this.state   = {store: new Store()};
+			    	this.autoBind(['delete', 'select', 'run', 'runLots', 'add', 'update', 'clear', 'swapRows']);
+			    }
+			    render(props, state, self) {
+			    	var data   = state.store.data;
 			    	var length = data.length;
 			    	var rows   = new Array(length);
 			        
 			        for (var i = 0; i < length; i++) {
 			        	var d = data[i];
+			        	var id = d.id;
+			        	var label = d.label;
+
+		        	    // rows[i] = {
+		        	    // 	nodeType: 1,
+		        	    // 	type: Row,
+		        	    // 	props: {
+			        	   //  	id: id,
+			        	   //  	label: label, 
+			        	   //  	onDelete: this.delete, 
+			        	   //  	onClick: this.select, 
+			        	   //  	styleClass: id === state.store.selected ? 'danger' : ''
+			        	   //  },
+			        	   //  children: []
+		        	    // }
 
 		        	    rows[i] = Row({
-		        	    	key: d.id,
-		        	    	data: d,
-		        	    	onClick: this.select,
-		        	    	onDelete: this.delete,
-		        	    	styleClass: d.id === this.state.store.selected ? 'danger' : '',
-		        	    });
+	        	    		id: id,
+	        	    		label: label,
+	        	    		onDelete: this.delete,
+	        	    		onClick: this.select,
+	        	    		styleClass: id === state.store.selected ? 'danger' : ''
+	        	    	});
 			        }
 
 			        return (
 			        	{
+			        		nodeType: 1,
 			        		type: 'div',
 			        		props: {className: 'container'},
 			        		children: [
 			        			{
+			        				nodeType: 1,
 			        				type: 'div',
 			        				props: {className: 'jumbotron'},
 			        				children: [
 			        					{
+			        						nodeType: 1,
 			        						type: 'div',
 			        						props: {className: 'row'},
 			        						children: [
 			        							{
+			        								nodeType: 1,
 			        								type: 'div',
-			        								props: {className: 'col-md-6'},
+			        								props: colMd6,
 			        								children: [
 			        									{
+			        										nodeType: 1,
 			        										type: 'h1',
 			        										props: {},
 			        										children: [
 			        											{
+			        												nodeType: 3,
 			        												type: 'text',
-			        												props: null,
+			        												props: {},
 			        												children: [dioVersion]
 			        											}
 			        										]
@@ -291,29 +398,33 @@
 			        								]
 			        							},
 			        							{
+			        								nodeType: 1,
 			        								type: 'div',
-			        								props: {className: 'col-md-6'},
+			        								props: colMd6,
 			        								children: [
 			        									{
+			        										nodeType: 1,
 			        										type: 'div',
 			        										props: {className: 'row'},
 			        										children: [
 			        											{
+			        												nodeType: 1,
 			        												type: 'div',
-			        												props: {className: 'col-sm-6 smallpad'},
+			        												props: colSm6,
 			        												children: [
 			        													{
+			        														nodeType: 1,
 			        														type: 'button',
 			        														props: {
-			        															type: 'button', 
 			        															className: 'btn btn-primary btn-block', 
 			        															id: 'run',
 			        															onClick: this.run
 		        															},
 			        														children: [
 			        															{
+			        																nodeType: 3,
 			        																type: 'text',
-			        																props: null,
+			        																props: {},
 			        																children: ['Create 1,000 rows']
 			        															}
 			        														]
@@ -321,21 +432,23 @@
 			        												]
 			        											},
 			        											{
+			        												nodeType: 1,
 			        												type: 'div',
-			        												props: {className: 'col-sm-6 smallpad'},
+			        												props: colSm6,
 			        												children: [
 			        													{
+			        														nodeType: 1,
 			        														type: 'button',
 			        														props: {
-			        															type: 'button', 
 			        															className: 'btn btn-primary btn-block', 
 			        															id: 'runlots',
 			        															onClick: this.runLots
 		        															},
 			        														children: [
 			        															{
+			        																nodeType: 3,
 			        																type: 'text',
-			        																props: null,
+			        																props: {},
 			        																children: ['Create 10,000 rows']
 			        															}
 			        														]
@@ -343,21 +456,23 @@
 			        												]
 			        											},
 			        											{
+			        												nodeType: 1,
 			        												type: 'div',
-			        												props: {className: 'col-sm-6 smallpad'},
+			        												props: colSm6,
 			        												children: [
 			        													{
+			        														nodeType: 1,
 			        														type: 'button',
 			        														props: {
-			        															type: 'button', 
 			        															className: 'btn btn-primary btn-block', 
 			        															id: 'add',
 			        															onClick: this.add
 		        															},
 			        														children: [
 			        															{
+			        																nodeType: 3,
 			        																type: 'text',
-			        																props: null,
+			        																props: {},
 			        																children: ['Append 1,000 rows']
 			        															}
 			        														]
@@ -365,21 +480,23 @@
 			        												]
 			        											},
 			        											{
+			        												nodeType: 1,
 			        												type: 'div',
-			        												props: {className: 'col-sm-6 smallpad'},
+			        												props: colSm6,
 			        												children: [
 			        													{
+			        														nodeType: 1,
 			        														type: 'button',
 			        														props: {
-			        															type: 'button', 
 			        															className: 'btn btn-primary btn-block', 
 			        															id: 'update',
 			        															onClick: this.update
 		        															},
 			        														children: [
 			        															{
+			        																nodeType: 3,
 			        																type: 'text',
-			        																props: null,
+			        																props: {},
 			        																children: ['Update every 10th row']
 			        															}
 			        														]
@@ -387,21 +504,23 @@
 			        												]
 			        											},
 			        											{
+			        												nodeType: 1,
 			        												type: 'div',
-			        												props: {className: 'col-sm-6 smallpad'},
+			        												props: colSm6,
 			        												children: [
 			        													{
+			        														nodeType: 1,
 			        														type: 'button',
 			        														props: {
-			        															type: 'button', 
 			        															className: 'btn btn-primary btn-block', 
 			        															id: 'clear',
 			        															onClick: this.clear
 		        															},
 			        														children: [
 			        															{
+			        																nodeType: 3,
 			        																type: 'text',
-			        																props: null,
+			        																props: {},
 			        																children: ['Clear']
 			        															}
 			        														]
@@ -409,21 +528,23 @@
 			        												]
 			        											},
 			        											{
+			        												nodeType: 1,
 			        												type: 'div',
-			        												props: {className: 'col-sm-6 smallpad'},
+			        												props: colSm6,
 			        												children: [
 			        													{
+			        														nodeType: 1,
 			        														type: 'button',
 			        														props: {
-			        															type: 'button', 
 			        															className: 'btn btn-primary btn-block', 
 			        															id: 'swaprows',
 			        															onClick: this.swapRows
 		        															},
 			        														children: [
 			        															{
+			        																nodeType: 3,
 			        																type: 'text',
-			        																props: null,
+			        																props: {},
 			        																children: ['Swap Rows']
 			        															}
 			        														]
@@ -439,10 +560,12 @@
 			        				]
 			        			},
 			        			{
+			        				nodeType: 1,
 			        				type: 'table',
 			        				props: {className: 'table table-hover table-striped test-data'},
 			        				children: [
 			        					{
+			        						nodeType: 1,
 			        						type: 'tbody',
 			        						props: {},
 			        						children: rows
@@ -450,6 +573,7 @@
 			        				]
 			        			},
 			        			{
+			        				nodeType: 1,
 			        				type: 'span',
 			        				props: {className: 'preloadicon glyphicon glyphicon-remove', 'aria-hidden': 'true'},
 			        				children: []
@@ -458,9 +582,17 @@
 			        	}
 		        	);
 			    }
-			});
+			}
 
-			dio.render(Main, document.getElementById('main'))();
+			dio.render(
+				{
+					nodeType: 1, 
+					type: Main, 
+					props: {}, 
+					children: []
+				}, 
+				document.getElementById('main')
+			);
 		</script>
 	</body>
 </html>

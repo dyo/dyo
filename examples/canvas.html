@@ -12,48 +12,55 @@
 		<div class="app"></div>
 
 		<script>
-			function CanvasComponent () {
-				var
-				isDrawing = dio.createStream(false),
-				canvas    = dio.createStream(null)
-				ctx       = dio.createStream(null)
+			function Canvas () {
+				var isDrawing = dio.stream(false),
+					canvas    = dio.stream(null);
+					ctx       = dio.stream(null);
 
 			    function mouseDown (e) {
-			    	ctx().strokeStyle = '#FF5722'
-			    	ctx().lineWidth = 4
-			    	ctx().lineJoin  = ctx.lineCap = 'round'
-			    	ctx().moveTo(e.clientX, e.clientY)
-			    	isDrawing(true)
+			    	ctx().strokeStyle = '#FF5722';
+			    	ctx().lineWidth = 4;
+			    	ctx().lineJoin  = ctx.lineCap = 'round';
+			    	ctx().moveTo(e.clientX, e.clientY);
+			    	isDrawing(true);
 			    }
 			    function mouseMove (e) {
 			    	if (isDrawing()) {
-			    		ctx().lineTo(e.clientX, e.clientY)
-			    		ctx().stroke()
+			    		ctx().lineTo(e.clientX, e.clientY);
+			    		ctx().stroke();
 			    	}
 			    }
 			    function mouseUp () {
-			    	isDrawing(false)
+			    	isDrawing(false);
 			    }
-
 				return {
 					componentDidMount: function () {
 						ctx(canvas().getContext('2d'))
 					},
 				    render: function () {
-				        return h('canvas', {
-				        	ref: canvas,
-				        	width: window.innerWidth - 4, 
-				        	height: window.innerHeight - 4,
-				        	onMouseDown: mouseDown,
-				        	onMouseMove: mouseMove,
-				        	onMouseUp: mouseUp
-				        })
+				        return {
+				        	nodeType: 1,
+				        	type: 'canvas',
+				        	props: {
+				        		ref: canvas,
+				        		width: window.innerWidth - 4, 
+				        		height: window.innerHeight - 4,
+				        		onMouseDown: mouseDown,
+				        		onMouseMove: mouseMove,
+				        		onMouseUp: mouseUp
+				        	},
+				        	children: []
+				        }
 				    }
 				}
-			}	
-			var 
-			Render = dio.createRender(CanvasComponent, '.app');
-			Render();
+			}
+			
+			dio.render({
+				nodeType: 1,
+				type: Canvas,
+				props: {},
+				children: []
+			}, '.app');
 		</script>
 	</body>
 </html>

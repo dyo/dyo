@@ -1,3 +1,21 @@
+## 2.0.0 (October 07, 2016)
+
+- performance, performance, performance.
+
+### API changes
+
+- `dio.render` replaces `dio.createRender`
+- `dio.createClass` replaces `dio.createComponent`
+- `dio.renderToString` replaces `dio.createHTML`
+- `dio.router` replaces `dio.createRouter`
+- `dio.stream` replaces `dio.createStream`
+- push back `createFactory` to support react-like single element factories
+- removed `componentDidUnmount` lifecycle method not to be confused with `componentWillUnmount`
+- pushed utilities to the `dio` namespace, removed `dio._` namespace
+- utility `dio.splice` replaces `dio.toArray`
+- added ``flatten`, `splice`, `slice` utilities
+- added `nodeType` to compiled vnodes, `1` for `Element`, `3` for `TextNode`
+
 ## 1.2.3 (September 16, 2016)
 
 - patch .createRender/.render caching
@@ -42,7 +60,7 @@ dio.render(Component, '.app')();
 
 ### API
 
-- Added `version, isValidElement, cloneElement, renderToString, renderToStaticMarkup`
+- Added `version`, `isValidElement`, `cloneElement`, `renderToString`, `renderToStaticMarkup`
 - Exposes internal utilities to `dio._` that are used to get out-the-box support for IE 8+
 
 ``` javascript

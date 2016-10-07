@@ -14,7 +14,9 @@
 			function Component () {
 				return {
 					render: function (props, state, self) {
-						return h('ul', {
+						return (
+							h('ul', 
+								{
 									onClick: function () {
 										self.forceUpdate();
 									}
@@ -23,14 +25,25 @@
 								h('li', 'Second Year'),
 								h('li', 'Third Year')
 							)
+						)
 					}
 				}
 			}
 
-			// server-Side render mock
-			document.querySelector('.app').innerHTML = dio.createHTML(Component);
+			var html = dio.renderToString(Component);
 
-			dio.createRender(Component, '.app')();
+			// server-Side render mock
+			document.querySelector('.app').innerHTML = html;
+
+			// var li = document.querySelector('.app li');
+			// li.className = 'hello world';
+			
+			dio.render({
+				nodeType: 1,
+				type: Component,
+				props: {},
+				children: []
+			}, '.app');
 		</script>
 	</body>
 </html>

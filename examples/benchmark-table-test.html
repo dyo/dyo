@@ -12,7 +12,7 @@
             #table {overflow: auto;height: 400px;}
             .btn-group-lg>.btn, .btn-lg {font-size: 16px;}
         </style>
-        <script src="/dio.min.js"></script>
+        <script src="/dio.js"></script>
     </head>
     <body>
         <div class="container">
@@ -26,19 +26,30 @@
         <script>
             var TestTable = dio.createClass({
                 render: function () {
-                    var rows = [];
+                    var rows;
+                    
                     if (this.props.rows) {
-                        this.props.rows.forEach(function (row) {
-                            rows.push(
+                        var $rows = this.props.rows;
+                        var len   = $rows.length
+
+                        rows = new Array(len);
+
+                        for (var i = 0; i < len; i++) {
+                            var row = $rows[i];
+                        
+                            rows[i] = (
                                 {
+                                    nodeType: 1,
                                     type: 'tr',
                                     props: {},
                                     children: [
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
+                                                    nodeType: 1,
                                                     type: 'input', 
                                                     props: {type: 'checkbox'}, 
                                                     children: []
@@ -46,122 +57,144 @@
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.status]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.field1]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {}, 
                                                     children: [row.field2]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.field3]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.field4]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.field5]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.field6Data]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.field7]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {}, 
                                                     children: [row.field8]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.field9]
                                                 }
                                             ]
                                         },
                                         {
+                                            nodeType: 1,
                                             type: 'td', 
                                             props: {}, 
                                             children: [
                                                 {
-                                                    type: 'text', 
-                                                    props: null, 
+                                                    nodeType: 3,
+                                                    type: 'text',
+                                                    props: {},
                                                     children: [row.field10]
                                                 }
                                             ]
@@ -169,26 +202,34 @@
                                     ]
                                 }
                             );
-                        });
+                        }
+                    } else {
+                        rows = [];
                     }
+
                     return (
                         {
+                            nodeType: 1,
                             type: 'table',
                             props: {className: 'table'},
                             children: [
                                 {
+                                    nodeType: 1,
                                     type: 'thead',
                                     props: {},
                                     children: [
                                         {
+                                            nodeType: 1,
                                             type: 'tr',
                                             props: {},
                                             children: [
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 1,
                                                             type: 'input',
                                                             props: {type: 'checkbox'},
                                                             children: []
@@ -196,145 +237,171 @@
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['Status']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['Name']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['Email']
                                                         }
                                                     ]
                                                 },
 
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field1']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field2']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field3']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field4']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field5']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field6Date']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field7']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field8']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field9']
                                                         }
                                                     ]
                                                 },
                                                 {
+                                                    nodeType: 1,
                                                     type: 'th',
                                                     props: {},
                                                     children: [
                                                         {
+                                                            nodeType: 3,
                                                             type: 'text',
-                                                            props: null,
+                                                            props: {},
                                                             children: ['field10']
                                                         }
                                                     ]
@@ -344,6 +411,7 @@
                                     ]
                                 },
                                 {
+                                    nodeType: 1,
                                     type: 'tbody',
                                     props: {},
                                     children: rows
@@ -370,7 +438,7 @@
                                         className: 'btn btn-lg btn-success', 
                                         role: 'button', 
                                         disabled: this.props.running, 
-                                        onClick: this.handleClick.bind(null, 500)
+                                        onClick: this.handleClick.bind(this, 500)
                                     }, 
                                     '500 records'
                                 ),
@@ -379,7 +447,7 @@
                                         className: 'btn btn-lg btn-success', 
                                         role: 'button', 
                                         disabled: this.props.running, 
-                                        onClick: this.handleClick.bind(null, 1500)
+                                        onClick: this.handleClick.bind(this, 1500)
                                     }, 
                                     '1500 records'
                                 ),
@@ -388,7 +456,7 @@
                                         className: 'btn btn-lg btn-success', 
                                         role: 'button', 
                                         disabled: this.props.running, 
-                                        onClick: this.handleClick.bind(null, 2500)
+                                        onClick: this.handleClick.bind(this, 2500)
                                     }, 
                                     '2500 records'
                                 ),
@@ -397,7 +465,7 @@
                                         className: 'btn btn-lg btn-success', 
                                         role: 'button', 
                                         disabled: this.props.running, 
-                                        onClick: this.handleClick.bind(null, 5000)
+                                        onClick: this.handleClick.bind(this, 5000)
                                     }, 
                                     '5000 records'
                                 )
@@ -409,7 +477,7 @@
                         )
                     );
                 }
-            })
+            });
 
             var TestApp = dio.createClass({
                 getInitialState: function () {
@@ -419,19 +487,38 @@
                 },
                 runTest: function (counter) {
                     var self = this;
-                    this.setState({rows: [], running: true});
+                    self.setState({rows: [], running: true});
+
                     // Force clear table before
-                    dio.render(TestTable({rows: []}), document.getElementById("table"));
+                    dio.render(
+                        {
+                            nodeType: 1,
+                            type: TestTable,
+                            props: {rows: []},
+                            children: []
+                        },
+                        document.getElementById('table')
+                    );
 
                     dio.request
                         .get('https://thysultan.com/data/' + counter + '.json', null, 'json')
                         .then(function (data) {
                             console.log('Loading records completed');
 
-                            var start = new Date();
+                            var start = Date.now();
                             self.setState({rows: data, running: false});
-                            dio.render(TestTable({rows: self.state.rows}), document.getElementById("table"))
-                            self.setState({duration: new Date() - start});
+
+                            dio.render(
+                                {
+                                    nodeType: 1,
+                                    type: TestTable,
+                                    props: {rows: self.state.rows},
+                                    children: []
+                                },
+                                document.getElementById('table')
+                            );
+
+                            self.setState({duration: Date.now() - start});
                         })
                         .catch(function (err) {
                             console.error('Error', status, err.toString());
@@ -442,8 +529,14 @@
                         type: 'div',
                         props: {},
                         children: [
-                            Header({runTest: this.runTest, running: this.state.running, duration: this.state.duration}),
                             {
+                                nodeType: 1,
+                                type: Header,
+                                props: {runTest: this.runTest, running: this.state.running, duration: this.state.duration}, 
+                                children: []
+                            },
+                            {
+                                nodeType: 1,
                                 type: 'div',
                                 props: {id: 'table'},
                                 children: []
@@ -454,7 +547,12 @@
             });
 
             dio.render(
-                TestApp,
+                {
+                    nodeType: 1,
+                    type: TestApp,
+                    props: {},
+                    children: []
+                },
                 document.getElementById('content')
             )();
         </script>
