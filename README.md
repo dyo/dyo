@@ -32,15 +32,15 @@ Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.0.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.0.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/2.0.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/2.0.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@2.0.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@2.0.1/dio.min.js></script>
 ```
 
 #### bower
@@ -116,17 +116,6 @@ Will mount a h1 element onto the page the contents of which will be 'Hello World
 	componentWillMount:        () => {}
 	componentDidMount:         () => {}
 	componentWillUnmount:      () => {}
-	
-	// this.methods
-	this.withAttr              ({string|string[]}, {function|function[]})
-
-	this.forceUpdate:          ()
-
-	// setState is synchronous
-	// setState also calls this.forceUpdate
-	// setState will execute the callback before this.forceUpdate
-	this.setState:             ({Object}, callback: {function=})
-	this.setProps:             ({Object})
 
 	// displayName is auto created when you create a component
 	// with a function like dio.createClass({Function})
@@ -146,6 +135,22 @@ Will mount a h1 element onto the page the contents of which will be 'Hello World
 
 	// render method
 	render:                    (props, state, this) => {}
+	
+	// methods
+	this.forceUpdate:          ()
+
+	// setState is synchronous
+	// setState also calls this.forceUpdate
+	// setState will execute the optional callback before this.forceUpdate if supplied
+	this.setState:             ({Object}, callback: {function=})
+
+	// non-react methods
+	// helper for two-way auto binding
+	this.withAttr              ({string|string[]}, {function|function[]})
+	// if you've used class Components and want to bind multiple
+	// methods `this.method = this.method.bind(), ...more bindings` the following can provides
+	// a way to delegate all bindings with this.autoBind(['method1', 'method2', 'method3'])
+	this.autoBind              (string[])
 }
 ```
 
@@ -154,8 +159,10 @@ Will mount a h1 element onto the page the contents of which will be 'Hello World
 ## creating hyperscript objects
 
 ```javascript
+// NOTE: h is an alias for dio.createElement
+
 h(
-	tag: {String}, 
+	type: {String}, 
 	props?|children?: {Object} | {Array|Object}...,
 	children?: {Array|Object}...
 )
@@ -719,6 +726,24 @@ div('Hello World');
 
 ---
 
+## dio.findDOMNode
+
+Given a component findDOMNode will return the dom node
+attached to that component if the component is mounted.
+
+```javascript
+class Component extends dio.Component {
+	componentDidMount(){
+		var node = dio.findDOMNode(this);
+	}
+	render(){
+		return h('div')
+	}
+}
+```
+
+---
+
 ## dio.request
 
 a http helper that makes ajax requests.
@@ -822,8 +847,11 @@ handleDelete: function (e) {
 		// we can also nest another transtion using the second arg
 		// el will be the element we passed to it
 		next('slideLeft')(el, function (el, next) {
-			// we can also trigger the animation 
+			// we can still trigger the animation 
 			// that results in removing the class
+			// and nest another transition as much as we nest the callback chain
+			// -1, false and 0 represent remove operations
+			// undefined(left blank), true, 1, anything truefy represents add operations
 			next('slideLeft', -1)(el);
 		});
 	})

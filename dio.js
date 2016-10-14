@@ -22,31 +22,30 @@
 }(this, function (exports) {
 	'use strict';
 
-	var
-	VERSION                    = '2.0.0',
-	// signatures
-	FRAGMENT                   = '@',
-	SIGNATURE                  = '@DIO',
-	STORE                      = '@DIO/STORE',
-	// objects
-	window                    = typeof global === 'object' ? global : exports,
-	document                  = window.document,
-	mathNS                    = 'http://www.w3.org/1998/Math/MathML',
-	xlinkNS                   = 'http://www.w3.org/1999/xlink',
-	svgNS                     = 'http://www.w3.org/2000/svg',
-	// functions
-	XMLHttpRequest            = window && window.XMLHttpRequest,
-	hasOwnProperty            = Object.prototype.hasOwnProperty,
-	slice                     = Array.prototype.slice,
-	// other
-	isDevEnv                  = registerEnviroment()|0,
-	emptyNode                 = {nodeType: 0, type: '', props: {}, children: []},
-	voidElements              = {
-		'area': 0, 'base': 0, 'br': 0, '!doctype': 0, 'col': 0, 
-		'embed': 0, 'wbr': 0, 'track': 0, 'hr': 0, 'img': 0, 'input': 0, 
-		'keygen': 0, 'link': 0, 'meta': 0, 'param': 0, 'source': 0
-	},
-	specialVirtualElementTypeRegExp;
+	var VERSION                    = '2.0.1',
+		// signatures
+		FRAGMENT                   = '@',
+		SIGNATURE                  = '@DIO',
+		STORE                      = '@DIO/STORE',
+		// objects
+		window                    = typeof global === 'object' ? global : exports,
+		document                  = window.document,
+		mathNS                    = 'http://www.w3.org/1998/Math/MathML',
+		xlinkNS                   = 'http://www.w3.org/1999/xlink',
+		svgNS                     = 'http://www.w3.org/2000/svg',
+		// functions
+		XMLHttpRequest            = window && window.XMLHttpRequest,
+		hasOwnProperty            = Object.prototype.hasOwnProperty,
+		slice                     = Array.prototype.slice,
+		// other
+		isDevEnv                  = registerEnviroment()|0,
+		emptyNode                 = {nodeType: 0, type: '', props: {}, children: []},
+		voidElements              = {
+			'area': 0, 'base': 0, 'br': 0, '!doctype': 0, 'col': 0, 
+			'embed': 0, 'wbr': 0, 'track': 0, 'hr': 0, 'img': 0, 'input': 0, 
+			'keygen': 0, 'link': 0, 'meta': 0, 'param': 0, 'source': 0
+		},
+		specialVirtualElementTypeRegExp;
 
 
 	/**
@@ -113,7 +112,7 @@
 		// throw error
 		else { throw error; }
 	}
-	
+
 	/**
 	 * [].forEach or for in {}
 	 * 
@@ -125,8 +124,7 @@
 		if (subject !== void 0 && subject !== null) {
 			var len;
 
-			if (subject.constructor === Array) {
-				// arrays/array-like object
+			if (subject.constructor === Array || subject.length) {
 				for (var i = 0, len = subject.length; i < len; i = i + 1) {
 					if (callback.call(thisArg, subject[i], i, subject) === false) {
 						return void 0;
@@ -387,6 +385,16 @@
 	}
 
 	/**
+	 * @param  {*}
+	 * @return {boolean}
+	 */
+	function isNumber (subject) {
+		return (
+			typeof subject === 'number'
+		);
+	}
+
+	/**
 	 * @param  {*} subject
 	 * @return {boolean}
 	 */
@@ -413,6 +421,16 @@
 	function isDefined (subject) {
 		return (
 			subject !== void 0 && subject !== null
+		);
+	}
+
+	/**
+	 * @param  {*}  subject 
+	 * @return {boolean}
+	 */
+	function isArrayLike (subject) {
+		return (
+			isDefined(subject) && isNumber(subject.length) === false && isFunction(subject) === false
 		);
 	}
 
@@ -973,14 +991,14 @@
 	 * diff oldProps agains newProps
 	 * 
 	 * @param  {Object}  newProps 
-	 * @param  {Object}  oldProps 
+	 * @param  {Object}  oldName 
 	 * @param  {string}  namespace
 	 * @param  {Array[]} propsDiff
 	 * @return {Array[]}          
 	 */
-	function diffOldProps (newProps, oldNode, namespace, propsDiff) {
-		if (newProps[oldNode] === null || newProps[oldNode] === void 0) {
-			propsDiff[propsDiff.length] = ['removeAttribute', oldNode, '', namespace];
+	function diffOldProps (newProps, oldName, namespace, propsDiff) {
+		if (newProps[oldName] === null || newProps[oldName] === void 0) {
+			propsDiff[propsDiff.length] = ['removeAttribute', oldName, '', namespace];
 		}
 	}
 
@@ -1191,6 +1209,7 @@
 				// class / createClass components
 				component = type;
 			}
+
 			subject._owner = new component(subject.props || component.defaultProps);
 		} else {
 			subject._owner = subject.type;
@@ -1206,7 +1225,11 @@
 	 * @return {Object}
 	 */
 	function retrieveVirtualElement (subject) {
-		var vnode, component = subject._owner;
+		var vnode, component = subject._owner, children = subject.props.children;
+
+		if (children !== void 0 && children.length !== 0) {
+			component.props.children = children;
+		}
 		
 		// retrieve vnode
 		vnode = component.render(component.props, component.state, component);
@@ -1248,49 +1271,58 @@
 
 		// remove operation
 		if (newNodeType === 0) { return 1; }
+
 		// add operation
 		else if (oldNodeType === 0) { return 2; }
+
 		// text operation
-		else if (newNodeType === 3 && newNodeType === 3) { if (newNode.children[0] !== oldNode.children[0]) { return 3; } }
+		else if (newNodeType === 3 && oldNodeType === 3) { if (newNode.children[0] !== oldNode.children[0]) { return 3; } }
+
 		// key operation
 		else if (newNode.props.key !== oldNode.props.key) { return 5; }
+
 		// replace operation
 		else if (newNode.type !== oldNode.type) { return 4; }
 
 		// recursive
 		else {
 			// extract node from possible component node
-			var _newNode = extractNode(newNode);
+			var currentNode = extractNode(newNode);
 
-			// opt: if _newNode and oldNode are the same, exity early
-			if (_newNode === oldNode) { return 0; }
+			// opt: if currentNode and oldNode are the identical, exit early
+			if (currentNode === oldNode) { return 0; }
 
 			// opt: patch props only if oldNode is not a textNode and the props objects of the two noeds are not equal
-			if (oldNode.nodeType === 1 && _newNode.props !== oldNode.props) { patchProps(_newNode, oldNode); }
+			if (oldNode.nodeType === 1 && currentNode.props !== oldNode.props) { 
+				patchProps(currentNode, oldNode); 
+			}
 
 			// references, children & children length
-			var newChildren = _newNode.children,
-				oldChildren = oldNode.children,
-				newLength   = newChildren.length,
-				oldLength   = oldChildren.length;
+			var currentChildren = currentNode.children,
+				oldChildren     = oldNode.children,
+				newLength       = currentChildren.length,
+				oldLength       = oldChildren.length;
 
 			// opt: if new children length is 0 clear/remove all children
 			if (newLength === 0) {
 				// but only if old children is not already cleared
 				if (oldLength !== 0) {
 					oldNode._el.textContent = '';
-					oldNode.children = _newNode.children;
+					oldNode.children = currentNode.children;
 				}	
 			}
 			// if newNode has children
 			else {
+				// opt: if currentChildren and oldChildren are identical, exit early
+				if (currentChildren === oldChildren) { return 0; }
+
 				// count of index change when we .splice to keep track of the new index to reference
-				var deleteCount = 0,
-					parent      = oldNode._el;
+				var deleteCount   = 0,
+					parentElement = oldNode._el;
 
 				// for loop, the end point being which ever is the greater value between newLength and oldLength
 				for (var i = 0; i < newLength || i < oldLength; i = i + 1) {
-					var newChild = newChildren[i] || emptyNode,
+					var newChild = currentChildren[i] || emptyNode,
 						oldChild = oldChildren[i] || emptyNode,
 						action   = patch(newChild, oldChild);
 
@@ -1306,7 +1338,7 @@
 								var removeNode = oldChildren[index];
 
 								// remove node from the dom
-								removeChild(removeNode, parent, removeNode._el);
+								removeChild(removeNode, parentElement, removeNode._el);
 								// normalize old children, remove from array
 								spliceArray(oldChildren, index, 1);
 								// update delete count, increment
@@ -1317,7 +1349,7 @@
 							}
 							// add operation
 							case 2: {
-								addNode(index, oldLength, parent, createElement(newChild), newChild, oldChild);
+								addNode(index, oldLength, parentElement, createElement(newChild), newChild, oldChild);
 
 								// normalize old children, add to array								
 								spliceArray(oldChildren, index, 0, newChild);
@@ -1336,7 +1368,7 @@
 							// replace operation
 							case 4: {
 								// replace dom node
-								replaceChild(newChild, parent, createElement(newChild), oldChild._el);
+								replaceChild(newChild, parentElement, createElement(newChild), oldChild._el);
 								// update old children, replace array element
 								oldChildren[index] = newChild; 
 
@@ -1361,12 +1393,12 @@
 									// reference element from oldChildren that matches newChild key
 									var element = oldChildren[fromIndex];
 
-								    addNode(index, oldLength, parent, element._el, element, oldChild);
+								    addNode(index, oldLength, parentElement, element._el, element, oldChild);
 
 									// remove element from 'old' oldChildren index
-								    oldChildren.splice(fromIndex, 1);
+								    spliceArray(oldChildren, fromIndex, 1);
 								    // insert into 'new' oldChildren index
-								    oldChildren.splice(index, 0, element);
+								    spliceArray(oldChildren, index, 0, element);
 								    // the length of oldChildren does not change in this case
 								} else {
 									// remove node
@@ -1375,7 +1407,7 @@
 										var removeNode = oldChildren[index];
 										
 										// remove node from the dom
-										removeChild(removeNode, parent, removeNode._el);
+										removeChild(removeNode, parentElement, removeNode._el);
 
 										// normalize old children, remove from array
 										spliceArray(oldChildren, index, 1);
@@ -1386,7 +1418,7 @@
 									}
 									// add node
 									else if (newLength > oldLength) {
-										addNode(index, oldLength, parent, createElement(newChild), newChild, oldChild);
+										addNode(index, oldLength, parentElement, createElement(newChild), newChild, oldChild);
 
 										// normalize old children, add to array
 										spliceArray(oldChildren, index, 0, newChild);
@@ -1398,7 +1430,7 @@
 									// replace node
 									else {
 										// replace dom node
-										replaceChild(newChild, parent, createElement(newChild), oldChild._el);
+										replaceChild(newChild, parentElement, createElement(newChild), oldChild._el);
 										// update old children, replace array element
 										oldChildren[index] = newChild; 
 									}
@@ -1665,21 +1697,22 @@
    				// register mount dispatched
    				initial = 0;
    				// assign component
-   				if (component === void 0) { component = node._owner; }
+   				if (component === void 0) { 
+   					component = node._owner;
+   				}
    			} else {
    				// update props
    				if (props !== void 0) {
+   					if (component.shouldComponentUpdate !== void 0 && 
+   						component.shouldComponentUpdate(props, component.state) === false) {
+   						return reconciler;
+   					}
+
    					component.props = props;
    				}
 
-		   		var time  = Date.now(),
-		   			delta = time - then;
-
-		   		if (delta > interval) {
-	   				then = time - (delta % interval);
-	   				// update component
-	   				component.forceUpdate();
-	   			}
+   				// update component
+   				component.forceUpdate();
    			}
 
 	   		return reconciler;
@@ -1694,10 +1727,14 @@
 
 	   	// create component from object
 	   	if (subject.render !== void 0 || subject.constructor === Function) {
-	   		node = {nodeType: 1, type: createClass(subject), props: {}, children: []};
-	   	}
-	   	// normalization
-	   	else if (subject.type === void 0) {
+	   		node = {
+	   			nodeType: 1, 
+	   			type: subject.render !== void 0 ? createClass(subject) : subject, 
+	   			props: {}, 
+	   			children: []
+	   		};
+	   	} else if (subject.type === void 0) {
+	   		// normalization
 	   		node = {nodeType: 1, type: subject, props: {}, children: []};
 	   	} else {
 	   		node = subject;
@@ -1716,12 +1753,8 @@
 		// retrieve mount element
 		var element = retrieveMountElement(target);
 
-		// initialize variables
-		var initial   = 1, 
-			then      = 0,
-			// pipe each update at 60 frames per second
-			// this does not use async requestAnimationFrame
-			interval  = 1000/60;
+		// initial mount registry
+		var initial = 1;
 
 		// caching
 		reconciler._render = reconciler;
@@ -1816,6 +1849,7 @@
 	 * ---------------------------------------------------------------------------------
 	 */
 	
+
 	/**
 	 * assign component properties
 	 * 
@@ -1872,6 +1906,16 @@
 				thisArg[names[i]] = functionBind(functions[i], thisArg);
 			}
 		}
+	}
+
+	/**
+	 * findDOMNode
+	 * 
+	 * @param  {Object} component
+	 * @return {(Node|bool)}
+	 */
+	function findDOMNode (component) {
+		return component._node && component._node._el;
 	}
 	
 	/**
@@ -2018,10 +2062,8 @@
 				}
 			},
 			setState: function setState (newState, callback) {
-				if (
-					this.shouldComponentUpdate !== void 0 && 
-					this.shouldComponentUpdate(this.props, newState) === false
-				) {
+				if (this.shouldComponentUpdate !== void 0 && 
+					this.shouldComponentUpdate(this.props, newState) === false) {
 					return;
 				}
 
@@ -2036,7 +2078,6 @@
 				}
 			},
 			forceUpdate: function forceUpdate () {
-				// patch update
 				if (this._node !== void 0) {
 					// componentWillUpdate lifecycle
 					if (this.componentWillUpdate !== void 0) {
@@ -2051,6 +2092,7 @@
 						oldNode.type = newNode.type;
 					}
 
+					// patch update
 					update(newNode, oldNode);
 
 					// componentDidUpdate lifecycle
@@ -2326,8 +2368,8 @@
 		propTypesObj.node = createTypeValidator('node', void 0,
 			function (propValue) {
 				if (
-					typeof propValue !== 'string' &&
-					isNaN(propValue) === true && 
+					isString(propValue)       === false &&
+					isNumber(propValue)       === false &&
 					isValidElement(propValue) === false
 				) {
 					return 1;
@@ -3669,6 +3711,7 @@
 		// components
 		Component: createComponentClass(),
 		createClass: createClass,
+		findDOMNode: findDOMNode,
 
 		// stores
 		createStore: Store,
@@ -3706,6 +3749,8 @@
 		isString: isString,
 		isArray: isArray,
 		isDefined: isDefined,
+		isNumber: isNumber,
+		isArrayLike: isArrayLike,
 		curry: curry
 	};
 }));

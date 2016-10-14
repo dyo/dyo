@@ -9,15 +9,15 @@
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.0.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.0.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/2.0.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/2.0.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@2.0.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@2.0.1/dio.min.js></script>
 ```
 
 #### bower

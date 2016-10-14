@@ -1,3 +1,8 @@
+## 2.0.1 (October 14, 2016)
+
+- tweaks to allow for better performance optimizations when needed
+- add `dio.findDOMNode`
+
 ## 2.0.0 (October 07, 2016)
 
 - performance, performance, performance.
