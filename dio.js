@@ -82,18 +82,30 @@
 	function spliceArray (subject, index, deleteCount, item) {
 		if (item === void 0) {
 			// remove first item using faster shift if start of array
-			if (index === 0) { return subject.shift(); }
+			if (index === 0) { 
+				return subject.shift(); 
+			}
 			// remove last item using faster pop if end of array
-			else if (index >= subject.length - 1) { return subject.pop(); }
+			else if (index > subject.length - 1) { 
+				return subject.pop(); 
+			}
 			// remove at a specific index
-			else { return subject.splice(index, deleteCount); }
+			else { 
+				return subject.splice(index, 1); 
+			}
 		} else {
 			// prepend using faster unshift if start of array
-			if (index === 0) { return subject.unshift(item); }
+			if (index === 0) { 
+				return subject.unshift(item); 
+			}
 			// append using faster push to end of array
-			else if (index >= subject.length - 1) { return subject[subject.length] = item; }
+			else if (index > subject.length - 1) { 
+				return subject[subject.length] = item; 
+			}
 			// insert at index
-			else { return subject.splice(index, deleteCount, item); }
+			else { 
+				return subject.splice(index, deleteCount, item); 
+			}
 		}
 	}
 
@@ -1271,19 +1283,14 @@
 
 		// remove operation
 		if (newNodeType === 0) { return 1; }
-
 		// add operation
 		else if (oldNodeType === 0) { return 2; }
-
 		// text operation
 		else if (newNodeType === 3 && oldNodeType === 3) { if (newNode.children[0] !== oldNode.children[0]) { return 3; } }
-
 		// key operation
 		else if (newNode.props.key !== oldNode.props.key) { return 5; }
-
 		// replace operation
 		else if (newNode.type !== oldNode.type) { return 4; }
-
 		// recursive
 		else {
 			// extract node from possible component node
