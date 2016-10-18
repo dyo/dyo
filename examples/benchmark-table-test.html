@@ -12,7 +12,7 @@
             #table {overflow: auto;height: 400px;}
             .btn-group-lg>.btn, .btn-lg {font-size: 16px;}
         </style>
-        <script src="/dio.js"></script>
+        <script src="/dio.min.js"></script>
     </head>
     <body>
         <div class="container">
@@ -492,7 +492,7 @@
                     // Force clear table before
                     dio.render(
                         {
-                            nodeType: 1,
+                            nodeType: 2,
                             type: TestTable,
                             props: {rows: []},
                             children: []
@@ -510,7 +510,7 @@
 
                             dio.render(
                                 {
-                                    nodeType: 1,
+                                    nodeType: 2,
                                     type: TestTable,
                                     props: {rows: self.state.rows},
                                     children: []
@@ -530,7 +530,7 @@
                         props: {},
                         children: [
                             {
-                                nodeType: 1,
+                                nodeType: 2,
                                 type: Header,
                                 props: {runTest: this.runTest, running: this.state.running, duration: this.state.duration}, 
                                 children: []
@@ -548,7 +548,7 @@
 
             dio.render(
                 {
-                    nodeType: 1,
+                    nodeType: 2,
                     type: TestApp,
                     props: {},
                     children: []
