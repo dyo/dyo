@@ -40,27 +40,27 @@ zep(['../dio.js'], function (utili, deps) {
 		);
 
 		assert(
-			h('div', 1).children[0].children[0] === '1',
+			h('div', 1).children[0].children === 1,
 			"h('div', 1)"
 		);
 
 		assert(
-			h('div', 1, 2, 3).children[1].children[0] === '2',
+			h('div', 1, 2, 3).children[1].children === 2,
 			"h('div', 1, 2, 3)"
 		);
 
 		assert(
-			h('div', [1]).children[0].children[0] === '1',
+			h('div', [1]).children[0].children === 1,
 			"h('div', [1])"
 		);
 
 		assert(
-			h('div', [1,2], 3).children[2].children[0] === '3',
+			h('div', [1,2], 3).children[2].children === 3,
 			"h('div', [1,2], 3)"
 		);
 
 		assert(
-			h('div', [1,2], [3,4]).children[2].children[0] === '3',
+			h('div', [1,2], [3,4]).children[2].children === 3,
 			"h('div', [1,2], [3,4])"
 		);
 
@@ -70,7 +70,7 @@ zep(['../dio.js'], function (utili, deps) {
 		);
 
 		assert(
-			h('div', h('h1', 1)).children[0].children[0].children[0] === '1' &&
+			h('div', h('h1', 1)).children[0].children[0].children === 1 &&
 			h('div', h('h1', 1)).children[0].type === 'h1',
 			"h('div', h('h1', 1))"
 		);

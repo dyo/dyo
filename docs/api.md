@@ -101,9 +101,8 @@ h('@foo', 'Hello', 'World')
 
 // you could also write all of the above by hand in its compiled form
 // when trying to skews the most out of performance.
-
 {
-	nodeType: 1, // where nodeType is either 1 'Element' or 3 'TextNode'
+	nodeType: 1, // where nodeType is either 1 'Element' or 3 'TextNode' or 2 'Component'
 	type: 'div',
 	props: {},
 	children: [
@@ -111,7 +110,7 @@ h('@foo', 'Hello', 'World')
 			nodeType: 3,
 			type: 'text',
 			props: {},
-			children: ['Hello World']
+			children: 'Hello World'
 		}
 	]
 }
@@ -640,6 +639,43 @@ class Component extends dio.Component {
 
 ---
 
+## dio.DOM
+
+creates common element factories
+
+```javascript
+var {div, li, input} = dio.DOM();
+
+// instead of
+h('div', {}, [div('input')])
+
+// you can now do the same with
+div({}, [input()])
+
+// the common elements exported are
+[
+	'h1','h2','h3','h4','h5', 'h6','audio','video','canvas',
+	'header','nav','main','aside','footer','section','article','div',
+	'form','button','fieldset','form','input','label','option','select','textarea',
+	'ul','ol','li','p','a','pre','code','span','img','strong','time','small','hr','br',
+	'table','tr','td','th','tbody','thead',
+];
+
+// you can supply dio.DOM([...]) your own list of elements
+// that will overwrite what elements are exported.
+
+
+// if you supply a ['svg'] in the array of elements the following 
+// list of svg elements will get exported aswell.
+[
+	'rect','path','polygon','circle','ellipse','line','polyline','image','marker','a','symbol',
+	'linearGradient','radialGradient','stop','filter','use','clipPath','view','pattern','svg',
+	'g','defs','text','textPath','tspan','mpath','defs','g','marker','mask'
+];
+```
+
+---
+
 ## dio.request
 
 a http helper that makes ajax requests.
@@ -738,7 +774,7 @@ handleDelete: function (e) {
 		self = this
 	
 	// animate element out then update state
-	dio.animateWith.transitions('slideUp')(element, function(next, el) {
+	dio.animateWith.transitions('slideUp')(element, function(el, next) {
 		store.dispatch({type: 'DELETE', id: 1234});
 		// we can also nest another transtion using the second arg
 		// el will be the element we passed to it
@@ -865,4 +901,46 @@ isFunction,
 isString,
 isArray,
 isDefined // (not null and undefined)
+```
+
+## Performance Tips
+
+The hyperscript helper `h` for creating vnodes is very versatile,
+however if you are trying to draw the most out of performance
+the following way of creating vnodes are the most optimal performance wise..
+
+```javascript
+// raw vnode object
+// this is what all the helpers generate
+{
+	// where 1 = element, 2 = component and 3 = text
+	// elementNodes and textNodes follow the spec with regards
+	// to the nodeType signature being 1 and 3 respectfully.
+	nodeType: 1,
+	type: 'div',
+	props: {},
+	children: [
+		{
+			nodeType: 3,
+			type: 'text',
+			props: {},
+			children: 'Hello World' // ony text nodes have non array children
+		}
+	]
+}
+
+// or the V... helpers, the 2nd and 3rd arguments are optinal in all the following
+dio.VElement('div', {}, [VText('Hello World')])
+dio.VComponent(Component)
+dio.VFragment([...])
+dio.VSvg({}, [...]) // it's easier to use dio.DOM(['svg']) svg({}) since they perform the same
+dio.VText('Content')
+
+// the following helper receives a single VNode or array[] of VNodes
+// use this when you want to hoist element for a bump in performance.
+// this method returns what is passed to it.
+// internally it creates the elements are attaches them to as the `_el` key
+// when dio creates elements it always looks to see if a _el is already assign
+// in which case it executes a cloneNode instead of createElement action for the respective node
+dio.VBlueprint(vnode);
 ```

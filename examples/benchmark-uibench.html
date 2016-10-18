@@ -13,27 +13,17 @@
 		<div id="App"></div>
 
 		<script>
+			var VElement = dio.VElement;
+			var VText = dio.VText;
+			var VComponent = dio.VComponent;
+
 			function onClick (e) {
 				console.log('Clicked' + this);
         		e.stopPropagation();
 			}
 
-			var emptyProps = {};
-
 			function TableCell (text) {
-				return {
-	    			nodeType: 1,
-	    			type: 'td',
-	    			props: {className: 'TableCell', onClick: onClick.bind(text)},
-	    			children: [
-	    				{
-	    					nodeType: 3,
-	    					type: 'text',
-	    					props: emptyProps,
-	    					children: [text]
-	    				}
-    				]
-	    		}
+	    		return VElement('td', {className: 'TableCell', onClick: onClick.bind(text)}, [VText(text)])
 			}
 
 			function TableRow (data) {
@@ -53,12 +43,7 @@
 		      		children[i+1] = TableCell(cells[i]);
 			    }
 
-		    	return {
-		    		nodeType: 1,
-		    		type: 'tr',
-		    		props: {className: classes, 'data-id': data.id},
-		    		children: children
-	    		}
+	    		return VElement('tr', {className: classes, 'data-id': data.id}, children)
 			}
 
 			var propsTable = {className: 'Table'};
@@ -71,34 +56,15 @@
 					children[i] = TableRow(items[i]);
 	    		}
 
-		    	return {
-		    		nodeType: 1,
-		    		type: 'table',
-		    		props: propsTable,
-		    		children: [
-		    			{
-		    				nodeType: 1,
-		    				type: 'tbody',
-		    				props: emptyProps,
-		    				children: children
-		    			}
-		    		]
-		    	}
+		    	return VElement('table', {className: 'Table'}, [VElement('tbody', {}, children)]);
 			}
 
 			function AnimBox (props) {
 		    	var time = props.time;
 	    		var style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+');';
 
-				return {
-					nodeType: 1,
-					type: 'div',
-					props: {className: 'AnimBox', 'data-id': props.id, style: style},
-					children: []
-				}
+				return VElement('div', {className: 'AnimBox', 'data-id': props.id, style: style}, [])
 			}
-
-			var propsAnim = {className: 'Anim'};
 
 			function Anim (items) {
 		    	var length = items.length;
@@ -108,15 +74,8 @@
 	      			children[i] = AnimBox(items[i]);
 	    		}
 
-		    	return {
-		    		nodeType: 1,
-		    		type: 'div',
-		    		props: propsAnim,
-		    		children: children
-		    	}
+		    	return VElement('div', {className: 'Anim'}, children);
 			}
-
-			var propsTreeNode = {className: 'TreeNode'};
 
 			function TreeNode (props) {
 			    var dataChildren = props.children;
@@ -133,61 +92,20 @@
 		      		}
 			    }
 
-			    return {
-			    	nodeType: 1,
-			    	type: 'ul',
-			    	props: propsTreeNode,
-			    	children: children
-			    }
+			    return VElement('ul', {className: 'TreeNode'}, children);
 			}
-
-			var propsTree = {className: 'Tree'};
 
 			function Tree (root) {
-				return {
-					nodeType: 1,
-					type: 'div',
-					props: propsTree,
-					children: [
-						TreeNode(root)
-					]
-				}
+				return VElement('div', {className: 'Tree'}, [TreeNode(root)])
 			}
 
-			var propsTreeLeaf = {className: 'TreeLeaf'}
-
 			function TreeLeaf (id) {
-				return {
-					nodeType: 1,
-					type: 'li',
-					props: propsTreeLeaf,
-					children: [
-						{
-							nodeType: 3,
-							type: 'text',
-							props: emptyProps,
-							children: [id]
-						}
-					]
-				}
+				return VElement('li', {className: 'TreeLeaf'}, [VText(id)])
 			}
 
 			function Output (samples) {
-		    	return {
-					type: 'pre',
-					props: {},
-					children: [
-						{
-							nodeType: 3,
-							type: 'text',
-							props: {},
-							children: [JSON.stringify(samples, null, ' ')]
-						}
-					]
-				}
+				return VElement('pre', {}, [VText(JSON.stringify(samples, null, ' '))])
 		    }
-
-		    var propsMain = {className: 'Main'};
 
 		    class Main extends dio.Component {
 		    	shouldComponentUpdate (newProps) {
@@ -208,20 +126,15 @@
     			    	children[0] = section;
     			    }
 
-    			    return {
-    			    	nodeType: 1,
-    			    	type: 'div', 
-    			    	props: propsMain, 
-    			    	children: children
-    			    };
+    			    return VElement('div', {className: 'Main'}, children);
 		    	}
 		    }
 
 			uibench.init('DIO', dio.version);
 
 			document.addEventListener('DOMContentLoaded', function (e) {
-		  		var container = document.querySelector('#App');
-		  		var render = dio.render(Main, container);
+		  		var container = document.getElementById('App');
+		  		var render = dio.render(VComponent(Main), container);
 
 			  	uibench.run(
 				    function(state) {

@@ -49,9 +49,7 @@
 		    		}
 		  		}
 		  		function handleDelete () {
-		  			var node = this;
-		  			console.log(node);
-		  			dio.animateWith.transitions('slideUp')(node, function(){
+		  			dio.animateWith.transitions('slideUp')(this, function(node){
 		  				TodoStore.dispatch({type: 'REMOVE', id: node.id});
 		  			})
 		  		}

@@ -242,8 +242,9 @@
 				propsPopoverLeft = {className: 'popover left'},
 				propsPopoverContent = {className: 'popover-content'},
 				propsArrow = {className: 'arrow'},
-				propsTable = {className: 'table table-striped latest-data'},
-				emptyObj = {};
+				propsTable = {className: 'table table-striped latest-data'};
+
+			var emptyObj = {};
 
 			var arrowDiv = {
 				nodeType: 1,
@@ -272,7 +273,7 @@
 									nodeType: 3,
 									type: 'text',
 									props: emptyObj,
-									children: [db.dbname]
+									children: db.dbname
 								}
 							]
 						}
@@ -292,7 +293,7 @@
 											nodeType: 3,
 											type: 'text',
 											props: emptyObj,
-											children: [db.lastSample.nbQueries]
+											children: db.lastSample.nbQueries
 										}
 									]
 								}
@@ -313,7 +314,7 @@
 										nodeType: 3,
 										type: 'text',
 										props: emptyObj,
-										children: [query.formatElapsed]
+										children: query.formatElapsed
 									},
 									{
 										nodeType: 1,
@@ -329,7 +330,7 @@
 														nodeType: 3,
 														type: 'text',
 														props: emptyObj,
-														children: [query.query]
+														children: query.query
 													}
 												]
 											},
@@ -371,22 +372,13 @@
 				}
 			});
 			
-			var render = dio.render({
-				nodeType: 1,
-				type: DBMon,
-				props: {},
-				children: []
-			}, '#app');
-
+			var render = dio.render(dio.VComponent(DBMon), '#app');
 
 			function update() {
 				data = ENV.generateData().toArray();
 				perfMonitor.startProfile("render")
-				
 				render();
-
 				perfMonitor.endProfile("render")
-
 				setTimeout(update, ENV.timeout)
 			}
 

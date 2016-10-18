@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>dio.js - 5k components</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<script src="/dio.min.js"></script>
+		<style>
+			div {
+				line-height: 0;
+				font-size: 0;
+			}
+			span {
+				display: inline-block;
+				width: 4px;
+				height: 4px; 
+				margin: 0;
+				padding: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="app"></div>
+		<script>
+			var {span, div} = dio.DOM();
+			var {VComponent} = dio;
+
+			class Pixel extends dio.Component {
+				render () {
+					return span(this.props);
+				}
+			}
+
+			class PixelShow extends dio.Component {
+				constructor(props){
+					super(props);
+				}
+				// pick a random color from an array of colors
+				colorPicker () {
+					return "#"+((1<<24)*Math.random()|0).toString(16);
+				}
+				drawGrid (width, height) {
+					var length = this.length;
+					// define y axis and width and height of squares
+					var yAxis = 0, 
+						wh = 4,
+						i = 0,
+						children = this.length ? new Array(length) : [];
+
+					// while the y axis is less than the section height
+					while (yAxis <= height) {
+						// draw squares along the x axis
+					    for (var xAxis = 0; xAxis <= width; xAxis += wh) {
+				       		children[i] = VComponent(Pixel, {
+				       			style: {
+				       				background: this.colorPicker()
+				       			}
+				       		});
+
+					       	i += 1;
+					    }
+
+					    // move the y axis down to the next row
+					    yAxis += wh;
+					}
+
+					if (length === void 0) {
+						this.length = children.length;
+					}
+
+					return children;
+				}
+				componentDidMount(){
+					this.mounted = true;
+				}
+				render(props) {
+					return (
+						div(
+							{
+								style: {
+									width: props.width+'px', 
+									height: props.height+'px', 
+									position: 'relative',
+								}
+							}, 
+							this.drawGrid(props.width, props.height)
+						)
+					)
+				}
+			}
+
+			var render = dio.render(VComponent(PixelShow, {width: 320, height: 320}));
+
+			setInterval(render, 1000/60);
+		</script>
+	</body>
+</html>

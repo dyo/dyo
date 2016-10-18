@@ -5,7 +5,7 @@
 Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
 
 - ~9kb minified+gzipped
-- ~24kb minified
+- ~25kb minified
 
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
  ![dependencies](https://img.shields.io/badge/dependencies-none-green.svg?style=flat) [![Join the chat at https://gitter.im/thysultan/dio.js](https://img.shields.io/badge/chat-gitter-green.svg?style=flat)](https://gitter.im/thysultan/dio.js)
@@ -32,15 +32,15 @@ Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.0.1/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.1.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/2.0.1/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/2.1.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@2.0.1/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@2.1.0/dio.min.js></script>
 ```
 
 #### bower
@@ -842,7 +842,7 @@ handleDelete: function (e) {
 		self = this
 	
 	// animate element out then update state
-	dio.animateWith.transitions('slideUp')(element, function(next, el) {
+	dio.animateWith.transitions('slideUp')(element, function(el, next) {
 		store.dispatch({type: 'DELETE', id: 1234});
 		// we can also nest another transtion using the second arg
 		// el will be the element we passed to it
@@ -969,4 +969,46 @@ isFunction,
 isString,
 isArray,
 isDefined // (not null and undefined)
+```
+
+## Performance Tips
+
+The hyperscript helper `h` for creating vnodes is very versatile,
+however if you are trying to draw the most out of performance
+the following way of creating vnodes are the most optimal performance wise..
+
+```javascript
+// raw vnode object
+// this is what all the helpers generate
+{
+	// where 1 = element, 2 = component and 3 = text
+	// elementNodes and textNodes follow the spec with regards
+	// to the nodeType signature being 1 and 3 respectfully.
+	nodeType: 1,
+	type: 'div',
+	props: {},
+	children: [
+		{
+			nodeType: 3,
+			type: 'text',
+			props: {},
+			children: 'Hello World' // ony text nodes have non array children
+		}
+	]
+}
+
+// or the V... helpers, the 2nd and 3rd arguments are optinal in all the following
+dio.VElement('div', {}, [VText('Hello World')])
+dio.VComponent(Component)
+dio.VFragment([...])
+dio.VSvg({}, [...]) // it's easier to use dio.DOM(['svg']) svg({}) since they perform the same
+dio.VText('Content')
+
+// the following helper receives a single VNode or array[] of VNodes
+// use this when you want to hoist element for a bump in performance.
+// this method returns what is passed to it.
+// internally it creates the elements are attaches them to as the `_el` key
+// when dio creates elements it always looks to see if a _el is already assign
+// in which case it executes a cloneNode instead of createElement action for the respective node
+dio.VBlueprint(vnode);
 ```

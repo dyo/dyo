@@ -99,7 +99,7 @@
 				};
 			};
 
-			var render = dio.render({nodeType: 1, type: Sortable, props: {}, children: []}, '.container');
+			var render = dio.render(h(Sortable), '.container');
 
 			setInterval(function (){
 				render();
