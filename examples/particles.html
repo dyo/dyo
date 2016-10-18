@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>dio.js - particles</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<script src="/dio.js"></script>
+	</head>
+	<body>
+		<div class="app"></div>
+
+		<style>
+			.app{
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				background: #F8F5F2;
+				overflow: hidden;
+			}
+			.app > div {
+				width: 100%;
+				height: 100%;
+				position: relative;
+			}
+			span {
+				position: absolute;
+				left: 0;
+				top: 0;
+				display:inline-block;
+				width: 3px;
+				height: 3px;
+				background: rgb(52,46,33);
+				border-radius: 4px;
+			}
+		</style>
+		<script>
+			var {span, div} = dio.DOM();
+			var {VComponent, VElement} = dio;
+			var DAMPING = 0.996;
+
+			function Particle(x, y) {
+		        this.x = this.oldX = x;
+		        this.y = this.oldY = y;
+	      	}
+
+	      	Particle.prototype.render = function(x, y) {
+	      		var velocityX = (this.x - this.oldX) * DAMPING;
+	      		var velocityY = (this.y - this.oldY) * DAMPING;
+
+	      		this.oldX = this.x;
+	      		this.oldY = this.y;
+
+	      		this.x += velocityX;
+	      		this.y += velocityY;
+
+	      		var dx = x - this.x;
+	      		var dy = y - this.y;
+
+	      		var distance = Math.sqrt(dx * dx + dy * dy);
+
+	      		this.x += dx / distance;
+	      		this.y += dy / distance;
+
+	      		return span({style: 'transform: translate('+ this.x + 'px,' + this.y + 'px);'});
+  	      	};
+
+			class Particles extends dio.Component {
+				constructor(props){
+					super(props);
+
+					var length = this.length = props.length;
+					var width  = window.innerWidth;
+					var height = window.innerHeight;
+
+					var particles = this.particles = new Array(length);
+
+					for (var i = 0; i < length; i++) {
+		       			particles[i] = new Particle(Math.random() * width, Math.random() * height);
+		      		}
+
+		      		this.mouse = {x: width * 0.5, y: height * 0.5};
+		      		this.onMousemove = this.onMousemove.bind(this);
+				}
+				onMousemove(e) {
+					this.mouse.x = e.clientX;
+					this.mouse.y = e.clientY;
+				}
+				render() {
+					var mouse     = this.mouse;
+					var length    = this.length;
+					var particles = this.particles;
+					var children  = new Array(length);
+
+				  	for (var i = 0; i < length; i++) {
+				  		children[i] = particles[i].render(mouse.x, mouse.y);
+				  	}
+
+				  	return (
+				  		VElement('div', {onMousemove: this.onMousemove}, children)
+			  		);
+				}
+			}
+
+			var render = dio.render(VComponent(Particles, {length: 400}), '.app');
+
+			setInterval(render, 1000/60);
+		</script>
+	</body>
+</html>
