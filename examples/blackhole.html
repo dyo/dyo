@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>dio.js - blackhole</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<script src="/dio.js"></script>
+		<style>
+			html, body {
+				height: 100%;
+			}
+			body {
+				overflow: hidden;
+				background: #333;
+				background:  radial-gradient(#111, #000);
+			}
+			span {
+				position: absolute;
+				background: #FFF;
+				will-change: transform;
+			}
+		</style>
+	</head>
+<body>
+	<script>
+		var {span, div} = dio.DOM();
+	  	
+  		function Particle(x, y, distance, speed) {
+			this.angle    = Math.random() * 2 * Math.PI;
+			this.radius   = Math.random(); 
+			this.opacity  = (Math.random()*5 + 2)/10;
+			this.distance = (1/this.opacity)*distance;
+			this.speed    = this.distance * 0.00005;
+			
+			this.position = {
+		  		x: x + this.distance * Math.cos(this.angle),
+		  		y: y + this.distance * Math.sin(this.angle)
+			};
+
+			this.x = x;
+			this.y = y;
+  		}
+
+  		Particle.prototype = {
+			render: function() {
+		  		var size    = this.radius*2;
+				var x       = this.x + this.distance * Math.cos(this.angle);
+				var y       = this.y + this.distance * Math.sin(this.angle);
+				var opacity = this.opacity;
+
+				this.position.x = x;
+				this.position.y = y;
+
+		  		this.angle += this.speed; 
+
+		  		return span({
+		  			style: 'opacity:'+opacity+';width:'+size+'px; height:'+size+'px;transform:'+'translate('+x+'px,'+y+'px);'
+		  		});		  		
+			}
+  		}
+
+		var positionX = window.innerWidth/2;
+		var positionY = window.innerHeight/2;
+		var radius = 60;
+		var particleCount = 2000;
+		var particles = new Array();
+	
+		for (var i=0; i< particleCount; i++){
+	  		particles[i] = new Particle(positionX, positionY, radius);
+		}
+
+		function getParticles () {  
+			var children = new Array(particles.length);
+
+	 		for (var i=0; i< particleCount; i++) {
+	   			children[i] = particles[i].render();
+	 		}
+
+	 		return children;
+		}
+
+  		var render = dio.render({ 
+  			render() { 
+  				return div(null, getParticles()); 
+  			}
+  		});
+
+  		(function loop() {
+			render();
+			requestAnimationFrame(loop);
+  		})();
+	</script>
+</body>
+</html>

@@ -29,17 +29,17 @@
 				position: absolute;
 				left: 0;
 				top: 0;
-				display:inline-block;
-				width: 3px;
-				height: 3px;
+				width: 4px;
+				height: 4px;
 				background: rgb(52,46,33);
-				border-radius: 4px;
+				border-radius: 10px;
+				will-change: transform;
 			}
 		</style>
 		<script>
 			var {span, div} = dio.DOM();
 			var {VComponent, VElement} = dio;
-			var DAMPING = 0.996;
+			var DAMPING = 0.999;
 
 			function Particle(x, y) {
 		        this.x = this.oldX = x;
@@ -106,7 +106,10 @@
 
 			var render = dio.render(VComponent(Particles, {length: 400}), '.app');
 
-			setInterval(render, 1000/60);
+	  		(function loop() {
+				render();
+				requestAnimationFrame(loop);
+	  		})();
 		</script>
 	</body>
 </html>
