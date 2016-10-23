@@ -9,20 +9,21 @@
  * @author Sultan Tarimo <https://github.com/thysultan>
  * @licence MIT
  */
-(function (root, factory) {
+(function (global, factory) {
 	'use strict';
 
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
 		factory(exports);
 	} else if (typeof define === 'function' && define.amd) {
-		define([], factory);
+		define(['exports'], factory);
 	} else {
-		factory(root);
+		factory(global);
 	}
 }(this, function (exports) {
 	'use strict';
 
-	var VERSION                   = '2.1.1',
+	var version                   = '2.1.1',
+
 		// objects
 		_window                   = typeof global === 'object' ? global : window,
 		_document                 = _window.document,
@@ -50,7 +51,7 @@
 			'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
 			'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
 		},
-		specialVirtualElementTypeRegExp;
+		parseVNodeTypeRegExp;
 
 
 	/**
@@ -597,7 +598,8 @@
 	function VElement (type, props, children) {
 		return {
 			nodeType: 1, 
-			type: type, props: props || emptyObject, 
+			type: type, 
+			props: props || emptyObject, 
 			children: children || [], 
 			_el: null
 		};
@@ -633,7 +635,7 @@
 		return {
 			nodeType: 2, 
 			type: type, 
-			props: props || emptyObject, 
+			props: props || type.defaultProps || emptyObject, 
 			children: children || emptyArray,
 			_el: null
 		};
@@ -673,16 +675,21 @@
 		// if props = element
 		if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
 			// update position if props !== undefined|null
-			if (props !== null) { position = 1; }
+			if (props !== null) { 
+				position = 1; 
+			}
 
 			// default
-			props = {};
-		}
-
-		// if !props.xmlns && type === svg|math assign svg && math props.xmlns
-		if (props.xmlns === void 0) {
-			if (type === 'svg') { props.xmlns = svgNS; } 
-			else if (type === 'math') { props.xmlns = mathNS; }
+			props = null;
+		} else {
+			// if !props.xmlns && type === svg|math assign svg && math props.xmlns
+			if (props.xmlns === void 0) {
+				if (type === 'svg') { 
+					props.xmlns = svgNS; 
+				} else if (type === 'math') { 
+					props.xmlns = mathNS; 
+				}
+			}
 		}
 
 		// construct children
@@ -703,30 +710,17 @@
 			}
 		}
 
-		// retreive type, to determine if component, fragment, element
-		var typeofType = typeof type;
-
 		// create component
-		if (typeofType === 'function') {
+		if (typeof type === 'function') {
 			return VComponent(type, props, children);
 		}
 
-		var element;
-
-		if (type.charAt(0) === '@') {
-			// create fragment
-			element = VFragment(children);
-		} else {
-			// create element
-			element = VElement(type, props, children);
-		}
+		// create fragment, or create element
+		var element = type.charAt(0) === '@' ? VFragment(children) : VElement(type, props, children);
 
 		// special type, i.e [type] | div.class | #id
-		if (
-			typeofType === 'string' &&
-			(type.indexOf('.') > -1 || type.indexOf('[') > -1 || type.indexOf('#') > -1)
-		) {
-			specialVirtualElementType(element);
+		if ((type.indexOf('.') > -1 || type.indexOf('[') > -1 || type.indexOf('#') > -1)) {
+			parseVNodeType(type, props || {}, element);
 		}
 
 		return element;
@@ -764,27 +758,22 @@
 	 * @param  {Object} element
 	 * @return {Object} element
 	 */
-	function specialVirtualElementType (element) {
-		var matches, classes = [],
-			// reference type
-			type = element.type,
-			// reference/create props
-			props = element.props || {};
+	function parseVNodeType (type, props, element) {
+		var matches, classes = [];
 
 		// default type
 		element.type = 'div';
 
 		// if undefined, create RegExp
-		if (specialVirtualElementTypeRegExp === void 0) {
-			specialVirtualElementTypeRegExp = new RegExp(
-				"(?:(^|#|\\.)([^#\\.\\[\\]]+))|" +
-				"(\\[(.+?)(?:\\s*=\\s*(\"|'|)((?:\\\\[\"'\\]]|.)*?)\\5)?\\])",
+		if (parseVNodeTypeRegExp === void 0) {
+			parseVNodeTypeRegExp = new RegExp(
+				"(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|'|)((?:\\\\[\"'\\]]|.)*?)\\5)?\\])",
 				"g"
 			);
 		}
 
 		// execute RegExp, iterate matches
-		while ((matches = specialVirtualElementTypeRegExp.exec(type))) {
+		while ((matches = parseVNodeTypeRegExp.exec(type))) {
 			var matchedType      = matches[1],
 				matchedValue     = matches[2],
 				matchedProp      = matches[3],
@@ -1381,42 +1370,29 @@
 			return subject;
 		}
 
-		var component, type = subject.type;
+		// possible component class, type
+		var candidate, type = subject.type;
 
 		if (type._component !== void 0) {
 			// cache
-			component = type._component;
+			candidate = type._component;
 		} else if (type.constructor === Function && type.prototype.render === void 0) {
 			// function components
-			component = type._component = createClass(type);
+			candidate = type._component = createClass(type);
 		} else {
 			// class / createClass components
-			component = type;
+			candidate = type;
 		}
 
-		return retrieveElement(subject, subject._owner = new component(subject.props || component.defaultProps));
-	}
-
-	/**
-	 * retrieve virtual element
-	 * 
-	 * @param  {Object} subject
-	 * @return {Object}
-	 */
-	function retrieveElement (subject, component) {
-		var vnode;
+		// create component instance
+		var component = subject._owner = new candidate(subject.props);
 
 		if (subject.children && subject.children.length !== 0) {
 			component.props.children = subject.children;
 		}
 		
 		// retrieve vnode
-		vnode = component.render(component.props, component.state, component);
-
-		// throw if render returns nothing
-		if (vnode === void 0) {
-			throwError('render method for ' + component.displayName + ' returns' + void 0);
-		}
+		var vnode = retrieveElement(component);
 
 		// if keyed, assign key to vnode
 		if (subject.props.key !== void 0 && vnode.props.key === void 0) {
@@ -1428,9 +1404,23 @@
 		subject.children = vnode.children;
 
 		// assign component node
-		component._vnode  = subject;
+		component._vnode = subject;
 
 		return vnode;
+	}
+
+	/**
+	 * retreive virtual element
+	 *
+	 * @param  {Object} subject
+	 * @return {Object}
+	 */
+	function retrieveElement (component) {
+		// retrieve vnode
+		var vnode = component.render(component.props, component.state, component);
+
+		// if array, fragment, else vnode
+		return vnode.constructor === Array ? VFragment(vnode) : vnode;
 	}
 
 
@@ -2277,6 +2267,10 @@
 
 					var newNode = this.render(this.props, this.state, this), 
 						oldNode = this._vnode;
+
+					if (newNode.constructor === Array) {
+
+					}
 
 					// never executes more than once
 					if (oldNode.type !== newNode.type) {
@@ -3898,7 +3892,7 @@
 
 	exports.h   = createElement;
 	exports.dio = {
-		version: VERSION,
+		version: version,
 
 		// elements
 		createElement: createElement,

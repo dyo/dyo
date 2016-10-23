@@ -2,9 +2,10 @@
 
 - add dio.Children top level api, mirros React.Children
 - better intergration with webpack
-- fix `dio.createElement` rename conflict
-- fix `dio.createElement` assign children components
-- fix assignment of component `this.props.children`
+- patch `dio.createElement` rename conflict
+- patch `dio.createElement` assign children components
+- patch assignment of component `this.props.children`
+- patch issue with es6 Components class `.defaultProps` not registering
 
 ## 2.1.0 (October 18, 2016)
 
