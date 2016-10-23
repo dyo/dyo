@@ -1406,8 +1406,8 @@
 	function retrieveElement (subject, component) {
 		var vnode;
 
-		if (subject.props.children) {
-			component.props.children = subject.props.children;
+		if (subject.children && subject.children.length !== 0) {
+			component.props.children = subject.children;
 		}
 		
 		// retrieve vnode
