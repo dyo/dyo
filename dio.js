@@ -22,7 +22,7 @@
 }(this, function (exports) {
 	'use strict';
 
-	var VERSION                   = '2.1.0',
+	var VERSION                   = '2.1.1',
 		// objects
 		_window                   = typeof global === 'object' ? global : window,
 		_document                 = _window.document,
@@ -671,7 +671,7 @@
 		var length = arguments.length, children = [], position = 2;
 
 		// if props = element
-		if (props === void 0 || props.nodeType !== void 0 || props.constructor !== Object) {
+		if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
 			// update position if props !== undefined|null
 			if (props !== null) { position = 1; }
 
@@ -688,22 +688,25 @@
 		// construct children
 		for (var i = position; i < length; i = i + 1) {
 			var child = arguments[i];
-	
-			if (child !== void 0 && child !== null && child.constructor === Array) {
-				var len = child.length;
+		
+			if (child != null) {
+				if (child.constructor === Array) {
+					var len = child.length;
 
-				// array child
-				for (var j = 0; j < len; j = j + 1) {
-					assignElement(child[j], children); 
-				} 
-			} else {
-				assignElement(child, children);
+					// array child
+					for (var j = 0; j < len; j = j + 1) {
+						assignElement(child[j], children); 
+					} 
+				} else {
+					assignElement(child, children);
+				}
 			}
 		}
 
+		// retreive type, to determine if component, fragment, element
 		var typeofType = typeof type;
 
-		// create element
+		// create component
 		if (typeofType === 'function') {
 			return VComponent(type, props, children);
 		}
@@ -711,8 +714,10 @@
 		var element;
 
 		if (type.charAt(0) === '@') {
+			// create fragment
 			element = VFragment(children);
 		} else {
+			// create element
 			element = VElement(type, props, children);
 		}
 
@@ -735,16 +740,16 @@
 	 */
 	function assignElement (element, children) {
 		var childNode;
-			
-		if (element === void 0 || element === null || element.nodeType === void 0) {
-			// primitives, string, bool, number
-			childNode = VText(element);
-		} else if (element.nodeType !== void 0) {
+
+		if (element != null && element.nodeType !== void 0) {
 			// default element
 			childNode = element;
 		} else if (typeof element === 'function') {
 			// component
-			childNode = VComponent(element.type, element.props, element.children);
+			childNode = VComponent(element);
+		} else {
+			// primitives, string, bool, number
+			childNode = VText(element);
 		}
 
 		// push to children array
@@ -760,7 +765,7 @@
 	 * @return {Object} element
 	 */
 	function specialVirtualElementType (element) {
-		var matches, classes = '',
+		var matches, classes = [],
 			// reference type
 			type = element.type,
 			// reference/create props
@@ -794,7 +799,7 @@
 				props.id = matchedValue;
 			} else if (matchedType === '.') { 
 				// class(es)
-				classes += ' ' + matchedValue;
+				classes[classes.length] = matchedValue;
 			} else if (matchedProp.charAt(0) === '[') { 
 				// attribute
 				var prop = matchedPropValue;
@@ -811,7 +816,7 @@
 
 		// if classes, assign classes
 		if (classes.length !== 0) {
-			props.className = classes;
+			props.className = classes.join(' ');
 		}
 
 		// assign props
@@ -841,7 +846,7 @@
 				subject.children = [];
 
 				for (var i = 0; i < len; i = i + 1) {
-					assignVirtualElement(children[i], subject.children);
+					assignElement(children[i], subject.children);
 				}
 			}
 		}
@@ -876,7 +881,10 @@
 
 	/**
 	 * Children
+	 * 
 	 * mocks React.Children Top-Level API
+	 *
+	 * @return {Object}
 	 */
 	function Children () {
 		// children
@@ -1367,7 +1375,7 @@
 	 * @param  {Object} props
 	 * @return {Object} 
 	 */
-	function extractNode (subject) {
+	function extractNode (subject) {		
 		// static node
 		if (subject.nodeType !== 2) {
 			return subject;
@@ -1386,9 +1394,7 @@
 			component = type;
 		}
 
-		subject._owner = new component(subject.props || component.defaultProps);
-
-		return retrieveElement(subject);
+		return retrieveElement(subject, subject._owner = new component(subject.props || component.defaultProps));
 	}
 
 	/**
@@ -1397,15 +1403,20 @@
 	 * @param  {Object} subject
 	 * @return {Object}
 	 */
-	function retrieveElement (subject) {
-		var vnode, component = subject._owner, children = subject.props.children;
+	function retrieveElement (subject, component) {
+		var vnode;
 
-		if (children !== void 0 && children.length !== 0) {
-			component.props.children = children;
+		if (subject.props.children) {
+			component.props.children = subject.props.children;
 		}
 		
 		// retrieve vnode
 		vnode = component.render(component.props, component.state, component);
+
+		// throw if render returns nothing
+		if (vnode === void 0) {
+			throwError('render method for ' + component.displayName + ' returns' + void 0);
+		}
 
 		// if keyed, assign key to vnode
 		if (subject.props.key !== void 0 && vnode.props.key === void 0) {

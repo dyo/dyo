@@ -1,3 +1,10 @@
+## 2.1.1 (October 23, 2016)
+
+- add dio.Children top level api, mirros React.Children
+- better intergration with webpack
+- fix dio.createElement rename conflict
+- fix dio.createElement assign children components
+
 ## 2.1.0 (October 18, 2016)
 
 - more performance tweaks to (SSR, hydration, mounting, patching)
