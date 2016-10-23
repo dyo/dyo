@@ -12,17 +12,17 @@
 (function (root, factory) {
 	'use strict';
 
-	if (typeof define === 'function' && define.amd) {
-		define([], factory);
-	} else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
+	if (typeof exports === 'object' && typeof module !== 'undefined') {
 		factory(exports);
+	} else if (typeof define === 'function' && define.amd) {
+		define([], factory);
 	} else {
 		factory(root);
 	}
 }(this, function (exports) {
 	'use strict';
 
-	var VERSION                    = '2.1.0',
+	var VERSION                   = '2.1.0',
 		// objects
 		_window                   = typeof global === 'object' ? global : window,
 		_document                 = _window.document,
@@ -589,6 +589,7 @@
 		
 	/**
 	 * virtual element node factory
+	 * 
 	 * @param {string} type
 	 * @param {Object=} props
 	 * @param {any[]=}  children
@@ -871,6 +872,31 @@
 		return props === void 0 ? 
 			bind.call(VElement, null, type) : 
 			bind.call(VElement, null, type, props);
+	}
+
+	/**
+	 * Children
+	 * mocks React.Children Top-Level API
+	 */
+	function Children () {
+		// children
+		return {
+			only: function only (children) {
+				return children && children.length === 1;
+			},
+			map: function map (children, func) {
+				return children ? arrayMap(children, func) : children;
+			},
+			forEach: function forEach (children, func) {
+				return children ? forEach(children, func) : children;
+			},
+			toArray: function toArray (children) {
+				return sliceArray(children);
+			},
+			count: function count (children) {
+				return children ? children.length : 0;
+			}
+		}
 	}
 
 
@@ -3864,7 +3890,7 @@
 		version: VERSION,
 
 		// elements
-		createNode: createElement,
+		createElement: createElement,
 		isValidElement: isValidElement,
 		cloneElement: cloneElement,
 		createFactory: createFactory,
@@ -3876,6 +3902,7 @@
 		VComponent: VComponent,
 		VBlueprint: VBlueprint,
 
+		Children: Children(),
 		DOM: DOM,
 
 		// render
