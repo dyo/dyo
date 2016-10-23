@@ -14,7 +14,7 @@
 			.preloadicon {position: absolute;top:-20px;left:-20px;}
 			.col-sm-6.smallpad {padding: 5px;}
 		</style>
-		<script src="/dio.js"></script>
+		<script src="/dio.min.js"></script>
 	</head>
 	<body>
 		<div id="main"></div>
@@ -43,7 +43,6 @@
 				        setTimeout(function () {
 				            lastMeasure = null;
 				            var stop = performance.now();
-				            var duration = 0;
 				            console.log(last+" took "+(stop-startTime));
 				        }, 0);
 				    }
@@ -136,21 +135,6 @@
 				var RowDelIcon  = VElement('span', {className: 'glyphicon glyphicon-remove', 'aria-hidden': 'true'});
 				var preLoadIcon = VElement('span', {className: 'preloadicon glyphicon glyphicon-remove', 'aria-hidden': 'true'});
 
-				function clickEvent(e) {
-				    var fn, id, target = e.target, val = target.value;
-
-				    if (val !== void 0) {
-				        fn = val.fn, id = val.id;
-				    } else {
-				        val = target.parentNode.value;
-				        if (val !== void 0) {
-				            fn = val.fn, id = val.id;
-				        }
-				    }
-
-				    fn(id);
-				}
-
 				function Nav (run, runLots, add, update, clear, swapRows) {
 		        	return (
 		        		VElement('div', {className: 'jumbotron'}, [
@@ -201,8 +185,8 @@
 					return (
 						VElement('tr', {className: id === selected ? 'danger' : ''}, [
 							VElement('td', colMd1, [VText(id)]),
-							VElement('td', colMd4, [VElement('a', {onClick: clickEvent, value: {id: id, fn: onSelect}}, [VText(label)])]),
-							VElement('td', colMd1, [VElement('a', {onClick: clickEvent, value: {id: id, fn: onDelete}}, [RowDelIcon])]),
+							VElement('td', colMd4, [VElement('a', {value: {id: id, fn: onSelect}}, [VText(label)])]),
+							VElement('td', colMd1, [VElement('a', {value: {id: id, fn: onDelete}}, [RowDelIcon])]),
 							RowEmpty
 						])
 					);
@@ -258,6 +242,20 @@
 				        this.state.store.swapRows();
 				        this.forceUpdate();
 				    }
+				    handleClick(e) {
+				        var fn, id, target = e.target, val = target.value;
+
+				        if (val !== void 0) {
+				            fn = val.fn, id = val.id;
+				        } else {
+				            val = target.parentNode.value;
+				            if (val !== void 0) {
+				                fn = val.fn, id = val.id;
+				            }
+				        }
+
+				        fn(id);
+				    }
 				    constructor(props) {
 				    	super(props);
 				    	this.state   = {store: new Store()};
@@ -283,7 +281,7 @@
 				        	VElement('div', {className: 'container'}, [
 				        		nav, 
 				        		VElement('table', {className: 'table table-hover table-striped test-data'}, [
-				        			VElement('tbody', {}, rows)
+				        			VElement('tbody', {onClick: this.handleClick}, rows)
 			        			]),
 			        			preLoadIcon
 			        		])

@@ -6,6 +6,7 @@
 - patch `dio.createElement` assign children components
 - patch assignment of component `this.props.children`
 - patch issue with es6 Components class `.defaultProps` not registering
+- pathc redux store initialState
 
 ## 2.1.0 (October 18, 2016)
 

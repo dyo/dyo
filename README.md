@@ -33,15 +33,15 @@ Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.1.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.1.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/2.1.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/2.1.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@2.1.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@2.1.1/dio.min.js></script>
 ```
 
 #### bower
@@ -203,12 +203,13 @@ h('@fragment', 'Hello', 'World')
 // letter be a '@' thus so the above could also be re-written as
 
 h('@foo', 'Hello', 'World')
+// note: to the same effect you can also return an array from a render function
 
 // you could also write all of the above by hand in its compiled form
 // when trying to skews the most out of performance.
 
 {
-	nodeType: 1, // where nodeType is either 1 'Element' or 3 'TextNode'
+	nodeType: 1, // where nodeType is either 1 'Element', 3 'TextNode', or 2 'Component'
 	type: 'div',
 	props: {},
 	children: [

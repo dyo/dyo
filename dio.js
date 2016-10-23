@@ -315,8 +315,8 @@
 	 * @return {Object} target
 	 */
 	function objectAssign (target) {
-		for (var i = 0, args = arguments, len = args.length - 1; i < len; i = i + 1) {
-			var source = args[i + 1];
+		for (var i = 0, len = arguments.length - 1; i < len; i = i + 1) {
+			var source = arguments[i + 1];
 
 			for (var name in source) {
 				if (hasOwnProperty.call(source, name) === true) {
@@ -681,15 +681,6 @@
 
 			// default
 			props = null;
-		} else {
-			// if !props.xmlns && type === svg|math assign svg && math props.xmlns
-			if (props.xmlns === void 0) {
-				if (type === 'svg') { 
-					props.xmlns = svgNS; 
-				} else if (type === 'math') { 
-					props.xmlns = mathNS; 
-				}
-			}
 		}
 
 		// construct children
@@ -713,17 +704,26 @@
 		// create component
 		if (typeof type === 'function') {
 			return VComponent(type, props, children);
+		} else {
+			// create fragment, or create element
+			var element = type.charAt(0) === '@' ? VFragment(children) : VElement(type, props, children);
+
+			// special type, i.e [type] | div.class | #id
+			if ((type.indexOf('.') > -1 || type.indexOf('[') > -1 || type.indexOf('#') > -1)) {
+				parseVNodeType(type, props || {}, element);
+			}
+
+			// if !props.xmlns && type === svg|math assign svg && math props.xmlns
+			if (element.props.xmlns === void 0) {	
+				if (type === 'svg') { 
+					element.props.xmlns = svgNS; 
+				} else if (type === 'math') { 
+					element.props.xmlns = mathNS; 
+				}
+			}
+
+			return element;
 		}
-
-		// create fragment, or create element
-		var element = type.charAt(0) === '@' ? VFragment(children) : VElement(type, props, children);
-
-		// special type, i.e [type] | div.class | #id
-		if ((type.indexOf('.') > -1 || type.indexOf('[') > -1 || type.indexOf('#') > -1)) {
-			parseVNodeType(type, props || {}, element);
-		}
-
-		return element;
 	}
 
 	/**
@@ -1306,8 +1306,10 @@
 									_document.createElement(type);
 				}
 
-				// diff and update/add/remove props
-				assignProps(element, props, 0);
+				if (props !== emptyObject) {
+					// diff and update/add/remove props
+					assignProps(element, props, 0);
+				}
 
 				if (len !== 0) {
 					// create children
@@ -1410,7 +1412,7 @@
 	}
 
 	/**
-	 * retreive virtual element
+	 * retrieve virtual element
 	 *
 	 * @param  {Object} subject
 	 * @return {Object}
@@ -1419,8 +1421,8 @@
 		// retrieve vnode
 		var vnode = component.render(component.props, component.state, component);
 
-		// if array, fragment, else vnode
-		return vnode.constructor === Array ? VFragment(vnode) : vnode;
+		// if vnode, else fragment
+		return vnode.nodeType !== void 0 ? vnode : VFragment(vnode);
 	}
 
 
@@ -1954,8 +1956,11 @@
 	   		element.removeAttribute('data-hydrate');
 	   		// register mount dispatched
 	   		initial = 0;
+
 	   		// assign component
-	   		if (component === void 0) { component = node._owner; }
+	   		if (component === void 0) { 
+	   			component = node._owner; 
+	   		}
 
 	   		return reconciler;
 	   	}
@@ -2265,12 +2270,8 @@
 						this.componentWillUpdate(this.props, this.state);
 					}
 
-					var newNode = this.render(this.props, this.state, this), 
+					var newNode = retrieveElement(this), 
 						oldNode = this._vnode;
-
-					if (newNode.constructor === Array) {
-
-					}
 
 					// never executes more than once
 					if (oldNode.type !== newNode.type) {
@@ -3357,7 +3358,7 @@
 			// passing arguments to a function i.e [].splice() will prevent this function
 			// from getting optimized by the VM, so we manually build the array in-line
 			for (var i = 0; i < len; i = i + 1) {
-				args[i] = arguments[i];
+				funcs[i] = arguments[i];
 			}
 
 			// remove and retrieve last function
@@ -3550,7 +3551,7 @@
 		// if initialState is a function and enhancer is undefined
 		// we assume that initialState is an enhancer
 		if (typeof initialState === 'function' && enhancer === void 0) {
-			enhancer = initialState, initialState = null;
+			enhancer = initialState, initialState = void 0;
 		}
 
 		// delegate to enhancer if defined

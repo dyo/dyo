@@ -98,11 +98,12 @@ h('@fragment', 'Hello', 'World')
 // letter be a '@' thus so the above could also be re-written as
 
 h('@foo', 'Hello', 'World')
+// note: to the same effect you can also return an array from a render function
 
 // you could also write all of the above by hand in its compiled form
 // when trying to skews the most out of performance.
 {
-	nodeType: 1, // where nodeType is either 1 'Element' or 3 'TextNode' or 2 'Component'
+	nodeType: 1, // where nodeType is either 1 'Element', 3 'TextNode', or 2 'Component'
 	type: 'div',
 	props: {},
 	children: [
