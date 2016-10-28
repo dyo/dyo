@@ -1,6 +1,14 @@
+## 2.1.2 (October 23, 2016)
+
+- patch `dio.renderToString` className should map to class
+- patch `dio.Children.only`
+- improve compatibility with commonJS enviroments
+- add `dio.unmountComponentAtNode` top level api, mirrors `React`
+- add `dio.applyMiddleware`, `dio.combineReducers` and `dio.compose` to top level api
+
 ## 2.1.1 (October 23, 2016)
 
-- add dio.Children top level api, mirros React.Children
+- add `dio.Children` top level api, mirrors `React`
 - better intergration with webpack
 - patch `dio.createElement` rename conflict
 - patch `dio.createElement` assign children components

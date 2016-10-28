@@ -33,15 +33,15 @@ Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.1.1/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/2.1.2/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/2.1.1/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/2.1.2/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@2.1.1/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@2.1.2/dio.min.js></script>
 ```
 
 #### bower
@@ -569,6 +569,15 @@ hydrate the current dom on initial mount.
 
 ```javascript
 dio.renderToString(h('div', 'Text'));
+
+// or
+dio.renderToString(Component);
+
+// note: dio.render in a server-side enviroment calls and returns
+// renderToString's output so you may not need to use renderToString
+// explicitly if you are calling .render
+
+// performance 260ms (dio.js) vs 2,683ms (react)
 ```
 
 ---

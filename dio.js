@@ -4,26 +4,23 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
+ * Dio.js is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework. 
+ * https://github.com/thysultan/dio.js
  * 
- * @author Sultan Tarimo <https://github.com/thysultan>
  * @licence MIT
  */
 (function (global, factory) {
-	'use strict';
-
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
-		factory(exports);
+		module.exports = factory();
 	} else if (typeof define === 'function' && define.amd) {
-		define(['exports'], factory);
+		define('dio', factory);
 	} else {
-		factory(global);
+		global.dio = factory();
 	}
-}(this, function (exports) {
+}(this, function () {
 	'use strict';
 
-	var version                   = '2.1.1',
-
+	var version                   = '2.1.2',
 		// objects
 		_window                   = typeof global === 'object' ? global : window,
 		_document                 = _window.document,
@@ -87,11 +84,11 @@
 	 */
 	function spliceArray (subject, index, deleteCount, item) {
 		if (item === void 0) {
-			// remove first item using faster shift if start of array
+			// remove first item with shift if start of array
 			if (index === 0) { 
 				return subject.shift(); 
 			}
-			// remove last item using faster pop if end of array
+			// remove last item using pop if end of array
 			else if (index > subject.length - 1) { 
 				return subject.pop(); 
 			}
@@ -100,15 +97,15 @@
 				return subject.splice(index, 1); 
 			}
 		} else {
-			// prepend using faster unshift if start of array
+			// prepend with unshift if start of array
 			if (index === 0) { 
 				return subject.unshift(item); 
 			}
-			// append using faster push to end of array
+			// append using with push if end of array
 			else if (index > subject.length - 1) { 
 				return subject[subject.length] = item; 
 			}
-			// insert at index
+			// insert at a specific index
 			else { 
 				return subject.splice(index, deleteCount, item); 
 			}
@@ -125,10 +122,13 @@
 	function throwError (message, silent) {
 		// create error
 		var error = new Error(message);
-		// silent, return erro
-		if (silent === 1) { return error; }
-		// throw error
-		else { throw error; }
+
+		// return/throw error
+		if (silent === 1) {
+			return error;
+		} else {
+			throw error;
+		}
 	}
 
 	/**
@@ -139,17 +139,17 @@
 	 * @param  {*=}             thisArg
 	 */
 	function forEach (subject, callback, thisArg) {
-		if (isDefined(subject)) {
-			if (subject.constructor === Array || isNumber(subject.length)) {
-				for (var i = 0, len = subject.length; i < len; i = i + 1) {
-					if (callback.call(thisArg, subject[i], i, subject) === false) {
-						return void 0;
-					}
+		// if array or array-like
+		if (isArray(subject) || isNumber(subject.length)) {
+			for (var i = 0, len = subject.length; i < len; i = i + 1) {
+				// if return false, exit
+				if (callback.call(thisArg, subject[i], i, subject) === false) {
+					return void 0;
 				}
-			} else {
-				// objects 
-				forIn(subject, callback, thisArg);
 			}
+		} else {
+			// objects 
+			forIn(subject, callback, thisArg);
 		}
 	}
 
@@ -161,8 +161,8 @@
 	 * @param  {*}        thisArg
 	 */
 	function forIn (subject, callback, thisArg) {
-		// objects 
 		for (var name in subject) {
+			// if return false, exit
 			if (callback.call(thisArg, subject[name], name, subject) === false) { 
 				return void 0;
 			}
@@ -184,6 +184,7 @@
 			var len    = subject.length, 
 				output = new Array(len);
 
+			// for each item call callback(item, index, array)
 			for (var i = 0; i < len; i = i + 1) {
 				output[i] = callback.call(thisArg, subject[i], i, subject);
 			}
@@ -194,6 +195,7 @@
 
 	/**
 	 * [].filter
+	 * 
 	 * @param  {any[]}    subject
 	 * @param  {function} callback
 	 * @param  {*=}       thisArg
@@ -205,6 +207,8 @@
 		} else {
 			var output = [];
 
+			// for each item call callback(item, index, array)
+			// if callback returns true add value to ouput array
 			for (var i = 0, len = subject.length; i < len; i = i + 1) {
 				var value = subject[i];
 
@@ -229,9 +233,13 @@
 		if (subject.reduce !== void 0) {
 			return subject.reduce(callback, initialValue);
 		} else {
-			var value = initialValue
+			var value = initialValue;
 
+			// for each item call callback(item, index, array)
+			// update value with callbacks return value
 			for (var i = 0, len = subject.length; i < len; i = i + 1) {
+				// subject[i] can return undefined/null depending on the
+				// value that index contains
 				if (i in subject) {
 					value = callback(value, subject[i], i, subject);
 				}
@@ -255,8 +263,11 @@
 		} else {
 			var value = initialValue;
 
+			// arrayReduce from right to left
 			for (var len = subject.length, i = len - 1; i >= 0; i = i - 1) {
-				if (i in subject) value = callback(value, subject[i], i, subject);
+				if (i in subject) {
+					value = callback(value, subject[i], i, subject);
+				}
 			}
 
 			return value;
@@ -272,13 +283,18 @@
 	 */
 	function arrayFlatten (subject, output) {
 		output = output || [];
-				
+		
+		// for each item add to array if item is an array add recursively it's items
 		for (var i = 0, len = subject.length; i < len; i = i + 1){
 			var item = subject[i];
 
-			(item === void 0 || item === null || item.constructor !== Array) ?
-				output[output.length] = item :
+			// if not an array add value to ouput
+			if (item === void 0 || item === null || item.constructor !== Array) {
+				output[output.length] = item;
+			} else {
+				// recursive
 				arrayFlatten(item, output);
+			}
 		}
 		
 		return output;
@@ -296,6 +312,7 @@
 		} else {
 			var keys = [];
 			
+			// for each member in object add non-prototype keys
 			for (var key in subject) {
 				if (hasOwnProperty.call(subject, key) === false) {
 					continue;
@@ -315,9 +332,11 @@
 	 * @return {Object} target
 	 */
 	function objectAssign (target) {
+		// for each argument starting from the 2nd argument
 		for (var i = 0, len = arguments.length - 1; i < len; i = i + 1) {
 			var source = arguments[i + 1];
 
+			// add its properties to the target object
 			for (var name in source) {
 				if (hasOwnProperty.call(source, name) === true) {
 					target[name] = source[name];
@@ -363,10 +382,13 @@
 	function functionBind (func, thisArg) {
 		var pos, offset;
 
+		// setup so that functionBind.call works like it would
+		// calling Function.prototype.bind.call
 		isFunction(func) ? (pos = offset = 2) : (thisArg = func, func = this, pos = offset = 1);
 
 		var len = arguments.length - pos, args = [];
 
+		// build arguments array
 		if (len > 0) {
 			for (var i = 0; i < len; i = i + 1) { 
 				args[i] = arguments[i + offset]; 
@@ -376,7 +398,9 @@
 		return function () {
 			var _len = arguments.length, _args;
 
-			if (_len !== 0) { 
+			// build arguments array
+			if (_len !== 0) {
+				// assumed few arguments start of empty build as you go along
 				_args = [];
 
 				for (var j = 0; j < _len; j = j + 1) { 
@@ -454,7 +478,7 @@
 	 */
 	function isArrayLike (subject) {
 		return (
-			isDefined(subject) && isNumber(subject.length) === false && isFunction(subject) === false
+			isDefined(subject) && isNumber(subject.length) === true && isFunction(subject) === false
 		);
 	}
 
@@ -501,6 +525,8 @@
 	 * @param  {function} catchBlock
 	 */
 	function tryCatch (tryBlock, catchBlock) {
+		// this is hoisted in its own function because
+		// V8 does not opt functions that use try..catch
 		try {
 			tryBlock();
 		} catch (e) {
@@ -526,6 +552,7 @@
 	 * create references to common dom elements
 	 */
 	function DOM (types) {
+		// default to preset types if non passed
 		types = types || [
 			'h1','h2','h3','h4','h5', 'h6','audio','video','canvas',
 			'header','nav','main','aside','footer','section','article','div',
@@ -536,13 +563,16 @@
 
 		var elements = {};
 
+		// add element factories
 		for (var i = 0, len = types.length; i < len; i = i + 1) {
 			var type = types[i]; elements[type] = bind.call(VElement, null, type);
 		}
 
+		// optional usefull helpers
 		elements.text = VText;
 		elements.fragment = VFragment;
 		
+		// if in list of types, add related svg element factories
 		if (elements.svg !== void 0) {
 			var svgs = [
 				'rect','path','polygon','circle','ellipse','line','polyline','image','marker','a','symbol',
@@ -613,7 +643,7 @@
 	 * @param {any[]=} children
 	 */
 	function VSvg (type, props, children) {
-		props = props || {}; props.xmlns = svgNS;
+		props = props || {}, props.xmlns = svgNS;
 
 		return {
 			nodeType: 1, 
@@ -648,13 +678,22 @@
 	 * @return {Object} Vnode
 	 */
 	function VBlueprint (VNode) {
-		if (isArray(VNode)) {
-			for (var i = 0, len = VNode; i < len; i = i + 1) {
-				VBlueprint(VNode[i]);
-			}
-		} else {
-			if (VNode._el === null) {
-				VNode._el = createNode(VNode);
+		if (isDefined(VNode)) {
+			// if array run all VNodes through VBlueprint
+			if (VNode.constructor === Array) {
+				for (var i = 0, len = VNode; i < len; i = i + 1) {
+					VBlueprint(VNode[i]);
+				}
+			} else {
+				// if a blueprint not already constructed
+				if (VNode._el === null) {
+					// createNode returns a dom element
+					// the opt is that createNode() uses .cloneNode if _el is assigned
+					// so the next time this element is created cloneNode is used
+					// instead of createElement, the benefits incremental depending
+					// on the size(children...) of the node in question.
+					VNode._el = createNode(VNode);
+				}
 			}
 		}
 
@@ -666,15 +705,17 @@
 	 * 
 	 * @param  {(string|function|Object)} type
 	 * @param  {Object=}                  props
-	 * @param  {...*=}                    children
+	 * @param  {...*=}                    children - everything after props
 	 * @return {Object}
 	 */
-	function createElement (type, props) {		
+	function createElement (type, props) {
 		var length = arguments.length, children = [], position = 2;
 
-		// if props = element
-		if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
+		// if props is not a normal object
+		if (props === null || props === void 0 || props.nodeType !== void 0 || props.constructor !== Object) {
 			// update position if props !== undefined|null
+			// this assumes that it would look like
+			// createElement('type', null, ...children);
 			if (props !== null) { 
 				position = 1; 
 			}
@@ -686,26 +727,33 @@
 		// construct children
 		for (var i = position; i < length; i = i + 1) {
 			var child = arguments[i];
-		
-			if (child != null) {
+			
+			// only add non null/undefined children
+			if (child !== void 0 && child !== null) {
+				// if array add all its items
+				// this means that we can have
+				// createElement('type', null, 'Hello', [1, 2], 'World')
+				// then Hello, 1, 2 and World will all become
+				// individual items in the children array of the VNode
 				if (child.constructor === Array) {
 					var len = child.length;
 
-					// array child
+					// add array child
 					for (var j = 0; j < len; j = j + 1) {
 						assignElement(child[j], children); 
 					} 
 				} else {
+					// add non-array child
 					assignElement(child, children);
 				}
 			}
 		}
 
-		// create component
+		// if type is a function, create component
 		if (typeof type === 'function') {
 			return VComponent(type, props, children);
 		} else {
-			// create fragment, or create element
+			// if first letter = @, create fragment, else create element
 			var element = type.charAt(0) === '@' ? VFragment(children) : VElement(type, props, children);
 
 			// special type, i.e [type] | div.class | #id
@@ -735,7 +783,7 @@
 	function assignElement (element, children) {
 		var childNode;
 
-		if (element != null && element.nodeType !== void 0) {
+		if (element !== null && element !== void 0 && element.nodeType !== void 0) {
 			// default element
 			childNode = element;
 		} else if (typeof element === 'function') {
@@ -759,7 +807,7 @@
 	 * @return {Object} element
 	 */
 	function parseVNodeType (type, props, element) {
-		var matches, classes = [];
+		var matches, classList = [];
 
 		// default type
 		element.type = 'div';
@@ -767,13 +815,12 @@
 		// if undefined, create RegExp
 		if (parseVNodeTypeRegExp === void 0) {
 			parseVNodeTypeRegExp = new RegExp(
-				"(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|'|)((?:\\\\[\"'\\]]|.)*?)\\5)?\\])",
-				"g"
+				'(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|\'|)((?:\\\\[\"\'\\]]|.)*?)\\5)?\\])','g'
 			);
 		}
 
 		// execute RegExp, iterate matches
-		while ((matches = parseVNodeTypeRegExp.exec(type))) {
+		while (matches = parseVNodeTypeRegExp.exec(type)) {
 			var matchedType      = matches[1],
 				matchedValue     = matches[2],
 				matchedProp      = matches[3],
@@ -788,7 +835,7 @@
 				props.id = matchedValue;
 			} else if (matchedType === '.') { 
 				// class(es)
-				classes[classes.length] = matchedValue;
+				classList[classList.length] = matchedValue;
 			} else if (matchedProp.charAt(0) === '[') { 
 				// attribute
 				var prop = matchedPropValue;
@@ -803,9 +850,9 @@
 			}
 		}
 
-		// if classes, assign classes
-		if (classes.length !== 0) {
-			props.className = classes.join(' ');
+		// if there are classes in classList, create className prop member
+		if (classList.length !== 0) {
+			props.className = classList.join(' ');
 		}
 
 		// assign props
@@ -822,18 +869,18 @@
 	 * @return {Object}
 	 */
 	function cloneElement (subject, props, children) {
-		if (Object.assign !== void 0) {
-			Object.assign(subject.props, props);
-		} else {
-			objectAssign(subject.props, props);
-		}
+		// copy props
+		(Object.assign !== void 0 ? Object.assign : objectAssign)(subject.props, props);
 
-		if (children !== void 0 && children.constructor === Array) {
+		// if new children
+		if (isArray(children)) {
 			var len = children.length;
 
+			// and new children is not an empty array
 			if (len !== 0) {
 				subject.children = [];
 
+				// copy old children
 				for (var i = 0; i < len; i = i + 1) {
 					assignElement(children[i], subject.children);
 				}
@@ -876,10 +923,9 @@
 	 * @return {Object}
 	 */
 	function Children () {
-		// children
 		return {
 			only: function only (children) {
-				return children && children.length === 1;
+			  	return isArray(children) && children.length === 1 ? children[0] : throwError('expects only one child!');
 			},
 			map: function map (children, func) {
 				return children ? arrayMap(children, func) : children;
@@ -888,7 +934,7 @@
 				return children ? forEach(children, func) : children;
 			},
 			toArray: function toArray (children) {
-				return sliceArray(children);
+				return isArray(children) ? children : sliceArray(children);
 			},
 			count: function count (children) {
 				return children ? children.length : 0;
@@ -1265,12 +1311,13 @@
 	 * @return {Node}
 	 */
 	function createNode (subject, component, namespace) {
-		// textNode
-		if (subject.nodeType === 3) {
+		var nodeType = subject.nodeType;
+		
+		if (nodeType === 3) {
+			// textNode
 			return subject._el = _document.createTextNode(subject.children || '');
-		}
-		// element
-		else {
+		} else {
+			// element
 			var element, props;
 
 			// clone, blueprint node/hoisted vnode
@@ -1280,7 +1327,7 @@
 			}
 			// create
 			else {
-				var newNode  = extractNode(subject),
+				var newNode  = nodeType === 2 ? extractNode(subject) : subject,
 					type     = newNode.type,
 					children = newNode.children,
 					len      = children.length;
@@ -1778,8 +1825,8 @@
 	 * @return {string}
 	 */
 	function renderToStringHTML (subject) {
-		var vnode    = extractNode(subject),
-			nodeType = vnode.nodeType;
+		var nodeType = subject.nodeType,
+			vnode    = nodeType === 2 ? extractNode(subject) : subject;
 
 		// textNode
 		if (nodeType === 3) {
@@ -1793,7 +1840,7 @@
 
 		if (nodeType === 11) {
 			return renderToStringChildren(children);
-		} else if (voidElements[type] === 0) {
+		} else if (hasOwnProperty.call(voidElements, type)) {
 			// <type ...props>
 			return '<'+type+renderToStringProps(props)+'>';
 		} else {
@@ -1809,7 +1856,7 @@
 	 * @return {string}
 	 */
 	function renderToStringProps (props) {
-		if (props.constructor === Object) {
+		if (isObject(props)) {
 			var propsFilter = renderToStringPropsFilter(props, []);
 
 			// create string, convert multi-spaces to single space
@@ -1846,8 +1893,14 @@
 	function renderToStringPropsFilterAssignProp (name, propValue, propsFilter) {
 		// propValue --> <type name=value>
 		if (propValue !== void 0 && propValue !== null && propValue !== false) {
+			var typeOfPropValue = typeof propValue;
+
 			// do not add events, keys or refs
-			if (name !== 'key' && name !== 'ref' && typeof propValue !== 'function') {
+			if (name !== 'key' && name !== 'ref' && typeOfPropValue !== 'function' && typeOfPropValue !== 'object') {
+				if (name === 'className') {
+					name = 'class';
+				}
+
 				// if falsey/truefy checkbox=true ---> <type checkbox>
 				var output = propValue === true ? name : name + '="' + propValue + '"';
 
@@ -1890,7 +1943,7 @@
 	 * @param  {Node|string}       target
 	 * @return {function}
 	 */
-	function render (subject, target) {
+	function render (subject, target, callback) {
 		// renderer
 		function reconciler (props) {
    			if (initial === 1) {
@@ -1961,11 +2014,15 @@
 	   		if (component === void 0) { 
 	   			component = node._owner; 
 	   		}
-
-	   		return reconciler;
+	   	} else {
+	   		reconciler();
 	   	}
 
-	   	return reconciler(); 
+	   	if (typeof callback === 'function') {
+	   		callback();
+	   	}
+
+	   	return reconciler;
 	}
 
 	/**
@@ -2102,6 +2159,15 @@
 	 */
 	function findDOMNode (component) {
 		return component._vnode && component._vnode._el;
+	}
+
+	/**
+	 * unmountComponentAtNode
+	 * @param  {Node} container
+	 * @return {}
+	 */
+	function unmountComponentAtNode (container) {
+		container.textContent = '';
 	}
 	
 	/**
@@ -2310,7 +2376,7 @@
 					var target = this || event.currentTarget;
 
 					// array of bindings
-					if (props.constructor === Array) {
+					if (isArray(props)) {
 						for (var i = 0, len = props.length; i < len; i = i + 1) {
 							updateAttr(target, props[i], setters[i]);
 						}
@@ -3500,7 +3566,7 @@
 			reducer = nextReducer;
 
 			// dispath initial action
-			dispatch({type: '@DIO/STORE'});
+			dispatch({type: '@/STORE'});
 		}
 
 		// auto subscribe a component to a store
@@ -3522,7 +3588,7 @@
 		}
 
 		// dispath initial action
-		dispatch({type: '@DIO/STORE'});
+		dispatch({type: '@/STORE'});
 
 		return {
 			getState: getState, 
@@ -3889,11 +3955,13 @@
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
-	
 
-	exports.h   = createElement;
-	exports.dio = {
+
+	var dio = {
 		version: version,
+
+		// alias
+		h: createElement,
 
 		// elements
 		createElement: createElement,
@@ -3914,15 +3982,19 @@
 		// render
 		render: render,
 		renderToString: renderToString,
-		renderToStaticMarkUp: renderToString,
+		renderToStaticMarkup: renderToString,
 
 		// components
 		Component: createComponentClass(),
 		createClass: createClass,
 		findDOMNode: findDOMNode,
+		unmountComponentAtNode: unmountComponentAtNode,
 
 		// stores
 		createStore: Store,
+		applyMiddleware: applyMiddleware,
+		combineReducers: combineReducers,
+		compose: compose,
 
 		// animations
 		animateWith: animateWith(),
@@ -3961,4 +4033,10 @@
 		isArrayLike: isArrayLike,
 		curry: curry
 	};
+
+	if (_window.hasOwnProperty('window')) {
+		_window.h = createElement;
+	}
+
+	return dio.dio = dio;
 }));

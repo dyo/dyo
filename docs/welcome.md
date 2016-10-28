@@ -1,6 +1,6 @@
 Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
 
-[Install v2.1.1](./documentation "button")
+[Install v2.1.2](./documentation "button")
 
 ```javascript
 function Main () {

@@ -463,6 +463,15 @@ hydrate the current dom on initial mount.
 
 ```javascript
 dio.renderToString(h('div', 'Text'));
+
+// or
+dio.renderToString(Component);
+
+// note: dio.render in a server-side enviroment calls and returns
+// renderToString's output so you may not need to use renderToString
+// explicitly if you are calling .render
+
+// performance 260ms (dio.js) vs 2,683ms (react)
 ```
 
 ---
