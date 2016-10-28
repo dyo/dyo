@@ -666,7 +666,7 @@
 			nodeType: 2, 
 			type: type, 
 			props: props || type.defaultProps || emptyObject, 
-			children: children || emptyArray,
+			children: children || [],
 			_el: null
 		};
 	}
@@ -3576,7 +3576,7 @@
 			// if component
 			if (subject.constructor !== Function || element !== void 0) {
 				// create renderer
-				callback = render(VComponent(subject, getState(), emptyArray), element);
+				callback = render(VComponent(subject, getState(), []), element);
 			} else{
 				callback = subject;
 			}
@@ -4034,6 +4034,7 @@
 		curry: curry
 	};
 
+	// expose h helper to global scope if browser
 	if (_window.hasOwnProperty('window')) {
 		_window.h = createElement;
 	}

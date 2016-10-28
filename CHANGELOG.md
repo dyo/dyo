@@ -1,4 +1,4 @@
-## 2.1.2 (October 23, 2016)
+## 2.1.2 (October 29, 2016)
 
 - patch `dio.renderToString` className should map to class
 - patch `dio.Children.only`
