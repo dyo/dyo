@@ -37,7 +37,7 @@
 
 	// setState is synchronous
 	// setState also calls this.forceUpdate
-	// setState will execute the optional callback before this.forceUpdate if supplied
+	// setState will execute the optional callback before calling this.forceUpdate
 	this.setState:             ({Object}, callback: {function=})
 
 	// non-react methods

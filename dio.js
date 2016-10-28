@@ -2325,7 +2325,7 @@
 				this.forceUpdate();
 
 				// callback, call
-				if (callback !== void 0) {
+				if (callback !== void 0 && typeof callback === 'function') {
 					callback(this.state);
 				}
 			},

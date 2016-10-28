@@ -142,7 +142,7 @@ Will mount a h1 element onto the page the contents of which will be 'Hello World
 
 	// setState is synchronous
 	// setState also calls this.forceUpdate
-	// setState will execute the optional callback before this.forceUpdate if supplied
+	// setState will execute the optional callback before calling this.forceUpdate
 	this.setState:             ({Object}, callback: {function=})
 
 	// non-react methods
