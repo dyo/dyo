@@ -2,7 +2,7 @@
 
 ## Build
 
-The only build step is running dio.js through uglify.js to produce dio.min.js, though PR's without this are also ok.
+`npm run build`
 
 ## Suggestions
 

@@ -1,3 +1,14 @@
+## 3.0.0 (November 09, 2016)
+
+- Add support for style encapsulation.
+- Improve server side rendering
+- Modularity 
+
+### API changes
+
+
+
+
 ## 2.1.2 (October 29, 2016)
 
 - patch `dio.renderToString` className should map to class

@@ -258,8 +258,8 @@
 				    }
 				    constructor(props) {
 				    	super(props);
-				    	this.state   = {store: new Store()};
-				    	this.autoBind('delete', 'select', 'run', 'runLots', 'add', 'update', 'clear', 'swapRows');
+				    	this.state = {store: new Store()};
+				    	this.bind('delete', 'select', 'run', 'runLots', 'add', 'update', 'clear', 'swapRows');
 				    	this.nav = Nav(this.run, this.runLots, this.add, this.update, this.clear, this.swapRows);
 				    }
 				    render(props, state, self) {

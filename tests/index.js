@@ -5,7 +5,9 @@ if (typeof require === 'function' && typeof module === 'object') {
 zep(['../dio.js'], function (utili, deps) {
 	'use strict';
 
-	var {dio, h} = deps;
+	var dio = deps.dio || deps;
+	var h = dio.h;
+	
 	var {describe, spy} = utili;
 
 	describe('hyperscript', function (assert) {
@@ -144,7 +146,7 @@ zep(['../dio.js'], function (utili, deps) {
 		assert(componentHTML   === expectedOutput, '.renderToString(createClass)');
 	});
 
-	describe('dio.curry', function (assert) {
+	describe('dio.defer', function (assert) {
 		function fn (a, b) {
 			return a + b;
 		};
@@ -155,13 +157,13 @@ zep(['../dio.js'], function (utili, deps) {
 
 		function event () {}
 
-		var simple = dio.curry(fn, [1, 2]);
-		var evt = dio.curry(event, null, true);
+		var simple = dio.defer(fn, [1, 2]);
+		var evt = dio.defer(event, null, true);
 
 		evt(e);
 
-		assert(simple() === 3, '.curry(fn, [a, b])');
-		assert(e.preventDefault.called, '.curry(fn, __, true)');
+		assert(simple() === 3, '.defer(fn, [a, b])');
+		assert(e.preventDefault.called, '.defer(fn, __, true)');
 	});
 
 	describe('dio.createClass', function (assert) {

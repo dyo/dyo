@@ -12,14 +12,11 @@
 		<script>
 			function Home () {
 				return {
-					onClick: function () {
-						router.nav('/user/sultan');
-					},
 					render: function () {
 						return h('h1', 
 							{
-								key: '1234', 
-								onClick: this.onClick
+								onClick: router.link('href'),
+								href: '/user/sultan'
 							}, 
 							'Home Page'
 						)
@@ -29,31 +26,18 @@
 			
 			function User () {
 				return {
-					onClick: function () {
-						router.nav('/router.html');
-					},
 					render: function (props) {
 						return h('h1', 
 									{
-										key: '1000', 
-										onClick: this.onClick
+										onClick: router.link('href'),
+										href: '/router.html'
 									},
-
 									props.page + " Page",
 									h('p', {}, 'Hello ' + props.name)
 								)
 					}
 				}
 			}
-
-			// var router = dio.router({
-			// 		'/router.html': function (data) {
-			// 			dio.render({nodeType: 1, type: Home, props: data, children: []}, '.app');
-			// 		},
-			// 		'/:page/:name': function (data) {
-			// 			dio.render({nodeType: 1, type: User, props: data, children: []}, '.app');
-			// 		}
-			// }, '/examples');
 
 			var router = dio.router({
 					'/router.html': Home,

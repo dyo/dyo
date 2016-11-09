@@ -136,6 +136,9 @@ Will mount a h1 element onto the page the contents of which will be 'Hello World
 
 	// render method
 	render:                    (props, state, this) => {}
+
+	// stylesheet, support for style encapsulation
+	stylesheet:                () => ''
 	
 	// methods
 	this.forceUpdate:          ()
@@ -207,7 +210,6 @@ h('@foo', 'Hello', 'World')
 
 // you could also write all of the above by hand in its compiled form
 // when trying to skews the most out of performance.
-
 {
 	nodeType: 1, // where nodeType is either 1 'Element', 3 'TextNode', or 2 'Component'
 	type: 'div',
@@ -217,7 +219,7 @@ h('@foo', 'Hello', 'World')
 			nodeType: 3,
 			type: 'text',
 			props: {},
-			children: ['Hello World']
+			children: 'Hello World'
 		}
 	]
 }
@@ -439,6 +441,153 @@ function () {
 
 ```
 
+## dio.Component.prototype.stylesheet
+
+Before we continue to server-side rendering to explain the stylesheet signature
+that appeared in the schema. It allows use to define a component as follows
+
+```javascript
+class Button extends Component {
+	stylesheet () {
+		return `
+			{
+				color: black;
+				border: 1px solid red;
+				padding: 10px;
+			}
+		`
+	}
+	render () {
+		return button(null, [text('Click Me')]);
+	}
+}
+
+```
+The return value of the stylesheet method when it exists is expected to
+be a string representing css for that component.
+The returned styles will be applied to every instance of that component.
+
+Behind the scenes when dio first encounters an element with a stylesheet method
+it parses the css returned, prefixes(if applicable), namespaces and caches the output of this.
+It will then add this output(string) to the document(browser) or template(server-side).
+
+prefixes supported are appearance, transform, keyframes & animation.
+@keyframes are namespaced and so are animations to match. Eveything else works
+as it would with regular css with the addition of `&{}` and `{}` which match the component itself
+
+for example
+
+```javascript
+`
+{
+	color: 'red'
+}
+&, & h1{
+	color: 'blue'
+}
+`
+// due to css specifity the button will be rendered blue and so will a h1 child of the button
+// if the second block where absent the button would have been renderd red.
+
+// all of this plays well with server-side rendering that is discussed in the following section
+```
+
+---
+
+## dio.renderToString
+
+Like the name suggests this methods outputs the html 
+of a specific component this is normally used for server side rendering.
+When used as a server-side tool adding the attribute `hydrate` 
+will tell dio to hydrate the present structure.
+
+```javascript
+// the method accepsts components, elements and 
+// fragments(array of the above)
+// the template argument is an optional argument
+// when passed dio will render the subject into a {{body}} placeholder
+// and any styles into {{style}} placeholder
+dio.renderToString(
+	subject: {(function|Object|VNode[])}, 
+	template: {string=}
+)
+
+
+// simple use
+
+dio.renderToString(h('div', 'Text'));
+// or
+dio.renderToString(Component);
+
+// note: dio.render in a server-side enviroment calls and returns
+// renderToString's output so you may not need to use renderToString
+// explicitly if you are calling .render
+
+// performance 280ms (dio.js) vs 2,683ms (react)
+
+
+// advanced server-side use
+
+const http = require('http');
+const dio  = require('./dio.js');
+
+const {Component, renderToString} = dio;
+const {button, text, h1} = dio.DOM(['button', 'h1']);
+
+class Button extends Component {
+	stylesheet () {
+		return `
+			{
+				color: black;
+				border: 1px solid red;
+				padding: 10px;
+			}
+		`
+	}
+	render () {
+		return button(null, [text('Click Me')]);
+	}
+}
+
+class Heading extends Component {
+	render () {
+		return h1(null, [text('Hello World')])
+	}
+}
+
+const body = renderToString([Heading, Button], `
+	<html>
+		<head>
+			<title>Example</title>
+			{{style}}
+		</head>
+		<body hydrate>
+			{{body}}
+		</body>
+	</html>		
+`);
+
+// server
+http.createServer(function(request, response) { 
+    response.writeHeader(200, {"Content-Type": "text/html"});  
+    response.write(body);  
+    response.end();  
+}).listen(3000, '127.0.0.1');
+
+// will yield the following
+`
+	<html>
+		<head>
+			<title>Example</title>
+			<style id="tJroa">[scope=tJroa] {color:black;border:1px solid red;padding:10px;}</style>
+		</head>
+		<body hydrate>
+			<h1>Hello World</h1><button scope="tJroa">Click Me</button>
+		</body>
+	</html>		
+`
+```
+
 ---
 
 ## dio.router
@@ -450,7 +599,7 @@ dio.router(
 	onInit: {(string|function)=},
 	mount: {(string|Node)=}
 	middleware: {function} 
-	// arguments passed: component/callback, data, mount, uri
+	// arguments passed: component/callback, data, uri
 )
 
 // or
@@ -476,18 +625,18 @@ dio.router({
 	}
 }, '/backend', '/user/sultan')
 
-// The above firstly defines a set of routes
-// '/' and '/user/:id' the second of which features a data attribute
+// The above firstly defines a set of routes you could optionally also just pass a function
+//  that returns an object of routes.
+// '/' and '/user/:id' the second of which features data
 // that is passed to the callback function (data) in the form
 // {id: value} i.e /user/sultan will output {id: 'sultan'}
 // '/backend' specifies the root address to be used
-// i.e your app lives in url.com/backend rather than on the root /
+// for example if your app lives on url.com/backend rather than on the root /
 // and the third argument '/user/sultan' specifies
-// an initial route address to navigate to
-// initially. The last two arguments are optional.
-// you can also pass a function that retuns an object of routes.
+// an initial route address to navigate to. The last two arguments are optional.
 
-// uri -> component example
+// or pass a component
+// note: if you don't supply a mount this will default to document.body
 dio.router({
 	'/': ComponentA,
 	'/user/:id': ComponentA
@@ -499,12 +648,38 @@ dio.router({
 You can then assign this route to a variable and use it to navigate across views
 
 ```javascript
-var myrouter = ...
+var router = dio.router({
+	'/': () => {...}
+	'/user/:id': () => {...}
+});
 
-myrouter.nav('/user/sultan')
-myrouter.go(-2) // like calling myrouter.back() twice
-myrouter.back()
-myrouter.forward()
+router.nav('/user/sultan')
+router.back()
+router.forward()
+
+// identical to calling myrouter.back() twice
+router.go(-2)
+
+// will route to the href `/about`
+h('a', {href: '/about', onClick: router.link('href')})
+
+// will route to the url `/user/sultan`
+h('a', {onClick: router.link('/user/sultan')})
+
+// using a function
+h('a', {href: '/about', onClick: router.link(el => el.href)});
+
+// note the this context of the function is the element 
+// so you could also write in the following way
+h('a', {href: '/about', onClick: router.link(
+	function () {
+		return this.href;
+	}
+)});
+
+// since you can create multiple routes on a single view you could potentially
+// have one part of the page mount to one container and one to another each
+// responding independaty to their respective routing descriptors.
 ```
 
 ---
@@ -554,30 +729,6 @@ store.subscribe(listener: {Function})
 // and it follows that a render will get auto created
 store.connect(callback: {function})
 store.connect(callback: {(function|Object)}, element: {(string|Node)})
-```
-
----
-
-## dio.renderToString
-
-Like the name suggests this methods outputs the html 
-of a specific component with the props passed
-to it, this is normally used within the context of server-side rendering.
-When used as a server-side tool add the attribute `data-hydrate` 
-to the container you wish to ouput the html, this will allow DIO to
-hydrate the current dom on initial mount.
-
-```javascript
-dio.renderToString(h('div', 'Text'));
-
-// or
-dio.renderToString(Component);
-
-// note: dio.render in a server-side enviroment calls and returns
-// renderToString's output so you may not need to use renderToString
-// explicitly if you are calling .render
-
-// performance 260ms (dio.js) vs 2,683ms (react)
 ```
 
 ---
@@ -755,6 +906,43 @@ class Component extends dio.Component {
 
 ---
 
+## dio.DOM
+
+creates common element factories
+
+```javascript
+var {div, li, input} = dio.DOM();
+
+// instead of
+h('div', {}, [div('input')])
+
+// you can now do the same with
+div({}, [input()])
+
+// the common elements exported are
+[
+	'h1','h2','h3','h4','h5', 'h6','audio','video','canvas',
+	'header','nav','main','aside','footer','section','article','div',
+	'form','button','fieldset','form','input','label','option','select','textarea',
+	'ul','ol','li','p','a','pre','code','span','img','strong','time','small','hr','br',
+	'table','tr','td','th','tbody','thead',
+];
+
+// you can supply dio.DOM([...]) your own list of elements
+// that will overwrite what elements are exported.
+
+
+// if you supply a ['svg'] in the array of elements the following 
+// list of svg elements will get exported aswell.
+[
+	'rect','path','polygon','circle','ellipse','line','polyline','image','marker','a','symbol',
+	'linearGradient','radialGradient','stop','filter','use','clipPath','view','pattern','svg',
+	'g','defs','text','textPath','tspan','mpath','defs','g','marker','mask'
+];
+```
+
+---
+
 ## dio.request
 
 a http helper that makes ajax requests.
@@ -773,23 +961,35 @@ dio.request(
 	// that indicates whether CORS requests should be made 
 	// using credentials such as cookies, 
 	// authorization headers or TLS client certificates.
-	withCredentials?: {Boolean} 
+	withCredentials?: {Boolean},
+
+	// initial value of the returned stream before the request completes
+	initial?: {Any},
+
+	// exposes xhr object for low level access before the request is sent
+	config?: {Function},
+
+	// username & password for HTTP authorization
+	username?: {String}, 
+	password?: {String}
 )
 
 // example
-
 dio.request.post('/url', {id: 1234}, 'json')
 	.then((res)=>{return res})
 	.then((res)=>{'do something'})
 	.catch((err)=>{throw err});
 
-// request also accepts an opbject descriping the request
+// request accepts an object aswell
 dio.request({
 	method: 'GET',
 	url: '/url',
 	payload: {id: 1234},
 	enctype: 'json',
-	withCredentials: false
+	withCredentials: false,
+	config: function (xhr) {
+		xhr.setRequestHeader('x-auth-token',"xxxx");
+	}
 }).then((res)=>{return res}).catch((err)=>{throw err});
 ```
 
