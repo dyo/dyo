@@ -1,4 +1,4 @@
-# Builds
+# Build
 
 ```
 npm run build
