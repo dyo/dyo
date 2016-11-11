@@ -1,4 +1,4 @@
-## 3.0.0 (November 10, 2016)
+## 3.0.0 (November 11, 2016)
 
 - add support for style encapsulation
 - improve server side rendering
