@@ -1,3 +1,20 @@
+## 3.0.0 (November 10, 2016)
+
+- add support for style encapsulation
+- improve server side rendering
+- move code base modularity approach
+
+### API changes
+
+- added stylesheet component method
+- removed injectWindowDependency()
+- removed registerEnviroment()
+- removed `Array`, `Object` and `Event` utilities
+- added `input`, `panic`, `sandbox` and `random` utilities
+- rename `curry` utility to `defer`
+- rename `animateWith` to `animate`
+
+
 ## 2.1.2 (October 29, 2016)
 
 - patch `dio.renderToString` className should map to class

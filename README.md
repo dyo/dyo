@@ -525,14 +525,13 @@ dio.renderToString(Component);
 
 // performance 280ms (dio.js) vs 2,683ms (react)
 
-
 // advanced server-side use
 
 const http = require('http');
 const dio  = require('./dio.js');
 
 const {Component, renderToString} = dio;
-const {button, text, h1} = dio.DOM(['button', 'h1']);
+const {button, text, h1} = dio.DOM(['button', 'h1', 'text']);
 
 class Button extends Component {
 	stylesheet () {
@@ -586,6 +585,9 @@ http.createServer(function(request, response) {
 		</body>
 	</html>		
 `
+
+// where `tJroa` is the generated scope name of the that components namespace
+// that every instance of the component will inherit styles from
 ```
 
 ---
@@ -653,33 +655,39 @@ var router = dio.router({
 	'/user/:id': () => {...}
 });
 
+// navigate to
 router.nav('/user/sultan')
+
+// history back
 router.back()
-router.forward()
 
 // identical to calling myrouter.back() twice
 router.go(-2)
 
-// will route to the href `/about`
-h('a', {href: '/about', onClick: router.link('href')})
+// histroy forward
+router.forward()
 
-// will route to the url `/user/sultan`
-h('a', {onClick: router.link('/user/sultan')})
+// will create a callback attached to href attribute
+router.link('href')
 
-// using a function
-h('a', {href: '/about', onClick: router.link(el => el.href)});
+// for example
+h('h1', {onClick: router.link('href'), href: '/'}, 'Home')
+// or a url
+h('h1', {onClick: router.link('/'), href: '/'}, 'Home')
+// the argument could also be a function
+h('h1', {onClick: router.link(el => el.getAttribute('href')), href: '/'}, 'Home')
 
 // note the this context of the function is the element 
-// so you could also write in the following way
+// so you could also write it in the following way
 h('a', {href: '/about', onClick: router.link(
 	function () {
-		return this.href;
+		return this.getAttribute('href');
 	}
 )});
 
 // since you can create multiple routes on a single view you could potentially
 // have one part of the page mount to one container and one to another each
-// responding independaty to their respective routing descriptors.
+// responding independently to their respective routing descriptors.
 ```
 
 ---
@@ -836,10 +844,10 @@ sum(); // => 10
 
 ---
 
-## dio.curry
+## dio.defer
 
 ```javascript
-var foo = dio.curry(
+var foo = dio.defer(
 	fn: {function}, 
 	args...: {any[]}, 
 	preventDefault: {boolean}, 
@@ -847,7 +855,7 @@ var foo = dio.curry(
 // passing preventDefault triggers e.preventDefault() 
 // if function is called as an event listener
 // for example:
-onClick: dio.curry(
+onClick: dio.defer(
 		(a) => {'look no e.preventDefault()'}, 
 		['a'], 
 		true
@@ -862,7 +870,7 @@ function DoesOneThing (component, arg1, arg2) {
 
 // then in render
 h('input', {
-	onInput: dio.curry(DoesOneThing, [this, 1, 2], true)
+	onInput: dio.defer(DoesOneThing, [this, 1, 2], true)
 })
 ```
 
@@ -1075,7 +1083,7 @@ handleDelete: function (e) {
 
 validates props passed to components insuring they are 
 of the the specificied type. The built in validtors work 
-exactly as they do in react land namely.
+exactly as they do in react land namely...
 
 ```javascript
 [
@@ -1084,9 +1092,9 @@ exactly as they do in react land namely.
 ]
 ```
 
-and you can also create your own validators though 
-it should be noted that propTypes/validations are only evaluated 
-when `NODE_ENV` or `process.env.NODE_ENV` are defined and set to `'development'`.
+It should however be noted that propTypes/validations are only evaluated 
+when `process.env.NODE_ENV` is set to `'development'` or
+if you set `dio.enviroment = 'development'`
 
 ```javascript
 dio.createClass({
@@ -1119,16 +1127,17 @@ dio.createClass({
 
 // where `createInvalidPropTypeError` and `createInvalidPropTypeError`
 // are helper functions that that you can use to create an error message
+// when creating your own custom propType
 createInvalidPropTypeError(
-	propName: {String}, 
-	propValue: {Any}, 
-	displayName: {String}, 
-	expectedType: {String}
+	propName:     {string}, 
+	propValue:    {any}, 
+	displayName:  {string}, 
+	expectedType: {string}
 )
 
 createRequiredPropTypeError(
-	propName: {String}, 
-	displayName: {String}
+	propName:    {string}, 
+	displayName: {string}
 )
 
 // so instead of the above
@@ -1143,43 +1152,43 @@ return createInvalidPropTypeError(
 )
 ```
 
-## dio.injectWindowDependency
+## dio.window
 
-injects a mock window object to be used for writting tests for 
-features that do not exist outside of the browser enviroment,
-like `XMLHttpRequest` and other `#document` operations.
+assigns a mock window object to be used for writting tests for 
+features that do not exist outside of browser enviroment,
+like `XMLHttpRequest` and `#document` operations.
 
 ```javascript
 // returns whatever is passed
-dio.injectWindowDependency({Object})
+dio.window = {Object}
 ```
 
 ## Utilities
 
 ```javascript
-addEventListener: // cross-browser addEventListener
+{
+	// throw an error
+	panic
+	// sandbox a try catch statement
+	sandbox
+	// compose functions
+	compose
+	// generate a random string
+	random
+	// flatten array
+	flatten
+	// create input stream (used to create the stylsheet parse)
+	input        
 
-bind,             // cross-browser Function.bind
-assign,           // cross-browser Object.assign
-keys,             // cross-browser Object.keys
-
-assign,           // cross-browser Object.assign
-keys,             // cross-browser Object.Keys
-reduce,           // cross-browser [].reduce
-reduceRight,      // cross-browser [].reduceRight
-filter            // cross-browser [].filter
-map,              // cross-browser [].map
-
-forEach,          // for each for arrays/objects
-slice,            // [].slice
-splice            // [].splice, uses pop/shift/push/unshift when optimal
-flatten           // flattens an array of any depts
-
-isObject,
-isFunction,
-isString,
-isArray,
-isDefined // (not null and undefined)
+	// type checking utilities
+	isObject 
+	isFunction
+	isString
+	isArray
+	isDefined
+	isNumber
+	isArrayLike
+}
 ```
 
 ## Performance Tips

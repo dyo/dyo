@@ -184,7 +184,7 @@ zep(['../dio.js'], function (utili, deps) {
 		});
 
 		function isComponent (a) {
-			a = a(0,0,1);
+			a = new a;
 
 			var props = [
 				'withAttr', 'setState', 'setProps', 
@@ -198,9 +198,12 @@ zep(['../dio.js'], function (utili, deps) {
 			return !!state.length;
 		}
 
-		assert.deepEqual(fn().render(), hyperscript, '.createClass({Object})');
-		assert.deepEqual(obj().render(), hyperscript, '.createClass({Function})');
-		assert.deepEqual(obj().render(), fn().render(), isComponent(obj), '.createClass({Object}|{Function})');
+		var fnC  = new fn;
+		var objC = new obj;
+
+		assert.deepEqual(fnC.render(), hyperscript, '.createClass({Object})');
+		assert.deepEqual(objC.render(), hyperscript, '.createClass({Function})');
+		assert.deepEqual(objC.render(), fnC.render(), isComponent(obj), '.createClass({Object}|{Function})');
 		assert(isComponent(fn), '.createClass({Function})(__, __, true)');
 		assert(isComponent(obj), '.createClass({Object})(__, __, true)');
 	});

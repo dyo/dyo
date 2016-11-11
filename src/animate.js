@@ -12,7 +12,7 @@
  * 
  * @return {Object}
  */
-function animateWith () {
+function animate () {
 	/**
 	 * element has class
 	 * 
@@ -122,7 +122,7 @@ function animateWith () {
 	 * @param  {number=}  easing
 	 * @return {function}
 	 */
-	function flipAnimation (className, duration, transformations, transformOrigin, easing) {
+	function flip (className, duration, transformations, transformOrigin, easing) {
 		return function (element, callback) {
 			transformations = transformations || '';
 
@@ -259,7 +259,7 @@ function animateWith () {
 	 * @param  {string}
 	 * @return {function}
 	 */
-	function cssAnimation (type) {			
+	function css (type) {			
 		return function keyframe (className, operation) {
 			// default to addition
 			if (operation === undefined) {
@@ -276,7 +276,7 @@ function animateWith () {
 				}
 
 				// push to next event-cycle/frame
-				requestAnimationFrame(function () {
+				rAf(function () {
 					// add transition class this will start the transtion
 					reducer(element, className);
 
@@ -311,8 +311,8 @@ function animateWith () {
 
 
 	return {
-		flip: flipAnimation,
-		transitions: cssAnimation('transition'),
-		animations: cssAnimation('animation')
+		flip:       flip,
+		transition: css('transition'),
+		animation:  css('animation')
 	};
 }

@@ -14,7 +14,8 @@
  * @return  {function} - a store enhancer
  */
 function applyMiddleware () {
-	var middlewares = [], length = arguments.length;
+	var middlewares = [];
+	var length = arguments.length;
 
 	// passing arguments to a function i.e [].splice() will prevent this function
 	// from getting optimized by the VM, so we manually build the array in-line
@@ -22,14 +23,14 @@ function applyMiddleware () {
 		middlewares[i] = arguments[i];
 	}
 
-	return function (createStore) {
+	return function (Store) {
 		return function (reducer, initialState, enhancer) {
 			// create store
-			var store = createStore(reducer, initialState, enhancer),
-				api   = {
-					getState: store.getState,
-					dispatch: store.dispatch
-				};
+			var store = Store(reducer, initialState, enhancer);
+			var api   = {
+				getState: store.getState,
+				dispatch: store.dispatch
+			};
 
 			// create chain
 			var chain = [];
@@ -59,8 +60,8 @@ function applyMiddleware () {
  * @return {function}
  */
 function combineReducers (reducers) {
-	var keys   = Object.keys(reducers),
-		length = keys.length;
+	var keys   = Object.keys(reducers);
+	var length = keys.length;
 
 	// create and return a single reducer
 	return function (state, action) {
@@ -86,9 +87,9 @@ function combineReducers (reducers) {
  * @param  {*}        initialState
  * @return {Object}   {getState, dispatch, subscribe, connect, replaceReducer}
  */
-function createStore (reducer, initialState) {
-	var currentState = initialState,
-		listeners    = [];
+function Store (reducer, initialState) {
+	var currentState = initialState;
+	var listeners    = [];
 
 	// state getter, retrieves the current state
 	function getState () {
@@ -98,7 +99,7 @@ function createStore (reducer, initialState) {
 	// dispatchs a action
 	function dispatch (action) {
 		if (action.type === undefined) {
-			panic('actions without type');
+			throw 'actions without type';
 		}
 
 		// update state with return value of reducer
@@ -115,7 +116,7 @@ function createStore (reducer, initialState) {
 	// subscribe to a store
 	function subscribe (listener) {
 		if (typeof listener !== 'function') {
-			panic('listener should be a function');
+			throw 'listener should be a function';
 		}
 
 		// retrieve index position
@@ -130,7 +131,7 @@ function createStore (reducer, initialState) {
 			for (var i = 0, length = listeners.length; i < length; i++) {
 				// if currentListener === listener, remove
 				if (listeners[i] === listener) {
-					splice(listeners, i, 1);
+					listeners.splice(i, 1);
 				}
 			}
 		}
@@ -140,7 +141,7 @@ function createStore (reducer, initialState) {
 	function replaceReducer (nextReducer) {
 		// exit early, reducer is not a function
 		if (typeof nextReducer !== 'function') {
-			panic('reducer should be a function');
+			throw 'reducer should be a function';
 		}
 
 		// replace reducer
@@ -158,7 +159,7 @@ function createStore (reducer, initialState) {
 		if (typeof subject !== 'function' || element !== undefined) {
 			// create renderer
 			callback = render(VComponent(subject, getState(), []), element);
-		} else{
+		} else {
 			callback = subject;
 		}
 
@@ -172,10 +173,10 @@ function createStore (reducer, initialState) {
 	dispatch({type: '@/STORE'});
 
 	return {
-		getState: getState, 
-		dispatch: dispatch, 
-		subscribe: subscribe,
-		connect: connect,
+		getState:       getState, 
+		dispatch:       dispatch, 
+		subscribe:      subscribe,
+		connect:        connect,
 		replaceReducer: replaceReducer
 	};
 }
@@ -189,28 +190,29 @@ function createStore (reducer, initialState) {
  * @param  {function=} enhancer
  * @return {Object}    {getState, dispatch, subscribe, connect, replaceReducer}
  */
-function Store (reducer, initialState, enhancer) {
+function createStore (reducer, initialState, enhancer) {
 	// exit early, reducer is not a function
 	if (typeof reducer !== 'function') {
-		panic('reducer should be a function');
+		throw 'reducer should be a function';
 	}
 
 	// if initialState is a function and enhancer is undefined
 	// we assume that initialState is an enhancer
 	if (typeof initialState === 'function' && enhancer === undefined) {
-		enhancer = initialState, initialState = undefined;
+		enhancer = initialState;
+		initialState = undefined;
 	}
 
 	// delegate to enhancer if defined
 	if (enhancer !== undefined) {
 		// exit early, enhancer is not a function
 		if (typeof enhancer !== 'function') {
-			panic('enhancer should be a function');
+			throw 'enhancer should be a function';
 		}
 
-		return applyMiddleware(enhancer)(createStore)(reducer, initialState);
+		return applyMiddleware(enhancer)(Store)(reducer, initialState);
 	}
 
 	// if object, multiple reducers, else, single reducer
-	return reducer.constructor === Object ? createStore(combineReducers(reducer)) : createStore(reducer);
+	return typeof reducer === 'object' ? Store(combineReducers(reducer)) : Store(reducer);
 }

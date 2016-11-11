@@ -20,39 +20,38 @@
 }(this, function (window, document, undefined) {
 	'use strict';
 
-	var version                   = '3.0.0',
-		// namespaces
-		styleNS                   = 'scope',
-		mathNS                    = 'http://www.w3.org/1998/Math/MathML',
-		xlinkNS                   = 'http://www.w3.org/1999/xlink',
-		svgNS                     = 'http://www.w3.org/2000/svg',
-		// functions
-		requestAnimationFrame     = window.requestAnimationFrame || setTimeout,
-		// other
-		development               = window.global === window && process.env.NODE_ENV === 'development',
-		emptyObject               = {},
-		emptyArray                = [],
-		emptyVNode                = {
-			nodeType: 0,
-			type:     '',
-			props:    emptyObject, 
-			children: emptyArray, 
-			_el:      null
-		},
-		voidElements              = {
-			'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0,'embed':  0,
-			'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
-			'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
-		},
-		parseVNodeTypeRegExp;
+	var version        = '3.0.0';
+	// namespaces
+	var styleNS        = 'scope';
+	var mathNS         = 'http://www.w3.org/1998/Math/MathML';
+	var xlinkNS        = 'http://www.w3.org/1999/xlink';
+	var svgNS          = 'http://www.w3.org/2000/svg';
+	// functions
+	var rAf            = window.requestAnimationFrame || setTimeout;
+	// other
+	var development    = window.global === window && process.env.NODE_ENV === 'development';
+	var emptyObject    = {};
+	var emptyArray     = [];
+	var emptyVNode     = {
+		nodeType: 0,
+		type:     '',
+		props:    emptyObject, 
+		children: emptyArray, 
+		_el:      null
+	};
+	var voidElements = {
+		'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0,'embed':  0,
+		'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
+		'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
+	};
+	var parseVNodeTypeRegExp;
 
 
 	require('../src/utilities.js');
-	require('../src/element.js');
-	require('../src/vdom.js');
-	require('../src/hydrate.js');
-	require('../src/renderToString.js');
+	require('../src/element.js');	
 	require('../src/render.js');
+	require('../src/renderToString.js');
+	require('../src/hydrate.js');
 	require('../src/component.js');
 	require('../src/stylesheet.js');
 	require('../src/PropTypes.js');
@@ -80,7 +79,7 @@
 	 */
 	function bootstrap (api) {
 		// if browser expose h
-		if (window.window) {
+		if (window.window === window) {
 			window.h = createElement;
 		}
 
@@ -90,9 +89,7 @@
 	  			get: function () {
 	  				return (
 	  					Object.defineProperty(
-	  						this, 
-	  						'PropTypes', 
-	  						{ value: PropTypes() }
+	  						this, 'PropTypes', { value: PropTypes() }
   						),
 	  					this.PropTypes
   					);
@@ -112,13 +109,12 @@
 	  			get: function () { 
 	  				return development ? 'development' : 'production'; 
 	  			}, 
-	  			set: function (value) { 
+	  			set: function (value) {
 	  				development = value === 'development'; 
 	  			},
   			}
   		});
 	}
-
 
 	return bootstrap({
 		// elements
@@ -141,28 +137,29 @@
 		renderToStaticMarkup:   renderToString,
 
 		// components
-		Component:              createComponent(),
+		Component:              Component,
 		createClass:            createClass,
 		findDOMNode:            findDOMNode,
 		unmountComponentAtNode: unmountComponentAtNode,
 
 		// stores
-		createStore:            Store,
+		createStore:            createStore,
 		applyMiddleware:        applyMiddleware,
 		combineReducers:        combineReducers,
 
 		// animations
-		animateWith:            animateWith(),
-
+		animate:                animate(),
+		
 		// http
 		request:                request(),
 		router:                 router,
 
 		// streams
-		stream:                 Stream,
+		stream:                 stream,
 		input:                  input,
 
 		// utilities
+		input:                  input,
 		panic:                  panic,
 		sandbox:                sandbox,
 		compose:                compose,
@@ -188,5 +185,4 @@
 		window:                 null,
 		enviroment:             null
 	});
-
 }));

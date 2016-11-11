@@ -15,21 +15,22 @@
  * @return {(string|void)}
  */
 function stylesheet (element, component) {
-	var id     = '', 
-		output = '', 
-		func   = typeof component.stylesheet === 'function';
+	var id     = '';
+	var output = '';
+	var func   = typeof component.stylesheet === 'function';
 
 	// create stylesheet, executed once per component constructor(not instance)
 	if (func) {
 		// generate unique id
-		id = random(7);
+		id = component.name + random(6);
 
 		// property id, selector id 
-		var prefix      = '['+styleNS+'='+id+']',
-			currentLine = '',
-			content     = component.stylesheet(),
-			characters  = input(
-			content.replace(/\t/g, '')             // remove tabs
+		var prefix      = '['+styleNS+'='+id+']';
+		var currentLine = '';
+		var content     = component.stylesheet();
+
+		var characters  = input(
+		    content.replace(/\t/g, '')             // remove tabs
    				   .replace(/: /g, ':')            // remove space after `:`
    				   .replace(/{(?!\n| \n)/g, '{\n') // drop every opening block into newlines
    				   .replace(/;(?!\n| \n)/g, ';\n') // drop every property into newlines
@@ -40,8 +41,8 @@ function stylesheet (element, component) {
 		// appearance, transform, animation & keyframes are prefixed,
 		// keyframes and corrosponding animations are also namespaced
         while (!characters.eof()) {
-        	var character     = characters.next(),
-        		characterCode = character.charCodeAt(0);
+        	var character     = characters.next();
+        	var characterCode = character.charCodeAt(0);
 
         	// end of current line, \n
         	if (characterCode === 10) {
@@ -55,8 +56,8 @@ function stylesheet (element, component) {
 
         				// till the end of the keyframe block
         				while (!characters.eof()) {
-        					var char = characters.next(),
-        						charCode = char.charCodeAt(0);
+        					var char = characters.next();
+        					var charCode = char.charCodeAt(0);
         					
         					// \n
         					if (charCode !== 10) {
@@ -111,8 +112,8 @@ function stylesheet (element, component) {
         			} else {
         				// selector declaration
         				if (currentLine.charCodeAt(currentLine.length - 1) === 123) {
-        					var splitLine         = currentLine.split(','),
-        						currentLineBuffer = '';
+        					var splitLine         = currentLine.split(',');
+        					var currentLineBuffer = '';
 
         					for (var i = 0, length = splitLine.length; i < length; i++) {
         						var selector = splitLine[i],
@@ -179,9 +180,7 @@ function stylesheet (element, component) {
 
     if (element == null) {
     	// cache for server-side rendering
-    	return (
-    		component.output = '<style id="'+id+'">'+output+'</style>'
-		);
+    	return component.output = '<style id="'+id+'">'+output+'</style>';
     } else {
     	element.setAttribute(styleNS, id);
 
@@ -191,9 +190,10 @@ function stylesheet (element, component) {
     	// since we mutate the .stylesheet property to 0
     	if (func) {
     		// avoid adding a style element when one is already present
-    		if (document.querySelector('#'+id) === null) {
+    		if (document.querySelector('style#'+id) == null) {
 	    		var style              = document.createElement('style');
-	    			style.textContent  = output;
+	    			
+                    style.textContent  = output;
 	    			style.id           = id;
 
 				document.head.appendChild(style);

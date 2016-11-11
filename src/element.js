@@ -44,7 +44,9 @@ function DOM (types) {
 		];
 
 		for (var i = 0, length = svgs.length; i < length; i++) {
-			var type = svgs[i]; elements[type] = VSvg.bind(null, type);
+			var type = svgs[i]; 
+
+			elements[type] = VSvg.bind(null, type);
 		}
 	}
 
@@ -106,7 +108,8 @@ function VElement (type, props, children) {
  * @param {any[]=} children
  */
 function VSvg (type, props, children) {
-	props = props || {}, props.xmlns = svgNS;
+	props = props || {};
+	props.xmlns = svgNS;
 
 	return {
 		nodeType: 1, 
@@ -141,25 +144,16 @@ function VComponent (type, props, children) {
  * @return {Object} Vnode
  */
 function VBlueprint (VNode) {
-	if (isDefined(VNode)) {
+	if (VNode != null) {
 		// if array run all VNodes through VBlueprint
-		if (isArray(VNode)) {
+		if (!VNode.nodeType) {
 			for (var i = 0, length = VNode.length; i < length; i++) {
 				VBlueprint(VNode[i]);
 			}
 		} else {
 			// if a blueprint not already constructed
-			if (VNode._el === null) {
-				if (document) {
-					// create node returns a dom element
-					// the opt is that createNode() uses .cloneNode if _el is assigned
-					// so the next time this element is created cloneNode is used
-					// instead of createElement, the benefits incremental depending
-					// on the size(children...) of the node in question.
-					VNode._el = createNode(VNode);
-				} else {
-					extractVNode(VNode);
-				}
+			if (VNode._el == null) {
+				document ? VNode._el = createNode(VNode) : extractVNode(VNode);
 			}
 		}
 	}
@@ -176,7 +170,9 @@ function VBlueprint (VNode) {
  * @return {Object}
  */
 function createElement (type, props) {
-	var length = arguments.length, children = [], position = 2;
+	var length = arguments.length;
+	var children = [];
+	var position = 2;
 
 	// if props is not a normal object
 	if (props == null || props.nodeType !== undefined || props.constructor !== Object) {
@@ -205,7 +201,7 @@ function createElement (type, props) {
 				var len = child.length;
 
 				// add array child
-				for (var j = 0; j < len; j = j + 1) {
+				for (var j = 0; j < len; j++) {
 					assignElement(child[j], children); 
 				} 
 			} else {
@@ -273,7 +269,8 @@ function assignElement (element, children) {
  * @return {Object} element
  */
 function parseVNodeType (type, props, element) {
-	var matches, classList = [];
+	var matches;
+	var classList = [];
 
 	// default type
 	element.type = 'div';
@@ -287,32 +284,30 @@ function parseVNodeType (type, props, element) {
 
 	// execute RegExp, iterate matches
 	while (matches = parseVNodeTypeRegExp.exec(type)) {
-		var matchedType      = matches[1],
-			matchedValue     = matches[2],
-			matchedProp      = matches[3],
-			matchedPropKey   = matches[4],
-			matchedPropValue = matches[6];
+		var typeMatch      = matches[1];
+		var valueMatch     = matches[2];
+		var propMatch      = matches[3];
+		var propKeyMatch   = matches[4];
+		var propValueMatch = matches[6];
 
-		if (matchedType === '' && matchedValue !== '') {
+		if (typeMatch === '' && valueMatch !== '') {
 			// type
-			element.type = matchedValue;
-		} else if (matchedType === '#') { 
+			element.type = valueMatch;
+		} else if (typeMatch === '#') { 
 			// id
-			props.id = matchedValue;
-		} else if (matchedType === '.') { 
+			props.id = valueMatch;
+		} else if (typeMatch === '.') { 
 			// class(es)
-			classList[classList.length] = matchedValue;
-		} else if (matchedProp[0] === '[') { 
+			classList[classList.length] = valueMatch;
+		} else if (propMatch[0] === '[') { 
 			// attribute
-			var prop = matchedPropValue;
-
 			// remove `[`, `]`, `'` and `"` characters
-			if (prop !== undefined) {
-				prop = prop.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
+			if (propValueMatch != null) {
+				propValueMatch = propValueMatch.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
 			}
 
 			// h('input[checked]') or h('input[checked=true]') yield {checked: true}
-			props[matchedPropKey] = prop || true;
+			props[propKeyMatch] = propValueMatch || true;
 		}
 	}
 
@@ -334,28 +329,32 @@ function parseVNodeType (type, props, element) {
  * @param  {any[]=}  children
  * @return {Object}
  */
-function cloneElement (subject, props, children) {
+function cloneElement (subject, newProps, newChildren) {
+	newProps = newProps || {};
+
 	// copy props
-	each(props, function (value, name) {
-		subject.props[name] = value;
+	each(subject.props, function (value, name) {
+		if (newProps[name] === undefined) {
+			newProps[name] = value;
+		}
 	});
 
-	// if new children
-	if (isArray(children)) {
-		var length = children.length;
+	// assign children
+	if (newChildren) {
+		var length = newChildren.length;
 
 		// and new children is not an empty array
-		if (length !== 0) {
-			subject.children = [];
+		if (length > 0) {
+			var children = [];
 
 			// copy old children
 			for (var i = 0; i < length; i++) {
-				assignElement(children[i], subject.children);
+				assignElement(newChildren[i], children);
 			}
 		}
 	}
 
-	return subject;
+	return VElement(subject.type, newProps, newChildren);
 }
 
 
@@ -366,9 +365,7 @@ function cloneElement (subject, props, children) {
  * @return {boolean}
  */
 function isValidElement (subject) {
-	return (
-		subject != null && subject.nodeType !== undefined
-	);
+	return subject && subject.nodeType;
 }
 
 
@@ -379,16 +376,14 @@ function isValidElement (subject) {
  * @return {function}
  */
 function createFactory (type, props) {
-	return (
-		!props ? VElement.bind(null, type) : VElement.bind(null, type, props)
-	);
+	return props ? VElement.bind(null, type, props) : VElement.bind(null, type);
 }
 
 
 /**
  * Children
  * 
- * mocks React.Children Top-Level API
+ * mocks React.Children top-level api
  *
  * @return {Object}
  */

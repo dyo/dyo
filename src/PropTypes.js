@@ -69,7 +69,7 @@ function validatePropTypes (props, propTypes, displayName) {
 		);
 
 		// an error has occured only if the validator returns a non-falsey value
-		if (validationResult !== undefined) {
+		if (validationResult) {
 			logValidationError(validationResult);
 		}
 	} 
@@ -189,12 +189,13 @@ function createMapOfTypeValidator (type) {
  * @return {Object}
  */
 function PropTypes () {
-	var primitivesTypes = ['number', 'string', 'bool', 'array', 'object', 'func', 'symbol'],
-		propTypesObj    = {};
+	var primitivesTypes = ['number', 'string', 'bool', 'array', 'object', 'func', 'symbol'];
+	var propTypesObj    = {};
 
 	// assign primitive validators
 	for (var i = 0, length = primitivesTypes.length; i < length; i++) {
 		var name = primitivesTypes[i];
+
 		// bool / func ---> boolean / function
 		var primitiveType = name === 'bool' ? name + 'ean'  :
 							name === 'func' ? name + 'tion' : 
@@ -250,11 +251,12 @@ function PropTypes () {
 
 	// object of a certain shape
 	propTypesObj.shape = function (shape) {
-		var shapeKeys    = Object.keys(shape),
-			keysLength   = shapeKeys.length;
-			expectedType = shapeKeys.map(function (name) { 
-				return name + ': ' + shape[name]._propType; 
-			});
+		var keys = Object.keys(shape);
+		var length = keys.length;
+		
+		var expectedType = keys.map(function (name) { 
+			return name + ': ' + shape[name]._propType; 
+		});
 
 		var expectedTypeName = '{\n\t' + expectedType.join(', \n\t') + '\n}';
 
@@ -268,7 +270,7 @@ function PropTypes () {
 				var propValueKeys = Object.keys(propValue);
 
 				// fail if object has different number of keys
-				if (propValueKeys.length !== keysLength) {
+				if (propValueKeys.length !== length) {
 					return 1;
 				}
 

@@ -14,26 +14,26 @@
  * @param  {function} middleware
  * @return {function}
  */
-function Stream (value, middleware) {
-	var store, 
-		chain     = {then: null, 'catch': null}, 
-		listeners = {then: [],'catch': []};
+function stream (value, middleware) {
+	var store; 
+	var chain = {then: null, 'catch': null}; 
+	var listeners = {then: [],'catch': []};
 
-	function stream (value) {
+	function Stream (value) {
 		// received value, update stream
 		if (arguments.length !== 0) {
 			dispatch('then', store = value);
-			return stream;
+			return Stream;
 		}
 
 		var output;
 
 		// special store
-		if (middleware === 1) {
-			output = store();
-		} else {
+		if (middleware) {
 			// if middleware function
-			output = typeof middleware === 'function' ? middleware(store) : store;
+			output = typeof middleware === 'function' ? middleware(store) : store();
+		} else {
+			output = store;
 		}
 
 		return output;  
@@ -41,8 +41,8 @@ function Stream (value, middleware) {
 
 	// dispatcher, dispatches listerners
 	function dispatch (type, value) {
-		var collection = listeners[type], 
-			length     = collection.length;
+		var collection = listeners[type]; 
+		var length = collection.length;
 
 		if (length !== 0) {
 			for (var i = 0; i < length; i++) {
@@ -59,7 +59,7 @@ function Stream (value, middleware) {
 						}
 					}, 
 					function (e) {
-						stream.reject(e);
+						Stream.reject(e);
 					}
 				)
 			}
@@ -67,64 +67,64 @@ function Stream (value, middleware) {
 	}
 
 	// ...JSON.strinfigy()
-	stream.toJSON = function () { 
+	Stream.toJSON = function () { 
 		return store; 
 	};
 
 	// {function}.valueOf()
-	stream.valueOf = function () { 
+	Stream.valueOf = function () { 
 		return store; 
 	};
 
 	// resolve value
-	stream.resolve = function (value) {
-		return stream(value); 
+	Stream.resolve = function (value) {
+		return Stream(value); 
 	};
 
 	// reject
-	stream.reject = function (reason) { 
+	Stream.reject = function (reason) { 
 		dispatch('catch', reason); 
 	};
 
 	// push listener
-	stream.push = function (type, listener, end) {
+	Stream.push = function (type, listener, end) {
 		listeners[type].push(function (chain) {
 			return listener(chain);
 		});
 
-		return end === undefined ? stream : undefined;
+		return end === undefined ? Stream : undefined;
 	};
 
 	// then listener
-	stream.then = function (listener, error) {
+	Stream.then = function (listener, error) {
 		if (error !== undefined) {
-			stream['catch'](error);
+			Stream['catch'](error);
 		}
 
 		if (listener !== undefined) {
-			return stream.push('then', listener, error);
+			return Stream.push('then', listener, error);
 		}
 	};
 
 	// done listener, ends the chain
-	stream.done = function (listener, error) {
-		stream.then(listener, error || 1);
+	Stream.done = function (listener, error) {
+		Stream.then(listener, error || 1);
 	};
 
 	// catch listener
-	stream['catch'] = function (listener) {
-		return stream.push('catch', listener);
+	Stream['catch'] = function (listener) {
+		return Stream.push('catch', listener);
 	};
 
 	// create a map
-	stream.map = function (map) {
-		return Stream(function (resolve) {
-			resolve(function () { return map(stream()); });
+	Stream.map = function (map) {
+		return stream(function (resolve) {
+			resolve(function () { return map(Stream()); });
 		}, 1);
 	};
 
 	// end/reset a stream
-	stream.end = function () {
+	Stream.end = function () {
 		chain.then         = null;
 		chain['catch']     = null;
 		listeners.then     = [];
@@ -132,22 +132,22 @@ function Stream (value, middleware) {
 	};
 
 	// id to distinguish functions from streams
-	stream._stream = 0;
+	Stream._stream = true;
 
-	typeof value === 'function' ? value(stream.resolve, stream.reject, stream) : stream(value);
+	typeof value === 'function' ? value(Stream.resolve, Stream.reject, Stream) : Stream(value);
 
-	return stream;
+	return Stream;
 }
 
 
 /**
  * combine two or more streams
  * 
- * @param  {function} reducer
- * @return {any[]}    deps
+ * @param  {function}  reducer
+ * @return {streams[]} deps
  */
-Stream.combine = function combine (reducer, deps) {
-	if (isArray(deps) === false) {
+stream.combine = function combine (reducer, deps) {
+	if (typeof deps !== 'object') {
 		var args = [];
 
 		for (var i = 0, length = arguments.length; i < length; i++) {
@@ -165,7 +165,7 @@ Stream.combine = function combine (reducer, deps) {
 
 	// second arg === 1 allows us to pass a function as the streams store
 	// that runs when retrieved
-	return Stream(function (resolve) {
+	return stream(function (resolve) {
 		resolve(function () {
 			// extract return value of reducer, assign prevStore, return it
 			return deps[prevStoreAddress] = reducer.apply(null, deps);
@@ -180,7 +180,7 @@ Stream.combine = function combine (reducer, deps) {
  * @param  {any[]} deps
  * @return {function}
  */
-Stream.all = function all (deps) {
+stream.all = function all (deps) {
 	var resolved = [];
 
 	// pushes a value to the resolved array and compares if resolved length
@@ -193,7 +193,7 @@ Stream.all = function all (deps) {
 		}
 	}
 
-	return Stream(function (resolve, reject) {
+	return stream(function (resolve, reject) {
 		// check all dependencies, if a dependecy is a stream attach a listener
 		// reject / resolve as nessessary.
 		for (var i = 0, length = deps.length; i < length; i++) {
@@ -224,7 +224,7 @@ Stream.all = function all (deps) {
  * @param  {function} stream 
  * @return {function} stream
  */
-Stream.scan = function scan (reducer, accumulator, stream) {
+stream.scan = function scan (reducer, accumulator, stream) {
 	return Stream(function (resolve) {
 		// attach a listener to stream, 
 		stream.then(function () {

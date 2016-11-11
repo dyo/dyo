@@ -15,7 +15,8 @@
  * @return {string}
  */
 function renderToString (subject, template) {
-	var vnode, store = [''];
+	var vnode;
+	var store = [''];
 
 	if (subject.type !== undefined) {
 		vnode = subject;
@@ -61,8 +62,8 @@ function renderToString (subject, template) {
  * @return {string}  
  */
 function renderVNodeToString (subject, store) {
-	var nodeType  = subject.nodeType,
-		vnode     = nodeType === 2 ? extractVNode(subject) : subject;
+	var nodeType  = subject.nodeType;
+	var vnode     = nodeType === 2 ? extractVNode(subject) : subject;
 
 	// textNode
 	if (nodeType === 3) {

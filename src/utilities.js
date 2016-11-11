@@ -19,32 +19,50 @@
  */
 function input (str) {
  	// peek at the next character
- 	function peek () { return str[position]; }
+ 	function peek () { 
+ 		return str[position]; 
+ 	}
+
  	// peek x number of characters relative to the current character
- 	function look (distance) { return str[(position-1)+distance]; }
+ 	function look (distance) { 
+ 		return str[(position-1)+distance]; 
+ 	}
+
  	// move on to the next character
- 	function next () { return str[position++]; }
+ 	function next () { 
+ 		return str[position++]; 
+ 	}
+
  	// sleep until a certain character is reached
- 	function sleep (until) { while (!eof() && next() !== until) {} }
+ 	function sleep (until) { 
+ 		while (!eof() && next() !== until) {} 
+ 	}
  	// end of file
  	function eof () { return position === length; }
 
  	// position of the caret
- 	var position = 0, length = str.length;
+ 	var position = 0;
+ 	var length = str.length;
 
- 	return { next: next, peek: peek, eof: eof, look: look, sleep: sleep};
+ 	return { 
+ 		next:  next, 
+ 		peek:  peek, 
+ 		eof:   eof, 
+ 		look:  look, 
+ 		sleep: sleep 
+ 	};
 }
 
 
 /**
- * generate random string of a certain length`
+ * generate random string of a certain length
  * 
  * @param  {number} length
  * @return {string}
  */
 function random (length) {
-    var text     = '',
-    	possible = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
+    var text     = '';
+    var possible = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
 
     for (var i = 0; i < length; i++) {
         text += possible[Math.floor(Math.random() * 52)];
@@ -62,30 +80,25 @@ function random (length) {
  * @return {(undefined|Error)}
  */
 function panic (message, silent) {
+	var error = message instanceof Error ? message : new Error(message);
+
 	// return/throw error
-	if (silent) {
-		return new Error(message);
-	} else {
-		throw new Error(message);
-	}
+	if (silent) { return error; } else { throw error; }
 }
 
 
 /**
  * try catch helper
  * 
- * @param  {function} tryBlock  
- * @param  {function} catchBlock
+ * @param  {function}  func
+ * @param  {function=} catcher
  */
-function sandbox (tryBlock, catchBlock) {
-	// this is hoisted in its own function because
-	// V8 does not opt functions that feature try..catch
+function sandbox (func, catcher) {
+	// hoisted due to V8 not opt'ing functions with try..catch
 	try {
-		tryBlock();
-	} catch (e) {
-		if (catchBlock !== undefined) {
-			catchBlock(e);
-		}
+		return func();
+	} catch (err) {
+		return catcher && catcher(err);
 	}
 }
 
@@ -94,23 +107,21 @@ function sandbox (tryBlock, catchBlock) {
  * defer function
  * 
  * @param  {function} subject
- * @param  {*}        args
+ * @param  {any[]}    args
  * @param  {boolean}  preventDefault
  * @return {function}
  */
 function defer (subject, args, preventDefault) {
+	var empty = !args || args.length === 0;
+
 	// return a function that calls `subject` with args as arguments
-	return function (e) {
+	return function callback (e) {
 		// auto prevent default
 		if (preventDefault && e && e.preventDefault) {
 			e.preventDefault();
 		}
-		// if empty args, else
-		return (
-			args == null || args.length === 0 ? 
-					subject.call(this, e) : 
-					subject.apply(this, args)
-		);
+
+		return subject.apply(this, (empty ? arguments : args));
 	}
 }
 
@@ -129,9 +140,7 @@ function compose () {
 
 	// no functions passed
 	if (length === 0) {
-		return function (arg) { 
-			return arg;
-		}
+		return function (a) { return a; }
 	} else {
 		var funcs = [];
 
@@ -143,14 +152,14 @@ function compose () {
 
 		// remove and retrieve last function
 		// we will use this for the initial composition
-		var lastFunction = funcs.pop();
+		var lastFunc = funcs.pop();
 
-		// update length of funcs array
-		length = length - 1;
+		// decrement length of funcs array
+		length--;
 
 		return function () {
-			var output = lastFunction.apply(null, arguments);
-
+			var output = lastFunc.apply(null, arguments);
+			
 			while (length--) {
 				output = funcs[length](output);
 			}
@@ -249,9 +258,7 @@ function each (subject, callback, thisArg) {
  * @return {boolean}
  */
 function isFunction (subject) {
-	return (
-		typeof subject === 'function'
-	);
+	return typeof subject === 'function';
 }
 
 
@@ -260,9 +267,7 @@ function isFunction (subject) {
  * @return {boolean}
  */
 function isString (subject) {
-	return (
-		typeof subject === 'string'
-	);
+	return typeof subject === 'string';
 }
 
 
@@ -271,9 +276,7 @@ function isString (subject) {
  * @return {boolean}
  */
 function isNumber (subject) {
-	return (
-		typeof subject === 'number'
-	);
+	return typeof subject === 'number';
 }
 
 
@@ -282,9 +285,7 @@ function isNumber (subject) {
  * @return {boolean}
  */
 function isArray (subject) {
-	return (
-		isDefined(subject) && subject.constructor === Array
-	); 
+	return subject != null && subject.constructor === Array;
 }
 
 
@@ -293,9 +294,7 @@ function isArray (subject) {
  * @return {boolean}
  */
 function isObject (subject) {
-	return (
-		isDefined(subject) && subject.constructor === Object
-	);
+	return subject != null && subject.constructor === Object;
 }
 
 
@@ -304,9 +303,7 @@ function isObject (subject) {
  * @return {boolean}
  */
 function isDefined (subject) {
-	return (
-		subject != null
-	);
+	return subject != null;
 }
 
 
@@ -315,7 +312,5 @@ function isDefined (subject) {
  * @return {boolean}
  */
 function isArrayLike (subject) {
-	return (
-		isDefined(subject) && isNumber(subject.length) && !isFunction(subject)
-	);
+	return subject != null && typeof subject.length === 'number' && typeof subject !== 'function';
 }

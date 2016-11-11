@@ -20,13 +20,13 @@ function request () {
 	/**
 	 * serialize + encode object
 	 * 
-	 * @example serializeObject({url:'http://.com'}) //=> 'url=http%3A%2F%2F.com'
+	 * @example serialize({url:'http://.com'}) //=> 'url=http%3A%2F%2F.com'
 	 * 
 	 * @param  {Object} object   
 	 * @param  {Object} prefix
 	 * @return {string}
 	 */
-	function serializeObject (object, prefix) {
+	function serialize (object, prefix) {
 		var arr = [];
 
 		each(object, function (value, key) {
@@ -36,9 +36,9 @@ function request () {
 			// we have somethinglike value = {name:'John', addr: {...}}
 			// re-run param(addr) to serialize 'addr: {...}'
 			arr[arr.length] = typeof value == 'object' ? 
-									serializeObject(value, prefixValue) :
+									serialize(value, prefixValue) :
 									encodeURIComponent(prefixValue) + '=' + encodeURIComponent(value);
-		}, null);
+		});
 
 		return arr.join('&');
 	}
@@ -49,8 +49,11 @@ function request () {
 	 * @param  {Object} xhr
 	 * @return {*} 
 	 */
-	function parseResponse (xhr, type) {			
-		var body, type, data, header = xhr.getResponseHeader('Content-Type');
+	function response (xhr, type) {			
+		var body; 
+		var type; 
+		var data;
+		var header = xhr.getResponseHeader('Content-Type');
 
 		if (!xhr.responseType || xhr.responseType === "text") {
 	        data = xhr.responseText;
@@ -90,11 +93,11 @@ function request () {
 	 * @param  {string=}           password
 	 * @return {function}
 	 */
-	function createRequest (
+	function create (
 		method, uri, payload, enctype, withCredentials, initial, config, username, password
 	) {
 		// return a a stream
-		return Stream(function (resolve, reject, stream) {
+		return stream(function (resolve, reject, stream) {
 			// if XMLHttpRequest constructor absent, exit early
 			if (window.XMLHttpRequest === undefined) {
 				return;
@@ -128,7 +131,7 @@ function request () {
 			xhr.open(method, uri, true, username, password);
 
 			// on success resolve
-			xhr.onload  = function onload () { resolve(parseResponse(this)); };
+			xhr.onload  = function onload () { resolve(response(this)); };
 			// on error reject
 			xhr.onerror = function onerror () { reject(this.statusText); };
 			
@@ -142,7 +145,7 @@ function request () {
 				xhr.setRequestHeader('Content-Type', enctype);
 
 				if (enctype.indexOf('x-www-form-urlencoded') > -1) {
-					payload = serializeObject(payload);
+					payload = serialize(payload);
 				} else if (enctype.indexOf('json') > -1) {
 					payload = JSON.stringify(payload);
 				}
@@ -166,13 +169,15 @@ function request () {
 
 
 	/**
-	 * create request
+	 * create request method
 	 * 
 	 * @param {string}
 	 * @param {function}
 	 */
-	function createInterface (method) {
-		return function (url, payload, enctype, withCredentials, initial, config, username, password) {
+	function method (method) {
+		return function (
+			url, payload, enctype, withCredentials, initial, config, username, password
+		) {
 			// encode url
 			var uri = encodeURI(url);
 
@@ -185,42 +190,44 @@ function request () {
 			}
 
 			// if has payload && GET pass payload as query string
-			if (payload && method === 'GET') {
-				uri = uri + '?' + (typeof payload === 'object' ? serializeObject(payload) : payload);
+			if (method === 'GET' && payload) {
+				uri = uri + '?' + (typeof payload === 'object' ? serialize(payload) : payload);
 			}
 
 			// return promise-like stream
-			return createRequest(
+			return create(
 				method, uri, payload, enctype, withCredentials, initial, config, username, password
 			);
 		}
 	}
 
 	/**
-	 * request interface
+	 * request constructor
 	 * 
 	 * request({method: 'GET', url: '?'}) === request.get('?')
 	 * 
 	 * @param  {Object} subject
 	 * @return {function}
 	 */
-	function request (subject) {
-		return request[(subject.method || 'get').toLowerCase()](
-			subject.url, 
-			subject.payload || subject.data,
-			subject.enctype, 
-			subject.withCredentials,
-			subject.initial,
-			subject.config,
-			subject.username, 
-			subject.password
-		);
+	function Request (subject) {
+		if (typeof subject === 'string') {
+			return Request.get(subject);
+		} else {
+			return Request[(subject.method || 'GET').toLowerCase()](
+				subject.url, 
+				subject.payload || subject.data,
+				subject.enctype, 
+				subject.withCredentials,
+				subject.initial,
+				subject.config,
+				subject.username, 
+				subject.password
+			);
+		}
 	}
 
-	request.get       = createInterface('GET'),
-	request.post      = createInterface('POST'),
-	request.put       = createInterface('PUT'),
-	request['delete'] = createInterface('DELETE');
+	Request.get  = method('GET'),
+	Request.post = method('POST');
 
-	return request;
+	return Request;
 }

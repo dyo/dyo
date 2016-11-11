@@ -258,8 +258,18 @@
 				    }
 				    constructor(props) {
 				    	super(props);
+
 				    	this.state = {store: new Store()};
-				    	this.bind('delete', 'select', 'run', 'runLots', 'add', 'update', 'clear', 'swapRows');
+
+				    	this.delete = this.delete.bind(this);
+				    	this.select = this.select.bind(this);
+				    	this.run = this.run.bind(this);
+				    	this.runLots = this.runLots.bind(this);
+				    	this.add = this.add.bind(this);
+				    	this.update = this.update.bind(this);
+				    	this.clear = this.clear.bind(this);
+				    	this.swapRows = this.swapRows.bind(this);
+
 				    	this.nav = Nav(this.run, this.runLots, this.add, this.update, this.clear, this.swapRows);
 				    }
 				    render(props, state, self) {

@@ -1,6 +1,7 @@
 (function () {
-	var component = dio.VComponent, curry = dio.curry;
-	var dom = dio.DOM(['ul', 'li', 'div', 'a', 'img']);
+	var component = dio.VComponent;
+	var defer = dio.defer;
+	var dom = dio.DOM(['ul', 'li', 'div', 'a', 'img', 'text']);
 	var div = dom.div, ul = dom.ul, li = dom.li, a = dom.a, img = dom.img, text = dom.text;
 
 	// stateless components
@@ -23,7 +24,7 @@
 	function Header () {
 		return div({className: 'wrap'}, [
 			div({className: 'logo'}, [
-				a({href: './', onClick: curry(router.nav, ['/'], true)}, [
+				a({href: './', onClick: defer(router.nav, ['/'], true)}, [
 					img({src: 'assets/logo.svg'})
 				])
 			]),
@@ -71,8 +72,8 @@
 
 			var nav = [];
 
-			dio.forEach(self.state.nav, function (value) {
-				var item = dio.assign({}, value, {active: value.href !== href ? false : true});
+			self.state.nav.forEach(function (value) {
+				var item = Object.assign({}, value, {active: value.href !== href ? false : true});
 				nav[nav.length] = item;
 			});
 
@@ -103,7 +104,7 @@
 					Content({html: rawMarkup()}),
 					TableOfContents({
 						nav: this.state.nav,
-						onClick: dio.curry(activateLink, [this], true)
+						onClick: defer(activateLink, [this], true)
 					})
 				]);
 			}
@@ -137,7 +138,7 @@
 				highlighter();
 			},
 			render: function () {
-				return div({className: 'welcome', onClick: curry(Install, [], true), innerHTML: rawMarkup()})
+				return div({className: 'welcome', onClick: defer(Install, [], true), innerHTML: rawMarkup()})
 			}
 		}
 	}

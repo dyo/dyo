@@ -44,7 +44,7 @@ function router (routes, address, initialiser, element, middleware) {
 					render(VComponent(component, data), element);
 				}
 			}
-		}, null);
+		});
 	}
 
 	return Router(routes, address, initialiser);
@@ -109,17 +109,18 @@ function Router (routes, address, initialiser) {
 	// called when the listener detects a route change
 	function dispatch () {
 		each(routes, function (route, uri) {
-			var callback = route[0],
-				pattern  = route[1],
-				params   = route[2],
-				match    = location.match(pattern);
+			var callback = route[0];
+			var pattern  = route[1];
+			var params   = route[2];
+			var match    = location.match(pattern);
 
 			// we have a match
 			if (match != null) {
 				// create params object to pass to callback
 				// i.e {user: 'simple', id: '1234'}
-				var data = match.slice(1, match.length),
-					args = data.reduce(function (previousValue, currentValue, index) {
+				var data = match.slice(1, match.length);
+
+				var args = data.reduce(function (previousValue, currentValue, index) {
 						// if this is the first value, create variables store
 						if (previousValue == null) {
 							previousValue = {};
@@ -132,12 +133,12 @@ function Router (routes, address, initialiser) {
 
 						return previousValue;
 
-						// null = first value
+						// null --> first value
 					}, null); 
 
 				callback(args, uri);
 			}
-		}, null);
+		});
 	}
 
 	// navigate to a uri
@@ -149,11 +150,11 @@ function Router (routes, address, initialiser) {
 
 	// middleware between event and route
 	function link (to) {
-		var isFunc = typeof to === 'function';
+		var func = typeof to === 'function';
 
 		return function (e) {
-			var target = e.currentTarget,
-				value  = isFunc ? to.call(target, target) : to;
+			var target = e.currentTarget;
+			var value  = func ? to.call(target, target) : to;
 
 			navigate(target[value] || target.getAttribute(value) || value); 
 		}
@@ -165,17 +166,17 @@ function Router (routes, address, initialiser) {
 		address = address.substr(0, address.length - 1);
 	}
 
-	var location = '', 
-		interval = 0,
-		regexp   = /([:*])(\w+)|([\*])/g;
+	var location = '';
+	var interval = 0;
+	var regexp   = /([:*])(\w+)|([\*])/g;
 	
 	var api = {
-			nav:    navigate,
-			go:     history.go, 
-			back:   history.back, 
-			foward: history.foward, 
-			link:   link
-		};
+		nav:    navigate,
+		go:     history.go, 
+		back:   history.back, 
+		foward: history.foward, 
+		link:   link
+	};
 
 
 	// register routes, start listening for changes
