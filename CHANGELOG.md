@@ -1,3 +1,7 @@
+## 3.0.1 (November 12, 2016)
+
+- patch stylesheet encapsulation with pure functions
+
 ## 3.0.0 (November 11, 2016)
 
 - add support for style encapsulation

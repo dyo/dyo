@@ -209,8 +209,8 @@ function extractVNode (subject) {
 	// assign component node
 	component._vnode = subject;
 
-	if (candidate.stylesheet === undefined) {
-		candidate.stylesheet = component.stylesheet !== undefined ? component.stylesheet : null;
+	if (type.stylesheet === undefined) {
+		type.stylesheet = component.stylesheet !== undefined ? component.stylesheet : null;
 	}
 
 	return vnode;

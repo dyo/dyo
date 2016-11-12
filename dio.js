@@ -20,7 +20,7 @@
 }(function (window) {
 	'use strict';
 
-	var version = '3.0.0';
+	var version = '3.0.1';
 	
 	var styleNS = 'scope';
 	var mathNS  = 'http://www.w3.org/1998/Math/MathML';
@@ -980,8 +980,8 @@
 		// assign component node
 		component._vnode = subject;
 	
-		if (candidate.stylesheet === undefined) {
-			candidate.stylesheet = component.stylesheet !== undefined ? component.stylesheet : null;
+		if (type.stylesheet === undefined) {
+			type.stylesheet = component.stylesheet !== undefined ? component.stylesheet : null;
 		}
 	
 		return vnode;
