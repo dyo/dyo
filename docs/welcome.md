@@ -1,4 +1,4 @@
-Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
+Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
 
 [Install v3.0.0](./documentation "button")
 

@@ -29,25 +29,14 @@ function renderToString (subject, template) {
 	}
 
 	if (template) {
-		/*
-			this allows to use this a full-feature template engine server-side
-			i.e renderToString(Component, `
-			<html>
-					<head>
-						<title>Home</title>
-						{{style}}
-					</head>
-					<body>
-						{{body}}
-					</body>
-				</html>
-			`)
-			styles will get rendered to {{style}}
-			and the component/element/fragment to {{body}};			
-		 */
-		return template
-					.replace('{{body}}', renderVNodeToString(vnode, store))
-					.replace('{{style}}', store[0]);
+		var body = renderVNodeToString(vnode, store);
+		var style = store[0]; 
+
+		if (typeof template === 'string') {
+			return template.replace('{{body}}', body).replace('{{style}}', style);
+		} else {
+			return template(body, style);
+		}
 	} else {
 		return renderVNodeToString(vnode, null);
 	}

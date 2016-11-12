@@ -1,7 +1,7 @@
 {
 	"name": "dio.js",
 	"main": "dio.js",
-	"description": "Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.",
+	"description": "Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.",
 	"version": "3.0.0",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",

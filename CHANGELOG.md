@@ -2,7 +2,7 @@
 
 - add support for style encapsulation
 - improve server side rendering
-- move code base modularity approach
+- move code baseto  modularity approach
 
 ### API changes
 

@@ -4,48 +4,46 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * Dio.js is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework. 
+ * Dio.js is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework. 
  * https://github.com/thysultan/dio.js
  * 
  * @licence MIT
  */
-(function (global, factory) {
+(function (factory) {
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
 		module.exports = factory(global);
 	} else if (typeof define === 'function' && define.amd) {
-		define(factory(global, global.document));
+		define(factory(window));
 	} else {
-		global.dio = factory(global, global.document);
+		window.dio = factory(window);
 	}
-}(this, function (window, document, undefined) {
+}(function (window) {
 	'use strict';
 
-	var version        = '3.0.0';
-	// namespaces
-	var styleNS        = 'scope';
-	var mathNS         = 'http://www.w3.org/1998/Math/MathML';
-	var xlinkNS        = 'http://www.w3.org/1999/xlink';
-	var svgNS          = 'http://www.w3.org/2000/svg';
-	// functions
-	var rAf            = window.requestAnimationFrame || setTimeout;
-	// other
-	var development    = window.global === window && process.env.NODE_ENV === 'development';
-	var emptyObject    = {};
-	var emptyArray     = [];
-	var emptyVNode     = {
-		nodeType: 0,
-		type:     '',
-		props:    emptyObject, 
-		children: emptyArray, 
-		_el:      null
+	var version = '3.0.0';
+	
+	var styleNS = 'scope';
+	var mathNS  = 'http://www.w3.org/1998/Math/MathML';
+	var xlinkNS = 'http://www.w3.org/1999/xlink';
+	var svgNS   = 'http://www.w3.org/2000/svg';
+
+	var document    = window.document;
+	var development = window.global === window && process.env.NODE_ENV === 'development';
+
+	var emptyObject  = {};
+	var emptyArray   = [];
+	var emptyVNode   = {
+		nodeType: 0, type: '', props: emptyObject, children: emptyArray, _el: null
 	};
+
 	var voidElements = {
 		'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0,'embed':  0,
 		'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
 		'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
 	};
-	var parseVNodeTypeRegExp;
 
+	var requestAnimationFrame = window.requestAnimationFrame || setTimeout;
+	var parseVNodeTypeRegExp;
 
 	require('../src/utilities.js');
 	require('../src/element.js');	
@@ -159,7 +157,6 @@
 		input:                  input,
 
 		// utilities
-		input:                  input,
 		panic:                  panic,
 		sandbox:                sandbox,
 		compose:                compose,

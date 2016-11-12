@@ -276,7 +276,7 @@ function animate () {
 				}
 
 				// push to next event-cycle/frame
-				rAf(function () {
+				requestAnimationFrame(function () {
 					// add transition class this will start the transtion
 					reducer(element, className);
 

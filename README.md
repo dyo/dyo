@@ -2,9 +2,9 @@
 
 [![dio.js](https://cdn.rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
 
-Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework.
+Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
 
-- ~9kb minified+gzipped
+- ~10kb minified+gzipped
 - ~25kb minified
 
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
@@ -62,7 +62,7 @@ You can also play with Dio [on this jsbin](http://jsbin.com/lobavo/edit?js,outpu
 
 # Getting Started
 
-Dio is a blazing fast, lightweight (~9kb) feature rich Virtual DOM framework
+Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework
 built around the concept that any function/object can become a component.
 
 Components in Dio share the same api's as react with a few additions, 
@@ -509,7 +509,7 @@ will tell dio to hydrate the present structure.
 // and any styles into {{style}} placeholder
 dio.renderToString(
 	subject: {(function|Object|VNode[])}, 
-	template: {string=}
+	template: {(string|function)=}
 )
 
 
@@ -566,6 +566,21 @@ const body = renderToString([Heading, Button], `
 	</html>		
 `);
 
+// or using a function
+const body = renderToString([Heading, Button], function (body, style) {
+	return `
+		<html>
+			<head>
+				<title>Example</title>
+				${style}
+			</head>
+			<body hydrate>
+				${body}
+			</body>
+		</html>		
+	`;
+});
+
 // server
 http.createServer(function(request, response) { 
     response.writeHeader(200, {"Content-Type": "text/html"});  
@@ -578,15 +593,15 @@ http.createServer(function(request, response) {
 	<html>
 		<head>
 			<title>Example</title>
-			<style id="tJroa">[scope=tJroa] {color:black;border:1px solid red;padding:10px;}</style>
+			<style id="ButtontJroa">[scope=ButtontJroa] {color:black;border:1px solid red;padding:10px;}</style>
 		</head>
 		<body hydrate>
-			<h1>Hello World</h1><button scope="tJroa">Click Me</button>
+			<h1>Hello World</h1><button scope="ButtontJroa">Click Me</button>
 		</body>
 	</html>		
 `
 
-// where `tJroa` is the generated scope name of the that components namespace
+// where `ButtontJroa` is the generated scope name of the that components namespace
 // that every instance of the component will inherit styles from
 ```
 
