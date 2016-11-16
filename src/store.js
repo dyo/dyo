@@ -107,7 +107,7 @@ function Store (reducer, initialState) {
 
 		// dispatch to all listeners
 		for (var i = 0, length = listeners.length; i < length; i++) {
-			listeners[i]();
+			listeners[i](currentState);
 		}
 
 		return action;
@@ -156,17 +156,15 @@ function Store (reducer, initialState) {
 		var callback;
 
 		// if component
-		if (typeof subject !== 'function' || element !== undefined) {
+		if (element && typeof render === 'function' && typeof VComponent === 'function') {
 			// create renderer
-			callback = render(VComponent(subject, getState(), []), element);
+			callback = render(VComponent(subject, currentState, []), element);
 		} else {
 			callback = subject;
 		}
 
 		// subscribe to state updates, dispatching render on update
-		subscribe(function () {
-			callback(getState());
-		});
+		subscribe(callback);
 	}
 
 	// dispath initial action
@@ -216,3 +214,4 @@ function createStore (reducer, initialState, enhancer) {
 	// if object, multiple reducers, else, single reducer
 	return typeof reducer === 'object' ? Store(combineReducers(reducer)) : Store(reducer);
 }
+

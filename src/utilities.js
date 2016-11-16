@@ -33,12 +33,20 @@ function input (str) {
  		return str[position++]; 
  	}
 
- 	// sleep until a certain character is reached
- 	function sleep (until) { 
- 		while (!eof() && next() !== until) {} 
+ 	// get current position
+ 	function pos () {
+ 		return position;
  	}
+
  	// end of file
- 	function eof () { return position === length; }
+ 	function eof () { 
+ 		return position === length; 
+ 	}
+
+ 	// sleep until a certain character is reached
+ 	function sleep (until) {
+			while (position !== length && next() !== until) {} 
+ 	}
 
  	// position of the caret
  	var position = 0;
@@ -49,7 +57,8 @@ function input (str) {
  		peek:  peek, 
  		eof:   eof, 
  		look:  look, 
- 		sleep: sleep 
+ 		sleep: sleep,
+ 		pos:   pos
  	};
 }
 
@@ -91,14 +100,14 @@ function panic (message, silent) {
  * try catch helper
  * 
  * @param  {function}  func
- * @param  {function=} catcher
+ * @param  {function=} onerror
  */
-function sandbox (func, catcher) {
+function sandbox (func, onerror) {
 	// hoisted due to V8 not opt'ing functions with try..catch
 	try {
 		return func();
 	} catch (err) {
-		return catcher && catcher(err);
+		return onerror && onerror(err);
 	}
 }
 
@@ -314,3 +323,4 @@ function isDefined (subject) {
 function isArrayLike (subject) {
 	return subject != null && typeof subject.length === 'number' && typeof subject !== 'function';
 }
+

@@ -1,7 +1,7 @@
 /**
  * ---------------------------------------------------------------------------------
  * 
- * server-side render
+ * server-side
  * 
  * ---------------------------------------------------------------------------------
  */
@@ -144,3 +144,4 @@ function renderVNodeToString (subject, store) {
 		return '<'+type+propsString+'>'+childrenString+'</'+type+'>';
 	}
 }
+

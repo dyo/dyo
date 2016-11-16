@@ -276,7 +276,7 @@ function animate () {
 				}
 
 				// push to next event-cycle/frame
-				requestAnimationFrame(function () {
+				setTimeout(function () {
 					// add transition class this will start the transtion
 					reducer(element, className);
 
@@ -316,3 +316,4 @@ function animate () {
 		animation:  css('animation')
 	};
 }
+

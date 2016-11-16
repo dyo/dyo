@@ -1,3 +1,11 @@
+## 3.0.2 (November 16, 2016)
+
+- patch stylesheet @media queries encapsulation
+- add `.pos` to `dio.input` to retrieve current caret position
+- add `dio.stream.resolve` to match promise spec
+- add `dio.stream.reject` to match promise spec
+- patch compatibiliy of `dio.stream` with ES6 async & await
+
 ## 3.0.1 (November 12, 2016)
 
 - patch stylesheet encapsulation with pure functions

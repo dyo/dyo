@@ -81,3 +81,4 @@ function hydrate (element, newNode, index, parentNode) {
 		element.replaceChild(fragment, element.childNodes[index]);
 	}
 }
+

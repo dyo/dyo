@@ -27,15 +27,15 @@ function stylesheet (element, component) {
 		// property id, selector id 
 		var prefix      = '['+styleNS+'='+id+']';
 		var currentLine = '';
-		var content     = component.stylesheet();
+        var raw         = component.stylesheet();
+        var content     = raw
+            .replace(/\t/g, '')             // remove tabs
+            .replace(/: /g, ':')            // remove space after `:`
+            .replace(/{(?!\n| \n)/g, '{\n') // drop every opening block into newlines
+            .replace(/;(?!\n| \n)/g, ';\n') // drop every property into newlines
+            .replace(/^ +|^\n/gm, '');      // remove all leading spaces and newlines
 
-		var characters  = input(
-		    content.replace(/\t/g, '')             // remove tabs
-   				   .replace(/: /g, ':')            // remove space after `:`
-   				   .replace(/{(?!\n| \n)/g, '{\n') // drop every opening block into newlines
-   				   .replace(/;(?!\n| \n)/g, ';\n') // drop every property into newlines
-   				   .replace(/^ +|^\n/gm, '')       // remove all leading spaces and newlines
-		);
+		var characters  = input(content);
 
 		// css parser, SASS &{} is supported, styles are namespaced,
 		// appearance, transform, animation & keyframes are prefixed,
@@ -63,9 +63,9 @@ function stylesheet (element, component) {
         					if (charCode !== 10) {
         						currentLine += char;
 
-        						// `{`, `}`
-        						if ((charCode === 123 && characters.look(2).charCodeAt(0) === 125)) {
-        							currentLine += '}';
+        						// `}`, `}`
+        						if (charCode === 125 && characters.look(2).charCodeAt(0) === 125) {
+        							currentLine += '';
         							break;
         						}
         					}
@@ -73,7 +73,7 @@ function stylesheet (element, component) {
 
         				// prefix, webkit is the only reasonable prefix to use here
         				// -moz- has supported this since 2012 and -ms- was never a thing here
-        				currentLine = '@-webkit-'+currentLine+'@'+currentLine;
+        				currentLine = '@-webkit-'+currentLine+'}@'+currentLine;
         			}
         		} else {
         			// animation: a, n, n
@@ -201,3 +201,4 @@ function stylesheet (element, component) {
     	}
     }
 }
+

@@ -270,20 +270,23 @@ function assignElement (element, children) {
  */
 function parseVNodeType (type, props, element) {
 	var matches;
+	var regex;
 	var classList = [];
 
 	// default type
 	element.type = 'div';
 
 	// if undefined, create RegExp
-	if (parseVNodeTypeRegExp === undefined) {
-		parseVNodeTypeRegExp = new RegExp(
+	if (!parseVNodeType.regex) {
+		regex = parseVNodeType.regex = new RegExp(
 			'(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|\'|)((?:\\\\[\"\'\\]]|.)*?)\\5)?\\])','g'
 		);
+	} else {
+		regex = parseVNodeType.regex;
 	}
 
 	// execute RegExp, iterate matches
-	while (matches = parseVNodeTypeRegExp.exec(type)) {
+	while (matches = regex.exec(type)) {
 		var typeMatch      = matches[1];
 		var valueMatch     = matches[2];
 		var propMatch      = matches[3];
@@ -319,6 +322,7 @@ function parseVNodeType (type, props, element) {
 	// assign props
 	element.props = props;
 }
+
 
 /**
  * clone and return an element having the original element's props
@@ -406,3 +410,4 @@ function Children () {
 		}
 	}
 }
+

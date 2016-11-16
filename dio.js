@@ -11,40 +11,51 @@
  */
 (function (factory) {
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
-		module.exports = factory(global);
+		module.exports = factory(global, global.document);
 	} else if (typeof define === 'function' && define.amd) {
-		define(factory(window));
+		define(factory(window, document));
 	} else {
-		window.dio = factory(window);
+		window.dio = factory(window, document);
 	}
-}(function (window) {
+}(function (window, document) {
 	'use strict';
+	
 
-	var version = '3.0.1';
+	/**
+	 * ---------------------------------------------------------------------------------
+	 * 
+	 * constants
+	 * 
+	 * ---------------------------------------------------------------------------------
+	 */
+	
+	
+	var version = '3.0.2';
 	
 	var styleNS = 'scope';
 	var mathNS  = 'http://www.w3.org/1998/Math/MathML';
 	var xlinkNS = 'http://www.w3.org/1999/xlink';
-	var svgNS   = 'http://www.w3.org/2000/svg';
-
-	var document    = window.document;
+	var svgNS = 'http://www.w3.org/2000/svg';
+	
 	var development = window.global === window && process.env.NODE_ENV === 'development';
-
-	var emptyObject  = {};
-	var emptyArray   = [];
-	var emptyVNode   = {
-		nodeType: 0, type: '', props: emptyObject, children: emptyArray, _el: null
+	
+	var emptyObject = {};
+	var emptyArray = [];
+	var emptyVNode = {
+		nodeType: 0, 
+		type: '', 
+		props: emptyObject, 
+		children: emptyArray, 
+		_el: null
 	};
-
+	
 	var voidElements = {
-		'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0,'embed':  0,
+		'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0, 'embed':  0,
 		'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
 		'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
 	};
-
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout;
-	var parseVNodeTypeRegExp;
-
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -80,12 +91,20 @@
 	 		return str[position++]; 
 	 	}
 	
-	 	// sleep until a certain character is reached
-	 	function sleep (until) { 
-	 		while (!eof() && next() !== until) {} 
+	 	// get current position
+	 	function pos () {
+	 		return position;
 	 	}
+	
 	 	// end of file
-	 	function eof () { return position === length; }
+	 	function eof () { 
+	 		return position === length; 
+	 	}
+	
+	 	// sleep until a certain character is reached
+	 	function sleep (until) {
+				while (position !== length && next() !== until) {} 
+	 	}
 	
 	 	// position of the caret
 	 	var position = 0;
@@ -96,7 +115,8 @@
 	 		peek:  peek, 
 	 		eof:   eof, 
 	 		look:  look, 
-	 		sleep: sleep 
+	 		sleep: sleep,
+	 		pos:   pos
 	 	};
 	}
 	
@@ -138,14 +158,14 @@
 	 * try catch helper
 	 * 
 	 * @param  {function}  func
-	 * @param  {function=} catcher
+	 * @param  {function=} onerror
 	 */
-	function sandbox (func, catcher) {
+	function sandbox (func, onerror) {
 		// hoisted due to V8 not opt'ing functions with try..catch
 		try {
 			return func();
 		} catch (err) {
-			return catcher && catcher(err);
+			return onerror && onerror(err);
 		}
 	}
 	
@@ -361,6 +381,8 @@
 	function isArrayLike (subject) {
 		return subject != null && typeof subject.length === 'number' && typeof subject !== 'function';
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -633,20 +655,23 @@
 	 */
 	function parseVNodeType (type, props, element) {
 		var matches;
+		var regex;
 		var classList = [];
 	
 		// default type
 		element.type = 'div';
 	
 		// if undefined, create RegExp
-		if (parseVNodeTypeRegExp === undefined) {
-			parseVNodeTypeRegExp = new RegExp(
+		if (!parseVNodeType.regex) {
+			regex = parseVNodeType.regex = new RegExp(
 				'(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|\'|)((?:\\\\[\"\'\\]]|.)*?)\\5)?\\])','g'
 			);
+		} else {
+			regex = parseVNodeType.regex;
 		}
 	
 		// execute RegExp, iterate matches
-		while (matches = parseVNodeTypeRegExp.exec(type)) {
+		while (matches = regex.exec(type)) {
 			var typeMatch      = matches[1];
 			var valueMatch     = matches[2];
 			var propMatch      = matches[3];
@@ -682,6 +707,7 @@
 		// assign props
 		element.props = props;
 	}
+	
 	
 	/**
 	 * clone and return an element having the original element's props
@@ -768,7 +794,9 @@
 				return isArray(children) ? children.length : 0;
 			}
 		}
-	}	
+	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -1718,10 +1746,12 @@
 			}
 		}
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * server-side render
+	 * server-side
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -1864,6 +1894,8 @@
 			return '<'+type+propsString+'>'+childrenString+'</'+type+'>';
 		}
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -1947,6 +1979,8 @@
 			element.replaceChild(fragment, element.childNodes[index]);
 		}
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -2229,6 +2263,8 @@
 	
 		return displayName === '' && subject.name !== undefined ? subject.name : displayName;
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -2258,15 +2294,15 @@
 			// property id, selector id 
 			var prefix      = '['+styleNS+'='+id+']';
 			var currentLine = '';
-			var content     = component.stylesheet();
+	        var raw         = component.stylesheet();
+	        var content     = raw
+	            .replace(/\t/g, '')             // remove tabs
+	            .replace(/: /g, ':')            // remove space after `:`
+	            .replace(/{(?!\n| \n)/g, '{\n') // drop every opening block into newlines
+	            .replace(/;(?!\n| \n)/g, ';\n') // drop every property into newlines
+	            .replace(/^ +|^\n/gm, '');      // remove all leading spaces and newlines
 	
-			var characters  = input(
-			    content.replace(/\t/g, '')             // remove tabs
-	   				   .replace(/: /g, ':')            // remove space after `:`
-	   				   .replace(/{(?!\n| \n)/g, '{\n') // drop every opening block into newlines
-	   				   .replace(/;(?!\n| \n)/g, ';\n') // drop every property into newlines
-	   				   .replace(/^ +|^\n/gm, '')       // remove all leading spaces and newlines
-			);
+			var characters  = input(content);
 	
 			// css parser, SASS &{} is supported, styles are namespaced,
 			// appearance, transform, animation & keyframes are prefixed,
@@ -2294,9 +2330,9 @@
 	        					if (charCode !== 10) {
 	        						currentLine += char;
 	
-	        						// `{`, `}`
-	        						if ((charCode === 123 && characters.look(2).charCodeAt(0) === 125)) {
-	        							currentLine += '}';
+	        						// `}`, `}`
+	        						if (charCode === 125 && characters.look(2).charCodeAt(0) === 125) {
+	        							currentLine += '';
 	        							break;
 	        						}
 	        					}
@@ -2304,7 +2340,7 @@
 	
 	        				// prefix, webkit is the only reasonable prefix to use here
 	        				// -moz- has supported this since 2012 and -ms- was never a thing here
-	        				currentLine = '@-webkit-'+currentLine+'@'+currentLine;
+	        				currentLine = '@-webkit-'+currentLine+'}@'+currentLine;
 	        			}
 	        		} else {
 	        			// animation: a, n, n
@@ -2432,6 +2468,8 @@
 	    	}
 	    }
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -2777,6 +2815,8 @@
 	
 		return propTypesObj;
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -2794,10 +2834,15 @@
 	 * @return {function}
 	 */
 	function stream (value, middleware) {
-		var store; 
-		var chain = {then: null, 'catch': null}; 
-		var listeners = {then: [],'catch': []};
+		var chain = { then: null, catch: null }; 
+		var listeners = { then: [], catch: [] };
 	
+		var store;
+	
+		var hasMiddleware = !!middleware;
+		var middlewareFunc = hasMiddleware && typeof middleware === 'function';
+	
+		// constructor
 		function Stream (value) {
 			// received value, update stream
 			if (arguments.length !== 0) {
@@ -2808,9 +2853,9 @@
 			var output;
 	
 			// special store
-			if (middleware) {
+			if (hasMiddleware) {
 				// if middleware function
-				output = typeof middleware === 'function' ? middleware(store) : store();
+				output = middlewareFunc ? middleware(store) : store();
 			} else {
 				output = store;
 			}
@@ -2837,83 +2882,92 @@
 								chain[type] = link;
 							}
 						}, 
-						function (e) {
-							Stream.reject(e);
-						}
+						reject
 					)
 				}
 			}
 		}
 	
-		// ...JSON.strinfigy()
-		Stream.toJSON = function () { 
-			return store; 
-		};
-	
-		// {function}.valueOf()
-		Stream.valueOf = function () { 
-			return store; 
-		};
-	
 		// resolve value
-		Stream.resolve = function (value) {
+		function resolve (value) {
 			return Stream(value); 
-		};
+		}
 	
 		// reject
-		Stream.reject = function (reason) { 
+		function reject (reason) { 
 			dispatch('catch', reason); 
-		};
+		}
 	
 		// push listener
-		Stream.push = function (type, listener, end) {
+		function push (type, listener, end) {
 			listeners[type].push(function (chain) {
 				return listener(chain);
 			});
 	
-			return end === undefined ? Stream : undefined;
+			return !end ? Stream : undefined;
 		};
 	
-		// then listener
-		Stream.then = function (listener, error) {
-			if (error !== undefined) {
-				Stream['catch'](error);
+		// add then listener
+		function then (listener, onerror) {
+			if (onerror) {
+				error(onerror);
 			}
 	
-			if (listener !== undefined) {
-				return Stream.push('then', listener, error);
+			if (listener) {
+				return push('then', listener, onerror);
 			}
-		};
+		}
 	
-		// done listener, ends the chain
-		Stream.done = function (listener, error) {
-			Stream.then(listener, error || 1);
-		};
-	
-		// catch listener
-		Stream['catch'] = function (listener) {
-			return Stream.push('catch', listener);
-		};
+		// add done listener, ends the chain
+		function done (listener, onerror) {
+			then(listener, onerror || true);
+		}
 	
 		// create a map
-		Stream.map = function (map) {
+		function map (dep) {
 			return stream(function (resolve) {
-				resolve(function () { return map(Stream()); });
-			}, 1);
-		};
+				resolve(function () { return dep(Stream()); });
+			}, true);
+		}
 	
 		// end/reset a stream
-		Stream.end = function () {
-			chain.then         = null;
-			chain['catch']     = null;
-			listeners.then     = [];
-			listeners['catch'] = [];
-		};
+		function end () {
+			chain.then = null; 
+			chain.catch = null;
+	
+			listeners.then = [];
+			listeners.catch = [];
+		}
+	
+		// add catch/error listener
+		function error (listener) {
+			return push('catch', listener);
+		}
+	
+		// ...JSON.strinfigy()
+		function toJSON () { 
+			return store;
+		}
+	
+		// {function}.valueOf()
+		function valueOf () { 
+			return store; 
+		}
+	
+		// assign public methods
+		Stream.then = then;
+		Stream.done = done;
+		Stream.catch = error;
+		Stream.map = map;
+		Stream.end = end;
+		Stream.valueOf = valueOf;
+		Stream.toJSON = toJSON;
 	
 		// id to distinguish functions from streams
 		Stream._stream = true;
 	
-		typeof value === 'function' ? value(Stream.resolve, Stream.reject, Stream) : Stream(value);
+		// acts like a promise if function is passed as value
+		typeof value === 'function' ? value(resolve, reject, Stream) : Stream(value);
 	
 		return Stream;
 	}
@@ -2925,7 +2979,7 @@
 	 * @param  {function}  reducer
 	 * @return {streams[]} deps
 	 */
-	stream.combine = function combine (reducer, deps) {
+	stream.combine = function (reducer, deps) {
 		if (typeof deps !== 'object') {
 			var args = [];
 	
@@ -2949,7 +3003,7 @@
 				// extract return value of reducer, assign prevStore, return it
 				return deps[prevStoreAddress] = reducer.apply(null, deps);
 			});
-		}, 1);
+		}, true);
 	};
 	
 	
@@ -2959,7 +3013,7 @@
 	 * @param  {any[]} deps
 	 * @return {function}
 	 */
-	stream.all = function all (deps) {
+	stream.all = function (deps) {
 		var resolved = [];
 	
 		// pushes a value to the resolved array and compares if resolved length
@@ -2978,10 +3032,10 @@
 			for (var i = 0, length = deps.length; i < length; i++) {
 				var value = deps[i];
 	
-				if (value._stream === 0) {
-					value.done(function (value) {
+				if (value._stream) {
+					value.then(function (value) {
 						resolver(value, resolve);
-					}, function (reason) {
+					}).catch(function (reason) {
 						reject(reason);
 					});
 				} else {
@@ -3003,7 +3057,7 @@
 	 * @param  {function} stream 
 	 * @return {function} stream
 	 */
-	stream.scan = function scan (reducer, accumulator, stream) {
+	stream.scan = function (reducer, accumulator, stream) {
 		return Stream(function (resolve) {
 			// attach a listener to stream, 
 			stream.then(function () {
@@ -3013,7 +3067,35 @@
 				resolve(accumulator);
 			});
 		});
-	}
+	};
+	
+	
+	/**
+	 * create new stream in resolved state
+	 * 
+	 * @param  {any} value
+	 * @return {Stream}
+	 */
+	stream.resolve = function (value) {
+		return stream(function (resolve, reject) {
+			setTimeout(resolve, 0, value);
+		});
+	};
+	
+	
+	/**
+	 * create new stream in rejected state
+	 * 
+	 * @param  {any} value 
+	 * @return {Stream}
+	 */
+	stream.reject = function (value) {
+		return stream(function (resolve, reject) {
+			setTimeout(reject, 0, value);
+		});
+	};
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -3247,6 +3329,8 @@
 	
 		return Request;
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -3451,6 +3535,8 @@
 	
 		return api;
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -3560,7 +3646,7 @@
 	
 			// dispatch to all listeners
 			for (var i = 0, length = listeners.length; i < length; i++) {
-				listeners[i]();
+				listeners[i](currentState);
 			}
 	
 			return action;
@@ -3609,17 +3695,15 @@
 			var callback;
 	
 			// if component
-			if (typeof subject !== 'function' || element !== undefined) {
+			if (element && typeof render === 'function' && typeof VComponent === 'function') {
 				// create renderer
-				callback = render(VComponent(subject, getState(), []), element);
+				callback = render(VComponent(subject, currentState, []), element);
 			} else {
 				callback = subject;
 			}
 	
 			// subscribe to state updates, dispatching render on update
-			subscribe(function () {
-				callback(getState());
-			});
+			subscribe(callback);
 		}
 	
 		// dispath initial action
@@ -3669,6 +3753,8 @@
 		// if object, multiple reducers, else, single reducer
 		return typeof reducer === 'object' ? Store(combineReducers(reducer)) : Store(reducer);
 	}
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -3947,7 +4033,7 @@
 					}
 	
 					// push to next event-cycle/frame
-					requestAnimationFrame(function () {
+					setTimeout(function () {
 						// add transition class this will start the transtion
 						reducer(element, className);
 	
@@ -3987,8 +4073,8 @@
 			animation:  css('animation')
 		};
 	}
-
-
+	
+	
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -3996,8 +4082,8 @@
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
-
-
+	
+	
 	/**
 	 * bootstrap
 	 * 
@@ -4009,7 +4095,7 @@
 		if (window.window === window) {
 			window.h = createElement;
 		}
-
+	
 		return Object.defineProperties(api, {
 	  		'PropTypes': {
 	  			// only construct PropTypes when used
@@ -4017,9 +4103,9 @@
 	  				return (
 	  					Object.defineProperty(
 	  						this, 'PropTypes', { value: PropTypes() }
-  						),
+							),
 	  					this.PropTypes
-  					);
+						);
 	  			},
 	  			configurable: true, 
 	  			enumerable: true
@@ -4031,7 +4117,7 @@
 	  			set: function (value) { 
 	  				return window = value, document = value.document, value; 
 	  			},
-  			},
+				},
 	  		'enviroment': {
 	  			get: function () { 
 	  				return development ? 'development' : 'production'; 
@@ -4039,10 +4125,10 @@
 	  			set: function (value) {
 	  				development = value === 'development'; 
 	  			},
-  			}
-  		});
+				}
+			});
 	}
-
+	
 	return bootstrap({
 		// elements
 		createElement:          createElement,
@@ -4057,34 +4143,34 @@
 		VBlueprint:             VBlueprint,
 		Children:               Children(),
 		DOM:                    DOM,
-
+	
 		// render
 		render:                 render,
 		renderToString:         renderToString,
 		renderToStaticMarkup:   renderToString,
-
+	
 		// components
 		Component:              Component,
 		createClass:            createClass,
 		findDOMNode:            findDOMNode,
 		unmountComponentAtNode: unmountComponentAtNode,
-
+	
 		// stores
 		createStore:            createStore,
 		applyMiddleware:        applyMiddleware,
 		combineReducers:        combineReducers,
-
+	
 		// animations
 		animate:                animate(),
 		
 		// http
 		request:                request(),
 		router:                 router,
-
+	
 		// streams
 		stream:                 stream,
 		input:                  input,
-
+	
 		// utilities
 		panic:                  panic,
 		sandbox:                sandbox,
@@ -4099,13 +4185,13 @@
 		isDefined:              isDefined,
 		isNumber:               isNumber,
 		isArrayLike:            isArrayLike,
-
+	
 		// version
 		version:                version,
-
+	
 		// alias
 		h:                      createElement,
-
+	
 		// test utilities
 		PropTypes:              null,
 		window:                 null,

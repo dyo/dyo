@@ -15,10 +15,15 @@
  * @return {function}
  */
 function stream (value, middleware) {
-	var store; 
-	var chain = {then: null, 'catch': null}; 
-	var listeners = {then: [],'catch': []};
+	var chain = { then: null, catch: null }; 
+	var listeners = { then: [], catch: [] };
 
+	var store;
+
+	var hasMiddleware = !!middleware;
+	var middlewareFunc = hasMiddleware && typeof middleware === 'function';
+
+	// constructor
 	function Stream (value) {
 		// received value, update stream
 		if (arguments.length !== 0) {
@@ -29,9 +34,9 @@ function stream (value, middleware) {
 		var output;
 
 		// special store
-		if (middleware) {
+		if (hasMiddleware) {
 			// if middleware function
-			output = typeof middleware === 'function' ? middleware(store) : store();
+			output = middlewareFunc ? middleware(store) : store();
 		} else {
 			output = store;
 		}
@@ -58,83 +63,92 @@ function stream (value, middleware) {
 							chain[type] = link;
 						}
 					}, 
-					function (e) {
-						Stream.reject(e);
-					}
+					reject
 				)
 			}
 		}
 	}
 
-	// ...JSON.strinfigy()
-	Stream.toJSON = function () { 
-		return store; 
-	};
-
-	// {function}.valueOf()
-	Stream.valueOf = function () { 
-		return store; 
-	};
-
 	// resolve value
-	Stream.resolve = function (value) {
+	function resolve (value) {
 		return Stream(value); 
-	};
+	}
 
 	// reject
-	Stream.reject = function (reason) { 
+	function reject (reason) { 
 		dispatch('catch', reason); 
-	};
+	}
 
 	// push listener
-	Stream.push = function (type, listener, end) {
+	function push (type, listener, end) {
 		listeners[type].push(function (chain) {
 			return listener(chain);
 		});
 
-		return end === undefined ? Stream : undefined;
+		return !end ? Stream : undefined;
 	};
 
-	// then listener
-	Stream.then = function (listener, error) {
-		if (error !== undefined) {
-			Stream['catch'](error);
+	// add then listener
+	function then (listener, onerror) {
+		if (onerror) {
+			error(onerror);
 		}
 
-		if (listener !== undefined) {
-			return Stream.push('then', listener, error);
+		if (listener) {
+			return push('then', listener, onerror);
 		}
-	};
+	}
 
-	// done listener, ends the chain
-	Stream.done = function (listener, error) {
-		Stream.then(listener, error || 1);
-	};
-
-	// catch listener
-	Stream['catch'] = function (listener) {
-		return Stream.push('catch', listener);
-	};
+	// add done listener, ends the chain
+	function done (listener, onerror) {
+		then(listener, onerror || true);
+	}
 
 	// create a map
-	Stream.map = function (map) {
+	function map (dep) {
 		return stream(function (resolve) {
-			resolve(function () { return map(Stream()); });
-		}, 1);
-	};
+			resolve(function () { return dep(Stream()); });
+		}, true);
+	}
 
 	// end/reset a stream
-	Stream.end = function () {
-		chain.then         = null;
-		chain['catch']     = null;
-		listeners.then     = [];
-		listeners['catch'] = [];
-	};
+	function end () {
+		chain.then = null; 
+		chain.catch = null;
+
+		listeners.then = [];
+		listeners.catch = [];
+	}
+
+	// add catch/error listener
+	function error (listener) {
+		return push('catch', listener);
+	}
+
+	// ...JSON.strinfigy()
+	function toJSON () { 
+		return store;
+	}
+
+	// {function}.valueOf()
+	function valueOf () { 
+		return store; 
+	}
+
+	// assign public methods
+	Stream.then = then;
+	Stream.done = done;
+	Stream.catch = error;
+	Stream.map = map;
+	Stream.end = end;
+	Stream.valueOf = valueOf;
+	Stream.toJSON = toJSON;
 
 	// id to distinguish functions from streams
 	Stream._stream = true;
 
-	typeof value === 'function' ? value(Stream.resolve, Stream.reject, Stream) : Stream(value);
+	// acts like a promise if function is passed as value
+	typeof value === 'function' ? value(resolve, reject, Stream) : Stream(value);
 
 	return Stream;
 }
@@ -146,7 +160,7 @@ function stream (value, middleware) {
  * @param  {function}  reducer
  * @return {streams[]} deps
  */
-stream.combine = function combine (reducer, deps) {
+stream.combine = function (reducer, deps) {
 	if (typeof deps !== 'object') {
 		var args = [];
 
@@ -170,7 +184,7 @@ stream.combine = function combine (reducer, deps) {
 			// extract return value of reducer, assign prevStore, return it
 			return deps[prevStoreAddress] = reducer.apply(null, deps);
 		});
-	}, 1);
+	}, true);
 };
 
 
@@ -180,7 +194,7 @@ stream.combine = function combine (reducer, deps) {
  * @param  {any[]} deps
  * @return {function}
  */
-stream.all = function all (deps) {
+stream.all = function (deps) {
 	var resolved = [];
 
 	// pushes a value to the resolved array and compares if resolved length
@@ -199,10 +213,10 @@ stream.all = function all (deps) {
 		for (var i = 0, length = deps.length; i < length; i++) {
 			var value = deps[i];
 
-			if (value._stream === 0) {
-				value.done(function (value) {
+			if (value._stream) {
+				value.then(function (value) {
 					resolver(value, resolve);
-				}, function (reason) {
+				}).catch(function (reason) {
 					reject(reason);
 				});
 			} else {
@@ -224,7 +238,7 @@ stream.all = function all (deps) {
  * @param  {function} stream 
  * @return {function} stream
  */
-stream.scan = function scan (reducer, accumulator, stream) {
+stream.scan = function (reducer, accumulator, stream) {
 	return Stream(function (resolve) {
 		// attach a listener to stream, 
 		stream.then(function () {
@@ -234,4 +248,31 @@ stream.scan = function scan (reducer, accumulator, stream) {
 			resolve(accumulator);
 		});
 	});
-}
+};
+
+
+/**
+ * create new stream in resolved state
+ * 
+ * @param  {any} value
+ * @return {Stream}
+ */
+stream.resolve = function (value) {
+	return stream(function (resolve, reject) {
+		setTimeout(resolve, 0, value);
+	});
+};
+
+
+/**
+ * create new stream in rejected state
+ * 
+ * @param  {any} value 
+ * @return {Stream}
+ */
+stream.reject = function (value) {
+	return stream(function (resolve, reject) {
+		setTimeout(reject, 0, value);
+	});
+};
+

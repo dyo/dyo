@@ -947,3 +947,4 @@ function updatePropObject (value, targetAttr) {
 		}
 	}
 }
+

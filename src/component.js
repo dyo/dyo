@@ -280,3 +280,4 @@ function getDisplayName (subject) {
 
 	return displayName === '' && subject.name !== undefined ? subject.name : displayName;
 }
+
