@@ -1,3 +1,7 @@
+## 3.0.3 (November 17, 2016)
+
+- patch `dio.input` end of file `.eof`
+
 ## 3.0.2 (November 17, 2016)
 
 - patch stylesheet @media queries encapsulation

@@ -30,7 +30,7 @@
 	 */
 	
 	
-	var version = '3.0.2';
+	var version = '3.0.3';
 	
 	var styleNS = 'scope';
 	var mathNS  = 'http://www.w3.org/1998/Math/MathML';
@@ -109,7 +109,7 @@
 	
 	 	// position of the caret
 	 	var position = 0;
-	 	var length = str.length;
+	 	var length = str.length-1;
 	
 	 	return { 
 	 		next:  next, 

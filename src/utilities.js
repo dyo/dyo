@@ -50,7 +50,7 @@ function input (str) {
 
  	// position of the caret
  	var position = 0;
- 	var length = str.length;
+ 	var length = str.length-1;
 
  	return { 
  		next:  next, 
