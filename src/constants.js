@@ -7,7 +7,7 @@
  */
 
 
-var version = '3.0.2';
+var version = '3.0.4';
 
 var styleNS = 'scope';
 var mathNS  = 'http://www.w3.org/1998/Math/MathML';

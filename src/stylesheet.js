@@ -29,13 +29,16 @@ function stylesheet (element, component) {
 		var currentLine = '';
         var raw         = component.stylesheet();
         var content     = raw
-            .replace(/\t/g, '')             // remove tabs
-            .replace(/: /g, ':')            // remove space after `:`
-            .replace(/{(?!\n| \n)/g, '{\n') // drop every opening block into newlines
-            .replace(/;(?!\n| \n)/g, ';\n') // drop every property into newlines
-            .replace(/^ +|^\n/gm, '');      // remove all leading spaces and newlines
+            .replace(/\t/g, '')                   // remove tabs
+            .replace(/: /g, ':')                  // remove space after `:`
+            .replace(/{(?!\n| \n)/g, '{\n')       // drop every opening block into newlines
+            .replace(/;(?!\n| \n)/g, ';\n')       // drop every property into newlines
+            .replace(/^ +|^\n/gm, '')             // remove all leading spaces and newlines
+            .replace(/{ /g, '{')                  // remove trailing space after start declaration
+            .replace(/} /g, '}')                  // remove trailing space after end declaration
+            .replace(/([^\{\}; \n\t]$)/gm, '$1;') // patch declarations ending without ;
 
-		var characters  = input(content);
+		var characters = input(content);
 
 		// css parser, SASS &{} is supported, styles are namespaced,
 		// appearance, transform, animation & keyframes are prefixed,
@@ -63,8 +66,10 @@ function stylesheet (element, component) {
         					if (charCode !== 10) {
         						currentLine += char;
 
+                                var timetravel = characters.look(2);
+
         						// `}`, `}`
-        						if (charCode === 125 && characters.look(2).charCodeAt(0) === 125) {
+        						if (charCode === 125 && timetravel && timetravel.charCodeAt(0) === 125) {
         							currentLine += '';
         							break;
         						}
@@ -75,6 +80,8 @@ function stylesheet (element, component) {
         				// -moz- has supported this since 2012 and -ms- was never a thing here
         				currentLine = '@-webkit-'+currentLine+'}@'+currentLine;
         			}
+
+                    // do nothing to @media
         		} else {
         			// animation: a, n, n
         			if (
@@ -91,7 +98,8 @@ function stylesheet (element, component) {
         				currentLine = (
         					splitLine[0] + ':' + id + (splitLine[1].split(',')).join(','+id)
     					);
-        				currentLine = '-webkit-'+currentLine+currentLine;
+
+        				currentLine = '-webkit-' + currentLine + currentLine;
         			} else if (
         				// t, r, :
         				(
@@ -110,7 +118,7 @@ function stylesheet (element, component) {
         				// transform/appearance:
         				currentLine = '-webkit-' + currentLine + currentLine;
         			} else {
-        				// selector declaration
+        				// selector declaration, if last char is `{`
         				if (currentLine.charCodeAt(currentLine.length - 1) === 123) {
         					var splitLine         = currentLine.split(',');
         					var currentLineBuffer = '';
@@ -122,9 +130,8 @@ function stylesheet (element, component) {
 
         							if (i === 0) {
         								// :, &
-        								affix = first === 58 || first === 38 ? prefix : prefix +' ';
+        								affix = first === 58 || first === 38 ? prefix : prefix + ' ';
         							}
-
         						if (first === 123) {
         							// `{`
         							currentLineBuffer += affix + selector;
@@ -144,7 +151,8 @@ function stylesheet (element, component) {
         		css += currentLine;
         		currentLine = '';
         	} else {
-        		var nextCharater = characters.look(1).charCodeAt(0);
+        		var nextCharater = characters.look(1);
+                    nextCharater = nextCharater ? nextCharater.charCodeAt(0) : 0;
 
         		// `/`, `/`
         		if (characterCode === 47 && nextCharater === 47) {

@@ -1,6 +1,6 @@
-## 3.0.3 (November 17, 2016)
+## 3.0.4 (November 17, 2016)
 
-- patch `dio.input` end of file `.eof`
+- patch stylesheet to support loose formatting i.e `leaving out ; at end of declaration`
 
 ## 3.0.2 (November 17, 2016)
 

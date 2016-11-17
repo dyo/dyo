@@ -33,15 +33,15 @@ Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.0.3/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.0.4/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/3.0.3/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/3.0.4/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@3.0.3/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@3.0.4/dio.min.js></script>
 ```
 
 #### bower
