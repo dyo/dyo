@@ -1,4 +1,4 @@
-## 3.0.2 (November 16, 2016)
+## 3.0.2 (November 17, 2016)
 
 - patch stylesheet @media queries encapsulation
 - add `.pos` to `dio.input` to retrieve current caret position

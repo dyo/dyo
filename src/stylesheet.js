@@ -15,9 +15,9 @@
  * @return {(string|void)}
  */
 function stylesheet (element, component) {
-	var id     = '';
-	var output = '';
-	var func   = typeof component.stylesheet === 'function';
+	var id   = '';
+	var css  = '';
+	var func = typeof component.stylesheet === 'function';
 
 	// create stylesheet, executed once per component constructor(not instance)
 	if (func) {
@@ -141,7 +141,7 @@ function stylesheet (element, component) {
         			}
         		}
 
-        		output += currentLine;
+        		css += currentLine;
         		currentLine = '';
         	} else {
         		var nextCharater = characters.look(1).charCodeAt(0);
@@ -169,18 +169,18 @@ function stylesheet (element, component) {
         	}
         }
 
-        component.output     = output;
+        component.css        = css;
         component.stylesheet = 0;
         component.id         = id;
 	} else {
 		// retrieve cache
-		id     = component.id;
-		output = component.output;
+		id  = component.id;
+		css = component.css;
 	}
 
     if (element == null) {
     	// cache for server-side rendering
-    	return component.output = '<style id="'+id+'">'+output+'</style>';
+    	return component.css = '<style id="'+id+'">'+css+'</style>';
     } else {
     	element.setAttribute(styleNS, id);
 
@@ -191,10 +191,10 @@ function stylesheet (element, component) {
     	if (func) {
     		// avoid adding a style element when one is already present
     		if (document.querySelector('style#'+id) == null) {
-	    		var style              = document.createElement('style');
+	    		var style             = document.createElement('style');
 	    			
-                    style.textContent  = output;
-	    			style.id           = id;
+                    style.textContent = css;
+	    			style.id          = id;
 
 				document.head.appendChild(style);
     		}

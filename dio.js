@@ -11,13 +11,13 @@
  */
 (function (factory) {
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
-		module.exports = factory(global, global.document);
+		module.exports = factory(global);
 	} else if (typeof define === 'function' && define.amd) {
-		define(factory(window, document));
+		define(factory(window));
 	} else {
-		window.dio = factory(window, document);
+		window.dio = factory(window);
 	}
-}(function (window, document) {
+}(function (window) {
 	'use strict';
 	
 
@@ -37,6 +37,7 @@
 	var xlinkNS = 'http://www.w3.org/1999/xlink';
 	var svgNS = 'http://www.w3.org/2000/svg';
 	
+	var document = window.document;
 	var development = window.global === window && process.env.NODE_ENV === 'development';
 	
 	var emptyObject = {};
@@ -438,6 +439,7 @@
 		return elements;
 	}
 	
+	
 	/**
 	 * virtual fragment node factory
 	 * 
@@ -452,6 +454,7 @@
 			_el: null
 		};
 	}
+	
 	
 	/**
 	 * virtual text node factory
@@ -468,6 +471,7 @@
 		};
 	}
 		
+	
 	/**
 	 * virtual element node factory
 	 * 
@@ -484,6 +488,7 @@
 			_el: null
 		};
 	}
+	
 	
 	/**
 	 * virtual svg node factory
@@ -505,6 +510,7 @@
 		};
 	}
 	
+	
 	/**
 	 * virtual component node factory
 	 * 
@@ -522,6 +528,7 @@
 		};
 	}
 	
+	
 	/**
 	 * virtual blueprint node factory
 	 * 
@@ -538,13 +545,14 @@
 			} else {
 				// if a blueprint not already constructed
 				if (VNode._el == null) {
-					document ? VNode._el = createNode(VNode) : extractVNode(VNode);
+					document ? VNode._el = createNode(VNode) : renderToString(VNode);//extractVNode(VNode);
 				}
 			}
 		}
 	
 		return VNode;
 	}
+	
 	
 	/**
 	 * create virtual element
@@ -621,6 +629,7 @@
 		}
 	}
 	
+	
 	/**
 	 * assign virtual element
 	 * 
@@ -644,6 +653,7 @@
 		// push to children array
 		children[children.length] = childNode;
 	}
+	
 	
 	/**
 	 * special virtual element types
@@ -1873,10 +1883,10 @@
 		if (store != null && component.stylesheet != null) {
 			// this insures we only every create one 
 			// stylesheet for every component with one
-			if (component.output === undefined || component.output[0] !== '<') {
+			if (component.css === undefined || component.css[0] !== '<') {
 				store[0] += stylesheet(null, component);
 			} else if (component.stylesheet === 0) {
-				store[0] = component.output;
+				store[0] = component.css;
 			}
 	
 			if (store[0] !== '') {
@@ -2282,9 +2292,9 @@
 	 * @return {(string|void)}
 	 */
 	function stylesheet (element, component) {
-		var id     = '';
-		var output = '';
-		var func   = typeof component.stylesheet === 'function';
+		var id   = '';
+		var css  = '';
+		var func = typeof component.stylesheet === 'function';
 	
 		// create stylesheet, executed once per component constructor(not instance)
 		if (func) {
@@ -2408,7 +2418,7 @@
 	        			}
 	        		}
 	
-	        		output += currentLine;
+	        		css += currentLine;
 	        		currentLine = '';
 	        	} else {
 	        		var nextCharater = characters.look(1).charCodeAt(0);
@@ -2436,18 +2446,18 @@
 	        	}
 	        }
 	
-	        component.output     = output;
+	        component.css        = css;
 	        component.stylesheet = 0;
 	        component.id         = id;
 		} else {
 			// retrieve cache
-			id     = component.id;
-			output = component.output;
+			id  = component.id;
+			css = component.css;
 		}
 	
 	    if (element == null) {
 	    	// cache for server-side rendering
-	    	return component.output = '<style id="'+id+'">'+output+'</style>';
+	    	return component.css = '<style id="'+id+'">'+css+'</style>';
 	    } else {
 	    	element.setAttribute(styleNS, id);
 	
@@ -2458,10 +2468,10 @@
 	    	if (func) {
 	    		// avoid adding a style element when one is already present
 	    		if (document.querySelector('style#'+id) == null) {
-		    		var style              = document.createElement('style');
+		    		var style             = document.createElement('style');
 		    			
-	                    style.textContent  = output;
-		    			style.id           = id;
+	                    style.textContent = css;
+		    			style.id          = id;
 	
 					document.head.appendChild(style);
 	    		}

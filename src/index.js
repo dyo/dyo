@@ -11,13 +11,13 @@
  */
 (function (factory) {
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
-		module.exports = factory(global, global.document);
+		module.exports = factory(global);
 	} else if (typeof define === 'function' && define.amd) {
-		define(factory(window, document));
+		define(factory(window));
 	} else {
-		window.dio = factory(window, document);
+		window.dio = factory(window);
 	}
-}(function (window, document) {
+}(function (window) {
 	'use strict';
 	
 

@@ -123,10 +123,10 @@ function renderVNodeToString (subject, store) {
 	if (store != null && component.stylesheet != null) {
 		// this insures we only every create one 
 		// stylesheet for every component with one
-		if (component.output === undefined || component.output[0] !== '<') {
+		if (component.css === undefined || component.css[0] !== '<') {
 			store[0] += stylesheet(null, component);
 		} else if (component.stylesheet === 0) {
-			store[0] = component.output;
+			store[0] = component.css;
 		}
 
 		if (store[0] !== '') {

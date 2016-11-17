@@ -53,6 +53,7 @@ function DOM (types) {
 	return elements;
 }
 
+
 /**
  * virtual fragment node factory
  * 
@@ -67,6 +68,7 @@ function VFragment (children) {
 		_el: null
 	};
 }
+
 
 /**
  * virtual text node factory
@@ -83,6 +85,7 @@ function VText (text) {
 	};
 }
 	
+
 /**
  * virtual element node factory
  * 
@@ -99,6 +102,7 @@ function VElement (type, props, children) {
 		_el: null
 	};
 }
+
 
 /**
  * virtual svg node factory
@@ -120,6 +124,7 @@ function VSvg (type, props, children) {
 	};
 }
 
+
 /**
  * virtual component node factory
  * 
@@ -137,6 +142,7 @@ function VComponent (type, props, children) {
 	};
 }
 
+
 /**
  * virtual blueprint node factory
  * 
@@ -153,13 +159,14 @@ function VBlueprint (VNode) {
 		} else {
 			// if a blueprint not already constructed
 			if (VNode._el == null) {
-				document ? VNode._el = createNode(VNode) : extractVNode(VNode);
+				document ? VNode._el = createNode(VNode) : renderToString(VNode);//extractVNode(VNode);
 			}
 		}
 	}
 
 	return VNode;
 }
+
 
 /**
  * create virtual element
@@ -236,6 +243,7 @@ function createElement (type, props) {
 	}
 }
 
+
 /**
  * assign virtual element
  * 
@@ -259,6 +267,7 @@ function assignElement (element, children) {
 	// push to children array
 	children[children.length] = childNode;
 }
+
 
 /**
  * special virtual element types

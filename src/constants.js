@@ -14,6 +14,7 @@ var mathNS  = 'http://www.w3.org/1998/Math/MathML';
 var xlinkNS = 'http://www.w3.org/1999/xlink';
 var svgNS = 'http://www.w3.org/2000/svg';
 
+var document = window.document;
 var development = window.global === window && process.env.NODE_ENV === 'development';
 
 var emptyObject = {};
