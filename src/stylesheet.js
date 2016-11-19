@@ -27,9 +27,6 @@ function stylesheet (element, component) {
 		// property id, selector id 
 		var prefix      = '['+styleNS+'='+id+']';
 		var currentLine = '';
-
-        // TODO
-        var start = performance.now();
         
         var content = (
             // retrieve css string and format...
@@ -209,8 +206,6 @@ function stylesheet (element, component) {
                 }
         	}
         }
-
-        console.log(performance.now()-start, css);
 
         component.css        = css;
         component.stylesheet = 0;

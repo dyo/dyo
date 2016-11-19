@@ -2308,9 +2308,6 @@
 			// property id, selector id 
 			var prefix      = '['+styleNS+'='+id+']';
 			var currentLine = '';
-	
-	        // TODO
-	        var start = performance.now();
 	        
 	        var content = (
 	            // retrieve css string and format...
@@ -2490,8 +2487,6 @@
 	                }
 	        	}
 	        }
-	
-	        console.log(performance.now()-start, css);
 	
 	        component.css        = css;
 	        component.stylesheet = 0;
