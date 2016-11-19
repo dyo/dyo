@@ -4,6 +4,8 @@
 
 `npm run build`
 
+See [./build/README.md](https://github.com/thysultan/dio.js/tree/master/build) for more information on how it works.
+
 ## Suggestions
 
 Create an issue to suggest it before sending a PR, you can also check ROADMAP.md to see if it's already in the ROADMAP in which case you could send a PR for it.

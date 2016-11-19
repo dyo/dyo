@@ -20,12 +20,12 @@
 function input (str) {
  	// peek at the next character
  	function peek () { 
- 		return str[position]; 
+ 		return str[position] || ''; 
  	}
 
  	// peek x number of characters relative to the current character
  	function look (distance) { 
- 		return str[(position-1)+distance]; 
+ 		return str[(position-1)+distance] || ''; 
  	}
 
  	// move on to the next character
@@ -39,18 +39,22 @@ function input (str) {
  	}
 
  	// end of file
- 	function eof () { 
+ 	function eof () {
  		return position === length; 
  	}
 
  	// sleep until a certain character is reached
  	function sleep (until) {
-			while (position !== length && next() !== until) {} 
+ 		until = until.charCodeAt(0);
+
+		while (position !== length && next().charCodeAt(0) !== until) {
+			// empty
+		} 
  	}
 
  	// position of the caret
  	var position = 0;
- 	var length = str.length-1;
+ 	var length = str.length;
 
  	return { 
  		next:  next, 

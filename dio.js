@@ -30,7 +30,7 @@
 	 */
 	
 	
-	var version = '3.0.4';
+	var version = '3.0.5';
 	
 	var styleNS = 'scope';
 	var mathNS  = 'http://www.w3.org/1998/Math/MathML';
@@ -79,12 +79,12 @@
 	function input (str) {
 	 	// peek at the next character
 	 	function peek () { 
-	 		return str[position]; 
+	 		return str[position] || ''; 
 	 	}
 	
 	 	// peek x number of characters relative to the current character
 	 	function look (distance) { 
-	 		return str[(position-1)+distance]; 
+	 		return str[(position-1)+distance] || ''; 
 	 	}
 	
 	 	// move on to the next character
@@ -98,18 +98,22 @@
 	 	}
 	
 	 	// end of file
-	 	function eof () { 
+	 	function eof () {
 	 		return position === length; 
 	 	}
 	
 	 	// sleep until a certain character is reached
 	 	function sleep (until) {
-				while (position !== length && next() !== until) {} 
+	 		until = until.charCodeAt(0);
+	
+			while (position !== length && next().charCodeAt(0) !== until) {
+				// empty
+			} 
 	 	}
 	
 	 	// position of the caret
 	 	var position = 0;
-	 	var length = str.length-1;
+	 	var length = str.length;
 	
 	 	return { 
 	 		next:  next, 
@@ -1927,7 +1931,7 @@
 		var currentNode = newNode.nodeType === 2 ? extractVNode(newNode) : newNode;
 		var nodeType    = currentNode.nodeType;
 	
-		// is fragment if newNode is not a text node and type is fragment signature '@'
+		// is a fragment if `newNode` is not a text node and type is fragment signature '@'
 		var isFragmentNode = nodeType === 11 ? 1 : 0;
 		var newElement     = isFragmentNode === 1 ? element : element.childNodes[index];
 	
@@ -1958,7 +1962,7 @@
 			}
 		}
 		/*
-			when we reach a string child, assume the dom representing is a single textNode,
+			when we reach a string child, it is assumed that the dom representing it is a single textNode,
 			we do a look ahead of the child, create & append each textNode child to documentFragment 
 			starting from current child till we reach a non textNode such that on h('p', 'foo', 'bar') 
 			foo and bar are two different textNodes in the fragment, we then replace the 
@@ -2304,16 +2308,40 @@
 			// property id, selector id 
 			var prefix      = '['+styleNS+'='+id+']';
 			var currentLine = '';
-	        var raw         = component.stylesheet();
-	        var content     = raw
-	            .replace(/\t/g, '')                   // remove tabs
-	            .replace(/: /g, ':')                  // remove space after `:`
-	            .replace(/{(?!\n| \n)/g, '{\n')       // drop every opening block into newlines
-	            .replace(/;(?!\n| \n)/g, ';\n')       // drop every property into newlines
-	            .replace(/^ +|^\n/gm, '')             // remove all leading spaces and newlines
-	            .replace(/{ /g, '{')                  // remove trailing space after start declaration
-	            .replace(/} /g, '}')                  // remove trailing space after end declaration
-	            .replace(/([^\{\}; \n\t]$)/gm, '$1;') // patch declarations ending without ;
+	
+	        // TODO
+	        var start = performance.now();
+	        
+	        var content = (
+	            // retrieve css string and format...
+	            component.stylesheet()
+	                // remove all spaces after `:`
+	                .replace(/:[ \t]+/g, ':')
+	
+	                // remove all spaces before `;`
+	                .replace(/[ \t]+;/g, ';')
+	                
+	                // drop every block and property into newlines
+	                .replace(/(\{|\}|;)(?!\n)/g, '$1\n')
+	
+	                // remove all leading spaces and newlines                
+	                .replace(/^[\t\n ]*/gm, '')
+	
+	                // remove all spaces/tabs after opening `{` and closing `}` tags
+	                .replace(/(\{|\})[ \t]+/g, '$1')
+	
+	                // remove all spaces/tabs before opening `{` and closing `}` tags
+	                .replace(/[ \t]+(\{|\})/g, '$1')
+	                
+	                // remove all trailing spaces and tabs
+	                .replace(/[ \t]+$/gm, '')
+	
+	                // insure opening `{` are on the same like as the selector
+	                .replace(/(.*)\n(?:|[\t\n ])\{/g, '$1{')
+	
+	                // patch declarations ending without ;
+	                .replace(/([^\{\};\n\/]$)/gm, '$1;')
+	        );
 	
 			var characters = input(content);
 	
@@ -2381,18 +2409,18 @@
 	        				// t, r, :
 	        				(
 	        					firstLetter === 116 && 
-	        					currentLine.charCodeAt(0) === 114 && 
+	        					currentLine.charCodeAt(1) === 114 && 
 	        					currentLine.charCodeAt(9) === 58
 	    					) 
 	        					||
 	        				// a, p, :
 	        				(
 	        					firstLetter === 97 && 
-	        					currentLine.charCodeAt(0) === 112 && 
+	        					currentLine.charCodeAt(1) === 112 && 
 	        					currentLine.charCodeAt(10) === 58
 	    					)
 	    				) {
-	        				// transform/appearance:
+	        				// transform/appearance
 	        				currentLine = '-webkit-' + currentLine + currentLine;
 	        			} else {
 	        				// selector declaration, if last char is `{`
@@ -2405,10 +2433,13 @@
 	        							first    = selector.charCodeAt(0),
 	        							affix    = '';
 	
-	        							if (i === 0) {
-	        								// :, &
-	        								affix = first === 58 || first === 38 ? prefix : prefix + ' ';
-	        							}
+	    							if (i === 0) {
+	    								// :, &
+	    								affix = (first === 58 || first === 38) ? prefix : prefix + ' ';
+	    							} else {
+	                                    affix = ',' + prefix;
+	                                }
+	
 	        						if (first === 123) {
 	        							// `{`
 	        							currentLineBuffer += affix + selector;
@@ -2428,31 +2459,39 @@
 	        		css += currentLine;
 	        		currentLine = '';
 	        	} else {
-	        		var nextCharater = characters.look(1);
-	                    nextCharater = nextCharater ? nextCharater.charCodeAt(0) : 0;
+	                // `/`
+	                if (characterCode === 47) {
+	                    var nextCharaterCode = characters.peek().charCodeAt(0);
 	
-	        		// `/`, `/`
-	        		if (characterCode === 47 && nextCharater === 47) {
-	        			// till end of line comment 
-	        			characters.sleep('\n');
-	        		} else if (characterCode === 47 && nextCharater === 42) {
-	        			// `/`, `*`
-	        			while (!characters.eof()) {
-	        				// till end of block comment
-	        				if (
-	        					// `*`, `/`
-	        					characters.next().charCodeAt(0)  === 42 && 
-	        					characters.look(1).charCodeAt(0) === 47
-	    					) {
-	        					characters.next(); 
-	        					break;
-	        				}
-	        			}
-	        		} else {
-	        			currentLine += character;
-	        		}
+	                    // `/`, `/`
+	                    if (nextCharaterCode === 47) {
+	                        // till end of line comment 
+	                        characters.sleep('\n');
+	                    } else if (nextCharaterCode === 42) {
+	                        characters.next();
+	
+	                        // `/`, `*`
+	                        while (!characters.eof()) {
+	                            // till end of block comment
+	                            if (
+	                                // `*`, `/`
+	                                characters.next().charCodeAt(0)  === 42 && 
+	                                characters.peek().charCodeAt(0) === 47
+	                            ) {
+	                                characters.next();
+	                                break;
+	                            }
+	                        }
+	                    } else {
+	                        currentLine += character;
+	                    }
+	                } else {
+	                    currentLine += character;
+	                }
 	        	}
 	        }
+	
+	        console.log(performance.now()-start, css);
 	
 	        component.css        = css;
 	        component.stylesheet = 0;
@@ -2476,10 +2515,10 @@
 	    	if (func) {
 	    		// avoid adding a style element when one is already present
 	    		if (document.querySelector('style#'+id) == null) {
-		    		var style             = document.createElement('style');
+		    		var style = document.createElement('style');
 		    			
-	                    style.textContent = css;
-		    			style.id          = id;
+	                style.textContent = css;
+	    			style.id = id;
 	
 					document.head.appendChild(style);
 	    		}

@@ -19,7 +19,7 @@ function hydrate (element, newNode, index, parentNode) {
 	var currentNode = newNode.nodeType === 2 ? extractVNode(newNode) : newNode;
 	var nodeType    = currentNode.nodeType;
 
-	// is fragment if newNode is not a text node and type is fragment signature '@'
+	// is a fragment if `newNode` is not a text node and type is fragment signature '@'
 	var isFragmentNode = nodeType === 11 ? 1 : 0;
 	var newElement     = isFragmentNode === 1 ? element : element.childNodes[index];
 
@@ -50,7 +50,7 @@ function hydrate (element, newNode, index, parentNode) {
 		}
 	}
 	/*
-		when we reach a string child, assume the dom representing is a single textNode,
+		when we reach a string child, it is assumed that the dom representing it is a single textNode,
 		we do a look ahead of the child, create & append each textNode child to documentFragment 
 		starting from current child till we reach a non textNode such that on h('p', 'foo', 'bar') 
 		foo and bar are two different textNodes in the fragment, we then replace the 

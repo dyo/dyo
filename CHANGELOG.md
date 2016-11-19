@@ -1,3 +1,11 @@
+## 3.0.5 (November 19, 2016)
+
+- improve `stylesheet` parser, now more forgiving i.e trailing `;` is optional
+- patch to `stylesheet` prefixer for transforms and appearance
+- patch to `stylesheet` to handle minified css
+- patch `dio.input` eof
+- all round the stylesheet parser is now better at handling multiple input styles
+
 ## 3.0.4 (November 17, 2016)
 
 - patch stylesheet to support loose formatting i.e `leaving out ; at end of declaration`
