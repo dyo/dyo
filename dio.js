@@ -41,12 +41,11 @@
 	var development = window.global === window && process.env.NODE_ENV === 'development';
 	
 	var emptyObject = {};
-	var emptyArray = [];
 	var emptyVNode = {
 		nodeType: 0, 
 		type: '', 
 		props: emptyObject, 
-		children: emptyArray, 
+		children: [], 
 		_el: null
 	};
 	
