@@ -30,9 +30,9 @@
 	 */
 	
 	
-	var version = '3.0.5';
+	var version = '3.0.6';
 	
-	var styleNS = 'scope';
+	var styleNS = 'data-scope';
 	var mathNS  = 'http://www.w3.org/1998/Math/MathML';
 	var xlinkNS = 'http://www.w3.org/1999/xlink';
 	var svgNS = 'http://www.w3.org/2000/svg';
@@ -548,7 +548,7 @@
 			} else {
 				// if a blueprint not already constructed
 				if (VNode._el == null) {
-					document ? VNode._el = createNode(VNode) : renderToString(VNode);//extractVNode(VNode);
+					document ? VNode._el = createNode(VNode) : extractVNode(VNode);
 				}
 			}
 		}
@@ -705,6 +705,10 @@
 				// remove `[`, `]`, `'` and `"` characters
 				if (propValueMatch != null) {
 					propValueMatch = propValueMatch.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
+				}
+	
+				if (propKeyMatch === 'class') {
+					propKeyMatch = 'className';
 				}
 	
 				// h('input[checked]') or h('input[checked=true]') yield {checked: true}
@@ -1819,7 +1823,13 @@
 	
 		// textNode
 		if (nodeType === 3) {
-			return vnode.children;
+			var text = '' + vnode.children;
+	
+			if (text.indexOf('&') > -1) { text = text.replace(/&/g, '&amp;'); }
+			if (text.indexOf('<') > -1) { text = text.replace(/</g, '&lt;'); }
+			if (text.indexOf('>') > -1) { text = text.replace(/>/g, '&gt;'); }
+	
+			return text;
 		}
 	
 		// references
@@ -1846,6 +1856,11 @@
 				// value --> <type name=value>, exclude props with undefined/null/false as values
 				if (value != null && value !== false) {
 					var typeOfValue = typeof value;
+	
+					if (typeOfValue === 'string' && value) {
+						if (value.indexOf('&') > -1) { value = value.replace(/&/g, '&amp;'); }
+						if (value.indexOf('"') > -1) { value = value.replace(/"/g, '&quot;'); }
+					}
 	
 					// do not add events, keys or refs
 					if (name !== 'key' && name !== 'ref' && typeOfValue !== 'function') {

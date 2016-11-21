@@ -7,9 +7,9 @@
  */
 
 
-var version = '3.0.5';
+var version = '3.0.6';
 
-var styleNS = 'scope';
+var styleNS = 'data-scope';
 var mathNS  = 'http://www.w3.org/1998/Math/MathML';
 var xlinkNS = 'http://www.w3.org/1999/xlink';
 var svgNS = 'http://www.w3.org/2000/svg';

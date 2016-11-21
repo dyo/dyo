@@ -56,7 +56,13 @@ function renderVNodeToString (subject, store) {
 
 	// textNode
 	if (nodeType === 3) {
-		return vnode.children;
+		var text = '' + vnode.children;
+
+		if (text.indexOf('&') > -1) { text = text.replace(/&/g, '&amp;'); }
+		if (text.indexOf('<') > -1) { text = text.replace(/</g, '&lt;'); }
+		if (text.indexOf('>') > -1) { text = text.replace(/>/g, '&gt;'); }
+
+		return text;
 	}
 
 	// references
@@ -83,6 +89,11 @@ function renderVNodeToString (subject, store) {
 			// value --> <type name=value>, exclude props with undefined/null/false as values
 			if (value != null && value !== false) {
 				var typeOfValue = typeof value;
+
+				if (typeOfValue === 'string' && value) {
+					if (value.indexOf('&') > -1) { value = value.replace(/&/g, '&amp;'); }
+					if (value.indexOf('"') > -1) { value = value.replace(/"/g, '&quot;'); }
+				}
 
 				// do not add events, keys or refs
 				if (name !== 'key' && name !== 'ref' && typeOfValue !== 'function') {

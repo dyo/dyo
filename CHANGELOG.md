@@ -1,3 +1,8 @@
+## 3.0.6 (November 21, 2016)
+
+- patch stylesheet to use valid html attribute for namespacing `scope` becomes `data-scope`
+- escape props and textNodes for server-side rendering
+
 ## 3.0.5 (November 19, 2016)
 
 - improve `stylesheet` parser, now more forgiving i.e trailing `;` is optional

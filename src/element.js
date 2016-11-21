@@ -159,7 +159,7 @@ function VBlueprint (VNode) {
 		} else {
 			// if a blueprint not already constructed
 			if (VNode._el == null) {
-				document ? VNode._el = createNode(VNode) : renderToString(VNode);//extractVNode(VNode);
+				document ? VNode._el = createNode(VNode) : extractVNode(VNode);
 			}
 		}
 	}
@@ -316,6 +316,10 @@ function parseVNodeType (type, props, element) {
 			// remove `[`, `]`, `'` and `"` characters
 			if (propValueMatch != null) {
 				propValueMatch = propValueMatch.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
+			}
+
+			if (propKeyMatch === 'class') {
+				propKeyMatch = 'className';
 			}
 
 			// h('input[checked]') or h('input[checked=true]') yield {checked: true}

@@ -2,7 +2,7 @@
 	"name": "dio.js",
 	"main": "dio.js",
 	"description": "Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.",
-	"version": "3.0.5",
+	"version": "3.0.6",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",
 	"author": {
@@ -32,8 +32,8 @@
 		"url": "https://github.com/thysultan/dio.js/issues"
 	},
 	"scripts": {
-		"test": "node ./tests/index.js",
-		"build": "node ./build/index.js '../src/' '../dio.js' 'index.js'"
+		"test": "node ./tests/",
+		"build": "node ./build/ '../src/' '../dio.js' 'index.js'"
 	},
 	"files": ["dio.min.js", "dio.js"]
 }

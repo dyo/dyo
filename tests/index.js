@@ -23,6 +23,12 @@ zep(['../dio.js'], function (utili, deps) {
 		);
 
 		assert(
+			h('[class=a]').type === 'div' && 
+			h('[class=a]').props.className === 'a', 
+			"h('[class=a]')"
+		);
+
+		assert(
 			h('#id').type === 'div' && 
 			h('#id').props.id === 'id', 
 			"h('#id')"
@@ -285,10 +291,16 @@ zep(['../dio.js'], function (utili, deps) {
 				assert(propsSpy.called, 'render(props)');
 				done();
 			}, 1000/61);
+		} else {
+			done();
 		}
 	});
 
 	describe('dio.request', function (assert, done) {
+		if (typeof XMLHttpRequest !== 'function') {
+			return done();
+		}
+
 		var spyer = spy();
 		var requestJSON = dio.request.get('https://jsonplaceholder.typicode.com/users');
 
@@ -304,10 +316,6 @@ zep(['../dio.js'], function (utili, deps) {
 			// lets end the test here.
 			done();
 		});
-
-		if (typeof XMLHttpRequest !== 'function') {
-			done();
-		}
 
 		dio.request.post('?', {id: 1234}, null, function () {
 			assert(true, '(__, __, __, callback)');
