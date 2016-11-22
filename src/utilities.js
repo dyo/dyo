@@ -8,6 +8,37 @@
 
 
 /**
+ * escape string
+ * 
+ * @param  {(string|boolean|number)} subject
+ * @return {string}
+ */
+function escape (subject) {
+	var string = subject + '';
+	var characters = '';
+
+	for (var i = 0, length = string.length; i < length; i++) {
+		var char = string[i];
+
+		switch (char.charCodeAt(0)) {
+			// &
+			case 38: characters += '&amp;'; break;
+			// "
+			case 34: characters += '&quot;'; break;
+			// <
+			case 60: characters += '&lt;'; break;
+			// >
+			case 62: characters += '&gt;'; break;
+
+			default: characters += char; break;
+		}
+	}
+	
+	return characters;
+}
+
+
+/**
  * input stream factory
  * 
  * used to build the css parser but could 

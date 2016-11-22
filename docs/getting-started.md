@@ -4,9 +4,8 @@ Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework
 built around the concept that any function/object can become a component.
 
 Components in Dio share the same api's as react with a few additions, 
-this means that you can easily port both ways between Dio and React as and when needed
-without any significant changes to the code base, 
-the minimal change in most cases being a simple `React, ReactDOM = dio`.
+this means that you can easily port both code and and your knowledge of the api 
+both ways between Dio and React as and when needed.
 
 Having said that Dio can be used as just a "view" library but it does come
 self containeed with everything you would need to build an application,

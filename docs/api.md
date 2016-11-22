@@ -488,10 +488,10 @@ http.createServer(function(request, response) {
 	<html>
 		<head>
 			<title>Example</title>
-			<style id="ButtontJroa">[scope=ButtontJroa] {color:black;border:1px solid red;padding:10px;}</style>
+			<style id="ButtontJroa">[data-scope=ButtontJroa] {color:black;border:1px solid red;padding:10px;}</style>
 		</head>
 		<body hydrate>
-			<h1>Hello World</h1><button scope="ButtontJroa">Click Me</button>
+			<h1>Hello World</h1><button data-scope="ButtontJroa">Click Me</button>
 		</body>
 	</html>		
 `

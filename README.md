@@ -33,15 +33,15 @@ Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.0.6/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.1.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/3.0.6/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/3.1.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@3.0.6/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@3.1.0/dio.min.js></script>
 ```
 
 #### bower
@@ -66,9 +66,8 @@ Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework
 built around the concept that any function/object can become a component.
 
 Components in Dio share the same api's as react with a few additions, 
-this means that you can easily port both ways between Dio and React as and when needed
-without any significant changes to the code base, 
-the minimal change in most cases being a simple `React, ReactDOM = dio`.
+this means that you can easily port both code and and your knowledge of the api 
+both ways between Dio and React as and when needed.
 
 Having said that Dio can be used as just a "view" library but it does come
 self containeed with everything you would need to build an application,
@@ -593,10 +592,10 @@ http.createServer(function(request, response) {
 	<html>
 		<head>
 			<title>Example</title>
-			<style id="ButtontJroa">[scope=ButtontJroa] {color:black;border:1px solid red;padding:10px;}</style>
+			<style id="ButtontJroa">[data-scope=ButtontJroa] {color:black;border:1px solid red;padding:10px;}</style>
 		</head>
 		<body hydrate>
-			<h1>Hello World</h1><button scope="ButtontJroa">Click Me</button>
+			<h1>Hello World</h1><button data-scope="ButtontJroa">Click Me</button>
 		</body>
 	</html>		
 `

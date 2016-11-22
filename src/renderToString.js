@@ -56,13 +56,7 @@ function renderVNodeToString (subject, store) {
 
 	// textNode
 	if (nodeType === 3) {
-		var text = '' + vnode.children;
-
-		if (text.indexOf('&') > -1) { text = text.replace(/&/g, '&amp;'); }
-		if (text.indexOf('<') > -1) { text = text.replace(/</g, '&lt;'); }
-		if (text.indexOf('>') > -1) { text = text.replace(/>/g, '&gt;'); }
-
-		return text;
+		return escape(vnode.children);
 	}
 
 	// references
@@ -91,8 +85,7 @@ function renderVNodeToString (subject, store) {
 				var typeOfValue = typeof value;
 
 				if (typeOfValue === 'string' && value) {
-					if (value.indexOf('&') > -1) { value = value.replace(/&/g, '&amp;'); }
-					if (value.indexOf('"') > -1) { value = value.replace(/"/g, '&quot;'); }
+					value = escape(value);
 				}
 
 				// do not add events, keys or refs

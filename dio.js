@@ -30,7 +30,7 @@
 	 */
 	
 	
-	var version = '3.0.6';
+	var version = '3.1.0';
 	
 	var styleNS = 'data-scope';
 	var mathNS  = 'http://www.w3.org/1998/Math/MathML';
@@ -63,6 +63,37 @@
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
+	
+	
+	/**
+	 * escape string
+	 * 
+	 * @param  {(string|boolean|number)} subject
+	 * @return {string}
+	 */
+	function escape (subject) {
+		var string = subject + '';
+		var characters = '';
+	
+		for (var i = 0, length = string.length; i < length; i++) {
+			var char = string[i];
+	
+			switch (char.charCodeAt(0)) {
+				// &
+				case 38: characters += '&amp;'; break;
+				// "
+				case 34: characters += '&quot;'; break;
+				// <
+				case 60: characters += '&lt;'; break;
+				// >
+				case 62: characters += '&gt;'; break;
+	
+				default: characters += char; break;
+			}
+		}
+		
+		return characters;
+	}
 	
 	
 	/**
@@ -1823,13 +1854,7 @@
 	
 		// textNode
 		if (nodeType === 3) {
-			var text = '' + vnode.children;
-	
-			if (text.indexOf('&') > -1) { text = text.replace(/&/g, '&amp;'); }
-			if (text.indexOf('<') > -1) { text = text.replace(/</g, '&lt;'); }
-			if (text.indexOf('>') > -1) { text = text.replace(/>/g, '&gt;'); }
-	
-			return text;
+			return escape(vnode.children);
 		}
 	
 		// references
@@ -1858,8 +1883,7 @@
 					var typeOfValue = typeof value;
 	
 					if (typeOfValue === 'string' && value) {
-						if (value.indexOf('&') > -1) { value = value.replace(/&/g, '&amp;'); }
-						if (value.indexOf('"') > -1) { value = value.replace(/"/g, '&quot;'); }
+						value = escape(value);
 					}
 	
 					// do not add events, keys or refs
@@ -4238,6 +4262,7 @@
 		input:                  input,
 	
 		// utilities
+		escape:                 escape,
 		panic:                  panic,
 		sandbox:                sandbox,
 		compose:                compose,

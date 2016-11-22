@@ -95,6 +95,7 @@ return bootstrap({
 	input:                  input,
 
 	// utilities
+	escape:                 escape,
 	panic:                  panic,
 	sandbox:                sandbox,
 	compose:                compose,

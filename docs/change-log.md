@@ -1,3 +1,8 @@
+## 3.1.0 (November 22, 2016)
+
+- improve performance of escaping SSR
+- add `dio.escape`
+
 ## 3.0.6 (November 21, 2016)
 
 - patch stylesheet to use valid html attribute for namespacing `scope` becomes `data-scope`
