@@ -2011,7 +2011,9 @@
 	
 		Stream.prototype = Object.create(Readable.prototype, {
 			_read: {
-				value: function () {
+				value: function (size) {
+					console.log(0, size);
+	
 					if (initial === 1 && stack.length === 0) {
 				  		this.push(null);
 					} else {
@@ -2108,28 +2110,32 @@
 		var stack = [];
 		var initial = 0;
 	
-		// 
-		// return new Stream(subject);
 	
-		// var req = renderToStream(
-		// 	createElement('div', {id: 'foo'}, 
-		// 		1, 2, 3, 4, 
-		// 		createElement('h1', 'Hello World')
-		// 	)
-		// );
-	
-		// var body = '';
-	
-		// // Readable streams emit 'data' events once a listener is added
-		// req.on('data', (chunk) => {
-		//     body += chunk;
-		// });
-	
-		// // the end event indicates that the entire body has been received
-		// req.on('end', () => {
-		//     console.log('done,', body);
-		// });
+		return new Stream(subject);
 	}
+	
+	
+	// var req = renderToStream(
+	// 	createElement('div', {id: 'foo'}, 
+	// 		1, 2, 3, 4, 
+	// 		createElement('h1', 'Hello World')
+	// 	)
+	// );
+	
+	// const writable = require('fs').createWriteStream('file.txt');
+	// req.pipe(writable);
+	
+	// var body = '';
+	
+	// // Readable streams emit 'data' events once a listener is added
+	// req.on('data', (chunk) => {
+	//     body += chunk;
+	// });
+	
+	// // the end event indicates that the entire body has been received
+	// req.on('end', () => {
+	//     console.log('done,', body);
+	// });
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -2329,7 +2335,7 @@
 				this.componentWillUpdate(this.props, this.state);
 			}
 	
-			var newNode = retrieveVNode(this), 
+			var newNode = retrieveRender(this), 
 				oldNode = this._vnode;
 	
 			// patch update

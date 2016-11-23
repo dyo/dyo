@@ -112,7 +112,7 @@ function forceUpdate () {
 			this.componentWillUpdate(this.props, this.state);
 		}
 
-		var newNode = retrieveVNode(this), 
+		var newNode = retrieveRender(this), 
 			oldNode = this._vnode;
 
 		// patch update
