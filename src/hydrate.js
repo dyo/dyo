@@ -34,7 +34,7 @@ function hydrate (element, newNode, index, parentNode) {
 		}
 
 		// hydrate the dom element to the virtual element
-		currentNode._el = newElement;
+		currentNode._node = newElement;
 
 		// exit early if fragment
 		if (isFragmentNode === 1) { 

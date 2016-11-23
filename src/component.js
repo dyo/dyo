@@ -14,7 +14,7 @@
  * @return {(Node|bool)}
  */
 function findDOMNode (component) {
-	return component._vnode && component._vnode._el;
+	return component._vnode && component._vnode._node;
 }
 
 
@@ -115,13 +115,8 @@ function forceUpdate () {
 		var newNode = retrieveVNode(this), 
 			oldNode = this._vnode;
 
-		// never executes more than once
-		if (oldNode.type !== newNode.type) {
-			oldNode.type = newNode.type;
-		}
-
 		// patch update
-		update(newNode, oldNode);
+		patch(newNode, oldNode);
 
 		// componentDidUpdate lifecycle
 		if (this.componentDidUpdate) {

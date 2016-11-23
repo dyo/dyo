@@ -23,7 +23,7 @@ function render (subject, target, callback) {
 				// register mount dispatched
 				initial = 0;
 				// assign component
-				if (component === undefined) { 
+				if (component == null) { 
 					component = node._owner;
 				}
 			} else {
@@ -81,14 +81,14 @@ function render (subject, target, callback) {
 	// hydration
    	if (element.hasAttribute('hydrate')) {
    		// dispatch hydration
-   		hydrate(element, node, 0, emptyVNode);
+   		hydrate(element, node, 0, vempty);
    		// cleanup element hydrate attributes
    		element.removeAttribute('hydrate');
    		// register mount dispatched
    		initial = 0;
 
    		// assign component
-   		if (component === undefined) { 
+   		if (component == null) { 
    			component = node._owner; 
    		}
    	} else {
@@ -115,19 +115,6 @@ function mount (element, newNode) {
 	element.textContent = '';
 	// create element
 	appendNode(newNode, element, createNode(newNode));
-}
-
-
-/**
- * update render
- * 
- * @param  {Node}   element
- * @param  {Object} newNode
- * @param  {Object} oldNode
- */
-function update (newNode, oldNode) {
-	// detect diffs, pipe diffs to diff handler
-	patch(newNode, oldNode);
 }
 
 
@@ -195,19 +182,21 @@ function extractVNode (subject) {
 	}
 	
 	// retrieve vnode
-	var vnode = retrieveVNode(component);
+	var vnode = retrieveRender(component);
 
 	// if keyed, assign key to vnode
 	if (subject.props.key !== undefined && vnode.props.key === undefined) {
 		vnode.props.key = subject.props.key;
 	}
 
-	// assign props
-	subject.props    = vnode.props;
-	subject.children = vnode.children;
 
 	// assign component node
-	component._vnode = subject;
+	component._vnode = VNode(
+		(vnode.nodeType === 2 ? (vnode = extractVNode(vnode)).nodeType : vnode.nodeType),
+		(vnode.type),
+		(subject.props = vnode.props), 
+		(subject.children = vnode.children)
+	);
 
 	if (type.stylesheet === undefined) {
 		type.stylesheet = component.stylesheet !== undefined ? component.stylesheet : null;
@@ -223,7 +212,7 @@ function extractVNode (subject) {
  * @param  {Object} subject
  * @return {Object}
  */
-function retrieveVNode (component) {
+function retrieveRender (component) {
 	// retrieve vnode
 	var vnode = component.render(component.props, component.state, component);
 
@@ -295,7 +284,7 @@ function patch (newNode, oldNode) {
 			if (newLength === 0) {
 				// but only if old children is not already cleared
 				if (oldLength !== 0) {
-					oldNode._el.textContent = '';
+					oldNode._node.textContent = '';
 					oldNode.children = currentChildren;
 				}	
 			}
@@ -303,13 +292,13 @@ function patch (newNode, oldNode) {
 			// opt4: if currentChildren and oldChildren are identical, exit early
 			else {
 				// count of index change when we remove items to keep track of the new index to reference
-				var deleteCount = 0, parentElement = oldNode._el;
+				var deleteCount = 0, parentElement = oldNode._node;
 
 				// for loop, the end point being which ever is the 
 				// greater value between newLength and oldLength
 				for (var i = 0; i < newLength || i < oldLength; i++) {
-					var newChild = currentChildren[i] || emptyVNode;
-					var oldChild = oldChildren[i] || emptyVNode;
+					var newChild = currentChildren[i] || vempty;
+					var oldChild = oldChildren[i] || vempty;
 					var action   = patch(newChild, oldChild);
 
 					// if action dispatched, 
@@ -325,7 +314,7 @@ function patch (newNode, oldNode) {
 								var nodeToRemove = oldChildren[index];
 
 								// remove node from the dom
-								removeNode(nodeToRemove, parentElement, nodeToRemove._el);
+								removeNode(nodeToRemove, parentElement, nodeToRemove._node);
 								// normalize old children, remove from array
 								splice(oldChildren, index, 1);
 								// update delete count, increment
@@ -354,14 +343,14 @@ function patch (newNode, oldNode) {
 							// text operation
 							case 3: {
 								// update dom textNode value and oldChild textNode content
-								oldChild._el.nodeValue = oldChild.children = newChild.children;
+								oldChild._node.nodeValue = oldChild.children = newChild.children;
 
 								break;
 							}
 							// replace operation
 							case 4: {
 								// replace dom node
-								replaceNode(newChild, parentElement, createNode(newChild), oldChild._el);
+								replaceNode(newChild, parentElement, createNode(newChild), oldChild._node);
 								// update old children, replace array element
 								oldChildren[index] = newChild; 
 
@@ -386,7 +375,7 @@ function patch (newNode, oldNode) {
 									// reference element from oldChildren that matches newChild key
 									var element = oldChildren[fromIndex];
 
-								    addNode(index, oldLength, parentElement, element._el, element, oldChild);
+								    addNode(index, oldLength, parentElement, element._node, element, oldChild);
 
 									// remove element from 'old' oldChildren index
 								    splice(oldChildren, fromIndex, 1);
@@ -401,7 +390,7 @@ function patch (newNode, oldNode) {
 										var nodeToRemove = oldChildren[index];
 										
 										// remove node from the dom
-										removeNode(nodeToRemove, parentElement, nodeToRemove._el);
+										removeNode(nodeToRemove, parentElement, nodeToRemove._node);
 
 										// normalize old children, remove from array
 										splice(oldChildren, index, 1);
@@ -439,7 +428,7 @@ function patch (newNode, oldNode) {
 											newChild, 
 											parentElement, 
 											createNode(newChild), 
-											oldChild._el
+											oldChild._node
 										);
 
 										// update old children, replace array element
@@ -482,7 +471,7 @@ function patchProps (newNode, oldNode) {
 
 	// if diff length > 0 apply diff
 	if (length !== 0) {
-		var target = oldNode._el;
+		var target = oldNode._node;
 
 		for (var i = 0; i < length; i++) {
 			var prop = propsDiff[i];
@@ -711,7 +700,7 @@ function addNode (index, oldLength, parent, newElement, newNode, oldNode) {
 		appendNode(newNode, parent, newElement);
 	} else {
 		// insert node to the dom at an specific position
-		insertNode(newNode, parent, newElement, oldNode._el);
+		insertNode(newNode, parent, newElement, oldNode._node);
 	}
 }
 
@@ -729,16 +718,16 @@ function createNode (subject, component, namespace) {
 	
 	if (nodeType === 3) {
 		// textNode
-		return subject._el = document.createTextNode(subject.children || '');
+		return subject._node = document.createTextNode(subject.children || '');
 	} else {
 		// element
 		var element;
 		var props;
 
 		// clone, blueprint node/hoisted vnode
-		if (subject._el) {
+		if (subject._node) {
 			props = subject.props;
-			element = subject._el;
+			element = subject._node;
 		}
 		// create
 		else {
@@ -750,26 +739,32 @@ function createNode (subject, component, namespace) {
 				props = newNode.props;
 
 			// vnode has component attachment
-			if (subject._owner !== undefined) { component = subject._owner; }
+			if (subject._owner != null) { 
+				component = subject._owner; 
+			}
 
 			// assign namespace
-			if (props.xmlns !== undefined) { namespace = props.xmlns; }
+			if (props.xmlns != null) { 
+				namespace = props.xmlns; 
+			}
 
 			// if namespaced, create namespaced element
-			if (namespace !== undefined) {
+			if (namespace != null) {
 				// if undefined, assign svg namespace
-				if (props.xmlns === undefined) {
+				if (props.xmlns == null) {
 					props.xmlns = namespace;
 				}
 
 				element = document.createElementNS(namespace, type);
 			} else {
-				element = newNode.nodeType === 11 ? 
-								document.createDocumentFragment() : 
-								document.createElement(type);
+				if (newNode.nodeType === 11) {
+					element = document.createDocumentFragment();
+				} else {
+					element = document.createElement(type);
+				}
 			}
 
-			if (props !== emptyObject) {
+			if (props !== oempty) {
 				// diff and update/add/remove props
 				assignProps(element, props, 0);
 			}
@@ -780,14 +775,15 @@ function createNode (subject, component, namespace) {
 					var newChild = children[i];
 
 					// clone vnode of hoisted/blueprint node
-					if (newChild._el) {
-						newChild = children[i] = {
-							nodeType: newChild.nodeType,
-							type: newChild.type, 
-							props: newChild.props, 
-							children: newChild.children,
-							_el: newChild._el.cloneNode(true)
-						};
+					if (newChild._node) {
+						newChild = children[i] = VNode(
+							newChild.nodeType,
+							newChild.type,
+							newChild.props,
+							newChild.children,
+							newChild._node.cloneNode(true),
+							null
+						);
 					}
 
 					// append child
@@ -799,11 +795,11 @@ function createNode (subject, component, namespace) {
 				}
 			}
 
-			subject._el = element;
+			subject._node = element;
 		}
 
 		// refs
-		if (props.ref !== undefined && component !== undefined) {
+		if (props.ref != null && component != null) {
 			assignRefs(element, props.ref, component);
 		}
 
@@ -812,7 +808,7 @@ function createNode (subject, component, namespace) {
 		// this will execute exactly once at any given runtime lifecycle
 		if (subject.type.stylesheet != null) {
 			if (subject.type.stylesheet === 0) {
-				element.setAttribute(styleNS, subject.type.id);
+				element.setAttribute(nsstyle, subject.type.id);
 			} else {
 				stylesheet(element, subject.type);
 			}
@@ -882,15 +878,15 @@ function updateProp (target, action, name, propValue, namespace) {
 	if (name === 'ref' || 
 		name === 'key' || 
 		isEventName(name) || 
-		propValue === svgNS || 
-		propValue === mathNS
+		propValue === nssvg || 
+		propValue === nsmath
 	) {
 		return;
 	}
 
 	// if xlink:href set, exit, 
 	if (name === 'xlink:href') {
-		return (target[action + 'NS'](xlinkNS, 'href', propValue), undefined);
+		return (target[action + 'NS'](nsxlink, 'href', propValue), undefined);
 	}
 
 	var isSVG = 0;
@@ -898,7 +894,7 @@ function updateProp (target, action, name, propValue, namespace) {
 
 	// normalize class/className references, i.e svg className !== html className
 	// uses className instead of class for html elements
-	if (namespace === svgNS) {
+	if (namespace === nssvg) {
 		isSVG = 1;
 		propName = name === 'className' ? 'class' : name;
 	} else {

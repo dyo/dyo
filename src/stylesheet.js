@@ -25,7 +25,7 @@ function stylesheet (element, component) {
 		id = component.name + random(6);
 
 		// property id, selector id 
-		var prefix      = '['+styleNS+'='+id+']';
+		var prefix      = '['+nsstyle+'='+id+']';
 		var currentLine = '';
         
         var content = (
@@ -220,7 +220,7 @@ function stylesheet (element, component) {
     	// cache for server-side rendering
     	return component.css = '<style id="'+id+'">'+css+'</style>';
     } else {
-    	element.setAttribute(styleNS, id);
+    	element.setAttribute(nsstyle, id);
 
     	// create style element and append to head
     	// only when stylesheet is a function

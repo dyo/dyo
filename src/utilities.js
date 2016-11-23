@@ -18,9 +18,7 @@ function escape (subject) {
 	var characters = '';
 
 	for (var i = 0, length = string.length; i < length; i++) {
-		var char = string[i];
-
-		switch (char.charCodeAt(0)) {
+		switch (string.charCodeAt(i)) {
 			// &
 			case 38: characters += '&amp;'; break;
 			// "
@@ -30,7 +28,7 @@ function escape (subject) {
 			// >
 			case 62: characters += '&gt;'; break;
 
-			default: characters += char; break;
+			default: characters += string[i]; break;
 		}
 	}
 	

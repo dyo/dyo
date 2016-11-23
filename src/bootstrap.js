@@ -71,6 +71,7 @@ return bootstrap({
 	render:                 render,
 	renderToString:         renderToString,
 	renderToStaticMarkup:   renderToString,
+	renderToStream:         renderToStream,
 
 	// components
 	Component:              Component,

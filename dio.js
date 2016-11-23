@@ -30,29 +30,22 @@
 	 */
 	
 	
-	var version = '3.1.0';
+	var version     = '3.1.0';
 	
-	var styleNS = 'data-scope';
-	var mathNS  = 'http://www.w3.org/1998/Math/MathML';
-	var xlinkNS = 'http://www.w3.org/1999/xlink';
-	var svgNS = 'http://www.w3.org/2000/svg';
+	var nsstyle     = 'data-scope';
+	var nsmath      = 'http://www.w3.org/1998/Math/MathML';
+	var nsxlink     = 'http://www.w3.org/1999/xlink';
+	var nssvg       = 'http://www.w3.org/2000/svg';
 	
-	var document = window.document;
+	var document    = window.document;
 	var development = window.global === window && process.env.NODE_ENV === 'development';
 	
-	var emptyObject = {};
-	var emptyVNode = {
-		nodeType: 0, 
-		type: '', 
-		props: emptyObject, 
-		children: [], 
-		_el: null
-	};
-	
-	var voidElements = {
-		'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0, 'embed':  0,
-		'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
-		'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
+	var oempty      = Object.create(null);
+	var vempty      = VNode(0, '', oempty, [], null, null);
+	var isvoid      = {
+		'area':   !0, 'base':  !0, 'br':   !0, '!doctype': !0, 'col':    !0, 'embed':  !0,
+		'wbr':    !0, 'track': !0, 'hr':   !0, 'img':      !0, 'input':  !0, 
+		'keygen': !0, 'link':  !0, 'meta': !0, 'param':    !0, 'source': !0
 	};
 	
 	
@@ -76,9 +69,7 @@
 		var characters = '';
 	
 		for (var i = 0, length = string.length; i < length; i++) {
-			var char = string[i];
-	
-			switch (char.charCodeAt(0)) {
+			switch (string.charCodeAt(i)) {
 				// &
 				case 38: characters += '&amp;'; break;
 				// "
@@ -88,7 +79,7 @@
 				// >
 				case 62: characters += '&gt;'; break;
 	
-				default: characters += char; break;
+				default: characters += string[i]; break;
 			}
 		}
 		
@@ -428,53 +419,6 @@
 	
 	
 	/**
-	 * DOM factory
-	 *
-	 * @param {any[]=} types
-	 * create references to common dom elements
-	 */
-	function DOM (types) {
-		// default to preset types if non passed
-		types = types || [
-			'h1','h2','h3','h4','h5', 'h6','audio','video','canvas',
-			'header','nav','main','aside','footer','section','article','div',
-			'form','button','fieldset','form','input','label','option','select','textarea',
-			'ul','ol','li','p','a','pre','code','span','img','strong','time','small','hr','br',
-			'table','tr','td','th','tbody','thead',
-		];
-	
-		var elements = {};
-	
-		// add element factories
-		for (var i = 0, length = types.length; i < length; i++) {
-			var type = types[i]; elements[type] = VElement.bind(null, type);
-		}
-	
-		// optional usefull helpers
-		if (elements.text)      { elements.text      = VText; }
-		if (elements.fragment)  { elements.fragment  = VFragment; }
-		if (elements.component) { elements.component = VComponent; }
-		
-		// if in list of types, add related svg element factories
-		if (elements.svg) {
-			var svgs = [
-				'rect','path','polygon','circle','ellipse','line','polyline','image','marker','a','symbol',
-				'linearGradient','radialGradient','stop','filter','use','clipPath','view','pattern','svg',
-				'g','defs','text','textPath','tspan','mpath','defs','g','marker','mask'
-			];
-	
-			for (var i = 0, length = svgs.length; i < length; i++) {
-				var type = svgs[i]; 
-	
-				elements[type] = VSvg.bind(null, type);
-			}
-		}
-	
-		return elements;
-	}
-	
-	
-	/**
 	 * virtual fragment node factory
 	 * 
 	 * @param {any[]} children
@@ -483,9 +427,10 @@
 		return {
 			nodeType: 11, 
 			type: '@', 
-			props: emptyObject, 
+			props: oempty, 
 			children: children,
-			_el: null
+			_node: null,
+			_owner: null
 		};
 	}
 	
@@ -499,9 +444,10 @@
 		return {
 			nodeType: 3, 
 			type: 'text', 
-			props: emptyObject, 
+			props: oempty, 
 			children: text, 
-			_el: null
+			_node: null,
+			_owner: null
 		};
 	}
 		
@@ -517,9 +463,10 @@
 		return {
 			nodeType: 1, 
 			type: type, 
-			props: props || {}, 
-			children: children || [], 
-			_el: null
+			props: (props || {}), 
+			children: (children || []), 
+			_node: null,
+			_owner: null
 		};
 	}
 	
@@ -532,15 +479,13 @@
 	 * @param {any[]=} children
 	 */
 	function VSvg (type, props, children) {
-		props = props || {};
-		props.xmlns = svgNS;
-	
 		return {
 			nodeType: 1, 
 			type: type, 
-			props: props, 
-			children: children || [],
-			_el: null
+			props: (props = props || {}, props.xmlns = nssvg, props), 
+			children: (children || []),
+			_node: null,
+			_owner: null
 		};
 	}
 	
@@ -556,9 +501,32 @@
 		return {
 			nodeType: 2, 
 			type: type, 
-			props: props || type.defaultProps || {}, 
-			children: children || [],
-			_el: null
+			props: (props || type.defaultProps || {}), 
+			children: (children || []),
+			_node: null,
+			_owner: null
+		};
+	}
+	
+	
+	/**
+	 * internal virtual node factory
+	 * 
+	 * @param {number} nodeType
+	 * @param {(function|string)} type
+	 * @param {Object} props
+	 * @param {VNode[]} children
+	 * @param {(Node|null)} _node
+	 * @param {(Node|null)} _owner 
+	 */
+	function VNode (nodeType, type, props, children, _node, _owner) {
+		return {
+			nodeType: nodeType,
+			type: type,
+			props: props,
+			children: children,
+			_node: _node,
+			_owner: _owner
 		};
 	}
 	
@@ -566,25 +534,25 @@
 	/**
 	 * virtual blueprint node factory
 	 * 
-	 * @param  {Object} VNode
-	 * @return {Object} Vnode
+	 * @param  {Object} subject
+	 * @return {Object} subject
 	 */
-	function VBlueprint (VNode) {
-		if (VNode != null) {
+	function VBlueprint (subject) {
+		if (subject != null) {
 			// if array run all VNodes through VBlueprint
-			if (!VNode.nodeType) {
-				for (var i = 0, length = VNode.length; i < length; i++) {
-					VBlueprint(VNode[i]);
+			if (!subject.nodeType) {
+				for (var i = 0, length = subject.length; i < length; i++) {
+					VBlueprint(subject[i]);
 				}
 			} else {
 				// if a blueprint not already constructed
-				if (VNode._el == null) {
-					document ? VNode._el = createNode(VNode) : extractVNode(VNode);
+				if (subject._node == null) {
+					document ? subject._node = createNode(subject) : extractVNode(subject);
 				}
 			}
 		}
 	
-		return VNode;
+		return subject;
 	}
 	
 	
@@ -653,9 +621,9 @@
 			// if !props.xmlns && type === svg|math assign svg && math props.xmlns
 			if (element.props.xmlns === undefined) {	
 				if (type === 'svg') { 
-					element.props.xmlns = svgNS; 
+					element.props.xmlns = nssvg; 
 				} else if (type === 'math') { 
-					element.props.xmlns = mathNS; 
+					element.props.xmlns = nsmath; 
 				}
 			}
 	
@@ -796,6 +764,53 @@
 	
 	
 	/**
+	 * DOM factory
+	 *
+	 * @param {any[]=} types
+	 * create references to common dom elements
+	 */
+	function DOM (types) {
+		// default to preset types if non passed
+		types = types || [
+			'h1','h2','h3','h4','h5', 'h6','audio','video','canvas',
+			'header','nav','main','aside','footer','section','article','div',
+			'form','button','fieldset','form','input','label','option','select','textarea',
+			'ul','ol','li','p','a','pre','code','span','img','strong','time','small','hr','br',
+			'table','tr','td','th','tbody','thead',
+		];
+	
+		var elements = {};
+	
+		// add element factories
+		for (var i = 0, length = types.length; i < length; i++) {
+			var type = types[i]; elements[type] = VElement.bind(null, type);
+		}
+	
+		// optional usefull helpers
+		if (elements.text)      { elements.text      = VText; }
+		if (elements.fragment)  { elements.fragment  = VFragment; }
+		if (elements.component) { elements.component = VComponent; }
+		
+		// if in list of types, add related svg element factories
+		if (elements.svg) {
+			var svgs = [
+				'rect','path','polygon','circle','ellipse','line','polyline','image','marker','a','symbol',
+				'linearGradient','radialGradient','stop','filter','use','clipPath','view','pattern','svg',
+				'g','defs','text','textPath','tspan','mpath','defs','g','marker','mask'
+			];
+	
+			for (var i = 0, length = svgs.length; i < length; i++) {
+				var type = svgs[i]; 
+	
+				elements[type] = VSvg.bind(null, type);
+			}
+		}
+	
+		return elements;
+	}
+	
+	
+	/**
 	 * is valid element
 	 * 
 	 * @param  {*} subject
@@ -818,9 +833,7 @@
 	
 	
 	/**
-	 * Children
-	 * 
-	 * mocks React.Children top-level api
+	 * Children, mocks React.Children top-level api
 	 *
 	 * @return {Object}
 	 */
@@ -841,6 +854,21 @@
 			count: function count (children) {
 				return isArray(children) ? children.length : 0;
 			}
+		}
+	}
+	
+	
+	/**
+	 * retrieve virtual node
+	 * 
+	 * @param  {(function|object)} subject
+	 * @return {VNode}
+	 */
+	function retrieveVNode (subject) {
+		if (subject.type) {
+			return subject;
+		} else {
+			return typeof subject === 'function' ? VComponent(subject) : createElement('@', null, subject);
 		}
 	}
 	
@@ -870,7 +898,7 @@
 					// register mount dispatched
 					initial = 0;
 					// assign component
-					if (component === undefined) { 
+					if (component == null) { 
 						component = node._owner;
 					}
 				} else {
@@ -928,14 +956,14 @@
 		// hydration
 	   	if (element.hasAttribute('hydrate')) {
 	   		// dispatch hydration
-	   		hydrate(element, node, 0, emptyVNode);
+	   		hydrate(element, node, 0, vempty);
 	   		// cleanup element hydrate attributes
 	   		element.removeAttribute('hydrate');
 	   		// register mount dispatched
 	   		initial = 0;
 	
 	   		// assign component
-	   		if (component === undefined) { 
+	   		if (component == null) { 
 	   			component = node._owner; 
 	   		}
 	   	} else {
@@ -962,19 +990,6 @@
 		element.textContent = '';
 		// create element
 		appendNode(newNode, element, createNode(newNode));
-	}
-	
-	
-	/**
-	 * update render
-	 * 
-	 * @param  {Node}   element
-	 * @param  {Object} newNode
-	 * @param  {Object} oldNode
-	 */
-	function update (newNode, oldNode) {
-		// detect diffs, pipe diffs to diff handler
-		patch(newNode, oldNode);
 	}
 	
 	
@@ -1042,19 +1057,21 @@
 		}
 		
 		// retrieve vnode
-		var vnode = retrieveVNode(component);
+		var vnode = retrieveRender(component);
 	
 		// if keyed, assign key to vnode
 		if (subject.props.key !== undefined && vnode.props.key === undefined) {
 			vnode.props.key = subject.props.key;
 		}
 	
-		// assign props
-		subject.props    = vnode.props;
-		subject.children = vnode.children;
 	
 		// assign component node
-		component._vnode = subject;
+		component._vnode = VNode(
+			(vnode.nodeType === 2 ? (vnode = extractVNode(vnode)).nodeType : vnode.nodeType),
+			(vnode.type),
+			(subject.props = vnode.props), 
+			(subject.children = vnode.children)
+		);
 	
 		if (type.stylesheet === undefined) {
 			type.stylesheet = component.stylesheet !== undefined ? component.stylesheet : null;
@@ -1070,7 +1087,7 @@
 	 * @param  {Object} subject
 	 * @return {Object}
 	 */
-	function retrieveVNode (component) {
+	function retrieveRender (component) {
 		// retrieve vnode
 		var vnode = component.render(component.props, component.state, component);
 	
@@ -1142,7 +1159,7 @@
 				if (newLength === 0) {
 					// but only if old children is not already cleared
 					if (oldLength !== 0) {
-						oldNode._el.textContent = '';
+						oldNode._node.textContent = '';
 						oldNode.children = currentChildren;
 					}	
 				}
@@ -1150,13 +1167,13 @@
 				// opt4: if currentChildren and oldChildren are identical, exit early
 				else {
 					// count of index change when we remove items to keep track of the new index to reference
-					var deleteCount = 0, parentElement = oldNode._el;
+					var deleteCount = 0, parentElement = oldNode._node;
 	
 					// for loop, the end point being which ever is the 
 					// greater value between newLength and oldLength
 					for (var i = 0; i < newLength || i < oldLength; i++) {
-						var newChild = currentChildren[i] || emptyVNode;
-						var oldChild = oldChildren[i] || emptyVNode;
+						var newChild = currentChildren[i] || vempty;
+						var oldChild = oldChildren[i] || vempty;
 						var action   = patch(newChild, oldChild);
 	
 						// if action dispatched, 
@@ -1172,7 +1189,7 @@
 									var nodeToRemove = oldChildren[index];
 	
 									// remove node from the dom
-									removeNode(nodeToRemove, parentElement, nodeToRemove._el);
+									removeNode(nodeToRemove, parentElement, nodeToRemove._node);
 									// normalize old children, remove from array
 									splice(oldChildren, index, 1);
 									// update delete count, increment
@@ -1201,14 +1218,14 @@
 								// text operation
 								case 3: {
 									// update dom textNode value and oldChild textNode content
-									oldChild._el.nodeValue = oldChild.children = newChild.children;
+									oldChild._node.nodeValue = oldChild.children = newChild.children;
 	
 									break;
 								}
 								// replace operation
 								case 4: {
 									// replace dom node
-									replaceNode(newChild, parentElement, createNode(newChild), oldChild._el);
+									replaceNode(newChild, parentElement, createNode(newChild), oldChild._node);
 									// update old children, replace array element
 									oldChildren[index] = newChild; 
 	
@@ -1233,7 +1250,7 @@
 										// reference element from oldChildren that matches newChild key
 										var element = oldChildren[fromIndex];
 	
-									    addNode(index, oldLength, parentElement, element._el, element, oldChild);
+									    addNode(index, oldLength, parentElement, element._node, element, oldChild);
 	
 										// remove element from 'old' oldChildren index
 									    splice(oldChildren, fromIndex, 1);
@@ -1248,7 +1265,7 @@
 											var nodeToRemove = oldChildren[index];
 											
 											// remove node from the dom
-											removeNode(nodeToRemove, parentElement, nodeToRemove._el);
+											removeNode(nodeToRemove, parentElement, nodeToRemove._node);
 	
 											// normalize old children, remove from array
 											splice(oldChildren, index, 1);
@@ -1286,7 +1303,7 @@
 												newChild, 
 												parentElement, 
 												createNode(newChild), 
-												oldChild._el
+												oldChild._node
 											);
 	
 											// update old children, replace array element
@@ -1329,7 +1346,7 @@
 	
 		// if diff length > 0 apply diff
 		if (length !== 0) {
-			var target = oldNode._el;
+			var target = oldNode._node;
 	
 			for (var i = 0; i < length; i++) {
 				var prop = propsDiff[i];
@@ -1558,7 +1575,7 @@
 			appendNode(newNode, parent, newElement);
 		} else {
 			// insert node to the dom at an specific position
-			insertNode(newNode, parent, newElement, oldNode._el);
+			insertNode(newNode, parent, newElement, oldNode._node);
 		}
 	}
 	
@@ -1576,16 +1593,16 @@
 		
 		if (nodeType === 3) {
 			// textNode
-			return subject._el = document.createTextNode(subject.children || '');
+			return subject._node = document.createTextNode(subject.children || '');
 		} else {
 			// element
 			var element;
 			var props;
 	
 			// clone, blueprint node/hoisted vnode
-			if (subject._el) {
+			if (subject._node) {
 				props = subject.props;
-				element = subject._el;
+				element = subject._node;
 			}
 			// create
 			else {
@@ -1597,26 +1614,32 @@
 					props = newNode.props;
 	
 				// vnode has component attachment
-				if (subject._owner !== undefined) { component = subject._owner; }
+				if (subject._owner != null) { 
+					component = subject._owner; 
+				}
 	
 				// assign namespace
-				if (props.xmlns !== undefined) { namespace = props.xmlns; }
+				if (props.xmlns != null) { 
+					namespace = props.xmlns; 
+				}
 	
 				// if namespaced, create namespaced element
-				if (namespace !== undefined) {
+				if (namespace != null) {
 					// if undefined, assign svg namespace
-					if (props.xmlns === undefined) {
+					if (props.xmlns == null) {
 						props.xmlns = namespace;
 					}
 	
 					element = document.createElementNS(namespace, type);
 				} else {
-					element = newNode.nodeType === 11 ? 
-									document.createDocumentFragment() : 
-									document.createElement(type);
+					if (newNode.nodeType === 11) {
+						element = document.createDocumentFragment();
+					} else {
+						element = document.createElement(type);
+					}
 				}
 	
-				if (props !== emptyObject) {
+				if (props !== oempty) {
 					// diff and update/add/remove props
 					assignProps(element, props, 0);
 				}
@@ -1627,14 +1650,15 @@
 						var newChild = children[i];
 	
 						// clone vnode of hoisted/blueprint node
-						if (newChild._el) {
-							newChild = children[i] = {
-								nodeType: newChild.nodeType,
-								type: newChild.type, 
-								props: newChild.props, 
-								children: newChild.children,
-								_el: newChild._el.cloneNode(true)
-							};
+						if (newChild._node) {
+							newChild = children[i] = VNode(
+								newChild.nodeType,
+								newChild.type,
+								newChild.props,
+								newChild.children,
+								newChild._node.cloneNode(true),
+								null
+							);
 						}
 	
 						// append child
@@ -1646,11 +1670,11 @@
 					}
 				}
 	
-				subject._el = element;
+				subject._node = element;
 			}
 	
 			// refs
-			if (props.ref !== undefined && component !== undefined) {
+			if (props.ref != null && component != null) {
 				assignRefs(element, props.ref, component);
 			}
 	
@@ -1659,7 +1683,7 @@
 			// this will execute exactly once at any given runtime lifecycle
 			if (subject.type.stylesheet != null) {
 				if (subject.type.stylesheet === 0) {
-					element.setAttribute(styleNS, subject.type.id);
+					element.setAttribute(nsstyle, subject.type.id);
 				} else {
 					stylesheet(element, subject.type);
 				}
@@ -1729,15 +1753,15 @@
 		if (name === 'ref' || 
 			name === 'key' || 
 			isEventName(name) || 
-			propValue === svgNS || 
-			propValue === mathNS
+			propValue === nssvg || 
+			propValue === nsmath
 		) {
 			return;
 		}
 	
 		// if xlink:href set, exit, 
 		if (name === 'xlink:href') {
-			return (target[action + 'NS'](xlinkNS, 'href', propValue), undefined);
+			return (target[action + 'NS'](nsxlink, 'href', propValue), undefined);
 		}
 	
 		var isSVG = 0;
@@ -1745,7 +1769,7 @@
 	
 		// normalize class/className references, i.e svg className !== html className
 		// uses className instead of class for html elements
-		if (namespace === svgNS) {
+		if (namespace === nssvg) {
 			isSVG = 1;
 			propName = name === 'className' ? 'class' : name;
 		} else {
@@ -1813,18 +1837,8 @@
 	 * @return {string}
 	 */
 	function renderToString (subject, template) {
-		var vnode;
 		var store = [''];
-	
-		if (subject.type !== undefined) {
-			vnode = subject;
-		} else {			
-			if (typeof subject === 'function') {
-				vnode = VComponent(subject);
-			} else {
-				vnode = createElement('@', null, subject);
-			}
-		}
+		var vnode = retrieveVNode(subject);
 	
 		if (template) {
 			var body = renderVNodeToString(vnode, store);
@@ -1849,8 +1863,9 @@
 	 * @return {string}  
 	 */
 	function renderVNodeToString (subject, store) {
-		var nodeType  = subject.nodeType;
-		var vnode     = nodeType === 2 ? extractVNode(subject) : subject;
+		var vnode = subject.nodeType === 2 ? extractVNode(subject) : subject;
+	
+		var nodeType  = vnode.nodeType;
 	
 		// textNode
 		if (nodeType === 3) {
@@ -1858,69 +1873,45 @@
 		}
 	
 		// references
-		var component = subject.type,
-			type      = vnode.type, 
-			props     = vnode.props, 
-			children  = vnode.children;
+		var component = subject.type;
+		var type = vnode.type;
+		var props = vnode.props;
+		var children = vnode.children;
 	
-		var propsString    = '', 
-			childrenString = '';
+		var childrenStr = '';
 	
 		// construct children string
 		if (children.length === 0) {
-			childrenString = '';
+			childrenStr = '';
 		} else {
 			for (var i = 0, length = children.length; i < length; i++) {
-				childrenString += renderVNodeToString(children[i], store);
+				childrenStr += renderVNodeToString(children[i], store);
 			}
 		}
 	
-		// construct props string
-		if (props !== emptyObject && props !== null && typeof props === 'object') {
-			each(props, function (value, name) {
-				// value --> <type name=value>, exclude props with undefined/null/false as values
-				if (value != null && value !== false) {
-					var typeOfValue = typeof value;
+		var propsStr = renderStylesheetToString(component, renderPropsToString(props), store);
 	
-					if (typeOfValue === 'string' && value) {
-						value = escape(value);
-					}
-	
-					// do not add events, keys or refs
-					if (name !== 'key' && name !== 'ref' && typeOfValue !== 'function') {
-						if (typeOfValue !== 'object') {
-							// textContent are special props that alter the rendered children
-							if (name === 'textContent' || name === 'innerHTML') {
-								childrenString = value;
-							} else {
-								if (name === 'className') { 
-									name = 'class'; 
-								}
-	
-								// if falsey/truefy checkbox=true ---> <type checkbox>
-								propsString += ' ' + (value === true ? name : name + '="' + value + '"');
-							}
-						} else {
-							// style objects, hoist regexp to convert camelCase to dash-case
-							var styleString  = '', regexp = /([a-zA-Z])(?=[A-Z])/g;
-	
-							each(value, function (value, name) {
-								// if camelCase convert to dash-case 
-								// i.e marginTop --> margin-top
-								if (name !== name.toLowerCase()) {
-									name.replace(regexp, '$1-').toLowerCase();
-								}
-	
-								styleString += name + ':' + value + ';';
-							});
-	
-							propsString += name + '="' + value + '"';
-						}
-					}
-				}
-			});
+		if (nodeType === 11) {
+			return childrenStr;
+		} else if (isvoid[type]) {
+			// <type ...props>
+			return '<'+type+propsStr+'>';
+		} else {
+			// <type ...props>...children</type>
+			return '<'+type+propsStr+'>'+childrenStr+'</'+type+'>';
 		}
+	}
 	
+	
+	/**
+	 * render stylesheet to string
+	 * 
+	 * @param  {function}  component
+	 * @param  {string}    string   
+	 * @param  {string[1]} store    
+	 * @return {string}          
+	 */
+	function renderStylesheetToString (component, string, store) {
 		// stylesheet
 		if (store != null && component.stylesheet != null) {
 			// this insures we only every create one 
@@ -1932,22 +1923,213 @@
 			}
 	
 			if (store[0] !== '') {
-				propsString += ' '+styleNS+'='+'"'+component.id+'"';
+				string += ' '+nsstyle+'='+'"'+component.id+'"';
 			}
 		}
 	
-		if (nodeType === 11) {
-			return childrenString;
-		} else if (voidElements[type] === 0) {
-			// <type ...props>
-			return '<'+type+propsString+'>';
-		} else {
-			// <type ...props>...children</type>
-			return '<'+type+propsString+'>'+childrenString+'</'+type+'>';
-		}
+		return string;
 	}
 	
 	
+	/**
+	 * render props to string
+	 * 
+	 * @param  {Object} props
+	 * @param  {string} string
+	 * @return {string}
+	 */
+	function renderPropsToString (props) {
+		var string = '';
+	
+		// construct props string
+		if (props !== oempty && props !== null) {
+			each(props, function (value, name) {
+				// value --> <type name=value>, exclude props with undefined/null/false as values
+				if (value != null && value !== false) {
+					var type = typeof value;
+	
+					if (type === 'string' && value) {
+						value = escape(value);
+					}
+	
+					// do not process these props
+					if (
+						type !== 'function' &&
+						name !== 'key' && 
+						name !== 'ref' && 
+						name !== 'textContent' && 
+						name !== 'innerHTML'
+					) {
+						if (type !== 'object') {
+							if (name === 'className') { 
+								name = 'class'; 
+							}
+	
+							// if falsey/truefy checkbox=true ---> <type checkbox>
+							string += ' ' + (value === true ? name : name + '="' + value + '"');
+						} else {
+							// if style objects
+							var style = '';
+	
+							each(value, function (value, name) {
+								// if camelCase convert to dash-case 
+								// i.e marginTop --> margin-top
+								if (name !== name.toLowerCase()) {
+									name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
+								}
+	
+								style += name + ':' + value + ';';
+							});
+	
+							string += name + '="' + value + '"';
+						}
+					}
+				}
+			});
+		}
+	
+		return string;
+	}
+	
+	
+	/**
+	 * renderToStream
+	 * 
+	 * @param  {(Object|function)} subject 
+	 * @return {Stream}
+	 */
+	function renderToStream (subject) {
+		var Readable = (
+			document ? 
+				function () { this.on = this.push = function () {}; } : 
+				require('stream').Readable
+		);
+	
+		function Stream (subject) {
+			Readable.call(this);
+		}
+	
+		Stream.prototype = Object.create(Readable.prototype, {
+			_read: {
+				value: function () {
+					if (initial === 1 && stack.length === 0) {
+				  		this.push(null);
+					} else {
+						initial = 1;
+						this._pipe(subject, true);
+					}
+				}
+			},
+			_push: {
+				value: function (string) {
+					// convert string to buffer and send chunk
+					this.push(Buffer.from(string, 'utf8'));
+				}
+			},
+			_pipe: {
+				value: function (vnode, flush) {
+					// if there something pending in the stack
+					// give that priority
+					if (flush && stack.length) { 
+						stack.pop()(this); return;
+					}
+	
+					vnode = vnode.nodeType === 2 ? extractVNode(vnode) : vnode;
+					
+					var nodeType = vnode.nodeType;
+					var type = vnode.type;
+					var props = vnode.props;
+					var children = vnode.children;
+	
+					// text node
+					if (nodeType === 3) {
+						// convert string to buffer and send chunk
+						this._push(escape(vnode.children));
+					} else {
+						if (isvoid[type]) {
+							// <type ...props>
+							this._push('<'+type+renderPropsToString(props)+'>');
+						} else {
+							var opening = '';
+							var closing = '';
+	
+							// fragments(11) do not have opening and closing tags
+							if (nodeType !== 11) {
+								// <type ...props>...children</type>
+								opening += '<'+type+renderPropsToString(props)+'>';
+								closing += '</'+type+'>';
+							}
+	
+							var length = children.length;
+	
+							if (length === 0) {
+								// no children, sync
+								this._push(opening+closing);
+							} else if (length === 1 && children[0].nodeType === 3) {
+								// one text node child, sync
+								this._push(opening+escape(children[0].children)+closing);
+							} else {
+								// has children, async
+								// since we cannot know ahead of time the number of children
+								// recursively down this nodes tree
+								// it is better to split this operation 
+								// into asynchronously added chunks of data
+								var index = 0;
+								var middlwares = length + 1;
+	
+								// for each _read if queue has middleware
+								// middleware execution will take priority
+								function middlware (ctx) {
+									if (index === length) {
+										// done, close html tag
+										ctx._push(closing);
+									} else {
+										// delegate next middleware
+										ctx._pipe(children[index++], false);
+									}
+								}
+	
+								// push middlwares
+								for (var i = 0; i < middlwares; i++) {
+									stack.push(middlware);
+								}
+	
+								// initialize opening tag
+								this._push(opening);
+							}
+						}
+					}
+				}
+			}
+		});
+		
+		subject = retrieveVNode(subject);
+	
+		var stack = [];
+		var initial = 0;
+	
+		// 
+		// return new Stream(subject);
+	
+		// var req = renderToStream(
+		// 	createElement('div', {id: 'foo'}, 
+		// 		1, 2, 3, 4, 
+		// 		createElement('h1', 'Hello World')
+		// 	)
+		// );
+	
+		// var body = '';
+	
+		// // Readable streams emit 'data' events once a listener is added
+		// req.on('data', (chunk) => {
+		//     body += chunk;
+		// });
+	
+		// // the end event indicates that the entire body has been received
+		// req.on('end', () => {
+		//     console.log('done,', body);
+		// });
+	}
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -1984,7 +2166,7 @@
 			}
 	
 			// hydrate the dom element to the virtual element
-			currentNode._el = newElement;
+			currentNode._node = newElement;
 	
 			// exit early if fragment
 			if (isFragmentNode === 1) { 
@@ -2049,7 +2231,7 @@
 	 * @return {(Node|bool)}
 	 */
 	function findDOMNode (component) {
-		return component._vnode && component._vnode._el;
+		return component._vnode && component._vnode._node;
 	}
 	
 	
@@ -2150,13 +2332,8 @@
 			var newNode = retrieveVNode(this), 
 				oldNode = this._vnode;
 	
-			// never executes more than once
-			if (oldNode.type !== newNode.type) {
-				oldNode.type = newNode.type;
-			}
-	
 			// patch update
-			update(newNode, oldNode);
+			patch(newNode, oldNode);
 	
 			// componentDidUpdate lifecycle
 			if (this.componentDidUpdate) {
@@ -2344,7 +2521,7 @@
 			id = component.name + random(6);
 	
 			// property id, selector id 
-			var prefix      = '['+styleNS+'='+id+']';
+			var prefix      = '['+nsstyle+'='+id+']';
 			var currentLine = '';
 	        
 	        var content = (
@@ -2539,7 +2716,7 @@
 	    	// cache for server-side rendering
 	    	return component.css = '<style id="'+id+'">'+css+'</style>';
 	    } else {
-	    	element.setAttribute(styleNS, id);
+	    	element.setAttribute(nsstyle, id);
 	
 	    	// create style element and append to head
 	    	// only when stylesheet is a function
@@ -4238,6 +4415,7 @@
 		render:                 render,
 		renderToString:         renderToString,
 		renderToStaticMarkup:   renderToString,
+		renderToStream:         renderToStream,
 	
 		// components
 		Component:              Component,

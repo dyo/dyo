@@ -8,53 +8,6 @@
 
 
 /**
- * DOM factory
- *
- * @param {any[]=} types
- * create references to common dom elements
- */
-function DOM (types) {
-	// default to preset types if non passed
-	types = types || [
-		'h1','h2','h3','h4','h5', 'h6','audio','video','canvas',
-		'header','nav','main','aside','footer','section','article','div',
-		'form','button','fieldset','form','input','label','option','select','textarea',
-		'ul','ol','li','p','a','pre','code','span','img','strong','time','small','hr','br',
-		'table','tr','td','th','tbody','thead',
-	];
-
-	var elements = {};
-
-	// add element factories
-	for (var i = 0, length = types.length; i < length; i++) {
-		var type = types[i]; elements[type] = VElement.bind(null, type);
-	}
-
-	// optional usefull helpers
-	if (elements.text)      { elements.text      = VText; }
-	if (elements.fragment)  { elements.fragment  = VFragment; }
-	if (elements.component) { elements.component = VComponent; }
-	
-	// if in list of types, add related svg element factories
-	if (elements.svg) {
-		var svgs = [
-			'rect','path','polygon','circle','ellipse','line','polyline','image','marker','a','symbol',
-			'linearGradient','radialGradient','stop','filter','use','clipPath','view','pattern','svg',
-			'g','defs','text','textPath','tspan','mpath','defs','g','marker','mask'
-		];
-
-		for (var i = 0, length = svgs.length; i < length; i++) {
-			var type = svgs[i]; 
-
-			elements[type] = VSvg.bind(null, type);
-		}
-	}
-
-	return elements;
-}
-
-
-/**
  * virtual fragment node factory
  * 
  * @param {any[]} children
@@ -63,9 +16,10 @@ function VFragment (children) {
 	return {
 		nodeType: 11, 
 		type: '@', 
-		props: emptyObject, 
+		props: oempty, 
 		children: children,
-		_el: null
+		_node: null,
+		_owner: null
 	};
 }
 
@@ -79,9 +33,10 @@ function VText (text) {
 	return {
 		nodeType: 3, 
 		type: 'text', 
-		props: emptyObject, 
+		props: oempty, 
 		children: text, 
-		_el: null
+		_node: null,
+		_owner: null
 	};
 }
 	
@@ -97,9 +52,10 @@ function VElement (type, props, children) {
 	return {
 		nodeType: 1, 
 		type: type, 
-		props: props || {}, 
-		children: children || [], 
-		_el: null
+		props: (props || {}), 
+		children: (children || []), 
+		_node: null,
+		_owner: null
 	};
 }
 
@@ -112,15 +68,13 @@ function VElement (type, props, children) {
  * @param {any[]=} children
  */
 function VSvg (type, props, children) {
-	props = props || {};
-	props.xmlns = svgNS;
-
 	return {
 		nodeType: 1, 
 		type: type, 
-		props: props, 
-		children: children || [],
-		_el: null
+		props: (props = props || {}, props.xmlns = nssvg, props), 
+		children: (children || []),
+		_node: null,
+		_owner: null
 	};
 }
 
@@ -136,9 +90,32 @@ function VComponent (type, props, children) {
 	return {
 		nodeType: 2, 
 		type: type, 
-		props: props || type.defaultProps || {}, 
-		children: children || [],
-		_el: null
+		props: (props || type.defaultProps || {}), 
+		children: (children || []),
+		_node: null,
+		_owner: null
+	};
+}
+
+
+/**
+ * internal virtual node factory
+ * 
+ * @param {number} nodeType
+ * @param {(function|string)} type
+ * @param {Object} props
+ * @param {VNode[]} children
+ * @param {(Node|null)} _node
+ * @param {(Node|null)} _owner 
+ */
+function VNode (nodeType, type, props, children, _node, _owner) {
+	return {
+		nodeType: nodeType,
+		type: type,
+		props: props,
+		children: children,
+		_node: _node,
+		_owner: _owner
 	};
 }
 
@@ -146,25 +123,25 @@ function VComponent (type, props, children) {
 /**
  * virtual blueprint node factory
  * 
- * @param  {Object} VNode
- * @return {Object} Vnode
+ * @param  {Object} subject
+ * @return {Object} subject
  */
-function VBlueprint (VNode) {
-	if (VNode != null) {
+function VBlueprint (subject) {
+	if (subject != null) {
 		// if array run all VNodes through VBlueprint
-		if (!VNode.nodeType) {
-			for (var i = 0, length = VNode.length; i < length; i++) {
-				VBlueprint(VNode[i]);
+		if (!subject.nodeType) {
+			for (var i = 0, length = subject.length; i < length; i++) {
+				VBlueprint(subject[i]);
 			}
 		} else {
 			// if a blueprint not already constructed
-			if (VNode._el == null) {
-				document ? VNode._el = createNode(VNode) : extractVNode(VNode);
+			if (subject._node == null) {
+				document ? subject._node = createNode(subject) : extractVNode(subject);
 			}
 		}
 	}
 
-	return VNode;
+	return subject;
 }
 
 
@@ -233,9 +210,9 @@ function createElement (type, props) {
 		// if !props.xmlns && type === svg|math assign svg && math props.xmlns
 		if (element.props.xmlns === undefined) {	
 			if (type === 'svg') { 
-				element.props.xmlns = svgNS; 
+				element.props.xmlns = nssvg; 
 			} else if (type === 'math') { 
-				element.props.xmlns = mathNS; 
+				element.props.xmlns = nsmath; 
 			}
 		}
 
@@ -376,6 +353,53 @@ function cloneElement (subject, newProps, newChildren) {
 
 
 /**
+ * DOM factory
+ *
+ * @param {any[]=} types
+ * create references to common dom elements
+ */
+function DOM (types) {
+	// default to preset types if non passed
+	types = types || [
+		'h1','h2','h3','h4','h5', 'h6','audio','video','canvas',
+		'header','nav','main','aside','footer','section','article','div',
+		'form','button','fieldset','form','input','label','option','select','textarea',
+		'ul','ol','li','p','a','pre','code','span','img','strong','time','small','hr','br',
+		'table','tr','td','th','tbody','thead',
+	];
+
+	var elements = {};
+
+	// add element factories
+	for (var i = 0, length = types.length; i < length; i++) {
+		var type = types[i]; elements[type] = VElement.bind(null, type);
+	}
+
+	// optional usefull helpers
+	if (elements.text)      { elements.text      = VText; }
+	if (elements.fragment)  { elements.fragment  = VFragment; }
+	if (elements.component) { elements.component = VComponent; }
+	
+	// if in list of types, add related svg element factories
+	if (elements.svg) {
+		var svgs = [
+			'rect','path','polygon','circle','ellipse','line','polyline','image','marker','a','symbol',
+			'linearGradient','radialGradient','stop','filter','use','clipPath','view','pattern','svg',
+			'g','defs','text','textPath','tspan','mpath','defs','g','marker','mask'
+		];
+
+		for (var i = 0, length = svgs.length; i < length; i++) {
+			var type = svgs[i]; 
+
+			elements[type] = VSvg.bind(null, type);
+		}
+	}
+
+	return elements;
+}
+
+
+/**
  * is valid element
  * 
  * @param  {*} subject
@@ -398,9 +422,7 @@ function createFactory (type, props) {
 
 
 /**
- * Children
- * 
- * mocks React.Children top-level api
+ * Children, mocks React.Children top-level api
  *
  * @return {Object}
  */
@@ -421,6 +443,21 @@ function Children () {
 		count: function count (children) {
 			return isArray(children) ? children.length : 0;
 		}
+	}
+}
+
+
+/**
+ * retrieve virtual node
+ * 
+ * @param  {(function|object)} subject
+ * @return {VNode}
+ */
+function retrieveVNode (subject) {
+	if (subject.type) {
+		return subject;
+	} else {
+		return typeof subject === 'function' ? VComponent(subject) : createElement('@', null, subject);
 	}
 }
 
