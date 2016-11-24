@@ -11,7 +11,7 @@
  * creates a store enhancer
  *
  * @param   {...function} middlewares
- * @return  {function} - a store enhancer
+ * @return  {function}    a store enhancer
  */
 function applyMiddleware () {
 	var middlewares = [];
@@ -56,7 +56,7 @@ function applyMiddleware () {
 /**
  * combines a set of reducers
  * 
- * @param  {Object} reducers
+ * @param  {Object}  reducers
  * @return {function}
  */
 function combineReducers (reducers) {
@@ -98,7 +98,7 @@ function Store (reducer, initialState) {
 
 	// dispatchs a action
 	function dispatch (action) {
-		if (action.type === undefined) {
+		if (action.type === void 0) {
 			throw 'actions without type';
 		}
 
@@ -196,13 +196,13 @@ function createStore (reducer, initialState, enhancer) {
 
 	// if initialState is a function and enhancer is undefined
 	// we assume that initialState is an enhancer
-	if (typeof initialState === 'function' && enhancer === undefined) {
+	if (typeof initialState === 'function' && enhancer === void 0) {
 		enhancer = initialState;
-		initialState = undefined;
+		initialState = void 0;
 	}
 
 	// delegate to enhancer if defined
-	if (enhancer !== undefined) {
+	if (enhancer !== void 0) {
 		// exit early, enhancer is not a function
 		if (typeof enhancer !== 'function') {
 			throw 'enhancer should be a function';

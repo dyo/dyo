@@ -30,7 +30,7 @@ function request () {
 		var arr = [];
 
 		each(object, function (value, key) {
-			var prefixValue = prefix !== undefined ? prefix + '[' + key + ']' : key;
+			var prefixValue = prefix !== void 0 ? prefix + '[' + key + ']' : key;
 
 			// when the value is equal to an object 
 			// we have somethinglike value = {name:'John', addr: {...}}
@@ -99,7 +99,7 @@ function request () {
 		// return a a stream
 		return stream(function (resolve, reject, stream) {
 			// if XMLHttpRequest constructor absent, exit early
-			if (window.XMLHttpRequest === undefined) {
+			if (window.XMLHttpRequest === void 0) {
 				return;
 			}
 
@@ -152,18 +152,18 @@ function request () {
 			}
 
 			// if, assign inital value of stream
-			if (initial !== undefined) {
+			if (initial !== void 0) {
 				resolve(initial);
 			}
 
 			// if config, expose underlying XMLHttpRequest object
 			// allows us to save a reference to it and call abort when required
-			if (config !== undefined && typeof config !== 'function') {
+			if (config !== void 0 && typeof config !== 'function') {
 				config(xhr);
 			}
 
 			// send request
-			payload !== undefined ? xhr.send(payload) : xhr.send();
+			payload !== void 0 ? xhr.send(payload) : xhr.send();
 		});
 	}
 

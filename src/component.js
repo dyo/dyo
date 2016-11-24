@@ -11,7 +11,7 @@
  * findDOMNode
  * 
  * @param  {Object} component
- * @return {(Node|bool)}
+ * @return {(Node|boolean)}
  */
 function findDOMNode (component) {
 	return component._vnode && component._vnode._node;
@@ -20,8 +20,8 @@ function findDOMNode (component) {
 
 /**
  * unmountComponentAtNode
+ * 
  * @param  {Node} container
- * @return {}
  */
 function unmountComponentAtNode (container) {
 	container.textContent = '';
@@ -30,11 +30,10 @@ function unmountComponentAtNode (container) {
 
 /**
  * component class
+ * 
  * @param {Object=} props
  */
 function Component (props) {
-	this.state = (this.getInitialState && this.getInitialState()) || {};
-
 	if (props) {
 		// if dev env and has propTypes, validate props
 		if (development) {
@@ -60,19 +59,22 @@ function Component (props) {
 		this.props = (this.getDefaultProps && this.getDefaultProps()) || {};
 	}
 
+	this.state = (this.getInitialState && this.getInitialState()) || {};
+
 	this.refs = this._vnode = null;
 }
+
 
 /**
  * component prototype
  * 
  * @type {Object}
  */
-Component.prototype = {
-	setState: setState, 
-	forceUpdate: forceUpdate, 
-	withAttr: withAttr
-};
+Component.prototype = Object.create(null, {
+	setState: { value: setState },
+	forceUpdate: { value: forceUpdate },
+	withAttr: { value: withAttr }
+});
 
 
 /**
@@ -106,17 +108,14 @@ function setState (newState, callback) {
  * @return {void}
  */
 function forceUpdate () {
-	if (this._vnode !== undefined) {
+	if (this._vnode != null) {
 		// componentWillUpdate lifecycle
 		if (this.componentWillUpdate) {
 			this.componentWillUpdate(this.props, this.state);
 		}
 
-		var newNode = retrieveRender(this), 
-			oldNode = this._vnode;
-
 		// patch update
-		patch(newNode, oldNode);
+		patch(retrieveRender(this), this._vnode);
 
 		// componentDidUpdate lifecycle
 		if (this.componentDidUpdate) {
@@ -273,6 +272,6 @@ function getDisplayName (subject) {
 	// the regex may return nothing, ['',''] insures we can always retrieves something
 	var displayName = (/function ([^(]*)/.exec(subject.valueOf()) || ['',''])[1];
 
-	return displayName === '' && subject.name !== undefined ? subject.name : displayName;
+	return displayName === '' && subject.name !== void 0 ? subject.name : displayName;
 }
 

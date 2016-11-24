@@ -7,7 +7,7 @@
  */
 
 
-var version     = '3.1.0';
+var version     = '3.2.0';
 
 var nsstyle     = 'data-scope';
 var nsmath      = 'http://www.w3.org/1998/Math/MathML';
@@ -15,13 +15,24 @@ var nsxlink     = 'http://www.w3.org/1999/xlink';
 var nssvg       = 'http://www.w3.org/2000/svg';
 
 var document    = window.document;
-var development = window.global === window && process.env.NODE_ENV === 'development';
+var server      = window.global === window;
+var development = server && process.env.NODE_ENV === 'development';
+var readable    = server ? require('stream').Readable : function () {};
 
 var oempty      = Object.create(null);
 var vempty      = VNode(0, '', oempty, [], null, null);
 var isvoid      = {
-	'area':   !0, 'base':  !0, 'br':   !0, '!doctype': !0, 'col':    !0, 'embed':  !0,
-	'wbr':    !0, 'track': !0, 'hr':   !0, 'img':      !0, 'input':  !0, 
-	'keygen': !0, 'link':  !0, 'meta': !0, 'param':    !0, 'source': !0
+	'area':   1, 'base':  1, 'br':   1, '!doctype': 1, 'col':    1, 'embed': 1,
+	'wbr':    1, 'track': 1, 'hr':   1, 'img':      1, 'input':  1, 
+	'keygen': 1, 'link':  1, 'meta': 1, 'param':    1, 'source': 1
+};
+
+var escpattern   = /[<>&"']/g;
+var unicodes     = {
+	'<': '&lt;',
+	'>': '&gt;',
+	'"': '&quot;',
+	"'": '&#39;',
+	'&': '&amp;'
 };
 

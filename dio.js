@@ -30,7 +30,7 @@
 	 */
 	
 	
-	var version     = '3.1.0';
+	var version     = '3.2.0';
 	
 	var nsstyle     = 'data-scope';
 	var nsmath      = 'http://www.w3.org/1998/Math/MathML';
@@ -38,14 +38,25 @@
 	var nssvg       = 'http://www.w3.org/2000/svg';
 	
 	var document    = window.document;
-	var development = window.global === window && process.env.NODE_ENV === 'development';
+	var server      = window.global === window;
+	var development = server && process.env.NODE_ENV === 'development';
+	var readable    = server ? require('stream').Readable : function () {};
 	
 	var oempty      = Object.create(null);
 	var vempty      = VNode(0, '', oempty, [], null, null);
 	var isvoid      = {
-		'area':   !0, 'base':  !0, 'br':   !0, '!doctype': !0, 'col':    !0, 'embed':  !0,
-		'wbr':    !0, 'track': !0, 'hr':   !0, 'img':      !0, 'input':  !0, 
-		'keygen': !0, 'link':  !0, 'meta': !0, 'param':    !0, 'source': !0
+		'area':   1, 'base':  1, 'br':   1, '!doctype': 1, 'col':    1, 'embed': 1,
+		'wbr':    1, 'track': 1, 'hr':   1, 'img':      1, 'input':  1, 
+		'keygen': 1, 'link':  1, 'meta': 1, 'param':    1, 'source': 1
+	};
+	
+	var escpattern   = /[<>&"']/g;
+	var unicodes     = {
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#39;',
+		'&': '&amp;'
 	};
 	
 	
@@ -66,24 +77,41 @@
 	 */
 	function escape (subject) {
 		var string = subject + '';
-		var characters = '';
 	
-		for (var i = 0, length = string.length; i < length; i++) {
-			switch (string.charCodeAt(i)) {
-				// &
-				case 38: characters += '&amp;'; break;
-				// "
-				case 34: characters += '&quot;'; break;
-				// <
-				case 60: characters += '&lt;'; break;
-				// >
-				case 62: characters += '&gt;'; break;
+		if (string.length > 50) {
+			// use regex if the string is long
+			return string.replace(escpattern, unicode);
+		} else {
+			var characters = '';
 	
-				default: characters += string[i]; break;
+			for (var i = 0, length = string.length; i < length; i++) {
+				switch (string.charCodeAt(i)) {
+					// & character
+					case 38: characters += '&amp;'; break;
+					// " character
+					case 34: characters += '&quot;'; break;
+					// < character
+					case 60: characters += '&lt;'; break;
+					// > character
+					case 62: characters += '&gt;'; break;
+					// any character
+					default: characters += string[i]; break;
+				}
 			}
+			
+			return characters;
 		}
-		
-		return characters;
+	}
+	
+	
+	/**
+	 * unicode, escape => () helper
+	 * 
+	 * @param  {string} char
+	 * @return {string}
+	 */
+	function unicode (char) {
+		return unicodes[char];
 	}
 	
 	
@@ -93,24 +121,23 @@
 	 * used to build the css parser but could 
 	 * be used to develop other parsers as well
 	 * 
-	 * @param  {string} str
-	 * @param  {method} string
+	 * @param  {string} string
 	 * @return {Object}
 	 */
-	function input (str) {
+	function input (string) {
 	 	// peek at the next character
 	 	function peek () { 
-	 		return str[position] || ''; 
+	 		return string[position] || ''; 
 	 	}
 	
 	 	// peek x number of characters relative to the current character
 	 	function look (distance) { 
-	 		return str[(position-1)+distance] || ''; 
+	 		return string[(position-1)+distance] || ''; 
 	 	}
 	
 	 	// move on to the next character
 	 	function next () { 
-	 		return str[position++]; 
+	 		return string[position++]; 
 	 	}
 	
 	 	// get current position
@@ -125,16 +152,18 @@
 	
 	 	// sleep until a certain character is reached
 	 	function sleep (until) {
-	 		until = until.charCodeAt(0);
+	 		// use character code for faster number-to-number comparison
+	 		var code = until.charCodeAt(0);
 	
-			while (position !== length && next().charCodeAt(0) !== until) {
+			while (position !== length && next().charCodeAt(0) !== code) {
 				// empty
 			} 
 	 	}
 	
 	 	// position of the caret
 	 	var position = 0;
-	 	var length = str.length;
+	 	// length of string
+	 	var length = string.length;
 	
 	 	return { 
 	 		next:  next, 
@@ -168,15 +197,20 @@
 	/**
 	 * throw/return error
 	 * 
-	 * @param  {string}   message
-	 * @param  {number=}  silent
+	 * @param  {string}            message
+	 * @param  {number=}           silent
 	 * @return {(undefined|Error)}
 	 */
 	function panic (message, silent) {
-		var error = message instanceof Error ? message : new Error(message);
+		// create an error object for stack stake tracing
+		var error = (message || '').constructor === Error ? message : new Error(message);
 	
-		// return/throw error
-		if (silent) { return error; } else { throw error; }
+		// throw error/return error(silent)
+		if (silent) { 
+			return error; 
+		} else { 
+			throw error; 
+		}
 	}
 	
 	
@@ -185,11 +219,13 @@
 	 * 
 	 * @param  {function}  func
 	 * @param  {function=} onerror
+	 * @param  {any=}      value
+	 * @return {any}
 	 */
-	function sandbox (func, onerror) {
+	function sandbox (func, onerror, value) {
 		// hoisted due to V8 not opt'ing functions with try..catch
 		try {
-			return func();
+			return value ? func(value) : func();
 		} catch (err) {
 			return onerror && onerror(err);
 		}
@@ -198,6 +234,9 @@
 	
 	/**
 	 * defer function
+	 *
+	 * defers the execution of a function with predefined arguments
+	 * and an optional command to preventDefault event behaviour
 	 * 
 	 * @param  {function} subject
 	 * @param  {any[]}    args
@@ -214,6 +253,7 @@
 				e.preventDefault();
 			}
 	
+			// defaults to arguments if there are no predefined args
 			return subject.apply(this, (empty ? arguments : args));
 		}
 	}
@@ -235,6 +275,7 @@
 		if (length === 0) {
 			return function (a) { return a; }
 		} else {
+			// list of functions to compose
 			var funcs = [];
 	
 			// passing arguments to a function i.e [].splice() will prevent this function
@@ -247,12 +288,14 @@
 			// we will use this for the initial composition
 			var lastFunc = funcs.pop();
 	
-			// decrement length of funcs array
+			// decrement length of funcs array as a reflection of the above
 			length--;
 	
 			return function () {
+				// initial composition
 				var output = lastFunc.apply(null, arguments);
-				
+					
+				// recursively commpose all functions
 				while (length--) {
 					output = funcs[length](output);
 				}
@@ -273,16 +316,16 @@
 	function flatten (subject, output) {
 		output = output || [];
 		
-		// for each item add to array if item is an array add recursively it's items
+		// for each item add to array, if an item is an array add recursively its elements
 		for (var i = 0, length = subject.length; i < length; i++){
 			var item = subject[i];
 	
-			// if not an array add value to output
+			// if it is not an array add its value to the output array
 			if (item == null || item.constructor !== Array) {
 				output[output.length] = item;
 			} else {
-				// recursive
-				arrayFlatten(item, output);
+				// recursively add the arrays elements to output
+				flatten(item, output);
 			}
 		}
 		
@@ -365,7 +408,7 @@
 	
 	
 	/**
-	 * @param  {*}
+	 * @param  {*} subject
 	 * @return {boolean}
 	 */
 	function isNumber (subject) {
@@ -401,7 +444,7 @@
 	
 	
 	/**
-	 * @param  {*}  subject 
+	 * @param  {*} subject 
 	 * @return {boolean}
 	 */
 	function isArrayLike (subject) {
@@ -421,7 +464,8 @@
 	/**
 	 * virtual fragment node factory
 	 * 
-	 * @param {any[]} children
+	 * @param  {VNode[]} children
+	 * @return {VNode}
 	 */
 	function VFragment (children) {
 		return {
@@ -438,7 +482,8 @@
 	/**
 	 * virtual text node factory
 	 * 
-	 * @param {string=} text
+	 * @param  {string} text
+	 * @return {VNode}
 	 */
 	function VText (text) {
 		return {
@@ -455,9 +500,10 @@
 	/**
 	 * virtual element node factory
 	 * 
-	 * @param {string} type
-	 * @param {Object=} props
-	 * @param {any[]=}  children
+	 * @param  {string} type
+	 * @param  {Object=} props
+	 * @param  {any[]=}  children
+	 * @return {VNode}
 	 */
 	function VElement (type, props, children) {
 		return {
@@ -474,9 +520,10 @@
 	/**
 	 * virtual svg node factory
 	 * 
-	 * @param {string} type
-	 * @param {Object=} props
-	 * @param {any[]=} children
+	 * @param  {string}  type
+	 * @param  {Object=} props
+	 * @param  {any[]=}  children
+	 * @return {VNode}
 	 */
 	function VSvg (type, props, children) {
 		return {
@@ -493,9 +540,10 @@
 	/**
 	 * virtual component node factory
 	 * 
-	 * @param {function} type
-	 * @param {Object=}  props
-	 * @param {any[]=}   children
+	 * @param  {function} type
+	 * @param  {Object=}  props
+	 * @param  {any[]=}   children
+	 * @return {VNode}
 	 */
 	function VComponent (type, props, children) {
 		return {
@@ -512,12 +560,12 @@
 	/**
 	 * internal virtual node factory
 	 * 
-	 * @param {number} nodeType
+	 * @param {number}            nodeType
 	 * @param {(function|string)} type
-	 * @param {Object} props
-	 * @param {VNode[]} children
-	 * @param {(Node|null)} _node
-	 * @param {(Node|null)} _owner 
+	 * @param {Object}            props
+	 * @param {VNode[]}           children
+	 * @param {(Node|null)}       _node
+	 * @param {Component}         _owner
 	 */
 	function VNode (nodeType, type, props, children, _node, _owner) {
 		return {
@@ -540,14 +588,17 @@
 	function VBlueprint (subject) {
 		if (subject != null) {
 			// if array run all VNodes through VBlueprint
-			if (!subject.nodeType) {
+			if (subject.constructor === Array) {
 				for (var i = 0, length = subject.length; i < length; i++) {
 					VBlueprint(subject[i]);
 				}
 			} else {
 				// if a blueprint not already constructed
 				if (subject._node == null) {
-					document ? subject._node = createNode(subject) : extractVNode(subject);
+					if (document !== void 0) {
+						// browser, cache blueprint node
+						subject._node = createNode(subject.nodeType ? subject : VComponent(subject));
+					}
 				}
 			}
 		}
@@ -561,7 +612,7 @@
 	 * 
 	 * @param  {(string|function|Object)} type
 	 * @param  {Object=}                  props
-	 * @param  {...*=}                    children - everything after props
+	 * @param  {...*=}                    children
 	 * @return {Object}
 	 */
 	function createElement (type, props) {
@@ -570,7 +621,7 @@
 		var position = 2;
 	
 		// if props is not a normal object
-		if (props == null || props.nodeType !== undefined || props.constructor !== Object) {
+		if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
 			// update position if props !== undefined|null
 			// this assumes that it would look like
 			// createElement('type', null, ...children);
@@ -606,11 +657,11 @@
 			}
 		}
 	
-		// if type is a function, create component
+		// if type is a function, create component VNode
 		if (typeof type === 'function') {
 			return VComponent(type, props, children);
 		} else {
-			// if first letter = @, create fragment, else create element
+			// if first letter = @, create fragment VNode, else create element VNode
 			var element = type[0] === '@' ? VFragment(children) : VElement(type, props, children);
 	
 			// special type, i.e [type] | div.class | #id
@@ -618,8 +669,9 @@
 				parseVNodeType(type, props || {}, element);
 			}
 	
-			// if !props.xmlns && type === svg|math assign svg && math props.xmlns
-			if (element.props.xmlns === undefined) {	
+			// if props.xmlns is undefined  and type === svg|math 
+			// assign svg && math namespaces to props.xmlns
+			if (element.props.xmlns === void 0) {	
 				if (type === 'svg') { 
 					element.props.xmlns = nssvg; 
 				} else if (type === 'math') { 
@@ -641,7 +693,7 @@
 	function assignElement (element, children) {
 		var childNode;
 	
-		if (element != null && element.nodeType !== undefined) {
+		if (element != null && element.nodeType !== void 0) {
 			// default element
 			childNode = element;
 		} else if (typeof element === 'function') {
@@ -661,7 +713,9 @@
 	 * special virtual element types
 	 *
 	 * @example h('inpu#id[type=radio]') <-- yields --> h('input', {id: 'id', type: 'radio'})
-	 * 
+	 *
+	 * @param  {Object} type
+	 * @param  {Object} props
 	 * @param  {Object} element
 	 * @return {Object} element
 	 */
@@ -673,7 +727,7 @@
 		// default type
 		element.type = 'div';
 	
-		// if undefined, create RegExp
+		// if undefined, create and cache RegExp
 		if (!parseVNodeType.regex) {
 			regex = parseVNodeType.regex = new RegExp(
 				'(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|\'|)((?:\\\\[\"\'\\]]|.)*?)\\5)?\\])','g'
@@ -739,7 +793,7 @@
 	
 		// copy props
 		each(subject.props, function (value, name) {
-			if (newProps[name] === undefined) {
+			if (newProps[name] === void 0) {
 				newProps[name] = value;
 			}
 		});
@@ -765,9 +819,10 @@
 	
 	/**
 	 * DOM factory
+	 * 
+	 * create references to common dom elements
 	 *
 	 * @param {any[]=} types
-	 * create references to common dom elements
 	 */
 	function DOM (types) {
 		// default to preset types if non passed
@@ -824,7 +879,7 @@
 	/**
 	 * create element factory
 	 * 
-	 * @param  {string} element
+	 * @param  {string}  element
 	 * @return {function}
 	 */
 	function createFactory (type, props) {
@@ -895,16 +950,18 @@
 				if (initial === 1) {
 					// dispatch mount
 					mount(element, node);
-					// register mount dispatched
+	
+					// register mount has been dispatched
 					initial = 0;
+	
 					// assign component
 					if (component == null) { 
 						component = node._owner;
 					}
 				} else {
 					// update props
-					if (props !== undefined) {
-						if (component.shouldComponentUpdate !== undefined && 
+					if (props !== void 0) {
+						if (component.shouldComponentUpdate !== void 0 && 
 							component.shouldComponentUpdate(props, component.state) === false) {
 							return reconciler;
 						}
@@ -922,10 +979,10 @@
 	   	var component;
 	   	var node;
 	
-	   	if (subject.render !== undefined) {
+	   	if (subject.render !== void 0) {
 	   		// create component from object
 	   		node = VComponent(createClass(subject));
-	   	} else if (subject.type === undefined) {
+	   	} else if (subject.type === void 0) {
 	   		// normalization
 	   		if (subject.constructor === Array) {
 				// fragment array
@@ -937,13 +994,8 @@
 	   		node = subject;
 	   	}
 	
-	   	// normalize props
-	   	if (node.props == null || typeof node.props !== 'object') {
-	   		node.props = {};
-	   	}
-	
 	   	// server-side
-	   	if (document === undefined) {
+	   	if (document === void 0) {
 	   		return renderToString(node);
 	   	}
 	
@@ -957,13 +1009,15 @@
 	   	if (element.hasAttribute('hydrate')) {
 	   		// dispatch hydration
 	   		hydrate(element, node, 0, vempty);
+	
 	   		// cleanup element hydrate attributes
 	   		element.removeAttribute('hydrate');
-	   		// register mount dispatched
+	
+	   		// register mount has been dispatched
 	   		initial = 0;
 	
 	   		// assign component
-	   		if (component == null) { 
+	   		if (component == null) {
 	   			component = node._owner; 
 	   		}
 	   	} else {
@@ -1001,7 +1055,7 @@
 	 */
 	function retrieveMount (subject) {
 		// document not available
-		if (document == null || (subject != null && subject.nodeType != null)) {
+		if (subject != null && subject.nodeType != null) {
 			return subject;
 		}
 	
@@ -1038,10 +1092,10 @@
 		var candidate;
 		var type = subject.type;
 	
-		if (type._component !== undefined) {
+		if (type._component !== void 0) {
 			// cache
 			candidate = type._component;
-		} else if (type.constructor === Function && type.prototype.render === undefined) {
+		} else if (type.constructor === Function && type.prototype.render === void 0) {
 			// function components
 			candidate = type._component = createClass(type);
 		} else {
@@ -1060,21 +1114,27 @@
 		var vnode = retrieveRender(component);
 	
 		// if keyed, assign key to vnode
-		if (subject.props.key !== undefined && vnode.props.key === undefined) {
+		if (subject.props.key !== void 0 && vnode.props.key === void 0) {
 			vnode.props.key = subject.props.key;
 		}
 	
+		// if render returns a component
+		if (vnode.nodeType === 2) {
+			vnode = extractVNode(vnode);
+		}
 	
 		// assign component node
 		component._vnode = VNode(
-			(vnode.nodeType === 2 ? (vnode = extractVNode(vnode)).nodeType : vnode.nodeType),
-			(vnode.type),
-			(subject.props = vnode.props), 
-			(subject.children = vnode.children)
+			vnode.nodeType,
+			vnode.type,
+			subject.props = vnode.props, 
+			subject.children = vnode.children,
+			null,
+			null
 		);
 	
-		if (type.stylesheet === undefined) {
-			type.stylesheet = component.stylesheet !== undefined ? component.stylesheet : null;
+		if (type.stylesheet === void 0) {
+			type.stylesheet = component.stylesheet !== void 0 ? component.stylesheet : null;
 		}
 	
 		return vnode;
@@ -1092,7 +1152,7 @@
 		var vnode = component.render(component.props, component.state, component);
 	
 		// if vnode, else fragment
-		return vnode.nodeType !== undefined ? vnode : VFragment(vnode);
+		return vnode.nodeType !== void 0 ? vnode : VFragment(vnode);
 	}
 	
 	
@@ -1246,7 +1306,7 @@
 									}
 	
 									// opt: if found newChild in oldChildren, only move element
-									if (fromIndex !== undefined) {
+									if (fromIndex !== void 0) {
 										// reference element from oldChildren that matches newChild key
 										var element = oldChildren[fromIndex];
 	
@@ -1437,7 +1497,7 @@
 	 * @return {boolean}
 	 */
 	function isEventName (name) {
-		return name[0] === 'o' && name[1] === 'n' && name.length > 3;
+		return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 3;
 	}
 	
 	
@@ -1462,7 +1522,7 @@
 	function assignRefs (element, ref, component) {
 		// hoist typeof info
 		var type = typeof ref;
-		var refs = component.refs == null ? component.refs = {} : component.refs;
+		var refs = component.refs === null ? component.refs = {} : component.refs;
 	
 		if (type === 'string') {
 			// string ref, assign
@@ -1599,34 +1659,28 @@
 			var element;
 			var props;
 	
-			// clone, blueprint node/hoisted vnode
 			if (subject._node) {
+				// clone, blueprint node/hoisted vnode
 				props = subject.props;
 				element = subject._node;
-			}
-			// create
-			else {
+			} else {
+				// create
 				var newNode  = nodeType === 2 ? extractVNode(subject) : subject;
 				var type     = newNode.type;
 				var children = newNode.children;
 				var length   = children.length;
 	
-					props = newNode.props;
-	
-				// vnode has component attachment
-				if (subject._owner != null) { 
-					component = subject._owner; 
-				}
+				props = newNode.props;
 	
 				// assign namespace
-				if (props.xmlns != null) { 
+				if (props.xmlns !== void 0) { 
 					namespace = props.xmlns; 
 				}
 	
 				// if namespaced, create namespaced element
 				if (namespace != null) {
 					// if undefined, assign svg namespace
-					if (props.xmlns == null) {
+					if (props.xmlns === void 0) {
 						props.xmlns = namespace;
 					}
 	
@@ -1644,12 +1698,17 @@
 					assignProps(element, props, 0);
 				}
 	
+				// vnode has component attachment
+				if (subject._owner != null) {
+					(component = subject._owner)._vnode._node = element;
+				}
+	
 				if (length !== 0) {				
 					// create children
 					for (var i = 0; i < length; i++) {
 						var newChild = children[i];
 	
-						// clone vnode of hoisted/blueprint node
+						// clone vnode of hoisted/pre-rendered node
 						if (newChild._node) {
 							newChild = children[i] = VNode(
 								newChild.nodeType,
@@ -1663,10 +1722,10 @@
 	
 						// append child
 						appendNode(newChild, element, createNode(newChild, component, namespace));
-	
+						
 						// we pass namespace and component so that 
-						// 1. when the element is an svg element all child elements are svg namespaces and 
-						// 2. so that refs nested in childNodes can propagate to the parent component
+						// 1. if element is svg element we can namespace all its children
+						// 2. if nested refs we can propagate them to a parent component
 					}
 				}
 	
@@ -1674,17 +1733,17 @@
 			}
 	
 			// refs
-			if (props.ref != null && component != null) {
+			if (props.ref !== void 0 && component !== void 0) {
 				assignRefs(element, props.ref, component);
 			}
 	
 			// check if a stylesheet is attached
-			// note: since we mutate the .stylesheet property to 0 in stylesheet
-			// this will execute exactly once at any given runtime lifecycle
 			if (subject.type.stylesheet != null) {
 				if (subject.type.stylesheet === 0) {
 					element.setAttribute(nsstyle, subject.type.id);
 				} else {
+					// note: since we mutate the .stylesheet property to 0 in stylesheet
+					// this will execute exactly once at any given runtime lifecycle
 					stylesheet(element, subject.type);
 				}
 			}
@@ -1761,7 +1820,7 @@
 	
 		// if xlink:href set, exit, 
 		if (name === 'xlink:href') {
-			return (target[action + 'NS'](nsxlink, 'href', propValue), undefined);
+			return (target[action + 'NS'](nsxlink, 'href', propValue), void 0);
 		}
 	
 		var isSVG = 0;
@@ -1781,9 +1840,9 @@
 	
 		// objects, adds property if undefined, else, updates each memeber of attribute object
 		if (isDefinedValue === 1 && typeof propValue === 'object') {
-			targetProp === undefined ? target[propName] = propValue : updatePropObject(propValue, targetProp);
+			targetProp === void 0 ? target[propName] = propValue : updatePropObject(propValue, targetProp);
 		} else {
-			if (targetProp !== undefined && isSVG === 0) {
+			if (targetProp !== void 0 && isSVG === 0) {
 				target[propName] = propValue;
 			} else {
 				// remove attributes with false/null/undefined values
@@ -1806,7 +1865,7 @@
 	 * update prop objects, i.e .style
 	 * 
 	 * @param  {Object} value
-	 * @param  {*} targetAttr
+	 * @param  {*}      targetAttr
 	 */
 	function updatePropObject (value, targetAttr) {
 		for (var propName in value) {
@@ -1823,7 +1882,7 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * server-side
+	 * server-side (sync)
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -1837,20 +1896,20 @@
 	 * @return {string}
 	 */
 	function renderToString (subject, template) {
-		var store = [''];
-		var vnode = retrieveVNode(subject);
+		var styles = [''];
+		var vnode  = retrieveVNode(subject);
+		var lookup = {};
+		var body   = renderVNodeToString(vnode, styles, lookup);
+		var style  = styles[0];
 	
 		if (template) {
-			var body = renderVNodeToString(vnode, store);
-			var style = store[0]; 
-	
 			if (typeof template === 'string') {
-				return template.replace('{{body}}', body).replace('{{style}}', style);
+				return template.replace('{{body}}', body+style);
 			} else {
 				return template(body, style);
 			}
 		} else {
-			return renderVNodeToString(vnode, null);
+			return body+style;
 		}
 	}
 	
@@ -1859,13 +1918,12 @@
 	 * render a VNode to string
 	 * 
 	 * @param  {Object} subject
-	 * @param  {str[1]} store
+	 * @param  {str[1]} styles
 	 * @return {string}  
 	 */
-	function renderVNodeToString (subject, store) {
+	function renderVNodeToString (subject, styles, lookup) {
 		var vnode = subject.nodeType === 2 ? extractVNode(subject) : subject;
-	
-		var nodeType  = vnode.nodeType;
+		var nodeType = vnode.nodeType;
 	
 		// textNode
 		if (nodeType === 3) {
@@ -1878,27 +1936,30 @@
 		var props = vnode.props;
 		var children = vnode.children;
 	
-		var childrenStr = '';
+		var schildren = '';
 	
-		// construct children string
-		if (children.length === 0) {
-			childrenStr = '';
-		} else {
-			for (var i = 0, length = children.length; i < length; i++) {
-				childrenStr += renderVNodeToString(children[i], store);
+		if (props.innerHTML) {
+			// special case when a prop replaces children
+			schildren = props.innerHTML;
+		} else {		
+			// construct children string
+			if (children.length !== 0) {
+				for (var i = 0, length = children.length; i < length; i++) {
+					schildren += renderVNodeToString(children[i], styles, lookup);
+				}
 			}
 		}
 	
-		var propsStr = renderStylesheetToString(component, renderPropsToString(props), store);
+		var sprops = renderStylesheetToString(component, styles, renderPropsToString(props), lookup);
 	
 		if (nodeType === 11) {
-			return childrenStr;
+			return schildren;
 		} else if (isvoid[type]) {
 			// <type ...props>
-			return '<'+type+propsStr+'>';
+			return '<'+type+sprops+'>';
 		} else {
 			// <type ...props>...children</type>
-			return '<'+type+propsStr+'>'+childrenStr+'</'+type+'>';
+			return '<'+type+sprops+'>'+schildren+'</'+type+'>';
 		}
 	}
 	
@@ -1907,24 +1968,26 @@
 	 * render stylesheet to string
 	 * 
 	 * @param  {function}  component
+	 * @param  {string[1]} styles    
 	 * @param  {string}    string   
-	 * @param  {string[1]} store    
 	 * @return {string}          
 	 */
-	function renderStylesheetToString (component, string, store) {
+	function renderStylesheetToString (component, styles, string, lookup) {
 		// stylesheet
-		if (store != null && component.stylesheet != null) {
-			// this insures we only every create one 
-			// stylesheet for every component with one
-			if (component.css === undefined || component.css[0] !== '<') {
-				store[0] += stylesheet(null, component);
-			} else if (component.stylesheet === 0) {
-				store[0] = component.css;
+		if (component.stylesheet != null) {
+			// insure we only every create one 
+			// stylesheet for every component
+			if (component.css === void 0 || component.css[0] !== '<') {
+				// initial build css
+				styles[0] += stylesheet(null, component);
+				lookup[component.id] = true;
+			} else if (!lookup[component.id]) {
+				styles[0] += component.css;
+				lookup[component.id] = true;
 			}
 	
-			if (store[0] !== '') {
-				string += ' '+nsstyle+'='+'"'+component.id+'"';
-			}
+			// add attribute to element
+			string += ' '+nsstyle+'='+'"'+component.id+'"';
 		}
 	
 		return string;
@@ -1957,7 +2020,6 @@
 						type !== 'function' &&
 						name !== 'key' && 
 						name !== 'ref' && 
-						name !== 'textContent' && 
 						name !== 'innerHTML'
 					) {
 						if (type !== 'object') {
@@ -1993,149 +2055,171 @@
 	
 	
 	/**
+	 * ---------------------------------------------------------------------------------
+	 * 
+	 * server-side (async)
+	 * 
+	 * ---------------------------------------------------------------------------------
+	 */
+	
+	
+	/**
 	 * renderToStream
 	 * 
 	 * @param  {(Object|function)} subject 
 	 * @return {Stream}
 	 */
-	function renderToStream (subject) {
-		var Readable = (
-			document ? 
-				function () { this.on = this.push = function () {}; } : 
-				require('stream').Readable
-		);
+	function renderToStream (subject, template) {	
+		return subject ? (
+			new Stream(
+				subject,
+				template == null ? null : template.split('{{body}}')
+			)
+		) : Stream
+	}
 	
-		function Stream (subject) {
-			Readable.call(this);
-		}
 	
-		Stream.prototype = Object.create(Readable.prototype, {
-			_read: {
-				value: function (size) {
-					console.log(0, size);
+	/**
+	 * Stream
+	 * 
+	 * @param {(VNode|Component)} subject
+	 * @param {string=}           template
+	 */
+	function Stream (subject, template) {
+		this.initial  = 0;
+		this.lookup   = {};
+		this.stack    = [];
+		this.styles   = [''];
+		this.template = template;
+		this.node     = retrieveVNode(subject);
 	
-					if (initial === 1 && stack.length === 0) {
-				  		this.push(null);
-					} else {
-						initial = 1;
-						this._pipe(subject, true);
+		readable.call(this);
+	}
+	
+	
+	/**
+	 * Stream prototype
+	 * 
+	 * @type {Object}
+	 */
+	Stream.prototype = server ? Object.create(readable.prototype, {
+		_type: {
+			value: 'html'
+		},
+		_read: {
+			value: function () {
+				if (this.initial === 1 && this.stack.length === 0) {
+					var style = this.styles[0];
+	
+					// if there are styles, append
+					if (style.length !== 0) {
+						this.push(style);
 					}
+	
+					// has template, push closing
+					this.template && this.push(this.template[1]);
+	
+					// end of stream
+					this.push(null);
+	
+					// reset `initial` identifier
+					this.initial = 0;			
+				} else {
+					// start of stream
+					if (this.initial === 0) {
+						this.initial = 1;
+	
+						// has template, push opening 
+						this.template && this.push(this.template[0]);
+					}
+	
+					// pipe a chunk
+					this._pipe(this.node, true, this.stack, this.styles, this.lookup);
 				}
-			},
-			_push: {
-				value: function (string) {
+			}
+		},
+		_pipe: {
+			value: function (subject, flush, stack, styles, lookup) {
+				// if there is something pending in the stack
+				// give that priority
+				if (flush && stack.length !== 0) {
+					return stack.pop()(this);
+				}
+	
+				var vnode = subject.nodeType === 2 ? extractVNode(subject) : subject;
+				var nodeType = vnode.nodeType;
+	
+				var component = subject.type;
+				var type = vnode.type;
+				var props = vnode.props;
+				var children = vnode.children;
+	
+				// text node
+				if (nodeType === 3) {
 					// convert string to buffer and send chunk
-					this.push(Buffer.from(string, 'utf8'));
-				}
-			},
-			_pipe: {
-				value: function (vnode, flush) {
-					// if there something pending in the stack
-					// give that priority
-					if (flush && stack.length) { 
-						stack.pop()(this); return;
-					}
+					this.push(escape(children));
+				} else {
+					var sprops = renderStylesheetToString(component, styles, renderPropsToString(props), lookup);
 	
-					vnode = vnode.nodeType === 2 ? extractVNode(vnode) : vnode;
-					
-					var nodeType = vnode.nodeType;
-					var type = vnode.type;
-					var props = vnode.props;
-					var children = vnode.children;
-	
-					// text node
-					if (nodeType === 3) {
-						// convert string to buffer and send chunk
-						this._push(escape(vnode.children));
+					if (isvoid[type]) {
+						// <type ...props>
+						this.push('<'+type+sprops+'>');
 					} else {
-						if (isvoid[type]) {
-							// <type ...props>
-							this._push('<'+type+renderPropsToString(props)+'>');
+						var opening = '';
+						var closing = '';
+	
+						// fragments do not have opening/closing tags
+						if (nodeType !== 11) {
+							// <type ...props>...children</type>
+							opening = '<'+type+sprops+'>';
+							closing = '</'+type+'>';
+						}
+	
+						if (props.innerHTML !== void 0) {
+							// special case when a prop replaces children
+							this.push(opening+props.innerHTML+closing);
 						} else {
-							var opening = '';
-							var closing = '';
-	
-							// fragments(11) do not have opening and closing tags
-							if (nodeType !== 11) {
-								// <type ...props>...children</type>
-								opening += '<'+type+renderPropsToString(props)+'>';
-								closing += '</'+type+'>';
-							}
-	
 							var length = children.length;
 	
 							if (length === 0) {
 								// no children, sync
-								this._push(opening+closing);
+								this.push(opening+closing);
 							} else if (length === 1 && children[0].nodeType === 3) {
 								// one text node child, sync
-								this._push(opening+escape(children[0].children)+closing);
+								this.push(opening+escape(children[0].children)+closing);
 							} else {
 								// has children, async
 								// since we cannot know ahead of time the number of children
-								// recursively down this nodes tree
-								// it is better to split this operation 
-								// into asynchronously added chunks of data
+								// split this operation into asynchronously added chunks of data
 								var index = 0;
+								// add one more for the closing tag
 								var middlwares = length + 1;
 	
 								// for each _read if queue has middleware
 								// middleware execution will take priority
-								function middlware (ctx) {
-									if (index === length) {
-										// done, close html tag
-										ctx._push(closing);
-									} else {
-										// delegate next middleware
-										ctx._pipe(children[index++], false);
-									}
+								function middlware (stream) {
+									// done, close html tag, delegate next middleware
+									index === length ? 
+										stream.push(closing) : 
+										stream._pipe(children[index++], false, stack, styles, lookup);
 								}
+	
+								// push opening tag
+								this.push(opening);
 	
 								// push middlwares
 								for (var i = 0; i < middlwares; i++) {
-									stack.push(middlware);
+									stack[stack.length] = middlware;
 								}
-	
-								// initialize opening tag
-								this._push(opening);
 							}
 						}
 					}
 				}
 			}
-		});
-		
-		subject = retrieveVNode(subject);
-	
-		var stack = [];
-		var initial = 0;
+		}
+	}) : oempty;
 	
 	
-		return new Stream(subject);
-	}
-	
-	
-	// var req = renderToStream(
-	// 	createElement('div', {id: 'foo'}, 
-	// 		1, 2, 3, 4, 
-	// 		createElement('h1', 'Hello World')
-	// 	)
-	// );
-	
-	// const writable = require('fs').createWriteStream('file.txt');
-	// req.pipe(writable);
-	
-	// var body = '';
-	
-	// // Readable streams emit 'data' events once a listener is added
-	// req.on('data', (chunk) => {
-	//     body += chunk;
-	// });
-	
-	// // the end event indicates that the entire body has been received
-	// req.on('end', () => {
-	//     console.log('done,', body);
-	// });
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
@@ -2183,7 +2267,7 @@
 			assignProps(newElement, currentNode.props, 1);
 	
 			// assign refs
-			if (currentNode.props.ref !== undefined && currentNode._owner !== undefined) {
+			if (currentNode.props.ref !== void 0 && currentNode._owner !== void 0) {
 				assignRefs(newElement, currentNode.props.ref, currentNode._owner);
 			}
 		}
@@ -2234,7 +2318,7 @@
 	 * findDOMNode
 	 * 
 	 * @param  {Object} component
-	 * @return {(Node|bool)}
+	 * @return {(Node|boolean)}
 	 */
 	function findDOMNode (component) {
 		return component._vnode && component._vnode._node;
@@ -2243,8 +2327,8 @@
 	
 	/**
 	 * unmountComponentAtNode
+	 * 
 	 * @param  {Node} container
-	 * @return {}
 	 */
 	function unmountComponentAtNode (container) {
 		container.textContent = '';
@@ -2253,11 +2337,10 @@
 	
 	/**
 	 * component class
+	 * 
 	 * @param {Object=} props
 	 */
 	function Component (props) {
-		this.state = (this.getInitialState && this.getInitialState()) || {};
-	
 		if (props) {
 			// if dev env and has propTypes, validate props
 			if (development) {
@@ -2283,19 +2366,22 @@
 			this.props = (this.getDefaultProps && this.getDefaultProps()) || {};
 		}
 	
+		this.state = (this.getInitialState && this.getInitialState()) || {};
+	
 		this.refs = this._vnode = null;
 	}
+	
 	
 	/**
 	 * component prototype
 	 * 
 	 * @type {Object}
 	 */
-	Component.prototype = {
-		setState: setState, 
-		forceUpdate: forceUpdate, 
-		withAttr: withAttr
-	};
+	Component.prototype = Object.create(null, {
+		setState: { value: setState },
+		forceUpdate: { value: forceUpdate },
+		withAttr: { value: withAttr }
+	});
 	
 	
 	/**
@@ -2329,17 +2415,14 @@
 	 * @return {void}
 	 */
 	function forceUpdate () {
-		if (this._vnode !== undefined) {
+		if (this._vnode != null) {
 			// componentWillUpdate lifecycle
 			if (this.componentWillUpdate) {
 				this.componentWillUpdate(this.props, this.state);
 			}
 	
-			var newNode = retrieveRender(this), 
-				oldNode = this._vnode;
-	
 			// patch update
-			patch(newNode, oldNode);
+			patch(retrieveRender(this), this._vnode);
 	
 			// componentDidUpdate lifecycle
 			if (this.componentDidUpdate) {
@@ -2496,7 +2579,7 @@
 		// the regex may return nothing, ['',''] insures we can always retrieves something
 		var displayName = (/function ([^(]*)/.exec(subject.valueOf()) || ['',''])[1];
 	
-		return displayName === '' && subject.name !== undefined ? subject.name : displayName;
+		return displayName === '' && subject.name !== void 0 ? subject.name : displayName;
 	}
 	
 	
@@ -2574,9 +2657,9 @@
 	        	if (characterCode === 10) {
 	        		var firstLetter = currentLine.charCodeAt(0);
 	
-	        		// `@`
+	        		// `@` character
 	        		if (firstLetter === 64) {
-	        			// @keyframe, `k`
+	        			// @keyframe, `k` character
 	        			if (currentLine.charCodeAt(1) === 107) {
 	        				currentLine = currentLine.substr(1, 10) + id + currentLine.substr(11);
 	
@@ -2585,28 +2668,27 @@
 	        					var char = characters.next();
 	        					var charCode = char.charCodeAt(0);
 	        					
-	        					// \n
+	        					// `\n` character
 	        					if (charCode !== 10) {
 	        						currentLine += char;
 	
 	                                var timetravel = characters.look(2);
 	
-	        						// `}`, `}`
+	        						// `}`, `}` characters
 	        						if (charCode === 125 && timetravel && timetravel.charCodeAt(0) === 125) {
-	        							currentLine += '';
-	        							break;
+	        							currentLine += ''; break;
 	        						}
 	        					}
 	        				}
 	
-	        				// prefix, webkit is the only reasonable prefix to use here
+	        				// add prefix, webkit is the only reasonable prefix to use here
 	        				// -moz- has supported this since 2012 and -ms- was never a thing here
 	        				currentLine = '@-webkit-'+currentLine+'}@'+currentLine;
 	        			}
 	
-	                    // do nothing to @media
+	                    // do nothing to @media...
 	        		} else {
-	        			// animation: a, n, n
+	        			// animation: `a`, `n`, `n` characters
 	        			if (
 	        				firstLetter === 97 && 
 	        				currentLine.charCodeAt(1) === 110 && 
@@ -2622,16 +2704,18 @@
 	        					splitLine[0] + ':' + id + (splitLine[1].split(',')).join(','+id)
 	    					);
 	
+	                        // add prefix, same as before webkit is the only reasonable prefix
+	                        // for older andriod phones
 	        				currentLine = '-webkit-' + currentLine + currentLine;
 	        			} else if (
-	        				// t, r, :
+	        				// `t`, `r`, `:`, characters
 	        				(
 	        					firstLetter === 116 && 
 	        					currentLine.charCodeAt(1) === 114 && 
 	        					currentLine.charCodeAt(9) === 58
 	    					) 
 	        					||
-	        				// a, p, :
+	        				// `a`, `p`, `:`, characters
 	        				(
 	        					firstLetter === 97 && 
 	        					currentLine.charCodeAt(1) === 112 && 
@@ -2639,30 +2723,38 @@
 	    					)
 	    				) {
 	        				// transform/appearance
+	                        // the above if condition assumes the length and placement
+	                        // of the 3 characters listed to pass the condition
 	        				currentLine = '-webkit-' + currentLine + currentLine;
 	        			} else {
 	        				// selector declaration, if last char is `{`
+	                        // note: the format block made it so that this will always
+	                        // be the case for selector declarations
 	        				if (currentLine.charCodeAt(currentLine.length - 1) === 123) {
 	        					var splitLine         = currentLine.split(',');
 	        					var currentLineBuffer = '';
 	
+	                            // iterate through all the characters and build
+	                            // this allows us to prefix multiple selectors with namesapces
+	                            // i.e h1, h2, h3 --> [namespace] h1, ....
 	        					for (var i = 0, length = splitLine.length; i < length; i++) {
 	        						var selector = splitLine[i],
 	        							first    = selector.charCodeAt(0),
 	        							affix    = '';
 	
+	                                // if first selector
 	    							if (i === 0) {
-	    								// :, &
+	    								// `:`, `&`, characters
 	    								affix = (first === 58 || first === 38) ? prefix : prefix + ' ';
 	    							} else {
 	                                    affix = ',' + prefix;
 	                                }
 	
 	        						if (first === 123) {
-	        							// `{`
+	        							// `{`, character
 	        							currentLineBuffer += affix + selector;
 	        						} else if (first === 38) { 
-	        							// `&`
+	        							// `&` character
 	        							currentLineBuffer += affix + selector.substr(1);
 	        						} else {
 	        							currentLineBuffer += affix + selector;
@@ -2677,27 +2769,26 @@
 	        		css += currentLine;
 	        		currentLine = '';
 	        	} else {
-	                // `/`
+	                // `/` character
 	                if (characterCode === 47) {
 	                    var nextCharaterCode = characters.peek().charCodeAt(0);
 	
-	                    // `/`, `/`
+	                    // `/`, `/` characters
 	                    if (nextCharaterCode === 47) {
 	                        // till end of line comment 
 	                        characters.sleep('\n');
 	                    } else if (nextCharaterCode === 42) {
 	                        characters.next();
 	
-	                        // `/`, `*`
+	                        // `/`, `*` character
 	                        while (!characters.eof()) {
 	                            // till end of block comment
 	                            if (
-	                                // `*`, `/`
+	                                // `*`, `/` character
 	                                characters.next().charCodeAt(0)  === 42 && 
 	                                characters.peek().charCodeAt(0) === 47
 	                            ) {
-	                                characters.next();
-	                                break;
+	                                characters.next(); break;
 	                            }
 	                        }
 	                    } else {
@@ -2709,12 +2800,15 @@
 	        	}
 	        }
 	
-	        component.css        = css;
+	        // signifies that we are done parsing the components css
+	        // so we can avoid this whole step for any other instances
 	        component.stylesheet = 0;
-	        component.id         = id;
+	
+	        component.id = id;
+	        component.css = css;
 		} else {
 			// retrieve cache
-			id  = component.id;
+			id = component.id;
 			css = component.css;
 		}
 	
@@ -2732,7 +2826,7 @@
 	    		// avoid adding a style element when one is already present
 	    		if (document.querySelector('style#'+id) == null) {
 		    		var style = document.createElement('style');
-		    			
+		    		
 	                style.textContent = css;
 	    			style.id = id;
 	
@@ -3102,17 +3196,22 @@
 	/**
 	 * create stream, getter/setter
 	 * 
-	 * @param  {*}        value
-	 * @param  {function} middleware
+	 * @param  {*}                  value
+	 * @param  {(function|boolean)} middleware
 	 * @return {function}
 	 */
 	function stream (value, middleware) {
+		// this allows us to return values in a .then block that will
+		// get passed to the next .then block
 		var chain = { then: null, catch: null }; 
+		// .then/.catch listeners
 		var listeners = { then: [], catch: [] };
 	
 		var store;
 	
+		// predetermine if a middlware was passed
 		var hasMiddleware = !!middleware;
+		// predetermine if the middlware passed is a function
 		var middlewareFunc = hasMiddleware && typeof middleware === 'function';
 	
 		// constructor
@@ -3125,7 +3224,10 @@
 	
 			var output;
 	
-			// special store
+			// if you pass a middleware function i.e a = stream(1, String)
+			// the stream will return 1 processed through String
+			// if you pass a boolean an assumtion is made tha the store
+			// is a function and that it should return the functions return value
 			if (hasMiddleware) {
 				// if middleware function
 				output = middlewareFunc ? middleware(store) : store();
@@ -3138,25 +3240,23 @@
 	
 		// dispatcher, dispatches listerners
 		function dispatch (type, value) {
-			var collection = listeners[type]; 
+			var collection = listeners[type];
 			var length = collection.length;
 	
 			if (length !== 0) {
+				// executes a listener, adding the return value to the chain
+				function action (listener) {
+					// link in the .then / .catch chain
+					var link = listener(chain[type] || value);
+	
+					// add to chain if defined
+					if (link !== void 0) {
+						chain[type] = link;
+					}
+				}
+	
 				for (var i = 0; i < length; i++) {
-					var listener = collection[i];
-	
-					sandbox(
-						function () {
-							// link in the .then / .catch chain
-							var link = listener(chain[type] || value);
-	
-							// add to chain if defined
-							if (link !== undefined) {
-								chain[type] = link;
-							}
-						}, 
-						reject
-					)
+					sandbox(action, reject, collection[i]);
 				}
 			}
 		}
@@ -3177,7 +3277,7 @@
 				return listener(chain);
 			});
 	
-			return !end ? Stream : undefined;
+			return !end ? Stream : void 0;
 		};
 	
 		// add then listener
@@ -3207,7 +3307,6 @@
 		function end () {
 			chain.then = null; 
 			chain.catch = null;
-	
 			listeners.then = [];
 			listeners.catch = [];
 		}
@@ -3218,12 +3317,12 @@
 		}
 	
 		// ...JSON.strinfigy()
-		function toJSON () { 
+		function toJSON () {
 			return store;
 		}
 	
 		// {function}.valueOf()
-		function valueOf () { 
+		function valueOf () {
 			return store; 
 		}
 	
@@ -3240,7 +3339,7 @@
 		Stream._stream = true;
 	
 		// acts like a promise if function is passed as value
-		typeof value === 'function' ? value(resolve, reject, Stream) : Stream(value);
+		typeof value === 'function' ? value(resolve, reject) : Stream(value);
 	
 		return Stream;
 	}
@@ -3253,6 +3352,8 @@
 	 * @return {streams[]} deps
 	 */
 	stream.combine = function (reducer, deps) {
+		// if deps is not an array, we dependencies are arguments
+		// build deps array inline
 		if (typeof deps !== 'object') {
 			var args = [];
 	
@@ -3283,7 +3384,7 @@
 	/**
 	 * do something after all dependecies have resolved
 	 * 
-	 * @param  {any[]} deps
+	 * @param  {any[]}    deps
 	 * @return {function}
 	 */
 	stream.all = function (deps) {
@@ -3346,7 +3447,7 @@
 	/**
 	 * create new stream in resolved state
 	 * 
-	 * @param  {any} value
+	 * @param  {any}    value
 	 * @return {Stream}
 	 */
 	stream.resolve = function (value) {
@@ -3359,7 +3460,7 @@
 	/**
 	 * create new stream in rejected state
 	 * 
-	 * @param  {any} value 
+	 * @param  {any}    value 
 	 * @return {Stream}
 	 */
 	stream.reject = function (value) {
@@ -3401,7 +3502,7 @@
 			var arr = [];
 	
 			each(object, function (value, key) {
-				var prefixValue = prefix !== undefined ? prefix + '[' + key + ']' : key;
+				var prefixValue = prefix !== void 0 ? prefix + '[' + key + ']' : key;
 	
 				// when the value is equal to an object 
 				// we have somethinglike value = {name:'John', addr: {...}}
@@ -3470,7 +3571,7 @@
 			// return a a stream
 			return stream(function (resolve, reject, stream) {
 				// if XMLHttpRequest constructor absent, exit early
-				if (window.XMLHttpRequest === undefined) {
+				if (window.XMLHttpRequest === void 0) {
 					return;
 				}
 	
@@ -3523,18 +3624,18 @@
 				}
 	
 				// if, assign inital value of stream
-				if (initial !== undefined) {
+				if (initial !== void 0) {
 					resolve(initial);
 				}
 	
 				// if config, expose underlying XMLHttpRequest object
 				// allows us to save a reference to it and call abort when required
-				if (config !== undefined && typeof config !== 'function') {
+				if (config !== void 0 && typeof config !== 'function') {
 					config(xhr);
 				}
 	
 				// send request
-				payload !== undefined ? xhr.send(payload) : xhr.send();
+				payload !== void 0 ? xhr.send(payload) : xhr.send();
 			});
 		}
 	
@@ -3639,9 +3740,9 @@
 			address     = address.root;
 		}
 	
-		if (element !== undefined) {
+		if (element !== void 0) {
 			each(routes, function (component, uri) {
-				if (middleware !== undefined) {
+				if (middleware !== void 0) {
 					routes[uri] = function (data) {
 						middleware(component, data, element, uri);
 					}
@@ -3699,7 +3800,7 @@
 				// uri is the url/RegExp that describes the uri match thus
 				// given the following /:user/:id/*
 				// the pattern will be / ([^\/]+) / ([^\/]+) / (?:.*)
-				var pattern = uri.replace(regexp, function () {
+				var pattern = uri.replace(regex, function () {
 					// id => 'user', '>>>id<<<', undefned
 					var id = arguments[2];
 	
@@ -3774,7 +3875,7 @@
 	
 		var location = '';
 		var interval = 0;
-		var regexp   = /([:*])(\w+)|([\*])/g;
+		var regex    = /([:*])(\w+)|([\*])/g;
 		
 		var api = {
 			nav:    navigate,
@@ -3789,12 +3890,12 @@
 		register();
 	
 		// listens only while in the browser enviroment
-		if (document !== undefined) {
+		if (document !== void 0) {
 			listen();
 		}
 	
 		// initialiser, if function pass api as args, else string, navigate to uri
-		if (initialiser !== undefined) {
+		if (initialiser !== void 0) {
 			var type = typeof initialiser;
 	
 			if (type === 'function') {
@@ -3823,7 +3924,7 @@
 	 * creates a store enhancer
 	 *
 	 * @param   {...function} middlewares
-	 * @return  {function} - a store enhancer
+	 * @return  {function}    a store enhancer
 	 */
 	function applyMiddleware () {
 		var middlewares = [];
@@ -3868,7 +3969,7 @@
 	/**
 	 * combines a set of reducers
 	 * 
-	 * @param  {Object} reducers
+	 * @param  {Object}  reducers
 	 * @return {function}
 	 */
 	function combineReducers (reducers) {
@@ -3910,7 +4011,7 @@
 	
 		// dispatchs a action
 		function dispatch (action) {
-			if (action.type === undefined) {
+			if (action.type === void 0) {
 				throw 'actions without type';
 			}
 	
@@ -4008,13 +4109,13 @@
 	
 		// if initialState is a function and enhancer is undefined
 		// we assume that initialState is an enhancer
-		if (typeof initialState === 'function' && enhancer === undefined) {
+		if (typeof initialState === 'function' && enhancer === void 0) {
 			enhancer = initialState;
-			initialState = undefined;
+			initialState = void 0;
 		}
 	
 		// delegate to enhancer if defined
-		if (enhancer !== undefined) {
+		if (enhancer !== void 0) {
 			// exit early, enhancer is not a function
 			if (typeof enhancer !== 'function') {
 				throw 'enhancer should be a function';
@@ -4051,7 +4152,7 @@
 		 * @return {boolean}
 		 */
 		function hasClass (element, className) {
-			return element.classList !== undefined ? 
+			return element.classList !== void 0 ? 
 				element.classList.contains(className) : 
 				element.className.indexOf(className) > -1;
 		}
@@ -4064,7 +4165,7 @@
 		 * @param {string} className
 		 */
 		function addClass (element, className) {
-			if (element.classList !== undefined) {
+			if (element.classList !== void 0) {
 				element.classList.add(className);
 			} else if (hasClass(element, className) === true) {
 				var classes = element.className.split(' ');
@@ -4082,7 +4183,7 @@
 		 * @param {string}
 		 */
 		function removeClass (element, className) {
-			if (element.classList !== undefined) {
+			if (element.classList !== void 0) {
 				element.classList.remove(className);
 			} else {
 				var classes = element.className.split(' ');
@@ -4100,7 +4201,7 @@
 		 * @param {string} className - classname to toggle
 		 */
 		function toggleClass (element, className) {
-			if (element.classList !== undefined) {
+			if (element.classList !== void 0) {
 				element.classList.toggle(className);
 			} else {
 				hasClass(element, className) === true ? 
@@ -4119,7 +4220,7 @@
 		 */
 		function prefix (style, prop, value) {
 			// if !un-prefixed support
-			if (style !== undefined && style[prop] === undefined) {
+			if (style !== void 0 && style[prop] === void 0) {
 				// chrome, safari, mozila, ie
 				var vendors = ['webkit','Webkit','Moz','ms'];
 	
@@ -4130,7 +4231,7 @@
 					);
 	
 					// add prop if vendor prop exists
-					if (style[prefixed] !== undefined) {
+					if (style[prefixed] !== void 0) {
 						style[prefixed] = value;
 					}
 				}
@@ -4159,12 +4260,12 @@
 				// get element if selector
 				if (typeof element === 'string') {
 					element = document.querySelector(element);
-				} else if (this.nodeType !== undefined) {
+				} else if (this.nodeType !== void 0) {
 					element = this;
 				}
 	
 				// check if element exists
-				if (element === undefined || element.nodeType === undefined) {
+				if (element === void 0 || element.nodeType === void 0) {
 					panic('element not found');
 				}
 	
@@ -4178,7 +4279,7 @@
 					transEvtEnd  = 'transitionend';
 	
 				// feature detection
-				if (element.animate !== undefined && typeof element.animate === 'function') {
+				if (element.animate !== void 0 && typeof element.animate === 'function') {
 					webAnimations = 1;
 				}
 	
@@ -4212,7 +4313,7 @@
 				transform[1] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
 	
 				// assign transform origin if set
-				if (transformOrigin !== undefined) {
+				if (transformOrigin !== void 0) {
 					prefix(style, 'transformOrigin', transformOrigin);
 				}
 	
@@ -4273,7 +4374,7 @@
 					removeClass(body, runningClass);
 	
 					// callback
-					if (callback !== undefined && typeof callback === 'function') {
+					if (callback !== void 0 && typeof callback === 'function') {
 						callback(element);
 					}
 				}
@@ -4292,7 +4393,7 @@
 		function css (type) {			
 			return function keyframe (className, operation) {
 				// default to addition
-				if (operation === undefined) {
+				if (operation === void 0) {
 					operation = 1;
 				}
 	
@@ -4300,7 +4401,7 @@
 	
 				return function (element, callback) {
 					// exit early in the absence of an element
-					if (element == null || element.nodeType === undefined) {
+					if (element == null || element.nodeType === void 0) {
 						callback(element, keyframe);
 						return;
 					}
@@ -4311,7 +4412,7 @@
 						reducer(element, className);
 	
 						// exit early no callback,
-						if (callback === undefined) {
+						if (callback === void 0) {
 							return;
 						}
 	
@@ -4319,7 +4420,7 @@
 							transition = getComputedStyle(element)[type + 'Duration'];
 	
 						// if !(duration property)
-						if (transition === undefined) {
+						if (transition === void 0) {
 							callback(element, keyframe);
 							return;
 						}

@@ -21,7 +21,7 @@ function animate () {
 	 * @return {boolean}
 	 */
 	function hasClass (element, className) {
-		return element.classList !== undefined ? 
+		return element.classList !== void 0 ? 
 			element.classList.contains(className) : 
 			element.className.indexOf(className) > -1;
 	}
@@ -34,7 +34,7 @@ function animate () {
 	 * @param {string} className
 	 */
 	function addClass (element, className) {
-		if (element.classList !== undefined) {
+		if (element.classList !== void 0) {
 			element.classList.add(className);
 		} else if (hasClass(element, className) === true) {
 			var classes = element.className.split(' ');
@@ -52,7 +52,7 @@ function animate () {
 	 * @param {string}
 	 */
 	function removeClass (element, className) {
-		if (element.classList !== undefined) {
+		if (element.classList !== void 0) {
 			element.classList.remove(className);
 		} else {
 			var classes = element.className.split(' ');
@@ -70,7 +70,7 @@ function animate () {
 	 * @param {string} className - classname to toggle
 	 */
 	function toggleClass (element, className) {
-		if (element.classList !== undefined) {
+		if (element.classList !== void 0) {
 			element.classList.toggle(className);
 		} else {
 			hasClass(element, className) === true ? 
@@ -89,7 +89,7 @@ function animate () {
 	 */
 	function prefix (style, prop, value) {
 		// if !un-prefixed support
-		if (style !== undefined && style[prop] === undefined) {
+		if (style !== void 0 && style[prop] === void 0) {
 			// chrome, safari, mozila, ie
 			var vendors = ['webkit','Webkit','Moz','ms'];
 
@@ -100,7 +100,7 @@ function animate () {
 				);
 
 				// add prop if vendor prop exists
-				if (style[prefixed] !== undefined) {
+				if (style[prefixed] !== void 0) {
 					style[prefixed] = value;
 				}
 			}
@@ -129,12 +129,12 @@ function animate () {
 			// get element if selector
 			if (typeof element === 'string') {
 				element = document.querySelector(element);
-			} else if (this.nodeType !== undefined) {
+			} else if (this.nodeType !== void 0) {
 				element = this;
 			}
 
 			// check if element exists
-			if (element === undefined || element.nodeType === undefined) {
+			if (element === void 0 || element.nodeType === void 0) {
 				panic('element not found');
 			}
 
@@ -148,7 +148,7 @@ function animate () {
 				transEvtEnd  = 'transitionend';
 
 			// feature detection
-			if (element.animate !== undefined && typeof element.animate === 'function') {
+			if (element.animate !== void 0 && typeof element.animate === 'function') {
 				webAnimations = 1;
 			}
 
@@ -182,7 +182,7 @@ function animate () {
 			transform[1] = 'translate(0,0) translateZ(0) scale(1,1) rotate(0) skew(0)';
 
 			// assign transform origin if set
-			if (transformOrigin !== undefined) {
+			if (transformOrigin !== void 0) {
 				prefix(style, 'transformOrigin', transformOrigin);
 			}
 
@@ -243,7 +243,7 @@ function animate () {
 				removeClass(body, runningClass);
 
 				// callback
-				if (callback !== undefined && typeof callback === 'function') {
+				if (callback !== void 0 && typeof callback === 'function') {
 					callback(element);
 				}
 			}
@@ -262,7 +262,7 @@ function animate () {
 	function css (type) {			
 		return function keyframe (className, operation) {
 			// default to addition
-			if (operation === undefined) {
+			if (operation === void 0) {
 				operation = 1;
 			}
 
@@ -270,7 +270,7 @@ function animate () {
 
 			return function (element, callback) {
 				// exit early in the absence of an element
-				if (element == null || element.nodeType === undefined) {
+				if (element == null || element.nodeType === void 0) {
 					callback(element, keyframe);
 					return;
 				}
@@ -281,7 +281,7 @@ function animate () {
 					reducer(element, className);
 
 					// exit early no callback,
-					if (callback === undefined) {
+					if (callback === void 0) {
 						return;
 					}
 
@@ -289,7 +289,7 @@ function animate () {
 						transition = getComputedStyle(element)[type + 'Duration'];
 
 					// if !(duration property)
-					if (transition === undefined) {
+					if (transition === void 0) {
 						callback(element, keyframe);
 						return;
 					}

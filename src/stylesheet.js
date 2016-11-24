@@ -72,9 +72,9 @@ function stylesheet (element, component) {
         	if (characterCode === 10) {
         		var firstLetter = currentLine.charCodeAt(0);
 
-        		// `@`
+        		// `@` character
         		if (firstLetter === 64) {
-        			// @keyframe, `k`
+        			// @keyframe, `k` character
         			if (currentLine.charCodeAt(1) === 107) {
         				currentLine = currentLine.substr(1, 10) + id + currentLine.substr(11);
 
@@ -83,28 +83,27 @@ function stylesheet (element, component) {
         					var char = characters.next();
         					var charCode = char.charCodeAt(0);
         					
-        					// \n
+        					// `\n` character
         					if (charCode !== 10) {
         						currentLine += char;
 
                                 var timetravel = characters.look(2);
 
-        						// `}`, `}`
+        						// `}`, `}` characters
         						if (charCode === 125 && timetravel && timetravel.charCodeAt(0) === 125) {
-        							currentLine += '';
-        							break;
+        							currentLine += ''; break;
         						}
         					}
         				}
 
-        				// prefix, webkit is the only reasonable prefix to use here
+        				// add prefix, webkit is the only reasonable prefix to use here
         				// -moz- has supported this since 2012 and -ms- was never a thing here
         				currentLine = '@-webkit-'+currentLine+'}@'+currentLine;
         			}
 
-                    // do nothing to @media
+                    // do nothing to @media...
         		} else {
-        			// animation: a, n, n
+        			// animation: `a`, `n`, `n` characters
         			if (
         				firstLetter === 97 && 
         				currentLine.charCodeAt(1) === 110 && 
@@ -120,16 +119,18 @@ function stylesheet (element, component) {
         					splitLine[0] + ':' + id + (splitLine[1].split(',')).join(','+id)
     					);
 
+                        // add prefix, same as before webkit is the only reasonable prefix
+                        // for older andriod phones
         				currentLine = '-webkit-' + currentLine + currentLine;
         			} else if (
-        				// t, r, :
+        				// `t`, `r`, `:`, characters
         				(
         					firstLetter === 116 && 
         					currentLine.charCodeAt(1) === 114 && 
         					currentLine.charCodeAt(9) === 58
     					) 
         					||
-        				// a, p, :
+        				// `a`, `p`, `:`, characters
         				(
         					firstLetter === 97 && 
         					currentLine.charCodeAt(1) === 112 && 
@@ -137,30 +138,38 @@ function stylesheet (element, component) {
     					)
     				) {
         				// transform/appearance
+                        // the above if condition assumes the length and placement
+                        // of the 3 characters listed to pass the condition
         				currentLine = '-webkit-' + currentLine + currentLine;
         			} else {
         				// selector declaration, if last char is `{`
+                        // note: the format block made it so that this will always
+                        // be the case for selector declarations
         				if (currentLine.charCodeAt(currentLine.length - 1) === 123) {
         					var splitLine         = currentLine.split(',');
         					var currentLineBuffer = '';
 
+                            // iterate through all the characters and build
+                            // this allows us to prefix multiple selectors with namesapces
+                            // i.e h1, h2, h3 --> [namespace] h1, ....
         					for (var i = 0, length = splitLine.length; i < length; i++) {
         						var selector = splitLine[i],
         							first    = selector.charCodeAt(0),
         							affix    = '';
 
+                                // if first selector
     							if (i === 0) {
-    								// :, &
+    								// `:`, `&`, characters
     								affix = (first === 58 || first === 38) ? prefix : prefix + ' ';
     							} else {
                                     affix = ',' + prefix;
                                 }
 
         						if (first === 123) {
-        							// `{`
+        							// `{`, character
         							currentLineBuffer += affix + selector;
         						} else if (first === 38) { 
-        							// `&`
+        							// `&` character
         							currentLineBuffer += affix + selector.substr(1);
         						} else {
         							currentLineBuffer += affix + selector;
@@ -175,27 +184,26 @@ function stylesheet (element, component) {
         		css += currentLine;
         		currentLine = '';
         	} else {
-                // `/`
+                // `/` character
                 if (characterCode === 47) {
                     var nextCharaterCode = characters.peek().charCodeAt(0);
 
-                    // `/`, `/`
+                    // `/`, `/` characters
                     if (nextCharaterCode === 47) {
                         // till end of line comment 
                         characters.sleep('\n');
                     } else if (nextCharaterCode === 42) {
                         characters.next();
 
-                        // `/`, `*`
+                        // `/`, `*` character
                         while (!characters.eof()) {
                             // till end of block comment
                             if (
-                                // `*`, `/`
+                                // `*`, `/` character
                                 characters.next().charCodeAt(0)  === 42 && 
                                 characters.peek().charCodeAt(0) === 47
                             ) {
-                                characters.next();
-                                break;
+                                characters.next(); break;
                             }
                         }
                     } else {
@@ -207,12 +215,15 @@ function stylesheet (element, component) {
         	}
         }
 
-        component.css        = css;
+        // signifies that we are done parsing the components css
+        // so we can avoid this whole step for any other instances
         component.stylesheet = 0;
-        component.id         = id;
+
+        component.id = id;
+        component.css = css;
 	} else {
 		// retrieve cache
-		id  = component.id;
+		id = component.id;
 		css = component.css;
 	}
 
@@ -230,7 +241,7 @@ function stylesheet (element, component) {
     		// avoid adding a style element when one is already present
     		if (document.querySelector('style#'+id) == null) {
 	    		var style = document.createElement('style');
-	    			
+	    		
                 style.textContent = css;
     			style.id = id;
 

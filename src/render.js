@@ -20,16 +20,18 @@ function render (subject, target, callback) {
 			if (initial === 1) {
 				// dispatch mount
 				mount(element, node);
-				// register mount dispatched
+
+				// register mount has been dispatched
 				initial = 0;
+
 				// assign component
 				if (component == null) { 
 					component = node._owner;
 				}
 			} else {
 				// update props
-				if (props !== undefined) {
-					if (component.shouldComponentUpdate !== undefined && 
+				if (props !== void 0) {
+					if (component.shouldComponentUpdate !== void 0 && 
 						component.shouldComponentUpdate(props, component.state) === false) {
 						return reconciler;
 					}
@@ -47,10 +49,10 @@ function render (subject, target, callback) {
    	var component;
    	var node;
 
-   	if (subject.render !== undefined) {
+   	if (subject.render !== void 0) {
    		// create component from object
    		node = VComponent(createClass(subject));
-   	} else if (subject.type === undefined) {
+   	} else if (subject.type === void 0) {
    		// normalization
    		if (subject.constructor === Array) {
 			// fragment array
@@ -62,13 +64,8 @@ function render (subject, target, callback) {
    		node = subject;
    	}
 
-   	// normalize props
-   	if (node.props == null || typeof node.props !== 'object') {
-   		node.props = {};
-   	}
-
    	// server-side
-   	if (document === undefined) {
+   	if (document === void 0) {
    		return renderToString(node);
    	}
 
@@ -82,13 +79,15 @@ function render (subject, target, callback) {
    	if (element.hasAttribute('hydrate')) {
    		// dispatch hydration
    		hydrate(element, node, 0, vempty);
+
    		// cleanup element hydrate attributes
    		element.removeAttribute('hydrate');
-   		// register mount dispatched
+
+   		// register mount has been dispatched
    		initial = 0;
 
    		// assign component
-   		if (component == null) { 
+   		if (component == null) {
    			component = node._owner; 
    		}
    	} else {
@@ -126,7 +125,7 @@ function mount (element, newNode) {
  */
 function retrieveMount (subject) {
 	// document not available
-	if (document == null || (subject != null && subject.nodeType != null)) {
+	if (subject != null && subject.nodeType != null) {
 		return subject;
 	}
 
@@ -163,10 +162,10 @@ function extractVNode (subject) {
 	var candidate;
 	var type = subject.type;
 
-	if (type._component !== undefined) {
+	if (type._component !== void 0) {
 		// cache
 		candidate = type._component;
-	} else if (type.constructor === Function && type.prototype.render === undefined) {
+	} else if (type.constructor === Function && type.prototype.render === void 0) {
 		// function components
 		candidate = type._component = createClass(type);
 	} else {
@@ -185,21 +184,27 @@ function extractVNode (subject) {
 	var vnode = retrieveRender(component);
 
 	// if keyed, assign key to vnode
-	if (subject.props.key !== undefined && vnode.props.key === undefined) {
+	if (subject.props.key !== void 0 && vnode.props.key === void 0) {
 		vnode.props.key = subject.props.key;
 	}
 
+	// if render returns a component
+	if (vnode.nodeType === 2) {
+		vnode = extractVNode(vnode);
+	}
 
 	// assign component node
 	component._vnode = VNode(
-		(vnode.nodeType === 2 ? (vnode = extractVNode(vnode)).nodeType : vnode.nodeType),
-		(vnode.type),
-		(subject.props = vnode.props), 
-		(subject.children = vnode.children)
+		vnode.nodeType,
+		vnode.type,
+		subject.props = vnode.props, 
+		subject.children = vnode.children,
+		null,
+		null
 	);
 
-	if (type.stylesheet === undefined) {
-		type.stylesheet = component.stylesheet !== undefined ? component.stylesheet : null;
+	if (type.stylesheet === void 0) {
+		type.stylesheet = component.stylesheet !== void 0 ? component.stylesheet : null;
 	}
 
 	return vnode;
@@ -217,7 +222,7 @@ function retrieveRender (component) {
 	var vnode = component.render(component.props, component.state, component);
 
 	// if vnode, else fragment
-	return vnode.nodeType !== undefined ? vnode : VFragment(vnode);
+	return vnode.nodeType !== void 0 ? vnode : VFragment(vnode);
 }
 
 
@@ -371,7 +376,7 @@ function patch (newNode, oldNode) {
 								}
 
 								// opt: if found newChild in oldChildren, only move element
-								if (fromIndex !== undefined) {
+								if (fromIndex !== void 0) {
 									// reference element from oldChildren that matches newChild key
 									var element = oldChildren[fromIndex];
 
@@ -562,7 +567,7 @@ function diffOldProps (newProps, oldName, namespace, propsDiff) {
  * @return {boolean}
  */
 function isEventName (name) {
-	return name[0] === 'o' && name[1] === 'n' && name.length > 3;
+	return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 3;
 }
 
 
@@ -587,7 +592,7 @@ function extractEventName (name) {
 function assignRefs (element, ref, component) {
 	// hoist typeof info
 	var type = typeof ref;
-	var refs = component.refs == null ? component.refs = {} : component.refs;
+	var refs = component.refs === null ? component.refs = {} : component.refs;
 
 	if (type === 'string') {
 		// string ref, assign
@@ -724,34 +729,28 @@ function createNode (subject, component, namespace) {
 		var element;
 		var props;
 
-		// clone, blueprint node/hoisted vnode
 		if (subject._node) {
+			// clone, blueprint node/hoisted vnode
 			props = subject.props;
 			element = subject._node;
-		}
-		// create
-		else {
+		} else {
+			// create
 			var newNode  = nodeType === 2 ? extractVNode(subject) : subject;
 			var type     = newNode.type;
 			var children = newNode.children;
 			var length   = children.length;
 
-				props = newNode.props;
-
-			// vnode has component attachment
-			if (subject._owner != null) { 
-				component = subject._owner; 
-			}
+			props = newNode.props;
 
 			// assign namespace
-			if (props.xmlns != null) { 
+			if (props.xmlns !== void 0) { 
 				namespace = props.xmlns; 
 			}
 
 			// if namespaced, create namespaced element
 			if (namespace != null) {
 				// if undefined, assign svg namespace
-				if (props.xmlns == null) {
+				if (props.xmlns === void 0) {
 					props.xmlns = namespace;
 				}
 
@@ -769,12 +768,17 @@ function createNode (subject, component, namespace) {
 				assignProps(element, props, 0);
 			}
 
+			// vnode has component attachment
+			if (subject._owner != null) {
+				(component = subject._owner)._vnode._node = element;
+			}
+
 			if (length !== 0) {				
 				// create children
 				for (var i = 0; i < length; i++) {
 					var newChild = children[i];
 
-					// clone vnode of hoisted/blueprint node
+					// clone vnode of hoisted/pre-rendered node
 					if (newChild._node) {
 						newChild = children[i] = VNode(
 							newChild.nodeType,
@@ -788,10 +792,10 @@ function createNode (subject, component, namespace) {
 
 					// append child
 					appendNode(newChild, element, createNode(newChild, component, namespace));
-
+					
 					// we pass namespace and component so that 
-					// 1. when the element is an svg element all child elements are svg namespaces and 
-					// 2. so that refs nested in childNodes can propagate to the parent component
+					// 1. if element is svg element we can namespace all its children
+					// 2. if nested refs we can propagate them to a parent component
 				}
 			}
 
@@ -799,17 +803,17 @@ function createNode (subject, component, namespace) {
 		}
 
 		// refs
-		if (props.ref != null && component != null) {
+		if (props.ref !== void 0 && component !== void 0) {
 			assignRefs(element, props.ref, component);
 		}
 
 		// check if a stylesheet is attached
-		// note: since we mutate the .stylesheet property to 0 in stylesheet
-		// this will execute exactly once at any given runtime lifecycle
 		if (subject.type.stylesheet != null) {
 			if (subject.type.stylesheet === 0) {
 				element.setAttribute(nsstyle, subject.type.id);
 			} else {
+				// note: since we mutate the .stylesheet property to 0 in stylesheet
+				// this will execute exactly once at any given runtime lifecycle
 				stylesheet(element, subject.type);
 			}
 		}
@@ -886,7 +890,7 @@ function updateProp (target, action, name, propValue, namespace) {
 
 	// if xlink:href set, exit, 
 	if (name === 'xlink:href') {
-		return (target[action + 'NS'](nsxlink, 'href', propValue), undefined);
+		return (target[action + 'NS'](nsxlink, 'href', propValue), void 0);
 	}
 
 	var isSVG = 0;
@@ -906,9 +910,9 @@ function updateProp (target, action, name, propValue, namespace) {
 
 	// objects, adds property if undefined, else, updates each memeber of attribute object
 	if (isDefinedValue === 1 && typeof propValue === 'object') {
-		targetProp === undefined ? target[propName] = propValue : updatePropObject(propValue, targetProp);
+		targetProp === void 0 ? target[propName] = propValue : updatePropObject(propValue, targetProp);
 	} else {
-		if (targetProp !== undefined && isSVG === 0) {
+		if (targetProp !== void 0 && isSVG === 0) {
 			target[propName] = propValue;
 		} else {
 			// remove attributes with false/null/undefined values
@@ -931,7 +935,7 @@ function updateProp (target, action, name, propValue, namespace) {
  * update prop objects, i.e .style
  * 
  * @param  {Object} value
- * @param  {*} targetAttr
+ * @param  {*}      targetAttr
  */
 function updatePropObject (value, targetAttr) {
 	for (var propName in value) {

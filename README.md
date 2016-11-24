@@ -33,15 +33,15 @@ Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.1.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.2.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/3.1.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/3.2.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@3.1.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@3.2.0/dio.min.js></script>
 ```
 
 #### bower
@@ -497,7 +497,7 @@ for example
 
 Like the name suggests this methods outputs the html 
 of a specific component this is normally used for server side rendering.
-When used as a server-side tool adding the attribute `hydrate` 
+When used as a server-side tool adding the attribute `data-hydrate` 
 will tell dio to hydrate the present structure.
 
 ```javascript
@@ -513,7 +513,6 @@ dio.renderToString(
 
 
 // simple use
-
 dio.renderToString(h('div', 'Text'));
 // or
 dio.renderToString(Component);
@@ -522,10 +521,9 @@ dio.renderToString(Component);
 // renderToString's output so you may not need to use renderToString
 // explicitly if you are calling .render
 
-// performance 280ms (dio.js) vs 2,683ms (react)
+// performance comparison 280ms (dio.js) vs 2,683ms (react)
 
 // advanced server-side use
-
 const http = require('http');
 const dio  = require('./dio.js');
 
@@ -557,9 +555,8 @@ const body = renderToString([Heading, Button], `
 	<html>
 		<head>
 			<title>Example</title>
-			{{style}}
 		</head>
-		<body hydrate>
+		<body data-hydrate>
 			{{body}}
 		</body>
 	</html>		
@@ -573,7 +570,7 @@ const body = renderToString([Heading, Button], function (body, style) {
 				<title>Example</title>
 				${style}
 			</head>
-			<body hydrate>
+			<body data-hydrate>
 				${body}
 			</body>
 		</html>		
@@ -592,16 +589,45 @@ http.createServer(function(request, response) {
 	<html>
 		<head>
 			<title>Example</title>
-			<style id="ButtontJroa">[data-scope=ButtontJroa] {color:black;border:1px solid red;padding:10px;}</style>
 		</head>
-		<body hydrate>
+		<body data-hydrate>
 			<h1>Hello World</h1><button data-scope="ButtontJroa">Click Me</button>
+			<style id="ButtontJroa">[data-scope=ButtontJroa] {color:black;border:1px solid red;padding:10px;}</style>
 		</body>
 	</html>		
 `
 
-// where `ButtontJroa` is the generated scope name of the that components namespace
+// where `ButtontJroa` is the generated scope name of that components namespace
 // that every instance of the component will inherit styles from
+// note that style are only generated if there are components that use the stylesheet method
+```
+
+## dio.renderToStream
+
+This method is identical to renderToString with the exception 
+of its async nature and does not support template functions
+
+```javascript
+dio.renderToStream(
+	subject: {(function|Object|VNode[])}, 
+	template: {string}
+)
+
+// there are 2 ways to use this function
+http.createServer(function(request, response) { 
+	// 1.
+	var hoisted = dio.renderToStream();
+	var stream = new hoisted(Component);
+	// or
+	var stream = new hoisted(Component, `<body>{{body}}</body>`);
+
+	stream.pipe(response);
+}).listen(3000, '127.0.0.1');
+
+// 2.
+http.createServer(function(request, response) { 
+	renderToStream(Component).pipe(response);
+}).listen(3000, '127.0.0.1');
 ```
 
 ---
@@ -1181,27 +1207,47 @@ dio.window = {Object}
 
 ```javascript
 {
-	// throw an error
-	panic
-	// sandbox a try catch statement
-	sandbox
-	// compose functions
-	compose
-	// generate a random string
-	random
-	// flatten array
-	flatten
-	// create input stream (used to create the stylsheet parse)
-	input        
+	// escape special html characters
+	escape: (string: {string}) => {string}
 
-	// type checking utilities
-	isObject 
-	isFunction
-	isString
-	isArray
-	isDefined
-	isNumber
-	isArrayLike
+	// throw an error
+	panic: (message: {(string|Error)}, silent: {boolean}) => {(Error|undefined)}
+
+	// sandbox a try catch statement
+	sandbox: (func: {function}, onerror: {function=}, value: {any=}) => {any}
+
+	// compose functions
+	compose: (...funcs: {...function}) => {function}
+
+	// generate a random string
+	random: (length: {number}) => {string}
+
+	// flatten array
+	flatten: (array: {any[]}) => {any[]}
+
+	// create input stream (used to create the stylsheet parse)
+	input: (string: {string}) => {}
+
+	// is subject an object
+	isObject: (subject: {any=}) => {boolean}
+
+	// is subject an object
+	isFunction: (subject: {any=}) => {boolean}
+
+	// is subject a string
+	isString: (subject: {any=}) => {boolean}
+
+	// is subject an array
+	isArray: (subject: {any=}) => {boolean}
+
+	// is subject defined not null/undefined
+	isDefined: (subject: {any=}) => {boolean}
+
+	// is subject a number
+	isNumber: (subject: {any=}) => {boolean}
+	
+	// is subject a array like
+	isArrayLike: (subject: {any=}) => {boolean}
 }
 ```
 
@@ -1244,5 +1290,8 @@ dio.VText('Content')
 // internally it creates the elements are attaches them to as the `_el` key
 // when dio creates elements it always looks to see if a _el is already assign
 // in which case it executes a cloneNode instead of createElement action for the respective node
+dio.VBlueprint(vnode);
+
+// if executed server side this creates a static html cache of the component/element
 dio.VBlueprint(vnode);
 ```

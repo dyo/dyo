@@ -10,7 +10,8 @@
 /**
  * virtual fragment node factory
  * 
- * @param {any[]} children
+ * @param  {VNode[]} children
+ * @return {VNode}
  */
 function VFragment (children) {
 	return {
@@ -27,7 +28,8 @@ function VFragment (children) {
 /**
  * virtual text node factory
  * 
- * @param {string=} text
+ * @param  {string} text
+ * @return {VNode}
  */
 function VText (text) {
 	return {
@@ -44,9 +46,10 @@ function VText (text) {
 /**
  * virtual element node factory
  * 
- * @param {string} type
- * @param {Object=} props
- * @param {any[]=}  children
+ * @param  {string} type
+ * @param  {Object=} props
+ * @param  {any[]=}  children
+ * @return {VNode}
  */
 function VElement (type, props, children) {
 	return {
@@ -63,9 +66,10 @@ function VElement (type, props, children) {
 /**
  * virtual svg node factory
  * 
- * @param {string} type
- * @param {Object=} props
- * @param {any[]=} children
+ * @param  {string}  type
+ * @param  {Object=} props
+ * @param  {any[]=}  children
+ * @return {VNode}
  */
 function VSvg (type, props, children) {
 	return {
@@ -82,9 +86,10 @@ function VSvg (type, props, children) {
 /**
  * virtual component node factory
  * 
- * @param {function} type
- * @param {Object=}  props
- * @param {any[]=}   children
+ * @param  {function} type
+ * @param  {Object=}  props
+ * @param  {any[]=}   children
+ * @return {VNode}
  */
 function VComponent (type, props, children) {
 	return {
@@ -101,12 +106,12 @@ function VComponent (type, props, children) {
 /**
  * internal virtual node factory
  * 
- * @param {number} nodeType
+ * @param {number}            nodeType
  * @param {(function|string)} type
- * @param {Object} props
- * @param {VNode[]} children
- * @param {(Node|null)} _node
- * @param {(Node|null)} _owner 
+ * @param {Object}            props
+ * @param {VNode[]}           children
+ * @param {(Node|null)}       _node
+ * @param {Component}         _owner
  */
 function VNode (nodeType, type, props, children, _node, _owner) {
 	return {
@@ -129,14 +134,17 @@ function VNode (nodeType, type, props, children, _node, _owner) {
 function VBlueprint (subject) {
 	if (subject != null) {
 		// if array run all VNodes through VBlueprint
-		if (!subject.nodeType) {
+		if (subject.constructor === Array) {
 			for (var i = 0, length = subject.length; i < length; i++) {
 				VBlueprint(subject[i]);
 			}
 		} else {
 			// if a blueprint not already constructed
 			if (subject._node == null) {
-				document ? subject._node = createNode(subject) : extractVNode(subject);
+				if (document !== void 0) {
+					// browser, cache blueprint node
+					subject._node = createNode(subject.nodeType ? subject : VComponent(subject));
+				}
 			}
 		}
 	}
@@ -150,7 +158,7 @@ function VBlueprint (subject) {
  * 
  * @param  {(string|function|Object)} type
  * @param  {Object=}                  props
- * @param  {...*=}                    children - everything after props
+ * @param  {...*=}                    children
  * @return {Object}
  */
 function createElement (type, props) {
@@ -159,7 +167,7 @@ function createElement (type, props) {
 	var position = 2;
 
 	// if props is not a normal object
-	if (props == null || props.nodeType !== undefined || props.constructor !== Object) {
+	if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
 		// update position if props !== undefined|null
 		// this assumes that it would look like
 		// createElement('type', null, ...children);
@@ -195,11 +203,11 @@ function createElement (type, props) {
 		}
 	}
 
-	// if type is a function, create component
+	// if type is a function, create component VNode
 	if (typeof type === 'function') {
 		return VComponent(type, props, children);
 	} else {
-		// if first letter = @, create fragment, else create element
+		// if first letter = @, create fragment VNode, else create element VNode
 		var element = type[0] === '@' ? VFragment(children) : VElement(type, props, children);
 
 		// special type, i.e [type] | div.class | #id
@@ -207,8 +215,9 @@ function createElement (type, props) {
 			parseVNodeType(type, props || {}, element);
 		}
 
-		// if !props.xmlns && type === svg|math assign svg && math props.xmlns
-		if (element.props.xmlns === undefined) {	
+		// if props.xmlns is undefined  and type === svg|math 
+		// assign svg && math namespaces to props.xmlns
+		if (element.props.xmlns === void 0) {	
 			if (type === 'svg') { 
 				element.props.xmlns = nssvg; 
 			} else if (type === 'math') { 
@@ -230,7 +239,7 @@ function createElement (type, props) {
 function assignElement (element, children) {
 	var childNode;
 
-	if (element != null && element.nodeType !== undefined) {
+	if (element != null && element.nodeType !== void 0) {
 		// default element
 		childNode = element;
 	} else if (typeof element === 'function') {
@@ -250,7 +259,9 @@ function assignElement (element, children) {
  * special virtual element types
  *
  * @example h('inpu#id[type=radio]') <-- yields --> h('input', {id: 'id', type: 'radio'})
- * 
+ *
+ * @param  {Object} type
+ * @param  {Object} props
  * @param  {Object} element
  * @return {Object} element
  */
@@ -262,7 +273,7 @@ function parseVNodeType (type, props, element) {
 	// default type
 	element.type = 'div';
 
-	// if undefined, create RegExp
+	// if undefined, create and cache RegExp
 	if (!parseVNodeType.regex) {
 		regex = parseVNodeType.regex = new RegExp(
 			'(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|\'|)((?:\\\\[\"\'\\]]|.)*?)\\5)?\\])','g'
@@ -328,7 +339,7 @@ function cloneElement (subject, newProps, newChildren) {
 
 	// copy props
 	each(subject.props, function (value, name) {
-		if (newProps[name] === undefined) {
+		if (newProps[name] === void 0) {
 			newProps[name] = value;
 		}
 	});
@@ -354,9 +365,10 @@ function cloneElement (subject, newProps, newChildren) {
 
 /**
  * DOM factory
+ * 
+ * create references to common dom elements
  *
  * @param {any[]=} types
- * create references to common dom elements
  */
 function DOM (types) {
 	// default to preset types if non passed
@@ -413,7 +425,7 @@ function isValidElement (subject) {
 /**
  * create element factory
  * 
- * @param  {string} element
+ * @param  {string}  element
  * @return {function}
  */
 function createFactory (type, props) {

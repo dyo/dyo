@@ -45,7 +45,7 @@ function hydrate (element, newNode, index, parentNode) {
 		assignProps(newElement, currentNode.props, 1);
 
 		// assign refs
-		if (currentNode.props.ref !== undefined && currentNode._owner !== undefined) {
+		if (currentNode.props.ref !== void 0 && currentNode._owner !== void 0) {
 			assignRefs(newElement, currentNode.props.ref, currentNode._owner);
 		}
 	}

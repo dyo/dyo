@@ -15,24 +15,41 @@
  */
 function escape (subject) {
 	var string = subject + '';
-	var characters = '';
 
-	for (var i = 0, length = string.length; i < length; i++) {
-		switch (string.charCodeAt(i)) {
-			// &
-			case 38: characters += '&amp;'; break;
-			// "
-			case 34: characters += '&quot;'; break;
-			// <
-			case 60: characters += '&lt;'; break;
-			// >
-			case 62: characters += '&gt;'; break;
+	if (string.length > 50) {
+		// use regex if the string is long
+		return string.replace(escpattern, unicode);
+	} else {
+		var characters = '';
 
-			default: characters += string[i]; break;
+		for (var i = 0, length = string.length; i < length; i++) {
+			switch (string.charCodeAt(i)) {
+				// & character
+				case 38: characters += '&amp;'; break;
+				// " character
+				case 34: characters += '&quot;'; break;
+				// < character
+				case 60: characters += '&lt;'; break;
+				// > character
+				case 62: characters += '&gt;'; break;
+				// any character
+				default: characters += string[i]; break;
+			}
 		}
+		
+		return characters;
 	}
-	
-	return characters;
+}
+
+
+/**
+ * unicode, escape => () helper
+ * 
+ * @param  {string} char
+ * @return {string}
+ */
+function unicode (char) {
+	return unicodes[char];
 }
 
 
@@ -42,24 +59,23 @@ function escape (subject) {
  * used to build the css parser but could 
  * be used to develop other parsers as well
  * 
- * @param  {string} str
- * @param  {method} string
+ * @param  {string} string
  * @return {Object}
  */
-function input (str) {
+function input (string) {
  	// peek at the next character
  	function peek () { 
- 		return str[position] || ''; 
+ 		return string[position] || ''; 
  	}
 
  	// peek x number of characters relative to the current character
  	function look (distance) { 
- 		return str[(position-1)+distance] || ''; 
+ 		return string[(position-1)+distance] || ''; 
  	}
 
  	// move on to the next character
  	function next () { 
- 		return str[position++]; 
+ 		return string[position++]; 
  	}
 
  	// get current position
@@ -74,16 +90,18 @@ function input (str) {
 
  	// sleep until a certain character is reached
  	function sleep (until) {
- 		until = until.charCodeAt(0);
+ 		// use character code for faster number-to-number comparison
+ 		var code = until.charCodeAt(0);
 
-		while (position !== length && next().charCodeAt(0) !== until) {
+		while (position !== length && next().charCodeAt(0) !== code) {
 			// empty
 		} 
  	}
 
  	// position of the caret
  	var position = 0;
- 	var length = str.length;
+ 	// length of string
+ 	var length = string.length;
 
  	return { 
  		next:  next, 
@@ -117,15 +135,20 @@ function random (length) {
 /**
  * throw/return error
  * 
- * @param  {string}   message
- * @param  {number=}  silent
+ * @param  {string}            message
+ * @param  {number=}           silent
  * @return {(undefined|Error)}
  */
 function panic (message, silent) {
-	var error = message instanceof Error ? message : new Error(message);
+	// create an error object for stack stake tracing
+	var error = (message || '').constructor === Error ? message : new Error(message);
 
-	// return/throw error
-	if (silent) { return error; } else { throw error; }
+	// throw error/return error(silent)
+	if (silent) { 
+		return error; 
+	} else { 
+		throw error; 
+	}
 }
 
 
@@ -134,11 +157,13 @@ function panic (message, silent) {
  * 
  * @param  {function}  func
  * @param  {function=} onerror
+ * @param  {any=}      value
+ * @return {any}
  */
-function sandbox (func, onerror) {
+function sandbox (func, onerror, value) {
 	// hoisted due to V8 not opt'ing functions with try..catch
 	try {
-		return func();
+		return value ? func(value) : func();
 	} catch (err) {
 		return onerror && onerror(err);
 	}
@@ -147,6 +172,9 @@ function sandbox (func, onerror) {
 
 /**
  * defer function
+ *
+ * defers the execution of a function with predefined arguments
+ * and an optional command to preventDefault event behaviour
  * 
  * @param  {function} subject
  * @param  {any[]}    args
@@ -163,6 +191,7 @@ function defer (subject, args, preventDefault) {
 			e.preventDefault();
 		}
 
+		// defaults to arguments if there are no predefined args
 		return subject.apply(this, (empty ? arguments : args));
 	}
 }
@@ -184,6 +213,7 @@ function compose () {
 	if (length === 0) {
 		return function (a) { return a; }
 	} else {
+		// list of functions to compose
 		var funcs = [];
 
 		// passing arguments to a function i.e [].splice() will prevent this function
@@ -196,12 +226,14 @@ function compose () {
 		// we will use this for the initial composition
 		var lastFunc = funcs.pop();
 
-		// decrement length of funcs array
+		// decrement length of funcs array as a reflection of the above
 		length--;
 
 		return function () {
+			// initial composition
 			var output = lastFunc.apply(null, arguments);
-			
+				
+			// recursively commpose all functions
 			while (length--) {
 				output = funcs[length](output);
 			}
@@ -222,16 +254,16 @@ function compose () {
 function flatten (subject, output) {
 	output = output || [];
 	
-	// for each item add to array if item is an array add recursively it's items
+	// for each item add to array, if an item is an array add recursively its elements
 	for (var i = 0, length = subject.length; i < length; i++){
 		var item = subject[i];
 
-		// if not an array add value to output
+		// if it is not an array add its value to the output array
 		if (item == null || item.constructor !== Array) {
 			output[output.length] = item;
 		} else {
-			// recursive
-			arrayFlatten(item, output);
+			// recursively add the arrays elements to output
+			flatten(item, output);
 		}
 	}
 	
@@ -314,7 +346,7 @@ function isString (subject) {
 
 
 /**
- * @param  {*}
+ * @param  {*} subject
  * @return {boolean}
  */
 function isNumber (subject) {
@@ -350,7 +382,7 @@ function isDefined (subject) {
 
 
 /**
- * @param  {*}  subject 
+ * @param  {*} subject 
  * @return {boolean}
  */
 function isArrayLike (subject) {

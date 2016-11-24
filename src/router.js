@@ -33,9 +33,9 @@ function router (routes, address, initialiser, element, middleware) {
 		address     = address.root;
 	}
 
-	if (element !== undefined) {
+	if (element !== void 0) {
 		each(routes, function (component, uri) {
-			if (middleware !== undefined) {
+			if (middleware !== void 0) {
 				routes[uri] = function (data) {
 					middleware(component, data, element, uri);
 				}
@@ -93,7 +93,7 @@ function Router (routes, address, initialiser) {
 			// uri is the url/RegExp that describes the uri match thus
 			// given the following /:user/:id/*
 			// the pattern will be / ([^\/]+) / ([^\/]+) / (?:.*)
-			var pattern = uri.replace(regexp, function () {
+			var pattern = uri.replace(regex, function () {
 				// id => 'user', '>>>id<<<', undefned
 				var id = arguments[2];
 
@@ -168,7 +168,7 @@ function Router (routes, address, initialiser) {
 
 	var location = '';
 	var interval = 0;
-	var regexp   = /([:*])(\w+)|([\*])/g;
+	var regex    = /([:*])(\w+)|([\*])/g;
 	
 	var api = {
 		nav:    navigate,
@@ -183,12 +183,12 @@ function Router (routes, address, initialiser) {
 	register();
 
 	// listens only while in the browser enviroment
-	if (document !== undefined) {
+	if (document !== void 0) {
 		listen();
 	}
 
 	// initialiser, if function pass api as args, else string, navigate to uri
-	if (initialiser !== undefined) {
+	if (initialiser !== void 0) {
 		var type = typeof initialiser;
 
 		if (type === 'function') {

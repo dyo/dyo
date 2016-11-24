@@ -10,17 +10,22 @@
 /**
  * create stream, getter/setter
  * 
- * @param  {*}        value
- * @param  {function} middleware
+ * @param  {*}                  value
+ * @param  {(function|boolean)} middleware
  * @return {function}
  */
 function stream (value, middleware) {
+	// this allows us to return values in a .then block that will
+	// get passed to the next .then block
 	var chain = { then: null, catch: null }; 
+	// .then/.catch listeners
 	var listeners = { then: [], catch: [] };
 
 	var store;
 
+	// predetermine if a middlware was passed
 	var hasMiddleware = !!middleware;
+	// predetermine if the middlware passed is a function
 	var middlewareFunc = hasMiddleware && typeof middleware === 'function';
 
 	// constructor
@@ -33,7 +38,10 @@ function stream (value, middleware) {
 
 		var output;
 
-		// special store
+		// if you pass a middleware function i.e a = stream(1, String)
+		// the stream will return 1 processed through String
+		// if you pass a boolean an assumtion is made tha the store
+		// is a function and that it should return the functions return value
 		if (hasMiddleware) {
 			// if middleware function
 			output = middlewareFunc ? middleware(store) : store();
@@ -46,25 +54,23 @@ function stream (value, middleware) {
 
 	// dispatcher, dispatches listerners
 	function dispatch (type, value) {
-		var collection = listeners[type]; 
+		var collection = listeners[type];
 		var length = collection.length;
 
 		if (length !== 0) {
+			// executes a listener, adding the return value to the chain
+			function action (listener) {
+				// link in the .then / .catch chain
+				var link = listener(chain[type] || value);
+
+				// add to chain if defined
+				if (link !== void 0) {
+					chain[type] = link;
+				}
+			}
+
 			for (var i = 0; i < length; i++) {
-				var listener = collection[i];
-
-				sandbox(
-					function () {
-						// link in the .then / .catch chain
-						var link = listener(chain[type] || value);
-
-						// add to chain if defined
-						if (link !== undefined) {
-							chain[type] = link;
-						}
-					}, 
-					reject
-				)
+				sandbox(action, reject, collection[i]);
 			}
 		}
 	}
@@ -85,7 +91,7 @@ function stream (value, middleware) {
 			return listener(chain);
 		});
 
-		return !end ? Stream : undefined;
+		return !end ? Stream : void 0;
 	};
 
 	// add then listener
@@ -115,7 +121,6 @@ function stream (value, middleware) {
 	function end () {
 		chain.then = null; 
 		chain.catch = null;
-
 		listeners.then = [];
 		listeners.catch = [];
 	}
@@ -126,12 +131,12 @@ function stream (value, middleware) {
 	}
 
 	// ...JSON.strinfigy()
-	function toJSON () { 
+	function toJSON () {
 		return store;
 	}
 
 	// {function}.valueOf()
-	function valueOf () { 
+	function valueOf () {
 		return store; 
 	}
 
@@ -148,7 +153,7 @@ function stream (value, middleware) {
 	Stream._stream = true;
 
 	// acts like a promise if function is passed as value
-	typeof value === 'function' ? value(resolve, reject, Stream) : Stream(value);
+	typeof value === 'function' ? value(resolve, reject) : Stream(value);
 
 	return Stream;
 }
@@ -161,6 +166,8 @@ function stream (value, middleware) {
  * @return {streams[]} deps
  */
 stream.combine = function (reducer, deps) {
+	// if deps is not an array, we dependencies are arguments
+	// build deps array inline
 	if (typeof deps !== 'object') {
 		var args = [];
 
@@ -191,7 +198,7 @@ stream.combine = function (reducer, deps) {
 /**
  * do something after all dependecies have resolved
  * 
- * @param  {any[]} deps
+ * @param  {any[]}    deps
  * @return {function}
  */
 stream.all = function (deps) {
@@ -254,7 +261,7 @@ stream.scan = function (reducer, accumulator, stream) {
 /**
  * create new stream in resolved state
  * 
- * @param  {any} value
+ * @param  {any}    value
  * @return {Stream}
  */
 stream.resolve = function (value) {
@@ -267,7 +274,7 @@ stream.resolve = function (value) {
 /**
  * create new stream in rejected state
  * 
- * @param  {any} value 
+ * @param  {any}    value 
  * @return {Stream}
  */
 stream.reject = function (value) {

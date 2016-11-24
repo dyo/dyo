@@ -1,3 +1,9 @@
+## 3.2.0 (November 25, 2016)
+
+- improve performance of `dio.escape`
+- add `dio.renderToStream`
+- patch `dio.flatten`
+
 ## 3.1.0 (November 22, 2016)
 
 - improve performance of escaping SSR
