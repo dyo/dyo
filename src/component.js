@@ -84,7 +84,7 @@ Component.prototype = Object.create(null, {
  * @param {function=} callback
  */
 function setState (newState, callback) {
-	if (this.shouldComponentUpdate && !this.shouldComponentUpdate(this.props, newState)) {
+	if (this.shouldComponentUpdate && this.shouldComponentUpdate(this.props, newState) === false) {
 		return;
 	}
 

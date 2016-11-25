@@ -72,6 +72,7 @@ return bootstrap({
 	renderToString:         renderToString,
 	renderToStaticMarkup:   renderToString,
 	renderToStream:         renderToStream,
+	renderToCache:          renderToCache,
 
 	// components
 	Component:              Component,

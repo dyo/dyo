@@ -1,7 +1,7 @@
 /**
  * ---------------------------------------------------------------------------------
  * 
- * server-side (sync)
+ * server-side (sync) string
  * 
  * ---------------------------------------------------------------------------------
  */
@@ -41,16 +41,29 @@ function renderToString (subject, template) {
  * @return {string}  
  */
 function renderVNodeToString (subject, styles, lookup) {
-	var vnode = subject.nodeType === 2 ? extractVNode(subject) : subject;
-	var nodeType = vnode.nodeType;
+	var nodeType = subject.nodeType;
 
 	// textNode
 	if (nodeType === 3) {
-		return escape(vnode.children);
+		return escape(subject.children);
+	}
+
+	var component = subject.type;
+	var vnode;
+
+	// if component
+	if (nodeType === 2) {
+		// if cached
+		if (component._html) {
+			return component._html;
+		} else {
+			vnode = extractVNode(subject);
+		}
+	} else {
+		vnode = subject;
 	}
 
 	// references
-	var component = subject.type;
 	var type = vnode.type;
 	var props = vnode.props;
 	var children = vnode.children;
@@ -69,7 +82,7 @@ function renderVNodeToString (subject, styles, lookup) {
 		}
 	}
 
-	var sprops = renderStylesheetToString(component, styles, renderPropsToString(props), lookup);
+	var sprops = renderStylesheetToString(nodeType, component, styles, renderPropsToString(props), lookup);
 
 	if (nodeType === 11) {
 		return schildren;
@@ -91,9 +104,9 @@ function renderVNodeToString (subject, styles, lookup) {
  * @param  {string}    string   
  * @return {string}          
  */
-function renderStylesheetToString (component, styles, string, lookup) {
+function renderStylesheetToString (nodeType, component, styles, string, lookup) {
 	// stylesheet
-	if (component.stylesheet != null) {
+	if (nodeType === 2 && component.stylesheet != null) {
 		// insure we only every create one 
 		// stylesheet for every component
 		if (component.css === void 0 || component.css[0] !== '<') {

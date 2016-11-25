@@ -96,8 +96,8 @@
 					]
 				}
 			},
-			componentWillReceiveProps: function (props) {
-				activateLink(this, props.url);
+			componentDidMount: function (props) {
+				activateLink(this, this.props.url);
 			},
 			render: function (props) {
 				return div({className: 'documentation'+(this.state.loading ? '.loading' : '')}, [

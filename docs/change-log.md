@@ -2,6 +2,7 @@
 
 - improve performance of `dio.escape`
 - add `dio.renderToStream`
+- add `dio.renderToCache`
 - patch `dio.flatten`
 
 ## 3.1.0 (November 22, 2016)

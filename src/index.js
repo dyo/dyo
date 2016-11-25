@@ -26,6 +26,7 @@
 	import 'element.js';
 	import 'render.js';
 	import 'renderToString.js';
+	import 'renderToCache.js';
 	import 'renderToStream.js';
 	import 'hydrate.js';
 	import 'component.js';

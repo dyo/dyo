@@ -632,6 +632,84 @@ http.createServer(function(request, response) {
 
 ---
 
+## dio.renderToCache
+
+```javascript
+dio.renderToCache(subject: ({(VNode[]|VNode|Component)}))
+```
+
+pre-renders and caches the output by executing `renderToString` on a component 
+and store a html cache of the output such that when the same 
+component is rendered again the cache will be used
+instead of doing a re-render. Works with both `renderToString` and `renderToStream`
+and is meant to be used on the server-side, for example i could build the whole
+html page with components.
+
+```javascript
+class Head extends Component {
+	render () {
+		return h('head',
+			h('title', 'Hello World'),
+			h('link', {rel: 'stylesheet', href: 'style.css'})
+		)
+	}
+}
+
+class Button extends Component {
+	render () {
+		return h('button', 'Click Me');
+	}
+}
+
+class Body extends Component {
+	render () {
+		return h('body', Hello, Button, Button);
+	}
+}
+
+class Page extends Component {
+	render () {
+		return h('html', 
+			Head,
+			Body
+		)
+	}
+}
+```
+
+so imagine we want `Head` to be static i could cache its output
+
+```javascript
+dio.renderToCache(Head);
+
+// i could also cache multiple components
+dio.renderToCache([Head, Button])
+
+// or i could cache the parent component
+dio.renderToCache(Page);
+```
+at this point there is almost no overhead because i am essentially rendering a string when
+i pass `Page` to `renderToString`/`renderToStream` but depending on the situation you may not 
+want to cache the whole page but a selection of elements. 
+if you where wondering what the above `Page` component will render 
+see the following minus the whitespace.
+
+```html
+<!doctype html>
+<html>
+<head>
+    <title>Hello World</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Hello World</h1>
+    <button>Click Me</button>
+    <button>Click Me</button>
+    <!-- if there where component styles, they would come here -->
+</body>
+</html>
+```
+
 ## dio.router
 
 ```javascript

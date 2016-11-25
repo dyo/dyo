@@ -267,12 +267,28 @@ function patch (newNode, oldNode) {
 		return 5; 
 	}
 	// recursive
-	else {
+	else {		
 		// extract node from possible component node
 		var currentNode = newNodeType === 2 ? extractVNode(newNode) : newNode;
 
 		// opt1: if currentNode and oldNode are the identical, exit early
-		if (currentNode !== oldNode) {
+		if (currentNode !== oldNode) {			
+			// component will update
+			if (oldNodeType === 2) {
+				var component = oldNode._owner;
+
+				if (
+					component.shouldComponentUpdate && 
+					component.shouldComponentUpdate(newNode.props, newNode._owner.state) === false
+				) {
+					return 0;
+				}
+
+				if (component.componentWillUpdate) {
+					component.componentWillUpdate(newNode.props, newNode._owner.state);
+				}
+			}
+
 			// opt2: patch props only if oldNode is not a textNode 
 			// and the props objects of the two noeds are not equal
 			if (currentNode.props !== oldNode.props) {
@@ -281,9 +297,9 @@ function patch (newNode, oldNode) {
 
 			// references, children & children length
 			var currentChildren = currentNode.children;
-			var oldChildren     = oldNode.children;
-			var newLength       = currentChildren.length;
-			var oldLength       = oldChildren.length;
+			var oldChildren = oldNode.children;
+			var newLength = currentChildren.length;
+			var oldLength = oldChildren.length;
 
 			// opt3: if new children length is 0 clear/remove all children
 			if (newLength === 0) {
@@ -446,6 +462,11 @@ function patch (newNode, oldNode) {
 						}
 					}
 				}
+			}
+
+			// component did update
+			if (oldNodeType === 2 && component.componentDidUpdate) {
+				component.componentDidUpdate(newNode.props, newNode._owner.state);
 			}
 		}
 	}

@@ -139,12 +139,10 @@ function VBlueprint (subject) {
 				VBlueprint(subject[i]);
 			}
 		} else {
-			// if a blueprint not already constructed
-			if (subject._node == null) {
-				if (document !== void 0) {
-					// browser, cache blueprint node
-					subject._node = createNode(subject.nodeType ? subject : VComponent(subject));
-				}
+			// if a blueprint is not already constructed
+			if (subject._node == null && document !== void 0) {
+				// browser, cache blueprint node
+				subject._node = createNode(subject.nodeType ? subject : VComponent(subject));
 			}
 		}
 	}

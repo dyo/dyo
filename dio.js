@@ -593,12 +593,10 @@
 					VBlueprint(subject[i]);
 				}
 			} else {
-				// if a blueprint not already constructed
-				if (subject._node == null) {
-					if (document !== void 0) {
-						// browser, cache blueprint node
-						subject._node = createNode(subject.nodeType ? subject : VComponent(subject));
-					}
+				// if a blueprint is not already constructed
+				if (subject._node == null && document !== void 0) {
+					// browser, cache blueprint node
+					subject._node = createNode(subject.nodeType ? subject : VComponent(subject));
 				}
 			}
 		}
@@ -1197,12 +1195,28 @@
 			return 5; 
 		}
 		// recursive
-		else {
+		else {		
 			// extract node from possible component node
 			var currentNode = newNodeType === 2 ? extractVNode(newNode) : newNode;
 	
 			// opt1: if currentNode and oldNode are the identical, exit early
-			if (currentNode !== oldNode) {
+			if (currentNode !== oldNode) {			
+				// component will update
+				if (oldNodeType === 2) {
+					var component = oldNode._owner;
+	
+					if (
+						component.shouldComponentUpdate && 
+						component.shouldComponentUpdate(newNode.props, newNode._owner.state) === false
+					) {
+						return 0;
+					}
+	
+					if (component.componentWillUpdate) {
+						component.componentWillUpdate(newNode.props, newNode._owner.state);
+					}
+				}
+	
 				// opt2: patch props only if oldNode is not a textNode 
 				// and the props objects of the two noeds are not equal
 				if (currentNode.props !== oldNode.props) {
@@ -1211,9 +1225,9 @@
 	
 				// references, children & children length
 				var currentChildren = currentNode.children;
-				var oldChildren     = oldNode.children;
-				var newLength       = currentChildren.length;
-				var oldLength       = oldChildren.length;
+				var oldChildren = oldNode.children;
+				var newLength = currentChildren.length;
+				var oldLength = oldChildren.length;
 	
 				// opt3: if new children length is 0 clear/remove all children
 				if (newLength === 0) {
@@ -1376,6 +1390,11 @@
 							}
 						}
 					}
+				}
+	
+				// component did update
+				if (oldNodeType === 2 && component.componentDidUpdate) {
+					component.componentDidUpdate(newNode.props, newNode._owner.state);
 				}
 			}
 		}
@@ -1882,7 +1901,7 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * server-side (sync)
+	 * server-side (sync) string
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -1922,16 +1941,29 @@
 	 * @return {string}  
 	 */
 	function renderVNodeToString (subject, styles, lookup) {
-		var vnode = subject.nodeType === 2 ? extractVNode(subject) : subject;
-		var nodeType = vnode.nodeType;
+		var nodeType = subject.nodeType;
 	
 		// textNode
 		if (nodeType === 3) {
-			return escape(vnode.children);
+			return escape(subject.children);
+		}
+	
+		var component = subject.type;
+		var vnode;
+	
+		// if component
+		if (nodeType === 2) {
+			// if cached
+			if (component._html) {
+				return component._html;
+			} else {
+				vnode = extractVNode(subject);
+			}
+		} else {
+			vnode = subject;
 		}
 	
 		// references
-		var component = subject.type;
 		var type = vnode.type;
 		var props = vnode.props;
 		var children = vnode.children;
@@ -1950,7 +1982,7 @@
 			}
 		}
 	
-		var sprops = renderStylesheetToString(component, styles, renderPropsToString(props), lookup);
+		var sprops = renderStylesheetToString(nodeType, component, styles, renderPropsToString(props), lookup);
 	
 		if (nodeType === 11) {
 			return schildren;
@@ -1972,9 +2004,9 @@
 	 * @param  {string}    string   
 	 * @return {string}          
 	 */
-	function renderStylesheetToString (component, styles, string, lookup) {
+	function renderStylesheetToString (nodeType, component, styles, string, lookup) {
 		// stylesheet
-		if (component.stylesheet != null) {
+		if (nodeType === 2 && component.stylesheet != null) {
 			// insure we only every create one 
 			// stylesheet for every component
 			if (component.css === void 0 || component.css[0] !== '<') {
@@ -2057,7 +2089,41 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * server-side (async)
+	 * server-side (sync) cache
+	 * 
+	 * ---------------------------------------------------------------------------------
+	 */
+	
+	
+	/**
+	 * renderToCache
+	 * 
+	 * @param  {Object} subject
+	 * @return {Object} subject
+	 */
+	function renderToCache (subject) {
+		if (subject != null) {
+			// if array run all VNodes through VBlueprint
+			if (subject.constructor === Array) {
+				for (var i = 0, length = subject.length; i < length; i++) {
+					renderToCache(subject[i]);
+				}
+			} else {
+				// if a blueprint is not already constructed
+				if (subject._html == null) {
+					subject._html = renderToString(subject);
+				}
+			}
+		}
+	
+		return subject;
+	}
+	
+	
+	/**
+	 * ---------------------------------------------------------------------------------
+	 * 
+	 * server-side (async) stream
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -2075,7 +2141,9 @@
 				subject,
 				template == null ? null : template.split('{{body}}')
 			)
-		) : Stream
+		) : function (subject) {
+			return new Stream(subject);
+		}
 	}
 	
 	
@@ -2104,7 +2172,7 @@
 	 */
 	Stream.prototype = server ? Object.create(readable.prototype, {
 		_type: {
-			value: 'html'
+			value: 'text/html'
 		},
 		_read: {
 			value: function () {
@@ -2143,74 +2211,105 @@
 				// if there is something pending in the stack
 				// give that priority
 				if (flush && stack.length !== 0) {
-					return stack.pop()(this);
+					stack.pop()(this); return;
 				}
 	
-				var vnode = subject.nodeType === 2 ? extractVNode(subject) : subject;
-				var nodeType = vnode.nodeType;
-	
-				var component = subject.type;
-				var type = vnode.type;
-				var props = vnode.props;
-				var children = vnode.children;
+				var nodeType = subject.nodeType;
 	
 				// text node
 				if (nodeType === 3) {
 					// convert string to buffer and send chunk
-					this.push(escape(children));
-				} else {
-					var sprops = renderStylesheetToString(component, styles, renderPropsToString(props), lookup);
+					this.push(escape(subject.children)); return;
+				}
 	
-					if (isvoid[type]) {
-						// <type ...props>
-						this.push('<'+type+sprops+'>');
+				var component = subject.type;
+				var vnode;
+	
+				// if component
+				if (nodeType === 2) {
+					// if cached
+					if (component._html) {
+						this.push(component._html); return;
 					} else {
-						var opening = '';
-						var closing = '';
+						vnode = extractVNode(subject);
+					}
+				} else {
+					vnode = subject;
+				}
 	
-						// fragments do not have opening/closing tags
-						if (nodeType !== 11) {
-							// <type ...props>...children</type>
-							opening = '<'+type+sprops+'>';
-							closing = '</'+type+'>';
-						}
+				// references
+				var type = vnode.type;
+				var props = vnode.props;
+				var children = vnode.children;
 	
-						if (props.innerHTML !== void 0) {
-							// special case when a prop replaces children
-							this.push(opening+props.innerHTML+closing);
+				var sprops = renderStylesheetToString(nodeType, component, styles, renderPropsToString(props), lookup);
+	
+				if (isvoid[type]) {
+					// <type ...props>
+					this.push('<'+type+sprops+'>');
+				} else {
+					var opening = '';
+					var closing = '';
+	
+					// fragments do not have opening/closing tags
+					if (nodeType !== 11) {
+						// <type ...props>...children</type>
+						opening = '<'+type+sprops+'>';
+						closing = '</'+type+'>';
+					}
+	
+					if (props.innerHTML !== void 0) {
+						// special case when a prop replaces children
+						this.push(opening+props.innerHTML+closing);
+					} else {
+						var length = children.length;
+	
+						if (length === 0) {
+							// no children, sync
+							this.push(opening+closing);
+						} else if (length === 1 && children[0].nodeType === 3) {
+							// one text node child, sync
+							this.push(opening+escape(children[0].children)+closing);
 						} else {
-							var length = children.length;
+							// has children, async
+							// since we cannot know ahead of time the number of children
+							// split this operation into asynchronously added chunks of data
+							var index = 0;
+							// add one more for the closing tag
+							var middlwares = length + 1;
 	
-							if (length === 0) {
-								// no children, sync
-								this.push(opening+closing);
-							} else if (length === 1 && children[0].nodeType === 3) {
-								// one text node child, sync
-								this.push(opening+escape(children[0].children)+closing);
-							} else {
-								// has children, async
-								// since we cannot know ahead of time the number of children
-								// split this operation into asynchronously added chunks of data
-								var index = 0;
-								// add one more for the closing tag
-								var middlwares = length + 1;
+							var doctype = type === 'html';
+							var eof = type === 'body' || doctype;
 	
-								// for each _read if queue has middleware
-								// middleware execution will take priority
-								function middlware (stream) {
-									// done, close html tag, delegate next middleware
-									index === length ? 
-										stream.push(closing) : 
-										stream._pipe(children[index++], false, stack, styles, lookup);
+							// for each _read if queue has middleware
+							// middleware execution will take priority
+							function middlware (stream) {
+								// done, close html tag, delegate next middleware
+								if (index === length) {
+									// if the closing tag is body or html
+									// we want to push the styles before we close them
+									if (eof && styles[0].length !== 0) {
+										stream.push(styles[0]);
+										styles[0] = '';
+									}
+	
+									stream.push(closing);
+								} else {
+									stream._pipe(children[index++], false, stack, styles, lookup);
 								}
+							}
 	
-								// push opening tag
-								this.push(opening);
+							// if opening html tag, push doctype first
+							if (doctype) {
+								this.push('<!doctype html>');
+							}
 	
-								// push middlwares
-								for (var i = 0; i < middlwares; i++) {
-									stack[stack.length] = middlware;
-								}
+							// push opening tag
+							this.push(opening);
+	
+							// push middlwares
+							for (var i = 0; i < middlwares; i++) {
+								stack[stack.length] = middlware;
 							}
 						}
 					}
@@ -2391,7 +2490,7 @@
 	 * @param {function=} callback
 	 */
 	function setState (newState, callback) {
-		if (this.shouldComponentUpdate && !this.shouldComponentUpdate(this.props, newState)) {
+		if (this.shouldComponentUpdate && this.shouldComponentUpdate(this.props, newState) === false) {
 			return;
 		}
 	
@@ -4523,6 +4622,7 @@
 		renderToString:         renderToString,
 		renderToStaticMarkup:   renderToString,
 		renderToStream:         renderToStream,
+		renderToCache:          renderToCache,
 	
 		// components
 		Component:              Component,
