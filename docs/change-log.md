@@ -1,3 +1,8 @@
+## 3.3.0 (November 26, 2016)
+
+- at root support to `dio.stylesheet` for pushing to root `@root {...}`
+- patch `dio.stylesheet` handling `{}` when used without `&` like `&{}`
+
 ## 3.2.0 (November 25, 2016)
 
 - improve performance of `dio.escape`

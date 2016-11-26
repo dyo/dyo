@@ -30,7 +30,7 @@
 	 */
 	
 	
-	var version     = '3.2.0';
+	var version     = '3.3.0';
 	
 	var nsstyle     = 'data-scope';
 	var nsmath      = 'http://www.w3.org/1998/Math/MathML';
@@ -2721,9 +2721,6 @@
 	                // remove all spaces before `;`
 	                .replace(/[ \t]+;/g, ';')
 	                
-	                // drop every block and property into newlines
-	                .replace(/(\{|\}|;)(?!\n)/g, '$1\n')
-	
 	                // remove all leading spaces and newlines                
 	                .replace(/^[\t\n ]*/gm, '')
 	
@@ -2736,8 +2733,11 @@
 	                // remove all trailing spaces and tabs
 	                .replace(/[ \t]+$/gm, '')
 	
-	                // insure opening `{` are on the same like as the selector
+	                // insure opening `{` are on the same line as the selector
 	                .replace(/(.*)\n(?:|[\t\n ])\{/g, '$1{')
+	
+	                // drop every block and property into newlines
+	                .replace(/(\{|\}|;)(?!\n)/g, '$1\n')
 	
 	                // patch declarations ending without ;
 	                .replace(/([^\{\};\n\/]$)/gm, '$1;')
@@ -2758,9 +2758,17 @@
 	
 	        		// `@` character
 	        		if (firstLetter === 64) {
-	        			// @keyframe, `k` character
-	        			if (currentLine.charCodeAt(1) === 107) {
-	        				currentLine = currentLine.substr(1, 10) + id + currentLine.substr(11);
+	                    var firstCharacter = currentLine.charCodeAt(1);
+	
+	        			// @keyframe/@root, `k` or @root, `r` character
+	        			if (firstCharacter === 107 || firstCharacter === 114) {
+	        				if (firstCharacter == 107) {
+	                            // @keyframes
+	                            currentLine = currentLine.substr(1, 10) + id + currentLine.substr(11);
+	                        } else {
+	                            // @root
+	                            currentLine = '';
+	                        }
 	
 	        				// till the end of the keyframe block
 	        				while (!characters.eof()) {
@@ -2780,9 +2788,11 @@
 	        					}
 	        				}
 	
-	        				// add prefix, webkit is the only reasonable prefix to use here
-	        				// -moz- has supported this since 2012 and -ms- was never a thing here
-	        				currentLine = '@-webkit-'+currentLine+'}@'+currentLine;
+	        				if (firstLetter === 107) {
+	                            // add prefix, webkit is the only reasonable prefix to use here
+	                            // -moz- has supported this since 2012 and -ms- was never a thing here
+	                            currentLine = '@-webkit-'+currentLine+'}@'+currentLine;
+	                        }
 	        			}
 	
 	                    // do nothing to @media...

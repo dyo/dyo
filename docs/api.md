@@ -368,7 +368,9 @@ It will then add this output(string) to the document(browser) or template(server
 
 prefixes supported are appearance, transform, keyframes & animation.
 @keyframes are namespaced and so are animations to match. Eveything else works
-as it would with regular css with the addition of `&{}` and `{}` which match the component itself
+as it would with regular css with the addition of `&{}` and `{}` 
+which match the component itself and `@root {}` whic pushes a block to
+the global namespace.
 
 for example
 
@@ -377,8 +379,15 @@ for example
 {
 	color: 'red'
 }
+
 &, & h1{
 	color: 'blue'
+}
+
+@root {
+	body {
+		background: red;
+	}
 }
 `
 // due to css specifity the button will be rendered blue and so will a h1 child of the button

@@ -329,7 +329,15 @@ function build (directory, destination, filepath) {
 
 // report status
 function report (start, filename, event) {
-	console.log((filename || '') + ' ' + (event || '') + ' [Build Finished in ' + (Date.now() - start) + 'ms]');
+	var timestamp = new Date + '';
+
+	console.log(
+		(filename || '') + ' ' + 
+		(event || '') + 
+		' [Build Finished in ' + 
+		(Date.now() - start) + 'ms]' + 
+		' on ' + timestamp.substr(0, timestamp.lastIndexOf(':'))
+	);
 }
 
 

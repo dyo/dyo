@@ -33,15 +33,15 @@ Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.2.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.3.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/3.2.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/3.3.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@3.2.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@3.3.0/dio.min.js></script>
 ```
 
 #### bower
@@ -472,7 +472,9 @@ It will then add this output(string) to the document(browser) or template(server
 
 prefixes supported are appearance, transform, keyframes & animation.
 @keyframes are namespaced and so are animations to match. Eveything else works
-as it would with regular css with the addition of `&{}` and `{}` which match the component itself
+as it would with regular css with the addition of `&{}` and `{}` 
+which match the component itself and `@root {}` whic pushes a block to
+the global namespace.
 
 for example
 
@@ -481,8 +483,15 @@ for example
 {
 	color: 'red'
 }
+
 &, & h1{
 	color: 'blue'
+}
+
+@root {
+	body {
+		background: red;
+	}
 }
 `
 // due to css specifity the button will be rendered blue and so will a h1 child of the button
