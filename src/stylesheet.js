@@ -15,8 +15,8 @@
  * @return {(string|void)}
  */
 function stylesheet (element, component) {
-	var id   = '';
-	var css  = '';
+	var id;
+	var css = '';
 	var func = typeof component.stylesheet === 'function';
 
 	// create stylesheet, executed once per component constructor(not instance)
@@ -25,210 +25,17 @@ function stylesheet (element, component) {
 		id = component.name + random(6);
 
 		// property id, selector id 
-		var prefix      = '['+nsstyle+'='+id+']';
-		var currentLine = '';
-        
-        var content = (
-            // retrieve css string and format...
-            component.stylesheet()
-                // remove all spaces after `:`
-                .replace(/:[ \t]+/g, ':')
-
-                // remove all spaces before `;`
-                .replace(/[ \t]+;/g, ';')
-                
-                // remove all leading spaces and newlines                
-                .replace(/^[\t\n ]*/gm, '')
-
-                // remove all spaces/tabs after opening `{` and closing `}` tags
-                .replace(/(\{|\})[ \t]+/g, '$1')
-
-                // remove all spaces/tabs before opening `{` and closing `}` tags
-                .replace(/[ \t]+(\{|\})/g, '$1')
-                
-                // remove all trailing spaces and tabs
-                .replace(/[ \t]+$/gm, '')
-
-                // insure opening `{` are on the same line as the selector
-                .replace(/(.*)\n(?:|[\t\n ])\{/g, '$1{')
-
-                // drop every block and property into newlines
-                .replace(/(\{|\}|;)(?!\n)/g, '$1\n')
-
-                // patch declarations ending without ;
-                .replace(/([^\{\};\n\/]$)/gm, '$1;')
-        );
-
-		var characters = input(content);
+        var chars = component.stylesheet();
 
 		// css parser, SASS &{} is supported, styles are namespaced,
 		// appearance, transform, animation & keyframes are prefixed,
 		// keyframes and corrosponding animations are also namespaced
-        while (!characters.eof()) {
-        	var character     = characters.next();
-        	var characterCode = character.charCodeAt(0);
+        var css = cssparser(nsstyle, id, chars, true);
 
-        	// end of current line, \n
-        	if (characterCode === 10) {
-        		var firstLetter = currentLine.charCodeAt(0);
-
-        		// `@` character
-        		if (firstLetter === 64) {
-                    var firstCharacter = currentLine.charCodeAt(1);
-
-        			// @keyframe/@root, `k` or @root, `r` character
-        			if (firstCharacter === 107 || firstCharacter === 114) {
-        				if (firstCharacter == 107) {
-                            // @keyframes
-                            currentLine = currentLine.substr(1, 10) + id + currentLine.substr(11);
-                        } else {
-                            // @root
-                            currentLine = '';
-                        }
-
-        				// till the end of the keyframe block
-        				while (!characters.eof()) {
-        					var char = characters.next();
-        					var charCode = char.charCodeAt(0);
-        					
-        					// `\n` character
-        					if (charCode !== 10) {
-        						currentLine += char;
-
-                                var timetravel = characters.look(2);
-
-        						// `}`, `}` characters
-        						if (charCode === 125 && timetravel && timetravel.charCodeAt(0) === 125) {
-        							currentLine += ''; break;
-        						}
-        					}
-        				}
-
-        				if (firstLetter === 107) {
-                            // add prefix, webkit is the only reasonable prefix to use here
-                            // -moz- has supported this since 2012 and -ms- was never a thing here
-                            currentLine = '@-webkit-'+currentLine+'}@'+currentLine;
-                        }
-        			}
-
-                    // do nothing to @media...
-        		} else {
-        			// animation: `a`, `n`, `n` characters
-        			if (
-        				firstLetter === 97 && 
-        				currentLine.charCodeAt(1) === 110 && 
-        				currentLine.charCodeAt(8) === 110
-    				) {
-        				// remove space after `,` and `:`
-        				currentLine = currentLine.replace(/, /g, ',').replace(/: /g, ':');
-
-        				var splitLine = currentLine.split(':');
-
-        				// re-build line
-        				currentLine = (
-        					splitLine[0] + ':' + id + (splitLine[1].split(',')).join(','+id)
-    					);
-
-                        // add prefix, same as before webkit is the only reasonable prefix
-                        // for older andriod phones
-        				currentLine = '-webkit-' + currentLine + currentLine;
-        			} else if (
-        				// `t`, `r`, `:`, characters
-        				(
-        					firstLetter === 116 && 
-        					currentLine.charCodeAt(1) === 114 && 
-        					currentLine.charCodeAt(9) === 58
-    					) 
-        					||
-        				// `a`, `p`, `:`, characters
-        				(
-        					firstLetter === 97 && 
-        					currentLine.charCodeAt(1) === 112 && 
-        					currentLine.charCodeAt(10) === 58
-    					)
-    				) {
-        				// transform/appearance
-                        // the above if condition assumes the length and placement
-                        // of the 3 characters listed to pass the condition
-        				currentLine = '-webkit-' + currentLine + currentLine;
-        			} else {
-        				// selector declaration, if last char is `{`
-                        // note: the format block made it so that this will always
-                        // be the case for selector declarations
-        				if (currentLine.charCodeAt(currentLine.length - 1) === 123) {
-        					var splitLine         = currentLine.split(',');
-        					var currentLineBuffer = '';
-
-                            // iterate through all the characters and build
-                            // this allows us to prefix multiple selectors with namesapces
-                            // i.e h1, h2, h3 --> [namespace] h1, ....
-        					for (var i = 0, length = splitLine.length; i < length; i++) {
-        						var selector = splitLine[i],
-        							first    = selector.charCodeAt(0),
-        							affix    = '';
-
-                                // if first selector
-    							if (i === 0) {
-    								// `:`, `&`, characters
-    								affix = (first === 58 || first === 38) ? prefix : prefix + ' ';
-    							} else {
-                                    affix = ',' + prefix;
-                                }
-
-        						if (first === 123) {
-        							// `{`, character
-        							currentLineBuffer += affix + selector;
-        						} else if (first === 38) { 
-        							// `&` character
-        							currentLineBuffer += affix + selector.substr(1);
-        						} else {
-        							currentLineBuffer += affix + selector;
-        						}
-        					}
-
-        					currentLine = currentLineBuffer;
-        				}
-        			}
-        		}
-
-        		css += currentLine;
-        		currentLine = '';
-        	} else {
-                // `/` character
-                if (characterCode === 47) {
-                    var nextCharaterCode = characters.peek().charCodeAt(0);
-
-                    // `/`, `/` characters
-                    if (nextCharaterCode === 47) {
-                        // till end of line comment 
-                        characters.sleep('\n');
-                    } else if (nextCharaterCode === 42) {
-                        characters.next();
-
-                        // `/`, `*` character
-                        while (!characters.eof()) {
-                            // till end of block comment
-                            if (
-                                // `*`, `/` character
-                                characters.next().charCodeAt(0)  === 42 && 
-                                characters.peek().charCodeAt(0) === 47
-                            ) {
-                                characters.next(); break;
-                            }
-                        }
-                    } else {
-                        currentLine += character;
-                    }
-                } else {
-                    currentLine += character;
-                }
-        	}
-        }
-
-        // signifies that we are done parsing the components css
-        // so we can avoid this whole step for any other instances
+        // re-assign stylesheet to avoid this whole step for future instances
         component.stylesheet = 0;
 
+        // cache the id and css 
         component.id = id;
         component.css = css;
 	} else {
@@ -261,3 +68,207 @@ function stylesheet (element, component) {
     }
 }
 
+
+/**
+ * stylis, css compiler interface
+ *
+ * @example stylis(selector, styles);
+ * 
+ * @param  {string}  selector
+ * @param  {string}  styles
+ * @param  {(boolean|Node)} element
+ * @return {string}
+ */
+function stylis (selector, styles, element) {
+    var output = cssparser(selector[0], selector.substr(1), styles, false);
+
+    // request for element
+    if (element && document) {
+        // browser
+        if (document) {
+            if (element.nodeType) {
+                // passed an element, append to preserve elements content
+                return (element.appendChild(document.createTextNode(output)), element);
+            } else {
+                // new element
+                var _element = document.createElement('style');
+                    _element.textContent = output;
+
+                return _element;
+            }
+        } else {
+            // node
+            return '<style>'+output+'</style>';
+        }
+    } else {
+        // string
+        return output;
+    }
+}
+
+
+/**
+ * css compiler
+ *
+ * @example cssparser('.', 'class1', 'css...', false);
+ * 
+ * @param  {string}  ns
+ * @param  {string}  id
+ * @param  {string}  chars
+ * @param  {boolean} isattr
+ * @return {string}
+ */
+function cssparser (ns, id, chars, isattr) {
+    var prefix = isattr ? '['+ns+'='+id+']' : ns + id;
+    var output = '';
+    var len = chars.length;
+    var i = 0;
+    var line = '';
+
+    while (i < len) {
+        var code = chars.charCodeAt(i);
+
+        // {, }, ; characters
+        if (code === 123 || code  === 125 || code === 59) {
+            line += chars[i];
+            line  = line.trim();
+
+            var first = line.charCodeAt(0);
+
+            // / character, line comment
+            if (first === 47) {
+                line = code === 125 ? '}' : '';
+            }
+            // @ character, special block
+            else if (first === 64) {
+                var second = line.charCodeAt(1) || 0;
+
+                // @keyframe/@root, `k` or @root, `r` character
+                if (second === 107 || second === 114) {
+                    i++;
+
+                    if (second == 107) {
+                        // @keyframes
+                        line = line.substr(1, 10) + id + line.substr(11);
+                    } else {
+                        // @root
+                        line = '';
+                    }
+
+                    var close = 0;
+
+                    while (i < len) {
+                        var char = chars[i++];
+                        var _code = char.charCodeAt(0);
+
+                        // not `\t`, `\r`, `\n` characters
+                        if (_code !== 9 && _code !== 13 && _code !== 10) {
+                            // } character
+                            if (_code === 125) {
+                                // previous block tag is close
+                                if (close === 1) {
+                                    break;
+                                }
+                                // current block tag is close tag 
+                                else {
+                                    close = 1;
+                                }
+                            }
+                            // { character 
+                            else if (_code === 123) {
+                                // current block tag is open
+                                close = 0;
+                            }
+
+                            line += char;
+                        }
+                    }
+
+                    // vendor prefix transforms properties
+                    line = line.replace(rspaces, '').replace(rtrans, '-webkit-$1$1');
+                    
+                    if (second === 107) {
+                        // vendor prefix keyframes
+                        line = '@-webkit-'+line+'}@'+line+'}';
+                    } else {
+                        line = line.replace(rkeyf, '@-webkit-$1}@$1}');
+                    }
+                }
+            } else {
+                var second = line.charCodeAt(1) || 0;
+                var third = line.charCodeAt(2) || 0;
+
+                // animation: a, n, i characters
+                if (first === 97 && second === 110 && third === 105) {
+                    // remove space after `,` and `:` then split line
+                    var split = line.replace(ranim, '$1').split(':');
+
+                    // build line
+                    line = split[0] + ':' + id + (split[1].split(',')).join(','+id);
+
+                    // vendor prefix
+                    line = '-webkit-' + line + line;
+                }
+                // transform: t, r, a 
+                // appearance: a, p, p
+                else if (
+                    (first === 116 && second === 114 && third === 97) ||
+                    (first === 97 && second === 112 && third === 112)
+                ) {
+                    // vendor prefix
+                    line = '-webkit-' + line + line;
+                } else {
+                    // selector declaration
+                    if (code === 123) {
+                        var split = line.split(',');
+                        var _line = '';
+
+                        // iterate through characters and prefix multiple selectors with namesapces
+                        // i.e h1, h2, h3 --> [namespace] h1, [namespace] h1, ....
+                        for (var j = 0, length = split.length; j < length; j++) {
+                            var selector = split[j];
+                            var _first = selector.charCodeAt(0);
+                            var affix = '';
+
+                            // first selector
+                            if (j === 0) {
+                                // :, &, { characters
+                                if (_first === 58 || _first === 38 || _first === 123) {
+                                    affix = prefix;
+                                } else {
+                                    affix = prefix + ' ';
+                                }
+                            } else {
+                                affix = ',' + prefix;
+                            }
+
+                            if (_first === 123) {
+                                // { character
+                                _line += affix + selector;
+                            } else if (_first === 38) {
+                                // & character
+                                _line += affix + selector.substr(1);
+                            } else {
+                                _line += affix + selector;
+                            }
+                        }
+
+                        line = _line;
+                    }
+                }
+            }
+
+            output += line;
+            line = '';
+        } 
+        // `\t`, `\r`, `\n` characters
+        else if (code !== 9 && code !== 13 && code !== 10) {
+            line += chars[i];
+        }
+
+        // next character
+        i++; 
+    }
+
+    return output;
+}

@@ -7,7 +7,7 @@
  */
 
 
-var version     = '3.3.0';
+var version     = '3.4.0';
 
 var nsstyle     = 'data-scope';
 var nsmath      = 'http://www.w3.org/1998/Math/MathML';
@@ -27,7 +27,6 @@ var isvoid      = {
 	'keygen': 1, 'link':  1, 'meta': 1, 'param':    1, 'source': 1
 };
 
-var escpattern   = /[<>&"']/g;
 var unicodes     = {
 	'<': '&lt;',
 	'>': '&gt;',
@@ -35,4 +34,10 @@ var unicodes     = {
 	"'": '&#39;',
 	'&': '&amp;'
 };
+
+var resc        = /[<>&"']/g;
+var rkeyf       = /@(keyframes +.*?}$)/g;
+var rtrans      = /(transform:.*?;)/g;
+var rspaces     = /  +/g;
+var ranim       = /(,|:) +/g;
 

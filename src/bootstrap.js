@@ -40,7 +40,7 @@ function bootstrap (api) {
   			set: function (value) { 
   				return window = value, document = value.document, value; 
   			},
-			},
+		},
   		'enviroment': {
   			get: function () { 
   				return development ? 'development' : 'production'; 
@@ -48,8 +48,8 @@ function bootstrap (api) {
   			set: function (value) {
   				development = value === 'development'; 
   			},
-			}
-		});
+		}
+	});
 }
 
 return bootstrap({
@@ -94,9 +94,10 @@ return bootstrap({
 
 	// streams
 	stream:                 stream,
-	input:                  input,
 
 	// utilities
+	stylis:                 stylis,
+	input:                  input,
 	escape:                 escape,
 	panic:                  panic,
 	sandbox:                sandbox,

@@ -642,11 +642,19 @@ function assignRefs (element, ref, component) {
  * @param  {Node}   prevNode
  */
 function removeNode (oldNode, parent, prevNode) {
+	// remove reference to avoid memory leaks with hoisted VNodes
+	oldNode._node = null;
+
 	// remove node
 	parent.removeChild(prevNode);
 
-	if (oldNode._owner && oldNode._owner.componentWillUnmount) {
-		oldNode._owner.componentWillUnmount();
+	if (oldNode._owner) {
+		if (oldNode._owner.componentWillUnmount) {
+			oldNode._owner.componentWillUnmount();
+		}
+
+		// remove reference...
+		oldNode._owner = null;
 	}
 }
 

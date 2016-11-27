@@ -33,15 +33,15 @@ Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.3.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.4.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/3.3.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/3.4.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@3.3.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@3.4.0/dio.min.js></script>
 ```
 
 #### bower
@@ -497,7 +497,26 @@ for example
 // due to css specifity the button will be rendered blue and so will a h1 child of the button
 // if the second block where absent the button would have been renderd red.
 
-// all of this plays well with server-side rendering that is discussed in the following section
+// all of this plays well with server-side rendering 
+// that is discussed in the section following the next section
+```
+
+## dio.stylis
+
+Is the interface used to access the internal css compiler that Dio uss to generate
+stylesheets.
+
+```javascript
+dio.stylis(selector: {string}, css: {string}, element: {(boolean|Node)=})
+
+// where element is an optional argument
+// that can either be boolean: true to explicity request for an eleemnt
+// with the output
+
+dio.stylis('#user', `h1, & { color: red; }`);
+
+// will return
+'#user h1, #user { color: red; }';
 ```
 
 ---

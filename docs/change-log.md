@@ -1,3 +1,9 @@
+## 3.4.0 (November 27, 2016)
+
+- improve stylesheet compiler
+- handle the removal of hoisted elements to avoid memory leaks
+- add `.stylis` to expose internal css compiler
+
 ## 3.3.0 (November 26, 2016)
 
 - at root support to `dio.stylesheet` for pushing to root `@root {...}`

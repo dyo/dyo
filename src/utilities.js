@@ -18,7 +18,7 @@ function escape (subject) {
 
 	if (string.length > 50) {
 		// use regex if the string is long
-		return string.replace(escpattern, unicode);
+		return string.replace(resc, unicode);
 	} else {
 		var characters = '';
 
