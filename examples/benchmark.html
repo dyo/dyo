@@ -9,8 +9,9 @@
 	<body>
 		<div id="app"></div>
 		
-		<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
-		<script src="/dio.min.js"></script>
+		<!-- <script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script> -->
+		<script src="/perf-monitor.js"></script>
+		<script src="/dio.js"></script>
 			
 		<!-- ENV.js -->
 		<script>
@@ -233,25 +234,11 @@
 
 			perfMonitor.startFPSMonitor()
 			perfMonitor.startMemMonitor()
-			perfMonitor.initProfiler("render")
+			perfMonitor.initProfiler("render");
 
 			var data = [];
-
-			var propsDbname = {className: 'dbname'},
-				propsQueryCount = {className: 'query-count'},
-				propsPopoverLeft = {className: 'popover left'},
-				propsPopoverContent = {className: 'popover-content'},
-				propsArrow = {className: 'arrow'},
-				propsTable = {className: 'table table-striped latest-data'};
-
-			var emptyObj = {};
-
-			var arrowDiv = {
-				nodeType: 1,
-				type: 'div',
-				props: {className: 'arrow'},
-				children: []
-			}
+			var VElement = dio.VElement;
+			var VText = dio.VText;
 
 			var DBMon = dio.createClass({
 				render: function() {
@@ -263,112 +250,40 @@
 						var db = data[i];
 						var children = new Array(7);
 
-						children[0] = {
-							nodeType: 1,
-							type: 'td',
-							props: propsDbname,
-							children:
-							[
-								{
-									nodeType: 3,
-									type: 'text',
-									props: emptyObj,
-									children: db.dbname
-								}
-							]
-						}
+						children[0] = VElement('td', {className: 'dbname'}, [
+							VText(db.dbname)
+						]);
 
-						children[1] = {
-							nodeType: 1,
-							type: 'td',
-							props: propsQueryCount,
-							children: [
-								{
-									nodeType: 1,
-									type: 'span',
-									props: {className: db.lastSample.countClassName},
-									children:
-									[
-										{
-											nodeType: 3,
-											type: 'text',
-											props: emptyObj,
-											children: db.lastSample.nbQueries
-										}
-									]
-								}
-							]
-						}
+						children[1] = VElement('td', {className: 'query-count'}, [
+							VElement('span', {className: db.lastSample.countClassName}, [
+								VText(db.lastSample.nbQueries)
+							])
+						]);
 
 						var topFiveQueries = db.lastSample.topFiveQueries;
 
 						for (var j = 0, len = topFiveQueries.length; j < len; j = j + 1) {
 							var query = topFiveQueries[j];
 
-							children[j+2] = {
-								nodeType: 1,
-								type: 'td',
-								props: {key: j, className: query.elapsedClassName},
-								children: [
-									{
-										nodeType: 3,
-										type: 'text',
-										props: emptyObj,
-										children: query.formatElapsed
-									},
-									{
-										nodeType: 1,
-										type: 'div',
-										props: propsPopoverLeft,
-										children: [
-											{
-												nodeType: 1,
-												type: 'div',
-												props: propsPopoverContent,
-												children: [
-													{
-														nodeType: 3,
-														type: 'text',
-														props: emptyObj,
-														children: query.query
-													}
-												]
-											},
-											arrowDiv
-										]
-									}
-								]
-							};
+							children[j+2] = VElement('td', {className: query.elapsedClassName}, [
+								VText(query.formatElapsed),
+								VElement('div', {className: 'popover left'}, [
+									VElement('div', {className: 'popover-content'}, [VText(query.query)]),
+									VElement('div', {className: 'arrow'}, null)
+								])
+							])
 						}
 
-						$children[i] = {
-							nodeType: 1,
-							type: 'tr',
-							props: {key: db.dbname},
-							children: children
-						}
+						$children[i] = VElement('tr', null, children);
 					}
 
-					return {
-						nodeType: 1,
-						type: 'div',
-						props: emptyObj,
-						children: [
-							{
-								nodeType: 1,
-								type: 'table',
-								props: propsTable,
-								children: [
-									{
-										nodeType: 1,
-										type: 'tbody',
-										props: emptyObj,
-										children: $children
-									}	
-								]
-							}
-						]
-					}
+					return (
+						VElement('div', null, [
+							VElement('table', {className: 'table table-striped latest-data'}, [
+								VElement('tbody', null, $children)
+							])
+						])
+					);
 				}
 			});
 			
@@ -376,10 +291,10 @@
 
 			function update() {
 				data = ENV.generateData().toArray();
-				perfMonitor.startProfile("render")
+				perfMonitor.startProfile("render");
 				render();
-				perfMonitor.endProfile("render")
-				setTimeout(update, ENV.timeout)
+				perfMonitor.endProfile("render");
+				requestAnimationFrame(update, ENV.timeout);
 			}
 
 			update();

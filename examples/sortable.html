@@ -5,7 +5,7 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Sortable List Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="/dio.min.js"></script>
+		<script src="/dio.js"></script>
 		<style>
 			* {box-sizing: border-box;}
 			body {
@@ -60,6 +60,7 @@
 			      		this.dragged = Number(e.currentTarget.dataset.id);
 			      		e.dataTransfer.effectAllowed = 'move';
 			      		e.dataTransfer.setData('text/html', null);
+			      		this.forceUpdate();
 				    },
 				    dragOver: function(e) {
 			      		e.preventDefault();
@@ -73,37 +74,42 @@
 			      		var colors = this.items.colors();
 			      		colors.splice(to, 0, colors.splice(from, 1)[0]);
 			      		this.sort(colors, to);
+			      		this.forceUpdate();
 				    },
 				    dragEnd: function(e) {
 				        this.sort(this.items.colors(), undefined);
+				        this.forceUpdate();
 				    },
 					render: function (props, state, self) {
-					    return h('div.drag-n-drop', [
-						        h('ol',
+					    return (
+					    	h('div.drag-n-drop', 
+					    		h('ol',
 					          		this.items.colors().map(function(item, i) {
 					            		var dragging = (i == this.items.dragging()) ? 'dragging' : '';
 
 					            		return h('li', {
+					            			key: i,
 						                	'data-id': i,
 						                	class: dragging,
 						                	draggable: 'true',
 						                	ondragstart: this.dragStart.bind(this),
 						                	ondragover: this.dragOver.bind(this),
 						                	ondragend: this.dragEnd.bind(this, self)
-					            		}, [item]);
+					            		}, item);
 					          		}, this)
 								),
-					      		h('pre', ['App State:' + JSON.stringify(this.items,0,2)])
-					    ]);
+					      		h('pre', 'App State:' + JSON.stringify(this.items,0,2))
+					    	)
+				    	);
 					}
 				};
 			};
 
 			var render = dio.render(h(Sortable), '.container');
 
-			setInterval(function (){
-				render();
-			}, 1000/60);
+			// setInterval(function (){
+				// render();
+			// }, 1000/60);
 		</script>
 	</body>
 </html>

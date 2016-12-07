@@ -1,3 +1,8 @@
+## 3.4.1 (November 29, 2016)
+
+- handle setting a style property to false i.e `style.color = state.id && "red"` to remove it
+- improve stylesheet compiler.
+
 ## 3.4.0 (November 27, 2016)
 
 - improve stylesheet compiler

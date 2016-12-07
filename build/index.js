@@ -39,7 +39,6 @@ var regexImport = new RegExp(
 	),
 	'gm'
 );
-// /^.*?(?:import)[\t ]+(?:'|")(.*?)(?:'|")(?: as (.[^;]*).*|.*)|^.*?(?:import)[\t ]+(.*?)[\t ]from[\t ](?:'|")(.*)(?:'|").*/gm
 
 var regexImport1 = /^.*?(?:import)[\t ]+(?:'|")(.*?)(?:'|")(?: as (.[^;]*).*|.*)/gm;
 
@@ -92,10 +91,11 @@ function random (length) {
 
 
 // resolve imports
-function resolve (directory, template, imported) {
+function resolve (directory, template, imported, parent) {
 	// replace all require/import lines with the resolved import/file
-	// return template.replace(regexImport, function (match, filepath, namespace) {
 	return template.replace(regexImport, function (match, group1, group2, group3, group4) {
+		match = match.trim();
+
 		var type;
 		var filepath;
 		var namespace;
@@ -129,15 +129,20 @@ function resolve (directory, template, imported) {
 			}
 		}
 
+		// if directory
+		if (filepath[filepath.length-1] === '/') {
+			parent   = filepath;
+			filepath = path.join(filepath, '/index.js');
+		}
 		// if no file extension
 		// the default is assumed to be a js file
 		// thus 'module-name' is converted to 'module-name.js'
-		if (filepath.indexOf('.') === -1) {
-			filepath += '.js';
+		else if (filepath.indexOf('.') === -1) {
+			filepath = path.join(parent, filepath+'.js');
 		}
 
 		// resolve filepath
-		var filepath = normalize(directory+filepath);
+		var filepath = normalize(path.join(directory, filepath));
 
 		// get number of tabs at the beginning of a line
 		var tabs = match.match(regexTab)[0];
@@ -151,10 +156,13 @@ function resolve (directory, template, imported) {
 		// if a file has already been imported, this will register something
 		var alias = imported[filepath];
 
-		// ignore comments, and only import once per file
-		if ((commentIndex > -1 && commentIndex < captureIndex) || alias) {
-			
-			if (type < 3 && namespace && alias && alias !== true) {
+		// ignore comments
+		if (commentIndex === 0) {
+			content = namespace;
+		}
+		// only import once per file
+		else if (alias) {
+			if (type < 3 && namespace && alias !== true) {
 				content = 'var ' + namespace + ' = ' + alias + ';';
 			} else if (type !== 2) {
 				content = namespace;
@@ -254,7 +262,7 @@ function resolve (directory, template, imported) {
 
 			// recursive try to resolve any imports from sub file, 
 			// then append tabs to match indent style
-			content = resolve(directory, content, imported);
+			content = resolve(directory, content, imported, parent);
 		}
 
 		if (content) {
@@ -320,7 +328,7 @@ function build (directory, destination, filepath) {
 	test(content, filepath);
 
 	// resolve(recursively)
-	var output = resolve(directory, content, imported);
+	var output = resolve(directory, content, imported, '');
 
 	// write to filesystem(destination) when done
 	fs.writeFileSync(destination, output, 'utf8');
@@ -365,25 +373,26 @@ function bootstrap (directory, destination, entry) {
 	console.log('\n  ...watching for changes in ./src\n');
 
 	// start watching directory
-	fs.watch(directory, function (event, filename) {
-		// keep track of build time
-		var start = Date.now();
+	// fs.watch(directory, function (event, filename) {
+	// 	// keep track of build time
+	// 	var start = Date.now();
 
-	    try {
-	    	// build
-	    	build(directory, destination, entry);
-	    	// report build complete
-	    	report(start, filename, event);
-	    } catch (error) {
-	    	console.log(error);
-	    }
-	});
+	//     try {
+	//     	// build
+	//     	build(directory, destination, entry);
+	//     	// report build complete
+	//     	report(start, filename, event);
+	//     } catch (error) {
+	//     	console.log(error);
+	//     }
+	// });
 }
 
 
 if (require.main === module) {
 	// used via command line
 	var argv = process.argv.splice(2);
+
 	bootstrap(argv[0], argv[1], argv[2]);
 } else {
 	// used via require()

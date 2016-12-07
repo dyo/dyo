@@ -33,15 +33,15 @@ Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.4.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/3.4.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/3.4.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/3.4.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@3.4.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@3.4.1/dio.min.js></script>
 ```
 
 #### bower
@@ -244,19 +244,24 @@ class Component extends dio.Component {
 	}
 }
 
-// examples
+// examples, with an object, binding this to methods is auto managed with this method
 var myComponent = dio.createClass({
 	render: () => { return h('div') }
 });
 
-// with a function
+// with a function, binding this to methods is auto managed with this method
 var myComponent = dio.createClass(function () {
 	return {
 		render: () => { return h('div') }
 	};
 });
 
-// with a class
+// with a function constructor, binding this to methods is self managed with this method
+var myComponent = dio.createClass(function () {
+	this.render = () => { return h('div') };
+});
+
+// with a class, binding this to methods is self managed with this method
 class myComponent extends dio.Component {
 	render() {
 		return h('div')

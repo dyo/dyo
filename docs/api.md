@@ -140,19 +140,24 @@ class Component extends dio.Component {
 	}
 }
 
-// examples
+// examples, with an object, binding this to methods is auto managed with this method
 var myComponent = dio.createClass({
 	render: () => { return h('div') }
 });
 
-// with a function
+// with a function, binding this to methods is auto managed with this method
 var myComponent = dio.createClass(function () {
 	return {
 		render: () => { return h('div') }
 	};
 });
 
-// with a class
+// with a function constructor, binding this to methods is self managed with this method
+var myComponent = dio.createClass(function () {
+	this.render = () => { return h('div') };
+});
+
+// with a class, binding this to methods is self managed with this method
 class myComponent extends dio.Component {
 	render() {
 		return h('div')

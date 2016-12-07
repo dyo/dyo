@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<title>uibench (Dio.js)</title>
+		<!-- <link rel="stylesheet" href="https://localvoid.github.io/uibench-base/0.1.0/styles.css"> -->
+		<link rel="stylesheet" href="/styles.css">
+		<!-- <script src="https://localvoid.github.io/uibench-base/0.1.0/uibench.js"></script> -->
+		<script src="/uibench.js"></script>
+		<script src="/dio.js"></script>
+	</head>
+	<body>
+		<div id="App"></div>
+
+		<script>
+			var VElement = dio.VElement;
+			var VText = dio.VText;
+			var VComponent = dio.VComponent;
+			var render = dio.render;
+			var Component = dio.Component;
+
+			class TableCell extends Component {
+				constructor(props) {
+					super(props);
+					this.onClick = this.onClick.bind(this);
+				}
+
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.text !== nextProps.text;
+				}
+
+				onClick(e) {
+					console.log('Clicked' + this.props.text);
+					e.stopPropagation();
+				}
+
+				render() {
+					return VElement('td', {className: 'TableCell', onClick: this.onClick}, [VText(this.props.text)]);
+				}
+			}
+
+			class TableRow extends Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const { data } = this.props;
+
+					const classes = (data.active) ? 'TableRow active' : 'TableRow';
+					const cells = data.props;
+					const length = cells.length;
+					const children = new Array(length+1);
+
+					children[0] = VComponent(TableCell, {text: '#' + data.id}, []);
+
+					for (let i = 0; i < length; i++) {
+			      		children[i+1] = VComponent(TableCell, {key: i, text: cells[i]}, []);
+				    }
+
+					return VElement('tr', {className: classes, 'data-id': data.id}, children);
+				}
+			}
+
+			class Table extends Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const items = this.props.data.items;
+			    	const length = items.length;
+			    	const children = new Array(length);
+
+		    		for (let i = 0; i < length; i = i + 1) {
+		    			const item = items[i];
+						children[i] = VComponent(TableRow, {key: item.id, data: item}, []);
+		    		}
+
+			    	return VElement('table', {className: 'Table'}, [VElement('tbody', null, children)]);
+				}
+			}
+
+			class AnimBox extends Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const { data } = this.props;
+			    	const time = data.time;
+		    		const style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+');';
+
+		    		return VElement('div', {className: 'AnimBox', 'data-id': data.id, style: style}, []);
+				}
+			}
+
+			class Anim extends Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const items = this.props.data.items;
+
+			    	const length = items.length;
+		    		const children = new Array(length);
+
+		    		for (let i = 0; i < length; i = i + 1) {
+		    			const item = items[i];
+		      			children[i] = VComponent(AnimBox, {key: item.id, data: item}, []);
+		    		}
+
+		    		return VElement('div', {className: 'Anim'}, children);
+				}
+			}
+
+			class TreeLeaf extends Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					return VElement('li', {className: 'TreeLeaf'}, [VText(this.props.data.id)]);
+				}
+			}
+
+			class TreeNode extends Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+				    const { data } = this.props;
+				    const _children = data.children;
+					const length = _children.length;
+					const children = new Array(length);
+
+					for (let i = 0; i < length; i++) {
+						const n = _children[i];
+						if (n.container) {
+							children[i] = VComponent(TreeNode, {key: n.id, data: n}, []);
+						} else {
+							children[i] = VComponent(TreeLeaf, {key: n.id, data: n}, []);
+						}
+					}					
+
+					return VElement('ul', {className: 'TreeNode'}, children);
+				}
+			}
+
+			class Tree extends Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					return VElement('div', {className: 'Tree'}, 
+						[
+							VComponent(TreeNode, {data: this.props.data.root}, [])
+						]
+					)
+				}
+			}
+
+			class Main extends Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const { data } = this.props;
+					const location = data.location;
+					const children = [];
+
+					var section = null;
+
+					if (location === 'table') {
+						section = VComponent(Table, {data: data.table}, []);
+					} else if (location === 'anim') {
+						section = VComponent(Anim, {data: data.anim}, []);
+					} else if (location === 'tree') {
+						section = VComponent(Tree, {data: data.tree}, []);
+					}
+
+					if (section !== null) {
+						children[0] = section;
+					}
+
+					return VElement('div', {className: 'Main'}, children);
+				}
+			}
+
+			uibench.init('DIO', dio.version);
+
+			document.addEventListener('DOMContentLoaded', function(e) {
+				const container = document.querySelector('#App');
+				const _render = render(VComponent(Main, {data: {}}, null), container);
+
+				uibench.run(
+					function(state) {
+						_render({data: state});
+					},
+					function(samples) {
+						render(VElement('pre', null, [ VText(JSON.stringify(samples, null, ' ')) ]), container);
+					}
+				);
+			});
+		</script>
+	</body>
+</html>

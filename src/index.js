@@ -4,8 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * Dio.js is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework. 
- * https://github.com/thysultan/dio.js
+ * Dio is a fast (~8kb) Virtual DOM framework
  * 
  * @licence MIT
  */
@@ -18,24 +17,87 @@
 		window.dio = factory(window);
 	}
 }(function (window) {
-	'use strict';
+
+
+'use strict';
 	
 
-	import 'constants.js';
-	import 'utilities.js';
-	import 'element.js';
-	import 'render.js';
-	import 'renderToString.js';
-	import 'renderToCache.js';
-	import 'renderToStream.js';
-	import 'hydrate.js';
-	import 'component.js';
-	import 'stylesheet.js';
-	import 'PropTypes.js';
-	import 'stream.js';
-	import 'request.js';
-	import 'router.js';
-	import 'store.js';
-	import 'animate.js';
-	import 'bootstrap.js';
+import 'Constants/';
+import 'Utilities/';
+import 'Element/';
+import 'Component/';
+import 'Render/';
+import 'DOM/';
+import 'SSR/';
+import 'Stream/';
+import 'HTTP/';
+import 'Router/';
+import 'Store/';
+
+
+/**
+ * ---------------------------------------------------------------------------------
+ * 
+ * exports
+ * 
+ * ---------------------------------------------------------------------------------
+ */
+
+
+if (browser) {
+	window.h = createElement;
+}
+
+return {
+	// elements
+	createElement:    createElement,
+	isValidElement:   isValidElement,
+	cloneElement:     cloneElement,
+	createFactory:    createFactory,
+
+	VText:            VText,
+	VElement:         VElement,
+	VSvg:             VSvg,
+	VFragment:        VFragment,
+	VComponent:       VComponent,
+
+	DOM:              DOM,
+
+	// render
+	render:           render,
+	renderToString:   renderToString,
+	renderToStream:   renderToStream,
+	renderToCache:    renderToCache,
+
+	// components
+	Component:        Component,
+	createClass:      createClass,
+
+	// stores
+	createStore:      createStore,
+	applyMiddleware:  applyMiddleware,
+	combineReducers:  combineReducers,
+	
+	// http
+	request:          http(),
+	router:           router,
+	
+	// utilities
+	stream:           stream,
+	stylis:           stylis,
+	escape:           escape,
+	panic:            panic,
+	sandbox:          sandbox,
+	compose:          compose,
+	random:           random,
+	defer:            defer,
+
+	// version
+	version:          version,
+
+	// alias
+	h:                createElement,
+};
+
+
 }));
