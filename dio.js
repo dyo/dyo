@@ -38,7 +38,6 @@ var version      = '4.0.0';
 var document     = window.document || null;
 var browser      = document !== null;
 var server       = browser === false;
-var development  = server && process.env.NODE_ENV === 'development';
 
 var readable     = server ? require('stream').Readable : null;
 
@@ -539,7 +538,7 @@ function createElement (type, props) {
 
 		// special type, i.e [type] | div.class | #id
 		if ((type.indexOf('.') > -1 || type.indexOf('[') > -1 || type.indexOf('#') > -1)) {
-			parseVNodeType(type, props || {}, element);
+			parseType(type, props || {}, element);
 		}
 
 		// if props.xmlns is undefined  and type === svg|math 
@@ -1449,26 +1448,6 @@ function patch (newNode, oldNode) {
 
 
 /**
- * register key for keyed updates
- * 
- * @param  {VNode}  vnode
- * @param  {number} index
- * @param  {string} keys
- */
-function registerKey (vnode, index, keys) {
-	if (vnode.nodeType !== 0) {
-		var key = vnode.props.key;
-
-		keys[key] = {
-			index: index,
-			vnode: vnode,
-			key: key
-		}
-	}
-}
-
-
-/**
  * handles diff props
  * 
  * @param  {Object} node
@@ -2012,28 +1991,6 @@ function appendNode (newNode, parentNode, nextNode) {
 	
 	if (newNode._owner && newNode._owner.componentDidMount) {
 		newNode._owner.componentDidMount();
-	}
-}
-
-
-/**
- * append/insert node
- * 
- * @param {number} index        
- * @param {number} oldLength    
- * @param {Object} newNode      
- * @param {Node}   parentElement
- * @param {Node}   newElement   
- * @param {Object} oldNode 
- */
-function addNode (index, oldLength, parent, newElement, newNode, oldNode) {
-	// append/insert
-	if (index > (oldLength - 1)) {
-		// append node to the dom
-		appendNode(newNode, parent, newElement);
-	} else {
-		// insert node to the dom at an specific position
-		insertNode(newNode, oldNode, parent, newElement);
 	}
 }
 
@@ -2636,7 +2593,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 						// push middlwares
 						for (var i = 0; i < middlwares; i++) {
-							stack[stack.length] = middlware;
+							stack[stack.length] = middleware;
 						}
 					}
 				}

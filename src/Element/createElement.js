@@ -57,7 +57,7 @@ function createElement (type, props) {
 
 		// special type, i.e [type] | div.class | #id
 		if ((type.indexOf('.') > -1 || type.indexOf('[') > -1 || type.indexOf('#') > -1)) {
-			parseVNodeType(type, props || {}, element);
+			parseType(type, props || {}, element);
 		}
 
 		// if props.xmlns is undefined  and type === svg|math 

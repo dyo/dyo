@@ -178,7 +178,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 						// push middlwares
 						for (var i = 0; i < middlwares; i++) {
-							stack[stack.length] = middlware;
+							stack[stack.length] = middleware;
 						}
 					}
 				}

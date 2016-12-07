@@ -216,23 +216,3 @@ function patch (newNode, oldNode) {
 	return 0;
 }
 
-
-/**
- * register key for keyed updates
- * 
- * @param  {VNode}  vnode
- * @param  {number} index
- * @param  {string} keys
- */
-function registerKey (vnode, index, keys) {
-	if (vnode.nodeType !== 0) {
-		var key = vnode.props.key;
-
-		keys[key] = {
-			index: index,
-			vnode: vnode,
-			key: key
-		}
-	}
-}
-

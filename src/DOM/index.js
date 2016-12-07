@@ -114,28 +114,6 @@ function appendNode (newNode, parentNode, nextNode) {
 
 
 /**
- * append/insert node
- * 
- * @param {number} index        
- * @param {number} oldLength    
- * @param {Object} newNode      
- * @param {Node}   parentElement
- * @param {Node}   newElement   
- * @param {Object} oldNode 
- */
-function addNode (index, oldLength, parent, newElement, newNode, oldNode) {
-	// append/insert
-	if (index > (oldLength - 1)) {
-		// append node to the dom
-		appendNode(newNode, parent, newElement);
-	} else {
-		// insert node to the dom at an specific position
-		insertNode(newNode, oldNode, parent, newElement);
-	}
-}
-
-
-/**
  * create element
  * 
  * @param  {Object}  subject

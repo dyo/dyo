@@ -14,7 +14,6 @@ var version      = '4.0.0';
 var document     = window.document || null;
 var browser      = document !== null;
 var server       = browser === false;
-var development  = server && process.env.NODE_ENV === 'development';
 
 var readable     = server ? require('stream').Readable : null;
 
