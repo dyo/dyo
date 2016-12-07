@@ -94,7 +94,7 @@ zep(['../dio.js'], function (utili, deps) {
 		);
 	});
 
-	describe('dio.stream', function(assert) {
+	describe('dio.stream', function(assert, done) {
 		var foo = dio.stream(3);
 		var bar = dio.stream(2);
 		var faz = dio.stream('string');
@@ -105,33 +105,22 @@ zep(['../dio.js'], function (utili, deps) {
 		var fooMap = foo.map(function (value) {
 			return value + 10;
 		});
-		
-		var combine = dio.stream.combine(function (a, b) {
-			return a() + b();
-		}, [foo, bar]);
 
-		var combinePrev = dio.stream.combine(function (a, b, prev) {
-			spye(prev);
-			return a();
-		}, [foo, bar]);
+		var fn = spy();
 
-		var fn  = spy();
-
-		the.then(fn);
+		the.then(function () {
+			fn();
+			assert(fn.called, 'stream.then()');
+			done();
+		});
 
 		the('changed');
 
 		foo(2);
-
-		combinePrev();
-		combinePrev();
 		
 	    assert(foo() + bar() === 4, '.stream()');
 	    assert(pro() === 100, '.stream(__, processor)');
-	    assert(combine() === 4, '.stream.combine()');
 	    assert(fooMap() === 12, 'stream.map()' );
-	    assert(fn.called, 'stream.then()');
-	    assert(spye.called[1][0] === 2, '.combine(fn(a,b, prevValue))');
 	});
 
 	describe('dio.renderToString', function (assert) {

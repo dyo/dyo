@@ -16,7 +16,7 @@ function parseType (type, props, element) {
 	element.type = 'div';
 
 	// if undefined, create and cache RegExp
-	if (parseVNodeType.regEx === void 0) {
+	if (parseType.regEx === void 0) {
 		regEx = parseType.regEx = new RegExp(
 			'(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|\'|)((?:\\\\[\"\'\\]]|.)*?)\\5)?\\])',
 			'g'
