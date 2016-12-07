@@ -17,12 +17,12 @@ function parseType (type, props, element) {
 
 	// if undefined, create and cache RegExp
 	if (parseVNodeType.regEx === void 0) {
-		regEx = parseVNodeType.regEx = new RegExp(
+		regEx = parseType.regEx = new RegExp(
 			'(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|\'|)((?:\\\\[\"\'\\]]|.)*?)\\5)?\\])',
 			'g'
 		);
 	} else {
-		regEx = parseVNodeType.regEx;
+		regEx = parseType.regEx;
 	}
 
 	// execute RegExp, iterate matches
