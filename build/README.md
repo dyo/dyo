@@ -4,7 +4,7 @@
 npm run build
 ```
 
-Will bundle everything in ./src into dio.js ~~and watch for changes in the ./src that will update dio.js~~
+Will bundle everything in `./src` into dio.js and watch for changes in `./src` that will update `dio.js`
 
 ## How it works
 
@@ -30,7 +30,7 @@ render will get imported once the first time it is imported in `filename1.js`
 ## Exports
 
 using `export default` or `export` with `import 'file.js' as variable` wraps the imported file in an IIFE 
-`(function () { /* file.js */ }())` that retuns the exporsts thus replacing
+`(function () { /* file.js */ }())` that retuns the exports thus replacing
 `import 'file.js' as variable` with `var variable = (function () { /* file.js */ return {...exports}; }());`
 
 for example

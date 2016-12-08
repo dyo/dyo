@@ -5,7 +5,7 @@
  * @param  {Object} props
  * @return {Object} 
  */
-function extractVNode (subject) {		
+function extractVNode (subject) {	
 	// static node
 	if (subject.nodeType !== 2) {
 		return subject;

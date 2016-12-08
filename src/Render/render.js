@@ -5,55 +5,48 @@
  * @param  {Node|string}       target
  * @return {function}
  */
-function render (subject, target, callback) {
+function render (subject, target) {
 	// renderer
 	function reconciler (props) {
-	if (initial) {
-		// dispatch mount
-		mount(element, node);
+		if (initial) {
+			// dispatch mount
+			mount(element, node);
 
-		// register mount has been dispatched
-		initial = false;
+			// register mount has been dispatched
+			initial = false;
 
-		// assign component
-		if (component === null) { 
-			component = node._owner;
-		}
-	} else {
-		// update props
-		if (props !== void 0) {
-			if (
-				component.shouldComponentUpdate !== void 0 && 
-				component.shouldComponentUpdate(props, component.state) === false
-			) {
-				return reconciler;
+			// assign component
+			component === null && (component = node._owner);
+		} else {
+			// update props
+			if (props !== void 0) {
+				if (
+					component.shouldComponentUpdate !== void 0 && 
+					component.shouldComponentUpdate(props, component.state) === false
+				) {
+					return reconciler;
+				}
+
+				component.props = props;
 			}
 
-			component.props = props;
+			// update component
+			component.forceUpdate();
 		}
-
-		// update component
-		component.forceUpdate();
-	}
 
 		return reconciler;
 	}
 
 	var component = null;
 	var node = null;
-   var element = null;
+	var element = null;
 
 	if (subject.render !== void 0) {
 		// create component from object
 		node = VComponent(createClass(subject));
 	} else if (subject.type === void 0) {
-		// normalization
-		if (subject.constructor === Array) {
-		// fragment array
-			node = createElement('@', null, subject);	   			
-		} else {
-			node = VComponent(subject);
-		}
+		// fragment/component
+		node = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
 	} else {
 		node = subject;
 	}
@@ -69,7 +62,7 @@ function render (subject, target, callback) {
 	  element = target;
    } else {
 	  // target might be a selector
-	  target = document.querySelector(subject);
+	  target = document.querySelector(target);
 
 	  // default to document.body if no match/document
 	  element = (target === null || target === document) ? document.body : target;
@@ -90,15 +83,9 @@ function render (subject, target, callback) {
 		initial = false;
 
 		// assign component
-		if (component === null) {
-			component = node._owner; 
-		}
+		component === null && (component = node._owner); 
 	} else {
 		reconciler();
-	}
-
-	if (typeof callback === 'function') {
-		callback();
 	}
 
 	return reconciler;

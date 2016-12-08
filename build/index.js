@@ -390,6 +390,8 @@ function bootstrap (directory, destination, entry) {
 	    }
 	}
 
+	fs.watch(directory, watcher);
+
 	// start watching directories
 	walk(directory, function (filepath) {
 		fs.watch(filepath, watcher);

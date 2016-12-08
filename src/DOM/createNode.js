@@ -51,14 +51,14 @@ function createNode (subject, component, namespace) {
 				}
 			}
 
-			if (props !== objEmpty) {
-				// diff and update/add/remove props
-				assignProps(element, props, false);
-			}
-
 			// vnode has component attachment
 			if (subject._owner != null) {
 				(component = subject._owner)._vnode._node = element;
+			}
+
+			if (props !== objEmpty) {
+				// diff and update/add/remove props
+				assignProps(element, props, false, component || null);
 			}
 
 			if (length !== 0) {

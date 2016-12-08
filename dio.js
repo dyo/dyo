@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * Dio is a fast (~8kb) Virtual DOM framework
+ * dio is a fast (~8kb) Virtual DOM framework
  * 
  * @licence MIT
  */
@@ -20,7 +20,7 @@
 
 
 'use strict';
-	
+
 
 /**
  * ---------------------------------------------------------------------------------
@@ -696,47 +696,6 @@ function retrieveVNode (subject) {
 
 
 /**
- * ---------------------------------------------------------------------------------
- * 
- * component
- * 
- * ---------------------------------------------------------------------------------
- */
-
-
-/**
- * component class
- * 
- * @param {Object=} props
- */
-function Component (props) {
-	if (props) {
-		// componentWillReceiveProps lifecycle
-		this.componentWillReceiveProps && this.componentWillReceiveProps(props); 
-		// assign props
-		this.props = props;
-	} else {
-		this.props = this.props || (this.getDefaultProps && this.getDefaultProps()) || {};
-	}
-
-	this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
-	this.refs = this._vnode = null;
-}
-
-
-/**
- * component prototype
- * 
- * @type {Object}
- */
-Component.prototype = Object.create(null, {
-	setState: { value: setState },
-	forceUpdate: { value: forceUpdate },
-	withAttr: { value: withAttr }
-});
-
-
-/**
  * set state
  * 
  * @param {Object}    newState
@@ -757,6 +716,28 @@ function setState (newState, callback) {
 	// callback, call
 	if (callback !== void 0) {
 		callback(this.state);
+	}
+}
+
+
+/**
+ * bindState
+ * 
+ * @param  {string}   property
+ * @param  {string}   attr
+ * @param  {boolean=} preventUpdate
+ * @return {function}           
+ */
+function bindState (property, attr, preventUpdate) {
+	var component = this;
+
+	return function (e) {
+		var target = e.currentTarget;
+		var value  = attr in target ? target[attr] : target.getAttribute(attr);
+
+		component.state[property] = value;
+
+		!preventUpdate && component.forceUpdate();
 	}
 }
 
@@ -785,149 +766,75 @@ function forceUpdate () {
 
 
 /**
- * withAttr
+ * ---------------------------------------------------------------------------------
  * 
- * @param  {(any[]|string)}      props
- * @param  {function[]|function} setters
- * @param  {function=}           callback
- * @return {function=}           
+ * component
+ * 
+ * ---------------------------------------------------------------------------------
  */
-function withAttr (props, setters, callback) {
-	var component = this, isarray = typeof props === 'object';
-
-	return function () {
-		// array of bindings
-		if (isarray) {
-			for (var i = 0, length = props.length; i < length; i++) {
-				updateAttr(this, props[i], setters[i]);
-			}
-		} else {
-			updateAttr(this, props, setters);
-		}
-
-		callback ? callback(component) : component.forceUpdate();
-	}
-}
 
 
 /**
- * withAttr(update attribute)
+ * component class
  * 
- * @param  {Node}           target
- * @param  {(string|any[])} prop
- * @param  {function}       setter
+ * @param {Object=} props
  */
-function updateAttr (target, prop, setter) {
-	var value;
-
-	if (typeof prop === 'string') {
-		value = prop in target ? target[prop] : target.getAttribute(prop);
-
-		if (value != null) { 
-			setter(value); 
-		}
+function Component (props) {
+	if (props) {
+		// componentWillReceiveProps lifecycle
+		this.componentWillReceiveProps && this.componentWillReceiveProps(props); 
+		// assign props
+		this.props = props;
 	} else {
-		value = prop();
-		
-		if (value != null) {
-			setter in target ? target[setter] = value : target.setAttribute(setter, value);
-		}
+		this.props = this.props || (this.getDefaultProps && this.getDefaultProps()) || {};
 	}
+
+	this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
+	this.refs = this._vnode = this._cache = null;
 }
 
 
 /**
- * create component
+ * component prototype
+ * 
+ * @type {Object}
+ */
+Component.prototype = Object.create(null, {
+	setState:    { value: setState },
+	forceUpdate: { value: forceUpdate },
+	bindState:   { value: bindState }
+});
+
+
+/**
+ * create class
  * 
  * @param  {(Object|function)} subject
  * @return {function}
  */
 function createClass (subject) {
-	// component cache
 	if (subject._component) {
-		return subject._component;
-	}
-
-	var func = typeof subject === 'function';
-
-	var shape = func ? (subject.prototype = Component.prototype, new subject(Component)) : subject;
-	var isconstuct = shape.constructor !== Object;
-
-	if (shape.nodeType) {
-		var vnode = shape; shape = { render: function () { return vnode; } };
-	}
-	
-	// we want to allow 2 type of function constructors
-	// 1. one that returns an object `{...}`
-	// 2. one that returns an instance `this[method] = ...`
-	if (func && isconstuct) {
-		// returns an instance, let the constructor handle binding
-		var component = function createClass (props) { Component.call(this, props); };
-		component.prototype = shape;
+		// cache
+		return subject._component; 
 	} else {
-		// to avoid mutating Component.prototype we add it to the prototype chain
-		var prototype = Object.create(Component.prototype);
+		var func      = typeof subject === 'function';
+		var shape     = func ? subject() : subject;
+		var construct = shape.hasOwnProperty('constructor');
 
-		// returns a object
-		var component = function createClass (props) { Component.call(this, props), bind(this); }
-
-		var methods = [];
-		var length = 0;
-		var auto = true;
-
-		var bind = function (ctx) {
-			var i = length;
-
-			while (i--) {
-				var name = methods[i];
-
-				ctx[name] = ctx[name].bind(ctx);
-			}
+		function component (props) {
+			construct && this.constructor(props);
+			Component.call(this, props); 
 		}
 
-		each(shape, function (value, name) {
-			if (name !== 'statics') {
-				prototype[name] = value;
+		component.prototype             = shape;
+		component.prototype.bindState   = Component.prototype.bindState;
+		component.prototype.setState    = Component.prototype.setState;
+		component.prototype.forceUpdate = Component.prototype.forceUpdate;
 
-				if (
-					auto && typeof 
-					value === 'function' &&
-					name !== 'render' && 
-					name !== 'stylesheet' && 
-					name !== 'getInitialState' && 
-					name !== 'getDefaultProps' && 
-					name !== 'shouldComponentUpdate' &&
-					name !== 'componentWillReceiveProps' &&
-					name !== 'componentWillUpdate' &&
-					name !== 'componentDidUpdate' &&
-					name !== 'componentWillMount' &&
-					name !== 'componentDidMount' &&
-					name !== 'componentWillUnmount'
-				) {
-					methods[length++] = name;
-				}
-			}
-		});
+		func && (subject._component = component);
 
-		component.prototype = prototype;
-		prototype.constructor = component;
+		return component.constructor = component;
 	}
-
-	if (isconstuct === false) {
-		component.constructor = component;
-	}
-
-	if (func) {
-		subject._component = component;
-	}
-
-	if (shape.statics) {
-		each(shape.statics, function (value, name) {
-			(shape === subject ? component : subject)[name] = value;
-		});
-	}
-
-	return component;
 }
 
 
@@ -1023,55 +930,48 @@ function hydrate (element, newNode, index, parentNode) {
  * @param  {Node|string}       target
  * @return {function}
  */
-function render (subject, target, callback) {
+function render (subject, target) {
 	// renderer
 	function reconciler (props) {
-	if (initial) {
-		// dispatch mount
-		mount(element, node);
+		if (initial) {
+			// dispatch mount
+			mount(element, node);
 
-		// register mount has been dispatched
-		initial = false;
+			// register mount has been dispatched
+			initial = false;
 
-		// assign component
-		if (component === null) { 
-			component = node._owner;
-		}
-	} else {
-		// update props
-		if (props !== void 0) {
-			if (
-				component.shouldComponentUpdate !== void 0 && 
-				component.shouldComponentUpdate(props, component.state) === false
-			) {
-				return reconciler;
+			// assign component
+			component === null && (component = node._owner);
+		} else {
+			// update props
+			if (props !== void 0) {
+				if (
+					component.shouldComponentUpdate !== void 0 && 
+					component.shouldComponentUpdate(props, component.state) === false
+				) {
+					return reconciler;
+				}
+
+				component.props = props;
 			}
 
-			component.props = props;
+			// update component
+			component.forceUpdate();
 		}
-
-		// update component
-		component.forceUpdate();
-	}
 
 		return reconciler;
 	}
 
 	var component = null;
 	var node = null;
-   var element = null;
+	var element = null;
 
 	if (subject.render !== void 0) {
 		// create component from object
 		node = VComponent(createClass(subject));
 	} else if (subject.type === void 0) {
-		// normalization
-		if (subject.constructor === Array) {
-		// fragment array
-			node = createElement('@', null, subject);	   			
-		} else {
-			node = VComponent(subject);
-		}
+		// fragment/component
+		node = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
 	} else {
 		node = subject;
 	}
@@ -1087,7 +987,7 @@ function render (subject, target, callback) {
 	  element = target;
    } else {
 	  // target might be a selector
-	  target = document.querySelector(subject);
+	  target = document.querySelector(target);
 
 	  // default to document.body if no match/document
 	  element = (target === null || target === document) ? document.body : target;
@@ -1108,15 +1008,9 @@ function render (subject, target, callback) {
 		initial = false;
 
 		// assign component
-		if (component === null) {
-			component = node._owner; 
-		}
+		component === null && (component = node._owner); 
 	} else {
 		reconciler();
-	}
-
-	if (typeof callback === 'function') {
-		callback();
 	}
 
 	return reconciler;
@@ -1689,7 +1583,7 @@ function patch (newNode, oldNode) {
  * @param  {Object} props
  * @return {Object} 
  */
-function extractVNode (subject) {		
+function extractVNode (subject) {	
 	// static node
 	if (subject.nodeType !== 2) {
 		return subject;
@@ -2040,14 +1934,14 @@ function createNode (subject, component, namespace) {
 				}
 			}
 
-			if (props !== objEmpty) {
-				// diff and update/add/remove props
-				assignProps(element, props, false);
-			}
-
 			// vnode has component attachment
 			if (subject._owner != null) {
 				(component = subject._owner)._vnode._node = element;
+			}
+
+			if (props !== objEmpty) {
+				// diff and update/add/remove props
+				assignProps(element, props, false, component || null);
 			}
 
 			if (length !== 0) {
@@ -2104,13 +1998,14 @@ function createNode (subject, component, namespace) {
 /**
  * assign prop for create element
  * 
- * @param  {Node}   target
- * @param  {Object} props
- * @param  {number} onlyEvents
+ * @param  {Node}       target
+ * @param  {Object}     props
+ * @param  {number}     onlyEvents
+ * @param  {?Component} component
  */
-function assignProps (target, props, onlyEvents) {
+function assignProps (target, props, onlyEvents, component) {
 	for (var name in props) {
-		assignProp(target, name, props, onlyEvents);
+		assignProp(target, name, props, onlyEvents, component);
 	}
 }
 
@@ -2118,15 +2013,25 @@ function assignProps (target, props, onlyEvents) {
 /**
  * assign prop for create element
  * 
- * @param  {Node}   target
- * @param  {string} name
- * @param  {Object} props
- * @param  {number} onlyEvents
+ * @param  {Node}       target
+ * @param  {string}     name
+ * @param  {Object}     props
+ * @param  {number}     onlyEvents
+ * @param  {?Component} component
  */
-function assignProp (target, name, props, onlyEvents) {
+function assignProp (target, name, props, onlyEvents, component) {
 	var propValue = props[name];
 
 	if (isEventName(name)) {
+		if (component !== null) {
+			var funcName = propValue.name;
+
+			// auto bind event listeners to component
+			if (component[funcName] === propValue) {
+				propValue = component[funcName] = propValue.bind(component);
+			}
+		}
+
 		// add event listener
 		target.addEventListener(extractEventName(name), propValue, false);
 	} else if (onlyEvents === false) {

@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * Dio is a fast (~8kb) Virtual DOM framework
+ * dio is a fast (~8kb) Virtual DOM framework
  * 
  * @licence MIT
  */
@@ -20,7 +20,7 @@
 
 
 'use strict';
-	
+
 
 import 'Constants/';
 import 'Utilities/';

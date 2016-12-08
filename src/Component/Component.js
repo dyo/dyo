@@ -23,7 +23,7 @@ function Component (props) {
 	}
 
 	this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
-	this.refs = this._vnode = null;
+	this.refs = this._vnode = this._cache = null;
 }
 
 
@@ -33,8 +33,8 @@ function Component (props) {
  * @type {Object}
  */
 Component.prototype = Object.create(null, {
-	setState: { value: setState },
+	setState:    { value: setState },
 	forceUpdate: { value: forceUpdate },
-	withAttr: { value: withAttr }
+	bindState:   { value: bindState }
 });
 

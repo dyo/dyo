@@ -7,8 +7,8 @@
  */
 
 
-import 'Component';
 import 'setState';
+import 'bindState';
 import 'forceUpdate';
-import 'withAttr';
+import 'Component';
 import 'createClass';
