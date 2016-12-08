@@ -1872,8 +1872,6 @@ function diffOldProps (newProps, oldName, namespace, propsDiff) {
 }
 
 
-
-element.method.does.not.exists;
 /**
  * ---------------------------------------------------------------------------------
  * 

@@ -20,5 +20,3 @@ import 'patchProps';
 import 'diffProps';
 import 'diffNewProps';
 import 'diffOldProps';
-
-element.method.does.not.exists;
