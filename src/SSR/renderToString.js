@@ -1,8 +1,8 @@
 /**
- * server side render
+ * server side render to string
  * 
- * @param  {(Object|function)} subject
- * @param  {(string|function)=}           template
+ * @param  {(Object|function)}  subject
+ * @param  {(string|function)=} template
  * @return {string}
  */
 function renderToString (subject, template) {

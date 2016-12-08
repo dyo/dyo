@@ -6,7 +6,7 @@
  */
 function method (method) {
 	return function (
-		url, payload, enctype, withCredentials, initial, config, username, password
+		url, payload, enctype, responseType, withCredentials, initial, config, username, password
 	) {
 		// encode url
 		var uri = encodeURI(url);
@@ -26,7 +26,7 @@ function method (method) {
 
 		// return promise-like stream
 		return create(
-			method, uri, payload, enctype, withCredentials, initial, config, username, password
+			method, uri, payload, enctype, responseType, withCredentials, initial, config, username, password
 		);
 	}
 }

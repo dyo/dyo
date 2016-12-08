@@ -3,14 +3,14 @@
  * with new props merged in shallowly and new children replacing existing ones.
  * 
  * @param  {Object}  subject
- * @param  {Object=} props
- * @param  {any[]=}  children
+ * @param  {Object=} newProps
+ * @param  {any[]=}  newChildren
  * @return {Object}
  */
 function cloneElement (subject, newProps, newChildren) {
 	var type     = subject.type;
 	var props    = newProps || {};
-	var children = null;
+	var children = newChildren || subject.children;
 
 	// copy props
 	each(subject.props, function (value, name) {

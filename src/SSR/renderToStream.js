@@ -1,5 +1,5 @@
 /**
- * renderToStream
+ * server-side render to stream
  * 
  * @param  {(Object|function)} subject 
  * @return {Stream}

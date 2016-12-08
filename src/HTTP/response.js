@@ -1,34 +1,35 @@
 /**
- * parse, format response
+ * retrieve and format response
  * 
- * @param  {Object} xhr
+ * @param  {Object}   xhr
+ * @param  {string}   responseType
+ * @param  {function} reject
  * @return {*} 
  */
-function response (xhr, type) {			
-	var body; 
-	var type; 
-	var data;
-	var header = xhr.getResponseHeader('Content-Type');
+function response (xhr, responseType, reject) {			
+	var data, header = xhr.getResponseHeader('Content-Type');
 
 	if (!xhr.responseType || xhr.responseType === 'text') {
-        data = xhr.responseText;
-    } else if (xhr.responseType === 'document') {
-        data = xhr.responseXML;
-    } else {
-        data = xhr.response;
-    }
+		data = xhr.responseText;
+	} else if (xhr.responseType === 'document') {
+		data = responseXML;
+	} else {
+		data = response;
+	}
 
-	// get response format
-	type = (
-		header.indexOf(';') !== -1 ? 
-		header.split(';')[0].split('/') : 
-		header.split('/')
-	)[1];
+	// response format
+	if (!responseType) {
+		responseType = (header.indexOf(';') > -1 ? header.split(';')[0].split('/') : header.split('/'))[1];
+	}
 
-	switch (type) {
-		case 'json': { body = JSON.parse(data); break; }
-		case 'html': { body = (new DOMParser()).parseFromString(data, 'text/html'); break; }
-		default    : { body = data; }
+	var body;
+
+	if (responseType === 'json') {
+		body = sandbox(JSON.parse, reject, data);
+	} else if (responseType === 'html' || responseType === 'document') {
+		body = (new DOMParser()).parseFromString(data, 'text/html');
+	} else {
+		body = data;
 	}
 
 	return body;

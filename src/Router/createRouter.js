@@ -119,7 +119,6 @@ function createRouter (routes, address, initialiser) {
 	
 	var api      = {
 		nav:    navigate,
-		go:     history.go, 
 		back:   history.back, 
 		foward: history.foward, 
 		link:   link

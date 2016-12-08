@@ -142,14 +142,13 @@ function panic (message, silent) {
  * try catch helper
  * 
  * @param  {function}  func
- * @param  {function=} onerror
+ * @param  {function=} onError
  * @param  {any=}      value
  * @return {any}
  */
-function sandbox (func, onerror, value) {
-	// hoisted due to V8 not opt'ing functions with try..catch
+function sandbox (func, onError, value) {
 	try {
-		return value ? func(value) : func();
+		return value != null ? func(value) : func();
 	} catch (err) {
 		return onerror && onerror(err);
 	}
@@ -608,14 +607,14 @@ function createChild (child) {
  * with new props merged in shallowly and new children replacing existing ones.
  * 
  * @param  {Object}  subject
- * @param  {Object=} props
- * @param  {any[]=}  children
+ * @param  {Object=} newProps
+ * @param  {any[]=}  newChildren
  * @return {Object}
  */
 function cloneElement (subject, newProps, newChildren) {
 	var type     = subject.type;
 	var props    = newProps || {};
-	var children = null;
+	var children = newChildren || subject.children;
 
 	// copy props
 	each(subject.props, function (value, name) {
@@ -713,10 +712,8 @@ function setState (newState, callback) {
 
 	this.forceUpdate();
 
-	// callback, call
-	if (callback !== void 0) {
-		callback(this.state);
-	}
+	// callback
+	callback && callback(this.state);
 }
 
 
@@ -2154,10 +2151,10 @@ function extractEventName (name) {
 
 
 /**
- * server side render
+ * server side render to string
  * 
- * @param  {(Object|function)} subject
- * @param  {(string|function)=}           template
+ * @param  {(Object|function)}  subject
+ * @param  {(string|function)=} template
  * @return {string}
  */
 function renderToString (subject, template) {
@@ -2335,7 +2332,7 @@ function renderStylesheetToString (nodeType, component, styles, output, lookup) 
 
 
 /**
- * renderToStream
+ * server-side render to stream
  * 
  * @param  {(Object|function)} subject 
  * @return {Stream}
@@ -2770,36 +2767,37 @@ function serialize (object, prefix) {
 
 
 /**
- * parse, format response
+ * retrieve and format response
  * 
- * @param  {Object} xhr
+ * @param  {Object}   xhr
+ * @param  {string}   responseType
+ * @param  {function} reject
  * @return {*} 
  */
-function response (xhr, type) {			
-	var body; 
-	var type; 
-	var data;
-	var header = xhr.getResponseHeader('Content-Type');
+function response (xhr, responseType, reject) {			
+	var data, header = xhr.getResponseHeader('Content-Type');
 
 	if (!xhr.responseType || xhr.responseType === 'text') {
-        data = xhr.responseText;
-    } else if (xhr.responseType === 'document') {
-        data = xhr.responseXML;
-    } else {
-        data = xhr.response;
-    }
+		data = xhr.responseText;
+	} else if (xhr.responseType === 'document') {
+		data = responseXML;
+	} else {
+		data = response;
+	}
 
-	// get response format
-	type = (
-		header.indexOf(';') !== -1 ? 
-		header.split(';')[0].split('/') : 
-		header.split('/')
-	)[1];
+	// response format
+	if (!responseType) {
+		responseType = (header.indexOf(';') > -1 ? header.split(';')[0].split('/') : header.split('/'))[1];
+	}
 
-	switch (type) {
-		case 'json': { body = JSON.parse(data); break; }
-		case 'html': { body = (new DOMParser()).parseFromString(data, 'text/html'); break; }
-		default    : { body = data; }
+	var body;
+
+	if (responseType === 'json') {
+		body = sandbox(JSON.parse, reject, data);
+	} else if (responseType === 'html' || responseType === 'document') {
+		body = (new DOMParser()).parseFromString(data, 'text/html');
+	} else {
+		body = data;
 	}
 
 	return body;
@@ -2813,6 +2811,7 @@ function response (xhr, type) {
  * @param  {string}            uri
  * @param  {(Object|string)=}  payload
  * @param  {string=}           enctype
+ * @param  {string=}           responseType
  * @param  {boolean=}          withCredential
  * @param  {initial=}          initial
  * @param  {function=}         config
@@ -2821,12 +2820,12 @@ function response (xhr, type) {
  * @return {function}
  */
 function create (
-	method, uri, payload, enctype, withCredentials, initial, config, username, password
+	method, uri, payload, enctype, responseType, withCredentials, initial, config, username, password
 ) {
 	// return a a stream
 	return stream(function (resolve, reject, stream) {
 		// if XMLHttpRequest constructor absent, exit early
-		if (window.XMLHttpRequest === void 0) {
+		if (window.XMLHttpRequest == null) {
 			return;
 		}
 
@@ -2851,24 +2850,22 @@ function create (
 			location.protocol !== 'file:'
 		);
 
-		// remove reference, for garbage collection
+		// remove reference
 		anchor = null;
 
 		// open request
 		xhr.open(method, uri, true, username, password);
 
 		// on success resolve
-		xhr.onload  = function onload () { resolve(response(this)); };
+		xhr.onload  = function () { resolve(response(this, responseType, reject)); };
 		// on error reject
-		xhr.onerror = function onerror () { reject(this.statusText); };
+		xhr.onerror = function () { reject(this.statusText); };
 		
 		// cross origin request cookies
-		if (isCrossOriginRequest && withCredentials) {
-			xhr.withCredentials = true;
-		}
+		isCrossOriginRequest && withCredentials (xhr.withCredentials = true);
 
 		// assign content type and payload
-		if (method === 'POST' || method === 'PUT') {
+		if (method === 'POST') {
 			xhr.setRequestHeader('Content-Type', enctype);
 
 			if (enctype.indexOf('x-www-form-urlencoded') > -1) {
@@ -2879,15 +2876,11 @@ function create (
 		}
 
 		// if, assign inital value of stream
-		if (initial !== void 0) {
-			resolve(initial);
-		}
+		initial !== void 0 && resolve(initial);
 
-		// if config, expose underlying XMLHttpRequest object
+		// config, expose underlying XMLHttpRequest object
 		// allows us to save a reference to it and call abort when required
-		if (config !== void 0 && typeof config !== 'function') {
-			config(xhr);
-		}
+		config != null && typeof config === 'function' && config(xhr);
 
 		// send request
 		payload !== void 0 ? xhr.send(payload) : xhr.send();
@@ -2903,7 +2896,7 @@ function create (
  */
 function method (method) {
 	return function (
-		url, payload, enctype, withCredentials, initial, config, username, password
+		url, payload, enctype, responseType, withCredentials, initial, config, username, password
 	) {
 		// encode url
 		var uri = encodeURI(url);
@@ -2923,7 +2916,7 @@ function method (method) {
 
 		// return promise-like stream
 		return create(
-			method, uri, payload, enctype, withCredentials, initial, config, username, password
+			method, uri, payload, enctype, responseType, withCredentials, initial, config, username, password
 		);
 	}
 }
@@ -2945,6 +2938,7 @@ function request (subject) {
 			subject.url, 
 			subject.payload || subject.data,
 			subject.enctype, 
+			subject.responseType,
 			subject.withCredentials,
 			subject.initial,
 			subject.config,
@@ -3137,7 +3131,6 @@ function createRouter (routes, address, initialiser) {
 	
 	var api      = {
 		nav:    navigate,
-		go:     history.go, 
 		back:   history.back, 
 		foward: history.foward, 
 		link:   link

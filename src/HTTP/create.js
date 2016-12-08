@@ -5,6 +5,7 @@
  * @param  {string}            uri
  * @param  {(Object|string)=}  payload
  * @param  {string=}           enctype
+ * @param  {string=}           responseType
  * @param  {boolean=}          withCredential
  * @param  {initial=}          initial
  * @param  {function=}         config
@@ -13,12 +14,12 @@
  * @return {function}
  */
 function create (
-	method, uri, payload, enctype, withCredentials, initial, config, username, password
+	method, uri, payload, enctype, responseType, withCredentials, initial, config, username, password
 ) {
 	// return a a stream
 	return stream(function (resolve, reject, stream) {
 		// if XMLHttpRequest constructor absent, exit early
-		if (window.XMLHttpRequest === void 0) {
+		if (window.XMLHttpRequest == null) {
 			return;
 		}
 
@@ -43,24 +44,22 @@ function create (
 			location.protocol !== 'file:'
 		);
 
-		// remove reference, for garbage collection
+		// remove reference
 		anchor = null;
 
 		// open request
 		xhr.open(method, uri, true, username, password);
 
 		// on success resolve
-		xhr.onload  = function onload () { resolve(response(this)); };
+		xhr.onload  = function () { resolve(response(this, responseType, reject)); };
 		// on error reject
-		xhr.onerror = function onerror () { reject(this.statusText); };
+		xhr.onerror = function () { reject(this.statusText); };
 		
 		// cross origin request cookies
-		if (isCrossOriginRequest && withCredentials) {
-			xhr.withCredentials = true;
-		}
+		isCrossOriginRequest && withCredentials (xhr.withCredentials = true);
 
 		// assign content type and payload
-		if (method === 'POST' || method === 'PUT') {
+		if (method === 'POST') {
 			xhr.setRequestHeader('Content-Type', enctype);
 
 			if (enctype.indexOf('x-www-form-urlencoded') > -1) {
@@ -71,15 +70,11 @@ function create (
 		}
 
 		// if, assign inital value of stream
-		if (initial !== void 0) {
-			resolve(initial);
-		}
+		initial !== void 0 && resolve(initial);
 
-		// if config, expose underlying XMLHttpRequest object
+		// config, expose underlying XMLHttpRequest object
 		// allows us to save a reference to it and call abort when required
-		if (config !== void 0 && typeof config !== 'function') {
-			config(xhr);
-		}
+		config != null && typeof config === 'function' && config(xhr);
 
 		// send request
 		payload !== void 0 ? xhr.send(payload) : xhr.send();

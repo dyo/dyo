@@ -14,6 +14,7 @@ function request (subject) {
 			subject.url, 
 			subject.payload || subject.data,
 			subject.enctype, 
+			subject.responseType,
 			subject.withCredentials,
 			subject.initial,
 			subject.config,
