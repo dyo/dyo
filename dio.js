@@ -3111,7 +3111,7 @@ function createRouter (routes, address, initialiser) {
 
 		return function (e) {
 			var target = e.currentTarget;
-			var value  = func ? to.call(target, target) : to;
+			var value  = func ? to(target) : to;
 
 			navigate(target[value] || target.getAttribute(value) || value); 
 		};
