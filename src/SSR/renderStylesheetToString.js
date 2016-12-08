@@ -1,12 +1,14 @@
 /**
  * render stylesheet to string
- * 
- * @param  {function}  component
- * @param  {string[1]} styles    
- * @param  {string}    string   
+ *
+ * @param  {number}                  nodeType
+ * @param  {function}                component
+ * @param  {string[1]}               styles    
+ * @param  {string}                  output   
+ * @param  {Object<string, boolean>} lookup
  * @return {string}          
  */
-function renderStylesheetToString (nodeType, component, styles, string, lookup) {
+function renderStylesheetToString (nodeType, component, styles, output, lookup) {
 	// stylesheet
 	if (nodeType === 2 && component.stylesheet != null) {
 		// insure we only every create one 
@@ -21,9 +23,9 @@ function renderStylesheetToString (nodeType, component, styles, string, lookup) 
 		}
 
 		// add attribute to element
-		string += ' '+nsStyle+'='+'"'+component.id+'"';
+		output += ' '+nsStyle+'='+'"'+component.id+'"';
 	}
 
-	return string;
+	return output;
 }
 

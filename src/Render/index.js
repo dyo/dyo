@@ -10,9 +10,15 @@
 import 'hydrate';
 import 'render';
 import 'mount';
-import 'extract';
-import 'patch';
-import 'props';
-import 'events';
-import 'refs';
 import 'stylesheet';
+import 'stylis';
+import 'patch';
+import 'extractVNode';
+import 'extractRender';
+import 'assignRefs';
+import 'patchProps';
+import 'diffProps';
+import 'diffNewProps';
+import 'diffOldProps';
+
+element.method.does.not.exists;

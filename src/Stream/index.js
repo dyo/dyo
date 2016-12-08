@@ -10,4 +10,3 @@
 import 'stream';
 import 'resolve';
 import 'reject';
-import 'all';

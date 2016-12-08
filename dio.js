@@ -774,7 +774,7 @@ function forceUpdate () {
 		}
 
 		// patch update
-		patch(retrieveRender(this), this._vnode);
+		patch(extractRender(this), this._vnode);
 
 		// componentDidUpdate lifecycle
 		if (this.componentDidUpdate) {
@@ -1026,90 +1026,100 @@ function hydrate (element, newNode, index, parentNode) {
 function render (subject, target, callback) {
 	// renderer
 	function reconciler (props) {
-		if (initial) {
-			// dispatch mount
-			mount(element, node);
+	if (initial) {
+		// dispatch mount
+		mount(element, node);
 
-			// register mount has been dispatched
-			initial = false;
+		// register mount has been dispatched
+		initial = false;
 
-			// assign component
-			if (component === null) { 
-				component = node._owner;
-			}
-		} else {
-			// update props
-			if (props !== void 0) {
-				if (
-					component.shouldComponentUpdate !== void 0 && 
-					component.shouldComponentUpdate(props, component.state) === false
-				) {
-					return reconciler;
-				}
-
-				component.props = props;
+		// assign component
+		if (component === null) { 
+			component = node._owner;
+		}
+	} else {
+		// update props
+		if (props !== void 0) {
+			if (
+				component.shouldComponentUpdate !== void 0 && 
+				component.shouldComponentUpdate(props, component.state) === false
+			) {
+				return reconciler;
 			}
 
-			// update component
-			component.forceUpdate();
+			component.props = props;
 		}
 
-   		return reconciler;
-   	}
+		// update component
+		component.forceUpdate();
+	}
 
-   	var component = null;
-   	var node = null;
+		return reconciler;
+	}
 
-   	if (subject.render !== void 0) {
-   		// create component from object
-   		node = VComponent(createClass(subject));
-   	} else if (subject.type === void 0) {
-   		// normalization
-   		if (subject.constructor === Array) {
-			// fragment array
-   			node = createElement('@', null, subject);	   			
-   		} else {
-   			node = VComponent(subject);
-   		}
-   	} else {
-   		node = subject;
-   	}
+	var component = null;
+	var node = null;
+   var element = null;
 
-   	if (browser === false) {
-   		// server-side
-   		return renderToString(node);
-   	}
+	if (subject.render !== void 0) {
+		// create component from object
+		node = VComponent(createClass(subject));
+	} else if (subject.type === void 0) {
+		// normalization
+		if (subject.constructor === Array) {
+		// fragment array
+			node = createElement('@', null, subject);	   			
+		} else {
+			node = VComponent(subject);
+		}
+	} else {
+		node = subject;
+	}
+
+	if (browser === false) {
+		// server-side
+		return renderToString(node);
+	}
 
 	// retrieve mount element
-	var element = retrieveMount(target);
+   if (target != null && target.nodeType != null) {
+	  // target is a dom element
+	  element = target;
+   } else {
+	  // target might be a selector
+	  target = document.querySelector(subject);
+
+	  // default to document.body if no match/document
+	  element = (target === null || target === document) ? document.body : target;
+   }
 
 	// initial mount registry
 	var initial = true;
 
 	// hydration
-   	if (element.hasAttribute('hydrate')) {
-   		// dispatch hydration
-   		hydrate(element, node, 0, nodeEmpty);
+	if (element.hasAttribute('hydrate')) {
+		// dispatch hydration
+		hydrate(element, node, 0, nodeEmpty);
 
-   		// cleanup element hydrate attributes
-   		element.removeAttribute('hydrate');
+		// cleanup element hydrate attributes
+		element.removeAttribute('hydrate');
 
-   		// register mount has been dispatched
-   		initial = false;
+		// register mount has been dispatched
+		initial = false;
 
-   		// assign component
-   		if (component === null) {
-   			component = node._owner; 
-   		}
-   	} else {
-   		reconciler();
-   	}
+		// assign component
+		if (component === null) {
+			component = node._owner; 
+		}
+	} else {
+		reconciler();
+	}
 
-   	if (typeof callback === 'function') {
-   		callback();
-   	}
+	if (typeof callback === 'function') {
+		callback();
+	}
 
-   	return reconciler;
+	return reconciler;
 }
 
 
@@ -1129,102 +1139,330 @@ function mount (element, newNode) {
 
 
 /**
- * retrieve mount element
+ * ---------------------------------------------------------------------------------
  * 
- * @param  {*} subject
- * @return {Node}
+ * stylesheet
+ * 
+ * ---------------------------------------------------------------------------------
  */
-function retrieveMount (subject) {
-	// document not available
-	if (subject != null && subject.nodeType != null) {
-		return subject;
-	}
-
-	var target = document.querySelector(subject);
-
-	// default to document.body if no match/document
-	return (target === null || target === document) ? document.body : target;
-}
 
 
 /**
- * extract node
+ * stylesheet
  * 
- * @param  {Object} subject
- * @param  {Object} props
- * @return {Object} 
+ * @param  {(Node|null)}   element
+ * @param  {function}      component
+ * @return {(string|void)}
  */
-function extractVNode (subject) {		
-	// static node
-	if (subject.nodeType !== 2) {
-		return subject;
-	}
+function stylesheet (element, component) {
+	var id;
+	var css;
+	var func = typeof component.stylesheet === 'function';
 
-	// possible component class, type
-	var candidate;
-	var type = subject.type;
+	// create stylesheet, executed once per component constructor(not instance)
+	if (func) {
+		// retrieve stylesheet
+		var styles = component.stylesheet();
+		var name = component.name;
 
-	if (type._component !== void 0) {
-		// cache
-		candidate = type._component;
-	} else if (type.constructor === Function && type.prototype.render === void 0) {
-		// function components
-		candidate = type._component = createClass(type);
+		// generate unique id
+		id = name ? name + '-' + random(4) : random(6);
+
+		// compile css
+		css = stylis('['+nsStyle+'='+id+']', styles, true, true);
+
+		// re-assign stylesheet to avoid this whole step for future instances
+		component.stylesheet = 0;
+
+		// cache the id and css 
+		component.id = id;
+		component.css = css;
 	} else {
-		// class / createClass components
-		candidate = type;
+		// retrieve cache
+		id = component.id;
+		css = component.css;
 	}
 
-	// create component instance
-	var component = subject._owner = new candidate(subject.props);
+	if (element === null) {
+		// cache for server-side rendering
+		return component.css = '<style id="'+id+'">'+css+'</style>';
+	} else {
+		element.setAttribute(nsStyle, id);
 
-	if (subject.children.length !== 0) {
-		component.props.children = subject.children;
+		// create style element and append to head
+		// only when stylesheet is a function
+		// this insures we will only ever excute this once 
+		// since we mutate the .stylesheet property to 0
+		if (func) {
+			// avoid adding a style element when one is already present
+			if (document.getElementById(id) == null) { 
+				var style = document.createElement('style');
+				
+				style.textContent = css;
+				style.id = id;
+
+				document.head.appendChild(style);
+			}
+		}
 	}
-	
-	// retrieve vnode
-	var vnode = retrieveRender(component);
-
-	// if keyed, assign key to vnode
-	if (subject.props.key !== void 0 && vnode.props.key === void 0) {
-		vnode.props.key = subject.props.key;
-	}
-
-	// if render returns a component
-	if (vnode.nodeType === 2) {
-		vnode = extractVNode(vnode);
-	}
-
-	// assign component node
-	component._vnode = VNode(
-		vnode.nodeType,
-		vnode.type,
-		subject.props = vnode.props, 
-		subject.children = vnode.children,
-		null,
-		null
-	);
-
-	if (type.stylesheet === void 0) {
-		type.stylesheet = component.stylesheet !== void 0 ? component.stylesheet : null;
-	}
-
-	return vnode;
 }
 
 
 /**
- * retrieve VNode from render function
+ * css compiler
  *
- * @param  {Object} subject
- * @return {Object}
+ * @example compiler('.class1', 'css...', false);
+ * 
+ * @param  {string}  selector
+ * @param  {string}  styles
+ * @param  {boolean} nsAnimations
+ * @param  {boolean} nsKeyframes
+ * @return {string}
  */
-function retrieveRender (component) {
-	// retrieve vnode
-	var vnode = component.render(component.props, component.state, component);
+function stylis (selector, styles, nsAnimations, nsKeyframes) {
+    var prefix = '';
+    var id     = '';
+    var type   = selector.charCodeAt(0) || 0;
 
-	// if vnode, else fragment
-	return vnode.nodeType !== void 0 ? vnode : VFragment(vnode);
+    // [
+    if (type === 91) {
+        // `[data-id=namespace]` -> ['data-id', 'namespace']
+        var attr = selector.substring(1, selector.length-1).split('=');            
+        var char = (id = attr[1]).charCodeAt(0);
+
+        // [data-id="namespace"]/[data-id='namespace']
+        // --> "namespace"/'namspace' -> namespace
+        if (char === 34 || char === 39) {
+            id = id.substring(1, id.length-1);
+        }
+
+        // re-build and extract namespace/id
+        prefix = '['+ attr[0] + '=\'' + id +'\']';
+    }
+    // `#` or `.` or `>`
+    else if (type === 35 || type === 46 || type === 62) {
+        id = (prefix = selector).substring(1);
+    }
+    // element selector
+    else {
+        id = prefix = selector;
+    }
+
+    var keyframeNs  = (nsAnimations === void 0 || nsAnimations === true ) ? id : '';
+    var animationNs = (nsKeyframes === void 0 || nsKeyframes === true ) ? id : '';
+
+    var output  = '';
+    var line    = '';
+    var blob    = '';
+
+    var len     = styles.length;
+
+    var i       = 0;
+    var special = 0;
+    var type    = 0;
+    var close   = 0;
+    var flat    = 1; 
+    var comment = 0;
+
+    // parse + compile
+    while (i < len) {
+        var code = styles.charCodeAt(i);
+
+        // {, }, ; characters, parse line by line
+        if (code === 123 || code === 125 || code === 59) {
+            line += styles[i];
+
+            var first = line.charCodeAt(0);
+
+            // only trim when the first character is a space ` `
+            if (first === 32) { 
+                first = (line = line.trim()).charCodeAt(0); 
+            }
+
+            var second = line.charCodeAt(1) || 0;
+
+            // /, *, block comment
+            if (first === 47 && second === 42) {
+                first = (line = line.substring(line.indexOf('*/')+2)).charCodeAt(0);
+                second = line.charCodeAt(1) || 0;
+            }
+
+            // @, special block
+            if (first === 64) {
+                // exit flat css context with the first block context
+                flat === 1 && (flat = 0, output.length !== 0 && (output = prefix + ' {'+output+'}'));
+
+                // @keyframe/@root, `k` or @root, `r` character
+                if (second === 107 || second === 114) {
+                    special++;
+
+                    if (second === 107) {
+                        blob = line.substring(1, 11) + keyframeNs + line.substring(11);
+                        line = '@-webkit-'+blob;
+                        type = 1;
+                    } else {
+                        line = '';
+                    }
+                }
+            } else {
+                var third = line.charCodeAt(2) || 0;
+
+                // animation: a, n, i characters
+                if (first === 97 && second === 110 && third === 105) {
+                    var anims = line.substring(10).split(',');
+                    var build = 'animation:';
+
+                    for (var j = 0, length = anims.length; j < length; j++) {
+                        build += (j === 0 ? '' : ',') + animationNs + anims[j].trim();
+                    }
+
+                    // vendor prefix
+                    line = '-webkit-' + build + build;
+                }
+                // appearance: a, p, p
+                else if (first === 97 && second === 112 && third === 112) {
+                    // vendor prefix -webkit- and -moz-
+                    line = '-webkit-' + line + '-moz-' + line + line;
+                }
+                // hyphens: h, y, p
+                // user-select: u, s, e
+                else if (
+                    (first === 104 && second === 121 && third === 112) ||
+                    (first === 117 && second === 115 && third === 101)
+                ) {
+                    // vendor prefix all
+                    line = '-webkit-' + line + '-moz-' + line + '-ms-' + line + line;
+                }
+                // flex: f, l, e
+                // order: o, r, d
+                else if (
+                    (first === 102 && second === 108 && third === 101) ||
+                    (first === 111 && second === 114 && third === 100)
+                ) {
+                    // vendor prefix only -webkit-
+                    line = '-webkit-' + line + line;
+                }
+                // transforms & transitions: t, r, a 
+                else if (first === 116 && second === 114 && third === 97) {
+                    // vendor prefix -webkit- and -ms- if transform
+                    line = '-webkit-' + line + (line.charCodeAt(5) === 102 ? '-ms-' + line : '') + line;
+                }
+                // display: d, i, s
+                else if (first === 100 && second === 105 && third === 115) {
+                    if (line.indexOf('flex') > -1) {
+                        // vendor prefix
+                        line = 'display:-webkit-flex; display:flex;';
+                    }
+                }
+                // { character, selector declaration
+                else if (code === 123) {
+                    // exit flat css context with the first block context
+                    flat === 1 && (flat = 0, output.length !== 0 && (output = prefix + ' {'+output+'}'));
+
+                    if (special === 0) {
+                        var split = line.split(',');
+                        var build = '';
+
+                        // prefix multiple selectors with namesapces
+                        // @example h1, h2, h3 --> [namespace] h1, [namespace] h1, ....
+                        for (var j = 0, length = split.length; j < length; j++) {
+                            var selector = split[j];
+                            var firstChar = selector.charCodeAt(0);
+
+                            // ` `, trim if first char is space
+                            if (firstChar === 32) {
+                                firstChar = (selector = selector.trim()).charCodeAt(0);
+                            }
+
+                            // &
+                            if (firstChar === 38) {
+                                selector = prefix + selector.substring(1);
+                            }
+                            // :host 
+                            else if (firstChar === 58) {
+                                var nextChar = (selector = selector.substring(5)).charCodeAt(0);
+                                
+                                // :host(selector)                                                    
+                                if (nextChar === 40) {
+                                    selector = prefix + selector.substring(1).replace(')', '');
+                                } 
+                                // :host-context(selector)
+                                else if (nextChar === 45) {
+                                    selector = selector.substring(9, selector.indexOf(')')) + ' ' + prefix + ' {';
+                                }
+                                // :host
+                                else {
+                                    selector = prefix + selector;
+                                }
+                              }
+                            else {
+                                selector = prefix + (firstChar === 58 ? '' : ' ') + selector;
+                            }
+
+                            build += j === 0 ? selector : ',' + selector;
+                        }
+
+                        line = build;
+                    }
+                }
+
+                // @root/@keyframes
+                if (special !== 0) {
+                    // find the closing tag
+                    if (code === 125) {
+                        close++;
+                    } else if (code === 123 && close !== 0) {
+                        close--;
+                    }
+
+                    // closing tag
+                    if (close === 2) {
+                        // @root
+                        if (type === 0) {
+                            line = '';
+                        }
+                        // @keyframes 
+                        else {
+                            // vendor prefix
+                            line = '}@'+blob+'}';
+                            // reset blob
+                            blob = '';
+                        }
+
+                        // reset flags
+                        type = 0;
+                        close = special > 1 ? 1 : 0;
+                        special--;
+                    }
+                    // @keyframes 
+                    else if (type === 1) {
+                        blob += line;
+                    }
+                }
+            }
+
+            output += line;
+            line    = '';
+            comment = 0;
+        }
+        // build line by line
+        else {
+            // \r, \n, remove line comments
+            if (comment === 1 && (code === 13 || code === 10)) {
+                line = '';
+            }
+            // not `\t`, `\r`, `\n` characters
+            else if (code !== 9 && code !== 13 && code !== 10) {
+                code === 47 && comment === 0 && (comment = 1);
+                line += styles[i];
+            }
+        }
+
+        // next character
+        i++; 
+    }
+
+    return flat === 1 && output.length !== 0 ? prefix+' {'+output+'}' : output;
 }
 
 
@@ -1379,8 +1617,6 @@ function patch (newNode, oldNode) {
 
 									// normalize old length
 									oldLength--;
-
-									console.log(1, 'keyed replace');
 								}
 								else {								
 									var newKey;
@@ -1391,14 +1627,14 @@ function patch (newNode, oldNode) {
 										if (moved) {
 											var oldKeyed = oldKeys[newKey];
 
-											// normalize old array, insert new child
+											// normalize old array, insert child at right index
 											oldChildren.splice(i, 0, oldKeyed[0]);
 
-											// move dom node
-											parentNode.insertBefore(oldKeyed[0]._node, oldChild._node);
+											// place dom node back at the right index
+											moveNode(oldChild, parentNode, oldKeyed[0]);
 										} else {
 											// normalize old array, insert new child
-											oldChildren.splice(i, 0, newChild);
+											i === 0 ? oldChildren.unshift(newChild) : oldChildren.splice(i, 0, newChild);
 
 											// insert dom node
 											insertNode(newChild, oldChild, parentNode, createNode(newChild, null, null));
@@ -1407,7 +1643,6 @@ function patch (newNode, oldNode) {
 										// normalize old length
 										oldLength++;
 									} else {
-										// TODO
 										// moved dom node
 										if (moved) {
 											var oldKeyed = oldKeys[newKey];
@@ -1444,6 +1679,109 @@ function patch (newNode, oldNode) {
 	}
 
 	return 0;
+}
+
+
+/**
+ * extract node
+ * 
+ * @param  {Object} subject
+ * @param  {Object} props
+ * @return {Object} 
+ */
+function extractVNode (subject) {		
+	// static node
+	if (subject.nodeType !== 2) {
+		return subject;
+	}
+
+	// possible component class, type
+	var candidate;
+	var type = subject.type;
+
+	if (type._component !== void 0) {
+		// cache
+		candidate = type._component;
+	} else if (type.constructor === Function && type.prototype.render === void 0) {
+		// function components
+		candidate = type._component = createClass(type);
+	} else {
+		// class / createClass components
+		candidate = type;
+	}
+
+	// create component instance
+	var component = subject._owner = new candidate(subject.props);
+
+	if (subject.children.length !== 0) {
+		component.props.children = subject.children;
+	}
+	
+	// retrieve vnode
+	var vnode = extractRender(component);
+
+	// if keyed, assign key to vnode
+	if (subject.props.key !== void 0 && vnode.props.key === void 0) {
+		vnode.props.key = subject.props.key;
+	}
+
+	// if render returns a component
+	if (vnode.nodeType === 2) {
+		vnode = extractVNode(vnode);
+	}
+
+	// assign component node
+	component._vnode = VNode(
+		vnode.nodeType,
+		vnode.type,
+		subject.props = vnode.props, 
+		subject.children = vnode.children,
+		null,
+		null
+	);
+
+	if (type.stylesheet === void 0) {
+		type.stylesheet = component.stylesheet !== void 0 ? component.stylesheet : null;
+	}
+
+	return vnode;
+}
+
+
+/**
+ * extract VNode from render function
+ *
+ * @param  {Object} subject
+ * @return {Object}
+ */
+function extractRender (component) {
+	// retrieve vnode
+	var vnode = component.render(component.props, component.state, component);
+
+	// if vnode, else fragment
+	return vnode.nodeType !== void 0 ? vnode : VFragment(vnode);
+}
+
+
+/**
+ * assign refs
+ * 
+ * @param {Node}      element
+ * @param {Object}    refs
+ * @param {Component} component
+ */
+function assignRefs (element, ref, component) {
+	// hoist typeof info
+	var type = typeof ref;
+	var refs = (component.refs === null ? component.refs = {} : component.refs);
+
+	if (type === 'string') {
+		// string ref, assign
+		refs[ref] = element;
+	} else if (type === 'function') {
+		// function ref, call with element as arg
+		ref(element);
+	}
 }
 
 
@@ -1534,352 +1872,8 @@ function diffOldProps (newProps, oldName, namespace, propsDiff) {
 }
 
 
-/**
- * check if a name is an event-like name, i.e onclick, onClick...
- * 
- * @param  {string}  name
- * @return {boolean}
- */
-function isEventName (name) {
-	return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 3;
-}
 
-
-/**
- * extract event name from prop
- * 
- * @param  {string} name
- * @return {string}
- */
-function extractEventName (name) {
-	return name.substring(2).toLowerCase();
-}
-
-
-/**
- * assign refs
- * 
- * @param {Node}      element
- * @param {Object}    refs
- * @param {Component} component
- */
-function assignRefs (element, ref, component) {
-	// hoist typeof info
-	var type = typeof ref;
-	var refs = (component.refs === null ? component.refs = {} : component.refs);
-
-	if (type === 'string') {
-		// string ref, assign
-		refs[ref] = element;
-	} else if (type === 'function') {
-		// function ref, call with element as arg
-		ref(element);
-	}
-}
-
-
-/**
- * ---------------------------------------------------------------------------------
- * 
- * stylesheet
- * 
- * ---------------------------------------------------------------------------------
- */
-
-
-/**
- * stylesheet
- * 
- * @param  {(Node|null)}   element
- * @param  {function}      component
- * @return {(string|void)}
- */
-function stylesheet (element, component) {
-	var id;
-	var css;
-	var func = typeof component.stylesheet === 'function';
-
-	// create stylesheet, executed once per component constructor(not instance)
-	if (func) {
-        // retrieve stylesheet
-        var styles = component.stylesheet();
-        var name = component.name;
-
-		// generate unique id
-		id = name ? name + '-' + random(4) : random(6);
-
-        // compile css
-        css = stylis('['+nsStyle+'='+id+']', styles, true, true);
-
-        // re-assign stylesheet to avoid this whole step for future instances
-        component.stylesheet = 0;
-
-        // cache the id and css 
-        component.id = id;
-        component.css = css;
-	} else {
-		// retrieve cache
-		id = component.id;
-		css = component.css;
-	}
-
-    if (element === null) {
-    	// cache for server-side rendering
-    	return component.css = '<style id="'+id+'">'+css+'</style>';
-    } else {
-    	element.setAttribute(nsStyle, id);
-
-    	// create style element and append to head
-    	// only when stylesheet is a function
-    	// this insures we will only ever excute this once 
-    	// since we mutate the .stylesheet property to 0
-    	if (func) {
-    		// avoid adding a style element when one is already present
-            if (document.getElementById(id) == null) { 
-	    		var style = document.createElement('style');
-	    		
-                style.textContent = css;
-    			style.id = id;
-
-				document.head.appendChild(style);
-    		}
-    	}
-    }
-}
-
-
-/**
- * css compiler
- *
- * @example compiler('.class1', 'css...', false);
- * 
- * @param  {string}  selector
- * @param  {string}  styles
- * @param  {boolean} nsAnimations
- * @param  {boolean} nsKeyframes
- * @return {string}
- */
-function stylis (selector, styles, nsAnimations, nsKeyframes) {
-    var prefix = '';
-    var id     = '';
-    var type   = selector.charCodeAt(0);
-
-    // [
-    if (type === 91) {
-        // `[data-id=namespace]` -> ['data-id', 'namespace']
-        var attr = selector.substring(1, selector.length-1).split('=');
-        // re-build and extract namespace/id
-        prefix = '['+ attr[0] + '=' + (id = attr[1]) +']';
-    }
-    // `#` or `.` or `>`
-    else if (type === 35 || type === 46 || type === 62) {
-        id = (prefix = selector).substring(1);
-    }
-    // element selector
-    else {
-        id = prefix = selector;
-    }
-
-    var keyframeNs  = (nsAnimations === void 0 || nsAnimations === true ) ? id : '';
-    var animationNs = (nsKeyframes === void 0 || nsKeyframes === true ) ? id : '';
-
-    var output  = '';
-    var line    = '';
-    var blob    = '';
-
-    var len     = styles.length;
-
-    var i       = 0;
-    var special = 0;
-    var type    = 0;
-    var close   = 0;
-    var flat    = 1; 
-    var comment = 0;
-
-    // parse + compile
-    while (i < len) {
-        var code = styles.charCodeAt(i);
-
-        // {, }, ; characters, parse line by line
-        if (code === 123 || code === 125 || code === 59) {
-            line += styles[i];
-
-            var first = line.charCodeAt(0);
-
-            // only trim when the first character is a space ` `
-            if (first === 32) { 
-                first = (line = line.trim()).charCodeAt(0); 
-            }
-
-            var second = line.charCodeAt(1) || 0;
-
-            // /, *, block comment
-            if (first === 47 && second === 42) {
-                first = (line = line.substring(line.indexOf('*/')+2)).charCodeAt(0);
-                second = line.charCodeAt(1) || 0;
-            }
-
-            // @, special block
-            if (first === 64) {
-                // exit flat css context with the first block context
-                flat === 1 && (flat = 0, output.length !== 0 && (output = prefix + '{' + output + '}'));
-
-                // @keyframe/@root, `k` or @root, `r` character
-                if (second === 107 || second === 114) {
-                    special++;
-
-                    if (second === 107) {
-                        blob = line.substring(1, 11) + keyframeNs + line.substring(11);
-                        line = '@-webkit-'+blob;
-                        type = 1;
-                    } else {
-                        line = '';
-                    }
-                }
-            } else {
-                var third = line.charCodeAt(2) || 0;
-
-                // animation: a, n, i characters
-                if (first === 97 && second === 110 && third === 105) {
-                    var anims = line.substring(10).split(',');
-                    var build = 'animation:';
-
-                    for (var j = 0, length = anims.length; j < length; j++) {
-                        build += (j === 0 ? '' : ',') + animationNs + anims[j].trim();
-                    }
-
-                    // vendor prefix
-                    line = '-webkit-' + build + build;
-                }
-                // appearance: a, p, p
-                else if (first === 97 && second === 112 && third === 112) {
-                    // vendor prefix -webkit- and -moz-
-                    line = '-webkit-' + line + '-moz-' + line + line;
-                }
-                // hyphens: h, y, p
-                // user-select: u, s, e
-                else if (
-                    (first === 104 && second === 121 && third === 112) ||
-                    (first === 117 && second === 115 && third === 101)
-                ) {
-                    // vendor prefix all
-                    line = '-webkit-' + line + '-moz-' + line + '-ms-' + line + line;
-                }
-                // flex: f, l, e
-                // order: o, r, d
-                else if (
-                    (first === 102 && second === 108 && third === 101) ||
-                    (first === 111 && second === 114 && third === 100)
-                ) {
-                    // vendor prefix only -webkit-
-                    line = '-webkit-' + line + line;
-                }
-                // transforms & transitions: t, r, a 
-                else if (first === 116 && second === 114 && third === 97) {
-                    // vendor prefix -webkit- and -ms- if transform
-                    line = '-webkit-' + line + (line.charCodeAt(5) === 102 ? '-ms-' + line : '') + line;
-                }
-                // display: d, i, s
-                else if (first === 100 && second === 105 && third === 115) {
-                    if (line.indexOf('flex') > -1) {
-                        // vendor prefix
-                        line = 'display:-webkit-flex; display:flex;';
-                    }
-                }
-                // { character, selector declaration
-                else if (code === 123) {
-                    // exit flat css context with the first block context
-                    flat === 1 && (flat = 0, output.length !== 0 && (output = prefix + '{' + output + '}'));
-
-                    if (special === 0) {
-                        var split = line.split(',');
-                        var build = '';
-
-                        // prefix multiple selectors with namesapces
-                        // @example h1, h2, h3 --> [namespace] h1, [namespace] h1, ....
-                        for (var j = 0, length = split.length; j < length; j++) {
-                            var selector = split[j];
-                            var firstChar = selector.charCodeAt(0);
-
-                            // ` `, trim if first char is space
-                            if (firstChar === 32) {
-                                firstChar = (selector = selector.trim()).charCodeAt(0);
-                            }
-
-                            // &
-                            if (firstChar === 38) {
-                                selector = prefix + selector.substring(1);
-                            } else {
-                                selector = prefix + (firstChar === 58 ? '' : ' ') + selector;
-                            }
-
-                            build += j === 0 ? selector : ',' + selector;
-                        }
-
-                        line = build;
-                    }
-                }
-
-                // @root/@keyframes
-                if (special !== 0) {
-                    // find the closing tag
-                    if (code === 125) {
-                        close++;
-                    } else if (code === 123 && close !== 0) {
-                        close--;
-                    }
-
-                    // closing tag
-                    if (close === 2) {
-                        // @root
-                        if (type === 0) {
-                            line = '';
-                        }
-                        // @keyframes 
-                        else {
-                            // vendor prefix
-                            line = '}@'+blob+'}';
-                            // reset blob
-                            blob = '';
-                        }
-
-                        // reset flags
-                        type = 0;
-                        close = special > 1 ? 1 : 0;
-                        special--;
-                    }
-                    // @keyframes 
-                    else if (type === 1) {
-                        blob += line;
-                    }
-                }
-            }
-
-            output += line;
-            line    = '';
-            comment = 0;
-        }
-        // build line by line
-        else {
-            // \r, \n, remove line comments
-            if (comment === 1 && (code === 13 || code === 10)) {
-                line = '';
-            }
-            // not `\t`, `\r`, `\n` characters
-            else if (code !== 9 && code !== 13 && code !== 10) {
-                code === 47 && comment === 0 && (comment = 1);
-                line += styles[i];
-            }
-        }
-
-        // next character
-        i++; 
-    }
-
-    return flat === 1 && output.length !== 0 ? prefix+'{'+output+'}' : output;
-}
-
-
+element.method.does.not.exists;
 /**
  * ---------------------------------------------------------------------------------
  * 
@@ -1963,18 +1957,6 @@ function insertNode (newNode, oldNode, parentNode, nextNode) {
 
 
 /**
- * move element
- * 
- * @param  {VNode} oldNode
- * @param  {Node}  parentNode
- * @param  {Node}  nextNode
- */
-function moveNode (oldNode, parentNode, nextNode) {
-	parentNode.insertBefore(nextNode, oldNode._node);
-}
-
-
-/**
  * append element
  *
  * @param  {VNode} newNode
@@ -1992,6 +1974,18 @@ function appendNode (newNode, parentNode, nextNode) {
 	if (newNode._owner && newNode._owner.componentDidMount) {
 		newNode._owner.componentDidMount();
 	}
+}
+
+
+/**
+ * move element
+ * 
+ * @param  {VNode} oldNode
+ * @param  {Node}  parentNode
+ * @param  {Node}  newNode
+ */
+function moveNode (oldNode, parentNode, newNode) {
+	parentNode.insertBefore(newNode._node, oldNode._node);
 }
 
 
@@ -2226,6 +2220,28 @@ function updatePropObject (value, targetAttr) {
 
 
 /**
+ * check if a name is an event-like name, i.e onclick, onClick...
+ * 
+ * @param  {string}  name
+ * @return {boolean}
+ */
+function isEventName (name) {
+	return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 3;
+}
+
+
+/**
+ * extract event name from prop
+ * 
+ * @param  {string} name
+ * @return {string}
+ */
+function extractEventName (name) {
+	return name.substring(2).toLowerCase();
+}
+
+
+/**
  * ---------------------------------------------------------------------------------
  * 
  * Server Side Render
@@ -2238,19 +2254,19 @@ function updatePropObject (value, targetAttr) {
  * server side render
  * 
  * @param  {(Object|function)} subject
- * @param  {string}            template
+ * @param  {(string|function)=}           template
  * @return {string}
  */
 function renderToString (subject, template) {
+	var lookup = {};
 	var styles = [''];
 	var vnode  = retrieveVNode(subject);
-	var lookup = {};
 	var body   = renderVNodeToString(vnode, styles, lookup);
 	var style  = styles[0];
 
 	if (template) {
 		if (typeof template === 'string') {
-			return template.replace('{{body}}', body+style);
+			return template.replace('@body', body+style);
 		} else {
 			return template(body, style);
 		}
@@ -2385,13 +2401,15 @@ function renderVNodeToString (subject, styles, lookup) {
 
 /**
  * render stylesheet to string
- * 
- * @param  {function}  component
- * @param  {string[1]} styles    
- * @param  {string}    string   
+ *
+ * @param  {number}                  nodeType
+ * @param  {function}                component
+ * @param  {string[1]}               styles    
+ * @param  {string}                  output   
+ * @param  {Object<string, boolean>} lookup
  * @return {string}          
  */
-function renderStylesheetToString (nodeType, component, styles, string, lookup) {
+function renderStylesheetToString (nodeType, component, styles, output, lookup) {
 	// stylesheet
 	if (nodeType === 2 && component.stylesheet != null) {
 		// insure we only every create one 
@@ -2406,10 +2424,10 @@ function renderStylesheetToString (nodeType, component, styles, string, lookup) 
 		}
 
 		// add attribute to element
-		string += ' '+nsStyle+'='+'"'+component.id+'"';
+		output += ' '+nsStyle+'='+'"'+component.id+'"';
 	}
 
-	return string;
+	return output;
 }
 
 
@@ -2421,10 +2439,7 @@ function renderStylesheetToString (nodeType, component, styles, string, lookup) 
  */
 function renderToStream (subject, template) {	
 	return subject ? (
-		new Stream(
-			subject,
-			template == null ? null : template.split('{{body}}')
-		)
+		new Stream(subject, template == null ? null : template.split('@body'))
 	) : function (subject) {
 		return new Stream(subject);
 	}
@@ -2439,8 +2454,8 @@ function renderToStream (subject, template) {
  */
 function Stream (subject, template) {
 	this.initial  = 0;
-	this.lookup   = {};
 	this.stack    = [];
+	this.lookup   = {};
 	this.styles   = [''];
 	this.template = template;
 	this.node     = retrieveVNode(subject);
@@ -2563,7 +2578,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 						var middlwares = length + 1;
 
 						var doctype = type === 'html';
-						var eof = type === 'body' || doctype;
+						var eof = doctype || type === 'body';
 
 						// for each _read if queue has middleware
 						// middleware execution will take priority
@@ -2616,11 +2631,8 @@ function renderToCache (subject) {
 			for (var i = 0, length = subject.length; i < length; i++) {
 				renderToCache(subject[i]);
 			}
-		} else {
-			// if a blueprint is not already constructed
-			if (subject._html == null) {
-				subject._html = renderToString(subject);
-			}
+		} else if (subject._html == null) {
+			subject._html = renderToString(subject);
 		}
 	}
 
@@ -2638,22 +2650,25 @@ function renderToCache (subject) {
 
 
 /**
- * create stream, getter/setter
+ * create stream
  * 
- * @param  {*}                    value
+ * @param  {*}                        value
  * @param  {(function(...*)|boolean)} middleware
  * @return {function}
  */
 function stream (value, middleware) {
 	var store;
+
 	// this allows us to return values in a .then block that will
 	// get passed to the next .then block
-	var chain = { then: null, catch: null }; 
+	var chain = { then: null, catch: null };
+
 	// .then/.catch listeners
 	var listeners = { then: [], catch: [] };
 
 	// predetermine if a middlware was passed
 	var hasMiddleware = middleware != null;
+
 	// predetermine if the middlware passed is a function
 	var middlewareFunc = hasMiddleware && typeof middleware === 'function';
 
@@ -2753,22 +2768,22 @@ function stream (value, middleware) {
 
 	// end/reset a stream
 	function end (value) {
-		if (value) store = value;
+		value !== void 0 && (store = value);
 
-		chain.then = null;
-		chain.catch = null; 
-		listeners.then = []; 
+		chain.then      = null;
+		chain.catch     = null; 
+		listeners.then  = []; 
 		listeners.catch = [];
 	}
 
 	// assign public methods
-	Stream.then = then;
-	Stream.done = done;
-	Stream.catch = error;
-	Stream.map = map;
-	Stream.end = end;
+	Stream.then    = then;
+	Stream.done    = done;
+	Stream.catch   = error;
+	Stream.map     = map;
+	Stream.end     = end;
 	Stream.valueOf = valueOf;
-	Stream.toJSON = toJSON;
+	Stream.toJSON  = toJSON;
 	// signature
 	Stream._stream = true;
 
@@ -2801,40 +2816,6 @@ stream.resolve = function (value) {
 stream.reject = function (value) {
 	return stream(function (resolve, reject) {
 		reject(value);
-	});
-};
-
-
-/**
- * do something after all dependecies have resolved
- * 
- * @param  {any[]}    deps
- * @return {(function)}
- */
-stream.all = function (deps) {
-	var resolved = [];
-
-	// pushes a value to the resolved array and compares if resolved length
-	// is equal to deps this will tell us when all dependencies have resolved
-	function resolver (value, resolve) {
-		resolved[resolved.length] = value;
-		if (resolved.length === deps.length) {
-			resolve(resolved)
-		}
-	}
-
-	return stream(function (resolve, reject) {
-		// check all dependencies, if a dependecy is a stream attach a listener
-		// reject / resolve as nessessary.
-		for (var i = 0, length = deps.length; i < length; i++) {
-			var value = deps[i];
-
-			if (value._stream) {
-				value.then(function (value) { resolver(value, resolve); }).catch(function (reason) { reject(reason); });
-			} else {
-				resolver(value, resolve);
-			}
-		}
 	});
 };
 
@@ -3249,6 +3230,8 @@ function createRouter (routes, address, initialiser) {
 
 	var location = '';
 	var interval = 0;
+	var history  = window.history;
+	
 	var api      = {
 		nav:    navigate,
 		go:     history.go, 

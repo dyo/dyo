@@ -6,10 +6,7 @@
  */
 function renderToStream (subject, template) {	
 	return subject ? (
-		new Stream(
-			subject,
-			template == null ? null : template.split('{{body}}')
-		)
+		new Stream(subject, template == null ? null : template.split('@body'))
 	) : function (subject) {
 		return new Stream(subject);
 	}
@@ -24,8 +21,8 @@ function renderToStream (subject, template) {
  */
 function Stream (subject, template) {
 	this.initial  = 0;
-	this.lookup   = {};
 	this.stack    = [];
+	this.lookup   = {};
 	this.styles   = [''];
 	this.template = template;
 	this.node     = retrieveVNode(subject);
@@ -148,7 +145,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 						var middlwares = length + 1;
 
 						var doctype = type === 'html';
-						var eof = type === 'body' || doctype;
+						var eof = doctype || type === 'body';
 
 						// for each _read if queue has middleware
 						// middleware execution will take priority

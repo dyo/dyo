@@ -115,6 +115,8 @@ function createRouter (routes, address, initialiser) {
 
 	var location = '';
 	var interval = 0;
+	var history  = window.history;
+	
 	var api      = {
 		nav:    navigate,
 		go:     history.go, 

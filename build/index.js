@@ -28,9 +28,6 @@ var fs = require('fs');
 var path = require('path');
 var proc = require("child_process");
 
-var normalize = path.normalize;
-var execFile = proc.execFile;
-
 // captures lines with import '..'
 var regexImport = new RegExp(
 	(
@@ -39,10 +36,6 @@ var regexImport = new RegExp(
 	),
 	'gm'
 );
-
-var regexImport1 = /^.*?(?:import)[\t ]+(?:'|")(.*?)(?:'|")(?: as (.[^;]*).*|.*)/gm;
-
-var regexImport2 = /^.*?(?:import)[\t ]+(.*?)[\t ]from[\t ](?:'|")(.*)(?:'|").*/gm;
 
 // capture number of tabs at the beginning of a string
 var regexTab = /^\t*/gm;
@@ -71,22 +64,36 @@ var formatNamespace = /\{|\}| /g;
 // format module name
 var formatModuleName = /\.|\/|js/g;
 
+// hidden files
+var hidden  = /(?:^|\/)\.[^\/\.]|node_modules$|npm-debug\.log$/g;
+
 
 /**
- * generate random string of a certain length
+ * walk & create list of all files directory, recursively
  * 
- * @param  {number} length
- * @return {string}
+ * @param  {string} directory
+ * @param  {Object} callback
+ * @return {Object}
  */
-function random (length) {
-    var text     = '';
-    var possible = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
+function walk (directory, callback) {
+	var files = fs.readdirSync(path.resolve(directory));
 
-    for (var i = 0; i < length; i++) {
-        text += possible[Math.floor(Math.random() * 52)];
-    }
+	// iterate through all files in directory, if a file is
+	// a directory recursively walk the tree
+	for (var i = 0, length = files.length; i < length; i++) {
+		var filename = files[i];
 
-    return text;
+		// ignore hidden files i.e `.cache/.DS_Store` and node_modules ...
+		if (filename[0] !== '.' && !hidden.test(filename)) {
+			var filepath = path.join(directory, filename);
+
+			if (fs.statSync(filepath).isDirectory()) {
+				// directory, recursive walk
+				walk(filepath, callback);
+				callback(filepath);
+			}
+		}
+	}
 }
 
 
@@ -142,7 +149,7 @@ function resolve (directory, template, imported, parent) {
 		}
 
 		// resolve filepath
-		var filepath = normalize(path.join(directory, filepath));
+		var filepath = path.normalize(path.join(directory, filepath));
 
 		// get number of tabs at the beginning of a line
 		var tabs = match.match(regexTab)[0];
@@ -274,9 +281,6 @@ function resolve (directory, template, imported, parent) {
 			// remove export statements
 			content = content.replace(regexExportsRm, '');
 
-			// test the code(imported module) for errors
-			test(content);
-
 			// append tabs to match position of import statement
 			content = content.replace(regexLine, tabs);
 
@@ -288,30 +292,30 @@ function resolve (directory, template, imported, parent) {
 }
 
 // test if the code throws errors
-function test (code, filepath) {
-	try {
-		new Function(code);
-	} catch (err) {
-		// ignore import/export syntax errors
-		if (err.message.indexOf('token import') || err.message.indexOf('token export')) {
-			return;
-		}
+function test (file) {
+	proc.execFile('node', [file], function (error) {
+		if (error) {
+			var message = error.message;
 
-		// log all other errors
-		execFile('node', [filepath], function (error) {
-			if (error) {
-				// format message
-				var message = (
-					'\x1b[31m' + 
-					error.message.replace('Command failed: node '+filepath, '') + 
-					'\x1b[0m'
-				);
-
-				// log
-				console.error(message);
+			// ignore import/export syntax errors
+			if (
+				message.indexOf('token import') > -1 || 
+				message.indexOf('token export') > -1
+			) {
+				return;
 			}
-		});
-	}
+
+			// format message
+			var message = (
+				'\x1b[31m' + 
+				error.message.replace('Command failed: node '+file, '') + 
+				'\x1b[0m'
+			);
+
+			// log
+			console.error(message);
+		}
+	});
 }
 
 
@@ -324,14 +328,14 @@ function build (directory, destination, filepath) {
 	// retrieve entry files content
 	var content = fs.readFileSync(filepath, 'utf8');
 
-	// test the code(entry module) for errors
-	test(content, filepath);
-
 	// resolve(recursively)
 	var output = resolve(directory, content, imported, '');
 
 	// write to filesystem(destination) when done
 	fs.writeFileSync(destination, output, 'utf8');
+
+	// test the code for errors
+	test(destination);
 }
 
 
@@ -352,13 +356,13 @@ function report (start, filename, event) {
 // start
 function bootstrap (directory, destination, entry) {
 	// destination to write to
-	destination = normalize(__dirname + '/' + destination);
+	destination = path.normalize(__dirname + '/' + destination);
 
 	// directory to watch
-	directory = normalize(__dirname + '/' + directory);
+	directory = path.normalize(__dirname + '/' + directory);
 
 	// entry file
-	entry = normalize(directory + (entry || 'index.js'));
+	entry = path.normalize(directory + (entry || 'index.js'));
 
 	// start initial build timer
 	var start = Date.now();
@@ -372,20 +376,24 @@ function bootstrap (directory, destination, entry) {
 	// log watching status
 	console.log('\n  ...watching for changes in ./src\n');
 
-	// start watching directory
-	// fs.watch(directory, function (event, filename) {
-	// 	// keep track of build time
-	// 	var start = Date.now();
+	function watcher (event, filename) {
+		// keep track of build time
+		var start = Date.now();
 
-	//     try {
-	//     	// build
-	//     	build(directory, destination, entry);
-	//     	// report build complete
-	//     	report(start, filename, event);
-	//     } catch (error) {
-	//     	console.log(error);
-	//     }
-	// });
+	    try {
+	    	// build
+	    	build(directory, destination, entry);
+	    	// report build complete
+	    	report(start, filename, event);
+	    } catch (error) {
+	    	console.log(error);
+	    }
+	}
+
+	// start watching directories
+	walk(directory, function (filepath) {
+		fs.watch(filepath, watcher);
+	});
 }
 
 

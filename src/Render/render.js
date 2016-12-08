@@ -8,89 +8,99 @@
 function render (subject, target, callback) {
 	// renderer
 	function reconciler (props) {
-		if (initial) {
-			// dispatch mount
-			mount(element, node);
+	if (initial) {
+		// dispatch mount
+		mount(element, node);
 
-			// register mount has been dispatched
-			initial = false;
+		// register mount has been dispatched
+		initial = false;
 
-			// assign component
-			if (component === null) { 
-				component = node._owner;
-			}
-		} else {
-			// update props
-			if (props !== void 0) {
-				if (
-					component.shouldComponentUpdate !== void 0 && 
-					component.shouldComponentUpdate(props, component.state) === false
-				) {
-					return reconciler;
-				}
-
-				component.props = props;
+		// assign component
+		if (component === null) { 
+			component = node._owner;
+		}
+	} else {
+		// update props
+		if (props !== void 0) {
+			if (
+				component.shouldComponentUpdate !== void 0 && 
+				component.shouldComponentUpdate(props, component.state) === false
+			) {
+				return reconciler;
 			}
 
-			// update component
-			component.forceUpdate();
+			component.props = props;
 		}
 
-   		return reconciler;
-   	}
+		// update component
+		component.forceUpdate();
+	}
 
-   	var component = null;
-   	var node = null;
+		return reconciler;
+	}
 
-   	if (subject.render !== void 0) {
-   		// create component from object
-   		node = VComponent(createClass(subject));
-   	} else if (subject.type === void 0) {
-   		// normalization
-   		if (subject.constructor === Array) {
-			// fragment array
-   			node = createElement('@', null, subject);	   			
-   		} else {
-   			node = VComponent(subject);
-   		}
-   	} else {
-   		node = subject;
-   	}
+	var component = null;
+	var node = null;
+   var element = null;
 
-   	if (browser === false) {
-   		// server-side
-   		return renderToString(node);
-   	}
+	if (subject.render !== void 0) {
+		// create component from object
+		node = VComponent(createClass(subject));
+	} else if (subject.type === void 0) {
+		// normalization
+		if (subject.constructor === Array) {
+		// fragment array
+			node = createElement('@', null, subject);	   			
+		} else {
+			node = VComponent(subject);
+		}
+	} else {
+		node = subject;
+	}
+
+	if (browser === false) {
+		// server-side
+		return renderToString(node);
+	}
 
 	// retrieve mount element
-	var element = retrieveMount(target);
+   if (target != null && target.nodeType != null) {
+	  // target is a dom element
+	  element = target;
+   } else {
+	  // target might be a selector
+	  target = document.querySelector(subject);
+
+	  // default to document.body if no match/document
+	  element = (target === null || target === document) ? document.body : target;
+   }
 
 	// initial mount registry
 	var initial = true;
 
 	// hydration
-   	if (element.hasAttribute('hydrate')) {
-   		// dispatch hydration
-   		hydrate(element, node, 0, nodeEmpty);
+	if (element.hasAttribute('hydrate')) {
+		// dispatch hydration
+		hydrate(element, node, 0, nodeEmpty);
 
-   		// cleanup element hydrate attributes
-   		element.removeAttribute('hydrate');
+		// cleanup element hydrate attributes
+		element.removeAttribute('hydrate');
 
-   		// register mount has been dispatched
-   		initial = false;
+		// register mount has been dispatched
+		initial = false;
 
-   		// assign component
-   		if (component === null) {
-   			component = node._owner; 
-   		}
-   	} else {
-   		reconciler();
-   	}
+		// assign component
+		if (component === null) {
+			component = node._owner; 
+		}
+	} else {
+		reconciler();
+	}
 
-   	if (typeof callback === 'function') {
-   		callback();
-   	}
+	if (typeof callback === 'function') {
+		callback();
+	}
 
-   	return reconciler;
+	return reconciler;
 }
 

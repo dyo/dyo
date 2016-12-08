@@ -11,7 +11,7 @@ function forceUpdate () {
 		}
 
 		// patch update
-		patch(retrieveRender(this), this._vnode);
+		patch(extractRender(this), this._vnode);
 
 		// componentDidUpdate lifecycle
 		if (this.componentDidUpdate) {

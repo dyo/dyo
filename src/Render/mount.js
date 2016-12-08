@@ -12,22 +12,3 @@ function mount (element, newNode) {
 	appendNode(newNode, element, createNode(newNode, null, null));
 }
 
-
-/**
- * retrieve mount element
- * 
- * @param  {*} subject
- * @return {Node}
- */
-function retrieveMount (subject) {
-	// document not available
-	if (subject != null && subject.nodeType != null) {
-		return subject;
-	}
-
-	var target = document.querySelector(subject);
-
-	// default to document.body if no match/document
-	return (target === null || target === document) ? document.body : target;
-}
-

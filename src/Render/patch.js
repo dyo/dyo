@@ -149,8 +149,6 @@ function patch (newNode, oldNode) {
 
 									// normalize old length
 									oldLength--;
-
-									console.log(1, 'keyed replace');
 								}
 								else {								
 									var newKey;
@@ -161,14 +159,14 @@ function patch (newNode, oldNode) {
 										if (moved) {
 											var oldKeyed = oldKeys[newKey];
 
-											// normalize old array, insert new child
+											// normalize old array, insert child at right index
 											oldChildren.splice(i, 0, oldKeyed[0]);
 
-											// move dom node
-											parentNode.insertBefore(oldKeyed[0]._node, oldChild._node);
+											// place dom node back at the right index
+											moveNode(oldChild, parentNode, oldKeyed[0]);
 										} else {
 											// normalize old array, insert new child
-											oldChildren.splice(i, 0, newChild);
+											i === 0 ? oldChildren.unshift(newChild) : oldChildren.splice(i, 0, newChild);
 
 											// insert dom node
 											insertNode(newChild, oldChild, parentNode, createNode(newChild, null, null));
@@ -177,7 +175,6 @@ function patch (newNode, oldNode) {
 										// normalize old length
 										oldLength++;
 									} else {
-										// TODO
 										// moved dom node
 										if (moved) {
 											var oldKeyed = oldKeys[newKey];

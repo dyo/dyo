@@ -34,7 +34,7 @@ function extractVNode (subject) {
 	}
 	
 	// retrieve vnode
-	var vnode = retrieveRender(component);
+	var vnode = extractRender(component);
 
 	// if keyed, assign key to vnode
 	if (subject.props.key !== void 0 && vnode.props.key === void 0) {
@@ -61,20 +61,5 @@ function extractVNode (subject) {
 	}
 
 	return vnode;
-}
-
-
-/**
- * retrieve VNode from render function
- *
- * @param  {Object} subject
- * @return {Object}
- */
-function retrieveRender (component) {
-	// retrieve vnode
-	var vnode = component.render(component.props, component.state, component);
-
-	// if vnode, else fragment
-	return vnode.nodeType !== void 0 ? vnode : VFragment(vnode);
 }
 

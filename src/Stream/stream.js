@@ -1,20 +1,23 @@
 /**
- * create stream, getter/setter
+ * create stream
  * 
- * @param  {*}                    value
+ * @param  {*}                        value
  * @param  {(function(...*)|boolean)} middleware
  * @return {function}
  */
 function stream (value, middleware) {
 	var store;
+
 	// this allows us to return values in a .then block that will
 	// get passed to the next .then block
-	var chain = { then: null, catch: null }; 
+	var chain = { then: null, catch: null };
+
 	// .then/.catch listeners
 	var listeners = { then: [], catch: [] };
 
 	// predetermine if a middlware was passed
 	var hasMiddleware = middleware != null;
+
 	// predetermine if the middlware passed is a function
 	var middlewareFunc = hasMiddleware && typeof middleware === 'function';
 
@@ -114,22 +117,22 @@ function stream (value, middleware) {
 
 	// end/reset a stream
 	function end (value) {
-		if (value) store = value;
+		value !== void 0 && (store = value);
 
-		chain.then = null;
-		chain.catch = null; 
-		listeners.then = []; 
+		chain.then      = null;
+		chain.catch     = null; 
+		listeners.then  = []; 
 		listeners.catch = [];
 	}
 
 	// assign public methods
-	Stream.then = then;
-	Stream.done = done;
-	Stream.catch = error;
-	Stream.map = map;
-	Stream.end = end;
+	Stream.then    = then;
+	Stream.done    = done;
+	Stream.catch   = error;
+	Stream.map     = map;
+	Stream.end     = end;
 	Stream.valueOf = valueOf;
-	Stream.toJSON = toJSON;
+	Stream.toJSON  = toJSON;
 	// signature
 	Stream._stream = true;
 
