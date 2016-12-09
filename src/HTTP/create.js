@@ -14,7 +14,7 @@
  * @return {function}
  */
 function create (
-	method, uri, payload, enctype, responseType, withCredentials, initial, config, username, password
+	method, uri, payload, enctype, responseType, withCredentials, initial, headers, config, username, password
 ) {
 	// return a a stream
 	return stream(function (resolve, reject, stream) {
@@ -67,6 +67,12 @@ function create (
 			} else if (enctype.indexOf('json') > -1) {
 				payload = JSON.stringify(payload);
 			}
+		}
+
+		if (headers != null) {
+			each(function (value, name) {
+				xhr.setRequestHeader(name, value);
+			});
 		}
 
 		// if, assign inital value of stream

@@ -1,26 +1,34 @@
 /**
- * defer function
- *
  * defers the execution of a function with predefined arguments
- * and an optional command to preventDefault event behaviour
+ * with an optional command to preventDefault event behaviour and
+ * delay execution
  * 
- * @param  {function} subject
- * @param  {any[]}    args
- * @param  {boolean}  preventDefault
+ * @param  {function}  func
+ * @param  {any[]-}    defaultArgs
+ * @param  {boolean=}  preventDefault
+ * @param  {number=}   duration
  * @return {function}
  */
-function defer (subject, args, preventDefault) {
-	var empty = !args || args.length === 0;
+function defer (func, defaultArgs, preventDefault, duration) {
+	var empty = !defaultArgs || defaultArgs.length === 0;
 
-	// return a function that calls `subject` with args as arguments
+	// return a function that calls `func` with args as arguments
 	return function callback (e) {
 		// auto prevent default
 		if (preventDefault && e && e.preventDefault) {
 			e.preventDefault();
 		}
 
-		// defaults to arguments if there are no predefined args
-		return subject.apply(this, (empty ? arguments : args));
+		// defaults to arguments if there are no predefined defaultArgs
+		var args = empty ? arguments : defaultArgs;
+
+		if (duration === void 0) {
+			return func.apply(this, args);
+		} else {
+			setTimeout(function () {
+				func.apply(this, args);
+			}, duration);
+		}
 	}
 }
 

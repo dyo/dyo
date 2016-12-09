@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio is a fast (~8kb) Virtual DOM framework
+ * dio is a fast ~8kb Virtual DOM framework
  * 
  * @licence MIT
  */
@@ -35,32 +35,32 @@
 var version      = '4.0.0';
 
 // enviroment variables
-var document     = window.document || null;
-var browser      = document !== null;
-var server       = browser === false;
+var document        = window.document || null;
+var browser         = document !== null;
+var server          = browser === false;
 
-var readable     = server ? require('stream').Readable : null;
+var readable        = server ? require('stream').Readable : null;
 
 // namespaces
-var nsStyle      = 'data-scope';
-var nsMath       = 'http://www.w3.org/1998/Math/MathML';
-var nsXlink      = 'http://www.w3.org/1999/xlink';
-var nsSvg        = 'http://www.w3.org/2000/svg';
+var nsStyle         = 'data-scope';
+var nsMath          = 'http://www.w3.org/1998/Math/MathML';
+var nsXlink         = 'http://www.w3.org/1999/xlink';
+var nsSvg           = 'http://www.w3.org/2000/svg';
 
 // empty shapes
-var objEmpty     = Object.create(null);
-var arrEmpty     = [];
-var nodeEmpty    = VNode(0, '', objEmpty, arrEmpty, null, null);
+var objEmpty        = Object.create(null);
+var arrEmpty        = [];
+var nodeEmpty       = VNode(0, '', objEmpty, arrEmpty, null, null);
 
 // void elements
-var isVoid       = {
+var isVoid          = {
 	'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0, 'embed': 0,
 	'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
 	'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
 };
 
 // unicode characters
-var uniCodes     = {
+var uniCodes        = {
 	'<': '&lt;',
 	'>': '&gt;',
 	'"': '&quot;',
@@ -69,11 +69,13 @@ var uniCodes     = {
 };
 
 // regular expressions
-var regEsc       = /[<>&"']/g;
-var regRoute     = /([:*])(\w+)|([\*])/g;
+var regEsc          = /[<>&"']/g;
+var regRoute        = /([:*])(\w+)|([\*])/g;
+var regStyleCamel   = /([a-zA-Z])(?=[A-Z])/g;
+var regStyleVendor  = /^(ms|webkit|moz)/;
 
 // random characters
-var randomChars  = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
+var randomChars     = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
 
 
 /**
@@ -123,6 +125,17 @@ function escape (subject) {
 
 
 /**
+ * unicoder, escape => () helper
+ * 
+ * @param  {string} char
+ * @return {string}
+ */
+function unicoder (char) {
+	return uniCodes[char];
+}
+
+
+/**
  * throw/return error
  * 
  * @param  {string}            message
@@ -142,15 +155,15 @@ function panic (message, silent) {
  * try catch helper
  * 
  * @param  {function}  func
- * @param  {function=} onError
+ * @param  {function=} error
  * @param  {any=}      value
  * @return {any}
  */
-function sandbox (func, onError, value) {
+function sandbox (func, error, value) {
 	try {
 		return value != null ? func(value) : func();
-	} catch (err) {
-		return onerror && onerror(err);
+	} catch (e) {
+		return error && error(e);
 	}
 }
 
@@ -176,39 +189,47 @@ function random (length) {
 /**
  * for in proxy
  * 
- * @param  {Object}   subject
- * @param  {Function} callback
+ * @param  {Object}   obj
+ * @param  {function} func
  */
-function each (subject, callback) {
-	for (var name in subject) {
-		callback(subject[name], name, subject);
+function each (obj, func) {
+	for (var name in obj) {
+		func(obj[name], name, obj);
 	}
 }
 
 
 /**
- * defer function
- *
  * defers the execution of a function with predefined arguments
- * and an optional command to preventDefault event behaviour
+ * with an optional command to preventDefault event behaviour and
+ * delay execution
  * 
- * @param  {function} subject
- * @param  {any[]}    args
- * @param  {boolean}  preventDefault
+ * @param  {function}  func
+ * @param  {any[]-}    defaultArgs
+ * @param  {boolean=}  preventDefault
+ * @param  {number=}   duration
  * @return {function}
  */
-function defer (subject, args, preventDefault) {
-	var empty = !args || args.length === 0;
+function defer (func, defaultArgs, preventDefault, duration) {
+	var empty = !defaultArgs || defaultArgs.length === 0;
 
-	// return a function that calls `subject` with args as arguments
+	// return a function that calls `func` with args as arguments
 	return function callback (e) {
 		// auto prevent default
 		if (preventDefault && e && e.preventDefault) {
 			e.preventDefault();
 		}
 
-		// defaults to arguments if there are no predefined args
-		return subject.apply(this, (empty ? arguments : args));
+		// defaults to arguments if there are no predefined defaultArgs
+		var args = empty ? arguments : defaultArgs;
+
+		if (duration === void 0) {
+			return func.apply(this, args);
+		} else {
+			setTimeout(function () {
+				func.apply(this, args);
+			}, duration);
+		}
 	}
 }
 
@@ -258,17 +279,6 @@ function compose () {
 			return output;
 		}
 	}
-}
-
-
-/**
- * unicoder, escape => () helper
- * 
- * @param  {string} char
- * @return {string}
- */
-function unicoder (char) {
-	return uniCodes[char];
 }
 
 
@@ -745,20 +755,8 @@ function bindState (property, attr, preventUpdate) {
  * @return {void}
  */
 function forceUpdate () {
-	if (this._vnode !== null) {
-		// componentWillUpdate lifecycle
-		if (this.componentWillUpdate) {
-			this.componentWillUpdate(this.props, this.state);
-		}
-
-		// patch update
-		patch(extractRender(this), this._vnode);
-
-		// componentDidUpdate lifecycle
-		if (this.componentDidUpdate) {
-			this.componentDidUpdate(this.props, this.state);
-		}
-	}
+	// patch update
+	this._vnode !== null && patch(extractRender(this), this._vnode);
 }
 
 
@@ -853,7 +851,7 @@ function createClass (subject) {
  * @param  {Object}  parentNode
  */
 function hydrate (element, newNode, index, parentNode) {
-	var currentNode = newNode.nodeType === 2 ? extractVNode(newNode) : newNode;
+	var currentNode = newNode.nodeType === 2 ? extractComponent(newNode) : newNode;
 	var nodeType = currentNode.nodeType;
 
 	// is a fragment if `newNode` is not a text node and type is fragment signature '@'
@@ -883,7 +881,7 @@ function hydrate (element, newNode, index, parentNode) {
 
 		// assign refs
 		if (currentNode.props.ref !== void 0 && currentNode._owner !== void 0) {
-			assignRefs(newElement, currentNode.props.ref, currentNode._owner);
+			extractRefs(newElement, currentNode.props.ref, currentNode._owner);
 		}
 	}
 	/*
@@ -1054,10 +1052,9 @@ function stylesheet (element, component) {
 	if (func) {
 		// retrieve stylesheet
 		var styles = component.stylesheet();
-		var name = component.name;
 
 		// generate unique id
-		id = name ? name + '-' + random(4) : random(6);
+		id = random(6);
 
 		// compile css
 		css = stylis('['+nsStyle+'='+id+']', styles, true, true);
@@ -1270,7 +1267,7 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                                 selector = prefix + selector.substring(1);
                             }
                             // :host 
-                            else if (firstChar === 58) {
+                            else if (firstChar === 58 && selector.charCodeAt(1) === 104) {
                                 var nextChar = (selector = selector.substring(5)).charCodeAt(0);
                                 
                                 // :host(selector)                                                    
@@ -1285,7 +1282,7 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                                 else {
                                     selector = prefix + selector;
                                 }
-                              }
+                            }
                             else {
                                 selector = prefix + (firstChar === 58 ? '' : ' ') + selector;
                             }
@@ -1394,7 +1391,7 @@ function patch (newNode, oldNode) {
 		// if _newNode and oldNode are the identical, exit early
 		if (newNode !== oldNode) {		
 			// extract node from possible component node
-			var _newNode = newNodeType === 2 ? extractVNode(newNode) : newNode;
+			var _newNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
 
 			// component will update
 			if (oldNodeType === 2) {
@@ -1574,18 +1571,13 @@ function patch (newNode, oldNode) {
 
 
 /**
- * extract node
+ * extract component
  * 
  * @param  {Object} subject
  * @param  {Object} props
  * @return {Object} 
  */
-function extractVNode (subject) {	
-	// static node
-	if (subject.nodeType !== 2) {
-		return subject;
-	}
-
+function extractComponent (subject) {
 	// possible component class, type
 	var candidate;
 	var type = subject.type;
@@ -1618,7 +1610,7 @@ function extractVNode (subject) {
 
 	// if render returns a component
 	if (vnode.nodeType === 2) {
-		vnode = extractVNode(vnode);
+		vnode = extractComponent(vnode);
 	}
 
 	// assign component node
@@ -1640,10 +1632,10 @@ function extractVNode (subject) {
 
 
 /**
- * extract VNode from render function
+ * extract a render function
  *
- * @param  {Object} subject
- * @return {Object}
+ * @param  {Component} component
+ * @return {VNode}
  */
 function extractRender (component) {
 	// retrieve vnode
@@ -1655,13 +1647,13 @@ function extractRender (component) {
 
 
 /**
- * assign refs
+ * extract refs
  * 
  * @param {Node}      element
  * @param {Object}    refs
  * @param {Component} component
  */
-function assignRefs (element, ref, component) {
+function extractRefs (element, ref, component) {
 	// hoist typeof info
 	var type = typeof ref;
 	var refs = (component.refs === null ? component.refs = {} : component.refs);
@@ -1684,15 +1676,15 @@ function assignRefs (element, ref, component) {
  * @param  {Object} old
  */
 function patchProps (newNode, oldNode) {
-	var propsDiff = diffProps(newNode.props, oldNode.props, newNode.props.xmlns || '', []);
-	var length = propsDiff.length;
+	var diff   = diffProps(newNode.props, oldNode.props, newNode.props.xmlns || '', []);
+	var length = diff.length;
 
 	// if diff length > 0 apply diff
 	if (length !== 0) {
 		var target = oldNode._node;
 
 		for (var i = 0; i < length; i++) {
-			var prop = propsDiff[i];
+			var prop = diff[i];
 			// [0: action, 1: name, 2: value, namespace]
 			updateProp(target, prop[0], prop[1], prop[2], prop[3]);
 		}
@@ -1903,7 +1895,7 @@ function createNode (subject, component, namespace) {
 			element = subject._node;
 		} else {
 			// create
-			var newNode  = nodeType === 2 ? extractVNode(subject) : subject;
+			var newNode  = nodeType === 2 ? extractComponent(subject) : subject;
 			var type     = newNode.type;
 			var children = newNode.children;
 			var length   = children.length;
@@ -1972,7 +1964,7 @@ function createNode (subject, component, namespace) {
 
 		// refs
 		if (props.ref !== void 0 && component !== null) {
-			assignRefs(element, props.ref, component);
+			extractRefs(element, props.ref, component);
 		}
 
 		// check if a stylesheet is attached
@@ -2219,7 +2211,7 @@ function renderPropsToString (props) {
 							// if camelCase convert to dash-case 
 							// i.e marginTop --> margin-top
 							if (name !== name.toLowerCase()) {
-								name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
+								name.replace(regStyleCamel, '$1-').replace(regStyleVendor, '-$1').toLowerCase();
 							}
 
 							style += name + ':' + value + ';';
@@ -2260,7 +2252,7 @@ function renderVNodeToString (subject, styles, lookup) {
 		if (component._html !== void 0) {
 			return component._html;
 		} else {
-			vnode = extractVNode(subject);
+			vnode = extractComponent(subject);
 		}
 	} else {
 		vnode = subject;
@@ -2430,7 +2422,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				if (component._html !== void 0) {
 					this.push(component._html); return;
 				} else {
-					vnode = extractVNode(subject);
+					vnode = extractComponent(subject);
 				}
 			} else {
 				vnode = subject;
@@ -2552,8 +2544,8 @@ function renderToCache (subject) {
 /**
  * create stream
  * 
- * @param  {*}                        value
- * @param  {(function(...*)|boolean)} middleware
+ * @param  {(function(resolve, reject)|*)} value
+ * @param  {(function(...*)|boolean)}      middleware
  * @return {function}
  */
 function stream (value, middleware) {
@@ -2723,20 +2715,16 @@ stream.reject = function (value) {
 /**
  * ---------------------------------------------------------------------------------
  * 
- * requests
+ * request
  * 
  * ---------------------------------------------------------------------------------
  */
 
 
 /**
- * http requests
+ * request constructor
  * 
- * @param  {string}  url
- * @param  {*}       payload 
- * @param  {string}  enctype 
- * @param  {boolean} withCredentials
- * @return {Object}
+ * @return {function}
  */
 function http () {
 /**
@@ -2820,7 +2808,7 @@ function response (xhr, responseType, reject) {
  * @return {function}
  */
 function create (
-	method, uri, payload, enctype, responseType, withCredentials, initial, config, username, password
+	method, uri, payload, enctype, responseType, withCredentials, initial, headers, config, username, password
 ) {
 	// return a a stream
 	return stream(function (resolve, reject, stream) {
@@ -2875,6 +2863,12 @@ function create (
 			}
 		}
 
+		if (headers != null) {
+			each(function (value, name) {
+				xhr.setRequestHeader(name, value);
+			});
+		}
+
 		// if, assign inital value of stream
 		initial !== void 0 && resolve(initial);
 
@@ -2896,7 +2890,7 @@ function create (
  */
 function method (method) {
 	return function (
-		url, payload, enctype, responseType, withCredentials, initial, config, username, password
+		url, payload, enctype, responseType, withCredentials, initial, headers, config, username, password
 	) {
 		// encode url
 		var uri = encodeURI(url);
@@ -2916,7 +2910,7 @@ function method (method) {
 
 		// return promise-like stream
 		return create(
-			method, uri, payload, enctype, responseType, withCredentials, initial, config, username, password
+			method, uri, payload, enctype, responseType, withCredentials, initial, headers, config, username, password
 		);
 	}
 }
@@ -2941,6 +2935,7 @@ function request (subject) {
 			subject.responseType,
 			subject.withCredentials,
 			subject.initial,
+			subject.headers,
 			subject.config,
 			subject.username, 
 			subject.password
@@ -3418,11 +3413,10 @@ return {
 	applyMiddleware:  applyMiddleware,
 	combineReducers:  combineReducers,
 	
-	// http
+	// utilities
 	request:          http(),
 	router:           router,
-	
-	// utilities
+
 	stream:           stream,
 	stylis:           stylis,
 	escape:           escape,

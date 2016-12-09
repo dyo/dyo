@@ -17,6 +17,7 @@ function request (subject) {
 			subject.responseType,
 			subject.withCredentials,
 			subject.initial,
+			subject.headers,
 			subject.config,
 			subject.username, 
 			subject.password

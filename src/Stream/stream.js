@@ -1,8 +1,8 @@
 /**
  * create stream
  * 
- * @param  {*}                        value
- * @param  {(function(...*)|boolean)} middleware
+ * @param  {(function(resolve, reject)|*)} value
+ * @param  {(function(...*)|boolean)}      middleware
  * @return {function}
  */
 function stream (value, middleware) {

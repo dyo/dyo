@@ -22,7 +22,7 @@ function renderVNodeToString (subject, styles, lookup) {
 		if (component._html !== void 0) {
 			return component._html;
 		} else {
-			vnode = extractVNode(subject);
+			vnode = extractComponent(subject);
 		}
 	} else {
 		vnode = subject;

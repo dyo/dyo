@@ -35,7 +35,7 @@ function patch (newNode, oldNode) {
 		// if _newNode and oldNode are the identical, exit early
 		if (newNode !== oldNode) {		
 			// extract node from possible component node
-			var _newNode = newNodeType === 2 ? extractVNode(newNode) : newNode;
+			var _newNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
 
 			// component will update
 			if (oldNodeType === 2) {

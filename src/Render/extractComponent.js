@@ -1,16 +1,11 @@
 /**
- * extract node
+ * extract component
  * 
  * @param  {Object} subject
  * @param  {Object} props
  * @return {Object} 
  */
-function extractVNode (subject) {	
-	// static node
-	if (subject.nodeType !== 2) {
-		return subject;
-	}
-
+function extractComponent (subject) {
 	// possible component class, type
 	var candidate;
 	var type = subject.type;
@@ -43,7 +38,7 @@ function extractVNode (subject) {
 
 	// if render returns a component
 	if (vnode.nodeType === 2) {
-		vnode = extractVNode(vnode);
+		vnode = extractComponent(vnode);
 	}
 
 	// assign component node

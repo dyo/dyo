@@ -23,10 +23,9 @@ function stylesheet (element, component) {
 	if (func) {
 		// retrieve stylesheet
 		var styles = component.stylesheet();
-		var name = component.name;
 
 		// generate unique id
-		id = name ? name + '-' + random(4) : random(6);
+		id = random(6);
 
 		// compile css
 		css = stylis('['+nsStyle+'='+id+']', styles, true, true);

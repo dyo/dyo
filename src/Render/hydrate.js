@@ -7,7 +7,7 @@
  * @param  {Object}  parentNode
  */
 function hydrate (element, newNode, index, parentNode) {
-	var currentNode = newNode.nodeType === 2 ? extractVNode(newNode) : newNode;
+	var currentNode = newNode.nodeType === 2 ? extractComponent(newNode) : newNode;
 	var nodeType = currentNode.nodeType;
 
 	// is a fragment if `newNode` is not a text node and type is fragment signature '@'
@@ -37,7 +37,7 @@ function hydrate (element, newNode, index, parentNode) {
 
 		// assign refs
 		if (currentNode.props.ref !== void 0 && currentNode._owner !== void 0) {
-			assignRefs(newElement, currentNode.props.ref, currentNode._owner);
+			extractRefs(newElement, currentNode.props.ref, currentNode._owner);
 		}
 	}
 	/*

@@ -97,7 +97,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				if (component._html !== void 0) {
 					this.push(component._html); return;
 				} else {
-					vnode = extractVNode(subject);
+					vnode = extractComponent(subject);
 				}
 			} else {
 				vnode = subject;

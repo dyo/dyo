@@ -41,7 +41,7 @@ function renderPropsToString (props) {
 							// if camelCase convert to dash-case 
 							// i.e marginTop --> margin-top
 							if (name !== name.toLowerCase()) {
-								name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
+								name.replace(regStyleCamel, '$1-').replace(regStyleVendor, '-$1').toLowerCase();
 							}
 
 							style += name + ':' + value + ';';

@@ -23,7 +23,7 @@ function createNode (subject, component, namespace) {
 			element = subject._node;
 		} else {
 			// create
-			var newNode  = nodeType === 2 ? extractVNode(subject) : subject;
+			var newNode  = nodeType === 2 ? extractComponent(subject) : subject;
 			var type     = newNode.type;
 			var children = newNode.children;
 			var length   = children.length;
@@ -92,7 +92,7 @@ function createNode (subject, component, namespace) {
 
 		// refs
 		if (props.ref !== void 0 && component !== null) {
-			assignRefs(element, props.ref, component);
+			extractRefs(element, props.ref, component);
 		}
 
 		// check if a stylesheet is attached

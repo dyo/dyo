@@ -1,8 +1,8 @@
 /**
- * extract VNode from render function
+ * extract a render function
  *
- * @param  {Object} subject
- * @return {Object}
+ * @param  {Component} component
+ * @return {VNode}
  */
 function extractRender (component) {
 	// retrieve vnode

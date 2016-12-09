@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio is a fast (~8kb) Virtual DOM framework
+ * dio is a fast ~8kb Virtual DOM framework
  * 
  * @licence MIT
  */
@@ -78,11 +78,10 @@ return {
 	applyMiddleware:  applyMiddleware,
 	combineReducers:  combineReducers,
 	
-	// http
+	// utilities
 	request:          http(),
 	router:           router,
-	
-	// utilities
+
 	stream:           stream,
 	stylis:           stylis,
 	escape:           escape,

@@ -1,20 +1,16 @@
 /**
  * ---------------------------------------------------------------------------------
  * 
- * requests
+ * request
  * 
  * ---------------------------------------------------------------------------------
  */
 
 
 /**
- * http requests
+ * request constructor
  * 
- * @param  {string}  url
- * @param  {*}       payload 
- * @param  {string}  enctype 
- * @param  {boolean} withCredentials
- * @return {Object}
+ * @return {function}
  */
 function http () {
 	import 'serialize';

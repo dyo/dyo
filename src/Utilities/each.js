@@ -1,12 +1,12 @@
 /**
  * for in proxy
  * 
- * @param  {Object}   subject
- * @param  {Function} callback
+ * @param  {Object}   obj
+ * @param  {function} func
  */
-function each (subject, callback) {
-	for (var name in subject) {
-		callback(subject[name], name, subject);
+function each (obj, func) {
+	for (var name in obj) {
+		func(obj[name], name, obj);
 	}
 }
 

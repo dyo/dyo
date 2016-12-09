@@ -2,15 +2,15 @@
  * try catch helper
  * 
  * @param  {function}  func
- * @param  {function=} onError
+ * @param  {function=} error
  * @param  {any=}      value
  * @return {any}
  */
-function sandbox (func, onError, value) {
+function sandbox (func, error, value) {
 	try {
 		return value != null ? func(value) : func();
-	} catch (err) {
-		return onerror && onerror(err);
+	} catch (e) {
+		return error && error(e);
 	}
 }
 

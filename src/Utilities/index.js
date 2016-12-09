@@ -14,4 +14,3 @@ import 'random';
 import 'each';
 import 'defer';
 import 'compose';
-import 'unicoder';

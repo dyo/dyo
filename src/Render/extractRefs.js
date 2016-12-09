@@ -1,11 +1,11 @@
 /**
- * assign refs
+ * extract refs
  * 
  * @param {Node}      element
  * @param {Object}    refs
  * @param {Component} component
  */
-function assignRefs (element, ref, component) {
+function extractRefs (element, ref, component) {
 	// hoist typeof info
 	var type = typeof ref;
 	var refs = (component.refs === null ? component.refs = {} : component.refs);
