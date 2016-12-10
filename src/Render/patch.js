@@ -1,8 +1,8 @@
 /**
  * patch
  *  
- * @param {Object} newNode  
- * @param {Object} oldNode  
+ * @param {VNode} newNode  
+ * @param {VNode} oldNode  
  */
 function patch (newNode, oldNode) {
 	var newNodeType = newNode.nodeType;
@@ -14,7 +14,7 @@ function patch (newNode, oldNode) {
 	}
 	// add operation
 	else if (oldNodeType === 0) { 
-		return 2; 
+		return 2;
 	}
 	// text operation
 	else if (newNodeType === 3 && oldNodeType === 3) { 

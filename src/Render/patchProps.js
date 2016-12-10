@@ -1,12 +1,11 @@
 /**
- * handles diff props
+ * diff and patch props
  * 
- * @param  {Object} node
- * @param  {number} index
- * @param  {Object} old
+ * @param  {VNode} newNode
+ * @param  {VNode} oldNode
  */
 function patchProps (newNode, oldNode) {
-	var diff   = diffProps(newNode.props, oldNode.props, newNode.props.xmlns || '', []);
+	var diff   = diffProps(newNode, oldNode, newNode.props.xmlns || '', []);
 	var length = diff.length;
 
 	// if diff length > 0 apply diff

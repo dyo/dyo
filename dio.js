@@ -31,6 +31,15 @@
  */
 
 
+/**
+ * ---------------------------------------------------------------------------------
+ * 
+ * constants
+ * 
+ * ---------------------------------------------------------------------------------
+ */
+
+
 // current version
 var version      = '4.0.0';
 
@@ -76,6 +85,8 @@ var regStyleVendor  = /^(ms|webkit|moz)/;
 
 // random characters
 var randomChars     = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
+
+
 
 
 /**
@@ -394,7 +405,7 @@ function VSvg (type, props, children) {
  * @param {(function|string)} type
  * @param {Object}            props
  * @param {VNode[]}           children
- * @param {(Node|null)}       _node
+ * @param {(?Node)}           _node
  * @param {Component}         _owner
  */
 function VNode (nodeType, type, props, children, _node, _owner) {
@@ -730,10 +741,10 @@ function setState (newState, callback) {
 /**
  * bindState
  * 
- * @param  {string}   property
- * @param  {string}   attr
- * @param  {boolean=} preventUpdate
- * @return {function}           
+ * @param  {string}          property
+ * @param  {string}          attr
+ * @param  {boolean=}        preventUpdate
+ * @return {function(Event)}
  */
 function bindState (property, attr, preventUpdate) {
 	var component = this;
@@ -1357,8 +1368,8 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
 /**
  * patch
  *  
- * @param {Object} newNode  
- * @param {Object} oldNode  
+ * @param {VNode} newNode  
+ * @param {VNode} oldNode  
  */
 function patch (newNode, oldNode) {
 	var newNodeType = newNode.nodeType;
@@ -1370,7 +1381,7 @@ function patch (newNode, oldNode) {
 	}
 	// add operation
 	else if (oldNodeType === 0) { 
-		return 2; 
+		return 2;
 	}
 	// text operation
 	else if (newNodeType === 3 && oldNodeType === 3) { 
@@ -1573,14 +1584,11 @@ function patch (newNode, oldNode) {
 /**
  * extract component
  * 
- * @param  {Object} subject
- * @param  {Object} props
- * @return {Object} 
+ * @param  {VNode} subject
+ * @return {VNode} 
  */
 function extractComponent (subject) {
-	// possible component class, type
-	var candidate;
-	var type = subject.type;
+	var candidate, type = subject.type;
 
 	if (type._component !== void 0) {
 		// cache
@@ -1669,14 +1677,13 @@ function extractRefs (element, ref, component) {
 
 
 /**
- * handles diff props
+ * diff and patch props
  * 
- * @param  {Object} node
- * @param  {number} index
- * @param  {Object} old
+ * @param  {VNode} newNode
+ * @param  {VNode} oldNode
  */
 function patchProps (newNode, oldNode) {
-	var diff   = diffProps(newNode.props, oldNode.props, newNode.props.xmlns || '', []);
+	var diff   = diffProps(newNode, oldNode, newNode.props.xmlns || '', []);
 	var length = diff.length;
 
 	// if diff length > 0 apply diff
@@ -1697,42 +1704,43 @@ function patchProps (newNode, oldNode) {
 /**
  * collect prop diffs
  * 
- * @param  {Object}  newProps 
- * @param  {Object}  oldProps 
+ * @param  {VNode}   newNode 
+ * @param  {VNode}   oldNode 
  * @param  {string}  namespace
  * @param  {Array[]} propsDiff
  * @return {Array[]}          
  */
-function diffProps (newProps, oldProps, namespace, propsDiff) {
+function diffProps (newNode, oldNode, namespace, diff) {
 	// diff newProps
-	for (var newName in newProps) { 
-		diffNewProps(newProps, oldProps, newName, namespace, propsDiff); 
-	}
-	// diff oldProps
-	for (var oldName in oldProps) { 
-		diffOldProps(newProps, oldName, namespace, propsDiff); 
+	for (var newName in newNode.props) { 
+		diffNewProps(newNode, oldNode, newName, namespace, diff); 
 	}
 
-	return propsDiff;
+	// diff oldProps
+	for (var oldName in oldNode.props) { 
+		diffOldProps(newNode, oldName, namespace, diff); 
+	}
+
+	return diff;
 }
 
 
 /**
  * diff newProps agains oldProps
  * 
- * @param  {Object}  newProps 
- * @param  {Object}  oldProps 
+ * @param  {VNode}   newNode 
+ * @param  {VNode}   oldNode 
  * @param  {string}  newName
  * @param  {string}  namespace
- * @param  {Array[]} propsDiff
+ * @param  {Array[]} diff
  * @return {Array[]}          
  */
-function diffNewProps (newProps, oldProps, newName, namespace, propsDiff) {
-	var newValue = newProps[newName];
-	var oldValue = oldProps[newName];
+function diffNewProps (newNode, oldNode, newName, namespace, diff) {
+	var newValue = newNode.props[newName];
+	var oldValue = oldNode.props[newName];
 
 	if (newValue != null && oldValue !== newValue) {
-		propsDiff[propsDiff.length] = ['setAttribute', newName, newValue, namespace];
+		diff[diff.length] = ['setAttribute', newName, newValue, namespace];
 	}
 }
 
@@ -1740,17 +1748,17 @@ function diffNewProps (newProps, oldProps, newName, namespace, propsDiff) {
 /**
  * diff oldProps agains newProps
  * 
- * @param  {Object}  newProps 
+ * @param  {VNode}   newNode 
  * @param  {Object}  oldName 
  * @param  {string}  namespace
- * @param  {Array[]} propsDiff
+ * @param  {Array[]} diff
  * @return {Array[]}          
  */
-function diffOldProps (newProps, oldName, namespace, propsDiff) {
-	var newValue = newProps[oldName];
+function diffOldProps (newNode, oldName, namespace, diff) {
+	var newValue = newNode.props[oldName];
 
 	if (newValue == null) {
-		propsDiff[propsDiff.length] = ['removeAttribute', oldName, '', namespace];
+		diff[diff.length] = ['removeAttribute', oldName, '', namespace];
 	}
 }
 

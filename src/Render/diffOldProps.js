@@ -1,17 +1,17 @@
 /**
  * diff oldProps agains newProps
  * 
- * @param  {Object}  newProps 
+ * @param  {VNode}   newNode 
  * @param  {Object}  oldName 
  * @param  {string}  namespace
- * @param  {Array[]} propsDiff
+ * @param  {Array[]} diff
  * @return {Array[]}          
  */
-function diffOldProps (newProps, oldName, namespace, propsDiff) {
-	var newValue = newProps[oldName];
+function diffOldProps (newNode, oldName, namespace, diff) {
+	var newValue = newNode.props[oldName];
 
 	if (newValue == null) {
-		propsDiff[propsDiff.length] = ['removeAttribute', oldName, '', namespace];
+		diff[diff.length] = ['removeAttribute', oldName, '', namespace];
 	}
 }
 

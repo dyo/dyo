@@ -5,7 +5,7 @@
  * @param {(function|string)} type
  * @param {Object}            props
  * @param {VNode[]}           children
- * @param {(Node|null)}       _node
+ * @param {(?Node)}           _node
  * @param {Component}         _owner
  */
 function VNode (nodeType, type, props, children, _node, _owner) {

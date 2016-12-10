@@ -1,14 +1,11 @@
 /**
  * extract component
  * 
- * @param  {Object} subject
- * @param  {Object} props
- * @return {Object} 
+ * @param  {VNode} subject
+ * @return {VNode} 
  */
 function extractComponent (subject) {
-	// possible component class, type
-	var candidate;
-	var type = subject.type;
+	var candidate, type = subject.type;
 
 	if (type._component !== void 0) {
 		// cache

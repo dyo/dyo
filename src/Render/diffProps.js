@@ -1,22 +1,23 @@
 /**
  * collect prop diffs
  * 
- * @param  {Object}  newProps 
- * @param  {Object}  oldProps 
+ * @param  {VNode}   newNode 
+ * @param  {VNode}   oldNode 
  * @param  {string}  namespace
  * @param  {Array[]} propsDiff
  * @return {Array[]}          
  */
-function diffProps (newProps, oldProps, namespace, propsDiff) {
+function diffProps (newNode, oldNode, namespace, diff) {
 	// diff newProps
-	for (var newName in newProps) { 
-		diffNewProps(newProps, oldProps, newName, namespace, propsDiff); 
-	}
-	// diff oldProps
-	for (var oldName in oldProps) { 
-		diffOldProps(newProps, oldName, namespace, propsDiff); 
+	for (var newName in newNode.props) { 
+		diffNewProps(newNode, oldNode, newName, namespace, diff); 
 	}
 
-	return propsDiff;
+	// diff oldProps
+	for (var oldName in oldNode.props) { 
+		diffOldProps(newNode, oldName, namespace, diff); 
+	}
+
+	return diff;
 }
 

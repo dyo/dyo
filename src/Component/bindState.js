@@ -1,10 +1,10 @@
 /**
  * bindState
  * 
- * @param  {string}   property
- * @param  {string}   attr
- * @param  {boolean=} preventUpdate
- * @return {function}           
+ * @param  {string}          property
+ * @param  {string}          attr
+ * @param  {boolean=}        preventUpdate
+ * @return {function(Event)}
  */
 function bindState (property, attr, preventUpdate) {
 	var component = this;
