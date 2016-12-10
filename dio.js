@@ -87,8 +87,6 @@ var regStyleVendor  = /^(ms|webkit|moz)/;
 var randomChars     = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
 
 
-
-
 /**
  * ---------------------------------------------------------------------------------
  * 
