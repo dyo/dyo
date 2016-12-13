@@ -1,8 +1,9 @@
 /**
- * patch
+ * patch nodes
  *  
- * @param {VNode} newNode  
- * @param {VNode} oldNode  
+ * @param  {VNode}  newNode  
+ * @param  {VNode}  oldNode  
+ * @return {number} number
  */
 function patch (newNode, oldNode) {
 	var newNodeType = newNode.nodeType;
@@ -31,25 +32,29 @@ function patch (newNode, oldNode) {
 		return 4;
 	}
 	// recursive
-	else {		
+	else {
 		// if _newNode and oldNode are the identical, exit early
 		if (newNode !== oldNode) {		
 			// extract node from possible component node
 			var _newNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
 
-			// component will update
+			// a component
 			if (oldNodeType === 2) {
-				var component = oldNode._owner;
+				var oldComponent = oldNode._owner;
+				var newComponent = newNode._owner;
 
+				// a component with shouldComponentUpdate method
 				if (
-					component.shouldComponentUpdate && 
-					component.shouldComponentUpdate(newNode.props, newNode._owner.state) === false
+					oldComponent.shouldComponentUpdate && 
+					oldComponent.shouldComponentUpdate(newNode.props, newComponent.state) === false
 				) {
+					// exit early
 					return 0;
 				}
 
-				if (component.componentWillUpdate) {
-					component.componentWillUpdate(newNode.props, newNode._owner.state);
+				// a component with a componentWillUpdate method
+				if (oldComponent.componentWillUpdate) {
+					oldComponent.componentWillUpdate(newNode.props, newComponent.state);
 				}
 			}
 
@@ -78,11 +83,11 @@ function patch (newNode, oldNode) {
 				var parentNode = oldNode._node;
 				var isKeyed    = false;
 				var oldKeys    = null;
+				var newKeys    = null;
 
 				// for loop, the end point being which ever is the 
 				// greater value between newLength and oldLength
 				for (var i = 0; i < newLength || i < oldLength; i++) {
-
 					var newChild = newChildren[i] || nodeEmpty;
 					var oldChild = oldChildren[i] || nodeEmpty;
 					var action   = patch(newChild, oldChild);
@@ -129,83 +134,50 @@ function patch (newNode, oldNode) {
 								break;
 							}
 							// keyed operation
-							case 5: {						
-								// create padding
-								if (oldLength > newLength) {
-									// initialize keyed operations
-									if (isKeyed === false) { 
-										isKeyed = true;
-										oldKeys = {}; 
-									}
-
-									// create key/node map
-									oldKeys[oldChild.props.key] = [oldChild, i];
-
-									// normalize old array, remove old child
-									oldChildren.splice(i, 1);
-
-									// remove dom node
-									removeNode(oldChild, parentNode);
-
-									// normalize old length
-									oldLength--;
-								}
-								else {								
-									var newKey;
-									var moved = oldKeys !== null && oldKeys[newKey = newChild.props.key] !== void 0;
-
-									if (newLength > oldLength) {
-										// moved dom node
-										if (moved) {
-											var oldKeyed = oldKeys[newKey];
-
-											// normalize old array, insert child at right index
-											oldChildren.splice(i, 0, oldKeyed[0]);
-
-											// place dom node back at the right index
-											moveNode(oldChild, parentNode, oldKeyed[0]);
-										} else {
-											// normalize old array, insert new child
-											i === 0 ? oldChildren.unshift(newChild) : oldChildren.splice(i, 0, newChild);
-
-											// insert dom node
-											insertNode(newChild, oldChild, parentNode, createNode(newChild, null, null));
-										}
-
-										// normalize old length
-										oldLength++;
-									} else {
-										// moved dom node
-										if (moved) {
-											var oldKeyed = oldKeys[newKey];
-
-											// normalize old array, move old child
-											oldChildren.splice(i, 0, oldChildren.splice(oldKeyed[1], 1)[0]);
-
-											// move dom node
-											moveNode(oldChildren[i+1], parentNode, oldKeyed[0]);
-										} else {
-											// replace dom node, replace old child
-											replaceNode(
-												oldChildren[i] = newChild, 
-												oldChild, 
-												parentNode, 
-												createNode(newChild, null, null)
-											);
-										}
-									}
+							case 5: {
+								// register keyed children
+								if (isKeyed === false) {
+									isKeyed = true;
+									oldKeys = {};
+									newKeys = {};
 								}
 
-								break;
+								var newKey = newChild.props.key;
+								var oldKey = oldChild.props.key;
+
+								// register key
+								newKeys[newKey] = (newChild._index = i, newChild);
+								oldKeys[oldKey] = (oldChild._index = i, oldChild);
+
+								// padding
+								if (newLength > oldLength) {
+									oldChildren.splice(i, 0, nodeEmpty);
+								} else if (oldLength > newLength) {
+									newChildren.splice(i, 0, nodeEmpty);
+								}
 							}
 						}
 					}
 				}
 			}
 
-			// component did update
-			if (oldNodeType === 2 && component.componentDidUpdate) {
-				component.componentDidUpdate(newNode.props, newNode._owner.state);
+			// reconcile keyed children
+			if (isKeyed === true) {
+				keyed(
+					newKeys, 
+					oldKeys, 
+					parentNode, 
+					oldNode, 
+					newChildren, 
+					oldChildren, 
+					newLength, 
+					oldLength
+				);
+			}
+
+			// a component with a componentDidUpdate method
+			if (oldNodeType === 2 && oldComponent.componentDidUpdate) {
+				oldComponent.componentDidUpdate(newNode.props, newComponent.state);
 			}
 		}
 	}

@@ -14,7 +14,7 @@
 			.preloadicon {position: absolute;top:-20px;left:-20px;}
 			.col-sm-6.smallpad {padding: 5px;}
 		</style>
-		<script src="/dio.min.js"></script>
+		<script src="/dio.js"></script>
 	</head>
 	<body>
 		<div id="main"></div>
@@ -299,8 +299,6 @@
 				    }
 				}
 				
-				VBlueprint([RowDelIcon, preLoadIcon, RowEmpty]);
-
 				dio.render(VComponent(Main), '#main');
 			})(window);
 		</script>

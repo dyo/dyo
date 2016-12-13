@@ -14,12 +14,12 @@ function renderToString (subject, template) {
 
 	if (template) {
 		if (typeof template === 'string') {
-			return template.replace('@body', body+style);
+			return template.replace('@body', body+'<style>'+style+'<style>');
 		} else {
 			return template(body, style);
 		}
 	} else {
-		return body+style;
+		return body+'<style>'+style+'<style>';
 	}
 }
 

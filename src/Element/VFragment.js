@@ -11,7 +11,8 @@ function VFragment (children) {
 		props: objEmpty, 
 		children: children,
 		_node: null,
-		_owner: null
+		_owner: null,
+		_index: null
 	};
 }
 

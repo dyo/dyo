@@ -19,84 +19,84 @@
 }(function (window) {
 
 
-'use strict';
+	'use strict';
 
 
-import 'Constants/';
-import 'Utilities/';
-import 'Element/';
-import 'Component/';
-import 'Render/';
-import 'DOM/';
-import 'SSR/';
-import 'Stream/';
-import 'HTTP/';
-import 'Router/';
-import 'Store/';
+	import 'Constants/';
+	import 'Utilities/';
+	import 'Animation/';
+	import 'Stylesheet/';
+	import 'Element/';
+	import 'Component/';
+	import 'Render/';
+	import 'SSR/';
+	import 'Stream/';
+	import 'HTTP/';
+	import 'Router/';
+	import 'Store/';
 
 
-/**
- * ---------------------------------------------------------------------------------
- * 
- * exports
- * 
- * ---------------------------------------------------------------------------------
- */
+	/**
+	 * ---------------------------------------------------------------------------------
+	 * 
+	 * exports
+	 * 
+	 * ---------------------------------------------------------------------------------
+	 */
 
 
-if (browser) {
-	window.h = createElement;
-}
+	if (browser) {
+		window.h = createElement;
+	}
 
-return {
-	// elements
-	createElement:    createElement,
-	isValidElement:   isValidElement,
-	cloneElement:     cloneElement,
-	createFactory:    createFactory,
+	return {
+		// elements
+		createElement:    createElement,
+		isValidElement:   isValidElement,
+		cloneElement:     cloneElement,
+		createFactory:    createFactory,
 
-	VText:            VText,
-	VElement:         VElement,
-	VSvg:             VSvg,
-	VFragment:        VFragment,
-	VComponent:       VComponent,
+		VText:            VText,
+		VElement:         VElement,
+		VSvg:             VSvg,
+		VFragment:        VFragment,
+		VComponent:       VComponent,
 
-	DOM:              DOM,
+		DOM:              DOM,
 
-	// render
-	render:           render,
-	renderToString:   renderToString,
-	renderToStream:   renderToStream,
-	renderToCache:    renderToCache,
+		// render
+		render:           render,
+		renderToString:   renderToString,
+		renderToStream:   renderToStream,
+		renderToCache:    renderToCache,
 
-	// components
-	Component:        Component,
-	createClass:      createClass,
+		// components
+		Component:        Component,
+		createClass:      createClass,
 
-	// stores
-	createStore:      createStore,
-	applyMiddleware:  applyMiddleware,
-	combineReducers:  combineReducers,
-	
-	// utilities
-	request:          http(),
-	router:           router,
+		// stores
+		createStore:      createStore,
+		applyMiddleware:  applyMiddleware,
+		combineReducers:  combineReducers,
+		
+		// utilities
+		request:          http(),
+		router:           router,
+		stream:           stream,
+		stylis:           stylis,
+		escape:           escape,
+		panic:            panic,
+		sandbox:          sandbox,
+		compose:          compose,
+		random:           random,
+		defer:            defer,
 
-	stream:           stream,
-	stylis:           stylis,
-	escape:           escape,
-	panic:            panic,
-	sandbox:          sandbox,
-	compose:          compose,
-	random:           random,
-	defer:            defer,
+		// version
+		version:          version,
 
-	// version
-	version:          version,
-
-	// alias
-	h:                createElement,
-};
+		// alias
+		h:                createElement,
+	};
 
 
 }));

@@ -13,7 +13,8 @@ function VSvg (type, props, children) {
 		props: (props = props || {}, props.xmlns = nsSvg, props), 
 		children: (children || []),
 		_node: null,
-		_owner: null
+		_owner: null,
+		_index: null
 	};
 }
 

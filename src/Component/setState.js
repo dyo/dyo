@@ -12,11 +12,8 @@ function setState (newState, callback) {
 	// update state
 	for (var name in newState) {
 		this.state[name] = newState[name];
-	}		
+	}
 
-	this.forceUpdate();
-
-	// callback
-	callback && callback(this.state);
+	callback ? this.forceUpdate(callback) : this.forceUpdate();
 }
 

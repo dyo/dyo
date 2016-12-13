@@ -10,6 +10,10 @@ function panic (message, silent) {
 	var error = new Error(message || '');
 
 	// throw error/return error(silent)
-	if (silent) { return error; } else { throw error; }
+	if (silent) { 
+		return error; 
+	} else { 
+		throw error; 
+	}
 }
 

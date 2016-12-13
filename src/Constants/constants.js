@@ -8,7 +8,7 @@
 
 
 // current version
-var version      = '4.0.0';
+var version         = '4.0.0';
 
 // enviroment variables
 var document        = window.document || null;
@@ -26,7 +26,8 @@ var nsSvg           = 'http://www.w3.org/2000/svg';
 // empty shapes
 var objEmpty        = Object.create(null);
 var arrEmpty        = [];
-var nodeEmpty       = VNode(0, '', objEmpty, arrEmpty, null, null);
+var nodeEmpty       = VNode(0, '', objEmpty, arrEmpty, null, null, null);
+var fragEmpty       = VNode(11, '', objEmpty, arrEmpty, null, null, null);
 
 // void elements
 var isVoid          = {

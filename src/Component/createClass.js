@@ -23,7 +23,9 @@ function createClass (subject) {
 		component.prototype.setState    = Component.prototype.setState;
 		component.prototype.forceUpdate = Component.prototype.forceUpdate;
 
-		func && (subject._component = component);
+		if (func) {
+			subject._component = component;
+		}
 
 		return component.constructor = component;
 	}

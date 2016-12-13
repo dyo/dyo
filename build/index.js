@@ -98,10 +98,12 @@ function walk (directory, callback) {
 
 
 // resolve imports
-function resolve (directory, template, imported, parent) {
+function resolve (directory, template, imported, parent, dir) {
+	var _parent = '';
+
 	// replace all require/import lines with the resolved import/file
 	return template.replace(regexImport, function (match, group1, group2, group3, group4) {
-		match = match.trim();
+		var matched = match.trim();
 
 		var type;
 		var filepath;
@@ -111,7 +113,7 @@ function resolve (directory, template, imported, parent) {
 		if (group3) {
 			filepath = group4;
 
-			if (match.indexOf('{') > -1) {
+			if (matched.indexOf('{') > -1) {
 				// import {one, two} from 'module-name';
 				type = 3;
 
@@ -138,14 +140,18 @@ function resolve (directory, template, imported, parent) {
 
 		// if directory
 		if (filepath[filepath.length-1] === '/') {
-			parent   = filepath;
-			filepath = path.join(filepath, '/index.js');
+			_parent  = filepath;
+			filepath = path.join(dir, parent, filepath, 'index.js');
 		}
-		// if no file extension
-		// the default is assumed to be a js file
-		// thus 'module-name' is converted to 'module-name.js'
-		else if (filepath.indexOf('.') === -1) {
-			filepath = path.join(parent, filepath+'.js');
+		else {
+			// if no file extension
+			// the default is assumed to be a js file
+			// thus 'module-name' is converted to 'module-name.js'
+			if (filepath.indexOf('.') === -1) {
+				filepath += '.js';
+			}
+
+			filepath = path.join(dir, parent, _parent, filepath);
 		}
 
 		// resolve filepath
@@ -154,8 +160,8 @@ function resolve (directory, template, imported, parent) {
 		// get number of tabs at the beginning of a line
 		var tabs = match.match(regexTab)[0];
 
-		var commentIndex = match.indexOf('//');
-		var captureIndex = match.indexOf(filepath);
+		var commentIndex = matched.indexOf('//');
+		var captureIndex = matched.indexOf(filepath);
 
 		var content = '';
 		var cleanup = true;
@@ -269,7 +275,7 @@ function resolve (directory, template, imported, parent) {
 
 			// recursive try to resolve any imports from sub file, 
 			// then append tabs to match indent style
-			content = resolve(directory, content, imported, parent);
+			content = resolve(directory, content, imported, _parent, parent);
 		}
 
 		if (content) {
@@ -329,7 +335,7 @@ function build (directory, destination, filepath) {
 	var content = fs.readFileSync(filepath, 'utf8');
 
 	// resolve(recursively)
-	var output = resolve(directory, content, imported, '');
+	var output = resolve(directory, content, imported, '', '');
 
 	// write to filesystem(destination) when done
 	fs.writeFileSync(destination, output, 'utf8');
@@ -354,15 +360,15 @@ function report (start, filename, event) {
 
 
 // start
-function bootstrap (directory, destination, entry) {
+function bootstrap (_directory, _destination, _entry) {
 	// destination to write to
-	destination = path.normalize(__dirname + '/' + destination);
+	var destination = path.normalize(__dirname + '/' + _destination);
 
 	// directory to watch
-	directory = path.normalize(__dirname + '/' + directory);
+	var directory = path.normalize(__dirname + '/' + _directory);
 
 	// entry file
-	entry = path.normalize(directory + (entry || 'index.js'));
+	var entry = path.normalize(directory + (_entry || 'index.js'));
 
 	// start initial build timer
 	var start = Date.now();
@@ -376,26 +382,34 @@ function bootstrap (directory, destination, entry) {
 	// log watching status
 	console.log('\n  ...watching for changes in ./src\n');
 
-	function watcher (event, filename) {
-		// keep track of build time
-		var start = Date.now();
-
-	    try {
-	    	// build
-	    	build(directory, destination, entry);
-	    	// report build complete
-	    	report(start, filename, event);
-	    } catch (error) {
-	    	console.log(error);
-	    }
-	}
-
-	fs.watch(directory, watcher);
+	fs.watch(directory, watcher(_directory.replace('../', '')));
 
 	// start watching directories
 	walk(directory, function (filepath) {
-		fs.watch(filepath, watcher);
+		fs.watch(filepath, watcher(filepath));
 	});
+
+	function watcher (parent) {
+		parent = parent.replace(directory, '');
+
+		if (parent[parent.length-1] !== '/') {
+			parent += '/';
+		}
+
+		return function (event, filename) {
+			// keep track of build time
+			var start = Date.now();
+
+		    try {
+		    	// build
+		    	build(directory, destination, entry);
+		    	// report build complete
+		    	report(start, parent+filename, event);
+		    } catch (error) {
+		    	console.log(error);
+		    }
+		}
+	}
 }
 
 

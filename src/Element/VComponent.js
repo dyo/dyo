@@ -1,9 +1,9 @@
 /**
  * virtual component node factory
  * 
- * @param  {function} type
- * @param  {Object=}  props
- * @param  {any[]=}   children
+ * @param  {(function|Component)} type
+ * @param  {Object=}              props
+ * @param  {any[]=}               children
  * @return {VNode}
  */
 function VComponent (type, props, children) {
@@ -13,7 +13,8 @@ function VComponent (type, props, children) {
 		props: (props || type.defaultProps || objEmpty), 
 		children: (children || []),
 		_node: null,
-		_owner: null
+		_owner: null,
+		_index: null
 	};
 }
 

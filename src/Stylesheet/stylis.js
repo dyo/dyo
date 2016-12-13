@@ -82,8 +82,8 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                 // exit flat css context with the first block context
                 flat === 1 && (flat = 0, output.length !== 0 && (output = prefix + ' {'+output+'}'));
 
-                // @keyframe/@root, `k` or @root, `r` character
-                if (second === 107 || second === 114) {
+                // @keyframe/@global, `k` or @global, `g` character
+                if (second === 107 || second === 103) {
                     special++;
 
                     if (second === 107) {
@@ -168,21 +168,34 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                             if (firstChar === 38) {
                                 selector = prefix + selector.substring(1);
                             }
-                            // :host 
-                            else if (firstChar === 58 && selector.charCodeAt(1) === 104) {
-                                var nextChar = (selector = selector.substring(5)).charCodeAt(0);
-                                
-                                // :host(selector)                                                    
-                                if (nextChar === 40) {
-                                    selector = prefix + selector.substring(1).replace(')', '');
-                                } 
-                                // :host-context(selector)
-                                else if (nextChar === 45) {
-                                    selector = selector.substring(9, selector.indexOf(')')) + ' ' + prefix + ' {';
+                            // : 
+                            else if (firstChar === 58) {
+                                var secondChar = selector.charCodeAt(1);
+
+                                // :host 
+                                if (secondChar === 104) {
+                                    var nextChar = (selector = selector.substring(5)).charCodeAt(0);
+                                    
+                                    // :host(selector)                                                    
+                                    if (nextChar === 40) {
+                                        selector = prefix + selector.substring(1).replace(')', '');
+                                    } 
+                                    // :host-context(selector)
+                                    else if (nextChar === 45) {
+                                        selector = selector.substring(9, selector.indexOf(')')) + ' ' + prefix + ' {';
+                                    }
+                                    // :host
+                                    else {
+                                        selector = prefix + selector;
+                                    }
                                 }
-                                // :host
+                                // :global()
+                                else if (secondChar === 103) {
+                                    selector = selector.substring(8).replace(')', '');
+                                }
+                                // :hover, :active, :focus, etc...
                                 else {
-                                    selector = prefix + selector;
+                                    selector = prefix + (firstChar === 58 ? '' : ' ') + selector;
                                 }
                             }
                             else {
@@ -196,7 +209,7 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                     }
                 }
 
-                // @root/@keyframes
+                // @global/@keyframes
                 if (special !== 0) {
                     // find the closing tag
                     if (code === 125) {
@@ -207,7 +220,7 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
 
                     // closing tag
                     if (close === 2) {
-                        // @root
+                        // @global
                         if (type === 0) {
                             line = '';
                         }

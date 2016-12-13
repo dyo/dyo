@@ -21,7 +21,7 @@ function hydrate (element, newNode, index, parentNode) {
 		var newLength = newChildren.length;
 
 		for (var i = 0; i < newLength; i++) {
-			hydrate(newElement, newChildren[i], i, currentNode);
+			setTimeout(hydrate, 0, newElement, newChildren[i], i, currentNode);
 		}
 
 		// hydrate the dom element to the virtual element

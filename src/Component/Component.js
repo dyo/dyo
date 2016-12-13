@@ -13,17 +13,22 @@
  * @param {Object=} props
  */
 function Component (props) {
+	// assign props
 	if (props) {
-		// componentWillReceiveProps lifecycle
-		this.componentWillReceiveProps && this.componentWillReceiveProps(props); 
-		// assign props
+		if (this.componentWillReceiveProps) {
+			this.componentWillReceiveProps(props);
+		}
+
 		this.props = props;
 	} else {
 		this.props = this.props || (this.getDefaultProps && this.getDefaultProps()) || {};
 	}
 
+	// assign state
 	this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
-	this.refs = this._vnode = this._cache = null;
+
+	// create refs and node placeholders properties
+	this.refs = this._vnode = null;
 }
 
 
@@ -34,7 +39,7 @@ function Component (props) {
  */
 Component.prototype = Object.create(null, {
 	setState:    { value: setState },
-	forceUpdate: { value: forceUpdate },
-	bindState:   { value: bindState }
+	bindState:   { value: bindState },
+	forceUpdate: { value: forceUpdate }
 });
 

@@ -48,10 +48,6 @@ function extractComponent (subject) {
 		null
 	);
 
-	if (type.stylesheet === void 0) {
-		type.stylesheet = component.stylesheet !== void 0 ? component.stylesheet : null;
-	}
-
 	return vnode;
 }
 

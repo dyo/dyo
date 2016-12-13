@@ -1,5 +1,5 @@
 /**
- * diff and patch props
+ * patch props
  * 
  * @param  {VNode} newNode
  * @param  {VNode} oldNode

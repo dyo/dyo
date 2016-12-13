@@ -12,13 +12,14 @@ function cloneElement (subject, newProps, newChildren) {
 	var props    = newProps || {};
 	var children = newChildren || subject.children;
 
-	// copy props
+	// copy old props
 	each(subject.props, function (value, name) {
 		if (props[name] === void 0) {
 			props[name] = value;
 		}
 	});
 
+	// replace children
 	if (newChildren !== void 0) {
 		var length = newChildren.length;
 

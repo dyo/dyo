@@ -78,3 +78,7 @@ function reverse () {}
 
 which allows us to setup multiple builds that use the same file in different ways.
 
+## Caveats
+
+compile time errors are currently relative to the output bundle, this can get better, optimally they
+would refer to the source module.

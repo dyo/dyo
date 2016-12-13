@@ -1,18 +1,23 @@
 /**
- * create virtual child
+ * create virtual child node
  * 
- * @param  {*} child
+ * @param {any} child
  */
 function createChild (child) {
-	if (child != null && child.nodeType !== void 0) {
-		// default element
-		return child;
-	} else if (typeof child === 'function') {
-		// component
-		return VComponent(child);
+	if (child != null) {
+		if (child.nodeType !== void 0) {
+			// Element
+			return child;
+		} else if (typeof child === 'function') {
+			// Component
+			return VComponent(child);
+		} else {
+			// Text
+			return VText(child);
+		}
 	} else {
-		// primitives, string, bool, number
-		return VText(child);
+		// Empty
+		return nodeEmpty;
 	}
 }
 

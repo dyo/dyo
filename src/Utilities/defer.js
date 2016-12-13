@@ -25,9 +25,7 @@ function defer (func, defaultArgs, preventDefault, duration) {
 		if (duration === void 0) {
 			return func.apply(this, args);
 		} else {
-			setTimeout(function () {
-				func.apply(this, args);
-			}, duration);
+			setTimeout(call, duration, func, this, args);
 		}
 	}
 }

@@ -1,9 +1,9 @@
 /**
  * create element
  * 
- * @param  {Object}  subject
- * @param  {Object=} component
- * @param  {string=} namespace
+ * @param  {VNode}      subject
+ * @param  {?Component} component
+ * @param  {?string}    namespace
  * @return {Node}
  */
 function createNode (subject, component, namespace) {
@@ -11,15 +11,15 @@ function createNode (subject, component, namespace) {
 	
 	if (nodeType === 3) {
 		// textNode
-		return subject._node = document.createTextNode(subject.children || '');
+		return subject._node = document.createTextNode(subject.children);
 	} else {
 		// element
 		var element;
 		var props;
 
 		if (subject._node) {
-			// clone, blueprint node/hoisted vnode
-			props = subject.props;
+			// hoisted vnode
+			props   = subject.props;
 			element = subject._node;
 		} else {
 			// create
@@ -52,7 +52,7 @@ function createNode (subject, component, namespace) {
 			}
 
 			// vnode has component attachment
-			if (subject._owner != null) {
+			if (subject._owner !== null) {
 				(component = subject._owner)._vnode._node = element;
 			}
 
@@ -74,39 +74,47 @@ function createNode (subject, component, namespace) {
 							newChild.props,
 							newChild.children,
 							newChild._node.cloneNode(true),
+							null,
 							null
 						);
 					}
 
 					// append child
-					appendNode(newChild, element, createNode(newChild, component || null, namespace || null));
+					appendNode(newChild, element, createNode(newChild, component, namespace));
 					
-					// we pass namespace and component so that 
-					// 1. if element is svg element we can namespace all its children
-					// 2. if nested refs we can propagate them to a parent component
+					// we pass component and namespace so that 
+					// 1. if an element is svg we can namespace all its children in kind
+					// 2. we can propagate nested refs to the parent component
 				}
 			}
 
+			// cache element reference
 			subject._node = element;
 		}
 
-		// refs
-		if (props.ref !== void 0 && component !== null) {
-			extractRefs(element, props.ref, component);
-		}
+		if (component !== null) {
+			// refs
+			if (props.ref !== void 0) {
+				extractRefs(element, props.ref, component);
+			}
 
-		// check if a stylesheet is attached
-		if (subject.type.stylesheet != null) {
-			if (subject.type.stylesheet === 0) {
-				element.setAttribute(nsStyle, subject.type.id);
-			} else {
-				// note: since we mutate the .stylesheet property to 0 in stylesheet
-				// this will execute exactly once for any component constructor
-				stylesheet(element, subject.type);
+			// stylesheets
+			if (component.stylesheet) {
+				if (component.stylesheet.styler !== true) {
+					// create
+					stylesheet(component, subject.type)(element);
+				} else {
+					// namespace
+					component.stylesheet(element);
+				}
+			}
+
+			// animations
+			if (component.animation && component.animation.animator !== true) {
+				component.animation = animation(component, subject.type);
 			}
 		}
 
-		// cache element reference
 		return element;
 	}
 }

@@ -47,11 +47,13 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 				// if there are styles, append
 				if (style.length !== 0) {
-					this.push(style);
+					this.push('<style>'+style+'</style>');
 				}
 
 				// has template, push closing
-				this.template && this.push(this.template[1]);
+				if (this.template) {
+					this.push(this.template[1]);
+				}
 
 				// end of stream
 				this.push(null);
@@ -88,14 +90,13 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				this.push(escape(subject.children)); return;
 			}
 
-			var component = subject.type;
 			var vnode;
 
 			// if component
 			if (nodeType === 2) {
 				// if cached
-				if (component._html !== void 0) {
-					this.push(component._html); return;
+				if (subject.type._html !== void 0) {
+					this.push(subject.type._html); return;
 				} else {
 					vnode = extractComponent(subject);
 				}
@@ -108,11 +109,13 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 			var props = vnode.props;
 			var children = vnode.children;
 
-			var sprops = renderStylesheetToString(nodeType, component, styles, renderPropsToString(props), lookup);
+			var propsStr = renderStylesheetToString(
+				nodeType, subject._owner, subject.type, styles, renderPropsToString(props), lookup
+			);
 
 			if (isVoid[type] === 0) {
 				// <type ...props>
-				this.push('<'+type+sprops+'>');
+				this.push('<'+type+propsStr+'>');
 			} else {
 				var opening = '';
 				var closing = '';
@@ -120,7 +123,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				// fragments do not have opening/closing tags
 				if (nodeType !== 11) {
 					// <type ...props>...children</type>
-					opening = '<'+type+sprops+'>';
+					opening = '<'+type+propsStr+'>';
 					closing = '</'+type+'>';
 				}
 

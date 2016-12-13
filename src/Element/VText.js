@@ -1,7 +1,7 @@
 /**
  * virtual text node factory
  * 
- * @param  {string} text
+ * @param  {(string|boolean|number)} text
  * @return {VNode}
  */
 function VText (text) {
@@ -9,9 +9,10 @@ function VText (text) {
 		nodeType: 3, 
 		type: 'text', 
 		props: objEmpty, 
-		children: text, 
+		children: text || '', 
 		_node: null,
-		_owner: null
+		_owner: null,
+		_index: null
 	};
 }
 
