@@ -10,16 +10,17 @@ function renderToString (subject, template) {
 	var styles = [''];
 	var vnode  = retrieveVNode(subject);
 	var body   = renderVNodeToString(vnode, styles, lookup);
-	var style  = styles[0];
+	var css    = styles[0];
+	var style  = css.length !== 0 ? '<style>'+css+'<style>' : '';
 
 	if (template) {
 		if (typeof template === 'string') {
-			return template.replace('@body', body+'<style>'+style+'<style>');
+			return template.replace('@body', body, style);
 		} else {
 			return template(body, style);
 		}
 	} else {
-		return body+'<style>'+style+'<style>';
+		return body+style;
 	}
 }
 

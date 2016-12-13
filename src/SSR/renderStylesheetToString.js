@@ -23,10 +23,10 @@ function renderStylesheetToString (nodeType, component, constructor, styles, out
 				styles[0] += component.stylesheet(null);
 				lookup[component.stylesheet.id] = true;
 			}
-		}
 
-		// add attribute to element
-		output += ' '+nsStyle+'='+'"'+component.stylesheet.id+'"';
+			// add attribute to element
+			output += ' '+nsStyle+'='+'"'+component.stylesheet.id+'"';
+		}
 	}
 
 	return output;
