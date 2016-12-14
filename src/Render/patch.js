@@ -33,10 +33,10 @@ function patch (newNode, oldNode) {
 	}
 	// recursive
 	else {
-		// if _newNode and oldNode are the identical, exit early
+		// if currentNode and oldNode are the identical, exit early
 		if (newNode !== oldNode) {		
 			// extract node from possible component node
-			var _newNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
+			var currentNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
 
 			// a component
 			if (oldNodeType === 2) {
@@ -58,14 +58,8 @@ function patch (newNode, oldNode) {
 				}
 			}
 
-			// patch props only if oldNode is not a textNode 
-			// and the props objects of the two noeds are not equal
-			if (_newNode.props !== oldNode.props) {
-				patchProps(_newNode, oldNode); 
-			}
-
 			// references, children & children length
-			var newChildren = _newNode.children;
+			var newChildren = currentNode.children;
 			var oldChildren = oldNode.children;
 			var newLength   = newChildren.length;
 			var oldLength   = oldChildren.length;
@@ -81,15 +75,15 @@ function patch (newNode, oldNode) {
 			// newNode has children
 			else {
 				var parentNode = oldNode._node;
-				var isKeyed    = false;
-				var oldKeys    = null;
-				var newKeys    = null;
+				var isKeyed = false;
+				var oldKeys;
+				var newKeys;
 
 				// for loop, the end point being which ever is the 
 				// greater value between newLength and oldLength
 				for (var i = 0; i < newLength || i < oldLength; i++) {
-					var newChild = newChildren[i] || nodeEmpty;
-					var oldChild = oldChildren[i] || nodeEmpty;
+					var newChild = newChildren[i] || nodEmpty;
+					var oldChild = oldChildren[i] || nodEmpty;
 					var action   = patch(newChild, oldChild);
 
 					// if action dispatched, 
@@ -151,9 +145,9 @@ function patch (newNode, oldNode) {
 
 								// padding
 								if (newLength > oldLength) {
-									oldChildren.splice(i, 0, nodeEmpty);
+									oldChildren.splice(i, 0, nodEmpty);
 								} else if (oldLength > newLength) {
-									newChildren.splice(i, 0, nodeEmpty);
+									newChildren.splice(i, 0, nodEmpty);
 								}
 							}
 						}
@@ -163,6 +157,8 @@ function patch (newNode, oldNode) {
 
 			// reconcile keyed children
 			if (isKeyed === true) {
+				// offloaded to another function to keep the type feedback 
+				// of this function to a minimum when non-keyed
 				keyed(
 					newKeys, 
 					oldKeys, 
@@ -173,6 +169,12 @@ function patch (newNode, oldNode) {
 					newLength, 
 					oldLength
 				);
+			}
+
+			// patch props only if oldNode is not a textNode 
+			// and the props objects of the two nodes are not equal
+			if (currentNode.props !== oldNode.props) {
+				patchProps(currentNode, oldNode); 
 			}
 
 			// a component with a componentDidUpdate method

@@ -12,11 +12,11 @@
  */
 function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
 	var reconciledChildren = new Array(newLength);
-	var deleteCount = 0;
+	var deleteCount        = 0;
 
 	for (var i = 0; i < newLength || i < oldLength; i++) {
-		var newChild = newChildren[i] || nodeEmpty;
-		var oldChild = oldChildren[i] || nodeEmpty;
+		var newChild = newChildren[i] || nodEmpty;
+		var oldChild = oldChildren[i] || nodEmpty;
 		var newKey   = newChild.props.key;
 		var oldKey   = oldChild.props.key;
 
@@ -29,14 +29,18 @@ function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren,
 			var movedChild = oldKeys[newKey];
 
 			// new key exists in old keys
-			if (movedChild) {	
+			if (movedChild) {
 				var idx = movedChild._index;
 
 				// but the index does not match,
 				if (i !== idx) {
 					// move
 					reconciledChildren[idx] = oldChild;
-					parentNode.insertBefore(movedChild._node, parentNode.childNodes[i+1]);
+					
+					parentNode.insertBefore(
+						oldChild._node = parentNode.children[idx],
+						parentNode.children[i+1]
+					);
 				}
 			}
 			// old key does not exist

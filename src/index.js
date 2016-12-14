@@ -24,7 +24,6 @@
 
 	import 'Constants/';
 	import 'Utilities/';
-	import 'Animation/';
 	import 'Stylesheet/';
 	import 'Element/';
 	import 'Component/';

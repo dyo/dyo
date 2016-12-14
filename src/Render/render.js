@@ -16,7 +16,7 @@ function render (subject, target) {
 			initial = false;
 
 			// assign component
-			component === null && (component = node._owner);
+			component === void 0 && (component = node._owner);
 		} else {
 			// update props
 			if (props !== void 0) {
@@ -37,9 +37,9 @@ function render (subject, target) {
 		return reconciler;
 	}
 
-	var component = null;
-	var node = null;
-	var element = null;
+	var component;
+	var node;
+	var element;
 
 	if (subject.render !== void 0) {
 		// create component from object
@@ -73,7 +73,7 @@ function render (subject, target) {
 	// hydration
 	if (element.hasAttribute('hydrate')) {
 		// dispatch hydration
-		hydrate(element, node, 0, nodeEmpty);
+		hydrate(element, node, 0, nodEmpty);
 
 		// cleanup element hydrate attributes
 		element.removeAttribute('hydrate');
@@ -82,7 +82,7 @@ function render (subject, target) {
 		initial = false;
 
 		// assign component
-		component === null && (component = node._owner); 
+		component === void 0 && (component = node._owner); 
 	} else {
 		reconciler();
 	}

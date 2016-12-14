@@ -9,11 +9,21 @@ function setState (newState, callback) {
 		return;
 	}
 
-	// update state
-	for (var name in newState) {
-		this.state[name] = newState[name];
-	}
+	updateState(this.state, newState);
 
 	callback ? this.forceUpdate(callback) : this.forceUpdate();
+}
+
+
+/**
+ * update state, hoisted to avoid deopts
+ * 
+ * @param  {Object} state
+ * @param  {Object} newState
+ */
+function updateState (state, newState) {
+	for (var name in newState) {
+		state[name] = newState[name];
+	}
 }
 

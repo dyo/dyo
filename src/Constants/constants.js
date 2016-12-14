@@ -26,8 +26,7 @@ var nsSvg           = 'http://www.w3.org/2000/svg';
 // empty shapes
 var objEmpty        = Object.create(null);
 var arrEmpty        = [];
-var nodeEmpty       = VNode(0, '', objEmpty, arrEmpty, null, null, null);
-var fragEmpty       = VNode(11, '', objEmpty, arrEmpty, null, null, null);
+var nodEmpty        = VNode(0, '', objEmpty, arrEmpty, null, null, null);
 
 // void elements
 var isVoid          = {

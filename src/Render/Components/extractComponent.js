@@ -4,8 +4,9 @@
  * @param  {VNode} subject
  * @return {VNode} 
  */
-function extractComponent (subject) {
-	var candidate, type = subject.type;
+function extractComponent (subject, mutate) {
+	var candidate;
+	var type = subject.type;
 
 	if (type._component !== void 0) {
 		// cache
@@ -38,16 +39,12 @@ function extractComponent (subject) {
 		vnode = extractComponent(vnode);
 	}
 
-	// assign component node
-	component._vnode = VNode(
-		vnode.nodeType,
-		vnode.type,
-		subject.props = vnode.props, 
-		subject.children = vnode.children,
-		null,
-		null,
-		null
-	);
+	// replace props and children of old vnode
+	subject.props    = vnode.props
+	subject.children = vnode.children;
+
+	// assign reference to component 
+	component._vnode = vnode;
 
 	return vnode;
 }

@@ -85,8 +85,7 @@
 	// empty shapes
 	var objEmpty        = Object.create(null);
 	var arrEmpty        = [];
-	var nodeEmpty       = VNode(0, '', objEmpty, arrEmpty, null, null, null);
-	var fragEmpty       = VNode(11, '', objEmpty, arrEmpty, null, null, null);
+	var nodEmpty        = VNode(0, '', objEmpty, arrEmpty, null, null, null);
 	
 	// void elements
 	var isVoid          = {
@@ -316,98 +315,6 @@
 	
 				return output;
 			}
-		}
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * animate
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * create animator
-	 * 
-	 * @param  {Component}                component
-	 * @param  {function}                 constructor
-	 * @return {function(name, callback)} animator
-	 */
-	function animation (component, constructor) {
-		function animator (name, callback) {
-			var animations = componentAnimations[name];
-			var context = this;
-			var duration = (animations && animations.duration) || 0;
-	
-			return function (event) {
-				if (animations !== void 0) {
-					var style = (event ? (event.currentTarget || event.target || event) : context._vnode._node).style;
-	
-					// start animation
-					animationWillBegin(style, animations);
-				}
-	
-				// call callback when animation ends
-				setTimeout(animationWillEnd, duration, style, event, context, callback);
-	
-				return duration;
-			};
-		}
-	
-		animator.animator = 0;
-	
-		// extract animations
-		var componentAnimations = component.animation();
-	
-		// build transition property
-		for (var name in componentAnimations) {
-			var animations = componentAnimations[name];
-				animations.transition = 'all ' + animations.duration + 'ms ' + (animations.easing || '');
-		}
-	
-		// return animator and replace animation function
-		return constructor.prototype.animation = animator;
-	}
-	
-	
-	/**
-	 * start animation
-	 * 
-	 * @param  {CSSStyleDeclaration} style
-	 * @param  {Object}              animations
-	 */
-	function animationWillBegin (style, animations) {
-		// register willChange when supported
-		style.willChange != null && (style.willChange = 'transform, opacity');
-	
-		style.transition = animations.transition;
-	
-		for (var name in animations) {
-			var value = animations[name];
-	
-			if (value && name !== 'duration' && name !== 'easing' && name !== 'transition') {
-				style[name] = style[name] === value ? '' : value;
-			}
-		}
-	}
-	
-	
-	/**
-	 * start animation
-	 * 
-	 * @param  {function}  callback
-	 * @param  {Event}     event
-	 * @param  {Component} context
-	 */
-	function animationWillEnd (style, event, context, callback) {
-		// reset willChange property
-		style && style.willChange != null && (style.willChange = null);
-	
-		if (callback) {
-			callback.call(context, event);
 		}
 	}
 	
@@ -869,6 +776,24 @@
 	
 	
 	/**
+	 * virtual empty node factory
+	 * 
+	 * @return {VNode}
+	 */
+	function VEmpty () {
+		return {
+			nodeType: 1, 
+			type: 'noscript', 
+			props: objEmpty, 
+			children: [], 
+			_node: null,
+			_owner: null,
+			_index: null
+		};
+	}
+	
+	
+	/**
 	 * create virtual element
 	 * 
 	 * @param  {(string|function|Object)} type
@@ -964,7 +889,7 @@
 			}
 		} else {
 			// Empty
-			return nodeEmpty;
+			return nodEmpty;
 		}
 	}
 	
@@ -1161,12 +1086,22 @@
 			return;
 		}
 	
-		// update state
-		for (var name in newState) {
-			this.state[name] = newState[name];
-		}
+		updateState(this.state, newState);
 	
 		callback ? this.forceUpdate(callback) : this.forceUpdate();
+	}
+	
+	
+	/**
+	 * update state, hoisted to avoid deopts
+	 * 
+	 * @param  {Object} state
+	 * @param  {Object} newState
+	 */
+	function updateState (state, newState) {
+		for (var name in newState) {
+			state[name] = newState[name];
+		}
 	}
 	
 	
@@ -1202,8 +1137,25 @@
 			this.componentWillUpdate(this.props, this.state);
 		}
 	
-		// patch update
-		patch(extractRender(this), this._vnode);
+		var newNode = extractRender(this);
+		var oldNode = this._vnode;
+	
+		// component returns a different root node
+		if (newNode.type !== oldNode.type) {		
+			// replace node
+			replaceNode(newNode, oldNode, oldNode._node.parentNode, createNode(newNode, null, null));
+	
+			// hydrate newNode
+			oldNode.nodeType = newNode.nodeType;
+			oldNode.type     = newNode.type;
+			oldNode.props    = newNode.props;
+			oldNode.children = newNode.children;
+			oldNode._node    = newNode._node;
+			oldNode._owner   = newNode._owner;
+		} else {
+			// patch node
+			patch(newNode, oldNode);
+		}
 	
 		if (this.componentDidUpdate) {
 			this.componentDidUpdate(this.props, this.state);
@@ -1238,14 +1190,17 @@
 			}
 	
 			this.props = props;
-		} else {
-			this.props = this.props || (this.getDefaultProps && this.getDefaultProps()) || {};
+		} 
+		else if (this.props === void 0) {
+			this.props = (this.getDefaultProps && this.getDefaultProps()) || {};
 		}
 	
 		// assign state
-		this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
+		if (this.state === void 0) {
+			this.state = (this.getInitialState && this.getInitialState()) || {};
+		}
 	
-		// create refs and node placeholders properties
+		// create addresses for refs and vnode references
 		this.refs = this._vnode = null;
 	}
 	
@@ -1400,7 +1355,7 @@
 				initial = false;
 	
 				// assign component
-				component === null && (component = node._owner);
+				component === void 0 && (component = node._owner);
 			} else {
 				// update props
 				if (props !== void 0) {
@@ -1421,9 +1376,9 @@
 			return reconciler;
 		}
 	
-		var component = null;
-		var node = null;
-		var element = null;
+		var component;
+		var node;
+		var element;
 	
 		if (subject.render !== void 0) {
 			// create component from object
@@ -1457,7 +1412,7 @@
 		// hydration
 		if (element.hasAttribute('hydrate')) {
 			// dispatch hydration
-			hydrate(element, node, 0, nodeEmpty);
+			hydrate(element, node, 0, nodEmpty);
 	
 			// cleanup element hydrate attributes
 			element.removeAttribute('hydrate');
@@ -1466,7 +1421,7 @@
 			initial = false;
 	
 			// assign component
-			component === null && (component = node._owner); 
+			component === void 0 && (component = node._owner); 
 		} else {
 			reconciler();
 		}
@@ -1524,10 +1479,10 @@
 		}
 		// recursive
 		else {
-			// if _newNode and oldNode are the identical, exit early
+			// if currentNode and oldNode are the identical, exit early
 			if (newNode !== oldNode) {		
 				// extract node from possible component node
-				var _newNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
+				var currentNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
 	
 				// a component
 				if (oldNodeType === 2) {
@@ -1549,14 +1504,8 @@
 					}
 				}
 	
-				// patch props only if oldNode is not a textNode 
-				// and the props objects of the two noeds are not equal
-				if (_newNode.props !== oldNode.props) {
-					patchProps(_newNode, oldNode); 
-				}
-	
 				// references, children & children length
-				var newChildren = _newNode.children;
+				var newChildren = currentNode.children;
 				var oldChildren = oldNode.children;
 				var newLength   = newChildren.length;
 				var oldLength   = oldChildren.length;
@@ -1572,15 +1521,15 @@
 				// newNode has children
 				else {
 					var parentNode = oldNode._node;
-					var isKeyed    = false;
-					var oldKeys    = null;
-					var newKeys    = null;
+					var isKeyed = false;
+					var oldKeys;
+					var newKeys;
 	
 					// for loop, the end point being which ever is the 
 					// greater value between newLength and oldLength
 					for (var i = 0; i < newLength || i < oldLength; i++) {
-						var newChild = newChildren[i] || nodeEmpty;
-						var oldChild = oldChildren[i] || nodeEmpty;
+						var newChild = newChildren[i] || nodEmpty;
+						var oldChild = oldChildren[i] || nodEmpty;
 						var action   = patch(newChild, oldChild);
 	
 						// if action dispatched, 
@@ -1642,9 +1591,9 @@
 	
 									// padding
 									if (newLength > oldLength) {
-										oldChildren.splice(i, 0, nodeEmpty);
+										oldChildren.splice(i, 0, nodEmpty);
 									} else if (oldLength > newLength) {
-										newChildren.splice(i, 0, nodeEmpty);
+										newChildren.splice(i, 0, nodEmpty);
 									}
 								}
 							}
@@ -1654,6 +1603,8 @@
 	
 				// reconcile keyed children
 				if (isKeyed === true) {
+					// offloaded to another function to keep the type feedback 
+					// of this function to a minimum when non-keyed
 					keyed(
 						newKeys, 
 						oldKeys, 
@@ -1664,6 +1615,12 @@
 						newLength, 
 						oldLength
 					);
+				}
+	
+				// patch props only if oldNode is not a textNode 
+				// and the props objects of the two nodes are not equal
+				if (currentNode.props !== oldNode.props) {
+					patchProps(currentNode, oldNode); 
 				}
 	
 				// a component with a componentDidUpdate method
@@ -1691,11 +1648,11 @@
 	 */
 	function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
 		var reconciledChildren = new Array(newLength);
-		var deleteCount = 0;
+		var deleteCount        = 0;
 	
 		for (var i = 0; i < newLength || i < oldLength; i++) {
-			var newChild = newChildren[i] || nodeEmpty;
-			var oldChild = oldChildren[i] || nodeEmpty;
+			var newChild = newChildren[i] || nodEmpty;
+			var oldChild = oldChildren[i] || nodEmpty;
 			var newKey   = newChild.props.key;
 			var oldKey   = oldChild.props.key;
 	
@@ -1708,14 +1665,18 @@
 				var movedChild = oldKeys[newKey];
 	
 				// new key exists in old keys
-				if (movedChild) {	
+				if (movedChild) {
 					var idx = movedChild._index;
 	
 					// but the index does not match,
 					if (i !== idx) {
 						// move
 						reconciledChildren[idx] = oldChild;
-						parentNode.insertBefore(movedChild._node, parentNode.childNodes[i+1]);
+						
+						parentNode.insertBefore(
+							oldChild._node = parentNode.children[idx],
+							parentNode.children[i+1]
+						);
 					}
 				}
 				// old key does not exist
@@ -2061,11 +2022,6 @@
 						component.stylesheet(element);
 					}
 				}
-	
-				// animations
-				if (component.animation && component.animation.animator !== 0) {
-					component.animation = animation(component, subject.type);
-				}
 			}
 	
 			return element;
@@ -2214,8 +2170,9 @@
 	 * @param  {VNode} subject
 	 * @return {VNode} 
 	 */
-	function extractComponent (subject) {
-		var candidate, type = subject.type;
+	function extractComponent (subject, mutate) {
+		var candidate;
+		var type = subject.type;
 	
 		if (type._component !== void 0) {
 			// cache
@@ -2248,16 +2205,12 @@
 			vnode = extractComponent(vnode);
 		}
 	
-		// assign component node
-		component._vnode = VNode(
-			vnode.nodeType,
-			vnode.type,
-			subject.props = vnode.props, 
-			subject.children = vnode.children,
-			null,
-			null,
-			null
-		);
+		// replace props and children of old vnode
+		subject.props    = vnode.props
+		subject.children = vnode.children;
+	
+		// assign reference to component 
+		component._vnode = vnode;
 	
 		return vnode;
 	}
@@ -2271,7 +2224,7 @@
 	 */
 	function extractRender (component) {
 		// extract render
-		var vnode = component.render(component.props, component.state, component) || fragEmpty;
+		var vnode = component.render(component.props, component.state, component) || VEmpty();
 	
 		// if vnode, else fragment
 		return vnode.nodeType !== void 0 ? vnode : VFragment(vnode);

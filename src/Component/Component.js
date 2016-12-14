@@ -20,14 +20,17 @@ function Component (props) {
 		}
 
 		this.props = props;
-	} else {
-		this.props = this.props || (this.getDefaultProps && this.getDefaultProps()) || {};
+	} 
+	else if (this.props === void 0) {
+		this.props = (this.getDefaultProps && this.getDefaultProps()) || {};
 	}
 
 	// assign state
-	this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
+	if (this.state === void 0) {
+		this.state = (this.getInitialState && this.getInitialState()) || {};
+	}
 
-	// create refs and node placeholders properties
+	// create addresses for refs and vnode references
 	this.refs = this._vnode = null;
 }
 

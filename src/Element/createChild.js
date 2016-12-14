@@ -17,7 +17,7 @@ function createChild (child) {
 		}
 	} else {
 		// Empty
-		return nodeEmpty;
+		return nodEmpty;
 	}
 }
 

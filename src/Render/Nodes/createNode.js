@@ -108,11 +108,6 @@ function createNode (subject, component, namespace) {
 					component.stylesheet(element);
 				}
 			}
-
-			// animations
-			if (component.animation && component.animation.animator !== 0) {
-				component.animation = animation(component, subject.type);
-			}
 		}
 
 		return element;

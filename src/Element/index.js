@@ -13,6 +13,7 @@ import 'VFragment';
 import 'VText';
 import 'VSvg';
 import 'VNode';
+import 'VEmpty';
 import 'createElement';
 import 'createChild';
 import 'parseType';
