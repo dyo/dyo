@@ -3458,7 +3458,7 @@
 	
 				return render;
 			} else {
-				return subscribe(subscribe);
+				return subscribe(subject);
 			}
 		}
 	
