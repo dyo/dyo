@@ -71,18 +71,17 @@ function Store (reducer, initialState) {
 
 	// auto subscribe a component to a store
 	function connect (subject, element) {
-		var callback;
-
-		// if component
-		if (element && typeof render === 'function' && typeof VComponent === 'function') {
+		// if component and element 
+		if (element && typeof render === 'function') {
 			// create renderer
-			callback = render(VComponent(subject, currentState, []), element);
-		} else {
-			callback = subject;
-		}
+			var render = render(VComponent(subject, currentState, []), element);
 
-		// subscribe to state updates, dispatching render on update
-		subscribe(callback);
+			subscribe(render);
+
+			return render;
+		} else {
+			return subscribe(subscribe);
+		}
 	}
 
 	// dispath initial action

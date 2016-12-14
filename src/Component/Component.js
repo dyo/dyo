@@ -14,7 +14,7 @@
  */
 function Component (props) {
 	// assign props
-	if (props) {
+	if (props && props !== objEmpty) {
 		if (this.componentWillReceiveProps) {
 			this.componentWillReceiveProps(props);
 		}
