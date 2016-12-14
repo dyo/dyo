@@ -33,7 +33,7 @@ function extractComponent (subject) {
 		vnode.props.key = subject.props.key;
 	}
 
-	// if render returns a component
+	// if render returns a component, extract that component
 	if (vnode.nodeType === 2) {
 		vnode = extractComponent(vnode);
 	}
@@ -44,6 +44,7 @@ function extractComponent (subject) {
 		vnode.type,
 		subject.props = vnode.props, 
 		subject.children = vnode.children,
+		null,
 		null,
 		null
 	);

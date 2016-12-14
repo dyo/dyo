@@ -1,11 +1,11 @@
 /**
  * render a VNode to string
  * 
- * @param  {Object} subject
- * @param  {str[1]} styles
+ * @param  {VNode}               subject
+ * @param  {Object<string, any>} lookup
  * @return {string}  
  */
-function renderVNodeToString (subject, styles, lookup) {
+function renderVNodeToString (subject, lookup) {
 	var nodeType = subject.nodeType;
 
 	// textNode
@@ -41,16 +41,16 @@ function renderVNodeToString (subject, styles, lookup) {
 		// construct children string
 		if (children.length !== 0) {
 			for (var i = 0, length = children.length; i < length; i++) {
-				childrenStr += renderVNodeToString(children[i], styles, lookup);
+				childrenStr += renderVNodeToString(children[i], lookup);
 			}
 		}
 	}
 
 	var propsStr = renderStylesheetToString(
-		nodeType, subject._owner, subject.type, styles, renderPropsToString(props), lookup
+		nodeType, subject._owner, subject.type, renderPropsToString(props), lookup
 	);
 
-	if (nodeType === 11) {
+	if (vnode.nodeType === 11) {
 		return childrenStr;
 	} else if (isVoid[type] === 0) {
 		// <type ...props>

@@ -2,10 +2,10 @@
  * clone and return an element having the original element's props
  * with new props merged in shallowly and new children replacing existing ones.
  * 
- * @param  {Object}  subject
+ * @param  {VNode}   subject
  * @param  {Object=} newProps
  * @param  {any[]=}  newChildren
- * @return {Object}
+ * @return {VNode}
  */
 function cloneElement (subject, newProps, newChildren) {
 	var type     = subject.type;

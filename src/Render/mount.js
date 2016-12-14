@@ -3,7 +3,6 @@
  * 
  * @param  {Node}   element
  * @param  {Object} newNode
- * @return {number}
  */
 function mount (element, newNode) {
 	// clear element

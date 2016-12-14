@@ -1,7 +1,7 @@
 /**
  * combines a set of reducers
  * 
- * @param  {Object}  reducers
+ * @param  {Object<string, function>}  reducers
  * @return {function}
  */
 function combineReducers (reducers) {

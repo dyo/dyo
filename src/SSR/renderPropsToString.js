@@ -1,8 +1,7 @@
 /**
  * render props to string
  * 
- * @param  {Object} props
- * @param  {string} string
+ * @param  {Object<string, any>} props
  * @return {string}
  */
 function renderPropsToString (props) {

@@ -2,7 +2,6 @@
  * force an update
  *
  * @param  {function=}
- * @return {void}
  */
 function forceUpdate (callback) {
 	if (this.componentWillUpdate) {

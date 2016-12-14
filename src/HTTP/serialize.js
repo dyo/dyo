@@ -4,7 +4,7 @@
  * @example serialize({url:'http://.com'}) //=> 'url=http%3A%2F%2F.com'
  * 
  * @param  {Object} object   
- * @param  {Object} prefix
+ * @param  {string} prefix
  * @return {string}
  */
 function serialize (object, prefix) {

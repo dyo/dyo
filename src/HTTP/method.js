@@ -1,8 +1,8 @@
 /**
  * create request method
  * 
- * @param {string}
- * @param {function}
+ * @param  {string}
+ * @return {function}
  */
 function method (method) {
 	return function (

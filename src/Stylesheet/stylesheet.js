@@ -1,16 +1,16 @@
 /**
  * stylesheet
  * 
- * @param  {(Node|null)}   element
- * @param  {function}      component
- * @return {(string|void)}
+ * @param  {Component}     component
+ * @param  {function}      constructor
+ * @return {function(?Node)}
  */
 function stylesheet (component, constructor) {
 	// retrieve stylesheet
 	var styles = component.stylesheet();
 
 	// generate unique id
-	var id = random(6);
+	var id = random(5);
 
 	// compile css
 	var css = stylis('['+nsStyle+'='+id+']', styles, true, true);
@@ -34,8 +34,7 @@ function stylesheet (component, constructor) {
 		}
 	}
 
-	styler.styler = true;
-	styler.id = id;
+	styler.styler = id;
 
 	return constructor.prototype.stylesheet = styler;
 }

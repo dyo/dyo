@@ -1,31 +1,32 @@
 /**
  * render stylesheet to string
  *
- * @param  {number}                  nodeType
- * @param  {Component}               component
- * @param  {function}                constructor
- * @param  {string[1]}               styles    
- * @param  {string}                  output   
- * @param  {Object<string, boolean>} lookup
+ * @param  {number}              nodeType
+ * @param  {Component}           component
+ * @param  {function}            constructor
+ * @param  {string}              output   
+ * @param  {Object<string, any>} lookup
  * @return {string}          
  */
-function renderStylesheetToString (nodeType, component, constructor, styles, output, lookup) {
+function renderStylesheetToString (nodeType, component, constructor, output, lookup) {
 	// stylesheet
 	if (nodeType === 2) {
 		// stylesheets
 		if (component.stylesheet) {
-			if (component.stylesheet.styler !== true) {
+			var id = component.stylesheet.styler;
+
+			if (id === void 0) {
 				// create
-				styles[0] += stylesheet(component, constructor)(null);
-				lookup[component.stylesheet.id] = true;
+				lookup.styles += stylesheet(component, constructor)(null);
+				lookup.ids[id = component.stylesheet.styler] = true;
 			}
-		 	else if (!lookup[component.stylesheet.id]) {
-				styles[0] += component.stylesheet(null);
-				lookup[component.stylesheet.id] = true;
+		 	else if (!lookup.ids[id]) {
+				lookup.styles += component.stylesheet(null);
+				lookup.ids[id] = true;
 			}
 
 			// add attribute to element
-			output += ' '+nsStyle+'='+'"'+component.stylesheet.id+'"';
+			output += ' '+nsStyle+'='+'"'+id+'"';
 		}
 	}
 

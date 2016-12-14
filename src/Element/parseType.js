@@ -1,19 +1,19 @@
 /**
- * special virtual element types
+ * parse special virtual node types
  *
  * @example h('inpu#id[type=radio]') <-- yields --> h('input', {id: 'id', type: 'radio'})
  *
- * @param  {Object} type
+ * @param  {string} type
  * @param  {Object} props
- * @param  {Object} element
+ * @param  {VNode}  vnode
  */
-function parseType (type, props, element) {
+function parseType (type, props, vnode) {
 	var matches;
 	var regEx;
 	var classList = [];
 
 	// default type
-	element.type = 'div';
+	vnode.type = 'div';
 
 	// if undefined, create and cache RegExp
 	if (parseType.regEx === void 0) {
@@ -35,7 +35,7 @@ function parseType (type, props, element) {
 
 		if (typeMatch === '' && valueMatch !== '') {
 			// type
-			element.type = valueMatch;
+			vnode.type = valueMatch;
 		} else if (typeMatch === '#') { 
 			// id
 			props.id = valueMatch;
@@ -64,5 +64,6 @@ function parseType (type, props, element) {
 	}
 
 	// assign props
-	element.props = props;
+	vnode.props = props;
 }
+

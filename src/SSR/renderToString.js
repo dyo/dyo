@@ -6,11 +6,10 @@
  * @return {string}
  */
 function renderToString (subject, template) {
-	var lookup = {};
-	var styles = [''];
+	var lookup = {styles: '', ids: {}};
 	var vnode  = retrieveVNode(subject);
-	var body   = renderVNodeToString(vnode, styles, lookup);
-	var css    = styles[0];
+	var body   = renderVNodeToString(vnode, lookup);
+	var css    = lookup.styles;
 	var style  = css.length !== 0 ? '<style>'+css+'<style>' : '';
 
 	if (template) {

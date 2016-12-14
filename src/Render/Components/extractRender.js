@@ -5,7 +5,7 @@
  * @return {VNode}
  */
 function extractRender (component) {
-	// retrieve vnode
+	// extract render
 	var vnode = component.render(component.props, component.state, component) || fragEmpty;
 
 	// if vnode, else fragment

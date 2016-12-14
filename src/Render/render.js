@@ -1,9 +1,9 @@
 /**
  * render
  * 
- * @param  {(function|Object)} subject
- * @param  {Node|string}       target
- * @return {function}
+ * @param  {(Component|VNode)} subject
+ * @param  {(Node|string)}     target
+ * @return {function(Object=)}
  */
 function render (subject, target) {
 	// renderer
@@ -51,22 +51,21 @@ function render (subject, target) {
 		node = subject;
 	}
 
-	if (browser === false) {
-		// server-side
-		return renderToString(node);
+	if (server) {
+		return reconciler;
 	}
 
 	// retrieve mount element
-   if (target != null && target.nodeType != null) {
+  	if (target != null && target.nodeType != null) {
 	  // target is a dom element
 	  element = target;
-   } else {
+	} else {
 	  // target might be a selector
 	  target = document.querySelector(target);
 
 	  // default to document.body if no match/document
 	  element = (target === null || target === document) ? document.body : target;
-   }
+	}
 
 	// initial mount registry
 	var initial = true;

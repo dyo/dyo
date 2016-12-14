@@ -37,7 +37,6 @@
 			}
 		</style>
 		<script>
-			var {span, div} = dio.DOM();
 			var {VComponent, VElement} = dio;
 			var DAMPING = 0.999;
 
@@ -64,7 +63,7 @@
 	      		this.x += dx / distance;
 	      		this.y += dy / distance;
 
-	      		return span({style: 'transform: translate('+ this.x + 'px,' + this.y + 'px);'});
+	      		return VElement('span', {style: 'transform: translate('+ this.x + 'px,' + this.y + 'px);'}, null);
   	      	};
 
 			class Particles extends dio.Component {

@@ -58,7 +58,7 @@ function createNode (subject, component, namespace) {
 
 			if (props !== objEmpty) {
 				// diff and update/add/remove props
-				assignProps(element, props, false, component || null);
+				assignProps(element, props, false);
 			}
 
 			if (length !== 0) {
@@ -100,7 +100,7 @@ function createNode (subject, component, namespace) {
 
 			// stylesheets
 			if (component.stylesheet) {
-				if (component.stylesheet.styler !== true) {
+				if (component.stylesheet.styler === void 0) {
 					// create
 					stylesheet(component, subject.type)(element);
 				} else {
@@ -110,7 +110,7 @@ function createNode (subject, component, namespace) {
 			}
 
 			// animations
-			if (component.animation && component.animation.animator !== true) {
+			if (component.animation && component.animation.animator !== 0) {
 				component.animation = animation(component, subject.type);
 			}
 		}

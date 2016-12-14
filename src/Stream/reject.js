@@ -1,8 +1,8 @@
 /**
  * create new stream in rejected state
  * 
- * @param  {*}    value 
- * @return {Stream}
+ * @param  {*}     value 
+ * @return {function}
  */
 stream.reject = function (value) {
 	return stream(function (resolve, reject) {

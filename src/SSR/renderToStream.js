@@ -1,7 +1,8 @@
 /**
  * server-side render to stream
  * 
- * @param  {(Object|function)} subject 
+ * @param  {(VNode|Component)} subject 
+ * @param  {string=}           template
  * @return {Stream}
  */
 function renderToStream (subject, template) {	
@@ -22,8 +23,7 @@ function renderToStream (subject, template) {
 function Stream (subject, template) {
 	this.initial  = 0;
 	this.stack    = [];
-	this.lookup   = {};
-	this.styles   = [''];
+	this.lookup   = {styles: '', ids: {}};
 	this.template = template;
 	this.node     = retrieveVNode(subject);
 
@@ -43,7 +43,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 	_read: {
 		value: function () {
 			if (this.initial === 1 && this.stack.length === 0) {
-				var style = this.styles[0];
+				var style = this.lookup.styles;
 
 				// if there are styles, append
 				if (style.length !== 0) {
@@ -70,12 +70,12 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				}
 
 				// pipe a chunk
-				this._pipe(this.node, true, this.stack, this.styles, this.lookup);
+				this._pipe(this.node, true, this.stack, this.lookup);
 			}
 		}
 	},
 	_pipe: {
-		value: function (subject, flush, stack, styles, lookup) {
+		value: function (subject, flush, stack, lookup) {
 			// if there is something pending in the stack
 			// give that priority
 			if (flush && stack.length !== 0) {
@@ -110,7 +110,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 			var children = vnode.children;
 
 			var propsStr = renderStylesheetToString(
-				nodeType, subject._owner, subject.type, styles, renderPropsToString(props), lookup
+				nodeType, subject._owner, subject.type, renderPropsToString(props), lookup
 			);
 
 			if (isVoid[type] === 0) {
@@ -121,7 +121,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				var closing = '';
 
 				// fragments do not have opening/closing tags
-				if (nodeType !== 11) {
+				if (vnode.nodeType !== 11) {
 					// <type ...props>...children</type>
 					opening = '<'+type+propsStr+'>';
 					closing = '</'+type+'>';
@@ -157,14 +157,15 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 							if (index === length) {
 								// if the closing tag is body or html
 								// we want to push the styles before we close them
-								if (eof && styles[0].length !== 0) {
-									stream.push(styles[0]);
-									styles[0] = '';
+								if (eof && lookup.styles.length !== 0) {
+									stream.push('<style>'+lookup.styles+'</style>');
+									// clear styles, avoid adding duplicates
+									lookup.styles = '';
 								}
 
 								stream.push(closing);
 							} else {
-								stream._pipe(children[index++], false, stack, styles, lookup);
+								stream._pipe(children[index++], false, stack, lookup);
 							}
 						}
 

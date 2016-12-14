@@ -1,11 +1,11 @@
 /**
  * router
  * 
- * @param  {Object}        routes
- * @param  {string}        address 
- * @param  {string}        initialiser
- * @param  {(string|Node)} element
- * @param  {middleware}    middleware
+ * @param  {Object<string, (function|Component)>} routes
+ * @param  {string=}                              address 
+ * @param  {string=}                              initialiser
+ * @param  {(string|Node)=}                       element
+ * @param  {middleware=}                          middleware
  * @return {Object}
  */
 function router (routes, address, initialiser, element, middleware) {

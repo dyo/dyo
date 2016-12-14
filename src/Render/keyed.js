@@ -1,7 +1,14 @@
 /**
  * patch keyed nodes
- *  
- * @param  {VNode}  oldNode  
+ *
+ * @param {Object}  newKeys
+ * @param {Object}  oldKeys
+ * @param {VNode}   oldNode
+ * @param {Node}    parentNode
+ * @param {VNode[]} newChildren
+ * @param {VNode[]} oldChildren
+ * @param {number}  newLength
+ * @param {number}  oldLength
  */
 function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
 	var reconciledChildren = new Array(newLength);

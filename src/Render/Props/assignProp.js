@@ -5,9 +5,8 @@
  * @param  {string}     name
  * @param  {Object}     props
  * @param  {number}     onlyEvents
- * @param  {?Component} component
  */
-function assignProp (target, name, props, onlyEvents, component) {
+function assignProp (target, name, props, onlyEvents) {
 	var propValue = props[name];
 
 	if (isEventName(name)) {

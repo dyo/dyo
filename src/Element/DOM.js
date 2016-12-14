@@ -1,7 +1,5 @@
 /**
- * DOM factory
- * 
- * create references to common dom elements
+ * DOM factory, create VNode factories
  *
  * @param {string[]} types
  */

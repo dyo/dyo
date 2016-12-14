@@ -1,10 +1,10 @@
 /**
  * retrieve and format response
  * 
- * @param  {Object}   xhr
- * @param  {string}   responseType
- * @param  {function} reject
- * @return {*} 
+ * @param  {XMLHttpRequest} xhr
+ * @param  {string}         responseType
+ * @param  {function}       reject
+ * @return {(Node|string|Object)}
  */
 function response (xhr, responseType, reject) {			
 	var data, header = xhr.getResponseHeader('Content-Type');

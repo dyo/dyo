@@ -2,10 +2,12 @@
  * start animation
  * 
  * @param  {CSSStyleDeclaration} style
- * @param  {Object} animations
+ * @param  {Object}              animations
  */
 function animationWillBegin (style, animations) {
+	// register willChange when supported
 	style.willChange != null && (style.willChange = 'transform, opacity');
+
 	style.transition = animations.transition;
 
 	for (var name in animations) {

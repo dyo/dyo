@@ -1,9 +1,9 @@
 /**
  * extract refs
  * 
- * @param {Node}      element
- * @param {Object}    refs
- * @param {Component} component
+ * @param {Node}              element
+ * @param {(Object|function)} ref
+ * @param {Component}         component
  */
 function extractRefs (element, ref, component) {
 	// hoist typeof info

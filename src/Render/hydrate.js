@@ -2,9 +2,9 @@
  * hydrates a server-side rendered dom structure
  * 
  * @param  {Node}    element
- * @param  {Object}  newNode
+ * @param  {VNode}   newNode
  * @param  {number}  index
- * @param  {Object}  parentNode
+ * @param  {VNode}   parentNode
  */
 function hydrate (element, newNode, index, parentNode) {
 	var currentNode = newNode.nodeType === 2 ? extractComponent(newNode) : newNode;
@@ -20,6 +20,7 @@ function hydrate (element, newNode, index, parentNode) {
 		var newChildren = currentNode.children;
 		var newLength = newChildren.length;
 
+		// async hydration
 		for (var i = 0; i < newLength; i++) {
 			setTimeout(hydrate, 0, newElement, newChildren[i], i, currentNode);
 		}

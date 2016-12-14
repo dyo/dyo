@@ -1,9 +1,9 @@
 /**
  * router constructor
  * 
- * @param {any[]}     routes
- * @param {string=}   address
- * @param {function=} initialiser
+ * @param {Object<string, (function|Component)>} routes
+ * @param {string=}                              address
+ * @param {function=}                            initialiser
  */
 function createRouter (routes, address, initialiser) {
 	// listens for changes to the url
@@ -105,12 +105,12 @@ function createRouter (routes, address, initialiser) {
 		};
 	}
 
-	var addrlen = address.length;
+	var addrLength = address.length;
 
 	// normalize rootAddress format
 	// i.e '/url/' -> '/url', 47 === `/` character
-	if (typeof address === 'string' && address.charCodeAt(addrlen-1) === 47) {
-		address = address.substring(0, addrlen - 1);
+	if (typeof address === 'string' && address.charCodeAt(addrLength-1) === 47) {
+		address = address.substring(0, addrLength - 1);
 	}
 
 	var location = '';

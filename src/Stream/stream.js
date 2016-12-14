@@ -95,7 +95,7 @@ function stream (value, middleware) {
 		});
 
 		return end === null ? Stream : void 0;
-	};
+	}
 
 	// add then listener
 	function then (listener, onerror) {
