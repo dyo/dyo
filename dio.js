@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio is a fast ~8kb Virtual DOM framework
+ * dio is a fast ~8kb framework
  * 
  * @licence MIT
  */
@@ -1163,7 +1163,7 @@
 	
 		// callback
 		if (callback) {
-			callback(this.state);
+			callback.call(this);
 		}
 	}
 	
@@ -3525,7 +3525,6 @@
 		request:          http(),
 		router:           router,
 		stream:           stream,
-		stylis:           stylis,
 		escape:           escape,
 		panic:            panic,
 		sandbox:          sandbox,
@@ -3539,6 +3538,4 @@
 		// alias
 		h:                createElement,
 	};
-
-
 }));

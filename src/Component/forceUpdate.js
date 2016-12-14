@@ -34,7 +34,7 @@ function forceUpdate (callback) {
 
 	// callback
 	if (callback) {
-		callback(this.state);
+		callback.call(this);
 	}
 }
 
