@@ -8,7 +8,7 @@
  */
 function replaceNode (newNode, oldNode, parentNode, nextNode) {
 	if (oldNode._owner !== null && oldNode._owner.componentWillUnmount) {
-		oldNode._owner.componentWillUnmount(oldNode._node) || 0;
+		oldNode._owner.componentWillUnmount(oldNode._node);
 	}
 
 	if (newNode._owner !== null && newNode._owner.componentWillMount) {

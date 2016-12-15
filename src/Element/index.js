@@ -21,4 +21,3 @@ import 'cloneElement';
 import 'createFactory';
 import 'isValidElement';
 import 'DOM';
-import 'retrieveVNode';

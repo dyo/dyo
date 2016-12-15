@@ -147,7 +147,7 @@ function resolve (directory, template, imported, parent, dir) {
 			// if no file extension
 			// the default is assumed to be a js file
 			// thus 'module-name' is converted to 'module-name.js'
-			if (filepath.indexOf('.') === -1) {
+			if (filepath.replace(/\.\.\/|\.\//g, '').indexOf('.') === -1) {
 				filepath += '.js';
 			}
 

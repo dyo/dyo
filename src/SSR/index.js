@@ -13,3 +13,4 @@ import 'renderVNodeToString';
 import 'renderStylesheetToString';
 import 'renderToStream';
 import 'renderToCache';
+import 'retrieveVNode';
