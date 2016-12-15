@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio is a fast ~8kb framework
+ * dio is a fast javascript framework
  * 
  * @licence MIT
  */
@@ -560,7 +560,7 @@
 			nodeType: 3, 
 			type: 'text', 
 			props: objEmpty, 
-			children: text || '', 
+			children: text === false ? '' : text, 
 			_node: null,
 			_owner: null,
 			_index: null
@@ -658,6 +658,8 @@
 		}
 	
 		if (length !== 1) {
+			var index = 0;
+			
 			// construct children
 			for (var i = position; i < length; i++) {
 				var child = arguments[i];
@@ -668,10 +670,10 @@
 					if (child.constructor === Array) {
 						// add array child
 						for (var j = 0, len = child.length; j < len; j++) {
-							createChild(child[j], children);
+							index = createChild(child[j], children, index);
 						}
 					} else {
-						createChild(child, children);
+						index = createChild(child, children, index);
 					}
 				}
 			}
@@ -709,31 +711,33 @@
 	 * 
 	 * @param {any} child
 	 */
-	function createChild (child, children) {
+	function createChild (child, children, index) {
 		if (child != null) {
 			if (child.nodeType !== void 0) {
 				// Element
-				children[children.length] = child;
+				children[index++] = child;
 			} else {
 				var type = typeof child;
 	
 				if (type === 'function') {
 					// Component
-					children[children.length] = VComponent(child);
+					children[index++] = VComponent(child);
 				} else if (type !== 'object') {
 					// Text
-					children[children.length] = VText(child);
+					children[index++] = VText(child);
 				} else {
 					// Array
 					for (var i = 0, len = child.length; i < len; i++) {
-						createChild(child[i], children);
+						index = createChild(child[i], children, index);
 					}
 				}
 			}
 		} else {
 			// Empty
-			children[children.length] = nodEmpty;
+			children[index++] = nodEmpty;
 		}
+	
+		return index;
 	}
 	
 	
@@ -834,11 +838,12 @@
 	
 			// if not empty, copy
 			if (length > 0) {
-				children = [];
+				var index    = 0;
+					children = [];
 	
 				// copy old children
 				for (var i = 0; i < length; i++) {
-					createChild(newChildren[i], children);
+					index = createChild(newChildren[i], children, index);
 				}
 			}
 		}

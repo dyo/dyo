@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio is a fast ~8kb framework
+ * dio is a fast javascript framework
  * 
  * @licence MIT
  */

@@ -9,7 +9,7 @@ function VText (text) {
 		nodeType: 3, 
 		type: 'text', 
 		props: objEmpty, 
-		children: text || '', 
+		children: text === false ? '' : text, 
 		_node: null,
 		_owner: null,
 		_index: null

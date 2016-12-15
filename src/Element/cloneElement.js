@@ -25,11 +25,12 @@ function cloneElement (subject, newProps, newChildren) {
 
 		// if not empty, copy
 		if (length > 0) {
-			children = [];
+			var index    = 0;
+				children = [];
 
 			// copy old children
 			for (var i = 0; i < length; i++) {
-				createChild(newChildren[i], children);
+				index = createChild(newChildren[i], children, index);
 			}
 		}
 	}
