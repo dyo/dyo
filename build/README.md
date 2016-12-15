@@ -4,7 +4,7 @@
 npm run build
 ```
 
-Will bundle everything in `./src` into dio.js and watch for changes in `./src` that will update `dio.js`
+Will bundle everything in `./src` and `./packages/` into their respectful bundles and watch for changes in these directories updating the bundle when something changes.
 
 ## How it works
 

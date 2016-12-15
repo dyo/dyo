@@ -14,14 +14,14 @@ function createChild (child, children, index) {
 			if (type === 'function') {
 				// Component
 				children[index++] = VComponent(child);
-			} else if (type !== 'object') {
-				// Text
-				children[index++] = VText(child);
-			} else {
+			} else if (type === 'object') {
 				// Array
 				for (var i = 0, len = child.length; i < len; i++) {
 					index = createChild(child[i], children, index);
 				}
+			} else {
+				// Text
+				children[index++] = VText(type !== 'boolean' ? child : '');
 			}
 		}
 	} else {
