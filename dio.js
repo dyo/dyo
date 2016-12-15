@@ -3076,10 +3076,11 @@
 	 * @param  {string=}                              address 
 	 * @param  {string=}                              initialiser
 	 * @param  {(string|Node)=}                       element
-	 * @param  {middleware=}                          middleware
+	 * @param  {function=}                            middleware
+	 * @param  {function=}                            notFound
 	 * @return {Object}
 	 */
-	function router (routes, address, initialiser, element, middleware) {
+	function router (routes, address, initialiser, element, middleware, notFound) {
 		if (typeof routes === 'function') {
 			routes = routes();
 		}
@@ -3089,17 +3090,18 @@
 		}
 	
 		if (typeof address === 'object') {
-			element     = address.mount,
-			initialiser = address.init,
-			middleware  = address.middleware,
-			address     = address.root;
+			element     = address.mount;
+			initialiser = address.initial;
+			middleware  = address.middleware;
+			notFound    = address['404'];
+			address     = address.directory;
 		}
 	
 		if (element !== void 0) {
 			each(routes, function (component, uri) {
 				if (middleware !== void 0) {
 					routes[uri] = function (data) {
-						middleware(component, data, element, uri);
+						middleware(component, data, element);
 					}
 				} else {
 					routes[uri] = function (data) {
@@ -3109,34 +3111,36 @@
 			});
 		}
 	
-		return createRouter(routes, address, initialiser);
+		return createRouter(routes, address, initialiser, notFound);
 	}
 	
 	
 	/**
 	 * router constructor
 	 * 
-	 * @param {Object<string, (function|Component)>} routes
+	 * @param {Object<string, (function|Component)>} patterns
 	 * @param {string=}                              address
 	 * @param {function=}                            initialiser
+	 * @param {function=}                            notFound
 	 */
-	function createRouter (routes, address, initialiser) {
+	function createRouter (patterns, address, initialiser, notFound) {
 		// listens for changes to the url
 		function listen () {
 			if (interval !== 0) {
 				// clear the interval if it's already set
 				clearInterval(interval);
+				interval = 0;
 			}
 	
 			// start listening for a change in the url
 			interval = setInterval(function () {
-				var current = window.location.pathname;
+				var pathname = location.pathname;
 	
 				// if our store of the current url does not 
 				// equal the url of the browser, something has changed
-				if (location !== current) {					
+				if (current !== pathname) {					
 					// update the location
-					location = current;
+					current = pathname;
 					// dispatch route change
 					dispatch();
 				}
@@ -3146,59 +3150,94 @@
 		// register routes
 		function register () {
 			// assign routes
-			each(routes, function (callback, uri) {
-				// - params is where we store variable names
-				// i.e in /:user/:id - user, id are variables
-				var params = [];
+			for (var name in patterns) {
+				set(name, patterns[name]);
+			}
+		}
 	
-				// uri is the url/RegExp that describes the uri match thus
-				// given the following /:user/:id/*
-				// the pattern will be / ([^\/]+) / ([^\/]+) / (?:.*)
-				var pattern = uri.replace(regRoute, function () {
-					// id => 'user', '>>>id<<<', undefned
-					var id = arguments[2];
-					// if, not variable, else, capture variable
-					return id != null ? (params[params.length] = id, '([^\/]+)') : '(?:.*)';
-				});
+		// assign a route
+		function set (uri, callback) {
+			// - params is where we store variable names
+			// i.e in /:user/:id - user, id are variables
+			var params = [];
 	
-				// assign a route item
-				routes[uri] = [callback, new RegExp((address ? address + pattern : pattern) + '$'), params];
+			// uri is the url/RegExp that describes the uri match thus
+			// given the following /:user/:id/*
+			// the pattern will be / ([^\/]+) / ([^\/]+) / (?:.*)
+			var pattern = uri.replace(regRoute, function () {
+				// id => arguments: 'user', id, undefned
+				var id = arguments[2];
+				// if, not variable, else, capture variable
+				return id != null ? (params[params.length] = id, '([^\/]+)') : '(?:.*)';
+			});
+	
+			// assign a route item
+			Object.defineProperty(routes, uri, {
+				value: Object.create(null, {
+					callback: { value: callback },
+					pattern:  { value: new RegExp((address ? address + pattern : pattern) + '$') },
+					params:   { value: params }
+				})
 			});
 		}
 	
 		// called when the listener detects a route change
 		function dispatch () {
-			each(routes, function (route, uri) {
-				var callback = route[0];
-				var pattern  = route[1];
-				var params   = route[2];
-				var match    = location.match(pattern);
+			each(routes, finder);
 	
-				// we have a match
-				if (match != null) {
-					// create params object to pass to callback
-					// i.e {user: 'simple', id: '1234'}
-					var data = match.slice(1, match.length);
+			if (resolved === 0 && notFound !== void 0) {
+				notFound({url: current});
+			}
 	
-					var args = data.reduce(function (previousValue, currentValue, index) {
-						// if this is the first value, create variables store
-						if (previousValue === null) {
-							previousValue = {};
-						}
+			resolved = 0;
+		}
 	
-						// name: value
-						// i.e user: 'simple'
-						// `vars` contains the keys for the variables
-						previousValue[params[index]] = currentValue;
+		// find a match from the available routes
+		function finder (route, uri) {
+			var callback = route.callback;
+			var pattern  = route.pattern;
+			var params   = route.params;
+			var match    = current.match(pattern);
 	
-						return previousValue;
+			// we have a match
+			if (match != null) {
+				// create params object to pass to callback
+				// i.e {user: 'simple', id: '1234'}
+				var data = match.slice(1, match.length);
 	
-						// null --> first value
-					}, null); 
+				var args = data.reduce(function (previousValue, currentValue, index) {
+					// if this is the first value, create variables store
+					if (previousValue === null) {
+						previousValue = {url: current};
+					}
 	
-					callback(args, uri);
-				}
-			});
+					// name: value, i.e user: 'simple'
+					// `vars` contains the keys for variables
+					previousValue[params[index]] = currentValue;
+	
+					return previousValue;
+	
+					// null --> first value
+				}, null); 
+	
+				callback(args, uri);
+	
+				resolved = 1;
+			} else {
+				resolved = 0;
+			}
+		}
+	
+		// middleware between event and route
+		function link (to) {
+			var func = typeof to === 'function';
+	
+			return function (e) {
+				var target = e.currentTarget || e.target || this;
+				var value  = func ? to(target) : to;
+	
+				navigate(target[value] || (target.nodeName && target.getAttribute(value)) || value); 
+			};
 		}
 	
 		// navigate to a uri
@@ -3208,41 +3247,57 @@
 			}
 		}
 	
-		// middleware between event and route
-		function link (to) {
-			var func = typeof to === 'function';
-	
-			return function (e) {
-				var target = e.currentTarget;
-				var value  = func ? to(target) : to;
-	
-				navigate(target[value] || target.getAttribute(value) || value); 
-			};
+		// resume listener
+		function resume () {
+			current = location.pathname;
+			listen();
 		}
 	
-		var addrLength = address.length;
+		// pause listerner
+		function pause () {
+			clearInterval(interval);
+		}
+	
+		// stop listening and clear all routes 
+		function destroy () {
+			pause();
+			routes = {};
+		}
 	
 		// normalize rootAddress format
 		// i.e '/url/' -> '/url', 47 === `/` character
-		if (typeof address === 'string' && address.charCodeAt(addrLength-1) === 47) {
-			address = address.substring(0, addrLength - 1);
+		if (typeof address === 'string' && address.charCodeAt(address.length - 1) === 47) {
+			address = address.substring(0, address.length - 1);
 		}
 	
-		var location = '';
+		var history  = window.history || objEmpty;
+		var location = history.location || window.location;
+		var current  = '';
 		var interval = 0;
-		var history  = window.history;
-		
-		var api      = {
-			nav:    navigate,
-			back:   history.back, 
-			foward: history.foward, 
-			link:   link
-		};
+		var resolved = 0;
+		var routes   = {};
 	
-		// register routes, start listening for changes
+		var api      = Object.defineProperty({
+			back:    history.back, 
+			foward:  history.forward, 
+			link:    link,
+			resume:  resume,
+			pause:   pause,
+			destroy: destroy,
+			set:     set,
+			routes:  routes
+		}, 'location', {
+			get: function () { return current; },
+			set: navigate
+		});
+	
+		// register routes
 		register();
-		// listens only while in the browser enviroment
-		browser && listen();
+	
+		// state listening if browser enviroment
+		if (browser) {
+			listen();
+		}
 	
 		// initialiser, if function pass api as args, else string, navigate to uri
 		if (initialiser !== void 0) {

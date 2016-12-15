@@ -5,10 +5,11 @@
  * @param  {string=}                              address 
  * @param  {string=}                              initialiser
  * @param  {(string|Node)=}                       element
- * @param  {middleware=}                          middleware
+ * @param  {function=}                            middleware
+ * @param  {function=}                            notFound
  * @return {Object}
  */
-function router (routes, address, initialiser, element, middleware) {
+function router (routes, address, initialiser, element, middleware, notFound) {
 	if (typeof routes === 'function') {
 		routes = routes();
 	}
@@ -18,17 +19,18 @@ function router (routes, address, initialiser, element, middleware) {
 	}
 
 	if (typeof address === 'object') {
-		element     = address.mount,
-		initialiser = address.init,
-		middleware  = address.middleware,
-		address     = address.root;
+		element     = address.mount;
+		initialiser = address.initial;
+		middleware  = address.middleware;
+		notFound    = address['404'];
+		address     = address.directory;
 	}
 
 	if (element !== void 0) {
 		each(routes, function (component, uri) {
 			if (middleware !== void 0) {
 				routes[uri] = function (data) {
-					middleware(component, data, element, uri);
+					middleware(component, data, element);
 				}
 			} else {
 				routes[uri] = function (data) {
@@ -38,6 +40,6 @@ function router (routes, address, initialiser, element, middleware) {
 		});
 	}
 
-	return createRouter(routes, address, initialiser);
+	return createRouter(routes, address, initialiser, notFound);
 }
 
