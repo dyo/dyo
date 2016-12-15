@@ -27,16 +27,16 @@ function router (routes, address, initialiser, element, middleware, notFound) {
 	}
 
 	if (element !== void 0) {
+		var callback;
+		
+		if (middleware !== void 0) {
+			callback = function (data) { middleware(component, data, element); }
+		} else {
+			callback = function (data) { render(VComponent(component, data), element); }
+		}
+
 		each(routes, function (component, uri) {
-			if (middleware !== void 0) {
-				routes[uri] = function (data) {
-					middleware(component, data, element);
-				}
-			} else {
-				routes[uri] = function (data) {
-					render(VComponent(component, data), element);
-				}
-			}
+			routes[uri] = callback;
 		});
 	}
 
