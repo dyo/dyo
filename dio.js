@@ -3097,13 +3097,13 @@
 			address     = address.directory;
 		}
 	
-		if (element !== void 0) {
-			var callback;
+		var callback;
 	
+		if (element !== void 0) {
 			if (middleware !== void 0) {
-				callback = function callback (data) { middleware(component, data, element); }
+				callback = function callback (data) { middleware(component, data, element); };
 			} else {
-				callback = function callback (data) { render(VComponent(component, data), element); }
+				callback = function callback (data) { render(VComponent(component, data), element); };
 			}
 	
 			each(routes, function (component, uri) {
