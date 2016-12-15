@@ -658,8 +658,6 @@
 		}
 	
 		if (length !== 1) {
-			var index = 0;
-	
 			// construct children
 			for (var i = position; i < length; i++) {
 				var child = arguments[i];
@@ -668,14 +666,12 @@
 				if (child != null) {
 					// if array, flatten
 					if (child.constructor === Array) {
-						var len = child.length;
-	
 						// add array child
-						for (var j = 0; j < len; j++) {
-							children[index++] = createChild(child[j]);
+						for (var j = 0, len = child.length; j < len; j++) {
+							createChild(child[j], children);
 						}
 					} else {
-						children[index++] = createChild(child);
+						createChild(child, children);
 					}
 				}
 			}
@@ -713,21 +709,30 @@
 	 * 
 	 * @param {any} child
 	 */
-	function createChild (child) {
+	function createChild (child, children) {
 		if (child != null) {
 			if (child.nodeType !== void 0) {
 				// Element
-				return child;
-			} else if (typeof child === 'function') {
-				// Component
-				return VComponent(child);
+				children[children.length] = child;
 			} else {
-				// Text
-				return VText(child);
+				var type = typeof child;
+	
+				if (type === 'function') {
+					// Component
+					children[children.length] = VComponent(child);
+				} else if (type !== 'object') {
+					// Text
+					children[children.length] = VText(child);
+				} else {
+					// Array
+					for (var i = 0, len = child.length; i < len; i++) {
+						createChild(child[i], children);
+					}
+				}
 			}
 		} else {
 			// Empty
-			return nodEmpty;
+			children[children.length] = nodEmpty;
 		}
 	}
 	
@@ -833,7 +838,7 @@
 	
 				// copy old children
 				for (var i = 0; i < length; i++) {
-					children[i] = createChild(newChildren[i]);
+					createChild(newChildren[i], children);
 				}
 			}
 		}

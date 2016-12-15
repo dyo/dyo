@@ -25,8 +25,6 @@ function createElement (type, props) {
 	}
 
 	if (length !== 1) {
-		var index = 0;
-
 		// construct children
 		for (var i = position; i < length; i++) {
 			var child = arguments[i];
@@ -35,14 +33,12 @@ function createElement (type, props) {
 			if (child != null) {
 				// if array, flatten
 				if (child.constructor === Array) {
-					var len = child.length;
-
 					// add array child
-					for (var j = 0; j < len; j++) {
-						children[index++] = createChild(child[j]);
+					for (var j = 0, len = child.length; j < len; j++) {
+						createChild(child[j], children);
 					}
 				} else {
-					children[index++] = createChild(child);
+					createChild(child, children);
 				}
 			}
 		}

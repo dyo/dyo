@@ -29,7 +29,7 @@ function cloneElement (subject, newProps, newChildren) {
 
 			// copy old children
 			for (var i = 0; i < length; i++) {
-				children[i] = createChild(newChildren[i]);
+				createChild(newChildren[i], children);
 			}
 		}
 	}

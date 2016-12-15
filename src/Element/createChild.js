@@ -3,21 +3,30 @@
  * 
  * @param {any} child
  */
-function createChild (child) {
+function createChild (child, children) {
 	if (child != null) {
 		if (child.nodeType !== void 0) {
 			// Element
-			return child;
-		} else if (typeof child === 'function') {
-			// Component
-			return VComponent(child);
+			children[children.length] = child;
 		} else {
-			// Text
-			return VText(child);
+			var type = typeof child;
+
+			if (type === 'function') {
+				// Component
+				children[children.length] = VComponent(child);
+			} else if (type !== 'object') {
+				// Text
+				children[children.length] = VText(child);
+			} else {
+				// Array
+				for (var i = 0, len = child.length; i < len; i++) {
+					createChild(child[i], children);
+				}
+			}
 		}
 	} else {
 		// Empty
-		return nodEmpty;
+		children[children.length] = nodEmpty;
 	}
 }
 
