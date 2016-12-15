@@ -70,7 +70,7 @@ function create (
 		}
 
 		if (headers != null) {
-			each(function (value, name) {
+			each(headers, function (value, name) {
 				xhr.setRequestHeader(name, value);
 			});
 		}

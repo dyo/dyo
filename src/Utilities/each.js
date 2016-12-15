@@ -6,7 +6,7 @@
  */
 function each (obj, func) {
 	for (var name in obj) {
-		func(obj[name], name, obj);
+		func(obj[name], name);
 	}
 }
 

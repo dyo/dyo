@@ -233,7 +233,7 @@
 	 */
 	function each (obj, func) {
 		for (var name in obj) {
-			func(obj[name], name, obj);
+			func(obj[name], name);
 		}
 	}
 	
@@ -2972,7 +2972,7 @@
 				}
 		
 				if (headers != null) {
-					each(function (value, name) {
+					each(headers, function (value, name) {
 						xhr.setRequestHeader(name, value);
 					});
 				}
