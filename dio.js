@@ -3099,11 +3099,11 @@
 	
 		if (element !== void 0) {
 			var callback;
-			
+	
 			if (middleware !== void 0) {
-				callback = function (data) { middleware(component, data, element); }
+				callback = function callback (data) { middleware(component, data, element); }
 			} else {
-				callback = function (data) { render(VComponent(component, data), element); }
+				callback = function callback (data) { render(VComponent(component, data), element); }
 			}
 	
 			each(routes, function (component, uri) {
