@@ -156,7 +156,7 @@
 			dio.render(component(Documentation, {url: section}), '.container');
 		}
 	};
-	var router = dio.router(routes, '/dio.js');
+	var router = dio.router(routes);
 
 	dio.render(Header, '.header');
 })()

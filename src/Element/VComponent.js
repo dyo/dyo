@@ -11,7 +11,7 @@ function VComponent (type, props, children) {
 		nodeType: 2, 
 		type: type, 
 		props: (props || type.defaultProps || objEmpty), 
-		children: (children || []),
+		children: (children || arrEmpty),
 		_node: null,
 		_owner: null,
 		_index: null

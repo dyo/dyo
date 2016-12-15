@@ -22,6 +22,7 @@ function extractComponent (subject, mutate) {
 	// create component instance
 	var component = subject._owner = new candidate(subject.props);
 
+	// add children to props if not empty
 	if (subject.children.length !== 0) {
 		component.props.children = subject.children;
 	}

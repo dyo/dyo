@@ -444,7 +444,7 @@
 			nodeType: 2, 
 			type: type, 
 			props: (props || type.defaultProps || objEmpty), 
-			children: (children || []),
+			children: (children || arrEmpty),
 			_node: null,
 			_owner: null,
 			_index: null
@@ -1943,6 +1943,7 @@
 		// create component instance
 		var component = subject._owner = new candidate(subject.props);
 	
+		// add children to props if not empty
 		if (subject.children.length !== 0) {
 			component.props.children = subject.children;
 		}

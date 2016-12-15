@@ -76,17 +76,15 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 	},
 	_pipe: {
 		value: function (subject, flush, stack, lookup) {
-			// if there is something pending in the stack
-			// give that priority
+			// if there is something pending in the stack give that priority
 			if (flush && stack.length !== 0) {
 				stack.pop()(this); return;
 			}
 
 			var nodeType = subject.nodeType;
 
-			// text node
+			// text node, sync
 			if (nodeType === 3) {
-				// convert string to buffer and send chunk
 				this.push(escape(subject.children)); return;
 			}
 
@@ -142,7 +140,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 					} else {
 						// has children, async
 						// since we cannot know ahead of time the number of children
-						// split this operation into asynchronously added chunks of data
+						// this is operation is split into asynchronously added chunks of data
 						var index = 0;
 						// add one more for the closing tag
 						var middlwares = length + 1;

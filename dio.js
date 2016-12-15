@@ -602,7 +602,7 @@
 			nodeType: 2, 
 			type: type, 
 			props: (props || type.defaultProps || objEmpty), 
-			children: (children || []),
+			children: (children || arrEmpty),
 			_node: null,
 			_owner: null,
 			_index: null
@@ -2101,6 +2101,7 @@
 		// create component instance
 		var component = subject._owner = new candidate(subject.props);
 	
+		// add children to props if not empty
 		if (subject.children.length !== 0) {
 			component.props.children = subject.children;
 		}
@@ -2418,17 +2419,15 @@
 		},
 		_pipe: {
 			value: function (subject, flush, stack, lookup) {
-				// if there is something pending in the stack
-				// give that priority
+				// if there is something pending in the stack give that priority
 				if (flush && stack.length !== 0) {
 					stack.pop()(this); return;
 				}
 	
 				var nodeType = subject.nodeType;
 	
-				// text node
+				// text node, sync
 				if (nodeType === 3) {
-					// convert string to buffer and send chunk
 					this.push(escape(subject.children)); return;
 				}
 	
@@ -2484,7 +2483,7 @@
 						} else {
 							// has children, async
 							// since we cannot know ahead of time the number of children
-							// split this operation into asynchronously added chunks of data
+							// this is operation is split into asynchronously added chunks of data
 							var index = 0;
 							// add one more for the closing tag
 							var middlwares = length + 1;
@@ -2538,14 +2537,16 @@
 	 * @return {Object} subject
 	 */
 	function renderToCache (subject) {
-		if (subject != null && server) {
-			// if array run all VNodes through renderToCache
+		if (subject) {
+			// array, run all VNodes through renderToCache
 			if (subject.constructor === Array) {
 				for (var i = 0, length = subject.length; i < length; i++) {
 					renderToCache(subject[i]);
 				}
-			} else if (subject._html == null) {
+			} else if (subject.nodeType === void 0) {
 				subject._html = renderToString(subject);
+			} else if (subject.nodeType === 2 && subject.type._html === void 0) {
+				subject.type._html = renderToString(subject);
 			}
 		}
 	
