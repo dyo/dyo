@@ -22,10 +22,8 @@ function createRouter (patterns, address, initialiser, notFound) {
 			// if our store of the current url does not 
 			// equal the url of the browser, something has changed
 			if (current !== pathname) {					
-				// update the location
-				current = pathname;
-				// dispatch route change
-				dispatch();
+				// update the location and dispatch route change
+				dispatch(current = pathname);
 			}
 		}, 50);
 	}
@@ -57,16 +55,19 @@ function createRouter (patterns, address, initialiser, notFound) {
 		// assign a route item
 		Object.defineProperty(routes, uri, {
 			value: Object.create(null, {
-				callback: { value: callback },
-				pattern:  { value: new RegExp((address ? address + pattern : pattern) + '$') },
-				params:   { value: params }
-			})
+				callback: { value: callback, },
+				pattern:  { value: new RegExp((address ? address + pattern : pattern) + '$'), },
+				params:   { value: params, }
+			}),
+			enumerable: true
 		});
 	}
 
 	// called when the listener detects a route change
-	function dispatch () {
-		each(routes, finder);
+	function dispatch (current) {
+		for (var name in routes) {
+			finder(routes[name], name, current);
+		}
 
 		if (resolved === 0 && notFound !== void 0) {
 			notFound({url: current});
@@ -76,7 +77,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 	}
 
 	// find a match from the available routes
-	function finder (route, uri) {
+	function finder (route, uri, current) {
 		var callback = route.callback;
 		var pattern  = route.pattern;
 		var params   = route.params;
@@ -101,7 +102,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 				return previousValue;
 
 				// null --> first value
-			}, null); 
+			}, null) || {uri: current};
 
 			callback(args, uri);
 
@@ -147,6 +148,11 @@ function createRouter (patterns, address, initialiser, notFound) {
 		routes = {};
 	}
 
+	// manually resolve a route
+	function resolve (uri) {
+		dispatch(uri);
+	}
+
 	// normalize rootAddress format
 	// i.e '/url/' -> '/url', 47 === `/` character
 	if (typeof address === 'string' && address.charCodeAt(address.length - 1) === 47) {
@@ -168,6 +174,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 		pause:   pause,
 		destroy: destroy,
 		set:     set,
+		resolve: resolve,
 		routes:  routes
 	}, 'location', {
 		get: function () { return current; },
