@@ -17,7 +17,7 @@ function Store (reducer, initialState) {
 	// dispatchs a action
 	function dispatch (action) {
 		if (action.type === void 0) {
-			panic('actions without type');
+			throw 'actions without type';
 		}
 
 		// update state with return value of reducer
@@ -34,7 +34,7 @@ function Store (reducer, initialState) {
 	// subscribe to a store
 	function subscribe (listener) {
 		if (typeof listener !== 'function') {
-			panic('listener should be a function');
+			throw 'listener should be a function';
 		}
 
 		// retrieve index position
@@ -59,7 +59,7 @@ function Store (reducer, initialState) {
 	function replaceReducer (nextReducer) {
 		// exit early, reducer is not a function
 		if (typeof nextReducer !== 'function') {
-			panic('reducer should be a function');
+			throw 'reducer should be a function';
 		}
 
 		// replace reducer

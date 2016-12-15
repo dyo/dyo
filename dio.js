@@ -32,39 +32,39 @@
 	
 	
 	// current version
-	var version         = '4.0.0';
+	var version = '4.0.0';
 	
 	// enviroment variables
-	var document        = window.document || null;
-	var browser         = document !== null;
-	var server          = browser === false;
+	var document = window.document || null;
+	var browser = document !== null;
+	var server = browser === false;
 	
 	// namespaces
-	var nsStyle         = 'data-scope';
-	var nsMath          = 'http://www.w3.org/1998/Math/MathML';
-	var nsXlink         = 'http://www.w3.org/1999/xlink';
-	var nsSvg           = 'http://www.w3.org/2000/svg';
+	var nsStyle = 'data-scope';
+	var nsMath  = 'http://www.w3.org/1998/Math/MathML';
+	var nsXlink = 'http://www.w3.org/1999/xlink';
+	var nsSvg = 'http://www.w3.org/2000/svg';
 	
 	// empty shapes
-	var objEmpty        = Object.create(null);
-	var arrEmpty        = [];
-	var nodEmpty        = VNode(0, '', objEmpty, arrEmpty, null, null, null);
+	var objEmpty = Object.create(null);
+	var arrEmpty = [];
+	var nodEmpty = VNode(0, '', objEmpty, arrEmpty, null, null, null);
 	
 	// random characters
-	var randomChars     = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
+	var randomChars = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
 	
 	// ssr
-	var readable        = server ? require('stream').Readable : null;
+	var readable = server ? require('stream').Readable : null;
 	
 	// void elements
-	var isVoid          = {
+	var isVoid = {
 		'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0, 'embed': 0,
 		'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
 		'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
 	};
 	
 	// unicode characters
-	var uniCodes        = {
+	var uniCodes = {
 		'<': '&lt;',
 		'>': '&gt;',
 		'"': '&quot;',
@@ -73,12 +73,13 @@
 	};
 	
 	// regular expressions
-	var regEsc          = /[<>&"']/g;
-	var regStyleCamel   = /([a-zA-Z])(?=[A-Z])/g;
-	var regStyleVendor  = /^(ms|webkit|moz)/;
+	var regEsc = /[<>&"']/g;
+	var regStyleCamel = /([a-zA-Z])(?=[A-Z])/g;
+	var regStyleVendor = /^(ms|webkit|moz)/;
 	
 	
-	var regRoute        = /([:*])(\w+)|([\*])/g;
+	// router
+	var regRoute = /([:*])(\w+)|([\*])/g;
 	
 	
 	/**
@@ -97,33 +98,7 @@
 	 * @return {string}
 	 */
 	function escape (subject) {
-		var string = subject + '';
-	
-		if (string.length > 50) {
-			// use regex if the string is long
-			return string.replace(regEsc, unicoder);
-		} else {
-			var characters = '';
-	
-			for (var i = 0, length = string.length; i < length; i++) {
-				switch (string.charCodeAt(i)) {
-					// & character
-					case 38: characters += '&amp;'; break;
-					// " character
-					case 34: characters += '&quot;'; break;
-					// ' character
-					case 39: characters += '&#39;'; break;
-					// < character
-					case 60: characters += '&lt;'; break;
-					// > character
-					case 62: characters += '&gt;'; break;
-					// any character
-					default: characters += string[i]; break;
-				}
-			}
-			
-			return characters;
-		}
+		return String(subject).replace(regEsc, unicoder);
 	}
 	
 	
@@ -134,27 +109,7 @@
 	 * @return {string}
 	 */
 	function unicoder (char) {
-		return uniCodes[char];
-	}
-	
-	
-	/**
-	 * throw/return error
-	 * 
-	 * @param  {string}            message
-	 * @param  {boolean=}          silent
-	 * @return {(undefined|Error)}
-	 */
-	function panic (message, silent) {
-		// create an error object for stack tracing
-		var error = new Error(message || '');
-	
-		// throw error/return error(silent)
-		if (silent) { 
-			return error; 
-		} else { 
-			throw error; 
-		}
+		return uniCodes[char] || char;
 	}
 	
 	
@@ -304,14 +259,9 @@
 	 * @return {function(?Node)}
 	 */
 	function stylesheet (component, constructor) {
-		// retrieve stylesheet
 		var styles = component.stylesheet();
-	
-		// generate unique id
-		var id = random(5);
-	
-		// compile css
-		var css = stylis('['+nsStyle+'='+id+']', styles, true, true);
+		var id     = random(5);
+		var css    = stylis('['+nsStyle+'='+id+']', styles, true, true);
 	
 		function styler (element) {
 			if (element === null) {
@@ -2497,8 +2447,8 @@
 				}
 	
 				// references
-				var type = vnode.type;
-				var props = vnode.props;
+				var type     = vnode.type;
+				var props    = vnode.props;
 				var children = vnode.children;
 	
 				var propsStr = renderStylesheetToString(
@@ -3256,7 +3206,6 @@
 		var interval = 0;
 		var resolved = 0;
 		var routes   = {};
-	
 		var api      = Object.defineProperty({
 			back:    history.back, 
 			foward:  history.forward, 
@@ -3315,7 +3264,7 @@
 	 */
 	function applyMiddleware () {
 		var middlewares = [];
-		var length = arguments.length;
+		var length      = arguments.length;
 	
 		// passing arguments to a function i.e [].splice() will prevent this function
 		// from getting optimized by the VM, so we manually build the array in-line
@@ -3389,7 +3338,7 @@
 	function createStore (reducer, initialState, enhancer) {
 		// exit early, reducer is not a function
 		if (typeof reducer !== 'function') {
-			panic('reducer should be a function');
+			throw 'reducer should be a function';
 		}
 	
 		// if initialState is a function and enhancer is undefined
@@ -3403,7 +3352,7 @@
 		if (enhancer !== void 0) {
 			// exit early, enhancer is not a function
 			if (typeof enhancer !== 'function') {
-				panic('enhancer should be a function');
+				throw 'enhancer should be a function';
 			}
 	
 			return applyMiddleware(enhancer)(Store)(reducer, initialState);
@@ -3431,7 +3380,7 @@
 		// dispatchs a action
 		function dispatch (action) {
 			if (action.type === void 0) {
-				panic('actions without type');
+				throw 'actions without type';
 			}
 	
 			// update state with return value of reducer
@@ -3448,7 +3397,7 @@
 		// subscribe to a store
 		function subscribe (listener) {
 			if (typeof listener !== 'function') {
-				panic('listener should be a function');
+				throw 'listener should be a function';
 			}
 	
 			// retrieve index position
@@ -3473,7 +3422,7 @@
 		function replaceReducer (nextReducer) {
 			// exit early, reducer is not a function
 			if (typeof nextReducer !== 'function') {
-				panic('reducer should be a function');
+				throw 'reducer should be a function';
 			}
 	
 			// replace reducer
@@ -3560,11 +3509,7 @@
 		request:          http(),
 		router:           router,
 		stream:           stream,
-		escape:           escape,
-		panic:            panic,
-		sandbox:          sandbox,
 		compose:          compose,
-		random:           random,
 		defer:            defer,
 
 		// version

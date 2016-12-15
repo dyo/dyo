@@ -1,4 +1,4 @@
 import 'core';
-import 'ssr';
+import 'server';
 import 'router';
 

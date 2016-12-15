@@ -165,7 +165,6 @@ function createRouter (patterns, address, initialiser, notFound) {
 	var interval = 0;
 	var resolved = 0;
 	var routes   = {};
-
 	var api      = Object.defineProperty({
 		back:    history.back, 
 		foward:  history.forward, 

@@ -105,8 +105,8 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 			}
 
 			// references
-			var type = vnode.type;
-			var props = vnode.props;
+			var type     = vnode.type;
+			var props    = vnode.props;
 			var children = vnode.children;
 
 			var propsStr = renderStylesheetToString(

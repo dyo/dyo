@@ -82,11 +82,7 @@
 		request:          http(),
 		router:           router,
 		stream:           stream,
-		escape:           escape,
-		panic:            panic,
-		sandbox:          sandbox,
 		compose:          compose,
-		random:           random,
 		defer:            defer,
 
 		// version

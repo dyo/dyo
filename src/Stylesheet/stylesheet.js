@@ -6,14 +6,9 @@
  * @return {function(?Node)}
  */
 function stylesheet (component, constructor) {
-	// retrieve stylesheet
 	var styles = component.stylesheet();
-
-	// generate unique id
-	var id = random(5);
-
-	// compile css
-	var css = stylis('['+nsStyle+'='+id+']', styles, true, true);
+	var id     = random(5);
+	var css    = stylis('['+nsStyle+'='+id+']', styles, true, true);
 
 	function styler (element) {
 		if (element === null) {

@@ -23,7 +23,7 @@
 
 
 	import '../../../src/Constants/core';
-	import '../../../src/Constants/ssr';
+	import '../../../src/Constants/server';
 	import '../../../src/Utilities/random';
 	import '../../../src/Utilities/each';
 	import '../../../src/Utilities/escape';

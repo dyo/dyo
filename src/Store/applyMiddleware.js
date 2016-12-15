@@ -6,7 +6,7 @@
  */
 function applyMiddleware () {
 	var middlewares = [];
-	var length = arguments.length;
+	var length      = arguments.length;
 
 	// passing arguments to a function i.e [].splice() will prevent this function
 	// from getting optimized by the VM, so we manually build the array in-line

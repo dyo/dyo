@@ -1,1 +1,2 @@
-var regRoute        = /([:*])(\w+)|([\*])/g;
+// router
+var regRoute = /([:*])(\w+)|([\*])/g;

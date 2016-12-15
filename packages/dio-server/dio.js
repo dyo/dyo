@@ -32,39 +32,39 @@
 	
 	
 	// current version
-	var version         = '4.0.0';
+	var version = '4.0.0';
 	
 	// enviroment variables
-	var document        = window.document || null;
-	var browser         = document !== null;
-	var server          = browser === false;
+	var document = window.document || null;
+	var browser = document !== null;
+	var server = browser === false;
 	
 	// namespaces
-	var nsStyle         = 'data-scope';
-	var nsMath          = 'http://www.w3.org/1998/Math/MathML';
-	var nsXlink         = 'http://www.w3.org/1999/xlink';
-	var nsSvg           = 'http://www.w3.org/2000/svg';
+	var nsStyle = 'data-scope';
+	var nsMath  = 'http://www.w3.org/1998/Math/MathML';
+	var nsXlink = 'http://www.w3.org/1999/xlink';
+	var nsSvg = 'http://www.w3.org/2000/svg';
 	
 	// empty shapes
-	var objEmpty        = Object.create(null);
-	var arrEmpty        = [];
-	var nodEmpty        = VNode(0, '', objEmpty, arrEmpty, null, null, null);
+	var objEmpty = Object.create(null);
+	var arrEmpty = [];
+	var nodEmpty = VNode(0, '', objEmpty, arrEmpty, null, null, null);
 	
 	// random characters
-	var randomChars     = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
+	var randomChars = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
 	
 	// ssr
-	var readable        = server ? require('stream').Readable : null;
+	var readable = server ? require('stream').Readable : null;
 	
 	// void elements
-	var isVoid          = {
+	var isVoid = {
 		'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0, 'embed': 0,
 		'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
 		'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
 	};
 	
 	// unicode characters
-	var uniCodes        = {
+	var uniCodes = {
 		'<': '&lt;',
 		'>': '&gt;',
 		'"': '&quot;',
@@ -73,9 +73,9 @@
 	};
 	
 	// regular expressions
-	var regEsc          = /[<>&"']/g;
-	var regStyleCamel   = /([a-zA-Z])(?=[A-Z])/g;
-	var regStyleVendor  = /^(ms|webkit|moz)/;
+	var regEsc = /[<>&"']/g;
+	var regStyleCamel = /([a-zA-Z])(?=[A-Z])/g;
+	var regStyleVendor = /^(ms|webkit|moz)/;
 	
 	
 	/**
@@ -116,33 +116,7 @@
 	 * @return {string}
 	 */
 	function escape (subject) {
-		var string = subject + '';
-	
-		if (string.length > 50) {
-			// use regex if the string is long
-			return string.replace(regEsc, unicoder);
-		} else {
-			var characters = '';
-	
-			for (var i = 0, length = string.length; i < length; i++) {
-				switch (string.charCodeAt(i)) {
-					// & character
-					case 38: characters += '&amp;'; break;
-					// " character
-					case 34: characters += '&quot;'; break;
-					// ' character
-					case 39: characters += '&#39;'; break;
-					// < character
-					case 60: characters += '&lt;'; break;
-					// > character
-					case 62: characters += '&gt;'; break;
-					// any character
-					default: characters += string[i]; break;
-				}
-			}
-			
-			return characters;
-		}
+		return String(subject).replace(regEsc, unicoder);
 	}
 	
 	
@@ -153,7 +127,7 @@
 	 * @return {string}
 	 */
 	function unicoder (char) {
-		return uniCodes[char];
+		return uniCodes[char] || char;
 	}
 	
 	
@@ -174,14 +148,9 @@
 	 * @return {function(?Node)}
 	 */
 	function stylesheet (component, constructor) {
-		// retrieve stylesheet
 		var styles = component.stylesheet();
-	
-		// generate unique id
-		var id = random(5);
-	
-		// compile css
-		var css = stylis('['+nsStyle+'='+id+']', styles, true, true);
+		var id     = random(5);
+		var css    = stylis('['+nsStyle+'='+id+']', styles, true, true);
 	
 		function styler (element) {
 			if (element === null) {
@@ -2367,8 +2336,8 @@
 				}
 	
 				// references
-				var type = vnode.type;
-				var props = vnode.props;
+				var type     = vnode.type;
+				var props    = vnode.props;
 				var children = vnode.children;
 	
 				var propsStr = renderStylesheetToString(

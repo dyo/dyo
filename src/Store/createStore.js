@@ -9,7 +9,7 @@
 function createStore (reducer, initialState, enhancer) {
 	// exit early, reducer is not a function
 	if (typeof reducer !== 'function') {
-		panic('reducer should be a function');
+		throw 'reducer should be a function';
 	}
 
 	// if initialState is a function and enhancer is undefined
@@ -23,7 +23,7 @@ function createStore (reducer, initialState, enhancer) {
 	if (enhancer !== void 0) {
 		// exit early, enhancer is not a function
 		if (typeof enhancer !== 'function') {
-			panic('enhancer should be a function');
+			throw 'enhancer should be a function';
 		}
 
 		return applyMiddleware(enhancer)(Store)(reducer, initialState);
