@@ -21,7 +21,7 @@ function createElement (type, props) {
 		}
 
 		// default
-		props = {};
+		props = null;
 	}
 
 	if (length !== 1) {

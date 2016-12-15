@@ -47,7 +47,10 @@
 										h('h3', 'Input'),
 										h('textarea', {
 											ref: textarea, 
-											onInput: this.withAttr('value', markdownInput, updateTextarea),
+											onInput: (e) => {
+												markdownInput(e.currentTarget.value)
+												updateTextarea(this);
+											},
 											value: markdownInput()
 										})
 									),

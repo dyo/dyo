@@ -71,14 +71,12 @@ function Store (reducer, initialState) {
 
 	// auto subscribe a component to a store
 	function connect (subject, element) {
+		var renderer;
+
 		// if component and element 
-		if (element && typeof render === 'function') {
-			// create renderer
-			var render = render(VComponent(subject, currentState, []), element);
-
-			subscribe(render);
-
-			return render;
+		if (element) {			
+			// create renderer add it as a subscriber and return the renderer
+			return subscribe(renderer = render(VComponent(subject, currentState, null), element)), renderer;
 		} else {
 			return subscribe(subject);
 		}

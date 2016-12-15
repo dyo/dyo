@@ -734,7 +734,7 @@
 			}
 	
 			// default
-			props = {};
+			props = null;
 		}
 	
 		if (length !== 1) {
@@ -801,7 +801,7 @@
 	
 				if (type === 'function') {
 					// Component
-					children[index++] = VComponent(child);
+					children[index++] = VComponent(child, null, null);
 				} else if (type === 'object') {
 					// Array
 					for (var i = 0, len = child.length; i < len; i++) {
@@ -1096,22 +1096,22 @@
 	 * @param {Object=} props
 	 */
 	function Component (props) {
+		// initial props
+		if (this.getInitialProps) {
+			this.props = this.getInitialProps(props);
+		}
 		// assign props
-		if (props && props !== objEmpty) {
-			if (this.componentWillReceiveProps) {
-				this.componentWillReceiveProps(props);
-			}
-	
+		else if (props && props !== objEmpty) {
+			this.componentWillReceiveProps && this.componentWillReceiveProps(props);
 			this.props = props;
 		} 
-		else if (this.props === void 0) {
-			this.props = (this.getDefaultProps && this.getDefaultProps()) || {};
+		// default props
+		else {
+			this.props = this.props || (this.getDefaultProps && this.getDefaultProps()) || {};
 		}
 	
 		// assign state
-		if (this.state === void 0) {
-			this.state = (this.getInitialState && this.getInitialState()) || {};
-		}
+		this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
 	
 		// create addresses for refs and vnode references
 		this.refs = this._vnode = null;
@@ -2887,7 +2887,7 @@
 				xhr.onerror = function () { reject(this.statusText); };
 				
 				// cross origin request cookies
-				isCrossOriginRequest && withCredentials (xhr.withCredentials = true);
+				isCrossOriginRequest && withCredentials && (xhr.withCredentials = true);
 		
 				// assign content type and payload
 				if (method === 'POST') {
@@ -3059,13 +3059,13 @@
 	
 			// start listening for a change in the url
 			interval = setInterval(function () {
-				var pathname = location.pathname;
-	
+				var href = location.href.replace(origin, '');
+				
 				// if our store of the current url does not 
 				// equal the url of the browser, something has changed
-				if (current !== pathname) {					
+				if (current !== href) {					
 					// update the location and dispatch route change
-					dispatch(current = pathname);
+					dispatch(current = href);
 				}
 			}, 50);
 		}
@@ -3203,20 +3203,22 @@
 	
 		var history  = window.history || objEmpty;
 		var location = history.location || window.location;
+		var origin   = location.origin;
 		var current  = '';
 		var interval = 0;
 		var resolved = 0;
 		var routes   = {};
 		var api      = Object.defineProperty({
-			back:    history.back, 
-			foward:  history.forward, 
-			link:    link,
-			resume:  resume,
-			pause:   pause,
-			destroy: destroy,
-			set:     set,
-			resolve: resolve,
-			routes:  routes
+			navigate: navigate,
+			back:     history.back, 
+			foward:   history.forward, 
+			link:     link,
+			resume:   resume,
+			pause:    pause,
+			destroy:  destroy,
+			set:      set,
+			resolve:  resolve,
+			routes:   routes
 		}, 'location', {
 			get: function () { return current; },
 			set: navigate
@@ -3435,14 +3437,12 @@
 	
 		// auto subscribe a component to a store
 		function connect (subject, element) {
+			var renderer;
+	
 			// if component and element 
-			if (element && typeof render === 'function') {
-				// create renderer
-				var render = render(VComponent(subject, currentState, []), element);
-	
-				subscribe(render);
-	
-				return render;
+			if (element) {			
+				// create renderer add it as a subscriber and return the renderer
+				return subscribe(renderer = render(VComponent(subject, currentState, null), element)), renderer;
 			} else {
 				return subscribe(subject);
 			}

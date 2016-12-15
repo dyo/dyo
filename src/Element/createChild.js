@@ -13,7 +13,7 @@ function createChild (child, children, index) {
 
 			if (type === 'function') {
 				// Component
-				children[index++] = VComponent(child);
+				children[index++] = VComponent(child, null, null);
 			} else if (type === 'object') {
 				// Array
 				for (var i = 0, len = child.length; i < len; i++) {

@@ -1,6 +1,6 @@
-Dio is a blazing fast, lightweight (~10kb) feature rich Virtual DOM framework.
+dio is a fast javascript framework
 
-[Install v3.4.1](./documentation "button")
+<p>[Install v4.0.0](./#installation "button")</p>
 
 ```javascript
 function Main () {

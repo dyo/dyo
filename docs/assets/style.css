@@ -40,6 +40,7 @@ body {
 	display: block;
 	width: 82px;
 	height: 64px;
+	cursor: pointer;
 }
 
 .nav {
@@ -78,11 +79,9 @@ a[title=button] {
 }
 
 p {
-	font-size: 19px;
 	color: #535353;
 	line-height: 38px;
 }
-
 pre {
 	padding: 0 20px;
 	position: relative;
@@ -107,10 +106,20 @@ h2 code,
 h3 code,
 h4 code {
     background: #DDD;
-    padding: 2px 2px;
+    padding: 0px 4px 2px;
     border-radius: 4px;
     color: #332E22;
 }
+
+p code,
+ul code {
+	font-size: 14px;
+}
+
+p, ul li {
+	font-size: 17px;
+}
+
 
 h1 {
 	font-size: 38px;
@@ -189,13 +198,21 @@ hr {
 .content ul li {
 	margin: 10px 0;
 	color: #535353;
-	font-size: 19px;
+	display: block;
+}
+
+.content ul li:before {
+	content: '- ';
+	display: inline-block;
+	margin-right: 14px;
+	color: #E1574E;
 }
 
 .table-of-contents {
 	position: fixed;
 	top: 208px;
 	left: 40px;
+	transform: translateZ(0);
 }
 .table-of-contents li {
 	display: block;
@@ -214,7 +231,16 @@ hr {
 
 @media (max-width: 620px) {
 	.table-of-contents {
-	    display: none;
+		position:absolute;
+        transform: translate(-20px,-20px);
+	}
+	.table-of-contents li {
+		display: inline-block;
+		margin-right: 10px;
+	}
+	.table-of-contents li:first-child,
+	.table-of-contents li:last-child {
+		display:none;
 	}
 	.content {
 		margin: 0 auto;
@@ -252,3 +278,4 @@ hr {
  	animation-delay: 0.375s;
  	margin-left: 30px;
 }
+

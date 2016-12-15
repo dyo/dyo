@@ -1,41 +1,43 @@
 (function () {
 	var component = dio.VComponent;
 	var defer = dio.defer;
-	var dom = dio.DOM(['ul', 'li', 'div', 'a', 'img', 'text']);
-	var div = dom.div, ul = dom.ul, li = dom.li, a = dom.a, img = dom.img, text = dom.text;
 
 	// stateless components
 	function Content (props) {
-		return div({className: 'content',innerHTML: props.html})
+		return h('div', {className: 'content',innerHTML: props.html})
 	}
 
 	function TableOfContents (props) {
-		return div({className: 'table-of-contents'}, [
-			ul(null, props.nav.map(function (value) {
-				return li(null, [
-					a({href: value.href, className: value.active ? 'active' : '', onClick: props.onClick}, [
-						text(value.text)
-					])
-				])
-			}))
-		]);
+		return (
+			h('div', {className: 'table-of-contents'}, 
+				h('ul', 
+					props.nav.map(function (value) {
+						return h('li', 
+							h('a', {href: value.href, className: value.active ? 'active' : '', onClick: props.onClick}, value.text)
+						)
+					})
+				)
+			)
+		);
 	}
 
 	function Header () {
-		return div({className: 'wrap'}, [
-			div({className: 'logo'}, [
-				a({href: './', onClick: defer(router.nav, ['/'], true)}, [
-					img({src: 'assets/logo.svg'})
-				])
-			]),
-			div({className: 'nav'}, [
-				ul(null, [
-					li(null, [
-						a({href: 'https://github.com/thysultan/dio.js'}, [text('Github')])
-					])
-				])
-			])
-		]);
+		return (
+			h('div', {className: 'wrap'}, 
+				h('div', {className: 'logo'}, 
+					h('a', {className: './', onClick: router.link('/')},
+						h('img', {src: 'assets/logo.svg'})
+					)
+				),
+				h('div', {className: 'nav'}, 
+					h('ul', 
+						h('li',
+							h('a', {href: 'https://github.com/thysultan/dio.js'}, 'Github')
+						)
+					)
+				)
+			)
+		);
 	}
 
 
@@ -44,7 +46,7 @@
 		var markdown = dio.stream();
 
 		function rawMarkup () {
-			return remarkable.render(markdown());
+			return md(markdown());
 		}
 
 		function getDocument (url, callback) {
@@ -89,9 +91,8 @@
 				return {
 					nav: [
 						{text: 'Installation', href: 'installation.md'},
-						{text: 'Getting Started', href: 'getting-started.md'},
-						{text: 'Examples', href: 'examples.md'},
 						{text: 'API Reference', href: 'api.md'},
+						{text: 'Examples', href: 'examples.md'},
 						{text: 'Change Log', href: 'change-log.md'}
 					]
 				}
@@ -100,13 +101,13 @@
 				activateLink(this, this.props.url);
 			},
 			render: function (props) {
-				return div({className: 'documentation'+(this.state.loading ? '.loading' : '')}, [
+				return h('div', {className: 'documentation'+(this.state.loading ? '.loading' : '')},
 					Content({html: rawMarkup()}),
 					TableOfContents({
 						nav: this.state.nav,
 						onClick: defer(activateLink, [this], true)
 					})
-				]);
+				);
 			}
 		}
 	}
@@ -119,7 +120,7 @@
 			var href = e.target.getAttribute('href');
 
 			if (href) {
-				router.nav(href.replace('.',''));
+				router.location = href.replace('.','');
 			}
 		}
 
@@ -130,7 +131,7 @@
 				dio.request.get(this.props.url)
 					.then(rawMarkup)
 					.then(function () {
-						rawMarkup(remarkable.render(rawMarkup()))
+						rawMarkup(md(rawMarkup()))
 						self.forceUpdate();
 					});
 			},
@@ -138,17 +139,17 @@
 				highlighter();
 			},
 			render: function () {
-				return div({className: 'welcome', onClick: defer(Install, [], true), innerHTML: rawMarkup()})
+				return h('div', {className: 'welcome', onClick: defer(Install, [], true), innerHTML: rawMarkup()})
 			}
 		}
 	}
 
-	var remarkable = new Remarkable();
+
 	var routes = {
 		'/': function () {
 			dio.render(component(Welcome, {url: 'welcome.md'}), '.container');
 		},
-		'/documentation': function () {
+		'/#*': function () {
 			var section = window.location.hash.toLowerCase().replace('#', '');
 
 			section = section || 'installation';
@@ -158,5 +159,5 @@
 	};
 	var router = dio.router(routes);
 
-	dio.render(Header, '.header');
+	dio.render(Header(), '.header');
 })()

@@ -56,7 +56,7 @@ function create (
 		xhr.onerror = function () { reject(this.statusText); };
 		
 		// cross origin request cookies
-		isCrossOriginRequest && withCredentials (xhr.withCredentials = true);
+		isCrossOriginRequest && withCredentials && (xhr.withCredentials = true);
 
 		// assign content type and payload
 		if (method === 'POST') {

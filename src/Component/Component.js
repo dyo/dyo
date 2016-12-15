@@ -13,22 +13,22 @@
  * @param {Object=} props
  */
 function Component (props) {
+	// initial props
+	if (this.getInitialProps) {
+		this.props = this.getInitialProps(props);
+	}
 	// assign props
-	if (props && props !== objEmpty) {
-		if (this.componentWillReceiveProps) {
-			this.componentWillReceiveProps(props);
-		}
-
+	else if (props && props !== objEmpty) {
+		this.componentWillReceiveProps && this.componentWillReceiveProps(props);
 		this.props = props;
 	} 
-	else if (this.props === void 0) {
-		this.props = (this.getDefaultProps && this.getDefaultProps()) || {};
+	// default props
+	else {
+		this.props = this.props || (this.getDefaultProps && this.getDefaultProps()) || {};
 	}
 
 	// assign state
-	if (this.state === void 0) {
-		this.state = (this.getInitialState && this.getInitialState()) || {};
-	}
+	this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
 
 	// create addresses for refs and vnode references
 	this.refs = this._vnode = null;

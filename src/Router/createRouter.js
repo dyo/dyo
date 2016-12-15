@@ -17,13 +17,13 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 		// start listening for a change in the url
 		interval = setInterval(function () {
-			var pathname = location.pathname;
-
+			var href = location.href.replace(origin, '');
+			
 			// if our store of the current url does not 
 			// equal the url of the browser, something has changed
-			if (current !== pathname) {					
+			if (current !== href) {					
 				// update the location and dispatch route change
-				dispatch(current = pathname);
+				dispatch(current = href);
 			}
 		}, 50);
 	}
@@ -161,20 +161,22 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 	var history  = window.history || objEmpty;
 	var location = history.location || window.location;
+	var origin   = location.origin;
 	var current  = '';
 	var interval = 0;
 	var resolved = 0;
 	var routes   = {};
 	var api      = Object.defineProperty({
-		back:    history.back, 
-		foward:  history.forward, 
-		link:    link,
-		resume:  resume,
-		pause:   pause,
-		destroy: destroy,
-		set:     set,
-		resolve: resolve,
-		routes:  routes
+		navigate: navigate,
+		back:     history.back, 
+		foward:   history.forward, 
+		link:     link,
+		resume:   resume,
+		pause:    pause,
+		destroy:  destroy,
+		set:      set,
+		resolve:  resolve,
+		routes:   routes
 	}, 'location', {
 		get: function () { return current; },
 		set: navigate

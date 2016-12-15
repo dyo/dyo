@@ -5,7 +5,7 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Todo App Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="/dio.min.js"></script>
+		<script src="/dio.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -49,16 +49,17 @@
 		    		}
 		  		}
 		  		function handleDelete () {
-		  			dio.animate.transition('slideUp')(this, function(node){
-		  				TodoStore.dispatch({type: 'REMOVE', id: node.id});
-		  			})
+	  				TodoStore.dispatch({type: 'REMOVE', id: this.id});
 		  		}
 
 		  		function render (props) {
 		  			return h('div.TodoApp',
 		  						h('h3', 'TODO'),
 		  						h('form', {onsubmit: this.handleSubmit},
-		  							h('input', {ref: input, oninput: this.withAttr('value', text)}),
+		  							h('input', {ref: input, oninput: (e) => {
+		  									text(e.currentTarget.value);
+		  								}
+		  							}),
 		  							h('button', 'Add #' + (props.items.length+1))
   								),
   								TodoList({items: props.items, handleDelete: handleDelete})
@@ -152,7 +153,7 @@
 
 
 			var TodoStore = dio.createStore(TodoStoreReducer);
-			TodoStore.connect(TodoApp, '.app');
+			var render = TodoStore.connect(TodoApp, '.app');
 		</script>
 	</body>
 </html>

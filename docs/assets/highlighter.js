@@ -44,7 +44,7 @@
         'comment{color:#007400'
     ]
     .map(function (value) { return '.' + prefix + value + ';}' })
-    .join('') + selector + '{font:14px/1.8em menlo,monospace;tab-size:4;}';
+    .join('') + selector + '{font:12px/1.8em menlo,monospace;tab-size:4;}';
 
     style = document.createElement('style');
     style.textContent = styleContent;

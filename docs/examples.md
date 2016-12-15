@@ -1,4 +1,4 @@
-# Examples
+## Examples
 
 - [DBmon Benchmark](../../examples/benchmark.html)
 - [JS Repaint Perfs](https://mathieuancelin.github.io/js-repaint-perfs/dio/index.html)
@@ -13,7 +13,6 @@
 - [Ajax](../../examples/ajax.html)
 - [Svg](../../examples/svg.html)
 - [Router](../../examples/router.html)
-- [Animation](../../examples/animate.html)
 - [Hyrdation](../../examples/hydration.html)
 - [Fragments](../../examples/fragments.html)
 - [5k Components](../../examples/5k.html)
