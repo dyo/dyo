@@ -24,7 +24,10 @@ function patch (newNode, oldNode) {
 		} 
 	}
 	// key operation
-	else if (newNode.props.key !== oldNode.props.key) {
+	// else if (newNode.props.key !== oldNode.props.key) {
+	// 	return 5; 
+	// }
+	else if (newNode.props.key !== void 0 || oldNode.props.key !== void 0) {
 		return 5; 
 	}
 	// replace operation
@@ -63,6 +66,7 @@ function patch (newNode, oldNode) {
 			var oldChildren = oldNode.children;
 			var newLength   = newChildren.length;
 			var oldLength   = oldChildren.length;
+			var _newChildren = [].slice.call(newChildren);
 
 			// new children length is 0 clear/remove all children
 			if (newLength === 0) {
@@ -136,19 +140,21 @@ function patch (newNode, oldNode) {
 									newKeys = {};
 								}
 
-								var newKey = newChild.props.key;
-								var oldKey = oldChild.props.key;
+								// var newKey = newChild.props.key;
+								// var oldKey = oldChild.props.key;
 
 								// register key
-								newKeys[newKey] = (newChild._index = i, newChild);
-								oldKeys[oldKey] = (oldChild._index = i, oldChild);
+								newKeys[newChild.props.key] = (newChild._index = i, newChild);
+								oldKeys[oldChild.props.key] = (oldChild._index = i, oldChild);
 
 								// padding
-								if (newLength > oldLength) {
-									oldChildren.splice(i, 0, nodEmpty);
-								} else if (oldLength > newLength) {
-									newChildren.splice(i, 0, nodEmpty);
-								}
+								// if (newChildren.length > oldChildren.length) {
+								// 	oldChildren.splice(i, 0, nodEmpty);
+								// } else if (oldChildren.length > newChildren.length) {
+								// 	newChildren.splice(i, 0, nodEmpty);
+								// }
+
+								break;
 							}
 						}
 					}
