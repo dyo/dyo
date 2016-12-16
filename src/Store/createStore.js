@@ -32,3 +32,4 @@ function createStore (reducer, initialState, enhancer) {
 	// if object, multiple reducers, else, single reducer
 	return typeof reducer === 'object' ? Store(combineReducers(reducer)) : Store(reducer);
 }
+

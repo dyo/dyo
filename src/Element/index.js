@@ -16,7 +16,6 @@ import 'VNode';
 import 'VEmpty';
 import 'createElement';
 import 'createChild';
-import 'parseType';
 import 'cloneElement';
 import 'createFactory';
 import 'isValidElement';

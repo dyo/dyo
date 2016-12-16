@@ -13,15 +13,11 @@ function createElement (type, props) {
 
 	// if props is not a normal object
 	if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
-		// update position if props !== undefined|null
-		// this assumes that it would look like
-		// createElement('type', null, ...children);
+		// update position if props !== null
 		if (props !== null) {
+			props = null;
 			position = 1; 
 		}
-
-		// default
-		props = null;
 	}
 
 	if (length !== 1) {
@@ -49,26 +45,26 @@ function createElement (type, props) {
 	// if type is a function, create component VNode
 	if (typeof type === 'function') {
 		return VComponent(type, props, children);
-	} else {
-		// if first letter = @, create fragment VNode, else create element VNode
-		var element = type[0] === '@' ? VFragment(children) : VElement(type, props, children);
-
-		// special type, i.e [type] | div.class | #id
-		if ((type.indexOf('.') > -1 || type.indexOf('[') > -1 || type.indexOf('#') > -1)) {
-			parseType(type, props || {}, element);
+	} 
+	else if (type === '@') {
+		return VFragment(children);
+	} 
+	else {
+		if (props === null) {
+			props = {};
 		}
 
-		// if props.xmlns is undefined  and type === svg|math 
+		// if props.xmlns is undefined and type === 'svg' or 'math' 
 		// assign svg && math namespaces to props.xmlns
-		if (element.props.xmlns === void 0) {	
+		if (props.xmlns === void 0) {	
 			if (type === 'svg') { 
-				element.props.xmlns = nsSvg; 
+				props.xmlns = nsSvg; 
 			} else if (type === 'math') { 
-				element.props.xmlns = nsMath; 
+				props.xmlns = nsMath; 
 			}
 		}
 
-		return element;
+		return VElement(type, props, children);
 	}
 }
 

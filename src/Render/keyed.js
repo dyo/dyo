@@ -11,112 +11,67 @@
  * @param {number}  oldLength
  */
 
-var index = 0;
+// var index = 0;
 
 function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
-	var reconciled = new Array(newLength);
+	var reconciled   = new Array(newLength);
+	var children     = parentNode.children;
+	var length       = children.length;
+	var delOffset    = 0;
+	var addOffset    = 0;
 
-	for (var i = 0; i < oldChildren.length; i++) {
+	for (var i = 0; i < oldLength; i++) {
 		var oldChild = oldChildren[i];
 		var oldKey   = oldChild.props.key;
 		var newChild = newKeys[oldKey];
 
-		if (newChild) {
-			var index = newChild._index;
+		// removed
+		if (newChild === void 0) {
+			delOffset++;
 
-			// moved
-			if (index !== i) {
-				parentNode.insertBefore(oldChild._node, parentNode.children[index+1]);
-			}
+			removeNode(oldChild, parentNode);
+		}
 
-			reconciled[index] = oldChild; 
-		} else {
-			// removed
-			parentNode.removeChild(oldChild._node);
+		// update old indexes
+		if (delOffset !== 0) {
+			oldChild._index -= delOffset;
 		}
 	}
 
-	for (var i = 0; i < newChildren.length; i++) {
-		var newChild = newChildren[i];
+	// update length
+	length -= delOffset;
+
+	for (var j = 0; j < newLength; j++) {
+		var newChild = newChildren[j];
 		var newKey   = newChild.props.key;
 		var oldChild = oldKeys[newKey];
 
+		// exists
 		if (oldChild) {
-			reconciled[i] = oldChild;			
+			var index = oldChild._index;
+
+			// moved
+			if (index+addOffset !== j) {
+				parentNode.insertBefore(oldChild._node, children[j]);
+			}
+
+			reconciled[j] = oldChild; 	
 		} else {
-			// added
-			reconciled[i] = newChild;
-			parentNode.insertBefore(createNode(newChild, null, null), parentNode.children[i]);
+			reconciled[j] = newChild;
+
+			addOffset++;
+
+			if (j < length) {
+				// insert
+				insertNode(newChild, children[j], parentNode, createNode(newChild, null, null));
+			} else {
+				// append
+				appendNode(newChild, parentNode, createNode(newChild, null, null));
+			}
+
+			length++;
 		}		
 	}
 
-	console.log(reconciled);
 	oldNode.children = reconciled;
-
-	// throw '';
-
-
-	// var reconciledChildren = new Array(newLength);
-	// var deleteCount        = 0;
-
-	// for (var i = 0; i < newLength || i < oldLength; i++) {
-	// 	var newChild = newChildren[i] || nodEmpty;
-	// 	var oldChild = oldChildren[i] || nodEmpty;
-	// 	var newKey   = newChild.props.key;
-	// 	var oldKey   = oldChild.props.key;
-
-	// 	// new and old keys match, no-op
-	// 	if (newKey === oldKey) {
-	// 		reconciledChildren[i-deleteCount] = oldChild;
-	// 	}
-	// 	// new and old keys don't match 
-	// 	else {
-	// 		var movedChild = oldKeys[newKey];
-
-	// 		// new key exists in old keys
-	// 		if (movedChild) {
-	// 			var idx = movedChild._index;
-
-	// 			// but the index does not match,
-	// 			if (i !== idx) {
-	// 				// move
-	// 				reconciledChildren[idx] = oldChild;
-
-	// 				parentNode.insertBefore(
-	// 					oldChild._node = parentNode.children[idx],
-	// 					parentNode.children[i+1]
-	// 				);
-	// 			}
-	// 		}
-	// 		// old key does not exist
-	// 		else if (oldChild.nodeType === 0) {
-	// 			// insert
-	// 			reconciledChildren[i-deleteCount] = newChild;
-
-	// 			insertNode(
-	// 				newChild, 
-	// 				oldChildren[i+1], 
-	// 				parentNode, 
-	// 				createNode(newChild, null, null)
-	// 			);
-	// 		}
-	// 		// new key does not exist
-	// 		else if (newChild.nodeType === 0) {
-	// 			console.log(i);
-	// 			// remove
-	// 			removeNode(oldChild, parentNode);
-	// 			deleteCount++;
-	// 		}
-	// 		// new key and old key exists 
-	// 		// but new key is not in old keys
-	// 		else {
-	// 			// replace
-	// 			reconciledChildren[i-deleteCount] = newChild;
-	// 			replaceNode(newChild, oldChild, parentNode, createNode(newChild, null, null));
-	// 		}
-	// 	}
-	// }
-
-	// replace old children with reconciled children
-	// oldNode.children = reconciledChildren;
 }

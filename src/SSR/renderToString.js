@@ -7,16 +7,15 @@
  */
 function renderToString (subject, template) {
 	var lookup = {styles: '', ids: {}};
-	var vnode  = retrieveVNode(subject);
-	var body   = renderVNodeToString(vnode, lookup);
-	var css    = lookup.styles;
-	var style  = css.length !== 0 ? '<style>'+css+'<style>' : '';
+	var body   = renderVNodeToString(renderVNode(subject), lookup);
+	var styles = lookup.styles;
+	var style  = styles.length !== 0 ? '<style>'+styles+'<style>' : '';
 
 	if (template) {
 		if (typeof template === 'string') {
-			return template.replace('@body', body, style);
+			return template.replace('@body', body+style);
 		} else {
-			return template(body, style);
+			return template(body, styles);
 		}
 	} else {
 		return body+style;

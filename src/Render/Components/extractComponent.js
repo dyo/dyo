@@ -44,9 +44,7 @@ function extractComponent (subject, mutate) {
 	subject.props    = vnode.props
 	subject.children = vnode.children;
 
-	// assign reference to component 
-	component._vnode = vnode;
-
-	return vnode;
+	// assign reference to component and return vnode
+	return component._vnode = vnode;
 }
 

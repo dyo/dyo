@@ -5,7 +5,6 @@
 - [Benchmark Table Test](../../examples/benchmark-table-test.html)
 - [JS Framework Benchmark](../../examples/benchmark-js-framework.html)
 - [UI Bench Benchmark](https://localvoid.github.io/uibench/)
-- [Todos](../../examples/todo.html)
 - [Sortable List](../../examples/sortable.html)
 - [Filter](../../examples/filter.html)
 - [Markdown](../../examples/markdown.html)

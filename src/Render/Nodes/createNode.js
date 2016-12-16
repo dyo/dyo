@@ -54,11 +54,17 @@ function createNode (subject, component, namespace) {
 			// vnode has component attachment
 			if (subject._owner !== null) {
 				(component = subject._owner)._vnode._node = element;
-			}
 
-			if (props !== objEmpty) {
-				// diff and update/add/remove props
-				assignProps(element, props, false);
+				// stylesheets
+				if (component.stylesheet) {
+					if (component.stylesheet.styler === void 0) {
+						// create
+						stylesheet(component, subject.type)(element);
+					} else {
+						// namespace
+						component.stylesheet(element);
+					}
+				}
 			}
 
 			if (length !== 0) {
@@ -66,7 +72,7 @@ function createNode (subject, component, namespace) {
 				for (var i = 0; i < length; i++) {
 					var newChild = children[i];
 
-					// clone vnode of hoisted/pre-rendered node
+					// hoisted nodes, clone
 					if (newChild._node) {
 						newChild = children[i] = VNode(
 							newChild.nodeType,
@@ -80,34 +86,22 @@ function createNode (subject, component, namespace) {
 					}
 
 					// append child
-					appendNode(newChild, element, createNode(newChild, component, namespace));
-					
-					// we pass component and namespace so that 
-					// 1. if an element is svg we can namespace all its children in kind
-					// 2. we can propagate nested refs to the parent component
+					appendNode(newChild, element, createNode(newChild, component, namespace));					
 				}
+			}
+
+			if (props !== objEmpty) {
+				// refs
+				if (props.ref) {
+					props.ref.call(component, element);
+				}
+
+				// initialize props
+				assignProps(element, props, false, component);
 			}
 
 			// cache element reference
 			subject._node = element;
-		}
-
-		if (component !== null) {
-			// refs
-			if (props.ref !== void 0) {
-				extractRefs(element, props.ref, component);
-			}
-
-			// stylesheets
-			if (component.stylesheet) {
-				if (component.stylesheet.styler === void 0) {
-					// create
-					stylesheet(component, subject.type)(element);
-				} else {
-					// namespace
-					component.stylesheet(element);
-				}
-			}
 		}
 
 		return element;

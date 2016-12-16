@@ -123,7 +123,7 @@
 								ref: svgElement
 							},
 							h('defs',
-								h('filter#dropshadow', {x: '-200%', y: '-200%', width: '450%', height: '450%'},
+								h('filter', {id: 'dropshadow', x: '-200%', y: '-200%', width: '450%', height: '450%'},
 									h('feGaussianBlur', {in: 'SourceAlpha', stdDeviation: '2'}),
 									h('feOffset', {dx: '1', dy: '2', result: 'offsetblur'}),
 									h('feComponentTransfer',

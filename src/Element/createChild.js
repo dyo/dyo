@@ -24,9 +24,6 @@ function createChild (child, children, index) {
 				children[index++] = VText(type !== 'boolean' ? child : '');
 			}
 		}
-	} else {
-		// Empty
-		children[index++] = nodEmpty;
 	}
 
 	return index;

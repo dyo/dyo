@@ -73,7 +73,7 @@ function render (subject, target) {
 	// hydration
 	if (element.hasAttribute('hydrate')) {
 		// dispatch hydration
-		hydrate(element, node, 0, nodEmpty);
+		hydrate(element, node, 0, nodEmpty, null);
 
 		// cleanup element hydrate attributes
 		element.removeAttribute('hydrate');

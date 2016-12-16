@@ -176,25 +176,6 @@ class Hello extends dio.Component {
 }
 ```
 
-#### bindState
-
-bindState is a method used to bind a property of the components state to a value in the document, this allow for easy two-way data binding.
-
-```javascript
-class Hello extends dio.Component {
-	getInitialState () {
-		return {
-			input: ''
-		}
-	}
-	render () {
-		return h('input', {onInput: this.bindState('input', 'value')})
-	}
-}
-```
-
-In the example above when ever the `onInput` event is triggered the `this.state.input` will update to the `value` of the input element.
-
 #### getDefaultProps
 
 getDefaultProps is a method used to assign the default props of a component when the component does not receive props. This method receives no arguments and returns an `{Object}`. This method is supported by components created with createClass functions and classes. Alternatively you could also specify `defaultProps` for function and class components.
@@ -236,6 +217,77 @@ function Hello {
 #### props
 
 props are the values passed down to a component, the convention is that they should be treated as immutable objects(read-only), that is you shouldn't mutate them - `this.props.value = 1`, though nothing will break if you do and nothing stops you from doing that.
+
+#### events
+
+events are props prefixed with `on` and case insensitive. The value of an event prop can either be a function or an object.
+
+```javascript
+class Hello extends dio.Component {
+	handleClick (e) {
+
+	}
+	render () {
+		return h('div', {
+			onClick: this.handleClick
+		})
+	}
+}
+```
+
+Object values are used to specifiy bindings, this allows for either creating a twa-way binding system between a property of the component and a property of the element or binding a method to a specific context or data.
+
+For example if we wanted to bind the `handler` function to the components instance. 
+
+```javascript
+const handler = component => component.state.id = 1;
+
+class Hello extends dio.Component {
+	render () {
+		return h('div', {
+			onClick: {
+				bind: handler,
+				with: this
+			}
+		})
+	}
+}
+```
+
+The `handler` function will receive two props, the value of `this` and a second argument that is the event object, if `handler` was not an arrow function the `this` context would also be the components `this` context that the value of `with: this`.
+
+But if we wanted to bind a property of the component to a property of the element we could do it as follows, where the `this` property is the object you want to bind.
+
+```javascript
+class Hello extends dio.Component {
+	render (props, state) {
+		return h('div', {
+			onClick: {
+				bind: {
+					this: state,
+					property: 'foo'
+				},
+				with: 'value'
+			}
+		})
+	}
+}
+```
+
+By default two-way data binding will envoke `e.preventDefault` unless specified otherwise by assigning `false` to a property `preventDefault` on the object passed. Optionally if the property of the element and component you are binding to use the same name then creating an object for the bind property can be ommited.
+
+```javascript
+class Hello extends dio.Component {
+	render (props, state) {
+		return h('div', {
+			onClick: {
+				bind: state,
+				with: 'value'
+			}
+		})
+	}
+}
+```
 
 ## Elements
 
@@ -684,23 +736,4 @@ var bar = dio.stream.scan((sum, n) => {
 
 foo(1)(1)(2)
 bar() // => 4 
-```
-
-## Utilities
-
-### defer
-
-defers the execution of a function with a fixed number of arguments and optionionally disable default event actions i.e preventDefault. The function passed is executed synchronously but could get promoted to async with the introduction of a 4th number argument that represents the delay time in milliseconds.
-
-```javascript
-h('form', {onSubmit: dio.defer(func, [1,2], true, 500)})
-```
-
-### compose
-
-creates a composition of multiple functions 
-
-```javascript
-var composed = dio.compose(fn1, fn2...)
-compsed() // => fn1(fn2...)
 ```

@@ -27,7 +27,7 @@ import 'Nodes/removeNode';
 import 'Nodes/replaceNode';
 import 'Events/extractEventName';
 import 'Events/isEventName';
-import 'Refs/extractRefs';
+import 'Events/bindEvent';
 import 'Components/extractComponent';
 import 'Components/extractRender';
 

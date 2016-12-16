@@ -14,14 +14,12 @@
 		<script>
 			function Main () {
 				return {
-					render: function (props, state, self) {
-						return (
-							h('@optionalFragmentLabelHere',
-								h('h1', { onClick: function () { self.forceUpdate(); }}, 'Hello'), 
-								'World ',
-								performance.now()
-							)
-						)
+					render: function (props, state, ctx) {
+						return [
+							h('h1', { onClick: function () { ctx.forceUpdate(); }}, 'Hello'),
+							h('h2', performance.now()),
+							h('div', h('div', {ref: el => console.log(el)}, 'Nested'))
+						]
 					}
 				}
 			}

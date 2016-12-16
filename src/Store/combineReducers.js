@@ -23,3 +23,4 @@ function combineReducers (reducers) {
 		return nextState;
 	}
 }
+

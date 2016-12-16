@@ -17,15 +17,14 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 		// start listening for a change in the url
 		interval = setInterval(function () {
-			var href = location.href.replace(origin, '');
-			
-			// if our store of the current url does not 
-			// equal the url of the browser, something has changed
-			if (current !== href) {					
-				// update the location and dispatch route change
-				dispatch(current = href);
+			href = location.href;
+
+			// current url does not equal the url of the browser
+			if (href !== current) {
+				// update the current and dispatch
+				dispatch((current = href).replace(origin, ''));
 			}
-		}, 50);
+		}, 40);
 	}
 
 	// register routes
@@ -69,10 +68,12 @@ function createRouter (patterns, address, initialiser, notFound) {
 			finder(routes[name], name, current);
 		}
 
+		// if resolved flag is 0 and a notFound function is available
 		if (resolved === 0 && notFound !== void 0) {
 			notFound({url: current});
 		}
 
+		// reset resolved flag
 		resolved = 0;
 	}
 
@@ -106,8 +107,10 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 			callback(args, uri);
 
+			// register match
 			resolved = 1;
 		} else {
+			// register not found
 			resolved = 0;
 		}
 	}
@@ -133,7 +136,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 	// resume listener
 	function resume () {
-		current = location.pathname;
+		current = location.href;
 		listen();
 	}
 
@@ -163,6 +166,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 	var location = history.location || window.location;
 	var origin   = location.origin;
 	var current  = '';
+	var href     = '';
 	var interval = 0;
 	var resolved = 0;
 	var routes   = {};

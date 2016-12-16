@@ -17,37 +17,6 @@ zep(['../dio.js'], function (utili, deps) {
 		);
 
 		assert(
-			h('.class').type === 'div' && 
-			h('.class').props.className === 'class', 
-			"h('.class')"
-		);
-
-		assert(
-			h('[class=a]').type === 'div' && 
-			h('[class=a]').props.className === 'a', 
-			"h('[class=a]')"
-		);
-
-		assert(
-			h('#id').type === 'div' && 
-			h('#id').props.id === 'id', 
-			"h('#id')"
-		);
-
-		assert(
-			h('[title=bar]').type === "div" &&
-			h('[title=bar]').props.title === "bar" &&
-			h('[title=\'bar\']').props.title === "bar" && 
-			h('[title="bar"]').props.title === "bar", 
-			"h('[title=bar]')"
-		);
-
-		assert(
-			h('[checkbox]').props.checkbox === true,
-			"h('[checkbox]')"
-		);
-
-		assert(
 			h('div', 1).children[0].children === 1,
 			"h('div', 1)"
 		);
@@ -141,26 +110,6 @@ zep(['../dio.js'], function (utili, deps) {
 		assert(componentHTML   === expectedOutput, '.renderToString(createClass)');
 	});
 
-	describe('dio.defer', function (assert) {
-		function fn (a, b) {
-			return a + b;
-		};
-
-		var e = {
-			preventDefault: spy()
-		};
-
-		function event () {}
-
-		var simple = dio.defer(fn, [1, 2]);
-		var evt = dio.defer(event, null, true);
-
-		evt(e);
-
-		assert(simple() === 3, '.defer(fn, [a, b])');
-		assert(e.preventDefault.called, '.defer(fn, __, true)');
-	});
-
 	describe('dio.createClass', function (assert) {
 		var hyperscript = h('div', {class: 'foo' }, 'hello world');
 
@@ -215,7 +164,16 @@ zep(['../dio.js'], function (utili, deps) {
 			}
 		}
 
-		var store = dio.createStore(reducer);
+		function logger({ getState }) {
+		  	return function (next) {
+		  		return function (action) {
+		  			middlewareSpy();
+		  			return next(action);
+		  		}
+		  	}
+		}
+
+		var store = dio.createStore(reducer, logger);
 
 		function isStore (a) {
 			var props = ['connect', 'dispatch', 'getState', 'subscribe'];
@@ -229,13 +187,16 @@ zep(['../dio.js'], function (utili, deps) {
 
 		var renderSpy = spy();
 		var subscribeSpy = spy();
+		var middlewareSpy = spy();
 
-		assert(isStore(store), '.createStore({Function})');
-		assert.deepEqual(store.getState(), {items: [1,2,3,4]}, 'store.getState()');
+		assert(isStore(store), '.createStore({Function})');		
 
 		store.dispatch({type: 'ADD', item: 10});
 
-		assert.deepEqual(store.getState(), {items: [1,2,3,4,10]}, 'store.dispatch({Object})');
+		assert(middlewareSpy.called, '.createStore({Function}), middleware');
+		assert.deepEqual(store.getState(), {items: [1,2,3,4,10]}, 'store.getState()');
+		store.dispatch({type: 'ADD', item: 11});
+		assert.deepEqual(store.getState(), {items: [1,2,3,4,10, 11]}, 'store.dispatch({Object})');
 
 		store.subscribe(subscribeSpy);
 		store.dispatch({type: 'ADD', item: 14});
@@ -306,9 +267,7 @@ zep(['../dio.js'], function (utili, deps) {
 			done();
 		});
 
-		dio.request.post('?', {id: 1234}, null, function () {
-			assert(true, '(__, __, __, callback)');
-		}).then(function (value) {
+		dio.request.post('?', {id: 1234}).then(function (value) {
 			assert(value.nodeType, '.post()')
 		});
 	});

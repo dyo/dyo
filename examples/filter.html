@@ -87,8 +87,8 @@
 			var SearchBar = React.createClass({
 				handleChange: function() {
 			  		this.props.onUserInput(
-				    	this.refs.filterTextInput.value,
-				    	this.refs.inStockOnlyInput.checked
+				    	this.filterTextInput.value,
+				    	this.inStockOnlyInput.checked
 			  		);
 				},
 		  		render: function () {
@@ -99,7 +99,7 @@
 			    					type: 'text', 
 			    					placeholder: 'Search...', 
 			    					value: this.props.filterText, 
-			    					ref: 'filterTextInput',
+			    					ref: el => this.filterTextInput = el,
 			    					onInput: this.handleChange.bind(this)
 			    				}
 		    				),
@@ -108,7 +108,7 @@
 			    					{
 			    						type: 'checkbox', 
 			    						checked: this.props.inStockOnly,
-			    						ref: 'inStockOnlyInput',
+			    						ref: el => this.inStockOnlyInput = el,
 			    						onChange: this.handleChange.bind(this)
 		    						}
 		    					), 

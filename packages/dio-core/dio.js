@@ -568,15 +568,11 @@
 	
 		// if props is not a normal object
 		if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
-			// update position if props !== undefined|null
-			// this assumes that it would look like
-			// createElement('type', null, ...children);
+			// update position if props !== null
 			if (props !== null) {
+				props = null;
 				position = 1; 
 			}
-	
-			// default
-			props = null;
 		}
 	
 		if (length !== 1) {
@@ -604,26 +600,26 @@
 		// if type is a function, create component VNode
 		if (typeof type === 'function') {
 			return VComponent(type, props, children);
-		} else {
-			// if first letter = @, create fragment VNode, else create element VNode
-			var element = type[0] === '@' ? VFragment(children) : VElement(type, props, children);
-	
-			// special type, i.e [type] | div.class | #id
-			if ((type.indexOf('.') > -1 || type.indexOf('[') > -1 || type.indexOf('#') > -1)) {
-				parseType(type, props || {}, element);
+		} 
+		else if (type === '@') {
+			return VFragment(children);
+		} 
+		else {
+			if (props === null) {
+				props = {};
 			}
 	
-			// if props.xmlns is undefined  and type === svg|math 
+			// if props.xmlns is undefined and type === 'svg' or 'math' 
 			// assign svg && math namespaces to props.xmlns
-			if (element.props.xmlns === void 0) {	
+			if (props.xmlns === void 0) {	
 				if (type === 'svg') { 
-					element.props.xmlns = nsSvg; 
+					props.xmlns = nsSvg; 
 				} else if (type === 'math') { 
-					element.props.xmlns = nsMath; 
+					props.xmlns = nsMath; 
 				}
 			}
 	
-			return element;
+			return VElement(type, props, children);
 		}
 	}
 	
@@ -654,82 +650,9 @@
 					children[index++] = VText(type !== 'boolean' ? child : '');
 				}
 			}
-		} else {
-			// Empty
-			children[index++] = nodEmpty;
 		}
 	
 		return index;
-	}
-	
-	
-	/**
-	 * parse special virtual node types
-	 *
-	 * @example h('inpu#id[type=radio]') <-- yields --> h('input', {id: 'id', type: 'radio'})
-	 *
-	 * @param  {string} type
-	 * @param  {Object} props
-	 * @param  {VNode}  vnode
-	 */
-	function parseType (type, props, vnode) {
-		var matches;
-		var regEx;
-		var classList = [];
-	
-		// default type
-		vnode.type = 'div';
-	
-		// if undefined, create and cache RegExp
-		if (parseType.regEx === void 0) {
-			regEx = parseType.regEx = new RegExp(
-				'(?:(^|#|\\.)([^#\\.\\[\\]]+))|(\\[(.+?)(?:\\s*=\\s*(\"|\'|)((?:\\\\[\"\'\\]]|.)*?)\\5)?\\])',
-				'g'
-			);
-		} else {
-			regEx = parseType.regEx;
-		}
-	
-		// execute RegExp, iterate matches
-		while (matches = regEx.exec(type)) {
-			var typeMatch      = matches[1];
-			var valueMatch     = matches[2];
-			var propMatch      = matches[3];
-			var propKeyMatch   = matches[4];
-			var propValueMatch = matches[6];
-	
-			if (typeMatch === '' && valueMatch !== '') {
-				// type
-				vnode.type = valueMatch;
-			} else if (typeMatch === '#') { 
-				// id
-				props.id = valueMatch;
-			} else if (typeMatch === '.') { 
-				// class(es)
-				classList[classList.length] = valueMatch;
-			} else if (propMatch[0] === '[') { 
-				// attribute
-				// remove `[`, `]`, `'` and `"` characters
-				if (propValueMatch != null) {
-					propValueMatch = propValueMatch.replace(/\\(["'])/g, '$1').replace(/\\\\/g, "\\");
-				}
-	
-				if (propKeyMatch === 'class') {
-					propKeyMatch = 'className';
-				}
-	
-				// h('input[checked]') or h('input[checked=true]') yield {checked: true}
-				props[propKeyMatch] = propValueMatch || true;
-			}
-		}
-	
-		// if there are classes in classList, create className prop member
-		if (classList.length !== 0) {
-			props.className = classList.join(' ');
-		}
-	
-		// assign props
-		vnode.props = props;
 	}
 	
 	
@@ -861,28 +784,6 @@
 	
 	
 	/**
-	 * bindState
-	 * 
-	 * @param  {string}          property
-	 * @param  {string}          attr
-	 * @param  {boolean=}        preventUpdate
-	 * @return {function(Event)}
-	 */
-	function bindState (property, attr, preventUpdate) {
-		var component = this;
-	
-		return function (e) {
-			var target = e.currentTarget;
-			var value  = attr in target ? target[attr] : target.getAttribute(attr);
-	
-			component.state[property] = value;
-	
-			!preventUpdate && component.forceUpdate();
-		}
-	}
-	
-	
-	/**
 	 * force an update
 	 *
 	 * @param  {function=}
@@ -909,7 +810,7 @@
 			oldNode._owner   = newNode._owner;
 		} else {
 			// patch node
-			patch(newNode, oldNode);
+			patch(newNode, oldNode, false);
 		}
 	
 		if (this.componentDidUpdate) {
@@ -943,7 +844,7 @@
 			this.props = this.getInitialProps(props);
 		}
 		// assign props
-		else if (props && props !== objEmpty) {
+		else if (props !== objEmpty) {
 			this.componentWillReceiveProps && this.componentWillReceiveProps(props);
 			this.props = props;
 		} 
@@ -955,8 +856,8 @@
 		// assign state
 		this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
 	
-		// create addresses for refs and vnode references
-		this.refs = this._vnode = null;
+		// create vnode addresses reference
+		this._cache = this._vnode = null;
 	}
 	
 	
@@ -967,7 +868,6 @@
 	 */
 	Component.prototype = Object.create(null, {
 		setState:    { value: setState },
-		bindState:   { value: bindState },
 		forceUpdate: { value: forceUpdate }
 	});
 	
@@ -980,23 +880,30 @@
 	 */
 	function createClass (subject) {
 		if (subject._component) {
-			// cache
 			return subject._component; 
 		} else {
-			var func      = typeof subject === 'function';
-			var shape     = func ? subject() : subject;
-			var construct = shape.hasOwnProperty('constructor');
+			var func  = typeof subject === 'function';
+			var shape = func ? subject() : subject;
+	
+			// shape has a constructor method
+			var init  = shape.hasOwnProperty('constructor');
 	
 			function component (props) {
-				construct && this.constructor(props);
+				// constructor
+				if (init) {
+					this.constructor(props);
+				}
+	
+				// extend Component
 				Component.call(this, props); 
 			}
 	
+			// extend Component prototype
 			component.prototype             = shape;
-			component.prototype.bindState   = Component.prototype.bindState;
 			component.prototype.setState    = Component.prototype.setState;
 			component.prototype.forceUpdate = Component.prototype.forceUpdate;
 	
+			// function component, cache created component
 			if (func) {
 				subject._component = component;
 			}
@@ -1018,76 +925,89 @@
 	/**
 	 * hydrates a server-side rendered dom structure
 	 * 
-	 * @param  {Node}    element
-	 * @param  {VNode}   newNode
-	 * @param  {number}  index
-	 * @param  {VNode}   parentNode
+	 * @param  {Node}       parent
+	 * @param  {VNode}      subject
+	 * @param  {number}     index
+	 * @param  {VNode}      parentNode
+	 * @param  {?Component}
 	 */
-	function hydrate (element, newNode, index, parentNode) {
-		var currentNode = newNode.nodeType === 2 ? extractComponent(newNode) : newNode;
-		var nodeType = currentNode.nodeType;
+	function hydrate (parent, subject, index, parentNode, component) {
+		var newNode  = subject.nodeType === 2 ? extractComponent(subject) : subject;
+		var nodeType = newNode.nodeType;
 	
-		// is a fragment if `newNode` is not a text node and type is fragment signature '@'
-		var isFragmentNode = nodeType === 11 ? 1 : 0;
-		var newElement = isFragmentNode === 1 ? element : element.childNodes[index];
+		var element = nodeType === 11 ? parent : parent.childNodes[index];
 	
 		// if the node is not a textNode and
 		// has children hydrate each of its children
 		if (nodeType === 1) {
-			var newChildren = currentNode.children;
-			var newLength = newChildren.length;
+			var props       = newNode.props;
+			var newChildren = newNode.children;
+			var newLength   = newChildren.length;
+	
+			// vnode has component attachment
+			if (subject._owner !== null) {
+				(component = subject._owner)._vnode._node = parent;
+			}
 	
 			// async hydration
 			for (var i = 0; i < newLength; i++) {
-				setTimeout(hydrate, 0, newElement, newChildren[i], i, currentNode);
+				setTimeout(hydrate, 0, element, newChildren[i], i, newNode, component);
+			}
+	
+			// not a fragment
+			if (nodeType !== 11) {
+				if (props !== objEmpty) {
+					// refs
+					if (props.ref) {
+						props.ref.call(component, element);
+					}
+	
+					// assign events
+					assignProps(element, props, true, newNode._owner || null);
+				}
 			}
 	
 			// hydrate the dom element to the virtual element
-			currentNode._node = newElement;
-	
-			// exit early if fragment
-			if (isFragmentNode === 1) { 
-				return; 
-			}
-	
-			// add events if any
-			assignProps(newElement, currentNode.props, true);
-	
-			// assign refs
-			if (currentNode.props.ref !== void 0 && currentNode._owner !== void 0) {
-				extractRefs(newElement, currentNode.props.ref, currentNode._owner);
-			}
+			subject._node = element;
 		}
-		/*
-			when we reach a string child, it is assumed that the dom representing it is a single textNode,
-			we do a look ahead of the child, create & append each textNode child to documentFragment 
-			starting from current child till we reach a non textNode such that on h('p', 'foo', 'bar') 
-			foo and bar are two different textNodes in the fragment, we then replace the 
-			single dom's textNode with the fragment converting the dom's single textNode to multiple
-		 */
 		else if (nodeType === 3) {
-			// fragment to use to replace a single textNode with multiple text nodes
-			// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
-			// but HelloWorld is one text node in the dom while two in the vnode
-			var fragment = document.createDocumentFragment();
 			var children = parentNode.children;
+			var length   = children.length;
+			var next     = children[index+1] || nodEmpty;
 	
-			// look ahead of this nodes siblings and add all textNodes to the the fragment.
-			// exit when a non text node is encounted
-			for (var i = index, length = children.length - index; i < length; i++) {
-				var textNode = children[i];
+			/*
+				when we reach a string child that is followed by a string child, 
+				it is assumed that the dom representing it is a single textNode,
+				we do a look ahead of the child, create & append each textNode child to documentFragment 
+				starting from current child till we reach a non textNode such that on h('p', 'foo', 'bar') 
+				foo and bar are two different textNodes in the fragment, we then replace the 
+				single dom's textNode with the fragment converting the dom's single textNode to multiple
+			 */
+			if (length > 1 && next.nodeType === 3) {
+				// fragment to use to replace a single textNode with multiple text nodes
+				// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
+				// but HelloWorld is one text node in the dom while two in the vnode
+				var fragment = document.createDocumentFragment();
+				
+				// look ahead of this nodes siblings and add all textNodes to the the fragment.
+				// exit when a non text node is encounted
+				for (var i = index, len = length - index; i < len; i++) {
+					var textNode = children[i];
 	
-				// exit early once we encounter a non text/string node
-				if (textNode.nodeType !== 3) {
-					break;
+					// exit early once we encounter a non text/string node
+					if (textNode.nodeType !== 3) {
+						break;
+					}
+	
+					// create textnode, append to the fragment
+					fragment.appendChild(textNode._node = document.createTextNode(textNode.children));
 				}
 	
-				// create textnode, append to the fragment
-				fragment.appendChild(textNode._node = document.createTextNode(textNode.children || ''));
+				// replace the textNode with a set of textNodes
+				parent.replaceChild(fragment, element);
+			} else {
+				newNode._node = element;
 			}
-	
-			// replace the textNode with a set of textNodes
-			element.replaceChild(fragment, element.childNodes[index]);
 		}
 	}
 	
@@ -1167,7 +1087,7 @@
 		// hydration
 		if (element.hasAttribute('hydrate')) {
 			// dispatch hydration
-			hydrate(element, node, 0, nodEmpty);
+			hydrate(element, node, 0, nodEmpty, null);
 	
 			// cleanup element hydrate attributes
 			element.removeAttribute('hydrate');
@@ -1202,11 +1122,12 @@
 	/**
 	 * patch nodes
 	 *  
-	 * @param  {VNode}  newNode  
-	 * @param  {VNode}  oldNode  
-	 * @return {number} number
+	 * @param  {VNode}   newNode  
+	 * @param  {VNode}   oldNode  
+	 * @param  {boolean} innerRecursive
+	 * @return {number}  number
 	 */
-	function patch (newNode, oldNode) {
+	function patch (newNode, oldNode, innerRecursive) {
 		var newNodeType = newNode.nodeType;
 		var oldNodeType = oldNode.nodeType;
 	
@@ -1225,11 +1146,8 @@
 			} 
 		}
 		// key operation
-		// else if (newNode.props.key !== oldNode.props.key) {
-		// 	return 5; 
-		// }
-		else if (newNode.props.key !== void 0 || oldNode.props.key !== void 0) {
-			return 5; 
+		else if (innerRecursive && (newNode.props.key !== void 0 || oldNode.props.key !== void 0)) {
+			return 5;
 		}
 		// replace operation
 		else if (newNode.type !== oldNode.type) {
@@ -1267,7 +1185,6 @@
 				var oldChildren = oldNode.children;
 				var newLength   = newChildren.length;
 				var oldLength   = oldChildren.length;
-				var _newChildren = [].slice.call(newChildren);
 	
 				// new children length is 0 clear/remove all children
 				if (newLength === 0) {
@@ -1280,7 +1197,8 @@
 				// newNode has children
 				else {
 					var parentNode = oldNode._node;
-					var isKeyed = false;
+					var hasKeys = false;
+					var diffKeys = false;
 					var oldKeys;
 					var newKeys;
 	
@@ -1289,11 +1207,15 @@
 					for (var i = 0; i < newLength || i < oldLength; i++) {
 						var newChild = newChildren[i] || nodEmpty;
 						var oldChild = oldChildren[i] || nodEmpty;
-						var action   = patch(newChild, oldChild);
+						var action   = patch(newChild, oldChild, true);
 	
 						// if action dispatched, 
 						// 1 - remove, 2 - add, 3 - text update, 4 - replace, 5 - key
 						if (action !== 0) {
+							if (diffKeys) {
+								action = 5;
+							}
+	
 							switch (action) {
 								// remove operation
 								case 1: {
@@ -1334,26 +1256,24 @@
 								}
 								// keyed operation
 								case 5: {
-									// register keyed children
-									if (isKeyed === false) {
-										isKeyed = true;
+									var newKey = newChild.props.key;
+									var oldKey = oldChild.props.key;
+	
+									// initialize key hash maps
+									if (hasKeys === false) {
+										hasKeys = true;
 										oldKeys = {};
 										newKeys = {};
 									}
 	
-									// var newKey = newChild.props.key;
-									// var oldKey = oldChild.props.key;
+									// opt for keyed diffing if atleast one node has different keys
+									if (diffKeys === false && newKey !== oldKey) {
+										diffKeys = true;
+									}
 	
 									// register key
-									newKeys[newChild.props.key] = (newChild._index = i, newChild);
-									oldKeys[oldChild.props.key] = (oldChild._index = i, oldChild);
-	
-									// padding
-									// if (newChildren.length > oldChildren.length) {
-									// 	oldChildren.splice(i, 0, nodEmpty);
-									// } else if (oldChildren.length > newChildren.length) {
-									// 	newChildren.splice(i, 0, nodEmpty);
-									// }
+									newKeys[newKey] = (newChild._index = i, newChild);
+									oldKeys[oldKey] = (oldChild._index = i, oldChild);
 	
 									break;
 								}
@@ -1363,7 +1283,7 @@
 				}
 	
 				// reconcile keyed children
-				if (isKeyed === true) {
+				if (diffKeys) {
 					// offloaded to another function to keep the type feedback 
 					// of this function to a minimum when non-keyed
 					keyed(
@@ -1408,114 +1328,69 @@
 	 * @param {number}  oldLength
 	 */
 	
-	var index = 0;
+	// var index = 0;
 	
 	function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
-		var reconciled = new Array(newLength);
+		var reconciled   = new Array(newLength);
+		var children     = parentNode.children;
+		var length       = children.length;
+		var delOffset    = 0;
+		var addOffset    = 0;
 	
-		for (var i = 0; i < oldChildren.length; i++) {
+		for (var i = 0; i < oldLength; i++) {
 			var oldChild = oldChildren[i];
 			var oldKey   = oldChild.props.key;
 			var newChild = newKeys[oldKey];
 	
-			if (newChild) {
-				var index = newChild._index;
+			// removed
+			if (newChild === void 0) {
+				delOffset++;
 	
-				// moved
-				if (index !== i) {
-					parentNode.insertBefore(oldChild._node, parentNode.children[index+1]);
-				}
+				removeNode(oldChild, parentNode);
+			}
 	
-				reconciled[index] = oldChild; 
-			} else {
-				// removed
-				parentNode.removeChild(oldChild._node);
+			// update old indexes
+			if (delOffset !== 0) {
+				oldChild._index -= delOffset;
 			}
 		}
 	
-		for (var i = 0; i < newChildren.length; i++) {
-			var newChild = newChildren[i];
+		// update length
+		length -= delOffset;
+	
+		for (var j = 0; j < newLength; j++) {
+			var newChild = newChildren[j];
 			var newKey   = newChild.props.key;
 			var oldChild = oldKeys[newKey];
 	
+			// exists
 			if (oldChild) {
-				reconciled[i] = oldChild;			
+				var index = oldChild._index;
+	
+				// moved
+				if (index+addOffset !== j) {
+					parentNode.insertBefore(oldChild._node, children[j]);
+				}
+	
+				reconciled[j] = oldChild; 	
 			} else {
-				// added
-				reconciled[i] = newChild;
-				parentNode.insertBefore(createNode(newChild, null, null), parentNode.children[i]);
+				reconciled[j] = newChild;
+	
+				addOffset++;
+	
+				if (j < length) {
+					// insert
+					insertNode(newChild, children[j], parentNode, createNode(newChild, null, null));
+				} else {
+					// append
+					appendNode(newChild, parentNode, createNode(newChild, null, null));
+				}
+	
+				length++;
 			}		
 		}
 	
-		console.log(reconciled);
 		oldNode.children = reconciled;
-	
-		// throw '';
-	
-	
-		// var reconciledChildren = new Array(newLength);
-		// var deleteCount        = 0;
-	
-		// for (var i = 0; i < newLength || i < oldLength; i++) {
-		// 	var newChild = newChildren[i] || nodEmpty;
-		// 	var oldChild = oldChildren[i] || nodEmpty;
-		// 	var newKey   = newChild.props.key;
-		// 	var oldKey   = oldChild.props.key;
-	
-		// 	// new and old keys match, no-op
-		// 	if (newKey === oldKey) {
-		// 		reconciledChildren[i-deleteCount] = oldChild;
-		// 	}
-		// 	// new and old keys don't match 
-		// 	else {
-		// 		var movedChild = oldKeys[newKey];
-	
-		// 		// new key exists in old keys
-		// 		if (movedChild) {
-		// 			var idx = movedChild._index;
-	
-		// 			// but the index does not match,
-		// 			if (i !== idx) {
-		// 				// move
-		// 				reconciledChildren[idx] = oldChild;
-	
-		// 				parentNode.insertBefore(
-		// 					oldChild._node = parentNode.children[idx],
-		// 					parentNode.children[i+1]
-		// 				);
-		// 			}
-		// 		}
-		// 		// old key does not exist
-		// 		else if (oldChild.nodeType === 0) {
-		// 			// insert
-		// 			reconciledChildren[i-deleteCount] = newChild;
-	
-		// 			insertNode(
-		// 				newChild, 
-		// 				oldChildren[i+1], 
-		// 				parentNode, 
-		// 				createNode(newChild, null, null)
-		// 			);
-		// 		}
-		// 		// new key does not exist
-		// 		else if (newChild.nodeType === 0) {
-		// 			console.log(i);
-		// 			// remove
-		// 			removeNode(oldChild, parentNode);
-		// 			deleteCount++;
-		// 		}
-		// 		// new key and old key exists 
-		// 		// but new key is not in old keys
-		// 		else {
-		// 			// replace
-		// 			reconciledChildren[i-deleteCount] = newChild;
-		// 			replaceNode(newChild, oldChild, parentNode, createNode(newChild, null, null));
-		// 		}
-		// 	}
-		// }
-	
-		// replace old children with reconciled children
-		// oldNode.children = reconciledChildren;
 	}
 	/**
 	 * assign prop for create element
@@ -1523,10 +1398,11 @@
 	 * @param  {Node}       target
 	 * @param  {Object}     props
 	 * @param  {number}     onlyEvents
+	 * @param  {Component}  component
 	 */
-	function assignProps (target, props, onlyEvents) {
+	function assignProps (target, props, onlyEvents, component) {
 		for (var name in props) {
-			assignProp(target, name, props, onlyEvents);
+			assignProp(target, name, props, onlyEvents, component);
 		}
 	}
 	
@@ -1537,13 +1413,25 @@
 	 * @param  {Node}       target
 	 * @param  {string}     name
 	 * @param  {Object}     props
-	 * @param  {number}     onlyEvents
+	 * @param  {number}     onlyEvents,
+	 * @param  {Component}  component
 	 */
-	function assignProp (target, name, props, onlyEvents) {
+	function assignProp (target, name, props, onlyEvents, component) {
 		var propValue = props[name];
 	
 		if (isEventName(name)) {
-			target.addEventListener(extractEventName(name), propValue);
+			var eventName = extractEventName(name);
+	
+			if (typeof propValue !== 'function') {
+				var cache = component._cache === null ? component._cache = {} : component._cache;
+	
+				target.addEventListener(
+					eventName, 
+					cache[eventName] || bindEvent(eventName, propValue, cache, component)
+				)
+			} else {
+				target.addEventListener(eventName, propValue);
+			}
 		} else if (onlyEvents === false) {
 			// add attribute
 			updateProp(target, 'setAttribute', name, propValue, props.xmlns);
@@ -1663,38 +1551,38 @@
 			return (target[action + 'NS'](nsXlink, 'href', propValue), void 0);
 		}
 	
-		var isSVG = 0;
+		var isSVG = false;
 		var propName;
 	
 		// normalize class/className references, i.e svg className !== html className
 		// uses className instead of class for html elements
 		if (namespace === nsSvg) {
-			isSVG = 1;
+			isSVG = true;
 			propName = name === 'className' ? 'class' : name;
 		} else {
 			propName = name === 'class' ? 'className' : name;
 		}
 	
 		var targetProp = target[propName];
-		var isDefinedValue = (propValue != null && propValue !== false) ? 1 : 0;
+		var isDefinedValue = propValue != null && propValue !== false;
 	
 		// objects, adds property if undefined, else, updates each memeber of attribute object
-		if (isDefinedValue === 1 && typeof propValue === 'object') {
+		if (isDefinedValue && typeof propValue === 'object') {
 			targetProp === void 0 ? target[propName] = propValue : updatePropObject(propValue, targetProp);
 		} else {
-			if (targetProp !== void 0 && isSVG === 0) {
+			if (targetProp !== void 0 && isSVG === false) {
 				target[propName] = propValue;
 			} else {
-				// remove attributes with false/null/undefined values
-				if (isDefinedValue === 0) {
-					target['removeAttribute'](propName);
-				} else {
+				if (isDefinedValue) {
 					// reduce value to an empty string if true, <tag checked=true> --> <tag checked>
 					if (propValue === true) { 
 						propValue = ''; 
 					}
 	
 					target[action](propName, propValue);
+				} else {
+					// remove attributes with false/null/undefined values
+					target.removeAttribute(propName);
 				}
 			}
 		}
@@ -1775,11 +1663,17 @@
 				// vnode has component attachment
 				if (subject._owner !== null) {
 					(component = subject._owner)._vnode._node = element;
-				}
 	
-				if (props !== objEmpty) {
-					// diff and update/add/remove props
-					assignProps(element, props, false);
+					// stylesheets
+					if (component.stylesheet) {
+						if (component.stylesheet.styler === void 0) {
+							// create
+							stylesheet(component, subject.type)(element);
+						} else {
+							// namespace
+							component.stylesheet(element);
+						}
+					}
 				}
 	
 				if (length !== 0) {
@@ -1787,7 +1681,7 @@
 					for (var i = 0; i < length; i++) {
 						var newChild = children[i];
 	
-						// clone vnode of hoisted/pre-rendered node
+						// hoisted nodes, clone
 						if (newChild._node) {
 							newChild = children[i] = VNode(
 								newChild.nodeType,
@@ -1801,34 +1695,22 @@
 						}
 	
 						// append child
-						appendNode(newChild, element, createNode(newChild, component, namespace));
-						
-						// we pass component and namespace so that 
-						// 1. if an element is svg we can namespace all its children in kind
-						// 2. we can propagate nested refs to the parent component
+						appendNode(newChild, element, createNode(newChild, component, namespace));					
 					}
+				}
+	
+				if (props !== objEmpty) {
+					// refs
+					if (props.ref) {
+						props.ref.call(component, element);
+					}
+	
+					// initialize props
+					assignProps(element, props, false, component);
 				}
 	
 				// cache element reference
 				subject._node = element;
-			}
-	
-			if (component !== null) {
-				// refs
-				if (props.ref !== void 0) {
-					extractRefs(element, props.ref, component);
-				}
-	
-				// stylesheets
-				if (component.stylesheet) {
-					if (component.stylesheet.styler === void 0) {
-						// create
-						stylesheet(component, subject.type)(element);
-					} else {
-						// namespace
-						component.stylesheet(element);
-					}
-				}
 			}
 	
 			return element;
@@ -1861,7 +1743,7 @@
 	 * insert element
 	 *
 	 * @param {VNode} newNode
-	 * @param {VNode} newNode
+	 * @param {Node}  oldNode
 	 * @param {Node}  parentNode
 	 * @param {Node}  nextNode
 	 */
@@ -1871,7 +1753,7 @@
 		}
 	
 		// insert node
-		parentNode.insertBefore(nextNode, oldNode._node);
+		parentNode.insertBefore(nextNode, oldNode);
 	
 		if (newNode._owner !== null && newNode._owner.componentDidMount) {
 			newNode._owner.componentDidMount(nextNode);
@@ -1950,27 +1832,42 @@
 	
 	
 	/**
-	 * extract refs
-	 * 
-	 * @param {Node}              element
-	 * @param {(Object|function)} ref
-	 * @param {Component}         component
+	 * bind event
+	 *
+	 * @param  {string}    name
+	 * @param  {Object}    value
+	 * @param  {Object}    cache
+	 * @param  {Component} component
+	 * @return {function}
 	 */
-	function extractRefs (element, ref, component) {
-		// hoist typeof info
-		var type = typeof ref;
-		var refs = (component.refs === null ? component.refs = {} : component.refs);
+	function bindEvent (name, value, cache, component) {
+		var bind = value.bind;
+		var data = value.with;
 	
-		if (type === 'string') {
-			// string ref, assign
-			refs[ref] = element;
-		} else if (type === 'function') {
-			// function ref, call with element as arg
-			ref(element);
+		var preventDefault = value.preventDefault === void 0 || value.preventDefault === true;
+	
+		if (typeof bind === 'object') {
+			var property = bind.property || data;
+	
+			return cache[name] = function (e) {
+				preventDefault && e.preventDefault();
+	
+				var target = e.currentTarget || e.target || this;
+				var value  = data in target ? target[data] : target.getAttribute(data);
+	
+				// update component state
+				component.state[property] = value;
+	
+				// update component
+				component.forceUpdate();
+			}
+		} else {
+			return cache[name] = function (e) {
+				preventDefault && e.preventDefault();
+				bind.call(data, data, e);
+			}
 		}
 	}
-	
-	
 	/**
 	 * extract component
 	 * 
@@ -2017,10 +1914,8 @@
 		subject.props    = vnode.props
 		subject.children = vnode.children;
 	
-		// assign reference to component 
-		component._vnode = vnode;
-	
-		return vnode;
+		// assign reference to component and return vnode
+		return component._vnode = vnode;
 	}
 	
 	

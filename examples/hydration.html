@@ -5,11 +5,11 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Hydration Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="/dio.min.js"></script>
+		<script src="/dio.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
-		<div class="app" data-hydrate></div>
+		<div class="app" hydrate></div>
 		<script>
 			function Component () {
 				return {
@@ -23,9 +23,20 @@
 								},
 								h('li', Date.now()),
 								h('li', 'Second Year'),
-								h('li', 'Third Year')
+								h('li', 'Third Year', 'Again'),
+								h('div', h('div', {ref: el => console.log(1, el)}, 'Nested')),
+								h(Text)
 							)
 						)
+					}
+				}
+			}
+
+			function Text () {
+				return {
+					displayName: 'Text',
+					render: function () {
+						return h('h1', {ref: el => console.log(2, el)}, 'Nested Component');
 					}
 				}
 			}
@@ -34,9 +45,6 @@
 
 			// server-Side render mock
 			document.querySelector('.app').innerHTML = html;
-
-			// var li = document.querySelector('.app li');
-			// li.className = 'hello world';
 			
 			dio.render(h(Component), '.app');
 		</script>

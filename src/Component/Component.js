@@ -18,7 +18,7 @@ function Component (props) {
 		this.props = this.getInitialProps(props);
 	}
 	// assign props
-	else if (props && props !== objEmpty) {
+	else if (props !== objEmpty) {
 		this.componentWillReceiveProps && this.componentWillReceiveProps(props);
 		this.props = props;
 	} 
@@ -30,8 +30,8 @@ function Component (props) {
 	// assign state
 	this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
 
-	// create addresses for refs and vnode references
-	this.refs = this._vnode = null;
+	// create vnode addresses reference
+	this._cache = this._vnode = null;
 }
 
 
@@ -42,7 +42,6 @@ function Component (props) {
  */
 Component.prototype = Object.create(null, {
 	setState:    { value: setState },
-	bindState:   { value: bindState },
 	forceUpdate: { value: forceUpdate }
 });
 

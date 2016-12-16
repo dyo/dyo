@@ -42,8 +42,8 @@
 							.then(function () { updateTextarea(thisArg); });
 					},
 					render: function () {
-						return h('.MarkdownEditor',
-									h('.input', 
+						return h('div', {className: 'MarkdownEditor'},
+									h('div', {className: 'input'},
 										h('h3', 'Input'),
 										h('textarea', {
 											ref: textarea, 
@@ -54,9 +54,10 @@
 											value: markdownInput()
 										})
 									),
-									h('.output', 
+									h('div', {className: 'output'},
 										h('h3', 'Output'),
-										h('.content', {
+										h('div', {
+											className: 'content',
 											ref: content, 
 											innerHTML: rawMarkup()
 										})

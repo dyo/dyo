@@ -493,6 +493,7 @@
 			if (workspace.length > 1) {
 				workspace(assert, function done () {
 					pending--;
+
 					capture(test, index);
 				});
 			}
@@ -523,11 +524,20 @@
 		});
 	}
 
+	var captured = {}
+
 	function capture (test, index, tests) {
 		var name        = test.name;
 		var messages    = [];
 		var failCount   = 0;
 		var assertCount = 0;
+
+		if (captured[name]) {
+			return;
+		}
+
+		captured[name] = true;
+
 
 		forEach(test.assertions, function (result) {
 			messages.push([result.status, result.message]);

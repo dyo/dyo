@@ -8,7 +8,7 @@
  * from right to left. for example, compose(f, g, h) is identical to doing
  * (...args) => f(g(h(...args))).
  */
-function compose () {
+function composeMiddlewares () {
 	var length = arguments.length;
 
 	// no functions passed

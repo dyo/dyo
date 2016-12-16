@@ -1,76 +1,89 @@
 /**
  * hydrates a server-side rendered dom structure
  * 
- * @param  {Node}    element
- * @param  {VNode}   newNode
- * @param  {number}  index
- * @param  {VNode}   parentNode
+ * @param  {Node}       parent
+ * @param  {VNode}      subject
+ * @param  {number}     index
+ * @param  {VNode}      parentNode
+ * @param  {?Component}
  */
-function hydrate (element, newNode, index, parentNode) {
-	var currentNode = newNode.nodeType === 2 ? extractComponent(newNode) : newNode;
-	var nodeType = currentNode.nodeType;
+function hydrate (parent, subject, index, parentNode, component) {
+	var newNode  = subject.nodeType === 2 ? extractComponent(subject) : subject;
+	var nodeType = newNode.nodeType;
 
-	// is a fragment if `newNode` is not a text node and type is fragment signature '@'
-	var isFragmentNode = nodeType === 11 ? 1 : 0;
-	var newElement = isFragmentNode === 1 ? element : element.childNodes[index];
+	var element = nodeType === 11 ? parent : parent.childNodes[index];
 
 	// if the node is not a textNode and
 	// has children hydrate each of its children
 	if (nodeType === 1) {
-		var newChildren = currentNode.children;
-		var newLength = newChildren.length;
+		var props       = newNode.props;
+		var newChildren = newNode.children;
+		var newLength   = newChildren.length;
+
+		// vnode has component attachment
+		if (subject._owner !== null) {
+			(component = subject._owner)._vnode._node = parent;
+		}
 
 		// async hydration
 		for (var i = 0; i < newLength; i++) {
-			setTimeout(hydrate, 0, newElement, newChildren[i], i, currentNode);
+			setTimeout(hydrate, 0, element, newChildren[i], i, newNode, component);
+		}
+
+		// not a fragment
+		if (nodeType !== 11) {
+			if (props !== objEmpty) {
+				// refs
+				if (props.ref) {
+					props.ref.call(component, element);
+				}
+
+				// assign events
+				assignProps(element, props, true, newNode._owner || null);
+			}
 		}
 
 		// hydrate the dom element to the virtual element
-		currentNode._node = newElement;
-
-		// exit early if fragment
-		if (isFragmentNode === 1) { 
-			return; 
-		}
-
-		// add events if any
-		assignProps(newElement, currentNode.props, true);
-
-		// assign refs
-		if (currentNode.props.ref !== void 0 && currentNode._owner !== void 0) {
-			extractRefs(newElement, currentNode.props.ref, currentNode._owner);
-		}
+		subject._node = element;
 	}
-	/*
-		when we reach a string child, it is assumed that the dom representing it is a single textNode,
-		we do a look ahead of the child, create & append each textNode child to documentFragment 
-		starting from current child till we reach a non textNode such that on h('p', 'foo', 'bar') 
-		foo and bar are two different textNodes in the fragment, we then replace the 
-		single dom's textNode with the fragment converting the dom's single textNode to multiple
-	 */
 	else if (nodeType === 3) {
-		// fragment to use to replace a single textNode with multiple text nodes
-		// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
-		// but HelloWorld is one text node in the dom while two in the vnode
-		var fragment = document.createDocumentFragment();
 		var children = parentNode.children;
+		var length   = children.length;
+		var next     = children[index+1] || nodEmpty;
 
-		// look ahead of this nodes siblings and add all textNodes to the the fragment.
-		// exit when a non text node is encounted
-		for (var i = index, length = children.length - index; i < length; i++) {
-			var textNode = children[i];
+		/*
+			when we reach a string child that is followed by a string child, 
+			it is assumed that the dom representing it is a single textNode,
+			we do a look ahead of the child, create & append each textNode child to documentFragment 
+			starting from current child till we reach a non textNode such that on h('p', 'foo', 'bar') 
+			foo and bar are two different textNodes in the fragment, we then replace the 
+			single dom's textNode with the fragment converting the dom's single textNode to multiple
+		 */
+		if (length > 1 && next.nodeType === 3) {
+			// fragment to use to replace a single textNode with multiple text nodes
+			// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
+			// but HelloWorld is one text node in the dom while two in the vnode
+			var fragment = document.createDocumentFragment();
+			
+			// look ahead of this nodes siblings and add all textNodes to the the fragment.
+			// exit when a non text node is encounted
+			for (var i = index, len = length - index; i < len; i++) {
+				var textNode = children[i];
 
-			// exit early once we encounter a non text/string node
-			if (textNode.nodeType !== 3) {
-				break;
+				// exit early once we encounter a non text/string node
+				if (textNode.nodeType !== 3) {
+					break;
+				}
+
+				// create textnode, append to the fragment
+				fragment.appendChild(textNode._node = document.createTextNode(textNode.children));
 			}
 
-			// create textnode, append to the fragment
-			fragment.appendChild(textNode._node = document.createTextNode(textNode.children || ''));
+			// replace the textNode with a set of textNodes
+			parent.replaceChild(fragment, element);
+		} else {
+			newNode._node = element;
 		}
-
-		// replace the textNode with a set of textNodes
-		element.replaceChild(fragment, element.childNodes[index]);
 	}
 }
 

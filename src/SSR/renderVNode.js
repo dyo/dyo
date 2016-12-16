@@ -1,10 +1,10 @@
 /**
- * retrieve virtual node
+ * render virtual node
  * 
- * @param  {(function|object)} subject
+ * @param  {(function|Object)} subject
  * @return {VNode}
  */
-function retrieveVNode (subject) {
+function renderVNode (subject) {
 	if (subject.type) {
 		return subject;
 	} else {

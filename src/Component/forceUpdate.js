@@ -25,7 +25,7 @@ function forceUpdate (callback) {
 		oldNode._owner   = newNode._owner;
 	} else {
 		// patch node
-		patch(newNode, oldNode);
+		patch(newNode, oldNode, false);
 	}
 
 	if (this.componentDidUpdate) {

@@ -23,38 +23,38 @@ function updateProp (target, action, name, propValue, namespace) {
 		return (target[action + 'NS'](nsXlink, 'href', propValue), void 0);
 	}
 
-	var isSVG = 0;
+	var isSVG = false;
 	var propName;
 
 	// normalize class/className references, i.e svg className !== html className
 	// uses className instead of class for html elements
 	if (namespace === nsSvg) {
-		isSVG = 1;
+		isSVG = true;
 		propName = name === 'className' ? 'class' : name;
 	} else {
 		propName = name === 'class' ? 'className' : name;
 	}
 
 	var targetProp = target[propName];
-	var isDefinedValue = (propValue != null && propValue !== false) ? 1 : 0;
+	var isDefinedValue = propValue != null && propValue !== false;
 
 	// objects, adds property if undefined, else, updates each memeber of attribute object
-	if (isDefinedValue === 1 && typeof propValue === 'object') {
+	if (isDefinedValue && typeof propValue === 'object') {
 		targetProp === void 0 ? target[propName] = propValue : updatePropObject(propValue, targetProp);
 	} else {
-		if (targetProp !== void 0 && isSVG === 0) {
+		if (targetProp !== void 0 && isSVG === false) {
 			target[propName] = propValue;
 		} else {
-			// remove attributes with false/null/undefined values
-			if (isDefinedValue === 0) {
-				target['removeAttribute'](propName);
-			} else {
+			if (isDefinedValue) {
 				// reduce value to an empty string if true, <tag checked=true> --> <tag checked>
 				if (propValue === true) { 
 					propValue = ''; 
 				}
 
 				target[action](propName, propValue);
+			} else {
+				// remove attributes with false/null/undefined values
+				target.removeAttribute(propName);
 			}
 		}
 	}

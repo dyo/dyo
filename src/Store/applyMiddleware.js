@@ -34,7 +34,7 @@ function applyMiddleware () {
 			// return store with composed dispatcher
 			return {
 				getState: store.getState, 
-				dispatch: compose.apply(null, chain)(store.dispatch), 
+				dispatch: composeMiddlewares.apply(null, chain)(store.dispatch), 
 				subscribe: store.subscribe,
 				connect: store.connect,
 				replaceReducer: store.replaceReducer

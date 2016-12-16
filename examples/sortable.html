@@ -88,9 +88,8 @@
 					            		var dragging = (i == this.items.dragging()) ? 'dragging' : '';
 
 					            		return h('li', {
-					            			key: i,
 						                	'data-id': i,
-						                	class: dragging,
+						                	className: dragging,
 						                	draggable: 'true',
 						                	ondragstart: this.dragStart.bind(this),
 						                	ondragover: this.dragOver.bind(this),

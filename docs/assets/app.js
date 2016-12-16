@@ -1,7 +1,4 @@
 (function () {
-	var component = dio.VComponent;
-	var defer = dio.defer;
-
 	// stateless components
 	function Content (props) {
 		return h('div', {className: 'content',innerHTML: props.html})
@@ -65,8 +62,8 @@
 			}
 		}
 
-		function activateLink (self, href) {
-			href = href || this.getAttribute('href');
+		function activateLink (context, e, href) {
+			href = href || e.currentTarget.getAttribute('href');
 
 			if (this.className === 'active') {
 				return;
@@ -74,15 +71,15 @@
 
 			var nav = [];
 
-			self.state.nav.forEach(function (value) {
+			context.state.nav.forEach(function (value) {
 				var item = Object.assign({}, value, {active: value.href !== href ? false : true});
 				nav[nav.length] = item;
 			});
 
 			hash = href.replace('../', '').replace('.md', '');
-			self.setState({nav: nav, loading: true});
+			context.setState({nav: nav, loading: true});
 
-			getDocument(href, update(self));
+			getDocument(href, update(context));
 			window.location.hash = hash;
 		}
 
@@ -98,14 +95,17 @@
 				}
 			},
 			componentDidMount: function (props) {
-				activateLink(this, this.props.url);
+				activateLink(this, null, this.props.url);
 			},
 			render: function (props) {
 				return h('div', {className: 'documentation'+(this.state.loading ? '.loading' : '')},
 					Content({html: rawMarkup()}),
 					TableOfContents({
 						nav: this.state.nav,
-						onClick: defer(activateLink, [this], true)
+						onClick: {
+							bind: activateLink,
+							with: this
+						}
 					})
 				);
 			}
@@ -139,7 +139,11 @@
 				highlighter();
 			},
 			render: function () {
-				return h('div', {className: 'welcome', onClick: defer(Install, [], true), innerHTML: rawMarkup()})
+				return h('div', {
+					className: 'welcome', 
+					onClick: Install,
+					innerHTML: rawMarkup()
+				})
 			}
 		}
 	}
@@ -147,14 +151,14 @@
 
 	var routes = {
 		'/': function () {
-			dio.render(component(Welcome, {url: 'welcome.md'}), '.container');
+			dio.render(h(Welcome, {url: 'welcome.md'}), '.container');
 		},
 		'/#*': function () {
 			var section = window.location.hash.toLowerCase().replace('#', '');
 
 			section = section || 'installation';
 			section = ''+ section + '.md';
-			dio.render(component(Documentation, {url: section}), '.container');
+			dio.render(h(Documentation, {url: section}), '.container');
 		}
 	};
 	var router = dio.router(routes);

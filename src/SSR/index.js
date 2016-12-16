@@ -8,9 +8,9 @@
 
 
 import 'renderToString';
-import 'renderPropsToString';
-import 'renderVNodeToString';
-import 'renderStylesheetToString';
 import 'renderToStream';
 import 'renderToCache';
-import 'retrieveVNode';
+import 'renderStylesheetToString';
+import 'renderPropsToString';
+import 'renderVNodeToString';
+import 'renderVNode';

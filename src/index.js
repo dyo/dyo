@@ -54,13 +54,11 @@
 		isValidElement:   isValidElement,
 		cloneElement:     cloneElement,
 		createFactory:    createFactory,
-
 		VText:            VText,
 		VElement:         VElement,
 		VSvg:             VSvg,
 		VFragment:        VFragment,
 		VComponent:       VComponent,
-
 		DOM:              DOM,
 
 		// render
@@ -82,8 +80,6 @@
 		request:          http(),
 		router:           router,
 		stream:           stream,
-		compose:          compose,
-		defer:            defer,
 
 		// version
 		version:          version,

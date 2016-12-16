@@ -25,7 +25,7 @@ function Stream (subject, template) {
 	this.stack    = [];
 	this.lookup   = {styles: '', ids: {}};
 	this.template = template;
-	this.node     = retrieveVNode(subject);
+	this.node     = renderVNode(subject);
 
 	readable.call(this);
 }

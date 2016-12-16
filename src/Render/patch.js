@@ -1,11 +1,12 @@
 /**
  * patch nodes
  *  
- * @param  {VNode}  newNode  
- * @param  {VNode}  oldNode  
- * @return {number} number
+ * @param  {VNode}   newNode  
+ * @param  {VNode}   oldNode  
+ * @param  {boolean} innerRecursive
+ * @return {number}  number
  */
-function patch (newNode, oldNode) {
+function patch (newNode, oldNode, innerRecursive) {
 	var newNodeType = newNode.nodeType;
 	var oldNodeType = oldNode.nodeType;
 
@@ -24,11 +25,8 @@ function patch (newNode, oldNode) {
 		} 
 	}
 	// key operation
-	// else if (newNode.props.key !== oldNode.props.key) {
-	// 	return 5; 
-	// }
-	else if (newNode.props.key !== void 0 || oldNode.props.key !== void 0) {
-		return 5; 
+	else if (innerRecursive && (newNode.props.key !== void 0 || oldNode.props.key !== void 0)) {
+		return 5;
 	}
 	// replace operation
 	else if (newNode.type !== oldNode.type) {
@@ -66,7 +64,6 @@ function patch (newNode, oldNode) {
 			var oldChildren = oldNode.children;
 			var newLength   = newChildren.length;
 			var oldLength   = oldChildren.length;
-			var _newChildren = [].slice.call(newChildren);
 
 			// new children length is 0 clear/remove all children
 			if (newLength === 0) {
@@ -79,7 +76,8 @@ function patch (newNode, oldNode) {
 			// newNode has children
 			else {
 				var parentNode = oldNode._node;
-				var isKeyed = false;
+				var hasKeys = false;
+				var diffKeys = false;
 				var oldKeys;
 				var newKeys;
 
@@ -88,11 +86,15 @@ function patch (newNode, oldNode) {
 				for (var i = 0; i < newLength || i < oldLength; i++) {
 					var newChild = newChildren[i] || nodEmpty;
 					var oldChild = oldChildren[i] || nodEmpty;
-					var action   = patch(newChild, oldChild);
+					var action   = patch(newChild, oldChild, true);
 
 					// if action dispatched, 
 					// 1 - remove, 2 - add, 3 - text update, 4 - replace, 5 - key
 					if (action !== 0) {
+						if (diffKeys) {
+							action = 5;
+						}
+
 						switch (action) {
 							// remove operation
 							case 1: {
@@ -133,26 +135,24 @@ function patch (newNode, oldNode) {
 							}
 							// keyed operation
 							case 5: {
-								// register keyed children
-								if (isKeyed === false) {
-									isKeyed = true;
+								var newKey = newChild.props.key;
+								var oldKey = oldChild.props.key;
+
+								// initialize key hash maps
+								if (hasKeys === false) {
+									hasKeys = true;
 									oldKeys = {};
 									newKeys = {};
 								}
 
-								// var newKey = newChild.props.key;
-								// var oldKey = oldChild.props.key;
+								// opt for keyed diffing if atleast one node has different keys
+								if (diffKeys === false && newKey !== oldKey) {
+									diffKeys = true;
+								}
 
 								// register key
-								newKeys[newChild.props.key] = (newChild._index = i, newChild);
-								oldKeys[oldChild.props.key] = (oldChild._index = i, oldChild);
-
-								// padding
-								// if (newChildren.length > oldChildren.length) {
-								// 	oldChildren.splice(i, 0, nodEmpty);
-								// } else if (oldChildren.length > newChildren.length) {
-								// 	newChildren.splice(i, 0, nodEmpty);
-								// }
+								newKeys[newKey] = (newChild._index = i, newChild);
+								oldKeys[oldKey] = (oldChild._index = i, oldChild);
 
 								break;
 							}
@@ -162,7 +162,7 @@ function patch (newNode, oldNode) {
 			}
 
 			// reconcile keyed children
-			if (isKeyed === true) {
+			if (diffKeys) {
 				// offloaded to another function to keep the type feedback 
 				// of this function to a minimum when non-keyed
 				keyed(

@@ -1,3 +1,20 @@
+## 4.0.0 (December 16, 2016)
+
+- improve performance
+- improve SSR
+- introduce non-blocking async hydration
+- introduce constructor to createClass, remove auto binding
+- remove `autoBind` method from Components
+- intergrate support for two-way data binding on events and binding data to a function
+- support empty/null render
+- support changing component root nodes
+- remove all utilities except `stream`
+- add router methods `pause`, `resume`, `set`, `resolve`, `destroy` and `location` getter/setter
+- add support for `responseType` to `request`
+- remove all helper methods from streams except `resolve` and `reject`
+- improve css compiler
+- introduce packages
+
 ## 3.4.1 (November 29, 2016)
 
 - handle setting a style property to false i.e `style.color = state.id && "red"` to remove it
@@ -42,6 +59,10 @@
 ## 3.0.4 (November 17, 2016)
 
 - patch stylesheet to support loose formatting i.e `leaving out ; at end of declaration`
+
+## 3.0.3 (November 17, 2016)
+
+- patch `dio.input` end of file `.eof`
 
 ## 3.0.2 (November 17, 2016)
 
