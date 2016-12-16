@@ -1,6 +1,6 @@
 # DIO
 
-[![dio.js](https://cdn.rawgit.com/thysultan/dio.js/master/docs/layout/assets/logo.svg)](http://thysultan.com/dio)
+[![dio.js](https://dio.js.org/assets/logo.svg)](http://thysultan.com/dio)
 
 dio is a fast javascript framework
 
