@@ -19,7 +19,7 @@ function render (subject, target) {
 			component === void 0 && (component = node._owner);
 		} else {
 			// update props
-			if (props !== void 0) {
+			if (props) {
 				if (
 					component.shouldComponentUpdate !== void 0 && 
 					component.shouldComponentUpdate(props, component.state) === false
@@ -31,7 +31,7 @@ function render (subject, target) {
 			}
 
 			// update component
-			component.forceUpdate();
+			component.forceUpdate(null);
 		}
 
 		return reconciler;

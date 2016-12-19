@@ -291,9 +291,9 @@
 			function update() {
 				data = ENV.generateData().toArray();
 				perfMonitor.startProfile("render");
-				render();
+				render(null);
 				perfMonitor.endProfile("render");
-				requestAnimationFrame(update, ENV.timeout);
+				requestAnimationFrame(update);
 			}
 
 			update();

@@ -34,7 +34,7 @@ function forceUpdate (callback) {
 
 	// callback
 	if (callback) {
-		callback.call(this);
+		typeof callback === 'function' && callback.call(this);
 	}
 }
 

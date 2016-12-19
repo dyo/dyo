@@ -3,10 +3,10 @@
  *  
  * @param  {VNode}   newNode  
  * @param  {VNode}   oldNode  
- * @param  {boolean} innerRecursive
+ * @param  {boolean} internalCall
  * @return {number}  number
  */
-function patch (newNode, oldNode, innerRecursive) {
+function patch (newNode, oldNode, internalCall) {
 	var newNodeType = newNode.nodeType;
 	var oldNodeType = oldNode.nodeType;
 
@@ -25,7 +25,7 @@ function patch (newNode, oldNode, innerRecursive) {
 		} 
 	}
 	// key operation
-	else if (innerRecursive && (newNode.props.key !== void 0 || oldNode.props.key !== void 0)) {
+	else if (internalCall && (newNode.props.key !== void 0 || oldNode.props.key !== void 0)) {
 		return 5;
 	}
 	// replace operation
@@ -76,8 +76,10 @@ function patch (newNode, oldNode, innerRecursive) {
 			// newNode has children
 			else {
 				var parentNode = oldNode._node;
-				var hasKeys = false;
+
+				var hasKeys  = false;
 				var diffKeys = false;
+				
 				var oldKeys;
 				var newKeys;
 

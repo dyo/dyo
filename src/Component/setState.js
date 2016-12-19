@@ -11,7 +11,7 @@ function setState (newState, callback) {
 
 	updateState(this.state, newState);
 
-	callback ? this.forceUpdate(callback) : this.forceUpdate();
+	this.forceUpdate(callback || null);
 }
 
 

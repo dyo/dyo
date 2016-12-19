@@ -62,11 +62,11 @@ class Hello extends dio.Component {
 
 #### componentWillUpdate
 
-componentWillUpdate is a method called before the component updates.
+componentWillUpdate is a method called before the component updates and receives as arguments the new props and new state.
 
 ```javascript
 class Hello extends dio.Component {
-	componentWillUpdate () {
+	componentWillUpdate (newProps, newState) {
 		// do something before an update
 	}
 }
@@ -74,11 +74,11 @@ class Hello extends dio.Component {
 
 #### componentDidUpdate
 
-similar to componentWillUpdate, componentDidUpdate is called after the component updates.
+similar to componentWillUpdate, componentDidUpdate is called after the component updates and receives as arguments the new props and new state. 
 
 ```javascript
 class Hello extends dio.Component {
-	componentDidUpdate () {
+	componentDidUpdate (newProps, newState) {
 		// do something after an update
 	}
 }
@@ -86,11 +86,11 @@ class Hello extends dio.Component {
 
 #### componentWillMount
 
-componentWillMount is a method called before the component is mounted to the document.
+componentWillMount is a method called before the component is mounted to the document and recieves as an argument the element being added to the document.
 
 ```javascript
 class Hello extends dio.Component {
-	componentWillMount () {
+	componentWillMount (element) {
 		// do something before mounting
 	}
 }
@@ -98,11 +98,11 @@ class Hello extends dio.Component {
 
 #### componentDidMount
 
-similar to componentWillMount, componentDidMount is called after the component is mounted to the document.
+similar to componentWillMount, componentDidMount is called after the component is mounted to the document and recieves as an argument the element that was added to the document.
 
 ```javascript
 class Hello extends dio.Component {
-	componentDidMount () {
+	componentDidMount (element) {
 		// do something after mounting
 	}
 }
@@ -110,11 +110,11 @@ class Hello extends dio.Component {
 
 #### componentWillUnmount
 
-similar to componentWillMount, componentWillUnmount is called before the component is un-mounted from the document.
+similar to componentWillMount, componentWillUnmount is called before the component is un-mounted from the document and receives as an argument the element that is about to be removed.
 
 ```javascript
 class Hello extends dio.Component {
-	componentWillUnmount () {
+	componentWillUnmount (element) {
 		// do something before un-mounting
 	}
 }
@@ -126,7 +126,7 @@ componentWillRecieveProps is called before the component recieves new props.
 
 ```javascript
 class Hello extends dio.Component {
-	componentWillUnmount () {
+	componentWillReceiveProps () {
 		// do something before new props are recieved
 	}
 }

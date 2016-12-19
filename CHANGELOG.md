@@ -1,3 +1,8 @@
+## 4.0.1 (December 19, 2016)
+
+- improvement in handling callbacks passed to `.forceUpdate`
+- bump css compiler
+
 ## 4.0.0 (December 16, 2016)
 
 - improve performance
