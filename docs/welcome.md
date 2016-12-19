@@ -1,6 +1,6 @@
 dio is a fast javascript framework
 
-<p>[Install v4.0.0](./#installation "button")</p>
+<p>[Install v4.0.1](./#installation "button")</p>
 
 ```javascript
 function Main () {
