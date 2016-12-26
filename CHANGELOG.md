@@ -1,10 +1,11 @@
 ## 5.0.0 (December 26, 2016)
 
-- render is now no-destructive to the mount node
-- hydration is now configurable `.render(vnode, target, null, true)`
 - render now accepts a callback argument `.render(vnode, target, callback(root))`
 - support string refs
 - add shallow render `dio.shallow`
+- render is now no-destructive to the mount node
+- hydration is now configurable `.render(vnode, target, null, true)`
+- hydration is the only breaking change, pre 5.0 used an attribute `hydrate`
 
 
 ## 4.0.1 (December 19, 2016)

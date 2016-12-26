@@ -996,7 +996,7 @@
 		var oldNode = this.VNode;
 	
 		// component returns a different root node
-		if (newNode.type !== oldNode.type) {	
+		if (newNode.type !== oldNode.type) {
 			// replace node
 			replaceNode(newNode, oldNode, oldNode.DOMNode.parentNode, createNode(newNode, null, null));
 	
@@ -1007,9 +1007,11 @@
 			oldNode.children = newNode.children;
 			oldNode.DOMNode  = newNode.DOMNode;
 			oldNode.instance = newNode.instance;
+	
+			patch(newNode, oldNode);
 		} else {
 			// patch node
-			patch(newNode, oldNode, false);
+			patch(newNode, oldNode, newNode.nodeType, oldNode.nodeType);
 		}
 	
 		if (this.componentDidUpdate) {
@@ -1017,8 +1019,8 @@
 		}
 	
 		// callback
-		if (callback) {
-			typeof callback === 'function' && callback.call(this);
+		if (callback && typeof callback === 'function') {
+			callback.call(this);
 		}
 	}
 	
@@ -1227,201 +1229,184 @@
 	 * patch nodes
 	 *  
 	 * @param  {VNode}   newNode  
-	 * @param  {VNode}   oldNode  
-	 * @param  {boolean} internalCall
+	 * @param  {VNode}   oldNode 
+	 * @param  {number}  newNodeType 
+	 * @param  {number}  oldNodeType
 	 * @return {number}
 	 */
-	function patch (newNode, oldNode, internalCall) {
-		var newNodeType = newNode.nodeType;
-		var oldNodeType = oldNode.nodeType;
+	function patch (newNode, oldNode, newNodeType, oldNodeType) {
+		// if currentNode and oldNode are the identical, exit early
+		if (newNode !== oldNode) {		
+			// extract node from possible component node
+			var currentNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
 	
-		// remove operation
-		if (newNodeType === 0) { 
-			return 1; 
-		}
-		// add operation
-		else if (oldNodeType === 0) { 
-			return 2;
-		}
-		// text operation
-		else if (newNodeType === 3 && oldNodeType === 3) { 
-			if (newNode.children !== oldNode.children) {
-				return 3; 
+			// a component
+			if (oldNodeType === 2) {
+				var oldComponent = oldNode.instance;
+				var newComponent = newNode.instance;
+	
+				var newState = newComponent ? newComponent.state : oldComponent.state;
+				var newProps = newNode.props;
+	
+				// component with shouldComponentUpdate
+				if (
+					oldComponent.shouldComponentUpdate && 
+					oldComponent.shouldComponentUpdate(newProps, newState) === false
+				) {
+					// exit early
+					return;
+				}
+	
+				// component with componentWillUpdate
+				if (oldComponent.componentWillUpdate) {
+					oldComponent.componentWillUpdate(newProps, newState);
+				}
 			}
-		}
-		// key operation
-		else if (internalCall && (newNode.props.key !== void 0 || oldNode.props.key !== void 0)) {
-			return 5;
-		}
-		// replace operation
-		else if (newNode.type !== oldNode.type) {
-			return 4;
-		}
-		// recursive
-		else {
-			// if currentNode and oldNode are the identical, exit early
-			if (newNode !== oldNode) {		
-				// extract node from possible component node
-				var currentNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
 	
-				// a component
-				if (oldNodeType === 2) {
-					var oldComponent = oldNode.instance;
-					var newComponent = newNode.instance;
+			// references, children & children length
+			var newChildren = currentNode.children;
+			var oldChildren = oldNode.children;
+			var newLength   = newChildren.length;
+			var oldLength   = oldChildren.length;
 	
-					// a component with shouldComponentUpdate method
-					if (
-						oldComponent.shouldComponentUpdate && 
-						oldComponent.shouldComponentUpdate(newNode.props, newComponent.state) === false
-					) {
-						// exit early
-						return 0;
+			// new children length is 0 clear/remove all children
+			if (newLength === 0) {
+				// but only if old children is not already cleared
+				if (oldLength !== 0) {
+					oldNode.DOMNode.textContent = '';
+					oldNode.children = newChildren;
+				}	
+			}
+			// newNode has children
+			else {
+				var parentNode = oldNode.DOMNode;
+	
+				var hasKeys = false;
+				var diffKeys = false;
+				
+				var oldKeys;
+				var newKeys;
+	
+				// for loop, the end point being which ever is the 
+				// greater value between newLength and oldLength
+				for (var i = 0; i < newLength || i < oldLength; i++) {
+					var newChild = newChildren[i] || nodEmpty;
+					var oldChild = oldChildren[i] || nodEmpty;
+	
+					var newChildType = newChild.nodeType;
+					var oldChildType = oldChild.nodeType;
+	
+					var action = 0;
+	
+					// remove
+					if (newChildType === 0) {
+						action = 1;
+					}
+					// add
+					else if (oldChildType === 0) {
+						action = 2;
+					}
+					// text
+					else if (newChildType === 3 && oldChildType === 3) {
+						if (newChild.children !== oldChild.children) {
+							action = 3;
+						}
+					}
+					// keys
+					else if (newChild.props.key !== void 0 || oldChild.props.key !== void 0) {
+						action = 4;
+					}
+					// replace
+					else if (newChild.type !== oldChild.type) {
+						action = 5;
+					}
+					// noop
+					else {
+						patch(newChild, oldChild, newChildType, oldNodeType);
 					}
 	
-					// a component with a componentWillUpdate method
-					if (oldComponent.componentWillUpdate) {
-						oldComponent.componentWillUpdate(newNode.props, newComponent.state);
-					}
-				}
+					// patch
+					if (action !== 0) {
+						if (diffKeys) {
+							action = 4;
+						}
 	
-				// references, children & children length
-				var newChildren = currentNode.children;
-				var oldChildren = oldNode.children;
-				var newLength   = newChildren.length;
-				var oldLength   = oldChildren.length;
+						// remove operation
+						if (action === 1) {
+							// remove dom node, remove old child
+							removeNode(oldChildren.pop(), parentNode);
+						} 
+						// add operation
+						else if (action === 2) {
+							// append dom node, push new child
+							appendNode(oldChildren[oldChildren.length] = newChild, parentNode, createNode(newChild, null, null));
+						}
+						// text operation
+						else if (action === 3) {
+							// replace dom node text, replace old child text
+							oldChild.DOMNode.nodeValue = oldChild.children = newChild.children;
+						}
+						// keyed operation
+						else if (action === 4) {
+							var newKey = newChild.props.key;
+							var oldKey = oldChild.props.key;
 	
-				// new children length is 0 clear/remove all children
-				if (newLength === 0) {
-					// but only if old children is not already cleared
-					if (oldLength !== 0) {
-						oldNode.DOMNode.textContent = '';
-						oldNode.children = newChildren;
-					}	
-				}
-				// newNode has children
-				else {
-					var parentNode = oldNode.DOMNode;
-	
-					var hasKeys  = false;
-					var diffKeys = false;
-					
-					var oldKeys;
-					var newKeys;
-	
-					// for loop, the end point being which ever is the 
-					// greater value between newLength and oldLength
-					for (var i = 0; i < newLength || i < oldLength; i++) {
-						var newChild = newChildren[i] || nodEmpty;
-						var oldChild = oldChildren[i] || nodEmpty;
-						var action   = patch(newChild, oldChild, true);
-	
-						// 0 - noop
-						// 1 - remove, 
-						// 2 - add, 
-						// 3 - text update, 
-						// 4 - replace, 
-						// 5 - key
-						if (action !== 0) {
-							if (diffKeys) {
-								action = 5;
+							// initialize key hash maps
+							if (hasKeys === false) {
+								hasKeys = true;
+								oldKeys = {};
+								newKeys = {};
 							}
 	
-							switch (action) {
-								// remove operation
-								case 1: {
-									// remove dom node, remove old child
-									removeNode(oldChildren.pop(), parentNode);
-	
-									break;
+							// register to patch keys if a mis-match is found
+							if (newKey !== oldKey) {
+								if (diffKeys === false) {
+									diffKeys = true;
 								}
-								// add operation
-								case 2: {
-									// append dom node, push new child
-									appendNode(
-										oldChildren[oldChildren.length] = newChild, 
-										parentNode, 
-										createNode(newChild, null, null)
-									);
-	
-									break;
-								}
-								// text operation
-								case 3: {
-									// replace dom node text, replace old child text
-									oldChild.DOMNode.nodeValue = oldChild.children = newChild.children;
-	
-									break;
-								}
-								// replace operation
-								case 4: {
-									// replace dom node, replace old child
-									replaceNode(
-										oldChildren[i] = newChild, 
-										oldChild, 
-										parentNode, 
-										createNode(newChild, null, null)
-									);
-	
-									break;
-								}
-								// keyed operation
-								case 5: {
-									var newKey = newChild.props.key;
-									var oldKey = oldChild.props.key;
-	
-									// initialize key hash maps
-									if (hasKeys === false) {
-										hasKeys = true;
-										oldKeys = {};
-										newKeys = {};
-									}
-	
-									// opt for keyed diffing if atleast one node has different keys
-									if (diffKeys === false && newKey !== oldKey) {
-										diffKeys = true;
-									}
-	
-									// register keys
-									newKeys[newKey] = (newChild.index = i, newChild);
-									oldKeys[oldKey] = (oldChild.index = i, oldChild);
-	
-									break;
-								}
+							} else {
+								patch(newChild, oldChild, newChildType, oldNodeType);
 							}
+	
+							// register key
+							newKeys[newKey] = (newChild.index = i, newChild);
+							oldKeys[oldKey] = (oldChild.index = i, oldChild);
+						}
+						else if (action === 5) {
+							// replace dom node, replace old child
+							replaceNode(oldChildren[i] = newChild, oldChild, parentNode, createNode(newChild, null, null));
 						}
 					}
 				}
+			}
 	
-				// reconcile keyed children
-				if (diffKeys) {
-					// offloaded to another function to keep the type feedback 
-					// of this function to a minimum when non-keyed
-					keyed(
-						newKeys, 
-						oldKeys, 
-						parentNode, 
-						oldNode, 
-						newChildren, 
-						oldChildren, 
-						newLength, 
-						oldLength
-					);
-				}
+			// reconcile keyed children
+			if (diffKeys) {
+				// offloaded to another function to keep the type feedback 
+				// of this function to a minimum when non-keyed
+				keyed(
+					newKeys, 
+					oldKeys, 
+					parentNode, 
+					newNode,
+					oldNode, 
+					newChildren, 
+					oldChildren, 
+					newLength, 
+					oldLength
+				);
+			}
 	
-				// patch props only if oldNode is not a textNode 
-				// and the props objects of the two nodes are not equal
-				if (currentNode.props !== oldNode.props) {
-					patchProps(currentNode, oldNode); 
-				}
+			// patch props only if oldNode is not a textNode 
+			// and the props objects of the two nodes are not equal
+			if (currentNode.props !== oldNode.props) {
+				patchProps(currentNode, oldNode);
+			}
 	
-				// a component with a componentDidUpdate method
-				if (oldNodeType === 2 && oldComponent.componentDidUpdate) {
-					oldComponent.componentDidUpdate(newNode.props, newComponent.state);
-				}
+			// component with componentDidUpdate
+			if (oldNodeType === 2 && oldComponent.componentDidUpdate) {
+				oldComponent.componentDidUpdate(newProps, newState);
 			}
 		}
-	
-		return 0;
 	}
 	
 	
@@ -1431,19 +1416,21 @@
 	 * @param {Object}  newKeys
 	 * @param {Object}  oldKeys
 	 * @param {Node}    parentNode
+	 * @param {VNode}   newNode
 	 * @param {VNode}   oldNode
 	 * @param {VNode[]} newChildren
 	 * @param {VNode[]} oldChildren
 	 * @param {number}  newLength
 	 * @param {number}  oldLength
 	 */
-	function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
+	function keyed (newKeys, oldKeys, parentNode, newNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
 		var reconciled = new Array(newLength);
 		var children   = parentNode.children;
 		var length     = children.length;
 		var delOffset  = 0;
 		var addOffset  = 0;
 	
+		// old children
 		for (var i = 0; i < oldLength; i++) {
 			var oldChild = oldChildren[i];
 			var oldKey   = oldChild.props.key;
@@ -1465,6 +1452,7 @@
 		// update length
 		length -= delOffset;
 	
+		// new children
 		for (var j = 0; j < newLength; j++) {
 			var newChild = newChildren[j];
 			var newKey   = newChild.props.key;
@@ -1476,10 +1464,10 @@
 	
 				// moved
 				if (index+addOffset !== j) {
-					parentNode.insertBefore(oldChild.DOMNode, children[j]);
+					parentNode.insertBefore(children[index], children[j]);
 				}
 	
-				reconciled[j] = oldChild; 	
+				reconciled[j] = oldChild;
 			} else {
 				reconciled[j] = newChild;
 	

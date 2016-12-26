@@ -12,7 +12,7 @@ function forceUpdate (callback) {
 	var oldNode = this.VNode;
 
 	// component returns a different root node
-	if (newNode.type !== oldNode.type) {	
+	if (newNode.type !== oldNode.type) {
 		// replace node
 		replaceNode(newNode, oldNode, oldNode.DOMNode.parentNode, createNode(newNode, null, null));
 
@@ -23,9 +23,11 @@ function forceUpdate (callback) {
 		oldNode.children = newNode.children;
 		oldNode.DOMNode  = newNode.DOMNode;
 		oldNode.instance = newNode.instance;
+
+		patch(newNode, oldNode);
 	} else {
 		// patch node
-		patch(newNode, oldNode, false);
+		patch(newNode, oldNode, newNode.nodeType, oldNode.nodeType);
 	}
 
 	if (this.componentDidUpdate) {
@@ -33,8 +35,8 @@ function forceUpdate (callback) {
 	}
 
 	// callback
-	if (callback) {
-		typeof callback === 'function' && callback.call(this);
+	if (callback && typeof callback === 'function') {
+		callback.call(this);
 	}
 }
 

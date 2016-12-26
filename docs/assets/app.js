@@ -90,7 +90,8 @@
 						{text: 'Installation', href: 'installation.md'},
 						{text: 'API Reference', href: 'api.md'},
 						{text: 'Examples', href: 'examples.md'},
-						{text: 'Change Log', href: 'change-log.md'}
+						{text: 'FAQ', href: 'faq.md'},
+						{text: 'Changelog', href: 'change-log.md'}
 					]
 				}
 			},
