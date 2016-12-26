@@ -1,5 +1,5 @@
 /**
- * virtual empty node factory
+ * empty shape
  * 
  * @return {VNode}
  */
@@ -9,9 +9,9 @@ function VEmpty () {
 		type: 'noscript', 
 		props: objEmpty, 
 		children: [], 
-		_node: null,
-		_owner: null,
-		_index: null
+		DOMNode: null,
+		instance: null,
+		index: null
 	};
 }
 

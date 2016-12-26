@@ -5,11 +5,11 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Hydration Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="../assets/bundled/dio.min.js"></script>
+		<script src="../assets/dio.min.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
-		<div class="app" hydrate></div>
+		<div class="app"></div>
 		<script>
 			function Component () {
 				return {
@@ -17,6 +17,7 @@
 						return (
 							h('ul', 
 								{
+									className: 'hello',
 									onClick: function () {
 										self.forceUpdate();
 									}
@@ -24,8 +25,11 @@
 								h('li', Date.now()),
 								h('li', 'Second Year'),
 								h('li', 'Third Year', 'Again'),
-								h('div', h('div', {ref: el => console.log(1, el)}, 'Nested')),
-								h(Text)
+								h(Text),
+								h('div', h('div', {ref: function () {
+									var end = performance.now();
+									// console.log(end-start);
+								}}, 'Nested'))
 							)
 						)
 					}
@@ -36,7 +40,7 @@
 				return {
 					displayName: 'Text',
 					render: function () {
-						return h('h1', {ref: el => console.log(2, el)}, 'Nested Component');
+						return h('h1', 'Nested Component');
 					}
 				}
 			}
@@ -46,7 +50,8 @@
 			// server-Side render mock
 			document.querySelector('.app').innerHTML = html;
 			
-			dio.render(h(Component), '.app');
+			// var start = performance.now();
+			dio.render(h(Component), '.app', function (el) { /*console.log(el)*/ }, true);			
 		</script>
 	</body>
 </html>

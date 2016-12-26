@@ -3,20 +3,27 @@
  * 
  * @param  {(Component|VNode)} subject
  * @param  {(Node|string)}     target
- * @return {function(Object=)}
+ * @param  {function(Node)=}   callback
+ * @param  {boolean=}          hydration
+ * @return {function(Object=)} reconciler
  */
-function render (subject, target) {
+function render (subject, target, callback, hydration) {
+	var initial = true;
+	var component;	
+	var vnode;
+	var element;
+	
 	// renderer
 	function reconciler (props) {
 		if (initial) {
 			// dispatch mount
-			mount(element, node);
+			appendNode(vnode, element, createNode(vnode, null, null));
 
 			// register mount has been dispatched
 			initial = false;
 
-			// assign component
-			component === void 0 && (component = node._owner);
+			// assign component instance
+			component = vnode.instance;
 		} else {
 			// update props
 			if (props) {
@@ -37,54 +44,52 @@ function render (subject, target) {
 		return reconciler;
 	}
 
-	var component;
-	var node;
-	var element;
-
 	if (subject.render !== void 0) {
 		// create component from object
-		node = VComponent(createClass(subject));
+		vnode = VComponent(createClass(subject));
 	} else if (subject.type === void 0) {
 		// fragment/component
-		node = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
+		vnode = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
 	} else {
-		node = subject;
+		vnode = subject;
 	}
 
 	if (server) {
 		return reconciler;
 	}
 
-	// retrieve mount element
+	// dom element
   	if (target != null && target.nodeType != null) {
-	  // target is a dom element
-	  element = target;
+  		// target is a dom element
+  		element = target === document ? docuemnt.body : target;
 	} else {
-	  // target might be a selector
-	  target = document.querySelector(target);
+  		// selector
+  		target = document.querySelector(target);
 
-	  // default to document.body if no match/document
-	  element = (target === null || target === document) ? document.body : target;
+  		// default to document.body if no match/document
+  		element = (target === null || target === document) ? document.body : target;
 	}
 
-	// initial mount registry
-	var initial = true;
-
 	// hydration
-	if (element.hasAttribute('hydrate')) {
+	if (hydration === true) {
 		// dispatch hydration
-		hydrate(element, node, 0, nodEmpty, null);
-
-		// cleanup element hydrate attributes
-		element.removeAttribute('hydrate');
+		hydrate(element, vnode, 0, nodEmpty, null);
 
 		// register mount has been dispatched
 		initial = false;
 
 		// assign component
-		component === void 0 && (component = node._owner); 
+		component = vnode.instance;
 	} else {
+		// destructive mount
+		hydration === false && (element.textContent = '');
+		
 		reconciler();
+	}
+
+	// if present call root components context, passing root node as argument
+	if (callback && typeof callback === 'function') {
+		callback.call(component, vnode.DOMNode);
 	}
 
 	return reconciler;

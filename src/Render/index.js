@@ -7,11 +7,12 @@
  */
 	
 
-import 'hydrate';
 import 'render';
-import 'mount';
 import 'patch';
 import 'keyed';
+import 'hydrate';
+import 'refs';
+import 'shallow';
 import 'Props/assignProps';
 import 'Props/assignProp';
 import 'Props/patchProps';
@@ -25,9 +26,9 @@ import 'Nodes/appendNode';
 import 'Nodes/insertNode';
 import 'Nodes/removeNode';
 import 'Nodes/replaceNode';
+import 'Events/addEventListener';
 import 'Events/extractEventName';
 import 'Events/isEventName';
 import 'Events/bindEvent';
 import 'Components/extractComponent';
 import 'Components/extractRender';
-

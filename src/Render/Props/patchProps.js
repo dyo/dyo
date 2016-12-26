@@ -10,7 +10,7 @@ function patchProps (newNode, oldNode) {
 
 	// if diff length > 0 apply diff
 	if (length !== 0) {
-		var target = oldNode._node;
+		var target = oldNode.DOMNode;
 
 		for (var i = 0; i < length; i++) {
 			var prop = diff[i];

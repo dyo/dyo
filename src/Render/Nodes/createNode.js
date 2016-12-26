@@ -11,24 +11,22 @@ function createNode (subject, component, namespace) {
 	
 	if (nodeType === 3) {
 		// textNode
-		return subject._node = document.createTextNode(subject.children);
+		return subject.DOMNode = document.createTextNode(subject.children);
 	} else {
-		// element
-		var element;
-		var props;
-
-		if (subject._node) {
-			// hoisted vnode
-			props   = subject.props;
-			element = subject._node;
+		if (subject.DOMNode !== null) {
+			// clone
+			return subject.DOMNode = subject.DOMNode.cloneNode(true);
 		} else {
 			// create
 			var newNode  = nodeType === 2 ? extractComponent(subject) : subject;
 			var type     = newNode.type;
 			var children = newNode.children;
+			var props    = newNode.props;
 			var length   = children.length;
+			var element;
 
-			props = newNode.props;
+			// update nodeType
+			nodeType = newNode.nodeType;
 
 			// assign namespace
 			if (props.xmlns !== void 0) { 
@@ -44,19 +42,19 @@ function createNode (subject, component, namespace) {
 
 				element = document.createElementNS(namespace, type);
 			} else {
-				if (newNode.nodeType === 11) {
-					element = document.createDocumentFragment();
+				if (nodeType !== 11) {
+					element = document.createElement(type);					
 				} else {
-					element = document.createElement(type);
+					element = document.createDocumentFragment();
 				}
 			}
 
 			// vnode has component attachment
-			if (subject._owner !== null) {
-				(component = subject._owner)._vnode._node = element;
+			if (subject.instance !== null) {
+				(component = subject.instance).VNode.DOMNode = element;
 
 				// stylesheets
-				if (component.stylesheet) {
+				if (component.stylesheet && nodeType !== 11) {
 					if (component.stylesheet.styler === void 0) {
 						// create
 						stylesheet(component, subject.type)(element);
@@ -72,14 +70,14 @@ function createNode (subject, component, namespace) {
 				for (var i = 0; i < length; i++) {
 					var newChild = children[i];
 
-					// hoisted nodes, clone
-					if (newChild._node) {
+					// clone VNode
+					if (newChild.DOMNode !== null) {
 						newChild = children[i] = VNode(
 							newChild.nodeType,
 							newChild.type,
 							newChild.props,
 							newChild.children,
-							newChild._node.cloneNode(true),
+							newChild.DOMNode,
 							null,
 							null
 						);
@@ -92,19 +90,15 @@ function createNode (subject, component, namespace) {
 
 			if (props !== objEmpty) {
 				// refs
-				if (props.ref) {
-					props.ref.call(component, element);
-				}
+				props.ref && refs(props.ref, component, element);
 
 				// initialize props
 				assignProps(element, props, false, component);
 			}
 
 			// cache element reference
-			subject._node = element;
+			return subject.DOMNode = element;
 		}
-
-		return element;
 	}
 }
 

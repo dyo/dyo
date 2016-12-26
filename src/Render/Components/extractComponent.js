@@ -4,23 +4,23 @@
  * @param  {VNode} subject
  * @return {VNode} 
  */
-function extractComponent (subject, mutate) {
-	var candidate;
+function extractComponent (subject) {
 	var type = subject.type;
-
-	if (type._component !== void 0) {
+	var candidate;
+	
+	if (type.COMPCache !== void 0) {
 		// cache
-		candidate = type._component;
-	} else if (type.constructor === Function && type.prototype.render === void 0) {
+		candidate = type.COMPCache;
+	} else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
 		// function components
-		candidate = type._component = createClass(type);
+		candidate = type.COMPCache = createClass(type);
 	} else {
 		// class / createClass components
 		candidate = type;
 	}
 
 	// create component instance
-	var component = subject._owner = new candidate(subject.props);
+	var component = subject.instance = new candidate(subject.props);
 
 	// add children to props if not empty
 	if (subject.children.length !== 0) {
@@ -45,6 +45,6 @@ function extractComponent (subject, mutate) {
 	subject.children = vnode.children;
 
 	// assign reference to component and return vnode
-	return component._vnode = vnode;
+	return component.VNode = vnode;
 }
 

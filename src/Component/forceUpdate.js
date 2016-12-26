@@ -9,20 +9,20 @@ function forceUpdate (callback) {
 	}
 
 	var newNode = extractRender(this);
-	var oldNode = this._vnode;
+	var oldNode = this.VNode;
 
 	// component returns a different root node
-	if (newNode.type !== oldNode.type) {		
+	if (newNode.type !== oldNode.type) {	
 		// replace node
-		replaceNode(newNode, oldNode, oldNode._node.parentNode, createNode(newNode, null, null));
+		replaceNode(newNode, oldNode, oldNode.DOMNode.parentNode, createNode(newNode, null, null));
 
 		// hydrate newNode
 		oldNode.nodeType = newNode.nodeType;
 		oldNode.type     = newNode.type;
 		oldNode.props    = newNode.props;
 		oldNode.children = newNode.children;
-		oldNode._node    = newNode._node;
-		oldNode._owner   = newNode._owner;
+		oldNode.DOMNode  = newNode.DOMNode;
+		oldNode.instance = newNode.instance;
 	} else {
 		// patch node
 		patch(newNode, oldNode, false);

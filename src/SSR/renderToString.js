@@ -7,7 +7,7 @@
  */
 function renderToString (subject, template) {
 	var lookup = {styles: '', ids: {}};
-	var body   = renderVNodeToString(renderVNode(subject), lookup);
+	var body   = renderVNodeToString(renderVNode(subject), lookup, true);
 	var styles = lookup.styles;
 	var style  = styles.length !== 0 ? '<style>'+styles+'<style>' : '';
 

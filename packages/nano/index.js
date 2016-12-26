@@ -1,4 +1,4 @@
-/*!
+/*
  *  ___ __ __  
  * (   (  /  \ 
  *  ) ) )( () )
@@ -22,13 +22,18 @@
 	'use strict';
 
 
-	import '../../../src/Constants/core';
-	import '../../../src/Utilities/random';
-	import '../../../src/Utilities/each';
-	import '../../../src/Stylesheet/';
-	import '../../../src/Element/';
-	import '../../../src/Component/';
-	import '../../../src/Render/';
+	import '../../src/Constants/main';
+	import '../../src/Utilities/random';
+	import '../../src/Utilities/each';
+	import '../../src/Shapes/VText';
+	import '../../src/Shapes/VElement';
+	import '../../src/Shapes/VSvg';
+	import '../../src/Shapes/VFragment';
+	import '../../src/Shapes/VComponent';
+	import '../../src/Stylesheet/';
+	import '../../src/Element/';
+	import '../../src/Component/';
+	import '../../src/Render/';
 
 
 	/**
@@ -51,6 +56,7 @@
 		cloneElement:     cloneElement,
 		createFactory:    createFactory,
 
+		// shapes
 		VText:            VText,
 		VElement:         VElement,
 		VSvg:             VSvg,
@@ -61,6 +67,7 @@
 
 		// render
 		render:           render,
+		shallow:          shallow,
 
 		// components
 		Component:        Component,

@@ -83,9 +83,9 @@ function watcher (parent, builds) {
 
 function bootstrap () {
 	var builds = {
-		server: ['../packages/dio-server/src/', '../packages/dio-server/', '../packages/dio-server/dio.js', 'index.js'],
-		core: ['../packages/dio-core/src/', '../packages/dio-core/', '../packages/dio-core/dio.js', 'index.js'],
-		main: ['../src/', '../src/', '../dio.js', 'index.js']
+		nano: ['../packages/nano/', '../packages/nano/', '../packages/nano/dio.js', 'index.js'],
+		main: ['../src/', '../src/', '../dio.js', 'index.js'],
+		docs: ['../src/', '../src/', '../docs/assets/dio.js', 'index.js'],
 	};
 
 	// log watching status
@@ -105,7 +105,7 @@ function bootstrap () {
 
 		build(directory, destination, entry, ext);
 
-		if (name === 'main') {
+		if (name === 'main' || name === 'docs') {
 			fs.watch(directory, watcher(parent, builds));
 			walk(directory, watch);
 		} else {

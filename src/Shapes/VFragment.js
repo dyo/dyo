@@ -1,5 +1,5 @@
 /**
- * virtual fragment node factory
+ * fragment shape
  * 
  * @param  {VNode[]} children
  * @return {VNode}
@@ -10,9 +10,9 @@ function VFragment (children) {
 		type: '@', 
 		props: objEmpty, 
 		children: children,
-		_node: null,
-		_owner: null,
-		_index: null
+		DOMNode: null,
+		instance: null,
+		index: null
 	};
 }
 

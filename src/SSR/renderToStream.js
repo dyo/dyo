@@ -78,14 +78,16 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 		value: function (subject, flush, stack, lookup) {
 			// if there is something pending in the stack give that priority
 			if (flush && stack.length !== 0) {
-				stack.pop()(this); return;
+				stack.pop()(this); 
+				return;
 			}
 
 			var nodeType = subject.nodeType;
 
 			// text node, sync
 			if (nodeType === 3) {
-				this.push(escape(subject.children)); return;
+				this.push(escape(subject.children)); 
+				return;
 			}
 
 			var vnode;
@@ -93,8 +95,9 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 			// if component
 			if (nodeType === 2) {
 				// if cached
-				if (subject.type._html !== void 0) {
-					this.push(subject.type._html); return;
+				if (subject.type.HTMLCache !== void 0) {
+					this.push(subject.type.HTMLCache); 
+					return;
 				} else {
 					vnode = extractComponent(subject);
 				}
@@ -108,7 +111,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 			var children = vnode.children;
 
 			var propsStr = renderStylesheetToString(
-				nodeType, subject._owner, subject.type, renderPropsToString(props), lookup
+				nodeType, subject.instance, subject.type, renderPropsToString(props), lookup
 			);
 
 			if (isVoid[type] === 0) {

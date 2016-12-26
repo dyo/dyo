@@ -3,11 +3,10 @@
  *
  * @param  {string}    name
  * @param  {Object}    value
- * @param  {Object}    cache
  * @param  {Component} component
  * @return {function}
  */
-function bindEvent (name, value, cache, component) {
+function bindEvent (name, value, component) {
 	var bind = value.bind;
 	var data = value.with;
 
@@ -16,11 +15,11 @@ function bindEvent (name, value, cache, component) {
 	if (typeof bind === 'object') {
 		var property = bind.property || data;
 
-		return cache[name] = function (e) {
-			preventDefault && e.preventDefault();
-
-			var target = e.currentTarget || e.target || this;
+		return function (event) {
+			var target = event.currentTarget || event.target;
 			var value  = data in target ? target[data] : target.getAttribute(data);
+
+			preventDefault && event.preventDefault();
 
 			// update component state
 			component.state[property] = value;
@@ -29,9 +28,10 @@ function bindEvent (name, value, cache, component) {
 			component.forceUpdate();
 		}
 	} else {
-		return cache[name] = function (e) {
-			preventDefault && e.preventDefault();
-			bind.call(data, data, e);
+		return function (event) {
+			preventDefault && event.preventDefault();
+			bind.call(data, data, event);
 		}
 	}
 }
+

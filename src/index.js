@@ -1,4 +1,4 @@
-/*!
+/*
  *  ___ __ __  
  * (   (  /  \ 
  *  ) ) )( () )
@@ -24,6 +24,7 @@
 
 	import 'Constants/';
 	import 'Utilities/';
+	import 'Shapes/';
 	import 'Stylesheet/';
 	import 'Element/';
 	import 'Component/';
@@ -49,20 +50,22 @@
 	}
 
 	return {
+		// version
+		version:          version,
+
+		// alias
+		h:                createElement,
+		
 		// elements
 		createElement:    createElement,
 		isValidElement:   isValidElement,
 		cloneElement:     cloneElement,
 		createFactory:    createFactory,
-		VText:            VText,
-		VElement:         VElement,
-		VSvg:             VSvg,
-		VFragment:        VFragment,
-		VComponent:       VComponent,
 		DOM:              DOM,
 
 		// render
 		render:           render,
+		shallow:          shallow,
 		renderToString:   renderToString,
 		renderToStream:   renderToStream,
 		renderToCache:    renderToCache,
@@ -77,14 +80,16 @@
 		combineReducers:  combineReducers,
 		
 		// utilities
-		request:          http(),
+		request:          request,
 		router:           router,
 		stream:           stream,
 
-		// version
-		version:          version,
-
-		// alias
-		h:                createElement,
+		// shapes
+		VText:            VText,
+		VElement:         VElement,
+		VSvg:             VSvg,
+		VFragment:        VFragment,
+		VComponent:       VComponent,
+		VRequest:         VRequest,
 	};
 }));

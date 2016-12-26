@@ -3,22 +3,19 @@
  *
  * @param {Object}  newKeys
  * @param {Object}  oldKeys
- * @param {VNode}   oldNode
  * @param {Node}    parentNode
+ * @param {VNode}   oldNode
  * @param {VNode[]} newChildren
  * @param {VNode[]} oldChildren
  * @param {number}  newLength
  * @param {number}  oldLength
  */
-
-// var index = 0;
-
 function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
-	var reconciled   = new Array(newLength);
-	var children     = parentNode.children;
-	var length       = children.length;
-	var delOffset    = 0;
-	var addOffset    = 0;
+	var reconciled = new Array(newLength);
+	var children   = parentNode.children;
+	var length     = children.length;
+	var delOffset  = 0;
+	var addOffset  = 0;
 
 	for (var i = 0; i < oldLength; i++) {
 		var oldChild = oldChildren[i];
@@ -34,7 +31,7 @@ function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren,
 
 		// update old indexes
 		if (delOffset !== 0) {
-			oldChild._index -= delOffset;
+			oldChild.index -= delOffset;
 		}
 	}
 
@@ -48,11 +45,11 @@ function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren,
 
 		// exists
 		if (oldChild) {
-			var index = oldChild._index;
+			var index = oldChild.index;
 
 			// moved
 			if (index+addOffset !== j) {
-				parentNode.insertBefore(oldChild._node, children[j]);
+				parentNode.insertBefore(oldChild.DOMNode, children[j]);
 			}
 
 			reconciled[j] = oldChild; 	

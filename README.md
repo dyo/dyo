@@ -2,11 +2,10 @@
 
 [![dio.js](https://dio.js.org/assets/logo.svg)](https://dio.js.org/)
 
-dio is a fast javascript framework
+dio is a fast javascript framework for building applications.
 
 - ~8kb min+gzip
-- ~4kb min+gzip (core)
-- ~6kb min+gzip (server)
+- ~4kb min+gzip (nano)
 
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
@@ -35,15 +34,15 @@ dio is a fast javascript framework
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/4.0.1/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/5.0.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/4.0.1/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/5.0.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@4.0.1/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@5.0.0/dio.min.js></script>
 ```
 
 #### bower
@@ -58,22 +57,14 @@ bower install dio.js
 npm install dio.js --save
 ```
 
-or play with **dio** [on jsbin](http://jsbin.com/lobavo/edit?js,output)
+or play with dio [on jsbin](http://jsbin.com/lobavo/edit?js,output)
 
 ---
 
 ## Getting Started
 
-This getting started guide aims to show you how to go from zero to hello world in **dio**.
-
 ```javascript
-function Hello () {
-	return {
-		render () {
-			return h('h1' 'Hello ' + this.props.name);
-		}
-	}
-}
+const Main = h => props => h('h1', props.value);
 
 dio.render(Hello)({name: 'World'});
 ```
@@ -101,11 +92,13 @@ function Hello () {
 	}
 }
 
-var Hello = () => ({
+var Hello = h => ({
 	render () {
 	
 	}
 });
+
+var Hello = h => props => ();
 
 var Hello = dio.createClass({
 	render () {
@@ -401,6 +394,41 @@ var special = h('input.green[type=checkbox][checked]')
 var element = h('div', Hello);
 ```
 
+## Refs
+
+refs are an escape hatches used to extract the DOMNode the a Virtual Element represents
+
+```javascript
+h('div', {ref: (el) => el instanceof Element});
+```
+
+The only argument passed to a function ref is the DOMNode the Element represents. The ref function will be called within the this context of its root component if it has any.
+
+```javascript
+class Hello extends Component {
+	render () {
+		return h('div', {
+			ref: function () {
+				this instanceof Hello;
+			}
+		});
+	}
+}
+```
+
+Strings can also represent refs.
+
+```javascript
+class Hello extends Component {
+	onClick () {
+		this.refs.div.nodeName === 'DIV';
+	},
+	render () {
+		return h('div', {ref: 'div', onClick: this.onClick.bind(this)});
+	}
+}
+```
+
 
 ## createFactory
 
@@ -457,9 +485,12 @@ The render method however also accepts a second argument, a mount element/mount 
 
 ```javascript
 dio.render(Hello)({name: 'World'}, '.container');
+
+// equivalent to
+dio.render(Hello, document.body)({name: 'World'}, '.container');
 ```
 
-this method returns a render instance that could be used to re-render as needed.
+The return value is a render instance that can be used to re-render as needed.
 
 ```javascript
 var hello = dio.render(Hello)({name: 'World'}, '.container');
@@ -477,6 +508,14 @@ dio.render({
 	render: (props, state) => h('h1', 'Hello' + state.name)
 })
 ```
+
+The render method is non-destructive, that is it will not destroy the contents of the element you wish to mount to. If you wanted to retrieve the root node that is mounted you can pass a function as a third argument that will recieve a single argument that is the root node after the Element/Component has mounted. The callback function will execute with the this refering to the component instance if a component was passed to render.
+
+```javascript
+dio.render(Hello)({name: 'World'}, document.body, function (el) { this instanceof Hello; } );
+```
+
+The last argument the render method accepts is a `{boolean}` that signals whether to hydrate the DOM `true` or active a destructive render `false`. This is usefull in the context of Server Side Rendering when coupled with `renderToString` or `renderToStream`.
 
 ## renderToString
 
@@ -498,7 +537,7 @@ This method accepts two arugments the second of which is an optional `template` 
 
 ```javascript
 // default
-var output = dio.renderToString(Hello)
+var output = dio.renderToString(Hello);
 
 // template string, 
 // where @body is replaced with the output

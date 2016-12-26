@@ -6,7 +6,7 @@
  * @param  {any=}      value
  * @return {any}
  */
-function sandbox (func, error, value) {
+function tryCatch (func, error, value) {
 	try {
 		return value != null ? func(value) : func();
 	} catch (e) {

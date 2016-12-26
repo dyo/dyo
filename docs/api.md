@@ -19,11 +19,13 @@ function Hello () {
 	}
 }
 
-var Hello = () => ({
+var Hello = h => ({
 	render () {
 	
 	}
 });
+
+var Hello = h => props => ();
 
 var Hello = dio.createClass({
 	render () {
@@ -319,6 +321,40 @@ var special = h('input.green[type=checkbox][checked]')
 var element = h('div', Hello);
 ```
 
+## Refs
+
+refs are an escape hatches used to extract the DOMNode the a Virtual Element represents
+
+```javascript
+h('div', {ref: (el) => el instanceof Element});
+```
+
+The only argument passed to a function ref is the DOMNode the Element represents. The ref function will be called within the this context of its root component if it has any.
+
+```javascript
+class Hello extends Component {
+	render () {
+		return h('div', {
+			ref: function () {
+				this instanceof Hello;
+			}
+		});
+	}
+}
+```
+
+Strings can also represent refs.
+
+```javascript
+class Hello extends Component {
+	onClick () {
+		this.refs.div.nodeName === 'DIV';
+	},
+	render () {
+		return h('div', {ref: 'div', onClick: this.onClick.bind(this)});
+	}
+}
+```
 
 ## createFactory
 
@@ -354,7 +390,6 @@ dio.isValidElement(h('h1')); // => true
 
 cloneElement accpets 3 arguments, `(element, newProps, newChildren)` the last two of which are optional, when newProps are passed it shallow clones newProps and replaces the elements children with newChildren if passed as part of the arguments. 
 
-
 ## render
 
 Not to be confused with the Component method render `dio.render` is used to mount a Component/Element to the document and create render factories. As you will recall in the getting started section we did something like this.
@@ -375,9 +410,12 @@ The render method however also accepts a second argument, a mount element/mount 
 
 ```javascript
 dio.render(Hello)({name: 'World'}, '.container');
+
+// equivalent to
+dio.render(Hello, document.body)({name: 'World'}, '.container');
 ```
 
-this method returns a render instance that could be used to re-render as needed.
+The return value is a render instance that can be used to re-render as needed.
 
 ```javascript
 var hello = dio.render(Hello)({name: 'World'}, '.container');
@@ -395,6 +433,14 @@ dio.render({
 	render: (props, state) => h('h1', 'Hello' + state.name)
 })
 ```
+
+The render method is non-destructive, that is it will not destroy the contents of the element you wish to mount to. If you wanted to retrieve the root node that is mounted you can pass a function as a third argument that will recieve a single argument that is the root node after the Element/Component has mounted. The callback function will execute with the this refering to the component instance if a component was passed to render.
+
+```javascript
+dio.render(Hello)({name: 'World'}, document.body, function (el) { this instanceof Hello; } );
+```
+
+The last argument the render method accepts is a `{boolean}` that signals whether to hydrate the DOM `true` or active a destructive render `false`. This is usefull in the context of Server Side Rendering when coupled with `renderToString` or `renderToStream`.
 
 ## renderToString
 

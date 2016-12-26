@@ -1,4 +1,4 @@
-/*!
+/*
  *  ___ __ __  
  * (   (  /  \ 
  *  ) ) )( () )
@@ -32,7 +32,7 @@
 	
 	
 	// current version
-	var version = '4.0.1';
+	var version = '5.0.0';
 	
 	// enviroment variables
 	var document = window.document || null;
@@ -52,6 +52,7 @@
 	
 	// random characters
 	var randomChars = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
+	
 	
 	// ssr
 	var readable = server ? require('stream').Readable : null;
@@ -76,10 +77,6 @@
 	var regEsc = /[<>&"']/g;
 	var regStyleCamel = /([a-zA-Z])(?=[A-Z])/g;
 	var regStyleVendor = /^(ms|webkit|moz)/;
-	
-	
-	// router
-	var regRoute = /([:*])(\w+)|([\*])/g;
 	
 	
 	/**
@@ -110,23 +107,6 @@
 	 */
 	function unicoder (char) {
 		return uniCodes[char] || char;
-	}
-	
-	
-	/**
-	 * try catch helper
-	 * 
-	 * @param  {function}  func
-	 * @param  {function=} error
-	 * @param  {any=}      value
-	 * @return {any}
-	 */
-	function sandbox (func, error, value) {
-		try {
-			return value != null ? func(value) : func();
-		} catch (e) {
-			return error && error(e);
-		}
 	}
 	
 	
@@ -162,6 +142,201 @@
 	
 	
 	/**
+	 * try catch helper
+	 * 
+	 * @param  {function}  func
+	 * @param  {function=} error
+	 * @param  {any=}      value
+	 * @return {any}
+	 */
+	function tryCatch (func, error, value) {
+		try {
+			return value != null ? func(value) : func();
+		} catch (e) {
+			return error && error(e);
+		}
+	}
+	
+	
+	/**
+	 * ---------------------------------------------------------------------------------
+	 * 
+	 * shapes
+	 * 
+	 * ---------------------------------------------------------------------------------
+	 */
+	
+	
+	/**
+	 * element shape
+	 * 
+	 * @param  {string}  type
+	 * @param  {Object=} props
+	 * @param  {any[]=}  children
+	 * @return {VNode}
+	 */
+	function VElement (type, props, children) {
+		return {
+			nodeType: 1, 
+			type: type, 
+			props: (props || objEmpty), 
+			children: (children || []), 
+			DOMNode: null,
+			instance: null,
+			index: null
+		};
+	}
+	
+	
+	/**
+	 * component shape
+	 * 
+	 * @param  {(function|Component)} type
+	 * @param  {Object=}              props
+	 * @param  {any[]=}               children
+	 * @return {VNode}
+	 */
+	function VComponent (type, props, children) {
+		return {
+			nodeType: 2, 
+			type: type, 
+			props: (props || type.defaultProps || objEmpty), 
+			children: (children || arrEmpty),
+			DOMNode: null,
+			instance: null,
+			index: null
+		};
+	}
+	
+	
+	/**
+	 * fragment shape
+	 * 
+	 * @param  {VNode[]} children
+	 * @return {VNode}
+	 */
+	function VFragment (children) {
+		return {
+			nodeType: 11, 
+			type: '@', 
+			props: objEmpty, 
+			children: children,
+			DOMNode: null,
+			instance: null,
+			index: null
+		};
+	}
+	
+	
+	/**
+	 * text shape
+	 * 
+	 * @param  {(string|boolean|number)} text
+	 * @return {VNode}
+	 */
+	function VText (text) {
+		return {
+			nodeType: 3, 
+			type: 'text', 
+			props: objEmpty, 
+			children: text, 
+			DOMNode: null,
+			instance: null,
+			index: null
+		};
+	}
+	
+	
+	/**
+	 * svg shape
+	 * 
+	 * @param  {string}  type
+	 * @param  {Object=} props
+	 * @param  {any[]=}  children
+	 * @return {VNode}
+	 */
+	function VSvg (type, props, children) {
+		return {
+			nodeType: 1, 
+			type: type, 
+			props: (props = props || {}, props.xmlns = nsSvg, props), 
+			children: (children || []),
+			DOMNode: null,
+			instance: null,
+			index: null
+		};
+	}
+	
+	
+	/**
+	 * VNode shape
+	 * 
+	 * @param {number}                      nodeType
+	 * @param {(function|Component|string)} type
+	 * @param {Object}                      props
+	 * @param {VNode[]}                     children
+	 * @param {?Node}                       DOMNode
+	 * @param {?Component}                  instance
+	 * @param {?index}                      index
+	 */
+	function VNode (nodeType, type, props, children, DOMNode, instance, index) {
+		return {
+			nodeType: nodeType,
+			type: type,
+			props: props,
+			children: children,
+			DOMNode: DOMNode,
+			instance: instance,
+			index: index
+		};
+	}
+	
+	
+	/**
+	 * empty shape
+	 * 
+	 * @return {VNode}
+	 */
+	function VEmpty () {
+		return {
+			nodeType: 1, 
+			type: 'noscript', 
+			props: objEmpty, 
+			children: [], 
+			DOMNode: null,
+			instance: null,
+			index: null
+		};
+	}
+	
+	
+	/**
+	 * request shape
+	 * 
+	 * @param {string}           method
+	 * @param {string}           url
+	 * @param {(string|Object)=} payload
+	 * @param {string=}          enctype
+	 * @param {string=}          responseType
+	 */
+	function VRequest (method, url, payload, enctype, responseType) {
+		return {
+			method: method,
+			url: url,
+			payload: payload,
+			enctype: enctype,
+			responseType: responseType,
+			withCredentials: null,
+			headers: null,
+			initial: null,
+			config: null,
+			username: null,
+			password: null
+		}
+	}
+	
+	
+	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
 	 * stylesheet
@@ -173,31 +348,29 @@
 	/**
 	 * stylesheet
 	 * 
-	 * @param  {Component}     component
-	 * @param  {function}      constructor
-	 * @return {function(?Node)}
+	 * @param  {Component}       component
+	 * @param  {function}        constructor
+	 * @return {function(?Node)} styler
 	 */
 	function stylesheet (component, constructor) {
 		var styles = component.stylesheet();
 		var id     = random(5);
 		var css    = stylis('['+nsStyle+'='+id+']', styles, true, true);
 	
+		if (browser && document.getElementById(id) == null) {
+			var style = document.createElement('style');
+			
+			style.textContent = css;
+			style.id = id;
+	
+			document.head.appendChild(style);
+		}
+	
 		function styler (element) {
 			if (element === null) {
-				// cache for server-side rendering
 				return css;
 			} else {
 				element.setAttribute(nsStyle, id);
-	
-				// avoid adding a style element when one is already present
-				if (document.getElementById(id) == null) { 
-					var style = document.createElement('style');
-					
-					style.textContent = css;
-					style.id = id;
-	
-					document.head.appendChild(style);
-				}
 			}
 		}
 	
@@ -282,7 +455,7 @@
 	            // default to 0 instead of NaN if there is no second character
 	            var second = line.charCodeAt(1) || 0;
 	
-	            // ignore line comments
+	            // ignore comments
 	            if (comment === 2) {
 	                line = ''; comment = 0;
 	            }
@@ -381,7 +554,7 @@
 	                                var char = styles.charCodeAt(i);
 	                                // {, }, nested blocks may have nested blocks
 	                                char === 123 ? counter++ : char === 125 && counter--;
-	                                // break when the has ended
+	                                // break when the block has ended
 	                                if (counter === 0) break;
 	                                // build content of nested block
 	                                inner += styles[i++];
@@ -392,7 +565,7 @@
 	                            for (var j = 0, length = prevSel.length; j < length; j++) {
 	                                // extract value, prep index for reuse
 	                                var val = prevSel[j]; prevSel[j] = '';
-	                                // since there can also be multiple nested selectors
+	                                // since there could also be multiple nested selectors
 	                                for (var k = 0, l = nestSel.length; k < l; k++) {
 	                                    prevSel[j] += (
 	                                        (val.replace(prefix, '').trim() + ' ' + nestSel[k].trim()).trim() + 
@@ -450,11 +623,11 @@
 	                                else if (firstChar === 58) {
 	                                    var secondChar = selector.charCodeAt(1);
 	
-	                                    // :host 
-	                                    if (secondChar === 104) {
+	                                    // h, t, :host 
+	                                    if (secondChar === 104 && selector.charCodeAt(4) === 116) {
 	                                        var nextChar = (selector = selector.substring(5)).charCodeAt(0);
 	                                        
-	                                        // :host(selector)                                                    
+	                                        // :host(selector)                                                 
 	                                        if (nextChar === 40) {
 	                                            // before: `(selector)`
 	                                            selector = prefix + selector.substring(1).replace(')', '');
@@ -471,7 +644,7 @@
 	                                            selector = prefix + selector;
 	                                        }
 	                                    }
-	                                    // :global(selector)
+	                                    // g, :global(selector)
 	                                    else if (secondChar === 103) {
 	                                        // before: `:global(selector)`
 	                                        selector = selector.substring(8).replace(')', '');
@@ -479,13 +652,11 @@
 	                                    }
 	                                    // :hover, :active, :focus, etc...
 	                                    else {
-	                                        // :, insure `div:hover` does not end up as `div :hover` 
-	                                        selector = prefix + (firstChar === 58 ? '' : ' ') + selector;
+	                                        selector = prefix + selector;
 	                                    }
 	                                }
 	                                else {
-	                                    // :, insure `div:hover` does not end up as `div :hover` 
-	                                    selector = prefix + (firstChar === 58 ? '' : ' ') + selector;
+	                                    selector = prefix + ' ' + selector;
 	                                }
 	
 	                                // if first selector do not prefix with `,`
@@ -579,149 +750,6 @@
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
-	
-	
-	/**
-	 * virtual element node factory
-	 * 
-	 * @param  {string}  type
-	 * @param  {Object=} props
-	 * @param  {any[]=}  children
-	 * @return {VNode}
-	 */
-	function VElement (type, props, children) {
-		return {
-			nodeType: 1, 
-			type: type, 
-			props: (props || objEmpty), 
-			children: (children || []), 
-			_node: null,
-			_owner: null,
-			_index: null
-		};
-	}
-	
-	
-	/**
-	 * virtual component node factory
-	 * 
-	 * @param  {(function|Component)} type
-	 * @param  {Object=}              props
-	 * @param  {any[]=}               children
-	 * @return {VNode}
-	 */
-	function VComponent (type, props, children) {
-		return {
-			nodeType: 2, 
-			type: type, 
-			props: (props || type.defaultProps || objEmpty), 
-			children: (children || arrEmpty),
-			_node: null,
-			_owner: null,
-			_index: null
-		};
-	}
-	
-	
-	/**
-	 * virtual fragment node factory
-	 * 
-	 * @param  {VNode[]} children
-	 * @return {VNode}
-	 */
-	function VFragment (children) {
-		return {
-			nodeType: 11, 
-			type: '@', 
-			props: objEmpty, 
-			children: children,
-			_node: null,
-			_owner: null,
-			_index: null
-		};
-	}
-	
-	
-	/**
-	 * virtual text node factory
-	 * 
-	 * @param  {(string|boolean|number)} text
-	 * @return {VNode}
-	 */
-	function VText (text) {
-		return {
-			nodeType: 3, 
-			type: 'text', 
-			props: objEmpty, 
-			children: text, 
-			_node: null,
-			_owner: null,
-			_index: null
-		};
-	}
-	
-	
-	/**
-	 * virtual svg node factory
-	 * 
-	 * @param  {string}  type
-	 * @param  {Object=} props
-	 * @param  {any[]=}  children
-	 * @return {VNode}
-	 */
-	function VSvg (type, props, children) {
-		return {
-			nodeType: 1, 
-			type: type, 
-			props: (props = props || {}, props.xmlns = nsSvg, props), 
-			children: (children || []),
-			_node: null,
-			_owner: null,
-			_index: null
-		};
-	}
-	
-	
-	/**
-	 * virtual node factory
-	 * 
-	 * @param {number}                      nodeType
-	 * @param {(function|Component|string)} type
-	 * @param {Object}                      props
-	 * @param {VNode[]}                     children
-	 * @param {?Node}                      _node
-	 * @param {?Component}                 _owner
-	 * @param {?index}                     _index
-	 */
-	function VNode (nodeType, type, props, children, _node, _owner, _index) {
-		return {
-			nodeType: nodeType,
-			type: type,
-			props: props,
-			children: children,
-			_node: _node,
-			_owner: _owner,
-			_index: _index
-		};
-	}
-	
-	
-	/**
-	 * virtual empty node factory
-	 * 
-	 * @return {VNode}
-	 */
-	function VEmpty () {
-		return {
-			nodeType: 1, 
-			type: 'noscript', 
-			props: objEmpty, 
-			children: [], 
-			_node: null,
-			_owner: null,
-			_index: null
-		};
-	}
 	
 	
 	/**
@@ -965,20 +993,20 @@
 		}
 	
 		var newNode = extractRender(this);
-		var oldNode = this._vnode;
+		var oldNode = this.VNode;
 	
 		// component returns a different root node
-		if (newNode.type !== oldNode.type) {		
+		if (newNode.type !== oldNode.type) {	
 			// replace node
-			replaceNode(newNode, oldNode, oldNode._node.parentNode, createNode(newNode, null, null));
+			replaceNode(newNode, oldNode, oldNode.DOMNode.parentNode, createNode(newNode, null, null));
 	
 			// hydrate newNode
 			oldNode.nodeType = newNode.nodeType;
 			oldNode.type     = newNode.type;
 			oldNode.props    = newNode.props;
 			oldNode.children = newNode.children;
-			oldNode._node    = newNode._node;
-			oldNode._owner   = newNode._owner;
+			oldNode.DOMNode  = newNode.DOMNode;
+			oldNode.instance = newNode.instance;
 		} else {
 			// patch node
 			patch(newNode, oldNode, false);
@@ -1027,8 +1055,8 @@
 		// assign state
 		this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
 	
-		// create vnode addresses reference
-		this._cache = this._vnode = null;
+		// VNode and refs
+		this.refs = this.VNode = null;
 	}
 	
 	
@@ -1046,41 +1074,45 @@
 	/**
 	 * create class
 	 * 
-	 * @param  {(Object|function)} subject
+	 * @param  {(Object|function(createElement))} subject
 	 * @return {function}
 	 */
 	function createClass (subject) {
-		if (subject._component) {
-			return subject._component; 
-		} else {
-			var func  = typeof subject === 'function';
-			var shape = func ? subject() : subject;
-	
-			// shape has a constructor method
-			var init  = shape.hasOwnProperty('constructor');
-	
-			function component (props) {
-				// constructor
-				if (init) {
-					this.constructor(props);
-				}
-	
-				// extend Component
-				Component.call(this, props); 
-			}
-	
-			// extend Component prototype
-			component.prototype             = shape;
-			component.prototype.setState    = Component.prototype.setState;
-			component.prototype.forceUpdate = Component.prototype.forceUpdate;
-	
-			// function component, cache created component
-			if (func) {
-				subject._component = component;
-			}
-	
-			return component.constructor = component;
+		if (subject.COMPCache) {
+			return subject.COMPCache; 
 		}
+	
+		var func  = typeof subject === 'function';
+		var shape = func ? subject(createElement) : subject;
+		var init  = false;
+		var render;
+	
+		if (typeof shape === 'function') {
+			render = shape; 
+			shape = { render: render };
+		} else {
+			init = shape.hasOwnProperty('constructor');
+		}
+	
+		function component (props) {
+			// constructor
+			init && this.constructor(props);
+	
+			// extend Component
+			Component.call(this, props); 
+		}
+	
+		// extend Component prototype
+		component.prototype = shape;
+	
+		shape.setState      = Component.prototype.setState;
+		shape.forceUpdate   = Component.prototype.forceUpdate;
+	
+		// function component, cache created component
+		func  && (subject.COMPCache = component);
+		!init && (shape.constructor = component);
+	
+		return component;
 	}
 	
 	
@@ -1094,114 +1126,31 @@
 		
 	
 	/**
-	 * hydrates a server-side rendered dom structure
-	 * 
-	 * @param  {Node}       parent
-	 * @param  {VNode}      subject
-	 * @param  {number}     index
-	 * @param  {VNode}      parentNode
-	 * @param  {?Component}
-	 */
-	function hydrate (parent, subject, index, parentNode, component) {
-		var newNode  = subject.nodeType === 2 ? extractComponent(subject) : subject;
-		var nodeType = newNode.nodeType;
-	
-		var element = nodeType === 11 ? parent : parent.childNodes[index];
-	
-		// if the node is not a textNode and
-		// has children hydrate each of its children
-		if (nodeType === 1) {
-			var props       = newNode.props;
-			var newChildren = newNode.children;
-			var newLength   = newChildren.length;
-	
-			// vnode has component attachment
-			if (subject._owner !== null) {
-				(component = subject._owner)._vnode._node = parent;
-			}
-	
-			// async hydration
-			for (var i = 0; i < newLength; i++) {
-				setTimeout(hydrate, 0, element, newChildren[i], i, newNode, component);
-			}
-	
-			// not a fragment
-			if (nodeType !== 11) {
-				if (props !== objEmpty) {
-					// refs
-					if (props.ref) {
-						props.ref.call(component, element);
-					}
-	
-					// assign events
-					assignProps(element, props, true, newNode._owner || null);
-				}
-			}
-	
-			// hydrate the dom element to the virtual element
-			subject._node = element;
-		}
-		else if (nodeType === 3) {
-			var children = parentNode.children;
-			var length   = children.length;
-			var next     = children[index+1] || nodEmpty;
-	
-			/*
-				when we reach a string child that is followed by a string child, 
-				it is assumed that the dom representing it is a single textNode,
-				we do a look ahead of the child, create & append each textNode child to documentFragment 
-				starting from current child till we reach a non textNode such that on h('p', 'foo', 'bar') 
-				foo and bar are two different textNodes in the fragment, we then replace the 
-				single dom's textNode with the fragment converting the dom's single textNode to multiple
-			 */
-			if (length > 1 && next.nodeType === 3) {
-				// fragment to use to replace a single textNode with multiple text nodes
-				// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
-				// but HelloWorld is one text node in the dom while two in the vnode
-				var fragment = document.createDocumentFragment();
-				
-				// look ahead of this nodes siblings and add all textNodes to the the fragment.
-				// exit when a non text node is encounted
-				for (var i = index, len = length - index; i < len; i++) {
-					var textNode = children[i];
-	
-					// exit early once we encounter a non text/string node
-					if (textNode.nodeType !== 3) {
-						break;
-					}
-	
-					// create textnode, append to the fragment
-					fragment.appendChild(textNode._node = document.createTextNode(textNode.children));
-				}
-	
-				// replace the textNode with a set of textNodes
-				parent.replaceChild(fragment, element);
-			} else {
-				newNode._node = element;
-			}
-		}
-	}
-	
-	
-	/**
 	 * render
 	 * 
 	 * @param  {(Component|VNode)} subject
 	 * @param  {(Node|string)}     target
-	 * @return {function(Object=)}
+	 * @param  {function(Node)=}   callback
+	 * @param  {boolean=}          hydration
+	 * @return {function(Object=)} reconciler
 	 */
-	function render (subject, target) {
+	function render (subject, target, callback, hydration) {
+		var initial = true;
+		var component;	
+		var vnode;
+		var element;
+		
 		// renderer
 		function reconciler (props) {
 			if (initial) {
 				// dispatch mount
-				mount(element, node);
+				appendNode(vnode, element, createNode(vnode, null, null));
 	
 				// register mount has been dispatched
 				initial = false;
 	
-				// assign component
-				component === void 0 && (component = node._owner);
+				// assign component instance
+				component = vnode.instance;
 			} else {
 				// update props
 				if (props) {
@@ -1222,71 +1171,55 @@
 			return reconciler;
 		}
 	
-		var component;
-		var node;
-		var element;
-	
 		if (subject.render !== void 0) {
 			// create component from object
-			node = VComponent(createClass(subject));
+			vnode = VComponent(createClass(subject));
 		} else if (subject.type === void 0) {
 			// fragment/component
-			node = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
+			vnode = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
 		} else {
-			node = subject;
+			vnode = subject;
 		}
 	
 		if (server) {
 			return reconciler;
 		}
 	
-		// retrieve mount element
+		// dom element
 	  	if (target != null && target.nodeType != null) {
-		  // target is a dom element
-		  element = target;
+	  		// target is a dom element
+	  		element = target === document ? docuemnt.body : target;
 		} else {
-		  // target might be a selector
-		  target = document.querySelector(target);
+	  		// selector
+	  		target = document.querySelector(target);
 	
-		  // default to document.body if no match/document
-		  element = (target === null || target === document) ? document.body : target;
+	  		// default to document.body if no match/document
+	  		element = (target === null || target === document) ? document.body : target;
 		}
 	
-		// initial mount registry
-		var initial = true;
-	
 		// hydration
-		if (element.hasAttribute('hydrate')) {
+		if (hydration === true) {
 			// dispatch hydration
-			hydrate(element, node, 0, nodEmpty, null);
-	
-			// cleanup element hydrate attributes
-			element.removeAttribute('hydrate');
+			hydrate(element, vnode, 0, nodEmpty, null);
 	
 			// register mount has been dispatched
 			initial = false;
 	
 			// assign component
-			component === void 0 && (component = node._owner); 
+			component = vnode.instance;
 		} else {
+			// destructive mount
+			hydration === false && (element.textContent = '');
+			
 			reconciler();
 		}
 	
+		// if present call root components context, passing root node as argument
+		if (callback && typeof callback === 'function') {
+			callback.call(component, vnode.DOMNode);
+		}
+	
 		return reconciler;
-	}
-	
-	
-	/**
-	 * mount render
-	 * 
-	 * @param  {Node}   element
-	 * @param  {Object} newNode
-	 */
-	function mount (element, newNode) {
-		// clear element
-		element.textContent = '';
-		// create element
-		appendNode(newNode, element, createNode(newNode, null, null));
 	}
 	
 	
@@ -1296,7 +1229,7 @@
 	 * @param  {VNode}   newNode  
 	 * @param  {VNode}   oldNode  
 	 * @param  {boolean} internalCall
-	 * @return {number}  number
+	 * @return {number}
 	 */
 	function patch (newNode, oldNode, internalCall) {
 		var newNodeType = newNode.nodeType;
@@ -1314,7 +1247,7 @@
 		else if (newNodeType === 3 && oldNodeType === 3) { 
 			if (newNode.children !== oldNode.children) {
 				return 3; 
-			} 
+			}
 		}
 		// key operation
 		else if (internalCall && (newNode.props.key !== void 0 || oldNode.props.key !== void 0)) {
@@ -1333,8 +1266,8 @@
 	
 				// a component
 				if (oldNodeType === 2) {
-					var oldComponent = oldNode._owner;
-					var newComponent = newNode._owner;
+					var oldComponent = oldNode.instance;
+					var newComponent = newNode.instance;
 	
 					// a component with shouldComponentUpdate method
 					if (
@@ -1361,13 +1294,13 @@
 				if (newLength === 0) {
 					// but only if old children is not already cleared
 					if (oldLength !== 0) {
-						oldNode._node.textContent = '';
+						oldNode.DOMNode.textContent = '';
 						oldNode.children = newChildren;
 					}	
 				}
 				// newNode has children
 				else {
-					var parentNode = oldNode._node;
+					var parentNode = oldNode.DOMNode;
 	
 					var hasKeys  = false;
 					var diffKeys = false;
@@ -1382,8 +1315,12 @@
 						var oldChild = oldChildren[i] || nodEmpty;
 						var action   = patch(newChild, oldChild, true);
 	
-						// if action dispatched, 
-						// 1 - remove, 2 - add, 3 - text update, 4 - replace, 5 - key
+						// 0 - noop
+						// 1 - remove, 
+						// 2 - add, 
+						// 3 - text update, 
+						// 4 - replace, 
+						// 5 - key
 						if (action !== 0) {
 							if (diffKeys) {
 								action = 5;
@@ -1411,7 +1348,7 @@
 								// text operation
 								case 3: {
 									// replace dom node text, replace old child text
-									oldChild._node.nodeValue = oldChild.children = newChild.children;
+									oldChild.DOMNode.nodeValue = oldChild.children = newChild.children;
 	
 									break;
 								}
@@ -1444,9 +1381,9 @@
 										diffKeys = true;
 									}
 	
-									// register key
-									newKeys[newKey] = (newChild._index = i, newChild);
-									oldKeys[oldKey] = (oldChild._index = i, oldChild);
+									// register keys
+									newKeys[newKey] = (newChild.index = i, newChild);
+									oldKeys[oldKey] = (oldChild.index = i, oldChild);
 	
 									break;
 								}
@@ -1493,22 +1430,19 @@
 	 *
 	 * @param {Object}  newKeys
 	 * @param {Object}  oldKeys
-	 * @param {VNode}   oldNode
 	 * @param {Node}    parentNode
+	 * @param {VNode}   oldNode
 	 * @param {VNode[]} newChildren
 	 * @param {VNode[]} oldChildren
 	 * @param {number}  newLength
 	 * @param {number}  oldLength
 	 */
-	
-	// var index = 0;
-	
 	function keyed (newKeys, oldKeys, parentNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
-		var reconciled   = new Array(newLength);
-		var children     = parentNode.children;
-		var length       = children.length;
-		var delOffset    = 0;
-		var addOffset    = 0;
+		var reconciled = new Array(newLength);
+		var children   = parentNode.children;
+		var length     = children.length;
+		var delOffset  = 0;
+		var addOffset  = 0;
 	
 		for (var i = 0; i < oldLength; i++) {
 			var oldChild = oldChildren[i];
@@ -1524,7 +1458,7 @@
 	
 			// update old indexes
 			if (delOffset !== 0) {
-				oldChild._index -= delOffset;
+				oldChild.index -= delOffset;
 			}
 		}
 	
@@ -1538,11 +1472,11 @@
 	
 			// exists
 			if (oldChild) {
-				var index = oldChild._index;
+				var index = oldChild.index;
 	
 				// moved
 				if (index+addOffset !== j) {
-					parentNode.insertBefore(oldChild._node, children[j]);
+					parentNode.insertBefore(oldChild.DOMNode, children[j]);
 				}
 	
 				reconciled[j] = oldChild; 	
@@ -1565,6 +1499,117 @@
 	
 		oldNode.children = reconciled;
 	}
+	/**
+	 * hydrates a server-side rendered dom structure
+	 * 
+	 * @param  {Node}       parent
+	 * @param  {VNode}      subject
+	 * @param  {number}     index
+	 * @param  {VNode}      parentNode
+	 * @param  {?Component} component
+	 */
+	function hydrate (parent, subject, index, parentNode, component) {
+		var newNode  = subject.nodeType === 2 ? extractComponent(subject) : subject;
+		var nodeType = newNode.nodeType;
+	
+		var element = nodeType === 11 ? parent : parent.childNodes[index];
+	
+		// if the node is not a textNode and
+		// has children hydrate each of its children
+		if (nodeType === 1) {
+			var props       = newNode.props;
+			var newChildren = newNode.children;
+			var newLength   = newChildren.length;
+	
+			// vnode has component attachment
+			if (subject.instance !== null) {
+				(component = subject.instance).VNode.DOMNode = parent;
+			}
+	
+			// hydrate children
+			for (var i = 0; i < newLength; i++) {
+				hydrate(element, newChildren[i], i, newNode, component);
+			}
+	
+			// not a fragment
+			if (nodeType !== 11) {
+				if (props !== objEmpty) {
+					// refs
+					props.ref && refs(props.ref, component, element);
+	
+					// assign events
+					assignProps(element, props, true, component);
+				}
+			}
+	
+			// hydrate the dom element to the virtual element
+			subject.DOMNode = element;
+		}
+		else if (nodeType === 3) {
+			var children = parentNode.children;
+			var length   = children.length;
+	
+			// when we reach a string child that is followed by a string child, 
+			// it is assumed that the dom representing it is a single textNode,
+			if (length > 1 && (children[index+1] || nodEmpty).nodeType === 3) {
+				// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
+				// HelloWorld is one textNode in the DOM but two in the VNode
+				var fragment = document.createDocumentFragment();
+				
+				// look ahead of this nodes siblings and add all textNodes to the the fragment.
+				// exit when a non text node is encounted
+				for (var i = index, len = length - index; i < len; i++) {
+					var textNode = children[i];
+	
+					// exit early once we encounter a non text/string node
+					if (textNode.nodeType !== 3) {
+						break;
+					}
+	
+					// create textnode, append to the fragment
+					fragment.appendChild(textNode.DOMNode = document.createTextNode(textNode.children));
+				}
+	
+				// replace the textNode with a set of textNodes
+				parent.replaceChild(fragment, element);
+			} else {
+				newNode.DOMNode = element;
+			}
+		}
+	}
+	
+	
+	/**
+	 * refs
+	 *
+	 * @param {(string|function(Node))} ref
+	 * @param {Component}               component
+	 * @param {Node}                    element
+	 */
+	function refs (ref, component, element) {
+		if (typeof ref === 'function') {
+			ref.call(component, element);
+		} else {
+			(component.refs = component.refs || {})[ref] = element;
+		}
+	}
+	
+	
+	/**
+	 * shallow render
+	 *
+	 * @param  {(VNode|Component)}
+	 * @return {VNode}
+	 */
+	function shallow (subject) {
+		if (isValidElement(subject)) {
+			return subject.nodeType === 2 ? extractComponent(subject) : subject;
+		} else {
+			return extractComponent(createElement(subject, null, null));
+		}
+	}
+	
+	
 	/**
 	 * assign prop for create element
 	 * 
@@ -1590,24 +1635,11 @@
 	 * @param  {Component}  component
 	 */
 	function assignProp (target, name, props, onlyEvents, component) {
-		var propValue = props[name];
-	
 		if (isEventName(name)) {
-			var eventName = extractEventName(name);
-	
-			if (typeof propValue !== 'function') {
-				var cache = component._cache === null ? component._cache = {} : component._cache;
-	
-				target.addEventListener(
-					eventName, 
-					cache[eventName] || bindEvent(eventName, propValue, cache, component)
-				)
-			} else {
-				target.addEventListener(eventName, propValue);
-			}
+			addEventListener(target, extractEventName(name), props[name], component);
 		} else if (onlyEvents === false) {
 			// add attribute
-			updateProp(target, 'setAttribute', name, propValue, props.xmlns);
+			updateProp(target, 'setAttribute', name, props[name], props.xmlns);
 		}
 	}
 	
@@ -1624,7 +1656,7 @@
 	
 		// if diff length > 0 apply diff
 		if (length !== 0) {
-			var target = oldNode._node;
+			var target = oldNode.DOMNode;
 	
 			for (var i = 0; i < length; i++) {
 				var prop = diff[i];
@@ -1793,24 +1825,22 @@
 		
 		if (nodeType === 3) {
 			// textNode
-			return subject._node = document.createTextNode(subject.children);
+			return subject.DOMNode = document.createTextNode(subject.children);
 		} else {
-			// element
-			var element;
-			var props;
-	
-			if (subject._node) {
-				// hoisted vnode
-				props   = subject.props;
-				element = subject._node;
+			if (subject.DOMNode !== null) {
+				// clone
+				return subject.DOMNode = subject.DOMNode.cloneNode(true);
 			} else {
 				// create
 				var newNode  = nodeType === 2 ? extractComponent(subject) : subject;
 				var type     = newNode.type;
 				var children = newNode.children;
+				var props    = newNode.props;
 				var length   = children.length;
+				var element;
 	
-				props = newNode.props;
+				// update nodeType
+				nodeType = newNode.nodeType;
 	
 				// assign namespace
 				if (props.xmlns !== void 0) { 
@@ -1826,19 +1856,19 @@
 	
 					element = document.createElementNS(namespace, type);
 				} else {
-					if (newNode.nodeType === 11) {
-						element = document.createDocumentFragment();
+					if (nodeType !== 11) {
+						element = document.createElement(type);					
 					} else {
-						element = document.createElement(type);
+						element = document.createDocumentFragment();
 					}
 				}
 	
 				// vnode has component attachment
-				if (subject._owner !== null) {
-					(component = subject._owner)._vnode._node = element;
+				if (subject.instance !== null) {
+					(component = subject.instance).VNode.DOMNode = element;
 	
 					// stylesheets
-					if (component.stylesheet) {
+					if (component.stylesheet && nodeType !== 11) {
 						if (component.stylesheet.styler === void 0) {
 							// create
 							stylesheet(component, subject.type)(element);
@@ -1854,14 +1884,14 @@
 					for (var i = 0; i < length; i++) {
 						var newChild = children[i];
 	
-						// hoisted nodes, clone
-						if (newChild._node) {
+						// clone VNode
+						if (newChild.DOMNode !== null) {
 							newChild = children[i] = VNode(
 								newChild.nodeType,
 								newChild.type,
 								newChild.props,
 								newChild.children,
-								newChild._node.cloneNode(true),
+								newChild.DOMNode,
 								null,
 								null
 							);
@@ -1874,19 +1904,15 @@
 	
 				if (props !== objEmpty) {
 					// refs
-					if (props.ref) {
-						props.ref.call(component, element);
-					}
+					props.ref && refs(props.ref, component, element);
 	
 					// initialize props
 					assignProps(element, props, false, component);
 				}
 	
 				// cache element reference
-				subject._node = element;
+				return subject.DOMNode = element;
 			}
-	
-			return element;
 		}
 	}
 	
@@ -1899,15 +1925,15 @@
 	 * @param {Node}  nextNode
 	 */
 	function appendNode (newNode, parentNode, nextNode) {
-		if (newNode._owner !== null && newNode._owner.componentWillMount) {
-			newNode._owner.componentWillMount(nextNode);
+		if (newNode.instance !== null && newNode.instance.componentWillMount) {
+			newNode.instance.componentWillMount(nextNode);
 		}
 	
 		// append node
 		parentNode.appendChild(nextNode);
 	
-		if (newNode._owner !== null && newNode._owner.componentDidMount) {
-			newNode._owner.componentDidMount(nextNode);
+		if (newNode.instance !== null && newNode.instance.componentDidMount) {
+			newNode.instance.componentDidMount(nextNode);
 		}
 	}
 	
@@ -1921,15 +1947,15 @@
 	 * @param {Node}  nextNode
 	 */
 	function insertNode (newNode, oldNode, parentNode, nextNode) {
-		if (newNode._owner !== null && newNode._owner.componentWillMount) {
-			newNode._owner.componentWillMount(nextNode);
+		if (newNode.instance !== null && newNode.instance.componentWillMount) {
+			newNode.instance.componentWillMount(nextNode);
 		}
 	
 		// insert node
 		parentNode.insertBefore(nextNode, oldNode);
 	
-		if (newNode._owner !== null && newNode._owner.componentDidMount) {
-			newNode._owner.componentDidMount(nextNode);
+		if (newNode.instance !== null && newNode.instance.componentDidMount) {
+			newNode.instance.componentDidMount(nextNode);
 		}
 	}
 	
@@ -1941,15 +1967,15 @@
 	 * @param {Node}  parentNode
 	 */
 	function removeNode (oldNode, parentNode) {
-		if (oldNode._owner !== null && oldNode._owner.componentWillUnmount) {
-			oldNode._owner.componentWillUnmount(oldNode._node);
+		if (oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
+			oldNode.instance.componentWillUnmount(oldNode.DOMNode);
 		}
 	
 		// remove node
-		parentNode.removeChild(oldNode._node);
+		parentNode.removeChild(oldNode.DOMNode);
 	
 		// clear references
-		oldNode._node = null;
+		oldNode.DOMNode = null;
 	}
 	
 	
@@ -1962,23 +1988,40 @@
 	 * @param {Node}  nextNode
 	 */
 	function replaceNode (newNode, oldNode, parentNode, nextNode) {
-		if (oldNode._owner !== null && oldNode._owner.componentWillUnmount) {
-			oldNode._owner.componentWillUnmount(oldNode._node);
+		if (oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
+			oldNode.instance.componentWillUnmount(oldNode.DOMNode);
 		}
 	
-		if (newNode._owner !== null && newNode._owner.componentWillMount) {
-			newNode._owner.componentWillMount(nextNode);
+		if (newNode.instance !== null && newNode.instance.componentWillMount) {
+			newNode.instance.componentWillMount(nextNode);
 		}
 	
 		// replace node
-		parentNode.replaceChild(nextNode, oldNode._node);
+		parentNode.replaceChild(nextNode, oldNode.DOMNode);
 		
-		if (newNode._owner !== null && newNode._owner.componentDidMount) {
-			newNode._owner.componentDidMount(nextNode);
+		if (newNode.instance !== null && newNode.instance.componentDidMount) {
+			newNode.instance.componentDidMount(nextNode);
 		}
 	
 		// clear references
-		oldNode._node = null;
+		oldNode.DOMNode = null;
+	}
+	
+	
+	/**
+	 * add event listener
+	 *
+	 * @param {Node}      element
+	 * @param {string}    name
+	 * @param {function}  listener
+	 * @param {Component} component
+	 */
+	function addEventListener (element, name, listener, component) {
+		if (typeof listener !== 'function') {
+			element.addEventListener(name, bindEvent(name, listener, component));
+		} else {
+			element.addEventListener(name, listener);
+		}
 	}
 	
 	
@@ -2009,11 +2052,10 @@
 	 *
 	 * @param  {string}    name
 	 * @param  {Object}    value
-	 * @param  {Object}    cache
 	 * @param  {Component} component
 	 * @return {function}
 	 */
-	function bindEvent (name, value, cache, component) {
+	function bindEvent (name, value, component) {
 		var bind = value.bind;
 		var data = value.with;
 	
@@ -2022,11 +2064,11 @@
 		if (typeof bind === 'object') {
 			var property = bind.property || data;
 	
-			return cache[name] = function (e) {
-				preventDefault && e.preventDefault();
-	
-				var target = e.currentTarget || e.target || this;
+			return function (event) {
+				var target = event.currentTarget || event.target;
 				var value  = data in target ? target[data] : target.getAttribute(data);
+	
+				preventDefault && event.preventDefault();
 	
 				// update component state
 				component.state[property] = value;
@@ -2035,35 +2077,37 @@
 				component.forceUpdate();
 			}
 		} else {
-			return cache[name] = function (e) {
-				preventDefault && e.preventDefault();
-				bind.call(data, data, e);
+			return function (event) {
+				preventDefault && event.preventDefault();
+				bind.call(data, data, event);
 			}
 		}
 	}
+	
+	
 	/**
 	 * extract component
 	 * 
 	 * @param  {VNode} subject
 	 * @return {VNode} 
 	 */
-	function extractComponent (subject, mutate) {
-		var candidate;
+	function extractComponent (subject) {
 		var type = subject.type;
-	
-		if (type._component !== void 0) {
+		var candidate;
+		
+		if (type.COMPCache !== void 0) {
 			// cache
-			candidate = type._component;
-		} else if (type.constructor === Function && type.prototype.render === void 0) {
+			candidate = type.COMPCache;
+		} else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
 			// function components
-			candidate = type._component = createClass(type);
+			candidate = type.COMPCache = createClass(type);
 		} else {
 			// class / createClass components
 			candidate = type;
 		}
 	
 		// create component instance
-		var component = subject._owner = new candidate(subject.props);
+		var component = subject.instance = new candidate(subject.props);
 	
 		// add children to props if not empty
 		if (subject.children.length !== 0) {
@@ -2088,7 +2132,7 @@
 		subject.children = vnode.children;
 	
 		// assign reference to component and return vnode
-		return component._vnode = vnode;
+		return component.VNode = vnode;
 	}
 	
 	
@@ -2101,12 +2145,10 @@
 	function extractRender (component) {
 		// extract render
 		var vnode = component.render(component.props, component.state, component) || VEmpty();
-	
+		
 		// if vnode, else fragment
-		return vnode.nodeType !== void 0 ? vnode : VFragment(vnode);
+		return vnode.nodeType !== void 0 ? vnode : createElement('@', null, vnode);
 	}
-	
-	
 	
 	
 	/**
@@ -2127,7 +2169,7 @@
 	 */
 	function renderToString (subject, template) {
 		var lookup = {styles: '', ids: {}};
-		var body   = renderVNodeToString(renderVNode(subject), lookup);
+		var body   = renderVNodeToString(renderVNode(subject), lookup, true);
 		var styles = lookup.styles;
 		var style  = styles.length !== 0 ? '<style>'+styles+'<style>' : '';
 	
@@ -2223,14 +2265,16 @@
 			value: function (subject, flush, stack, lookup) {
 				// if there is something pending in the stack give that priority
 				if (flush && stack.length !== 0) {
-					stack.pop()(this); return;
+					stack.pop()(this); 
+					return;
 				}
 	
 				var nodeType = subject.nodeType;
 	
 				// text node, sync
 				if (nodeType === 3) {
-					this.push(escape(subject.children)); return;
+					this.push(escape(subject.children)); 
+					return;
 				}
 	
 				var vnode;
@@ -2238,8 +2282,9 @@
 				// if component
 				if (nodeType === 2) {
 					// if cached
-					if (subject.type._html !== void 0) {
-						this.push(subject.type._html); return;
+					if (subject.type.HTMLCache !== void 0) {
+						this.push(subject.type.HTMLCache); 
+						return;
 					} else {
 						vnode = extractComponent(subject);
 					}
@@ -2253,7 +2298,7 @@
 				var children = vnode.children;
 	
 				var propsStr = renderStylesheetToString(
-					nodeType, subject._owner, subject.type, renderPropsToString(props), lookup
+					nodeType, subject.instance, subject.type, renderPropsToString(props), lookup
 				);
 	
 				if (isVoid[type] === 0) {
@@ -2346,9 +2391,9 @@
 					renderToCache(subject[i]);
 				}
 			} else if (subject.nodeType === void 0) {
-				subject._html = renderToString(subject);
-			} else if (subject.nodeType === 2 && subject.type._html === void 0) {
-				subject.type._html = renderToString(subject);
+				subject.HTMLCache = renderToString(subject);
+			} else if (subject.nodeType === 2) {
+				subject.type.HTMLCache = renderToString(subject);
 			}
 		}
 	
@@ -2456,9 +2501,10 @@
 	 * 
 	 * @param  {VNode}               subject
 	 * @param  {Object<string, any>} lookup
+	 * @param  {boolean}             initial
 	 * @return {string}  
 	 */
-	function renderVNodeToString (subject, lookup) {
+	function renderVNodeToString (subject, lookup, initial) {
 		var nodeType = subject.nodeType;
 	
 		// textNode
@@ -2471,8 +2517,8 @@
 		// if component
 		if (nodeType === 2) {
 			// if cached
-			if (subject.type._html !== void 0) {
-				return subject.type._html;
+			if (subject.type.HTMLCache !== void 0) {
+				return subject.type.HTMLCache;
 			} else {
 				vnode = extractComponent(subject);
 			}
@@ -2486,6 +2532,7 @@
 		var children = vnode.children;
 	
 		var childrenStr = '';
+		var vnodeStr = '';
 	
 		if (props.innerHTML !== void 0) {
 			// special case when a prop replaces children
@@ -2494,24 +2541,31 @@
 			// construct children string
 			if (children.length !== 0) {
 				for (var i = 0, length = children.length; i < length; i++) {
-					childrenStr += renderVNodeToString(children[i], lookup);
+					childrenStr += renderVNodeToString(children[i], lookup, false);
 				}
 			}
 		}
 	
 		var propsStr = renderStylesheetToString(
-			nodeType, subject._owner, subject.type, renderPropsToString(props), lookup
+			nodeType, subject.instance, subject.type, renderPropsToString(props), lookup
 		);
 	
 		if (vnode.nodeType === 11) {
-			return childrenStr;
+			vnodeStr = childrenStr;
 		} else if (isVoid[type] === 0) {
 			// <type ...props>
-			return '<'+type+propsStr+'>';
+			vnodeStr = '<'+type+propsStr+'>';
 		} else {
 			// <type ...props>...children</type>
-			return '<'+type+propsStr+'>'+childrenStr+'</'+type+'>';
+			vnodeStr = '<'+type+propsStr+'>'+childrenStr+'</'+type+'>';
 		}
+	
+		// add doctype if initial element is <html>
+		if (initial && type === 'html') {
+			vnodeStr = '<!doctype html>' + vnodeStr;
+		}
+	
+		return vnodeStr;
 	}
 	
 	
@@ -2594,7 +2648,7 @@
 				}
 	
 				for (var i = 0; i < length; i++) {
-					sandbox(action, reject, collection[i]);
+					tryCatch(action, reject, collection[i]);
 				}
 			}
 		}
@@ -2720,233 +2774,199 @@
 	
 	
 	/**
-	 * request constructor
-	 * 
+	 * create http request
+	 *
+	 * @param  {Object}
 	 * @return {function}
 	 */
-	function http () {
-		/**
-		 * serialize + encode object
-		 * 
-		 * @example serialize({url:'http://.com'}) //=> 'url=http%3A%2F%2F.com'
-		 * 
-		 * @param  {Object} object   
-		 * @param  {string} prefix
-		 * @return {string}
-		 */
-		function serialize (object, prefix) {
-			var arr = [];
-		
-			each(object, function (value, key) {
-				var prefixValue = prefix !== void 0 ? prefix + '[' + key + ']' : key;
-		
-				// when the value is equal to an object 
-				// we have somethinglike value = {name:'John', addr: {...}}
-				// re-run param(addr) to serialize 'addr: {...}'
-				arr[arr.length] = typeof value == 'object' ? 
-										serialize(value, prefixValue) :
-										encodeURIComponent(prefixValue) + '=' + encodeURIComponent(value);
-			});
-		
-			return arr.join('&');
-		}
-		
-		
-		/**
-		 * retrieve and format response
-		 * 
-		 * @param  {XMLHttpRequest} xhr
-		 * @param  {string}         responseType
-		 * @param  {function}       reject
-		 * @return {(Node|string|Object)}
-		 */
-		function response (xhr, responseType, reject) {			
-			var data, header = xhr.getResponseHeader('Content-Type');
-		
-			if (!xhr.responseType || xhr.responseType === 'text') {
-				data = xhr.responseText;
-			} else if (xhr.responseType === 'document') {
-				data = responseXML;
-			} else {
-				data = response;
-			}
-		
-			// response format
-			if (!responseType) {
-				responseType = (header.indexOf(';') > -1 ? header.split(';')[0].split('/') : header.split('/'))[1];
-			}
-		
-			var body;
-		
-			if (responseType === 'json') {
-				body = sandbox(JSON.parse, reject, data);
-			} else if (responseType === 'html' || responseType === 'document') {
-				body = (new DOMParser()).parseFromString(data, 'text/html');
-			} else {
-				body = data;
-			}
-		
-			return body;
-		}
-		
-		
-		/**
-		 * create http request
-		 * 
-		 * @param  {string}            method
-		 * @param  {string}            uri
-		 * @param  {(Object|string)=}  payload
-		 * @param  {string=}           enctype
-		 * @param  {string=}           responseType
-		 * @param  {boolean=}          withCredential
-		 * @param  {initial=}          initial
-		 * @param  {function=}         config
-		 * @param  {string=}           username
-		 * @param  {string=}           password
-		 * @return {function}
-		 */
-		function create (
-			method, uri, payload, enctype, responseType, withCredentials, initial, headers, config, username, password
-		) {
-			// return a a stream
-			return stream(function (resolve, reject, stream) {
-				// if XMLHttpRequest constructor absent, exit early
-				if (window.XMLHttpRequest == null) {
-					return;
-				}
-		
-				// create xhr object
-				var xhr = new window.XMLHttpRequest();
-		
-				// retrieve browser location 
-				var location = window.location;
-		
-				// create anchor element
-				var anchor = document.createElement('a');
-				
-				// plug uri as href to anchor element, 
-				// to extract hostname, port, protocol properties
-				anchor.href = uri;
-		
-				// check if cross origin request
-				var isCrossOriginRequest = !(
-					anchor.hostname   === location.hostname && 
-					anchor.port       === location.port &&
-					anchor.protocol   === location.protocol && 
-					location.protocol !== 'file:'
-				);
-		
-				// remove reference
-				anchor = null;
-		
-				// open request
-				xhr.open(method, uri, true, username, password);
-		
-				// on success resolve
-				xhr.onload  = function () { resolve(response(this, responseType, reject)); };
-				// on error reject
-				xhr.onerror = function () { reject(this.statusText); };
-				
-				// cross origin request cookies
-				isCrossOriginRequest && withCredentials && (xhr.withCredentials = true);
-		
-				// assign content type and payload
-				if (method === 'POST') {
-					xhr.setRequestHeader('Content-Type', enctype);
-		
-					if (enctype.indexOf('x-www-form-urlencoded') > -1) {
-						payload = serialize(payload);
-					} else if (enctype.indexOf('json') > -1) {
-						payload = JSON.stringify(payload);
-					}
-				}
-		
-				if (headers != null) {
-					each(headers, function (value, name) {
-						xhr.setRequestHeader(name, value);
-					});
-				}
-		
-				// if, assign inital value of stream
-				initial !== void 0 && resolve(initial);
-		
-				// config, expose underlying XMLHttpRequest object
-				// allows us to save a reference to it and call abort when required
-				config != null && typeof config === 'function' && config(xhr);
-		
-				// send request
-				payload !== void 0 ? xhr.send(payload) : xhr.send();
-			});
-		}
-		
-		
-		/**
-		 * create request method
-		 * 
-		 * @param  {string}
-		 * @return {function}
-		 */
-		function method (method) {
-			return function (
-				url, payload, enctype, responseType, withCredentials, initial, headers, config, username, password
-			) {
-				// encode url
-				var uri = encodeURI(url);
-		
-				// enctype syntax sugar
-				switch (enctype) {
-					case 'json': { enctype = 'application/json'; break; }
-					case 'text': { enctype = 'text/plain'; break; }
-					case 'file': { enctype = 'multipart/form-data'; break; }
-					default:     { enctype = 'application/x-www-form-urlencoded'; }
-				}
-		
-				// if has payload && GET pass payload as query string
-				if (method === 'GET' && payload) {
-					uri = uri + '?' + (typeof payload === 'object' ? serialize(payload) : payload);
-				}
-		
-				// return promise-like stream
-				return create(
-					method, uri, payload, enctype, responseType, withCredentials, initial, headers, config, username, password
-				);
-			}
-		}
-		
-		
-		/**
-		 * request constructor
-		 * 
-		 * request({method: 'GET', url: '?'}) === request.get('?')
-		 * 
-		 * @param  {Object} subject
-		 * @return {function}
-		 */
-		function request (subject) {
-			if (typeof subject === 'string') {
-				return request.get(subject);
-			} else {
-				return request[(subject.method || 'GET').toLowerCase()](
-					subject.url, 
-					subject.payload || subject.data,
-					subject.enctype, 
-					subject.responseType,
-					subject.withCredentials,
-					subject.initial,
-					subject.headers,
-					subject.config,
-					subject.username, 
-					subject.password
-				);
-			}
-		}
-		
-		request.get  = method('GET'),
-		request.post = method('POST');
-		
-		
+	function http (options) {
+		var method          = options.method;
+		var url             = options.url;
+		var payload         = options.payload; 
+		var enctype         = options.enctype;
+		var responseType    = options.responseType;
+		var withCredentials = options.withCredentials;
+		var headers         = options.headers;
+		var initial         = options.initial;
+		var config          = options.config;
+		var username        = options.username;
+		var password        = options.password;
 	
-		return request;
+		// return a stream
+		return stream(function (resolve, reject) {
+			// if XMLHttpRequest constructor absent, exit early
+			if (window.XMLHttpRequest == null) {
+				return;
+			}
+	
+			// create xhr object
+			var xhr = new window.XMLHttpRequest();
+	
+			// retrieve browser location 
+			var location = window.location;
+	
+			// create anchor element
+			var anchor = document.createElement('a');
+			
+			// use to extract hostname, port, protocol properties
+			anchor.href = url;
+	
+			// check if cross origin request
+			var isCrossOriginRequest = !(
+				anchor.hostname === location.hostname && 
+				anchor.port === location.port &&
+				anchor.protocol === location.protocol && 
+				location.protocol !== 'file:'
+			);
+	
+			// open request
+			xhr.open(method, url, true, username, password);
+	
+			// on success resolve
+			xhr.onload = function onload () { 
+				resolve(response(this, responseType, reject)); 
+			};
+			// on error reject
+			xhr.onerror = function onerror () { 
+				reject(this.statusText); 
+			};
+			
+			// cross origin request cookies
+			isCrossOriginRequest && withCredentials && (xhr.withCredentials = true);
+	
+			// assign content type and payload
+			if (method === 'POST') {
+				xhr.setRequestHeader('Content-Type', enctype);
+	
+				if (enctype.indexOf('x-www-form-urlencoded') > -1) {
+					payload = serialize(payload);
+				} else if (enctype.indexOf('json') > -1) {
+					payload = JSON.stringify(payload);
+				}
+			}
+	
+			if (headers != null) {
+				each(headers, function (value, name) {
+					xhr.setRequestHeader(name, value);
+				});
+			}
+	
+			// if, assign inital value of stream
+			initial != null && resolve(initial);
+	
+			// config, expose underlying XMLHttpRequest object
+			// allows us to save a reference to it and call abort when required
+			config != null && typeof config === 'function' && config(xhr);
+	
+			// send request
+			payload != null ? xhr.send(payload) : xhr.send();
+		});
+	}
+	
+	
+	/**
+	 * request constructor
+	 * 
+	 * @example request({method: 'GET', url: '?'}) === request.get('?')
+	 * 
+	 * @param {Object} options
+	 */
+	function request (options) {
+		var payload = options.payload;
+		var method  = options.method = (options.method.toUpperCase() || 'GET');
+		
+		options.url = encodeURI(options.url);
+	
+		// enctype syntax sugar
+		switch (options.enctype) {
+			case 'json': options.enctype = 'application/json'; break;
+			case 'text': options.enctype = 'text/plain'; break;
+			case 'file': options.enctype = 'multipart/form-data'; break;
+			default:     options.enctype = 'application/x-www-form-urlencoded';
+		}
+	
+		// if has payload && GET pass payload as query string
+		if (method === 'GET' && payload) {
+			options.url += '?' + (typeof payload === 'object' ? serialize(payload) : payload);		
+		}
+	
+		// returns a promise-like stream
+		return http(options);
+	}
+	
+	request.get = function (url, payload, enctype, responseType) {
+		return request(VRequest('GET', url, payload, enctype, responseType));
+	};
+	
+	request.post = function (url, payload, enctype, responseType) {
+		return request(VRequest('POST', url, payload, enctype, responseType));
+	};
+	
+	request.get('');
+	
+	/**
+	 * retrieve and format response
+	 * 
+	 * @param  {XMLHttpRequest} xhr
+	 * @param  {string}         responseType
+	 * @param  {function}       reject
+	 * @return {(Node|string|Object)}
+	 */
+	function response (xhr, responseType, reject) {			
+		var data   = null; 
+		var header = xhr.getResponseHeader('Content-Type');
+	
+		if (!xhr.responseType || xhr.responseType === 'text') {
+			data = xhr.responseText;
+		} else if (xhr.responseType === 'document') {
+			data = responseXML;
+		} else {
+			data = response;
+		}
+	
+		// response format
+		if (responseType == null) {
+			responseType = (header.indexOf(';') > -1 ? header.split(';')[0].split('/') : header.split('/'))[1];
+		}
+	
+		var body;
+	
+		if (responseType === 'json') {
+			body = tryCatch(JSON.parse, reject, data);
+		} else if (responseType === 'html' || responseType === 'document') {
+			body = (new DOMParser()).parseFromString(data, 'text/html');
+		} else {
+			body = data;
+		}
+	
+		return body;
+	}
+	
+	
+	/**
+	 * serialize + encode object
+	 * 
+	 * @example serialize({url:'http://.com'}) //=> 'url=http%3A%2F%2F.com'
+	 * 
+	 * @param  {Object} object   
+	 * @param  {string} prefix
+	 * @return {string}
+	 */
+	function serialize (object, prefix) {
+		var arr = [];
+	
+		each(object, function (value, key) {
+			var prefixValue = prefix !== void 0 ? prefix + '[' + key + ']' : key;
+	
+			// when the value is equal to an object 
+			// we have somethinglike value = {name:'John', addr: {...}}
+			// re-run param(addr) to serialize 'addr: {...}'
+			arr[arr.length] = typeof value == 'object' ? 
+									serialize(value, prefixValue) :
+									encodeURIComponent(prefixValue) + '=' + encodeURIComponent(value);
+		});
+	
+		return arr.join('&');
 	}
 	
 	
@@ -2989,11 +3009,13 @@
 	
 		if (middleware !== void 0) {
 			each(routes, function (func, uri) {
-				routes[uri] = function callback (data) { middleware(func, data, element); };
+				routes[uri] = function (data) { middleware(func, data, element); };
 			});
 		} else if (element !== void 0) {
 			each(routes, function (component, uri) {
-				routes[uri] = function callback (data) { render(VComponent(component, data), element); };
+				routes[uri] = function (data) {
+					render(VComponent(component, data), element, null, false);
+				};
 			});
 		}
 	
@@ -3047,7 +3069,7 @@
 			// uri is the url/RegExp that describes the uri match thus
 			// given the following /:user/:id/*
 			// the pattern will be / ([^\/]+) / ([^\/]+) / (?:.*)
-			var pattern = uri.replace(regRoute, function () {
+			var pattern = uri.replace(regex, function () {
 				// id => arguments: 'user', id, undefned
 				var id = arguments[2];
 				// if, not variable, else, capture variable
@@ -3165,6 +3187,7 @@
 			address = address.substring(0, address.length - 1);
 		}
 	
+		var regex    = /([:*])(\w+)|([\*])/g;
 		var history  = window.history || objEmpty;
 		var location = history.location || window.location;
 		var origin   = location.origin;
@@ -3494,20 +3517,22 @@
 	}
 
 	return {
+		// version
+		version:          version,
+
+		// alias
+		h:                createElement,
+		
 		// elements
 		createElement:    createElement,
 		isValidElement:   isValidElement,
 		cloneElement:     cloneElement,
 		createFactory:    createFactory,
-		VText:            VText,
-		VElement:         VElement,
-		VSvg:             VSvg,
-		VFragment:        VFragment,
-		VComponent:       VComponent,
 		DOM:              DOM,
 
 		// render
 		render:           render,
+		shallow:          shallow,
 		renderToString:   renderToString,
 		renderToStream:   renderToStream,
 		renderToCache:    renderToCache,
@@ -3522,14 +3547,16 @@
 		combineReducers:  combineReducers,
 		
 		// utilities
-		request:          http(),
+		request:          request,
 		router:           router,
 		stream:           stream,
 
-		// version
-		version:          version,
-
-		// alias
-		h:                createElement,
+		// shapes
+		VText:            VText,
+		VElement:         VElement,
+		VSvg:             VSvg,
+		VFragment:        VFragment,
+		VComponent:       VComponent,
+		VRequest:         VRequest,
 	};
 }));

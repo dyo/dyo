@@ -1,15 +1,24 @@
-dio is a fast javascript framework
+dio is a fast javascript framework for building applications.
 
-<p>[Install v4.0.1](./#installation "button")</p>
+<p>[Install v5.0.0](./#installation "button")</p>
 
 ```javascript
-function Main () {
-	return {
-		render: function (props) {
-			return h('h1', props.value)
-		}
+// statefull
+const Main = dio.createClass({
+	render (props) {
+		return h('h1', props.value);
+	}
+});
+
+// statefull
+class Main extends dio.Component {
+	render (props) {
+		return h('h1', props.value);
 	}
 }
 
-dio.render(Main)({value: 'Hello World'})
+// statefull
+const Main = h => props => h('h1', props.value);
+
+dio.render(Main)({value: 'Hello World'});
 ```

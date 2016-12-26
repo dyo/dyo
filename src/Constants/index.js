@@ -1,4 +1,2 @@
-import 'core';
+import 'main';
 import 'server';
-import 'router';
-

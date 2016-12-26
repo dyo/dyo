@@ -44,7 +44,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 		// uri is the url/RegExp that describes the uri match thus
 		// given the following /:user/:id/*
 		// the pattern will be / ([^\/]+) / ([^\/]+) / (?:.*)
-		var pattern = uri.replace(regRoute, function () {
+		var pattern = uri.replace(regex, function () {
 			// id => arguments: 'user', id, undefned
 			var id = arguments[2];
 			// if, not variable, else, capture variable
@@ -162,6 +162,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 		address = address.substring(0, address.length - 1);
 	}
 
+	var regex    = /([:*])(\w+)|([\*])/g;
 	var history  = window.history || objEmpty;
 	var location = history.location || window.location;
 	var origin   = location.origin;

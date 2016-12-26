@@ -4,7 +4,7 @@
  * @param  {VNode}   newNode  
  * @param  {VNode}   oldNode  
  * @param  {boolean} internalCall
- * @return {number}  number
+ * @return {number}
  */
 function patch (newNode, oldNode, internalCall) {
 	var newNodeType = newNode.nodeType;
@@ -22,7 +22,7 @@ function patch (newNode, oldNode, internalCall) {
 	else if (newNodeType === 3 && oldNodeType === 3) { 
 		if (newNode.children !== oldNode.children) {
 			return 3; 
-		} 
+		}
 	}
 	// key operation
 	else if (internalCall && (newNode.props.key !== void 0 || oldNode.props.key !== void 0)) {
@@ -41,8 +41,8 @@ function patch (newNode, oldNode, internalCall) {
 
 			// a component
 			if (oldNodeType === 2) {
-				var oldComponent = oldNode._owner;
-				var newComponent = newNode._owner;
+				var oldComponent = oldNode.instance;
+				var newComponent = newNode.instance;
 
 				// a component with shouldComponentUpdate method
 				if (
@@ -69,13 +69,13 @@ function patch (newNode, oldNode, internalCall) {
 			if (newLength === 0) {
 				// but only if old children is not already cleared
 				if (oldLength !== 0) {
-					oldNode._node.textContent = '';
+					oldNode.DOMNode.textContent = '';
 					oldNode.children = newChildren;
 				}	
 			}
 			// newNode has children
 			else {
-				var parentNode = oldNode._node;
+				var parentNode = oldNode.DOMNode;
 
 				var hasKeys  = false;
 				var diffKeys = false;
@@ -90,8 +90,12 @@ function patch (newNode, oldNode, internalCall) {
 					var oldChild = oldChildren[i] || nodEmpty;
 					var action   = patch(newChild, oldChild, true);
 
-					// if action dispatched, 
-					// 1 - remove, 2 - add, 3 - text update, 4 - replace, 5 - key
+					// 0 - noop
+					// 1 - remove, 
+					// 2 - add, 
+					// 3 - text update, 
+					// 4 - replace, 
+					// 5 - key
 					if (action !== 0) {
 						if (diffKeys) {
 							action = 5;
@@ -119,7 +123,7 @@ function patch (newNode, oldNode, internalCall) {
 							// text operation
 							case 3: {
 								// replace dom node text, replace old child text
-								oldChild._node.nodeValue = oldChild.children = newChild.children;
+								oldChild.DOMNode.nodeValue = oldChild.children = newChild.children;
 
 								break;
 							}
@@ -152,9 +156,9 @@ function patch (newNode, oldNode, internalCall) {
 									diffKeys = true;
 								}
 
-								// register key
-								newKeys[newKey] = (newChild._index = i, newChild);
-								oldKeys[oldKey] = (oldChild._index = i, oldChild);
+								// register keys
+								newKeys[newKey] = (newChild.index = i, newChild);
+								oldKeys[oldKey] = (oldChild.index = i, oldChild);
 
 								break;
 							}

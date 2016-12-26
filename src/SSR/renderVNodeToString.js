@@ -3,9 +3,10 @@
  * 
  * @param  {VNode}               subject
  * @param  {Object<string, any>} lookup
+ * @param  {boolean}             initial
  * @return {string}  
  */
-function renderVNodeToString (subject, lookup) {
+function renderVNodeToString (subject, lookup, initial) {
 	var nodeType = subject.nodeType;
 
 	// textNode
@@ -18,8 +19,8 @@ function renderVNodeToString (subject, lookup) {
 	// if component
 	if (nodeType === 2) {
 		// if cached
-		if (subject.type._html !== void 0) {
-			return subject.type._html;
+		if (subject.type.HTMLCache !== void 0) {
+			return subject.type.HTMLCache;
 		} else {
 			vnode = extractComponent(subject);
 		}
@@ -33,6 +34,7 @@ function renderVNodeToString (subject, lookup) {
 	var children = vnode.children;
 
 	var childrenStr = '';
+	var vnodeStr = '';
 
 	if (props.innerHTML !== void 0) {
 		// special case when a prop replaces children
@@ -41,23 +43,30 @@ function renderVNodeToString (subject, lookup) {
 		// construct children string
 		if (children.length !== 0) {
 			for (var i = 0, length = children.length; i < length; i++) {
-				childrenStr += renderVNodeToString(children[i], lookup);
+				childrenStr += renderVNodeToString(children[i], lookup, false);
 			}
 		}
 	}
 
 	var propsStr = renderStylesheetToString(
-		nodeType, subject._owner, subject.type, renderPropsToString(props), lookup
+		nodeType, subject.instance, subject.type, renderPropsToString(props), lookup
 	);
 
 	if (vnode.nodeType === 11) {
-		return childrenStr;
+		vnodeStr = childrenStr;
 	} else if (isVoid[type] === 0) {
 		// <type ...props>
-		return '<'+type+propsStr+'>';
+		vnodeStr = '<'+type+propsStr+'>';
 	} else {
 		// <type ...props>...children</type>
-		return '<'+type+propsStr+'>'+childrenStr+'</'+type+'>';
+		vnodeStr = '<'+type+propsStr+'>'+childrenStr+'</'+type+'>';
 	}
+
+	// add doctype if initial element is <html>
+	if (initial && type === 'html') {
+		vnodeStr = '<!doctype html>' + vnodeStr;
+	}
+
+	return vnodeStr;
 }
 

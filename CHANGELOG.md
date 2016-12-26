@@ -1,3 +1,12 @@
+## 5.0.0 (December 26, 2016)
+
+- render is now no-destructive to the mount node
+- hydration is now configurable `.render(vnode, target, null, true)`
+- render now accepts a callback argument `.render(vnode, target, callback(root))`
+- support string refs
+- add shallow render `dio.shallow`
+
+
 ## 4.0.1 (December 19, 2016)
 
 - improvement in handling callbacks passed to `.forceUpdate`
@@ -87,7 +96,7 @@
 - improve server side rendering
 - move code baseto  modularity approach
 
-### API changes
+#### API changes
 
 - added stylesheet component method
 - removed injectWindowDependency()
@@ -178,10 +187,10 @@ dio.render(Component, '.app')();
 
 ## 1.2.0 (September 12, 2016)
 
-- Improves performance in various ways.
+- Improves performance in various ways
 - Added fragment support, you can now return a fragment/array of elements in render
 
-### dio.PropTypes
+#### dio.PropTypes
 
 - Added all the react land PropTypes
 
@@ -192,16 +201,15 @@ dio.render(Component, '.app')();
 ]
 ```
 
-### dio.createStore
+#### dio.createStore
 
 - Added middleware support. `dio.createStore(reducer(s), initalState, enhancer)`
-
-### API
-
 - Added `version`, `isValidElement`, `cloneElement`, `renderToString`, `renderToStaticMarkup`
 - Exposes internal utilities to `dio._` that are used to get out-the-box support for IE 8+
 
-``` javascript
+#### Top Level API
+
+```javascript
 toArray
 assign      (Object.assign)
 keys        (Object.keys)

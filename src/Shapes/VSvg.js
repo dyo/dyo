@@ -1,5 +1,5 @@
 /**
- * virtual svg node factory
+ * svg shape
  * 
  * @param  {string}  type
  * @param  {Object=} props
@@ -12,9 +12,9 @@ function VSvg (type, props, children) {
 		type: type, 
 		props: (props = props || {}, props.xmlns = nsSvg, props), 
 		children: (children || []),
-		_node: null,
-		_owner: null,
-		_index: null
+		DOMNode: null,
+		instance: null,
+		index: null
 	};
 }
 

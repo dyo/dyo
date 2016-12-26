@@ -12,9 +12,9 @@ function renderToCache (subject) {
 				renderToCache(subject[i]);
 			}
 		} else if (subject.nodeType === void 0) {
-			subject._html = renderToString(subject);
-		} else if (subject.nodeType === 2 && subject.type._html === void 0) {
-			subject.type._html = renderToString(subject);
+			subject.HTMLCache = renderToString(subject);
+		} else if (subject.nodeType === 2) {
+			subject.type.HTMLCache = renderToString(subject);
 		}
 	}
 

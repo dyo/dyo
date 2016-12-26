@@ -53,7 +53,7 @@ function stream (value, middleware) {
 			}
 
 			for (var i = 0; i < length; i++) {
-				sandbox(action, reject, collection[i]);
+				tryCatch(action, reject, collection[i]);
 			}
 		}
 	}

@@ -7,15 +7,15 @@
  * @param {Node}  nextNode
  */
 function insertNode (newNode, oldNode, parentNode, nextNode) {
-	if (newNode._owner !== null && newNode._owner.componentWillMount) {
-		newNode._owner.componentWillMount(nextNode);
+	if (newNode.instance !== null && newNode.instance.componentWillMount) {
+		newNode.instance.componentWillMount(nextNode);
 	}
 
 	// insert node
 	parentNode.insertBefore(nextNode, oldNode);
 
-	if (newNode._owner !== null && newNode._owner.componentDidMount) {
-		newNode._owner.componentDidMount(nextNode);
+	if (newNode.instance !== null && newNode.instance.componentDidMount) {
+		newNode.instance.componentDidMount(nextNode);
 	}
 }
 

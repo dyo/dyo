@@ -73,7 +73,7 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
             // default to 0 instead of NaN if there is no second character
             var second = line.charCodeAt(1) || 0;
 
-            // ignore line comments
+            // ignore comments
             if (comment === 2) {
                 line = ''; comment = 0;
             }
@@ -172,7 +172,7 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                                 var char = styles.charCodeAt(i);
                                 // {, }, nested blocks may have nested blocks
                                 char === 123 ? counter++ : char === 125 && counter--;
-                                // break when the has ended
+                                // break when the block has ended
                                 if (counter === 0) break;
                                 // build content of nested block
                                 inner += styles[i++];
@@ -183,7 +183,7 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                             for (var j = 0, length = prevSel.length; j < length; j++) {
                                 // extract value, prep index for reuse
                                 var val = prevSel[j]; prevSel[j] = '';
-                                // since there can also be multiple nested selectors
+                                // since there could also be multiple nested selectors
                                 for (var k = 0, l = nestSel.length; k < l; k++) {
                                     prevSel[j] += (
                                         (val.replace(prefix, '').trim() + ' ' + nestSel[k].trim()).trim() + 
@@ -241,11 +241,11 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                                 else if (firstChar === 58) {
                                     var secondChar = selector.charCodeAt(1);
 
-                                    // :host 
-                                    if (secondChar === 104) {
+                                    // h, t, :host 
+                                    if (secondChar === 104 && selector.charCodeAt(4) === 116) {
                                         var nextChar = (selector = selector.substring(5)).charCodeAt(0);
                                         
-                                        // :host(selector)                                                    
+                                        // :host(selector)                                                 
                                         if (nextChar === 40) {
                                             // before: `(selector)`
                                             selector = prefix + selector.substring(1).replace(')', '');
@@ -262,7 +262,7 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                                             selector = prefix + selector;
                                         }
                                     }
-                                    // :global(selector)
+                                    // g, :global(selector)
                                     else if (secondChar === 103) {
                                         // before: `:global(selector)`
                                         selector = selector.substring(8).replace(')', '');
@@ -270,13 +270,11 @@ function stylis (selector, styles, nsAnimations, nsKeyframes) {
                                     }
                                     // :hover, :active, :focus, etc...
                                     else {
-                                        // :, insure `div:hover` does not end up as `div :hover` 
-                                        selector = prefix + (firstChar === 58 ? '' : ' ') + selector;
+                                        selector = prefix + selector;
                                     }
                                 }
                                 else {
-                                    // :, insure `div:hover` does not end up as `div :hover` 
-                                    selector = prefix + (firstChar === 58 ? '' : ' ') + selector;
+                                    selector = prefix + ' ' + selector;
                                 }
 
                                 // if first selector do not prefix with `,`

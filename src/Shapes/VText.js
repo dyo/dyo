@@ -1,5 +1,5 @@
 /**
- * virtual text node factory
+ * text shape
  * 
  * @param  {(string|boolean|number)} text
  * @return {VNode}
@@ -10,9 +10,9 @@ function VText (text) {
 		type: 'text', 
 		props: objEmpty, 
 		children: text, 
-		_node: null,
-		_owner: null,
-		_index: null
+		DOMNode: null,
+		instance: null,
+		index: null
 	};
 }
 

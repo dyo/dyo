@@ -1,5 +1,5 @@
 /**
- * virtual element node factory
+ * element shape
  * 
  * @param  {string}  type
  * @param  {Object=} props
@@ -12,9 +12,9 @@ function VElement (type, props, children) {
 		type: type, 
 		props: (props || objEmpty), 
 		children: (children || []), 
-		_node: null,
-		_owner: null,
-		_index: null
+		DOMNode: null,
+		instance: null,
+		index: null
 	};
 }
 

@@ -5,14 +5,14 @@
  * @param {Node}  parentNode
  */
 function removeNode (oldNode, parentNode) {
-	if (oldNode._owner !== null && oldNode._owner.componentWillUnmount) {
-		oldNode._owner.componentWillUnmount(oldNode._node);
+	if (oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
+		oldNode.instance.componentWillUnmount(oldNode.DOMNode);
 	}
 
 	// remove node
-	parentNode.removeChild(oldNode._node);
+	parentNode.removeChild(oldNode.DOMNode);
 
 	// clear references
-	oldNode._node = null;
+	oldNode.DOMNode = null;
 }
 

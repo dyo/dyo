@@ -1,8 +1,8 @@
 {
 	"name": "dio.js",
 	"main": "dio.js",
-	"description": "dio is a fast javascript framework",
-	"version": "4.0.1",
+	"description": "dio is a fast javascript framework for building applications.",
+	"version": "5.0.0",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",
 	"authors": [
@@ -16,17 +16,12 @@
 	"keywords": [
 		"dio", 
 		"react",
-		"vdom", 
-		"virtual", 
-		"dom",
-		"virtual dom", 
-		"blazing",
 		"fast",
 		"lightweight",
 		"framework", 
-		"html", 
-		"server", 
-		"browser"
+		"server",
+		"browser",
+		"components"
 	],
 	"ignore": [
 		"*",

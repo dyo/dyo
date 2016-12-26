@@ -8,7 +8,7 @@
 
 
 // current version
-var version = '4.0.1';
+var version = '5.0.0';
 
 // enviroment variables
 var document = window.document || null;
@@ -28,3 +28,4 @@ var nodEmpty = VNode(0, '', objEmpty, arrEmpty, null, null, null);
 
 // random characters
 var randomChars = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
+

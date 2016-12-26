@@ -1,30 +1,39 @@
 /**
  * request constructor
  * 
- * request({method: 'GET', url: '?'}) === request.get('?')
+ * @example request({method: 'GET', url: '?'}) === request.get('?')
  * 
- * @param  {Object} subject
- * @return {function}
+ * @param {Object} options
  */
-function request (subject) {
-	if (typeof subject === 'string') {
-		return request.get(subject);
-	} else {
-		return request[(subject.method || 'GET').toLowerCase()](
-			subject.url, 
-			subject.payload || subject.data,
-			subject.enctype, 
-			subject.responseType,
-			subject.withCredentials,
-			subject.initial,
-			subject.headers,
-			subject.config,
-			subject.username, 
-			subject.password
-		);
+function request (options) {
+	var payload = options.payload;
+	var method  = options.method = (options.method.toUpperCase() || 'GET');
+	
+	options.url = encodeURI(options.url);
+
+	// enctype syntax sugar
+	switch (options.enctype) {
+		case 'json': options.enctype = 'application/json'; break;
+		case 'text': options.enctype = 'text/plain'; break;
+		case 'file': options.enctype = 'multipart/form-data'; break;
+		default:     options.enctype = 'application/x-www-form-urlencoded';
 	}
+
+	// if has payload && GET pass payload as query string
+	if (method === 'GET' && payload) {
+		options.url += '?' + (typeof payload === 'object' ? serialize(payload) : payload);		
+	}
+
+	// returns a promise-like stream
+	return http(options);
 }
 
-request.get  = method('GET'),
-request.post = method('POST');
+request.get = function (url, payload, enctype, responseType) {
+	return request(VRequest('GET', url, payload, enctype, responseType));
+};
 
+request.post = function (url, payload, enctype, responseType) {
+	return request(VRequest('POST', url, payload, enctype, responseType));
+};
+
+request.get('');

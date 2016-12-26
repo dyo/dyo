@@ -151,14 +151,14 @@
 
 	var routes = {
 		'/': function () {
-			dio.render(h(Welcome, {url: 'welcome.md'}), '.container');
+			dio.render(h(Welcome, {url: 'welcome.md'}), '.container', null, false);
 		},
 		'/#*': function () {
 			var section = window.location.hash.toLowerCase().replace('#', '');
 
 			section = section || 'installation';
 			section = ''+ section + '.md';
-			dio.render(h(Documentation, {url: section}), '.container');
+			dio.render(h(Documentation, {url: section}), '.container', null, false);
 		}
 	};
 	var router = dio.router(routes);

@@ -7,22 +7,22 @@
  * @param {Node}  nextNode
  */
 function replaceNode (newNode, oldNode, parentNode, nextNode) {
-	if (oldNode._owner !== null && oldNode._owner.componentWillUnmount) {
-		oldNode._owner.componentWillUnmount(oldNode._node);
+	if (oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
+		oldNode.instance.componentWillUnmount(oldNode.DOMNode);
 	}
 
-	if (newNode._owner !== null && newNode._owner.componentWillMount) {
-		newNode._owner.componentWillMount(nextNode);
+	if (newNode.instance !== null && newNode.instance.componentWillMount) {
+		newNode.instance.componentWillMount(nextNode);
 	}
 
 	// replace node
-	parentNode.replaceChild(nextNode, oldNode._node);
+	parentNode.replaceChild(nextNode, oldNode.DOMNode);
 	
-	if (newNode._owner !== null && newNode._owner.componentDidMount) {
-		newNode._owner.componentDidMount(nextNode);
+	if (newNode.instance !== null && newNode.instance.componentDidMount) {
+		newNode.instance.componentDidMount(nextNode);
 	}
 
 	// clear references
-	oldNode._node = null;
+	oldNode.DOMNode = null;
 }
 

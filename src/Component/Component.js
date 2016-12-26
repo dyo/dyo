@@ -30,8 +30,8 @@ function Component (props) {
 	// assign state
 	this.state = this.state || (this.getInitialState && this.getInitialState()) || {};
 
-	// create vnode addresses reference
-	this._cache = this._vnode = null;
+	// VNode and refs
+	this.refs = this.VNode = null;
 }
 
 

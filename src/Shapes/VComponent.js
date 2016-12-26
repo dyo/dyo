@@ -1,5 +1,5 @@
 /**
- * virtual component node factory
+ * component shape
  * 
  * @param  {(function|Component)} type
  * @param  {Object=}              props
@@ -12,9 +12,9 @@ function VComponent (type, props, children) {
 		type: type, 
 		props: (props || type.defaultProps || objEmpty), 
 		children: (children || arrEmpty),
-		_node: null,
-		_owner: null,
-		_index: null
+		DOMNode: null,
+		instance: null,
+		index: null
 	};
 }
 
