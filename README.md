@@ -121,7 +121,7 @@ class Hello extends dio.Component {
 
 #### stylesheet
 
-The stylesheet method tells dio how the component appearance will look like(its style/css). This method receieves no arguments but returns a string of css. This css will get namespaced to the component and prefixed where required.
+The stylesheet method tells dio how the component appearance will look like(its style/css). This method receives no arguments but returns a string of css. This css will get namespaced to the component and prefixed where required.
 
 ```javascript
 class Hello extends dio.Component {
