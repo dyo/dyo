@@ -32,7 +32,7 @@ dio is a fast javascript framework for building applications.
 #### cdn
 
 ```html
-<script src=https://unpkg.com/dio-nano@5.0.0/dio.min.js></script>
+<script src=https://unpkg.com/dio-nano@5.0.1/dio.min.js></script>
 ```
 
 #### npm

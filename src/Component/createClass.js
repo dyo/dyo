@@ -9,9 +9,9 @@ function createClass (subject) {
 		return subject.COMPCache; 
 	}
 
-	var func  = typeof subject === 'function';
+	var func = typeof subject === 'function';
 	var shape = func ? subject(createElement) : subject;
-	var init  = false;
+	var init = false;
 	var render;
 
 	if (typeof shape === 'function') {
@@ -32,12 +32,18 @@ function createClass (subject) {
 	// extend Component prototype
 	component.prototype = shape;
 
-	shape.setState      = Component.prototype.setState;
-	shape.forceUpdate   = Component.prototype.forceUpdate;
+	shape.setState = Component.prototype.setState;
+	shape.forceUpdate = Component.prototype.forceUpdate;
 
 	// function component, cache created component
-	func  && (subject.COMPCache = component);
-	!init && (shape.constructor = component);
+	if (func) {
+		subject.COMPCache = component;
+		component.constructor = subject;
+	}
+	
+	if (!init) {
+		shape.constructor = component;
+	}
 
 	return component;
 }

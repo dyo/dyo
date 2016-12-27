@@ -23,8 +23,6 @@ function forceUpdate (callback) {
 		oldNode.children = newNode.children;
 		oldNode.DOMNode  = newNode.DOMNode;
 		oldNode.instance = newNode.instance;
-
-		patch(newNode, oldNode);
 	} else {
 		// patch node
 		patch(newNode, oldNode, newNode.nodeType, oldNode.nodeType);

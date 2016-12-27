@@ -1,3 +1,7 @@
+## 5.0.1 (December 27, 2016)
+
+- perf improvements
+
 ## 5.0.0 (December 26, 2016)
 
 - render now accepts a callback argument `.render(vnode, target, callback(root))`
