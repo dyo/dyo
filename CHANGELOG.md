@@ -1,3 +1,7 @@
+## 5.0.2 (December 27, 2016)
+
+- patch nano
+
 ## 5.0.1 (December 27, 2016)
 
 - perf improvements

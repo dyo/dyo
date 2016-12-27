@@ -32,7 +32,7 @@
 	
 	
 	// current version
-	var version = '5.0.1';
+	var version = '5.0.2';
 	
 	// enviroment variables
 	var document = window.document || null;

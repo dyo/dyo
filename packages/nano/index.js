@@ -30,6 +30,8 @@
 	import '../../src/Shapes/VSvg';
 	import '../../src/Shapes/VFragment';
 	import '../../src/Shapes/VComponent';
+	import '../../src/Shapes/VEmpty';
+	import '../../src/Shapes/VNode';
 	import '../../src/Stylesheet/';
 	import '../../src/Element/';
 	import '../../src/Component/';

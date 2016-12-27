@@ -32,7 +32,7 @@
 	
 	
 	// current version
-	var version = '5.0.1';
+	var version = '5.0.2';
 	
 	// enviroment variables
 	var document = window.document || null;
@@ -182,6 +182,48 @@
 			DOMNode: null,
 			instance: null,
 			index: null
+		};
+	}
+	
+	
+	/**
+	 * empty shape
+	 * 
+	 * @return {VNode}
+	 */
+	function VEmpty () {
+		return {
+			nodeType: 1, 
+			type: 'noscript', 
+			props: objEmpty, 
+			children: [], 
+			DOMNode: null,
+			instance: null,
+			index: null
+		};
+	}
+	
+	
+	/**
+	 * VNode shape
+	 * 
+	 * @param {number}                      nodeType
+	 * @param {(function|Component|string)} type
+	 * @param {Object}                      props
+	 * @param {VNode[]}                     children
+	 * @param {?Node}                       DOMNode
+	 * @param {?Component}                  instance
+	 * @param {?index}                      index
+	 */
+	function VNode (nodeType, type, props, children, DOMNode, instance, index) {
+		return {
+			nodeType: nodeType,
+			type: type,
+			props: props,
+			children: children,
+			DOMNode: DOMNode,
+			instance: instance,
+			index: index
 		};
 	}
 	
