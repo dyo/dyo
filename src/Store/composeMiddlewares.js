@@ -2,7 +2,7 @@
  * composes single-argument functions from right to left. The right most
  * function can take multiple arguments as it provides the signature for
  * the resulting composite function
- *
+ * 
  * @param  {...function} funcs functions to compose
  * @return {function}          function obtained by composing the argument functions
  * from right to left. for example, compose(f, g, h) is identical to doing

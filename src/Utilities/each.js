@@ -1,8 +1,8 @@
 /**
  * for in proxy
  * 
- * @param  {Object}   obj
- * @param  {function} func
+ * @param  {Object<string, any>} obj
+ * @param  {function(any, string)} func
  */
 function each (obj, func) {
 	for (var name in obj) {

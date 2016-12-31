@@ -63,10 +63,6 @@ function renderVNodeToString (subject, lookup, initial) {
 	}
 
 	// add doctype if initial element is <html>
-	if (initial && type === 'html') {
-		vnodeStr = '<!doctype html>' + vnodeStr;
-	}
-
-	return vnodeStr;
+	return initial && type === 'html' ? ('<!doctype html>' + vnodeStr) : vnodeStr;
 }
 

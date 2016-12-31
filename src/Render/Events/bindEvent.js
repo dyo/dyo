@@ -1,9 +1,9 @@
 /**
  * bind event
  *
- * @param  {string}    name
- * @param  {Object}    value
- * @param  {Component} component
+ * @param  {string}              name
+ * @param  {Object<string, any>} value
+ * @param  {Component}           component
  * @return {function}
  */
 function bindEvent (name, value, component) {

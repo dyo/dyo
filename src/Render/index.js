@@ -8,11 +8,10 @@
 	
 
 import 'render';
-import 'patch';
-import 'keyed';
-import 'hydrate';
-import 'refs';
 import 'shallow';
+import 'Refs/refs';
+import 'Reconciler/patchKeys';
+import 'Reconciler/patchNodes';
 import 'Props/assignProps';
 import 'Props/assignProp';
 import 'Props/patchProps';
@@ -32,3 +31,4 @@ import 'Events/isEventName';
 import 'Events/bindEvent';
 import 'Components/extractComponent';
 import 'Components/extractRender';
+import 'Components/assignDefaultProps';

@@ -1,8 +1,10 @@
 /**
  * renderToCache
+ *
+ * @public
  * 
- * @param  {Object} subject
- * @return {Object} subject
+ * @param  {(VNode|VNode[]|Component)} subject
+ * @return {(VNode|VNode[]|Component)} subject
  */
 function renderToCache (subject) {
 	if (subject) {

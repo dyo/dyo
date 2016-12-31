@@ -1,9 +1,11 @@
 /**
  * svg shape
+ *
+ * @public
  * 
- * @param  {string}  type
- * @param  {Object=} props
- * @param  {any[]=}  children
+ * @param  {string}               type
+ * @param  {Object<string, any>=} props
+ * @param  {VNode[]=}             children
  * @return {VNode}
  */
 function VSvg (type, props, children) {

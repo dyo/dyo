@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>dio.js - Changing Root Node II</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<script src="../assets/dio.js"></script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script>
+			class ViewSelector extends dio.Component {
+				constructor() {
+					super();
+					this.state = {};
+					this.handleAccountChange = this.handleAccountChange.bind(this);
+					this.handlePropertyChange = this.handlePropertyChange.bind(this);
+					this.handleViewChange = this.handleViewChange.bind(this);
+				}
+
+				componentDidMount() {
+					this.handleAccountChange({target: {value: '1001'}});
+				}
+
+				handleAccountChange({target}) {
+					const accounts = accountSummaries.items;
+					const [account] = accounts.filter((account) => account.id === target.value);
+					const properties = account.webProperties;
+					const property = properties[0];
+					const views = property.profiles;
+					const view = views[0];
+
+					this.setState({
+							accounts,
+							account,
+							properties,
+							property,
+							views,
+							view,
+					});
+				}
+
+				handlePropertyChange({target}) {
+					const [property] = this.state.properties.filter((property) => property.id === target.value);
+					const views = property.profiles;
+					const view = views[0];
+
+					this.setState({
+						property,
+						views,
+						view,
+					});
+				}
+
+				handleViewChange({target}) {
+					const [view] = this.state.views.filter((view) => view.id === target.value);
+					this.setState({view});
+				}
+
+				render() {
+					const {accounts, account, properties, property,
+							views, view, viewId} = this.state;
+
+					if (!(account && property && view)) return null;
+
+					return (
+						h('div', 
+							h('select', {onChange: this.handleAccountChange, value: account.id || ''},
+								accounts.map((account, i) => h('option', {key: i, value: account.id}, account.name)) 
+							),
+							h('select', {onChange: this.handlePropertyChange, value: property.id || ''},
+								properties.map((property, i) => h('option', {key: i, value: property.id}, property.name)) 
+							),
+							h('select', {onChange: this.handleViewChange, value: view.id || ''},
+								views.map((view, i) => h('option', {key: i, value: view.id}, view.name)) 
+							)
+						)
+					)
+				}
+			}
+
+			const accountSummaries = {
+				"kind": "analytics#accountSummaries",
+				"username": "joe@gmail.com",
+				"totalResults": 5,
+				"startIndex": 1,
+				"itemsPerPage": 1000,
+				"items": [
+					{
+						"id": "1001",
+						"kind": "analytics#accountSummary",
+						"name": "Account A",
+						"webProperties": [
+							{
+								"kind": "analytics#webPropertySummary",
+								"id": "UA-1001-1",
+								"name": "WebProperty A.A",
+								"internalWebPropertyId": "3001",
+								"level": "STANDARD",
+								"websiteUrl": "http://example.com",
+								"profiles": [
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2001",
+										"name": "Profile A.A.A",
+										"type": "WEB"
+									},
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2002",
+										"name": "Profile A.A.B",
+										"type": "WEB"
+									},
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2003",
+										"name": "Profile A.A.C",
+										"type": "WEB"
+									}
+								]
+							},
+							{
+								"kind": "analytics#webPropertySummary",
+								"id": "UA-1001-2",
+								"name": "WebProperty A.B",
+								"internalWebPropertyId": "3002",
+								"level": "STANDARD",
+								"websiteUrl": "http://example.com",
+								"profiles": [
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2004",
+										"name": "Profile A.B.A",
+										"type": "WEB"
+									},
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2005",
+										"name": "Profile A.B.B",
+										"type": "WEB"
+									},
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2006",
+										"name": "Profile A.B.C",
+										"type": "WEB"
+									}
+								]
+							},
+							{
+								"kind": "analytics#webPropertySummary",
+								"id": "UA-1001-3",
+								"name": "WebProperty A.C",
+								"internalWebPropertyId": "3003",
+								"level": "STANDARD",
+								"websiteUrl": "http://example.com",
+								"profiles": [
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2007",
+										"name": "Profile A.C.A",
+										"type": "WEB"
+									},
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2008",
+										"name": "Profile A.C.B",
+										"type": "WEB"
+									},
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2009",
+										"name": "Profile A.C.C",
+										"type": "WEB"
+									}
+								]
+							}
+						]
+					},
+					{
+						"id": "1002",
+						"kind": "analytics#accountSummary",
+						"name": "Account B",
+						"webProperties": [
+							{
+								"kind": "analytics#webPropertySummary",
+								"id": "UA-1002-1",
+								"name": "WebProperty B.A",
+								"internalWebPropertyId": "3002",
+								"level": "STANDARD",
+								"websiteUrl": "http://example.com",
+								"profiles": [
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2010",
+										"name": "Profile B.A.A",
+										"type": "WEB"
+									}
+								]
+							}
+						]
+					},
+					{
+						"id": "1003",
+						"kind": "analytics#accountSummary",
+						"name": "Account C",
+						"webProperties": [
+							{
+								"kind": "analytics#webPropertySummary",
+								"id": "UA-1003-1",
+								"name": "WebProperty C.A",
+								"internalWebPropertyId": "3003",
+								"level": "STANDARD",
+								"websiteUrl": "http://example.com",
+								"profiles": [
+									{
+										"kind": "analytics#profileSummary",
+										"id": "2011",
+										"name": "Profile C.A.A",
+										"type": "WEB"
+									}
+								]
+							}
+						]
+					},
+					{
+						"id": "1004",
+						"kind": "analytics#accountSummary",
+						"name": "Account D (Property-less)"
+					},
+					{
+						"id": "1005",
+						"kind": "analytics#accountSummary",
+						"name": "Account E (View-less)",
+						"webProperties": [
+							{
+								"kind": "analytics#webPropertySummary",
+								"id": "UA-1005-1",
+								"name": "WebProperty E.A (View-less)",
+								"internalWebPropertyId": "3005",
+								"level": "STANDARD",
+								"websiteUrl": "http://example.com"
+							}
+						]
+					}
+				]
+			};
+
+			dio.render(h(ViewSelector), document.getElementById('root'));
+		</script>
+	</body>
+</html>

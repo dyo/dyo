@@ -1,9 +1,10 @@
 /**
  * create element factory
  * 
- * @param  {string}  element
- * @return {function}
+ * @param  {string}              type
+ * @param  {Object<string, any>} props
+ * @return {createElement(?Object<string>, ...any=)}
  */
 function createFactory (type, props) {
-	return props ? VElement.bind(null, type, props) : VElement.bind(null, type);
+	return props ? createElement.bind(null, type, props) : createElement.bind(null, type);
 }

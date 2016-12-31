@@ -4,7 +4,7 @@
  * @param  {Node}   target
  * @param  {string} action
  * @param  {string} name
- * @param  {*}      propValue
+ * @param  {any}    propValue
  * @param  {string} namespace
  */
 function updateProp (target, action, name, propValue, namespace) {

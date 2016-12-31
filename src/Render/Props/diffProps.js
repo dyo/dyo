@@ -4,7 +4,7 @@
  * @param  {VNode}   newNode 
  * @param  {VNode}   oldNode 
  * @param  {string}  namespace
- * @param  {Array[]} propsDiff
+ * @param  {Array[]} diff
  * @return {Array[]}          
  */
 function diffProps (newNode, oldNode, namespace, diff) {

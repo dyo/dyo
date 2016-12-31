@@ -1,5 +1,7 @@
 /**
  * fragment shape
+ *
+ * @public
  * 
  * @param  {VNode[]} children
  * @return {VNode}

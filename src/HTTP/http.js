@@ -1,10 +1,11 @@
 /**
  * create http request
  *
- * @param  {Object}
- * @return {function}
+ * @param  {VRequest|Object<string, any>}
+ * @return {function} {then, catch, done, ...}
  */
 function http (options) {
+	// extract properties from options
 	var method          = options.method;
 	var url             = options.url;
 	var payload         = options.payload; 
@@ -70,7 +71,9 @@ function http (options) {
 			}
 		}
 
+		// headers property
 		if (headers != null) {
+			// assign headers
 			each(headers, function (value, name) {
 				xhr.setRequestHeader(name, value);
 			});

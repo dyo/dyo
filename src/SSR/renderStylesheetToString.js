@@ -11,22 +11,25 @@
 function renderStylesheetToString (nodeType, component, constructor, output, lookup) {
 	// stylesheet
 	if (nodeType === 2) {
-		// stylesheets
+		// stylesheet
 		if (component.stylesheet) {
-			var id = component.stylesheet.styler;
+			var namespace = component.stylesheet.CSSNamespace;
 
-			if (id === void 0) {
-				// create
-				lookup.styles += stylesheet(component, constructor)(null);
-				lookup.ids[id = component.stylesheet.styler] = true;
+			// create
+			if (namespace === void 0) {
+				var decorator = stylesheet(component, constructor.COMPCache || constructor, false);
+
+				lookup.namespaces[namespace = decorator.CSSNamespace] = true;			
+				lookup.styles += '<style id="\''+namespace+'\'">'+decorator(null)+'</style>';
 			}
-		 	else if (!lookup.ids[id]) {
-				lookup.styles += component.stylesheet(null);
-				lookup.ids[id] = true;
+			// cache
+		 	else if (!lookup.namespaces[namespace]) {
+		 		lookup.namespaces[namespace] = true;
+				lookup.styles += '<style id="\''+namespace+'\'">'+component.stylesheet(null)+'</style>';
 			}
 
 			// add attribute to element
-			output += ' '+nsStyle+'='+'"'+id+'"';
+			output += ' '+nsStyle+'='+'"'+namespace+'"';
 		}
 	}
 

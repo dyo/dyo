@@ -1,11 +1,13 @@
 /**
  * render
+ *
+ * @public
  * 
- * @param  {(Component|VNode)} subject
- * @param  {(Node|string)}     target
- * @param  {function(Node)=}   callback
- * @param  {boolean=}          hydration
- * @return {function(Object=)} reconciler
+ * @param  {(Component|VNode|function|Object<string, any>)} subject
+ * @param  {(Node|string)=}                                 target
+ * @param  {function(this:Component, Node)=}                callback
+ * @param  {boolean=}                                       hydration
+ * @return {function(Object=)}
  */
 function render (subject, target, callback, hydration) {
 	var initial = true;
@@ -14,7 +16,7 @@ function render (subject, target, callback, hydration) {
 	var element;
 	
 	// renderer
-	function reconciler (props) {
+	function renderer (props) {
 		if (initial) {
 			// dispatch mount
 			appendNode(vnode, element, createNode(vnode, null, null));
@@ -26,12 +28,11 @@ function render (subject, target, callback, hydration) {
 			component = vnode.instance;
 		} else {
 			// update props
-			if (props) {
-				if (
-					component.shouldComponentUpdate !== void 0 && 
+			if (props !== void 0) {
+				if (component.shouldComponentUpdate !== void 0 && 
 					component.shouldComponentUpdate(props, component.state) === false
 				) {
-					return reconciler;
+					return renderer;
 				}
 
 				component.props = props;
@@ -41,21 +42,29 @@ function render (subject, target, callback, hydration) {
 			component.forceUpdate(null);
 		}
 
-		return reconciler;
+		return renderer;
 	}
 
-	if (subject.render !== void 0) {
-		// create component from object
-		vnode = VComponent(createClass(subject));
-	} else if (subject.type === void 0) {
-		// fragment/component
-		vnode = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
-	} else {
-		vnode = subject;
-	}
-
+	// exit early
 	if (server) {
-		return reconciler;
+		return renderer;
+	}
+
+	// Object
+	if (subject.render !== void 0) {
+		vnode = VComponent(createClass(subject));
+	}
+	// array/Component/function
+	else if (subject.nodeType === void 0) {
+		vnode = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
+	} 
+	// VElement/VSvg
+	else if (subject.nodeType !== 2) {
+		vnode = VComponent(createClass({ render: function () { return subject; } }))
+	}
+	// VComponent
+	else {
+		vnode = subject;
 	}
 
 	// dom element
@@ -84,14 +93,14 @@ function render (subject, target, callback, hydration) {
 		// destructive mount
 		hydration === false && (element.textContent = '');
 		
-		reconciler();
+		renderer();
 	}
 
 	// if present call root components context, passing root node as argument
 	if (callback && typeof callback === 'function') {
-		callback.call(component, vnode.DOMNode);
+		callback.call(component, vnode.DOMNode || target);
 	}
 
-	return reconciler;
+	return renderer;
 }
 

@@ -7,14 +7,20 @@
  * @return {(Node|string|Object)}
  */
 function response (xhr, responseType, reject) {			
-	var data   = null; 
 	var header = xhr.getResponseHeader('Content-Type');
+	var data = null; 
+	var body;
 
+	// text
 	if (!xhr.responseType || xhr.responseType === 'text') {
 		data = xhr.responseText;
-	} else if (xhr.responseType === 'document') {
+	}
+	// Node 
+	else if (xhr.responseType === 'document') {
 		data = responseXML;
-	} else {
+	}
+	// ?any
+	else {
 		data = response;
 	}
 
@@ -23,13 +29,18 @@ function response (xhr, responseType, reject) {
 		responseType = (header.indexOf(';') > -1 ? header.split(';')[0].split('/') : header.split('/'))[1];
 	}
 
-	var body;
-
+	// json
 	if (responseType === 'json') {
+		// sandbox JSON parsing
 		body = tryCatch(JSON.parse, reject, data);
-	} else if (responseType === 'html' || responseType === 'document') {
+	} 
+	// Node
+	else if (responseType === 'html' || responseType === 'document') {
+		// parse html string
 		body = (new DOMParser()).parseFromString(data, 'text/html');
-	} else {
+	}
+	// ?any
+	else {
 		body = data;
 	}
 

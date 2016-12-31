@@ -1,7 +1,9 @@
 /**
  * create new stream in resolved state
+ *
+ * @public
  * 
- * @param  {*}          value
+ * @param  {*} value
  * @return {function}
  */
 stream.resolve = function (value) {

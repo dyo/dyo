@@ -8,7 +8,7 @@
 
 
 // current version
-var version = '5.0.2';
+var version = '5.0.3';
 
 // enviroment variables
 var document = window.document || null;
@@ -25,7 +25,4 @@ var nsSvg = 'http://www.w3.org/2000/svg';
 var objEmpty = Object.create(null);
 var arrEmpty = [];
 var nodEmpty = VNode(0, '', objEmpty, arrEmpty, null, null, null);
-
-// random characters
-var randomChars = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
 

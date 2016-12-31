@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio is a fast javascript framework
+ * dio is a fast javascript framework for building applications.
  * 
  * @licence MIT
  */
@@ -32,7 +32,7 @@
 	
 	
 	// current version
-	var version = '5.0.2';
+	var version = '5.0.3';
 	
 	// enviroment variables
 	var document = window.document || null;
@@ -49,9 +49,6 @@
 	var objEmpty = Object.create(null);
 	var arrEmpty = [];
 	var nodEmpty = VNode(0, '', objEmpty, arrEmpty, null, null, null);
-	
-	// random characters
-	var randomChars = 'JrIFgLKeEuQUPbhBnWZCTXDtRcxwSzaqijOvfpklYdAoMHmsVNGy';
 	
 	
 	// ssr
@@ -111,28 +108,10 @@
 	
 	
 	/**
-	 * generate random string of a certain length
-	 * 
-	 * @param  {number} length
-	 * @return {string}
-	 */
-	function random (length) {
-	    var text = '';
-	
-	    // 52 is the length of characters in the string `randomChars`
-	    for (var i = 0; i < length; i++) {
-	        text += randomChars[Math.floor(Math.random() * 52)];
-	    }
-	
-	    return text;
-	}
-	
-	
-	/**
 	 * for in proxy
 	 * 
-	 * @param  {Object}   obj
-	 * @param  {function} func
+	 * @param  {Object<string, any>} obj
+	 * @param  {function(any, string)} func
 	 */
 	function each (obj, func) {
 		for (var name in obj) {
@@ -169,10 +148,12 @@
 	
 	/**
 	 * element shape
+	 *
+	 * @public
 	 * 
-	 * @param  {string}  type
-	 * @param  {Object=} props
-	 * @param  {any[]=}  children
+	 * @param  {string}               type
+	 * @param  {Object<string, any>=} props
+	 * @param  {VNode[]=}             children
 	 * @return {VNode}
 	 */
 	function VElement (type, props, children) {
@@ -190,9 +171,11 @@
 	
 	/**
 	 * component shape
+	 *
+	 * @public
 	 * 
 	 * @param  {(function|Component)} type
-	 * @param  {Object=}              props
+	 * @param  {Object<string, any>=} props
 	 * @param  {any[]=}               children
 	 * @return {VNode}
 	 */
@@ -200,7 +183,7 @@
 		return {
 			nodeType: 2, 
 			type: type, 
-			props: (props || type.defaultProps || objEmpty), 
+			props: (props || objEmpty), 
 			children: (children || arrEmpty),
 			DOMNode: null,
 			instance: null,
@@ -211,6 +194,8 @@
 	
 	/**
 	 * fragment shape
+	 *
+	 * @public
 	 * 
 	 * @param  {VNode[]} children
 	 * @return {VNode}
@@ -230,6 +215,8 @@
 	
 	/**
 	 * text shape
+	 *
+	 * @public
 	 * 
 	 * @param  {(string|boolean|number)} text
 	 * @return {VNode}
@@ -249,10 +236,12 @@
 	
 	/**
 	 * svg shape
+	 *
+	 * @public
 	 * 
-	 * @param  {string}  type
-	 * @param  {Object=} props
-	 * @param  {any[]=}  children
+	 * @param  {string}               type
+	 * @param  {Object<string, any>=} props
+	 * @param  {VNode[]=}             children
 	 * @return {VNode}
 	 */
 	function VSvg (type, props, children) {
@@ -270,14 +259,15 @@
 	
 	/**
 	 * VNode shape
-	 * 
-	 * @param {number}                      nodeType
-	 * @param {(function|Component|string)} type
-	 * @param {Object}                      props
-	 * @param {VNode[]}                     children
-	 * @param {?Node}                       DOMNode
-	 * @param {?Component}                  instance
-	 * @param {?index}                      index
+	 *
+	 * @param  {number}                      nodeType
+	 * @param  {(string|function|Component)} type
+	 * @param  {Object<string, any>}         props
+	 * @param  {VNode[]}                     children
+	 * @param  {Node}                        DOMNode
+	 * @param  {Component}                   instance
+	 * @param  {number}                      index
+	 * @return {VNode}
 	 */
 	function VNode (nodeType, type, props, children, DOMNode, instance, index) {
 		return {
@@ -350,33 +340,48 @@
 	 * 
 	 * @param  {Component}       component
 	 * @param  {function}        constructor
-	 * @return {function(?Node)} styler
+	 * @param  {boolean}         inject
+	 * @return {function(?Node)}
 	 */
-	function stylesheet (component, constructor) {
-		var styles = component.stylesheet();
-		var id     = random(5);
-		var css    = stylis('['+nsStyle+'='+id+']', styles, true, true);
+	function stylesheet (component, constructor, inject) {
+		var namespace = component.displayName || constructor.name;
+		var selector  = '['+nsStyle+'='+namespace+']';
+		var css       = component.stylesheet();
+		var output    = stylis(selector, css, true, true);
 	
-		if (browser && document.getElementById(id) == null) {
-			var style = document.createElement('style');
-			
-			style.textContent = css;
-			style.id = id;
+		if (browser && inject) {
+			// obscure namesapce to avoid id/global namespace conflicts
+			var id = '\''+namespace+'\'';
 	
-			document.head.appendChild(style);
-		}
+			// prevent duplicate styles, this also works with SSR
+			if (document.getElementById(id) == null) {			
+				var style = document.createElement('style');
+				
+				style.textContent = output;
+				style.id = id;
 	
-		function styler (element) {
-			if (element === null) {
-				return css;
-			} else {
-				element.setAttribute(nsStyle, id);
+				document.head.appendChild(style);
 			}
 		}
 	
-		styler.styler = id;
+		/**
+		 * decorator
+		 * 
+		 * @param  {?Node} DOMNode
+		 * @return {(undefined|string)}
+		 */
+		function decorator (DOMNode) {
+			if (DOMNode === null) {
+				return output;			
+			} else {
+				DOMNode.setAttribute(nsStyle, namespace);
+			}
+		}
 	
-		return constructor.prototype.stylesheet = styler;
+		decorator.CSSNamespace = namespace;
+	
+		// replace stylesheet method for all instances with the style constructor `decorator`
+		return component.stylesheet = constructor.prototype.stylesheet = decorator;
 	}
 	
 	
@@ -754,11 +759,13 @@
 	
 	/**
 	 * create virtual element
+	 *
+	 * @public
 	 * 
-	 * @param  {(string|function|Object)} type
-	 * @param  {Object=}                  props
-	 * @param  {...*=}                    children
-	 * @return {Object}
+	 * @param  {(string|function|Component)} type
+	 * @param  {Object<string, any>=}        props
+	 * @param  {...any=}                     children
+	 * @return {Object<string, any>}
 	 */
 	function createElement (type, props) {
 		var length   = arguments.length;
@@ -826,7 +833,10 @@
 	/**
 	 * create virtual child node
 	 * 
-	 * @param {any} child
+	 * @param  {*}       child
+	 * @param  {VNode[]} children
+	 * @param  {number}  index
+	 * @return {number}  index
 	 */
 	function createChild (child, children, index) {
 		if (child != null) {
@@ -858,10 +868,12 @@
 	/**
 	 * clone and return an element having the original element's props
 	 * with new props merged in shallowly and new children replacing existing ones.
+	 *
+	 * @public
 	 * 
-	 * @param  {VNode}   subject
-	 * @param  {Object=} newProps
-	 * @param  {any[]=}  newChildren
+	 * @param  {VNode}                subject
+	 * @param  {Object<string, any>=} newProps
+	 * @param  {any[]=}               newChildren
 	 * @return {VNode}
 	 */
 	function cloneElement (subject, newProps, newChildren) {
@@ -882,8 +894,9 @@
 	
 			// if not empty, copy
 			if (length > 0) {
-				var index    = 0;
-					children = [];
+				var index = 0;
+				
+				children = [];
 	
 				// copy old children
 				for (var i = 0; i < length; i++) {
@@ -897,29 +910,54 @@
 	
 	
 	/**
+	 * clone virtual node
+	 * 
+	 * @param  {VNode} subject
+	 * @return {VNode}
+	 */
+	function cloneNode (subject) {
+		return VNode(
+			subject.nodeType,
+			subject.type,
+			subject.props,
+			subject.children,
+			subject.DOMNode,
+			null,
+			null
+		);
+	}
+	
+	
+	/**
 	 * create element factory
 	 * 
-	 * @param  {string}  element
-	 * @return {function}
+	 * @param  {string}              type
+	 * @param  {Object<string, any>} props
+	 * @return {createElement(?Object<string>, ...any=)}
 	 */
 	function createFactory (type, props) {
-		return props ? VElement.bind(null, type, props) : VElement.bind(null, type);
+		return props ? createElement.bind(null, type, props) : createElement.bind(null, type);
 	}
 	/**
 	 * is valid element
+	 *
+	 * @public
 	 * 
-	 * @param  {*} subject
+	 * @param  {any} subject
 	 * @return {boolean}
 	 */
 	function isValidElement (subject) {
-		return subject && subject.nodeType;
+		return subject != null && subject.nodeType != null;
 	}
 	
 	
 	/**
 	 * DOM factory, create VNode factories
 	 *
-	 * @param {string[]} types
+	 * @public
+	 * 
+	 * @param  {string[]}                 types
+	 * @return {Object<string, function>} elements
 	 */
 	function DOM (types) {
 		var elements = {};
@@ -930,14 +968,7 @@
 		}
 		
 		// if svg, add related svg element factories
-		if (elements.svg) {
-			var svgs = ['rect','path','polygon','circle','ellipse','line','polyline','svg',
-				'g','defs','text','textPath','tspan','mpath','defs','g'];
-	
-			for (var i = 0, length = svgs.length; i < length; i++) {
-				elements[svgs[i]] = VSvg.bind(null, svgs[i]);
-			}
-		}
+		elements.svg !== void 0 && (elements.svg = VSvg.bind(null, 'svg'));
 	
 		return elements;
 	}
@@ -954,23 +985,28 @@
 	
 	/**
 	 * set state
+	 *
+	 * @public
 	 * 
-	 * @param {Object}    newState
-	 * @param {function=} callback
+	 * @param {Object}                    newState
+	 * @param {function(this:Component)=} callback
 	 */
 	function setState (newState, callback) {
-		if (this.shouldComponentUpdate && this.shouldComponentUpdate(this.props, newState) === false) {
+		// exist early if shouldComponentUpdate exists and returns false
+		if (this.shouldComponentUpdate !== void 0 && this.shouldComponentUpdate(this.props, newState) === false) {
 			return;
 		}
 	
+		// update state
 		updateState(this.state, newState);
 	
+		// update component
 		this.forceUpdate(callback || null);
 	}
 	
 	
 	/**
-	 * update state, hoisted to avoid deopts
+	 * update state, hoisted to avoid `for in` deopts
 	 * 
 	 * @param  {Object} state
 	 * @param  {Object} newState
@@ -985,10 +1021,12 @@
 	/**
 	 * force an update
 	 *
-	 * @param  {function=}
+	 * @public
+	 * 
+	 * @param  {function(this:Component)=} callback
 	 */
 	function forceUpdate (callback) {
-		if (this.componentWillUpdate) {
+		if (this.componentWillUpdate !== void 0) {
 			this.componentWillUpdate(this.props, this.state);
 		}
 	
@@ -996,7 +1034,7 @@
 		var oldNode = this.VNode;
 	
 		// component returns a different root node
-		if (newNode.type !== oldNode.type) {
+		if (newNode.type !== oldNode.type) {		
 			// replace node
 			replaceNode(newNode, oldNode, oldNode.DOMNode.parentNode, createNode(newNode, null, null));
 	
@@ -1006,45 +1044,46 @@
 			oldNode.props    = newNode.props;
 			oldNode.children = newNode.children;
 			oldNode.DOMNode  = newNode.DOMNode;
-			oldNode.instance = newNode.instance;
+			newNode.instance = oldNode.instance;
 		} else {
 			// patch node
-			patch(newNode, oldNode, newNode.nodeType, oldNode.nodeType);
+			patchNodes(newNode, oldNode, newNode.nodeType, oldNode.nodeType);
 		}
 	
-		if (this.componentDidUpdate) {
+		if (this.componentDidUpdate !== void 0) {
 			this.componentDidUpdate(this.props, this.state);
 		}
 	
-		// callback
-		if (callback && typeof callback === 'function') {
+		// if callback function call with the component as `this` context
+		if (callback != null && typeof callback === 'function') {
 			callback.call(this);
 		}
 	}
 	
 	
 	/**
-	 * ---------------------------------------------------------------------------------
+	 * Component class
+	 *
+	 * @public
 	 * 
-	 * component
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * component class
-	 * 
-	 * @param {Object=} props
+	 * @param {Object<string, any>=} props
 	 */
 	function Component (props) {
 		// initial props
-		if (this.getInitialProps) {
-			this.props = this.getInitialProps(props);
+		if (this.getInitialProps !== void 0) {
+			this.props = this.getInitialProps(props) || {};
 		}
 		// assign props
 		else if (props !== objEmpty) {
-			this.componentWillReceiveProps && this.componentWillReceiveProps(props);
+			// hydrate default props
+			if (this.getDefaultProps !== void 0) {
+				assignDefaultProps(this.getDefaultProps(), props);
+			}
+			
+			if (this.componentWillReceiveProps !== void 0) {
+				this.componentWillReceiveProps(props);
+			}
+	
 			this.props = props;
 		} 
 		// default props
@@ -1061,9 +1100,9 @@
 	
 	
 	/**
-	 * component prototype
+	 * Component prototype
 	 * 
-	 * @type {Object}
+	 * @type {Object<string, function>}
 	 */
 	Component.prototype = Object.create(null, {
 		setState:    { value: setState },
@@ -1073,52 +1112,66 @@
 	
 	/**
 	 * create class
+	 *
+	 * @public
 	 * 
-	 * @param  {(Object|function(createElement))} subject
-	 * @return {function}
+	 * @param  {(Object<string, any>|function(createElement): (Object<string, any>|function))} subject
+	 * @return {function(new:Component, Object<string, any>)}
 	 */
 	function createClass (subject) {
-		if (subject.COMPCache) {
-			return subject.COMPCache; 
+		// component cache
+		if (subject.COMPCache !== void 0) {
+			return subject.COMPCache;
 		}
 	
+		// is function?
 		var func = typeof subject === 'function';
+	
+		// extract shape of component
 		var shape = func ? subject(createElement) : subject;
-		var init = false;
+		var constructor = false;
 		var render;
 	
-		if (typeof shape === 'function') {
-			render = shape; 
+		if (shape.nodeType !== void 0 || typeof shape === 'function') {
+			// render function
+			render = shape.nodeType !== void 0 ? subject : shape;
 			shape = { render: render };
-		} else {
-			init = shape.hasOwnProperty('constructor');
+		}
+		else {
+			// register that the shape has a constructor method
+			constructor = shape.hasOwnProperty('constructor');
 		}
 	
+		// create component class
 		function component (props) {
 			// constructor
-			init && this.constructor(props);
+			if (constructor) {
+				this.constructor(props);
+			}
 	
 			// extend Component
 			Component.call(this, props); 
 		}
 	
-		// extend Component prototype
+		// inherit shape properties
 		component.prototype = shape;
 	
+		// inherit Component methods
 		shape.setState = Component.prototype.setState;
 		shape.forceUpdate = Component.prototype.forceUpdate;
 	
-		// function component, cache created component
+		// function shape, cache component
 		if (func) {
 			subject.COMPCache = component;
-			component.constructor = subject;
-		}
-		
-		if (!init) {
-			shape.constructor = component;
 		}
 	
-		return component;
+		// stylesheet namespaced
+		if (shape.stylesheet !== void 0) {
+			// function name / displayName / random string
+			shape.displayName = (func ? subject.name : shape.displayName) || ((Math.random()+1).toString(36).substr(2, 5));
+		}
+	
+		return (component.constructor = Component, component);
 	}
 	
 	
@@ -1133,12 +1186,14 @@
 	
 	/**
 	 * render
+	 *
+	 * @public
 	 * 
-	 * @param  {(Component|VNode)} subject
-	 * @param  {(Node|string)}     target
-	 * @param  {function(Node)=}   callback
-	 * @param  {boolean=}          hydration
-	 * @return {function(Object=)} reconciler
+	 * @param  {(Component|VNode|function|Object<string, any>)} subject
+	 * @param  {(Node|string)=}                                 target
+	 * @param  {function(this:Component, Node)=}                callback
+	 * @param  {boolean=}                                       hydration
+	 * @return {function(Object=)}
 	 */
 	function render (subject, target, callback, hydration) {
 		var initial = true;
@@ -1147,7 +1202,7 @@
 		var element;
 		
 		// renderer
-		function reconciler (props) {
+		function renderer (props) {
 			if (initial) {
 				// dispatch mount
 				appendNode(vnode, element, createNode(vnode, null, null));
@@ -1159,12 +1214,11 @@
 				component = vnode.instance;
 			} else {
 				// update props
-				if (props) {
-					if (
-						component.shouldComponentUpdate !== void 0 && 
+				if (props !== void 0) {
+					if (component.shouldComponentUpdate !== void 0 && 
 						component.shouldComponentUpdate(props, component.state) === false
 					) {
-						return reconciler;
+						return renderer;
 					}
 	
 					component.props = props;
@@ -1174,21 +1228,29 @@
 				component.forceUpdate(null);
 			}
 	
-			return reconciler;
+			return renderer;
 		}
 	
-		if (subject.render !== void 0) {
-			// create component from object
-			vnode = VComponent(createClass(subject));
-		} else if (subject.type === void 0) {
-			// fragment/component
-			vnode = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
-		} else {
-			vnode = subject;
-		}
-	
+		// exit early
 		if (server) {
-			return reconciler;
+			return renderer;
+		}
+	
+		// Object
+		if (subject.render !== void 0) {
+			vnode = VComponent(createClass(subject));
+		}
+		// array/Component/function
+		else if (subject.nodeType === void 0) {
+			vnode = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
+		} 
+		// VElement/VSvg
+		else if (subject.nodeType !== 2) {
+			vnode = VComponent(createClass({ render: function () { return subject; } }))
+		}
+		// VComponent
+		else {
+			vnode = subject;
 		}
 	
 		// dom element
@@ -1217,364 +1279,31 @@
 			// destructive mount
 			hydration === false && (element.textContent = '');
 			
-			reconciler();
+			renderer();
 		}
 	
 		// if present call root components context, passing root node as argument
 		if (callback && typeof callback === 'function') {
-			callback.call(component, vnode.DOMNode);
+			callback.call(component, vnode.DOMNode || target);
 		}
 	
-		return reconciler;
+		return renderer;
 	}
 	
 	
 	/**
-	 * patch nodes
-	 *  
-	 * @param  {VNode}   newNode  
-	 * @param  {VNode}   oldNode 
-	 * @param  {number}  newNodeType 
-	 * @param  {number}  oldNodeType
-	 */
-	function patch (newNode, oldNode, newNodeType, oldNodeType) {
-		// if currentNode and oldNode are the identical, exit early
-		if (newNode === oldNode) {
-			return;
-		}
-	
-		// extract node from possible component node
-		var currentNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
-	
-		// a component
-		if (oldNodeType === 2) {
-			var oldComponent = oldNode.instance;
-			var newComponent = newNode.instance;
-	
-			var newProps = newComponent.props;
-			var newState = newComponent.state;
-	
-			// component with shouldComponentUpdate
-			if (
-				oldComponent.shouldComponentUpdate && 
-				oldComponent.shouldComponentUpdate(newProps, newState) === false
-			) {
-				// exit early
-				return;
-			}
-	
-			// component with componentWillUpdate
-			if (oldComponent.componentWillUpdate) {
-				oldComponent.componentWillUpdate(newProps, newState);
-			}
-		}
-	
-		// references, children & children length
-		var newChildren = currentNode.children;
-		var oldChildren = oldNode.children;
-		var newLength   = newChildren.length;
-		var oldLength   = oldChildren.length;
-	
-		// new children length is 0 clear/remove all children
-		if (newLength === 0) {
-			// but only if old children is not already cleared
-			if (oldLength !== 0) {
-				oldNode.DOMNode.textContent = '';
-				oldNode.children = newChildren;
-			}
-		} else {
-			// new node has children
-			var parentNode = oldNode.DOMNode;
-	
-			var hasKeys = false;
-			var diffKeys = false;
-			
-			var oldKeys;
-			var newKeys;
-	
-			// for loop, the end point being which ever is the 
-			// greater value between newLength and oldLength
-			for (var i = 0; i < newLength || i < oldLength; i++) {
-				var newChild = newChildren[i] || nodEmpty;
-				var oldChild = oldChildren[i] || nodEmpty;
-	
-				var newChildType = newChild.nodeType;
-				var oldChildType = oldChild.nodeType;
-	
-				var action = 0;
-	
-				// remove
-				if (newChildType === 0) {
-					action = 1;
-				}
-				// add
-				else if (oldChildType === 0) {
-					action = 2;
-				}
-				// text
-				else if (newChildType === 3 && oldChildType === 3) {
-					if (newChild.children !== oldChild.children) {
-						action = 3;
-					}
-				}
-				// keys
-				else if (newChild.props.key !== void 0 || oldChild.props.key !== void 0) {
-					action = 4;
-				}
-				// replace
-				else if (newChild.type !== oldChild.type) {
-					action = 5;
-				}
-				// noop
-				else {
-					patch(newChild, oldChild, newChildType, oldChildType);
-				}
-	
-				// patch
-				if (action !== 0) {
-					if (diffKeys) {
-						action = 4;
-					}
-	
-					switch (action) {
-						// remove operation
-						case 1: {
-							// remove dom node, remove old child
-							removeNode(oldChildren.pop(), parentNode);
-							break;
-						}
-						// add operation
-						case 2: {
-							// append dom node, push new child
-							appendNode(oldChildren[oldChildren.length] = newChild, parentNode, createNode(newChild, null, null));
-							break;
-						}
-						// text operation
-						case 3: {
-							// replace dom node text, replace old child text
-							oldChild.DOMNode.nodeValue = oldChild.children = newChild.children;
-							break;
-						}
-						// keyed operation
-						case 4: {
-							var newKey = newChild.props.key;
-							var oldKey = oldChild.props.key;
-	
-							// initialize key hash maps
-							if (hasKeys === false) {
-								hasKeys = true;
-								oldKeys = {};
-								newKeys = {};
-							}
-	
-							// register to patch keys if a mis-match is found
-							if (newKey !== oldKey) {
-								if (diffKeys === false) {
-									diffKeys = true;
-								}
-							} else {
-								patch(newChild, oldChild, newChildType, oldNodeType);
-							}
-	
-							// register key
-							newKeys[newKey] = (newChild.index = i, newChild);
-							oldKeys[oldKey] = (oldChild.index = i, oldChild);
-							break;
-						}
-						// replace operation
-						case 5: {
-							// replace dom node, replace old child
-							replaceNode(oldChildren[i] = newChild, oldChild, parentNode, createNode(newChild, null, null));
-							break;
-						}
-					}
-				}
-			}
-		}
-	
-		// reconcile keyed children
-		if (diffKeys) {
-			// offloaded to another function to keep the type feedback 
-			// of this function to a minimum when non-keyed
-			keyed(
-				newKeys, 
-				oldKeys, 
-				parentNode, 
-				newNode,
-				oldNode, 
-				newChildren, 
-				oldChildren, 
-				newLength, 
-				oldLength
-			);
-		}
-	
-		// patch props only if oldNode is not a textNode 
-		// and the props objects of the two nodes are not equal
-		if (currentNode.props !== oldNode.props) {
-			patchProps(currentNode, oldNode);
-		}
-	
-		// component with componentDidUpdate
-		if (oldNodeType === 2 && oldComponent.componentDidUpdate) {
-			oldComponent.componentDidUpdate(newProps, newState);
-		}
-	}
-	
-	
-	/**
-	 * patch keyed nodes
+	 * shallow render
 	 *
-	 * @param {Object}  newKeys
-	 * @param {Object}  oldKeys
-	 * @param {Node}    parentNode
-	 * @param {VNode}   newNode
-	 * @param {VNode}   oldNode
-	 * @param {VNode[]} newChildren
-	 * @param {VNode[]} oldChildren
-	 * @param {number}  newLength
-	 * @param {number}  oldLength
-	 */
-	function keyed (newKeys, oldKeys, parentNode, newNode, oldNode, newChildren, oldChildren, newLength, oldLength) {
-		var reconciled = new Array(newLength);
-		var children   = parentNode.children;
-		var length     = children.length;
-		var delOffset  = 0;
-		var addOffset  = 0;
-	
-		// old children
-		for (var i = 0; i < oldLength; i++) {
-			var oldChild = oldChildren[i];
-			var oldKey   = oldChild.props.key;
-			var newChild = newKeys[oldKey];
-	
-			// removed
-			if (newChild === void 0) {
-				delOffset++;
-	
-				removeNode(oldChild, parentNode);
-			}
-	
-			// update old indexes
-			if (delOffset !== 0) {
-				oldChild.index -= delOffset;
-			}
-		}
-	
-		// update length
-		length -= delOffset;
-	
-		// new children
-		for (var j = 0; j < newLength; j++) {
-			var newChild = newChildren[j];
-			var newKey   = newChild.props.key;
-			var oldChild = oldKeys[newKey];
-	
-			// exists
-			if (oldChild) {
-				var index = oldChild.index;
-	
-				// moved
-				if (index+addOffset !== j) {
-					parentNode.insertBefore(children[index], children[j]);
-				}
-	
-				reconciled[j] = oldChild;
-			} else {
-				reconciled[j] = newChild;
-	
-				addOffset++;
-	
-				if (j < length) {
-					// insert
-					insertNode(newChild, children[j], parentNode, createNode(newChild, null, null));
-				} else {
-					// append
-					appendNode(newChild, parentNode, createNode(newChild, null, null));
-				}
-	
-				length++;
-			}		
-		}
-	
-		oldNode.children = reconciled;
-	}
-	/**
-	 * hydrates a server-side rendered dom structure
+	 * @public
 	 * 
-	 * @param  {Node}       parent
-	 * @param  {VNode}      subject
-	 * @param  {number}     index
-	 * @param  {VNode}      parentNode
-	 * @param  {?Component} component
+	 * @param  {(VNode|Component|function)}
+	 * @return {VNode}
 	 */
-	function hydrate (parent, subject, index, parentNode, component) {
-		var newNode  = subject.nodeType === 2 ? extractComponent(subject) : subject;
-		var nodeType = newNode.nodeType;
-	
-		var element = nodeType === 11 ? parent : parent.childNodes[index];
-	
-		// if the node is not a textNode and
-		// has children hydrate each of its children
-		if (nodeType === 1) {
-			var props       = newNode.props;
-			var newChildren = newNode.children;
-			var newLength   = newChildren.length;
-	
-			// vnode has component attachment
-			if (subject.instance !== null) {
-				(component = subject.instance).VNode.DOMNode = parent;
-			}
-	
-			// hydrate children
-			for (var i = 0; i < newLength; i++) {
-				hydrate(element, newChildren[i], i, newNode, component);
-			}
-	
-			// not a fragment
-			if (nodeType !== 11) {
-				if (props !== objEmpty) {
-					// refs
-					props.ref && refs(props.ref, component, element);
-	
-					// assign events
-					assignProps(element, props, true, component);
-				}
-			}
-	
-			// hydrate the dom element to the virtual element
-			subject.DOMNode = element;
-		}
-		else if (nodeType === 3) {
-			var children = parentNode.children;
-			var length   = children.length;
-	
-			// when we reach a string child that is followed by a string child, 
-			// it is assumed that the dom representing it is a single textNode,
-			if (length > 1 && (children[index+1] || nodEmpty).nodeType === 3) {
-				// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
-				// HelloWorld is one textNode in the DOM but two in the VNode
-				var fragment = document.createDocumentFragment();
-				
-				// look ahead of this nodes siblings and add all textNodes to the the fragment.
-				// exit when a non text node is encounted
-				for (var i = index, len = length - index; i < len; i++) {
-					var textNode = children[i];
-	
-					// exit early once we encounter a non text/string node
-					if (textNode.nodeType !== 3) {
-						break;
-					}
-	
-					// create textnode, append to the fragment
-					fragment.appendChild(textNode.DOMNode = document.createTextNode(textNode.children));
-				}
-	
-				// replace the textNode with a set of textNodes
-				parent.replaceChild(fragment, element);
-			} else {
-				newNode.DOMNode = element;
-			}
+	function shallow (subject) {
+		if (isValidElement(subject)) {
+			return subject.nodeType === 2 ? extractComponent(subject) : subject;
+		} else {
+			return extractComponent(createElement(subject, null, null));
 		}
 	}
 	
@@ -1596,16 +1325,237 @@
 	
 	
 	/**
-	 * shallow render
+	 * patch keyed nodes
 	 *
-	 * @param  {(VNode|Component)}
-	 * @return {VNode}
+	 * @param {Object<string, any>[2]} keys
+	 * @param {Node}                   parentNode
+	 * @param {VNode}                  newNode
+	 * @param {VNode}                  oldNode
+	 * @param {number}                 newLen
+	 * @param {number}                 oldLen
+	 * @param {number}                 pos
 	 */
-	function shallow (subject) {
-		if (isValidElement(subject)) {
-			return subject.nodeType === 2 ? extractComponent(subject) : subject;
+	function patchKeys (keys, parentNode, newNode, oldNode, newLen, oldLen, pos) {
+		var reconciled = new Array(newLen);
+		var childNodes = parentNode.childNodes;
+	
+		// children
+		var newChildren = newNode.children;
+		var oldChildren = oldNode.children;
+	
+		var length = oldChildren.length;
+	
+		// keys
+		var newKeys = keys[0];
+		var oldKeys = keys[1];
+	
+		// book keeping
+		var delOffset = 0;
+		var addOffset = 0;
+	
+		// hydrate clean nodes
+		if (pos !== 0) {
+			for (var i = 0; i < pos; i++) {
+				reconciled[i] = oldChildren[i];
+			}
+		}
+	
+		// old children
+		for (var i = pos; i < oldLen; i++) {
+			var oldChild = oldChildren[i];
+			var newChild = newKeys[oldChild.props.key];
+	
+			// removed
+			if (newChild === void 0) {
+				// book keeping
+				delOffset++;
+	
+				removeNode(oldChild, parentNode);
+			}
+	
+			// update old indexes
+			if (delOffset !== 0) {
+				oldChild.index -= delOffset;
+			}
+		}
+	
+		// update length
+		length -= delOffset;
+	
+		// new children
+		for (var i = pos; i < newLen; i++) {
+			var newChild = newChildren[i];
+			var oldChild = oldKeys[newChild.props.key];
+	
+			// exists
+			if (oldChild !== void 0) {
+				var index = oldChild.index;
+	
+				// moved
+				if (index+addOffset !== i) {
+					parentNode.insertBefore(childNodes[index], childNodes[i]);
+				}
+	
+				// assign clean node
+				reconciled[i] = oldChild;
+			} else {
+				if (i < length) {
+					// insert
+					insertNode(newChild, childNodes[i], parentNode, createNode(newChild, null, null));
+				} else {
+					// append
+					appendNode(newChild, parentNode, createNode(newChild, null, null));
+				}
+	
+				// book keeping
+				addOffset++; 
+				length++;
+	
+				// assign clean node
+				reconciled[i] = newChild;
+			}	
+		}
+	
+		// replace dirty children
+		oldNode.children = reconciled;
+	}
+	
+	
+	/**
+	 * patch nodes
+	 *  
+	 * @param  {VNode}   newNode  
+	 * @param  {VNode}   oldNode 
+	 * @param  {number}  newNodeType 
+	 * @param  {number}  oldNodeType
+	 */
+	function patchNodes (newNode, oldNode, newNodeType, oldNodeType) {
+		// if newNode and oldNode are the identical, exit early
+		if (newNode === oldNode) {
+			return;
+		}
+	
+		// extract node from possible component node
+		var currentNode = newNodeType === 2 ? extractComponent(newNode) : newNode;
+	
+		// a component
+		if (oldNodeType === 2) {
+			// retrieve components
+			var oldComp = oldNode.instance;
+			var newComp = newNode.instance;
+	
+			// retrieve props
+			var newProps = newComp.props;
+			var newState = newComp.state;
+	
+			// component with shouldComponentUpdate
+			if (oldComp.shouldComponentUpdate !== void 0 && oldComp.shouldComponentUpdate(newProps, newState) === false) {
+				// exit early
+				return;
+			}
+	
+			// component with componentWillUpdate
+			if (oldComp.componentWillUpdate !== void 0) {
+				oldComp.componentWillUpdate(newProps, newState);
+			}
+		}
+	
+		// children
+		var newChildren = currentNode.children;
+		var oldChildren = oldNode.children;
+	
+		// children length
+		var newLen = newChildren.length;
+		var oldLen = oldChildren.length;
+	
+		// new children length is 0, remove all children
+		if (newLen === 0) {
+			// but only if old children is not already cleared
+			if (oldLen !== 0) {
+				oldNode.DOMNode.textContent = '';
+				oldNode.children = newChildren;
+			}
 		} else {
-			return extractComponent(createElement(subject, null, null));
+			// new node has children
+			var parentNode = oldNode.DOMNode;
+	
+			// when keyed, the position that dirty keys begin
+			var pos = 0;
+	
+			// non-keyed until the first dirty key is found
+			var keyed = false;
+	
+			// un-initialized key hash maps
+			var oldKeys;
+			var newKeys;
+	
+			// the highest point of interest
+			var length = newLen > oldLen ? newLen : oldLen;
+	
+			// for loop, the end point being which ever is the 
+			// greater value between new length and old length
+			for (var i = 0; i < length; i++) {
+				var newChild = newChildren[i] || nodEmpty;
+				var oldChild = oldChildren[i] || nodEmpty;
+	
+				var newType = newChild.nodeType;
+				var oldType = oldChild.nodeType;
+	
+				if (keyed) {
+					// push keys
+					if (newType !== 0) newKeys[newChild.props.key] = (newChild.index = i, newChild);
+					if (oldType !== 0) oldKeys[oldChild.props.key] = (oldChild.index = i, oldChild);
+				}
+				// remove
+				else if (newType === 0) {
+					removeNode(oldChildren.pop(), parentNode);
+				}
+				// add
+				else if (oldType === 0) {
+					appendNode(oldChildren[oldChildren.length] = newChild, parentNode, createNode(newChild, null, null));
+				}
+				// text
+				else if (newType === 3 && oldType === 3) {
+					if (newChild.children !== oldChild.children) {
+						oldChild.DOMNode.nodeValue = oldChild.children = newChild.children;
+					}
+				}
+				// key
+				else if (newChild.props.key !== oldChild.props.key) {
+					keyed = true; 
+					pos = i;
+					oldKeys = {}; 
+					newKeys = {}; 
+	
+					// push keys
+					newKeys[newChild.props.key] = (newChild.index = i, newChild);
+					oldKeys[oldChild.props.key] = (oldChild.index = i, oldChild);
+				}
+				// replace
+				else if (newChild.type !== oldChild.type) {
+					replaceNode(oldChildren[i] = newChild, oldChild, parentNode, createNode(newChild, null, null));
+				}
+				// noop
+				else {
+					patchNodes(newChild, oldChild, newType, oldType);
+				}
+			}
+	
+			// reconcile keyed children
+			if (keyed) {
+				patchKeys([newKeys, oldKeys], parentNode, newNode, oldNode, newLen, oldLen, pos);
+			}
+		}
+	
+		// patch props only if oldNode is not a textNode 
+		// and the props objects of the two nodes are not equal
+		if (currentNode.props !== oldNode.props) {
+			patchProps(currentNode, oldNode);
+		}
+	
+		// component with componentDidUpdate
+		if (oldNodeType === 2 && oldComp.componentDidUpdate !== void 0) {
+			oldComp.componentDidUpdate(newProps, newState);
 		}
 	}
 	
@@ -1615,7 +1565,7 @@
 	 * 
 	 * @param  {Node}       target
 	 * @param  {Object}     props
-	 * @param  {number}     onlyEvents
+	 * @param  {boolean}    onlyEvents
 	 * @param  {Component}  component
 	 */
 	function assignProps (target, props, onlyEvents, component) {
@@ -1631,7 +1581,7 @@
 	 * @param  {Node}       target
 	 * @param  {string}     name
 	 * @param  {Object}     props
-	 * @param  {number}     onlyEvents,
+	 * @param  {boolean}    onlyEvents,
 	 * @param  {Component}  component
 	 */
 	function assignProp (target, name, props, onlyEvents, component) {
@@ -1675,7 +1625,7 @@
 	 * @param  {VNode}   newNode 
 	 * @param  {VNode}   oldNode 
 	 * @param  {string}  namespace
-	 * @param  {Array[]} propsDiff
+	 * @param  {Array[]} diff
 	 * @return {Array[]}          
 	 */
 	function diffProps (newNode, oldNode, namespace, diff) {
@@ -1737,7 +1687,7 @@
 	 * @param  {Node}   target
 	 * @param  {string} action
 	 * @param  {string} name
-	 * @param  {*}      propValue
+	 * @param  {any}    propValue
 	 * @param  {string} namespace
 	 */
 	function updateProp (target, action, name, propValue, namespace) {
@@ -1798,7 +1748,7 @@
 	 * update prop objects, i.e .style
 	 * 
 	 * @param  {Object} value
-	 * @param  {*}      targetAttr
+	 * @param  {any}    targetAttr
 	 */
 	function updatePropObject (value, targetAttr) {
 		for (var propName in value) {
@@ -1813,7 +1763,7 @@
 	
 	
 	/**
-	 * create element
+	 * create node
 	 * 
 	 * @param  {VNode}      subject
 	 * @param  {?Component} component
@@ -1823,102 +1773,106 @@
 	function createNode (subject, component, namespace) {
 		var nodeType = subject.nodeType;
 		
+		// textNode	
 		if (nodeType === 3) {
-			// textNode
 			return subject.DOMNode = document.createTextNode(subject.children);
+		}
+	
+		// hoisted, clone DOMNode, second check ensures fragments are not cloned
+		if (subject.DOMNode !== null && subject.DOMNode.isFragment !== true) {
+			return subject.DOMNode = subject.DOMNode.cloneNode(true);
+		}
+	
+		// create
+		var newNode  = nodeType === 2 ? extractComponent(subject) : subject;
+		var type     = newNode.type;
+		var children = newNode.children;
+		var props    = newNode.props;
+		var length   = children.length;
+		var element;
+	
+		// update nodeType
+		nodeType = newNode.nodeType;
+	
+		// assign namespace
+		if (props.xmlns !== void 0) { 
+			namespace = props.xmlns; 
+		}
+	
+		// if namespaced, create namespaced element
+		if (namespace !== null) {
+			// if undefined, assign svg namespace
+			if (props.xmlns === void 0) {
+				props.xmlns = namespace;
+			}
+	
+			element = document.createElementNS(namespace, type);
 		} else {
-			if (subject.DOMNode !== null) {
-				// clone
-				return subject.DOMNode = subject.DOMNode.cloneNode(true);
+			if (nodeType !== 11) {
+				element = document.createElement(type);				
 			} else {
-				// create
-				var newNode  = nodeType === 2 ? extractComponent(subject) : subject;
-				var type     = newNode.type;
-				var children = newNode.children;
-				var props    = newNode.props;
-				var length   = children.length;
-				var element;
+				element = document.createDocumentFragment();
 	
-				// update nodeType
-				nodeType = newNode.nodeType;
-	
-				// assign namespace
-				if (props.xmlns !== void 0) { 
-					namespace = props.xmlns; 
-				}
-	
-				// if namespaced, create namespaced element
-				if (namespace !== null) {
-					// if undefined, assign svg namespace
-					if (props.xmlns === void 0) {
-						props.xmlns = namespace;
-					}
-	
-					element = document.createElementNS(namespace, type);
-				} else {
-					if (nodeType !== 11) {
-						element = document.createElement(type);					
-					} else {
-						element = document.createDocumentFragment();
-					}
-				}
-	
-				// vnode has component attachment
-				if (subject.instance !== null) {
-					(component = subject.instance).VNode.DOMNode = element;
-	
-					// stylesheets
-					if (component.stylesheet && nodeType !== 11) {
-						if (component.stylesheet.styler === void 0) {
-							// create
-							stylesheet(component, subject.type)(element);
-						} else {
-							// namespace
-							component.stylesheet(element);
-						}
-					}
-				}
-	
-				if (length !== 0) {
-					// create children
-					for (var i = 0; i < length; i++) {
-						var newChild = children[i];
-	
-						// clone VNode
-						if (newChild.DOMNode !== null) {
-							newChild = children[i] = VNode(
-								newChild.nodeType,
-								newChild.type,
-								newChild.props,
-								newChild.children,
-								newChild.DOMNode,
-								null,
-								null
-							);
-						}
-	
-						// append child
-						appendNode(newChild, element, createNode(newChild, component, namespace));					
-					}
-				}
-	
-				if (props !== objEmpty) {
-					// refs
-					props.ref && refs(props.ref, component, element);
-	
-					// initialize props
-					assignProps(element, props, false, component);
-				}
-	
-				// cache element reference
-				return subject.DOMNode = element;
+				// accessing any dom property i.e nodeType to check if a node is a fragment
+				// is slower ~(50mil vs 800mil) than accessing a non-existent or added property
+				element.isFragment = true;
 			}
 		}
+	
+		// has a component instance
+		if (subject.instance !== null) {
+			// hydrate component instance, 
+			// this travels through the tree until we find another component to hydrate
+			// which allows use to call ref functions under the context of the component they are within
+			// and assign string refs to their parent components
+			(component = subject.instance).VNode.DOMNode = element;
+	
+			// stylesheets
+			if (component.stylesheet !== void 0 && nodeType !== 11) {
+				if (component.stylesheet.CSSNamespace === void 0) {
+					// create
+					stylesheet(component, subject.type.COMPCache || subject.type, true)(element);
+				} else {
+					// namespace
+					component.stylesheet(element);
+				}
+			}
+		}
+	
+		// has children
+		if (length !== 0) {
+			// append children
+			for (var i = 0; i < length; i++) {
+				var newChild = children[i];
+	
+				// hoisted, clone VNode
+				if (newChild.DOMNode !== null) {
+					newChild = children[i] = cloneNode(newChild);
+				}
+	
+				// append child
+				appendNode(newChild, element, createNode(newChild, component, namespace));					
+			}
+		}
+	
+		// props is not an empty object
+		if (props !== objEmpty) {
+			// refs
+			if (props.ref !== void 0) {
+				refs(props.ref, component, element);
+			}
+	
+			// props and events
+			assignProps(element, props, false, component);
+		}
+	
+		// cache element reference
+		return subject.DOMNode = element;
 	}
 	
 	
 	/**
-	 * append element
+	 * append node
 	 *
 	 * @param {VNode} newNode
 	 * @param {Node}  parentNode
@@ -1929,7 +1883,7 @@
 			newNode.instance.componentWillMount(nextNode);
 		}
 	
-		// append node
+		// append DOMNode
 		parentNode.appendChild(nextNode);
 	
 		if (newNode.instance !== null && newNode.instance.componentDidMount) {
@@ -1939,7 +1893,7 @@
 	
 	
 	/**
-	 * insert element
+	 * insert node
 	 *
 	 * @param {VNode} newNode
 	 * @param {Node}  oldNode
@@ -1951,7 +1905,7 @@
 			newNode.instance.componentWillMount(nextNode);
 		}
 	
-		// insert node
+		// insert DOMNode
 		parentNode.insertBefore(nextNode, oldNode);
 	
 		if (newNode.instance !== null && newNode.instance.componentDidMount) {
@@ -1961,7 +1915,7 @@
 	
 	
 	/**
-	 * remove element
+	 * remove node
 	 *
 	 * @param {VNode} oldNode
 	 * @param {Node}  parentNode
@@ -1971,7 +1925,7 @@
 			oldNode.instance.componentWillUnmount(oldNode.DOMNode);
 		}
 	
-		// remove node
+		// remove DOMNode
 		parentNode.removeChild(oldNode.DOMNode);
 	
 		// clear references
@@ -1980,7 +1934,7 @@
 	
 	
 	/**
-	 * replace element
+	 * replace node
 	 *
 	 * @param {VNode} newNode
 	 * @param {VNode} oldNode
@@ -1996,7 +1950,7 @@
 			newNode.instance.componentWillMount(nextNode);
 		}
 	
-		// replace node
+		// replace DOMNode
 		parentNode.replaceChild(nextNode, oldNode.DOMNode);
 		
 		if (newNode.instance !== null && newNode.instance.componentDidMount) {
@@ -2039,7 +1993,7 @@
 	/**
 	 * check if a name is an event-like name, i.e onclick, onClick...
 	 * 
-	 * @param  {string}  name
+	 * @param  {string} name
 	 * @return {boolean}
 	 */
 	function isEventName (name) {
@@ -2050,9 +2004,9 @@
 	/**
 	 * bind event
 	 *
-	 * @param  {string}    name
-	 * @param  {Object}    value
-	 * @param  {Component} component
+	 * @param  {string}              name
+	 * @param  {Object<string, any>} value
+	 * @param  {Component}           component
 	 * @return {function}
 	 */
 	function bindEvent (name, value, component) {
@@ -2092,34 +2046,55 @@
 	 * @return {VNode} 
 	 */
 	function extractComponent (subject) {
+		/** @type {Component} */
+		var owner;
+	
+		/** @type {(Component|function(new:Component, Object<string, any>))} */
 		var type = subject.type;
-		var candidate;
+	
+		/** @type {Object<string, any>} */
+		var props = subject.props;
+	
+		// default props
+		if (type.defaultProps !== void 0) {
+			// clone default props if props is not an empty object, else use defaultProps as props
+			props !== objEmpty ? assignDefaultProps(type.defaultProps, props) : (props = type.defaultProps);
+		}
+	
+		// assign children to props if not empty
+		if (subject.children.length !== 0) {
+			// prevents mutating the empty object constant
+			if (props === objEmpty) {
+				props = { children: subject.children };
+			}
+			else {
+				props.children = subject.children;			
+			}
+		}
 		
+		// cached component
 		if (type.COMPCache !== void 0) {
-			// cache
-			candidate = type.COMPCache;
-		} else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
-			// function components
-			candidate = type.COMPCache = createClass(type);
-		} else {
-			// class / createClass components
-			candidate = type;
+			owner = type.COMPCache;
+		} 
+		// function components
+		else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
+			// create component
+			owner = createClass(type);
+		}
+		// class / createClass components
+		else {
+			owner = type;
 		}
 	
 		// create component instance
-		var component = subject.instance = new candidate(subject.props);
-	
-		// add children to props if not empty
-		if (subject.children.length !== 0) {
-			component.props.children = subject.children;
-		}
+		var component = subject.instance = new owner(props);
 		
 		// retrieve vnode
 		var vnode = extractRender(component);
 	
 		// if keyed, assign key to vnode
-		if (subject.props.key !== void 0 && vnode.props.key === void 0) {
-			vnode.props.key = subject.props.key;
+		if (props.key !== void 0 && vnode.props.key === void 0) {
+			vnode.props.key = props.key;
 		}
 	
 		// if render returns a component, extract that component
@@ -2127,7 +2102,7 @@
 			vnode = extractComponent(vnode);
 		}
 	
-		// replace props and children of old vnode
+		// replace props and children
 		subject.props    = vnode.props
 		subject.children = vnode.children;
 	
@@ -2152,6 +2127,120 @@
 	
 	
 	/**
+	 * assign default props
+	 * 
+	 * @param  {Object<string, any>} defaultProps
+	 */
+	function assignDefaultProps (defaultProps, props) {
+		for (var name in defaultProps) {
+			props[name] = props[name] || defaultProps[name];
+		}
+	}
+	
+	
+	/**
+	 * ---------------------------------------------------------------------------------
+	 * 
+	 * hydration
+	 * 
+	 * ---------------------------------------------------------------------------------
+	 */
+	
+	
+	/**
+	 * hydrates a server-side rendered dom structure
+	 * 
+	 * @param  {Node}       parent
+	 * @param  {VNode}      subject
+	 * @param  {number}     index
+	 * @param  {VNode}      parentNode
+	 * @param  {?Component} component
+	 */
+	function hydrate (parent, subject, index, parentNode, component) {
+		var newNode  = subject.nodeType === 2 ? extractComponent(subject) : subject;
+		var nodeType = newNode.nodeType;
+	
+		var element = nodeType === 11 ? parent : parent.childNodes[index];
+	
+		// newNode is not a textNode, hydrate its children
+		if (nodeType !== 3) {
+			var props    = newNode.props;
+			var children = newNode.children;
+			var length   = children.length;
+	
+			// vnode has component attachment
+			if (subject.instance !== null) {
+				(component = subject.instance).VNode.DOMNode = parent;
+			}
+	
+			// hydrate children
+			for (var i = 0; i < length; i++) {
+				var newChild = children[i];
+	
+				// hoisted, clone VNode
+				if (newChild.DOMNode !== null) {
+					newChild = children[i] = cloneNode(newChild);
+				}
+	
+				hydrate(element, newChild, i, newNode, component);
+			}
+	
+	
+			// not a fragment, fragments do not use props
+			if (nodeType !== 11) {
+				// not an emtpy object
+				if (props !== objEmpty) {
+					// refs
+					if (props.ref !== void 0) {
+						refs(props.ref, component, element);
+					}
+	
+					// events
+					assignProps(element, props, true, component);
+				}
+			}
+	
+			// hydrate the dom element to the virtual node
+			subject.DOMNode = element;
+		}
+		// textNode
+		else if (nodeType === 3) {
+			var children = parentNode.children;
+			var length   = children.length;
+	
+			// when we reach a string child that is followed by a string child, 
+			// it is assumed that the dom representing it is a single textNode
+			// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
+			// HelloWorld is one textNode in the DOM but two in the VNode
+			if (length > 1 && (children[index+1] || nodEmpty).nodeType === 3) {			
+				var fragment = document.createDocumentFragment();
+				
+				// look ahead of this nodes siblings and add all textNodes to the fragment
+				// and exit when a non-textNode is encounted
+				for (var i = index, len = length - index; i < len; i++) {
+					var textNode = children[i];
+	
+					// exit early once we encounter a non textNode
+					if (textNode.nodeType !== 3) {
+						break;
+					}
+	
+					// create textNode, hydrate and append to fragment
+					fragment.appendChild(textNode.DOMNode = document.createTextNode(textNode.children));
+				}
+	
+				// replace the textNode with a set of textNodes
+				parent.replaceChild(fragment, element);
+			}
+			else {
+				// hydrate single textNode
+				newNode.DOMNode = element;
+			}
+		}
+	}
+	
+	
+	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
 	 * Server Side Render
@@ -2162,16 +2251,18 @@
 	
 	/**
 	 * server side render to string
+	 *
+	 * @public
 	 * 
 	 * @param  {(Object|function)}  subject
 	 * @param  {(string|function)=} template
 	 * @return {string}
 	 */
 	function renderToString (subject, template) {
-		var lookup = {styles: '', ids: {}};
+		var lookup = {styles: '', namespaces: {}};
 		var body   = renderVNodeToString(renderVNode(subject), lookup, true);
 		var styles = lookup.styles;
-		var style  = styles.length !== 0 ? '<style>'+styles+'<style>' : '';
+		var style  = styles.length !== 0 ? styles : '';
 	
 		if (template) {
 			if (typeof template === 'string') {
@@ -2187,9 +2278,11 @@
 	
 	/**
 	 * server-side render to stream
+	 *
+	 * @public
 	 * 
-	 * @param  {(VNode|Component)} subject 
-	 * @param  {string=}           template
+	 * @param  {(VNode|Component|VNode[])} subject 
+	 * @param  {string=}                   template
 	 * @return {Stream}
 	 */
 	function renderToStream (subject, template) {	
@@ -2204,13 +2297,13 @@
 	/**
 	 * Stream
 	 * 
-	 * @param {(VNode|Component)} subject
-	 * @param {string=}           template
+	 * @param {(VNode|Component|VNode[])} subject
+	 * @param {string=}                   template
 	 */
 	function Stream (subject, template) {
-		this.initial  = 0;
+		this.initial  = true;
 		this.stack    = [];
-		this.lookup   = {styles: '', ids: {}};
+		this.lookup   = {styles: '', namespaces: {}};
 		this.template = template;
 		this.node     = renderVNode(subject);
 	
@@ -2221,7 +2314,7 @@
 	/**
 	 * Stream prototype
 	 * 
-	 * @type {Object}
+	 * @type {Object<string, (function|string)>}
 	 */
 	Stream.prototype = server ? Object.create(readable.prototype, {
 		_type: {
@@ -2229,12 +2322,14 @@
 		},
 		_read: {
 			value: function () {
-				if (this.initial === 1 && this.stack.length === 0) {
-					var style = this.lookup.styles;
+				var initial = this.initial;
+	
+				if (initial === false && this.stack.length === 0) {
+					var styles = this.lookup.styles;
 	
 					// if there are styles, append
-					if (style.length !== 0) {
-						this.push('<style>'+style+'</style>');
+					if (styles.length !== 0) {
+						this.push(styles);
 					}
 	
 					// has template, push closing
@@ -2246,23 +2341,23 @@
 					this.push(null);
 	
 					// reset `initial` identifier
-					this.initial = 0;			
+					this.initial = true;			
 				} else {
 					// start of stream
-					if (this.initial === 0) {
-						this.initial = 1;
+					if (initial === true) {
+						this.initial = false;
 	
 						// has template, push opening 
 						this.template && this.push(this.template[0]);
 					}
 	
 					// pipe a chunk
-					this._pipe(this.node, true, this.stack, this.lookup);
+					this._pipe(this.node, true, this.stack, this.lookup, initial);
 				}
 			}
 		},
 		_pipe: {
-			value: function (subject, flush, stack, lookup) {
+			value: function (subject, flush, stack, lookup, initial) {
 				// if there is something pending in the stack give that priority
 				if (flush && stack.length !== 0) {
 					stack.pop()(this); 
@@ -2281,7 +2376,7 @@
 	
 				// if component
 				if (nodeType === 2) {
-					// if cached
+					// cached
 					if (subject.type.HTMLCache !== void 0) {
 						this.push(subject.type.HTMLCache); 
 						return;
@@ -2332,10 +2427,11 @@
 							// since we cannot know ahead of time the number of children
 							// this is operation is split into asynchronously added chunks of data
 							var index = 0;
+	
 							// add one more for the closing tag
 							var middlwares = length + 1;
 	
-							var doctype = type === 'html';
+							var doctype = initial && type === 'html';
 							var eof = doctype || type === 'body';
 	
 							// for each _read if queue has middleware
@@ -2346,7 +2442,8 @@
 									// if the closing tag is body or html
 									// we want to push the styles before we close them
 									if (eof && lookup.styles.length !== 0) {
-										stream.push('<style>'+lookup.styles+'</style>');
+										stream.push(lookup.styles);
+	
 										// clear styles, avoid adding duplicates
 										lookup.styles = '';
 									}
@@ -2379,9 +2476,11 @@
 	
 	/**
 	 * renderToCache
+	 *
+	 * @public
 	 * 
-	 * @param  {Object} subject
-	 * @return {Object} subject
+	 * @param  {(VNode|VNode[]|Component)} subject
+	 * @return {(VNode|VNode[]|Component)} subject
 	 */
 	function renderToCache (subject) {
 		if (subject) {
@@ -2414,22 +2513,25 @@
 	function renderStylesheetToString (nodeType, component, constructor, output, lookup) {
 		// stylesheet
 		if (nodeType === 2) {
-			// stylesheets
+			// stylesheet
 			if (component.stylesheet) {
-				var id = component.stylesheet.styler;
+				var namespace = component.stylesheet.CSSNamespace;
 	
-				if (id === void 0) {
-					// create
-					lookup.styles += stylesheet(component, constructor)(null);
-					lookup.ids[id = component.stylesheet.styler] = true;
+				// create
+				if (namespace === void 0) {
+					var decorator = stylesheet(component, constructor.COMPCache || constructor, false);
+	
+					lookup.namespaces[namespace = decorator.CSSNamespace] = true;			
+					lookup.styles += '<style id="\''+namespace+'\'">'+decorator(null)+'</style>';
 				}
-			 	else if (!lookup.ids[id]) {
-					lookup.styles += component.stylesheet(null);
-					lookup.ids[id] = true;
+				// cache
+			 	else if (!lookup.namespaces[namespace]) {
+			 		lookup.namespaces[namespace] = true;
+					lookup.styles += '<style id="\''+namespace+'\'">'+component.stylesheet(null)+'</style>';
 				}
 	
 				// add attribute to element
-				output += ' '+nsStyle+'='+'"'+id+'"';
+				output += ' '+nsStyle+'='+'"'+namespace+'"';
 			}
 		}
 	
@@ -2459,10 +2561,11 @@
 	
 					// do not process these props
 					if (
-						type !== 'function' &&
 						name !== 'key' && 
 						name !== 'ref' && 
-						name !== 'innerHTML'
+						name !== 'innerHTML' &&
+						type !== 'function' &&
+						isEventName(name) === false
 					) {
 						if (type !== 'object') {
 							if (name === 'className') { 
@@ -2561,22 +2664,18 @@
 		}
 	
 		// add doctype if initial element is <html>
-		if (initial && type === 'html') {
-			vnodeStr = '<!doctype html>' + vnodeStr;
-		}
-	
-		return vnodeStr;
+		return initial && type === 'html' ? ('<!doctype html>' + vnodeStr) : vnodeStr;
 	}
 	
 	
 	/**
 	 * render virtual node
 	 * 
-	 * @param  {(function|Object)} subject
+	 * @param  {(VNode|function|Component)} subject
 	 * @return {VNode}
 	 */
 	function renderVNode (subject) {
-		if (subject.type) {
+		if (subject.nodeType) {
 			return subject;
 		} else {
 			return typeof subject === 'function' ? VComponent(subject) : createElement('@', null, subject);
@@ -2595,9 +2694,11 @@
 	
 	/**
 	 * create stream
+	 *
+	 * @public
 	 * 
-	 * @param  {(function(resolve, reject)|*)} value
-	 * @param  {(function(...*)|boolean)}      middleware
+	 * @param  {(function(resolve, reject)|any)} value
+	 * @param  {(function(...any)|boolean)}      middleware
 	 * @return {function}
 	 */
 	function stream (value, middleware) {
@@ -2740,8 +2841,10 @@
 	
 	/**
 	 * create new stream in resolved state
+	 *
+	 * @public
 	 * 
-	 * @param  {*}          value
+	 * @param  {*} value
 	 * @return {function}
 	 */
 	stream.resolve = function (value) {
@@ -2753,8 +2856,10 @@
 	
 	/**
 	 * create new stream in rejected state
+	 *
+	 * @public
 	 * 
-	 * @param  {*}     value 
+	 * @param  {*} value 
 	 * @return {function}
 	 */
 	stream.reject = function (value) {
@@ -2776,10 +2881,11 @@
 	/**
 	 * create http request
 	 *
-	 * @param  {Object}
-	 * @return {function}
+	 * @param  {VRequest|Object<string, any>}
+	 * @return {function} {then, catch, done, ...}
 	 */
 	function http (options) {
+		// extract properties from options
 		var method          = options.method;
 		var url             = options.url;
 		var payload         = options.payload; 
@@ -2845,7 +2951,9 @@
 				}
 			}
 	
+			// headers property
 			if (headers != null) {
+				// assign headers
 				each(headers, function (value, name) {
 					xhr.setRequestHeader(name, value);
 				});
@@ -2866,15 +2974,19 @@
 	
 	/**
 	 * request constructor
+	 *
+	 * @public
 	 * 
 	 * @example request({method: 'GET', url: '?'}) === request.get('?')
 	 * 
-	 * @param {Object} options
+	 * @param  {VRequest|Object<string, any>} options
+	 * @return {function} {then, catch, done, ...}
 	 */
 	function request (options) {
 		var payload = options.payload;
 		var method  = options.method = (options.method.toUpperCase() || 'GET');
 		
+		// encode url
 		options.url = encodeURI(options.url);
 	
 		// enctype syntax sugar
@@ -2886,7 +2998,7 @@
 		}
 	
 		// if has payload && GET pass payload as query string
-		if (method === 'GET' && payload) {
+		if (method === 'GET' && payload != null) {
 			options.url += '?' + (typeof payload === 'object' ? serialize(payload) : payload);		
 		}
 	
@@ -2902,7 +3014,6 @@
 		return request(VRequest('POST', url, payload, enctype, responseType));
 	};
 	
-	request.get('');
 	
 	/**
 	 * retrieve and format response
@@ -2913,14 +3024,20 @@
 	 * @return {(Node|string|Object)}
 	 */
 	function response (xhr, responseType, reject) {			
-		var data   = null; 
 		var header = xhr.getResponseHeader('Content-Type');
+		var data = null; 
+		var body;
 	
+		// text
 		if (!xhr.responseType || xhr.responseType === 'text') {
 			data = xhr.responseText;
-		} else if (xhr.responseType === 'document') {
+		}
+		// Node 
+		else if (xhr.responseType === 'document') {
 			data = responseXML;
-		} else {
+		}
+		// ?any
+		else {
 			data = response;
 		}
 	
@@ -2929,13 +3046,18 @@
 			responseType = (header.indexOf(';') > -1 ? header.split(';')[0].split('/') : header.split('/'))[1];
 		}
 	
-		var body;
-	
+		// json
 		if (responseType === 'json') {
+			// sandbox JSON parsing
 			body = tryCatch(JSON.parse, reject, data);
-		} else if (responseType === 'html' || responseType === 'document') {
+		} 
+		// Node
+		else if (responseType === 'html' || responseType === 'document') {
+			// parse html string
 			body = (new DOMParser()).parseFromString(data, 'text/html');
-		} else {
+		}
+		// ?any
+		else {
 			body = data;
 		}
 	
@@ -2958,12 +3080,12 @@
 		each(object, function (value, key) {
 			var prefixValue = prefix !== void 0 ? prefix + '[' + key + ']' : key;
 	
-			// when the value is equal to an object 
-			// we have somethinglike value = {name:'John', addr: {...}}
-			// re-run param(addr) to serialize 'addr: {...}'
-			arr[arr.length] = typeof value == 'object' ? 
-									serialize(value, prefixValue) :
-									encodeURIComponent(prefixValue) + '=' + encodeURIComponent(value);
+			// when the value is an object recursive serialize
+			if (typeof value == 'object') {
+				arr[arr.length] = serialize(value, prefixValue);
+			} else {
+				arr[arr.length] = encodeURIComponent(prefixValue) + '=' + encodeURIComponent(value);
+			}
 		});
 	
 		return arr.join('&');
@@ -2981,9 +3103,11 @@
 	
 	/**
 	 * router
+	 *
+	 * @public
 	 * 
 	 * @param  {Object<string, (function|Component)>} routes
-	 * @param  {string=}                              address 
+	 * @param  {string|Object<string, any>=}          address 
 	 * @param  {string=}                              initialiser
 	 * @param  {(string|Node)=}                       element
 	 * @param  {function=}                            middleware
@@ -2991,14 +3115,6 @@
 	 * @return {Object}
 	 */
 	function router (routes, address, initialiser, element, middleware, notFound) {
-		if (typeof routes === 'function') {
-			routes = routes();
-		}
-	
-		if (typeof address === 'function') {
-			address = address();
-		}
-	
 		if (typeof address === 'object') {
 			element     = address.mount;
 			initialiser = address.initial;
@@ -3196,6 +3312,8 @@
 		var interval = 0;
 		var resolved = 0;
 		var routes   = {};
+	
+		/** @public */
 		var api      = Object.defineProperty({
 			navigate: navigate,
 			back:     history.back, 
@@ -3250,6 +3368,8 @@
 	/**
 	 * creates a store enhancer
 	 *
+	 * @public
+	 * 
 	 * @param   {...function} middlewares
 	 * @return  {function}    a store enhancer
 	 */
@@ -3297,7 +3417,7 @@
 	 * composes single-argument functions from right to left. The right most
 	 * function can take multiple arguments as it provides the signature for
 	 * the resulting composite function
-	 *
+	 * 
 	 * @param  {...function} funcs functions to compose
 	 * @return {function}          function obtained by composing the argument functions
 	 * from right to left. for example, compose(f, g, h) is identical to doing
@@ -3343,6 +3463,8 @@
 	
 	/**
 	 * combines a set of reducers
+	 *
+	 * @public
 	 * 
 	 * @param  {Object<string, function>}  reducers
 	 * @return {function}
@@ -3374,7 +3496,7 @@
 	 * @param  {function}  reducer
 	 * @param  {*}         initialState
 	 * @param  {function=} enhancer
-	 * @return {Object}    {getState, dispatch, subscribe, connect, replaceReducer}
+	 * @return {Store}     {getState, dispatch, subscribe, connect, replaceReducer}
 	 */
 	function createStore (reducer, initialState, enhancer) {
 		// exit early, reducer is not a function
@@ -3409,7 +3531,7 @@
 	 * 
 	 * @param  {function} reducer
 	 * @param  {*}        initialState
-	 * @return {Object}   {getState, dispatch, subscribe, connect, replaceReducer}
+	 * @return {Store}    {getState, dispatch, subscribe, connect, replaceReducer}
 	 */
 	function Store (reducer, initialState) {
 		var currentState = initialState;
@@ -3518,45 +3640,46 @@
 
 	return {
 		// version
-		version:          version,
+		version: version,
 
 		// alias
-		h:                createElement,
+		h: createElement,
 		
 		// elements
-		createElement:    createElement,
-		isValidElement:   isValidElement,
-		cloneElement:     cloneElement,
-		createFactory:    createFactory,
-		DOM:              DOM,
+		createElement: createElement,
+		isValidElement: isValidElement,
+		cloneElement: cloneElement,
+		createFactory: createFactory,
+		DOM: DOM,
 
 		// render
-		render:           render,
-		shallow:          shallow,
-		renderToString:   renderToString,
-		renderToStream:   renderToStream,
-		renderToCache:    renderToCache,
+		render: render,
+		shallow: shallow,
+
+		// server
+		renderToString: renderToString,
+		renderToStream: renderToStream,
+		renderToCache: renderToCache,
 
 		// components
-		Component:        Component,
-		createClass:      createClass,
+		Component: Component,
+		createClass: createClass,
 
 		// stores
-		createStore:      createStore,
-		applyMiddleware:  applyMiddleware,
-		combineReducers:  combineReducers,
+		createStore: createStore,
+		applyMiddleware: applyMiddleware,
+		combineReducers: combineReducers,
 		
 		// utilities
-		request:          request,
-		router:           router,
-		stream:           stream,
+		request: request,
+		router: router,
+		stream: stream,
 
 		// shapes
-		VText:            VText,
-		VElement:         VElement,
-		VSvg:             VSvg,
-		VFragment:        VFragment,
-		VComponent:       VComponent,
-		VRequest:         VRequest,
+		VText: VText,
+		VElement: VElement,
+		VSvg: VSvg,
+		VFragment: VFragment,
+		VComponent: VComponent
 	};
 }));

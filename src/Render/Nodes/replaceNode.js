@@ -1,5 +1,5 @@
 /**
- * replace element
+ * replace node
  *
  * @param {VNode} newNode
  * @param {VNode} oldNode
@@ -15,7 +15,7 @@ function replaceNode (newNode, oldNode, parentNode, nextNode) {
 		newNode.instance.componentWillMount(nextNode);
 	}
 
-	// replace node
+	// replace DOMNode
 	parentNode.replaceChild(nextNode, oldNode.DOMNode);
 	
 	if (newNode.instance !== null && newNode.instance.componentDidMount) {

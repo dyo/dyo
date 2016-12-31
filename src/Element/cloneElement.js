@@ -1,10 +1,12 @@
 /**
  * clone and return an element having the original element's props
  * with new props merged in shallowly and new children replacing existing ones.
+ *
+ * @public
  * 
- * @param  {VNode}   subject
- * @param  {Object=} newProps
- * @param  {any[]=}  newChildren
+ * @param  {VNode}                subject
+ * @param  {Object<string, any>=} newProps
+ * @param  {any[]=}               newChildren
  * @return {VNode}
  */
 function cloneElement (subject, newProps, newChildren) {
@@ -25,8 +27,9 @@ function cloneElement (subject, newProps, newChildren) {
 
 		// if not empty, copy
 		if (length > 0) {
-			var index    = 0;
-				children = [];
+			var index = 0;
+			
+			children = [];
 
 			// copy old children
 			for (var i = 0; i < length; i++) {

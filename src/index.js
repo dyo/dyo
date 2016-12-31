@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio is a fast javascript framework
+ * dio is a fast javascript framework for building applications.
  * 
  * @licence MIT
  */
@@ -29,6 +29,7 @@
 	import 'Element/';
 	import 'Component/';
 	import 'Render/';
+	import 'Hydration/';
 	import 'SSR/';
 	import 'Stream/';
 	import 'HTTP/';
@@ -51,45 +52,46 @@
 
 	return {
 		// version
-		version:          version,
+		version: version,
 
 		// alias
-		h:                createElement,
+		h: createElement,
 		
 		// elements
-		createElement:    createElement,
-		isValidElement:   isValidElement,
-		cloneElement:     cloneElement,
-		createFactory:    createFactory,
-		DOM:              DOM,
+		createElement: createElement,
+		isValidElement: isValidElement,
+		cloneElement: cloneElement,
+		createFactory: createFactory,
+		DOM: DOM,
 
 		// render
-		render:           render,
-		shallow:          shallow,
-		renderToString:   renderToString,
-		renderToStream:   renderToStream,
-		renderToCache:    renderToCache,
+		render: render,
+		shallow: shallow,
+
+		// server
+		renderToString: renderToString,
+		renderToStream: renderToStream,
+		renderToCache: renderToCache,
 
 		// components
-		Component:        Component,
-		createClass:      createClass,
+		Component: Component,
+		createClass: createClass,
 
 		// stores
-		createStore:      createStore,
-		applyMiddleware:  applyMiddleware,
-		combineReducers:  combineReducers,
+		createStore: createStore,
+		applyMiddleware: applyMiddleware,
+		combineReducers: combineReducers,
 		
 		// utilities
-		request:          request,
-		router:           router,
-		stream:           stream,
+		request: request,
+		router: router,
+		stream: stream,
 
 		// shapes
-		VText:            VText,
-		VElement:         VElement,
-		VSvg:             VSvg,
-		VFragment:        VFragment,
-		VComponent:       VComponent,
-		VRequest:         VRequest,
+		VText: VText,
+		VElement: VElement,
+		VSvg: VSvg,
+		VFragment: VFragment,
+		VComponent: VComponent
 	};
 }));

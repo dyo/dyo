@@ -1,7 +1,10 @@
 /**
  * create virtual child node
  * 
- * @param {any} child
+ * @param  {*}       child
+ * @param  {VNode[]} children
+ * @param  {number}  index
+ * @return {number}  index
  */
 function createChild (child, children, index) {
 	if (child != null) {

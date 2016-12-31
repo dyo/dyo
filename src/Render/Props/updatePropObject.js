@@ -2,7 +2,7 @@
  * update prop objects, i.e .style
  * 
  * @param  {Object} value
- * @param  {*}      targetAttr
+ * @param  {any}    targetAttr
  */
 function updatePropObject (value, targetAttr) {
 	for (var propName in value) {

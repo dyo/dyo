@@ -3,7 +3,7 @@
  * 
  * @param  {function} reducer
  * @param  {*}        initialState
- * @return {Object}   {getState, dispatch, subscribe, connect, replaceReducer}
+ * @return {Store}    {getState, dispatch, subscribe, connect, replaceReducer}
  */
 function Store (reducer, initialState) {
 	var currentState = initialState;

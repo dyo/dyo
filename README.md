@@ -5,7 +5,7 @@
 dio is a fast javascript framework for building applications.
 
 - ~8kb 
-- ~4kb (nano)
+- ~5kb (nano)
 
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
@@ -34,15 +34,15 @@ dio is a fast javascript framework for building applications.
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/5.0.2/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/5.0.3/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/5.0.2/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/5.0.3/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@5.0.2/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@5.0.3/dio.min.js></script>
 ```
 
 #### bower
@@ -84,6 +84,12 @@ class Hello extends dio.Component {
 	}
 }
 
+var Hello = dio.createClass({
+	render () {
+
+	}
+});
+
 function Hello () {
 	return {
 		render () {
@@ -99,12 +105,34 @@ var Hello = h => ({
 });
 
 var Hello = h => props => ();
+```
 
-var Hello = dio.createClass({
+Though dio looks like react, the last 3 examples are one of the areas that dio is different from react, introducing statefull components as pure functions. All of the above examples act the same, createClass does not auto-bind but it does behave like the class in that you can use a constructor method, though you will not have to call `super()`, for example the following are identical.
+
+```javascript
+class Hello extends dio.Component {
+	constructor (props) { this.state = {id: 100}; }
 	render () {
-
+		
 	}
-});
+}
+
+function Hello {
+	return {
+		constructor (props) { this.state = {id: 100}; }
+		render () {}
+	}
+}
+
+const Hello = h => ({
+	constructor (props) { this.state = {id: 100}; }
+	render () { }
+})
+
+const Hello = () => ({
+	state: {id: 100},
+	render () { }
+})
 ```
 
 #### render
@@ -255,13 +283,73 @@ class Hello extends dio.Component {
 
 getDefaultProps is a method used to assign the default props of a component when the component does not receive props. This method receives no arguments and returns an `{Object}`. This method is supported by components created with createClass functions and classes. Alternatively you could also specify `defaultProps` for function and class components.
 
+```javascript
+class Foo extends Component {
+	getDefaultProps () {
+		return {
+			id: 100
+		}
+	}
+	render () {
+
+	}
+}
+
+// or
+class Foo extends Component {
+	render () {
+
+	}
+}
+
+Foo.defaultProps = {id: 100};
+```
+
+
 #### getInitialProps
 
 similar to getDefaultProps, getInitialProps is a method used to assign the initial props of the component. This method receives the props passed to the component if any and returns an `{Object}` or sets the props manually via `this.props = {}`.
 
+```javascript
+class Foo extends Component {
+	getInitialProps () {
+		return {
+			id: 100
+		}
+	}
+	render () {
+
+	}
+}
+```
+
 #### getInitialState
 
 similar to getDefaultProps, getInitialState is a method used to assign the initial state of the component. This method receives no arguments and returns an `{Object}` or sets the state manually via `this.state = {}`.
+
+```javascript
+class Foo extends Component {
+	getInitialState () {
+		return {
+			id: 100
+		}
+	}
+	render () {
+
+	}
+}
+
+// or
+
+class Foo extends Component {
+	constructor () {
+		this.state = {id: 100};
+	}
+	render () {
+
+	}
+}
+```
 
 #### state
 
@@ -517,6 +605,10 @@ dio.render(Hello)({name: 'World'}, document.body, function (el) { this instanceo
 
 The last argument the render method accepts is a `{boolean}` that signals whether to hydrate the DOM `true` or active a destructive render `false`. This is usefull in the context of Server Side Rendering when coupled with `renderToString` or `renderToStream`.
 
+## shallow
+
+This method accepts an element or a Component and returns a shallow rendered virtual node.
+
 ## renderToString
 
 similar to render but renders the output to a string. This is usefull in a server-side enviroment.
@@ -548,16 +640,16 @@ var output = dio.renderToString(Hello, `
 	</html>
 `);
 
-// where @stylesheet is a string of all the css generated from
+// where ${stylesheet} is a string of all the stylesheets generated from
 // the Hello Component including its children.
 var output = dio.renderToString(Hello, function (body, stylesheet) {
 	return `
 		<html>
 			<title>Hello</title>
 			
-			@stylesheet
+			${stylesheet}
 			
-			<body>@body</body>
+			<body>${body}</body>
 		</html>
 	`
 })
@@ -868,4 +960,4 @@ Yes, dio shares a great deal of its api with react.
 
 > What is the nano package
 
-The nano is dio core (4kb) without the extras.
+The nano is dio core (5kb) without the extras.

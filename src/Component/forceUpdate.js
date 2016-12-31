@@ -1,10 +1,12 @@
 /**
  * force an update
  *
- * @param  {function=}
+ * @public
+ * 
+ * @param  {function(this:Component)=} callback
  */
 function forceUpdate (callback) {
-	if (this.componentWillUpdate) {
+	if (this.componentWillUpdate !== void 0) {
 		this.componentWillUpdate(this.props, this.state);
 	}
 
@@ -12,7 +14,7 @@ function forceUpdate (callback) {
 	var oldNode = this.VNode;
 
 	// component returns a different root node
-	if (newNode.type !== oldNode.type) {
+	if (newNode.type !== oldNode.type) {		
 		// replace node
 		replaceNode(newNode, oldNode, oldNode.DOMNode.parentNode, createNode(newNode, null, null));
 
@@ -22,18 +24,18 @@ function forceUpdate (callback) {
 		oldNode.props    = newNode.props;
 		oldNode.children = newNode.children;
 		oldNode.DOMNode  = newNode.DOMNode;
-		oldNode.instance = newNode.instance;
+		newNode.instance = oldNode.instance;
 	} else {
 		// patch node
-		patch(newNode, oldNode, newNode.nodeType, oldNode.nodeType);
+		patchNodes(newNode, oldNode, newNode.nodeType, oldNode.nodeType);
 	}
 
-	if (this.componentDidUpdate) {
+	if (this.componentDidUpdate !== void 0) {
 		this.componentDidUpdate(this.props, this.state);
 	}
 
-	// callback
-	if (callback && typeof callback === 'function') {
+	// if callback function call with the component as `this` context
+	if (callback != null && typeof callback === 'function') {
 		callback.call(this);
 	}
 }

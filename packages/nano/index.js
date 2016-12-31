@@ -4,7 +4,7 @@
  *  ) ) )( () )
  * (___(__\__/ 
  * 
- * dio is a fast javascript framework
+ * dio is a fast javascript framework for building applications.
  * 
  * @licence MIT
  */
@@ -23,7 +23,6 @@
 
 
 	import '../../src/Constants/main';
-	import '../../src/Utilities/random';
 	import '../../src/Utilities/each';
 	import '../../src/Shapes/VText';
 	import '../../src/Shapes/VElement';
@@ -52,19 +51,17 @@
 	}
 
 	return {
+		// version
+		version:          version,
+
+		// alias
+		h:                createElement,
+
 		// elements
 		createElement:    createElement,
 		isValidElement:   isValidElement,
 		cloneElement:     cloneElement,
 		createFactory:    createFactory,
-
-		// shapes
-		VText:            VText,
-		VElement:         VElement,
-		VSvg:             VSvg,
-		VFragment:        VFragment,
-		VComponent:       VComponent,
-
 		DOM:              DOM,
 
 		// render
@@ -74,11 +71,12 @@
 		// components
 		Component:        Component,
 		createClass:      createClass,
-		
-		// version
-		version:          version,
 
-		// alias
-		h:                createElement,
+		// shapes
+		VText:            VText,
+		VElement:         VElement,
+		VSvg:             VSvg,
+		VFragment:        VFragment,
+		VComponent:       VComponent
 	};
 }));

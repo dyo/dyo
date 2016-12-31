@@ -1,7 +1,9 @@
 /**
  * shallow render
  *
- * @param  {(VNode|Component)}
+ * @public
+ * 
+ * @param  {(VNode|Component|function)}
  * @return {VNode}
  */
 function shallow (subject) {

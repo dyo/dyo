@@ -1,10 +1,12 @@
 /**
  * is valid element
+ *
+ * @public
  * 
- * @param  {*} subject
+ * @param  {any} subject
  * @return {boolean}
  */
 function isValidElement (subject) {
-	return subject && subject.nodeType;
+	return subject != null && subject.nodeType != null;
 }
 

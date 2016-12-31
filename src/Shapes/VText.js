@@ -1,5 +1,7 @@
 /**
  * text shape
+ *
+ * @public
  * 
  * @param  {(string|boolean|number)} text
  * @return {VNode}

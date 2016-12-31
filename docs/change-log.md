@@ -1,3 +1,12 @@
+## 5.0.3 (December 30, 2016)
+
+- patch `defaultProps` & `getDefaultProps`
+- better intergrate hydration with SSR stylesheets
+- use component name/function name/displayName for css namespaces when available
+- patch for hoisted nodes when hydrating SSR
+- patch for cloning fragments
+- patch performance regression between v4 and v5
+
 ## 5.0.2 (December 27, 2016)
 
 - patch nano

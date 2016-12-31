@@ -1,14 +1,18 @@
 /**
  * request constructor
+ *
+ * @public
  * 
  * @example request({method: 'GET', url: '?'}) === request.get('?')
  * 
- * @param {Object} options
+ * @param  {VRequest|Object<string, any>} options
+ * @return {function} {then, catch, done, ...}
  */
 function request (options) {
 	var payload = options.payload;
 	var method  = options.method = (options.method.toUpperCase() || 'GET');
 	
+	// encode url
 	options.url = encodeURI(options.url);
 
 	// enctype syntax sugar
@@ -20,7 +24,7 @@ function request (options) {
 	}
 
 	// if has payload && GET pass payload as query string
-	if (method === 'GET' && payload) {
+	if (method === 'GET' && payload != null) {
 		options.url += '?' + (typeof payload === 'object' ? serialize(payload) : payload);		
 	}
 
@@ -36,4 +40,3 @@ request.post = function (url, payload, enctype, responseType) {
 	return request(VRequest('POST', url, payload, enctype, responseType));
 };
 
-request.get('');

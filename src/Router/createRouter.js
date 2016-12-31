@@ -171,6 +171,8 @@ function createRouter (patterns, address, initialiser, notFound) {
 	var interval = 0;
 	var resolved = 0;
 	var routes   = {};
+
+	/** @public */
 	var api      = Object.defineProperty({
 		navigate: navigate,
 		back:     history.back, 

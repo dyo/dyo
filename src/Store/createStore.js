@@ -4,7 +4,7 @@
  * @param  {function}  reducer
  * @param  {*}         initialState
  * @param  {function=} enhancer
- * @return {Object}    {getState, dispatch, subscribe, connect, replaceReducer}
+ * @return {Store}     {getState, dispatch, subscribe, connect, replaceReducer}
  */
 function createStore (reducer, initialState, enhancer) {
 	// exit early, reducer is not a function

@@ -1,6 +1,8 @@
 /**
  * creates a store enhancer
  *
+ * @public
+ * 
  * @param   {...function} middlewares
  * @return  {function}    a store enhancer
  */

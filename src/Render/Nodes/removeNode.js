@@ -1,5 +1,5 @@
 /**
- * remove element
+ * remove node
  *
  * @param {VNode} oldNode
  * @param {Node}  parentNode
@@ -9,7 +9,7 @@ function removeNode (oldNode, parentNode) {
 		oldNode.instance.componentWillUnmount(oldNode.DOMNode);
 	}
 
-	// remove node
+	// remove DOMNode
 	parentNode.removeChild(oldNode.DOMNode);
 
 	// clear references

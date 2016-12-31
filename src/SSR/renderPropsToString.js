@@ -20,10 +20,11 @@ function renderPropsToString (props) {
 
 				// do not process these props
 				if (
-					type !== 'function' &&
 					name !== 'key' && 
 					name !== 'ref' && 
-					name !== 'innerHTML'
+					name !== 'innerHTML' &&
+					type !== 'function' &&
+					isEventName(name) === false
 				) {
 					if (type !== 'object') {
 						if (name === 'className') { 

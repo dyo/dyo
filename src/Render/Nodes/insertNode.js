@@ -1,5 +1,5 @@
 /**
- * insert element
+ * insert node
  *
  * @param {VNode} newNode
  * @param {Node}  oldNode
@@ -11,7 +11,7 @@ function insertNode (newNode, oldNode, parentNode, nextNode) {
 		newNode.instance.componentWillMount(nextNode);
 	}
 
-	// insert node
+	// insert DOMNode
 	parentNode.insertBefore(nextNode, oldNode);
 
 	if (newNode.instance !== null && newNode.instance.componentDidMount) {

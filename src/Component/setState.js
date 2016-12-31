@@ -1,22 +1,27 @@
 /**
  * set state
+ *
+ * @public
  * 
- * @param {Object}    newState
- * @param {function=} callback
+ * @param {Object}                    newState
+ * @param {function(this:Component)=} callback
  */
 function setState (newState, callback) {
-	if (this.shouldComponentUpdate && this.shouldComponentUpdate(this.props, newState) === false) {
+	// exist early if shouldComponentUpdate exists and returns false
+	if (this.shouldComponentUpdate !== void 0 && this.shouldComponentUpdate(this.props, newState) === false) {
 		return;
 	}
 
+	// update state
 	updateState(this.state, newState);
 
+	// update component
 	this.forceUpdate(callback || null);
 }
 
 
 /**
- * update state, hoisted to avoid deopts
+ * update state, hoisted to avoid `for in` deopts
  * 
  * @param  {Object} state
  * @param  {Object} newState

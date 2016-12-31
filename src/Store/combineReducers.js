@@ -1,5 +1,7 @@
 /**
  * combines a set of reducers
+ *
+ * @public
  * 
  * @param  {Object<string, function>}  reducers
  * @return {function}

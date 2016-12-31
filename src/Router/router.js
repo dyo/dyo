@@ -1,8 +1,10 @@
 /**
  * router
+ *
+ * @public
  * 
  * @param  {Object<string, (function|Component)>} routes
- * @param  {string=}                              address 
+ * @param  {string|Object<string, any>=}          address 
  * @param  {string=}                              initialiser
  * @param  {(string|Node)=}                       element
  * @param  {function=}                            middleware
@@ -10,14 +12,6 @@
  * @return {Object}
  */
 function router (routes, address, initialiser, element, middleware, notFound) {
-	if (typeof routes === 'function') {
-		routes = routes();
-	}
-
-	if (typeof address === 'function') {
-		address = address();
-	}
-
 	if (typeof address === 'object') {
 		element     = address.mount;
 		initialiser = address.initial;

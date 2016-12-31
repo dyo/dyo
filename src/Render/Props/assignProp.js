@@ -4,7 +4,7 @@
  * @param  {Node}       target
  * @param  {string}     name
  * @param  {Object}     props
- * @param  {number}     onlyEvents,
+ * @param  {boolean}    onlyEvents,
  * @param  {Component}  component
  */
 function assignProp (target, name, props, onlyEvents, component) {

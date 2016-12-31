@@ -6,4 +6,4 @@ Yes, dio shares a great deal of its api with react.
 
 > What is the nano package
 
-The nano is dio core (4kb) without the extras.
+The nano is dio core (5kb) without the extras.

@@ -1,5 +1,5 @@
 /**
- * append element
+ * append node
  *
  * @param {VNode} newNode
  * @param {Node}  parentNode
@@ -10,7 +10,7 @@ function appendNode (newNode, parentNode, nextNode) {
 		newNode.instance.componentWillMount(nextNode);
 	}
 
-	// append node
+	// append DOMNode
 	parentNode.appendChild(nextNode);
 
 	if (newNode.instance !== null && newNode.instance.componentDidMount) {

@@ -1,7 +1,10 @@
 /**
  * DOM factory, create VNode factories
  *
- * @param {string[]} types
+ * @public
+ * 
+ * @param  {string[]}                 types
+ * @return {Object<string, function>} elements
  */
 function DOM (types) {
 	var elements = {};
@@ -12,14 +15,7 @@ function DOM (types) {
 	}
 	
 	// if svg, add related svg element factories
-	if (elements.svg) {
-		var svgs = ['rect','path','polygon','circle','ellipse','line','polyline','svg',
-			'g','defs','text','textPath','tspan','mpath','defs','g'];
-
-		for (var i = 0, length = svgs.length; i < length; i++) {
-			elements[svgs[i]] = VSvg.bind(null, svgs[i]);
-		}
-	}
+	elements.svg !== void 0 && (elements.svg = VSvg.bind(null, 'svg'));
 
 	return elements;
 }

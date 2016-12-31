@@ -1,8 +1,10 @@
 /**
  * server-side render to stream
+ *
+ * @public
  * 
- * @param  {(VNode|Component)} subject 
- * @param  {string=}           template
+ * @param  {(VNode|Component|VNode[])} subject 
+ * @param  {string=}                   template
  * @return {Stream}
  */
 function renderToStream (subject, template) {	
@@ -17,13 +19,13 @@ function renderToStream (subject, template) {
 /**
  * Stream
  * 
- * @param {(VNode|Component)} subject
- * @param {string=}           template
+ * @param {(VNode|Component|VNode[])} subject
+ * @param {string=}                   template
  */
 function Stream (subject, template) {
-	this.initial  = 0;
+	this.initial  = true;
 	this.stack    = [];
-	this.lookup   = {styles: '', ids: {}};
+	this.lookup   = {styles: '', namespaces: {}};
 	this.template = template;
 	this.node     = renderVNode(subject);
 
@@ -34,7 +36,7 @@ function Stream (subject, template) {
 /**
  * Stream prototype
  * 
- * @type {Object}
+ * @type {Object<string, (function|string)>}
  */
 Stream.prototype = server ? Object.create(readable.prototype, {
 	_type: {
@@ -42,12 +44,14 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 	},
 	_read: {
 		value: function () {
-			if (this.initial === 1 && this.stack.length === 0) {
-				var style = this.lookup.styles;
+			var initial = this.initial;
+
+			if (initial === false && this.stack.length === 0) {
+				var styles = this.lookup.styles;
 
 				// if there are styles, append
-				if (style.length !== 0) {
-					this.push('<style>'+style+'</style>');
+				if (styles.length !== 0) {
+					this.push(styles);
 				}
 
 				// has template, push closing
@@ -59,23 +63,23 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				this.push(null);
 
 				// reset `initial` identifier
-				this.initial = 0;			
+				this.initial = true;			
 			} else {
 				// start of stream
-				if (this.initial === 0) {
-					this.initial = 1;
+				if (initial === true) {
+					this.initial = false;
 
 					// has template, push opening 
 					this.template && this.push(this.template[0]);
 				}
 
 				// pipe a chunk
-				this._pipe(this.node, true, this.stack, this.lookup);
+				this._pipe(this.node, true, this.stack, this.lookup, initial);
 			}
 		}
 	},
 	_pipe: {
-		value: function (subject, flush, stack, lookup) {
+		value: function (subject, flush, stack, lookup, initial) {
 			// if there is something pending in the stack give that priority
 			if (flush && stack.length !== 0) {
 				stack.pop()(this); 
@@ -94,7 +98,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 			// if component
 			if (nodeType === 2) {
-				// if cached
+				// cached
 				if (subject.type.HTMLCache !== void 0) {
 					this.push(subject.type.HTMLCache); 
 					return;
@@ -145,10 +149,11 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 						// since we cannot know ahead of time the number of children
 						// this is operation is split into asynchronously added chunks of data
 						var index = 0;
+
 						// add one more for the closing tag
 						var middlwares = length + 1;
 
-						var doctype = type === 'html';
+						var doctype = initial && type === 'html';
 						var eof = doctype || type === 'body';
 
 						// for each _read if queue has middleware
@@ -159,7 +164,8 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 								// if the closing tag is body or html
 								// we want to push the styles before we close them
 								if (eof && lookup.styles.length !== 0) {
-									stream.push('<style>'+lookup.styles+'</style>');
+									stream.push(lookup.styles);
+
 									// clear styles, avoid adding duplicates
 									lookup.styles = '';
 								}

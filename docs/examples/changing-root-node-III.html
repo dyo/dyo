@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>dio.js - Changing Root Node III</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<script src="../assets/dio.js"></script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script>
+			class A extends dio.Component {
+		  		constructor() {
+				    super(...arguments);
+				    this.state = { n: false };
+				    
+				    this.onClick = () => {
+			      		this.setState({ n: !this.state.n });
+				    }
+		  		}
+			  
+				render() {
+					if (this.state.n) {
+						return h('div', {onClick: this.onClick}, 'DIV');
+					}
+					return h('span', {onClick: this.onClick}, 'SPAN');
+				}
+			}
+
+			class B extends dio.Component {
+				shouldComponentUpdate() {
+					return false;
+				}
+
+				render() {
+					return this.props.children;
+				}
+			}
+
+			class Test extends dio.Component {
+				constructor() {
+					super(...arguments);
+					this.state = {
+						reverse: false,
+					};
+				}
+
+				render() {
+					const children = [
+						h(B, {key: 'b'}, A),
+						h('div', {key: 'a'}, A)
+					];
+					if (this.state.reverse) {
+						children.reverse();
+					}
+				
+					return (
+						h('div',
+							h('button', {
+								onClick: () => { this.setState({ reverse: !this.state.reverse }); }
+							}, 'Swap Rows'),
+							h('div', null, children),
+							h('div', null, children)
+						)
+					);
+				}
+			}
+
+			dio.render(
+			  	h('div',
+			  		h('h1', 'Instructions'),
+			  		h('ul', 
+			  			h('li', 'Click on "SPAN" => "SWAP ROWS", or "SWAP ROWS" 3 times'),
+			  			h('li', 'Pass')
+		  			),
+		  			h(Test)
+		  		),
+		  		document.getElementById('root')
+			);
+		</script>
+	</body>
+</html>

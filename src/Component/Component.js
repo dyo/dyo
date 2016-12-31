@@ -1,25 +1,26 @@
 /**
- * ---------------------------------------------------------------------------------
+ * Component class
+ *
+ * @public
  * 
- * component
- * 
- * ---------------------------------------------------------------------------------
- */
-
-
-/**
- * component class
- * 
- * @param {Object=} props
+ * @param {Object<string, any>=} props
  */
 function Component (props) {
 	// initial props
-	if (this.getInitialProps) {
-		this.props = this.getInitialProps(props);
+	if (this.getInitialProps !== void 0) {
+		this.props = this.getInitialProps(props) || {};
 	}
 	// assign props
 	else if (props !== objEmpty) {
-		this.componentWillReceiveProps && this.componentWillReceiveProps(props);
+		// hydrate default props
+		if (this.getDefaultProps !== void 0) {
+			assignDefaultProps(this.getDefaultProps(), props);
+		}
+		
+		if (this.componentWillReceiveProps !== void 0) {
+			this.componentWillReceiveProps(props);
+		}
+
 		this.props = props;
 	} 
 	// default props
@@ -36,9 +37,9 @@ function Component (props) {
 
 
 /**
- * component prototype
+ * Component prototype
  * 
- * @type {Object}
+ * @type {Object<string, function>}
  */
 Component.prototype = Object.create(null, {
 	setState:    { value: setState },

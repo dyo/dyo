@@ -1,10 +1,12 @@
 /**
  * create virtual element
+ *
+ * @public
  * 
- * @param  {(string|function|Object)} type
- * @param  {Object=}                  props
- * @param  {...*=}                    children
- * @return {Object}
+ * @param  {(string|function|Component)} type
+ * @param  {Object<string, any>=}        props
+ * @param  {...any=}                     children
+ * @return {Object<string, any>}
  */
 function createElement (type, props) {
 	var length   = arguments.length;

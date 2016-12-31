@@ -1,7 +1,7 @@
 /**
  * check if a name is an event-like name, i.e onclick, onClick...
  * 
- * @param  {string}  name
+ * @param  {string} name
  * @return {boolean}
  */
 function isEventName (name) {
