@@ -1,3 +1,7 @@
+## 5.0.5 (January 07, 2016)
+
+- patch minfied bundle 
+
 ## 5.0.4 (January 06, 2016)
 
 - patch http to trigger catch handler if status is fasley or `>= 400`

@@ -1,7 +1,12 @@
+## 5.0.5 (January 07, 2016)
+
+- patch minfied bundle 
+
 ## 5.0.4 (January 06, 2016)
 
-- patch http to trigger catch handler if status is 0 or >= 400
+- patch http to trigger catch handler if status is fasley or `>= 400`
 - patch http to allow `dio.request({string})` to alias `dio.request.get({string})`
+- update the css compiler
 
 ## 5.0.3 (December 31, 2016)
 

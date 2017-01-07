@@ -29,7 +29,7 @@ function request (options) {
 		}
 
 		// if has payload && GET pass payload as query string
-		if (options.method === 'GET' && payload != null) {
+		if (method === 'GET' && payload != null) {
 			options.url += '?' + (typeof payload === 'object' ? serialize(payload) : payload);		
 		}
 
