@@ -17,6 +17,7 @@ interface Props {
 	key?: Key;
 }
 
+// VNode shapes
 interface VNode {
 	nodeType: nodeType;
 	type: Type;
@@ -27,6 +28,23 @@ interface VNode {
 	index: number
 }
 
+interface VText implements VNode {
+	nodeType: nodeType.VText;
+}
+
+interface VComponent implements VNode {
+	nodeType: nodeType.Component;
+}
+
+interface VElement implements VNode {
+	nodeType: nodeType.VElement;
+}
+
+interface VFragment implements VNode {
+	nodeType: nodeType.VFragment;
+}
+
+// HTTP Shape
 interface VRequest {
 	method: string;
 	url: string;
@@ -41,20 +59,18 @@ interface VRequest {
 	password: string;
 }
 
+// Components
 declare class Component <P> {
 	constructor (props?: P);
 	forceUpdate (callback?: () => void): void;
-	setState (state: any, callback?: () => void): void;
+	setState (state: Object<string, any>, callback?: () => void): void;
 	VNode?: VNode;
 	refs?: any;
 	state?: any;
 	props?: P;
 }
 
-// Components
 declare function createClass(shape: Function | Object): Component<Props>;
-declare function forceUpdate(callback: Function): void;
-declare function setState(state: Object<string, any>, callback: Function): void;
 
 // Elements
 declare function createElement(type: Type, props?: Props, ...children): VNode;
