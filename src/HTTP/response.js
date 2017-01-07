@@ -3,11 +3,13 @@
  * 
  * @param  {XMLHttpRequest} xhr
  * @param  {string}         responseType
+ * @param  {function}       resolve
  * @param  {function}       reject
  * @return {(Node|string|Object)}
  */
-function response (xhr, responseType, reject) {			
+function response (xhr, responseType, resolve, reject) {			
 	var header = xhr.getResponseHeader('Content-Type');
+	var status = xhr.status;
 	var data = null; 
 	var body;
 
@@ -44,6 +46,6 @@ function response (xhr, responseType, reject) {
 		body = data;
 	}
 
-	return body;
+	(!status || status >= 400) ? reject(xhr) : resolve(body);
 }
 

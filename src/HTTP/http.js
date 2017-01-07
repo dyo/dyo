@@ -50,7 +50,7 @@ function http (options) {
 
 		// on success resolve
 		xhr.onload = function onload () { 
-			resolve(response(this, responseType, reject)); 
+			response(this, responseType, resolve, reject);
 		};
 		// on error reject
 		xhr.onerror = function onerror () { 

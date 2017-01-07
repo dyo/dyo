@@ -10,7 +10,7 @@ function stylesheet (component, constructor, inject) {
 	var namespace = component.displayName || constructor.name;
 	var selector  = '['+nsStyle+'='+namespace+']';
 	var css       = component.stylesheet();
-	var output    = stylis(selector, css, true, true);
+	var output    = stylis(selector, css, true, null);
 
 	if (browser && inject) {
 		// obscure namesapce to avoid id/global namespace conflicts

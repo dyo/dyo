@@ -667,6 +667,7 @@ request is a method that provides a http layer to help make ajax calls to api en
 ```javascript
 dio.request('google.com');
 dio.request.get('google.com');
+dio.request.post('google.com');
 dio.request({url: 'google.com'})
 ```
 Below is a full run down of all the arguments the request method accepts, all of which are optional with the exception of the `url`.
@@ -728,6 +729,8 @@ dio.request({
 }).then((res)=>{return res})
   .catch((err)=>{throw err});
 ```
+
+The catch handler will get called in 3 cases, 1 - when an error is thrown in a `then` function, 2 - json parsing error and 3 - a response returns a status of `0` or `>= 400`.
 
 ## router
 

@@ -4,7 +4,7 @@
 
 dio is a fast javascript framework for building applications.
 
-- ~8kb 
+- ~9kb 
 - ~5kb (nano)
 
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
@@ -34,15 +34,15 @@ dio is a fast javascript framework for building applications.
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/5.0.3/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/5.0.4/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/5.0.3/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/5.0.4/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@5.0.3/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@5.0.4/dio.min.js></script>
 ```
 
 #### bower
@@ -740,6 +740,7 @@ request is a method that provides a http layer to help make ajax calls to api en
 ```javascript
 dio.request('google.com');
 dio.request.get('google.com');
+dio.request.post('google.com');
 dio.request({url: 'google.com'})
 ```
 Below is a full run down of all the arguments the request method accepts, all of which are optional with the exception of the `url`.
@@ -801,6 +802,8 @@ dio.request({
 }).then((res)=>{return res})
   .catch((err)=>{throw err});
 ```
+
+The catch handler will get called in 3 cases, 1 - when an error is thrown in a `then` function, 2 - json parsing error and 3 - a response returns a status of `0` or `>= 400`.
 
 ## router
 

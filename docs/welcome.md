@@ -1,6 +1,6 @@
 dio is a fast javascript framework for building applications.
 
-<p>[Install v5.0.3](./#installation "button")</p>
+<p>[Install v5.0.4](./#installation "button")</p>
 
 ```javascript
 const Main = dio.createClass({
