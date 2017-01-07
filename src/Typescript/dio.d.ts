@@ -9,7 +9,7 @@ declare enum nodeType {
 type Key = string | number;
 type Ref = string | Function;
 type Children = VNode[];
-type Type = string | Component<Props> | Function;
+type Type = string |Component<Props> | Function;
 
 interface Props {
 	children?: Children;
@@ -28,19 +28,19 @@ interface VNode {
 	index: number
 }
 
-interface VText implements VNode {
+interface VText extends VNode {
 	nodeType: nodeType.VText;
 }
 
-interface VComponent implements VNode {
+interface VComponent extends VNode {
 	nodeType: nodeType.Component;
 }
 
-interface VElement implements VNode {
+interface VElement extends VNode {
 	nodeType: nodeType.VElement;
 }
 
-interface VFragment implements VNode {
+interface VFragment extends VNode {
 	nodeType: nodeType.VFragment;
 }
 
@@ -59,37 +59,50 @@ interface VRequest {
 	password: string;
 }
 
-// Components
-declare class Component <P> {
-	constructor (props?: P);
-	forceUpdate (callback?: () => void): void;
-	setState (state: Object<string, any>, callback?: () => void): void;
-	VNode?: VNode;
-	refs?: any;
-	state?: any;
-	props?: P;
-}
+declare namespace dio {
+	// Components
+	export class Component <P> {
+		constructor (props?: P);
+		forceUpdate (callback?: () => void): void;
+		setState (state: Object<string, any>, callback?: () => void): void;
+		VNode?: VNode;
+		refs?: any;
+		state?: any;
+		props?: P;
+	}
 
-declare function createClass(shape: Function | Object): Component<Props>;
+	export function createClass (shape: Function | Object): Component<Props>;
 
-// Elements
-declare function createElement(type: Type, props?: Props, ...children): VNode;
-declare function cloneElement(element: VNode, props: Props, children: Children): VNode;
-declare function isValidElement(any): boolean;
-declare function createFactory(type: Type, props: Props): createElement;
-declare function DOM(types: string[]): Object<string, createElement>;
+	// Elements
+	export function createElement (type: Type, props?: Props, ...children): VNode;
+	export function h (type: Type, props?: Props, ...children): VNode;
 
-// Shape Factories
-declare function VElement(type: Type, props: Props, children: Children)
-declare function VComponent(type: Type, props: Props, children: Children)
-declare function VText(type: Type, props: Props, children: Children)
-declare function VSvg(type: Type, props: Props, children: Children)
+	export function cloneElement (element: VNode, props: Props, children: Children): VNode;
+	export function isValidElement (any): boolean;
+	export function createFactory (type: Type, props: Props): createElement;
+	export function DOM (types: string[]): Object<string, createElement>;
 
-// Render
-declare function render(subject: Component | VNode | Object<string, any> | Function): (props: Props) => void;
-declare function shallow(subject: Component | VNode | Object<string, any> | Function): VNode;
+	// Shape Factories
+	export function VElement (type: Type, props: Props, children: Children);
+	export function VComponent (type: Type, props: Props, children: Children);
+	export function VText (type: Type, props: Props, children: Children);
+	export function VSvg (type: Type, props: Props, children: Children);
 
-declare module 'dio' {
+	// Render
+	export function render
+	(
+		subject: Component | VNode | Object<string, any> | Function, 
+		target: string | Node, 
+		callback: (Node) => void,
+		hydration: boolean
+	): (props: Props) => void; 
+
+	export function shallow (subject: Component | VNode | Object<string, any> | Function): VNode;
 	
+	export const version: string
 }
+
+declare function h (type: Type, props?: Props, ...children): VNode;
+
+declare module 'dio' { export = dio; }
 
