@@ -703,6 +703,30 @@ dio.renderToStream(Hello, template)
 
 This method like renderToString accepts 2 arguments the second of which is differs from renderToString in that it expects `template` to be a string if passed where as renderToString also accepts functions.
 
+## renderToCache
+
+like shouldComponentUpdate but for server-side rendering, renderToCache caches a render of the specified component such that whenever renderToString/renderToStream comes across the component the cache is used saving on computing the html output of the component.
+
+```javascript
+class Head extends dio.Component {
+	render () {
+		return h('head', h('title', 'Example Page'))
+	}
+}
+class Page extends dio.Component {
+	render ({msg}) {
+		return h('html', [Head, h('body', h('h1', msg))])
+	}
+}
+
+dio.renderToCache(Head);
+
+app.use(context => {
+	context.body = dio.renderToString(h(Page, {msg: 'Hello World'}));
+});
+```
+
+In the above example the Head component is only every computed.
 
 ## createStore
 
