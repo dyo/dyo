@@ -128,13 +128,16 @@ function stream (value, middleware) {
 	}
 
 	// assign public methods
-	Stream.then    = then;
-	Stream.done    = done;
-	Stream.catch   = error;
-	Stream.map     = map;
-	Stream.end     = end;
+	Stream.then = then;
+	Stream.done = done;
+	Stream.catch = error;
+	Stream.map = map;
+	Stream.end = end;
 	Stream.valueOf = valueOf;
-	Stream.toJSON  = toJSON;
+	Stream.toJSON = toJSON;
+	Stream.resolve = resolve;
+	Stream.reject = reject;
+
 	// signature
 	Stream._stream = true;
 

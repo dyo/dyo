@@ -25,7 +25,7 @@ function request (options) {
 			case 'json': options.enctype = 'application/json'; break;
 			case 'text': options.enctype = 'text/plain'; break;
 			case 'file': options.enctype = 'multipart/form-data'; break;
-			default:     options.enctype = 'application/x-www-form-urlencoded';
+			default: options.enctype = 'application/x-www-form-urlencoded';
 		}
 
 		// if has payload && GET pass payload as query string

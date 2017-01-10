@@ -13,11 +13,11 @@
  */
 function router (routes, address, initialiser, element, middleware, notFound) {
 	if (typeof address === 'object') {
-		element     = address.mount;
+		element = address.mount;
 		initialiser = address.initial;
-		middleware  = address.middleware;
-		notFound    = address['404'];
-		address     = address.directory;
+		middleware = address.middleware;
+		notFound = address['404'];
+		address = address.directory;
 	}
 
 	if (middleware !== void 0) {

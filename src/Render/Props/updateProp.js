@@ -26,32 +26,36 @@ function updateProp (target, action, name, propValue, namespace) {
 	var isSVG = false;
 	var propName;
 
-	// normalize class/className references, i.e svg className !== html className
-	// uses className instead of class for html elements
+	// svg element, default to class instead of className
 	if (namespace === nsSvg) {
 		isSVG = true;
 		propName = name === 'className' ? 'class' : name;
-	} else {
+	}
+	// html element, default to className instead of class
+	else {
 		propName = name === 'class' ? 'className' : name;
 	}
 
 	var targetProp = target[propName];
 	var isDefinedValue = propValue != null && propValue !== false;
 
-	// objects, adds property if undefined, else, updates each memeber of attribute object
+	// objects
 	if (isDefinedValue && typeof propValue === 'object') {
-		targetProp === void 0 ? target[propName] = propValue : updatePropObject(propValue, targetProp);
-	} else {
+		targetProp === void 0 ? target[propName] = propValue : updatePropObject(propName, propValue, targetProp);
+	}
+	// primitives `string | number | boolean`
+	else {
+		// id, className etc..
 		if (targetProp !== void 0 && isSVG === false) {
 			target[propName] = propValue;
-		} else {
+		}
+		// setAttribute/removeAttribute
+		else {
 			if (isDefinedValue) {
 				// reduce value to an empty string if true, <tag checked=true> --> <tag checked>
-				if (propValue === true) { 
-					propValue = ''; 
-				}
+				propValue === true && (propValue = '');
 
-				target[action](propName, propValue);
+				target.setAttribute(propName, propValue);
 			} else {
 				// remove attributes with false/null/undefined values
 				target.removeAttribute(propName);

@@ -1,8 +1,9 @@
 {
 	"name": "dio.js",
 	"main": "dio.js",
+	"types": "dio.d.ts",
 	"description": "dio is a fast javascript framework for building applications.",
-	"version": "5.0.5",
+	"version": "5.1.0",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",
 	"author": {
@@ -31,6 +32,7 @@
 		"build": "node ./build/"
 	},
 	"files": [
+		"dio.d.ts",
 		"dio.min.js", 
 		"dio.js"
 	]

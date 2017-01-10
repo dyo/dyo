@@ -34,15 +34,15 @@ dio is a fast javascript framework for building applications.
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/5.0.5/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/5.1.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/5.0.5/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/5.1.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@5.0.5/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@5.1.0/dio.min.js></script>
 ```
 
 #### bower
@@ -75,7 +75,7 @@ will mount a h1 element to the page the content of which will be 'Hello World'.
 
 ### Components
 
-You can create a component in the following 3 ways.
+You can create a component in with any of the following.
 
 ```javascript
 class Hello extends dio.Component {
@@ -105,9 +105,11 @@ var Hello = h => ({
 });
 
 var Hello = h => props => ();
+
+var Hello = props => ();
 ```
 
-Though dio looks like react, the last 3 examples are one of the areas that dio is different from react, introducing statefull components as pure functions. All of the above examples act the same, createClass does not auto-bind but it does behave like the class in that you can use a constructor method, though you will not have to call `super()`, for example the following are identical.
+All the examples above act the same, it should however be noted that createClass does not auto-bind methods though it does behave like a class in that you can use a constructor method, for example the following component definitions are identical.
 
 ```javascript
 class Hello extends dio.Component {
@@ -116,6 +118,11 @@ class Hello extends dio.Component {
 		
 	}
 }
+
+const Hello = dio.createClass({
+	constructor (props) { this.state = {id: 100}; }
+	render () {}
+});
 
 function Hello {
 	return {
@@ -142,7 +149,7 @@ The render method tells dio what the component will render. This method recieves
 ```javascript
 class Hello extends dio.Component {
 	render () {
-		return h('div', 'Text') || [h('div'), h('div')]
+		return h('div', 'Text') || [h('div'), h('div')] || null
 	}
 }
 ```
@@ -398,7 +405,7 @@ class Hello extends dio.Component {
 }
 ```
 
-Object values are used to specifiy bindings, this allows for either creating a twa-way binding system between a property of the component and a property of the element or binding a method to a specific context or data.
+Object values are used to specifiy bindings and additional options, this allows for either creating a two-way binding system between a property of the component and a property of the element or binding a method to a specific context or data.
 
 For example if we wanted to bind the `handler` function to the components instance. 
 
@@ -417,9 +424,9 @@ class Hello extends dio.Component {
 }
 ```
 
-The `handler` function will receive two props, the value of `this` and a second argument that is the event object, if `handler` was not an arrow function the `this` context would also be the components `this` context that the value of `with: this`.
+The `handler` function will receive two props, the value of `this` and a second argument that is the event object, if `handler` was not an arrow function the `this` context would also be the components `this` context.
 
-But if we wanted to bind a property of the component to a property of the element we could do it as follows, where the `this` property is the object you want to bind.
+If we wanted to bind a specific property of the component to a property of the element we could do it as follows, where the `this` property is the object you want to bind.
 
 ```javascript
 class Hello extends dio.Component {
@@ -446,6 +453,37 @@ class Hello extends dio.Component {
 			onClick: {
 				bind: state,
 				with: 'value'
+			}
+		})
+	}
+}
+```
+
+In a similar fashion you can register a passive event listeners
+
+```javascript
+class Hello extends dio.Component {
+	render (props, state) {
+		return h('div', {
+			onClick: {
+				bind: function () {},
+				options: {passive: true}
+			}
+		})
+	}
+}
+```
+
+In both cases the property `bind` is interchangable with `handler` and `with` is interchangable with `data`.
+
+```javascript
+class Hello extends dio.Component {
+	render (props, state) {
+		return h('div', {
+			onClick: {
+				handler: function () {},
+				data: {id: 1},
+				options: {passive: true}
 			}
 		})
 	}
@@ -839,7 +877,7 @@ var router = dio.router({
 
 In both cases `:id` variables are passed to Foo and Bar as props when the route is activated or to the function specified such that in the case where the url `/user/1234` is matched the object passed will be represented as `{url: '/user/1234', id: 1234}`. 
 
-When called this method will return an object with `resolve`, `routes`, `back`, `foward`, `link`, `resume`, `pause`, `destroy`, `set` and `location` properties. The location property can be used to navigate between views `router.location = '/user'` or link it to an action with `router.link` in the following way.
+When called this method will return an object with `resolve`, `routes`, `back`, `forward`, `link`, `resume`, `pause`, `destroy`, `set` and `location` properties. The location property can be used to navigate between views `router.location = '/user'` or link it to an action with `router.link` in the following way.
 
 ```javascript
 // attached to the value of an elements property
@@ -854,7 +892,7 @@ h('h1', {onClick: router.link(el => {
 }), href: '/'}, 'Home') 
 ```
 
-The `pause` method pauses listerning to route changes, `resume` does the opposite and can be used after `destroy` to start things up a fresh. The methods `back` and `foward` are proxies to `history.back` & `history.foward` and the destroy method stops the router and clears all registered routes. The set method is used interally to regsiter a route, it can be used at any point to assign/re-assign/add routes as needed. If you wanted to access the registered routes you can access the `routes` property, it is immutable so you cannot change the already registered routes without using `set` or `destroy`. The `resolve` method exists for cases where you might want to resolve a route without relying on `window.location` or changing location manually with `location`.
+The `pause` method pauses listerning to route changes, `resume` does the opposite and can be used after `destroy` to start things up a fresh. The methods `back` and `forward` are proxies to `history.back` & `history.forward` and the destroy method stops the router and clears all registered routes. The set method is used interally to regsiter a route, it can be used at any point to assign/re-assign/add routes as needed. If you wanted to access the registered routes you can access the `routes` property, it is immutable so you cannot change the already registered routes without using `set` or `destroy`. The `resolve` method exists for cases where you might want to resolve a route without relying on `window.location` or changing location manually with `location`.
 
 
 ```javascript

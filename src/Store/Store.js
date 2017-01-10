@@ -7,7 +7,7 @@
  */
 function Store (reducer, initialState) {
 	var currentState = initialState;
-	var listeners    = [];
+	var listeners = [];
 
 	// state getter, retrieves the current state
 	function getState () {
@@ -17,7 +17,7 @@ function Store (reducer, initialState) {
 	// dispatchs a action
 	function dispatch (action) {
 		if (action.type === void 0) {
-			throw 'actions without type';
+			throw 'action without a type';
 		}
 
 		// update state with return value of reducer
@@ -86,10 +86,10 @@ function Store (reducer, initialState) {
 	dispatch({type: '@/STORE'});
 
 	return {
-		getState:       getState, 
-		dispatch:       dispatch, 
-		subscribe:      subscribe,
-		connect:        connect,
+		getState: getState, 
+		dispatch: dispatch, 
+		subscribe: subscribe,
+		connect: connect,
 		replaceReducer: replaceReducer
 	};
 }

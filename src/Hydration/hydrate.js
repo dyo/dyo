@@ -8,16 +8,16 @@
  * @param  {?Component} component
  */
 function hydrate (parent, subject, index, parentNode, component) {
-	var newNode  = subject.nodeType === 2 ? extractComponent(subject) : subject;
+	var newNode = subject.nodeType === 2 ? extractComponent(subject) : subject;
 	var nodeType = newNode.nodeType;
 
 	var element = nodeType === 11 ? parent : parent.childNodes[index];
 
 	// newNode is not a textNode, hydrate its children
 	if (nodeType !== 3) {
-		var props    = newNode.props;
+		var props = newNode.props;
 		var children = newNode.children;
-		var length   = children.length;
+		var length = children.length;
 
 		// vnode has component attachment
 		if (subject.instance !== null) {
@@ -57,7 +57,7 @@ function hydrate (parent, subject, index, parentNode, component) {
 	// textNode
 	else if (nodeType === 3) {
 		var children = parentNode.children;
-		var length   = children.length;
+		var length = children.length;
 
 		// when we reach a string child that is followed by a string child, 
 		// it is assumed that the dom representing it is a single textNode

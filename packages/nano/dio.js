@@ -32,7 +32,7 @@
 	
 	
 	// current version
-	var version = '5.0.5';
+	var version = '5.1.0';
 	
 	// enviroment variables
 	var document = window.document || null;
@@ -41,7 +41,7 @@
 	
 	// namespaces
 	var nsStyle = 'data-scope';
-	var nsMath  = 'http://www.w3.org/1998/Math/MathML';
+	var nsMath = 'http://www.w3.org/1998/Math/MathML';
 	var nsXlink = 'http://www.w3.org/1999/xlink';
 	var nsSvg = 'http://www.w3.org/2000/svg';
 	
@@ -238,8 +238,8 @@
 	function stylesheet (component, constructor, inject) {
 		var namespace = component.displayName || constructor.name;
 		var selector  = '['+nsStyle+'='+namespace+']';
-		var css       = component.stylesheet();
-		var output    = stylis(selector, css, true, null);
+		var css = component.stylesheet();
+		var output = stylis(selector, css, true, null);
 	
 		if (browser && inject) {
 			// obscure namesapce to avoid id/global namespace conflicts
@@ -952,7 +952,7 @@
 	 * @return {Object<string, any>}
 	 */
 	function createElement (type, props) {
-		var length   = arguments.length;
+		var length = arguments.length;
 		var children = [];
 		var position = 2;
 	
@@ -1061,8 +1061,8 @@
 	 * @return {VNode}
 	 */
 	function cloneElement (subject, newProps, newChildren) {
-		var type     = subject.type;
-		var props    = newProps || {};
+		var type = subject.type;
+		var props = newProps || {};
 		var children = newChildren || subject.children;
 	
 		// copy old props
@@ -1224,10 +1224,10 @@
 	
 			// hydrate newNode
 			oldNode.nodeType = newNode.nodeType;
-			oldNode.type     = newNode.type;
-			oldNode.props    = newNode.props;
+			oldNode.type = newNode.type;
+			oldNode.props = newNode.props;
 			oldNode.children = newNode.children;
-			oldNode.DOMNode  = newNode.DOMNode;
+			oldNode.DOMNode = newNode.DOMNode;
 			newNode.instance = oldNode.instance;
 		} else {
 			// patch node
@@ -1520,7 +1520,7 @@
 	 * @param {number}                 pos
 	 */
 	function patchKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, pos) {
-		var reconciled = new Array(newLen);
+		var reconciled = new Array(newLength);
 		var childNodes = parentNode.childNodes;
 	
 		// children
@@ -1545,7 +1545,7 @@
 		}
 	
 		// old children
-		for (var i = pos; i < oldLen; i++) {
+		for (var i = pos; i < oldLength; i++) {
 			var oldChild = oldChildren[i];
 			var newChild = newKeys[oldChild.props.key];
 	
@@ -1567,7 +1567,7 @@
 		length -= delOffset;
 	
 		// new children
-		for (var i = pos; i < newLen; i++) {
+		for (var i = pos; i < newLength; i++) {
 			var newChild = newChildren[i];
 			var oldChild = oldKeys[newChild.props.key];
 	
@@ -1893,32 +1893,36 @@
 		var isSVG = false;
 		var propName;
 	
-		// normalize class/className references, i.e svg className !== html className
-		// uses className instead of class for html elements
+		// svg element, default to class instead of className
 		if (namespace === nsSvg) {
 			isSVG = true;
 			propName = name === 'className' ? 'class' : name;
-		} else {
+		}
+		// html element, default to className instead of class
+		else {
 			propName = name === 'class' ? 'className' : name;
 		}
 	
 		var targetProp = target[propName];
 		var isDefinedValue = propValue != null && propValue !== false;
 	
-		// objects, adds property if undefined, else, updates each memeber of attribute object
+		// objects
 		if (isDefinedValue && typeof propValue === 'object') {
-			targetProp === void 0 ? target[propName] = propValue : updatePropObject(propValue, targetProp);
-		} else {
+			targetProp === void 0 ? target[propName] = propValue : updatePropObject(propName, propValue, targetProp);
+		}
+		// primitives `string | number | boolean`
+		else {
+			// id, className etc..
 			if (targetProp !== void 0 && isSVG === false) {
 				target[propName] = propValue;
-			} else {
+			}
+			// setAttribute/removeAttribute
+			else {
 				if (isDefinedValue) {
 					// reduce value to an empty string if true, <tag checked=true> --> <tag checked>
-					if (propValue === true) { 
-						propValue = ''; 
-					}
+					propValue === true && (propValue = '');
 	
-					target[action](propName, propValue);
+					target.setAttribute(propName, propValue);
 				} else {
 					// remove attributes with false/null/undefined values
 					target.removeAttribute(propName);
@@ -1930,17 +1934,23 @@
 	
 	/**
 	 * update prop objects, i.e .style
-	 * 
-	 * @param  {Object} value
-	 * @param  {any}    targetAttr
+	 *
+	 * @param {string} parent
+	 * @param {Object} prop
+	 * @param {Object} target
 	 */
-	function updatePropObject (value, targetAttr) {
-		for (var propName in value) {
-			var propValue = value[propName] || null;
+	function updatePropObject (parent, prop, target) {
+		for (var name in prop) {
+			var value = prop[name] || null;
 	
-			// if targetAttr object has propName, assign
-			if (propName in targetAttr) {
-				targetAttr[propName] = propValue;
+			// assign if target object has property
+			if (name in target) {
+				target[name] = value;
+			}
+			// style properties that don't exist on CSSStyleDeclaration
+			else if (parent === 'style') {
+				// assign/remove
+				value ? target.setProperty(name, value, null) : target.removeProperty(name);
 			}
 		}
 	}
@@ -2149,16 +2159,19 @@
 	/**
 	 * add event listener
 	 *
-	 * @param {Node}      element
-	 * @param {string}    name
-	 * @param {function}  listener
-	 * @param {Component} component
+	 * @param {Node}            element
+	 * @param {string}          name
+	 * @param {function|Object} listener
+	 * @param {Component}       component
 	 */
 	function addEventListener (element, name, listener, component) {
-		if (typeof listener !== 'function') {
-			element.addEventListener(name, bindEvent(name, listener, component));
-		} else {
-			element.addEventListener(name, listener);
+		// default listener
+		if (typeof listener === 'function') {
+			element.addEventListener(name, listener, false);
+		}
+		// non-default listener
+		else {
+			element.addEventListener(name, bindEvent(name, listener, component), listener.options || false);
 		}
 	}
 	
@@ -2194,17 +2207,16 @@
 	 * @return {function}
 	 */
 	function bindEvent (name, value, component) {
-		var bind = value.bind;
-		var data = value.with;
-	
-		var preventDefault = value.preventDefault === void 0 || value.preventDefault === true;
+		var bind = value.bind || value.handler;
+		var data = value.with || value.data;
+		var preventDefault = value.preventDefault === true || (!value.options && value.preventDefault === void 0);
 	
 		if (typeof bind === 'object') {
 			var property = bind.property || data;
 	
 			return function (event) {
 				var target = event.currentTarget || event.target;
-				var value  = data in target ? target[data] : target.getAttribute(data);
+				var value = data in target ? target[data] : target.getAttribute(data);
 	
 				preventDefault && event.preventDefault();
 	
@@ -2214,7 +2226,8 @@
 				// update component
 				component.forceUpdate();
 			}
-		} else {
+		} 
+		else {
 			return function (event) {
 				preventDefault && event.preventDefault();
 				bind.call(data, data, event);

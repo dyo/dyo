@@ -43,7 +43,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 		// uri is the url/RegExp that describes the uri match thus
 		// given the following /:user/:id/*
-		// the pattern will be / ([^\/]+) / ([^\/]+) / (?:.*)
+		// the pattern would be / ([^\/]+) / ([^\/]+) / (?:.*)
 		var pattern = uri.replace(regex, function () {
 			// id => arguments: 'user', id, undefned
 			var id = arguments[2];
@@ -80,9 +80,9 @@ function createRouter (patterns, address, initialiser, notFound) {
 	// find a match from the available routes
 	function finder (route, uri, current) {
 		var callback = route.callback;
-		var pattern  = route.pattern;
-		var params   = route.params;
-		var match    = current.match(pattern);
+		var pattern = route.pattern;
+		var params = route.params;
+		var match = current.match(pattern);
 
 		// we have a match
 		if (match != null) {
@@ -121,7 +121,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 		return function (e) {
 			var target = e.currentTarget || e.target || this;
-			var value  = func ? to(target) : to;
+			var value = func ? to(target) : to;
 
 			navigate(target[value] || (target.nodeName && target.getAttribute(value)) || value); 
 		};
@@ -162,28 +162,28 @@ function createRouter (patterns, address, initialiser, notFound) {
 		address = address.substring(0, address.length - 1);
 	}
 
-	var regex    = /([:*])(\w+)|([\*])/g;
-	var history  = window.history || objEmpty;
+	var regex = /([:*])(\w+)|([\*])/g;
+	var history = window.history || objEmpty;
 	var location = history.location || window.location;
-	var origin   = location.origin;
-	var current  = '';
-	var href     = '';
+	var origin = location.origin;
+	var current = '';
+	var href = '';
 	var interval = 0;
 	var resolved = 0;
-	var routes   = {};
+	var routes = {};
 
 	/** @public */
-	var api      = Object.defineProperty({
+	var api = Object.defineProperty({
 		navigate: navigate,
-		back:     history.back, 
-		foward:   history.forward, 
-		link:     link,
-		resume:   resume,
-		pause:    pause,
-		destroy:  destroy,
-		set:      set,
-		resolve:  resolve,
-		routes:   routes
+		back: history.back, 
+		forward: history.forward, 
+		link: link,
+		resume: resume,
+		pause: pause,
+		destroy: destroy,
+		set: set,
+		resolve: resolve,
+		routes: routes
 	}, 'location', {
 		get: function () { return current; },
 		set: navigate

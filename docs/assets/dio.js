@@ -32,7 +32,7 @@
 	
 	
 	// current version
-	var version = '5.0.5';
+	var version = '5.1.0';
 	
 	// enviroment variables
 	var document = window.document || null;
@@ -41,7 +41,7 @@
 	
 	// namespaces
 	var nsStyle = 'data-scope';
-	var nsMath  = 'http://www.w3.org/1998/Math/MathML';
+	var nsMath = 'http://www.w3.org/1998/Math/MathML';
 	var nsXlink = 'http://www.w3.org/1999/xlink';
 	var nsSvg = 'http://www.w3.org/2000/svg';
 	
@@ -346,8 +346,8 @@
 	function stylesheet (component, constructor, inject) {
 		var namespace = component.displayName || constructor.name;
 		var selector  = '['+nsStyle+'='+namespace+']';
-		var css       = component.stylesheet();
-		var output    = stylis(selector, css, true, null);
+		var css = component.stylesheet();
+		var output = stylis(selector, css, true, null);
 	
 		if (browser && inject) {
 			// obscure namesapce to avoid id/global namespace conflicts
@@ -1060,7 +1060,7 @@
 	 * @return {Object<string, any>}
 	 */
 	function createElement (type, props) {
-		var length   = arguments.length;
+		var length = arguments.length;
 		var children = [];
 		var position = 2;
 	
@@ -1169,8 +1169,8 @@
 	 * @return {VNode}
 	 */
 	function cloneElement (subject, newProps, newChildren) {
-		var type     = subject.type;
-		var props    = newProps || {};
+		var type = subject.type;
+		var props = newProps || {};
 		var children = newChildren || subject.children;
 	
 		// copy old props
@@ -1332,10 +1332,10 @@
 	
 			// hydrate newNode
 			oldNode.nodeType = newNode.nodeType;
-			oldNode.type     = newNode.type;
-			oldNode.props    = newNode.props;
+			oldNode.type = newNode.type;
+			oldNode.props = newNode.props;
 			oldNode.children = newNode.children;
-			oldNode.DOMNode  = newNode.DOMNode;
+			oldNode.DOMNode = newNode.DOMNode;
 			newNode.instance = oldNode.instance;
 		} else {
 			// patch node
@@ -1628,7 +1628,7 @@
 	 * @param {number}                 pos
 	 */
 	function patchKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, pos) {
-		var reconciled = new Array(newLen);
+		var reconciled = new Array(newLength);
 		var childNodes = parentNode.childNodes;
 	
 		// children
@@ -1653,7 +1653,7 @@
 		}
 	
 		// old children
-		for (var i = pos; i < oldLen; i++) {
+		for (var i = pos; i < oldLength; i++) {
 			var oldChild = oldChildren[i];
 			var newChild = newKeys[oldChild.props.key];
 	
@@ -1675,7 +1675,7 @@
 		length -= delOffset;
 	
 		// new children
-		for (var i = pos; i < newLen; i++) {
+		for (var i = pos; i < newLength; i++) {
 			var newChild = newChildren[i];
 			var oldChild = oldKeys[newChild.props.key];
 	
@@ -2001,32 +2001,36 @@
 		var isSVG = false;
 		var propName;
 	
-		// normalize class/className references, i.e svg className !== html className
-		// uses className instead of class for html elements
+		// svg element, default to class instead of className
 		if (namespace === nsSvg) {
 			isSVG = true;
 			propName = name === 'className' ? 'class' : name;
-		} else {
+		}
+		// html element, default to className instead of class
+		else {
 			propName = name === 'class' ? 'className' : name;
 		}
 	
 		var targetProp = target[propName];
 		var isDefinedValue = propValue != null && propValue !== false;
 	
-		// objects, adds property if undefined, else, updates each memeber of attribute object
+		// objects
 		if (isDefinedValue && typeof propValue === 'object') {
-			targetProp === void 0 ? target[propName] = propValue : updatePropObject(propValue, targetProp);
-		} else {
+			targetProp === void 0 ? target[propName] = propValue : updatePropObject(propName, propValue, targetProp);
+		}
+		// primitives `string | number | boolean`
+		else {
+			// id, className etc..
 			if (targetProp !== void 0 && isSVG === false) {
 				target[propName] = propValue;
-			} else {
+			}
+			// setAttribute/removeAttribute
+			else {
 				if (isDefinedValue) {
 					// reduce value to an empty string if true, <tag checked=true> --> <tag checked>
-					if (propValue === true) { 
-						propValue = ''; 
-					}
+					propValue === true && (propValue = '');
 	
-					target[action](propName, propValue);
+					target.setAttribute(propName, propValue);
 				} else {
 					// remove attributes with false/null/undefined values
 					target.removeAttribute(propName);
@@ -2038,17 +2042,23 @@
 	
 	/**
 	 * update prop objects, i.e .style
-	 * 
-	 * @param  {Object} value
-	 * @param  {any}    targetAttr
+	 *
+	 * @param {string} parent
+	 * @param {Object} prop
+	 * @param {Object} target
 	 */
-	function updatePropObject (value, targetAttr) {
-		for (var propName in value) {
-			var propValue = value[propName] || null;
+	function updatePropObject (parent, prop, target) {
+		for (var name in prop) {
+			var value = prop[name] || null;
 	
-			// if targetAttr object has propName, assign
-			if (propName in targetAttr) {
-				targetAttr[propName] = propValue;
+			// assign if target object has property
+			if (name in target) {
+				target[name] = value;
+			}
+			// style properties that don't exist on CSSStyleDeclaration
+			else if (parent === 'style') {
+				// assign/remove
+				value ? target.setProperty(name, value, null) : target.removeProperty(name);
 			}
 		}
 	}
@@ -2257,16 +2267,19 @@
 	/**
 	 * add event listener
 	 *
-	 * @param {Node}      element
-	 * @param {string}    name
-	 * @param {function}  listener
-	 * @param {Component} component
+	 * @param {Node}            element
+	 * @param {string}          name
+	 * @param {function|Object} listener
+	 * @param {Component}       component
 	 */
 	function addEventListener (element, name, listener, component) {
-		if (typeof listener !== 'function') {
-			element.addEventListener(name, bindEvent(name, listener, component));
-		} else {
-			element.addEventListener(name, listener);
+		// default listener
+		if (typeof listener === 'function') {
+			element.addEventListener(name, listener, false);
+		}
+		// non-default listener
+		else {
+			element.addEventListener(name, bindEvent(name, listener, component), listener.options || false);
 		}
 	}
 	
@@ -2302,17 +2315,16 @@
 	 * @return {function}
 	 */
 	function bindEvent (name, value, component) {
-		var bind = value.bind;
-		var data = value.with;
-	
-		var preventDefault = value.preventDefault === void 0 || value.preventDefault === true;
+		var bind = value.bind || value.handler;
+		var data = value.with || value.data;
+		var preventDefault = value.preventDefault === true || (!value.options && value.preventDefault === void 0);
 	
 		if (typeof bind === 'object') {
 			var property = bind.property || data;
 	
 			return function (event) {
 				var target = event.currentTarget || event.target;
-				var value  = data in target ? target[data] : target.getAttribute(data);
+				var value = data in target ? target[data] : target.getAttribute(data);
 	
 				preventDefault && event.preventDefault();
 	
@@ -2322,7 +2334,8 @@
 				// update component
 				component.forceUpdate();
 			}
-		} else {
+		} 
+		else {
 			return function (event) {
 				preventDefault && event.preventDefault();
 				bind.call(data, data, event);
@@ -2449,16 +2462,16 @@
 	 * @param  {?Component} component
 	 */
 	function hydrate (parent, subject, index, parentNode, component) {
-		var newNode  = subject.nodeType === 2 ? extractComponent(subject) : subject;
+		var newNode = subject.nodeType === 2 ? extractComponent(subject) : subject;
 		var nodeType = newNode.nodeType;
 	
 		var element = nodeType === 11 ? parent : parent.childNodes[index];
 	
 		// newNode is not a textNode, hydrate its children
 		if (nodeType !== 3) {
-			var props    = newNode.props;
+			var props = newNode.props;
 			var children = newNode.children;
-			var length   = children.length;
+			var length = children.length;
 	
 			// vnode has component attachment
 			if (subject.instance !== null) {
@@ -2498,7 +2511,7 @@
 		// textNode
 		else if (nodeType === 3) {
 			var children = parentNode.children;
-			var length   = children.length;
+			var length = children.length;
 	
 			// when we reach a string child that is followed by a string child, 
 			// it is assumed that the dom representing it is a single textNode
@@ -2552,9 +2565,9 @@
 	 */
 	function renderToString (subject, template) {
 		var lookup = {styles: '', namespaces: {}};
-		var body   = renderVNodeToString(renderVNode(subject), lookup, true);
+		var body = renderVNodeToString(renderVNode(subject), lookup, true);
 		var styles = lookup.styles;
-		var style  = styles.length !== 0 ? styles : '';
+		var style = styles.length !== 0 ? styles : '';
 	
 		if (template) {
 			if (typeof template === 'string') {
@@ -2594,10 +2607,10 @@
 	 */
 	function Stream (subject, template) {
 		this.initial  = true;
-		this.stack    = [];
-		this.lookup   = {styles: '', namespaces: {}};
+		this.stack = [];
+		this.lookup = {styles: '', namespaces: {}};
 		this.template = template;
-		this.node     = renderVNode(subject);
+		this.node = renderVNode(subject);
 	
 		readable.call(this);
 	}
@@ -2680,8 +2693,8 @@
 				}
 	
 				// references
-				var type     = vnode.type;
-				var props    = vnode.props;
+				var type = vnode.type;
+				var props = vnode.props;
 				var children = vnode.children;
 	
 				var propsStr = renderStylesheetToString(
@@ -2781,9 +2794,13 @@
 				for (var i = 0, length = subject.length; i < length; i++) {
 					renderToCache(subject[i]);
 				}
-			} else if (subject.nodeType === void 0) {
+			}
+			// Component
+			else if (subject.nodeType === void 0) {
 				subject.HTMLCache = renderToString(subject);
-			} else if (subject.nodeType === 2) {
+			}
+			// VNode
+			else if (subject.nodeType === 2) {
 				subject.type.HTMLCache = renderToString(subject);
 			}
 		}
@@ -3114,13 +3131,16 @@
 		}
 	
 		// assign public methods
-		Stream.then    = then;
-		Stream.done    = done;
-		Stream.catch   = error;
-		Stream.map     = map;
-		Stream.end     = end;
+		Stream.then = then;
+		Stream.done = done;
+		Stream.catch = error;
+		Stream.map = map;
+		Stream.end = end;
 		Stream.valueOf = valueOf;
-		Stream.toJSON  = toJSON;
+		Stream.toJSON = toJSON;
+		Stream.resolve = resolve;
+		Stream.reject = reject;
+	
 		// signature
 		Stream._stream = true;
 	
@@ -3178,17 +3198,17 @@
 	 */
 	function http (options) {
 		// extract properties from options
-		var method          = options.method;
-		var url             = options.url;
-		var payload         = options.payload; 
-		var enctype         = options.enctype;
-		var responseType    = options.responseType;
+		var method = options.method;
+		var url = options.url;
+		var payload = options.payload; 
+		var enctype = options.enctype;
+		var responseType = options.responseType;
 		var withCredentials = options.withCredentials;
-		var headers         = options.headers;
-		var initial         = options.initial;
-		var config          = options.config;
-		var username        = options.username;
-		var password        = options.password;
+		var headers = options.headers;
+		var initial = options.initial;
+		var config = options.config;
+		var username = options.username;
+		var password = options.password;
 	
 		// return a stream
 		return stream(function (resolve, reject) {
@@ -3291,7 +3311,7 @@
 				case 'json': options.enctype = 'application/json'; break;
 				case 'text': options.enctype = 'text/plain'; break;
 				case 'file': options.enctype = 'multipart/form-data'; break;
-				default:     options.enctype = 'application/x-www-form-urlencoded';
+				default: options.enctype = 'application/x-www-form-urlencoded';
 			}
 	
 			// if has payload && GET pass payload as query string
@@ -3400,10 +3420,12 @@
 		each(object, function (value, key) {
 			var prefixValue = prefix !== void 0 ? prefix + '[' + key + ']' : key;
 	
-			// when the value is an object recursive serialize
+			// recursive serialize
 			if (typeof value == 'object') {
 				arr[arr.length] = serialize(value, prefixValue);
-			} else {
+			}
+			// serialize
+			else {
 				arr[arr.length] = encodeURIComponent(prefixValue) + '=' + encodeURIComponent(value);
 			}
 		});
@@ -3436,11 +3458,11 @@
 	 */
 	function router (routes, address, initialiser, element, middleware, notFound) {
 		if (typeof address === 'object') {
-			element     = address.mount;
+			element = address.mount;
 			initialiser = address.initial;
-			middleware  = address.middleware;
-			notFound    = address['404'];
-			address     = address.directory;
+			middleware = address.middleware;
+			notFound = address['404'];
+			address = address.directory;
 		}
 	
 		if (middleware !== void 0) {
@@ -3504,7 +3526,7 @@
 	
 			// uri is the url/RegExp that describes the uri match thus
 			// given the following /:user/:id/*
-			// the pattern will be / ([^\/]+) / ([^\/]+) / (?:.*)
+			// the pattern would be / ([^\/]+) / ([^\/]+) / (?:.*)
 			var pattern = uri.replace(regex, function () {
 				// id => arguments: 'user', id, undefned
 				var id = arguments[2];
@@ -3541,9 +3563,9 @@
 		// find a match from the available routes
 		function finder (route, uri, current) {
 			var callback = route.callback;
-			var pattern  = route.pattern;
-			var params   = route.params;
-			var match    = current.match(pattern);
+			var pattern = route.pattern;
+			var params = route.params;
+			var match = current.match(pattern);
 	
 			// we have a match
 			if (match != null) {
@@ -3582,7 +3604,7 @@
 	
 			return function (e) {
 				var target = e.currentTarget || e.target || this;
-				var value  = func ? to(target) : to;
+				var value = func ? to(target) : to;
 	
 				navigate(target[value] || (target.nodeName && target.getAttribute(value)) || value); 
 			};
@@ -3623,28 +3645,28 @@
 			address = address.substring(0, address.length - 1);
 		}
 	
-		var regex    = /([:*])(\w+)|([\*])/g;
-		var history  = window.history || objEmpty;
+		var regex = /([:*])(\w+)|([\*])/g;
+		var history = window.history || objEmpty;
 		var location = history.location || window.location;
-		var origin   = location.origin;
-		var current  = '';
-		var href     = '';
+		var origin = location.origin;
+		var current = '';
+		var href = '';
 		var interval = 0;
 		var resolved = 0;
-		var routes   = {};
+		var routes = {};
 	
 		/** @public */
-		var api      = Object.defineProperty({
+		var api = Object.defineProperty({
 			navigate: navigate,
-			back:     history.back, 
-			foward:   history.forward, 
-			link:     link,
-			resume:   resume,
-			pause:    pause,
-			destroy:  destroy,
-			set:      set,
-			resolve:  resolve,
-			routes:   routes
+			back: history.back, 
+			forward: history.forward, 
+			link: link,
+			resume: resume,
+			pause: pause,
+			destroy: destroy,
+			set: set,
+			resolve: resolve,
+			routes: routes
 		}, 'location', {
 			get: function () { return current; },
 			set: navigate
@@ -3695,7 +3717,7 @@
 	 */
 	function applyMiddleware () {
 		var middlewares = [];
-		var length      = arguments.length;
+		var length = arguments.length;
 	
 		// passing arguments to a function i.e [].splice() will prevent this function
 		// from getting optimized by the VM, so we manually build the array in-line
@@ -3707,7 +3729,9 @@
 			return function (reducer, initialState, enhancer) {
 				// create store
 				var store = Store(reducer, initialState, enhancer);
-				var api   = {
+				
+				// create api
+				var api = {
 					getState: store.getState,
 					dispatch: store.dispatch
 				};
@@ -3790,10 +3814,10 @@
 	 * @return {function}
 	 */
 	function combineReducers (reducers) {
-		var keys   = Object.keys(reducers);
+		var keys = Object.keys(reducers);
 		var length = keys.length;
 	
-		// create and return a single reducer
+		// return a single reducer which combines all reducers
 		return function (state, action) {
 			state = state || {};
 	
@@ -3855,7 +3879,7 @@
 	 */
 	function Store (reducer, initialState) {
 		var currentState = initialState;
-		var listeners    = [];
+		var listeners = [];
 	
 		// state getter, retrieves the current state
 		function getState () {
@@ -3865,7 +3889,7 @@
 		// dispatchs a action
 		function dispatch (action) {
 			if (action.type === void 0) {
-				throw 'actions without type';
+				throw 'action without a type';
 			}
 	
 			// update state with return value of reducer
@@ -3934,10 +3958,10 @@
 		dispatch({type: '@/STORE'});
 	
 		return {
-			getState:       getState, 
-			dispatch:       dispatch, 
-			subscribe:      subscribe,
-			connect:        connect,
+			getState: getState, 
+			dispatch: dispatch, 
+			subscribe: subscribe,
+			connect: connect,
 			replaceReducer: replaceReducer
 		};
 	}

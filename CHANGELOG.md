@@ -1,3 +1,9 @@
+## 5.1.0 (January 10, 2016)
+
+- add support for passive event listeners `{onClick: {handler: () => {}, options: {passive: true}}}`
+- add style support for css variables `style: { '--color': 'red',color: 'var(--color)'}`
+- add typescript definitions
+
 ## 5.0.5 (January 07, 2016)
 
 - patch minfied bundle 

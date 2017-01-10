@@ -8,7 +8,7 @@
 
 
 // current version
-var version = '5.0.5';
+var version = '5.1.0';
 
 // enviroment variables
 var document = window.document || null;
@@ -17,7 +17,7 @@ var server = browser === false;
 
 // namespaces
 var nsStyle = 'data-scope';
-var nsMath  = 'http://www.w3.org/1998/Math/MathML';
+var nsMath = 'http://www.w3.org/1998/Math/MathML';
 var nsXlink = 'http://www.w3.org/1999/xlink';
 var nsSvg = 'http://www.w3.org/2000/svg';
 

@@ -6,17 +6,17 @@
  */
 function http (options) {
 	// extract properties from options
-	var method          = options.method;
-	var url             = options.url;
-	var payload         = options.payload; 
-	var enctype         = options.enctype;
-	var responseType    = options.responseType;
+	var method = options.method;
+	var url = options.url;
+	var payload = options.payload; 
+	var enctype = options.enctype;
+	var responseType = options.responseType;
 	var withCredentials = options.withCredentials;
-	var headers         = options.headers;
-	var initial         = options.initial;
-	var config          = options.config;
-	var username        = options.username;
-	var password        = options.password;
+	var headers = options.headers;
+	var initial = options.initial;
+	var config = options.config;
+	var username = options.username;
+	var password = options.password;
 
 	// return a stream
 	return stream(function (resolve, reject) {

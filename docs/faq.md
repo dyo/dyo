@@ -2,7 +2,7 @@
 
 > Is this like react?
 
-Yes, dio shares a great deal of its api with react.
+Kind of, dio shares some of its top-level api with react api's.
 
 > What is the nano package
 

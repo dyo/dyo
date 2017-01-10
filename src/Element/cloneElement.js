@@ -10,8 +10,8 @@
  * @return {VNode}
  */
 function cloneElement (subject, newProps, newChildren) {
-	var type     = subject.type;
-	var props    = newProps || {};
+	var type = subject.type;
+	var props = newProps || {};
 	var children = newChildren || subject.children;
 
 	// copy old props

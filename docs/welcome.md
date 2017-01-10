@@ -1,23 +1,13 @@
 dio is a fast javascript framework for building applications.
 
-<p>[Install v5.0.5](./#installation "button")</p>
+<p>[Install v5.1.0](./#installation "button")</p>
 
 ```javascript
-const Main = dio.createClass({
-	render (props) {
-		return h('h1', props.value);
-	}
-});
-
-// or
 class Main extends dio.Component {
-	render (props) {
-		return h('h1', props.value);
+	render ({value}) {
+		return h('h1', value);
 	}
 }
-
-// or
-const Main = h => props => h('h1', props.value);
 
 dio.render(Main)({value: 'Hello World'});
 ```

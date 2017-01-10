@@ -9,9 +9,9 @@
  */
 function renderToString (subject, template) {
 	var lookup = {styles: '', namespaces: {}};
-	var body   = renderVNodeToString(renderVNode(subject), lookup, true);
+	var body = renderVNodeToString(renderVNode(subject), lookup, true);
 	var styles = lookup.styles;
-	var style  = styles.length !== 0 ? styles : '';
+	var style = styles.length !== 0 ? styles : '';
 
 	if (template) {
 		if (typeof template === 'string') {

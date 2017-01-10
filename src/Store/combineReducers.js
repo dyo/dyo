@@ -7,10 +7,10 @@
  * @return {function}
  */
 function combineReducers (reducers) {
-	var keys   = Object.keys(reducers);
+	var keys = Object.keys(reducers);
 	var length = keys.length;
 
-	// create and return a single reducer
+	// return a single reducer which combines all reducers
 	return function (state, action) {
 		state = state || {};
 

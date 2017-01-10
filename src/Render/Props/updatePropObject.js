@@ -1,16 +1,22 @@
 /**
  * update prop objects, i.e .style
- * 
- * @param  {Object} value
- * @param  {any}    targetAttr
+ *
+ * @param {string} parent
+ * @param {Object} prop
+ * @param {Object} target
  */
-function updatePropObject (value, targetAttr) {
-	for (var propName in value) {
-		var propValue = value[propName] || null;
+function updatePropObject (parent, prop, target) {
+	for (var name in prop) {
+		var value = prop[name] || null;
 
-		// if targetAttr object has propName, assign
-		if (propName in targetAttr) {
-			targetAttr[propName] = propValue;
+		// assign if target object has property
+		if (name in target) {
+			target[name] = value;
+		}
+		// style properties that don't exist on CSSStyleDeclaration
+		else if (parent === 'style') {
+			// assign/remove
+			value ? target.setProperty(name, value, null) : target.removeProperty(name);
 		}
 	}
 }

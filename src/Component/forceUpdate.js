@@ -20,10 +20,10 @@ function forceUpdate (callback) {
 
 		// hydrate newNode
 		oldNode.nodeType = newNode.nodeType;
-		oldNode.type     = newNode.type;
-		oldNode.props    = newNode.props;
+		oldNode.type = newNode.type;
+		oldNode.props = newNode.props;
 		oldNode.children = newNode.children;
-		oldNode.DOMNode  = newNode.DOMNode;
+		oldNode.DOMNode = newNode.DOMNode;
 		newNode.instance = oldNode.instance;
 	} else {
 		// patch node

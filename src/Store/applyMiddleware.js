@@ -8,7 +8,7 @@
  */
 function applyMiddleware () {
 	var middlewares = [];
-	var length      = arguments.length;
+	var length = arguments.length;
 
 	// passing arguments to a function i.e [].splice() will prevent this function
 	// from getting optimized by the VM, so we manually build the array in-line
@@ -20,7 +20,9 @@ function applyMiddleware () {
 		return function (reducer, initialState, enhancer) {
 			// create store
 			var store = Store(reducer, initialState, enhancer);
-			var api   = {
+			
+			// create api
+			var api = {
 				getState: store.getState,
 				dispatch: store.dispatch
 			};

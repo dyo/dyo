@@ -10,7 +10,7 @@
  * @param {number}                 pos
  */
 function patchKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, pos) {
-	var reconciled = new Array(newLen);
+	var reconciled = new Array(newLength);
 	var childNodes = parentNode.childNodes;
 
 	// children
@@ -35,7 +35,7 @@ function patchKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, po
 	}
 
 	// old children
-	for (var i = pos; i < oldLen; i++) {
+	for (var i = pos; i < oldLength; i++) {
 		var oldChild = oldChildren[i];
 		var newChild = newKeys[oldChild.props.key];
 
@@ -57,7 +57,7 @@ function patchKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, po
 	length -= delOffset;
 
 	// new children
-	for (var i = pos; i < newLen; i++) {
+	for (var i = pos; i < newLength; i++) {
 		var newChild = newChildren[i];
 		var oldChild = oldKeys[newChild.props.key];
 

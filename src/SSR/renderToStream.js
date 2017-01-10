@@ -24,10 +24,10 @@ function renderToStream (subject, template) {
  */
 function Stream (subject, template) {
 	this.initial  = true;
-	this.stack    = [];
-	this.lookup   = {styles: '', namespaces: {}};
+	this.stack = [];
+	this.lookup = {styles: '', namespaces: {}};
 	this.template = template;
-	this.node     = renderVNode(subject);
+	this.node = renderVNode(subject);
 
 	readable.call(this);
 }
@@ -110,8 +110,8 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 			}
 
 			// references
-			var type     = vnode.type;
-			var props    = vnode.props;
+			var type = vnode.type;
+			var props = vnode.props;
 			var children = vnode.children;
 
 			var propsStr = renderStylesheetToString(

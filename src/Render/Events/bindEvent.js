@@ -7,17 +7,16 @@
  * @return {function}
  */
 function bindEvent (name, value, component) {
-	var bind = value.bind;
-	var data = value.with;
-
-	var preventDefault = value.preventDefault === void 0 || value.preventDefault === true;
+	var bind = value.bind || value.handler;
+	var data = value.with || value.data;
+	var preventDefault = value.preventDefault === true || (!value.options && value.preventDefault === void 0);
 
 	if (typeof bind === 'object') {
 		var property = bind.property || data;
 
 		return function (event) {
 			var target = event.currentTarget || event.target;
-			var value  = data in target ? target[data] : target.getAttribute(data);
+			var value = data in target ? target[data] : target.getAttribute(data);
 
 			preventDefault && event.preventDefault();
 
@@ -27,7 +26,8 @@ function bindEvent (name, value, component) {
 			// update component
 			component.forceUpdate();
 		}
-	} else {
+	} 
+	else {
 		return function (event) {
 			preventDefault && event.preventDefault();
 			bind.call(data, data, event);

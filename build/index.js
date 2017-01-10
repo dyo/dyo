@@ -74,7 +74,7 @@ function watcher (parent, builds) {
 	    		build(directory, destination, entry, ext);
 	    	}
 	    	// report build complete
-	    	report(start, parent+filename, event);
+	    	report(start, parent+' '+filename, event);
 	    } catch (error) {
 	    	console.log(error);
 	    }

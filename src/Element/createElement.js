@@ -9,7 +9,7 @@
  * @return {Object<string, any>}
  */
 function createElement (type, props) {
-	var length   = arguments.length;
+	var length = arguments.length;
 	var children = [];
 	var position = 2;
 
