@@ -8,18 +8,20 @@
  * @return {string}
  */
 function renderToString (subject, template) {
-	var lookup = {styles: '', namespaces: {}};
-	var body = renderVNodeToString(renderVNode(subject), lookup, true);
+	var lookup = {styles: '', namespaces: {}};	
+	var body = renderVNodeToString(extractVirtualNode(subject, null), lookup, true);
 	var styles = lookup.styles;
 	var style = styles.length !== 0 ? styles : '';
 
 	if (template) {
 		if (typeof template === 'string') {
 			return template.replace('@body', body+style);
-		} else {
+		}
+		else {
 			return template(body, styles);
 		}
-	} else {
+	}
+	else {
 		return body+style;
 	}
 }

@@ -27,14 +27,16 @@ function stream (value, middleware) {
 		// received value, update stream
 		if (arguments.length !== 0) {
 			return (setTimeout(dispatch, 0, 'then', store = value), Stream);
-		} else {
+		}
+		else {
 			// if you pass a middleware function i.e a = stream(1, String)
 			// the stream will return 1 processed through String
 			// if you pass a boolean primitive the assumtion is made that the store
 			// is a function and that it should return the functions return value
 			if (hasMiddleware) {
 				return middlewareFunc ? middleware(store) : store();
-			} else {
+			}
+			else {
 				return store;
 			}
 		}
@@ -55,7 +57,7 @@ function stream (value, middleware) {
 			}
 
 			for (var i = 0; i < length; i++) {
-				tryCatch(action, reject, collection[i]);
+				sandbox(action, reject, collection[i]);
 			}
 		}
 	}

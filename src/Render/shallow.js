@@ -8,9 +8,10 @@
  */
 function shallow (subject) {
 	if (isValidElement(subject)) {
-		return subject.nodeType === 2 ? extractComponent(subject) : subject;
-	} else {
-		return extractComponent(createElement(subject, null, null));
+		return subject.nodeType === 2 ? extractComponentNode(subject) : subject;
+	}
+	else {
+		return extractComponentNode(createElement(subject, null, null));
 	}
 }
 

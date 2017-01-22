@@ -18,6 +18,7 @@ type streamCatch = (reason: any) => stream;
 type streamThen = (data: any) => stream;
 type Reducer = (currentState: State, action: Action) => any;
 type Events = EventObject | EventCallback;
+type RenderTypes = VNode | any[] | string | number | null | void;
 
 // Shapes
 interface EventCallback {
@@ -44,75 +45,51 @@ interface EventObject {
 	preventDefault?: boolean;
 }
 
-interface ComponentDefaults {
-	render: (props: Props, state: State, context: this) => VNode | null | void;
-}
-
 interface Action {
 	type: any;
 }
 
-interface Props {
-	children?: Children;
-	ref?: Ref;
-	key?: Key;
-	className?: any;
-	class?: any;
-	id?: any;
-	checked?: any;
-	value?: any;
-	style?: string | Object;
-
-	onClick?: Events;
-	onChange?: Events;
-	onDblClick?: Events;
-	onFocus?: Events;
-	onKeyUp?: Events;
-	onKeyDown?: Events;
-	onLoad?: Events;
-	onMouseDown?: Events;
-	onMouseEnter?: Events;
-	onMouseLeave?: Events;
-	onMouseMove?: Events;
-	onMouseOut?: Events;
-	onMouseOver?: Events;
-	onMouseUp?: Events;
-	onMouseWheel?: Events;
-	onSubmit?: Events;
-	onSelect?: Events;
-	onSelectStart?: Events;
-	onInput?: Events;
-	onError?: Events;
-	onBlur?: Events;
-	onDrag?: Events;
-	onDragEnd?: Events;
-	onDragEnter?: Events;
-	onDragLeave?: Events;
-	onDragOver?: Events;
-	onDragStart?: Events;
-	onDrop?: Events;
-	onToggle?: Events;
-	onKeyPress?: Events;
-	onTouchEnd?: Events;
-	onTouchStart?: Events;
-	onTouchMove?: Events;
-	onTouchCancel?: Events;
-	onScroll?: Events;
-	onReset?: Events;
-	onPlay?: Events;
-	onPlaying?: Events;
-	onPause?: Events;
-	onContextMenu?: Events;
-	onCopy?: Events;
-	onCut?: Events;
-
-	onclick?: Events;
+interface EventProps {
+	onabort?: Events;
+	onauxclick?: Events;
+	onbeforecopy?: Events;
+	onbeforecut?: Events;
+	onbeforepaste?: Events;
+	onblur?: Events;
+	oncancel?: Events;
+	oncanplay?: Events;
+	oncanplaythrough?: Events;
 	onchange?: Events;
+	onclick?: Events;
+	onclose?: Events;
+	oncontextmenu?: Events;
+	oncopy?: Events;
+	oncuechange?: Events;
+	oncut?: Events;
 	ondblclick?: Events;
+	ondrag?: Events;
+	ondragend?: Events;
+	ondragenter?: Events;
+	ondragleave?: Events;
+	ondragover?: Events;
+	ondragstart?: Events;
+	ondrop?: Events;
+	ondurationchange?: Events;
+	onemptied?: Events;
+	onended?: Events;
+	onerror?: Events;
 	onfocus?: Events;
-	onkeyup?: Events;
+	ongotpointercapture?: Events;
+	oninput?: Events;
+	oninvalid?: Events;
 	onkeydown?: Events;
+	onkeypress?: Events;
+	onkeyup?: Events;
 	onload?: Events;
+	onloadeddata?: Events;
+	onloadedmetadata?: Events;
+	onloadstart?: Events;
+	onlostpointercapture?: Events;
 	onmousedown?: Events;
 	onmouseenter?: Events;
 	onmouseleave?: Events;
@@ -121,33 +98,134 @@ interface Props {
 	onmouseover?: Events;
 	onmouseup?: Events;
 	onmousewheel?: Events;
-	onsubmit?: Events;
-	onselect?: Events;
-	onselectstart?: Events;
-	oninput?: Events;
-	onerror?: Events;
-	onblur?: Events;
-	ondrag?: Events;
-	ondragend?: Events;
-	ondragenter?: Events;
-	ondragleave?: Events;
-	ondragover?: Events;
-	ondragstart?: Events;
-	ondrop?: Events;
-	ontoggle?: Events;
-	onkeypress?: Events;
-	ontouchend?: Events;
-	ontouchstart?: Events;
-	ontouchmove?: Events;
-	ontouchcancel?: Events;
-	onscroll?: Events;
-	onreset?: Events;
+	onpaste?: Events;
+	onpause?: Events;
 	onplay?: Events;
 	onplaying?: Events;
-	onpause?: Events;
-	oncontextmenu?: Events;
-	oncopy?: Events;
-	oncut?: Events;
+	onpointercancel?: Events;
+	onpointerdown?: Events;
+	onpointerenter?: Events;
+	onpointerleave?: Events;
+	onpointermove?: Events;
+	onpointerout?: Events;
+	onpointerover?: Events;
+	onpointerup?: Events;
+	onprogress?: Events;
+	onratechange?: Events;
+	onreset?: Events;
+	onresize?: Events;
+	onscroll?: Events;
+	onsearch?: Events;
+	onseeked?: Events;
+	onseeking?: Events;
+	onselect?: Events;
+	onselectstart?: Events;
+	onshow?: Events;
+	onstalled?: Events;
+	onsubmit?: Events;
+	onsuspend?: Events;
+	ontimeupdate?: Events;
+	ontoggle?: Events;
+	onvolumechange?: Events;
+	onwaiting?: Events;
+	onwebkitfullscreenchange?: Events;
+	onwebkitfullscreenerror?: Events;
+	onwheel?: Events;
+
+	onAbort?: Events;
+	onAuxClick?: Events;
+	onBeforeCopy?: Events;
+	onBeforeCut?: Events;
+	onBeforePaste?: Events;
+	onBlur?: Events;
+	onCancel?: Events;
+	onCanPlay?: Events;
+	onCanPlayThrough?: Events;
+	onChange?: Events;
+	onClick?: Events;
+	onClose?: Events;
+	onContextMenu?: Events;
+	onCopy?: Events;
+	onCueChange?: Events;
+	onCut?: Events;
+	onDblClick?: Events;
+	onDrag?: Events;
+	onDragEnd?: Events;
+	onDragEnter?: Events;
+	onDragLeave?: Events;
+	onDragOver?: Events;
+	onDragStart?: Events;
+	onDrop?: Events;
+	onDurationChange?: Events;
+	onEmptied?: Events;
+	onEnded?: Events;
+	onError?: Events;
+	onFocus?: Events;
+	onGotPointerCapture?: Events;
+	onInput?: Events;
+	onInvalid?: Events;
+	onKeydown?: Events;
+	onKeypress?: Events;
+	onKeyup?: Events;
+	onLoad?: Events;
+	onLoadedData?: Events;
+	onLoadedMetaData?: Events;
+	onLoadStart?: Events;
+	onLostPointerCapture?: Events;
+	onMouseDown?: Events;
+	onMouseEnter?: Events;
+	onMouseLeave?: Events;
+	onMouseMove?: Events;
+	onMouseOut?: Events;
+	onMouseOver?: Events;
+	onMouseUp?: Events;
+	onMouseWheel?: Events;
+	onPaste?: Events;
+	onPause?: Events;
+	onPlay?: Events;
+	onPlaying?: Events;
+	onPointerCancel?: Events;
+	onPointerDown?: Events;
+	onPointerEnter?: Events;
+	onPointerLeave?: Events;
+	onPointerMove?: Events;
+	onPointerOut?: Events;
+	onPointerOver?: Events;
+	onPointerUp?: Events;
+	onProgress?: Events;
+	onRateChange?: Events;
+	onReset?: Events;
+	onResize?: Events;
+	onScroll?: Events;
+	onSearch?: Events;
+	onSeeked?: Events;
+	onSeeking?: Events;
+	onSelect?: Events;
+	onSelectStart?: Events;
+	onShow?: Events;
+	onStalled?: Events;
+	onSubmit?: Events;
+	onSuspend?: Events;
+	onTimeUpdate?: Events;
+	onToggle?: Events;
+	onVolumeChange?: Events;
+	onWaiting?: Events;
+	onWebkitFullScreenChange?: Events;
+	onWebkitFullScreenError?: Events;
+	onWheel?: Events;
+}
+
+interface Props extends EventProps {
+	children?: Children;
+	ref?: Ref;
+	key?: Key;
+	className?: any;
+	class?: any;
+	id?: any;
+	checked?: any;
+	value?: any;
+	style?: any;
+	href?: any;
 }
 
 interface VNode {
@@ -155,9 +233,11 @@ interface VNode {
 	type: Type;
 	props: Props;
 	children: Children;
-	DOMNode: Node;
+	DOMNode: Node | null;
 	instance: Object | null;
-	index: number
+	index: number | null;
+	parent: VNode | null;
+	key: any;
 }
 
 interface VText extends VNode {
@@ -235,23 +315,22 @@ declare namespace dio {
 	export const version: string;
 
 	// Components
-	export abstract class Component<Props> {
-		constructor (props: Props);
-		forceUpdate (callback?: () => void): void;
-		setState (state: Object, callback?: () => void): void;
+	export abstract class Component<P> {
+		constructor (props: P);
+		forceUpdate (callback?: () => any): void;
+		setState (state: State, callback?: () => any): void;
 		state: State;
-		props: Props;
-		VNode: VNode | null;
+		props: Object;
 		refs: Object | null;
 	}
-	export function createClass (shape: Function | ComponentDefaults): Function;
+	export function createClass (shape: Object | Function): Function;
 
 	// Elements 
 	export const createElement: createElement;
 	export const h: createElement;
-	export function cloneElement (element: VNode, props?: Props, children?: Array<any>): VNode;
+	export function cloneElement (element: VNode, props?: Object, children?: Array<any>): VNode;
 	export function isValidElement (subject: any): boolean;
-	export function createFactory (type: Type, props?: Props): createElement;
+	export function createFactory (type: Type, props?: Object): createElement;
 	export function DOM (types: Array<string>): Object;
 
 	// Shapes
@@ -266,7 +345,7 @@ declare namespace dio {
 		target?: string | Node, 
 		callback?: (DOMNode: Element) => void,
 		hydration?: boolean
-	): (props: Props) => any; 
+	): (props?: Object) => void; 
 
 	// Test Utils
 	export function shallow (subject: VNode | Object | Function): VNode;

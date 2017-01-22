@@ -147,7 +147,8 @@ function resolve (directory, template, imported, parent, dir, ext) {
 			} else if (type !== 2) {
 				content = namespace;
 			}
-		} else {
+		}
+		else {
 			// retrieve file contents
 			content = fs.readFileSync(filepath, 'utf8');
 

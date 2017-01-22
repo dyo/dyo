@@ -131,8 +131,7 @@ zep(['../dio.js'], function (utili, deps) {
 			a = new a;
 
 			var props = [
-				'withAttr', 'setState', 'setProps', 
-				'forceUpdate', 'state', 'props', 'render'
+				'setState', 'forceUpdate', 'state', 'props', 'render'
 			];
 
 			var state = props.filter(function (value) {

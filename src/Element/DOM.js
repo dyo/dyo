@@ -1,5 +1,5 @@
 /**
- * DOM factory, create VNode factories
+ * DOM factory, create vnode factories
  *
  * @public
  * 
@@ -11,11 +11,13 @@ function DOM (types) {
 
 	// add element factories
 	for (var i = 0, length = types.length; i < length; i++) {
-		elements[types[i]] = VElement.bind(null, types[i]);
+		elements[types[i]] = createElementShape.bind(null, types[i]);
 	}
 	
-	// if svg, add related svg element factories
-	elements.svg !== void 0 && (elements.svg = VSvg.bind(null, 'svg'));
+	// if svg, add related svg element factory
+	if (elements.svg !== void 0) {
+		elements.svg = createSvgShape.bind(null, 'svg');
+	}
 
 	return elements;
 }

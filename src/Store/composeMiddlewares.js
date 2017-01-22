@@ -14,7 +14,8 @@ function composeMiddlewares () {
 	// no functions passed
 	if (length === 0) {
 		return function (a) { return a; }
-	} else {
+	}
+	else {
 		// list of functions to compose
 		var funcs = [];
 

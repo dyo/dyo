@@ -7,5 +7,6 @@
  */
 
 
+import 'createScopedStylesheet';
+import 'createScopedCSS';
 import 'stylesheet';
-import 'stylis';

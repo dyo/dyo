@@ -1,4 +1,5 @@
-// ssr
+// server
+var server = browser === false && window.window !== window;
 var readable = server ? require('stream').Readable : null;
 
 // void elements

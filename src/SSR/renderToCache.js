@@ -7,7 +7,7 @@
  * @return {(VNode|VNode[]|Component)} subject
  */
 function renderToCache (subject) {
-	if (subject) {
+	if (subject != null) {
 		// array, run all VNodes through renderToCache
 		if (subject.constructor === Array) {
 			for (var i = 0, length = subject.length; i < length; i++) {

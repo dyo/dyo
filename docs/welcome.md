@@ -1,10 +1,10 @@
-dio is a fast javascript framework for building applications.
+dio is a javascript framework for building applications.
 
-<p>[Install v5.1.0](./#installation "button")</p>
+<p>[Install v6.0.0](./#installation "button")</p>
 
 ```javascript
 class Main extends dio.Component {
-	render ({value}) {
+	async render ({value}) {
 		return h('h1', value);
 	}
 }

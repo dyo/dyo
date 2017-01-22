@@ -11,15 +11,17 @@
  */
 function cloneElement (subject, newProps, newChildren) {
 	var type = subject.type;
-	var props = newProps || {};
+	var props = subject.props;
 	var children = newChildren || subject.children;
 
+	newProps = newProps || {};
+
 	// copy old props
-	each(subject.props, function (value, name) {
-		if (props[name] === void 0) {
-			props[name] = value;
+	for (var name in subject.props) {
+		if (newProps[name] === void 0) {
+			newProps[name] = props[name];
 		}
-	});
+	}
 
 	// replace children
 	if (newChildren !== void 0) {
@@ -38,6 +40,6 @@ function cloneElement (subject, newProps, newChildren) {
 		}
 	}
 
-	return createElement(type, props, children);
+	return createElement(type, newProps, children);
 }
 

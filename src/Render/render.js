@@ -11,31 +11,35 @@
  */
 function render (subject, target, callback, hydration) {
 	var initial = true;
+	var nodeType = 2;
+	
 	var component;	
 	var vnode;
 	var element;
 	
 	// renderer
-	function renderer (props) {
+	function renderer (newProps) {
 		if (initial) {
 			// dispatch mount
-			appendNode(vnode, element, createNode(vnode, null, null));
+			appendNode(nodeType, vnode, element, createNode(vnode, null, null));
 
 			// register mount has been dispatched
 			initial = false;
 
 			// assign component instance
 			component = vnode.instance;
-		} else {
+		}
+		else {
 			// update props
-			if (props !== void 0) {
+			if (newProps !== void 0) {
+				// component with shouldComponentUpdate
 				if (component.shouldComponentUpdate !== void 0 && 
-					component.shouldComponentUpdate(props, component.state) === false
-				) {
+					componentUpdateBoundary(component, 'shouldComponentUpdate', newProps, component.state) === false) {
+					// exit early
 					return renderer;
 				}
 
-				component.props = props;
+				component.props = newProps;
 			}
 
 			// update component
@@ -46,32 +50,36 @@ function render (subject, target, callback, hydration) {
 	}
 
 	// exit early
-	if (server) {
+	if (browser === false) {
 		return renderer;
 	}
 
 	// Object
 	if (subject.render !== void 0) {
-		vnode = VComponent(createClass(subject));
+		vnode = createComponentShape(createClass(subject));
 	}
 	// array/Component/function
 	else if (subject.nodeType === void 0) {
-		vnode = subject.constructor === Array ? createElement('@', null, subject) : VComponent(subject);
+		// fragment
+		if (subject.constructor === Array) {
+			vnode = createElement('@', null, subject);
+		}
+		// component
+		else {
+			vnode = createComponentShape(subject);
+		}
 	} 
-	// VElement/VSvg
-	else if (subject.nodeType !== 2) {
-		vnode = VComponent(createClass({ render: function () { return subject; } }))
-	}
-	// VComponent
+	// element/component
 	else {
 		vnode = subject;
 	}
 
-	// dom element
+	// mount
   	if (target != null && target.nodeType != null) {
   		// target is a dom element
   		element = target === document ? docuemnt.body : target;
-	} else {
+	} 
+	else {
   		// selector
   		target = document.querySelector(target);
 
@@ -79,17 +87,23 @@ function render (subject, target, callback, hydration) {
   		element = (target === null || target === document) ? document.body : target;
 	}
 
+	// element
+	if (vnode.nodeType !== 2) {
+		vnode = createComponentShape(createClass(subject));
+	}
+
 	// hydration
-	if (hydration === true) {
+	if (hydration != null && hydration !== false) {
 		// dispatch hydration
-		hydrate(element, vnode, 0, nodEmpty, null);
+		hydrate(element, vnode, typeof hydration === 'number' ? hydration : 0, null, null);
 
 		// register mount has been dispatched
 		initial = false;
 
 		// assign component
 		component = vnode.instance;
-	} else {
+	} 
+	else {
 		// destructive mount
 		hydration === false && (element.textContent = '');
 		

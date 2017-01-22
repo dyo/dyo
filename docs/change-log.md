@@ -1,7 +1,14 @@
+## 6.0.0 (January 22, 2016)
+
+- adds async component support for `getInitialProps` on the server and client
+- adds render types, render supports `coroutine/element/number/string/function/component/array/promise`
+- adds error boundries to components for non-breaking graceful error state handling
+- improves keyed algorithm
+
 ## 5.1.0 (January 10, 2016)
 
 - add support for passive event listeners `{onClick: {handler: () => {}, options: {passive: true}}}`
-- add style support for css variables `style: { '--color': 'red',color: 'var(--color)'}`
+- add style support for css variables `style: {'--color': 'red',color: 'var(--color)'}`
 - add typescript definitions
 
 ## 5.0.5 (January 07, 2016)

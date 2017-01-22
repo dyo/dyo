@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>dio.js - Component Render Type</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<script src="../assets/dio.js"></script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script>
+			class Foo extends dio.Component {
+				render() {
+					return class extends dio.Component {
+						render () {
+							return h('h1', `
+								I am a component, 
+								The backing component instance will get cached 
+								when created outside of render
+							`);
+						}
+					}
+				}
+			}
+
+			dio.render(Foo, '#root');
+		</script>
+	</body>
+</html>

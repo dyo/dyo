@@ -14,7 +14,7 @@
 			.preloadicon {position: absolute;top:-20px;left:-20px;}
 			.col-sm-6.smallpad {padding: 5px;}
 		</style>
-		<script src="../assets/dio.min.js"></script>
+		<script src="../assets/dio.js"></script>
 	</head>
 	<body>
 		<div id="main"></div>
@@ -124,54 +124,54 @@
 			// ----------------------------------------------------------------------------
 
 			(function (exports) {
-				var {VElement, VComponent, VText, VBlueprint, version} = dio;
+				var {element, component, text, version} = dio;
 
 				var colMd1   = {className: 'col-md-1'};
 				var colMd4   = {className: 'col-md-4'};
 				var colMd6   = {className: 'col-md-6'};
 				var colSm6   = {className: 'col-sm-6 smallpad'};
 
-				var RowEmpty    = VElement('td', colMd6);
-				var RowDelIcon  = VElement('span', {className: 'glyphicon glyphicon-remove', 'aria-hidden': 'true'});
-				var preLoadIcon = VElement('span', {className: 'preloadicon glyphicon glyphicon-remove', 'aria-hidden': 'true'});
+				var RowEmpty    = element('td', colMd6);
+				var RowDelIcon  = element('span', {className: 'glyphicon glyphicon-remove', 'aria-hidden': 'true'});
+				var preLoadIcon = element('span', {className: 'preloadicon glyphicon glyphicon-remove', 'aria-hidden': 'true'});
 
 				function Nav (run, runLots, add, update, clear, swapRows) {
 		        	return (
-		        		VElement('div', {className: 'jumbotron'}, [
-		        			VElement('div', {className: 'row'}, [
-		        				VElement('div', colMd6, [
-		        					VElement('h1', null, [VText(version)])
+		        		element('div', {className: 'jumbotron'}, [
+		        			element('div', {className: 'row'}, [
+		        				element('div', colMd6, [
+		        					element('h1', null, [text(version)])
 		        				]),
-		        				VElement('div', colMd6, [
-		        					VElement('div', {className: 'row'}, [
-		        						VElement('div', colSm6, [
-	    									VElement('button', {id: 'run', onClick: run, className: 'btn btn-primary btn-block'}, [
-	    										VText('Create 1,000 rows')
+		        				element('div', colMd6, [
+		        					element('div', {className: 'row'}, [
+		        						element('div', colSm6, [
+	    									element('button', {id: 'run', onClick: run, className: 'btn btn-primary btn-block'}, [
+	    										text('Create 1,000 rows')
 	    									])
 		        						]),
-		        						VElement('div', colSm6, [
-	    									VElement('button', {id: 'runlots', onClick: runLots, className: 'btn btn-primary btn-block'}, [
-	    										VText('Create 10,000 rows')
+		        						element('div', colSm6, [
+	    									element('button', {id: 'runlots', onClick: runLots, className: 'btn btn-primary btn-block'}, [
+	    										text('Create 10,000 rows')
 	    									])
 		        						]),
-		        						VElement('div', colSm6, [
-	    									VElement('button', {id: 'add', onClick: add, className: 'btn btn-primary btn-block'}, [
-	    										VText('Append 1,000 rows')
+		        						element('div', colSm6, [
+	    									element('button', {id: 'add', onClick: add, className: 'btn btn-primary btn-block'}, [
+	    										text('Append 1,000 rows')
 	    									])
 		        						]),
-		        						VElement('div', colSm6, [
-	    									VElement('button', {id: 'update', onClick: update, className: 'btn btn-primary btn-block'}, [
-	    										VText('Update every 10th row')
+		        						element('div', colSm6, [
+	    									element('button', {id: 'update', onClick: update, className: 'btn btn-primary btn-block'}, [
+	    										text('Update every 10th row')
 	    									])
 		        						]),
-		        						VElement('div', colSm6, [
-	    									VElement('button', {id: 'clear', onClick: clear, className: 'btn btn-primary btn-block'}, [
-	    										VText('Clear')
+		        						element('div', colSm6, [
+	    									element('button', {id: 'clear', onClick: clear, className: 'btn btn-primary btn-block'}, [
+	    										text('Clear')
 	    									])
 		        						]),
-		        						VElement('div', colSm6, [
-	    									VElement('button', {id: 'swaprows', onClick: swapRows, className: 'btn btn-primary btn-block'}, [
-	    										VText('Swap Rows')
+		        						element('div', colSm6, [
+	    									element('button', {id: 'swaprows', onClick: swapRows, className: 'btn btn-primary btn-block'}, [
+	    										text('Swap Rows')
 	    									])
 		        						])
 	        						])
@@ -183,10 +183,10 @@
 
 				function Row (id, label, selected, onDelete, onSelect) {
 					return (
-						VElement('tr', {className: id === selected ? 'danger' : ''}, [
-							VElement('td', colMd1, [VText(id)]),
-							VElement('td', colMd4, [VElement('a', {value: {id: id, fn: onSelect}}, [VText(label)])]),
-							VElement('td', colMd1, [VElement('a', {value: {id: id, fn: onDelete}}, [RowDelIcon])]),
+						element('tr', {className: id === selected ? 'danger' : ''}, [
+							element('td', colMd1, [text(id)]),
+							element('td', colMd4, [element('a', {value: {id: id, fn: onSelect}}, [text(label)])]),
+							element('td', colMd1, [element('a', {value: {id: id, fn: onDelete}}, [RowDelIcon])]),
 							RowEmpty
 						])
 					);
@@ -243,18 +243,16 @@
 				        this.forceUpdate();
 				    }
 				    handleClick(e) {
-				        var fn, id, target = e.target, val = target.value;
+				        var target = e.target, val = target.value;
 
 				        if (val !== void 0) {
-				            fn = val.fn, id = val.id;
+				            val.fn(val.id);
 				        } else {
 				            val = target.parentNode.value;
 				            if (val !== void 0) {
-				                fn = val.fn, id = val.id;
+				                val.fn(val.id);
 				            }
 				        }
-
-				        fn(id);
 				    }
 				    constructor(props) {
 				    	super(props);
@@ -288,10 +286,10 @@
 				        }
 
 				        return (
-				        	VElement('div', {className: 'container'}, [
+				        	element('div', {className: 'container'}, [
 				        		nav, 
-				        		VElement('table', {className: 'table table-hover table-striped test-data'}, [
-				        			VElement('tbody', {onClick: this.handleClick}, rows)
+				        		element('table', {className: 'table table-hover table-striped test-data'}, [
+				        			element('tbody', {onClick: this.handleClick}, rows)
 			        			]),
 			        			preLoadIcon
 			        		])
@@ -299,7 +297,7 @@
 				    }
 				}
 				
-				dio.render(VComponent(Main), '#main');
+				dio.render(component(Main), '#main');
 			})(window);
 		</script>
 	</body>

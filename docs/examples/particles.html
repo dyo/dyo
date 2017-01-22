@@ -5,7 +5,7 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - particles</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="../assets/dio.min.js"></script>
+		<script src="../assets/dio.js"></script>
 	</head>
 	<body>
 		<div class="app"></div>
@@ -37,7 +37,7 @@
 			}
 		</style>
 		<script>
-			var {VComponent, VElement} = dio;
+			var {component, element} = dio;
 			var DAMPING = 0.999;
 
 			function Particle(x, y) {
@@ -63,7 +63,7 @@
 	      		this.x += dx / distance;
 	      		this.y += dy / distance;
 
-	      		return VElement('span', {style: 'transform: translate('+ this.x + 'px,' + this.y + 'px);'}, null);
+	      		return element('span', {style: 'transform: translate('+ this.x + 'px,' + this.y + 'px);'}, null);
   	      	};
 
 			class Particles extends dio.Component {
@@ -98,12 +98,12 @@
 				  	}
 
 				  	return (
-				  		VElement('div', {onMousemove: this.onMousemove}, children)
+				  		element('div', {onMousemove: this.onMousemove}, children)
 			  		);
 				}
 			}
 
-			var render = dio.render(VComponent(Particles, {length: 300}), '.app');
+			var render = dio.render(component(Particles, {length: 300}), '.app');
 
 	  		(function loop() {
 				render();

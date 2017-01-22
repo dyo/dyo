@@ -8,5 +8,5 @@
 
 
 import 'stream';
-import 'resolve';
-import 'reject';
+import 'stream.resolve.js';
+import 'stream.reject.js';

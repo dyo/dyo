@@ -34,7 +34,7 @@ function response (xhr, responseType, resolve, reject) {
 	// json
 	if (responseType === 'json') {
 		// sandbox JSON parsing
-		body = tryCatch(JSON.parse, reject, data);
+		body = sandbox(JSON.parse, reject, data);
 	} 
 	// Node
 	else if (responseType === 'html' || responseType === 'document') {

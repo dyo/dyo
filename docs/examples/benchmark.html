@@ -10,7 +10,7 @@
 		<div id="app"></div>
 		
 		<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
-		<script src="../assets/dio.min.js"></script>
+		<script src="../assets/dio.js"></script>
 			
 		<!-- ENV.js -->
 		<script>
@@ -236,8 +236,8 @@
 			perfMonitor.initProfiler("render");
 
 			var data = [];
-			var VElement = dio.VElement;
-			var VText = dio.VText;
+			var element = dio.element;
+			var text = dio.text;
 
 			var DBMon = dio.createClass({
 				render: function() {
@@ -249,13 +249,13 @@
 						var db = data[i];
 						var children = new Array(7);
 
-						children[0] = VElement('td', {className: 'dbname'}, [
-							VText(db.dbname)
+						children[0] = element('td', {className: 'dbname'}, [
+							text(db.dbname)
 						]);
 
-						children[1] = VElement('td', {className: 'query-count'}, [
-							VElement('span', {className: db.lastSample.countClassName}, [
-								VText(db.lastSample.nbQueries)
+						children[1] = element('td', {className: 'query-count'}, [
+							element('span', {className: db.lastSample.countClassName}, [
+								text(db.lastSample.nbQueries)
 							])
 						]);
 
@@ -264,29 +264,29 @@
 						for (var j = 0, len = topFiveQueries.length; j < len; j = j + 1) {
 							var query = topFiveQueries[j];
 
-							children[j+2] = VElement('td', {className: query.elapsedClassName}, [
-								VText(query.formatElapsed),
-								VElement('div', {className: 'popover left'}, [
-									VElement('div', {className: 'popover-content'}, [VText(query.query)]),
-									VElement('div', {className: 'arrow'}, null)
+							children[j+2] = element('td', {className: query.elapsedClassName}, [
+								text(query.formatElapsed),
+								element('div', {className: 'popover left'}, [
+									element('div', {className: 'popover-content'}, [text(query.query)]),
+									element('div', {className: 'arrow'}, null)
 								])
 							])
 						}
 
-						$children[i] = VElement('tr', null, children);
+						$children[i] = element('tr', null, children);
 					}
 
 					return (
-						VElement('div', null, [
-							VElement('table', {className: 'table table-striped latest-data'}, [
-								VElement('tbody', null, $children)
+						element('div', null, [
+							element('table', {className: 'table table-striped latest-data'}, [
+								element('tbody', null, $children)
 							])
 						])
 					);
 				}
 			});
 			
-			var render = dio.render(dio.VComponent(DBMon), '#app');
+			var render = dio.render(dio.component(DBMon), '#app');
 
 			function update() {
 				data = ENV.generateData().toArray();

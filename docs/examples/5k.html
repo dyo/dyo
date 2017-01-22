@@ -5,7 +5,7 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - 5k components</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="../assets/dio.min.js"></script>
+		<script src="../assets/dio.js"></script>
 		<style>
 			div {
 				line-height: 0;
@@ -25,7 +25,7 @@
 		<div class="app"></div>
 		<script>
 			var {span, div} = dio.DOM(['span', 'div']);
-			var {VComponent} = dio;
+			var {component} = dio;
 
 			class Pixel extends dio.Component {
 				render () {
@@ -53,7 +53,7 @@
 					while (yAxis <= height) {
 						// draw squares along the x axis
 					    for (var xAxis = 0; xAxis <= width; xAxis += wh) {
-				       		children[i] = VComponent(Pixel, {
+				       		children[i] = component(Pixel, {
 				       			style: {
 				       				background: this.colorPicker()
 				       			}
@@ -91,7 +91,7 @@
 				}
 			}
 
-			var render = dio.render(VComponent(PixelShow, {width: 320, height: 320}));
+			var render = dio.render(component(PixelShow, {width: 320, height: 320}));
 
 			setInterval(render, 1000/60);
 		</script>

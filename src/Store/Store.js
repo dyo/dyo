@@ -76,8 +76,18 @@ function Store (reducer, initialState) {
 		// if component and element 
 		if (element) {			
 			// create renderer add it as a subscriber and return the renderer
-			return subscribe(renderer = render(VComponent(subject, currentState, null), element)), renderer;
-		} else {
+			subscribe(
+				renderer = render(
+					createComponentShape(subject, currentState, null), 
+					element, 
+					null, 
+					null
+				)
+			);
+
+			return renderer;
+		}
+		else {
 			return subscribe(subject);
 		}
 	}

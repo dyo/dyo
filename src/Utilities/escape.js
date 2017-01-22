@@ -5,17 +5,6 @@
  * @return {string}
  */
 function escape (subject) {
-	return String(subject).replace(regEsc, unicoder);
-}
-
-
-/**
- * unicoder, escape => () helper
- * 
- * @param  {string} char
- * @return {string}
- */
-function unicoder (char) {
-	return uniCodes[char] || char;
+	return String(subject).replace(regEsc, unicode);
 }
 

@@ -71,12 +71,130 @@ const Hello = () => ({
 
 #### render
 
-The render method tells dio what the component will render. This method recieves `props`, `state` & `context` as its arguments and can return a VNode `h(...)`, an array of VNodes `[h()...]` or nothing(null/empty render). This is the only required method to render a component.
+The render method tells dio what the component will render. This method recieves `props`, `state` & `context` as its arguments and can return a VNode `h(...)`, an array of VNodes `[h()...]` or nothing(null/undefined) and more. This is the only required method to render a component.
 
 ```javascript
 class Hello extends dio.Component {
 	render () {
 		return h('div', 'Text') || [h('div'), h('div')]
+	}
+}
+```
+
+The render method support a wide variety of return types
+
+- elements
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return h('div', 'Element')
+	}
+}
+```
+
+
+- strings
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return 'String'
+	}
+}
+```
+
+- number
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return 911
+	}
+}
+```
+
+- arrays
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return [h('div', 'Call '), 911]
+	}
+}
+```
+
+- functions
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return h => props => h('h1', 'Call the police');
+	}
+}
+```
+
+- coroutines
+
+```javascript
+class Hello extends dio.Component {
+	*render () {
+		yield h('h1', 'Going once...');
+		yield h('h1', 'Going twice..');
+		yield h('h1', 'Sold!')	
+	}
+}
+```
+
+- promises
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return h('div', 'A knight in shining armor')
+	}
+}
+```
+
+- components
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return class extends Component {
+			render () {
+				return h('h1', 'Inception!')
+			}
+		}
+	}
+}
+```
+
+- component descriptors(any object that implements a render method)
+
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return {
+			render () {
+				return h('h1', 'Inception!')
+			}
+		}
+	}
+}
+```
+
+or even
+
+```javascript
+class Hello extends dio.Component {
+	render () {
+		return h => ({
+			render () {
+				return h('h1', 'Dio, dah')
+			}
+		})
 	}
 }
 ```
@@ -239,7 +357,6 @@ class Foo extends Component {
 Foo.defaultProps = {id: 100};
 ```
 
-
 #### getInitialProps
 
 similar to getDefaultProps, getInitialProps is a method used to assign the initial props of the component. This method receives the props passed to the component if any and returns an `{Object}` or sets the props manually via `this.props = {}`.
@@ -253,6 +370,21 @@ class Foo extends Component {
 	}
 	render () {
 
+	}
+}
+```
+
+If this method returns a promise/promise-like object(i.e a dio stream) the component will go into async rendering mode.
+
+```javascript
+class Foo extends Component {
+	async getInitialProps () {
+		return {
+			id: 100
+		}
+	}
+	render ({id}) {
+		return h('h1', 'Id Number:' + id)
 	}
 }
 ```
@@ -413,6 +545,46 @@ class Hello extends dio.Component {
 				options: {passive: true}
 			}
 		})
+	}
+}
+```
+
+## Error Boundries
+
+All components created with dio are sandboxed by error boundries which allow for components to go down gracefully when they fail/throw as opposed to taking down a the application.
+
+If an error is triggered from render a second retry will always happen asynchronously prior to going into a errored state, this allows for common error that can naturally get resolved in the next event loop cycle to get resolved, if that doesn't solve it the component then goes into an errored state. In an errored state by default dio will log a detailed error to the console and render nothing in the place of the component.
+
+To control component errored states you can use the lifecycle method `componentDidThrow` that is executed when an error is thrown from anywhere within the component. 
+
+Error boundries cover all parts of the component including invalid render types - when render returns an invalid element or object that is not render-able. Render-able types include `numbers/strings/functions/components/arrays/promises` and `elements` that are valid DOM elements, this is to say that if it fails when dio internally calls `document.createElement` it will get caught by the error boundry and sent to componentDidThrow with the `location: "element"`
+
+#### componentDidThrow
+
+This method receives one argument with the following shape 
+
+```javascript
+{
+	location, // location that the error was thrown
+	stack,    // stack trace
+	silence,  // assign to true to silence console logging
+	from      // name of component the error was thrown from
+}
+```
+The return value of this method if a valid render type will be used to render the error state of the component.
+
+```javascript
+class Foo extends dio.Component {	
+	componentDidThrow({location}) {
+		switch (location) {
+			case 'render': 
+				return h('h1', `
+					You thought it would throw but instead you found me... DIO! haha.
+				`)
+		}
+	}
+	render() {
+		throw 'Pawned! Hahaha!'
 	}
 }
 ```
@@ -628,7 +800,7 @@ similar to renderToString except this method renders the output to a stream. Thi
 dio.renderToStream(Hello, template)
 ```
 
-This method like renderToString accepts 2 arguments the second of which is differs from renderToString in that it expects `template` to be a string if passed where as renderToString also accepts functions.
+This method like renderToString accepts 2 arguments the second of which differs from renderToString in that it expects the optional `template` to be a string if passed where as renderToString also accepts functions.
 
 ## renderToCache
 
@@ -653,7 +825,7 @@ app.use(context => {
 });
 ```
 
-In the above example the Head component is only every computed.
+In the above example the `Head` component is only every computed.
 
 ## createStore
 
@@ -942,14 +1114,3 @@ var bar = dio.stream.scan((sum, n) => {
 foo(1)(1)(2)
 bar() // => 4 
 ```
-
-
-## FAQ
-
-> Is this like react?
-
-Yes, dio shares a great deal of its api with react.
-
-> What is the nano package
-
-The nano is dio core (4kb) without the extras.

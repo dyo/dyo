@@ -5,7 +5,7 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - blackhole</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="../assets/dio.min.js"></script>
+		<script src="../assets/dio.js"></script>
 		<style>
 			html, body { height: 100%; }
 			body { overflow: hidden; background: rgba(0,0,0,.96); }
@@ -14,14 +14,14 @@
 	</head>
 <body>
 	<script>	  	
-		var {VElement} = dio;
+		var {element} = dio;
 		
   		function Particle(x, y, distance, speed) {
-			this.angle    = Math.random() * 2 * Math.PI;
-			this.radius   = Math.random()*2; 
-			this.opacity  = (Math.random()*5 + 2)/10;
+			this.angle = Math.random() * 2 * Math.PI;
+			this.radius = Math.random()*2; 
+			this.opacity = (Math.random()*5 + 2)/10;
 			this.distance = (1/this.opacity)*distance;
-			this.speed    = this.distance * 0.00005;
+			this.speed = this.distance * 0.00005;
 			
 			this.position = {
 		  		x: x + this.distance * Math.cos(this.angle),
@@ -45,7 +45,7 @@
 
 		  		var style = 'opacity:'+opacity+';width:'+size+'px; height:'+size+'px;'+'transform:'+'translate('+x+'px,'+y+'px);';
 
-		  		return VElement('span', {style: style }, null);
+		  		return element('span', {style: style }, null);
 			}
   		}
 
@@ -71,7 +71,7 @@
 
   		var render = dio.render({ 
   			render() { 
-  				return VElement('div', null, getParticles()); 
+  				return element('div', null, getParticles()); 
   			}
   		});
 

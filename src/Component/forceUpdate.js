@@ -7,36 +7,45 @@
  */
 function forceUpdate (callback) {
 	if (this.componentWillUpdate !== void 0) {
-		this.componentWillUpdate(this.props, this.state);
+		componentUpdateBoundary(this, 'componentWillUpdate', this.props, this.state);
 	}
 
-	var newNode = extractRender(this);
-	var oldNode = this.VNode;
+	var newNode = extractRenderNode(this);
+	var oldNode = this.vnode;
 
-	// component returns a different root node
-	if (newNode.type !== oldNode.type) {		
-		// replace node
-		replaceNode(newNode, oldNode, oldNode.DOMNode.parentNode, createNode(newNode, null, null));
+	var newType = newNode.nodeType;
+	var oldType = oldNode.nodeType;
 
-		// hydrate newNode
-		oldNode.nodeType = newNode.nodeType;
-		oldNode.type = newNode.type;
-		oldNode.props = newNode.props;
-		oldNode.children = newNode.children;
-		oldNode.DOMNode = newNode.DOMNode;
-		newNode.instance = oldNode.instance;
-	} else {
-		// patch node
-		patchNodes(newNode, oldNode, newNode.nodeType, oldNode.nodeType);
+	// different root node
+	if (newNode.type !== oldNode.type) {
+		// render returns a promise
+		if (newType === void 0) {
+			return;
+		}
+
+		replaceRootNode(newNode, oldNode, newType, oldType, this);
+	} 
+	// patch node
+	else {
+		// text root node
+		if (oldType === 3) {
+			if (newNode.children !== oldNode.children) {
+				oldNode.DOMNode.nodeValue = oldNode.children = newNode.children;
+			}
+		} 
+		// element root node
+		else {
+			patchNodes(newNode, oldNode, newType, oldType);
+		}
 	}
 
 	if (this.componentDidUpdate !== void 0) {
-		this.componentDidUpdate(this.props, this.state);
+		componentUpdateBoundary(this, 'componentDidUpdate', this.props, this.state);
 	}
 
-	// if callback function call with the component as `this` context
+	// callback
 	if (callback != null && typeof callback === 'function') {
-		callback.call(this);
+		componentStateBoundary(this, callback, 1, null);
 	}
 }
 

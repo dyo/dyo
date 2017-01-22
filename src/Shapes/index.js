@@ -7,11 +7,11 @@
  */
 
 
-import 'VElement';
-import 'VComponent';
-import 'VFragment';
-import 'VText';
-import 'VSvg';
-import 'VNode';
-import 'VEmpty';
-import 'VRequest';
+import 'createElementShape';
+import 'createComponentShape';
+import 'createFragmentShape';
+import 'createTextShape';
+import 'createSvgShape';
+import 'createVNodeShape';
+import 'createEmptyShape';
+import 'createRequestShape';

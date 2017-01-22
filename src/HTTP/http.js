@@ -66,7 +66,8 @@ function http (options) {
 
 			if (enctype.indexOf('x-www-form-urlencoded') > -1) {
 				payload = serialize(payload);
-			} else if (enctype.indexOf('json') > -1) {
+			} 
+			else if (enctype.indexOf('json') > -1) {
 				payload = JSON.stringify(payload);
 			}
 		}
@@ -74,9 +75,9 @@ function http (options) {
 		// headers property
 		if (headers != null) {
 			// assign headers
-			each(headers, function (value, name) {
-				xhr.setRequestHeader(name, value);
-			});
+			for (var name in headers) {
+				xhr.setRequestHeader(name, headers[name]);
+			}
 		}
 
 		// if, assign inital value of stream

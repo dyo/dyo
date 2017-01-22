@@ -7,6 +7,6 @@
  * @return {boolean}
  */
 function isValidElement (subject) {
-	return subject != null && subject.nodeType != null;
+	return subject != null && subject.nodeType != null && subject.nodeName === void 0;
 }
 

@@ -83,9 +83,9 @@ function watcher (parent, builds) {
 
 function bootstrap () {
 	var builds = {
-		nano: ['../packages/nano/', '../packages/nano/', '../packages/nano/dio.js', 'index.js'],
-		main: ['../src/', '../src/', '../dio.js', 'index.js'],
-		docs: ['../src/', '../src/', '../docs/assets/dio.js', 'index.js'],
+		nano: ['../src/', '../src/', '../packages/nano/dio.js', 'nano.js'],
+		main: ['../src/', '../src/', '../dio.js', 'main.js'],
+		docs: ['../src/', '../src/', '../docs/assets/dio.js', 'main.js'],
 	};
 
 	// log watching status
@@ -105,7 +105,7 @@ function bootstrap () {
 
 		build(directory, destination, entry, ext);
 
-		if (name === 'main' || name === 'docs') {
+		if (name === 'main' || name === 'nano') {
 			fs.watch(directory, watcher(parent, builds));
 			walk(directory, watch);
 		} else {

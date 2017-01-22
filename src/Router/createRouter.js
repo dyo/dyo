@@ -2,11 +2,11 @@
  * router constructor
  * 
  * @param {Object<string, (function|Component)>} patterns
- * @param {string=}                              address
+ * @param {string=}                              directory
  * @param {function=}                            initialiser
  * @param {function=}                            notFound
  */
-function createRouter (patterns, address, initialiser, notFound) {
+function createRouter (patterns, directory, initialiser, notFound) {
 	// listens for changes to the url
 	function listen () {
 		if (interval !== 0) {
@@ -55,7 +55,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 		Object.defineProperty(routes, uri, {
 			value: Object.create(null, {
 				callback: { value: callback, },
-				pattern:  { value: new RegExp((address ? address + pattern : pattern) + '$'), },
+				pattern:  { value: new RegExp(directory + pattern + '$'), },
 				params:   { value: params, }
 			}),
 			enumerable: true
@@ -79,37 +79,33 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 	// find a match from the available routes
 	function finder (route, uri, current) {
-		var callback = route.callback;
-		var pattern = route.pattern;
-		var params = route.params;
-		var match = current.match(pattern);
+		var match = current.match(route.pattern);
 
 		// we have a match
 		if (match != null) {
 			// create params object to pass to callback
 			// i.e {user: 'simple', id: '1234'}
-			var data = match.slice(1, match.length);
-
-			var args = data.reduce(function (previousValue, currentValue, index) {
+			var args = match.slice(1, match.length).reduce(function (prev, val, i) {
 				// if this is the first value, create variables store
-				if (previousValue === null) {
-					previousValue = {url: current};
+				if (prev === null) {
+					prev = {url: current};
 				}
 
 				// name: value, i.e user: 'simple'
 				// `vars` contains the keys for variables
-				previousValue[params[index]] = currentValue;
+				prev[route.params[i]] = val;
 
-				return previousValue;
+				return prev;
 
 				// null --> first value
 			}, null) || {uri: current};
 
-			callback(args, uri);
+			route.callback(args, uri);
 
 			// register match
 			resolved = 1;
-		} else {
+		}
+		else {
 			// register not found
 			resolved = 0;
 		}
@@ -130,7 +126,7 @@ function createRouter (patterns, address, initialiser, notFound) {
 	// navigate to a uri
 	function navigate (uri) {
 		if (typeof uri === 'string') {
-			history.pushState(null, null, address ? address + uri : uri);
+			history.pushState(null, null, directory + uri);
 		}
 	}
 
@@ -158,8 +154,8 @@ function createRouter (patterns, address, initialiser, notFound) {
 
 	// normalize rootAddress format
 	// i.e '/url/' -> '/url', 47 === `/` character
-	if (typeof address === 'string' && address.charCodeAt(address.length - 1) === 47) {
-		address = address.substring(0, address.length - 1);
+	if (typeof directory === 'string' && directory.charCodeAt(directory.length - 1) === 47) {
+		directory = directory.substring(0, directory.length - 1);
 	}
 
 	var regex = /([:*])(\w+)|([\*])/g;
@@ -204,7 +200,8 @@ function createRouter (patterns, address, initialiser, notFound) {
 		if (type === 'function') {
 			// initialiser function
 			initialiser(api);
-		} else if (type === 'string') {
+		}
+		else if (type === 'string') {
 			// navigate to path
 			navigate(initialiser);
 		}

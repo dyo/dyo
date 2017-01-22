@@ -5,12 +5,14 @@
  * @return {VNode}
  */
 function cloneNode (subject) {
-	return VNode(
+	return createVNodeShape(
 		subject.nodeType,
 		subject.type,
 		subject.props,
 		subject.children,
 		subject.DOMNode,
+		null,
+		null,
 		null,
 		null
 	);

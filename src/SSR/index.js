@@ -13,4 +13,3 @@ import 'renderToCache';
 import 'renderStylesheetToString';
 import 'renderPropsToString';
 import 'renderVNodeToString';
-import 'renderVNode';

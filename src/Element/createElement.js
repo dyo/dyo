@@ -37,19 +37,21 @@ function createElement (type, props) {
 					for (var j = 0, len = child.length; j < len; j++) {
 						index = createChild(child[j], children, index);
 					}
-				} else {
+				}
+				else {
 					index = createChild(child, children, index);
 				}
 			}
 		}
 	}
 
-	// if type is a function, create component VNode
+	// component
 	if (typeof type === 'function') {
-		return VComponent(type, props, children);
-	} 
+		return createComponentShape(type, props, children);
+	}
+	// fragment
 	else if (type === '@') {
-		return VFragment(children);
+		return createFragmentShape(children);
 	} 
 	else {
 		if (props === null) {
@@ -61,12 +63,13 @@ function createElement (type, props) {
 		if (props.xmlns === void 0) {	
 			if (type === 'svg') { 
 				props.xmlns = nsSvg; 
-			} else if (type === 'math') { 
+			}
+			else if (type === 'math') { 
 				props.xmlns = nsMath; 
 			}
 		}
 
-		return VElement(type, props, children);
+		return createElementShape(type, props, children);
 	}
 }
 

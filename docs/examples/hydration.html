@@ -5,7 +5,7 @@
 		<meta http-equiv="x-ua-compatible" content="ie=edge">
 		<title>dio.js - Hydration Example</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="../assets/dio.min.js"></script>
+		<script src="../assets/dio.js"></script>
 		<link rel="stylesheet" href="assets/style.css">
 	</head>
 	<body>
@@ -47,11 +47,17 @@
 
 			var html = dio.renderToString(Component);
 
+			// add whitespace
+			html = html.replace('<li>Second Year</li>', `
+				<li>Second Year</li>
+			`)
+			console.log(html);
+
 			// server-Side render mock
-			document.querySelector('.app').innerHTML = html;
+			document.querySelector('.app').innerHTML = 'Hi there<h1> I am un affected html already in the dom</h1>'+html;
 			
 			// var start = performance.now();
-			dio.render(h(Component), '.app', function (el) { /*console.log(el)*/ }, true);			
+			dio.render(h(Component), '.app', function (el) { /*console.log(el)*/ }, 0);			
 		</script>
 	</body>
 </html>

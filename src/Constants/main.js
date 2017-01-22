@@ -8,12 +8,12 @@
 
 
 // current version
-var version = '5.1.0';
+var version = '6.0.0';
 
-// enviroment variables
+// enviroment specific variables
 var document = window.document || null;
 var browser = document !== null;
-var server = browser === false;
+var Promise = window.Promise;
 
 // namespaces
 var nsStyle = 'data-scope';
@@ -22,7 +22,9 @@ var nsXlink = 'http://www.w3.org/1999/xlink';
 var nsSvg = 'http://www.w3.org/2000/svg';
 
 // empty shapes
-var objEmpty = Object.create(null);
+var objEmpty = {};
 var arrEmpty = [];
-var nodEmpty = VNode(0, '', objEmpty, arrEmpty, null, null, null);
+var nodeEmpty = createVNodeShape(0, '', objEmpty, arrEmpty, null, null, null, null, null);
+var funcEmpty = function () {};
+var fragProps = {style: 'display: inherit;'};
 

@@ -10,18 +10,19 @@
 function serialize (object, prefix) {
 	var arr = [];
 
-	each(object, function (value, key) {
-		var prefixValue = prefix !== void 0 ? prefix + '[' + key + ']' : key;
+	for (var key in object) {
+		var value = object[key];
+		var prefixed = prefix !== void 0 ? prefix + '[' + key + ']' : key;
 
 		// recursive serialize
 		if (typeof value == 'object') {
-			arr[arr.length] = serialize(value, prefixValue);
+			arr[arr.length] = serialize(value, prefixed);
 		}
 		// serialize
 		else {
-			arr[arr.length] = encodeURIComponent(prefixValue) + '=' + encodeURIComponent(value);
+			arr[arr.length] = encodeURIComponent(prefixed) + '=' + encodeURIComponent(value);
 		}
-	});
+	}
 
 	return arr.join('&');
 }

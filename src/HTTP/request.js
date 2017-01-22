@@ -49,7 +49,7 @@ function request (options) {
  * @return {function} {then, catch, done, ...}
  */
 request.get = function (url, payload, enctype, responseType) {
-	return request(VRequest('GET', url, payload, enctype, responseType));
+	return request(createRequestShape('GET', url, payload, enctype, responseType));
 };
 
 
@@ -63,6 +63,6 @@ request.get = function (url, payload, enctype, responseType) {
  * @return {function} {then, catch, done, ...}
  */
 request.post = function (url, payload, enctype, responseType) {
-	return request(VRequest('POST', url, payload, enctype, responseType));
+	return request(createRequestShape('POST', url, payload, enctype, responseType));
 };
 

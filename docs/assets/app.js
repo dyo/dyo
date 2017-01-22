@@ -58,7 +58,8 @@
 
 		function update (self) {
 			return function () {
-				self.setState({loading: false}, highlighter);
+				self.setState({loading: false});
+				highlighter();
 			}
 		}
 
