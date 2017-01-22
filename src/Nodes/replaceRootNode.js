@@ -22,8 +22,8 @@ function replaceRootNode (newNode, oldNode, newType, oldType, component) {
 	);
 
 	// stylesheet
-	if (newType === 1 && component.stylesheet !== void 0) {
-		createScopedStyleSheet(component, component.constructor, newNode.DOMNode);
+	if (newType !== 3 && component.stylesheet !== void 0) {
+		createScopedStylesheet(component, component.constructor, newNode.DOMNode);
 	}
 
 	// hydrate new node

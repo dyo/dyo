@@ -34,7 +34,7 @@
 	
 	
 	// current version
-	var version = '6.0.0';
+	var version = '6.0.1';
 	
 	// enviroment specific variables
 	var document = window.document || null;
@@ -363,14 +363,19 @@
 	 * @param {function}  constructor
 	 * @param {Node?}     element
 	 */
-	function createScopedStyleSheet (component, constructor, element) {
-		// create
-		if (component.stylesheet.CSSNamespace === void 0) {
-			createScopedCSS(component, constructor.COMPCache || constructor, true)(element);
+	function createScopedStylesheet (component, constructor, element) {
+		try {
+			// create
+			if (component.stylesheet.CSSNamespace === void 0) {
+				createScopedCSS(component, constructor.COMPCache || constructor, true)(element);
+			}
+			// namespace
+			else {
+				component.stylesheet(element);
+			}
 		}
-		// namespace
-		else {
-			component.stylesheet(element);
+		catch (error) {
+			componentErrorBoundary(error, component, 'stylesheet');
 		}
 	}
 	
@@ -2022,8 +2027,8 @@
 		var thrown = component.thrown;
 	
 		component.thrown = thrown + 1;
-		
-		if (error instanceof Error === false) {
+	
+		if ((error instanceof Error) === false) {
 			error = new Error(error);
 		}
 	
@@ -2032,7 +2037,7 @@
 			setTimeout(call, 0, component.forceUpdate, component, null);
 		}
 		// multiple render throws / non-render location
-		else {		
+		else {
 			authored = typeof component.componentDidThrow === 'function';
 	
 			// define error
@@ -2041,10 +2046,18 @@
 				location: {value: location}, 
 				from: {value: (displayName = component.displayName || component.constructor.name)}
 			});
-			
+	
 			// authored error handler
 		    if (authored) {
-		    	newNode = component.componentDidThrow(error);
+		    	try {
+		    		newNode = component.componentDidThrow(error);
+		    	}
+		    	catch (err) {
+		    		if (thrown >= 0) {
+		    			component.thrown = -1;
+		    			componentErrorBoundary(err, component, 'componentDidThrow');
+		    		}
+		    	}
 		    }
 	
 		    if (error.silence !== true) {
@@ -2057,9 +2070,22 @@
 		        );
 		    }
 	
-		    if (authored) {
+		    if (authored && location !== 'stylesheet') {	    	
 		    	// return render node
 		    	if (location === 'render' || location === 'element') {
+		    		if (typeof newNode.type === 'string') {
+		    			if (/^[A-z]/g.exec(newNode.type) === null) {
+	    					console.error(
+	    						'Dio bailed out of rendering an error state.\n\n'+
+	    						'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
+							);
+	
+		    				return;
+		    			}
+	
+		    			newNode.type = newNode.type.replace(/ /g, '');
+		    		}
+	
 		    		return newNode;
 		    	}
 		    	// async replace render node
@@ -2288,15 +2314,11 @@
 					} 
 					// unsupported render types, fail gracefully
 					else {
-						return componentErrorBoundary(
-							componentRenderBoundary(
-								component,
-								'render', 
-								subject.constructor.name, 
-								'Reason: `render` returns an unsupported element type'
-							),
+						return componentRenderBoundary(
 							component,
-							'render'
+							'render', 
+							subject.constructor.name, 
+							''
 						) || createEmptyShape();
 					}
 				}
@@ -2786,6 +2808,12 @@
 	
 		var thrown = 0;
 		var vnodeType = vnode.nodeType;
+	
+		// text
+		if (vnodeType === 3) {
+			return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
+		}
+	
 		var instance = subject.instance !== null;
 	
 		// assign namespace
@@ -2811,14 +2839,7 @@
 		}
 		// create html element
 		else {
-			// text
-			if (vnodeType === 3) {
-				return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
-			}
-			// element
-			else {
-				element = createDOMNode(type, component);
-			}
+			element = createDOMNode(type, component);
 		}
 	
 		// stylesheets
@@ -2833,7 +2854,7 @@
 			}
 	
 			if (nodeType === 2 && component.stylesheet !== void 0 && type !== 'noscript') {
-				createScopedStyleSheet(component, subject.type, element);
+				createScopedStylesheet(component, subject.type, element);
 			}
 		}
 	
@@ -2989,8 +3010,8 @@
 		);
 	
 		// stylesheet
-		if (newType === 1 && component.stylesheet !== void 0) {
-			createScopedStyleSheet(component, component.constructor, newNode.DOMNode);
+		if (newType !== 3 && component.stylesheet !== void 0) {
+			createScopedStylesheet(component, component.constructor, newNode.DOMNode);
 		}
 	
 		// hydrate new node

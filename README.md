@@ -34,15 +34,15 @@ dio is a javascript framework for building applications.
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/6.0.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/6.0.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/6.0.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/6.0.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@6.0.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@6.0.1/dio.min.js></script>
 ```
 
 #### bower

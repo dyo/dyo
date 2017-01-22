@@ -18,8 +18,8 @@ function componentErrorBoundary (error, component, location) {
 	var thrown = component.thrown;
 
 	component.thrown = thrown + 1;
-	
-	if (error instanceof Error === false) {
+
+	if ((error instanceof Error) === false) {
 		error = new Error(error);
 	}
 
@@ -28,7 +28,7 @@ function componentErrorBoundary (error, component, location) {
 		setTimeout(call, 0, component.forceUpdate, component, null);
 	}
 	// multiple render throws / non-render location
-	else {		
+	else {
 		authored = typeof component.componentDidThrow === 'function';
 
 		// define error
@@ -37,10 +37,18 @@ function componentErrorBoundary (error, component, location) {
 			location: {value: location}, 
 			from: {value: (displayName = component.displayName || component.constructor.name)}
 		});
-		
+
 		// authored error handler
 	    if (authored) {
-	    	newNode = component.componentDidThrow(error);
+	    	try {
+	    		newNode = component.componentDidThrow(error);
+	    	}
+	    	catch (err) {
+	    		if (thrown >= 0) {
+	    			component.thrown = -1;
+	    			componentErrorBoundary(err, component, 'componentDidThrow');
+	    		}
+	    	}
 	    }
 
 	    if (error.silence !== true) {
@@ -53,9 +61,22 @@ function componentErrorBoundary (error, component, location) {
 	        );
 	    }
 
-	    if (authored) {
+	    if (authored && location !== 'stylesheet') {	    	
 	    	// return render node
 	    	if (location === 'render' || location === 'element') {
+	    		if (typeof newNode.type === 'string') {
+	    			if (/^[A-z]/g.exec(newNode.type) === null) {
+    					console.error(
+    						'Dio bailed out of rendering an error state.\n\n'+
+    						'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
+						);
+
+	    				return;
+	    			}
+
+	    			newNode.type = newNode.type.replace(/ /g, '');
+	    		}
+
 	    		return newNode;
 	    	}
 	    	// async replace render node

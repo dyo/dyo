@@ -1,8 +1,15 @@
+## 6.0.1 (January 22, 2016)
+
+- patch error boundaries to support `stylesheet`
+- patch error boundaries to support error boundry handler `componentDidThrow`
+- patch stylesheet, prevents adding styles to components that return components that return text nodes
+- patch stylesheet, support adding namespacing to components that return components recursively
+
 ## 6.0.0 (January 22, 2016)
 
 - adds async component support for `getInitialProps` on the server and client
 - adds render types, render supports `coroutine/element/number/string/function/component/array/promise`
-- adds error boundries to components for non-breaking graceful error state handling
+- adds error boundaries to components for non-breaking graceful error state handling
 - improves keyed algorithm
 
 ## 5.1.0 (January 10, 2016)

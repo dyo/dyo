@@ -81,15 +81,11 @@ function extractVirtualNode (subject, component) {
 				} 
 				// unsupported render types, fail gracefully
 				else {
-					return componentErrorBoundary(
-						componentRenderBoundary(
-							component,
-							'render', 
-							subject.constructor.name, 
-							'Reason: `render` returns an unsupported element type'
-						),
+					return componentRenderBoundary(
 						component,
-						'render'
+						'render', 
+						subject.constructor.name, 
+						''
 					) || createEmptyShape();
 				}
 			}

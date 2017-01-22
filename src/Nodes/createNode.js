@@ -29,6 +29,12 @@ function createNode (subject, component, namespace) {
 
 	var thrown = 0;
 	var vnodeType = vnode.nodeType;
+
+	// text
+	if (vnodeType === 3) {
+		return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
+	}
+
 	var instance = subject.instance !== null;
 
 	// assign namespace
@@ -54,14 +60,7 @@ function createNode (subject, component, namespace) {
 	}
 	// create html element
 	else {
-		// text
-		if (vnodeType === 3) {
-			return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
-		}
-		// element
-		else {
-			element = createDOMNode(type, component);
-		}
+		element = createDOMNode(type, component);
 	}
 
 	// stylesheets
@@ -76,7 +75,7 @@ function createNode (subject, component, namespace) {
 		}
 
 		if (nodeType === 2 && component.stylesheet !== void 0 && type !== 'noscript') {
-			createScopedStyleSheet(component, subject.type, element);
+			createScopedStylesheet(component, subject.type, element);
 		}
 	}
 

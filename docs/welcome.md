@@ -1,6 +1,6 @@
 dio is a javascript framework for building applications.
 
-<p>[Install v6.0.0](./#installation "button")</p>
+<p>[Install v6.0.1](./#installation "button")</p>
 
 ```javascript
 class Main extends dio.Component {
