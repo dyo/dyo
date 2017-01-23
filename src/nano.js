@@ -25,15 +25,14 @@
 
 
 	import 'Constants/main';
-	import 'Utilities/call';
+	import 'Utilities/schedule';
 	import 'Shapes/createElementShape';
 	import 'Shapes/createComponentShape';
 	import 'Shapes/createFragmentShape';
 	import 'Shapes/createTextShape';
 	import 'Shapes/createSvgShape';
-	import 'Shapes/createVNodeShape';
+	import 'Shapes/createNodeShape';
 	import 'Shapes/createEmptyShape';
-
 	import 'Stylesheet/';
 	import 'Element/';
 	import 'Component/';

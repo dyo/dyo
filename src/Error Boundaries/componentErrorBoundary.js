@@ -25,7 +25,9 @@ function componentErrorBoundary (error, component, location) {
 
 	// intial throw from render, retry once
 	if (thrown === 0 && browser && location === 'render') {
-		setTimeout(call, 0, component.forceUpdate, component, null);
+		schedule(function () {
+			component.forceUpdate(null);
+		});
 	}
 	// multiple render throws / non-render location
 	else {
@@ -64,7 +66,7 @@ function componentErrorBoundary (error, component, location) {
 	    if (authored && location !== 'stylesheet') {	    	
 	    	// return render node
 	    	if (location === 'render' || location === 'element') {
-	    		if (typeof newNode.type === 'string') {
+	    		if (newNode != null && typeof newNode.type === 'string') {
 	    			if (/^[A-z]/g.exec(newNode.type) === null) {
     					console.error(
     						'Dio bailed out of rendering an error state.\n\n'+
@@ -80,16 +82,16 @@ function componentErrorBoundary (error, component, location) {
 	    		return newNode;
 	    	}
 	    	// async replace render node
-	    	else if (browser && newNode != null && newNode !== true && newNode !== false) {	 
-				setTimeout(
-					replaceRootNode, 
-					0, 
-					extractVirtualNode(newNode), 
-					oldNode = component.vnode, 
-					newNode.nodeType, 
-					oldNode.nodeType, 
-					component
-				)
+	    	else if (browser && newNode != null && newNode !== true && newNode !== false) {
+	    		schedule(function () {
+	    			replaceRootNode(
+	    				extractVirtualNode(newNode), 
+	    				oldNode = component.vnode, 
+	    				newNode.nodeType, 
+	    				oldNode.nodeType, 
+	    				component
+    				)
+	    		});
 	    	}
 	    }
 	}

@@ -1,3 +1,8 @@
+## 6.0.2 (January 24, 2016)
+
+- patch for string `style` props
+- use faster timers where available to schedule an async task
+
 ## 6.0.1 (January 22, 2016)
 
 - patch error boundaries to support `stylesheet`

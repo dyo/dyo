@@ -1,12 +1,12 @@
 /**
- * patch nodes
+ * reconcile nodes
  *  
  * @param  {VNode}  newNode
  * @param  {VNode}  oldNode
  * @param  {number} newNodeType
  * @param  {number} oldNodeType
  */
-function patchNodes (newNode, oldNode, newNodeType, oldNodeType) {	
+function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {	
 	// if newNode and oldNode, exit early
 	if (newNode === oldNode) {
 		return;
@@ -153,14 +153,14 @@ function patchNodes (newNode, oldNode, newNodeType, oldNodeType) {
 			}
 			// noop
 			else {
-				patchNodes(newChild, oldChild, newType, oldType);
+				reconcileNodes(newChild, oldChild, newType, oldType);
 			}
 		}
 
 		// reconcile keyed children
 		if (keyed) {
 			// new and old keys object are of differing shapes
-			patchKeys([newKeys, oldKeys], parentNode, newNode, oldNode, newLength, oldLength, pos);
+			reconcileKeys([newKeys, oldKeys], parentNode, newNode, oldNode, newLength, oldLength, pos);
 		}
 	}
 

@@ -1,5 +1,5 @@
 /**
- * create VNode shape
+ * create node shape
  *
  * @param  {number}                      nodeType
  * @param  {(string|function|Component)} type
@@ -11,7 +11,7 @@
  * @param  {Component}                   parent
  * @return {VNode}
  */
-function createVNodeShape (nodeType, type, props, children, DOMNode, instance, index, parent, key) {
+function createNodeShape (nodeType, type, props, children, DOMNode, instance, index, parent, key) {
 	return {
 		nodeType: nodeType,
 		type: type,

@@ -34,12 +34,20 @@
 	
 	
 	// current version
-	var version = '6.0.1';
+	var version = '6.0.2';
 	
-	// enviroment specific variables
+	// enviroment
 	var document = window.document || null;
 	var browser = document !== null;
+	
+	// other
 	var Promise = window.Promise;
+	var requestAnimationFrame = window.requestAnimationFrame;
+	var setImmediate = window.setImmediate;
+	
+	var promiseSupport = Promise !== void 0;
+	var requestAnimationFrameSupport = requestAnimationFrame !== void 0;
+	var setImmediateSupport = setImmediate !== void 0;
 	
 	// namespaces
 	var nsStyle = 'data-scope';
@@ -50,7 +58,7 @@
 	// empty shapes
 	var objEmpty = {};
 	var arrEmpty = [];
-	var nodeEmpty = createVNodeShape(0, '', objEmpty, arrEmpty, null, null, null, null, null);
+	var nodeEmpty = createNodeShape(0, '', objEmpty, arrEmpty, null, null, null, null, null);
 	var funcEmpty = function () {};
 	var fragProps = {style: 'display: inherit;'};
 	
@@ -113,19 +121,6 @@
 	
 	
 	/**
-	 * call function with context
-	 * 
-	 * @param  {function} func
-	 * @param  {any}      context
-	 * @param  {any}      arg
-	 * @return {any}
-	 */
-	function call (func, context, arg) {
-		return func.call(context, arg);
-	}
-	
-	
-	/**
 	 * try catch helper
 	 * 
 	 * @param  {function}  func
@@ -141,6 +136,37 @@
 			return errorHandler != null && errorHandler(error);
 		}
 	}
+	
+	
+	/**
+	 * schedule callback
+	 * 
+	 * @type {function}
+	 * @param {function} callback
+	 */
+	var schedule;
+	
+	if (requestAnimationFrameSupport) {
+		schedule = function schedule (callback) { 
+			requestAnimationFrame(callback);
+		}
+	}
+	else if (setImmediateSupport) {
+		schedule = function schedule (callback) { 
+			setImmediate(callback); 
+		}
+	}
+	else if (promiseSupport) {
+		schedule = function schedule (callback) { 
+			Promise.resolve().then(callback); 
+		}
+	}
+	else {
+		schedule = function schedule (callback) { 
+			setTimeout(callback, 0); 
+		}
+	}
+	
 	
 	
 	/**
@@ -274,7 +300,7 @@
 	
 	
 	/**
-	 * create VNode shape
+	 * create node shape
 	 *
 	 * @param  {number}                      nodeType
 	 * @param  {(string|function|Component)} type
@@ -286,7 +312,7 @@
 	 * @param  {Component}                   parent
 	 * @return {VNode}
 	 */
-	function createVNodeShape (nodeType, type, props, children, DOMNode, instance, index, parent, key) {
+	function createNodeShape (nodeType, type, props, children, DOMNode, instance, index, parent, key) {
 		return {
 			nodeType: nodeType,
 			type: type,
@@ -1569,7 +1595,7 @@
 	 * @return {VNode}
 	 */
 	function cloneNode (subject) {
-		return createVNodeShape(
+		return createNodeShape(
 			subject.nodeType,
 			subject.type,
 			subject.props,
@@ -1718,7 +1744,7 @@
 			} 
 			// element root node
 			else {
-				patchNodes(newNode, oldNode, newType, oldType);
+				reconcileNodes(newNode, oldNode, newType, oldType);
 			}
 		}
 	
@@ -2034,7 +2060,9 @@
 	
 		// intial throw from render, retry once
 		if (thrown === 0 && browser && location === 'render') {
-			setTimeout(call, 0, component.forceUpdate, component, null);
+			schedule(function () {
+				component.forceUpdate(null);
+			});
 		}
 		// multiple render throws / non-render location
 		else {
@@ -2073,7 +2101,7 @@
 		    if (authored && location !== 'stylesheet') {	    	
 		    	// return render node
 		    	if (location === 'render' || location === 'element') {
-		    		if (typeof newNode.type === 'string') {
+		    		if (newNode != null && typeof newNode.type === 'string') {
 		    			if (/^[A-z]/g.exec(newNode.type) === null) {
 	    					console.error(
 	    						'Dio bailed out of rendering an error state.\n\n'+
@@ -2089,16 +2117,16 @@
 		    		return newNode;
 		    	}
 		    	// async replace render node
-		    	else if (browser && newNode != null && newNode !== true && newNode !== false) {	 
-					setTimeout(
-						replaceRootNode, 
-						0, 
-						extractVirtualNode(newNode), 
-						oldNode = component.vnode, 
-						newNode.nodeType, 
-						oldNode.nodeType, 
-						component
-					)
+		    	else if (browser && newNode != null && newNode !== true && newNode !== false) {
+		    		schedule(function () {
+		    			replaceRootNode(
+		    				extractVirtualNode(newNode), 
+		    				oldNode = component.vnode, 
+		    				newNode.nodeType, 
+		    				oldNode.nodeType, 
+		    				component
+	    				)
+		    		});
 		    	}
 		    }
 		}
@@ -2108,7 +2136,7 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * render components
+	 * extract
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -2478,7 +2506,7 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * render props
+	 * props
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -2494,27 +2522,13 @@
 	 */
 	function assignProps (target, props, onlyEvents, component) {
 		for (var name in props) {
-			assignProp(target, name, props, onlyEvents, component);
-		}
-	}
-	
-	
-	/**
-	 * assign prop for create element
-	 * 
-	 * @param  {Node}       target
-	 * @param  {string}     name
-	 * @param  {Object}     props
-	 * @param  {boolean}    onlyEvents,
-	 * @param  {Component}  component
-	 */
-	function assignProp (target, name, props, onlyEvents, component) {
-		if (isEventName(name)) {
-			addEventListener(target, extractEventName(name), props[name], component);
-		}
-		else if (onlyEvents === false) {
-			// add attribute
-			updateProp(target, 'setAttribute', name, props[name], props.xmlns);
+			if (isEventName(name)) {
+				addEventListener(target, extractEventName(name), props[name], component);
+			}
+			else if (onlyEvents === false) {
+				// add attribute
+				updateProp(target, 'setAttribute', name, props[name], props.xmlns);
+			}
 		}
 	}
 	
@@ -2526,82 +2540,41 @@
 	 * @param  {VNode} oldNode
 	 */
 	function patchProps (newNode, oldNode) {
-		var diff   = diffProps(newNode, oldNode, newNode.props.xmlns || '', []);
-		var length = diff.length;
+		var newProps = newNode.props;
+		var oldProps = oldNode.props;
+		var namespace = newNode.props.xmlns || '';
+		var target = oldNode.DOMNode;
+		var length = 0;
 	
-		// if diff length > 0 apply diff
-		if (length !== 0) {
-			var target = oldNode.DOMNode;
-	
-			for (var i = 0; i < length; i++) {
-				var prop = diff[i];
-				// [0: action, 1: name, 2: value, namespace]
-				updateProp(target, prop[0], prop[1], prop[2], prop[3]);
-			}
-	
-			oldNode.props = newNode.props;
-		}
-	}
-	
-	
-	/**
-	 * collect prop diffs
-	 * 
-	 * @param  {VNode}   newNode 
-	 * @param  {VNode}   oldNode 
-	 * @param  {string}  namespace
-	 * @param  {Array[]} diff
-	 * @return {Array[]}          
-	 */
-	function diffProps (newNode, oldNode, namespace, diff) {
 		// diff newProps
 		for (var newName in newNode.props) { 
-			diffNewProps(newNode, oldNode, newName, namespace, diff); 
+			var newValue = newProps[newName];
+			var oldValue = oldProps[newName];
+	
+			if (newValue != null && oldValue !== newValue) {
+				updateProp(target, 'setAttribute', newName, newValue, namespace);
+				
+				if (length === 0) {
+					length++;
+				}
+			}
 		}
 	
 		// diff oldProps
 		for (var oldName in oldNode.props) { 
-			diffOldProps(newNode, oldName, namespace, diff); 
+			var newValue = newProps[oldName];
+	
+			if (newValue == null) {
+				updateProp(target, 'removeAttribute', oldName, '', namespace);
+				
+				if (length === 0) {
+					length++;
+				}
+			}
 		}
 	
-		return diff;
-	}
-	
-	
-	/**
-	 * diff newProps agains oldProps
-	 * 
-	 * @param  {VNode}   newNode 
-	 * @param  {VNode}   oldNode 
-	 * @param  {string}  newName
-	 * @param  {string}  namespace
-	 * @param  {Array[]} diff
-	 * @return {Array[]}          
-	 */
-	function diffNewProps (newNode, oldNode, newName, namespace, diff) {
-		var newValue = newNode.props[newName];
-		var oldValue = oldNode.props[newName];
-	
-		if (newValue != null && oldValue !== newValue) {
-			diff[diff.length] = ['setAttribute', newName, newValue, namespace];
-		}
-	}
-	
-	
-	/**
-	 * diff oldProps agains newProps
-	 * 
-	 * @param  {VNode}   newNode 
-	 * @param  {Object}  oldName 
-	 * @param  {string}  namespace
-	 * @param  {Array[]} diff
-	 * @return {Array[]}          
-	 */
-	function diffOldProps (newNode, oldName, namespace, diff) {
-		var newValue = newNode.props[oldName];
-	
-		if (newValue == null) {
-			diff[diff.length] = ['removeAttribute', oldName, '', namespace];
+		if (length !== 0) {
+			oldNode.props = newNode.props;
 		}
 	}
 	
@@ -2655,7 +2628,12 @@
 		else {
 			// id, className etc..
 			if (targetProp !== void 0 && isSVG === false) {
-				target[propName] = propValue;
+				if (propName === 'style') {
+					target.style.cssText = propValue;
+				}
+				else {
+					target[propName] = propValue;
+				}
 			}
 			// setAttribute/removeAttribute
 			else {
@@ -2713,7 +2691,7 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * render nodes
+	 * nodes
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -3037,7 +3015,7 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * render events
+	 * events
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -3126,7 +3104,7 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * render refs
+	 * refs
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
@@ -3152,14 +3130,14 @@
 	/**
 	 * ---------------------------------------------------------------------------------
 	 * 
-	 * reconciler
+	 * reconcile
 	 * 
 	 * ---------------------------------------------------------------------------------
 	 */
 	
 	
 	/**
-	 * patch keyed nodes
+	 * reconcile keyed nodes
 	 *
 	 * @param {Object<string, any>[2]} keys
 	 * @param {Node}                   parentNode
@@ -3169,7 +3147,7 @@
 	 * @param {number}                 oldLength
 	 * @param {number}                 pos
 	 */
-	function patchKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, pos) {
+	function reconcileKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, pos) {
 		var reconciled = new Array(newLength);
 		var childNodes = parentNode.childNodes;
 	
@@ -3247,7 +3225,7 @@
 				} 
 				// append
 				else {
-					appendNode(nodeType, newChild, parentNode,nextNode);
+					appendNode(nodeType, newChild, parentNode, nextNode);
 				}
 	
 				added++;
@@ -3278,14 +3256,14 @@
 	}
 	
 	/**
-	 * patch nodes
+	 * reconcile nodes
 	 *  
 	 * @param  {VNode}  newNode
 	 * @param  {VNode}  oldNode
 	 * @param  {number} newNodeType
 	 * @param  {number} oldNodeType
 	 */
-	function patchNodes (newNode, oldNode, newNodeType, oldNodeType) {	
+	function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {	
 		// if newNode and oldNode, exit early
 		if (newNode === oldNode) {
 			return;
@@ -3432,14 +3410,14 @@
 				}
 				// noop
 				else {
-					patchNodes(newChild, oldChild, newType, oldType);
+					reconcileNodes(newChild, oldChild, newType, oldType);
 				}
 			}
 	
 			// reconcile keyed children
 			if (keyed) {
 				// new and old keys object are of differing shapes
-				patchKeys([newKeys, oldKeys], parentNode, newNode, oldNode, newLength, oldLength, pos);
+				reconcileKeys([newKeys, oldKeys], parentNode, newNode, oldNode, newLength, oldLength, pos);
 			}
 		}
 	
@@ -4146,6 +4124,9 @@
 	function stream (value, middleware) {
 		var store;
 	
+		// state
+		var paused = false;
+	
 		// this allows us to return values in a .then block that will
 		// get passed to the next .then block
 		var chain = { then: null, catch: null };
@@ -4162,7 +4143,13 @@
 		function Stream (value) {
 			// received value, update stream
 			if (arguments.length !== 0) {
-				return (setTimeout(dispatch, 0, 'then', store = value), Stream);
+				store = value;
+				
+				schedule(function () {
+					dispatch('then', store);
+				});
+	
+				return Stream;
 			}
 			else {
 				// if you pass a middleware function i.e a = stream(1, String)
@@ -4180,6 +4167,10 @@
 	
 		// dispatcher, dispatches listerners
 		function dispatch (type, value) {
+			if (paused) {
+				return;
+			}
+	
 			var collection = listeners[type];
 			var length = collection.length;
 	
@@ -4204,8 +4195,10 @@
 		}
 	
 		// reject
-		function reject (reason) { 
-			setTimeout(dispatch, 0, 'catch', reason);
+		function reject (reason) {
+			schedule(function () {
+				dispatch('catch', reason);
+			});
 		}
 	
 		// add done listener, ends the chain
@@ -4259,10 +4252,21 @@
 		function end (value) {
 			value !== void 0 && (store = value);
 	
-			chain.then      = null;
-			chain.catch     = null; 
-			listeners.then  = []; 
+			paused = false;
+			chain.then = null;
+			chain.catch = null; 
+			listeners.then = []; 
 			listeners.catch = [];
+		}
+	
+		// pause stream
+		function pause () {
+			paused = true;
+		}
+	
+		// resume stream
+		function resume () {
+			paused = false;
 		}
 	
 		// assign public methods
@@ -4275,6 +4279,8 @@
 		Stream.toJSON = toJSON;
 		Stream.resolve = resolve;
 		Stream.reject = reject;
+		Stream.pause = pause;
+		Stream.resume = resume;
 	
 		// signature
 		Stream._stream = true;
@@ -5125,7 +5131,7 @@
 	}
 	
 	
-
+	
 
 	/**
 	 * ---------------------------------------------------------------------------------

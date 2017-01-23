@@ -8,7 +8,13 @@
  */
 function assignProps (target, props, onlyEvents, component) {
 	for (var name in props) {
-		assignProp(target, name, props, onlyEvents, component);
+		if (isEventName(name)) {
+			addEventListener(target, extractEventName(name), props[name], component);
+		}
+		else if (onlyEvents === false) {
+			// add attribute
+			updateProp(target, 'setAttribute', name, props[name], props.xmlns);
+		}
 	}
 }
 

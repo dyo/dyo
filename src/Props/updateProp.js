@@ -47,7 +47,12 @@ function updateProp (target, action, name, propValue, namespace) {
 	else {
 		// id, className etc..
 		if (targetProp !== void 0 && isSVG === false) {
-			target[propName] = propValue;
+			if (propName === 'style') {
+				target.style.cssText = propValue;
+			}
+			else {
+				target[propName] = propValue;
+			}
 		}
 		// setAttribute/removeAttribute
 		else {

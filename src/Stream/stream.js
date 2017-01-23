@@ -10,6 +10,9 @@
 function stream (value, middleware) {
 	var store;
 
+	// state
+	var paused = false;
+
 	// this allows us to return values in a .then block that will
 	// get passed to the next .then block
 	var chain = { then: null, catch: null };
@@ -26,7 +29,13 @@ function stream (value, middleware) {
 	function Stream (value) {
 		// received value, update stream
 		if (arguments.length !== 0) {
-			return (setTimeout(dispatch, 0, 'then', store = value), Stream);
+			store = value;
+			
+			schedule(function () {
+				dispatch('then', store);
+			});
+
+			return Stream;
 		}
 		else {
 			// if you pass a middleware function i.e a = stream(1, String)
@@ -44,6 +53,10 @@ function stream (value, middleware) {
 
 	// dispatcher, dispatches listerners
 	function dispatch (type, value) {
+		if (paused) {
+			return;
+		}
+
 		var collection = listeners[type];
 		var length = collection.length;
 
@@ -68,8 +81,10 @@ function stream (value, middleware) {
 	}
 
 	// reject
-	function reject (reason) { 
-		setTimeout(dispatch, 0, 'catch', reason);
+	function reject (reason) {
+		schedule(function () {
+			dispatch('catch', reason);
+		});
 	}
 
 	// add done listener, ends the chain
@@ -123,10 +138,21 @@ function stream (value, middleware) {
 	function end (value) {
 		value !== void 0 && (store = value);
 
-		chain.then      = null;
-		chain.catch     = null; 
-		listeners.then  = []; 
+		paused = false;
+		chain.then = null;
+		chain.catch = null; 
+		listeners.then = []; 
 		listeners.catch = [];
+	}
+
+	// pause stream
+	function pause () {
+		paused = true;
+	}
+
+	// resume stream
+	function resume () {
+		paused = false;
 	}
 
 	// assign public methods
@@ -139,6 +165,8 @@ function stream (value, middleware) {
 	Stream.toJSON = toJSON;
 	Stream.resolve = resolve;
 	Stream.reject = reject;
+	Stream.pause = pause;
+	Stream.resume = resume;
 
 	// signature
 	Stream._stream = true;

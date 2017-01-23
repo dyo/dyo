@@ -35,7 +35,7 @@ function forceUpdate (callback) {
 		} 
 		// element root node
 		else {
-			patchNodes(newNode, oldNode, newType, oldType);
+			reconcileNodes(newNode, oldNode, newType, oldType);
 		}
 	}
 

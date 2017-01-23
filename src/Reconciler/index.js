@@ -1,11 +1,11 @@
 /**
  * ---------------------------------------------------------------------------------
  * 
- * reconciler
+ * reconcile
  * 
  * ---------------------------------------------------------------------------------
  */
 
 
-import 'patchKeys';
-import 'patchNodes';
+import 'reconcileKeys';
+import 'reconcileNodes';

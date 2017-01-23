@@ -1,5 +1,5 @@
 /**
- * patch keyed nodes
+ * reconcile keyed nodes
  *
  * @param {Object<string, any>[2]} keys
  * @param {Node}                   parentNode
@@ -9,7 +9,7 @@
  * @param {number}                 oldLength
  * @param {number}                 pos
  */
-function patchKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, pos) {
+function reconcileKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, pos) {
 	var reconciled = new Array(newLength);
 	var childNodes = parentNode.childNodes;
 
@@ -87,7 +87,7 @@ function patchKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, po
 			} 
 			// append
 			else {
-				appendNode(nodeType, newChild, parentNode,nextNode);
+				appendNode(nodeType, newChild, parentNode, nextNode);
 			}
 
 			added++;

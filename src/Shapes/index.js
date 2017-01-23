@@ -12,6 +12,6 @@ import 'createComponentShape';
 import 'createFragmentShape';
 import 'createTextShape';
 import 'createSvgShape';
-import 'createVNodeShape';
+import 'createNodeShape';
 import 'createEmptyShape';
 import 'createRequestShape';
