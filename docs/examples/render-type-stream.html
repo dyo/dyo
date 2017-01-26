@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<title>dio.js - Stream Render Type</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<script src="../assets/dio.js"></script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script>
+			var bar = dio.stream(h('h1', 'Initial stream value'));
+
+			class Foo extends dio.Component {
+				render() {
+					return bar;
+				}
+			}
+
+			setTimeout(bar, 1000, h('h1', 'Updated stream value once'));
+			setTimeout(bar, 2000, h('h1', 'Updated stream value twice'));
+
+			dio.render(Foo, '#root');
+		</script>
+	</body>
+</html>
