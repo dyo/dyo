@@ -31,7 +31,10 @@
 - [Render Type Function](/examples/render-type-function.html)
 - [Render Type Number](/examples/render-type-number.html)
 - [Render Type String](/examples/render-type-string.html)
+- [Render Type Stream](/examples/render-type-stream.html)
 - [Render Type Coroutine](/examples/render-type-coroutine.html)
+- [Render Type Coroutine Async](/examples/render-type-coroutine-async.html)
+- [Render Type Portal](/examples/render-type-portal.html)
 
 - [Render Type Component 1](/examples/render-type-component-1.html)
 - [Render Type Component 2](/examples/render-type-component-2.html)
