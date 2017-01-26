@@ -1893,8 +1893,6 @@
 			shape = extractVirtualNode(shape, {props: props});
 		}
 	
-		// console.log(type, shape.Type);
-	
 		// elements/functions
 		if (type !== 0) {
 			// render method
