@@ -77,24 +77,9 @@
 		render: render,
 		shallow: shallow,
 
-		// server
-		renderToString: renderToString,
-		renderToStream: renderToStream,
-		renderToCache: renderToCache,
-
 		// components
 		Component: Component,
 		createClass: createClass,
-
-		// stores
-		createStore: createStore,
-		applyMiddleware: applyMiddleware,
-		combineReducers: combineReducers,
-		
-		// utilities
-		request: request,
-		router: router,
-		stream: stream,
 
 		// shapes
 		text: createTextShape,
@@ -104,6 +89,21 @@
 		component: createComponentShape,
 
 		// stylesheet
-		stylesheet: stylesheet
+		stylesheet: stylesheet,
+
+		// server
+		renderToString: renderToString,
+		renderToStream: renderToStream,
+		renderToCache: renderToCache,
+
+		// stores
+		createStore: createStore,
+		applyMiddleware: applyMiddleware,
+		combineReducers: combineReducers,
+		
+		// utilities
+		request: request,
+		router: router,
+		stream: stream
 	};
 }));

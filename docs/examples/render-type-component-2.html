@@ -12,7 +12,7 @@
 		<script>
 			class Foo extends dio.Component {
 				render() {
-					return h => props => h('h1', `
+					return props => props => h('h1', `
 						I am a component, 
 						The backing component instance will get cached 
 						when created outside of render

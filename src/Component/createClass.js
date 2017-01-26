@@ -4,9 +4,10 @@
  * @public
  * 
  * @param  {(Object<string, any>|function(createElement): (Object<string, any>|function))} subject
+ * @param  {Object<string, any>=} props
  * @return {function(new:Component, Object<string, any>)}
  */
-function createClass (subject) {
+function createClass (subject, props) {
 	// empty class
 	if (subject == null) {
 		subject = createEmptyShape();
@@ -21,30 +22,33 @@ function createClass (subject) {
 	var func = typeof subject === 'function';
 
 	// extract shape of component
-	var shape = func ? (subject(createElement) || createEmptyShape()) : subject;
-	
+	var shape = func ? (subject(createElement) || createEmptyShape()) : subject;	
+	var type = typeof shape === 'function' ? 2 : (shape.Type != null ? 1 : 0);
 	var construct = false;
-
+	
 	var vnode;
 	var constructor;
 	var render;
 
 	// numbers, strings, arrays
-	if (shape.constructor !== Object && shape.render === void 0) {
-		shape = extractVirtualNode(shape, null);
+	if (type !== 2 && shape.constructor !== Object && shape.render === void 0) {
+		shape = extractVirtualNode(shape, {props: props});
 	}
 
+	// console.log(type, shape.Type);
+
 	// elements/functions
-	if (shape.nodeType !== void 0 || typeof shape === 'function') {
+	if (type !== 0) {
 		// render method
-		render = shape.nodeType !== void 0 ? (vnode = shape, function () { return vnode; }) : shape;
+		render = type === 1 ? (vnode = shape, function () { return vnode; }) : shape;
 
 		// new shape
 		shape = { render: render };
 	}
 	else {
-		// shape has a constructor
-		(construct = shape.hasOwnProperty('constructor')) && (constructor = shape.constructor);
+		if (construct = shape.hasOwnProperty('constructor')) {
+			constructor = shape.constructor
+		}
 
 		// create render method if one does not exist
 		if (typeof shape.render !== 'function') {
@@ -55,7 +59,9 @@ function createClass (subject) {
 	// create component class
 	function component (props) {
 		// constructor
-		construct && constructor.call(this, props);
+		if (construct) {
+			constructor.call(this, props);
+		}
 
 		// extend Component
 		Component.call(this, props); 

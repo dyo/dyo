@@ -11,6 +11,7 @@ function updateProp (target, action, name, propValue, namespace) {
 	// avoid refs, keys, events and xmlns namespaces
 	if (name === 'ref' || 
 		name === 'key' || 
+		name === 'children' ||
 		isEventName(name) || 
 		propValue === nsSvg || 
 		propValue === nsMath

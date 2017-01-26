@@ -53,7 +53,7 @@ function reconcileKeys (keys, parentNode, newNode, oldNode, newLength, oldLength
 
 		// removed
 		if (newChild === void 0) {
-			removeNode(oldChild.nodeType, oldChild, parentNode);
+			removeNode(oldChild.Type, oldChild, parentNode);
 			removed++;
 		}
 
@@ -72,7 +72,7 @@ function reconcileKeys (keys, parentNode, newNode, oldNode, newLength, oldLength
 
 		// new
 		if (oldChild === void 0) {
-			nodeType = newChild.nodeType;
+			nodeType = newChild.Type;
 			nextNode = createNode(newChild, null, null);
 
 			// insert

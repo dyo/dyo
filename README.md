@@ -4,8 +4,8 @@
 
 dio is a javascript framework for building applications.
 
-- ~11kb 
-- ~7kb (nano)
+- ~12kb 
+- ~8kb (nano)
 
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
@@ -34,15 +34,15 @@ dio is a javascript framework for building applications.
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/6.0.2/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/6.1.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/6.0.2/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/6.1.0/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@6.0.2/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@6.1.0/dio.min.js></script>
 ```
 
 #### bower
@@ -79,7 +79,7 @@ Kind of, dio shares some of its top-level api with react.
 
 > What is the nano package
 
-The nano is dio core (7kb) without the extras.
+The nano is dio core (8kb) without the extras.
 
 ## API
 

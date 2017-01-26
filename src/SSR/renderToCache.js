@@ -8,18 +8,18 @@
  */
 function renderToCache (subject) {
 	if (subject != null) {
-		// array, run all VNodes through renderToCache
+		// array
 		if (subject.constructor === Array) {
 			for (var i = 0, length = subject.length; i < length; i++) {
 				renderToCache(subject[i]);
 			}
 		}
-		// Component
-		else if (subject.nodeType === void 0) {
+		// component
+		else if (subject.Type === void 0) {
 			subject.HTMLCache = renderToString(subject);
 		}
-		// VNode
-		else if (subject.nodeType === 2) {
+		// vnode
+		else if (subject.Type === 2) {
 			subject.type.HTMLCache = renderToString(subject);
 		}
 	}

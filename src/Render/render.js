@@ -33,8 +33,10 @@ function render (subject, target, callback, hydration) {
 			// update props
 			if (newProps !== void 0) {
 				// component with shouldComponentUpdate
-				if (component.shouldComponentUpdate !== void 0 && 
-					componentUpdateBoundary(component, 'shouldComponentUpdate', newProps, component.state) === false) {
+				if (
+					component.shouldComponentUpdate !== void 0 && 
+					componentUpdateBoundary(component, 'shouldComponentUpdate', newProps, component.state) === false
+				) {
 					// exit early
 					return renderer;
 				}
@@ -56,22 +58,27 @@ function render (subject, target, callback, hydration) {
 
 	// Object
 	if (subject.render !== void 0) {
-		vnode = createComponentShape(createClass(subject));
+		vnode = createComponentShape(createClass(subject, null), objEmpty, arrEmpty);
 	}
-	// array/Component/function
-	else if (subject.nodeType === void 0) {
-		// fragment
+	// array/component/function
+	else if (subject.Type === void 0) {
+		// array
 		if (subject.constructor === Array) {
 			vnode = createElement('@', null, subject);
 		}
-		// component
+		// component/function
 		else {
-			vnode = createComponentShape(subject);
+			vnode = createComponentShape(subject, objEmpty, arrEmpty);
 		}
 	} 
 	// element/component
 	else {
 		vnode = subject;
+	}
+
+	// element
+	if (vnode.Type !== 2) {
+		vnode = createComponentShape(createClass(vnode, null), objEmpty, arrEmpty);
 	}
 
 	// mount
@@ -85,11 +92,6 @@ function render (subject, target, callback, hydration) {
 
   		// default to document.body if no match/document
   		element = (target === null || target === document) ? document.body : target;
-	}
-
-	// element
-	if (vnode.nodeType !== 2) {
-		vnode = createComponentShape(createClass(subject));
 	}
 
 	// hydration

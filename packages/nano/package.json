@@ -2,7 +2,7 @@
 	"name": "dio-nano",
 	"main": "dio.js",
 	"description": "dio is a javascript framework for building applications.",
-	"version": "6.0.2",
+	"version": "6.1.0",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",
 	"author": {

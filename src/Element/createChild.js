@@ -8,25 +8,29 @@
  */
 function createChild (child, children, index) {
 	if (child != null) {
-		if (child.nodeType !== void 0) {
-			// Element
+		// vnode
+		if (child.Type !== void 0) {
 			children[index++] = child;
+		}
+		// portal
+		else if (child.nodeType !== void 0) {
+			children[index++] = createPortalShape(child, objEmpty, arrEmpty);
 		}
 		else {
 			var type = typeof child;
 
+			// function/component
 			if (type === 'function') {
-				// Component
-				children[index++] = createComponentShape(child, null, null);
+				children[index++] = createComponentShape(child, objEmpty, arrEmpty);
 			}
+			// array
 			else if (type === 'object') {
-				// Array
-				for (var i = 0, len = child.length; i < len; i++) {
+				for (var i = 0, length = child.length; i < length; i++) {
 					index = createChild(child[i], children, index);
 				}
 			}
+			// text
 			else {
-				// Text
 				children[index++] = createTextShape(type !== 'boolean' ? child : '');
 			}
 		}

@@ -8,8 +8,10 @@
  */
 function setState (newState, callback) {
 	// exist early if shouldComponentUpdate exists and returns false
-	if (this.shouldComponentUpdate !== void 0 && 
-		componentUpdateBoundary(this, 'shouldComponentUpdate', this.props, newState) === false) {
+	if (
+		this.shouldComponentUpdate !== void 0 && 
+		componentUpdateBoundary(this, 'shouldComponentUpdate', this.props, newState) === false
+	) {
 		return;
 	}
 

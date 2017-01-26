@@ -11,14 +11,26 @@ function extractVirtualNode (subject, component) {
 		return createEmptyShape();
 	}
 	// element
-	else if (subject.nodeType !== void 0) {
+	else if (subject.Type !== void 0) {
 		return subject;
+	}
+	// portal
+	else if (subject.nodeType !== void 0) {	
+		return (
+			subject = createPortalShape(subject, objEmpty, arrEmpty), 
+			subject.Type = 5, 
+			subject
+		);
 	}
 	else {
 		switch (subject.constructor) {
 			// component
 			case Component: {
-				return createComponentShape(subject, null, null);
+				return createComponentShape(subject, objEmpty, arrEmpty);
+			}
+			// booleans
+			case Boolean: {
+				return createEmptyShape();
 			}
 			// fragment
 			case Array: {
@@ -30,13 +42,21 @@ function extractVirtualNode (subject, component) {
 			}
 			// component/function
 			case Function: {
+				// stream
+				if (subject.then != null && typeof subject.then === 'function') {
+					subject.then(function resolveStreamUpdates () {
+						component.forceUpdate();
+					}).catch(funcEmpty);
+
+					return extractVirtualNode(subject(), component);
+				}
 				// component
-				if (subject.prototype !== void 0 && subject.prototype.render !== void 0) {
-					return createComponentShape(subject, null, null);
+				else if (subject.prototype !== void 0 && subject.prototype.render !== void 0) {
+					return createComponentShape(subject, objEmpty, arrEmpty);
 				}
 				// function
 				else {
-					return createComponentShape(createClass(subject), null, null);
+					return extractVirtualNode(subject((component && component.props) || {}), component);
 				}
 			}
 			// promise
@@ -46,8 +66,8 @@ function extractVirtualNode (subject, component) {
 						replaceRootNode(
 							extractVirtualNode(newNode), 
 							subject = component.vnode, 
-							newNode.nodeType, 
-							subject.nodeType, 
+							newNode.Type, 
+							subject.Type, 
 							component
 						);
 					}).catch(funcEmpty);
@@ -58,37 +78,38 @@ function extractVirtualNode (subject, component) {
 
 				return createEmptyShape();
 			}
-			default: {
-				// coroutine
-				if (subject.return != null && typeof subject.next === 'function' && component != null) {
-					component.yield = true;
-					component.render = subject;
+		}
 
-					if (component.constructor.prototype !== void 0) {
-						component.constructor.prototype.render = function render () {
-							return subject.next().value;
-						};
-					}
-
-					return extractVirtualNode(subject.next().value, component);
-				}
-				// component descriptor
-				else if (typeof subject.render === 'function') {
-					return (
-						subject.COMPCache || 
-						createComponentShape(subject.COMPCache = createClass(subject), null, null)
-					);
-				} 
-				// unsupported render types, fail gracefully
-				else {
-					return componentRenderBoundary(
-						component,
-						'render', 
-						subject.constructor.name, 
-						''
-					) || createEmptyShape();
-				}
+		// coroutine
+		if (typeof subject.next === 'function' || (subject.prototype != null && subject.prototype.next != null)) {			
+			if (subject.return == null) {
+				subject = subject(component.props, component.state, component);
 			}
+
+			component.yield = true;
+			component.render = subject;
+
+			component.constructor.prototype.render = function render () {
+				return subject.next().value;
+			};
+
+			return extractVirtualNode(subject.next().value, component);
+		}
+		// component descriptor
+		else if (typeof subject.render === 'function') {
+			return (
+				subject.COMPCache || 
+				createComponentShape(subject.COMPCache = createClass(subject, null), objEmpty, arrEmpty)
+			);
+		} 
+		// unsupported render types, fail gracefully
+		else {
+			return componentRenderBoundary(
+				component,
+				'render', 
+				subject.constructor.name, 
+				''
+			) || createEmptyShape();
 		}
 	}
 }

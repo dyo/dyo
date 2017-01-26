@@ -7,7 +7,7 @@
  * @return {string}  
  */
 function renderVNodeToString (subject, lookup, initial) {
-	var nodeType = subject.nodeType;
+	var nodeType = subject.Type;
 
 	// textNode
 	if (nodeType === 3) {

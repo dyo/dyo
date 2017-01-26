@@ -6,13 +6,13 @@
  */
 function cloneNode (subject) {
 	return createNodeShape(
-		subject.nodeType,
+		subject.Type,
 		subject.type,
 		subject.props,
 		subject.children,
 		subject.DOMNode,
 		null,
-		null,
+		0,
 		null,
 		null
 	);

@@ -26,8 +26,10 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 		var newState = newComponent.state;
 
 		// component with shouldComponentUpdate
-		if (oldComponent.shouldComponentUpdate !== void 0 && 
-			componentUpdateBoundary(oldComponent, 'shouldComponentUpdate', newProps, newState) === false) {
+		if (
+			oldComponent.shouldComponentUpdate !== void 0 && 
+			componentUpdateBoundary(oldComponent, 'shouldComponentUpdate', newProps, newState) === false
+		) {
 			// exit early
 			return;
 		}
@@ -87,8 +89,8 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 		// greater value between new length and old length
 		for (var i = 0; i < length; i++) {
 			// avoid accessing out of bounds index and nodeType where unnecessary
-			newType = i < newLength ? (newChild = newChildren[i]).nodeType : (newChild = nodeEmpty, 0);
-			oldType = i < oldLength ? (oldChild = oldChildren[i]).nodeType : (oldChild = nodeEmpty, 0);
+			newType = i < newLength ? (newChild = newChildren[i]).Type : (newChild = nodeEmpty, 0);
+			oldType = i < oldLength ? (oldChild = oldChildren[i]).Type : (oldChild = nodeEmpty, 0);
 
 			if (keyed) {
 				// push keys

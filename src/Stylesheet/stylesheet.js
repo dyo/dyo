@@ -51,48 +51,40 @@ function stylesheet (selector, styles, animations, compact, middleware) {
 
     // uses middleware
     var use = middleware != null;
+    var plugins;
 
-    // object
+    // middleware
     if (use) {
         var uses = (typeof middleware).charCodeAt(0);
 
         // o, object of middlewares
         if (uses === 111) {
-            var keys = Object.keys(middleware).map(function (key) {
-                return [key, new RegExp(key+'\\([ \t\r\n]*([^\0]*?)[ \t\r\n]*\\)', 'g')];
-            });
-
-            var plugins = middleware;
-            var funcs = keys.length;
-
-            middleware = function (ctx, str, line, col) {
-                // block context
-                if (ctx === 2) {
-                    for (var i = 0; i < funcs; i++) {
-                        var plugin = keys[i];
-                        var key = plugin[0];
-                        var regex = plugin[1];
-
-                        str = str.replace(regex, function (match, capture) {
-                            return (
-                                    plugins[key].apply(
-                                    null, 
-                                    capture.replace(/[ \t\r\n]*,[ \t\r\n]*/g, ',').split(',')
-                                ) || match
-                            );
-                        });
-                    }
-
-                    return str;
-                }
-            };
+            for (var i = 0, keys = Object.keys(middleware), length = keys.length; i < length; i++) {
+                stylesheet.use(keys[i], middleware[keys[i]]);
+            }
         }
-        // f, single function middleware
+        // f, not a single function middleware
         else if (uses !== 102) {
             use = false;
         }
     }
 
+    // plugins
+    if ((plugins = stylesheet.plugins).length !== 0) {
+        middleware = function (ctx, str, line, col) {
+            var output = str;
+
+            for (var i = 0, length = plugins.length; i < length; i++) {
+                output = plugins[i](ctx, output, line, col) || output;
+            }
+
+            return output !== str ? output : void 0;
+        };
+
+        use = true;
+    }
+
+    // declare
     var colon;
     var inner;
     var selectors;
@@ -116,13 +108,6 @@ function stylesheet (selector, styles, animations, compact, middleware) {
     var nest = '';
     var flat = '';
 
-    // positions
-    var caret = 0;
-    var depth = 0;
-    var column = 0;
-    var line = 1;
-    var eof = styles.length;
-
     // context signatures       
     var special = 0;
     var close = 0;
@@ -140,6 +125,22 @@ function stylesheet (selector, styles, animations, compact, middleware) {
     var ms = '-ms-';
     var webkit = '-webkit-';
 
+    if (use) {
+        temp = middleware(0, styles, line, column);
+        
+        if (temp != null) {
+            styles = temp;
+        }
+    }
+
+    // positions
+    var caret = 0;
+    var depth = 0;
+    var column = 0;
+    var line = 1;
+    var eof = styles.length;
+
+    // compiled output
     var output = '';
 
     // parse + compile
@@ -165,14 +166,14 @@ function stylesheet (selector, styles, animations, compact, middleware) {
             if (use && code !== 125) {
                 // { selector context
                 if (code === 123) {
-                    temp = middleware(0, buff.substring(0, buff.length-1).trim(), line, column);
+                    temp = middleware(1, buff.substring(0, buff.length - 1).trim(), line, column);
                 } 
                 // ; property context
                 else {
-                    temp = middleware(1, buff, line, column);
+                    temp = middleware(2, buff, line, column);
                 }
 
-                if (temp !== void 0) {
+                if (temp != null) {
                     buff = code === 123 ? temp + '{' : temp;
                 }
             }
@@ -191,9 +192,11 @@ function stylesheet (selector, styles, animations, compact, middleware) {
 
                     // middleware, flat context
                     if (use) {
-                        temp = middleware(3, flat, line, column);
+                        temp = middleware(4, flat, line, column);
                     
-                        temp !== void 0 && (flat = temp);
+                        if (temp != null) {
+                            flat = temp;
+                        }
                     }
 
                     output += flat;
@@ -267,9 +270,9 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                                 selector = selectors[i];
 
                                 // build media block
-                                media += stylis(
+                                media += stylesheet(
                                     // remove { on last selector
-                                    (i === length - 1 ? selector.substring(0, selector.length-1) :  selector).trim(),
+                                    (i === length - 1 ? selector.substring(0, selector.length - 1) :  selector).trim(),
                                     inner, 
                                     animations, 
                                     compact, 
@@ -293,38 +296,49 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                 }
 
                 // @include/@import `i` character
-                if (second === 105) {   
-                    if (compact === true) {                 
-                        // @include `n` character
-                        if (third === 110) {
-                            buff = buff.substring(9, buff.length-1);
-                            indexOf = buff.indexOf('(');
+                if (second === 105) {
+                    // @include `n` character
+                    if (compact === true && third === 110) {
+                        buff = buff.substring(9, buff.length - 1);
+                        indexOf = buff.indexOf('(');
 
-                            // function mixins
-                            if (indexOf > -1) {
-                                // mixin name
-                                var name = buff.substring(0, indexOf);
+                        // function mixins
+                        if (indexOf > -1) {
+                            // mixin name
+                            var name = buff.substring(0, indexOf);
 
-                                // mixin data
-                                var data = mixins[name];
+                            // mixin data
+                            var data = mixins[name];
 
-                                // args passed to the mixin
-                                var argsPassed = buff.substring(name.length+1, buff.length-1).split(',');
+                            // args passed to the mixin
+                            var argsPassed = buff.substring(name.length+1, buff.length - 1).split(',');
 
-                                // args the mixin expects
-                                var argsExpected = data.key.replace(name, '').replace(/\(|\)/g, '').trim().split(',');
-                                
-                                buff = data.body;
+                            // args the mixin expects
+                            var argsExpected = data.key.replace(name, '').replace(/\(|\)/g, '').trim().split(',');
+                            
+                            buff = data.body;
 
-                                for (var i = 0, length = argsPassed.length; i < length; i++) {
-                                    var arg = argsExpected[i].trim();
+                            for (var i = 0, length = argsPassed.length; i < length; i++) {
+                                var arg = argsExpected[i].trim();
 
-                                    // if the mixin has a slot for that arg
-                                    if (arg !== void 0) {
-                                        buff = buff.replace(new RegExp('var\\(~~'+arg+'\\)', 'g'), argsPassed[i].trim());
-                                    }
+                                // if the mixin has a slot for that arg
+                                if (arg !== void 0) {
+                                    buff = buff.replace(new RegExp('var\\(~~'+arg+'\\)', 'g'), argsPassed[i].trim());
                                 }
+                            }
 
+                            // create block and update styles length
+                            styles += buff;
+                            eof += buff.length;
+
+                            // reset
+                            buff = '';
+                        }
+                        // static mixins
+                        else {
+                            buff = mixins[buff].body;
+
+                            if (depth === 0) {
                                 // create block and update styles length
                                 styles += buff;
                                 eof += buff.length;
@@ -332,37 +346,24 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                                 // reset
                                 buff = '';
                             }
-                            // static mixins
-                            else {
-                                buff = mixins[buff].body;
-
-                                if (depth === 0) {
-                                    // create block and update styles length
-                                    styles += buff;
-                                    eof += buff.length;
-
-                                    // reset
-                                    buff = '';
-                                }
-                            }
                         }
-                        // @import `m` character
-                        else if (third === 109 && use) {
-                            // avoid "foo.css"; "foo" screen; "http://foo.com/bar"; url(foo);
-                            var match = /@import.*?(["'][^\.\n\r]*?["'];|["'].*\.scss["'])/g.exec(buff);
+                    }
+                    // @import `m` character
+                    else if (third === 109 && use) {
+                        // avoid "foo.css"; "foo" screen; "http://foo.com/bar"; url(foo);
+                        var match = /@import.*?(["'`][^\.\n\r]*?["'`];|["'`][^:\r\n]*?\.[^c].*?["'`])/g.exec(buff);
 
-                            if (match !== null) {
-                                // middleware, import context
-                                buff = middleware(4, match[1].replace(/['"; ]/g, ''), line, column) || '';
+                        if (match !== null) {
+                            // middleware, import context
+                            buff = middleware(5, match[1].replace(/['"; ]/g, ''), line, column) || '';
 
-                                if (buff) {
-                                    // create block and update styles length
-                                    styles = styles.substring(0, caret+1) + buff + styles.substring(caret+1);
-                                    eof += buff.length;
-                                }
-
-                                buff = '';
+                            if (buff) {
+                                // create block and update styles length
+                                styles = styles.substring(0, caret+1) + buff + styles.substring(caret+1);
+                                eof += buff.length;
                             }
+
+                            buff = '';
                         }
                     }
                 }
@@ -380,7 +381,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                 variables === void 0 && (variables = []);
 
                 // push key value pair
-                variables[variables.length] = [buff.substring(0, colon), buff.substring(colon+1, buff.length-1).trim()];
+                variables[variables.length] = [buff.substring(0, colon), buff.substring(colon+1, buff.length - 1).trim()];
 
                 // reset buffer
                 buff = '';
@@ -390,7 +391,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                 // animation: a, n, i characters
                 if (first === 97 && second === 110 && third === 105) {
                     // removes ;
-                    buff = buff.substring(0, buff.length-1);
+                    buff = buff.substring(0, buff.length - 1);
 
                     // position of :
                     colon = buff.indexOf(':')+1;
@@ -413,8 +414,8 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                                 var prop = props[k].trim();
                                 var frst = prop.charCodeAt(0);
                                 var third = prop.charCodeAt(2);
-                                var slen = prop.length;
-                                var last = prop.charCodeAt(slen-1);
+                                var len = prop.length;
+                                var last = prop.charCodeAt(len - 1);
 
                                 // animation name is anything not in this list
                                 if (
@@ -422,34 +423,34 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                                     !(frst === 99 && last === 41) &&
 
                                     // infinite, i, f, e
-                                    !(frst === 105 && third === 102 && last === 101 && slen === 8) &&
+                                    !(frst === 105 && third === 102 && last === 101 && len === 8) &&
 
                                     // linear, l, n, r
-                                    !(frst === 108 && third === 110 && last === 114 && slen === 6) &&
+                                    !(frst === 108 && third === 110 && last === 114 && len === 6) &&
 
                                     // alternate, a, t, e
-                                    !(frst === 97 && third === 116 && last === 101 && slen === 9) &&
+                                    !(frst === 97 && third === 116 && last === 101 && len === 9) &&
 
                                     // normal, n, r, l
-                                    !(frst === 110 && third === 114 && last === 108 && slen === 6) &&
+                                    !(frst === 110 && third === 114 && last === 108 && len === 6) &&
 
                                     // backwords, b, c, s
-                                    !(frst === 98 && third === 99 && last === 115 && slen === 9) &&
+                                    !(frst === 98 && third === 99 && last === 115 && len === 9) &&
 
                                     // forwards, f, r, s
-                                    !(frst === 102 && third === 114 && last === 115 && slen === 8) &&
+                                    !(frst === 102 && third === 114 && last === 115 && len === 8) &&
 
                                     // both, b, t, h
-                                    !(frst === 98 && third === 116 && last === 104 && slen === 4) &&
+                                    !(frst === 98 && third === 116 && last === 104 && len === 4) &&
 
                                     // none, n, n, e
-                                    !(frst === 110 && third === 110 && last === 101 && slen === 4)&&
+                                    !(frst === 110 && third === 110 && last === 101 && len === 4)&&
 
                                     // ease, e, s, e
-                                    !(frst === 101 && third === 115 && last === 101 && slen === 4) &&
+                                    !(frst === 101 && third === 115 && last === 101 && len === 4) &&
 
                                     // ease-
-                                    !(frst === 101 && slen > 4 && prop.charCodeAt(4) === 45) &&
+                                    !(frst === 101 && len > 4 && prop.charCodeAt(4) === 45) &&
 
                                     // durations 0.4ms, .4s, 400ms ...
                                     isNaN(parseFloat(prop))
@@ -570,9 +571,11 @@ function stylesheet (selector, styles, animations, compact, middleware) {
 
                         // middleware, flat context
                         if (use) {
-                            temp = middleware(3, flat, line, column);
+                            temp = middleware(4, flat, line, column);
                         
-                            temp !== void 0 && (flat = temp);
+                            if (temp != null) {
+                                flat = temp;
+                            }
                         }
 
                         output += flat;
@@ -853,9 +856,11 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                 if (blck.charCodeAt(blck.length-2) !== 123) {
                     // middleware, block context
                     if (use && blck.length !== 0) {
-                        temp = middleware(2, blck, line, column);
+                        temp = middleware(3, blck, line, column);
 
-                        temp !== void 0 && (blck = temp);
+                        if (temp != null) {
+                            blck = temp;
+                        }
                     }
 
                     // append blck buffer
@@ -866,9 +871,11 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                 if (type === 4) {
                     // middleware, block context
                     if (use) {
-                        temp = middleware(2, media, line, column);
+                        temp = middleware(3, media, line, column);
 
-                        temp !== void 0 && (media = temp);
+                        if (temp != null) {
+                            media = temp;
+                        }
                     }
 
                     // reset
@@ -930,9 +937,11 @@ function stylesheet (selector, styles, animations, compact, middleware) {
 
         // middleware, flat context
         if (use) {
-            temp = middleware(3, flat, line, column);
+            temp = middleware(4, flat, line, column);
         
-            temp !== void 0 && (flat = temp);
+            if (temp != null) {
+                flat = temp;
+            }
         }
 
         // append flat css
@@ -942,18 +951,77 @@ function stylesheet (selector, styles, animations, compact, middleware) {
     // has variables
     if (compact && variables !== void 0) {
         // replace all variables
-        for (var i = 0, l = variables.length; i < l; i++) {
+        for (var i = 0, length = variables.length; i < length; i++) {
             output = output.replace(new RegExp('var\\('+variables[i][0]+'\\)', 'g'), variables[i][1]);
         }
     }
 
     // middleware, output context
     if (use) {
-        temp = middleware(5, output, line, column);
+        temp = middleware(6, output, line, column);
     
-        temp !== void 0 && (output = temp);
+        if (temp != null) {
+            output = temp;
+        }
     }
 
     return output;
 }
+
+
+/**
+ * use plugin
+ * 
+ * @param  {string|function|function[]} key
+ * @param  {function?} plugin
+ * @return {Object} {use, plugins}
+ */
+stylesheet.use = function (key, plugin) {
+    var plugins = this.plugins;
+    var length = plugins.length;
+
+    if (plugin == null) {
+        plugin = key;
+        key = void 0;
+    }
+
+    // array of plugins
+    if (plugin instanceof Array) {
+        for (var i = 0, length = plugin.length; i < length; i++) {
+            plugins[length++] = plugin[i];
+        }
+    }
+    // single un-keyed plugin
+    else if (key == null) {
+        plugins[length] = plugin;
+    }
+    // keyed plugin
+    else {
+        var pattern = (key instanceof RegExp) ? key : new RegExp(key + '\\([ \\t\\r\\n]*([^\\0]*?)[ \\t\\r\\n]*\\)', 'g');
+        var regex = /[ \t\r\n]*,[ \t\r\n]*/g;
+
+        plugins[length] = function (ctx, str, line, col) {
+            if (ctx === 6) {
+                str = str.replace(pattern, function (match, group) {
+                    var args = group.replace(regex, ',').split(',');
+                    var replace = plugin.apply(null, args);
+
+                    return replace != null ? replace : match;
+                });
+
+                return str;
+            }
+        }
+    }
+
+    return stylesheet;
+};
+
+
+/**
+ * plugin store
+ * 
+ * @type {function[]}
+ */
+stylesheet.plugins = [];
 

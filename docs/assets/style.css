@@ -199,6 +199,7 @@ hr {
 	margin: 10px 0;
 	color: #535353;
 	display: block;
+	line-height: 160%;
 }
 
 .content ul li:before {

@@ -8,9 +8,9 @@
  * @param  {?Component} component
  */
 function hydrate (parent, subject, index, parentNode, component) {
-	var newNode = subject.nodeType === 2 ? extractComponentNode(subject) : subject;
+	var newNode = subject.Type === 2 ? extractComponentNode(subject) : subject;
 	
-	var nodeType = newNode.nodeType;
+	var nodeType = newNode.Type;
 	var type = newNode.type;
 
 	var childNodes = parent.childNodes;
@@ -85,7 +85,7 @@ function hydrate (parent, subject, index, parentNode, component) {
 		// it is assumed that the dom representing it is a single textNode
 		// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
 		// HelloWorld is one textNode in the DOM but two in the VNode
-		if (length > 1 && (children[index + 1] || nodeEmpty).nodeType === 3) {			
+		if (length > 1 && (children[index + 1] || nodeEmpty).Type === 3) {			
 			var fragment = document.createDocumentFragment();
 			
 			// look ahead of this nodes siblings and add all textNodes to the fragment
@@ -94,7 +94,7 @@ function hydrate (parent, subject, index, parentNode, component) {
 				var textNode = children[i];
 
 				// exit early once we encounter a non textNode
-				if (textNode.nodeType !== 3) {
+				if (textNode.Type !== 3) {
 					break;
 				}
 
@@ -110,7 +110,5 @@ function hydrate (parent, subject, index, parentNode, component) {
 			newNode.DOMNode = element;
 		}
 	}
-
-	return index;
 }
 

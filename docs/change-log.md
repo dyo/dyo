@@ -1,3 +1,14 @@
+## 6.1.0 (January 26, 2016)
+
+- add DOMNodes to return types
+- returning a DOMNode from render auto creates a portal
+- `h` and `createElement` now support DOM(portal), array(fragment), element(clone), null/void(empty) as the type param
+- add first class support for portals
+- patch short hand class construction `cons Foo = h => (props, state) => h('h1', state.name)`
+- exposes internal css compiler `dio.stylesheet`
+- You can now register middleware/plugins for the css compiler `dio.stylesheet.use()`
+- improve error boundary logs
+
 ## 6.0.2 (January 24, 2016)
 
 - patch for string `style` props

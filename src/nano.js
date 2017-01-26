@@ -26,13 +26,7 @@
 
 	import 'Constants/main';
 	import 'Utilities/schedule';
-	import 'Shapes/createElementShape';
-	import 'Shapes/createComponentShape';
-	import 'Shapes/createFragmentShape';
-	import 'Shapes/createTextShape';
-	import 'Shapes/createSvgShape';
-	import 'Shapes/createNodeShape';
-	import 'Shapes/createEmptyShape';
+	import 'Shapes/Node/';
 	import 'Stylesheet/';
 	import 'Element/';
 	import 'Component/';

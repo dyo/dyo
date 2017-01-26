@@ -5,6 +5,6 @@
  * @return {string}
  */
 function escape (subject) {
-	return String(subject).replace(regEsc, unicode);
+	return (''+subject).replace(regEsc, unicode);
 }
 

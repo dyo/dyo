@@ -11,14 +11,14 @@ declare enum nodeType {
 type Key = string | number;
 type Ref = string | Function;
 type Children = Array<VNode>;
-type Type = string | Function;
+type Type = string | Function | Node | any[] | null;
 type State = Object;
-type createElement = (type: Type, props?: Props, ...children: Array<any>) => VNode;
+type createElement = (type?: Type, props?: Props, ...children: Array<any>) => VNode;
 type streamCatch = (reason: any) => stream;
 type streamThen = (data: any) => stream;
 type Reducer = (currentState: State, action: Action) => any;
 type Events = EventObject | EventCallback;
-type RenderTypes = VNode | any[] | string | number | null | void;
+type RenderTypes = any;
 
 // Shapes
 interface EventCallback {

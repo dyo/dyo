@@ -78,7 +78,8 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 				// end of stream
 				this.push(null);
-			} else {
+			}
+			else {
 				// start of stream
 				if (initial === true) {
 					this.initial = false;
@@ -110,7 +111,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				return;
 			}
 
-			var nodeType = subject.nodeType;
+			var nodeType = subject.Type;
 
 			// text node, sync
 			if (nodeType === 3) {
@@ -151,7 +152,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 						(promise ? component.async : component.props)
 							.then(function resolveAsyncServerComponent (data) {								
-								vnode.nodeType = 2;
+								vnode.Type = 2;
 								vnode.type = subject.type;
 								vnode.instance = component;
 
@@ -197,15 +198,9 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 				return
 			}
+
 			var opening = '';
 			var closing = '';
-
-			// fragments do not have opening/closing tags
-			if (vnode.nodeType !== 11) {
-				// <type ...props>...children</type>
-				opening = '<'+type+propsStr+'>';
-				closing = '</'+type+'>';
-			}
 
 			if (props.innerHTML !== void 0) {
 				// special case when a prop replaces children
@@ -222,7 +217,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 				return;
 			}
-			if (length === 1 && children[0].nodeType === 3) {
+			if (length === 1 && children[0].Type === 3) {
 				// one text node child, sync
 				this.push(opening + escape(children[0].children) + closing);
 
@@ -260,7 +255,8 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 					}
 
 					stream.push(closing);
-				} else {
+				}
+				else {
 					stream._pipe(
 						children[index++], 
 						false, 

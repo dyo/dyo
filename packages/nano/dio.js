@@ -34,7 +34,7 @@
 	
 	
 	// current version
-	var version = '6.0.2';
+	var version = '6.1.0';
 	
 	// enviroment
 	var document = window.document || null;
@@ -58,7 +58,7 @@
 	// empty shapes
 	var objEmpty = {};
 	var arrEmpty = [];
-	var nodeEmpty = createNodeShape(0, '', objEmpty, arrEmpty, null, null, null, null, null);
+	var nodeEmpty = createNodeShape(0, '', objEmpty, arrEmpty, null, null, 0, null, null);
 	var funcEmpty = function () {};
 	var fragProps = {style: 'display: inherit;'};
 	
@@ -94,6 +94,15 @@
 	
 	
 	/**
+	 * ---------------------------------------------------------------------------------
+	 * 
+	 * Node shapes
+	 * 
+	 * ---------------------------------------------------------------------------------
+	 */
+	
+	
+	/**
 	 * element shape
 	 *
 	 * @public
@@ -105,7 +114,7 @@
 	 */
 	function createElementShape (type, props, children) {
 		return {
-			nodeType: 1,
+			Type: 1,
 			type: type,
 			props: props || objEmpty,
 			children: children || [],
@@ -130,7 +139,7 @@
 	 */
 	function createComponentShape (type, props, children) {
 		return {
-			nodeType: 2,
+			Type: 2,
 			type: type,
 			props: props || objEmpty,
 			children: children || arrEmpty,
@@ -153,7 +162,7 @@
 	 */
 	function createFragmentShape (children) {
 		return {
-			nodeType: 1,
+			Type: 1,
 			type: 'fragment',
 			props: fragProps,
 			children: children,
@@ -176,7 +185,7 @@
 	 */
 	function createTextShape (text) {
 		return {
-			nodeType: 3,
+			Type: 3,
 			type: '#text',
 			props: objEmpty,
 			children: text,
@@ -201,7 +210,7 @@
 	 */
 	function createSvgShape (type, props, children) {
 		return {
-			nodeType: 1,
+			Type: 1,
 			type: type,
 			props: (props = props || {}, props.xmlns = nsSvg, props),
 			children: children || [],
@@ -217,7 +226,7 @@
 	/**
 	 * create node shape
 	 *
-	 * @param  {number}                      nodeType
+	 * @param  {number}                      Type
 	 * @param  {(string|function|Component)} type
 	 * @param  {Object<string, any>}         props
 	 * @param  {VNode[]}                     children
@@ -227,9 +236,9 @@
 	 * @param  {Component}                   parent
 	 * @return {VNode}
 	 */
-	function createNodeShape (nodeType, type, props, children, DOMNode, instance, index, parent, key) {
+	function createNodeShape (Type, type, props, children, DOMNode, instance, index, parent, key) {
 		return {
-			nodeType: nodeType,
+			Type: Type,
 			type: type,
 			props: props,
 			children: children,
@@ -249,11 +258,34 @@
 	 */
 	function createEmptyShape () {
 		return {
-			nodeType: 1,
+			Type: 1,
 			type: 'noscript',
 			props: objEmpty,
 			children: [],
 			DOMNode: null,
+			instance: null,
+			index: 0,
+			parent: null,
+			key: null
+		};
+	}
+	
+	
+	/**
+	 * portal shape
+	 *
+	 * @public
+	 * 
+	 * @param  {Node} DOMNode
+	 * @return {VNode}
+	 */
+	function createPortalShape (type, props, children) {
+		return {
+			Type: 4,
+			type: type.nodeName.toLowerCase(),
+			props: props,
+			children: children,
+			DOMNode: type,
 			instance: null,
 			index: 0,
 			parent: null,
@@ -401,48 +433,40 @@
 	
 	    // uses middleware
 	    var use = middleware != null;
+	    var plugins;
 	
-	    // object
+	    // middleware
 	    if (use) {
 	        var uses = (typeof middleware).charCodeAt(0);
 	
 	        // o, object of middlewares
 	        if (uses === 111) {
-	            var keys = Object.keys(middleware).map(function (key) {
-	                return [key, new RegExp(key+'\\([ \t\r\n]*([^\0]*?)[ \t\r\n]*\\)', 'g')];
-	            });
-	
-	            var plugins = middleware;
-	            var funcs = keys.length;
-	
-	            middleware = function (ctx, str, line, col) {
-	                // block context
-	                if (ctx === 2) {
-	                    for (var i = 0; i < funcs; i++) {
-	                        var plugin = keys[i];
-	                        var key = plugin[0];
-	                        var regex = plugin[1];
-	
-	                        str = str.replace(regex, function (match, capture) {
-	                            return (
-	                                    plugins[key].apply(
-	                                    null, 
-	                                    capture.replace(/[ \t\r\n]*,[ \t\r\n]*/g, ',').split(',')
-	                                ) || match
-	                            );
-	                        });
-	                    }
-	
-	                    return str;
-	                }
-	            };
+	            for (var i = 0, keys = Object.keys(middleware), length = keys.length; i < length; i++) {
+	                stylesheet.use(keys[i], middleware[keys[i]]);
+	            }
 	        }
-	        // f, single function middleware
+	        // f, not a single function middleware
 	        else if (uses !== 102) {
 	            use = false;
 	        }
 	    }
 	
+	    // plugins
+	    if ((plugins = stylesheet.plugins).length !== 0) {
+	        middleware = function (ctx, str, line, col) {
+	            var output = str;
+	
+	            for (var i = 0, length = plugins.length; i < length; i++) {
+	                output = plugins[i](ctx, output, line, col) || output;
+	            }
+	
+	            return output !== str ? output : void 0;
+	        };
+	
+	        use = true;
+	    }
+	
+	    // declare
 	    var colon;
 	    var inner;
 	    var selectors;
@@ -466,13 +490,6 @@
 	    var nest = '';
 	    var flat = '';
 	
-	    // positions
-	    var caret = 0;
-	    var depth = 0;
-	    var column = 0;
-	    var line = 1;
-	    var eof = styles.length;
-	
 	    // context signatures       
 	    var special = 0;
 	    var close = 0;
@@ -490,6 +507,22 @@
 	    var ms = '-ms-';
 	    var webkit = '-webkit-';
 	
+	    if (use) {
+	        temp = middleware(0, styles, line, column);
+	        
+	        if (temp != null) {
+	            styles = temp;
+	        }
+	    }
+	
+	    // positions
+	    var caret = 0;
+	    var depth = 0;
+	    var column = 0;
+	    var line = 1;
+	    var eof = styles.length;
+	
+	    // compiled output
 	    var output = '';
 	
 	    // parse + compile
@@ -515,14 +548,14 @@
 	            if (use && code !== 125) {
 	                // { selector context
 	                if (code === 123) {
-	                    temp = middleware(0, buff.substring(0, buff.length-1).trim(), line, column);
+	                    temp = middleware(1, buff.substring(0, buff.length - 1).trim(), line, column);
 	                } 
 	                // ; property context
 	                else {
-	                    temp = middleware(1, buff, line, column);
+	                    temp = middleware(2, buff, line, column);
 	                }
 	
-	                if (temp !== void 0) {
+	                if (temp != null) {
 	                    buff = code === 123 ? temp + '{' : temp;
 	                }
 	            }
@@ -541,9 +574,11 @@
 	
 	                    // middleware, flat context
 	                    if (use) {
-	                        temp = middleware(3, flat, line, column);
+	                        temp = middleware(4, flat, line, column);
 	                    
-	                        temp !== void 0 && (flat = temp);
+	                        if (temp != null) {
+	                            flat = temp;
+	                        }
 	                    }
 	
 	                    output += flat;
@@ -617,9 +652,9 @@
 	                                selector = selectors[i];
 	
 	                                // build media block
-	                                media += stylis(
+	                                media += stylesheet(
 	                                    // remove { on last selector
-	                                    (i === length - 1 ? selector.substring(0, selector.length-1) :  selector).trim(),
+	                                    (i === length - 1 ? selector.substring(0, selector.length - 1) :  selector).trim(),
 	                                    inner, 
 	                                    animations, 
 	                                    compact, 
@@ -643,38 +678,49 @@
 	                }
 	
 	                // @include/@import `i` character
-	                if (second === 105) {   
-	                    if (compact === true) {                 
-	                        // @include `n` character
-	                        if (third === 110) {
-	                            buff = buff.substring(9, buff.length-1);
-	                            indexOf = buff.indexOf('(');
+	                if (second === 105) {
+	                    // @include `n` character
+	                    if (compact === true && third === 110) {
+	                        buff = buff.substring(9, buff.length - 1);
+	                        indexOf = buff.indexOf('(');
 	
-	                            // function mixins
-	                            if (indexOf > -1) {
-	                                // mixin name
-	                                var name = buff.substring(0, indexOf);
+	                        // function mixins
+	                        if (indexOf > -1) {
+	                            // mixin name
+	                            var name = buff.substring(0, indexOf);
 	
-	                                // mixin data
-	                                var data = mixins[name];
+	                            // mixin data
+	                            var data = mixins[name];
 	
-	                                // args passed to the mixin
-	                                var argsPassed = buff.substring(name.length+1, buff.length-1).split(',');
+	                            // args passed to the mixin
+	                            var argsPassed = buff.substring(name.length+1, buff.length - 1).split(',');
 	
-	                                // args the mixin expects
-	                                var argsExpected = data.key.replace(name, '').replace(/\(|\)/g, '').trim().split(',');
-	                                
-	                                buff = data.body;
+	                            // args the mixin expects
+	                            var argsExpected = data.key.replace(name, '').replace(/\(|\)/g, '').trim().split(',');
+	                            
+	                            buff = data.body;
 	
-	                                for (var i = 0, length = argsPassed.length; i < length; i++) {
-	                                    var arg = argsExpected[i].trim();
+	                            for (var i = 0, length = argsPassed.length; i < length; i++) {
+	                                var arg = argsExpected[i].trim();
 	
-	                                    // if the mixin has a slot for that arg
-	                                    if (arg !== void 0) {
-	                                        buff = buff.replace(new RegExp('var\\(~~'+arg+'\\)', 'g'), argsPassed[i].trim());
-	                                    }
+	                                // if the mixin has a slot for that arg
+	                                if (arg !== void 0) {
+	                                    buff = buff.replace(new RegExp('var\\(~~'+arg+'\\)', 'g'), argsPassed[i].trim());
 	                                }
+	                            }
 	
+	                            // create block and update styles length
+	                            styles += buff;
+	                            eof += buff.length;
+	
+	                            // reset
+	                            buff = '';
+	                        }
+	                        // static mixins
+	                        else {
+	                            buff = mixins[buff].body;
+	
+	                            if (depth === 0) {
 	                                // create block and update styles length
 	                                styles += buff;
 	                                eof += buff.length;
@@ -682,37 +728,24 @@
 	                                // reset
 	                                buff = '';
 	                            }
-	                            // static mixins
-	                            else {
-	                                buff = mixins[buff].body;
-	
-	                                if (depth === 0) {
-	                                    // create block and update styles length
-	                                    styles += buff;
-	                                    eof += buff.length;
-	
-	                                    // reset
-	                                    buff = '';
-	                                }
-	                            }
 	                        }
-	                        // @import `m` character
-	                        else if (third === 109 && use) {
-	                            // avoid "foo.css"; "foo" screen; "http://foo.com/bar"; url(foo);
-	                            var match = /@import.*?(["'][^\.\n\r]*?["'];|["'].*\.scss["'])/g.exec(buff);
+	                    }
+	                    // @import `m` character
+	                    else if (third === 109 && use) {
+	                        // avoid "foo.css"; "foo" screen; "http://foo.com/bar"; url(foo);
+	                        var match = /@import.*?(["'`][^\.\n\r]*?["'`];|["'`][^:\r\n]*?\.[^c].*?["'`])/g.exec(buff);
 	
-	                            if (match !== null) {
-	                                // middleware, import context
-	                                buff = middleware(4, match[1].replace(/['"; ]/g, ''), line, column) || '';
+	                        if (match !== null) {
+	                            // middleware, import context
+	                            buff = middleware(5, match[1].replace(/['"; ]/g, ''), line, column) || '';
 	
-	                                if (buff) {
-	                                    // create block and update styles length
-	                                    styles = styles.substring(0, caret+1) + buff + styles.substring(caret+1);
-	                                    eof += buff.length;
-	                                }
-	
-	                                buff = '';
+	                            if (buff) {
+	                                // create block and update styles length
+	                                styles = styles.substring(0, caret+1) + buff + styles.substring(caret+1);
+	                                eof += buff.length;
 	                            }
+	
+	                            buff = '';
 	                        }
 	                    }
 	                }
@@ -730,7 +763,7 @@
 	                variables === void 0 && (variables = []);
 	
 	                // push key value pair
-	                variables[variables.length] = [buff.substring(0, colon), buff.substring(colon+1, buff.length-1).trim()];
+	                variables[variables.length] = [buff.substring(0, colon), buff.substring(colon+1, buff.length - 1).trim()];
 	
 	                // reset buffer
 	                buff = '';
@@ -740,7 +773,7 @@
 	                // animation: a, n, i characters
 	                if (first === 97 && second === 110 && third === 105) {
 	                    // removes ;
-	                    buff = buff.substring(0, buff.length-1);
+	                    buff = buff.substring(0, buff.length - 1);
 	
 	                    // position of :
 	                    colon = buff.indexOf(':')+1;
@@ -763,8 +796,8 @@
 	                                var prop = props[k].trim();
 	                                var frst = prop.charCodeAt(0);
 	                                var third = prop.charCodeAt(2);
-	                                var slen = prop.length;
-	                                var last = prop.charCodeAt(slen-1);
+	                                var len = prop.length;
+	                                var last = prop.charCodeAt(len - 1);
 	
 	                                // animation name is anything not in this list
 	                                if (
@@ -772,34 +805,34 @@
 	                                    !(frst === 99 && last === 41) &&
 	
 	                                    // infinite, i, f, e
-	                                    !(frst === 105 && third === 102 && last === 101 && slen === 8) &&
+	                                    !(frst === 105 && third === 102 && last === 101 && len === 8) &&
 	
 	                                    // linear, l, n, r
-	                                    !(frst === 108 && third === 110 && last === 114 && slen === 6) &&
+	                                    !(frst === 108 && third === 110 && last === 114 && len === 6) &&
 	
 	                                    // alternate, a, t, e
-	                                    !(frst === 97 && third === 116 && last === 101 && slen === 9) &&
+	                                    !(frst === 97 && third === 116 && last === 101 && len === 9) &&
 	
 	                                    // normal, n, r, l
-	                                    !(frst === 110 && third === 114 && last === 108 && slen === 6) &&
+	                                    !(frst === 110 && third === 114 && last === 108 && len === 6) &&
 	
 	                                    // backwords, b, c, s
-	                                    !(frst === 98 && third === 99 && last === 115 && slen === 9) &&
+	                                    !(frst === 98 && third === 99 && last === 115 && len === 9) &&
 	
 	                                    // forwards, f, r, s
-	                                    !(frst === 102 && third === 114 && last === 115 && slen === 8) &&
+	                                    !(frst === 102 && third === 114 && last === 115 && len === 8) &&
 	
 	                                    // both, b, t, h
-	                                    !(frst === 98 && third === 116 && last === 104 && slen === 4) &&
+	                                    !(frst === 98 && third === 116 && last === 104 && len === 4) &&
 	
 	                                    // none, n, n, e
-	                                    !(frst === 110 && third === 110 && last === 101 && slen === 4)&&
+	                                    !(frst === 110 && third === 110 && last === 101 && len === 4)&&
 	
 	                                    // ease, e, s, e
-	                                    !(frst === 101 && third === 115 && last === 101 && slen === 4) &&
+	                                    !(frst === 101 && third === 115 && last === 101 && len === 4) &&
 	
 	                                    // ease-
-	                                    !(frst === 101 && slen > 4 && prop.charCodeAt(4) === 45) &&
+	                                    !(frst === 101 && len > 4 && prop.charCodeAt(4) === 45) &&
 	
 	                                    // durations 0.4ms, .4s, 400ms ...
 	                                    isNaN(parseFloat(prop))
@@ -920,9 +953,11 @@
 	
 	                        // middleware, flat context
 	                        if (use) {
-	                            temp = middleware(3, flat, line, column);
+	                            temp = middleware(4, flat, line, column);
 	                        
-	                            temp !== void 0 && (flat = temp);
+	                            if (temp != null) {
+	                                flat = temp;
+	                            }
 	                        }
 	
 	                        output += flat;
@@ -1203,9 +1238,11 @@
 	                if (blck.charCodeAt(blck.length-2) !== 123) {
 	                    // middleware, block context
 	                    if (use && blck.length !== 0) {
-	                        temp = middleware(2, blck, line, column);
+	                        temp = middleware(3, blck, line, column);
 	
-	                        temp !== void 0 && (blck = temp);
+	                        if (temp != null) {
+	                            blck = temp;
+	                        }
 	                    }
 	
 	                    // append blck buffer
@@ -1216,9 +1253,11 @@
 	                if (type === 4) {
 	                    // middleware, block context
 	                    if (use) {
-	                        temp = middleware(2, media, line, column);
+	                        temp = middleware(3, media, line, column);
 	
-	                        temp !== void 0 && (media = temp);
+	                        if (temp != null) {
+	                            media = temp;
+	                        }
 	                    }
 	
 	                    // reset
@@ -1280,9 +1319,11 @@
 	
 	        // middleware, flat context
 	        if (use) {
-	            temp = middleware(3, flat, line, column);
+	            temp = middleware(4, flat, line, column);
 	        
-	            temp !== void 0 && (flat = temp);
+	            if (temp != null) {
+	                flat = temp;
+	            }
 	        }
 	
 	        // append flat css
@@ -1292,20 +1333,79 @@
 	    // has variables
 	    if (compact && variables !== void 0) {
 	        // replace all variables
-	        for (var i = 0, l = variables.length; i < l; i++) {
+	        for (var i = 0, length = variables.length; i < length; i++) {
 	            output = output.replace(new RegExp('var\\('+variables[i][0]+'\\)', 'g'), variables[i][1]);
 	        }
 	    }
 	
 	    // middleware, output context
 	    if (use) {
-	        temp = middleware(5, output, line, column);
+	        temp = middleware(6, output, line, column);
 	    
-	        temp !== void 0 && (output = temp);
+	        if (temp != null) {
+	            output = temp;
+	        }
 	    }
 	
 	    return output;
 	}
+	
+	
+	/**
+	 * use plugin
+	 * 
+	 * @param  {string|function|function[]} key
+	 * @param  {function?} plugin
+	 * @return {Object} {use, plugins}
+	 */
+	stylesheet.use = function (key, plugin) {
+	    var plugins = this.plugins;
+	    var length = plugins.length;
+	
+	    if (plugin == null) {
+	        plugin = key;
+	        key = void 0;
+	    }
+	
+	    // array of plugins
+	    if (plugin instanceof Array) {
+	        for (var i = 0, length = plugin.length; i < length; i++) {
+	            plugins[length++] = plugin[i];
+	        }
+	    }
+	    // single un-keyed plugin
+	    else if (key == null) {
+	        plugins[length] = plugin;
+	    }
+	    // keyed plugin
+	    else {
+	        var pattern = (key instanceof RegExp) ? key : new RegExp(key + '\\([ \\t\\r\\n]*([^\\0]*?)[ \\t\\r\\n]*\\)', 'g');
+	        var regex = /[ \t\r\n]*,[ \t\r\n]*/g;
+	
+	        plugins[length] = function (ctx, str, line, col) {
+	            if (ctx === 6) {
+	                str = str.replace(pattern, function (match, group) {
+	                    var args = group.replace(regex, ',').split(',');
+	                    var replace = plugin.apply(null, args);
+	
+	                    return replace != null ? replace : match;
+	                });
+	
+	                return str;
+	            }
+	        }
+	    }
+	
+	    return stylesheet;
+	};
+	
+	
+	/**
+	 * plugin store
+	 * 
+	 * @type {function[]}
+	 */
+	stylesheet.plugins = [];
 	
 	
 	/**
@@ -1328,12 +1428,16 @@
 	 * @return {Object<string, any>}
 	 */
 	function createElement (type, props) {
+		if (type == null) {
+			return createEmptyShape();
+		}
+	
 		var length = arguments.length;
 		var children = [];
 		var position = 2;
 	
 		// if props is not a normal object
-		if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
+		if (props == null || props.constructor !== Object || props.props !== void 0) {
 			// update position if props !== null
 			if (props !== null) {
 				props = null;
@@ -1364,31 +1468,48 @@
 			}
 		}
 	
+		var typeOf = typeof type;
+	
+		if (typeOf === 'string') {
+			// fragment
+			if (type === '@') {
+				return createFragmentShape(children);
+			}
+			// element
+			else {
+				if (props === null) {
+					props = {};
+				}
+	
+				// if props.xmlns is undefined and type === 'svg' or 'math' 
+				// assign svg && math namespaces to props.xmlns
+				if (props.xmlns === void 0) {	
+					if (type === 'svg') { 
+						props.xmlns = nsSvg; 
+					}
+					else if (type === 'math') { 
+						props.xmlns = nsMath; 
+					}
+				}
+	
+				return createElementShape(type, props, children);
+			}
+		}
 		// component
-		if (typeof type === 'function') {
+		else if (typeOf === 'function') {
 			return createComponentShape(type, props, children);
 		}
+		// hoisted
+		else if (type.Type) {
+			return cloneElement(type, props, children);
+		}
+		// portal
+		else if (type.nodeType !== void 0) {
+			return createPortalShape(type, props || objEmpty, children);
+		}
 		// fragment
-		else if (type === '@') {
-			return createFragmentShape(children);
-		} 
 		else {
-			if (props === null) {
-				props = {};
-			}
-	
-			// if props.xmlns is undefined and type === 'svg' or 'math' 
-			// assign svg && math namespaces to props.xmlns
-			if (props.xmlns === void 0) {	
-				if (type === 'svg') { 
-					props.xmlns = nsSvg; 
-				}
-				else if (type === 'math') { 
-					props.xmlns = nsMath; 
-				}
-			}
-	
-			return createElementShape(type, props, children);
+			return createElement('@', null, type);
 		}
 	}
 	
@@ -1403,25 +1524,29 @@
 	 */
 	function createChild (child, children, index) {
 		if (child != null) {
-			if (child.nodeType !== void 0) {
-				// Element
+			// vnode
+			if (child.Type !== void 0) {
 				children[index++] = child;
+			}
+			// portal
+			else if (child.nodeType !== void 0) {
+				children[index++] = createPortalShape(child, objEmpty, arrEmpty);
 			}
 			else {
 				var type = typeof child;
 	
+				// function/component
 				if (type === 'function') {
-					// Component
-					children[index++] = createComponentShape(child, null, null);
+					children[index++] = createComponentShape(child, objEmpty, arrEmpty);
 				}
+				// array
 				else if (type === 'object') {
-					// Array
-					for (var i = 0, len = child.length; i < len; i++) {
+					for (var i = 0, length = child.length; i < length; i++) {
 						index = createChild(child[i], children, index);
 					}
 				}
+				// text
 				else {
-					// Text
 					children[index++] = createTextShape(type !== 'boolean' ? child : '');
 				}
 			}
@@ -1485,13 +1610,13 @@
 	 */
 	function cloneNode (subject) {
 		return createNodeShape(
-			subject.nodeType,
+			subject.Type,
 			subject.type,
 			subject.props,
 			subject.children,
 			subject.DOMNode,
 			null,
-			null,
+			0,
 			null,
 			null
 		);
@@ -1517,7 +1642,7 @@
 	 * @return {boolean}
 	 */
 	function isValidElement (subject) {
-		return subject != null && subject.nodeType != null && subject.nodeName === void 0;
+		return subject != null && subject.Type != null;
 	}
 	
 	
@@ -1565,8 +1690,10 @@
 	 */
 	function setState (newState, callback) {
 		// exist early if shouldComponentUpdate exists and returns false
-		if (this.shouldComponentUpdate !== void 0 && 
-			componentUpdateBoundary(this, 'shouldComponentUpdate', this.props, newState) === false) {
+		if (
+			this.shouldComponentUpdate !== void 0 && 
+			componentUpdateBoundary(this, 'shouldComponentUpdate', this.props, newState) === false
+		) {
 			return;
 		}
 	
@@ -1611,11 +1738,20 @@
 		var newNode = extractRenderNode(this);
 		var oldNode = this.vnode;
 	
-		var newType = newNode.nodeType;
-		var oldType = oldNode.nodeType;
+		var newType = newNode.Type;
+		var oldType = oldNode.Type;
 	
 		// different root node
-		if (newNode.type !== oldNode.type) {
+		if (
+			// node type check
+			newType !== oldType || 
+	
+			// portal type check
+			(newType === 4 && oldType === 4 && newNode !== oldNode) ||
+		
+			// element type checke
+			newNode.type !== oldNode.type
+		) {
 			// render returns a promise
 			if (newType === void 0) {
 				return;
@@ -1726,9 +1862,10 @@
 	 * @public
 	 * 
 	 * @param  {(Object<string, any>|function(createElement): (Object<string, any>|function))} subject
+	 * @param  {Object<string, any>=} props
 	 * @return {function(new:Component, Object<string, any>)}
 	 */
-	function createClass (subject) {
+	function createClass (subject, props) {
 		// empty class
 		if (subject == null) {
 			subject = createEmptyShape();
@@ -1743,30 +1880,33 @@
 		var func = typeof subject === 'function';
 	
 		// extract shape of component
-		var shape = func ? (subject(createElement) || createEmptyShape()) : subject;
-		
+		var shape = func ? (subject(createElement) || createEmptyShape()) : subject;	
+		var type = typeof shape === 'function' ? 2 : (shape.Type != null ? 1 : 0);
 		var construct = false;
-	
+		
 		var vnode;
 		var constructor;
 		var render;
 	
 		// numbers, strings, arrays
-		if (shape.constructor !== Object && shape.render === void 0) {
-			shape = extractVirtualNode(shape, null);
+		if (type !== 2 && shape.constructor !== Object && shape.render === void 0) {
+			shape = extractVirtualNode(shape, {props: props});
 		}
 	
+		// console.log(type, shape.Type);
+	
 		// elements/functions
-		if (shape.nodeType !== void 0 || typeof shape === 'function') {
+		if (type !== 0) {
 			// render method
-			render = shape.nodeType !== void 0 ? (vnode = shape, function () { return vnode; }) : shape;
+			render = type === 1 ? (vnode = shape, function () { return vnode; }) : shape;
 	
 			// new shape
 			shape = { render: render };
 		}
 		else {
-			// shape has a constructor
-			(construct = shape.hasOwnProperty('constructor')) && (constructor = shape.constructor);
+			if (construct = shape.hasOwnProperty('constructor')) {
+				constructor = shape.constructor
+			}
 	
 			// create render method if one does not exist
 			if (typeof shape.render !== 'function') {
@@ -1777,7 +1917,9 @@
 		// create component class
 		function component (props) {
 			// constructor
-			construct && constructor.call(this, props);
+			if (construct) {
+				constructor.call(this, props);
+			}
 	
 			// extend Component
 			Component.call(this, props); 
@@ -1947,78 +2089,86 @@
 			error = new Error(error);
 		}
 	
-		// intial throw from render, retry once
+		// intial throw from render, try to recover once
 		if (thrown === 0 && browser && location === 'render') {
 			schedule(function () {
 				component.forceUpdate(null);
 			});
 		}
-		// multiple render throws / non-render location
-		else {
-			authored = typeof component.componentDidThrow === 'function';
 	
-			// define error
-			Object.defineProperties(error, {
-				silence: {value: false, writable: true},
-				location: {value: location}, 
-				from: {value: (displayName = component.displayName || component.constructor.name)}
-			});
-	
-			// authored error handler
-		    if (authored) {
-		    	try {
-		    		newNode = component.componentDidThrow(error);
-		    	}
-		    	catch (err) {
-		    		if (thrown >= 0) {
-		    			component.thrown = -1;
-		    			componentErrorBoundary(err, component, 'componentDidThrow');
-		    		}
-		    	}
-		    }
-	
-		    if (error.silence !== true) {
-		    	// default error handler
-		    	console.error(
-		          'Dio caught an error thrown by ' + 
-		          (displayName ? '`' + displayName + '`' : 'one of your components') + 
-		          ', the error was thrown in `' + location + '`.' + 
-		          '\n\n' + error.stack.replace(/\n+/, '\n\n')
-		        );
-		    }
-	
-		    if (authored && location !== 'stylesheet') {	    	
-		    	// return render node
-		    	if (location === 'render' || location === 'element') {
-		    		if (newNode != null && typeof newNode.type === 'string') {
-		    			if (/^[A-z]/g.exec(newNode.type) === null) {
-	    					console.error(
-	    						'Dio bailed out of rendering an error state.\n\n'+
-	    						'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
-							);
-	
-		    				return;
-		    			}
-	
-		    			newNode.type = newNode.type.replace(/ /g, '');
-		    		}
-	
-		    		return newNode;
-		    	}
-		    	// async replace render node
-		    	else if (browser && newNode != null && newNode !== true && newNode !== false) {
-		    		schedule(function () {
-		    			replaceRootNode(
-		    				extractVirtualNode(newNode), 
-		    				oldNode = component.vnode, 
-		    				newNode.nodeType, 
-		    				oldNode.nodeType, 
-		    				component
-	    				)
-		    		});
-		    	}
-		    }
+		// second throw, failed to recover the first time
+		if (thrown !== 0 && location === 'render') {
+			return;
 		}
+	
+		authored = typeof component.componentDidThrow === 'function';
+		displayName = component.displayName || component.constructor.name;
+	
+		// define error
+		Object.defineProperties(error, {
+			silence: {value: false, writable: true},
+			location: {value: location}, 
+			from: {value: displayName}
+		});
+	
+		// authored error handler
+	    if (authored) {
+	    	try {
+	    		newNode = component.componentDidThrow(error);
+	    	}
+	    	catch (err) {    		
+	    		// avoid recursive call stack
+	    		if (thrown >= 0) {
+	    			// preserve order of errors logged 
+	    			schedule(function () {
+	    				component.thrown = -1;
+	    				componentErrorBoundary(err, component, 'componentDidThrow');
+	    			});
+	    		}
+	    	}
+	    }
+	
+	    if (error.silence !== true) {
+	    	// default error handler
+	    	console.error(
+	          'Dio caught an error thrown by ' + 
+	          (displayName ? '`' + displayName + '`' : 'one of your components') + 
+	          ', the error was thrown in `' + location + '`.' + 
+	          '\n\n' + error.stack.replace(/\n+/, '\n\n')
+	        );
+	    }
+	
+	    if (authored && location !== 'stylesheet') {	    	
+	    	// return render node
+	    	if (location === 'render' || location === 'element') {
+	    		if (newNode != null && typeof newNode.type === 'string') {
+	    			if (/^[A-z]/g.exec(newNode.type) === null) {
+						console.error(
+							'Dio bailed out of rendering an error state.\n\n'+
+							'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
+						);
+	
+	    				return;
+	    			}
+	
+	    			newNode.type = newNode.type.replace(/ /g, '');
+	    		}
+	
+	    		return newNode;
+	    	}
+	    	// async replace render node
+	    	else if (browser && newNode != null && newNode !== true && newNode !== false) {
+	    		schedule(function () {
+	    			replaceRootNode(
+	    				extractVirtualNode(newNode), 
+	    				oldNode = component.vnode, 
+	    				newNode.Type, 
+	    				oldNode.Type, 
+	    				component
+					)
+	    		});
+	    	}
+	    }
 	}
 	
 	
@@ -2071,7 +2221,7 @@
 		// function components
 		else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
 			// create component
-			owner = createClass(type);
+			owner = createClass(type, props);
 		}
 		// class / createClass components
 		else {
@@ -2085,7 +2235,7 @@
 		var vnode = extractRenderNode(component);
 	
 		// if render returns a component, extract that component
-		if (vnode.nodeType === 2) {
+		if (vnode.Type === 2) {
 			vnode = extractComponentNode(vnode);
 		}
 		
@@ -2161,14 +2311,26 @@
 			return createEmptyShape();
 		}
 		// element
-		else if (subject.nodeType !== void 0) {
+		else if (subject.Type !== void 0) {
 			return subject;
+		}
+		// portal
+		else if (subject.nodeType !== void 0) {	
+			return (
+				subject = createPortalShape(subject, objEmpty, arrEmpty), 
+				subject.Type = 5, 
+				subject
+			);
 		}
 		else {
 			switch (subject.constructor) {
 				// component
 				case Component: {
-					return createComponentShape(subject, null, null);
+					return createComponentShape(subject, objEmpty, arrEmpty);
+				}
+				// booleans
+				case Boolean: {
+					return createEmptyShape();
 				}
 				// fragment
 				case Array: {
@@ -2180,13 +2342,21 @@
 				}
 				// component/function
 				case Function: {
+					// stream
+					if (subject.then != null && typeof subject.then === 'function') {
+						subject.then(function resolveStreamUpdates () {
+							component.forceUpdate();
+						}).catch(funcEmpty);
+	
+						return extractVirtualNode(subject(), component);
+					}
 					// component
-					if (subject.prototype !== void 0 && subject.prototype.render !== void 0) {
-						return createComponentShape(subject, null, null);
+					else if (subject.prototype !== void 0 && subject.prototype.render !== void 0) {
+						return createComponentShape(subject, objEmpty, arrEmpty);
 					}
 					// function
 					else {
-						return createComponentShape(createClass(subject), null, null);
+						return extractVirtualNode(subject((component && component.props) || {}), component);
 					}
 				}
 				// promise
@@ -2196,8 +2366,8 @@
 							replaceRootNode(
 								extractVirtualNode(newNode), 
 								subject = component.vnode, 
-								newNode.nodeType, 
-								subject.nodeType, 
+								newNode.Type, 
+								subject.Type, 
 								component
 							);
 						}).catch(funcEmpty);
@@ -2208,37 +2378,38 @@
 	
 					return createEmptyShape();
 				}
-				default: {
-					// coroutine
-					if (subject.return != null && typeof subject.next === 'function' && component != null) {
-						component.yield = true;
-						component.render = subject;
+			}
 	
-						if (component.constructor.prototype !== void 0) {
-							component.constructor.prototype.render = function render () {
-								return subject.next().value;
-							};
-						}
-	
-						return extractVirtualNode(subject.next().value, component);
-					}
-					// component descriptor
-					else if (typeof subject.render === 'function') {
-						return (
-							subject.COMPCache || 
-							createComponentShape(subject.COMPCache = createClass(subject), null, null)
-						);
-					} 
-					// unsupported render types, fail gracefully
-					else {
-						return componentRenderBoundary(
-							component,
-							'render', 
-							subject.constructor.name, 
-							''
-						) || createEmptyShape();
-					}
+			// coroutine
+			if (typeof subject.next === 'function' || (subject.prototype != null && subject.prototype.next != null)) {			
+				if (subject.return == null) {
+					subject = subject(component.props, component.state, component);
 				}
+	
+				component.yield = true;
+				component.render = subject;
+	
+				component.constructor.prototype.render = function render () {
+					return subject.next().value;
+				};
+	
+				return extractVirtualNode(subject.next().value, component);
+			}
+			// component descriptor
+			else if (typeof subject.render === 'function') {
+				return (
+					subject.COMPCache || 
+					createComponentShape(subject.COMPCache = createClass(subject, null), objEmpty, arrEmpty)
+				);
+			} 
+			// unsupported render types, fail gracefully
+			else {
+				return componentRenderBoundary(
+					component,
+					'render', 
+					subject.constructor.name, 
+					''
+				) || createEmptyShape();
 			}
 		}
 	}
@@ -2288,8 +2459,10 @@
 				// update props
 				if (newProps !== void 0) {
 					// component with shouldComponentUpdate
-					if (component.shouldComponentUpdate !== void 0 && 
-						componentUpdateBoundary(component, 'shouldComponentUpdate', newProps, component.state) === false) {
+					if (
+						component.shouldComponentUpdate !== void 0 && 
+						componentUpdateBoundary(component, 'shouldComponentUpdate', newProps, component.state) === false
+					) {
 						// exit early
 						return renderer;
 					}
@@ -2311,22 +2484,27 @@
 	
 		// Object
 		if (subject.render !== void 0) {
-			vnode = createComponentShape(createClass(subject));
+			vnode = createComponentShape(createClass(subject, null), objEmpty, arrEmpty);
 		}
-		// array/Component/function
-		else if (subject.nodeType === void 0) {
-			// fragment
+		// array/component/function
+		else if (subject.Type === void 0) {
+			// array
 			if (subject.constructor === Array) {
 				vnode = createElement('@', null, subject);
 			}
-			// component
+			// component/function
 			else {
-				vnode = createComponentShape(subject);
+				vnode = createComponentShape(subject, objEmpty, arrEmpty);
 			}
 		} 
 		// element/component
 		else {
 			vnode = subject;
+		}
+	
+		// element
+		if (vnode.Type !== 2) {
+			vnode = createComponentShape(createClass(vnode, null), objEmpty, arrEmpty);
 		}
 	
 		// mount
@@ -2340,11 +2518,6 @@
 	
 	  		// default to document.body if no match/document
 	  		element = (target === null || target === document) ? document.body : target;
-		}
-	
-		// element
-		if (vnode.nodeType !== 2) {
-			vnode = createComponentShape(createClass(subject));
 		}
 	
 		// hydration
@@ -2384,7 +2557,7 @@
 	 */
 	function shallow (subject) {
 		if (isValidElement(subject)) {
-			return subject.nodeType === 2 ? extractComponentNode(subject) : subject;
+			return subject.Type === 2 ? extractComponentNode(subject) : subject;
 		}
 		else {
 			return extractComponentNode(createElement(subject, null, null));
@@ -2481,6 +2654,7 @@
 		// avoid refs, keys, events and xmlns namespaces
 		if (name === 'ref' || 
 			name === 'key' || 
+			name === 'children' ||
 			isEventName(name) || 
 			propValue === nsSvg || 
 			propValue === nsMath
@@ -2648,40 +2822,62 @@
 	 * create node
 	 * 
 	 * @param  {VNode}      subject
-	 * @param  {?Component} component
-	 * @param  {?string}    namespace
+	 * @param  {Component?} component
+	 * @param  {string?}    namespace
 	 * @return {Node}
 	 */
 	function createNode (subject, component, namespace) {
-		var nodeType = subject.nodeType;
-		
+		var nodeType = subject.Type;
+	
 		// create text node element	
 		if (nodeType === 3) {
 			return subject.DOMNode = document.createTextNode(subject.children);
 		}
 	
-		// hoisted, clone DOMNode, ensure fragments are not cloned
-		if (subject.DOMNode !== null) {
-			return subject.DOMNode = subject.DOMNode.cloneNode(true);
-		}
-	
-		// create
-		var vnode = nodeType === 2 ? extractComponentNode(subject) : subject;
-		var type = vnode.type;
-		var children = vnode.children;
-		var props = vnode.props;
-		var length = children.length;
+		var vnode;
 		var element;
 	
-		var thrown = 0;
-		var vnodeType = vnode.nodeType;
+		var portal = false;
 	
-		// text
-		if (vnodeType === 3) {
-			return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
+		// DOMNode exists
+		if (subject.DOMNode !== null) {
+			element = subject.DOMNode;
+	
+			// portal
+			if (portal = (nodeType === 4 || nodeType === 5)) {
+				element = (vnode = subject).DOMNode = (nodeType === 4 ? element.cloneNode(true) : element);
+			}
+			// hoisted
+			else {
+				return subject.DOMNode = element.cloneNode(true);
+			}
+		}
+		// create DOMNode
+		else {
+			vnode = nodeType === 2 ? extractComponentNode(subject) : subject;
+		}
+		
+		var vnodeType = vnode.Type;	
+		var children = vnode.children;
+	
+		if (portal === false) {
+			// text		
+			if (vnodeType === 3) {
+				return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
+			}
+			// portal
+			else if (vnodeType === 4 || vnodeType === 5) {
+				element = vnode.DOMNode;
+				portal = true;
+			}
 		}
 	
+		var type = vnode.type;
+		var props = vnode.props;
+		var length = children.length;
+	
 		var instance = subject.instance !== null;
+		var thrown = 0;
 	
 		// assign namespace
 		if (props.xmlns !== void 0) { 
@@ -2695,32 +2891,35 @@
 			thrown = component.thrown;
 		}
 	
-		// create namespaced element
-		if (namespace !== null) {
-			// if undefined, assign svg namespace
-			if (props.xmlns === void 0) {
-				props === objEmpty ? (props = {xmlns: namespace}) : (props.xmlns = namespace);
+		if (portal === false) {
+			// create namespaced element
+			if (namespace !== null) {
+				// if undefined, assign svg namespace
+				if (props.xmlns === void 0) {
+					props === objEmpty ? (props = {xmlns: namespace}) : (props.xmlns = namespace);
+				}
+	
+				element = createDOMNodeNS(namespace, type, component);
 			}
-	
-			element = createDOMNodeNS(namespace, type, component);
-		}
-		// create html element
-		else {
-			element = createDOMNode(type, component);
+			// create html element
+			else {
+				element = createDOMNode(type, component);
+			}
 		}
 	
-		// stylesheets
 		if (instance) {
 			// avoid appending children if an error was thrown
 			if (thrown !== 0 || thrown !== component.thrown) {
 				return vnode.DOMNode = subject.DOMNode = element;
 			}
 	
+			// hydrate
 			if (component.vnode.DOMNode === null) {
 				component.vnode.DOMNode = element;
 			}
 	
-			if (nodeType === 2 && component.stylesheet !== void 0 && type !== 'noscript') {
+			// stylesheets
+			if (nodeType === 2 && component.stylesheet !== void 0 && type !== 'noscript' && type !== '#text') {
 				createScopedStylesheet(component, subject.type, element);
 			}
 		}
@@ -2731,18 +2930,18 @@
 			for (var i = 0; i < length; i++) {
 				var newChild = children[i];
 	
-				// hoisted, clone VNode
+				// hoisted, clone
 				if (newChild.DOMNode !== null) {
 					newChild = children[i] = cloneNode(newChild);
 				}
 	
 				// append child
-				appendNode(newChild.nodeType, newChild, element, createNode(newChild, component, namespace));					
+				appendNode(newChild.Type, newChild, element, createNode(newChild, component, namespace));
 			}
 		}
 	
-		// props is not an empty object
-		if (props !== objEmpty) {
+		// has props
+		if (props !== objEmpty) {		
 			// refs
 			if (props.ref !== void 0) {
 				refs(props.ref, component, element);
@@ -2752,7 +2951,7 @@
 			assignProps(element, props, false, component);
 		}
 	
-		// cache element reference
+		// cache DOM reference
 		return vnode.DOMNode = subject.DOMNode = element;
 	}
 	
@@ -2882,7 +3081,7 @@
 		}
 	
 		// hydrate new node
-		oldNode.nodeType = newType;
+		oldNode.Type = newType;
 		oldNode.type = newNode.type;
 		oldNode.props = newNode.props;
 		oldNode.children = newNode.children;
@@ -3080,7 +3279,7 @@
 	
 			// removed
 			if (newChild === void 0) {
-				removeNode(oldChild.nodeType, oldChild, parentNode);
+				removeNode(oldChild.Type, oldChild, parentNode);
 				removed++;
 			}
 	
@@ -3099,7 +3298,7 @@
 	
 			// new
 			if (oldChild === void 0) {
-				nodeType = newChild.nodeType;
+				nodeType = newChild.Type;
 				nextNode = createNode(newChild, null, null);
 	
 				// insert
@@ -3172,8 +3371,10 @@
 			var newState = newComponent.state;
 	
 			// component with shouldComponentUpdate
-			if (oldComponent.shouldComponentUpdate !== void 0 && 
-				componentUpdateBoundary(oldComponent, 'shouldComponentUpdate', newProps, newState) === false) {
+			if (
+				oldComponent.shouldComponentUpdate !== void 0 && 
+				componentUpdateBoundary(oldComponent, 'shouldComponentUpdate', newProps, newState) === false
+			) {
 				// exit early
 				return;
 			}
@@ -3233,8 +3434,8 @@
 			// greater value between new length and old length
 			for (var i = 0; i < length; i++) {
 				// avoid accessing out of bounds index and nodeType where unnecessary
-				newType = i < newLength ? (newChild = newChildren[i]).nodeType : (newChild = nodeEmpty, 0);
-				oldType = i < oldLength ? (oldChild = oldChildren[i]).nodeType : (oldChild = nodeEmpty, 0);
+				newType = i < newLength ? (newChild = newChildren[i]).Type : (newChild = nodeEmpty, 0);
+				oldType = i < oldLength ? (oldChild = oldChildren[i]).Type : (oldChild = nodeEmpty, 0);
 	
 				if (keyed) {
 					// push keys

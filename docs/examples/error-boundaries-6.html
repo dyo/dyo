@@ -13,7 +13,7 @@
 			class Foo extends dio.Component {	
 				componentDidThrow(err) {
 					// error boundry handler throwing an error
-					throw 'recursive error boundry... handled'
+					throw new Error('recursive error boundry... handled')
 				}
 				render() {
 					throw 'Pawned! Hahaha!'

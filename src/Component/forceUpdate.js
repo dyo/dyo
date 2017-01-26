@@ -13,11 +13,20 @@ function forceUpdate (callback) {
 	var newNode = extractRenderNode(this);
 	var oldNode = this.vnode;
 
-	var newType = newNode.nodeType;
-	var oldType = oldNode.nodeType;
+	var newType = newNode.Type;
+	var oldType = oldNode.Type;
 
 	// different root node
-	if (newNode.type !== oldNode.type) {
+	if (
+		// node type check
+		newType !== oldType || 
+
+		// portal type check
+		(newType === 4 && oldType === 4 && newNode !== oldNode) ||
+	
+		// element type checke
+		newNode.type !== oldNode.type
+	) {
 		// render returns a promise
 		if (newType === void 0) {
 			return;

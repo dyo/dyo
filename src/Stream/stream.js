@@ -65,8 +65,11 @@ function stream (value, middleware) {
 			var action = function (listener) {
 				// link in the .then / .catch chain
 				var link = listener(chain[type] || value);
+				
 				// add to chain if defined
-				if (link !== void 0) { chain[type] = link; }
+				if (link !== void 0) { 
+					chain[type] = link; 
+				}
 			}
 
 			for (var i = 0; i < length; i++) {
@@ -169,7 +172,7 @@ function stream (value, middleware) {
 	Stream.resume = resume;
 
 	// signature
-	Stream._stream = true;
+	Stream.isStream = true;
 
 	// acts like a promise if a function is passed as value
 	typeof value === 'function' ? value(resolve, reject) : Stream(value);

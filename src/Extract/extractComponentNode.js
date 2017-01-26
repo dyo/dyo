@@ -38,7 +38,7 @@ function extractComponentNode (subject) {
 	// function components
 	else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
 		// create component
-		owner = createClass(type);
+		owner = createClass(type, props);
 	}
 	// class / createClass components
 	else {
@@ -52,7 +52,7 @@ function extractComponentNode (subject) {
 	var vnode = extractRenderNode(component);
 
 	// if render returns a component, extract that component
-	if (vnode.nodeType === 2) {
+	if (vnode.Type === 2) {
 		vnode = extractComponentNode(vnode);
 	}
 	

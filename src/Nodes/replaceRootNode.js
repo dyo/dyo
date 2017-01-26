@@ -27,7 +27,7 @@ function replaceRootNode (newNode, oldNode, newType, oldType, component) {
 	}
 
 	// hydrate new node
-	oldNode.nodeType = newType;
+	oldNode.Type = newType;
 	oldNode.type = newNode.type;
 	oldNode.props = newNode.props;
 	oldNode.children = newNode.children;

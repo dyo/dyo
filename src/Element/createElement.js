@@ -9,12 +9,16 @@
  * @return {Object<string, any>}
  */
 function createElement (type, props) {
+	if (type == null) {
+		return createEmptyShape();
+	}
+
 	var length = arguments.length;
 	var children = [];
 	var position = 2;
 
 	// if props is not a normal object
-	if (props == null || props.nodeType !== void 0 || props.constructor !== Object) {
+	if (props == null || props.constructor !== Object || props.props !== void 0) {
 		// update position if props !== null
 		if (props !== null) {
 			props = null;
@@ -45,31 +49,48 @@ function createElement (type, props) {
 		}
 	}
 
+	var typeOf = typeof type;
+
+	if (typeOf === 'string') {
+		// fragment
+		if (type === '@') {
+			return createFragmentShape(children);
+		}
+		// element
+		else {
+			if (props === null) {
+				props = {};
+			}
+
+			// if props.xmlns is undefined and type === 'svg' or 'math' 
+			// assign svg && math namespaces to props.xmlns
+			if (props.xmlns === void 0) {	
+				if (type === 'svg') { 
+					props.xmlns = nsSvg; 
+				}
+				else if (type === 'math') { 
+					props.xmlns = nsMath; 
+				}
+			}
+
+			return createElementShape(type, props, children);
+		}
+	}
 	// component
-	if (typeof type === 'function') {
+	else if (typeOf === 'function') {
 		return createComponentShape(type, props, children);
 	}
+	// hoisted
+	else if (type.Type) {
+		return cloneElement(type, props, children);
+	}
+	// portal
+	else if (type.nodeType !== void 0) {
+		return createPortalShape(type, props || objEmpty, children);
+	}
 	// fragment
-	else if (type === '@') {
-		return createFragmentShape(children);
-	} 
 	else {
-		if (props === null) {
-			props = {};
-		}
-
-		// if props.xmlns is undefined and type === 'svg' or 'math' 
-		// assign svg && math namespaces to props.xmlns
-		if (props.xmlns === void 0) {	
-			if (type === 'svg') { 
-				props.xmlns = nsSvg; 
-			}
-			else if (type === 'math') { 
-				props.xmlns = nsMath; 
-			}
-		}
-
-		return createElementShape(type, props, children);
+		return createElement('@', null, type);
 	}
 }
 
