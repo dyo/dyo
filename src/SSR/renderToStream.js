@@ -8,10 +8,9 @@
  * @return {Stream}
  */
 function renderToStream (subject, template) {	
-	if (subject != null) {
-		return new Stream(subject, template == null ? null : template.split('@body'));
-	}
-	else {
+	return subject ? (
+		new Stream(subject, template == null ? null : template.split('@body'))
+	) : function (subject) {
 		return new Stream(subject);
 	}
 }
@@ -152,7 +151,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 						promise = component['--async'] !== true;
 
 						(promise ? component['--async'] : component.props)
-							.then(function resolveAsyncComponent (data) {								
+							.then(function resolveAsyncComponent (data) {
 								vnode.Type = 2;
 								vnode.type = subject.type;
 								vnode.instance = component;
@@ -197,11 +196,11 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 				// <type ...props>
 				this.push('<'+type+propsStr+'>');
 
-				return
+				return;
 			}
 
-			var opening = '';
-			var closing = '';
+			var opening = '<'+type+propsStr+'>';
+			var closing = '</'+type+'>';
 
 			if (props.innerHTML !== void 0) {
 				// special case when a prop replaces children
