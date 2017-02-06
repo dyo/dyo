@@ -15,8 +15,8 @@ function createFragmentShape (children) {
 		DOMNode: null,
 		instance: null,
 		index: 0,
-		parent: null,
-		key: null
+		nodeName: null,
+		key: void 0
 	};
 }
 

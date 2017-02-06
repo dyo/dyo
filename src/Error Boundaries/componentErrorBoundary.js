@@ -15,18 +15,27 @@ function componentErrorBoundary (error, component, location) {
 	var oldNode;
 	var displayName;
 	var authored;
-	var thrown = component.thrown;
+	var thrown = component['--throw'];
 
-	component.thrown = thrown + 1;
+	component['--throw'] = thrown + 1;
 
 	if ((error instanceof Error) === false) {
 		error = new Error(error);
 	}
 
-	// intial throw from render, try to recover once
+	// initial throw from render, try to recover once
 	if (thrown === 0 && browser && location === 'render') {
 		schedule(function () {
-			component.forceUpdate(null);
+            try {
+                // test render for errors
+                component.render(component.props, component.state, component);
+
+                // update if no errors where thrown
+                component.forceUpdate();
+            }
+            catch (e) {
+                
+            }
 		});
 	}
 
@@ -50,13 +59,13 @@ function componentErrorBoundary (error, component, location) {
     	try {
     		newNode = component.componentDidThrow(error);
     	}
-    	catch (err) {    		
+    	catch (e) {    		
     		// avoid recursive call stack
     		if (thrown >= 0) {
     			// preserve order of errors logged 
     			schedule(function () {
-    				component.thrown = -1;
-    				componentErrorBoundary(err, component, 'componentDidThrow');
+    				component['--throw'] = -1;
+    				componentErrorBoundary(e, component, 'componentDidThrow');
     			});
     		}
     	}
@@ -78,7 +87,7 @@ function componentErrorBoundary (error, component, location) {
     		if (newNode != null && typeof newNode.type === 'string') {
     			if (/^[A-z]/g.exec(newNode.type) === null) {
 					console.error(
-						'Dio bailed out of rendering an error state.\n\n'+
+						'Dio bailed out of rendering an error state for `' + displayName + '`.\n\n'+
 						'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
 					);
 
@@ -95,7 +104,7 @@ function componentErrorBoundary (error, component, location) {
     		schedule(function () {
     			replaceRootNode(
     				extractVirtualNode(newNode), 
-    				oldNode = component.vnode, 
+    				oldNode = component['--vnode'], 
     				newNode.Type, 
     				oldNode.Type, 
     				component

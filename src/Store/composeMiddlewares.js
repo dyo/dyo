@@ -13,10 +13,12 @@ function composeMiddlewares () {
 
 	// no functions passed
 	if (length === 0) {
-		return function (a) { return a; }
+		return function (a) { 
+			return a;
+		}
 	}
 	else {
-		// list of functions to compose
+		// functions to compose
 		var funcs = [];
 
 		// passing arguments to a function i.e [].splice() will prevent this function

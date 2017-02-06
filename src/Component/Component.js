@@ -15,7 +15,7 @@ function Component (props) {
 				(props = (props === objEmpty ? {} : props) || {}) || props)
 		);
 
-		this.async = (
+		this['--async'] = (
 			props != null && props.constructor !== Object && typeof props.then === 'function'
 		) ? true : false;
 	}
@@ -42,7 +42,7 @@ function Component (props) {
 			);
 		}
 
-		this.async = false;
+		this['--async'] = false;
 	}
 
 	// assign state
@@ -52,10 +52,11 @@ function Component (props) {
 		{}
 	);
 
-	this.thrown = 0;
-	this.yield = false;
-	this.vnode = null;
 	this.refs = null;
+
+	this['--vnode'] = null;
+	this['--yield'] = false;
+	this['--throw'] = 0;
 }
 
 

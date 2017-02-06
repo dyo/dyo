@@ -9,36 +9,53 @@ function patchProps (newNode, oldNode) {
 	var oldProps = oldNode.props;
 	var namespace = newNode.props.xmlns || '';
 	var target = oldNode.DOMNode;
+	var updated = false;
 	var length = 0;
 
 	// diff newProps
-	for (var newName in newNode.props) { 
-		var newValue = newProps[newName];
-		var oldValue = oldProps[newName];
+	for (var newName in newNode.props) {
+		length = newName.length;
 
-		if (newValue != null && oldValue !== newValue) {
-			updateProp(target, 'setAttribute', newName, newValue, namespace);
-			
-			if (length === 0) {
-				length++;
+		if (
+			(length === 3 && newName === 'key') === false && 
+			(length === 8 && newName === 'children') === false && 
+			isEventProp(newName) === false
+		) {
+			var newValue = newProps[newName];
+			var oldValue = oldProps[newName];
+
+			if (newValue != null && oldValue !== newValue) {
+				updateProp(target, true, newName, newValue, namespace);
+				
+				if (updated === false) {
+					updated = true;
+				}
 			}
 		}
 	}
 
 	// diff oldProps
-	for (var oldName in oldNode.props) { 
-		var newValue = newProps[oldName];
+	for (var oldName in oldNode.props) {
+		length = oldName.length;
 
-		if (newValue == null) {
-			updateProp(target, 'removeAttribute', oldName, '', namespace);
-			
-			if (length === 0) {
-				length++;
+		if (
+			(length === 3 && oldName === 'key') === false && 
+			(length === 8 && oldName === 'children') === false &&  
+			isEventProp(oldName) === false
+		) {
+			var newValue = newProps[oldName];
+
+			if (newValue == null) {
+				updateProp(target, false, oldName, '', namespace);
+				
+				if (updated === false) {
+					updated = true;
+				}
 			}
 		}
 	}
 
-	if (length !== 0) {
+	if (updated) {
 		oldNode.props = newNode.props;
 	}
 }

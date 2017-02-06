@@ -15,7 +15,7 @@ function renderToCache (subject) {
 			}
 		}
 		// component
-		else if (subject.Type === void 0) {
+		else if (typeof subject === 'function') {
 			subject.HTMLCache = renderToString(subject);
 		}
 		// vnode

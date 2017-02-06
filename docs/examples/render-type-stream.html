@@ -21,7 +21,7 @@
 			setTimeout(bar, 1000, h('h1', 'Updated stream value once'));
 			setTimeout(bar, 2000, h('h1', 'Updated stream value twice'));
 
-			dio.render(Foo, '#root');
+			var render = dio.render(Foo, '#root');
 		</script>
 	</body>
 </html>

@@ -1,7 +1,5 @@
 /**
- * css compiler
- *
- * @public
+ * css preprocessor
  *
  * @example stylesheet('.foo', 'css...', true, true, null);
  * 
@@ -46,8 +44,17 @@ function stylesheet (selector, styles, animations, compact, middleware) {
     // reset type signature
     type = 0;
 
+    var animns;
+
     // animation and keyframe namespace
-    var animns = (animations === void 0 || animations === true) ? namespace : '';
+    if (animations == void 0 || animations === true) {
+        animations = true;
+        animns = namespace;
+    }
+    else {
+        animns = '';
+        animations = false;
+    }
 
     // uses middleware
     var use = middleware != null;
@@ -59,9 +66,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
 
         // o, object of middlewares
         if (uses === 111) {
-            for (var i = 0, keys = Object.keys(middleware), length = keys.length; i < length; i++) {
-                stylesheet.use(keys[i], middleware[keys[i]]);
-            }
+            stylesheet.use(middleware, null);
         }
         // f, not a single function middleware
         else if (uses !== 102) {
@@ -115,6 +120,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
     var comment = 0;
     var strings = 0;
     var nested = 0;
+    var func = 0;
 
     // context(flat) signatures
     var levels = 0;
@@ -148,8 +154,8 @@ function stylesheet (selector, styles, animations, compact, middleware) {
         var code = styles.charCodeAt(caret);
 
         // {, }, ; characters, parse line by line
-        if (strings === 0 && (code === 123 || code === 125 || code === 59)) {
-            buff += styles[caret];
+        if (strings === 0 && func === 0 && (code === 123 || code === 125 || code === 59)) {
+            buff += styles.charAt(caret);
 
             var first = buff.charCodeAt(0);
 
@@ -263,7 +269,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                                 }
 
                                 // build content of nested block
-                                inner += styles[caret++];
+                                inner += styles.charAt(caret++);
                             }
 
                             for (var i = 0, length = selectors.length; i < length; i++) {
@@ -403,7 +409,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                     var anims = buff.substring(colon).trim().split(',');
 
                     // - short hand animation syntax
-                    if ((buff.charCodeAt(9) || 0) !== 45) {
+                    if (animations === true && (buff.charCodeAt(9) || 0) !== 45) {
                         // because we can have multiple animations `animation: slide 4s, slideOut 2s`
                         for (var j = 0, length = anims.length; j < length; j++) {
                             var anim = anims[j];
@@ -419,8 +425,8 @@ function stylesheet (selector, styles, animations, compact, middleware) {
 
                                 // animation name is anything not in this list
                                 if (
-                                    // cubic-bezier()
-                                    !(frst === 99 && last === 41) &&
+                                    // cubic-bezier()/steps(), ) 
+                                    last !== 41 && len !== 0 &&
 
                                     // infinite, i, f, e
                                     !(frst === 105 && third === 102 && last === 101 && len === 8) &&
@@ -428,13 +434,13 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                                     // linear, l, n, r
                                     !(frst === 108 && third === 110 && last === 114 && len === 6) &&
 
-                                    // alternate, a, t, e
-                                    !(frst === 97 && third === 116 && last === 101 && len === 9) &&
+                                    // alternate/alternate-reverse, a, t, e
+                                    !(frst === 97 && third === 116 && last === 101 && (len === 9 || len === 17)) &&
 
                                     // normal, n, r, l
                                     !(frst === 110 && third === 114 && last === 108 && len === 6) &&
 
-                                    // backwords, b, c, s
+                                    // backwards, b, c, s
                                     !(frst === 98 && third === 99 && last === 115 && len === 9) &&
 
                                     // forwards, f, r, s
@@ -446,21 +452,41 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                                     // none, n, n, e
                                     !(frst === 110 && third === 110 && last === 101 && len === 4)&&
 
-                                    // ease, e, s, e
-                                    !(frst === 101 && third === 115 && last === 101 && len === 4) &&
+                                    // running, r, n, g 
+                                    !(frst === 114 && third === 110 && last === 103 && len === 7) &&
 
-                                    // ease-
-                                    !(frst === 101 && len > 4 && prop.charCodeAt(4) === 45) &&
+                                    // paused, p, u, d
+                                    !(frst === 112 && third === 117 && last === 100 && len === 6) &&
 
-                                    // durations 0.4ms, .4s, 400ms ...
-                                    isNaN(parseFloat(prop))
+                                    // reversed, r, v, d
+                                    !(frst === 114 && third === 118 && last === 100 && len === 8) &&
+
+                                    // step-start/step-end, s, e, (t/d)
+                                    !(
+                                        frst === 115 && third === 101 && 
+                                        ((last === 116 && len === 10) || (last === 100 && len === 8)) 
+                                    ) &&
+
+                                    // ease/ease-in/ease-out/ease-in-out, e, s, e
+                                    !(
+                                        frst === 101 && third === 115 &&
+                                        (
+                                            (last === 101 && len === 4) ||
+                                            (len === 11 || len === 7 || len === 8) && prop.charCodeAt(4) === 45
+                                        )
+                                    ) &&
+
+                                    // durations, 0.4ms, .4s, 400ms ...
+                                    isNaN(parseFloat(prop)) &&
+
+                                    // handle spaces in cubic-bezier()/steps() functions
+                                    prop.indexOf('(') === -1
                                 ) {
-                                    props[k] = animns+prop;
-                                    anim = props.join(' ');
+                                    props[k] = animns + prop;
                                 }
                             }
 
-                            build += (j === 0 ? '' : ',') + anim.trim();
+                            build += (j === 0 ? '' : ',') + props.join(' ').trim();
                         }
                     }
                     // explicit syntax, anims array should have only one elemenet
@@ -483,9 +509,13 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                 }
                 // display: d, i, s
                 else if (first === 100 && second === 105 && third === 115) {
-                    if (buff.indexOf('flex') > -1) {
+                    // flex/inline-flex
+                    if ((indexOf = buff.indexOf('flex')) > -1) {
+                        // e, inline-flex
+                        temp = buff.charCodeAt(indexOf-2) === 101 ? 'inline-' : '';
+
                         // vendor prefix
-                        buff = 'display:'+webkit+'box;display:'+webkit+'flex;'+ms+'flexbox;display:flex;';
+                        buff = 'display:'+webkit+temp+'box;display:'+webkit+temp+'flex;'+ms+'flexbox;display:'+temp+'flex;';
                     }
                 }
                 // transforms & transitions: t, r, a 
@@ -590,7 +620,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
 
                             // inner content of block
                             inner = '';
-                            
+
                             var nestSelector = buff.substring(0, buff.length-1).split(',');
                             var prevSelector = prev.substring(0, prev.length-1).split(',');
 
@@ -610,7 +640,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                                 }
 
                                 // build content of nested block
-                                inner += styles[caret++];
+                                inner += styles.charAt(caret++);
                             }
 
                             // handle multiple selectors: h1, h2 { div, h4 {} } should generate
@@ -622,7 +652,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
 
                                 // since there could also be multiple nested selectors
                                 for (var k = 0, l = nestSelector.length; k < l; k++) {
-                                    selector = temp.replace(prefix, '').trim();
+                                    selector = temp.replace(prefix, '&').trim();
 
                                     if (nestSelector[k].indexOf(' &') > 0) {
                                         selector = nestSelector[k].replace('&', '').trim() + ' ' + selector;
@@ -639,7 +669,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
                             buff = ('\n' + prevSelector.join(',') + ' {'+inner+'}');
 
                             // append nest
-                            nest += buff.replace(/&| +&/g, '');
+                            nest += buff.replace(/ +&/g, '');
 
                             // signature
                             nested = 1;
@@ -904,23 +934,40 @@ function stylesheet (selector, styles, animations, compact, middleware) {
             }
             // not `\t` tab character
             else if (code !== 9) {
-                // " character
-                if (code === 34) {
-                    // exit string " context / enter string context
-                    strings = strings === 34 ? 0 : (strings === 39 ? 39 : 34);
-                }
-                // ' character
-                else if (code === 39) {
-                    // exit string ' context / enter string context
-                    strings = strings === 39 ? 0 : (strings === 34 ? 34 : 39);
-                }
-                // / character
-                else if (code === 47) {
-                    code === 47 && comment < 2 && comment++;
+                switch (code) {
+                    // " character
+                    case 34: {
+                        // exit string " context / enter string context
+                        strings = strings === 34 ? 0 : (strings === 39 ? 39 : 34);
+                        break;
+                    }
+                    // ' character
+                    case 39: {
+                        // exit string ' context / enter string context
+                        strings = strings === 39 ? 0 : (strings === 34 ? 34 : 39);
+                        break;
+                    }
+                    // ( character
+                    case 40: {
+                        strings === 0 && (func = 1);
+                        break;
+                    }
+                    // ) character
+                    case 41: {
+                        strings === 0 && (func = 0);
+                        break;
+                    }
+                    // / character
+                    case 47: {
+                        if (strings === 0 && func !== 1) {
+                            code === 47 && comment < 2 && comment++;
+                        }
+                        break;
+                    }
                 }
 
                 // build line buffer
-                buff += styles[caret];
+                buff += styles.charAt(caret);
             }
         }
 
@@ -977,7 +1024,7 @@ function stylesheet (selector, styles, animations, compact, middleware) {
  * @return {Object} {use, plugins}
  */
 stylesheet.use = function (key, plugin) {
-    var plugins = this.plugins;
+    var plugins = stylesheet.plugins;
     var length = plugins.length;
 
     if (plugin == null) {
@@ -985,31 +1032,39 @@ stylesheet.use = function (key, plugin) {
         key = void 0;
     }
 
-    // array of plugins
-    if (plugin instanceof Array) {
-        for (var i = 0, length = plugin.length; i < length; i++) {
-            plugins[length++] = plugin[i];
+    if (plugin != null) {
+        // object of plugins
+        if (plugin.constructor === Object) {
+            for (var name in plugin) {
+                stylesheet.use(name, plugin[name]);
+            }
         }
-    }
-    // single un-keyed plugin
-    else if (key == null) {
-        plugins[length] = plugin;
-    }
-    // keyed plugin
-    else {
-        var pattern = (key instanceof RegExp) ? key : new RegExp(key + '\\([ \\t\\r\\n]*([^\\0]*?)[ \\t\\r\\n]*\\)', 'g');
-        var regex = /[ \t\r\n]*,[ \t\r\n]*/g;
+        // array of plugins
+        else if (plugin.constructor === Array) {
+            for (var i = 0, length = plugin.length; i < length; i++) {
+                plugins[length++] = plugin[i];
+            }
+        }
+        // single un-keyed plugin
+        else if (key == null) {
+            plugins[length] = plugin;
+        }
+        // keyed plugin
+        else {
+            var pattern = (key instanceof RegExp) ? key : new RegExp(key + '\\([ \\t\\r\\n]*([^\\0]*?)[ \\t\\r\\n]*\\)', 'g');
+            var regex = /[ \t\r\n]*,[ \t\r\n]*/g;
 
-        plugins[length] = function (ctx, str, line, col) {
-            if (ctx === 6) {
-                str = str.replace(pattern, function (match, group) {
-                    var args = group.replace(regex, ',').split(',');
-                    var replace = plugin.apply(null, args);
+            plugins[length] = function (ctx, str, line, col) {
+                if (ctx === 6) {
+                    str = str.replace(pattern, function (match, group) {
+                        var args = group.replace(regex, ',').split(',');
+                        var replace = plugin.apply(null, args);
 
-                    return replace != null ? replace : match;
-                });
+                        return replace != null ? replace : match;
+                    });
 
-                return str;
+                    return str;
+                }
             }
         }
     }

@@ -46,6 +46,8 @@
 - [JS Repaint Perfs](https://mathieuancelin.github.io/js-repaint-perfs/dio/index.html)
 - [Benchmark Table Test](/examples/benchmark-table-test.html)
 - [JS Framework Benchmark](/examples/benchmark-js-framework.html)
+- [JS Framework Benchmark Keyed](/examples/benchmark-js-framework-keyed.html)
 - [UI Bench Benchmark](https://localvoid.github.io/uibench/)
 
 - [This website](https://github.com/thysultan/dio.js/tree/master/docs)
+

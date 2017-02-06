@@ -34,7 +34,7 @@
 	
 	
 	// current version
-	var version = '6.1.0';
+	var version = '6.1.1';
 	
 	// enviroment
 	var document = window.document || null;
@@ -58,7 +58,7 @@
 	// empty shapes
 	var objEmpty = {};
 	var arrEmpty = [];
-	var nodeEmpty = createNodeShape(0, '', objEmpty, arrEmpty, null, null, 0, null, null);
+	var nodeEmpty = createNodeShape(0, '', objEmpty, arrEmpty, null, null, 0, null, void 0);
 	var funcEmpty = function () {};
 	var fragProps = {style: 'display: inherit;'};
 	
@@ -69,9 +69,9 @@
 	
 	// void elements
 	var isVoid = {
-		'area':   0, 'base':  0, 'br':   0, '!doctype': 0, 'col':    0, 'embed': 0,
-		'wbr':    0, 'track': 0, 'hr':   0, 'img':      0, 'input':  0, 
-		'keygen': 0, 'link':  0, 'meta': 0, 'param':    0, 'source': 0
+		'area': 0, 'base': 0, 'br': 0, '!doctype': 0, 'col': 0, 'embed': 0,
+		'wbr': 0, 'track': 0, 'hr': 0, 'img': 0, 'input': 0, 'keygen': 0, 
+		'link': 0, 'meta': 0, 'param': 0, 'source': 0
 	};
 	
 	// unicode characters
@@ -201,13 +201,13 @@
 		return {
 			Type: 1,
 			type: type,
-			props: props || objEmpty,
-			children: children || [],
+			props: (props = props != null ? props : objEmpty),
+			children: (children == null ? [] : children),
 			DOMNode: null,
 			instance: null,
 			index: 0,
-			parent: null,
-			key: null
+			nodeName: null,
+			key: props !== objEmpty ? props.key : void 0
 		};
 	}
 	
@@ -226,13 +226,13 @@
 		return {
 			Type: 2,
 			type: type,
-			props: props || objEmpty,
-			children: children || arrEmpty,
+			props: (props = props != null ? props : objEmpty),
+			children: (children == null ? arrEmpty : children),
 			DOMNode: null,
 			instance: null,
 			index: 0,
-			parent: null,
-			key: null
+			nodeName: null,
+			key: props !== objEmpty ? props.key : void 0
 		};
 	}
 	
@@ -254,8 +254,8 @@
 			DOMNode: null,
 			instance: null,
 			index: 0,
-			parent: null,
-			key: null
+			nodeName: null,
+			key: void 0
 		};
 	}
 	
@@ -276,9 +276,9 @@
 			children: text,
 			DOMNode: null,
 			instance: null,
-			index: null,
-			parent: null,
-			key: null
+			index: 0,
+			nodeName: null,
+			key: void 0
 		};
 	}
 	
@@ -297,13 +297,13 @@
 		return {
 			Type: 1,
 			type: type,
-			props: (props = props || {}, props.xmlns = nsSvg, props),
-			children: children || [],
+			props: (props == null ? (props = {xmlns: nsSvg}) : (props.xmlns = nsSvg, props)),
+			children: (children == null ? [] : children),
 			DOMNode: null,
 			instance: null,
 			index: 0,
-			parent: null,
-			key: null
+			nodeName: null,
+			key: props.key
 		};
 	}
 	
@@ -318,10 +318,11 @@
 	 * @param  {Node}                        DOMNode
 	 * @param  {Component}                   instance
 	 * @param  {number}                      index
-	 * @param  {Component}                   parent
+	 * @param  {string?}                     nodeName
+	 * @param  {any}                         key
 	 * @return {VNode}
 	 */
-	function createNodeShape (Type, type, props, children, DOMNode, instance, index, parent, key) {
+	function createNodeShape (Type, type, props, children, DOMNode, instance, index, nodeName, key) {
 		return {
 			Type: Type,
 			type: type,
@@ -330,7 +331,7 @@
 			DOMNode: DOMNode,
 			instance: instance,
 			index: index,
-			parent: parent,
+			nodeName: nodeName,
 			key: key
 		};
 	}
@@ -350,8 +351,8 @@
 			DOMNode: null,
 			instance: null,
 			index: 0,
-			parent: null,
-			key: null
+			nodeName: null,
+			key: void 0
 		};
 	}
 	
@@ -368,13 +369,13 @@
 		return {
 			Type: 4,
 			type: type.nodeName.toLowerCase(),
-			props: props,
-			children: children,
+			props: (props = props != null ? props : objEmpty),
+			children: (children == null ? [] : children),
 			DOMNode: type,
 			instance: null,
 			index: 0,
-			parent: null,
-			key: null
+			nodeName: null,
+			key: props !== objEmpty ? props.key : void 0
 		};
 	}
 	
@@ -457,7 +458,7 @@
 	 */
 	function createScopedCSS (component, constructor, inject) {
 		var namespace = component.displayName || constructor.name;
-		var selector  = '['+nsStyle+'='+namespace+']';
+		var selector = '['+nsStyle+'='+namespace+']';
 		var css = component.stylesheet();
 		var output = stylesheet(selector, css, true, true, null);
 	
@@ -501,9 +502,7 @@
 	
 	
 	/**
-	 * css compiler
-	 *
-	 * @public
+	 * css preprocessor
 	 *
 	 * @example stylesheet('.foo', 'css...', true, true, null);
 	 * 
@@ -548,8 +547,17 @@
 	    // reset type signature
 	    type = 0;
 	
+	    var animns;
+	
 	    // animation and keyframe namespace
-	    var animns = (animations === void 0 || animations === true) ? namespace : '';
+	    if (animations == void 0 || animations === true) {
+	        animations = true;
+	        animns = namespace;
+	    }
+	    else {
+	        animns = '';
+	        animations = false;
+	    }
 	
 	    // uses middleware
 	    var use = middleware != null;
@@ -561,9 +569,7 @@
 	
 	        // o, object of middlewares
 	        if (uses === 111) {
-	            for (var i = 0, keys = Object.keys(middleware), length = keys.length; i < length; i++) {
-	                stylesheet.use(keys[i], middleware[keys[i]]);
-	            }
+	            stylesheet.use(middleware, null);
 	        }
 	        // f, not a single function middleware
 	        else if (uses !== 102) {
@@ -617,6 +623,7 @@
 	    var comment = 0;
 	    var strings = 0;
 	    var nested = 0;
+	    var func = 0;
 	
 	    // context(flat) signatures
 	    var levels = 0;
@@ -650,8 +657,8 @@
 	        var code = styles.charCodeAt(caret);
 	
 	        // {, }, ; characters, parse line by line
-	        if (strings === 0 && (code === 123 || code === 125 || code === 59)) {
-	            buff += styles[caret];
+	        if (strings === 0 && func === 0 && (code === 123 || code === 125 || code === 59)) {
+	            buff += styles.charAt(caret);
 	
 	            var first = buff.charCodeAt(0);
 	
@@ -765,7 +772,7 @@
 	                                }
 	
 	                                // build content of nested block
-	                                inner += styles[caret++];
+	                                inner += styles.charAt(caret++);
 	                            }
 	
 	                            for (var i = 0, length = selectors.length; i < length; i++) {
@@ -905,7 +912,7 @@
 	                    var anims = buff.substring(colon).trim().split(',');
 	
 	                    // - short hand animation syntax
-	                    if ((buff.charCodeAt(9) || 0) !== 45) {
+	                    if (animations === true && (buff.charCodeAt(9) || 0) !== 45) {
 	                        // because we can have multiple animations `animation: slide 4s, slideOut 2s`
 	                        for (var j = 0, length = anims.length; j < length; j++) {
 	                            var anim = anims[j];
@@ -921,8 +928,8 @@
 	
 	                                // animation name is anything not in this list
 	                                if (
-	                                    // cubic-bezier()
-	                                    !(frst === 99 && last === 41) &&
+	                                    // cubic-bezier()/steps(), ) 
+	                                    last !== 41 && len !== 0 &&
 	
 	                                    // infinite, i, f, e
 	                                    !(frst === 105 && third === 102 && last === 101 && len === 8) &&
@@ -930,13 +937,13 @@
 	                                    // linear, l, n, r
 	                                    !(frst === 108 && third === 110 && last === 114 && len === 6) &&
 	
-	                                    // alternate, a, t, e
-	                                    !(frst === 97 && third === 116 && last === 101 && len === 9) &&
+	                                    // alternate/alternate-reverse, a, t, e
+	                                    !(frst === 97 && third === 116 && last === 101 && (len === 9 || len === 17)) &&
 	
 	                                    // normal, n, r, l
 	                                    !(frst === 110 && third === 114 && last === 108 && len === 6) &&
 	
-	                                    // backwords, b, c, s
+	                                    // backwards, b, c, s
 	                                    !(frst === 98 && third === 99 && last === 115 && len === 9) &&
 	
 	                                    // forwards, f, r, s
@@ -948,21 +955,41 @@
 	                                    // none, n, n, e
 	                                    !(frst === 110 && third === 110 && last === 101 && len === 4)&&
 	
-	                                    // ease, e, s, e
-	                                    !(frst === 101 && third === 115 && last === 101 && len === 4) &&
+	                                    // running, r, n, g 
+	                                    !(frst === 114 && third === 110 && last === 103 && len === 7) &&
 	
-	                                    // ease-
-	                                    !(frst === 101 && len > 4 && prop.charCodeAt(4) === 45) &&
+	                                    // paused, p, u, d
+	                                    !(frst === 112 && third === 117 && last === 100 && len === 6) &&
 	
-	                                    // durations 0.4ms, .4s, 400ms ...
-	                                    isNaN(parseFloat(prop))
+	                                    // reversed, r, v, d
+	                                    !(frst === 114 && third === 118 && last === 100 && len === 8) &&
+	
+	                                    // step-start/step-end, s, e, (t/d)
+	                                    !(
+	                                        frst === 115 && third === 101 && 
+	                                        ((last === 116 && len === 10) || (last === 100 && len === 8)) 
+	                                    ) &&
+	
+	                                    // ease/ease-in/ease-out/ease-in-out, e, s, e
+	                                    !(
+	                                        frst === 101 && third === 115 &&
+	                                        (
+	                                            (last === 101 && len === 4) ||
+	                                            (len === 11 || len === 7 || len === 8) && prop.charCodeAt(4) === 45
+	                                        )
+	                                    ) &&
+	
+	                                    // durations, 0.4ms, .4s, 400ms ...
+	                                    isNaN(parseFloat(prop)) &&
+	
+	                                    // handle spaces in cubic-bezier()/steps() functions
+	                                    prop.indexOf('(') === -1
 	                                ) {
-	                                    props[k] = animns+prop;
-	                                    anim = props.join(' ');
+	                                    props[k] = animns + prop;
 	                                }
 	                            }
 	
-	                            build += (j === 0 ? '' : ',') + anim.trim();
+	                            build += (j === 0 ? '' : ',') + props.join(' ').trim();
 	                        }
 	                    }
 	                    // explicit syntax, anims array should have only one elemenet
@@ -985,9 +1012,13 @@
 	                }
 	                // display: d, i, s
 	                else if (first === 100 && second === 105 && third === 115) {
-	                    if (buff.indexOf('flex') > -1) {
+	                    // flex/inline-flex
+	                    if ((indexOf = buff.indexOf('flex')) > -1) {
+	                        // e, inline-flex
+	                        temp = buff.charCodeAt(indexOf-2) === 101 ? 'inline-' : '';
+	
 	                        // vendor prefix
-	                        buff = 'display:'+webkit+'box;display:'+webkit+'flex;'+ms+'flexbox;display:flex;';
+	                        buff = 'display:'+webkit+temp+'box;display:'+webkit+temp+'flex;'+ms+'flexbox;display:'+temp+'flex;';
 	                    }
 	                }
 	                // transforms & transitions: t, r, a 
@@ -1092,7 +1123,7 @@
 	
 	                            // inner content of block
 	                            inner = '';
-	                            
+	
 	                            var nestSelector = buff.substring(0, buff.length-1).split(',');
 	                            var prevSelector = prev.substring(0, prev.length-1).split(',');
 	
@@ -1112,7 +1143,7 @@
 	                                }
 	
 	                                // build content of nested block
-	                                inner += styles[caret++];
+	                                inner += styles.charAt(caret++);
 	                            }
 	
 	                            // handle multiple selectors: h1, h2 { div, h4 {} } should generate
@@ -1124,7 +1155,7 @@
 	
 	                                // since there could also be multiple nested selectors
 	                                for (var k = 0, l = nestSelector.length; k < l; k++) {
-	                                    selector = temp.replace(prefix, '').trim();
+	                                    selector = temp.replace(prefix, '&').trim();
 	
 	                                    if (nestSelector[k].indexOf(' &') > 0) {
 	                                        selector = nestSelector[k].replace('&', '').trim() + ' ' + selector;
@@ -1141,7 +1172,7 @@
 	                            buff = ('\n' + prevSelector.join(',') + ' {'+inner+'}');
 	
 	                            // append nest
-	                            nest += buff.replace(/&| +&/g, '');
+	                            nest += buff.replace(/ +&/g, '');
 	
 	                            // signature
 	                            nested = 1;
@@ -1406,23 +1437,40 @@
 	            }
 	            // not `\t` tab character
 	            else if (code !== 9) {
-	                // " character
-	                if (code === 34) {
-	                    // exit string " context / enter string context
-	                    strings = strings === 34 ? 0 : (strings === 39 ? 39 : 34);
-	                }
-	                // ' character
-	                else if (code === 39) {
-	                    // exit string ' context / enter string context
-	                    strings = strings === 39 ? 0 : (strings === 34 ? 34 : 39);
-	                }
-	                // / character
-	                else if (code === 47) {
-	                    code === 47 && comment < 2 && comment++;
+	                switch (code) {
+	                    // " character
+	                    case 34: {
+	                        // exit string " context / enter string context
+	                        strings = strings === 34 ? 0 : (strings === 39 ? 39 : 34);
+	                        break;
+	                    }
+	                    // ' character
+	                    case 39: {
+	                        // exit string ' context / enter string context
+	                        strings = strings === 39 ? 0 : (strings === 34 ? 34 : 39);
+	                        break;
+	                    }
+	                    // ( character
+	                    case 40: {
+	                        strings === 0 && (func = 1);
+	                        break;
+	                    }
+	                    // ) character
+	                    case 41: {
+	                        strings === 0 && (func = 0);
+	                        break;
+	                    }
+	                    // / character
+	                    case 47: {
+	                        if (strings === 0 && func !== 1) {
+	                            code === 47 && comment < 2 && comment++;
+	                        }
+	                        break;
+	                    }
 	                }
 	
 	                // build line buffer
-	                buff += styles[caret];
+	                buff += styles.charAt(caret);
 	            }
 	        }
 	
@@ -1479,7 +1527,7 @@
 	 * @return {Object} {use, plugins}
 	 */
 	stylesheet.use = function (key, plugin) {
-	    var plugins = this.plugins;
+	    var plugins = stylesheet.plugins;
 	    var length = plugins.length;
 	
 	    if (plugin == null) {
@@ -1487,31 +1535,39 @@
 	        key = void 0;
 	    }
 	
-	    // array of plugins
-	    if (plugin instanceof Array) {
-	        for (var i = 0, length = plugin.length; i < length; i++) {
-	            plugins[length++] = plugin[i];
+	    if (plugin != null) {
+	        // object of plugins
+	        if (plugin.constructor === Object) {
+	            for (var name in plugin) {
+	                stylesheet.use(name, plugin[name]);
+	            }
 	        }
-	    }
-	    // single un-keyed plugin
-	    else if (key == null) {
-	        plugins[length] = plugin;
-	    }
-	    // keyed plugin
-	    else {
-	        var pattern = (key instanceof RegExp) ? key : new RegExp(key + '\\([ \\t\\r\\n]*([^\\0]*?)[ \\t\\r\\n]*\\)', 'g');
-	        var regex = /[ \t\r\n]*,[ \t\r\n]*/g;
+	        // array of plugins
+	        else if (plugin.constructor === Array) {
+	            for (var i = 0, length = plugin.length; i < length; i++) {
+	                plugins[length++] = plugin[i];
+	            }
+	        }
+	        // single un-keyed plugin
+	        else if (key == null) {
+	            plugins[length] = plugin;
+	        }
+	        // keyed plugin
+	        else {
+	            var pattern = (key instanceof RegExp) ? key : new RegExp(key + '\\([ \\t\\r\\n]*([^\\0]*?)[ \\t\\r\\n]*\\)', 'g');
+	            var regex = /[ \t\r\n]*,[ \t\r\n]*/g;
 	
-	        plugins[length] = function (ctx, str, line, col) {
-	            if (ctx === 6) {
-	                str = str.replace(pattern, function (match, group) {
-	                    var args = group.replace(regex, ',').split(',');
-	                    var replace = plugin.apply(null, args);
+	            plugins[length] = function (ctx, str, line, col) {
+	                if (ctx === 6) {
+	                    str = str.replace(pattern, function (match, group) {
+	                        var args = group.replace(regex, ',').split(',');
+	                        var replace = plugin.apply(null, args);
 	
-	                    return replace != null ? replace : match;
-	                });
+	                        return replace != null ? replace : match;
+	                    });
 	
-	                return str;
+	                    return str;
+	                }
 	            }
 	        }
 	    }
@@ -1601,15 +1657,12 @@
 					props = {};
 				}
 	
-				// if props.xmlns is undefined and type === 'svg' or 'math' 
-				// assign svg && math namespaces to props.xmlns
-				if (props.xmlns === void 0) {	
-					if (type === 'svg') { 
-						props.xmlns = nsSvg; 
-					}
-					else if (type === 'math') { 
-						props.xmlns = nsMath; 
-					}
+				// svg and math namespaces
+				if (type === 'svg') {
+					props.xmlns = nsSvg; 
+				}
+				else if (type === 'math') { 
+					props.xmlns = nsMath;
 				}
 	
 				return createElementShape(type, props, children);
@@ -1620,12 +1673,12 @@
 			return createComponentShape(type, props, children);
 		}
 		// hoisted
-		else if (type.Type) {
+		else if (type.Type != null) {
 			return cloneElement(type, props, children);
 		}
 		// portal
-		else if (type.nodeType !== void 0) {
-			return createPortalShape(type, props || objEmpty, children);
+		else if (type.nodeType != null) {
+			return createPortalShape(type, props != null ? props : objEmpty, children);
 		}
 		// fragment
 		else {
@@ -1738,7 +1791,7 @@
 			null,
 			0,
 			null,
-			null
+			void 0
 		);
 	}
 	
@@ -1751,7 +1804,7 @@
 	 * @return {createElement(?Object<string>, ...any=)}
 	 */
 	function createFactory (type, props) {
-		return props ? createElement.bind(null, type, props) : createElement.bind(null, type);
+		return props != null ? createElement.bind(null, type, props) : createElement.bind(null, type);
 	}
 	/**
 	 * is valid element
@@ -1780,11 +1833,6 @@
 		// add element factories
 		for (var i = 0, length = types.length; i < length; i++) {
 			elements[types[i]] = createElementShape.bind(null, types[i]);
-		}
-		
-		// if svg, add related svg element factory
-		if (elements.svg !== void 0) {
-			elements.svg = createSvgShape.bind(null, 'svg');
 		}
 	
 		return elements;
@@ -1826,7 +1874,7 @@
 		}
 	
 		// update component
-		this.forceUpdate(null);
+		this.forceUpdate();
 	}
 	
 	
@@ -1836,9 +1884,11 @@
 	 * @param {Object} oldState
 	 * @param {Object} newState
 	 */
-	function updateState (oldState, newState) {
-		for (var name in newState) {
-			oldState[name] = newState[name];
+	function updateState (oldState, newState) {	
+		if (oldState != null) {
+			for (var name in newState) {
+				oldState[name] = newState[name];
+			}
 		}
 	}
 	
@@ -1850,46 +1900,30 @@
 	 * 
 	 * @param  {function(this:Component)=} callback
 	 */
-	function forceUpdate (callback) {
+	function forceUpdate (callback) {	
 		if (this.componentWillUpdate !== void 0) {
 			componentUpdateBoundary(this, 'componentWillUpdate', this.props, this.state);
 		}
 	
+		var oldNode = this['--vnode'];
 		var newNode = extractRenderNode(this);
-		var oldNode = this.vnode;
 	
 		var newType = newNode.Type;
 		var oldType = oldNode.Type;
 	
 		// different root node
-		if (
-			// node type check
-			newType !== oldType || 
-	
-			// portal type check
-			(newType === 4 && oldType === 4 && newNode !== oldNode) ||
-		
-			// element type checke
-			newNode.type !== oldNode.type
-		) {
-			// render returns a promise
-			if (newType === void 0) {
-				return;
-			}
-	
+		if (newNode.type !== oldNode.nodeName) {
 			replaceRootNode(newNode, oldNode, newType, oldType, this);
-		} 
+		}
 		// patch node
 		else {
-			// text root node
-			if (oldType === 3) {
-				if (newNode.children !== oldNode.children) {
-					oldNode.DOMNode.nodeValue = oldNode.children = newNode.children;
-				}
-			} 
 			// element root node
-			else {
-				reconcileNodes(newNode, oldNode, newType, oldType);
+			if (oldType !== 3) {
+				reconcileNodes(newNode, oldNode, newType, 1);
+			} 
+			// text root node
+			else if (newNode.children !== oldNode.children) {
+				oldNode.DOMNode.nodeValue = oldNode.children = newNode.children;
 			}
 		}
 	
@@ -1921,7 +1955,7 @@
 					(props = (props === objEmpty ? {} : props) || {}) || props)
 			);
 	
-			this.async = (
+			this['--async'] = (
 				props != null && props.constructor !== Object && typeof props.then === 'function'
 			) ? true : false;
 		}
@@ -1948,7 +1982,7 @@
 				);
 			}
 	
-			this.async = false;
+			this['--async'] = false;
 		}
 	
 		// assign state
@@ -1958,10 +1992,11 @@
 			{}
 		);
 	
-		this.thrown = 0;
-		this.yield = false;
-		this.vnode = null;
 		this.refs = null;
+	
+		this['--vnode'] = null;
+		this['--yield'] = false;
+		this['--throw'] = 0;
 	}
 	
 	
@@ -2199,18 +2234,27 @@
 		var oldNode;
 		var displayName;
 		var authored;
-		var thrown = component.thrown;
+		var thrown = component['--throw'];
 	
-		component.thrown = thrown + 1;
+		component['--throw'] = thrown + 1;
 	
 		if ((error instanceof Error) === false) {
 			error = new Error(error);
 		}
 	
-		// intial throw from render, try to recover once
+		// initial throw from render, try to recover once
 		if (thrown === 0 && browser && location === 'render') {
 			schedule(function () {
-				component.forceUpdate(null);
+	            try {
+	                // test render for errors
+	                component.render(component.props, component.state, component);
+	
+	                // update if no errors where thrown
+	                component.forceUpdate();
+	            }
+	            catch (e) {
+	                
+	            }
 			});
 		}
 	
@@ -2234,13 +2278,13 @@
 	    	try {
 	    		newNode = component.componentDidThrow(error);
 	    	}
-	    	catch (err) {    		
+	    	catch (e) {    		
 	    		// avoid recursive call stack
 	    		if (thrown >= 0) {
 	    			// preserve order of errors logged 
 	    			schedule(function () {
-	    				component.thrown = -1;
-	    				componentErrorBoundary(err, component, 'componentDidThrow');
+	    				component['--throw'] = -1;
+	    				componentErrorBoundary(e, component, 'componentDidThrow');
 	    			});
 	    		}
 	    	}
@@ -2262,7 +2306,7 @@
 	    		if (newNode != null && typeof newNode.type === 'string') {
 	    			if (/^[A-z]/g.exec(newNode.type) === null) {
 						console.error(
-							'Dio bailed out of rendering an error state.\n\n'+
+							'Dio bailed out of rendering an error state for `' + displayName + '`.\n\n'+
 							'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
 						);
 	
@@ -2279,7 +2323,7 @@
 	    		schedule(function () {
 	    			replaceRootNode(
 	    				extractVirtualNode(newNode), 
-	    				oldNode = component.vnode, 
+	    				oldNode = component['--vnode'], 
 	    				newNode.Type, 
 	    				oldNode.Type, 
 	    				component
@@ -2302,10 +2346,12 @@
 	/**
 	 * extract component
 	 * 
-	 * @param  {VNode} subject
+	 * @param  {VNode}      subject
+	 * @param  {Component?} instance
+	 * @param  {VNode?}     parent
 	 * @return {VNode} 
 	 */
-	function extractComponentNode (subject) {
+	function extractComponentNode (subject, instance, parent) {
 		/** @type {Component} */
 		var owner;
 	
@@ -2325,7 +2371,7 @@
 		if (subject.children.length !== 0) {
 			// prevents mutating the empty object constant
 			if (props === objEmpty) {
-				props = { children: subject.children };
+				props = {children: subject.children};
 			}
 			else {
 				props.children = subject.children;			
@@ -2352,22 +2398,29 @@
 		// retrieve vnode
 		var vnode = extractRenderNode(component);
 	
-		// if render returns a component, extract that component
+		// if render returns a component, extract component recursive
 		if (vnode.Type === 2) {
-			vnode = extractComponentNode(vnode);
+			vnode = extractComponentNode(vnode, component, parent || subject);
 		}
-		
+	
 		// if keyed, assign key to vnode
-		if (props.key !== void 0 && vnode.props.key === void 0) {
-			vnode.props.key = props.key;
+		if (subject.key !== void 0 && vnode.key === void 0) {
+			vnode.key = subject.key;
 		}
 	
 		// replace props and children
-		subject.props    = vnode.props
+		subject.props = vnode.props
 		subject.children = vnode.children;
 	
-		// assign reference to component and return vnode
-		(component.vnode = vnode).parent = subject;
+		// recursive component
+		if (instance !== null) {
+			component['--vnode'] = parent;
+		}
+		else {
+			component['--vnode'] = subject;
+			
+			subject.nodeName = vnode.type;
+		}
 	
 		return vnode;
 	}
@@ -2382,20 +2435,20 @@
 	function extractRenderNode (component) {
 		try {
 			// async render
-			if (component.async === true) {			
+			if (component['--async'] === true) {			
 				if (browser) {
 					component.props.then(function resolveAsyncClientComponent (props) {
 						component.props = props;
 						component.forceUpdate();
 					}).catch(funcEmpty);
 					
-					component.async = false;
+					component['--async'] = false;
 				}
 	
 				return createEmptyShape();
 			}
 			// generator
-			else if (component.yield) {
+			else if (component['--yield']) {
 				return extractVirtualNode(
 					component.render.next().value, 
 					component
@@ -2428,107 +2481,112 @@
 		if (subject == null) {
 			return createEmptyShape();
 		}
+	
 		// element
-		else if (subject.Type !== void 0) {
+		if (subject.Type !== void 0) {
 			return subject;
 		}
+	
 		// portal
-		else if (subject.nodeType !== void 0) {	
+		if (subject.nodeType !== void 0) {	
 			return (
 				subject = createPortalShape(subject, objEmpty, arrEmpty), 
 				subject.Type = 5, 
 				subject
 			);
 		}
-		else {
-			switch (subject.constructor) {
-				// component
-				case Component: {
-					return createComponentShape(subject, objEmpty, arrEmpty);
-				}
-				// booleans
-				case Boolean: {
-					return createEmptyShape();
-				}
-				// fragment
-				case Array: {
-					return createElement('@', null, subject);
-				}
-				// string/number
-				case String: case Number: {
-					return createTextShape(subject);
-				}
-				// component/function
-				case Function: {
-					// stream
-					if (subject.then != null && typeof subject.then === 'function') {
-						subject.then(function resolveStreamUpdates () {
+		
+		switch (subject.constructor) {
+			// component
+			case Component: {
+				return createComponentShape(subject, objEmpty, arrEmpty);
+			}
+			// booleans
+			case Boolean: {
+				return createEmptyShape();
+			}
+			// fragment
+			case Array: {
+				return createElement('@', null, subject);
+			}
+			// string/number
+			case String: case Number: {
+				return createTextShape(subject);
+			}
+			// component/function
+			case Function: {
+				// stream
+				if (subject.then != null && typeof subject.then === 'function') {
+					if (subject['--listening'] !== true) {
+						subject.then(function resolveStreamComponent () {
 							component.forceUpdate();
 						}).catch(funcEmpty);
 	
-						return extractVirtualNode(subject(), component);
-					}
-					// component
-					else if (subject.prototype !== void 0 && subject.prototype.render !== void 0) {
-						return createComponentShape(subject, objEmpty, arrEmpty);
-					}
-					// function
-					else {
-						return extractVirtualNode(subject((component && component.props) || {}), component);
-					}
-				}
-				// promise
-				case Promise: {
-					if (browser) {
-						subject.then(function resolveAsyncComponent (newNode) {
-							replaceRootNode(
-								extractVirtualNode(newNode), 
-								subject = component.vnode, 
-								newNode.Type, 
-								subject.Type, 
-								component
-							);
-						}).catch(funcEmpty);
-					}
-					else {
-						component.async = subject;
+						subject['--listening'] = true;
 					}
 	
-					return createEmptyShape();
+					return extractVirtualNode(subject(), component);
+				}
+				// component
+				else if (subject.prototype !== void 0 && subject.prototype.render !== void 0) {
+					return createComponentShape(subject, objEmpty, arrEmpty);
+				}
+				// function
+				else {
+					return extractVirtualNode(subject((component && component.props) || {}), component);
 				}
 			}
-	
-			// coroutine
-			if (typeof subject.next === 'function' || (subject.prototype != null && subject.prototype.next != null)) {			
-				if (subject.return == null) {
-					subject = subject(component.props, component.state, component);
+			// promise
+			case Promise: {
+				if (browser) {
+					subject.then(function resolveAsyncComponent (newNode) {
+						replaceRootNode(
+							extractVirtualNode(newNode), 
+							subject = component['--vnode'], 
+							newNode.Type, 
+							subject.Type, 
+							component
+						);
+					}).catch(funcEmpty);
+				}
+				else {
+					component['--async'] = subject;
 				}
 	
-				component.yield = true;
-				component.render = subject;
-	
-				component.constructor.prototype.render = function render () {
-					return subject.next().value;
-				};
-	
-				return extractVirtualNode(subject.next().value, component);
+				return createEmptyShape();
 			}
-			// component descriptor
-			else if (typeof subject.render === 'function') {
-				return (
-					subject.COMPCache || 
-					createComponentShape(subject.COMPCache = createClass(subject, null), objEmpty, arrEmpty)
-				);
-			} 
-			// unsupported render types, fail gracefully
-			else {
-				return componentRenderBoundary(
-					component,
-					'render', 
-					subject.constructor.name, 
-					''
-				) || createEmptyShape();
+		}
+	
+		// coroutine
+		if (typeof subject.next === 'function' || (subject.prototype != null && subject.prototype.next != null)) {			
+			if (subject.return == null) {
+				subject = subject(component.props, component.state, component);
 			}
+	
+			component['--yield'] = true;
+			component.render = subject;
+	
+			component.constructor.prototype.render = function render () {
+				return subject.next().value;
+			};
+	
+			return extractVirtualNode(subject.next().value, component);
+		}
+		// component descriptor
+		else if (typeof subject.render === 'function') {
+			return (
+				subject.COMPCache || 
+				createComponentShape(subject.COMPCache = createClass(subject, null), objEmpty, arrEmpty)
+			);
+		} 
+		// unsupported render types, fail gracefully
+		else {
+			return componentRenderBoundary(
+				component,
+				'render', 
+				subject.constructor.name, 
+				''
+			) || createEmptyShape();
 		}
 	}
 	
@@ -2589,7 +2647,7 @@
 				}
 	
 				// update component
-				component.forceUpdate(null);
+				component.forceUpdate();
 			}
 	
 			return renderer;
@@ -2675,10 +2733,10 @@
 	 */
 	function shallow (subject) {
 		if (isValidElement(subject)) {
-			return subject.Type === 2 ? extractComponentNode(subject) : subject;
+			return subject.Type === 2 ? extractComponentNode(subject, null, null) : subject;
 		}
 		else {
-			return extractComponentNode(createElement(subject, null, null));
+			return extractComponentNode(createElement(subject, null, null), null, null);
 		}
 	}
 	
@@ -2702,12 +2760,20 @@
 	 */
 	function assignProps (target, props, onlyEvents, component) {
 		for (var name in props) {
-			if (isEventName(name)) {
-				addEventListener(target, extractEventName(name), props[name], component);
+			var value = props[name];
+	
+			// refs
+			if (name === 'ref' && value != null) {
+				refs(value, component, target);
 			}
-			else if (onlyEvents === false) {
+			// events
+			else if (isEventProp(name)) {
+				addEventListener(target, name.substring(2).toLowerCase(), value, component);
+			}
+			// attributes
+			else if (onlyEvents === false && name !== 'key' && name !== 'children') {
 				// add attribute
-				updateProp(target, 'setAttribute', name, props[name], props.xmlns);
+				updateProp(target, true, name, value, props.xmlns);
 			}
 		}
 	}
@@ -2724,36 +2790,53 @@
 		var oldProps = oldNode.props;
 		var namespace = newNode.props.xmlns || '';
 		var target = oldNode.DOMNode;
+		var updated = false;
 		var length = 0;
 	
 		// diff newProps
-		for (var newName in newNode.props) { 
-			var newValue = newProps[newName];
-			var oldValue = oldProps[newName];
+		for (var newName in newNode.props) {
+			length = newName.length;
 	
-			if (newValue != null && oldValue !== newValue) {
-				updateProp(target, 'setAttribute', newName, newValue, namespace);
-				
-				if (length === 0) {
-					length++;
+			if (
+				(length === 3 && newName === 'key') === false && 
+				(length === 8 && newName === 'children') === false && 
+				isEventProp(newName) === false
+			) {
+				var newValue = newProps[newName];
+				var oldValue = oldProps[newName];
+	
+				if (newValue != null && oldValue !== newValue) {
+					updateProp(target, true, newName, newValue, namespace);
+					
+					if (updated === false) {
+						updated = true;
+					}
 				}
 			}
 		}
 	
 		// diff oldProps
-		for (var oldName in oldNode.props) { 
-			var newValue = newProps[oldName];
+		for (var oldName in oldNode.props) {
+			length = oldName.length;
 	
-			if (newValue == null) {
-				updateProp(target, 'removeAttribute', oldName, '', namespace);
-				
-				if (length === 0) {
-					length++;
+			if (
+				(length === 3 && oldName === 'key') === false && 
+				(length === 8 && oldName === 'children') === false &&  
+				isEventProp(oldName) === false
+			) {
+				var newValue = newProps[oldName];
+	
+				if (newValue == null) {
+					updateProp(target, false, oldName, '', namespace);
+					
+					if (updated === false) {
+						updated = true;
+					}
 				}
 			}
 		}
 	
-		if (length !== 0) {
+		if (updated) {
 			oldNode.props = newNode.props;
 		}
 	}
@@ -2762,74 +2845,87 @@
 	/**
 	 * assign/update/remove prop
 	 * 
-	 * @param  {Node}   target
-	 * @param  {string} action
-	 * @param  {string} name
-	 * @param  {any}    propValue
-	 * @param  {string} namespace
+	 * @param  {Node}    target
+	 * @param  {boolean} set
+	 * @param  {string}  name
+	 * @param  {any}     value
+	 * @param  {string}  namespace
 	 */
-	function updateProp (target, action, name, propValue, namespace) {
-		// avoid refs, keys, events and xmlns namespaces
-		if (name === 'ref' || 
-			name === 'key' || 
-			name === 'children' ||
-			isEventName(name) || 
-			propValue === nsSvg || 
-			propValue === nsMath
-		) {
+	function updateProp (target, set, name, value, namespace) {
+		var length = name.length;
+	
+		// avoid xmlns namespaces
+		if (length > 22 && (value === nsSvg || value === nsMath)) {
 			return;
 		}
 	
 		// if xlink:href set, exit, 
-		if (name === 'xlink:href') {
-			return (target[action + 'NS'](nsXlink, 'href', propValue), void 0);
+		if (length === 10 && name === 'xlink:href') {
+			target[(set ? 'set' : 'remove') + 'AttributeNS'](nsXlink, 'href', value);
+			return;
 		}
 	
-		var isSVG = false;
-		var propName;
+		var svg = false;
 	
 		// svg element, default to class instead of className
 		if (namespace === nsSvg) {
-			isSVG = true;
-			propName = name === 'className' ? 'class' : name;
+			svg = true;
+	
+			if (length === 9 && name === 'className') {
+				name = 'class';
+			}
+			else {
+				name = name;
+			}
 		}
 		// html element, default to className instead of class
 		else {
-			propName = name === 'class' ? 'className' : name;
+			if (length === 5 && name === 'class') {
+				name = 'className';
+			}
 		}
 	
-		var targetProp = target[propName];
-		var isDefinedValue = propValue != null && propValue !== false;
+		var destination = target[name];
+		var defined = value != null && value !== false;
 	
 		// objects
-		if (isDefinedValue && typeof propValue === 'object') {
-			targetProp === void 0 ? target[propName] = propValue : updatePropObject(propName, propValue, targetProp);
+		if (defined && typeof value === 'object') {
+			destination === void 0 ? target[name] = value : updatePropObject(name, value, destination);
 		}
-		// primitives `string | number | boolean`
+		// primitives `string, number, boolean`
 		else {
-			// id, className etc..
-			if (targetProp !== void 0 && isSVG === false) {
-				if (propName === 'style') {
-					target.style.cssText = propValue;
+			// id, className, style, etc..
+			if (destination !== void 0 && svg === false) {
+				if (length === 5 && name === 'style') {
+					target.style.cssText = value;
 				}
 				else {
-					target[propName] = propValue;
+					target[name] = value;
 				}
 			}
-			// setAttribute/removeAttribute
+			// set/remove Attribute
 			else {
-				if (isDefinedValue) {
-					// reduce value to an empty string if true, <tag checked=true> --> <tag checked>
-					propValue === true && (propValue = '');
-	
-					target.setAttribute(propName, propValue);
+				if (defined && set) {
+					// assign an empty value with boolean `true` values
+					target.setAttribute(name, value === true ? '' : value);
 				}
 				else {
-					// remove attributes with false/null/undefined values
-					target.removeAttribute(propName);
+					// removes attributes with false/null/undefined values
+					target.removeAttribute(name);
 				}
 			}
 		}
+	}
+	
+	
+	/**
+	 * check if a name is an event-like name, i.e onclick, onClick...
+	 * 
+	 * @param  {string} name
+	 * @return {boolean}
+	 */
+	function isEventProp (name) {
+		return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 3;
 	}
 	
 	
@@ -2972,19 +3068,19 @@
 		}
 		// create DOMNode
 		else {
-			vnode = nodeType === 2 ? extractComponentNode(subject) : subject;
+			vnode = nodeType === 2 ? extractComponentNode(subject, null, null) : subject;
 		}
 		
-		var vnodeType = vnode.Type;	
+		var Type = vnode.Type;
 		var children = vnode.children;
 	
 		if (portal === false) {
 			// text		
-			if (vnodeType === 3) {
+			if (Type === 3) {
 				return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
 			}
 			// portal
-			else if (vnodeType === 4 || vnodeType === 5) {
+			else if (Type === 4 || Type === 5) {
 				element = vnode.DOMNode;
 				portal = true;
 			}
@@ -3002,11 +3098,10 @@
 			namespace = props.xmlns; 
 		}
 	
-		// has a component instance
+		// has a component instance, hydrate component instance
 		if (instance) {
-			// hydrate component instance
 			component = subject.instance;
-			thrown = component.thrown;
+			thrown = component['--throw'];
 		}
 	
 		if (portal === false) {
@@ -3023,17 +3118,21 @@
 			else {
 				element = createDOMNode(type, component);
 			}
+	
+			vnode.DOMNode = subject.DOMNode = element;
 		}
 	
 		if (instance) {
-			// avoid appending children if an error was thrown
-			if (thrown !== 0 || thrown !== component.thrown) {
+			// avoid appending children if an error was thrown while creating a DOMNode
+			if (thrown !== component['--throw']) {
 				return vnode.DOMNode = subject.DOMNode = element;
 			}
 	
+			vnode = component['--vnode'];
+	
 			// hydrate
-			if (component.vnode.DOMNode === null) {
-				component.vnode.DOMNode = element;
+			if (vnode.DOMNode === null) {
+				vnode.DOMNode = element;
 			}
 	
 			// stylesheets
@@ -3059,18 +3158,13 @@
 		}
 	
 		// has props
-		if (props !== objEmpty) {		
-			// refs
-			if (props.ref !== void 0) {
-				refs(props.ref, component, element);
-			}
-	
+		if (props !== objEmpty) {
 			// props and events
 			assignProps(element, props, false, component);
 		}
 	
 		// cache DOM reference
-		return vnode.DOMNode = subject.DOMNode = element;
+		return element;
 	}
 	
 	
@@ -3083,6 +3177,7 @@
 	 * @param {Node}   nextNode
 	 */
 	function appendNode (newType, newNode, parentNode, nextNode) {
+		// lifecycle, componentWillMount
 		if (newType === 2 && newNode.instance !== null && newNode.instance.componentWillMount) {
 			componentMountBoundary(newNode.instance, 'componentWillMount', nextNode);
 		}
@@ -3090,6 +3185,7 @@
 		// append element
 		parentNode.appendChild(nextNode);
 	
+		// lifecycle, componentDidMount
 		if (newType === 2 && newNode.instance !== null && newNode.instance.componentDidMount) {
 			componentMountBoundary(newNode.instance, 'componentDidMount', nextNode);
 		}
@@ -3106,6 +3202,7 @@
 	 * @param {Node}   nextNode
 	 */
 	function insertNode (newType, newNode, prevNode, parentNode, nextNode) {
+		// lifecycle, componentWillMount
 		if (newType === 2 && newNode.instance !== null && newNode.instance.componentWillMount) {
 			componentMountBoundary(newNode.instance, 'componentWillMount', nextNode);
 		}
@@ -3113,6 +3210,7 @@
 		// insert element
 		parentNode.insertBefore(nextNode, prevNode);
 	
+		// lifecycle, componentDidMount
 		if (newType === 2 && newNode.instance !== null && newNode.instance.componentDidMount) {
 			componentMountBoundary(newNode.instance, 'componentDidMount', nextNode);
 		}
@@ -3127,6 +3225,7 @@
 	 * @param {Node}   parentNode
 	 */
 	function removeNode (oldType, oldNode, parentNode) {
+		// lifecycle, componentWillUnmount
 		if (oldType === 2 && oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
 			componentMountBoundary(oldNode.instance, 'componentWillUnmount', oldNode.DOMNode);
 		}
@@ -3136,6 +3235,34 @@
 	
 		// clear references
 		oldNode.DOMNode = null;
+	}
+	
+	
+	/**
+	 * empty node
+	 *
+	 * @param {VNode}  oldNode
+	 * @param {number} oldLength
+	 */
+	function emptyNode (oldNode, oldLength) {
+		var children = oldNode.children;	
+		var parentNode = oldNode.DOMNode;
+		var oldChild;
+	
+		// umount children
+		for (var i = 0; i < oldLength; i++) {
+			oldChild = children[i];
+			
+			// lifecycle, componentWillUnmount
+			if (oldChild.Type === 2 && oldChild.instance !== null && oldChild.instance.componentWillUnmount) {
+				componentMountBoundary(oldChild.instance, 'componentWillUnmount', oldChild.DOMNode);
+			}
+	
+			// clear references
+			oldChild.DOMNode = null;
+		}
+	
+		parentNode.textContent = '';
 	}
 	
 	
@@ -3150,17 +3277,20 @@
 	 * @param {Node}  nextNode
 	 */
 	function replaceNode (newType, oldType, newNode, oldNode, parentNode, nextNode) {
+		// lifecycle, componentWillUnmount
 		if (oldType === 2 && oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
 			componentMountBoundary(oldNode.instance, 'componentWillUnmount', oldNode.DOMNode);
 		}
 	
+		// lifecycle, componentWillMount
 		if (newType === 2 && newNode.instance !== null && newNode.instance.componentWillMount) {
 			componentMountBoundary(newNode.instance, 'componentWillMount', nextNode);
 		}
 	
 		// replace element
 		parentNode.replaceChild(nextNode, oldNode.DOMNode);
-		
+			
+		// lifecycle, componentDidmount
 		if (newType === 2 && newNode.instance !== null && newNode.instance.componentDidMount) {
 			componentMountBoundary(newNode.instance, 'componentDidMount', nextNode);
 		}
@@ -3175,47 +3305,28 @@
 	 * 
 	 * @param  {VNode}     newNode
 	 * @param  {VNode}     oldNode
-	 * @param  {number}
-	 * @param  {number}
+	 * @param  {number}    newType
+	 * @param  {number}    oldType
 	 * @param  {Component} component
 	 */
 	function replaceRootNode (newNode, oldNode, newType, oldType, component) {
-		var key = oldNode.props.key;
-		var node = oldNode.parent;
+		var refDOMNode = oldNode.DOMNode;
+		var newProps = newNode.props;
 	
 		// replace node
-		replaceNode(
-			newType, 
-			oldType, 
-			newNode, 
-			oldNode, 
-			oldNode.DOMNode.parentNode, 
-			createNode(newNode, component, null)
-		);
-	
-		// stylesheet
-		if (newType !== 3 && component.stylesheet !== void 0) {
-			createScopedStylesheet(component, component.constructor, newNode.DOMNode);
-		}
+		refDOMNode.parentNode.replaceChild(createNode(newNode, component, null), refDOMNode);
 	
 		// hydrate new node
-		oldNode.Type = newType;
-		oldNode.type = newNode.type;
-		oldNode.props = newNode.props;
+		oldNode.props = newProps;
+		oldNode.nodeName = newNode.nodeName || newNode.type;
 		oldNode.children = newNode.children;
 		oldNode.DOMNode = newNode.DOMNode;
-		oldNode.instance = newNode.instance = component;
 	
-		node.type = component.constructor;
-		node.props = newNode.props;
-		node.children = newNode.children;
-		node.DOMNode = newNode.DOMNode;
-		node.instance = component;
-	
-		if (key !== void 0) {
-			node.props === objEmpty ? (node.props = {key: key}) : (node.props.key = key);
-		}
-	}
+	 	// // stylesheet
+	 	if (newType !== 3 && component.stylesheet !== void 0) {
+	 		createScopedStylesheet(component, component.constructor, newNode.DOMNode);
+	 	}
+	}	
 	
 	
 	/**
@@ -3244,28 +3355,6 @@
 		else {
 			element.addEventListener(name, bindEvent(name, listener, component), listener.options || false);
 		}
-	}
-	
-	
-	/**
-	 * extract event name from prop
-	 * 
-	 * @param  {string} name
-	 * @return {string}
-	 */
-	function extractEventName (name) {
-		return name.substring(2).toLowerCase();
-	}
-	
-	
-	/**
-	 * check if a name is an event-like name, i.e onclick, onClick...
-	 * 
-	 * @param  {string} name
-	 * @return {boolean}
-	 */
-	function isEventName (name) {
-		return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 3;
 	}
 	
 	
@@ -3345,121 +3434,194 @@
 	/**
 	 * reconcile keyed nodes
 	 *
-	 * @param {Object<string, any>[2]} keys
+	 * @param {Object<string, any>}    newKeys
+	 * @param {Object<string, any>}    oldKeys
 	 * @param {Node}                   parentNode
 	 * @param {VNode}                  newNode
 	 * @param {VNode}                  oldNode
 	 * @param {number}                 newLength
 	 * @param {number}                 oldLength
-	 * @param {number}                 pos
+	 * @param {number}                 position
+	 * @param {number}                 length
 	 */
-	function reconcileKeys (keys, parentNode, newNode, oldNode, newLength, oldLength, pos) {
+	function reconcileKeys (newKeys, oldKeys, parentNode, newNode, oldNode, newLength, oldLength, position, length) {
 		var reconciled = new Array(newLength);
-		var childNodes = parentNode.childNodes;
 	
 		// children
 		var newChildren = newNode.children;
 		var oldChildren = oldNode.children;
 	
-		// keys
-		var newKeys = keys[0];
-		var oldKeys = keys[1];
+		// child nodes
+		var newChild;
+		var oldChild;
 	
-		// position
-		var inserted = 0;
+		// DOM nodes
+		var nextNode;
+		var prevNode;
+	
+		// keys
+		var key;
+	
+		// offsets
 		var added = 0;
 		var removed = 0;
 		var i = 0;
 		var index = 0;
+		var offset = 0;
+		var moved = 0;
 	
-		// VNodes
-		var newChild;
-		var oldChild;
-	
-		// DOMNodes
-		var nextNode;
-		var prevNode;
-	
-		// signatures
-		var nodeType;
-	
-		// hydrate clean nodes
-		if (pos !== 0) {
-			for (var i = 0; i < pos; i++) {
+		// reconcile leading nodes
+		if (position !== 0) {
+			for (; i < position; i++) {
 				reconciled[i] = oldChildren[i];
 			}
 		}
 	
-		// old children
-		for (var i = pos; i < oldLength; i++) {
-			oldChild = oldChildren[i];
-			newChild = newKeys[oldChild.key];
+		// reconcile trailing nodes
+		for (i = 0; i < length; i++) {
+			newChild = newChildren[index = (newLength-1)-i];
+			oldChild = oldChildren[(oldLength-1)-i];
 	
-			// removed
-			if (newChild === void 0) {
-				removeNode(oldChild.Type, oldChild, parentNode);
-				removed++;
+			if (newChild.key === oldChild.key) {
+				reconciled[index] = oldChild;
+	
+				// trim trailing node
+				length--;
 			}
-	
-			// update forward indexes
-			if (removed !== 0) {
-				oldChild.index -= removed;
+			else {
+				break;
 			}
 		}
 	
-		oldLength -= removed;
+		// reconcile inverted nodes
+		if (newLength === oldLength) {
+			for (i = position; i < length; i++) {
+				newChild = newChildren[index = (newLength-1)-i];
+				oldChild = oldChildren[i];
 	
-		// new children
-		for (var i = pos; i < newLength; i++) {
-			newChild = newChildren[i];
-			oldChild = oldKeys[newChild.key];
+				if (index !== i && newChild.key === oldChild.key) {		
+					newChild = oldChildren[index];
 	
-			// new
-			if (oldChild === void 0) {
-				nodeType = newChild.Type;
-				nextNode = createNode(newChild, null, null);
+					nextNode = oldChild.DOMNode;
+					prevNode = newChild.DOMNode;
 	
-				// insert
-				if (i < oldLength + added) {
-					oldChild = oldChildren[i - added];
-					prevNode = oldChild.DOMNode;
-	
-					insertNode(nodeType, newChild, prevNode, parentNode, nextNode);
-	
-					// update forward indexes
-					oldChild.index += ++inserted;
-				} 
-				// append
-				else {
-					appendNode(nodeType, newChild, parentNode, nextNode);
-				}
-	
-				added++;
-	
-				reconciled[i] = newChild;
-			}
-			// old
-			else {
-				index = oldChild.index;
-	
-				// moved
-				if (index !== i) {
-					if (newChild.key !== oldChildren[i - added].key) {
-						prevNode = childNodes[i];
-						nextNode = oldChild.DOMNode;
-	
-						if (prevNode !== nextNode) {
-							parentNode.insertBefore(nextNode, prevNode);
-						}
+					// adjacent nodes
+					if (index - i === 1) {
+						parentNode.insertBefore(prevNode, nextNode);
 					}
-				}
+					else {
+						// move first node to inverted postion
+						parentNode.insertBefore(nextNode, prevNode);
 	
-				reconciled[i] = oldChild;
+						nextNode = prevNode;
+						prevNode = oldChildren[i + 1].DOMNode;
+	
+						// move second node to inverted position
+						parentNode.insertBefore(nextNode, prevNode);
+					}
+	
+					// trim leading node
+					position = i;
+	
+					// trim trailing node
+					length--;
+	
+					// hydrate
+					reconciled[i] = newChild;
+					reconciled[index] = oldChild;
+				}
+				else {			
+					break;
+				}
+			}
+	
+			// single remaining node
+			if (length - i === 1) {
+				reconciled[i] = oldChildren[i];
+				oldNode.children = reconciled;
+	
+				return;
+			}
+		}
+	
+		// reconcile remaining node
+		for (i = position; i < length; i++) {
+			// old children
+			if (i < oldLength) {
+				oldChild = oldChildren[i];
+				newChild = newKeys[oldChild.key];
+	
+				if (newChild === void 0) {
+					removeNode(oldChild.Type, oldChild, parentNode);
+					removed++;
+				}
+			}
+	
+			// new children
+			if (i < newLength) {
+				newChild = newChildren[i];
+				oldChild = oldKeys[newChild.key];
+	
+				// new
+				if (oldChild === void 0) {
+					nextNode = createNode(newChild, null, null);
+	
+					// insert
+					if (i < oldLength + added) {
+						insertNode(
+							newChild.Type, 
+							newChild, 
+							oldChildren[i - added].DOMNode, 
+							parentNode, 
+							nextNode
+						);
+					}
+					// append
+					else {
+						appendNode(
+							newChild.Type, 
+							newChild, 
+							parentNode, 
+							nextNode
+						);
+					}
+	
+					reconciled[i] = newChild;
+					added++;
+				}
+				// old
+				else {
+					index = oldChild.index;
+					offset = index - removed;
+	
+					// moved
+					if (offset !== i) {
+						key = oldChildren[offset].key;
+	
+						// not moving to a removed index
+						if (newKeys[key] !== void 0) {
+							offset = i - added;
+	
+							// not identical keys
+							if (newChild.key !== oldChildren[offset].key) {
+								nextNode = oldChild.DOMNode;
+								prevNode = oldChildren[offset - (moved++)].DOMNode;
+	
+								if (prevNode !== nextNode) {
+									parentNode.insertBefore(nextNode, prevNode);
+								}
+							}
+						}					
+					}
+	
+					reconciled[i] = oldChild;
+				}
 			}
 		}
 	
 		oldNode.children = reconciled;
 	}
+	
 	
 	/**
 	 * reconcile nodes
@@ -3476,8 +3638,8 @@
 		}
 	
 		// extract node from possible component node
-		var currentNode = newNodeType === 2 ? extractComponentNode(newNode) : newNode;
-	
+		var currentNode = newNodeType === 2 ? extractComponentNode(newNode, null, null) : newNode;
+		
 		// a component
 		if (oldNodeType === 2) {
 			// retrieve components
@@ -3515,7 +3677,7 @@
 		if (newLength === 0) {
 			// remove all children if old children is not already cleared
 			if (oldLength !== 0) {
-				oldNode.DOMNode.textContent = '';
+				emptyNode(oldNode, oldLength);
 				oldNode.children = newChildren;
 			}
 		}
@@ -3525,7 +3687,7 @@
 			var parentNode = oldNode.DOMNode;
 	
 			// when keyed, the position that dirty keys begin
-			var pos = 0;
+			var position = 0;
 	
 			// non-keyed until the first dirty key is found
 			var keyed = false;
@@ -3551,33 +3713,25 @@
 			// for loop, the end point being which ever is the 
 			// greater value between new length and old length
 			for (var i = 0; i < length; i++) {
-				// avoid accessing out of bounds index and nodeType where unnecessary
+				// avoid accessing out of bounds index and Type where unnecessary
 				newType = i < newLength ? (newChild = newChildren[i]).Type : (newChild = nodeEmpty, 0);
 				oldType = i < oldLength ? (oldChild = oldChildren[i]).Type : (oldChild = nodeEmpty, 0);
 	
-				if (keyed) {
+				if (keyed) {				
 					// push keys
 					if (newType !== 0) {
-						newKeys[newKey = newChild.props.key] = (
-							newChild.index = i, 
-							newChild.key = newKey, 
-							newChild
-						);
+						newKeys[newChild.key] = (newChild.index = i, newChild);
 					}
 	
 					if (oldType !== 0) {
-						oldKeys[oldKey = oldChild.props.key] = (
-							oldChild.index = i, 
-							oldChild.key = oldKey, 
-							oldChild
-						);
+						oldKeys[oldChild.key] = (oldChild.index = i, oldChild);
 					}
 				}
 				// remove
 				else if (newType === 0) {
-					oldLength--;
-	
 					removeNode(oldType, oldChildren.pop(), parentNode);
+	
+					oldLength--;
 				}
 				// add
 				else if (oldType === 0) {
@@ -3595,15 +3749,17 @@
 					}
 				}
 				// key
-				else if ((newKey = newChild.props.key) !== (oldKey = oldChild.props.key)) {
-					keyed = true; 
-					pos = i;
-					oldKeys = {}; 
+				else if ((newKey = newChild.key) !== (oldKey = oldChild.key)) {
+					keyed = true;
+					position = i;
+	
+					// map of key
 					newKeys = {};
+					oldKeys = {};
 	
 					// push keys
-					newKeys[newKey] = (newChild.index = i, newChild.key = newKey, newChild);
-					oldKeys[oldKey] = (oldChild.index = i, oldChild.key = oldKey, oldChild);
+					newKeys[newKey] = (newChild.index = i, newChild);
+					oldKeys[oldKey] = (oldChild.index = i, oldChild);
 				}
 				// replace
 				else if (newChild.type !== oldChild.type) {
@@ -3624,8 +3780,17 @@
 	
 			// reconcile keyed children
 			if (keyed) {
-				// new and old keys object are of differing shapes
-				reconcileKeys([newKeys, oldKeys], parentNode, newNode, oldNode, newLength, oldLength, pos);
+				reconcileKeys(
+					newKeys, 
+					oldKeys,
+					parentNode, 
+					newNode, 
+					oldNode, 
+					newLength, 
+					oldLength, 
+					position,
+					length
+				);
 			}
 		}
 	
@@ -3660,7 +3825,7 @@
 	 * @param  {?Component} component
 	 */
 	function hydrate (parent, subject, index, parentNode, component) {
-		var newNode = subject.Type === 2 ? extractComponentNode(subject) : subject;
+		var newNode = subject.Type === 2 ? extractComponentNode(subject, null, null) : subject;
 		
 		var nodeType = newNode.Type;
 		var type = newNode.type;
@@ -3669,7 +3834,7 @@
 		var element = childNodes[index];
 		var nodeName = element.nodeName;
 	
-		// DOMNode does not match vnode
+		// DOMNode type does not match
 		if (type !== nodeName.toLowerCase()) {
 			// root(mount target) context
 			if (parentNode === null) {
@@ -3698,7 +3863,7 @@
 	
 			// vnode has component attachment
 			if (subject.instance !== null) {
-				(component = subject.instance).vnode.DOMNode = parent;
+				(component = subject.instance)['--vnode'].DOMNode = parent;
 			}
 	
 			// hydrate children
@@ -3716,11 +3881,6 @@
 	
 			// not a fragment, not an emtpy object
 			if (props !== objEmpty) {
-				// refs
-				if (props.ref !== void 0) {
-					refs(props.ref, component, element);
-				}
-	
 				// events
 				assignProps(element, props, true, component);
 			}
@@ -3730,16 +3890,16 @@
 		}
 		// textNode
 		else if (nodeType === 3) {
-			children = parentNode.children;
-			length = children.length;
+			var children = parentNode.children;
+			var length = children.length;
 	
 			// when we reach a string child that is followed by a string child, 
 			// it is assumed that the dom representing it is a single textNode
 			// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
 			// HelloWorld is one textNode in the DOM but two in the VNode
-			if (length > 1 && (children[index + 1] || nodeEmpty).Type === 3) {			
+			if (length > 1 && index + 1 < length && children[index + 1].Type === 3) {
 				var fragment = document.createDocumentFragment();
-				
+	
 				// look ahead of this nodes siblings and add all textNodes to the fragment
 				// and exit when a non-textNode is encounted
 				for (var i = index, len = length - index; i < len; i++) {
@@ -3758,6 +3918,13 @@
 				parent.replaceChild(fragment, element);
 			}
 			else {
+				var nodeValue = newNode.children+'';
+	
+				// DOMNode text does not match, reconcile
+				if (element.nodeValue !== nodeValue) {
+					element.nodeValue = nodeValue;
+				}
+	
 				// hydrate single textNode
 				newNode.DOMNode = element;
 			}
@@ -3813,9 +3980,10 @@
 	 * @return {Stream}
 	 */
 	function renderToStream (subject, template) {	
-		return subject ? (
-			new Stream(subject, template == null ? null : template.split('@body'))
-		) : function (subject) {
+		if (subject != null) {
+			return new Stream(subject, template == null ? null : template.split('@body'));
+		}
+		else {
 			return new Stream(subject);
 		}
 	}
@@ -3911,8 +4079,8 @@
 			value: function (subject, flush, stack, lookup, initial, self) {
 				// if there is something pending in the stack give that priority
 				if (flush && stack.length !== 0) {
-					stack.pop()(this); 
-	
+					stack.pop()(this);
+					
 					return;
 				}
 	
@@ -3920,7 +4088,7 @@
 	
 				// text node, sync
 				if (nodeType === 3) {
-					this.push(escape(subject.children)); 
+					this.push(escape(subject.children) || ' ');
 	
 					return;
 				}
@@ -3949,14 +4117,14 @@
 						}
 					}
 					else {
-						vnode = extractComponentNode(subject);
+						vnode = extractComponentNode(subject, null, null);
 	
 						// pending async component
-						if ((component = subject.instance).async !== false) {
-							promise = component.async !== true;
+						if ((component = subject.instance)['--async'] !== false) {
+							promise = component['--async'] !== true;
 	
-							(promise ? component.async : component.props)
-								.then(function resolveAsyncServerComponent (data) {								
+							(promise ? component['--async'] : component.props)
+								.then(function resolveAsyncComponent (data) {								
 									vnode.Type = 2;
 									vnode.type = subject.type;
 									vnode.instance = component;
@@ -3978,7 +4146,7 @@
 									);
 								}).catch(funcEmpty);
 	
-							component.async = false;
+							component['--async'] = false;
 	
 							return;
 						}
@@ -4101,7 +4269,7 @@
 				}
 			}
 			// component
-			else if (subject.Type === void 0) {
+			else if (typeof subject === 'function') {
 				subject.HTMLCache = renderToString(subject);
 			}
 			// vnode
@@ -4161,27 +4329,32 @@
 	 * @return {string}
 	 */
 	function renderPropsToString (vnode) {
-		var propsString = '';
+		var string = '';
 		var props = vnode.props;
+	
+		var length;
+		var type;
+		var value;
+		var styles;
+		var property;
 	
 		// construct props string
 		if (props !== objEmpty) {
 			for (var name in props) {
-				var value = props[name];
+				value = props[name];
 	
 				// value --> <type name=value>, exclude props with undefined/null/false as values
 				if (value != null && value !== false) {
-					var type = typeof value;
+					type = typeof value;
+					length = name.length;
 	
 					// props to avoid
 					if (
-						name !== 'key' && 
-						name !== 'ref' && 
-						name !== 'children' &&
-						name !== 'innerHTML' &&
-						name !== 'innerText' &&
-						type !== 'function' &&
-						isEventName(name) === false
+						(length === 3 && (name === 'key' || name === 'ref')) === false &&
+						(length === 9 && name === 'children') === false &&
+						(length === 9 && (name === 'innerHTML' && name === 'innerText')) === false &&
+						(type.length === 8 && type === 'function') === false &&
+						isEventProp(name) === false
 					) {
 						// defaultValue does not render
 						if (name === 'defaultValue') {
@@ -4200,19 +4373,19 @@
 						}
 	
 						if (type !== 'object') {
-							if (name === 'className') { 
+							if (length === 9 && name === 'className') { 
 								name = 'class'; 
 							}
 	
 							// if falsey/truefy checkbox=true ---> <type checkbox>
-							propsString += ' ' + (value === true ? name : name + '="' + value + '"');
+							string += ' ' + (value === true ? name : name + '="' + value + '"');
 						}
 						// style objects
 						else {
-							var styles = '';
+							styles = '';
 	
-							for (name in value) {
-								var property = value[name];
+							for (var name in value) {
+								property = value[name];
 	
 								// if camelCase convert to dash-case 
 								// i.e marginTop --> margin-top
@@ -4223,14 +4396,14 @@
 								styles += name + ':' + property + ';';
 							}
 	
-							propsString += name + '="' + property + '"';
+							string += name + '="' + property + '"';
 						}
 					}
 				}
 			}
 		}
 	
-		return propsString;
+		return string;
 	}
 	
 	
@@ -4247,7 +4420,7 @@
 	
 		// textNode
 		if (nodeType === 3) {
-			return escape(subject.children);
+			return escape(subject.children) || ' ';
 		}
 	
 		var vnode;
@@ -4259,7 +4432,7 @@
 				return subject.type.HTMLCache;
 			} 
 			else {
-				vnode = extractComponentNode(subject);
+				vnode = extractComponentNode(subject, null, null);
 			}
 		} 
 		else {
@@ -4331,18 +4504,18 @@
 	
 		// this allows us to return values in a .then block that will
 		// get passed to the next .then block
-		var chain = { then: null, catch: null };
+		var chain = {then: null, catch: null};
 	
 		// .then/.catch listeners
-		var listeners = { then: [], catch: [] };
+		var listeners = {then: [], catch: []};
 	
 		// predetermine if a middlware was passed
-		var hasMiddleware = middleware != null;
+		var plugin = middleware != null;
 	
 		// predetermine if the middlware passed is a function
-		var middlewareFunc = hasMiddleware && typeof middleware === 'function';
+		var func = plugin && typeof middleware === 'function';
 	
-		function Stream (value) {
+		function observable (value) {
 			// received value, update stream
 			if (arguments.length !== 0) {
 				store = value;
@@ -4351,15 +4524,15 @@
 					dispatch('then', store);
 				});
 	
-				return Stream;
+				return observable;
 			}
 			else {
 				// if you pass a middleware function i.e a = stream(1, String)
 				// the stream will return 1 processed through String
 				// if you pass a boolean primitive the assumtion is made that the store
 				// is a function and that it should return the functions return value
-				if (hasMiddleware) {
-					return middlewareFunc ? middleware(store) : store();
+				if (plugin) {
+					return func ? middleware(store) : store();
 				}
 				else {
 					return store;
@@ -4393,23 +4566,6 @@
 				}
 			}
 		}
-	
-		// resolve value
-		function resolve (value) {
-			return Stream(value); 
-		}
-	
-		// reject
-		function reject (reason) {
-			schedule(function () {
-				dispatch('catch', reason);
-			});
-		}
-	
-		// add done listener, ends the chain
-		function done (listener, onerror) {
-			then(listener, onerror || true);
-		}
 		
 		// add catch/error listener
 		function error (listener) {
@@ -4432,7 +4588,24 @@
 				return listener(chain);
 			});
 	
-			return end === null ? Stream : void 0;
+			return end === null ? observable : void 0;
+		}
+	
+		// resolve value
+		function resolve (value) {
+			return observable(value); 
+		}
+	
+		// reject
+		function reject (reason) {
+			schedule(function () {
+				dispatch('catch', reason);
+			});
+		}
+	
+		// add done listener, ends the chain
+		function done (listener, onerror) {
+			then(listener, onerror || true);
 		}
 	
 		// add then listener
@@ -4449,13 +4622,15 @@
 		// create a map
 		function map (callback) {
 			return stream(function (resolve) {
-				resolve(function () { return callback(Stream()); });
+				resolve(function () { return callback(observable()); });
 			}, true);
 		}
 	
 		// end/reset a stream
 		function end (value) {
-			value !== void 0 && (store = value);
+			if (value !== void 0) {
+				store = value;
+			}
 	
 			paused = false;
 			chain.then = null;
@@ -4475,25 +4650,27 @@
 		}
 	
 		// assign public methods
-		Stream.then = then;
-		Stream.done = done;
-		Stream.catch = error;
-		Stream.map = map;
-		Stream.end = end;
-		Stream.valueOf = valueOf;
-		Stream.toJSON = toJSON;
-		Stream.resolve = resolve;
-		Stream.reject = reject;
-		Stream.pause = pause;
-		Stream.resume = resume;
-	
-		// signature
-		Stream.isStream = true;
+		observable.then = then;
+		observable.done = done;
+		observable.catch = error;
+		observable.map = map;
+		observable.end = end;
+		observable.valueOf = valueOf;
+		observable.toJSON = toJSON;
+		observable.resolve = resolve;
+		observable.reject = reject;
+		observable.pause = pause;
+		observable.resume = resume;
 	
 		// acts like a promise if a function is passed as value
-		typeof value === 'function' ? value(resolve, reject) : Stream(value);
+		if (typeof value === 'function') {
+			value(resolve, reject);
+		} 
+		else {
+			observable(value);
+		}
 	
-		return Stream;
+		return observable;
 	}
 	
 	
@@ -4712,7 +4889,8 @@
 	function response (xhr, responseType, resolve, reject) {			
 		var header = xhr.getResponseHeader('Content-Type');
 		var status = xhr.status;
-		var data = null; 
+		
+		var data;
 		var body;
 	
 		// text
@@ -4748,7 +4926,12 @@
 			body = data;
 		}
 	
-		(!status || status >= 400) ? reject(xhr) : resolve(body);
+		if (!status || status >= 400) {
+			reject(xhr);
+		}
+		else {
+			resolve(body);
+		}
 	}
 	
 	
@@ -4762,7 +4945,7 @@
 	 * @return {string}
 	 */
 	function serialize (object, prefix) {
-		var arr = [];
+		var array = [];
 	
 		for (var key in object) {
 			var value = object[key];
@@ -4770,15 +4953,15 @@
 	
 			// recursive serialize
 			if (typeof value == 'object') {
-				arr[arr.length] = serialize(value, prefixed);
+				array[array.length] = serialize(value, prefixed);
 			}
 			// serialize
 			else {
-				arr[arr.length] = encodeURIComponent(prefixed) + '=' + encodeURIComponent(value);
+				array[array.length] = encodeURIComponent(prefixed) + '=' + encodeURIComponent(value);
 			}
 		}
 	
-		return arr.join('&');
+		return array.join('&');
 	}
 	
 	
@@ -4898,9 +5081,9 @@
 			// assign a route item
 			Object.defineProperty(routes, uri, {
 				value: Object.create(null, {
-					callback: { value: callback, },
-					pattern:  { value: new RegExp(directory + pattern + '$'), },
-					params:   { value: params, }
+					callback: {value: callback},
+					pattern: {value: new RegExp(directory + pattern + '$')},
+					params: {value: params}
 				}),
 				enumerable: true
 			});
@@ -4942,7 +5125,7 @@
 					return prev;
 	
 					// null --> first value
-				}, null) || {uri: current};
+				}, null) || {url: current};
 	
 				route.callback(args, uri);
 	
@@ -5032,12 +5215,12 @@
 		// register routes
 		register();
 	
-		// state listening if browser enviroment
+		// listen if browser enviroment
 		if (browser) {
 			listen();
 		}
 	
-		// initialiser, if function pass api as args, else string, navigate to uri
+		// if function pass api as args, else if string navigate to url
 		if (initialiser !== void 0) {
 			var type = typeof initialiser;
 	
@@ -5130,10 +5313,12 @@
 	
 		// no functions passed
 		if (length === 0) {
-			return function (a) { return a; }
+			return function (a) { 
+				return a;
+			}
 		}
 		else {
-			// list of functions to compose
+			// functions to compose
 			var funcs = [];
 	
 			// passing arguments to a function i.e [].splice() will prevent this function
@@ -5181,11 +5366,10 @@
 			state = state || {};
 	
 			var nextState = {};
+			var key;
 	
-			for (var i = 0; i < length; i++) {
-				var key = keys[i]; 
-	
-				nextState[key] = reducers[key](state[key], action);
+			for (var i = 0; i < length; i++) {			
+				nextState[key = keys[i]] = reducers[key](state[key], action);
 			}
 	
 			return nextState;
@@ -5239,6 +5423,7 @@
 	function Store (reducer, initialState) {
 		var currentState = initialState;
 		var listeners = [];
+		var length = 0;
 	
 		// state getter, retrieves the current state
 		function getState () {
@@ -5255,7 +5440,7 @@
 			currentState = reducer(currentState, action);
 	
 			// dispatch to all listeners
-			for (var i = 0, length = listeners.length; i < length; i++) {
+			for (var i = 0; i < length; i++) {
 				listeners[i](currentState);
 			}
 	
@@ -5268,19 +5453,17 @@
 				throw 'listener should be a function';
 			}
 	
-			// retrieve index position
-			var index = listeners.length;
-	
 			// append listener
-			listeners[index] = listener;
+			listeners[length++] = listener;
 	
 			// return unsubscribe function
 			return function unsubscribe () {
 				// for each listener
-				for (var i = 0, length = listeners.length; i < length; i++) {
+				for (var i = 0; i < length; i++) {
 					// if currentListener === listener, remove
 					if (listeners[i] === listener) {
 						listeners.splice(i, 1);
+						length--;
 					}
 				}
 			}
@@ -5379,6 +5562,7 @@
 		svg: createSvgShape,
 		fragment: createFragmentShape,
 		component: createComponentShape,
+		portal: createPortalShape,
 
 		// stylesheet
 		stylesheet: stylesheet,

@@ -1,10 +1,12 @@
 /**
  * extract component
  * 
- * @param  {VNode} subject
+ * @param  {VNode}      subject
+ * @param  {Component?} instance
+ * @param  {VNode?}     parent
  * @return {VNode} 
  */
-function extractComponentNode (subject) {
+function extractComponentNode (subject, instance, parent) {
 	/** @type {Component} */
 	var owner;
 
@@ -24,7 +26,7 @@ function extractComponentNode (subject) {
 	if (subject.children.length !== 0) {
 		// prevents mutating the empty object constant
 		if (props === objEmpty) {
-			props = { children: subject.children };
+			props = {children: subject.children};
 		}
 		else {
 			props.children = subject.children;			
@@ -51,22 +53,29 @@ function extractComponentNode (subject) {
 	// retrieve vnode
 	var vnode = extractRenderNode(component);
 
-	// if render returns a component, extract that component
+	// if render returns a component, extract component recursive
 	if (vnode.Type === 2) {
-		vnode = extractComponentNode(vnode);
+		vnode = extractComponentNode(vnode, component, parent || subject);
 	}
-	
+
 	// if keyed, assign key to vnode
-	if (props.key !== void 0 && vnode.props.key === void 0) {
-		vnode.props.key = props.key;
+	if (subject.key !== void 0 && vnode.key === void 0) {
+		vnode.key = subject.key;
 	}
 
 	// replace props and children
-	subject.props    = vnode.props
+	subject.props = vnode.props
 	subject.children = vnode.children;
 
-	// assign reference to component and return vnode
-	(component.vnode = vnode).parent = subject;
+	// recursive component
+	if (instance !== null) {
+		component['--vnode'] = parent;
+	}
+	else {
+		component['--vnode'] = subject;
+		
+		subject.nodeName = vnode.type;
+	}
 
 	return vnode;
 }

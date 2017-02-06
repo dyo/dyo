@@ -14,5 +14,6 @@ import 'createNode';
 import 'appendNode';
 import 'insertNode';
 import 'removeNode';
+import 'emptyNode';
 import 'replaceNode';
 import 'replaceRootNode';

@@ -11,7 +11,7 @@ function renderVNodeToString (subject, lookup, initial) {
 
 	// textNode
 	if (nodeType === 3) {
-		return escape(subject.children);
+		return escape(subject.children) || ' ';
 	}
 
 	var vnode;
@@ -23,7 +23,7 @@ function renderVNodeToString (subject, lookup, initial) {
 			return subject.type.HTMLCache;
 		} 
 		else {
-			vnode = extractComponentNode(subject);
+			vnode = extractComponentNode(subject, null, null);
 		}
 	} 
 	else {

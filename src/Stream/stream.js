@@ -15,18 +15,18 @@ function stream (value, middleware) {
 
 	// this allows us to return values in a .then block that will
 	// get passed to the next .then block
-	var chain = { then: null, catch: null };
+	var chain = {then: null, catch: null};
 
 	// .then/.catch listeners
-	var listeners = { then: [], catch: [] };
+	var listeners = {then: [], catch: []};
 
 	// predetermine if a middlware was passed
-	var hasMiddleware = middleware != null;
+	var plugin = middleware != null;
 
 	// predetermine if the middlware passed is a function
-	var middlewareFunc = hasMiddleware && typeof middleware === 'function';
+	var func = plugin && typeof middleware === 'function';
 
-	function Stream (value) {
+	function observable (value) {
 		// received value, update stream
 		if (arguments.length !== 0) {
 			store = value;
@@ -35,15 +35,15 @@ function stream (value, middleware) {
 				dispatch('then', store);
 			});
 
-			return Stream;
+			return observable;
 		}
 		else {
 			// if you pass a middleware function i.e a = stream(1, String)
 			// the stream will return 1 processed through String
 			// if you pass a boolean primitive the assumtion is made that the store
 			// is a function and that it should return the functions return value
-			if (hasMiddleware) {
-				return middlewareFunc ? middleware(store) : store();
+			if (plugin) {
+				return func ? middleware(store) : store();
 			}
 			else {
 				return store;
@@ -77,23 +77,6 @@ function stream (value, middleware) {
 			}
 		}
 	}
-
-	// resolve value
-	function resolve (value) {
-		return Stream(value); 
-	}
-
-	// reject
-	function reject (reason) {
-		schedule(function () {
-			dispatch('catch', reason);
-		});
-	}
-
-	// add done listener, ends the chain
-	function done (listener, onerror) {
-		then(listener, onerror || true);
-	}
 	
 	// add catch/error listener
 	function error (listener) {
@@ -116,7 +99,24 @@ function stream (value, middleware) {
 			return listener(chain);
 		});
 
-		return end === null ? Stream : void 0;
+		return end === null ? observable : void 0;
+	}
+
+	// resolve value
+	function resolve (value) {
+		return observable(value); 
+	}
+
+	// reject
+	function reject (reason) {
+		schedule(function () {
+			dispatch('catch', reason);
+		});
+	}
+
+	// add done listener, ends the chain
+	function done (listener, onerror) {
+		then(listener, onerror || true);
 	}
 
 	// add then listener
@@ -133,13 +133,15 @@ function stream (value, middleware) {
 	// create a map
 	function map (callback) {
 		return stream(function (resolve) {
-			resolve(function () { return callback(Stream()); });
+			resolve(function () { return callback(observable()); });
 		}, true);
 	}
 
 	// end/reset a stream
 	function end (value) {
-		value !== void 0 && (store = value);
+		if (value !== void 0) {
+			store = value;
+		}
 
 		paused = false;
 		chain.then = null;
@@ -159,24 +161,26 @@ function stream (value, middleware) {
 	}
 
 	// assign public methods
-	Stream.then = then;
-	Stream.done = done;
-	Stream.catch = error;
-	Stream.map = map;
-	Stream.end = end;
-	Stream.valueOf = valueOf;
-	Stream.toJSON = toJSON;
-	Stream.resolve = resolve;
-	Stream.reject = reject;
-	Stream.pause = pause;
-	Stream.resume = resume;
-
-	// signature
-	Stream.isStream = true;
+	observable.then = then;
+	observable.done = done;
+	observable.catch = error;
+	observable.map = map;
+	observable.end = end;
+	observable.valueOf = valueOf;
+	observable.toJSON = toJSON;
+	observable.resolve = resolve;
+	observable.reject = reject;
+	observable.pause = pause;
+	observable.resume = resume;
 
 	// acts like a promise if a function is passed as value
-	typeof value === 'function' ? value(resolve, reject) : Stream(value);
+	if (typeof value === 'function') {
+		value(resolve, reject);
+	} 
+	else {
+		observable(value);
+	}
 
-	return Stream;
+	return observable;
 }
 

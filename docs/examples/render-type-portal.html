@@ -53,6 +53,10 @@
 				render () {
 					return h(
 						document.createElement('div'), 
+
+						// children will get added to the created div above
+						// it could be a string type as well h('div', ...)
+						
 						document.createElement('custom-progress-bar'), 
 						h('h1', 'progress bar is a custom DOM element')
 					);

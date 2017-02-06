@@ -7,20 +7,20 @@
 function extractRenderNode (component) {
 	try {
 		// async render
-		if (component.async === true) {			
+		if (component['--async'] === true) {			
 			if (browser) {
 				component.props.then(function resolveAsyncClientComponent (props) {
 					component.props = props;
 					component.forceUpdate();
 				}).catch(funcEmpty);
 				
-				component.async = false;
+				component['--async'] = false;
 			}
 
 			return createEmptyShape();
 		}
 		// generator
-		else if (component.yield) {
+		else if (component['--yield']) {
 			return extractVirtualNode(
 				component.render.next().value, 
 				component

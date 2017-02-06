@@ -8,10 +8,11 @@
  * @param  {Node}                        DOMNode
  * @param  {Component}                   instance
  * @param  {number}                      index
- * @param  {Component}                   parent
+ * @param  {string?}                     nodeName
+ * @param  {any}                         key
  * @return {VNode}
  */
-function createNodeShape (Type, type, props, children, DOMNode, instance, index, parent, key) {
+function createNodeShape (Type, type, props, children, DOMNode, instance, index, nodeName, key) {
 	return {
 		Type: Type,
 		type: type,
@@ -20,7 +21,7 @@ function createNodeShape (Type, type, props, children, DOMNode, instance, index,
 		DOMNode: DOMNode,
 		instance: instance,
 		index: index,
-		parent: parent,
+		nodeName: nodeName,
 		key: key
 	};
 }

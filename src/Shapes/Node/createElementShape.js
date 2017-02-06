@@ -12,13 +12,13 @@ function createElementShape (type, props, children) {
 	return {
 		Type: 1,
 		type: type,
-		props: props || objEmpty,
-		children: children || [],
+		props: (props = props != null ? props : objEmpty),
+		children: (children == null ? [] : children),
 		DOMNode: null,
 		instance: null,
 		index: 0,
-		parent: null,
-		key: null
+		nodeName: null,
+		key: props !== objEmpty ? props.key : void 0
 	};
 }
 

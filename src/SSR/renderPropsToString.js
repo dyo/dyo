@@ -5,27 +5,32 @@
  * @return {string}
  */
 function renderPropsToString (vnode) {
-	var propsString = '';
+	var string = '';
 	var props = vnode.props;
+
+	var length;
+	var type;
+	var value;
+	var styles;
+	var property;
 
 	// construct props string
 	if (props !== objEmpty) {
 		for (var name in props) {
-			var value = props[name];
+			value = props[name];
 
 			// value --> <type name=value>, exclude props with undefined/null/false as values
 			if (value != null && value !== false) {
-				var type = typeof value;
+				type = typeof value;
+				length = name.length;
 
 				// props to avoid
 				if (
-					name !== 'key' && 
-					name !== 'ref' && 
-					name !== 'children' &&
-					name !== 'innerHTML' &&
-					name !== 'innerText' &&
-					type !== 'function' &&
-					isEventName(name) === false
+					(length === 3 && (name === 'key' || name === 'ref')) === false &&
+					(length === 9 && name === 'children') === false &&
+					(length === 9 && (name === 'innerHTML' && name === 'innerText')) === false &&
+					(type.length === 8 && type === 'function') === false &&
+					isEventProp(name) === false
 				) {
 					// defaultValue does not render
 					if (name === 'defaultValue') {
@@ -44,19 +49,19 @@ function renderPropsToString (vnode) {
 					}
 
 					if (type !== 'object') {
-						if (name === 'className') { 
+						if (length === 9 && name === 'className') { 
 							name = 'class'; 
 						}
 
 						// if falsey/truefy checkbox=true ---> <type checkbox>
-						propsString += ' ' + (value === true ? name : name + '="' + value + '"');
+						string += ' ' + (value === true ? name : name + '="' + value + '"');
 					}
 					// style objects
 					else {
-						var styles = '';
+						styles = '';
 
-						for (name in value) {
-							var property = value[name];
+						for (var name in value) {
+							property = value[name];
 
 							// if camelCase convert to dash-case 
 							// i.e marginTop --> margin-top
@@ -67,13 +72,13 @@ function renderPropsToString (vnode) {
 							styles += name + ':' + property + ';';
 						}
 
-						propsString += name + '="' + property + '"';
+						string += name + '="' + property + '"';
 					}
 				}
 			}
 		}
 	}
 
-	return propsString;
+	return string;
 }
 

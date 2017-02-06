@@ -8,7 +8,7 @@
  * @param  {?Component} component
  */
 function hydrate (parent, subject, index, parentNode, component) {
-	var newNode = subject.Type === 2 ? extractComponentNode(subject) : subject;
+	var newNode = subject.Type === 2 ? extractComponentNode(subject, null, null) : subject;
 	
 	var nodeType = newNode.Type;
 	var type = newNode.type;
@@ -17,7 +17,7 @@ function hydrate (parent, subject, index, parentNode, component) {
 	var element = childNodes[index];
 	var nodeName = element.nodeName;
 
-	// DOMNode does not match vnode
+	// DOMNode type does not match
 	if (type !== nodeName.toLowerCase()) {
 		// root(mount target) context
 		if (parentNode === null) {
@@ -46,7 +46,7 @@ function hydrate (parent, subject, index, parentNode, component) {
 
 		// vnode has component attachment
 		if (subject.instance !== null) {
-			(component = subject.instance).vnode.DOMNode = parent;
+			(component = subject.instance)['--vnode'].DOMNode = parent;
 		}
 
 		// hydrate children
@@ -64,11 +64,6 @@ function hydrate (parent, subject, index, parentNode, component) {
 
 		// not a fragment, not an emtpy object
 		if (props !== objEmpty) {
-			// refs
-			if (props.ref !== void 0) {
-				refs(props.ref, component, element);
-			}
-
 			// events
 			assignProps(element, props, true, component);
 		}
@@ -78,16 +73,16 @@ function hydrate (parent, subject, index, parentNode, component) {
 	}
 	// textNode
 	else if (nodeType === 3) {
-		children = parentNode.children;
-		length = children.length;
+		var children = parentNode.children;
+		var length = children.length;
 
 		// when we reach a string child that is followed by a string child, 
 		// it is assumed that the dom representing it is a single textNode
 		// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
 		// HelloWorld is one textNode in the DOM but two in the VNode
-		if (length > 1 && (children[index + 1] || nodeEmpty).Type === 3) {			
+		if (length > 1 && index + 1 < length && children[index + 1].Type === 3) {
 			var fragment = document.createDocumentFragment();
-			
+
 			// look ahead of this nodes siblings and add all textNodes to the fragment
 			// and exit when a non-textNode is encounted
 			for (var i = index, len = length - index; i < len; i++) {
@@ -106,6 +101,13 @@ function hydrate (parent, subject, index, parentNode, component) {
 			parent.replaceChild(fragment, element);
 		}
 		else {
+			var nodeValue = newNode.children+'';
+
+			// DOMNode text does not match, reconcile
+			if (element.nodeValue !== nodeValue) {
+				element.nodeValue = nodeValue;
+			}
+
 			// hydrate single textNode
 			newNode.DOMNode = element;
 		}

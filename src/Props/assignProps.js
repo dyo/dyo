@@ -8,12 +8,20 @@
  */
 function assignProps (target, props, onlyEvents, component) {
 	for (var name in props) {
-		if (isEventName(name)) {
-			addEventListener(target, extractEventName(name), props[name], component);
+		var value = props[name];
+
+		// refs
+		if (name === 'ref' && value != null) {
+			refs(value, component, target);
 		}
-		else if (onlyEvents === false) {
+		// events
+		else if (isEventProp(name)) {
+			addEventListener(target, name.substring(2).toLowerCase(), value, component);
+		}
+		// attributes
+		else if (onlyEvents === false && name !== 'key' && name !== 'children') {
 			// add attribute
-			updateProp(target, 'setAttribute', name, props[name], props.xmlns);
+			updateProp(target, true, name, value, props.xmlns);
 		}
 	}
 }

@@ -30,13 +30,13 @@
                     
                     if (this.props.rows) {
                         var $rows = this.props.rows;
-                        var len   = $rows.length
+                        var len = $rows.length
 
                         rows = new Array(len);
 
                         for (var i = 0; i < len; i++) {
                             var row = $rows[i];
-                        
+
                             rows[i] = (
                                 {
                                     Type: 1,
@@ -54,11 +54,11 @@
                                                     props: {type: 'checkbox'}, 
                                                     children: [],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -69,13 +69,47 @@
                                                     Type: 3,
                                                     type: 'text',
                                                     props: {},
-                                                    children: [row.status],
+                                                    children: row.id,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
+                                        },
+                                        {
+                                            Type: 1,
+                                            type: 'td', 
+                                            props: {}, 
+                                            children: [
+                                                {
+                                                    Type: 3,
+                                                    type: 'text',
+                                                    props: {},
+                                                    children: row.name,
+                                                    DOMNode: null,
+                                                    instance: null, index: null, key: null, nodeName: null
+                                                }
+                                            ],
+                                            DOMNode: null,
+                                            instance: null, index: null, key: null, nodeName: null
+                                        },
+                                        {
+                                            Type: 1,
+                                            type: 'td', 
+                                            props: {}, 
+                                            children: [
+                                                {
+                                                    Type: 3,
+                                                    type: 'text',
+                                                    props: {},
+                                                    children: row.email,
+                                                    DOMNode: null,
+                                                    instance: null, index: null, key: null, nodeName: null
+                                                }
+                                            ],
+                                            DOMNode: null,
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -88,11 +122,11 @@
                                                     props: {},
                                                     children: row.field1,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -105,11 +139,11 @@
                                                     props: {}, 
                                                     children: row.field2,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -122,11 +156,11 @@
                                                     props: {},
                                                     children: row.field3,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -137,13 +171,13 @@
                                                     Type: 3,
                                                     type: 'text',
                                                     props: {},
-                                                    children: row.field4,
+                                                    children: row.field4 || '',
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -156,11 +190,11 @@
                                                     props: {},
                                                     children: row.field5,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -173,11 +207,11 @@
                                                     props: {},
                                                     children: row.field6Data,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -190,11 +224,11 @@
                                                     props: {},
                                                     children: row.field7,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -207,11 +241,11 @@
                                                     props: {}, 
                                                     children: row.field8,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -224,11 +258,11 @@
                                                     props: {},
                                                     children: row.field9,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         },
                                         {
                                             Type: 1,
@@ -241,15 +275,15 @@
                                                     props: {},
                                                     children: row.field10,
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         }
                                     ],
                                     DOMNode: null,
-                                    instance: null, index: null, parent: null
+                                    instance: null, index: null, key: null, nodeName: null
                                 }
                             );
                         }
@@ -284,11 +318,11 @@
                                                             props: {type: 'checkbox'},
                                                             children: [],
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -299,13 +333,13 @@
                                                             Type: 3,
                                                             type: 'text',
                                                             props: {},
-                                                            children: 'Status',
+                                                            children: 'ID',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -318,11 +352,11 @@
                                                             props: {},
                                                             children: 'Name',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -335,11 +369,11 @@
                                                             props: {},
                                                             children: 'Email',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
 
                                                 {
@@ -353,11 +387,11 @@
                                                             props: {},
                                                             children: 'field1',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -370,11 +404,11 @@
                                                             props: {},
                                                             children: 'field2',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -387,11 +421,11 @@
                                                             props: {},
                                                             children: 'field3',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -404,11 +438,11 @@
                                                             props: {},
                                                             children: 'field4',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -421,11 +455,11 @@
                                                             props: {},
                                                             children: 'field5',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -438,11 +472,11 @@
                                                             props: {},
                                                             children: 'field6Date',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -455,11 +489,11 @@
                                                             props: {},
                                                             children: 'field7',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -472,11 +506,11 @@
                                                             props: {},
                                                             children: 'field8',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -489,11 +523,11 @@
                                                             props: {},
                                                             children: 'field9',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 },
                                                 {
                                                     Type: 1,
@@ -506,19 +540,19 @@
                                                             props: {},
                                                             children: 'field10',
                                                             DOMNode: null,
-                                                            instance: null, index: null, parent: null
+                                                            instance: null, index: null, key: null, nodeName: null
                                                         }
                                                     ],
                                                     DOMNode: null,
-                                                    instance: null, index: null, parent: null
+                                                    instance: null, index: null, key: null, nodeName: null
                                                 }
                                             ],
                                             DOMNode: null,
-                                            instance: null, index: null, parent: null
+                                            instance: null, index: null, key: null, nodeName: null
                                         }
                                     ],
                                     DOMNode: null,
-                                    instance: null, index: null, parent: null
+                                    instance: null, index: null, key: null, nodeName: null
                                 },
                                 {
                                     Type: 1,
@@ -526,11 +560,11 @@
                                     props: {},
                                     children: rows,
                                     DOMNode: null,
-                                    instance: null, index: null, parent: null
+                                    instance: null, index: null, key: null, nodeName: null
                                 }
                             ],
                             DOMNode: null,
-                            instance: null, index: null, parent: null
+                            instance: null, index: null, key: null, nodeName: null
                         }
                     );
                 }
@@ -624,7 +658,7 @@
                                     props: {rows: self.state.rows},
                                     children: [],
                                     DOMNode: null,
-                                    instance: null, index: null, parent: null
+                                    instance: null, index: null, key: null, nodeName: null
                                 },
                                 document.getElementById('table'),
                                 null,
@@ -649,7 +683,7 @@
                                 props: {runTest: this.runTest, running: this.state.running, duration: this.state.duration}, 
                                 children: [],
                                 DOMNode: null,
-                                instance: null, index: null, parent: null
+                                instance: null, index: null, key: null, nodeName: null
                             },
                             {
                                 Type: 1,
@@ -657,11 +691,11 @@
                                 props: {id: 'table'},
                                 children: [],
                                 DOMNode: null,
-                                instance: null, index: null, parent: null
+                                instance: null, index: null, key: null, nodeName: null
                             }
                         ],
                         DOMNode: null,
-                        instance: null, index: null, parent: null
+                        instance: null, index: null, key: null, nodeName: null
                    })
                 }
             });
@@ -673,7 +707,7 @@
                     props: {},
                     children: [],
                     DOMNode: null,
-                    instance: null, index: null, parent: null
+                    instance: null, index: null, key: null, nodeName: null
                 },
                 document.getElementById('content'),
                 null,

@@ -8,6 +8,7 @@
 function Store (reducer, initialState) {
 	var currentState = initialState;
 	var listeners = [];
+	var length = 0;
 
 	// state getter, retrieves the current state
 	function getState () {
@@ -24,7 +25,7 @@ function Store (reducer, initialState) {
 		currentState = reducer(currentState, action);
 
 		// dispatch to all listeners
-		for (var i = 0, length = listeners.length; i < length; i++) {
+		for (var i = 0; i < length; i++) {
 			listeners[i](currentState);
 		}
 
@@ -37,19 +38,17 @@ function Store (reducer, initialState) {
 			throw 'listener should be a function';
 		}
 
-		// retrieve index position
-		var index = listeners.length;
-
 		// append listener
-		listeners[index] = listener;
+		listeners[length++] = listener;
 
 		// return unsubscribe function
 		return function unsubscribe () {
 			// for each listener
-			for (var i = 0, length = listeners.length; i < length; i++) {
+			for (var i = 0; i < length; i++) {
 				// if currentListener === listener, remove
 				if (listeners[i] === listener) {
 					listeners.splice(i, 1);
+					length--;
 				}
 			}
 		}

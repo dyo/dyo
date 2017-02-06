@@ -1,3 +1,9 @@
+## 6.1.1 (February 06, 2016)
+
+- improve reconciler
+- improve internal component property naming to avoid possible user-land naming conflicts
+- improve hydration
+
 ## 6.1.0 (January 26, 2016)
 
 - add DOMNodes to return types

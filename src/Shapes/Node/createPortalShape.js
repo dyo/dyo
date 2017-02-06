@@ -10,13 +10,13 @@ function createPortalShape (type, props, children) {
 	return {
 		Type: 4,
 		type: type.nodeName.toLowerCase(),
-		props: props,
-		children: children,
+		props: (props = props != null ? props : objEmpty),
+		children: (children == null ? [] : children),
 		DOMNode: type,
 		instance: null,
 		index: 0,
-		parent: null,
-		key: null
+		nodeName: null,
+		key: props !== objEmpty ? props.key : void 0
 	};
 }
 

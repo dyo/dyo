@@ -12,13 +12,13 @@ function createSvgShape (type, props, children) {
 	return {
 		Type: 1,
 		type: type,
-		props: (props = props || {}, props.xmlns = nsSvg, props),
-		children: children || [],
+		props: (props == null ? (props = {xmlns: nsSvg}) : (props.xmlns = nsSvg, props)),
+		children: (children == null ? [] : children),
 		DOMNode: null,
 		instance: null,
 		index: 0,
-		parent: null,
-		key: null
+		nodeName: null,
+		key: props.key
 	};
 }
 

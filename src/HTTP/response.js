@@ -10,7 +10,8 @@
 function response (xhr, responseType, resolve, reject) {			
 	var header = xhr.getResponseHeader('Content-Type');
 	var status = xhr.status;
-	var data = null; 
+	
+	var data;
 	var body;
 
 	// text
@@ -46,6 +47,11 @@ function response (xhr, responseType, resolve, reject) {
 		body = data;
 	}
 
-	(!status || status >= 400) ? reject(xhr) : resolve(body);
+	if (!status || status >= 400) {
+		reject(xhr);
+	}
+	else {
+		resolve(body);
+	}
 }
 

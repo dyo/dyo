@@ -6,6 +6,7 @@
  * @param {Node}   parentNode
  */
 function removeNode (oldType, oldNode, parentNode) {
+	// lifecycle, componentWillUnmount
 	if (oldType === 2 && oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
 		componentMountBoundary(oldNode.instance, 'componentWillUnmount', oldNode.DOMNode);
 	}

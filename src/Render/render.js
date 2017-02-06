@@ -45,7 +45,7 @@ function render (subject, target, callback, hydration) {
 			}
 
 			// update component
-			component.forceUpdate(null);
+			component.forceUpdate();
 		}
 
 		return renderer;

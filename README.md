@@ -34,15 +34,15 @@ dio is a javascript framework for building applications.
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/6.1.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/6.1.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/6.1.0/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/dio/6.1.1/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@6.1.0/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@6.1.1/dio.min.js></script>
 ```
 
 #### bower
@@ -85,7 +85,7 @@ The nano is dio core (8kb) without the extras.
 
 ### Components
 
-You can create a component in with any of the following.
+You can create a component in any of the following ways.
 
 ```javascript
 class Hello extends dio.Component {
@@ -674,7 +674,7 @@ class Foo extends dio.Component {
 
 ## Elements
 
-Elements are of three types, `VComponent`, `VElement`, `VText` and `VSvg`. The `h` (read as hyperscript) and `createElement` functions hide away these low-level types that you can access if the need arises. In a browser enviroment `h` is also exposed to the global scope.
+Elements are of three types, `component`, `element`, `text` and `svg`. The `h` (read as hyperscript) and `createElement` functions hide away these low-level types that you can access if the need arises. In a browser enviroment `h` is also exposed to the global scope.
 
 ```javascript
 
@@ -684,27 +684,23 @@ class Hello extends Component {
 	}
 }
 
-// VComponent passing {id: 1} as props to the component
+// component passing {id: 1} as props to the component
 // and textNodes 1 and 2 as children
 var component = h(Hello, {id: 1}, 1, 2)
 
-// VElement passing textNodes 'Hello' and 'World' as children
+// element passing textNodes 'Hello' and 'World' as children
 var element = h('div', 'Hello', 'World')
 
-// VSvg passing a svg path element as a child
+// svg passing a svg path element as a child
 var h('svg', h('path'))
 
-// VElement passing props 
-// {type: 'checkbox', checkbox: true, className: 'green'}
-var special = h('input.green[type=checkbox][checked]')
-
-// VElement passing a VComponent as a child
+// element passing a component as a child
 var element = h('div', Hello);
 ```
 
 ## Refs
 
-refs are an escape hatches used to extract the DOMNode the a Virtual Element represents
+refs are  escape hatches used to extract the DOMNode the a Virtual Element represents
 
 ```javascript
 h('div', {ref: (el) => el instanceof Element});
@@ -736,7 +732,6 @@ class Hello extends Component {
 	}
 }
 ```
-
 
 ## createFactory
 
@@ -828,6 +823,25 @@ The last argument the render method accepts is a `{boolean}` that signals whethe
 ## shallow
 
 This method accepts an element or a Component and returns a shallow rendered virtual node.
+
+## stylesheet
+
+The css preprocessor that namespaces css defined in a `stylesheet` method is exposed as `dio.stylesheet`. You can use this to use the preprocessor directly or add plugins to the preprocessor allowing you to extend css.
+
+```javascript
+dio.stylesheet(
+    selector: {string},     // selector - i.e `.class` or `#id` or `[attr=id]`
+    styles: {string},       // css string
+    animations: {boolean=}  // false to prevent prefixing animations, true by default
+    compact: {boolean=}     // enable additional features (mixins, variables)
+    middleware: {function=}
+);
+
+dio.stylesheet.use(
+    key/middleware: {(string|RegExp|function|array|object)}
+    plugin: {function=}
+)
+```
 
 ## renderToString
 
@@ -959,10 +973,10 @@ store.connect(callback: {(function|Object)}, element: {(string|Node)})
 
 ## applyMiddleware
 
-although you can archive the same effect with the third argument of `createStore()` applyMiddleware is exposed as a public api to allow manual handling of the above proxy detailed in createStore. applyMiddleware accepts a variable number of function arguments that are composed into middlewares.
+although you can archive the same effect with the third argument of `createStore()` applyMiddleware is exposed as a public api to allow manual handling of the above proxy detailed in createStore, applyMiddleware accepts a variable number of function arguments that are composed into middlewares.
 
 ```javascript
-dio. applyMiddleware(fn, fn, fn...);
+dio.applyMiddleware(fn, fn, fn...);
 ```
 
 ## combineReducers
@@ -1197,3 +1211,4 @@ var bar = dio.stream.scan((sum, n) => {
 foo(1)(1)(2)
 bar() // => 4 
 ```
+

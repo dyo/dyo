@@ -14,9 +14,9 @@ function createTextShape (text) {
 		children: text,
 		DOMNode: null,
 		instance: null,
-		index: null,
-		parent: null,
-		key: null
+		index: 0,
+		nodeName: null,
+		key: void 0
 	};
 }
 

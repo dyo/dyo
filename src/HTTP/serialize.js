@@ -8,7 +8,7 @@
  * @return {string}
  */
 function serialize (object, prefix) {
-	var arr = [];
+	var array = [];
 
 	for (var key in object) {
 		var value = object[key];
@@ -16,14 +16,14 @@ function serialize (object, prefix) {
 
 		// recursive serialize
 		if (typeof value == 'object') {
-			arr[arr.length] = serialize(value, prefixed);
+			array[array.length] = serialize(value, prefixed);
 		}
 		// serialize
 		else {
-			arr[arr.length] = encodeURIComponent(prefixed) + '=' + encodeURIComponent(value);
+			array[array.length] = encodeURIComponent(prefixed) + '=' + encodeURIComponent(value);
 		}
 	}
 
-	return arr.join('&');
+	return array.join('&');
 }
 

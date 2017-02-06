@@ -8,7 +8,7 @@
  */
 function createScopedCSS (component, constructor, inject) {
 	var namespace = component.displayName || constructor.name;
-	var selector  = '['+nsStyle+'='+namespace+']';
+	var selector = '['+nsStyle+'='+namespace+']';
 	var css = component.stylesheet();
 	var output = stylesheet(selector, css, true, true, null);
 

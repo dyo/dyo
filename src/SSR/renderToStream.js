@@ -8,9 +8,10 @@
  * @return {Stream}
  */
 function renderToStream (subject, template) {	
-	return subject ? (
-		new Stream(subject, template == null ? null : template.split('@body'))
-	) : function (subject) {
+	if (subject != null) {
+		return new Stream(subject, template == null ? null : template.split('@body'));
+	}
+	else {
 		return new Stream(subject);
 	}
 }
@@ -106,8 +107,8 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 		value: function (subject, flush, stack, lookup, initial, self) {
 			// if there is something pending in the stack give that priority
 			if (flush && stack.length !== 0) {
-				stack.pop()(this); 
-
+				stack.pop()(this);
+				
 				return;
 			}
 
@@ -115,7 +116,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 
 			// text node, sync
 			if (nodeType === 3) {
-				this.push(escape(subject.children)); 
+				this.push(escape(subject.children) || ' ');
 
 				return;
 			}
@@ -144,14 +145,14 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 					}
 				}
 				else {
-					vnode = extractComponentNode(subject);
+					vnode = extractComponentNode(subject, null, null);
 
 					// pending async component
-					if ((component = subject.instance).async !== false) {
-						promise = component.async !== true;
+					if ((component = subject.instance)['--async'] !== false) {
+						promise = component['--async'] !== true;
 
-						(promise ? component.async : component.props)
-							.then(function resolveAsyncServerComponent (data) {								
+						(promise ? component['--async'] : component.props)
+							.then(function resolveAsyncComponent (data) {								
 								vnode.Type = 2;
 								vnode.type = subject.type;
 								vnode.instance = component;
@@ -173,7 +174,7 @@ Stream.prototype = server ? Object.create(readable.prototype, {
 								);
 							}).catch(funcEmpty);
 
-						component.async = false;
+						component['--async'] = false;
 
 						return;
 					}

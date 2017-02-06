@@ -24,7 +24,7 @@ function setState (newState, callback) {
 	}
 
 	// update component
-	this.forceUpdate(null);
+	this.forceUpdate();
 }
 
 
@@ -34,9 +34,11 @@ function setState (newState, callback) {
  * @param {Object} oldState
  * @param {Object} newState
  */
-function updateState (oldState, newState) {
-	for (var name in newState) {
-		oldState[name] = newState[name];
+function updateState (oldState, newState) {	
+	if (oldState != null) {
+		for (var name in newState) {
+			oldState[name] = newState[name];
+		}
 	}
 }
 

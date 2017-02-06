@@ -6,5 +6,5 @@
  * @return {createElement(?Object<string>, ...any=)}
  */
 function createFactory (type, props) {
-	return props ? createElement.bind(null, type, props) : createElement.bind(null, type);
+	return props != null ? createElement.bind(null, type, props) : createElement.bind(null, type);
 }

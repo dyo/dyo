@@ -34,19 +34,19 @@ function createNode (subject, component, namespace) {
 	}
 	// create DOMNode
 	else {
-		vnode = nodeType === 2 ? extractComponentNode(subject) : subject;
+		vnode = nodeType === 2 ? extractComponentNode(subject, null, null) : subject;
 	}
 	
-	var vnodeType = vnode.Type;	
+	var Type = vnode.Type;
 	var children = vnode.children;
 
 	if (portal === false) {
 		// text		
-		if (vnodeType === 3) {
+		if (Type === 3) {
 			return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
 		}
 		// portal
-		else if (vnodeType === 4 || vnodeType === 5) {
+		else if (Type === 4 || Type === 5) {
 			element = vnode.DOMNode;
 			portal = true;
 		}
@@ -64,11 +64,10 @@ function createNode (subject, component, namespace) {
 		namespace = props.xmlns; 
 	}
 
-	// has a component instance
+	// has a component instance, hydrate component instance
 	if (instance) {
-		// hydrate component instance
 		component = subject.instance;
-		thrown = component.thrown;
+		thrown = component['--throw'];
 	}
 
 	if (portal === false) {
@@ -85,17 +84,21 @@ function createNode (subject, component, namespace) {
 		else {
 			element = createDOMNode(type, component);
 		}
+
+		vnode.DOMNode = subject.DOMNode = element;
 	}
 
 	if (instance) {
-		// avoid appending children if an error was thrown
-		if (thrown !== 0 || thrown !== component.thrown) {
+		// avoid appending children if an error was thrown while creating a DOMNode
+		if (thrown !== component['--throw']) {
 			return vnode.DOMNode = subject.DOMNode = element;
 		}
 
+		vnode = component['--vnode'];
+
 		// hydrate
-		if (component.vnode.DOMNode === null) {
-			component.vnode.DOMNode = element;
+		if (vnode.DOMNode === null) {
+			vnode.DOMNode = element;
 		}
 
 		// stylesheets
@@ -121,17 +124,12 @@ function createNode (subject, component, namespace) {
 	}
 
 	// has props
-	if (props !== objEmpty) {		
-		// refs
-		if (props.ref !== void 0) {
-			refs(props.ref, component, element);
-		}
-
+	if (props !== objEmpty) {
 		// props and events
 		assignProps(element, props, false, component);
 	}
 
 	// cache DOM reference
-	return vnode.DOMNode = subject.DOMNode = element;
+	return element;
 }
 

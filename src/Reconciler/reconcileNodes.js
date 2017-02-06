@@ -13,8 +13,8 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 	}
 
 	// extract node from possible component node
-	var currentNode = newNodeType === 2 ? extractComponentNode(newNode) : newNode;
-
+	var currentNode = newNodeType === 2 ? extractComponentNode(newNode, null, null) : newNode;
+	
 	// a component
 	if (oldNodeType === 2) {
 		// retrieve components
@@ -52,7 +52,7 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 	if (newLength === 0) {
 		// remove all children if old children is not already cleared
 		if (oldLength !== 0) {
-			oldNode.DOMNode.textContent = '';
+			emptyNode(oldNode, oldLength);
 			oldNode.children = newChildren;
 		}
 	}
@@ -62,7 +62,7 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 		var parentNode = oldNode.DOMNode;
 
 		// when keyed, the position that dirty keys begin
-		var pos = 0;
+		var position = 0;
 
 		// non-keyed until the first dirty key is found
 		var keyed = false;
@@ -88,33 +88,25 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 		// for loop, the end point being which ever is the 
 		// greater value between new length and old length
 		for (var i = 0; i < length; i++) {
-			// avoid accessing out of bounds index and nodeType where unnecessary
+			// avoid accessing out of bounds index and Type where unnecessary
 			newType = i < newLength ? (newChild = newChildren[i]).Type : (newChild = nodeEmpty, 0);
 			oldType = i < oldLength ? (oldChild = oldChildren[i]).Type : (oldChild = nodeEmpty, 0);
 
-			if (keyed) {
+			if (keyed) {				
 				// push keys
 				if (newType !== 0) {
-					newKeys[newKey = newChild.props.key] = (
-						newChild.index = i, 
-						newChild.key = newKey, 
-						newChild
-					);
+					newKeys[newChild.key] = (newChild.index = i, newChild);
 				}
 
 				if (oldType !== 0) {
-					oldKeys[oldKey = oldChild.props.key] = (
-						oldChild.index = i, 
-						oldChild.key = oldKey, 
-						oldChild
-					);
+					oldKeys[oldChild.key] = (oldChild.index = i, oldChild);
 				}
 			}
 			// remove
 			else if (newType === 0) {
-				oldLength--;
-
 				removeNode(oldType, oldChildren.pop(), parentNode);
+
+				oldLength--;
 			}
 			// add
 			else if (oldType === 0) {
@@ -132,15 +124,17 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 				}
 			}
 			// key
-			else if ((newKey = newChild.props.key) !== (oldKey = oldChild.props.key)) {
-				keyed = true; 
-				pos = i;
-				oldKeys = {}; 
+			else if ((newKey = newChild.key) !== (oldKey = oldChild.key)) {
+				keyed = true;
+				position = i;
+
+				// map of key
 				newKeys = {};
+				oldKeys = {};
 
 				// push keys
-				newKeys[newKey] = (newChild.index = i, newChild.key = newKey, newChild);
-				oldKeys[oldKey] = (oldChild.index = i, oldChild.key = oldKey, oldChild);
+				newKeys[newKey] = (newChild.index = i, newChild);
+				oldKeys[oldKey] = (oldChild.index = i, oldChild);
 			}
 			// replace
 			else if (newChild.type !== oldChild.type) {
@@ -161,8 +155,17 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 
 		// reconcile keyed children
 		if (keyed) {
-			// new and old keys object are of differing shapes
-			reconcileKeys([newKeys, oldKeys], parentNode, newNode, oldNode, newLength, oldLength, pos);
+			reconcileKeys(
+				newKeys, 
+				oldKeys,
+				parentNode, 
+				newNode, 
+				oldNode, 
+				newLength, 
+				oldLength, 
+				position,
+				length
+			);
 		}
 	}
 

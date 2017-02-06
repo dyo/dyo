@@ -34,9 +34,9 @@
 
   		Particle.prototype = {
 			render: function() {
-		  		var size    = this.radius;
-				var x       = this.x + this.distance * Math.cos(this.angle);
-				var y       = this.y + this.distance * Math.sin(this.angle);
+		  		var size = this.radius;
+				var x = this.x + this.distance * Math.cos(this.angle);
+				var y = this.y + this.distance * Math.sin(this.angle);
 				var opacity = this.opacity;
 
 				this.position.x = x;
@@ -45,14 +45,14 @@
 
 		  		var style = 'opacity:'+opacity+';width:'+size+'px; height:'+size+'px;'+'transform:'+'translate('+x+'px,'+y+'px);';
 
-		  		return element('span', {style: style }, null);
+		  		return element('span', {style: style}, null);
 			}
   		}
 
 		var positionX = window.innerWidth/2;
 		var positionY = window.innerHeight/2;
 		var radius = 60;
-		var particleCount = 2000;
+		var particleCount = 1000;
 		var particles = new Array();
 	
 		for (var i=0; i< particleCount; i++){

@@ -1,6 +1,6 @@
 dio is a javascript framework for building applications.
 
-<p>[Install v6.1.0](./#installation "button")</p>
+<p>[Install v6.1.1](./#installation "button")</p>
 
 ```javascript
 class Main extends dio.Component {
@@ -11,3 +11,4 @@ class Main extends dio.Component {
 
 dio.render(Main)({value: 'Hello World'});
 ```
+

@@ -81,6 +81,7 @@
 		svg: createSvgShape,
 		fragment: createFragmentShape,
 		component: createComponentShape,
+		portal: createPortalShape,
 
 		// stylesheet
 		stylesheet: stylesheet

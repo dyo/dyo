@@ -15,11 +15,10 @@ function combineReducers (reducers) {
 		state = state || {};
 
 		var nextState = {};
+		var key;
 
-		for (var i = 0; i < length; i++) {
-			var key = keys[i]; 
-
-			nextState[key] = reducers[key](state[key], action);
+		for (var i = 0; i < length; i++) {			
+			nextState[key = keys[i]] = reducers[key](state[key], action);
 		}
 
 		return nextState;

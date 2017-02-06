@@ -62,15 +62,12 @@ function createElement (type, props) {
 				props = {};
 			}
 
-			// if props.xmlns is undefined and type === 'svg' or 'math' 
-			// assign svg && math namespaces to props.xmlns
-			if (props.xmlns === void 0) {	
-				if (type === 'svg') { 
-					props.xmlns = nsSvg; 
-				}
-				else if (type === 'math') { 
-					props.xmlns = nsMath; 
-				}
+			// svg and math namespaces
+			if (type === 'svg') {
+				props.xmlns = nsSvg; 
+			}
+			else if (type === 'math') { 
+				props.xmlns = nsMath;
 			}
 
 			return createElementShape(type, props, children);
@@ -81,12 +78,12 @@ function createElement (type, props) {
 		return createComponentShape(type, props, children);
 	}
 	// hoisted
-	else if (type.Type) {
+	else if (type.Type != null) {
 		return cloneElement(type, props, children);
 	}
 	// portal
-	else if (type.nodeType !== void 0) {
-		return createPortalShape(type, props || objEmpty, children);
+	else if (type.nodeType != null) {
+		return createPortalShape(type, props != null ? props : objEmpty, children);
 	}
 	// fragment
 	else {

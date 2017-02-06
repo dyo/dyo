@@ -1,71 +1,73 @@
 /**
  * assign/update/remove prop
  * 
- * @param  {Node}   target
- * @param  {string} action
- * @param  {string} name
- * @param  {any}    propValue
- * @param  {string} namespace
+ * @param  {Node}    target
+ * @param  {boolean} set
+ * @param  {string}  name
+ * @param  {any}     value
+ * @param  {string}  namespace
  */
-function updateProp (target, action, name, propValue, namespace) {
-	// avoid refs, keys, events and xmlns namespaces
-	if (name === 'ref' || 
-		name === 'key' || 
-		name === 'children' ||
-		isEventName(name) || 
-		propValue === nsSvg || 
-		propValue === nsMath
-	) {
+function updateProp (target, set, name, value, namespace) {
+	var length = name.length;
+
+	// avoid xmlns namespaces
+	if (length > 22 && (value === nsSvg || value === nsMath)) {
 		return;
 	}
 
 	// if xlink:href set, exit, 
-	if (name === 'xlink:href') {
-		return (target[action + 'NS'](nsXlink, 'href', propValue), void 0);
+	if (length === 10 && name === 'xlink:href') {
+		target[(set ? 'set' : 'remove') + 'AttributeNS'](nsXlink, 'href', value);
+		return;
 	}
 
-	var isSVG = false;
-	var propName;
+	var svg = false;
 
 	// svg element, default to class instead of className
 	if (namespace === nsSvg) {
-		isSVG = true;
-		propName = name === 'className' ? 'class' : name;
+		svg = true;
+
+		if (length === 9 && name === 'className') {
+			name = 'class';
+		}
+		else {
+			name = name;
+		}
 	}
 	// html element, default to className instead of class
 	else {
-		propName = name === 'class' ? 'className' : name;
+		if (length === 5 && name === 'class') {
+			name = 'className';
+		}
 	}
 
-	var targetProp = target[propName];
-	var isDefinedValue = propValue != null && propValue !== false;
+	var destination = target[name];
+	var defined = value != null && value !== false;
 
 	// objects
-	if (isDefinedValue && typeof propValue === 'object') {
-		targetProp === void 0 ? target[propName] = propValue : updatePropObject(propName, propValue, targetProp);
+	if (defined && typeof value === 'object') {
+		destination === void 0 ? target[name] = value : updatePropObject(name, value, destination);
 	}
-	// primitives `string | number | boolean`
+	// primitives `string, number, boolean`
 	else {
-		// id, className etc..
-		if (targetProp !== void 0 && isSVG === false) {
-			if (propName === 'style') {
-				target.style.cssText = propValue;
+		// id, className, style, etc..
+		if (destination !== void 0 && svg === false) {
+			if (length === 5 && name === 'style') {
+				target.style.cssText = value;
 			}
 			else {
-				target[propName] = propValue;
+				target[name] = value;
 			}
 		}
-		// setAttribute/removeAttribute
+		// set/remove Attribute
 		else {
-			if (isDefinedValue) {
-				// reduce value to an empty string if true, <tag checked=true> --> <tag checked>
-				propValue === true && (propValue = '');
-
-				target.setAttribute(propName, propValue);
+			if (defined && set) {
+				// assign an empty value with boolean `true` values
+				target.setAttribute(name, value === true ? '' : value);
 			}
 			else {
-				// remove attributes with false/null/undefined values
-				target.removeAttribute(propName);
+				// removes attributes with false/null/undefined values
+				target.removeAttribute(name);
 			}
 		}
 	}

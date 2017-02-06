@@ -8,7 +8,7 @@
 
 
 // current version
-var version = '6.1.0';
+var version = '6.1.1';
 
 // enviroment
 var document = window.document || null;
@@ -32,7 +32,7 @@ var nsSvg = 'http://www.w3.org/2000/svg';
 // empty shapes
 var objEmpty = {};
 var arrEmpty = [];
-var nodeEmpty = createNodeShape(0, '', objEmpty, arrEmpty, null, null, 0, null, null);
+var nodeEmpty = createNodeShape(0, '', objEmpty, arrEmpty, null, null, 0, null, void 0);
 var funcEmpty = function () {};
 var fragProps = {style: 'display: inherit;'};
 

@@ -14,7 +14,7 @@ function cloneNode (subject) {
 		null,
 		0,
 		null,
-		null
+		void 0
 	);
 }
 

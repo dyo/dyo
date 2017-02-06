@@ -54,9 +54,9 @@ function createRouter (patterns, directory, initialiser, notFound) {
 		// assign a route item
 		Object.defineProperty(routes, uri, {
 			value: Object.create(null, {
-				callback: { value: callback, },
-				pattern:  { value: new RegExp(directory + pattern + '$'), },
-				params:   { value: params, }
+				callback: {value: callback},
+				pattern: {value: new RegExp(directory + pattern + '$')},
+				params: {value: params}
 			}),
 			enumerable: true
 		});
@@ -98,7 +98,7 @@ function createRouter (patterns, directory, initialiser, notFound) {
 				return prev;
 
 				// null --> first value
-			}, null) || {uri: current};
+			}, null) || {url: current};
 
 			route.callback(args, uri);
 
@@ -188,12 +188,12 @@ function createRouter (patterns, directory, initialiser, notFound) {
 	// register routes
 	register();
 
-	// state listening if browser enviroment
+	// listen if browser enviroment
 	if (browser) {
 		listen();
 	}
 
-	// initialiser, if function pass api as args, else string, navigate to uri
+	// if function pass api as args, else if string navigate to url
 	if (initialiser !== void 0) {
 		var type = typeof initialiser;
 
