@@ -62,7 +62,7 @@ function extractVirtualNode (subject, component) {
 			}
 			// function
 			else {
-				return extractVirtualNode(subject((component && component.props) || {}), component);
+				return extractVirtualNode(subject(component != null ? component.props : {}), component);
 			}
 		}
 		// promise
@@ -70,7 +70,7 @@ function extractVirtualNode (subject, component) {
 			if (browser) {
 				subject.then(function resolveAsyncComponent (newNode) {
 					replaceRootNode(
-						extractVirtualNode(newNode), 
+						extractVirtualNode(newNode, component), 
 						subject = component['--vnode'], 
 						newNode.Type, 
 						subject.Type, 

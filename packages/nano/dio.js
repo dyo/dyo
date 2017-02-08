@@ -34,7 +34,7 @@
 	
 	
 	// current version
-	var version = '6.1.1';
+	var version = '6.1.2';
 	
 	// enviroment
 	var document = window.document || null;
@@ -400,12 +400,18 @@
 	    var prefix = '';
 	    var namespace = '';
 	    var type = selector.charCodeAt(0) || 0;
+	    
+	    var char;
+	    var attr;
+	    var animns;
+	    var plugins;
+	    var uses;
 	
 	    // [ attr selector
 	    if (type === 91) {
 	        // `[data-id=namespace]` -> ['data-id', 'namespace']
-	        var attr = selector.substring(1, selector.length-1).split('=');
-	        var char = (namespace = attr[1]).charCodeAt(0);
+	        attr = selector.substring(1, selector.length-1).split('=');
+	        char = (namespace = attr[1]).charCodeAt(0);
 	
 	        // [data-id="namespace"]/[data-id='namespace']
 	        // --> "namespace"/'namspace' --> namespace
@@ -427,8 +433,6 @@
 	    // reset type signature
 	    type = 0;
 	
-	    var animns;
-	
 	    // animation and keyframe namespace
 	    if (animations == void 0 || animations === true) {
 	        animations = true;
@@ -441,11 +445,10 @@
 	
 	    // uses middleware
 	    var use = middleware != null;
-	    var plugins;
 	
 	    // middleware
 	    if (use) {
-	        var uses = (typeof middleware).charCodeAt(0);
+	        uses = (typeof middleware).charCodeAt(0);
 	
 	        // o, object of middlewares
 	        if (uses === 111) {
@@ -481,6 +484,10 @@
 	    var temp;
 	    var prev;
 	    var indexOf;
+	    var first;
+	    var second;
+	    var third;
+	    var sel;
 	
 	    // variables
 	    var variables;
@@ -495,12 +502,14 @@
 	    var blck = '';
 	    var nest = '';
 	    var flat = '';
+	    var code = 0;
 	
 	    // context signatures       
 	    var special = 0;
 	    var close = 0;
 	    var closed = 0;
 	    var comment = 0;
+	    var comments = 0;
 	    var strings = 0;
 	    var nested = 0;
 	    var func = 0;
@@ -534,13 +543,13 @@
 	
 	    // parse + compile
 	    while (caret < eof) {
-	        var code = styles.charCodeAt(caret);
+	        code = styles.charCodeAt(caret);
 	
 	        // {, }, ; characters, parse line by line
 	        if (strings === 0 && func === 0 && (code === 123 || code === 125 || code === 59)) {
 	            buff += styles.charAt(caret);
 	
-	            var first = buff.charCodeAt(0);
+	            first = buff.charCodeAt(0);
 	
 	            // only trim when the first character is a space ` `
 	            if (first === 32) {
@@ -548,8 +557,8 @@
 	            }
 	
 	            // default to 0 instead of NaN if there is no second/third character
-	            var second = buff.charCodeAt(1) || 0;
-	            var third = buff.charCodeAt(2) || 0;
+	            second = buff.charCodeAt(1) || 0;
+	            third = buff.charCodeAt(2) || 0;
 	
 	            // middleware, selector/property context, }
 	            if (use && code !== 125) {
@@ -569,7 +578,9 @@
 	
 	            // ignore comments
 	            if (comment === 2) {
-	                code === 125 && (comment = 0);
+	                if (code === 125) {
+	                    comment = 0;
+	                }
 	                buff = ''; 
 	            }
 	            // @, special block
@@ -644,7 +655,12 @@
 	                                char = styles.charCodeAt(caret);
 	
 	                                // {, }, nested blocks may have nested blocks
-	                                char === 123 ? closed++ : char === 125 && closed--;
+	                                if (char === 123) {
+	                                    closed++;
+	                                }
+	                                else if (char === 125) {
+	                                    closed--;
+	                                }
 	
 	                                // break when the nested block has ended
 	                                if (closed === 0) {
@@ -692,7 +708,7 @@
 	                        indexOf = buff.indexOf('(');
 	
 	                        // function mixins
-	                        if (indexOf > -1) {
+	                        if (indexOf !== -1) {
 	                            // mixin name
 	                            var name = buff.substring(0, indexOf);
 	
@@ -767,7 +783,9 @@
 	                colon = buff.indexOf(':');
 	
 	                // first match create variables store 
-	                variables === void 0 && (variables = []);
+	                if (variables === void 0) {
+	                    variables = [];
+	                }
 	
 	                // push key value pair
 	                variables[variables.length] = [buff.substring(0, colon), buff.substring(colon+1, buff.length - 1).trim()];
@@ -802,7 +820,7 @@
 	                            for (var k = 0, l = props.length; k < l; k++) {
 	                                var prop = props[k].trim();
 	                                var frst = prop.charCodeAt(0);
-	                                var third = prop.charCodeAt(2);
+	                                var thrd = prop.charCodeAt(2);
 	                                var len = prop.length;
 	                                var last = prop.charCodeAt(len - 1);
 	
@@ -812,47 +830,47 @@
 	                                    last !== 41 && len !== 0 &&
 	
 	                                    // infinite, i, f, e
-	                                    !(frst === 105 && third === 102 && last === 101 && len === 8) &&
+	                                    !(frst === 105 && thrd === 102 && last === 101 && len === 8) &&
 	
 	                                    // linear, l, n, r
-	                                    !(frst === 108 && third === 110 && last === 114 && len === 6) &&
+	                                    !(frst === 108 && thrd === 110 && last === 114 && len === 6) &&
 	
 	                                    // alternate/alternate-reverse, a, t, e
-	                                    !(frst === 97 && third === 116 && last === 101 && (len === 9 || len === 17)) &&
+	                                    !(frst === 97 && thrd === 116 && last === 101 && (len === 9 || len === 17)) &&
 	
 	                                    // normal, n, r, l
-	                                    !(frst === 110 && third === 114 && last === 108 && len === 6) &&
+	                                    !(frst === 110 && thrd === 114 && last === 108 && len === 6) &&
 	
 	                                    // backwards, b, c, s
-	                                    !(frst === 98 && third === 99 && last === 115 && len === 9) &&
+	                                    !(frst === 98 && thrd === 99 && last === 115 && len === 9) &&
 	
 	                                    // forwards, f, r, s
-	                                    !(frst === 102 && third === 114 && last === 115 && len === 8) &&
+	                                    !(frst === 102 && thrd === 114 && last === 115 && len === 8) &&
 	
 	                                    // both, b, t, h
-	                                    !(frst === 98 && third === 116 && last === 104 && len === 4) &&
+	                                    !(frst === 98 && thrd === 116 && last === 104 && len === 4) &&
 	
 	                                    // none, n, n, e
-	                                    !(frst === 110 && third === 110 && last === 101 && len === 4)&&
+	                                    !(frst === 110 && thrd === 110 && last === 101 && len === 4)&&
 	
 	                                    // running, r, n, g 
-	                                    !(frst === 114 && third === 110 && last === 103 && len === 7) &&
+	                                    !(frst === 114 && thrd === 110 && last === 103 && len === 7) &&
 	
 	                                    // paused, p, u, d
-	                                    !(frst === 112 && third === 117 && last === 100 && len === 6) &&
+	                                    !(frst === 112 && thrd === 117 && last === 100 && len === 6) &&
 	
 	                                    // reversed, r, v, d
-	                                    !(frst === 114 && third === 118 && last === 100 && len === 8) &&
+	                                    !(frst === 114 && thrd === 118 && last === 100 && len === 8) &&
 	
 	                                    // step-start/step-end, s, e, (t/d)
 	                                    !(
-	                                        frst === 115 && third === 101 && 
+	                                        frst === 115 && thrd === 101 && 
 	                                        ((last === 116 && len === 10) || (last === 100 && len === 8)) 
 	                                    ) &&
 	
 	                                    // ease/ease-in/ease-out/ease-in-out, e, s, e
 	                                    !(
-	                                        frst === 101 && third === 115 &&
+	                                        frst === 101 && thrd === 115 &&
 	                                        (
 	                                            (last === 101 && len === 4) ||
 	                                            (len === 11 || len === 7 || len === 8) && prop.charCodeAt(4) === 45
@@ -893,7 +911,7 @@
 	                // display: d, i, s
 	                else if (first === 100 && second === 105 && third === 115) {
 	                    // flex/inline-flex
-	                    if ((indexOf = buff.indexOf('flex')) > -1) {
+	                    if ((indexOf = buff.indexOf('flex')) !== -1) {
 	                        // e, inline-flex
 	                        temp = buff.charCodeAt(indexOf-2) === 101 ? 'inline-' : '';
 	
@@ -1015,7 +1033,12 @@
 	                                char = styles.charCodeAt(caret);
 	
 	                                // {, }, nested blocks may have nested blocks
-	                                char === 123 ? closed++ : char === 125 && closed--;
+	                                if (char === 123) {
+	                                    closed++;
+	                                }
+	                                else if (char === 125) {
+	                                    closed--;
+	                                }
 	
 	                                // break when the nested block has ended
 	                                if (closed === 0) {
@@ -1036,12 +1059,13 @@
 	                                // since there could also be multiple nested selectors
 	                                for (var k = 0, l = nestSelector.length; k < l; k++) {
 	                                    selector = temp.replace(prefix, '&').trim();
+	                                    sel = nestSelector[k].trim();
 	
-	                                    if (nestSelector[k].indexOf(' &') > 0) {
-	                                        selector = nestSelector[k].replace('&', '').trim() + ' ' + selector;
+	                                    if (sel.indexOf(' &') > 0) {
+	                                        selector = sel.replace('&', '').trim() + ' ' + selector;
 	                                    }
 	                                    else {
-	                                        selector = selector + ' ' + nestSelector[k].trim();
+	                                        selector = selector + ' ' + sel;
 	                                    }
 	
 	                                    prevSelector[j] += selector.trim() + (k === l - 1  ? '' : ',');
@@ -1079,12 +1103,12 @@
 	                                }
 	
 	                                // [, [title="a,b,..."]
-	                                if (firstChar === 91) {
-	                                    for (var k = j+1, l = length-j; k < l; k++) {
+	                                if (firstChar === 91 && selector.indexOf(']') === -1) {
+	                                    for (var k = j + 1, l = length; k < l; k++) {
 	                                        var broken = (selector += ',' + selectors[k]).trim();
 	
 	                                        // ], end
-	                                        if (broken.charCodeAt(broken.length-1) === 93) {
+	                                        if (broken.indexOf(']') !== -1) {
 	                                            length -= k;
 	                                            selectors.splice(j, k);
 	                                            break;
@@ -1308,7 +1332,21 @@
 	            if (code === 13 || code === 10) {
 	                // ignore line and block comments
 	                if (comment === 2) {
-	                    buff = '';
+	                    // * character, block comment
+	                    if (buff.charCodeAt(buff.length - 2) === 42) {
+	                        buff = buff.substring(0, buff.indexOf('/*')).trim();
+	                    }
+	                    else {
+	                        // / character, does not start with `/`
+	                        if (buff.charCodeAt(0) !== 47 && (indexOf = buff.indexOf('//')) !== -1) {
+	                            buff = buff.substring(0, indexOf).trim();
+	                        }
+	                        else {
+	                            buff = '';
+	                        }
+	                    }
+	
+	                    comments = 0;
 	                    comment = 0;
 	                }
 	
@@ -1332,18 +1370,30 @@
 	                    }
 	                    // ( character
 	                    case 40: {
-	                        strings === 0 && (func = 1);
+	                        if (strings === 0) {
+	                            func = 1;
+	                        }
 	                        break;
 	                    }
 	                    // ) character
 	                    case 41: {
-	                        strings === 0 && (func = 0);
+	                        if (strings === 0) {
+	                            func = 0;
+	                        }
 	                        break;
 	                    }
 	                    // / character
 	                    case 47: {
-	                        if (strings === 0 && func !== 1) {
-	                            code === 47 && comment < 2 && comment++;
+	                        if (strings === 0 && func !== 1 && comment < 2) {
+	                            // * character
+	                            if (comments === 0 || styles.charCodeAt(caret - 1) === 42) {
+	                                comment++;              
+	                            }
+	
+	                            // * character, allow line comments in block comments
+	                            if (comments === 0 && styles.charCodeAt(caret + 1) === 42) {
+	                                comments = 1;
+	                            }
 	                        }
 	                        break;
 	                    }
@@ -2202,7 +2252,7 @@
 	    	else if (browser && newNode != null && newNode !== true && newNode !== false) {
 	    		schedule(function () {
 	    			replaceRootNode(
-	    				extractVirtualNode(newNode), 
+	    				extractVirtualNode(newNode, component), 
 	    				oldNode = component['--vnode'], 
 	    				newNode.Type, 
 	    				oldNode.Type, 
@@ -2235,6 +2285,9 @@
 		/** @type {Component} */
 		var owner;
 	
+		/** @type {VNode} */
+		var vnode;
+	
 		/** @type {(Component|function(new:Component, Object<string, any>))} */
 		var type = subject.type;
 	
@@ -2264,8 +2317,16 @@
 		} 
 		// function components
 		else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
-			// create component
-			owner = createClass(type, props);
+			vnode = type(props);
+	
+			if (vnode.Type === void 0) {
+				// create component
+				owner = createClass(type, props);
+			}
+			else {
+				// pure function
+				return vnode;
+			}
 		}
 		// class / createClass components
 		else {
@@ -2413,7 +2474,7 @@
 				}
 				// function
 				else {
-					return extractVirtualNode(subject((component && component.props) || {}), component);
+					return extractVirtualNode(subject(component != null ? component.props : {}), component);
 				}
 			}
 			// promise
@@ -2421,7 +2482,7 @@
 				if (browser) {
 					subject.then(function resolveAsyncComponent (newNode) {
 						replaceRootNode(
-							extractVirtualNode(newNode), 
+							extractVirtualNode(newNode, component), 
 							subject = component['--vnode'], 
 							newNode.Type, 
 							subject.Type, 

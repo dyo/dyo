@@ -1,3 +1,7 @@
+## 6.1.2 (February 08, 2016)
+
+- patch pure function components
+
 ## 6.1.1 (February 06, 2016)
 
 - improve reconciler

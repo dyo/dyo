@@ -10,6 +10,9 @@ function extractComponentNode (subject, instance, parent) {
 	/** @type {Component} */
 	var owner;
 
+	/** @type {VNode} */
+	var vnode;
+
 	/** @type {(Component|function(new:Component, Object<string, any>))} */
 	var type = subject.type;
 
@@ -39,8 +42,16 @@ function extractComponentNode (subject, instance, parent) {
 	} 
 	// function components
 	else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
-		// create component
-		owner = createClass(type, props);
+		vnode = type(props);
+
+		if (vnode.Type === void 0) {
+			// create component
+			owner = createClass(type, props);
+		}
+		else {
+			// pure function
+			return vnode;
+		}
 	}
 	// class / createClass components
 	else {

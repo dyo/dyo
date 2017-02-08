@@ -23,6 +23,9 @@
 - [Error Boundries 3](/examples/error-boundaries-3.html)
 - [Error Boundries 4](/examples/error-boundaries-4.html)
 - [Error Boundries 5](/examples/error-boundaries-5.html)
+- [Error Boundries 6](/examples/error-boundaries-6.html)
+- [Error Boundries 7](/examples/error-boundaries-7.html)
+- [Error Boundries 8](/examples/error-boundaries-8.html)
 
 - [Render Type Array](/examples/render-type-array.html)
 - [Render Type Async 1](/examples/render-type-async-1.html)

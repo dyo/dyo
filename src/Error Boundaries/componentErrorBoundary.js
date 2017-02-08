@@ -103,7 +103,7 @@ function componentErrorBoundary (error, component, location) {
     	else if (browser && newNode != null && newNode !== true && newNode !== false) {
     		schedule(function () {
     			replaceRootNode(
-    				extractVirtualNode(newNode), 
+    				extractVirtualNode(newNode, component), 
     				oldNode = component['--vnode'], 
     				newNode.Type, 
     				oldNode.Type, 

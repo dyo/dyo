@@ -8,7 +8,7 @@
 
 
 // current version
-var version = '6.1.1';
+var version = '6.1.2';
 
 // enviroment
 var document = window.document || null;
