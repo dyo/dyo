@@ -1,5 +1,5 @@
 /**
- * render to virtual node
+ * extract virtual node
  * 
  * @param  {(VNode|function|Component)} subject
  * @param  {Component}                  component
@@ -115,7 +115,7 @@ function extractVirtualNode (subject, component) {
 			'render', 
 			subject.constructor.name, 
 			''
-		) || createEmptyShape();
+		);
 	}
 }
 

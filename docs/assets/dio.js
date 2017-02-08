@@ -2086,7 +2086,7 @@
 	
 		// extract shape of component
 		var shape = func ? (subject(createElement) || createEmptyShape()) : subject;	
-		var type = typeof shape === 'function' ? 2 : (shape.Type != null ? 1 : 0);
+		var type = func && typeof shape === 'function' ? 2 : (shape.Type != null ? 1 : 0);
 		var construct = false;
 		
 		var vnode;
@@ -2273,18 +2273,23 @@
 	 * @param {string|Error} error
 	 * @param {Component}    component
 	 * @param {string}       location
-	 * @param {Error}
+	 * @param {VNode}
 	 */
 	function componentErrorBoundary (error, component, location) {
 		if (component == null) {
-			return;
+			return createEmptyShape();
 		}
 	
 		var newNode;
 		var oldNode;
 		var displayName;
 		var authored;
+	    var func;
 		var thrown = component['--throw'];
+	
+	    if (thrown == null) {
+	        thrown = 0;
+	    }
 	
 		component['--throw'] = thrown + 1;
 	
@@ -2303,28 +2308,29 @@
 	                component.forceUpdate();
 	            }
 	            catch (e) {
-	                
+	                // silently fail to recover
 	            }
 			});
 		}
 	
 		// second throw, failed to recover the first time
 		if (thrown !== 0 && location === 'render') {
-			return;
+			return createEmptyShape();
 		}
 	
-		authored = typeof component.componentDidThrow === 'function';
-		displayName = component.displayName || component.constructor.name;
-	
-		// define error
-		Object.defineProperties(error, {
-			silence: {value: false, writable: true},
-			location: {value: location}, 
-			from: {value: displayName}
-		});
+	    func = typeof component === 'function';
+		authored = func === false && typeof component.componentDidThrow === 'function';
+		displayName = func ? component.name : component.displayName || component.constructor.name;
 	
 		// authored error handler
 	    if (authored) {
+	        // define error
+	        Object.defineProperties(error, {
+	            silence: {value: false, writable: true},
+	            location: {value: location}, 
+	            from: {value: displayName}
+	        });
+	        
 	    	try {
 	    		newNode = component.componentDidThrow(error);
 	    	}
@@ -2360,13 +2366,13 @@
 							'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
 						);
 	
-	    				return;
+	    				return createEmptyShape();
 	    			}
 	
 	    			newNode.type = newNode.type.replace(/ /g, '');
 	    		}
 	
-	    		return newNode;
+	    		return newNode || createEmptyShape();
 	    	}
 	    	// async replace render node
 	    	else if (browser && newNode != null && newNode !== true && newNode !== false) {
@@ -2381,6 +2387,8 @@
 	    		});
 	    	}
 	    }
+	
+	    return createEmptyShape();
 	}
 	
 	
@@ -2394,7 +2402,7 @@
 	
 	
 	/**
-	 * extract component
+	 * extract component node
 	 * 
 	 * @param  {VNode}      subject
 	 * @param  {Component?} instance
@@ -2434,14 +2442,14 @@
 		// cached component
 		if (type.COMPCache !== void 0) {
 			owner = type.COMPCache;
-		} 
+		}
 		// function components
 		else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
-			vnode = type(props);
+			vnode = extractFunctionNode(type, props);
 	
 			if (vnode.Type === void 0) {
 				// create component
-				owner = createClass(type, props);
+				owner = createClass(vnode, props);
 			}
 			else {
 				// pure function
@@ -2488,7 +2496,7 @@
 	
 	
 	/**
-	 * extract a render function
+	 * extract render node
 	 *
 	 * @param  {Component} component
 	 * @return {VNode}
@@ -2496,7 +2504,7 @@
 	function extractRenderNode (component) {
 		try {
 			// async render
-			if (component['--async'] === true) {			
+			if (component['--async'] === true) {	
 				if (browser) {
 					component.props.then(function resolveAsyncClientComponent (props) {
 						component.props = props;
@@ -2509,7 +2517,7 @@
 				return createEmptyShape();
 			}
 			// generator
-			else if (component['--yield']) {
+			else if (component['--yield'] === true) {
 				return extractVirtualNode(
 					component.render.next().value, 
 					component
@@ -2525,13 +2533,13 @@
 		}
 		// error thrown
 		catch (error) {
-			return componentErrorBoundary(error, component, 'render') || createEmptyShape();
+			return componentErrorBoundary(error, component, 'render');
 		}
 	}
 	
 	
 	/**
-	 * render to virtual node
+	 * extract virtual node
 	 * 
 	 * @param  {(VNode|function|Component)} subject
 	 * @param  {Component}                  component
@@ -2647,7 +2655,45 @@
 				'render', 
 				subject.constructor.name, 
 				''
-			) || createEmptyShape();
+			);
+		}
+	}
+	
+	
+	/**
+	 * extract function node
+	 *
+	 * @param  {function}            type
+	 * @param  {Object<string, any>} props
+	 * @return {VNode}
+	 */
+	function extractFunctionNode (type, props) {
+		try {
+			var vnode;
+			var func = type['--func'] !== void 0;
+	
+			if (func === false) {
+				vnode = type(createElement);
+			}
+			
+			if (func || vnode.Type !== void 0) {
+				try {
+					vnode = type(props);
+					
+					if (func === false) {
+						type['--func'] = true;
+					}
+				}
+				catch (e) {
+					vnode = componentErrorBoundary(e, type, 'function');
+				}
+			}
+	
+			return vnode;
+		}
+		// error thrown
+		catch (error) {
+			return componentErrorBoundary(error, type, 'function');
 		}
 	}
 	

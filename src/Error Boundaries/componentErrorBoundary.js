@@ -4,18 +4,23 @@
  * @param {string|Error} error
  * @param {Component}    component
  * @param {string}       location
- * @param {Error}
+ * @param {VNode}
  */
 function componentErrorBoundary (error, component, location) {
 	if (component == null) {
-		return;
+		return createEmptyShape();
 	}
 
 	var newNode;
 	var oldNode;
 	var displayName;
 	var authored;
+    var func;
 	var thrown = component['--throw'];
+
+    if (thrown == null) {
+        thrown = 0;
+    }
 
 	component['--throw'] = thrown + 1;
 
@@ -34,28 +39,29 @@ function componentErrorBoundary (error, component, location) {
                 component.forceUpdate();
             }
             catch (e) {
-                
+                // silently fail to recover
             }
 		});
 	}
 
 	// second throw, failed to recover the first time
 	if (thrown !== 0 && location === 'render') {
-		return;
+		return createEmptyShape();
 	}
 
-	authored = typeof component.componentDidThrow === 'function';
-	displayName = component.displayName || component.constructor.name;
-
-	// define error
-	Object.defineProperties(error, {
-		silence: {value: false, writable: true},
-		location: {value: location}, 
-		from: {value: displayName}
-	});
+    func = typeof component === 'function';
+	authored = func === false && typeof component.componentDidThrow === 'function';
+	displayName = func ? component.name : component.displayName || component.constructor.name;
 
 	// authored error handler
     if (authored) {
+        // define error
+        Object.defineProperties(error, {
+            silence: {value: false, writable: true},
+            location: {value: location}, 
+            from: {value: displayName}
+        });
+        
     	try {
     		newNode = component.componentDidThrow(error);
     	}
@@ -91,13 +97,13 @@ function componentErrorBoundary (error, component, location) {
 						'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
 					);
 
-    				return;
+    				return createEmptyShape();
     			}
 
     			newNode.type = newNode.type.replace(/ /g, '');
     		}
 
-    		return newNode;
+    		return newNode || createEmptyShape();
     	}
     	// async replace render node
     	else if (browser && newNode != null && newNode !== true && newNode !== false) {
@@ -112,5 +118,7 @@ function componentErrorBoundary (error, component, location) {
     		});
     	}
     }
+
+    return createEmptyShape();
 }
 

@@ -1,5 +1,5 @@
 /**
- * extract component
+ * extract component node
  * 
  * @param  {VNode}      subject
  * @param  {Component?} instance
@@ -39,14 +39,14 @@ function extractComponentNode (subject, instance, parent) {
 	// cached component
 	if (type.COMPCache !== void 0) {
 		owner = type.COMPCache;
-	} 
+	}
 	// function components
 	else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
-		vnode = type(props);
+		vnode = extractFunctionNode(type, props);
 
 		if (vnode.Type === void 0) {
 			// create component
-			owner = createClass(type, props);
+			owner = createClass(vnode, props);
 		}
 		else {
 			// pure function

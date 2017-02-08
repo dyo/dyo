@@ -23,7 +23,7 @@ function createClass (subject, props) {
 
 	// extract shape of component
 	var shape = func ? (subject(createElement) || createEmptyShape()) : subject;	
-	var type = typeof shape === 'function' ? 2 : (shape.Type != null ? 1 : 0);
+	var type = func && typeof shape === 'function' ? 2 : (shape.Type != null ? 1 : 0);
 	var construct = false;
 	
 	var vnode;

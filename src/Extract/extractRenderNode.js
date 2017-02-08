@@ -1,5 +1,5 @@
 /**
- * extract a render function
+ * extract render node
  *
  * @param  {Component} component
  * @return {VNode}
@@ -7,7 +7,7 @@
 function extractRenderNode (component) {
 	try {
 		// async render
-		if (component['--async'] === true) {			
+		if (component['--async'] === true) {	
 			if (browser) {
 				component.props.then(function resolveAsyncClientComponent (props) {
 					component.props = props;
@@ -20,7 +20,7 @@ function extractRenderNode (component) {
 			return createEmptyShape();
 		}
 		// generator
-		else if (component['--yield']) {
+		else if (component['--yield'] === true) {
 			return extractVirtualNode(
 				component.render.next().value, 
 				component
@@ -36,7 +36,7 @@ function extractRenderNode (component) {
 	}
 	// error thrown
 	catch (error) {
-		return componentErrorBoundary(error, component, 'render') || createEmptyShape();
+		return componentErrorBoundary(error, component, 'render');
 	}
 }
 

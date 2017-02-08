@@ -1,6 +1,7 @@
 ## 6.1.2 (February 08, 2016)
 
 - patch pure function components
+- include pure function components in error boundries
 
 ## 6.1.1 (February 06, 2016)
 
