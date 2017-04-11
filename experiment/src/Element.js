@@ -71,8 +71,14 @@ function adopt (tree, index, child) {
 	if (child === null || child === void 0) {
 		children[i] = text('');
 	} else if (child.cast !== void 0) {
-		if (tree.keyed === false && child.key !== null) {
-			tree.keyed = true;
+		if (tree.keyed === false) {
+			if (child.key !== null) {
+				tree.keyed = true;
+			}
+		} else if (child.key === null) {
+			// assign float key to non-keyed children in a keyed tree
+			// an obscure floating point key avoids conflicts with int keyed children
+			child.key = index/161800;
 		}
 
 		children[i] = child;

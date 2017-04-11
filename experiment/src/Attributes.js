@@ -11,14 +11,14 @@ function attribute (newer, owner, xmlns, node, hydrate) {
 	var attrs = newer.attrs;
 
 	for (var name in attrs) {
-		if (valid(name) === true) {
+		if (name === 'ref') {
+			refs(attrs[name], owner, node, 0);
+		} else if (name !== 'key' && name !== 'children') {
 			if (evt(name) === true) {
 				event(name.toLowerCase().substring(2), attrs[name], owner, node);
 			} else if (hydrate === false) {
 				assign(attr(name), name, attrs[name], xmlns, node);
 			}
-		} else if (name === 'ref') {
-			refs(attrs[name], owner, node);
 		}
 	}
 }
@@ -28,8 +28,9 @@ function attribute (newer, owner, xmlns, node, hydrate) {
  *
  * @param {Tree} newer
  * @param {Tree} older
+ * @param {Tree} ancestor
  */
-function attributes (older, newer) {
+function attributes (older, newer, ancestor) {
 	var oldAttrs = older.attrs;
 	var newAttrs = newer.attrs;
 	var xmlns = older.xmlns;
@@ -39,18 +40,24 @@ function attributes (older, newer) {
 	var newValue;
 
 	for (var name in newAttrs) {
-		if (valid(name) === true && evt(name) === false) {
-			oldValue = oldAttrs[name];
+		// name !== 'key' && name !== 'children' && name !== 'ref'
+		if (name !== 'key' && name !== 'children' && evt(name) === false) {
 			newValue = newAttrs[name];
 
-			if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
-				assign(attr(name), name, newValue, xmlns, node);
+			if (name === 'ref') {
+				refs(newValue, ancestor.owner, node, 1);
+			} else {
+				oldValue = oldAttrs[name];
+
+				if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
+					assign(attr(name), name, newValue, xmlns, node);
+				}
 			}
 		}
 	}
 
 	for (var name in oldAttrs) {
-		if (valid(name) === true && evt(name) === false) {
+		if (name !== 'key' && name !== 'children' && name !== 'ref' && evt(name) === false) {
 			newValue = newAttrs[name];
 
 			if (newValue === null || newValue === void 0) {
@@ -68,21 +75,28 @@ function attributes (older, newer) {
  * @param  {Function|String} value
  * @param  {Component} owner
  * @param  {Node} node
+ * @param  {Number} type
  */
-function refs (value, owner, node) {
+function refs (value, owner, node, type) {
 	if (owner !== null && owner.refs === null) {
 		owner.refs = {};
 	}
 
 	switch (typeof value) {
-		case 'string': {
-			if (owner !== null) {
-				owner.refs[value] = node;
+		case 'function': {
+			if (type === 0) {
+				schedule(function () {
+					callbackBoundary(owner, value, node, 2);
+				});
+			} else {
+				callbackBoundary(owner, value, node, 0);
 			}
 			break;
 		}
-		case 'function': {
-			callbackBoundary(owner, value, node);
+		case 'string': {
+			if (type === 0 && owner !== null) {
+				owner.refs[value] = node;
+			}
 			break;
 		}
 	}
@@ -162,16 +176,6 @@ function attr (name, tree) {
 		case 'width': case 'height': return 5;
 		default: return 6;
 	}
-}
-
-/**
- * Attribute Validator [Blacklist]
- *
- * @param  {String} name
- * @return {Boolean}
- */
-function valid (name) {
-	return name !== 'key' && name !== 'children' && name !== 'ref';
 }
 
 /**

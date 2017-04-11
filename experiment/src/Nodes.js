@@ -43,8 +43,7 @@ function create (newer, _xmlns, _owner) {
 
 	// error creating node
 	if (newer.flag === 3) {
-		newer.flag = flag;
-		node = create(node, xmlns, owner);
+		return newer.flag = flag, node = newer.node = create(node, xmlns, owner);
 	}
 
 	children = newer.children;
@@ -193,14 +192,15 @@ function empty (older, newer) {
  *
  * @param  {Tree} older
  * @param  {Tree} newer
+ * @param  {Tree} ancestor
  */
-function populate (older, newer) {
+function populate (older, newer, ancestor) {
 	var parent = older.node;
 	var children = newer.children;
 	var length = children.length;
 
 	for (var i = 0, child; i < length; i++) {
-		append(child = children[i], parent, create(child, null, null));
+		append(child = children[i], parent, create(child, null, ancestor));
 	}
 
 	older.children = children;

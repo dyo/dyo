@@ -18,54 +18,10 @@ function Component (_props) {
 
 	// state
 	if (state === void 0) {
-		this.state = state = this.getInitialState === void 0 ? {} : dataBoundary(this, 1, props);
+		state = this.state = {};
 	}
 
 	this._state = state;
-}
-
-/**
- * setState
- *
- * @param {Object} state
- * @param {Function=} callback
- */
-function setState (state, callback) {
-	if (state === void 0) {
-		return;
-	}
-
-	var nextState = state;
-	var prevState = this._state = this.state;
-
-	if (typeof nextState === 'function') {
-		if ((nextState = callbackBoundary(this, nextState, prevState)) === void 0) {
-			return;
-		}
-	}
-
-	this.state = updateState({}, prevState, nextState);
-
-	this.forceUpdate(callback);
-}
-
-/**
- * forceUpdate
- *
- * @param {Function=} callback
- */
-function forceUpdate (callback) {
-	if (this._block !== 0) {
-		return;
-	}
-
-	var tree = this._tree;
-
-	patch(tree, tree, 1);
-
-	if (callback !== void 0 && typeof callback === 'function') {
-		callbackBoundary(this, callback, this.state);
-	}
 }
 
 /**
@@ -96,6 +52,60 @@ function extendClass (type, proto) {
 		setState: {value: setState},
 		forceUpdate: {value: forceUpdate}
 	});
+}
+
+/**
+ * setState
+ *
+ * @param {Object} state
+ * @param {Function=} callback
+ */
+function setState (state, callback) {
+	var nextState;
+	var prevState;
+	var owner;
+
+	if (state === void 0) {
+		return;
+	}
+
+	nextState = state;
+	prevState = this._state = this.state;
+
+	if (typeof nextState === 'function') {
+		if ((nextState = callbackBoundary(this, nextState, prevState, 0)) === void 0) {
+			return;
+		}
+	}
+
+	if (state !== null && state.constructor === Promise) {
+		owner = this;
+		state.then(function (value) {
+			owner.setState(value);
+		});
+	} else {
+		this.state = updateState({}, prevState, nextState);
+		this.forceUpdate(callback);
+	}
+}
+
+/**
+ * forceUpdate
+ *
+ * @param {Function=} callback
+ */
+function forceUpdate (callback) {
+	var tree;
+
+	if (this._block !== 0) {
+		return;
+	}
+
+	patch(tree = this._tree, tree, 1, tree);
+
+	if (callback !== void 0 && typeof callback === 'function') {
+		callbackBoundary(this, callback, this.state, 1);
+	}
 }
 
 /**
@@ -137,7 +147,7 @@ function shouldUpdate (older, newer, cast) {
 	var nextState;
 	var nextProps;
 	var prevProps;
-	var result;
+	var tree;
 
 	if (cast === 1) {
 		if (owner._block !== 0) {
@@ -149,8 +159,8 @@ function shouldUpdate (older, newer, cast) {
 
 		owner._block = 1;
 	} else {
-		nextState = nextProps || object;
-		prevState = prevProps || object;
+		nextState = nextProps === null ? object : nextProps;
+		prevState = prevProps === null ? object : prevProps;
 	}
 
 	if ((recievedProps = nextProps !== null) === true) {
@@ -180,7 +190,7 @@ function shouldUpdate (older, newer, cast) {
 		updateBoundary(owner, 1, nextProps, nextState);
 	}
 
-	result = renderBoundary(cast === 1 ? owner : older, cast);
+	tree = renderBoundary(cast === 1 ? owner : older, cast);
 
 	if (owner.componentDidUpdate !== void 0) {
 		updateBoundary(owner, 2, prevProps, prevState);
@@ -190,5 +200,5 @@ function shouldUpdate (older, newer, cast) {
 		owner._block = 0;
 	}
 
-	return shape(result, owner, false);
+	return shape(tree, owner, false);
 }

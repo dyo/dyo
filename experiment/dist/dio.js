@@ -120,54 +120,10 @@
 	
 		// state
 		if (state === void 0) {
-			this.state = state = this.getInitialState === void 0 ? {} : dataBoundary(this, 1, props);
+			state = this.state = {};
 		}
 	
 		this._state = state;
-	}
-	
-	/**
-	 * setState
-	 *
-	 * @param {Object} state
-	 * @param {Function=} callback
-	 */
-	function setState (state, callback) {
-		if (state === void 0) {
-			return;
-		}
-	
-		var nextState = state;
-		var prevState = this._state = this.state;
-	
-		if (typeof nextState === 'function') {
-			if ((nextState = callbackBoundary(this, nextState, prevState)) === void 0) {
-				return;
-			}
-		}
-	
-		this.state = updateState({}, prevState, nextState);
-	
-		this.forceUpdate(callback);
-	}
-	
-	/**
-	 * forceUpdate
-	 *
-	 * @param {Function=} callback
-	 */
-	function forceUpdate (callback) {
-		if (this._block !== 0) {
-			return;
-		}
-	
-		var tree = this._tree;
-	
-		patch(tree, tree, 1);
-	
-		if (callback !== void 0 && typeof callback === 'function') {
-			callbackBoundary(this, callback, this.state);
-		}
 	}
 	
 	/**
@@ -198,6 +154,60 @@
 			setState: {value: setState},
 			forceUpdate: {value: forceUpdate}
 		});
+	}
+	
+	/**
+	 * setState
+	 *
+	 * @param {Object} state
+	 * @param {Function=} callback
+	 */
+	function setState (state, callback) {
+		var nextState;
+		var prevState;
+		var owner;
+	
+		if (state === void 0) {
+			return;
+		}
+	
+		nextState = state;
+		prevState = this._state = this.state;
+	
+		if (typeof nextState === 'function') {
+			if ((nextState = callbackBoundary(this, nextState, prevState, 0)) === void 0) {
+				return;
+			}
+		}
+	
+		if (state !== null && state.constructor === Promise) {
+			owner = this;
+			state.then(function (value) {
+				owner.setState(value);
+			});
+		} else {
+			this.state = updateState({}, prevState, nextState);
+			this.forceUpdate(callback);
+		}
+	}
+	
+	/**
+	 * forceUpdate
+	 *
+	 * @param {Function=} callback
+	 */
+	function forceUpdate (callback) {
+		var tree;
+	
+		if (this._block !== 0) {
+			return;
+		}
+	
+		patch(tree = this._tree, tree, 1, tree);
+	
+		if (callback !== void 0 && typeof callback === 'function') {
+			callbackBoundary(this, callback, this.state, 1);
+		}
 	}
 	
 	/**
@@ -239,7 +249,7 @@
 		var nextState;
 		var nextProps;
 		var prevProps;
-		var result;
+		var tree;
 	
 		if (cast === 1) {
 			if (owner._block !== 0) {
@@ -251,8 +261,8 @@
 	
 			owner._block = 1;
 		} else {
-			nextState = nextProps || object;
-			prevState = prevProps || object;
+			nextState = nextProps === null ? object : nextProps;
+			prevState = prevProps === null ? object : prevProps;
 		}
 	
 		if ((recievedProps = nextProps !== null) === true) {
@@ -282,7 +292,7 @@
 			updateBoundary(owner, 1, nextProps, nextState);
 		}
 	
-		result = renderBoundary(cast === 1 ? owner : older, cast);
+		tree = renderBoundary(cast === 1 ? owner : older, cast);
 	
 		if (owner.componentDidUpdate !== void 0) {
 			updateBoundary(owner, 2, prevProps, prevState);
@@ -292,7 +302,7 @@
 			owner._block = 0;
 		}
 	
-		return shape(result, owner, false);
+		return shape(tree, owner, false);
 	}
 	
 	/**
@@ -368,8 +378,14 @@
 		if (child === null || child === void 0) {
 			children[i] = text('');
 		} else if (child.cast !== void 0) {
-			if (tree.keyed === false && child.key !== null) {
-				tree.keyed = true;
+			if (tree.keyed === false) {
+				if (child.key !== null) {
+					tree.keyed = true;
+				}
+			} else if (child.key === null) {
+				// assign float key to non-keyed children in a keyed tree
+				// an obscure floating point key avoids conflicts with int keyed children
+				child.key = index/161800;
 			}
 	
 			children[i] = child;
@@ -506,9 +522,21 @@
 				}
 				case 'object': {
 					switch (tree.constructor) {
-						case Promise: return resolve(tree, owner);
-						case Array: tree = fragment(tree); break;
-						case Date: tree = text(tree+''); break;
+						case Promise: {
+							return resolve(tree, owner);
+						}
+						case Array: {
+							tree = fragment(tree);
+							break;
+						}
+						case Date: {
+							tree = text(tree+'');
+							break;
+						}
+						case Object: {
+							tree = tree.length > 0 && tree[0] !== void 0 ? fragment(tree) : text('');
+							break;
+						}
 						default: tree = text('');
 					}
 					break;
@@ -543,8 +571,12 @@
 		var owner;
 		var proto;
 	
+		if (props === null) {
+			props = {};
+		}
+	
 		if (type.defaultProps !== void 0) {
-			props = merge(type.defaultProps, props === null ? {} : props);
+			props = merge(type.defaultProps, props);
 		}
 	
 		if (length !== 0) {
@@ -595,13 +627,19 @@
 	}
 	
 	/**
-	 * Resolve Promises
+	 * Resolve
 	 *
 	 * @param {Promise} pending
 	 * @param {Component} owner
 	 */
 	function resolve (pending, owner) {
-		var tree = owner._tree;
+		var tree;
+	
+		if (owner === null) {
+			return;
+		}
+	
+		tree = owner._tree;
 	
 		if (tree === null) {
 			tree = text('');
@@ -610,90 +648,25 @@
 		owner._block = 1;
 	
 		pending.then(function (value) {
-			var status = value.status;
+			var older;
+			var newer;
 	
-			if (
-				value !== void 0 &&
-				value !== null &&
-				status !== void 0
-			) {
-				if (status >= 200 && status < 400) {
-					value.text().then(function (source) {
-						var addrs = value.url;
-						var cache = owner._cache === void 0 ? (owner._cache = {}) : owner._cache;
-						var store = cache[addrs];
-						var older;
-						var result;
+			owner._block = 0;
 	
-						if (store !== void 0) {
-							older = store.src;
-							result = store.res;
-						}
+			if ((older = owner._tree) === null) {
+				return;
+			}
 	
-						if (older !== source) {
-							result = addrs.lastIndexOf('.js') > addrs.length - 4 ? module(source, owner, addrs) : source;
-							cache[addrs] = {src: source, res: result};
-						}
+			newer = shape(value, owner, false);
 	
-						refresh(result, owner);
-					});
-				} else {
-					refresh(tree, owner);
-				}
+			if (older.tag !== newer.tag) {
+				swap(older, newer, false);
 			} else {
-				refresh(value, owner);
+				patch(older, newer, 0, older);
 			}
 		});
 	
 		return tree;
-	}
-	
-	/**
-	 * Refresh Module
-	 *
-	 * @param {Any}
-	 * @param {Component}
-	 */
-	function refresh (source, owner) {
-		var older = owner._tree;
-		var newer = shape(source, owner, false);
-	
-		owner._block = 0;
-	
-		if (older === null) {
-			return;
-		}
-	
-		if (older.tag !== newer.tag) {
-			swap(older, newer, false);
-		} else {
-			patch(older, newer, 0);
-		}
-	}
-	
-	/**
-	 * Extract Module
-	 *
-	 * @param  {String} source
-	 * @param  {Component} owner
-	 * @return {Function}
-	 */
-	function module (source, owner, addrs) {
-		try {
-			return new Function('"use strict";' + format(source)).call(global);
-		} catch (err) {
-			errorBoundary(err instanceof Error ? err.stack : err, owner, 6, addrs);
-		}
-	}
-	
-	/**
-	 * Format Source
-	 *
-	 * @param  {String} source
-	 * @return {String}
-	 */
-	function format (source) {
-		return source.replace(/^[\t ]*export[\t ]+(?:default[\t ]|)/gm, 'return ');
 	}
 	
 	/**
@@ -707,9 +680,7 @@
 	function dataBoundary (owner, type, props) {
 		try {
 			switch (type) {
-				case 0: return owner.componentWillReceiveProps(props);
-				case 1: return owner.getInitialState(props);
-				case 2: return owner.getDefaultProps(props);
+				case 0: return returnBoundary(owner.componentWillReceiveProps(props), owner, null, true);
 			}
 		} catch (err) {
 			errorBoundary(err, owner, 0, type);
@@ -729,8 +700,8 @@
 		try {
 			switch (type) {
 				case 0: return owner.shouldComponentUpdate(props, state);
-				case 1: return owner.componentWillUpdate(props, state);
-				case 2: return owner.componentDidUpdate(props, state);
+				case 1: return returnBoundary(owner.componentWillUpdate(props, state), owner, null, true);
+				case 2: return returnBoundary(owner.componentDidUpdate(props, state), owner, null, true);
 			}
 		} catch (err) {
 			errorBoundary(err, owner, 1, type);
@@ -768,10 +739,11 @@
 		try {
 			if (xmlns === null) {
 				return document.createElement(newer.tag);
+			} else {
+				return document.createElementNS(newer.xmlns === xmlns, newer.tag);
 			}
-			return document.createElementNS(newer.xmlns === xmlns, newer.tag);
 		} catch (err) {
-			return errorBoundary(err, owner, 5, (newer.flag = 3, 0));
+			return errorBoundary(err, owner, newer.flag = 3, typeof owner === 'function' ? 2 : 1);
 		}
 	}
 	
@@ -784,8 +756,8 @@
 	function mountBoundary (owner, type) {
 		try {
 			switch (type) {
-				case 0: return owner.componentWillMount();
-				case 1: return owner.componentDidMount();
+				case 0: return returnBoundary(owner.componentWillMount(), owner, null, false);
+				case 1: return returnBoundary(owner.componentDidMount(), owner, null, true);
 				case 2: return owner.componentWillUnmount();
 			}
 		} catch (err) {
@@ -800,9 +772,13 @@
 	 * @param {Component} owner
 	 * @param {Object|Node} param
 	 */
-	function callbackBoundary (owner, callback, param) {
+	function callbackBoundary (owner, callback, param, type) {
 		try {
-			return callback.call(owner, param);
+			if (type === 0) {
+				return callback.call(owner, param);
+			} else {
+				return returnBoundary(callback.call(owner, param), owner, null, false);
+			}
 		} catch (err) {
 			errorBoundary(err, owner, 2, callback);
 		}
@@ -817,9 +793,35 @@
 	 */
 	function eventBoundary (owner, fn, e) {
 		try {
-			return fn.call(owner, owner.props, owner.state, e);
+			return returnBoundary(fn.call(owner, owner.props, owner.state, e), owner, e, true);
 		} catch (err) {
 			errorBoundary(err, owner, 5, fn);
+		}
+	}
+	
+	/**
+	 * Return Boundary
+	 *
+	 * @param  {(Object|Promise)?} state
+	 * @param  {Component} owner
+	 * @param  {Event?} e
+	 * @param  {Boolean} sync
+	 */
+	function returnBoundary (state, owner, e, sync) {
+		if (owner !== null && state !== void 0 && state !== null) {
+			if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
+				e.preventDefault();
+			}
+	
+			if (state !== false) {
+				if (sync === true) {
+					owner.setState(state);
+				} else {
+					schedule(function () {
+						owner.setState(state);
+					});
+				}
+			}
 		}
 	}
 	
@@ -833,88 +835,83 @@
 	 * @return {Tree?}
 	 */
 	function errorBoundary (message, owner, type, from) {
-		var name = '#unknown';
-		var location = name;
+		var component = '#unknown';
+		var location;
 		var tree;
 	
 		try {
-			if (typeof from !== 'function') {
-				switch (type) {
-					case 0: {
-						switch (from) {
-							case 0: location = 'componentWillReceiveProps'; break;
-							case 1: location = 'getInitialState'; break;
-							case 2: location = 'getDefaultProps'; break;
-						}
-						break;
-					}
-					case 1: {
-						switch (from) {
-							case 0: location = 'shouldComponentUpdate'; break;
-							case 1: location = 'componentWillUpdate'; break;
-							case 2: location = 'componentDidUpdate'; break;
-						}
-						break;
-					}
-					case 3: {
-						switch (from) {
-							case 1: location = 'render'; break;
-							case 2: location = 'function'; break;
-						}
-						break;
-					}
-					case 4: {
-						switch (from) {
-							case 0: location = 'componentWillMount'; break;
-							case 1: location = 'componentDidMount'; break;
-							case 2: location = 'componentWillUnmount'; break;
-						}
-						break;
-					}
-					case 5: {
-						location = 'render';
-						break;
-					}
-					case 6: {
-						location = from;
-						break;
-					}
-				}
-			} else {
-				location = from.name;
-			}
+			location = errorLocation(type, from) || component;
 	
 			if (owner !== null) {
 				if (owner.componentDidThrow !== void 0) {
 					tree = owner.componentDidThrow({location: location, message: message});
 				}
 	
-				if (type === 3 && from === 2) {
-					name = owner.name;
-				} else {
-					name = owner.constructor.name;
-				}
+				component = typeof owner === 'function' ? owner.name : owner.constructor.name;
 			}
 		} catch (err) {
-			location = 'componentDidThrow';
-			message = err;
+			message = err, location = 'componentDidThrow';
 		}
 	
-		error(name, location, message instanceof Error ? message.stack : message);
+		errorMessage(component, location, message instanceof Error ? message.stack : message);
 	
 		if (type === 3 || type === 5) {
-			return shape(tree === void 0 ? element('noscript') : tree, owner, false);
+			return shape(tree, owner, false);
 		}
 	}
 	
 	/**
-	 * Error Logger
+	 * Error Location
+	 *
+	 * @param  {Number} type
+	 * @param  {Number|Function} from
+	 * @return {String?}
+	 */
+	function errorLocation (type, from) {
+		if (typeof from === 'function') {
+			return from.name;
+		}
+	
+		switch (type) {
+			case 0: {
+				switch (from) {
+					case 0: return 'componentWillReceiveProps';
+				} break;
+			}
+			case 1: {
+				switch (from) {
+					case 0: return 'shouldComponentUpdate';
+					case 1: return 'componentWillUpdate';
+					case 2: return 'componentDidUpdate';
+				} break;
+			}
+			case 3: {
+				switch (from) {
+					case 1: return 'render';
+					case 2: return 'function';
+				} break;
+			}
+			case 4: {
+				switch (from) {
+					case 0: return 'componentWillMount';
+					case 1: return 'componentDidMount';
+					case 2: return 'componentWillUnmount';
+				} break;
+			}
+			case 5: {
+				return 'render';
+			}
+		}
+	}
+	
+	/**
+	 * Error Message
 	 *
 	 * @param  {String} component
 	 * @param  {String} location
 	 * @param  {String} message
 	 */
-	function error (component, location, message) {
+	function errorMessage (component, location, message) {
 		console.error(
 			message+'\n\n  ^^ Error caught in Component '+'"'+component+'"'+
 			' from "'+location+'" \n'
@@ -934,14 +931,14 @@
 		var attrs = newer.attrs;
 	
 		for (var name in attrs) {
-			if (valid(name) === true) {
+			if (name === 'ref') {
+				refs(attrs[name], owner, node, 0);
+			} else if (name !== 'key' && name !== 'children') {
 				if (evt(name) === true) {
 					event(name.toLowerCase().substring(2), attrs[name], owner, node);
 				} else if (hydrate === false) {
 					assign(attr(name), name, attrs[name], xmlns, node);
 				}
-			} else if (name === 'ref') {
-				refs(attrs[name], owner, node);
 			}
 		}
 	}
@@ -951,8 +948,9 @@
 	 *
 	 * @param {Tree} newer
 	 * @param {Tree} older
+	 * @param {Tree} ancestor
 	 */
-	function attributes (older, newer) {
+	function attributes (older, newer, ancestor) {
 		var oldAttrs = older.attrs;
 		var newAttrs = newer.attrs;
 		var xmlns = older.xmlns;
@@ -962,18 +960,24 @@
 		var newValue;
 	
 		for (var name in newAttrs) {
-			if (valid(name) === true && evt(name) === false) {
-				oldValue = oldAttrs[name];
+			// name !== 'key' && name !== 'children' && name !== 'ref'
+			if (name !== 'key' && name !== 'children' && evt(name) === false) {
 				newValue = newAttrs[name];
 	
-				if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
-					assign(attr(name), name, newValue, xmlns, node);
+				if (name === 'ref') {
+					refs(newValue, ancestor.owner, node, 1);
+				} else {
+					oldValue = oldAttrs[name];
+	
+					if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
+						assign(attr(name), name, newValue, xmlns, node);
+					}
 				}
 			}
 		}
 	
 		for (var name in oldAttrs) {
-			if (valid(name) === true && evt(name) === false) {
+			if (name !== 'key' && name !== 'children' && name !== 'ref' && evt(name) === false) {
 				newValue = newAttrs[name];
 	
 				if (newValue === null || newValue === void 0) {
@@ -991,21 +995,28 @@
 	 * @param  {Function|String} value
 	 * @param  {Component} owner
 	 * @param  {Node} node
+	 * @param  {Number} type
 	 */
-	function refs (value, owner, node) {
+	function refs (value, owner, node, type) {
 		if (owner !== null && owner.refs === null) {
 			owner.refs = {};
 		}
 	
 		switch (typeof value) {
-			case 'string': {
-				if (owner !== null) {
-					owner.refs[value] = node;
+			case 'function': {
+				if (type === 0) {
+					schedule(function () {
+						callbackBoundary(owner, value, node, 2);
+					});
+				} else {
+					callbackBoundary(owner, value, node, 0);
 				}
 				break;
 			}
-			case 'function': {
-				callbackBoundary(owner, value, node);
+			case 'string': {
+				if (type === 0 && owner !== null) {
+					owner.refs[value] = node;
+				}
 				break;
 			}
 		}
@@ -1088,16 +1099,6 @@
 	}
 	
 	/**
-	 * Attribute Validator [Blacklist]
-	 *
-	 * @param  {String} name
-	 * @return {Boolean}
-	 */
-	function valid (name) {
-		return name !== 'key' && name !== 'children' && name !== 'ref';
-	}
-	
-	/**
 	 * Event Attribute Validator [Whitelist]
 	 *
 	 * @param  {String} name
@@ -1146,17 +1147,7 @@
 	function event (type, listener, owner, node) {
 		if (owner !== null) {
 			node.addEventListener(type, function (e) {
-				var result = eventBoundary(owner, listener, e);
-	
-				if (result !== void 0) {
-					if (e.defaultPrevented !== true && e.allowDefault !== true) {
-						e.preventDefault();
-					}
-	
-					if (result !== false) {
-						owner.setState(result);
-					}
-				}
+				eventBoundary(owner, listener, e);
 			}, false);
 		} else {
 			node.addEventListener(type, listener, false);
@@ -1208,8 +1199,7 @@
 	
 		// error creating node
 		if (newer.flag === 3) {
-			newer.flag = flag;
-			node = create(node, xmlns, owner);
+			return newer.flag = flag, node = newer.node = create(node, xmlns, owner);
 		}
 	
 		children = newer.children;
@@ -1358,14 +1348,15 @@
 	 *
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
+	 * @param  {Tree} ancestor
 	 */
-	function populate (older, newer) {
+	function populate (older, newer, ancestor) {
 		var parent = older.node;
 		var children = newer.children;
 		var length = children.length;
 	
 		for (var i = 0, child; i < length; i++) {
-			append(child = children[i], parent, create(child, null, null));
+			append(child = children[i], parent, create(child, null, ancestor));
 		}
 	
 		older.children = children;
@@ -1426,7 +1417,7 @@
 	
 		if (older !== void 0) {
 			if (older.type === newer.type) {
-				patch(older, newer, older.cast);
+				patch(older, newer, older.cast, older);
 			} else {
 				swap(older, newer, true);
 			}
@@ -1452,8 +1443,10 @@
 	 * @param {Tree} older
 	 * @param {Tree} newer
 	 * @param {Number} cast
+	 * @param {Tree} ancestor
 	 */
-	function patch (older, _newer, cast) {
+	function patch (older, _newer, cast, _ancestor) {
+		var ancestor = _ancestor;
 		var newer = _newer;
 	
 		if (cast > 0) {
@@ -1463,6 +1456,10 @@
 	
 			if (newer.tag !== older.tag) {
 				return swap(older, newer, false);
+			}
+	
+			if (cast === 1) {
+				ancestor = older;
 			}
 		}
 	
@@ -1476,7 +1473,7 @@
 		// append children
 		if (oldLength === 0) {
 			if (newLength !== 0) {
-				populate(older, newer);
+				populate(older, newer, ancestor);
 			}
 			return;
 		}
@@ -1491,12 +1488,12 @@
 	
 		// patch keyed children
 		if (older.keyed === true) {
-			keyed(older, newer);
+			keyed(older, newer, ancestor);
 		} else {
-			nonkeyed(older, newer);
+			nonkeyed(older, newer, ancestor);
 		}
 	
-		attributes(older, newer);
+		attributes(older, newer, ancestor);
 	}
 	
 	/**
@@ -1504,8 +1501,9 @@
 	 *
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
+	 * @param  {Tree} ancestor
 	 */
-	function nonkeyed (older, newer) {
+	function nonkeyed (older, newer, ancestor) {
 		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
@@ -1519,7 +1517,7 @@
 				remove(oldChild = oldChildren.pop(), parent);
 				oldLength--;
 			} else if (i >= oldLength) {
-				append(newChild = oldChildren[i] = newChildren[i], parent, create(newChild, null, null));
+				append(newChild = oldChildren[i] = newChildren[i], parent, create(newChild, null, ancestor));
 				oldLength++;
 			} else {
 				newChild = newChildren[i];
@@ -1528,9 +1526,9 @@
 				if (newChild.flag === 1 && oldChild.flag === 1) {
 					content(oldChild, newChild);
 				} else if (newChild.type !== oldChild.type) {
-					replace(oldChild, oldChildren[i] = newChild, parent, create(newChild, null, null));
+					replace(oldChild, oldChildren[i] = newChild, parent, create(newChild, null, ancestor));
 				} else {
-					patch(oldChild, newChild, oldChild.cast);
+					patch(oldChild, newChild, oldChild.cast, ancestor);
 				}
 			}
 		}
@@ -1541,8 +1539,9 @@
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} newer
+	 * @param {Tree} ancestor
 	 */
-	function keyed (older, newer) {
+	function keyed (older, newer, ancestor) {
 	 	var parent = older.node;
 	 	var oldChildren = older.children;
 	 	var newChildren = newer.children;
@@ -1568,7 +1567,7 @@
 	 		while (oldStartNode.key === newStartNode.key) {
 	 			newChildren[newStart] = oldStartNode;
 	
-	 			patch(oldStartNode, newStartNode, oldStartNode.cast);
+	 			patch(oldStartNode, newStartNode, oldStartNode.cast, ancestor);
 	
 	 			oldStart++;
 	 			newStart++;
@@ -1585,7 +1584,7 @@
 	 		while (oldEndNode.key === newEndNode.key) {
 	 			newChildren[newEnd] = oldEndNode;
 	
-	 			patch(oldEndNode, newEndNode, oldEndNode.cast);
+	 			patch(oldEndNode, newEndNode, oldEndNode.cast, ancestor);
 	
 	 			oldEnd--;
 	 			newEnd--;
@@ -1603,7 +1602,7 @@
 	 			newChildren[newStart] = oldEndNode;
 	 			oldChildren[oldEnd] = oldStartNode;
 	
-	 			patch(oldEndNode, newStartNode, oldEndNode.cast);
+	 			patch(oldEndNode, newStartNode, oldEndNode.cast, ancestor);
 	 			move(parent, oldEndNode, oldStartNode.node);
 	
 	 			oldEnd--;
@@ -1623,7 +1622,7 @@
 	 			nextPos = newEnd + 1;
 	 			nextNode = nextPos < newLength ? oldChildren[nextPos].node : null;
 	
-	 			patch(oldStartNode, newEndNode, oldStartNode.cast);
+	 			patch(oldStartNode, newEndNode, oldStartNode.cast, ancestor);
 	 			move(parent, oldStartNode, nextNode);
 	
 	 			oldStart++;
@@ -1644,9 +1643,8 @@
 	 		if (newStart <= newEnd) {
 	 			nextPos = newEnd + 1;
 	 			nextNode = nextPos < newLength ? newChildren[nextPos].node : null;
-	
 	 			do {
-	 				insert (newStartNode = newChildren[newStart++], parent, create(newStartNode, null, null), nextNode);
+	 				insert(newStartNode = newChildren[newStart++], parent, create(newStartNode, null, ancestor), nextNode);
 	 			} while (newStart <= newEnd);
 	 		}
 	 	} else if (newStart > newEnd) {
@@ -1656,7 +1654,7 @@
 	 		} while (oldStart <= oldEnd);
 	 	} else {
 	 		// could not completely sync children, move on the the next phase
-	 		complex(older, newer, oldStart, newStart, oldEnd, newEnd)
+	 		complex(older, newer, ancestor, oldStart, newStart, oldEnd, newEnd);
 	 	}
 	
 	 	older.children = newChildren;
@@ -1667,12 +1665,13 @@
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} newer
+	 * @param {Tree} ancestor
 	 * @param {Number} oldStart
 	 * @param {Number} newStart
 	 * @param {Number} oldEnd
 	 * @param {Number} newEnd
 	 */
-	function complex (older, newer, oldStart, newStart, oldEnd, newEnd) {
+	function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd) {
 		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
@@ -1714,10 +1713,10 @@
 	
 				// new child doesn't exist in old children, insert
 				if (oldChild === void 0) {
-					insert(newChild, parent, create(newChild, null, null), childNodes[newIndex]);
+					insert(newChild, parent, create(newChild, null, ancestor), childNodes[newIndex]);
 					newOffset--;
 				} else {
-					patch(oldChild, newChild, oldChild.cast);
+					patch(oldChild, newChild, oldChild.cast, ancestor);
 					newChildren[newIndex] = oldChild;
 				}
 			}

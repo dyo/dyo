@@ -24,9 +24,21 @@ function shape (_tree, owner, deep) {
 			}
 			case 'object': {
 				switch (tree.constructor) {
-					case Promise: return resolve(tree, owner);
-					case Array: tree = fragment(tree); break;
-					case Date: tree = text(tree+''); break;
+					case Promise: {
+						return resolve(tree, owner);
+					}
+					case Array: {
+						tree = fragment(tree);
+						break;
+					}
+					case Date: {
+						tree = text(tree+'');
+						break;
+					}
+					case Object: {
+						tree = tree.length > 0 && tree[0] !== void 0 ? fragment(tree) : text('');
+						break;
+					}
 					default: tree = text('');
 				}
 				break;
@@ -61,8 +73,12 @@ function extract (tree) {
 	var owner;
 	var proto;
 
+	if (props === null) {
+		props = {};
+	}
+
 	if (type.defaultProps !== void 0) {
-		props = merge(type.defaultProps, props === null ? {} : props);
+		props = merge(type.defaultProps, props);
 	}
 
 	if (length !== 0) {
@@ -110,4 +126,47 @@ function extract (tree) {
 	tree.xmlns = result.xmlns;
 
 	return result;
+}
+
+/**
+ * Resolve
+ *
+ * @param {Promise} pending
+ * @param {Component} owner
+ */
+function resolve (pending, owner) {
+	var tree;
+
+	if (owner === null) {
+		return;
+	}
+
+	tree = owner._tree;
+
+	if (tree === null) {
+		tree = text('');
+	}
+
+	owner._block = 1;
+
+	pending.then(function (value) {
+		var older;
+		var newer;
+
+		owner._block = 0;
+
+		if ((older = owner._tree) === null) {
+			return;
+		}
+
+		newer = shape(value, owner, false);
+
+		if (older.tag !== newer.tag) {
+			swap(older, newer, false);
+		} else {
+			patch(older, newer, 0, older);
+		}
+	});
+
+	return tree;
 }

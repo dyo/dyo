@@ -9,9 +9,7 @@
 function dataBoundary (owner, type, props) {
 	try {
 		switch (type) {
-			case 0: return owner.componentWillReceiveProps(props);
-			case 1: return owner.getInitialState(props);
-			case 2: return owner.getDefaultProps(props);
+			case 0: return returnBoundary(owner.componentWillReceiveProps(props), owner, null, true);
 		}
 	} catch (err) {
 		errorBoundary(err, owner, 0, type);
@@ -31,8 +29,8 @@ function updateBoundary (owner, type, props, state) {
 	try {
 		switch (type) {
 			case 0: return owner.shouldComponentUpdate(props, state);
-			case 1: return owner.componentWillUpdate(props, state);
-			case 2: return owner.componentDidUpdate(props, state);
+			case 1: return returnBoundary(owner.componentWillUpdate(props, state), owner, null, true);
+			case 2: return returnBoundary(owner.componentDidUpdate(props, state), owner, null, true);
 		}
 	} catch (err) {
 		errorBoundary(err, owner, 1, type);
@@ -70,10 +68,11 @@ function nodeBoundary (flag, newer, xmlns, owner) {
 	try {
 		if (xmlns === null) {
 			return document.createElement(newer.tag);
+		} else {
+			return document.createElementNS(newer.xmlns === xmlns, newer.tag);
 		}
-		return document.createElementNS(newer.xmlns === xmlns, newer.tag);
 	} catch (err) {
-		return errorBoundary(err, owner, 5, (newer.flag = 3, 0));
+		return errorBoundary(err, owner, newer.flag = 3, typeof owner === 'function' ? 2 : 1);
 	}
 }
 
@@ -86,8 +85,8 @@ function nodeBoundary (flag, newer, xmlns, owner) {
 function mountBoundary (owner, type) {
 	try {
 		switch (type) {
-			case 0: return owner.componentWillMount();
-			case 1: return owner.componentDidMount();
+			case 0: return returnBoundary(owner.componentWillMount(), owner, null, false);
+			case 1: return returnBoundary(owner.componentDidMount(), owner, null, true);
 			case 2: return owner.componentWillUnmount();
 		}
 	} catch (err) {
@@ -102,9 +101,13 @@ function mountBoundary (owner, type) {
  * @param {Component} owner
  * @param {Object|Node} param
  */
-function callbackBoundary (owner, callback, param) {
+function callbackBoundary (owner, callback, param, type) {
 	try {
-		return callback.call(owner, param);
+		if (type === 0) {
+			return callback.call(owner, param);
+		} else {
+			return returnBoundary(callback.call(owner, param), owner, null, false);
+		}
 	} catch (err) {
 		errorBoundary(err, owner, 2, callback);
 	}
@@ -119,9 +122,35 @@ function callbackBoundary (owner, callback, param) {
  */
 function eventBoundary (owner, fn, e) {
 	try {
-		return fn.call(owner, owner.props, owner.state, e);
+		return returnBoundary(fn.call(owner, owner.props, owner.state, e), owner, e, true);
 	} catch (err) {
 		errorBoundary(err, owner, 5, fn);
+	}
+}
+
+/**
+ * Return Boundary
+ *
+ * @param  {(Object|Promise)?} state
+ * @param  {Component} owner
+ * @param  {Event?} e
+ * @param  {Boolean} sync
+ */
+function returnBoundary (state, owner, e, sync) {
+	if (owner !== null && state !== void 0 && state !== null) {
+		if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
+			e.preventDefault();
+		}
+
+		if (state !== false) {
+			if (sync === true) {
+				owner.setState(state);
+			} else {
+				schedule(function () {
+					owner.setState(state);
+				});
+			}
+		}
 	}
 }
 
@@ -135,88 +164,83 @@ function eventBoundary (owner, fn, e) {
  * @return {Tree?}
  */
 function errorBoundary (message, owner, type, from) {
-	var name = '#unknown';
-	var location = name;
+	var component = '#unknown';
+	var location;
 	var tree;
 
 	try {
-		if (typeof from !== 'function') {
-			switch (type) {
-				case 0: {
-					switch (from) {
-						case 0: location = 'componentWillReceiveProps'; break;
-						case 1: location = 'getInitialState'; break;
-						case 2: location = 'getDefaultProps'; break;
-					}
-					break;
-				}
-				case 1: {
-					switch (from) {
-						case 0: location = 'shouldComponentUpdate'; break;
-						case 1: location = 'componentWillUpdate'; break;
-						case 2: location = 'componentDidUpdate'; break;
-					}
-					break;
-				}
-				case 3: {
-					switch (from) {
-						case 1: location = 'render'; break;
-						case 2: location = 'function'; break;
-					}
-					break;
-				}
-				case 4: {
-					switch (from) {
-						case 0: location = 'componentWillMount'; break;
-						case 1: location = 'componentDidMount'; break;
-						case 2: location = 'componentWillUnmount'; break;
-					}
-					break;
-				}
-				case 5: {
-					location = 'render';
-					break;
-				}
-				case 6: {
-					location = from;
-					break;
-				}
-			}
-		} else {
-			location = from.name;
-		}
+		location = errorLocation(type, from) || component;
 
 		if (owner !== null) {
 			if (owner.componentDidThrow !== void 0) {
 				tree = owner.componentDidThrow({location: location, message: message});
 			}
 
-			if (type === 3 && from === 2) {
-				name = owner.name;
-			} else {
-				name = owner.constructor.name;
-			}
+			component = typeof owner === 'function' ? owner.name : owner.constructor.name;
 		}
 	} catch (err) {
-		location = 'componentDidThrow';
-		message = err;
+		message = err, location = 'componentDidThrow';
 	}
 
-	error(name, location, message instanceof Error ? message.stack : message);
+	errorMessage(component, location, message instanceof Error ? message.stack : message);
 
 	if (type === 3 || type === 5) {
-		return shape(tree === void 0 ? element('noscript') : tree, owner, false);
+		return shape(tree, owner, false);
 	}
 }
 
 /**
- * Error Logger
+ * Error Location
+ *
+ * @param  {Number} type
+ * @param  {Number|Function} from
+ * @return {String?}
+ */
+function errorLocation (type, from) {
+	if (typeof from === 'function') {
+		return from.name;
+	}
+
+	switch (type) {
+		case 0: {
+			switch (from) {
+				case 0: return 'componentWillReceiveProps';
+			} break;
+		}
+		case 1: {
+			switch (from) {
+				case 0: return 'shouldComponentUpdate';
+				case 1: return 'componentWillUpdate';
+				case 2: return 'componentDidUpdate';
+			} break;
+		}
+		case 3: {
+			switch (from) {
+				case 1: return 'render';
+				case 2: return 'function';
+			} break;
+		}
+		case 4: {
+			switch (from) {
+				case 0: return 'componentWillMount';
+				case 1: return 'componentDidMount';
+				case 2: return 'componentWillUnmount';
+			} break;
+		}
+		case 5: {
+			return 'render';
+		}
+	}
+}
+
+/**
+ * Error Message
  *
  * @param  {String} component
  * @param  {String} location
  * @param  {String} message
  */
-function error (component, location, message) {
+function errorMessage (component, location, message) {
 	console.error(
 		message+'\n\n  ^^ Error caught in Component '+'"'+component+'"'+
 		' from "'+location+'" \n'

@@ -41,7 +41,7 @@ function render (_newer, _target) {
 
 	if (older !== void 0) {
 		if (older.type === newer.type) {
-			patch(older, newer, older.cast);
+			patch(older, newer, older.cast, older);
 		} else {
 			swap(older, newer, true);
 		}
