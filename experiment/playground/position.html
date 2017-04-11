@@ -1,0 +1,137 @@
+<html>
+<body>
+	<div id=root></div>
+
+	<script src="../dist/dio.js"></script>
+
+	<script>
+		const Component = dio.Component;
+		const h = dio.createElement;
+
+
+		class A {
+		  	constructor() {
+		    	// super(...arguments);
+		    	this.state = {n: 0 };
+		    	this.props = {name: true};
+		    	// console.log(10);
+	  		}
+
+	  		// getInitialProps () {
+
+	  		// }
+
+	  		// getInitialState () {
+	  		// getDefaultProps () {
+	  		// 	return new Promise(function (resolve) {
+	  		// 		setTimeout(function () {
+	  		// 			resolve({
+	  		// 				n: 0
+	  		// 			})
+	  		// 		}, 3000);
+	  		// 	});
+	  		// }
+
+	  		componentDidThrow (a) {
+	  			// throw 'another';
+	  			// console.log(a);
+	  		}
+
+	  		shouldComponentUpdate () {
+	  			// console.log('shouldComponentUpdate');
+	  		}
+
+	  		componentWillUpdate () {
+	  			// console.log(this);
+	  		// 	console.log(this);
+
+	  		// 	throw `
+					// // this.setState({id: 1}, () => {});
+					// // console.log('componentWillUpdate');
+	  		// 	`
+	  			// this.setState({id: 1}, () => {});
+	  			// console.log('componentWillUpdate');
+	  		}
+
+	  		componentDidUpdate () {
+	  			// console.log('componentDidUpdate');
+	  		}
+
+	  		componentWillRecieveProps () {
+	  			// console.log('componentWillRecieveProps');
+	  		}
+
+	  		componentWillMount () {
+	  			// console.log('componentWillMount');
+	  		}
+
+	  		componentDidMount() {
+		    	// console.log("componentDidMount");
+
+		    	// const update = () => {
+	      // 			this.setState({ n: this.state.n + 1 });
+	      // 			setTimeout(update, 1000);
+		    	// }
+
+		    	// setTimeout(update, 1000);
+		  	}
+
+			async render() {
+				console.log(this);
+				return await new Promise((resolve) => setTimeout(() => resolve(B), 1000));
+				// return h(B, this.props);
+				// return [this.state.n]
+				// return h('div', this.state.n);
+			}
+		}
+
+		class B {
+			render () {
+				// console.log(this);
+				return h('div', 'Hello World');
+			}
+		}
+
+		class Test extends Component {
+			constructor() {
+				super(...arguments);
+				this.state = {toggle: 1};
+			}
+
+			onClick ({toggle}) {
+				return {toggle: toggle ^ 1};
+			}
+
+			render() {
+				return (
+					h('div',
+						h('button', {onClick: this.onClick}, 'TOGGLE: ' + this.state.toggle),
+		  				this.state.toggle ? h('div') : null,
+		  				this.state.toggle ? h('div') : null,
+		  				A,
+		  				this.state.toggle ? h('div') : null
+					)
+				);
+			}
+		}
+
+		console.log(
+			h('div', [], 2, 3, 3)
+		);
+
+
+		// dio.render(
+		// 	h('div',
+		// 		h('p', 'React implementation is working as expected. Other virtual dom implementations:'),
+		// 		h('ul',
+		// 			h('li', 'vue2: ', h('a', {href: 'https://jsfiddle.net/4ppdfyy8/'}, 'https://jsfiddle.net/4ppdfyy8/')),
+		// 			h('li', 'preact: ', h('a', {href: 'http://codepen.io/localvoid/pen/EZBpoz'}, 'http://codepen.io/localvoid/pen/EZBpoz')),
+		// 			h('li', 'react: ', h('a', {href: 'http://codepen.io/localvoid/pen/VPJBrv/'}, 'http://codepen.io/localvoid/pen/VPJBrv/'))
+		// 		),
+		// 		Test
+		// 	),
+		// 	document.getElementById('root')
+		// );
+	</script>
+</body>
+</html>

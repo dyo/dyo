@@ -1,0 +1,41 @@
+{
+	"name": "dio.js",
+	"main": "dio.js",
+	"types": "dio.d.ts",
+	"description": "a javascript framework for building applications",
+	"version": "7.0.0",
+	"homepage": "https://github.com/thysultan/dio.js",
+	"license": "MIT",
+	"author": {
+		"name": "Sultan Tarimo",
+		"email": "sultantarimo@me.com"
+	},
+	"keywords": [
+		"dio",
+		"framework",
+		"server",
+		"browser"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/thysultan/dio.js"
+	},
+	"bugs": {
+		"url": "https://github.com/thysultan/dio.js/issues"
+	},
+	"files": [
+		"dist/dio.js",
+		"dist/dio.min.js",
+		"dist/dio.server.js",
+		"dist/dio.d.ts"
+	],
+	"scripts": {
+		"test": "node ./tests/",
+		"build": "node ./bundle/ --bundle && node ./bundle/minify",
+		"dev": "node ./bundle/"
+	},
+	"devDependencies": {
+		"chokidar": "^1.6.1",
+		"uglify-js": "^2.8.16"
+	}
+}
