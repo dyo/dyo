@@ -197,13 +197,13 @@
 	 * @param {Function=} callback
 	 */
 	function forceUpdate (callback) {
-		var tree;
+		var tree = this._tree;
 	
-		if (this._block !== 0) {
+		if (this._block !== 0 || tree.node === null) {
 			return;
 		}
 	
-		patch(tree = this._tree, tree, 1, tree);
+		patch(tree, tree, 1, tree);
 	
 		if (callback !== void 0 && typeof callback === 'function') {
 			callbackBoundary(this, callback, this.state, 1);
@@ -236,7 +236,7 @@
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
 	 * @param  {Number} cast
-	 * @return {Boolean}
+	 * @return {Tree?}
 	 */
 	function shouldUpdate (older, newer, cast) {
 		var owner = older.owner;
@@ -298,11 +298,18 @@
 			updateBoundary(owner, 2, prevProps, prevState);
 		}
 	
+		tree = shape(tree, owner, false);
+	
+		// async render, defer patching children
 		if (cast === 1) {
-			owner._block = 0;
+			if (owner._block === 2) {
+				return null;
+			} else {
+				owner._block = 0;
+			}
 		}
 	
-		return shape(tree, owner, false);
+		return tree;
 	}
 	
 	/**
@@ -645,7 +652,7 @@
 			tree = text('');
 		}
 	
-		owner._block = 1;
+		owner._block = 2;
 	
 		pending.then(function (value) {
 			var older;
@@ -657,10 +664,15 @@
 				return;
 			}
 	
+			// node removed
+			if (older.node === null) {
+				return;
+			}
+	
 			newer = shape(value, owner, false);
 	
 			if (older.tag !== newer.tag) {
-				swap(older, newer, false);
+				swap(older, newer, false, older);
 			} else {
 				patch(older, newer, 0, older);
 			}
@@ -1310,9 +1322,10 @@
 	 * @param {Tree} newer
 	 * @param {Tree} older
 	 * @param {Boolean} deep
+	 * @param {Tree} ancestor
 	 */
-	function swap (older, newer, deep) {
-		older.node.parentNode.replaceChild(create(newer, null, null), older.node);
+	function swap (older, newer, deep, ancestor) {
+		older.node.parentNode.replaceChild(create(newer, null, ancestor.owner), older.node);
 	
 		copy(older, newer, deep);
 	}
@@ -1354,9 +1367,10 @@
 		var parent = older.node;
 		var children = newer.children;
 		var length = children.length;
+		var owner = ancestor.owner;
 	
 		for (var i = 0, child; i < length; i++) {
-			append(child = children[i], parent, create(child, null, ancestor));
+			append(child = children[i], parent, create(child, null, owner));
 		}
 	
 		older.children = children;
@@ -1419,10 +1433,10 @@
 			if (older.type === newer.type) {
 				patch(older, newer, older.cast, older);
 			} else {
-				swap(older, newer, true);
+				swap(older, newer, true, newer);
 			}
 		} else {
-			append(newer, target, create(newer, null, null));
+			append(newer, target, create(newer, null, newer.owner));
 			target._older = newer;
 		}
 	}
@@ -1454,12 +1468,12 @@
 				return;
 			}
 	
-			if (newer.tag !== older.tag) {
-				return swap(older, newer, false);
-			}
-	
 			if (cast === 1) {
 				ancestor = older;
+			}
+	
+			if (newer.tag !== older.tag) {
+				return swap(older, newer, false, ancestor);
 			}
 		}
 	
@@ -1470,7 +1484,7 @@
 		var newLength = newer.children.length;
 		var oldLength = older.children.length;
 	
-		// append children
+		// populate children
 		if (oldLength === 0) {
 			if (newLength !== 0) {
 				populate(older, newer, ancestor);
@@ -1486,7 +1500,6 @@
 			return;
 		}
 	
-		// patch keyed children
 		if (older.keyed === true) {
 			keyed(older, newer, ancestor);
 		} else {
@@ -1510,6 +1523,7 @@
 		var newLength = newChildren.length;
 		var oldLength = oldChildren.length;
 		var length = newLength > oldLength ? newLength : oldLength;
+		var owner = ancestor.owner;
 	
 		// patch non-keyed children
 		for (var i = 0, newChild, oldChild; i < length; i++) {
@@ -1517,7 +1531,7 @@
 				remove(oldChild = oldChildren.pop(), parent);
 				oldLength--;
 			} else if (i >= oldLength) {
-				append(newChild = oldChildren[i] = newChildren[i], parent, create(newChild, null, ancestor));
+				append(newChild = oldChildren[i] = newChildren[i], parent, create(newChild, null, owner));
 				oldLength++;
 			} else {
 				newChild = newChildren[i];
@@ -1526,7 +1540,7 @@
 				if (newChild.flag === 1 && oldChild.flag === 1) {
 					content(oldChild, newChild);
 				} else if (newChild.type !== oldChild.type) {
-					replace(oldChild, oldChildren[i] = newChild, parent, create(newChild, null, ancestor));
+					replace(oldChild, oldChildren[i] = newChild, parent, create(newChild, null, owner));
 				} else {
 					patch(oldChild, newChild, oldChild.cast, ancestor);
 				}
@@ -1547,6 +1561,7 @@
 	 	var newChildren = newer.children;
 	 	var oldLength = oldChildren.length;
 	 	var newLength = newChildren.length;
+	 	var owner = ancestor.owner;
 	
 	 	var oldStart = 0;
 	 	var newStart = 0;
@@ -1644,7 +1659,7 @@
 	 			nextPos = newEnd + 1;
 	 			nextNode = nextPos < newLength ? newChildren[nextPos].node : null;
 	 			do {
-	 				insert(newStartNode = newChildren[newStart++], parent, create(newStartNode, null, ancestor), nextNode);
+	 				insert(newStartNode = newChildren[newStart++], parent, create(newStartNode, null, owner), nextNode);
 	 			} while (newStart <= newEnd);
 	 		}
 	 	} else if (newStart > newEnd) {
@@ -1675,15 +1690,19 @@
 		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
-		var oldKeys = {};
-		var newKeys = {};
+		var owner = ancestor.owner;
+	
 		var oldLength = oldEnd + 1;
 		var newLength = newEnd + 1;
 		var oldOffset = oldLength - oldStart;
 		var newOffset = newLength - newStart;
 		var oldIndex = oldStart;
 		var newIndex = newStart;
+	
+		var oldKeys = {};
+		var newKeys = {};
 		var childNodes = parent.childNodes;
+	
 		var oldChild;
 		var newChild;
 	
@@ -1713,7 +1732,7 @@
 	
 				// new child doesn't exist in old children, insert
 				if (oldChild === void 0) {
-					insert(newChild, parent, create(newChild, null, ancestor), childNodes[newIndex]);
+					insert(newChild, parent, create(newChild, null, owner), childNodes[newIndex]);
 					newOffset--;
 				} else {
 					patch(oldChild, newChild, oldChild.cast, ancestor);

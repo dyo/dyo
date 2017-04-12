@@ -43,10 +43,10 @@ function render (_newer, _target) {
 		if (older.type === newer.type) {
 			patch(older, newer, older.cast, older);
 		} else {
-			swap(older, newer, true);
+			swap(older, newer, true, newer);
 		}
 	} else {
-		append(newer, target, create(newer, null, null));
+		append(newer, target, create(newer, null, newer.owner));
 		target._older = newer;
 	}
 }

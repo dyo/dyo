@@ -154,9 +154,10 @@ function move (node, older, sibling) {
  * @param {Tree} newer
  * @param {Tree} older
  * @param {Boolean} deep
+ * @param {Tree} ancestor
  */
-function swap (older, newer, deep) {
-	older.node.parentNode.replaceChild(create(newer, null, null), older.node);
+function swap (older, newer, deep, ancestor) {
+	older.node.parentNode.replaceChild(create(newer, null, ancestor.owner), older.node);
 
 	copy(older, newer, deep);
 }
@@ -198,9 +199,10 @@ function populate (older, newer, ancestor) {
 	var parent = older.node;
 	var children = newer.children;
 	var length = children.length;
+	var owner = ancestor.owner;
 
 	for (var i = 0, child; i < length; i++) {
-		append(child = children[i], parent, create(child, null, ancestor));
+		append(child = children[i], parent, create(child, null, owner));
 	}
 
 	older.children = children;

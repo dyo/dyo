@@ -147,7 +147,7 @@ function resolve (pending, owner) {
 		tree = text('');
 	}
 
-	owner._block = 1;
+	owner._block = 2;
 
 	pending.then(function (value) {
 		var older;
@@ -159,10 +159,15 @@ function resolve (pending, owner) {
 			return;
 		}
 
+		// node removed
+		if (older.node === null) {
+			return;
+		}
+
 		newer = shape(value, owner, false);
 
 		if (older.tag !== newer.tag) {
-			swap(older, newer, false);
+			swap(older, newer, false, older);
 		} else {
 			patch(older, newer, 0, older);
 		}

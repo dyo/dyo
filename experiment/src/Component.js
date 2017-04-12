@@ -95,13 +95,13 @@ function setState (state, callback) {
  * @param {Function=} callback
  */
 function forceUpdate (callback) {
-	var tree;
+	var tree = this._tree;
 
-	if (this._block !== 0) {
+	if (this._block !== 0 || tree.node === null) {
 		return;
 	}
 
-	patch(tree = this._tree, tree, 1, tree);
+	patch(tree, tree, 1, tree);
 
 	if (callback !== void 0 && typeof callback === 'function') {
 		callbackBoundary(this, callback, this.state, 1);
@@ -134,7 +134,7 @@ function updateState (state, prevState, nextState) {
  * @param  {Tree} older
  * @param  {Tree} newer
  * @param  {Number} cast
- * @return {Boolean}
+ * @return {Tree?}
  */
 function shouldUpdate (older, newer, cast) {
 	var owner = older.owner;
@@ -196,9 +196,16 @@ function shouldUpdate (older, newer, cast) {
 		updateBoundary(owner, 2, prevProps, prevState);
 	}
 
+	tree = shape(tree, owner, false);
+
+	// async render, defer patching children
 	if (cast === 1) {
-		owner._block = 0;
+		if (owner._block === 2) {
+			return null;
+		} else {
+			owner._block = 0;
+		}
 	}
 
-	return shape(tree, owner, false);
+	return tree;
 }

@@ -15,12 +15,12 @@ function patch (older, _newer, cast, _ancestor) {
 			return;
 		}
 
-		if (newer.tag !== older.tag) {
-			return swap(older, newer, false);
-		}
-
 		if (cast === 1) {
 			ancestor = older;
+		}
+
+		if (newer.tag !== older.tag) {
+			return swap(older, newer, false, ancestor);
 		}
 	}
 
@@ -31,7 +31,7 @@ function patch (older, _newer, cast, _ancestor) {
 	var newLength = newer.children.length;
 	var oldLength = older.children.length;
 
-	// append children
+	// populate children
 	if (oldLength === 0) {
 		if (newLength !== 0) {
 			populate(older, newer, ancestor);
@@ -47,7 +47,6 @@ function patch (older, _newer, cast, _ancestor) {
 		return;
 	}
 
-	// patch keyed children
 	if (older.keyed === true) {
 		keyed(older, newer, ancestor);
 	} else {
@@ -71,6 +70,7 @@ function nonkeyed (older, newer, ancestor) {
 	var newLength = newChildren.length;
 	var oldLength = oldChildren.length;
 	var length = newLength > oldLength ? newLength : oldLength;
+	var owner = ancestor.owner;
 
 	// patch non-keyed children
 	for (var i = 0, newChild, oldChild; i < length; i++) {
@@ -78,7 +78,7 @@ function nonkeyed (older, newer, ancestor) {
 			remove(oldChild = oldChildren.pop(), parent);
 			oldLength--;
 		} else if (i >= oldLength) {
-			append(newChild = oldChildren[i] = newChildren[i], parent, create(newChild, null, ancestor));
+			append(newChild = oldChildren[i] = newChildren[i], parent, create(newChild, null, owner));
 			oldLength++;
 		} else {
 			newChild = newChildren[i];
@@ -87,7 +87,7 @@ function nonkeyed (older, newer, ancestor) {
 			if (newChild.flag === 1 && oldChild.flag === 1) {
 				content(oldChild, newChild);
 			} else if (newChild.type !== oldChild.type) {
-				replace(oldChild, oldChildren[i] = newChild, parent, create(newChild, null, ancestor));
+				replace(oldChild, oldChildren[i] = newChild, parent, create(newChild, null, owner));
 			} else {
 				patch(oldChild, newChild, oldChild.cast, ancestor);
 			}
@@ -108,6 +108,7 @@ function keyed (older, newer, ancestor) {
  	var newChildren = newer.children;
  	var oldLength = oldChildren.length;
  	var newLength = newChildren.length;
+ 	var owner = ancestor.owner;
 
  	var oldStart = 0;
  	var newStart = 0;
@@ -205,7 +206,7 @@ function keyed (older, newer, ancestor) {
  			nextPos = newEnd + 1;
  			nextNode = nextPos < newLength ? newChildren[nextPos].node : null;
  			do {
- 				insert(newStartNode = newChildren[newStart++], parent, create(newStartNode, null, ancestor), nextNode);
+ 				insert(newStartNode = newChildren[newStart++], parent, create(newStartNode, null, owner), nextNode);
  			} while (newStart <= newEnd);
  		}
  	} else if (newStart > newEnd) {
@@ -236,15 +237,19 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd) {
 	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
-	var oldKeys = {};
-	var newKeys = {};
+	var owner = ancestor.owner;
+
 	var oldLength = oldEnd + 1;
 	var newLength = newEnd + 1;
 	var oldOffset = oldLength - oldStart;
 	var newOffset = newLength - newStart;
 	var oldIndex = oldStart;
 	var newIndex = newStart;
+
+	var oldKeys = {};
+	var newKeys = {};
 	var childNodes = parent.childNodes;
+
 	var oldChild;
 	var newChild;
 
@@ -274,7 +279,7 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd) {
 
 			// new child doesn't exist in old children, insert
 			if (oldChild === void 0) {
-				insert(newChild, parent, create(newChild, null, ancestor), childNodes[newIndex]);
+				insert(newChild, parent, create(newChild, null, owner), childNodes[newIndex]);
 				newOffset--;
 			} else {
 				patch(oldChild, newChild, oldChild.cast, ancestor);
