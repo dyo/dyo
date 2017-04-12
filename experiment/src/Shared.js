@@ -16,7 +16,7 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  *
  * 1: text
  * 2: element
- * 3: n/a
+ * 3: error
  * 4: n/a
  * 5: n/a
  * 6: n/a
