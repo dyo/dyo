@@ -6,6 +6,7 @@ An experimental rewrite that puts what i've learnt from the past versions of dio
 
 - ~4kb
 - extend less class
+- supports lifecycle methods on functional components
 - bound less event handlers, think no `this.fn = this.fn.bind()`
 - event handlers recieve `props, state, event` arguments
 - return state from event handles
