@@ -518,7 +518,6 @@
 				older.props = newer.props;
 				older.owner = newer.owner;
 				older.branch = newer.branch;
-				older.events = newer.events;
 				older.key = newer.key;
 				break;
 			}
@@ -549,7 +548,6 @@
 		this.key = null;
 		this.keyed = false;
 		this.cast = 0;
-		this.events = null;
 	}
 	
 	/**
@@ -1411,7 +1409,6 @@
 	function release (tree) {
 		tree.parent = null;
 		tree.branch = null;
-		tree.events = null;
 		tree.owner = null;
 		tree.node = null;
 	}

@@ -211,7 +211,6 @@ function swap (older, newer, type, ancestor) {
 function release (tree) {
 	tree.parent = null;
 	tree.branch = null;
-	tree.events = null;
 	tree.owner = null;
 	tree.node = null;
 }

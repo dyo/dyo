@@ -173,7 +173,6 @@ function clone (older, newer, type) {
 			older.props = newer.props;
 			older.owner = newer.owner;
 			older.branch = newer.branch;
-			older.events = newer.events;
 			older.key = newer.key;
 			break;
 		}
@@ -204,7 +203,6 @@ function Tree (flag) {
 	this.key = null;
 	this.keyed = false;
 	this.cast = 0;
-	this.events = null;
 }
 
 /**
