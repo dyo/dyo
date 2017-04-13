@@ -7,11 +7,7 @@
  * @param {Node} node
  */
 function event (type, listener, owner, node) {
-	if (owner !== null) {
-		node.addEventListener(type, function (e) {
-			eventBoundary(owner, listener, e);
-		}, false);
-	} else {
-		node.addEventListener(type, listener, false);
+	node[type.toLowerCase()] = typeof listener !== 'function' ? null : function (e) {
+		eventBoundary(owner, listener, e);
 	}
 }

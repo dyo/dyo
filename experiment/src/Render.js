@@ -44,13 +44,13 @@ function render (_newer, _target) {
 	var older = target._older;
 
 	if (older !== void 0) {
-		if (older.type === newer.type && older.key === newer.key) {
+		if (older.key === newer.key) {
 			patch(older, newer, older.cast, older);
 		} else {
-			swap(older, newer, true, newer);
+			swap(older, newer, 1, newer);
 		}
 	} else {
-		append(newer, target, create(newer, null, newer.owner));
+		create(newer, null, newer.owner, target, null, 1);
 		target._older = newer;
 	}
 }
@@ -58,9 +58,15 @@ function render (_newer, _target) {
 /**
  * Shallow Render
  *
- * @param  {Any} tree
+ * @param  {Any} _tree
  * @return {Tree}
  */
-function shallow (tree) {
-	return shape(tree, null, true);
+function shallow (_tree) {
+	var tree = shape(_tree, null);
+
+	while (tree.tag === null) {
+		tree = extract(tree);
+	}
+
+	return tree;
 }

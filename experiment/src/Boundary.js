@@ -175,7 +175,6 @@ function errorBoundary (message, owner, type, from) {
 			if (owner.componentDidThrow !== void 0) {
 				tree = owner.componentDidThrow({location: location, message: message});
 			}
-
 			component = typeof owner === 'function' ? owner.name : owner.constructor.name;
 		}
 	} catch (err) {
@@ -185,7 +184,7 @@ function errorBoundary (message, owner, type, from) {
 	errorMessage(component, location, message instanceof Error ? message.stack : message);
 
 	if (type === 3 || type === 5) {
-		return shape(tree, owner, false);
+		return shape(tree, owner);
 	}
 }
 

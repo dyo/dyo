@@ -11,13 +11,15 @@ function attribute (newer, owner, xmlns, node, hydrate) {
 	var attrs = newer.attrs;
 
 	for (var name in attrs) {
-		if (name === 'ref') {
-			refs(attrs[name], owner, node, 0);
-		} else if (name !== 'key' && name !== 'children') {
-			if (evt(name) === true) {
-				event(name.toLowerCase().substring(2), attrs[name], owner, node);
-			} else if (hydrate === false) {
-				assign(attr(name), name, attrs[name], xmlns, node);
+		if (name !== 'key' && name !== 'children') {
+			if (name !== 'ref') {
+				if (evt(name) === true) {
+					event(name, attrs[name], owner, node, newer);
+				} else if (hydrate === false) {
+					assign(attr(name), name, attrs[name], xmlns, node, newer);
+				}
+			} else {
+				refs(attrs[name], owner, node, 0);
 			}
 		}
 	}
@@ -40,28 +42,26 @@ function attributes (older, newer, ancestor) {
 	var newValue;
 
 	for (var name in newAttrs) {
-		// name !== 'key' && name !== 'children' && name !== 'ref'
-		if (name !== 'key' && name !== 'children' && evt(name) === false) {
+		if (name !== 'key' && name !== 'children') {
 			newValue = newAttrs[name];
 
-			if (name === 'ref') {
-				refs(newValue, ancestor.owner, node, 1);
-			} else {
-				oldValue = oldAttrs[name];
-
+			if (name !== 'ref') {
+				oldValue = oldAttrs !== null ? oldAttrs[name] : null;
 				if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
-					assign(attr(name), name, newValue, xmlns, node);
+					assign(attr(name), name, newValue, xmlns, node, ancestor);
 				}
+			} else {
+				refs(newValue, ancestor.owner, node, 2);
 			}
 		}
 	}
 
 	for (var name in oldAttrs) {
-		if (name !== 'key' && name !== 'children' && name !== 'ref' && evt(name) === false) {
-			newValue = newAttrs[name];
+		if (name !== 'key' && name !== 'children' && name !== 'ref') {
+			newValue = newAttrs !== null ? newAttrs[name] : null;
 
 			if (newValue === null || newValue === void 0) {
-				assign(attr(name), name, newValue, xmlns, node);
+				assign(attr(name), name, newValue, xmlns, node, ancestor);
 			}
 		}
 	}
@@ -84,13 +84,7 @@ function refs (value, owner, node, type) {
 
 	switch (typeof value) {
 		case 'function': {
-			if (type === 0) {
-				schedule(function () {
-					callbackBoundary(owner, value, node, 2);
-				});
-			} else {
-				callbackBoundary(owner, value, node, 0);
-			}
+			callbackBoundary(owner, value, node, type);
 			break;
 		}
 		case 'string': {
@@ -110,8 +104,10 @@ function refs (value, owner, node, type) {
  * @param {Any} value
  * @param {String?} xmlns
  * @param {Node} node
+ * @param {Tree} tree
+ * @param {Tree} ancestor
  */
-function assign (type, name, value, xmlns, node) {
+function assign (type, name, value, xmlns, node, ancestor) {
 	switch (type) {
 		case 1: {
 			if (xmlns === null) {
@@ -143,7 +139,7 @@ function assign (type, name, value, xmlns, node) {
 			} else if (isNaN(Number(value)) === true) {
 				assign(6, name, value, xmlns, node);
 			} else {
-				node[name] = value;
+				set(node, name, value);
 			}
 			break;
 		}
@@ -156,6 +152,9 @@ function assign (type, name, value, xmlns, node) {
 				node.removeAttribute(name);
 			}
 			break;
+		}
+		case 7: {
+			event(name, value, ancestor.owner, node);
 		}
 	}
 }
@@ -174,7 +173,7 @@ function attr (name, tree) {
 		case 'style': return 3;
 		case 'innerHTML': return 4;
 		case 'width': case 'height': return 5;
-		default: return 6;
+		default: return evt(name) === false ? 6 : 7;
 	}
 }
 
@@ -212,6 +211,23 @@ function merge (source, props) {
 	for (var name in source) {
 		if (props[name] === void 0) {
 			props[name] = source[name];
+		}
+	}
+}
+
+/**
+ * Set Property
+ *
+ * @param {Tree} node
+ * @param {String} name
+ * @param {Any} value
+ */
+function set (node, name, value) {
+	try {
+		node[name] = value;
+	} catch (err) {
+		if (node[name] !== value) {
+			node.setProperty(name, value);
 		}
 	}
 }

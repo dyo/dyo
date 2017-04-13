@@ -3,17 +3,15 @@
  *
  * @param  {Tree} _tree
  * @param  {Component} owner
- * @param  {Boolean} deep
  * @return {Tree}
  */
-function shape (_tree, owner, deep) {
+function shape (_tree, owner) {
 	var tree = (_tree !== null && _tree !== void 0) ? _tree : text('');
-	var cast = tree.cast;
 
-	if (cast === void 0) {
+	if (tree.cast === void 0) {
 		switch (typeof tree) {
 			case 'function': {
-				tree = fragment(element(tree, owner === null ? null : owner.props));
+				tree = element(tree, owner === null ? null : owner.props);
 				break;
 			}
 			case 'string':
@@ -24,33 +22,14 @@ function shape (_tree, owner, deep) {
 			}
 			case 'object': {
 				switch (tree.constructor) {
-					case Promise: {
-						return resolve(tree, owner);
-					}
-					case Array: {
-						tree = fragment(tree);
-						break;
-					}
-					case Date: {
-						tree = text(tree+'');
-						break;
-					}
-					case Object: {
-						tree = tree.length > 0 && tree[0] !== void 0 ? fragment(tree) : text('');
-						break;
-					}
+					case Promise: return resolve(tree, owner);
+					case Array: tree = fragment(tree); break;
+					case Date: tree = text(tree+''); break;
+					case Object: tree = text(''); break;
 					default: tree = text('');
-				}
-				break;
+				} break;
 			}
 		}
-		cast = tree.cast;
-	} else if (cast > 0) {
-		tree = fragment(tree);
-	}
-
-	if (cast > 0 && deep === true && tree.tag === null) {
-		return extract(tree);
 	}
 
 	return tree;
@@ -76,11 +55,9 @@ function extract (tree) {
 	if (props === null) {
 		props = {};
 	}
-
 	if (type.defaultProps !== void 0) {
 		props = merge(type.defaultProps, props);
 	}
-
 	if (length !== 0) {
 		if (props === null) {
 			props = {children: children};
@@ -88,26 +65,22 @@ function extract (tree) {
 			props.children = children;
 		}
 	}
-
 	if (cast === 1) {
 		proto = type.prototype;
 
-		if (proto._ === 7) {
+		if (proto.UUID === 7) {
 			owner = new type(props);
 		} else {
 			if (proto.setState === void 0) {
 				extendClass(type, proto);
 			}
-
 			owner = new type(props);
 			Component.call(owner, props);
 		}
 
 		result = renderBoundary(owner, cast);
-
 		owner._block = 0;
-
-		result = shape(result, owner, false);
+		result = shape(result, owner);
 
 		owner._tree = tree;
 		tree.owner = owner;
@@ -115,15 +88,8 @@ function extract (tree) {
 		tree.cast = cast;
 		tree.owner = type;
 
-		result = shape(renderBoundary(tree, cast), null, false);
+		result = shape(renderBoundary(tree, cast), null);
 	}
-
-	tree.flag = result.flag;
-	tree.tag = result.tag;
-	tree.attrs = result.attrs;
-	tree.children = result.children;
-	tree.keyed = result.keyed;
-	tree.xmlns = result.xmlns;
 
 	return result;
 }
@@ -158,16 +124,15 @@ function resolve (pending, owner) {
 		if ((older = owner._tree) === null) {
 			return;
 		}
-
 		// node removed
 		if (older.node === null) {
 			return;
 		}
 
-		newer = shape(value, owner, false);
+		newer = shape(value, owner);
 
 		if (older.tag !== newer.tag) {
-			swap(older, newer, false, older);
+			swap(older, newer, 0, older);
 		} else {
 			patch(older, newer, 0, older);
 		}

@@ -64,10 +64,11 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
   */
 
 /**
- * ## Component Levels
+ * ## Component Flags
  *
  * 0: not pending/blocked(ready) `non of the below`
- * 1: blocked/pending `instance creation | prior merging new state | resolving async render`
+ * 1: blocked/pending `instance creation | prior merging new state`
+ * 2: async/pending `resolving async render`
  */
 
 /**

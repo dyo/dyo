@@ -33,12 +33,11 @@ function element (_type, _props) {
 
 	switch (typeof type) {
 		case 'string': {
-			tree.tag = type;
-			tree.attrs = props;
+			tree.tag = type, tree.attrs = props;
 			break;
 		}
 		case 'function': {
-			tree.cast = (proto = type.prototype) !== void 0 && proto.render !== void 0 ? 1 : 2
+			tree.cast = (proto = type.prototype) !== void 0 && proto.render !== void 0 ? 1 : 2;
 			break;
 		}
 	}
@@ -80,7 +79,6 @@ function adopt (tree, index, child) {
 			// an obscure floating point key avoids conflicts with int keyed children
 			child.key = index/161800;
 		}
-
 		children[i] = child;
 	} else {
 		switch (typeof child) {
@@ -93,14 +91,15 @@ function adopt (tree, index, child) {
 					for (var j = 0; j < length; j++) {
 						i = adopt(tree, i, child[j]);
 					}
-				} else if (length === void 0 && child.constructor === Date) {
-					children[i++] = text(child+'');
+					return i;
+				} else if (child.constructor === Date) {
+					return adopt(tree, i, text(child+''));
+				} else {
+					return adopt(tree, i, text(''));
 				}
-
-				return i;
 			}
 			default: {
-				children[i] = text(child);
+				return adopt(tree, i, text(child));
 			}
 		}
 	}
@@ -135,14 +134,29 @@ function fragment (children) {
 }
 
 /**
+ * Copy Properties
+ *
+ * @param  {Tree} older
+ * @param  {Tree} newer
+ */
+function copy (older, newer) {
+	older.flag = newer.flag;
+	older.tag = newer.tag;
+	older.attrs = newer.attrs;
+	older.children = newer.children;
+	older.keyed = newer.keyed;
+	older.xmlns = newer.xmlns;
+	older.node = newer.node;
+}
+
+/**
  * Copy Tree
  *
  * @param  {Tree} older
  * @param  {Tree} newer
- * @param  {Boolean} deep
- * @return {Tree}
+ * @param  {Boolean} type
  */
-function copy (older, newer, deep) {
+function clone (older, newer, type) {
 	older.flag = newer.flag;
 	older.tag = newer.tag;
 	older.attrs = newer.attrs;
@@ -150,16 +164,24 @@ function copy (older, newer, deep) {
 	older.xmlns = newer.xmlns;
 	older.node = newer.node;
 	older.keyed = newer.keyed;
+	older.parent = older.parent;
 
-	if (deep === true) {
-		older.cast = older.cast;
-		older.type = newer.type;
-		older.props = newer.props;
-		older.owner = newer.owner;
-		older.key = newer.key;
+	switch (type) {
+		case 1: {
+			older.cast = older.cast;
+			older.type = newer.type;
+			older.props = newer.props;
+			older.owner = newer.owner;
+			older.branch = newer.branch;
+			older.events = newer.events;
+			older.key = newer.key;
+			break;
+		}
+		case 2: {
+			older.branch = newer.owner;
+			break;
+		}
 	}
-
-	return older;
 }
 
 /**
@@ -176,10 +198,13 @@ function Tree (flag) {
 	this.children = null;
 	this.xmlns = null;
 	this.owner = null;
+	this.branch = null;
+	this.parent = null;
 	this.node = null;
 	this.key = null;
 	this.keyed = false;
 	this.cast = 0;
+	this.events = null;
 }
 
 /**

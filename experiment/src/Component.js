@@ -6,21 +6,17 @@
 function Component (_props) {
 	var props = _props;
 	var state = this.state;
-
-	this.refs = null;
-	this._tree = null;
-	this._block = 1;
-
 	// props
 	if (this.props === void 0) {
 		this.props = props !== null && props !== void 0 ? props : (props = {});
 	}
-
 	// state
 	if (state === void 0) {
 		state = this.state = {};
 	}
-
+	this.refs = null;
+	this._tree = null;
+	this._block = 1;
 	this._state = state;
 }
 
@@ -29,11 +25,13 @@ function Component (_props) {
  *
  * @type {Object}
  */
-Component.prototype = Object.create(null, {
+var prototype = {
 	setState: {value: setState},
 	forceUpdate: {value: forceUpdate},
-	_: {value: 7}
-});
+	UUID: {value: 7}
+};
+Component.prototype = Object.create(null, prototype);
+prototype.UUID.value = 0;
 
 /**
  * Extend Class
@@ -43,15 +41,9 @@ Component.prototype = Object.create(null, {
  */
 function extendClass (type, proto) {
 	if (proto.constructor !== type) {
-		Object.defineProperty(proto, 'constructor', {
-			value: type
-		});
+		Object.defineProperty(proto, 'constructor', {value: type});
 	}
-
-	Object.defineProperties(proto, {
-		setState: {value: setState},
-		forceUpdate: {value: forceUpdate}
-	});
+	Object.defineProperties(proto, prototype);
 }
 
 /**
@@ -120,7 +112,6 @@ function updateState (state, prevState, nextState) {
 	for (var name in prevState) {
 		state[name] = prevState[name];
 	}
-
 	for (var name in nextState) {
 		state[name] = nextState[name];
 	}
@@ -137,6 +128,7 @@ function updateState (state, prevState, nextState) {
  * @return {Tree?}
  */
 function shouldUpdate (older, newer, cast) {
+	var type = older.type;
 	var owner = older.owner;
 	var nextProps = newer.props;
 	var prevProps = older.props;
@@ -147,16 +139,20 @@ function shouldUpdate (older, newer, cast) {
 	var nextState;
 	var nextProps;
 	var prevProps;
+	var branch;
 	var tree;
+	var tag;
+
+	if (owner === null) {
+		return null;
+	}
 
 	if (cast === 1) {
 		if (owner._block !== 0) {
 			return null;
 		}
-
 		nextState = owner.state;
 		prevState = owner._state;
-
 		owner._block = 1;
 	} else {
 		nextState = nextProps === null ? object : nextProps;
@@ -164,6 +160,10 @@ function shouldUpdate (older, newer, cast) {
 	}
 
 	if ((recievedProps = nextProps !== null) === true) {
+		if (type.propTypes !== void 0) {
+			propTypes(type, nextProps);
+		}
+
 		if (owner.componentWillReceiveProps !== void 0) {
 			dataBoundary(owner, 0, nextProps);
 		}
@@ -190,22 +190,52 @@ function shouldUpdate (older, newer, cast) {
 		updateBoundary(owner, 1, nextProps, nextState);
 	}
 
-	tree = renderBoundary(cast === 1 ? owner : older, cast);
+	tree = shape(renderBoundary(cast === 1 ? owner : older, cast), owner);
+	tag = tree.tag;
+
+	if (tag !== older.tag) {
+		if (tag === null) {
+			if ((branch = older.branch) !== null && branch instanceof tree.type) {
+				patch(branch._tree, tree, tree.cast);
+			} else {
+				swap(older, tree, 2, older);
+				refresh(older);
+			}
+		} else {
+			swap(older, tree, 2, older);
+		}
+		tree = null;
+	}
 
 	if (owner.componentDidUpdate !== void 0) {
 		updateBoundary(owner, 2, prevProps, prevState);
 	}
 
-	tree = shape(tree, owner, false);
-
-	// async render, defer patching children
 	if (cast === 1) {
 		if (owner._block === 2) {
-			return null;
+			tree = null;
 		} else {
 			owner._block = 0;
 		}
 	}
 
 	return tree;
+}
+
+/**
+ * PropTypes
+ *
+ * @param {Function|Class} type
+ * @param {Object} props
+ */
+function propTypes (type, props) {
+	var validators = type.propTypes;
+	var display = type.name;
+	var result;
+
+	for (var name in validators) {
+		if (result = validators[name](props, name, display)) {
+			console.error(result);
+		}
+	}
 }
