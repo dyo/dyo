@@ -104,17 +104,14 @@ function keyed (older, newer, ancestor) {
  	var oldLength = oldChildren.length;
  	var newLength = newChildren.length;
  	var owner = ancestor.owner;
-
  	var oldStart = 0;
  	var newStart = 0;
  	var oldEnd = oldLength - 1;
  	var newEnd = newLength - 1;
-
  	var oldStartNode = oldChildren[oldStart];
  	var newStartNode = newChildren[newStart];
  	var oldEndNode = oldChildren[oldEnd];
  	var newEndNode = newChildren[newEnd];
-
  	var nextPos;
  	var nextNode;
 
@@ -225,18 +222,15 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd) {
 	var oldChildren = older.children;
 	var newChildren = newer.children;
 	var owner = ancestor.owner;
-
 	var oldLength = oldEnd + 1;
 	var newLength = newEnd + 1;
 	var oldOffset = oldLength - oldStart;
 	var newOffset = newLength - newStart;
 	var oldIndex = oldStart;
 	var newIndex = newStart;
-
 	var oldKeys = {};
 	var newKeys = {};
 	var childNodes = parent.childNodes;
-
 	var oldChild;
 	var newChild;
 

@@ -47,7 +47,6 @@ function extract (tree) {
 	var children = tree.children;
 	var length = children.length;
 	var group = tree.group;
-
 	var result;
 	var owner;
 	var proto;

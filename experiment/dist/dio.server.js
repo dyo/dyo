@@ -109,6 +109,7 @@
 	function Component (_props) {
 		var props = _props;
 		var state = this.state;
+	
 		// props
 		if (this.props === void 0) {
 			if (props === object || props === void 0 || props === null) {
@@ -116,10 +117,12 @@
 			}
 			this.props = props;
 		}
+	
 		// state
 		if (state === void 0) {
 			state = this.state = {};
 		}
+	
 		this.refs = null;
 		this._tree = null;
 		this._sync = 1;
@@ -341,10 +344,7 @@
 		}
 	
 		if ((host = older.host) !== null) {
-			owner = host.owner;
-			type = newer.type;
-	
-			if (owner === type || owner instanceof type) {
+			if ((owner = host.owner) === (type = newer.type) || owner instanceof type) {
 				return patch(host, newer, host.group, ancestor);
 			}
 		}
@@ -519,7 +519,7 @@
 	}
 	
 	/**
-	 * Copy Tree
+	 * Clone Tree
 	 *
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
@@ -634,7 +634,6 @@
 		var children = tree.children;
 		var length = children.length;
 		var group = tree.group;
-	
 		var result;
 		var owner;
 		var proto;
@@ -911,7 +910,8 @@
 				component = typeof owner === 'function' ? owner.name : owner.constructor.name;
 			}
 		} catch (err) {
-			message = err, location = 'componentDidThrow';
+			message = err;
+			location = 'componentDidThrow';
 		}
 	
 		errorMessage(component, location, message instanceof Error ? message.stack : message);
@@ -937,27 +937,31 @@
 			case 0: {
 				switch (from) {
 					case 0: return 'componentWillReceiveProps';
-				} break;
+				}
+				break;
 			}
 			case 1: {
 				switch (from) {
 					case 0: return 'shouldComponentUpdate';
 					case 1: return 'componentWillUpdate';
 					case 2: return 'componentDidUpdate';
-				} break;
+				}
+				break;
 			}
 			case 3: {
 				switch (from) {
 					case 1: return 'render';
 					case 2: return 'function';
-				} break;
+				}
+				break;
 			}
 			case 4: {
 				switch (from) {
 					case 0: return 'componentWillMount';
 					case 1: return 'componentDidMount';
 					case 2: return 'componentWillUnmount';
-				} break;
+				}
+				break;
 			}
 			case 5: {
 				return 'render';
@@ -1022,7 +1026,6 @@
 		var xmlns = older.xmlns;
 		var node = older.node;
 		var owner = ancestor.owner;
-	
 		var oldValue;
 		var newValue;
 	
@@ -1252,7 +1255,6 @@
 		var group = newer.group;
 		var flag = newer.flag;
 		var type = 0;
-	
 		var node;
 		var children;
 		var length;
@@ -1526,7 +1528,7 @@
 	function render (_newer, _target) {
 		var newer = _newer;
 		var target = _target;
-	
+		var older;
 	
 		if (target === null || target === void 0 || target === document) {
 			// mount points to document.body, if it's null dio was loaded before
@@ -1560,9 +1562,7 @@
 			}
 		}
 	
-		var older = target._older;
-	
-		if (older !== void 0) {
+		if ((older = target._older) !== void 0) {
 			if (older.key === newer.key) {
 				patch(older, newer, older.group, older);
 			} else {
@@ -1696,17 +1696,14 @@
 	 	var oldLength = oldChildren.length;
 	 	var newLength = newChildren.length;
 	 	var owner = ancestor.owner;
-	
 	 	var oldStart = 0;
 	 	var newStart = 0;
 	 	var oldEnd = oldLength - 1;
 	 	var newEnd = newLength - 1;
-	
 	 	var oldStartNode = oldChildren[oldStart];
 	 	var newStartNode = newChildren[newStart];
 	 	var oldEndNode = oldChildren[oldEnd];
 	 	var newEndNode = newChildren[newEnd];
-	
 	 	var nextPos;
 	 	var nextNode;
 	
@@ -1817,18 +1814,15 @@
 		var oldChildren = older.children;
 		var newChildren = newer.children;
 		var owner = ancestor.owner;
-	
 		var oldLength = oldEnd + 1;
 		var newLength = newEnd + 1;
 		var oldOffset = oldLength - oldStart;
 		var newOffset = newLength - newStart;
 		var oldIndex = oldStart;
 		var newIndex = newStart;
-	
 		var oldKeys = {};
 		var newKeys = {};
 		var childNodes = parent.childNodes;
-	
 		var oldChild;
 		var newChild;
 	

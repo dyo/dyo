@@ -146,7 +146,7 @@ function copy (older, newer) {
 }
 
 /**
- * Copy Tree
+ * Clone Tree
  *
  * @param  {Tree} older
  * @param  {Tree} newer

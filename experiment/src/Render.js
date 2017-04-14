@@ -7,7 +7,7 @@
 function render (_newer, _target) {
 	var newer = _newer;
 	var target = _target;
-
+	var older;
 
 	if (target === null || target === void 0 || target === document) {
 		// mount points to document.body, if it's null dio was loaded before
@@ -41,9 +41,7 @@ function render (_newer, _target) {
 		}
 	}
 
-	var older = target._older;
-
-	if (older !== void 0) {
+	if ((older = target._older) !== void 0) {
 		if (older.key === newer.key) {
 			patch(older, newer, older.group, older);
 		} else {

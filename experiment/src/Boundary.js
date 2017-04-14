@@ -178,7 +178,8 @@ function errorBoundary (message, owner, type, from) {
 			component = typeof owner === 'function' ? owner.name : owner.constructor.name;
 		}
 	} catch (err) {
-		message = err, location = 'componentDidThrow';
+		message = err;
+		location = 'componentDidThrow';
 	}
 
 	errorMessage(component, location, message instanceof Error ? message.stack : message);
@@ -204,27 +205,31 @@ function errorLocation (type, from) {
 		case 0: {
 			switch (from) {
 				case 0: return 'componentWillReceiveProps';
-			} break;
+			}
+			break;
 		}
 		case 1: {
 			switch (from) {
 				case 0: return 'shouldComponentUpdate';
 				case 1: return 'componentWillUpdate';
 				case 2: return 'componentDidUpdate';
-			} break;
+			}
+			break;
 		}
 		case 3: {
 			switch (from) {
 				case 1: return 'render';
 				case 2: return 'function';
-			} break;
+			}
+			break;
 		}
 		case 4: {
 			switch (from) {
 				case 0: return 'componentWillMount';
 				case 1: return 'componentDidMount';
 				case 2: return 'componentWillUnmount';
-			} break;
+			}
+			break;
 		}
 		case 5: {
 			return 'render';

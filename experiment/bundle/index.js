@@ -10,25 +10,16 @@ const main = [
 	'../src/Element.js',
 	'../src/Extract.js',
 	'../src/Boundary.js',
-	'../src/Attributes.js',
+	'../src/Attribute.js',
 	'../src/Event.js',
-	'../src/Nodes.js',
+	'../src/Node.js',
 	'../src/Render.js',
 	'../src/Reconcile.js'
 ];
 
-const server = [
-	'../src/Shared.js',
-	'../src/Component.js',
-	'../src/Element.js',
-	'../src/Extract.js',
-	'../src/Boundary.js',
-	'../src/Attributes.js',
-	'../src/Event.js',
-	'../src/Nodes.js',
-	'../src/Render.js',
-	'../src/Reconcile.js'
-];
+const server = main.concat([
+
+]);
 
 const bundler = (file) => {
 	return fs.readFileSync(path.join(__dirname, file), 'utf8');

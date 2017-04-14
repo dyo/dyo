@@ -6,6 +6,7 @@
 function Component (_props) {
 	var props = _props;
 	var state = this.state;
+
 	// props
 	if (this.props === void 0) {
 		if (props === object || props === void 0 || props === null) {
@@ -13,10 +14,12 @@ function Component (_props) {
 		}
 		this.props = props;
 	}
+
 	// state
 	if (state === void 0) {
 		state = this.state = {};
 	}
+
 	this.refs = null;
 	this._tree = null;
 	this._sync = 1;
@@ -238,10 +241,7 @@ function updateHost (older, newer, ancestor, tag) {
 	}
 
 	if ((host = older.host) !== null) {
-		owner = host.owner;
-		type = newer.type;
-
-		if (owner === type || owner instanceof type) {
+		if ((owner = host.owner) === (type = newer.type) || owner instanceof type) {
 			return patch(host, newer, host.group, ancestor);
 		}
 	}
