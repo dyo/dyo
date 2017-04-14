@@ -59,7 +59,8 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
 			node = nodeBoundary(flag, newer, xmlns, owner);
 
 			if (newer.flag === 3) {
-				type = (create(node, xmlns, owner, parent, sibling, action), 0);
+				create(node, xmlns, owner, parent, sibling, action);
+				clone(newer, node, type = 0);
 			} else {
 				children = newer.children;
 				length = children.length;
