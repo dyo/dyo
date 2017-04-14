@@ -16,8 +16,8 @@ function element (_type, _props) {
 	var proto;
 
 	if (props !== null) {
-		if (props.cast !== void 0 || props.constructor !== Object) {
-			props = null;
+		if (props.group !== void 0 || props.constructor !== Object) {
+			props = object;
 			i = 1;
 		} else {
 			tree.props = props;
@@ -33,11 +33,12 @@ function element (_type, _props) {
 
 	switch (typeof type) {
 		case 'string': {
-			tree.tag = type, tree.attrs = props;
+			tree.tag = type;
+			tree.attrs = props;
 			break;
 		}
 		case 'function': {
-			tree.cast = (proto = type.prototype) !== void 0 && proto.render !== void 0 ? 1 : 2;
+			tree.group = (proto = type.prototype) !== void 0 && proto.render !== void 0 ? 1 : 2;
 			break;
 		}
 	}
@@ -50,7 +51,6 @@ function element (_type, _props) {
 			index = adopt(tree, index, arguments[i]);
 		}
 	}
-
 	return tree;
 }
 
@@ -69,7 +69,7 @@ function adopt (tree, index, child) {
 
 	if (child === null || child === void 0) {
 		children[i] = text('');
-	} else if (child.cast !== void 0) {
+	} else if (child.group !== void 0) {
 		if (tree.keyed === false) {
 			if (child.key !== null) {
 				tree.keyed = true;
@@ -82,10 +82,7 @@ function adopt (tree, index, child) {
 		children[i] = child;
 	} else {
 		switch (typeof child) {
-			case 'function': {
-				children[i] = element(child, null);
-				break;
-			}
+			case 'function': children[i] = element(child, null); break;
 			case 'object': {
 				if ((length = child.length) > 0) {
 					for (var j = 0; j < length; j++) {
@@ -103,7 +100,6 @@ function adopt (tree, index, child) {
 			}
 		}
 	}
-
 	return i + 1;
 }
 
@@ -140,13 +136,13 @@ function fragment (children) {
  * @param  {Tree} newer
  */
 function copy (older, newer) {
-	older.flag = newer.flag;
 	older.tag = newer.tag;
+	older.flag = newer.flag;
+	older.node = newer.node;
 	older.attrs = newer.attrs;
-	older.children = newer.children;
 	older.keyed = newer.keyed;
 	older.xmlns = newer.xmlns;
-	older.node = newer.node;
+	older.children = newer.children;
 }
 
 /**
@@ -159,25 +155,29 @@ function copy (older, newer) {
 function clone (older, newer, type) {
 	older.flag = newer.flag;
 	older.tag = newer.tag;
-	older.attrs = newer.attrs;
-	older.children = newer.children;
-	older.xmlns = newer.xmlns;
 	older.node = newer.node;
+	older.attrs = newer.attrs;
+	older.xmlns = newer.xmlns;
 	older.keyed = newer.keyed;
 	older.parent = older.parent;
+	older.children = newer.children;
 
 	switch (type) {
 		case 1: {
-			older.cast = older.cast;
-			older.type = newer.type;
 			older.props = newer.props;
 			older.owner = newer.owner;
-			older.branch = newer.branch;
+			older.type = newer.type;
+			older.group = older.group;
+			older.host = newer.host;
 			older.key = newer.key;
 			break;
 		}
 		case 2: {
-			older.branch = newer.owner;
+			if (typeof newer.owner === 'function') {
+				older.host = shape(newer.owner, newer);
+			} else {
+				older.host = newer.owner;
+			}
 			break;
 		}
 	}
@@ -191,18 +191,18 @@ function clone (older, newer, type) {
 function Tree (flag) {
 	this.flag = flag;
 	this.tag = null;
+	this.key = null;
 	this.type = null;
-	this.props = null;
-	this.attrs = null;
-	this.children = null;
+	this.host = null;
+	this.node = null;
+	this.group = 0;
+	this.props = object;
+	this.attrs = object;
 	this.xmlns = null;
 	this.owner = null;
-	this.branch = null;
-	this.parent = null;
-	this.node = null;
-	this.key = null;
 	this.keyed = false;
-	this.cast = 0;
+	this.parent = null;
+	this.children = null;
 }
 
 /**

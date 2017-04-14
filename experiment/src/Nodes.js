@@ -12,7 +12,7 @@
 function create (newer, _xmlns, _owner, parent, sibling, action) {
 	var xmlns = _xmlns;
 	var owner = _owner;
-	var cast = newer.cast;
+	var group = newer.group;
 	var flag = newer.flag;
 	var type = 0;
 
@@ -26,7 +26,7 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
 		xmlns = newer.xmlns;
 	}
 
-	if (cast > 0) {
+	if (group > 0) {
 		tree = extract(newer);
 		flag = tree.flag;
 
@@ -37,14 +37,14 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
 		if (owner.componentWillMount !== void 0) {
 			mountBoundary(owner, 0);
 		}
-		if (tree.cast === 0) {
+		if (tree.group === 0) {
 			type = 2;
 		} else {
 			create(tree, xmlns, owner, parent, sibling, action);
 			// components may return components recursively,
 			// keep a record of these
 			tree.parent = newer;
-			newer.branch = tree.owner;
+			newer.host = tree;
 		}
 		copy(newer, tree);
 	} else {
@@ -90,7 +90,7 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
 		}
 	}
 
-	if (cast > 0 && owner.componentDidMount !== void 0) {
+	if (group > 0 && owner.componentDidMount !== void 0) {
 		mountBoundary(owner, 1);
 	}
 }
@@ -103,7 +103,7 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
  * @param {Node} node
  */
 function remove (older, parent, node) {
-	if (older.cast > 0 && older.owner.componentWillUnmount !== void 0) {
+	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
 		mountBoundary(older.owner, 2);
 	}
 	empty(older, older, false);
@@ -121,7 +121,7 @@ function remove (older, parent, node) {
  * @param {Node} node
  */
 function replace (older, newer, parent, ancestor, node) {
-	if (older.cast > 0 && older.owner.componentWillUnmount !== void 0) {
+	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
 		mountBoundary(older.owner, 2);
 	}
 	empty(older, older, false);
@@ -160,15 +160,15 @@ function refresh (older) {
  * @param {Tree} older
  */
 function unmount (older) {
-	var branch = older.branch;
+	var host = older.host;
 	var owner = older.owner;
 
 	if (owner !== null && owner.componentWillUnmount !== void 0) {
 		mountBoundary(owner, 2);
 	}
 
-	if (branch !== null) {
-		unmount(branch._tree);
+	if (host !== null) {
+		unmount(host);
 	}
 }
 
@@ -189,8 +189,8 @@ function swap (older, newer, type, ancestor) {
 			break;
 		}
 		case 2: {
-			if (older.branch !== null) {
-				unmount(older.branch._tree);
+			if (older.host !== null) {
+				unmount(older.host);
 			}
 			break;
 		}
@@ -200,6 +200,7 @@ function swap (older, newer, type, ancestor) {
 			}
 		}
 	}
+
 	clone(older, newer, type);
 }
 
@@ -210,7 +211,7 @@ function swap (older, newer, type, ancestor) {
  */
 function release (tree) {
 	tree.parent = null;
-	tree.branch = null;
+	tree.host = null;
 	tree.owner = null;
 	tree.node = null;
 }
@@ -233,7 +234,7 @@ function empty (older, newer, clear) {
 	for (var i = 0, child; i < length; i++) {
 		child = children[i];
 
-		if (child.cast > 0 && child.owner.componentWillUnmount !== void 0) {
+		if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
 			mountBoundary(child.owner, 2);
 		}
 

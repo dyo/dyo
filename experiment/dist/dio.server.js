@@ -68,13 +68,13 @@
 	 * xmlns:    node xmlns namespace {String?}
 	 * owner:    node component       {Component?}
 	 * node:     node DOM reference   {Node?}
-	 * cast:     node type case       {Number}
+	 * group:    node ground          {Number}
 	 */
 	
 	 /**
 	  * ## Component Shape
 	  *
-	  * _block:      block          {Number}
+	  * _sync:       sync/async     {Number}
 	  * _tree:       current tree   {Tree?}
 	  * _state:      previous state {Object}
 	  *
@@ -111,7 +111,10 @@
 		var state = this.state;
 		// props
 		if (this.props === void 0) {
-			this.props = props !== null && props !== void 0 ? props : (props = {});
+			if (props === object || props === void 0 || props === null) {
+				props = {};
+			}
+			this.props = props;
 		}
 		// state
 		if (state === void 0) {
@@ -119,7 +122,7 @@
 		}
 		this.refs = null;
 		this._tree = null;
-		this._block = 1;
+		this._sync = 1;
 		this._state = state;
 	}
 	
@@ -133,6 +136,7 @@
 		forceUpdate: {value: forceUpdate},
 		UUID: {value: 7}
 	};
+	
 	Component.prototype = Object.create(null, prototype);
 	prototype.UUID.value = 0;
 	
@@ -160,7 +164,7 @@
 		var prevState;
 		var owner;
 	
-		if (state === void 0) {
+		if (state === void 0 || state === null) {
 			return;
 		}
 	
@@ -168,14 +172,16 @@
 		prevState = this._state = this.state;
 	
 		if (typeof nextState === 'function') {
-			if ((nextState = callbackBoundary(this, nextState, prevState, 0)) === void 0) {
+			nextState = callbackBoundary(this, nextState, prevState, 0);
+	
+			if (nextState === void 0 || nextState === null) {
 				return;
 			}
 		}
 	
-		if (state !== null && state.constructor === Promise) {
+		if (nextState.constructor === Promise) {
 			owner = this;
-			state.then(function (value) {
+			nextState.then(function (value) {
 				owner.setState(value);
 			});
 		} else {
@@ -190,13 +196,12 @@
 	 * @param {Function=} callback
 	 */
 	function forceUpdate (callback) {
-		var tree = this._tree;
+		var older = this._tree;
 	
-		if (this._block !== 0 || tree.node === null) {
+		if (this._sync !== 0 || older.node === null) {
 			return;
 		}
-	
-		patch(tree, tree, 1, tree);
+		patch(older, older, 1, older);
 	
 		if (callback !== void 0 && typeof callback === 'function') {
 			callbackBoundary(this, callback, this.state, 1);
@@ -218,7 +223,6 @@
 		for (var name in nextState) {
 			state[name] = nextState[name];
 		}
-	
 		return state;
 	}
 	
@@ -226,14 +230,15 @@
 	 * shouldUpdate
 	 *
 	 * @param  {Tree} older
-	 * @param  {Tree} newer
-	 * @param  {Number} cast
+	 * @param  {Tree} _newer
+	 * @param  {Number} group
+	 * @param  {Tree} ancestor
 	 * @return {Tree?}
 	 */
-	function shouldUpdate (older, newer, cast) {
+	function shouldUpdate (older, _newer, group, ancestor) {
 		var type = older.type;
 		var owner = older.owner;
-		var nextProps = newer.props;
+		var nextProps = _newer.props;
 		var prevProps = older.props;
 	
 		var recievedProps;
@@ -242,27 +247,27 @@
 		var nextState;
 		var nextProps;
 		var prevProps;
-		var branch;
-		var tree;
+		var newer;
+		var host;
 		var tag;
 	
 		if (owner === null) {
 			return null;
 		}
 	
-		if (cast === 1) {
-			if (owner._block !== 0) {
-				return null;
+		if (group === 1) {
+			if (owner._sync !== 0) {
+				return;
 			}
 			nextState = owner.state;
 			prevState = owner._state;
-			owner._block = 1;
+			owner._sync = 1;
 		} else {
-			nextState = nextProps === null ? object : nextProps;
-			prevState = prevProps === null ? object : prevProps;
+			nextState = nextProps;
+			prevState = prevProps;
 		}
 	
-		if ((recievedProps = nextProps !== null) === true) {
+		if ((recievedProps = nextProps !== object) === true) {
 			if (type.propTypes !== void 0) {
 				propTypes(type, nextProps);
 			}
@@ -270,7 +275,6 @@
 			if (owner.componentWillReceiveProps !== void 0) {
 				dataBoundary(owner, 0, nextProps);
 			}
-	
 			defaultProps = older.type.defaultProps;
 	
 			if (defaultProps !== void 0) {
@@ -282,47 +286,71 @@
 			owner.shouldComponentUpdate !== void 0 &&
 			updateBoundary(owner, 0, nextProps, nextState) === false
 		) {
-			return (owner._block = 0, null);
+			return (owner._sync = 0, null);
 		}
 	
 		if (recievedProps === true) {
-			(cast === 1 ? owner : older).props = nextProps;
+			(group === 1 ? owner : older).props = nextProps;
 		}
 	
 		if (owner.componentWillUpdate !== void 0) {
 			updateBoundary(owner, 1, nextProps, nextState);
 		}
 	
-		tree = shape(renderBoundary(cast === 1 ? owner : older, cast), owner);
-		tag = tree.tag;
+		if (group === 1) {
+			// class
+			newer = shape(renderBoundary(owner, group), owner);
+		} else {
+			// function
+			newer = shape(renderBoundary(older, group), _newer);
+		}
 	
-		if (tag !== older.tag) {
-			if (tag === null) {
-				if ((branch = older.branch) !== null && branch instanceof tree.type) {
-					patch(branch._tree, tree, tree.cast);
-				} else {
-					swap(older, tree, 2, older);
-					refresh(older);
-				}
-			} else {
-				swap(older, tree, 2, older);
-			}
-			tree = null;
+		if ((tag = newer.tag) !== older.tag) {
+			newer = updateHost(older, newer, ancestor, tag);
 		}
 	
 		if (owner.componentDidUpdate !== void 0) {
 			updateBoundary(owner, 2, prevProps, prevState);
 		}
 	
-		if (cast === 1) {
-			if (owner._block === 2) {
-				tree = null;
-			} else {
-				owner._block = 0;
+		if (group === 1) {
+			if (owner._sync === 2) {
+				return;
+			}
+			owner._sync = 0;
+		}
+		return newer;
+	}
+	
+	/**
+	 * Update Host
+	 *
+	 * @param  {Tree} older
+	 * @param  {Tree} newer
+	 * @param  {Tree} ancestor
+	 * @param  {String?} tag
+	 */
+	function updateHost (older, newer, ancestor, tag) {
+		var host;
+		var owner;
+		var type;
+		var group;
+	
+		if (tag !== null) {
+			return swap(older, newer, 2, older);
+		}
+	
+		if ((host = older.host) !== null) {
+			owner = host.owner;
+			type = newer.type;
+	
+			if (owner === type || owner instanceof type) {
+				return patch(host, newer, host.group, ancestor);
 			}
 		}
 	
-		return tree;
+		swap(older, newer, 2, older);
+		refresh(older);
 	}
 	
 	/**
@@ -361,8 +389,8 @@
 		var proto;
 	
 		if (props !== null) {
-			if (props.cast !== void 0 || props.constructor !== Object) {
-				props = null;
+			if (props.group !== void 0 || props.constructor !== Object) {
+				props = object;
 				i = 1;
 			} else {
 				tree.props = props;
@@ -378,11 +406,12 @@
 	
 		switch (typeof type) {
 			case 'string': {
-				tree.tag = type, tree.attrs = props;
+				tree.tag = type;
+				tree.attrs = props;
 				break;
 			}
 			case 'function': {
-				tree.cast = (proto = type.prototype) !== void 0 && proto.render !== void 0 ? 1 : 2;
+				tree.group = (proto = type.prototype) !== void 0 && proto.render !== void 0 ? 1 : 2;
 				break;
 			}
 		}
@@ -395,7 +424,6 @@
 				index = adopt(tree, index, arguments[i]);
 			}
 		}
-	
 		return tree;
 	}
 	
@@ -414,7 +442,7 @@
 	
 		if (child === null || child === void 0) {
 			children[i] = text('');
-		} else if (child.cast !== void 0) {
+		} else if (child.group !== void 0) {
 			if (tree.keyed === false) {
 				if (child.key !== null) {
 					tree.keyed = true;
@@ -427,10 +455,7 @@
 			children[i] = child;
 		} else {
 			switch (typeof child) {
-				case 'function': {
-					children[i] = element(child, null);
-					break;
-				}
+				case 'function': children[i] = element(child, null); break;
 				case 'object': {
 					if ((length = child.length) > 0) {
 						for (var j = 0; j < length; j++) {
@@ -448,7 +473,6 @@
 				}
 			}
 		}
-	
 		return i + 1;
 	}
 	
@@ -485,13 +509,13 @@
 	 * @param  {Tree} newer
 	 */
 	function copy (older, newer) {
-		older.flag = newer.flag;
 		older.tag = newer.tag;
+		older.flag = newer.flag;
+		older.node = newer.node;
 		older.attrs = newer.attrs;
-		older.children = newer.children;
 		older.keyed = newer.keyed;
 		older.xmlns = newer.xmlns;
-		older.node = newer.node;
+		older.children = newer.children;
 	}
 	
 	/**
@@ -504,25 +528,29 @@
 	function clone (older, newer, type) {
 		older.flag = newer.flag;
 		older.tag = newer.tag;
-		older.attrs = newer.attrs;
-		older.children = newer.children;
-		older.xmlns = newer.xmlns;
 		older.node = newer.node;
+		older.attrs = newer.attrs;
+		older.xmlns = newer.xmlns;
 		older.keyed = newer.keyed;
 		older.parent = older.parent;
+		older.children = newer.children;
 	
 		switch (type) {
 			case 1: {
-				older.cast = older.cast;
-				older.type = newer.type;
 				older.props = newer.props;
 				older.owner = newer.owner;
-				older.branch = newer.branch;
+				older.type = newer.type;
+				older.group = older.group;
+				older.host = newer.host;
 				older.key = newer.key;
 				break;
 			}
 			case 2: {
-				older.branch = newer.owner;
+				if (typeof newer.owner === 'function') {
+					older.host = shape(newer.owner, newer);
+				} else {
+					older.host = newer.owner;
+				}
 				break;
 			}
 		}
@@ -536,18 +564,18 @@
 	function Tree (flag) {
 		this.flag = flag;
 		this.tag = null;
+		this.key = null;
 		this.type = null;
-		this.props = null;
-		this.attrs = null;
-		this.children = null;
+		this.host = null;
+		this.node = null;
+		this.group = 0;
+		this.props = object;
+		this.attrs = object;
 		this.xmlns = null;
 		this.owner = null;
-		this.branch = null;
-		this.parent = null;
-		this.node = null;
-		this.key = null;
 		this.keyed = false;
-		this.cast = 0;
+		this.parent = null;
+		this.children = null;
 	}
 	
 	/**
@@ -567,7 +595,7 @@
 	function shape (_tree, owner) {
 		var tree = (_tree !== null && _tree !== void 0) ? _tree : text('');
 	
-		if (tree.cast === void 0) {
+		if (tree.group === void 0) {
 			switch (typeof tree) {
 				case 'function': {
 					tree = element(tree, owner === null ? null : owner.props);
@@ -605,26 +633,27 @@
 		var props = tree.props;
 		var children = tree.children;
 		var length = children.length;
-		var cast = tree.cast;
+		var group = tree.group;
 	
 		var result;
 		var owner;
 		var proto;
 	
-		if (props === null) {
+		if (props === object) {
 			props = {};
 		}
 		if (type.defaultProps !== void 0) {
 			props = merge(type.defaultProps, props);
 		}
 		if (length !== 0) {
-			if (props === null) {
+			if (props === object) {
 				props = {children: children};
 			} else {
 				props.children = children;
 			}
 		}
-		if (cast === 1) {
+	
+		if (group === 1) {
 			proto = type.prototype;
 	
 			if (proto.UUID === 7) {
@@ -637,17 +666,19 @@
 				Component.call(owner, props);
 			}
 	
-			result = renderBoundary(owner, cast);
-			owner._block = 0;
+			result = renderBoundary(owner, group);
+	
+			owner._sync = 0;
+	
 			result = shape(result, owner);
 	
 			owner._tree = tree;
 			tree.owner = owner;
 		} else {
-			tree.cast = cast;
+			tree.group = group;
 			tree.owner = type;
 	
-			result = shape(renderBoundary(tree, cast), null);
+			result = shape(renderBoundary(tree, group), tree);
 		}
 	
 		return result;
@@ -672,13 +703,13 @@
 			tree = text('');
 		}
 	
-		owner._block = 2;
+		owner._sync = 2;
 	
 		pending.then(function (value) {
 			var older;
 			var newer;
 	
-			owner._block = 0;
+			owner._sync = 0;
 	
 			if ((older = owner._tree) === null) {
 				return;
@@ -750,7 +781,7 @@
 		try {
 			switch (cast) {
 				case 1: return owner.render(owner.props, owner.state);
-				case 2: return owner.type(owner.props || object);
+				case 2: return owner.type(owner.props);
 			}
 		} catch (err) {
 			return errorBoundary(err, cast === 1 ? owner : owner.type, 3, cast);
@@ -959,17 +990,20 @@
 	 */
 	function attribute (newer, owner, xmlns, node, hydrate) {
 		var attrs = newer.attrs;
+		var value;
 	
 		for (var name in attrs) {
 			if (name !== 'key' && name !== 'children') {
+				value = attrs[name];
+	
 				if (name !== 'ref') {
 					if (evt(name) === true) {
-						event(name, attrs[name], owner, node, newer);
+						event(node, name, owner, value);
 					} else if (hydrate === false) {
-						assign(attr(name), name, attrs[name], xmlns, node, newer);
+						assign(attr(name), name, value, xmlns, node, newer);
 					}
 				} else {
-					refs(attrs[name], owner, node, 0);
+					refs(value, owner, node, 0);
 				}
 			}
 		}
@@ -987,6 +1021,7 @@
 		var newAttrs = newer.attrs;
 		var xmlns = older.xmlns;
 		var node = older.node;
+		var owner = ancestor.owner;
 	
 		var oldValue;
 		var newValue;
@@ -996,9 +1031,14 @@
 				newValue = newAttrs[name];
 	
 				if (name !== 'ref') {
-					oldValue = oldAttrs !== null ? oldAttrs[name] : null;
+					oldValue = oldAttrs[name];
+	
 					if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
-						assign(attr(name), name, newValue, xmlns, node, ancestor);
+						if (evt(name) === false) {
+							assign(attr(name), name, newValue, xmlns, node, ancestor);
+						} else {
+							event(node, name, owner, newValue);
+						}
 					}
 				} else {
 					refs(newValue, ancestor.owner, node, 2);
@@ -1008,10 +1048,14 @@
 	
 		for (var name in oldAttrs) {
 			if (name !== 'key' && name !== 'children' && name !== 'ref') {
-				newValue = newAttrs !== null ? newAttrs[name] : null;
+				newValue = newAttrs[name];
 	
 				if (newValue === null || newValue === void 0) {
-					assign(attr(name), name, newValue, xmlns, node, ancestor);
+					if (evt(name) === false) {
+						assign(attr(name), name, newValue, xmlns, node, ancestor);
+					} else {
+						event(node, name, owner, newValue);
+					}
 				}
 			}
 		}
@@ -1054,10 +1098,8 @@
 	 * @param {Any} value
 	 * @param {String?} xmlns
 	 * @param {Node} node
-	 * @param {Tree} tree
-	 * @param {Tree} ancestor
 	 */
-	function assign (type, name, value, xmlns, node, ancestor) {
+	function assign (type, name, value, xmlns, node) {
 		switch (type) {
 			case 1: {
 				if (xmlns === null) {
@@ -1103,9 +1145,6 @@
 				}
 				break;
 			}
-			case 7: {
-				event(name, value, ancestor.owner, node);
-			}
 		}
 	}
 	
@@ -1123,7 +1162,7 @@
 			case 'style': return 3;
 			case 'innerHTML': return 4;
 			case 'width': case 'height': return 5;
-			default: return evt(name) === false ? 6 : 7;
+			default: return 6;
 		}
 	}
 	
@@ -1185,15 +1224,15 @@
 	/**
 	 * Event Station
 	 *
-	 * @param {String} type
-	 * @param {Function} listener
-	 * @param {Component} owner
 	 * @param {Node} node
+	 * @param {String} name
+	 * @param {Component} owner
+	 * @param {Function} handler
 	 */
-	function event (type, listener, owner, node) {
-		node[type.toLowerCase()] = typeof listener !== 'function' ? null : function (e) {
-			eventBoundary(owner, listener, e);
-		}
+	function event (node, name, owner, handler) {
+		node[name.toLowerCase()] = typeof handler !== 'function' ? null : function proxy (e) {
+			eventBoundary(owner, handler, e);
+		};
 	}
 	
 	/**
@@ -1210,7 +1249,7 @@
 	function create (newer, _xmlns, _owner, parent, sibling, action) {
 		var xmlns = _xmlns;
 		var owner = _owner;
-		var cast = newer.cast;
+		var group = newer.group;
 		var flag = newer.flag;
 		var type = 0;
 	
@@ -1224,7 +1263,7 @@
 			xmlns = newer.xmlns;
 		}
 	
-		if (cast > 0) {
+		if (group > 0) {
 			tree = extract(newer);
 			flag = tree.flag;
 	
@@ -1235,14 +1274,14 @@
 			if (owner.componentWillMount !== void 0) {
 				mountBoundary(owner, 0);
 			}
-			if (tree.cast === 0) {
+			if (tree.group === 0) {
 				type = 2;
 			} else {
 				create(tree, xmlns, owner, parent, sibling, action);
 				// components may return components recursively,
 				// keep a record of these
 				tree.parent = newer;
-				newer.branch = tree.owner;
+				newer.host = tree;
 			}
 			copy(newer, tree);
 		} else {
@@ -1288,7 +1327,7 @@
 			}
 		}
 	
-		if (cast > 0 && owner.componentDidMount !== void 0) {
+		if (group > 0 && owner.componentDidMount !== void 0) {
 			mountBoundary(owner, 1);
 		}
 	}
@@ -1301,7 +1340,7 @@
 	 * @param {Node} node
 	 */
 	function remove (older, parent, node) {
-		if (older.cast > 0 && older.owner.componentWillUnmount !== void 0) {
+		if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
 			mountBoundary(older.owner, 2);
 		}
 		empty(older, older, false);
@@ -1319,7 +1358,7 @@
 	 * @param {Node} node
 	 */
 	function replace (older, newer, parent, ancestor, node) {
-		if (older.cast > 0 && older.owner.componentWillUnmount !== void 0) {
+		if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
 			mountBoundary(older.owner, 2);
 		}
 		empty(older, older, false);
@@ -1358,15 +1397,15 @@
 	 * @param {Tree} older
 	 */
 	function unmount (older) {
-		var branch = older.branch;
+		var host = older.host;
 		var owner = older.owner;
 	
 		if (owner !== null && owner.componentWillUnmount !== void 0) {
 			mountBoundary(owner, 2);
 		}
 	
-		if (branch !== null) {
-			unmount(branch._tree);
+		if (host !== null) {
+			unmount(host);
 		}
 	}
 	
@@ -1387,8 +1426,8 @@
 				break;
 			}
 			case 2: {
-				if (older.branch !== null) {
-					unmount(older.branch._tree);
+				if (older.host !== null) {
+					unmount(older.host);
 				}
 				break;
 			}
@@ -1398,6 +1437,7 @@
 				}
 			}
 		}
+	
 		clone(older, newer, type);
 	}
 	
@@ -1408,7 +1448,7 @@
 	 */
 	function release (tree) {
 		tree.parent = null;
-		tree.branch = null;
+		tree.host = null;
 		tree.owner = null;
 		tree.node = null;
 	}
@@ -1431,7 +1471,7 @@
 		for (var i = 0, child; i < length; i++) {
 			child = children[i];
 	
-			if (child.cast > 0 && child.owner.componentWillUnmount !== void 0) {
+			if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
 				mountBoundary(child.owner, 2);
 			}
 	
@@ -1523,7 +1563,7 @@
 	
 		if (older !== void 0) {
 			if (older.key === newer.key) {
-				patch(older, newer, older.cast, older);
+				patch(older, newer, older.group, older);
 			} else {
 				swap(older, newer, 1, newer);
 			}
@@ -1554,10 +1594,10 @@
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} newer
-	 * @param {Number} cast
+	 * @param {Number} group
 	 * @param {Tree} _ancestor
 	 */
-	function patch (older, _newer, cast, _ancestor) {
+	function patch (older, _newer, group, _ancestor) {
 		var ancestor = _ancestor;
 		var newer = _newer;
 	
@@ -1565,14 +1605,14 @@
 			return swap(older, newer, 1, ancestor);
 		}
 	
-		if (cast > 0) {
-			if ((newer = shouldUpdate(older, newer, cast)) === null) {
+		if (group > 0) {
+			if ((newer = shouldUpdate(older, newer, group, ancestor)) === void 0) {
 				return;
 			}
 			// ancestor represents the last root component
 			// we need to keep refererence of this to support
 			// boundless events when creating new nodes
-			if (cast === 1) {
+			if (group === 1) {
 				ancestor = older;
 			}
 		}
@@ -1598,6 +1638,7 @@
 		} else {
 			nonkeyed(older, newer, ancestor);
 		}
+	
 		attributes(older, newer, ancestor);
 	}
 	
@@ -1634,7 +1675,7 @@
 				} else if (newChild.type !== oldChild.type) {
 					replace(oldChild, oldChildren[i] = newChild, parent, ancestor, oldChild.node);
 				} else {
-					patch(oldChild, newChild, oldChild.cast, ancestor);
+					patch(oldChild, newChild, oldChild.group, ancestor);
 				}
 			}
 		}
@@ -1674,7 +1715,7 @@
 	 		while (oldStartNode.key === newStartNode.key) {
 	 			newChildren[newStart] = oldStartNode;
 	
-	 			patch(oldStartNode, newStartNode, oldStartNode.cast, ancestor);
+	 			patch(oldStartNode, newStartNode, oldStartNode.group, ancestor);
 	
 	 			oldStart++;
 	 			newStart++;
@@ -1689,7 +1730,7 @@
 	 		while (oldEndNode.key === newEndNode.key) {
 	 			newChildren[newEnd] = oldEndNode;
 	
-	 			patch(oldEndNode, newEndNode, oldEndNode.cast, ancestor);
+	 			patch(oldEndNode, newEndNode, oldEndNode.group, ancestor);
 	
 	 			oldEnd--;
 	 			newEnd--;
@@ -1705,7 +1746,7 @@
 	 			newChildren[newStart] = oldEndNode;
 	 			oldChildren[oldEnd] = oldStartNode;
 	
-	 			patch(oldEndNode, newStartNode, oldEndNode.cast, ancestor);
+	 			patch(oldEndNode, newStartNode, oldEndNode.group, ancestor);
 	 			move(parent, oldEndNode, oldStartNode.node);
 	
 	 			oldEnd--;
@@ -1723,7 +1764,7 @@
 	 			nextPos = newEnd + 1;
 	 			nextNode = nextPos < newLength ? oldChildren[nextPos].node : null;
 	
-	 			patch(oldStartNode, newEndNode, oldStartNode.cast, ancestor);
+	 			patch(oldStartNode, newEndNode, oldStartNode.group, ancestor);
 	 			move(parent, oldStartNode, nextNode);
 	
 	 			oldStart++;
@@ -1819,7 +1860,7 @@
 					create(newChild, null, owner, parent, childNodes[newIndex], 2);
 					newOffset--;
 				} else {
-					patch(oldChild, newChild, oldChild.cast, ancestor);
+					patch(oldChild, newChild, oldChild.group, ancestor);
 					newChildren[newIndex] = oldChild;
 				}
 			}

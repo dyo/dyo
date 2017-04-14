@@ -8,7 +8,7 @@
 function shape (_tree, owner) {
 	var tree = (_tree !== null && _tree !== void 0) ? _tree : text('');
 
-	if (tree.cast === void 0) {
+	if (tree.group === void 0) {
 		switch (typeof tree) {
 			case 'function': {
 				tree = element(tree, owner === null ? null : owner.props);
@@ -46,26 +46,27 @@ function extract (tree) {
 	var props = tree.props;
 	var children = tree.children;
 	var length = children.length;
-	var cast = tree.cast;
+	var group = tree.group;
 
 	var result;
 	var owner;
 	var proto;
 
-	if (props === null) {
+	if (props === object) {
 		props = {};
 	}
 	if (type.defaultProps !== void 0) {
 		props = merge(type.defaultProps, props);
 	}
 	if (length !== 0) {
-		if (props === null) {
+		if (props === object) {
 			props = {children: children};
 		} else {
 			props.children = children;
 		}
 	}
-	if (cast === 1) {
+
+	if (group === 1) {
 		proto = type.prototype;
 
 		if (proto.UUID === 7) {
@@ -78,17 +79,19 @@ function extract (tree) {
 			Component.call(owner, props);
 		}
 
-		result = renderBoundary(owner, cast);
-		owner._block = 0;
+		result = renderBoundary(owner, group);
+
+		owner._sync = 0;
+
 		result = shape(result, owner);
 
 		owner._tree = tree;
 		tree.owner = owner;
 	} else {
-		tree.cast = cast;
+		tree.group = group;
 		tree.owner = type;
 
-		result = shape(renderBoundary(tree, cast), null);
+		result = shape(renderBoundary(tree, group), tree);
 	}
 
 	return result;
@@ -113,13 +116,13 @@ function resolve (pending, owner) {
 		tree = text('');
 	}
 
-	owner._block = 2;
+	owner._sync = 2;
 
 	pending.then(function (value) {
 		var older;
 		var newer;
 
-		owner._block = 0;
+		owner._sync = 0;
 
 		if ((older = owner._tree) === null) {
 			return;

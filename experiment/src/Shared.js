@@ -46,13 +46,13 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * xmlns:    node xmlns namespace {String?}
  * owner:    node component       {Component?}
  * node:     node DOM reference   {Node?}
- * cast:     node type case       {Number}
+ * group:    node ground          {Number}
  */
 
  /**
   * ## Component Shape
   *
-  * _block:      block          {Number}
+  * _sync:       sync/async     {Number}
   * _tree:       current tree   {Tree?}
   * _state:      previous state {Object}
   *

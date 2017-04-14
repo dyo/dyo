@@ -45,7 +45,7 @@ function render (_newer, _target) {
 
 	if (older !== void 0) {
 		if (older.key === newer.key) {
-			patch(older, newer, older.cast, older);
+			patch(older, newer, older.group, older);
 		} else {
 			swap(older, newer, 1, newer);
 		}

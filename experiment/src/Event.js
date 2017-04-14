@@ -1,13 +1,13 @@
 /**
  * Event Station
  *
- * @param {String} type
- * @param {Function} listener
- * @param {Component} owner
  * @param {Node} node
+ * @param {String} name
+ * @param {Component} owner
+ * @param {Function} handler
  */
-function event (type, listener, owner, node) {
-	node[type.toLowerCase()] = typeof listener !== 'function' ? null : function (e) {
-		eventBoundary(owner, listener, e);
-	}
+function event (node, name, owner, handler) {
+	node[name.toLowerCase()] = typeof handler !== 'function' ? null : function proxy (e) {
+		eventBoundary(owner, handler, e);
+	};
 }

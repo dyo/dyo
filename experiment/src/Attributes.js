@@ -9,17 +9,20 @@
  */
 function attribute (newer, owner, xmlns, node, hydrate) {
 	var attrs = newer.attrs;
+	var value;
 
 	for (var name in attrs) {
 		if (name !== 'key' && name !== 'children') {
+			value = attrs[name];
+
 			if (name !== 'ref') {
 				if (evt(name) === true) {
-					event(name, attrs[name], owner, node, newer);
+					event(node, name, owner, value);
 				} else if (hydrate === false) {
-					assign(attr(name), name, attrs[name], xmlns, node, newer);
+					assign(attr(name), name, value, xmlns, node, newer);
 				}
 			} else {
-				refs(attrs[name], owner, node, 0);
+				refs(value, owner, node, 0);
 			}
 		}
 	}
@@ -37,6 +40,7 @@ function attributes (older, newer, ancestor) {
 	var newAttrs = newer.attrs;
 	var xmlns = older.xmlns;
 	var node = older.node;
+	var owner = ancestor.owner;
 
 	var oldValue;
 	var newValue;
@@ -46,9 +50,14 @@ function attributes (older, newer, ancestor) {
 			newValue = newAttrs[name];
 
 			if (name !== 'ref') {
-				oldValue = oldAttrs !== null ? oldAttrs[name] : null;
+				oldValue = oldAttrs[name];
+
 				if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
-					assign(attr(name), name, newValue, xmlns, node, ancestor);
+					if (evt(name) === false) {
+						assign(attr(name), name, newValue, xmlns, node, ancestor);
+					} else {
+						event(node, name, owner, newValue);
+					}
 				}
 			} else {
 				refs(newValue, ancestor.owner, node, 2);
@@ -58,10 +67,14 @@ function attributes (older, newer, ancestor) {
 
 	for (var name in oldAttrs) {
 		if (name !== 'key' && name !== 'children' && name !== 'ref') {
-			newValue = newAttrs !== null ? newAttrs[name] : null;
+			newValue = newAttrs[name];
 
 			if (newValue === null || newValue === void 0) {
-				assign(attr(name), name, newValue, xmlns, node, ancestor);
+				if (evt(name) === false) {
+					assign(attr(name), name, newValue, xmlns, node, ancestor);
+				} else {
+					event(node, name, owner, newValue);
+				}
 			}
 		}
 	}
@@ -104,10 +117,8 @@ function refs (value, owner, node, type) {
  * @param {Any} value
  * @param {String?} xmlns
  * @param {Node} node
- * @param {Tree} tree
- * @param {Tree} ancestor
  */
-function assign (type, name, value, xmlns, node, ancestor) {
+function assign (type, name, value, xmlns, node) {
 	switch (type) {
 		case 1: {
 			if (xmlns === null) {
@@ -153,9 +164,6 @@ function assign (type, name, value, xmlns, node, ancestor) {
 			}
 			break;
 		}
-		case 7: {
-			event(name, value, ancestor.owner, node);
-		}
 	}
 }
 
@@ -173,7 +181,7 @@ function attr (name, tree) {
 		case 'style': return 3;
 		case 'innerHTML': return 4;
 		case 'width': case 'height': return 5;
-		default: return evt(name) === false ? 6 : 7;
+		default: return 6;
 	}
 }
 
