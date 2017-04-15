@@ -258,13 +258,13 @@ function empty (older, newer, clear) {
 }
 
 /**
- * Populate Children
+ * fill Children
  *
  * @param {Tree} older
  * @param {Tree} newer
  * @param {Tree} ancestor
  */
-function populate (older, newer, ancestor) {
+function fill (older, newer, ancestor) {
 	var parent = older.node;
 	var children = newer.children;
 	var length = children.length;

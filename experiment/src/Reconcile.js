@@ -33,9 +33,9 @@ function patch (older, _newer, group, _ancestor) {
 	var newLength = newer.children.length;
 	var oldLength = older.children.length;
 
-	// populate children
+	// fill children
 	if (oldLength === 0) {
-		return void newLength !== 0 ? populate(older, newer, ancestor) : 0;
+		return void newLength !== 0 ? fill(older, newer, ancestor) : 0;
 	}
 	// empty children
 	if (newLength === 0) {

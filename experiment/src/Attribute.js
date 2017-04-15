@@ -8,12 +8,12 @@
  * @param {Boolean} hydrate
  */
 function attribute (newer, owner, xmlns, node, hydrate) {
-	var attrs = newer.attrs;
+	var newAttrs = newer.attrs;
 	var value;
 
-	for (var name in attrs) {
+	for (var name in newAttrs) {
 		if (name !== 'key' && name !== 'children') {
-			value = attrs[name];
+			value = newAttrs[name];
 
 			if (name !== 'ref') {
 				if (evt(name) === true) {

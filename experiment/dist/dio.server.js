@@ -28,7 +28,7 @@
 	var array = [];
 	var object = {};
 	var browser = global.window !== void 0;
-	var document = window.document;
+	var document = global.document;
 	var mount = browser === true ? document.body : null;
 	var Promise = global.Promise || noop;
 	var schedule = global.requestIdleCallback || global.requestAnimationFrame || setTimeout;
@@ -72,19 +72,19 @@
 	 * host: node host component(composites) {Component?}
 	 */
 	
-	 /**
-	  * ## Component Shape
-	  *
-	  * _sync: sync/async {Number}
-	  * _tree: current tree {Tree?}
-	  * _state: previous state {Object}
-	  *
-	  * props: current props {Object}
-	  * state: current state {Object}
-	  * refs: refs {Object?}
-	  * setState: method {Function}
-	  * forceUpdate: method {Function}
-	  */
+	/**
+	 * ## Component Shape
+	 *
+	 * _sync: sync/async {Number}
+	 * _tree: current tree {Tree?}
+	 * _state: previous state {Object}
+	 *
+	 * props: current props {Object}
+	 * state: current state {Object}
+	 * refs: refs {Object?}
+	 * setState: method {Function}
+	 * forceUpdate: method {Function}
+	 */
 	
 	/**
 	 * ## Component Flags
@@ -997,12 +997,12 @@
 	 * @param {Boolean} hydrate
 	 */
 	function attribute (newer, owner, xmlns, node, hydrate) {
-		var attrs = newer.attrs;
+		var newAttrs = newer.attrs;
 		var value;
 	
-		for (var name in attrs) {
+		for (var name in newAttrs) {
 			if (name !== 'key' && name !== 'children') {
-				value = attrs[name];
+				value = newAttrs[name];
 	
 				if (name !== 'ref') {
 					if (evt(name) === true) {
@@ -1502,13 +1502,13 @@
 	}
 	
 	/**
-	 * Populate Children
+	 * fill Children
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} newer
 	 * @param {Tree} ancestor
 	 */
-	function populate (older, newer, ancestor) {
+	function fill (older, newer, ancestor) {
 		var parent = older.node;
 		var children = newer.children;
 		var length = children.length;
@@ -1636,9 +1636,9 @@
 		var newLength = newer.children.length;
 		var oldLength = older.children.length;
 	
-		// populate children
+		// fill children
 		if (oldLength === 0) {
-			return void newLength !== 0 ? populate(older, newer, ancestor) : 0;
+			return void newLength !== 0 ? fill(older, newer, ancestor) : 0;
 		}
 		// empty children
 		if (newLength === 0) {
@@ -1959,12 +1959,12 @@
 	}
 	
 	/**
-	 * Stringify Props
+	 * Stringify Attributes
 	 *
 	 * @param  {Tree} tree
 	 * @return {String}
 	 */
-	function stringify (tree) {
+	function attrs (tree) {
 		var props = tree.props;
 		var body = '';
 		var value;

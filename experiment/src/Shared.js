@@ -6,7 +6,7 @@ var noop = function () {};
 var array = [];
 var object = {};
 var browser = global.window !== void 0;
-var document = window.document;
+var document = global.document;
 var mount = browser === true ? document.body : null;
 var Promise = global.Promise || noop;
 var schedule = global.requestIdleCallback || global.requestAnimationFrame || setTimeout;
@@ -50,19 +50,19 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * host: node host component(composites) {Component?}
  */
 
- /**
-  * ## Component Shape
-  *
-  * _sync: sync/async {Number}
-  * _tree: current tree {Tree?}
-  * _state: previous state {Object}
-  *
-  * props: current props {Object}
-  * state: current state {Object}
-  * refs: refs {Object?}
-  * setState: method {Function}
-  * forceUpdate: method {Function}
-  */
+/**
+ * ## Component Shape
+ *
+ * _sync: sync/async {Number}
+ * _tree: current tree {Tree?}
+ * _state: previous state {Object}
+ *
+ * props: current props {Object}
+ * state: current state {Object}
+ * refs: refs {Object?}
+ * setState: method {Function}
+ * forceUpdate: method {Function}
+ */
 
 /**
  * ## Component Flags

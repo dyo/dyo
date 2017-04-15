@@ -38,12 +38,12 @@ TreePrototype.toString = function () {
 }
 
 /**
- * Stringify Props
+ * Stringify Attributes
  *
  * @param  {Tree} tree
  * @return {String}
  */
-function stringify (tree) {
+function attrs (tree) {
 	var props = tree.props;
 	var body = '';
 	var value;
