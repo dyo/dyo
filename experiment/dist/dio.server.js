@@ -120,7 +120,7 @@
 	
 		// state
 		if (state === void 0) {
-			state = this.state = {};
+			this.state = state = this.getInitialState !== void 0 ? dataBoundary(this, 1, props) : {};
 		}
 	
 		this.refs = null;
@@ -562,6 +562,7 @@
 	 * @param {Number} flag
 	 */
 	function Tree (flag) {
+		this.i = 0;
 		this.flag = flag;
 		this.tag = null;
 		this.key = null;
@@ -742,6 +743,7 @@
 		try {
 			switch (type) {
 				case 0: return returnBoundary(owner.componentWillReceiveProps(props), owner, null, true);
+				case 1: return owner.getInitialState(props);
 			}
 		} catch (err) {
 			errorBoundary(err, owner, 0, type);
@@ -937,6 +939,7 @@
 			case 0: {
 				switch (from) {
 					case 0: return 'componentWillReceiveProps';
+					case 1: return 'getInitialState';
 				}
 				break;
 			}
@@ -1635,9 +1638,9 @@
 		}
 	
 		if (older.keyed === true) {
-			keyed(older, newer, ancestor);
+			keyed(older, newer, ancestor, oldLength, newLength);
 		} else {
-			nonkeyed(older, newer, ancestor);
+			nonkeyed(older, newer, ancestor, oldLength, newLength);
 		}
 	
 		attributes(older, newer, ancestor);
@@ -1649,13 +1652,15 @@
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
 	 * @param  {Tree} ancestor
+	 * @param  {Number}
+	 * @param  {Number}
 	 */
-	function nonkeyed (older, newer, ancestor) {
+	function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
 		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
-		var newLength = newChildren.length;
-		var oldLength = oldChildren.length;
+		var newLength = _oldLength;
+		var oldLength = _newLength;
 		var length = newLength > oldLength ? newLength : oldLength;
 		var owner = ancestor.owner;
 	
@@ -1688,13 +1693,13 @@
 	 * @param {Tree} older
 	 * @param {Tree} newer
 	 * @param {Tree} ancestor
+	 * @param {Number} oldLength
+	 * @param {Number} newLength
 	 */
-	function keyed (older, newer, ancestor) {
+	function keyed (older, newer, ancestor, oldLength, newLength) {
 	 	var parent = older.node;
 	 	var oldChildren = older.children;
 	 	var newChildren = newer.children;
-	 	var oldLength = oldChildren.length;
-	 	var newLength = newChildren.length;
 	 	var owner = ancestor.owner;
 	 	var oldStart = 0;
 	 	var newStart = 0;
@@ -1777,7 +1782,7 @@
 	 	}
 	 	// step 2, remove or insert
 	 	if (oldStart > oldEnd) {
-	 		// all nodes from old children are synced, insert the difference
+	 		// old children is synced, insert the difference
 	 		if (newStart <= newEnd) {
 	 			nextPos = newEnd + 1;
 	 			nextNode = nextPos < newLength ? newChildren[nextPos].node : null;
@@ -1787,13 +1792,13 @@
 	 			} while (newStart <= newEnd);
 	 		}
 	 	} else if (newStart > newEnd) {
-	 		// all nodes from new children are synced, remove the difference
+	 		// new children is synced, remove the difference
 	 		do {
 	 			remove(oldStartNode = oldChildren[oldStart++], parent, oldStartNode.node);
 	 		} while (oldStart <= oldEnd);
 	 	} else {
 	 		// could not completely sync children, move on the the next phase
-	 		complex(older, newer, ancestor, oldStart, newStart, oldEnd, newEnd);
+	 		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
 	 	}
 	 	older.children = newChildren;
 	}
@@ -1808,85 +1813,97 @@
 	 * @param {Number} newStart
 	 * @param {Number} oldEnd
 	 * @param {Number} newEnd
+	 * @param {Number} oldLength
+	 * @param {number} newLength
 	 */
-	function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd) {
+	function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
 		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
 		var owner = ancestor.owner;
-		var oldLength = oldEnd + 1;
-		var newLength = newEnd + 1;
-		var oldOffset = oldLength - oldStart;
-		var newOffset = newLength - newStart;
+		var oldOffset = oldEnd - oldStart;
+		var newOffset = newEnd - newStart;
+		var addOffset = 0;
 		var oldIndex = oldStart;
 		var newIndex = newStart;
 		var oldKeys = {};
 		var newKeys = {};
-		var childNodes = parent.childNodes;
+		var childNodes;
 		var oldChild;
 		var newChild;
+		var nextNode;
+		var nextPos;
 	
 		// step 1, build a map of keys
 		while (true) {
-			if (oldIndex !== oldLength) {
-				oldChild = oldChildren[oldIndex++];
+			if (oldIndex !== oldEnd) {
+				oldChild = oldChildren[oldIndex];
+				oldChild.i = oldIndex++;
 				oldKeys[oldChild.key] = oldChild;
 			}
-	
-			if (newIndex !== newLength) {
-				newChild = newChildren[newIndex++];
+			if (newIndex !== newEnd) {
+				newChild = newChildren[newIndex];
+				newChild.i = newIndex++;
 				newKeys[newChild.key] = newChild;
 			}
-	
-			if (oldIndex === oldLength && newIndex === newLength) {
+			if (oldIndex === oldEnd && newIndex === newEnd) {
+				oldIndex = oldStart;
+				newIndex = newStart;
 				break;
 			}
 		}
 	
-		// step 2, insert and remove
-		while (true) {
-			// insert new children
-			if (newIndex !== newStart) {
-				newChild = newChildren[--newIndex];
-				oldChild = oldKeys[newChild.key];
+		// step 2, insert
+		while (newIndex < newEnd) {
+			newChild = newChildren[newIndex];
+			oldChild = oldKeys[newChild.key];
 	
-				// new child doesn't exist in old children, insert
-				if (oldChild === void 0) {
-					create(newChild, null, owner, parent, childNodes[newIndex], 2);
-					newOffset--;
-				} else {
-					patch(oldChild, newChild, oldChild.group, ancestor);
-					newChildren[newIndex] = oldChild;
-				}
+			// new child doesn't exist in old children, insert
+			if (oldChild === void 0) {
+				nextPos = newIndex - addOffset;
+				nextNode = nextPos < oldLength ? oldChildren[nextPos].node : null;
+	
+				create(newChild, null, owner, parent, nextNode, 2);
+	
+				addOffset++;
+				newOffset--;
+			} else if (newIndex === oldChild.i) {
+				patch(newChildren[newIndex] = oldChild, oldChild, oldChild.group, ancestor);
 			}
-	
-			// remove old children
-			if (oldIndex !== oldStart) {
-				oldChild = oldChildren[--oldIndex];
-				newChild = newKeys[oldChild.key];
-	
-				// old child doesn't exist in new children, remove
-				if (newChild === void 0) {
-					remove(oldChild, parent, oldChild.node);
-					oldOffset--;
-				}
-			}
-	
-			if (oldIndex === oldStart && newIndex === newStart) {
-				break;
-			}
+			newIndex++;
 		}
 	
-		// step 5, move remaining when insert/remove is not enough to sync indexes
-		if ((oldOffset + newOffset) - 2 > 0) {
-			for (var i = newStart; i < newLength; i++) {
-				newChild = newChildren[i];
-				oldChild = oldKeys[newChild.key];
+		// step 3, remove
+		while (oldIndex < oldEnd) {
+			oldChild = oldChildren[oldIndex];
 	
-				if (oldChild !== void 0) {
-					move(parent, oldChild, childNodes[i+1]);
-				}
+			// old child doesn't exist in new children, remove
+			if (newKeys[oldChild.key] === void 0) {
+				remove(oldChild, parent, oldChild.node);
+				oldOffset--;
 			}
+			oldIndex++;
+		}
+	
+		// new and old children are synced
+		if (oldOffset + newOffset === 2) {
+			return;
+		}
+	
+		newIndex = newStart;
+		childNodes = parent.childNodes;
+	
+		// step 4, move
+		while (newIndex < newEnd) {
+			newChild = newChildren[newIndex];
+	
+			if (newChild.node === null && (oldChild = oldKeys[newChild.key]) !== void 0) {
+				if ((nextNode = childNodes[newIndex+1]) !== oldChild.node) {
+					move(parent, oldChild, nextNode);
+				}
+				patch(newChildren[newIndex] = oldChild, oldChild, oldChild.group, ancestor);
+			}
+			newIndex++;
 		}
 	}
 	

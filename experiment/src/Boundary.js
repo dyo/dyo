@@ -10,6 +10,7 @@ function dataBoundary (owner, type, props) {
 	try {
 		switch (type) {
 			case 0: return returnBoundary(owner.componentWillReceiveProps(props), owner, null, true);
+			case 1: return owner.getInitialState(props);
 		}
 	} catch (err) {
 		errorBoundary(err, owner, 0, type);
@@ -205,6 +206,7 @@ function errorLocation (type, from) {
 		case 0: {
 			switch (from) {
 				case 0: return 'componentWillReceiveProps';
+				case 1: return 'getInitialState';
 			}
 			break;
 		}

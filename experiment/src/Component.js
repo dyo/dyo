@@ -17,7 +17,7 @@ function Component (_props) {
 
 	// state
 	if (state === void 0) {
-		state = this.state = {};
+		this.state = state = this.getInitialState !== void 0 ? dataBoundary(this, 1, props) : {};
 	}
 
 	this.refs = null;

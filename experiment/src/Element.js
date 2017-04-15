@@ -189,6 +189,7 @@ function clone (older, newer, type) {
  * @param {Number} flag
  */
 function Tree (flag) {
+	this.i = 0;
 	this.flag = flag;
 	this.tag = null;
 	this.key = null;
