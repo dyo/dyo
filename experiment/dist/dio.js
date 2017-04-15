@@ -532,7 +532,7 @@
 		older.attrs = newer.attrs;
 		older.xmlns = newer.xmlns;
 		older.keyed = newer.keyed;
-		older.parent = older.parent;
+		older.parent = newer.parent;
 		older.children = newer.children;
 	
 		switch (type) {
@@ -540,17 +540,13 @@
 				older.props = newer.props;
 				older.owner = newer.owner;
 				older.type = newer.type;
-				older.group = older.group;
+				older.group = newer.group;
 				older.host = newer.host;
 				older.key = newer.key;
 				break;
 			}
 			case 2: {
-				if (typeof newer.owner === 'function') {
-					older.host = shape(newer.owner, newer);
-				} else {
-					older.host = newer.owner;
-				}
+				older.host = typeof newer.owner === 'function' ? shape(newer.owner, newer) : newer.owner;
 				break;
 			}
 		}
@@ -1698,9 +1694,9 @@
 	 */
 	function keyed (older, newer, ancestor, oldLength, newLength) {
 	 	var parent = older.node;
+	 	var owner = ancestor.owner;
 	 	var oldChildren = older.children;
 	 	var newChildren = newer.children;
-	 	var owner = ancestor.owner;
 	 	var oldStart = 0;
 	 	var newStart = 0;
 	 	var oldEnd = oldLength - 1;
@@ -1818,21 +1814,20 @@
 	 */
 	function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
 		var parent = older.node;
+		var owner = ancestor.owner;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
-		var owner = ancestor.owner;
-		var oldOffset = oldEnd - oldStart;
-		var newOffset = newEnd - newStart;
-		var addOffset = 0;
-		var oldIndex = oldStart;
-		var newIndex = newStart;
 		var oldKeys = {};
 		var newKeys = {};
-		var childNodes;
+		var oldIndex = oldStart;
+		var newIndex = newStart;
+		var oldOffset = 0;
+		var newOffset = 0;
 		var oldChild;
 		var newChild;
 		var nextNode;
 		var nextPos;
+		var childNodes;
 	
 		// step 1, build a map of keys
 		while (true) {
@@ -1860,15 +1855,13 @@
 	
 			// new child doesn't exist in old children, insert
 			if (oldChild === void 0) {
-				nextPos = newIndex - addOffset;
+				nextPos = newIndex - newOffset;
 				nextNode = nextPos < oldLength ? oldChildren[nextPos].node : null;
 	
 				create(newChild, null, owner, parent, nextNode, 2);
-	
-				addOffset++;
-				newOffset--;
+				newOffset++;
 			} else if (newIndex === oldChild.i) {
-				patch(newChildren[newIndex] = oldChild, oldChild, oldChild.group, ancestor);
+				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 			}
 			newIndex++;
 		}
@@ -1876,17 +1869,18 @@
 		// step 3, remove
 		while (oldIndex < oldEnd) {
 			oldChild = oldChildren[oldIndex];
+			newChild = newKeys[oldChild.key];
 	
 			// old child doesn't exist in new children, remove
-			if (newKeys[oldChild.key] === void 0) {
+			if (newChild === void 0) {
 				remove(oldChild, parent, oldChild.node);
-				oldOffset--;
+				oldOffset++;
 			}
 			oldIndex++;
 		}
 	
 		// new and old children are synced
-		if (oldOffset + newOffset === 2) {
+		if (((oldEnd - oldStart) - oldOffset) + ((newEnd - newStart) - newOffset) === 2) {
 			return;
 		}
 	
@@ -1898,10 +1892,13 @@
 			newChild = newChildren[newIndex];
 	
 			if (newChild.node === null && (oldChild = oldKeys[newChild.key]) !== void 0) {
-				if ((nextNode = childNodes[newIndex+1]) !== oldChild.node) {
+				nextPos = newIndex + 1;
+				nextNode = childNodes[nextPos];
+	
+				if (nextNode !== oldChild.node) {
 					move(parent, oldChild, nextNode);
 				}
-				patch(newChildren[newIndex] = oldChild, oldChild, oldChild.group, ancestor);
+				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 			}
 			newIndex++;
 		}

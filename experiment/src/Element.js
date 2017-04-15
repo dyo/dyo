@@ -159,7 +159,7 @@ function clone (older, newer, type) {
 	older.attrs = newer.attrs;
 	older.xmlns = newer.xmlns;
 	older.keyed = newer.keyed;
-	older.parent = older.parent;
+	older.parent = newer.parent;
 	older.children = newer.children;
 
 	switch (type) {
@@ -167,17 +167,13 @@ function clone (older, newer, type) {
 			older.props = newer.props;
 			older.owner = newer.owner;
 			older.type = newer.type;
-			older.group = older.group;
+			older.group = newer.group;
 			older.host = newer.host;
 			older.key = newer.key;
 			break;
 		}
 		case 2: {
-			if (typeof newer.owner === 'function') {
-				older.host = shape(newer.owner, newer);
-			} else {
-				older.host = newer.owner;
-			}
+			older.host = typeof newer.owner === 'function' ? shape(newer.owner, newer) : newer.owner;
 			break;
 		}
 	}
