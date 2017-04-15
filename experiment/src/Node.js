@@ -52,7 +52,7 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
 
 	if (type === 2) {
 		if (flag === 1) {
-			// .createTextNode is less prone to emit errors
+			// createTextNode is less prone to emit errors
 			node = document.createTextNode((type = 1, newer.children));
 		} else {
 			node = nodeBoundary(flag, newer, xmlns, owner);
@@ -100,14 +100,13 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
  *
  * @param {Tree} older
  * @param {Node} parent
- * @param {Node} node
  */
-function remove (older, parent, node) {
+function remove (older, parent) {
 	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
 		mountBoundary(older.owner, 2);
 	}
 	empty(older, older, false);
-	parent.removeChild(node);
+	parent.removeChild(older.node);
 	release(older);
 }
 
@@ -118,26 +117,48 @@ function remove (older, parent, node) {
  * @param {Tree} newer
  * @param {Node} parent
  * @param {Tree} ancestor
- * @param {Node} node
  */
-function replace (older, newer, parent, ancestor, node) {
+function replace (older, newer, parent, ancestor) {
 	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
 		mountBoundary(older.owner, 2);
 	}
 	empty(older, older, false);
-	create(newer, null, ancestor.owner, parent, node, 3);
+	create(newer, null, ancestor.owner, parent, older.node, 3);
 	release(older);
 }
 
 /**
  * Move Node
  *
- * @param {Node} node
- * @param {Node} next
- * @param {Node} sibling
+ * @param {Node} parent
+ * @param {Tree} older
+ * @param {Number} index
+ * @param {Tree} sibling
  */
-function move (node, older, sibling) {
-	node.insertBefore(older.node, sibling);
+function move (parent, older, index, sibling) {
+	parent.insertBefore(older.node, sibling !== null ? sibling.node : parent.childNodes[index]);
+}
+
+/**
+ * Append Node
+ *
+ * @param {Node} parent
+ * @param {Tree} older
+ */
+function append (parent, older) {
+	parent.appendChild(older.node);
+}
+
+/**
+ * Release References
+ *
+ * @param  {Tree} tree
+ */
+function release (tree) {
+	tree.parent = null;
+	tree.host = null;
+	tree.owner = null;
+	tree.node = null;
 }
 
 /**
@@ -198,22 +219,10 @@ function swap (older, newer, type, ancestor) {
 			if (older.flag !== 1 && older.children.length > 0) {
 				empty(older, newer, false);
 			}
+			clone(older, newer, type);
 		}
 	}
-
 	clone(older, newer, type);
-}
-
-/**
- * Release References
- *
- * @param  {Tree} tree
- */
-function release (tree) {
-	tree.parent = null;
-	tree.host = null;
-	tree.owner = null;
-	tree.node = null;
 }
 
 /**
@@ -251,9 +260,9 @@ function empty (older, newer, clear) {
 /**
  * Populate Children
  *
- * @param  {Tree} older
- * @param  {Tree} newer
- * @param  {Tree} ancestor
+ * @param {Tree} older
+ * @param {Tree} newer
+ * @param {Tree} ancestor
  */
 function populate (older, newer, ancestor) {
 	var parent = older.node;
@@ -274,7 +283,5 @@ function populate (older, newer, ancestor) {
  * @param {Tree} newer
  */
 function content (older, newer) {
-	if (older.children !== newer.children) {
-		older.node.nodeValue = older.children = newer.children;
-	}
+	older.node.nodeValue = older.children = newer.children;
 }

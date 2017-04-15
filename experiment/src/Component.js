@@ -31,14 +31,14 @@ function Component (_props) {
  *
  * @type {Object}
  */
-var prototype = {
+var ComponentPrototype = {
 	setState: {value: setState},
 	forceUpdate: {value: forceUpdate},
 	UUID: {value: 7}
 };
 
-Component.prototype = Object.create(null, prototype);
-prototype.UUID.value = 0;
+Component.prototype = Object.create(null, ComponentPrototype);
+ComponentPrototype.UUID.value = 0;
 
 /**
  * Extend Class
@@ -50,7 +50,7 @@ function extendClass (type, proto) {
 	if (proto.constructor !== type) {
 		Object.defineProperty(proto, 'constructor', {value: type});
 	}
-	Object.defineProperties(proto, prototype);
+	Object.defineProperties(proto, ComponentPrototype);
 }
 
 /**
@@ -237,11 +237,14 @@ function updateHost (older, newer, ancestor, tag) {
 	var group;
 
 	if (tag !== null) {
-		return swap(older, newer, 2, older);
+		return swap(older, newer, 0, older);
 	}
 
 	if ((host = older.host) !== null) {
-		if ((owner = host.owner) === (type = newer.type) || owner instanceof type) {
+		owner = host.owner;
+		type = newer.type;
+
+		if (owner === type || (owner instanceof type)) {
 			return patch(host, newer, host.group, ancestor);
 		}
 	}

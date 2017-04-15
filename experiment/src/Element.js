@@ -38,7 +38,12 @@ function element (_type, _props) {
 			break;
 		}
 		case 'function': {
-			tree.group = (proto = type.prototype) !== void 0 && proto.render !== void 0 ? 1 : 2;
+			if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
+				tree.group = 1;
+			} else {
+				tree.owner = type;
+				tree.group = 2;
+			}
 			break;
 		}
 	}
@@ -173,7 +178,7 @@ function clone (older, newer, type) {
 			break;
 		}
 		case 2: {
-			older.host = typeof newer.owner === 'function' ? shape(newer.owner, newer) : newer.owner;
+			older.host = newer.owner === 'function' ? shape(newer.owner, newer) : newer;
 			break;
 		}
 	}
@@ -185,7 +190,6 @@ function clone (older, newer, type) {
  * @param {Number} flag
  */
 function Tree (flag) {
-	this.i = 0;
 	this.flag = flag;
 	this.tag = null;
 	this.key = null;
@@ -207,4 +211,4 @@ function Tree (flag) {
  *
  * @type {Object}
  */
-Tree.prototype = element.prototype = Object.create(null);
+var TreePrototype = Tree.prototype = element.prototype = Object.create(null);

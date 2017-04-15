@@ -24,9 +24,9 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * 8: n/a
  * 9: n/a
  * 10: n/a
- * 11: fragment
+ * 11: n/a
  *
- * ## Element Type Casts
+ * ## Element Groups
  *
  * 0: Element
  * 1: Component
@@ -36,31 +36,32 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
 /**
  * ## Element Shapes
  *
- * name:     node tag             {String}
- * type:     node type            {Function|Class|String}
- * props:    node properties      {Object?}
- * attrs:    node attributes      {Object?}
- * children: node children        {Array<Tree>}
- * key:      node key             {Any}
- * flag:     node flag            {Number}
- * xmlns:    node xmlns namespace {String?}
- * owner:    node component       {Component?}
- * node:     node DOM reference   {Node?}
- * group:    node ground          {Number}
+ * name: node tag {String}
+ * type: node type {Function|Class|String}
+ * props: node properties {Object?}
+ * attrs: node attributes {Object?}
+ * children: node children {Array<Tree>}
+ * key: node key {Any}
+ * flag: node flag {Number}
+ * xmlns: node xmlns namespace {String?}
+ * owner: node component {Component?}
+ * node: node DOM reference {Node?}
+ * group: node ground {Number}
+ * host: node host component(composites) {Component?}
  */
 
  /**
   * ## Component Shape
   *
-  * _sync:       sync/async     {Number}
-  * _tree:       current tree   {Tree?}
-  * _state:      previous state {Object}
+  * _sync: sync/async {Number}
+  * _tree: current tree {Tree?}
+  * _state: previous state {Object}
   *
-  * props:       current props  {Object}
-  * state:       current state  {Object}
-  * refs:        refs           {Object?}
-  * setState:    method         {Function}
-  * forceUpdate: method         {Function}
+  * props: current props {Object}
+  * state: current state {Object}
+  * refs: refs {Object?}
+  * setState: method {Function}
+  * forceUpdate: method {Function}
   */
 
 /**

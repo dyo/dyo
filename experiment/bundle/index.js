@@ -18,7 +18,7 @@ const main = [
 ];
 
 const server = main.concat([
-
+	'../src/Server.js'
 ]);
 
 const bundler = (file) => {
@@ -43,7 +43,7 @@ function build (module, files, location) {
 
 function bootstrap () {
 	build('main', main, '../dist/dio.js');
-	build('server', main, '../dist/dio.server.js');
+	build('server', server, '../dist/dio.server.js');
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' +

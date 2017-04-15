@@ -1,6 +1,6 @@
 return {
 	version: version,
-	h: element
+	h: element,
 	createElement: element,
 	Component: Component,
 	render: render,

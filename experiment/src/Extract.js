@@ -87,9 +87,6 @@ function extract (tree) {
 		owner._tree = tree;
 		tree.owner = owner;
 	} else {
-		tree.group = group;
-		tree.owner = type;
-
 		result = shape(renderBoundary(tree, group), tree);
 	}
 

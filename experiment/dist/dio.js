@@ -46,9 +46,9 @@
 	 * 8: n/a
 	 * 9: n/a
 	 * 10: n/a
-	 * 11: fragment
+	 * 11: n/a
 	 *
-	 * ## Element Type Casts
+	 * ## Element Groups
 	 *
 	 * 0: Element
 	 * 1: Component
@@ -58,31 +58,32 @@
 	/**
 	 * ## Element Shapes
 	 *
-	 * name:     node tag             {String}
-	 * type:     node type            {Function|Class|String}
-	 * props:    node properties      {Object?}
-	 * attrs:    node attributes      {Object?}
-	 * children: node children        {Array<Tree>}
-	 * key:      node key             {Any}
-	 * flag:     node flag            {Number}
-	 * xmlns:    node xmlns namespace {String?}
-	 * owner:    node component       {Component?}
-	 * node:     node DOM reference   {Node?}
-	 * group:    node ground          {Number}
+	 * name: node tag {String}
+	 * type: node type {Function|Class|String}
+	 * props: node properties {Object?}
+	 * attrs: node attributes {Object?}
+	 * children: node children {Array<Tree>}
+	 * key: node key {Any}
+	 * flag: node flag {Number}
+	 * xmlns: node xmlns namespace {String?}
+	 * owner: node component {Component?}
+	 * node: node DOM reference {Node?}
+	 * group: node ground {Number}
+	 * host: node host component(composites) {Component?}
 	 */
 	
 	 /**
 	  * ## Component Shape
 	  *
-	  * _sync:       sync/async     {Number}
-	  * _tree:       current tree   {Tree?}
-	  * _state:      previous state {Object}
+	  * _sync: sync/async {Number}
+	  * _tree: current tree {Tree?}
+	  * _state: previous state {Object}
 	  *
-	  * props:       current props  {Object}
-	  * state:       current state  {Object}
-	  * refs:        refs           {Object?}
-	  * setState:    method         {Function}
-	  * forceUpdate: method         {Function}
+	  * props: current props {Object}
+	  * state: current state {Object}
+	  * refs: refs {Object?}
+	  * setState: method {Function}
+	  * forceUpdate: method {Function}
 	  */
 	
 	/**
@@ -134,14 +135,14 @@
 	 *
 	 * @type {Object}
 	 */
-	var prototype = {
+	var ComponentPrototype = {
 		setState: {value: setState},
 		forceUpdate: {value: forceUpdate},
 		UUID: {value: 7}
 	};
 	
-	Component.prototype = Object.create(null, prototype);
-	prototype.UUID.value = 0;
+	Component.prototype = Object.create(null, ComponentPrototype);
+	ComponentPrototype.UUID.value = 0;
 	
 	/**
 	 * Extend Class
@@ -153,7 +154,7 @@
 		if (proto.constructor !== type) {
 			Object.defineProperty(proto, 'constructor', {value: type});
 		}
-		Object.defineProperties(proto, prototype);
+		Object.defineProperties(proto, ComponentPrototype);
 	}
 	
 	/**
@@ -340,11 +341,14 @@
 		var group;
 	
 		if (tag !== null) {
-			return swap(older, newer, 2, older);
+			return swap(older, newer, 0, older);
 		}
 	
 		if ((host = older.host) !== null) {
-			if ((owner = host.owner) === (type = newer.type) || owner instanceof type) {
+			owner = host.owner;
+			type = newer.type;
+	
+			if (owner === type || (owner instanceof type)) {
 				return patch(host, newer, host.group, ancestor);
 			}
 		}
@@ -411,7 +415,12 @@
 				break;
 			}
 			case 'function': {
-				tree.group = (proto = type.prototype) !== void 0 && proto.render !== void 0 ? 1 : 2;
+				if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
+					tree.group = 1;
+				} else {
+					tree.owner = type;
+					tree.group = 2;
+				}
 				break;
 			}
 		}
@@ -546,7 +555,7 @@
 				break;
 			}
 			case 2: {
-				older.host = typeof newer.owner === 'function' ? shape(newer.owner, newer) : newer.owner;
+				older.host = newer.owner === 'function' ? shape(newer.owner, newer) : newer;
 				break;
 			}
 		}
@@ -558,7 +567,6 @@
 	 * @param {Number} flag
 	 */
 	function Tree (flag) {
-		this.i = 0;
 		this.flag = flag;
 		this.tag = null;
 		this.key = null;
@@ -580,7 +588,7 @@
 	 *
 	 * @type {Object}
 	 */
-	Tree.prototype = element.prototype = Object.create(null);
+	var TreePrototype = Tree.prototype = element.prototype = Object.create(null);
 	
 	/**
 	 * Shape Tree
@@ -671,9 +679,6 @@
 			owner._tree = tree;
 			tree.owner = owner;
 		} else {
-			tree.group = group;
-			tree.owner = type;
-	
 			result = shape(renderBoundary(tree, group), tree);
 		}
 	
@@ -1291,7 +1296,7 @@
 	
 		if (type === 2) {
 			if (flag === 1) {
-				// .createTextNode is less prone to emit errors
+				// createTextNode is less prone to emit errors
 				node = document.createTextNode((type = 1, newer.children));
 			} else {
 				node = nodeBoundary(flag, newer, xmlns, owner);
@@ -1339,14 +1344,13 @@
 	 *
 	 * @param {Tree} older
 	 * @param {Node} parent
-	 * @param {Node} node
 	 */
-	function remove (older, parent, node) {
+	function remove (older, parent) {
 		if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
 			mountBoundary(older.owner, 2);
 		}
 		empty(older, older, false);
-		parent.removeChild(node);
+		parent.removeChild(older.node);
 		release(older);
 	}
 	
@@ -1357,26 +1361,48 @@
 	 * @param {Tree} newer
 	 * @param {Node} parent
 	 * @param {Tree} ancestor
-	 * @param {Node} node
 	 */
-	function replace (older, newer, parent, ancestor, node) {
+	function replace (older, newer, parent, ancestor) {
 		if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
 			mountBoundary(older.owner, 2);
 		}
 		empty(older, older, false);
-		create(newer, null, ancestor.owner, parent, node, 3);
+		create(newer, null, ancestor.owner, parent, older.node, 3);
 		release(older);
 	}
 	
 	/**
 	 * Move Node
 	 *
-	 * @param {Node} node
-	 * @param {Node} next
-	 * @param {Node} sibling
+	 * @param {Node} parent
+	 * @param {Tree} older
+	 * @param {Number} index
+	 * @param {Tree} sibling
 	 */
-	function move (node, older, sibling) {
-		node.insertBefore(older.node, sibling);
+	function move (parent, older, index, sibling) {
+		parent.insertBefore(older.node, sibling !== null ? sibling.node : parent.childNodes[index]);
+	}
+	
+	/**
+	 * Append Node
+	 *
+	 * @param {Node} parent
+	 * @param {Tree} older
+	 */
+	function append (parent, older) {
+		parent.appendChild(older.node);
+	}
+	
+	/**
+	 * Release References
+	 *
+	 * @param  {Tree} tree
+	 */
+	function release (tree) {
+		tree.parent = null;
+		tree.host = null;
+		tree.owner = null;
+		tree.node = null;
 	}
 	
 	/**
@@ -1437,22 +1463,10 @@
 				if (older.flag !== 1 && older.children.length > 0) {
 					empty(older, newer, false);
 				}
+				clone(older, newer, type);
 			}
 		}
-	
 		clone(older, newer, type);
-	}
-	
-	/**
-	 * Release References
-	 *
-	 * @param  {Tree} tree
-	 */
-	function release (tree) {
-		tree.parent = null;
-		tree.host = null;
-		tree.owner = null;
-		tree.node = null;
 	}
 	
 	/**
@@ -1490,9 +1504,9 @@
 	/**
 	 * Populate Children
 	 *
-	 * @param  {Tree} older
-	 * @param  {Tree} newer
-	 * @param  {Tree} ancestor
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Tree} ancestor
 	 */
 	function populate (older, newer, ancestor) {
 		var parent = older.node;
@@ -1513,9 +1527,7 @@
 	 * @param {Tree} newer
 	 */
 	function content (older, newer) {
-		if (older.children !== newer.children) {
-			older.node.nodeValue = older.children = newer.children;
-		}
+		older.node.nodeValue = older.children = newer.children;
 	}
 	
 	/**
@@ -1652,18 +1664,18 @@
 	 * @param  {Number}
 	 */
 	function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
+		var owner = ancestor.owner;
 		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
 		var newLength = _oldLength;
 		var oldLength = _newLength;
 		var length = newLength > oldLength ? newLength : oldLength;
-		var owner = ancestor.owner;
 	
 		// patch non-keyed children
 		for (var i = 0, newChild, oldChild; i < length; i++) {
 			if (i >= newLength) {
-				remove(oldChild = oldChildren.pop(), parent, oldChild.node);
+				remove(oldChild = oldChildren.pop(), parent);
 				oldLength--;
 			} else if (i >= oldLength) {
 				create(newChild = oldChildren[i] = newChildren[i], null, owner, parent, null, 1);
@@ -1675,7 +1687,7 @@
 				if (newChild.flag === 1 && oldChild.flag === 1) {
 					content(oldChild, newChild);
 				} else if (newChild.type !== oldChild.type) {
-					replace(oldChild, oldChildren[i] = newChild, parent, ancestor, oldChild.node);
+					replace(oldChild, oldChildren[i] = newChild, parent, ancestor);
 				} else {
 					patch(oldChild, newChild, oldChild.group, ancestor);
 				}
@@ -1693,8 +1705,8 @@
 	 * @param {Number} newLength
 	 */
 	function keyed (older, newer, ancestor, oldLength, newLength) {
-	 	var parent = older.node;
 	 	var owner = ancestor.owner;
+	 	var parent = older.node;
 	 	var oldChildren = older.children;
 	 	var newChildren = newer.children;
 	 	var oldStart = 0;
@@ -1745,8 +1757,8 @@
 	 			newChildren[newStart] = oldEndNode;
 	 			oldChildren[oldEnd] = oldStartNode;
 	
+	 			move(parent, oldEndNode, oldStart, oldStartNode);
 	 			patch(oldEndNode, newStartNode, oldEndNode.group, ancestor);
-	 			move(parent, oldEndNode, oldStartNode.node);
 	
 	 			oldEnd--;
 	 			newStart++;
@@ -1761,10 +1773,14 @@
 	 			oldChildren[oldStart] = oldEndNode;
 	
 	 			nextPos = newEnd + 1;
-	 			nextNode = nextPos < newLength ? oldChildren[nextPos].node : null;
 	
+	 			if (nextPos < newLength) {
+	 				nextNode = oldChildren[nextPos];
+	 				move(parent, oldStartNode, nextPos, nextNode);
+	 			} else {
+	 				append(parent, oldStartNode);
+	 			}
 	 			patch(oldStartNode, newEndNode, oldStartNode.group, ancestor);
-	 			move(parent, oldStartNode, nextNode);
 	
 	 			oldStart++;
 	 			newEnd--;
@@ -1790,7 +1806,7 @@
 	 	} else if (newStart > newEnd) {
 	 		// new children is synced, remove the difference
 	 		do {
-	 			remove(oldStartNode = oldChildren[oldStart++], parent, oldStartNode.node);
+	 			remove(oldStartNode = oldChildren[oldStart++], parent);
 	 		} while (oldStart <= oldEnd);
 	 	} else {
 	 		// could not completely sync children, move on the the next phase
@@ -1813,8 +1829,8 @@
 	 * @param {number} newLength
 	 */
 	function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
-		var parent = older.node;
 		var owner = ancestor.owner;
+		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
 		var oldKeys = {};
@@ -1827,19 +1843,16 @@
 		var newChild;
 		var nextNode;
 		var nextPos;
-		var childNodes;
 	
 		// step 1, build a map of keys
 		while (true) {
 			if (oldIndex !== oldEnd) {
 				oldChild = oldChildren[oldIndex];
-				oldChild.i = oldIndex++;
-				oldKeys[oldChild.key] = oldChild;
+				oldKeys[oldChild.key] = oldIndex++;
 			}
 			if (newIndex !== newEnd) {
 				newChild = newChildren[newIndex];
-				newChild.i = newIndex++;
-				newKeys[newChild.key] = newChild;
+				newKeys[newChild.key] = newIndex++;
 			}
 			if (oldIndex === oldEnd && newIndex === newEnd) {
 				oldIndex = oldStart;
@@ -1851,29 +1864,31 @@
 		// step 2, insert
 		while (newIndex < newEnd) {
 			newChild = newChildren[newIndex];
-			oldChild = oldKeys[newChild.key];
+			oldIndex = oldKeys[newChild.key];
 	
 			// new child doesn't exist in old children, insert
-			if (oldChild === void 0) {
+			if (oldIndex === void 0) {
 				nextPos = newIndex - newOffset;
 				nextNode = nextPos < oldLength ? oldChildren[nextPos].node : null;
-	
 				create(newChild, null, owner, parent, nextNode, 2);
 				newOffset++;
-			} else if (newIndex === oldChild.i) {
+			} else if (newIndex === oldIndex) {
+				oldChild = oldChildren[oldIndex];
 				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 			}
 			newIndex++;
 		}
 	
+		oldIndex = oldStart;
+	
 		// step 3, remove
 		while (oldIndex < oldEnd) {
 			oldChild = oldChildren[oldIndex];
-			newChild = newKeys[oldChild.key];
+			newIndex = newKeys[oldChild.key];
 	
 			// old child doesn't exist in new children, remove
-			if (newChild === void 0) {
-				remove(oldChild, parent, oldChild.node);
+			if (newIndex === void 0) {
+				remove(oldChild, parent);
 				oldOffset++;
 			}
 			oldIndex++;
@@ -1883,22 +1898,22 @@
 		if (((oldEnd - oldStart) - oldOffset) + ((newEnd - newStart) - newOffset) === 2) {
 			return;
 		}
-	
 		newIndex = newStart;
-		childNodes = parent.childNodes;
 	
 		// step 4, move
 		while (newIndex < newEnd) {
 			newChild = newChildren[newIndex];
 	
-			if (newChild.node === null && (oldChild = oldKeys[newChild.key]) !== void 0) {
-				nextPos = newIndex + 1;
-				nextNode = childNodes[nextPos];
+			if (newChild.node === null) {
+				oldIndex = oldKeys[newChild.key];
 	
-				if (nextNode !== oldChild.node) {
-					move(parent, oldChild, nextNode);
+				if (oldIndex !== void 0) {
+					nextPos = newIndex + 1;
+					oldChild = oldChildren[oldIndex];
+	
+					move(parent, oldChild, nextPos, null);
+					patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 				}
-				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 			}
 			newIndex++;
 		}

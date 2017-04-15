@@ -61,18 +61,18 @@ function patch (older, _newer, group, _ancestor) {
  * @param  {Number}
  */
 function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
+	var owner = ancestor.owner;
 	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
 	var newLength = _oldLength;
 	var oldLength = _newLength;
 	var length = newLength > oldLength ? newLength : oldLength;
-	var owner = ancestor.owner;
 
 	// patch non-keyed children
 	for (var i = 0, newChild, oldChild; i < length; i++) {
 		if (i >= newLength) {
-			remove(oldChild = oldChildren.pop(), parent, oldChild.node);
+			remove(oldChild = oldChildren.pop(), parent);
 			oldLength--;
 		} else if (i >= oldLength) {
 			create(newChild = oldChildren[i] = newChildren[i], null, owner, parent, null, 1);
@@ -84,7 +84,7 @@ function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
 			if (newChild.flag === 1 && oldChild.flag === 1) {
 				content(oldChild, newChild);
 			} else if (newChild.type !== oldChild.type) {
-				replace(oldChild, oldChildren[i] = newChild, parent, ancestor, oldChild.node);
+				replace(oldChild, oldChildren[i] = newChild, parent, ancestor);
 			} else {
 				patch(oldChild, newChild, oldChild.group, ancestor);
 			}
@@ -102,8 +102,8 @@ function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
  * @param {Number} newLength
  */
 function keyed (older, newer, ancestor, oldLength, newLength) {
- 	var parent = older.node;
  	var owner = ancestor.owner;
+ 	var parent = older.node;
  	var oldChildren = older.children;
  	var newChildren = newer.children;
  	var oldStart = 0;
@@ -154,8 +154,8 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			newChildren[newStart] = oldEndNode;
  			oldChildren[oldEnd] = oldStartNode;
 
+ 			move(parent, oldEndNode, oldStart, oldStartNode);
  			patch(oldEndNode, newStartNode, oldEndNode.group, ancestor);
- 			move(parent, oldEndNode, oldStartNode.node);
 
  			oldEnd--;
  			newStart++;
@@ -170,10 +170,14 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			oldChildren[oldStart] = oldEndNode;
 
  			nextPos = newEnd + 1;
- 			nextNode = nextPos < newLength ? oldChildren[nextPos].node : null;
 
+ 			if (nextPos < newLength) {
+ 				nextNode = oldChildren[nextPos];
+ 				move(parent, oldStartNode, nextPos, nextNode);
+ 			} else {
+ 				append(parent, oldStartNode);
+ 			}
  			patch(oldStartNode, newEndNode, oldStartNode.group, ancestor);
- 			move(parent, oldStartNode, nextNode);
 
  			oldStart++;
  			newEnd--;
@@ -199,7 +203,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  	} else if (newStart > newEnd) {
  		// new children is synced, remove the difference
  		do {
- 			remove(oldStartNode = oldChildren[oldStart++], parent, oldStartNode.node);
+ 			remove(oldStartNode = oldChildren[oldStart++], parent);
  		} while (oldStart <= oldEnd);
  	} else {
  		// could not completely sync children, move on the the next phase
@@ -222,8 +226,8 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  * @param {number} newLength
  */
 function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
-	var parent = older.node;
 	var owner = ancestor.owner;
+	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
 	var oldKeys = {};
@@ -236,19 +240,16 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 	var newChild;
 	var nextNode;
 	var nextPos;
-	var childNodes;
 
 	// step 1, build a map of keys
 	while (true) {
 		if (oldIndex !== oldEnd) {
 			oldChild = oldChildren[oldIndex];
-			oldChild.i = oldIndex++;
-			oldKeys[oldChild.key] = oldChild;
+			oldKeys[oldChild.key] = oldIndex++;
 		}
 		if (newIndex !== newEnd) {
 			newChild = newChildren[newIndex];
-			newChild.i = newIndex++;
-			newKeys[newChild.key] = newChild;
+			newKeys[newChild.key] = newIndex++;
 		}
 		if (oldIndex === oldEnd && newIndex === newEnd) {
 			oldIndex = oldStart;
@@ -260,29 +261,31 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 	// step 2, insert
 	while (newIndex < newEnd) {
 		newChild = newChildren[newIndex];
-		oldChild = oldKeys[newChild.key];
+		oldIndex = oldKeys[newChild.key];
 
 		// new child doesn't exist in old children, insert
-		if (oldChild === void 0) {
+		if (oldIndex === void 0) {
 			nextPos = newIndex - newOffset;
 			nextNode = nextPos < oldLength ? oldChildren[nextPos].node : null;
-
 			create(newChild, null, owner, parent, nextNode, 2);
 			newOffset++;
-		} else if (newIndex === oldChild.i) {
+		} else if (newIndex === oldIndex) {
+			oldChild = oldChildren[oldIndex];
 			patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 		}
 		newIndex++;
 	}
 
+	oldIndex = oldStart;
+
 	// step 3, remove
 	while (oldIndex < oldEnd) {
 		oldChild = oldChildren[oldIndex];
-		newChild = newKeys[oldChild.key];
+		newIndex = newKeys[oldChild.key];
 
 		// old child doesn't exist in new children, remove
-		if (newChild === void 0) {
-			remove(oldChild, parent, oldChild.node);
+		if (newIndex === void 0) {
+			remove(oldChild, parent);
 			oldOffset++;
 		}
 		oldIndex++;
@@ -292,22 +295,22 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 	if (((oldEnd - oldStart) - oldOffset) + ((newEnd - newStart) - newOffset) === 2) {
 		return;
 	}
-
 	newIndex = newStart;
-	childNodes = parent.childNodes;
 
 	// step 4, move
 	while (newIndex < newEnd) {
 		newChild = newChildren[newIndex];
 
-		if (newChild.node === null && (oldChild = oldKeys[newChild.key]) !== void 0) {
-			nextPos = newIndex + 1;
-			nextNode = childNodes[nextPos];
+		if (newChild.node === null) {
+			oldIndex = oldKeys[newChild.key];
 
-			if (nextNode !== oldChild.node) {
-				move(parent, oldChild, nextNode);
+			if (oldIndex !== void 0) {
+				nextPos = newIndex + 1;
+				oldChild = oldChildren[oldIndex];
+
+				move(parent, oldChild, nextPos, null);
+				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 			}
-			patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 		}
 		newIndex++;
 	}
