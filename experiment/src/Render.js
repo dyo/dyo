@@ -45,7 +45,7 @@ function render (_newer, _target) {
 		if (older.key === newer.key) {
 			patch(older, newer, older.group, older);
 		} else {
-			swap(older, newer, 1, newer);
+			exchange(older, newer, 1, newer);
 		}
 	} else {
 		create(newer, null, newer.owner, target, null, 1);

@@ -77,5 +77,8 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  *
  * `_name` prefix is used to identify function arguments
  * when the value is expected to change within the function
- * and private component properties
+ * and private component properties.
+ *
+ * All code that interfaces with the DOM platform is in DOM.js
+ * it was structured this way to allow for future work on bridges with other platforms
  */

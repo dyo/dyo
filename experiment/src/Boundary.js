@@ -68,9 +68,9 @@ function renderBoundary (owner, cast) {
 function nodeBoundary (flag, newer, xmlns, owner) {
 	try {
 		if (xmlns === null) {
-			return document.createElement(newer.tag);
+			return createElement(newer.tag);
 		} else {
-			return document.createElementNS(newer.xmlns === xmlns, newer.tag);
+			return createElementNS(newer.xmlns === xmlns, newer.tag);
 		}
 	} catch (err) {
 		return errorBoundary(err, owner, newer.flag = 3, typeof owner === 'function' ? 2 : 1);

@@ -41,7 +41,7 @@ function test (name, body) {
 		return !body.toString().match(/async|await|Promise|setTimeout|\bend\b|\.then/g);
 	}
 	const report = (pass, fail) => {
-		console.log(underline+'\n'+pass +' tests passed,\n'+fail+ ' tests failed.\n');
+		console.log(underline+'\n'+pass +' assertions passed.\n'+fail+ ' assertions failed.\n');
 		if (fail > 0) {
 			process.exit(1);
 		}

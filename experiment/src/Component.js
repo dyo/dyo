@@ -237,7 +237,7 @@ function updateHost (older, newer, ancestor, tag) {
 	var group;
 
 	if (tag !== null) {
-		return swap(older, newer, 0, older);
+		return exchange(older, newer, 0, older);
 	}
 
 	if ((host = older.host) !== null) {
@@ -249,7 +249,7 @@ function updateHost (older, newer, ancestor, tag) {
 		}
 	}
 
-	swap(older, newer, 2, older);
+	exchange(older, newer, 2, older);
 	refresh(older);
 }
 

@@ -109,64 +109,6 @@ function refs (value, owner, node, type) {
 }
 
 /**
- * Assign Attributes
- *
- * @param {Number} type
- * @param {String} name
- * @param {Any} value
- * @param {String?} xmlns
- * @param {Node} node
- */
-function assign (type, name, value, xmlns, node) {
-	switch (type) {
-		case 1: {
-			if (xmlns === null) {
-				node.className = value;
-			} else {
-				assign(6, 'class', value, xmlns, node);
-			}
-			break;
-		}
-		case 2: {
-			node.id = value;
-			break;
-		}
-		case 3: {
-			if (typeof value === 'string') {
-				node.style.cssText = value;
-			} else {
-				style(value, node.style);
-			}
-			break;
-		}
-		case 4: {
-			node.innerHTML = value;
-			break;
-		}
-		case 5: {
-			if (node[name] === void 0) {
-				node.style.setProperty(name, value);
-			} else if (isNaN(Number(value)) === true) {
-				assign(6, name, value, xmlns, node);
-			} else {
-				set(node, name, value);
-			}
-			break;
-		}
-		case 6: {
-			if (name === 'xlink:href') {
-				node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
-			} else if (value !== null && value !== void 0 && value !== false) {
-				node.setAttribute(name, (value === true ? '' : value));
-			} else {
-				node.removeAttribute(name);
-			}
-			break;
-		}
-	}
-}
-
-/**
  * Attribute Identifier [Whitelist]
  *
  * @param  {String} name
@@ -195,20 +137,6 @@ function evt (name) {
 }
 
 /**
- * Assign Styles
- *
- * @param {Object} source
- * @param {Object} target
- */
-function style (source, target) {
-	for (var name in source) {
-		if (name in target) {
-			target[name] = source[name];
-		}
-	}
-}
-
-/**
  * Merge Props
  *
  * @param {Object} source
@@ -218,23 +146,6 @@ function merge (source, props) {
 	for (var name in source) {
 		if (props[name] === void 0) {
 			props[name] = source[name];
-		}
-	}
-}
-
-/**
- * Set Property
- *
- * @param {Tree} node
- * @param {String} name
- * @param {Any} value
- */
-function set (node, name, value) {
-	try {
-		node[name] = value;
-	} catch (err) {
-		if (node[name] !== value) {
-			node.setProperty(name, value);
 		}
 	}
 }

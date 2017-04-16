@@ -131,7 +131,7 @@ function resolve (pending, owner) {
 		newer = shape(value, owner);
 
 		if (older.tag !== newer.tag) {
-			swap(older, newer, 0, older);
+			exchange(older, newer, 0, older);
 		} else {
 			patch(older, newer, 0, older);
 		}

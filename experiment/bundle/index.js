@@ -11,8 +11,8 @@ const main = [
 	'../src/Extract.js',
 	'../src/Boundary.js',
 	'../src/Attribute.js',
-	'../src/Event.js',
 	'../src/Node.js',
+	'../src/DOM.js',
 	'../src/Render.js',
 	'../src/Reconcile.js'
 ];
