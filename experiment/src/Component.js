@@ -254,6 +254,37 @@ function updateHost (older, newer, ancestor, tag) {
 }
 
 /**
+ * Resolve
+ *
+ * @param {Promise} pending
+ * @param {Component} owner
+ */
+function resolve (pending, owner) {
+	if (owner === null) {
+		return;
+	}
+	var tree = owner._tree;
+
+	if (tree === null) {
+		tree = text('');
+	}
+	owner._sync = 2;
+
+	pending.then(function (value) {
+		var older = owner._tree;
+
+		owner._sync = 0;
+
+		if (older === null || older.node === null) {
+			return;
+		}
+		var newer = shape(value, owner);
+		older.tag !== newer.tag ? exchange(older, newer, 0, older) : patch(older, newer, 0, older);
+	});
+	return tree;
+}
+
+/**
  * PropTypes
  *
  * @param {Function|Class} type

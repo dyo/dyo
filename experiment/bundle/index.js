@@ -8,7 +8,6 @@ const main = [
 	'../src/Shared.js',
 	'../src/Component.js',
 	'../src/Element.js',
-	'../src/Extract.js',
 	'../src/Boundary.js',
 	'../src/Attribute.js',
 	'../src/Node.js',
