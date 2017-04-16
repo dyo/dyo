@@ -34,7 +34,7 @@ TreePrototype.toString = function () {
 			body += children[i].toString();
 		}
 	}
-	return '<'+tag+stringify(tree)+'>'+ (empty[tag] !== 0 ? body+'</'+tag+'>' : '');
+	return '<'+tag+attrs(tree)+'>'+ (empty[tag] !== 0 ? body+'</'+tag+'>' : '');
 }
 
 /**
@@ -57,10 +57,12 @@ function attrs (tree) {
 		if (evt(name) === true) {
 			continue;
 		}
+		value = props[name];
+
 		switch (name) {
-			case 'key': case 'children': case 'ref': case 'innerHTML': break;
+			case 'key': case 'children': case 'ref': case 'innerHTML': continue;
 			case 'style': {
-				if (typeof(value = props[name]) === 'object') {
+				if (typeof value === 'object') {
 					name = '';
 					for (var key in value) {
 						val = value[key];
@@ -71,24 +73,26 @@ function attrs (tree) {
 					}
 					value = name;
 				}
-				body += ' style="'+sanitize(value)+'"';
+				value = ' style="'+sanitize(value)+'"';
 				break;
 			}
 			case 'defaultValue': {
-				if (props.value !== void 0) {
-					break;
-				}
-				body += ' value="'+sanitize(props[name])+'"';
+				value = props.value === void 0 ? ' value="'+sanitize(value)+'"' : '';
+				break;
 			}
-			case 'className': name = 'class';
+			case 'class': case 'className': name = 'class'; {
+				value = ' class="'+sanitize(value)+'"';
+				break;
+			}
 			default: {
-				switch ((value = props[name])) {
+				switch (value) {
 					case false: case null: case void 0: continue;
 					case true: body += ' '+name; continue;
 				}
-				body += ' '+name+'="'+sanitize(value)+'"';
+				value = ' '+name+'="'+sanitize(value)+'"';
 			}
 		}
+		body += value;
 	}
 	return body;
 }
