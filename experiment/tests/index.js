@@ -24,7 +24,9 @@ files.forEach(file => {
   const code = fs.readFileSync(filepath, 'utf8').replace(regex, imports);
   const related = fs.readFileSync(resolve(file, '../src/'), 'utf8');
 
-  vm.runInThisContext(test.toString()+shared+related+code, filepath);
+  vm.runInThisContext(`
+		var __dirname = '${__dirname}';
+	`+test.toString()+shared+related+code, filepath);
 });
 
 
@@ -36,10 +38,10 @@ function test (name, body) {
 	let ended = false;
 
 	const sync = (body) => {
-		return !body.toString().match(/async|await|Promise|setTimeout|\.then/g);
+		return !body.toString().match(/async|await|Promise|setTimeout|\bend\b|\.then/g);
 	}
 	const report = (pass, fail) => {
-		console.log(pass +' tests passed, '+fail+ ' tests failed.\n');
+		console.log(underline+'\n'+pass +' tests passed,\n'+fail+ ' tests failed.\n');
 		if (fail > 0) {
 			process.exit(1);
 		}
@@ -47,18 +49,24 @@ function test (name, body) {
 	const log = (status, {msg, type}) => {
 		switch (status) {
 			case 'FAIL': {
-				console.log('\x1b[31m', type+': ', msg||'', '\x1b[0m');
+				console.log('\x1b[31m', type+': ✖', msg||'', '\x1b[0m');
 				break;
 			}
 			case 'PASS': {
-				console.log('\x1b[32m', type+': ', msg||'', '\x1b[0m');
+				console.log('\x1b[32m', type+': ✓', msg||'', '\x1b[0m');
 				break;
 			}
 		}
 	}
+	const underline = '----------------'
 	const end = () => {
 		ended = true;
-		console.log('\x1b[4m\x1b[36m%s\x1b[0m', '\n'+'\x1b[1m'+name+'\x1b[0m');
+		console.log(
+			'\x1b[36m%s',
+			'\n'+''+name,
+			'\n'+underline,
+			'\x1b[0m'
+		);
 		if (failed.length > 0) {
 			console.log('Failed Tests');
 			failed.forEach((v) => log('FAIL', v))
@@ -75,8 +83,25 @@ function test (name, body) {
 	const equal = (actual, expected, msg) => {
 		(actual === expected ? passed : failed).push({type: 'EQUAL', msg: msg})
 	}
+	const deepEqual = (x, y) => {
+	  const ok = Object.keys, tx = typeof x, ty = typeof y;
+	  return x && y && tx === 'object' && tx === ty ? (
+	    ok(x).length === ok(y).length &&
+	      ok(x).every(key => deepEqual(x[key], y[key]))
+	  ) : (x === y);
+	}
 
-	body({end, ok, equal});
+	try {
+		body({end, ok, equal, deepEqual});
+	} catch (err) {
+		err = err.stack.split('\n').slice(0, 4).join('\n');
+		err = err.replace(new RegExp('.*'+__dirname+'(.*)', 'g'), '$1').replace(/\)/g, '');
+
+		failed.push({
+			type: 'ERR',
+			msg: err
+		});
+	}
 
 	if (!ended && sync(body)) {
 		end();

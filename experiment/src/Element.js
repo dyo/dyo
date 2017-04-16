@@ -46,6 +46,9 @@ function element (_type, _props) {
 			}
 			break;
 		}
+		default: {
+			tree.tag = 'noscript';
+		}
 	}
 
 	tree.type = type;
