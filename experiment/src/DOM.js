@@ -1,4 +1,27 @@
 /**
+ * Document
+ *
+ * @type {Node?}
+ */
+var document = browser === true ? global.document : null;
+
+/**
+ * Mount
+ *
+ * @type {Node?}
+ */
+var mount = browser === true ? document.body : null;
+
+/**
+ * Top Level Node
+ *
+ * @return {Node}
+ */
+function toplevel () {
+	return document.body || document.documentElement;
+}
+
+/**
  * Create Element
  *
  * @return {Node}

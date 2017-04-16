@@ -6,8 +6,6 @@ var noop = function () {};
 var array = [];
 var object = {};
 var browser = global.window !== void 0;
-var document = global.document;
-var mount = browser === true ? document.body : null;
 var Promise = global.Promise || noop;
 var schedule = global.requestIdleCallback || global.requestAnimationFrame || setTimeout;
 

@@ -28,8 +28,6 @@
 	var array = [];
 	var object = {};
 	var browser = global.window !== void 0;
-	var document = global.document;
-	var mount = browser === true ? document.body : null;
 	var Promise = global.Promise || noop;
 	var schedule = global.requestIdleCallback || global.requestAnimationFrame || setTimeout;
 	
@@ -1256,6 +1254,29 @@
 	}
 	
 	/**
+	 * Document
+	 *
+	 * @type {Node?}
+	 */
+	var document = browser === true ? global.document : null;
+	
+	/**
+	 * Mount
+	 *
+	 * @type {Node?}
+	 */
+	var mount = browser === true ? document.body : null;
+	
+	/**
+	 * Top Level Node
+	 *
+	 * @return {Node}
+	 */
+	function toplevel () {
+		return document.body || document.documentElement;
+	}
+	
+	/**
 	 * Create Element
 	 *
 	 * @return {Node}
@@ -1579,14 +1600,13 @@
 		var target = _target;
 		var older;
 	
-		if (target === null || target === void 0 || target === document) {
+		if (target === void 0) {
 			// mount points to document.body, if it's null dio was loaded before
 			// the body node, try to use <body> if it exists at this point
 			// else default to the root <html> node
 			if (mount === null) {
-				mount = document.body || document.documentElement;
+				mount = toplevel();
 			}
-	
 			target = mount;
 		}
 	

@@ -9,14 +9,13 @@ function render (_newer, _target) {
 	var target = _target;
 	var older;
 
-	if (target === null || target === void 0 || target === document) {
+	if (target === void 0) {
 		// mount points to document.body, if it's null dio was loaded before
 		// the body node, try to use <body> if it exists at this point
 		// else default to the root <html> node
 		if (mount === null) {
-			mount = document.body || document.documentElement;
+			mount = toplevel();
 		}
-
 		target = mount;
 	}
 
