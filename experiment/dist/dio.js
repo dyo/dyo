@@ -114,6 +114,7 @@
 	
 		this.refs = null;
 		this._tree = null;
+		this._flag = 0;
 	
 		// props
 		if (this.props === void 0) {
@@ -124,7 +125,12 @@
 		}
 		// state
 		if (state === void 0) {
-			this.state = state = this.getInitialState !== void 0 ? dataBoundary(this, 1, props) : {};
+			if (this.getInitialState !== void 0) {
+				state = getInitialState(dataBoundary(this, 1, props), this);
+			} else {
+				state = {};
+			}
+			this.state = state;
 		}
 		this._state = state;
 	}
@@ -154,6 +160,28 @@
 			Object.defineProperty(proto, 'constructor', {value: type});
 		}
 		Object.defineProperties(proto, ComponentPrototype);
+	}
+	
+	/**
+	 * Get Initial State
+	 *
+	 * @param  {Object} state
+	 * @param  {Component} owner
+	 * @return {Object}
+	 */
+	function getInitialState (state, owner) {
+		if (state === null || state === void 0) {
+			return {};
+		}
+		if (state.constructor === Promise) {
+			owner.flag = 1;
+			state.then(function (value) {
+				owner.flag = 0;
+				owner.setState(value);
+			});
+			return {};
+		}
+		return state;
 	}
 	
 	/**
@@ -712,19 +740,21 @@
 	 * @param  {Boolean} sync
 	 */
 	function returnBoundary (state, owner, e, sync) {
-		if (owner !== null && owner.UUID !== void 0 && state !== void 0 && state !== null) {
-			if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
-				e.preventDefault();
-			}
+		if (owner === null || owner.UUID === void 0 || state === void 0 || state === null) {
+			return;
+		}
 	
-			if (state !== false) {
-				if (sync === true) {
+		if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
+			e.preventDefault();
+		}
+	
+		if (state !== false) {
+			if (sync === true) {
+				owner.setState(state);
+			} else {
+				schedule(function () {
 					owner.setState(state);
-				} else {
-					schedule(function () {
-						owner.setState(state);
-					});
-				}
+				});
 			}
 		}
 	}
@@ -991,7 +1021,7 @@
 		var length = children.length;
 		var group = tree.group;
 		var owner;
-		var result;
+		var newer;
 		var proto;
 		var UUID;
 	
@@ -1020,17 +1050,20 @@
 				owner = new type(props);
 				Component.call(owner, props);
 			}
-			tree.async = 1;
-			result = renderBoundary(owner, group);
-			tree.async = 0;
 	
-			result = shape(result, tree);
+			if (owner.flag === 0) {
+				tree.async = 1;
+				newer = renderBoundary(owner, group);
+				tree.async = 0;
+			}
+	
+			newer = shape(newer, tree);
 			owner._tree = tree;
 			tree.owner = owner;
 		} else {
-			result = shape(renderBoundary(tree, group), tree);
+			newer = shape(renderBoundary(tree, group), tree);
 		}
-		return result;
+		return newer;
 	}
 	
 	/**

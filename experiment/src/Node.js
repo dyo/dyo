@@ -11,7 +11,7 @@ function extract (tree) {
 	var length = children.length;
 	var group = tree.group;
 	var owner;
-	var result;
+	var newer;
 	var proto;
 	var UUID;
 
@@ -40,17 +40,20 @@ function extract (tree) {
 			owner = new type(props);
 			Component.call(owner, props);
 		}
-		tree.async = 1;
-		result = renderBoundary(owner, group);
-		tree.async = 0;
 
-		result = shape(result, tree);
+		if (owner.flag === 0) {
+			tree.async = 1;
+			newer = renderBoundary(owner, group);
+			tree.async = 0;
+		}
+
+		newer = shape(newer, tree);
 		owner._tree = tree;
 		tree.owner = owner;
 	} else {
-		result = shape(renderBoundary(tree, group), tree);
+		newer = shape(renderBoundary(tree, group), tree);
 	}
-	return result;
+	return newer;
 }
 
 /**

@@ -9,6 +9,7 @@ function Component (_props) {
 
 	this.refs = null;
 	this._tree = null;
+	this._flag = 0;
 
 	// props
 	if (this.props === void 0) {
@@ -19,7 +20,12 @@ function Component (_props) {
 	}
 	// state
 	if (state === void 0) {
-		this.state = state = this.getInitialState !== void 0 ? dataBoundary(this, 1, props) : {};
+		if (this.getInitialState !== void 0) {
+			state = getInitialState(dataBoundary(this, 1, props), this);
+		} else {
+			state = {};
+		}
+		this.state = state;
 	}
 	this._state = state;
 }
@@ -49,6 +55,28 @@ function extendClass (type, proto) {
 		Object.defineProperty(proto, 'constructor', {value: type});
 	}
 	Object.defineProperties(proto, ComponentPrototype);
+}
+
+/**
+ * Get Initial State
+ *
+ * @param  {Object} state
+ * @param  {Component} owner
+ * @return {Object}
+ */
+function getInitialState (state, owner) {
+	if (state === null || state === void 0) {
+		return {};
+	}
+	if (state.constructor === Promise) {
+		owner.flag = 1;
+		state.then(function (value) {
+			owner.flag = 0;
+			owner.setState(value);
+		});
+		return {};
+	}
+	return state;
 }
 
 /**

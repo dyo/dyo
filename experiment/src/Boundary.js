@@ -138,19 +138,21 @@ function eventBoundary (owner, fn, e) {
  * @param  {Boolean} sync
  */
 function returnBoundary (state, owner, e, sync) {
-	if (owner !== null && owner.UUID !== void 0 && state !== void 0 && state !== null) {
-		if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
-			e.preventDefault();
-		}
+	if (owner === null || owner.UUID === void 0 || state === void 0 || state === null) {
+		return;
+	}
 
-		if (state !== false) {
-			if (sync === true) {
+	if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
+		e.preventDefault();
+	}
+
+	if (state !== false) {
+		if (sync === true) {
+			owner.setState(state);
+		} else {
+			schedule(function () {
 				owner.setState(state);
-			} else {
-				schedule(function () {
-					owner.setState(state);
-				});
-			}
+			});
 		}
 	}
 }
