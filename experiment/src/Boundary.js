@@ -182,11 +182,10 @@ function errorBoundary (message, owner, type, from) {
 		message = err;
 		location = 'componentDidThrow';
 	}
-
 	errorMessage(component, location, message instanceof Error ? message.stack : message);
 
 	if (type === 3 || type === 5) {
-		return shape(tree, owner);
+		return shape(tree, owner._tree);
 	}
 }
 

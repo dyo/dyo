@@ -1,41 +1,5 @@
 /**
- * Shape Tree
- *
- * @param  {Tree} _tree
- * @param  {Component?} owner
- * @return {Tree}
- */
-function shape (_tree, owner) {
-	var tree = (_tree !== null && _tree !== void 0) ? _tree : text('');
-
-	if (tree.group === void 0) {
-		switch (typeof tree) {
-			case 'function': {
-				tree = element(tree, owner === null ? null : owner.props);
-				break;
-			}
-			case 'string':
-			case 'number':
-			case 'boolean': {
-				tree = text(tree);
-				break;
-			}
-			case 'object': {
-				switch (tree.constructor) {
-					case Promise: return resolve(tree, owner);
-					case Array: tree = fragment(tree); break;
-					case Date: tree = text(tree+''); break;
-					case Object: tree = text(''); break;
-					default: tree = text('');
-				} break;
-			}
-		}
-	}
-	return tree;
-}
-
-/**
- * Extract Component
+ * Extract Component Tree
  *
  * @param  {Tree} tree
  * @return {Tree}
@@ -46,9 +10,10 @@ function extract (tree) {
 	var children = tree.children;
 	var length = children.length;
 	var group = tree.group;
-	var result;
 	var owner;
+	var result;
 	var proto;
+	var UUID;
 
 	if (props === object) {
 		props = {};
@@ -65,18 +30,21 @@ function extract (tree) {
 	}
 
 	if (group === 1) {
-		if ((proto = type.prototype).UUID === 7) {
+		UUID = (proto = type.prototype).UUID;
+		if (UUID === 2) {
 			owner = new type(props);
 		} else {
-			if (proto.setState === void 0) {
+			if (UUID !== 1) {
 				extendClass(type, proto);
 			}
 			owner = new type(props);
 			Component.call(owner, props);
 		}
+		tree.async = 1;
 		result = renderBoundary(owner, group);
-		owner._sync = 0;
-		result = shape(result, owner);
+		tree.async = 0;
+
+		result = shape(result, tree);
 		owner._tree = tree;
 		tree.owner = owner;
 	} else {
@@ -86,7 +54,69 @@ function extract (tree) {
 }
 
 /**
- * Exchange Node
+ * Shape Tree
+ *
+ * @param  {Any} _newer
+ * @param  {Tree?} older
+ * @return {Tree}
+ */
+function shape (_newer, older) {
+	var newer = (_newer !== null && _newer !== void 0) ? _newer : text('');
+
+	if (newer.group === void 0) {
+		switch (typeof newer) {
+			case 'function': {
+				newer = element(newer, older === null ? null : older.props);
+				break;
+			}
+			case 'string':
+			case 'number':
+			case 'boolean': {
+				newer = text(newer);
+				break;
+			}
+			case 'object': {
+				switch (newer.constructor) {
+					case Promise: return resolve(newer, older);
+					case Array: newer = fragment(newer); break;
+					case Date: newer = text(newer+''); break;
+					case Object: newer = text(''); break;
+					default: tree = text('');
+				} break;
+			}
+		}
+	}
+	return newer;
+}
+
+/**
+ * Resolve Tree
+ *
+ * @param {Promise} pending
+ * @param {Tree} older
+ */
+function resolve (pending, older) {
+	older.async = 2;
+
+	pending.then(function (value) {
+		var newer = value;
+		if (older.node === null) {
+			return;
+		}
+		older.async = 0;
+		newer = shape(newer, older);
+		if (older.tag !== newer.tag) {
+			exchange(older, newer, 0, older);
+		} else {
+			patch(older, newer, 0, older);
+		}
+	});
+
+	return older.node !== null ? older : text('');;
+}
+
+/**
+ * Exchange Tree
  *
  * @param {Tree} newer
  * @param {Tree} older
@@ -97,6 +127,13 @@ function exchange (older, newer, type, ancestor) {
 	swap(older, newer, ancestor);
 
 	switch (type) {
+		case 0: {
+			if (older.flag !== 1 && older.children.length > 0) {
+				empty(older);
+			}
+			clone(older, newer, type);
+			break;
+		}
 		case 1: {
 			unmount(older);
 			break;
@@ -106,12 +143,6 @@ function exchange (older, newer, type, ancestor) {
 				unmount(older.host);
 			}
 			break;
-		}
-		default: {
-			if (older.flag !== 1 && older.children.length > 0) {
-				empty(older);
-			}
-			clone(older, newer, type);
 		}
 	}
 	clone(older, newer, type);
@@ -137,8 +168,8 @@ function refresh (older) {
  * @param {Tree} older
  */
 function unmount (older) {
-	var host = older.host;
 	var owner = older.owner;
+	var host = older.host;
 
 	if (owner !== null && owner.componentWillUnmount !== void 0) {
 		mountBoundary(owner, 2);
@@ -158,13 +189,12 @@ function empty (older) {
 	var children = older.children;
 	var length = children.length;
 
-	if (clear === false && (older.flag === 1 || length === 0)) {
+	if (older.flag === 1 || length === 0) {
 		return;
 	}
 
 	for (var i = 0, child; i < length; i++) {
 		child = children[i];
-
 		if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
 			mountBoundary(child.owner, 2);
 		}
@@ -177,17 +207,17 @@ function empty (older) {
 }
 
 /**
- * fill Children
+ * Fill Children
  *
  * @param {Tree} older
  * @param {Tree} newer
  * @param {Tree} ancestor
  */
 function fill (older, newer, ancestor) {
+	var owner = ancestor.owner;
 	var parent = older.node;
 	var children = newer.children;
 	var length = children.length;
-	var owner = ancestor.owner;
 
 	for (var i = 0, child; i < length; i++) {
 		create(child = children[i], null, owner, parent, null, 1);

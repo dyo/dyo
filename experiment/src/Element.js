@@ -41,8 +41,8 @@ function element (_type, _props) {
 			if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
 				tree.group = 1;
 			} else {
-				tree.owner = type;
 				tree.group = 2;
+				tree.owner = type;
 			}
 			break;
 		}
@@ -130,7 +130,7 @@ function text (value) {
 /**
  * Create Fragment
  *
- * @param  {Tree[]|Tree|Function} children
+ * @param  {Array<Tree>|Tree|Function} children
  * @return {Tree}
  */
 function fragment (children) {
@@ -138,7 +138,7 @@ function fragment (children) {
 }
 
 /**
- * Copy Properties
+ * Copy Tree [Shallow]
  *
  * @param  {Tree} older
  * @param  {Tree} newer
@@ -154,7 +154,7 @@ function copy (older, newer) {
 }
 
 /**
- * Clone Tree
+ * Clone Tree [Deep]
  *
  * @param  {Tree} older
  * @param  {Tree} newer
@@ -166,6 +166,7 @@ function clone (older, newer, type) {
 	older.node = newer.node;
 	older.attrs = newer.attrs;
 	older.xmlns = newer.xmlns;
+	older.async = newer.async;
 	older.keyed = newer.keyed;
 	older.parent = newer.parent;
 	older.children = newer.children;
@@ -200,6 +201,7 @@ function Tree (flag) {
 	this.host = null;
 	this.node = null;
 	this.group = 0;
+	this.async = 0;
 	this.props = object;
 	this.attrs = object;
 	this.xmlns = null;

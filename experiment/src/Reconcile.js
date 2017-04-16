@@ -10,11 +10,11 @@ function patch (older, _newer, group, _ancestor) {
 	var ancestor = _ancestor;
 	var newer = _newer;
 
-	if (older.type !== newer.type) {
-		return exchange(older, newer, 1, ancestor);
-	}
-
 	if (group > 0) {
+		if (older.type !== newer.type) {
+			return exchange(older, newer, 1, ancestor);
+		}
+
 		if ((newer = shouldUpdate(older, newer, group, ancestor)) === void 0) {
 			return;
 		}

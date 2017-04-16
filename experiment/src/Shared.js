@@ -32,7 +32,7 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  */
 
 /**
- * ## Element Shapes
+ * ## Element Shape
  *
  * name: node tag {String}
  * type: node type {Function|Class|String}
@@ -46,12 +46,20 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * node: node DOM reference {Node?}
  * group: node ground {Number}
  * host: node host component(composites) {Component?}
+ * async: node work state {Number}
  */
+
+ /**
+  * ## Element Async Flag
+  *
+  * 0: ready(sync)
+  * 1: blocked(delegates) `instance creation | prior set state`
+  * 2: pending(async) `resolving async render`
+  */
 
 /**
  * ## Component Shape
  *
- * _sync: sync/async {Number}
  * _tree: current tree {Tree?}
  * _state: previous state {Object}
  *
@@ -60,14 +68,6 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * refs: refs {Object?}
  * setState: method {Function}
  * forceUpdate: method {Function}
- */
-
-/**
- * ## Component Flags
- *
- * 0: not pending/blocked(ready) `non of the below`
- * 1: blocked/pending `instance creation | prior merging new state`
- * 2: async/pending `resolving async render`
  */
 
 /**

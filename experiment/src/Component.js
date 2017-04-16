@@ -7,6 +7,9 @@ function Component (_props) {
 	var props = _props;
 	var state = this.state;
 
+	this.refs = null;
+	this._tree = null;
+
 	// props
 	if (this.props === void 0) {
 		if (props === object || props === void 0 || props === null) {
@@ -14,15 +17,10 @@ function Component (_props) {
 		}
 		this.props = props;
 	}
-
 	// state
 	if (state === void 0) {
 		this.state = state = this.getInitialState !== void 0 ? dataBoundary(this, 1, props) : {};
 	}
-
-	this.refs = null;
-	this._tree = null;
-	this._sync = 1;
 	this._state = state;
 }
 
@@ -34,11 +32,11 @@ function Component (_props) {
 var ComponentPrototype = {
 	setState: {value: setState},
 	forceUpdate: {value: forceUpdate},
-	UUID: {value: 7}
+	UUID: {value: 2}
 };
 
 Component.prototype = Object.create(null, ComponentPrototype);
-ComponentPrototype.UUID.value = 0;
+ComponentPrototype.UUID.value = 1;
 
 /**
  * Extend Class
@@ -67,7 +65,6 @@ function setState (state, callback) {
 	if (state === void 0 || state === null) {
 		return;
 	}
-
 	nextState = state;
 	prevState = this._state = this.state;
 
@@ -98,7 +95,7 @@ function setState (state, callback) {
 function forceUpdate (callback) {
 	var older = this._tree;
 
-	if (this._sync !== 0 || older.node === null) {
+	if (older === null || older.async !== 0 || older.node === null) {
 		return;
 	}
 	patch(older, older, 1, older);
@@ -140,7 +137,6 @@ function shouldUpdate (older, _newer, group, ancestor) {
 	var owner = older.owner;
 	var nextProps = _newer.props;
 	var prevProps = older.props;
-
 	var recievedProps;
 	var defaultProps;
 	var prevState;
@@ -151,17 +147,14 @@ function shouldUpdate (older, _newer, group, ancestor) {
 	var host;
 	var tag;
 
-	if (owner === null) {
-		return null;
+	if (owner === null || older.async !== 0) {
+		return;
 	}
+	older.async = 1;
 
 	if (group === 1) {
-		if (owner._sync !== 0) {
-			return;
-		}
 		nextState = owner.state;
 		prevState = owner._state;
-		owner._sync = 1;
 	} else {
 		nextState = nextProps;
 		prevState = prevProps;
@@ -171,7 +164,6 @@ function shouldUpdate (older, _newer, group, ancestor) {
 		if (type.propTypes !== void 0) {
 			propTypes(type, nextProps);
 		}
-
 		if (owner.componentWillReceiveProps !== void 0) {
 			dataBoundary(owner, 0, nextProps);
 		}
@@ -186,40 +178,25 @@ function shouldUpdate (older, _newer, group, ancestor) {
 		owner.shouldComponentUpdate !== void 0 &&
 		updateBoundary(owner, 0, nextProps, nextState) === false
 	) {
-		return (owner._sync = 0, null);
-	}
-
-	if (recievedProps === true) {
-		(group === 1 ? owner : older).props = nextProps;
-	}
-
-	if (owner.componentWillUpdate !== void 0) {
-		updateBoundary(owner, 1, nextProps, nextState);
-	}
-
-	if (group === 1) {
-		// class
-		newer = shape(renderBoundary(owner, group), owner);
+		older.async = 0;
 	} else {
-		// function
-		newer = shape(renderBoundary(older, group), _newer);
-	}
-
-	if ((tag = newer.tag) !== older.tag) {
-		newer = updateHost(older, newer, ancestor, tag);
-	}
-
-	if (owner.componentDidUpdate !== void 0) {
-		updateBoundary(owner, 2, prevProps, prevState);
-	}
-
-	if (group === 1) {
-		if (owner._sync === 2) {
-			return;
+		if (recievedProps === true) {
+			(group === 1 ? owner : older).props = nextProps;
 		}
-		owner._sync = 0;
+		if (owner.componentWillUpdate !== void 0) {
+			updateBoundary(owner, 1, nextProps, nextState);
+		}
+
+		newer = shape(renderBoundary(group === 1 ? owner : older, group), older);
+
+		if ((tag = newer.tag) !== older.tag) {
+			newer = updateHost(older, newer, ancestor, tag);
+		}
+		if (owner.componentDidUpdate !== void 0) {
+			updateBoundary(owner, 2, prevProps, prevState);
+		}
+		return older.async === 2 ? void 0 : (older.async = 0, newer);
 	}
-	return newer;
 }
 
 /**
@@ -248,40 +225,8 @@ function updateHost (older, newer, ancestor, tag) {
 			return patch(host, newer, host.group, ancestor);
 		}
 	}
-
 	exchange(older, newer, 2, older);
 	refresh(older);
-}
-
-/**
- * Resolve
- *
- * @param {Promise} pending
- * @param {Component} owner
- */
-function resolve (pending, owner) {
-	if (owner === null) {
-		return;
-	}
-	var tree = owner._tree;
-
-	if (tree === null) {
-		tree = text('');
-	}
-	owner._sync = 2;
-
-	pending.then(function (value) {
-		var older = owner._tree;
-
-		owner._sync = 0;
-
-		if (older === null || older.node === null) {
-			return;
-		}
-		var newer = shape(value, owner);
-		older.tag !== newer.tag ? exchange(older, newer, 0, older) : patch(older, newer, 0, older);
-	});
-	return tree;
 }
 
 /**

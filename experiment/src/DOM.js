@@ -128,7 +128,6 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
 
 	if (type !== 0) {
 		newer.node = node;
-
 		switch (action) {
 			case 1: parent.appendChild(node); break;
 			case 2: parent.insertBefore(node, sibling); break;

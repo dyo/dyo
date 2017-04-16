@@ -1,5 +1,5 @@
-// empty nodes
-var empty = {'area': 0, 'base': 0, 'br': 0, '!doctype': 0, 'col': 0, 'embed': 0, 'wbr': 0, 'track': 0,
+// hollow nodes
+var hollow = {'area': 0, 'base': 0, 'br': 0, '!doctype': 0, 'col': 0, 'embed': 0, 'wbr': 0, 'track': 0,
 'hr': 0, 'img': 0, 'input': 0, 'keygen': 0, 'link': 0, 'meta': 0, 'param': 0, 'source': 0};
 
 // unicode characters
@@ -34,7 +34,7 @@ TreePrototype.toString = function () {
 			body += children[i].toString();
 		}
 	}
-	return '<'+tag+attrs(tree)+'>'+ (empty[tag] !== 0 ? body+'</'+tag+'>' : '');
+	return '<'+tag+attrs(tree)+'>'+ (hollow[tag] !== 0 ? body+'</'+tag+'>' : '');
 }
 
 /**
