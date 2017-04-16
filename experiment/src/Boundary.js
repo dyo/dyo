@@ -138,7 +138,7 @@ function eventBoundary (owner, fn, e) {
  * @param  {Boolean} sync
  */
 function returnBoundary (state, owner, e, sync) {
-	if (owner !== null && state !== void 0 && state !== null) {
+	if (owner !== null && owner.UUID !== void 0 && state !== void 0 && state !== null) {
 		if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
 			e.preventDefault();
 		}

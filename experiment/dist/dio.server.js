@@ -875,7 +875,7 @@
 	 * @param  {Boolean} sync
 	 */
 	function returnBoundary (state, owner, e, sync) {
-		if (owner !== null && state !== void 0 && state !== null) {
+		if (owner !== null && owner.UUID !== void 0 && state !== void 0 && state !== null) {
 			if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
 				e.preventDefault();
 			}
@@ -1240,9 +1240,11 @@
 	 * @param {Function} handler
 	 */
 	function event (node, name, owner, handler) {
-		node[name.toLowerCase()] = typeof handler !== 'function' ? null : function proxy (e) {
-			eventBoundary(owner, handler, e);
-		};
+		node[name.toLowerCase()] = typeof handler !== 'function' ? null : (
+			owner !== null ? function proxy (e) {
+				eventBoundary(owner, handler, e);
+			} : handler
+		);
 	}
 	
 	/**

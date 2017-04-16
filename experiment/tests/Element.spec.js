@@ -9,7 +9,9 @@ test('Element', ({ok, deepEqual}) => {
 	let props = h1.props;
 	let attrs = h1.attrs;
 	let tag = h1.tag;
-	let flag = h1.flag
+	let flag = h1.flag;
+
+	clone(h2, h1, 1);
 
 	ok(tag === 'h1', 'element tag');
 	ok(flag === 2, 'element flag');
@@ -27,8 +29,6 @@ test('Element', ({ok, deepEqual}) => {
 	ok(key.keyed === true, 'element keyed children');
 	ok(key.children[1].key > 0, 'element auto insert keys');
 	ok(h().tag === 'noscript', 'default element type');
-
-	clone(h2, h1, 1);
 
 	ok(deepEqual(h2, h1), 'element copy');
 })

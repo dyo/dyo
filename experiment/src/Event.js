@@ -7,7 +7,9 @@
  * @param {Function} handler
  */
 function event (node, name, owner, handler) {
-	node[name.toLowerCase()] = typeof handler !== 'function' ? null : function proxy (e) {
-		eventBoundary(owner, handler, e);
-	};
+	node[name.toLowerCase()] = typeof handler !== 'function' ? null : (
+		owner !== null ? function proxy (e) {
+			eventBoundary(owner, handler, e);
+		} : handler
+	);
 }

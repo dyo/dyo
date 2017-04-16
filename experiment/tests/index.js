@@ -63,7 +63,7 @@ function test (name, body) {
 		ended = true;
 		console.log(
 			'\x1b[36m%s',
-			'\n'+''+name,
+			name,
 			'\n'+underline,
 			'\x1b[0m'
 		);
