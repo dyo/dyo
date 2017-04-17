@@ -117,6 +117,20 @@ class Foo {
 	}
 }
 ```
+#### promise setState type
+
+```js
+class Foo {
+	async componentDidUpdate() {
+		return {id: 0};
+		// or this.setState(Promise.resolve({id: 0}))
+	}
+	render () {
+		return 1+1;
+	}
+}
+```
+
 
 #### error boundaries
 
