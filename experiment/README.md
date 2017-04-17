@@ -14,11 +14,15 @@ An experimental rewrite that puts what i've learnt from the past versions of dio
 - return state from event handles
 - return state from lifecycles
 - return state from function refs and callbacks
-- error boundaries
 - promise return type
-- fragment return type
+
+## Similarities
+
+- error boundaries and recovery
+- array return type
+- support non-deterministic render/updates
+- can pause/resume tree commits
 - pause, fetch data, resume pattern
-- support non-deterministic render/update
 
 ## When
 
@@ -50,6 +54,10 @@ class Foo {
 		return 'Foo';
 	}
 }
+
+// or
+function Foo () {}
+Foo.prototype.render = () => {}
 ```
 
 #### bound less event handlers
