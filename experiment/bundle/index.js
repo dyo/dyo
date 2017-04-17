@@ -11,9 +11,10 @@ const main = [
 	'../src/Boundary.js',
 	'../src/Attribute.js',
 	'../src/Node.js',
-	'../src/DOM.js',
 	'../src/Render.js',
-	'../src/Reconcile.js'
+	'../src/Reconcile.js',
+	'../src/Fiber.js',
+	'../src/DOM.js'
 ];
 
 const server = main.concat([

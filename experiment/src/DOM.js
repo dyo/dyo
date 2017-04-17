@@ -239,41 +239,7 @@ function content (node, value) {
  */
 function assign (type, name, value, xmlns, node) {
 	switch (type) {
-		case 1: {
-			if (xmlns === null) {
-				node.className = value;
-			} else {
-				assign(6, 'class', value, xmlns, node);
-			}
-			break;
-		}
-		case 2: {
-			node.id = value;
-			break;
-		}
-		case 3: {
-			if (typeof value === 'string') {
-				node.style.cssText = value;
-			} else {
-				style(value, node.style);
-			}
-			break;
-		}
-		case 4: {
-			node.innerHTML = value;
-			break;
-		}
-		case 5: {
-			if (node[name] === void 0) {
-				node.style.setProperty(name, value);
-			} else if (isNaN(Number(value)) === true) {
-				assign(6, name, value, xmlns, node);
-			} else {
-				set(node, name, value);
-			}
-			break;
-		}
-		case 6: {
+		case 0: {
 			if (name === 'xlink:href') {
 				node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
 			} else if (value !== null && value !== void 0 && value !== false) {
@@ -283,19 +249,41 @@ function assign (type, name, value, xmlns, node) {
 			}
 			break;
 		}
-	}
-}
-
-/**
- * Assign Styles
- *
- * @param {Object} source
- * @param {Object} target
- */
-function style (source, target) {
-	for (var name in source) {
-		if (name in target) {
-			target[name] = source[name];
+		case 1: {
+			if (xmlns === null) {
+				node.className = value;
+			} else {
+				assign(0, 'class', value, xmlns, node);
+			}
+			break;
+		}
+		case 2: {
+			if (typeof value === 'string') {
+				node.style.cssText = value;
+			} else {
+				style(value, node.style);
+			}
+			break;
+		}
+		case 3: {
+			if (node[name] === void 0) {
+				node.style.setProperty(name, value);
+			} else if (isNaN(Number(value)) === true) {
+				assign(0, name, value, xmlns, node);
+			} else {
+				assign(2, name, value, xmlns, node);
+			}
+			break;
+		}
+		case 4: {
+			assign(5, 'innerHTML', value.__html, xmlns, node);
+			break;
+		}
+		case 5: {
+			if (name in node) {
+				set(node, name, value);
+			}
+			break;
 		}
 	}
 }
@@ -313,6 +301,20 @@ function set (node, name, value) {
 	} catch (err) {
 		if (node[name] !== value) {
 			node.setProperty(name, value);
+		}
+	}
+}
+
+/**
+ * Assign Styles
+ *
+ * @param {Object} source
+ * @param {Object} target
+ */
+function style (source, target) {
+	for (var name in source) {
+		if (name in target) {
+			target[name] = source[name];
 		}
 	}
 }

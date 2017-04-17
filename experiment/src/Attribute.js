@@ -117,12 +117,23 @@ function refs (value, owner, node, type) {
  */
 function attr (name, tree) {
 	switch (name) {
-		case 'class': case 'className': return 1;
-		case 'id': return 2;
-		case 'style': return 3;
-		case 'innerHTML': return 4;
-		case 'width': case 'height': return 5;
-		default: return 6;
+		case 'class':
+		case 'className': return 1;
+
+		case 'style': return 2;
+
+		case 'width':
+		case 'height': return 3;
+
+		case 'dangerouslySetInnerHTML': return 4;
+
+		case 'id':
+		case 'selected':
+		case 'hidden':
+		case 'value':
+		case 'innerHTML': return 5;
+
+		default: return 0;
 	}
 }
 
