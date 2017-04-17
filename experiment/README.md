@@ -30,7 +30,7 @@ For the most part it's done. Clamping on possible obscure edge cases.
 
 ## Preview
 
-See `playground` directory for examples that you can play with, a few patterns that this allows are as follows.
+See `playground` directory for examples that you can play with, or play with it at [codesandbox.io/s/48njoRpV1](https://codesandbox.io/s/48njoRpV1). A few patterns that this allows are as follows.
 
 > Note that all patterns described below can be used without a transpiler in modern browsers.
 
