@@ -10,6 +10,8 @@ function extract (tree) {
 	var children = tree.children;
 	var length = children.length;
 	var group = tree.group;
+	var defaults = type.defaultProps;
+	var types = type.propTypes;
 	var owner;
 	var newer;
 	var proto;
@@ -18,15 +20,15 @@ function extract (tree) {
 	if (props === object) {
 		props = {};
 	}
-	if (type.defaultProps !== void 0) {
-		props = merge(type.defaultProps, props);
-	}
 	if (length !== 0) {
-		if (props === object) {
-			props = {children: children};
-		} else {
-			props.children = children;
-		}
+		props.children = children;
+	}
+
+	if (defaults !== void 0) {
+		merge(getInitialStatic(type, defaults, 'defaultProps', props), props);
+	}
+	if (types !== void 0) {
+		getInitialStatic(type, types, 'propTypes', props);
 	}
 
 	if (group === 1) {
@@ -41,12 +43,11 @@ function extract (tree) {
 			Component.call(owner, props);
 		}
 
-		if (owner.flag === 0) {
+		if (owner._flag === 0) {
 			tree.async = 1;
 			newer = renderBoundary(owner, group);
 			tree.async = 0;
 		}
-
 		newer = shape(newer, tree);
 		owner._tree = tree;
 		tree.owner = owner;

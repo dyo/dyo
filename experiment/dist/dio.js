@@ -163,28 +163,6 @@
 	}
 	
 	/**
-	 * Get Initial State
-	 *
-	 * @param  {Object} state
-	 * @param  {Component} owner
-	 * @return {Object}
-	 */
-	function getInitialState (state, owner) {
-		if (state === null || state === void 0) {
-			return {};
-		}
-		if (state.constructor === Promise) {
-			owner.flag = 1;
-			state.then(function (value) {
-				owner.flag = 0;
-				owner.setState(value);
-			});
-			return {};
-		}
-		return state;
-	}
-	
-	/**
 	 * setState
 	 *
 	 * @param {Object} state
@@ -228,7 +206,7 @@
 	function forceUpdate (callback) {
 		var older = this._tree;
 	
-		if (older === null || older.async !== 0 || older.node === null) {
+		if (older === null || older.node === null || this._flag !== 0) {
 			return;
 		}
 		patch(older, older, 1, older);
@@ -295,7 +273,7 @@
 	
 		if ((recievedProps = nextProps !== object) === true) {
 			if (type.propTypes !== void 0) {
-				propTypes(type, nextProps);
+				propTypes(owner, type, nextProps);
 			}
 			if (owner.componentWillReceiveProps !== void 0) {
 				dataBoundary(owner, 0, nextProps);
@@ -328,7 +306,13 @@
 			if (owner.componentDidUpdate !== void 0) {
 				updateBoundary(owner, 2, prevProps, prevState);
 			}
-			return older.async === 2 ? void 0 : (older.async = 0, newer);
+	
+			if (older.async === 2) {
+				return;
+			}
+	
+			older.async = 0;
+			return newer;
 		}
 	}
 	
@@ -363,20 +347,70 @@
 	}
 	
 	/**
+	 * Get Initial State
+	 *
+	 * @param  {Object} state
+	 * @param  {Component} owner
+	 * @return {Object}
+	 */
+	function getInitialState (state, owner) {
+		if (state === null || state === void 0) {
+			return {};
+		}
+		if (state.constructor === Promise) {
+			owner._flag = 1;
+			state.then(function (value) {
+				owner._flag = 0;
+				owner.setState(value);
+			});
+			return {};
+		}
+		return state;
+	}
+	
+	/**
+	 * Get Initial Static
+	 *
+	 * @param  {Function} owner
+	 * @param  {Function} fn
+	 * @param  {String} type
+	 * @param  {Object} props
+	 * @return {Object?}
+	 */
+	function getInitialStatic (owner, fn, type, props) {
+		if (typeof fn === 'object') {
+			return fn;
+		}
+		var obj = callbackBoundary(owner, fn, props, 0);
+		if (obj !== void 0 && obj !== null) {
+			Object.defineProperty(owner, type, {value: obj});
+		}
+	}
+	
+	/**
 	 * PropTypes
 	 *
-	 * @param {Function|Class} type
+	 * @param {Component} owner
+	 * @param {Function} type
 	 * @param {Object} props
 	 */
-	function propTypes (type, props) {
-		var validators = type.propTypes;
+	function propTypes (owner, type, props) {
 		var display = type.name;
+		var validators = type.propTypes;
+		var validator;
 		var result;
 	
-		for (var name in validators) {
-			if (result = validators[name](props, name, display)) {
-				console.error(result);
+		try {
+			for (var name in validators) {
+				validator = validators[name];
+				result = validator(props, name, display);
+	
+				if (result) {
+					console.error(result);
+				}
 			}
+		} catch (err) {
+			errorBoundary(err, owner, 2, validator);
 		}
 	}
 	
@@ -740,7 +774,7 @@
 	 * @param  {Boolean} sync
 	 */
 	function returnBoundary (state, owner, e, sync) {
-		if (owner === null || owner.UUID === void 0 || state === void 0 || state === null) {
+		if (state === void 0 || state === null || owner === null || owner.UUID === void 0) {
 			return;
 		}
 	
@@ -1020,6 +1054,8 @@
 		var children = tree.children;
 		var length = children.length;
 		var group = tree.group;
+		var defaults = type.defaultProps;
+		var types = type.propTypes;
 		var owner;
 		var newer;
 		var proto;
@@ -1028,15 +1064,15 @@
 		if (props === object) {
 			props = {};
 		}
-		if (type.defaultProps !== void 0) {
-			props = merge(type.defaultProps, props);
-		}
 		if (length !== 0) {
-			if (props === object) {
-				props = {children: children};
-			} else {
-				props.children = children;
-			}
+			props.children = children;
+		}
+	
+		if (defaults !== void 0) {
+			merge(getInitialStatic(type, defaults, 'defaultProps', props), props);
+		}
+		if (types !== void 0) {
+			getInitialStatic(type, types, 'propTypes', props);
 		}
 	
 		if (group === 1) {
@@ -1051,12 +1087,11 @@
 				Component.call(owner, props);
 			}
 	
-			if (owner.flag === 0) {
+			if (owner._flag === 0) {
 				tree.async = 1;
 				newer = renderBoundary(owner, group);
 				tree.async = 0;
 			}
-	
 			newer = shape(newer, tree);
 			owner._tree = tree;
 			tree.owner = owner;
@@ -1258,7 +1293,7 @@
 	 * @return {Node}
 	 */
 	function toplevel () {
-		return document.body || document.documentElement;
+		return browser === true ? (document.body || document.documentElement) : null;
 	}
 	
 	/**
@@ -1613,6 +1648,11 @@
 				mount = toplevel();
 			}
 			target = mount;
+	
+			// server enviroment
+			if (target === null && newer.toString !== void 0) {
+				return newer.toString();
+			}
 		}
 	
 		if ((older = target._older) !== void 0) {

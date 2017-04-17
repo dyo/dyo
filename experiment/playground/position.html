@@ -61,11 +61,11 @@
 	  			// console.log('componentWillRecieveProps');
 	  		}
 
-	  		componentWillMount () {
+	  		// componentWillMount () {
 	  			// console.log('componentWillMount');
-	  		}
+	  		// }
 
-	  		componentDidMount() {
+	  		// componentDidMount() {
 		    	// console.log("componentDidMount");
 
 		    	// const update = () => {
@@ -74,10 +74,12 @@
 		    	// }
 
 		    	// setTimeout(update, 1000);
-		  	}
+		  	// }
 
 			async render() {
-				console.log(this);
+			// render () {
+				// return B;
+				// console.log(this);
 				return await new Promise((resolve) => setTimeout(() => resolve(B), 1000));
 				// return h(B, this.props);
 				// return [this.state.n]
@@ -97,11 +99,9 @@
 				super(...arguments);
 				this.state = {toggle: 1};
 			}
-
-			onClick ({toggle}) {
+			onClick (props, {toggle}) {
 				return {toggle: toggle ^ 1};
 			}
-
 			render() {
 				return (
 					h('div',
@@ -115,23 +115,23 @@
 			}
 		}
 
-		console.log(
-			h('div', [], 2, 3, 3)
-		);
-
-
-		// dio.render(
-		// 	h('div',
-		// 		h('p', 'React implementation is working as expected. Other virtual dom implementations:'),
-		// 		h('ul',
-		// 			h('li', 'vue2: ', h('a', {href: 'https://jsfiddle.net/4ppdfyy8/'}, 'https://jsfiddle.net/4ppdfyy8/')),
-		// 			h('li', 'preact: ', h('a', {href: 'http://codepen.io/localvoid/pen/EZBpoz'}, 'http://codepen.io/localvoid/pen/EZBpoz')),
-		// 			h('li', 'react: ', h('a', {href: 'http://codepen.io/localvoid/pen/VPJBrv/'}, 'http://codepen.io/localvoid/pen/VPJBrv/'))
-		// 		),
-		// 		Test
-		// 	),
-		// 	document.getElementById('root')
+		// console.log(
+		// 	h('div', [], 2, 3, 3)
 		// );
+
+
+		dio.render(
+			h('div',
+				h('p', 'React implementation is working as expected. Other virtual dom implementations:'),
+				h('ul',
+					h('li', 'vue2: ', h('a', {href: 'https://jsfiddle.net/4ppdfyy8/'}, 'https://jsfiddle.net/4ppdfyy8/')),
+					h('li', 'preact: ', h('a', {href: 'http://codepen.io/localvoid/pen/EZBpoz'}, 'http://codepen.io/localvoid/pen/EZBpoz')),
+					h('li', 'react: ', h('a', {href: 'http://codepen.io/localvoid/pen/VPJBrv/'}, 'http://codepen.io/localvoid/pen/VPJBrv/'))
+				),
+				Test
+			),
+			document.getElementById('root')
+		);
 	</script>
 </body>
 </html>

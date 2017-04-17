@@ -18,7 +18,7 @@ var mount = browser === true ? document.body : null;
  * @return {Node}
  */
 function toplevel () {
-	return document.body || document.documentElement;
+	return browser === true ? (document.body || document.documentElement) : null;
 }
 
 /**

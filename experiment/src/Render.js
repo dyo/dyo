@@ -38,6 +38,11 @@ function render (_newer, _target) {
 			mount = toplevel();
 		}
 		target = mount;
+
+		// server enviroment
+		if (target === null && newer.toString !== void 0) {
+			return newer.toString();
+		}
 	}
 
 	if ((older = target._older) !== void 0) {

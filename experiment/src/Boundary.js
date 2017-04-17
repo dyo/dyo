@@ -138,7 +138,7 @@ function eventBoundary (owner, fn, e) {
  * @param  {Boolean} sync
  */
 function returnBoundary (state, owner, e, sync) {
-	if (owner === null || owner.UUID === void 0 || state === void 0 || state === null) {
+	if (state === void 0 || state === null || owner === null || owner.UUID === void 0) {
 		return;
 	}
 

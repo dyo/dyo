@@ -58,28 +58,6 @@ function extendClass (type, proto) {
 }
 
 /**
- * Get Initial State
- *
- * @param  {Object} state
- * @param  {Component} owner
- * @return {Object}
- */
-function getInitialState (state, owner) {
-	if (state === null || state === void 0) {
-		return {};
-	}
-	if (state.constructor === Promise) {
-		owner.flag = 1;
-		state.then(function (value) {
-			owner.flag = 0;
-			owner.setState(value);
-		});
-		return {};
-	}
-	return state;
-}
-
-/**
  * setState
  *
  * @param {Object} state
@@ -123,7 +101,7 @@ function setState (state, callback) {
 function forceUpdate (callback) {
 	var older = this._tree;
 
-	if (older === null || older.async !== 0 || older.node === null) {
+	if (older === null || older.node === null || this._flag !== 0) {
 		return;
 	}
 	patch(older, older, 1, older);
@@ -190,7 +168,7 @@ function shouldUpdate (older, _newer, group, ancestor) {
 
 	if ((recievedProps = nextProps !== object) === true) {
 		if (type.propTypes !== void 0) {
-			propTypes(type, nextProps);
+			propTypes(owner, type, nextProps);
 		}
 		if (owner.componentWillReceiveProps !== void 0) {
 			dataBoundary(owner, 0, nextProps);
@@ -223,7 +201,13 @@ function shouldUpdate (older, _newer, group, ancestor) {
 		if (owner.componentDidUpdate !== void 0) {
 			updateBoundary(owner, 2, prevProps, prevState);
 		}
-		return older.async === 2 ? void 0 : (older.async = 0, newer);
+
+		if (older.async === 2) {
+			return;
+		}
+
+		older.async = 0;
+		return newer;
 	}
 }
 
@@ -258,19 +242,69 @@ function updateHost (older, newer, ancestor, tag) {
 }
 
 /**
+ * Get Initial State
+ *
+ * @param  {Object} state
+ * @param  {Component} owner
+ * @return {Object}
+ */
+function getInitialState (state, owner) {
+	if (state === null || state === void 0) {
+		return {};
+	}
+	if (state.constructor === Promise) {
+		owner._flag = 1;
+		state.then(function (value) {
+			owner._flag = 0;
+			owner.setState(value);
+		});
+		return {};
+	}
+	return state;
+}
+
+/**
+ * Get Initial Static
+ *
+ * @param  {Function} owner
+ * @param  {Function} fn
+ * @param  {String} type
+ * @param  {Object} props
+ * @return {Object?}
+ */
+function getInitialStatic (owner, fn, type, props) {
+	if (typeof fn === 'object') {
+		return fn;
+	}
+	var obj = callbackBoundary(owner, fn, props, 0);
+	if (obj !== void 0 && obj !== null) {
+		Object.defineProperty(owner, type, {value: obj});
+	}
+}
+
+/**
  * PropTypes
  *
- * @param {Function|Class} type
+ * @param {Component} owner
+ * @param {Function} type
  * @param {Object} props
  */
-function propTypes (type, props) {
-	var validators = type.propTypes;
+function propTypes (owner, type, props) {
 	var display = type.name;
+	var validators = type.propTypes;
+	var validator;
 	var result;
 
-	for (var name in validators) {
-		if (result = validators[name](props, name, display)) {
-			console.error(result);
+	try {
+		for (var name in validators) {
+			validator = validators[name];
+			result = validator(props, name, display);
+
+			if (result) {
+				console.error(result);
+			}
 		}
+	} catch (err) {
+		errorBoundary(err, owner, 2, validator);
 	}
 }
