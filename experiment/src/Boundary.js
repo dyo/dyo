@@ -48,8 +48,8 @@ function updateBoundary (owner, type, props, state) {
 function renderBoundary (owner, cast) {
 	try {
 		switch (cast) {
-			case 1: return owner.render(owner.props, owner.state);
-			case 2: return owner.type(owner.props);
+			case 1: return owner.type(owner.props);
+			case 2: case 3: return owner.render(owner.props, owner.state);
 		}
 	} catch (err) {
 		return errorBoundary(err, cast === 1 ? owner : owner.type, 3, cast);

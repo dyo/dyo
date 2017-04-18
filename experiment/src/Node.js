@@ -31,7 +31,7 @@ function extract (tree) {
 		getInitialStatic(type, types, 'propTypes', props);
 	}
 
-	if (group === 1) {
+	if (group > 1) {
 		UUID = (proto = type.prototype).UUID;
 		if (UUID === 2) {
 			owner = new type(props);
@@ -43,7 +43,7 @@ function extract (tree) {
 			Component.call(owner, props);
 		}
 
-		if (owner._flag === 0) {
+		if (owner.async === 0) {
 			tree.async = 1;
 			newer = renderBoundary(owner, group);
 			tree.async = 0;

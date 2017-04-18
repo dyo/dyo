@@ -35,7 +35,7 @@ function render (_newer, _target) {
 		// the body node, try to use <body> if it exists at this point
 		// else default to the root <html> node
 		if (mount === null) {
-			mount = toplevel();
+			mount = browser === true ? (document.body || document.documentElement) : null;
 		}
 		target = mount;
 

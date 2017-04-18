@@ -119,20 +119,15 @@ function attr (name, tree) {
 	switch (name) {
 		case 'class':
 		case 'className': return 1;
-
 		case 'style': return 2;
-
 		case 'width':
 		case 'height': return 3;
-
-		case 'dangerouslySetInnerHTML': return 4;
-
 		case 'id':
 		case 'selected':
 		case 'hidden':
 		case 'value':
 		case 'innerHTML': return 5;
-
+		case 'xlink:href': return 6;
 		default: return 0;
 	}
 }

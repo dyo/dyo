@@ -16,7 +16,7 @@
 		function dbmon () {
 			'use strict';
 
-			class Monster extends Component {
+			class Monster {
 				render () {
 					return (
 						h('div',
@@ -51,14 +51,12 @@
 			perfMonitor.initProfiler("render");
 
 			var data = [];
-			// var factory = dio.factory(h(Monster), target);
 
 			function loop() {
 				data = ENV.generateData().toArray();
 				perfMonitor.startProfile("render");
 
-				// factory();
-				dio.render(Monster, target);
+				dio.render(h(Monster), target);
 
 				perfMonitor.endProfile("render");
 				requestAnimationFrame(loop);

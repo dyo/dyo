@@ -13,7 +13,6 @@ const main = [
 	'../src/Node.js',
 	'../src/Render.js',
 	'../src/Reconcile.js',
-	'../src/Fiber.js',
 	'../src/DOM.js'
 ];
 

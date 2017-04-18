@@ -21,7 +21,7 @@ function patch (older, _newer, group, _ancestor) {
 		// ancestor represents the last root component
 		// we need to keep refererence of this to support
 		// boundless events when creating new nodes
-		if (group === 1) {
+		if (group > 1) {
 			ancestor = older;
 		}
 	}

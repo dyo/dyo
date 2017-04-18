@@ -8,8 +8,8 @@ function Component (_props) {
 	var state = this.state;
 
 	this.refs = null;
+	this.async = 0;
 	this._tree = null;
-	this._flag = 0;
 
 	// props
 	if (this.props === void 0) {
@@ -101,10 +101,11 @@ function setState (state, callback) {
 function forceUpdate (callback) {
 	var older = this._tree;
 
-	if (older === null || older.node === null || this._flag !== 0) {
+	if (older === null || older.node === null || this.async !== 0) {
 		return;
 	}
-	patch(older, older, 1, older);
+
+	patch(older, older, 3, older);
 
 	if (callback !== void 0 && typeof callback === 'function') {
 		callbackBoundary(this, callback, this.state, 1);
@@ -156,9 +157,10 @@ function shouldUpdate (older, _newer, group, ancestor) {
 	if (owner === null || older.async !== 0) {
 		return;
 	}
+
 	older.async = 1;
 
-	if (group === 1) {
+	if (group > 1) {
 		nextState = owner.state;
 		prevState = owner._state;
 	} else {
@@ -166,7 +168,9 @@ function shouldUpdate (older, _newer, group, ancestor) {
 		prevState = prevProps;
 	}
 
-	if ((recievedProps = nextProps !== object) === true) {
+	recievedProps = group < 3 && nextProps !== object;
+
+	if (recievedProps === true) {
 		if (type.propTypes !== void 0) {
 			propTypes(owner, type, nextProps);
 		}
@@ -187,13 +191,13 @@ function shouldUpdate (older, _newer, group, ancestor) {
 		older.async = 0;
 	} else {
 		if (recievedProps === true) {
-			(group === 1 ? owner : older).props = nextProps;
+			(group > 1 ? owner : older).props = nextProps;
 		}
 		if (owner.componentWillUpdate !== void 0) {
 			updateBoundary(owner, 1, nextProps, nextState);
 		}
 
-		newer = shape(renderBoundary(group === 1 ? owner : older, group), older);
+		newer = shape(renderBoundary(group > 1 ? owner : older, group), older);
 
 		if ((tag = newer.tag) !== older.tag) {
 			newer = updateHost(older, newer, ancestor, tag);
@@ -223,7 +227,6 @@ function updateHost (older, newer, ancestor, tag) {
 	var host;
 	var owner;
 	var type;
-	var group;
 
 	if (tag !== null) {
 		return exchange(older, newer, 0, older);
@@ -237,6 +240,7 @@ function updateHost (older, newer, ancestor, tag) {
 			return patch(host, newer, host.group, ancestor);
 		}
 	}
+
 	exchange(older, newer, 2, older);
 	refresh(older);
 }
@@ -253,9 +257,9 @@ function getInitialState (state, owner) {
 		return {};
 	}
 	if (state.constructor === Promise) {
-		owner._flag = 1;
+		owner.async = 1;
 		state.then(function (value) {
-			owner._flag = 0;
+			owner.async = 0;
 			owner.setState(value);
 		});
 		return {};

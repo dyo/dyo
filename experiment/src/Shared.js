@@ -27,8 +27,9 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * ## Element Groups
  *
  * 0: Element
- * 1: Component
- * 2: Function
+ * 1: Function
+ * 2: Component
+ * 3: Component
  */
 
 /**
@@ -62,6 +63,7 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  *
  * _tree: current tree {Tree?}
  * _state: previous state {Object}
+ * _async: component async, tracks async lifecycle methods flag {Number}
  *
  * props: current props {Object}
  * state: current state {Object}
@@ -79,4 +81,5 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  *
  * All code that interfaces with the DOM platform is in DOM.js
  * it was structured this way to allow for future work on bridges with other platforms
+ * when that becomes possible and overall seperation of concerns.
  */

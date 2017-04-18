@@ -49,8 +49,9 @@
 	 * ## Element Groups
 	 *
 	 * 0: Element
-	 * 1: Component
-	 * 2: Function
+	 * 1: Function
+	 * 2: Component
+	 * 3: Component
 	 */
 	
 	/**
@@ -84,6 +85,7 @@
 	 *
 	 * _tree: current tree {Tree?}
 	 * _state: previous state {Object}
+	 * _async: component async, tracks async lifecycle methods flag {Number}
 	 *
 	 * props: current props {Object}
 	 * state: current state {Object}
@@ -101,6 +103,7 @@
 	 *
 	 * All code that interfaces with the DOM platform is in DOM.js
 	 * it was structured this way to allow for future work on bridges with other platforms
+	 * when that becomes possible and overall seperation of concerns.
 	 */
 	
 	/**
@@ -113,8 +116,8 @@
 		var state = this.state;
 	
 		this.refs = null;
+		this.async = 0;
 		this._tree = null;
-		this._flag = 0;
 	
 		// props
 		if (this.props === void 0) {
@@ -206,10 +209,11 @@
 	function forceUpdate (callback) {
 		var older = this._tree;
 	
-		if (older === null || older.node === null || this._flag !== 0) {
+		if (older === null || older.node === null || this.async !== 0) {
 			return;
 		}
-		patch(older, older, 1, older);
+	
+		patch(older, older, 3, older);
 	
 		if (callback !== void 0 && typeof callback === 'function') {
 			callbackBoundary(this, callback, this.state, 1);
@@ -261,9 +265,10 @@
 		if (owner === null || older.async !== 0) {
 			return;
 		}
+	
 		older.async = 1;
 	
-		if (group === 1) {
+		if (group > 1) {
 			nextState = owner.state;
 			prevState = owner._state;
 		} else {
@@ -271,7 +276,9 @@
 			prevState = prevProps;
 		}
 	
-		if ((recievedProps = nextProps !== object) === true) {
+		recievedProps = group < 3 && nextProps !== object;
+	
+		if (recievedProps === true) {
 			if (type.propTypes !== void 0) {
 				propTypes(owner, type, nextProps);
 			}
@@ -292,13 +299,13 @@
 			older.async = 0;
 		} else {
 			if (recievedProps === true) {
-				(group === 1 ? owner : older).props = nextProps;
+				(group > 1 ? owner : older).props = nextProps;
 			}
 			if (owner.componentWillUpdate !== void 0) {
 				updateBoundary(owner, 1, nextProps, nextState);
 			}
 	
-			newer = shape(renderBoundary(group === 1 ? owner : older, group), older);
+			newer = shape(renderBoundary(group > 1 ? owner : older, group), older);
 	
 			if ((tag = newer.tag) !== older.tag) {
 				newer = updateHost(older, newer, ancestor, tag);
@@ -328,7 +335,6 @@
 		var host;
 		var owner;
 		var type;
-		var group;
 	
 		if (tag !== null) {
 			return exchange(older, newer, 0, older);
@@ -342,6 +348,7 @@
 				return patch(host, newer, host.group, ancestor);
 			}
 		}
+	
 		exchange(older, newer, 2, older);
 		refresh(older);
 	}
@@ -358,9 +365,9 @@
 			return {};
 		}
 		if (state.constructor === Promise) {
-			owner._flag = 1;
+			owner.async = 1;
 			state.then(function (value) {
-				owner._flag = 0;
+				owner.async = 0;
 				owner.setState(value);
 			});
 			return {};
@@ -455,9 +462,9 @@
 			}
 			case 'function': {
 				if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
-					tree.group = 1;
-				} else {
 					tree.group = 2;
+				} else {
+					tree.group = 1;
 					tree.owner = type;
 				}
 				break;
@@ -684,8 +691,8 @@
 	function renderBoundary (owner, cast) {
 		try {
 			switch (cast) {
-				case 1: return owner.render(owner.props, owner.state);
-				case 2: return owner.type(owner.props);
+				case 1: return owner.type(owner.props);
+				case 2: case 3: return owner.render(owner.props, owner.state);
 			}
 		} catch (err) {
 			return errorBoundary(err, cast === 1 ? owner : owner.type, 3, cast);
@@ -1011,20 +1018,15 @@
 		switch (name) {
 			case 'class':
 			case 'className': return 1;
-	
 			case 'style': return 2;
-	
 			case 'width':
 			case 'height': return 3;
-	
-			case 'dangerouslySetInnerHTML': return 4;
-	
 			case 'id':
 			case 'selected':
 			case 'hidden':
 			case 'value':
 			case 'innerHTML': return 5;
-	
+			case 'xlink:href': return 6;
 			default: return 0;
 		}
 	}
@@ -1086,7 +1088,7 @@
 			getInitialStatic(type, types, 'propTypes', props);
 		}
 	
-		if (group === 1) {
+		if (group > 1) {
 			UUID = (proto = type.prototype).UUID;
 			if (UUID === 2) {
 				owner = new type(props);
@@ -1098,7 +1100,7 @@
 				Component.call(owner, props);
 			}
 	
-			if (owner._flag === 0) {
+			if (owner.async === 0) {
 				tree.async = 1;
 				newer = renderBoundary(owner, group);
 				tree.async = 0;
@@ -1321,7 +1323,7 @@
 			// the body node, try to use <body> if it exists at this point
 			// else default to the root <html> node
 			if (mount === null) {
-				mount = toplevel();
+				mount = browser === true ? (document.body || document.documentElement) : null;
 			}
 			target = mount;
 	
@@ -1382,7 +1384,7 @@
 			// ancestor represents the last root component
 			// we need to keep refererence of this to support
 			// boundless events when creating new nodes
-			if (group === 1) {
+			if (group > 1) {
 				ancestor = older;
 			}
 		}
@@ -1703,156 +1705,6 @@
 		}
 	}
 	
-	(function () {
-		// normally would be around 10,000 / 10kb
-		// for demo's sake, this is the upper-limit size of our memory
-		// we don't intend to reach this since we resuse memory alot
-		var size = 100|0;
-		// these arrays are meant to be monomorphic types
-		// they will only hold one type of struct
-		// i.e Array<Uint8>, Array<Tree>, Array<Commit>
-		// hopefully js VM's can optimize these better.
-		var updates = new Array(size);
-		var buffer = new Array(size);
-		var memory = new Uint8Array(size);
-	
-		var index = 0;
-		var address = 0;
-		var pointer = 0;
-		var start = 0;
-	
-		var a = 0; // first bit, address pointer
-		var b = 0; // second bit, instruction
-		var c = 0; // third bit, additional data in the form of a int signature
-		var d = 0; // third bit, additional data in the form of a int signature
-	
-		var startTime = 0;
-		var endTime = 0;
-		var deltaTime = 0;
-		var frameBudget = 1000/60;
-	
-		// calculates if we are still in budget
-		function budget () {
-			var endTime = Date.now();
-			var deltaTime = endTime - startTime;
-	
-			if (deltaTime > frameBudget) {
-				return true;
-			} else {
-				return (startTime = endTime - deltaTime % budget, false);
-			}
-		}
-		// schedules resuming work based on priority it makes choice between
-		// requestIdleCallback for low priority and requestAnimationFrame for high priority
-		function schedule (priority) {
-			switch (priority) {
-				case 0: return requestAnimationFrame(walk);
-				case 1: return requestIdleCallback(walk);
-			}
-		}
-		// walks the through all work loads
-		// and try to do as much work before the next frame
-		// when the frame budget is exhausted, it schedules to call
-		// itself again on the next frame depending on the priority
-		// of the work
-		function walk () {
-			var i = index;
-			var j = start;
-			while (true) {
-				if (budget()) {
-					a = memory[i+0];
-					b = memory[i+1];
-					c = memory[i+2];
-					d = memory[i+3];
-					// we always release/restore memory to
-					// it's idle state when we are done with it
-					// so if we encouter 0, 0, 0, 0 we can assume
-					// this the end of the work queue
-					if (a + b + c + d === 0) {
-						break;
-					}
-					// work
-					patch(buffer[a], b, c, d);
-	
-					// release
-					release(i, j);
-					i+=4;
-					j++;
-				} else {
-					schedule(0);
-					break;
-				}
-			}
-			// rset pointer address
-			pointer = j;
-		}
-		// relase memory, to avoid changing the length of the arrays, memory is reused
-		// as much as possible
-		function release (i, j) {
-			buffer[j] = void 0;
-			memory[i] = memory[i+1] = memory[i+2] = memory[i+3] = 0;
-		}
-		// pushes a tree to buffer,
-		// assigns a pointer to the buffer address and work type in memory
-		function push (tree, type) {
-			memory[address+0] = pointer;
-			memory[address+1] = type;
-			memory[address+2] = tree.async|0;
-			memory[address+3] = tree.flag|0;
-			buffer[pointer++] = tree;
-			address += 4;
-		}
-		// patches a tree to represent it's final stage before commiting work
-		function patch (tree, type, c, d) {
-	
-		}
-	
-		// commit an update
-		// this is the enviroment specific piece
-		// it doesn't care about the rest
-		// it recieves work and commits the patches in one sync go
-		// to a specific enviroment i.e DOM and Native can have different
-		// commit implementations, optimally this is where
-		// lifecycles like componentWillMount... will be called
-		// and Nodes created/updated
-		function commit () {
-	
-		}
-	
-		// this will log an empty buffer and empty memory
-		// when no work is happening this will be the state of
-		// our memory
-		console.log(buffer, memory);
-	
-		// push work of type 2
-		push({}, 2);
-		// push work of type 255 (the maximum type int)
-		push({}, 255);
-		// assign a position to start commit work
-		start = 0;
-		// buffer has two objects, memory has
-		//
-		// 	0 - object address in buffer
-		// 	2 - type of work
-		// 	0 - additional data about the tree
-		// 	0 - additional data about the tree
-		//
-		// 	1 - object address in buffer
-		// 	255 - type of work
-		// 	0 - additional data about the tree
-		// 	0 - additional data about the tree
-	
-		// this will log an object filled with two objects
-		// and the above [0, 2, 0, 0, 1, 255, 0, 0, ...]
-		console.log(buffer, memory);
-		// start work
-		walk();
-	
-		// now it will log an empty buffer, and empty memory
-		console.log(buffer, memory);
-	})();
-	
-	
 	/**
 	 * Document
 	 *
@@ -1866,15 +1718,6 @@
 	 * @type {Node?}
 	 */
 	var mount = browser === true ? document.body : null;
-	
-	/**
-	 * Top Level Node
-	 *
-	 * @return {Node}
-	 */
-	function toplevel () {
-		return browser === true ? (document.body || document.documentElement) : null;
-	}
 	
 	/**
 	 * Create Element
@@ -2095,9 +1938,7 @@
 	function assign (type, name, value, xmlns, node) {
 		switch (type) {
 			case 0: {
-				if (name === 'xlink:href') {
-					node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
-				} else if (value !== null && value !== void 0 && value !== false) {
+				if (value !== null && value !== void 0 && value !== false) {
 					node.setAttribute(name, (value === true ? '' : value));
 				} else {
 					node.removeAttribute(name);
@@ -2138,6 +1979,10 @@
 				if (name in node) {
 					set(node, name, value);
 				}
+				break;
+			}
+			case 6: {
+				node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
 				break;
 			}
 		}

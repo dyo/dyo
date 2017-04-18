@@ -13,15 +13,6 @@ var document = browser === true ? global.document : null;
 var mount = browser === true ? document.body : null;
 
 /**
- * Top Level Node
- *
- * @return {Node}
- */
-function toplevel () {
-	return browser === true ? (document.body || document.documentElement) : null;
-}
-
-/**
  * Create Element
  *
  * @return {Node}
@@ -240,9 +231,7 @@ function content (node, value) {
 function assign (type, name, value, xmlns, node) {
 	switch (type) {
 		case 0: {
-			if (name === 'xlink:href') {
-				node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
-			} else if (value !== null && value !== void 0 && value !== false) {
+			if (value !== null && value !== void 0 && value !== false) {
 				node.setAttribute(name, (value === true ? '' : value));
 			} else {
 				node.removeAttribute(name);
@@ -283,6 +272,10 @@ function assign (type, name, value, xmlns, node) {
 			if (name in node) {
 				set(node, name, value);
 			}
+			break;
+		}
+		case 6: {
+			node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
 			break;
 		}
 	}

@@ -60,7 +60,9 @@ function attrs (tree) {
 		value = props[name];
 
 		switch (name) {
-			case 'key': case 'children': case 'ref': case 'innerHTML': continue;
+			case 'key': case 'children': case 'ref': case 'innerHTML': {
+				continue;
+			}
 			case 'style': {
 				if (typeof value === 'object') {
 					name = '';
@@ -80,7 +82,7 @@ function attrs (tree) {
 				value = props.value === void 0 ? ' value="'+sanitize(value)+'"' : '';
 				break;
 			}
-			case 'class': case 'className': name = 'class'; {
+			case 'class': case 'className': {
 				value = ' class="'+sanitize(value)+'"';
 				break;
 			}
@@ -110,9 +112,10 @@ function sanitize (value) {
 /**
  * Encode Unicode
  *
- * @param  {String} char
+ * @param  {String} _char
  * @return {String}
  */
-function encode (char) {
-	return unicodes[char] || char;
+function encode (_char) {
+	var char = unicodes[char];
+	return char !== void 0 ? char : _char;
 }

@@ -39,9 +39,9 @@ function element (_type, _props) {
 		}
 		case 'function': {
 			if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
-				tree.group = 1;
-			} else {
 				tree.group = 2;
+			} else {
+				tree.group = 1;
 				tree.owner = type;
 			}
 			break;
