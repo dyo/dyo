@@ -14,12 +14,12 @@ TreePrototype.toString = function () {
 	if (this.group > 0) {
 		return extract(this).toString();
 	}
-	var tree = this;
-	var group = tree.group;
-	var type = tree.type;
-	var flag = tree.flag;
-	var tag = tree.tag;
-	var children = tree.children;
+	var newer = this;
+	var group = newer.group;
+	var type = newer.type;
+	var flag = newer.flag;
+	var tag = newer.tag;
+	var children = newer.children;
 	var body = '';
 	var length = 0;
 	var props;
@@ -27,24 +27,24 @@ TreePrototype.toString = function () {
 	if (flag === 1) {
 		return sanitize(children);
 	}
-	if (tree.props !== object && tree.props.innerHTML !== void 0) {
-		body = tree.props.innerHTML;
+	if (newer.props !== object && newer.props.innerHTML !== void 0) {
+		body = newer.props.innerHTML;
 	} else if ((length = children.length) > 0) {
 		for (var i = 0; i < length; i++) {
 			body += children[i].toString();
 		}
 	}
-	return '<'+tag+attrs(tree)+'>'+ (hollow[tag] !== 0 ? body+'</'+tag+'>' : '');
+	return '<'+tag+attrs(newer)+'>'+ (hollow[tag] !== 0 ? body+'</'+tag+'>' : '');
 }
 
 /**
  * Stringify Attributes
  *
- * @param  {Tree} tree
+ * @param  {Tree} newer
  * @return {String}
  */
-function attrs (tree) {
-	var props = tree.props;
+function attrs (newer) {
+	var props = newer.props;
 	var body = '';
 	var value;
 	var val;

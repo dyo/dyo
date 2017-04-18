@@ -112,10 +112,9 @@ function refs (value, owner, node, type) {
  * Attribute Identifier [Whitelist]
  *
  * @param  {String} name
- * @param  {Tree} tree
  * @return {Number}
  */
-function attr (name, tree) {
+function attr (name) {
 	switch (name) {
 		case 'class':
 		case 'className': return 1;

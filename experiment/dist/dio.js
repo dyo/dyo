@@ -32,29 +32,19 @@
 	var schedule = global.requestIdleCallback || global.requestAnimationFrame || setTimeout;
 	
 	/**
-	 * ## Element Flags
+	 * ## Element Flag
 	 *
 	 * 1: text
 	 * 2: element
 	 * 3: error
-	 * 4: n/a
-	 * 5: n/a
-	 * 6: n/a
-	 * 7: n/a
-	 * 8: n/a
-	 * 9: n/a
-	 * 10: n/a
-	 * 11: n/a
 	 *
-	 * ## Element Groups
+	 * ## Element Group
 	 *
 	 * 0: Element
 	 * 1: Function
 	 * 2: Component
 	 * 3: Component
-	 */
-	
-	/**
+	 *
 	 * ## Element Shape
 	 *
 	 * name: node tag {String}
@@ -69,41 +59,21 @@
 	 * node: node DOM reference {Node?}
 	 * group: node ground {Number}
 	 * host: node host component(composites) {Component?}
-	 * async: node work state {Number}
+	 * async: node work state {Number} 0: ready, 1:blocked, 2:pending
 	 */
-	
-	 /**
-	  * ## Element Async Flag
-	  *
-	  * 0: ready(sync)
-	  * 1: blocked(delegates) `instance creation | prior set state`
-	  * 2: pending(async) `resolving async render`
-	  */
 	
 	/**
 	 * ## Component Shape
 	 *
-	 * _tree: current tree {Tree?}
-	 * _state: previous state {Object}
-	 * _async: component async, tracks async lifecycle methods flag {Number}
+	 * older: current tree {Tree?}
+	 * async: component async, tracks async lifecycle methods flag {Number}
+	 * super: previous cached state {Object}
 	 *
 	 * props: current props {Object}
 	 * state: current state {Object}
 	 * refs: refs {Object?}
 	 * setState: method {Function}
 	 * forceUpdate: method {Function}
-	 */
-	
-	/**
-	 * ## Notes
-	 *
-	 * `_name` prefix is used to identify function arguments
-	 * when the value is expected to change within the function
-	 * and private component properties.
-	 *
-	 * All code that interfaces with the DOM platform is in DOM.js
-	 * it was structured this way to allow for future work on bridges with other platforms
-	 * when that becomes possible and overall seperation of concerns.
 	 */
 	
 	/**
@@ -116,8 +86,8 @@
 		var state = this.state;
 	
 		this.refs = null;
+		this.older = null;
 		this.async = 0;
-		this._tree = null;
 	
 		// props
 		if (this.props === void 0) {
@@ -135,7 +105,8 @@
 			}
 			this.state = state;
 		}
-		this._state = state;
+		this.next = state;
+		this.prev = state;
 	}
 	
 	/**
@@ -172,32 +143,32 @@
 	 * @param {Function=} callback
 	 */
 	function setState (state, callback) {
-		var nextState;
-		var prevState;
-		var owner;
+		var owner = this;
+		var next;
+		var prev;
 	
 		if (state === void 0 || state === null) {
 			return;
 		}
-		nextState = state;
-		prevState = this._state = this.state;
+		mergeState(prev = owner.prev = {}, owner.state, true);
 	
-		if (typeof nextState === 'function') {
-			nextState = callbackBoundary(this, nextState, prevState, 0);
+		if (typeof next === 'function') {
+			next = callbackBoundary(owner, next, prev, 0);
 	
-			if (nextState === void 0 || nextState === null) {
+			if (next === void 0 || next === null) {
 				return;
 			}
 		}
 	
-		if (nextState.constructor === Promise) {
-			owner = this;
-			nextState.then(function (value) {
+		next = owner.next = state;
+	
+		if (next.constructor === Promise) {
+			next.then(function (value) {
 				owner.setState(value);
 			});
 		} else {
-			this.state = updateState({}, prevState, nextState);
-			this.forceUpdate(callback);
+			mergeState(owner.state, next, false);
+			owner.forceUpdate(callback);
 		}
 	}
 	
@@ -207,7 +178,7 @@
 	 * @param {Function=} callback
 	 */
 	function forceUpdate (callback) {
-		var older = this._tree;
+		var older = this.older;
 	
 		if (older === null || older.node === null || this.async !== 0) {
 			return;
@@ -221,21 +192,16 @@
 	}
 	
 	/**
-	 * Update State
+	 * Merge State
 	 *
 	 * @param  {Object} state
-	 * @param  {Object} prevState
 	 * @param  {Object} nextState
 	 * @return {Object}
 	 */
-	function updateState (state, prevState, nextState) {
-		for (var name in prevState) {
-			state[name] = prevState[name];
-		}
+	function mergeState (state, nextState) {
 		for (var name in nextState) {
 			state[name] = nextState[name];
 		}
-		return state;
 	}
 	
 	/**
@@ -269,13 +235,12 @@
 		older.async = 1;
 	
 		if (group > 1) {
-			nextState = owner.state;
-			prevState = owner._state;
+			nextState = owner.next;
+			prevState = owner.prev;
 		} else {
 			nextState = nextProps;
 			prevState = prevProps;
 		}
-	
 		recievedProps = group < 3 && nextProps !== object;
 	
 		if (recievedProps === true) {
@@ -317,9 +282,7 @@
 			if (older.async === 2) {
 				return;
 			}
-	
-			older.async = 0;
-			return newer;
+			return (older.async = 0, newer);
 		}
 	}
 	
@@ -433,7 +396,7 @@
 		var props = _props !== void 0 ? _props : null;
 		var length = arguments.length;
 		var children = length !== 1 ? [] : array;
-		var tree = new Tree(2);
+		var newer = new Tree(2);
 		var index = 0;
 		var i = 2;
 		var proto;
@@ -443,91 +406,94 @@
 				props = object;
 				i = 1;
 			} else {
-				tree.props = props;
+				newer.props = props;
 	
 				if (props.key !== void 0) {
-					tree.key = props.key;
+					newer.key = props.key;
 				}
 				if (props.xmlns !== void 0) {
-					tree.xmlns = props.xmlns;
+					newer.xmlns = props.xmlns;
 				}
 			}
 		}
 	
 		switch (typeof type) {
 			case 'string': {
-				tree.tag = type;
-				tree.attrs = props;
+				newer.tag = type;
+				newer.attrs = props;
 				break;
 			}
 			case 'function': {
 				if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
-					tree.group = 2;
+					newer.group = 2;
 				} else {
-					tree.group = 1;
-					tree.owner = type;
+					newer.group = 1;
+					newer.owner = type;
 				}
 				break;
 			}
 			default: {
-				tree.tag = 'noscript';
+				newer.tag = 'noscript';
 			}
 		}
 	
-		tree.type = type;
-		tree.children = children;
+		newer.type = type;
+		newer.children = children;
 	
 		if (length !== 1) {
 			for (; i < length; i++) {
-				index = adopt(tree, index, arguments[i]);
+				index = adopt(newer, index, arguments[i]);
 			}
 		}
-		return tree;
+		return newer;
 	}
 	
 	/**
 	 * Adopt Element Children
 	 *
-	 * @param  {Tree} tree
+	 * @param  {Tree} newer
 	 * @param  {Number} index
 	 * @param  {Any} child
 	 * @return {Number}
 	 */
-	function adopt (tree, index, child) {
-		var children = tree.children;
+	function adopt (newer, index, child) {
+		var children = newer.children;
 		var i = index;
 		var length;
 	
 		if (child === null || child === void 0) {
 			children[i] = text('');
 		} else if (child.group !== void 0) {
-			if (tree.keyed === false) {
+			if (newer.keyed === false) {
 				if (child.key !== null) {
-					tree.keyed = true;
+					newer.keyed = true;
 				}
 			} else if (child.key === null) {
-				// assign float key to non-keyed children in a keyed tree
+				// assign float key to non-keyed children in a keyed structure
 				// an obscure floating point key avoids conflicts with int keyed children
 				child.key = index/161800;
 			}
 			children[i] = child;
 		} else {
 			switch (typeof child) {
-				case 'function': children[i] = element(child, null); break;
+				case 'function': {
+					children[i] = element(child, null);
+					break;
+				}
 				case 'object': {
 					if ((length = child.length) > 0) {
 						for (var j = 0; j < length; j++) {
-							i = adopt(tree, i, child[j]);
+							i = adopt(newer, i, child[j]);
 						}
 						return i;
 					} else if (child.constructor === Date) {
-						return adopt(tree, i, text(child+''));
+						return adopt(newer, i, text(child+''));
 					} else {
-						return adopt(tree, i, text(''));
+						return adopt(newer, i, text(''));
 					}
 				}
 				default: {
-					return adopt(tree, i, text(child));
+					return adopt(newer, i, text(child));
 				}
 			}
 		}
@@ -542,12 +508,12 @@
 	 * @return {Tree}
 	 */
 	function text (value) {
-		var tree = new Tree(1);
+		var newer = new Tree(1);
 	
-		tree.type = tree.tag = '#text';
-		tree.children = ((value === true || value === false) ? '' : value);
+		newer.type = newer.tag = '#text';
+		newer.children = ((value === true || value === false) ? '' : value);
 	
-		return tree;
+		return newer;
 	}
 	
 	/**
@@ -685,17 +651,17 @@
 	 * Render Boundary
 	 *
 	 * @param  {Component|Tree} owner
-	 * @param  {Number} cast
+	 * @param  {Number} group
 	 * @return {Tree}
 	 */
-	function renderBoundary (owner, cast) {
+	function renderBoundary (owner, group) {
 		try {
-			switch (cast) {
+			switch (group) {
 				case 1: return owner.type(owner.props);
 				case 2: case 3: return owner.render(owner.props, owner.state);
 			}
 		} catch (err) {
-			return errorBoundary(err, cast === 1 ? owner : owner.type, 3, cast);
+			return errorBoundary(err, group > 1 ? owner : owner.type, 3, group);
 		}
 	}
 	
@@ -812,14 +778,14 @@
 	function errorBoundary (message, owner, type, from) {
 		var component = '#unknown';
 		var location;
-		var tree;
+		var newer;
 	
 		try {
 			location = errorLocation(type, from) || component;
 	
 			if (owner !== null) {
 				if (owner.componentDidThrow !== void 0) {
-					tree = owner.componentDidThrow({location: location, message: message});
+					newer = owner.componentDidThrow({location: location, message: message});
 				}
 				component = typeof owner === 'function' ? owner.name : owner.constructor.name;
 			}
@@ -830,7 +796,7 @@
 		errorMessage(component, location, message instanceof Error ? message.stack : message);
 	
 		if (type === 3 || type === 5) {
-			return shape(tree, owner._tree);
+			return shape(newer, owner.older);
 		}
 	}
 	
@@ -1011,10 +977,9 @@
 	 * Attribute Identifier [Whitelist]
 	 *
 	 * @param  {String} name
-	 * @param  {Tree} tree
 	 * @return {Number}
 	 */
-	function attr (name, tree) {
+	function attr (name) {
 		switch (name) {
 			case 'class':
 			case 'className': return 1;
@@ -1058,15 +1023,15 @@
 	/**
 	 * Extract Component Tree
 	 *
-	 * @param  {Tree} tree
+	 * @param  {Tree} older
 	 * @return {Tree}
 	 */
-	function extract (tree) {
-		var type = tree.type;
-		var props = tree.props;
-		var children = tree.children;
+	function extract (older) {
+		var type = older.type;
+		var props = older.props;
+		var children = older.children;
 		var length = children.length;
-		var group = tree.group;
+		var group = older.group;
 		var defaults = type.defaultProps;
 		var types = type.propTypes;
 		var owner;
@@ -1100,16 +1065,16 @@
 				Component.call(owner, props);
 			}
 	
+			older.owner = owner;
+	
 			if (owner.async === 0) {
-				tree.async = 1;
+				older.async = 1;
 				newer = renderBoundary(owner, group);
-				tree.async = 0;
+				older.async = 0;
 			}
-			newer = shape(newer, tree);
-			owner._tree = tree;
-			tree.owner = owner;
+			newer = shape(newer, owner.older = older);
 		} else {
-			newer = shape(renderBoundary(tree, group), tree);
+			newer = shape(renderBoundary(older, group), older);
 		}
 		return newer;
 	}
@@ -1142,12 +1107,40 @@
 						case Array: newer = fragment(newer); break;
 						case Date: newer = text(newer+''); break;
 						case Object: newer = text(''); break;
-						default: tree = text('');
-					} break;
+						default: {
+							newer = newer.next !== void 0 && older !== null ? generator(newer, older) : text('');
+						}
+					}
+					break;
 				}
 			}
 		}
 		return newer;
+	}
+	
+	/**
+	 * Extract Generator
+	 *
+	 * @param  {Generator} _newer
+	 * @param  {Tree} older
+	 * @return {Tree}
+	 */
+	function generator (newer, older) {
+		if (older !== null && older.group > 1) {
+			older.owner.render = older.type.prototype.render = function () {
+				var next = newer.next();
+				var value = next.value;
+	
+				if (next.done === true) {
+					return shape(value !== void 0 && value !== null ? value : this.older, older);
+				} else {
+					return shape(value, older);
+				}
+			}
+			return shape(renderBoundary(older.owner, older.group), older);
+		} else {
+			return text('');
+		}
 	}
 	
 	/**
@@ -1333,7 +1326,7 @@
 			}
 		}
 	
-		if ((older = target._older) !== void 0) {
+		if ((older = target.older) !== void 0) {
 			if (older.key === newer.key) {
 				patch(older, newer, older.group, older);
 			} else {
@@ -1341,24 +1334,24 @@
 			}
 		} else {
 			create(newer, null, newer.owner, target, null, 1);
-			target._older = newer;
+			target.older = newer;
 		}
 	}
 	
 	/**
 	 * Shallow Render
 	 *
-	 * @param  {Any} _tree
+	 * @param  {Any} older
 	 * @return {Tree}
 	 */
-	function shallow (_tree) {
-		var tree = shape(_tree, null);
+	function shallow (older) {
+		var newer = shape(older, null);
 	
-		while (tree.tag === null) {
-			tree = extract(tree);
+		while (newer.tag === null) {
+			newer = extract(newer);
 		}
 	
-		return tree;
+		return newer;
 	}
 	
 	/**
@@ -1757,63 +1750,63 @@
 	 * @param  {Number} action
 	 * @return {Node}
 	 */
-	function create (newer, _xmlns, _owner, parent, sibling, action) {
+	function create (older, _xmlns, _owner, parent, sibling, action) {
 		var xmlns = _xmlns;
 		var owner = _owner;
-		var group = newer.group;
-		var flag = newer.flag;
+		var group = older.group;
+		var flag = older.flag;
 		var type = 0;
 		var node;
 		var children;
 		var length;
-		var tree;
+		var newer;
 	
 		// preserve last namespace among children
-		if (flag !== 1 && newer.xmlns !== null) {
-			xmlns = newer.xmlns;
+		if (flag !== 1 && older.xmlns !== null) {
+			xmlns = older.xmlns;
 		}
 	
 		if (group > 0) {
-			tree = extract(newer);
-			flag = tree.flag;
+			newer = extract(older);
+			flag = newer.flag;
 	
 			// every instance registers the last root component, children will use
 			// this when attaching events, to support boundless events
-			owner = newer.owner;
+			owner = older.owner;
 	
 			if (owner.componentWillMount !== void 0) {
 				mountBoundary(owner, 0);
 			}
-			if (tree.group === 0) {
+			if (newer.group === 0) {
 				type = 2;
 			} else {
-				create(tree, xmlns, owner, parent, sibling, action);
+				create(newer, xmlns, owner, parent, sibling, action);
 				// components may return components recursively,
 				// keep a record of these
-				tree.parent = newer;
-				newer.host = tree;
+				newer.parent = older;
+				older.host = newer;
 			}
-			copy(newer, tree);
+			copy(older, newer);
 		} else {
 			type = 2;
 		}
 	
 		if (type === 2) {
 			if (flag === 1) {
-				node = createTextNode((type = 1, newer.children));
+				node = createTextNode((type = 1, older.children));
 			} else {
-				node = nodeBoundary(flag, newer, xmlns, owner);
+				node = nodeBoundary(flag, older, xmlns, owner);
 	
-				if (newer.flag === 3) {
+				if (older.flag === 3) {
 					create(node, xmlns, owner, parent, sibling, action);
-					clone(newer, node, type = 0);
+					clone(older, node, type = 0);
 				} else {
-					children = newer.children;
+					children = older.children;
 					length = children.length;
 	
 					if (length > 0) {
 						for (var i = 0, child; i < length; i++) {
-							// hoisted tree
+							// hoisted
 							if ((child = children[i]).node !== null) {
 								clone(child = children[i] = new Tree(child.flag), child, false);
 							}
@@ -1825,14 +1818,14 @@
 		}
 	
 		if (type !== 0) {
-			newer.node = node;
+			older.node = node;
 			switch (action) {
 				case 1: parent.appendChild(node); break;
 				case 2: parent.insertBefore(node, sibling); break;
 				case 3: parent.replaceChild(node, sibling); break;
 			}
 			if (type !== 1) {
-				attribute(newer, owner, xmlns, node, false);
+				attribute(older, owner, xmlns, node, false);
 			}
 		}
 	

@@ -50,63 +50,63 @@ function createTextNode (value) {
  * @param  {Number} action
  * @return {Node}
  */
-function create (newer, _xmlns, _owner, parent, sibling, action) {
+function create (older, _xmlns, _owner, parent, sibling, action) {
 	var xmlns = _xmlns;
 	var owner = _owner;
-	var group = newer.group;
-	var flag = newer.flag;
+	var group = older.group;
+	var flag = older.flag;
 	var type = 0;
 	var node;
 	var children;
 	var length;
-	var tree;
+	var newer;
 
 	// preserve last namespace among children
-	if (flag !== 1 && newer.xmlns !== null) {
-		xmlns = newer.xmlns;
+	if (flag !== 1 && older.xmlns !== null) {
+		xmlns = older.xmlns;
 	}
 
 	if (group > 0) {
-		tree = extract(newer);
-		flag = tree.flag;
+		newer = extract(older);
+		flag = newer.flag;
 
 		// every instance registers the last root component, children will use
 		// this when attaching events, to support boundless events
-		owner = newer.owner;
+		owner = older.owner;
 
 		if (owner.componentWillMount !== void 0) {
 			mountBoundary(owner, 0);
 		}
-		if (tree.group === 0) {
+		if (newer.group === 0) {
 			type = 2;
 		} else {
-			create(tree, xmlns, owner, parent, sibling, action);
+			create(newer, xmlns, owner, parent, sibling, action);
 			// components may return components recursively,
 			// keep a record of these
-			tree.parent = newer;
-			newer.host = tree;
+			newer.parent = older;
+			older.host = newer;
 		}
-		copy(newer, tree);
+		copy(older, newer);
 	} else {
 		type = 2;
 	}
 
 	if (type === 2) {
 		if (flag === 1) {
-			node = createTextNode((type = 1, newer.children));
+			node = createTextNode((type = 1, older.children));
 		} else {
-			node = nodeBoundary(flag, newer, xmlns, owner);
+			node = nodeBoundary(flag, older, xmlns, owner);
 
-			if (newer.flag === 3) {
+			if (older.flag === 3) {
 				create(node, xmlns, owner, parent, sibling, action);
-				clone(newer, node, type = 0);
+				clone(older, node, type = 0);
 			} else {
-				children = newer.children;
+				children = older.children;
 				length = children.length;
 
 				if (length > 0) {
 					for (var i = 0, child; i < length; i++) {
-						// hoisted tree
+						// hoisted
 						if ((child = children[i]).node !== null) {
 							clone(child = children[i] = new Tree(child.flag), child, false);
 						}
@@ -118,14 +118,14 @@ function create (newer, _xmlns, _owner, parent, sibling, action) {
 	}
 
 	if (type !== 0) {
-		newer.node = node;
+		older.node = node;
 		switch (action) {
 			case 1: parent.appendChild(node); break;
 			case 2: parent.insertBefore(node, sibling); break;
 			case 3: parent.replaceChild(node, sibling); break;
 		}
 		if (type !== 1) {
-			attribute(newer, owner, xmlns, node, false);
+			attribute(older, owner, xmlns, node, false);
 		}
 	}
 

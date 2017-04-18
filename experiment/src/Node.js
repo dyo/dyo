@@ -1,15 +1,15 @@
 /**
  * Extract Component Tree
  *
- * @param  {Tree} tree
+ * @param  {Tree} older
  * @return {Tree}
  */
-function extract (tree) {
-	var type = tree.type;
-	var props = tree.props;
-	var children = tree.children;
+function extract (older) {
+	var type = older.type;
+	var props = older.props;
+	var children = older.children;
 	var length = children.length;
-	var group = tree.group;
+	var group = older.group;
 	var defaults = type.defaultProps;
 	var types = type.propTypes;
 	var owner;
@@ -43,16 +43,16 @@ function extract (tree) {
 			Component.call(owner, props);
 		}
 
+		older.owner = owner;
+
 		if (owner.async === 0) {
-			tree.async = 1;
+			older.async = 1;
 			newer = renderBoundary(owner, group);
-			tree.async = 0;
+			older.async = 0;
 		}
-		newer = shape(newer, tree);
-		owner._tree = tree;
-		tree.owner = owner;
+		newer = shape(newer, owner.older = older);
 	} else {
-		newer = shape(renderBoundary(tree, group), tree);
+		newer = shape(renderBoundary(older, group), older);
 	}
 	return newer;
 }
@@ -85,12 +85,40 @@ function shape (_newer, older) {
 					case Array: newer = fragment(newer); break;
 					case Date: newer = text(newer+''); break;
 					case Object: newer = text(''); break;
-					default: tree = text('');
-				} break;
+					default: {
+						newer = newer.next !== void 0 && older !== null ? generator(newer, older) : text('');
+					}
+				}
+				break;
 			}
 		}
 	}
 	return newer;
+}
+
+/**
+ * Extract Generator
+ *
+ * @param  {Generator} _newer
+ * @param  {Tree} older
+ * @return {Tree}
+ */
+function generator (newer, older) {
+	if (older !== null && older.group > 1) {
+		older.owner.render = older.type.prototype.render = function () {
+			var next = newer.next();
+			var value = next.value;
+
+			if (next.done === true) {
+				return shape(value !== void 0 && value !== null ? value : this.older, older);
+			} else {
+				return shape(value, older);
+			}
+		}
+		return shape(renderBoundary(older.owner, older.group), older);
+	} else {
+		return text('');
+	}
 }
 
 /**

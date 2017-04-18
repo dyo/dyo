@@ -10,7 +10,7 @@ function element (_type, _props) {
 	var props = _props !== void 0 ? _props : null;
 	var length = arguments.length;
 	var children = length !== 1 ? [] : array;
-	var tree = new Tree(2);
+	var newer = new Tree(2);
 	var index = 0;
 	var i = 2;
 	var proto;
@@ -20,91 +20,94 @@ function element (_type, _props) {
 			props = object;
 			i = 1;
 		} else {
-			tree.props = props;
+			newer.props = props;
 
 			if (props.key !== void 0) {
-				tree.key = props.key;
+				newer.key = props.key;
 			}
 			if (props.xmlns !== void 0) {
-				tree.xmlns = props.xmlns;
+				newer.xmlns = props.xmlns;
 			}
 		}
 	}
 
 	switch (typeof type) {
 		case 'string': {
-			tree.tag = type;
-			tree.attrs = props;
+			newer.tag = type;
+			newer.attrs = props;
 			break;
 		}
 		case 'function': {
 			if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
-				tree.group = 2;
+				newer.group = 2;
 			} else {
-				tree.group = 1;
-				tree.owner = type;
+				newer.group = 1;
+				newer.owner = type;
 			}
 			break;
 		}
 		default: {
-			tree.tag = 'noscript';
+			newer.tag = 'noscript';
 		}
 	}
 
-	tree.type = type;
-	tree.children = children;
+	newer.type = type;
+	newer.children = children;
 
 	if (length !== 1) {
 		for (; i < length; i++) {
-			index = adopt(tree, index, arguments[i]);
+			index = adopt(newer, index, arguments[i]);
 		}
 	}
-	return tree;
+	return newer;
 }
 
 /**
  * Adopt Element Children
  *
- * @param  {Tree} tree
+ * @param  {Tree} newer
  * @param  {Number} index
  * @param  {Any} child
  * @return {Number}
  */
-function adopt (tree, index, child) {
-	var children = tree.children;
+function adopt (newer, index, child) {
+	var children = newer.children;
 	var i = index;
 	var length;
 
 	if (child === null || child === void 0) {
 		children[i] = text('');
 	} else if (child.group !== void 0) {
-		if (tree.keyed === false) {
+		if (newer.keyed === false) {
 			if (child.key !== null) {
-				tree.keyed = true;
+				newer.keyed = true;
 			}
 		} else if (child.key === null) {
-			// assign float key to non-keyed children in a keyed tree
+			// assign float key to non-keyed children in a keyed structure
 			// an obscure floating point key avoids conflicts with int keyed children
 			child.key = index/161800;
 		}
 		children[i] = child;
 	} else {
 		switch (typeof child) {
-			case 'function': children[i] = element(child, null); break;
+			case 'function': {
+				children[i] = element(child, null);
+				break;
+			}
 			case 'object': {
 				if ((length = child.length) > 0) {
 					for (var j = 0; j < length; j++) {
-						i = adopt(tree, i, child[j]);
+						i = adopt(newer, i, child[j]);
 					}
 					return i;
 				} else if (child.constructor === Date) {
-					return adopt(tree, i, text(child+''));
+					return adopt(newer, i, text(child+''));
 				} else {
-					return adopt(tree, i, text(''));
+					return adopt(newer, i, text(''));
 				}
 			}
 			default: {
-				return adopt(tree, i, text(child));
+				return adopt(newer, i, text(child));
 			}
 		}
 	}
@@ -119,12 +122,12 @@ function adopt (tree, index, child) {
  * @return {Tree}
  */
 function text (value) {
-	var tree = new Tree(1);
+	var newer = new Tree(1);
 
-	tree.type = tree.tag = '#text';
-	tree.children = ((value === true || value === false) ? '' : value);
+	newer.type = newer.tag = '#text';
+	newer.children = ((value === true || value === false) ? '' : value);
 
-	return tree;
+	return newer;
 }
 
 /**

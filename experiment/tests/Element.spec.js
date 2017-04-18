@@ -21,7 +21,7 @@ test('Element', ({ok, deepEqual}) => {
 	ok(children.length === 7, 'element children length');
 	ok(
 		children[1].flag === 1 && children[2].flag === 1 &&
-		children[5].group === 2 && children[6].group === 1,
+		children[5].group === 1 && children[6].group === 2,
 		'element children types'
 	)
 

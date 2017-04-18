@@ -42,17 +42,17 @@ function updateBoundary (owner, type, props, state) {
  * Render Boundary
  *
  * @param  {Component|Tree} owner
- * @param  {Number} cast
+ * @param  {Number} group
  * @return {Tree}
  */
-function renderBoundary (owner, cast) {
+function renderBoundary (owner, group) {
 	try {
-		switch (cast) {
+		switch (group) {
 			case 1: return owner.type(owner.props);
 			case 2: case 3: return owner.render(owner.props, owner.state);
 		}
 	} catch (err) {
-		return errorBoundary(err, cast === 1 ? owner : owner.type, 3, cast);
+		return errorBoundary(err, group > 1 ? owner : owner.type, 3, group);
 	}
 }
 
@@ -169,14 +169,14 @@ function returnBoundary (state, owner, e, sync) {
 function errorBoundary (message, owner, type, from) {
 	var component = '#unknown';
 	var location;
-	var tree;
+	var newer;
 
 	try {
 		location = errorLocation(type, from) || component;
 
 		if (owner !== null) {
 			if (owner.componentDidThrow !== void 0) {
-				tree = owner.componentDidThrow({location: location, message: message});
+				newer = owner.componentDidThrow({location: location, message: message});
 			}
 			component = typeof owner === 'function' ? owner.name : owner.constructor.name;
 		}
@@ -187,7 +187,7 @@ function errorBoundary (message, owner, type, from) {
 	errorMessage(component, location, message instanceof Error ? message.stack : message);
 
 	if (type === 3 || type === 5) {
-		return shape(tree, owner._tree);
+		return shape(newer, owner.older);
 	}
 }
 

@@ -45,7 +45,7 @@ function render (_newer, _target) {
 		}
 	}
 
-	if ((older = target._older) !== void 0) {
+	if ((older = target.older) !== void 0) {
 		if (older.key === newer.key) {
 			patch(older, newer, older.group, older);
 		} else {
@@ -53,22 +53,22 @@ function render (_newer, _target) {
 		}
 	} else {
 		create(newer, null, newer.owner, target, null, 1);
-		target._older = newer;
+		target.older = newer;
 	}
 }
 
 /**
  * Shallow Render
  *
- * @param  {Any} _tree
+ * @param  {Any} older
  * @return {Tree}
  */
-function shallow (_tree) {
-	var tree = shape(_tree, null);
+function shallow (older) {
+	var newer = shape(older, null);
 
-	while (tree.tag === null) {
-		tree = extract(tree);
+	while (newer.tag === null) {
+		newer = extract(newer);
 	}
 
-	return tree;
+	return newer;
 }
