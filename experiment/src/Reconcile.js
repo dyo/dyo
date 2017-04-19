@@ -56,7 +56,6 @@ function patch (older, _newer, group, _ancestor) {
 	} else {
 		nonkeyed(older, newer, ancestor, oldLength, newLength);
 	}
-
 	attributes(older, newer, ancestor);
 }
 
@@ -70,7 +69,6 @@ function patch (older, _newer, group, _ancestor) {
  * @param  {Number}
  */
 function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
-	var owner = ancestor.owner;
 	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
@@ -120,7 +118,6 @@ function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
  * @param {Number} newLength
  */
 function keyed (older, newer, ancestor, oldLength, newLength) {
- 	var owner = ancestor.owner;
  	var parent = older.node;
  	var oldChildren = older.children;
  	var newChildren = newer.children;
@@ -248,7 +245,6 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  * @param {number} newLength
  */
 function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
-	var owner = ancestor.owner;
 	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;

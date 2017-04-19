@@ -178,8 +178,9 @@ function clone (older, newer, type) {
 		case 1: {
 			older.props = newer.props;
 			older.owner = newer.owner;
-			older.type = newer.type;
+			older.yield = newer.yield;
 			older.group = newer.group;
+			older.type = newer.type;
 			older.host = newer.host;
 			older.key = newer.key;
 			break;
@@ -209,6 +210,7 @@ function Tree (flag) {
 	this.attrs = object;
 	this.xmlns = null;
 	this.owner = null;
+	this.yield = null;
 	this.keyed = false;
 	this.parent = null;
 	this.children = null;

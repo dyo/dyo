@@ -52,7 +52,7 @@ function render (_newer, _target) {
 			exchange(older, newer, 1, newer);
 		}
 	} else {
-		create(newer, null, newer.owner, target, null, 1);
+		create(newer, null, newer, target, null, 1);
 		target.older = newer;
 	}
 }

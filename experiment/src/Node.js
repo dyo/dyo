@@ -47,7 +47,7 @@ function extract (older) {
 
 		if (owner.async === 0) {
 			older.async = 1;
-			newer = renderBoundary(owner, group);
+			newer = renderBoundary(older, group);
 			older.async = 0;
 		}
 		newer = shape(newer, owner.older = older);
@@ -97,27 +97,40 @@ function shape (_newer, older) {
 }
 
 /**
- * Extract Generator
+ * Create Generator
  *
- * @param  {Generator} _newer
+ * @param  {Generator} newer
  * @param  {Tree} older
  * @return {Tree}
  */
 function generator (newer, older) {
-	if (older !== null && older.group > 1) {
-		older.owner.render = older.type.prototype.render = function () {
-			var next = newer.next();
-			var value = next.value;
+	var prev;
+	var next;
 
-			if (next.done === true) {
-				return shape(value !== void 0 && value !== null ? value : this.older, older);
-			} else {
-				return shape(value, older);
-			}
+	older.yield = function () {
+		prev = (next = newer.next(prev)).value;
+
+		if (next.done === true) {
+			return shape(prev !== void 0 && prev !== null ? prev : this.older, older);
+		} else {
+			return shape(prev, older);
 		}
-		return shape(renderBoundary(older.owner, older.group), older);
-	} else {
-		return text('');
+	};
+
+	return shape(renderBoundary(older, older.group), older);
+}
+
+/**
+ * Extract Generator
+ *
+ * @param {Tree} older
+ * @param {Number} group
+ * @return {Tree}
+ */
+function coroutine (older, group) {
+	switch (group) {
+		case 1: return older.yield(older.props);
+		case 2: case 3: return older.yield(older.owner.props, older.owner.state);
 	}
 }
 

@@ -1,28 +1,58 @@
 /**
+ * Attribute Identifier [Whitelist]
+ *
+ * @param  {String} name
+ * @return {Number}
+ */
+function attr (name) {
+	switch (name) {
+		case 'class':
+		case 'className': return 1;
+
+		case 'style': return 2;
+
+		case 'width':
+		case 'height': return 3;
+
+		case 'id':
+		case 'selected':
+		case 'hidden':
+		case 'value':
+		case 'innerHTML': return 4;
+
+		case 'xlink:href': return 5;
+
+		case 'ref': return 30;
+		case 'key': case 'children': return 31;
+
+		default: return evt(name) === true ? 20 : 0;
+	}
+}
+
+/**
  * Create Attributes
  *
  * @param {Tree} newer
- * @param {Component?} owner
+ * @param {Tree} ancestor
  * @param {String?} xmlns
- * @param {Node} node
- * @param {Boolean} hydrate
  */
-function attribute (newer, owner, xmlns, node, hydrate) {
+function attribute (newer, ancestor, xmlns) {
 	var newAttrs = newer.attrs;
+	var type = 0;
 	var value;
 
 	for (var name in newAttrs) {
-		if (name !== 'key' && name !== 'children') {
+		type = attr(name);
+
+		if (type < 31) {
 			value = newAttrs[name];
 
-			if (name !== 'ref') {
-				if (evt(name) === true) {
-					event(node, name, owner, value);
-				} else if (hydrate === false) {
-					assign(attr(name), name, value, xmlns, node, newer);
-				}
+			if (type === 30) {
+				refs(value, ancestor, newer, 0);
+			} else if (type < 20) {
+				assign(type, name, value, xmlns, newer);
 			} else {
-				refs(value, owner, node, 0);
+				event(newer, name, ancestor, value);
 			}
 		}
 	}
@@ -40,39 +70,43 @@ function attributes (older, newer, ancestor) {
 	var newAttrs = newer.attrs;
 	var xmlns = older.xmlns;
 	var node = older.node;
-	var owner = ancestor.owner;
+	var type = 0;
 	var oldValue;
 	var newValue;
 
 	for (var name in newAttrs) {
-		if (name !== 'key' && name !== 'children') {
+		type = attr(name);
+
+		if (type < 31) {
 			newValue = newAttrs[name];
 
-			if (name !== 'ref') {
+			if (type === 30) {
+				refs(newValue, ancestor, older, 2);
+			} else {
 				oldValue = oldAttrs[name];
 
 				if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
-					if (evt(name) === false) {
-						assign(attr(name), name, newValue, xmlns, node, ancestor);
+					if (type < 20) {
+						assign(type, name, newValue, xmlns, older);
 					} else {
-						event(node, name, owner, newValue);
+						event(older, name, ancestor, newValue);
 					}
 				}
-			} else {
-				refs(newValue, ancestor.owner, node, 2);
 			}
 		}
 	}
 
 	for (var name in oldAttrs) {
-		if (name !== 'key' && name !== 'children' && name !== 'ref') {
+		type = attr(name);
+
+		if (type < 30) {
 			newValue = newAttrs[name];
 
 			if (newValue === null || newValue === void 0) {
 				if (evt(name) === false) {
-					assign(attr(name), name, newValue, xmlns, node, ancestor);
+					assign(type, name, newValue, xmlns, older);
 				} else {
-					event(node, name, owner, newValue);
+					event(older, name, ancestor, newValue);
 				}
 			}
 		}
@@ -85,49 +119,34 @@ function attributes (older, newer, ancestor) {
  * Create Refs
  *
  * @param  {Function|String} value
- * @param  {Component} owner
- * @param  {Node} node
+ * @param  {Tree} ancestor
+ * @param  {Tree} older
  * @param  {Number} type
  */
-function refs (value, owner, node, type) {
-	if (owner !== null && owner.refs === null) {
+function refs (value, ancestor, older, type) {
+	var stateful;
+	var owner;
+
+	if (ancestor !== null) {
+		if ((owner = ancestor.owner) !== null && ancestor.group > 1) {
+			stateful = true;
+		}
+	}
+	if (stateful === true && owner.refs === null) {
 		owner.refs = {};
 	}
 
 	switch (typeof value) {
 		case 'function': {
-			callbackBoundary(owner, value, node, type);
+			callbackBoundary(owner, value, older.node, type);
 			break;
 		}
 		case 'string': {
-			if (type === 0 && owner !== null) {
-				owner.refs[value] = node;
+			if (stateful === true && type === 0) {
+				owner.refs[value] = older.node;
 			}
 			break;
 		}
-	}
-}
-
-/**
- * Attribute Identifier [Whitelist]
- *
- * @param  {String} name
- * @return {Number}
- */
-function attr (name) {
-	switch (name) {
-		case 'class':
-		case 'className': return 1;
-		case 'style': return 2;
-		case 'width':
-		case 'height': return 3;
-		case 'id':
-		case 'selected':
-		case 'hidden':
-		case 'value':
-		case 'innerHTML': return 5;
-		case 'xlink:href': return 6;
-		default: return 0;
 	}
 }
 

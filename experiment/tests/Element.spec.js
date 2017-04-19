@@ -2,7 +2,7 @@ const h = element;
 
 test('Element', ({ok, deepEqual}) => {
 	let h1 = h('h1', 'Hello', 1, new Date, [2, 3], () => {}, class Foo{render(){}});
-	let h2 = {};
+	let h2 = h('');
 	let key = h('h1', {key: 1}, h('h1', {key: 2}), 'Auto Key');
 
 	let children = h1.children;

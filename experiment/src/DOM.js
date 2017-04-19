@@ -50,89 +50,94 @@ function createTextNode (value) {
  * @param  {Number} action
  * @return {Node}
  */
-function create (older, _xmlns, _owner, parent, sibling, action) {
-	var xmlns = _xmlns;
-	var owner = _owner;
-	var group = older.group;
-	var flag = older.flag;
-	var type = 0;
-	var node;
-	var children;
-	var length;
-	var newer;
+ function create (older, _xmlns, _ancestor, parent, sibling, action) {
+ 	var xmlns = _xmlns;
+ 	var ancestor = _ancestor;
+ 	var group = older.group;
+ 	var flag = older.flag;
+ 	var type = 0;
+ 	var owner;
+ 	var node;
+ 	var children;
+ 	var length;
+ 	var newer;
 
-	// preserve last namespace among children
-	if (flag !== 1 && older.xmlns !== null) {
-		xmlns = older.xmlns;
-	}
+ 	// preserve last namespace among children
+ 	if (flag !== 1 && older.xmlns !== null) {
+ 		xmlns = older.xmlns;
+ 	}
 
-	if (group > 0) {
-		newer = extract(older);
-		flag = newer.flag;
+ 	if (group > 0) {
+ 		// every instance registers the last root component, children will use
+ 		// this when attaching events, to support boundless events
+ 		if (group > 1) {
+ 			ancestor = older;
+ 		}
 
-		// every instance registers the last root component, children will use
-		// this when attaching events, to support boundless events
-		owner = older.owner;
+ 		newer = extract(older);
+ 		flag = newer.flag;
+ 		owner = older.owner;
 
-		if (owner.componentWillMount !== void 0) {
-			mountBoundary(owner, 0);
-		}
-		if (newer.group === 0) {
-			type = 2;
-		} else {
-			create(newer, xmlns, owner, parent, sibling, action);
-			// components may return components recursively,
-			// keep a record of these
-			newer.parent = older;
-			older.host = newer;
-		}
-		copy(older, newer);
-	} else {
-		type = 2;
-	}
+ 		if (owner.componentWillMount !== void 0) {
+ 			mountBoundary(owner, 0);
+ 		}
+ 		if (newer.group === 0) {
+ 			type = 2;
+ 		} else {
+ 			create(newer, xmlns, ancestor, parent, sibling, action);
+ 			// components may return components recursively,
+ 			// keep a record of these
+ 			newer.parent = older;
+ 			older.host = newer;
+ 		}
+ 		copy(older, newer);
+ 	} else {
+ 		type = 2;
+ 	}
 
-	if (type === 2) {
-		if (flag === 1) {
-			node = createTextNode((type = 1, older.children));
-		} else {
-			node = nodeBoundary(flag, older, xmlns, owner);
+ 	if (type === 2) {
+ 		if (flag === 1) {
+ 			node = createTextNode((type = 1, older.children));
+ 		} else {
+ 			node = nodeBoundary(flag, older, xmlns, ancestor);
 
-			if (older.flag === 3) {
-				create(node, xmlns, owner, parent, sibling, action);
-				clone(older, node, type = 0);
-			} else {
-				children = older.children;
-				length = children.length;
+ 			if (older.flag === 3) {
+ 				create(node, xmlns, ancestor, parent, sibling, action);
+ 				clone(older, node, type = 0);
+ 			} else {
+ 				children = older.children;
+ 				length = children.length;
 
-				if (length > 0) {
-					for (var i = 0, child; i < length; i++) {
-						// hoisted
-						if ((child = children[i]).node !== null) {
-							clone(child = children[i] = new Tree(child.flag), child, false);
-						}
-						create(child, xmlns, owner, node, null, 1);
-					}
-				}
-			}
-		}
-	}
+ 				if (length > 0) {
+ 					for (var i = 0, child; i < length; i++) {
+ 						// hoisted
+ 						if ((child = children[i]).node !== null) {
+ 							clone(child = children[i] = new Tree(child.flag), child, false);
+ 						}
+ 						create(child, xmlns, ancestor, node, null, 1);
+ 					}
+ 				}
+ 			}
+ 		}
+ 	}
 
-	if (type !== 0) {
-		older.node = node;
-		switch (action) {
-			case 1: parent.appendChild(node); break;
-			case 2: parent.insertBefore(node, sibling); break;
-			case 3: parent.replaceChild(node, sibling); break;
-		}
-		if (type !== 1) {
-			attribute(older, owner, xmlns, node, false);
-		}
-	}
+ 	if (type !== 0) {
+ 		older.node = node;
 
-	if (group > 0 && owner.componentDidMount !== void 0) {
-		mountBoundary(owner, 1);
-	}
-}
+ 		switch (action) {
+ 			case 1: parent.appendChild(node); break;
+ 			case 2: parent.insertBefore(node, sibling); break;
+ 			case 3: parent.replaceChild(node, sibling); break;
+ 		}
+ 		if (type !== 1) {
+ 			attribute(older, ancestor, xmlns);
+ 		}
+ 	}
+
+ 	if (group > 0 && owner.componentDidMount !== void 0) {
+ 		mountBoundary(owner, 1);
+ 	}
+ }
 
 /**
  * Change Node
@@ -226,9 +231,11 @@ function content (node, value) {
  * @param {String} name
  * @param {Any} value
  * @param {String?} xmlns
- * @param {Node} node
+ * @param {Tree} newer
  */
-function assign (type, name, value, xmlns, node) {
+function assign (type, name, value, xmlns, newer) {
+	var node = newer.node;
+
 	switch (type) {
 		case 0: {
 			if (value !== null && value !== void 0 && value !== false) {
@@ -265,16 +272,12 @@ function assign (type, name, value, xmlns, node) {
 			break;
 		}
 		case 4: {
-			assign(5, 'innerHTML', value.__html, xmlns, node);
-			break;
-		}
-		case 5: {
 			if (name in node) {
 				set(node, name, value);
 			}
 			break;
 		}
-		case 6: {
+		case 5: {
 			node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
 			break;
 		}
@@ -315,15 +318,15 @@ function style (source, target) {
 /**
  * Create Events
  *
- * @param {Node} node
+ * @param {Tree} older
  * @param {String} name
- * @param {Component} owner
+ * @param {Tree} ancestor
  * @param {Function} handler
  */
-function event (node, name, owner, handler) {
-	node[name.toLowerCase()] = typeof handler !== 'function' ? null : (
-		owner !== null ? function proxy (e) {
-			eventBoundary(owner, handler, e);
+function event (older, name, ancestor, handler) {
+	older.node[name.toLowerCase()] = typeof handler !== 'function' ? null : (
+		ancestor !== null && ancestor.group > 1 ? function proxy (e) {
+			eventBoundary(ancestor.owner, handler, e);
 		} : handler
 	);
 }

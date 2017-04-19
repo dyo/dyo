@@ -192,7 +192,7 @@ function shouldUpdate (older, _newer, group, ancestor) {
 			updateBoundary(owner, 1, nextProps, nextState);
 		}
 
-		newer = shape(renderBoundary(group > 1 ? owner : older, group), older);
+		newer = shape(renderBoundary(older, group), older);
 
 		if ((tag = newer.tag) !== older.tag) {
 			newer = updateHost(older, newer, ancestor, tag);

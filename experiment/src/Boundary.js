@@ -41,18 +41,21 @@ function updateBoundary (owner, type, props, state) {
 /**
  * Render Boundary
  *
- * @param  {Component|Tree} owner
+ * @param  {Tree} older
  * @param  {Number} group
  * @return {Tree}
  */
-function renderBoundary (owner, group) {
+function renderBoundary (older, group) {
 	try {
+		if (older.yield !== null) {
+			return coroutine(older, group);
+		}
 		switch (group) {
-			case 1: return owner.type(owner.props);
-			case 2: case 3: return owner.render(owner.props, owner.state);
+			case 1: return older.type(older.props);
+			case 2: case 3: return older.owner.render(older.owner.props, older.owner.state);
 		}
 	} catch (err) {
-		return errorBoundary(err, group > 1 ? owner : owner.type, 3, group);
+		return errorBoundary(err, group > 1 ? older.owner : older.type, 3, group);
 	}
 }
 
