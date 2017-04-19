@@ -106,15 +106,19 @@ function shape (_newer, older) {
 function generator (newer, older) {
 	var prev;
 	var next;
+	var view;
 
 	older.yield = function () {
-		prev = (next = newer.next(prev)).value;
+		var supply = newer.next(prev);
 
-		if (next.done === true) {
-			return shape(prev !== void 0 && prev !== null ? prev : this.older, older);
+		next = supply.value;
+
+		if (supply.done === true) {
+			view = shape(next !== void 0 && next !== null ? next : prev, older);
 		} else {
-			return shape(prev, older);
+			view = shape(next, older);
 		}
+		return prev = view;
 	};
 
 	return shape(renderBoundary(older, older.group), older);
