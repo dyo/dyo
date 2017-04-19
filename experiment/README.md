@@ -15,6 +15,7 @@ An experimental rewrite that puts what i've learnt from the past versions of dio
 - return state from lifecycles
 - return state from function refs and callbacks
 - promise return type
+- render coroutines/generators
 
 ## Similarities
 
@@ -139,7 +140,6 @@ class Foo {
 }
 ```
 
-
 #### error boundaries
 
 ```js
@@ -184,6 +184,24 @@ class Bar {
 ```
 
 lifecycles, function refs and callbacks work in a similar fashion to how bound-less events work, the only lifecycles methodes that cannot return new state are `componentWillUnmount` and `shouldComponentUpdate`.
+
+#### coroutines
+
+```js
+class Coroutine {
+	getInitialState() {
+		return {n: 0}
+	}
+	handleClick(props, state){
+		return {n: state.n+1};
+	}
+	*render(props, state) {
+		while (true) {
+			yield h('button', {onclick: this.handleClick}, 'Click Me - ', state.n);
+		}
+	}
+}
+```
 
 ## Future
 

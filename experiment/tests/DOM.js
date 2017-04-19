@@ -1,6 +1,7 @@
 import 'Boundary';
 
 test('Event', ({ok}) => {
+	// todo use jsdom/undom
 	let mock = {node: {onclick: null}};
 
 	event(mock, 'onclick', null, (e) => {
