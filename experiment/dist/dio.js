@@ -201,20 +201,7 @@
 	}
 	
 	/**
-	 * Merge State
-	 *
-	 * @param  {Object} state
-	 * @param  {Object} nextState
-	 * @return {Object}
-	 */
-	function mergeState (state, nextState) {
-		for (var name in nextState) {
-			state[name] = nextState[name];
-		}
-	}
-	
-	/**
-	 * shouldUpdate
+	 * Should Update
 	 *
 	 * @param  {Tree} older
 	 * @param  {Tree} _newer
@@ -294,6 +281,21 @@
 	}
 	
 	/**
+	 * Did Update
+	 *
+	 * @param  {Tree} older
+	 */
+	function didUpdate (older) {
+		var owner = older.owner;
+	
+		if (owner.componentDidUpdate !== void 0) {
+			older.async = 3;
+			updateBoundary(owner, 2, owner.past, owner.prev);
+			older.async = 0;
+		}
+	}
+	
+	/**
 	 * Update Host
 	 *
 	 * @param  {Tree} older
@@ -361,6 +363,19 @@
 		var obj = callbackBoundary(owner, fn, props, 0);
 		if (obj !== void 0 && obj !== null) {
 			Object.defineProperty(owner, type, {value: obj});
+		}
+	}
+	
+	/**
+	 * Merge State
+	 *
+	 * @param  {Object} state
+	 * @param  {Object} nextState
+	 * @return {Object}
+	 */
+	function mergeState (state, nextState) {
+		for (var name in nextState) {
+			state[name] = nextState[name];
 		}
 	}
 	
@@ -1467,11 +1482,7 @@
 		}
 	
 		if (group > 0) {
-			if (older.owner.componentDidUpdate !== void 0) {
-				older.async = 3;
-				updateBoundary(older.owner, 2, older.owner.past, older.owner.prev);
-				older.async = 0;
-			}
+			didUpdate(older);
 		}
 	}
 	
@@ -1618,7 +1629,7 @@
 	 		}
 	 		break;
 	 	}
-	 	// step 2, remove or insert
+	 	// step 2, remove or insert or both
 	 	if (oldStart > oldEnd) {
 	 		// old children is synced, insert the difference
 	 		if (newStart <= newEnd) {
@@ -1640,7 +1651,7 @@
 	 			empty(oldStartNode, true);
 	 		} while (oldStart <= oldEnd);
 	 	} else if (newStart === 0 && newEnd === newLength-1) {
-	 		// all children are out of sync, remove and append new set
+	 		// all children are out of sync, remove all, append new set
 	 		empty(older, false);
 	 		clear(parent);
 	 		fill(older, newer, ancestor);

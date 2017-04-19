@@ -123,20 +123,7 @@ function forceUpdate (callback) {
 }
 
 /**
- * Merge State
- *
- * @param  {Object} state
- * @param  {Object} nextState
- * @return {Object}
- */
-function mergeState (state, nextState) {
-	for (var name in nextState) {
-		state[name] = nextState[name];
-	}
-}
-
-/**
- * shouldUpdate
+ * Should Update
  *
  * @param  {Tree} older
  * @param  {Tree} _newer
@@ -216,6 +203,21 @@ function shouldUpdate (older, _newer, group, ancestor) {
 }
 
 /**
+ * Did Update
+ *
+ * @param  {Tree} older
+ */
+function didUpdate (older) {
+	var owner = older.owner;
+
+	if (owner.componentDidUpdate !== void 0) {
+		older.async = 3;
+		updateBoundary(owner, 2, owner.past, owner.prev);
+		older.async = 0;
+	}
+}
+
+/**
  * Update Host
  *
  * @param  {Tree} older
@@ -283,6 +285,19 @@ function getInitialStatic (owner, fn, type, props) {
 	var obj = callbackBoundary(owner, fn, props, 0);
 	if (obj !== void 0 && obj !== null) {
 		Object.defineProperty(owner, type, {value: obj});
+	}
+}
+
+/**
+ * Merge State
+ *
+ * @param  {Object} state
+ * @param  {Object} nextState
+ * @return {Object}
+ */
+function mergeState (state, nextState) {
+	for (var name in nextState) {
+		state[name] = nextState[name];
 	}
 }
 

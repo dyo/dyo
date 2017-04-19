@@ -54,11 +54,7 @@ function patch (older, _newer, group, _ancestor) {
 	}
 
 	if (group > 0) {
-		if (older.owner.componentDidUpdate !== void 0) {
-			older.async = 3;
-			updateBoundary(older.owner, 2, older.owner.past, older.owner.prev);
-			older.async = 0;
-		}
+		didUpdate(older);
 	}
 }
 
@@ -205,7 +201,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		}
  		break;
  	}
- 	// step 2, remove or insert
+ 	// step 2, remove or insert or both
  	if (oldStart > oldEnd) {
  		// old children is synced, insert the difference
  		if (newStart <= newEnd) {
@@ -227,7 +223,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			empty(oldStartNode, true);
  		} while (oldStart <= oldEnd);
  	} else if (newStart === 0 && newEnd === newLength-1) {
- 		// all children are out of sync, remove and append new set
+ 		// all children are out of sync, remove all, append new set
  		empty(older, false);
  		clear(parent);
  		fill(older, newer, ancestor);
