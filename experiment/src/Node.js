@@ -178,7 +178,7 @@ function exchange (older, newer, type, ancestor) {
 	switch (type) {
 		case 0: {
 			if (older.flag !== 1 && older.children.length > 0) {
-				empty(older);
+				empty(older, false);
 			}
 			clone(older, newer, type);
 			break;
@@ -233,8 +233,9 @@ function unmount (older) {
  * Empty Children
  *
  * @param  {Tree} older
+ * @param  {Boolean} release
  */
-function empty (older) {
+function empty (older, release) {
 	var children = older.children;
 	var length = children.length;
 
@@ -247,12 +248,15 @@ function empty (older) {
 		if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
 			mountBoundary(child.owner, 2);
 		}
-		empty(child);
+		empty(child, true);
 	}
-	older.parent = null;
-	older.host = null;
-	older.owner = null;
-	older.node = null;
+
+	if (release === true) {
+		older.parent = null;
+		older.host = null;
+		older.owner = null;
+		older.node = null;
+	}
 }
 
 /**
@@ -263,13 +267,12 @@ function empty (older) {
  * @param {Tree} ancestor
  */
 function fill (older, newer, ancestor) {
-	var owner = ancestor.owner;
 	var parent = older.node;
 	var children = newer.children;
 	var length = children.length;
 
 	for (var i = 0, child; i < length; i++) {
-		create(child = children[i], null, owner, parent, null, 1);
+		create(child = children[i], null, ancestor, parent, null, 1);
 	}
 	older.children = children;
 }

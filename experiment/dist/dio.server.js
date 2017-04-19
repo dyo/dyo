@@ -1230,7 +1230,7 @@
 		switch (type) {
 			case 0: {
 				if (older.flag !== 1 && older.children.length > 0) {
-					empty(older);
+					empty(older, false);
 				}
 				clone(older, newer, type);
 				break;
@@ -1285,8 +1285,9 @@
 	 * Empty Children
 	 *
 	 * @param  {Tree} older
+	 * @param  {Boolean} release
 	 */
-	function empty (older) {
+	function empty (older, release) {
 		var children = older.children;
 		var length = children.length;
 	
@@ -1299,12 +1300,15 @@
 			if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
 				mountBoundary(child.owner, 2);
 			}
-			empty(child);
+			empty(child, true);
 		}
-		older.parent = null;
-		older.host = null;
-		older.owner = null;
-		older.node = null;
+	
+		if (release === true) {
+			older.parent = null;
+			older.host = null;
+			older.owner = null;
+			older.node = null;
+		}
 	}
 	
 	/**
@@ -1315,13 +1319,12 @@
 	 * @param {Tree} ancestor
 	 */
 	function fill (older, newer, ancestor) {
-		var owner = ancestor.owner;
 		var parent = older.node;
 		var children = newer.children;
 		var length = children.length;
 	
 		for (var i = 0, child; i < length; i++) {
-			create(child = children[i], null, owner, parent, null, 1);
+			create(child = children[i], null, ancestor, parent, null, 1);
 		}
 		older.children = children;
 	}
@@ -1447,7 +1450,7 @@
 		// empty children
 		if (newLength === 0) {
 			if (oldLength !== 0) {
-				empty(older);
+				empty(older, false);
 				older.children = newChildren;
 				clear(older.node);
 			}
@@ -1487,10 +1490,10 @@
 					mountBoundary(oldChild.owner, 2);
 				}
 				remove(oldChild.node, parent);
-				empty(oldChild);
+				empty(oldChild, true);
 				oldLength--;
 			} else if (i >= oldLength) {
-				create(newChild = oldChildren[i] = newChildren[i], null, owner, parent, null, 1);
+				create(newChild = oldChildren[i] = newChildren[i], null, ancestor, parent, null, 1);
 				oldLength++;
 			} else {
 				newChild = newChildren[i];
@@ -1503,7 +1506,7 @@
 						mountBoundary(oldChild.owner, 2);
 					}
 					change(oldChild, oldChildren[i] = newChild, parent, ancestor);
-					empty(oldChild);
+					empty(oldChild, true);
 				} else {
 					patch(oldChild, newChild, oldChild.group, ancestor);
 				}
@@ -1614,7 +1617,7 @@
 	 			nextNode = nextPos < newLength ? newChildren[nextPos].node : null;
 	
 	 			do {
-	 				create(newStartNode = newChildren[newStart++], null, owner, parent, nextNode, 2);
+	 				create(newStartNode = newChildren[newStart++], null, ancestor, parent, nextNode, 2);
 	 			} while (newStart <= newEnd);
 	 		}
 	 	} else if (newStart > newEnd) {
@@ -1625,12 +1628,18 @@
 	 				mountBoundary(oldStartNode.owner, 2);
 	 			}
 	 			remove(oldStartNode.node, parent);
-	 			empty(oldStartNode);
+	 			empty(oldStartNode, true);
 	 		} while (oldStart <= oldEnd);
+	 	} else if (newStart === 0 && newEnd === newLength-1) {
+	 		// all children are out of sync, remove and append new set
+	 		empty(older, false);
+	 		clear(parent);
+	 		fill(older, newer, ancestor);
 	 	} else {
 	 		// could not completely sync children, move on the the next phase
 	 		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
 	 	}
+	
 	 	older.children = newChildren;
 	}
 	
@@ -1688,7 +1697,7 @@
 			if (oldIndex === void 0) {
 				nextPos = newIndex - newOffset;
 				nextNode = nextPos < oldLength ? oldChildren[nextPos].node : null;
-				create(newChild, null, owner, parent, nextNode, 2);
+				create(newChild, null, ancestor, parent, nextNode, 2);
 				newOffset++;
 			} else if (newIndex === oldIndex) {
 				oldChild = oldChildren[oldIndex];
@@ -1710,7 +1719,7 @@
 					mountBoundary(oldChild.owner, 2);
 				}
 				remove(oldChild.node, parent);
-				empty(oldChild);
+				empty(oldChild, true);
 				oldOffset++;
 			}
 			oldIndex++;
