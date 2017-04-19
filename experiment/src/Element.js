@@ -107,7 +107,13 @@ function adopt (newer, index, child) {
 				}
 			}
 			default: {
-				return adopt(newer, i, text(child));
+				// if theres a text node
+				// among keyed children we want to auto insert keys to
+				// text nodes to make them unique among it's siblings
+				if (newer.keyed === true) {
+					return adopt(newer, i, text(child));
+				}
+				children[i] = text(child);
 			}
 		}
 	}
