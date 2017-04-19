@@ -28,7 +28,6 @@ test('Element', ({ok, deepEqual}) => {
 	ok(key.key === 1, 'element key')
 	ok(key.keyed === true, 'element keyed children');
 	ok(key.children[1].key > 0, 'element auto insert keys');
-	ok(h().tag === 'noscript', 'default element type');
 
 	ok(deepEqual(h2, h1), 'element copy');
 })

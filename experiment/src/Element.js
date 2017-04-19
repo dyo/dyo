@@ -9,35 +9,44 @@ function element (_type, _props) {
 	var type = _type;
 	var props = _props !== void 0 ? _props : null;
 	var length = arguments.length;
-	var children = length !== 1 ? [] : array;
-	var newer = new Tree(2);
+	var size = length-1;
 	var index = 0;
 	var i = 2;
+	var newer = new Tree(2);
 	var proto;
 
 	if (props !== null) {
-		if (props.group !== void 0 || props.constructor !== Object) {
-			props = object;
-			i = 1;
-		} else {
-			newer.props = props;
-
-			if (props.key !== void 0) {
-				newer.key = props.key;
+		switch (props.constructor) {
+			case Object: {
+				if (props.key !== void 0) {
+					newer.key = props.key;
+				}
+				if (props.xmlns !== void 0) {
+					newer.xmlns = props.xmlns;
+				}
+				newer.props = props;
+				size--;
+				break;
 			}
-			if (props.xmlns !== void 0) {
-				newer.xmlns = props.xmlns;
+			case Array: {
+				size += props.length-1;
+			}
+			default: {
+				props = object;
+				i = 1;
 			}
 		}
+	} else {
+		size--;
 	}
 
-	switch (typeof type) {
-		case 'string': {
+	switch (type.constructor) {
+		case String: {
 			newer.tag = type;
 			newer.attrs = props;
 			break;
 		}
-		case 'function': {
+		case Function: {
 			if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
 				newer.group = 2;
 			} else {
@@ -46,15 +55,12 @@ function element (_type, _props) {
 			}
 			break;
 		}
-		default: {
-			newer.tag = 'noscript';
-		}
 	}
-
 	newer.type = type;
-	newer.children = children;
 
-	if (length !== 1) {
+	if (size > 0) {
+		newer.children = new Array(size);
+
 		for (; i < length; i++) {
 			index = adopt(newer, index, arguments[i]);
 		}
@@ -68,55 +74,47 @@ function element (_type, _props) {
  * @param  {Tree} newer
  * @param  {Number} index
  * @param  {Any} child
+ * @param  {Number} depth
  * @return {Number}
  */
-function adopt (newer, index, child) {
+function adopt (newer, index, decedent) {
 	var children = newer.children;
 	var i = index;
 	var length;
+	var child;
 
-	if (child === null || child === void 0) {
-		children[i] = text('');
-	} else if (child.group !== void 0) {
-		if (newer.keyed === false) {
-			if (child.key !== null) {
-				newer.keyed = true;
-			}
-		} else if (child.key === null) {
-			// assign float key to non-keyed children in a keyed structure
-			// an obscure floating point key avoids conflicts with int keyed children
-			child.key = index/161800;
+	if (decedent === null || decedent === void 0) {
+		child = text('');
+	} else if (decedent.group !== void 0) {
+		if (newer.keyed === false && decedent.key !== null) {
+			newer.keyed = true;
 		}
-		children[i] = child;
+		child = decedent;
 	} else {
-		switch (typeof child) {
+		switch (typeof decedent) {
 			case 'function': {
-				children[i] = element(child, null);
+				child = element(decedent, null);
 				break;
 			}
 			case 'object': {
-				if ((length = child.length) > 0) {
+				if ((length = decedent.length) > 0) {
 					for (var j = 0; j < length; j++) {
-						i = adopt(newer, i, child[j]);
+						i = adopt(newer, i, decedent[j]);
 					}
 					return i;
-				} else if (child.constructor === Date) {
-					return adopt(newer, i, text(child+''));
 				} else {
-					return adopt(newer, i, text(''));
+					child = text(decedent.constructor === Date ? decedent+'' : '');
 				}
 			}
 			default: {
-				// if theres a text node
-				// among keyed children we want to auto insert keys to
-				// text nodes to make them unique among it's siblings
-				if (newer.keyed === true) {
-					return adopt(newer, i, text(child));
-				}
-				children[i] = text(child);
+				child = text(decedent);
 			}
 		}
+		child.key = index/161800;
 	}
+
+	children[i] = child;
+
 	return i + 1;
 }
 
@@ -131,7 +129,7 @@ function text (value) {
 	var newer = new Tree(1);
 
 	newer.type = newer.tag = '#text';
-	newer.children = ((value === true || value === false) ? '' : value);
+	newer.children = (value === true || value === false) ? '' : value;
 
 	return newer;
 }
@@ -219,7 +217,7 @@ function Tree (flag) {
 	this.yield = null;
 	this.keyed = false;
 	this.parent = null;
-	this.children = null;
+	this.children = array;
 }
 
 /**

@@ -53,6 +53,8 @@ function patch (older, _newer, group, _ancestor) {
 		nonkeyed(older, newer, ancestor, oldLength, newLength);
 	}
 
+	attributes(older, newer, ancestor);
+
 	if (group > 0) {
 		didUpdate(older);
 	}
