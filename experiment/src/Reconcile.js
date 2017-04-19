@@ -14,13 +14,10 @@ function patch (older, _newer, group, _ancestor) {
 		if (older.type !== newer.type) {
 			return exchange(older, newer, 1, ancestor);
 		}
-
 		if ((newer = shouldUpdate(older, newer, group, ancestor)) === void 0) {
 			return;
 		}
-		// ancestor represents the last root component
-		// we need to keep refererence of this to support
-		// boundless events when creating new nodes
+
 		if (group > 1) {
 			ancestor = older;
 		}
@@ -29,7 +26,6 @@ function patch (older, _newer, group, _ancestor) {
 	if (older.flag === 1) {
 		return content(older.node, older.children = newer.children);
 	}
-
 	var newLength = newer.children.length;
 	var oldLength = older.children.length;
 
@@ -56,7 +52,14 @@ function patch (older, _newer, group, _ancestor) {
 	} else {
 		nonkeyed(older, newer, ancestor, oldLength, newLength);
 	}
-	attributes(older, newer, ancestor);
+
+	if (group > 0) {
+		if (older.owner.componentDidUpdate !== void 0) {
+			older.async = 3;
+			updateBoundary(older.owner, 2, older.owner.past, older.owner.prev);
+			older.async = 0;
+		}
+	}
 }
 
 /**
@@ -200,7 +203,6 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			newEndNode = newChildren[newEnd];
  			continue;
  		}
-
  		break;
  	}
  	// step 2, remove or insert
@@ -233,7 +235,6 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		// could not completely sync children, move on the the next phase
  		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
  	}
-
  	older.children = newChildren;
 }
 

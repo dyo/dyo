@@ -27,6 +27,7 @@ function Component (_props) {
 		}
 		this.state = state;
 	}
+	this.past = props;
 	this.next = state;
 	this.prev = state;
 }
@@ -100,16 +101,24 @@ function setState (state, callback) {
  * @param {Function=} callback
  */
 function forceUpdate (callback) {
-	var older = this.older;
+	var owner = this;
+	var older = owner.older;
 
-	if (older === null || older.node === null || this.async !== 0) {
+	if (older === null || older.node === null || older.async !== 0 || owner.async !== 0) {
+		// this is to avoid maxium call stack when componentDidUpdate
+		// produces a infinite render loop
+		if (older.async === 3) {
+			schedule(function () {
+				owner.forceUpdate(callback);
+			});
+		}
 		return;
 	}
 
 	patch(older, older, 3, older);
 
 	if (callback !== void 0 && typeof callback === 'function') {
-		callbackBoundary(this, callback, this.state, 1);
+		callbackBoundary(owner, callback, owner.state, 1);
 	}
 }
 
@@ -157,6 +166,7 @@ function shouldUpdate (older, _newer, group, ancestor) {
 	older.async = 1;
 
 	if (group > 1) {
+		owner.past = prevProps;
 		nextState = owner.next;
 		prevState = owner.prev;
 	} else {
@@ -196,9 +206,6 @@ function shouldUpdate (older, _newer, group, ancestor) {
 
 		if ((tag = newer.tag) !== older.tag) {
 			newer = updateHost(older, newer, ancestor, tag);
-		}
-		if (owner.componentDidUpdate !== void 0) {
-			updateBoundary(owner, 2, prevProps, prevState);
 		}
 
 		if (older.async === 2) {

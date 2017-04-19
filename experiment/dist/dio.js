@@ -105,6 +105,7 @@
 			}
 			this.state = state;
 		}
+		this.past = props;
 		this.next = state;
 		this.prev = state;
 	}
@@ -178,16 +179,24 @@
 	 * @param {Function=} callback
 	 */
 	function forceUpdate (callback) {
-		var older = this.older;
+		var owner = this;
+		var older = owner.older;
 	
-		if (older === null || older.node === null || this.async !== 0) {
+		if (older === null || older.node === null || older.async !== 0 || owner.async !== 0) {
+			// this is to avoid maxium call stack when componentDidUpdate
+			// produces a infinite render loop
+			if (older.async === 3) {
+				schedule(function () {
+					owner.forceUpdate(callback);
+				});
+			}
 			return;
 		}
 	
 		patch(older, older, 3, older);
 	
 		if (callback !== void 0 && typeof callback === 'function') {
-			callbackBoundary(this, callback, this.state, 1);
+			callbackBoundary(owner, callback, owner.state, 1);
 		}
 	}
 	
@@ -235,6 +244,7 @@
 		older.async = 1;
 	
 		if (group > 1) {
+			owner.past = prevProps;
 			nextState = owner.next;
 			prevState = owner.prev;
 		} else {
@@ -274,9 +284,6 @@
 	
 			if ((tag = newer.tag) !== older.tag) {
 				newer = updateHost(older, newer, ancestor, tag);
-			}
-			if (owner.componentDidUpdate !== void 0) {
-				updateBoundary(owner, 2, prevProps, prevState);
 			}
 	
 			if (older.async === 2) {
@@ -648,7 +655,7 @@
 			switch (type) {
 				case 0: return owner.shouldComponentUpdate(props, state);
 				case 1: return returnBoundary(owner.componentWillUpdate(props, state), owner, null, true);
-				case 2: return returnBoundary(owner.componentDidUpdate(props, state), owner, null, true);
+				case 2: return returnBoundary(owner.componentDidUpdate(props, state), owner, null, false);
 			}
 		} catch (err) {
 			errorBoundary(err, owner, 1, type);
@@ -1420,13 +1427,10 @@
 			if (older.type !== newer.type) {
 				return exchange(older, newer, 1, ancestor);
 			}
-	
 			if ((newer = shouldUpdate(older, newer, group, ancestor)) === void 0) {
 				return;
 			}
-			// ancestor represents the last root component
-			// we need to keep refererence of this to support
-			// boundless events when creating new nodes
+	
 			if (group > 1) {
 				ancestor = older;
 			}
@@ -1435,7 +1439,6 @@
 		if (older.flag === 1) {
 			return content(older.node, older.children = newer.children);
 		}
-	
 		var newLength = newer.children.length;
 		var oldLength = older.children.length;
 	
@@ -1462,7 +1465,14 @@
 		} else {
 			nonkeyed(older, newer, ancestor, oldLength, newLength);
 		}
-		attributes(older, newer, ancestor);
+	
+		if (group > 0) {
+			if (older.owner.componentDidUpdate !== void 0) {
+				older.async = 3;
+				updateBoundary(older.owner, 2, older.owner.past, older.owner.prev);
+				older.async = 0;
+			}
+		}
 	}
 	
 	/**
@@ -1606,7 +1616,6 @@
 	 			newEndNode = newChildren[newEnd];
 	 			continue;
 	 		}
-	
 	 		break;
 	 	}
 	 	// step 2, remove or insert
@@ -1639,7 +1648,6 @@
 	 		// could not completely sync children, move on the the next phase
 	 		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
 	 	}
-	
 	 	older.children = newChildren;
 	}
 	

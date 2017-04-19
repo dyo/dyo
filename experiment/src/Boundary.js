@@ -31,7 +31,7 @@ function updateBoundary (owner, type, props, state) {
 		switch (type) {
 			case 0: return owner.shouldComponentUpdate(props, state);
 			case 1: return returnBoundary(owner.componentWillUpdate(props, state), owner, null, true);
-			case 2: return returnBoundary(owner.componentDidUpdate(props, state), owner, null, true);
+			case 2: return returnBoundary(owner.componentDidUpdate(props, state), owner, null, false);
 		}
 	} catch (err) {
 		errorBoundary(err, owner, 1, type);
