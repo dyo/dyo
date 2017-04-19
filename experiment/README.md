@@ -176,8 +176,8 @@ class Foo {
 class Bar {
 	render() {
 		return h('div',
-			Resolve,
-			Resolve
+			Foo,
+			Foo
 		)
 	}
 }
