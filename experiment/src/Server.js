@@ -54,16 +54,17 @@ function attrs (newer) {
 	}
 
 	for (var name in props) {
-		if (evt(name) === true) {
-			continue;
-		}
 		value = props[name];
 
-		switch (name) {
-			case 'key': case 'children': case 'ref': case 'innerHTML': {
+		switch (attr(name)) {
+			case 20: case 30: case 31: {
 				continue;
 			}
-			case 'style': {
+			case 1: {
+				value = ' class="'+sanitize(value)+'"';
+				break;
+			}
+			case 2: {
 				if (typeof value === 'object') {
 					name = '';
 					for (var key in value) {
@@ -78,12 +79,8 @@ function attrs (newer) {
 				value = ' style="'+sanitize(value)+'"';
 				break;
 			}
-			case 'defaultValue': {
+			case 5: {
 				value = props.value === void 0 ? ' value="'+sanitize(value)+'"' : '';
-				break;
-			}
-			case 'class': case 'className': {
-				value = ' class="'+sanitize(value)+'"';
 				break;
 			}
 			default: {

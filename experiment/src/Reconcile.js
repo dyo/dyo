@@ -26,6 +26,7 @@ function patch (older, _newer, group, _ancestor) {
 	if (older.flag === 1) {
 		return content(older.node, older.children = newer.children);
 	}
+
 	var newLength = newer.children.length;
 	var oldLength = older.children.length;
 

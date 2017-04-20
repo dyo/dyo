@@ -272,13 +272,20 @@ function assign (type, name, value, xmlns, newer) {
 			break;
 		}
 		case 4: {
+			node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
+			break;
+		}
+		case 5:
+		case 6: {
 			if (name in node) {
 				set(node, name, value);
+			} else {
+				assign(0, name, value, xmlns, node);
 			}
 			break;
 		}
-		case 5: {
-			node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
+		case 10: {
+			node.innerHTML = value;
 			break;
 		}
 	}

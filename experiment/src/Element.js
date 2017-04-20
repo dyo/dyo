@@ -73,14 +73,11 @@ function element (_type, _props) {
  *
  * @param  {Tree} newer
  * @param  {Number} index
- * @param  {Any} child
- * @param  {Number} depth
+ * @param  {Any} decedent
  * @return {Number}
  */
 function adopt (newer, index, decedent) {
 	var children = newer.children;
-	var i = index;
-	var length;
 	var child;
 
 	if (decedent === null || decedent === void 0) {
@@ -97,8 +94,10 @@ function adopt (newer, index, decedent) {
 				break;
 			}
 			case 'object': {
-				if ((length = decedent.length) > 0) {
-					for (var j = 0; j < length; j++) {
+				var length = length = decedent.length;
+
+				if (length > 0) {
+					for (var j = 0, i = index; j < length; j++) {
 						i = adopt(newer, i, decedent[j]);
 					}
 					return i;
@@ -113,9 +112,9 @@ function adopt (newer, index, decedent) {
 		child.key = index/161800;
 	}
 
-	children[i] = child;
+	children[index] = child;
 
-	return i + 1;
+	return index + 1;
 }
 
 /**

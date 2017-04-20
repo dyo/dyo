@@ -481,14 +481,11 @@
 	 *
 	 * @param  {Tree} newer
 	 * @param  {Number} index
-	 * @param  {Any} child
-	 * @param  {Number} depth
+	 * @param  {Any} decedent
 	 * @return {Number}
 	 */
 	function adopt (newer, index, decedent) {
 		var children = newer.children;
-		var i = index;
-		var length;
 		var child;
 	
 		if (decedent === null || decedent === void 0) {
@@ -505,8 +502,10 @@
 					break;
 				}
 				case 'object': {
-					if ((length = decedent.length) > 0) {
-						for (var j = 0; j < length; j++) {
+					var length = length = decedent.length;
+	
+					if (length > 0) {
+						for (var j = 0, i = index; j < length; j++) {
 							i = adopt(newer, i, decedent[j]);
 						}
 						return i;
@@ -521,9 +520,9 @@
 			child.key = index/161800;
 		}
 	
-		children[i] = child;
+		children[index] = child;
 	
-		return i + 1;
+		return index + 1;
 	}
 	
 	/**
@@ -910,18 +909,21 @@
 			case 'width':
 			case 'height': return 3;
 	
+			case 'xlink:href': return 4;
+	
+			case 'defaultValue': return 5;
+	
 			case 'id':
 			case 'selected':
 			case 'hidden':
-			case 'value':
-			case 'innerHTML': return 4;
+			case 'value': return 6;
 	
-			case 'xlink:href': return 5;
+			case 'innerHTML': return 10;
 	
 			case 'ref': return 30;
 			case 'key': case 'children': return 31;
 	
-			default: return evt(name) === true ? 20 : 0;
+			default: return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 ? 20 : 0;
 		}
 	}
 	
@@ -999,7 +1001,7 @@
 				newValue = newAttrs[name];
 	
 				if (newValue === null || newValue === void 0) {
-					if (evt(name) === false) {
+					if (type < 20) {
 						assign(type, name, newValue, xmlns, older);
 					} else {
 						event(older, name, ancestor, newValue);
@@ -1044,16 +1046,6 @@
 				break;
 			}
 		}
-	}
-	
-	/**
-	 * Event Attribute Validator [Whitelist]
-	 *
-	 * @param  {String} name
-	 * @return {Boolean}
-	 */
-	function evt (name) {
-		return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110;
 	}
 	
 	/**
@@ -1452,6 +1444,7 @@
 		if (older.flag === 1) {
 			return content(older.node, older.children = newer.children);
 		}
+	
 		var newLength = newer.children.length;
 		var oldLength = older.children.length;
 	
@@ -2043,13 +2036,20 @@
 				break;
 			}
 			case 4: {
+				node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
+				break;
+			}
+			case 5:
+			case 6: {
 				if (name in node) {
 					set(node, name, value);
+				} else {
+					assign(0, name, value, xmlns, node);
 				}
 				break;
 			}
-			case 5: {
-				node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
+			case 10: {
+				node.innerHTML = value;
 				break;
 			}
 		}

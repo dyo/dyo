@@ -14,18 +14,21 @@ function attr (name) {
 		case 'width':
 		case 'height': return 3;
 
+		case 'xlink:href': return 4;
+
+		case 'defaultValue': return 5;
+
 		case 'id':
 		case 'selected':
 		case 'hidden':
-		case 'value':
-		case 'innerHTML': return 4;
+		case 'value': return 6;
 
-		case 'xlink:href': return 5;
+		case 'innerHTML': return 10;
 
 		case 'ref': return 30;
 		case 'key': case 'children': return 31;
 
-		default: return evt(name) === true ? 20 : 0;
+		default: return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 ? 20 : 0;
 	}
 }
 
@@ -103,7 +106,7 @@ function attributes (older, newer, ancestor) {
 			newValue = newAttrs[name];
 
 			if (newValue === null || newValue === void 0) {
-				if (evt(name) === false) {
+				if (type < 20) {
 					assign(type, name, newValue, xmlns, older);
 				} else {
 					event(older, name, ancestor, newValue);
@@ -148,16 +151,6 @@ function refs (value, ancestor, older, type) {
 			break;
 		}
 	}
-}
-
-/**
- * Event Attribute Validator [Whitelist]
- *
- * @param  {String} name
- * @return {Boolean}
- */
-function evt (name) {
-	return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110;
 }
 
 /**
