@@ -264,12 +264,12 @@ function empty (older, release) {
  *
  * @param {Tree} older
  * @param {Tree} newer
+ * @param {Number} length
  * @param {Tree} ancestor
  */
-function fill (older, newer, ancestor) {
+function fill (older, newer, length, ancestor) {
 	var parent = older.node;
 	var children = newer.children;
-	var length = children.length;
 
 	for (var i = 0, child; i < length; i++) {
 		create(child = children[i], null, ancestor, parent, null, 1);

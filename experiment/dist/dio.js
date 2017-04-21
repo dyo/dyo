@@ -410,14 +410,15 @@
 	 * Create Element
 	 *
 	 * @param  {String|Function} _type
-	 * @param  {...} _props
+	 * @param  {any} _props
+	 * @param  {...} _children
 	 * @return {Tree}
 	 */
-	function element (_type, _props) {
+	function element (_type, _props, _children) {
 		var type = _type;
 		var props = _props !== void 0 ? _props : null;
 		var length = arguments.length;
-		var size = length-1;
+		var size = 0;
 		var index = 0;
 		var i = 2;
 		var newer = new Tree(2);
@@ -433,19 +434,16 @@
 						newer.xmlns = props.xmlns;
 					}
 					newer.props = props;
-					size--;
 					break;
 				}
 				case Array: {
-					size += props.length-1;
+					size = props.length;
 				}
 				default: {
 					props = object;
 					i = 1;
 				}
 			}
-		} else {
-			size--;
 		}
 	
 		switch (type.constructor) {
@@ -466,13 +464,14 @@
 		}
 		newer.type = type;
 	
-		if (size > 0) {
+		if (length > 1) {
 			newer.children = new Array(size);
 	
 			for (; i < length; i++) {
 				index = adopt(newer, index, arguments[i]);
 			}
 		}
+	
 		return newer;
 	}
 	
@@ -487,6 +486,7 @@
 	function adopt (newer, index, decedent) {
 		var children = newer.children;
 		var child;
+		var length;
 	
 		if (decedent === null || decedent === void 0) {
 			child = text('');
@@ -502,9 +502,7 @@
 					break;
 				}
 				case 'object': {
-					var length = length = decedent.length;
-	
-					if (length > 0) {
+					if ((length = decedent.length) !== void 0) {
 						for (var j = 0, i = index; j < length; j++) {
 							i = adopt(newer, i, decedent[j]);
 						}
@@ -512,6 +510,7 @@
 					} else {
 						child = text(decedent.constructor === Date ? decedent+'' : '');
 					}
+					break;
 				}
 				default: {
 					child = text(decedent);
@@ -562,7 +561,6 @@
 		older.flag = newer.flag;
 		older.node = newer.node;
 		older.attrs = newer.attrs;
-		older.keyed = newer.keyed;
 		older.xmlns = newer.xmlns;
 		older.children = newer.children;
 	}
@@ -967,7 +965,6 @@
 		var oldAttrs = older.attrs;
 		var newAttrs = newer.attrs;
 		var xmlns = older.xmlns;
-		var node = older.node;
 		var type = 0;
 		var oldValue;
 		var newValue;
@@ -1328,12 +1325,12 @@
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} newer
+	 * @param {Number} length
 	 * @param {Tree} ancestor
 	 */
-	function fill (older, newer, ancestor) {
+	function fill (older, newer, length, ancestor) {
 		var parent = older.node;
 		var children = newer.children;
-		var length = children.length;
 	
 		for (var i = 0, child; i < length; i++) {
 			create(child = children[i], null, ancestor, parent, null, 1);
@@ -1373,7 +1370,7 @@
 			}
 		}
 	
-		if (target === void 0) {
+		if (target === void 0 || target === null) {
 			// mount points to document.body, if it's null dio was loaded before
 			// the body node, try to use <body> if it exists at this point
 			// else default to the root <html> node
@@ -1451,8 +1448,8 @@
 		// fill children
 		if (oldLength === 0) {
 			if (newLength !== 0) {
-				fill(older, newer, ancestor);
-				older.children = newChildren;
+				fill(older, newer, newLength, ancestor);
+				older.children = newer.children;
 			}
 			return;
 		}
@@ -1460,13 +1457,13 @@
 		if (newLength === 0) {
 			if (oldLength !== 0) {
 				empty(older, false);
-				older.children = newChildren;
 				clear(older.node);
+				older.children = newer.children;
 			}
 			return;
 		}
 	
-		if (older.keyed === true) {
+		if (newer.keyed === true) {
 			keyed(older, newer, ancestor, oldLength, newLength);
 		} else {
 			nonkeyed(older, newer, ancestor, oldLength, newLength);
@@ -1492,8 +1489,8 @@
 		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
-		var newLength = _oldLength;
-		var oldLength = _newLength;
+		var newLength = _newLength;
+		var oldLength = _oldLength;
 		var length = newLength > oldLength ? newLength : oldLength;
 	
 		// patch non-keyed children
@@ -1607,7 +1604,7 @@
 	 			nextPos = newEnd + 1;
 	
 	 			if (nextPos < newLength) {
-	 				move(oldStartNode, oldChildren[nextPos].node, nextPos, parent);
+	 				move(oldStartNode.node, oldChildren[nextPos].node, nextPos, parent);
 	 			} else {
 	 				append(oldStartNode.node, parent);
 	 			}
@@ -1647,7 +1644,7 @@
 	 		// all children are out of sync, remove all, append new set
 	 		empty(older, false);
 	 		clear(parent);
-	 		fill(older, newer, ancestor);
+	 		fill(older, newer, newLength, ancestor);
 	 	} else {
 	 		// could not completely sync children, move on the the next phase
 	 		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
@@ -1754,7 +1751,7 @@
 					nextPos = newIndex + 1;
 					oldChild = oldChildren[oldIndex];
 	
-					move(oldChild, null, nextPos, parent);
+					move(oldChild.node, null, nextPos, parent);
 					patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 				}
 			}
@@ -1887,7 +1884,6 @@
 	
 	 	if (type !== 0) {
 	 		older.node = node;
-	
 	 		switch (action) {
 	 			case 1: parent.appendChild(node); break;
 	 			case 2: parent.insertBefore(node, sibling); break;
@@ -1999,7 +1995,6 @@
 	 */
 	function assign (type, name, value, xmlns, newer) {
 		var node = newer.node;
-	
 		switch (type) {
 			case 0: {
 				if (value !== null && value !== void 0 && value !== false) {
@@ -2041,33 +2036,12 @@
 			}
 			case 5:
 			case 6: {
-				if (name in node) {
-					set(node, name, value);
-				} else {
-					assign(0, name, value, xmlns, node);
-				}
+				node[name] = value;
 				break;
 			}
 			case 10: {
 				node.innerHTML = value;
 				break;
-			}
-		}
-	}
-	
-	/**
-	 * Set Property
-	 *
-	 * @param {Tree} node
-	 * @param {String} name
-	 * @param {Any} value
-	 */
-	function set (node, name, value) {
-		try {
-			node[name] = value;
-		} catch (err) {
-			if (node[name] !== value) {
-				node.setProperty(name, value);
 			}
 		}
 	}

@@ -123,7 +123,6 @@ function createTextNode (value) {
 
  	if (type !== 0) {
  		older.node = node;
-
  		switch (action) {
  			case 1: parent.appendChild(node); break;
  			case 2: parent.insertBefore(node, sibling); break;
@@ -235,7 +234,6 @@ function content (node, value) {
  */
 function assign (type, name, value, xmlns, newer) {
 	var node = newer.node;
-
 	switch (type) {
 		case 0: {
 			if (value !== null && value !== void 0 && value !== false) {
@@ -277,33 +275,12 @@ function assign (type, name, value, xmlns, newer) {
 		}
 		case 5:
 		case 6: {
-			if (name in node) {
-				set(node, name, value);
-			} else {
-				assign(0, name, value, xmlns, node);
-			}
+			node[name] = value;
 			break;
 		}
 		case 10: {
 			node.innerHTML = value;
 			break;
-		}
-	}
-}
-
-/**
- * Set Property
- *
- * @param {Tree} node
- * @param {String} name
- * @param {Any} value
- */
-function set (node, name, value) {
-	try {
-		node[name] = value;
-	} catch (err) {
-		if (node[name] !== value) {
-			node.setProperty(name, value);
 		}
 	}
 }

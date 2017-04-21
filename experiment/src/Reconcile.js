@@ -33,8 +33,8 @@ function patch (older, _newer, group, _ancestor) {
 	// fill children
 	if (oldLength === 0) {
 		if (newLength !== 0) {
-			fill(older, newer, ancestor);
-			older.children = newChildren;
+			fill(older, newer, newLength, ancestor);
+			older.children = newer.children;
 		}
 		return;
 	}
@@ -42,13 +42,13 @@ function patch (older, _newer, group, _ancestor) {
 	if (newLength === 0) {
 		if (oldLength !== 0) {
 			empty(older, false);
-			older.children = newChildren;
 			clear(older.node);
+			older.children = newer.children;
 		}
 		return;
 	}
 
-	if (older.keyed === true) {
+	if (newer.keyed === true) {
 		keyed(older, newer, ancestor, oldLength, newLength);
 	} else {
 		nonkeyed(older, newer, ancestor, oldLength, newLength);
@@ -74,8 +74,8 @@ function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
 	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
-	var newLength = _oldLength;
-	var oldLength = _newLength;
+	var newLength = _newLength;
+	var oldLength = _oldLength;
 	var length = newLength > oldLength ? newLength : oldLength;
 
 	// patch non-keyed children
@@ -189,7 +189,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			nextPos = newEnd + 1;
 
  			if (nextPos < newLength) {
- 				move(oldStartNode, oldChildren[nextPos].node, nextPos, parent);
+ 				move(oldStartNode.node, oldChildren[nextPos].node, nextPos, parent);
  			} else {
  				append(oldStartNode.node, parent);
  			}
@@ -229,7 +229,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		// all children are out of sync, remove all, append new set
  		empty(older, false);
  		clear(parent);
- 		fill(older, newer, ancestor);
+ 		fill(older, newer, newLength, ancestor);
  	} else {
  		// could not completely sync children, move on the the next phase
  		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
@@ -336,7 +336,7 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 				nextPos = newIndex + 1;
 				oldChild = oldChildren[oldIndex];
 
-				move(oldChild, null, nextPos, parent);
+				move(oldChild.node, null, nextPos, parent);
 				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 			}
 		}

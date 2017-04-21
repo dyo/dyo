@@ -72,7 +72,6 @@ function attributes (older, newer, ancestor) {
 	var oldAttrs = older.attrs;
 	var newAttrs = newer.attrs;
 	var xmlns = older.xmlns;
-	var node = older.node;
 	var type = 0;
 	var oldValue;
 	var newValue;

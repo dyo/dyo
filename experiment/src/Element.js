@@ -2,14 +2,15 @@
  * Create Element
  *
  * @param  {String|Function} _type
- * @param  {...} _props
+ * @param  {any} _props
+ * @param  {...} _children
  * @return {Tree}
  */
-function element (_type, _props) {
+function element (_type, _props, _children) {
 	var type = _type;
 	var props = _props !== void 0 ? _props : null;
 	var length = arguments.length;
-	var size = length-1;
+	var size = 0;
 	var index = 0;
 	var i = 2;
 	var newer = new Tree(2);
@@ -25,19 +26,16 @@ function element (_type, _props) {
 					newer.xmlns = props.xmlns;
 				}
 				newer.props = props;
-				size--;
 				break;
 			}
 			case Array: {
-				size += props.length-1;
+				size = props.length;
 			}
 			default: {
 				props = object;
 				i = 1;
 			}
 		}
-	} else {
-		size--;
 	}
 
 	switch (type.constructor) {
@@ -58,13 +56,14 @@ function element (_type, _props) {
 	}
 	newer.type = type;
 
-	if (size > 0) {
+	if (length > 1) {
 		newer.children = new Array(size);
 
 		for (; i < length; i++) {
 			index = adopt(newer, index, arguments[i]);
 		}
 	}
+
 	return newer;
 }
 
@@ -79,6 +78,7 @@ function element (_type, _props) {
 function adopt (newer, index, decedent) {
 	var children = newer.children;
 	var child;
+	var length;
 
 	if (decedent === null || decedent === void 0) {
 		child = text('');
@@ -94,9 +94,7 @@ function adopt (newer, index, decedent) {
 				break;
 			}
 			case 'object': {
-				var length = length = decedent.length;
-
-				if (length > 0) {
+				if ((length = decedent.length) !== void 0) {
 					for (var j = 0, i = index; j < length; j++) {
 						i = adopt(newer, i, decedent[j]);
 					}
@@ -104,6 +102,7 @@ function adopt (newer, index, decedent) {
 				} else {
 					child = text(decedent.constructor === Date ? decedent+'' : '');
 				}
+				break;
 			}
 			default: {
 				child = text(decedent);
@@ -154,7 +153,6 @@ function copy (older, newer) {
 	older.flag = newer.flag;
 	older.node = newer.node;
 	older.attrs = newer.attrs;
-	older.keyed = newer.keyed;
 	older.xmlns = newer.xmlns;
 	older.children = newer.children;
 }
