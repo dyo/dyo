@@ -2,11 +2,10 @@
  * Create Element
  *
  * @param  {String|Function} _type
- * @param  {any} _props
- * @param  {...} _children
+ * @param  {...} _props
  * @return {Tree}
  */
-function element (_type, _props, _children) {
+function element (_type, _props) {
 	var type = _type;
 	var props = _props !== void 0 ? _props : null;
 	var length = arguments.length;
