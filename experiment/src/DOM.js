@@ -147,7 +147,7 @@ function createTextNode (value) {
  * @param {Tree} ancestor
  */
 function change (older, newer, parent, ancestor) {
-	create(newer, null, ancestor.owner, parent, older.node, 3);
+	create(newer, null, ancestor, parent, older.node, 3);
 }
 
 /**
@@ -158,7 +158,7 @@ function change (older, newer, parent, ancestor) {
  * @param  {Tree} ancestor
  */
 function swap (older, newer, ancestor) {
-	create(newer, null, ancestor.owner, older.node.parentNode, older.node, 3);
+	create(newer, null, ancestor, older.node.parentNode, older.node, 3);
 }
 
 /**
