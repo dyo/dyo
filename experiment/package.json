@@ -30,9 +30,10 @@
 		"dist/dio.d.ts"
 	],
 	"scripts": {
-		"test": "node ./tests/",
-		"build": "node ./bundle/ --bundle && node ./bundle/minify",
-		"dev": "node ./bundle/"
+		"test": "node ./tests",
+		"tests": "node ./tests --watch",
+		"build": "node ./bundle --bundle && node ./bundle/minify",
+		"dev": "node ./bundle"
 	},
 	"devDependencies": {
 		"chokidar": "^1.6.1",

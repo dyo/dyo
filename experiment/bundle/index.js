@@ -1,5 +1,3 @@
-'use strict';
-
 const fs = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
@@ -71,3 +69,7 @@ var watch = chokidar.watch([
 
 watch.on('change', watcher);
 watch.on('ready', watcher);
+
+process.stdout.write('\033c');
+process.stdout.write("\033]0;" + 'dio bundle' + '\007');
+
