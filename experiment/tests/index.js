@@ -1,37 +1,32 @@
-const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
+const dio = require('../dist/dio');
+const jsdom = require("jsdom").jsdom;
 
-const files = fs.readdirSync(__dirname);
-const current = path.basename(__filename);
-const shared = fs.readFileSync(path.join(__dirname, '../src/Shared.js'), 'utf8');
-const regex = /(\s*)import\s+'(.*)'.*/g;
+global.document = jsdom();
+global.window = document.defaultView;
 
-const resolve = (file, dir) => {
-	const name = file.indexOf('.spec') > 0 ? file.substring(0, file.lastIndexOf('.spec')) : file;
-	return path.resolve(__dirname, dir, name.replace('.js', '')+'.js')
+/**
+ * deepEqual
+ *
+ * @param  {Object} x
+ * @param  {Object} y
+ * @return {Boolean}
+ */
+global.deepEqual = (x, y) => {
+  const ok = Object.keys, tx = typeof x, ty = typeof y;
+  return x && y && tx === 'object' && tx === ty ? (
+    ok(x).length === ok(y).length &&
+      ok(x).every(key => deepEqual(x[key], y[key]))
+  ) : (x === y);
 }
-const imports = (match, tabs, file) => {
-	return fs.readFileSync(path.join(resolve(file, '../src/')), 'utf8');
-}
 
-// import tests
-files.forEach(file => {
-	if (file === current) {
-		return;
-	}
-	const filepath = path.join(__dirname, file);
-  const code = fs.readFileSync(filepath, 'utf8').replace(regex, imports);
-  const related = fs.readFileSync(resolve(file, '../src/'), 'utf8');
-
-  vm.runInThisContext(`
-		var __dirname = '${__dirname}';
-	`+test.toString()+shared+related+code, filepath);
-});
-
-
-// test runner
-function test (name, body) {
+/**
+ * Test
+ * @param  {String} name
+ * @param  {Function} body
+ */
+global.test = (name, body) => {
 	const failed = [];
 	const passed = [];
 
@@ -40,6 +35,7 @@ function test (name, body) {
 	const sync = (body) => {
 		return !body.toString().match(/async|await|Promise|setTimeout|\bend\b|\.then/g);
 	}
+
 	const report = (pass, fail) => {
 		console.log(underline+'\n'+pass +' assertions passed.\n'+fail+ ' assertions failed.\n');
 		if (fail > 0) {
@@ -58,7 +54,9 @@ function test (name, body) {
 			}
 		}
 	}
-	const underline = '----------------'
+
+	const underline = '----------------';
+
 	const end = () => {
 		ended = true;
 		console.log(
@@ -77,18 +75,13 @@ function test (name, body) {
 		}
 		report(passed.length, failed.length);
 	}
+
 	const ok = (value, msg) => {
 		(value ? passed : failed).push({type: 'OK', msg: msg});
 	}
+
 	const equal = (actual, expected, msg) => {
 		(actual === expected ? passed : failed).push({type: 'EQUAL', msg: msg})
-	}
-	const deepEqual = (x, y) => {
-	  const ok = Object.keys, tx = typeof x, ty = typeof y;
-	  return x && y && tx === 'object' && tx === ty ? (
-	    ok(x).length === ok(y).length &&
-	      ok(x).every(key => deepEqual(x[key], y[key]))
-	  ) : (x === y);
 	}
 
 	try {
@@ -107,3 +100,8 @@ function test (name, body) {
 		end();
 	}
 }
+
+const files = fs.readdirSync(__dirname).filter(file=>file.lastIndexOf('.spec.js') > 0);
+const tests = files.map(file=>require(path.resolve(__dirname, file)));
+
+tests.map(spec=>typeof spec === 'function' ? spec(dio) : spec);

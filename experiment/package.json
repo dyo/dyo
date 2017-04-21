@@ -36,6 +36,7 @@
 	},
 	"devDependencies": {
 		"chokidar": "^1.6.1",
-		"uglify-js": "^2.8.16"
+		"uglify-js": "^2.8.16",
+		"jsdom": "^9.12.0"
 	}
 }
