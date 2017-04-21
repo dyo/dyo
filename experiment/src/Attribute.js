@@ -9,8 +9,6 @@ function attr (name) {
 		case 'class':
 		case 'className': return 1;
 
-		case 'style': return 2;
-
 		case 'width':
 		case 'height': return 3;
 
@@ -21,14 +19,17 @@ function attr (name) {
 		case 'id':
 		case 'selected':
 		case 'hidden':
+		case 'checked':
 		case 'value': return 6;
 
 		case 'innerHTML': return 10;
 
+		case 'style': return 20;
+
 		case 'ref': return 30;
 		case 'key': case 'children': return 31;
 
-		default: return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 ? 20 : 0;
+		default: return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 ? 21 : 0;
 	}
 }
 
@@ -40,22 +41,24 @@ function attr (name) {
  * @param {String?} xmlns
  */
 function attribute (newer, ancestor, xmlns) {
-	var newAttrs = newer.attrs;
+	var attrs = newer.attrs;
 	var type = 0;
 	var value;
 
-	for (var name in newAttrs) {
+	for (var name in attrs) {
 		type = attr(name);
 
 		if (type < 31) {
-			value = newAttrs[name];
+			value = attrs[name];
 
 			if (type === 30) {
 				refs(value, ancestor, newer, 0);
 			} else if (type < 20) {
 				assign(type, name, value, xmlns, newer);
+			} else if (type > 20) {
+				event(newer, name, value, ancestor);
 			} else {
-				event(newer, name, ancestor, value);
+				style(newer);
 			}
 		}
 	}
@@ -69,52 +72,54 @@ function attribute (newer, ancestor, xmlns) {
  * @param {Tree} ancestor
  */
 function attributes (older, newer, ancestor) {
-	var oldAttrs = older.attrs;
-	var newAttrs = newer.attrs;
+	var old = older.attrs;
+	var attrs = newer.attrs;
 	var xmlns = older.xmlns;
 	var type = 0;
-	var oldValue;
-	var newValue;
+	var prev;
+	var next;
 
-	for (var name in newAttrs) {
+	for (var name in attrs) {
 		type = attr(name);
 
 		if (type < 31) {
-			newValue = newAttrs[name];
+			next = attrs[name];
 
 			if (type === 30) {
-				refs(newValue, ancestor, older, 2);
+				refs(next, ancestor, older, 2);
 			} else {
-				oldValue = oldAttrs[name];
+				prev = old[name];
 
-				if (newValue !== oldValue && newValue !== null && newValue !== void 0) {
+				if (next !== prev && next !== null && next !== void 0) {
 					if (type < 20) {
-						assign(type, name, newValue, xmlns, older);
+						assign(type, name, next, xmlns, older);
+					} else if (type > 20) {
+						event(older, name, next, ancestor);
 					} else {
-						event(older, name, ancestor, newValue);
+						styles(older, newer);
 					}
 				}
 			}
 		}
 	}
 
-	for (var name in oldAttrs) {
+	for (var name in old) {
 		type = attr(name);
 
 		if (type < 30) {
-			newValue = newAttrs[name];
+			next = attrs[name];
 
-			if (newValue === null || newValue === void 0) {
+			if (next === null || next === void 0) {
 				if (type < 20) {
-					assign(type, name, newValue, xmlns, older);
-				} else {
-					event(older, name, ancestor, newValue);
+					assign(type, name, next, xmlns, older);
+				} else if (type > 20) {
+					event(older, name, next, ancestor);
 				}
 			}
 		}
 	}
 
-	older.attrs = newAttrs;
+	older.attrs = attrs;
 }
 
 /**

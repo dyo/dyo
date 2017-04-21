@@ -57,14 +57,18 @@ function attrs (newer) {
 		value = props[name];
 
 		switch (attr(name)) {
-			case 20: case 30: case 31: {
+			case 10: case 21: case 30: case 31: {
 				continue;
 			}
 			case 1: {
 				value = ' class="'+sanitize(value)+'"';
 				break;
 			}
-			case 2: {
+			case 5: {
+				value = props.value === void 0 ? ' value="'+sanitize(value)+'"' : '';
+				break;
+			}
+			case 20: {
 				if (typeof value === 'object') {
 					name = '';
 					for (var key in value) {
@@ -77,10 +81,6 @@ function attrs (newer) {
 					value = name;
 				}
 				value = ' style="'+sanitize(value)+'"';
-				break;
-			}
-			case 5: {
-				value = props.value === void 0 ? ' value="'+sanitize(value)+'"' : '';
 				break;
 			}
 			default: {

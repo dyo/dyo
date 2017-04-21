@@ -251,14 +251,6 @@ function assign (type, name, value, xmlns, newer) {
 			}
 			break;
 		}
-		case 2: {
-			if (typeof value === 'string') {
-				node.style.cssText = value;
-			} else {
-				style(value, node.style);
-			}
-			break;
-		}
 		case 3: {
 			if (node[name] === void 0) {
 				node.style.setProperty(name, value);
@@ -286,15 +278,59 @@ function assign (type, name, value, xmlns, newer) {
 }
 
 /**
+ * Assign Unknown Attribute
+ *
+ * @param {String} name
+ * @param {Any} value
+ * @param {Node} node
+ */
+function set (name, value, node) {
+	try {
+		node[name] = value;
+	} catch (err) {}
+}
+
+/**
  * Assign Styles
  *
- * @param {Object} source
- * @param {Object} target
+ * @param {Tree} newer
  */
-function style (source, target) {
-	for (var name in source) {
-		if (name in target) {
-			target[name] = source[name];
+function style (newer) {
+	var node = newer.node.style;
+	var next = newer.attrs.style;
+
+	if (typeof next === 'string') {
+		node.cssText = next;
+	} else {
+		for (var name in next) {
+			if (name in node) {
+				node[name] = next[name];
+			}
+		}
+	}
+}
+
+/**
+ * Update Styles
+ *
+ * @param {Tree} older
+ * @param {Tree} newer
+ */
+function styles (older, newer) {
+	var node = older.node.style;
+	var next = newer.attrs.style;
+	var prev = older.attrs.style;
+	var value;
+
+	if (typeof next === 'string') {
+		if (next !== prev) {
+			node.cssText = next;
+		}
+	} else {
+		for (var name in next) {
+			if ((value = next[name]) !== prev[name]) {
+				node[name] = value;
+			}
 		}
 	}
 }
@@ -304,10 +340,10 @@ function style (source, target) {
  *
  * @param {Tree} older
  * @param {String} name
- * @param {Tree} ancestor
  * @param {Function} handler
+ * @param {Tree} ancestor
  */
-function event (older, name, ancestor, handler) {
+function event (older, name, handler, ancestor) {
 	older.node[name.toLowerCase()] = typeof handler !== 'function' ? null : (
 		ancestor !== null && ancestor.group > 1 ? function proxy (e) {
 			eventBoundary(ancestor.owner, handler, e);
