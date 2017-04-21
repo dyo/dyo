@@ -166,11 +166,10 @@ function swap (older, newer, ancestor) {
  *
  * @param {Node} node
  * @param {Node} sibling
- * @param {Number} index
  * @param {Node} parent
  */
-function move (node, sibling, index, parent) {
-	parent.insertBefore(node, sibling !== null ? sibling : parent.childNodes[index]);
+function move (node, sibling, parent) {
+	parent.insertBefore(node, sibling);
 }
 
 /**

@@ -67,18 +67,17 @@ function patch (older, _newer, group, _ancestor) {
  * @param  {Tree} older
  * @param  {Tree} newer
  * @param  {Tree} ancestor
- * @param  {Number}
- * @param  {Number}
+ * @param  {Number} _oldLength
+ * @param  {Number} _newLength
  */
 function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
 	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
-	var newLength = _newLength;
 	var oldLength = _oldLength;
+	var newLength = _newLength;
 	var length = newLength > oldLength ? newLength : oldLength;
 
-	// patch non-keyed children
 	for (var i = 0, newChild, oldChild; i < length; i++) {
 		if (i >= newLength) {
 			oldChild = oldChildren.pop();
@@ -139,7 +138,6 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		// sync leading nodes
  		while (oldStartNode.key === newStartNode.key) {
  			newChildren[newStart] = oldStartNode;
-
  			patch(oldStartNode, newStartNode, oldStartNode.group, ancestor);
 
  			oldStart++;
@@ -154,7 +152,6 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		// sync trailing nodes
  		while (oldEndNode.key === newEndNode.key) {
  			newChildren[newEnd] = oldEndNode;
-
  			patch(oldEndNode, newEndNode, oldEndNode.group, ancestor);
 
  			oldEnd--;
@@ -170,8 +167,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		if (oldEndNode.key === newStartNode.key) {
  			newChildren[newStart] = oldEndNode;
  			oldChildren[oldEnd] = oldStartNode;
-
- 			move(oldEndNode.node, oldStartNode.node, oldStart, parent);
+ 			move(oldEndNode.node, oldStartNode.node, parent);
  			patch(oldEndNode, newStartNode, oldEndNode.group, ancestor);
 
  			oldEnd--;
@@ -189,10 +185,11 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			nextPos = newEnd + 1;
 
  			if (nextPos < newLength) {
- 				move(oldStartNode.node, oldChildren[nextPos].node, nextPos, parent);
+ 				move(oldStartNode.node, oldChildren[nextPos].node, parent);
  			} else {
  				append(oldStartNode.node, parent);
  			}
+
  			patch(oldStartNode, newEndNode, oldStartNode.group, ancestor);
 
  			oldStart++;
@@ -231,7 +228,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		clear(parent);
  		fill(older, newer, newLength, ancestor);
  	} else {
- 		// could not completely sync children, move on the the next phase
+ 		// could sync all children, move on the the next phase
  		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
  	}
  	older.children = newChildren;
@@ -262,16 +259,17 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 	var newOffset = 0;
 	var oldChild;
 	var newChild;
+	var nextChild;
 	var nextNode;
 	var nextPos;
 
 	// step 1, build a map of keys
 	while (true) {
-		if (oldIndex !== oldEnd) {
+		if (oldIndex < oldEnd) {
 			oldChild = oldChildren[oldIndex];
 			oldKeys[oldChild.key] = oldIndex++;
 		}
-		if (newIndex !== newEnd) {
+		if (newIndex < newEnd) {
 			newChild = newChildren[newIndex];
 			newKeys[newChild.key] = newIndex++;
 		}
@@ -282,7 +280,7 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 		}
 	}
 
-	// step 2, insert
+	// step 2, insert and sync nodes from left to right [a, b, ...]
 	while (newIndex < newEnd) {
 		newChild = newChildren[newIndex];
 		oldIndex = oldKeys[newChild.key];
@@ -300,9 +298,10 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 		newIndex++;
 	}
 
+	// reset
 	oldIndex = oldStart;
 
-	// step 3, remove
+	// step 3, remove and sync nodes from left to right [a, b, ...]
 	while (oldIndex < oldEnd) {
 		oldChild = oldChildren[oldIndex];
 		newIndex = newKeys[oldChild.key];
@@ -319,27 +318,40 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 		oldIndex++;
 	}
 
-	// new and old children are synced
-	if (((oldEnd - oldStart) - oldOffset) + ((newEnd - newStart) - newOffset) === 2) {
+	// compute changes
+	oldOffset = (oldEnd - oldStart) - oldOffset;
+	newOffset = (newEnd - newStart) - newOffset;
+
+	// new and old children positions are in sync
+	if (oldOffset + newOffset === 2) {
 		return;
 	}
-	newIndex = newStart;
 
-	// step 4, move
-	while (newIndex < newEnd) {
+	// reset
+	newIndex = newEnd - 1;
+
+	// step 4, move and sync nodes from right to left, [..., c, d]
+	while (newIndex >= newStart) {
 		newChild = newChildren[newIndex];
 
+		// moved node
 		if (newChild.node === null) {
+			// retreive index
 			oldIndex = oldKeys[newChild.key];
 
+			// exists
 			if (oldIndex !== void 0) {
-				nextPos = newIndex + 1;
 				oldChild = oldChildren[oldIndex];
 
-				move(oldChild.node, null, nextPos, parent);
+				// within bounds
+				if ((nextPos = newIndex + 1) < newLength) {
+					move(oldChild.node, newChildren[nextPos].node, parent);
+				} else {
+					append(oldChild.node, parent);
+				}
 				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group, ancestor);
 			}
 		}
-		newIndex++;
+		newIndex--;
 	}
 }
