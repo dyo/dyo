@@ -21,11 +21,10 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * 0: Element
  * 1: Function
  * 2: Component
- * 3: Component
  *
  * ## Element Shape
  *
- * name: node tag {String}
+ * tag: node tag {String}
  * type: node type {Function|Class|String}
  * props: node properties {Object?}
  * attrs: node attributes {Object?}
@@ -38,6 +37,8 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * group: node ground {Number}
  * host: node host component(composites) {Component?}
  * async: node work state {Number} 0: ready, 1:blocked, 2:pending
+ * yield: coroutine {Function?}
+ * parent: host parent
  */
 
 /**
