@@ -1,5 +1,5 @@
 module.exports = ({h}) => {
-	test('Element', ({ok}) => {
+	test('Element', ({ok, end}) => {
 		let h1 = h('h1', 'Hello', 1, new Date, [2, 3], () => {}, class Foo{render(){}});
 		let h2 = h('');
 		let key = h('h1', {key: 1}, h('h1', {key: 2}), 'Auto Key');
@@ -24,6 +24,6 @@ module.exports = ({h}) => {
 
 		ok(key.key === 1, 'element key')
 		ok(key.keyed === true, 'element keyed children');
-		ok(key.children[1].key > 0, 'element auto insert keys');
+		end();
 	})
 }

@@ -107,7 +107,6 @@ function adopt (newer, index, decedent) {
 				child = text(decedent);
 			}
 		}
-		child.key = index/161800;
 	}
 
 	children[index] = child;

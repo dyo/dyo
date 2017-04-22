@@ -515,7 +515,6 @@
 					child = text(decedent);
 				}
 			}
-			child.key = index/161800;
 		}
 	
 		children[index] = child;
@@ -1375,8 +1374,7 @@
 		}
 	
 		if (target === void 0 || target === null) {
-			// mount points to document.body, if it's null dio was loaded before
-			// the body node, try to use <body> if it exists at this point
+			// use <body> if it exists at this point
 			// else default to the root <html> node
 			if (mount === null) {
 				mount = browser === true ? (document.body || document.documentElement) : null;
@@ -1429,10 +1427,11 @@
 		var ancestor = _ancestor;
 		var newer = _newer;
 	
+		if (older.type !== newer.type) {
+			return exchange(older, newer, 1, ancestor);
+		}
+	
 		if (group > 0) {
-			if (older.type !== newer.type) {
-				return exchange(older, newer, 1, ancestor);
-			}
 			if ((newer = shouldUpdate(older, newer, group, ancestor)) === void 0) {
 				return;
 			}
@@ -1776,18 +1775,12 @@
 	}
 	
 	/**
-	 * Document
-	 *
-	 * @type {Node?}
-	 */
-	var document = browser === true ? global.document : null;
-	
-	/**
 	 * Mount
 	 *
 	 * @type {Node?}
 	 */
-	var mount = browser === true ? document.body : null;
+	var mount = null;
+	
 	
 	/**
 	 * Create Element

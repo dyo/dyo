@@ -1,16 +1,10 @@
 /**
- * Document
- *
- * @type {Node?}
- */
-var document = browser === true ? global.document : null;
-
-/**
  * Mount
  *
  * @type {Node?}
  */
-var mount = browser === true ? document.body : null;
+var mount = null;
+
 
 /**
  * Create Element

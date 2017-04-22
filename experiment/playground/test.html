@@ -1,0 +1,20 @@
+<html>
+<body>
+	<div id=root></div>
+	<script src="../dist/dio.js"></script>
+	<script>
+		class Foo {
+			componentDidThrow() {
+				console.log(this);
+				console.log('componentDidThrow');
+				return h('h1', 'Error State');
+			}
+			render() {
+				throw 'end';
+			}
+		}
+
+		dio.render(h(Foo), document.body);
+	</script>
+</body>
+</html>
