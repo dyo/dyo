@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
-const dio = require('../dist/dio');
 const jsdom = require("jsdom").jsdom;
 
 global.document = jsdom('');
 global.window = document.defaultView;
+
+const dio = require('../dist/dio');
 
 /**
  * deepEqual

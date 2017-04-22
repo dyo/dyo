@@ -1,12 +1,4 @@
 /**
- * Mount
- *
- * @type {Node?}
- */
-var mount = null;
-
-
-/**
  * Create Element
  *
  * @return {Node}

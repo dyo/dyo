@@ -1,4 +1,11 @@
 /**
+ * Mount
+ *
+ * @type {Node?}
+ */
+var mount = null;
+
+/**
  * Render Tree
  *
  * @param  {Tree} _newer
@@ -34,8 +41,9 @@ function render (_newer, _target) {
 		// use <body> if it exists at this point
 		// else default to the root <html> node
 		if (mount === null) {
-			mount = browser === true ? (document.body || document.documentElement) : null;
+			mount = global.document !== void 0 ? (document.body || document.documentElement) : null;
 		}
+
 		target = mount;
 
 		// server enviroment
@@ -44,7 +52,7 @@ function render (_newer, _target) {
 		}
 	}
 
-	if ((older = target.older) !== void 0) {
+	if ((older = target._older) !== void 0) {
 		if (older.key === newer.key) {
 			patch(older, newer, older.group, older);
 		} else {
@@ -52,7 +60,7 @@ function render (_newer, _target) {
 		}
 	} else {
 		create(newer, null, newer, target, null, 1);
-		target.older = newer;
+		target._older = newer;
 	}
 }
 

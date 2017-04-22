@@ -85,9 +85,10 @@
 		var props = _props;
 		var state = this.state;
 	
-		this.refs = null;
-		this.older = null;
 		this.async = 0;
+		this.refs = null;
+	
+		this._older = null;
 	
 		// props
 		if (this.props === void 0) {
@@ -105,9 +106,9 @@
 			}
 			this.state = state;
 		}
-		this.past = props;
-		this.next = state;
-		this.prev = state;
+		this._props = props;
+		this._state = state;
+		this._pending = state;
 	}
 	
 	/**
@@ -151,7 +152,7 @@
 		if (state === void 0 || state === null) {
 			return;
 		}
-		mergeState(prev = owner.prev = {}, owner.state, true);
+		mergeState(prev = owner._state = {}, owner.state, true);
 	
 		if (typeof next === 'function') {
 			next = callbackBoundary(owner, next, prev, 0);
@@ -161,7 +162,7 @@
 			}
 		}
 	
-		next = owner.next = state;
+		next = owner._pending = state;
 	
 		if (next.constructor === Promise) {
 			next.then(function (value) {
@@ -180,7 +181,7 @@
 	 */
 	function forceUpdate (callback) {
 		var owner = this;
-		var older = owner.older;
+		var older = owner._older;
 	
 		if (older === null || older.node === null || older.async !== 0 || owner.async !== 0) {
 			// this is to avoid maxium call stack when componentDidUpdate
@@ -231,9 +232,9 @@
 		older.async = 1;
 	
 		if (group > 1) {
-			owner.past = prevProps;
-			nextState = owner.next;
-			prevState = owner.prev;
+			owner._props = prevProps;
+			nextState = owner._pending;
+			prevState = owner._state;
 		} else {
 			nextState = nextProps;
 			prevState = prevProps;
@@ -290,7 +291,7 @@
 	
 		if (owner.componentDidUpdate !== void 0) {
 			older.async = 3;
-			updateBoundary(owner, 2, owner.past, owner.prev);
+			updateBoundary(owner, 2, owner._props, owner._state);
 			older.async = 0;
 		}
 	}
@@ -822,7 +823,7 @@
 		errorMessage(component, location, message instanceof Error ? message.stack : message);
 	
 		if (type === 3 || type === 5) {
-			return shape(newer, owner.older);
+			return shape(newer, owner._older);
 		}
 	}
 	
@@ -1114,7 +1115,7 @@
 				newer = renderBoundary(older, group);
 				older.async = 0;
 			}
-			newer = shape(newer, owner.older = older);
+			newer = shape(newer, owner._older = older);
 		} else {
 			newer = shape(renderBoundary(older, group), older);
 		}
@@ -1342,6 +1343,13 @@
 	}
 	
 	/**
+	 * Mount
+	 *
+	 * @type {Node?}
+	 */
+	var mount = null;
+	
+	/**
 	 * Render Tree
 	 *
 	 * @param  {Tree} _newer
@@ -1377,8 +1385,9 @@
 			// use <body> if it exists at this point
 			// else default to the root <html> node
 			if (mount === null) {
-				mount = browser === true ? (document.body || document.documentElement) : null;
+				mount = global.document !== void 0 ? (document.body || document.documentElement) : null;
 			}
+	
 			target = mount;
 	
 			// server enviroment
@@ -1387,7 +1396,7 @@
 			}
 		}
 	
-		if ((older = target.older) !== void 0) {
+		if ((older = target._older) !== void 0) {
 			if (older.key === newer.key) {
 				patch(older, newer, older.group, older);
 			} else {
@@ -1395,7 +1404,7 @@
 			}
 		} else {
 			create(newer, null, newer, target, null, 1);
-			target.older = newer;
+			target._older = newer;
 		}
 	}
 	
@@ -1773,14 +1782,6 @@
 			newIndex--;
 		}
 	}
-	
-	/**
-	 * Mount
-	 *
-	 * @type {Node?}
-	 */
-	var mount = null;
-	
 	
 	/**
 	 * Create Element

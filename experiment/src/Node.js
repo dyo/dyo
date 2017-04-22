@@ -50,7 +50,7 @@ function extract (older) {
 			newer = renderBoundary(older, group);
 			older.async = 0;
 		}
-		newer = shape(newer, owner.older = older);
+		newer = shape(newer, owner._older = older);
 	} else {
 		newer = shape(renderBoundary(older, group), older);
 	}
