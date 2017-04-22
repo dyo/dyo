@@ -45,7 +45,7 @@ function extract (older) {
 
 		older.owner = owner;
 
-		if (owner.async === 0) {
+		if (owner._async === 0) {
 			older.async = 1;
 			newer = renderBoundary(older, group);
 			older.async = 0;
@@ -152,8 +152,10 @@ function resolve (pending, older) {
 		if (older.node === null) {
 			return;
 		}
+
 		older.async = 0;
 		newer = shape(newer, older);
+
 		if (older.tag !== newer.tag) {
 			exchange(older, newer, 0, older);
 		} else {

@@ -43,9 +43,10 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
 /**
  * ## Component Shape
  *
- * older: current tree {Tree?}
- * async: component async, tracks async lifecycle methods flag {Number}
- * super: previous cached state {Object}
+ * _older: current tree {Tree?}
+ * _async: component async, tracks async lifecycle methods flag {Number}
+ * _state: previous cached state {Object}
+ * _pending: pending cached state {Object}
  *
  * props: current props {Object}
  * state: current state {Object}

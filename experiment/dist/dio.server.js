@@ -65,9 +65,10 @@
 	/**
 	 * ## Component Shape
 	 *
-	 * older: current tree {Tree?}
-	 * async: component async, tracks async lifecycle methods flag {Number}
-	 * super: previous cached state {Object}
+	 * _older: current tree {Tree?}
+	 * _async: component async, tracks async lifecycle methods flag {Number}
+	 * _state: previous cached state {Object}
+	 * _pending: pending cached state {Object}
 	 *
 	 * props: current props {Object}
 	 * state: current state {Object}
@@ -85,10 +86,9 @@
 		var props = _props;
 		var state = this.state;
 	
-		this.async = 0;
 		this.refs = null;
-	
 		this._older = null;
+		this._async = 0;
 	
 		// props
 		if (this.props === void 0) {
@@ -183,7 +183,7 @@
 		var owner = this;
 		var older = owner._older;
 	
-		if (older === null || older.node === null || older.async !== 0 || owner.async !== 0) {
+		if (older === null || older.node === null || older.async !== 0 || owner._async !== 0) {
 			// this is to avoid maxium call stack when componentDidUpdate
 			// produces a infinite render loop
 			if (older.async === 3) {
@@ -338,9 +338,9 @@
 			return {};
 		}
 		if (state.constructor === Promise) {
-			owner.async = 1;
+			owner._async = 1;
 			state.then(function (value) {
-				owner.async = 0;
+				owner._async = 0;
 				owner.setState(value);
 			});
 			return {};
@@ -1110,7 +1110,7 @@
 	
 			older.owner = owner;
 	
-			if (owner.async === 0) {
+			if (owner._async === 0) {
 				older.async = 1;
 				newer = renderBoundary(older, group);
 				older.async = 0;
@@ -1217,8 +1217,10 @@
 			if (older.node === null) {
 				return;
 			}
+	
 			older.async = 0;
 			newer = shape(newer, older);
+	
 			if (older.tag !== newer.tag) {
 				exchange(older, newer, 0, older);
 			} else {
