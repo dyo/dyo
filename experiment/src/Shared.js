@@ -5,9 +5,12 @@ var version = '7.0.0';
 var noop = function () {};
 var array = [];
 var object = {};
-var browser = global.window !== void 0;
+var server = global.global === global;
+var browser = global.window === global;
 var Promise = global.Promise || noop;
-var schedule = global.requestIdleCallback || global.requestAnimationFrame || setTimeout;
+var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
+var requestIdleCallback = global.requestIdleCallback || setTimeout;
+var mount = null;
 
 /**
  * ## Element Flag
@@ -35,10 +38,8 @@ var schedule = global.requestIdleCallback || global.requestAnimationFrame || set
  * owner: node component {Component?}
  * node: node DOM reference {Node?}
  * group: node ground {Number}
- * host: node host component(composites) {Component?}
  * async: node work state {Number} 0: ready, 1:blocked, 2:pending
  * yield: coroutine {Function?}
- * parent: host parent
  */
 
 /**

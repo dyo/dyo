@@ -3,18 +3,59 @@
 	<div id=root></div>
 	<script src="../dist/dio.js"></script>
 	<script>
-		class Foo {
-			componentDidThrow() {
-				console.log(this);
-				console.log('componentDidThrow');
-				return h('h1', 'Error State');
+		class Bar {
+			componentWillUpdate() {
+				console.log(true, 'componentWillUpdate - Bar');
+			}
+			componentDidUpdate() {
+				console.log(true, 'componentDidUpdate - Bar');
+			}
+			shouldComponentUpdate() {
+				// return false;
 			}
 			render() {
-				throw 'end';
+				return h('h1', {ref: (e) => console.log(e.parentNode)}, this.props.id);
 			}
 		}
 
-		dio.render(h(Foo), document.body);
+		var counter = 0
+
+		class Foo {
+			componentDidThrow() {
+				return h('h1', 'error ', counter++);
+			}
+			componentWillMount() {
+				console.log(true, 'componentWillMount - Foo');
+			}
+			componentDidMount() {
+				console.log(true, 'componentDidMount - Foo');
+			}
+			componentWillUpdate() {
+				console.log(true, 'componentWillUpdate - Foo');
+			}
+			componentDidUpdate() {
+				console.log(true, 'componentDidUpdate - Foo');
+			}
+			componentWillReceiveProps() {
+				console.log(true, 'componentWillReceiveProps - Foo');
+			}
+			componentWillUnmount() {
+				console.log(true, 'componentWillUnmount - Foo');
+			}
+			shouldComponentUpdate() {
+				console.log(true, 'shouldComponentUpdate - Foo');
+			}
+			render() {
+				throw 'end';
+				// return h('h1', 1);
+				return Bar;
+			}
+		}
+
+		dio.render(h(Foo, {id: 1}));
+		dio.render(h(Foo, {id: 1}));
+		// dio.render('null');
+		// dio.render(h(Foo, {id: 1}));
 	</script>
 </body>
 </html>

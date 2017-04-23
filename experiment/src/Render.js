@@ -1,11 +1,4 @@
 /**
- * Mount
- *
- * @type {Node?}
- */
-var mount = null;
-
-/**
  * Render Tree
  *
  * @param  {Tree} _newer
@@ -54,12 +47,12 @@ function render (_newer, _target) {
 
 	if ((older = target._older) !== void 0) {
 		if (older.key === newer.key) {
-			patch(older, newer, older.group, older);
+			patch(older, newer, older, older.group);
 		} else {
-			exchange(older, newer, 1, newer);
+			exchange(older, newer, newer, true);
 		}
 	} else {
-		create(newer, null, newer, target, null, 1);
+		create(newer, newer, 1, null, target, null);
 		target._older = newer;
 	}
 }
@@ -70,8 +63,8 @@ function render (_newer, _target) {
  * @param  {Any} older
  * @return {Tree}
  */
-function shallow (older) {
-	var newer = shape(older, null);
+function shallow (value) {
+	var newer = shape(value, null, false);
 
 	while (newer.tag === null) {
 		newer = extract(newer);

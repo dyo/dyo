@@ -27,10 +27,10 @@ function build (module, files, location) {
 	let umd = fs.readFileSync(path.join(__dirname, '../exports/umd.js'), 'utf8');
 	let exported = fs.readFileSync(path.join('exports', module+'.js'), 'utf8');
 	let bundle = (
-		umd +
+		umd + '\n' +
 		(
 			files.map(bundler).join('\n') +
-			'\n\n' + exported
+			'\n' + exported
 		).replace(/^/gm, '\t') +
 		'\n}));\n'
 	);
@@ -72,4 +72,3 @@ watch.on('ready', watcher);
 
 process.stdout.write('\033c');
 process.stdout.write("\033]0;" + 'dio bundle' + '\007');
-

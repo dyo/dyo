@@ -16,7 +16,4 @@
 	}
 }(function (global) {
 
-
 	'use strict';
-
-

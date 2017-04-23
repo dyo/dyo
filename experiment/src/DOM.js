@@ -1,42 +1,14 @@
 /**
- * Create Element
- *
- * @return {Node}
- */
-function createElement (tag) {
-	return document.createElement(tag);
-}
-
-/**
- * Create Element[Namespaced]
- *
- * @return {Node}
- */
-function createElementNS (xmlns, tag) {
-	return document.createElementNS(xmlns, tag);
-}
-
-/**
- * Create Text Node
- *
- * @return {Node}
- */
-function createTextNode (value) {
-	return document.createTextNode(value);
-}
-
-/**
  * Create Node
  *
  * @param  {Tree} newer
+ * @param  {Tree?} _ancestor
+ * @param  {Number} action
  * @param  {String?} _xmlns
- * @param  {Component?} _owner
  * @param  {Node} parent
  * @param  {Node} sibling
- * @param  {Number} action
- * @return {Node}
  */
- function create (older, _xmlns, _ancestor, parent, sibling, action) {
+ function create (older, _ancestor, action, _xmlns, parent, sibling) {
  	var xmlns = _xmlns;
  	var ancestor = _ancestor;
  	var group = older.group;
@@ -70,27 +42,23 @@ function createTextNode (value) {
  		if (newer.group === 0) {
  			type = 2;
  		} else {
- 			create(newer, xmlns, ancestor, parent, sibling, action);
- 			// components may return components recursively,
- 			// keep a record of these
- 			newer.parent = older;
- 			older.host = newer;
+ 			create(newer, ancestor, action, xmlns, parent, sibling);
  		}
- 		copy(older, newer);
  	} else {
  		type = 2;
  	}
 
  	if (type === 2) {
  		if (flag === 1) {
- 			node = createTextNode((type = 1, older.children));
+ 			node = older.node = document.createTextNode((type = 1, older.children));
  		} else {
- 			node = nodeBoundary(flag, older, xmlns, ancestor);
+ 			node = nodeBoundary(flag, older, ancestor, xmlns);
 
  			if (older.flag === 3) {
- 				create(node, xmlns, ancestor, parent, sibling, action);
- 				clone(older, node, type = 0);
+ 				create(node, ancestor, action, xmlns, parent, sibling);
+ 				clone(older, node, (type = 0, false));
  			} else {
+ 				older.node = node;
  				children = older.children;
  				length = children.length;
 
@@ -100,7 +68,7 @@ function createTextNode (value) {
  						if ((child = children[i]).node !== null) {
  							clone(child = children[i] = new Tree(child.flag), child, false);
  						}
- 						create(child, xmlns, ancestor, node, null, 1);
+ 						create(child, ancestor, 1, xmlns, node, null);
  					}
  				}
  			}
@@ -108,7 +76,6 @@ function createTextNode (value) {
  	}
 
  	if (type !== 0) {
- 		older.node = node;
  		switch (action) {
  			case 1: parent.appendChild(node); break;
  			case 2: parent.insertBefore(node, sibling); break;
@@ -133,7 +100,7 @@ function createTextNode (value) {
  * @param {Tree} ancestor
  */
 function change (older, newer, parent, ancestor) {
-	create(newer, null, ancestor, parent, older.node, 3);
+	create(newer, ancestor, 3, null, parent, older.node);
 }
 
 /**
@@ -144,7 +111,7 @@ function change (older, newer, parent, ancestor) {
  * @param  {Tree} ancestor
  */
 function swap (older, newer, ancestor) {
-	create(newer, null, ancestor, older.node.parentNode, older.node, 3);
+	create(newer, ancestor, 3, null, older.node.parentNode, older.node);
 }
 
 /**

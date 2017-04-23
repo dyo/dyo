@@ -141,28 +141,13 @@ function fragment (children) {
 }
 
 /**
- * Copy Tree [Shallow]
+ * Clone Tree
  *
  * @param  {Tree} older
  * @param  {Tree} newer
+ * @param  {Boolean} deep
  */
-function copy (older, newer) {
-	older.tag = newer.tag;
-	older.flag = newer.flag;
-	older.node = newer.node;
-	older.attrs = newer.attrs;
-	older.xmlns = newer.xmlns;
-	older.children = newer.children;
-}
-
-/**
- * Clone Tree [Deep]
- *
- * @param  {Tree} older
- * @param  {Tree} newer
- * @param  {Boolean} type
- */
-function clone (older, newer, type) {
+function clone (older, newer, deep) {
 	older.flag = newer.flag;
 	older.tag = newer.tag;
 	older.node = newer.node;
@@ -170,24 +155,15 @@ function clone (older, newer, type) {
 	older.xmlns = newer.xmlns;
 	older.async = newer.async;
 	older.keyed = newer.keyed;
-	older.parent = newer.parent;
 	older.children = newer.children;
 
-	switch (type) {
-		case 1: {
-			older.props = newer.props;
-			older.owner = newer.owner;
-			older.yield = newer.yield;
-			older.group = newer.group;
-			older.type = newer.type;
-			older.host = newer.host;
-			older.key = newer.key;
-			break;
-		}
-		case 2: {
-			older.host = newer.owner === 'function' ? shape(newer.owner, newer) : newer;
-			break;
-		}
+	if (deep === true) {
+		older.props = newer.props;
+		older.owner = newer.owner;
+		older.yield = newer.yield;
+		older.group = newer.group;
+		older.type = newer.type;
+		older.key = newer.key;
 	}
 }
 
@@ -201,8 +177,8 @@ function Tree (flag) {
 	this.tag = null;
 	this.key = null;
 	this.type = null;
-	this.host = null;
 	this.node = null;
+	this.host = null;
 	this.group = 0;
 	this.async = 0;
 	this.props = object;
@@ -211,7 +187,6 @@ function Tree (flag) {
 	this.owner = null;
 	this.yield = null;
 	this.keyed = false;
-	this.parent = null;
 	this.children = array;
 }
 

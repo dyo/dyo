@@ -50,22 +50,31 @@ function extract (older) {
 			newer = renderBoundary(older, group);
 			older.async = 0;
 		}
-		newer = shape(newer, owner._older = older);
+		newer = shape(newer, owner._older = older, true);
 	} else {
-		newer = shape(renderBoundary(older, group), older);
+		newer = shape(renderBoundary(older, group), older, true);
 	}
+
+	older.tag = newer.tag;
+	older.flag = newer.flag;
+	older.node = newer.node;
+	older.attrs = newer.attrs;
+	older.xmlns = newer.xmlns;
+	older.children = newer.children;
+
 	return newer;
 }
 
 /**
  * Shape Tree
  *
- * @param  {Any} _newer
+ * @param  {Any} value
  * @param  {Tree?} older
+ * @param  {Boolean} abstract
  * @return {Tree}
  */
-function shape (_newer, older) {
-	var newer = (_newer !== null && _newer !== void 0) ? _newer : text('');
+function shape (value, older, abstract) {
+	var newer = (value !== null && value !== void 0) ? value : text('');
 
 	if (newer.group === void 0) {
 		switch (typeof newer) {
@@ -81,70 +90,55 @@ function shape (_newer, older) {
 			}
 			case 'object': {
 				switch (newer.constructor) {
-					case Promise: return resolve(newer, older);
+					case Promise: return older === null ? text('') : resolve(older, newer);
 					case Array: newer = fragment(newer); break;
 					case Date: newer = text(newer+''); break;
 					case Object: newer = text(''); break;
 					default: {
-						newer = newer.next !== void 0 && older !== null ? generator(newer, older) : text('');
+						newer = newer.next !== void 0 && older !== null ? coroutine(older, newer) : text('');
 					}
 				}
 				break;
 			}
 		}
 	}
-	return newer;
+
+	return newer.group > 0 && abstract === true ? fragment(newer) : newer;
 }
 
 /**
- * Create Generator
+ * Create Coroutine
  *
- * @param  {Generator} newer
  * @param  {Tree} older
+ * @param  {Generator} generator
  * @return {Tree}
  */
-function generator (newer, older) {
-	var prev;
-	var next;
-	var view;
+function coroutine (older, generator) {
+	var previous;
+	var current;
 
 	older.yield = function () {
-		var supply = newer.next(prev);
-
-		next = supply.value;
+		var supply = generator.next(previous);
+		var next = supply.value;
 
 		if (supply.done === true) {
-			view = shape(next !== void 0 && next !== null ? next : prev, older);
+			current = shape(next !== void 0 && next !== null ? next : previous, older, true);
 		} else {
-			view = shape(next, older);
+			current = shape(next, older, true);
 		}
-		return prev = view;
+		return previous = current;
 	};
 
-	return shape(renderBoundary(older, older.group), older);
-}
-
-/**
- * Extract Generator
- *
- * @param {Tree} older
- * @param {Number} group
- * @return {Tree}
- */
-function coroutine (older, group) {
-	switch (group) {
-		case 1: return older.yield(older.props);
-		case 2: case 3: return older.yield(older.owner.props, older.owner.state);
-	}
+	return shape(renderBoundary(older, older.group), older, true);
 }
 
 /**
  * Resolve Tree
  *
- * @param {Promise} pending
  * @param {Tree} older
+ * @param {Promise} pending
  */
-function resolve (pending, older) {
+function resolve (older, pending) {
 	older.async = 2;
 
 	pending.then(function (value) {
@@ -154,12 +148,12 @@ function resolve (pending, older) {
 		}
 
 		older.async = 0;
-		newer = shape(newer, older);
+		newer = shape(newer, older, true);
 
 		if (older.tag !== newer.tag) {
-			exchange(older, newer, 0, older);
+			exchange(older, newer, older, false);
 		} else {
-			patch(older, newer, 0, older);
+			patch(older, newer, older, 0);
 		}
 	});
 
@@ -171,73 +165,30 @@ function resolve (pending, older) {
  *
  * @param {Tree} newer
  * @param {Tree} older
- * @param {Number} type
  * @param {Tree} ancestor
+ * @param {Boolean} deep
  */
-function exchange (older, newer, type, ancestor) {
+function exchange (older, newer, ancestor, deep) {
 	swap(older, newer, ancestor);
 
-	switch (type) {
-		case 0: {
-			if (older.flag !== 1 && older.children.length > 0) {
-				empty(older, false);
-			}
-			clone(older, newer, type);
-			break;
-		}
-		case 1: {
-			unmount(older);
-			break;
-		}
-		case 2: {
-			if (older.host !== null) {
-				unmount(older.host);
-			}
-			break;
-		}
+	if (older.flag !== 1 && older.children.length > 0) {
+		unmount(older, false);
 	}
-	clone(older, newer, type);
+
+	if (older.owner !== null && older.owner.componentWillUnmount !== void 0) {
+		mountBoundary(older.owner, 2);
+	}
+
+	clone(older, newer, deep);
 }
 
 /**
- * Refresh Tree
- *
- * @param {Tree} older
- */
-function refresh (older) {
-	var parent = older.parent;
-
-	if (parent !== null) {
-		parent.node = older.node;
-		refresh(parent);
-	}
-}
-
-/**
- * Unmount
- *
- * @param {Tree} older
- */
-function unmount (older) {
-	var owner = older.owner;
-	var host = older.host;
-
-	if (owner !== null && owner.componentWillUnmount !== void 0) {
-		mountBoundary(owner, 2);
-	}
-
-	if (host !== null) {
-		unmount(host);
-	}
-}
-
-/**
- * Empty Children
+ * Unmount Children
  *
  * @param  {Tree} older
  * @param  {Boolean} release
  */
-function empty (older, release) {
+function unmount (older, release) {
 	var children = older.children;
 	var length = children.length;
 
@@ -250,12 +201,10 @@ function empty (older, release) {
 		if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
 			mountBoundary(child.owner, 2);
 		}
-		empty(child, true);
+		unmount(child, true);
 	}
 
 	if (release === true) {
-		older.parent = null;
-		older.host = null;
 		older.owner = null;
 		older.node = null;
 	}
@@ -274,7 +223,7 @@ function fill (older, newer, length, ancestor) {
 	var children = newer.children;
 
 	for (var i = 0, child; i < length; i++) {
-		create(child = children[i], null, ancestor, parent, null, 1);
+		create(child = children[i], ancestor, 1, null, parent, null);
 	}
 	older.children = children;
 }

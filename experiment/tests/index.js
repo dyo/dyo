@@ -6,7 +6,7 @@ const jsdom = require("jsdom").jsdom;
 global.document = jsdom('');
 global.window = document.defaultView;
 
-const dio = require('../dist/dio');
+global.dio = require('../dist/dio');
 
 /**
  * deepEqual
@@ -23,6 +23,13 @@ global.deepEqual = (x, y) => {
   ) : (x === y);
 }
 
+/**
+ * compare
+ *
+ * @param  {Node} a
+ * @param  {String} b
+ * @return {Boolean}
+ */
 global.compare = (a, b) => {
 	return a.innerHTML === b.replace(/[\n\t ]/g, '');
 }

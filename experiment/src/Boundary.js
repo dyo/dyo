@@ -48,7 +48,10 @@ function updateBoundary (owner, type, props, state) {
 function renderBoundary (older, group) {
 	try {
 		if (older.yield !== null) {
-			return coroutine(older, group);
+			switch (group) {
+				case 1: return older.yield(older.props);
+				case 2: case 3: return older.yield(older.owner.props, older.owner.state);
+			}
 		}
 		switch (group) {
 			case 1: return older.type(older.props);
@@ -65,18 +68,18 @@ function renderBoundary (older, group) {
  * @param  {Number} flag
  * @param  {Tree} newer
  * @param  {String?} xmlns
- * @param  {Component} owner
+ * @param  {Tree} ancestor
  * @return {Node}
  */
-function nodeBoundary (flag, newer, xmlns, owner) {
+function nodeBoundary (flag, newer, ancestor, xmlns) {
 	try {
 		if (xmlns === null) {
-			return createElement(newer.tag);
+			return document.createElement(newer.tag);
 		} else {
-			return createElementNS(newer.xmlns === xmlns, newer.tag);
+			return document.createElementNS(newer.xmlns === xmlns, newer.tag);
 		}
 	} catch (err) {
-		return errorBoundary(err, owner, newer.flag = 3, typeof owner === 'function' ? 2 : 1);
+		return errorBoundary(err, ancestor.owner, newer.flag = 3, typeof ancestor.owner === 'function' ? 2 : 1);
 	}
 }
 
@@ -153,7 +156,7 @@ function returnBoundary (state, owner, e, sync) {
 		if (sync === true) {
 			owner.setState(state);
 		} else {
-			schedule(function () {
+			requestIdleCallback(function () {
 				owner.setState(state);
 			});
 		}
@@ -190,7 +193,7 @@ function errorBoundary (message, owner, type, from) {
 	errorMessage(component, location, message instanceof Error ? message.stack : message);
 
 	if (type === 3 || type === 5) {
-		return shape(newer, owner._older);
+		return shape(newer, owner !== null ? owner._older : null, true);
 	}
 }
 

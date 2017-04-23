@@ -2,6 +2,18 @@ module.exports = ({h, render}) => {
 	test('Lifecycle', ({ok, end}) => {
 		var container = document.createElement('div');
 
+		class Bar {
+			componentWillUpdate() {
+				ok(true, 'componentWillUpdate - composite');
+			}
+			componentDidUpdate() {
+				ok(true, 'componentDidUpdate - composite');
+			}
+			render() {
+				return h('h1', this.props.id);
+			}
+		}
+
 		class Foo {
 			componentWillMount() {
 				ok(true, 'componentWillMount');
@@ -25,7 +37,7 @@ module.exports = ({h, render}) => {
 				ok(true, 'shouldComponentUpdate');
 			}
 			render() {
-				return h('h1', 1);
+				return Bar;
 			}
 		}
 
