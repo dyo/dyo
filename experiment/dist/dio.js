@@ -356,8 +356,10 @@
 		var size = 0;
 		var index = 0;
 		var i = 2;
+		var group = 0;
 		var newer = new Tree(2);
 		var proto;
+		var children;
 	
 		if (props !== null) {
 			switch (props.constructor) {
@@ -389,21 +391,34 @@
 			}
 			case Function: {
 				if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
-					newer.group = 2;
+					group = newer.group = 2;
 				} else {
-					newer.group = 1;
+					group = newer.group = 1;
 					newer.owner = type;
 				}
 				break;
 			}
 		}
+	
 		newer.type = type;
 	
 		if (length > 1) {
-			newer.children = new Array(size);
+			children = new Array(size);
 	
-			for (; i < length; i++) {
-				index = adopt(newer, index, arguments[i]);
+			if (group < 1) {
+				for (newer.children = children; i < length; i++) {
+					index = push(newer, index, arguments[i]);
+				}
+			} else {
+				if ((props = newer.props) === null || props === object) {
+					props = newer.props = {};
+				}
+				for (newer.children = children; i < length; i++) {
+					index = pull(newer, index, arguments[i]);
+				}
+	
+				props.children = index > 1 ? children : children[0];
+				newer.children = array;
 			}
 		}
 	
@@ -411,14 +426,14 @@
 	}
 	
 	/**
-	 * Adopt Element Children
+	 * Push Children
 	 *
 	 * @param  {Tree} newer
 	 * @param  {Number} index
 	 * @param  {Any} decedent
 	 * @return {Number}
 	 */
-	function adopt (newer, index, decedent) {
+	function push (newer, index, decedent) {
 		var children = newer.children;
 		var child;
 		var length;
@@ -439,7 +454,7 @@
 				case 'object': {
 					if ((length = decedent.length) !== void 0) {
 						for (var j = 0, i = index; j < length; j++) {
-							i = adopt(newer, i, decedent[j]);
+							i = push(newer, i, decedent[j]);
 						}
 						return i;
 					} else {
@@ -452,8 +467,33 @@
 				}
 			}
 		}
-	
 		children[index] = child;
+	
+		return index + 1;
+	}
+	
+	/**
+	 * Pull Children
+	 *
+	 * @param  {Tree} newer
+	 * @param  {Number} index
+	 * @param  {Any} decedent
+	 * @return {Number}
+	 */
+	function pull (newer, index, decedent) {
+		var children = newer.children;
+	
+		if (decedent !== null && typeof decedent === 'object') {
+			var length = decedent.length;
+	
+			if (length !== void 0) {
+				for (var j = 0, i = index; j < length; j++) {
+					i = pull(newer, i, decedent[j]);
+				}
+				return i;
+			}
+		}
+		children[index] = decedent;
 	
 		return index + 1;
 	}
@@ -502,6 +542,7 @@
 		older.children = newer.children;
 	
 		if (deep === true) {
+			older.parent = newer.parent;
 			older.props = newer.props;
 			older.owner = newer.owner;
 			older.yield = newer.yield;
