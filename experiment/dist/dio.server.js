@@ -1889,7 +1889,7 @@
 				} else if (isNaN(Number(value)) === true) {
 					assign(0, name, value, xmlns, node);
 				} else {
-					assign(2, name, value, xmlns, node);
+					assign(6, name, value, xmlns, node);
 				}
 				break;
 			}
