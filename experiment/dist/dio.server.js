@@ -884,6 +884,24 @@
 		var prev;
 		var next;
 	
+		// old attributes
+		for (var name in old) {
+			type = attr(name);
+	
+			if (type < 30) {
+				next = attrs[name];
+	
+				if (next === null || next === void 0) {
+					if (type < 20) {
+						assign(type, name, next, xmlns, older);
+					} else if (type > 20) {
+						event(older, name, next, ancestor, 0);
+					}
+				}
+			}
+		}
+	
+		// new attributes
 		for (var name in attrs) {
 			type = attr(name);
 	
@@ -903,22 +921,6 @@
 						} else {
 							styles(older, newer);
 						}
-					}
-				}
-			}
-		}
-	
-		for (var name in old) {
-			type = attr(name);
-	
-			if (type < 30) {
-				next = attrs[name];
-	
-				if (next === null || next === void 0) {
-					if (type < 20) {
-						assign(type, name, next, xmlns, older);
-					} else if (type > 20) {
-						event(older, name, next, ancestor, 0);
 					}
 				}
 			}
@@ -1933,8 +1935,16 @@
 		}
 	
 		switch (action) {
-			case 0: node.removeEventListener(name, proxy); break;
-			case 1: node.addEventListener(name, proxy);
+			case 0: {
+				node.removeEventListener(name, proxy);
+				if (node._owner !== void 0) {
+					node._owner = null;
+				}
+				break;
+			}
+			case 1: {
+				node.addEventListener(name, proxy);
+			}
 			case 2: {
 				if (ancestor !== null && ancestor.group > 1) {
 					node._owner = ancestor.owner;

@@ -273,8 +273,16 @@ function event (older, type, value, ancestor, action) {
 	}
 
 	switch (action) {
-		case 0: node.removeEventListener(name, proxy); break;
-		case 1: node.addEventListener(name, proxy);
+		case 0: {
+			node.removeEventListener(name, proxy);
+			if (node._owner !== void 0) {
+				node._owner = null;
+			}
+			break;
+		}
+		case 1: {
+			node.addEventListener(name, proxy);
+		}
 		case 2: {
 			if (ancestor !== null && ancestor.group > 1) {
 				node._owner = ancestor.owner;

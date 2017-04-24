@@ -79,6 +79,24 @@ function attributes (older, newer, ancestor) {
 	var prev;
 	var next;
 
+	// old attributes
+	for (var name in old) {
+		type = attr(name);
+
+		if (type < 30) {
+			next = attrs[name];
+
+			if (next === null || next === void 0) {
+				if (type < 20) {
+					assign(type, name, next, xmlns, older);
+				} else if (type > 20) {
+					event(older, name, next, ancestor, 0);
+				}
+			}
+		}
+	}
+
+	// new attributes
 	for (var name in attrs) {
 		type = attr(name);
 
@@ -98,22 +116,6 @@ function attributes (older, newer, ancestor) {
 					} else {
 						styles(older, newer);
 					}
-				}
-			}
-		}
-	}
-
-	for (var name in old) {
-		type = attr(name);
-
-		if (type < 30) {
-			next = attrs[name];
-
-			if (next === null || next === void 0) {
-				if (type < 20) {
-					assign(type, name, next, xmlns, older);
-				} else if (type > 20) {
-					event(older, name, next, ancestor, 0);
 				}
 			}
 		}
