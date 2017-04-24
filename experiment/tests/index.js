@@ -1,10 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
-const jsdom = require("jsdom").jsdom;
+const {JSDOM} = require("jsdom");
 
-global.document = jsdom('');
-global.window = document.defaultView;
+const DOM = new JSDOM('');
+
+global.window = DOM.window;
+global.document = window.document;
+
 
 global.dio = require('../dist/dio');
 
