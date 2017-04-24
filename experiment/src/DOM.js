@@ -227,10 +227,10 @@ function style (older, newer, type) {
 				for (var name in next) {
 					var value = next[name];
 
-					if (name in node) {
-						node[name] = value;
+					if (name.charCodeAt(0) === 45) {
+						node.setProperty(name, value);
 					} else {
-						node.setProperty(name, next[name]);
+						node[name] = value;
 					}
 				}
 				break;
@@ -242,12 +242,10 @@ function style (older, newer, type) {
 				for (var name in next) {
 					var value = next[name];
 
-					if (value !== prev[name]) {
-						if (name in node) {
-							node[name] = value;
-						} else {
-							node.setProperty(name, next[name]);
-						}
+					if (name.charCodeAt(0) === 45) {
+						node.setProperty(name, value);
+					} else {
+						node[name] = value;
 					}
 				}
 				break;
