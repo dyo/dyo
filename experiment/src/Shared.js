@@ -11,6 +11,7 @@ var Promise = global.Promise || noop;
 var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
 var requestIdleCallback = global.requestIdleCallback || setTimeout;
 var mount = null;
+var empty = new Tree(2);
 
 /**
  * ## Element Flag

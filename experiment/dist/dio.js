@@ -31,6 +31,7 @@
 	var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
 	var requestIdleCallback = global.requestIdleCallback || setTimeout;
 	var mount = null;
+	var empty = new Tree(2);
 	
 	/**
 	 * ## Element Flag
@@ -484,13 +485,13 @@
 	}
 	
 	/**
-	 * Clone Tree
+	 * Copy Tree
 	 *
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
 	 * @param  {Boolean} deep
 	 */
-	function clone (older, newer, deep) {
+	function copy (older, newer, deep) {
 		older.flag = newer.flag;
 		older.tag = newer.tag;
 		older.node = newer.node;
@@ -521,7 +522,6 @@
 		this.key = null;
 		this.type = null;
 		this.node = null;
-		this.host = null;
 		this.group = 0;
 		this.async = 0;
 		this.props = object;
@@ -530,6 +530,7 @@
 		this.owner = null;
 		this.yield = null;
 		this.keyed = false;
+		this.parent = null;
 		this.children = array;
 	}
 	
@@ -860,7 +861,7 @@
 				} else if (type < 20) {
 					assign(type, name, value, xmlns, newer);
 				} else if (type > 20) {
-					event(newer, name, value, ancestor);
+					event(newer, name, value, ancestor, 1);
 				} else {
 					style(newer);
 				}
@@ -898,7 +899,7 @@
 						if (type < 20) {
 							assign(type, name, next, xmlns, older);
 						} else if (type > 20) {
-							event(older, name, next, ancestor);
+							event(older, name, next, ancestor, 2);
 						} else {
 							styles(older, newer);
 						}
@@ -917,7 +918,7 @@
 					if (type < 20) {
 						assign(type, name, next, xmlns, older);
 					} else if (type > 20) {
-						event(older, name, next, ancestor);
+						event(older, name, next, ancestor, 0);
 					}
 				}
 			}
@@ -1156,7 +1157,7 @@
 			mountBoundary(older.owner, 2);
 		}
 	
-		clone(older, newer, deep);
+		copy(older, newer, deep);
 	}
 	
 	/**
@@ -1182,6 +1183,7 @@
 		}
 	
 		if (release === true) {
+			older.parent = null;
 			older.owner = null;
 			older.node = null;
 		}
@@ -1196,11 +1198,10 @@
 	 * @param {Tree} ancestor
 	 */
 	function fill (older, newer, length, ancestor) {
-		var parent = older.node;
 		var children = newer.children;
 	
 		for (var i = 0, child; i < length; i++) {
-			create(child = children[i], ancestor, 1, null, parent, null);
+			create(child = children[i], ancestor, older, empty, 1, null);
 		}
 		older.children = children;
 	}
@@ -1215,6 +1216,7 @@
 		var newer = _newer;
 		var target = _target;
 		var older;
+		var parent;
 	
 		if (newer === void 0 || newer === null) {
 			newer = text('');
@@ -1241,7 +1243,11 @@
 			// use <body> if it exists at this point
 			// else default to the root <html> node
 			if (mount === null) {
-				mount = global.document !== void 0 ? (document.body || document.documentElement) : null;
+				if (global.document !== void 0) {
+					mount = document.body || document.documentElement;
+				} else {
+					mount = null;
+				}
 			}
 	
 			target = mount;
@@ -1253,14 +1259,16 @@
 		}
 	
 		if ((older = target._older) !== void 0) {
-			if (older.key === newer.key) {
+			if (older.key === newer.key && older.type === newer.type) {
 				patch(older, newer, older, older.group);
 			} else {
 				exchange(older, newer, newer, true);
 			}
 		} else {
-			create(newer, newer, 1, null, target, null);
-			target._older = newer;
+			parent = new Tree(2);
+			parent.node = target;
+	
+			create(target._older = newer, newer, parent, empty, 1, null);
 		}
 	}
 	
@@ -1303,15 +1311,15 @@
 	
 			newer = shape(renderBoundary(older, group), older, true);
 	
-			if (newer.tag !== older.tag) {
-				return exchange(older, newer, older, false);
-			}
-	
 			if (older.async === 2) {
 				return;
 			}
 	
 			older.async = 0;
+	
+			if (newer.tag !== older.tag) {
+				return exchange(older, newer, older, false);
+			}
 	
 			if (group > 1) {
 				ancestor = older;
@@ -1319,7 +1327,7 @@
 		}
 	
 		if (older.flag === 1) {
-			return content(older.node, older.children = newer.children);
+			return content(older, older.children = newer.children);
 		}
 	
 		var newLength = newer.children.length;
@@ -1328,12 +1336,15 @@
 		if (oldLength === 0) {
 			// fill children
 			if (newLength !== 0) {
-				fill(older, newer, newLength, ancestor), older.children = newer.children;
+				fill(older, newer, newLength, ancestor);
+				older.children = newer.children;
 			}
 		} else if (newLength === 0) {
 			// empty children
 			if (oldLength !== 0) {
-				unmount(older, false), clear(older.node), older.children = newer.children;
+				unmount(older, false);
+				clear(older.node);
+				older.children = newer.children;
 			}
 		} else if (newer.keyed === true) {
 			keyed(older, newer, ancestor, oldLength, newLength);
@@ -1364,7 +1375,6 @@
 	 * @param  {Number} _newLength
 	 */
 	function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
-		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
 		var oldLength = _oldLength;
@@ -1377,23 +1387,23 @@
 				if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
 					mountBoundary(oldChild.owner, 2);
 				}
-				remove(oldChild.node, parent);
+				remove(oldChild, older);
 				unmount(oldChild, true);
 				oldLength--;
 			} else if (i >= oldLength) {
-				create(newChild = oldChildren[i] = newChildren[i], ancestor, 1, null, parent, null);
+				create(newChild = oldChildren[i] = newChildren[i], ancestor, older, empty, 1, null);
 				oldLength++;
 			} else {
 				newChild = newChildren[i];
 				oldChild = oldChildren[i];
 	
 				if (newChild.flag === 1 && oldChild.flag === 1) {
-					content(oldChild.node, oldChild.children = newChild.children);
+					content(oldChild, oldChild.children = newChild.children);
 				} else if (newChild.type !== oldChild.type) {
 					if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
 						mountBoundary(oldChild.owner, 2);
 					}
-					change(oldChild, oldChildren[i] = newChild, parent, ancestor);
+					create(oldChildren[i] = newChild, ancestor, older, oldChild, 3, null);
 					unmount(oldChild, true);
 				} else {
 					patch(oldChild, newChild, ancestor, oldChild.group);
@@ -1412,7 +1422,6 @@
 	 * @param {Number} newLength
 	 */
 	function keyed (older, newer, ancestor, oldLength, newLength) {
-	 	var parent = older.node;
 	 	var oldChildren = older.children;
 	 	var newChildren = newer.children;
 	 	var oldStart = 0;
@@ -1424,7 +1433,7 @@
 	 	var oldEndNode = oldChildren[oldEnd];
 	 	var newEndNode = newChildren[newEnd];
 	 	var nextPos;
-	 	var nextNode;
+	 	var nextChild;
 	
 	 	// step 1, sync leading [a, b ...], trailing [... c, d], opposites [a, b] [b, a] recursively
 	 	outer: while (true) {
@@ -1460,7 +1469,7 @@
 	 		if (oldEndNode.key === newStartNode.key) {
 	 			newChildren[newStart] = oldEndNode;
 	 			oldChildren[oldEnd] = oldStartNode;
-	 			move(oldEndNode.node, oldStartNode.node, parent);
+	 			move(oldEndNode, oldStartNode, older);
 	 			patch(oldEndNode, newStartNode, ancestor, oldEndNode.group);
 	
 	 			oldEnd--;
@@ -1478,9 +1487,9 @@
 	 			nextPos = newEnd + 1;
 	
 	 			if (nextPos < newLength) {
-	 				move(oldStartNode.node, oldChildren[nextPos].node, parent);
+	 				move(oldStartNode, oldChildren[nextPos], older);
 	 			} else {
-	 				append(oldStartNode.node, parent);
+	 				append(oldStartNode, older);
 	 			}
 	
 	 			patch(oldStartNode, newEndNode, ancestor, oldStartNode.group);
@@ -1499,10 +1508,10 @@
 	 		// old children is synced, insert the difference
 	 		if (newStart <= newEnd) {
 	 			nextPos = newEnd + 1;
-	 			nextNode = nextPos < newLength ? newChildren[nextPos].node : null;
+	 			nextChild = nextPos < newLength ? newChildren[nextPos] : empty;
 	
 	 			do {
-	 				create(newStartNode = newChildren[newStart++], ancestor, 2, null, parent, nextNode);
+	 				create(newStartNode = newChildren[newStart++], ancestor, older, nextChild, 2, null);
 	 			} while (newStart <= newEnd);
 	 		}
 	 	} else if (newStart > newEnd) {
@@ -1512,17 +1521,17 @@
 	 			if (oldStartNode.group > 0 && oldStartNode.owner.componentWillUnmount !== void 0) {
 	 				mountBoundary(oldStartNode.owner, 2);
 	 			}
-	 			remove(oldStartNode.node, parent);
+	 			remove(oldStartNode, older);
 	 			unmount(oldStartNode, true);
 	 		} while (oldStart <= oldEnd);
 	 	} else if (newStart === 0 && newEnd === newLength-1) {
 	 		// all children are out of sync, remove all, append new set
 	 		unmount(older, false);
-	 		clear(parent);
+	 		clear(older);
 	 		fill(older, newer, newLength, ancestor);
 	 	} else {
 	 		// could sync all children, move on the the next phase
-	 		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
+	 		complex(older, newer, ancestor, oldStart, newStart, oldEnd + 1, newEnd + 1, oldLength, newLength);
 	 	}
 	 	older.children = newChildren;
 	}
@@ -1541,7 +1550,6 @@
 	 * @param {number} newLength
 	 */
 	function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
-		var parent = older.node;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
 		var oldKeys = {};
@@ -1553,7 +1561,6 @@
 		var oldChild;
 		var newChild;
 		var nextChild;
-		var nextNode;
 		var nextPos;
 	
 		// step 1, build a map of keys
@@ -1567,11 +1574,13 @@
 				newKeys[newChild.key] = newIndex++;
 			}
 			if (oldIndex === oldEnd && newIndex === newEnd) {
-				oldIndex = oldStart;
-				newIndex = newStart;
 				break;
 			}
 		}
+	
+		// reset
+		oldIndex = oldStart;
+		newIndex = newStart;
 	
 		// step 2, insert and sync nodes from left to right [a, b, ...]
 		while (newIndex < newEnd) {
@@ -1581,8 +1590,8 @@
 			// new child doesn't exist in old children, insert
 			if (oldIndex === void 0) {
 				nextPos = newIndex - newOffset;
-				nextNode = nextPos < oldLength ? oldChildren[nextPos].node : null;
-				create(newChild, ancestor, 2, null, parent, nextNode);
+				nextChild = nextPos < oldLength ? oldChildren[nextPos] : empty;
+				create(newChild, ancestor, older, nextChild, 2, null);
 				newOffset++;
 			} else if (newIndex === oldIndex) {
 				oldChild = oldChildren[oldIndex];
@@ -1604,7 +1613,7 @@
 				if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
 					mountBoundary(oldChild.owner, 2);
 				}
-				remove(oldChild.node, parent);
+				remove(oldChild, older);
 				unmount(oldChild, true);
 				oldOffset++;
 			}
@@ -1638,9 +1647,9 @@
 	
 					// within bounds
 					if ((nextPos = newIndex + 1) < newLength) {
-						move(oldChild.node, newChildren[nextPos].node, parent);
+						move(oldChild, newChildren[nextPos], older);
 					} else {
-						append(oldChild.node, parent);
+						append(oldChild, older);
 					}
 					patch(newChildren[newIndex] = oldChild, newChild, ancestor, oldChild.group);
 				}
@@ -1654,24 +1663,24 @@
 	 *
 	 * @param  {Tree} newer
 	 * @param  {Tree?} _ancestor
+	 * @param  {Tree} parent
+	 * @param  {Tree} sibling
 	 * @param  {Number} action
 	 * @param  {String?} _xmlns
-	 * @param  {Node} parent
-	 * @param  {Node} sibling
 	 */
-	 function create (older, _ancestor, action, _xmlns, parent, sibling) {
-	 	var xmlns = _xmlns;
-	 	var ancestor = _ancestor;
-	 	var group = older.group;
-	 	var flag = older.flag;
-	 	var type = 0;
-	 	var owner;
-	 	var node;
-	 	var children;
-	 	var length;
-	 	var newer;
+	function create (older, _ancestor, parent, sibling, action, _xmlns) {
+		var ancestor = _ancestor;
+		var xmlns = _xmlns;
+		var group = older.group;
+		var flag = older.flag;
+		var type = 0;
+		var owner;
+		var node;
+		var children;
+		var length;
+		var newer;
 	
-	 	// preserve last namespace among children
+	 	// preserve last namespace context among children
 	 	if (flag !== 1 && older.xmlns !== null) {
 	 		xmlns = older.xmlns;
 	 	}
@@ -1693,7 +1702,7 @@
 	 		if (newer.group === 0) {
 	 			type = 2;
 	 		} else {
-	 			create(newer, ancestor, action, xmlns, parent, sibling);
+	 			create(newer, ancestor, parent, sibling, action, xmlns);
 	 		}
 	 	} else {
 	 		type = 2;
@@ -1706,8 +1715,9 @@
 	 			node = nodeBoundary(flag, older, ancestor, xmlns);
 	
 	 			if (older.flag === 3) {
-	 				create(node, ancestor, action, xmlns, parent, sibling);
-	 				clone(older, node, (type = 0, false));
+	 				create(node, ancestor, older, sibling, action, xmlns);
+	 				copy(older, node, false);
+	 				type = 0;
 	 			} else {
 	 				older.node = node;
 	 				children = older.children;
@@ -1717,9 +1727,9 @@
 	 					for (var i = 0, child; i < length; i++) {
 	 						// hoisted
 	 						if ((child = children[i]).node !== null) {
-	 							clone(child = children[i] = new Tree(child.flag), child, false);
+	 							copy(child = children[i] = new Tree(child.flag), child, false);
 	 						}
-	 						create(child, ancestor, 1, xmlns, node, null);
+	 						create(child, ancestor, older, sibling, 1, xmlns);
 	 					}
 	 				}
 	 			}
@@ -1727,10 +1737,11 @@
 	 	}
 	
 	 	if (type !== 0) {
+	 		older.parent = parent;
 	 		switch (action) {
-	 			case 1: parent.appendChild(node); break;
-	 			case 2: parent.insertBefore(node, sibling); break;
-	 			case 3: parent.replaceChild(node, sibling); break;
+	 			case 1: parent.node.appendChild(node); break;
+	 			case 2: parent.node.insertBefore(node, sibling.node); break;
+	 			case 3: parent.node.replaceChild(node, sibling.node); break;
 	 		}
 	 		if (type !== 1) {
 	 			attribute(older, ancestor, xmlns);
@@ -1740,18 +1751,6 @@
 	 	if (group > 0 && owner.componentDidMount !== void 0) {
 	 		mountBoundary(owner, 1);
 	 	}
-	 }
-	
-	/**
-	 * Change Node
-	 *
-	 * @param {Tree} older
-	 * @param {Tree} newer
-	 * @param {Node} parent
-	 * @param {Tree} ancestor
-	 */
-	function change (older, newer, parent, ancestor) {
-		create(newer, ancestor, 3, null, parent, older.node);
 	}
 	
 	/**
@@ -1762,68 +1761,57 @@
 	 * @param  {Tree} ancestor
 	 */
 	function swap (older, newer, ancestor) {
-		create(newer, ancestor, 3, null, older.node.parentNode, older.node);
+		create(newer, ancestor, older.parent, older, 3, null);
 	}
 	
 	/**
 	 * Move Node
 	 *
-	 * @param {Node} node
-	 * @param {Node} sibling
-	 * @param {Node} parent
+	 * @param {Tree} older
+	 * @param {Tree} sibling
+	 * @param {Tree} parent
 	 */
-	function move (node, sibling, parent) {
-		parent.insertBefore(node, sibling);
+	function move (older, sibling, parent) {
+		parent.node.insertBefore(older.node, sibling.node);
 	}
 	
 	/**
 	 * Append Node
 	 *
-	 * @param {Node} node
-	 * @param {Node} parent
+	 * @param {Tree} older
+	 * @param {Tree} parent
 	 */
-	function append (node, parent) {
-		parent.appendChild(node);
+	function append (older, parent) {
+		parent.node.appendChild(older.node);
 	}
 	
 	/**
 	 * Remove Node
 	 *
-	 * @param {Node} node
-	 * @param {Node} parent
+	 * @param {Tree} older
+	 * @param {Tree} parent
 	 */
-	function remove (node, parent) {
-		parent.removeChild(node);
-	}
-	
-	/**
-	 * Replace Node
-	 *
-	 * @param {Node} node
-	 * @param {Node} sibling
-	 * @param {Node} parent
-	 */
-	function replace (node, sibling, parent) {
-		parent.replaceChild(node, sibling);
+	function remove (older, parent) {
+		parent.node.removeChild(older.node);
 	}
 	
 	/**
 	 * Clear Node
 	 *
-	 * @param {Node} node
+	 * @param {Tree} older
 	 */
-	function clear (node) {
-		node.textContent = null;
+	function clear (older) {
+		older.node.textContent = null;
 	}
 	
 	/**
-	 * Update Text Content
+	 * Update Text
 	 *
-	 * @param {Node} older
+	 * @param {Tree} older
 	 * @param {String|Number} value
 	 */
-	function content (node, value) {
-		node.nodeValue = value;
+	function content (older, value) {
+		older.node.nodeValue = value;
 	}
 	
 	/**
@@ -1837,6 +1825,7 @@
 	 */
 	function assign (type, name, value, xmlns, newer) {
 		var node = newer.node;
+	
 		switch (type) {
 			case 0: {
 				if (value !== null && value !== void 0 && value !== false) {
@@ -1878,19 +1867,6 @@
 				break;
 			}
 		}
-	}
-	
-	/**
-	 * Assign Unknown Attribute
-	 *
-	 * @param {String} name
-	 * @param {Any} value
-	 * @param {Node} node
-	 */
-	function set (name, value, node) {
-		try {
-			node[name] = value;
-		} catch (err) {}
 	}
 	
 	/**
@@ -1939,19 +1915,58 @@
 	}
 	
 	/**
-	 * Create Events
+	 * Assign Event
 	 *
 	 * @param {Tree} older
-	 * @param {String} name
-	 * @param {Function} handler
+	 * @param {String} type
+	 * @param {Function} value
 	 * @param {Tree} ancestor
+	 * @param {Number} action
 	 */
-	function event (older, name, handler, ancestor) {
-		older.node[name.toLowerCase()] = typeof handler !== 'function' ? null : (
-			ancestor !== null && ancestor.group > 1 ? function proxy (e) {
-				eventBoundary(ancestor.owner, handler, e);
-			} : handler
-		);
+	function event (older, type, value, ancestor, action) {
+		var name = type.toLowerCase().substring(2);
+		var node = older.node;
+		var listeners = node._listeners;
+	
+		if (listeners === void 0) {
+			listeners = node._listeners = {};
+		}
+	
+		switch (action) {
+			case 0: node.removeEventListener(name, proxy); break;
+			case 1: node.addEventListener(name, proxy);
+			case 2: {
+				if (ancestor !== null && ancestor.group > 1) {
+					node._owner = ancestor.owner;
+				}
+			}
+		}
+	
+		listeners[name] = value;
+	}
+	
+	/**
+	 * Proxy Event
+	 *
+	 * @param {Event} e
+	 */
+	function proxy (e) {
+		var type = e.type;
+		var listeners = this._listeners;
+		var fn = listeners[type];
+		var owner;
+	
+		if (fn === null || fn === void 0) {
+			return;
+		}
+	
+		owner = this._owner;
+	
+		if (owner !== void 0) {
+			eventBoundary(owner, fn, e);
+		} else {
+			fn.call(this, e);
+		}
 	}
 	
 	if (global.window !== void 0) {

@@ -141,13 +141,13 @@ function fragment (children) {
 }
 
 /**
- * Clone Tree
+ * Copy Tree
  *
  * @param  {Tree} older
  * @param  {Tree} newer
  * @param  {Boolean} deep
  */
-function clone (older, newer, deep) {
+function copy (older, newer, deep) {
 	older.flag = newer.flag;
 	older.tag = newer.tag;
 	older.node = newer.node;
@@ -178,7 +178,6 @@ function Tree (flag) {
 	this.key = null;
 	this.type = null;
 	this.node = null;
-	this.host = null;
 	this.group = 0;
 	this.async = 0;
 	this.props = object;
@@ -187,6 +186,7 @@ function Tree (flag) {
 	this.owner = null;
 	this.yield = null;
 	this.keyed = false;
+	this.parent = null;
 	this.children = array;
 }
 

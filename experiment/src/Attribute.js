@@ -56,7 +56,7 @@ function attribute (newer, ancestor, xmlns) {
 			} else if (type < 20) {
 				assign(type, name, value, xmlns, newer);
 			} else if (type > 20) {
-				event(newer, name, value, ancestor);
+				event(newer, name, value, ancestor, 1);
 			} else {
 				style(newer);
 			}
@@ -94,7 +94,7 @@ function attributes (older, newer, ancestor) {
 					if (type < 20) {
 						assign(type, name, next, xmlns, older);
 					} else if (type > 20) {
-						event(older, name, next, ancestor);
+						event(older, name, next, ancestor, 2);
 					} else {
 						styles(older, newer);
 					}
@@ -113,7 +113,7 @@ function attributes (older, newer, ancestor) {
 				if (type < 20) {
 					assign(type, name, next, xmlns, older);
 				} else if (type > 20) {
-					event(older, name, next, ancestor);
+					event(older, name, next, ancestor, 0);
 				}
 			}
 		}

@@ -21,15 +21,15 @@ function patch (older, _newer, _ancestor, group) {
 
 		newer = shape(renderBoundary(older, group), older, true);
 
-		if (newer.tag !== older.tag) {
-			return exchange(older, newer, older, false);
-		}
-
 		if (older.async === 2) {
 			return;
 		}
 
 		older.async = 0;
+
+		if (newer.tag !== older.tag) {
+			return exchange(older, newer, older, false);
+		}
 
 		if (group > 1) {
 			ancestor = older;
@@ -37,7 +37,7 @@ function patch (older, _newer, _ancestor, group) {
 	}
 
 	if (older.flag === 1) {
-		return content(older.node, older.children = newer.children);
+		return content(older, older.children = newer.children);
 	}
 
 	var newLength = newer.children.length;
@@ -46,12 +46,15 @@ function patch (older, _newer, _ancestor, group) {
 	if (oldLength === 0) {
 		// fill children
 		if (newLength !== 0) {
-			fill(older, newer, newLength, ancestor), older.children = newer.children;
+			fill(older, newer, newLength, ancestor);
+			older.children = newer.children;
 		}
 	} else if (newLength === 0) {
 		// empty children
 		if (oldLength !== 0) {
-			unmount(older, false), clear(older.node), older.children = newer.children;
+			unmount(older, false);
+			clear(older.node);
+			older.children = newer.children;
 		}
 	} else if (newer.keyed === true) {
 		keyed(older, newer, ancestor, oldLength, newLength);
@@ -82,7 +85,6 @@ function patch (older, _newer, _ancestor, group) {
  * @param  {Number} _newLength
  */
 function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
-	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
 	var oldLength = _oldLength;
@@ -95,23 +97,23 @@ function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
 			if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
 				mountBoundary(oldChild.owner, 2);
 			}
-			remove(oldChild.node, parent);
+			remove(oldChild, older);
 			unmount(oldChild, true);
 			oldLength--;
 		} else if (i >= oldLength) {
-			create(newChild = oldChildren[i] = newChildren[i], ancestor, 1, null, parent, null);
+			create(newChild = oldChildren[i] = newChildren[i], ancestor, older, empty, 1, null);
 			oldLength++;
 		} else {
 			newChild = newChildren[i];
 			oldChild = oldChildren[i];
 
 			if (newChild.flag === 1 && oldChild.flag === 1) {
-				content(oldChild.node, oldChild.children = newChild.children);
+				content(oldChild, oldChild.children = newChild.children);
 			} else if (newChild.type !== oldChild.type) {
 				if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
 					mountBoundary(oldChild.owner, 2);
 				}
-				change(oldChild, oldChildren[i] = newChild, parent, ancestor);
+				create(oldChildren[i] = newChild, ancestor, older, oldChild, 3, null);
 				unmount(oldChild, true);
 			} else {
 				patch(oldChild, newChild, ancestor, oldChild.group);
@@ -130,7 +132,6 @@ function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
  * @param {Number} newLength
  */
 function keyed (older, newer, ancestor, oldLength, newLength) {
- 	var parent = older.node;
  	var oldChildren = older.children;
  	var newChildren = newer.children;
  	var oldStart = 0;
@@ -142,7 +143,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  	var oldEndNode = oldChildren[oldEnd];
  	var newEndNode = newChildren[newEnd];
  	var nextPos;
- 	var nextNode;
+ 	var nextChild;
 
  	// step 1, sync leading [a, b ...], trailing [... c, d], opposites [a, b] [b, a] recursively
  	outer: while (true) {
@@ -178,7 +179,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		if (oldEndNode.key === newStartNode.key) {
  			newChildren[newStart] = oldEndNode;
  			oldChildren[oldEnd] = oldStartNode;
- 			move(oldEndNode.node, oldStartNode.node, parent);
+ 			move(oldEndNode, oldStartNode, older);
  			patch(oldEndNode, newStartNode, ancestor, oldEndNode.group);
 
  			oldEnd--;
@@ -196,9 +197,9 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			nextPos = newEnd + 1;
 
  			if (nextPos < newLength) {
- 				move(oldStartNode.node, oldChildren[nextPos].node, parent);
+ 				move(oldStartNode, oldChildren[nextPos], older);
  			} else {
- 				append(oldStartNode.node, parent);
+ 				append(oldStartNode, older);
  			}
 
  			patch(oldStartNode, newEndNode, ancestor, oldStartNode.group);
@@ -217,10 +218,10 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		// old children is synced, insert the difference
  		if (newStart <= newEnd) {
  			nextPos = newEnd + 1;
- 			nextNode = nextPos < newLength ? newChildren[nextPos].node : null;
+ 			nextChild = nextPos < newLength ? newChildren[nextPos] : empty;
 
  			do {
- 				create(newStartNode = newChildren[newStart++], ancestor, 2, null, parent, nextNode);
+ 				create(newStartNode = newChildren[newStart++], ancestor, older, nextChild, 2, null);
  			} while (newStart <= newEnd);
  		}
  	} else if (newStart > newEnd) {
@@ -230,17 +231,17 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			if (oldStartNode.group > 0 && oldStartNode.owner.componentWillUnmount !== void 0) {
  				mountBoundary(oldStartNode.owner, 2);
  			}
- 			remove(oldStartNode.node, parent);
+ 			remove(oldStartNode, older);
  			unmount(oldStartNode, true);
  		} while (oldStart <= oldEnd);
  	} else if (newStart === 0 && newEnd === newLength-1) {
  		// all children are out of sync, remove all, append new set
  		unmount(older, false);
- 		clear(parent);
+ 		clear(older);
  		fill(older, newer, newLength, ancestor);
  	} else {
  		// could sync all children, move on the the next phase
- 		complex(older, newer, ancestor, oldStart, newStart, oldEnd+1, newEnd+1, oldLength, newLength);
+ 		complex(older, newer, ancestor, oldStart, newStart, oldEnd + 1, newEnd + 1, oldLength, newLength);
  	}
  	older.children = newChildren;
 }
@@ -259,7 +260,6 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  * @param {number} newLength
  */
 function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
-	var parent = older.node;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
 	var oldKeys = {};
@@ -271,7 +271,6 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 	var oldChild;
 	var newChild;
 	var nextChild;
-	var nextNode;
 	var nextPos;
 
 	// step 1, build a map of keys
@@ -285,11 +284,13 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 			newKeys[newChild.key] = newIndex++;
 		}
 		if (oldIndex === oldEnd && newIndex === newEnd) {
-			oldIndex = oldStart;
-			newIndex = newStart;
 			break;
 		}
 	}
+
+	// reset
+	oldIndex = oldStart;
+	newIndex = newStart;
 
 	// step 2, insert and sync nodes from left to right [a, b, ...]
 	while (newIndex < newEnd) {
@@ -299,8 +300,8 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 		// new child doesn't exist in old children, insert
 		if (oldIndex === void 0) {
 			nextPos = newIndex - newOffset;
-			nextNode = nextPos < oldLength ? oldChildren[nextPos].node : null;
-			create(newChild, ancestor, 2, null, parent, nextNode);
+			nextChild = nextPos < oldLength ? oldChildren[nextPos] : empty;
+			create(newChild, ancestor, older, nextChild, 2, null);
 			newOffset++;
 		} else if (newIndex === oldIndex) {
 			oldChild = oldChildren[oldIndex];
@@ -322,7 +323,7 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 			if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
 				mountBoundary(oldChild.owner, 2);
 			}
-			remove(oldChild.node, parent);
+			remove(oldChild, older);
 			unmount(oldChild, true);
 			oldOffset++;
 		}
@@ -356,9 +357,9 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 
 				// within bounds
 				if ((nextPos = newIndex + 1) < newLength) {
-					move(oldChild.node, newChildren[nextPos].node, parent);
+					move(oldChild, newChildren[nextPos], older);
 				} else {
-					append(oldChild.node, parent);
+					append(oldChild, older);
 				}
 				patch(newChildren[newIndex] = oldChild, newChild, ancestor, oldChild.group);
 			}

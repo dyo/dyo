@@ -99,6 +99,8 @@ global.test = (name, body) => {
 	try {
 		body({end, ok, equal, deepEqual});
 	} catch (err) {
+		console.error('\x1b[31m', err, '\x1b[0m');
+
 		failed.push({
 			type: 'ERR',
 			msg: err

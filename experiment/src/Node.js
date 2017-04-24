@@ -179,7 +179,7 @@ function exchange (older, newer, ancestor, deep) {
 		mountBoundary(older.owner, 2);
 	}
 
-	clone(older, newer, deep);
+	copy(older, newer, deep);
 }
 
 /**
@@ -205,6 +205,7 @@ function unmount (older, release) {
 	}
 
 	if (release === true) {
+		older.parent = null;
 		older.owner = null;
 		older.node = null;
 	}
@@ -219,11 +220,10 @@ function unmount (older, release) {
  * @param {Tree} ancestor
  */
 function fill (older, newer, length, ancestor) {
-	var parent = older.node;
 	var children = newer.children;
 
 	for (var i = 0, child; i < length; i++) {
-		create(child = children[i], ancestor, 1, null, parent, null);
+		create(child = children[i], ancestor, older, empty, 1, null);
 	}
 	older.children = children;
 }
