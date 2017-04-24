@@ -8,7 +8,6 @@ const DOM = new JSDOM('');
 global.window = DOM.window;
 global.document = window.document;
 
-
 global.dio = require('../dist/dio');
 
 /**
