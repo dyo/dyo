@@ -142,35 +142,45 @@
 	/**
 	 * setState
 	 *
-	 * @param {Object} state
+	 * @param {Object} newer
 	 * @param {Function?} callback
 	 */
-	function setState (state, callback) {
+	function setState (newer, callback) {
 		var owner = this;
-		var newState;
-		var prevState;
 	
-		if (state === void 0 || state === null) {
+		if (newer === void 0 || newer === null) {
 			return;
 		}
-		mergeState(prevState = owner._state = {}, owner.state, true);
 	
-		if (typeof newState === 'function') {
-			newState = callbackBoundary(owner, newState, prevState, 0);
+		var state = owner.state;
 	
-			if (newState === void 0 || newState === null) {
+		if (typeof newer === 'function') {
+			newer = callbackBoundary(owner, newer, state, 0);
+	
+			if (newer === void 0 || newer === null) {
 				return;
 			}
 		}
 	
-		newState = owner._pending = state;
-	
-		if (newState.constructor === Promise) {
-			newState.then(function (value) {
+		if (newer.constructor === Promise) {
+			newer.then(function (value) {
 				owner.setState(value);
 			});
 		} else {
-			mergeState(owner.state, newState, false);
+			owner._pending = newer;
+	
+			var older = owner._state = {};
+	
+			// cache current state
+			for (var name in state) {
+				older[name] = state[name];
+			}
+	
+			// update current state
+			for (var name in newer) {
+				state[name] = newer[name];
+			}
+	
 			owner.forceUpdate(callback);
 		}
 	}
@@ -299,19 +309,6 @@
 		var obj = callbackBoundary(owner, fn, props, 0);
 		if (obj !== void 0 && obj !== null) {
 			Object.defineProperty(owner, type, {value: obj});
-		}
-	}
-	
-	/**
-	 * Merge State
-	 *
-	 * @param  {Object} state
-	 * @param  {Object} nextState
-	 * @return {Object}
-	 */
-	function mergeState (state, nextState) {
-		for (var name in nextState) {
-			state[name] = nextState[name];
 		}
 	}
 	
@@ -845,7 +842,7 @@
 	}
 	
 	/**
-	 * Attribute Identifier [Whitelist]
+	 * Attributes [Whitelist]
 	 *
 	 * @param  {String} name
 	 * @return {Number}
@@ -880,7 +877,7 @@
 	}
 	
 	/**
-	 * Create Attributes
+	 * Assign Attributes
 	 *
 	 * @param {Tree} newer
 	 * @param {Tree} ancestor
@@ -904,7 +901,7 @@
 				} else if (type > 20) {
 					event(newer, name, value, ancestor, 1);
 				} else {
-					style(newer);
+					style(newer, newer, 0);
 				}
 			}
 		}
@@ -960,7 +957,7 @@
 						} else if (type > 20) {
 							event(older, name, next, ancestor, 2);
 						} else {
-							styles(older, newer);
+							style(older, newer, 1);
 						}
 					}
 				}
@@ -971,7 +968,7 @@
 	}
 	
 	/**
-	 * Create Refs
+	 * Refs
 	 *
 	 * @param  {Function|String} value
 	 * @param  {Tree} ancestor
@@ -1702,7 +1699,7 @@
 	}
 	
 	/**
-	 * Create Node
+	 * Create
 	 *
 	 * @param  {Tree} newer
 	 * @param  {Tree?} _ancestor
@@ -1797,7 +1794,7 @@
 	}
 	
 	/**
-	 * Swap Node
+	 * Swap
 	 *
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
@@ -1808,7 +1805,7 @@
 	}
 	
 	/**
-	 * Move Node
+	 * Move
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} sibling
@@ -1819,7 +1816,7 @@
 	}
 	
 	/**
-	 * Append Node
+	 * Append
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} parent
@@ -1829,7 +1826,7 @@
 	}
 	
 	/**
-	 * Remove Node
+	 * Remove
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} parent
@@ -1839,7 +1836,7 @@
 	}
 	
 	/**
-	 * Clear Node
+	 * Clear
 	 *
 	 * @param {Tree} older
 	 */
@@ -1848,7 +1845,7 @@
 	}
 	
 	/**
-	 * Update Text
+	 * Text
 	 *
 	 * @param {Tree} older
 	 * @param {String|Number} value
@@ -1858,7 +1855,7 @@
 	}
 	
 	/**
-	 * Assign Attributes
+	 * Attribute
 	 *
 	 * @param {Number} type
 	 * @param {String} name
@@ -1913,52 +1910,56 @@
 	}
 	
 	/**
-	 * Assign Styles
-	 *
-	 * @param {Tree} newer
-	 */
-	function style (newer) {
-		var node = newer.node.style;
-		var next = newer.attrs.style;
-	
-		if (typeof next === 'string') {
-			node.cssText = next;
-		} else {
-			for (var name in next) {
-				if (name in node) {
-					node[name] = next[name];
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Update Styles
+	 * Style
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} newer
+	 * @param {Number} type
 	 */
-	function styles (older, newer) {
+	function style (older, newer, type) {
 		var node = older.node.style;
 		var next = newer.attrs.style;
-		var prev = older.attrs.style;
-		var value;
 	
-		if (typeof next === 'string') {
-			if (next !== prev) {
-				node.cssText = next;
-			}
-		} else {
-			for (var name in next) {
-				if ((value = next[name]) !== prev[name]) {
-					node[name] = value;
+		if (typeof next !== 'string') {
+			switch (type) {
+				// assign
+				case 0: {
+					for (var name in next) {
+						var value = next[name];
+	
+						if (name in node) {
+							node[name] = value;
+						} else {
+							node.setProperty(name, next[name]);
+						}
+					}
+					break;
+				}
+				// update
+				case 1: {
+					var prev = older.attrs.style;
+	
+					for (var name in next) {
+						var value = next[name];
+	
+						if (value !== prev[name]) {
+							if (name in node) {
+								node[name] = value;
+							} else {
+								node.setProperty(name, next[name]);
+							}
+						}
+					}
+					break;
 				}
 			}
+		} else {
+			node.cssText = next;
 		}
 	}
 	
 	/**
-	 * Assign Event
+	 * Event
 	 *
 	 * @param {Tree} older
 	 * @param {String} type
@@ -1997,7 +1998,7 @@
 	}
 	
 	/**
-	 * Proxy Event
+	 * Proxy
 	 *
 	 * @param {Event} e
 	 */

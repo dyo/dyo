@@ -1,5 +1,5 @@
 /**
- * Attribute Identifier [Whitelist]
+ * Attributes [Whitelist]
  *
  * @param  {String} name
  * @return {Number}
@@ -34,7 +34,7 @@ function attr (name) {
 }
 
 /**
- * Create Attributes
+ * Assign Attributes
  *
  * @param {Tree} newer
  * @param {Tree} ancestor
@@ -58,7 +58,7 @@ function attribute (newer, ancestor, xmlns) {
 			} else if (type > 20) {
 				event(newer, name, value, ancestor, 1);
 			} else {
-				style(newer);
+				style(newer, newer, 0);
 			}
 		}
 	}
@@ -114,7 +114,7 @@ function attributes (older, newer, ancestor) {
 					} else if (type > 20) {
 						event(older, name, next, ancestor, 2);
 					} else {
-						styles(older, newer);
+						style(older, newer, 1);
 					}
 				}
 			}
@@ -125,7 +125,7 @@ function attributes (older, newer, ancestor) {
 }
 
 /**
- * Create Refs
+ * Refs
  *
  * @param  {Function|String} value
  * @param  {Tree} ancestor

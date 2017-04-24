@@ -1,5 +1,5 @@
 /**
- * Create Node
+ * Create
  *
  * @param  {Tree} newer
  * @param  {Tree?} _ancestor
@@ -94,7 +94,7 @@ function create (older, _ancestor, parent, sibling, action, _xmlns) {
 }
 
 /**
- * Swap Node
+ * Swap
  *
  * @param  {Tree} older
  * @param  {Tree} newer
@@ -105,7 +105,7 @@ function swap (older, newer, ancestor) {
 }
 
 /**
- * Move Node
+ * Move
  *
  * @param {Tree} older
  * @param {Tree} sibling
@@ -116,7 +116,7 @@ function move (older, sibling, parent) {
 }
 
 /**
- * Append Node
+ * Append
  *
  * @param {Tree} older
  * @param {Tree} parent
@@ -126,7 +126,7 @@ function append (older, parent) {
 }
 
 /**
- * Remove Node
+ * Remove
  *
  * @param {Tree} older
  * @param {Tree} parent
@@ -136,7 +136,7 @@ function remove (older, parent) {
 }
 
 /**
- * Clear Node
+ * Clear
  *
  * @param {Tree} older
  */
@@ -145,7 +145,7 @@ function clear (older) {
 }
 
 /**
- * Update Text
+ * Text
  *
  * @param {Tree} older
  * @param {String|Number} value
@@ -155,7 +155,7 @@ function content (older, value) {
 }
 
 /**
- * Assign Attributes
+ * Attribute
  *
  * @param {Number} type
  * @param {String} name
@@ -210,52 +210,56 @@ function assign (type, name, value, xmlns, newer) {
 }
 
 /**
- * Assign Styles
- *
- * @param {Tree} newer
- */
-function style (newer) {
-	var node = newer.node.style;
-	var next = newer.attrs.style;
-
-	if (typeof next === 'string') {
-		node.cssText = next;
-	} else {
-		for (var name in next) {
-			if (name in node) {
-				node[name] = next[name];
-			}
-		}
-	}
-}
-
-/**
- * Update Styles
+ * Style
  *
  * @param {Tree} older
  * @param {Tree} newer
+ * @param {Number} type
  */
-function styles (older, newer) {
+function style (older, newer, type) {
 	var node = older.node.style;
 	var next = newer.attrs.style;
-	var prev = older.attrs.style;
-	var value;
 
-	if (typeof next === 'string') {
-		if (next !== prev) {
-			node.cssText = next;
-		}
-	} else {
-		for (var name in next) {
-			if ((value = next[name]) !== prev[name]) {
-				node[name] = value;
+	if (typeof next !== 'string') {
+		switch (type) {
+			// assign
+			case 0: {
+				for (var name in next) {
+					var value = next[name];
+
+					if (name in node) {
+						node[name] = value;
+					} else {
+						node.setProperty(name, next[name]);
+					}
+				}
+				break;
+			}
+			// update
+			case 1: {
+				var prev = older.attrs.style;
+
+				for (var name in next) {
+					var value = next[name];
+
+					if (value !== prev[name]) {
+						if (name in node) {
+							node[name] = value;
+						} else {
+							node.setProperty(name, next[name]);
+						}
+					}
+				}
+				break;
 			}
 		}
+	} else {
+		node.cssText = next;
 	}
 }
 
 /**
- * Assign Event
+ * Event
  *
  * @param {Tree} older
  * @param {String} type
@@ -294,7 +298,7 @@ function event (older, type, value, ancestor, action) {
 }
 
 /**
- * Proxy Event
+ * Proxy
  *
  * @param {Event} e
  */

@@ -30,7 +30,14 @@
 
 		class Block {
 			render(){
-				return h('p', 'The time is', h(Text, 'Additional Text', 1, [100, 200], h('div')))
+				return h('p', {style:
+						// 'color: green;'
+						{
+							'--foo': 'green',
+							color: 'var(--foo, red)'
+						}
+					},
+				 'The time is', h(Text, 'Additional Text', 1, [100, 200], h('div')))
 				// return h('p', 'The time is', h(Text, 'Additional Text'))
 			}
 		}
@@ -46,6 +53,7 @@
 
 		// console.log(children);
 
+		dio.render(Block)
 		dio.render(Block)
 	</script>
 </body>

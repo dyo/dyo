@@ -62,35 +62,45 @@ function extendClass (type, prototype) {
 /**
  * setState
  *
- * @param {Object} state
+ * @param {Object} newer
  * @param {Function?} callback
  */
-function setState (state, callback) {
+function setState (newer, callback) {
 	var owner = this;
-	var newState;
-	var prevState;
 
-	if (state === void 0 || state === null) {
+	if (newer === void 0 || newer === null) {
 		return;
 	}
-	mergeState(prevState = owner._state = {}, owner.state, true);
 
-	if (typeof newState === 'function') {
-		newState = callbackBoundary(owner, newState, prevState, 0);
+	var state = owner.state;
 
-		if (newState === void 0 || newState === null) {
+	if (typeof newer === 'function') {
+		newer = callbackBoundary(owner, newer, state, 0);
+
+		if (newer === void 0 || newer === null) {
 			return;
 		}
 	}
 
-	newState = owner._pending = state;
-
-	if (newState.constructor === Promise) {
-		newState.then(function (value) {
+	if (newer.constructor === Promise) {
+		newer.then(function (value) {
 			owner.setState(value);
 		});
 	} else {
-		mergeState(owner.state, newState, false);
+		owner._pending = newer;
+
+		var older = owner._state = {};
+
+		// cache current state
+		for (var name in state) {
+			older[name] = state[name];
+		}
+
+		// update current state
+		for (var name in newer) {
+			state[name] = newer[name];
+		}
+
 		owner.forceUpdate(callback);
 	}
 }
@@ -219,19 +229,6 @@ function getInitialStatic (owner, fn, type, props) {
 	var obj = callbackBoundary(owner, fn, props, 0);
 	if (obj !== void 0 && obj !== null) {
 		Object.defineProperty(owner, type, {value: obj});
-	}
-}
-
-/**
- * Merge State
- *
- * @param  {Object} state
- * @param  {Object} nextState
- * @return {Object}
- */
-function mergeState (state, nextState) {
-	for (var name in nextState) {
-		state[name] = nextState[name];
 	}
 }
 
