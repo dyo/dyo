@@ -84,7 +84,7 @@ function setState (newer, callback) {
 
 	if (newer.constructor === Promise) {
 		newer.then(function (value) {
-			owner.setState(value);
+			owner.setState(value, callback);
 		});
 	} else {
 		owner._pending = newer;
