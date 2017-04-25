@@ -63,6 +63,7 @@ section {
 a {
   color: #a00000;
   text-decoration: none;
+  word-wrap: break-word;
 }
 
 header nav a:hover {
