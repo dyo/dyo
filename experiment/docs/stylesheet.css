@@ -304,10 +304,10 @@ pre {
 
 table {
 	border-spacing: 0px;
-	overflow: auto;
 }
 
 th, td {
+	box-sizing: border-box;
 	font-size: 1em;
 	padding: 0.4em 2em 0.4em 0em;
 	text-align: left;
