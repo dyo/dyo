@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<title>DIO</title>
+	<link rel=stylesheet href=stylesheet.css>
+</head>
+<body>
+	<a href=./ title=index class=logo>
+		<img src=logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=./>Index</a>
+			<a href=./introduction.html>Introduction</a>
+			<a href=./api.html>API</a>
+			<a href=./examples.html>Examples</a>
+			<a href=https://github.com/thysultan/dio.js>Github</a>
+		</nav>
+	</header>
+	<article>
+		<h1>API</h1>
+
+		<p>DIO's API surface is small to a benefit, with a close resemblance to React.</p>
+
+		<h1>Components</h1>
+
+		<p>
+			Components can be either a <code>class</code> or a <code>function</code>, and though the class syntax can extend <code>dio.Component</code> DIO accepts plain classes alike.
+		</p>
+
+		<h2>Classes</h2>
+
+<pre><code>
+class Welcome {
+	render() {
+		return 'Welcome';
+	}
+}
+</code></pre>
+
+<pre><code>
+class Welcome extends dio.Component {
+	render() {
+		return 'Welcome';
+	}
+}
+</code></pre>
+
+<pre><code>
+function Welcome {}
+Welcome.prototype = {
+	render() {
+		return 'Welcome'
+	}
+}
+</code></pre>
+
+		<h2>Functions</h2>
+<pre><code>
+function Welcome () {
+	return 'Welcome'
+}
+</code></pre>
+
+<pre><code>
+function* Welcome () {
+	return 'Welcome'
+}
+</code></pre>
+
+		<h1>Lifecycle</h1>
+
+		<p>Both <code>function</code> and <code>class</code> components can make use of lifcycles with the exception of <code>`getInitialState`</code> that is reserved soley for <code>`class`</code> component which could be used to retrieve the initial state of a class component if required.</p>
+
+		<h2>Data</h2>
+
+<pre><code>
+class Welcome {
+	getInitialState() {}
+}
+</code></pre>
+
+		<p>
+			The default return value that <code>`getInitialState`</code> expects is an object representing the initial state of the component; However <code>`getInitialState`</code> also accepts a <code>`Promise`</code> when the data the component requires is network bound.
+		</p>
+
+		<h2>Mounting</h2>
+
+<pre><code>
+class Welcome {
+	componentWillMount() {}
+}
+</code></pre>
+
+<pre><code>
+class Welcome {
+	componentDidMount() {}
+}
+</code></pre>
+
+		<h2>Updating</h2>
+
+<pre><code>
+class Welcome {
+	componentWillReceiveProps() {}
+}
+</code></pre>
+
+<pre><code>
+class Welcome {
+	shouldComponentUpdate() {}
+}
+</code></pre>
+
+<pre><code>
+class Welcome {
+	componentWillUpdate() {}
+}
+</code></pre>
+
+<pre><code>
+class Welcome {
+	componentDidUpdate() {}
+}
+</code></pre>
+
+		<h2>Umounting</h2>
+
+<pre><code>
+class Welcome {
+	componentWillUnmount() {}
+}
+</code></pre>
+
+		<h1>setState</h1>
+
+		<p>When you want to update the component invoking the <code>`this.setState`</code> an Object representing how to update the state or a <code>`Promise`</code> that resolves to a similar Object.</p>
+
+		<p>In addition you could optionaly update the state by returning an Object/Promise from a lifcycle method or event handler.</p>
+		<h2>Data</h2>
+
+<pre><code>
+class Welcome {
+	getInitialState() {
+		return {n: 0}
+	}
+}
+</code></pre>
+
+		<h2>Lifecycle</h2>
+
+<pre><code>
+class Welcome {
+	componentDidMount() {
+		return {n: 0}
+	}
+}
+</code></pre>
+
+		<h2>Event</h2>
+
+<pre><code>
+class Welcome {
+	handleClick() {
+		return {n: 0}
+	}
+	render() {
+		h('button', {
+			onclick: this.handleClick
+		}, 'Click Me')
+	}
+}
+</code></pre>
+
+		<h2>Async</h2>
+
+<pre><code>
+class Welcome {
+	async getInitialState() {
+		return {n: 0}
+	}
+}
+</code></pre>
+
+		<h1>Render</h1>
+
+		<p>For the most part <code>`dio.render`</code> will be how you first invoke DIO. The first argument is the element you want to render and the second the root you want to mount to.</p>
+
+<pre><code>
+// defaults to &lt;body> or &lt;html>
+dio.render('Hello World')
+</code></pre>
+
+<pre><code>
+dio.render('Hello World', document.body)
+</code></pre>
+
+		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM but returns a shallow copy of the passed element. This can mostly be used for testing purposes.</p>
+
+<pre><code>
+dio.shallow('Hello World')
+</code></pre>
+
+		<h1>Version</h1>
+
+<pre><code>
+console.log(dio.version)
+</code></pre>
+
+		<h1>Other</h1>
+
+		<h2>Static PropTypes/defaultProps</h2>
+
+		<p>The following would resemble attaching the returned object to the <code>`Welcome` class</code>.</p>
+
+<pre><code>
+class Welcome {
+	static propTypes () {
+		return {
+			id: PropTypes.func.isRequired
+		}
+	}
+	static defaultProps () {
+		return {id: 1}
+	}
+	render () {
+
+	}
+}
+</code></pre>
+
+		<h2>Error Boundary</h2>
+
+		<p>All components are error safe; This means that if any error where to throw at any point in the components lifecycle DIO would catch it and pass it the <code>`componentDidThrow`</code> method if it exists which can in turn show an error view or try to manually recover from the errored state.</p>
+<pre><code>
+class Welcome {
+	componentDidThrow({location, message}) {
+		if (location === 'render') {
+			return h('h1', 'Error State');
+		}
+	}
+	render () {
+		throw '';
+	}
+}
+</code></pre>
+
+		<h2>Non-Deterministic</h2>
+
+		<p>By default rendering something is a deterministic operation, given the following children <code>`A - B - C - D`</code>, the path the flow would take would be</p>
+
+		<p class=math>A - B - C - D</p>
+
+		<p>But Non-Deterministic Introduces the aspect non-linear updates, where instead of <code>`A - B - C - D`</code> would could get an array of different update sequences. For example:</p>
+
+		<p class=math>C - D - A - B</p>
+
+		<p>This is possible because DIO can pause and resume and update to a specific component depending on how long we tell it to wait before following through.</p>
+
+<pre><code>
+class Foo {
+	render() {
+		return new Promise((resolve)=>{
+			setTimeout(()=>{
+				resolve(
+					h('h1',
+						'performance now - ',
+						performance.now()
+					)
+				);
+			}, Math.random()*1000);
+		})
+	}
+}
+</code></pre>
+
+		<h2>Coroutine</h2>
+
+		<p>In other words Javascript <code>`generators`</code>; The following example will continue to return a button and increment the <code>`supply`</code> variable whenever it is invoked for an update through a <code>`click`</code> of the button.</p>
+
+		<p>Though generators are not a well known feature of Javascript they do introduce interesting ways to model behaviour beyond normal functons.</p>
+
+<pre><code>
+class Coroutine {
+	*render(props, state) {
+		var supply = 0;
+		while (true) {
+			yield h('button', {
+				onclick: this.forceUpdate
+			}, 'Click Me - ', supply++);
+		}
+	}
+}
+</code></pre>
+</code></pre>
+	</article>
+	<script src=highlight.js></script>
+	<script>highlight();</script>
+</body>
+</html>

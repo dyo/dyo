@@ -148,10 +148,6 @@ function returnBoundary (state, owner, e, sync) {
 		return;
 	}
 
-	if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
-		e.preventDefault();
-	}
-
 	if (state !== false) {
 		if (sync === true) {
 			owner.setState(state);
@@ -159,6 +155,10 @@ function returnBoundary (state, owner, e, sync) {
 			requestIdleCallback(function () {
 				owner.setState(state);
 			});
+		}
+	} else {
+		if (e !== null && e.defaultPrevented !== true) {
+			e.preventDefault();
 		}
 	}
 }

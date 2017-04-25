@@ -729,10 +729,6 @@
 			return;
 		}
 	
-		if (e !== null && e.defaultPrevented !== true && e.allowDefault !== true) {
-			e.preventDefault();
-		}
-	
 		if (state !== false) {
 			if (sync === true) {
 				owner.setState(state);
@@ -740,6 +736,10 @@
 				requestIdleCallback(function () {
 					owner.setState(state);
 				});
+			}
+		} else {
+			if (e !== null && e.defaultPrevented !== true) {
+				e.preventDefault();
 			}
 		}
 	}
@@ -897,7 +897,9 @@
 				if (type === 30) {
 					refs(value, ancestor, newer, 0);
 				} else if (type < 20) {
-					assign(type, name, value, xmlns, newer);
+					if (value !== void 0 && value !== null) {
+						assign(type, name, value, xmlns, newer);
+					}
 				} else if (type > 20) {
 					event(newer, name, value, ancestor, 1);
 				} else {
@@ -2004,6 +2006,7 @@
 		var type = e.type;
 		var listeners = this._listeners;
 		var fn = listeners[type];
+		var node = this;
 		var owner;
 	
 		if (fn === null || fn === void 0) {
@@ -2015,7 +2018,7 @@
 		if (owner !== void 0) {
 			eventBoundary(owner, fn, e);
 		} else {
-			fn.call(this, e);
+			fn.call(node, e);
 		}
 	}
 	

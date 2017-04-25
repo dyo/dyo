@@ -304,6 +304,7 @@ function proxy (e) {
 	var type = e.type;
 	var listeners = this._listeners;
 	var fn = listeners[type];
+	var node = this;
 	var owner;
 
 	if (fn === null || fn === void 0) {
@@ -315,6 +316,6 @@ function proxy (e) {
 	if (owner !== void 0) {
 		eventBoundary(owner, fn, e);
 	} else {
-		fn.call(this, e);
+		fn.call(node, e);
 	}
 }

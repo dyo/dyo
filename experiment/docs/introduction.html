@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<title>DIO</title>
+	<link rel=stylesheet href=stylesheet.css>
+</head>
+<body>
+	<a href=./ title=index class=logo>
+		<img src=logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=./>Index</a>
+			<a href=./introduction.html>Introduction</a>
+			<a href=./api.html>API</a>
+			<a href=./examples.html>Examples</a>
+			<a href=https://github.com/thysultan/dio.js>Github</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Getting Started</h1>
+
+		<p>
+			The easiest way to get started with DIO is to use this <a href="#">Hello World Example</a> and follow along through the code snippets. The smallest example looks like this:
+		</p>
+
+<pre><code>
+dio.render(
+  h('h1', 'Hello, world!'),
+  document.getElementById('root')
+)</code>
+</pre>
+
+		<p>It renders a heading saying "Hello World" on the page.</p>
+
+		<p>The next few sections will gradually introduce you to the building blocks of an application; elements and components. Once you master them, you can create complex applications from small reusable parts.</p>
+
+		<h1>Installation</h1>
+
+		<p>DIO can be installed through any one of the following CDN's</p>
+
+		<ol>
+			<li><a href="https://cdnjs.cloudflare.com/ajax/libs/dio/7.0.0/dio.min.js">cdnjs.cloudflare.com/ajax/libs/dio/6.1.2/dio.min.js</a></li>
+			<li><a href="https://cdn.jsdelivr.net/dio/7.0.0/dio.min.js">cdn.jsdelivr.net/dio/6.1.2/dio.min.js</a></li>
+			<li><a href="https://unpkg.com/dio.js@7.0.0/dio.min.js">unpkg.com/dio.js@6.1.2/dio.min.js</a></li>
+		</ol>
+
+		<p>OR through NPM</p>
+<pre><code>
+`npm install dio.js --save`
+</code></pre>
+
+		<h1>Introducing Elements</h1>
+
+		<p>Elements are the smallest building blocks of an application.</p>
+		<p>An element describes what you want to see on the screen:</p>
+<pre><code>
+const element = h('h1', 'Hello World');
+</code></pre>
+		<p>
+			Virtual elements are plain objects, that are cheap to create and cheap to access. The underlining reconciler takes care of updating the DOM to match the virtual elements you create.
+		</p>
+		<p>
+			Elements are composed of three parts; type <label for="1"></label>,
+			<span class=note>
+				type represents the type of element that should be rendered.
+			</span>
+			props <label for="2"></label> and
+			<span class=note>
+				props represents the attributes associated with an element.
+			</span>
+			children <label for="3"></label>.
+			Each part describes a specific aspect of the element.
+			<span class=note>
+				children represents the children contained within the element.
+			</span>
+		</p>
+<pre><code>
+const element = h('h1', {class: 'red'}, 'Hello World')
+</code></pre>
+
+		<h1>Components</h1>
+
+		<p>Components let you split the UI into independent, reusable pieces, and think about each piece in isolation.</p>
+
+		<p>Conceptually, components are like JavaScript functions. They accept arbitrary inputs (called "props") and return virtual elements describing what should appear on the screen.</p>
+
+		<h2>Functions and Classes</h2>
+
+		<p>The simplest component is a Javascript function that accepts a single("props") argument.</p>
+<pre><code>
+function Welcome (props) {
+	return h('h1', 'Hello', props.name)
+}
+</code></pre>
+		<p>The second varient <label for=4></label>
+		<span class=note>
+			There is a third varient called coroutines resembling functions that <a href="#">API</a> sheds more detail about.
+		</span>
+		 of a component is a <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">ES6 class</a> that defines your component.</p>
+
+<pre><code>
+class Welcome {
+	render() {
+		return h('h1', 'Hello', this.props.name)
+	}
+}
+</code></pre>
+		<p>Function and ES6 class components are equivalent <label for="5"></label>,
+		<span class=note>
+			Including lifecycle methods.
+		</span>
+		 with the exception that class components can contain state.</p>
+
+		<h2>Rendering a Component</h2>
+
+<pre><code>
+function Welcome(props) {
+  return h('h1', props.name)
+}
+
+const element = h(Welcome, {name: 'World'})
+
+dio.render(
+  element,
+  document.getElementById('root')
+)
+</code></pre>
+
+		<p>Pseudo Code:</p>
+
+		<ol>
+			<li>DIO calls the <code>Welcome</code> component with <code>{name: 'World'}</code> as the props.</li>
+			<li>Our <code>Welcome</code> component returns a <code>&lt;h1>Hello, World&lt;/h1></code> element as the result.</li>
+			<li>The reconciler efficiently updates the DOM to match <code>&lt;h1>Hello, World&lt;/h1></code>.</li>
+		</ol>
+
+		<h1>Lifecycle</h1>
+
+		<p>With the introduction of components we cn now keep a closer trail of what actions our components are invoking over time, these trails are called lifecycle methods.</p>
+
+<pre><code>
+function Welcome () {
+	return h('h1', props.name)
+}
+Welcome.componentDidMount = () => console.log('didMount')
+</code></pre>
+
+		<p>The following table gives us a view into what these methods are and when they are invoked</p>
+
+		<hr>
+
+		<table>
+			<thead>
+				<tr>
+					<th>Lifecycle method</th>
+					<th>When it gets called</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>componentWillMount</code></td>
+					<td>before mounting</td>
+				</tr>
+				<tr>
+					<td><code>componentDidMount</code></td>
+					<td>after mounting</td>
+				</tr>
+				<tr>
+					<td><code>componentWillUnmount</code></td>
+					<td>prior to being removed</td>
+				</tr>
+				<tr>
+					<td><code>componentWillReceiveProps</code></td>
+					<td>before new props are received</td>
+				</tr>
+				<tr>
+					<td><code>shouldComponentUpdate</code></td>
+					<td>before the component is invoked</td>
+				</tr>
+				<tr>
+					<td><code>componentWillUpdate</code></td>
+					<td>after <code>shouldComponentUpdate</code></td>
+				</tr>
+				<tr>
+					<td><code>componentDidUpdate</code></td>
+					<td>after the component is invoked</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<h1>Events &amp; State</h1>
+
+		<p>Now that we know how to construct the building blocks of a view we can start to define views as a function of its state.</p>
+
+		<p class=math>V=f(s)</p>
+
+		<p>We can then add events to response to user behaviour.</p>
+
+<pre><code>
+class Input {
+	handleInput(props, state, event) {
+		const {target} = event
+		const {value} = target
+		return {value}
+	}
+	render() {
+		return [
+			h('input', {
+				type: 'text',
+				oninput: this.handleInput
+			}),
+			h('h1', this.state.value)
+		]
+	}
+}
+
+dio.render(h(Input), document.getElementById('root'))
+</code></pre>
+
+		<p>Pseudo Code:</p>
+
+		<ol>
+			<li>DIO calls the <code>Input</code> component with no props.</li>
+			<li>Our <code>Input</code> component returns a <code>`&lt;input>&lt;h1>&lt;/h1>`</code> element as the result.</li>
+			<li>DIO creates the Nodes and attaches the <code>oninput</code> event to <code>`&lt;input>`</code>.</li>
+			<li>User types something in our <code>`Input`</code> component.</li>
+			<li>Our <code>`Input`</code> component retrieves the user input and updates its state.</li>
+			<li>The reconciler efficiently updates the DOM to match the new state <code>&lt;input>&lt;h1>${value}&lt;/h1></code>.</li>
+		</ol>
+	</article>
+
+	<script src=highlight.js></script>
+	<script>highlight();</script>
+</body>
+</html>

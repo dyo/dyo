@@ -54,7 +54,9 @@ function attribute (newer, ancestor, xmlns) {
 			if (type === 30) {
 				refs(value, ancestor, newer, 0);
 			} else if (type < 20) {
-				assign(type, name, value, xmlns, newer);
+				if (value !== void 0 && value !== null) {
+					assign(type, name, value, xmlns, newer);
+				}
 			} else if (type > 20) {
 				event(newer, name, value, ancestor, 1);
 			} else {
