@@ -4,9 +4,18 @@
 	<script src="../dist/dio.js"></script>
 	<script>
 		class Input {
-			componentDidThrow({location}) {
-				console.log(location);
-				return h('h1', {style: 'color:red'}, 'Error State')
+			componentDidThrow () {
+				console.log('didThrow');
+				return h('h1', 'Error state');
+			}
+			componentWillMount(a) {
+				console.log('willMount');
+			}
+			componentDidMount(a) {
+				console.log('didMount');
+			}
+			componentWillUnmount(a) {
+				console.log('willUnmount');
 			}
 			handleInput(props, state, event) {
 				const {target} = event
@@ -14,30 +23,30 @@
 				return {value}
 			}
 			render() {
-				console.log(this.refs);
+				throw 'end';
 				return h('div',
 					h('input', {
 						type: 'text',
-						oninput: this.handleInput,
-						ref: (el) => {
-							throw el;
-						}
+						oninput: this.handleInput
 					}),
 					h('h1', this.state.value)
 				)
 			}
 		}
 
-		function Input2 () {
-			throw '';
-		}
-		Input2.componentDidThrow = ({location}) => {
-			console.log(location);
+		class App {
+			render () {
+				return Input
+			}
 		}
 
-		// dio.render(h(Input), document.getElementById('root'))
+		const root = document.getElementById('root');
 
-		dio.render(h('button', {onclick: (e)=>console.log(e)}, 'Click Me'))
+		dio.render(h(App), root);
+
+		// setTimeout(dio.render, 1000, null, root);
+
+		// dio.render(h('button', {onclick: (e)=>console.log(e)}, 'Click Me'))
 	</script>
 </body>
 </html>

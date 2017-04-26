@@ -1669,14 +1669,14 @@
 	}
 	
 	/**
-	 * DOM
+	 * Generate
 	 *
 	 * @param  {Tree} newer
 	 * @param  {Tree} host
 	 * @param  {String?} xmlns
 	 * @return {Node}
 	 */
-	function DOM (newer, host, xmlns) {
+	function generate (newer, host, xmlns) {
 		try {
 			if (xmlns === null) {
 				return document.createElement(newer.tag);
@@ -1703,7 +1703,7 @@
 		var xmlns = _xmlns;
 		var group = older.group;
 		var flag = older.flag;
-		var type = 0;
+		var type = 2;
 		var owner;
 		var node;
 		var children;
@@ -1716,42 +1716,28 @@
 	 	}
 	
 	 	if (group > 0) {
-	 		// every instance registers the last root component, children will use
-	 		// this when attaching events, to support boundless events
 	 		if (group > 1) {
 	 			host = older.host = older;
 	 		}
 	
 	 		newer = extract(older);
+	
 	 		flag = newer.flag;
 	 		owner = older.owner;
-	
-	 		if (owner.componentWillMount !== void 0) {
-	 			mountBoundary(owner, 0);
-	 		}
-	
-	 		if (newer.group === 0) {
-	 			type = 2;
-	 		} else {
-	 			create(newer, host, parent, sibling, action, xmlns);
-	 		}
-	 	} else {
-	 		type = 2;
-	
-	 		if (host !== null) {
-	 			older.host = host;
-	 		}
+	 	} else if (host !== null) {
+			older.host = host;
 	 	}
 	
 	 	if (type === 2) {
 	 		if (flag === 1) {
 	 			node = older.node = document.createTextNode((type = 1, older.children));
 	 		} else {
-	 			node = DOM(older, host, xmlns);
+	 			node = generate(older, host, xmlns);
 	
 	 			if (older.flag === 3) {
 	 				create(node, host, older, sibling, action, xmlns);
 	 				copy(older, node, false);
+	
 	 				type = 0;
 	 			} else {
 	 				older.node = node;
@@ -1771,7 +1757,11 @@
 	 		}
 	 	}
 	
-	 	if (type !== 0) {
+	 	if (type > 0) {
+	 		if (group > 0 && owner.componentWillMount !== void 0) {
+	 			mountBoundary(owner, 0);
+	 		}
+	
 	 		older.parent = parent;
 	
 	 		switch (action) {
@@ -1779,13 +1769,14 @@
 	 			case 2: parent.node.insertBefore(node, sibling.node); break;
 	 			case 3: parent.node.replaceChild(node, sibling.node); break;
 	 		}
+	
 	 		if (type !== 1) {
 	 			attribute(older, xmlns);
 	 		}
-	 	}
 	
-	 	if (group > 0 && owner.componentDidMount !== void 0) {
-	 		mountBoundary(owner, 1);
+	 		if (group > 0 && owner.componentDidMount !== void 0) {
+	 			mountBoundary(owner, 1);
+	 		}
 	 	}
 	}
 	
