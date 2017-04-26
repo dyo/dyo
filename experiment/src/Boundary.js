@@ -48,8 +48,7 @@ function updateBoundary (owner, type, props, state) {
 function renderBoundary (older, group) {
 	try {
 		if (older.yield !== null) {
-				return older.yield();
-			}
+			return older.yield();
 		}
 		switch (group) {
 			case 1: return older.type(older.props);
