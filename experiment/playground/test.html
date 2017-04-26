@@ -4,23 +4,40 @@
 	<script src="../dist/dio.js"></script>
 	<script>
 		class Input {
+			componentDidThrow({location}) {
+				console.log(location);
+				return h('h1', {style: 'color:red'}, 'Error State')
+			}
 			handleInput(props, state, event) {
 				const {target} = event
 				const {value} = target
 				return {value}
 			}
 			render() {
+				console.log(this.refs);
 				return h('div',
 					h('input', {
 						type: 'text',
-						oninput: this.handleInput
+						oninput: this.handleInput,
+						ref: (el) => {
+							throw el;
+						}
 					}),
 					h('h1', this.state.value)
 				)
 			}
 		}
 
-		dio.render(h(Input), document.getElementById('root'))
+		function Input2 () {
+			throw '';
+		}
+		Input2.componentDidThrow = ({location}) => {
+			console.log(location);
+		}
+
+		// dio.render(h(Input), document.getElementById('root'))
+
+		dio.render(h('button', {onclick: (e)=>console.log(e)}, 'Click Me'))
 	</script>
 </body>
 </html>

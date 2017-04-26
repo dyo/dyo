@@ -125,7 +125,7 @@ function forceUpdate (callback) {
 		return;
 	}
 
-	patch(older, older, older, 3);
+	patch(older, older, 3);
 
 	if (callback !== void 0 && typeof callback === 'function') {
 		callbackBoundary(owner, callback, owner.state, 1);

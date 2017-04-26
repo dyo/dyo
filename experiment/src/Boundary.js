@@ -63,27 +63,6 @@ function renderBoundary (older, group) {
 }
 
 /**
- * Node Boundary
- *
- * @param  {Number} flag
- * @param  {Tree} newer
- * @param  {String?} xmlns
- * @param  {Tree} ancestor
- * @return {Node}
- */
-function nodeBoundary (flag, newer, ancestor, xmlns) {
-	try {
-		if (xmlns === null) {
-			return document.createElement(newer.tag);
-		} else {
-			return document.createElementNS(newer.xmlns === xmlns, newer.tag);
-		}
-	} catch (err) {
-		return errorBoundary(err, ancestor.owner, newer.flag = 3, typeof ancestor.owner === 'function' ? 2 : 1);
-	}
-}
-
-/**
  * Mount Boundary
  *
  * @param {Component} owner
@@ -177,6 +156,8 @@ function errorBoundary (message, owner, type, from) {
 	var location;
 	var newer;
 
+	console.log(type);
+
 	try {
 		location = errorLocation(type, from) || component;
 
@@ -226,10 +207,7 @@ function errorLocation (type, from) {
 			break;
 		}
 		case 3: {
-			switch (from) {
-				case 1: return 'render';
-				case 2: return 'function';
-			}
+			return 'render';
 			break;
 		}
 		case 4: {
@@ -241,7 +219,7 @@ function errorLocation (type, from) {
 			break;
 		}
 		case 5: {
-			return 'render';
+			return 'event';
 		}
 	}
 }
@@ -255,7 +233,7 @@ function errorLocation (type, from) {
  */
 function errorMessage (component, location, message) {
 	console.error(
-		message+'\n\n  ^^ Error caught in Component '+'"'+component+'"'+
+		message+'\n\n  ^^ Error caught in '+'"'+component+'"'+
 		' from "'+location+'" \n'
 	);
 }

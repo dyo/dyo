@@ -41,6 +41,7 @@ var empty = new Tree(2);
  * group: node ground {Number}
  * async: node work state {Number} 0: ready, 1:blocked, 2:pending
  * yield: coroutine {Function?}
+ * host: host component
  */
 
 /**

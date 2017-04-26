@@ -33,6 +33,7 @@ function extract (older) {
 
 	if (group > 1) {
 		UUID = (proto = type.prototype).UUID;
+
 		if (UUID === 2) {
 			owner = new type(props);
 		} else {
@@ -107,6 +108,34 @@ function shape (value, older, abstract) {
 }
 
 /**
+ * Resolve Tree
+ *
+ * @param {Tree} older
+ * @param {Promise} pending
+ */
+function resolve (older, pending) {
+	older.async = 2;
+
+	pending.then(function (value) {
+		var newer = value;
+		if (older.node === null) {
+			return;
+		}
+
+		older.async = 0;
+		newer = shape(newer, older, true);
+
+		if (older.tag !== newer.tag) {
+			exchange(older, newer, older, false);
+		} else {
+			patch(older, newer, 0);
+		}
+	});
+
+	return older.node !== null ? older : text('');;
+}
+
+/**
  * Create Coroutine
  *
  * @param  {Tree} older
@@ -133,43 +162,14 @@ function coroutine (older, generator) {
 }
 
 /**
- * Resolve Tree
- *
- * @param {Tree} older
- * @param {Promise} pending
- */
-function resolve (older, pending) {
-	older.async = 2;
-
-	pending.then(function (value) {
-		var newer = value;
-		if (older.node === null) {
-			return;
-		}
-
-		older.async = 0;
-		newer = shape(newer, older, true);
-
-		if (older.tag !== newer.tag) {
-			exchange(older, newer, older, false);
-		} else {
-			patch(older, newer, older, 0);
-		}
-	});
-
-	return older.node !== null ? older : text('');;
-}
-
-/**
  * Exchange Tree
  *
  * @param {Tree} newer
  * @param {Tree} older
- * @param {Tree} ancestor
  * @param {Boolean} deep
  */
-function exchange (older, newer, ancestor, deep) {
-	swap(older, newer, ancestor);
+function exchange (older, newer, deep) {
+	swap(older, newer, older.host);
 
 	if (older.flag !== 1 && older.children.length > 0) {
 		unmount(older, false);
@@ -208,6 +208,7 @@ function unmount (older, release) {
 		older.parent = null;
 		older.owner = null;
 		older.node = null;
+		older.host = null;
 	}
 }
 
@@ -217,13 +218,13 @@ function unmount (older, release) {
  * @param {Tree} older
  * @param {Tree} newer
  * @param {Number} length
- * @param {Tree} ancestor
  */
-function fill (older, newer, length, ancestor) {
+function fill (older, newer, length) {
 	var children = newer.children;
+	var host = older.host;
 
 	for (var i = 0, child; i < length; i++) {
-		create(child = children[i], ancestor, older, empty, 1, null);
+		create(child = children[i], host, older, empty, 1, null);
 	}
 	older.children = children;
 }

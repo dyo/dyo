@@ -122,17 +122,18 @@ class Welcome {
 			Refs are either functions of strings that provide access to the underlining DOM node; While <code>string</code>
 			<label for=4></label>
 			<span class="note">String refs are only usefull on <code>class</code> based components.</span>
-			refs are only extracted after mounting <code>function</code><label for=5></label>
-			<span class="note">Function refs can also return or call <code>`this.setState`</code> to update the components state.</span>
-			refs are also executed when updating.</p>
+			refs are can be dynamic, <code>function</code>
+			refs can also return or call <code>`this.setState`</code> to update the component.</p>
 
 <pre><code>
 class Welcome {
-	retrieveDOM(element) {
-		console.log(element.getBoundingClientRect())
+	retrieveDOM(el) {
+		console.log(el.getBoundingClientRect())
 	}
 	render() {
-		return h('h1', {ref: this.retrieveDOM}, 'Welcome')
+		return h('h1', {
+			ref: this.retrieveDOM
+		}, 'Welcome')
 	}
 }
 </code></pre>
@@ -233,7 +234,7 @@ class Welcome {
 		<h1>Render</h1>
 
 		<p>
-		For the most part <code>`dio.render`</code> will be how you first invoke DIO. The first argument is the element you want to render and the second the root you want to mount <label for="6"></label> to.
+		For the most part <code>`dio.render`</code> will be how you first invoke DIO. The first argument is the element you want to render and the second the root you want to mount <label for=5></label> to.
 		<span class="note">Defaulting to <code>&lt;body></code> or <code>&lt;html></code> if not provided.</span>
 		</p>
 
@@ -300,25 +301,32 @@ class Welcome {
 
 		<ol>
 			<li>We create a components that intentionally throws in the render phase.</li>
-			<li>DIO catches this and passes a <code>`componentDidThrow`</code> method if it exists.</li>
+			<li>DIO catches this and passes it to the <code>`componentDidThrow`</code> method if it exists.</li>
 			<li>Our <code>`componentDidThrow`</code> method detects if the error comes from <code>`render`</code> and responds with an error state.</li>
 		</ol>
 
-		<p>On the other hand if ther error happend in the update phase and we did not try to handle it DIO will simply resolve to the last rendered state.</p>
+		<p>On the other hand if the error happend in the update phase and we did not try to handle it DIO will simply resolve to the last rendered state.</p>
 
 		<h2>Non-Deterministic</h2>
 
-		<p>By default rendering something is a deterministic operation, given the following children <code>`A - B - C - D`</code> the path the flow would take would be</p>
+		<p>
+			By default rendering something is a deterministic <label for=6></label><span class=note><a href=https://en.wikipedia.org/wiki/Deterministic_system>Deterministic systems.</a></span> operation,
+			given the following children <code>`[A, B, C, D]`</code> the path the flow would take would be.
+		</p>
 
 		<p class=math>A &#x2192; B &#x2192; C &#x2192; D</p>
 
-		<p>But non-deterministic introduces the aspect of non-linear updates, where instead of <code>`A &#x2192; B &#x2192; C &#x2192; D`</code> you could get an array of different update sequences. For example:</p>
+		<p>
+			But non-deterministic <label for=7></label>
+			<span class=note><a href=https://en.wikipedia.org/wiki/Nondeterministic_algorithm>Non-deterministic systems.</a></span>
+			introduces the aspect of non-linear updates, where instead of <code>`A &#x2192; B &#x2192; C &#x2192; D`</code> you could get an array of different update sequences; For example:
+		</p>
 
 		<p class=math>C &#x2192; D &#x2192; A &#x2192; B</p>
 
 		<p>This is possible because DIO can pause and resume an update to a specific component depending on how long we tell it to wait before following through.</p>
 
-		<p>The in the following example we wait for a random time before resolving the return value of a render</p>
+		<p>In the example that follows we wait for a random time before resolving the return value of a render.</p>
 
 <pre><code>
 class Welcome {
@@ -337,13 +345,13 @@ class Welcome {
 }
 </code></pre>
 
-		<p>Put multiple instances of this component in a list and everytime we call to update the list it should update in a random order evertime.</p>
+		<p>If you where to put multiple instances of this component in a list, everytime we call to update the list it should update in a random order between updates.</p>
 
 		<h2>Coroutine</h2>
 
-		<p>In other words Javascript <code>`generators`</code>; The following example will continue to return a button and increment the <code>`supply`</code> variable whenever it is invoked for an update through a <code>`click`</code> of the button.</p>
+		<p>In other words Javascript <code>`generators`</code><label for=8></label><span class="note"><a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators>Iterators and generators</a></span>; The example that follows will continue to return a button and increment the <code>`supply`</code> variable whenever an update is invoked through a <code>`click`</code> of the button element.</p>
 
-		<p>Though generators are not a well known feature of Javascript they do introduce interesting ways to model behaviour beyond normal functons.</p>
+		<p>Though generators are not a well known/used feature in Javascript they do introduce interesting ways to model behaviour beyond normal functons.</p>
 
 <pre><code>
 class Coroutine {

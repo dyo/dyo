@@ -37,10 +37,9 @@ function attr (name) {
  * Assign Attributes
  *
  * @param {Tree} newer
- * @param {Tree} ancestor
  * @param {String?} xmlns
  */
-function attribute (newer, ancestor, xmlns) {
+function attribute (newer, xmlns) {
 	var attrs = newer.attrs;
 	var type = 0;
 	var value;
@@ -52,13 +51,13 @@ function attribute (newer, ancestor, xmlns) {
 			value = attrs[name];
 
 			if (type === 30) {
-				refs(value, ancestor, newer, 0);
+				refs(value, newer, 0);
 			} else if (type < 20) {
 				if (value !== void 0 && value !== null) {
 					assign(type, name, value, xmlns, newer);
 				}
 			} else if (type > 20) {
-				event(newer, name, value, ancestor, 1);
+				event(newer, name, value, 1);
 			} else {
 				style(newer, newer, 0);
 			}
@@ -71,9 +70,8 @@ function attribute (newer, ancestor, xmlns) {
  *
  * @param {Tree} newer
  * @param {Tree} older
- * @param {Tree} ancestor
  */
-function attributes (older, newer, ancestor) {
+function attributes (older, newer) {
 	var old = older.attrs;
 	var attrs = newer.attrs;
 	var xmlns = older.xmlns;
@@ -92,7 +90,7 @@ function attributes (older, newer, ancestor) {
 				if (type < 20) {
 					assign(type, name, next, xmlns, older);
 				} else if (type > 20) {
-					event(older, name, next, ancestor, 0);
+					event(older, name, next, 0);
 				}
 			}
 		}
@@ -106,7 +104,7 @@ function attributes (older, newer, ancestor) {
 			next = attrs[name];
 
 			if (type === 30) {
-				refs(next, ancestor, older, 2);
+				refs(next, older, 2);
 			} else {
 				prev = old[name];
 
@@ -114,7 +112,7 @@ function attributes (older, newer, ancestor) {
 					if (type < 20) {
 						assign(type, name, next, xmlns, older);
 					} else if (type > 20) {
-						event(older, name, next, ancestor, 2);
+						event(older, name, next, 2);
 					} else {
 						style(older, newer, 1);
 					}
@@ -130,19 +128,20 @@ function attributes (older, newer, ancestor) {
  * Refs
  *
  * @param  {Function|String} value
- * @param  {Tree} ancestor
  * @param  {Tree} older
  * @param  {Number} type
  */
-function refs (value, ancestor, older, type) {
-	var stateful;
+function refs (value, older, type) {
+	var host = older.host;
+	var stateful = false;
 	var owner;
 
-	if (ancestor !== null) {
-		if ((owner = ancestor.owner) !== null && ancestor.group > 1) {
+	if (host !== null) {
+		if ((owner = host.owner) !== null && host.group > 1) {
 			stateful = true;
 		}
 	}
+
 	if (stateful === true && owner.refs === null) {
 		owner.refs = {};
 	}
@@ -153,7 +152,7 @@ function refs (value, ancestor, older, type) {
 			break;
 		}
 		case 'string': {
-			if (stateful === true && type === 0) {
+			if (stateful === true) {
 				owner.refs[value] = older.node;
 			}
 			break;

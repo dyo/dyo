@@ -1,15 +1,35 @@
 /**
+ * DOM
+ *
+ * @param  {Tree} newer
+ * @param  {Tree} host
+ * @param  {String?} xmlns
+ * @return {Node}
+ */
+function DOM (newer, host, xmlns) {
+	try {
+		if (xmlns === null) {
+			return document.createElement(newer.tag);
+		} else {
+			return document.createElementNS(newer.xmlns === xmlns, newer.tag);
+		}
+	} catch (err) {
+		return errorBoundary(err, host.owner, newer.flag = 3, 0);
+	}
+}
+
+/**
  * Create
  *
  * @param  {Tree} newer
- * @param  {Tree?} _ancestor
+ * @param  {Tree?} _host
  * @param  {Tree} parent
  * @param  {Tree} sibling
  * @param  {Number} action
  * @param  {String?} _xmlns
  */
-function create (older, _ancestor, parent, sibling, action, _xmlns) {
-	var ancestor = _ancestor;
+function create (older, _host, parent, sibling, action, _xmlns) {
+	var host = _host;
 	var xmlns = _xmlns;
 	var group = older.group;
 	var flag = older.flag;
@@ -29,7 +49,7 @@ function create (older, _ancestor, parent, sibling, action, _xmlns) {
  		// every instance registers the last root component, children will use
  		// this when attaching events, to support boundless events
  		if (group > 1) {
- 			ancestor = older;
+ 			host = older.host = older;
  		}
 
  		newer = extract(older);
@@ -39,23 +59,28 @@ function create (older, _ancestor, parent, sibling, action, _xmlns) {
  		if (owner.componentWillMount !== void 0) {
  			mountBoundary(owner, 0);
  		}
+
  		if (newer.group === 0) {
  			type = 2;
  		} else {
- 			create(newer, ancestor, parent, sibling, action, xmlns);
+ 			create(newer, host, parent, sibling, action, xmlns);
  		}
  	} else {
  		type = 2;
+
+ 		if (host !== null) {
+ 			older.host = host;
+ 		}
  	}
 
  	if (type === 2) {
  		if (flag === 1) {
  			node = older.node = document.createTextNode((type = 1, older.children));
  		} else {
- 			node = nodeBoundary(flag, older, ancestor, xmlns);
+ 			node = DOM(older, host, xmlns);
 
  			if (older.flag === 3) {
- 				create(node, ancestor, older, sibling, action, xmlns);
+ 				create(node, host, older, sibling, action, xmlns);
  				copy(older, node, false);
  				type = 0;
  			} else {
@@ -69,7 +94,7 @@ function create (older, _ancestor, parent, sibling, action, _xmlns) {
  						if ((child = children[i]).node !== null) {
  							copy(child = children[i] = new Tree(child.flag), child, false);
  						}
- 						create(child, ancestor, older, sibling, 1, xmlns);
+ 						create(child, host, older, sibling, 1, xmlns);
  					}
  				}
  			}
@@ -78,13 +103,14 @@ function create (older, _ancestor, parent, sibling, action, _xmlns) {
 
  	if (type !== 0) {
  		older.parent = parent;
+
  		switch (action) {
  			case 1: parent.node.appendChild(node); break;
  			case 2: parent.node.insertBefore(node, sibling.node); break;
  			case 3: parent.node.replaceChild(node, sibling.node); break;
  		}
  		if (type !== 1) {
- 			attribute(older, ancestor, xmlns);
+ 			attribute(older, xmlns);
  		}
  	}
 
@@ -98,10 +124,9 @@ function create (older, _ancestor, parent, sibling, action, _xmlns) {
  *
  * @param  {Tree} older
  * @param  {Tree} newer
- * @param  {Tree} ancestor
  */
-function swap (older, newer, ancestor) {
-	create(newer, ancestor, older.parent, older, 3, null);
+function swap (older, newer) {
+	create(newer, older.host, older.parent, older, 3, null);
 }
 
 /**
@@ -262,21 +287,22 @@ function style (older, newer, type) {
  * @param {Tree} older
  * @param {String} type
  * @param {Function} value
- * @param {Tree} ancestor
  * @param {Number} action
  */
-function event (older, type, value, ancestor, action) {
+function event (older, type, value, action) {
 	var name = type.toLowerCase().substring(2);
+	var host = older.host;
 	var node = older.node;
-	var listeners = node._listeners;
+	var fns = node._fns;
 
-	if (listeners === void 0) {
-		listeners = node._listeners = {};
+	if (fns === void 0) {
+		fns = node._fns = {};
 	}
 
 	switch (action) {
 		case 0: {
 			node.removeEventListener(name, proxy);
+
 			if (node._owner !== void 0) {
 				node._owner = null;
 			}
@@ -286,13 +312,13 @@ function event (older, type, value, ancestor, action) {
 			node.addEventListener(name, proxy);
 		}
 		case 2: {
-			if (ancestor !== null && ancestor.group > 1) {
-				node._owner = ancestor.owner;
+			if (host !== null && host.group > 1) {
+				node._owner = host.owner;
 			}
 		}
 	}
 
-	listeners[name] = value;
+	fns[name] = value;
 }
 
 /**
@@ -302,20 +328,18 @@ function event (older, type, value, ancestor, action) {
  */
 function proxy (e) {
 	var type = e.type;
-	var listeners = this._listeners;
-	var fn = listeners[type];
-	var node = this;
-	var owner;
+	var fns = this._fns;
+	var fn = fns[type];
 
 	if (fn === null || fn === void 0) {
 		return;
 	}
 
-	owner = this._owner;
+	var owner = this._owner;
 
 	if (owner !== void 0) {
 		eventBoundary(owner, fn, e);
 	} else {
-		fn.call(node, e);
+		fn.call(this, e);
 	}
 }

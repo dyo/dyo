@@ -1,5 +1,5 @@
 /**
- * Render Tree
+ * Render
  *
  * @param  {Tree} _newer
  * @param  {Node} _target
@@ -52,7 +52,7 @@ function render (_newer, _target) {
 
 	if ((older = target._older) !== void 0) {
 		if (older.key === newer.key && older.type === newer.type) {
-			patch(older, newer, older, older.group);
+			patch(older, newer, older.group);
 		} else {
 			exchange(older, newer, newer, true);
 		}

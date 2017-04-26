@@ -1,17 +1,15 @@
 /**
- * Patch Tree
+ * Patch
  *
  * @param {Tree} older
  * @param {Tree} newer
- * @param {Tree} _ancestor
  * @param {Number} group
  */
-function patch (older, _newer, _ancestor, group) {
-	var ancestor = _ancestor;
+function patch (older, _newer, group) {
 	var newer = _newer;
 
 	if (older.type !== newer.type) {
-		return exchange(older, newer, ancestor, true);
+		return exchange(older, newer, true);
 	}
 
 	if (group > 0) {
@@ -28,11 +26,7 @@ function patch (older, _newer, _ancestor, group) {
 		older.async = 0;
 
 		if (newer.tag !== older.tag) {
-			return exchange(older, newer, older, false);
-		}
-
-		if (group > 1) {
-			ancestor = older;
+			return exchange(older, newer, false);
 		}
 	}
 
@@ -46,7 +40,7 @@ function patch (older, _newer, _ancestor, group) {
 	if (oldLength === 0) {
 		// fill children
 		if (newLength !== 0) {
-			fill(older, newer, newLength, ancestor);
+			fill(older, newer, newLength);
 			older.children = newer.children;
 		}
 	} else if (newLength === 0) {
@@ -57,12 +51,12 @@ function patch (older, _newer, _ancestor, group) {
 			older.children = newer.children;
 		}
 	} else if (newer.keyed === true) {
-		keyed(older, newer, ancestor, oldLength, newLength);
+		keyed(older, newer, oldLength, newLength);
 	} else {
-		nonkeyed(older, newer, ancestor, oldLength, newLength);
+		nonkeyed(older, newer, oldLength, newLength);
 	}
 
-	attributes(older, newer, ancestor);
+	attributes(older, newer);
 
 	if (group > 0) {
 		var owner = older.owner;
@@ -76,32 +70,30 @@ function patch (older, _newer, _ancestor, group) {
 }
 
 /**
- * Reconcile Non-Keyed Children
+ * Non-Keyed Children [Simple]
  *
  * @param  {Tree} older
  * @param  {Tree} newer
- * @param  {Tree} ancestor
  * @param  {Number} _oldLength
- * @param  {Number} _newLength
+ * @param  {Number} newLength
  */
-function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
+function nonkeyed (older, newer, _oldLength, newLength) {
+	var host = older.host;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
 	var oldLength = _oldLength;
-	var newLength = _newLength;
 	var length = newLength > oldLength ? newLength : oldLength;
 
 	for (var i = 0, newChild, oldChild; i < length; i++) {
 		if (i >= newLength) {
-			oldChild = oldChildren.pop();
-			if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
+			if ((oldChild = oldChildren.pop()).group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
 				mountBoundary(oldChild.owner, 2);
 			}
 			remove(oldChild, older);
 			unmount(oldChild, true);
 			oldLength--;
 		} else if (i >= oldLength) {
-			create(newChild = oldChildren[i] = newChildren[i], ancestor, older, empty, 1, null);
+			create(newChild = oldChildren[i] = newChildren[i], host, older, empty, 1, null);
 			oldLength++;
 		} else {
 			newChild = newChildren[i];
@@ -113,25 +105,25 @@ function nonkeyed (older, newer, ancestor, _oldLength, _newLength) {
 				if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
 					mountBoundary(oldChild.owner, 2);
 				}
-				create(oldChildren[i] = newChild, ancestor, older, oldChild, 3, null);
+				create(oldChildren[i] = newChild, host, older, oldChild, 3, null);
 				unmount(oldChild, true);
 			} else {
-				patch(oldChild, newChild, ancestor, oldChild.group);
+				patch(oldChild, newChild, oldChild.group);
 			}
 		}
 	}
 }
 
 /**
- * Reconcile Keyed Children [Simple]
+ * Keyed Children [Simple]
  *
  * @param {Tree} older
  * @param {Tree} newer
- * @param {Tree} ancestor
  * @param {Number} oldLength
  * @param {Number} newLength
  */
-function keyed (older, newer, ancestor, oldLength, newLength) {
+function keyed (older, newer, oldLength, newLength) {
+	var host = older.host;
  	var oldChildren = older.children;
  	var newChildren = newer.children;
  	var oldStart = 0;
@@ -150,7 +142,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		// sync leading nodes
  		while (oldStartNode.key === newStartNode.key) {
  			newChildren[newStart] = oldStartNode;
- 			patch(oldStartNode, newStartNode, ancestor, oldStartNode.group);
+ 			patch(oldStartNode, newStartNode, oldStartNode.group);
 
  			oldStart++;
  			newStart++;
@@ -164,7 +156,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		// sync trailing nodes
  		while (oldEndNode.key === newEndNode.key) {
  			newChildren[newEnd] = oldEndNode;
- 			patch(oldEndNode, newEndNode, ancestor, oldEndNode.group);
+ 			patch(oldEndNode, newEndNode, oldEndNode.group);
 
  			oldEnd--;
  			newEnd--;
@@ -180,7 +172,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			newChildren[newStart] = oldEndNode;
  			oldChildren[oldEnd] = oldStartNode;
  			move(oldEndNode, oldStartNode, older);
- 			patch(oldEndNode, newStartNode, ancestor, oldEndNode.group);
+ 			patch(oldEndNode, newStartNode, oldEndNode.group);
 
  			oldEnd--;
  			newStart++;
@@ -202,7 +194,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  				append(oldStartNode, older);
  			}
 
- 			patch(oldStartNode, newEndNode, ancestor, oldStartNode.group);
+ 			patch(oldStartNode, newEndNode, oldStartNode.group);
 
  			oldStart++;
  			newEnd--;
@@ -221,7 +213,7 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  			nextChild = nextPos < newLength ? newChildren[nextPos] : empty;
 
  			do {
- 				create(newStartNode = newChildren[newStart++], ancestor, older, nextChild, 2, null);
+ 				create(newStartNode = newChildren[newStart++], host, older, nextChild, 2, null);
  			} while (newStart <= newEnd);
  		}
  	} else if (newStart > newEnd) {
@@ -238,20 +230,19 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  		// all children are out of sync, remove all, append new set
  		unmount(older, false);
  		clear(older);
- 		fill(older, newer, newLength, ancestor);
+ 		fill(older, newer, newLength);
  	} else {
  		// could sync all children, move on the the next phase
- 		complex(older, newer, ancestor, oldStart, newStart, oldEnd + 1, newEnd + 1, oldLength, newLength);
+ 		complex(older, newer, oldStart, newStart, oldEnd + 1, newEnd + 1, oldLength, newLength);
  	}
  	older.children = newChildren;
 }
 
 /**
- * Reconcile Keyed Children [Complex]
+ * Keyed Children [Complex]
  *
  * @param {Tree} older
  * @param {Tree} newer
- * @param {Tree} ancestor
  * @param {Number} oldStart
  * @param {Number} newStart
  * @param {Number} oldEnd
@@ -259,7 +250,8 @@ function keyed (older, newer, ancestor, oldLength, newLength) {
  * @param {Number} oldLength
  * @param {number} newLength
  */
-function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
+function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
+	var host = older.host;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
 	var oldKeys = {};
@@ -301,11 +293,11 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 		if (oldIndex === void 0) {
 			nextPos = newIndex - newOffset;
 			nextChild = nextPos < oldLength ? oldChildren[nextPos] : empty;
-			create(newChild, ancestor, older, nextChild, 2, null);
+			create(newChild, host, older, nextChild, 2, null);
 			newOffset++;
 		} else if (newIndex === oldIndex) {
 			oldChild = oldChildren[oldIndex];
-			patch(newChildren[newIndex] = oldChild, newChild, ancestor, oldChild.group);
+			patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 		}
 		newIndex++;
 	}
@@ -361,7 +353,7 @@ function complex (older, newer, ancestor, oldStart, newStart, oldEnd, newEnd, ol
 				} else {
 					append(oldChild, older);
 				}
-				patch(newChildren[newIndex] = oldChild, newChild, ancestor, oldChild.group);
+				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 			}
 		}
 		newIndex--;

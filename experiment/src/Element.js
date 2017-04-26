@@ -13,7 +13,7 @@ function element (_type, _props) {
 	var index = 0;
 	var i = 2;
 	var group = 0;
-	var newer = new Tree(2);
+	var older = new Tree(2);
 	var proto;
 	var children;
 
@@ -21,12 +21,12 @@ function element (_type, _props) {
 		switch (props.constructor) {
 			case Object: {
 				if (props.key !== void 0) {
-					newer.key = props.key;
+					older.key = props.key;
 				}
 				if (props.xmlns !== void 0) {
-					newer.xmlns = props.xmlns;
+					older.xmlns = props.xmlns;
 				}
-				newer.props = props;
+				older.props = props;
 				break;
 			}
 			case Array: {
@@ -41,85 +41,85 @@ function element (_type, _props) {
 
 	switch (type.constructor) {
 		case String: {
-			newer.tag = type;
-			newer.attrs = props;
+			older.tag = type;
+			older.attrs = props;
 			break;
 		}
 		case Function: {
 			if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
-				group = newer.group = 2;
+				group = older.group = 2;
 			} else {
-				group = newer.group = 1;
-				newer.owner = type;
+				group = older.group = 1;
+				older.owner = type;
 			}
 			break;
 		}
 	}
 
-	newer.type = type;
+	older.type = type;
 
 	if (length > 1) {
 		children = new Array(size);
 
 		if (group < 1) {
-			for (newer.children = children; i < length; i++) {
-				index = push(newer, index, arguments[i]);
+			for (older.children = children; i < length; i++) {
+				index = push(older, index, arguments[i]);
 			}
 		} else {
-			if ((props = newer.props) === null || props === object) {
-				props = newer.props = {};
+			if ((props = older.props) === null || props === object) {
+				props = older.props = {};
 			}
-			for (newer.children = children; i < length; i++) {
-				index = pull(newer, index, arguments[i]);
+			for (older.children = children; i < length; i++) {
+				index = pull(older, index, arguments[i]);
 			}
 
 			props.children = index > 1 ? children : children[0];
-			newer.children = array;
+			older.children = array;
 		}
 	}
 
-	return newer;
+	return older;
 }
 
 /**
  * Push Children
  *
- * @param  {Tree} newer
+ * @param  {Tree} older
  * @param  {Number} index
- * @param  {Any} decedent
+ * @param  {Any} newer
  * @return {Number}
  */
-function push (newer, index, decedent) {
-	var children = newer.children;
+function push (older, index, newer) {
+	var children = older.children;
 	var child;
 	var length;
 
-	if (decedent === null || decedent === void 0) {
+	if (newer === null || newer === void 0) {
 		child = text('');
-	} else if (decedent.group !== void 0) {
-		if (newer.keyed === false && decedent.key !== null) {
-			newer.keyed = true;
+	} else if (newer.group !== void 0) {
+		if (older.keyed === false && newer.key !== null) {
+			older.keyed = true;
 		}
-		child = decedent;
+		child = newer;
 	} else {
-		switch (typeof decedent) {
+		switch (typeof newer) {
 			case 'function': {
-				child = element(decedent, null);
+				child = element(newer, null);
 				break;
 			}
 			case 'object': {
-				if ((length = decedent.length) !== void 0) {
+				if ((length = newer.length) !== void 0) {
 					for (var j = 0, i = index; j < length; j++) {
-						i = push(newer, i, decedent[j]);
+						i = push(older, i, newer[j]);
 					}
 					return i;
 				} else {
-					child = text(decedent.constructor === Date ? decedent+'' : '');
+					child = text(newer.constructor === Date ? newer+'' : '');
 				}
 				break;
 			}
 			default: {
-				child = text(decedent);
+				child = text(newer);
 			}
 		}
 	}
@@ -131,25 +131,25 @@ function push (newer, index, decedent) {
 /**
  * Pull Children
  *
- * @param  {Tree} newer
+ * @param  {Tree} older
  * @param  {Number} index
- * @param  {Any} decedent
+ * @param  {Any} newer
  * @return {Number}
  */
-function pull (newer, index, decedent) {
-	var children = newer.children;
+function pull (older, index, newer) {
+	var children = older.children;
 
-	if (decedent !== null && typeof decedent === 'object') {
-		var length = decedent.length;
+	if (newer !== null && typeof newer === 'object') {
+		var length = newer.length;
 
 		if (length !== void 0) {
 			for (var j = 0, i = index; j < length; j++) {
-				i = pull(newer, i, decedent[j]);
+				i = pull(older, i, newer[j]);
 			}
 			return i;
 		}
 	}
-	children[index] = decedent;
+	children[index] = newer;
 
 	return index + 1;
 }
@@ -204,6 +204,7 @@ function copy (older, newer, deep) {
 		older.yield = newer.yield;
 		older.group = newer.group;
 		older.type = newer.type;
+		older.host = newer.host;
 		older.key = newer.key;
 	}
 }
@@ -219,6 +220,7 @@ function Tree (flag) {
 	this.key = null;
 	this.type = null;
 	this.node = null;
+	this.host = null;
 	this.group = 0;
 	this.async = 0;
 	this.props = object;

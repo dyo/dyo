@@ -6,7 +6,7 @@ var hollow = {'area': 0, 'base': 0, 'br': 0, '!doctype': 0, 'col': 0, 'embed': 0
 var unicodes = {'<': '&lt;', '>': '&gt;','"': '&quot;',"'": '&#39;','&': '&amp;'};
 
 /**
- * Stringify Tree
+ * Stringify
  *
  * @return {String}
  */
@@ -109,10 +109,9 @@ function sanitize (value) {
 /**
  * Encode Unicode
  *
- * @param  {String} _char
+ * @param  {String} char
  * @return {String}
  */
-function encode (_char) {
-	var char = unicodes[char];
-	return char !== void 0 ? char : _char;
+function encode (char) {
+	return unicodes[char] || char;
 }
