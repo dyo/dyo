@@ -50,6 +50,7 @@ section {
 .card {
 	float: left;
 	max-width: 400px;
+  min-width: 240px;
 }
 
 .card p {

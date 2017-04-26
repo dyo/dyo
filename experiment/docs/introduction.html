@@ -112,7 +112,7 @@ class Welcome {
 </code></pre>
 		<p>Function and ES6 class components are equivalent <label for="5"></label>,
 		<span class=note>
-			Including lifecycle methods.
+			This includes lifecycle methods on function components.
 		</span>
 		 with the exception that class components can contain state.</p>
 
@@ -134,23 +134,41 @@ dio.render(
 		<p>Pseudo Code:</p>
 
 		<ol>
-			<li>DIO calls the <code>Welcome</code> component with <code>{name: 'World'}</code> as the props.</li>
-			<li>Our <code>Welcome</code> component returns a <code>&lt;h1>Hello, World&lt;/h1></code> element as the result.</li>
-			<li>The reconciler efficiently updates the DOM to match <code>&lt;h1>Hello, World&lt;/h1></code>.</li>
+			<li>We create a function component <code>`Welcome`</code> that accepts props and returns <code>&lt;h1>${props.name}&lt;/h1></code></li>
+			<li>DIO calls our <code>`Welcome`</code> component with props <code>{name: 'World'}</code>.</li>
+			<li>Our <code>`Welcome`</code> component returns an H1 element &mdash; <br><code>&lt;h1>Hello, World&lt;/h1></code> as the result.</li>
+			<li>The reconciler efficiently updates the DOM to match &mdash; <br><code>&lt;h1>Hello, World&lt;/h1></code>.</li>
 		</ol>
 
 		<h1>Lifecycle</h1>
 
-		<p>With the introduction of components we cann now keep a closer trail of what actions our components are invoking over time, these trails are called lifecycle methods.</p>
+		<p>With the introduction of components we can now keep a closer trail of what actions our components are invoking over time, these trails are called lifecycle methods.</p>
+
+		<h2>Function Lifecycles</h2>
 
 <pre><code>
 function Welcome () {
 	return h('h1', props.name)
 }
-Welcome.componentDidMount = () => console.log('didMount')
+Welcome.componentDidMount = () => {
+	console.log('didMount')
+}
 </code></pre>
 
-		<p>The following table gives us a view into what these methods are and when they are invoked</p>
+		<h2>Class Lifecycles</h2>
+
+<pre><code>
+class Welcome {
+	componentDidMount() {
+		console.log('didMount')
+	}
+	render() {
+		return h('h1', props.name)
+	}
+}
+</code></pre>
+
+		<p>The following table gives us a view into what these methods are called and when they are invoked.</p>
 
 		<hr>
 
@@ -162,6 +180,10 @@ Welcome.componentDidMount = () => console.log('didMount')
 				</tr>
 			</thead>
 			<tbody>
+				<tr>
+					<td><code>getInitialState</code></td>
+					<td>before instantiating a class component</td>
+				</tr>
 				<tr>
 					<td><code>componentWillMount</code></td>
 					<td>before mounting</td>
@@ -195,11 +217,11 @@ Welcome.componentDidMount = () => console.log('didMount')
 
 		<h1>Events &amp; State</h1>
 
-		<p>Now that we know how to construct the building blocks of a view we can start to define views as a function of its state.</p>
+		<p>Now that we know how to construct the building blocks of a view, we can start to define our views as a function of their state..</p>
 
 		<p class=math>V=f(s)</p>
 
-		<p>We can then add events to respond to user behaviour.</p>
+		<p>..and making use events to respond to user behaviour.</p>
 
 <pre><code>
 class Input {
@@ -225,10 +247,12 @@ dio.render(h(Input), document.getElementById('root'))
 		<p>Pseudo Code:</p>
 
 		<ol>
-			<li>DIO calls the <code>Input</code> component with no props.</li>
-			<li>Our <code>Input</code> component returns a <code>`&lt;input>&lt;h1>&lt;/h1>`</code> element as the result.</li>
+			<li>We create an <code>`Input`</code> component that returns a input field and H1 heading</li>
+			<li>We assign <code>`handleInput`</code> to respond to the <code>oninput</code> event.</li>
+			<li>DIO calls the <code>`Input`</code> component with no props.</li>
+			<li>Our <code>`Input`</code> component returns two elements &mdash; <br> <code>`&lt;input>&lt;h1>&lt;/h1>`</code> as a result.</li>
 			<li>DIO creates the Nodes and attaches the <code>oninput</code> event to <code>`&lt;input>`</code>.</li>
-			<li>User types something in our <code>`Input`</code> component.</li>
+			<li>User types something into our <code>`Input`</code> components &mdash; <br><code>&lt;input></code> element.</li>
 			<li>Our <code>`Input`</code> component retrieves the user input and updates its state.</li>
 			<li>The reconciler efficiently updates the DOM to match the new state <code>&lt;input>&lt;h1>${value}&lt;/h1></code>.</li>
 		</ol>
