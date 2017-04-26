@@ -169,16 +169,11 @@ function coroutine (older, generator) {
  * @param {Boolean} deep
  */
 function exchange (older, newer, deep) {
-	swap(older, newer, older.host);
-
 	if (older.flag !== 1 && older.children.length > 0) {
 		unmount(older, false);
 	}
 
-	if (older.owner !== null && older.owner.componentWillUnmount !== void 0) {
-		mountBoundary(older.owner, 2);
-	}
-
+	swap(older, newer, older.host);
 	copy(older, newer, deep);
 }
 
@@ -197,10 +192,10 @@ function unmount (older, release) {
 	}
 
 	for (var i = 0, child; i < length; i++) {
-		child = children[i];
-		if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
+		if ((child = children[i]).group > 0 && child.owner.componentWillUnmount !== void 0) {
 			mountBoundary(child.owner, 2);
 		}
+
 		unmount(child, true);
 	}
 

@@ -73,7 +73,7 @@ function element (_type, _props) {
 				index = pull(older, index, arguments[i]);
 			}
 
-			props.children = index > 1 ? children : children[0];
+			props.children = children;
 			older.children = array;
 		}
 	}

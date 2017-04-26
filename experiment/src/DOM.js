@@ -95,9 +95,21 @@ function create (older, _host, parent, sibling, action, _xmlns) {
  		older.parent = parent;
 
  		switch (action) {
- 			case 1: parent.node.appendChild(node); break;
- 			case 2: parent.node.insertBefore(node, sibling.node); break;
- 			case 3: parent.node.replaceChild(node, sibling.node); break;
+ 			case 1: {
+ 				parent.node.appendChild(node);
+ 				break;
+ 			}
+ 			case 2: {
+ 				parent.node.insertBefore(node, sibling.node);
+ 				break;
+ 			}
+ 			case 3: {
+ 				if (sibling.group > 0 && sibling.owner.componentWillUnmount !== void 0) {
+ 					mountBoundary(sibling.owner, 2);
+ 				}
+ 				parent.node.replaceChild(node, sibling.node);
+ 				break;
+ 			}
  		}
 
  		if (type !== 1) {
@@ -148,6 +160,10 @@ function append (older, parent) {
  * @param {Tree} parent
  */
 function remove (older, parent) {
+	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
+		mountBoundary(older.owner, 2);
+	}
+
 	parent.node.removeChild(older.node);
 }
 

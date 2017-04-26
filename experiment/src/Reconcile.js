@@ -86,10 +86,7 @@ function nonkeyed (older, newer, _oldLength, newLength) {
 
 	for (var i = 0, newChild, oldChild; i < length; i++) {
 		if (i >= newLength) {
-			if ((oldChild = oldChildren.pop()).group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
-				mountBoundary(oldChild.owner, 2);
-			}
-			remove(oldChild, older);
+			remove(oldChild = oldChildren.pop(), older);
 			unmount(oldChild, true);
 			oldLength--;
 		} else if (i >= oldLength) {
@@ -102,9 +99,6 @@ function nonkeyed (older, newer, _oldLength, newLength) {
 			if (newChild.flag === 1 && oldChild.flag === 1) {
 				content(oldChild, oldChild.children = newChild.children);
 			} else if (newChild.type !== oldChild.type) {
-				if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
-					mountBoundary(oldChild.owner, 2);
-				}
 				create(oldChildren[i] = newChild, host, older, oldChild, 3, null);
 				unmount(oldChild, true);
 			} else {
@@ -220,9 +214,6 @@ function keyed (older, newer, oldLength, newLength) {
  		// new children is synced, remove the difference
  		do {
  			oldStartNode = oldChildren[oldStart++];
- 			if (oldStartNode.group > 0 && oldStartNode.owner.componentWillUnmount !== void 0) {
- 				mountBoundary(oldStartNode.owner, 2);
- 			}
  			remove(oldStartNode, older);
  			unmount(oldStartNode, true);
  		} while (oldStart <= oldEnd);
@@ -312,9 +303,6 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 
 		// old child doesn't exist in new children, remove
 		if (newIndex === void 0) {
-			if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
-				mountBoundary(oldChild.owner, 2);
-			}
 			remove(oldChild, older);
 			unmount(oldChild, true);
 			oldOffset++;

@@ -415,7 +415,7 @@
 					index = pull(older, index, arguments[i]);
 				}
 	
-				props.children = index > 1 ? children : children[0];
+				props.children = children;
 				older.children = array;
 			}
 		}
@@ -1164,16 +1164,11 @@
 	 * @param {Boolean} deep
 	 */
 	function exchange (older, newer, deep) {
-		swap(older, newer, older.host);
-	
 		if (older.flag !== 1 && older.children.length > 0) {
 			unmount(older, false);
 		}
 	
-		if (older.owner !== null && older.owner.componentWillUnmount !== void 0) {
-			mountBoundary(older.owner, 2);
-		}
-	
+		swap(older, newer, older.host);
 		copy(older, newer, deep);
 	}
 	
@@ -1192,10 +1187,10 @@
 		}
 	
 		for (var i = 0, child; i < length; i++) {
-			child = children[i];
-			if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
+			if ((child = children[i]).group > 0 && child.owner.componentWillUnmount !== void 0) {
 				mountBoundary(child.owner, 2);
 			}
+	
 			unmount(child, true);
 		}
 	
@@ -1394,10 +1389,7 @@
 	
 		for (var i = 0, newChild, oldChild; i < length; i++) {
 			if (i >= newLength) {
-				if ((oldChild = oldChildren.pop()).group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
-					mountBoundary(oldChild.owner, 2);
-				}
-				remove(oldChild, older);
+				remove(oldChild = oldChildren.pop(), older);
 				unmount(oldChild, true);
 				oldLength--;
 			} else if (i >= oldLength) {
@@ -1410,9 +1402,6 @@
 				if (newChild.flag === 1 && oldChild.flag === 1) {
 					content(oldChild, oldChild.children = newChild.children);
 				} else if (newChild.type !== oldChild.type) {
-					if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
-						mountBoundary(oldChild.owner, 2);
-					}
 					create(oldChildren[i] = newChild, host, older, oldChild, 3, null);
 					unmount(oldChild, true);
 				} else {
@@ -1528,9 +1517,6 @@
 	 		// new children is synced, remove the difference
 	 		do {
 	 			oldStartNode = oldChildren[oldStart++];
-	 			if (oldStartNode.group > 0 && oldStartNode.owner.componentWillUnmount !== void 0) {
-	 				mountBoundary(oldStartNode.owner, 2);
-	 			}
 	 			remove(oldStartNode, older);
 	 			unmount(oldStartNode, true);
 	 		} while (oldStart <= oldEnd);
@@ -1620,9 +1606,6 @@
 	
 			// old child doesn't exist in new children, remove
 			if (newIndex === void 0) {
-				if (oldChild.group > 0 && oldChild.owner.componentWillUnmount !== void 0) {
-					mountBoundary(oldChild.owner, 2);
-				}
 				remove(oldChild, older);
 				unmount(oldChild, true);
 				oldOffset++;
@@ -1765,9 +1748,21 @@
 	 		older.parent = parent;
 	
 	 		switch (action) {
-	 			case 1: parent.node.appendChild(node); break;
-	 			case 2: parent.node.insertBefore(node, sibling.node); break;
-	 			case 3: parent.node.replaceChild(node, sibling.node); break;
+	 			case 1: {
+	 				parent.node.appendChild(node);
+	 				break;
+	 			}
+	 			case 2: {
+	 				parent.node.insertBefore(node, sibling.node);
+	 				break;
+	 			}
+	 			case 3: {
+	 				if (sibling.group > 0 && sibling.owner.componentWillUnmount !== void 0) {
+	 					mountBoundary(sibling.owner, 2);
+	 				}
+	 				parent.node.replaceChild(node, sibling.node);
+	 				break;
+	 			}
 	 		}
 	
 	 		if (type !== 1) {
@@ -1818,6 +1813,10 @@
 	 * @param {Tree} parent
 	 */
 	function remove (older, parent) {
+		if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
+			mountBoundary(older.owner, 2);
+		}
+	
 		parent.node.removeChild(older.node);
 	}
 	

@@ -23,7 +23,6 @@
 				return {value}
 			}
 			render() {
-				throw 'end';
 				return h('div',
 					h('input', {
 						type: 'text',
@@ -34,15 +33,34 @@
 			}
 		}
 
+		class Input2 {
+			handleInput(props, state, event) {
+				const {target} = event
+				const {value} = target
+				return {value}
+			}
+			render() {
+				return h('div',
+					h('input', {
+						type: 'text',
+						oninput: this.handleInput,
+						defaultValue: 'something'
+					}),
+					h('h1', this.state.value)
+				)
+			}
+		}
+
 		class App {
 			render () {
-				return Input
+				return this.props.children
 			}
 		}
 
 		const root = document.getElementById('root');
 
-		dio.render(h(App), root);
+		dio.render(h(App, Input, Input, Input), root);
+		dio.render(h(App, Input, Input, Input2), root);
 
 		// setTimeout(dio.render, 1000, null, root);
 
