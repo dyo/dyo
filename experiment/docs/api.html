@@ -26,8 +26,7 @@
 		<h1>API</h1>
 
 		<p>
-			DIO's API surface is small to a benefit, <br>with a close resemblance to React <label for=1></label>.
-			<span class="note">For example: <code>setState</code>, <code>forceUpdate</code></span>
+			DIO's API surface is small to a benefit, <br>with a close resemblance to React.
 		</p>
 
 		<h1>Components</h1>
@@ -79,7 +78,7 @@ function* Welcome () {
 		<h1>Lifecycle</h1>
 
 		<p>
-			Both <code>function</code> and <code>class</code> components can make use of lifcycles <label for=2></label>.
+			Both <code>function</code> and <code>class</code> components can make use of lifcycles <label for=1></label>.
 			<span class="note">
 				With the exception of <code>`getInitialState`</code> that is reserved soley for <code>`class`</code> component which could be used to retrieve the initial state of a class component if required.
 			</span>
@@ -96,7 +95,7 @@ class Welcome {
 </code></pre>
 
 		<p>
-			The default return value that <code>`getInitialState`</code> expects is an object representing the initial state of the component; However <code>`getInitialState`</code> also accepts a <code>`Promise`</code> when the data the component requires is network bound <label for=3></label>.
+			The default return value that <code>`getInitialState`</code> expects is an object representing the initial state of the component; However <code>`getInitialState`</code> also accepts a <code>`Promise`</code> when the data the component requires is network bound <label for=2></label>.
 			<span class="note">That is to say you can asynchronous-ly retrieve a components initial state.</span>
 		</p>
 
@@ -120,7 +119,7 @@ class Welcome {
 
 		<p>
 			Refs are either functions of strings that provide access to the underlining DOM node; While <code>string</code>
-			<label for=4></label>
+			<label for=3></label>
 			<span class="note">String refs are only usefull on <code>class</code> based components.</span>
 			refs are can be dynamic, <code>function</code>
 			refs can also return or call <code>`this.setState`</code> to update the component.</p>
@@ -234,7 +233,7 @@ class Welcome {
 		<h1>Render</h1>
 
 		<p>
-		For the most part <code>`dio.render`</code> will be how you first invoke DIO. The first argument is the element you want to render and the second the root you want to mount <label for=5></label> to.
+		For the most part <code>`dio.render`</code> will be how you first invoke DIO. The first argument is the element you want to render and the second the root you want to mount <label for=4></label> to.
 		<span class="note">Defaulting to <code>&lt;body></code> or <code>&lt;html></code> if not provided.</span>
 		</p>
 
@@ -310,15 +309,15 @@ class Welcome {
 		<h2>Non-Deterministic</h2>
 
 		<p>
-			By default rendering something is a deterministic <label for=6></label><span class=note><a href=https://en.wikipedia.org/wiki/Deterministic_system>Deterministic systems.</a></span> operation,
+			By default rendering something is a deterministic <label for=5></label><span class=note>A deterministic system is a system in which no randomness is involved in the development of future states of the system.</span> operation,
 			given the following children <code>`[A, B, C, D]`</code> the path the flow would take would be.
 		</p>
 
 		<p class=math>A &#x2192; B &#x2192; C &#x2192; D</p>
 
 		<p>
-			But non-deterministic <label for=7></label>
-			<span class=note><a href=https://en.wikipedia.org/wiki/Nondeterministic_algorithm>Non-deterministic systems.</a></span>
+			But non-deterministic <label for=6></label>
+			<span class=note>A non-deterministic algorithm is an algorithm that, even for the same input, can exhibit different behaviors on different runs.</span>
 			introduces the aspect of non-linear updates, where instead of <code>`A &#x2192; B &#x2192; C &#x2192; D`</code> you could get an array of different update sequences; For example:
 		</p>
 
@@ -345,11 +344,11 @@ class Welcome {
 }
 </code></pre>
 
-		<p>If you where to put multiple instances of this component in a list, everytime we call to update the list it should update in a random order between updates.</p>
+		<p>If you where to put multiple instances of this component in a list, everytime an update is invoked it should update in a random order.</p>
 
 		<h2>Coroutine</h2>
 
-		<p>In other words Javascript <code>`generators`</code><label for=8></label><span class="note"><a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators>Iterators and generators</a></span>; The example that follows will continue to return a button and increment the <code>`supply`</code> variable whenever an update is invoked through a <code>`click`</code> of the button element.</p>
+		<p>In other words Javascript <code>`generators`</code><label for=7></label><span class="note">A generator is a special type of function that works as a factory for iterators. A function becomes a generator if it contains one or more yield expressions and if it uses the <code>`function*`</code> syntax.</span>; The example that follows will continue to return a button and increment the <code>`supply`</code> variable whenever an update is invoked through a <code>`click`</code> of the button element.</p>
 
 		<p>Though generators are not a well known/used feature in Javascript they do introduce interesting ways to model behaviour beyond normal functons.</p>
 
