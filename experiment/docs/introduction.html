@@ -5,13 +5,13 @@
 	<meta http-equiv=X-UA-Compatible content=IE=edge>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>DIO</title>
-	<link rel=stylesheet href=stylesheet.css>
-	<link rel="icon" type="image/png" href="favicon-large.png" sizes="32x32">
-	<link rel="icon" type="image/png" href="favicon-small.png" sizes="16x16">
+	<link rel=stylesheet href=css/stylesheet.css>
+	<link rel="icon" type="image/png" href="imgs/favicon-large.png" sizes="32x32">
+	<link rel="icon" type="image/png" href="imgs/favicon-small.png" sizes="16x16">
 </head>
 <body>
 	<a href=./ title=index class=logo>
-		<img src=logo.svg alt=logo>
+		<img src=imgs/logo.svg alt=logo>
 	</a>
 	<header>
 		<nav>
@@ -139,8 +139,8 @@ dio.render(
 		<ol>
 			<li>We create a function component <code>`Welcome`</code> that accepts props and returns <code>&lt;h1>${props.name}&lt;/h1></code></li>
 			<li>DIO calls our <code>`Welcome`</code> component with props <code>{name: 'World'}</code>.</li>
-			<li>Our <code>`Welcome`</code> component returns an H1 element &mdash; <br><code>&lt;h1>Hello, World&lt;/h1></code> as the result.</li>
-			<li>The reconciler efficiently updates the DOM to match &mdash; <br><code>&lt;h1>Hello, World&lt;/h1></code>.</li>
+			<li>Our <code>`Welcome`</code> component returns an H1 element <br><code>&lt;h1>Hello, World&lt;/h1></code> as the result.</li>
+			<li>The reconciler efficiently updates the DOM to match <br><code>&lt;h1>Hello, World&lt;/h1></code>.</li>
 		</ol>
 
 		<h1>Lifecycle</h1>
@@ -253,15 +253,15 @@ dio.render(h(Input), document.getElementById('root'))
 			<li>We create an <code>`Input`</code> component that returns a input field and H1 heading</li>
 			<li>We assign <code>`handleInput`</code> to respond to the <code>oninput</code> event.</li>
 			<li>DIO calls the <code>`Input`</code> component with no props.</li>
-			<li>Our <code>`Input`</code> component returns two elements &mdash; <br> <code>`&lt;input>&lt;h1>&lt;/h1>`</code> as a result.</li>
+			<li>Our <code>`Input`</code> component returns two elements <br> <code>`&lt;input>&lt;h1>&lt;/h1>`</code> as a result.</li>
 			<li>DIO creates the Nodes and attaches the <code>oninput</code> event to <code>`&lt;input>`</code>.</li>
-			<li>User types something into our <code>`Input`</code> components &mdash; <br><code>&lt;input></code> element.</li>
+			<li>User types something into our <code>`Input`</code> components <br><code>&lt;input></code> element.</li>
 			<li>Our <code>`Input`</code> component retrieves the user input and updates its state.</li>
 			<li>The reconciler efficiently updates the DOM to match the new state <code>&lt;input>&lt;h1>${value}&lt;/h1></code>.</li>
 		</ol>
 	</article>
 
-	<script src=highlight.js></script>
-	<script>highlight();</script>
+	<script src=js/highlight.js></script>
+	<script src=js/main.js></script>
 </body>
 </html>
