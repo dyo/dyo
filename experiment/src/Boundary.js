@@ -156,8 +156,6 @@ function errorBoundary (message, owner, type, from) {
 	var location;
 	var newer;
 
-	console.log(type);
-
 	try {
 		location = errorLocation(type, from) || component;
 
