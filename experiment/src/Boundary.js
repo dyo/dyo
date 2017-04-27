@@ -63,14 +63,15 @@ function renderBoundary (older, group) {
  * Mount Boundary
  *
  * @param {Component} owner
+ * @param {Node} node
  * @param {Number} type
  */
-function mountBoundary (owner, type) {
+function mountBoundary (owner, node, type) {
 	try {
 		switch (type) {
-			case 0: return returnBoundary(owner.componentWillMount(), owner, null, false);
-			case 1: return returnBoundary(owner.componentDidMount(), owner, null, true);
-			case 2: return owner.componentWillUnmount();
+			case 0: return returnBoundary(owner.componentWillMount(node), owner, null, false);
+			case 1: return returnBoundary(owner.componentDidMount(node), owner, null, true);
+			case 2: return owner.componentWillUnmount(node);
 		}
 	} catch (err) {
 		errorBoundary(err, owner, 4, type);

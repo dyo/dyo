@@ -19,152 +19,90 @@ function generate (newer, host, xmlns) {
 }
 
 /**
- * Create
+ * Compose
  *
- * @param  {Tree} newer
- * @param  {Tree?} _host
- * @param  {Tree} parent
- * @param  {Tree} sibling
- * @param  {Number} action
- * @param  {String?} _xmlns
+ * @return {value}
  */
-function create (older, _host, parent, sibling, action, _xmlns) {
-	var host = _host;
-	var xmlns = _xmlns;
-	var group = older.group;
-	var flag = older.flag;
-	var type = 2;
-	var owner;
-	var node;
-	var children;
-	var length;
-	var newer;
-
- 	// preserve last namespace context among children
- 	if (flag !== 1 && older.xmlns !== null) {
- 		xmlns = older.xmlns;
- 	}
-
- 	if (group > 0) {
- 		if (group > 1) {
- 			host = older.host = older;
- 		}
-
- 		newer = extract(older);
-
- 		flag = newer.flag;
- 		owner = older.owner;
- 	} else if (host !== null) {
-		older.host = host;
- 	}
-
- 	if (type === 2) {
- 		if (flag === 1) {
- 			node = older.node = document.createTextNode((type = 1, older.children));
- 		} else {
- 			node = generate(older, host, xmlns);
-
- 			if (older.flag === 3) {
- 				create(node, host, older, sibling, action, xmlns);
- 				copy(older, node, false);
-
- 				type = 0;
- 			} else {
- 				older.node = node;
- 				children = older.children;
- 				length = children.length;
-
- 				if (length > 0) {
- 					for (var i = 0, child; i < length; i++) {
- 						// hoisted
- 						if ((child = children[i]).node !== null) {
- 							copy(child = children[i] = new Tree(child.flag), child, false);
- 						}
- 						create(child, host, older, sibling, 1, xmlns);
- 					}
- 				}
- 			}
- 		}
- 	}
-
- 	if (type > 0) {
- 		if (group > 0 && owner.componentWillMount !== void 0) {
- 			mountBoundary(owner, 0);
- 		}
-
- 		older.parent = parent;
-
- 		switch (action) {
- 			case 1: {
- 				parent.node.appendChild(node);
- 				break;
- 			}
- 			case 2: {
- 				parent.node.insertBefore(node, sibling.node);
- 				break;
- 			}
- 			case 3: {
- 				if (sibling.group > 0 && sibling.owner.componentWillUnmount !== void 0) {
- 					mountBoundary(sibling.owner, 2);
- 				}
- 				parent.node.replaceChild(node, sibling.node);
- 				break;
- 			}
- 		}
-
- 		if (type !== 1) {
- 			attribute(older, xmlns);
- 		}
-
- 		if (group > 0 && owner.componentDidMount !== void 0) {
- 			mountBoundary(owner, 1);
- 		}
- 	}
+function compose (value) {
+	return document.createTextNode(value);
 }
 
 /**
- * Swap
+ * Insert
  *
- * @param  {Tree} older
- * @param  {Tree} newer
- */
-function swap (older, newer) {
-	create(newer, older.host, older.parent, older, 3, null);
-}
-
-/**
- * Move
- *
- * @param {Tree} older
+ * @param {Tree} newer
  * @param {Tree} sibling
  * @param {Tree} parent
  */
-function move (older, sibling, parent) {
-	parent.node.insertBefore(older.node, sibling.node);
+function insert (newer, sibling, parent) {
+	parent.node.insertBefore(newer.node, sibling.node);
 }
 
 /**
  * Append
  *
- * @param {Tree} older
+ * @param {Tree} newer
  * @param {Tree} parent
  */
-function append (older, parent) {
-	parent.node.appendChild(older.node);
+function append (newer, parent) {
+	parent.node.appendChild(newer.node);
 }
 
 /**
- * Remove
+ * Remove/Replace
  *
  * @param {Tree} older
+ * @param {Tree} newer
  * @param {Tree} parent
  */
-function remove (older, parent) {
+function remove (older, newer, parent) {
+	var node = older.node;
+
 	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
-		mountBoundary(older.owner, 2);
+		var pending = mountBoundary(older.owner, node, 2);
+
+		if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
+			unmount(older, true);
+			wait(older, newer, parent, pending, node);
+
+			return true;
+		}
 	}
 
-	parent.node.removeChild(older.node);
+	unmount(older, true);
+
+	if (newer === empty) {
+		parent.node.removeChild(node);
+	} else {
+		parent.node.replaceChild(newer.node, node);
+	}
+
+	return false;
+}
+
+function wait (older, newer, parent, pending, node) {
+	pending.then(function () {
+		var anchor = parent.node;
+		var next = newer.node;
+
+		if (anchor === null) {
+			return;
+		}
+
+		if (newer === empty) {
+			return void anchor.removeChild(node);
+		}
+
+		if (next === null) {
+			return;
+		}
+
+		anchor.replaceChild(next, node);
+
+		if (newer.group > 0 && newer.owner.componentDidMount !== void 0) {
+			mountBoundary(newer.owner, next, 1);
+		}
+	});
 }
 
 /**

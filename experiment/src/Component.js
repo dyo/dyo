@@ -73,16 +73,19 @@ function setState (newer, callback) {
 	}
 
 	var state = owner.state;
+	var type = newer.constructor;
 
-	if (typeof newer === 'function') {
+	if (type === Function) {
 		newer = callbackBoundary(owner, newer, state, 0);
 
 		if (newer === void 0 || newer === null) {
 			return;
 		}
+
+		type = newer.constructor;
 	}
 
-	if (newer.constructor === Promise) {
+	if (type === Promise) {
 		newer.then(function (value) {
 			owner.setState(value, callback);
 		});

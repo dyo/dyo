@@ -3,19 +3,36 @@
 	<div id=root></div>
 	<script src="../dist/dio.js"></script>
 	<script>
+		const root = document.getElementById('root');
+		const animation = {
+			fadeOut: [
+			  {transform: 'translateY(0)', opacity: 1},
+		  	{transform: 'translateY(-100%)', opacity: 0}
+		  ],
+		  fadeIn: [
+	  	  {transform: 'translateY(-100%)', opacity: 0},
+	    	{transform: 'translateY(0%)', opacity: 1}
+		  ]
+		};
+
+		function fadeIn (el) {
+			return el.animate(animation.fadeIn, {delay: 200, duration: 200, fill: 'backwards'});
+		}
+
+		function fadeOut (el) {
+			return el.animate(animation.fadeOut, {duration: 200});
+		}
+
 		class Input {
 			componentDidThrow () {
 				console.log('didThrow');
 				return h('h1', 'Error state');
 			}
-			componentWillMount(a) {
-				console.log('willMount');
+			componentDidMount(el) {
+				fadeIn(el);
 			}
-			componentDidMount(a) {
-				console.log('didMount');
-			}
-			componentWillUnmount(a) {
-				console.log('willUnmount');
+			componentWillUnmount(el) {
+				return new Promise((r) => fadeOut(el).onfinish = r)
 			}
 			handleInput(props, state, event) {
 				const {target} = event
@@ -39,6 +56,9 @@
 				const {value} = target
 				return {value}
 			}
+			componentDidMount(el) {
+				fadeIn(el)
+			}
 			render() {
 				return h('div',
 					h('input', {
@@ -57,14 +77,117 @@
 			}
 		}
 
-		const root = document.getElementById('root');
+		// dio.render(h(App, Input, Input, Input), root);
 
-		dio.render(h(App, Input, Input, Input), root);
-		dio.render(h(App, Input, Input, Input2), root);
+		// setTimeout(dio.render, 1000, h(App, Input, Input, Input, Input), root);
+		// setTimeout(dio.render, 2000, h(App, Input, Input, Input), root);
 
-		// setTimeout(dio.render, 1000, null, root);
+
+		class A {
+		  componentWillUnmount() {console.log('unmount - A')}
+		  render() {return B}
+		}
+
+		class B {
+		  componentWillUnmount() {console.log('unmount - B')}
+		  render() {return C}
+		}
+
+		class C {
+		  componentWillUnmount() {console.log('unmount - C')}
+		  render() {return 'C'}
+		}
+
+		// dio.render(A, document.getElementById('app'))
+		// dio.render('Replace', document.getElementById('app'))
+
 
 		// dio.render(h('button', {onclick: (e)=>console.log(e)}, 'Click Me'))
+
+
+		const animations = {
+			fadeOut: [
+			  {transform: 'translateY(0)', opacity: 1},
+		  	{transform: 'translateY(-100%)', opacity: 0}
+		  ],
+		  fadeIn: [
+			  {transform: 'translateY(-100%)', opacity: 0},
+		  	{transform: ' translateY(0%)', opacity: 1}
+		  ]
+		}
+
+		class Item {
+			componentDidMount(el) {
+				el.animate(animations.fadeIn, {
+					duration: 200
+				});
+			}
+			componentWillUnmount(el) {
+				return new Promise((resolve) => {
+					el.animate(animations.fadeOut, {
+						duration: 200
+					}).onfinish = resolve
+				})
+			}
+			render() {
+				return h('li', this.props.children)
+			}
+		}
+
+		class List {
+			render() {
+				return h('ul', this.props.children.map(
+					v => h(Item, v)
+				))
+			}
+		}
+
+		dio.render(h(List, 1, 2, 3))
+
+		setTimeout(dio.render, 400, h(List, 1, 2, 3, 4))
+		setTimeout(dio.render, 1200, h(List, 1, 2, 3))
+
+		class Foo {
+			componentWillMount() {
+				console.log(true, 'componentWillMount');
+			}
+			componentDidMount() {
+				console.log(true, 'componentDidMount');
+			}
+			componentWillUpdate() {
+				console.log(true, 'componentWillUpdate');
+			}
+			componentDidUpdate() {
+				console.log(true, 'componentDidUpdate');
+			}
+			componentWillReceiveProps() {
+				console.log(true, 'componentWillReceiveProps');
+			}
+			componentWillUnmount() {
+				console.log(true, 'componentWillUnmount');
+			}
+			shouldComponentUpdate() {
+				console.log(true, 'shouldComponentUpdate');
+			}
+			render() {
+				return h(Bar, this.props);
+			}
+		}
+
+		class Bar {
+			componentWillUpdate() {
+				console.log(true, 'componentWillUpdate - composite');
+			}
+			componentDidUpdate() {
+				console.log(true, 'componentDidUpdate - composite');
+			}
+			render() {
+				return h('h1', this.props.id);
+			}
+		}
+
+		// dio.render(h(Foo, {id: 1}));
+		// dio.render(null);
 	</script>
 </body>
 </html>

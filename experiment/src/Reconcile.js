@@ -86,11 +86,10 @@ function nonkeyed (older, newer, _oldLength, newLength) {
 
 	for (var i = 0, newChild, oldChild; i < length; i++) {
 		if (i >= newLength) {
-			remove(oldChild = oldChildren.pop(), older);
-			unmount(oldChild, true);
+			remove(oldChild = oldChildren.pop(), empty, older);
 			oldLength--;
 		} else if (i >= oldLength) {
-			create(newChild = oldChildren[i] = newChildren[i], host, older, empty, 1, null);
+			create(newChild = oldChildren[i] = newChildren[i], older, empty, 1, host, null);
 			oldLength++;
 		} else {
 			newChild = newChildren[i];
@@ -99,8 +98,7 @@ function nonkeyed (older, newer, _oldLength, newLength) {
 			if (newChild.flag === 1 && oldChild.flag === 1) {
 				content(oldChild, oldChild.children = newChild.children);
 			} else if (newChild.type !== oldChild.type) {
-				create(oldChildren[i] = newChild, host, older, oldChild, 3, null);
-				unmount(oldChild, true);
+				create(oldChildren[i] = newChild, older, oldChild, 3, host, null);
 			} else {
 				patch(oldChild, newChild, oldChild.group);
 			}
@@ -165,7 +163,8 @@ function keyed (older, newer, oldLength, newLength) {
  		if (oldEndNode.key === newStartNode.key) {
  			newChildren[newStart] = oldEndNode;
  			oldChildren[oldEnd] = oldStartNode;
- 			move(oldEndNode, oldStartNode, older);
+
+ 			insert(oldEndNode, oldStartNode, older);
  			patch(oldEndNode, newStartNode, oldEndNode.group);
 
  			oldEnd--;
@@ -173,6 +172,7 @@ function keyed (older, newer, oldLength, newLength) {
 
  			oldEndNode = oldChildren[oldEnd];
  			newStartNode = newChildren[newStart];
+
  			continue;
  		}
  		// move and sync nodes from left to right
@@ -183,7 +183,7 @@ function keyed (older, newer, oldLength, newLength) {
  			nextPos = newEnd + 1;
 
  			if (nextPos < newLength) {
- 				move(oldStartNode, oldChildren[nextPos], older);
+ 				insert(oldStartNode, oldChildren[nextPos], older);
  			} else {
  				append(oldStartNode, older);
  			}
@@ -195,6 +195,7 @@ function keyed (older, newer, oldLength, newLength) {
 
  			oldStartNode = oldChildren[oldStart];
  			newEndNode = newChildren[newEnd];
+
  			continue;
  		}
  		break;
@@ -207,15 +208,13 @@ function keyed (older, newer, oldLength, newLength) {
  			nextChild = nextPos < newLength ? newChildren[nextPos] : empty;
 
  			do {
- 				create(newStartNode = newChildren[newStart++], host, older, nextChild, 2, null);
+ 				create(newStartNode = newChildren[newStart++], older, nextChild, 2, host, null);
  			} while (newStart <= newEnd);
  		}
  	} else if (newStart > newEnd) {
  		// new children is synced, remove the difference
  		do {
- 			oldStartNode = oldChildren[oldStart++];
- 			remove(oldStartNode, older);
- 			unmount(oldStartNode, true);
+ 			remove(oldStartNode = oldChildren[oldStart++], empty, older);
  		} while (oldStart <= oldEnd);
  	} else if (newStart === 0 && newEnd === newLength-1) {
  		// all children are out of sync, remove all, append new set
@@ -284,7 +283,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 		if (oldIndex === void 0) {
 			nextPos = newIndex - newOffset;
 			nextChild = nextPos < oldLength ? oldChildren[nextPos] : empty;
-			create(newChild, host, older, nextChild, 2, null);
+			create(newChild, older, nextChild, 2, host, null);
 			newOffset++;
 		} else if (newIndex === oldIndex) {
 			oldChild = oldChildren[oldIndex];
@@ -303,8 +302,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 
 		// old child doesn't exist in new children, remove
 		if (newIndex === void 0) {
-			remove(oldChild, older);
-			unmount(oldChild, true);
+			remove(oldChild, empty, older);
 			oldOffset++;
 		}
 		oldIndex++;
@@ -337,7 +335,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 
 				// within bounds
 				if ((nextPos = newIndex + 1) < newLength) {
-					move(oldChild, newChildren[nextPos], older);
+					insert(oldChild, newChildren[nextPos], older);
 				} else {
 					append(oldChild, older);
 				}

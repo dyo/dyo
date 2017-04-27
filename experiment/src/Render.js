@@ -54,13 +54,13 @@ function render (_newer, _target) {
 		if (older.key === newer.key && older.type === newer.type) {
 			patch(older, newer, older.group);
 		} else {
-			exchange(older, newer, newer, true);
+			exchange(older, newer, true);
 		}
 	} else {
 		parent = new Tree(2);
 		parent.node = target;
 
-		create(target._older = newer, newer, parent, empty, 1, null);
+		create(target._older = newer, parent, empty, 1, newer, null);
 	}
 }
 
