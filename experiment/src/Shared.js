@@ -24,7 +24,7 @@ var empty = new Tree(2);
  *
  * 0: Element
  * 1: Function
- * 2: Component
+ * 2: Class
  *
  * ## Element Shape
  *
