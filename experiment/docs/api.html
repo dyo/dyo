@@ -427,7 +427,7 @@ setTimeout(dio.render, 800, h(List, 1, 2, 3))
 			<li>We create <code>`Item`</code> component that triggers a <code>fadeIn</code> animation when mounted and <code>fadeOut</code> when unmounted.</li>
 			<li>We create multiple instances of the <code>`Item`</code> component in our <code>`List`</code> component.</li>
 			<li>We then render our <code>`List`</code> component with children <code>[1, 2, 3]</code>.</li>
-			<li>3 <code>`List`</code> components mount and animate when <code>`componentDidMount`</code> is invoked.</li>
+			<li>Three <code>`List`</code> components mount and animate when <code>`componentDidMount`</code> is invoked.</li>
 			<li>After <code>`400ms`</code> we update our <code>`List`</code> components children &mdash; <br> <code>[1, 2, 3, 4]</code>.</li>
 			<li>This mounts a new instance of our <code>`Item`</code> component.</li>
 			<li>After <code>`800ms`</code> we remove one <code>`Item`</code> child from our <code>`List`</code> component, which in turn invokes our <code>fadeOut</code> animation in <code>`componentWillUnmount`</code>.</li>
