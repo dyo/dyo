@@ -38,11 +38,11 @@ dio.render(
 
 		<p>It renders a heading saying "Hello World" on the page.</p>
 
-		<p>The next few sections will gradually introduce you to the building blocks of an application; elements and components. Once you master them, you can create complex applications from small reusable parts.</p>
+		<p>The next few sections will gradually introduce you to the building blocks of an application; Elements and Components. Once you master them, you can create complex applications from small reusable parts.</p>
 
 		<h1 id=installation>Installation</h1>
 
-		<p>DIO can be installed through any one of the following CDN's</p>
+		<p>DIO can be installed through any one of the following CDN's.</p>
 
 		<ol>
 			<li><a href="https://cdnjs.cloudflare.com/ajax/libs/dio/7.0.0/dio.min.js">cdnjs.cloudflare.com/ajax/libs/dio/7.0.0/dio.min.js</a></li>
@@ -50,7 +50,7 @@ dio.render(
 			<li><a href="https://unpkg.com/dio.js@7.0.0/dio.min.js">unpkg.com/dio.js@7.0.0/dio.min.js</a></li>
 		</ol>
 
-		<p>OR through NPM</p>
+		<p>OR through NPM &mdash;</p>
 <pre><code>
 `npm install dio.js --save`
 </code></pre>
@@ -94,7 +94,7 @@ const element = h('h1', {
 
 		<h2>Functions and Classes</h2>
 
-		<p>The simplest component is a Javascript function that accepts a single("props") argument.</p>
+		<p>The simplest component is a JavaScript function that accepts a single("props") argument.</p>
 <pre><code>
 function Welcome (props) {
 	return h('h1', 'Hello', props.name)
@@ -102,9 +102,9 @@ function Welcome (props) {
 </code></pre>
 		<p>The second varient <label for=4></label>
 		<span class=note>
-			There is a third varient called coroutines resembling functions that <a href="#">API</a> sheds more details about.
+			There is a third varient called coroutines resembling functions; More details on it in the <a href="api.html#coroutine">API</a> documentation.
 		</span>
-		 of a component is a <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">ES6 class</a> that defines your component.</p>
+		 of a component is an <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">ES6 class</a> that defines your component.</p>
 
 <pre><code>
 class Welcome {
@@ -115,7 +115,7 @@ class Welcome {
 </code></pre>
 		<p>Function and ES6 class components are equivalent <label for="5"></label>,
 		<span class=note>
-			This includes lifecycle methods on function components.
+			This includes support for lifecycle methods on both <code>function</code> and <code>class</code> based components.
 		</span>
 		 with the exception that class components can contain state.</p>
 
@@ -145,9 +145,9 @@ dio.render(
 
 		<h1 id=lifecycles>Lifecycle</h1>
 
-		<p>With the introduction of components we can now keep a closer trail of what actions our components are invoking over time, these trails are called lifecycle methods.</p>
+		<p>With the introduction of components we can now keep a closer trail of what actions our components are invoking over time, We will call these trails lifecycle methods.</p>
 
-		<h2>Function Lifecycles</h2>
+		<h2>Function Example</h2>
 
 <pre><code>
 function Welcome () {
@@ -158,7 +158,7 @@ Welcome.componentDidMount = () => {
 }
 </code></pre>
 
-		<h2>Class Lifecycles</h2>
+		<h2>Class Example</h2>
 
 <pre><code>
 class Welcome {
@@ -220,11 +220,11 @@ class Welcome {
 
 		<h1>Events &amp; State</h1>
 
-		<p>Now that we know how to construct the building blocks of a view, we can start to define our views as a function of their state..</p>
+		<p>Now that we know how to construct the building blocks of a view, we can start to define our views as a function of their state.</p>
 
 		<p class=math>V=f(s)</p>
 
-		<p>..and making use of events to respond to user behaviour.</p>
+		<p>We can then make use of events to respond to user behaviour.</p>
 
 <pre><code>
 class Input {
@@ -250,7 +250,7 @@ dio.render(h(Input), document.getElementById('root'))
 		<p>Pseudo Code:</p>
 
 		<ol>
-			<li>We create an <code>`Input`</code> component that returns a input field and H1 heading</li>
+			<li>We create an <code>`Input`</code> component that returns a input field and H1 heading.</li>
 			<li>We assign <code>`handleInput`</code> to respond to the <code>oninput</code> event.</li>
 			<li>DIO calls the <code>`Input`</code> component with no props.</li>
 			<li>Our <code>`Input`</code> component returns two elements <br> <code>`&lt;input>&lt;h1>&lt;/h1>`</code> as a result.</li>
@@ -259,6 +259,14 @@ dio.render(h(Input), document.getElementById('root'))
 			<li>Our <code>`Input`</code> component retrieves the user input and updates its state.</li>
 			<li>The reconciler efficiently updates the DOM to match the new state <code>&lt;input>&lt;h1>${value}&lt;/h1></code>.</li>
 		</ol>
+
+		<h1>Moving Foward</h1>
+
+		<p>There's still a few pieces we haven't gone into that the <a href=api.html>API</a> documentation will shed more light upon.</p>
+
+		<p>At this point you can jump right into creating something with DIO, look at some <a href=examples.html>Examples</a> or learn how DIO works under the craft of code on <a href=https://github.com/thysultan/dio.js>Github</a>.</p>
+
+		<p>If you've made anything with DIO i'd be happy to add it to the small list of examples currently available.</p>
 	</article>
 
 	<script src=js/highlight.js></script>

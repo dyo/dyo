@@ -53,6 +53,15 @@ module.exports = ({h, shallow, render}) => {
 			});
 		}
 
+		class Coroutine {
+			*render() {
+				var supply = 0;
+				while (true) {
+					yield ++supply;
+				}
+			}
+		}
+
 		var comp1 = h(Foo);
 		var comp2 = h(Faz);
 
@@ -72,6 +81,9 @@ module.exports = ({h, shallow, render}) => {
 
 		render('hello', container);
 		ok(container.innerHTML === 'hello', 'render text');
+
+		render(Coroutine, container);
+		ok(container.innerHTML === '1', 'render coroutine');
 
 		render(Resolve, container);
 	});

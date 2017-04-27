@@ -103,7 +103,9 @@ function setAttribute (type, name, value, xmlns, newer) {
 
 	switch (type) {
 		case 0: {
-			if (value !== null && value !== void 0 && value !== false) {
+			if (name in node) {
+				setUnknown(name, value, newer);
+			} else if (value !== null && value !== void 0 && value !== false) {
 				node.setAttribute(name, (value === true ? '' : value));
 			} else {
 				node.removeAttribute(name);
@@ -142,6 +144,19 @@ function setAttribute (type, name, value, xmlns, newer) {
 			break;
 		}
 	}
+}
+
+/**
+ * Unknown
+ *
+ * @param  {String} name
+ * @param  {Any} value
+ * @param  {Tree} newer
+ */
+function setUnknown (name, value, newer) {
+	try {
+		newer.node[name] = value;
+	} catch (e) {}
 }
 
 /**

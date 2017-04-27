@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>DIO</title>
+	<link rel=stylesheet href=../css/stylesheet.css>
+	<link rel="icon" type="image/png" href="../imgs/favicon-large.png" sizes="32x32">
+	<link rel="icon" type="image/png" href="../imgs/favicon-small.png" sizes="16x16">
+</head>
+<body>
+	<a href=../ title=index class=logo>
+		<img src=../imgs/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=../>Index</a>
+			<a href=../introduction.html>Introduction</a>
+			<a href=../api.html>API</a>
+			<a href=../examples.html>Examples</a>
+			<a href=https://github.com/thysultan/dio.js>Github</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Particles</h1>
+
+		<hr>
+
+		<p>Animating four hundred components, using a component for each particle, in response to the movement of the mouse.</p>
+
+		<div id=root></div>
+	</article>
+
+	<style>
+		nav a {
+			transform: translateZ(0);
+			position: relative;
+			z-index: 100;
+		}
+		body {
+			overflow-x: hidden;
+		}
+		#root {
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			position: fixed;
+			top: 0;
+			left: 0;
+		}
+		#root > div {
+			width: 100%;
+			height: 100%;
+			position: relative;
+		}
+		#root span {
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 4px;
+			height: 4px;
+			background-color: rgb(52,46,33);
+			border-radius: 8px;
+			will-change: transform;
+			opacity: 0.8;
+		}
+	</style>
+	<script src=../js/highlight.js></script>
+	<script src=../js/main.js></script>
+	<script src=../../dist/dio.js></script>
+	<script>
+		const DAMPING = 0.999
+		const width  = window.innerWidth
+		const height = window.innerHeight
+
+		class Particle {
+			constructor(props) {
+				this.x = this.oldX = Math.random() * width;
+				this.y = this.oldY = Math.random() * height;
+			}
+			render(props) {
+				const {x, y} = props
+				const velocityX = (this.x - this.oldX) * DAMPING
+				const velocityY = (this.y - this.oldY) * DAMPING
+
+				this.oldX = this.x
+				this.oldY = this.y
+
+				this.x += velocityX
+				this.y += velocityY
+
+				const dx = x - this.x
+				const dy = y - this.y
+				const distance = Math.sqrt(dx * dx + dy * dy);
+
+				this.x += dx / distance;
+				this.y += dy / distance;
+
+				return h('span', {style: {
+					transform: 'translate('+ this.x + 'px,' + this.y + 'px)'
+				}})
+			}
+		}
+
+		class Particles {
+			getInitialState (props) {
+				return {x: width * 0.5, y: height * 0.5}
+			}
+			onMousemove(props, state, event) {
+				return {x: event.clientX, y: event.clientY}
+			}
+			render(props, state) {
+				for (var i = 0, length = props.length, children = new Array(length); i < length; i++) {
+					children[i] = h(Particle, {x: this.state.x, y: this.state.y})
+				}
+
+		  	return h('div', {onMouseMove: this.onMousemove}, children)
+			}
+		}
+
+		const root = document.getElementById('root')
+		const element = h(Particles, {length: 400})
+
+		const loop = () => {
+			dio.render(element, root)
+			requestAnimationFrame(loop)
+		}
+
+		requestAnimationFrame(loop)
+	</script>
+</body>
+</html>

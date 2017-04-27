@@ -263,9 +263,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  			host = newer.host = newer;
  		}
 
- 		var result = extract(newer);
-
- 		flag = result.flag;
+ 		flag = extract(newer).flag;
  		owner = newer.owner;
  	} else if (host !== null) {
 		newer.host = host;

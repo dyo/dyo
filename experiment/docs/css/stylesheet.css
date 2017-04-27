@@ -11,10 +11,6 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body {
-  height: 100%;
-}
-
 body {
 	color: #111;
   width: 87.5%;
@@ -51,6 +47,10 @@ section {
 	float: left;
 	max-width: 400px;
   min-width: 240px;
+}
+
+.card a {
+  word-wrap: normal;
 }
 
 .card p {

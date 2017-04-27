@@ -80,13 +80,18 @@ function* Welcome () {
 		<p>
 			Both <code>function</code> and <code>class</code> components can make use of lifcycles <label for=1></label>.
 			<span class="note">
-				With the exception of <code>`getInitialState`</code> that is reserved soley for <code>`class`</code> component which could be used to retrieve the initial state of a class component if required.
+				With the exception of <code>`getInitialState`</code> that is reserved soley for <code>`class`</code> components useful when an initial state of a component if required.
 			</span>
 		</p>
 
 		<p>When required any lifecycle on a <code>`class`</code> based component can call <code>`this.setState`</code> or return a state update object to update the state.</p>
 
 		<h2>Data</h2>
+
+		<p>
+			The default return value that <code>`getInitialState`</code> expects is an object representing the initial state of the component; However <code>`getInitialState`</code> also accepts a <code>`Promise`</code> when the data the component requires is network bound <label for=2></label>.
+			<span class="note">That is to say you can asynchronous-ly retrieve a components initial state.</span>
+		</p>
 
 <pre><code>
 class Welcome {
@@ -100,7 +105,7 @@ class Welcome {
 			Refs are either functions of strings that provide access to the underlining DOM node; While <code>string</code>
 			<label for=3></label>
 			<span class="note">String refs are only usefull on <code>class</code> based components.</span>
-			refs are can be dynamic, <code>function</code>
+			refs can be dynamic, <code>function</code>
 			refs can also return or call <code>`this.setState`</code> to update the component.</p>
 
 <pre><code>
@@ -115,11 +120,6 @@ class Welcome {
 	}
 }
 </code></pre>
-
-		<p>
-			The default return value that <code>`getInitialState`</code> expects is an object representing the initial state of the component; However <code>`getInitialState`</code> also accepts a <code>`Promise`</code> when the data the component requires is network bound <label for=2></label>.
-			<span class="note">That is to say you can asynchronous-ly retrieve a components initial state.</span>
-		</p>
 
 		<h2 id=mounting>Mounting</h2>
 
@@ -236,6 +236,10 @@ class Welcome {
 }
 </code></pre>
 
+		<h1 id=setstate>forceUpdate</h1>
+
+		<p>Used when you want to invoke an update without a state update, <code>`this.forceUpdate`</code>.</p>
+
 		<h1 id=render>Render</h1>
 
 		<p>
@@ -253,7 +257,7 @@ dio.render('Hello World', document.body)
 
 		<h2 id=shallow>Shallow</h2>
 
-		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM but returns a shallow copy of the passed element. This can mostly be used for testing purposes.</p>
+		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM but returns a shallow render of the passed element. This can then be used for testing purposes.</p>
 
 <pre><code>
 dio.shallow('Hello World')
@@ -310,7 +314,7 @@ class Welcome {
 			<li>Our <code>`componentDidThrow`</code> method detects if the error comes from <code>`render`</code> and responds with an error state.</li>
 		</ol>
 
-		<p>On the other hand if the error happend in the update phase and we did not try to handle it DIO will simply resolve to the last rendered state.</p>
+		<p>On the other hand if the error happend in the update phase and we did handle it DIO will simply resolve to the last rendered state.</p>
 
 		<h2 id=non-deterministic>Non-Deterministic</h2>
 
@@ -324,8 +328,10 @@ class Welcome {
 		<p>
 			But <a href=https://en.wikipedia.org/wiki/Nondeterministic_algorithm>non-deterministic</a> <label for=6></label>
 			<span class=note>A non-deterministic algorithm is an algorithm that, even for the same input, can exhibit different behaviors on different runs.</span>
-			introduces the aspect of non-linear updates, where instead of <code>`A &#x2192; B &#x2192; C &#x2192; D`</code> you could get an array of different update sequences; For example:
+			introduces the aspect of non-linear updates, where instead of <code>`A &#x2192; B &#x2192; C &#x2192; D`</code> you could get an array of different update sequences;
 		</p>
+
+		<p>For example:</p>
 
 		<p class=math>C &#x2192; D &#x2192; A &#x2192; B</p>
 
@@ -350,13 +356,13 @@ class Welcome {
 }
 </code></pre>
 
-		<p>If you where to put multiple instances of this component in a list, everytime an update is invoked it should update in a random order.</p>
+		<p>Putting multiple instances of this component in a list will result in a random update order whenever an update is invoked.</p>
 
 		<h2 id=coroutine>Coroutine</h2>
 
-		<p>In other words Javascript <code>`generators`</code><label for=7></label><span class="note">A generator is a special type of function that works as a factory for iterators. A function becomes a generator if it contains one or more yield expressions and if it uses the <code>`function*`</code> syntax.</span>; The example that follows will continue to return a button and increment the <code>`supply`</code> variable whenever an update is invoked through a <code>`click`</code> of the button element.</p>
+		<p>In other words JavaScript <code>`generators`</code><label for=7></label><span class="note">A generator is a special type of function that works as a factory for iterators. A function becomes a generator if it contains one or more yield expressions and if it uses the <code>`function*`</code> syntax.</span>; The example that follows will continue to return a button and increment the <code>`supply`</code> variable whenever an update is invoked through a <code>`click`</code> of the button element.</p>
 
-		<p>Though generators are not a well known/used feature in Javascript they do introduce interesting ways to model behaviour beyond normal functons.</p>
+		<p>Though generators are not a well known/used feature in JavaScript they do introduce interesting ways to model behaviour beyond normal functons.</p>
 
 <pre><code>
 class Coroutine {
@@ -376,7 +382,7 @@ class Coroutine {
 
 		<p>There is no specialized API for animations in DIO, however the mount lifecycles methods have been designed with animations in mind.</p>
 
-		<p>Making use of the <code>`componentWillUnmount`</code> lifecycle return signature and <code>`componentDidMount`</code> we can animate any component; For example, using the new Javascript <a href=https://developer.mozilla.org/en-US/docs/Web/API/Element/animate>Element.animate</a><label for=8></label><span class="note">The Web Animations API opens the browser’s animation engine to developers and manipulation by JavaScript. This API was designed to underlie implementations of both CSS Animations and CSS Transitions, and leaves the door open to future animation effects. It is one of the most performant ways to animate on the Web where supported, letting the browser make its own internal optimizations without hacks, coercion, or Window.requestAnimationFrame(). <a href=https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API>Using the Web Animations API.</a></span> API:</p>
+		<p>Making use of the <code>`componentWillUnmount`</code> lifecycle return signature and <code>`componentDidMount`</code> we can animate any component; For example, using the new <a href=https://developer.mozilla.org/en-US/docs/Web/API/Element/animate>Element.animate</a><label for=8></label><span class="note">The Web Animations API opens the browser’s animation engine to developers and manipulation by JavaScript. This API was designed to underlie implementations of both CSS Animations and CSS Transitions, and leaves the door open to future animation effects. It is one of the most performant ways to animate on the Web where supported, letting the browser make its own internal optimizations without hacks, coercion, or Window.requestAnimationFrame(). <a href=https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API>Using the Web Animations API.</a></span> API:</p>
 
 <pre><code>
 const animations = {
