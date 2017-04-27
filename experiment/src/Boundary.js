@@ -170,7 +170,7 @@ function errorBoundary (message, owner, type, from) {
 	errorMessage(component, location, message instanceof Error ? message.stack : message);
 
 	if (type === 3 || type === 5) {
-		return shape(newer, owner !== null ? owner._older : null, true);
+		return shape(newer, owner !== null ? owner.this : null, true);
 	}
 }
 

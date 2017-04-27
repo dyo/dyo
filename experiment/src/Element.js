@@ -69,6 +69,7 @@ function element (_type, _props) {
 			if ((props = older.props) === null || props === object) {
 				props = older.props = {};
 			}
+
 			for (older.children = children; i < length; i++) {
 				index = pull(older, index, arguments[i]);
 			}
@@ -123,6 +124,7 @@ function push (older, index, newer) {
 			}
 		}
 	}
+
 	children[index] = child;
 
 	return index + 1;
@@ -149,6 +151,7 @@ function pull (older, index, newer) {
 			return i;
 		}
 	}
+
 	children[index] = newer;
 
 	return index + 1;
@@ -234,8 +237,8 @@ function Tree (flag) {
 }
 
 /**
- * Tree Prototype
+ * Prototype
  *
  * @type {Object}
  */
-var TreePrototype = Tree.prototype = element.prototype = Object.create(null);
+var Prototype = Tree.prototype = element.prototype = Object.create(null);

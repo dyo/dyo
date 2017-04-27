@@ -50,7 +50,7 @@ function render (_newer, _target) {
 		}
 	}
 
-	if ((older = target._older) !== void 0) {
+	if ((older = target.this) !== void 0) {
 		if (older.key === newer.key && older.type === newer.type) {
 			patch(older, newer, older.group);
 		} else {
@@ -60,7 +60,7 @@ function render (_newer, _target) {
 		parent = new Tree(2);
 		parent.node = target;
 
-		create(target._older = newer, parent, empty, 1, newer, null);
+		create(target.this = newer, parent, empty, 1, newer, null);
 	}
 }
 

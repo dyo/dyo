@@ -47,10 +47,12 @@ var empty = new Tree(2);
 /**
  * ## Component Shape
  *
- * _older: current tree {Tree?}
- * _async: component async, tracks async lifecycle methods flag {Number}
- * _state: previous cached state {Object}
- * _pending: pending cached state {Object}
+ * this: current tree {Tree?}
+ * async: component async, tracks async lifecycle methods flag {Number}
+ *
+ * _props: previous props {Object}
+ * _state: previous state {Object}
+ * _pending: pending state {Object}
  *
  * props: current props {Object}
  * state: current state {Object}

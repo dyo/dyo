@@ -31,7 +31,7 @@ function patch (older, _newer, group) {
 	}
 
 	if (older.flag === 1) {
-		return content(older, older.children = newer.children);
+		return nodeValue(older, older.children = newer.children);
 	}
 
 	var newLength = newer.children.length;
@@ -41,13 +41,15 @@ function patch (older, _newer, group) {
 		// fill children
 		if (newLength !== 0) {
 			fill(older, newer, newLength);
+
 			older.children = newer.children;
 		}
 	} else if (newLength === 0) {
 		// empty children
 		if (oldLength !== 0) {
 			unmount(older, false);
-			clear(older.node);
+			removeChildren(older);
+
 			older.children = newer.children;
 		}
 	} else if (newer.keyed === true) {
@@ -96,7 +98,7 @@ function nonkeyed (older, newer, _oldLength, newLength) {
 			oldChild = oldChildren[i];
 
 			if (newChild.flag === 1 && oldChild.flag === 1) {
-				content(oldChild, oldChild.children = newChild.children);
+				nodeValue(oldChild, oldChild.children = newChild.children);
 			} else if (newChild.type !== oldChild.type) {
 				create(oldChildren[i] = newChild, older, oldChild, 3, host, null);
 			} else {
@@ -134,6 +136,7 @@ function keyed (older, newer, oldLength, newLength) {
  		// sync leading nodes
  		while (oldStartNode.key === newStartNode.key) {
  			newChildren[newStart] = oldStartNode;
+
  			patch(oldStartNode, newStartNode, oldStartNode.group);
 
  			oldStart++;
@@ -148,6 +151,7 @@ function keyed (older, newer, oldLength, newLength) {
  		// sync trailing nodes
  		while (oldEndNode.key === newEndNode.key) {
  			newChildren[newEnd] = oldEndNode;
+
  			patch(oldEndNode, newEndNode, oldEndNode.group);
 
  			oldEnd--;
@@ -164,7 +168,7 @@ function keyed (older, newer, oldLength, newLength) {
  			newChildren[newStart] = oldEndNode;
  			oldChildren[oldEnd] = oldStartNode;
 
- 			insert(oldEndNode, oldStartNode, older);
+ 			insertBefore(oldEndNode, oldStartNode, older);
  			patch(oldEndNode, newStartNode, oldEndNode.group);
 
  			oldEnd--;
@@ -183,9 +187,9 @@ function keyed (older, newer, oldLength, newLength) {
  			nextPos = newEnd + 1;
 
  			if (nextPos < newLength) {
- 				insert(oldStartNode, oldChildren[nextPos], older);
+ 				insertBefore(oldStartNode, oldChildren[nextPos], older);
  			} else {
- 				append(oldStartNode, older);
+ 				appendChild(oldStartNode, older);
  			}
 
  			patch(oldStartNode, newEndNode, oldStartNode.group);
@@ -219,12 +223,14 @@ function keyed (older, newer, oldLength, newLength) {
  	} else if (newStart === 0 && newEnd === newLength-1) {
  		// all children are out of sync, remove all, append new set
  		unmount(older, false);
- 		clear(older);
+ 		removeChildren(older);
+
  		fill(older, newer, newLength);
  	} else {
  		// could sync all children, move on the the next phase
  		complex(older, newer, oldStart, newStart, oldEnd + 1, newEnd + 1, oldLength, newLength);
  	}
+
  	older.children = newChildren;
 }
 
@@ -283,10 +289,13 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 		if (oldIndex === void 0) {
 			nextPos = newIndex - newOffset;
 			nextChild = nextPos < oldLength ? oldChildren[nextPos] : empty;
+
 			create(newChild, older, nextChild, 2, host, null);
+
 			newOffset++;
 		} else if (newIndex === oldIndex) {
 			oldChild = oldChildren[oldIndex];
+
 			patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 		}
 		newIndex++;
@@ -303,6 +312,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 		// old child doesn't exist in new children, remove
 		if (newIndex === void 0) {
 			remove(oldChild, empty, older);
+
 			oldOffset++;
 		}
 		oldIndex++;
@@ -335,10 +345,11 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 
 				// within bounds
 				if ((nextPos = newIndex + 1) < newLength) {
-					insert(oldChild, newChildren[nextPos], older);
+					insertBefore(oldChild, newChildren[nextPos], older);
 				} else {
-					append(oldChild, older);
+					appendChild(oldChild, older);
 				}
+
 				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 			}
 		}

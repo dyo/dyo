@@ -8,8 +8,8 @@ function Component (_props) {
 	var state = this.state;
 
 	this.refs = null;
-	this._older = null;
-	this._async = 0;
+	this.this = null;
+	this.async = 0;
 
 	// props
 	if (this.props === void 0) {
@@ -27,6 +27,7 @@ function Component (_props) {
 		}
 		this.state = state;
 	}
+
 	this._props = props;
 	this._state = state;
 	this._pending = state;
@@ -115,9 +116,9 @@ function setState (newer, callback) {
  */
 function forceUpdate (callback) {
 	var owner = this;
-	var older = owner._older;
+	var older = owner.this;
 
-	if (older === null || older.node === null || older.async !== 0 || owner._async !== 0) {
+	if (older === null || older.node === null || older.async !== 0 || owner.async !== 0) {
 		// this is to avoid maxium call stack when componentDidUpdate
 		// produces a infinite render loop
 		if (older.async === 3) {
@@ -206,9 +207,9 @@ function getInitialState (state, owner) {
 		return {};
 	}
 	if (state.constructor === Promise) {
-		owner._async = 1;
+		owner.async = 1;
 		state.then(function (value) {
-			owner._async = 0;
+			owner.async = 0;
 			owner.setState(value);
 		});
 		return {};

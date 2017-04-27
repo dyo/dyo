@@ -34,7 +34,7 @@ function attr (name) {
 }
 
 /**
- * Assign Attributes
+ * Attribute [Mount]
  *
  * @param {Tree} newer
  * @param {String?} xmlns
@@ -54,19 +54,19 @@ function attribute (newer, xmlns) {
 				refs(value, newer, 0);
 			} else if (type < 20) {
 				if (value !== void 0 && value !== null) {
-					assign(type, name, value, xmlns, newer);
+					setAttribute(type, name, value, xmlns, newer);
 				}
 			} else if (type > 20) {
-				event(newer, name, value, 1);
+				eventListener(newer, name, value, 1);
 			} else {
-				style(newer, newer, 0);
+				setStyle(newer, newer, 0);
 			}
 		}
 	}
 }
 
 /**
- * Reconcile Attributes
+ * Attributes [Reconcile]
  *
  * @param {Tree} newer
  * @param {Tree} older
@@ -88,9 +88,9 @@ function attributes (older, newer) {
 
 			if (next === null || next === void 0) {
 				if (type < 20) {
-					assign(type, name, next, xmlns, older);
+					setAttribute(type, name, next, xmlns, older);
 				} else if (type > 20) {
-					event(older, name, next, 0);
+					eventListener(older, name, next, 0);
 				}
 			}
 		}
@@ -110,11 +110,11 @@ function attributes (older, newer) {
 
 				if (next !== prev && next !== null && next !== void 0) {
 					if (type < 20) {
-						assign(type, name, next, xmlns, older);
+						setAttribute(type, name, next, xmlns, older);
 					} else if (type > 20) {
-						event(older, name, next, 2);
+						eventListener(older, name, next, 2);
 					} else {
-						style(older, newer, 1);
+						setStyle(older, newer, 1);
 					}
 				}
 			}
@@ -146,12 +146,16 @@ function refs (value, older, type) {
 		owner.refs = {};
 	}
 
-	switch (typeof value) {
-		case 'function': {
+	if (value === void 0 || value === null) {
+		return;
+	}
+
+	switch (value.constructor) {
+		case Function: {
 			callbackBoundary(owner, value, older.node, type);
 			break;
 		}
-		case 'string': {
+		case String: {
 			if (stateful === true) {
 				owner.refs[value] = older.node;
 			}
@@ -161,7 +165,7 @@ function refs (value, older, type) {
 }
 
 /**
- * Merge Props
+ * Merge
  *
  * @param {Object} source
  * @param {Object} props

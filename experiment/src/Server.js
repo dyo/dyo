@@ -10,7 +10,7 @@ var unicodes = {'<': '&lt;', '>': '&gt;','"': '&quot;',"'": '&#39;','&': '&amp;'
  *
  * @return {String}
  */
-TreePrototype.toString = function () {
+Prototype.toString = function () {
 	if (this.group > 0) {
 		return extract(this).toString();
 	}
@@ -27,6 +27,7 @@ TreePrototype.toString = function () {
 	if (flag === 1) {
 		return sanitize(children);
 	}
+
 	if (newer.props !== object && newer.props.innerHTML !== void 0) {
 		body = newer.props.innerHTML;
 	} else if ((length = children.length) > 0) {
@@ -34,6 +35,7 @@ TreePrototype.toString = function () {
 			body += children[i].toString();
 		}
 	}
+
 	return '<'+tag+attrs(newer)+'>'+ (hollow[tag] !== 0 ? body+'</'+tag+'>' : '');
 }
 
@@ -93,6 +95,7 @@ function attrs (newer) {
 		}
 		body += value;
 	}
+
 	return body;
 }
 

@@ -6,7 +6,7 @@
  * @param  {String?} xmlns
  * @return {Node}
  */
-function generate (newer, host, xmlns) {
+function createElement (newer, host, xmlns) {
 	try {
 		if (xmlns === null) {
 			return document.createElement(newer.tag);
@@ -23,7 +23,7 @@ function generate (newer, host, xmlns) {
  *
  * @return {value}
  */
-function compose (value) {
+function createTextNode (value) {
 	return document.createTextNode(value);
 }
 
@@ -34,7 +34,7 @@ function compose (value) {
  * @param {Tree} sibling
  * @param {Tree} parent
  */
-function insert (newer, sibling, parent) {
+function insertBefore (newer, sibling, parent) {
 	parent.node.insertBefore(newer.node, sibling.node);
 }
 
@@ -44,73 +44,38 @@ function insert (newer, sibling, parent) {
  * @param {Tree} newer
  * @param {Tree} parent
  */
-function append (newer, parent) {
+function appendChild (newer, parent) {
 	parent.node.appendChild(newer.node);
 }
 
 /**
- * Remove/Replace
+ * Remove
  *
  * @param {Tree} older
  * @param {Tree} newer
  * @param {Tree} parent
  */
-function remove (older, newer, parent) {
-	var node = older.node;
-
-	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
-		var pending = mountBoundary(older.owner, node, 2);
-
-		if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
-			unmount(older, true);
-			wait(older, newer, parent, pending, node);
-
-			return true;
-		}
-	}
-
-	unmount(older, true);
-
-	if (newer === empty) {
-		parent.node.removeChild(node);
-	} else {
-		parent.node.replaceChild(newer.node, node);
-	}
-
-	return false;
-}
-
-function wait (older, newer, parent, pending, node) {
-	pending.then(function () {
-		var anchor = parent.node;
-		var next = newer.node;
-
-		if (anchor === null) {
-			return;
-		}
-
-		if (newer === empty) {
-			return void anchor.removeChild(node);
-		}
-
-		if (next === null) {
-			return;
-		}
-
-		anchor.replaceChild(next, node);
-
-		if (newer.group > 0 && newer.owner.componentDidMount !== void 0) {
-			mountBoundary(newer.owner, next, 1);
-		}
-	});
+function removeChild (older, parent) {
+	parent.node.removeChild(older.node);
 }
 
 /**
- * Clear
+ * Replace
+ *
+ * @param  {Tree} older
+ * @param  {Tree} newer
+ * @param  {Tree} parent
+ */
+function replaceChild (older, newer, parent) {
+	parent.node.replaceChild(newer.node, older.node);
+}
+
+/**
+ * Remove All
  *
  * @param {Tree} older
  */
-function clear (older) {
+function removeChildren (older) {
 	older.node.textContent = null;
 }
 
@@ -120,7 +85,7 @@ function clear (older) {
  * @param {Tree} older
  * @param {String|Number} value
  */
-function content (older, value) {
+function nodeValue (older, value) {
 	older.node.nodeValue = value;
 }
 
@@ -133,7 +98,7 @@ function content (older, value) {
  * @param {String?} xmlns
  * @param {Tree} newer
  */
-function assign (type, name, value, xmlns, newer) {
+function setAttribute (type, name, value, xmlns, newer) {
 	var node = newer.node;
 
 	switch (type) {
@@ -186,7 +151,7 @@ function assign (type, name, value, xmlns, newer) {
  * @param {Tree} newer
  * @param {Number} type
  */
-function style (older, newer, type) {
+function setStyle (older, newer, type) {
 	var node = older.node.style;
 	var next = newer.attrs.style;
 
@@ -234,7 +199,7 @@ function style (older, newer, type) {
  * @param {Function} value
  * @param {Number} action
  */
-function event (older, type, value, action) {
+function eventListener (older, type, value, action) {
 	var name = type.toLowerCase().substring(2);
 	var host = older.host;
 	var node = older.node;

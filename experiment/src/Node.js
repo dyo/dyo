@@ -20,6 +20,7 @@ function extract (older) {
 	if (props === object) {
 		props = {};
 	}
+
 	if (length !== 0) {
 		props.children = children;
 	}
@@ -27,6 +28,7 @@ function extract (older) {
 	if (defaults !== void 0) {
 		merge(getInitialStatic(type, defaults, 'defaultProps', props), props);
 	}
+
 	if (types !== void 0) {
 		getInitialStatic(type, types, 'propTypes', props);
 	}
@@ -46,12 +48,13 @@ function extract (older) {
 
 		older.owner = owner;
 
-		if (owner._async === 0) {
+		if (owner.async === 0) {
 			older.async = 1;
 			newer = renderBoundary(older, group);
 			older.async = 0;
 		}
-		newer = shape(newer, owner._older = older, true);
+
+		newer = shape(newer, owner.this = older, true);
 	} else {
 		newer = shape(renderBoundary(older, group), older, true);
 	}
@@ -169,7 +172,7 @@ function coroutine (older, generator) {
  * @param {Boolean} deep
  */
 function exchange (older, newer, deep) {
-	swap(older, newer, older.host);
+	change(older, newer, older.host);
 	copy(older, newer, deep);
 }
 
@@ -177,27 +180,39 @@ function exchange (older, newer, deep) {
  * Unmount Children
  *
  * @param  {Tree} older
- * @param  {Boolean} release
+ * @param  {Boolean} unlink
  */
-function unmount (older, release) {
+function unmount (older, unlink) {
 	var children = older.children;
 	var length = children.length;
 
 	if (length !== 0 && older.flag !== 1) {
 		for (var i = 0, child; i < length; i++) {
-			if ((child = children[i]).group > 0 && child.owner.componentWillUnmount !== void 0) {
+			child = children[i];
+
+			if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
 				mountBoundary(child.owner, child.node, 2);
 			}
+
 			unmount(child, true);
 		}
 	}
 
-	if (release === true) {
-		older.parent = null;
-		older.owner = null;
-		older.node = null;
-		older.host = null;
+	if (unlink === true) {
+		detach(older);
 	}
+}
+
+/**
+ * Detach
+ *
+ * @return {Tree}
+ */
+function detach (older) {
+	older.parent = null;
+	older.owner = null;
+	older.node = null;
+	older.host = null;
 }
 
 /**
@@ -214,6 +229,7 @@ function fill (older, newer, length) {
 	for (var i = 0, child; i < length; i++) {
 		create(child = children[i], older, empty, 1, host, null);
 	}
+
 	older.children = children;
 }
 
@@ -256,10 +272,10 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  	}
 
 	if (flag === 1) {
-		node = newer.node = compose(newer.children);
+		node = newer.node = createTextNode(newer.children);
 		type = 1;
 	} else {
-		node = generate(newer, host, xmlns);
+		node = createElement(newer, host, xmlns);
 
 		if (newer.flag === 3) {
 			create(node, newer, sibling, action, host, xmlns);
@@ -289,8 +305,8 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 	newer.parent = parent;
 
 	switch (action) {
-		case 1: append(newer, parent); break;
-		case 2: insert(newer, sibling, parent); break;
+		case 1: appendChild(newer, parent); break;
+		case 2: insertBefore(newer, sibling, parent); break;
 		case 3: skip = remove(sibling, newer, parent); break;
 	}
 
@@ -304,11 +320,73 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 }
 
 /**
- * Swap
+ * Remove
+ *
+ * @param  {Tree} older
+ * @param  {Tree} newer
+ * @param  {Tree} parent
+ * @return {Tree}
+ */
+function remove (older, newer, parent) {
+	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
+		var pending = mountBoundary(older.owner, older.node, 2);
+
+		if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
+			animate(older, newer, parent, pending, older.node);
+
+			return true;
+		}
+	}
+
+	unmount(older, false);
+
+	if (newer === empty) {
+		removeChild(older, parent);
+	} else {
+		replaceChild(older, newer, parent);
+	}
+
+	detach(older);
+
+	return false;
+}
+
+
+/**
+ * Animate
+ *
+ * @param  {Tree} older
+ * @param  {Tree} newer
+ * @param  {tree} parent
+ * @param  {Promise} pending
+ * @param  {Node} node
+ */
+function animate (older, newer, parent, pending) {
+	pending.then(function () {
+		if (parent.node === null || older.node === null) {
+			return;
+		}
+
+		if (newer === empty) {
+			removeChild(older, parent);
+		} else if (newer.node !== null) {
+			replaceChild(older, newer, parent);
+
+			if (newer.group > 0 && newer.owner.componentDidMount !== void 0) {
+				mountBoundary(newer.owner, newer.node, 1);
+			}
+		}
+
+		unmount(older, true);
+	});
+}
+
+/**
+ * Change
  *
  * @param  {Tree} older
  * @param  {Tree} newer
  */
-function swap (older, newer) {
+function change (older, newer) {
 	create(newer, older.parent, older, 3, older.host, null);
 }
