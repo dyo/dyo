@@ -42,7 +42,7 @@ function bootstrap () {
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' +
-	 	'\nbuild > ../dist/dio.js, ./dist/dio.server.js'+
+	 	'\nbuild > ../dist/dio.js'+
 		'\x1b[0m\n'
 	);
 }

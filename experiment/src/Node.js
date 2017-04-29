@@ -52,16 +52,18 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  			break;
  		}
  		default: {
- 			// auto namespace svg root
- 			if ((tag = newer.tag) === 'svg') {
- 				xmlns = svg;
+ 			// auto namespace svg & math roots
+ 			switch ((tag = newer.tag)) {
+ 				case 'svg': xmlns = svg; break;
+ 				case 'math': xmlns = math; break;
  			}
 
  			node = createElement(tag, newer, host, xmlns);
 
  			if (newer.flag === 5) {
  				create(node, newer, sibling, action, host, xmlns);
- 				return copy(newer, node, false);
+ 				copy(newer, node, false);
+ 				return;
  			}
 
  			newer.node = node;
@@ -75,6 +77,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  					if ((child = children[i]).node !== null) {
  						copy(child = children[i] = new Tree(child.flag), child, false);
  					}
+
  					create(child, newer, sibling, 1, host, xmlns);
  				}
  			}
@@ -300,6 +303,85 @@ function coroutine (older, generator) {
 }
 
 /**
+ * Fill
+ *
+ * @param {Tree} older
+ * @param {Tree} newer
+ * @param {Number} length
+ */
+function fill (older, newer, length) {
+	var children = newer.children;
+	var host = older.host;
+
+	for (var i = 0, child; i < length; i++) {
+		create(child = children[i], older, shared, 1, host, null);
+	}
+
+	older.children = children;
+}
+
+/**
+ * Animate
+ *
+ * @param  {Tree} older
+ * @param  {Tree} newer
+ * @param  {tree} parent
+ * @param  {Promise} pending
+ * @param  {Node} node
+ */
+function animate (older, newer, parent, pending) {
+	pending.then(function () {
+		if (parent.node === null || older.node === null) {
+			return;
+		}
+
+		if (newer === shared) {
+			removeChild(older, parent);
+		} else if (newer.node !== null) {
+			replaceChild(older, newer, parent);
+
+			if (newer.group > 0 && newer.owner.componentDidMount !== void 0) {
+				mountBoundary(newer, newer.owner, newer.node, 1);
+			}
+		}
+
+		unmount(older, true);
+	});
+}
+
+/**
+ * Remove
+ *
+ * @param  {Tree} older
+ * @param  {Tree} newer
+ * @param  {Tree} parent
+ * @return {Tree}
+ */
+function remove (older, newer, parent) {
+	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
+		var pending = mountBoundary(older, older.owner, older.node, 2);
+
+		if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
+			animate(older, newer, parent, pending, older.node);
+
+			return true;
+		}
+	}
+
+	unmount(older, false);
+
+	if (newer === shared) {
+		removeChild(older, parent);
+	} else {
+		replaceChild(older, newer, parent);
+	}
+
+	detach(older);
+
+	return false;
+}
+
+/**
  * Unmount
  *
  * @param  {Tree} older
@@ -339,86 +421,6 @@ function detach (older) {
 }
 
 /**
- * Fill
- *
- * @param {Tree} older
- * @param {Tree} newer
- * @param {Number} length
- */
-function fill (older, newer, length) {
-	var children = newer.children;
-	var host = older.host;
-
-	for (var i = 0, child; i < length; i++) {
-		create(child = children[i], older, shared, 1, host, null);
-	}
-
-	older.children = children;
-}
-
-/**
- * Remove
- *
- * @param  {Tree} older
- * @param  {Tree} newer
- * @param  {Tree} parent
- * @return {Tree}
- */
-function remove (older, newer, parent) {
-	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
-		var pending = mountBoundary(older, older.owner, older.node, 2);
-
-		if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
-			animate(older, newer, parent, pending, older.node);
-
-			return true;
-		}
-	}
-
-	unmount(older, false);
-
-	if (newer === shared) {
-		removeChild(older, parent);
-	} else {
-		replaceChild(older, newer, parent);
-	}
-
-	detach(older);
-
-	return false;
-}
-
-
-/**
- * Animate
- *
- * @param  {Tree} older
- * @param  {Tree} newer
- * @param  {tree} parent
- * @param  {Promise} pending
- * @param  {Node} node
- */
-function animate (older, newer, parent, pending) {
-	pending.then(function () {
-		if (parent.node === null || older.node === null) {
-			return;
-		}
-
-		if (newer === shared) {
-			removeChild(older, parent);
-		} else if (newer.node !== null) {
-			replaceChild(older, newer, parent);
-
-			if (newer.group > 0 && newer.owner.componentDidMount !== void 0) {
-				mountBoundary(newer, newer.owner, newer.node, 1);
-			}
-		}
-
-		unmount(older, true);
-	});
-}
-
-/**
  * Exchange
  *
  * @param {Tree} newer
@@ -428,7 +430,7 @@ function animate (older, newer, parent, pending) {
 function exchange (older, newer, deep) {
 	change(older, newer, older.host);
 	copy(older, newer, deep);
-	hydrate(older, older);
+	hydrate(older.host, newer);
 }
 
 /**
@@ -438,24 +440,14 @@ function exchange (older, newer, deep) {
  * @param  {Tree} newer
  */
 function hydrate (older, newer) {
-	var host = older.host;
+	if (older !== null && older.flag === 3) {
+		older.node = newer.node;
+		older.parent = newer.parent;
 
-	if (host !== null && host !== older && host.flag === 3) {
-		host.node = newer.node;
-		host.parent = newer.parent;
-
-		hydrate(host, newer);
+		if (older.host !== older) {
+			hydrate(older.host, newer);
+		}
 	}
-}
-
-/**
- * Change
- *
- * @param  {Tree} older
- * @param  {Tree} newer
- */
-function change (older, newer) {
-	create(newer, older.parent, older, 3, older.host, null);
 }
 
 /**
@@ -467,4 +459,14 @@ function change (older, newer) {
  */
 function composite (older, newer, group) {
 	patch(older.children[0], newer.children[0], group);
+}
+
+/**
+ * Change
+ *
+ * @param  {Tree} older
+ * @param  {Tree} newer
+ */
+function change (older, newer) {
+	create(newer, older.parent, older, 3, older.host, null);
 }

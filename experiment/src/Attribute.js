@@ -42,7 +42,7 @@ function attr (name) {
  */
 function attribute (newer, xmlns, node) {
 	var attrs = newer.attrs;
-	var type = 0;
+	var type;
 	var value;
 
 	for (var name in attrs) {
@@ -52,7 +52,7 @@ function attribute (newer, xmlns, node) {
 			value = attrs[name];
 
 			if (type === 30) {
-				refs(value, newer, 0);
+				refs(newer, value, 2);
 			} else if (type < 20) {
 				if (value !== void 0 && value !== null) {
 					setAttribute(type, name, value, xmlns, node);
@@ -73,16 +73,16 @@ function attribute (newer, xmlns, node) {
  * @param {Tree} older
  */
 function attributes (older, newer) {
-	var prevs = older.attrs;
 	var node = older.node;
+	var prevs = older.attrs;
 	var attrs = newer.attrs;
 
-	if (prevs === attrs) {
+	if (prevs === attrs && attr === object) {
 		return;
 	}
 
 	var xmlns = older.xmlns;
-	var type = 0;
+	var type;
 	var prev;
 	var next;
 
@@ -111,7 +111,7 @@ function attributes (older, newer) {
 			next = attrs[name];
 
 			if (type === 30) {
-				refs(next, older, 2);
+				refs(older, next, 2);
 			} else {
 				prev = prevs[name];
 
@@ -134,11 +134,11 @@ function attributes (older, newer) {
 /**
  * Refs
  *
- * @param  {Function|String} value
  * @param  {Tree} older
+ * @param  {Function|String} value
  * @param  {Number} type
  */
-function refs (value, older, type) {
+function refs (older, value, type) {
 	var host = older.host;
 	var stateful = false;
 	var owner;
