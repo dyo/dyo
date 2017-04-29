@@ -103,7 +103,7 @@ function setAttribute (type, name, value, xmlns, node) {
 	switch (type) {
 		case 0: {
 			if (xmlns === null && name in node) {
-				setUnknown(name, value, newer);
+				setUnknown(name, value, node);
 			} else if (value !== null && value !== void 0 && value !== false) {
 				node.setAttribute(name, (value === true ? '' : value));
 			} else {
@@ -154,11 +154,11 @@ function setAttribute (type, name, value, xmlns, node) {
  *
  * @param  {String} name
  * @param  {Any} value
- * @param  {Tree} newer
+ * @param  {Node} node
  */
-function setUnknown (name, value, newer) {
+function setUnknown (name, value, node) {
 	try {
-		newer.node[name] = value;
+		node[name] = value;
 	} catch (e) {}
 }
 
