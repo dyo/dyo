@@ -1,13 +1,14 @@
 /**
  * Render
  *
- * @param  {Tree} _newer
+ * @param  {Tree} subject
  * @param  {Node} _target
  */
-function render (_newer, _target) {
-	var newer = _newer;
-	var target = _target;
+function render (subject, target) {
+	var newer = subject;
+	var mount = target;
 	var older;
+	var sibling;
 	var parent;
 
 	if (newer === void 0 || newer === null) {
@@ -31,26 +32,26 @@ function render (_newer, _target) {
 		}
 	}
 
-	if (target === void 0 || target === null) {
+	if (mount === void 0 || mount === null) {
 		// use <body> if it exists at this point
 		// else default to the root <html> node
-		if (mount === null) {
+		if (body === null) {
 			if (global.document !== void 0) {
-				mount = document.body || document.documentElement;
+				body = document.body || document.documentElement;
 			} else {
-				mount = null;
+				body = null;
 			}
 		}
 
-		target = mount;
+		mount = body;
 
 		// server enviroment
-		if (target === null && newer.toString !== void 0) {
+		if (mount === null && newer.toString !== void 0) {
 			return newer.toString();
 		}
 	}
 
-	if ((older = target.this) !== void 0) {
+	if ((older = mount.this) !== void 0) {
 		if (older.key === newer.key && older.type === newer.type) {
 			patch(older, newer, older.group);
 		} else {
@@ -58,24 +59,16 @@ function render (_newer, _target) {
 		}
 	} else {
 		parent = new Tree(2);
-		parent.node = target;
+		mount.this = newer;
 
-		create(target.this = newer, parent, empty, 1, newer, null);
+		if (mount.getAttribute('slot') !== null) {
+			sibling = new Tree(2);
+			sibling.node = mount;
+			parent.node = mount.parentNode;
+			create(newer, parent, sibling, 3, newer, null);
+		} else {
+			parent.node = mount;
+			create(newer, parent, shared, 1, newer, null);
+		}
 	}
-}
-
-/**
- * Shallow Render
- *
- * @param  {Any} older
- * @return {Tree}
- */
-function shallow (value) {
-	var newer = shape(value, null, false);
-
-	while (newer.tag === null) {
-		newer = extract(newer);
-	}
-
-	return newer;
 }

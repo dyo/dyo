@@ -110,10 +110,16 @@ global.test = (name, body) => {
 	}
 }
 
-const files = fs.readdirSync(__dirname).filter(file=>file.lastIndexOf('.spec.js') !== -1);
-const specs = files.map(file=>path.resolve(__dirname, file));
+let search = '.spec.js';
 
 const bootstrap = () => {
+	const files = fs.readdirSync(__dirname).filter((file) => {
+		return file.lastIndexOf(search) !== -1
+	});
+	const specs = files.map((file) => {
+		return path.resolve(__dirname, file)
+	});
+
 	specs.forEach((spec)=>{
 		delete require.cache[require.resolve(spec)];
 	});
@@ -121,6 +127,7 @@ const bootstrap = () => {
 	try {
 		console.log('\n');
 		specs.map(spec=>require(spec)).map(spec=>typeof spec === 'function' ? spec(dio) : spec);
+
 		setTimeout(()=>{
 			console.log('-----------------------------------------------------------\n');
 		});
@@ -135,7 +142,7 @@ const exit = () => {
 	}
 }
 
-const type = process.argv.pop() + '';
+const type = (process.argv.pop() + '');
 
 if (type.indexOf('--watch') !== -1) {
 	const watcher = (file) => {
@@ -152,5 +159,8 @@ if (type.indexOf('--watch') !== -1) {
 	watch.on('change', watcher);
 	watch.on('ready', watcher);
 } else {
+	if (type.length !== 0 && type.indexOf(__dirname) === -1) {
+		search = type + search;
+	}
 	bootstrap();
 }

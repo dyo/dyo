@@ -109,12 +109,12 @@
 			getInitialState (props) {
 				return {x: width * 0.5, y: height * 0.5}
 			}
-			onMousemove(props, state, event) {
+			onMousemove(event) {
 				return {x: event.clientX, y: event.clientY}
 			}
 			render(props, state) {
 				for (var i = 0, length = props.length, children = new Array(length); i < length; i++) {
-					children[i] = h(Particle, {x: this.state.x, y: this.state.y})
+					children[i] = h(Particle, {x: state.x, y: state.y})
 				}
 
 		  	return h('div', {onMouseMove: this.onMousemove}, children)

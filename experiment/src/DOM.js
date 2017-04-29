@@ -1,20 +1,21 @@
 /**
  * Generate
  *
+ * @param  {String} tag
  * @param  {Tree} newer
  * @param  {Tree} host
  * @param  {String?} xmlns
  * @return {Node}
  */
-function createElement (newer, host, xmlns) {
+function createElement (tag, newer, host, xmlns) {
 	try {
 		if (xmlns === null) {
-			return document.createElement(newer.tag);
+			return document.createElement(tag);
 		} else {
-			return document.createElementNS(newer.xmlns === xmlns, newer.tag);
+			return document.createElementNS(newer.xmlns = xmlns, tag);
 		}
 	} catch (err) {
-		return errorBoundary(err, host.owner, newer.flag = 3, 0);
+		return errorBoundary(err, host, host.owner, newer.flag = 5, 0);
 	}
 }
 
@@ -96,14 +97,12 @@ function nodeValue (older, value) {
  * @param {String} name
  * @param {Any} value
  * @param {String?} xmlns
- * @param {Tree} newer
+ * @param {Tree} node
  */
-function setAttribute (type, name, value, xmlns, newer) {
-	var node = newer.node;
-
+function setAttribute (type, name, value, xmlns, node) {
 	switch (type) {
 		case 0: {
-			if (name in node) {
+			if (xmlns === null && name in node) {
 				setUnknown(name, value, newer);
 			} else if (value !== null && value !== void 0 && value !== false) {
 				node.setAttribute(name, (value === true ? '' : value));
@@ -116,7 +115,7 @@ function setAttribute (type, name, value, xmlns, newer) {
 			if (xmlns === null) {
 				node.className = value;
 			} else {
-				assign(0, 'class', value, xmlns, node);
+				setAttribute(0, 'class', value, xmlns, node);
 			}
 			break;
 		}
@@ -124,19 +123,23 @@ function setAttribute (type, name, value, xmlns, newer) {
 			if (node[name] === void 0) {
 				node.style.setProperty(name, value);
 			} else if (isNaN(Number(value)) === true) {
-				assign(0, name, value, xmlns, node);
+				setAttribute(0, name, value, xmlns, node);
 			} else {
-				assign(6, name, value, xmlns, node);
+				setAttribute(6, name, value, xmlns, node);
 			}
 			break;
 		}
 		case 4: {
-			node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', value);
+			node.setAttributeNS(xlink, 'href', value);
 			break;
 		}
 		case 5:
 		case 6: {
-			node[name] = value;
+			if (xmlns === null) {
+				node[name] = value;
+			} else {
+				setAttribute(0, name, value, xmlns, node);
+			}
 			break;
 		}
 		case 10: {
@@ -213,11 +216,11 @@ function setStyle (older, newer, type) {
  * @param {String} type
  * @param {Function} value
  * @param {Number} action
+ * @param {Node} node
  */
-function eventListener (older, type, value, action) {
+function eventListener (older, type, value, action, node) {
 	var name = type.toLowerCase().substring(2);
 	var host = older.host;
-	var node = older.node;
 	var fns = node._fns;
 
 	if (fns === void 0) {
@@ -228,8 +231,8 @@ function eventListener (older, type, value, action) {
 		case 0: {
 			node.removeEventListener(name, proxy);
 
-			if (node._owner !== void 0) {
-				node._owner = null;
+			if (node._this !== void 0) {
+				node._this = null;
 			}
 			break;
 		}
@@ -238,7 +241,7 @@ function eventListener (older, type, value, action) {
 		}
 		case 2: {
 			if (host !== null && host.group > 1) {
-				node._owner = host.owner;
+				node._this = older;
 			}
 		}
 	}
@@ -255,15 +258,14 @@ function proxy (e) {
 	var type = e.type;
 	var fns = this._fns;
 	var fn = fns[type];
+	var older;
 
 	if (fn === null || fn === void 0) {
 		return;
 	}
 
-	var owner = this._owner;
-
-	if (owner !== void 0) {
-		eventBoundary(owner, fn, e);
+	if ((older = this._this) !== void 0) {
+		eventBoundary(older, older.host.owner, fn, e);
 	} else {
 		fn.call(this, e);
 	}

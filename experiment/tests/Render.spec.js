@@ -28,7 +28,8 @@ module.exports = ({h, shallow, render}) => {
 		ok(els.tag === 'h1' && els.children[0].children === 1, 'shallow element');
 		ok(fns.tag === 'h1' && fns.children[0].children === 1, 'shallow function');
 		ok(cls.tag === 'h1' && cls.children[0].children === 1, 'shallow class');
-		ok(com.tag === 'section' && com.children[0].type === Bar, 'shallow composite');
+
+		ok(com.type === Bar, 'shallow composite');
 		end();
 	});
 

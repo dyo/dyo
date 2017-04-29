@@ -21,7 +21,7 @@ function Component (_props) {
 	// state
 	if (state === void 0) {
 		if (this.getInitialState !== void 0) {
-			state = getInitialState(dataBoundary(this, 1, props), this);
+			state = getInitialState(dataBoundary(shared, this, 1, props), this);
 		} else {
 			state = {};
 		}
@@ -77,7 +77,7 @@ function setState (newer, callback) {
 	var type = newer.constructor;
 
 	if (type === Function) {
-		newer = callbackBoundary(owner, newer, state, 0);
+		newer = callbackBoundary(shared, owner, newer, state, 0);
 
 		if (newer === void 0 || newer === null) {
 			return;
@@ -132,7 +132,7 @@ function forceUpdate (callback) {
 	patch(older, older, 3);
 
 	if (callback !== void 0 && typeof callback === 'function') {
-		callbackBoundary(owner, callback, owner.state, 1);
+		callbackBoundary(older, owner, callback, owner.state, 1);
 	}
 }
 
@@ -172,7 +172,7 @@ function shouldUpdate (older, _newer, group) {
 			propTypes(owner, type, nextProps);
 		}
 		if (owner.componentWillReceiveProps !== void 0) {
-			dataBoundary(owner, 0, nextProps);
+			dataBoundary(older, owner, 0, nextProps);
 		}
 		if (type.defaultProps !== void 0) {
 			merge(type.defaultProps, nextProps);
@@ -181,7 +181,7 @@ function shouldUpdate (older, _newer, group) {
 
 	if (
 		owner.shouldComponentUpdate !== void 0 &&
-		updateBoundary(owner, 0, nextProps, nextState) === false
+		updateBoundary(older, owner, 0, nextProps, nextState) === false
 	) {
 		return older.async = 0, false;
 	}
@@ -189,7 +189,7 @@ function shouldUpdate (older, _newer, group) {
 		(group > 1 ? owner : older).props = nextProps;
 	}
 	if (owner.componentWillUpdate !== void 0) {
-		updateBoundary(owner, 1, nextProps, nextState);
+		updateBoundary(older, owner, 1, nextProps, nextState);
 	}
 
 	return true;
@@ -230,10 +230,25 @@ function getInitialStatic (owner, fn, type, props) {
 	if (typeof fn === 'object') {
 		return fn;
 	}
-	var obj = callbackBoundary(owner, fn, props, 0);
+
+	var obj = callbackBoundary(shared, owner, fn, props, 0);
+
 	if (obj !== void 0 && obj !== null) {
 		Object.defineProperty(owner, type, {value: obj});
 	}
+}
+
+/**
+ * Did Update
+ *
+ * @param {Tree} older
+ */
+function didUpdate (older) {
+	var owner = older.owner;
+
+	older.async = 3;
+	updateBoundary(older, owner, 2, owner._props, owner._state);
+	older.async = 0;
 }
 
 /**
@@ -259,6 +274,6 @@ function propTypes (owner, type, props) {
 			}
 		}
 	} catch (err) {
-		errorBoundary(err, owner, 2, validator);
+		errorBoundary(err, shared, owner, 2, validator);
 	}
 }

@@ -38,8 +38,9 @@ function attr (name) {
  *
  * @param {Tree} newer
  * @param {String?} xmlns
+ * @param {Node} node
  */
-function attribute (newer, xmlns) {
+function attribute (newer, xmlns, node) {
 	var attrs = newer.attrs;
 	var type = 0;
 	var value;
@@ -54,10 +55,10 @@ function attribute (newer, xmlns) {
 				refs(value, newer, 0);
 			} else if (type < 20) {
 				if (value !== void 0 && value !== null) {
-					setAttribute(type, name, value, xmlns, newer);
+					setAttribute(type, name, value, xmlns, node);
 				}
 			} else if (type > 20) {
-				eventListener(newer, name, value, 1);
+				eventListener(newer, name, value, 1, node);
 			} else {
 				setStyle(newer, newer, 0);
 			}
@@ -72,15 +73,21 @@ function attribute (newer, xmlns) {
  * @param {Tree} older
  */
 function attributes (older, newer) {
-	var old = older.attrs;
+	var prevs = older.attrs;
+	var node = older.node;
 	var attrs = newer.attrs;
+
+	if (prevs === attrs) {
+		return;
+	}
+
 	var xmlns = older.xmlns;
 	var type = 0;
 	var prev;
 	var next;
 
 	// old attributes
-	for (var name in old) {
+	for (var name in prevs) {
 		type = attr(name);
 
 		if (type < 30) {
@@ -88,7 +95,7 @@ function attributes (older, newer) {
 
 			if (next === null || next === void 0) {
 				if (type < 20) {
-					setAttribute(type, name, next, xmlns, older);
+					setAttribute(type, name, next, xmlns, node);
 				} else if (type > 20) {
 					eventListener(older, name, next, 0);
 				}
@@ -106,11 +113,11 @@ function attributes (older, newer) {
 			if (type === 30) {
 				refs(next, older, 2);
 			} else {
-				prev = old[name];
+				prev = prevs[name];
 
 				if (next !== prev && next !== null && next !== void 0) {
 					if (type < 20) {
-						setAttribute(type, name, next, xmlns, older);
+						setAttribute(type, name, next, xmlns, node);
 					} else if (type > 20) {
 						eventListener(older, name, next, 2);
 					} else {
@@ -152,7 +159,7 @@ function refs (value, older, type) {
 
 	switch (value.constructor) {
 		case Function: {
-			callbackBoundary(owner, value, older.node, type);
+			callbackBoundary(older, owner, value, older.node, type);
 			break;
 		}
 		case String: {

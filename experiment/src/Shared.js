@@ -10,15 +10,19 @@ var browser = global.window === global;
 var Promise = global.Promise || noop;
 var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
 var requestIdleCallback = global.requestIdleCallback || setTimeout;
-var mount = null;
-var empty = new Tree(2);
+var body = null;
+var svg = 'http://www.w3.org/2000/svg';
+var xlink = 'http://www.w3.org/1999/xlink';
+var shared = new Tree(0);
 
 /**
  * ## Element Flag
  *
  * 1: text
  * 2: element
- * 3: error
+ * 3: composit
+ * 4: fragment
+ * 5: error
  *
  * ## Element Group
  *
@@ -42,9 +46,7 @@ var empty = new Tree(2);
  * async: node work state {Number} 0: ready, 1:blocked, 2:pending
  * yield: coroutine {Function?}
  * host: host component
- */
-
-/**
+ *
  * ## Component Shape
  *
  * this: current tree {Tree?}

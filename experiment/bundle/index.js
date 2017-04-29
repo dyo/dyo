@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
 
-const main = [
+const shared = [
 	'../src/Shared.js',
 	'../src/Component.js',
 	'../src/Element.js',
@@ -12,11 +12,9 @@ const main = [
 	'../src/Render.js',
 	'../src/Reconcile.js',
 	'../src/DOM.js'
-];
+]
 
-const server = main.concat([
-	'../src/Server.js'
-]);
+const main = shared.concat([]);
 
 const bundler = (file) => {
 	return fs.readFileSync(path.join(__dirname, file), 'utf8');
@@ -24,8 +22,9 @@ const bundler = (file) => {
 
 function build (module, files, location) {
 	location = path.join(__dirname, location);
-	let umd = fs.readFileSync(path.join(__dirname, '../exports/umd.js'), 'utf8');
-	let exported = fs.readFileSync(path.join('exports', module+'.js'), 'utf8');
+	let umd = fs.readFileSync(path.join(__dirname, 'umd.js'), 'utf8');
+	let exported = fs.readFileSync(path.join(__dirname, 'export.js'), 'utf8');
+
 	let bundle = (
 		umd + '\n' +
 		(
@@ -40,7 +39,6 @@ function build (module, files, location) {
 
 function bootstrap () {
 	build('main', main, '../dist/dio.js');
-	build('server', server, '../dist/dio.server.js');
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' +

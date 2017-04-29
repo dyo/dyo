@@ -1,9 +1,17 @@
 <html>
 <body>
 	<div id=root></div>
+	<section slot></section>
 	<script src="../dist/dio.js"></script>
+
+	<svg></svg>
+
 	<script>
-		const root = document.getElementById('root');
+		// const root = document.getElementById('root');
+		const root = document.querySelector('[slot]');
+
+		h('!', 'Comment');
+
 		const animation = {
 			fadeOut: [
 			  {transform: 'translateY(0)', opacity: 1},
@@ -101,9 +109,7 @@
 		// dio.render(A, document.getElementById('app'))
 		// dio.render('Replace', document.getElementById('app'))
 
-
 		// dio.render(h('button', {onclick: (e)=>console.log(e)}, 'Click Me'))
-
 
 		const animations = {
 			fadeOut: [
@@ -136,16 +142,118 @@
 
 		class List {
 			render() {
-				return h('ul', this.props.children.map(
-					v => h(Item, v)
-				))
+				return [
+					h('svg', {width: 500, height: 40, viewBox: '0 0 500 40'},
+						h('text', {x: 0, y: 35, 'font-family': 'Verdana', 'font-size': 35}, 'Hello, out there')
+					),
+					h(`svg`,
+	       		[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(id => (
+		         	h(`g`, {
+			           'key': id,
+		         	},
+	           		h(`circle`, {
+	           			'cx': 5 + 10 * id,
+	           			'cy': 5,
+	           			'r': 5,
+		           	})
+		         	)
+		       	))
+		     	),
+					h('br'),
+					X,
+					foo,
+					h('ul', this.props.children.map(
+						v => h(Item, v)
+					))
+				]
 			}
 		}
 
-		dio.render(h(List, 1, 2, 3))
+		// dio.render(h(List, 1, 2, 3), root)
 
-		setTimeout(dio.render, 400, h(List, 1, 2, 3, 4))
-		setTimeout(dio.render, 1200, h(List, 1, 2, 3))
+		var state = 0;
+
+		class X {
+			componentWillUnmount() {
+				console.log('willUnmount - ', this.constructor.name);
+			}
+			componentWillMount() {
+				console.log('willMount - ', this.constructor.name);
+			}
+			componentDidUpdate() {
+				console.log('didUpdate - ', this.constructor.name);
+			}
+			render () {
+				return Y;
+			}
+		}
+
+		class Y {
+			componentWillUnmount() {
+				console.log('willUnmount - ', this.constructor.name);
+			}
+			componentWillMount() {
+				console.log('willMount - ', this.constructor.name);
+			}
+			componentDidUpdate() {
+				console.log('didUpdate - ', this.constructor.name);
+			}
+			render () {
+				return state > 1 ? E : Z;
+			}
+		}
+
+		class Z {
+			componentWillUnmount() {
+				console.log('willUnmount - ', this.constructor.name);
+			}
+			componentWillMount() {
+				console.log('willMount - ', this.constructor.name);
+			}
+			componentDidUpdate() {
+				console.log('didUpdate - ', this.constructor.name);
+			}
+			render() {
+				return h('h1', 'I Am Z - ', state++)
+			}
+		}
+
+		class E {
+			componentWillUnmount() {
+				console.log('willUnmount - ', this.constructor.name);
+			}
+			componentWillMount() {
+				console.log('willMount - ', this.constructor.name);
+			}
+			componentDidUpdate() {
+				console.log('didUpdate - ', this.constructor.name);
+			}
+			render () {
+				console.log(this.props);
+				return h('h2', 'I Am E - ', Date.now());
+			}
+		}
+
+		// dio.render(X, root);
+
+		function event (e) {
+			console.log(this, e)
+		}
+
+		function foo () {
+			return h('button', {onclick: event}, 'Click Me - ', performance.now());
+		}
+
+		// dio.render(foo, root);
+
+		// setTimeout(()=>dio.render(X, root), 1000)
+		// setTimeout(()=>dio.render(X, root), 2000)
+
+		dio.render(h(List, 1, 2, 3), root);
+
+		setTimeout(dio.render, 400, h(List, 1, 2, 3, 4), root)
+		setTimeout(dio.render, 800, h(List, 1, 2, 3), root)
+		setTimeout(dio.render, 1200, h(List, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), root)
 
 		class Foo {
 			componentWillMount() {

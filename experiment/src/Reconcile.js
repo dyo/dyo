@@ -2,7 +2,7 @@
  * Patch
  *
  * @param {Tree} older
- * @param {Tree} newer
+ * @param {Tree} _newer
  * @param {Number} group
  */
 function patch (older, _newer, group) {
@@ -28,6 +28,15 @@ function patch (older, _newer, group) {
 		if (newer.tag !== older.tag) {
 			return exchange(older, newer, false);
 		}
+
+		if (newer.flag === 3) {
+			composite(older, newer, group);
+
+			if (older.owner.componentDidUpdate !== void 0) {
+				didUpdate(older);
+			}
+			return;
+		}
 	}
 
 	if (older.flag === 1) {
@@ -45,7 +54,7 @@ function patch (older, _newer, group) {
 			older.children = newer.children;
 		}
 	} else if (newLength === 0) {
-		// empty children
+		// remove children
 		if (oldLength !== 0) {
 			unmount(older, false);
 			removeChildren(older);
@@ -60,14 +69,8 @@ function patch (older, _newer, group) {
 
 	attributes(older, newer);
 
-	if (group > 0) {
-		var owner = older.owner;
-
-		if (owner.componentDidUpdate !== void 0) {
-			older.async = 3;
-			updateBoundary(owner, 2, owner._props, owner._state);
-			older.async = 0;
-		}
+	if (group > 0 && older.owner.componentDidUpdate !== void 0) {
+		didUpdate(older);
 	}
 }
 
@@ -88,10 +91,10 @@ function nonkeyed (older, newer, _oldLength, newLength) {
 
 	for (var i = 0, newChild, oldChild; i < length; i++) {
 		if (i >= newLength) {
-			remove(oldChild = oldChildren.pop(), empty, older);
+			remove(oldChild = oldChildren.pop(), shared, older);
 			oldLength--;
 		} else if (i >= oldLength) {
-			create(newChild = oldChildren[i] = newChildren[i], older, empty, 1, host, null);
+			create(newChild = oldChildren[i] = newChildren[i], older, shared, 1, host, null);
 			oldLength++;
 		} else {
 			newChild = newChildren[i];
@@ -209,7 +212,7 @@ function keyed (older, newer, oldLength, newLength) {
  		// old children is synced, insert the difference
  		if (newStart <= newEnd) {
  			nextPos = newEnd + 1;
- 			nextChild = nextPos < newLength ? newChildren[nextPos] : empty;
+ 			nextChild = nextPos < newLength ? newChildren[nextPos] : shared;
 
  			do {
  				create(newStartNode = newChildren[newStart++], older, nextChild, 2, host, null);
@@ -218,7 +221,7 @@ function keyed (older, newer, oldLength, newLength) {
  	} else if (newStart > newEnd) {
  		// new children is synced, remove the difference
  		do {
- 			remove(oldStartNode = oldChildren[oldStart++], empty, older);
+ 			remove(oldStartNode = oldChildren[oldStart++], shared, older);
  		} while (oldStart <= oldEnd);
  	} else if (newStart === 0 && newEnd === newLength-1) {
  		// all children are out of sync, remove all, append new set
@@ -288,7 +291,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 		// new child doesn't exist in old children, insert
 		if (oldIndex === void 0) {
 			nextPos = newIndex - newOffset;
-			nextChild = nextPos < oldLength ? oldChildren[nextPos] : empty;
+			nextChild = nextPos < oldLength ? oldChildren[nextPos] : shared;
 
 			create(newChild, older, nextChild, 2, host, null);
 
@@ -311,7 +314,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 
 		// old child doesn't exist in new children, remove
 		if (newIndex === void 0) {
-			remove(oldChild, empty, older);
+			remove(oldChild, shared, older);
 
 			oldOffset++;
 		}

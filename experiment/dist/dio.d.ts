@@ -23,7 +23,8 @@ type Ref = string | Function;
 type Children = Array<Tree>;
 type Type = string | Function;
 type State = Object;
-type createElement = (type?: Type, props?: Props, ...children: Array<any>) => Tree;
+type Return = State | void;
+type createElement = (type: Type, props?: Props, ...children: Array<any>) => Tree;
 
 // Shapes
 interface Event {
@@ -223,7 +224,7 @@ interface Tree {
 	owner: Object | null;
 	parent: Tree | null;
 	key: any;
-	yield: () => Tree | null;
+	yield?: () => Tree;
 	tag: string | null;
 	host: Tree | null;
 	group: Groups;
@@ -237,8 +238,8 @@ declare namespace dio {
 	// Components
 	export abstract class Component<P> {
 		constructor (props: P);
-		forceUpdate (callback?: () => any): void;
-		setState (state: State, callback?: () => any): void;
+		forceUpdate (callback?: () => Return): void;
+		setState (state: State, callback?: () => Return): void;
 		state: State;
 		props: Object;
 		refs: Object | null;
@@ -249,10 +250,7 @@ declare namespace dio {
 	export const h: createElement;
 
 	// Render
-	export function render (
-		subject: Tree | Object | Function,
-		target?: Node
-	): void;
+	export function render (subject: any,target?: Node): void;
 
 	// Test Utils
 	export function shallow (subject: any): Tree;

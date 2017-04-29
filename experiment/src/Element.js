@@ -1,5 +1,5 @@
 /**
- * Create Element
+ * Element
  *
  * @param  {String|Function} _type
  * @param  {...} _props
@@ -11,9 +11,10 @@ function element (_type, _props) {
 	var length = arguments.length;
 	var size = 0;
 	var index = 0;
+	var offset = 0;
 	var i = 2;
 	var group = 0;
-	var older = new Tree(2);
+	var newer = new Tree(2);
 	var proto;
 	var children;
 
@@ -21,12 +22,15 @@ function element (_type, _props) {
 		switch (props.constructor) {
 			case Object: {
 				if (props.key !== void 0) {
-					older.key = props.key;
+					newer.key = props.key;
 				}
 				if (props.xmlns !== void 0) {
-					older.xmlns = props.xmlns;
+					newer.xmlns = props.xmlns;
 				}
-				older.props = props;
+
+				offset++;
+				newer.props = props;
+
 				break;
 			}
 			case Array: {
@@ -37,90 +41,92 @@ function element (_type, _props) {
 				i = 1;
 			}
 		}
+	} else {
+		offset++;
 	}
 
 	switch (type.constructor) {
 		case String: {
-			older.tag = type;
-			older.attrs = props;
+			newer.tag = type;
+			newer.attrs = props;
 			break;
 		}
 		case Function: {
 			if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
-				group = older.group = 2;
+				group = newer.group = 2;
 			} else {
-				group = older.group = 1;
-				older.owner = type;
+				group = newer.group = 1;
+				newer.owner = type;
 			}
 			break;
 		}
 	}
 
-	older.type = type;
+	newer.type = type;
 
-	if (length > 1) {
+	if (length - offset > 1) {
 		children = new Array(size);
 
 		if (group < 1) {
-			for (older.children = children; i < length; i++) {
-				index = push(older, index, arguments[i]);
+			for (newer.children = children; i < length; i++) {
+				index = push(newer, index, arguments[i]);
 			}
 		} else {
-			if ((props = older.props) === null || props === object) {
-				props = older.props = {};
+			if ((props = newer.props) === null || props === object) {
+				props = newer.props = {};
 			}
 
-			for (older.children = children; i < length; i++) {
-				index = pull(older, index, arguments[i]);
+			for (newer.children = children; i < length; i++) {
+				index = pull(newer, index, arguments[i]);
 			}
 
 			props.children = children;
-			older.children = array;
+			newer.children = array;
 		}
 	}
 
-	return older;
+	return newer;
 }
 
 /**
  * Push Children
  *
- * @param  {Tree} older
+ * @param  {Tree} newer
  * @param  {Number} index
- * @param  {Any} newer
+ * @param  {Any} value
  * @return {Number}
  */
-function push (older, index, newer) {
-	var children = older.children;
+function push (newer, index, value) {
+	var children = newer.children;
 	var child;
 	var length;
 
-	if (newer === null || newer === void 0) {
+	if (value === null || value === void 0) {
 		child = text('');
-	} else if (newer.group !== void 0) {
-		if (older.keyed === false && newer.key !== null) {
-			older.keyed = true;
+	} else if (value.group !== void 0) {
+		if (newer.keyed === false && value.key !== null) {
+			newer.keyed = true;
 		}
-		child = newer;
+		child = value;
 	} else {
-		switch (typeof newer) {
+		switch (typeof value) {
 			case 'function': {
-				child = element(newer, null);
+				child = element(value, null);
 				break;
 			}
 			case 'object': {
-				if ((length = newer.length) !== void 0) {
+				if ((length = value.length) !== void 0) {
 					for (var j = 0, i = index; j < length; j++) {
-						i = push(older, i, newer[j]);
+						i = push(newer, i, value[j]);
 					}
 					return i;
 				} else {
-					child = text(newer.constructor === Date ? newer+'' : '');
+					child = text(value.constructor === Date ? value+'' : '');
 				}
 				break;
 			}
 			default: {
-				child = text(newer);
+				child = text(value);
 			}
 		}
 	}
@@ -133,32 +139,32 @@ function push (older, index, newer) {
 /**
  * Pull Children
  *
- * @param  {Tree} older
+ * @param  {Tree} newer
  * @param  {Number} index
- * @param  {Any} newer
+ * @param  {Any} value
  * @return {Number}
  */
-function pull (older, index, newer) {
-	var children = older.children;
+function pull (newer, index, value) {
+	var children = newer.children;
 
-	if (newer !== null && typeof newer === 'object') {
-		var length = newer.length;
+	if (value !== null && typeof value === 'object') {
+		var length = value.length;
 
 		if (length !== void 0) {
 			for (var j = 0, i = index; j < length; j++) {
-				i = pull(older, i, newer[j]);
+				i = pull(newer, i, value[j]);
 			}
 			return i;
 		}
 	}
 
-	children[index] = newer;
+	children[index] = value;
 
 	return index + 1;
 }
 
 /**
- * Create Text
+ * Text
  *
  * @param  {String|Number|Boolean} value
  * @param  {Tree}
@@ -174,17 +180,35 @@ function text (value) {
 }
 
 /**
- * Create Fragment
+ * Fragment
  *
  * @param  {Array<Tree>|Tree|Function} children
  * @return {Tree}
  */
 function fragment (children) {
-	return element('section', null, children);
+	var newer = element('div', null, children);
+
+	newer.flag = 4;
+
+	return newer;
 }
 
 /**
- * Copy Tree
+ * Compose
+ *
+ * @param  {Tree} child
+ * @return {Tree}
+ */
+function compose (child) {
+	var newer = new Tree(3);
+
+	newer.children = [child];
+
+	return newer;
+}
+
+/**
+ * Copy
  *
  * @param  {Tree} older
  * @param  {Tree} newer
@@ -224,6 +248,7 @@ function Tree (flag) {
 	this.type = null;
 	this.node = null;
 	this.host = null;
+	this.root = null;
 	this.group = 0;
 	this.async = 0;
 	this.props = object;
