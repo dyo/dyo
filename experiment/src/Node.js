@@ -217,16 +217,13 @@ function shape (value, older, abstract) {
 						}
 					}
 					case Array: {
-						return fragment(newer);
-						break;
+						return fragment(newer); break;
 					}
 					case Date: {
-						return text(newer+'');
-						break;
+						return text(newer+''); break;
 					}
 					case Object: {
-						return text('');
-						break;
+						return stringify(newer); break;
 					}
 					default: {
 						if (newer.next !== void 0 && older !== null) {

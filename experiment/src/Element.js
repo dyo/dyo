@@ -121,7 +121,11 @@ function push (newer, index, value) {
 					}
 					return i;
 				} else {
-					child = text(value.constructor === Date ? value+'' : '');
+					switch (value.constructor) {
+						case Date: child = text(value+''); break;
+						case Object: child = stringify(value); break;
+						default: child = text('');
+					}
 				}
 				break;
 			}
@@ -205,6 +209,20 @@ function compose (child) {
 	newer.children = [child];
 
 	return newer;
+}
+
+/**
+ * Stringify
+ *
+ * @param {Object} value
+ * @return {Tree}
+ */
+function stringify (value) {
+	try {
+		return element('pre', null, JSON.stringify(value, null, 2));
+	} catch (err) {
+		return text('');
+	}
 }
 
 /**

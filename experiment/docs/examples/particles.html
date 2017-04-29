@@ -60,11 +60,10 @@
 			position: absolute;
 			left: 0;
 			top: 0;
-			width: 4px;
-			height: 4px;
+			width: 3px;
+			height: 3px;
 			background-color: rgb(52,46,33);
-			border-radius: 8px;
-			will-change: transform;
+			border-radius: 12px;
 			opacity: 0.8;
 		}
 	</style>
@@ -100,7 +99,7 @@
 				this.y += dy / distance;
 
 				return h('span', {style: {
-					transform: 'translate('+ this.x + 'px,' + this.y + 'px)'
+					transform: 'translate3d('+ this.x + 'px,' + this.y + 'px, 0px)'
 				}})
 			}
 		}
@@ -110,23 +109,23 @@
 				return {x: width * 0.5, y: height * 0.5}
 			}
 			onMousemove(event) {
-				return {x: event.clientX, y: event.clientY}
+				this.state.x = event.clientX;
+				this.state.y = event.clientY;
 			}
 			render(props, state) {
 				for (var i = 0, length = props.length, children = new Array(length); i < length; i++) {
 					children[i] = h(Particle, {x: state.x, y: state.y})
 				}
-
 		  	return h('div', {onMouseMove: this.onMousemove}, children)
 			}
 		}
 
 		const root = document.getElementById('root')
-		const element = h(Particles, {length: 400})
+		const element = h(Particles, {length: 600})
 
 		const loop = () => {
-			dio.render(element, root)
 			requestAnimationFrame(loop)
+			dio.render(element, root)
 		}
 
 		requestAnimationFrame(loop)

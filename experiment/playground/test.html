@@ -182,6 +182,10 @@
 				console.log('didUpdate - ', this.constructor.name);
 			}
 			render () {
+				return [
+					100,
+					{id: 1, name: 'Hello', nest: {age: 20}}
+				]
 				return Y;
 			}
 		}
@@ -220,7 +224,6 @@
 
 		class E {
 			componentWillUnmount() {
-				// console.log('leak', this.this);
 				console.log('willUnmount - ', this.constructor.name);
 			}
 			componentWillMount() {
@@ -246,9 +249,9 @@
 
 		dio.render(X, root);
 
-		setTimeout(()=>dio.render(X, root), 1000)
-		setTimeout(()=>dio.render(X, root), 2000)
-		setTimeout(()=>dio.render(null, root), 3000)
+		// setTimeout(()=>dio.render(X, root), 1000)
+		// setTimeout(()=>dio.render(X, root), 2000)
+		// setTimeout(()=>dio.render(null, root), 3000)
 
 		// dio.render(h(List, 1, 2, 3), root);
 		// setTimeout(dio.render, 400, h(List, 1, 2, 3, 4), root)
