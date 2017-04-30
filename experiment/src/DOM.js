@@ -84,10 +84,10 @@ function removeChildren (older) {
  * Text
  *
  * @param {Tree} older
- * @param {String|Number} value
+ * @param {Tree} newer
  */
-function nodeValue (older, value) {
-	older.node.nodeValue = value;
+function nodeValue (older, newChild) {
+	older.node.nodeValue = oldChild.children = newChild.children;
 }
 
 /**
@@ -216,11 +216,11 @@ function setStyle (older, newer, type) {
  * @param {String} type
  * @param {Function} value
  * @param {Number} action
- * @param {Node} node
  */
-function eventListener (older, type, value, action, node) {
+function eventListener (older, type, value, action) {
 	var name = type.toLowerCase().substring(2);
 	var host = older.host;
+	var node = older.node;
 	var fns = node._fns;
 
 	if (fns === void 0) {
@@ -229,7 +229,7 @@ function eventListener (older, type, value, action, node) {
 
 	switch (action) {
 		case 0: {
-			node.removeEventListener(name, proxy);
+			node.removeEventListener(name, eventProxy);
 
 			if (node._this !== void 0) {
 				node._this = null;
@@ -237,7 +237,7 @@ function eventListener (older, type, value, action, node) {
 			break;
 		}
 		case 1: {
-			node.addEventListener(name, proxy);
+			node.addEventListener(name, eventProxy);
 		}
 		case 2: {
 			if (host !== null && host.group > 1) {
@@ -254,7 +254,7 @@ function eventListener (older, type, value, action, node) {
  *
  * @param {Event} e
  */
-function proxy (e) {
+function eventProxy (e) {
 	var type = e.type;
 	var fns = this._fns;
 	var fn = fns[type];

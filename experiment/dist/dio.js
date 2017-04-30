@@ -931,18 +931,16 @@
 	 *
 	 * @param {Tree} newer
 	 * @param {String?} xmlns
-	 * @param {Node} node
 	 */
-	function attribute (newer, xmlns, node) {
+	function attribute (newer, xmlns) {
 		var attrs = newer.attrs;
-		var type;
-		var value;
+		var node = newer.node;
 	
 		for (var name in attrs) {
-			type = attr(name);
+			var type = attr(name);
 	
 			if (type < 31) {
-				value = attrs[name];
+				var value = attrs[name];
 	
 				if (type === 30) {
 					refs(newer, value, 2);
@@ -951,7 +949,7 @@
 						setAttribute(type, name, value, xmlns, node);
 					}
 				} else if (type > 20) {
-					eventListener(newer, name, value, 1, node);
+					eventListener(newer, name, value, 1);
 				} else {
 					setStyle(newer, newer, 0);
 				}
@@ -962,29 +960,25 @@
 	/**
 	 * Attributes [Reconcile]
 	 *
-	 * @param {Tree} newer
 	 * @param {Tree} older
+	 * @param {Tree} newer
 	 */
 	function attributes (older, newer) {
 		var node = older.node;
 		var prevs = older.attrs;
 		var attrs = newer.attrs;
+		var xmlns = older.xmlns;
 	
 		if (prevs === attrs && attr === object) {
 			return;
 		}
 	
-		var xmlns = older.xmlns;
-		var type;
-		var prev;
-		var next;
-	
 		// old attributes
 		for (var name in prevs) {
-			type = attr(name);
+			var type = attr(name);
 	
 			if (type < 30) {
-				next = attrs[name];
+				var next = attrs[name];
 	
 				if (next === null || next === void 0) {
 					if (type < 20) {
@@ -998,15 +992,15 @@
 	
 		// new attributes
 		for (var name in attrs) {
-			type = attr(name);
+			var type = attr(name);
 	
 			if (type < 31) {
-				next = attrs[name];
+				var next = attrs[name];
 	
 				if (type === 30) {
 					refs(older, next, 2);
 				} else {
-					prev = prevs[name];
+					var prev = prevs[name];
 	
 					if (next !== prev && next !== null && next !== void 0) {
 						if (type < 20) {
@@ -1034,10 +1028,11 @@
 	function refs (older, value, type) {
 		var host = older.host;
 		var stateful = false;
-		var owner;
 	
 		if (host !== null) {
-			if ((owner = host.owner) !== null && host.group > 1) {
+			var owner = host.owner;
+	
+			if (owner !== null && host.group > 1) {
 				stateful = true;
 			}
 		}
@@ -1373,6 +1368,7 @@
 			} else {
 				current = shape(next, older, true);
 			}
+	
 			return previous = current;
 		};
 	
@@ -1665,7 +1661,7 @@
 		}
 	
 		if (older.flag === 1) {
-			return nodeValue(older, older.children = newer.children);
+			return nodeValue(older, newer);
 		}
 	
 		var newLength = newer.children.length;
@@ -1704,29 +1700,26 @@
 	 *
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
-	 * @param  {Number} _oldLength
+	 * @param  {Number} oldLength
 	 * @param  {Number} newLength
 	 */
-	function nonkeyed (older, newer, _oldLength, newLength) {
+	function nonkeyed (older, newer, oldLength, newLength) {
 		var host = older.host;
 		var oldChildren = older.children;
 		var newChildren = newer.children;
-		var oldLength = _oldLength;
 		var length = newLength > oldLength ? newLength : oldLength;
 	
-		for (var i = 0, newChild, oldChild; i < length; i++) {
+		for (var i = 0; i < length; i++) {
 			if (i >= newLength) {
-				remove(oldChild = oldChildren.pop(), shared, older);
-				oldLength--;
+				remove(oldChildren.pop(), shared, older);
 			} else if (i >= oldLength) {
-				create(newChild = oldChildren[i] = newChildren[i], older, shared, 1, host, null);
-				oldLength++;
+				create(oldChildren[i] = newChildren[i], older, shared, 1, host, null);
 			} else {
-				newChild = newChildren[i];
-				oldChild = oldChildren[i];
+				var newChild = newChildren[i];
+				var oldChild = oldChildren[i];
 	
 				if (newChild.flag === 1 && oldChild.flag === 1) {
-					nodeValue(oldChild, oldChild.children = newChild.children);
+					nodeValue(oldChild, newChild);
 				} else if (newChild.type !== oldChild.type) {
 					create(oldChildren[i] = newChild, older, oldChild, 3, host, null);
 				} else {
@@ -1773,6 +1766,7 @@
 	 			if (oldStart > oldEnd || newStart > newEnd) {
 	 				break outer;
 	 			}
+	
 	 			oldStartNode = oldChildren[oldStart];
 	 			newStartNode = newChildren[newStart];
 	 		}
@@ -1788,6 +1782,7 @@
 	 			if (oldStart > oldEnd || newStart > newEnd) {
 	 				break outer;
 	 			}
+	
 	 			oldEndNode = oldChildren[oldEnd];
 	 			newEndNode = newChildren[newEnd];
 	 		}
@@ -1832,6 +1827,7 @@
 	 		}
 	 		break;
 	 	}
+	
 	 	// step 2, remove or insert or both
 	 	if (oldStart > oldEnd) {
 	 		// old children is synced, insert the difference
@@ -2071,10 +2067,10 @@
 	 * Text
 	 *
 	 * @param {Tree} older
-	 * @param {String|Number} value
+	 * @param {Tree} newer
 	 */
-	function nodeValue (older, value) {
-		older.node.nodeValue = value;
+	function nodeValue (older, newChild) {
+		older.node.nodeValue = oldChild.children = newChild.children;
 	}
 	
 	/**
@@ -2203,11 +2199,11 @@
 	 * @param {String} type
 	 * @param {Function} value
 	 * @param {Number} action
-	 * @param {Node} node
 	 */
-	function eventListener (older, type, value, action, node) {
+	function eventListener (older, type, value, action) {
 		var name = type.toLowerCase().substring(2);
 		var host = older.host;
+		var node = older.node;
 		var fns = node._fns;
 	
 		if (fns === void 0) {
@@ -2216,7 +2212,7 @@
 	
 		switch (action) {
 			case 0: {
-				node.removeEventListener(name, proxy);
+				node.removeEventListener(name, eventProxy);
 	
 				if (node._this !== void 0) {
 					node._this = null;
@@ -2224,7 +2220,7 @@
 				break;
 			}
 			case 1: {
-				node.addEventListener(name, proxy);
+				node.addEventListener(name, eventProxy);
 			}
 			case 2: {
 				if (host !== null && host.group > 1) {
@@ -2241,7 +2237,7 @@
 	 *
 	 * @param {Event} e
 	 */
-	function proxy (e) {
+	function eventProxy (e) {
 		var type = e.type;
 		var fns = this._fns;
 		var fn = fns[type];

@@ -38,18 +38,16 @@ function attr (name) {
  *
  * @param {Tree} newer
  * @param {String?} xmlns
- * @param {Node} node
  */
-function attribute (newer, xmlns, node) {
+function attribute (newer, xmlns) {
 	var attrs = newer.attrs;
-	var type;
-	var value;
+	var node = newer.node;
 
 	for (var name in attrs) {
-		type = attr(name);
+		var type = attr(name);
 
 		if (type < 31) {
-			value = attrs[name];
+			var value = attrs[name];
 
 			if (type === 30) {
 				refs(newer, value, 2);
@@ -58,7 +56,7 @@ function attribute (newer, xmlns, node) {
 					setAttribute(type, name, value, xmlns, node);
 				}
 			} else if (type > 20) {
-				eventListener(newer, name, value, 1, node);
+				eventListener(newer, name, value, 1);
 			} else {
 				setStyle(newer, newer, 0);
 			}
@@ -69,29 +67,25 @@ function attribute (newer, xmlns, node) {
 /**
  * Attributes [Reconcile]
  *
- * @param {Tree} newer
  * @param {Tree} older
+ * @param {Tree} newer
  */
 function attributes (older, newer) {
 	var node = older.node;
 	var prevs = older.attrs;
 	var attrs = newer.attrs;
+	var xmlns = older.xmlns;
 
 	if (prevs === attrs && attr === object) {
 		return;
 	}
 
-	var xmlns = older.xmlns;
-	var type;
-	var prev;
-	var next;
-
 	// old attributes
 	for (var name in prevs) {
-		type = attr(name);
+		var type = attr(name);
 
 		if (type < 30) {
-			next = attrs[name];
+			var next = attrs[name];
 
 			if (next === null || next === void 0) {
 				if (type < 20) {
@@ -105,15 +99,15 @@ function attributes (older, newer) {
 
 	// new attributes
 	for (var name in attrs) {
-		type = attr(name);
+		var type = attr(name);
 
 		if (type < 31) {
-			next = attrs[name];
+			var next = attrs[name];
 
 			if (type === 30) {
 				refs(older, next, 2);
 			} else {
-				prev = prevs[name];
+				var prev = prevs[name];
 
 				if (next !== prev && next !== null && next !== void 0) {
 					if (type < 20) {
@@ -141,10 +135,11 @@ function attributes (older, newer) {
 function refs (older, value, type) {
 	var host = older.host;
 	var stateful = false;
-	var owner;
 
 	if (host !== null) {
-		if ((owner = host.owner) !== null && host.group > 1) {
+		var owner = host.owner;
+
+		if (owner !== null && host.group > 1) {
 			stateful = true;
 		}
 	}

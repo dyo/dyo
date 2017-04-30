@@ -247,16 +247,23 @@
 			return h('button', {onclick: event}, 'Click Me - ', performance.now());
 		}
 
-		dio.render(X, root);
+		// dio.render(X, root);
 
 		// setTimeout(()=>dio.render(X, root), 1000)
 		// setTimeout(()=>dio.render(X, root), 2000)
 		// setTimeout(()=>dio.render(null, root), 3000)
 
-		// dio.render(h(List, 1, 2, 3), root);
-		// setTimeout(dio.render, 400, h(List, 1, 2, 3, 4), root)
-		// setTimeout(dio.render, 800, h(List, 1, 2, 3), root)
-		// setTimeout(dio.render, 1200, h(List, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), root)
+		class Lists {
+			render() {
+				return h('ul', this.props.children.map(
+					v => h(Item, v)
+				))
+			}
+		}
+
+		dio.render(h(Lists, 1, 2, 3), root);
+		setTimeout(dio.render, 1000, h(Lists, 1, 2, 3, 4), root)
+		// setTimeout(dio.render, 1000, h(Lists, 1, 2), root)
 
 		class Foo {
 			componentWillMount() {

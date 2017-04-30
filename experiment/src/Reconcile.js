@@ -40,7 +40,7 @@ function patch (older, _newer, group) {
 	}
 
 	if (older.flag === 1) {
-		return nodeValue(older, older.children = newer.children);
+		return nodeValue(older, newer);
 	}
 
 	var newLength = newer.children.length;
@@ -79,29 +79,26 @@ function patch (older, _newer, group) {
  *
  * @param  {Tree} older
  * @param  {Tree} newer
- * @param  {Number} _oldLength
+ * @param  {Number} oldLength
  * @param  {Number} newLength
  */
-function nonkeyed (older, newer, _oldLength, newLength) {
+function nonkeyed (older, newer, oldLength, newLength) {
 	var host = older.host;
 	var oldChildren = older.children;
 	var newChildren = newer.children;
-	var oldLength = _oldLength;
 	var length = newLength > oldLength ? newLength : oldLength;
 
-	for (var i = 0, newChild, oldChild; i < length; i++) {
+	for (var i = 0; i < length; i++) {
 		if (i >= newLength) {
-			remove(oldChild = oldChildren.pop(), shared, older);
-			oldLength--;
+			remove(oldChildren.pop(), shared, older);
 		} else if (i >= oldLength) {
-			create(newChild = oldChildren[i] = newChildren[i], older, shared, 1, host, null);
-			oldLength++;
+			create(oldChildren[i] = newChildren[i], older, shared, 1, host, null);
 		} else {
-			newChild = newChildren[i];
-			oldChild = oldChildren[i];
+			var newChild = newChildren[i];
+			var oldChild = oldChildren[i];
 
 			if (newChild.flag === 1 && oldChild.flag === 1) {
-				nodeValue(oldChild, oldChild.children = newChild.children);
+				nodeValue(oldChild, newChild);
 			} else if (newChild.type !== oldChild.type) {
 				create(oldChildren[i] = newChild, older, oldChild, 3, host, null);
 			} else {
@@ -148,6 +145,7 @@ function keyed (older, newer, oldLength, newLength) {
  			if (oldStart > oldEnd || newStart > newEnd) {
  				break outer;
  			}
+
  			oldStartNode = oldChildren[oldStart];
  			newStartNode = newChildren[newStart];
  		}
@@ -163,6 +161,7 @@ function keyed (older, newer, oldLength, newLength) {
  			if (oldStart > oldEnd || newStart > newEnd) {
  				break outer;
  			}
+
  			oldEndNode = oldChildren[oldEnd];
  			newEndNode = newChildren[newEnd];
  		}
@@ -207,6 +206,7 @@ function keyed (older, newer, oldLength, newLength) {
  		}
  		break;
  	}
+
  	// step 2, remove or insert or both
  	if (oldStart > oldEnd) {
  		// old children is synced, insert the difference

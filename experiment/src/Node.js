@@ -293,6 +293,7 @@ function coroutine (older, generator) {
 		} else {
 			current = shape(next, older, true);
 		}
+
 		return previous = current;
 	};
 
