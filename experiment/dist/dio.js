@@ -785,13 +785,6 @@
 			return;
 		}
 	
-		if (state === false) {
-			if (e !== null && e.defaultPrevented !== true) {
-				e.preventDefault();
-			}
-			return;
-		}
-	
 		if (sync === true) {
 			return owner.setState(state);
 		}
@@ -893,8 +886,8 @@
 	 */
 	function errorMessage (component, location, message) {
 		console.error(
-			message+'\n\n  ^^ Error caught in '+'"'+component+'"'+
-			' from "'+location+'" \n'
+			message + '\n\n  ^^ Error caught in ' + '"' + component + '"' +
+			' from "' + location + '" \n'
 		);
 	}
 	
@@ -2167,7 +2160,9 @@
 		var node = older.node.style;
 		var next = newer.attrs.style;
 	
-		if (typeof next !== 'string') {
+		if (next.constructor === String) {
+			node.cssText = next;
+		} else {
 			switch (type) {
 				// assign
 				case 0: {
@@ -2198,8 +2193,6 @@
 					break;
 				}
 			}
-		} else {
-			node.cssText = next;
 		}
 	}
 	

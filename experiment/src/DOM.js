@@ -173,7 +173,9 @@ function setStyle (older, newer, type) {
 	var node = older.node.style;
 	var next = newer.attrs.style;
 
-	if (typeof next !== 'string') {
+	if (next.constructor === String) {
+		node.cssText = next;
+	} else {
 		switch (type) {
 			// assign
 			case 0: {
@@ -204,8 +206,6 @@ function setStyle (older, newer, type) {
 				break;
 			}
 		}
-	} else {
-		node.cssText = next;
 	}
 }
 

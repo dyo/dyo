@@ -131,13 +131,6 @@ function returnBoundary (older, state, owner, e, sync) {
 		return;
 	}
 
-	if (state === false) {
-		if (e !== null && e.defaultPrevented !== true) {
-			e.preventDefault();
-		}
-		return;
-	}
-
 	if (sync === true) {
 		return owner.setState(state);
 	}
@@ -239,7 +232,7 @@ function errorLocation (type, from) {
  */
 function errorMessage (component, location, message) {
 	console.error(
-		message+'\n\n  ^^ Error caught in '+'"'+component+'"'+
-		' from "'+location+'" \n'
+		message + '\n\n  ^^ Error caught in ' + '"' + component + '"' +
+		' from "' + location + '" \n'
 	);
 }
