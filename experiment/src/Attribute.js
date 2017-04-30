@@ -74,11 +74,12 @@ function attributes (older, newer) {
 	var node = older.node;
 	var prevs = older.attrs;
 	var attrs = newer.attrs;
-	var xmlns = older.xmlns;
 
-	if (prevs === attrs && attr === object) {
+	if (prevs === attrs && attrs === object) {
 		return;
 	}
+
+	var xmlns = older.xmlns;
 
 	// old attributes
 	for (var name in prevs) {

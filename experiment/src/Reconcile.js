@@ -43,8 +43,8 @@ function patch (older, _newer, group) {
 		return nodeValue(older, newer);
 	}
 
-	var newLength = newer.children.length;
 	var oldLength = older.children.length;
+	var newLength = newer.children.length;
 
 	if (oldLength === 0) {
 		// fill children
@@ -61,10 +61,11 @@ function patch (older, _newer, group) {
 
 			older.children = newer.children;
 		}
-	} else if (newer.keyed === true) {
-		keyed(older, newer, oldLength, newLength);
 	} else {
-		nonkeyed(older, newer, oldLength, newLength);
+		switch (newer.keyed) {
+			case false: nonkeyed(older, newer, oldLength, newLength); break;
+			case true: keyed(older, newer, oldLength, newLength); break;
+		}
 	}
 
 	attributes(older, newer);
@@ -77,10 +78,10 @@ function patch (older, _newer, group) {
 /**
  * Non-Keyed Children [Simple]
  *
- * @param  {Tree} older
- * @param  {Tree} newer
- * @param  {Number} oldLength
- * @param  {Number} newLength
+ * @param {Tree} older
+ * @param {Tree} newer
+ * @param {Number} oldLength
+ * @param {Number} newLength
  */
 function nonkeyed (older, newer, oldLength, newLength) {
 	var host = older.host;
@@ -149,6 +150,7 @@ function keyed (older, newer, oldLength, newLength) {
  			oldStartNode = oldChildren[oldStart];
  			newStartNode = newChildren[newStart];
  		}
+
  		// sync trailing nodes
  		while (oldEndNode.key === newEndNode.key) {
  			newChildren[newEnd] = oldEndNode;
@@ -165,6 +167,7 @@ function keyed (older, newer, oldLength, newLength) {
  			oldEndNode = oldChildren[oldEnd];
  			newEndNode = newChildren[newEnd];
  		}
+
  		// move and sync nodes from right to left
  		if (oldEndNode.key === newStartNode.key) {
  			newChildren[newStart] = oldEndNode;
@@ -181,6 +184,7 @@ function keyed (older, newer, oldLength, newLength) {
 
  			continue;
  		}
+
  		// move and sync nodes from left to right
  		if (oldStartNode.key === newEndNode.key) {
  			newChildren[newEnd] = oldStartNode;
@@ -204,6 +208,7 @@ function keyed (older, newer, oldLength, newLength) {
 
  			continue;
  		}
+
  		break;
  	}
 
@@ -227,7 +232,6 @@ function keyed (older, newer, oldLength, newLength) {
  		// all children are out of sync, remove all, append new set
  		unmount(older, false);
  		removeChildren(older);
-
  		fill(older, newer, newLength);
  	} else {
  		// could sync all children, move on the the next phase

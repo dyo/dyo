@@ -256,7 +256,7 @@
 		class Lists {
 			render() {
 				return h('ul', this.props.children.map(
-					v => h(Item, v)
+					v => h(Item, {key: v}, v)
 				))
 			}
 		}

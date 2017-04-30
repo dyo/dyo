@@ -967,11 +967,12 @@
 		var node = older.node;
 		var prevs = older.attrs;
 		var attrs = newer.attrs;
-		var xmlns = older.xmlns;
 	
-		if (prevs === attrs && attr === object) {
+		if (prevs === attrs && attrs === object) {
 			return;
 		}
+	
+		var xmlns = older.xmlns;
 	
 		// old attributes
 		for (var name in prevs) {
@@ -1664,8 +1665,8 @@
 			return nodeValue(older, newer);
 		}
 	
-		var newLength = newer.children.length;
 		var oldLength = older.children.length;
+		var newLength = newer.children.length;
 	
 		if (oldLength === 0) {
 			// fill children
@@ -1682,10 +1683,11 @@
 	
 				older.children = newer.children;
 			}
-		} else if (newer.keyed === true) {
-			keyed(older, newer, oldLength, newLength);
 		} else {
-			nonkeyed(older, newer, oldLength, newLength);
+			switch (newer.keyed) {
+				case false: nonkeyed(older, newer, oldLength, newLength); break;
+				case true: keyed(older, newer, oldLength, newLength); break;
+			}
 		}
 	
 		attributes(older, newer);
@@ -1698,10 +1700,10 @@
 	/**
 	 * Non-Keyed Children [Simple]
 	 *
-	 * @param  {Tree} older
-	 * @param  {Tree} newer
-	 * @param  {Number} oldLength
-	 * @param  {Number} newLength
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Number} oldLength
+	 * @param {Number} newLength
 	 */
 	function nonkeyed (older, newer, oldLength, newLength) {
 		var host = older.host;
@@ -1770,6 +1772,7 @@
 	 			oldStartNode = oldChildren[oldStart];
 	 			newStartNode = newChildren[newStart];
 	 		}
+	
 	 		// sync trailing nodes
 	 		while (oldEndNode.key === newEndNode.key) {
 	 			newChildren[newEnd] = oldEndNode;
@@ -1786,6 +1789,7 @@
 	 			oldEndNode = oldChildren[oldEnd];
 	 			newEndNode = newChildren[newEnd];
 	 		}
+	
 	 		// move and sync nodes from right to left
 	 		if (oldEndNode.key === newStartNode.key) {
 	 			newChildren[newStart] = oldEndNode;
@@ -1802,6 +1806,7 @@
 	
 	 			continue;
 	 		}
+	
 	 		// move and sync nodes from left to right
 	 		if (oldStartNode.key === newEndNode.key) {
 	 			newChildren[newEnd] = oldStartNode;
@@ -1825,6 +1830,7 @@
 	
 	 			continue;
 	 		}
+	
 	 		break;
 	 	}
 	
@@ -1848,7 +1854,6 @@
 	 		// all children are out of sync, remove all, append new set
 	 		unmount(older, false);
 	 		removeChildren(older);
-	
 	 		fill(older, newer, newLength);
 	 	} else {
 	 		// could sync all children, move on the the next phase
