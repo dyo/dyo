@@ -2069,8 +2069,8 @@
 	 * @param {Tree} older
 	 * @param {Tree} newer
 	 */
-	function nodeValue (older, newChild) {
-		older.node.nodeValue = oldChild.children = newChild.children;
+	function nodeValue (older, newer) {
+		older.node.nodeValue = older.children = newer.children;
 	}
 	
 	/**
