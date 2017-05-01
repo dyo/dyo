@@ -217,7 +217,7 @@ function setStyle (older, newer, type) {
  * @param {Function} value
  * @param {Number} action
  */
-function eventListener (older, type, value, action) {
+function setEvent (older, type, value, action) {
 	var name = type.toLowerCase().substring(2);
 	var host = older.host;
 	var node = older.node;

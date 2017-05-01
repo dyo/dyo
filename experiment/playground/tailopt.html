@@ -1,37 +1,62 @@
-<script src=tailopt.js></script>
 <script>
 
-function tailopted (older, newer) {
-	outer: while (true) {
-		var oldChildren = older.children;
-		var newChildren = newer.children;
-		var oldLength = older.children.length;
-		var newLength = newer.children.length;
-		var length = newLength > oldLength ? newLength : oldLength;
+var stack = new Array(1000);
 
+function stackRecursive (root) {
+	// start index
+	var size = 0;
+	// start with root node
+	stack[size++] = root;
+
+	// while we still have nodes to visit
+	while (size > 0) {
+		// get top node of the stack
+		var current = stack[--size];
+		var children = current.children;
+		var length = children.length;
+
+		// remove current node from the stack
+		stack[size] = void 0;
+
+		// push current nodes children to the stack
 		for (var i = 0; i < length; i++) {
-			if (i >= newLength) {
-				oldChild = oldChildren.pop(); oldLength--; // DOM op: remove node
-			} else if (i >= oldLength) {
-				oldChildren[i] = newChildren[i]; oldLength++; // DOM op: create node
-			} else {
-				var newChild = newChildren[i];
-				var oldChild = oldChildren[i];
-
-				if (newChild.flag === 1 && oldChild.flag === 1) {
-					oldChild.children = newChild.children; // DOM op: update text
-				} else if (newChild.type !== oldChild.type) {
-					oldChildren[i] = newChild; // DOM op: replace node
-				} else {
-					// instead of tailopted(oldChild, newChild)
-					older = oldChild;
-					newer = newChild;
-					continue outer;
-				}
-			}
+			stack[size++] = children[i];
 		}
-		break;
 	}
 }
 
+function funcRecursive (root) {
+	var children = root.children;
+	var length = children.length;
+
+	for (var i = 0; i < length; i++) {
+		funcRecursive(children[i]);
+	}
+}
+
+var tree = {
+	type: 'main',
+	children: [
+		{
+			type: 'div',
+			children: []
+		},
+		{
+			type: 'span',
+			children: [
+				{
+					type: 'p',
+					children: []
+				},
+				{
+					type: 'hr',
+					children: []
+				}
+			]
+		}
+	]
+}
+
+stackRecursive(tree);
+console.log(stack)
 </script>

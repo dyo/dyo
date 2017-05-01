@@ -274,10 +274,12 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 			oldChild = oldChildren[oldIndex];
 			oldKeys[oldChild.key] = oldIndex++;
 		}
+
 		if (newIndex < newEnd) {
 			newChild = newChildren[newIndex];
 			newKeys[newChild.key] = newIndex++;
 		}
+
 		if (oldIndex === oldEnd && newIndex === newEnd) {
 			break;
 		}
@@ -305,6 +307,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 
 			patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 		}
+
 		newIndex++;
 	}
 
@@ -322,6 +325,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 
 			oldOffset++;
 		}
+
 		oldIndex++;
 	}
 
@@ -360,6 +364,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 			}
 		}
+
 		newIndex--;
 	}
 }

@@ -56,7 +56,7 @@ function attribute (newer, xmlns) {
 					setAttribute(type, name, value, xmlns, node);
 				}
 			} else if (type > 20) {
-				eventListener(newer, name, value, 1);
+				setEvent(newer, name, value, 1);
 			} else {
 				setStyle(newer, newer, 0);
 			}
@@ -92,7 +92,7 @@ function attributes (older, newer) {
 				if (type < 20) {
 					setAttribute(type, name, next, xmlns, node);
 				} else if (type > 20) {
-					eventListener(older, name, next, 0);
+					setEvent(older, name, next, 0);
 				}
 			}
 		}
@@ -114,7 +114,7 @@ function attributes (older, newer) {
 					if (type < 20) {
 						setAttribute(type, name, next, xmlns, node);
 					} else if (type > 20) {
-						eventListener(older, name, next, 2);
+						setEvent(older, name, next, 2);
 					} else {
 						setStyle(older, newer, 1);
 					}

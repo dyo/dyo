@@ -949,7 +949,7 @@
 						setAttribute(type, name, value, xmlns, node);
 					}
 				} else if (type > 20) {
-					eventListener(newer, name, value, 1);
+					setEvent(newer, name, value, 1);
 				} else {
 					setStyle(newer, newer, 0);
 				}
@@ -985,7 +985,7 @@
 					if (type < 20) {
 						setAttribute(type, name, next, xmlns, node);
 					} else if (type > 20) {
-						eventListener(older, name, next, 0);
+						setEvent(older, name, next, 0);
 					}
 				}
 			}
@@ -1007,7 +1007,7 @@
 						if (type < 20) {
 							setAttribute(type, name, next, xmlns, node);
 						} else if (type > 20) {
-							eventListener(older, name, next, 2);
+							setEvent(older, name, next, 2);
 						} else {
 							setStyle(older, newer, 1);
 						}
@@ -1896,10 +1896,12 @@
 				oldChild = oldChildren[oldIndex];
 				oldKeys[oldChild.key] = oldIndex++;
 			}
+	
 			if (newIndex < newEnd) {
 				newChild = newChildren[newIndex];
 				newKeys[newChild.key] = newIndex++;
 			}
+	
 			if (oldIndex === oldEnd && newIndex === newEnd) {
 				break;
 			}
@@ -1927,6 +1929,7 @@
 	
 				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 			}
+	
 			newIndex++;
 		}
 	
@@ -1944,6 +1947,7 @@
 	
 				oldOffset++;
 			}
+	
 			oldIndex++;
 		}
 	
@@ -1982,6 +1986,7 @@
 					patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 				}
 			}
+	
 			newIndex--;
 		}
 	}
@@ -2205,7 +2210,7 @@
 	 * @param {Function} value
 	 * @param {Number} action
 	 */
-	function eventListener (older, type, value, action) {
+	function setEvent (older, type, value, action) {
 		var name = type.toLowerCase().substring(2);
 		var host = older.host;
 		var node = older.node;
