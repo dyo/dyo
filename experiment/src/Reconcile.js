@@ -40,7 +40,10 @@ function patch (older, _newer, group) {
 	}
 
 	if (older.flag === 1) {
-		return nodeValue(older, newer);
+		if (older.children !== newer.children) {
+			nodeValue(older, newer);
+		}
+		return;
 	}
 
 	var oldLength = older.children.length;
@@ -99,7 +102,9 @@ function nonkeyed (older, newer, oldLength, newLength) {
 			var oldChild = oldChildren[i];
 
 			if (newChild.flag === 1 && oldChild.flag === 1) {
-				nodeValue(oldChild, newChild);
+				if (newChild.children !== oldChild.children) {
+					nodeValue(oldChild, newChild);
+				}
 			} else if (newChild.type !== oldChild.type) {
 				create(oldChildren[i] = newChild, older, oldChild, 3, host, null);
 			} else {

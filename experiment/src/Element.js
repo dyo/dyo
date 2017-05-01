@@ -56,7 +56,6 @@ function element (_type, _props) {
 				group = newer.group = 2;
 			} else {
 				group = newer.group = 1;
-				newer.owner = type;
 			}
 			break;
 		}
@@ -235,6 +234,7 @@ function stringify (value) {
 function copy (older, newer, deep) {
 	older.flag = newer.flag;
 	older.tag = newer.tag;
+	older.ref = newer.ref;
 	older.node = newer.node;
 	older.attrs = newer.attrs;
 	older.xmlns = newer.xmlns;
@@ -263,6 +263,7 @@ function Tree (flag) {
 	this.flag = flag;
 	this.tag = null;
 	this.key = null;
+	this.ref = null;
 	this.type = null;
 	this.node = null;
 	this.host = null;

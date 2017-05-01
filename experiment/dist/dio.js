@@ -422,7 +422,6 @@
 					group = newer.group = 2;
 				} else {
 					group = newer.group = 1;
-					newer.owner = type;
 				}
 				break;
 			}
@@ -601,6 +600,7 @@
 	function copy (older, newer, deep) {
 		older.flag = newer.flag;
 		older.tag = newer.tag;
+		older.ref = newer.ref;
 		older.node = newer.node;
 		older.attrs = newer.attrs;
 		older.xmlns = newer.xmlns;
@@ -629,6 +629,7 @@
 		this.flag = flag;
 		this.tag = null;
 		this.key = null;
+		this.ref = null;
 		this.type = null;
 		this.node = null;
 		this.host = null;
@@ -978,7 +979,7 @@
 		for (var name in prevs) {
 			var type = attr(name);
 	
-			if (type < 30) {
+			if (type < 31) {
 				var next = attrs[name];
 	
 				if (next === null || next === void 0) {
@@ -987,6 +988,8 @@
 					} else if (type > 20) {
 						setEvent(older, name, next, 0);
 					}
+				} else if (type === 30 && next !== (prev = prevs[name])) {
+					refs(older, prev, 0);
 				}
 			}
 		}
@@ -1042,18 +1045,20 @@
 			owner.refs = {};
 		}
 	
-		if (value === void 0 || value === null) {
+		if ((older.ref = value) === void 0 || value === null) {
 			return;
 		}
 	
+		var node = type > 0 ? older.node : null;
+	
 		switch (value.constructor) {
 			case Function: {
-				callbackBoundary(older, owner, value, older.node, type);
+				callbackBoundary(older, owner, value, node, 2);
 				break;
 			}
 			case String: {
 				if (stateful === true) {
-					owner.refs[value] = older.node;
+					owner.refs[value] = node;
 				}
 				break;
 			}
@@ -1194,8 +1199,8 @@
 		var type = older.type;
 		var props = older.props;
 		var children = older.children;
-		var length = children.length;
 		var group = older.group;
+		var length = children.length;
 		var defaults = type.defaultProps;
 		var types = type.propTypes;
 		var owner;
@@ -1242,7 +1247,7 @@
 	
 			newer = shape(newer, owner.this = older, abstract);
 		} else {
-			newer = shape(renderBoundary(older, group), older, abstract);
+			newer = (older.owner = type, shape(renderBoundary(older, group), older, abstract));
 		}
 	
 		older.tag = newer.tag;
@@ -1464,16 +1469,23 @@
 	function unmount (older, unlink) {
 		var children = older.children;
 		var length = children.length;
+		var flag = older.flag;
 	
-		if (length !== 0 && older.flag !== 1) {
-			for (var i = 0, child; i < length; i++) {
-				child = children[i];
+		if (flag > 1) {
+			if (length !== 0) {
+				for (var i = 0; i < length; i++) {
+					var child = children[i];
 	
-				if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
-					mountBoundary(child, child.owner, child.node, 2);
+					if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
+						mountBoundary(child, child.owner, child.node, 2);
+					}
+	
+					unmount(child, true);
 				}
+			}
 	
-				unmount(child, true);
+			if (flag < 3 && older.ref !== null) {
+				refs(older, older.ref, 0);
 			}
 		}
 	
@@ -1662,7 +1674,10 @@
 		}
 	
 		if (older.flag === 1) {
-			return nodeValue(older, newer);
+			if (older.children !== newer.children) {
+				nodeValue(older, newer);
+			}
+			return;
 		}
 	
 		var oldLength = older.children.length;
@@ -1721,7 +1736,9 @@
 				var oldChild = oldChildren[i];
 	
 				if (newChild.flag === 1 && oldChild.flag === 1) {
-					nodeValue(oldChild, newChild);
+					if (newChild.children !== oldChild.children) {
+						nodeValue(oldChild, newChild);
+					}
 				} else if (newChild.type !== oldChild.type) {
 					create(oldChildren[i] = newChild, older, oldChild, 3, host, null);
 				} else {

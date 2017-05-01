@@ -134,8 +134,14 @@
 				})
 			}
 			render() {
-				return h('li', this.props.children)
+				return h('li', {
+					ref: ref
+				}, this.props.children)
 			}
+		}
+
+		const ref = (a) => {
+			console.log(a);
 		}
 
 		class List {
@@ -262,7 +268,8 @@
 		}
 
 		dio.render(h(Lists, 1, 2, 3), root);
-		setTimeout(dio.render, 1000, h(Lists, 1, 2, 3, 4), root)
+		setTimeout(dio.render, 1000, h(Lists, 1, 2), root)
+		// setTimeout(dio.render, 1000, h(Lists, 1, 2, 3, 4), root)
 		// setTimeout(dio.render, 1000, h(Lists, 1, 2), root)
 
 		class Foo {

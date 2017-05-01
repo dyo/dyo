@@ -85,7 +85,7 @@ function attributes (older, newer) {
 	for (var name in prevs) {
 		var type = attr(name);
 
-		if (type < 30) {
+		if (type < 31) {
 			var next = attrs[name];
 
 			if (next === null || next === void 0) {
@@ -94,6 +94,8 @@ function attributes (older, newer) {
 				} else if (type > 20) {
 					setEvent(older, name, next, 0);
 				}
+			} else if (type === 30 && next !== (prev = prevs[name])) {
+				refs(older, prev, 0);
 			}
 		}
 	}
@@ -149,18 +151,20 @@ function refs (older, value, type) {
 		owner.refs = {};
 	}
 
-	if (value === void 0 || value === null) {
+	if ((older.ref = value) === void 0 || value === null) {
 		return;
 	}
 
+	var node = type > 0 ? older.node : null;
+
 	switch (value.constructor) {
 		case Function: {
-			callbackBoundary(older, owner, value, older.node, type);
+			callbackBoundary(older, owner, value, node, 2);
 			break;
 		}
 		case String: {
 			if (stateful === true) {
-				owner.refs[value] = older.node;
+				owner.refs[value] = node;
 			}
 			break;
 		}

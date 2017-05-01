@@ -118,8 +118,8 @@ function extract (older, abstract) {
 	var type = older.type;
 	var props = older.props;
 	var children = older.children;
-	var length = children.length;
 	var group = older.group;
+	var length = children.length;
 	var defaults = type.defaultProps;
 	var types = type.propTypes;
 	var owner;
@@ -166,7 +166,7 @@ function extract (older, abstract) {
 
 		newer = shape(newer, owner.this = older, abstract);
 	} else {
-		newer = shape(renderBoundary(older, group), older, abstract);
+		newer = (older.owner = type, shape(renderBoundary(older, group), older, abstract));
 	}
 
 	older.tag = newer.tag;
@@ -388,16 +388,23 @@ function remove (older, newer, parent) {
 function unmount (older, unlink) {
 	var children = older.children;
 	var length = children.length;
+	var flag = older.flag;
 
-	if (length !== 0 && older.flag !== 1) {
-		for (var i = 0, child; i < length; i++) {
-			child = children[i];
+	if (flag > 1) {
+		if (length !== 0) {
+			for (var i = 0; i < length; i++) {
+				var child = children[i];
 
-			if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
-				mountBoundary(child, child.owner, child.node, 2);
+				if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
+					mountBoundary(child, child.owner, child.node, 2);
+				}
+
+				unmount(child, true);
 			}
+		}
 
-			unmount(child, true);
+		if (flag < 3 && older.ref !== null) {
+			refs(older, older.ref, 0);
 		}
 	}
 
