@@ -58,16 +58,18 @@ function render (subject, target) {
 			exchange(older, newer, true);
 		}
 	} else {
-		parent = new Tree(2);
 		mount.this = newer;
+		parent = new Tree(2);
 
 		if (mount.getAttribute('slot') !== null) {
-			sibling = new Tree(2);
-			sibling.node = mount;
-			parent.node = mount.parentNode;
-			create(newer, parent, sibling, 3, newer, null);
+			parent.node = (shared.node = mount).parentNode;
+
+			create(newer, parent, shared, 3, newer, null);
+
+			shared.node = null;
 		} else {
 			parent.node = mount;
+
 			create(newer, parent, shared, 1, newer, null);
 		}
 	}

@@ -152,6 +152,7 @@ function extract (older, abstract) {
 			if (UUID !== 1) {
 				extendClass(type, proto);
 			}
+
 			owner = new type(props);
 			Component.call(owner, props);
 		}
@@ -435,22 +436,22 @@ function detach (older) {
 function exchange (older, newer, deep) {
 	change(older, newer, older.host);
 	copy(older, newer, deep);
-	hydrate(older.host, newer);
+	update(older.host, newer);
 }
 
 /**
- * Hydrate
+ * Update
  *
  * @param  {Tree} older
  * @param  {Tree} newer
  */
-function hydrate (older, newer) {
+function update (older, newer) {
 	if (older !== null && older.flag === 3) {
 		older.node = newer.node;
 		older.parent = newer.parent;
 
 		if (older.host !== older) {
-			hydrate(older.host, newer);
+			update(older.host, newer);
 		}
 	}
 }

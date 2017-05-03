@@ -57,6 +57,7 @@ function extendClass (type, prototype) {
 	if (prototype.constructor !== type) {
 		Object.defineProperty(prototype, 'constructor', {value: type});
 	}
+
 	Object.defineProperties(prototype, ComponentPrototype);
 }
 
@@ -91,9 +92,9 @@ function setState (newer, callback) {
 			owner.setState(value, callback);
 		});
 	} else {
-		owner._pending = newer;
-
 		var older = owner._state = {};
+
+		owner._pending = newer;
 
 		// cache current state
 		for (var name in state) {
@@ -120,7 +121,7 @@ function forceUpdate (callback) {
 
 	if (older === null || older.node === null || older.async !== 0 || owner.async !== 0) {
 		// this is to avoid maxium call stack when componentDidUpdate
-		// produces a infinite render loop
+		// introduces an infinite render loop
 		if (older.async === 3) {
 			requestAnimationFrame(function () {
 				owner.forceUpdate(callback);
@@ -156,6 +157,7 @@ function shouldUpdate (older, _newer, group) {
 	if (owner === null || older.async !== 0) {
 		return false;
 	}
+
 	older.async = 1;
 
 	if (group > 1) {
@@ -171,9 +173,11 @@ function shouldUpdate (older, _newer, group) {
 		if (type.propTypes !== void 0) {
 			propTypes(owner, type, nextProps);
 		}
+
 		if (owner.componentWillReceiveProps !== void 0) {
 			dataBoundary(older, owner, 0, nextProps);
 		}
+
 		if (type.defaultProps !== void 0) {
 			merge(type.defaultProps, nextProps);
 		}
@@ -183,11 +187,14 @@ function shouldUpdate (older, _newer, group) {
 		owner.shouldComponentUpdate !== void 0 &&
 		updateBoundary(older, owner, 0, nextProps, nextState) === false
 	) {
-		return older.async = 0, false;
+		older.async = 0;
+		return false;
 	}
+
 	if (recievedProps === true) {
 		(group > 1 ? owner : older).props = nextProps;
 	}
+
 	if (owner.componentWillUpdate !== void 0) {
 		updateBoundary(older, owner, 1, nextProps, nextState);
 	}

@@ -143,6 +143,7 @@
 		if (prototype.constructor !== type) {
 			Object.defineProperty(prototype, 'constructor', {value: type});
 		}
+	
 		Object.defineProperties(prototype, ComponentPrototype);
 	}
 	
@@ -177,9 +178,9 @@
 				owner.setState(value, callback);
 			});
 		} else {
-			owner._pending = newer;
-	
 			var older = owner._state = {};
+	
+			owner._pending = newer;
 	
 			// cache current state
 			for (var name in state) {
@@ -206,7 +207,7 @@
 	
 		if (older === null || older.node === null || older.async !== 0 || owner.async !== 0) {
 			// this is to avoid maxium call stack when componentDidUpdate
-			// produces a infinite render loop
+			// introduces an infinite render loop
 			if (older.async === 3) {
 				requestAnimationFrame(function () {
 					owner.forceUpdate(callback);
@@ -242,6 +243,7 @@
 		if (owner === null || older.async !== 0) {
 			return false;
 		}
+	
 		older.async = 1;
 	
 		if (group > 1) {
@@ -257,9 +259,11 @@
 			if (type.propTypes !== void 0) {
 				propTypes(owner, type, nextProps);
 			}
+	
 			if (owner.componentWillReceiveProps !== void 0) {
 				dataBoundary(older, owner, 0, nextProps);
 			}
+	
 			if (type.defaultProps !== void 0) {
 				merge(type.defaultProps, nextProps);
 			}
@@ -269,11 +273,14 @@
 			owner.shouldComponentUpdate !== void 0 &&
 			updateBoundary(older, owner, 0, nextProps, nextState) === false
 		) {
-			return older.async = 0, false;
+			older.async = 0;
+			return false;
 		}
+	
 		if (recievedProps === true) {
 			(group > 1 ? owner : older).props = nextProps;
 		}
+	
 		if (owner.componentWillUpdate !== void 0) {
 			updateBoundary(older, owner, 1, nextProps, nextState);
 		}
@@ -1233,6 +1240,7 @@
 				if (UUID !== 1) {
 					extendClass(type, proto);
 				}
+	
 				owner = new type(props);
 				Component.call(owner, props);
 			}
@@ -1516,22 +1524,22 @@
 	function exchange (older, newer, deep) {
 		change(older, newer, older.host);
 		copy(older, newer, deep);
-		hydrate(older.host, newer);
+		update(older.host, newer);
 	}
 	
 	/**
-	 * Hydrate
+	 * Update
 	 *
 	 * @param  {Tree} older
 	 * @param  {Tree} newer
 	 */
-	function hydrate (older, newer) {
+	function update (older, newer) {
 		if (older !== null && older.flag === 3) {
 			older.node = newer.node;
 			older.parent = newer.parent;
 	
 			if (older.host !== older) {
-				hydrate(older.host, newer);
+				update(older.host, newer);
 			}
 		}
 	}
@@ -1617,16 +1625,18 @@
 				exchange(older, newer, true);
 			}
 		} else {
-			parent = new Tree(2);
 			mount.this = newer;
+			parent = new Tree(2);
 	
 			if (mount.getAttribute('slot') !== null) {
-				sibling = new Tree(2);
-				sibling.node = mount;
-				parent.node = mount.parentNode;
-				create(newer, parent, sibling, 3, newer, null);
+				parent.node = (shared.node = mount).parentNode;
+	
+				create(newer, parent, shared, 3, newer, null);
+	
+				shared.node = null;
 			} else {
 				parent.node = mount;
+	
 				create(newer, parent, shared, 1, newer, null);
 			}
 		}

@@ -19,8 +19,6 @@ module.exports = function (API, element, shape, extract, attr, object) {
 		var children = newer.children;
 		var body = '';
 		var length = 0;
-		var displayName = '';
-		var props;
 
 		if (flag === 1) {
 			return sanitize(children);
@@ -35,7 +33,7 @@ module.exports = function (API, element, shape, extract, attr, object) {
 		}
 
 		return (
-			'<' + tag + attrs(newer) + (slot === true ? ' slot' : '') + '>' +
+			('<' + tag + attrs(newer) + (slot === true ? ' slot' : '') + '>') +
 			(hollow[tag] !== 0 ? body + '</' + tag + '>' : '')
 		);
 	};
