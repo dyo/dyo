@@ -1597,12 +1597,12 @@
 				body = global.document !== void 0 ? (document.body || document.documentElement) : null;
 			}
 	
-			target = body;
-	
 			// server enviroment
-			if (server === true && target === null) {
+			if (server === true && body === null) {
 				return exports.renderToString(newer);
 			}
+	
+			target = body;
 		}
 	
 		var older = target.this;
@@ -1618,14 +1618,14 @@
 	
 			target.this = newer;
 	
-			switch ((options !== void 0 ? options.type : options)) {
+			switch (options) {
 				case 'replace': {
 					parent.node = (shared.node = target).parentNode;
 					create(newer, parent, shared, 3, newer, null);
 					shared.node = null;
 					break;
 				}
-				case 'remove': {
+				case 'destroy': {
 					target.textContent = null;
 				}
 				default: {

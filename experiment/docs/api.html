@@ -243,36 +243,60 @@ class Welcome {
 		<h1 id=render>Render</h1>
 
 		<p>
-		For the most part <code>`dio.render`</code> will be how you first invoke DIO. The first argument is the element you want to render and the second the root you want to mount <label for=4></label> to.
-		<span class="note">Defaulting to <code>&lt;body></code> or <code>&lt;html></code> if not provided.</span>
+		The first argument is the virtual element <label for=4></label>
+		<span class="note">This includes strings, numbers, functions, null, and virtual elements.</span>
+		you want to render, the second is the root DOM node you want render to.
 		</p>
-
-<pre><code>
-dio.render('Hello World')
-</code></pre>
 
 <pre><code>
 dio.render('Hello World', document.body)
 </code></pre>
 
-		<p>By default calling <code>`render`</code> when mounting preserves the children of the mount element you specifiy, this means that you can mount to <code>document.body</code> without any side-effects.</p>
+		<p>When ommitted, the root DOM node defaults to the <code>`&lt;body>`</code> or <code>`&lt;html>`</code> DOM nodes.</p>
 
-		<p>In addition to that there are 2 other mount methods that <code>`render`</code> supports.</p>
+		<pre><code>
+		dio.render('Hello World')
+		</code></pre>
+
+		<p>By default calling <code>`render`</code> when mounting preserves the children of the mount node you specifiy; This means that you can mount to <code>`document.body`</code> without any side-effects.</p>
+
+		<p>There are 3 methods that <code>`render`</code> supports when mounting.</p>
 
 		<ol>
-			<li>replace &mdash; replaces the mount element.</li>
-			<li>destroy &mdash; removes any previous content of the mount element.</li>
+			<li>preserve &mdash; preserves the mount nodes children.</li>
+			<li>replace &mdash; replaces the mount node.</li>
+			<li>destroy &mdash; removes any previous content from the mount node.</li>
 		</ol>
 
 <pre><code>
-dio.render('Hello World', document.body, {
-	type: 'replace'
-})
-
-dio.render('Hello World', document.body, {
-	type: 'destroy'
-})
+&lt;html>
+	&lt;body>
+		Old Content
+	&lt;/body>
+&lt;/html>
 </code></pre>
+
+		<p>Assuming we have this DOM structure, the following:</p>
+
+<pre><code>
+dio.render('Hello World', document.body, 'replace')
+</code></pre>
+
+		<p>Because we specified that we want to replace the mount node, in this case <code>`document.body`</code>, this will thus render the following &mdash;</p>
+
+<pre><code>
+&lt;html>
+	Hello World
+&lt;/html>
+</code></pre>
+
+		<p>On the other hand if we specify that we want to destroy the contents of the mount node, anything in <code>`document.body`</code> will be removed before mounting.</p>
+
+<pre><code>
+dio.render('Hello World', document.body, 'destroy')
+</code></pre>
+
+		<p>However the default mode of mounting is set to <code>`preserve`</code> when omitted; Coincidentally this is also what makes it safe to mount to <code>`document.body`</code>.</p>
 
 		<h2 id=server>Server</h2>
 
@@ -282,7 +306,7 @@ dio.render('Hello World', document.body, {
 `${h('html')}` === `&lt;html>&lt;/html>`
 </code></pre>
 
-		<p>In additon the method<code>`renderToString`</code> is exposed to the API.</p>
+		<p>In additon the method<code>`renderToString`</code> is exposed as a public API.</p>
 
 <pre><code>
 dio.renderToString(h('html')) === `&lt;html>&lt;/html>`
@@ -290,10 +314,12 @@ dio.renderToString(h('html')) === `&lt;html>&lt;/html>`
 
 		<h2 id=shallow>Shallow</h2>
 
-		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM or a string but rather returns a shallow render of the passed element. This can then be used for testing purposes.</p>
+		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM or a string but rather returns a shallow render of the element. This can then be used for testing purposes.</p>
 
 <pre><code>
-dio.shallow('Hello World')
+dio.shallow(() => {
+	return 'Hello World';
+})
 </code></pre>
 
 		<h1 id=version>Version</h1>
