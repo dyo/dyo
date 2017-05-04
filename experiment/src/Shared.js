@@ -1,10 +1,9 @@
 /**
  * ## Constants
  */
-var version = '7.0.0';
 var noop = function () {};
 var array = [];
-var object = {};
+var object = {children: array};
 var server = global.global === global;
 var browser = global.window === global;
 var Promise = global.Promise || noop;

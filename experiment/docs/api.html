@@ -255,9 +255,42 @@ dio.render('Hello World')
 dio.render('Hello World', document.body)
 </code></pre>
 
+		<p>By default calling <code>`render`</code> when mounting preserves the children of the mount element you specifiy, this means that you can mount to <code>document.body</code> without any side-effects.</p>
+
+		<p>In addition to that there are 2 other mount methods that <code>`render`</code> supports.</p>
+
+		<ol>
+			<li>replace &mdash; replaces the mount element.</li>
+			<li>destroy &mdash; removes any previous content of the mount element.</li>
+		</ol>
+
+<pre><code>
+dio.render('Hello World', document.body, {
+	type: 'replace'
+})
+
+dio.render('Hello World', document.body, {
+	type: 'destroy'
+})
+</code></pre>
+
+		<h2 id=server>Server</h2>
+
+		<p>In a server enviroment the <code>`toString`</code> method of virtual elements returns the element as a string.</p>
+
+<pre><code>
+`${h('html')}` === `&lt;html>&lt;/html>`
+</code></pre>
+
+		<p>In additon the method<code>`renderToString`</code> is exposed to the API.</p>
+
+<pre><code>
+dio.renderToString(h('html')) === `&lt;html>&lt;/html>`
+</code></pre>
+
 		<h2 id=shallow>Shallow</h2>
 
-		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM but returns a shallow render of the passed element. This can then be used for testing purposes.</p>
+		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM or a string but rather returns a shallow render of the passed element. This can then be used for testing purposes.</p>
 
 <pre><code>
 dio.shallow('Hello World')

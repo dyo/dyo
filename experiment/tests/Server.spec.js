@@ -18,9 +18,9 @@ module.exports = ({h, shallow, render}) => {
 			}
 		}
 
-		ok(dio.renderToString(Foo) === '<h1 slot>Faz</h1>', 'render composite');
-		ok(dio.renderToString(Faz) === '<h1 slot>Faz</h1>', 'render component');
-		ok(dio.renderToString(h('h1', 'Faz')) === '<h1 slot>Faz</h1>', 'render element');
+		ok(dio.renderToString(Foo) === '<h1>Faz</h1>', 'render composite');
+		ok(dio.renderToString(Faz) === '<h1>Faz</h1>', 'render component');
+		ok(dio.renderToString(h('h1', 'Faz')) === '<h1>Faz</h1>', 'render element');
 		ok(h('h1', 'Faz').toString() === '<h1>Faz</h1>', 'render element.toString');
 		ok(dio.renderToString('Hello') === 'Hello' && dio.renderToString(1) === '1', 'render text');
 

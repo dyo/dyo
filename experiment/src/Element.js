@@ -15,8 +15,8 @@ function element (_type, _props) {
 	var i = 2;
 	var group = 0;
 	var newer = new Tree(2);
-	var proto;
 	var children;
+	var proto;
 
 	if (props !== null) {
 		switch (props.constructor) {
@@ -285,4 +285,4 @@ function Tree (flag) {
  *
  * @type {Object}
  */
-var Prototype = Tree.prototype = element.prototype = Object.create(null);
+var TreePrototype = Tree.prototype = element.prototype = Object.create(null);

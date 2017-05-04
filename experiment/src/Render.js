@@ -1,15 +1,13 @@
 /**
  * Render
  *
- * @param  {Tree} subject
- * @param  {Node} _target
+ * @param {Any} subject
+ * @param {Node?} container
+ * @param {Object?} options
  */
-function render (subject, target) {
+function render (subject, container, options) {
 	var newer = subject;
-	var mount = target;
-	var older;
-	var sibling;
-	var parent;
+	var target = container;
 
 	if (newer === void 0 || newer === null) {
 		newer = text('');
@@ -32,45 +30,52 @@ function render (subject, target) {
 		}
 	}
 
-	if (mount === void 0 || mount === null) {
+	if (target === void 0 || target === null) {
 		// use <body> if it exists at this point
 		// else default to the root <html> node
 		if (body === null) {
-			if (global.document !== void 0) {
-				body = document.body || document.documentElement;
-			} else {
-				body = null;
-			}
+			body = global.document !== void 0 ? (document.body || document.documentElement) : null;
 		}
 
-		mount = body;
+		target = body;
 
 		// server enviroment
-		if (mount === null && newer.toString !== void 0) {
-			return newer.toString();
+		if (server === true && target === null) {
+			return exports.renderToString(newer);
 		}
 	}
 
-	if ((older = mount.this) !== void 0) {
+	var older = target.this;
+
+	if (older !== void 0) {
 		if (older.key === newer.key && older.type === newer.type) {
 			patch(older, newer, older.group);
 		} else {
 			exchange(older, newer, true);
 		}
 	} else {
-		mount.this = newer;
-		parent = new Tree(2);
+		var parent = new Tree(2);
 
-		if (mount.getAttribute('slot') !== null) {
-			parent.node = (shared.node = mount).parentNode;
+		target.this = newer;
 
-			create(newer, parent, shared, 3, newer, null);
-
-			shared.node = null;
-		} else {
-			parent.node = mount;
-
-			create(newer, parent, shared, 1, newer, null);
+		switch ((options !== void 0 ? options.type : options)) {
+			case 'replace': {
+				parent.node = (shared.node = target).parentNode;
+				create(newer, parent, shared, 3, newer, null);
+				shared.node = null;
+				break;
+			}
+			case 'remove': {
+				target.textContent = null;
+			}
+			default: {
+				parent.node = target;
+				create(newer, parent, shared, 1, newer, null);
+			}
 		}
+	}
+
+	if (options !== void 0 && options.constructor === Function) {
+		options();
 	}
 }

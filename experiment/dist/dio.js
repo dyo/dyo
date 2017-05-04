@@ -21,10 +21,9 @@
 	/**
 	 * ## Constants
 	 */
-	var version = '7.0.0';
 	var noop = function () {};
 	var array = [];
-	var object = {};
+	var object = {children: array};
 	var server = global.global === global;
 	var browser = global.window === global;
 	var Promise = global.Promise || noop;
@@ -104,6 +103,7 @@
 			}
 			this.props = props;
 		}
+	
 		// state
 		if (state === void 0) {
 			if (this.getInitialState !== void 0) {
@@ -235,10 +235,7 @@
 		var type = older.type;
 		var owner = older.owner;
 		var nextProps = _newer.props;
-		var recievedProps;
 		var nextState;
-		var nextProps;
-		var newer;
 	
 		if (owner === null || older.async !== 0) {
 			return false;
@@ -253,9 +250,7 @@
 			nextState = nextProps;
 		}
 	
-		recievedProps = group < 3 && nextProps !== object;
-	
-		if (recievedProps === true) {
+		if (group < 3) {
 			if (type.propTypes !== void 0) {
 				propTypes(owner, type, nextProps);
 			}
@@ -265,7 +260,7 @@
 			}
 	
 			if (type.defaultProps !== void 0) {
-				merge(type.defaultProps, nextProps);
+				merge(type.defaultProps, nextProps === object ? (nextProps = {}) : nextProps);
 			}
 		}
 	
@@ -277,7 +272,7 @@
 			return false;
 		}
 	
-		if (recievedProps === true) {
+		if (group < 3) {
 			(group > 1 ? owner : older).props = nextProps;
 		}
 	
@@ -353,21 +348,19 @@
 	 */
 	function propTypes (owner, type, props) {
 		var display = type.name;
-		var validators = type.propTypes;
-		var validator;
-		var result;
+		var types = type.propTypes;
 	
 		try {
-			for (var name in validators) {
-				validator = validators[name];
-				result = validator(props, name, display);
+			for (var name in types) {
+				var valid = types[name];
+				var result = valid(props, name, display);
 	
 				if (result) {
 					console.error(result);
 				}
 			}
 		} catch (err) {
-			errorBoundary(err, shared, owner, 2, validator);
+			errorBoundary(err, shared, owner, 2, valid);
 		}
 	}
 	
@@ -388,8 +381,8 @@
 		var i = 2;
 		var group = 0;
 		var newer = new Tree(2);
-		var proto;
 		var children;
+		var proto;
 	
 		if (props !== null) {
 			switch (props.constructor) {
@@ -658,7 +651,7 @@
 	 *
 	 * @type {Object}
 	 */
-	var Prototype = Tree.prototype = element.prototype = Object.create(null);
+	var TreePrototype = Tree.prototype = element.prototype = Object.create(null);
 	
 	/**
 	 * Data Boundary
@@ -900,12 +893,12 @@
 	}
 	
 	/**
-	 * Attributes [Whitelist]
+	 * Whitelist
 	 *
 	 * @param  {String} name
 	 * @return {Number}
 	 */
-	function attr (name) {
+	function whitelist (name) {
 		switch (name) {
 			case 'class':
 			case 'className': return 1;
@@ -945,7 +938,7 @@
 		var node = newer.node;
 	
 		for (var name in attrs) {
-			var type = attr(name);
+			var type = whitelist(name);
 	
 			if (type < 31) {
 				var value = attrs[name];
@@ -984,7 +977,7 @@
 	
 		// old attributes
 		for (var name in prevs) {
-			var type = attr(name);
+			var type = whitelist(name);
 	
 			if (type < 31) {
 				var next = attrs[name];
@@ -1003,7 +996,7 @@
 	
 		// new attributes
 		for (var name in attrs) {
-			var type = attr(name);
+			var type = whitelist(name);
 	
 			if (type < 31) {
 				var next = attrs[name];
@@ -1568,15 +1561,13 @@
 	/**
 	 * Render
 	 *
-	 * @param  {Tree} subject
-	 * @param  {Node} _target
+	 * @param {Any} subject
+	 * @param {Node?} container
+	 * @param {Object?} options
 	 */
-	function render (subject, target) {
+	function render (subject, container, options) {
 		var newer = subject;
-		var mount = target;
-		var older;
-		var sibling;
-		var parent;
+		var target = container;
 	
 		if (newer === void 0 || newer === null) {
 			newer = text('');
@@ -1599,46 +1590,53 @@
 			}
 		}
 	
-		if (mount === void 0 || mount === null) {
+		if (target === void 0 || target === null) {
 			// use <body> if it exists at this point
 			// else default to the root <html> node
 			if (body === null) {
-				if (global.document !== void 0) {
-					body = document.body || document.documentElement;
-				} else {
-					body = null;
-				}
+				body = global.document !== void 0 ? (document.body || document.documentElement) : null;
 			}
 	
-			mount = body;
+			target = body;
 	
 			// server enviroment
-			if (mount === null && newer.toString !== void 0) {
-				return newer.toString();
+			if (server === true && target === null) {
+				return exports.renderToString(newer);
 			}
 		}
 	
-		if ((older = mount.this) !== void 0) {
+		var older = target.this;
+	
+		if (older !== void 0) {
 			if (older.key === newer.key && older.type === newer.type) {
 				patch(older, newer, older.group);
 			} else {
 				exchange(older, newer, true);
 			}
 		} else {
-			mount.this = newer;
-			parent = new Tree(2);
+			var parent = new Tree(2);
 	
-			if (mount.getAttribute('slot') !== null) {
-				parent.node = (shared.node = mount).parentNode;
+			target.this = newer;
 	
-				create(newer, parent, shared, 3, newer, null);
-	
-				shared.node = null;
-			} else {
-				parent.node = mount;
-	
-				create(newer, parent, shared, 1, newer, null);
+			switch ((options !== void 0 ? options.type : options)) {
+				case 'replace': {
+					parent.node = (shared.node = target).parentNode;
+					create(newer, parent, shared, 3, newer, null);
+					shared.node = null;
+					break;
+				}
+				case 'remove': {
+					target.textContent = null;
+				}
+				default: {
+					parent.node = target;
+					create(newer, parent, shared, 1, newer, null);
+				}
 			}
+		}
+	
+		if (options !== void 0 && options.constructor === Function) {
+			options();
 		}
 	}
 	
@@ -2291,20 +2289,28 @@
 		}
 	}
 	
-	var API = {
-		version: version,
+	/**
+	 * Exports
+	 *
+	 * @type {Object}
+	 */
+	var exports = {
+		version: '7.0.0',
 		h: element,
 		createElement: element,
-		Component: Component,
-		render: render
+		render: render,
+		Component: Component
 	};
 	
 	global.h = element;
 	
+	/**
+	 * Server
+	 */
 	if (server === true && typeof require === 'function') {
-		require('./dio.server.js')(API, element, shape, extract, attr, object);
+		require('./dio.server.js')(exports, element, shape, extract, whitelist, object);
 	}
 	
-	return API;
+	return exports;
 	
 }));

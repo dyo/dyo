@@ -1,12 +1,10 @@
 <html>
 <body>
-	<div id=root></div>
-	<section slot></section>
+	<div id=root>something</div>
 	<script src="../dist/dio.js"></script>
 
 	<script>
-		// const root = document.getElementById('root');
-		const root = document.querySelector('[slot]');
+		const root = document.getElementById('root');
 
 		h('!', 'Comment');
 
@@ -260,16 +258,21 @@
 
 		class Lists {
 			render() {
+				console.log(this.props);
+
 				return h('ul', this.props.children.map(
 					v => h(Item, {key: v}, v)
 				))
 			}
 		}
 
-		dio.render(h(Lists, 1, 2, 3), root);
-		setTimeout(dio.render, 1000, h(Lists, 1, 2), root)
-		// setTimeout(dio.render, 1000, h(Lists, 1, 2, 3, 4), root)
+		dio.render(h(Lists, 1, 2, 3), root, {type: 'remove'});
+
 		// setTimeout(dio.render, 1000, h(Lists, 1, 2), root)
+		// setTimeout(dio.render, 2000, h(Lists, 1, 2, 3, 4), root)
+		setTimeout(dio.render, 2000, h(Lists), root)
+		// setTimeout(dio.render, 4000, h(Lists, 1, 2, 3, 4), root)
+
 
 		class Foo {
 			componentWillMount() {
@@ -312,6 +315,10 @@
 
 		// dio.render(h(Foo, {id: 1}));
 		// dio.render(null);
+
+		// replace
+		// remove
+		// preserve [default]
 	</script>
 </body>
 </html>

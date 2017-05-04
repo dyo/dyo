@@ -18,6 +18,7 @@ function Component (_props) {
 		}
 		this.props = props;
 	}
+
 	// state
 	if (state === void 0) {
 		if (this.getInitialState !== void 0) {
@@ -149,10 +150,7 @@ function shouldUpdate (older, _newer, group) {
 	var type = older.type;
 	var owner = older.owner;
 	var nextProps = _newer.props;
-	var recievedProps;
 	var nextState;
-	var nextProps;
-	var newer;
 
 	if (owner === null || older.async !== 0) {
 		return false;
@@ -167,9 +165,7 @@ function shouldUpdate (older, _newer, group) {
 		nextState = nextProps;
 	}
 
-	recievedProps = group < 3 && nextProps !== object;
-
-	if (recievedProps === true) {
+	if (group < 3) {
 		if (type.propTypes !== void 0) {
 			propTypes(owner, type, nextProps);
 		}
@@ -179,7 +175,7 @@ function shouldUpdate (older, _newer, group) {
 		}
 
 		if (type.defaultProps !== void 0) {
-			merge(type.defaultProps, nextProps);
+			merge(type.defaultProps, nextProps === object ? (nextProps = {}) : nextProps);
 		}
 	}
 
@@ -191,7 +187,7 @@ function shouldUpdate (older, _newer, group) {
 		return false;
 	}
 
-	if (recievedProps === true) {
+	if (group < 3) {
 		(group > 1 ? owner : older).props = nextProps;
 	}
 
@@ -267,20 +263,18 @@ function didUpdate (older) {
  */
 function propTypes (owner, type, props) {
 	var display = type.name;
-	var validators = type.propTypes;
-	var validator;
-	var result;
+	var types = type.propTypes;
 
 	try {
-		for (var name in validators) {
-			validator = validators[name];
-			result = validator(props, name, display);
+		for (var name in types) {
+			var valid = types[name];
+			var result = valid(props, name, display);
 
 			if (result) {
 				console.error(result);
 			}
 		}
 	} catch (err) {
-		errorBoundary(err, shared, owner, 2, validator);
+		errorBoundary(err, shared, owner, 2, valid);
 	}
 }

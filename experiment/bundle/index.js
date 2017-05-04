@@ -11,62 +11,77 @@ const shared = [
 	'../src/Node.js',
 	'../src/Render.js',
 	'../src/Reconcile.js',
-	'../src/DOM.js'
+	'../src/DOM.js',
+	'../src/Exports.js'
 ]
 
-const main = shared.concat([]);
+const main = shared.concat([])
+const server = ['../src/Server.js']
 
 const bundler = (file) => {
 	return fs.readFileSync(path.join(__dirname, file), 'utf8');
 }
 
-function build (module, files, location) {
-	location = path.join(__dirname, location);
-	let umd = fs.readFileSync(path.join(__dirname, 'umd.js'), 'utf8');
-	let exported = fs.readFileSync(path.join(__dirname, 'export.js'), 'utf8');
-
-	let bundle = (
-		umd + '\n' +
-		(
-			files.map(bundler).join('\n') +
-			'\n' + exported
-		).replace(/^/gm, '\t') +
-		'\n}));\n'
-	);
-
-	fs.writeFileSync(location, bundle);
+const wrapper = (module) => {
+	switch (module) {
+		case 'server': {
+			return {
+				open: 'module.exports = function (exports, element, shape, extract, whitelist, object) {\n',
+				close: '\n};\n'
+			}
+		}
+		default: {
+			return {
+				open: fs.readFileSync(path.join(__dirname, 'umd.js'), 'utf8') + '\n',
+				close: '\n}));\n'
+			}
+		}
+	}
 }
 
-function bootstrap () {
-	build('main', main, '../dist/dio.js');
+const build = (module, files, location) => {
+	const container = wrapper(module)
+
+	const bundle = (
+		container.open +
+		files.map(bundler).join('\n').replace(/^/gm, '\t') +
+		container.close
+	)
+
+	fs.writeFileSync(path.join(__dirname, location), bundle)
+}
+
+const bootstrap = () => {
+	build('main', main, '../dist/dio.js')
+	build('server', server, '../dist/dio.server.js')
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' +
 	 	'\nbuild > ../dist/dio.js'+
 		'\x1b[0m\n'
-	);
+	)
 }
 
 if ((process.argv.pop()+'').indexOf('--bundle') !== -1) {
-	return bootstrap();
+	return bootstrap()
 }
 
 const watcher = (file) => {
 	if (!file) {
-		console.log('\nwatching..', 'src/');
+		console.log('\nwatching..', 'src/')
 	} else {
-		console.log('changed > ' + file);
+		console.log('changed > ' + file)
 	}
-	bootstrap();
+
+	bootstrap()
 }
 
-var watch = chokidar.watch([
+const watch = chokidar.watch([
 	'./src/',
-	'./exports'
-], {ignored: /[\/\\]\./});
+], {ignored: /[\/\\]\./})
 
-watch.on('change', watcher);
-watch.on('ready', watcher);
+watch.on('change', watcher)
+watch.on('ready', watcher)
 
-process.stdout.write('\033c');
-process.stdout.write("\033]0;" + 'dio bundle' + '\007');
+process.stdout.write('\033c')
+process.stdout.write("\033]0;" + 'dio bundle' + '\007')

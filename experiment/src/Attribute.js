@@ -1,10 +1,10 @@
 /**
- * Attributes [Whitelist]
+ * Whitelist
  *
  * @param  {String} name
  * @return {Number}
  */
-function attr (name) {
+function whitelist (name) {
 	switch (name) {
 		case 'class':
 		case 'className': return 1;
@@ -44,7 +44,7 @@ function attribute (newer, xmlns) {
 	var node = newer.node;
 
 	for (var name in attrs) {
-		var type = attr(name);
+		var type = whitelist(name);
 
 		if (type < 31) {
 			var value = attrs[name];
@@ -83,7 +83,7 @@ function attributes (older, newer) {
 
 	// old attributes
 	for (var name in prevs) {
-		var type = attr(name);
+		var type = whitelist(name);
 
 		if (type < 31) {
 			var next = attrs[name];
@@ -102,7 +102,7 @@ function attributes (older, newer) {
 
 	// new attributes
 	for (var name in attrs) {
-		var type = attr(name);
+		var type = whitelist(name);
 
 		if (type < 31) {
 			var next = attrs[name];
