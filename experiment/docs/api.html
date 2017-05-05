@@ -29,6 +29,50 @@
 			DIO's API surface is small to a benefit, <br>with a close resemblance to React.
 		</p>
 
+		<h1 id=elements>Elements</h1>
+
+		<p>Elements are made up of three parts</p>
+
+		<ol>
+			<li>type &mdash; type of element that should be rendered.</li>
+			<li>props &mdash; attributes associated the element.</li>
+			<li>children &mdash; children contained within the element</li>
+		</ol>
+
+<pre><code>
+const h1 = h('h1', {
+	class: 'heading'
+}, 'Hello World')
+</code></pre>
+
+		<h2 id=clone>cloneElement</h2>
+
+		<p>When the first argument of an element, its type, is a virtual element, the element is cloned with new children replacing old children and props shallow merged.</p>
+
+<pre><code>
+const h1 = h('h1', {
+	class: 'large'
+}, 'Hello World')
+
+const h2 = h(h1, {
+	class: 'small'
+}, 'The Fox')
+</code></pre>
+
+		<h2 id=portals>Portals</h2>
+
+		<p>A portal is created when the first argument of an element, its type, is a DOM node. This means that when the element is mounted the children of the portal will be placed in the DOM node specified regardless of what its virtual parent is in the tree of virtual elements.</p>
+
+		<p>Given the following:</p>
+
+<pre><code>
+const portal = h(document.body, 2, 3)
+
+dio.render(h('div', 1, portal))
+</code></pre>
+
+		<p>We would find 1 to be in its parent <code>`div`</code> while 2 &amp; 3 would be placed into <code>`document.body`</code></p>
+
 		<h1 id=components>Components</h1>
 
 		<p>
