@@ -1,11 +1,11 @@
 /**
  * ## Constants
  */
+var browser = global.window === global;
+var server = browser === false;
 var noop = function () {};
 var array = [];
 var object = {children: array};
-var server = global.global === global;
-var browser = global.window === global;
 var Promise = global.Promise || noop;
 var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
 var requestIdleCallback = global.requestIdleCallback || setTimeout;
