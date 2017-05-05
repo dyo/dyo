@@ -126,8 +126,9 @@ function toString () {
 	var body = '';
 	var length = 0;
 
-	if (flag === 1) {
-		return sanitize(children);
+	switch (flag) {
+		case 1: return sanitize(children);
+		case 6: return '';
 	}
 
 	if (newer.props !== object && newer.props.innerHTML !== void 0) {

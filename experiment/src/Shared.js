@@ -20,9 +20,10 @@ var shared = new Tree(0);
  *
  * 1: text
  * 2: element
- * 3: composit
+ * 3: composite
  * 4: fragment
  * 5: error
+ * 6: portal
  *
  * ## Element Group
  *

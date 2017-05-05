@@ -1,12 +1,27 @@
 <html>
 <body>
 	<div id=root>something</div>
+	<div id="portal"></div>
 	<script src="../dist/dio.js"></script>
 
 	<script>
 		const root = document.getElementById('root');
 
-		h('!', 'Comment');
+		var node = document.getElementById('portal');
+		var hoist = h(Bars, {id: 1, class: 'old'}, 1, 2, 3);
+		var clone = h(hoist, {id: 2, value: 'new'}, 4, 5, 6);
+		var portal = h(node, [1, 2]);
+
+		function Bars () {
+
+		}
+
+		console.log(hoist, clone, portal);
+
+		dio.render(h(node, [1, 2]));
+		setTimeout(function () {
+			dio.render(h(node, [1, 2, 3, 4]));
+		}, 1000)
 
 		const animation = {
 			fadeOut: [
@@ -266,11 +281,11 @@
 			}
 		}
 
-		dio.render(h(Lists, 1, 2, 3), root, {type: 'remove'});
+		// dio.render(h(Lists, 1, 2, 3), root, 'destroy');
 
 		// setTimeout(dio.render, 1000, h(Lists, 1, 2), root)
 		// setTimeout(dio.render, 2000, h(Lists, 1, 2, 3, 4), root)
-		setTimeout(dio.render, 2000, h(Lists), root)
+		// setTimeout(dio.render, 2000, h(Lists), root)
 		// setTimeout(dio.render, 4000, h(Lists, 1, 2, 3, 4), root)
 
 

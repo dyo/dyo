@@ -52,21 +52,26 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  			break;
  		}
  		default: {
- 			// auto namespace svg & math roots
- 			switch ((tag = newer.tag)) {
- 				case 'svg': xmlns = svg; break;
- 				case 'math': xmlns = math; break;
+ 			if (flag === 2) {
+	 			// auto namespace svg & math roots
+	 			switch ((tag = newer.tag)) {
+	 				case 'svg': xmlns = svg; break;
+	 				case 'math': xmlns = math; break;
+	 			}
+
+				node = createElement(tag, newer, host, xmlns);
+
+				if (newer.flag === 5) {
+					create(node, newer, sibling, action, host, xmlns);
+					copy(newer, node, false);
+					return;
+				}
+
+				newer.node = node;
+ 			} else {
+ 				// portal
+ 				parent = newer.parent;
  			}
-
- 			node = createElement(tag, newer, host, xmlns);
-
- 			if (newer.flag === 5) {
- 				create(node, newer, sibling, action, host, xmlns);
- 				copy(newer, node, false);
- 				return;
- 			}
-
- 			newer.node = node;
 
  			var children = newer.children;
  			var length = children.length;

@@ -15,8 +15,6 @@ function element (_type, _props) {
 	var i = 2;
 	var group = 0;
 	var newer = new Tree(2);
-	var children;
-	var proto;
 
 	if (props !== null) {
 		switch (props.constructor) {
@@ -46,36 +44,56 @@ function element (_type, _props) {
 	}
 
 	switch (type.constructor) {
+		// node
 		case String: {
 			newer.tag = type;
 			newer.attrs = props;
 			break;
 		}
+		// component
 		case Function: {
-			if ((proto = type.prototype) !== void 0 && proto.render !== void 0) {
+			var proto = type.prototype;
+
+			if (proto !== void 0 && proto.render !== void 0) {
 				group = newer.group = 2;
 			} else {
 				group = newer.group = 1;
 			}
 			break;
 		}
+		// clone
+		case void 0: {
+			merge(type.props, props);
+
+			if ((type = type.type, group = type.group) === 0) {
+				newer.tag = type;
+			} else {
+				newer.props.children = array;
+			}
+			break;
+		}
+		default: {
+			if (type.nodeType !== void 0) {
+				type = portal(newer, type);
+			}
+		}
 	}
 
 	newer.type = type;
 
 	if (length - offset > 1) {
-		children = new Array(size);
+		var children = newer.children = new Array(size);
 
 		if (group < 1) {
-			for (newer.children = children; i < length; i++) {
+			for (; i < length; i++) {
 				index = push(newer, index, arguments[i]);
 			}
 		} else {
-			if ((props = newer.props) === null || props === object) {
+			if (props === null || props === object) {
 				props = newer.props = {};
 			}
 
-			for (newer.children = children; i < length; i++) {
+			for (; i < length; i++) {
 				index = pull(newer, index, arguments[i]);
 			}
 
@@ -208,6 +226,20 @@ function compose (child) {
 	newer.children = [child];
 
 	return newer;
+}
+
+/**
+ * Portal
+ *
+ * @param  {Tree} newer
+ * @param  {Tree} node
+ * @return {String}
+ */
+function portal (newer, node) {
+	newer.node = node;
+	newer.flag = 6;
+
+	return newer.tag = '#portal';
 }
 
 /**
