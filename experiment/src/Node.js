@@ -223,13 +223,13 @@ function shape (value, older, abstract) {
 						}
 					}
 					case Array: {
-						return fragment(newer); break;
+						return fragment(newer);
 					}
 					case Date: {
-						return text(newer+''); break;
+						return text(newer+'');
 					}
 					case Object: {
-						return stringify(newer); break;
+						return stringify(newer);
 					}
 					default: {
 						if (newer.next !== void 0 && older !== null) {

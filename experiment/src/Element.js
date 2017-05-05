@@ -48,32 +48,28 @@ function element (_type, _props) {
 		case String: {
 			newer.tag = type;
 			newer.attrs = props;
+
 			break;
 		}
 		// component
 		case Function: {
 			var proto = type.prototype;
 
-			if (proto !== void 0 && proto.render !== void 0) {
-				group = newer.group = 2;
-			} else {
-				group = newer.group = 1;
-			}
-			break;
-		}
-		// clone
-		case void 0: {
-			merge(type.props, props);
+			newer.group = group = proto !== void 0 && proto.render !== void 0 ? 2 : 1;
 
-			if ((type = type.type, group = type.group) === 0) {
-				newer.tag = type;
-			} else {
-				newer.props.children = array;
-			}
 			break;
 		}
 		default: {
-			if (type.nodeType !== void 0) {
+			if (type.flag !== void 0) {
+				// clone
+				merge(type.props, props);
+
+				if ((type = type.type, group = type.group) === 0) {
+					newer.tag = type;
+				} else {
+					newer.props.children = array;
+				}
+			} else if (type.nodeType !== void 0) {
 				type = portal(newer, type);
 			}
 		}
@@ -116,7 +112,6 @@ function element (_type, _props) {
 function push (newer, index, value) {
 	var children = newer.children;
 	var child;
-	var length;
 
 	if (value === null || value === void 0) {
 		child = text('');
@@ -124,30 +119,40 @@ function push (newer, index, value) {
 		if (newer.keyed === false && value.key !== null) {
 			newer.keyed = true;
 		}
+
 		child = value;
 	} else {
-		switch (typeof value) {
-			case 'function': {
+		switch (value.constructor) {
+			case Number:
+			case String: {
+				child = text(value);
+				break;
+			}
+			case Array: {
+				for (var j = 0, i = index, length = value.length; j < length; j++) {
+					i = push(newer, i, value[j]);
+				}
+				return i;
+			}
+			case Function: {
 				child = element(value, null);
 				break;
 			}
-			case 'object': {
-				if ((length = value.length) !== void 0) {
-					for (var j = 0, i = index; j < length; j++) {
-						i = push(newer, i, value[j]);
-					}
-					return i;
-				} else {
-					switch (value.constructor) {
-						case Date: child = text(value+''); break;
-						case Object: child = stringify(value); break;
-						default: child = text('');
-					}
-				}
+			case Object: {
+				child = stringify(value);
+				break;
+			}
+			case Date: {
+				child = text(value.toString());
+				break;
+			}
+			case Boolean: {
+				text('');
 				break;
 			}
 			default: {
-				child = text(value);
+				child = text('');
+				break;
 			}
 		}
 	}
@@ -168,15 +173,12 @@ function push (newer, index, value) {
 function pull (newer, index, value) {
 	var children = newer.children;
 
-	if (value !== null && typeof value === 'object') {
-		var length = value.length;
-
-		if (length !== void 0) {
-			for (var j = 0, i = index; j < length; j++) {
-				i = pull(newer, i, value[j]);
-			}
-			return i;
+	if (value !== null && value !== void 0 && value.constructor === Array) {
+		for (var j = 0, i = index, length = value.length; j < length; j++) {
+			i = pull(newer, i, value[j]);
 		}
+
+		return i;
 	}
 
 	children[index] = value;
@@ -195,7 +197,7 @@ function text (value) {
 	var newer = new Tree(1);
 
 	newer.type = newer.tag = '#text';
-	newer.children = (value === true || value === false) ? '' : value;
+	newer.children = value;
 
 	return newer;
 }

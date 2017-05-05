@@ -13,20 +13,9 @@ function render (subject, container, options) {
 		newer = text('');
 	} else if (newer.flag === void 0) {
 		switch (typeof newer) {
-			case 'function': {
-				newer = element(newer);
-				break;
-			}
-			case 'object': {
-				newer = fragment(newer);
-				break;
-			}
-			case 'number':
-			case 'boolean':
-			case 'string': {
-				newer = text(newer);
-				break;
-			}
+			case 'function': newer = element(newer); break;
+			case 'object': newer = fragment(newer); break;
+			case 'number': case 'boolean':	case 'string': newer = text(newer); break;
 		}
 	}
 
