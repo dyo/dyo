@@ -107,6 +107,17 @@ module.exports = ({h, shallow, render}) => {
 			</ul>
 		`), '[simple]  - 1, 2, 5, 6, 7 -> 1, 2, 3, 4, 5, 6');
 
+		render(h(List, {data: [1, 2, 3, 4, 5, 6]}), container);
+		render(h(List, {data: [1, 2, 4, 5, 6]}), container);
+		ok(compare(container, `
+			<ul>
+				<li>1</li>
+				<li>2</li>
+				<li>4</li>
+				<li>5</li>
+				<li>6</li>
+			</ul>
+		`), '[simple] - 1, 2, 3, 4, 5, 6 -> 1, 2, 4, 5, 6');
 
 		render(h(List, {data: [1, 2, 3, 4, 5, 6]}), container);
 		render(h(List, {data: [1, 40, 0, 3, 4, 2, 5, 6, 60]}), container);
@@ -180,18 +191,6 @@ module.exports = ({h, shallow, render}) => {
 				<li>a</li>
 			</ul>
 		`), '[complex] - a, b, d, f, c -> c, b, d, r, a');
-
-		render(h(List, {data: [1, 2, 3, 4, 5, 6]}), container);
-		render(h(List, {data: [1, 2, 4, 5, 6]}), container);
-		ok(compare(container, `
-			<ul>
-				<li>1</li>
-				<li>2</li>
-				<li>4</li>
-				<li>5</li>
-				<li>6</li>
-			</ul>
-		`), '[complex] - 1, 2, 3, 4, 5, 6 -> 1, 2, 4, 5, 6');
 
 		end();
 	});
