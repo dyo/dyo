@@ -70,7 +70,7 @@ function element (_type, _props) {
 					newer.props.children = array;
 				}
 			} else if (type.nodeType !== void 0) {
-				type = portal(newer, type);
+				newer.flag = 6;
 			}
 		}
 	}
@@ -228,20 +228,6 @@ function compose (child) {
 	newer.children = [child];
 
 	return newer;
-}
-
-/**
- * Portal
- *
- * @param  {Tree} newer
- * @param  {Tree} node
- * @return {String}
- */
-function portal (newer, node) {
-	newer.node = node;
-	newer.flag = 6;
-
-	return newer.tag = '#portal';
 }
 
 /**

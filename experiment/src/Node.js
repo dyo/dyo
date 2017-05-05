@@ -59,18 +59,18 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 	 				case 'math': xmlns = math; break;
 	 			}
 
-				node = createElement(tag, newer, host, xmlns);
+	 			node = createElement(tag, newer, host, xmlns);
 
-				if (newer.flag === 5) {
-					create(node, newer, sibling, action, host, xmlns);
-					copy(newer, node, false);
-					return;
-				}
+	 			if (newer.flag === 5) {
+	 				create(node, newer, sibling, action, host, xmlns);
+	 				copy(newer, node, false);
+	 				return;
+	 			}
 
-				newer.node = node;
+	 			newer.node = node;
  			} else {
  				// portal
- 				parent = newer.parent;
+ 				newer.node = newer.type;
  			}
 
  			var children = newer.children;
