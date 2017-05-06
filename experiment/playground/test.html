@@ -16,31 +16,28 @@
 
 		}
 
+		const refs = function (node) {
+			return {n: this.state.n+1}
+		}
+
 		class Testing {
-			shouldComponentUpdate(props, state) {
-				console.log('shouldUpdate', state, this.state, state === this.state);
-			}
-			componentWillUpdate(nextProps, newState) {
-				console.log('willUpdate', newState, this.state);
-			}
-			componentDidUpdate(prevProps, prevState) {
-				console.log('didUpdate', prevState, this.state);
-			}
-			constructor() {
-				this.state = {id: 1};
+			componentDidMount() {
+				// return {n: this.state.n+1}
 			}
 			getInitialState() {
-				return new Promise(r => setTimeout(r, 1000, {class: 2}))
+				return {n: 0}
 			}
 			render() {
-				switch (this.loading) {
-					case true: return h('h1', 'Loading...')
-					default: return h('h1', 'Loaded!');
-				}
+				return h('h1', {
+					ref: (node) => {
+						// return {n: this.state.n+1}
+					}
+				}, this.state.n)
 			}
 		}
 
 		dio.render(Testing)
+		// dio.render(Testing)
 
 		// console.log(hoist, clone, portal);
 

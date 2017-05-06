@@ -72,13 +72,18 @@ function setState (state, callback) {
 		constructor = newState.constructor;
 	}
 
-	if (constructor === Promise) {
-		newState.then(function (value) {
-			owner.setState(value, callback);
-		});
-	} else {
-		owner._state = newState;
-		owner.forceUpdate(callback);
+	switch (constructor) {
+		case Promise: {
+			newState.then(function (value) {
+				owner.setState(value, callback);
+			});
+			break;
+		}
+		case Object: {
+			owner._state = newState;
+			owner.forceUpdate(callback);
+			break;
+		}
 	}
 }
 
@@ -93,8 +98,6 @@ function forceUpdate (callback) {
 
 	if (older === null || older.node === null || older.async !== 0) {
 		if (older.async === 3) {
-			// this is to avoid maxium call stack when componentDidUpdate
-			// introduces an infinite render loop
 			requestAnimationFrame(function () {
 				owner.forceUpdate(callback);
 			});

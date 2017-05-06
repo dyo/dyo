@@ -164,17 +164,18 @@ function extract (older, abstract) {
 
 		older.owner = owner;
 
-		older.async = 1;
-		newer = renderBoundary(older, group);
-		older.async = 0;
-
 		if (owner.getInitialState !== void 0) {
 			getInitialState(older, dataBoundary(shared, owner, 1, owner.props));
 		}
 
+		older.async = 1;
+		newer = renderBoundary(older, group);
+		older.async = 0;
+
 		newer = shape(newer, owner.this = older, abstract);
 	} else {
-		newer = (older.owner = type, shape(renderBoundary(older, group), older, abstract));
+		older.owner = type;
+		newer = shape(renderBoundary(older, group), older, abstract);
 	}
 
 	older.tag = newer.tag;

@@ -9,7 +9,6 @@ function patch (older, _newer, group) {
 	var newer = _newer;
 	var skip;
 	var type;
-	var owner;
 
 	if ((type = older.type) !== newer.type) {
 		exchange(older, newer, true);
@@ -17,7 +16,9 @@ function patch (older, _newer, group) {
 	}
 
 	if (group > 0) {
-		if ((owner = older.owner) === null || older.async !== 0) {
+		var owner = older.owner;
+
+		if (owner === null || older.async !== 0) {
 			return;
 		}
 
@@ -67,7 +68,9 @@ function patch (older, _newer, group) {
 		}
 
 		if (owner.componentWillUpdate !== void 0) {
+			older.async = 3;
 			updateBoundary(older, owner, 1, newProps, newState);
+			older.async = 1;
 		}
 
 		if (group > 1) {

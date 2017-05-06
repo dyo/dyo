@@ -158,13 +158,18 @@
 			constructor = newState.constructor;
 		}
 	
-		if (constructor === Promise) {
-			newState.then(function (value) {
-				owner.setState(value, callback);
-			});
-		} else {
-			owner._state = newState;
-			owner.forceUpdate(callback);
+		switch (constructor) {
+			case Promise: {
+				newState.then(function (value) {
+					owner.setState(value, callback);
+				});
+				break;
+			}
+			case Object: {
+				owner._state = newState;
+				owner.forceUpdate(callback);
+				break;
+			}
 		}
 	}
 	
@@ -179,8 +184,6 @@
 	
 		if (older === null || older.node === null || older.async !== 0) {
 			if (older.async === 3) {
-				// this is to avoid maxium call stack when componentDidUpdate
-				// introduces an infinite render loop
 				requestAnimationFrame(function () {
 					owner.forceUpdate(callback);
 				});
@@ -980,22 +983,20 @@
 			owner.refs = {};
 		}
 	
-		if ((older.ref = value) === void 0 || value === null) {
-			return;
-		}
+		if ((older.ref = value) !== void 0 && value !== null) {
+			var node = type > 0 ? older.node : null;
 	
-		var node = type > 0 ? older.node : null;
-	
-		switch (value.constructor) {
-			case Function: {
-				callbackBoundary(older, owner, value, node, 2);
-				break;
-			}
-			case String: {
-				if (stateful === true) {
-					owner.refs[value] = node;
+			switch (value.constructor) {
+				case Function: {
+					callbackBoundary(older, owner, value, node, 2);
+					break;
 				}
-				break;
+				case String: {
+					if (stateful === true) {
+						owner.refs[value] = node;
+					}
+					break;
+				}
 			}
 		}
 	}
@@ -1180,17 +1181,18 @@
 	
 			older.owner = owner;
 	
-			older.async = 1;
-			newer = renderBoundary(older, group);
-			older.async = 0;
-	
 			if (owner.getInitialState !== void 0) {
 				getInitialState(older, dataBoundary(shared, owner, 1, owner.props));
 			}
 	
+			older.async = 1;
+			newer = renderBoundary(older, group);
+			older.async = 0;
+	
 			newer = shape(newer, owner.this = older, abstract);
 		} else {
-			newer = (older.owner = type, shape(renderBoundary(older, group), older, abstract));
+			older.owner = type;
+			newer = shape(renderBoundary(older, group), older, abstract);
 		}
 	
 		older.tag = newer.tag;
@@ -1570,7 +1572,6 @@
 		var newer = _newer;
 		var skip;
 		var type;
-		var owner;
 	
 		if ((type = older.type) !== newer.type) {
 			exchange(older, newer, true);
@@ -1578,7 +1579,9 @@
 		}
 	
 		if (group > 0) {
-			if ((owner = older.owner) === null || older.async !== 0) {
+			var owner = older.owner;
+	
+			if (owner === null || older.async !== 0) {
 				return;
 			}
 	
@@ -1628,7 +1631,9 @@
 			}
 	
 			if (owner.componentWillUpdate !== void 0) {
+				older.async = 3;
 				updateBoundary(older, owner, 1, newProps, newState);
+				older.async = 1;
 			}
 	
 			if (group > 1) {

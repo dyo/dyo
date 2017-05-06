@@ -151,22 +151,20 @@ function refs (older, value, type) {
 		owner.refs = {};
 	}
 
-	if ((older.ref = value) === void 0 || value === null) {
-		return;
-	}
+	if ((older.ref = value) !== void 0 && value !== null) {
+		var node = type > 0 ? older.node : null;
 
-	var node = type > 0 ? older.node : null;
-
-	switch (value.constructor) {
-		case Function: {
-			callbackBoundary(older, owner, value, node, 2);
-			break;
-		}
-		case String: {
-			if (stateful === true) {
-				owner.refs[value] = node;
+		switch (value.constructor) {
+			case Function: {
+				callbackBoundary(older, owner, value, node, 2);
+				break;
 			}
-			break;
+			case String: {
+				if (stateful === true) {
+					owner.refs[value] = node;
+				}
+				break;
+			}
 		}
 	}
 }
