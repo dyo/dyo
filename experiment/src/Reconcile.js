@@ -94,15 +94,15 @@ function patch (older, _newer, group) {
 		}
 	}
 
-	// text component
-	if (older.flag === 1) {
-		if (older.children !== newer.children) {
-			nodeValue(older, newer);
-		}
-		skip = true;
-	}
-
 	if (skip !== true) {
+		// text component
+		if (older.flag === 1) {
+			if (older.children !== newer.children) {
+				nodeValue(older, newer);
+			}
+			skip = true;
+		}
+
 		var oldLength = older.children.length;
 		var newLength = newer.children.length;
 
