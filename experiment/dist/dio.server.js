@@ -6,15 +6,15 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	 * @return {String}
 	 */
 	function attributes (newer) {
-		var props = newer.props;
+		var attrs = newer.attrs;
 		var body = '';
 	
-		if (props === object) {
+		if (attrs === object) {
 			return body;
 		}
 	
-		for (var name in props) {
-			var value = props[name];
+		for (var name in attrs) {
+			var value = attrs[name];
 	
 			switch (whitelist(name)) {
 				case 10: case 21: case 30: case 31: {
@@ -25,7 +25,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 					break;
 				}
 				case 5: {
-					value = props.value === void 0 ? ' value="'+sanitize(value)+'"' : '';
+					value = attrs.value === void 0 ? ' value="'+sanitize(value)+'"' : '';
 					break;
 				}
 				case 20: {
@@ -132,8 +132,8 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 			case 6: return '';
 		}
 	
-		if (newer.props !== object && newer.props.innerHTML !== void 0) {
-			body = newer.props.innerHTML;
+		if (newer.attrs !== object && newer.attrs.innerHTML !== void 0) {
+			body = newer.attrs.innerHTML;
 		} else if ((length = children.length) > 0) {
 			for (var i = 0; i < length; i++) {
 				body += children[i].toString(false);

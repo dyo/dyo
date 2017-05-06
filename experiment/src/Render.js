@@ -3,9 +3,9 @@
  *
  * @param {Any} subject
  * @param {Node?} container
- * @param {Object?} options
+ * @param {(Function|String)?} callback
  */
-function render (subject, container, options) {
+function render (subject, container, callback) {
 	var newer = subject;
 	var target = container;
 
@@ -23,7 +23,7 @@ function render (subject, container, options) {
 		// use <body> if it exists at this point
 		// else default to the root <html> node
 		if (body === null) {
-			body = global.document !== void 0 ? (document.body || document.documentElement) : null;
+			body = documentElement();
 		}
 
 		// server enviroment
@@ -46,25 +46,26 @@ function render (subject, container, options) {
 		var parent = new Tree(2);
 
 		target.this = newer;
+		parent.node = target;
 
-		switch (options) {
+		switch (callback) {
 			case 'replace': {
-				parent.node = (shared.node = target).parentNode;
+				shared.node = target;
+				parent.node = parentNode(shared);
 				create(newer, parent, shared, 3, newer, null);
 				shared.node = null;
 				break;
 			}
 			case 'destroy': {
-				target.textContent = null;
+				removeChildren(parent);
 			}
 			default: {
-				parent.node = target;
 				create(newer, parent, shared, 1, newer, null);
 			}
 		}
 	}
 
-	if (options !== void 0 && options.constructor === Function) {
-		options();
+	if (callback !== void 0 && callback.constructor === Function) {
+		callback();
 	}
 }

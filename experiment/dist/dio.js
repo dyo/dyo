@@ -25,7 +25,8 @@
 	var server = browser === false;
 	var noop = function () {};
 	var array = [];
-	var object = {children: array};
+	var object = {};
+	var properties = {children: array};
 	var Promise = global.Promise || noop;
 	var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
 	var requestIdleCallback = global.requestIdleCallback || setTimeout;
@@ -97,7 +98,7 @@
 	
 		// props
 		if (this.props === void 0) {
-			this.props = (props === object || props === void 0 || props === null) ? {} : props;
+			this.props = (props === properties || props === void 0 || props === null) ? {} : props;
 		}
 	
 		// state
@@ -222,10 +223,10 @@
 		if (state !== void 0 && state !== null) {
 			switch (state.constructor) {
 				case Promise: {
-					state.then(function (value) {
-						older.async = 0;
+					var fn = function (value) {
 						older.owner.setState(value);
-					});
+					};
+					state.then(fn).catch(fn);
 					break;
 				}
 				case Object: {
@@ -292,6 +293,7 @@
 	function element (_type, _props) {
 		var type = _type;
 		var props = _props !== void 0 ? _props : null;
+		var attrs = props;
 		var length = arguments.length;
 		var size = 0;
 		var index = 0;
@@ -300,38 +302,45 @@
 		var group = 0;
 		var newer = new Tree(2);
 	
-		if (props !== null) {
-			switch (props.constructor) {
-				case Object: {
-					if (props.key !== void 0) {
-						newer.key = props.key;
-					}
-					if (props.xmlns !== void 0) {
-						newer.xmlns = props.xmlns;
-					}
+		switch (props) {
+			case null: {
+				props = properties;
+				attrs = object;
+				offset++;
+				break;
+			}
+			default: {
+				switch (props.constructor) {
+					case Object: {
+						if (props.key !== void 0) {
+							newer.key = props.key;
+						}
+						if (props.xmlns !== void 0) {
+							newer.xmlns = props.xmlns;
+						}
 	
-					offset++;
-					newer.props = props;
+						offset++;
+						newer.props = props;
 	
-					break;
-				}
-				case Array: {
-					size = props.length;
-				}
-				default: {
-					props = object;
-					i = 1;
+						break;
+					}
+					case Array: {
+						size = props.length;
+					}
+					default: {
+						props = properties;
+						attrs = object;
+						i = 1;
+					}
 				}
 			}
-		} else {
-			offset++;
 		}
 	
 		switch (type.constructor) {
 			// node
 			case String: {
 				newer.tag = type;
-				newer.attrs = props;
+				newer.attrs = attrs;
 	
 				break;
 			}
@@ -369,7 +378,7 @@
 					index = push(newer, index, arguments[i]);
 				}
 			} else {
-				if (props === null || props === object) {
+				if (props === properties) {
 					props = newer.props = {};
 				}
 	
@@ -571,10 +580,9 @@
 		this.type = null;
 		this.node = null;
 		this.host = null;
-		this.root = null;
 		this.group = 0;
 		this.async = 0;
-		this.props = object;
+		this.props = properties;
 		this.attrs = object;
 		this.xmlns = null;
 		this.owner = null;
@@ -725,7 +733,8 @@
 		}
 	
 		if (sync === true) {
-			return owner.setState(state);
+			owner.setState(state);
+			return;
 		}
 	
 		requestIdleCallback(function () {
@@ -1149,7 +1158,7 @@
 		var proto;
 		var UUID;
 	
-		if (props === object) {
+		if (props === properties) {
 			props = {};
 		}
 	
@@ -1495,9 +1504,9 @@
 	 *
 	 * @param {Any} subject
 	 * @param {Node?} container
-	 * @param {Object?} options
+	 * @param {(Function|String)?} callback
 	 */
-	function render (subject, container, options) {
+	function render (subject, container, callback) {
 		var newer = subject;
 		var target = container;
 	
@@ -1515,7 +1524,7 @@
 			// use <body> if it exists at this point
 			// else default to the root <html> node
 			if (body === null) {
-				body = global.document !== void 0 ? (document.body || document.documentElement) : null;
+				body = documentElement();
 			}
 	
 			// server enviroment
@@ -1538,26 +1547,27 @@
 			var parent = new Tree(2);
 	
 			target.this = newer;
+			parent.node = target;
 	
-			switch (options) {
+			switch (callback) {
 				case 'replace': {
-					parent.node = (shared.node = target).parentNode;
+					shared.node = target;
+					parent.node = parentNode(shared);
 					create(newer, parent, shared, 3, newer, null);
 					shared.node = null;
 					break;
 				}
 				case 'destroy': {
-					target.textContent = null;
+					removeChildren(parent);
 				}
 				default: {
-					parent.node = target;
 					create(newer, parent, shared, 1, newer, null);
 				}
 			}
 		}
 	
-		if (options !== void 0 && options.constructor === Function) {
-			options();
+		if (callback !== void 0 && callback.constructor === Function) {
+			callback();
 		}
 	}
 	
@@ -1610,7 +1620,7 @@
 				}
 	
 				if (type.defaultProps !== void 0) {
-					merge(type.defaultProps, newProps === object ? (newProps = {}) : newProps);
+					merge(type.defaultProps, newProps === properties ? (newProps = {}) : newProps);
 				}
 			}
 	
@@ -2028,6 +2038,24 @@
 	}
 	
 	/**
+	 * Document
+	 *
+	 * @return {Node?}
+	 */
+	function documentElement () {
+		return global.document !== void 0 ? (document.body || document.documentElement) : null;
+	}
+	
+	/**
+	 * Parent
+	 *
+	 * @return {Node}
+	 */
+	function parentNode (older) {
+		return older.node.parentNode;
+	}
+	
+	/**
 	 * Insert
 	 *
 	 * @param {Tree} newer
@@ -2049,17 +2077,6 @@
 	}
 	
 	/**
-	 * Remove
-	 *
-	 * @param {Tree} older
-	 * @param {Tree} newer
-	 * @param {Tree} parent
-	 */
-	function removeChild (older, parent) {
-		parent.node.removeChild(older.node);
-	}
-	
-	/**
 	 * Replace
 	 *
 	 * @param  {Tree} older
@@ -2068,6 +2085,17 @@
 	 */
 	function replaceChild (older, newer, parent) {
 		parent.node.replaceChild(newer.node, older.node);
+	}
+	
+	/**
+	 * Remove
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Tree} parent
+	 */
+	function removeChild (older, parent) {
+		parent.node.removeChild(older.node);
 	}
 	
 	/**

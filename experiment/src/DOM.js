@@ -29,6 +29,24 @@ function createTextNode (value) {
 }
 
 /**
+ * Document
+ *
+ * @return {Node?}
+ */
+function documentElement () {
+	return global.document !== void 0 ? (document.body || document.documentElement) : null;
+}
+
+/**
+ * Parent
+ *
+ * @return {Node}
+ */
+function parentNode (older) {
+	return older.node.parentNode;
+}
+
+/**
  * Insert
  *
  * @param {Tree} newer
@@ -50,17 +68,6 @@ function appendChild (newer, parent) {
 }
 
 /**
- * Remove
- *
- * @param {Tree} older
- * @param {Tree} newer
- * @param {Tree} parent
- */
-function removeChild (older, parent) {
-	parent.node.removeChild(older.node);
-}
-
-/**
  * Replace
  *
  * @param  {Tree} older
@@ -69,6 +76,17 @@ function removeChild (older, parent) {
  */
 function replaceChild (older, newer, parent) {
 	parent.node.replaceChild(newer.node, older.node);
+}
+
+/**
+ * Remove
+ *
+ * @param {Tree} older
+ * @param {Tree} newer
+ * @param {Tree} parent
+ */
+function removeChild (older, parent) {
+	parent.node.removeChild(older.node);
 }
 
 /**

@@ -132,7 +132,8 @@ function returnBoundary (older, state, owner, e, sync) {
 	}
 
 	if (sync === true) {
-		return owner.setState(state);
+		owner.setState(state);
+		return;
 	}
 
 	requestIdleCallback(function () {

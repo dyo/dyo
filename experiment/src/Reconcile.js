@@ -47,7 +47,7 @@ function patch (older, _newer, group) {
 			}
 
 			if (type.defaultProps !== void 0) {
-				merge(type.defaultProps, newProps === object ? (newProps = {}) : newProps);
+				merge(type.defaultProps, newProps === properties ? (newProps = {}) : newProps);
 			}
 		}
 

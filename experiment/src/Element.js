@@ -8,6 +8,7 @@
 function element (_type, _props) {
 	var type = _type;
 	var props = _props !== void 0 ? _props : null;
+	var attrs = props;
 	var length = arguments.length;
 	var size = 0;
 	var index = 0;
@@ -16,38 +17,45 @@ function element (_type, _props) {
 	var group = 0;
 	var newer = new Tree(2);
 
-	if (props !== null) {
-		switch (props.constructor) {
-			case Object: {
-				if (props.key !== void 0) {
-					newer.key = props.key;
-				}
-				if (props.xmlns !== void 0) {
-					newer.xmlns = props.xmlns;
-				}
+	switch (props) {
+		case null: {
+			props = properties;
+			attrs = object;
+			offset++;
+			break;
+		}
+		default: {
+			switch (props.constructor) {
+				case Object: {
+					if (props.key !== void 0) {
+						newer.key = props.key;
+					}
+					if (props.xmlns !== void 0) {
+						newer.xmlns = props.xmlns;
+					}
 
-				offset++;
-				newer.props = props;
+					offset++;
+					newer.props = props;
 
-				break;
-			}
-			case Array: {
-				size = props.length;
-			}
-			default: {
-				props = object;
-				i = 1;
+					break;
+				}
+				case Array: {
+					size = props.length;
+				}
+				default: {
+					props = properties;
+					attrs = object;
+					i = 1;
+				}
 			}
 		}
-	} else {
-		offset++;
 	}
 
 	switch (type.constructor) {
 		// node
 		case String: {
 			newer.tag = type;
-			newer.attrs = props;
+			newer.attrs = attrs;
 
 			break;
 		}
@@ -85,7 +93,7 @@ function element (_type, _props) {
 				index = push(newer, index, arguments[i]);
 			}
 		} else {
-			if (props === null || props === object) {
+			if (props === properties) {
 				props = newer.props = {};
 			}
 
@@ -287,10 +295,9 @@ function Tree (flag) {
 	this.type = null;
 	this.node = null;
 	this.host = null;
-	this.root = null;
 	this.group = 0;
 	this.async = 0;
-	this.props = object;
+	this.props = properties;
 	this.attrs = object;
 	this.xmlns = null;
 	this.owner = null;

@@ -132,7 +132,7 @@ function extract (older, abstract) {
 	var proto;
 	var UUID;
 
-	if (props === object) {
+	if (props === properties) {
 		props = {};
 	}
 

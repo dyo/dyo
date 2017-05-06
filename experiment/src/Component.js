@@ -11,7 +11,7 @@ function Component (props) {
 
 	// props
 	if (this.props === void 0) {
-		this.props = (props === object || props === void 0 || props === null) ? {} : props;
+		this.props = (props === properties || props === void 0 || props === null) ? {} : props;
 	}
 
 	// state
@@ -136,10 +136,10 @@ function getInitialState (older, state) {
 	if (state !== void 0 && state !== null) {
 		switch (state.constructor) {
 			case Promise: {
-				state.then(function (value) {
-					older.async = 0;
+				var fn = function (value) {
 					older.owner.setState(value);
-				});
+				};
+				state.then(fn).catch(fn);
 				break;
 			}
 			case Object: {
