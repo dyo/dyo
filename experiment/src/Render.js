@@ -37,7 +37,7 @@ function render (subject, container, options) {
 	var older = target.this;
 
 	if (older !== void 0) {
-		if (older.key === newer.key && older.type === newer.type) {
+		if (older.key === newer.key) {
 			patch(older, newer, older.group);
 		} else {
 			exchange(older, newer, true);

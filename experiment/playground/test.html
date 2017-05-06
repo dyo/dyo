@@ -1,6 +1,6 @@
 <html>
 <body>
-	<div id=root>something</div>
+	<div id=root>...</div>
 	<div id="portal"></div>
 	<script src="../dist/dio.js"></script>
 
@@ -16,12 +16,38 @@
 
 		}
 
-		console.log(hoist, clone, portal);
+		class Testing {
+			shouldComponentUpdate(props, state) {
+				console.log('shouldUpdate', state, this.state, state === this.state);
+			}
+			componentWillUpdate(nextProps, newState) {
+				console.log('willUpdate', newState, this.state);
+			}
+			componentDidUpdate(prevProps, prevState) {
+				console.log('didUpdate', prevState, this.state);
+			}
+			constructor() {
+				this.state = {id: 1};
+			}
+			getInitialState() {
+				return new Promise(r => setTimeout(r, 1000, {class: 2}))
+			}
+			render() {
+				switch (this.loading) {
+					case true: return h('h1', 'Loading...')
+					default: return h('h1', 'Loaded!');
+				}
+			}
+		}
 
-		dio.render(h(node, [1, 2]));
-		setTimeout(function () {
-			dio.render(h(node, [1, 2, 3, 4]));
-		}, 1000)
+		dio.render(Testing)
+
+		// console.log(hoist, clone, portal);
+
+		// dio.render(h(node, [1, 2]));
+		// setTimeout(function () {
+		// 	dio.render(h(node, [1, 2, 3, 4]));
+		// }, 1000)
 
 		const animation = {
 			fadeOut: [

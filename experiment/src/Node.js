@@ -164,10 +164,12 @@ function extract (older, abstract) {
 
 		older.owner = owner;
 
-		if (owner.async === 0) {
-			older.async = 1;
-			newer = renderBoundary(older, group);
-			older.async = 0;
+		older.async = 1;
+		newer = renderBoundary(older, group);
+		older.async = 0;
+
+		if (owner.getInitialState !== void 0) {
+			getInitialState(older, dataBoundary(shared, owner, 1, owner.props));
 		}
 
 		newer = shape(newer, owner.this = older, abstract);
@@ -197,8 +199,8 @@ function shape (value, older, abstract) {
 	var newer = (value !== null && value !== void 0) ? value : text('');
 
 	if (newer.group === void 0) {
-		switch (typeof newer) {
-			case 'function': {
+		switch (newer.constructor) {
+			case Function: {
 				if (older === null) {
 					newer = element(newer, older);
 				} else if (older.group === 2) {
@@ -208,12 +210,12 @@ function shape (value, older, abstract) {
 				}
 				break;
 			}
-			case 'string':
-			case 'number':
-			case 'boolean': {
+			case String:
+			case Number:
+			case Boolean: {
 				return text(newer);
 			}
-			case 'object': {
+			default: {
 				switch (newer.constructor) {
 					case Promise: {
 						if (older === null || older.flag === 0) {
@@ -239,7 +241,6 @@ function shape (value, older, abstract) {
 						}
 					}
 				}
-				break;
 			}
 		}
 	}
@@ -459,17 +460,6 @@ function update (older, newer) {
 			update(older.host, newer);
 		}
 	}
-}
-
-/**
- * Composite
- *
- * @param {Tree} older
- * @param {Tree} newer
- * @param {Number} group
- */
-function composite (older, newer, group) {
-	patch(older.children[0], newer.children[0], group);
 }
 
 /**

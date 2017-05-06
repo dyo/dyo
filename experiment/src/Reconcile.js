@@ -7,14 +7,71 @@
  */
 function patch (older, _newer, group) {
 	var newer = _newer;
+	var skip;
+	var type;
+	var owner;
 
-	if (older.type !== newer.type) {
-		return exchange(older, newer, true);
+	if ((type = older.type) !== newer.type) {
+		exchange(older, newer, true);
+		return;
 	}
 
 	if (group > 0) {
-		if (shouldUpdate(older, newer, group) === false) {
+		if ((owner = older.owner) === null || older.async !== 0) {
 			return;
+		}
+
+		var newProps = newer.props;
+		var oldProps = older.props;
+		var newState;
+		var oldState;
+
+		if (group > 1) {
+			oldState = owner.state;
+			newState = owner._state;
+		} else {
+			oldState = oldProps;
+			newState = newProps;
+		}
+
+		older.async = 1;
+
+		if (group < 3) {
+			if (type.propTypes !== void 0) {
+				propTypes(owner, type, newProps);
+			}
+
+			if (owner.componentWillReceiveProps !== void 0) {
+				dataBoundary(older, owner, 0, newProps);
+			}
+
+			if (type.defaultProps !== void 0) {
+				merge(type.defaultProps, newProps === object ? (newProps = {}) : newProps);
+			}
+		}
+
+		if (
+			owner.shouldComponentUpdate !== void 0 &&
+			updateBoundary(older, owner, 0, newProps, newState) === false
+		) {
+			older.async = 0;
+			return;
+		}
+
+		if (group < 3) {
+			if (group > 1) {
+				owner.props = newProps;
+			} else {
+				older.props = newProps;
+			}
+		}
+
+		if (owner.componentWillUpdate !== void 0) {
+			updateBoundary(older, owner, 1, newProps, newState);
+		}
+
+		if (group > 1) {
+			updateState(oldState, newState);
 		}
 
 		newer = shape(renderBoundary(older, group), older, true);
@@ -26,55 +83,58 @@ function patch (older, _newer, group) {
 		older.async = 0;
 
 		if (newer.tag !== older.tag) {
-			return exchange(older, newer, false);
-		}
-
-		if (newer.flag === 3) {
-			composite(older, newer, group);
-
-			if (older.owner.componentDidUpdate !== void 0) {
-				didUpdate(older);
+			exchange(older, newer, false);
+			skip = true;
+		} else {
+			// composite component
+			if (newer.flag === 3) {
+				patch(older.children[0], newer.children[0], group);
+				skip = true;
 			}
-			return;
 		}
 	}
 
+	// text component
 	if (older.flag === 1) {
 		if (older.children !== newer.children) {
 			nodeValue(older, newer);
 		}
-		return;
+		skip = true;
 	}
 
-	var oldLength = older.children.length;
-	var newLength = newer.children.length;
+	if (skip !== true) {
+		var oldLength = older.children.length;
+		var newLength = newer.children.length;
 
-	if (oldLength === 0) {
-		// fill children
-		if (newLength !== 0) {
-			fill(older, newer, newLength);
+		if (oldLength === 0) {
+			// fill children
+			if (newLength !== 0) {
+				fill(older, newer, newLength);
 
-			older.children = newer.children;
-		}
-	} else if (newLength === 0) {
-		// remove children
-		if (oldLength !== 0) {
-			unmount(older, false);
-			removeChildren(older);
+				older.children = newer.children;
+			}
+		} else if (newLength === 0) {
+			// remove children
+			if (oldLength !== 0) {
+				unmount(older, false);
+				removeChildren(older);
 
-			older.children = newer.children;
+				older.children = newer.children;
+			}
+		} else {
+			switch (newer.keyed) {
+				case false: nonkeyed(older, newer, oldLength, newLength); break;
+				case true: keyed(older, newer, oldLength, newLength); break;
+			}
 		}
-	} else {
-		switch (newer.keyed) {
-			case false: nonkeyed(older, newer, oldLength, newLength); break;
-			case true: keyed(older, newer, oldLength, newLength); break;
-		}
+
+		attributes(older, newer);
 	}
-
-	attributes(older, newer);
 
 	if (group > 0 && older.owner.componentDidUpdate !== void 0) {
-		didUpdate(older);
+		older.async = 3;
+		updateBoundary(older, owner, 2, oldProps, oldState);
+		older.async = 0;
 	}
 }
 

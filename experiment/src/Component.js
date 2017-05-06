@@ -1,37 +1,25 @@
 /**
  * Component
  *
- * @param {Object?} _props
+ * @param {Object?} props
  */
-function Component (_props) {
-	var props = _props;
+function Component (props) {
 	var state = this.state;
 
 	this.refs = null;
 	this.this = null;
-	this.async = 0;
 
 	// props
 	if (this.props === void 0) {
-		if (props === object || props === void 0 || props === null) {
-			props = {};
-		}
-		this.props = props;
+		this.props = (props === object || props === void 0 || props === null) ? {} : props;
 	}
 
 	// state
 	if (state === void 0) {
-		if (this.getInitialState !== void 0) {
-			state = getInitialState(dataBoundary(shared, this, 1, props), this);
-		} else {
-			state = {};
-		}
-		this.state = state;
+		state = this.state = {};
 	}
 
-	this._props = props;
-	this._state = state;
-	this._pending = state;
+	this._state = null;
 }
 
 /**
@@ -65,48 +53,31 @@ function extendClass (type, prototype) {
 /**
  * setState
  *
- * @param {Object} newer
+ * @param {Object} state
  * @param {Function?} callback
  */
-function setState (newer, callback) {
+function setState (state, callback) {
 	var owner = this;
+	var newState = state !== void 0 && state !== null ? state : {};
+	var oldState = owner.state;
+	var constructor = newState.constructor;
 
-	if (newer === void 0 || newer === null) {
-		return;
-	}
+	if (constructor === Function) {
+		newState = callbackBoundary(shared, owner, newState, oldState, 0);
 
-	var state = owner.state;
-	var type = newer.constructor;
-
-	if (type === Function) {
-		newer = callbackBoundary(shared, owner, newer, state, 0);
-
-		if (newer === void 0 || newer === null) {
+		if (newState === void 0 || newState === null) {
 			return;
 		}
 
-		type = newer.constructor;
+		constructor = newState.constructor;
 	}
 
-	if (type === Promise) {
-		newer.then(function (value) {
+	if (constructor === Promise) {
+		newState.then(function (value) {
 			owner.setState(value, callback);
 		});
 	} else {
-		var older = owner._state = {};
-
-		owner._pending = newer;
-
-		// cache current state
-		for (var name in state) {
-			older[name] = state[name];
-		}
-
-		// update current state
-		for (var name in newer) {
-			state[name] = newer[name];
-		}
-
+		owner._state = newState;
 		owner.forceUpdate(callback);
 	}
 }
@@ -120,14 +91,15 @@ function forceUpdate (callback) {
 	var owner = this;
 	var older = owner.this;
 
-	if (older === null || older.node === null || older.async !== 0 || owner.async !== 0) {
-		// this is to avoid maxium call stack when componentDidUpdate
-		// introduces an infinite render loop
+	if (older === null || older.node === null || older.async !== 0) {
 		if (older.async === 3) {
+			// this is to avoid maxium call stack when componentDidUpdate
+			// introduces an infinite render loop
 			requestAnimationFrame(function () {
 				owner.forceUpdate(callback);
 			});
 		}
+
 		return;
 	}
 
@@ -139,85 +111,40 @@ function forceUpdate (callback) {
 }
 
 /**
- * Should Update
+ * Update State
  *
- * @param  {Tree} older
- * @param  {Tree} _newer
- * @param  {Number} group
- * @return {Boolean}
+ * @param {Object} oldState
+ * @param {Object} newState
  */
-function shouldUpdate (older, _newer, group) {
-	var type = older.type;
-	var owner = older.owner;
-	var nextProps = _newer.props;
-	var nextState;
-
-	if (owner === null || older.async !== 0) {
-		return false;
+function updateState (oldState, newState) {
+	for (var name in newState) {
+		oldState[name] = newState[name];
 	}
-
-	older.async = 1;
-
-	if (group > 1) {
-		owner._props = older.props;
-		nextState = owner._pending;
-	} else {
-		nextState = nextProps;
-	}
-
-	if (group < 3) {
-		if (type.propTypes !== void 0) {
-			propTypes(owner, type, nextProps);
-		}
-
-		if (owner.componentWillReceiveProps !== void 0) {
-			dataBoundary(older, owner, 0, nextProps);
-		}
-
-		if (type.defaultProps !== void 0) {
-			merge(type.defaultProps, nextProps === object ? (nextProps = {}) : nextProps);
-		}
-	}
-
-	if (
-		owner.shouldComponentUpdate !== void 0 &&
-		updateBoundary(older, owner, 0, nextProps, nextState) === false
-	) {
-		older.async = 0;
-		return false;
-	}
-
-	if (group < 3) {
-		(group > 1 ? owner : older).props = nextProps;
-	}
-
-	if (owner.componentWillUpdate !== void 0) {
-		updateBoundary(older, owner, 1, nextProps, nextState);
-	}
-
-	return true;
 }
 
 /**
  * Get Initial State
  *
+ * @param  {Tree} older
  * @param  {Object} state
- * @param  {Component} owner
  * @return {Object}
  */
-function getInitialState (state, owner) {
-	if (state === null || state === void 0) {
-		return {};
+function getInitialState (older, state) {
+	if (state !== void 0 && state !== null) {
+		switch (state.constructor) {
+			case Promise: {
+				state.then(function (value) {
+					older.async = 0;
+					older.owner.setState(value);
+				});
+				break;
+			}
+			case Object: {
+				older.owner.state = state;
+				break;
+			}
+		}
 	}
-	if (state.constructor === Promise) {
-		owner.async = 1;
-		state.then(function (value) {
-			owner.async = 0;
-			owner.setState(value);
-		});
-		return {};
-	}
-	return state;
 }
 
 /**
@@ -234,24 +161,11 @@ function getInitialStatic (owner, fn, type, props) {
 		return fn;
 	}
 
-	var obj = callbackBoundary(shared, owner, fn, props, 0);
+	var value = callbackBoundary(shared, owner, fn, props, 0);
 
-	if (obj !== void 0 && obj !== null) {
-		Object.defineProperty(owner, type, {value: obj});
+	if (value !== void 0 && value !== null) {
+		return Object.defineProperty(owner, type, {value: value});
 	}
-}
-
-/**
- * Did Update
- *
- * @param {Tree} older
- */
-function didUpdate (older) {
-	var owner = older.owner;
-
-	older.async = 3;
-	updateBoundary(older, owner, 2, owner._props, owner._state);
-	older.async = 0;
 }
 
 /**
