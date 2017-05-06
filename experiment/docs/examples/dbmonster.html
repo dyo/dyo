@@ -258,7 +258,7 @@
 	</script>
 
 	<script>
-		const root = document.getElementById('root');
+		const container = document.getElementById('root');
 
 		function bootstrap () {
 			'use strict';
@@ -303,7 +303,7 @@
 				data = ENV.generateData().toArray();
 				perfMonitor.startProfile("render");
 
-				dio.render(h(Monster), root);
+				dio.render(h(Monster), container);
 
 				perfMonitor.endProfile("render");
 				requestAnimationFrame(loop);

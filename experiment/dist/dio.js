@@ -296,7 +296,6 @@
 		var attrs = props;
 		var length = arguments.length;
 		var size = 0;
-		var index = 0;
 		var offset = 0;
 		var i = 2;
 		var group = 0;
@@ -372,6 +371,7 @@
 	
 		if (length - offset > 1) {
 			var children = newer.children = new Array(size);
+			var index = 0;
 	
 			if (group < 1) {
 				for (; i < length; i++) {
@@ -418,7 +418,9 @@
 			switch (value.constructor) {
 				case Number:
 				case String: {
-					child = text(value);
+					child = new Tree(1);
+					child.type = child.tag = '#text';
+					child.children = value;
 					break;
 				}
 				case Array: {
@@ -437,10 +439,6 @@
 				}
 				case Date: {
 					child = text(value.toString());
-					break;
-				}
-				case Boolean: {
-					text('');
 					break;
 				}
 				default: {

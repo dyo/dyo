@@ -8,9 +8,27 @@
 		const root = document.getElementById('root');
 
 		var node = document.getElementById('portal');
-		var hoist = h(Bars, {id: 1, class: 'old'}, 1, 2, 3);
-		var clone = h(hoist, {id: 2, value: 'new'}, 4, 5, 6);
-		var portal = h(node, [1, 2]);
+		// var hoist = h(Bars, {id: 1, class: 'old'}, 1, 2, 3);
+		// var clone = h(hoist, {id: 2, value: 'new'}, 4, 5, 6);
+		// var portal = h(node, [1, 2]);
+
+		// var el = h('h1', {}, 1, 2);
+		var tag = 'h1';
+		var tag = () => {};
+		// var arr = new Array(1000);
+		// arr.fill(100);
+
+		var start = performance.now();
+		arr = new Array(1024)
+		console.log(performance.now()-start);
+
+		var start = performance.now();
+		arr = new Array(1)
+		console.log(performance.now()-start);
+
+		var el = h(tag, 1, 2, [3, 4, [5, 6]], h('h2', ['Hello', 'World']), arr);
+
+		console.log(el);
 
 		function Bars () {
 
@@ -20,23 +38,23 @@
 			return {n: this.state.n+1}
 		}
 
-		class Testing {
-			componentDidMount() {
-				// return {n: this.state.n+1}
-			}
-			getInitialState() {
-				return {n: 0}
-			}
-			render() {
-				return h('h1', {
-					ref: (node) => {
-						// return {n: this.state.n+1}
-					}
-				}, this.state.n)
-			}
-		}
+		// class Testing {
+		// 	componentDidMount() {
+		// 		// return {n: this.state.n+1}
+		// 	}
+		// 	getInitialState() {
+		// 		return {n: 0}
+		// 	}
+		// 	render() {
+		// 		return h('h1', {
+		// 			ref: (node) => {
+		// 				// return {n: this.state.n+1}
+		// 			}
+		// 		}, this.state.n)
+		// 	}
+		// }
 
-		dio.render(Testing)
+		// dio.render(Testing)
 		// dio.render(Testing)
 
 		// console.log(hoist, clone, portal);
