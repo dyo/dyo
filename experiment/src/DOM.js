@@ -273,18 +273,17 @@ function setEvent (older, type, value, action) {
  * @param {Event} e
  */
 function eventProxy (e) {
-	var type = e.type;
-	var fns = this._fns;
-	var fn = fns[type];
-	var older;
+	var node = this;
+	var fns = node._fns;
+	var fn = fns[e.type];
 
-	if (fn === null || fn === void 0) {
-		return;
-	}
+	if (fn !== null && fn !== void 0) {
+		var older = node._this;
 
-	if ((older = this._this) !== void 0) {
-		eventBoundary(older, older.host.owner, fn, e);
-	} else {
-		fn.call(this, e);
+		if (older !== void 0) {
+			eventBoundary(older, older.host.owner, fn, e);
+		} else {
+			fn.call(node, e);
+		}
 	}
 }

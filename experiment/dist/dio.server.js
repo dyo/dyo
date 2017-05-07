@@ -136,7 +136,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 			body = newer.attrs.innerHTML;
 		} else if ((length = children.length) > 0) {
 			for (var i = 0; i < length; i++) {
-				body += children[i].toString(false);
+				body += children[i].toString();
 			}
 		}
 	

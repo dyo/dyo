@@ -12,15 +12,16 @@ function render (subject, container, callback) {
 	if (newer === void 0 || newer === null) {
 		newer = text('');
 	} else if (newer.flag === void 0) {
-		switch (typeof newer) {
-			case 'function': newer = element(newer); break;
-			case 'object': newer = fragment(newer); break;
-			case 'number': case 'boolean':	case 'string': newer = text(newer); break;
+		switch (newer.constructor) {
+			case Function: newer = element(newer); break;
+			case Array: newer = fragment(newer); break;
+			case Boolean: newer = text(''); break;
+			case Number: case String: newer = text(newer); break;
 		}
 	}
 
 	if (target === void 0 || target === null) {
-		// use <body> if it exists at this point
+		// uses <body> if it exists at this point
 		// else default to the root <html> node
 		if (body === null) {
 			body = documentElement();

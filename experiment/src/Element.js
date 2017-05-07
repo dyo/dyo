@@ -145,7 +145,7 @@ function push (newer, index, value) {
 				return i;
 			}
 			case Function: {
-				child = element(value, null);
+				child = element(value);
 				break;
 			}
 			case Object: {
@@ -215,9 +215,13 @@ function text (value) {
  * @return {Tree}
  */
 function fragment (children) {
-	var newer = element('div', null, children);
+	var newer = new Tree(4);
 
-	newer.flag = 4;
+	newer.tag = newer.type = 'div';
+
+	for (var i = 0, index = 0, length = children.length; i < length; i++) {
+		index = push(newer, index, children[i]);
+	}
 
 	return newer;
 }

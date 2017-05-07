@@ -430,7 +430,7 @@
 					return i;
 				}
 				case Function: {
-					child = element(value, null);
+					child = element(value);
 					break;
 				}
 				case Object: {
@@ -500,9 +500,13 @@
 	 * @return {Tree}
 	 */
 	function fragment (children) {
-		var newer = element('div', null, children);
+		var newer = new Tree(4);
 	
-		newer.flag = 4;
+		newer.tag = newer.type = 'div';
+	
+		for (var i = 0, index = 0, length = children.length; i < length; i++) {
+			index = push(newer, index, children[i]);
+		}
 	
 		return newer;
 	}
@@ -1253,7 +1257,7 @@
 							return fragment(newer);
 						}
 						case Date: {
-							return text(newer+'');
+							return text(newer.toString());
 						}
 						case Object: {
 							return stringify(newer);
@@ -1511,15 +1515,16 @@
 		if (newer === void 0 || newer === null) {
 			newer = text('');
 		} else if (newer.flag === void 0) {
-			switch (typeof newer) {
-				case 'function': newer = element(newer); break;
-				case 'object': newer = fragment(newer); break;
-				case 'number': case 'boolean':	case 'string': newer = text(newer); break;
+			switch (newer.constructor) {
+				case Function: newer = element(newer); break;
+				case Array: newer = fragment(newer); break;
+				case Boolean: newer = text(''); break;
+				case Number: case String: newer = text(newer); break;
 			}
 		}
 	
 		if (target === void 0 || target === null) {
-			// use <body> if it exists at this point
+			// uses <body> if it exists at this point
 			// else default to the root <html> node
 			if (body === null) {
 				body = documentElement();
@@ -2280,19 +2285,18 @@
 	 * @param {Event} e
 	 */
 	function eventProxy (e) {
-		var type = e.type;
-		var fns = this._fns;
-		var fn = fns[type];
-		var older;
+		var node = this;
+		var fns = node._fns;
+		var fn = fns[e.type];
 	
-		if (fn === null || fn === void 0) {
-			return;
-		}
+		if (fn !== null && fn !== void 0) {
+			var older = node._this;
 	
-		if ((older = this._this) !== void 0) {
-			eventBoundary(older, older.host.owner, fn, e);
-		} else {
-			fn.call(this, e);
+			if (older !== void 0) {
+				eventBoundary(older, older.host.owner, fn, e);
+			} else {
+				fn.call(node, e);
+			}
 		}
 	}
 	

@@ -229,7 +229,7 @@ function shape (value, older, abstract) {
 						return fragment(newer);
 					}
 					case Date: {
-						return text(newer+'');
+						return text(newer.toString());
 					}
 					case Object: {
 						return stringify(newer);
