@@ -70,7 +70,12 @@
 	<script src=../js/highlight.js></script>
 	<script src=../js/main.js></script>
 	<script src=../../dist/dio.js></script>
+	<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
 	<script>
+		perfMonitor.startFPSMonitor()
+		perfMonitor.startMemMonitor()
+		perfMonitor.initProfiler("render");
+
 		const DAMPING = 0.999
 		const width  = window.innerWidth
 		const height = window.innerHeight
@@ -124,8 +129,13 @@
 		const element = h(Particles, {length: 600})
 
 		const loop = () => {
-			requestAnimationFrame(loop)
+			perfMonitor.startProfile("render")
+
 			dio.render(element, root)
+
+			perfMonitor.endProfile("render")
+
+			requestAnimationFrame(loop)
 		}
 
 		requestAnimationFrame(loop)
