@@ -1029,12 +1029,12 @@
 	/**
 	 * Create
 	 *
-	 * @param  {Tree} newer
-	 * @param  {Tree} parent
-	 * @param  {Tree} sibling
-	 * @param  {Number} action
-	 * @param  {Tree?} _host
-	 * @param  {String?} _xmlns
+	 * @param {Tree} newer
+	 * @param {Tree} parent
+	 * @param {Tree} sibling
+	 * @param {Number} action
+	 * @param {Tree?} _host
+	 * @param {String?} _xmlns
 	 */
 	function create (newer, parent, sibling, action, _host, _xmlns) {
 		var host = _host;
@@ -1042,7 +1042,7 @@
 		var group = newer.group;
 		var flag = newer.flag;
 		var type = 2;
-		var node = null;
+		var node;
 		var skip;
 		var owner;
 		var temp;
@@ -1076,7 +1076,8 @@
 	 		}
 	 		case 3: {
 	 			create(temp = temp.children[0], parent, sibling, action, newer, _xmlns);
-	 			newer.node = temp.node;
+	 			node = newer.node = temp.node;
+				type = 0;
 	 			break;
 	 		}
 	 		default: {
@@ -1123,7 +1124,7 @@
 	
 		newer.parent = parent;
 	
-		if (node !== null) {
+		if (type !== 0) {
 			switch (action) {
 				case 1: appendChild(newer, parent); break;
 				case 2: insertBefore(newer, sibling, parent); break;
@@ -2034,7 +2035,8 @@
 	/**
 	 * Compose
 	 *
-	 * @return {value}
+	 * @param {(String|Number)} value
+	 * @return {Node}
 	 */
 	function createTextNode (value) {
 		return document.createTextNode(value);

@@ -2,7 +2,10 @@
 declare enum Flags {
 	Text = 1,
 	Element = 2,
-	Error = 3
+	Composite = 3,
+	Fragment = 4,
+	Error = 5,
+	Portal = 6
 }
 
 declare enum Async {
@@ -21,14 +24,14 @@ declare enum Groups {
 type Key = string | number;
 type Ref = string | Function;
 type Children = Array<Tree>;
-type Type = string | Function;
+type Type = string | Function | Tree | Node;
 type State = Object;
 type Return = State | void;
 type createElement = (type: Type, props?: Props, ...children: Array<any>) => Tree;
 
 // Shapes
 interface Event {
-	(props: Props, state: State, e: Event): any;
+	(e: Event): any;
 }
 
 interface Events {
@@ -229,6 +232,8 @@ interface Tree {
 	host: Tree | null;
 	group: Groups;
 	async: number;
+	xmlns: string;
+	attrs: Props;
 }
 
 // Namespaces
@@ -238,8 +243,8 @@ declare namespace dio {
 	// Components
 	export abstract class Component<P> {
 		constructor (props: P);
-		forceUpdate (callback?: () => Return): void;
-		setState (state: State, callback?: () => Return): void;
+		forceUpdate (callback: () => Return): void;
+		setState (state: State, callback: () => Return): void;
 		state: State;
 		props: Object;
 		refs: Object | null;
@@ -250,7 +255,7 @@ declare namespace dio {
 	export const h: createElement;
 
 	// Render
-	export function render (subject: any,target?: Node): void;
+	export function render (subject: any, container?: Node, callback: string | Function): void;
 
 	// Test Utils
 	export function shallow (subject: any): Tree;

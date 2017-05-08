@@ -22,7 +22,8 @@ function createElement (tag, newer, host, xmlns) {
 /**
  * Compose
  *
- * @return {value}
+ * @param {(String|Number)} value
+ * @return {Node}
  */
 function createTextNode (value) {
 	return document.createTextNode(value);

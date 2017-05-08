@@ -5,6 +5,7 @@
 	<script src="../dist/dio.js"></script>
 
 	<script>
+		// TODO: test switch components willMount/willUnmount calls
 		const root = document.getElementById('root');
 
 		var node = document.getElementById('portal');
@@ -25,6 +26,36 @@
 		const refs = function (node) {
 			return {n: this.state.n+1}
 		}
+
+		class S {
+			componentWillUnmount() {
+				console.log('willUnmount - S')
+			}
+			render() {
+				return F
+			}
+		}
+
+		class F {
+			componentWillUnmount() {
+				console.log('willUnmount - F')
+			}
+			render() {
+
+			}
+		}
+
+		class R {
+			componentWillMount() {
+				console.log('willMount - R')
+			}
+			render() {
+
+			}
+		}
+
+		dio.render(S);
+		dio.render(R);
 
 		// class Testing {
 		// 	componentDidMount() {

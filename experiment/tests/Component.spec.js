@@ -41,9 +41,35 @@ module.exports = ({h, render}) => {
 			}
 		}
 
+		var mounts = [];
+
+		class A {
+			componentWillUnmount() {
+				mounts.push('2')
+			}
+			render() {
+
+			}
+		}
+
+		class B {
+			componentWillMount() {
+				mounts.push('1')
+			}
+			render() {
+
+			}
+		}
+
 		render(h(Foo, {id: 1}), container);
 		render(h(Foo, {id: 1}), container);
 		render(null, container);
+
+		render(A, container);
+		render(B, container);
+
+		ok(mounts.join('') === '12', 'componentWillMount, componentWillUnmount')
+
 		end();
 	});
 }
