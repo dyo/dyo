@@ -383,4 +383,4 @@ declare namespace dio {
 	): Router;
 }
 
-declare module 'dio' { export = dio; }
+declare module 'dio.js' { export = dio; }
