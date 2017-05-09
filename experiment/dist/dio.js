@@ -35,6 +35,7 @@
 	var xlink = 'http://www.w3.org/1999/xlink';
 	var math = 'http://www.w3.org/1998/Math/MathML';
 	var shared = new Tree(0);
+	var golden = '1.618';
 	
 	/**
 	 * ## Element Flag
@@ -540,13 +541,13 @@
 	}
 	
 	/**
-	 * Copy
+	 * Assign
 	 *
-	 * @param  {Tree} older
-	 * @param  {Tree} newer
-	 * @param  {Boolean} deep
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Boolean} deep
 	 */
-	function copy (older, newer, deep) {
+	function assign (older, newer, deep) {
 		older.flag = newer.flag;
 		older.tag = newer.tag;
 		older.ref = newer.ref;
@@ -567,6 +568,18 @@
 			older.host = newer.host;
 			older.key = newer.key;
 		}
+	}
+	
+	/**
+	 * Clone
+	 *
+	 * @param  {Tree} older
+	 * @param  {Tree} newer
+	 * @param  {Boolean} deep
+	 * @return {Tree}
+	 */
+	function clone (older, newer, deep) {
+		return (assign(older, newer, deep), older);
 	}
 	
 	/**
@@ -881,13 +894,14 @@
 	 *
 	 * @param {Tree} newer
 	 * @param {String?} xmlns
+	 * @param {Boolean} event
 	 */
-	function attribute (newer, xmlns) {
+	function attribute (newer, xmlns, event) {
 		var attrs = newer.attrs;
 		var node = newer.node;
 	
 		for (var name in attrs) {
-			var type = whitelist(name);
+			var type = event === false ? whitelist(name) : 21;
 	
 			if (type < 31) {
 				var value = attrs[name];
@@ -1042,22 +1056,17 @@
 		var group = newer.group;
 		var flag = newer.flag;
 		var type = 2;
-		var node;
-		var skip;
 		var owner;
+		var node;
 		var temp;
-		var tag;
-	
-		// resolve namespace
-	 	if (flag !== 1 && newer.xmlns !== null) {
-	 		xmlns = newer.xmlns;
-	 	}
+		var skip;
 	
 	 	// cache host
 	 	if (host !== shared) {
 			newer.host = host;
 	 	}
 	
+	 	// component
 	 	if (group > 0) {
 	 		if (group > 1) {
 	 			host = newer;
@@ -1069,11 +1078,13 @@
 	 	}
 	
 	 	switch (flag) {
+	 		// text
 	 		case 1: {
 	 			node = newer.node = createTextNode(newer.children);
 	 			type = 1;
 	 			break;
 	 		}
+	 		// composite
 	 		case 3: {
 	 			create(temp = temp.children[0], parent, sibling, action, newer, _xmlns);
 	 			node = newer.node = temp.node;
@@ -1081,18 +1092,29 @@
 	 			break;
 	 		}
 	 		default: {
+	 			var children = newer.children;
+				var length = children.length;
+	
 	 			if (flag === 2) {
-		 			// auto namespace svg & math roots
-		 			switch ((tag = newer.tag)) {
+	 				var tag = newer.tag;
+	
+	 				// cache namespace
+	 				if (newer.xmlns !== null) {
+	 					xmlns = newer.xmlns;
+	 				}
+	
+		 			// namespace(implicit) svg/math roots
+		 			switch (tag) {
 		 				case 'svg': xmlns = svg; break;
 		 				case 'math': xmlns = math; break;
 		 			}
 	
 		 			node = createElement(tag, newer, host, xmlns);
 	
+		 			// error
 		 			if (newer.flag === 5) {
 		 				create(node, newer, sibling, action, host, xmlns);
-		 				copy(newer, node, false);
+		 				assign(newer, node, false);
 		 				return;
 		 			}
 	
@@ -1102,14 +1124,13 @@
 	 				newer.node = newer.type;
 	 			}
 	
-	 			var children = newer.children;
-	 			var length = children.length;
-	
 	 			if (length > 0) {
-	 				for (var i = 0, child; i < length; i++) {
+	 				for (var i = 0; i < length; i++) {
+	 					var child = children[i];
+	
 	 					// hoisted
-	 					if ((child = children[i]).node !== null) {
-	 						copy(child = children[i] = new Tree(child.flag), child, false);
+	 					if (child.node !== null) {
+	 						child = assign(children[i] = new Tree(child.flag), child, true);
 	 					}
 	
 	 					create(child, newer, sibling, 1, host, xmlns);
@@ -1132,7 +1153,7 @@
 			}
 	
 			if (type !== 1) {
-				attribute(newer, xmlns, node);
+				attribute(newer, xmlns, false);
 			}
 		}
 	
@@ -1158,8 +1179,6 @@
 		var types = type.propTypes;
 		var owner;
 		var newer;
-		var proto;
-		var UUID;
 	
 		if (props === properties) {
 			props = {};
@@ -1178,7 +1197,8 @@
 		}
 	
 		if (group > 1) {
-			UUID = (proto = type.prototype).UUID;
+			var proto = type.prototype;
+			var UUID = proto.UUID;
 	
 			if (UUID === 2) {
 				owner = new type(props);
@@ -1471,7 +1491,7 @@
 	 */
 	function exchange (older, newer, deep) {
 		change(older, newer, older.host);
-		copy(older, newer, deep);
+		assign(older, newer, deep);
 		update(older.host, newer);
 	}
 	
@@ -1553,20 +1573,10 @@
 			target.this = newer;
 			parent.node = target;
 	
-			switch (callback) {
-				case 'replace': {
-					shared.node = target;
-					parent.node = parentNode(shared);
-					create(newer, parent, shared, 3, newer, null);
-					shared.node = null;
-					break;
-				}
-				case 'destroy': {
-					removeChildren(parent);
-				}
-				default: {
-					create(newer, parent, shared, 1, newer, null);
-				}
+			if (callback === void 0 || callback.constructor === Function) {
+				create(newer, parent, shared, 1, newer, null);
+			} else {
+				hydrate(newer, parent, 0, callback, newer, null);
 			}
 		}
 	
@@ -2043,6 +2053,15 @@
 	}
 	
 	/**
+	 * Fragment
+	 *
+	 * @return {Node}
+	 */
+	function createDocumentFragment () {
+		return document.createDocumentFragment();
+	}
+	
+	/**
 	 * Document
 	 *
 	 * @return {Node?}
@@ -2300,6 +2319,141 @@
 				fn.call(node, e);
 			}
 		}
+	}
+	
+	/**
+	 * Hydrate
+	 *
+	 * @param {Tree} newer
+	 * @param {Tree} parent
+	 * @param {Number} index
+	 * @param {Node} _node
+	 * @param {Tree?} _host
+	 * @param {String?} _xmlns
+	 */
+	function hydrate (newer, parent, index, _node, _host, _xmlns) {
+		var flag = newer.flag;
+		var group = newer.group;
+		var xmlns = _xmlns;
+		var host = _host;
+		var node = _node;
+		var temp;
+	
+		// cache host
+		if (host !== shared) {
+			newer.host = host;
+		}
+	
+		// cache parent
+		newer.parent = parent;
+	
+		// component
+		if (group > 0) {
+			if (group > 1) {
+				host = newer;
+			}
+	
+			temp = extract(newer, true);
+			flag = temp.flag;
+		}
+	
+		// whitespace
+		if (flag !== 3) {
+			if (node !== null && node.nodeType === 3 && node.nodeValue.trim().length === 0) {
+				shared.node = node;
+				removeChild(shared, parent);
+				shared.node = null;
+				node = node.nextSibling;
+			}
+		}
+	
+		switch (flag) {
+			// text
+	 		case 1: {
+	 			var children = parent.children;
+	 			var length = children.length;
+	
+	 			if (length > 1 && children[index + 1].flag === 1) {
+	 				var fragment = new Tree(4);
+	 				var sibling = new Tree(1);
+	
+	 				fragment.node = createDocumentFragment();
+	 				sibling.node = node;
+	
+	 				for (var i = index; i < length; i++) {
+	 					var child = children[i];
+	
+	 					if (child.flag !== 1) {
+	 						replaceChild(sibling, fragment, parent);
+	 						return i;
+	 					}
+	
+	 					child.node = createTextNode(child.children);
+	
+	 					appendChild(child, fragment);
+	 				}
+	 			} else {
+	 				if (node.nodeValue !== newer.children) {
+	 					node.nodeValue = newer.children;
+	 				}
+	
+	 				newer.node = node;
+	 			}
+	
+	 			return 0;
+	 		}
+	 		// composite
+	 		case 3: {
+	 			hydrate(temp = temp.children[0], parent, index, node, host, xmlns);
+	 			newer.node = temp.node;
+				return 0;
+	 		}
+	 		default: {
+	 			if (flag === 2) {
+	 				var children = newer.children;
+	 				var length = children.length;
+	
+	 				// cache namespace
+	 				if (newer.xmlns !== null) {
+	 					xmlns = newer.xmlns;
+	 				} else if (xmlns !== null) {
+	 					newer.xmlns = xmlns;
+	 				}
+	
+		 			// namespace(implicit) svg/math roots
+		 			switch (newer.tag) {
+		 				case 'svg': xmlns = svg; break;
+		 				case 'math': xmlns = math; break;
+		 			}
+	
+		 			newer.node = node;
+	
+		 			if (length > 0) {
+		 				for (var i = 0, idx = 0; i < length; i++) {
+		 					var child = children[i];
+	
+		 					// hoisted
+		 					if (child.node !== null) {
+		 						child = clone(children[i] = new Tree(child.flag), child, true);
+		 					}
+	
+		 					node = i === 0 ? node.firstChild : node.nextSibling;
+	
+		 					if ((idx = hydrate(child, newer, i, node, host, xmlns)) !== 0) {
+		 						i = idx - 1;
+		 					}
+		 				}
+		 			}
+	 			} else {
+	 				// portal
+	 				create(newer, parent, shared, 0, host, xmlns);
+	 			}
+	 		}
+	 	}
+	
+		attribute(newer, xmlns, true);
+	
+		return 0;
 	}
 	
 	/**

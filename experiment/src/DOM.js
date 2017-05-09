@@ -30,6 +30,15 @@ function createTextNode (value) {
 }
 
 /**
+ * Fragment
+ *
+ * @return {Node}
+ */
+function createDocumentFragment () {
+	return document.createDocumentFragment();
+}
+
+/**
  * Document
  *
  * @return {Node?}

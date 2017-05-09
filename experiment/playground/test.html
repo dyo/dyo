@@ -1,87 +1,37 @@
 <html>
 <body>
-	<div id=root>...</div>
+	<div id=root data-id=1.618>
+		<h1><input type="text">Hello World 1494293784665</h1>
+	</div>
+	<!-- <div id=root>
+		<h1>Hello World 1494293784665</h1>
+	</div> -->
+	<!-- <div id=root><h1>Hello World 1494293784665</h1></div> -->
 	<div id="portal"></div>
 	<script src="../dist/dio.js"></script>
 
 	<script>
-		// TODO: test switch components willMount/willUnmount calls
 		const root = document.getElementById('root');
+		const node = document.getElementById('portal');
+		const h1 = root.querySelector('h1');
 
-		var node = document.getElementById('portal');
-		// var hoist = h(Bars, {id: 1, class: 'old'}, 1, 2, 3);
-		// var clone = h(hoist, {id: 2, value: 'new'}, 4, 5, 6);
-		// var portal = h(node, [1, 2]);
-
-		// var el = h('h1', {}, 1, 2);
-		var tag = 'h1';
-		var tag = () => {};
-
-		var el = h(tag, 1, 2, [3, 4, [5, 6]], h('h2', ['Hello', 'World']));
-
-		console.log(el);
-
-		function Bars () {}
-
-		const refs = function (node) {
-			return {n: this.state.n+1}
+		class foo {
+			render () {
+				return bar
+			}
 		}
 
-		class S {
-			componentWillUnmount() {
-				console.log('willUnmount - S')
-			}
+		class bar {
 			render() {
-				return F
+				return h('h1', h('input', {value: 'chanegd', oninput: () =>{
+					console.log('works');
+				}}), 'Hello World - ', Date.now(),
+					h(node, 1, 2)
+				)
 			}
 		}
 
-		class F {
-			componentWillUnmount() {
-				console.log('willUnmount - F')
-			}
-			render() {
-
-			}
-		}
-
-		class R {
-			componentWillMount() {
-				console.log('willMount - R')
-			}
-			render() {
-
-			}
-		}
-
-		dio.render(S);
-		dio.render(R);
-
-		// class Testing {
-		// 	componentDidMount() {
-		// 		// return {n: this.state.n+1}
-		// 	}
-		// 	getInitialState() {
-		// 		return {n: 0}
-		// 	}
-		// 	render() {
-		// 		return h('h1', {
-		// 			ref: (node) => {
-		// 				// return {n: this.state.n+1}
-		// 			}
-		// 		}, this.state.n)
-		// 	}
-		// }
-
-		// dio.render(Testing)
-		// dio.render(Testing)
-
-		// console.log(hoist, clone, portal);
-
-		// dio.render(h(node, [1, 2]));
-		// setTimeout(function () {
-		// 	dio.render(h(node, [1, 2, 3, 4]));
-		// }, 1000)
+		dio.render(foo, root, h1);
 
 		const animation = {
 			fadeOut: [
@@ -237,7 +187,7 @@
 		     	),
 					h('br'),
 					X,
-					foo,
+					foos,
 					h('ul', this.props.children.map(
 						v => h(Item, v)
 					))
@@ -321,7 +271,7 @@
 			console.log(this, e)
 		}
 
-		function foo () {
+		function foos () {
 			return h('button', {onclick: event}, 'Click Me - ', performance.now());
 		}
 

@@ -12,6 +12,7 @@ const shared = [
 	'../src/Render.js',
 	'../src/Reconcile.js',
 	'../src/DOM.js',
+	'../src/Hydrate.js',
 	'../src/Exports.js'
 ]
 

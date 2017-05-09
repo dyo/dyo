@@ -1,5 +1,5 @@
-// Enums
-declare enum Flags {
+// enums
+declare enum Flag {
 	Text = 1,
 	Element = 2,
 	Composite = 3,
@@ -20,18 +20,18 @@ declare enum Groups {
 	Class = 2
 }
 
-// Types
+// types
 type Key = string | number;
 type Ref = string | Function;
-type Children = Array<Tree>;
+type Children = Array<Tree> | Array<any>;
 type Type = string | Function | Tree | Node;
-type State = Object;
+type State = Object | Promise<Object>;
 type Return = State | void;
 type createElement = (type: Type, props?: Props, ...children: Array<any>) => Tree;
 
-// Shapes
+// shapes
 interface Event {
-	(e: Event): any;
+	(e: Event): State | void;
 }
 
 interface Events {
@@ -219,7 +219,7 @@ interface Props extends Events {
 }
 
 interface Tree {
-	flag: Flags;
+	flag: Flag;
 	type: Type;
 	props: Props;
 	children: Children;
@@ -227,7 +227,7 @@ interface Tree {
 	owner: Object | null;
 	parent: Tree | null;
 	key: any;
-	yield?: () => Tree;
+	yield: null | Function;
 	tag: string | null;
 	host: Tree | null;
 	group: Groups;
@@ -236,31 +236,24 @@ interface Tree {
 	attrs: Props;
 }
 
-// Namespaces
-declare namespace dio {
+// namespace
+export namespace dio {
 	export const version: string;
 
-	// Components
+	// component
 	export abstract class Component<P> {
 		constructor (props: P);
 		forceUpdate (callback: () => Return): void;
 		setState (state: State, callback: () => Return): void;
 		state: State;
-		props: Object;
+		props: Props;
 		refs: Object | null;
 	}
 
-	// Elements
+	// element
 	export const createElement: createElement;
 	export const h: createElement;
 
-	// Render
-	export function render (subject: any, container?: Node, callback: string | Function): void;
-
-	// Test Utils
-	export function shallow (subject: any): Tree;
+	// render
+	export function render (subject: any, container: Node, callback: Node | Function): void;
 }
-
-declare const h: createElement;
-declare module 'dio' { export = dio; }
-

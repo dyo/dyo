@@ -14,22 +14,17 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 	var group = newer.group;
 	var flag = newer.flag;
 	var type = 2;
-	var node;
-	var skip;
 	var owner;
+	var node;
 	var temp;
-	var tag;
-
-	// resolve namespace
- 	if (flag !== 1 && newer.xmlns !== null) {
- 		xmlns = newer.xmlns;
- 	}
+	var skip;
 
  	// cache host
  	if (host !== shared) {
 		newer.host = host;
  	}
 
+ 	// component
  	if (group > 0) {
  		if (group > 1) {
  			host = newer;
@@ -41,11 +36,13 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  	}
 
  	switch (flag) {
+ 		// text
  		case 1: {
  			node = newer.node = createTextNode(newer.children);
  			type = 1;
  			break;
  		}
+ 		// composite
  		case 3: {
  			create(temp = temp.children[0], parent, sibling, action, newer, _xmlns);
  			node = newer.node = temp.node;
@@ -53,18 +50,29 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  			break;
  		}
  		default: {
+ 			var children = newer.children;
+			var length = children.length;
+
  			if (flag === 2) {
-	 			// auto namespace svg & math roots
-	 			switch ((tag = newer.tag)) {
+ 				var tag = newer.tag;
+
+ 				// cache namespace
+ 				if (newer.xmlns !== null) {
+ 					xmlns = newer.xmlns;
+ 				}
+
+	 			// namespace(implicit) svg/math roots
+	 			switch (tag) {
 	 				case 'svg': xmlns = svg; break;
 	 				case 'math': xmlns = math; break;
 	 			}
 
 	 			node = createElement(tag, newer, host, xmlns);
 
+	 			// error
 	 			if (newer.flag === 5) {
 	 				create(node, newer, sibling, action, host, xmlns);
-	 				copy(newer, node, false);
+	 				assign(newer, node, false);
 	 				return;
 	 			}
 
@@ -74,14 +82,13 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  				newer.node = newer.type;
  			}
 
- 			var children = newer.children;
- 			var length = children.length;
-
  			if (length > 0) {
- 				for (var i = 0, child; i < length; i++) {
+ 				for (var i = 0; i < length; i++) {
+ 					var child = children[i];
+
  					// hoisted
- 					if ((child = children[i]).node !== null) {
- 						copy(child = children[i] = new Tree(child.flag), child, false);
+ 					if (child.node !== null) {
+ 						child = assign(children[i] = new Tree(child.flag), child, true);
  					}
 
  					create(child, newer, sibling, 1, host, xmlns);
@@ -104,7 +111,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 		}
 
 		if (type !== 1) {
-			attribute(newer, xmlns, node);
+			attribute(newer, xmlns, false);
 		}
 	}
 
@@ -130,8 +137,6 @@ function extract (older, abstract) {
 	var types = type.propTypes;
 	var owner;
 	var newer;
-	var proto;
-	var UUID;
 
 	if (props === properties) {
 		props = {};
@@ -150,7 +155,8 @@ function extract (older, abstract) {
 	}
 
 	if (group > 1) {
-		UUID = (proto = type.prototype).UUID;
+		var proto = type.prototype;
+		var UUID = proto.UUID;
 
 		if (UUID === 2) {
 			owner = new type(props);
@@ -443,7 +449,7 @@ function detach (older) {
  */
 function exchange (older, newer, deep) {
 	change(older, newer, older.host);
-	copy(older, newer, deep);
+	assign(older, newer, deep);
 	update(older.host, newer);
 }
 

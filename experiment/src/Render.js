@@ -49,20 +49,10 @@ function render (subject, container, callback) {
 		target.this = newer;
 		parent.node = target;
 
-		switch (callback) {
-			case 'replace': {
-				shared.node = target;
-				parent.node = parentNode(shared);
-				create(newer, parent, shared, 3, newer, null);
-				shared.node = null;
-				break;
-			}
-			case 'destroy': {
-				removeChildren(parent);
-			}
-			default: {
-				create(newer, parent, shared, 1, newer, null);
-			}
+		if (callback === void 0 || callback.constructor === Function) {
+			create(newer, parent, shared, 1, newer, null);
+		} else {
+			hydrate(newer, parent, 0, callback, newer, null);
 		}
 	}
 

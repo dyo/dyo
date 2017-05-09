@@ -38,13 +38,14 @@ function whitelist (name) {
  *
  * @param {Tree} newer
  * @param {String?} xmlns
+ * @param {Boolean} event
  */
-function attribute (newer, xmlns) {
+function attribute (newer, xmlns, event) {
 	var attrs = newer.attrs;
 	var node = newer.node;
 
 	for (var name in attrs) {
-		var type = whitelist(name);
+		var type = event === false ? whitelist(name) : 21;
 
 		if (type < 31) {
 			var value = attrs[name];

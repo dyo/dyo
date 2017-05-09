@@ -289,7 +289,7 @@ class Welcome {
 		<p>
 		The first argument is the virtual element <label for=4></label>
 		<span class="note">This includes strings, numbers, functions, null, and virtual elements.</span>
-		you want to render, the second is the root DOM node you want render to.
+		you want to render, the second is the root DOM node you want render to. There is an optional third argument that doubles as a callback function when a function is passed or a server-side rendered node for hydration.
 		</p>
 
 <pre><code>
@@ -304,43 +304,7 @@ dio.render('Hello World', document.body)
 
 		<p>By default calling <code>`render`</code> when mounting preserves the children of the mount node you specifiy; This means that you can mount to <code>`document.body`</code> without any side-effects.</p>
 
-		<p>There are 3 methods that <code>`render`</code> supports when mounting.</p>
-
-		<ol>
-			<li>preserve &mdash; preserves the mount nodes children.</li>
-			<li>replace &mdash; replaces the mount node.</li>
-			<li>destroy &mdash; removes any previous content from the mount node.</li>
-		</ol>
-
-<pre><code>
-&lt;html>
-	&lt;body>
-		Old Content
-	&lt;/body>
-&lt;/html>
-</code></pre>
-
-		<p>Assuming we have this DOM structure, the following:</p>
-
-<pre><code>
-dio.render('Hello World', document.body, 'replace')
-</code></pre>
-
-		<p>Because we specified that we want to replace the mount node, in this case <code>`document.body`</code>, this will thus render the following &mdash;</p>
-
-<pre><code>
-&lt;html>
-	Hello World
-&lt;/html>
-</code></pre>
-
-		<p>On the other hand if we specify that we want to destroy the contents of the mount node, anything in <code>`document.body`</code> will be removed before mounting.</p>
-
-<pre><code>
-dio.render('Hello World', document.body, 'destroy')
-</code></pre>
-
-		<p>However the default mode of mounting is set to <code>`preserve`</code> when omitted; Coincidentally this is also what makes it safe to mount to <code>`document.body`</code>.</p>
+		<p></p>
 
 		<h2 id=server>Server</h2>
 
@@ -355,6 +319,8 @@ dio.render('Hello World', document.body, 'destroy')
 <pre><code>
 dio.renderToString(h('html')) === `&lt;html>&lt;/html>`
 </code></pre>
+
+		<p>Though portals are not rendered on the server-string payload they are rendered when hydrated on the client.</p>
 
 		<h2 id=shallow>Shallow</h2>
 

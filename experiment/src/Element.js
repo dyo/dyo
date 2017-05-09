@@ -255,13 +255,13 @@ function stringify (value) {
 }
 
 /**
- * Copy
+ * Assign
  *
- * @param  {Tree} older
- * @param  {Tree} newer
- * @param  {Boolean} deep
+ * @param {Tree} older
+ * @param {Tree} newer
+ * @param {Boolean} deep
  */
-function copy (older, newer, deep) {
+function assign (older, newer, deep) {
 	older.flag = newer.flag;
 	older.tag = newer.tag;
 	older.ref = newer.ref;
@@ -282,6 +282,18 @@ function copy (older, newer, deep) {
 		older.host = newer.host;
 		older.key = newer.key;
 	}
+}
+
+/**
+ * Clone
+ *
+ * @param  {Tree} older
+ * @param  {Tree} newer
+ * @param  {Boolean} deep
+ * @return {Tree}
+ */
+function clone (older, newer, deep) {
+	return (assign(older, newer, deep), older);
 }
 
 /**
