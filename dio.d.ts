@@ -22,6 +22,7 @@ declare namespace dio {
 	type Reducer = (currentState: State, action: Action) => any;
 	type Events = EventObject | EventCallback;
 	type RenderTypes = any;
+	type Renderer = (props?: Object) => Renderer;
 
 	// Shapes
 	interface EventCallback {
@@ -314,7 +315,6 @@ declare namespace dio {
 		readonly location: string;
 	}
 
-
 	export const version: string;
 
 	// Components
@@ -348,7 +348,7 @@ declare namespace dio {
 		target?: string | Node,
 		callback?: (DOMNode: Element) => void,
 		hydration?: boolean
-	): (props?: Object) => void;
+	): Renderer;
 
 	// Test Utils
 	export function shallow(subject: VNode | Object | Function): VNode;
