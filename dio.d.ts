@@ -219,7 +219,7 @@ declare namespace dio {
 	}
 
 	interface Props extends EventProps {
-		children?: Children;
+		children?: Children | any;
 		ref?: Ref;
 		key?: Key;
 		className?: any;
@@ -229,6 +229,7 @@ declare namespace dio {
 		value?: any;
 		style?: any;
 		href?: any;
+		[prop: string]: any;
 	}
 
 	interface VNode {
@@ -381,6 +382,24 @@ declare namespace dio {
 		middleware?: Function,
 		notFound?: Function
 	): Router;
+}
+
+declare global {
+	namespace JSX {
+		interface Element extends dio.VNode { }
+		interface ElementClass extends dio.Component<any> {
+			render(props: any, state: any): JSX.Element | null;
+		}
+		interface ElementAttributesProperty { props: {}; }
+		interface ElementChildrenAttribute { children: {}; }
+
+		interface IntrinsicAttributes extends dio.Props { }
+		interface IntrinsicClassAttributes extends dio.Props { }
+
+		interface IntrinsicElements {
+			[props: string]: dio.Props;
+		}
+	}
 }
 
 export = dio;
