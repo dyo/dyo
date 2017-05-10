@@ -2334,9 +2334,9 @@
 	function hydrate (newer, parent, index, _node, _host, _xmlns) {
 		var flag = newer.flag;
 		var group = newer.group;
-		var xmlns = _xmlns;
-		var host = _host;
 		var node = _node;
+		var host = _host;
+		var xmlns = _xmlns;
 		var temp;
 	
 		// cache host
@@ -2363,6 +2363,7 @@
 				shared.node = node;
 				removeChild(shared, parent);
 				shared.node = null;
+	
 				node = node.nextSibling;
 			}
 		}
@@ -2406,6 +2407,7 @@
 	 		case 3: {
 	 			hydrate(temp = temp.children[0], parent, index, node, host, xmlns);
 	 			newer.node = temp.node;
+	
 				return 0;
 	 		}
 	 		default: {
@@ -2440,7 +2442,7 @@
 		 					node = i === 0 ? node.firstChild : node.nextSibling;
 	
 		 					if ((idx = hydrate(child, newer, i, node, host, xmlns)) !== 0) {
-		 						i = idx - 1;
+		 						node = children[(i = idx - 1)].node;
 		 					}
 		 				}
 		 			}

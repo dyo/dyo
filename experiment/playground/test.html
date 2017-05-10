@@ -1,12 +1,12 @@
 <html>
 <body>
 	<div id=root data-id=1.618>
-		<h1><input type="text">Hello World 1494293784665</h1>
+		<h1><input type="text">Hello World 1494293784665 <p>Paragraph</p></h1>
 	</div>
 	<!-- <div id=root>
 		<h1>Hello World 1494293784665</h1>
 	</div> -->
-	<!-- <div id=root><h1>Hello World 1494293784665</h1></div> -->
+	<!-- <div id=root><h1>Hello World 1494293784665 <p>Paragraph</p></h1></div> -->
 	<div id="portal"></div>
 	<script src="../dist/dio.js"></script>
 
@@ -26,7 +26,8 @@
 				return h('h1', h('input', {value: 'chanegd', oninput: () =>{
 					console.log('works');
 				}}), 'Hello World - ', Date.now(),
-					h(node, 1, 2)
+					h('p', 'Paragraph')
+					// h(node, 1, 2)
 				)
 			}
 		}
