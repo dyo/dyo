@@ -51,6 +51,7 @@ declare namespace dio {
 
 	interface Action {
 		type: any;
+		[data: string]: any;
 	}
 
 	interface EventProps {
