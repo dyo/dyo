@@ -239,7 +239,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 					// retrieve element from the stack
 					var newer = stack[size-1];
 	
-					if (newer.yield === true) {
+					if (newer.ref === true) {
 						// close
 						this.push(newer.node);
 					} else {
@@ -280,7 +280,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 										this.push(node + sanitize(children[0].children) + '</' + tag + '>');
 									} else {
 										// open
-										newer.yield = true;
+										newer.ref = true;
 										newer.node = '</' + tag + '>';
 	
 										// push children to the stack, from right to left
