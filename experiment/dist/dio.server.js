@@ -108,6 +108,13 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	var unicodes = {'<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;'};
 	
 	/**
+	 * readable
+	 *
+	 * @type {Readable}
+	 */
+	var readable = require('stream').Readable;
+	
+	/**
 	 * To String [Prototype]
 	 *
 	 * @return {String}
@@ -144,7 +151,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	};
 	
 	/**
-	 * Render To String
+	 * String Render
 	 *
 	 * @param {Any} newer
 	 * @return {String}
@@ -168,6 +175,88 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	
 		return extract(newer, false);
 	}
+	
+	/**
+	 * Stream Render
+	 *
+	 * @param {Any} subject
+	 */
+	function Stream (subject) {
+		this.root = shape(subject, null, true);
+		this.stack = [this.root];
+		this.size = 1;
+	
+		readable.call(this);
+	}
+	
+	Stream.prototype = Object.create(readable.prototype, {
+		_type: {
+			value: 'text/html'
+		},
+		_read: {
+			value: function read () {
+				var size = this.size;
+				var stack = this.stack;
+	
+				if (size === 0) {
+					// end
+					this.push(null);
+				} else {
+					// pipe
+					var current = stack.pop();
+					var children = current.children;
+	
+					// push current nodes children to the stack
+					for (var i = 0, length = children.length; i < length; i++) {
+						stack[size++] = children[i];
+					}
+	
+					this.size = size;
+					this._pipe(current);
+				}
+			}
+		}
+		_pipe: {
+			value: function pipe (newer) {
+				var group = newer.group;
+	
+				if (group > 0) {
+					return pipe(extract(newer, false));
+				}
+	
+				var type = newer.type;
+				var flag = newer.flag;
+				var tag = newer.tag;
+				var children = newer.children;
+				var length = children.length;
+	
+				switch (flag) {
+					case 1: return this.push(sanitize(newer.children));
+					case 6: return this.push('');
+				}
+	
+				if (newer.attrs !== object && newer.attrs.innerHTML !== void 0) {
+					return this.push(newer.attrs.innerHTML);
+				}
+	
+				var body = '<' + tag + attributes(newer) + '>';
+	
+				if (length === 1 && children[0].flag === 1) {
+					// one text child
+					body += sanitize(newer.children) + '</' + tag + '>';
+				} else if (length === 0) {
+					// not children
+					if (hollow[tag] !== 0) {
+						body += '</' + tag + '>';
+					}
+				} else {
+	
+				}
+	
+				this.push(body);
+			}
+		}
+	})
 	
 	/**
 	 * Exports
