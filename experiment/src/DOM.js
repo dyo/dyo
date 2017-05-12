@@ -125,14 +125,15 @@ function nodeValue (older, newer) {
  * @param {String} name
  * @param {Any} value
  * @param {String?} xmlns
+ * @param {Boolean} set
  * @param {Tree} node
  */
-function setAttribute (type, name, value, xmlns, node) {
+function setAttribute (type, name, value, xmlns, set, node) {
 	switch (type) {
 		case 0: {
-			if (xmlns === null && name in node) {
+			if (xmlns === null && (name in node) === true) {
 				setUnknown(name, value, node);
-			} else if (value !== null && value !== void 0 && value !== false) {
+			} else if (set === true) {
 				node.setAttribute(name, (value === true ? '' : value));
 			} else {
 				node.removeAttribute(name);
@@ -143,22 +144,26 @@ function setAttribute (type, name, value, xmlns, node) {
 			if (xmlns === null) {
 				node.className = value;
 			} else {
-				setAttribute(0, 'class', value, xmlns, node);
+				setAttribute(0, 'class', value, xmlns, set, node);
 			}
 			break;
 		}
 		case 3: {
-			if (node[name] === void 0) {
+			if ((name in node) === false) {
 				node.style.setProperty(name, value);
 			} else if (isNaN(Number(value)) === true) {
-				setAttribute(0, name, value, xmlns, node);
+				setAttribute(0, name, value, xmlns, set, node);
 			} else {
-				setAttribute(6, name, value, xmlns, node);
+				setAttribute(6, name, value, xmlns, set, node);
 			}
 			break;
 		}
 		case 4: {
-			node.setAttributeNS(xlink, 'href', value);
+			if (set === true) {
+				node.setAttributeNS(xlink, 'href', value);
+			} else {
+				node.removeAttributeNS(xlink, 'href');
+			}
 			break;
 		}
 		case 5:
@@ -166,7 +171,7 @@ function setAttribute (type, name, value, xmlns, node) {
 			if (xmlns === null) {
 				node[name] = value;
 			} else {
-				setAttribute(0, name, value, xmlns, node);
+				setAttribute(0, name, value, xmlns, set, node);
 			}
 			break;
 		}

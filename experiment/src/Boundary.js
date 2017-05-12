@@ -87,14 +87,15 @@ function mountBoundary (older, owner, node, type) {
  * @param {Tree} older
  * @param {Function} callback
  * @param {Component} owner
- * @param {Object|Node} param
+ * @param {Object|Node} data
+ * @param {Number} type
  */
-function callbackBoundary (older, owner, callback, param, type) {
+function callbackBoundary (older, owner, callback, data, type) {
 	try {
 		if (type === 0) {
-			return callback.call(owner, param);
+			return callback.call(owner, data);
 		} else {
-			return returnBoundary(older, callback.call(owner, param), owner, null, false);
+			return returnBoundary(older, callback.call(owner, data), owner, null, false);
 		}
 	} catch (err) {
 		errorBoundary(err, older, owner, 2, callback);

@@ -322,6 +322,20 @@ dio.renderToString(h('html')) === `&lt;html>&lt;/html>`
 
 		<p>Though portals are not rendered on the server-string payload they are rendered when hydrated on the client.</p>
 
+		<h2 id=hydration>Hydration</h2>
+
+		<p>To hydrate server rendered content <code>`render`</code> accepts a third argument that points to the DOM node to hydrate.</p>
+
+<pre><code>
+dio.render(
+	h('h1', 'Hello World'),
+	document.body,
+	document.body.firstChild
+)
+</code></pre>
+
+		<p>Where <code>`document.body`</code> is the containing node and <code>`document.body.firstChild`</code> is the DOM node to hydrate.</p>
+
 		<h2 id=shallow>Shallow</h2>
 
 		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM or a string but rather returns a shallow render of the element. This can then be used for testing purposes.</p>

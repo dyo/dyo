@@ -108,7 +108,7 @@ function forceUpdate (callback) {
 
 	patch(older, older, 3);
 
-	if (callback !== void 0 && typeof callback === 'function') {
+	if (callback !== void 0 && callback !== null && callback.constructor === Function) {
 		callbackBoundary(older, owner, callback, owner.state, 1);
 	}
 }
@@ -160,7 +160,7 @@ function getInitialState (older, state) {
  * @return {Object?}
  */
 function getInitialStatic (owner, fn, type, props) {
-	if (typeof fn === 'object') {
+	if (typeof fn !== 'function') {
 		return fn;
 	}
 

@@ -35,7 +35,6 @@
 	var xlink = 'http://www.w3.org/1999/xlink';
 	var math = 'http://www.w3.org/1998/Math/MathML';
 	var shared = new Tree(0);
-	var golden = '1.618';
 	
 	/**
 	 * ## Element Flag
@@ -196,7 +195,7 @@
 	
 		patch(older, older, 3);
 	
-		if (callback !== void 0 && typeof callback === 'function') {
+		if (callback !== void 0 && callback !== null && callback.constructor === Function) {
 			callbackBoundary(older, owner, callback, owner.state, 1);
 		}
 	}
@@ -248,7 +247,7 @@
 	 * @return {Object?}
 	 */
 	function getInitialStatic (owner, fn, type, props) {
-		if (typeof fn === 'object') {
+		if (typeof fn !== 'function') {
 			return fn;
 		}
 	
@@ -703,14 +702,15 @@
 	 * @param {Tree} older
 	 * @param {Function} callback
 	 * @param {Component} owner
-	 * @param {Object|Node} param
+	 * @param {Object|Node} data
+	 * @param {Number} type
 	 */
-	function callbackBoundary (older, owner, callback, param, type) {
+	function callbackBoundary (older, owner, callback, data, type) {
 		try {
 			if (type === 0) {
-				return callback.call(owner, param);
+				return callback.call(owner, data);
 			} else {
-				return returnBoundary(older, callback.call(owner, param), owner, null, false);
+				return returnBoundary(older, callback.call(owner, data), owner, null, false);
 			}
 		} catch (err) {
 			errorBoundary(err, older, owner, 2, callback);
@@ -910,7 +910,7 @@
 					refs(newer, value, 2);
 				} else if (type < 20) {
 					if (value !== void 0 && value !== null) {
-						setAttribute(type, name, value, xmlns, node);
+						setAttribute(type, name, value, xmlns, true, node);
 					}
 				} else if (type > 20) {
 					setEvent(newer, name, value, 1);
@@ -947,7 +947,7 @@
 	
 				if (next === null || next === void 0) {
 					if (type < 20) {
-						setAttribute(type, name, next, xmlns, node);
+						setAttribute(type, name, next, xmlns, false, node);
 					} else if (type > 20) {
 						setEvent(older, name, next, 0);
 					}
@@ -971,7 +971,7 @@
 	
 					if (next !== prev && next !== null && next !== void 0) {
 						if (type < 20) {
-							setAttribute(type, name, next, xmlns, node);
+							setAttribute(type, name, next, xmlns, true, node);
 						} else if (type > 20) {
 							setEvent(older, name, next, 2);
 						} else {
@@ -1086,7 +1086,7 @@
 	 		}
 	 		// composite
 	 		case 3: {
-	 			create(temp = temp.children[0], parent, sibling, action, newer, _xmlns);
+	 			create(temp = temp.children[0], parent, sibling, action, newer, xmlns);
 	 			node = newer.node = temp.node;
 				type = 0;
 	 			break;
@@ -1261,9 +1261,11 @@
 					break;
 				}
 				case String:
-				case Number:
-				case Boolean: {
+				case Number: {
 					return text(newer);
+				}
+				case Boolean: {
+					return text('');
 				}
 				default: {
 					switch (newer.constructor) {
@@ -1540,6 +1542,8 @@
 				case Function: newer = element(newer); break;
 				case Array: newer = fragment(newer); break;
 				case Boolean: newer = text(''); break;
+				case Object: newer = stringify(value); break;
+				case Date: newer = text(value.toString()); break;
 				case Number: case String: newer = text(newer); break;
 			}
 		}
@@ -1570,18 +1574,18 @@
 		} else {
 			var parent = new Tree(2);
 	
-			target.this = newer;
+			target.this = older = newer;
 			parent.node = target;
 	
-			if (callback === void 0 || callback.constructor === Function) {
+			if (callback === void 0 || callback === null || callback.constructor === Function) {
 				create(newer, parent, shared, 1, newer, null);
 			} else {
 				hydrate(newer, parent, 0, callback, newer, null);
 			}
 		}
 	
-		if (callback !== void 0 && callback.constructor === Function) {
-			callback();
+		if (callback !== void 0 && callback !== null && callback.constructor === Function) {
+			callbackBoundary(older, older.owner, callback, target, 0);
 		}
 	}
 	
@@ -2148,14 +2152,15 @@
 	 * @param {String} name
 	 * @param {Any} value
 	 * @param {String?} xmlns
+	 * @param {Boolean} set
 	 * @param {Tree} node
 	 */
-	function setAttribute (type, name, value, xmlns, node) {
+	function setAttribute (type, name, value, xmlns, set, node) {
 		switch (type) {
 			case 0: {
-				if (xmlns === null && name in node) {
+				if (xmlns === null && (name in node) === true) {
 					setUnknown(name, value, node);
-				} else if (value !== null && value !== void 0 && value !== false) {
+				} else if (set === true) {
 					node.setAttribute(name, (value === true ? '' : value));
 				} else {
 					node.removeAttribute(name);
@@ -2166,22 +2171,26 @@
 				if (xmlns === null) {
 					node.className = value;
 				} else {
-					setAttribute(0, 'class', value, xmlns, node);
+					setAttribute(0, 'class', value, xmlns, set, node);
 				}
 				break;
 			}
 			case 3: {
-				if (node[name] === void 0) {
+				if ((name in node) === false) {
 					node.style.setProperty(name, value);
 				} else if (isNaN(Number(value)) === true) {
-					setAttribute(0, name, value, xmlns, node);
+					setAttribute(0, name, value, xmlns, set, node);
 				} else {
-					setAttribute(6, name, value, xmlns, node);
+					setAttribute(6, name, value, xmlns, set, node);
 				}
 				break;
 			}
 			case 4: {
-				node.setAttributeNS(xlink, 'href', value);
+				if (set === true) {
+					node.setAttributeNS(xlink, 'href', value);
+				} else {
+					node.removeAttributeNS(xlink, 'href');
+				}
 				break;
 			}
 			case 5:
@@ -2189,7 +2198,7 @@
 				if (xmlns === null) {
 					node[name] = value;
 				} else {
-					setAttribute(0, name, value, xmlns, node);
+					setAttribute(0, name, value, xmlns, set, node);
 				}
 				break;
 			}

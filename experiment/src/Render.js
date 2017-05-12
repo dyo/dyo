@@ -16,6 +16,8 @@ function render (subject, container, callback) {
 			case Function: newer = element(newer); break;
 			case Array: newer = fragment(newer); break;
 			case Boolean: newer = text(''); break;
+			case Object: newer = stringify(value); break;
+			case Date: newer = text(value.toString()); break;
 			case Number: case String: newer = text(newer); break;
 		}
 	}
@@ -46,17 +48,17 @@ function render (subject, container, callback) {
 	} else {
 		var parent = new Tree(2);
 
-		target.this = newer;
+		target.this = older = newer;
 		parent.node = target;
 
-		if (callback === void 0 || callback.constructor === Function) {
+		if (callback === void 0 || callback === null || callback.constructor === Function) {
 			create(newer, parent, shared, 1, newer, null);
 		} else {
 			hydrate(newer, parent, 0, callback, newer, null);
 		}
 	}
 
-	if (callback !== void 0 && callback.constructor === Function) {
-		callback();
+	if (callback !== void 0 && callback !== null && callback.constructor === Function) {
+		callbackBoundary(older, older.owner, callback, target, 0);
 	}
 }

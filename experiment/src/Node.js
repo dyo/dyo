@@ -44,7 +44,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  		}
  		// composite
  		case 3: {
- 			create(temp = temp.children[0], parent, sibling, action, newer, _xmlns);
+ 			create(temp = temp.children[0], parent, sibling, action, newer, xmlns);
  			node = newer.node = temp.node;
 			type = 0;
  			break;
@@ -219,9 +219,11 @@ function shape (value, older, abstract) {
 				break;
 			}
 			case String:
-			case Number:
-			case Boolean: {
+			case Number: {
 				return text(newer);
+			}
+			case Boolean: {
+				return text('');
 			}
 			default: {
 				switch (newer.constructor) {
