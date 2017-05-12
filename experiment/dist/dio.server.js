@@ -79,7 +79,15 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	 * @return {String}
 	 */
 	function encode (char) {
-		return unicodes[char] || char;
+		switch (char) {
+			case '<': return '&lt;';
+			case '>': return '&gt;';
+			case '"': return '&quot;';
+			case "'": return '&#x27;';
+			case '&': return '&amp;';
+			case '/': return '&#x2F;';
+			default: return char;
+		}
 	}
 	
 	/**
@@ -91,13 +99,6 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	function dashcase (str) {
 		return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase();
 	}
-	
-	/**
-	 * Unicode Characters
-	 *
-	 * @type {Object}
-	 */
-	var unicodes = {'<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;'};
 	
 	/**
 	 * readable
