@@ -22,6 +22,7 @@ declare namespace dio {
 	type Reducer = (currentState: State, action: Action) => any;
 	type Events = EventObject | EventCallback;
 	type RenderTypes = any;
+	type Renderer = (props?: Object) => Renderer;
 
 	// Shapes
 	interface EventCallback {
@@ -50,6 +51,7 @@ declare namespace dio {
 
 	interface Action {
 		type: any;
+		[data: string]: any;
 	}
 
 	interface EventProps {
@@ -219,7 +221,7 @@ declare namespace dio {
 	}
 
 	interface Props extends EventProps {
-		children?: Children;
+		children?: Children | any;
 		ref?: Ref;
 		key?: Key;
 		className?: any;
@@ -229,6 +231,7 @@ declare namespace dio {
 		value?: any;
 		style?: any;
 		href?: any;
+		[prop: string]: any;
 	}
 
 	interface VNode {
@@ -313,7 +316,6 @@ declare namespace dio {
 		readonly location: string;
 	}
 
-
 	export const version: string;
 
 	// Components
@@ -347,7 +349,7 @@ declare namespace dio {
 		target?: string | Node,
 		callback?: (DOMNode: Element) => void,
 		hydration?: boolean
-	): (props?: Object) => void;
+	): Renderer;
 
 	// Test Utils
 	export function shallow(subject: VNode | Object | Function): VNode;
@@ -381,6 +383,24 @@ declare namespace dio {
 		middleware?: Function,
 		notFound?: Function
 	): Router;
+}
+
+declare global {
+	namespace JSX {
+		interface Element extends dio.VNode { }
+		interface ElementClass extends dio.Component<any> {
+			render(props: any, state: any): JSX.Element | null;
+		}
+		interface ElementAttributesProperty { props: {}; }
+		interface ElementChildrenAttribute { children: {}; }
+
+		interface IntrinsicAttributes extends dio.Props { }
+		interface IntrinsicClassAttributes extends dio.Props { }
+
+		interface IntrinsicElements {
+			[props: string]: dio.Props;
+		}
+	}
 }
 
 export = dio;
