@@ -1529,7 +1529,7 @@
 	 *
 	 * @param {Any} subject
 	 * @param {Node?} container
-	 * @param {(Function|String)?} callback
+	 * @param {(Function|Node)?} callback
 	 */
 	function render (subject, container, callback) {
 		var newer = subject;
