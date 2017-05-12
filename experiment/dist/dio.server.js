@@ -213,7 +213,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	 * @param {Any} subject
 	 */
 	function Stream (newer) {
-		this.stack = [this.root = newer];
+		this.stack = [newer];
 	
 		readable.call(this);
 	}
@@ -236,13 +236,14 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 					// end
 					this.push(null);
 				} else {
-					// pipe
+					// retrieve element from the stack
 					var newer = stack[size-1];
 	
 					if (newer.yield === true) {
-						stack.pop();
+						// close
 						this.push(newer.node);
 					} else {
+						// composite
 						if (newer.group > 0) {
 							while (newer.group > 0) {
 								newer = extract(newer, false);
@@ -250,50 +251,52 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 						}
 	
 						switch (newer.flag) {
+							// text
 							case 1: {
-								stack.pop();
 								this.push(sanitize(newer.children));
-								return;
+								break;
 							}
+							// portal
 							case 6: {
-								stack.pop();
 								this.push('');
-								return;
+								break;
 							}
-						}
+							default: {
+								// innerHTML
+								if (newer.attrs !== object && newer.attrs.innerHTML !== void 0) {
+									this.push(newer.attrs.innerHTML);
+								} else {
+									var type = newer.type;
+									var tag = newer.tag;
+									var children = newer.children;
+									var length = children.length;
+									var node = '<' + tag + attributes(newer) + '>';
 	
-						if (newer.attrs !== object && newer.attrs.innerHTML !== void 0) {
-							stack.pop();
-							this.push(newer.attrs.innerHTML);
-							return;
-						}
+									if (length === 0) {
+										// no children
+										this.push(hollow(tag) === true ? node : node + '</' + tag + '>');
+									} else if (length === 1 && children[0].flag === 1) {
+										// one text child
+										this.push(node + sanitize(children[0].children) + '</' + tag + '>');
+									} else {
+										// open
+										newer.yield = true;
+										newer.node = '</' + tag + '>';
 	
-						var type = newer.type;
-						var tag = newer.tag;
-						var children = newer.children;
-						var length = children.length;
-						var node = '<' + tag + attributes(newer) + '>';
+										// push children to the stack, from right to left
+										for (var i = length - 1; i >= 0; i--) {
+											stack[size++] = children[i];
+										}
 	
-						if (length === 0) {
-							// no children
-							stack.pop();
-							this.push(hollow(tag) === true ? node : node + '</' + tag + '>');
-						} else if (length === 1 && children[0].flag === 1) {
-							// one text child
-							stack.pop();
-							this.push(node + sanitize(children[0].children) + '</' + tag + '>');
-						} else {
-							newer.yield = true;
-							newer.node = '</' + tag + '>';
-	
-							// push children to the stack
-							for (var i = length - 1; i >= 0; i--) {
-								stack[size++] = children[i];
+										return void this.push(node);
+									}
+								}
 							}
-	
-							this.push(node);
 						}
 					}
+	
+					// remove element from stack
+					stack.pop();
 				}
 			}
 		}
