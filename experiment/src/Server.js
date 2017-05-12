@@ -84,7 +84,6 @@ function encode (char) {
 		case '"': return '&quot;';
 		case "'": return '&#x27;';
 		case '&': return '&amp;';
-		case '/': return '&#x2F;';
 		default: return char;
 	}
 }
@@ -240,10 +239,11 @@ Stream.prototype = Object.create(readable.prototype, {
 
 				if (newer.ref === true) {
 					// close
-					this.push(newer.node);
+					this.push('</' + newer.tag + '>');
 				} else {
-					// composite
-					if (newer.group > 0) {
+					// component
+					if (newer.group !== 0) {
+						// composite
 						while (newer.group > 0) {
 							newer = extract(newer, false);
 						}
@@ -279,8 +279,8 @@ Stream.prototype = Object.create(readable.prototype, {
 									this.push(node + sanitize(children[0].children) + '</' + tag + '>');
 								} else {
 									// open
+									newer.tag = tag;
 									newer.ref = true;
-									newer.node = '</' + tag + '>';
 
 									// push children to the stack, from right to left
 									for (var i = length - 1; i >= 0; i--) {
