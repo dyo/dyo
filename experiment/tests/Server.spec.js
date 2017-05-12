@@ -25,14 +25,14 @@ module.exports = ({h, shallow, render}) => {
 		ok(dio.renderToString('Hello') === 'Hello' && dio.renderToString(1) === '1', 'render text');
 
 		var output = '';
-		var source = dio.renderToStream(h('h1', 1, 2, h('p', 'Hello')));
+		var source = dio.renderToStream(h('h1', 1, 2, h('p', 'Hello'), h('span'), h('img')));
 
 		source.on('data', function (payload) {
 			output += payload.toString();
 		});
 
 		source.on('end', function (payload) {
-			ok(output === '<h1>12<p>Hello</p></h1>', 'render stream');
+			ok(output === '<h1>12<p>Hello</p><span></span><img></h1>', 'render stream');
 			end();
 		});
 	});

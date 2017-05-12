@@ -276,7 +276,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 						if (length === 0) {
 							// no children
 							stack.pop();
-							this.push(hollow(tag) === true ? '' : node + '</' + tag + '>');
+							this.push(hollow(tag) === true ? node : node + '</' + tag + '>');
 						} else if (length === 1 && children[0].flag === 1) {
 							// one text child
 							stack.pop();
