@@ -93,14 +93,6 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	}
 	
 	/**
-	 * Hollow Nodes
-	 *
-	 * @type {Object}
-	 */
-	var hollow = {'area': 0, 'base': 0, 'br': 0, '!doctype': 0, 'meta': 0, 'source': 0, 'keygen': 0, 'img': 0,
-	'col': 0, 'embed': 0, 'wbr': 0, 'track': 0, 'param': 0, 'link': 0, 'input': 0, 'hr': 0};
-	
-	/**
 	 * Unicode Characters
 	 *
 	 * @type {Object}
@@ -113,6 +105,34 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	 * @type {Readable}
 	 */
 	var readable = require('stream').Readable;
+	
+	/**
+	 * Hollow
+	 *
+	 * @param {String}
+	 * @return {Boolean}
+	 */
+	function hollow (name) {
+		switch (name) {
+			case 'area':
+			case 'base':
+			case 'br':
+			case '!doctype':
+			case 'meta':
+			case 'source':
+			case 'keygen':
+			case 'img':
+			case 'col':
+			case 'embed':
+			case 'wbr':
+			case 'track':
+			case 'param':
+			case 'link':
+			case 'input':
+			case 'hr': return true;
+			default: return false;
+		}
+	}
 	
 	/**
 	 * To String [Prototype]
@@ -147,7 +167,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 			}
 		}
 	
-		return '<' + tag + attributes(newer) + '>' + (hollow[tag] !== 0 ? body + '</' + tag + '>' : '');
+		return '<' + tag + attributes(newer) + '>' + (hollow(tag) === true ? '' : body + '</' + tag + '>');
 	};
 	
 	/**
@@ -180,89 +200,110 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	 * Stream Render
 	 *
 	 * @param {Any} subject
+	 * @return {Stream}
 	 */
-	function Stream (subject) {
-		this.root = shape(subject, null, true);
-		this.stack = [this.root];
-		this.size = 1;
+	function renderToStream (subject) {
+		return new Stream(shape(subject, null, true));
+	}
+	
+	/**
+	 * Stream
+	 *
+	 * @param {Any} subject
+	 */
+	function Stream (newer) {
+		this.stack = [this.root = newer];
 	
 		readable.call(this);
 	}
 	
+	/**
+	 * Stream Prototype
+	 *
+	 * @type {Object}
+	 */
 	Stream.prototype = Object.create(readable.prototype, {
 		_type: {
 			value: 'text/html'
 		},
 		_read: {
 			value: function read () {
-				var size = this.size;
 				var stack = this.stack;
+				var size = stack.length;
 	
 				if (size === 0) {
 					// end
 					this.push(null);
 				} else {
 					// pipe
-					var current = stack.pop();
-					var children = current.children;
+					var newer = stack[size-1];
 	
-					// push current nodes children to the stack
-					for (var i = 0, length = children.length; i < length; i++) {
-						stack[size++] = children[i];
+					if (newer.yield === true) {
+						stack.pop();
+						this.push(newer.node);
+					} else {
+						if (newer.group > 0) {
+							while (newer.group > 0) {
+								newer = extract(newer, false);
+							}
+						}
+	
+						switch (newer.flag) {
+							case 1: {
+								stack.pop();
+								this.push(sanitize(newer.children));
+								return;
+							}
+							case 6: {
+								stack.pop();
+								this.push('');
+								return;
+							}
+						}
+	
+						if (newer.attrs !== object && newer.attrs.innerHTML !== void 0) {
+							stack.pop();
+							this.push(newer.attrs.innerHTML);
+							return;
+						}
+	
+						var type = newer.type;
+						var tag = newer.tag;
+						var children = newer.children;
+						var length = children.length;
+						var node = '<' + tag + attributes(newer) + '>';
+	
+						if (length === 0) {
+							// no children
+							stack.pop();
+							this.push(hollow(tag) === true ? '' : node + '</' + tag + '>');
+						} else if (length === 1 && children[0].flag === 1) {
+							// one text child
+							stack.pop();
+							this.push(node + sanitize(children[0].children) + '</' + tag + '>');
+						} else {
+							newer.yield = true;
+							newer.node = '</' + tag + '>';
+	
+							// push children to the stack
+							for (var i = length - 1; i >= 0; i--) {
+								stack[size++] = children[i];
+							}
+	
+							this.push(node);
+						}
 					}
-	
-					this.size = size;
-					this._pipe(current);
 				}
 			}
 		}
-		_pipe: {
-			value: function pipe (newer) {
-				var group = newer.group;
-	
-				if (group > 0) {
-					return pipe(extract(newer, false));
-				}
-	
-				var type = newer.type;
-				var flag = newer.flag;
-				var tag = newer.tag;
-				var children = newer.children;
-				var length = children.length;
-	
-				switch (flag) {
-					case 1: return this.push(sanitize(newer.children));
-					case 6: return this.push('');
-				}
-	
-				if (newer.attrs !== object && newer.attrs.innerHTML !== void 0) {
-					return this.push(newer.attrs.innerHTML);
-				}
-	
-				var body = '<' + tag + attributes(newer) + '>';
-	
-				if (length === 1 && children[0].flag === 1) {
-					// one text child
-					body += sanitize(newer.children) + '</' + tag + '>';
-				} else if (length === 0) {
-					// not children
-					if (hollow[tag] !== 0) {
-						body += '</' + tag + '>';
-					}
-				} else {
-	
-				}
-	
-				this.push(body);
-			}
-		}
-	})
+	});
 	
 	/**
 	 * Exports
 	 */
 	exports.shallow = shallow;
 	exports.renderToString = renderToString;
+	exports.renderToStream = renderToStream;
 	
 	element.prototype.toString = toString;
 	
