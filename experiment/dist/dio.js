@@ -1542,8 +1542,8 @@
 				case Function: newer = element(newer); break;
 				case Array: newer = fragment(newer); break;
 				case Boolean: newer = text(''); break;
-				case Object: newer = stringify(value); break;
-				case Date: newer = text(value.toString()); break;
+				case Object: newer = stringify(newer); break;
+				case Date: newer = text(newer.toString()); break;
 				case Number: case String: newer = text(newer); break;
 			}
 		}

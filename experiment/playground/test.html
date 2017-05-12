@@ -1,8 +1,9 @@
 <html>
 <body>
-	<div id=root data-id=1.618>
+	<div id="root"></div>
+	<!-- <div id=root>
 		<h1><input type="text">Hello World 1494293784665 <p>Paragraph</p></h1>
-	</div>
+	</div> -->
 	<!-- <div id=root>
 		<h1>Hello World 1494293784665</h1>
 	</div> -->
@@ -33,6 +34,8 @@
 		}
 
 		dio.render(foo, root, h1);
+
+		dio.render({id: 1}, root);
 
 		const animation = {
 			fadeOut: [
