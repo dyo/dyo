@@ -88,10 +88,12 @@ function setState (state, callback) {
 			}
 
 			if (older.async !== READY) {
-				return updateState(owner._state, newState);
+				updateState(owner._state, newState);
+				return
+			} else {
+				owner._state = newState;
 			}
 
-			owner._state = newState;
 			this.forceUpdate(callback);
 		}
 	}
@@ -110,18 +112,22 @@ function forceUpdate (callback) {
 		// processed
 		if (older.async === PROCESSED) {
 			// process this update in the next frame
-			requestAnimationFrame(function () {
+			return void requestAnimationFrame(function () {
 				owner.forceUpdate(callback);
 			});
 		}
-
-		return;
+	} else {
+		patch(older, older, NOOP);
 	}
 
-	patch(older, older, 3);
-
 	if (callback !== void 0 && callback !== null && callback.constructor === Function) {
-		callbackBoundary(older, owner, callback, owner.state, 1);
+		if (older.async === READY) {
+			callbackBoundary(older, owner, callback, owner.state, 1);
+		} else {
+			requestAnimationFrame(function () {
+				callbackBoundary(older, owner, callback, owner.state, 1);
+			});
+		}
 	}
 }
 

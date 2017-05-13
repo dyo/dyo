@@ -13,37 +13,30 @@ var Promise = global.Promise || noop;
 var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
 var requestIdleCallback = global.requestIdleCallback || setTimeout;
 
-var SHARED = new Tree(0);
-
-var ARRAY = [];
-var OBJECT = {};
-var PROPS = {children: ARRAY};
-
 var READY = 0;
 var PROCESSING = 1;
 var PROCESSED = 2;
 var PENDING = 3;
 
-var ELEMENT = 0;
+var STRING = 0;
 var FUNCTION = 1;
 var CLASS = 2;
+var NOOP = 3;
+
+var EMPTY = 0;
+var TEXT = 1;
+var ELEMENT = 2;
+var COMPOSITE = 3;
+var FRAGMENT = 4;
+var ERROR = 5;
+var PORTAL = 6;
+
+var SHARED = new Tree(EMPTY);
+var ARRAY = [];
+var OBJECT = {};
+var PROPS = {children: ARRAY};
 
 /**
- * ## Element Flag
- *
- * 1: text
- * 2: element
- * 3: composite
- * 4: fragment
- * 5: error
- * 6: portal
- *
- * ## Element Group
- *
- * 0: Element
- * 1: Function
- * 2: Class
- *
  * ## Element Shape
  *
  * tag: node tag {String}

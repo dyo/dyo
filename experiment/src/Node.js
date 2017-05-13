@@ -25,7 +25,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  	}
 
  	// component
- 	if (group !== ELEMENT) {
+ 	if (group !== STRING) {
  		if (group === CLASS) {
  			host = newer;
  		}
@@ -37,13 +37,13 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 
  	switch (flag) {
  		// text
- 		case 1: {
+ 		case TEXT: {
  			node = newer.node = createTextNode(newer.children);
  			type = 1;
  			break;
  		}
  		// composite
- 		case 3: {
+ 		case COMPOSITE: {
  			create(temp = temp.children[0], parent, sibling, action, newer, xmlns);
  			node = newer.node = temp.node;
 			type = 0;
@@ -53,7 +53,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  			var children = newer.children;
 			var length = children.length;
 
- 			if (flag === 2) {
+ 			if (flag === ELEMENT) {
  				var tag = newer.tag;
 
  				// cache namespace
@@ -70,7 +70,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 	 			node = createElement(tag, newer, host, xmlns);
 
 	 			// error
-	 			if (newer.flag === 5) {
+	 			if (newer.flag === ERROR) {
 	 				create(node, newer, sibling, action, host, xmlns);
 	 				assign(newer, node, false);
 	 				return;
@@ -97,7 +97,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  		}
  	}
 
-	if (group !== ELEMENT && owner.componentWillMount !== void 0) {
+	if (group !== STRING && owner.componentWillMount !== void 0) {
 		mountBoundary(newer, owner, node, 0);
 	}
 
@@ -115,7 +115,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 		}
 	}
 
-	if (group !== ELEMENT && skip !== true && owner.componentDidMount !== void 0) {
+	if (group !== STRING && skip !== true && owner.componentDidMount !== void 0) {
 		mountBoundary(newer, owner, node, 1);
 	}
 }
@@ -123,8 +123,8 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 /**
  * Extract
  *
- * @param  {Tree} older
- * @param  {Boolean} abstract
+ * @param {Tree} older
+ * @param {Boolean} abstract
  * @return {Tree}
  */
 function extract (older, abstract) {
@@ -136,6 +136,7 @@ function extract (older, abstract) {
 	var defaults = type.defaultProps;
 	var types = type.propTypes;
 	var newer;
+	var result;
 
 	if (props === PROPS) {
 		props = {};
@@ -178,29 +179,30 @@ function extract (older, abstract) {
 		older.async = PROCESSING;
 		newer = renderBoundary(older, group);
 		older.async = READY;
-
-		newer = shape(newer, owner.this = older, abstract);
+		owner.this = older;
 	} else {
 		older.owner = type;
-		newer = shape(renderBoundary(older, group), older, abstract);
+		newer = renderBoundary(older, group);
 	}
 
-	older.tag = newer.tag;
-	older.flag = newer.flag;
-	older.node = newer.node;
-	older.attrs = newer.attrs;
-	older.xmlns = newer.xmlns;
-	older.children = newer.children;
+	result = shape(newer, older, abstract);
 
-	return newer;
+	older.tag = result.tag;
+	older.flag = result.flag;
+	older.node = result.node;
+	older.attrs = result.attrs;
+	older.xmlns = result.xmlns;
+	older.children = result.children;
+
+	return result;
 }
 
 /**
  * Shape
  *
- * @param  {Any} value
- * @param  {Tree?} older
- * @param  {Boolean} abstract
+ * @param {Any} value
+ * @param {Tree?} older
+ * @param {Boolean} abstract
  * @return {Tree}
  */
 function shape (value, older, abstract) {
@@ -228,7 +230,7 @@ function shape (value, older, abstract) {
 			default: {
 				switch (newer.constructor) {
 					case Promise: {
-						if (older === null || older.flag === 0) {
+						if (older === null || older.flag === EMPTY) {
 							return text('');
 						} else {
 							return resolve(older, newer);
@@ -255,7 +257,7 @@ function shape (value, older, abstract) {
 		}
 	}
 
-	if (newer.group !== ELEMENT && abstract === true) {
+	if (newer.group !== STRING && abstract === true) {
 		return compose(newer);
 	} else {
 		return newer;
@@ -293,8 +295,8 @@ function resolve (older, pending) {
 /**
  * Coroutine
  *
- * @param  {Tree} older
- * @param  {Generator} generator
+ * @param {Tree} older
+ * @param {Generator} generator
  * @return {Tree}
  */
 function coroutine (older, generator) {
@@ -338,11 +340,11 @@ function fill (older, newer, length) {
 /**
  * Animate
  *
- * @param  {Tree} older
- * @param  {Tree} newer
- * @param  {tree} parent
- * @param  {Promise} pending
- * @param  {Node} node
+ * @param {Tree} older
+ * @param {Tree} newer
+ * @param {tree} parent
+ * @param {Promise} pending
+ * @param {Node} node
  */
 function animate (older, newer, parent, pending) {
 	pending.then(function () {
@@ -355,7 +357,7 @@ function animate (older, newer, parent, pending) {
 		} else if (newer.node !== null) {
 			replaceChild(older, newer, parent);
 
-			if (newer.group !== ELEMENT && newer.owner.componentDidMount !== void 0) {
+			if (newer.group !== STRING && newer.owner.componentDidMount !== void 0) {
 				mountBoundary(newer, newer.owner, newer.node, 1);
 			}
 		}
@@ -367,13 +369,13 @@ function animate (older, newer, parent, pending) {
 /**
  * Remove
  *
- * @param  {Tree} older
- * @param  {Tree} newer
- * @param  {Tree} parent
+ * @param {Tree} older
+ * @param {Tree} newer
+ * @param {Tree} parent
  * @return {Tree}
  */
 function remove (older, newer, parent) {
-	if (older.group !== ELEMENT && older.owner.componentWillUnmount !== void 0) {
+	if (older.group !== STRING && older.owner.componentWillUnmount !== void 0) {
 		var pending = mountBoundary(older, older.owner, older.node, 2);
 
 		if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
@@ -399,20 +401,20 @@ function remove (older, newer, parent) {
 /**
  * Unmount
  *
- * @param  {Tree} older
- * @param  {Boolean} unlink
+ * @param {Tree} older
+ * @param {Boolean} unlink
  */
 function unmount (older, unlink) {
 	var children = older.children;
 	var length = children.length;
 	var flag = older.flag;
 
-	if (flag > 1) {
+	if (flag !== TEXT) {
 		if (length !== 0) {
 			for (var i = 0; i < length; i++) {
 				var child = children[i];
 
-				if (child.group !== ELEMENT && child.owner.componentWillUnmount !== void 0) {
+				if (child.group !== STRING && child.owner.componentWillUnmount !== void 0) {
 					mountBoundary(child, child.owner, child.node, 2);
 				}
 
@@ -420,7 +422,7 @@ function unmount (older, unlink) {
 			}
 		}
 
-		if (flag < 3 && older.ref !== null) {
+		if (older.ref !== null) {
 			refs(older, older.ref, 0);
 		}
 	}
@@ -451,18 +453,18 @@ function detach (older) {
  */
 function exchange (older, newer, deep) {
 	change(older, newer, older.host);
-	assign(older, newer, deep);
+	assign(older, newer, true);
 	update(older.host, newer);
 }
 
 /**
  * Update
  *
- * @param  {Tree} older
- * @param  {Tree} newer
+ * @param {Tree} older
+ * @param {Tree} newer
  */
 function update (older, newer) {
-	if (older !== null && older.flag === 3) {
+	if (older !== null && older.flag === COMPOSITE) {
 		older.node = newer.node;
 		older.parent = newer.parent;
 
@@ -475,8 +477,8 @@ function update (older, newer) {
 /**
  * Change
  *
- * @param  {Tree} older
- * @param  {Tree} newer
+ * @param {Tree} older
+ * @param {Tree} newer
  */
 function change (older, newer) {
 	create(newer, older.parent, older, 3, older.host, null);

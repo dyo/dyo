@@ -6,8 +6,8 @@
  * @param {Number} group
  */
 function patch (older, _newer, group) {
-	var newer = _newer;
 	var skip = false;
+	var newer = _newer;
 	var type = older.type;
 
 	if (type !== newer.type) {
@@ -15,19 +15,21 @@ function patch (older, _newer, group) {
 		return;
 	}
 
-	if (group !== ELEMENT) {
+	if (group !== STRING) {
 		var owner = older.owner;
 
 		if (owner === null || older.async !== READY) {
 			return;
 		}
 
+		older.async = PROCESSING;
+
 		var newProps = newer.props;
 		var oldProps = older.props;
 		var newState;
 		var oldState;
 
-		if (group === CLASS) {
+		if (group !== FUNCTION) {
 			oldState = owner.state;
 			newState = owner._state;
 		} else {
@@ -35,10 +37,7 @@ function patch (older, _newer, group) {
 			newState = newProps;
 		}
 
-		// processing
-		older.async = PROCESSING;
-
-		if (group < 3) {
+		if (group !== NOOP) {
 			if (type.propTypes !== void 0) {
 				propTypes(owner, type, newProps);
 			}
@@ -56,7 +55,6 @@ function patch (older, _newer, group) {
 			owner.shouldComponentUpdate !== void 0 &&
 			updateBoundary(older, owner, 0, newProps, newState) === false
 		) {
-			// ready
 			older.async = READY;
 			return;
 		}
@@ -74,18 +72,16 @@ function patch (older, _newer, group) {
 		}
 
 		// update current state
-		if (group === CLASS) {
+		if (group !== FUNCTION) {
 			updateState(oldState, newState);
 		}
 
 		newer = shape(renderBoundary(older, group), older, true);
 
-		// pending
 		if (older.async === PENDING) {
 			return;
 		}
 
-		// ready
 		older.async = READY;
 
 		if (newer.tag !== older.tag) {
@@ -93,7 +89,7 @@ function patch (older, _newer, group) {
 			skip = true;
 		} else {
 			// composite component
-			if (newer.flag === 3) {
+			if (newer.flag === COMPOSITE) {
 				patch(older.children[0], newer.children[0], group);
 				skip = true;
 			}
@@ -101,7 +97,7 @@ function patch (older, _newer, group) {
 	}
 
 	// text component
-	if (older.flag === 1) {
+	if (older.flag === TEXT) {
 		if (older.children !== newer.children) {
 			nodeValue(older, newer);
 		}
@@ -134,13 +130,9 @@ function patch (older, _newer, group) {
 		attributes(older, newer);
 	}
 
-	if (group !== ELEMENT && older.owner.componentDidUpdate !== void 0) {
-		// processed
+	if (group !== STRING && older.owner.componentDidUpdate !== void 0) {
 		older.async = PROCESSED;
-
 		updateBoundary(older, owner, 2, oldProps, oldState);
-
-		// ready
 		older.async = READY;
 	}
 }
@@ -168,7 +160,7 @@ function nonkeyed (older, newer, oldLength, newLength) {
 			var newChild = newChildren[i];
 			var oldChild = oldChildren[i];
 
-			if (newChild.flag === 1 && oldChild.flag === 1) {
+			if (newChild.flag === TEXT && oldChild.flag === TEXT) {
 				if (newChild.children !== oldChild.children) {
 					nodeValue(oldChild, newChild);
 				}

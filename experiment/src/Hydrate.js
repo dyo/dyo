@@ -7,6 +7,7 @@
  * @param {Node} _node
  * @param {Tree?} _host
  * @param {String?} _xmlns
+ * @return {Number}
  */
 function hydrate (newer, parent, index, _node, _host, _xmlns) {
 	var flag = newer.flag;
@@ -25,7 +26,7 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
 	newer.parent = parent;
 
 	// component
-	if (group !== ELEMENT) {
+	if (group !== STRING) {
 		if (group === CLASS) {
 			host = newer;
 		}
@@ -35,7 +36,7 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
 	}
 
 	// whitespace
-	if (flag !== 3) {
+	if (flag !== COMPOSITE) {
 		if (node !== null && node.nodeType === 3 && node.nodeValue.trim().length === 0) {
 			SHARED.node = node;
 			removeChild(SHARED, parent);
@@ -47,13 +48,13 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
 
 	switch (flag) {
 		// text
- 		case 1: {
+ 		case TEXT: {
  			var children = parent.children;
  			var length = children.length;
 
- 			if (length > 1 && children[index + 1].flag === 1) {
- 				var fragment = new Tree(4);
- 				var sibling = new Tree(1);
+ 			if (length > 1 && children[index + 1].flag === TEXT) {
+ 				var fragment = new Tree(FRAGMENT);
+ 				var sibling = new Tree(TEXT);
 
  				fragment.node = createDocumentFragment();
  				sibling.node = node;
@@ -61,7 +62,7 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
  				for (var i = index; i < length; i++) {
  					var child = children[i];
 
- 					if (child.flag !== 1) {
+ 					if (child.flag !== TEXT) {
  						replaceChild(sibling, fragment, parent);
  						return i;
  					}
@@ -81,51 +82,51 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
  			return 0;
  		}
  		// composite
- 		case 3: {
+ 		case COMPOSITE: {
  			hydrate(temp = temp.children[0], parent, index, node, host, xmlns);
  			newer.node = temp.node;
 
 			return 0;
  		}
+ 		// portal
+ 		case PORTAL: {
+ 			create(newer, parent, SHARED, 0, host, xmlns);
+ 			break;
+ 		}
  		default: {
- 			if (flag === 2) {
- 				var children = newer.children;
- 				var length = children.length;
+				var children = newer.children;
+				var length = children.length;
 
- 				// cache namespace
- 				if (newer.xmlns !== null) {
- 					xmlns = newer.xmlns;
- 				} else if (xmlns !== null) {
- 					newer.xmlns = xmlns;
+				// cache namespace
+				if (newer.xmlns !== null) {
+					xmlns = newer.xmlns;
+				} else if (xmlns !== null) {
+					newer.xmlns = xmlns;
+				}
+
+ 			// namespace(implicit) svg/math roots
+ 			switch (newer.tag) {
+ 				case 'svg': xmlns = svg; break;
+ 				case 'math': xmlns = math; break;
+ 			}
+
+ 			newer.node = node;
+
+ 			if (length > 0) {
+ 				for (var i = 0, idx = 0; i < length; i++) {
+ 					var child = children[i];
+
+ 					// hoisted
+ 					if (child.node !== null) {
+ 						child = clone(children[i] = new Tree(child.flag), child, true);
+ 					}
+
+ 					node = i === 0 ? node.firstChild : node.nextSibling;
+
+ 					if ((idx = hydrate(child, newer, i, node, host, xmlns)) !== 0) {
+ 						node = children[(i = idx - 1)].node;
+ 					}
  				}
-
-	 			// namespace(implicit) svg/math roots
-	 			switch (newer.tag) {
-	 				case 'svg': xmlns = svg; break;
-	 				case 'math': xmlns = math; break;
-	 			}
-
-	 			newer.node = node;
-
-	 			if (length > 0) {
-	 				for (var i = 0, idx = 0; i < length; i++) {
-	 					var child = children[i];
-
-	 					// hoisted
-	 					if (child.node !== null) {
-	 						child = clone(children[i] = new Tree(child.flag), child, true);
-	 					}
-
-	 					node = i === 0 ? node.firstChild : node.nextSibling;
-
-	 					if ((idx = hydrate(child, newer, i, node, host, xmlns)) !== 0) {
-	 						node = children[(i = idx - 1)].node;
-	 					}
-	 				}
-	 			}
- 			} else {
- 				// portal
- 				create(newer, parent, SHARED, 0, host, xmlns);
  			}
  		}
  	}

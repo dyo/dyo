@@ -46,7 +46,7 @@ function render (subject, container, callback) {
 			exchange(older, newer, true);
 		}
 	} else {
-		var parent = new Tree(2);
+		var parent = new Tree(ELEMENT);
 
 		target.this = older = newer;
 		parent.node = target;

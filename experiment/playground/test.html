@@ -26,13 +26,11 @@
 		  }
 
 		  componentWillReceiveProps(nextProps) {
-		  	console.log('nextProps', nextProps);
-
-		  	// if (!this.props.active && nextProps.active) {
+		  	if (!this.props.active && nextProps.active) {
 		    	this.setState({
 		      	active: true
 		      });
-		    // }
+		    }
 		  }
 
 		  componentWillUpdate(nextProps, nextState) {
@@ -79,7 +77,43 @@
 		  }
 		}
 
-		dio.render(App, document.getElementById('app'));
+		// dio.render(App, document.getElementById('app'));
+
+		var mounts = [];
+
+		class As {
+			componentWillUnmount() {
+				mounts.push('2')
+			}
+			render() {
+
+			}
+		}
+
+		class Bs {
+			componentWillUpdate(nextProps, nextState) {
+				console.log('WillUpdate', performance.now());
+				this.setState({id: nextState.id+1});
+			}
+			componentWillReceiveProps() {
+				console.log(this.this.async);
+				console.log('WillRecieve', performance.now());
+				this.setState({id: 1});
+			}
+			componentDidUpdate() {
+				console.log('didUpdate', this.state, performance.now());
+			}
+			componentWillMount() {
+				mounts.push('1')
+			}
+			render() {
+
+			}
+		}
+
+		dio.render(As);
+		dio.render(Bs);
+		dio.render(Bs);
 	</script>
 
 	<script>

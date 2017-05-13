@@ -14,7 +14,7 @@ function element (_type, _props) {
 	var offset = 0;
 	var i = 2;
 	var group = 0;
-	var newer = new Tree(2);
+	var newer = new Tree(ELEMENT);
 
 	switch (props) {
 		case null: {
@@ -62,7 +62,7 @@ function element (_type, _props) {
 		case Function: {
 			var proto = type.prototype;
 
-			newer.group = group = proto !== void 0 && proto.render !== void 0 ? CLASS : FUNCTION;
+			group = newer.group = proto !== void 0 && proto.render !== void 0 ? CLASS : FUNCTION;
 
 			break;
 		}
@@ -74,13 +74,13 @@ function element (_type, _props) {
 				type = type.type;
 				group = type.group;
 
-				if (group === ELEMENT) {
+				if (group === STRING) {
 					newer.tag = type;
 				} else {
 					newer.props.children = ARRAY;
 				}
 			} else if (type.nodeType !== void 0) {
-				newer.flag = 6;
+				newer.flag = PORTAL;
 			}
 		}
 	}
@@ -104,7 +104,7 @@ function element (_type, _props) {
 				index = pull(newer, index, arguments[i]);
 			}
 
-			props.children = ARRAY;
+			props.children = children;
 			newer.children = ARRAY;
 		}
 	}
@@ -136,7 +136,7 @@ function push (newer, index, value) {
 		switch (value.constructor) {
 			case Number:
 			case String: {
-				child = new Tree(1);
+				child = new Tree(TEXT);
 				child.type = child.tag = '#text';
 				child.children = value;
 				break;
@@ -203,7 +203,7 @@ function pull (newer, index, value) {
  * @return {Tree}
  */
 function text (value) {
-	var newer = new Tree(1);
+	var newer = new Tree(TEXT);
 
 	newer.type = newer.tag = '#text';
 	newer.children = value;
@@ -218,7 +218,7 @@ function text (value) {
  * @return {Tree}
  */
 function fragment (children) {
-	var newer = new Tree(4);
+	var newer = new Tree(FRAGMENT);
 
 	newer.tag = newer.type = 'div';
 
@@ -236,7 +236,7 @@ function fragment (children) {
  * @return {Tree}
  */
 function compose (child) {
-	var newer = new Tree(3);
+	var newer = new Tree(COMPOSITE);
 
 	newer.children = [child];
 
@@ -280,10 +280,13 @@ function assign (older, newer, deep) {
 		older.props = newer.props;
 		older.owner = newer.owner;
 		older.yield = newer.yield;
-		older.group = newer.group;
 		older.type = newer.type;
 		older.host = newer.host;
 		older.key = newer.key;
+
+		if ((older.group = newer.group) === CLASS) {
+			older.owner.this = older;
+		}
 	}
 }
 
@@ -296,7 +299,8 @@ function assign (older, newer, deep) {
  * @return {Tree}
  */
 function clone (older, newer, deep) {
-	return (assign(older, newer, deep), older);
+	assign(older, newer, deep);
+	return older;
 }
 
 /**
@@ -312,7 +316,7 @@ function Tree (flag) {
 	this.type = null;
 	this.node = null;
 	this.host = null;
-	this.group = ELEMENT;
+	this.group = STRING;
 	this.async = READY;
 	this.props = PROPS;
 	this.attrs = OBJECT;

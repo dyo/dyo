@@ -9,14 +9,23 @@ module.exports = function (
 	OBJECT,
 	PROPS,
 
-	ELEMENT,
-	FUNCTION,
-	CLASS,
-
 	READY,
 	PROCESSING,
 	PROCESSED,
-	PENDING
+	PENDING,
+
+	STRING,
+	FUNCTION,
+	CLASS,
+	NOOP,
+
+	EMPTY,
+	TEXT,
+	ELEMENT,
+	COMPOSITE,
+	FRAGMENT,
+	ERROR,
+	PORTAL
 ) {
 	/**
 	 * Readable
@@ -162,7 +171,7 @@ module.exports = function (
 		var newer = this;
 		var group = newer.group;
 
-		if (group !== ELEMENT) {
+		if (group !== STRING) {
 			return extract(newer, false).toString();
 		}
 
@@ -174,8 +183,8 @@ module.exports = function (
 		var length = 0;
 
 		switch (flag) {
-			case 1: return sanitize(children);
-			case 6: return '';
+			case TEXT: return sanitize(children);
+			case PORTAL: return '';
 		}
 
 		if (newer.attrs !== OBJECT && newer.attrs.innerHTML !== void 0) {
@@ -208,7 +217,7 @@ module.exports = function (
 	function shallow (value) {
 		var newer = shape(value, null, false);
 
-		if (newer.group === ELEMENT) {
+		if (newer.group === STRING) {
 			return newer;
 		}
 
@@ -257,21 +266,21 @@ module.exports = function (
 				this.push('</' + newer.tag + '>');
 			} else {
 				// component
-				if (newer.group !== ELEMENT) {
+				if (newer.group !== STRING) {
 					// composite
-					while (newer.group !== ELEMENT) {
+					while (newer.group !== STRING) {
 						newer = extract(newer, false);
 					}
 				}
 
 				switch (newer.flag) {
 					// text
-					case 1: {
+					case TEXT: {
 						this.push(sanitize(newer.children));
 						break;
 					}
 					// portal
-					case 6: {
+					case PORTAL: {
 						this.push('');
 						break;
 					}
@@ -289,7 +298,7 @@ module.exports = function (
 							if (length === 0) {
 								// no children
 								this.push(hollow(tag) === true ? node : node + '</' + tag + '>');
-							} else if (length === 1 && children[0].flag === 1) {
+							} else if (length === 1 && children[0].flag === TEXT) {
 								// one text child
 								this.push(node + sanitize(children[0].children) + '</' + tag + '>');
 							} else {

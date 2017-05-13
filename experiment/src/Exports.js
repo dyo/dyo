@@ -28,14 +28,23 @@ if (server === true) {
 		OBJECT,
 		PROPS,
 
-		ELEMENT,
-		FUNCTION,
-		CLASS,
-
 		READY,
 		PROCESSING,
 		PROCESSED,
-		PENDING
+		PENDING,
+
+		STRING,
+		FUNCTION,
+		CLASS,
+		NOOP,
+
+		EMPTY,
+		TEXT,
+		ELEMENT,
+		COMPOSITE,
+		FRAGMENT,
+		ERROR,
+		PORTAL
 	);
 }
 

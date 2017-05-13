@@ -53,6 +53,15 @@ module.exports = ({h, render}) => {
 		}
 
 		class B {
+			componentWillUpdate(nextProps, nextState) {
+				this.setState({id: nextState.id+1});
+			}
+			componentWillReceiveProps() {
+				this.setState({id: 2});
+			}
+			componentDidUpdate() {
+				mounts.push(this.state.id.toString());
+			}
 			componentWillMount() {
 				mounts.push('1')
 			}
@@ -67,8 +76,9 @@ module.exports = ({h, render}) => {
 
 		render(A, container);
 		render(B, container);
+		render(B, container);
 
-		ok(mounts.join('') === '12', 'componentWillMount, componentWillUnmount')
+		ok(mounts.join('') === '123', 'setState')
 
 		end();
 	});
