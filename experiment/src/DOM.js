@@ -273,7 +273,7 @@ function setEvent (older, type, value, action) {
 			node.addEventListener(name, eventProxy);
 		}
 		case 2: {
-			if (host !== null && host.group > 1) {
+			if (host !== null && host.group === CLASS) {
 				node._this = older;
 			}
 		}

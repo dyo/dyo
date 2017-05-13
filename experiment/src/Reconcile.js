@@ -7,18 +7,18 @@
  */
 function patch (older, _newer, group) {
 	var newer = _newer;
-	var skip;
-	var type;
+	var skip = false;
+	var type = older.type;
 
-	if ((type = older.type) !== newer.type) {
+	if (type !== newer.type) {
 		exchange(older, newer, true);
 		return;
 	}
 
-	if (group > 0) {
+	if (group !== ELEMENT) {
 		var owner = older.owner;
 
-		if (owner === null || older.async !== 0) {
+		if (owner === null || older.async !== READY) {
 			return;
 		}
 
@@ -27,7 +27,7 @@ function patch (older, _newer, group) {
 		var newState;
 		var oldState;
 
-		if (group > 1) {
+		if (group === CLASS) {
 			oldState = owner.state;
 			newState = owner._state;
 		} else {
@@ -35,7 +35,8 @@ function patch (older, _newer, group) {
 			newState = newProps;
 		}
 
-		older.async = 1;
+		// processing
+		older.async = PROCESSING;
 
 		if (group < 3) {
 			if (type.propTypes !== void 0) {
@@ -47,7 +48,7 @@ function patch (older, _newer, group) {
 			}
 
 			if (type.defaultProps !== void 0) {
-				merge(type.defaultProps, newProps === properties ? (newProps = {}) : newProps);
+				merge(type.defaultProps, newProps === PROPS ? (newProps = {}) : newProps);
 			}
 		}
 
@@ -55,12 +56,13 @@ function patch (older, _newer, group) {
 			owner.shouldComponentUpdate !== void 0 &&
 			updateBoundary(older, owner, 0, newProps, newState) === false
 		) {
-			older.async = 0;
+			// ready
+			older.async = READY;
 			return;
 		}
 
 		if (group < 3) {
-			if (group > 1) {
+			if (group === CLASS) {
 				owner.props = newProps;
 			} else {
 				older.props = newProps;
@@ -68,22 +70,23 @@ function patch (older, _newer, group) {
 		}
 
 		if (owner.componentWillUpdate !== void 0) {
-			older.async = 3;
 			updateBoundary(older, owner, 1, newProps, newState);
-			older.async = 1;
 		}
 
-		if (group > 1) {
+		// update current state
+		if (group === CLASS) {
 			updateState(oldState, newState);
 		}
 
 		newer = shape(renderBoundary(older, group), older, true);
 
-		if (older.async === 2) {
+		// pending
+		if (older.async === PENDING) {
 			return;
 		}
 
-		older.async = 0;
+		// ready
+		older.async = READY;
 
 		if (newer.tag !== older.tag) {
 			exchange(older, newer, false);
@@ -131,10 +134,14 @@ function patch (older, _newer, group) {
 		attributes(older, newer);
 	}
 
-	if (group > 0 && older.owner.componentDidUpdate !== void 0) {
-		older.async = 3;
+	if (group !== ELEMENT && older.owner.componentDidUpdate !== void 0) {
+		// processed
+		older.async = PROCESSED;
+
 		updateBoundary(older, owner, 2, oldProps, oldState);
-		older.async = 0;
+
+		// ready
+		older.async = READY;
 	}
 }
 
@@ -154,9 +161,9 @@ function nonkeyed (older, newer, oldLength, newLength) {
 
 	for (var i = 0; i < length; i++) {
 		if (i >= newLength) {
-			remove(oldChildren.pop(), shared, older);
+			remove(oldChildren.pop(), SHARED, older);
 		} else if (i >= oldLength) {
-			create(oldChildren[i] = newChildren[i], older, shared, 1, host, null);
+			create(oldChildren[i] = newChildren[i], older, SHARED, 1, host, null);
 		} else {
 			var newChild = newChildren[i];
 			var oldChild = oldChildren[i];
@@ -165,8 +172,6 @@ function nonkeyed (older, newer, oldLength, newLength) {
 				if (newChild.children !== oldChild.children) {
 					nodeValue(oldChild, newChild);
 				}
-			} else if (newChild.type !== oldChild.type) {
-				create(oldChildren[i] = newChild, older, oldChild, 3, host, null);
 			} else {
 				patch(oldChild, newChild, oldChild.group);
 			}
@@ -282,7 +287,7 @@ function keyed (older, newer, oldLength, newLength) {
  		// old children is synced, insert the difference
  		if (newStart <= newEnd) {
  			nextPos = newEnd + 1;
- 			nextChild = nextPos < newLength ? newChildren[nextPos] : shared;
+ 			nextChild = nextPos < newLength ? newChildren[nextPos] : SHARED;
 
  			do {
  				create(newStartNode = newChildren[newStart++], older, nextChild, 2, host, null);
@@ -291,7 +296,7 @@ function keyed (older, newer, oldLength, newLength) {
  	} else if (newStart > newEnd) {
  		// new children is synced, remove the difference
  		do {
- 			remove(oldStartNode = oldChildren[oldStart++], shared, older);
+ 			remove(oldStartNode = oldChildren[oldStart++], SHARED, older);
  		} while (oldStart <= oldEnd);
  	} else if (newStart === 0 && newEnd === newLength-1) {
  		// all children are out of sync, remove all, append new set
@@ -362,7 +367,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 		// new child doesn't exist in old children, insert
 		if (oldIndex === void 0) {
 			nextPos = newIndex - newOffset;
-			nextChild = nextPos < oldLength ? oldChildren[nextPos] : shared;
+			nextChild = nextPos < oldLength ? oldChildren[nextPos] : SHARED;
 
 			create(newChild, older, nextChild, 2, host, null);
 
@@ -386,7 +391,7 @@ function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, n
 
 		// old child doesn't exist in new children, remove
 		if (newIndex === void 0) {
-			remove(oldChild, shared, older);
+			remove(oldChild, SHARED, older);
 
 			oldOffset++;
 		}

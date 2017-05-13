@@ -18,8 +18,8 @@ function element (_type, _props) {
 
 	switch (props) {
 		case null: {
-			props = properties;
-			attrs = object;
+			props = PROPS;
+			attrs = OBJECT;
 			offset++;
 			break;
 		}
@@ -42,8 +42,8 @@ function element (_type, _props) {
 					size = props.length;
 				}
 				default: {
-					props = properties;
-					attrs = object;
+					props = PROPS;
+					attrs = OBJECT;
 					i = 1;
 				}
 			}
@@ -62,7 +62,7 @@ function element (_type, _props) {
 		case Function: {
 			var proto = type.prototype;
 
-			newer.group = group = proto !== void 0 && proto.render !== void 0 ? 2 : 1;
+			newer.group = group = proto !== void 0 && proto.render !== void 0 ? CLASS : FUNCTION;
 
 			break;
 		}
@@ -71,10 +71,13 @@ function element (_type, _props) {
 				// clone
 				merge(type.props, props);
 
-				if ((type = type.type, group = type.group) === 0) {
+				type = type.type;
+				group = type.group;
+
+				if (group === ELEMENT) {
 					newer.tag = type;
 				} else {
-					newer.props.children = array;
+					newer.props.children = ARRAY;
 				}
 			} else if (type.nodeType !== void 0) {
 				newer.flag = 6;
@@ -88,12 +91,12 @@ function element (_type, _props) {
 		var children = newer.children = new Array(size);
 		var index = 0;
 
-		if (group < 1) {
+		if (group === 0) {
 			for (; i < length; i++) {
 				index = push(newer, index, arguments[i]);
 			}
 		} else {
-			if (props === properties) {
+			if (props === PROPS) {
 				props = newer.props = {};
 			}
 
@@ -101,8 +104,8 @@ function element (_type, _props) {
 				index = pull(newer, index, arguments[i]);
 			}
 
-			props.children = children;
-			newer.children = array;
+			props.children = ARRAY;
+			newer.children = ARRAY;
 		}
 	}
 
@@ -309,16 +312,16 @@ function Tree (flag) {
 	this.type = null;
 	this.node = null;
 	this.host = null;
-	this.group = 0;
-	this.async = 0;
-	this.props = properties;
-	this.attrs = object;
+	this.group = ELEMENT;
+	this.async = READY;
+	this.props = PROPS;
+	this.attrs = OBJECT;
 	this.xmlns = null;
 	this.owner = null;
 	this.yield = null;
 	this.keyed = false;
 	this.parent = null;
-	this.children = array;
+	this.children = ARRAY;
 }
 
 /**

@@ -11,7 +11,7 @@ function Component (props) {
 
 	// props
 	if (this.props === void 0) {
-		this.props = (props === properties || props === void 0 || props === null) ? {} : props;
+		this.props = (props === PROPS || props === void 0 || props === null) ? {} : props;
 	}
 
 	// state
@@ -19,7 +19,7 @@ function Component (props) {
 		state = this.state = {};
 	}
 
-	this._state = null;
+	this._state = state;
 }
 
 /**
@@ -61,9 +61,10 @@ function setState (state, callback) {
 	var newState = state !== void 0 && state !== null ? state : {};
 	var oldState = owner.state;
 	var constructor = newState.constructor;
+	var older = null;
 
 	if (constructor === Function) {
-		newState = callbackBoundary(shared, owner, newState, oldState, 0);
+		newState = callbackBoundary(SHARED, owner, newState, oldState, 0);
 
 		if (newState === void 0 || newState === null) {
 			return;
@@ -80,9 +81,18 @@ function setState (state, callback) {
 			break;
 		}
 		case Object: {
+			var older = owner.this;
+
+			if (older === null) {
+				return;
+			}
+
+			if (older.async !== READY) {
+				return updateState(owner._state, newState);
+			}
+
 			owner._state = newState;
-			owner.forceUpdate(callback);
-			break;
+			this.forceUpdate(callback);
 		}
 	}
 }
@@ -96,8 +106,10 @@ function forceUpdate (callback) {
 	var owner = this;
 	var older = owner.this;
 
-	if (older === null || older.node === null || older.async !== 0) {
-		if (older.async === 3) {
+	if (older === null || older.node === null || older.async !== READY) {
+		// processed
+		if (older.async === PROCESSED) {
+			// process this update in the next frame
 			requestAnimationFrame(function () {
 				owner.forceUpdate(callback);
 			});
@@ -164,7 +176,7 @@ function getInitialStatic (owner, fn, type, props) {
 		return fn;
 	}
 
-	var value = callbackBoundary(shared, owner, fn, props, 0);
+	var value = callbackBoundary(SHARED, owner, fn, props, 0);
 
 	if (value !== void 0 && value !== null) {
 		return Object.defineProperty(owner, type, {value: value});
@@ -192,6 +204,6 @@ function propTypes (owner, type, props) {
 			}
 		}
 	} catch (err) {
-		errorBoundary(err, shared, owner, 2, valid);
+		errorBoundary(err, SHARED, owner, 2, valid);
 	}
 }

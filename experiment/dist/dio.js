@@ -23,18 +23,30 @@
 	 */
 	var browser = global.window === global;
 	var server = browser === false;
-	var noop = function () {};
-	var array = [];
-	var object = {};
-	var properties = {children: array};
-	var Promise = global.Promise || noop;
-	var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
-	var requestIdleCallback = global.requestIdleCallback || setTimeout;
 	var body = null;
 	var svg = 'http://www.w3.org/2000/svg';
 	var xlink = 'http://www.w3.org/1999/xlink';
 	var math = 'http://www.w3.org/1998/Math/MathML';
-	var shared = new Tree(0);
+	
+	var noop = function () {};
+	var Promise = global.Promise || noop;
+	var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
+	var requestIdleCallback = global.requestIdleCallback || setTimeout;
+	
+	var SHARED = new Tree(0);
+	
+	var ARRAY = [];
+	var OBJECT = {};
+	var PROPS = {children: ARRAY};
+	
+	var READY = 0;
+	var PROCESSING = 1;
+	var PROCESSED = 2;
+	var PENDING = 3;
+	
+	var ELEMENT = 0;
+	var FUNCTION = 1;
+	var CLASS = 2;
 	
 	/**
 	 * ## Element Flag
@@ -65,7 +77,7 @@
 	 * owner: node component {Component?}
 	 * node: node DOM reference {Node?}
 	 * group: node ground {Number}
-	 * async: node work state {Number} 0: ready, 1:blocked, 2:pending
+	 * async: node work state {Number} 0: ready, 1:processing, 2:processed, 3: pending
 	 * yield: coroutine {Function?}
 	 * host: host component
 	 *
@@ -98,7 +110,7 @@
 	
 		// props
 		if (this.props === void 0) {
-			this.props = (props === properties || props === void 0 || props === null) ? {} : props;
+			this.props = (props === PROPS || props === void 0 || props === null) ? {} : props;
 		}
 	
 		// state
@@ -106,7 +118,7 @@
 			state = this.state = {};
 		}
 	
-		this._state = null;
+		this._state = state;
 	}
 	
 	/**
@@ -148,9 +160,10 @@
 		var newState = state !== void 0 && state !== null ? state : {};
 		var oldState = owner.state;
 		var constructor = newState.constructor;
+		var older = null;
 	
 		if (constructor === Function) {
-			newState = callbackBoundary(shared, owner, newState, oldState, 0);
+			newState = callbackBoundary(SHARED, owner, newState, oldState, 0);
 	
 			if (newState === void 0 || newState === null) {
 				return;
@@ -167,9 +180,18 @@
 				break;
 			}
 			case Object: {
+				var older = owner.this;
+	
+				if (older === null) {
+					return;
+				}
+	
+				if (older.async !== READY) {
+					return updateState(owner._state, newState);
+				}
+	
 				owner._state = newState;
-				owner.forceUpdate(callback);
-				break;
+				this.forceUpdate(callback);
 			}
 		}
 	}
@@ -183,8 +205,10 @@
 		var owner = this;
 		var older = owner.this;
 	
-		if (older === null || older.node === null || older.async !== 0) {
-			if (older.async === 3) {
+		if (older === null || older.node === null || older.async !== READY) {
+			// processed
+			if (older.async === PROCESSED) {
+				// process this update in the next frame
 				requestAnimationFrame(function () {
 					owner.forceUpdate(callback);
 				});
@@ -251,7 +275,7 @@
 			return fn;
 		}
 	
-		var value = callbackBoundary(shared, owner, fn, props, 0);
+		var value = callbackBoundary(SHARED, owner, fn, props, 0);
 	
 		if (value !== void 0 && value !== null) {
 			return Object.defineProperty(owner, type, {value: value});
@@ -279,7 +303,7 @@
 				}
 			}
 		} catch (err) {
-			errorBoundary(err, shared, owner, 2, valid);
+			errorBoundary(err, SHARED, owner, 2, valid);
 		}
 	}
 	
@@ -303,8 +327,8 @@
 	
 		switch (props) {
 			case null: {
-				props = properties;
-				attrs = object;
+				props = PROPS;
+				attrs = OBJECT;
 				offset++;
 				break;
 			}
@@ -327,8 +351,8 @@
 						size = props.length;
 					}
 					default: {
-						props = properties;
-						attrs = object;
+						props = PROPS;
+						attrs = OBJECT;
 						i = 1;
 					}
 				}
@@ -347,7 +371,7 @@
 			case Function: {
 				var proto = type.prototype;
 	
-				newer.group = group = proto !== void 0 && proto.render !== void 0 ? 2 : 1;
+				newer.group = group = proto !== void 0 && proto.render !== void 0 ? CLASS : FUNCTION;
 	
 				break;
 			}
@@ -356,10 +380,13 @@
 					// clone
 					merge(type.props, props);
 	
-					if ((type = type.type, group = type.group) === 0) {
+					type = type.type;
+					group = type.group;
+	
+					if (group === ELEMENT) {
 						newer.tag = type;
 					} else {
-						newer.props.children = array;
+						newer.props.children = ARRAY;
 					}
 				} else if (type.nodeType !== void 0) {
 					newer.flag = 6;
@@ -373,12 +400,12 @@
 			var children = newer.children = new Array(size);
 			var index = 0;
 	
-			if (group < 1) {
+			if (group === 0) {
 				for (; i < length; i++) {
 					index = push(newer, index, arguments[i]);
 				}
 			} else {
-				if (props === properties) {
+				if (props === PROPS) {
 					props = newer.props = {};
 				}
 	
@@ -386,8 +413,8 @@
 					index = pull(newer, index, arguments[i]);
 				}
 	
-				props.children = children;
-				newer.children = array;
+				props.children = ARRAY;
+				newer.children = ARRAY;
 			}
 		}
 	
@@ -594,16 +621,16 @@
 		this.type = null;
 		this.node = null;
 		this.host = null;
-		this.group = 0;
-		this.async = 0;
-		this.props = properties;
-		this.attrs = object;
+		this.group = ELEMENT;
+		this.async = READY;
+		this.props = PROPS;
+		this.attrs = OBJECT;
 		this.xmlns = null;
 		this.owner = null;
 		this.yield = null;
 		this.keyed = false;
 		this.parent = null;
-		this.children = array;
+		this.children = ARRAY;
 	}
 	
 	/**
@@ -668,11 +695,11 @@
 				return older.yield();
 			}
 			switch (group) {
-				case 1: return older.type(older.props);
-				case 2: case 3: return older.owner.render(older.owner.props, older.owner.state);
+				case FUNCTION: return older.type(older.props);
+				default: return older.owner.render(older.owner.props, older.owner.state);
 			}
 		} catch (err) {
-			return errorBoundary(err, older, group > 1 ? older.owner : older.type, 3, group);
+			return errorBoundary(err, older, group === CLASS ? older.owner : older.type, 3, group);
 		}
 	}
 	
@@ -743,7 +770,7 @@
 	 * @param {Boolean} sync
 	 */
 	function returnBoundary (older, state, owner, e, sync) {
-		if (state === void 0 || state === null || older.group < 2) {
+		if (state === void 0 || state === null || older.group !== CLASS) {
 			return;
 		}
 	
@@ -932,7 +959,7 @@
 		var prevs = older.attrs;
 		var attrs = newer.attrs;
 	
-		if (prevs === attrs && attrs === object) {
+		if (prevs === attrs && attrs === OBJECT) {
 			return;
 		}
 	
@@ -999,7 +1026,7 @@
 		if (host !== null) {
 			var owner = host.owner;
 	
-			if (owner !== null && host.group > 1) {
+			if (owner !== null && host.group === CLASS) {
 				stateful = true;
 			}
 		}
@@ -1062,13 +1089,13 @@
 		var skip;
 	
 	 	// cache host
-	 	if (host !== shared) {
+	 	if (host !== SHARED) {
 			newer.host = host;
 	 	}
 	
 	 	// component
-	 	if (group > 0) {
-	 		if (group > 1) {
+	 	if (group !== ELEMENT) {
+	 		if (group === CLASS) {
 	 			host = newer;
 	 		}
 	
@@ -1139,7 +1166,7 @@
 	 		}
 	 	}
 	
-		if (group > 0 && owner.componentWillMount !== void 0) {
+		if (group !== ELEMENT && owner.componentWillMount !== void 0) {
 			mountBoundary(newer, owner, node, 0);
 		}
 	
@@ -1157,7 +1184,7 @@
 			}
 		}
 	
-		if (group > 0 && skip !== true && owner.componentDidMount !== void 0) {
+		if (group !== ELEMENT && skip !== true && owner.componentDidMount !== void 0) {
 			mountBoundary(newer, owner, node, 1);
 		}
 	}
@@ -1177,10 +1204,9 @@
 		var length = children.length;
 		var defaults = type.defaultProps;
 		var types = type.propTypes;
-		var owner;
 		var newer;
 	
-		if (props === properties) {
+		if (props === PROPS) {
 			props = {};
 		}
 	
@@ -1196,9 +1222,10 @@
 			getInitialStatic(type, types, 'propTypes', props);
 		}
 	
-		if (group > 1) {
+		if (group === CLASS) {
 			var proto = type.prototype;
 			var UUID = proto.UUID;
+			var owner;
 	
 			if (UUID === 2) {
 				owner = new type(props);
@@ -1214,12 +1241,12 @@
 			older.owner = owner;
 	
 			if (owner.getInitialState !== void 0) {
-				getInitialState(older, dataBoundary(shared, owner, 1, owner.props));
+				getInitialState(older, dataBoundary(SHARED, owner, 1, owner.props));
 			}
 	
-			older.async = 1;
+			older.async = PROCESSING;
 			newer = renderBoundary(older, group);
-			older.async = 0;
+			older.async = READY;
 	
 			newer = shape(newer, owner.this = older, abstract);
 		} else {
@@ -1253,7 +1280,7 @@
 				case Function: {
 					if (older === null) {
 						newer = element(newer, older);
-					} else if (older.group === 2) {
+					} else if (older.group === CLASS) {
 						newer = element(newer, older.owner.props);
 					} else {
 						newer = element(newer, older.props);
@@ -1297,7 +1324,7 @@
 			}
 		}
 	
-		if (newer.group > 0 && abstract === true) {
+		if (newer.group !== ELEMENT && abstract === true) {
 			return compose(newer);
 		} else {
 			return newer;
@@ -1311,7 +1338,7 @@
 	 * @param {Promise} pending
 	 */
 	function resolve (older, pending) {
-		older.async = 2;
+		older.async = PENDING;
 	
 		pending.then(function (value) {
 			var newer = value;
@@ -1319,7 +1346,7 @@
 				return;
 			}
 	
-			older.async = 0;
+			older.async = READY;
 			newer = shape(newer, older, true);
 	
 			if (older.tag !== newer.tag) {
@@ -1371,7 +1398,7 @@
 		var host = older.host;
 	
 		for (var i = 0, child; i < length; i++) {
-			create(child = children[i], older, shared, 1, host, null);
+			create(child = children[i], older, SHARED, 1, host, null);
 		}
 	
 		older.children = children;
@@ -1392,12 +1419,12 @@
 				return;
 			}
 	
-			if (newer === shared) {
+			if (newer === SHARED) {
 				removeChild(older, parent);
 			} else if (newer.node !== null) {
 				replaceChild(older, newer, parent);
 	
-				if (newer.group > 0 && newer.owner.componentDidMount !== void 0) {
+				if (newer.group !== ELEMENT && newer.owner.componentDidMount !== void 0) {
 					mountBoundary(newer, newer.owner, newer.node, 1);
 				}
 			}
@@ -1415,7 +1442,7 @@
 	 * @return {Tree}
 	 */
 	function remove (older, newer, parent) {
-		if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
+		if (older.group !== ELEMENT && older.owner.componentWillUnmount !== void 0) {
 			var pending = mountBoundary(older, older.owner, older.node, 2);
 	
 			if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
@@ -1427,7 +1454,7 @@
 	
 		unmount(older, false);
 	
-		if (newer === shared) {
+		if (newer === SHARED) {
 			removeChild(older, parent);
 		} else {
 			replaceChild(older, newer, parent);
@@ -1454,7 +1481,7 @@
 				for (var i = 0; i < length; i++) {
 					var child = children[i];
 	
-					if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
+					if (child.group !== ELEMENT && child.owner.componentWillUnmount !== void 0) {
 						mountBoundary(child, child.owner, child.node, 2);
 					}
 	
@@ -1578,7 +1605,7 @@
 			parent.node = target;
 	
 			if (callback === void 0 || callback === null || callback.constructor === Function) {
-				create(newer, parent, shared, 1, newer, null);
+				create(newer, parent, SHARED, 1, newer, null);
 			} else {
 				hydrate(newer, parent, 0, callback, newer, null);
 			}
@@ -1598,18 +1625,18 @@
 	 */
 	function patch (older, _newer, group) {
 		var newer = _newer;
-		var skip;
-		var type;
+		var skip = false;
+		var type = older.type;
 	
-		if ((type = older.type) !== newer.type) {
+		if (type !== newer.type) {
 			exchange(older, newer, true);
 			return;
 		}
 	
-		if (group > 0) {
+		if (group !== ELEMENT) {
 			var owner = older.owner;
 	
-			if (owner === null || older.async !== 0) {
+			if (owner === null || older.async !== READY) {
 				return;
 			}
 	
@@ -1618,7 +1645,7 @@
 			var newState;
 			var oldState;
 	
-			if (group > 1) {
+			if (group === CLASS) {
 				oldState = owner.state;
 				newState = owner._state;
 			} else {
@@ -1626,7 +1653,8 @@
 				newState = newProps;
 			}
 	
-			older.async = 1;
+			// processing
+			older.async = PROCESSING;
 	
 			if (group < 3) {
 				if (type.propTypes !== void 0) {
@@ -1638,7 +1666,7 @@
 				}
 	
 				if (type.defaultProps !== void 0) {
-					merge(type.defaultProps, newProps === properties ? (newProps = {}) : newProps);
+					merge(type.defaultProps, newProps === PROPS ? (newProps = {}) : newProps);
 				}
 			}
 	
@@ -1646,12 +1674,13 @@
 				owner.shouldComponentUpdate !== void 0 &&
 				updateBoundary(older, owner, 0, newProps, newState) === false
 			) {
-				older.async = 0;
+				// ready
+				older.async = READY;
 				return;
 			}
 	
 			if (group < 3) {
-				if (group > 1) {
+				if (group === CLASS) {
 					owner.props = newProps;
 				} else {
 					older.props = newProps;
@@ -1659,22 +1688,23 @@
 			}
 	
 			if (owner.componentWillUpdate !== void 0) {
-				older.async = 3;
 				updateBoundary(older, owner, 1, newProps, newState);
-				older.async = 1;
 			}
 	
-			if (group > 1) {
+			// update current state
+			if (group === CLASS) {
 				updateState(oldState, newState);
 			}
 	
 			newer = shape(renderBoundary(older, group), older, true);
 	
-			if (older.async === 2) {
+			// pending
+			if (older.async === PENDING) {
 				return;
 			}
 	
-			older.async = 0;
+			// ready
+			older.async = READY;
 	
 			if (newer.tag !== older.tag) {
 				exchange(older, newer, false);
@@ -1722,10 +1752,14 @@
 			attributes(older, newer);
 		}
 	
-		if (group > 0 && older.owner.componentDidUpdate !== void 0) {
-			older.async = 3;
+		if (group !== ELEMENT && older.owner.componentDidUpdate !== void 0) {
+			// processed
+			older.async = PROCESSED;
+	
 			updateBoundary(older, owner, 2, oldProps, oldState);
-			older.async = 0;
+	
+			// ready
+			older.async = READY;
 		}
 	}
 	
@@ -1745,9 +1779,9 @@
 	
 		for (var i = 0; i < length; i++) {
 			if (i >= newLength) {
-				remove(oldChildren.pop(), shared, older);
+				remove(oldChildren.pop(), SHARED, older);
 			} else if (i >= oldLength) {
-				create(oldChildren[i] = newChildren[i], older, shared, 1, host, null);
+				create(oldChildren[i] = newChildren[i], older, SHARED, 1, host, null);
 			} else {
 				var newChild = newChildren[i];
 				var oldChild = oldChildren[i];
@@ -1756,8 +1790,6 @@
 					if (newChild.children !== oldChild.children) {
 						nodeValue(oldChild, newChild);
 					}
-				} else if (newChild.type !== oldChild.type) {
-					create(oldChildren[i] = newChild, older, oldChild, 3, host, null);
 				} else {
 					patch(oldChild, newChild, oldChild.group);
 				}
@@ -1873,7 +1905,7 @@
 	 		// old children is synced, insert the difference
 	 		if (newStart <= newEnd) {
 	 			nextPos = newEnd + 1;
-	 			nextChild = nextPos < newLength ? newChildren[nextPos] : shared;
+	 			nextChild = nextPos < newLength ? newChildren[nextPos] : SHARED;
 	
 	 			do {
 	 				create(newStartNode = newChildren[newStart++], older, nextChild, 2, host, null);
@@ -1882,7 +1914,7 @@
 	 	} else if (newStart > newEnd) {
 	 		// new children is synced, remove the difference
 	 		do {
-	 			remove(oldStartNode = oldChildren[oldStart++], shared, older);
+	 			remove(oldStartNode = oldChildren[oldStart++], SHARED, older);
 	 		} while (oldStart <= oldEnd);
 	 	} else if (newStart === 0 && newEnd === newLength-1) {
 	 		// all children are out of sync, remove all, append new set
@@ -1953,7 +1985,7 @@
 			// new child doesn't exist in old children, insert
 			if (oldIndex === void 0) {
 				nextPos = newIndex - newOffset;
-				nextChild = nextPos < oldLength ? oldChildren[nextPos] : shared;
+				nextChild = nextPos < oldLength ? oldChildren[nextPos] : SHARED;
 	
 				create(newChild, older, nextChild, 2, host, null);
 	
@@ -1977,7 +2009,7 @@
 	
 			// old child doesn't exist in new children, remove
 			if (newIndex === void 0) {
-				remove(oldChild, shared, older);
+				remove(oldChild, SHARED, older);
 	
 				oldOffset++;
 			}
@@ -2300,7 +2332,7 @@
 				node.addEventListener(name, eventProxy);
 			}
 			case 2: {
-				if (host !== null && host.group > 1) {
+				if (host !== null && host.group === CLASS) {
 					node._this = older;
 				}
 			}
@@ -2349,7 +2381,7 @@
 		var temp;
 	
 		// cache host
-		if (host !== shared) {
+		if (host !== SHARED) {
 			newer.host = host;
 		}
 	
@@ -2357,8 +2389,8 @@
 		newer.parent = parent;
 	
 		// component
-		if (group > 0) {
-			if (group > 1) {
+		if (group !== ELEMENT) {
+			if (group === CLASS) {
 				host = newer;
 			}
 	
@@ -2369,9 +2401,9 @@
 		// whitespace
 		if (flag !== 3) {
 			if (node !== null && node.nodeType === 3 && node.nodeValue.trim().length === 0) {
-				shared.node = node;
-				removeChild(shared, parent);
-				shared.node = null;
+				SHARED.node = node;
+				removeChild(SHARED, parent);
+				SHARED.node = null;
 	
 				node = node.nextSibling;
 			}
@@ -2457,7 +2489,7 @@
 		 			}
 	 			} else {
 	 				// portal
-	 				create(newer, parent, shared, 0, host, xmlns);
+	 				create(newer, parent, SHARED, 0, host, xmlns);
 	 			}
 	 		}
 	 	}
@@ -2485,8 +2517,27 @@
 	/**
 	 * Server
 	 */
-	if (server === true && typeof require === 'function') {
-		require('./dio.server.js')(exports, element, shape, extract, whitelist, object);
+	if (server === true) {
+		require('./dio.server.js')(
+			exports,
+			element,
+			shape,
+			extract,
+			whitelist,
+	
+			ARRAY,
+			OBJECT,
+			PROPS,
+	
+			ELEMENT,
+			FUNCTION,
+			CLASS,
+	
+			READY,
+			PROCESSING,
+			PROCESSED,
+			PENDING
+		);
 	}
 	
 	return exports;

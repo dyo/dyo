@@ -3,18 +3,30 @@
  */
 var browser = global.window === global;
 var server = browser === false;
-var noop = function () {};
-var array = [];
-var object = {};
-var properties = {children: array};
-var Promise = global.Promise || noop;
-var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
-var requestIdleCallback = global.requestIdleCallback || setTimeout;
 var body = null;
 var svg = 'http://www.w3.org/2000/svg';
 var xlink = 'http://www.w3.org/1999/xlink';
 var math = 'http://www.w3.org/1998/Math/MathML';
-var shared = new Tree(0);
+
+var noop = function () {};
+var Promise = global.Promise || noop;
+var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
+var requestIdleCallback = global.requestIdleCallback || setTimeout;
+
+var SHARED = new Tree(0);
+
+var ARRAY = [];
+var OBJECT = {};
+var PROPS = {children: ARRAY};
+
+var READY = 0;
+var PROCESSING = 1;
+var PROCESSED = 2;
+var PENDING = 3;
+
+var ELEMENT = 0;
+var FUNCTION = 1;
+var CLASS = 2;
 
 /**
  * ## Element Flag
@@ -45,7 +57,7 @@ var shared = new Tree(0);
  * owner: node component {Component?}
  * node: node DOM reference {Node?}
  * group: node ground {Number}
- * async: node work state {Number} 0: ready, 1:blocked, 2:pending
+ * async: node work state {Number} 0: ready, 1:processing, 2:processed, 3: pending
  * yield: coroutine {Function?}
  * host: host component
  *

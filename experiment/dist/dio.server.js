@@ -1,4 +1,30 @@
-module.exports = function (exports, element, shape, extract, whitelist, object) {
+module.exports = function (
+	exports,
+	element,
+	shape,
+	extract,
+	whitelist,
+
+	ARRAY,
+	OBJECT,
+	PROPS,
+
+	ELEMENT,
+	FUNCTION,
+	CLASS,
+
+	READY,
+	PROCESSING,
+	PROCESSED,
+	PENDING
+) {
+	/**
+	 * Readable
+	 *
+	 * @type {Readable}
+	 */
+	var Readable = require('stream').Readable;
+
 	/**
 	 * Stringify Attributes
 	 *
@@ -8,14 +34,14 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	function attributes (newer) {
 		var attrs = newer.attrs;
 		var body = '';
-	
-		if (attrs === object) {
+
+		if (attrs === OBJECT) {
 			return body;
 		}
-	
+
 		for (var name in attrs) {
 			var value = attrs[name];
-	
+
 			switch (whitelist(name)) {
 				case 10: case 21: case 30: case 31: {
 					continue;
@@ -33,16 +59,16 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 						name = '';
 						for (var key in value) {
 							var val = value[key];
-	
+
 							if (key !== key.toLowerCase()) {
 								key = dashcase(key);
 							}
-	
+
 							name += key + ':' + val + ';';
 						}
 						value = name;
 					}
-	
+
 					value = ' style="'+sanitize(value)+'"';
 					break;
 				}
@@ -51,17 +77,17 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 						case false: case null: case void 0: continue;
 						case true: body += ' '+name; continue;
 					}
-	
+
 					value = ' '+name+'="'+sanitize(value)+'"';
 				}
 			}
-	
+
 			body += value;
 		}
-	
+
 		return body;
 	}
-	
+
 	/**
 	 * Sanitize String
 	 *
@@ -71,7 +97,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	function sanitize (value) {
 		return (value+'').replace(/[<>&"']/g, encode);
 	}
-	
+
 	/**
 	 * Encode Unicode
 	 *
@@ -88,7 +114,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 			default: return char;
 		}
 	}
-	
+
 	/**
 	 * camelCase to dash-case
 	 *
@@ -98,14 +124,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	function dashcase (str) {
 		return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase();
 	}
-	
-	/**
-	 * readable
-	 *
-	 * @type {Readable}
-	 */
-	var readable = require('stream').Readable;
-	
+
 	/**
 	 * Hollow
 	 *
@@ -133,7 +152,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 			default: return false;
 		}
 	}
-	
+
 	/**
 	 * To String [Prototype]
 	 *
@@ -142,34 +161,34 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	function toString () {
 		var newer = this;
 		var group = newer.group;
-	
-		if (group > 0) {
+
+		if (group !== ELEMENT) {
 			return extract(newer, false).toString();
 		}
-	
+
 		var type = newer.type;
 		var flag = newer.flag;
 		var tag = newer.tag;
 		var children = newer.children;
 		var body = '';
 		var length = 0;
-	
+
 		switch (flag) {
 			case 1: return sanitize(children);
 			case 6: return '';
 		}
-	
-		if (newer.attrs !== object && newer.attrs.innerHTML !== void 0) {
+
+		if (newer.attrs !== OBJECT && newer.attrs.innerHTML !== void 0) {
 			body = newer.attrs.innerHTML;
 		} else if ((length = children.length) > 0) {
 			for (var i = 0; i < length; i++) {
 				body += children[i].toString();
 			}
 		}
-	
+
 		return '<' + tag + attributes(newer) + '>' + (hollow(tag) === true ? '' : body + '</' + tag + '>');
-	};
-	
+	}
+
 	/**
 	 * String Render
 	 *
@@ -178,8 +197,8 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	 */
 	function renderToString (newer) {
 		return shape(newer, null, false).toString();
-	};
-	
+	}
+
 	/**
 	 * Shallow Render
 	 *
@@ -188,14 +207,14 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	 */
 	function shallow (value) {
 		var newer = shape(value, null, false);
-	
-		if (newer.group === 0) {
+
+		if (newer.group === ELEMENT) {
 			return newer;
 		}
-	
+
 		return extract(newer, false);
 	}
-	
+
 	/**
 	 * Stream Render
 	 *
@@ -205,7 +224,7 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	function renderToStream (subject) {
 		return new Stream(shape(subject, null, true));
 	}
-	
+
 	/**
 	 * Stream
 	 *
@@ -213,102 +232,104 @@ module.exports = function (exports, element, shape, extract, whitelist, object) 
 	 */
 	function Stream (newer) {
 		this.stack = [newer];
-	
-		readable.call(this);
+
+		Readable.call(this);
 	}
-	
+
+	/**
+	 * Stream Reader
+	 *
+	 * @return {void}
+	 */
+	function read () {
+		var stack = this.stack;
+		var size = stack.length;
+
+		if (size === 0) {
+			// end
+			this.push(null);
+		} else {
+			// retrieve element from the stack
+			var newer = stack[size-1];
+
+			if (newer.ref === true) {
+				// close
+				this.push('</' + newer.tag + '>');
+			} else {
+				// component
+				if (newer.group !== ELEMENT) {
+					// composite
+					while (newer.group !== ELEMENT) {
+						newer = extract(newer, false);
+					}
+				}
+
+				switch (newer.flag) {
+					// text
+					case 1: {
+						this.push(sanitize(newer.children));
+						break;
+					}
+					// portal
+					case 6: {
+						this.push('');
+						break;
+					}
+					default: {
+						// innerHTML
+						if (newer.attrs !== OBJECT && newer.attrs.innerHTML !== void 0) {
+							this.push(newer.attrs.innerHTML);
+						} else {
+							var type = newer.type;
+							var tag = newer.tag;
+							var children = newer.children;
+							var length = children.length;
+							var node = '<' + tag + attributes(newer) + '>';
+
+							if (length === 0) {
+								// no children
+								this.push(hollow(tag) === true ? node : node + '</' + tag + '>');
+							} else if (length === 1 && children[0].flag === 1) {
+								// one text child
+								this.push(node + sanitize(children[0].children) + '</' + tag + '>');
+							} else {
+								// open
+								newer.tag = tag;
+								newer.ref = true;
+
+								// push children to the stack, from right to left
+								for (var i = length - 1; i >= 0; i--) {
+									stack[size++] = children[i];
+								}
+
+								return void this.push(node);
+							}
+						}
+					}
+				}
+			}
+
+			// remove element from stack
+			stack.pop();
+		}
+	}
+
 	/**
 	 * Stream Prototype
 	 *
 	 * @type {Object}
 	 */
-	Stream.prototype = Object.create(readable.prototype, {
-		_type: {
-			value: 'text/html'
-		},
-		_read: {
-			value: function read () {
-				var stack = this.stack;
-				var size = stack.length;
-	
-				if (size === 0) {
-					// end
-					this.push(null);
-				} else {
-					// retrieve element from the stack
-					var newer = stack[size-1];
-	
-					if (newer.ref === true) {
-						// close
-						this.push('</' + newer.tag + '>');
-					} else {
-						// component
-						if (newer.group !== 0) {
-							// composite
-							while (newer.group > 0) {
-								newer = extract(newer, false);
-							}
-						}
-	
-						switch (newer.flag) {
-							// text
-							case 1: {
-								this.push(sanitize(newer.children));
-								break;
-							}
-							// portal
-							case 6: {
-								this.push('');
-								break;
-							}
-							default: {
-								// innerHTML
-								if (newer.attrs !== object && newer.attrs.innerHTML !== void 0) {
-									this.push(newer.attrs.innerHTML);
-								} else {
-									var type = newer.type;
-									var tag = newer.tag;
-									var children = newer.children;
-									var length = children.length;
-									var node = '<' + tag + attributes(newer) + '>';
-	
-									if (length === 0) {
-										// no children
-										this.push(hollow(tag) === true ? node : node + '</' + tag + '>');
-									} else if (length === 1 && children[0].flag === 1) {
-										// one text child
-										this.push(node + sanitize(children[0].children) + '</' + tag + '>');
-									} else {
-										// open
-										newer.tag = tag;
-										newer.ref = true;
-	
-										// push children to the stack, from right to left
-										for (var i = length - 1; i >= 0; i--) {
-											stack[size++] = children[i];
-										}
-	
-										return void this.push(node);
-									}
-								}
-							}
-						}
-					}
-	
-					// remove element from stack
-					stack.pop();
-				}
-			}
-		}
+	Stream.prototype = Object.create(Readable.prototype, {
+		_type: {value: 'text/html'},
+		_read: {value: read}
 	});
-	
+
 	/**
 	 * Exports
 	 */
 	exports.shallow = shallow;
 	exports.renderToString = renderToString;
 	exports.renderToStream = renderToStream;
-	
+
 	element.prototype.toString = toString;
-	
 };

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
 
-const shared = [
+const main = [
 	'../src/Shared.js',
 	'../src/Component.js',
 	'../src/Element.js',
@@ -16,24 +16,25 @@ const shared = [
 	'../src/Exports.js'
 ]
 
-const main = shared.concat([])
 const server = ['../src/Server.js']
 
 const bundler = (file) => {
 	return fs.readFileSync(path.join(__dirname, file), 'utf8');
 }
 
-const wrapper = (module) => {
+const wrapper = (module, body) => {
 	switch (module) {
 		case 'server': {
 			return {
-				open: 'module.exports = function (exports, element, shape, extract, whitelist, object) {\n',
-				close: '\n};\n'
+				open: '',
+				body: body,
+				close: ''
 			}
 		}
 		default: {
 			return {
 				open: fs.readFileSync(path.join(__dirname, 'umd.js'), 'utf8') + '\n',
+				body: body.replace(/^/gm, '\t'),
 				close: '\n}));\n'
 			}
 		}
@@ -41,13 +42,8 @@ const wrapper = (module) => {
 }
 
 const build = (module, files, location) => {
-	const container = wrapper(module)
-
-	const bundle = (
-		container.open +
-		files.map(bundler).join('\n').replace(/^/gm, '\t') +
-		container.close
-	)
+	const content = wrapper(module, files.map(bundler).join('\n'))
+	const bundle = content.open + content.body + content.close
 
 	fs.writeFileSync(path.join(__dirname, location), bundle)
 }

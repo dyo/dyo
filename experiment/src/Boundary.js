@@ -53,11 +53,11 @@ function renderBoundary (older, group) {
 			return older.yield();
 		}
 		switch (group) {
-			case 1: return older.type(older.props);
-			case 2: case 3: return older.owner.render(older.owner.props, older.owner.state);
+			case FUNCTION: return older.type(older.props);
+			default: return older.owner.render(older.owner.props, older.owner.state);
 		}
 	} catch (err) {
-		return errorBoundary(err, older, group > 1 ? older.owner : older.type, 3, group);
+		return errorBoundary(err, older, group === CLASS ? older.owner : older.type, 3, group);
 	}
 }
 
@@ -128,7 +128,7 @@ function eventBoundary (older, owner, fn, e) {
  * @param {Boolean} sync
  */
 function returnBoundary (older, state, owner, e, sync) {
-	if (state === void 0 || state === null || older.group < 2) {
+	if (state === void 0 || state === null || older.group !== CLASS) {
 		return;
 	}
 

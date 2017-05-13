@@ -17,7 +17,7 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
 	var temp;
 
 	// cache host
-	if (host !== shared) {
+	if (host !== SHARED) {
 		newer.host = host;
 	}
 
@@ -25,8 +25,8 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
 	newer.parent = parent;
 
 	// component
-	if (group > 0) {
-		if (group > 1) {
+	if (group !== ELEMENT) {
+		if (group === CLASS) {
 			host = newer;
 		}
 
@@ -37,9 +37,9 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
 	// whitespace
 	if (flag !== 3) {
 		if (node !== null && node.nodeType === 3 && node.nodeValue.trim().length === 0) {
-			shared.node = node;
-			removeChild(shared, parent);
-			shared.node = null;
+			SHARED.node = node;
+			removeChild(SHARED, parent);
+			SHARED.node = null;
 
 			node = node.nextSibling;
 		}
@@ -125,7 +125,7 @@ function hydrate (newer, parent, index, _node, _host, _xmlns) {
 	 			}
  			} else {
  				// portal
- 				create(newer, parent, shared, 0, host, xmlns);
+ 				create(newer, parent, SHARED, 0, host, xmlns);
  			}
  		}
  	}

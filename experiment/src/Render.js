@@ -52,7 +52,7 @@ function render (subject, container, callback) {
 		parent.node = target;
 
 		if (callback === void 0 || callback === null || callback.constructor === Function) {
-			create(newer, parent, shared, 1, newer, null);
+			create(newer, parent, SHARED, 1, newer, null);
 		} else {
 			hydrate(newer, parent, 0, callback, newer, null);
 		}

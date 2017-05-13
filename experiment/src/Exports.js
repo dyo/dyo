@@ -16,8 +16,27 @@ global.h = element;
 /**
  * Server
  */
-if (server === true && typeof require === 'function') {
-	require('./dio.server.js')(exports, element, shape, extract, whitelist, object);
+if (server === true) {
+	require('./dio.server.js')(
+		exports,
+		element,
+		shape,
+		extract,
+		whitelist,
+
+		ARRAY,
+		OBJECT,
+		PROPS,
+
+		ELEMENT,
+		FUNCTION,
+		CLASS,
+
+		READY,
+		PROCESSING,
+		PROCESSED,
+		PENDING
+	);
 }
 
 return exports;

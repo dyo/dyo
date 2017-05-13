@@ -76,7 +76,7 @@ function attributes (older, newer) {
 	var prevs = older.attrs;
 	var attrs = newer.attrs;
 
-	if (prevs === attrs && attrs === object) {
+	if (prevs === attrs && attrs === OBJECT) {
 		return;
 	}
 
@@ -143,7 +143,7 @@ function refs (older, value, type) {
 	if (host !== null) {
 		var owner = host.owner;
 
-		if (owner !== null && host.group > 1) {
+		if (owner !== null && host.group === CLASS) {
 			stateful = true;
 		}
 	}

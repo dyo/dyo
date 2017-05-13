@@ -20,13 +20,13 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 	var skip;
 
  	// cache host
- 	if (host !== shared) {
+ 	if (host !== SHARED) {
 		newer.host = host;
  	}
 
  	// component
- 	if (group > 0) {
- 		if (group > 1) {
+ 	if (group !== ELEMENT) {
+ 		if (group === CLASS) {
  			host = newer;
  		}
 
@@ -97,7 +97,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  		}
  	}
 
-	if (group > 0 && owner.componentWillMount !== void 0) {
+	if (group !== ELEMENT && owner.componentWillMount !== void 0) {
 		mountBoundary(newer, owner, node, 0);
 	}
 
@@ -115,7 +115,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 		}
 	}
 
-	if (group > 0 && skip !== true && owner.componentDidMount !== void 0) {
+	if (group !== ELEMENT && skip !== true && owner.componentDidMount !== void 0) {
 		mountBoundary(newer, owner, node, 1);
 	}
 }
@@ -135,10 +135,9 @@ function extract (older, abstract) {
 	var length = children.length;
 	var defaults = type.defaultProps;
 	var types = type.propTypes;
-	var owner;
 	var newer;
 
-	if (props === properties) {
+	if (props === PROPS) {
 		props = {};
 	}
 
@@ -154,9 +153,10 @@ function extract (older, abstract) {
 		getInitialStatic(type, types, 'propTypes', props);
 	}
 
-	if (group > 1) {
+	if (group === CLASS) {
 		var proto = type.prototype;
 		var UUID = proto.UUID;
+		var owner;
 
 		if (UUID === 2) {
 			owner = new type(props);
@@ -172,12 +172,12 @@ function extract (older, abstract) {
 		older.owner = owner;
 
 		if (owner.getInitialState !== void 0) {
-			getInitialState(older, dataBoundary(shared, owner, 1, owner.props));
+			getInitialState(older, dataBoundary(SHARED, owner, 1, owner.props));
 		}
 
-		older.async = 1;
+		older.async = PROCESSING;
 		newer = renderBoundary(older, group);
-		older.async = 0;
+		older.async = READY;
 
 		newer = shape(newer, owner.this = older, abstract);
 	} else {
@@ -211,7 +211,7 @@ function shape (value, older, abstract) {
 			case Function: {
 				if (older === null) {
 					newer = element(newer, older);
-				} else if (older.group === 2) {
+				} else if (older.group === CLASS) {
 					newer = element(newer, older.owner.props);
 				} else {
 					newer = element(newer, older.props);
@@ -255,7 +255,7 @@ function shape (value, older, abstract) {
 		}
 	}
 
-	if (newer.group > 0 && abstract === true) {
+	if (newer.group !== ELEMENT && abstract === true) {
 		return compose(newer);
 	} else {
 		return newer;
@@ -269,7 +269,7 @@ function shape (value, older, abstract) {
  * @param {Promise} pending
  */
 function resolve (older, pending) {
-	older.async = 2;
+	older.async = PENDING;
 
 	pending.then(function (value) {
 		var newer = value;
@@ -277,7 +277,7 @@ function resolve (older, pending) {
 			return;
 		}
 
-		older.async = 0;
+		older.async = READY;
 		newer = shape(newer, older, true);
 
 		if (older.tag !== newer.tag) {
@@ -329,7 +329,7 @@ function fill (older, newer, length) {
 	var host = older.host;
 
 	for (var i = 0, child; i < length; i++) {
-		create(child = children[i], older, shared, 1, host, null);
+		create(child = children[i], older, SHARED, 1, host, null);
 	}
 
 	older.children = children;
@@ -350,12 +350,12 @@ function animate (older, newer, parent, pending) {
 			return;
 		}
 
-		if (newer === shared) {
+		if (newer === SHARED) {
 			removeChild(older, parent);
 		} else if (newer.node !== null) {
 			replaceChild(older, newer, parent);
 
-			if (newer.group > 0 && newer.owner.componentDidMount !== void 0) {
+			if (newer.group !== ELEMENT && newer.owner.componentDidMount !== void 0) {
 				mountBoundary(newer, newer.owner, newer.node, 1);
 			}
 		}
@@ -373,7 +373,7 @@ function animate (older, newer, parent, pending) {
  * @return {Tree}
  */
 function remove (older, newer, parent) {
-	if (older.group > 0 && older.owner.componentWillUnmount !== void 0) {
+	if (older.group !== ELEMENT && older.owner.componentWillUnmount !== void 0) {
 		var pending = mountBoundary(older, older.owner, older.node, 2);
 
 		if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
@@ -385,7 +385,7 @@ function remove (older, newer, parent) {
 
 	unmount(older, false);
 
-	if (newer === shared) {
+	if (newer === SHARED) {
 		removeChild(older, parent);
 	} else {
 		replaceChild(older, newer, parent);
@@ -412,7 +412,7 @@ function unmount (older, unlink) {
 			for (var i = 0; i < length; i++) {
 				var child = children[i];
 
-				if (child.group > 0 && child.owner.componentWillUnmount !== void 0) {
+				if (child.group !== ELEMENT && child.owner.componentWillUnmount !== void 0) {
 					mountBoundary(child, child.owner, child.node, 2);
 				}
 
