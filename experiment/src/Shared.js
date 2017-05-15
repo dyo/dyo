@@ -2,7 +2,7 @@
  * ## Constants
  */
 var browser = global.window === global;
-var server = browser === false;
+var server = browser === false && typeof __webpack_require__ === 'undefined';
 var body = null;
 var svg = 'http://www.w3.org/2000/svg';
 var xlink = 'http://www.w3.org/1999/xlink';
@@ -31,10 +31,10 @@ var FRAGMENT = 4;
 var ERROR = 5;
 var PORTAL = 6;
 
-var SHARED = new Tree(EMPTY);
 var ARRAY = [];
 var OBJECT = {};
 var PROPS = {children: ARRAY};
+var SHARED = new Tree(EMPTY);
 
 /**
  * ## Element Shape

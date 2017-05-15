@@ -18,7 +18,7 @@
 					return this.props.text !== nextProps.text;
 				}
 
-				onClick(props, state, e) {
+				onClick(e) {
 					console.log('Clicked' + this.props.text);
 					e.stopPropagation();
 				}

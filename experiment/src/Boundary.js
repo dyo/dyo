@@ -174,8 +174,8 @@ function errorBoundary (message, older, owner, type, from) {
 
 	errorMessage(component, location, message instanceof Error ? message.stack : message);
 
-	if (type === 3 || type === 5) {
-		return shape(newer, older, browser);
+	if (type === 3) {
+		return newer === void 0 && older !== SHARED ? older : shape(newer, older, true);
 	}
 }
 

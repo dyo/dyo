@@ -127,8 +127,8 @@ function push (newer, index, value) {
 	if (value === null || value === void 0) {
 		child = text('');
 	} else if (value.group !== void 0) {
-		if (newer.keyed === false && value.key !== null) {
-			newer.keyed = true;
+		if (newer.keyed === 0 && value.key !== null) {
+			newer.keyed = 1;
 		}
 
 		child = value;
@@ -323,7 +323,7 @@ function Tree (flag) {
 	this.xmlns = null;
 	this.owner = null;
 	this.yield = null;
-	this.keyed = false;
+	this.keyed = 0;
 	this.parent = null;
 	this.children = ARRAY;
 }

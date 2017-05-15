@@ -23,7 +23,7 @@ module.exports = ({h}) => {
 		)
 
 		ok(key.key === 1, 'element key')
-		ok(key.keyed === true, 'element keyed children');
+		ok(key.keyed === 1, 'element keyed children');
 		end();
 	})
 }

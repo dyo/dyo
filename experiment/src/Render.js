@@ -12,26 +12,18 @@ function render (subject, container, callback) {
 	if (newer === void 0 || newer === null) {
 		newer = text('');
 	} else if (newer.flag === void 0) {
-		switch (newer.constructor) {
-			case Function: newer = element(newer); break;
-			case Array: newer = fragment(newer); break;
-			case Boolean: newer = text(''); break;
-			case Object: newer = stringify(newer); break;
-			case Date: newer = text(newer.toString()); break;
-			case Number: case String: newer = text(newer); break;
-		}
+		newer = shape(newer, null, false);
 	}
 
+	// browser
 	if (target === void 0 || target === null) {
 		// uses <body> if it exists at this point
 		// else default to the root <html> node
-		if (body === null) {
-			body = documentElement();
-		}
-
-		// server enviroment
-		if (server === true && body === null) {
-			return exports.renderToString(newer);
+		if (body === null && (body = documentElement()) === null) {
+			switch (server) {
+				case true: return newer.toString();
+				case false: return;
+			}
 		}
 
 		target = body;

@@ -14,10 +14,10 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 	var group = newer.group;
 	var flag = newer.flag;
 	var type = 2;
+	var skip = false;
 	var owner;
 	var node;
 	var temp;
-	var skip;
 
  	// cache host
  	if (host !== SHARED) {
@@ -67,12 +67,12 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 	 				case 'math': xmlns = math; break;
 	 			}
 
-	 			node = createElement(tag, newer, host, xmlns);
+ 				node = createElement(tag, newer, host, xmlns);
 
 	 			// error
 	 			if (newer.flag === ERROR) {
-	 				create(node, newer, sibling, action, host, xmlns);
-	 				assign(newer, node, false);
+	 				create(node, parent, sibling, action, host, xmlns);
+	 				assign(newer, node, newer.group === 0);
 	 				return;
 	 			}
 
@@ -213,8 +213,6 @@ function shape (value, older, abstract) {
 			case Function: {
 				if (older === null) {
 					newer = element(newer, older);
-				} else if (older.group === CLASS) {
-					newer = element(newer, older.owner.props);
 				} else {
 					newer = element(newer, older.props);
 				}
@@ -257,7 +255,7 @@ function shape (value, older, abstract) {
 		}
 	}
 
-	if (newer.group !== STRING && abstract === true) {
+	if (abstract === true && newer.group !== STRING) {
 		return compose(newer);
 	} else {
 		return newer;

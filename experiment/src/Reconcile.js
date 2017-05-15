@@ -6,9 +6,9 @@
  * @param {Number} group
  */
 function patch (older, _newer, group) {
-	var skip = false;
 	var newer = _newer;
 	var type = older.type;
+	var skip = false;
 
 	if (type !== newer.type) {
 		exchange(older, newer, true);
@@ -16,7 +16,7 @@ function patch (older, _newer, group) {
 	}
 
 	if (group !== STRING) {
-		var owner = older.owner;
+		var owner = older.owner
 
 		if (owner === null || older.async !== READY) {
 			return;
@@ -62,9 +62,9 @@ function patch (older, _newer, group) {
 		if (group < 3) {
 			if (group === CLASS) {
 				owner.props = newProps;
-			} else {
-				older.props = newProps;
 			}
+
+			older.props = newProps;
 		}
 
 		if (owner.componentWillUpdate !== void 0) {
@@ -76,7 +76,8 @@ function patch (older, _newer, group) {
 			updateState(oldState, newState);
 		}
 
-		newer = shape(renderBoundary(older, group), older, true);
+		newer = renderBoundary(older, group);
+		newer = newer !== older ? shape(newer, older, true) : newer;
 
 		if (older.async === PENDING) {
 			return;
@@ -122,8 +123,8 @@ function patch (older, _newer, group) {
 			}
 		} else {
 			switch (newer.keyed) {
-				case false: nonkeyed(older, newer, oldLength, newLength); break;
-				case true: keyed(older, newer, oldLength, newLength); break;
+				case 0: nonkeyed(older, newer, oldLength, newLength); break;
+				case 1: keyed(older, newer, oldLength, newLength); break;
 			}
 		}
 

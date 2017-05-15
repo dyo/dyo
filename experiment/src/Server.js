@@ -4,6 +4,7 @@ module.exports = function (
 	shape,
 	extract,
 	whitelist,
+	render,
 
 	ARRAY,
 	OBJECT,
@@ -163,52 +164,6 @@ module.exports = function (
 	}
 
 	/**
-	 * To String [Prototype]
-	 *
-	 * @return {String}
-	 */
-	function toString () {
-		var newer = this;
-		var group = newer.group;
-
-		if (group !== STRING) {
-			return extract(newer, false).toString();
-		}
-
-		var type = newer.type;
-		var flag = newer.flag;
-		var tag = newer.tag;
-		var children = newer.children;
-		var body = '';
-		var length = 0;
-
-		switch (flag) {
-			case TEXT: return sanitize(children);
-			case PORTAL: return '';
-		}
-
-		if (newer.attrs !== OBJECT && newer.attrs.innerHTML !== void 0) {
-			body = newer.attrs.innerHTML;
-		} else if ((length = children.length) > 0) {
-			for (var i = 0; i < length; i++) {
-				body += children[i].toString();
-			}
-		}
-
-		return '<' + tag + attributes(newer) + '>' + (hollow(tag) === true ? '' : body + '</' + tag + '>');
-	}
-
-	/**
-	 * String Render
-	 *
-	 * @param {Any} newer
-	 * @return {String}
-	 */
-	function renderToString (newer) {
-		return shape(newer, null, false).toString();
-	}
-
-	/**
 	 * Shallow Render
 	 *
 	 * @param  {Any} value
@@ -222,16 +177,6 @@ module.exports = function (
 		}
 
 		return extract(newer, false);
-	}
-
-	/**
-	 * Stream Render
-	 *
-	 * @param {Any} subject
-	 * @return {Stream}
-	 */
-	function renderToStream (subject) {
-		return new Stream(shape(subject, null, true));
 	}
 
 	/**
@@ -334,11 +279,98 @@ module.exports = function (
 	});
 
 	/**
+	 * To String [Prototype]
+	 *
+	 * @return {String}
+	 */
+	function toString () {
+		var newer = this;
+		var group = newer.group;
+
+		if (group !== STRING) {
+			return extract(newer, false).toString();
+		}
+
+		var type = newer.type;
+		var flag = newer.flag;
+		var tag = newer.tag;
+		var children = newer.children;
+		var body = '';
+		var length = 0;
+
+		switch (flag) {
+			case TEXT: return sanitize(children);
+			case PORTAL: return '';
+		}
+
+		if (newer.attrs !== OBJECT && newer.attrs.innerHTML !== void 0) {
+			body = newer.attrs.innerHTML;
+		} else if ((length = children.length) > 0) {
+			for (var i = 0; i < length; i++) {
+				body += children[i].toString();
+			}
+		}
+
+		return '<' + tag + attributes(newer) + '>' + (hollow(tag) === true ? '' : body + '</' + tag + '>');
+	}
+
+	/**
+	 * To Stream [Prototype]
+	 *
+	 * @return {Stream}
+	 */
+	function toStream () {
+		return new Stream(shape(this, null, false));
+	}
+
+	/**
+	 * String Render
+	 *
+	 * @param {Any} newer
+	 * @return {String}
+	 */
+	function renderToString (newer) {
+		return shape(newer, null, false).toString();
+	}
+
+	/**
+	 * Stream Render
+	 *
+	 * @param {Any} subject
+	 * @return {Stream}
+	 */
+	function renderToStream (subject) {
+		return new Stream(shape(subject, null, false));
+	}
+
+	/**
+	 * Server Render
+	 *
+	 * @param {Any} subject
+	 * @param {Node|Stream?} container
+	 * @param {Function?} callback
+	 */
+	exports.render = function (subject, container, callback) {
+		if (container === void 0 || container === null || container.writable === void 0) {
+			return render(subject, container, callback);
+		}
+
+		var newer = new Stream(shape(subject, null, false));
+
+		if (callback !== void 0 && callback !== null && callback.constructor === Function) {
+			newer.on('end', callback);
+		}
+
+		newer.pipe(container);
+	}
+
+	/**
 	 * Exports
 	 */
+	element.prototype.toString = toString;
+	element.prototype.toStream = toStream;
+
 	exports.shallow = shallow;
 	exports.renderToString = renderToString;
 	exports.renderToStream = renderToStream;
-
-	element.prototype.toString = toString;
 };

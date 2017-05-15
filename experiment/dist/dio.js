@@ -22,7 +22,7 @@
 	 * ## Constants
 	 */
 	var browser = global.window === global;
-	var server = browser === false;
+	var server = browser === false && typeof __webpack_require__ === 'undefined';
 	var body = null;
 	var svg = 'http://www.w3.org/2000/svg';
 	var xlink = 'http://www.w3.org/1999/xlink';
@@ -51,10 +51,10 @@
 	var ERROR = 5;
 	var PORTAL = 6;
 	
-	var SHARED = new Tree(EMPTY);
 	var ARRAY = [];
 	var OBJECT = {};
 	var PROPS = {children: ARRAY};
+	var SHARED = new Tree(EMPTY);
 	
 	/**
 	 * ## Element Shape
@@ -435,8 +435,8 @@
 		if (value === null || value === void 0) {
 			child = text('');
 		} else if (value.group !== void 0) {
-			if (newer.keyed === false && value.key !== null) {
-				newer.keyed = true;
+			if (newer.keyed === 0 && value.key !== null) {
+				newer.keyed = 1;
 			}
 	
 			child = value;
@@ -631,7 +631,7 @@
 		this.xmlns = null;
 		this.owner = null;
 		this.yield = null;
-		this.keyed = false;
+		this.keyed = 0;
 		this.parent = null;
 		this.children = ARRAY;
 	}
@@ -819,8 +819,8 @@
 	
 		errorMessage(component, location, message instanceof Error ? message.stack : message);
 	
-		if (type === 3 || type === 5) {
-			return shape(newer, older, browser);
+		if (type === 3) {
+			return newer === void 0 && older !== SHARED ? older : shape(newer, older, true);
 		}
 	}
 	
@@ -1086,10 +1086,10 @@
 		var group = newer.group;
 		var flag = newer.flag;
 		var type = 2;
+		var skip = false;
 		var owner;
 		var node;
 		var temp;
-		var skip;
 	
 	 	// cache host
 	 	if (host !== SHARED) {
@@ -1139,12 +1139,12 @@
 		 				case 'math': xmlns = math; break;
 		 			}
 	
-		 			node = createElement(tag, newer, host, xmlns);
+	 				node = createElement(tag, newer, host, xmlns);
 	
 		 			// error
 		 			if (newer.flag === ERROR) {
-		 				create(node, newer, sibling, action, host, xmlns);
-		 				assign(newer, node, false);
+		 				create(node, parent, sibling, action, host, xmlns);
+		 				assign(newer, node, newer.group === 0);
 		 				return;
 		 			}
 	
@@ -1285,8 +1285,6 @@
 				case Function: {
 					if (older === null) {
 						newer = element(newer, older);
-					} else if (older.group === CLASS) {
-						newer = element(newer, older.owner.props);
 					} else {
 						newer = element(newer, older.props);
 					}
@@ -1329,7 +1327,7 @@
 			}
 		}
 	
-		if (newer.group !== STRING && abstract === true) {
+		if (abstract === true && newer.group !== STRING) {
 			return compose(newer);
 		} else {
 			return newer;
@@ -1570,26 +1568,18 @@
 		if (newer === void 0 || newer === null) {
 			newer = text('');
 		} else if (newer.flag === void 0) {
-			switch (newer.constructor) {
-				case Function: newer = element(newer); break;
-				case Array: newer = fragment(newer); break;
-				case Boolean: newer = text(''); break;
-				case Object: newer = stringify(newer); break;
-				case Date: newer = text(newer.toString()); break;
-				case Number: case String: newer = text(newer); break;
-			}
+			newer = shape(newer, null, false);
 		}
 	
+		// browser
 		if (target === void 0 || target === null) {
 			// uses <body> if it exists at this point
 			// else default to the root <html> node
-			if (body === null) {
-				body = documentElement();
-			}
-	
-			// server enviroment
-			if (server === true && body === null) {
-				return exports.renderToString(newer);
+			if (body === null && (body = documentElement()) === null) {
+				switch (server) {
+					case true: return newer.toString();
+					case false: return;
+				}
 			}
 	
 			target = body;
@@ -1629,9 +1619,9 @@
 	 * @param {Number} group
 	 */
 	function patch (older, _newer, group) {
-		var skip = false;
 		var newer = _newer;
 		var type = older.type;
+		var skip = false;
 	
 		if (type !== newer.type) {
 			exchange(older, newer, true);
@@ -1639,7 +1629,7 @@
 		}
 	
 		if (group !== STRING) {
-			var owner = older.owner;
+			var owner = older.owner
 	
 			if (owner === null || older.async !== READY) {
 				return;
@@ -1685,9 +1675,9 @@
 			if (group < 3) {
 				if (group === CLASS) {
 					owner.props = newProps;
-				} else {
-					older.props = newProps;
 				}
+	
+				older.props = newProps;
 			}
 	
 			if (owner.componentWillUpdate !== void 0) {
@@ -1699,7 +1689,8 @@
 				updateState(oldState, newState);
 			}
 	
-			newer = shape(renderBoundary(older, group), older, true);
+			newer = renderBoundary(older, group);
+			newer = newer !== older ? shape(newer, older, true) : newer;
 	
 			if (older.async === PENDING) {
 				return;
@@ -1745,8 +1736,8 @@
 				}
 			} else {
 				switch (newer.keyed) {
-					case false: nonkeyed(older, newer, oldLength, newLength); break;
-					case true: keyed(older, newer, oldLength, newLength); break;
+					case 0: nonkeyed(older, newer, oldLength, newLength); break;
+					case 1: keyed(older, newer, oldLength, newLength); break;
 				}
 			}
 	
@@ -2071,7 +2062,7 @@
 				return document.createElementNS(newer.xmlns = xmlns, tag);
 			}
 		} catch (err) {
-			return errorBoundary(err, host, host.owner, newer.flag = ERROR, 0);
+			return errorBoundary(err, host, host.owner, (newer.flag = ERROR, 3), 0);
 		}
 	}
 	
@@ -2522,6 +2513,7 @@
 			shape,
 			extract,
 			whitelist,
+			render,
 	
 			ARRAY,
 			OBJECT,

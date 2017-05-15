@@ -15,7 +15,7 @@ function createElement (tag, newer, host, xmlns) {
 			return document.createElementNS(newer.xmlns = xmlns, tag);
 		}
 	} catch (err) {
-		return errorBoundary(err, host, host.owner, newer.flag = ERROR, 0);
+		return errorBoundary(err, host, host.owner, (newer.flag = ERROR, 3), 0);
 	}
 }
 

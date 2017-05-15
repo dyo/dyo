@@ -23,6 +23,7 @@ if (server === true) {
 		shape,
 		extract,
 		whitelist,
+		render,
 
 		ARRAY,
 		OBJECT,

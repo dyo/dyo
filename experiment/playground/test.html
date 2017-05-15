@@ -1,4 +1,4 @@
-<html>
+<!doctype html>
 <body>
 	<div id='app'></div>
 	<div id='log'></div>
@@ -77,43 +77,187 @@
 		  }
 		}
 
-		// dio.render(App, document.getElementById('app'));
+		dio.render(App, document.getElementById('app'));
 
-		var mounts = [];
+		var el = h('style', `
+				* {color:red}
+		`)
 
-		class As {
-			componentWillUnmount() {
-				mounts.push('2')
+		// <!-- [if lte IE 9]>
+	  	// <script src="/public/media.match.js">
+		// <![endif]-->
+
+		// dio.render(h('!', 'comment'), document.body)
+
+		var time = 0;
+
+		class Error {
+			render () {
+				if (time++ === 1) throw ''
+					return 'works'
+			}
+		}
+
+		dio.render(Error)
+		dio.render(Error)
+
+		// dio.render(h('div'), req, () => {})
+
+		class Styled {
+			static stylesheet () {
+				return `
+					& {
+						color: red;
+						display: block;
+					}
+
+					h1 {
+						color: red;
+					}
+				`;
 			}
 			render() {
 
 			}
 		}
 
-		class Bs {
-			componentWillUpdate(nextProps, nextState) {
-				console.log('WillUpdate', performance.now());
-				this.setState({id: nextState.id+1});
-			}
-			componentWillReceiveProps() {
-				console.log(this.this.async);
-				console.log('WillRecieve', performance.now());
-				this.setState({id: 1});
-			}
-			componentDidUpdate() {
-				console.log('didUpdate', this.state, performance.now());
-			}
-			componentWillMount() {
-				mounts.push('1')
-			}
-			render() {
+var sample = `
+color: red;
+display: block;
 
+&, :global(h1 &) {
+	color: red;
+	display: block;
+	transform: none;
+}
+
+width: 100px;
+
+h1, h2:not(h2, h3),
+[title='something, else'],
+:hover {
+	color: red;
+}
+
+@media () {
+	h1, h2, & {
+		color: 	red;
+	}
+}
+
+@keyframes animation {
+	0%: {
+		color: red;
+	}
+}
+		`
+
+var rsels = /^[^@}\s][^};]*?\{$/gm
+var rsel = /,[\s]*(?![^\(\[]*[\)\]])/g
+var rprop = /^.*;$/gm;
+var rwhite = /^[\s]+/gm;
+var rminify = /[\r\n\t]+/g;
+var rflat = /[^}{\s]*:[^}{]*;(?![^{]*\})/g
+var rnest = /([^{;]*)\{([\s\S]*?})\s*}(?![\s]*\})/gm;
+var namespace = '#prefix';
+var webkit = '-webkit-';
+var moz = '-moz-';
+var ms = '-ms-';
+
+function selectors (match) {
+	var items = match.substring(0, match.length-2).trim().split(rsel);
+	var i = items.length;
+	while (i-- > 0) {
+		var item = items[i];
+		var length = item.length;
+
+		if (item.charCodeAt(length-1) !== 58) {
+			switch (item.charCodeAt(0)) {
+				case 38: item = namespace; break;
+				case 58: {
+					switch (item.charCodeAt(1)) {
+						case 103: item = item.substring(8, length-1).replace(/&/g, namespace); break;
+						default: item = namespace + item; break;
+					}
+				}
+				default: item = namespace + ' ' + item;
 			}
+			items[i] = item;
 		}
+	}
+	return items.join(',') + '{';
+}
 
-		dio.render(As);
-		dio.render(Bs);
-		dio.render(Bs);
+function properties (match) {
+	var split = match.indexOf(':');
+	var name = match.substring(0, split).trim();
+	var value = match.substring(split+1, match.length-1).trim();
+
+	switch (name) {
+		case 'transform': {
+			return prefix(name, value, true, true, true);
+		}
+		default: return name + ':' + value + ';';
+	}
+
+	return prefix(name, value);
+}
+
+function prefix (name, value, wk, mz, ie) {
+	var set = '';
+	if (moz) set += webkit + name + ':' + value + ';';
+	if (mz) set += moz + name + ':' + value + ';';
+	if (ie) set += ms + name + ':' + value + ';';
+	return set + name + ':' + value + ';';
+}
+
+function process (ns, css) {
+	namespace = ns;
+	return css
+		.replace(rwhite, '')
+		.replace(rsels, selectors)
+		.replace(rprop, properties)
+		.replace(rflat, flat)
+		.replace(rminify, '')
+		// .replace(rnest, nest)
+}
+
+function flat (match) {
+	return namespace+'{'+match.replace(/[\r\n\t]/g, '')+'}';
+}
+
+function nest (match, selector, body) {
+	var out = body.replace(rnest, nest);
+	if (out !== match) {
+		return out;
+	}
+	return match;
+	// return process();
+}
+
+// console.log(`h1 {
+// color: blue;
+// h2 {
+// 	color: red;
+// 	h3 {
+// 		color: orange;
+// 	}
+// }
+// }`.replace(/[\r\n\t]+/g, '').replace(rnest, nest))
+
+// console.log(
+// 	process('#id', `h1 {
+// 	color: blue;
+// 	h2 {
+// 		color: red;
+// 		h3 {
+// 			color: orange;
+// 		}
+// 	}
+// 	}`)
+// );
+
+console.log(process('#prefix', sample));
 	</script>
 
 	<script>
