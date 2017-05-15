@@ -53,34 +53,38 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  			var children = newer.children;
 			var length = children.length;
 
- 			if (flag === ELEMENT) {
- 				var tag = newer.tag;
+			switch (flag) {
+				case PORTAL: {
+					newer.node = newer.type;
+					break;
+				}
+				default: {
+	 				var tag = newer.tag;
 
- 				// cache namespace
- 				if (newer.xmlns !== null) {
- 					xmlns = newer.xmlns;
- 				}
+	 				// cache namespace
+	 				if (newer.xmlns !== null) {
+	 					xmlns = newer.xmlns;
+	 				}
 
-	 			// namespace(implicit) svg/math roots
-	 			switch (tag) {
-	 				case 'svg': xmlns = svg; break;
-	 				case 'math': xmlns = math; break;
-	 			}
+		 			// namespace(implicit) svg/math roots
+		 			switch (tag) {
+		 				case 'svg': xmlns = svg; break;
+		 				case 'math': xmlns = math; break;
+		 				case '!doctype': tag = 'html'; break;
+		 			}
 
- 				node = createElement(tag, newer, host, xmlns);
+	 				node = createElement(tag, newer, host, xmlns);
 
-	 			// error
-	 			if (newer.flag === ERROR) {
-	 				create(node, parent, sibling, action, host, xmlns);
-	 				assign(newer, node, newer.group === 0);
-	 				return;
-	 			}
+		 			// error
+		 			if (newer.flag === ERROR) {
+		 				create(node, parent, sibling, action, host, xmlns);
+		 				assign(newer, node, newer.group === 0);
+		 				return;
+		 			}
 
-	 			newer.node = node;
- 			} else {
- 				// portal
- 				newer.node = newer.type;
- 			}
+		 			newer.node = node;
+				}
+			}
 
  			if (length > 0) {
  				for (var i = 0; i < length; i++) {
@@ -206,51 +210,45 @@ function extract (older, abstract) {
  * @return {Tree}
  */
 function shape (value, older, abstract) {
-	var newer = (value !== null && value !== void 0) ? value : text('');
+	var newer = (value !== null && value !== void 0) ? value : text(' ');
 
 	if (newer.group === void 0) {
 		switch (newer.constructor) {
 			case Function: {
-				if (older === null) {
-					newer = element(newer, older);
-				} else {
-					newer = element(newer, older.props);
-				}
+				newer = element(newer);
 				break;
 			}
-			case String:
+			case String: {
+				if (newer.length === 0) {
+					newer = ' ';
+				}
+			}
 			case Number: {
 				return text(newer);
 			}
+			case Array: {
+				return fragment(newer);
+			}
+			case Date: {
+				return text(newer.toString());
+			}
+			case Object: {
+				return stringify(newer);
+			}
+			case Promise: {
+				if (older !== null && older.flag !== EMPTY) {
+					return resolve(older, newer);
+				}
+			}
 			case Boolean: {
-				return text('');
+				return text(' ');
 			}
 			default: {
-				switch (newer.constructor) {
-					case Promise: {
-						if (older === null || older.flag === EMPTY) {
-							return text('');
-						} else {
-							return resolve(older, newer);
-						}
-					}
-					case Array: {
-						return fragment(newer);
-					}
-					case Date: {
-						return text(newer.toString());
-					}
-					case Object: {
-						return stringify(newer);
-					}
-					default: {
-						if (newer.next !== void 0 && older !== null) {
-							newer = coroutine(older, newer);
-						} else {
-							return text('');
-						}
-					}
+				if (older === null || newer.next === void 0) {
+					return text(' ');
 				}
+
+				newer = coroutine(older, newer);
 			}
 		}
 	}
@@ -287,7 +285,7 @@ function resolve (older, pending) {
 		}
 	});
 
-	return older.node !== null ? older : text('');;
+	return older.node !== null ? older : text(' ');
 }
 
 /**

@@ -180,26 +180,39 @@ module.exports = function (
 	}
 
 	/**
-	 * Stream
+	 * Enctype
 	 *
-	 * @param {Any} subject
+	 * @param {Any}
+	 * @return {String}
 	 */
-	function Stream (newer) {
-		this.stack = [newer];
-
-		Readable.call(this);
+	function enctype (subject) {
+		switch (subject.constructor) {
+			case Object: return 'application/json';
+			default: return 'text/html';
+		}
 	}
 
 	/**
-	 * Stream Reader
+	 * Reader
 	 *
 	 * @return {void}
 	 */
 	function read () {
-		var stack = this.stack;
+		var stack = this._stack;
 		var size = stack.length;
 
 		if (size === 0) {
+			if (this._target !== null) {
+				var target = this._target;
+
+				// invalidate cache
+				if (this._cache === true && target.getHeader !== void 0 && !target.getHeader('Last-Modified')) {
+					target.setHeader('Last-Modified', new Date()+'');
+				}
+
+				this._target = null;
+			}
+
 			// end
 			this.push(null);
 		} else {
@@ -212,6 +225,18 @@ module.exports = function (
 			} else {
 				// component
 				if (newer.group !== STRING) {
+					var type = newer.type;
+					var cache = type._cache;
+
+					if (cache !== void 0) {
+						if (cache === newer.key) {
+							return newer._payload;
+						} else {
+							this._cache = true;
+							return newer.toString();
+						}
+					}
+
 					// composite
 					while (newer.group !== STRING) {
 						newer = extract(newer, false);
@@ -234,7 +259,6 @@ module.exports = function (
 						if (newer.attrs !== OBJECT && newer.attrs.innerHTML !== void 0) {
 							this.push(newer.attrs.innerHTML);
 						} else {
-							var type = newer.type;
 							var tag = newer.tag;
 							var children = newer.children;
 							var length = children.length;
@@ -269,7 +293,20 @@ module.exports = function (
 	}
 
 	/**
-	 * Stream Prototype
+	 * Stream
+	 *
+	 * @param {Any} parent
+	 */
+	function Stream (parent) {
+		this._target = null;
+		this._cache = false;
+		this._stack = [shape(parent, null, false)];
+
+		Readable.call(this);
+	}
+
+	/**
+	 * Prototype
 	 *
 	 * @type {Object}
 	 */
@@ -279,6 +316,15 @@ module.exports = function (
 	});
 
 	/**
+	 * To Stream [Prototype]
+	 *
+	 * @return {Stream}
+	 */
+	function toStream () {
+		return new Stream(this);
+	}
+
+	/**
 	 * To String [Prototype]
 	 *
 	 * @return {String}
@@ -286,12 +332,24 @@ module.exports = function (
 	function toString () {
 		var newer = this;
 		var group = newer.group;
+		var type = newer.type;
 
 		if (group !== STRING) {
+			var cache = type._cache;
+
+			if (cache !== void 0) {
+				// invalidated cache
+				if (cache !== newer.key) {
+					type._cache = newer.key;
+					type._payload = extract(newer, false).toString();
+				}
+
+				return type._payload;
+			}
+
 			return extract(newer, false).toString();
 		}
 
-		var type = newer.type;
 		var flag = newer.flag;
 		var tag = newer.tag;
 		var children = newer.children;
@@ -315,22 +373,13 @@ module.exports = function (
 	}
 
 	/**
-	 * To Stream [Prototype]
-	 *
-	 * @return {Stream}
-	 */
-	function toStream () {
-		return new Stream(shape(this, null, false));
-	}
-
-	/**
 	 * String Render
 	 *
-	 * @param {Any} newer
+	 * @param {Any} subject
 	 * @return {String}
 	 */
-	function renderToString (newer) {
-		return shape(newer, null, false).toString();
+	function renderToString (subject) {
+		return shape(subject, null, false).toString();
 	}
 
 	/**
@@ -340,28 +389,87 @@ module.exports = function (
 	 * @return {Stream}
 	 */
 	function renderToStream (subject) {
-		return new Stream(shape(subject, null, false));
+		return shape(subject, null, false).toStream();
 	}
 
 	/**
 	 * Server Render
 	 *
 	 * @param {Any} subject
-	 * @param {Node|Stream?} container
+	 * @param {Node|Stream?} target
 	 * @param {Function?} callback
 	 */
-	exports.render = function (subject, container, callback) {
-		if (container === void 0 || container === null || container.writable === void 0) {
-			return render(subject, container, callback);
+	exports.render = function (subject, target, callback) {
+		if (target !== void 0 && target !== null && target.writable !== void 0) {
+			var newer = new Stream(subject);
+
+			if (!target.getHeader('Content-Type')) {
+				if (subject !== null && subject !== void 0) {
+					target.setHeader('Content-Type', enctype(subject));
+				}
+			}
+
+			if (callback !== void 0 && callback !== null && callback.constructor === Function) {
+				newer.on('end', callback);
+			}
+
+			return newer.pipe(newer._target = target);
 		}
 
-		var newer = new Stream(shape(subject, null, false));
+		return render(subject, target, callback);
+	}
 
-		if (callback !== void 0 && callback !== null && callback.constructor === Function) {
-			newer.on('end', callback);
+	/**
+	 * Cache
+	 *
+	 * @param {Any} subject
+	 * @return {String}
+	 */
+	function renderToCache (subject) {
+		if (subject === void 0 || subject === null) {
+			return ' '
 		}
 
-		newer.pipe(container);
+		switch (subject.constructor) {
+			case Array: {
+				var length = newer.length;
+
+				if (length === 0) {
+					return ' ';
+				}
+
+				for (var i = 0, out = ''; i < length; i++) {
+					out += renderToCache(subject[i]);
+				}
+
+				return out;
+			}
+			case Function: {
+				if (subject._cache === void 0) {
+					subject._payload = shape(subject, null, false).toString();
+					subject._cache = null;
+				}
+
+				return subject._payload;
+			}
+			default: {
+				var group = subject.group;
+
+				if (group !== void 0 && group !== STRING) {
+					var type = subject.type;
+
+					if (type._cache === void 0) {
+						type._payload = renderToCache(type);
+						type._cache = subject.key;
+					} else if (type._cache !== subject.key) {
+						// invalidate cache
+						type._cache = void 0;
+					}
+
+					return renderToCache(subject.type);
+				}
+			}
+		}
 	}
 
 	/**
@@ -373,4 +481,5 @@ module.exports = function (
 	exports.shallow = shallow;
 	exports.renderToString = renderToString;
 	exports.renderToStream = renderToStream;
+	exports.renderToCache = renderToCache;
 };

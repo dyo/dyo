@@ -125,7 +125,7 @@ function push (newer, index, value) {
 	var child;
 
 	if (value === null || value === void 0) {
-		child = text('');
+		child = text(' ');
 	} else if (value.group !== void 0) {
 		if (newer.keyed === 0 && value.key !== null) {
 			newer.keyed = 1;
@@ -134,8 +134,12 @@ function push (newer, index, value) {
 		child = value;
 	} else {
 		switch (value.constructor) {
-			case Number:
 			case String: {
+				if (value.length === 0) {
+					value = ' ';
+				}
+			}
+			case Number:{
 				child = new Tree(TEXT);
 				child.type = child.tag = '#text';
 				child.children = value;
@@ -160,7 +164,7 @@ function push (newer, index, value) {
 				break;
 			}
 			default: {
-				child = text('');
+				child = text(' ');
 				break;
 			}
 		}
@@ -221,6 +225,7 @@ function fragment (children) {
 	var newer = new Tree(FRAGMENT);
 
 	newer.tag = newer.type = 'div';
+	newer.children = children;
 
 	for (var i = 0, index = 0, length = children.length; i < length; i++) {
 		index = push(newer, index, children[i]);
@@ -253,7 +258,7 @@ function stringify (value) {
 	try {
 		return element('pre', null, JSON.stringify(value, null, 2));
 	} catch (err) {
-		return text('');
+		return text(' ');
 	}
 }
 

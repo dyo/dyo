@@ -24,16 +24,31 @@ module.exports = ({h, shallow, render}) => {
 		ok(h('h1', 'Faz').toString() === '<h1>Faz</h1>', 'render toString');
 		ok(dio.renderToString('Hello') === 'Hello' && dio.renderToString(1) === '1', 'render text');
 
+		const destination = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString();
+	      callback();
+		  }
+		});
+
 		var output = '';
 		var source = dio.renderToStream(h('h1', 1, 2, h('p', 'Hello'), h('span'), h('img')));
 
-		source.on('data', function (payload) {
-			output += payload.toString();
-		});
+		source.pipe(destination);
 
-		source.on('end', function (payload) {
+		source.on('end', () => {
 			ok(output === '<h1>12<p>Hello</p><span></span><img></h1>', 'render stream');
 			end();
 		});
+
+		function foo () {
+			return h('h1', 'Hello');
+		}
+
+		console.log(
+			dio.renderToCache(h(foo)),
+			dio.renderToCache(h(foo)),
+			dio.renderToCache(h(foo))
+		)
 	});
 }

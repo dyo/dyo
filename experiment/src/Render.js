@@ -10,7 +10,7 @@ function render (subject, container, callback) {
 	var target = container;
 
 	if (newer === void 0 || newer === null) {
-		newer = text('');
+		newer = text(' ');
 	} else if (newer.flag === void 0) {
 		newer = shape(newer, null, false);
 	}

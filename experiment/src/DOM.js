@@ -254,18 +254,18 @@ function setEvent (older, type, value, action) {
 	var name = type.toLowerCase().substring(2);
 	var host = older.host;
 	var node = older.node;
-	var fns = node._fns;
+	var evnt = node.evnt;
 
-	if (fns === void 0) {
-		fns = node._fns = {};
+	if (evnt === void 0) {
+		evnt = node.evnt = {};
 	}
 
 	switch (action) {
 		case 0: {
 			node.removeEventListener(name, eventProxy);
 
-			if (node._this !== void 0) {
-				node._this = null;
+			if (evnt.host !== void 0) {
+				evnt.host = null;
 			}
 			break;
 		}
@@ -274,12 +274,12 @@ function setEvent (older, type, value, action) {
 		}
 		case 2: {
 			if (host !== null && host.group === CLASS) {
-				node._this = older;
+				evnt.host = host;
 			}
 		}
 	}
 
-	fns[name] = value;
+	evnt[name] = value;
 }
 
 /**
@@ -288,17 +288,15 @@ function setEvent (older, type, value, action) {
  * @param {Event} e
  */
 function eventProxy (e) {
-	var node = this;
-	var fns = node._fns;
-	var fn = fns[e.type];
+	var evnt = this.evnt;
+	var host = evnt.host;
+	var func = evnt[e.type];
 
-	if (fn !== null && fn !== void 0) {
-		var older = node._this;
-
-		if (older !== void 0) {
-			eventBoundary(older, older.host.owner, fn, e);
+	if (func !== null && func !== void 0) {
+		if (host !== void 0) {
+			eventBoundary(host, host.owner, func, e);
 		} else {
-			fn.call(node, e);
+			func.call(this, e);
 		}
 	}
 }

@@ -433,7 +433,7 @@
 		var child;
 	
 		if (value === null || value === void 0) {
-			child = text('');
+			child = text(' ');
 		} else if (value.group !== void 0) {
 			if (newer.keyed === 0 && value.key !== null) {
 				newer.keyed = 1;
@@ -442,8 +442,12 @@
 			child = value;
 		} else {
 			switch (value.constructor) {
-				case Number:
 				case String: {
+					if (value.length === 0) {
+						value = ' ';
+					}
+				}
+				case Number:{
 					child = new Tree(TEXT);
 					child.type = child.tag = '#text';
 					child.children = value;
@@ -468,7 +472,7 @@
 					break;
 				}
 				default: {
-					child = text('');
+					child = text(' ');
 					break;
 				}
 			}
@@ -529,6 +533,7 @@
 		var newer = new Tree(FRAGMENT);
 	
 		newer.tag = newer.type = 'div';
+		newer.children = children;
 	
 		for (var i = 0, index = 0, length = children.length; i < length; i++) {
 			index = push(newer, index, children[i]);
@@ -561,7 +566,7 @@
 		try {
 			return element('pre', null, JSON.stringify(value, null, 2));
 		} catch (err) {
-			return text('');
+			return text(' ');
 		}
 	}
 	
@@ -820,7 +825,13 @@
 		errorMessage(component, location, message instanceof Error ? message.stack : message);
 	
 		if (type === 3) {
-			return newer === void 0 && older !== SHARED ? older : shape(newer, older, true);
+			if (newer === void 0 && older !== SHARED && older.node !== null) {
+				// last non-error state
+				return older;
+			} else {
+				// authored/default error state
+				return shape(newer, older, true);
+			}
 		}
 	}
 	
@@ -1125,34 +1136,38 @@
 	 			var children = newer.children;
 				var length = children.length;
 	
-	 			if (flag === ELEMENT) {
-	 				var tag = newer.tag;
+				switch (flag) {
+					case PORTAL: {
+						newer.node = newer.type;
+						break;
+					}
+					default: {
+		 				var tag = newer.tag;
 	
-	 				// cache namespace
-	 				if (newer.xmlns !== null) {
-	 					xmlns = newer.xmlns;
-	 				}
+		 				// cache namespace
+		 				if (newer.xmlns !== null) {
+		 					xmlns = newer.xmlns;
+		 				}
 	
-		 			// namespace(implicit) svg/math roots
-		 			switch (tag) {
-		 				case 'svg': xmlns = svg; break;
-		 				case 'math': xmlns = math; break;
-		 			}
+			 			// namespace(implicit) svg/math roots
+			 			switch (tag) {
+			 				case 'svg': xmlns = svg; break;
+			 				case 'math': xmlns = math; break;
+			 				case '!doctype': tag = 'html'; break;
+			 			}
 	
-	 				node = createElement(tag, newer, host, xmlns);
+		 				node = createElement(tag, newer, host, xmlns);
 	
-		 			// error
-		 			if (newer.flag === ERROR) {
-		 				create(node, parent, sibling, action, host, xmlns);
-		 				assign(newer, node, newer.group === 0);
-		 				return;
-		 			}
+			 			// error
+			 			if (newer.flag === ERROR) {
+			 				create(node, parent, sibling, action, host, xmlns);
+			 				assign(newer, node, newer.group === 0);
+			 				return;
+			 			}
 	
-		 			newer.node = node;
-	 			} else {
-	 				// portal
-	 				newer.node = newer.type;
-	 			}
+			 			newer.node = node;
+					}
+				}
 	
 	 			if (length > 0) {
 	 				for (var i = 0; i < length; i++) {
@@ -1278,51 +1293,45 @@
 	 * @return {Tree}
 	 */
 	function shape (value, older, abstract) {
-		var newer = (value !== null && value !== void 0) ? value : text('');
+		var newer = (value !== null && value !== void 0) ? value : text(' ');
 	
 		if (newer.group === void 0) {
 			switch (newer.constructor) {
 				case Function: {
-					if (older === null) {
-						newer = element(newer, older);
-					} else {
-						newer = element(newer, older.props);
-					}
+					newer = element(newer);
 					break;
 				}
-				case String:
+				case String: {
+					if (newer.length === 0) {
+						newer = ' ';
+					}
+				}
 				case Number: {
 					return text(newer);
 				}
+				case Array: {
+					return fragment(newer);
+				}
+				case Date: {
+					return text(newer.toString());
+				}
+				case Object: {
+					return stringify(newer);
+				}
+				case Promise: {
+					if (older !== null && older.flag !== EMPTY) {
+						return resolve(older, newer);
+					}
+				}
 				case Boolean: {
-					return text('');
+					return text(' ');
 				}
 				default: {
-					switch (newer.constructor) {
-						case Promise: {
-							if (older === null || older.flag === EMPTY) {
-								return text('');
-							} else {
-								return resolve(older, newer);
-							}
-						}
-						case Array: {
-							return fragment(newer);
-						}
-						case Date: {
-							return text(newer.toString());
-						}
-						case Object: {
-							return stringify(newer);
-						}
-						default: {
-							if (newer.next !== void 0 && older !== null) {
-								newer = coroutine(older, newer);
-							} else {
-								return text('');
-							}
-						}
+					if (older === null || newer.next === void 0) {
+						return text(' ');
 					}
+	
+					newer = coroutine(older, newer);
 				}
 			}
 		}
@@ -1359,7 +1368,7 @@
 			}
 		});
 	
-		return older.node !== null ? older : text('');;
+		return older.node !== null ? older : text(' ');
 	}
 	
 	/**
@@ -1566,7 +1575,7 @@
 		var target = container;
 	
 		if (newer === void 0 || newer === null) {
-			newer = text('');
+			newer = text(' ');
 		} else if (newer.flag === void 0) {
 			newer = shape(newer, null, false);
 		}
@@ -2301,18 +2310,18 @@
 		var name = type.toLowerCase().substring(2);
 		var host = older.host;
 		var node = older.node;
-		var fns = node._fns;
+		var evnt = node.evnt;
 	
-		if (fns === void 0) {
-			fns = node._fns = {};
+		if (evnt === void 0) {
+			evnt = node.evnt = {};
 		}
 	
 		switch (action) {
 			case 0: {
 				node.removeEventListener(name, eventProxy);
 	
-				if (node._this !== void 0) {
-					node._this = null;
+				if (evnt.host !== void 0) {
+					evnt.host = null;
 				}
 				break;
 			}
@@ -2321,12 +2330,12 @@
 			}
 			case 2: {
 				if (host !== null && host.group === CLASS) {
-					node._this = older;
+					evnt.host = host;
 				}
 			}
 		}
 	
-		fns[name] = value;
+		evnt[name] = value;
 	}
 	
 	/**
@@ -2335,17 +2344,15 @@
 	 * @param {Event} e
 	 */
 	function eventProxy (e) {
-		var node = this;
-		var fns = node._fns;
-		var fn = fns[e.type];
+		var evnt = this.evnt;
+		var host = evnt.host;
+		var func = evnt[e.type];
 	
-		if (fn !== null && fn !== void 0) {
-			var older = node._this;
-	
-			if (older !== void 0) {
-				eventBoundary(older, older.host.owner, fn, e);
+		if (func !== null && func !== void 0) {
+			if (host !== void 0) {
+				eventBoundary(host, host.owner, func, e);
 			} else {
-				fn.call(node, e);
+				func.call(this, e);
 			}
 		}
 	}

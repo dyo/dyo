@@ -78,7 +78,7 @@ module.exports = ({h, shallow, render}) => {
 		ok(container.innerHTML === '<h1 id="1">2</h1>', 'render class');
 
 		render(null, container);
-		ok(container.innerHTML === '', 'render null');
+		ok(container.innerHTML === ' ', 'render null');
 
 		render('hello', container);
 		ok(container.innerHTML === 'hello', 'render text');
