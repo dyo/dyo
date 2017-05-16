@@ -1,4 +1,4 @@
-/// <reference path="../dist/dio.d.ts" />
+/// <reference path="../dio.d.ts" />
 
 class A extends dio.Component<any> {
 	render() {

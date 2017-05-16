@@ -1,17 +1,17 @@
 /**
  * ## Constants
  */
-var browser = global.window === global;
-var server = browser === false && typeof __webpack_require__ === 'undefined';
+var browser = self.window === self;
+var server = browser === false;
 var body = null;
 var svg = 'http://www.w3.org/2000/svg';
 var xlink = 'http://www.w3.org/1999/xlink';
 var math = 'http://www.w3.org/1998/Math/MathML';
 
 var noop = function () {};
-var Promise = global.Promise || noop;
-var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
-var requestIdleCallback = global.requestIdleCallback || setTimeout;
+var Promise = self.Promise || noop;
+var requestAnimationFrame = self.requestAnimationFrame || setTimeout;
+var requestIdleCallback = self.requestIdleCallback || setTimeout;
 
 var READY = 0;
 var PROCESSING = 1;

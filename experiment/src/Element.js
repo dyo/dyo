@@ -338,4 +338,4 @@ function Tree (flag) {
  *
  * @type {Object}
  */
-var TreePrototype = Tree.prototype = element.prototype = Object.create(null);
+Tree.prototype = element.prototype = Object.create(null);

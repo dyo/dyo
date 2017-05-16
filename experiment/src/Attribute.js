@@ -73,21 +73,24 @@ function attribute (newer, xmlns, event) {
  */
 function attributes (older, newer) {
 	var node = older.node;
-	var prevs = older.attrs;
-	var attrs = newer.attrs;
+	var previous = older.attrs;
+	var current = newer.attrs;
 
-	if (prevs === attrs && attrs === ATTRS) {
+	if (previous === current && current === ATTRS) {
 		return;
 	}
 
 	var xmlns = older.xmlns;
+	var type;
+	var next;
+	var prev;
 
 	// old attributes
-	for (var name in prevs) {
-		var type = whitelist(name);
+	for (var name in previous) {
+		type = whitelist(name);
 
 		if (type < 31) {
-			var next = attrs[name];
+			next = current[name];
 
 			if (next === null || next === void 0) {
 				if (type < 20) {
@@ -95,23 +98,23 @@ function attributes (older, newer) {
 				} else if (type > 20) {
 					setEvent(older, name, next, 0);
 				}
-			} else if (type === 30 && next !== (prev = prevs[name])) {
+			} else if (type === 30 && next !== (prev = previous[name])) {
 				refs(older, prev, 0);
 			}
 		}
 	}
 
 	// new attributes
-	for (var name in attrs) {
-		var type = whitelist(name);
+	for (var name in current) {
+		type = whitelist(name);
 
 		if (type < 31) {
-			var next = attrs[name];
+			next = current[name];
 
 			if (type === 30) {
 				refs(older, next, 2);
 			} else {
-				var prev = prevs[name];
+				prev = previous[name];
 
 				if (next !== prev && next !== null && next !== void 0) {
 					if (type < 20) {
@@ -126,7 +129,7 @@ function attributes (older, newer) {
 		}
 	}
 
-	older.attrs = attrs;
+	older.attrs = current;
 }
 
 /**

@@ -3,7 +3,7 @@
  *
  * @type {Object}
  */
-var exports = {
+var dio = {
 	version: '7.0.0',
 	h: element,
 	createElement: element,
@@ -11,43 +11,19 @@ var exports = {
 	Component: Component
 };
 
-global.h = element;
+self.h = element;
 
 /**
  * Server
  */
 if (server === true) {
-	require('./dio.server.js')(
-		exports,
-		element,
-		shape,
-		extract,
-		whitelist,
-		render,
-		stringify,
-
-		CHILDREN,
-		PROPS,
-		ATTRS,
-
-		READY,
-		PROCESSING,
-		PROCESSED,
-		PENDING,
-
-		STRING,
-		FUNCTION,
-		CLASS,
-		NOOP,
-
-		EMPTY,
-		TEXT,
-		ELEMENT,
-		COMPOSITE,
-		FRAGMENT,
-		ERROR,
-		PORTAL
+	__require__('./dio.server.js')(
+		dio, element, shape, extract, whitelist, render,
+		CHILDREN, PROPS, ATTRS,
+		READY, PROCESSING, PROCESSED, PENDING,
+		STRING, FUNCTION, CLASS, NOOP,
+		EMPTY, TEXT, ELEMENT, COMPOSITE, FRAGMENT, ERROR, PORTAL
 	);
 }
 
-return exports;
+return dio;

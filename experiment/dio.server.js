@@ -1,33 +1,9 @@
 module.exports = function (
-	exports,
-	element,
-	shape,
-	extract,
-	whitelist,
-	render,
-	stringify,
-
-	CHILDREN,
-	PROPS,
-	ATTRS,
-
-	READY,
-	PROCESSING,
-	PROCESSED,
-	PENDING,
-
-	STRING,
-	FUNCTION,
-	CLASS,
-	NOOP,
-
-	EMPTY,
-	TEXT,
-	ELEMENT,
-	COMPOSITE,
-	FRAGMENT,
-	ERROR,
-	PORTAL
+	dio, element, shape, extract, whitelist, render,
+	CHILDREN, PROPS, ATTRS,
+	READY, PROCESSING, PROCESSED, PENDING,
+	STRING, FUNCTION, CLASS, NOOP,
+	EMPTY, TEXT, ELEMENT, COMPOSITE, FRAGMENT, ERROR, PORTAL
 ) {
 	var contentType = 'Content-Type';
 	var encodingType = 'text/html';
@@ -389,7 +365,7 @@ module.exports = function (
 	 * @param {Node|Stream?} target
 	 * @param {Function?} callback
 	 */
-	exports.render = function (subject, target, callback) {
+	dio.render = function (subject, target, callback) {
 		if (target !== void 0 && target !== null && target.writable !== void 0) {
 			var newer = new Stream(subject);
 
@@ -405,6 +381,7 @@ module.exports = function (
 							encodingType = 'text/html';
 						}
 					}
+
 					target.setHeader(contentType, encodingType);
 				}
 			}
@@ -424,6 +401,6 @@ module.exports = function (
 	 */
 	element.prototype.toString = toString;
 
-	exports.shallow = shallow;
-	exports.stream = stream;
+	dio.shallow = shallow;
+	dio.stream = stream;
 };

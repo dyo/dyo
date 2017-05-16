@@ -2,7 +2,7 @@
 <body>
 <div id=main></div>
 
-<script src="../../dist/dio.js"></script>
+<script src="../../dio.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 <style>
 	body {padding: 10px 0 0 0;margin: 0;overflow-y: scroll;}
@@ -165,7 +165,7 @@ class Main {
     this.state.store.swapRows();
     this.forceUpdate();
   }
-	handleClick(props, state, e) {
+	handleClick(e) {
 		// event delegation
 		var target = e.target;
 		var value = target.value;
@@ -220,7 +220,7 @@ class Main {
       	)
       ),
       h('table', {className: 'table table-hover table-striped test-data'},
-        h('tbody', data.map(({id, label}) => {
+        h('tbody', {onClick: this.handleClick}, data.map(({id, label}) => {
         		return h('tr', {key: id, className: id === selected ? 'danger' : ''},
         			h('td', {className: 'col-md-1'}, id),
         			h('td', {className: 'col-md-4'},

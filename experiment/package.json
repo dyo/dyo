@@ -1,7 +1,7 @@
 {
 	"name": "dio.js",
-	"main": "dist/dio.js",
-	"types": "dist/dio.d.ts",
+	"main": "dio.js",
+	"types": "dio.d.ts",
 	"description": "a javascript framework for building applications",
 	"version": "7.0.0",
 	"homepage": "https://github.com/thysultan/dio.js",
@@ -24,10 +24,10 @@
 		"url": "https://github.com/thysultan/dio.js/issues"
 	},
 	"files": [
-		"dist/dio.js",
-		"dist/dio.min.js",
-		"dist/dio.server.js",
-		"dist/dio.d.ts"
+		"dio.js",
+		"dio.min.js",
+		"dio.server.js",
+		"dio.d.ts"
 	],
 	"scripts": {
 		"test": "node ./tests",

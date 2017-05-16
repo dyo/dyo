@@ -43,18 +43,18 @@ const wrapper = (module, body) => {
 
 const build = (module, files, location) => {
 	const content = wrapper(module, files.map(bundler).join('\n'))
-	const bundle = content.open + content.body + content.close
+	const bundle = content.open + content.body + content.close;
 
 	fs.writeFileSync(path.join(__dirname, location), bundle)
 }
 
 const bootstrap = () => {
-	build('main', main, '../dist/dio.js')
-	build('server', server, '../dist/dio.server.js')
+	build('main', main, '../dio.js')
+	build('server', server, '../dio.server.js')
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' +
-	 	'\nbuild > ../dist/dio.js'+
+	 	'\nbuild > ../dio.js'+
 		'\x1b[0m\n'
 	)
 }

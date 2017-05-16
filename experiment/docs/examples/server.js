@@ -1,6 +1,5 @@
-var http = require('http');
-var fs = require('fs');
-var dio = require('./dist/dio.js');
+const http = require('http');
+const dio = require('../../dio.js');
 
 http.createServer(function (request, response) {
 	const webpage = (
@@ -16,13 +15,17 @@ http.createServer(function (request, response) {
 		)
 	);
 
-	// render to string
+	// render string
 	// response.end(`${webpage}`)
-	// json responses
+
+	// render json responses
   // dio.render({json: true}, response)
-  // render to stream
-  dio.render(webpage, response)
+
+  // streams
   // dio.stream(webpage).pipe(response)
+
+  // stream to response
+  dio.render(webpage, response)
 }).listen(2000, () => {
 	console.log('\nrunning on: http://127.0.0.1:2000');
 });

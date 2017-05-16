@@ -4,34 +4,35 @@
  *  ) ) )( () )
  * (___(__\__/
  *
- * a javascript library for building user interfaces
+ * a library for building user interfaces
  */
+/* eslint-disable */
 (function (factory) {
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
-		module.exports = factory(global);
+		module.exports = factory(global, require);
 	} else if (typeof define === 'function' && define.amd) {
-		define(factory(window));
+		define(factory(window, null));
 	} else {
-		window.dio = factory(window);
+		window.dio = factory(window, null);
 	}
-}(function (global) {
+}(function (self, __require__) {
 
 	'use strict';
 
 	/**
 	 * ## Constants
 	 */
-	var browser = global.window === global;
-	var server = browser === false && typeof __webpack_require__ === 'undefined';
+	var browser = self.window === self;
+	var server = browser === false;
 	var body = null;
 	var svg = 'http://www.w3.org/2000/svg';
 	var xlink = 'http://www.w3.org/1999/xlink';
 	var math = 'http://www.w3.org/1998/Math/MathML';
 	
 	var noop = function () {};
-	var Promise = global.Promise || noop;
-	var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
-	var requestIdleCallback = global.requestIdleCallback || setTimeout;
+	var Promise = self.Promise || noop;
+	var requestAnimationFrame = self.requestAnimationFrame || setTimeout;
+	var requestIdleCallback = self.requestIdleCallback || setTimeout;
 	
 	var READY = 0;
 	var PROCESSING = 1;
@@ -153,7 +154,6 @@
 		var newState = state !== void 0 && state !== null ? state : {};
 		var oldState = owner.state;
 		var constructor = newState.constructor;
-		var older = null;
 	
 		if (constructor === Function) {
 			newState = callbackBoundary(SHARED, owner, newState, oldState, 0);
@@ -246,10 +246,10 @@
 		if (state !== void 0 && state !== null) {
 			switch (state.constructor) {
 				case Promise: {
-					var fn = function (value) {
+					var func = function (value) {
 						older.owner.setState(value);
 					};
-					state.then(fn).catch(fn);
+					state.then(func).catch(func);
 					break;
 				}
 				case Object: {
@@ -264,17 +264,17 @@
 	 * Get Initial Static
 	 *
 	 * @param  {Function} owner
-	 * @param  {Function} fn
+	 * @param  {Function} func
 	 * @param  {String} type
 	 * @param  {Object} props
 	 * @return {Object?}
 	 */
-	function getInitialStatic (owner, fn, type, props) {
-		if (typeof fn !== 'function') {
-			return fn;
+	function getInitialStatic (owner, func, type, props) {
+		if (typeof func !== 'function') {
+			return func;
 		}
 	
-		var value = callbackBoundary(SHARED, owner, fn, props, 0);
+		var value = callbackBoundary(SHARED, owner, func, props, 0);
 	
 		if (value !== void 0 && value !== null) {
 			return Object.defineProperty(owner, type, {value: value});
@@ -646,7 +646,7 @@
 	 *
 	 * @type {Object}
 	 */
-	var TreePrototype = Tree.prototype = element.prototype = Object.create(null);
+	Tree.prototype = element.prototype = Object.create(null);
 	
 	/**
 	 * Data Boundary
@@ -755,16 +755,28 @@
 	/**
 	 * Events Boundary
 	 *
-	 * @param {Tree} older
-	 * @param {Component} owner
-	 * @param {Function} fn
 	 * @param {Event} e
 	 */
-	function eventBoundary (older, owner, fn, e) {
-		try {
-			return returnBoundary(older, fn.call(owner, e), owner, e, true);
-		} catch (err) {
-			errorBoundary(err, older, owner, 5, fn);
+	function eventBoundary (e) {
+		var handlers = this.that;
+		var host = handlers.host;
+		var func = handlers[e.type];
+	
+		if (func !== null && func !== void 0) {
+			if (host !== void 0) {
+				try {
+					var owner = host.owner;
+					var result = func.call(owner, e);
+	
+					if (result !== void 0) {
+						returnBoundary(host, result, owner, e, true);
+					}
+				} catch (err) {
+					errorBoundary(err, host, owner, 5, func);
+				}
+			} else {
+				func.call(this, e);
+			}
 		}
 	}
 	
@@ -865,7 +877,6 @@
 			}
 			case 3: {
 				return 'render';
-				break;
 			}
 			case 4: {
 				switch (from) {
@@ -970,21 +981,24 @@
 	 */
 	function attributes (older, newer) {
 		var node = older.node;
-		var prevs = older.attrs;
-		var attrs = newer.attrs;
+		var previous = older.attrs;
+		var current = newer.attrs;
 	
-		if (prevs === attrs && attrs === ATTRS) {
+		if (previous === current && current === ATTRS) {
 			return;
 		}
 	
 		var xmlns = older.xmlns;
+		var type;
+		var next;
+		var prev;
 	
 		// old attributes
-		for (var name in prevs) {
-			var type = whitelist(name);
+		for (var name in previous) {
+			type = whitelist(name);
 	
 			if (type < 31) {
-				var next = attrs[name];
+				next = current[name];
 	
 				if (next === null || next === void 0) {
 					if (type < 20) {
@@ -992,23 +1006,23 @@
 					} else if (type > 20) {
 						setEvent(older, name, next, 0);
 					}
-				} else if (type === 30 && next !== (prev = prevs[name])) {
+				} else if (type === 30 && next !== (prev = previous[name])) {
 					refs(older, prev, 0);
 				}
 			}
 		}
 	
 		// new attributes
-		for (var name in attrs) {
-			var type = whitelist(name);
+		for (var name in current) {
+			type = whitelist(name);
 	
 			if (type < 31) {
-				var next = attrs[name];
+				next = current[name];
 	
 				if (type === 30) {
 					refs(older, next, 2);
 				} else {
-					var prev = prevs[name];
+					prev = previous[name];
 	
 					if (next !== prev && next !== null && next !== void 0) {
 						if (type < 20) {
@@ -1023,7 +1037,7 @@
 			}
 		}
 	
-		older.attrs = attrs;
+		older.attrs = current;
 	}
 	
 	/**
@@ -2100,16 +2114,7 @@
 	 * @return {Node?}
 	 */
 	function documentElement () {
-		return global.document !== void 0 ? (document.body || document.documentElement) : null;
-	}
-	
-	/**
-	 * Parent
-	 *
-	 * @return {Node}
-	 */
-	function parentNode (older) {
-		return older.node.parentNode;
+		return self.document !== void 0 ? (document.body || document.documentElement) : null;
 	}
 	
 	/**
@@ -2310,51 +2315,32 @@
 		var name = type.toLowerCase().substring(2);
 		var host = older.host;
 		var node = older.node;
-		var evnt = node.evnt;
+		var handlers = node.that;
 	
-		if (evnt === void 0) {
-			evnt = node.evnt = {};
+		if (handlers === void 0) {
+			handlers = node.that = {};
 		}
 	
 		switch (action) {
 			case 0: {
-				node.removeEventListener(name, eventProxy);
+				node.removeEventListener(name, eventBoundary);
 	
-				if (evnt.host !== void 0) {
-					evnt.host = null;
+				if (handlers.host !== void 0) {
+					handlers.host = null;
 				}
 				break;
 			}
 			case 1: {
-				node.addEventListener(name, eventProxy);
+				node.addEventListener(name, eventBoundary);
 			}
 			case 2: {
 				if (host !== null && host.group === CLASS) {
-					evnt.host = host;
+					handlers.host = host;
 				}
 			}
 		}
 	
-		evnt[name] = value;
-	}
-	
-	/**
-	 * Proxy
-	 *
-	 * @param {Event} e
-	 */
-	function eventProxy (e) {
-		var evnt = this.evnt;
-		var host = evnt.host;
-		var func = evnt[e.type];
-	
-		if (func !== null && func !== void 0) {
-			if (host !== void 0) {
-				eventBoundary(host, host.owner, func, e);
-			} else {
-				func.call(this, e);
-			}
-		}
+		handlers[name] = value;
 	}
 	
 	/**
@@ -2500,7 +2486,7 @@
 	 *
 	 * @type {Object}
 	 */
-	var exports = {
+	var dio = {
 		version: '7.0.0',
 		h: element,
 		createElement: element,
@@ -2508,45 +2494,21 @@
 		Component: Component
 	};
 	
-	global.h = element;
+	self.h = element;
 	
 	/**
 	 * Server
 	 */
 	if (server === true) {
-		require('./dio.server.js')(
-			exports,
-			element,
-			shape,
-			extract,
-			whitelist,
-			render,
-			stringify,
-	
-			CHILDREN,
-			PROPS,
-			ATTRS,
-	
-			READY,
-			PROCESSING,
-			PROCESSED,
-			PENDING,
-	
-			STRING,
-			FUNCTION,
-			CLASS,
-			NOOP,
-	
-			EMPTY,
-			TEXT,
-			ELEMENT,
-			COMPOSITE,
-			FRAGMENT,
-			ERROR,
-			PORTAL
+		__require__('./dio.server.js')(
+			dio, element, shape, extract, whitelist, render,
+			CHILDREN, PROPS, ATTRS,
+			READY, PROCESSING, PROCESSED, PENDING,
+			STRING, FUNCTION, CLASS, NOOP,
+			EMPTY, TEXT, ELEMENT, COMPOSITE, FRAGMENT, ERROR, PORTAL
 		);
 	}
 	
-	return exports;
+	return dio;
 	
 }));

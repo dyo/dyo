@@ -44,16 +44,7 @@ function createDocumentFragment () {
  * @return {Node?}
  */
 function documentElement () {
-	return global.document !== void 0 ? (document.body || document.documentElement) : null;
-}
-
-/**
- * Parent
- *
- * @return {Node}
- */
-function parentNode (older) {
-	return older.node.parentNode;
+	return self.document !== void 0 ? (document.body || document.documentElement) : null;
 }
 
 /**
@@ -254,49 +245,30 @@ function setEvent (older, type, value, action) {
 	var name = type.toLowerCase().substring(2);
 	var host = older.host;
 	var node = older.node;
-	var evnt = node.evnt;
+	var handlers = node.that;
 
-	if (evnt === void 0) {
-		evnt = node.evnt = {};
+	if (handlers === void 0) {
+		handlers = node.that = {};
 	}
 
 	switch (action) {
 		case 0: {
-			node.removeEventListener(name, eventProxy);
+			node.removeEventListener(name, eventBoundary);
 
-			if (evnt.host !== void 0) {
-				evnt.host = null;
+			if (handlers.host !== void 0) {
+				handlers.host = null;
 			}
 			break;
 		}
 		case 1: {
-			node.addEventListener(name, eventProxy);
+			node.addEventListener(name, eventBoundary);
 		}
 		case 2: {
 			if (host !== null && host.group === CLASS) {
-				evnt.host = host;
+				handlers.host = host;
 			}
 		}
 	}
 
-	evnt[name] = value;
-}
-
-/**
- * Proxy
- *
- * @param {Event} e
- */
-function eventProxy (e) {
-	var evnt = this.evnt;
-	var host = evnt.host;
-	var func = evnt[e.type];
-
-	if (func !== null && func !== void 0) {
-		if (host !== void 0) {
-			eventBoundary(host, host.owner, func, e);
-		} else {
-			func.call(this, e);
-		}
-	}
+	handlers[name] = value;
 }

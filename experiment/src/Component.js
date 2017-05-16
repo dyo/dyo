@@ -61,7 +61,6 @@ function setState (state, callback) {
 	var newState = state !== void 0 && state !== null ? state : {};
 	var oldState = owner.state;
 	var constructor = newState.constructor;
-	var older = null;
 
 	if (constructor === Function) {
 		newState = callbackBoundary(SHARED, owner, newState, oldState, 0);
@@ -154,10 +153,10 @@ function getInitialState (older, state) {
 	if (state !== void 0 && state !== null) {
 		switch (state.constructor) {
 			case Promise: {
-				var fn = function (value) {
+				var func = function (value) {
 					older.owner.setState(value);
 				};
-				state.then(fn).catch(fn);
+				state.then(func).catch(func);
 				break;
 			}
 			case Object: {
@@ -172,17 +171,17 @@ function getInitialState (older, state) {
  * Get Initial Static
  *
  * @param  {Function} owner
- * @param  {Function} fn
+ * @param  {Function} func
  * @param  {String} type
  * @param  {Object} props
  * @return {Object?}
  */
-function getInitialStatic (owner, fn, type, props) {
-	if (typeof fn !== 'function') {
-		return fn;
+function getInitialStatic (owner, func, type, props) {
+	if (typeof func !== 'function') {
+		return func;
 	}
 
-	var value = callbackBoundary(SHARED, owner, fn, props, 0);
+	var value = callbackBoundary(SHARED, owner, func, props, 0);
 
 	if (value !== void 0 && value !== null) {
 		return Object.defineProperty(owner, type, {value: value});

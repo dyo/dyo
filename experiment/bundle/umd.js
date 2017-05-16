@@ -4,16 +4,17 @@
  *  ) ) )( () )
  * (___(__\__/
  *
- * a javascript library for building user interfaces
+ * a library for building user interfaces
  */
+/* eslint-disable */
 (function (factory) {
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
-		module.exports = factory(global);
+		module.exports = factory(global, require);
 	} else if (typeof define === 'function' && define.amd) {
-		define(factory(window));
+		define(factory(window, null));
 	} else {
-		window.dio = factory(window);
+		window.dio = factory(window, null);
 	}
-}(function (global) {
+}(function (self, __require__) {
 
 	'use strict';

@@ -105,16 +105,28 @@ function callbackBoundary (older, owner, callback, data, type) {
 /**
  * Events Boundary
  *
- * @param {Tree} older
- * @param {Component} owner
- * @param {Function} fn
  * @param {Event} e
  */
-function eventBoundary (older, owner, fn, e) {
-	try {
-		return returnBoundary(older, fn.call(owner, e), owner, e, true);
-	} catch (err) {
-		errorBoundary(err, older, owner, 5, fn);
+function eventBoundary (e) {
+	var handlers = this.that;
+	var host = handlers.host;
+	var func = handlers[e.type];
+
+	if (func !== null && func !== void 0) {
+		if (host !== void 0) {
+			try {
+				var owner = host.owner;
+				var result = func.call(owner, e);
+
+				if (result !== void 0) {
+					returnBoundary(host, result, owner, e, true);
+				}
+			} catch (err) {
+				errorBoundary(err, host, owner, 5, func);
+			}
+		} else {
+			func.call(this, e);
+		}
 	}
 }
 
@@ -215,7 +227,6 @@ function errorLocation (type, from) {
 		}
 		case 3: {
 			return 'render';
-			break;
 		}
 		case 4: {
 			switch (from) {
