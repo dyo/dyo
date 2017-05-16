@@ -58,7 +58,10 @@ module.exports = function (
 			var value = attrs[name];
 
 			switch (whitelist(name)) {
-				case 10: case 21: case 30: case 31: {
+				case 10: {
+					newer.ref = false;
+				}
+				case 21: case 30: case 31: {
 					continue;
 				}
 				case 1: {
@@ -162,8 +165,9 @@ module.exports = function (
 			case 'param':
 			case 'link':
 			case 'input':
-			case 'hr': return 2;
-			case '!doctype': return 1;
+			case 'hr': return 3;
+			case '!doctype': return 2;
+			case 'script': return 1;
 			default: return 0;
 		}
 	}
@@ -192,7 +196,6 @@ module.exports = function (
 	function toString () {
 		var newer = this;
 		var group = newer.group;
-		var type = newer.type;
 
 		if (group !== STRING) {
 			return extract(newer, false).toString();
@@ -208,26 +211,34 @@ module.exports = function (
 
 		var tag = newer.tag;
 		var type = hollow(tag);
-		var body = '<' + tag + attributes(newer) + '>';
+		var chunk = '<' + tag + attributes(newer);
 		var length = 0;
 
-		if (newer.attrs !== ATTRS && newer.attrs.innerHTML !== void 0) {
-			body += newer.attrs.innerHTML;
-		} else if ((length = children.length) > 0) {
-			for (var i = 0; i < length; i++) {
-				body += children[i].toString();
-			}
+		// innerHTML
+		if (newer.ref === false) {
+			chunk += '>' + newer.attrs.innerHTML;
+			newer.ref = null;
+		} else {
+			if ((length = children.length) > 0) {
+				if (type === 2) {
+					chunk += ' ' + (tag = 'html');
+				}
 
-			if (type === 1) {
-				tag = 'html';
+				chunk += '>';
+
+				for (var i = 0; i < length; i++) {
+					chunk += children[i].toString();
+				}
+			} else {
+				chunk += '>';
 			}
 		}
 
-		if (type < 2) {
-			body += '</' + tag + '>';
+		if (type < 3) {
+			chunk += '</' + tag + '>';
 		}
 
-		return body;
+		return chunk;
 	}
 
 	/**
@@ -277,30 +288,45 @@ module.exports = function (
 						break;
 					}
 					default: {
-						chunk = '<' + (tag = newer.tag) + attributes(newer) + '>';
+						var attrs = newer.attrs;
+
+						chunk = '<' + (tag = newer.tag) + attributes(newer);
 
 						// innerHTML
-						if (newer.attrs !== ATTRS && newer.attrs.innerHTML !== void 0) {
-							chunk += newer.attrs.innerHTML;
+						if (newer.ref === false) {
+							chunk += '>' + newer.attrs.innerHTML;
 							pop = false;
 						} else {
 							var children = newer.children;
 							var length = children.length;
+							var type = hollow(tag);
 
 							if (length === 0) {
+								chunk += '>';
+
 								// no children
-								if (hollow(tag) < 1) {
+								if (type < 3) {
 									chunk += '</' + tag + '>';
 								}
-							} else if (length === 1 && children[0].flag === TEXT) {
-								// one text child
-								chunk += sanitize(children[0].children) + '</' + tag + '>';
 							} else {
-								pop = false;
+								if (type === 2) {
+									chunk += ' ' + (tag = 'html');
+								}
 
-								// push children to the stack, from right to left
-								for (var i = length - 1; i >= 0; i--) {
-									stack[size++] = children[i];
+								chunk += '>';
+
+								var child;
+
+								if (length === 1 && (child = children[0]).flag === TEXT) {
+									// one text child
+									chunk += sanitize(child.children) + '</' + tag + '>';
+								} else {
+									pop = false;
+
+									// push children to the stack, from right to left
+									for (var i = length - 1; i >= 0; i--) {
+										stack[size++] = children[i];
+									}
 								}
 							}
 						}

@@ -4,14 +4,15 @@ var dio = require('./dist/dio.js');
 
 http.createServer(function (request, response) {
 	const page = (
-		h('!doctype', {html: true},
+		// h('!doctype', {html: true},
+		h('!doctype',
 	  	h('head',
 	  		h('title', 'Title!'),
 	  		h('style', `h1 {color:red;}`),
-	  		h('script', {defer: true, innerHTML: `console.log(1)`})
+	  		h('script', `console.log('1')`)
 	  	),
 	  	h('body',
-	  		h('h1', 'Hello World')
+	  		h('h1', {innerHTML: 'Hello World'})
 			)
 		)
 	);

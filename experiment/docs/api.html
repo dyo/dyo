@@ -108,6 +108,10 @@ Welcome.prototype = {
 
 		<h2>Functions</h2>
 <pre><code>
+const Welcome = () => {
+	return 'Welcome'
+}
+
 function Welcome () {
 	return 'Welcome'
 }
@@ -308,19 +312,35 @@ dio.render('Hello World', document.body)
 
 		<h2 id=server>Server</h2>
 
-		<p>In a server enviroment the <code>`toString`</code> method of virtual elements returns the element as a string.</p>
+		<p>The recommended way to render from the server is to use <code>`dio.render`</code> which can render to a response object.</p>
+
+<pre><code>
+const http = require('http')
+const dio = require('dio.js')
+
+const page = (
+	h('!doctype', {html: true},
+  	h('head',
+  		h('title', 'Title!'),
+  		h('style', `h1 {color:red;}`),
+  		h('script', `console.log("Hello")`)
+  	),
+  	h('body', 'Hello World')
+	)
+)
+
+const server = (request, response) => {
+	dio.render(page, response)
+}
+
+http.createServer(server).listen(2000)
+</code></pre>
+
+		<p>By design using <code>`dio.render`</code> to render on the server uses streams to send the response in chunks to the client, on the other hand the <code>`toString`</code> method on virtual elements returns the element as a string. Which allows us to do the following to rener a string.</p>
 
 <pre><code>
 `${h('html')}` === `&lt;html>&lt;/html>`
 </code></pre>
-
-		<p>In additon the method<code>`renderToString`</code> is exposed as a public API.</p>
-
-<pre><code>
-dio.renderToString(h('html')) === `&lt;html>&lt;/html>`
-</code></pre>
-
-		<p>Though portals are not rendered on the server-string payload they are rendered when hydrated on the client.</p>
 
 		<h2 id=hydration>Hydration</h2>
 
@@ -338,7 +358,7 @@ dio.render(
 
 		<h2 id=shallow>Shallow</h2>
 
-		<p><code>`dio.shallow`</code> on the other hand does not render to the DOM or a string but rather returns a shallow render of the element. This can then be used for testing purposes.</p>
+		<p><code>`dio.shallow`</code> does not render to the DOM or a string but rather returns a shallow render of the element. This is useful when used for testing purposes.</p>
 
 <pre><code>
 dio.shallow(() => {
@@ -347,6 +367,8 @@ dio.shallow(() => {
 </code></pre>
 
 		<h1 id=version>Version</h1>
+
+		<p>Retrieves the current version of DIO in use, ex. <code>`7.0.0`</code></p>
 
 <pre><code>
 console.log(dio.version)
@@ -397,7 +419,7 @@ class Welcome {
 			<li>Our <code>`componentDidThrow`</code> method detects if the error comes from <code>`render`</code> and responds with an error state.</li>
 		</ol>
 
-		<p>On the other hand if the error happend in the update phase and we did handle it DIO will simply resolve to the last rendered state.</p>
+		<p>On the other hand if the error happend in the update phase and we did not handle it, DIO would simply resolve to the last rendered state.</p>
 
 		<h2 id=non-deterministic>Non-Deterministic</h2>
 
