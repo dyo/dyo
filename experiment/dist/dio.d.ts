@@ -1,5 +1,6 @@
 // enums
 declare enum Flag {
+	Empty = 0,
 	Text = 1,
 	Element = 2,
 	Composite = 3,
@@ -10,8 +11,9 @@ declare enum Flag {
 
 declare enum Async {
 	Ready = 0,
-	Blocked = 1,
-	Pending = 2
+	Processing = 1,
+	Processed = 2,
+	Pending = 3
 }
 
 declare enum Groups {
@@ -21,17 +23,24 @@ declare enum Groups {
 }
 
 // types
-type Key = string | number;
+type Text = string | number;
+type Key = Text;
 type Ref = string | Function;
-type Children = Array<Tree> | Array<any>;
+type Children = Array<Tree>;
 type Type = string | Function | Tree | Node;
-type State = Object | Promise<Object>;
-type Return = State | void;
-type createElement = (type: Type, props?: Props, ...children: Array<any>) => Tree;
+type State = object | null;
+type Return = State | Promise<State> | void;
+type Render = Tree | string | null | Array<any> | Return | Date;
+
+interface createElement {
+	(type: Type, props?: Props, ...children: Array<any>): Tree;
+}
+
+interface h extends createElement {}
 
 // shapes
 interface Event {
-	(e: Event): State | void;
+	(e: Event): Return;
 }
 
 interface Events {
@@ -201,59 +210,91 @@ interface Events {
 }
 
 interface Props extends Events {
-	children?: Children;
+	[props: string]: any;
+	children?: Array<any>;
 	ref?: Ref;
 	key?: Key;
-	className?: any;
-	class?: any;
-	id?: any;
-	checked?: any;
-	value?: any;
-	style?: any;
-	href?: any;
-	width?: any;
-	height?: any;
-	defaultValue?: any;
-	hidden?: any;
-	innerHTML?: any;
+	className?: Text;
+	class?: Text;
+	id?: Text;
+	checked?: boolean;
+	value?: Text;
+	style?: string | object;
+	href?: Text;
+	width?: Text;
+	height?: Text;
+	defaultValue?: Text;
+	hidden?: boolean;
+	innerHTML?: Text;
 }
 
 interface Tree {
 	flag: Flag;
 	type: Type;
 	props: Props;
+	attrs: Props;
 	children: Children;
 	node: Node | null;
-	owner: Object | null;
+	owner: Function | null;
 	parent: Tree | null;
-	key: any;
-	yield: null | Function;
+	key: Key;
+	yield: Function | null;
 	tag: string | null;
 	host: Tree | null;
 	group: Groups;
-	async: number;
+	async: Async;
 	xmlns: string;
-	attrs: Props;
 }
 
-// namespace
-export namespace dio {
-	export const version: string;
+interface render {
+	(subject?: any, container?: Node, callback?: Node | Function): void
+}
 
-	// component
-	export abstract class Component<P> {
-		constructor (props: P);
-		forceUpdate (callback: () => Return): void;
-		setState (state: State, callback: () => Return): void;
-		state: State;
-		props: Props;
-		refs: Object | null;
+
+declare global {
+	namespace dio {
+		interface Component<P> {
+			componentWillUnmount(node: Node): Return;
+		  componentWillMount(node: Node): Return;
+		  componentDidMount(node: Node): Return;
+		  shouldComponentUpdate(nextProps: Props, nextState, State): Boolean | void;
+		  componentWillUpdate(nextProps: Props, nextState, State): Return;
+		  componentDidUpdate(prevProps: Props, prevState, State): Return;
+		}
+
+		export const version;
+		export const h: h;
+		export const createElement;
+		export const render;
+
+		export abstract class Component<P> {
+			constructor (props: P);
+			abstract render(props: Props, state: State): Render;
+			forceUpdate (callback?: () => Return): void;
+			setState (state: State, callback?: () => Return): void;
+			state: State;
+			props: Props;
+			refs: object | null;
+		}
 	}
 
-	// element
-	export const createElement: createElement;
-	export const h: createElement;
+	const h: h;
 
-	// render
-	export function render (subject: any, container: Node, callback: Node | Function): void;
+	namespace JSX {
+		interface Element extends Tree {}
+		interface ElementClass extends dio.Component<Props> {
+			render(props: Props, state: State): Render;
+		}
+		interface ElementAttributesProperty {props: Props;}
+		interface ElementChildrenAttribute {children: Children;}
+
+		interface IntrinsicAttributes extends Props {}
+		interface IntrinsicClassAttributes extends Props {}
+
+		interface IntrinsicElements {
+			[props: string]: Props;
+		}
+	}
 }
+
+export = dio;
