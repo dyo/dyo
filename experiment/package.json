@@ -1,7 +1,7 @@
 {
 	"name": "dio.js",
-	"main": "dio.js",
-	"types": "dio.d.ts",
+	"main": "dist/dio.js",
+	"types": "dist/dio.d.ts",
 	"description": "a javascript framework for building applications",
 	"version": "7.0.0",
 	"homepage": "https://github.com/thysultan/dio.js",
