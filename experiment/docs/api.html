@@ -312,14 +312,14 @@ dio.render('Hello World', document.body)
 
 		<h2 id=server>Server</h2>
 
-		<p>The recommended way to render from the server is to use <code>`dio.render`</code> which can render to a response object.</p>
+		<p>The recommended way to render from the server is to use <code>`dio.render`</code> which can also render to a response object.</p>
 
 <pre><code>
 const http = require('http')
 const dio = require('dio.js')
 
-const page = (
-	h('!doctype', {html: true},
+const webpage = (
+	h('!doctype',
   	h('head',
   		h('title', 'Title!'),
   		h('style', `h1 {color:red;}`),
@@ -330,13 +330,13 @@ const page = (
 )
 
 const server = (request, response) => {
-	dio.render(page, response)
+	dio.render(webpage, response)
 }
 
 http.createServer(server).listen(2000)
 </code></pre>
 
-		<p>By design using <code>`dio.render`</code> to render on the server uses streams to send the response in chunks to the client, on the other hand the <code>`toString`</code> method on virtual elements returns the element as a string. Which allows us to do the following to rener a string.</p>
+		<p>By design using <code>`dio.render`</code> to render on the server uses a stream to send the response to the client in chunks, on the other hand the <code>`toString`</code> method on virtual elements returns the element as a string. Which allows us to render a string in the following way.</p>
 
 <pre><code>
 `${h('html')}` === `&lt;html>&lt;/html>`
@@ -344,7 +344,7 @@ http.createServer(server).listen(2000)
 
 		<h2 id=hydration>Hydration</h2>
 
-		<p>To hydrate server rendered content <code>`render`</code> accepts a third argument that points to the DOM node to hydrate.</p>
+		<p>To hydrate server rendered content <code>`render`</code> accepts a third argument that is either a callback or a DOM node to hydrate.</p>
 
 <pre><code>
 dio.render(
@@ -354,7 +354,7 @@ dio.render(
 )
 </code></pre>
 
-		<p>Where <code>`document.body`</code> is the containing node and <code>`document.body.firstChild`</code> is the DOM node to hydrate.</p>
+		<p>In this case <code>`document.body`</code> is the containing node and <code>`document.body.firstChild`</code> is the DOM node to hydrate.</p>
 
 		<h2 id=shallow>Shallow</h2>
 

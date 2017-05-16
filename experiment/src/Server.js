@@ -226,8 +226,12 @@ module.exports = function (
 
 				chunk += '>';
 
-				for (var i = 0; i < length; i++) {
-					chunk += children[i].toString();
+				if (type === 1 && length === 1) {
+					chunk += children[0].children;
+				} else {
+					for (var i = 0; i < length; i++) {
+						chunk += children[i].toString();
+					}
 				}
 			} else {
 				chunk += '>';
@@ -319,7 +323,8 @@ module.exports = function (
 
 								if (length === 1 && (child = children[0]).flag === TEXT) {
 									// one text child
-									chunk += sanitize(child.children) + '</' + tag + '>';
+									chunk += type === 1 ? child.children : sanitize(child.children);
+									chunk += '</' + tag + '>';
 								} else {
 									pop = false;
 
