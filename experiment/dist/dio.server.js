@@ -5,10 +5,11 @@ module.exports = function (
 	extract,
 	whitelist,
 	render,
+	stringify,
 
-	ARRAY,
-	OBJECT,
+	CHILDREN,
 	PROPS,
+	ATTRS,
 
 	READY,
 	PROCESSING,
@@ -28,6 +29,10 @@ module.exports = function (
 	ERROR,
 	PORTAL
 ) {
+	var contentType = 'Content-Type';
+	var encodingType = 'text/html';
+
+
 	/**
 	 * Readable
 	 *
@@ -45,7 +50,7 @@ module.exports = function (
 		var attrs = newer.attrs;
 		var body = '';
 
-		if (attrs === OBJECT) {
+		if (attrs === ATTRS) {
 			return body;
 		}
 
@@ -146,7 +151,6 @@ module.exports = function (
 			case 'area':
 			case 'base':
 			case 'br':
-			case '!doctype':
 			case 'meta':
 			case 'source':
 			case 'keygen':
@@ -158,8 +162,9 @@ module.exports = function (
 			case 'param':
 			case 'link':
 			case 'input':
-			case 'hr': return true;
-			default: return false;
+			case 'hr': return 2;
+			case '!doctype': return 1;
+			default: return 0;
 		}
 	}
 
@@ -180,16 +185,49 @@ module.exports = function (
 	}
 
 	/**
-	 * Enctype
+	 * To String [Prototype]
 	 *
-	 * @param {Any}
 	 * @return {String}
 	 */
-	function enctype (subject) {
-		switch (subject.constructor) {
-			case Object: return 'application/json';
-			default: return 'text/html';
+	function toString () {
+		var newer = this;
+		var group = newer.group;
+		var type = newer.type;
+
+		if (group !== STRING) {
+			return extract(newer, false).toString();
 		}
+
+		var children = newer.children;
+
+		switch (newer.flag) {
+			case TEXT: return sanitize(children);
+			case PORTAL: return '';
+		}
+
+
+		var tag = newer.tag;
+		var type = hollow(tag);
+		var body = '<' + tag + attributes(newer) + '>';
+		var length = 0;
+
+		if (newer.attrs !== ATTRS && newer.attrs.innerHTML !== void 0) {
+			body += newer.attrs.innerHTML;
+		} else if ((length = children.length) > 0) {
+			for (var i = 0; i < length; i++) {
+				body += children[i].toString();
+			}
+
+			if (type === 1) {
+				tag = 'html';
+			}
+		}
+
+		if (type < 2) {
+			body += '</' + tag + '>';
+		}
+
+		return body;
 	}
 
 	/**
@@ -202,43 +240,28 @@ module.exports = function (
 		var size = stack.length;
 
 		if (size === 0) {
-			if (this._target !== null) {
-				var target = this._target;
-
-				// invalidate cache
-				if (this._cache === true && target.getHeader !== void 0 && !target.getHeader('Last-Modified')) {
-					target.setHeader('Last-Modified', new Date()+'');
-				}
-
-				this._target = null;
-			}
-
 			// end
 			this.push(null);
 		} else {
 			// retrieve element from the stack
 			var newer = stack[size-1];
+			var pop = true;
+			var chunk = '';
+			var tag = '';
 
 			if (newer.ref === true) {
 				// close
-				this.push('</' + newer.tag + '>');
+				switch (tag = newer.tag) {
+					case '!doctype': chunk = '</html>'; break;
+					default: chunk = '</' + tag + '>';
+				}
 			} else {
+				var group = newer.group;
+
 				// component
-				if (newer.group !== STRING) {
-					var type = newer.type;
-					var cache = type._cache;
-
-					if (cache !== void 0) {
-						if (cache === newer.key) {
-							return newer._payload;
-						} else {
-							this._cache = true;
-							return newer.toString();
-						}
-					}
-
+				if (group > STRING) {
 					// composite
-					while (newer.group !== STRING) {
+					while ((group = newer.group) > STRING) {
 						newer = extract(newer, false);
 					}
 				}
@@ -246,49 +269,55 @@ module.exports = function (
 				switch (newer.flag) {
 					// text
 					case TEXT: {
-						this.push(sanitize(newer.children));
+						chunk = group === STRING ? sanitize(newer.children) : newer.children;
 						break;
 					}
 					// portal
 					case PORTAL: {
-						this.push('');
 						break;
 					}
 					default: {
+						chunk = '<' + (tag = newer.tag) + attributes(newer) + '>';
+
 						// innerHTML
-						if (newer.attrs !== OBJECT && newer.attrs.innerHTML !== void 0) {
-							this.push(newer.attrs.innerHTML);
+						if (newer.attrs !== ATTRS && newer.attrs.innerHTML !== void 0) {
+							chunk += newer.attrs.innerHTML;
+							pop = false;
 						} else {
-							var tag = newer.tag;
 							var children = newer.children;
 							var length = children.length;
-							var node = '<' + tag + attributes(newer) + '>';
 
 							if (length === 0) {
 								// no children
-								this.push(hollow(tag) === true ? node : node + '</' + tag + '>');
+								if (hollow(tag) < 1) {
+									chunk += '</' + tag + '>';
+								}
 							} else if (length === 1 && children[0].flag === TEXT) {
 								// one text child
-								this.push(node + sanitize(children[0].children) + '</' + tag + '>');
+								chunk += sanitize(children[0].children) + '</' + tag + '>';
 							} else {
-								// open
-								newer.tag = tag;
-								newer.ref = true;
+								pop = false;
 
 								// push children to the stack, from right to left
 								for (var i = length - 1; i >= 0; i--) {
 									stack[size++] = children[i];
 								}
-
-								return void this.push(node);
 							}
 						}
 					}
 				}
 			}
 
+			// send next chunk
+			this.push(chunk);
+
 			// remove element from stack
-			stack.pop();
+			if (pop === true) {
+				stack.pop();
+			} else {
+				newer.tag = tag;
+				newer.ref = true;
+			}
 		}
 	}
 
@@ -298,15 +327,13 @@ module.exports = function (
 	 * @param {Any} parent
 	 */
 	function Stream (parent) {
-		this._target = null;
-		this._cache = false;
 		this._stack = [shape(parent, null, false)];
 
 		Readable.call(this);
 	}
 
 	/**
-	 * Prototype
+	 * Stream Prototype
 	 *
 	 * @type {Object}
 	 */
@@ -320,76 +347,8 @@ module.exports = function (
 	 *
 	 * @return {Stream}
 	 */
-	function toStream () {
-		return new Stream(this);
-	}
-
-	/**
-	 * To String [Prototype]
-	 *
-	 * @return {String}
-	 */
-	function toString () {
-		var newer = this;
-		var group = newer.group;
-		var type = newer.type;
-
-		if (group !== STRING) {
-			var cache = type._cache;
-
-			if (cache !== void 0) {
-				// invalidated cache
-				if (cache !== newer.key) {
-					type._cache = newer.key;
-					type._payload = extract(newer, false).toString();
-				}
-
-				return type._payload;
-			}
-
-			return extract(newer, false).toString();
-		}
-
-		var flag = newer.flag;
-		var tag = newer.tag;
-		var children = newer.children;
-		var body = '';
-		var length = 0;
-
-		switch (flag) {
-			case TEXT: return sanitize(children);
-			case PORTAL: return '';
-		}
-
-		if (newer.attrs !== OBJECT && newer.attrs.innerHTML !== void 0) {
-			body = newer.attrs.innerHTML;
-		} else if ((length = children.length) > 0) {
-			for (var i = 0; i < length; i++) {
-				body += children[i].toString();
-			}
-		}
-
-		return '<' + tag + attributes(newer) + '>' + (hollow(tag) === true ? '' : body + '</' + tag + '>');
-	}
-
-	/**
-	 * String Render
-	 *
-	 * @param {Any} subject
-	 * @return {String}
-	 */
-	function renderToString (subject) {
-		return shape(subject, null, false).toString();
-	}
-
-	/**
-	 * Stream Render
-	 *
-	 * @param {Any} subject
-	 * @return {Stream}
-	 */
-	function renderToStream (subject) {
-		return shape(subject, null, false).toStream();
+	function stream (subject) {
+		return new Stream(subject);
 	}
 
 	/**
@@ -403,9 +362,19 @@ module.exports = function (
 		if (target !== void 0 && target !== null && target.writable !== void 0) {
 			var newer = new Stream(subject);
 
-			if (!target.getHeader('Content-Type')) {
+			if (typeof target.getHeader === 'function' && target.getHeader(contentType) === void 0) {
 				if (subject !== null && subject !== void 0) {
-					target.setHeader('Content-Type', enctype(subject));
+					switch (subject.constructor) {
+						case Object: {
+							(newer._stack[0] = newer._stack[0].children[0]).group = -1;
+							encodingType = 'application/json';
+							break;
+						}
+						default: {
+							encodingType = 'text/html';
+						}
+					}
+					target.setHeader(contentType, encodingType);
 				}
 			}
 
@@ -413,73 +382,17 @@ module.exports = function (
 				newer.on('end', callback);
 			}
 
-			return newer.pipe(newer._target = target);
+			return newer.pipe(newer._target = target), newer;
 		}
 
 		return render(subject, target, callback);
 	}
 
 	/**
-	 * Cache
-	 *
-	 * @param {Any} subject
-	 * @return {String}
-	 */
-	function renderToCache (subject) {
-		if (subject === void 0 || subject === null) {
-			return ' '
-		}
-
-		switch (subject.constructor) {
-			case Array: {
-				var length = newer.length;
-
-				if (length === 0) {
-					return ' ';
-				}
-
-				for (var i = 0, out = ''; i < length; i++) {
-					out += renderToCache(subject[i]);
-				}
-
-				return out;
-			}
-			case Function: {
-				if (subject._cache === void 0) {
-					subject._payload = shape(subject, null, false).toString();
-					subject._cache = null;
-				}
-
-				return subject._payload;
-			}
-			default: {
-				var group = subject.group;
-
-				if (group !== void 0 && group !== STRING) {
-					var type = subject.type;
-
-					if (type._cache === void 0) {
-						type._payload = renderToCache(type);
-						type._cache = subject.key;
-					} else if (type._cache !== subject.key) {
-						// invalidate cache
-						type._cache = void 0;
-					}
-
-					return renderToCache(subject.type);
-				}
-			}
-		}
-	}
-
-	/**
 	 * Exports
 	 */
 	element.prototype.toString = toString;
-	element.prototype.toStream = toStream;
 
 	exports.shallow = shallow;
-	exports.renderToString = renderToString;
-	exports.renderToStream = renderToStream;
-	exports.renderToCache = renderToCache;
+	exports.stream = stream;
 };

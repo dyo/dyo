@@ -31,9 +31,9 @@ var FRAGMENT = 4;
 var ERROR = 5;
 var PORTAL = 6;
 
-var ARRAY = [];
-var OBJECT = {};
-var PROPS = {children: ARRAY};
+var CHILDREN = [];
+var ATTRS = {};
+var PROPS = {children: CHILDREN};
 var SHARED = new Tree(EMPTY);
 
 /**

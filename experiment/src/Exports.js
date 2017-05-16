@@ -24,10 +24,11 @@ if (server === true) {
 		extract,
 		whitelist,
 		render,
+		stringify,
 
-		ARRAY,
-		OBJECT,
+		CHILDREN,
 		PROPS,
+		ATTRS,
 
 		READY,
 		PROCESSING,

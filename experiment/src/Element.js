@@ -19,7 +19,7 @@ function element (_type, _props) {
 	switch (props) {
 		case null: {
 			props = PROPS;
-			attrs = OBJECT;
+			attrs = ATTRS;
 			offset++;
 			break;
 		}
@@ -43,7 +43,7 @@ function element (_type, _props) {
 				}
 				default: {
 					props = PROPS;
-					attrs = OBJECT;
+					attrs = ATTRS;
 					i = 1;
 				}
 			}
@@ -77,7 +77,7 @@ function element (_type, _props) {
 				if (group === STRING) {
 					newer.tag = type;
 				} else {
-					newer.props.children = ARRAY;
+					newer.props.children = CHILDREN;
 				}
 			} else if (type.nodeType !== void 0) {
 				newer.flag = PORTAL;
@@ -105,7 +105,7 @@ function element (_type, _props) {
 			}
 
 			props.children = children;
-			newer.children = ARRAY;
+			newer.children = CHILDREN;
 		}
 	}
 
@@ -324,13 +324,13 @@ function Tree (flag) {
 	this.group = STRING;
 	this.async = READY;
 	this.props = PROPS;
-	this.attrs = OBJECT;
+	this.attrs = ATTRS;
 	this.xmlns = null;
 	this.owner = null;
 	this.yield = null;
 	this.keyed = 0;
 	this.parent = null;
-	this.children = ARRAY;
+	this.children = CHILDREN;
 }
 
 /**

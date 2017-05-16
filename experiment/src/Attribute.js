@@ -76,7 +76,7 @@ function attributes (older, newer) {
 	var prevs = older.attrs;
 	var attrs = newer.attrs;
 
-	if (prevs === attrs && attrs === OBJECT) {
+	if (prevs === attrs && attrs === ATTRS) {
 		return;
 	}
 
