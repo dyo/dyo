@@ -1,8 +1,16 @@
 /// <reference path="../dio.d.ts" />
 
-class A extends dio.Component<any> {
-	render() {
-		return <h1 color='red'></h1>
+interface Props {
+	children: Array<any>
+}
+
+interface State {
+	age: number
+}
+
+class A extends dio.Component<Props, State> {
+	render(props: Props) {
+		return <h1 style='color:red;'></h1>
 	}
 }
 

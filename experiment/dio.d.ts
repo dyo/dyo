@@ -257,13 +257,13 @@ interface render {
 
 declare global {
 	namespace dio {
-		interface Component<P> {
+		interface Component<P, S> {
+			shouldComponentUpdate(nextProps: P, nextState: S): Boolean | void;
+		  componentWillUpdate(nextProps: P, nextState: S): Return;
+		  componentDidUpdate(prevProps: P, prevState: S): Return;
 			componentWillUnmount(node: Node): Return;
 		  componentWillMount(node: Node): Return;
 		  componentDidMount(node: Node): Return;
-		  shouldComponentUpdate(nextProps: Props, nextState, State): Boolean | void;
-		  componentWillUpdate(nextProps: Props, nextState, State): Return;
-		  componentDidUpdate(prevProps: Props, prevState, State): Return;
 		}
 
 		export const version;
@@ -271,13 +271,13 @@ declare global {
 		export const createElement;
 		export const render;
 
-		export abstract class Component<P> {
-			constructor (props: P);
-			abstract render(props: Props, state: State): Render;
+		export abstract class Component<P, S> {
+			constructor (props: Readonly<P>);
+			abstract render(props: Readonly<P>, state: Readonly<S>): Render;
 			forceUpdate (callback?: () => Return): void;
-			setState (state: State, callback?: () => Return): void;
-			state: Readonly<State>;
-			props: Readonly<Props>;
+			setState<K extends keyof S>(state: Pick<S, K>, callback?: () => Return): void;
+			state: Readonly<S>;
+			props: Readonly<P>;
 			refs: Refs;
 		}
 	}
@@ -286,18 +286,12 @@ declare global {
 
 	namespace JSX {
 		interface Element extends Tree {}
-		interface ElementClass extends dio.Component<Props> {
-			render(props: Props, state: State): Render;
-		}
+		interface ElementClass extends dio.Component<Props, State> {}
 		interface ElementAttributesProperty {props: Props;}
 		interface ElementChildrenAttribute {children: Children;}
-
 		interface IntrinsicAttributes extends Props {}
 		interface IntrinsicClassAttributes extends Props {}
-
-		interface IntrinsicElements {
-			[props: string]: Props;
-		}
+		interface IntrinsicElements {[props: string]: Props;}
 	}
 }
 
