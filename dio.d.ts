@@ -319,13 +319,16 @@ declare namespace dio {
 	export const version: string;
 
 	// Components
-	export abstract class Component<P> {
+	export abstract class Component<P, S> {
 		constructor(props: P);
+		render(props: P, state: S): VNode | VNode[] | null;
 		forceUpdate(callback?: () => any): void;
-		setState(state: State, callback?: () => any): void;
-		state: State;
-		props: Object;
-		refs: Object | null;
+		setState<K extends keyof S>(state: Pick<S, K>, callback?: () => any): void;
+		state: Readonly<S>;
+		props: Readonly<P & Props>;
+		refs: {
+			[key: string]: Component<any, any> | VNode;
+		}
 	}
 	export function createClass(shape: Object | Function): Function;
 
@@ -388,8 +391,8 @@ declare namespace dio {
 declare global {
 	namespace JSX {
 		interface Element extends dio.VNode { }
-		interface ElementClass extends dio.Component<any> {
-			render(props: any, state: any): JSX.Element | null;
+		interface ElementClass extends dio.Component<any, any> {
+			render(): JSX.Element | JSX.Element[] | null;
 		}
 		interface ElementAttributesProperty { props: {}; }
 		interface ElementChildrenAttribute { children: {}; }
