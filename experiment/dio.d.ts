@@ -32,6 +32,10 @@ type State = object | null;
 type Return = State | Promise<State> | void;
 type Render = Tree | string | null | Array<any> | Return | Date;
 
+interface Refs {
+	[key: string]: Node
+}
+
 interface createElement {
 	(type: Type, props?: Props, ...children: Array<any>): Tree;
 }
@@ -272,9 +276,9 @@ declare global {
 			abstract render(props: Props, state: State): Render;
 			forceUpdate (callback?: () => Return): void;
 			setState (state: State, callback?: () => Return): void;
-			state: State;
-			props: Props;
-			refs: object | null;
+			state: Readonly<State>;
+			props: Readonly<Props>;
+			refs: Refs;
 		}
 	}
 

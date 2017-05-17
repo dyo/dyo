@@ -2352,22 +2352,24 @@
 	 * @param {Node} _node
 	 * @param {Tree?} _host
 	 * @param {String?} _xmlns
+	 * @param {Boolean} entry
 	 * @return {Number}
 	 */
-	function hydrate (newer, parent, index, _node, _host, _xmlns) {
+	function hydrate (newer, parent, index, _node, _host, _xmlns, entry) {
 		var flag = newer.flag;
 		var group = newer.group;
 		var node = _node;
 		var host = _host;
 		var xmlns = _xmlns;
+		var i = 0;
 		var temp;
 	
-		// cache host
+		// link host
 		if (host !== SHARED) {
 			newer.host = host;
 		}
 	
-		// cache parent
+		// link parent
 		newer.parent = parent;
 	
 		// component
@@ -2378,17 +2380,6 @@
 	
 			temp = extract(newer, true);
 			flag = temp.flag;
-		}
-	
-		// whitespace
-		if (flag !== COMPOSITE) {
-			if (node !== null && node.nodeType === 3 && node.nodeValue.trim().length === 0) {
-				SHARED.node = node;
-				removeChild(SHARED, parent);
-				SHARED.node = null;
-	
-				node = node.nextSibling;
-			}
 		}
 	
 		switch (flag) {
@@ -2404,7 +2395,7 @@
 	 				fragment.node = createDocumentFragment();
 	 				sibling.node = node;
 	
-	 				for (var i = index; i < length; i++) {
+	 				for (i = index; i < length; i++) {
 	 					var child = children[i];
 	
 	 					if (child.flag !== TEXT) {
@@ -2439,15 +2430,15 @@
 	 			break;
 	 		}
 	 		default: {
-					var children = newer.children;
-					var length = children.length;
+				var children = newer.children;
+				var length = children.length;
 	
-					// cache namespace
-					if (newer.xmlns !== null) {
-						xmlns = newer.xmlns;
-					} else if (xmlns !== null) {
-						newer.xmlns = xmlns;
-					}
+				// cache namespace
+				if (newer.xmlns !== null) {
+					xmlns = newer.xmlns;
+				} else if (xmlns !== null) {
+					newer.xmlns = xmlns;
+				}
 	
 	 			// namespace(implicit) svg/math roots
 	 			switch (newer.tag) {
@@ -2455,22 +2446,31 @@
 	 				case 'math': xmlns = math; break;
 	 			}
 	
+	 			// whitespace
+	 			if (node.splitText !== void 0 && node.nodeValue.trim().length === 0) {
+	 				node = node.nextSibling;
+	 			}
+	
 	 			newer.node = node;
 	
 	 			if (length > 0) {
-	 				for (var i = 0, idx = 0; i < length; i++) {
+	 				node = node.firstChild;
+	
+	 				while (i < length && node !== null) {
 	 					var child = children[i];
 	
-	 					// hoisted
 	 					if (child.node !== null) {
 	 						child = clone(children[i] = new Tree(child.flag), child, true);
 	 					}
 	
-	 					node = i === 0 ? node.firstChild : node.nextSibling;
+	 					var idx = hydrate(child, newer, i, node, host, xmlns);
 	
-	 					if ((idx = hydrate(child, newer, i, node, host, xmlns)) !== 0) {
-	 						node = children[(i = idx - 1)].node;
+	 					if (idx !== 0) {
+	 						node = children[i = idx - 1].node;
 	 					}
+	
+	 					node = node.nextSibling;
+	 					i++;
 	 				}
 	 			}
 	 		}

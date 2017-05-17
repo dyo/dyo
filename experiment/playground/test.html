@@ -1,39 +1,20 @@
 <!doctype html>
 <body>
 	<div id='app'></div>
-	<div id="root"></div>
-	<!-- <div id=root>
-		<h1><input type="text">Hello World 1494293784665 <p>Paragraph</p></h1>
-	</div> -->
+
+	<!-- <div id="root"></div> -->
+
+	<div id=root>
+		<h1><input type="text">Hello World 1494293784665<p>Paragraph</p></h1>
+	</div>
+
 	<!-- <div id=root>
 		<h1>Hello World 1494293784665</h1>
 	</div> -->
+
 	<!-- <div id=root><h1>Hello World 1494293784665 <p>Paragraph</p></h1></div> -->
 	<div id="portal"></div>
 	<script src="../dio.js"></script>
-
-	<script>
-		h('!doctype', )
-		const Component = dio.Component;
-		// <!-- [if lte IE 9]>
-	  	// <script src="/public/media.match.js">
-		// <![endif]-->
-
-		// dio.render(h('!', 'comment'), document.body)
-
-		// var time = 0;
-
-		// class Error {
-		// 	render () {
-		// 		if (time++ === 1) throw ''
-		// 			return 'works'
-		// 	}
-		// }
-
-		// dio.render(Promise.resolve('something when wrong'))
-		// dio.render(Error)
-		// dio.render(h('div'), req, () => {})
-	</script>
 
 	<script>
 		const root = document.getElementById('root');
@@ -49,12 +30,13 @@
 			render() {
 				return h('h1', h('input', {value: 'chanegd', oninput: () =>{
 					console.log('works');
-				}}), 'Hello World - ', Date.now(),
-					h('p', 'Paragraph')
+				}}), 'Hello World - ', Date.now(), h('p', 'Paragraph')
 					// h(node, 1, 2)
 				)
 			}
 		}
+
+		dio.render(foo, root, root.firstChild);
 
 		const animation = {
 			fadeOut: [
@@ -264,8 +246,8 @@
 		// setTimeout(dio.render, 1000, h(App, Input, Input, Input, Input), root);
 		// setTimeout(dio.render, 2000, h(App, Input, Input, Input), root);
 
-		dio.render(h(Lists, 1, 2, 3), root)
-		setTimeout(dio.render, 500, h(Lists, 1, 2), root)
+		// dio.render(h(Lists, 1, 2, 3), root)
+		// setTimeout(dio.render, 500, h(Lists, 1, 2), root)
 
 		// setTimeout(dio.render, 1000, h(Lists, 1, 2, 3, 4), root)
 		// setTimeout(dio.render, 1500, h(Lists), root)
