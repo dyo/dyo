@@ -174,7 +174,13 @@ module.exports = function (
 		var group = newer.group;
 
 		if (group !== STRING) {
-			return extract(newer, false).toString();
+			newer = extract(newer, false);
+
+			if (newer.async === PENDING) {
+				return text(' ');
+			}
+
+			return newer.toString();
 		}
 
 		var children = newer.children;
@@ -192,8 +198,8 @@ module.exports = function (
 
 		// innerHTML
 		if (newer.ref === false) {
-			chunk += '>' + newer.attrs.innerHTML;
 			newer.ref = null;
+			chunk += '>' + newer.attrs.innerHTML;
 		} else {
 			if ((length = children.length) > 0) {
 				if (type === 2) {
@@ -242,6 +248,7 @@ module.exports = function (
 			var tag = '';
 
 			if (newer.ref === true) {
+				newer.ref === null;
 				// close
 				switch (tag = newer.tag) {
 					case '!doctype': chunk = '</html>'; break;
@@ -293,6 +300,7 @@ module.exports = function (
 
 						// innerHTML
 						if (newer.ref === false) {
+							newer.ref = null;
 							chunk += '>' + newer.attrs.innerHTML;
 							pop = false;
 						} else {

@@ -10,7 +10,7 @@
 function dataBoundary (older, owner, type, props) {
 	try {
 		switch (type) {
-			case 0: returnBoundary(older, owner.componentWillReceiveProps(props), owner, null, true);
+			case 0: returnBoundary(older, owner.componentWillReceiveProps(props), owner, null, true); break;
 			case 1: return owner.getInitialState(props);
 		}
 	} catch (err) {
@@ -32,8 +32,8 @@ function updateBoundary (older, owner, type, props, state) {
 	try {
 		switch (type) {
 			case 0: return owner.shouldComponentUpdate(props, state);
-			case 1: returnBoundary(older, owner.componentWillUpdate(props, state), owner, null, true);
-			case 2: returnBoundary(older, owner.componentDidUpdate(props, state), owner, null, false);
+			case 1: returnBoundary(older, owner.componentWillUpdate(props, state), owner, null, true); break;
+			case 2: returnBoundary(older, owner.componentDidUpdate(props, state), owner, null, false); break;
 		}
 	} catch (err) {
 		errorBoundary(err, older, owner, 1, type);
@@ -73,8 +73,8 @@ function renderBoundary (older, group) {
 function mountBoundary (older, owner, node, type) {
 	try {
 		switch (type) {
-			case 0: returnBoundary(older, owner.componentWillMount(node), owner, null, false);
-			case 1: returnBoundary(older, owner.componentDidMount(node), owner, null, true);
+			case 0: returnBoundary(older, owner.componentWillMount(node), owner, null, false); break;
+			case 1: returnBoundary(older, owner.componentDidMount(node), owner, null, true); break;
 			case 2: return owner.componentWillUnmount(node);
 		}
 	} catch (err) {
