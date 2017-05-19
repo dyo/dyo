@@ -18,7 +18,7 @@ self.h = element;
  */
 if (server === true) {
 	__require__('./dio.server.js')(
-		dio, element, shape, extract, whitelist, render,
+		dio, element, shape, extract, whitelist, render, renderBoundary,
 		CHILDREN, PROPS, ATTRS,
 		READY, PROCESSING, PROCESSED, PENDING,
 		STRING, FUNCTION, CLASS, NOOP,

@@ -25,9 +25,11 @@
 	var browser = self.window === self;
 	var server = browser === false;
 	var body = null;
-	var svg = 'http://www.w3.org/2000/svg';
-	var xlink = 'http://www.w3.org/1999/xlink';
-	var math = 'http://www.w3.org/1998/Math/MathML';
+	
+	var w3 = 'http://www.w3.org/';
+	var svg = w3 + '2000/svg';
+	var xlink = w3 + '1999/xlink';
+	var math = w3 + '1998/Math/MathML';
 	
 	var noop = function () {};
 	var Promise = self.Promise || noop;
@@ -238,19 +240,21 @@
 	/**
 	 * Get Initial State
 	 *
-	 * @param  {Tree} older
-	 * @param  {Object} state
-	 * @return {Object}
+	 * @param {Tree} older
+	 * @param {Object} state
 	 */
 	function getInitialState (older, state) {
 		if (state !== void 0 && state !== null) {
 			switch (state.constructor) {
 				case Promise: {
-					var func = function (value) {
-						older.owner.setState(value);
-					};
-					state.then(func).catch(func);
-					break;
+					if (browser === true) {
+						state.then(function (value) {
+							older.owner.setState(value);
+						});
+						break;
+					}
+	
+					older.async = PENDING;
 				}
 				case Object: {
 					older.owner.state = state;
@@ -842,7 +846,8 @@
 						break;
 					}
 					case 3: {
-						return location = 'render';
+						location = 'render';
+						break;
 					}
 					case 4: {
 						switch (from) {
@@ -853,7 +858,8 @@
 						break;
 					}
 					case 5: {
-						return location = 'event';
+						location = 'event';
+						break;
 					}
 				}
 			}
@@ -1255,6 +1261,10 @@
 	
 			if (owner.getInitialState !== void 0) {
 				getInitialState(older, dataBoundary(SHARED, owner, 1, owner.props));
+	
+				if (server === true && older.async === PENDING) {
+					return older;
+				}
 			}
 	
 			older.async = PROCESSING;
@@ -1347,13 +1357,13 @@
 		older.async = PENDING;
 	
 		pending.then(function (value) {
-			var newer = value;
 			if (older.node === null) {
 				return;
 			}
 	
 			older.async = READY;
-			newer = shape(newer, older, true);
+	
+			var newer = shape(value, older, true);
 	
 			if (older.tag !== newer.tag) {
 				exchange(older, newer, false);
@@ -2481,7 +2491,7 @@
 	 */
 	if (server === true) {
 		__require__('./dio.server.js')(
-			dio, element, shape, extract, whitelist, render,
+			dio, element, shape, extract, whitelist, render, renderBoundary,
 			CHILDREN, PROPS, ATTRS,
 			READY, PROCESSING, PROCESSED, PENDING,
 			STRING, FUNCTION, CLASS, NOOP,

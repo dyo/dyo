@@ -192,7 +192,8 @@ function errorBoundary (message, older, owner, type, from) {
 					break;
 				}
 				case 3: {
-					return location = 'render';
+					location = 'render';
+					break;
 				}
 				case 4: {
 					switch (from) {
@@ -203,7 +204,8 @@ function errorBoundary (message, older, owner, type, from) {
 					break;
 				}
 				case 5: {
-					return location = 'event';
+					location = 'event';
+					break;
 				}
 			}
 		}

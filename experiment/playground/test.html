@@ -1,12 +1,11 @@
 <!doctype html>
 <body>
 	<div id='app'></div>
+	<div id="root"></div>
 
-	<!-- <div id="root"></div> -->
-
-	<div id=root>
+	<!-- <div id=root>
 		<h1><input type="text">Hello World 1494293784665<p>Paragraph</p></h1>
-	</div>
+	</div> -->
 
 	<!-- <div id=root>
 		<h1>Hello World 1494293784665</h1>
@@ -19,6 +18,29 @@
 	<script>
 		const root = document.getElementById('root');
 		const node = document.getElementById('portal');
+		const promise = new Promise ((resolve) => {
+			setTimeout(() => {
+				resolve({});
+			}, 2000)
+		})
+
+		class DIO {
+			render () {
+				return promise;
+			}
+		}
+
+		// dio.render(DIO, root)
+
+		Promise.resolve(0).then(v=>{
+			return v+99
+		}).then(v => {
+			console.log(v)
+		})
+
+		// setTimeout(()=>{
+		// 	dio.render(DIO, root)
+		// }, 3000)
 
 		class foo {
 			render () {
@@ -36,7 +58,7 @@
 			}
 		}
 
-		dio.render(foo, root, root.firstChild);
+		// dio.render(foo, root, root.firstChild);
 
 		const animation = {
 			fadeOut: [

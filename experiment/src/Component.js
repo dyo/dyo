@@ -145,19 +145,21 @@ function updateState (oldState, newState) {
 /**
  * Get Initial State
  *
- * @param  {Tree} older
- * @param  {Object} state
- * @return {Object}
+ * @param {Tree} older
+ * @param {Object} state
  */
 function getInitialState (older, state) {
 	if (state !== void 0 && state !== null) {
 		switch (state.constructor) {
 			case Promise: {
-				var func = function (value) {
-					older.owner.setState(value);
-				};
-				state.then(func).catch(func);
-				break;
+				if (browser === true) {
+					state.then(function (value) {
+						older.owner.setState(value);
+					});
+					break;
+				}
+
+				older.async = PENDING;
 			}
 			case Object: {
 				older.owner.state = state;

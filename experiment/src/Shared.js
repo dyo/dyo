@@ -4,9 +4,11 @@
 var browser = self.window === self;
 var server = browser === false;
 var body = null;
-var svg = 'http://www.w3.org/2000/svg';
-var xlink = 'http://www.w3.org/1999/xlink';
-var math = 'http://www.w3.org/1998/Math/MathML';
+
+var w3 = 'http://www.w3.org/';
+var svg = w3 + '2000/svg';
+var xlink = w3 + '1999/xlink';
+var math = w3 + '1998/Math/MathML';
 
 var noop = function () {};
 var Promise = self.Promise || noop;

@@ -1,5 +1,5 @@
 module.exports = function (
-	dio, element, shape, extract, whitelist, render,
+	dio, element, shape, extract, whitelist, render, renderBoundary,
 	CHILDREN, PROPS, ATTRS,
 	READY, PROCESSING, PROCESSED, PENDING,
 	STRING, FUNCTION, CLASS, NOOP,
@@ -235,7 +235,8 @@ module.exports = function (
 			this.push(null);
 		} else {
 			// retrieve element from the stack
-			var newer = stack[size-1];
+			var older = stack[size-1];
+			var newer = older;
 			var pop = true;
 			var chunk = '';
 			var tag = '';
@@ -254,6 +255,24 @@ module.exports = function (
 					// composite
 					while ((group = newer.group) > STRING) {
 						newer = extract(newer, false);
+
+						if (newer.async === PENDING) {
+							var that = this;
+
+							newer.owner.state.then(function (state) {
+								newer.async = READY;
+								newer.owner.state = state;
+
+								newer = renderBoundary(newer, newer.group);
+								newer = shape(newer, newer, false);
+
+								// continue
+								stack[size-1] = newer;
+								read.call(that);
+							});
+
+							return;
+						}
 					}
 				}
 
@@ -315,16 +334,16 @@ module.exports = function (
 				}
 			}
 
-			// send next chunk
-			this.push(chunk);
-
 			// remove element from stack
 			if (pop === true) {
 				stack.pop();
 			} else {
-				newer.tag = tag;
-				newer.ref = true;
+				older.tag = tag;
+				older.ref = true;
 			}
+
+			// send next chunk
+			this.push(chunk);
 		}
 	}
 

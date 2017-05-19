@@ -178,6 +178,10 @@ function extract (older, abstract) {
 
 		if (owner.getInitialState !== void 0) {
 			getInitialState(older, dataBoundary(SHARED, owner, 1, owner.props));
+
+			if (server === true && older.async === PENDING) {
+				return older;
+			}
 		}
 
 		older.async = PROCESSING;
@@ -270,13 +274,13 @@ function resolve (older, pending) {
 	older.async = PENDING;
 
 	pending.then(function (value) {
-		var newer = value;
 		if (older.node === null) {
 			return;
 		}
 
 		older.async = READY;
-		newer = shape(newer, older, true);
+
+		var newer = shape(value, older, true);
 
 		if (older.tag !== newer.tag) {
 			exchange(older, newer, false);
