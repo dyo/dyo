@@ -1,114 +1,144 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="x-ua-compatible" content="ie=edge">
-		<title>dio.js - particles</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<script src="../assets/dio.js"></script>
-	</head>
-	<body>
-		<div class="app"></div>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>DIO</title>
+	<link rel=stylesheet href=../css/stylesheet.css>
+	<link rel="icon" type="image/png" href="../imgs/favicon-large.png" sizes="32x32">
+	<link rel="icon" type="image/png" href="../imgs/favicon-small.png" sizes="16x16">
+</head>
+<body>
+	<a href=../ title=index class=logo>
+		<img src=../imgs/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=../>Index</a>
+			<a href=../introduction.html>Introduction</a>
+			<a href=../api.html>API</a>
+			<a href=../examples.html>Examples</a>
+			<a href=https://github.com/thysultan/dio.js>Github</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Particles</h1>
 
-		<style>
-			.app{
-				position: absolute;
-				left: 0;
-				top: 0;
-				width: 100%;
-				height: 100%;
-				background: #F8F5F2;
-				overflow: hidden;
+		<hr>
+
+		<p>Animating six hundred components, using a component for each particle, in response to the movement of the mouse.</p>
+
+		<div id=root></div>
+	</article>
+
+	<style>
+		nav a {
+			transform: translateZ(0);
+			position: relative;
+			z-index: 100;
+		}
+		body {
+			overflow-x: hidden;
+		}
+		#root {
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			position: fixed;
+			top: 0;
+			left: 0;
+		}
+		#root > div {
+			width: 100%;
+			height: 100%;
+			position: relative;
+		}
+		#root span {
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 3px;
+			height: 3px;
+			background-color: rgb(52,46,33);
+			border-radius: 12px;
+			opacity: 0.8;
+		}
+	</style>
+	<script src=../js/highlight.js></script>
+	<script src=../js/main.js></script>
+	<script src=https://unpkg.com/dio.js@7.0.0/dio.min.js></script>
+	<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
+	<script>
+		perfMonitor.startFPSMonitor()
+		perfMonitor.startMemMonitor()
+		perfMonitor.initProfiler("render");
+
+		const DAMPING = 0.999
+		const width  = window.innerWidth
+		const height = window.innerHeight
+
+		class Particle {
+			constructor(props) {
+				this.x = this.oldX = Math.random() * width;
+				this.y = this.oldY = Math.random() * height;
 			}
-			.app > div {
-				width: 100%;
-				height: 100%;
-				position: relative;
+			render(props) {
+				const {x, y} = props
+				const velocityX = (this.x - this.oldX) * DAMPING
+				const velocityY = (this.y - this.oldY) * DAMPING
+
+				this.oldX = this.x
+				this.oldY = this.y
+
+				this.x += velocityX
+				this.y += velocityY
+
+				const dx = x - this.x
+				const dy = y - this.y
+				const distance = Math.sqrt(dx * dx + dy * dy);
+
+				this.x += dx / distance;
+				this.y += dy / distance;
+
+				return h('span', {style: {
+					transform: 'translate3d('+ this.x + 'px,' + this.y + 'px, 0px)'
+				}})
 			}
-			span {
-				position: absolute;
-				left: 0;
-				top: 0;
-				width: 4px;
-				height: 4px;
-				background: rgb(52,46,33);
-				border-radius: 10px;
-				will-change: transform;
+		}
+
+		class Particles {
+			getInitialState (props) {
+				return {x: width * 0.5, y: height * 0.5}
 			}
-		</style>
-		<script>
-			var {component, element} = dio;
-			var DAMPING = 0.999;
-
-			function Particle(x, y) {
-		        this.x = this.oldX = x;
-		        this.y = this.oldY = y;
-	      	}
-
-	      	Particle.prototype.render = function(x, y) {
-	      		var velocityX = (this.x - this.oldX) * DAMPING;
-	      		var velocityY = (this.y - this.oldY) * DAMPING;
-
-	      		this.oldX = this.x;
-	      		this.oldY = this.y;
-
-	      		this.x += velocityX;
-	      		this.y += velocityY;
-
-	      		var dx = x - this.x;
-	      		var dy = y - this.y;
-
-	      		var distance = Math.sqrt(dx * dx + dy * dy);
-
-	      		this.x += dx / distance;
-	      		this.y += dy / distance;
-
-	      		return element('span', {style: 'transform: translate('+ this.x + 'px,' + this.y + 'px);'}, null);
-  	      	};
-
-			class Particles extends dio.Component {
-				constructor(props){
-					super(props);
-
-					var length = this.length = props.length;
-					var width  = window.innerWidth;
-					var height = window.innerHeight;
-
-					var particles = this.particles = new Array(length);
-
-					for (var i = 0; i < length; i++) {
-		       			particles[i] = new Particle(Math.random() * width, Math.random() * height);
-		      		}
-
-		      		this.mouse = {x: width * 0.5, y: height * 0.5};
-		      		this.onMousemove = this.onMousemove.bind(this);
+			onMousemove(event) {
+				this.state.x = event.clientX;
+				this.state.y = event.clientY;
+			}
+			render(props, state) {
+				for (var i = 0, length = props.length, children = new Array(length); i < length; i++) {
+					children[i] = h(Particle, {x: state.x, y: state.y})
 				}
-				onMousemove(e) {
-					this.mouse.x = e.clientX;
-					this.mouse.y = e.clientY;
-				}
-				render() {
-					var mouse     = this.mouse;
-					var length    = this.length;
-					var particles = this.particles;
-					var children  = new Array(length);
-
-				  	for (var i = 0; i < length; i++) {
-				  		children[i] = particles[i].render(mouse.x, mouse.y);
-				  	}
-
-				  	return (
-				  		element('div', {onMousemove: this.onMousemove}, children)
-			  		);
-				}
+		  	return h('div', {onMouseMove: this.onMousemove}, children)
 			}
+		}
 
-			var render = dio.render(component(Particles, {length: 300}), '.app');
+		const root = document.getElementById('root')
+		const element = h(Particles, {length: 600})
 
-	  		(function loop() {
-				render();
-				requestAnimationFrame(loop);
-	  		})();
-		</script>
-	</body>
+		const loop = () => {
+			perfMonitor.startProfile("render")
+
+			dio.render(element, root)
+
+			perfMonitor.endProfile("render")
+
+			requestAnimationFrame(loop)
+		}
+
+		requestAnimationFrame(loop)
+	</script>
+</body>
 </html>

@@ -1,273 +1,166 @@
-if (typeof require === 'function' && typeof module === 'object') {
-	var zep = require('./zep.js');
+const fs = require('fs');
+const path = require('path');
+const chokidar = require('chokidar');
+const {JSDOM} = require("jsdom");
+
+const DOM = new JSDOM('');
+
+global.window = DOM.window;
+global.document = window.document;
+
+global.dio = require('../dio.js');
+
+/**
+ * deepEqual
+ *
+ * @param  {Object} x
+ * @param  {Object} y
+ * @return {Boolean}
+ */
+global.deepEqual = (x, y) => {
+  const ok = Object.keys, tx = typeof x, ty = typeof y;
+  return x && y && tx === 'object' && tx === ty ? (
+    ok(x).length === ok(y).length &&
+      ok(x).every(key => deepEqual(x[key], y[key]))
+  ) : (x === y);
 }
 
-zep(['../dio.js'], function (utili, deps) {
-	'use strict';
+/**
+ * compare
+ *
+ * @param  {Node} a
+ * @param  {String} b
+ * @return {Boolean}
+ */
+global.compare = (a, b) => {
+	return a.innerHTML === b.replace(/[\n\t ]/g, '');
+}
 
-	var dio = deps.dio || deps;
-	var h = dio.h;
-	
-	var {describe, spy} = utili;
+/**
+ * Test
+ * @param  {String} name
+ * @param  {Function} body
+ */
+global.test = (name, body) => {
+	const failed = [];
+	const passed = [];
 
-	describe('hyperscript', function (assert) {
-		assert(
-			h('div').type === 'div', 
-			"h('div')"
-		);
+	let ended = false;
 
-		assert(
-			h('div', 1).children[0].children === 1,
-			"h('div', 1)"
-		);
-
-		assert(
-			h('div', 1, 2, 3).children[1].children === 2,
-			"h('div', 1, 2, 3)"
-		);
-
-		assert(
-			h('div', [1]).children[0].children === 1,
-			"h('div', [1])"
-		);
-
-		assert(
-			h('div', [1,2], 3).children[2].children === 3,
-			"h('div', [1,2], 3)"
-		);
-
-		assert(
-			h('div', [1,2], [3,4]).children[2].children === 3,
-			"h('div', [1,2], [3,4])"
-		);
-
-		assert(
-			h('div', {title: 'foo'}).props.title === 'foo',
-			"h('div', {title: 'foo'})"
-		);
-
-		assert(
-			h('div', h('h1', 1)).children[0].children[0].children === 1 &&
-			h('div', h('h1', 1)).children[0].type === 'h1',
-			"h('div', h('h1', 1))"
-		);
-
-		assert(
-			h('div', {class: ''}).props.className === undefined,
-			"h('div', {class: ''})"
-		);
-
-		assert(
-			h('div', {className: ''}).props.class === undefined,
-			"h('div', {className: ''})"
-		);
-	});
-
-	describe('dio.stream', function(assert, done) {
-		var foo = dio.stream(3);
-		var bar = dio.stream(2);
-		var faz = dio.stream('string');
-		var pro = dio.stream('100', Number);
-		var the = dio.stream('initial');
-		var spye = spy();
-
-		var fooMap = foo.map(function (value) {
-			return value + 10;
-		});
-
-		var fn = spy();
-
-		the.then(function () {
-			fn();
-			assert(fn.called, 'stream.then()');
-			done();
-		});
-
-		the('changed');
-
-		foo(2);
-		
-	    assert(foo() + bar() === 4, '.stream()');
-	    assert(pro() === 100, '.stream(__, processor)');
-	    assert(fooMap() === 12, 'stream.map()' );
-	});
-
-	describe('dio.renderToString', function (assert) {
-		var hyperscript = h('div', {class: 'foo' }, 'hello world');
-
-		var component = dio.createClass({
-			render: function () {
-				return hyperscript;
+	const report = (pass, fail) => {
+		if (pass === 0 && fail === 0) {
+			console.log('/* could not find any tests */')
+		}
+		console.log(underline+'\n'+pass +' assertions passed.\n'+fail+ ' assertions failed.\n');
+		if (fail > 0) {
+			setTimeout(exit);
+		}
+	}
+	const log = (status, {msg, type}) => {
+		switch (status) {
+			case 'FAIL': {
+				console.log('\x1b[31m', type+': ✖', msg||'', '\x1b[0m');
+				break;
 			}
-		});
-
-		var expectedOutput = '<div class="foo">hello world</div>';
-
-		var hyperscriptHTML = dio.renderToString(hyperscript).replace(/\n|\t+/g, '');
-		var componentHTML   = dio.renderToString(component).replace(/\n|\t+/g, '');
-
-		assert(hyperscriptHTML === expectedOutput, '.renderToString(hyperscript)');
-		assert(componentHTML   === expectedOutput, '.renderToString(createClass)');
-	});
-
-	describe('dio.createClass', function (assert) {
-		var hyperscript = h('div', {class: 'foo' }, 'hello world');
-
-		function render () {
-			return hyperscript
-		}
-
-		var obj = dio.createClass({
-			render: render
-		});
-
-		var fn = dio.createClass(function () {
-			return {
-				render: render
-			};
-		});
-
-		function isComponent (a) {
-			a = new a;
-
-			var props = [
-				'setState', 'forceUpdate', 'state', 'props', 'render'
-			];
-
-			var state = props.filter(function (value) {
-				return !!a[value];
-			});
-
-			return !!state.length;
-		}
-
-		var fnC  = new fn;
-		var objC = new obj;
-
-		assert.deepEqual(fnC.render(), hyperscript, '.createClass({Object})');
-		assert.deepEqual(objC.render(), hyperscript, '.createClass({Function})');
-		assert.deepEqual(objC.render(), fnC.render(), isComponent(obj), '.createClass({Object}|{Function})');
-		assert(isComponent(fn), '.createClass({Function})(__, __, true)');
-		assert(isComponent(obj), '.createClass({Object})(__, __, true)');
-	});
-
-	describe('dio.createStore', function (assert) {
-		function reducer (state, action) {
-			state = state || {items: [1,2,3,4]}
-
-			switch (action.type) {
-				case 'ADD':
-					return Object.assign({}, state, {items: state.items.concat([action.item])})
-				default:
-					return state;
+			case 'PASS': {
+				console.log('\x1b[32m', type+': ✓', msg||'', '\x1b[0m');
+				break;
 			}
 		}
+	}
 
-		function logger({ getState }) {
-		  	return function (next) {
-		  		return function (action) {
-		  			middlewareSpy();
-		  			return next(action);
-		  		}
-		  	}
+	const underline = '----------------';
+
+	const end = () => {
+		ended = true;
+		console.log(
+			'\x1b[36m%s',
+			name,
+			'\n'+underline,
+			'\x1b[0m'
+		);
+		if (failed.length > 0) {
+			console.log('Failed Tests');
+			failed.forEach((v) => log('FAIL', v))
 		}
-
-		var store = dio.createStore(reducer, logger);
-
-		function isStore (a) {
-			var props = ['connect', 'dispatch', 'getState', 'subscribe'];
-
-			var state = props.filter(function (value) {
-				return !!a[value];
-			});
-
-			return !!state.length;
+		if (passed.length > 0) {
+			console.log('Passed Tests');
+			passed.forEach((v) => log('PASS', v));
 		}
+		report(passed.length, failed.length);
+	}
 
-		var renderSpy = spy();
-		var subscribeSpy = spy();
-		var middlewareSpy = spy();
+	const ok = (value, msg) => {
+		(value ? passed : failed).push({type: 'OK', msg: msg});
+	}
 
-		assert(isStore(store), '.createStore({Function})');		
+	const equal = (actual, expected, msg) => {
+		(actual === expected ? passed : failed).push({type: 'EQUAL', msg: msg})
+	}
 
-		store.dispatch({type: 'ADD', item: 10});
+	try {
+		body({end, ok, equal, deepEqual});
+	} catch (err) {
+		console.error('\x1b[31m', err, '\x1b[0m');
 
-		assert(middlewareSpy.called, '.createStore({Function}), middleware');
-		assert.deepEqual(store.getState(), {items: [1,2,3,4,10]}, 'store.getState()');
-		store.dispatch({type: 'ADD', item: 11});
-		assert.deepEqual(store.getState(), {items: [1,2,3,4,10, 11]}, 'store.dispatch({Object})');
+		failed.push({
+			type: 'ERR',
+			msg: err
+		});
+	}
+}
 
-		store.subscribe(subscribeSpy);
-		store.dispatch({type: 'ADD', item: 14});
+let search = '.spec.js';
 
-		assert(subscribeSpy.called, 'store.subscribe(fn)');
-
-		store.connect(renderSpy);
-		store.dispatch({type: 'ADD', item: 33});
-
-		assert(renderSpy.called, 'store.connect({createRender})');
+const bootstrap = () => {
+	const files = fs.readdirSync(__dirname).filter((file) => {
+		return file.lastIndexOf(search) !== -1
+	});
+	const specs = files.map((file) => {
+		return path.resolve(__dirname, file)
 	});
 
-	describe('dio.render', function (assert, done) {
-		var container;
+	specs.forEach((spec)=>{
+		delete require.cache[require.resolve(spec)];
+	});
 
-		if (typeof document === 'object') {
-			container = document.querySelector('.container');
-		}
+	try {
+		console.log('\n');
+		specs.map(spec=>require(spec)).map(spec=>typeof spec === 'function' ? spec(dio) : spec);
 
-		var hyperscript = h('pre', {style: 'display:none;'}, '.render works');
+		setTimeout(()=>{
+			console.log('-----------------------------------------------------------\n');
+		});
+	} catch (err) {
+		console.error('\x1b[31m', err, '\x1b[0m');
+	}
+}
 
-		var propsSpy = spy();
-		var childrenSpy = spy();
+const exit = () => {
+	if (type.indexOf('--watch') === -1) {
+		process.exit(1);
+	}
+}
 
-		var render = dio.render({
-			render: function () {
-				if (this.props.id) {
-					propsSpy();
-				}
+const type = (process.argv.pop() + '');
 
-				return hyperscript;
-			}
-		}, container);
-
-		if (container) {
-			assert(container.children.length, '.render({Object}, element)');
-		}
-
-		if (typeof document === 'object') {
-			setTimeout(function () {
-				render({id: 2});
-				assert(propsSpy.called, 'render(props)');
-				done();
-			}, 1000/61);
+if (type.indexOf('--watch') !== -1) {
+	const watcher = (file) => {
+		if (!file) {
+			console.log('\nwatching..', 'tests/');
 		} else {
-			done();
+			console.log('changed > ' + file);
 		}
-	});
+		bootstrap();
+	}
 
-	describe('dio.request', function (assert, done) {
-		if (typeof XMLHttpRequest !== 'function') {
-			return done();
-		}
+	const watch = chokidar.watch(specs, {ignored: /[\/\\]\./});
 
-		var spyer = spy();
-		var requestJSON = dio.request.get('https://jsonplaceholder.typicode.com/users');
-
-		requestJSON.then(spyer).then(function (value) {
-			assert(true, '.get()');
-			assert(true, '.then()');
-			assert(value.length === spyer.called[0][0].length, '.get(CORS)');
-
-			throw 'error';
-		}).catch(function (e) {
-			assert(e === 'error', '.catch(e => e)');
-			// a request would naturally take the longest
-			// lets end the test here.
-			done();
-		});
-
-		dio.request.post('?', {id: 1234}).then(function (value) {
-			assert(value.nodeType, '.post()')
-		});
-	});
-});
+	watch.on('change', watcher);
+	watch.on('ready', watcher);
+} else {
+	if (type.length !== 0 && type.indexOf(__dirname) === -1) {
+		search = type + search;
+	}
+	bootstrap();
+}

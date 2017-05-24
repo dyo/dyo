@@ -2,8 +2,8 @@
 	"name": "dio.js",
 	"main": "dio.js",
 	"types": "dio.d.ts",
-	"description": "dio is a javascript framework for building applications.",
-	"version": "6.1.2",
+	"description": "a library for building user interfaces",
+	"version": "7.0.0",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",
 	"author": {
@@ -11,14 +11,7 @@
 		"email": "sultantarimo@me.com"
 	},
 	"keywords": [
-		"dio", 
-		"react",
-		"fast",
-		"lightweight",
-		"framework", 
-		"server",
-		"browser",
-		"components"
+		"dio"
 	],
 	"repository": {
 		"type": "git",
@@ -27,13 +20,21 @@
 	"bugs": {
 		"url": "https://github.com/thysultan/dio.js/issues"
 	},
-	"scripts": {
-		"test": "node ./tests/",
-		"build": "node ./build/"
-	},
 	"files": [
-		"dio.d.ts",
-		"dio.min.js", 
-		"dio.js"
-	]
+		"dio.js",
+		"dio.min.js",
+		"dio.server.js",
+		"dio.d.ts"
+	],
+	"scripts": {
+		"test": "node ./tests",
+		"tests": "node ./tests --watch",
+		"build": "node ./bundle --bundle && node ./bundle/minify",
+		"dev": "node ./bundle"
+	},
+	"devDependencies": {
+		"chokidar": "^1.6.1",
+		"uglify-js": "^2.8.16",
+		"jsdom": "^10.0.0"
+	}
 }

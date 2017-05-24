@@ -1,5691 +1,2505 @@
 /*
- *  ___ __ __  
- * (   (  /  \ 
+ *  ___ __ __
+ * (   (  /  \
  *  ) ) )( () )
- * (___(__\__/ 
- * 
- * dio is a javascript framework for building applications.
- * 
- * @licence MIT
+ * (___(__\__/
+ *
+ * a library for building user interfaces
  */
+/* eslint-disable */
 (function (factory) {
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
-		module.exports = factory(global);
+		module.exports = factory(global, require);
+	} else if (typeof define === 'function' && define.amd) {
+		define(factory(window, null));
+	} else {
+		window.dio = factory(window, null);
 	}
-	else if (typeof define === 'function' && define.amd) {
-		define(factory(window));
-	}
-	else {
-		window.dio = factory(window);
-	}
-}(function (window) {
-
+}(function (self, __require__) {
 
 	'use strict';
 
-
 	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * constants
-	 * 
-	 * ---------------------------------------------------------------------------------
+	 * ## Constants
+	 */
+	var browser = self.window === self;
+	var server = browser === false;
+	var body = null;
+	
+	var w3 = 'http://www.w3.org/';
+	var svg = w3 + '2000/svg';
+	var xlink = w3 + '1999/xlink';
+	var math = w3 + '1998/Math/MathML';
+	
+	var noop = function () {};
+	var Promise = self.Promise || noop;
+	var requestAnimationFrame = self.requestAnimationFrame || setTimeout;
+	var requestIdleCallback = self.requestIdleCallback || setTimeout;
+	
+	var READY = 0;
+	var PROCESSING = 1;
+	var PROCESSED = 2;
+	var PENDING = 3;
+	
+	var STRING = 0;
+	var FUNCTION = 1;
+	var CLASS = 2;
+	var NOOP = 3;
+	
+	var EMPTY = 0;
+	var TEXT = 1;
+	var ELEMENT = 2;
+	var COMPOSITE = 3;
+	var FRAGMENT = 4;
+	var ERROR = 5;
+	var PORTAL = 6;
+	
+	var CHILDREN = [];
+	var ATTRS = {};
+	var PROPS = {children: CHILDREN};
+	var SHARED = new Tree(EMPTY);
+	
+	/**
+	 * ## Element Shape
+	 *
+	 * tag: node tag {String}
+	 * type: node type {Function|Class|String}
+	 * props: node properties {Object?}
+	 * attrs: node attributes {Object?}
+	 * children: node children {Array<Tree>}
+	 * key: node key {Any}
+	 * flag: node flag {Number}
+	 * xmlns: node xmlns namespace {String?}
+	 * owner: node component {Component?}
+	 * node: node DOM reference {Node?}
+	 * group: node ground {Number}
+	 * async: node work state {Number} 0: ready, 1:processing, 2:processed, 3: pending
+	 * yield: coroutine {Function?}
+	 * host: host component
+	 *
+	 * ## Component Shape
+	 *
+	 * this: current tree {Tree?}
+	 * async: component async, tracks async lifecycle methods flag {Number}
+	 *
+	 * _props: previous props {Object}
+	 * _state: previous state {Object}
+	 * _pending: pending state {Object}
+	 *
+	 * props: current props {Object}
+	 * state: current state {Object}
+	 * refs: refs {Object?}
+	 * setState: method {Function}
+	 * forceUpdate: method {Function}
 	 */
 	
+	/**
+	 * Component
+	 *
+	 * @param {Object?} props
+	 */
+	function Component (props) {
+		var state = this.state;
 	
-	// current version
-	var version = '6.1.2';
+		this.refs = null;
+		this.this = null;
 	
-	// enviroment
-	var document = window.document || null;
-	var browser = document !== null;
+		// props
+		if (this.props === void 0) {
+			this.props = (props === PROPS || props === void 0 || props === null) ? {} : props;
+		}
 	
-	// other
-	var Promise = window.Promise;
-	var requestAnimationFrame = window.requestAnimationFrame;
-	var setImmediate = window.setImmediate;
+		// state
+		if (state === void 0) {
+			state = this.state = {};
+		}
 	
-	var promiseSupport = Promise !== void 0;
-	var requestAnimationFrameSupport = requestAnimationFrame !== void 0;
-	var setImmediateSupport = setImmediate !== void 0;
+		this._state = state;
+	}
 	
-	// namespaces
-	var nsStyle = 'data-scope';
-	var nsMath = 'http://www.w3.org/1998/Math/MathML';
-	var nsXlink = 'http://www.w3.org/1999/xlink';
-	var nsSvg = 'http://www.w3.org/2000/svg';
-	
-	// empty shapes
-	var objEmpty = {};
-	var arrEmpty = [];
-	var nodeEmpty = createNodeShape(0, '', objEmpty, arrEmpty, null, null, 0, null, void 0);
-	var funcEmpty = function () {};
-	var fragProps = {style: 'display: inherit;'};
-	
-	
-	// server
-	var server = browser === false && window.window !== window;
-	var readable = server ? require('stream').Readable : null;
-	
-	// void elements
-	var isVoid = {
-		'area': 0, 'base': 0, 'br': 0, '!doctype': 0, 'col': 0, 'embed': 0,
-		'wbr': 0, 'track': 0, 'hr': 0, 'img': 0, 'input': 0, 'keygen': 0, 
-		'link': 0, 'meta': 0, 'param': 0, 'source': 0
+	/**
+	 * Component Prototype
+	 *
+	 * @type {Object}
+	 */
+	var ComponentPrototype = {
+		setState: {value: setState},
+		forceUpdate: {value: forceUpdate},
+		UUID: {value: 2}
 	};
 	
-	// unicode characters
-	var uniCodes = {
-		'<': '&lt;',
-		'>': '&gt;',
-		'"': '&quot;',
-		"'": '&#39;',
-		'&': '&amp;'
-	};
-	
-	// regular expressions
-	var regEsc = /[<>&"']/g;
-	var regStyleCamel = /([a-zA-Z])(?=[A-Z])/g;
-	var regStyleVendor = /^(ms|webkit|moz)/;
-	
+	Component.prototype = Object.create(null, ComponentPrototype);
+	ComponentPrototype.UUID.value = 1;
 	
 	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * utilities
-	 * 
-	 * ---------------------------------------------------------------------------------
+	 * Extend Class
+	 *
+	 * @param {Function} type
+	 * @param {Object} prototype
 	 */
-	
-	
-	/**
-	 * escape string
-	 * 
-	 * @param  {(string|boolean|number)} subject
-	 * @return {string}
-	 */
-	function escape (subject) {
-		return (''+subject).replace(regEsc, unicode);
-	}
-	
-	
-	/**
-	 * unicode, escape => () helper
-	 * 
-	 * @param  {string} char
-	 * @return {string}
-	 */
-	function unicode (char) {
-		return uniCodes[char] || char;
-	}
-	
-	
-	/**
-	 * try catch helper
-	 * 
-	 * @param  {function}  func
-	 * @param  {function=} errorHandler
-	 * @param  {any=}      arg
-	 * @return {any}
-	 */
-	function sandbox (func, errorHandler, arg) {
-		try {
-			return arg != null ? func(arg) : func();
+	function extendClass (type, prototype) {
+		if (prototype.constructor !== type) {
+			Object.defineProperty(prototype, 'constructor', {value: type});
 		}
-		catch (error) {
-			return errorHandler != null && errorHandler(error);
-		}
-	}
 	
+		Object.defineProperties(prototype, ComponentPrototype);
+	}
 	
 	/**
-	 * schedule callback
-	 * 
-	 * @type {function}
-	 * @param {function} callback
-	 */
-	var schedule;
-	
-	if (requestAnimationFrameSupport) {
-		schedule = function schedule (callback) { 
-			requestAnimationFrame(callback);
-		}
-	}
-	else if (setImmediateSupport) {
-		schedule = function schedule (callback) { 
-			setImmediate(callback); 
-		}
-	}
-	else if (promiseSupport) {
-		schedule = function schedule (callback) { 
-			Promise.resolve().then(callback); 
-		}
-	}
-	else {
-		schedule = function schedule (callback) { 
-			setTimeout(callback, 0); 
-		}
-	}
-	
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * shapes
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * Node shapes
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * element shape
+	 * setState
 	 *
-	 * @public
-	 * 
-	 * @param  {string}               type
-	 * @param  {Object<string, any>=} props
-	 * @param  {VNode[]=}             children
-	 * @return {VNode}
+	 * @param {Object} state
+	 * @param {Function?} callback
 	 */
-	function createElementShape (type, props, children) {
-		return {
-			Type: 1,
-			type: type,
-			props: (props = props != null ? props : objEmpty),
-			children: (children == null ? [] : children),
-			DOMNode: null,
-			instance: null,
-			index: 0,
-			nodeName: null,
-			key: props !== objEmpty ? props.key : void 0
-		};
-	}
+	function setState (state, callback) {
+		var owner = this;
+		var newState = state !== void 0 && state !== null ? state : {};
+		var oldState = owner.state;
+		var constructor = newState.constructor;
 	
+		if (constructor === Function) {
+			newState = callbackBoundary(SHARED, owner, newState, oldState, 0);
 	
-	/**
-	 * component shape
-	 *
-	 * @public
-	 * 
-	 * @param  {(function|Component)} type
-	 * @param  {Object<string, any>=} props
-	 * @param  {any[]=}               children
-	 * @return {VNode}
-	 */
-	function createComponentShape (type, props, children) {
-		return {
-			Type: 2,
-			type: type,
-			props: (props = props != null ? props : objEmpty),
-			children: (children == null ? arrEmpty : children),
-			DOMNode: null,
-			instance: null,
-			index: 0,
-			nodeName: null,
-			key: props !== objEmpty ? props.key : void 0
-		};
-	}
-	
-	
-	/**
-	 * fragment shape
-	 *
-	 * @public
-	 * 
-	 * @param  {VNode[]} children
-	 * @return {VNode}
-	 */
-	function createFragmentShape (children) {
-		return {
-			Type: 1,
-			type: 'fragment',
-			props: fragProps,
-			children: children,
-			DOMNode: null,
-			instance: null,
-			index: 0,
-			nodeName: null,
-			key: void 0
-		};
-	}
-	
-	
-	/**
-	 * create text shape
-	 *
-	 * @public
-	 * 
-	 * @param  {(string|boolean|number)} text
-	 * @return {VNode}
-	 */
-	function createTextShape (text) {
-		return {
-			Type: 3,
-			type: '#text',
-			props: objEmpty,
-			children: text,
-			DOMNode: null,
-			instance: null,
-			index: 0,
-			nodeName: null,
-			key: void 0
-		};
-	}
-	
-	
-	/**
-	 * svg shape
-	 *
-	 * @public
-	 * 
-	 * @param  {string}               type
-	 * @param  {Object<string, any>=} props
-	 * @param  {VNode[]=}             children
-	 * @return {VNode}
-	 */
-	function createSvgShape (type, props, children) {
-		return {
-			Type: 1,
-			type: type,
-			props: (props == null ? (props = {xmlns: nsSvg}) : (props.xmlns = nsSvg, props)),
-			children: (children == null ? [] : children),
-			DOMNode: null,
-			instance: null,
-			index: 0,
-			nodeName: null,
-			key: props.key
-		};
-	}
-	
-	
-	/**
-	 * create node shape
-	 *
-	 * @param  {number}                      Type
-	 * @param  {(string|function|Component)} type
-	 * @param  {Object<string, any>}         props
-	 * @param  {VNode[]}                     children
-	 * @param  {Node}                        DOMNode
-	 * @param  {Component}                   instance
-	 * @param  {number}                      index
-	 * @param  {string?}                     nodeName
-	 * @param  {any}                         key
-	 * @return {VNode}
-	 */
-	function createNodeShape (Type, type, props, children, DOMNode, instance, index, nodeName, key) {
-		return {
-			Type: Type,
-			type: type,
-			props: props,
-			children: children,
-			DOMNode: DOMNode,
-			instance: instance,
-			index: index,
-			nodeName: nodeName,
-			key: key
-		};
-	}
-	
-	
-	/**
-	 * empty shape
-	 * 
-	 * @return {VNode}
-	 */
-	function createEmptyShape () {
-		return {
-			Type: 1,
-			type: 'noscript',
-			props: objEmpty,
-			children: [],
-			DOMNode: null,
-			instance: null,
-			index: 0,
-			nodeName: null,
-			key: void 0
-		};
-	}
-	
-	
-	/**
-	 * portal shape
-	 *
-	 * @public
-	 * 
-	 * @param  {Node} DOMNode
-	 * @return {VNode}
-	 */
-	function createPortalShape (type, props, children) {
-		return {
-			Type: 4,
-			type: type.nodeName.toLowerCase(),
-			props: (props = props != null ? props : objEmpty),
-			children: (children == null ? [] : children),
-			DOMNode: type,
-			instance: null,
-			index: 0,
-			nodeName: null,
-			key: props !== objEmpty ? props.key : void 0
-		};
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * HTTP shapes
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * request shape
-	 * 
-	 * @param {string}           method
-	 * @param {string}           url
-	 * @param {(string|Object)=} payload
-	 * @param {string=}          enctype
-	 * @param {string=}          responseType
-	 */
-	function createRequestShape (method, url, payload, enctype, responseType) {
-		return {
-			method: method,
-			url: url,
-			payload: payload,
-			enctype: enctype,
-			responseType: responseType,
-			withCredentials: null,
-			headers: null,
-			initial: null,
-			config: null,
-			username: null,
-			password: null
-		};
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * stylesheet
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * create scoped stylesheet
-	 *
-	 * @param {Component} component
-	 * @param {function}  constructor
-	 * @param {Node?}     element
-	 */
-	function createScopedStylesheet (component, constructor, element) {
-		try {
-			// create
-			if (component.stylesheet.CSSNamespace === void 0) {
-				createScopedCSS(component, constructor.COMPCache || constructor, true)(element);
+			if (newState === void 0 || newState === null) {
+				return;
 			}
-			// namespace
-			else {
-				component.stylesheet(element);
-			}
-		}
-		catch (error) {
-			componentErrorBoundary(error, component, 'stylesheet');
-		}
-	}
 	
-	
-	/**
-	 * create scoped css
-	 * 
-	 * @param  {Component}       component
-	 * @param  {function}        constructor
-	 * @param  {boolean}         inject
-	 * @return {function(?Node)}
-	 */
-	function createScopedCSS (component, constructor, inject) {
-		var namespace = component.displayName || constructor.name;
-		var selector = '['+nsStyle+'='+namespace+']';
-		var css = component.stylesheet();
-		var output = stylesheet(selector, css, true, true, null);
-	
-		if (browser && inject) {
-			// obscure namesapce to avoid id/global namespace conflicts
-			var id = '\''+namespace+'\'';
-	
-			// prevent duplicate styles when SSR outputs stylesheet
-			if (document.getElementById(id) == null) {			
-				var style = document.createElement('style');
-				
-				style.textContent = output;
-				style.id = id;
-	
-				document.head.appendChild(style);
-			}
+			constructor = newState.constructor;
 		}
 	
-		/**
-		 * decorator
-		 * 
-		 * @param  {?Node} DOMNode
-		 * @return {(undefined|string)}
-		 */
-		function decorator (DOMNode) {
-			// SSR
-			if (DOMNode === null) {
-				return output;
+		switch (constructor) {
+			case Promise: {
+				newState.then(function (value) {
+					owner.setState(value, callback);
+				});
+				break;
 			}
-			// DOM
-			else {
-				DOMNode.setAttribute(nsStyle, namespace);
-			}
-		}
-	
-		decorator.CSSNamespace = namespace;
-	
-		// replace stylesheet method for all instances with the style constructor `decorator`
-		return component.stylesheet = constructor.prototype.stylesheet = decorator;
-	}
-	
-	
-	/**
-	 * css preprocessor
-	 *
-	 * @example stylesheet('.foo', 'css...', true, true, null);
-	 * 
-	 * @param  {string}   selector   - i.e `.class` or `#id` or `[attr=id]`
-	 * @param  {string}   styles     - css string
-	 * @param  {boolean=} animations - prefix animations and keyframes, true by default
-	 * @param  {boolean=} compact    - enable additional features(mixins and variables)
-	 * @param  {function(context, content, line, column)=} middleware
-	 * @return {string}
-	 */
-	function stylesheet (selector, styles, animations, compact, middleware) {
-	    // to string
-	    selector += '';
-	
-	    var prefix = '';
-	    var namespace = '';
-	    var type = selector.charCodeAt(0) || 0;
-	    
-	    var char;
-	    var attr;
-	    var animns;
-	    var plugins;
-	    var uses;
-	
-	    // [ attr selector
-	    if (type === 91) {
-	        // `[data-id=namespace]` -> ['data-id', 'namespace']
-	        attr = selector.substring(1, selector.length-1).split('=');
-	        char = (namespace = attr[1]).charCodeAt(0);
-	
-	        // [data-id="namespace"]/[data-id='namespace']
-	        // --> "namespace"/'namspace' --> namespace
-	        if (char === 34 || char === 39) {
-	            namespace = namespace.substring(1, namespace.length-1);
-	        }
-	
-	        prefix = '['+ attr[0] + '="' + namespace +'"]';
-	    }
-	    // `#` `.` `>` id class and descendant selectors
-	    else if (type === 35 || type === 46 || type === 62) {
-	        namespace = (prefix = selector).substring(1);
-	    }
-	    // element selector
-	    else {
-	        namespace = prefix = selector;
-	    }
-	
-	    // reset type signature
-	    type = 0;
-	
-	    // animation and keyframe namespace
-	    if (animations == void 0 || animations === true) {
-	        animations = true;
-	        animns = namespace;
-	    }
-	    else {
-	        animns = '';
-	        animations = false;
-	    }
-	
-	    // uses middleware
-	    var use = middleware != null;
-	
-	    // middleware
-	    if (use) {
-	        uses = (typeof middleware).charCodeAt(0);
-	
-	        // o, object of middlewares
-	        if (uses === 111) {
-	            stylesheet.use(middleware, null);
-	        }
-	        // f, not a single function middleware
-	        else if (uses !== 102) {
-	            use = false;
-	        }
-	    }
-	
-	    // plugins
-	    if ((plugins = stylesheet.plugins).length !== 0) {
-	        middleware = function (ctx, str, line, col) {
-	            var output = str;
-	
-	            for (var i = 0, length = plugins.length; i < length; i++) {
-	                output = plugins[i](ctx, output, line, col) || output;
-	            }
-	
-	            return output !== str ? output : void 0;
-	        };
-	
-	        use = true;
-	    }
-	
-	    // declare
-	    var colon;
-	    var inner;
-	    var selectors;
-	    var build;
-	    var media;
-	    var temp;
-	    var prev;
-	    var indexOf;
-	    var first;
-	    var second;
-	    var third;
-	    var sel;
-	
-	    // variables
-	    var variables;
-	
-	    // mixins
-	    var mixins;
-	    var mixin;
-	
-	    // buffers
-	    var buff = '';
-	    var blob = '';
-	    var blck = '';
-	    var nest = '';
-	    var flat = '';
-	    var code = 0;
-	
-	    // context signatures       
-	    var special = 0;
-	    var close = 0;
-	    var closed = 0;
-	    var comment = 0;
-	    var comments = 0;
-	    var strings = 0;
-	    var nested = 0;
-	    var func = 0;
-	
-	    // context(flat) signatures
-	    var levels = 0;
-	    var level = 0;
-	
-	    // prefixes
-	    var moz = '-moz-';
-	    var ms = '-ms-';
-	    var webkit = '-webkit-';
-	
-	    if (use) {
-	        temp = middleware(0, styles, line, column);
-	        
-	        if (temp != null) {
-	            styles = temp;
-	        }
-	    }
-	
-	    // positions
-	    var caret = 0;
-	    var depth = 0;
-	    var column = 0;
-	    var line = 1;
-	    var eof = styles.length;
-	
-	    // compiled output
-	    var output = '';
-	
-	    // parse + compile
-	    while (caret < eof) {
-	        code = styles.charCodeAt(caret);
-	
-	        // {, }, ; characters, parse line by line
-	        if (strings === 0 && func === 0 && (code === 123 || code === 125 || code === 59)) {
-	            buff += styles.charAt(caret);
-	
-	            first = buff.charCodeAt(0);
-	
-	            // only trim when the first character is a space ` `
-	            if (first === 32) {
-	                first = (buff = buff.trim()).charCodeAt(0);
-	            }
-	
-	            // default to 0 instead of NaN if there is no second/third character
-	            second = buff.charCodeAt(1) || 0;
-	            third = buff.charCodeAt(2) || 0;
-	
-	            // middleware, selector/property context, }
-	            if (use && code !== 125) {
-	                // { selector context
-	                if (code === 123) {
-	                    temp = middleware(1, buff.substring(0, buff.length - 1).trim(), line, column);
-	                } 
-	                // ; property context
-	                else {
-	                    temp = middleware(2, buff, line, column);
-	                }
-	
-	                if (temp != null) {
-	                    buff = code === 123 ? temp + '{' : temp;
-	                }
-	            }
-	
-	            // ignore comments
-	            if (comment === 2) {
-	                if (code === 125) {
-	                    comment = 0;
-	                }
-	                buff = ''; 
-	            }
-	            // @, special block
-	            else if (first === 64) {
-	                // push flat css
-	                if (levels === 1 && flat.length !== 0) {
-	                    levels = 0;
-	                    flat = prefix + ' {' + flat + '}';
-	
-	                    // middleware, flat context
-	                    if (use) {
-	                        temp = middleware(4, flat, line, column);
-	                    
-	                        if (temp != null) {
-	                            flat = temp;
-	                        }
-	                    }
-	
-	                    output += flat;
-	                    flat = '';
-	                }
-	
-	                // @keyframe/@global, `k` or @global, `g` character
-	                if (second === 107 || second === 103) {
-	                    // k, @keyframes
-	                    if (second === 107) {
-	                        blob = buff.substring(1, 11) + animns + buff.substring(11);
-	                        buff = '@'+webkit+blob;
-	                        type = 1;
-	                    }
-	                    // g, @global
-	                    else {
-	                        buff = '';
-	                    }
-	                }
-	                // @media/@mixin `m` character
-	                else if (second === 109) {
-	                    // @mixin
-	                    if (compact === true && third === 105) {
-	                        // first match create mixin store
-	                        mixins === void 0 && (mixins = {});
-	
-	                        // retrieve mixin identifier
-	                        blob = (mixin = buff.substring(7, buff.indexOf('{')) + ' ').trim();
-	
-	                        // cache current mixin name
-	                        mixin = mixin.substring(0, mixin.indexOf(' ')).trim();
-	
-	                        // append mixin identifier
-	                        mixins[mixin] = {key: blob.trim(), body: ''};
-	
-	                        type = 3;
-	                        buff = '';
-	                        blob = '';
-	                    }
-	                    // @media
-	                    else if (third === 101) {
-	                        // nested
-	                        if (depth !== 0) {
-	                            // discard first character {
-	                            caret++;
-	                            
-	                            media = '';
-	                            inner = '';
-	                            selectors = prev.split(',');
-	
-	                            // keep track of opening `{` and `}` occurrences
-	                            closed = 1;
-	
-	                            // travel to the end of the block
-	                            while (caret < eof) {
-	                                char = styles.charCodeAt(caret);
-	
-	                                // {, }, nested blocks may have nested blocks
-	                                if (char === 123) {
-	                                    closed++;
-	                                }
-	                                else if (char === 125) {
-	                                    closed--;
-	                                }
-	
-	                                // break when the nested block has ended
-	                                if (closed === 0) {
-	                                    break;
-	                                }
-	
-	                                // build content of nested block
-	                                inner += styles.charAt(caret++);
-	                            }
-	
-	                            for (var i = 0, length = selectors.length; i < length; i++) {
-	                                selector = selectors[i];
-	
-	                                // build media block
-	                                media += stylesheet(
-	                                    // remove { on last selector
-	                                    (i === length - 1 ? selector.substring(0, selector.length - 1) :  selector).trim(),
-	                                    inner, 
-	                                    animations, 
-	                                    compact, 
-	                                    middleware
-	                                );
-	                            }
-	
-	                            media = buff + media + '}';
-	                            buff = '';
-	                            type = 4;
-	                        }
-	                        // top-level
-	                        else {
-	                            type = 2;
-	                        }
-	                    }
-	                    // unknown
-	                    else {
-	                        type = 6;
-	                    }
-	                }
-	
-	                // @include/@import `i` character
-	                if (second === 105) {
-	                    // @include `n` character
-	                    if (compact === true && third === 110) {
-	                        buff = buff.substring(9, buff.length - 1);
-	                        indexOf = buff.indexOf('(');
-	
-	                        // function mixins
-	                        if (indexOf !== -1) {
-	                            // mixin name
-	                            var name = buff.substring(0, indexOf);
-	
-	                            // mixin data
-	                            var data = mixins[name];
-	
-	                            // args passed to the mixin
-	                            var argsPassed = buff.substring(name.length+1, buff.length - 1).split(',');
-	
-	                            // args the mixin expects
-	                            var argsExpected = data.key.replace(name, '').replace(/\(|\)/g, '').trim().split(',');
-	                            
-	                            buff = data.body;
-	
-	                            for (var i = 0, length = argsPassed.length; i < length; i++) {
-	                                var arg = argsExpected[i].trim();
-	
-	                                // if the mixin has a slot for that arg
-	                                if (arg !== void 0) {
-	                                    buff = buff.replace(new RegExp('var\\(~~'+arg+'\\)', 'g'), argsPassed[i].trim());
-	                                }
-	                            }
-	
-	                            // create block and update styles length
-	                            styles += buff;
-	                            eof += buff.length;
-	
-	                            // reset
-	                            buff = '';
-	                        }
-	                        // static mixins
-	                        else {
-	                            buff = mixins[buff].body;
-	
-	                            if (depth === 0) {
-	                                // create block and update styles length
-	                                styles += buff;
-	                                eof += buff.length;
-	
-	                                // reset
-	                                buff = '';
-	                            }
-	                        }
-	                    }
-	                    // @import `m` character
-	                    else if (third === 109 && use) {
-	                        // avoid "foo.css"; "foo" screen; "http://foo.com/bar"; url(foo);
-	                        var match = /@import.*?(["'`][^\.\n\r]*?["'`];|["'`][^:\r\n]*?\.[^c].*?["'`])/g.exec(buff);
-	
-	                        if (match !== null) {
-	                            // middleware, import context
-	                            buff = middleware(5, match[1].replace(/['"; ]/g, ''), line, column) || '';
-	
-	                            if (buff) {
-	                                // create block and update styles length
-	                                styles = styles.substring(0, caret+1) + buff + styles.substring(caret+1);
-	                                eof += buff.length;
-	                            }
-	
-	                            buff = '';
-	                        }
-	                    }
-	                }
-	                // flag special, i.e @keyframes, @global
-	                else if (type !== 4) {
-	                    close = -1;
-	                    special++;
-	                }
-	            }
-	            // ~, ; variables
-	            else if (compact === true && code === 59 && first === 126 && second === 126) {
-	                colon = buff.indexOf(':');
-	
-	                // first match create variables store 
-	                if (variables === void 0) {
-	                    variables = [];
-	                }
-	
-	                // push key value pair
-	                variables[variables.length] = [buff.substring(0, colon), buff.substring(colon+1, buff.length - 1).trim()];
-	
-	                // reset buffer
-	                buff = '';
-	            }
-	            // property/selector
-	            else {
-	                // animation: a, n, i characters
-	                if (first === 97 && second === 110 && third === 105) {
-	                    // removes ;
-	                    buff = buff.substring(0, buff.length - 1);
-	
-	                    // position of :
-	                    colon = buff.indexOf(':')+1;
-	
-	                    // left hand side everything before `:`
-	                    build = buff.substring(0, colon);
-	
-	                    // right hand side everything after `:` /* @type string[] */
-	                    var anims = buff.substring(colon).trim().split(',');
-	
-	                    // - short hand animation syntax
-	                    if (animations === true && (buff.charCodeAt(9) || 0) !== 45) {
-	                        // because we can have multiple animations `animation: slide 4s, slideOut 2s`
-	                        for (var j = 0, length = anims.length; j < length; j++) {
-	                            var anim = anims[j];
-	                            var props = anim.split(' ');
-	
-	                            // since we can't be sure of the position of the name of the animation we have to find it
-	                            for (var k = 0, l = props.length; k < l; k++) {
-	                                var prop = props[k].trim();
-	                                var frst = prop.charCodeAt(0);
-	                                var thrd = prop.charCodeAt(2);
-	                                var len = prop.length;
-	                                var last = prop.charCodeAt(len - 1);
-	
-	                                // animation name is anything not in this list
-	                                if (
-	                                    // cubic-bezier()/steps(), ) 
-	                                    last !== 41 && len !== 0 &&
-	
-	                                    // infinite, i, f, e
-	                                    !(frst === 105 && thrd === 102 && last === 101 && len === 8) &&
-	
-	                                    // linear, l, n, r
-	                                    !(frst === 108 && thrd === 110 && last === 114 && len === 6) &&
-	
-	                                    // alternate/alternate-reverse, a, t, e
-	                                    !(frst === 97 && thrd === 116 && last === 101 && (len === 9 || len === 17)) &&
-	
-	                                    // normal, n, r, l
-	                                    !(frst === 110 && thrd === 114 && last === 108 && len === 6) &&
-	
-	                                    // backwards, b, c, s
-	                                    !(frst === 98 && thrd === 99 && last === 115 && len === 9) &&
-	
-	                                    // forwards, f, r, s
-	                                    !(frst === 102 && thrd === 114 && last === 115 && len === 8) &&
-	
-	                                    // both, b, t, h
-	                                    !(frst === 98 && thrd === 116 && last === 104 && len === 4) &&
-	
-	                                    // none, n, n, e
-	                                    !(frst === 110 && thrd === 110 && last === 101 && len === 4)&&
-	
-	                                    // running, r, n, g 
-	                                    !(frst === 114 && thrd === 110 && last === 103 && len === 7) &&
-	
-	                                    // paused, p, u, d
-	                                    !(frst === 112 && thrd === 117 && last === 100 && len === 6) &&
-	
-	                                    // reversed, r, v, d
-	                                    !(frst === 114 && thrd === 118 && last === 100 && len === 8) &&
-	
-	                                    // step-start/step-end, s, e, (t/d)
-	                                    !(
-	                                        frst === 115 && thrd === 101 && 
-	                                        ((last === 116 && len === 10) || (last === 100 && len === 8)) 
-	                                    ) &&
-	
-	                                    // ease/ease-in/ease-out/ease-in-out, e, s, e
-	                                    !(
-	                                        frst === 101 && thrd === 115 &&
-	                                        (
-	                                            (last === 101 && len === 4) ||
-	                                            (len === 11 || len === 7 || len === 8) && prop.charCodeAt(4) === 45
-	                                        )
-	                                    ) &&
-	
-	                                    // durations, 0.4ms, .4s, 400ms ...
-	                                    isNaN(parseFloat(prop)) &&
-	
-	                                    // handle spaces in cubic-bezier()/steps() functions
-	                                    prop.indexOf('(') === -1
-	                                ) {
-	                                    props[k] = animns + prop;
-	                                }
-	                            }
-	
-	                            build += (j === 0 ? '' : ',') + props.join(' ').trim();
-	                        }
-	                    }
-	                    // explicit syntax, anims array should have only one elemenet
-	                    else {
-	                        // n
-	                        build += ((buff.charCodeAt(10) || 0) !== 110 ? '' : animns) + anims[0].trim();
-	                    }
-	
-	                    // vendor prefix
-	                    buff = webkit + build + ';' + build + ';';
-	                }
-	                // appearance: a, p, p
-	                else if (first === 97 && second === 112 && third === 112) {
-	                    // vendor prefix -webkit- and -moz-
-	                    buff = (
-	                        webkit + buff + 
-	                        moz + buff + 
-	                        buff
-	                    );
-	                }
-	                // display: d, i, s
-	                else if (first === 100 && second === 105 && third === 115) {
-	                    // flex/inline-flex
-	                    if ((indexOf = buff.indexOf('flex')) !== -1) {
-	                        // e, inline-flex
-	                        temp = buff.charCodeAt(indexOf-2) === 101 ? 'inline-' : '';
-	
-	                        // vendor prefix
-	                        buff = 'display:'+webkit+temp+'box;display:'+webkit+temp+'flex;'+ms+'flexbox;display:'+temp+'flex;';
-	                    }
-	                }
-	                // transforms & transitions: t, r, a 
-	                else if (first === 116 && second === 114 && third === 97) {
-	                    // vendor prefix -webkit- and -ms- if transform
-	                    buff = (
-	                        webkit + buff + 
-	                        (buff.charCodeAt(5) === 102 ? ms + buff : '') + 
-	                        buff
-	                    );
-	                }
-	                // hyphens: h, y, p
-	                // user-select: u, s, e
-	                else if (
-	                    (first === 104 && second === 121 && third === 112) ||
-	                    (first === 117 && second === 115 && third === 101)
-	                ) {
-	                    // vendor prefix all
-	                    buff = (
-	                        webkit + buff + 
-	                        moz + buff + 
-	                        ms + buff + 
-	                        buff
-	                    );
-	                }
-	                // flex: f, l, e
-	                else if (first === 102 && second === 108 && third === 101) {
-	                    // vendor prefix all but moz
-	                    buff = (
-	                        webkit + buff + 
-	                        ms + buff + 
-	                        buff
-	                    );
-	                }
-	                // order: o, r, d
-	                else if (first === 111 && second === 114 && third === 100) {
-	                    // vendor prefix all but moz
-	                    buff = (
-	                        webkit + buff + 
-	                        ms + 'flex-' + buff + 
-	                        buff
-	                    );
-	                }
-	                // align-items, align-center, align-self: a, l, i, -
-	                else if (first === 97 && second === 108 && third === 105 && (buff.charCodeAt(5) || 0) === 45) {
-	                    switch (buff.charCodeAt(6) || 0) {
-	                        // align-items, i
-	                        case 105: {
-	                            temp = buff.replace('-items', '');
-	                            buff = (
-	                                webkit + 'box-' + temp + 
-	                                ms + 'flex-'+ temp + 
-	                                buff
-	                            );
-	                            break;
-	                        }
-	                        // align-self, s
-	                        case 115: {
-	                            buff = (
-	                                ms + 'flex-item-' + buff.replace('-self', '') + 
-	                                buff
-	                            );
-	                            break;
-	                        }
-	                        // align-content
-	                        default: {
-	                            buff = (
-	                                ms + 'flex-line-pack' + buff.replace('align-content', '') + 
-	                                buff
-	                            );
-	                            break;
-	                        }
-	                    }
-	                }
-	                // { character, selector declaration
-	                else if (code === 123) {
-	                    depth++;
-	
-	                    // push flat css
-	                    if (levels === 1 && flat.length !== 0) {
-	                        levels = 0;
-	                        flat = prefix + ' {' + flat + '}';
-	
-	                        // middleware, flat context
-	                        if (use) {
-	                            temp = middleware(4, flat, line, column);
-	                        
-	                            if (temp != null) {
-	                                flat = temp;
-	                            }
-	                        }
-	
-	                        output += flat;
-	                        flat = '';
-	                    }
-	
-	                    if (special === 0 || type === 2) {
-	                        // nested selector
-	                        if (depth === 2) {
-	                            // discard first character {
-	                            caret++;
-	
-	                            // inner content of block
-	                            inner = '';
-	
-	                            var nestSelector = buff.substring(0, buff.length-1).split(',');
-	                            var prevSelector = prev.substring(0, prev.length-1).split(',');
-	
-	                            // keep track of opening `{` and `}` occurrences
-	                            closed = 1;
-	
-	                            // travel to the end of the block
-	                            while (caret < eof) {
-	                                char = styles.charCodeAt(caret);
-	
-	                                // {, }, nested blocks may have nested blocks
-	                                if (char === 123) {
-	                                    closed++;
-	                                }
-	                                else if (char === 125) {
-	                                    closed--;
-	                                }
-	
-	                                // break when the nested block has ended
-	                                if (closed === 0) {
-	                                    break;
-	                                }
-	
-	                                // build content of nested block
-	                                inner += styles.charAt(caret++);
-	                            }
-	
-	                            // handle multiple selectors: h1, h2 { div, h4 {} } should generate
-	                            // -> h1 div, h2 div, h2 h4, h2 div {}
-	                            for (var j = 0, length = prevSelector.length; j < length; j++) {
-	                                // extract value, prep index for reuse
-	                                temp = prevSelector[j];
-	                                prevSelector[j] = '';
-	
-	                                // since there could also be multiple nested selectors
-	                                for (var k = 0, l = nestSelector.length; k < l; k++) {
-	                                    selector = temp.replace(prefix, '&').trim();
-	                                    sel = nestSelector[k].trim();
-	
-	                                    if (sel.indexOf(' &') > 0) {
-	                                        selector = sel.replace('&', '').trim() + ' ' + selector;
-	                                    }
-	                                    else {
-	                                        selector = selector + ' ' + sel;
-	                                    }
-	
-	                                    prevSelector[j] += selector.trim() + (k === l - 1  ? '' : ',');
-	                                }
-	                            }
-	
-	                            // the `new line` is to avoid conflicts when the last line is a // line comment
-	                            buff = ('\n' + prevSelector.join(',') + ' {'+inner+'}');
-	
-	                            // append nest
-	                            nest += buff.replace(/ +&/g, '');
-	
-	                            // signature
-	                            nested = 1;
-	
-	                            // clear current line, to avoid adding nested blocks to the normal flow
-	                            buff = '';
-	
-	                            // decreament depth
-	                            depth--;
-	                        }
-	                        // top-level selector
-	                        else {
-	                            selectors = buff.split(',');
-	                            build = '';
-	
-	                            // prefix multiple selectors with namesapces
-	                            // @example h1, h2, h3 --> [namespace] h1, [namespace] h1, ....
-	                            for (var j = 0, length = selectors.length; j < length; j++) {
-	                                var firstChar = (selector = selectors[j]).charCodeAt(0);
-	
-	                                // ` `, trim if first character is a space
-	                                if (firstChar === 32) {
-	                                    firstChar = (selector = selector.trim()).charCodeAt(0);
-	                                }
-	
-	                                // [, [title="a,b,..."]
-	                                if (firstChar === 91 && selector.indexOf(']') === -1) {
-	                                    for (var k = j + 1, l = length; k < l; k++) {
-	                                        var broken = (selector += ',' + selectors[k]).trim();
-	
-	                                        // ], end
-	                                        if (broken.indexOf(']') !== -1) {
-	                                            length -= k;
-	                                            selectors.splice(j, k);
-	                                            break;
-	                                        }
-	                                    }
-	                                }
-	
-	                                // &
-	                                if (firstChar === 38) {
-	                                    // before: & {
-	                                    selector = prefix + selector.substring(1);
-	                                    // after: ${prefix} {
-	                                }
-	                                else {
-	                                    // default to :global if & exist outside of the first non-space character
-	                                    if ((indexOf = selector.indexOf(' &')) > 0) {
-	                                        // `:`
-	                                        firstChar = 58;
-	                                        // before: html & {
-	                                        selector = ':global('+selector.substring(0, indexOf)+')' + selector.substring(indexOf);
-	                                        // after: html ${prefix} {
-	                                    }
-	
-	                                    // :
-	                                    if (firstChar === 58) {
-	                                        var secondChar = selector.charCodeAt(1);
-	
-	                                        // h, t, :host
-	                                        if (secondChar === 104 && selector.charCodeAt(4) === 116) {
-	                                            var nextChar = (selector = selector.substring(5)).charCodeAt(0);
-	
-	                                            // :host(selector)                    
-	                                            if (nextChar === 40) {
-	                                                // before: `(selector)`
-	                                                selector = prefix + selector.substring(1).replace(')', '');
-	                                                // after: ${prefx} selector {
-	                                            }
-	                                            // :host-context(selector)
-	                                            else if (nextChar === 45) {
-	                                                indexOf = selector.indexOf(')');
-	
-	                                                // before: `-context(selector)`
-	                                                selector = (
-	                                                    selector.substring(9, indexOf)+' '+prefix+selector.substring(indexOf+1)
-	                                                );
-	                                                // after: selector ${prefix} {
-	                                            }
-	                                            // :host
-	                                            else {
-	                                                selector = prefix + selector;
-	                                            }
-	                                        }
-	                                        // g, :global(selector)
-	                                        else if (secondChar === 103) {
-	                                            // before: `:global(selector)`
-	                                            selector = selector.substring(8).replace(')', '').replace('&', prefix);
-	                                            // after: selector
-	                                        }
-	                                        // :hover, :active, :focus, etc...
-	                                        else {
-	                                            selector = prefix + selector;
-	                                        }
-	                                    }
-	                                    // non-pseudo selectors
-	                                    else {
-	                                        selector = prefix + ' ' + selector;
-	                                    }
-	                                }
-	
-	                                // if first selector do not prefix with `,`
-	                                build += (j === 0 ? selector : ',' + selector);
-	                            }
-	
-	                            // cache current selector
-	                            prev = (buff = build);
-	                        }
-	                    }
-	                }
-	                // } character
-	                else if (code === 125) {
-	                    if (depth !== 0) {
-	                        depth--;
-	                    }
-	
-	                    // concat nested css
-	                    if (depth === 0 && nested === 1) {
-	                        styles = styles.substring(0, caret+1) + nest + styles.substring(caret+1);
-	                        eof += nest.length;
-	                        nest = '';
-	                        nested = 0;
-	                        close++;
-	                    }
-	                }
-	
-	                // @global/@keyframes
-	                if (special !== 0) {
-	                    // }, find closing tag
-	                    if (code === 125) {
-	                        close++;
-	                    } 
-	                    // {
-	                    else if (code === 123 && close !== 0) {
-	                        close--;
-	                    }
-	
-	                    // append flat @media css
-	                    if (level === 1 && (code === 123 || close === 0) && flat.length !== 0) {
-	                        level = 0;
-	                        buff = prefix + ' {'+flat+'}' + buff;
-	                        flat = '';
-	                    }
-	
-	                    // closing tag
-	                    if (close === 0) {
-	                        // @global
-	                        if (type === 0) {
-	                            buff = '';
-	                        }
-	                        // @keyframes 
-	                        else if (type === 1) {
-	                            // vendor prefix
-	                            buff = '}@'+blob+'}';
-	
-	                            // reset
-	                            blob = '';
-	                        }
-	                        // @mixin
-	                        else if (type === 3) {
-	                            // append body of mixin
-	                            mixins[mixin].body = blob;
-	
-	                            // reset
-	                            mixin = '';
-	                            buff = '';
-	                            blob = '';
-	                        }
-	
-	                        // reset signatures
-	                        type = 0;
-	                        close--;
-	                        special--;
-	                    }
-	                    // @keyframes, @mixin
-	                    else if (type === 1 || type === 3) {
-	                        blob += buff;
-	
-	                        if (type === 3) {
-	                            buff = '';
-	                        }
-	                    }
-	                    // @media flat context
-	                    else if (type === 2 && depth === 0) {
-	                        if (code !== 125) {
-	                            if (level === 0) {
-	                                flat = '';
-	                            }
-	
-	                            flat += buff;
-	                            buff = '';
-	                        }
-	
-	                        level = 1;
-	                    }
-	                }
-	                // flat context
-	                else if (depth === 0 && code !== 125) {
-	                    levels = 1;
-	                    flat = flat === void 0 ? buff : flat + buff;
-	                    buff = '';
-	                }
-	            }
-	
-	            // append line to blck buffer
-	            blck += buff;
-	
-	            // reset line buffer
-	            buff = '';
-	
-	            // add blck buffer to output
-	            if (code === 125 && comment === 0 && (type === 0 || type === 4)) {                  
-	                // append if the block is not empty {}
-	                if (blck.charCodeAt(blck.length-2) !== 123) {
-	                    // middleware, block context
-	                    if (use && blck.length !== 0) {
-	                        temp = middleware(3, blck, line, column);
-	
-	                        if (temp != null) {
-	                            blck = temp;
-	                        }
-	                    }
-	
-	                    // append blck buffer
-	                    output += blck.trim();
-	                }
-	
-	                // nested @media
-	                if (type === 4) {
-	                    // middleware, block context
-	                    if (use) {
-	                        temp = middleware(3, media, line, column);
-	
-	                        if (temp != null) {
-	                            media = temp;
-	                        }
-	                    }
-	
-	                    // reset
-	                    type = 0;
-	
-	                    // concat nested @media block
-	                    output += media;
-	                }
-	
-	                // reset blck buffer
-	                blck = '';
-	            }
-	        }
-	        // build line by line
-	        else {
-	            // \r, \n, new lines
-	            if (code === 13 || code === 10) {
-	                // ignore line and block comments
-	                if (comment === 2) {
-	                    // * character, block comment
-	                    if (buff.charCodeAt(buff.length - 2) === 42) {
-	                        buff = buff.substring(0, buff.indexOf('/*')).trim();
-	                    }
-	                    else {
-	                        // / character, does not start with `/`
-	                        if (buff.charCodeAt(0) !== 47 && (indexOf = buff.indexOf('//')) !== -1) {
-	                            buff = buff.substring(0, indexOf).trim();
-	                        }
-	                        else {
-	                            buff = '';
-	                        }
-	                    }
-	
-	                    comments = 0;
-	                    comment = 0;
-	                }
-	
-	                column = 0;
-	                line++;
-	            }
-	            // not `\t` tab character
-	            else if (code !== 9) {
-	                switch (code) {
-	                    // " character
-	                    case 34: {
-	                        // exit string " context / enter string context
-	                        strings = strings === 34 ? 0 : (strings === 39 ? 39 : 34);
-	                        break;
-	                    }
-	                    // ' character
-	                    case 39: {
-	                        // exit string ' context / enter string context
-	                        strings = strings === 39 ? 0 : (strings === 34 ? 34 : 39);
-	                        break;
-	                    }
-	                    // ( character
-	                    case 40: {
-	                        if (strings === 0) {
-	                            func = 1;
-	                        }
-	                        break;
-	                    }
-	                    // ) character
-	                    case 41: {
-	                        if (strings === 0) {
-	                            func = 0;
-	                        }
-	                        break;
-	                    }
-	                    // / character
-	                    case 47: {
-	                        if (strings === 0 && func !== 1 && comment < 2) {
-	                            // * character
-	                            if (comments === 0 || styles.charCodeAt(caret - 1) === 42) {
-	                                comment++;              
-	                            }
-	
-	                            // * character, allow line comments in block comments
-	                            if (comments === 0 && styles.charCodeAt(caret + 1) === 42) {
-	                                comments = 1;
-	                            }
-	                        }
-	                        break;
-	                    }
-	                }
-	
-	                // build line buffer
-	                buff += styles.charAt(caret);
-	            }
-	        }
-	
-	        // move caret position
-	        caret++;
-	
-	        // move column position
-	        column++;
-	    }
-	
-	    // trailing flat css
-	    if (flat !== void 0 && flat.length !== 0) {
-	        flat = prefix + ' {' + flat + '}';
-	
-	        // middleware, flat context
-	        if (use) {
-	            temp = middleware(4, flat, line, column);
-	        
-	            if (temp != null) {
-	                flat = temp;
-	            }
-	        }
-	
-	        // append flat css
-	        output += flat;
-	    }
-	
-	    // has variables
-	    if (compact && variables !== void 0) {
-	        // replace all variables
-	        for (var i = 0, length = variables.length; i < length; i++) {
-	            output = output.replace(new RegExp('var\\('+variables[i][0]+'\\)', 'g'), variables[i][1]);
-	        }
-	    }
-	
-	    // middleware, output context
-	    if (use) {
-	        temp = middleware(6, output, line, column);
-	    
-	        if (temp != null) {
-	            output = temp;
-	        }
-	    }
-	
-	    return output;
-	}
-	
-	
-	/**
-	 * use plugin
-	 * 
-	 * @param  {string|function|function[]} key
-	 * @param  {function?} plugin
-	 * @return {Object} {use, plugins}
-	 */
-	stylesheet.use = function (key, plugin) {
-	    var plugins = stylesheet.plugins;
-	    var length = plugins.length;
-	
-	    if (plugin == null) {
-	        plugin = key;
-	        key = void 0;
-	    }
-	
-	    if (plugin != null) {
-	        // object of plugins
-	        if (plugin.constructor === Object) {
-	            for (var name in plugin) {
-	                stylesheet.use(name, plugin[name]);
-	            }
-	        }
-	        // array of plugins
-	        else if (plugin.constructor === Array) {
-	            for (var i = 0, length = plugin.length; i < length; i++) {
-	                plugins[length++] = plugin[i];
-	            }
-	        }
-	        // single un-keyed plugin
-	        else if (key == null) {
-	            plugins[length] = plugin;
-	        }
-	        // keyed plugin
-	        else {
-	            var pattern = (key instanceof RegExp) ? key : new RegExp(key + '\\([ \\t\\r\\n]*([^\\0]*?)[ \\t\\r\\n]*\\)', 'g');
-	            var regex = /[ \t\r\n]*,[ \t\r\n]*/g;
-	
-	            plugins[length] = function (ctx, str, line, col) {
-	                if (ctx === 6) {
-	                    str = str.replace(pattern, function (match, group) {
-	                        var args = group.replace(regex, ',').split(',');
-	                        var replace = plugin.apply(null, args);
-	
-	                        return replace != null ? replace : match;
-	                    });
-	
-	                    return str;
-	                }
-	            }
-	        }
-	    }
-	
-	    return stylesheet;
-	};
-	
-	
-	/**
-	 * plugin store
-	 * 
-	 * @type {function[]}
-	 */
-	stylesheet.plugins = [];
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * element
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * create virtual element
-	 *
-	 * @public
-	 * 
-	 * @param  {(string|function|Component)} type
-	 * @param  {Object<string, any>=}        props
-	 * @param  {...any=}                     children
-	 * @return {Object<string, any>}
-	 */
-	function createElement (type, props) {
-		if (type == null) {
-			return createEmptyShape();
-		}
-	
-		var length = arguments.length;
-		var children = [];
-		var position = 2;
-	
-		// if props is not a normal object
-		if (props == null || props.constructor !== Object || props.props !== void 0) {
-			// update position if props !== null
-			if (props !== null) {
-				props = null;
-				position = 1; 
-			}
-		}
-	
-		if (length !== 1) {
-			var index = 0;
-			
-			// construct children
-			for (var i = position; i < length; i++) {
-				var child = arguments[i];
-				
-				// only add non null/undefined children
-				if (child != null) {
-					// if array, flatten
-					if (child.constructor === Array) {
-						// add array child
-						for (var j = 0, len = child.length; j < len; j++) {
-							index = createChild(child[j], children, index);
-						}
-					}
-					else {
-						index = createChild(child, children, index);
-					}
-				}
-			}
-		}
-	
-		var typeOf = typeof type;
-	
-		if (typeOf === 'string') {
-			// fragment
-			if (type === '@') {
-				return createFragmentShape(children);
-			}
-			// element
-			else {
-				if (props === null) {
-					props = {};
+			case Object: {
+				var older = owner.this;
+	
+				if (older === null) {
+					return;
 				}
 	
-				// svg and math namespaces
-				if (type === 'svg') {
-					props.xmlns = nsSvg; 
-				}
-				else if (type === 'math') { 
-					props.xmlns = nsMath;
+				if (older.async !== READY) {
+					updateState(owner._state, newState);
+					return
+				} else {
+					owner._state = newState;
 				}
 	
-				return createElementShape(type, props, children);
+				this.forceUpdate(callback);
 			}
-		}
-		// component
-		else if (typeOf === 'function') {
-			return createComponentShape(type, props, children);
-		}
-		// hoisted
-		else if (type.Type != null) {
-			return cloneElement(type, props, children);
-		}
-		// portal
-		else if (type.nodeType != null) {
-			return createPortalShape(type, props != null ? props : objEmpty, children);
-		}
-		// fragment
-		else {
-			return createElement('@', null, type);
 		}
 	}
 	
-	
 	/**
-	 * create virtual child node
-	 * 
-	 * @param  {*}       child
-	 * @param  {VNode[]} children
-	 * @param  {number}  index
-	 * @return {number}  index
-	 */
-	function createChild (child, children, index) {
-		if (child != null) {
-			// vnode
-			if (child.Type !== void 0) {
-				children[index++] = child;
-			}
-			// portal
-			else if (child.nodeType !== void 0) {
-				children[index++] = createPortalShape(child, objEmpty, arrEmpty);
-			}
-			else {
-				var type = typeof child;
-	
-				// function/component
-				if (type === 'function') {
-					children[index++] = createComponentShape(child, objEmpty, arrEmpty);
-				}
-				// array
-				else if (type === 'object') {
-					for (var i = 0, length = child.length; i < length; i++) {
-						index = createChild(child[i], children, index);
-					}
-				}
-				// text
-				else {
-					children[index++] = createTextShape(type !== 'boolean' ? child : '');
-				}
-			}
-		}
-	
-		return index;
-	}
-	
-	
-	/**
-	 * clone and return an element having the original element's props
-	 * with new props merged in shallowly and new children replacing existing ones.
+	 * forceUpdate
 	 *
-	 * @public
-	 * 
-	 * @param  {VNode}                subject
-	 * @param  {Object<string, any>=} newProps
-	 * @param  {any[]=}               newChildren
-	 * @return {VNode}
+	 * @param {Function?} callback
 	 */
-	function cloneElement (subject, newProps, newChildren) {
-		var type = subject.type;
-		var props = subject.props;
-		var children = newChildren || subject.children;
+	function forceUpdate (callback) {
+		var owner = this;
+		var older = owner.this;
 	
-		newProps = newProps || {};
+		if (older === null || older.node === null || older.async !== READY) {
+			// processed
+			if (older.async === PROCESSED) {
+				// process this update in the next frame
+				return void requestAnimationFrame(function () {
+					owner.forceUpdate(callback);
+				});
+			}
+		} else {
+			patch(older, older, NOOP);
+		}
 	
-		// copy old props
-		for (var name in subject.props) {
-			if (newProps[name] === void 0) {
-				newProps[name] = props[name];
+		if (callback !== void 0 && callback !== null && callback.constructor === Function) {
+			if (older.async === READY) {
+				callbackBoundary(older, owner, callback, owner.state, 1);
+			} else {
+				requestAnimationFrame(function () {
+					callbackBoundary(older, owner, callback, owner.state, 1);
+				});
 			}
 		}
-	
-		// replace children
-		if (newChildren !== void 0) {
-			var length = newChildren.length;
-	
-			// if not empty, copy
-			if (length > 0) {
-				var index = 0;
-				
-				children = [];
-	
-				// copy old children
-				for (var i = 0; i < length; i++) {
-					index = createChild(newChildren[i], children, index);
-				}
-			}
-		}
-	
-		return createElement(type, newProps, children);
 	}
 	
-	
 	/**
-	 * clone virtual node
-	 * 
-	 * @param  {VNode} subject
-	 * @return {VNode}
-	 */
-	function cloneNode (subject) {
-		return createNodeShape(
-			subject.Type,
-			subject.type,
-			subject.props,
-			subject.children,
-			subject.DOMNode,
-			null,
-			0,
-			null,
-			void 0
-		);
-	}
-	
-	
-	/**
-	 * create element factory
-	 * 
-	 * @param  {string}              type
-	 * @param  {Object<string, any>} props
-	 * @return {createElement(?Object<string>, ...any=)}
-	 */
-	function createFactory (type, props) {
-		return props != null ? createElement.bind(null, type, props) : createElement.bind(null, type);
-	}
-	/**
-	 * is valid element
+	 * Update State
 	 *
-	 * @public
-	 * 
-	 * @param  {any} subject
-	 * @return {boolean}
-	 */
-	function isValidElement (subject) {
-		return subject != null && subject.Type != null;
-	}
-	
-	
-	/**
-	 * DOM factory, create vnode factories
-	 *
-	 * @public
-	 * 
-	 * @param  {string[]}                 types
-	 * @return {Object<string, function>} elements
-	 */
-	function DOM (types) {
-		var elements = {};
-	
-		// add element factories
-		for (var i = 0, length = types.length; i < length; i++) {
-			elements[types[i]] = createElementShape.bind(null, types[i]);
-		}
-	
-		return elements;
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * component
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * set state
-	 *
-	 * @public
-	 * 
-	 * @param {Object}                    newState
-	 * @param {function(this:Component)=} callback
-	 */
-	function setState (newState, callback) {
-		// exist early if shouldComponentUpdate exists and returns false
-		if (
-			this.shouldComponentUpdate !== void 0 && 
-			componentUpdateBoundary(this, 'shouldComponentUpdate', this.props, newState) === false
-		) {
-			return;
-		}
-	
-		// update state
-		updateState(this.state, newState);
-	
-		// callback
-		if (callback != null && typeof callback === 'function') {
-			componentStateBoundary(this, callback, 0);
-		}
-	
-		// update component
-		this.forceUpdate();
-	}
-	
-	
-	/**
-	 * update state, hoisted to avoid `for in` deopts
-	 * 
 	 * @param {Object} oldState
 	 * @param {Object} newState
 	 */
-	function updateState (oldState, newState) {	
-		if (oldState != null) {
-			for (var name in newState) {
-				oldState[name] = newState[name];
-			}
+	function updateState (oldState, newState) {
+		for (var name in newState) {
+			oldState[name] = newState[name];
 		}
 	}
 	
-	
 	/**
-	 * force an update
+	 * Get Initial State
 	 *
-	 * @public
-	 * 
-	 * @param  {function(this:Component)=} callback
+	 * @param {Tree} older
+	 * @param {Object} state
 	 */
-	function forceUpdate (callback) {	
-		if (this.componentWillUpdate !== void 0) {
-			componentUpdateBoundary(this, 'componentWillUpdate', this.props, this.state);
-		}
+	function getInitialState (older, state) {
+		if (state !== void 0 && state !== null) {
+			switch (state.constructor) {
+				case Promise: {
+					console.log('bug?')
+					// if (browser === true) {
+						state.then(function (value) {
+							older.owner.setState(value);
+						});
+						break;
+					// }
 	
-		var oldNode = this['--vnode'];
-		var newNode = extractRenderNode(this);
-	
-		var newType = newNode.Type;
-		var oldType = oldNode.Type;
-	
-		// different root node
-		if (newNode.type !== oldNode.nodeName) {
-			replaceRootNode(newNode, oldNode, newType, oldType, this);
-		}
-		// patch node
-		else {
-			// element root node
-			if (oldType !== 3) {
-				reconcileNodes(newNode, oldNode, newType, 1);
-			} 
-			// text root node
-			else if (newNode.children !== oldNode.children) {
-				oldNode.DOMNode.nodeValue = oldNode.children = newNode.children;
-			}
-		}
-	
-		if (this.componentDidUpdate !== void 0) {
-			componentUpdateBoundary(this, 'componentDidUpdate', this.props, this.state);
-		}
-	
-		// callback
-		if (callback != null && typeof callback === 'function') {
-			componentStateBoundary(this, callback, 1, null);
-		}
-	}
-	
-	
-	/**
-	 * Component class
-	 *
-	 * @public
-	 * 
-	 * @param {Object<string, any>=} props
-	 */
-	function Component (props) {
-		// initial props
-		if (this.getInitialProps !== void 0) {
-			props = this.props = (
-				componentDataBoundary(
-					this, 
-					'getInitialProps', 
-					(props = (props === objEmpty ? {} : props) || {}) || props)
-			);
-	
-			this['--async'] = (
-				props != null && props.constructor !== Object && typeof props.then === 'function'
-			) ? true : false;
-		}
-		else {
-			// assign props
-			if (props !== objEmpty) {
-				// hydrate default props
-				if (this.getDefaultProps !== void 0) {
-					assignDefaultProps(componentDataBoundary(this, 'getDefaultProps', props), props);
+					// older.async = PENDING;
 				}
-				
-				if (this.componentWillReceiveProps !== void 0) {
-					componentPropsBoundary(this, props);
+				case Object: {
+					older.owner.state = state;
+					break;
 				}
-	
-				this.props = props;
-			} 
-			// default props
-			else {
-				this.props = (
-					this.props || 
-					(this.getDefaultProps !== void 0 && componentDataBoundary(this, 'getDefaultProps', null)) || 
-					{}
-				);
 			}
-	
-			this['--async'] = false;
 		}
-	
-		// assign state
-		this.state = (
-			this.state || 
-			(this.getInitialState !== void 0 && componentDataBoundary(this, 'getInitialState', null)) || 
-			{}
-		);
-	
-		this.refs = null;
-	
-		this['--vnode'] = null;
-		this['--yield'] = false;
-		this['--throw'] = 0;
 	}
 	
-	
 	/**
-	 * Component prototype
-	 * 
-	 * @type {Object<string, function>}
-	 */
-	Component.prototype = Object.create(null, {
-		setState: {value: setState},
-		forceUpdate: {value: forceUpdate}
-	});
-	
-	
-	/**
-	 * create class
+	 * Get Initial Static
 	 *
-	 * @public
-	 * 
-	 * @param  {(Object<string, any>|function(createElement): (Object<string, any>|function))} subject
-	 * @param  {Object<string, any>=} props
-	 * @return {function(new:Component, Object<string, any>)}
+	 * @param  {Function} owner
+	 * @param  {Function} func
+	 * @param  {String} type
+	 * @param  {Object} props
+	 * @return {Object?}
 	 */
-	function createClass (subject, props) {
-		// empty class
-		if (subject == null) {
-			subject = createEmptyShape();
+	function getInitialStatic (owner, func, type, props) {
+		if (typeof func !== 'function') {
+			return func;
 		}
 	
-		// component cache
-		if (subject.COMPCache !== void 0) {
-			return subject.COMPCache;
+		var value = callbackBoundary(SHARED, owner, func, props, 0);
+	
+		if (value !== void 0 && value !== null) {
+			return Object.defineProperty(owner, type, {value: value});
 		}
-	
-		// is function?
-		var func = typeof subject === 'function';
-	
-		// extract shape of component
-		var shape = func ? (subject(createElement) || createEmptyShape()) : subject;	
-		var type = func && typeof shape === 'function' ? 2 : (shape.Type != null ? 1 : 0);
-		var construct = false;
-		
-		var vnode;
-		var constructor;
-		var render;
-	
-		// numbers, strings, arrays
-		if (type !== 2 && shape.constructor !== Object && shape.render === void 0) {
-			shape = extractVirtualNode(shape, {props: props});
-		}
-	
-		// elements/functions
-		if (type !== 0) {
-			// render method
-			render = type === 1 ? (vnode = shape, function () { return vnode; }) : shape;
-	
-			// new shape
-			shape = { render: render };
-		}
-		else {
-			if (construct = shape.hasOwnProperty('constructor')) {
-				constructor = shape.constructor
-			}
-	
-			// create render method if one does not exist
-			if (typeof shape.render !== 'function') {
-				shape.render = function () { return createEmptyShape(); };
-			}
-		}
-	
-		// create component class
-		function component (props) {
-			// constructor
-			if (construct) {
-				constructor.call(this, props);
-			}
-	
-			// extend Component
-			Component.call(this, props); 
-		}
-	
-		// extends shape
-		component.prototype = shape;
-	
-		// extends Component class
-		shape.setState = Component.prototype.setState;
-		shape.forceUpdate = Component.prototype.forceUpdate;
-		component.constructor = Component;
-	
-		// function shape, cache component
-		if (func) {
-			shape.constructor = subject;
-			subject.COMPCache = component;
-		}
-	
-		// stylesheet namespaced
-		if (func || shape.stylesheet !== void 0) {
-			// displayName / function name / random string
-			shape.displayName = (
-				shape.displayName || 
-				(func ? subject.name : false) || 
-				((Math.random()+1).toString(36).substr(2, 5))
-			);
-		}
-	
-		return component;
 	}
 	
-	
 	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * error boundries
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * mount error boundaries
+	 * PropTypes
 	 *
-	 * @param {Component} component
-	 * @param {string}    method
-	 * @param {Node}      DOMNode
+	 * @param {Component} owner
+	 * @param {Function} type
+	 * @param {Object} props
 	 */
-	function componentMountBoundary (component, method, DOMNode) {	
+	function propTypes (owner, type, props) {
+		var display = type.name;
+		var types = type.propTypes;
+	
 		try {
-			component[method](DOMNode);
-		}
-		catch (error) {
-			componentErrorBoundary(error, component, method);
-		}
-	}
+			for (var name in types) {
+				var valid = types[name];
+				var result = valid(props, name, display);
 	
-	
-	/**
-	 * update error boundaries
-	 *
-	 * @param  {Component} component
-	 * @param  {string}    method
-	 * @param  {Object}    newProps
-	 * @param  {Object}    newState
-	 * @return {boolean?}
-	 */
-	function componentUpdateBoundary (component, method, newProps, newState) {
-		try {
-			return component[method](newProps, newState);
-		}
-		catch (error) {
-			componentErrorBoundary(error, component, method);
-		}
-	}
-	
-	
-	/**
-	 * state error boundaries
-	 *
-	 * @param {Component} component
-	 * @param {function}  func
-	 */
-	function componentStateBoundary (component, func, location) {	
-		try {
-			return func.call(component);
-		}
-		catch (error) {
-			componentErrorBoundary(error, component, location === 0 ? 'setState' : 'forceUpdate');
-		}
-	}
-	
-	
-	/**
-	 * props error boundaries
-	 *
-	 * @param {Component} component
-	 * @param {Object}    props
-	 */
-	function componentPropsBoundary (component, props) {	
-		try {
-			component.componentWillReceiveProps(props);
-		}
-		catch (error) {
-			componentErrorBoundary(error, component, 'componentWillReceiveProps');
-		}
-	}
-	
-	
-	/**
-	 * data error boundaries
-	 *
-	 * @param {Component} component
-	 * @param {string}    method
-	 * @param {Object}    props
-	 */
-	function componentDataBoundary (component, method, data) {	
-		try {
-			return component[method](data);
-		}
-		catch (error) {
-			componentErrorBoundary(error, component, method);
-		}
-	}
-	
-	
-	/**
-	 * render error boundaries
-	 *
-	 * @param {Component} component
-	 * @param {string}    type
-	 * @param {string}    name
-	 * @param {Error}     error
-	 */
-	function componentRenderBoundary (component, type, name, error) {
-		return componentErrorBoundary(
-			'Encountered an unsupported ' + type + ' type `'+ name + '`.\n\n' + error,
-			component, 
-			type
-		);
-	}
-	
-	
-	/**
-	 * generate error
-	 *
-	 * @param {string|Error} error
-	 * @param {Component}    component
-	 * @param {string}       location
-	 * @param {VNode}
-	 */
-	function componentErrorBoundary (error, component, location) {
-		if (component == null) {
-			return createEmptyShape();
-		}
-	
-		var newNode;
-		var oldNode;
-		var displayName;
-		var authored;
-	    var func;
-		var thrown = component['--throw'];
-	
-	    if (thrown == null) {
-	        thrown = 0;
-	    }
-	
-		component['--throw'] = thrown + 1;
-	
-		if ((error instanceof Error) === false) {
-			error = new Error(error);
-		}
-	
-		// initial throw from render, try to recover once
-		if (thrown === 0 && browser && location === 'render') {
-			schedule(function () {
-	            try {
-	                // test render for errors
-	                component.render(component.props, component.state, component);
-	
-	                // update if no errors where thrown
-	                component.forceUpdate();
-	            }
-	            catch (e) {
-	                // silently fail to recover
-	            }
-			});
-		}
-	
-		// second throw, failed to recover the first time
-		if (thrown !== 0 && location === 'render') {
-			return createEmptyShape();
-		}
-	
-	    func = typeof component === 'function';
-		authored = func === false && typeof component.componentDidThrow === 'function';
-		displayName = func ? component.name : component.displayName || component.constructor.name;
-	
-		// authored error handler
-	    if (authored) {
-	        // define error
-	        Object.defineProperties(error, {
-	            silence: {value: false, writable: true},
-	            location: {value: location}, 
-	            from: {value: displayName}
-	        });
-	        
-	    	try {
-	    		newNode = component.componentDidThrow(error);
-	    	}
-	    	catch (e) {    		
-	    		// avoid recursive call stack
-	    		if (thrown >= 0) {
-	    			// preserve order of errors logged 
-	    			schedule(function () {
-	    				component['--throw'] = -1;
-	    				componentErrorBoundary(e, component, 'componentDidThrow');
-	    			});
-	    		}
-	    	}
-	    }
-	
-	    if (error.silence !== true) {
-	    	// default error handler
-	    	console.error(
-	          'Dio caught an error thrown by ' + 
-	          (displayName ? '`' + displayName + '`' : 'one of your components') + 
-	          ', the error was thrown in `' + location + '`.' + 
-	          '\n\n' + error.stack.replace(/\n+/, '\n\n')
-	        );
-	    }
-	
-	    if (authored && location !== 'stylesheet') {	    	
-	    	// return render node
-	    	if (location === 'render' || location === 'element') {
-	    		if (newNode != null && typeof newNode.type === 'string') {
-	    			if (/^[A-z]/g.exec(newNode.type) === null) {
-						console.error(
-							'Dio bailed out of rendering an error state for `' + displayName + '`.\n\n'+
-							'Reason: `componentDidThrow` returned an invalid element `'+ newNode.type +'`'
-						);
-	
-	    				return createEmptyShape();
-	    			}
-	
-	    			newNode.type = newNode.type.replace(/ /g, '');
-	    		}
-	
-	    		return newNode || createEmptyShape();
-	    	}
-	    	// async replace render node
-	    	else if (browser && newNode != null && newNode !== true && newNode !== false) {
-	    		schedule(function () {
-	    			replaceRootNode(
-	    				extractVirtualNode(newNode, component), 
-	    				oldNode = component['--vnode'], 
-	    				newNode.Type, 
-	    				oldNode.Type, 
-	    				component
-					)
-	    		});
-	    	}
-	    }
-	
-	    return createEmptyShape();
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * extract
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * extract component node
-	 * 
-	 * @param  {VNode}      subject
-	 * @param  {Component?} instance
-	 * @param  {VNode?}     parent
-	 * @return {VNode} 
-	 */
-	function extractComponentNode (subject, instance, parent) {
-		/** @type {Component} */
-		var owner;
-	
-		/** @type {VNode} */
-		var vnode;
-	
-		/** @type {(Component|function(new:Component, Object<string, any>))} */
-		var type = subject.type;
-	
-		/** @type {Object<string, any>} */
-		var props = subject.props;
-	
-		// default props
-		if (type.defaultProps !== void 0) {
-			// clone default props if props is not an empty object, else use defaultProps as props
-			props !== objEmpty ? assignDefaultProps(type.defaultProps, props) : (props = type.defaultProps);
-		}
-	
-		// assign children to props if not empty
-		if (subject.children.length !== 0) {
-			// prevents mutating the empty object constant
-			if (props === objEmpty) {
-				props = {children: subject.children};
-			}
-			else {
-				props.children = subject.children;			
-			}
-		}
-		
-		// cached component
-		if (type.COMPCache !== void 0) {
-			owner = type.COMPCache;
-		}
-		// function components
-		else if (type.constructor === Function && (type.prototype === void 0 || type.prototype.render === void 0)) {
-			vnode = extractFunctionNode(type, props);
-	
-			if (vnode.Type === void 0) {
-				// create component
-				owner = createClass(vnode, props);
-			}
-			else {
-				// pure function
-				return vnode;
-			}
-		}
-		// class / createClass components
-		else {
-			owner = type;
-		}
-	
-		// create component instance
-		var component = subject.instance = new owner(props);
-		
-		// retrieve vnode
-		var vnode = extractRenderNode(component);
-	
-		// if render returns a component, extract component recursive
-		if (vnode.Type === 2) {
-			vnode = extractComponentNode(vnode, component, parent || subject);
-		}
-	
-		// if keyed, assign key to vnode
-		if (subject.key !== void 0 && vnode.key === void 0) {
-			vnode.key = subject.key;
-		}
-	
-		// replace props and children
-		subject.props = vnode.props
-		subject.children = vnode.children;
-	
-		// recursive component
-		if (instance !== null) {
-			component['--vnode'] = parent;
-		}
-		else {
-			component['--vnode'] = subject;
-			
-			subject.nodeName = vnode.type;
-		}
-	
-		return vnode;
-	}
-	
-	
-	/**
-	 * extract render node
-	 *
-	 * @param  {Component} component
-	 * @return {VNode}
-	 */
-	function extractRenderNode (component) {
-		try {
-			// async render
-			if (component['--async'] === true) {	
-				if (browser) {
-					component.props.then(function resolveAsyncClientComponent (props) {
-						component.props = props;
-						component.forceUpdate();
-					}).catch(funcEmpty);
-					
-					component['--async'] = false;
-				}
-	
-				return createEmptyShape();
-			}
-			// generator
-			else if (component['--yield'] === true) {
-				return extractVirtualNode(
-					component.render.next().value, 
-					component
-				);
-			}
-			// sync render
-			else {
-				return extractVirtualNode(
-					component.render(component.props, component.state, component), 
-					component
-				);
-			}
-		}
-		// error thrown
-		catch (error) {
-			return componentErrorBoundary(error, component, 'render');
-		}
-	}
-	
-	
-	/**
-	 * extract virtual node
-	 * 
-	 * @param  {(VNode|function|Component)} subject
-	 * @param  {Component}                  component
-	 * @return {VNode}
-	 */
-	function extractVirtualNode (subject, component) {
-		// empty
-		if (subject == null) {
-			return createEmptyShape();
-		}
-	
-		// element
-		if (subject.Type !== void 0) {
-			return subject;
-		}
-	
-		// portal
-		if (subject.nodeType !== void 0) {	
-			return (
-				subject = createPortalShape(subject, objEmpty, arrEmpty), 
-				subject.Type = 5, 
-				subject
-			);
-		}
-		
-		switch (subject.constructor) {
-			// component
-			case Component: {
-				return createComponentShape(subject, objEmpty, arrEmpty);
-			}
-			// booleans
-			case Boolean: {
-				return createEmptyShape();
-			}
-			// fragment
-			case Array: {
-				return createElement('@', null, subject);
-			}
-			// string/number
-			case String: case Number: {
-				return createTextShape(subject);
-			}
-			// component/function
-			case Function: {
-				// stream
-				if (subject.then != null && typeof subject.then === 'function') {
-					if (subject['--listening'] !== true) {
-						subject.then(function resolveStreamComponent () {
-							component.forceUpdate();
-						}).catch(funcEmpty);
-	
-						subject['--listening'] = true;
-					}
-	
-					return extractVirtualNode(subject(), component);
-				}
-				// component
-				else if (subject.prototype !== void 0 && subject.prototype.render !== void 0) {
-					return createComponentShape(subject, objEmpty, arrEmpty);
-				}
-				// function
-				else {
-					return extractVirtualNode(subject(component != null ? component.props : {}), component);
+				if (result) {
+					console.error(result);
 				}
 			}
-			// promise
-			case Promise: {
-				if (browser) {
-					subject.then(function resolveAsyncComponent (newNode) {
-						replaceRootNode(
-							extractVirtualNode(newNode, component), 
-							subject = component['--vnode'], 
-							newNode.Type, 
-							subject.Type, 
-							component
-						);
-					}).catch(funcEmpty);
-				}
-				else {
-					component['--async'] = subject;
-				}
-	
-				return createEmptyShape();
-			}
-		}
-	
-		// coroutine
-		if (typeof subject.next === 'function' || (subject.prototype != null && subject.prototype.next != null)) {			
-			if (subject.return == null) {
-				subject = subject(component.props, component.state, component);
-			}
-	
-			component['--yield'] = true;
-			component.render = subject;
-	
-			component.constructor.prototype.render = function render () {
-				return subject.next().value;
-			};
-	
-			return extractVirtualNode(subject.next().value, component);
-		}
-		// component descriptor
-		else if (typeof subject.render === 'function') {
-			return (
-				subject.COMPCache || 
-				createComponentShape(subject.COMPCache = createClass(subject, null), objEmpty, arrEmpty)
-			);
-		} 
-		// unsupported render types, fail gracefully
-		else {
-			return componentRenderBoundary(
-				component,
-				'render', 
-				subject.constructor.name, 
-				''
-			);
+		} catch (err) {
+			errorBoundary(err, SHARED, owner, 2, valid);
 		}
 	}
 	
-	
 	/**
-	 * extract function node
+	 * Element
 	 *
-	 * @param  {function}            type
-	 * @param  {Object<string, any>} props
-	 * @return {VNode}
+	 * @param  {String|Function} _type
+	 * @param  {...} _props
+	 * @return {Tree}
 	 */
-	function extractFunctionNode (type, props) {
-		try {
-			var vnode;
-			var func = type['--func'] !== void 0;
-	
-			if (func === false) {
-				vnode = type(createElement);
-			}
-			
-			if (func || vnode.Type !== void 0) {
-				try {
-					vnode = type(props);
-					
-					if (func === false) {
-						type['--func'] = true;
-					}
-				}
-				catch (e) {
-					vnode = componentErrorBoundary(e, type, 'function');
-				}
-			}
-	
-			return vnode;
-		}
-		// error thrown
-		catch (error) {
-			return componentErrorBoundary(error, type, 'function');
-		}
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * render
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-		
-	
-	/**
-	 * render
-	 *
-	 * @public
-	 * 
-	 * @param  {(Component|VNode|function|Object<string, any>)} subject
-	 * @param  {(Node|string)=}                                 target
-	 * @param  {function(this:Component, Node)=}                callback
-	 * @param  {boolean=}                                       hydration
-	 * @return {function(Object=)}
-	 */
-	function render (subject, target, callback, hydration) {
-		var initial = true;
-		var nodeType = 2;
-		
-		var component;	
-		var vnode;
-		var element;
-		
-		// renderer
-		function renderer (newProps) {
-			if (initial) {
-				// dispatch mount
-				appendNode(nodeType, vnode, element, createNode(vnode, null, null));
-	
-				// register mount has been dispatched
-				initial = false;
-	
-				// assign component instance
-				component = vnode.instance;
-			}
-			else {
-				// update props
-				if (newProps !== void 0) {
-					// component with shouldComponentUpdate
-					if (
-						component.shouldComponentUpdate !== void 0 && 
-						componentUpdateBoundary(component, 'shouldComponentUpdate', newProps, component.state) === false
-					) {
-						// exit early
-						return renderer;
-					}
-	
-					component.props = newProps;
-				}
-	
-				// update component
-				component.forceUpdate();
-			}
-	
-			return renderer;
-		}
-	
-		// exit early
-		if (browser === false) {
-			return renderer;
-		}
-	
-		// Object
-		if (subject.render !== void 0) {
-			vnode = createComponentShape(createClass(subject, null), objEmpty, arrEmpty);
-		}
-		// array/component/function
-		else if (subject.Type === void 0) {
-			// array
-			if (subject.constructor === Array) {
-				vnode = createElement('@', null, subject);
-			}
-			// component/function
-			else {
-				vnode = createComponentShape(subject, objEmpty, arrEmpty);
-			}
-		} 
-		// element/component
-		else {
-			vnode = subject;
-		}
-	
-		// element
-		if (vnode.Type !== 2) {
-			vnode = createComponentShape(createClass(vnode, null), objEmpty, arrEmpty);
-		}
-	
-		// mount
-	  	if (target != null && target.nodeType != null) {
-	  		// target is a dom element
-	  		element = target === document ? docuemnt.body : target;
-		} 
-		else {
-	  		// selector
-	  		target = document.querySelector(target);
-	
-	  		// default to document.body if no match/document
-	  		element = (target === null || target === document) ? document.body : target;
-		}
-	
-		// hydration
-		if (hydration != null && hydration !== false) {
-			// dispatch hydration
-			hydrate(element, vnode, typeof hydration === 'number' ? hydration : 0, null, null);
-	
-			// register mount has been dispatched
-			initial = false;
-	
-			// assign component
-			component = vnode.instance;
-		} 
-		else {
-			// destructive mount
-			hydration === false && (element.textContent = '');
-			
-			renderer();
-		}
-	
-		// if present call root components context, passing root node as argument
-		if (callback && typeof callback === 'function') {
-			callback.call(component, vnode.DOMNode || target);
-		}
-	
-		return renderer;
-	}
-	
-	
-	/**
-	 * shallow render
-	 *
-	 * @public
-	 * 
-	 * @param  {(VNode|Component|function)}
-	 * @return {VNode}
-	 */
-	function shallow (subject) {
-		if (isValidElement(subject)) {
-			return subject.Type === 2 ? extractComponentNode(subject, null, null) : subject;
-		}
-		else {
-			return extractComponentNode(createElement(subject, null, null), null, null);
-		}
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * props
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-		
-	
-	/**
-	 * assign prop for create element
-	 * 
-	 * @param  {Node}       target
-	 * @param  {Object}     props
-	 * @param  {boolean}    onlyEvents
-	 * @param  {Component}  component
-	 */
-	function assignProps (target, props, onlyEvents, component) {
-		for (var name in props) {
-			var value = props[name];
-	
-			// refs
-			if (name === 'ref' && value != null) {
-				refs(value, component, target);
-			}
-			// events
-			else if (isEventProp(name)) {
-				addEventListener(target, name.substring(2).toLowerCase(), value, component);
-			}
-			// attributes
-			else if (onlyEvents === false && name !== 'key' && name !== 'children') {
-				// add attribute
-				updateProp(target, true, name, value, props.xmlns);
-			}
-		}
-	}
-	
-	
-	/**
-	 * patch props
-	 * 
-	 * @param  {VNode} newNode
-	 * @param  {VNode} oldNode
-	 */
-	function patchProps (newNode, oldNode) {
-		var newProps = newNode.props;
-		var oldProps = oldNode.props;
-		var namespace = newNode.props.xmlns || '';
-		var target = oldNode.DOMNode;
-		var updated = false;
-		var length = 0;
-	
-		// diff newProps
-		for (var newName in newNode.props) {
-			length = newName.length;
-	
-			if (
-				(length === 3 && newName === 'key') === false && 
-				(length === 8 && newName === 'children') === false && 
-				isEventProp(newName) === false
-			) {
-				var newValue = newProps[newName];
-				var oldValue = oldProps[newName];
-	
-				if (newValue != null && oldValue !== newValue) {
-					updateProp(target, true, newName, newValue, namespace);
-					
-					if (updated === false) {
-						updated = true;
-					}
-				}
-			}
-		}
-	
-		// diff oldProps
-		for (var oldName in oldNode.props) {
-			length = oldName.length;
-	
-			if (
-				(length === 3 && oldName === 'key') === false && 
-				(length === 8 && oldName === 'children') === false &&  
-				isEventProp(oldName) === false
-			) {
-				var newValue = newProps[oldName];
-	
-				if (newValue == null) {
-					updateProp(target, false, oldName, '', namespace);
-					
-					if (updated === false) {
-						updated = true;
-					}
-				}
-			}
-		}
-	
-		if (updated) {
-			oldNode.props = newNode.props;
-		}
-	}
-	
-	
-	/**
-	 * assign/update/remove prop
-	 * 
-	 * @param  {Node}    target
-	 * @param  {boolean} set
-	 * @param  {string}  name
-	 * @param  {any}     value
-	 * @param  {string}  namespace
-	 */
-	function updateProp (target, set, name, value, namespace) {
-		var length = name.length;
-	
-		// avoid xmlns namespaces
-		if (length > 22 && (value === nsSvg || value === nsMath)) {
-			return;
-		}
-	
-		// if xlink:href set, exit, 
-		if (length === 10 && name === 'xlink:href') {
-			target[(set ? 'set' : 'remove') + 'AttributeNS'](nsXlink, 'href', value);
-			return;
-		}
-	
-		var svg = false;
-	
-		// svg element, default to class instead of className
-		if (namespace === nsSvg) {
-			svg = true;
-	
-			if (length === 9 && name === 'className') {
-				name = 'class';
-			}
-			else {
-				name = name;
-			}
-		}
-		// html element, default to className instead of class
-		else {
-			if (length === 5 && name === 'class') {
-				name = 'className';
-			}
-		}
-	
-		var destination = target[name];
-		var defined = value != null && value !== false;
-	
-		// objects
-		if (defined && typeof value === 'object') {
-			destination === void 0 ? target[name] = value : updatePropObject(name, value, destination);
-		}
-		// primitives `string, number, boolean`
-		else {
-			// id, className, style, etc..
-			if (destination !== void 0 && svg === false) {
-				if (length === 5 && name === 'style') {
-					target.style.cssText = value;
-				}
-				else {
-					target[name] = value;
-				}
-			}
-			// set/remove Attribute
-			else {
-				if (defined && set) {
-					// assign an empty value with boolean `true` values
-					target.setAttribute(name, value === true ? '' : value);
-				}
-				else {
-					// removes attributes with false/null/undefined values
-					target.removeAttribute(name);
-				}
-			}
-		}
-	}
-	
-	
-	/**
-	 * check if a name is an event-like name, i.e onclick, onClick...
-	 * 
-	 * @param  {string} name
-	 * @return {boolean}
-	 */
-	function isEventProp (name) {
-		return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 3;
-	}
-	
-	
-	/**
-	 * update prop objects, i.e .style
-	 *
-	 * @param {string} parent
-	 * @param {Object} prop
-	 * @param {Object} target
-	 */
-	function updatePropObject (parent, prop, target) {
-		for (var name in prop) {
-			var value = prop[name] || null;
-	
-			// assign if target object has property
-			if (name in target) {
-				target[name] = value;
-			}
-			// style properties that don't exist on CSSStyleDeclaration
-			else if (parent === 'style') {
-				// assign/remove
-				value ? target.setProperty(name, value, null) : target.removeProperty(name);
-			}
-		}
-	}
-	
-	
-	/**
-	 * assign default props
-	 * 
-	 * @param  {Object<string, any>} defaultProps
-	 */
-	function assignDefaultProps (defaultProps, props) {
-		for (var name in defaultProps) {
-			props[name] = props[name] || defaultProps[name];
-		}
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * nodes
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * create DOMNode
-	 *
-	 * @param {number}    type
-	 * @param {Component} component
-	 */
-	function createDOMNode (type, component) {
-		try {
-			return document.createElement(type);
-		} 
-		catch (error) {
-			return createDOMNodeError(
-				componentRenderBoundary(component, 'element', type, error),
-				component
-			);
-		}
-	}
-	
-	
-	/**
-	 * create namespaced DOMNode
-	 *
-	 * @param {namespace} namespace
-	 * @param {number}    type
-	 * @param {Componnet} component
-	 */
-	function createDOMNodeNS (namespace, type, component) {
-		try {
-			return document.createElementNS(namespace, type);
-		}
-		catch (error) {
-			return createDOMNodeError(
-				componentRenderBoundary(component, 'element', type, error),
-				component
-			);
-		}
-	}
-	
-	
-	/**
-	 * create error state DOMNode
-	 * 
-	 * @param  {VNode}      vnode
-	 * @param  {Component?} component
-	 * @return {Node}
-	 */
-	function createDOMNodeError (vnode, component) {
-		// empty, null/undefined
-		if (vnode == null) {
-			return createNode(createEmptyShape(), null, null);
-		}
-		// string, number, element, array
-		else {
-			return createNode(createElement('@', null, vnode), component, null);
-		}
-	}
-	
-	
-	/**
-	 * create node
-	 * 
-	 * @param  {VNode}      subject
-	 * @param  {Component?} component
-	 * @param  {string?}    namespace
-	 * @return {Node}
-	 */
-	function createNode (subject, component, namespace) {
-		var nodeType = subject.Type;
-	
-		// create text node element	
-		if (nodeType === 3) {
-			return subject.DOMNode = document.createTextNode(subject.children);
-		}
-	
-		var vnode;
-		var element;
-	
-		var portal = false;
-	
-		// DOMNode exists
-		if (subject.DOMNode !== null) {
-			element = subject.DOMNode;
-	
-			// portal
-			if (portal = (nodeType === 4 || nodeType === 5)) {
-				element = (vnode = subject).DOMNode = (nodeType === 4 ? element.cloneNode(true) : element);
-			}
-			// hoisted
-			else {
-				return subject.DOMNode = element.cloneNode(true);
-			}
-		}
-		// create DOMNode
-		else {
-			vnode = nodeType === 2 ? extractComponentNode(subject, null, null) : subject;
-		}
-		
-		var Type = vnode.Type;
-		var children = vnode.children;
-	
-		if (portal === false) {
-			// text		
-			if (Type === 3) {
-				return vnode.DOMNode = subject.DOMNode = document.createTextNode(children);
-			}
-			// portal
-			else if (Type === 4 || Type === 5) {
-				element = vnode.DOMNode;
-				portal = true;
-			}
-		}
-	
-		var type = vnode.type;
-		var props = vnode.props;
-		var length = children.length;
-	
-		var instance = subject.instance !== null;
-		var thrown = 0;
-	
-		// assign namespace
-		if (props.xmlns !== void 0) { 
-			namespace = props.xmlns; 
-		}
-	
-		// has a component instance, hydrate component instance
-		if (instance) {
-			component = subject.instance;
-			thrown = component['--throw'];
-		}
-	
-		if (portal === false) {
-			// create namespaced element
-			if (namespace !== null) {
-				// if undefined, assign svg namespace
-				if (props.xmlns === void 0) {
-					props === objEmpty ? (props = {xmlns: namespace}) : (props.xmlns = namespace);
-				}
-	
-				element = createDOMNodeNS(namespace, type, component);
-			}
-			// create html element
-			else {
-				element = createDOMNode(type, component);
-			}
-	
-			vnode.DOMNode = subject.DOMNode = element;
-		}
-	
-		if (instance) {
-			// avoid appending children if an error was thrown while creating a DOMNode
-			if (thrown !== component['--throw']) {
-				return vnode.DOMNode = subject.DOMNode = element;
-			}
-	
-			vnode = component['--vnode'];
-	
-			// hydrate
-			if (vnode.DOMNode === null) {
-				vnode.DOMNode = element;
-			}
-	
-			// stylesheets
-			if (nodeType === 2 && component.stylesheet !== void 0 && type !== 'noscript' && type !== '#text') {
-				createScopedStylesheet(component, subject.type, element);
-			}
-		}
-	
-		// has children
-		if (length !== 0) {
-			// append children
-			for (var i = 0; i < length; i++) {
-				var newChild = children[i];
-	
-				// hoisted, clone
-				if (newChild.DOMNode !== null) {
-					newChild = children[i] = cloneNode(newChild);
-				}
-	
-				// append child
-				appendNode(newChild.Type, newChild, element, createNode(newChild, component, namespace));
-			}
-		}
-	
-		// has props
-		if (props !== objEmpty) {
-			// props and events
-			assignProps(element, props, false, component);
-		}
-	
-		// cache DOM reference
-		return element;
-	}
-	
-	
-	/**
-	 * append node
-	 *
-	 * @param {number} newType
-	 * @param {VNode}  newNode
-	 * @param {Node}   parentNode
-	 * @param {Node}   nextNode
-	 */
-	function appendNode (newType, newNode, parentNode, nextNode) {
-		// lifecycle, componentWillMount
-		if (newType === 2 && newNode.instance !== null && newNode.instance.componentWillMount) {
-			componentMountBoundary(newNode.instance, 'componentWillMount', nextNode);
-		}
-	
-		// append element
-		parentNode.appendChild(nextNode);
-	
-		// lifecycle, componentDidMount
-		if (newType === 2 && newNode.instance !== null && newNode.instance.componentDidMount) {
-			componentMountBoundary(newNode.instance, 'componentDidMount', nextNode);
-		}
-	}
-	
-	
-	/**
-	 * insert node
-	 *
-	 * @param {number} newType
-	 * @param {VNode}  newNode
-	 * @param {Node}   prevNode
-	 * @param {Node}   parentNode
-	 * @param {Node}   nextNode
-	 */
-	function insertNode (newType, newNode, prevNode, parentNode, nextNode) {
-		// lifecycle, componentWillMount
-		if (newType === 2 && newNode.instance !== null && newNode.instance.componentWillMount) {
-			componentMountBoundary(newNode.instance, 'componentWillMount', nextNode);
-		}
-	
-		// insert element
-		parentNode.insertBefore(nextNode, prevNode);
-	
-		// lifecycle, componentDidMount
-		if (newType === 2 && newNode.instance !== null && newNode.instance.componentDidMount) {
-			componentMountBoundary(newNode.instance, 'componentDidMount', nextNode);
-		}
-	}
-	
-	
-	/**
-	 * remove node
-	 *
-	 * @param {number} oldType
-	 * @param {VNode}  oldNode
-	 * @param {Node}   parentNode
-	 */
-	function removeNode (oldType, oldNode, parentNode) {
-		// lifecycle, componentWillUnmount
-		if (oldType === 2 && oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
-			componentMountBoundary(oldNode.instance, 'componentWillUnmount', oldNode.DOMNode);
-		}
-	
-		// remove element
-		parentNode.removeChild(oldNode.DOMNode);
-	
-		// clear references
-		oldNode.DOMNode = null;
-	}
-	
-	
-	/**
-	 * empty node
-	 *
-	 * @param {VNode}  oldNode
-	 * @param {number} oldLength
-	 */
-	function emptyNode (oldNode, oldLength) {
-		var children = oldNode.children;	
-		var parentNode = oldNode.DOMNode;
-		var oldChild;
-	
-		// umount children
-		for (var i = 0; i < oldLength; i++) {
-			oldChild = children[i];
-			
-			// lifecycle, componentWillUnmount
-			if (oldChild.Type === 2 && oldChild.instance !== null && oldChild.instance.componentWillUnmount) {
-				componentMountBoundary(oldChild.instance, 'componentWillUnmount', oldChild.DOMNode);
-			}
-	
-			// clear references
-			oldChild.DOMNode = null;
-		}
-	
-		parentNode.textContent = '';
-	}
-	
-	
-	/**
-	 * replace node
-	 *
-	 * @param {VNode} newType
-	 * @param {VNode} oldType
-	 * @param {VNode} newNode
-	 * @param {VNode} oldNode
-	 * @param {Node}  parentNode 
-	 * @param {Node}  nextNode
-	 */
-	function replaceNode (newType, oldType, newNode, oldNode, parentNode, nextNode) {
-		// lifecycle, componentWillUnmount
-		if (oldType === 2 && oldNode.instance !== null && oldNode.instance.componentWillUnmount) {
-			componentMountBoundary(oldNode.instance, 'componentWillUnmount', oldNode.DOMNode);
-		}
-	
-		// lifecycle, componentWillMount
-		if (newType === 2 && newNode.instance !== null && newNode.instance.componentWillMount) {
-			componentMountBoundary(newNode.instance, 'componentWillMount', nextNode);
-		}
-	
-		// replace element
-		parentNode.replaceChild(nextNode, oldNode.DOMNode);
-			
-		// lifecycle, componentDidmount
-		if (newType === 2 && newNode.instance !== null && newNode.instance.componentDidMount) {
-			componentMountBoundary(newNode.instance, 'componentDidMount', nextNode);
-		}
-	
-		// clear references
-		oldNode.DOMNode = null;
-	}
-	
-	
-	/**
-	 * replace root node
-	 * 
-	 * @param  {VNode}     newNode
-	 * @param  {VNode}     oldNode
-	 * @param  {number}    newType
-	 * @param  {number}    oldType
-	 * @param  {Component} component
-	 */
-	function replaceRootNode (newNode, oldNode, newType, oldType, component) {
-		var refDOMNode = oldNode.DOMNode;
-		var newProps = newNode.props;
-	
-		// replace node
-		refDOMNode.parentNode.replaceChild(createNode(newNode, component, null), refDOMNode);
-	
-		// hydrate new node
-		oldNode.props = newProps;
-		oldNode.nodeName = newNode.nodeName || newNode.type;
-		oldNode.children = newNode.children;
-		oldNode.DOMNode = newNode.DOMNode;
-	
-	 	// // stylesheet
-	 	if (newType !== 3 && component.stylesheet !== void 0) {
-	 		createScopedStylesheet(component, component.constructor, newNode.DOMNode);
-	 	}
-	}	
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * events
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * add event listener
-	 *
-	 * @param {Node}            element
-	 * @param {string}          name
-	 * @param {function|Object} listener
-	 * @param {Component}       component
-	 */
-	function addEventListener (element, name, listener, component) {
-		// default listener
-		if (typeof listener === 'function') {
-			element.addEventListener(name, listener, false);
-		}
-		// non-default listener
-		else {
-			element.addEventListener(name, bindEvent(name, listener, component), listener.options || false);
-		}
-	}
-	
-	
-	/**
-	 * bind event
-	 *
-	 * @param  {string}              name
-	 * @param  {Object<string, any>} value
-	 * @param  {Component}           component
-	 * @return {function}
-	 */
-	function bindEvent (name, value, component) {
-		var bind = value.bind || value.handler;
-		var data = value.with || value.data;
-		var preventDefault = value.preventDefault === true || (!value.options && value.preventDefault === void 0);
-	
-		if (typeof bind === 'object') {
-			var property = bind.property || data;
-	
-			return function (event) {
-				var target = event.currentTarget || event.target;
-				var value = data in target ? target[data] : target.getAttribute(data);
-	
-				preventDefault && event.preventDefault();
-	
-				// update component state
-				component.state[property] = value;
-	
-				// update component
-				component.forceUpdate();
-			}
-		} 
-		else {
-			return function (event) {
-				preventDefault && event.preventDefault();
-				bind.call(data, data, event);
-			}
-		}
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * refs
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-		
-	
-	/**
-	 * refs
-	 *
-	 * @param {(string|function(Node))} ref
-	 * @param {Component}               component
-	 * @param {Node}                    element
-	 */
-	function refs (ref, component, element) {
-		if (typeof ref === 'function') {
-			ref.call(component, element);
-		}
-		else {
-			(component.refs = component.refs || {})[ref] = element;
-		}
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * reconcile
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * reconcile keyed nodes
-	 *
-	 * @param {Object<string, any>}    newKeys
-	 * @param {Object<string, any>}    oldKeys
-	 * @param {Node}                   parentNode
-	 * @param {VNode}                  newNode
-	 * @param {VNode}                  oldNode
-	 * @param {number}                 newLength
-	 * @param {number}                 oldLength
-	 * @param {number}                 position
-	 * @param {number}                 length
-	 */
-	function reconcileKeys (newKeys, oldKeys, parentNode, newNode, oldNode, newLength, oldLength, position, length) {
-		var reconciled = new Array(newLength);
-	
-		// children
-		var newChildren = newNode.children;
-		var oldChildren = oldNode.children;
-	
-		// child nodes
-		var newChild;
-		var oldChild;
-	
-		// DOM nodes
-		var nextNode;
-		var prevNode;
-	
-		// keys
-		var key;
-	
-		// offsets
-		var added = 0;
-		var removed = 0;
-		var i = 0;
-		var index = 0;
+	function element (_type, _props) {
+		var type = _type;
+		var props = _props !== void 0 ? _props : null;
+		var attrs = props;
+		var length = arguments.length;
+		var size = 0;
 		var offset = 0;
-		var moved = 0;
+		var i = 2;
+		var group = 0;
+		var newer = new Tree(ELEMENT);
 	
-		// reconcile leading nodes
-		if (position !== 0) {
-			for (; i < position; i++) {
-				reconciled[i] = oldChildren[i];
+		switch (props) {
+			case null: {
+				props = PROPS;
+				attrs = ATTRS;
+				offset++;
+				break;
+			}
+			default: {
+				switch (props.constructor) {
+					case Object: {
+						if (props.key !== void 0) {
+							newer.key = props.key;
+						}
+						if (props.xmlns !== void 0) {
+							newer.xmlns = props.xmlns;
+						}
+	
+						offset++;
+						newer.props = props;
+	
+						break;
+					}
+					case Array: {
+						size = props.length;
+					}
+					default: {
+						props = PROPS;
+						attrs = ATTRS;
+						i = 1;
+					}
+				}
 			}
 		}
 	
-		// reconcile trailing nodes
-		for (i = 0; i < length; i++) {
-			newChild = newChildren[index = (newLength-1)-i];
-			oldChild = oldChildren[(oldLength-1)-i];
+		switch (type.constructor) {
+			// node
+			case String: {
+				newer.tag = type;
+				newer.attrs = attrs;
 	
-			if (newChild.key === oldChild.key) {
-				reconciled[index] = oldChild;
-	
-				// trim trailing node
-				length--;
+				break;
 			}
-			else {
+			// component
+			case Function: {
+				var proto = type.prototype;
+	
+				group = newer.group = proto !== void 0 && proto.render !== void 0 ? CLASS : FUNCTION;
+	
+				break;
+			}
+			default: {
+				if (type.flag !== void 0) {
+					// clone
+					merge(type.props, props);
+	
+					type = type.type;
+					group = type.group;
+	
+					if (group === STRING) {
+						newer.tag = type;
+					} else {
+						newer.props.children = CHILDREN;
+					}
+				} else if (type.nodeType !== void 0) {
+					newer.flag = PORTAL;
+				}
+			}
+		}
+	
+		newer.type = type;
+	
+		if (length - offset > 1) {
+			var children = newer.children = new Array(size);
+			var index = 0;
+	
+			if (group === 0) {
+				for (; i < length; i++) {
+					index = push(newer, index, arguments[i]);
+				}
+			} else {
+				if (props === PROPS) {
+					props = newer.props = {};
+				}
+	
+				for (; i < length; i++) {
+					index = pull(newer, index, arguments[i]);
+				}
+	
+				props.children = children;
+				newer.children = CHILDREN;
+			}
+		}
+	
+		return newer;
+	}
+	
+	/**
+	 * Push Children
+	 *
+	 * @param  {Tree} newer
+	 * @param  {Number} index
+	 * @param  {Any} value
+	 * @return {Number}
+	 */
+	function push (newer, index, value) {
+		var children = newer.children;
+		var child;
+	
+		if (value === null || value === void 0) {
+			child = text(' ');
+		} else if (value.group !== void 0) {
+			if (newer.keyed === 0 && value.key !== null) {
+				newer.keyed = 1;
+			}
+	
+			child = value;
+		} else {
+			switch (value.constructor) {
+				case String: {
+					if (value.length === 0) {
+						value = ' ';
+					}
+				}
+				case Number:{
+					child = new Tree(TEXT);
+					child.type = child.tag = '#text';
+					child.children = value;
+					break;
+				}
+				case Array: {
+					for (var j = 0, i = index, length = value.length; j < length; j++) {
+						i = push(newer, i, value[j]);
+					}
+					return i;
+				}
+				case Function: {
+					child = element(value);
+					break;
+				}
+				case Object: {
+					child = stringify(value);
+					break;
+				}
+				case Date: {
+					child = text(value.toString());
+					break;
+				}
+				default: {
+					child = text(' ');
+					break;
+				}
+			}
+		}
+	
+		children[index] = child;
+	
+		return index + 1;
+	}
+	
+	/**
+	 * Pull Children
+	 *
+	 * @param  {Tree} newer
+	 * @param  {Number} index
+	 * @param  {Any} value
+	 * @return {Number}
+	 */
+	function pull (newer, index, value) {
+		var children = newer.children;
+	
+		if (value !== null && value !== void 0 && value.constructor === Array) {
+			for (var j = 0, i = index, length = value.length; j < length; j++) {
+				i = pull(newer, i, value[j]);
+			}
+	
+			return i;
+		}
+	
+		children[index] = value;
+	
+		return index + 1;
+	}
+	
+	/**
+	 * Text
+	 *
+	 * @param  {String|Number|Boolean} value
+	 * @param  {Tree}
+	 * @return {Tree}
+	 */
+	function text (value) {
+		var newer = new Tree(TEXT);
+	
+		newer.type = newer.tag = '#text';
+		newer.children = value;
+	
+		return newer;
+	}
+	
+	/**
+	 * Fragment
+	 *
+	 * @param  {Array<Tree>|Tree|Function} children
+	 * @return {Tree}
+	 */
+	function fragment (children) {
+		var newer = new Tree(FRAGMENT);
+	
+		newer.tag = newer.type = 'div';
+		newer.children = children;
+	
+		for (var i = 0, index = 0, length = children.length; i < length; i++) {
+			index = push(newer, index, children[i]);
+		}
+	
+		return newer;
+	}
+	
+	/**
+	 * Compose
+	 *
+	 * @param  {Tree} child
+	 * @return {Tree}
+	 */
+	function compose (child) {
+		var newer = new Tree(COMPOSITE);
+	
+		newer.children = [child];
+	
+		return newer;
+	}
+	
+	/**
+	 * Stringify
+	 *
+	 * @param {Object} value
+	 * @return {Tree}
+	 */
+	function stringify (value) {
+		try {
+			return element('pre', null, JSON.stringify(value, null, 2));
+		} catch (err) {
+			return text(' ');
+		}
+	}
+	
+	/**
+	 * Assign
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Boolean} deep
+	 */
+	function assign (older, newer, deep) {
+		older.flag = newer.flag;
+		older.tag = newer.tag;
+		older.ref = newer.ref;
+		older.node = newer.node;
+		older.attrs = newer.attrs;
+		older.xmlns = newer.xmlns;
+		older.async = newer.async;
+		older.keyed = newer.keyed;
+		older.children = newer.children;
+	
+		if (deep === true) {
+			older.parent = newer.parent;
+			older.props = newer.props;
+			older.owner = newer.owner;
+			older.yield = newer.yield;
+			older.type = newer.type;
+			older.host = newer.host;
+			older.key = newer.key;
+	
+			if ((older.group = newer.group) === CLASS) {
+				older.owner.this = older;
+			}
+		}
+	}
+	
+	/**
+	 * Clone
+	 *
+	 * @param  {Tree} older
+	 * @param  {Tree} newer
+	 * @param  {Boolean} deep
+	 * @return {Tree}
+	 */
+	function clone (older, newer, deep) {
+		assign(older, newer, deep);
+		return older;
+	}
+	
+	/**
+	 * Tree
+	 *
+	 * @param {Number} flag
+	 */
+	function Tree (flag) {
+		this.flag = flag;
+		this.tag = null;
+		this.key = null;
+		this.ref = null;
+		this.type = null;
+		this.node = null;
+		this.host = null;
+		this.group = STRING;
+		this.async = READY;
+		this.props = PROPS;
+		this.attrs = ATTRS;
+		this.xmlns = null;
+		this.owner = null;
+		this.yield = null;
+		this.keyed = 0;
+		this.parent = null;
+		this.children = CHILDREN;
+	}
+	
+	/**
+	 * Prototype
+	 *
+	 * @type {Object}
+	 */
+	Tree.prototype = element.prototype = Object.create(null);
+	
+	/**
+	 * Data Boundary
+	 *
+	 * @param  {Tree} older
+	 * @param  {Component} owner
+	 * @param  {Number} type
+	 * @param  {Object} props
+	 * @return {Object?}
+	 */
+	function dataBoundary (older, owner, type, props) {
+		try {
+			switch (type) {
+				case 0: returnBoundary(older, owner.componentWillReceiveProps(props), owner, null, true); break;
+				case 1: return owner.getInitialState(props);
+			}
+		} catch (err) {
+			errorBoundary(err, older, owner, 0, type);
+		}
+	}
+	
+	/**
+	 * Update Boundary
+	 *
+	 * @param  {Tree} older
+	 * @param  {Component} owner
+	 * @param  {Number} type
+	 * @param  {Object} props
+	 * @param  {Object} state
+	 * @return {Boolean?}
+	 */
+	function updateBoundary (older, owner, type, props, state) {
+		try {
+			switch (type) {
+				case 0: return owner.shouldComponentUpdate(props, state);
+				case 1: returnBoundary(older, owner.componentWillUpdate(props, state), owner, null, true); break;
+				case 2: returnBoundary(older, owner.componentDidUpdate(props, state), owner, null, false); break;
+			}
+		} catch (err) {
+			errorBoundary(err, older, owner, 1, type);
+		}
+	}
+	
+	/**
+	 * Render Boundary
+	 *
+	 * @param  {Tree} older
+	 * @param  {Number} group
+	 * @return {Tree}
+	 */
+	function renderBoundary (older, group) {
+		try {
+			if (older.yield !== null) {
+				return older.yield();
+			}
+	
+			switch (group) {
+				case FUNCTION: return older.type(older.props);
+				default: return older.owner.render(older.owner.props, older.owner.state);
+			}
+		} catch (err) {
+			return errorBoundary(err, older, group === CLASS ? older.owner : older.type, 3, group);
+		}
+	}
+	
+	/**
+	 * Mount Boundary
+	 *
+	 * @param {Tree} older
+	 * @param {Component} owner
+	 * @param {Node} node
+	 * @param {Number} type
+	 */
+	function mountBoundary (older, owner, node, type) {
+		try {
+			switch (type) {
+				case 0: returnBoundary(older, owner.componentWillMount(node), owner, null, false); break;
+				case 1: returnBoundary(older, owner.componentDidMount(node), owner, null, true); break;
+				case 2: return owner.componentWillUnmount(node);
+			}
+		} catch (err) {
+			errorBoundary(err, older, owner, 4, type);
+		}
+	}
+	
+	/**
+	 * Callback Boundary
+	 *
+	 * @param {Tree} older
+	 * @param {Function} callback
+	 * @param {Component} owner
+	 * @param {Object|Node} data
+	 * @param {Number} type
+	 */
+	function callbackBoundary (older, owner, callback, data, type) {
+		try {
+			if (type === 0) {
+				return callback.call(owner, data);
+			} else {
+				returnBoundary(older, callback.call(owner, data), owner, null, false);
+			}
+		} catch (err) {
+			errorBoundary(err, older, owner, 2, callback);
+		}
+	}
+	
+	/**
+	 * Events Boundary
+	 *
+	 * @param {Event} e
+	 */
+	function eventBoundary (e) {
+		var handlers = this.that;
+		var host = handlers.host;
+		var func = handlers[e.type];
+	
+		if (func !== null && func !== void 0) {
+			if (host !== void 0) {
+				try {
+					var owner = host.owner;
+					var result = func.call(owner, e);
+	
+					if (result !== void 0) {
+						returnBoundary(host, result, owner, e, true);
+					}
+				} catch (err) {
+					errorBoundary(err, host, owner, 5, func);
+				}
+			} else {
+				func.call(this, e);
+			}
+		}
+	}
+	
+	/**
+	 * Return Boundary
+	 *
+	 * @param {Tree} older
+	 * @param {(Object|Promise)?} state
+	 * @param {Component} owner
+	 * @param {Event?} e
+	 * @param {Boolean} sync
+	 */
+	function returnBoundary (older, state, owner, e, sync) {
+		if (state === void 0 || state === null || older.group !== CLASS) {
+			return;
+		}
+	
+		if (sync === true) {
+			owner.setState(state);
+			return;
+		}
+	
+		requestIdleCallback(function () {
+			owner.setState(state);
+		});
+	}
+	
+	/**
+	 * Error Boundary
+	 *
+	 * @param  {Error|String} message
+	 * @param  {Tree} older
+	 * @param  {Component} owner
+	 * @param  {Number} type
+	 * @param  {Number|Function} from
+	 * @return {Tree?}
+	 */
+	function errorBoundary (message, older, owner, type, from) {
+		var unknown = '#unknown';
+		var component = unknown;
+		var location = unknown;
+		var newer;
+	
+		try {
+			if (typeof from === 'function') {
+				location = from.name;
+			} else {
+				switch (type) {
+					case 0: {
+						switch (from) {
+							case 0: location = 'componentWillReceiveProps';
+							case 1: location = 'getInitialState';
+						}
+						break;
+					}
+					case 1: {
+						switch (from) {
+							case 0: location = 'shouldComponentUpdate';
+							case 1: location = 'componentWillUpdate';
+							case 2: location = 'componentDidUpdate';
+						}
+						break;
+					}
+					case 3: {
+						location = 'render';
+						break;
+					}
+					case 4: {
+						switch (from) {
+							case 0: location = 'componentWillMount';
+							case 1: location = 'componentDidMount';
+							case 2: location = 'componentWillUnmount';
+						}
+						break;
+					}
+					case 5: {
+						location = 'event';
+						break;
+					}
+				}
+			}
+	
+			if (owner !== null) {
+				if (owner.componentDidThrow !== void 0) {
+					newer = owner.componentDidThrow({location: location, message: message});
+				}
+	
+				component = typeof owner === 'function' ? owner.name : owner.constructor.name;
+			}
+		} catch (err) {
+			message = err;
+			location = 'componentDidThrow';
+		}
+	
+		console.error(
+			(message instanceof Error ? message.stack : message) +
+			'\n\n  ^^ Error caught in '+'"'+component+'"'+' from "'+location+'" \n'
+		);
+	
+		if (type === 3) {
+			if (newer === void 0 && older !== SHARED && older.node !== null) {
+				// last non-error state
+				return older;
+			} else {
+				// authored/default error state
+				return shape(newer, older, true);
+			}
+		}
+	}
+	
+	/**
+	 * Whitelist
+	 *
+	 * @param  {String} name
+	 * @return {Number}
+	 */
+	function whitelist (name) {
+		switch (name) {
+			case 'class':
+			case 'className': return 1;
+	
+			case 'width':
+			case 'height': return 3;
+	
+			case 'xlink:href': return 4;
+	
+			case 'defaultValue': return 5;
+	
+			case 'id':
+			case 'selected':
+			case 'hidden':
+			case 'checked':
+			case 'value': return 6;
+	
+			case 'innerHTML': return 10;
+	
+			case 'style': return 20;
+	
+			case 'ref': return 30;
+			case 'key': case 'children': return 31;
+	
+			default: return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 ? 21 : 0;
+		}
+	}
+	
+	/**
+	 * Attribute [Mount]
+	 *
+	 * @param {Tree} newer
+	 * @param {String?} xmlns
+	 * @param {Boolean} event
+	 */
+	function attribute (newer, xmlns, event) {
+		var attrs = newer.attrs;
+		var node = newer.node;
+	
+		for (var name in attrs) {
+			var type = event === false ? whitelist(name) : 21;
+	
+			if (type < 31) {
+				var value = attrs[name];
+	
+				if (type === 30) {
+					refs(newer, value, 2);
+				} else if (type < 20) {
+					if (value !== void 0 && value !== null) {
+						setAttribute(type, name, value, xmlns, true, node);
+					}
+				} else if (type > 20) {
+					setEvent(newer, name, value, 1);
+				} else {
+					setStyle(newer, newer, 0);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Attributes [Reconcile]
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 */
+	function attributes (older, newer) {
+		var node = older.node;
+		var previous = older.attrs;
+		var current = newer.attrs;
+	
+		if (previous === current && current === ATTRS) {
+			return;
+		}
+	
+		var xmlns = older.xmlns;
+		var type;
+		var next;
+		var prev;
+	
+		// old attributes
+		for (var name in previous) {
+			type = whitelist(name);
+	
+			if (type < 31) {
+				next = current[name];
+	
+				if (next === null || next === void 0) {
+					if (type < 20) {
+						setAttribute(type, name, next, xmlns, false, node);
+					} else if (type > 20) {
+						setEvent(older, name, next, 0);
+					}
+				} else if (type === 30 && next !== (prev = previous[name])) {
+					refs(older, prev, 0);
+				}
+			}
+		}
+	
+		// new attributes
+		for (var name in current) {
+			type = whitelist(name);
+	
+			if (type < 31) {
+				next = current[name];
+	
+				if (type === 30) {
+					refs(older, next, 2);
+				} else {
+					prev = previous[name];
+	
+					if (next !== prev && next !== null && next !== void 0) {
+						if (type < 20) {
+							setAttribute(type, name, next, xmlns, true, node);
+						} else if (type > 20) {
+							setEvent(older, name, next, 2);
+						} else {
+							setStyle(older, newer, 1);
+						}
+					}
+				}
+			}
+		}
+	
+		older.attrs = current;
+	}
+	
+	/**
+	 * Refs
+	 *
+	 * @param  {Tree} older
+	 * @param  {Function|String} value
+	 * @param  {Number} type
+	 */
+	function refs (older, value, type) {
+		var host = older.host;
+		var stateful = false;
+	
+		if (host !== null) {
+			var owner = host.owner;
+	
+			if (owner !== null && host.group === CLASS) {
+				stateful = true;
+			}
+		}
+	
+		if (stateful === true && owner.refs === null) {
+			owner.refs = {};
+		}
+	
+		if ((older.ref = value) !== void 0 && value !== null) {
+			var node = type > 0 ? older.node : null;
+	
+			switch (value.constructor) {
+				case Function: {
+					callbackBoundary(older, owner, value, node, 2);
+					break;
+				}
+				case String: {
+					if (stateful === true) {
+						owner.refs[value] = node;
+					}
+					break;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Merge
+	 *
+	 * @param {Object} source
+	 * @param {Object} props
+	 */
+	function merge (source, props) {
+		for (var name in source) {
+			if (props[name] === void 0) {
+				props[name] = source[name];
+			}
+		}
+	}
+	
+	/**
+	 * Create
+	 *
+	 * @param {Tree} newer
+	 * @param {Tree} parent
+	 * @param {Tree} sibling
+	 * @param {Number} action
+	 * @param {Tree?} _host
+	 * @param {String?} _xmlns
+	 */
+	function create (newer, parent, sibling, action, _host, _xmlns) {
+		var host = _host;
+		var xmlns = _xmlns;
+		var group = newer.group;
+		var flag = newer.flag;
+		var type = 2;
+		var skip = false;
+		var owner;
+		var node;
+		var temp;
+	
+	 	// cache host
+	 	if (host !== SHARED) {
+			newer.host = host;
+	 	}
+	
+	 	// component
+	 	if (group !== STRING) {
+	 		if (group === CLASS) {
+	 			host = newer;
+	 		}
+	
+	 		temp = extract(newer, true);
+	 		flag = temp.flag;
+	 		owner = newer.owner;
+	 	}
+	
+	 	switch (flag) {
+	 		// text
+	 		case TEXT: {
+	 			node = newer.node = createTextNode(newer.children);
+	 			type = 1;
+	 			break;
+	 		}
+	 		// composite
+	 		case COMPOSITE: {
+	 			create(temp = temp.children[0], parent, sibling, action, newer, xmlns);
+	 			node = newer.node = temp.node;
+				type = 0;
+	 			break;
+	 		}
+	 		default: {
+	 			var children = newer.children;
+				var length = children.length;
+	
+				switch (flag) {
+					case PORTAL: {
+						newer.node = newer.type;
+						break;
+					}
+					default: {
+		 				var tag = newer.tag;
+	
+		 				// cache namespace
+		 				if (newer.xmlns !== null) {
+		 					xmlns = newer.xmlns;
+		 				}
+	
+			 			// namespace(implicit) svg/math roots
+			 			switch (tag) {
+			 				case 'svg': xmlns = svg; break;
+			 				case 'math': xmlns = math; break;
+			 				case '!doctype': tag = 'html'; break;
+			 			}
+	
+		 				node = createElement(tag, newer, host, xmlns);
+	
+			 			// error
+			 			if (newer.flag === ERROR) {
+			 				create(node, parent, sibling, action, host, xmlns);
+			 				assign(newer, node, newer.group === 0);
+			 				return;
+			 			}
+	
+			 			newer.node = node;
+					}
+				}
+	
+	 			if (length > 0) {
+	 				for (var i = 0; i < length; i++) {
+	 					var child = children[i];
+	
+	 					// hoisted
+	 					if (child.node !== null) {
+	 						child = assign(children[i] = new Tree(child.flag), child, true);
+	 					}
+	
+	 					create(child, newer, sibling, 1, host, xmlns);
+	 				}
+	 			}
+	 		}
+	 	}
+	
+		if (group !== STRING && owner.componentWillMount !== void 0) {
+			mountBoundary(newer, owner, node, 0);
+		}
+	
+		newer.parent = parent;
+	
+		if (type !== 0) {
+			switch (action) {
+				case 1: appendChild(newer, parent); break;
+				case 2: insertBefore(newer, sibling, parent); break;
+				case 3: skip = remove(sibling, newer, parent); break;
+			}
+	
+			if (type !== 1) {
+				attribute(newer, xmlns, false);
+			}
+		}
+	
+		if (group !== STRING && skip !== true && owner.componentDidMount !== void 0) {
+			mountBoundary(newer, owner, node, 1);
+		}
+	}
+	
+	/**
+	 * Extract
+	 *
+	 * @param {Tree} older
+	 * @param {Boolean} abstract
+	 * @return {Tree}
+	 */
+	function extract (older, abstract) {
+		var type = older.type;
+		var props = older.props;
+		var children = older.children;
+		var group = older.group;
+		var length = children.length;
+		var defaults = type.defaultProps;
+		var types = type.propTypes;
+		var newer;
+		var result;
+	
+		if (props === PROPS) {
+			props = {};
+		}
+	
+		if (length !== 0) {
+			props.children = children;
+		}
+	
+		if (defaults !== void 0) {
+			merge(getInitialStatic(type, defaults, 'defaultProps', props), props);
+		}
+	
+		if (types !== void 0) {
+			getInitialStatic(type, types, 'propTypes', props);
+		}
+	
+		if (group === CLASS) {
+			var proto = type.prototype;
+			var UUID = proto.UUID;
+			var owner;
+	
+			if (UUID === 2) {
+				owner = new type(props);
+			} else {
+				if (UUID !== 1) {
+					extendClass(type, proto);
+				}
+	
+				owner = new type(props);
+				Component.call(owner, props);
+			}
+	
+			older.owner = owner;
+	
+			if (owner.getInitialState !== void 0) {
+				getInitialState(older, dataBoundary(SHARED, owner, 1, owner.props));
+	
+				if (server === true && older.async === PENDING) {
+					return older;
+				}
+			}
+	
+			older.async = PROCESSING;
+			newer = renderBoundary(older, group);
+			older.async = READY;
+			owner.this = older;
+		} else {
+			older.owner = type;
+			newer = renderBoundary(older, group);
+		}
+	
+		result = shape(newer, older, abstract);
+	
+		older.tag = result.tag;
+		older.flag = result.flag;
+		older.node = result.node;
+		older.attrs = result.attrs;
+		older.xmlns = result.xmlns;
+		older.children = result.children;
+	
+		return result;
+	}
+	
+	/**
+	 * Shape
+	 *
+	 * @param {Any} value
+	 * @param {Tree?} older
+	 * @param {Boolean} abstract
+	 * @return {Tree}
+	 */
+	function shape (value, older, abstract) {
+		var newer = (value !== null && value !== void 0) ? value : text(' ');
+	
+		if (newer.group === void 0) {
+			switch (newer.constructor) {
+				case Function: {
+					newer = element(newer);
+					break;
+				}
+				case String: {
+					if (newer.length === 0) {
+						newer = ' ';
+					}
+				}
+				case Number: {
+					return text(newer);
+				}
+				case Array: {
+					return fragment(newer);
+				}
+				case Date: {
+					return text(newer.toString());
+				}
+				case Object: {
+					return stringify(newer);
+				}
+				case Promise: {
+					if (older !== null && older.flag !== EMPTY) {
+						return resolve(older, newer);
+					}
+				}
+				case Boolean: {
+					return text(' ');
+				}
+				default: {
+					if (older === null || newer.next === void 0) {
+						return text(' ');
+					}
+	
+					newer = coroutine(older, newer);
+				}
+			}
+		}
+	
+		if (abstract === true && newer.group !== STRING) {
+			return compose(newer);
+		} else {
+			return newer;
+		}
+	}
+	
+	/**
+	 * Resolve
+	 *
+	 * @param {Tree} older
+	 * @param {Promise} pending
+	 */
+	function resolve (older, pending) {
+		older.async = PENDING;
+	
+		pending.then(function (value) {
+			if (older.node === null) {
+				return;
+			}
+	
+			older.async = READY;
+	
+			var newer = shape(value, older, true);
+	
+			if (older.tag !== newer.tag) {
+				exchange(older, newer, false);
+			} else {
+				patch(older, newer, 0);
+			}
+		});
+	
+		return older.node !== null ? older : text(' ');
+	}
+	
+	/**
+	 * Coroutine
+	 *
+	 * @param {Tree} older
+	 * @param {Generator} generator
+	 * @return {Tree}
+	 */
+	function coroutine (older, generator) {
+		var previous;
+		var current;
+	
+		older.yield = function () {
+			var supply = generator.next(previous);
+			var next = supply.value;
+	
+			if (supply.done === true) {
+				current = shape(next !== void 0 && next !== null ? next : previous, older, true);
+			} else {
+				current = shape(next, older, true);
+			}
+	
+			return previous = current;
+		};
+	
+		return shape(renderBoundary(older, older.group), older, true);
+	}
+	
+	/**
+	 * Fill
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Number} length
+	 */
+	function fill (older, newer, length) {
+		var children = newer.children;
+		var host = older.host;
+	
+		for (var i = 0, child; i < length; i++) {
+			create(child = children[i], older, SHARED, 1, host, null);
+		}
+	
+		older.children = children;
+	}
+	
+	/**
+	 * Animate
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {tree} parent
+	 * @param {Promise} pending
+	 * @param {Node} node
+	 */
+	function animate (older, newer, parent, pending) {
+		pending.then(function () {
+			if (parent.node === null || older.node === null) {
+				return;
+			}
+	
+			if (newer === SHARED) {
+				removeChild(older, parent);
+			} else if (newer.node !== null) {
+				replaceChild(older, newer, parent);
+	
+				if (newer.group !== STRING && newer.owner.componentDidMount !== void 0) {
+					mountBoundary(newer, newer.owner, newer.node, 1);
+				}
+			}
+	
+			unmount(older, true);
+		});
+	}
+	
+	/**
+	 * Remove
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Tree} parent
+	 * @return {Tree}
+	 */
+	function remove (older, newer, parent) {
+		if (older.group !== STRING && older.owner.componentWillUnmount !== void 0) {
+			var pending = mountBoundary(older, older.owner, older.node, 2);
+	
+			if (pending !== void 0 && pending !== null && pending.constructor === Promise) {
+				animate(older, newer, parent, pending, older.node);
+	
+				return true;
+			}
+		}
+	
+		unmount(older, false);
+	
+		if (newer === SHARED) {
+			removeChild(older, parent);
+		} else {
+			replaceChild(older, newer, parent);
+		}
+	
+		detach(older);
+	
+		return false;
+	}
+	
+	/**
+	 * Unmount
+	 *
+	 * @param {Tree} older
+	 * @param {Boolean} unlink
+	 */
+	function unmount (older, unlink) {
+		var children = older.children;
+		var length = children.length;
+		var flag = older.flag;
+	
+		if (flag !== TEXT) {
+			if (length !== 0) {
+				for (var i = 0; i < length; i++) {
+					var child = children[i];
+	
+					if (child.group !== STRING && child.owner.componentWillUnmount !== void 0) {
+						mountBoundary(child, child.owner, child.node, 2);
+					}
+	
+					unmount(child, true);
+				}
+			}
+	
+			if (older.ref !== null) {
+				refs(older, older.ref, 0);
+			}
+		}
+	
+		if (unlink === true) {
+			detach(older);
+		}
+	}
+	
+	/**
+	 * Detach
+	 *
+	 * @return {Tree}
+	 */
+	function detach (older) {
+		older.parent = null;
+		older.owner = null;
+		older.node = null;
+		older.host = null;
+	}
+	
+	/**
+	 * Exchange
+	 *
+	 * @param {Tree} newer
+	 * @param {Tree} older
+	 * @param {Boolean} deep
+	 */
+	function exchange (older, newer, deep) {
+		change(older, newer, older.host);
+		assign(older, newer, true);
+		update(older.host, newer);
+	}
+	
+	/**
+	 * Update
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 */
+	function update (older, newer) {
+		if (older !== null && older.flag === COMPOSITE) {
+			older.node = newer.node;
+			older.parent = newer.parent;
+	
+			if (older.host !== older) {
+				update(older.host, newer);
+			}
+		}
+	}
+	
+	/**
+	 * Change
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 */
+	function change (older, newer) {
+		create(newer, older.parent, older, 3, older.host, null);
+	}
+	
+	/**
+	 * Render
+	 *
+	 * @param {Any} subject
+	 * @param {Node?} container
+	 * @param {(Function|Node)?} callback
+	 */
+	function render (subject, container, callback) {
+		var newer = subject;
+		var target = container;
+	
+		if (newer === void 0 || newer === null) {
+			newer = text(' ');
+		} else if (newer.flag === void 0) {
+			newer = shape(newer, null, false);
+		}
+	
+		// browser
+		if (target === void 0 || target === null) {
+			// uses <body> if it exists at this point
+			// else default to the root <html> node
+			if (body === null && (body = documentElement()) === null) {
+				switch (server) {
+					case true: return newer.toString();
+					case false: return;
+				}
+			}
+	
+			target = body;
+		}
+	
+		var older = target.this;
+	
+		if (older !== void 0) {
+			if (older.key === newer.key) {
+				patch(older, newer, older.group);
+			} else {
+				exchange(older, newer, true);
+			}
+		} else {
+			var parent = new Tree(ELEMENT);
+	
+			target.this = older = newer;
+			parent.node = target;
+	
+			if (callback === void 0 || callback === null || callback.constructor === Function) {
+				create(newer, parent, SHARED, 1, newer, null);
+			} else {
+				hydrate(newer, parent, 0, callback, newer, null);
+			}
+		}
+	
+		if (callback !== void 0 && callback !== null && callback.constructor === Function) {
+			callbackBoundary(older, older.owner, callback, target, 0);
+		}
+	}
+	
+	/**
+	 * Patch
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} _newer
+	 * @param {Number} group
+	 */
+	function patch (older, _newer, group) {
+		var newer = _newer;
+		var type = older.type;
+		var skip = false;
+	
+		if (type !== newer.type) {
+			exchange(older, newer, true);
+			return;
+		}
+	
+		if (group !== STRING) {
+			var owner = older.owner
+	
+			if (owner === null || older.async !== READY) {
+				return;
+			}
+	
+			older.async = PROCESSING;
+	
+			var newProps = newer.props;
+			var oldProps = older.props;
+			var newState;
+			var oldState;
+	
+			if (group !== FUNCTION) {
+				oldState = owner.state;
+				newState = owner._state;
+			} else {
+				oldState = oldProps;
+				newState = newProps;
+			}
+	
+			if (group !== NOOP) {
+				if (type.propTypes !== void 0) {
+					propTypes(owner, type, newProps);
+				}
+	
+				if (owner.componentWillReceiveProps !== void 0) {
+					dataBoundary(older, owner, 0, newProps);
+				}
+	
+				if (type.defaultProps !== void 0) {
+					merge(type.defaultProps, newProps === PROPS ? (newProps = {}) : newProps);
+				}
+			}
+	
+			if (
+				owner.shouldComponentUpdate !== void 0 &&
+				updateBoundary(older, owner, 0, newProps, newState) === false
+			) {
+				older.async = READY;
+				return;
+			}
+	
+			if (group < 3) {
+				if (group === CLASS) {
+					owner.props = newProps;
+				}
+	
+				older.props = newProps;
+			}
+	
+			if (owner.componentWillUpdate !== void 0) {
+				updateBoundary(older, owner, 1, newProps, newState);
+			}
+	
+			// update current state
+			if (group !== FUNCTION) {
+				updateState(oldState, newState);
+			}
+	
+			newer = renderBoundary(older, group);
+			newer = newer !== older ? shape(newer, older, true) : newer;
+	
+			if (older.async === PENDING) {
+				return;
+			}
+	
+			older.async = READY;
+	
+			if (newer.tag !== older.tag) {
+				exchange(older, newer, false);
+				skip = true;
+			} else {
+				// composite component
+				if (newer.flag === COMPOSITE) {
+					patch(older.children[0], newer.children[0], group);
+					skip = true;
+				}
+			}
+		}
+	
+		// text component
+		if (older.flag === TEXT) {
+			if (older.children !== newer.children) {
+				nodeValue(older, newer);
+			}
+		} else if (skip !== true) {
+			var oldLength = older.children.length;
+			var newLength = newer.children.length;
+	
+			if (oldLength === 0) {
+				// fill children
+				if (newLength !== 0) {
+					fill(older, newer, newLength);
+	
+					older.children = newer.children;
+				}
+			} else if (newLength === 0) {
+				// remove children
+				if (oldLength !== 0) {
+					unmount(older, false);
+					removeChildren(older);
+	
+					older.children = newer.children;
+				}
+			} else {
+				switch (newer.keyed) {
+					case 0: nonkeyed(older, newer, oldLength, newLength); break;
+					case 1: keyed(older, newer, oldLength, newLength); break;
+				}
+			}
+	
+			attributes(older, newer);
+		}
+	
+		if (group !== STRING && older.owner.componentDidUpdate !== void 0) {
+			older.async = PROCESSED;
+			updateBoundary(older, owner, 2, oldProps, oldState);
+			older.async = READY;
+		}
+	}
+	
+	/**
+	 * Non-Keyed Children [Simple]
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Number} oldLength
+	 * @param {Number} newLength
+	 */
+	function nonkeyed (older, newer, oldLength, newLength) {
+		var host = older.host;
+		var oldChildren = older.children;
+		var newChildren = newer.children;
+		var length = newLength > oldLength ? newLength : oldLength;
+	
+		for (var i = 0; i < length; i++) {
+			if (i >= newLength) {
+				remove(oldChildren.pop(), SHARED, older);
+			} else if (i >= oldLength) {
+				create(oldChildren[i] = newChildren[i], older, SHARED, 1, host, null);
+			} else {
+				var newChild = newChildren[i];
+				var oldChild = oldChildren[i];
+	
+				if (newChild.flag === TEXT && oldChild.flag === TEXT) {
+					if (newChild.children !== oldChild.children) {
+						nodeValue(oldChild, newChild);
+					}
+				} else {
+					patch(oldChild, newChild, oldChild.group);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Keyed Children [Simple]
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Number} oldLength
+	 * @param {Number} newLength
+	 */
+	function keyed (older, newer, oldLength, newLength) {
+		var host = older.host;
+	 	var oldChildren = older.children;
+	 	var newChildren = newer.children;
+	 	var oldStart = 0;
+	 	var newStart = 0;
+	 	var oldEnd = oldLength - 1;
+	 	var newEnd = newLength - 1;
+	 	var oldStartNode = oldChildren[oldStart];
+	 	var newStartNode = newChildren[newStart];
+	 	var oldEndNode = oldChildren[oldEnd];
+	 	var newEndNode = newChildren[newEnd];
+	 	var nextPos;
+	 	var nextChild;
+	
+	 	// step 1, sync leading [a, b ...], trailing [... c, d], opposites [a, b] [b, a] recursively
+	 	outer: while (true) {
+	 		// sync leading nodes
+	 		while (oldStartNode.key === newStartNode.key) {
+	 			newChildren[newStart] = oldStartNode;
+	
+	 			patch(oldStartNode, newStartNode, oldStartNode.group);
+	
+	 			oldStart++;
+	 			newStart++;
+	
+	 			if (oldStart > oldEnd || newStart > newEnd) {
+	 				break outer;
+	 			}
+	
+	 			oldStartNode = oldChildren[oldStart];
+	 			newStartNode = newChildren[newStart];
+	 		}
+	
+	 		// sync trailing nodes
+	 		while (oldEndNode.key === newEndNode.key) {
+	 			newChildren[newEnd] = oldEndNode;
+	
+	 			patch(oldEndNode, newEndNode, oldEndNode.group);
+	
+	 			oldEnd--;
+	 			newEnd--;
+	
+	 			if (oldStart > oldEnd || newStart > newEnd) {
+	 				break outer;
+	 			}
+	
+	 			oldEndNode = oldChildren[oldEnd];
+	 			newEndNode = newChildren[newEnd];
+	 		}
+	
+	 		// move and sync nodes from right to left
+	 		if (oldEndNode.key === newStartNode.key) {
+	 			newChildren[newStart] = oldEndNode;
+	 			oldChildren[oldEnd] = oldStartNode;
+	
+	 			insertBefore(oldEndNode, oldStartNode, older);
+	 			patch(oldEndNode, newStartNode, oldEndNode.group);
+	
+	 			oldEnd--;
+	 			newStart++;
+	
+	 			oldEndNode = oldChildren[oldEnd];
+	 			newStartNode = newChildren[newStart];
+	
+	 			continue;
+	 		}
+	
+	 		// move and sync nodes from left to right
+	 		if (oldStartNode.key === newEndNode.key) {
+	 			newChildren[newEnd] = oldStartNode;
+	 			oldChildren[oldStart] = oldEndNode;
+	
+	 			nextPos = newEnd + 1;
+	
+	 			if (nextPos < newLength) {
+	 				insertBefore(oldStartNode, oldChildren[nextPos], older);
+	 			} else {
+	 				appendChild(oldStartNode, older);
+	 			}
+	
+	 			patch(oldStartNode, newEndNode, oldStartNode.group);
+	
+	 			oldStart++;
+	 			newEnd--;
+	
+	 			oldStartNode = oldChildren[oldStart];
+	 			newEndNode = newChildren[newEnd];
+	
+	 			continue;
+	 		}
+	
+	 		break;
+	 	}
+	
+	 	// step 2, remove or insert or both
+	 	if (oldStart > oldEnd) {
+	 		// old children is synced, insert the difference
+	 		if (newStart <= newEnd) {
+	 			nextPos = newEnd + 1;
+	 			nextChild = nextPos < newLength ? newChildren[nextPos] : SHARED;
+	
+	 			do {
+	 				create(newStartNode = newChildren[newStart++], older, nextChild, 2, host, null);
+	 			} while (newStart <= newEnd);
+	 		}
+	 	} else if (newStart > newEnd) {
+	 		// new children is synced, remove the difference
+	 		do {
+	 			remove(oldStartNode = oldChildren[oldStart++], SHARED, older);
+	 		} while (oldStart <= oldEnd);
+	 	} else if (newStart === 0 && newEnd === newLength-1) {
+	 		// all children are out of sync, remove all, append new set
+	 		unmount(older, false);
+	 		removeChildren(older);
+	 		fill(older, newer, newLength);
+	 	} else {
+	 		// could sync all children, move on the the next phase
+	 		complex(older, newer, oldStart, newStart, oldEnd + 1, newEnd + 1, oldLength, newLength);
+	 	}
+	
+	 	older.children = newChildren;
+	}
+	
+	/**
+	 * Keyed Children [Complex]
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Number} oldStart
+	 * @param {Number} newStart
+	 * @param {Number} oldEnd
+	 * @param {Number} newEnd
+	 * @param {Number} oldLength
+	 * @param {number} newLength
+	 */
+	function complex (older, newer, oldStart, newStart, oldEnd, newEnd, oldLength, newLength) {
+		var host = older.host;
+		var oldChildren = older.children;
+		var newChildren = newer.children;
+		var oldKeys = {};
+		var newKeys = {};
+		var oldIndex = oldStart;
+		var newIndex = newStart;
+		var oldOffset = 0;
+		var newOffset = 0;
+		var oldChild;
+		var newChild;
+		var nextChild;
+		var nextPos;
+	
+		// step 1, build a map of keys
+		while (true) {
+			if (oldIndex < oldEnd) {
+				oldChild = oldChildren[oldIndex];
+				oldKeys[oldChild.key] = oldIndex++;
+			}
+	
+			if (newIndex < newEnd) {
+				newChild = newChildren[newIndex];
+				newKeys[newChild.key] = newIndex++;
+			}
+	
+			if (oldIndex === oldEnd && newIndex === newEnd) {
 				break;
 			}
 		}
 	
-		// reconcile inverted nodes
-		if (newLength === oldLength) {
-			for (i = position; i < length; i++) {
-				newChild = newChildren[index = (newLength-1)-i];
-				oldChild = oldChildren[i];
+		// reset
+		oldIndex = oldStart;
+		newIndex = newStart;
 	
-				if (index !== i && newChild.key === oldChild.key) {		
-					newChild = oldChildren[index];
+		// step 2, insert and sync nodes from left to right [a, b, ...]
+		while (newIndex < newEnd) {
+			newChild = newChildren[newIndex];
+			oldIndex = oldKeys[newChild.key];
 	
-					nextNode = oldChild.DOMNode;
-					prevNode = newChild.DOMNode;
+			// new child doesn't exist in old children, insert
+			if (oldIndex === void 0) {
+				nextPos = newIndex - newOffset;
+				nextChild = nextPos < oldLength ? oldChildren[nextPos] : SHARED;
 	
-					// adjacent nodes
-					if (index - i === 1) {
-						parentNode.insertBefore(prevNode, nextNode);
-					}
-					else {
-						// move first node to inverted postion
-						parentNode.insertBefore(nextNode, prevNode);
+				create(newChild, older, nextChild, 2, host, null);
 	
-						nextNode = prevNode;
-						prevNode = oldChildren[i + 1].DOMNode;
+				newOffset++;
+			} else if (newIndex === oldIndex) {
+				oldChild = oldChildren[oldIndex];
 	
-						// move second node to inverted position
-						parentNode.insertBefore(nextNode, prevNode);
-					}
-	
-					// trim leading node
-					position = i;
-	
-					// trim trailing node
-					length--;
-	
-					// hydrate
-					reconciled[i] = newChild;
-					reconciled[index] = oldChild;
-				}
-				else {			
-					break;
-				}
+				patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 			}
 	
-			// single remaining node
-			if (length - i === 1) {
-				reconciled[i] = oldChildren[i];
-				oldNode.children = reconciled;
-	
-				return;
-			}
+			newIndex++;
 		}
 	
-		// reconcile remaining node
-		for (i = position; i < length; i++) {
-			// old children
-			if (i < oldLength) {
-				oldChild = oldChildren[i];
-				newChild = newKeys[oldChild.key];
+		// reset
+		oldIndex = oldStart;
 	
-				if (newChild === void 0) {
-					removeNode(oldChild.Type, oldChild, parentNode);
-					removed++;
-				}
+		// step 3, remove and sync nodes from left to right [a, b, ...]
+		while (oldIndex < oldEnd) {
+			oldChild = oldChildren[oldIndex];
+			newIndex = newKeys[oldChild.key];
+	
+			// old child doesn't exist in new children, remove
+			if (newIndex === void 0) {
+				remove(oldChild, SHARED, older);
+	
+				oldOffset++;
 			}
 	
-			// new children
-			if (i < newLength) {
-				newChild = newChildren[i];
-				oldChild = oldKeys[newChild.key];
-	
-				// new
-				if (oldChild === void 0) {
-					nextNode = createNode(newChild, null, null);
-	
-					// insert
-					if (i < oldLength + added) {
-						insertNode(
-							newChild.Type, 
-							newChild, 
-							oldChildren[i - added].DOMNode, 
-							parentNode, 
-							nextNode
-						);
-					}
-					// append
-					else {
-						appendNode(
-							newChild.Type, 
-							newChild, 
-							parentNode, 
-							nextNode
-						);
-					}
-	
-					reconciled[i] = newChild;
-					added++;
-				}
-				// old
-				else {
-					index = oldChild.index;
-					offset = index - removed;
-	
-					// moved
-					if (offset !== i) {
-						key = oldChildren[offset].key;
-	
-						// not moving to a removed index
-						if (newKeys[key] !== void 0) {
-							offset = i - added;
-	
-							// not identical keys
-							if (newChild.key !== oldChildren[offset].key) {
-								nextNode = oldChild.DOMNode;
-								prevNode = oldChildren[offset - (moved++)].DOMNode;
-	
-								if (prevNode !== nextNode) {
-									parentNode.insertBefore(nextNode, prevNode);
-								}
-							}
-						}					
-					}
-	
-					reconciled[i] = oldChild;
-				}
-			}
+			oldIndex++;
 		}
 	
-		oldNode.children = reconciled;
-	}
+		// compute changes
+		oldOffset = (oldEnd - oldStart) - oldOffset;
+		newOffset = (newEnd - newStart) - newOffset;
 	
-	
-	/**
-	 * reconcile nodes
-	 *  
-	 * @param  {VNode}  newNode
-	 * @param  {VNode}  oldNode
-	 * @param  {number} newNodeType
-	 * @param  {number} oldNodeType
-	 */
-	function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {	
-		// if newNode and oldNode, exit early
-		if (newNode === oldNode) {
+		// new and old children positions are in sync
+		if (oldOffset + newOffset === 2) {
 			return;
 		}
 	
-		// extract node from possible component node
-		var currentNode = newNodeType === 2 ? extractComponentNode(newNode, null, null) : newNode;
-		
-		// a component
-		if (oldNodeType === 2) {
-			// retrieve components
-			var oldComponent = oldNode.instance;
-			var newComponent = newNode.instance;
+		// reset
+		newIndex = newEnd - 1;
 	
-			// retrieve props
-			var newProps = newComponent.props;
-			var newState = newComponent.state;
+		// step 4, move and sync nodes from right to left, [..., c, d]
+		while (newIndex >= newStart) {
+			newChild = newChildren[newIndex];
 	
-			// component with shouldComponentUpdate
-			if (
-				oldComponent.shouldComponentUpdate !== void 0 && 
-				componentUpdateBoundary(oldComponent, 'shouldComponentUpdate', newProps, newState) === false
-			) {
-				// exit early
-				return;
-			}
+			// moved node
+			if (newChild.node === null) {
+				// retreive index
+				oldIndex = oldKeys[newChild.key];
 	
-			// component with componentWillUpdate
-			if (oldComponent.componentWillUpdate !== void 0) {
-				componentUpdateBoundary(oldComponent, 'componentWillUpdate', newProps, newState);
-			}
-		}
+				// exists
+				if (oldIndex !== void 0) {
+					oldChild = oldChildren[oldIndex];
 	
-		// children
-		var newChildren = currentNode.children;
-		var oldChildren = oldNode.children;
-	
-		// children length
-		var newLength = newChildren.length;
-		var oldLength = oldChildren.length;
-	
-		// no children
-		if (newLength === 0) {
-			// remove all children if old children is not already cleared
-			if (oldLength !== 0) {
-				emptyNode(oldNode, oldLength);
-				oldNode.children = newChildren;
-			}
-		}
-		// has children
-		else {
-			// new node has children
-			var parentNode = oldNode.DOMNode;
-	
-			// when keyed, the position that dirty keys begin
-			var position = 0;
-	
-			// non-keyed until the first dirty key is found
-			var keyed = false;
-	
-			// un-initialized key hash maps
-			var oldKeys;
-			var newKeys;
-	
-			var newKey;
-			var oldKey;
-	
-			// the highest point of interest
-			var length = newLength > oldLength ? newLength : oldLength;
-	
-			// children nodes
-			var newChild;
-			var oldChild;
-	
-			// children types
-			var newType;
-			var oldType;
-	
-			// for loop, the end point being which ever is the 
-			// greater value between new length and old length
-			for (var i = 0; i < length; i++) {
-				// avoid accessing out of bounds index and Type where unnecessary
-				newType = i < newLength ? (newChild = newChildren[i]).Type : (newChild = nodeEmpty, 0);
-				oldType = i < oldLength ? (oldChild = oldChildren[i]).Type : (oldChild = nodeEmpty, 0);
-	
-				if (keyed) {				
-					// push keys
-					if (newType !== 0) {
-						newKeys[newChild.key] = (newChild.index = i, newChild);
+					// within bounds
+					if ((nextPos = newIndex + 1) < newLength) {
+						insertBefore(oldChild, newChildren[nextPos], older);
+					} else {
+						appendChild(oldChild, older);
 					}
 	
-					if (oldType !== 0) {
-						oldKeys[oldChild.key] = (oldChild.index = i, oldChild);
-					}
-				}
-				// remove
-				else if (newType === 0) {
-					removeNode(oldType, oldChildren.pop(), parentNode);
-	
-					oldLength--;
-				}
-				// add
-				else if (oldType === 0) {
-					appendNode(
-						newType, 
-						oldChildren[oldLength++] = newChild, 
-						parentNode, 
-						createNode(newChild, null, null)
-					);
-				}
-				// text
-				else if (newType === 3 && oldType === 3) {
-					if (newChild.children !== oldChild.children) {
-						oldChild.DOMNode.nodeValue = oldChild.children = newChild.children;
-					}
-				}
-				// key
-				else if ((newKey = newChild.key) !== (oldKey = oldChild.key)) {
-					keyed = true;
-					position = i;
-	
-					// map of key
-					newKeys = {};
-					oldKeys = {};
-	
-					// push keys
-					newKeys[newKey] = (newChild.index = i, newChild);
-					oldKeys[oldKey] = (oldChild.index = i, oldChild);
-				}
-				// replace
-				else if (newChild.type !== oldChild.type) {
-					replaceNode(
-						newType, 
-						oldType, 
-						oldChildren[i] = newChild, 
-						oldChild, 
-						parentNode, 
-						createNode(newChild, null, null)
-					);
-				}
-				// noop
-				else {
-					reconcileNodes(newChild, oldChild, newType, oldType);
+					patch(newChildren[newIndex] = oldChild, newChild, oldChild.group);
 				}
 			}
 	
-			// reconcile keyed children
-			if (keyed) {
-				reconcileKeys(
-					newKeys, 
-					oldKeys,
-					parentNode, 
-					newNode, 
-					oldNode, 
-					newLength, 
-					oldLength, 
-					position,
-					length
-				);
-			}
-		}
-	
-		// props objects of the two nodes are not equal, patch
-		if (currentNode.props !== oldNode.props) {
-			patchProps(currentNode, oldNode);
-		}
-	
-		// component with componentDidUpdate
-		if (oldNodeType === 2 && oldComponent.componentDidUpdate !== void 0) {
-			componentUpdateBoundary(oldComponent, 'componentDidUpdate', newProps, newState);
+			newIndex--;
 		}
 	}
 	
-	
 	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * hydration
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * hydrates a server-side rendered dom structure
-	 * 
-	 * @param  {Node}       parent
-	 * @param  {VNode}      subject
-	 * @param  {number}     index
-	 * @param  {VNode}      parentNode
-	 * @param  {?Component} component
-	 */
-	function hydrate (parent, subject, index, parentNode, component) {
-		var newNode = subject.Type === 2 ? extractComponentNode(subject, null, null) : subject;
-		
-		var nodeType = newNode.Type;
-		var type = newNode.type;
-	
-		var childNodes = parent.childNodes;
-		var element = childNodes[index];
-		var nodeName = element.nodeName;
-	
-		// DOMNode type does not match
-		if (type !== nodeName.toLowerCase()) {
-			// root(mount target) context
-			if (parentNode === null) {
-				// find a DOMNode match
-				for (var i = 0, l = childNodes.length; i < l; i++) {
-					if ((element = childNodes[i]).nodeName.toLowerCase() === type) {
-						break;
-					}
-				}
-			}
-			else {
-				// whitespace
-				if (nodeName === '#text' && element.nodeValue.trim() === '') {
-					parent.removeChild(element);
-				}
-	
-				element = childNodes[index];
-			}
-		}
-	
-		// newNode is not a textNode, hydrate its children
-		if (nodeType !== 3) {
-			var props = newNode.props;
-			var children = newNode.children;
-			var length = children.length;
-	
-			// vnode has component attachment
-			if (subject.instance !== null) {
-				(component = subject.instance)['--vnode'].DOMNode = parent;
-			}
-	
-			// hydrate children
-			for (var i = 0; i < length; i++) {
-				var newChild = children[i];
-	
-				// hoisted, clone VNode
-				if (newChild.DOMNode !== null) {
-					newChild = children[i] = cloneNode(newChild);
-				}
-	
-				hydrate(element, newChild, i, newNode, component);
-			}
-	
-	
-			// not a fragment, not an emtpy object
-			if (props !== objEmpty) {
-				// events
-				assignProps(element, props, true, component);
-			}
-	
-			// hydrate the dom element to the virtual node
-			subject.DOMNode = element;
-		}
-		// textNode
-		else if (nodeType === 3) {
-			var children = parentNode.children;
-			var length = children.length;
-	
-			// when we reach a string child that is followed by a string child, 
-			// it is assumed that the dom representing it is a single textNode
-			// case in point h('h1', 'Hello', 'World') output: <h1>HelloWorld</h1>
-			// HelloWorld is one textNode in the DOM but two in the VNode
-			if (length > 1 && index + 1 < length && children[index + 1].Type === 3) {
-				var fragment = document.createDocumentFragment();
-	
-				// look ahead of this nodes siblings and add all textNodes to the fragment
-				// and exit when a non-textNode is encounted
-				for (var i = index, len = length - index; i < len; i++) {
-					var textNode = children[i];
-	
-					// exit early once we encounter a non textNode
-					if (textNode.Type !== 3) {
-						break;
-					}
-	
-					// create textNode, hydrate and append to fragment
-					fragment.appendChild(textNode.DOMNode = document.createTextNode(textNode.children));
-				}
-	
-				// replace the textNode with a set of textNodes
-				parent.replaceChild(fragment, element);
-			}
-			else {
-				var nodeValue = newNode.children+'';
-	
-				// DOMNode text does not match, reconcile
-				if (element.nodeValue !== nodeValue) {
-					element.nodeValue = nodeValue;
-				}
-	
-				// hydrate single textNode
-				newNode.DOMNode = element;
-			}
-		}
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * Server Side Render
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * server side render to string
+	 * Generate
 	 *
-	 * @public
-	 * 
-	 * @param  {(Object|function)}  subject
-	 * @param  {(string|function)=} template
-	 * @return {string}
+	 * @param  {String} tag
+	 * @param  {Tree} newer
+	 * @param  {Tree} host
+	 * @param  {String?} xmlns
+	 * @return {Node}
 	 */
-	function renderToString (subject, template) {
-		var lookup = {styles: '', namespaces: {}};	
-		var body = renderVNodeToString(extractVirtualNode(subject, null), lookup, true);
-		var styles = lookup.styles;
-		var style = styles.length !== 0 ? styles : '';
-	
-		if (template) {
-			if (typeof template === 'string') {
-				return template.replace('@body', body+style);
+	function createElement (tag, newer, host, xmlns) {
+		try {
+			if (xmlns === null) {
+				return document.createElement(tag);
+			} else {
+				return document.createElementNS(newer.xmlns = xmlns, tag);
 			}
-			else {
-				return template(body, styles);
-			}
-		}
-		else {
-			return body+style;
+		} catch (err) {
+			return errorBoundary(err, host, host.owner, (newer.flag = ERROR, 3), 0);
 		}
 	}
 	
-	
 	/**
-	 * server-side render to stream
+	 * Compose
 	 *
-	 * @public
-	 * 
-	 * @param  {(VNode|Component|VNode[])} subject 
-	 * @param  {string=}                   template
-	 * @return {Stream}
+	 * @param {(String|Number)} value
+	 * @return {Node}
 	 */
-	function renderToStream (subject, template) {	
-		return subject ? (
-			new Stream(subject, template == null ? null : template.split('@body'))
-		) : function (subject) {
-			return new Stream(subject);
-		}
+	function createTextNode (value) {
+		return document.createTextNode(value);
 	}
 	
-	
 	/**
-	 * Stream
-	 * 
-	 * @param {(VNode|Component|VNode[])} subject
-	 * @param {string=}                   template
+	 * Fragment
+	 *
+	 * @return {Node}
 	 */
-	function Stream (subject, template) {
-		if (server === false) {
-			return renderToString(subject, template);
-		}
-	
-		this.initial = true;
-		this.stack = [];
-		this.lookup = {styles: '', namespaces: {}};
-		this.template = template;
-		this.node = extractVirtualNode(subject, null);
-	
-		readable.call(this);
+	function createDocumentFragment () {
+		return document.createDocumentFragment();
 	}
 	
+	/**
+	 * Document
+	 *
+	 * @return {Node?}
+	 */
+	function documentElement () {
+		return self.document !== void 0 ? (document.body || document.documentElement) : null;
+	}
 	
 	/**
-	 * Stream prototype
-	 * 
-	 * @type {Object<string, (function|string)>}
+	 * Insert
+	 *
+	 * @param {Tree} newer
+	 * @param {Tree} sibling
+	 * @param {Tree} parent
 	 */
-	Stream.prototype = server ? Object.create(readable.prototype, {
-		_type: {
-			value: 'text/html'
-		},
-		_read: {
-			value: function () {
-				var initial = this.initial;
-				var template;
-				var styles;
-				var blob;
+	function insertBefore (newer, sibling, parent) {
+		parent.node.insertBefore(newer.node, sibling.node);
+	}
 	
-				if (initial === false && this.stack.length === 0) {
-					styles = this.lookup.styles;
-					template = this.template;
-					blob = '';
+	/**
+	 * Append
+	 *
+	 * @param {Tree} newer
+	 * @param {Tree} parent
+	 */
+	function appendChild (newer, parent) {
+		parent.node.appendChild(newer.node);
+	}
 	
-					// styles?
-					if (styles.length !== 0) {
-						blob += styles;
-					}
+	/**
+	 * Replace
+	 *
+	 * @param  {Tree} older
+	 * @param  {Tree} newer
+	 * @param  {Tree} parent
+	 */
+	function replaceChild (older, newer, parent) {
+		parent.node.replaceChild(newer.node, older.node);
+	}
 	
-					// template?
-					if (template !== null) {
-						styles += template[1];
-					}
+	/**
+	 * Remove
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Tree} parent
+	 */
+	function removeChild (older, parent) {
+		parent.node.removeChild(older.node);
+	}
 	
-					// reset `initial` identifier
-					this.initial = true;
+	/**
+	 * Remove All
+	 *
+	 * @param {Tree} older
+	 */
+	function removeChildren (older) {
+		older.node.textContent = null;
+	}
 	
-					// styles/template?
-					if (blob.length !== 0) {
-						this.push(blob);
-					}
+	/**
+	 * Text
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 */
+	function nodeValue (older, newer) {
+		older.node.nodeValue = older.children = newer.children;
+	}
 	
-					// end of stream
-					this.push(null);
+	/**
+	 * Attribute
+	 *
+	 * @param {Number} type
+	 * @param {String} name
+	 * @param {Any} value
+	 * @param {String?} xmlns
+	 * @param {Boolean} set
+	 * @param {Tree} node
+	 */
+	function setAttribute (type, name, value, xmlns, set, node) {
+		switch (type) {
+			case 0: {
+				if (xmlns === null && (name in node) === true) {
+					setUnknown(name, value, node);
+				} else if (set === true) {
+					node.setAttribute(name, (value === true ? '' : value));
+				} else {
+					node.removeAttribute(name);
 				}
-				else {
-					// start of stream
-					if (initial === true) {
-						this.initial = false;
+				break;
+			}
+			case 1: {
+				if (xmlns === null) {
+					node.className = value;
+				} else {
+					setAttribute(0, 'class', value, xmlns, set, node);
+				}
+				break;
+			}
+			case 3: {
+				if ((name in node) === false) {
+					node.style.setProperty(name, value);
+				} else if (isNaN(Number(value)) === true) {
+					setAttribute(0, name, value, xmlns, set, node);
+				} else {
+					setAttribute(6, name, value, xmlns, set, node);
+				}
+				break;
+			}
+			case 4: {
+				if (set === true) {
+					node.setAttributeNS(xlink, 'href', value);
+				} else {
+					node.removeAttributeNS(xlink, 'href');
+				}
+				break;
+			}
+			case 5:
+			case 6: {
+				if (xmlns === null) {
+					node[name] = value;
+				} else {
+					setAttribute(0, name, value, xmlns, set, node);
+				}
+				break;
+			}
+			case 10: {
+				node.innerHTML = value;
+				break;
+			}
+		}
+	}
 	
-						// has template, push opening 
-						if (template = this.template) {
-							this.push(template[0]);
+	/**
+	 * Unknown
+	 *
+	 * @param  {String} name
+	 * @param  {Any} value
+	 * @param  {Node} node
+	 */
+	function setUnknown (name, value, node) {
+		try {
+			node[name] = value;
+		} catch (e) {}
+	}
+	
+	/**
+	 * Style
+	 *
+	 * @param {Tree} older
+	 * @param {Tree} newer
+	 * @param {Number} type
+	 */
+	function setStyle (older, newer, type) {
+		var node = older.node.style;
+		var next = newer.attrs.style;
+	
+		if (next.constructor === String) {
+			node.cssText = next;
+		} else {
+			switch (type) {
+				// assign
+				case 0: {
+					for (var name in next) {
+						var value = next[name];
+	
+						if (name.charCodeAt(0) === 45) {
+							node.setProperty(name, value);
+						} else {
+							node[name] = value;
 						}
 					}
+					break;
+				}
+				// update
+				case 1: {
+					var prev = older.attrs.style;
 	
-					// pipe a chunk
-					this._pipe(
-						this.node, 
-						true, 
-						this.stack, 
-						this.lookup, 
-						initial, 
-						this
-					);
+					for (var name in next) {
+						var value = next[name];
+	
+						if (name.charCodeAt(0) === 45) {
+							node.setProperty(name, value);
+						} else {
+							node[name] = value;
+						}
+					}
+					break;
 				}
 			}
-		},
-		_pipe: {
-			value: function (subject, flush, stack, lookup, initial, self) {
-				// if there is something pending in the stack give that priority
-				if (flush && stack.length !== 0) {
-					stack.pop()(this);
-					
-					return;
+		}
+	}
+	
+	/**
+	 * Event
+	 *
+	 * @param {Tree} older
+	 * @param {String} type
+	 * @param {Function} value
+	 * @param {Number} action
+	 */
+	function setEvent (older, type, value, action) {
+		var name = type.toLowerCase().substring(2);
+		var host = older.host;
+		var node = older.node;
+		var handlers = node.that;
+	
+		if (handlers === void 0) {
+			handlers = node.that = {};
+		}
+	
+		switch (action) {
+			case 0: {
+				node.removeEventListener(name, eventBoundary);
+	
+				if (handlers.host !== void 0) {
+					handlers.host = null;
 				}
-	
-				var nodeType = subject.Type;
-	
-				// text node, sync
-				if (nodeType === 3) {
-					this.push(escape(subject.children) || ' ');
-	
-					return;
+				break;
+			}
+			case 1: {
+				node.addEventListener(name, eventBoundary);
+			}
+			case 2: {
+				if (host !== null && host.group === CLASS) {
+					handlers.host = host;
 				}
+			}
+		}
 	
-				var vnode;
-				var component;
-				var promise;
+		handlers[name] = value;
+	}
 	
-				// if component
-				if (nodeType === 2) {
-					// cached
-					if (subject.type.HTMLCache !== void 0) {
-						this.push(subject.type.HTMLCache);
+	/**
+	 * Hydrate
+	 *
+	 * @param {Tree} newer
+	 * @param {Tree} parent
+	 * @param {Number} index
+	 * @param {Node} _node
+	 * @param {Tree?} _host
+	 * @param {String?} _xmlns
+	 * @param {Boolean} entry
+	 * @return {Number}
+	 */
+	function hydrate (newer, parent, index, _node, _host, _xmlns, entry) {
+		var flag = newer.flag;
+		var group = newer.group;
+		var node = _node;
+		var host = _host;
+		var xmlns = _xmlns;
+		var i = 0;
+		var temp;
 	
-						return;
-					}
-					// resolved async component
-					else if (subject.instance !== null) {
-						// render returned promise
-						if (subject.DOMNode !== null) {
-							vnode = subject.DOMNode;
-						}
-						// async getInitialProps
-						else {
-							vnode = extractRenderNode(subject.instance);
-						}
-					}
-					else {
-						vnode = extractComponentNode(subject, null, null);
+		// link host
+		if (host !== SHARED) {
+			newer.host = host;
+		}
 	
-						// pending async component
-						if ((component = subject.instance)['--async'] !== false) {
-							promise = component['--async'] !== true;
+		// link parent
+		newer.parent = parent;
 	
-							(promise ? component['--async'] : component.props)
-								.then(function resolveAsyncComponent (data) {
-									vnode.Type = 2;
-									vnode.type = subject.type;
-									vnode.instance = component;
+		// component
+		if (group !== STRING) {
+			if (group === CLASS) {
+				host = newer;
+			}
 	
-									if (promise) {
-										vnode.DOMNode = data;
-									}
-									else {
-										component.props = data;
-									}
+			temp = extract(newer, true);
+			flag = temp.flag;
+		}
 	
-									self._pipe(
-										vnode,
-										false, 
-										stack, 
-										lookup, 
-										initial, 
-										self
-									);
-								}).catch(funcEmpty);
+		switch (flag) {
+			// text
+	 		case TEXT: {
+	 			var children = parent.children;
+	 			var length = children.length;
 	
-							component['--async'] = false;
+	 			if (length > 1 && children[index + 1].flag === TEXT) {
+	 				var fragment = new Tree(FRAGMENT);
+	 				var sibling = new Tree(TEXT);
 	
-							return;
-						}
-					}
-				}
-				else {
-					vnode = subject;
-				}
+	 				fragment.node = createDocumentFragment();
+	 				sibling.node = node;
 	
-				// references
-				var type = vnode.type;
-				var props = vnode.props;
-				var children = vnode.children;
+	 				for (i = index; i < length; i++) {
+	 					var child = children[i];
 	
-				var propsStr = renderStylesheetToString(
-					nodeType, type, subject.instance, subject.type, renderPropsToString(vnode), lookup
-				);
+	 					if (child.flag !== TEXT) {
+	 						replaceChild(sibling, fragment, parent);
+	 						return i;
+	 					}
 	
-				if (isVoid[type] === 0) {
-					// <type ...props>
-					this.push('<'+type+propsStr+'>');
+	 					child.node = createTextNode(child.children);
 	
-					return;
-				}
+	 					appendChild(child, fragment);
+	 				}
+	 			} else {
+	 				if (node.nodeValue !== newer.children) {
+	 					node.nodeValue = newer.children;
+	 				}
 	
-				var opening = '<'+type+propsStr+'>';
-				var closing = '</'+type+'>';
+	 				newer.node = node;
+	 			}
 	
-				if (props.innerHTML !== void 0) {
-					// special case when a prop replaces children
-					this.push(opening + props.innerHTML + closing);
+	 			return 0;
+	 		}
+	 		// composite
+	 		case COMPOSITE: {
+	 			hydrate(temp = temp.children[0], parent, index, node, host, xmlns);
+	 			newer.node = temp.node;
 	
-					return;
-				}
-	
+				return 0;
+	 		}
+	 		// portal
+	 		case PORTAL: {
+	 			create(newer, parent, SHARED, 0, host, xmlns);
+	 			break;
+	 		}
+	 		default: {
+				var children = newer.children;
 				var length = children.length;
 	
-				if (length === 0) {
-					// no children, sync
-					this.push(opening + closing);
-	
-					return;
-				}
-				if (length === 1 && children[0].Type === 3) {
-					// one text node child, sync
-					this.push(opening + escape(children[0].children) + closing);
-	
-					return;
+				// cache namespace
+				if (newer.xmlns !== null) {
+					xmlns = newer.xmlns;
+				} else if (xmlns !== null) {
+					newer.xmlns = xmlns;
 				}
 	
-				// has children, async
-				// since we cannot know ahead of time the number of children
-				// this is operation is split into asynchronously added chunks of data
-				var index = 0;
+	 			// namespace(implicit) svg/math roots
+	 			switch (newer.tag) {
+	 				case 'svg': xmlns = svg; break;
+	 				case 'math': xmlns = math; break;
+	 			}
 	
-				// add one more for the closing tag
-				var middlwares = length + 1;
+	 			// whitespace
+	 			if (node.splitText !== void 0 && node.nodeValue.trim().length === 0) {
+	 				node = node.nextSibling;
+	 			}
 	
-				var doctype = initial && type === 'html';
-				var eof = doctype || type === 'body';
+	 			newer.node = node;
 	
-				// if opening html tag, push doctype first
-				if (doctype) {
-					opening = '<!doctype html>' + opening;
-				}
+	 			if (length > 0) {
+	 				node = node.firstChild;
 	
-				// for each _read if queue has middleware
-				// middleware execution will take priority
-				var middleware = function (stream) {
-					// done, close html tag, delegate next middleware
-					if (index === length) {
-						// if the closing tag is body or html
-						// we want to push the styles before we close them
-						if (eof && lookup.styles.length !== 0) {
-							stream.push(lookup.styles);
+	 				while (i < length && node !== null) {
+	 					var child = children[i];
 	
-							// clear styles, avoid adding duplicates
-							lookup.styles = '';
-						}
+	 					if (child.node !== null) {
+	 						child = clone(children[i] = new Tree(child.flag), child, true);
+	 					}
 	
-						stream.push(closing);
-					}
-					else {
-						stream._pipe(
-							children[index++], 
-							false, 
-							stack, 
-							lookup, 
-							initial, 
-							self
-						);
-					}
-				}
+	 					var idx = hydrate(child, newer, i, node, host, xmlns);
 	
-				// push middlwares
-				for (var i = 0; i < middlwares; i++) {
-					stack[stack.length] = middleware;
-				}
+	 					if (idx !== 0) {
+	 						node = children[i = idx - 1].node;
+	 					}
 	
-				// push opening tag
-				this.push(opening);
-			}
-		}
-	}) : objEmpty;
+	 					node = node.nextSibling;
+	 					i++;
+	 				}
+	 			}
+	 		}
+	 	}
+	
+		attribute(newer, xmlns, true);
+	
+		return 0;
+	}
 	
 	/**
-	 * renderToCache
+	 * Exports
 	 *
-	 * @public
-	 * 
-	 * @param  {(VNode|VNode[]|Component)} subject
-	 * @return {(VNode|VNode[]|Component)} subject
+	 * @type {Object}
 	 */
-	function renderToCache (subject) {
-		if (subject != null) {
-			// array
-			if (subject.constructor === Array) {
-				for (var i = 0, length = subject.length; i < length; i++) {
-					renderToCache(subject[i]);
-				}
-			}
-			// component
-			else if (typeof subject === 'function') {
-				subject.HTMLCache = renderToString(subject);
-			}
-			// vnode
-			else if (subject.Type === 2) {
-				subject.type.HTMLCache = renderToString(subject);
-			}
-		}
-	
-		return subject;
-	}
-	
-	
-	/**
-	 * render stylesheet to string
-	 *
-	 * @param  {number}              nodeType
-	 * @param  {string}              type
-	 * @param  {Component}           component
-	 * @param  {function}            constructor
-	 * @param  {string}              output   
-	 * @param  {Object<string, any>} lookup
-	 * @return {string}          
-	 */
-	function renderStylesheetToString (nodeType, type, component, constructor, output, lookup) {
-		// stylesheet
-		if (nodeType === 2 && type !== 'noscript') {
-			// stylesheet
-			if (component.stylesheet) {
-				var namespace = component.stylesheet.CSSNamespace;
-	
-				// create
-				if (namespace === void 0) {
-					var decorator = createScopedCSS(component, constructor.COMPCache || constructor, false);
-	
-					lookup.namespaces[namespace = decorator.CSSNamespace] = true;			
-					lookup.styles += '<style id="\''+namespace+'\'">'+decorator(null)+'</style>';
-				}
-				// cache
-			 	else if (!lookup.namespaces[namespace]) {
-			 		lookup.namespaces[namespace] = true;
-					lookup.styles += '<style id="\''+namespace+'\'">'+component.stylesheet(null)+'</style>';
-				}
-	
-				// add attribute to element
-				output += ' '+nsStyle+'='+'"'+namespace+'"';
-			}
-		}
-	
-		return output;
-	}
-	
-	
-	/**
-	 * render props to string
-	 * 
-	 * @param  {VNode}  vnode
-	 * @return {string}
-	 */
-	function renderPropsToString (vnode) {
-		var string = '';
-		var props = vnode.props;
-	
-		var length;
-		var type;
-		var value;
-		var styles;
-		var property;
-	
-		// construct props string
-		if (props !== objEmpty) {
-			for (var name in props) {
-				value = props[name];
-	
-				// value --> <type name=value>, exclude props with undefined/null/false as values
-				if (value != null && value !== false) {
-					type = typeof value;
-					length = name.length;
-	
-					// props to avoid
-					if (
-						(length === 3 && (name === 'key' || name === 'ref')) === false &&
-						(length === 9 && name === 'children') === false &&
-						(length === 9 && (name === 'innerHTML' && name === 'innerText')) === false &&
-						(type.length === 8 && type === 'function') === false &&
-						isEventProp(name) === false
-					) {
-						// defaultValue does not render
-						if (name === 'defaultValue') {
-							// if value does not already exist
-							if (props.value === void 0) {
-								name = 'value';
-							}
-							// else exist
-							else {
-								return;
-							}
-						}
-	
-						if (type === 'string' && value) {
-							value = escape(value);
-						}
-	
-						if (type !== 'object') {
-							if (length === 9 && name === 'className') { 
-								name = 'class'; 
-							}
-	
-							// if falsey/truefy checkbox=true ---> <type checkbox>
-							string += ' ' + (value === true ? name : name + '="' + value + '"');
-						}
-						// style objects
-						else {
-							styles = '';
-	
-							for (var name in value) {
-								property = value[name];
-	
-								// if camelCase convert to dash-case 
-								// i.e marginTop --> margin-top
-								if (name !== name.toLowerCase()) {
-									name = name.replace(regStyleCamel, '$1-').replace(regStyleVendor, '-$1').toLowerCase();
-								}
-	
-								styles += name + ':' + property + ';';
-							}
-	
-							string += name + '="' + property + '"';
-						}
-					}
-				}
-			}
-		}
-	
-		return string;
-	}
-	
-	
-	/**
-	 * render a VNode to string
-	 * 
-	 * @param  {VNode}               subject
-	 * @param  {Object<string, any>} lookup
-	 * @param  {boolean}             initial
-	 * @return {string}  
-	 */
-	function renderVNodeToString (subject, lookup, initial) {
-		var nodeType = subject.Type;
-	
-		// textNode
-		if (nodeType === 3) {
-			return escape(subject.children) || ' ';
-		}
-	
-		var vnode;
-	
-		// if component
-		if (nodeType === 2) {
-			// if cached
-			if (subject.type.HTMLCache !== void 0) {
-				return subject.type.HTMLCache;
-			} 
-			else {
-				vnode = extractComponentNode(subject, null, null);
-			}
-		} 
-		else {
-			vnode = subject;
-		}
-	
-		// references
-		var type = vnode.type;
-		var props = vnode.props;
-		var children = vnode.children;
-	
-		var childrenString = '';
-		var vnodeString = '';
-	
-		if (props.innerHTML !== void 0) {
-			// special case when a prop replaces children
-			childrenString = props.innerHTML;
-		}
-		else {		
-			// construct children string
-			if (children.length !== 0) {
-				for (var i = 0, length = children.length; i < length; i++) {
-					childrenString += renderVNodeToString(children[i], lookup, false);
-				}
-			}
-		}
-	
-		var propsStr = renderStylesheetToString(
-			nodeType, type, subject.instance, subject.type, renderPropsToString(vnode), lookup
-		);
-	
-		if (isVoid[type] === 0) {
-			// <type ...props>
-			vnodeString = '<'+type+propsStr+'>';
-		}
-		else {
-			// <type ...props>...children</type>
-			vnodeString = '<'+type+propsStr+'>'+childrenString+'</'+type+'>';
-		}
-	
-		// add doctype if initial element is <html>
-		return initial && type === 'html' ? ('<!doctype html>' + vnodeString) : vnodeString;
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * stream
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * create stream
-	 *
-	 * @public
-	 * 
-	 * @param  {(function(resolve, reject)|any)} value
-	 * @param  {(function(...any)|boolean)}      middleware
-	 * @return {function}
-	 */
-	function stream (value, middleware) {
-		var store;
-	
-		// state
-		var paused = false;
-	
-		// this allows us to return values in a .then block that will
-		// get passed to the next .then block
-		var chain = {then: null, catch: null};
-	
-		// .then/.catch listeners
-		var listeners = {then: [], catch: []};
-	
-		// predetermine if a middlware was passed
-		var plugin = middleware != null;
-	
-		// predetermine if the middlware passed is a function
-		var func = plugin && typeof middleware === 'function';
-	
-		function observable (value) {
-			// received value, update stream
-			if (arguments.length !== 0) {
-				store = value;
-				
-				schedule(function () {
-					dispatch('then', store);
-				});
-	
-				return observable;
-			}
-			else {
-				// if you pass a middleware function i.e a = stream(1, String)
-				// the stream will return 1 processed through String
-				// if you pass a boolean primitive the assumtion is made that the store
-				// is a function and that it should return the functions return value
-				if (plugin) {
-					return func ? middleware(store) : store();
-				}
-				else {
-					return store;
-				}
-			}
-		}
-	
-		// dispatcher, dispatches listerners
-		function dispatch (type, value) {
-			if (paused) {
-				return;
-			}
-	
-			var collection = listeners[type];
-			var length = collection.length;
-	
-			if (length !== 0) {
-				// executes a listener, adding the return value to the chain
-				var action = function (listener) {
-					// link in the .then / .catch chain
-					var link = listener(chain[type] || value);
-					
-					// add to chain if defined
-					if (link !== void 0) { 
-						chain[type] = link; 
-					}
-				}
-	
-				for (var i = 0; i < length; i++) {
-					sandbox(action, reject, collection[i]);
-				}
-			}
-		}
-		
-		// add catch/error listener
-		function error (listener) {
-			return push('catch', listener, null);
-		}
-	
-		// ...JSON.strinfigy()
-		function toJSON () {
-			return store;
-		}
-	
-		// {function}.valueOf()
-		function valueOf () {
-			return store; 
-		}
-	
-		// push listener
-		function push (type, listener, end) {
-			listeners[type].push(function (chain) {
-				return listener(chain);
-			});
-	
-			return end === null ? observable : void 0;
-		}
-	
-		// resolve value
-		function resolve (value) {
-			return observable(value); 
-		}
-	
-		// reject
-		function reject (reason) {
-			schedule(function () {
-				dispatch('catch', reason);
-			});
-		}
-	
-		// add done listener, ends the chain
-		function done (listener, onerror) {
-			then(listener, onerror || true);
-		}
-	
-		// add then listener
-		function then (listener, onerror) {
-			if (onerror) {
-				error(onerror);
-			}
-	
-			if (listener) {
-				return push('then', listener, onerror || null);
-			}
-		}
-	
-		// create a map
-		function map (callback) {
-			return stream(function (resolve) {
-				resolve(function () { return callback(observable()); });
-			}, true);
-		}
-	
-		// end/reset a stream
-		function end (value) {
-			if (value !== void 0) {
-				store = value;
-			}
-	
-			paused = false;
-			chain.then = null;
-			chain.catch = null; 
-			listeners.then = []; 
-			listeners.catch = [];
-		}
-	
-		// pause stream
-		function pause () {
-			paused = true;
-		}
-	
-		// resume stream
-		function resume () {
-			paused = false;
-		}
-	
-		// assign public methods
-		observable.then = then;
-		observable.done = done;
-		observable.catch = error;
-		observable.map = map;
-		observable.end = end;
-		observable.valueOf = valueOf;
-		observable.toJSON = toJSON;
-		observable.resolve = resolve;
-		observable.reject = reject;
-		observable.pause = pause;
-		observable.resume = resume;
-	
-		// acts like a promise if a function is passed as value
-		if (typeof value === 'function') {
-			value(resolve, reject);
-		} 
-		else {
-			observable(value);
-		}
-	
-		return observable;
-	}
-	
-	
-	/**
-	 * create new stream in resolved state
-	 *
-	 * @public
-	 * 
-	 * @param  {*} value
-	 * @return {function}
-	 */
-	stream.resolve = function (value) {
-		return stream(function (resolve, reject) {
-			resolve(value);
-		});
-	};
-	
-	
-	/**
-	 * create new stream in rejected state
-	 *
-	 * @public
-	 * 
-	 * @param  {*} value 
-	 * @return {function}
-	 */
-	stream.reject = function (value) {
-		return stream(function (resolve, reject) {
-			reject(value);
-		});
-	};
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * request
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * create http request
-	 *
-	 * @param  {VRequest|Object<string, any>}
-	 * @return {function} {then, catch, done, ...}
-	 */
-	function http (options) {
-		// extract properties from options
-		var method = options.method;
-		var url = options.url;
-		var payload = options.payload; 
-		var enctype = options.enctype;
-		var responseType = options.responseType;
-		var withCredentials = options.withCredentials;
-		var headers = options.headers;
-		var initial = options.initial;
-		var config = options.config;
-		var username = options.username;
-		var password = options.password;
-	
-		// return a stream
-		return stream(function (resolve, reject) {
-			// if XMLHttpRequest constructor absent, exit early
-			if (window.XMLHttpRequest == null) {
-				return;
-			}
-	
-			// create xhr object
-			var xhr = new window.XMLHttpRequest();
-	
-			// retrieve browser location 
-			var location = window.location;
-	
-			// create anchor element
-			var anchor = document.createElement('a');
-			
-			// use to extract hostname, port, protocol properties
-			anchor.href = url;
-	
-			// check if cross origin request
-			var isCrossOriginRequest = !(
-				anchor.hostname === location.hostname && 
-				anchor.port === location.port &&
-				anchor.protocol === location.protocol && 
-				location.protocol !== 'file:'
-			);
-	
-			// open request
-			xhr.open(method, url, true, username, password);
-	
-			// on success resolve
-			xhr.onload = function onload () { 
-				response(this, responseType, resolve, reject);
-			};
-			// on error reject
-			xhr.onerror = function onerror () { 
-				reject(this.statusText); 
-			};
-			
-			// cross origin request cookies
-			isCrossOriginRequest && withCredentials && (xhr.withCredentials = true);
-	
-			// assign content type and payload
-			if (method === 'POST') {
-				xhr.setRequestHeader('Content-Type', enctype);
-	
-				if (enctype.indexOf('x-www-form-urlencoded') > -1) {
-					payload = serialize(payload);
-				} 
-				else if (enctype.indexOf('json') > -1) {
-					payload = JSON.stringify(payload);
-				}
-			}
-	
-			// headers property
-			if (headers != null) {
-				// assign headers
-				for (var name in headers) {
-					xhr.setRequestHeader(name, headers[name]);
-				}
-			}
-	
-			// if, assign inital value of stream
-			initial != null && resolve(initial);
-	
-			// config, expose underlying XMLHttpRequest object
-			// allows us to save a reference to it and call abort when required
-			config != null && typeof config === 'function' && config(xhr);
-	
-			// send request
-			payload != null ? xhr.send(payload) : xhr.send();
-		});
-	}
-	
-	
-	/**
-	 * request constructor
-	 *
-	 * @public
-	 * 
-	 * @example request({method: 'GET', url: '?'}) === request.get('?') === request('?')
-	 * 
-	 * @param  {VRequest|Object<string, any>} options
-	 * @return {function} {then, catch, done, ...}
-	 */
-	function request (options) {
-		// alias request.get
-		if (typeof options === 'string') {
-			return request.get(options, arguments[1], arguments[2], arguments[3]);
-		}
-		else {
-			var payload = options.payload;
-			var method = options.method = (options.method.toUpperCase() || 'GET');
-			
-			// encode url
-			options.url = encodeURI(options.url);
-	
-			// enctype syntax sugar
-			switch (options.enctype) {
-				case 'json': options.enctype = 'application/json'; break;
-				case 'text': options.enctype = 'text/plain'; break;
-				case 'file': options.enctype = 'multipart/form-data'; break;
-				default: options.enctype = 'application/x-www-form-urlencoded';
-			}
-	
-			// if has payload && GET pass payload as query string
-			if (method === 'GET' && payload != null) {
-				options.url += '?' + (typeof payload === 'object' ? serialize(payload) : payload);		
-			}
-	
-			// returns a promise-like stream
-			return http(options);
-		}
-	}
-	
-	
-	/**
-	 * request GET alias
-	 * 
-	 * @param  {string}   url
-	 * @param  {any=}     payload
-	 * @param  {string=}  enctype
-	 * @param  {string=}  responseType
-	 * @return {function} {then, catch, done, ...}
-	 */
-	request.get = function (url, payload, enctype, responseType) {
-		return request(createRequestShape('GET', url, payload, enctype, responseType));
-	};
-	
-	
-	/**
-	 * request POST alias
-	 * 
-	 * @param  {string}   url
-	 * @param  {any=}     payload
-	 * @param  {string=}  enctype
-	 * @param  {string=}  responseType
-	 * @return {function} {then, catch, done, ...}
-	 */
-	request.post = function (url, payload, enctype, responseType) {
-		return request(createRequestShape('POST', url, payload, enctype, responseType));
-	};
-	
-	
-	/**
-	 * retrieve and format response
-	 * 
-	 * @param  {XMLHttpRequest} xhr
-	 * @param  {string}         responseType
-	 * @param  {function}       resolve
-	 * @param  {function}       reject
-	 * @return {(Node|string|Object)}
-	 */
-	function response (xhr, responseType, resolve, reject) {			
-		var header = xhr.getResponseHeader('Content-Type');
-		var status = xhr.status;
-		
-		var data;
-		var body;
-	
-		// text
-		if (!xhr.responseType || xhr.responseType === 'text') {
-			data = xhr.responseText;
-		}
-		// Node 
-		else if (xhr.responseType === 'document') {
-			data = responseXML;
-		}
-		// ?any
-		else {
-			data = response;
-		}
-	
-		// response format
-		if (responseType == null) {
-			responseType = (header.indexOf(';') > -1 ? header.split(';')[0].split('/') : header.split('/'))[1];
-		}
-	
-		// json
-		if (responseType === 'json') {
-			// sandbox JSON parsing
-			body = sandbox(JSON.parse, reject, data);
-		} 
-		// Node
-		else if (responseType === 'html' || responseType === 'document') {
-			// parse html string
-			body = (new DOMParser()).parseFromString(data, 'text/html');
-		}
-		// ?any
-		else {
-			body = data;
-		}
-	
-		if (!status || status >= 400) {
-			reject(xhr);
-		}
-		else {
-			resolve(body);
-		}
-	}
-	
-	
-	/**
-	 * serialize + encode object
-	 * 
-	 * @example serialize({url:'http://.com'}) //=> 'url=http%3A%2F%2F.com'
-	 * 
-	 * @param  {Object} object   
-	 * @param  {string} prefix
-	 * @return {string}
-	 */
-	function serialize (object, prefix) {
-		var array = [];
-	
-		for (var key in object) {
-			var value = object[key];
-			var prefixed = prefix !== void 0 ? prefix + '[' + key + ']' : key;
-	
-			// recursive serialize
-			if (typeof value == 'object') {
-				array[array.length] = serialize(value, prefixed);
-			}
-			// serialize
-			else {
-				array[array.length] = encodeURIComponent(prefixed) + '=' + encodeURIComponent(value);
-			}
-		}
-	
-		return array.join('&');
-	}
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * router
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * router
-	 *
-	 * @public
-	 * 
-	 * @param  {Object<string, (function|Component)>} routes
-	 * @param  {string|Object<string, any>=}          address 
-	 * @param  {string=}                              initialiser
-	 * @param  {(string|Node)=}                       element
-	 * @param  {function=}                            middleware
-	 * @param  {function=}                            notFound
-	 * @return {Object}
-	 */
-	function router (routes, directory, initial, mount, middleware, notFound) {
-		if (typeof directory === 'object') {
-			mount = directory.mount;
-			initial = directory.initial;
-			middleware = directory.middleware;
-			notFound = directory['404'];
-			directory = directory.directory;
-		}
-	
-		// functions
-		if (middleware !== void 0) {
-			for (var name in routes) {
-				(function () {
-					var func = routes[name];
-	
-					routes[name] = function (data) { 
-						middleware(func, data, mount); 
-					};
-				})()
-			}
-		}
-		// components
-		else if (mount !== void 0) {
-			for (var name in routes) {
-				(function () {
-					var component = routes[name];
-	
-					routes[name] = function (data) {	
-						render(createComponentShape(component, data, null), mount, null, false);
-					};
-				})();
-			}
-		}
-	
-		return createRouter(routes, directory || '', initial, notFound);
-	}
-	
-	
-	/**
-	 * router constructor
-	 * 
-	 * @param {Object<string, (function|Component)>} patterns
-	 * @param {string=}                              directory
-	 * @param {function=}                            initialiser
-	 * @param {function=}                            notFound
-	 */
-	function createRouter (patterns, directory, initialiser, notFound) {
-		// listens for changes to the url
-		function listen () {
-			if (interval !== 0) {
-				// clear the interval if it's already set
-				clearInterval(interval);
-				interval = 0;
-			}
-	
-			// start listening for a change in the url
-			interval = setInterval(function () {
-				href = location.href;
-	
-				// current url does not equal the url of the browser
-				if (href !== current) {
-					// update the current and dispatch
-					dispatch((current = href).replace(origin, ''));
-				}
-			}, 40);
-		}
-	
-		// register routes
-		function register () {
-			// assign routes
-			for (var name in patterns) {
-				set(name, patterns[name]);
-			}
-		}
-	
-		// assign a route
-		function set (uri, callback) {
-			// - params is where we store variable names
-			// i.e in /:user/:id - user, id are variables
-			var params = [];
-	
-			// uri is the url/RegExp that describes the uri match thus
-			// given the following /:user/:id/*
-			// the pattern would be / ([^\/]+) / ([^\/]+) / (?:.*)
-			var pattern = uri.replace(regex, function () {
-				// id => arguments: 'user', id, undefned
-				var id = arguments[2];
-				// if, not variable, else, capture variable
-				return id != null ? (params[params.length] = id, '([^\/]+)') : '(?:.*)';
-			});
-	
-			// assign a route item
-			Object.defineProperty(routes, uri, {
-				value: Object.create(null, {
-					callback: {value: callback},
-					pattern: {value: new RegExp(directory + pattern + '$')},
-					params: {value: params}
-				}),
-				enumerable: true
-			});
-		}
-	
-		// called when the listener detects a route change
-		function dispatch (current) {
-			for (var name in routes) {
-				finder(routes[name], name, current);
-			}
-	
-			// if resolved flag is 0 and a notFound function is available
-			if (resolved === 0 && notFound !== void 0) {
-				notFound({url: current});
-			}
-	
-			// reset resolved flag
-			resolved = 0;
-		}
-	
-		// find a match from the available routes
-		function finder (route, uri, current) {
-			var match = current.match(route.pattern);
-	
-			// we have a match
-			if (match != null) {
-				// create params object to pass to callback
-				// i.e {user: 'simple', id: '1234'}
-				var args = match.slice(1, match.length).reduce(function (prev, val, i) {
-					// if this is the first value, create variables store
-					if (prev === null) {
-						prev = {url: current};
-					}
-	
-					// name: value, i.e user: 'simple'
-					// `vars` contains the keys for variables
-					prev[route.params[i]] = val;
-	
-					return prev;
-	
-					// null --> first value
-				}, null) || {url: current};
-	
-				route.callback(args, uri);
-	
-				// register match
-				resolved = 1;
-			}
-			else {
-				// register not found
-				resolved = 0;
-			}
-		}
-	
-		// middleware between event and route
-		function link (to) {
-			var func = typeof to === 'function';
-	
-			return function (e) {
-				var target = e.currentTarget || e.target || this;
-				var value = func ? to(target) : to;
-	
-				navigate(target[value] || (target.nodeName && target.getAttribute(value)) || value); 
-			};
-		}
-	
-		// navigate to a uri
-		function navigate (uri) {
-			if (typeof uri === 'string') {
-				history.pushState(null, null, directory + uri);
-			}
-		}
-	
-		// resume listener
-		function resume () {
-			current = location.href;
-			listen();
-		}
-	
-		// pause listerner
-		function pause () {
-			clearInterval(interval);
-		}
-	
-		// stop listening and clear all routes 
-		function destroy () {
-			pause();
-			routes = {};
-		}
-	
-		// manually resolve a route
-		function resolve (uri) {
-			dispatch(uri);
-		}
-	
-		// normalize rootAddress format
-		// i.e '/url/' -> '/url', 47 === `/` character
-		if (typeof directory === 'string' && directory.charCodeAt(directory.length - 1) === 47) {
-			directory = directory.substring(0, directory.length - 1);
-		}
-	
-		var regex = /([:*])(\w+)|([\*])/g;
-		var history = window.history || objEmpty;
-		var location = history.location || window.location;
-		var origin = location.origin;
-		var current = '';
-		var href = '';
-		var interval = 0;
-		var resolved = 0;
-		var routes = {};
-	
-		/** @public */
-		var api = Object.defineProperty({
-			navigate: navigate,
-			back: history.back, 
-			forward: history.forward, 
-			link: link,
-			resume: resume,
-			pause: pause,
-			destroy: destroy,
-			set: set,
-			resolve: resolve,
-			routes: routes
-		}, 'location', {
-			get: function () { return current; },
-			set: navigate
-		});
-	
-		// register routes
-		register();
-	
-		// listen if browser enviroment
-		if (browser) {
-			listen();
-		}
-	
-		// if function pass api as args, else if string navigate to url
-		if (initialiser !== void 0) {
-			var type = typeof initialiser;
-	
-			if (type === 'function') {
-				// initialiser function
-				initialiser(api);
-			}
-			else if (type === 'string') {
-				// navigate to path
-				navigate(initialiser);
-			}
-		}
-	
-		return api;
-	}
-	
-	
-	
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * store
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-	
-	
-	/**
-	 * creates a store enhancer
-	 *
-	 * @public
-	 * 
-	 * @param   {...function} middlewares
-	 * @return  {function}    a store enhancer
-	 */
-	function applyMiddleware () {
-		var middlewares = [];
-		var length = arguments.length;
-	
-		// passing arguments to a function i.e [].splice() will prevent this function
-		// from getting optimized by the VM, so we manually build the array in-line
-		for (var i = 0; i < length; i++) {
-			middlewares[i] = arguments[i];
-		}
-	
-		return function (Store) {
-			return function (reducer, initialState, enhancer) {
-				// create store
-				var store = Store(reducer, initialState, enhancer);
-				
-				// create api
-				var api = {
-					getState: store.getState,
-					dispatch: store.dispatch
-				};
-	
-				// create chain
-				var chain = [];
-	
-				// add middlewares to chain
-				for (var i = 0; i < length; i++) {
-					chain[i] = middlewares[i](api);
-				}
-	
-				// return store with composed dispatcher
-				return {
-					getState: store.getState, 
-					dispatch: composeMiddlewares.apply(null, chain)(store.dispatch), 
-					subscribe: store.subscribe,
-					connect: store.connect,
-					replaceReducer: store.replaceReducer
-				};
-			}
-		}
-	}
-	
-	
-	/**
-	 * composes single-argument functions from right to left. The right most
-	 * function can take multiple arguments as it provides the signature for
-	 * the resulting composite function
-	 * 
-	 * @param  {...function} funcs functions to compose
-	 * @return {function}          function obtained by composing the argument functions
-	 * from right to left. for example, compose(f, g, h) is identical to doing
-	 * (...args) => f(g(h(...args))).
-	 */
-	function composeMiddlewares () {
-		var length = arguments.length;
-	
-		// no functions passed
-		if (length === 0) {
-			return function (a) { 
-				return a;
-			}
-		}
-		else {
-			// functions to compose
-			var funcs = [];
-	
-			// passing arguments to a function i.e [].splice() will prevent this function
-			// from getting optimized by the VM, so we manually build the array in-line
-			for (var i = 0; i < length; i++) {
-				funcs[i] = arguments[i];
-			}
-	
-			// remove and retrieve last function
-			// we will use this for the initial composition
-			var lastFunc = funcs.pop();
-	
-			// decrement length of funcs array as a reflection of the above
-			length--;
-	
-			return function () {
-				// initial composition
-				var output = lastFunc.apply(null, arguments);
-					
-				// recursively commpose all functions
-				while (length--) {
-					output = funcs[length](output);
-				}
-	
-				return output;
-			}
-		}
-	}
-	
-	
-	/**
-	 * combines a set of reducers
-	 *
-	 * @public
-	 * 
-	 * @param  {Object<string, function>}  reducers
-	 * @return {function}
-	 */
-	function combineReducers (reducers) {
-		var keys = Object.keys(reducers);
-		var length = keys.length;
-	
-		// return a single reducer which combines all reducers
-		return function (state, action) {
-			state = state || {};
-	
-			var nextState = {};
-			var key;
-	
-			for (var i = 0; i < length; i++) {			
-				nextState[key = keys[i]] = reducers[key](state[key], action);
-			}
-	
-			return nextState;
-		}
-	}
-	
-	
-	/**
-	 * create store interface
-	 * 
-	 * @param  {function}  reducer
-	 * @param  {*}         initialState
-	 * @param  {function=} enhancer
-	 * @return {Store}     {getState, dispatch, subscribe, connect, replaceReducer}
-	 */
-	function createStore (reducer, initialState, enhancer) {
-		// exit early, reducer is not a function
-		if (typeof reducer !== 'function') {
-			throw 'reducer should be a function';
-		}
-	
-		// if initialState is a function and enhancer is undefined
-		// we assume that initialState is an enhancer
-		if (typeof initialState === 'function' && enhancer === void 0) {
-			enhancer = initialState;
-			initialState = void 0;
-		}
-	
-		// delegate to enhancer if defined
-		if (enhancer !== void 0) {
-			// exit early, enhancer is not a function
-			if (typeof enhancer !== 'function') {
-				throw 'enhancer should be a function';
-			}
-	
-			return applyMiddleware(enhancer)(Store)(reducer, initialState);
-		}
-	
-		// if object, multiple reducers, else, single reducer
-		return typeof reducer === 'object' ? Store(combineReducers(reducer)) : Store(reducer);
-	}
-	
-	
-	/**
-	 * create store constructor
-	 * 
-	 * @param  {function} reducer
-	 * @param  {*}        initialState
-	 * @return {Store}    {getState, dispatch, subscribe, connect, replaceReducer}
-	 */
-	function Store (reducer, initialState) {
-		var currentState = initialState;
-		var listeners = [];
-		var length = 0;
-	
-		// state getter, retrieves the current state
-		function getState () {
-			return currentState;
-		}
-	
-		// dispatchs a action
-		function dispatch (action) {
-			if (action.type === void 0) {
-				throw 'action without a type';
-			}
-	
-			// update state with return value of reducer
-			currentState = reducer(currentState, action);
-	
-			// dispatch to all listeners
-			for (var i = 0; i < length; i++) {
-				listeners[i](currentState);
-			}
-	
-			return action;
-		}
-	
-		// subscribe to a store
-		function subscribe (listener) {
-			if (typeof listener !== 'function') {
-				throw 'listener should be a function';
-			}
-	
-			// append listener
-			listeners[length++] = listener;
-	
-			// return unsubscribe function
-			return function unsubscribe () {
-				// for each listener
-				for (var i = 0; i < length; i++) {
-					// if currentListener === listener, remove
-					if (listeners[i] === listener) {
-						listeners.splice(i, 1);
-						length--;
-					}
-				}
-			}
-		}
-	
-		// replace a reducer
-		function replaceReducer (nextReducer) {
-			// exit early, reducer is not a function
-			if (typeof nextReducer !== 'function') {
-				throw 'reducer should be a function';
-			}
-	
-			// replace reducer
-			reducer = nextReducer;
-	
-			// dispath initial action
-			dispatch({type: '@/STORE'});
-		}
-	
-		// auto subscribe a component to a store
-		function connect (subject, element) {
-			var renderer;
-	
-			// if component and element 
-			if (element) {			
-				// create renderer add it as a subscriber and return the renderer
-				subscribe(
-					renderer = render(
-						createComponentShape(subject, currentState, null), 
-						element, 
-						null, 
-						null
-					)
-				);
-	
-				return renderer;
-			}
-			else {
-				return subscribe(subject);
-			}
-		}
-	
-		// dispath initial action
-		dispatch({type: '@/STORE'});
-	
-		return {
-			getState: getState, 
-			dispatch: dispatch, 
-			subscribe: subscribe,
-			connect: connect,
-			replaceReducer: replaceReducer
-		};
-	}
-	
-	
-	
-
-	/**
-	 * ---------------------------------------------------------------------------------
-	 * 
-	 * exports
-	 * 
-	 * ---------------------------------------------------------------------------------
-	 */
-
-
-	if (browser) {
-		window.h = createElement;
-	}
-
-	return {
-		// version
-		version: version,
-
-		// alias
-		h: createElement,
-		
-		// elements
-		createElement: createElement,
-		isValidElement: isValidElement,
-		cloneElement: cloneElement,
-		createFactory: createFactory,
-		DOM: DOM,
-
-		// render
+	var dio = {
+		version: '7.0.0',
+		h: element,
+		createElement: element,
 		render: render,
-		shallow: shallow,
-
-		// components
-		Component: Component,
-		createClass: createClass,
-
-		// shapes
-		text: createTextShape,
-		element: createElementShape,
-		svg: createSvgShape,
-		fragment: createFragmentShape,
-		component: createComponentShape,
-		portal: createPortalShape,
-
-		// stylesheet
-		stylesheet: stylesheet,
-
-		// server
-		renderToString: renderToString,
-		renderToStream: renderToStream,
-		renderToCache: renderToCache,
-
-		// stores
-		createStore: createStore,
-		applyMiddleware: applyMiddleware,
-		combineReducers: combineReducers,
-		
-		// utilities
-		request: request,
-		router: router,
-		stream: stream
+		Component: Component
 	};
+	
+	self.h = element;
+	
+	/**
+	 * Server
+	 */
+	if (server === true && typeof __require__ === 'function') {
+		__require__('./dio.server.js')(
+			dio, element, shape, extract, whitelist, render, renderBoundary,
+			CHILDREN, PROPS, ATTRS,
+			READY, PROCESSING, PROCESSED, PENDING,
+			STRING, FUNCTION, CLASS, NOOP,
+			EMPTY, TEXT, ELEMENT, COMPOSITE, FRAGMENT, ERROR, PORTAL
+		);
+	}
+	
+	return dio;
+	
 }));

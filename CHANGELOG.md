@@ -1,3 +1,39 @@
+## 7.0.0 (25 May 2016)
+
+- reduced api surface
+
+Apart from that improvements where mostly internal facing, like improving async return types
+lifecycles on functional components, new architecture to support pausing and resuming tree
+updates and more.
+
+### API
+
+```js
+// client side
+{
+	render,
+	createElement,
+	h,
+	Component,
+	version
+}
+
+// server side
+{
+	...,
+	shallow
+}
+```
+
+#### renderToString
+
+renderToString is supplimented by `h(..).toString()` in a server enviroment which means we could just do this `${h(..)}`
+
+#### renderToStream
+
+renderToStream is supplimented by `dio.render` which also supports rendering to a writable stream
+on the server like the Node.js `Response` object and `h(..).toStream()`, `dio.render` however also handles streaming json responses and will set the correct MIME type if one hasn't been set.
+
 ## 6.1.2 (February 08, 2016)
 
 - patch pure function components
@@ -47,7 +83,7 @@
 
 ## 5.0.5 (January 07, 2016)
 
-- patch minfied bundle 
+- patch minfied bundle
 
 ## 5.0.4 (January 06, 2016)
 
@@ -249,7 +285,7 @@
 ```javascript
 dio.render(Component, '.app')();
 dio.render(Component, '.app')();
-// on the above code the second example will avoid 
+// on the above code the second example will avoid
 // creating a component and render instance a second time
 // and will rather return a cache of the render instance
 // except in the case that the mount is different
