@@ -27,6 +27,7 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 
 		// component with shouldComponentUpdate
 		if (
+			oldComponent &&
 			oldComponent.shouldComponentUpdate !== void 0 && 
 			componentUpdateBoundary(oldComponent, 'shouldComponentUpdate', newProps, newState) === false
 		) {
@@ -35,7 +36,7 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 		}
 
 		// component with componentWillUpdate
-		if (oldComponent.componentWillUpdate !== void 0) {
+		if (oldComponent && oldComponent.componentWillUpdate !== void 0) {
 			componentUpdateBoundary(oldComponent, 'componentWillUpdate', newProps, newState);
 		}
 	}
@@ -175,7 +176,7 @@ function reconcileNodes (newNode, oldNode, newNodeType, oldNodeType) {
 	}
 
 	// component with componentDidUpdate
-	if (oldNodeType === 2 && oldComponent.componentDidUpdate !== void 0) {
+	if (oldNodeType === 2 && oldComponent && oldComponent.componentDidUpdate !== void 0) {
 		componentUpdateBoundary(oldComponent, 'componentDidUpdate', newProps, newState);
 	}
 }
