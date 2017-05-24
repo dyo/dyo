@@ -54,7 +54,7 @@ const bootstrap = () => {
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' +
-	 	'\nbuild > ../dio.js'+
+	 	'\nbuild > dio.js, dio.server.js'+
 		'\x1b[0m\n'
 	)
 }

@@ -381,8 +381,8 @@ module.exports = function (
 	 *
 	 * @return {Stream}
 	 */
-	function stream (subject) {
-		return new Stream(subject);
+	function toStream () {
+		return new Stream(this);
 	}
 
 	/**
@@ -427,7 +427,7 @@ module.exports = function (
 	 * Exports
 	 */
 	element.prototype.toString = toString;
+	element.prototype.toStream = toStream;
 
 	dio.shallow = shallow;
-	dio.stream = stream;
 };
