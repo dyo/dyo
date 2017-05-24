@@ -4,10 +4,14 @@
 	<meta charset=utf-8>
 	<meta http-equiv=X-UA-Compatible content=IE=edge>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title>DIO</title>
+	<title>DIO – particles</title>
 	<link rel=stylesheet href=../css/stylesheet.css>
 	<link rel="icon" type="image/png" href="../imgs/favicon-large.png" sizes="32x32">
 	<link rel="icon" type="image/png" href="../imgs/favicon-small.png" sizes="16x16">
+	<script src=../js/highlight.js></script>
+	<script src=../js/main.js></script>
+	<script src=https://unpkg.com/dio.js@7.0.0/dio.min.js></script>
+	<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
 </head>
 <body>
 	<a href=../ title=index class=logo>
@@ -33,6 +37,7 @@
 	</article>
 
 	<style>
+		.logo,
 		nav a {
 			transform: translateZ(0);
 			position: relative;
@@ -42,8 +47,6 @@
 			overflow-x: hidden;
 		}
 		#root {
-			left: 0;
-			top: 0;
 			width: 100%;
 			height: 100%;
 			overflow: hidden;
@@ -67,10 +70,6 @@
 			opacity: 0.8;
 		}
 	</style>
-	<script src=../js/highlight.js></script>
-	<script src=../js/main.js></script>
-	<script src=https://unpkg.com/dio.js@7.0.0/dio.min.js></script>
-	<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
 	<script>
 		perfMonitor.startFPSMonitor()
 		perfMonitor.startMemMonitor()
