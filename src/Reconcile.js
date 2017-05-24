@@ -97,38 +97,60 @@ function patch (older, _newer, group) {
 		}
 	}
 
-	// text component
-	if (older.flag === TEXT) {
-		if (older.children !== newer.children) {
-			nodeValue(older, newer);
+	if (skip === false) {
+		switch (older.flag) {
+			// text component
+			case TEXT: {
+				if (older.children !== newer.children) {
+					nodeValue(older, newer);
+				}
+				break
+			}
+			default: {
+				var oldLength = older.children.length;
+				var newLength = newer.children.length;
+
+				/**
+				 * In theory switch(int * int)
+				 *
+				 * should be faster than
+				 *
+				 * if (int === x && int === y, ...condtions)
+				 *
+				 * when int * 0 === 0,
+				 * if oldLength is not zero then newLength is.
+				 */
+				switch (oldLength * newLength) {
+					case 0: {
+						switch (oldLength) {
+							// fill children
+							case 0: {
+								if (newLength > 0) {
+									fill(older, newer, newLength);
+									older.children = newer.children;
+								}
+								break
+							}
+							// remove children
+							default: {
+								unmount(older);
+								removeChildren(older);
+								older.children = newer.children;
+							}
+						}
+						break;
+					}
+					default: {
+						switch (newer.keyed) {
+							case 0: nonkeyed(older, newer, oldLength, newLength); break;
+							case 1: keyed(older, newer, oldLength, newLength); break;
+						}
+					}
+				}
+
+				attributes(older, newer);
+			}
 		}
-	} else if (skip !== true) {
-		var oldLength = older.children.length;
-		var newLength = newer.children.length;
-
-		if (oldLength === 0) {
-			// fill children
-			if (newLength !== 0) {
-				fill(older, newer, newLength);
-
-				older.children = newer.children;
-			}
-		} else if (newLength === 0) {
-			// remove children
-			if (oldLength !== 0) {
-				unmount(older, false);
-				removeChildren(older);
-
-				older.children = newer.children;
-			}
-		} else {
-			switch (newer.keyed) {
-				case 0: nonkeyed(older, newer, oldLength, newLength); break;
-				case 1: keyed(older, newer, oldLength, newLength); break;
-			}
-		}
-
-		attributes(older, newer);
 	}
 
 	if (group !== STRING && older.owner.componentDidUpdate !== void 0) {
@@ -153,10 +175,10 @@ function nonkeyed (older, newer, oldLength, newLength) {
 	var length = newLength > oldLength ? newLength : oldLength;
 
 	for (var i = 0; i < length; i++) {
-		if (i >= newLength) {
-			remove(oldChildren.pop(), SHARED, older);
-		} else if (i >= oldLength) {
+		if (i >= oldLength) {
 			create(oldChildren[i] = newChildren[i], older, SHARED, 1, host, null);
+		} else if (i >= newLength) {
+			remove(oldChildren.pop(), SHARED, older);
 		} else {
 			var newChild = newChildren[i];
 			var oldChild = oldChildren[i];
@@ -293,7 +315,7 @@ function keyed (older, newer, oldLength, newLength) {
  		} while (oldStart <= oldEnd);
  	} else if (newStart === 0 && newEnd === newLength-1) {
  		// all children are out of sync, remove all, append new set
- 		unmount(older, false);
+ 		unmount(older);
  		removeChildren(older);
  		fill(older, newer, newLength);
  	} else {

@@ -191,44 +191,39 @@ function setUnknown (name, value, node) {
  *
  * @param {Tree} older
  * @param {Tree} newer
- * @param {Number} type
+ * @param {Number} _type
  */
-function setStyle (older, newer, type) {
+function setStyle (older, newer, _type) {
 	var node = older.node.style;
+	var prev = older.attrs.style;
 	var next = newer.attrs.style;
 
-	if (next.constructor === String) {
-		node.cssText = next;
-	} else {
-		switch (type) {
-			// assign
-			case 0: {
-				for (var name in next) {
-					var value = next[name];
-
-					if (name.charCodeAt(0) === 45) {
-						node.setProperty(name, value);
-					} else {
-						node[name] = value;
-					}
-				}
-				break;
+	switch (next.constructor) {
+		case String: {
+			// update/assign
+			if (_type === 0 || next !== prev) {
+				node.cssText = next;
 			}
-			// update
-			case 1: {
-				var prev = older.attrs.style;
+			break;
+		}
+		case Object: {
+			// update/assign
+			var type = prev !== void 0 && prev !== null ? _type : 0;
 
-				for (var name in next) {
-					var value = next[name];
+			for (var name in next) {
+				var value = next[name];
 
-					if (name.charCodeAt(0) === 45) {
-						node.setProperty(name, value);
-					} else {
-						node[name] = value;
-					}
+				if (type === 1 && value === prev[name]) {
+					continue
 				}
-				break;
+
+				if (name.charCodeAt(0) === 45) {
+					node.setProperty(name, value);
+				} else {
+					node[name] = value;
+				}
 			}
+			break;
 		}
 	}
 }

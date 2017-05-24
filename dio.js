@@ -247,15 +247,15 @@
 		if (state !== void 0 && state !== null) {
 			switch (state.constructor) {
 				case Promise: {
-					console.log('bug?')
-					// if (browser === true) {
+					older.async = PENDING;
+	
+					if (browser === true) {
 						state.then(function (value) {
+							older.async = READY;
 							older.owner.setState(value);
 						});
 						break;
-					// }
-	
-					// older.async = PENDING;
+					}
 				}
 				case Object: {
 					older.owner.state = state;
@@ -1114,8 +1114,9 @@
 	 			host = newer;
 	 		}
 	
-	 		temp = extract(newer, true);
-	 		flag = temp.flag;
+	 		extract(newer, true);
+	
+	 		flag = newer.flag;
 	 		owner = newer.owner;
 	 	}
 	
@@ -1128,7 +1129,7 @@
 	 		}
 	 		// composite
 	 		case COMPOSITE: {
-	 			create(temp = temp.children[0], parent, sibling, action, newer, xmlns);
+	 			create(temp = newer.children[0], parent, sibling, action, newer, xmlns);
 	 			node = newer.node = temp.node;
 				type = 0;
 	 			break;
@@ -1223,6 +1224,7 @@
 		var length = children.length;
 		var defaults = type.defaultProps;
 		var types = type.propTypes;
+		var skip = false;
 		var newer;
 		var result;
 	
@@ -1263,14 +1265,22 @@
 			if (owner.getInitialState !== void 0) {
 				getInitialState(older, dataBoundary(SHARED, owner, 1, owner.props));
 	
-				if (server === true && older.async === PENDING) {
-					return older;
+				if (older.async === PENDING) {
+					if (server === true) {
+						return older;
+					} else {
+						skip = true;
+						newer = text(' ');
+					}
 				}
 			}
 	
-			older.async = PROCESSING;
-			newer = renderBoundary(older, group);
-			older.async = READY;
+			if (skip !== true) {
+				older.async = PROCESSING;
+				newer = renderBoundary(older, group);
+				older.async = READY;
+			}
+	
 			owner.this = older;
 		} else {
 			older.owner = type;
@@ -1281,7 +1291,6 @@
 	
 		older.tag = result.tag;
 		older.flag = result.flag;
-		older.node = result.node;
 		older.attrs = result.attrs;
 		older.xmlns = result.xmlns;
 		older.children = result.children;
@@ -1446,7 +1455,8 @@
 				}
 			}
 	
-			unmount(older, true);
+			unmount(older);
+			detach(older);
 		});
 	}
 	
@@ -1469,15 +1479,14 @@
 			}
 		}
 	
-		unmount(older, false);
+		unmount(older);
 	
 		if (newer === SHARED) {
 			removeChild(older, parent);
+			detach(older);
 		} else {
 			replaceChild(older, newer, parent);
 		}
-	
-		detach(older);
 	
 		return false;
 	}
@@ -1486,9 +1495,8 @@
 	 * Unmount
 	 *
 	 * @param {Tree} older
-	 * @param {Boolean} unlink
 	 */
-	function unmount (older, unlink) {
+	function unmount (older) {
 		var children = older.children;
 		var length = children.length;
 		var flag = older.flag;
@@ -1502,7 +1510,8 @@
 						mountBoundary(child, child.owner, child.node, 2);
 					}
 	
-					unmount(child, true);
+					unmount(child);
+					detach(child);
 				}
 			}
 	
@@ -1510,16 +1519,12 @@
 				refs(older, older.ref, 0);
 			}
 		}
-	
-		if (unlink === true) {
-			detach(older);
-		}
 	}
 	
 	/**
 	 * Detach
 	 *
-	 * @return {Tree}
+	 * @param {Tree}
 	 */
 	function detach (older) {
 		older.parent = null;
@@ -1537,7 +1542,7 @@
 	 */
 	function exchange (older, newer, deep) {
 		change(older, newer, older.host);
-		assign(older, newer, true);
+		assign(older, newer, deep);
 		update(older.host, newer);
 	}
 	
@@ -1724,38 +1729,60 @@
 			}
 		}
 	
-		// text component
-		if (older.flag === TEXT) {
-			if (older.children !== newer.children) {
-				nodeValue(older, newer);
+		if (skip === false) {
+			switch (older.flag) {
+				// text component
+				case TEXT: {
+					if (older.children !== newer.children) {
+						nodeValue(older, newer);
+					}
+					break
+				}
+				default: {
+					var oldLength = older.children.length;
+					var newLength = newer.children.length;
+	
+					/**
+					 * In theory switch(int * int)
+					 *
+					 * should be faster than
+					 *
+					 * if (int === x && int === y, ...condtions)
+					 *
+					 * when int * 0 === 0,
+					 * if oldLength is not zero then newLength is.
+					 */
+					switch (oldLength * newLength) {
+						case 0: {
+							switch (oldLength) {
+								// fill children
+								case 0: {
+									if (newLength > 0) {
+										fill(older, newer, newLength);
+										older.children = newer.children;
+									}
+									break
+								}
+								// remove children
+								default: {
+									unmount(older);
+									removeChildren(older);
+									older.children = newer.children;
+								}
+							}
+							break;
+						}
+						default: {
+							switch (newer.keyed) {
+								case 0: nonkeyed(older, newer, oldLength, newLength); break;
+								case 1: keyed(older, newer, oldLength, newLength); break;
+							}
+						}
+					}
+	
+					attributes(older, newer);
+				}
 			}
-		} else if (skip !== true) {
-			var oldLength = older.children.length;
-			var newLength = newer.children.length;
-	
-			if (oldLength === 0) {
-				// fill children
-				if (newLength !== 0) {
-					fill(older, newer, newLength);
-	
-					older.children = newer.children;
-				}
-			} else if (newLength === 0) {
-				// remove children
-				if (oldLength !== 0) {
-					unmount(older, false);
-					removeChildren(older);
-	
-					older.children = newer.children;
-				}
-			} else {
-				switch (newer.keyed) {
-					case 0: nonkeyed(older, newer, oldLength, newLength); break;
-					case 1: keyed(older, newer, oldLength, newLength); break;
-				}
-			}
-	
-			attributes(older, newer);
 		}
 	
 		if (group !== STRING && older.owner.componentDidUpdate !== void 0) {
@@ -1780,10 +1807,10 @@
 		var length = newLength > oldLength ? newLength : oldLength;
 	
 		for (var i = 0; i < length; i++) {
-			if (i >= newLength) {
-				remove(oldChildren.pop(), SHARED, older);
-			} else if (i >= oldLength) {
+			if (i >= oldLength) {
 				create(oldChildren[i] = newChildren[i], older, SHARED, 1, host, null);
+			} else if (i >= newLength) {
+				remove(oldChildren.pop(), SHARED, older);
 			} else {
 				var newChild = newChildren[i];
 				var oldChild = oldChildren[i];
@@ -1920,7 +1947,7 @@
 	 		} while (oldStart <= oldEnd);
 	 	} else if (newStart === 0 && newEnd === newLength-1) {
 	 		// all children are out of sync, remove all, append new set
-	 		unmount(older, false);
+	 		unmount(older);
 	 		removeChildren(older);
 	 		fill(older, newer, newLength);
 	 	} else {
@@ -2252,44 +2279,39 @@
 	 *
 	 * @param {Tree} older
 	 * @param {Tree} newer
-	 * @param {Number} type
+	 * @param {Number} _type
 	 */
-	function setStyle (older, newer, type) {
+	function setStyle (older, newer, _type) {
 		var node = older.node.style;
+		var prev = older.attrs.style;
 		var next = newer.attrs.style;
 	
-		if (next.constructor === String) {
-			node.cssText = next;
-		} else {
-			switch (type) {
-				// assign
-				case 0: {
-					for (var name in next) {
-						var value = next[name];
-	
-						if (name.charCodeAt(0) === 45) {
-							node.setProperty(name, value);
-						} else {
-							node[name] = value;
-						}
-					}
-					break;
+		switch (next.constructor) {
+			case String: {
+				// update/assign
+				if (_type === 0 || next !== prev) {
+					node.cssText = next;
 				}
-				// update
-				case 1: {
-					var prev = older.attrs.style;
+				break;
+			}
+			case Object: {
+				// update/assign
+				var type = prev !== void 0 && prev !== null ? _type : 0;
 	
-					for (var name in next) {
-						var value = next[name];
+				for (var name in next) {
+					var value = next[name];
 	
-						if (name.charCodeAt(0) === 45) {
-							node.setProperty(name, value);
-						} else {
-							node[name] = value;
-						}
+					if (type === 1 && value === prev[name]) {
+						continue
 					}
-					break;
+	
+					if (name.charCodeAt(0) === 45) {
+						node.setProperty(name, value);
+					} else {
+						node[name] = value;
+					}
 				}
+				break;
 			}
 		}
 	}

@@ -25,18 +25,23 @@
 		})
 
 		class DIO {
+			async getInitialState() {
+				return {
+					name: 'Sultan'
+				}
+			}
 			render () {
-				return promise;
+				return h('h1', this.state.name);
 			}
 		}
 
-		// dio.render(DIO, root)
+		dio.render(DIO, root)
 
-		Promise.resolve(0).then(v=>{
-			return v+99
-		}).then(v => {
-			console.log(v)
-		})
+		// Promise.resolve(0).then(v=>{
+		// 	return v+99
+		// }).then(v => {
+		// 	console.log(v)
+		// })
 
 		// setTimeout(()=>{
 		// 	dio.render(DIO, root)

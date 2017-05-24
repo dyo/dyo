@@ -152,15 +152,15 @@ function getInitialState (older, state) {
 	if (state !== void 0 && state !== null) {
 		switch (state.constructor) {
 			case Promise: {
-				console.log('bug?')
-				// if (browser === true) {
+				older.async = PENDING;
+
+				if (browser === true) {
 					state.then(function (value) {
+						older.async = READY;
 						older.owner.setState(value);
 					});
 					break;
-				// }
-
-				// older.async = PENDING;
+				}
 			}
 			case Object: {
 				older.owner.state = state;

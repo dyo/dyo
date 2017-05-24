@@ -30,8 +30,9 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  			host = newer;
  		}
 
- 		temp = extract(newer, true);
- 		flag = temp.flag;
+ 		extract(newer, true);
+
+ 		flag = newer.flag;
  		owner = newer.owner;
  	}
 
@@ -44,7 +45,7 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  		}
  		// composite
  		case COMPOSITE: {
- 			create(temp = temp.children[0], parent, sibling, action, newer, xmlns);
+ 			create(temp = newer.children[0], parent, sibling, action, newer, xmlns);
  			node = newer.node = temp.node;
 			type = 0;
  			break;
@@ -139,6 +140,7 @@ function extract (older, abstract) {
 	var length = children.length;
 	var defaults = type.defaultProps;
 	var types = type.propTypes;
+	var skip = false;
 	var newer;
 	var result;
 
@@ -179,14 +181,22 @@ function extract (older, abstract) {
 		if (owner.getInitialState !== void 0) {
 			getInitialState(older, dataBoundary(SHARED, owner, 1, owner.props));
 
-			if (server === true && older.async === PENDING) {
-				return older;
+			if (older.async === PENDING) {
+				if (server === true) {
+					return older;
+				} else {
+					skip = true;
+					newer = text(' ');
+				}
 			}
 		}
 
-		older.async = PROCESSING;
-		newer = renderBoundary(older, group);
-		older.async = READY;
+		if (skip !== true) {
+			older.async = PROCESSING;
+			newer = renderBoundary(older, group);
+			older.async = READY;
+		}
+
 		owner.this = older;
 	} else {
 		older.owner = type;
@@ -197,7 +207,6 @@ function extract (older, abstract) {
 
 	older.tag = result.tag;
 	older.flag = result.flag;
-	older.node = result.node;
 	older.attrs = result.attrs;
 	older.xmlns = result.xmlns;
 	older.children = result.children;
@@ -362,7 +371,8 @@ function animate (older, newer, parent, pending) {
 			}
 		}
 
-		unmount(older, true);
+		unmount(older);
+		detach(older);
 	});
 }
 
@@ -385,15 +395,14 @@ function remove (older, newer, parent) {
 		}
 	}
 
-	unmount(older, false);
+	unmount(older);
 
 	if (newer === SHARED) {
 		removeChild(older, parent);
+		detach(older);
 	} else {
 		replaceChild(older, newer, parent);
 	}
-
-	detach(older);
 
 	return false;
 }
@@ -402,9 +411,8 @@ function remove (older, newer, parent) {
  * Unmount
  *
  * @param {Tree} older
- * @param {Boolean} unlink
  */
-function unmount (older, unlink) {
+function unmount (older) {
 	var children = older.children;
 	var length = children.length;
 	var flag = older.flag;
@@ -418,7 +426,8 @@ function unmount (older, unlink) {
 					mountBoundary(child, child.owner, child.node, 2);
 				}
 
-				unmount(child, true);
+				unmount(child);
+				detach(child);
 			}
 		}
 
@@ -426,16 +435,12 @@ function unmount (older, unlink) {
 			refs(older, older.ref, 0);
 		}
 	}
-
-	if (unlink === true) {
-		detach(older);
-	}
 }
 
 /**
  * Detach
  *
- * @return {Tree}
+ * @param {Tree}
  */
 function detach (older) {
 	older.parent = null;
@@ -453,7 +458,7 @@ function detach (older) {
  */
 function exchange (older, newer, deep) {
 	change(older, newer, older.host);
-	assign(older, newer, true);
+	assign(older, newer, deep);
 	update(older.host, newer);
 }
 
