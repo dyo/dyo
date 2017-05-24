@@ -254,7 +254,6 @@ interface render {
 	(subject?: any, container?: Node, callback?: Node | Function): void
 }
 
-
 declare global {
 	namespace dio {
 		interface Component<P, S> {
@@ -266,10 +265,10 @@ declare global {
 		  componentDidMount(node: Node): Return;
 		}
 
-		export const version;
+		export const version: string;
 		export const h: h;
-		export const createElement;
-		export const render;
+		export const createElement: createElement;
+		export const render: render;
 
 		export abstract class Component<P, S> {
 			constructor (props: Readonly<P>);
