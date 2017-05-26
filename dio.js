@@ -9,7 +9,7 @@
 /* eslint-disable */
 (function (factory) {
 	if (typeof exports === 'object' && typeof module !== 'undefined') {
-		module.exports = factory(global, require);
+		module.exports = factory(global, typeof __webpack_require__ === 'undefined' ? require : null);
 	} else if (typeof define === 'function' && define.amd) {
 		define(factory(window, null));
 	} else {
@@ -2512,7 +2512,7 @@
 	/**
 	 * Server
 	 */
-	if (server === true && typeof __require__ === 'function') {
+	if (server === true && __require__ !== null) {
 		__require__('./dio.server.js')(
 			dio, element, shape, extract, whitelist, render, renderBoundary,
 			CHILDREN, PROPS, ATTRS,

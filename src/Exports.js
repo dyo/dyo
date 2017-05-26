@@ -16,7 +16,7 @@ self.h = element;
 /**
  * Server
  */
-if (server === true && typeof __require__ === 'function') {
+if (server === true && __require__ !== null) {
 	__require__('./dio.server.js')(
 		dio, element, shape, extract, whitelist, render, renderBoundary,
 		CHILDREN, PROPS, ATTRS,

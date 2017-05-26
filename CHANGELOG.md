@@ -1,3 +1,7 @@
+## 7.0.1 (26 May 2016)
+
+- patch compatibility with webpack
+
 ## 7.0.0 (25 May 2016)
 
 - reduced api surface
