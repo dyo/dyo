@@ -1,10 +1,10 @@
 # DIO
 
-[![dio.js](https://dio.js.org/assets/logo.svg)](https://dio.js.org/)
+[![dio.js](https://dio.js.org/imgs/logo.svg)](https://dio.js.org/)
 
 a library for building user interfaces.
 
-- ~5kb
+- ~6kb
 
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
@@ -21,7 +21,6 @@ a library for building user interfaces.
 
 ---
 
-
 ## Installation
 
 #### direct download
@@ -33,15 +32,15 @@ a library for building user interfaces.
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/7.0.1/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/7.0.2/dio.min.js></script>
 ```
 
 ```html
-<script src=https://cdn.jsdelivr.net/dio/7.0.1/dio.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/dio.js@latest/dio.min.js></script>
 ```
 
 ```html
-<script src=https://unpkg.com/dio.js@7.0.1/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@latest/dio.min.js></script>
 ```
 
 #### npm
@@ -50,11 +49,6 @@ a library for building user interfaces.
 npm install dio.js --save
 ```
 
-#### bower
-
-```
-bower install dio.js
-```
 ---
 
 ## Getting started
