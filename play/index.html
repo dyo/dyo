@@ -333,7 +333,13 @@
 			h('option', {value: ''}, 'a')
 		)
 
-		dio.render(h(root, {style: 'color:red;'}, select), app)
+		var style = true;
+
+		dio.render(h(root, {style: style && 'color:red;'}, select), app)
+
+		style = false;
+
+		dio.render(h(root, {style: style && 'color:red;'}, select), app)
 		// dio.render(h('div', select))
 
 		// setTimeout(function () {

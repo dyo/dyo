@@ -4,7 +4,7 @@
  * @type {Object}
  */
 var dio = {
-	version: '7.0.2',
+	version: '7.0.3',
 	h: element,
 	createElement: element,
 	render: render,

@@ -32,7 +32,7 @@ a library for building user interfaces.
 #### cdn
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/7.0.2/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/7.0.3/dio.min.js></script>
 ```
 
 ```html

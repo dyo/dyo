@@ -2333,13 +2333,6 @@
 		var next = newer.attrs.style;
 	
 		switch (next.constructor) {
-			case String: {
-				// update/assign
-				if (_type === 0 || next !== prev) {
-					node.cssText = next;
-				}
-				break;
-			}
 			case Object: {
 				// update/assign
 				var type = prev !== void 0 && prev !== null ? _type : 0;
@@ -2358,6 +2351,16 @@
 					}
 				}
 				break;
+			}
+			case String: {
+				// update/assign
+				if (_type === 0 || next !== prev) {
+					node.cssText = next;
+				}
+				break;
+			}
+			default: {
+				node.cssText = '';
 			}
 		}
 	}
@@ -2546,7 +2549,7 @@
 	 * @type {Object}
 	 */
 	var dio = {
-		version: '7.0.2',
+		version: '7.0.3',
 		h: element,
 		createElement: element,
 		render: render,

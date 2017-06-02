@@ -1,3 +1,7 @@
+## 7.0.3 (02 June 2016)
+
+- handle invalid values for `style` prop
+
 ## 7.0.2 (02 June 2016)
 
 - patch compatibility with "Web Components" classes

@@ -214,13 +214,6 @@ function setStyle (older, newer, _type) {
 	var next = newer.attrs.style;
 
 	switch (next.constructor) {
-		case String: {
-			// update/assign
-			if (_type === 0 || next !== prev) {
-				node.cssText = next;
-			}
-			break;
-		}
 		case Object: {
 			// update/assign
 			var type = prev !== void 0 && prev !== null ? _type : 0;
@@ -239,6 +232,16 @@ function setStyle (older, newer, _type) {
 				}
 			}
 			break;
+		}
+		case String: {
+			// update/assign
+			if (_type === 0 || next !== prev) {
+				node.cssText = next;
+			}
+			break;
+		}
+		default: {
+			node.cssText = '';
 		}
 	}
 }
