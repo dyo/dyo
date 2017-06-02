@@ -62,25 +62,49 @@ function element (_type, _props) {
 		case Function: {
 			var proto = type.prototype;
 
-			group = newer.group = proto !== void 0 && proto.render !== void 0 ? CLASS : FUNCTION;
+			if (proto !== void 0 && proto.render !== void 0) {
+				// class component
+				group = CLASS;
+			} else if (type.ELEMENT_NODE !== 1) {
+				// function component
+				group = FUNCTION;
+			} else {
+				// custom element
+				group = STRING;
+				newer.flag = CUSTOM;
+				newer.tag = type;
+				newer.attrs = attrs;
+			}
 
+			newer.group = group;
 			break;
 		}
 		default: {
-			if (type.flag !== void 0) {
+			if (type.ELEMENT_NODE === 1) {
+				// portal
+				newer.flag = PORTAL;
+				newer.tag = type;
+				newer.attrs = attrs;
+			}	else if (type.flag !== void 0) {
 				// clone
-				merge(type.props, props);
+				if (type.props !== PROPS) {
+					if (props === PROPS) {
+						props = newer.props = {};
+						attrs = newer.attrs = {};
+					}
 
+					merge(type.props, props);
+					merge(type.attrs, attrs);
+				}
+
+				group = newer.group = type.group;
 				type = type.type;
-				group = type.group;
 
 				if (group === STRING) {
 					newer.tag = type;
 				} else {
-					newer.props.children = CHILDREN;
+					props.children = CHILDREN;
 				}
-			} else if (type.nodeType !== void 0) {
-				newer.flag = PORTAL;
 			}
 		}
 	}
@@ -164,7 +188,7 @@ function push (newer, index, value) {
 				break;
 			}
 			default: {
-				child = text(' ');
+				child = value.ELEMENT_NODE === 1 ? element(value) : text(' ');
 				break;
 			}
 		}

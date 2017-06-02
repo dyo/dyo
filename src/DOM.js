@@ -1,10 +1,10 @@
 /**
- * Generate
+ * Create
  *
- * @param  {String} tag
- * @param  {Tree} newer
- * @param  {Tree} host
- * @param  {String?} xmlns
+ * @param {String} tag
+ * @param {Tree} newer
+ * @param {Tree} host
+ * @param {String?} xmlns
  * @return {Node}
  */
 function createElement (tag, newer, host, xmlns) {
@@ -20,7 +20,22 @@ function createElement (tag, newer, host, xmlns) {
 }
 
 /**
- * Compose
+ * Custom
+ * 
+ * @param {Tree} newer
+ * @param {Tree} host
+ * @return {Node}
+ */
+function createCustomElement (newer, host) {
+	try {
+		return new newer.tag(newer.props);
+	} catch (err) {
+		return errorBoundary(err, host, host.owner, (newer.flag = ERROR, 3), 0);
+	}
+}
+
+/**
+ * Text
  *
  * @param {(String|Number)} value
  * @return {Node}

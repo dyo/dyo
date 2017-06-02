@@ -4,13 +4,14 @@
  * @param {Tree} newer
  * @param {Tree} parent
  * @param {Tree} sibling
- * @param {Number} action
+ * @param {Number} _action
  * @param {Tree?} _host
  * @param {String?} _xmlns
  */
-function create (newer, parent, sibling, action, _host, _xmlns) {
+function create (newer, parent, sibling, _action, _host, _xmlns) {
 	var host = _host;
 	var xmlns = _xmlns;
+	var action = _action;
 	var group = newer.group;
 	var flag = newer.flag;
 	var type = 2;
@@ -49,14 +50,19 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
  			node = newer.node = temp.node;
 			type = 0;
  			break;
- 		}
+ 		} 		
  		default: {
  			var children = newer.children;
 			var length = children.length;
 
 			switch (flag) {
 				case PORTAL: {
-					newer.node = newer.type;
+					node = newer.tag;
+					action = 0;
+					break;
+				}
+				case CUSTOM: {
+					node = createCustomElement(newer, host)
 					break;
 				}
 				default: {
@@ -74,18 +80,18 @@ function create (newer, parent, sibling, action, _host, _xmlns) {
 		 				case '!doctype': tag = 'html'; break;
 		 			}
 
-	 				node = createElement(tag, newer, host, xmlns);
-
-		 			// error
-		 			if (newer.flag === ERROR) {
-		 				create(node, parent, sibling, action, host, xmlns);
-		 				assign(newer, node, newer.group === 0);
-		 				return;
-		 			}
-
-		 			newer.node = node;
+		 			node = createElement(tag, newer, host, xmlns);
 				}
 			}
+
+			// error
+			if (newer.flag === ERROR) {
+				create(node, parent, sibling, action, host, xmlns);
+				assign(newer, node, newer.group === 0);
+				return;
+			}
+
+			newer.node = node;
 
  			if (length > 0) {
  				for (var i = 0; i < length; i++) {
@@ -258,7 +264,7 @@ function shape (value, older, abstract) {
 			}
 			default: {
 				if (older === null || newer.next === void 0) {
-					return text(' ');
+					return newer.ELEMENT_NODE === 1 ? element(newer) : text(' ');
 				}
 
 				newer = coroutine(older, newer);

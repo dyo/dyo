@@ -32,6 +32,7 @@ var COMPOSITE = 3;
 var FRAGMENT = 4;
 var ERROR = 5;
 var PORTAL = 6;
+var CUSTOM = 7;
 
 var CHILDREN = [];
 var ATTRS = {};

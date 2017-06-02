@@ -45,9 +45,9 @@ dio.render(
 		<p>DIO can be installed through any one of the following CDN's.</p>
 
 		<ol>
-			<li><a href="https://cdnjs.cloudflare.com/ajax/libs/dio/7.0.1/dio.min.js">cdnjs.cloudflare.com/ajax/libs/dio/7.0.1/dio.min.js</a></li>
-			<li><a href="https://cdn.jsdelivr.net/dio/7.0.1/dio.min.js">cdn.jsdelivr.net/dio/7.0.1/dio.min.js</a></li>
-			<li><a href="https://unpkg.com/dio.js@7.0.1/dio.min.js">unpkg.com/dio.js@7.0.1/dio.min.js</a></li>
+			<li><a href="https://cdnjs.cloudflare.com/ajax/libs/dio/7.0.2/dio.min.js">cdnjs.cloudflare.com/ajax/libs/dio/7.0.1/dio.min.js</a></li>
+			<li><a href="https://cdn.jsdelivr.net/npm/dio.js@latest/dio.min.js">cdn.jsdelivr.net/dio/7.0.1/dio.min.js</a></li>
+			<li><a href="https://unpkg.com/dio.js@latest/dio.min.js">unpkg.com/dio.js@7.0.1/dio.min.js</a></li>
 		</ol>
 
 		<p>OR through NPM &mdash;</p>
@@ -218,7 +218,7 @@ class Welcome {
 			</tbody>
 		</table>
 
-		<h1>Events &amp; State</h1>
+		<h1 id=events>Events &amp; State</h1>
 
 		<p>Now that we know how to construct the building blocks of a view, we can start to define our views as a function of their state.</p>
 
@@ -259,6 +259,111 @@ dio.render(h(Input), document.getElementById('root'))
 			<li>Our <code>`Input`</code> component retrieves the user input and updates its state.</li>
 			<li>The reconciler efficiently updates the DOM to match the new state <code>&lt;input>&lt;h1>${value}&lt;/h1></code>.</li>
 		</ol>
+
+		<h1 id=interoperability>Interoperability</h1>
+
+		<p>Outside of the world of virtual elements DIO has built in mechanisms to interop with the DOM where needed.</p>
+
+		<h2>Refs</h2>
+
+		<p>Refs allow you to reference the underlining DOM node represented by a virtual element.</p>
+
+<pre><code>
+const Welcome = return h('h1', {
+	ref: el => console.log(el)
+}, 'Welcome')
+</code></pre>
+
+		<h2>Portals</h2>
+
+		<p>Portals are DOM elements outside of the immediate element context.</p>
+
+<pre><code>
+const el = document.querySelector('.modal')
+const body = document.body
+const portal = h(el, 'Welcome', 'Back')
+
+dio.render(['Fox', portal], body)
+</code></pre>
+
+		<p>This allows you to render virtual elements outside of their colocation. </p>
+
+		<p>As demonstrated in the example the text <code>`Welcome`</code> and <code>`Back`</code> will render in an element with a <code>modal</code> class while <code>`Fox`</code> will render in the <code>body</code> element.</p>
+
+		<h2>Web Components</h2>
+
+		<p>
+			In addition to regular HTML elements DIO can render Custom Elements/Web Components.<label for=6></label> 
+			<span class=note>
+				<a href=https://www.webcomponents.org/introduction>Web Components</a> are a set of web platform APIs that allow you to create new custom, reusable, encapsulated HTML tags to use in web pages and web apps.
+			</span>
+		</p>
+
+<pre><code>
+class Fox extends HTMLElement {}
+customElements.define('fox-x', Fox)
+</code></pre>
+
+		<p>For example, using the name of the Custom Element</p>
+
+<pre><code>
+dio.render(h('fox-x'))
+</code></pre>
+
+		<p>OR the class of the Custom Element</p>
+
+<pre><code>
+dio.render(h(Fox))
+</code></pre>
+
+		<h1 id=jsx>Using JSX</h1>
+
+		<p>JSX is an optional syntax extension that enables you to write HTML tags interspersed with JavaScript. It is not required for building applications, but it may be more pleasing to use depending on your preferences.</p>
+
+		<p>For example writing <code>`h('h1', 'Hello')`</code> as <code>`&lt;h1>Hello&lt;/h1>`</code></p>
+
+		<h2>Pragma</h2>
+
+		<p>A pragma <code>/* @jsx h */</code> is a comment that instructs the JSX compiler to use a function ex. <code>`h`</code> as the calling function, in turn transforming <code>`&lt;h1>Hello&lt;/h1>`</code> into <code>h('h1', null, 'Hello')</code></p>
+
+		<p>Most JSX compilers will support pragma comments but they are scoped to the files they are defined in, which might make it a less-than optimal solution for a project setup.</p>
+
+		<h2>Setup</h2>
+
+		<p>The simplest way to use JSX at a project level is through configurations.</p>
+
+		<p>
+			Babel <label for=7></label> 
+			<span class=note>
+				<a href=http://babeljs.io>Babel</a> is a JavaScript transpiler best known for its ability to turn ES6 (the next version of JavaScript) into code that runs in your browser (or on your server) today.
+			</span>
+			&mdash;
+		</p>
+
+<pre><code>
+{
+  "plugins": [
+  	["transform-react-jsx", { "pragma":"h" }]
+  ]
+}
+</code></pre>
+
+		<p>
+			Typescript <label for=8></label> 
+			<span class=note>
+				<a href=https://www.typescriptlang.org>Typescript</a> is a typed superset of JavaScript that compiles to plain JavaScript.
+			</span>
+			&mdash;
+		</p>
+
+<pre><code>
+{
+  "compilerOptions": {
+    "jsx": "React",
+    "jsxFactory": "h"
+  }
+}
+</code></pre>
 
 		<h1>Moving Foward</h1>
 

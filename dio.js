@@ -53,6 +53,7 @@
 	var FRAGMENT = 4;
 	var ERROR = 5;
 	var PORTAL = 6;
+	var CUSTOM = 7;
 	
 	var CHILDREN = [];
 	var ATTRS = {};
@@ -375,25 +376,49 @@
 			case Function: {
 				var proto = type.prototype;
 	
-				group = newer.group = proto !== void 0 && proto.render !== void 0 ? CLASS : FUNCTION;
+				if (proto !== void 0 && proto.render !== void 0) {
+					// class component
+					group = CLASS;
+				} else if (type.ELEMENT_NODE !== 1) {
+					// function component
+					group = FUNCTION;
+				} else {
+					// custom element
+					group = STRING;
+					newer.flag = CUSTOM;
+					newer.tag = type;
+					newer.attrs = attrs;
+				}
 	
+				newer.group = group;
 				break;
 			}
 			default: {
-				if (type.flag !== void 0) {
+				if (type.ELEMENT_NODE === 1) {
+					// portal
+					newer.flag = PORTAL;
+					newer.tag = type;
+					newer.attrs = attrs;
+				}	else if (type.flag !== void 0) {
 					// clone
-					merge(type.props, props);
+					if (type.props !== PROPS) {
+						if (props === PROPS) {
+							props = newer.props = {};
+							attrs = newer.attrs = {};
+						}
 	
+						merge(type.props, props);
+						merge(type.attrs, attrs);
+					}
+	
+					group = newer.group = type.group;
 					type = type.type;
-					group = type.group;
 	
 					if (group === STRING) {
 						newer.tag = type;
 					} else {
-						newer.props.children = CHILDREN;
+						props.children = CHILDREN;
 					}
-				} else if (type.nodeType !== void 0) {
-					newer.flag = PORTAL;
 				}
 			}
 		}
@@ -477,7 +502,7 @@
 					break;
 				}
 				default: {
-					child = text(' ');
+					child = value.ELEMENT_NODE === 1 ? element(value) : text(' ');
 					break;
 				}
 			}
@@ -1088,13 +1113,14 @@
 	 * @param {Tree} newer
 	 * @param {Tree} parent
 	 * @param {Tree} sibling
-	 * @param {Number} action
+	 * @param {Number} _action
 	 * @param {Tree?} _host
 	 * @param {String?} _xmlns
 	 */
-	function create (newer, parent, sibling, action, _host, _xmlns) {
+	function create (newer, parent, sibling, _action, _host, _xmlns) {
 		var host = _host;
 		var xmlns = _xmlns;
+		var action = _action;
 		var group = newer.group;
 		var flag = newer.flag;
 		var type = 2;
@@ -1133,14 +1159,19 @@
 	 			node = newer.node = temp.node;
 				type = 0;
 	 			break;
-	 		}
+	 		} 		
 	 		default: {
 	 			var children = newer.children;
 				var length = children.length;
 	
 				switch (flag) {
 					case PORTAL: {
-						newer.node = newer.type;
+						node = newer.tag;
+						action = 0;
+						break;
+					}
+					case CUSTOM: {
+						node = createCustomElement(newer, host)
 						break;
 					}
 					default: {
@@ -1158,18 +1189,18 @@
 			 				case '!doctype': tag = 'html'; break;
 			 			}
 	
-		 				node = createElement(tag, newer, host, xmlns);
-	
-			 			// error
-			 			if (newer.flag === ERROR) {
-			 				create(node, parent, sibling, action, host, xmlns);
-			 				assign(newer, node, newer.group === 0);
-			 				return;
-			 			}
-	
-			 			newer.node = node;
+			 			node = createElement(tag, newer, host, xmlns);
 					}
 				}
+	
+				// error
+				if (newer.flag === ERROR) {
+					create(node, parent, sibling, action, host, xmlns);
+					assign(newer, node, newer.group === 0);
+					return;
+				}
+	
+				newer.node = node;
 	
 	 			if (length > 0) {
 	 				for (var i = 0; i < length; i++) {
@@ -1342,7 +1373,7 @@
 				}
 				default: {
 					if (older === null || newer.next === void 0) {
-						return text(' ');
+						return newer.ELEMENT_NODE === 1 ? element(newer) : text(' ');
 					}
 	
 					newer = coroutine(older, newer);
@@ -2087,12 +2118,12 @@
 	}
 	
 	/**
-	 * Generate
+	 * Create
 	 *
-	 * @param  {String} tag
-	 * @param  {Tree} newer
-	 * @param  {Tree} host
-	 * @param  {String?} xmlns
+	 * @param {String} tag
+	 * @param {Tree} newer
+	 * @param {Tree} host
+	 * @param {String?} xmlns
 	 * @return {Node}
 	 */
 	function createElement (tag, newer, host, xmlns) {
@@ -2108,7 +2139,22 @@
 	}
 	
 	/**
-	 * Compose
+	 * Custom
+	 * 
+	 * @param {Tree} newer
+	 * @param {Tree} host
+	 * @return {Node}
+	 */
+	function createCustomElement (newer, host) {
+		try {
+			return new newer.tag(newer.props);
+		} catch (err) {
+			return errorBoundary(err, host, host.owner, (newer.flag = ERROR, 3), 0);
+		}
+	}
+	
+	/**
+	 * Text
 	 *
 	 * @param {(String|Number)} value
 	 * @return {Node}
@@ -2500,7 +2546,7 @@
 	 * @type {Object}
 	 */
 	var dio = {
-		version: '7.0.0',
+		version: '7.0.2',
 		h: element,
 		createElement: element,
 		render: render,

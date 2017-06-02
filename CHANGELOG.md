@@ -1,3 +1,9 @@
+## 7.0.2 (02 June 2016)
+
+- patch compatibility with "Web Components" classes
+- patch mounting portals
+- patch clone element
+
 ## 7.0.1 (26 May 2016)
 
 - patch compatibility with webpack

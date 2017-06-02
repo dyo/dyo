@@ -127,7 +127,7 @@ function* Welcome () {
 
 		<p>
 			Both <code>function</code> and <code>class</code> components can make use of lifcycles <label for=1></label>.
-			<span class="note">
+			<span class=note>
 				With the exception of <code>`getInitialState`</code> that is reserved soley for <code>`class`</code> components; Useful when setting the initial state of a component is a requirement.
 			</span>
 		</p>
@@ -138,7 +138,7 @@ function* Welcome () {
 
 		<p>
 			The default return value that <code>`getInitialState`</code> expects is an object representing the initial state of the component; However <code>`getInitialState`</code> also accepts a <code>`Promise`</code> when the data the component requires is network bound <label for=2></label>.
-			<span class="note">That is to say you can asynchronous-ly retrieve a components initial state.</span>
+			<span class=note>That is to say you can asynchronous-ly retrieve a components initial state.</span>
 		</p>
 
 <pre><code>
@@ -152,7 +152,7 @@ class Welcome {
 		<p>
 			Refs are either functions of strings that provide access to the underlining DOM node; While <code>string</code>
 			<label for=3></label>
-			<span class="note">String refs are only usefull on <code>class</code> based components.</span>
+			<span class=note>String refs are only usefull on <code>class</code> based components.</span>
 			refs can be dynamic, <code>function</code>
 			refs can also return or call <code>`this.setState`</code> to update the component.</p>
 
@@ -292,7 +292,7 @@ class Welcome {
 
 		<p>
 		The first argument is the virtual element <label for=4></label>
-		<span class="note">This includes strings, numbers, functions, null, and virtual elements.</span>
+		<span class=note>This includes strings, numbers, functions, null, and virtual elements.</span>
 		you want to render, the second is the root DOM node you want render to. There is an optional third argument that doubles as a callback function when a function is passed or a server-side rendered node for hydration.
 		</p>
 
@@ -465,7 +465,7 @@ class Welcome {
 
 		<h2 id=coroutine>Coroutine</h2>
 
-		<p>In other words JavaScript <code>`generators`</code><label for=7></label><span class="note">A generator is a special type of function that works as a factory for iterators. A function becomes a generator if it contains one or more yield expressions and if it uses the <code>`function*`</code> syntax.</span>; The example that follows will continue to return a button and increment the <code>`supply`</code> variable whenever an update is invoked through a <code>`click`</code> of the button element.</p>
+		<p>In other words JavaScript <code>`generators`</code><label for=7></label><span class=note>A generator is a special type of function that works as a factory for iterators. A function becomes a generator if it contains one or more yield expressions and if it uses the <code>`function*`</code> syntax.</span>; The example that follows will continue to return a button and increment the <code>`supply`</code> variable whenever an update is invoked through a <code>`click`</code> of the button element.</p>
 
 		<p>Though generators are not a well known/used feature in JavaScript they do introduce interesting ways to model behaviour beyond normal functons.</p>
 
@@ -487,7 +487,7 @@ class Coroutine {
 
 		<p>There is no specialized API for animations in DIO, however the mount lifecycles methods have been designed with animations in mind.</p>
 
-		<p>Making use of the <code>`componentWillUnmount`</code> lifecycle return signature and <code>`componentDidMount`</code> we can animate any component; For example, using the new <a href=https://developer.mozilla.org/en-US/docs/Web/API/Element/animate>Element.animate</a><label for=8></label><span class="note">The Web Animations API opens the browser’s animation engine to developers and manipulation by JavaScript. This API was designed to underlie implementations of both CSS Animations and CSS Transitions, and leaves the door open to future animation effects. It is one of the most performant ways to animate on the Web where supported, letting the browser make its own internal optimizations without hacks, coercion, or Window.requestAnimationFrame(). <a href=https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API>Using the Web Animations API.</a></span> API:</p>
+		<p>Making use of the <code>`componentWillUnmount`</code> lifecycle return signature and <code>`componentDidMount`</code> we can animate any component; For example, using the new <a href=https://developer.mozilla.org/en-US/docs/Web/API/Element/animate>Element.animate</a><label for=8></label><span class=note>The Web Animations API opens the browser’s animation engine to developers and manipulation by JavaScript. This API was designed to underlie implementations of both CSS Animations and CSS Transitions, and leaves the door open to future animation effects. It is one of the most performant ways to animate on the Web where supported, letting the browser make its own internal optimizations without hacks, coercion, or Window.requestAnimationFrame(). <a href=https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API>Using the Web Animations API.</a></span> API:</p>
 
 <pre><code>
 const animations = {
