@@ -20,10 +20,7 @@ function render (subject, container, callback) {
 		// uses <body> if it exists at this point
 		// else default to the root <html> node
 		if (body === null && (body = documentElement()) === null) {
-			switch (server) {
-				case true: return newer.toString();
-				case false: return;
-			}
+			return server === true ? newer.toString() : void 0;
 		}
 
 		target = body;

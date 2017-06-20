@@ -11,7 +11,7 @@ function Component (props) {
 
 	// props
 	if (this.props === void 0) {
-		this.props = (props === PROPS || props === void 0 || props === null) ? {} : props;
+		this.props = (props !== void 0 && props !== null) ? props : PROPS;
 	}
 
 	// state
@@ -23,7 +23,7 @@ function Component (props) {
 }
 
 /**
- * Component Prototype
+ * Prototype
  *
  * @type {Object}
  */
@@ -37,7 +37,7 @@ Component.prototype = Object.create(null, ComponentPrototype);
 ComponentPrototype.UUID.value = 1;
 
 /**
- * Extend Class
+ * Extend
  *
  * @param {Function} type
  * @param {Object} prototype
@@ -93,7 +93,7 @@ function setState (state, callback) {
 				owner._state = newState;
 			}
 
-			this.forceUpdate(callback);
+			commitUpdate(callback, this, NOOP)
 		}
 	}
 }
@@ -104,19 +104,28 @@ function setState (state, callback) {
  * @param {Function?} callback
  */
 function forceUpdate (callback) {
-	var owner = this;
+	commitUpdate(callback, this, FORCE);
+}
+
+/**
+ * commitUpdate
+ * 
+ * @param {Function?} callback
+ * @param {Component} owner
+ * @param {Number} group
+ */
+function commitUpdate (callback, owner, group) {
 	var older = owner.this;
 
-	if (older === null || older.node === null || older.async !== READY) {
-		// processed
-		if (older.async === PROCESSED) {
-			// process this update in the next frame
-			return void requestAnimationFrame(function () {
-				owner.forceUpdate(callback);
-			});
-		}
+	if (older === null || older.node === null) {
+		return;
+	} else if (older.async !== READY) {
+		// process this update in the next frame
+		return void requestAnimationFrame(function () {
+			owner.forceUpdate(callback);
+		});
 	} else {
-		patch(older, older, NOOP);
+		patch(older, older, group);
 	}
 
 	if (callback !== void 0 && callback !== null && callback.constructor === Function) {
@@ -131,7 +140,7 @@ function forceUpdate (callback) {
 }
 
 /**
- * Update State
+ * updateState
  *
  * @param {Object} oldState
  * @param {Object} newState
@@ -143,7 +152,7 @@ function updateState (oldState, newState) {
 }
 
 /**
- * Get Initial State
+ * initialState
  *
  * @param {Tree} older
  * @param {Object} state
@@ -171,7 +180,7 @@ function getInitialState (older, state) {
 }
 
 /**
- * Get Initial Static
+ * initialStatic
  *
  * @param  {Function} owner
  * @param  {Function} func

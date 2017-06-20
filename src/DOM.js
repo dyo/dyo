@@ -140,7 +140,7 @@ function setAttribute (type, name, value, xmlns, set, node) {
 			if (xmlns === null && (name in node) === true) {
 				setUnknown(name, value, node);
 			} else if (set === true) {
-				node.setAttribute(name, (value === true ? '' : value));
+				node.setAttribute(name, value);
 			} else {
 				node.removeAttribute(name);
 			}

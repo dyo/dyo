@@ -24,6 +24,7 @@ var STRING = 0;
 var FUNCTION = 1;
 var CLASS = 2;
 var NOOP = 3;
+var FORCE = 4;
 
 var EMPTY = 0;
 var TEXT = 1;

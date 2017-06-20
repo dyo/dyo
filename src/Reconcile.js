@@ -37,7 +37,7 @@ function patch (older, _newer, group) {
 			newState = newProps;
 		}
 
-		if (group !== NOOP) {
+		if (group < NOOP) {
 			if (type.propTypes !== void 0) {
 				propTypes(owner, type, newProps);
 			}
@@ -52,6 +52,7 @@ function patch (older, _newer, group) {
 		}
 
 		if (
+			group !== FORCE &&
 			owner.shouldComponentUpdate !== void 0 &&
 			updateBoundary(older, owner, 0, newProps, newState) === false
 		) {
@@ -59,7 +60,7 @@ function patch (older, _newer, group) {
 			return;
 		}
 
-		if (group < 3) {
+		if (group < NOOP) {
 			if (group === CLASS) {
 				owner.props = newProps;
 			}
@@ -111,12 +112,6 @@ function patch (older, _newer, group) {
 				var newLength = newer.children.length;
 
 				/**
-				 * In theory switch(int * int)
-				 *
-				 * should be faster than
-				 *
-				 * if (int === x && int === y, ...condtions)
-				 *
 				 * when int * 0 === 0,
 				 * if oldLength is not zero then newLength is.
 				 */

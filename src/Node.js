@@ -172,7 +172,9 @@ function extract (older, abstract) {
 		var owner;
 
 		if (UUID === 2) {
-			owner = new type(props);
+			if ((owner = new type(props)).props === PROPS) {
+				owner.props = props
+			}
 		} else {
 			if (UUID !== 1) {
 				extendClass(type, proto);

@@ -1,4 +1,4 @@
-module.exports = ({h, render}) => {
+module.exports = ({h, render, Component}) => {
 	test('Lifecycle', ({ok, end}) => {
 		var container = document.createElement('div');
 
@@ -79,6 +79,36 @@ module.exports = ({h, render}) => {
 		render(B, container);
 
 		ok(mounts.join('') === '123', 'setState')
+
+		end();
+	});
+
+	test('Props', ({ok, end}) => {
+		var container = document.createElement('div');
+
+		class A extends Component {
+			constructor() {
+				super()
+			}
+			render() {
+				return h('h1', this.props.value)
+			}
+		}
+
+		class B extends Component {
+			constructor(props) {
+				super(props)
+			}
+			render() {
+				return h('h1', this.props.value)
+			}
+		}
+
+		render(h(A, {value: 'Hello'}), container)
+		ok(container.innerHTML === '<h1>Hello</h1>', 'pass props without super(props)')
+
+		render(h(B, {value: 'Hello'}), container)
+		ok(container.innerHTML === '<h1>Hello</h1>', 'pass props with super(props)')
 
 		end();
 	});

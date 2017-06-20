@@ -45,6 +45,7 @@
 	var FUNCTION = 1;
 	var CLASS = 2;
 	var NOOP = 3;
+	var FORCE = 4;
 	
 	var EMPTY = 0;
 	var TEXT = 1;
@@ -107,7 +108,7 @@
 	
 		// props
 		if (this.props === void 0) {
-			this.props = (props === PROPS || props === void 0 || props === null) ? {} : props;
+			this.props = (props !== void 0 && props !== null) ? props : PROPS;
 		}
 	
 		// state
@@ -119,7 +120,7 @@
 	}
 	
 	/**
-	 * Component Prototype
+	 * Prototype
 	 *
 	 * @type {Object}
 	 */
@@ -133,7 +134,7 @@
 	ComponentPrototype.UUID.value = 1;
 	
 	/**
-	 * Extend Class
+	 * Extend
 	 *
 	 * @param {Function} type
 	 * @param {Object} prototype
@@ -189,7 +190,7 @@
 					owner._state = newState;
 				}
 	
-				this.forceUpdate(callback);
+				commitUpdate(callback, this, NOOP)
 			}
 		}
 	}
@@ -200,19 +201,28 @@
 	 * @param {Function?} callback
 	 */
 	function forceUpdate (callback) {
-		var owner = this;
+		commitUpdate(callback, this, FORCE);
+	}
+	
+	/**
+	 * commitUpdate
+	 * 
+	 * @param {Function?} callback
+	 * @param {Component} owner
+	 * @param {Number} group
+	 */
+	function commitUpdate (callback, owner, group) {
 		var older = owner.this;
 	
-		if (older === null || older.node === null || older.async !== READY) {
-			// processed
-			if (older.async === PROCESSED) {
-				// process this update in the next frame
-				return void requestAnimationFrame(function () {
-					owner.forceUpdate(callback);
-				});
-			}
+		if (older === null || older.node === null) {
+			return;
+		} else if (older.async !== READY) {
+			// process this update in the next frame
+			return void requestAnimationFrame(function () {
+				owner.forceUpdate(callback);
+			});
 		} else {
-			patch(older, older, NOOP);
+			patch(older, older, group);
 		}
 	
 		if (callback !== void 0 && callback !== null && callback.constructor === Function) {
@@ -227,7 +237,7 @@
 	}
 	
 	/**
-	 * Update State
+	 * updateState
 	 *
 	 * @param {Object} oldState
 	 * @param {Object} newState
@@ -239,7 +249,7 @@
 	}
 	
 	/**
-	 * Get Initial State
+	 * initialState
 	 *
 	 * @param {Tree} older
 	 * @param {Object} state
@@ -267,7 +277,7 @@
 	}
 	
 	/**
-	 * Get Initial Static
+	 * initialStatic
 	 *
 	 * @param  {Function} owner
 	 * @param  {Function} func
@@ -1281,7 +1291,9 @@
 			var owner;
 	
 			if (UUID === 2) {
-				owner = new type(props);
+				if ((owner = new type(props)).props === PROPS) {
+					owner.props = props
+				}
 			} else {
 				if (UUID !== 1) {
 					extendClass(type, proto);
@@ -1626,10 +1638,7 @@
 			// uses <body> if it exists at this point
 			// else default to the root <html> node
 			if (body === null && (body = documentElement()) === null) {
-				switch (server) {
-					case true: return newer.toString();
-					case false: return;
-				}
+				return server === true ? newer.toString() : void 0;
 			}
 	
 			target = body;
@@ -1700,7 +1709,7 @@
 				newState = newProps;
 			}
 	
-			if (group !== NOOP) {
+			if (group < NOOP) {
 				if (type.propTypes !== void 0) {
 					propTypes(owner, type, newProps);
 				}
@@ -1715,6 +1724,7 @@
 			}
 	
 			if (
+				group !== FORCE &&
 				owner.shouldComponentUpdate !== void 0 &&
 				updateBoundary(older, owner, 0, newProps, newState) === false
 			) {
@@ -1722,7 +1732,7 @@
 				return;
 			}
 	
-			if (group < 3) {
+			if (group < NOOP) {
 				if (group === CLASS) {
 					owner.props = newProps;
 				}
@@ -1774,12 +1784,6 @@
 					var newLength = newer.children.length;
 	
 					/**
-					 * In theory switch(int * int)
-					 *
-					 * should be faster than
-					 *
-					 * if (int === x && int === y, ...condtions)
-					 *
 					 * when int * 0 === 0,
 					 * if oldLength is not zero then newLength is.
 					 */
@@ -2259,7 +2263,7 @@
 				if (xmlns === null && (name in node) === true) {
 					setUnknown(name, value, node);
 				} else if (set === true) {
-					node.setAttribute(name, (value === true ? '' : value));
+					node.setAttribute(name, value);
 				} else {
 					node.removeAttribute(name);
 				}

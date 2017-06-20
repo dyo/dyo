@@ -1,3 +1,9 @@
+## 7.0.4 (21 June 2016)
+
+- bypass `shouldComponentUpdate` when coming from `forceUpdate`.
+- patch `Components` to not require passing props to `super()`.
+- patch missing value in `DOM` attributes that use the primitve `true` value.
+
 ## 7.0.3 (02 June 2016)
 
 - handle invalid values for `style` prop
