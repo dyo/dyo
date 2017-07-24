@@ -3,7 +3,7 @@
 	"main": "dio.js",
 	"types": "dio.d.ts",
 	"description": "a library for building user interfaces",
-	"version": "7.0.4",
+	"version": "7.1.0",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",
 	"author": {

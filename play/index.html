@@ -330,9 +330,9 @@
 			// }
 		// })
 
-		const select = h('select', {value: ''},
-			h('option', {value: ''}, 'a')
-		)
+		// const select = h('select', {value: ''},
+		// 	h('option', {value: ''}, 'a')
+		// )
 
 		var style = true;
 
@@ -358,467 +358,44 @@
 	</script>
 
 	<script>
-		let counter = 0, activeAutocomplete = {}, styleElement
-
-		const datasetProp = cn('data')
-
-		function dataset(input){
-		  return input[datasetProp] || (input[datasetProp] = {})
-		}
-
-		function setupAutocomplete(input, options = {}) {
-		  if (dataset(input).initialized === true) return // already set up
-		  const button = input.nextElementSibling
-		  if (button && button.nodeName.toLowerCase() === 'button') {
-		    dataset(button).input = input
-		    dataset(input).button = button
-		  }
-		  const { value, setValue } = dataset(input)
-		  input[datasetProp] = {
-		    initialized: true, value, setValue,
-		    dataSource: options.dataSource,
-		    destroy: destroyAutocomplete.bind(input),
-		  }
-		  if (options.focus) { input.focus(); onDocumentFocus({ target: input }) }
-		  findOrCreateStyles()
-		  if (counter++ !== 0) return
-		  addEventListener('click', onDocumentClick)
-		  addEventListener('focus', onDocumentFocus, true)
-		  addEventListener('keydown', onDocumentKeyDown)
-		  addEventListener('input', onDocumentInput)
-		}
-
-		function addEventListener(type, handler, bubble, element) {
-		  (element || document).addEventListener(type, handler, bubble)
-		}
-
-		function removeEventListener(type, handler, element) {
-		  (element || document).removeEventListener(type, handler)
-		}
-
-		function destroyAutocomplete() {
-		  delete this[datasetProp]
-		  removeStyleElement()
-		  if (--counter !== 0) return
-		  removeEventListener('click', onDocumentClick)
-		  removeEventListener('focus', onDocumentFocus, true)
-		  removeEventListener('keydown', onDocumentKeyDown)
-		  removeEventListener('input', onDocumentInput)
-		}
-
-		var baseClassName = 'autocomplete-' + `${performance.now()}`.replace('.', '')
-
-		function cn(className, baseName){ return (baseName || baseClassName) + '-' + className }
-
-		function isClass(element, className){ return element.className === cn(className) }
-		let stylesCount = 0
-		const containerClassName = cn('container'),
-		  menuClassName = cn('menu'),
-		  menuItemClassName = cn('menu-item'),
-		  checkboxClassName = cn('checkbox')
-		function findOrCreateStyles() {
-		  if (stylesCount++ !== 0) return styleElement
-		  styleElement = createElement('style')
-		  /*  .${containerClassName} .${menuItemClassName}:hover { text-decoration: underline; } */
-		  styleElement.innerHTML = `
-		    .${containerClassName} { position: relative; width: 220px; padding: 0; }
-		    .${containerClassName} .${menuItemClassName} { list-style: none }
-		    .${containerClassName} .${menuItemClassName}.hover { text-decoration: underline; }
-		    .${containerClassName} > button { width: 20px; margin: 0; padding-left: 2px; }
-		    .${containerClassName} > input { width: 200px; margin: 0; }
-		    .${containerClassName} .${menuClassName} {
-		      position: absolute; z-index: 1000; background-color: white;
-		      margin: 0; padding: 0; border: solid 1px black; max-height: 60px; overflow: auto;
-		      width: 198px;
-		    }
-		  `
-		  append(document.head, styleElement)
-		  return styleElement
-		}
-
-		function append(parent, ...children) { parent.append(...children) }
-
-		function createElement(element) { return document.createElement(element) }
-
-		function removeStyleElement() {
-		  if (--stylesCount !== 0) return
-		  styleElement.remove()
-		  styleElement = null
-		}
-
-		function onDocumentClick(ev) {
-		  if (ev.target === activeAutocomplete.input) return
-		  const input = dataset(ev.target).input
-		  if (input === undefined) closeAutocomplete()
-		  stopPropagation(ev)
-		  if (activeAutocomplete.input === input) closeAutocomplete()
-		  else openAutocomplete(input)
-		}
-
-		function closeAutocomplete(ignoreChange) {
-		  if (!activeAutocomplete.input) return
-		  //console.log('closed autocomplete', activeAutocomplete.input)
-		  previousHover = null
-		  activeAutocomplete.menu.remove()
-		  delete activeAutocomplete.menu
-		  delete activeAutocomplete.input
-		}
-
-		function onDocumentFocus(ev) {
-		  if (ev.target.className === checkboxClassName) return
-		  if (activeAutocomplete.input && activeAutocomplete.input !== ev.target &&
-		      dataset(ev.target).input !== activeAutocomplete.input)
-		    closeAutocomplete()
-		}
-
-		function openAutocomplete(input) {
-		  if (activeAutocomplete.input === input) return
-		  closeAutocomplete()
-		  activeAutocomplete.input = input
-		  const menu = activeAutocomplete.menu = createElement('div')
-		  menu.hidden = true
-		  menu.className = menuClassName
-		  addEventListener('click', stopPropagation, false, menu)
-		  addEventListener('mouseover', onMenuMouseOver, false, menu)
-		  let container = input.parentElement
-		  while (container.className !== containerClassName) container = container.parentElement
-		  container.insertBefore(menu, container.children[1])
-		  addMenuItems(input, menu, dataset(input))
-		}
-
-		function stopPropagation(ev){ ev.stopPropagation() }
-
-		function onMenuMouseOver(ev){
-		  if (ev.target.className.indexOf(menuItemClassName) === -1) return
-		  hoverItem(ev.target)
-		}
-
-		let previousHover
-		function hoverItem(item) {
-		  if (previousHover) previousHover.className = menuItemClassName
-		  previousHover = item
-		  previousHover.className += ' hover'
-		  const menu = activeAutocomplete.menu
-		  if ((menu.scrollTop + menu.clientHeight < item.offsetTop + item.clientHeight) ||
-		      menu.scrollTop > item.offsetTop)
-		    menu.scrollTop = item.offsetTop - item.clientHeight
-		}
-
-		function addMenuItems(input, menu, dataset) {
-		  const term = input.value
-		  if (typeof dataset.dataSource === 'function') {
-		    dataset.promise =
-		      dataset.dataSource(term, doAddMenuItems.bind(undefined, input, menu), dataset.promise)
-		    return
-		  }
-		  const regex = new RegExp(term, 'i')
-		  const keyBased = input.dataset.keyBased
-		  let items = dataset.dataSource.filter( item => regex.test( keyBased ? item.label : item ) )
-		  doAddMenuItems(input, menu, items)
-		}
-
-		function doAddMenuItems(input, menu, items) {
-		  const ds2 = dataset(input)
-		  delete ds2.promise
-		  menu.innerHTML = ''
-		  if (items.length === 0) return
-		  menu.hidden = false
-		  const ds = input.dataset
-		  const keyBased = ds.keyBased
-		  const multiple = ds.multiple
-		  const term = input.value
-		  const value = ds2.value
-		  if (multiple)
-		    var checkedItem = function(item){ return value.indexOf(keyBased ? item.id : item) !== -1 }
-		  for (let i in items) { // TODO: only show visible items
-		    const element = createElement('div')
-		    element.className = menuItemClassName
-		    const item = items[i]
-		    const itemLabel = highlightLabel(keyBased ? item.label : item, term)
-		    if (multiple) {
-		      const label = createElement('label')
-		      append(element, label)
-		      append(label, ...itemLabel)
-		      const checkbox = createElement('input')
-		      checkbox.type = 'checkbox'
-		      checkbox.className = checkboxClassName
-		      dataset(checkbox).value = keyBased ? item.id : item
-		      checkbox.onclick = onCheckboxClick
-		      if (value && checkedItem(item)) checkbox.checked = true
-		      label.prepend(checkbox)
-		    } else append(element, ...itemLabel)
-		    dataset(element).item = item
-		    append(menu, element)
-		  }
-		}
-
-		function onCheckboxClick(ev) { onCheckboxChange(ev.target) }
-
-		function onCheckboxChange(checkbox) {
-		  const itemValue = dataset(checkbox).value
-		  const ds = dataset(activeAutocomplete.input)
-		  const values = ds.value
-		  const i = values.indexOf(itemValue)
-		  if (checkbox.checked && i === -1) values.push(itemValue)
-		  else if (!checkbox.checkbox && i !== -1) values.splice(i, 1)
-		  ds.setValue(values)
-		}
-
-		function highlightLabel(label, term) {
-		  if (!term) return [ createTextNode(label) ]
-		  const matches = label.match(new RegExp(term, 'gi'))
-		  let left, right = label
-		  const result = []
-		  for (let i in matches) {
-		    const m = matches[i]
-		    ;[ left, right ] = right.split(m, 2)
-		    const hl = createElement('b')
-		    hl.innerText = m
-		    result.push(createTextNode(left), hl)
-		    if (!right) return result
-		  }
-		  result.push(createTextNode(right))
-		  return result
-		}
-
-		const createTextNode = document.createTextNode.bind(document)
-
-		function onDocumentKeyDown(ev) {
-		  if (dataset(ev.target).initialized === true &&
-		      !activeAutocomplete.input && ev.keyCode === 40) { // down arrow
-		    openAutocomplete(ev.target)
-		    return
-		  }
-		  if (!activeAutocomplete.input) return
-		  let el
-		  switch(ev.keyCode) {
-		    case 27: // Esc
-		      closeAutocomplete()
-		      break;
-		    case 40: // Down
-		      if (!previousHover) { hoverItem(activeAutocomplete.menu.children[0]); break }
-		      if (el = previousHover.nextElementSibling) hoverItem(el)
-		      break
-		    case 38: // Up
-		      if (!previousHover) { hoverItem(activeAutocomplete.menu.children[0]); break }
-		      if (el = previousHover.previousElementSibling) hoverItem(el)
-		      break
-		    case 13: // Enter
-		      if (!previousHover) break
-		      const checkbox = previousHover.querySelector('[type=checkbox]')
-		      if (!checkbox) break
-		      checkbox.checked = !checkbox.checked
-		      onCheckboxChange(checkbox)
-		      break
-		    default:
-		      return
-		  }
-		  ev.preventDefault()
-		}
-
-		function onDocumentInput(ev) {
-		  const input = ev.target, ds = dataset(input)
-		  if (ds.initialized !== true) return
-		  if (activeAutocomplete.input !== input) {
-		    openAutocomplete(input)
-		    return
-		  }
-		  const menu = activeAutocomplete.menu
-		  addMenuItems(input, menu, ds)
-		}
-	</script>
-
-	<script>
-		let added = false
-		document.body.innerHTML = '<div id=mount>'
-
-		/*
-		class Root extends Component {
-		  render() {
-		    return <Another name='Hello' />
-		  }
-		}
-
-		class Another extends Component {
-		  render() {
-		    return <h1>{this.props.name}</h1>
-		  }
-		}
-		render(<Root />, document.getElementById('mount'))
-		*/
-
-		function renderTree() {
-		  dio.render(h(Tree), document.getElementById('mount'))
-		  if (added) return
-		  added = true
-		  const button = document.createElement('button')
-		  button.onclick = renderTree
-		  button.innerText = 'Mount'
-		  document.body.prepend(button)
-		}
-
-		function unmount(){ render(null, document.getElementById('mount')) }
-
-		const autocompleteGenreOptions = [ 'Choro', 'Samba', 'Bossa-Nova', 'Jazz', 'Rock', 'Blues', 'Bip & Bop' ]. 
-		// test proper escap of &
-		map((l, i) => ({ id: i, label: l }))
-		
-		const autocompleteLanguageOptions = [ 'Ruby', 'TypeScript', 'JavaScript', 'Java', 'CoffeeScript' ]
-
-		function setLanguageOptions(term, openAutocomplete, timeout) {
-		  if (timeout) 
-		  	clearTimeout(timeout)
-
-		  return setTimeout(function(){
-		    const regex = new RegExp(term, 'i')
-		    openAutocomplete(autocompleteLanguageOptions.filter(l => regex.test(l)))
-		  }, 1000)
-		}
-
-		const manyOptions = []
-
-		for (let i = 0; i <= 10000; i++) 
-			manyOptions.push(`Option ${i}`)
-
-		class Tree extends dio.Component {
-		  componentWillMount() { findOrCreateStyles() }
-		  componentWillUnmount() { removeStyleElement() }
-
-		  render() {
-		    const extra = []
-
-		    if (false)
-		    	0
-			    // for (let i = 0; i < 50; i++) 
-			    // 	extra.push(h('div', 'Music:', 
-			    // 		h(Autocomplete, {key: i, type: 'music-genre', multiple: true, keyBased: true})
-		    	// 	))
-
-		    return h('div', {style: {height: '300px', overflowY: 'auto'}}, 
-		    	h('button', {onClick: unmount}, 'Unmount'),
-		    	h('div', 
-		    		'Language:', h(Autocomplete, {type: 'language', value: ['r', 'Java']})
-	    		),
-		    	h('div', 
-		    		'Single Language:', 
-		    		// h(Autocomplete, {type: 'language', value: 'Ruby'})
-		    	),
-		    	h('div', 
-		    		'Many options', 
-		    		// h(Autocomplete, {type: 'many-options'})
-	    		),
-		    	// h('input', {type: 'text'}),
-		    	extra
-		    )
-		  }
-		}
-
-		let count = 0;
-
-		class Autocomplete extends dio.Component {
-		  constructor(props) {
-		    super(props)
-		    this.state = {value: ''}
-		  }
-
-		  componentWillMount() {
-		    this.setState({ value: this.props.value })
-		  }
-
-		  componentDidMount() {
-		    if (count++ !== 0) 
-		    	return
-		    
-		    document.addEventListener('focus', onDocumentFocus, true)
-		  }
-
-		  componentWillUnmount() {
-		    if (--count !== 0) 
-		    	return
-		    
-		    document.removeEventListener('focus', onDocumentFocus)
-		    const destroy = dataset(this.inputValue).destroy
-		    
-		    if (destroy) 
-		    	destroy()
-		  }
-
-		  render() {
-		    console.log(this.props)
-
-				const button = this.props.noButton ? '' : h('button', {tabindex: -1, 'data-autocomplete-role': 'button'}, '&#9660;')
-
-		    let inputValue = '', valuesDescription = '', value = this.state.value
-
-		    if (!this.props.multiple)
-		      inputValue = (this.props.keyBased ? (value || {}).label : value) || ''
-
-		    if (this.props.multiple && (value || []).length)
-		      valuesDescription = (this.props.keyBased ? value.map(v => v.label) : value).join(', ')
-
-		    return h('div', {className: cn('container')}, 
-		    	h('span', {style: {whiteSpace: 'no-wrap'}},
-		    		h('input', {
-			    			value: inputValue, 
-			    			type: 'text', 'data-autocomplete-role': 'input',
-			    			'data-type': this.props.type,
-			    			'data-multiple': this.props.multiple,
-			    			'data-key-based': this.props.keyBased,
-			    			ref: this.setInputRef.bind(this)
-			    		},
-			    		button
-		    		),
-		    		h('div', valuesDescription)
-	    		)
-	    	)
-		  }
-
-		  setInputRef(element) {
-		    console.log('set ref')
-		    
-		    if (element === null) 
-		    	return
-		    
-		    this.inputValue = element
-		    
-		    const ds = dataset(element)
-		    
-		    ds.value = this.state.value
-		    
-		    ds.setValue = (value) => {
-		      dataset(this.inputValue).value = value
-		      this.setState({ value })
-		    }
-		  }
-		}
-
-		const dataSourceByType = {
-		  'music-genre': autocompleteGenreOptions,
-		  language: setLanguageOptions,
-		  'many-options': manyOptions,
-		}
-
-		function onDocumentFocus(ev) {
-		  let input = ev.target, dataset = input.dataset
-		  const role = dataset.autocompleteRole
-		  if (role !== 'input' && role !== 'button') return
-		  if (role === 'button') {
-		    input = ev.target.previousElementSibling
-		    dataset = input.dataset
-		  }
-		  const dataSource = dataSourceByType[dataset.type]
-		  setupAutocomplete(input, { focus: true, dataSource })
-		}
-
-		// renderTree()
 
 class Test {
+	componentWillMount(node) {
+		console.log(node)
+	}
 	render() {
-		return h('div', {test: false}, this.props.name)
+		return h('div', 'Test - ', performance.now())
 	}
 }
 
-dio.render(h(Test, {name: 'Hi'}))
-	</script>
+const AsyncLoadTest = new Promise ((resolve) => setTimeout(resolve, 500, h(Test)))
+
+var state = 0
+
+class Test2 {
+	render () {
+		return h('div', 'Test2 - ', performance.now())
+	}
+}
+
+// async render a module, show loading message while downloading
+class Load {
+	render() {
+		return state++ === 0 ? h(Test) : h(Test2)
+		return h(Test)
+		return h(AsyncLoadTest, {
+				style: 'background:red;'
+			}, h('h1', 'Loading...'), 'Text element.'
+		)
+	}
+}
+
+// dio.render(h(Test, {name: 'Hi'}))
+dio.render(Load)
+
+setTimeout(() => {
+	dio.render(Load)
+}, 2000)
+</script>
 </body>
 </html>

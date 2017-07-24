@@ -1,3 +1,8 @@
+## 7.1.0 (24 July 2016)
+
+- Allow lazy loading primitive to render while loading module.
+- Improve Promise return types.
+
 ## 7.0.4 (21 June 2016)
 
 - bypass `shouldComponentUpdate` when coming from `forceUpdate`.

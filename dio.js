@@ -375,11 +375,21 @@
 		}
 	
 		switch (type.constructor) {
+			// fragment
+			case Array: {
+				return fragment(type);
+			}
+			// import
+			case Promise: {
+				newer.tag = 'div';
+				newer.attrs = attrs;
+				newer.flag = FRAGMENT;
+				break;
+			}
 			// node
 			case String: {
 				newer.tag = type;
 				newer.attrs = attrs;
-	
 				break;
 			}
 			// component
@@ -487,7 +497,7 @@
 						value = ' ';
 					}
 				}
-				case Number:{
+				case Number: {
 					child = new Tree(TEXT);
 					child.type = child.tag = '#text';
 					child.children = value;
@@ -499,6 +509,7 @@
 					}
 					return i;
 				}
+				case Promise:
 				case Function: {
 					child = element(value);
 					break;
@@ -585,7 +596,7 @@
 	/**
 	 * Compose
 	 *
-	 * @param  {Tree} child
+	 * @param {Tree} child
 	 * @return {Tree}
 	 */
 	function compose (child) {
@@ -1352,43 +1363,57 @@
 	function shape (value, older, abstract) {
 		var newer = (value !== null && value !== void 0) ? value : text(' ');
 	
-		if (newer.group === void 0) {
-			switch (newer.constructor) {
-				case Function: {
-					newer = element(newer);
-					break;
-				}
-				case String: {
-					if (newer.length === 0) {
-						newer = ' ';
+		switch (newer.flag) {
+			case FRAGMENT: {
+				if (newer.type !== null) {
+					switch (newer.type.constructor) {
+						case Array: {
+							return fragment(newer)
+						}
+						case Promise: {
+							return (resolve(older, newer.type), newer)
+						}
 					}
 				}
-				case Number: {
-					return text(newer);
-				}
-				case Array: {
-					return fragment(newer);
-				}
-				case Date: {
-					return text(newer.toString());
-				}
-				case Object: {
-					return stringify(newer);
-				}
-				case Promise: {
-					if (older !== null && older.flag !== EMPTY) {
-						return resolve(older, newer);
+			}
+			case void 0: {
+				switch (newer.constructor) {
+					case Function: {
+						newer = element(newer);
+						break;
 					}
-				}
-				case Boolean: {
-					return text(' ');
-				}
-				default: {
-					if (older === null || newer.next === void 0) {
-						return newer.ELEMENT_NODE === 1 ? element(newer) : text(' ');
+					case String: {
+						if (newer.length === 0) {
+							newer = ' ';
+						}
 					}
+					case Number: {
+						return text(newer);
+					}
+					case Array: {
+						return fragment(newer);
+					}
+					case Date: {
+						return text(newer.toString());
+					}
+					case Object: {
+						return stringify(newer);
+					}
+					case Promise: {
+						if (older !== null && older.flag !== EMPTY) {
+							return resolve(older, newer, true);
+						}
+					}
+					case Boolean: {
+						return text(' ');
+					}
+					default: {
+						if (older === null || newer.next === void 0) {
+							return newer.ELEMENT_NODE === 1 ? element(newer) : text(' ');
+						}
 	
-					newer = coroutine(older, newer);
+						newer = coroutine(older, newer);
+					}
 				}
 			}
 		}
@@ -1404,28 +1429,29 @@
 	 * Resolve
 	 *
 	 * @param {Tree} older
-	 * @param {Promise} pending
+	 * @param {Promise} value
 	 */
-	function resolve (older, pending) {
+	function resolve (older, value) {
 		older.async = PENDING;
 	
-		pending.then(function (value) {
+		value.then(function (value) {		
 			if (older.node === null) {
 				return;
 			}
 	
-			older.async = READY;
-	
 			var newer = shape(value, older, true);
+	
+			older.async = READY;
 	
 			if (older.tag !== newer.tag) {
 				exchange(older, newer, false);
 			} else {
+				newer.type = older.type;
 				patch(older, newer, 0);
 			}
 		});
 	
-		return older.node !== null ? older : text(' ');
+		return older.node === null ? text(' ') : older
 	}
 	
 	/**
@@ -2553,7 +2579,7 @@
 	 * @type {Object}
 	 */
 	var dio = {
-		version: '7.0.4',
+		version: '7.1.0',
 		h: element,
 		createElement: element,
 		render: render,

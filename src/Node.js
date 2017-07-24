@@ -233,43 +233,57 @@ function extract (older, abstract) {
 function shape (value, older, abstract) {
 	var newer = (value !== null && value !== void 0) ? value : text(' ');
 
-	if (newer.group === void 0) {
-		switch (newer.constructor) {
-			case Function: {
-				newer = element(newer);
-				break;
-			}
-			case String: {
-				if (newer.length === 0) {
-					newer = ' ';
+	switch (newer.flag) {
+		case FRAGMENT: {
+			if (newer.type !== null) {
+				switch (newer.type.constructor) {
+					case Array: {
+						return fragment(newer)
+					}
+					case Promise: {
+						return (resolve(older, newer.type), newer)
+					}
 				}
 			}
-			case Number: {
-				return text(newer);
-			}
-			case Array: {
-				return fragment(newer);
-			}
-			case Date: {
-				return text(newer.toString());
-			}
-			case Object: {
-				return stringify(newer);
-			}
-			case Promise: {
-				if (older !== null && older.flag !== EMPTY) {
-					return resolve(older, newer);
+		}
+		case void 0: {
+			switch (newer.constructor) {
+				case Function: {
+					newer = element(newer);
+					break;
 				}
-			}
-			case Boolean: {
-				return text(' ');
-			}
-			default: {
-				if (older === null || newer.next === void 0) {
-					return newer.ELEMENT_NODE === 1 ? element(newer) : text(' ');
+				case String: {
+					if (newer.length === 0) {
+						newer = ' ';
+					}
 				}
+				case Number: {
+					return text(newer);
+				}
+				case Array: {
+					return fragment(newer);
+				}
+				case Date: {
+					return text(newer.toString());
+				}
+				case Object: {
+					return stringify(newer);
+				}
+				case Promise: {
+					if (older !== null && older.flag !== EMPTY) {
+						return resolve(older, newer, true);
+					}
+				}
+				case Boolean: {
+					return text(' ');
+				}
+				default: {
+					if (older === null || newer.next === void 0) {
+						return newer.ELEMENT_NODE === 1 ? element(newer) : text(' ');
+					}
 
-				newer = coroutine(older, newer);
+					newer = coroutine(older, newer);
+				}
 			}
 		}
 	}
@@ -285,28 +299,29 @@ function shape (value, older, abstract) {
  * Resolve
  *
  * @param {Tree} older
- * @param {Promise} pending
+ * @param {Promise} value
  */
-function resolve (older, pending) {
+function resolve (older, value) {
 	older.async = PENDING;
 
-	pending.then(function (value) {
+	value.then(function (value) {		
 		if (older.node === null) {
 			return;
 		}
 
-		older.async = READY;
-
 		var newer = shape(value, older, true);
+
+		older.async = READY;
 
 		if (older.tag !== newer.tag) {
 			exchange(older, newer, false);
 		} else {
+			newer.type = older.type;
 			patch(older, newer, 0);
 		}
 	});
 
-	return older.node !== null ? older : text(' ');
+	return older.node === null ? text(' ') : older
 }
 
 /**

@@ -51,11 +51,21 @@ function element (_type, _props) {
 	}
 
 	switch (type.constructor) {
+		// fragment
+		case Array: {
+			return fragment(type);
+		}
+		// import
+		case Promise: {
+			newer.tag = 'div';
+			newer.attrs = attrs;
+			newer.flag = FRAGMENT;
+			break;
+		}
 		// node
 		case String: {
 			newer.tag = type;
 			newer.attrs = attrs;
-
 			break;
 		}
 		// component
@@ -163,7 +173,7 @@ function push (newer, index, value) {
 					value = ' ';
 				}
 			}
-			case Number:{
+			case Number: {
 				child = new Tree(TEXT);
 				child.type = child.tag = '#text';
 				child.children = value;
@@ -175,6 +185,7 @@ function push (newer, index, value) {
 				}
 				return i;
 			}
+			case Promise:
 			case Function: {
 				child = element(value);
 				break;
@@ -261,7 +272,7 @@ function fragment (children) {
 /**
  * Compose
  *
- * @param  {Tree} child
+ * @param {Tree} child
  * @return {Tree}
  */
 function compose (child) {

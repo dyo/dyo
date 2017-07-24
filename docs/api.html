@@ -543,6 +543,35 @@ setTimeout(dio.render, 800, h(List, 1, 2, 3))
 			<li>This mounts a new instance of our <code>`Item`</code> component.</li>
 			<li>After <code>`800ms`</code> we remove one <code>`Item`</code> child from our <code>`List`</code> component, which in turn invokes our <code>fadeOut</code> animation in <code>`componentWillUnmount`</code>.</li>
 		</ol>
+
+		<h2 id=lazy-loading>Lazy Loading</h2>
+
+		<p>In large applications, bundles might become too big to send to the client in one chunk, this suggests the need to divide the app into smaller chunks and only load a component from the server when it is actually needed.</p>
+
+		<p>To make this task easier DIO allows a <code>Promise</code> return type from Components that you can use to control when a component renders, essentially baking the  
+		<a href="https://en.wikipedia.org/wiki/Lazy_loading">lazy loading</a><label for=9></label><span class="note">Lazy loading is a design pattern commonly used in computer programming to defer initialization of an object until the point at which it is needed. It can contribute to efficiency in the program's operation if properly and appropriately used.</span> design pattern into the component model.
+		</p>
+
+<pre><code>
+class Welcome {
+	render() {
+		return import('./welcome.js')
+	}
+}		
+</code></pre>
+
+		<p>As demonstrated above this allows us to lazy load components when we need them and as demontstrated below what to display before the requested module has been resolved.</p>
+
+<pre><code>
+class Welcome {
+	render() {
+		return h(import('./welcome.js'),
+			h('h1', 'Loading...')
+		)
+	}
+}		
+</code></pre>
+
 	</article>
 	<script src=js/highlight.js></script>
 	<script src=js/main.js></script>
