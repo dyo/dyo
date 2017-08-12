@@ -1,0 +1,252 @@
+<body>
+	<div id="root"></div>
+	<script src=dist/dio.umd.js></script>
+	<script>
+		const {h, render, Component} = dio
+
+		class ContextProvider extends Component {
+		  getChildContext() {
+		  	console.log(this)
+		    return {data: this.props.currentUser + ' - ' + performance.now()};
+		  }
+		  shouldComponentUpdate () {
+
+		  }
+		  // getInitialState() {
+		  	// console.log('getInitialState')
+		  	// return Promise.resolve({id: true})
+		  // }
+		  componentWillMount(node) {
+		  	// console.log('componentWillMount', node)
+		  }
+		  componentDidMount(node) {
+		  	// console.log('componentDidMount', node)
+		  }
+		  componentWillUpdate(node) {
+		  	// console.log('componentWillUpdate')
+		  }
+		  componentDidUpdate(node) {
+		  	// console.log('componentDidUpdate')
+		  }
+		  render() {
+		  	return h(ContextConsumer, this.props)
+		  }
+		}
+
+		var iterable = {
+			[Symbol.iterator]: function* () {
+			    yield 1
+			    yield 2
+			    yield 3
+			}
+		}
+
+		class ContextConsumer {
+		  render(props, state, context) {
+		  	return h(Foo, this.props)
+		  	// throw 'error'
+		  	// return h('h1', {id: 1, class: 1}, 'Hello')
+		  	// return h('h1', {tabIndex: 20})
+		  	// return h('svg', {width: 100, height: 100, innerHTML: '<text>hi<text>'})
+
+		  	// return h('img', {src: '', style: 'background:red', width: '400%', height: '400%'})
+		  	// return h('svg', {src: '', style: 'background:red', width: '400em', height: '400em'})
+		  	// return h('svg', {'xlink:href': 'hello'})
+		  	// return h('button', {
+		  	// 	onClick: (e) => {
+		  	// 		console.log(e)
+		  	// 	}
+		  	// }, 'Click Me')
+
+		  	// return new Date()
+		  	// return h(
+		  	// 	new Promise((resolve) => {
+		  	// 		setTimeout(resolve, 1000, 'Hello '+new Date() + ' - ' + counter++)
+		  	// 	}),
+		  	// 	'Loading...'
+		  	// )
+		  	// return Promise.resolve('Hello World')
+		  	// return function* () {
+		  	// 	yield 1
+		  	// 	yield 2
+		  	// }
+		  	// h('h1', iterable)  	
+		  	// return iterable
+
+		  	// return Promise.resolve(performance.now())
+		  	// return h(Promise.resolve(performance.now()))
+		  	// return h('h1', {color: 'red'}, 1, Promise.resolve(performance.now()))
+		  	return {props, state, context}
+		  }
+		}
+
+		const handleClick = function (event) {
+			return {name: 'handleClick', time: new Date}
+		}
+
+		const animation = {
+			fadeOut: [
+			  {transform: 'translateY(0)', opacity: 1},
+		  	{transform: 'translateY(-120%)', opacity: 0}
+		  ],
+		  fadeIn: [
+			  {transform: 'translateY(-120%)', opacity: 0},
+		  	{transform: 'translateY(0%)', opacity: 1}
+		  ]
+		}
+
+		var counter = 0
+
+		class Foo {
+			getInitialState() {
+				var value = '1,2,3,4,5'
+				// var value = '0,2,4,6,8'
+				// var value = 'a,b,d,f,c'
+				
+				return {data: value.split(/,\s*/), value: value}
+			}
+			handleInput({target}) {
+				return {value: target.value}
+			}
+			handleSubmit({target}) {
+				// var value = '1,4,0,3,2,5'
+				// var value = 'c,b,d,r,a'
+				// var value = '0,1,2,3,4,5,6,7,8'
+				// var value = '2,3,4,5,1'
+				// var value = '5,1,2,3,4'
+				// var value = '5,4,3,2,1'
+				// var value = '5,4,3,0,2,1'
+				// var value = '5,4,3,2,1'
+				// var value = '5,4,3,2,1'
+				// var value = '6,5,4,3,2,1'
+				// var value = '1,2,3,4,5'
+				// counter++
+				return {data: value.split(/,\s*/), value: value}
+			}
+			render(props, {data, value}) {
+				const input = h('input', {onInput: this.handleInput, value: value})
+				const button = h('button', {onClick: this.handleSubmit}, 'Submit')
+				const list = h('ul',
+					data.map(value => {
+						return [
+							h('li', {key: value}, value+' - '+counter),
+							'#Frag'
+						]
+					})
+				)
+				// const list = h('ul', data.map(value => h('li', {key: value}, value+' - '+counter)))
+
+				return h('div', input, button, list)
+			}
+		}
+
+		class List {
+			render({data}) {
+				return data.map(value => h('li', {key: value}, value+' - '+counter))
+			}
+		}
+
+
+		var arr = new Array(8038*2)
+		// 8038
+		// 2442
+		arr.fill(1)
+
+		// render(h('h1', {style: 'color:red;'}, 'Hello World'))
+
+		// element = h('ul',
+		// 	h('li', {key: 0}, 0)
+		// 	h('li', {key: 1}, 1),
+		// 	[
+		// 		h('li', {key: 0}, 0)
+		// 		h('li', {key: 1}, 1)
+		// 	]
+		// )
+
+		render(
+			h('ul',
+				h('li', {key: 0}, '0.0'),
+				h('li', {key: 1}, '0.1'),
+				[
+					h('li', {key: 0}, '1.0'),
+					h('li', {key: 1}, '1.1')
+				]
+			)
+		)
+
+		render(
+			h('ul',
+				h('li', {key: 0}, '0.0'),
+				h('li', {key: 1}, '0.1'),
+				[
+					// h('li', {key: 0}, '1.0')
+					h('li', {key: 1}, '1.1')
+				]
+			)
+		)
+
+		// requestAnimationFrame(()=>{
+		// 	console.log(element.children.length)
+		// })
+
+		// "0|0|0", 
+		// "0|1|1", 
+		// "1|2|0", 
+		// "1|3|1"
+
+		// console.log(el)
+
+		// render()
+		// render(h(Foo, {currentUser: 'Sultan'}))
+
+		setTimeout(()=>{
+			// render(h('div', 'removed'))
+		}, 2000)
+
+		// function Foo (props, state) {
+		// 	return h('div', h('button', {onClick: handleClick, ref: 'button'}, 'Click Me!'), {...props, ...state})
+		// }
+
+		// Foo.componentDidMount = () =>({name: 'componentDidMount', time: new Date})
+		// Foo.componentWillMount = ()=> ({name: 'componentWillMount', time: new Date})
+		// Foo.componentWillUpdate = () => ({name: 'componentWillUpdate', time: new Date})
+		// Foo.componentDidUpdate = async () => ({name: 'componentDidUpdate', time: new Date})
+		// Foo.getInitialState = () => ({name: 'getInitialState', time: new Date})
+
+		// class Foo {
+		// 	componentDidCatch(error) {
+		// 		return h('div', {color: 'red'}, error)
+		// 	}
+		// 	render (props, state, context) {
+		// 		// console.log(this)
+		// 		// return h(Bar, {ref: 'button'})
+
+		// 		return h('div', h('button', {onClick: handleClick, ref: 'button'}, 'Click Me!'), this.state)
+		// 	}
+		// }
+
+		// Foo.defaultProps = {
+		// 	statement: 'hello world'
+		// }
+
+		class Bar {
+			componentDidCatch() {
+				// throw new Error('bar')
+			}
+			async render() {
+				// console.log(1)
+				// return await resolveAfter2Seconds('Hello world')
+
+				return h('div', h('button', {onClick: handleClick}, 'Click Me!'))
+			}
+		}
+
+		// render(h(ContextProvider, {currentUser: 'Sultan'}))
+		
+		// setTimeout(()=>{
+			// render(h(ContextProvider, {currentUser: 'Tarimo'}))
+			// render(null)
+			// render(h(ContextProvider, {key: 'Sultan'}))
+		// }, 2000)
+	</script>
+</body>

@@ -1,41 +1,36 @@
 {
-	"name": "dio.js",
-	"main": "dio.js",
-	"types": "dio.d.ts",
-	"description": "a library for building user interfaces",
-	"version": "7.1.0",
-	"homepage": "https://github.com/thysultan/dio.js",
-	"license": "MIT",
-	"author": {
-		"name": "Sultan Tarimo",
-		"email": "sultantarimo@me.com"
-	},
-	"keywords": [
-		"dio"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/thysultan/dio.js"
-	},
-	"bugs": {
-		"url": "https://github.com/thysultan/dio.js/issues"
-	},
-	"files": [
-		"dio.js",
-		"dio.min.js",
-		"dio.server.js",
-		"dio.d.ts"
-	],
-	"scripts": {
-		"test": "node ./tests",
-		"tests": "node ./tests --watch",
-		"build": "node ./bundle --bundle && node ./bundle/minify",
-		"bundle": "node ./bundle --bundle && node ./bundle/minify",
-		"dev": "node ./bundle"
-	},
-	"devDependencies": {
-		"chokidar": "^1.6.1",
-		"uglify-js": "^2.8.16",
-		"jsdom": "^10.0.0"
-	}
+  "name": "dio.js",
+  "main": "dist/dio.umd.js",
+  "types": "dio.d.ts",
+  "description": "a library for building user interfaces",
+  "version": "8.0.0",
+  "homepage": "https://github.com/thysultan/dio.js",
+  "license": "MIT",
+  "author": {
+    "name": "Sultan Tarimo",
+    "email": "sultantarimo@me.com"
+  },
+  "keywords": [
+    "dio"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thysultan/dio.js"
+  },
+  "bugs": {
+    "url": "https://github.com/thysultan/dio.js/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "node ./test",
+    "dev": "node ./build",
+    "build": "node ./build --build"
+  },
+  "devDependencies": {
+    "chokidar": "^1.7.0",
+    "jsdom": "^11.1.0",
+    "uglify-js": "^3.0.27"
+  }
 }

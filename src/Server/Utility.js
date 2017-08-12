@@ -1,0 +1,7 @@
+function encode () {
+
+}
+
+function escape () {
+
+}
