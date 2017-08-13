@@ -297,18 +297,18 @@
 			}
 		}
 
-		var container = root
-		// var container = document.createElement('div')
-		// render('Hello')
-		// render(Test)
+		class Main {
+			render(){
+				return Child
+			}
+		}
 
-		render(h(List, {data: ['a', 'b', 'c', 'd', 'e', 'q', 'f', 'g']}), container)
-		render(h(List, {data: ['a', 'b', 'f', 'd', 'c', 'g']}), container)
+		class Child {
+			render(){
+				throw new Error('error!')
+			}
+		}
 
-
-		render(h(List, {data: ['w', 'g', 'c', 'f', 'd', 'b', 'a', 'z']}), container)
-		// render(h(List, {data: ['w', 'a', 'b', 'f', 'd', 'c', 'g', 'z']}), container)
-		
-		// console.log(stages.join(''))
+		dio.render(Main)
 	</script>
 </body>

@@ -435,7 +435,7 @@
 	function lifecycleReturn (element, state) {
 		switch (typeof state) {
 			case 'object':
-				if (state === null)
+				if (!state)
 					break
 			case 'function':
 				if (!server)
@@ -451,7 +451,7 @@
 		try {
 			var state = element.owner[name].call(element.instance, (element.DOM || sharedDOM).node)
 				
-			return state instanceof Promise ? state : lifecycleReturn(element, state)
+			return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
 		} catch (e) {
 			Boundary(element, e, name)
 		}
@@ -1606,7 +1606,7 @@
 	 */
 	function Recovery (element, error, from) {
 		if (!element || !element.owner)
-			return getHostElement(element)
+			return elementText('')
 	
 		if (!element.owner[LifecycleDidCatch])
 			return Recovery(element.host, snapshot, error, from)
@@ -1746,15 +1746,6 @@
 		return {
 			node: xmlns === null ? document.createElement(type) : document.createElementNS(xmlns, type)
 		}
-	}
-	
-	/**
-	 * @param {DOM} element
-	 * @param {DOM} sibling
-	 * @param {DOM} parent
-	 */
-	function DOMReplace (element, sibling, parent) {
-		parent.node.replaceChild(element.node, sibling.node)
 	}
 	
 	/**

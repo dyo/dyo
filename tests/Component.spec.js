@@ -52,21 +52,13 @@ module.exports = ({h, render, Component}) => {
 		var container = document.createElement('div')
 
 		class A extends Component {
-			constructor() {
-				super()
-			}
-			render() {
-				return h('h1', this.props.value)
-			}
+			constructor() {super()}
+			render() {return h('h1', this.props.value)}
 		}
 
 		class B extends Component {
-			constructor(props) {
-				super(props)
-			}
-			render() {
-				return h('h1', this.props.value)
-			}
+			constructor(props) {super(props)}
+			render() {return h('h1', this.props.value)}
 		}
 
 		render(h(A, {value: 'Hello'}), container)
@@ -75,8 +67,8 @@ module.exports = ({h, render, Component}) => {
 		render(h(B, {value: 'Hello'}), container)
 		ok(container.innerHTML === '<h1>Hello</h1>', 'super()')
 
-		// @TODO test async render and unmount
-
 		end()
 	})
+
+	// @TODO test async render and unmount
 }

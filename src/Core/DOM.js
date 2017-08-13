@@ -116,15 +116,6 @@ function DOMElement (type, xmlns) {
 
 /**
  * @param {DOM} element
- * @param {DOM} sibling
- * @param {DOM} parent
- */
-function DOMReplace (element, sibling, parent) {
-	parent.node.replaceChild(element.node, sibling.node)
-}
-
-/**
- * @param {DOM} element
  * @param {DOM} parent
  */
 function DOMRemove (element, parent) {

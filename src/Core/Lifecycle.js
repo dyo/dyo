@@ -32,7 +32,7 @@ function lifecycleData (element, name) {
 function lifecycleReturn (element, state) {
 	switch (typeof state) {
 		case 'object':
-			if (state === null)
+			if (!state)
 				break
 		case 'function':
 			if (!server)
@@ -48,7 +48,7 @@ function lifecycleMount (element, name) {
 	try {
 		var state = element.owner[name].call(element.instance, (element.DOM || sharedDOM).node)
 			
-		return state instanceof Promise ? state : lifecycleReturn(element, state)
+		return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
 	} catch (e) {
 		Boundary(element, e, name)
 	}

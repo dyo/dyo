@@ -47,7 +47,7 @@ function Boundary (element, err, from) {
  */
 function Recovery (element, error, from) {
 	if (!element || !element.owner)
-		return getHostElement(element)
+		return elementText('')
 
 	if (!element.owner[LifecycleDidCatch])
 		return Recovery(element.host, snapshot, error, from)
