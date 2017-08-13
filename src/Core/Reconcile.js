@@ -108,7 +108,7 @@ function patchChildren (element, snapshot) {
 		if (aLength !== bLength)
 			if (aLength > bLength)
 				while (aLength > bLength) {
-					commitUnmount(children.pop(), element, element, 0)
+					commitUnmount(children.pop(), element, 0)
 					aLength--
 				}
 			else
@@ -223,7 +223,7 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
 				if (aNode === children) {
 					commitAppend(children.push(children.remove(aNext)), element)
 				} else {
-					commitInsert(children.insert(aNext, aNode), aNode, element)
+					commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
 				}
 
 				if (delete aPool[bHash])
@@ -240,7 +240,7 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
 
 		if (aSize > 0)
 			for (bHash in aPool)
-				commitUnmount(children.remove(aPool[bHash]), element, element, 0)
+				commitUnmount(children.remove(aPool[bHash]), element, 0)
 	} else {
 		patchRemove(aHead, element, children, 0, aEnd)
 		patchInsert(bHead, bHead, element, host, children, 0, bEnd, 0)
@@ -279,9 +279,9 @@ function patchRemove (element, parent, children, index, length) {
 	var i = index
 	var prev = element
 	var next = prev
-
+	
 	while (i++ < length) {
 		next = (prev = next).next
-		commitUnmount(children.remove(prev), parent, parent, 0)
+		commitUnmount(children.remove(prev), parent, 0)
 	}
 }

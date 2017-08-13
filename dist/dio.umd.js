@@ -1,13 +1,11 @@
 /* DIO 8.0.0 */
-(function (global, factory) {
+(function (factory) {
 	/* eslint-disable */
 	if (typeof exports === 'object' && typeof module !== 'undefined')
 		module.exports = factory(global, typeof __webpack_require__ === 'undefined' ? require : global)
-	else if (typeof define === 'function' && define.amd)
-		define(factory(global, global))
 	else
-		global.dio = factory(global, global)
-}(this, function (window, __require__) {
+		window.dio = factory(window, window)
+}(function (window, __require__) {
 	/* eslint-disable */
 	'use strict'
 
@@ -276,7 +274,7 @@
 					if (child.key !== null && element.keyed === false)
 						element.keyed = true
 	
-					children.push((child.key = scope+'|'+index+'|'+child.key, child))
+					children.push(child)
 					break
 				case Array:
 					for (var i = 0; i < child.length; i++)
@@ -490,7 +488,6 @@
 	 * @type {Object}
 	 */
 	var descriptor = {
-		render: {value: noop, writable: true},
 		forceUpdate: {value: forceUpdate},
 		setState: {value: setState}
 	}
@@ -589,8 +586,7 @@
 	 */
 	function componentCreate (prototype) {
 		for (var key in descriptor)
-			if (key !== LifecycleRender)
-				Object.defineProperty(prototype, key, descriptor[key])
+			Object.defineProperty(prototype, key, descriptor[key])
 	}
 	
 	/**
@@ -689,26 +685,20 @@
 	
 	/**
 	 * @param {Element} host
-	 * @param {Element} element
-	 * @param {Element} sibling
+	 * @param {List} children
 	 * @param {Element} parent
 	 * @param {number} signature
 	 * @param {number} resolve
 	 */
-	function componentUnmount (host, element, sibling, parent, signature, resolve) {
+	function componentUnmount (host, children, parent, signature, resolve) {
 		if (resolve > 0 && host.owner[LifecycleWillUnmount])
 			if (host.state = lifecycleMount(host, LifecycleWillUnmount))
 				if (host.state.constructor === Promise)
 					return void host.state.then(function () {
-						componentUnmount(host, element, sibling, parent, signature, 0)
+						componentUnmount(host, children, element, parent, signature, 0)
 					})
 	
-		if (signature < 1)
-			commitUnmount(host.children, sibling, parent, signature)
-		else
-			commitUnmount(element, host.children, parent, signature)
-	
-		commitRelease(host, 0, signature)
+		commitUnmount(children, parent, signature)
 	}
 	
 	/**
@@ -969,9 +959,6 @@
 	 				break
 	 			case 1:
 	 				commitInsert(element, sibling, parent)
-	 				break
-	 			case 2:
-	 				commitUnmount(element, sibling, parent, signature)
 	 		}
 	
 	 		if (flag !== ElementText)
@@ -989,23 +976,15 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} sibling
 	 * @param {Element} parent
 	 * @param {number} signature
 	 */
-	function commitUnmount (element, sibling, parent, signature) {
-		if (signature < 1)
-			if (element.flag < ElementComponent) {
-				commitRemove(element, parent)
-				commitRelease(element, 1, signature)
-			} else
-				componentUnmount(element, element, sibling, parent, signature, 1)
-		else if (sibling.flag < ElementComponent) {
-			commitReplace(element, sibling, parent)
-			commitRelease(sibling, 1, signature)
-			commitRebase(sibling, element)
+	function commitUnmount (element, parent, signature) {
+		if (element.flag < ElementComponent) {
+			commitRemove(element, parent)
+			commitRelease(element, 1, signature)
 		} else
-			componentUnmount(sibling, element, sibling, parent, signature, 1)
+			componentUnmount(element, element.children, parent, signature, 1)
 	}
 	
 	/**
@@ -1013,14 +992,9 @@
 	 * @param {Element} snapshot
 	 */
 	function commitMerge (element, snapshot) {
-		commitMount(snapshot, element, element.parent, element.host, 2)
-	}
+		commitMount(snapshot, element, element.parent, element.host, 1)	
+		commitUnmount(element, element.parent, 2)
 	
-	/**
-	 * @param {Element} element
-	 * @param {Element} snapshot
-	 */
-	function commitRebase (element, snapshot) {
 		for (var key in snapshot)
 			switch (key) {
 				case 'DOM':
@@ -1110,39 +1084,6 @@
 			})
 	
 		DOMInsert(element.DOM, sibling.DOM, parent.DOM)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} sibling
-	 * @param {Element} parent
-	 */
-	function commitReplace (element, sibling, parent) {
-		if (element.flag === ElementFragment) {
-			if (element.children.length > 0)
-				return element.children.forEach(function (element) {
-					if (element !== this.prev)
-						commitInsert(element, sibling, parent)
-					else
-						commitReplace(this.prev, sibling, parent)
-				})
-			else
-				return commitRemove(sibling, parent)
-		}
-	
-		if (sibling.flag === ElementFragment) {
-			if (sibling.children.length > 0)
-				return sibling.children.forEach(function (sibling) {
-					if (sibling === this.next)
-						commitReplace(element, this.next, parent)
-					else
-						commitRemove(sibling, parent)
-				})
-			else
-				return commitInsert(element, sibling.next || sharedElement, parent)
-		}
-	
-		DOMReplace(element.DOM, sibling.DOM, parent.DOM)
 	}
 	
 	/**
@@ -1367,7 +1308,7 @@
 			if (aLength !== bLength)
 				if (aLength > bLength)
 					while (aLength > bLength) {
-						commitUnmount(children.pop(), element, element, 0)
+						commitUnmount(children.pop(), element, 0)
 						aLength--
 					}
 				else
@@ -1482,7 +1423,7 @@
 					if (aNode === children) {
 						commitAppend(children.push(children.remove(aNext)), element)
 					} else {
-						commitInsert(children.insert(aNext, aNode), aNode, element)
+						commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
 					}
 	
 					if (delete aPool[bHash])
@@ -1499,7 +1440,7 @@
 	
 			if (aSize > 0)
 				for (bHash in aPool)
-					commitUnmount(children.remove(aPool[bHash]), element, element, 0)
+					commitUnmount(children.remove(aPool[bHash]), element, 0)
 		} else {
 			patchRemove(aHead, element, children, 0, aEnd)
 			patchInsert(bHead, bHead, element, host, children, 0, bEnd, 0)
@@ -1538,10 +1479,10 @@
 		var i = index
 		var prev = element
 		var next = prev
-	
+		
 		while (i++ < length) {
 			next = (prev = next).next
-			commitUnmount(children.remove(prev), parent, parent, 0)
+			commitUnmount(children.remove(prev), parent, 0)
 		}
 	}
 	
@@ -1706,6 +1647,13 @@
 	DOM.prototype = Object.create(null)
 	
 	/**
+	 * @return {Node}
+	 */
+	function DOMDocument () {
+		return document.body || document.documentElement
+	}
+	
+	/**
 	 * @param {DOM} element
 	 * @param {string} name
 	 * @param {*} value
@@ -1844,7 +1792,7 @@
 	}
 	
 	if (server)
-		__require__('dio.node.js')(exports)
+		__require__('./dio.node.js')(exports)
 	else
 		window.h = createElement
 	

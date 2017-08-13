@@ -136,9 +136,6 @@ function commitMount (element, sibling, parent, composite, signature) {
  				break
  			case 1:
  				commitInsert(element, sibling, parent)
- 				break
- 			case 2:
- 				commitUnmount(element, sibling, parent, signature)
  		}
 
  		if (flag !== ElementText)
@@ -156,23 +153,15 @@ function commitMount (element, sibling, parent, composite, signature) {
 
 /**
  * @param {Element} element
- * @param {Element} sibling
  * @param {Element} parent
  * @param {number} signature
  */
-function commitUnmount (element, sibling, parent, signature) {
-	if (signature < 1)
-		if (element.flag < ElementComponent) {
-			commitRemove(element, parent)
-			commitRelease(element, 1, signature)
-		} else
-			componentUnmount(element, element, sibling, parent, signature, 1)
-	else if (sibling.flag < ElementComponent) {
-		commitReplace(element, sibling, parent)
-		commitRelease(sibling, 1, signature)
-		commitRebase(sibling, element)
+function commitUnmount (element, parent, signature) {
+	if (element.flag < ElementComponent) {
+		commitRemove(element, parent)
+		commitRelease(element, 1, signature)
 	} else
-		componentUnmount(sibling, element, sibling, parent, signature, 1)
+		componentUnmount(element, element.children, parent, signature, 1)
 }
 
 /**
@@ -180,14 +169,9 @@ function commitUnmount (element, sibling, parent, signature) {
  * @param {Element} snapshot
  */
 function commitMerge (element, snapshot) {
-	commitMount(snapshot, element, element.parent, element.host, 2)
-}
+	commitMount(snapshot, element, element.parent, element.host, 1)	
+	commitUnmount(element, element.parent, 2)
 
-/**
- * @param {Element} element
- * @param {Element} snapshot
- */
-function commitRebase (element, snapshot) {
 	for (var key in snapshot)
 		switch (key) {
 			case 'DOM':
@@ -277,39 +261,6 @@ function commitInsert (element, sibling, parent) {
 		})
 
 	DOMInsert(element.DOM, sibling.DOM, parent.DOM)
-}
-
-/**
- * @param {Element} element
- * @param {Element} sibling
- * @param {Element} parent
- */
-function commitReplace (element, sibling, parent) {
-	if (element.flag === ElementFragment) {
-		if (element.children.length > 0)
-			return element.children.forEach(function (element) {
-				if (element !== this.prev)
-					commitInsert(element, sibling, parent)
-				else
-					commitReplace(this.prev, sibling, parent)
-			})
-		else
-			return commitRemove(sibling, parent)
-	}
-
-	if (sibling.flag === ElementFragment) {
-		if (sibling.children.length > 0)
-			return sibling.children.forEach(function (sibling) {
-				if (sibling === this.next)
-					commitReplace(element, this.next, parent)
-				else
-					commitRemove(sibling, parent)
-			})
-		else
-			return commitInsert(element, sibling.next || sharedElement, parent)
-	}
-
-	DOMReplace(element.DOM, sibling.DOM, parent.DOM)
 }
 
 /**

@@ -24,7 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "test": "node ./test",
+    "test": "node ./tests",
     "dev": "node ./build",
     "build": "node ./build --build"
   },

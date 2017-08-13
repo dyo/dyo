@@ -12,7 +12,6 @@ function Component (props, context) {
  * @type {Object}
  */
 var descriptor = {
-	render: {value: noop, writable: true},
 	forceUpdate: {value: forceUpdate},
 	setState: {value: setState}
 }
@@ -111,8 +110,7 @@ function enqueueUpdate (element, instance, callback, signature) {
  */
 function componentCreate (prototype) {
 	for (var key in descriptor)
-		if (key !== LifecycleRender)
-			Object.defineProperty(prototype, key, descriptor[key])
+		Object.defineProperty(prototype, key, descriptor[key])
 }
 
 /**
@@ -211,26 +209,20 @@ function componentUpdate (element, snapshot, flag, signature) {
 
 /**
  * @param {Element} host
- * @param {Element} element
- * @param {Element} sibling
+ * @param {List} children
  * @param {Element} parent
  * @param {number} signature
  * @param {number} resolve
  */
-function componentUnmount (host, element, sibling, parent, signature, resolve) {
+function componentUnmount (host, children, parent, signature, resolve) {
 	if (resolve > 0 && host.owner[LifecycleWillUnmount])
 		if (host.state = lifecycleMount(host, LifecycleWillUnmount))
 			if (host.state.constructor === Promise)
 				return void host.state.then(function () {
-					componentUnmount(host, element, sibling, parent, signature, 0)
+					componentUnmount(host, children, element, parent, signature, 0)
 				})
 
-	if (signature < 1)
-		commitUnmount(host.children, sibling, parent, signature)
-	else
-		commitUnmount(element, host.children, parent, signature)
-
-	commitRelease(host, 0, signature)
+	commitUnmount(children, parent, signature)
 }
 
 /**

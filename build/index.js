@@ -37,7 +37,7 @@ var exports = {
 }
 
 if (server)
-	__require__('dio.node.js')(exports)
+	__require__('./dio.node.js')(exports)
 else
 	window.h = createElement
 

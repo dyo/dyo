@@ -179,7 +179,7 @@ function elementChildren (element, children, child, index, scope) {
 				if (child.key !== null && element.keyed === false)
 					element.keyed = true
 
-				children.push((child.key = scope+'|'+index+'|'+child.key, child))
+				children.push(child)
 				break
 			case Array:
 				for (var i = 0; i < child.length; i++)

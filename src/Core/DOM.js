@@ -10,6 +10,12 @@ function DOM (node) {
  */
 DOM.prototype = Object.create(null)
 
+/**
+ * @return {Node}
+ */
+function DOMDocument () {
+	return document.body || document.documentElement
+}
 
 /**
  * @param {DOM} element
