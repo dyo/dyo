@@ -87,7 +87,8 @@ const wrapper = (open, module, content, close, version) => {
 					open+
 					fs.readFileSync(path.join(__dirname, 'umd.js'), 
 					'utf8').trim() + '\n\n' + 
-					"\tvar version = '"+version+"'\n"
+					"\tvar version = '"+version+"'\n"+
+					'\tvar server = __require__ !== window\n'
 				),
 				body: pad(format(content)),
 				close: close

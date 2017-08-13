@@ -10,7 +10,6 @@
 	'use strict'
 
 	var version = '8.0.0'
-	var server = __require__ !== window
 	var noop = function () {}
 	var document = window.document || noop
 	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
