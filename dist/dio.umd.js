@@ -10,7 +10,7 @@
 	'use strict'
 
 	var version = '8.0.0'
-	var server = typeof window === 'undefined' || window.window !== window
+	var server = window.window === window
 	var noop = function () {}
 	var document = window.document || noop
 	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
@@ -1787,7 +1787,7 @@
 	}
 	
 	if (server)
-		namespace.render = __require__('./dio.node.js')(Element, componentMount, commitElement)
+		__require__('./dio.node.js')(namespace, componentMount, commitElement, Element)
 	else
 		window.h = createElement
 	

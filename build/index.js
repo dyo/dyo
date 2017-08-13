@@ -29,7 +29,7 @@ const node = [
 	'../src/Server/Render.js'
 ]
 
-const imports = 'Element, componentMount, commitElement'
+const imports = 'namespace, componentMount, commitElement, Element'
 
 const getExports = () => `
 /**
@@ -45,7 +45,7 @@ var namespace = {
 }
 
 if (server)
-	namespace.render = __require__('./dio.node.js')(${imports})
+	__require__('./dio.node.js')(${imports})
 else
 	window.h = createElement
 
@@ -77,7 +77,7 @@ const wrapper = (open, module, content, close, version) => {
 		case 'node': {
 			return {
 				open: open,
-				body: `module.export = function (${imports}) {\n${pad(strict+'\n\n'+format(content))}\n}`,
+				body: `module.exports = function (${imports}) {\n${pad(strict+'\n\n'+format(content))}\n}`,
 				close: ''
 			}
 		}

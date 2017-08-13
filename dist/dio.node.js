@@ -1,5 +1,5 @@
 /* DIO 8.0.0 */
-module.export = function (Element, componentMount, commitElement) {
+module.exports = function (namespace, componentMount, commitElement, Element) {
 	'use strict'
 	
 	/**
@@ -139,7 +139,7 @@ module.export = function (Element, componentMount, commitElement) {
 	
 		var children = this.children
 		var length = children.length
-		var output = '{type:"' + this.type + '",props:' JSON.stringify(this.props) + ',children:['
+		var output = '{type:"' + this.type + '",props:' + JSON.stringify(this.props) + ',children:['
 		var next = children
 	
 		while (length-- > 0)
@@ -214,19 +214,20 @@ module.export = function (Element, componentMount, commitElement) {
 	 * @param {Stream?} container
 	 * @param {function?} callback
 	 */
-	return function render (subject, container, callback) {
-		if (!container)
-			return
+	if (!global.document)
+		namespace.render = function render (subject, container, callback) {
+			if (!container)
+				return
 	
-		var target = container
-		var readable = new Stream(element)
+			var target = container
+			var readable = new Stream(element)
 	
-		if (typeof target.getHeader === 'function' && !target.getHeader('Content-Type'))
-			target.setHeader('Content-Type', 'text/html')
+			if (typeof target.getHeader === 'function' && !target.getHeader('Content-Type'))
+				target.setHeader('Content-Type', 'text/html')
 	
-		if (typeof callback === 'function')
-			readable.on('end', callback)
+			if (typeof callback === 'function')
+				readable.on('end', callback)
 	
-		return readable.pipe(target), readable
-	}
+			return readable.pipe(target), readable
+		}
 }

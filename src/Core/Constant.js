@@ -1,4 +1,4 @@
-var server = typeof window === 'undefined' || window.window !== window
+var server = window.window === window
 var noop = function () {}
 var document = window.document || noop
 var requestAnimationFrame = window.requestAnimationFrame || setTimeout

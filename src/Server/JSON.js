@@ -11,7 +11,7 @@ Element.prototype.toJSON = function toJSON () {
 
 	var children = this.children
 	var length = children.length
-	var output = '{type:"' + this.type + '",props:' JSON.stringify(this.props) + ',children:['
+	var output = '{type:"' + this.type + '",props:' + JSON.stringify(this.props) + ',children:['
 	var next = children
 
 	while (length-- > 0)
