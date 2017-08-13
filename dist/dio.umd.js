@@ -1230,7 +1230,8 @@
 		switch (signature) {
 			case 0:
 				for (var key in delta)
-					commitProps(element, key, delta[key], 1, xmlns)
+					if ((value = delta[key]) != null)
+						commitProps(element, key, delta[key], 1, xmlns)
 				return
 			case 1:
 				for (var key in delta)
@@ -1621,7 +1622,7 @@
 				default:
 					if (from === LifecycleRender)
 						return commitElement(snapshot)
-					else
+					else if (!server)
 						patchElement(element.children, commitElement(snapshot))	
 			}
 		} catch (e) {
@@ -1773,7 +1774,10 @@
 		parent.node.appendChild(element.node)
 	}
 
-	var exports = {
+	/**
+	 * @type {Object}
+	 */
+	var namespace = {
 		h: createElement,
 		createElement: createElement,
 		Component: Component,
@@ -1783,9 +1787,9 @@
 	}
 	
 	if (server)
-		__require__('./dio.node.js')(exports)
+		namespace.render = __require__('./dio.node.js')(Element, componentMount, commitElement)
 	else
 		window.h = createElement
 	
-	return exports
+	return namespace
 }))

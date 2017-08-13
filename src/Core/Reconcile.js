@@ -30,7 +30,8 @@ function patchProps (element, snapshot, signature) {
 	switch (signature) {
 		case 0:
 			for (var key in delta)
-				commitProps(element, key, delta[key], 1, xmlns)
+				if ((value = delta[key]) != null)
+					commitProps(element, key, delta[key], 1, xmlns)
 			return
 		case 1:
 			for (var key in delta)

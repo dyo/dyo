@@ -62,7 +62,7 @@ function Recovery (element, error, from) {
 			default:
 				if (from === LifecycleRender)
 					return commitElement(snapshot)
-				else
+				else if (!server)
 					patchElement(element.children, commitElement(snapshot))	
 		}
 	} catch (e) {

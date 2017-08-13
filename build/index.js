@@ -4,6 +4,7 @@ const chokidar = require('chokidar')
 const UglifyJS = require('uglify-js')
 const package = require('../package.json')
 const options = {compress: {}}
+const strict = `'use strict'`
 
 const umd = [
 	'../src/Core/Constant.js',
@@ -21,13 +22,20 @@ const umd = [
 ]
 
 const node = [
-	'../src/Server/Constant.js',
 	'../src/Server/Utility.js',
+	'../src/Server/String.js',
+	'../src/Server/JSON.js',
+	'../src/Server/Stream.js',
 	'../src/Server/Render.js'
 ]
 
+const imports = 'Element, componentMount, commitElement'
+
 const getExports = () => `
-var exports = {
+/**
+ * @type {Object}
+ */
+var namespace = {
 	h: createElement,
 	createElement: createElement,
 	Component: Component,
@@ -37,11 +45,11 @@ var exports = {
 }
 
 if (server)
-	__require__('./dio.node.js')(exports)
+	namespace.render = __require__('./dio.node.js')(${imports})
 else
 	window.h = createElement
 
-return exports
+return namespace
 `
 
 const builder = (file) => {
@@ -69,7 +77,7 @@ const wrapper = (open, module, content, close, version) => {
 		case 'node': {
 			return {
 				open: open,
-				body: format(content),
+				body: `module.export = function (${imports}) {\n${pad(strict+'\n\n'+format(content))}\n}`,
 				close: ''
 			}
 		}
@@ -92,10 +100,10 @@ const build = (module, files, location) => {
 	let version = package.version
 	let open = '/* DIO '+version+' */\n'
 	let close = '\n}))'
-	let public = pad(getExports().trim())
+	let public = module === 'umd' ? pad(getExports().trim()) : ''
 
 	let content = wrapper(open, module, files.map(builder).join('\n'), close, version)
-	let uncompressed = (content.open + content.body + '\n\n' + public + content.close).trim()
+	let uncompressed = (content.open + content.body + '\n\n' + public + content.close).trim()+'\n'
 	
 	fs.writeFileSync(path.join(__dirname, location), uncompressed)
 
@@ -112,6 +120,7 @@ const build = (module, files, location) => {
 
 const resolve = () => {
 	build('umd', umd, '../dist/dio.umd.js')
+	build('node', node, '../dist/dio.node.js')
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' + '\nBuild: '+
