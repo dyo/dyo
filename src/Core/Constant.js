@@ -1,4 +1,4 @@
-var server = window.window === window
+var server = __require__ !== window
 var noop = function () {}
 var document = window.document || noop
 var requestAnimationFrame = window.requestAnimationFrame || setTimeout
