@@ -912,11 +912,10 @@
 	function commitPromise (element, snapshot) {
 		snapshot.type.then(function (value) {
 			if (!element.DOM)
-				return
-			// if (element.flag === ElementPromise)
-				// patchChildren(element, elementFragment(commitElement(value)))
-			// else
-				// patchElement(element, commitElement(value))
+			if (element.flag === ElementPromise)
+				patchChildren(element, elementFragment(commitElement(value)))
+			else
+				patchElement(element, commitElement(value))
 		})
 	}
 	
