@@ -236,7 +236,7 @@ function commitRemove (element, parent) {
  */
 function commitAppend (element, parent) {
 	if (parent.flag === ElementFragment)
-		return commitInsert(element, parent.next || sharedElement, parent)
+		return commitInsert(element, parent.next || shared.Element, parent)
 
 	if (element.flag === ElementFragment)
 		return element.children.forEach(function (element) {
@@ -253,7 +253,7 @@ function commitAppend (element, parent) {
  */
 function commitInsert (element, sibling, parent) {
 	if (sibling.flag === ElementFragment)
-		return commitInsert(element, sibling.children.next || sibling.next || sharedElement, parent)
+		return commitInsert(element, sibling.children.next || sibling.next || Shared.Element, parent)
 
 	if (element.flag === ElementFragment)
 		return element.children.forEach(function (element) {
@@ -281,7 +281,7 @@ function commitText (element, snapshot) {
 function commitProps (element, name, value, signature, xmlns) {	
 	switch (name) {
 		case 'dangerouslySetInnerHTML':
-			if (!value || signature > 1 & !dangerouslySetInnerHTML(element.props, name, value))
+			if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
 				return
 			else
 				return commitProps(element, 'innerHTML', value.__html, signature, xmlns)

@@ -7,8 +7,8 @@ const options = {compress: {}}
 const strict = `'use strict'`
 
 const umd = [
-	'../src/Core/Constant.js',
 	'../src/Core/Utility.js',
+	'../src/Core/Constant.js',
 	'../src/Core/Element.js',
 	'../src/Core/Lifecycle.js',
 	'../src/Core/Component.js',
@@ -17,39 +17,34 @@ const umd = [
 	'../src/Core/Render.js',
 	'../src/Core/Event.js',
 	'../src/Core/Error.js',
-	'../src/Core/Shared.js',
 	'../src/Core/DOM.js'
 ]
 
 const node = [
 	'../src/Server/Utility.js',
+	'../src/Server/Constant.js',
 	'../src/Server/String.js',
 	'../src/Server/JSON.js',
 	'../src/Server/Stream.js',
 	'../src/Server/Render.js'
 ]
 
-const imports = 'namespace, componentMount, commitElement, Element'
+const imports = 'Element, render, componentMount, commitElement'
 
 const getExports = () => `
 /**
  * @type {Object}
  */
-var namespace = {
-	h: createElement,
-	createElement: createElement,
-	Component: Component,
-	render: render,
-	isValidElement: isValidElement,
-	cloneElement: cloneElement
-}
+shared.DOM = (shared.Element = new Element(0)).DOM = {node: null}
 
-if (server)
-	__require__('./dio.node.js')(${imports})
-else
-	window.h = createElement
-
-return namespace
+/**
+ * @exports
+ */
+exports.h = exports.createElement = window.h = createElement
+exports.isValidElement = isValidElement
+exports.cloneElement = cloneElement
+exports.Component = Component
+exports.render = !server ? render : __require__('./dio.node.js')(${imports})
 `
 
 const builder = (file) => {
@@ -88,7 +83,8 @@ const wrapper = (open, module, content, close, version) => {
 					fs.readFileSync(path.join(__dirname, 'umd.js'), 
 					'utf8').trim() + '\n\n' + 
 					"\tvar version = '"+version+"'\n"+
-					'\tvar server = __require__ !== window\n'
+					'\tvar server = __require__ !== window\n'+
+					'\tvar shared = {}\n\n'
 				),
 				body: pad(format(content)),
 				close: close

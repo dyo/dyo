@@ -1,9 +1,9 @@
-var noop = function () {}
-var document = window.document || noop
 var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+var document = window.document || noop
 var Node = window.Node || noop
-var Promise = window.Promise || noop
 var Symbol = window.Symbol || noop
+var Promise = window.Promise || noop
+var WeakMap = window.WeakMap || Hash
 var Iterator = Symbol.iterator || Symbol('iterator') || 'Symbol(Symbol.iterator)'
 
 var ElementText = 0

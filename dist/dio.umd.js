@@ -2,129 +2,17 @@
 (function (factory) {
 	/* eslint-disable */
 	if (typeof exports === 'object' && typeof module !== 'undefined')
-		module.exports = factory(global, typeof __webpack_require__ === 'undefined' ? require : global)
+		factory(exports, global, typeof __webpack_require__ === 'undefined' ? require : global)
 	else
-		window.dio = factory(window, window)
-}(function (window, __require__) {
+		factory(window.dio = {}, window, window)
+}(function (exports, window, __require__) {
 	/* eslint-disable */
 	'use strict'
 
 	var version = '8.0.0'
-	var noop = function () {}
-	var document = window.document || noop
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
-	var Node = window.Node || noop
-	var Promise = window.Promise || noop
-	var Symbol = window.Symbol || noop
-	var Iterator = Symbol.iterator || Symbol('iterator') || 'Symbol(Symbol.iterator)'
-	
-	var ElementText = 0
-	var ElementNode = 1
-	var ElementFragment = 2
-	var ElementPromise = 3
-	var ElementPortal = 4
-	var ElementComponent = 5
-	
-	var PriorityLow = -2
-	var PriorityTask = -1
-	var PriorityHigh = 1
-	
-	var LifecycleCallback = 'callback'
-	var LifecycleRender = 'render'
-	var LifecycleConstructor = 'constructor'
-	var LifecycleWillMount = 'componentWillMount'
-	var LifecycleDidMount = 'componentDidMount'
-	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
-	var LifecycleShouldUpdate = 'shouldComponentUpdate'
-	var LifecycleWillUpdate = 'componentWillUpdate'
-	var LifecycleDidUpdate = 'componentDidUpdate'
-	var LifecycleWillUnmount = 'componentWillUnmount'
-	var LifecycleDidCatch = 'componentDidCatch'
-	var LifecycleChildContext = 'getChildContext'
-	var LifecycleInitialState = 'getInitialState'
-	
-	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
-	var NSXlink = 'http://www.w3.org/1999/xlink'
-	var NSSVG = 'http://www.w3.org/2000/svg'
-	
-	var TypeFragment = '#Fragment'
-	var TypeText = '#Text'
-	
-	/**
-	 * @param {Object} destination
-	 * @param {Object} source
-	 */
-	function merge (destination, source) {
-		for (var key in source)
-			destination[key] = source[key]
-	}
-	
-	/**
-	 * @param {Object} destination
-	 * @param {Object} source
-	 * @param {Object} delta
-	 * @return {Object}
-	 */
-	function assign (destination, source, delta) {
-		for (var key in source)
-			destination[key] = source[key]
-		
-		for (var key in delta)
-			destination[key] = delta[key]
-	
-		return destination
-	}
-	
-	/**
-	 * @param {function} callback
-	 */
-	function setImmediate (callback) {
-		requestAnimationFrame(callback, 16)
-	}
-	
-	/**
-	 * @param {Object} obj
-	 * @param {string} name
-	 * @param {Object} value
-	 * @return {boolean}
-	 */
-	function dangerouslySetInnerHTML (obj, name, value) {
-		return !obj[name] || obj[name].__html !== value.__html 
-	}
-	
-	/**
-	 * @constructor
-	 * @param {number} flag
-	 */
-	function Element (flag) {
-		this.flag = flag
-		this.sync = 0
-		this.keyed = false
-		this.key = null
-		this.ref = null
-		this.type = null
-		this.props = null
-		this.state = null
-		this.children = null
-		this.xmlns = null
-		this.owner = null
-		this.instance = null
-		this.host = null
-		this.parent = null
-		this.event = null
-		this.style = null
-		this.DOM = null
-		this.context = null
-		this.next = null
-		this.prev = null
-	}
-	/**
-	 * @type {Object}
-	 */
-	Element.prototype = Object.create(null, {
-		constructor: {value: Element} 
-	})
-	
+	var server = __require__ !== window
+	var shared = {}
+
 	/**
 	 * @constructor
 	 */
@@ -183,6 +71,156 @@
 				callback.call(this, node = node.next, i)
 		}}
 	})
+	
+	/**
+	 * @constructor
+	 */
+	function Hash () {
+		this.k = []
+		this.v = []
+	}
+	/**
+	 * @type {Object}
+	 */
+	Hash.prototype = Object.create(null, {
+		delete: {value: function (key) {
+			var k = this.k
+			var i = k.lastIndexOf(key)
+			
+			delete this.k[i]
+			delete this.v[i]
+		}},
+		set: {value: function (key, value) {
+			var k = this.k
+			var i = k.lastIndexOf(key)
+	
+			k[!~i ? (i = k.length) : i] = key
+			this.v[i] = value
+		}},
+		get: {value: function (key) {
+			return this.v[this.k.lastIndexOf(key)]
+		}},
+		has: {value: function (key) {
+			return this.k.lastIndexOf(key) > -1
+		}}
+	})
+	
+	/**
+	 * @param {Object} destination
+	 * @param {Object} source
+	 */
+	function merge (destination, source) {
+		for (var key in source)
+			destination[key] = source[key]
+	}
+	
+	/**
+	 * @param {Object} destination
+	 * @param {Object} source
+	 * @param {Object} delta
+	 * @return {Object}
+	 */
+	function assign (destination, source, delta) {
+		for (var key in source)
+			destination[key] = source[key]
+		
+		for (var key in delta)
+			destination[key] = delta[key]
+	
+		return destination
+	}
+	
+	/**
+	 * @param {function} callback
+	 */
+	function setImmediate (callback) {
+		requestAnimationFrame(callback, 16)
+	}
+	
+	/**
+	 * @type {function}
+	 * @return {void}
+	 */
+	function noop () {}
+	
+	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+	var document = window.document || noop
+	var Node = window.Node || noop
+	var Symbol = window.Symbol || noop
+	var Promise = window.Promise || noop
+	var WeakMap = window.WeakMap || Hash
+	var Iterator = Symbol.iterator || Symbol('iterator') || 'Symbol(Symbol.iterator)'
+	
+	var ElementText = 0
+	var ElementNode = 1
+	var ElementFragment = 2
+	var ElementPromise = 3
+	var ElementPortal = 4
+	var ElementComponent = 5
+	
+	var PriorityLow = -2
+	var PriorityTask = -1
+	var PriorityHigh = 1
+	
+	var LifecycleCallback = 'callback'
+	var LifecycleRender = 'render'
+	var LifecycleConstructor = 'constructor'
+	var LifecycleWillMount = 'componentWillMount'
+	var LifecycleDidMount = 'componentDidMount'
+	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
+	var LifecycleShouldUpdate = 'shouldComponentUpdate'
+	var LifecycleWillUpdate = 'componentWillUpdate'
+	var LifecycleDidUpdate = 'componentDidUpdate'
+	var LifecycleWillUnmount = 'componentWillUnmount'
+	var LifecycleDidCatch = 'componentDidCatch'
+	var LifecycleChildContext = 'getChildContext'
+	var LifecycleInitialState = 'getInitialState'
+	
+	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
+	var NSXlink = 'http://www.w3.org/1999/xlink'
+	var NSSVG = 'http://www.w3.org/2000/svg'
+	
+	var TypeFragment = '#Fragment'
+	var TypeText = '#Text'
+	
+	/**
+	 * @constructor
+	 * @param {number} flag
+	 */
+	function Element (flag) {
+		this.flag = flag
+		this.sync = 0
+		this.keyed = false
+		this.key = null
+		this.ref = null
+		this.type = null
+		this.props = null
+		this.state = null
+		this.children = null
+		this.xmlns = null
+		this.owner = null
+		this.instance = null
+		this.host = null
+		this.parent = null
+		this.event = null
+		this.style = null
+		this.DOM = null
+		this.context = null
+		this.next = null
+		this.prev = null
+	}
+	/**
+	 * @type {Object}
+	 */
+	Element.prototype = Object.create(null, {
+		constructor: {value: Element} 
+	})
+	Element.Text = ElementText
+	Element.Node = ElementNode
+	Element.Fragment = ElementFragment
+	Element.Promise = ElementPromise
+	Element.Portal = ElementPortal
+	Element.Component = ElementComponent
 	
 	/**
 	 * @param {*} child
@@ -448,7 +486,7 @@
 	 */
 	function lifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, (element.DOM || sharedDOM).node)
+			var state = element.owner[name].call(element.instance, (element.DOM || shared.DOM).node)
 				
 			return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
 		} catch (e) {
@@ -1058,7 +1096,7 @@
 	 */
 	function commitAppend (element, parent) {
 		if (parent.flag === ElementFragment)
-			return commitInsert(element, parent.next || sharedElement, parent)
+			return commitInsert(element, parent.next || shared.Element, parent)
 	
 		if (element.flag === ElementFragment)
 			return element.children.forEach(function (element) {
@@ -1075,7 +1113,7 @@
 	 */
 	function commitInsert (element, sibling, parent) {
 		if (sibling.flag === ElementFragment)
-			return commitInsert(element, sibling.children.next || sibling.next || sharedElement, parent)
+			return commitInsert(element, sibling.children.next || sibling.next || Shared.Element, parent)
 	
 		if (element.flag === ElementFragment)
 			return element.children.forEach(function (element) {
@@ -1103,7 +1141,7 @@
 	function commitProps (element, name, value, signature, xmlns) {	
 		switch (name) {
 			case 'dangerouslySetInnerHTML':
-				if (!value || signature > 1 & !dangerouslySetInnerHTML(element.props, name, value))
+				if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
 					return
 				else
 					return commitProps(element, 'innerHTML', value.__html, signature, xmlns)
@@ -1486,31 +1524,34 @@
 		}
 	}
 	
-	var rootElements = []
-	var rootContainers = []
+	/**
+	 * @type {WeakMap}
+	 */
+	var roots = new WeakMap()
 	
 	/**
 	 * @param {*} subject
-	 * @param {Node?} container
+	 * @param {Node?} target
 	 * @param {function?} callback
 	 */
-	function render (subject, container, callback) {
-		var target = container != null ? container : DOMDocument()
-		var element = rootElements[rootContainers.indexOf(target)]
+	function render (subject, target, callback) {
+		if (target == null)
+			return render(subject, DOMDocument(), callback)
+			
+		var element = roots.get(target)
 		var parent = null
 	
 		if (element)
-			return patchElement(element, commitElement(subject))
+			patchElement(element, commitElement(subject))
+		else {
+			element = commitElement(subject)
+			parent = new Element(0)
+			parent.DOM = {node: target}
+			parent.context = {}
 	
-		element = commitElement(subject)
-		parent = new Element(0)
-		parent.DOM = {node: target}
-		parent.context = {}
-	
-		rootElements.push(element)
-		rootContainers.push(target)
-	
-		commitMount(element, element, parent, parent, 0)
+			roots.set(target, element)
+			commitMount(element, element, parent, parent, 0)
+		}
 	
 		if (typeof callback === 'function')
 			lifecycleCallback(element, callback, target)
@@ -1571,7 +1612,7 @@
 		var stack = this.stack
 	
 		while (host.type) {
-			tree += tabs + '<' + (host.type.name || 'anonymous') + '>\n'
+			tree += tabs + '<' + (host.type.displayName || host.type.name || 'anonymous') + '>\n'
 			tabs += '  '
 			host = host.host
 		}
@@ -1630,21 +1671,6 @@
 	
 		return getHostElement(element)
 	}
-	
-	var sharedElement = new Element(0)
-	var sharedDOM = sharedElement.DOM = {node: null}
-	
-	/**
-	 * @constructor
-	 * @param {Node} node
-	 */
-	function DOM (node) {
-		this.node = node
-	}
-	/**
-	 * @type {Object}
-	 */
-	DOM.prototype = Object.create(null)
 	
 	/**
 	 * @return {Node}
@@ -1776,19 +1802,14 @@
 	/**
 	 * @type {Object}
 	 */
-	var namespace = {
-		h: createElement,
-		createElement: createElement,
-		Component: Component,
-		render: render,
-		isValidElement: isValidElement,
-		cloneElement: cloneElement
-	}
+	shared.DOM = (shared.Element = new Element(0)).DOM = {node: null}
 	
-	if (server)
-		__require__('./dio.node.js')(namespace, componentMount, commitElement, Element)
-	else
-		window.h = createElement
-	
-	return namespace
+	/**
+	 * @exports
+	 */
+	exports.h = exports.createElement = window.h = createElement
+	exports.isValidElement = isValidElement
+	exports.cloneElement = cloneElement
+	exports.Component = Component
+	exports.render = !server ? render : __require__('./dio.node.js')(Element, render, componentMount, commitElement)
 }))

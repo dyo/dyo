@@ -1,5 +1,5 @@
 /* DIO 8.0.0 */
-module.exports = function (namespace, componentMount, commitElement, Element) {
+module.exports = function (Element, render, componentMount, commitElement) {
 	'use strict'
 	
 	/**
@@ -50,21 +50,30 @@ module.exports = function (namespace, componentMount, commitElement, Element) {
 		}
 	}
 	
+	var Readable = require('stream').Readable
+	var ElementText = Element.Text
+	var ElementNode = Element.Node
+	var ElementFragment = Element.Fragment
+	var ElementPromise = Element.Promise
+	var ElementPortal = Element.Portal
+	var ElementComponent = Element.Component
+	
 	/**
 	 * @return {string}
 	 */
 	Element.prototype.toString = function toString () {
 		switch (this.flag) {
 			case ElementComponent:
-				return componentMount(this).children.toString()
+				return (componentMount(this), this.children.toString())
 			case ElementText:
 				return escape(this.children)
 		}
 	
+		var flag = this.flag
 		var type = this.type
 		var children = this.children
 		var length = children.length
-		var output = '<' + type + toProps(this, this.props) + '>'
+		var output = flag < ElementFragment ? '<' + type + toProps(this, this.props) + '>' : ''
 	
 		switch (bool(type)) {
 			case 0:
@@ -77,10 +86,14 @@ module.exports = function (namespace, componentMount, commitElement, Element) {
 					output += this.html
 		}
 	
-		return output + '</'+type+'>'
+		if (flag < ElementFragment)
+			output += '</'+type+'>'
+	
+		return output
 	}
 	
 	/**
+	 * @param {Element} element
 	 * @param  {Object} props
 	 * @return {String}
 	 */
@@ -88,7 +101,15 @@ module.exports = function (namespace, componentMount, commitElement, Element) {
 		var value, output = ''
 	
 		for (var key in props) {
-			switch (value = props[key], name) {
+			switch (value = props[key], key) {
+				case 'dangerouslySetInnerHTML':
+					if (value && value.__html)
+						value = value.__html
+					else
+						break
+				case 'innerHTML':
+					element.html = value
+					break
 				case 'defaultValue':
 					if (!props.value)
 						output += ' value="'+escape(value)+'"'
@@ -97,30 +118,35 @@ module.exports = function (namespace, componentMount, commitElement, Element) {
 				case 'children':
 					break
 				case 'style':
-					output += ' style="'
-					
-					if (typeof value === 'string')
-						output += escape(value)
-					else if (value)
-						for (key in value) {
-							if (key !== key.toLowerCase())
-								key = key.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
-	
-							output += key+':'+value[key]+';'
-						}
-	
-					output += '"'
+					output += ' style="' + (typeof value === 'string' ? value : toStyle(value)) + '"'				
 					break
 				case 'className':
-					name = 'class'
+					key = 'class'
 				default:
-					if (value === false || value == null)
-						continue
-					else if (value === true)
-						output += ' '+key
+					if (value !== false && value != null)
+						output += ' '+ key + (value !== true ? '="'+escape(value)+'"' : '')
 					else
-						output += ' '+name+'="'+escape(value)+'"'
+						continue
 			}
+		}
+	
+		return output
+	}
+	
+	/**
+	 * @param {Object} obj
+	 * @return {string}
+	 */
+	function toStyle (obj) {
+		var name, output = ''
+	
+		for (var key in obj) {
+			if (key !== key.toLowerCase())
+				name = key.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
+			else
+				name = key
+			
+			output += name+':'+obj[key]+';'
 		}
 	
 		return output
@@ -168,7 +194,7 @@ module.exports = function (namespace, componentMount, commitElement, Element) {
 	/**
 	 * @type {Object}
 	 */
-	Stream.prototype = Object.create(require('stream').Readable.prototype, {
+	Stream.prototype = Object.create(Readable.prototype, {
 		_read: {value: function read () {
 			var stack = this.stack
 			var size = stack.length
@@ -177,32 +203,34 @@ module.exports = function (namespace, componentMount, commitElement, Element) {
 				this.push(null)
 			else {
 				var element = stack[size-1]
+				var flag = element.flag
+				var keyed = element.keyed
 				var type = element.type
 				var children = newer.children
 				var length = children.length
-				var output = element.keyed ? '</' + type + '>' : ''
+				var output = (keyed && flag !== ElementFragment) ? '</'+type+'>' : ''
 	
-				if (!element.keyed) {
+				if (!keyed) {
 					while (element.flag === ElementComponent)
-						element = componentMount(element)
+						element = (componentMount(element), element.children)
 	
 					switch (element.flag) {
 						case ElementText:
 							output = escape(newer.children)
 							break
-						default:
-							output = '<' + element.type + toProps(element.props) + '>'
-	
+						case ElementNode:
+							output = '<' + (type = element.type) + toProps(element.props) + '>'
+							
 							if (length === 0)
-								output += bool(type) > 0 ? '</' + type + '>' : ''
-							else
-								while (length-- > 0)
-									stack[size++] = children = children.prev 
+								output += bool(type) > 0 ? '</'+type+'>' : ''
+						default:						
+							while (length-- > 0)
+								stack[size++] = children = children.prev 
 					}
 				}
 	
-				if (element.keyed)
-					stack.pop(element.keyed = false)
+				if (keyed)
+					stack.pop(element.keyed = !keyed)
 	
 				this.push(output)
 			}
@@ -211,23 +239,21 @@ module.exports = function (namespace, componentMount, commitElement, Element) {
 	
 	/**
 	 * @param {*} subject
-	 * @param {Stream?} container
+	 * @param {Stream?} target
 	 * @param {function?} callback
 	 */
-	if (!global.document)
-		namespace.render = function render (subject, container, callback) {
-			if (!container)
-				return
+	return function (subject, target, callback) {
+		if (!target || !target.writable)
+			return render(subject, target, callback)
 	
-			var target = container
-			var readable = new Stream(element)
+		var readable = new Stream(element)
 	
-			if (typeof target.getHeader === 'function' && !target.getHeader('Content-Type'))
-				target.setHeader('Content-Type', 'text/html')
+		if (typeof target.getHeader === 'function' && !target.getHeader('Content-Type'))
+			target.setHeader('Content-Type', 'text/html')
 	
-			if (typeof callback === 'function')
-				readable.on('end', callback)
+		if (typeof callback === 'function')
+			readable.on('end', callback)
 	
-			return readable.pipe(target), readable
-		}
+		return readable.pipe(target), readable
+	}
 }

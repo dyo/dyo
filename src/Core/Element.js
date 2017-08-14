@@ -30,65 +30,12 @@ function Element (flag) {
 Element.prototype = Object.create(null, {
 	constructor: {value: Element} 
 })
-
-/**
- * @constructor
- */
-function List () {
-	this.next = this
-	this.prev = this
-	this.length = 0
-}
-/**
- * @type {Object}
- */
-List.prototype = Object.create(null, {
-	constructor: {value: List},
-	/**
-	 * @param {Element} node
-	 * @return {Element}
-	 */
-	remove: {value: function remove (node) {
-		if (this.length < 1) return
-		node.next.prev = node.prev
-		node.prev.next = node.next
-		this.length--
-		return node
-	}},
-	/**
-	 * @param {Element} node
-	 * @param {Element} before
-	 * @return {Element}
-	 */
-	insert: {value: function insert (node, before) {
-		node.next = before
-		node.prev = before.prev
-		before.prev.next = node
-		before.prev = node
-		this.length++
-		return node
-	}},
-	/**
-	 * @return {Element}
-	 */
-	pop: {value: function pop () {
-		return this.remove(this.prev)
-	}},
-	/**
-	 * @param {Element} node
-	 * @return {Element}
-	 */
-	push: {value: function push (node) {
-		return this.insert(node, this)
-	}},
-	/**
-	 * @param {function} callback
-	 */
-	forEach: {value: function forEach (callback) {
-		for (var i = 0, node = this; i < this.length; i++)
-			callback.call(this, node = node.next, i)
-	}}
-})
+Element.Text = ElementText
+Element.Node = ElementNode
+Element.Fragment = ElementFragment
+Element.Promise = ElementPromise
+Element.Portal = ElementPortal
+Element.Component = ElementComponent
 
 /**
  * @param {*} child

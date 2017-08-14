@@ -1,28 +1,31 @@
-var rootElements = []
-var rootContainers = []
+/**
+ * @type {WeakMap}
+ */
+var roots = new WeakMap()
 
 /**
  * @param {*} subject
- * @param {Node?} container
+ * @param {Node?} target
  * @param {function?} callback
  */
-function render (subject, container, callback) {
-	var target = container != null ? container : DOMDocument()
-	var element = rootElements[rootContainers.indexOf(target)]
+function render (subject, target, callback) {
+	if (target == null)
+		return render(subject, DOMDocument(), callback)
+		
+	var element = roots.get(target)
 	var parent = null
 
 	if (element)
-		return patchElement(element, commitElement(subject))
+		patchElement(element, commitElement(subject))
+	else {
+		element = commitElement(subject)
+		parent = new Element(0)
+		parent.DOM = {node: target}
+		parent.context = {}
 
-	element = commitElement(subject)
-	parent = new Element(0)
-	parent.DOM = {node: target}
-	parent.context = {}
-
-	rootElements.push(element)
-	rootContainers.push(target)
-
-	commitMount(element, element, parent, parent, 0)
+		roots.set(target, element)
+		commitMount(element, element, parent, parent, 0)
+	}
 
 	if (typeof callback === 'function')
 		lifecycleCallback(element, callback, target)

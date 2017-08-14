@@ -18,7 +18,7 @@ function Stream (element) {
 /**
  * @type {Object}
  */
-Stream.prototype = Object.create(require('stream').Readable.prototype, {
+Stream.prototype = Object.create(Readable.prototype, {
 	_read: {value: function read () {
 		var stack = this.stack
 		var size = stack.length
@@ -27,32 +27,34 @@ Stream.prototype = Object.create(require('stream').Readable.prototype, {
 			this.push(null)
 		else {
 			var element = stack[size-1]
+			var flag = element.flag
+			var keyed = element.keyed
 			var type = element.type
 			var children = newer.children
 			var length = children.length
-			var output = element.keyed ? '</' + type + '>' : ''
+			var output = (keyed && flag !== ElementFragment) ? '</'+type+'>' : ''
 
-			if (!element.keyed) {
+			if (!keyed) {
 				while (element.flag === ElementComponent)
-					element = componentMount(element)
+					element = (componentMount(element), element.children)
 
 				switch (element.flag) {
 					case ElementText:
 						output = escape(newer.children)
 						break
-					default:
-						output = '<' + element.type + toProps(element.props) + '>'
-
+					case ElementNode:
+						output = '<' + (type = element.type) + toProps(element.props) + '>'
+						
 						if (length === 0)
-							output += bool(type) > 0 ? '</' + type + '>' : ''
-						else
-							while (length-- > 0)
-								stack[size++] = children = children.prev 
+							output += bool(type) > 0 ? '</'+type+'>' : ''
+					default:						
+						while (length-- > 0)
+							stack[size++] = children = children.prev 
 				}
 			}
 
-			if (element.keyed)
-				stack.pop(element.keyed = false)
+			if (keyed)
+				stack.pop(element.keyed = !keyed)
 
 			this.push(output)
 		}

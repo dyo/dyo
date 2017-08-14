@@ -12,7 +12,7 @@ function Exception (element, from) {
 	var stack = this.stack
 
 	while (host.type) {
-		tree += tabs + '<' + (host.type.name || 'anonymous') + '>\n'
+		tree += tabs + '<' + (host.type.displayName || host.type.name || 'anonymous') + '>\n'
 		tabs += '  '
 		host = host.host
 	}

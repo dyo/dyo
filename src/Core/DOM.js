@@ -1,16 +1,4 @@
 /**
- * @constructor
- * @param {Node} node
- */
-function DOM (node) {
-	this.node = node
-}
-/**
- * @type {Object}
- */
-DOM.prototype = Object.create(null)
-
-/**
  * @return {Node}
  */
 function DOMDocument () {
