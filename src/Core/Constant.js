@@ -4,14 +4,14 @@ var Node = window.Node || noop
 var Symbol = window.Symbol || noop
 var Promise = window.Promise || noop
 var WeakMap = window.WeakMap || Hash
-var Iterator = Symbol.iterator || Symbol('iterator') || 'Symbol(Symbol.iterator)'
+var Iterator = Symbol.iterator
 
-var ElementText = 0
+var ElementPromise = -3
+var ElementPortal = -2
+var ElementFragment = -1
+var ElementComponent = 0
 var ElementNode = 1
-var ElementFragment = 2
-var ElementPromise = 3
-var ElementPortal = 4
-var ElementComponent = 5
+var ElementText = 2
 
 var PriorityLow = -2
 var PriorityTask = -1

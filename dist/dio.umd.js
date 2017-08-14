@@ -149,14 +149,14 @@
 	var Symbol = window.Symbol || noop
 	var Promise = window.Promise || noop
 	var WeakMap = window.WeakMap || Hash
-	var Iterator = Symbol.iterator || Symbol('iterator') || 'Symbol(Symbol.iterator)'
+	var Iterator = Symbol.iterator
 	
-	var ElementText = 0
+	var ElementPromise = -3
+	var ElementPortal = -2
+	var ElementFragment = -1
+	var ElementComponent = 0
 	var ElementNode = 1
-	var ElementFragment = 2
-	var ElementPromise = 3
-	var ElementPortal = 4
-	var ElementComponent = 5
+	var ElementText = 2
 	
 	var PriorityLow = -2
 	var PriorityTask = -1
@@ -296,6 +296,20 @@
 	}
 	
 	/**
+	 * @param {Eleemnt} element
+	 * @param {number} signature
+	 * @return {Element}
+	 */
+	function elementSibling (element, signature) {
+		if (signature > 0 && isValidElement(element.children.next))
+			return element.children.next
+		else if (isValidElement(element.next))
+			return element.next
+		else
+			return shared.Element
+	}
+	
+	/**
 	 * @param {Element} element
 	 * @param {List} children
 	 * @param {*} child
@@ -313,20 +327,23 @@
 	
 					children.push(child)
 					break
+				case List:
 				case Array:
 					for (var i = 0; i < child.length; i++)
 						elementChildren(element, children, child[i], index+i, scope+1)
+	
 					return index+i
 				case String:
 				case Number:
+				case Error:
 				case Date:
 					return elementChildren(element, children, elementText(child), index, scope)
-				case Promise:
 				case Function:
+				case Promise:
 					return elementChildren(element, children, createElement(child), index, scope)
 				case Boolean:
 				case Symbol:
-					return elementChildren(element, children, elementText(''), index, scope)
+					return elementChildren(element, children, null, index, scope)
 				default:
 					return elementChildren(element, children, elementUnknown(child), index, scope) 
 			}
@@ -813,7 +830,7 @@
 		if (element == null || element.DOM == null)
 			return elementText('')
 		else
-			return element.flag < ElementComponent ? element : element.children
+			return element.flag !== ElementComponent ? element : element.children
 	}
 	
 	/**
@@ -865,27 +882,27 @@
 	function commitElement (element) {
 		if (element != null)
 			switch (element.constructor) {
+				case Element:
+					return element
 				case List:
 				case Array:
 					return elementFragment(element)
-				case Function:
-					return createElement(element)
 				case String:
 				case Number:
 				case Date:
+				case Error:
 					return elementText(element)
+				case Function:
+				case Promise:
+					return createElement(element)
 				case Boolean:
 				case Symbol:
-					return commitElement(null)
-				case Element:
-					return element
-				case Promise:
-					return commitElement(createElement(element))
+					break
 				default:
 					return elementUnknown(element)
 			}
 	
-		return getHostElement(element)
+		return elementText('')
 	}
 	
 	/**
@@ -896,10 +913,10 @@
 		snapshot.type.then(function (value) {
 			if (!element.DOM)
 				return
-			if (element.flag === ElementPromise)
-				patchChildren(element, elementFragment(commitElement(value)))
-			else
-				patchElement(element, commitElement(value))
+			// if (element.flag === ElementPromise)
+				// patchChildren(element, elementFragment(commitElement(value)))
+			// else
+				// patchElement(element, commitElement(value))
 		})
 	}
 	
@@ -909,7 +926,7 @@
 	 */
 	function commitCreate (element) {
 		try {
-			return element.flag > ElementText ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
+			return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
 		} catch (e) {
 			return commitCreate(Boundary(element, e, LifecycleRender))
 		}
@@ -970,7 +987,8 @@
 	 			if (flag === ElementPortal)
 	 				element.DOM = {node: element.type}
 	 		case ElementFragment:
-	 			element.DOM = flag !== ElementPortal ? parent.DOM : element.DOM
+	 			if (flag !== ElementPortal)
+	 				element.DOM = parent.DOM
 	
 	 			node = children.next
 	 			length = children.length
@@ -989,7 +1007,7 @@
 	 			node = node.next
 	 		}
 	
-	 	if (flag < ElementFragment) {
+	 	if (flag >= ElementNode) {
 	 		switch (signature) {
 	 			case 0:
 	 				commitAppend(element, parent)
@@ -1017,7 +1035,7 @@
 	 * @param {number} signature
 	 */
 	function commitUnmount (element, parent, signature) {
-		if (element.flag < ElementComponent) {
+		if (element.flag !== ElementComponent) {
 			commitRemove(element, parent)
 			commitRelease(element, 1, signature)
 		} else
@@ -1082,9 +1100,11 @@
 	 * @param {Element} parent
 	 */
 	function commitRemove (element, parent) {
-		if (element.flag === ElementFragment)
-			return element.children.forEach(function (element) {
-				commitRemove(element, parent)
+		if (element.flag <= ElementFragment)
+			return element.flag !== ElementPortal ? element.children.forEach(function (children) {
+				commitRemove(children, parent)
+			}) : element.children.forEach(function (children) {
+				commitRemove(children, element)
 			})
 	
 		DOMRemove(element.DOM, parent.DOM)
@@ -1095,12 +1115,12 @@
 	 * @param {Element} parent
 	 */
 	function commitAppend (element, parent) {
-		if (parent.flag === ElementFragment)
-			return commitInsert(element, parent.next || shared.Element, parent)
+		if (parent.flag <= ElementFragment)
+			return commitInsert(element, elementSibling(parent, 0), parent)
 	
-		if (element.flag === ElementFragment)
-			return element.children.forEach(function (element) {
-				commitAppend(element, parent)
+		if (element.flag <= ElementFragment)
+			return element.children.forEach(function (children) {
+				commitAppend(children, parent)
 			})
 	
 		DOMAppend(element.DOM, parent.DOM)
@@ -1112,12 +1132,12 @@
 	 * @param {Element} parent
 	 */
 	function commitInsert (element, sibling, parent) {
-		if (sibling.flag === ElementFragment)
-			return commitInsert(element, sibling.children.next || sibling.next || Shared.Element, parent)
+		if (sibling.flag <= ElementFragment)
+			return commitInsert(element, elementSibling(sibling, 1), parent)
 	
-		if (element.flag === ElementFragment)
-			return element.children.forEach(function (element) {
-				commitInsert(element, sibling, parent)
+		if (element.flag <= ElementFragment)
+			return element.children.forEach(function (children) {
+				commitInsert(children, sibling, parent)
 			})
 	
 		DOMInsert(element.DOM, sibling.DOM, parent.DOM)
@@ -1807,6 +1827,7 @@
 	/**
 	 * @exports
 	 */
+	exports.version = version
 	exports.h = exports.createElement = window.h = createElement
 	exports.isValidElement = isValidElement
 	exports.cloneElement = cloneElement

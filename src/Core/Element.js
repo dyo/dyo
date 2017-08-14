@@ -111,6 +111,20 @@ function elementUnknown (child) {
 }
 
 /**
+ * @param {Eleemnt} element
+ * @param {number} signature
+ * @return {Element}
+ */
+function elementSibling (element, signature) {
+	if (signature > 0 && isValidElement(element.children.next))
+		return element.children.next
+	else if (isValidElement(element.next))
+		return element.next
+	else
+		return shared.Element
+}
+
+/**
  * @param {Element} element
  * @param {List} children
  * @param {*} child
@@ -128,20 +142,23 @@ function elementChildren (element, children, child, index, scope) {
 
 				children.push(child)
 				break
+			case List:
 			case Array:
 				for (var i = 0; i < child.length; i++)
 					elementChildren(element, children, child[i], index+i, scope+1)
+
 				return index+i
 			case String:
 			case Number:
+			case Error:
 			case Date:
 				return elementChildren(element, children, elementText(child), index, scope)
-			case Promise:
 			case Function:
+			case Promise:
 				return elementChildren(element, children, createElement(child), index, scope)
 			case Boolean:
 			case Symbol:
-				return elementChildren(element, children, elementText(''), index, scope)
+				return elementChildren(element, children, null, index, scope)
 			default:
 				return elementChildren(element, children, elementUnknown(child), index, scope) 
 		}

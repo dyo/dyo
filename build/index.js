@@ -40,6 +40,7 @@ shared.DOM = (shared.Element = new Element(0)).DOM = {node: null}
 /**
  * @exports
  */
+exports.version = version
 exports.h = exports.createElement = window.h = createElement
 exports.isValidElement = isValidElement
 exports.cloneElement = cloneElement

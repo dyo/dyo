@@ -300,7 +300,7 @@ function getHostElement (element) {
 	if (element == null || element.DOM == null)
 		return elementText('')
 	else
-		return element.flag < ElementComponent ? element : element.children
+		return element.flag !== ElementComponent ? element : element.children
 }
 
 /**
