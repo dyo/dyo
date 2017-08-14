@@ -301,7 +301,7 @@
 	 * @return {Element}
 	 */
 	function elementSibling (element, signature) {
-		if (signature > 0 && isValidElement(element.children.next))
+		if (signature > 0 && element.flag !== ElementPortal && isValidElement(element.children.next))
 			return element.children.next
 		else if (isValidElement(element.next))
 			return element.next
