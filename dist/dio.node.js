@@ -160,18 +160,17 @@ module.exports = function (Element, render, componentMount, commitElement) {
 			case ElementComponent:
 				return componentMount(this).children.toJSON()
 			case ElementText:
-				return '"'+escape(this.children)+'"'
+				return this.children
 		}
 	
+		var output = {type: element.type, props: element.props, children: []}
 		var children = this.children
 		var length = children.length
-		var output = '{type:"' + this.type + '",props:' + JSON.stringify(this.props) + ',children:['
-		var next = children
 	
 		while (length-- > 0)
-			output += (next = next.next).toJSON()
+			output.children.push((children = children.next).toJSON())
 	
-		return output + ']}'
+		return output
 	}
 	
 	/**
