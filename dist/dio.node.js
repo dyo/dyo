@@ -158,7 +158,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	Element.prototype.toJSON = function toJSON () {
 		switch (this.flag) {
 			case ElementComponent:
-				return componentMount(this).children.toJSON()
+				return (componentMount(this), this.children.toJSON())
 			case ElementText:
 				return this.children
 		}
