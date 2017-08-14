@@ -21,8 +21,10 @@ const umd = [
 ]
 
 const node = [
+	'../src/Core/Utility.js',
 	'../src/Server/Utility.js',
 	'../src/Server/Constant.js',
+	'../src/Core/Constant.js',
 	'../src/Server/String.js',
 	'../src/Server/JSON.js',
 	'../src/Server/Stream.js',

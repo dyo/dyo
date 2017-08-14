@@ -152,8 +152,8 @@
 	var Iterator = Symbol.iterator
 	
 	var ElementPromise = -3
-	var ElementPortal = -2
-	var ElementFragment = -1
+	var ElementFragment = -2
+	var ElementPortal = -1
 	var ElementComponent = 0
 	var ElementNode = 1
 	var ElementText = 2
@@ -215,12 +215,6 @@
 	Element.prototype = Object.create(null, {
 		constructor: {value: Element} 
 	})
-	Element.Text = ElementText
-	Element.Node = ElementNode
-	Element.Fragment = ElementFragment
-	Element.Promise = ElementPromise
-	Element.Portal = ElementPortal
-	Element.Component = ElementComponent
 	
 	/**
 	 * @param {*} child
@@ -913,7 +907,7 @@
 		snapshot.type.then(function (value) {
 			if (!element.DOM)
 				return
-			
+	
 			if (element.flag === ElementPromise)
 				patchChildren(element, elementFragment(commitElement(value)))
 			else
@@ -1101,11 +1095,9 @@
 	 * @param {Element} parent
 	 */
 	function commitRemove (element, parent) {
-		if (element.flag <= ElementFragment)
-			return element.flag !== ElementPortal ? element.children.forEach(function (children) {
-				commitRemove(children, parent)
-			}) : element.children.forEach(function (children) {
-				commitRemove(children, element)
+		if (element.flag < ElementComponent)
+			return element.children.forEach(function (children) {
+				commitRemove(children, element.flag !== ElementPortal ? parent : element)
 			})
 	
 		DOMRemove(element.DOM, parent.DOM)
@@ -1116,10 +1108,10 @@
 	 * @param {Element} parent
 	 */
 	function commitAppend (element, parent) {
-		if (parent.flag <= ElementFragment)
+		if (parent.flag < ElementPortal)
 			return commitInsert(element, elementSibling(parent, 0), parent)
 	
-		if (element.flag <= ElementFragment)
+		if (element.flag < ElementComponent)
 			return element.children.forEach(function (children) {
 				commitAppend(children, parent)
 			})
@@ -1133,10 +1125,10 @@
 	 * @param {Element} parent
 	 */
 	function commitInsert (element, sibling, parent) {
-		if (sibling.flag <= ElementFragment)
+		if (sibling.flag < ElementComponent)
 			return commitInsert(element, elementSibling(sibling, 1), parent)
 	
-		if (element.flag <= ElementFragment)
+		if (element.flag < ElementComponent)
 			return element.children.forEach(function (children) {
 				commitInsert(children, sibling, parent)
 			})

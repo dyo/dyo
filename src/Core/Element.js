@@ -30,12 +30,6 @@ function Element (flag) {
 Element.prototype = Object.create(null, {
 	constructor: {value: Element} 
 })
-Element.Text = ElementText
-Element.Node = ElementNode
-Element.Fragment = ElementFragment
-Element.Promise = ElementPromise
-Element.Portal = ElementPortal
-Element.Component = ElementComponent
 
 /**
  * @param {*} child

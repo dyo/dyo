@@ -7,8 +7,8 @@ var WeakMap = window.WeakMap || Hash
 var Iterator = Symbol.iterator
 
 var ElementPromise = -3
-var ElementPortal = -2
-var ElementFragment = -1
+var ElementFragment = -2
+var ElementPortal = -1
 var ElementComponent = 0
 var ElementNode = 1
 var ElementText = 2

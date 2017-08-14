@@ -3,6 +3,136 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	'use strict'
 	
 	/**
+	 * @constructor
+	 */
+	function List () {
+		this.next = this
+		this.prev = this
+		this.length = 0
+	}
+	/**
+	 * @type {Object}
+	 */
+	List.prototype = Object.create(null, {
+		constructor: {value: List},
+		/**
+		 * @param {Element} node
+		 * @return {Element}
+		 */
+		remove: {value: function remove (node) {
+			if (this.length < 1) return
+			node.next.prev = node.prev
+			node.prev.next = node.next
+			this.length--
+			return node
+		}},
+		/**
+		 * @param {Element} node
+		 * @param {Element} before
+		 * @return {Element}
+		 */
+		insert: {value: function insert (node, before) {
+			node.next = before
+			node.prev = before.prev
+			before.prev.next = node
+			before.prev = node
+			this.length++
+			return node
+		}},
+		/**
+		 * @return {Element}
+		 */
+		pop: {value: function pop () {
+			return this.remove(this.prev)
+		}},
+		/**
+		 * @param {Element} node
+		 * @return {Element}
+		 */
+		push: {value: function push (node) {
+			return this.insert(node, this)
+		}},
+		/**
+		 * @param {function} callback
+		 */
+		forEach: {value: function forEach (callback) {
+			for (var i = 0, node = this; i < this.length; i++)
+				callback.call(this, node = node.next, i)
+		}}
+	})
+	
+	/**
+	 * @constructor
+	 */
+	function Hash () {
+		this.k = []
+		this.v = []
+	}
+	/**
+	 * @type {Object}
+	 */
+	Hash.prototype = Object.create(null, {
+		delete: {value: function (key) {
+			var k = this.k
+			var i = k.lastIndexOf(key)
+			
+			delete this.k[i]
+			delete this.v[i]
+		}},
+		set: {value: function (key, value) {
+			var k = this.k
+			var i = k.lastIndexOf(key)
+	
+			k[!~i ? (i = k.length) : i] = key
+			this.v[i] = value
+		}},
+		get: {value: function (key) {
+			return this.v[this.k.lastIndexOf(key)]
+		}},
+		has: {value: function (key) {
+			return this.k.lastIndexOf(key) > -1
+		}}
+	})
+	
+	/**
+	 * @param {Object} destination
+	 * @param {Object} source
+	 */
+	function merge (destination, source) {
+		for (var key in source)
+			destination[key] = source[key]
+	}
+	
+	/**
+	 * @param {Object} destination
+	 * @param {Object} source
+	 * @param {Object} delta
+	 * @return {Object}
+	 */
+	function assign (destination, source, delta) {
+		for (var key in source)
+			destination[key] = source[key]
+		
+		for (var key in delta)
+			destination[key] = delta[key]
+	
+		return destination
+	}
+	
+	/**
+	 * @param {function} callback
+	 */
+	function setImmediate (callback) {
+		requestAnimationFrame(callback, 16)
+	}
+	
+	/**
+	 * @type {function}
+	 * @return {void}
+	 */
+	function noop () {}
+	
+	/**
 	 * @param {*} value
 	 * @return {string}
 	 */
@@ -51,12 +181,46 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	}
 	
 	var Readable = require('stream').Readable
-	var ElementText = Element.Text
-	var ElementNode = Element.Node
-	var ElementFragment = Element.Fragment
-	var ElementPromise = Element.Promise
-	var ElementPortal = Element.Portal
-	var ElementComponent = Element.Component
+	
+	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+	var document = window.document || noop
+	var Node = window.Node || noop
+	var Symbol = window.Symbol || noop
+	var Promise = window.Promise || noop
+	var WeakMap = window.WeakMap || Hash
+	var Iterator = Symbol.iterator
+	
+	var ElementPromise = -3
+	var ElementFragment = -2
+	var ElementPortal = -1
+	var ElementComponent = 0
+	var ElementNode = 1
+	var ElementText = 2
+	
+	var PriorityLow = -2
+	var PriorityTask = -1
+	var PriorityHigh = 1
+	
+	var LifecycleCallback = 'callback'
+	var LifecycleRender = 'render'
+	var LifecycleConstructor = 'constructor'
+	var LifecycleWillMount = 'componentWillMount'
+	var LifecycleDidMount = 'componentDidMount'
+	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
+	var LifecycleShouldUpdate = 'shouldComponentUpdate'
+	var LifecycleWillUpdate = 'componentWillUpdate'
+	var LifecycleDidUpdate = 'componentDidUpdate'
+	var LifecycleWillUnmount = 'componentWillUnmount'
+	var LifecycleDidCatch = 'componentDidCatch'
+	var LifecycleChildContext = 'getChildContext'
+	var LifecycleInitialState = 'getInitialState'
+	
+	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
+	var NSXlink = 'http://www.w3.org/1999/xlink'
+	var NSSVG = 'http://www.w3.org/2000/svg'
+	
+	var TypeFragment = '#Fragment'
+	var TypeText = '#Text'
 	
 	/**
 	 * @return {string}
