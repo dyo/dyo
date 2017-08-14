@@ -1,4 +1,4 @@
-module.exports = ({h, shallow, render}) => {
+module.exports = ({h, render}) => {
 	test('Reconcile', ({ok, end}) => {
 		class List {
 			render () {
@@ -195,5 +195,5 @@ module.exports = ({h, shallow, render}) => {
 		`), '[complex] - a, b, d, f, c -> c, b, d, r, a');
 
 		end()
-	});
+	})
 }

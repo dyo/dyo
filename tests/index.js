@@ -6,6 +6,7 @@ const DOM = new JSDOM('<!DOCTYPE html>')
 
 global.window = DOM.window
 global.document = DOM.window.document
+global.Node = DOM.window.Node
 global.dio = require('../dist/dio.umd.js');
 
 /**

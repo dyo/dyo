@@ -1,4 +1,4 @@
-module.exports = ({h, shallow, render}) => {
+module.exports = ({h, render}) => {
 	test('Render', ({ok, end}) => {
 		var iterable = {
 			[Symbol.iterator]: function* () {
@@ -16,8 +16,10 @@ module.exports = ({h, shallow, render}) => {
 
 		const Foo = () => h('h1', {id: 1}, '1')
 		const Bar = () => iterable
+		const Baz = () => [h('h1', 'Hello'), h('h1', 'World')]
 
 		var container = document.createElement('div')
+		var portal = document.createElement('div')
 
 		render(h('h1', {id: 1}, '0'), container);
 		ok(container.innerHTML === '<h1 id="1">0</h1>', 'render element')
@@ -37,10 +39,14 @@ module.exports = ({h, shallow, render}) => {
 		render(Bar, container)
 		ok(container.innerHTML === '123', 'render iteratable')
 
-		console.log(container.innerHTML)
+		render(Baz, container)
+		ok(container.innerHTML === '<h1>Hello</h1><h1>World</h1>', 'render fragment')
 
-		// @TODO render fragments, portal, etc..
+		render([h('h1', 'Hello'), h(portal, h('h1', 'World'))], container)
+		ok(container.innerHTML === '<h1>Hello</h1>' && portal.innerHTML === '<h1>World</h1>', 'render portal')
+
+		// @TODO render Promise..
 
 		end()
-	});
+	})
 }

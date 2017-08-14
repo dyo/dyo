@@ -62,14 +62,15 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	 * @return {string}
 	 */
 	Element.prototype.toString = function toString () {
-		switch (this.flag) {
+		var flag = this.flag
+	
+		switch (flag) {
 			case ElementComponent:
 				return (componentMount(this), this.children.toString())
 			case ElementText:
 				return escape(this.children)
 		}
 	
-		var flag = this.flag
 		var type = this.type
 		var children = this.children
 		var length = children.length
@@ -156,21 +157,23 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	 * @return {string}
 	 */
 	Element.prototype.toJSON = function toJSON () {
-		switch (this.flag) {
+		var flag = this.flag
+	
+		switch (flag) {
 			case ElementComponent:
 				return (componentMount(this), this.children.toJSON())
 			case ElementText:
 				return this.children
 		}
 	
-		var output = {type: element.type, props: element.props, children: []}
+		var output = {type: this.type, props: this.props, children: []}
 		var children = this.children
 		var length = children.length
 	
 		while (length-- > 0)
 			output.children.push((children = children.next).toJSON())
 	
-		return output
+		return flag < ElementFragment ? output : output.children
 	}
 	
 	/**

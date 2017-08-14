@@ -1,11 +1,11 @@
-module.exports = ({h, render, Component}) => {
+module.exports = ({h, Component, render}) => {
 	test('Lifecycle', ({ok, end}) => {
 		var container = document.createElement('div')
 
 		class Bar {
 			componentWillUpdate() { ok(true, 'componentWillUpdate#Composite') }
 			componentDidUpdate() { ok(true, 'componentDidUpdate#Composite') }
-			render() { return h('h1', this.props.id); }
+			render() { return h('h1', this.props.id) }
 		}
 
 		class Foo {
@@ -16,7 +16,7 @@ module.exports = ({h, render, Component}) => {
 			componentWillReceiveProps() { ok(true, 'componentWillReceiveProps') }
 			componentWillUnmount() { ok(true, 'componentWillUnmount') }
 			shouldComponentUpdate() { ok(true, 'shouldComponentUpdate') }
-			render() { return Bar}
+			render() { return Bar }
 		}			
 
 		render(h(Foo, {id: 1}), container)
@@ -70,5 +70,5 @@ module.exports = ({h, render, Component}) => {
 		end()
 	})
 
-	// @TODO test async render and unmount
+	// @TODO test async render and unmount animation
 }

@@ -305,9 +305,12 @@
 
 		class Child {
 			render(){
-				throw new Error('error!')
+				return [h('h1', 'Hello')]
+				// throw new Error('error!')
 			}
 		}
+
+		// render([h('h1', 'Hello'), h(root, h('h1', 'World'))])
 
 		dio.render(Main)
 	</script>
