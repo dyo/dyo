@@ -912,6 +912,8 @@
 	function commitPromise (element, snapshot) {
 		snapshot.type.then(function (value) {
 			if (!element.DOM)
+				return
+			
 			if (element.flag === ElementPromise)
 				patchChildren(element, elementFragment(commitElement(value)))
 			else
