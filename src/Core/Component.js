@@ -219,7 +219,7 @@ function componentUnmount (host, children, parent, signature, resolve) {
 		if (host.state = lifecycleMount(host, LifecycleWillUnmount))
 			if (host.state.constructor === Promise)
 				return void host.state.then(function () {
-					componentUnmount(host, children, element, parent, signature, 0)
+					componentUnmount(host, children, element, parent, signature, (host.state = null, 0))
 				})
 
 	commitUnmount(children, parent, signature)

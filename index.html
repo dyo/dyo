@@ -324,12 +324,14 @@
 		})
 
 		// render(h('div', 1, h(then, 'Loading')))
-		render(h('div', 1, h(root, 'Loading')))
+		// render(h('div', 1, h(root, 'Loading')))
+		render(h('div', 1, h(root, 2, 3)))
 
 		// render([1, h(then, 'Loading')])
 		
 		setTimeout(function (){
 			render(h('div', 1))
+			// render(h('div', 1, h(root, 2)))
 			// render(h(then, 'Loading'))
 		}, 2000)
 		

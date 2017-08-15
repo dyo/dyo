@@ -172,7 +172,7 @@ function commitUnmount (element, parent, signature) {
  */
 function commitMerge (element, snapshot) {
 	commitMount(snapshot, element, element.parent, element.host, 1)	
-	commitUnmount(element, element.parent, 2)
+	commitUnmount(element, element.parent, 1)
 
 	for (var key in snapshot)
 		switch (key) {
@@ -224,28 +224,12 @@ function commitRelease (element, flag, signature) {
  * @param {Element} parent
  */
 function commitRemove (element, parent) {
-	if (element.flag < ElementComponent)
-		return element.children.forEach(function (children) {
-			commitRemove(children, element.flag !== ElementPortal ? parent : element)
+	if (element.flag > ElementComponent)
+		DOMRemove(element.DOM, parent.DOM)
+	else
+		element.children.forEach(function (children) {
+			commitRemove(children, element.flag < ElementPortal ? parent : element)
 		})
-
-	DOMRemove(element.DOM, parent.DOM)
-}
-
-/**
- * @param {Element} element
- * @param {Element} parent
- */
-function commitAppend (element, parent) {
-	if (parent.flag < ElementPortal)
-		return commitInsert(element, elementSibling(parent, 0), parent)
-
-	if (element.flag < ElementComponent)
-		return element.children.forEach(function (children) {
-			commitAppend(children, parent)
-		})
-
-	DOMAppend(element.DOM, parent.DOM)
 }
 
 /**
@@ -257,12 +241,28 @@ function commitInsert (element, sibling, parent) {
 	if (sibling.flag < ElementComponent)
 		return commitInsert(element, elementSibling(sibling, 1), parent)
 
-	if (element.flag < ElementComponent)
-		return element.children.forEach(function (children) {
+	if (element.flag > ElementComponent)
+		DOMInsert(element.DOM, sibling.DOM, parent.DOM)
+	else if (element.flag < ElementPortal)
+		element.children.forEach(function (children) {
 			commitInsert(children, sibling, parent)
 		})
+}
 
-	DOMInsert(element.DOM, sibling.DOM, parent.DOM)
+/**
+ * @param {Element} element
+ * @param {Element} parent
+ */
+function commitAppend (element, parent) {
+	if (parent.flag < ElementPortal)
+		return commitInsert(element, elementSibling(parent, 0), parent)
+
+	if (element.flag > ElementComponent)
+		DOMAppend(element.DOM, parent.DOM)
+	else if (element.flag < ElementPortal)
+		element.children.forEach(function (children) {
+			commitAppend(children, parent)
+		})
 }
 
 /**

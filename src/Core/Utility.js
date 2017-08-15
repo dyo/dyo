@@ -16,10 +16,13 @@ List.prototype = Object.create(null, {
 	 * @return {Element}
 	 */
 	remove: {value: function remove (node) {
-		if (this.length < 1) return
+		if (this.length < 1) 
+			return
+		
 		node.next.prev = node.prev
 		node.prev.next = node.next
 		this.length--
+		
 		return node
 	}},
 	/**
@@ -33,6 +36,7 @@ List.prototype = Object.create(null, {
 		before.prev.next = node
 		before.prev = node
 		this.length++
+		
 		return node
 	}},
 	/**
@@ -62,7 +66,7 @@ List.prototype = Object.create(null, {
  */
 function Hash () {
 	this.k = []
-	this.v = []
+	this.v = {}
 }
 /**
  * @type {Object}
