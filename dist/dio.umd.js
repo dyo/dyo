@@ -81,31 +81,21 @@
 	 */
 	function Hash () {
 		this.k = []
-		this.v = {}
+		this.v = []
 	}
 	/**
 	 * @type {Object}
 	 */
 	Hash.prototype = Object.create(null, {
-		delete: {value: function (key) {
-			var k = this.k
-			var i = k.lastIndexOf(key)
-			
-			delete this.k[i]
-			delete this.v[i]
-		}},
 		set: {value: function (key, value) {
 			var k = this.k
 			var i = k.lastIndexOf(key)
 	
-			k[!~i ? (i = k.length) : i] = key
+			k[i < 0 ? (i = k.length) : i] = key
 			this.v[i] = value
 		}},
 		get: {value: function (key) {
 			return this.v[this.k.lastIndexOf(key)]
-		}},
-		has: {value: function (key) {
-			return this.k.lastIndexOf(key) > -1
 		}}
 	})
 	
@@ -152,7 +142,8 @@
 	var Node = window.Node || noop
 	var Symbol = window.Symbol || noop
 	var Promise = window.Promise || noop
-	var WeakMap = window.WeakMap || Hash
+	var WeakMap = window.WeakMapd || Hash
+	var Map = window.Mapd || Hash
 	var Iterator = Symbol.iterator
 	
 	var ElementPromise = -3
@@ -635,14 +626,6 @@
 	}
 	
 	/**
-	 * @param {Object} prototype
-	 */
-	function componentCreate (prototype) {
-		for (var key in descriptor)
-			Object.defineProperty(prototype, key, descriptor[key])
-	}
-	
-	/**
 	 * @param {Element} element
 	 * @return {number}
 	 */
@@ -655,7 +638,7 @@
 	
 		if (prototype && prototype.render) {
 			if (!prototype.setState)
-				componentCreate(prototype)
+				Object.defineProperties(prototype, descriptor)
 	
 			instance = owner = getChildInstance(element) || new Component()
 			element.owner = owner
@@ -831,10 +814,7 @@
 	 * @param {Element} element
 	 */
 	function getHostElement (element) {
-		if (element == null || element.DOM == null)
-			return elementText('')
-		else
-			return element.flag !== ElementComponent ? element : element.children
+		return element.flag > ElementComponent ? element : getHostElement(element.children)
 	}
 	
 	/**
@@ -1487,8 +1467,8 @@
 						commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
 					}
 	
-					if (delete aPool[bHash])
-						patchElement(aNext, bNode)
+					patchElement(aNext, bNode)
+					delete aPool[bHash]
 				} else {
 					if (aNode === children)
 						commitMount(children.push(bNode), bNode, element, host, 0)
@@ -1521,7 +1501,7 @@
 	function patchInsert (element, sibling, parent, host, children, index, length, signature) {
 		var i = index
 		var prev = element
-		var next = prev
+		var next = element
 	
 		while (i++ < length) {
 			next = (prev = next).next
@@ -1539,7 +1519,7 @@
 	function patchRemove (element, parent, children, index, length) {
 		var i = index
 		var prev = element
-		var next = prev
+		var next = element
 		
 		while (i++ < length) {
 			next = (prev = next).next
@@ -1567,10 +1547,10 @@
 		if (element)
 			patchElement(element, commitElement(subject))
 		else {
-			element = commitElement(subject)
-			parent = new Element(0)
+			parent = new Element(ElementIntermediate)
 			parent.DOM = {node: target}
 			parent.context = {}
+			parent.children = element = commitElement(subject)
 	
 			roots.set(target, element)
 			commitMount(element, element, parent, parent, 0)
@@ -1640,12 +1620,10 @@
 			host = host.host
 		}
 	
+		console.error('Error caught in `\n\n'+tree+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
+	
 		this.from = from
 		this.tree = tree
-	
-		console.error(
-			'Error caught in `\n\n'+tree+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n'
-		)
 	
 		return this
 	}
@@ -1669,30 +1647,32 @@
 	 * @return {Element?}
 	 */
 	function Recovery (element, error, from) {
-		if (!element || !element.owner)
-			return elementText('')
+		if (element && element.owner)
+			try {
+				if (!element.owner[LifecycleDidCatch])
+					return Recovery(element.host, error, from)
 	
-		if (!element.owner[LifecycleDidCatch])
-			return Recovery(element.host, snapshot, error, from)
+				var snapshot = element.owner[LifecycleDidCatch].call((element.sync = PriorityLow, element.instance), error)
 	
-		try {
-			var snapshot = element.owner[LifecycleDidCatch].call((element.sync = PriorityLow, element.instance), error)
-	
-			switch (element.sync = PriorityHigh, typeof snapshot) {
-				case 'boolean':
-				case 'undefined':
-					break
-				default:
-					if (from === LifecycleRender)
-						return commitElement(snapshot)
-					else if (!server)
-						patchElement(element.children, commitElement(snapshot))	
+				switch (element.sync = PriorityHigh, typeof snapshot) {
+					case 'boolean':
+					case 'undefined':
+						break
+					default:
+						if (from === LifecycleRender)
+							return commitElement(snapshot)
+						else if (!server)
+							patchElement(getHostElement(element), commitElement(snapshot))
+				}
+			} catch (e) {
+				Boundary(element.host, e, LifecycleDidCatch)
 			}
-		} catch (e) {
-			return Boundary(element.host, e, LifecycleDidCatch)
-		}
+		else if (!server)
+			setImmediate(function () {
+				patchElement(getHostElement(element), elementText(''))
+			})
 	
-		return getHostElement(element)
+		return elementText('')
 	}
 	
 	/**

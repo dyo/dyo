@@ -298,42 +298,50 @@
 		}
 
 		class Main {
+			// componentDidCatch(err) {
+				// console.log(err, 'componentDidCatch')
+				// return h('h1', {style: 'color:red'}, 'Error!')
+			// }
 			render(){
 				return Child
 			}
 		}
 
 		class Child {
+			componentDidMount() {
+				throw new Error('error')
+			}
 			render(){
-				// return [h('h1', 'Hello')]
-				return h('h1', new Error('error!'))
+				return h('h1', 'Hello')
 			}
 		}
 
+		render(Main)
+
 		// render([h('h1', 'Hello'), h(root, h('h1', 'World'))])
 
-		var counter = 0
-		function Load () {
-			return h('h1', 'Loaded - ', counter++)
-		}
+		// var counter = 0
+		// function Load () {
+		// 	return h('h1', 'Loaded - ', counter++)
+		// }
 
-		var then = new Promise((resolve)=>{
-			setTimeout(function () {
-				resolve(h(Load))
-			}, 1000)
-		})
+		// var then = new Promise((resolve)=>{
+		// 	setTimeout(function () {
+		// 		resolve(h(Load))
+		// 	}, 1000)
+		// })
 
 		// render(h('div', 1, h(then, 'Loading')))
 		// render(h('div', 1, h(root, 'Loading')))
-		render(h('div', 1, h(root, 2, 3)))
+		// render(h('div', 1, h(root, 2, 3)))
 
 		// render([1, h(then, 'Loading')])
 		
-		setTimeout(function (){
-			render(h('div', 1))
+		// setTimeout(function (){
+			// render(h('div', 1))
 			// render(h('div', 1, h(root, 2)))
 			// render(h(then, 'Loading'))
-		}, 2000)
+		// }, 2000)
 		
 		// dio.render(Main)
 	</script>

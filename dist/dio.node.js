@@ -70,31 +70,21 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	 */
 	function Hash () {
 		this.k = []
-		this.v = {}
+		this.v = []
 	}
 	/**
 	 * @type {Object}
 	 */
 	Hash.prototype = Object.create(null, {
-		delete: {value: function (key) {
-			var k = this.k
-			var i = k.lastIndexOf(key)
-			
-			delete this.k[i]
-			delete this.v[i]
-		}},
 		set: {value: function (key, value) {
 			var k = this.k
 			var i = k.lastIndexOf(key)
 	
-			k[!~i ? (i = k.length) : i] = key
+			k[i < 0 ? (i = k.length) : i] = key
 			this.v[i] = value
 		}},
 		get: {value: function (key) {
 			return this.v[this.k.lastIndexOf(key)]
-		}},
-		has: {value: function (key) {
-			return this.k.lastIndexOf(key) > -1
 		}}
 	})
 	
@@ -191,7 +181,8 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	var Node = window.Node || noop
 	var Symbol = window.Symbol || noop
 	var Promise = window.Promise || noop
-	var WeakMap = window.WeakMap || Hash
+	var WeakMap = window.WeakMapd || Hash
+	var Map = window.Mapd || Hash
 	var Iterator = Symbol.iterator
 	
 	var ElementPromise = -3

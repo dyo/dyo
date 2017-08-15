@@ -106,14 +106,6 @@ function enqueueUpdate (element, instance, callback, signature) {
 }
 
 /**
- * @param {Object} prototype
- */
-function componentCreate (prototype) {
-	for (var key in descriptor)
-		Object.defineProperty(prototype, key, descriptor[key])
-}
-
-/**
  * @param {Element} element
  * @return {number}
  */
@@ -126,7 +118,7 @@ function componentMount (element) {
 
 	if (prototype && prototype.render) {
 		if (!prototype.setState)
-			componentCreate(prototype)
+			Object.defineProperties(prototype, descriptor)
 
 		instance = owner = getChildInstance(element) || new Component()
 		element.owner = owner
@@ -302,10 +294,7 @@ function getChildContext (element) {
  * @param {Element} element
  */
 function getHostElement (element) {
-	if (element == null || element.DOM == null)
-		return elementText('')
-	else
-		return element.flag !== ElementComponent ? element : element.children
+	return element.flag > ElementComponent ? element : getHostElement(element.children)
 }
 
 /**

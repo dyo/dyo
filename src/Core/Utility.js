@@ -66,31 +66,21 @@ List.prototype = Object.create(null, {
  */
 function Hash () {
 	this.k = []
-	this.v = {}
+	this.v = []
 }
 /**
  * @type {Object}
  */
 Hash.prototype = Object.create(null, {
-	delete: {value: function (key) {
-		var k = this.k
-		var i = k.lastIndexOf(key)
-		
-		delete this.k[i]
-		delete this.v[i]
-	}},
 	set: {value: function (key, value) {
 		var k = this.k
 		var i = k.lastIndexOf(key)
 
-		k[!~i ? (i = k.length) : i] = key
+		k[i < 0 ? (i = k.length) : i] = key
 		this.v[i] = value
 	}},
 	get: {value: function (key) {
 		return this.v[this.k.lastIndexOf(key)]
-	}},
-	has: {value: function (key) {
-		return this.k.lastIndexOf(key) > -1
 	}}
 })
 

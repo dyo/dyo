@@ -18,10 +18,10 @@ function render (subject, target, callback) {
 	if (element)
 		patchElement(element, commitElement(subject))
 	else {
-		element = commitElement(subject)
-		parent = new Element(0)
+		parent = new Element(ElementIntermediate)
 		parent.DOM = {node: target}
 		parent.context = {}
+		parent.children = element = commitElement(subject)
 
 		roots.set(target, element)
 		commitMount(element, element, parent, parent, 0)

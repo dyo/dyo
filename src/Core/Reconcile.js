@@ -227,8 +227,8 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
 					commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
 				}
 
-				if (delete aPool[bHash])
-					patchElement(aNext, bNode)
+				patchElement(aNext, bNode)
+				delete aPool[bHash]
 			} else {
 				if (aNode === children)
 					commitMount(children.push(bNode), bNode, element, host, 0)
@@ -261,7 +261,7 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
 function patchInsert (element, sibling, parent, host, children, index, length, signature) {
 	var i = index
 	var prev = element
-	var next = prev
+	var next = element
 
 	while (i++ < length) {
 		next = (prev = next).next
@@ -279,7 +279,7 @@ function patchInsert (element, sibling, parent, host, children, index, length, s
 function patchRemove (element, parent, children, index, length) {
 	var i = index
 	var prev = element
-	var next = prev
+	var next = element
 	
 	while (i++ < length) {
 		next = (prev = next).next
