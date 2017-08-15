@@ -522,11 +522,11 @@
 	 * @constructor
 	 */
 	function Component (props, context) {
-		this.node = null
 		this.refs = null
 		this.state = null
 		this.props = props
 		this.context = context
+		this.children = null
 	}
 	/**
 	 * @type {Object}
@@ -542,14 +542,14 @@
 	 * @param {function?} callback
 	 */
 	function setState (state, callback) {
-		enqueueState(this.node, this, state, callback)
+		enqueueState(this.children, this, state, callback)
 	}
 	
 	/**
 	 * @param {function} callback
 	 */
 	function forceUpdate (callback) {
-		enqueueUpdate(this.node, this, callback, 0)
+		enqueueUpdate(this.children, this, callback, 0)
 	}
 	
 	/**
@@ -641,17 +641,16 @@
 				Object.defineProperties(prototype, descriptor)
 	
 			instance = owner = getChildInstance(element) || new Component()
-			element.owner = owner
 		} else {
 			instance = new Component()
 			instance.render = type
-			element.owner = type
 		}
 	
 		instance.refs = {}
-		instance.context = context
-		instance.node = element
 		instance.props = element.props
+		instance.context = context
+		instance.children = element
+	
 		element.owner = owner
 		element.instance = instance
 	
@@ -822,7 +821,7 @@
 	 * @return {Element?}
 	 */
 	function getHostChildren (element) {
-		return isValidElement(element) ? element : element.node	
+		return isValidElement(element) ? element : element.children	
 	}
 	
 	/**
