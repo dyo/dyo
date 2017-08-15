@@ -60,15 +60,15 @@ function commitCreate (element) {
  * @param {Element} element
  * @param {Element} sibling
  * @param {Element} parent
- * @param {Element} composite
+ * @param {Element} origin
  * @param {number} signature
  * @return {Element}
  */
-function commitMount (element, sibling, parent, composite, signature) {
+function commitMount (element, sibling, parent, origin, signature) {
 	var node = null
 	var children = null
 	var owner = null
-	var host = composite
+	var host = origin
 	var flag = element.flag
 	var length = 0
 
@@ -224,7 +224,7 @@ function commitRelease (element, flag, signature) {
  * @param {Element} parent
  */
 function commitRemove (element, parent) {
-	if (element.flag > ElementComponent)
+	if (element.flag > ElementIntermediate)
 		DOMRemove(element.DOM, parent.DOM)
 	else
 		element.children.forEach(function (children) {
@@ -238,10 +238,10 @@ function commitRemove (element, parent) {
  * @param {Element} parent
  */
 function commitInsert (element, sibling, parent) {
-	if (sibling.flag < ElementComponent)
+	if (sibling.flag < ElementIntermediate)
 		return commitInsert(element, elementSibling(sibling, 1), parent)
 
-	if (element.flag > ElementComponent)
+	if (element.flag > ElementIntermediate)
 		DOMInsert(element.DOM, sibling.DOM, parent.DOM)
 	else if (element.flag < ElementPortal)
 		element.children.forEach(function (children) {
@@ -257,7 +257,7 @@ function commitAppend (element, parent) {
 	if (parent.flag < ElementPortal)
 		return commitInsert(element, elementSibling(parent, 0), parent)
 
-	if (element.flag > ElementComponent)
+	if (element.flag > ElementIntermediate)
 		DOMAppend(element.DOM, parent.DOM)
 	else if (element.flag < ElementPortal)
 		element.children.forEach(function (children) {

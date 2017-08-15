@@ -144,7 +144,7 @@ function componentMount (element) {
 	element.instance = instance
 
 	if (owner[LifecycleInitialState])
-		instance.state = getInitialState(element, instance, owner)
+		instance.state = getInitialState(element, instance)
 	else if (!instance.state)
 		instance.state = {}
 	
@@ -219,7 +219,7 @@ function componentUnmount (host, children, parent, signature, resolve) {
 		if (host.state = lifecycleMount(host, LifecycleWillUnmount))
 			if (host.state.constructor === Promise)
 				return void host.state.then(function () {
-					componentUnmount(host, children, element, parent, signature, (host.state = null, 0))
+					host.state = componentUnmount(host, children, element, parent, signature, 0)
 				})
 
 	commitUnmount(children, parent, signature)
@@ -244,16 +244,21 @@ function componentReference (value, key, element) {
  * @param {(Component|Element)} instance
  * @return {Object}
  */
-function getInitialState (element, instance, owner) {
+function getInitialState (element, instance) {
 	var state = lifecycleData(element, LifecycleInitialState)
 	
-	if (!state)
-		return instance.state || {}
+	if (state)
+		switch (state.constructor) {
+			case Promise:
+				if (element.sync = PriorityLow && !server)
+					enqueuePending(element, instance, state)
+			case Boolean:
+				break
+			default:
+				return state
+		}
 
-	if (state.constructor !== Promise || server)
-		return state
-	else
-		return enqueuePending(element, instance, element.state) || {}
+	return instance.state || {}
 }
 
 /**

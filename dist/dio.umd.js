@@ -158,9 +158,10 @@
 	var ElementPromise = -3
 	var ElementFragment = -2
 	var ElementPortal = -1
-	var ElementComponent = 0
-	var ElementNode = 1
-	var ElementText = 2
+	var ElementIntermediate = 0
+	var ElementComponent = 1
+	var ElementNode = 2
+	var ElementText = 3
 	
 	var PriorityLow = -2
 	var PriorityTask = -1
@@ -672,7 +673,7 @@
 		element.instance = instance
 	
 		if (owner[LifecycleInitialState])
-			instance.state = getInitialState(element, instance, owner)
+			instance.state = getInitialState(element, instance)
 		else if (!instance.state)
 			instance.state = {}
 		
@@ -747,7 +748,7 @@
 			if (host.state = lifecycleMount(host, LifecycleWillUnmount))
 				if (host.state.constructor === Promise)
 					return void host.state.then(function () {
-						componentUnmount(host, children, element, parent, signature, (host.state = null, 0))
+						host.state = componentUnmount(host, children, element, parent, signature, 0)
 					})
 	
 		commitUnmount(children, parent, signature)
@@ -772,16 +773,21 @@
 	 * @param {(Component|Element)} instance
 	 * @return {Object}
 	 */
-	function getInitialState (element, instance, owner) {
+	function getInitialState (element, instance) {
 		var state = lifecycleData(element, LifecycleInitialState)
 		
-		if (!state)
-			return instance.state || {}
+		if (state)
+			switch (state.constructor) {
+				case Promise:
+					if (element.sync = PriorityLow && !server)
+						enqueuePending(element, instance, state)
+				case Boolean:
+					break
+				default:
+					return state
+			}
 	
-		if (state.constructor !== Promise || server)
-			return state
-		else
-			return enqueuePending(element, instance, element.state) || {}
+		return instance.state || {}
 	}
 	
 	/**
@@ -935,15 +941,15 @@
 	 * @param {Element} element
 	 * @param {Element} sibling
 	 * @param {Element} parent
-	 * @param {Element} composite
+	 * @param {Element} origin
 	 * @param {number} signature
 	 * @return {Element}
 	 */
-	function commitMount (element, sibling, parent, composite, signature) {
+	function commitMount (element, sibling, parent, origin, signature) {
 		var node = null
 		var children = null
 		var owner = null
-		var host = composite
+		var host = origin
 		var flag = element.flag
 		var length = 0
 	
@@ -1099,7 +1105,7 @@
 	 * @param {Element} parent
 	 */
 	function commitRemove (element, parent) {
-		if (element.flag > ElementComponent)
+		if (element.flag > ElementIntermediate)
 			DOMRemove(element.DOM, parent.DOM)
 		else
 			element.children.forEach(function (children) {
@@ -1113,10 +1119,10 @@
 	 * @param {Element} parent
 	 */
 	function commitInsert (element, sibling, parent) {
-		if (sibling.flag < ElementComponent)
+		if (sibling.flag < ElementIntermediate)
 			return commitInsert(element, elementSibling(sibling, 1), parent)
 	
-		if (element.flag > ElementComponent)
+		if (element.flag > ElementIntermediate)
 			DOMInsert(element.DOM, sibling.DOM, parent.DOM)
 		else if (element.flag < ElementPortal)
 			element.children.forEach(function (children) {
@@ -1132,7 +1138,7 @@
 		if (parent.flag < ElementPortal)
 			return commitInsert(element, elementSibling(parent, 0), parent)
 	
-		if (element.flag > ElementComponent)
+		if (element.flag > ElementIntermediate)
 			DOMAppend(element.DOM, parent.DOM)
 		else if (element.flag < ElementPortal)
 			element.children.forEach(function (children) {
