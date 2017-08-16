@@ -291,6 +291,7 @@ function getChildContext (element) {
 
 /**
  * @param {Element} element
+ * @return {Element}
  */
 function getHostElement (element) {
 	return element.flag > ElementComponent ? element : getHostElement(element.children)

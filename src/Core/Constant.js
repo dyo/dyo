@@ -3,8 +3,8 @@ var document = window.document || noop
 var Node = window.Node || noop
 var Symbol = window.Symbol || noop
 var Promise = window.Promise || noop
-var WeakMap = window.WeakMapd || Hash
-var Map = window.Mapd || Hash
+var WeakMap = window.WeakMap || Hash
+var Map = window.Map || Hash
 var Iterator = Symbol.iterator
 
 var ElementPromise = -3
