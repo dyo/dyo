@@ -235,6 +235,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	/**
 	 * @return {string}
 	 */
+	Element.prototype.html = ''
 	Element.prototype.toString = function toString () {
 		var flag = this.flag
 	
@@ -248,7 +249,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 		var type = this.type
 		var children = this.children
 		var length = children.length
-		var output = flag < ElementFragment ? '<' + type + toProps(this, this.props) + '>' : ''
+		var output = flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
 	
 		switch (bool(type)) {
 			case 0:
@@ -261,10 +262,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 					output += this.html
 		}
 	
-		if (flag < ElementFragment)
-			output += '</'+type+'>'
-	
-		return output
+		return flag > ElementIntermediate ? output + '</'+type+'>' : output
 	}
 	
 	/**
@@ -353,6 +351,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	/**
 	 * @return {Stream}
 	 */
+	Element.prototype.chunk = ''
 	Element.prototype.toStream = function toStream () {
 		return new Stream(this)
 	}
@@ -371,45 +370,41 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	 * @type {Object}
 	 */
 	Stream.prototype = Object.create(Readable.prototype, {
+		commit: {value: function commit (element, stack, index, done) {
+			var type = element.type
+			var children = element.children
+			var length = children.length
+			var output = ''
+	
+			while (element.flag === ElementComponent)
+				element = componentMount(element)
+	
+			switch (element.flag) {
+				case ElementText:
+					output = escape(element.children)
+					break
+				case ElementNode:
+					output = '<' + (type = element.type) + toProps(element.props) + '>'
+					
+					if (!length)
+						output += bool(type) > 0 ? '</'+type+'>' : ''
+				default:
+					children.prev.chunk = element.flag !== ElementFragment ? '</'+type+'>' : ''  
+	
+					while (length-- > 0)
+						stack.push(children = children.prev) 
+			}
+	
+			return output + element.chunk
+		}},
 		_read: {value: function read () {
 			var stack = this.stack
-			var size = stack.length
+			var length = stack.length
 	
-			if (size === 0)
-				this.push(null)
-			else {
-				var element = stack[size-1]
-				var flag = element.flag
-				var keyed = element.keyed
-				var type = element.type
-				var children = newer.children
-				var length = children.length
-				var output = (keyed && flag !== ElementFragment) ? '</'+type+'>' : ''
+			if (length === 0)
+				return void this.push(null)
 	
-				if (!keyed) {
-					while (element.flag === ElementComponent)
-						element = componentMount(element)
-	
-					switch (element.flag) {
-						case ElementText:
-							output = escape(newer.children)
-							break
-						case ElementNode:
-							output = '<' + (type = element.type) + toProps(element.props) + '>'
-							
-							if (length === 0)
-								output += bool(type) > 0 ? '</'+type+'>' : ''
-						default:						
-							while (length-- > 0)
-								stack[size++] = children = children.prev 
-					}
-				}
-	
-				if (keyed)
-					stack.pop(element.keyed = !keyed)
-	
-				this.push(output)
-			}
+			this.push(this.commit(stack.pop(), stack, length-1, false))
 		}}
 	})
 	
@@ -422,7 +417,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 		if (!target || !target.writable)
 			return render(subject, target, callback)
 	
-		var readable = new Stream(element)
+		var readable = new Stream(subject)
 	
 		if (typeof target.getHeader === 'function' && !target.getHeader('Content-Type'))
 			target.setHeader('Content-Type', 'text/html')

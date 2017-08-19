@@ -1,6 +1,7 @@
 /**
  * @return {string}
  */
+Element.prototype.html = ''
 Element.prototype.toString = function toString () {
 	var flag = this.flag
 
@@ -14,7 +15,7 @@ Element.prototype.toString = function toString () {
 	var type = this.type
 	var children = this.children
 	var length = children.length
-	var output = flag < ElementFragment ? '<' + type + toProps(this, this.props) + '>' : ''
+	var output = flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
 
 	switch (bool(type)) {
 		case 0:
@@ -27,10 +28,7 @@ Element.prototype.toString = function toString () {
 				output += this.html
 	}
 
-	if (flag < ElementFragment)
-		output += '</'+type+'>'
-
-	return output
+	return flag > ElementIntermediate ? output + '</'+type+'>' : output
 }
 
 /**

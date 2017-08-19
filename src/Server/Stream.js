@@ -1,6 +1,7 @@
 /**
  * @return {Stream}
  */
+Element.prototype.chunk = ''
 Element.prototype.toStream = function toStream () {
 	return new Stream(this)
 }
@@ -19,44 +20,40 @@ function Stream (element) {
  * @type {Object}
  */
 Stream.prototype = Object.create(Readable.prototype, {
+	commit: {value: function commit (element, stack, index, done) {
+		var type = element.type
+		var children = element.children
+		var length = children.length
+		var output = ''
+
+		while (element.flag === ElementComponent)
+			element = componentMount(element)
+
+		switch (element.flag) {
+			case ElementText:
+				output = escape(element.children)
+				break
+			case ElementNode:
+				output = '<' + (type = element.type) + toProps(element.props) + '>'
+				
+				if (!length)
+					output += bool(type) > 0 ? '</'+type+'>' : ''
+			default:
+				children.prev.chunk = element.flag !== ElementFragment ? '</'+type+'>' : ''  
+
+				while (length-- > 0)
+					stack.push(children = children.prev) 
+		}
+
+		return output + element.chunk
+	}},
 	_read: {value: function read () {
 		var stack = this.stack
-		var size = stack.length
+		var length = stack.length
 
-		if (size === 0)
-			this.push(null)
-		else {
-			var element = stack[size-1]
-			var flag = element.flag
-			var keyed = element.keyed
-			var type = element.type
-			var children = newer.children
-			var length = children.length
-			var output = (keyed && flag !== ElementFragment) ? '</'+type+'>' : ''
+		if (length === 0)
+			return void this.push(null)
 
-			if (!keyed) {
-				while (element.flag === ElementComponent)
-					element = componentMount(element)
-
-				switch (element.flag) {
-					case ElementText:
-						output = escape(newer.children)
-						break
-					case ElementNode:
-						output = '<' + (type = element.type) + toProps(element.props) + '>'
-						
-						if (length === 0)
-							output += bool(type) > 0 ? '</'+type+'>' : ''
-					default:						
-						while (length-- > 0)
-							stack[size++] = children = children.prev 
-				}
-			}
-
-			if (keyed)
-				stack.pop(element.keyed = !keyed)
-
-			this.push(output)
-		}
+		this.push(this.commit(stack.pop(), stack, length-1, false))
 	}}
 })
