@@ -46,7 +46,7 @@ function lifecycleReturn (element, state) {
  */
 function lifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, (element.DOM || shared.DOM).node)
+		var state = element.owner[name].call(element.instance, element.DOM ? element.DOM.node : null)
 			
 		return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
 	} catch (e) {

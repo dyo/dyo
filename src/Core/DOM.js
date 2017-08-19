@@ -6,7 +6,7 @@ function DOMDocument () {
 }
 
 /**
- * @param {DOM} element
+ * @param {Object} element
  * @param {string} name
  * @param {*} value
  */
@@ -17,7 +17,7 @@ function DOMProperty (element, name, value) {
 }
 
 /**
- * @param {DOM} element
+ * @param {Object} element
  * @param {string} name
  * @param {*} value
  * @param {number} signature
@@ -60,7 +60,7 @@ function DOMAttribute (element, name, value, signature, xmlns, type) {
 
 
 /**
- * @param {DOM} element
+ * @param {Object} element
  * @param {string} type
  * @param {(function|EventListener)} listener
  * @param {number} signature
@@ -74,7 +74,7 @@ function DOMEvent (element, type, listener, signature) {
 
 
 /**
- * @param {DOM} element
+ * @param {Object} element
  * @param {(string|number)} value
  */
 function DOMContent (element, value) {
@@ -83,7 +83,7 @@ function DOMContent (element, value) {
 
 /**
  * @param {(string|number)} value
- * @return {DOM}
+ * @return {Object}
  */
 function DOMText (value) {
 	return {
@@ -94,34 +94,34 @@ function DOMText (value) {
 /**
  * @param {string} type
  * @param {string?} xmlns
- * @return {DOM}
+ * @return {Object}
  */
 function DOMElement (type, xmlns) {
 	return {
-		node: xmlns === null ? document.createElement(type) : document.createElementNS(xmlns, type)
+		node: !xmlns ? document.createElement(type) : document.createElementNS(xmlns, type)
 	}
 }
 
 /**
- * @param {DOM} element
- * @param {DOM} parent
+ * @param {Object} element
+ * @param {Object} parent
  */
 function DOMRemove (element, parent) {
 	parent.node.removeChild(element.node)
 }
 
 /**
- * @param {DOM} element
- * @param {DOM} sibling
- * @param {DOM} parent
+ * @param {Object} element
+ * @param {Object} sibling
+ * @param {Object} parent
  */
 function DOMInsert (element, sibling, parent) {
 	parent.node.insertBefore(element.node, sibling.node)
 }
 
 /**
- * @param {DOM} element
- * @param {DOM} parent
+ * @param {Object} element
+ * @param {Object} parent
  */
 function DOMAppend (element, parent) {
 	parent.node.appendChild(element.node)

@@ -11,11 +11,11 @@ function Component (props, context) {
 /**
  * @type {Object}
  */
-var descriptor = {
+var description = {
 	forceUpdate: {value: forceUpdate},
 	setState: {value: setState}
 }
-Component.prototype = Object.create(null, descriptor)
+Component.prototype = Object.create(null, description)
 
 /**
  * @param {(Object|function)} state
@@ -110,15 +110,15 @@ function enqueueUpdate (element, instance, callback, signature) {
  * @return {number}
  */
 function componentMount (element) {
-	var context = element.context
 	var type = element.type
 	var prototype = type.prototype
 	var owner = type
 	var instance = null
+	var children = null
 
 	if (prototype && prototype.render) {
 		if (!prototype.setState)
-			Object.defineProperties(prototype, descriptor)
+			Object.defineProperties(prototype, description)
 
 		instance = owner = getChildInstance(element) || new Component()
 	} else {
@@ -128,7 +128,7 @@ function componentMount (element) {
 
 	instance.refs = {}
 	instance.props = element.props
-	instance.context = context
+	instance.context = element.context
 	instance.children = element
 
 	element.owner = owner
@@ -142,8 +142,10 @@ function componentMount (element) {
 	if (owner[LifecycleChildContext])
 		element.context = getChildContext(element)
 
-	element.children = getChildElement(element)
-	element.children.context = context
+	children = getChildElement(element)
+	children.context = element.context
+
+	return element.children = children
 }
 
 /**

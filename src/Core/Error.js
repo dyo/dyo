@@ -7,20 +7,20 @@ function Exception (element, from) {
 		return Exception.call(new Error(this), element, from)
 
 	var tabs = ''
-	var tree = ''
+	var info = ''
 	var host = element
 	var stack = this.stack
 
 	while (host.type) {
-		tree += tabs + '<' + (host.type.displayName || host.type.name || 'anonymous') + '>\n'
+		info += tabs + '<' + (host.type.displayName || host.type.name || 'anonymous') + '>\n'
 		tabs += '  '
 		host = host.host
 	}
 
-	console.error('Error caught in `\n\n'+tree+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
+	console.error('Error caught in `\n\n'+info+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
 
 	this.from = from
-	this.tree = tree
+	this.info = info
 
 	return this
 }
@@ -32,9 +32,7 @@ function Exception (element, from) {
  * @param {Element}
  */
 function Boundary (element, err, from) {	
-	try {
-		return Recovery(element, Exception.call(err, element, from), from)
-	} catch (e) {}
+	return Recovery(element, Exception.call(err, element, from), from)
 }
 
 /**
@@ -44,30 +42,29 @@ function Boundary (element, err, from) {
  * @return {Element?}
  */
 function Recovery (element, error, from) {
-	if (element && element.owner)
-		try {
-			if (!element.owner[LifecycleDidCatch])
-				return Recovery(element.host, error, from)
+	if (!element || !element.owner)
+		return elementText('')
+	
+	if (!element.owner[LifecycleDidCatch])
+		return Recovery(element.host, error, from)
 
-			var snapshot = element.owner[LifecycleDidCatch].call((element.sync = PriorityLow, element.instance), error)
+	try {
+		element.sync = PriorityLow
+		error.children = element.owner[LifecycleDidCatch].call(element.instance, error)
+		element.sync = PriorityHigh
 
-			switch (element.sync = PriorityHigh, typeof snapshot) {
-				case 'boolean':
-				case 'undefined':
-					break
-				default:
-					if (from === LifecycleRender)
-						return commitElement(snapshot)
-					else if (!server)
-						patchElement(getHostElement(element), commitElement(snapshot))
-			}
-		} catch (e) {
-			Boundary(element.host, e, LifecycleDidCatch)
+		switch (typeof error.children) {
+			case 'boolean':
+			case 'undefined':
+				break
+			default:
+				if (from === LifecycleRender)
+					return commitElement(error.children)
+
+				if (!server)
+					patchElement(getHostElement(element), commitElement(error.children))
 		}
-	else if (!server)
-		setImmediate(function () {
-			patchElement(getHostElement(element), elementText(''))
-		})
-
-	return elementText('')
+	} catch (e) {
+		Boundary(element.host, e, LifecycleDidCatch)
+	}
 }

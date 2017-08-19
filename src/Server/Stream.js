@@ -36,7 +36,7 @@ Stream.prototype = Object.create(Readable.prototype, {
 
 			if (!keyed) {
 				while (element.flag === ElementComponent)
-					element = (componentMount(element), element.children)
+					element = componentMount(element)
 
 				switch (element.flag) {
 					case ElementText:

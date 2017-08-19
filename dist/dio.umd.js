@@ -11,7 +11,6 @@
 
 	var version = '8.0.0'
 	var server = __require__ !== window
-	var shared = {}
 
 	/**
 	 * @constructor
@@ -22,59 +21,53 @@
 		this.length = 0
 	}
 	/**
-	 * @type {Object}
+	 * @param {Element} element
+	 * @param {Element} sibling
+	 * @return {Element}
 	 */
-	List.prototype = Object.create(null, {
-		constructor: {value: List},
-		/**
-		 * @param {Element} node
-		 * @return {Element}
-		 */
-		remove: {value: function remove (node) {
-			if (this.length < 1) 
-				return
-			
-			node.next.prev = node.prev
-			node.prev.next = node.next
-			this.length--
-			
-			return node
-		}},
-		/**
-		 * @param {Element} node
-		 * @param {Element} before
-		 * @return {Element}
-		 */
-		insert: {value: function insert (node, before) {
-			node.next = before
-			node.prev = before.prev
-			before.prev.next = node
-			before.prev = node
-			this.length++
-			
-			return node
-		}},
-		/**
-		 * @return {Element}
-		 */
-		pop: {value: function pop () {
-			return this.remove(this.prev)
-		}},
-		/**
-		 * @param {Element} node
-		 * @return {Element}
-		 */
-		push: {value: function push (node) {
-			return this.insert(node, this)
-		}},
-		/**
-		 * @param {function} callback
-		 */
-		forEach: {value: function forEach (callback) {
-			for (var i = 0, node = this; i < this.length; i++)
-				callback.call(this, node = node.next, i)
-		}}
-	})
+	List.prototype.insert = function insert (element, sibling) {
+		element.next = sibling
+		element.prev = sibling.prev
+		sibling.prev.next = element
+		sibling.prev = element
+		this.length++
+		
+		return element
+	}
+	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	List.prototype.remove = function remove (element) {
+		if (this.length < 1) 
+			return
+		
+		element.next.prev = element.prev
+		element.prev.next = element.next
+		this.length--
+		
+		return element
+	}
+	/**
+	 * @return {Element}
+	 */
+	List.prototype.pop = function pop () {
+		return this.remove(this.prev)
+	}
+	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	List.prototype.push = function push (element) {
+		return this.insert(element, this)
+	}
+	/**
+	 * @param {function} callback
+	 */
+	List.prototype.forEach = function forEach (callback) {
+		for (var i = 0, element = this; i < this.length; i++)
+			callback.call(this, element = element.next, i)
+	}
 	
 	/**
 	 * @constructor
@@ -83,21 +76,19 @@
 		this.k = []
 		this.v = []
 	}
-	/**
-	 * @type {Object}
-	 */
-	Hash.prototype = Object.create(null, {
-		set: {value: function (key, value) {
-			var k = this.k
-			var i = k.lastIndexOf(key)
+	Hash.prototype.set = function set (key, value) {
+		var k = this.k
+		var i = k.lastIndexOf(key)
 	
-			k[i < 0 ? (i = k.length) : i] = key
-			this.v[i] = value
-		}},
-		get: {value: function (key) {
+		k[i < 0 ? (i = k.length) : i] = key
+		this.v[i] = value
+	}
+	Hash.prototype.get = function get (key) {
 			return this.v[this.k.lastIndexOf(key)]
-		}}
-	})
+		}
+	Hash.prototype.has = function has (key) {
+		return this.k.lastIndexOf(key) > -1
+	}
 	
 	/**
 	 * @param {Object} destination
@@ -137,48 +128,6 @@
 	 */
 	function noop () {}
 	
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
-	var document = window.document || noop
-	var Node = window.Node || noop
-	var Symbol = window.Symbol || noop
-	var Promise = window.Promise || noop
-	var WeakMap = window.WeakMap || Hash
-	var Map = window.Map || Hash
-	var Iterator = Symbol.iterator
-	
-	var ElementPromise = -3
-	var ElementFragment = -2
-	var ElementPortal = -1
-	var ElementIntermediate = 0
-	var ElementComponent = 1
-	var ElementNode = 2
-	var ElementText = 3
-	
-	var PriorityLow = -2
-	var PriorityTask = -1
-	var PriorityHigh = 1
-	
-	var LifecycleCallback = 'callback'
-	var LifecycleRender = 'render'
-	var LifecycleConstructor = 'constructor'
-	var LifecycleWillMount = 'componentWillMount'
-	var LifecycleDidMount = 'componentDidMount'
-	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
-	var LifecycleShouldUpdate = 'shouldComponentUpdate'
-	var LifecycleWillUpdate = 'componentWillUpdate'
-	var LifecycleDidUpdate = 'componentDidUpdate'
-	var LifecycleWillUnmount = 'componentWillUnmount'
-	var LifecycleDidCatch = 'componentDidCatch'
-	var LifecycleChildContext = 'getChildContext'
-	var LifecycleInitialState = 'getInitialState'
-	
-	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
-	var NSXlink = 'http://www.w3.org/1999/xlink'
-	var NSSVG = 'http://www.w3.org/2000/svg'
-	
-	var TypeFragment = '#Fragment'
-	var TypeText = '#Text'
-	
 	/**
 	 * @constructor
 	 * @param {number} flag
@@ -187,13 +136,13 @@
 		this.flag = flag
 		this.sync = 0
 		this.keyed = false
+		this.xmlns = ''
 		this.key = null
 		this.ref = null
 		this.type = null
 		this.props = null
 		this.state = null
 		this.children = null
-		this.xmlns = null
 		this.owner = null
 		this.instance = null
 		this.host = null
@@ -205,48 +154,54 @@
 		this.next = null
 		this.prev = null
 	}
-	/**
-	 * @type {Object}
-	 */
-	Element.prototype = Object.create(null, {
-		constructor: {value: Element} 
-	})
 	
 	/**
-	 * @param {*} child
+	 * @param {*} content
 	 * @return {Element}
 	 */
-	function elementText (child) {
+	function elementText (content) {
 		var element = new Element(ElementText)
 	
 		element.type = TypeText
-		element.children = child
+		element.children = content
 	
 		return element
 	}
 	
 	/**
-	 * @param {(Array|List)} child
 	 * @return {Element}
 	 */
-	function elementFragment (child) {
+	function elementIntermediate () {
+		var element = new Element(ElementIntermediate)
+	
+		element.context = {}
+		element.DOM = {node: null}
+	
+		return element
+	}
+	
+	/**
+	 * @param {(Element|Array|List)} fragment
+	 * @return {Element}
+	 */
+	function elementFragment (fragment) {
 		var element = new Element(ElementFragment)
 		var children = new List()
 		
 		element.type = TypeFragment
 		element.children = children
 	
-		switch (child.constructor) {
+		switch (fragment.constructor) {
 			case Element:
-				elementChildren(element, children, child, 0, 0)
+				elementChildren(element, children, fragment, 0, 0)
 				break
 			case Array:
-				for (var i = 0; i < child.length; i++)
-					elementChildren(element, children, child[i], i, 0)
+				for (var i = 0; i < fragment.length; i++)
+					elementChildren(element, children, fragment[i], i, 0)
 				break
 			case List:
-				child.forEach(function (child, i) {
-					elementChildren(element, children, child, i, 0)
+				fragment.forEach(function (fragment, i) {
+					elementChildren(element, children, fragment, i, 0)
 				})
 		}
 	
@@ -286,7 +241,7 @@
 	}
 	
 	/**
-	 * @param {Eleemnt} element
+	 * @param {Element} element
 	 * @param {number} signature
 	 * @return {Element}
 	 */
@@ -296,7 +251,7 @@
 		else if (isValidElement(element.next))
 			return element.next
 		else
-			return shared.Element
+			return elementIntermediate()
 	}
 	
 	/**
@@ -445,6 +400,50 @@
 		return element
 	}
 	
+	var Node = window.Node || noop
+	var Symbol = window.Symbol || noop
+	var Iterator = Symbol.iterator
+	var Promise = window.Promise || noop
+	var Map = window.Map || Hash
+	var WeakMap = window.WeakMap || Hash
+	
+	var root = new WeakMap()
+	var document = window.document || noop
+	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+	
+	var ElementPromise = -3
+	var ElementFragment = -2
+	var ElementPortal = -1
+	var ElementIntermediate = 0
+	var ElementComponent = 1
+	var ElementNode = 2
+	var ElementText = 3
+	
+	var PriorityLow = -2
+	var PriorityTask = -1
+	var PriorityHigh = 1
+	
+	var LifecycleCallback = 'callback'
+	var LifecycleRender = 'render'
+	var LifecycleConstructor = 'constructor'
+	var LifecycleWillMount = 'componentWillMount'
+	var LifecycleDidMount = 'componentDidMount'
+	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
+	var LifecycleShouldUpdate = 'shouldComponentUpdate'
+	var LifecycleWillUpdate = 'componentWillUpdate'
+	var LifecycleDidUpdate = 'componentDidUpdate'
+	var LifecycleWillUnmount = 'componentWillUnmount'
+	var LifecycleDidCatch = 'componentDidCatch'
+	var LifecycleChildContext = 'getChildContext'
+	var LifecycleInitialState = 'getInitialState'
+	
+	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
+	var NSXlink = 'http://www.w3.org/1999/xlink'
+	var NSSVG = 'http://www.w3.org/2000/svg'
+	
+	var TypeFragment = '#Fragment'
+	var TypeText = '#Text'
+	
 	/**
 	 * @param {Element} element
 	 * @param {function} callback
@@ -493,7 +492,7 @@
 	 */
 	function lifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, (element.DOM || shared.DOM).node)
+			var state = element.owner[name].call(element.instance, element.DOM ? element.DOM.node : null)
 				
 			return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
 		} catch (e) {
@@ -531,11 +530,11 @@
 	/**
 	 * @type {Object}
 	 */
-	var descriptor = {
+	var description = {
 		forceUpdate: {value: forceUpdate},
 		setState: {value: setState}
 	}
-	Component.prototype = Object.create(null, descriptor)
+	Component.prototype = Object.create(null, description)
 	
 	/**
 	 * @param {(Object|function)} state
@@ -630,15 +629,15 @@
 	 * @return {number}
 	 */
 	function componentMount (element) {
-		var context = element.context
 		var type = element.type
 		var prototype = type.prototype
 		var owner = type
 		var instance = null
+		var children = null
 	
 		if (prototype && prototype.render) {
 			if (!prototype.setState)
-				Object.defineProperties(prototype, descriptor)
+				Object.defineProperties(prototype, description)
 	
 			instance = owner = getChildInstance(element) || new Component()
 		} else {
@@ -648,7 +647,7 @@
 	
 		instance.refs = {}
 		instance.props = element.props
-		instance.context = context
+		instance.context = element.context
 		instance.children = element
 	
 		element.owner = owner
@@ -662,8 +661,10 @@
 		if (owner[LifecycleChildContext])
 			element.context = getChildContext(element)
 	
-		element.children = getChildElement(element)
-		element.children.context = context
+		children = getChildElement(element)
+		children.context = element.context
+	
+		return element.children = children
 	}
 	
 	/**
@@ -897,7 +898,6 @@
 		snapshot.type.then(function (value) {
 			if (!element.DOM)
 				return
-	
 			if (element.flag === ElementPromise)
 				patchChildren(element, elementFragment(commitElement(value)))
 			else
@@ -907,13 +907,29 @@
 	
 	/**
 	 * @param {Element} element
-	 * @return {DOM}
+	 * @return {Object}
 	 */
-	function commitCreate (element) {
+	function commitDOM (element) {
 		try {
 			return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
 		} catch (e) {
-			return commitCreate(Boundary(element, e, LifecycleRender))
+			return commitDOM(Boundary(element, e, LifecycleRender))
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} sibling
+	 * @param {Element} host
+	 */
+	function commitChildren (element, sibling, host) {
+		var children = element.children
+		var length = children.length
+		var next = children.next
+	
+		while (length-- > 0) {
+			commitMount(!next.DOM ? next : merge(new Element(ElementNode), next), sibling, element, host, 0)
+			next = next.next
 		}
 	}
 	
@@ -921,32 +937,37 @@
 	 * @param {Element} element
 	 * @param {Element} sibling
 	 * @param {Element} parent
-	 * @param {Element} origin
+	 * @param {Element} host
 	 * @param {number} signature
-	 * @return {Element}
 	 */
-	function commitMount (element, sibling, parent, origin, signature) {
-		var node = null
-		var children = null
-		var owner = null
-		var host = origin
-		var flag = element.flag
-		var length = 0
-	
+	function commitMount (element, sibling, parent, host, signature) {
 		element.host = host
 		element.parent = parent
 		element.context = host.context
 	
-	 	if (flag === ElementComponent) {
-	 		componentMount((element.sync = PriorityTask, host = element))
+	 	switch (element.flag) {
+	 		case ElementComponent:
+	 			componentMount((element.sync = PriorityTask, element))
 	
-	 		if (element.owner[LifecycleWillMount])
-	 			lifecycleMount(element, LifecycleWillMount)
-	 	}
+	 			if (element.owner[LifecycleWillMount]) 
+	 				lifecycleMount(element, LifecycleWillMount)
 	
-	 	switch (children = element.children, flag) {
-	 		case ElementText:
-	 			element.DOM = commitCreate(element)
+	 			commitMount(element.children, sibling, parent, element, signature)
+	
+	 			if ((element.DOM = element.children.DOM, element.ref)) 
+	 				commitReference(element, element.ref, 1)
+	 			if (element.owner[LifecycleDidMount]) 
+	 				lifecycleMount(element, LifecycleDidMount)
+	
+	 			element.sync = PriorityHigh
+	 			return
+	 		case ElementPortal:
+	 			element.DOM = {node: element.type}
+	 			break
+	 		case ElementPromise:
+	 			commitPromise(element, element)
+	 		case ElementFragment:
+	 			element.DOM = parent.DOM
 	 			break
 	 		case ElementNode:
 	 			switch (element.type) {
@@ -957,61 +978,22 @@
 	 					element.xmlns = NSMathML
 	 					break
 	 				default:
-	 					if (element.xmlns === null)
-	 						element.xmlns = parent.xmlns
+	 					element.xmlns = parent.xmlns
 	 			}
-	
-	 			node = children.next
-	 			length = children.length
-	
-	 			element.DOM = commitCreate(element)
-	 			break
-	 		case ElementPromise:
-	 			commitPromise(element, element)
-	 		case ElementPortal:
-	 			if (flag === ElementPortal)
-	 				element.DOM = {node: element.type}
-	 		case ElementFragment:
-	 			if (flag !== ElementPortal)
-	 				element.DOM = parent.DOM
-	
-	 			node = children.next
-	 			length = children.length
-	 			break
-	 		case ElementComponent:
-	 			commitMount(children, sibling, parent, host, signature)
-	 			element.DOM = children.DOM
-	 	}
-	
-	 	if (length > 0)
-	 		while (length-- > 0) {
-	 			if (node.DOM)
-	 				node = merge(new Element(ElementNode), node)
-	
-	 			commitMount(node, node, element, host, 0)
-	 			node = node.next
-	 		}
-	
-	 	if (flag >= ElementNode) {
-	 		switch (signature) {
-	 			case 0:
+	 		case ElementText:
+	 			element.DOM = commitDOM(element)
+	 			
+	 			if (signature < 1) 
 	 				commitAppend(element, parent)
-	 				break
-	 			case 1:
+	 			else
 	 				commitInsert(element, sibling, parent)
-	 		}
-	
-	 		if (flag !== ElementText)
-	 			patchProps(element, element, 0)
-	 	} else if (flag === ElementComponent) {
-	 		if (element.ref)
-	 			commitReference(element, element.ref, 1)
-	
-	 		if (element.owner[LifecycleDidMount])
-	 			lifecycleMount(element, LifecycleDidMount)
-	
-	 		element.sync = PriorityHigh
+	 
+	 			if (element.flag > ElementNode)
+	 				return
 	 	}
+	
+		commitChildren(element, element, host)
+		commitProperties(element)
 	}
 	
 	/**
@@ -1022,9 +1004,42 @@
 	function commitUnmount (element, parent, signature) {
 		if (element.flag !== ElementComponent) {
 			commitRemove(element, parent)
-			commitRelease(element, 1, signature)
+			commitDemount(element, 1, signature)
 		} else
 			componentUnmount(element, element.children, parent, signature, 1)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {number} flag
+	 * @param {number} signature
+	 */
+	function commitDemount (element, flag, signature) {
+		switch (element.flag*flag) {
+			case ElementText:
+				break
+			default:
+				var index = 0
+				var children = element.children
+				var length = children.length
+				var next = children.next
+	
+				while (index++ < length)
+					switch (next.flag) {
+						case ElementComponent:
+							if (next.owner[LifecycleWillUnmount])
+								lifecycleMount(next, LifecycleWillUnmount)
+						default:
+							commitDemount(next, 1, 1)
+							next = next.next
+					}
+		}
+	
+		if (signature < 1)
+			element.context = element.DOM = null
+	
+		if (element.ref)
+			commitReference(element, element.ref, -1)
 	}
 	
 	/**
@@ -1049,89 +1064,15 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {number} flag
-	 * @param {number} signature
 	 */
-	function commitRelease (element, flag, signature) {
-		switch (element.flag*flag) {
-			case ElementText:
-				break
-			default:
-				var index = 0
-				var children = element.children
-				var length = children.length
-				var next = children.next
+	function commitProperties (element) {
+		var props = element.props
+		var xmlns = !!element.xmlns
+		var value = null
 	
-				while (index++ < length)
-					switch (next.flag) {
-						case ElementComponent:
-							if (next.owner[LifecycleWillUnmount])
-								lifecycleMount(next, LifecycleWillUnmount)
-						default:
-							commitRelease(next, 1, 1)
-							next = next.next
-					}
-		}
-	
-		if (signature < 1)
-			element.context = element.DOM = null
-	
-		if (element.ref)
-			commitReference(element, element.ref, -1)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} parent
-	 */
-	function commitRemove (element, parent) {
-		if (element.flag > ElementIntermediate)
-			DOMRemove(element.DOM, parent.DOM)
-		else
-			element.children.forEach(function (children) {
-				commitRemove(children, element.flag < ElementPortal ? parent : element)
-			})
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} sibling
-	 * @param {Element} parent
-	 */
-	function commitInsert (element, sibling, parent) {
-		if (sibling.flag < ElementIntermediate)
-			return commitInsert(element, elementSibling(sibling, 1), parent)
-	
-		if (element.flag > ElementIntermediate)
-			DOMInsert(element.DOM, sibling.DOM, parent.DOM)
-		else if (element.flag < ElementPortal)
-			element.children.forEach(function (children) {
-				commitInsert(children, sibling, parent)
-			})
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} parent
-	 */
-	function commitAppend (element, parent) {
-		if (parent.flag < ElementPortal)
-			return commitInsert(element, elementSibling(parent, 0), parent)
-	
-		if (element.flag > ElementIntermediate)
-			DOMAppend(element.DOM, parent.DOM)
-		else if (element.flag < ElementPortal)
-			element.children.forEach(function (children) {
-				commitAppend(children, parent)
-			})
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} snapshot
-	 */
-	function commitText (element, snapshot) {
-		DOMContent(element.DOM, element.children = snapshot.children)
+		for (var key in props)
+			if ((value = props[key]) != null)
+				commitProperty(element, key, value, 1, xmlns)
 	}
 	
 	/**
@@ -1139,15 +1080,15 @@
 	 * @param {string} name
 	 * @param {*} value
 	 * @param {number} signature
-	 * @param {number} xmlns
+	 * @param {boolean} xmlns
 	 */
-	function commitProps (element, name, value, signature, xmlns) {	
+	function commitProperty (element, name, value, signature, xmlns) {	
 		switch (name) {
 			case 'dangerouslySetInnerHTML':
 				if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
 					return
 				else
-					return commitProps(element, 'innerHTML', value.__html, signature, xmlns)
+					return commitProperty(element, 'innerHTML', value.__html, signature, xmlns)
 			case 'ref':
 				commitReference(element, value, signature)
 			case 'key':
@@ -1156,7 +1097,7 @@
 				break
 			case 'className':
 				if (xmlns)
-					return commitProps(element, 'class', value, signature, !xmlns)
+					return commitProperty(element, 'class', value, signature, !xmlns)
 			case 'id':
 				return DOMAttribute(element.DOM, name, value, signature, xmlns, 3)
 			case 'innerHTML':
@@ -1229,13 +1170,67 @@
 					case 0:
 						element.ref = callback
 					case 1:
-						lifecycleCallback(element.host, callback, element.DOM.node, key, element)
+						lifecycleCallback(element.host, callback, element.instance || element.DOM.node, key, element)
 						break
 					case 2:
 						commitReference(element, callback, -1, key)
 						commitReference(element, callback, 0, key)
 				}
 		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} snapshot
+	 */
+	function commitText (element, snapshot) {
+		DOMContent(element.DOM, element.children = snapshot.children)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} parent
+	 */
+	function commitRemove (element, parent) {
+		if (element.flag > ElementIntermediate)
+			DOMRemove(element.DOM, parent.DOM)
+		else
+			element.children.forEach(function (children) {
+				commitRemove(children, element.flag < ElementPortal ? parent : element)
+			})
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} sibling
+	 * @param {Element} parent
+	 */
+	function commitInsert (element, sibling, parent) {
+		if (sibling.flag < ElementIntermediate)
+			return commitInsert(element, elementSibling(sibling, 1), parent)
+	
+		if (element.flag > ElementIntermediate)
+			DOMInsert(element.DOM, sibling.DOM, parent.DOM)
+		else if (element.flag < ElementPortal)
+			element.children.forEach(function (children) {
+				commitInsert(children, sibling, parent)
+			})
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} parent
+	 */
+	function commitAppend (element, parent) {
+		if (parent.flag < ElementPortal)
+			return commitInsert(element, elementSibling(parent, 0), parent)
+	
+		if (element.flag > ElementIntermediate)
+			DOMAppend(element.DOM, parent.DOM)
+		else if (element.flag < ElementPortal)
+			element.children.forEach(function (children) {
+				commitAppend(children, parent)
+			})
 	}
 	
 	/**
@@ -1263,25 +1258,17 @@
 	 */
 	function patchProps (element, snapshot, signature) {
 		var props = element.props
-		var delta = signature === 0 ? props : assign({}, props, snapshot.props)
-		var xmlns = element.xmlns !== null
+		var delta = assign({}, props, snapshot.props)
+		var xmlns = !!element.xmlns
 		var value = null
 	
-		switch (signature) {
-			case 0:
-				for (var key in delta)
-					if ((value = delta[key]) != null)
-						commitProps(element, key, delta[key], 1, xmlns)
-				return
-			case 1:
-				for (var key in delta)
-					switch (value = delta[key]) {
-						case props[key]:
-							break
-						default:
-							commitProps(element, key, value, value == null ? 0 : 2, xmlns)
-					}
-		}
+		for (var key in delta)
+			switch (value = delta[key]) {
+				case props[key]:
+					break
+				default:
+					commitProperty(element, key, value, value == null ? 0 : 2, xmlns)
+			}
 	
 		element.props = snapshot.props
 	}
@@ -1298,17 +1285,18 @@
 			return commitMerge(element, snapshot)
 				
 		switch (snapshot.flag) {
-			case ElementText:
-				if (element.children !== snapshot.children)
-					commitText(element, snapshot)
-				break
 			case ElementPortal:
-			case ElementNode:
-				return patchChildren(element, snapshot), patchProps(element, snapshot, 1)
 			case ElementFragment:
 				return patchChildren(element, snapshot)
 			case ElementComponent:
 				return componentUpdate(element, snapshot, element.flag, 1)
+			case ElementText:
+				if (element.children !== snapshot.children)
+					commitText(element, snapshot)
+				break
+			case ElementNode:
+				patchChildren(element, snapshot)
+				patchProps(element, snapshot, 1)
 		}
 	}
 	
@@ -1348,10 +1336,8 @@
 	
 			if (aLength !== bLength)
 				if (aLength > bLength)
-					while (aLength > bLength) {
-						commitUnmount(children.pop(), element, 0)
-						aLength--
-					}
+					while (aLength > bLength)
+						commitUnmount(children.pop(), element, (aLength--, 0))
 				else
 					while (aLength < bLength) {
 						aHead = bHead
@@ -1409,8 +1395,8 @@
 			}
 		} else if (bPos > bEnd)
 			patchRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
-		else
-			patchMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
+			else
+				patchMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
 	}
 	
 	/**
@@ -1461,20 +1447,17 @@
 				aNext = aPool[bHash]
 	
 				if (aNext = aPool[bHash]) {
-					if (aNode === children) {
+					if (aNode === children)
 						commitAppend(children.push(children.remove(aNext)), element)
-					} else {
+					else
 						commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
-					}
 	
 					patchElement(aNext, bNode)
 					delete aPool[bHash]
-				} else {
-					if (aNode === children)
-						commitMount(children.push(bNode), bNode, element, host, 0)
+				} else if (aNode === children)
+					commitMount(children.push(bNode), bNode, element, host, 0)
 					else
 						commitMount(children.insert(bNode, aNode), aNode, element, host, 1)	
-				}
 	
 				bNode = bNext
 			}
@@ -1500,13 +1483,11 @@
 	 */
 	function patchInsert (element, sibling, parent, host, children, index, length, signature) {
 		var i = index
-		var prev = element
 		var next = element
+		var prev = element
 	
-		while (i++ < length) {
-			next = (prev = next).next
-			commitMount(children.push(prev), sibling, parent, host, signature)
-		}
+		while (i++ < length)
+			commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature)
 	}
 	
 	/**
@@ -1518,46 +1499,11 @@
 	 */
 	function patchRemove (element, parent, children, index, length) {
 		var i = index
-		var prev = element
 		var next = element
+		var prev = element
 		
-		while (i++ < length) {
-			next = (prev = next).next
-			commitUnmount(children.remove(prev), parent, 0)
-		}
-	}
-	
-	/**
-	 * @type {WeakMap}
-	 */
-	var roots = new WeakMap()
-	
-	/**
-	 * @param {*} subject
-	 * @param {Node?} target
-	 * @param {function?} callback
-	 */
-	function render (subject, target, callback) {
-		if (target == null)
-			return render(subject, DOMDocument(), callback)
-			
-		var element = roots.get(target)
-		var parent = null
-	
-		if (element)
-			patchElement(element, commitElement(subject))
-		else {
-			parent = new Element(ElementIntermediate)
-			parent.DOM = {node: target}
-			parent.context = {}
-			parent.children = element = commitElement(subject)
-	
-			roots.set(target, element)
-			commitMount(element, element, parent, parent, 0)
-		}
-	
-		if (typeof callback === 'function')
-			lifecycleCallback(element, callback, target)
+		while (i++ < length)
+			commitUnmount(children.remove((next = (prev = next).next, prev)), parent, 0)
 	}
 	
 	/**
@@ -1610,20 +1556,20 @@
 			return Exception.call(new Error(this), element, from)
 	
 		var tabs = ''
-		var tree = ''
+		var info = ''
 		var host = element
 		var stack = this.stack
 	
 		while (host.type) {
-			tree += tabs + '<' + (host.type.displayName || host.type.name || 'anonymous') + '>\n'
+			info += tabs + '<' + (host.type.displayName || host.type.name || 'anonymous') + '>\n'
 			tabs += '  '
 			host = host.host
 		}
 	
-		console.error('Error caught in `\n\n'+tree+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
+		console.error('Error caught in `\n\n'+info+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
 	
 		this.from = from
-		this.tree = tree
+		this.info = info
 	
 		return this
 	}
@@ -1635,9 +1581,7 @@
 	 * @param {Element}
 	 */
 	function Boundary (element, err, from) {	
-		try {
-			return Recovery(element, Exception.call(err, element, from), from)
-		} catch (e) {}
+		return Recovery(element, Exception.call(err, element, from), from)
 	}
 	
 	/**
@@ -1647,32 +1591,31 @@
 	 * @return {Element?}
 	 */
 	function Recovery (element, error, from) {
-		if (element && element.owner)
-			try {
-				if (!element.owner[LifecycleDidCatch])
-					return Recovery(element.host, error, from)
+		if (!element || !element.owner)
+			return elementText('')
+		
+		if (!element.owner[LifecycleDidCatch])
+			return Recovery(element.host, error, from)
 	
-				var snapshot = element.owner[LifecycleDidCatch].call((element.sync = PriorityLow, element.instance), error)
+		try {
+			element.sync = PriorityLow
+			error.children = element.owner[LifecycleDidCatch].call(element.instance, error)
+			element.sync = PriorityHigh
 	
-				switch (element.sync = PriorityHigh, typeof snapshot) {
-					case 'boolean':
-					case 'undefined':
-						break
-					default:
-						if (from === LifecycleRender)
-							return commitElement(snapshot)
-						else if (!server)
-							patchElement(getHostElement(element), commitElement(snapshot))
-				}
-			} catch (e) {
-				Boundary(element.host, e, LifecycleDidCatch)
+			switch (typeof error.children) {
+				case 'boolean':
+				case 'undefined':
+					break
+				default:
+					if (from === LifecycleRender)
+						return commitElement(error.children)
+	
+					if (!server)
+						patchElement(getHostElement(element), commitElement(error.children))
 			}
-		else if (!server)
-			setImmediate(function () {
-				patchElement(getHostElement(element), elementText(''))
-			})
-	
-		return elementText('')
+		} catch (e) {
+			Boundary(element.host, e, LifecycleDidCatch)
+		}
 	}
 	
 	/**
@@ -1683,7 +1626,7 @@
 	}
 	
 	/**
-	 * @param {DOM} element
+	 * @param {Object} element
 	 * @param {string} name
 	 * @param {*} value
 	 */
@@ -1694,7 +1637,7 @@
 	}
 	
 	/**
-	 * @param {DOM} element
+	 * @param {Object} element
 	 * @param {string} name
 	 * @param {*} value
 	 * @param {number} signature
@@ -1736,7 +1679,7 @@
 	}
 	
 	/**
-	 * @param {DOM} element
+	 * @param {Object} element
 	 * @param {string} type
 	 * @param {(function|EventListener)} listener
 	 * @param {number} signature
@@ -1749,7 +1692,7 @@
 	}
 	
 	/**
-	 * @param {DOM} element
+	 * @param {Object} element
 	 * @param {(string|number)} value
 	 */
 	function DOMContent (element, value) {
@@ -1758,7 +1701,7 @@
 	
 	/**
 	 * @param {(string|number)} value
-	 * @return {DOM}
+	 * @return {Object}
 	 */
 	function DOMText (value) {
 		return {
@@ -1769,44 +1712,132 @@
 	/**
 	 * @param {string} type
 	 * @param {string?} xmlns
-	 * @return {DOM}
+	 * @return {Object}
 	 */
 	function DOMElement (type, xmlns) {
 		return {
-			node: xmlns === null ? document.createElement(type) : document.createElementNS(xmlns, type)
+			node: !xmlns ? document.createElement(type) : document.createElementNS(xmlns, type)
 		}
 	}
 	
 	/**
-	 * @param {DOM} element
-	 * @param {DOM} parent
+	 * @param {Object} element
+	 * @param {Object} parent
 	 */
 	function DOMRemove (element, parent) {
 		parent.node.removeChild(element.node)
 	}
 	
 	/**
-	 * @param {DOM} element
-	 * @param {DOM} sibling
-	 * @param {DOM} parent
+	 * @param {Object} element
+	 * @param {Object} sibling
+	 * @param {Object} parent
 	 */
 	function DOMInsert (element, sibling, parent) {
 		parent.node.insertBefore(element.node, sibling.node)
 	}
 	
 	/**
-	 * @param {DOM} element
-	 * @param {DOM} parent
+	 * @param {Object} element
+	 * @param {Object} parent
 	 */
 	function DOMAppend (element, parent) {
 		parent.node.appendChild(element.node)
 	}
-
-	/**
-	 * @type {Object}
-	 */
-	shared.DOM = (shared.Element = new Element(0)).DOM = {node: null}
 	
+	/**
+	 * @param {*} subject
+	 * @param {Node?} target
+	 */
+	function render (subject, target) {
+		if (!isValidElement(subject))
+			return render(commitElement(subject), target)
+		if (!target)
+			return render(subject, DOMDocument())
+			
+		if (root.has(target))
+			return patchElement(root.get(target), commitElement(subject))
+	
+		var parent = elementIntermediate()
+	
+		root.set(parent.DOM.node = target, subject)
+	
+		commitMount(subject, subject, parent, parent, 0)
+	}
+	
+	/**
+	 * @param {*} subject
+	 * @param {Node?} target
+	 */
+	function hydrate (subject, target) {
+		if (!isValidElement(subject))
+			return hydrate(commitElement(subject), target)
+	
+		if (!target)
+			return hydrate(subject, DOMDocument())
+		
+		// if (root.has(target))
+		// 	return render(subject, target)
+	
+		// var parent = elementIntermediate()
+	
+		// root.set(parent.DOM.node = target, subject)
+		// hydrateMount(element, {node: target.firstChild}, parent, parent, 0)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Object} sibling
+	 * @param {Element} parent
+	 * @param {Element} host
+	 * @param {number} signature
+	 */
+	// function hydrateMount (element, sibling, parent, host, signature) {
+	// 	element.host = host
+	// 	element.parent = parent
+	// 	element.context = host.context
+	
+	//  	switch (element.flag) {
+	//  		case ElementComponent:
+	//  			return
+	//  			// return commitComponent(element, sibling, parent, host, signature)
+	//  		case ElementPortal:
+	//  			element.DOM = {node: element.type}
+	//  			break
+	//  		case ElementPromise:
+	//  		case ElementFragment:
+	//  			element.DOM = parent.DOM
+	//  			break
+	//  		case ElementNode:
+	//  			element.xmlns = commitXmlns(element.type, parent.xmlns)
+	//  		case ElementText:
+	//  			element.DOM = {node: sibling}
+	 			
+	//  			if (element.flag > ElementNode)
+	//  				return
+	//  	}
+	
+	// 	hydrateChildren(element, sibling, host)
+	// 	commitProperties(element)
+	// }
+	
+	// /**
+	//  * @param {Element} element
+	//  * @param {Node} sibling
+	//  * @param {Element} hosto
+	//  */
+	// function hydrateChildren (element, sibling, host) {
+	// 	var children = element.children
+	// 	var length = children.length
+	// 	var next = children.next
+	
+	// 	while (length-- > 0) {
+	// 		rehydrate(!next.DOM ? next : merge(new Element(ElementNode), next), sibling, element, host, 0)
+	// 		next = next.next
+	// 		sibling.node = sibling.node.nextSibling
+	// 	}
+	// }
+
 	/**
 	 * @exports
 	 */
@@ -1815,5 +1846,7 @@
 	exports.isValidElement = isValidElement
 	exports.cloneElement = cloneElement
 	exports.Component = Component
+	
+	exports.hydrate = !server ? hydrate : noop
 	exports.render = !server ? render : __require__('./dio.node.js')(Element, render, componentMount, commitElement)
 }))

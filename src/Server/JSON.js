@@ -6,7 +6,7 @@ Element.prototype.toJSON = function toJSON () {
 
 	switch (flag) {
 		case ElementComponent:
-			return (componentMount(this), this.children.toJSON())
+			return componentMount(this).toJSON()
 		case ElementText:
 			return this.children
 	}

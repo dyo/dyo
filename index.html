@@ -1,5 +1,5 @@
 <body>
-	<div id="root"></div>
+	<div id="root"><h1>Hello World</h1></div>
 	<script src=dist/dio.umd.js></script>
 	<script>
 		const {h, render, Component} = dio
@@ -297,15 +297,15 @@
 			}
 		}
 
-		class Main {
+		// class Main {
 			// componentDidCatch(err) {
 				// console.log(err, 'componentDidCatch')
 				// return h('h1', {style: 'color:red'}, 'Error!')
 			// }
-			render(){
-				return Child
-			}
-		}
+		// 	render(){
+		// 		return Child
+		// 	}
+		// }
 
 		class Child {
 			componentDidMount() {
@@ -316,7 +316,7 @@
 			}
 		}
 
-		render(Main)
+		// render(Main)
 
 		// render([h('h1', 'Hello'), h(root, h('h1', 'World'))])
 
@@ -344,5 +344,52 @@
 		// }, 2000)
 		
 		// dio.render(Main)
+
+		class Timer extends dio.Component {
+		  constructor(props) {
+		    super(props)
+		    this.state = { secondsElapsed: 0 }
+		  }
+
+		  tick() {
+		    this.setState(prevState => ({
+		      secondsElapsed: prevState.secondsElapsed + 1
+		    }))
+		  }
+
+		  componentDidMount() {
+		    this.interval = setInterval(() => this.tick(), 1000)
+		  }
+
+		  componentWillUnmount() {
+		    clearInterval(this.interval)
+		  }
+
+		  render() {
+		    return (
+		    	h('div', 'Seconds Elapsed:', this.state.secondsElapsed)
+		    )
+		  }
+		}
+
+		var ref = (e) => {console.log(e)}
+
+		class Main extends dio.Component {
+		  render(){
+		  	console.log(this.props.children)
+		  	return h(Timer, {ref: ref})
+		  }
+		}
+
+		dio.render(h(Main, null, 1, 2))
+		
+		class Hello {
+			render () {
+				return h('h1', 'Hello World')
+			}
+		}
+
+
+		dio.hydrate(Hello, root)
 	</script>
 </body>

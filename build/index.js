@@ -8,16 +8,17 @@ const strict = `'use strict'`
 
 const umd = [
 	'../src/Core/Utility.js',
-	'../src/Core/Constant.js',
 	'../src/Core/Element.js',
+	'../src/Core/Constant.js',
 	'../src/Core/Lifecycle.js',
 	'../src/Core/Component.js',
 	'../src/Core/Commit.js',
 	'../src/Core/Reconcile.js',
-	'../src/Core/Render.js',
 	'../src/Core/Event.js',
 	'../src/Core/Error.js',
-	'../src/Core/DOM.js'
+	'../src/Core/DOM.js',
+	'../src/Core/Render.js',
+	'../src/Core/Hydrate.js'
 ]
 
 const node = [
@@ -35,11 +36,6 @@ const imports = 'Element, render, componentMount, commitElement'
 
 const getExports = () => `
 /**
- * @type {Object}
- */
-shared.DOM = (shared.Element = new Element(0)).DOM = {node: null}
-
-/**
  * @exports
  */
 exports.version = version
@@ -47,6 +43,8 @@ exports.h = exports.createElement = window.h = createElement
 exports.isValidElement = isValidElement
 exports.cloneElement = cloneElement
 exports.Component = Component
+
+exports.hydrate = !server ? hydrate : noop
 exports.render = !server ? render : __require__('./dio.node.js')(${imports})
 `
 
@@ -86,8 +84,7 @@ const wrapper = (open, module, content, close, version) => {
 					fs.readFileSync(path.join(__dirname, 'umd.js'), 
 					'utf8').trim() + '\n\n' + 
 					"\tvar version = '"+version+"'\n"+
-					'\tvar server = __require__ !== window\n'+
-					'\tvar shared = {}\n\n'
+					'\tvar server = __require__ !== window\n\n'
 				),
 				body: pad(format(content)),
 				close: close

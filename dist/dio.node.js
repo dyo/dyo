@@ -11,59 +11,53 @@ module.exports = function (Element, render, componentMount, commitElement) {
 		this.length = 0
 	}
 	/**
-	 * @type {Object}
+	 * @param {Element} element
+	 * @param {Element} sibling
+	 * @return {Element}
 	 */
-	List.prototype = Object.create(null, {
-		constructor: {value: List},
-		/**
-		 * @param {Element} node
-		 * @return {Element}
-		 */
-		remove: {value: function remove (node) {
-			if (this.length < 1) 
-				return
-			
-			node.next.prev = node.prev
-			node.prev.next = node.next
-			this.length--
-			
-			return node
-		}},
-		/**
-		 * @param {Element} node
-		 * @param {Element} before
-		 * @return {Element}
-		 */
-		insert: {value: function insert (node, before) {
-			node.next = before
-			node.prev = before.prev
-			before.prev.next = node
-			before.prev = node
-			this.length++
-			
-			return node
-		}},
-		/**
-		 * @return {Element}
-		 */
-		pop: {value: function pop () {
-			return this.remove(this.prev)
-		}},
-		/**
-		 * @param {Element} node
-		 * @return {Element}
-		 */
-		push: {value: function push (node) {
-			return this.insert(node, this)
-		}},
-		/**
-		 * @param {function} callback
-		 */
-		forEach: {value: function forEach (callback) {
-			for (var i = 0, node = this; i < this.length; i++)
-				callback.call(this, node = node.next, i)
-		}}
-	})
+	List.prototype.insert = function insert (element, sibling) {
+		element.next = sibling
+		element.prev = sibling.prev
+		sibling.prev.next = element
+		sibling.prev = element
+		this.length++
+		
+		return element
+	}
+	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	List.prototype.remove = function remove (element) {
+		if (this.length < 1) 
+			return
+		
+		element.next.prev = element.prev
+		element.prev.next = element.next
+		this.length--
+		
+		return element
+	}
+	/**
+	 * @return {Element}
+	 */
+	List.prototype.pop = function pop () {
+		return this.remove(this.prev)
+	}
+	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	List.prototype.push = function push (element) {
+		return this.insert(element, this)
+	}
+	/**
+	 * @param {function} callback
+	 */
+	List.prototype.forEach = function forEach (callback) {
+		for (var i = 0, element = this; i < this.length; i++)
+			callback.call(this, element = element.next, i)
+	}
 	
 	/**
 	 * @constructor
@@ -72,21 +66,19 @@ module.exports = function (Element, render, componentMount, commitElement) {
 		this.k = []
 		this.v = []
 	}
-	/**
-	 * @type {Object}
-	 */
-	Hash.prototype = Object.create(null, {
-		set: {value: function (key, value) {
-			var k = this.k
-			var i = k.lastIndexOf(key)
+	Hash.prototype.set = function set (key, value) {
+		var k = this.k
+		var i = k.lastIndexOf(key)
 	
-			k[i < 0 ? (i = k.length) : i] = key
-			this.v[i] = value
-		}},
-		get: {value: function (key) {
+		k[i < 0 ? (i = k.length) : i] = key
+		this.v[i] = value
+	}
+	Hash.prototype.get = function get (key) {
 			return this.v[this.k.lastIndexOf(key)]
-		}}
-	})
+		}
+	Hash.prototype.has = function has (key) {
+		return this.k.lastIndexOf(key) > -1
+	}
 	
 	/**
 	 * @param {Object} destination
@@ -176,14 +168,16 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	
 	var Readable = require('stream').Readable
 	
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
-	var document = window.document || noop
 	var Node = window.Node || noop
 	var Symbol = window.Symbol || noop
-	var Promise = window.Promise || noop
-	var WeakMap = window.WeakMap || Hash
-	var Map = window.Map || Hash
 	var Iterator = Symbol.iterator
+	var Promise = window.Promise || noop
+	var Map = window.Map || Hash
+	var WeakMap = window.WeakMap || Hash
+	
+	var root = new WeakMap()
+	var document = window.document || noop
+	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
 	
 	var ElementPromise = -3
 	var ElementFragment = -2
@@ -226,7 +220,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	
 		switch (flag) {
 			case ElementComponent:
-				return (componentMount(this), this.children.toString())
+				return componentMount(this).toString()
 			case ElementText:
 				return escape(this.children)
 		}
@@ -321,7 +315,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	
 		switch (flag) {
 			case ElementComponent:
-				return (componentMount(this), this.children.toJSON())
+				return componentMount(this).toJSON()
 			case ElementText:
 				return this.children
 		}
@@ -374,7 +368,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	
 				if (!keyed) {
 					while (element.flag === ElementComponent)
-						element = (componentMount(element), element.children)
+						element = componentMount(element)
 	
 					switch (element.flag) {
 						case ElementText:

@@ -1,32 +1,19 @@
 /**
- * @type {WeakMap}
- */
-var roots = new WeakMap()
-
-/**
  * @param {*} subject
  * @param {Node?} target
- * @param {function?} callback
  */
-function render (subject, target, callback) {
-	if (target == null)
-		return render(subject, DOMDocument(), callback)
+function render (subject, target) {
+	if (!isValidElement(subject))
+		return render(commitElement(subject), target)
+	if (!target)
+		return render(subject, DOMDocument())
 		
-	var element = roots.get(target)
-	var parent = null
+	if (root.has(target))
+		return patchElement(root.get(target), commitElement(subject))
 
-	if (element)
-		patchElement(element, commitElement(subject))
-	else {
-		parent = new Element(ElementIntermediate)
-		parent.DOM = {node: target}
-		parent.context = {}
-		parent.children = element = commitElement(subject)
+	var parent = elementIntermediate()
 
-		roots.set(target, element)
-		commitMount(element, element, parent, parent, 0)
-	}
+	root.set(parent.DOM.node = target, subject)
 
-	if (typeof callback === 'function')
-		lifecycleCallback(element, callback, target)
+	commitMount(subject, subject, parent, parent, 0)
 }

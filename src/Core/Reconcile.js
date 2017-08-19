@@ -23,25 +23,17 @@ function patchStyle (prev, next) {
  */
 function patchProps (element, snapshot, signature) {
 	var props = element.props
-	var delta = signature === 0 ? props : assign({}, props, snapshot.props)
-	var xmlns = element.xmlns !== null
+	var delta = assign({}, props, snapshot.props)
+	var xmlns = !!element.xmlns
 	var value = null
 
-	switch (signature) {
-		case 0:
-			for (var key in delta)
-				if ((value = delta[key]) != null)
-					commitProps(element, key, delta[key], 1, xmlns)
-			return
-		case 1:
-			for (var key in delta)
-				switch (value = delta[key]) {
-					case props[key]:
-						break
-					default:
-						commitProps(element, key, value, value == null ? 0 : 2, xmlns)
-				}
-	}
+	for (var key in delta)
+		switch (value = delta[key]) {
+			case props[key]:
+				break
+			default:
+				commitProperty(element, key, value, value == null ? 0 : 2, xmlns)
+		}
 
 	element.props = snapshot.props
 }
@@ -58,17 +50,18 @@ function patchElement (element, snapshot) {
 		return commitMerge(element, snapshot)
 			
 	switch (snapshot.flag) {
-		case ElementText:
-			if (element.children !== snapshot.children)
-				commitText(element, snapshot)
-			break
 		case ElementPortal:
-		case ElementNode:
-			return patchChildren(element, snapshot), patchProps(element, snapshot, 1)
 		case ElementFragment:
 			return patchChildren(element, snapshot)
 		case ElementComponent:
 			return componentUpdate(element, snapshot, element.flag, 1)
+		case ElementText:
+			if (element.children !== snapshot.children)
+				commitText(element, snapshot)
+			break
+		case ElementNode:
+			patchChildren(element, snapshot)
+			patchProps(element, snapshot, 1)
 	}
 }
 
@@ -108,10 +101,8 @@ function patchChildren (element, snapshot) {
 
 		if (aLength !== bLength)
 			if (aLength > bLength)
-				while (aLength > bLength) {
-					commitUnmount(children.pop(), element, 0)
-					aLength--
-				}
+				while (aLength > bLength)
+					commitUnmount(children.pop(), element, (aLength--, 0))
 			else
 				while (aLength < bLength) {
 					aHead = bHead
@@ -169,8 +160,8 @@ function patchChildren (element, snapshot) {
 		}
 	} else if (bPos > bEnd)
 		patchRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
-	else
-		patchMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
+		else
+			patchMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
 }
 
 /**
@@ -221,20 +212,17 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
 			aNext = aPool[bHash]
 
 			if (aNext = aPool[bHash]) {
-				if (aNode === children) {
+				if (aNode === children)
 					commitAppend(children.push(children.remove(aNext)), element)
-				} else {
+				else
 					commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
-				}
 
 				patchElement(aNext, bNode)
 				delete aPool[bHash]
-			} else {
-				if (aNode === children)
-					commitMount(children.push(bNode), bNode, element, host, 0)
+			} else if (aNode === children)
+				commitMount(children.push(bNode), bNode, element, host, 0)
 				else
 					commitMount(children.insert(bNode, aNode), aNode, element, host, 1)	
-			}
 
 			bNode = bNext
 		}
@@ -260,13 +248,11 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
  */
 function patchInsert (element, sibling, parent, host, children, index, length, signature) {
 	var i = index
-	var prev = element
 	var next = element
+	var prev = element
 
-	while (i++ < length) {
-		next = (prev = next).next
-		commitMount(children.push(prev), sibling, parent, host, signature)
-	}
+	while (i++ < length)
+		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature)
 }
 
 /**
@@ -278,11 +264,9 @@ function patchInsert (element, sibling, parent, host, children, index, length, s
  */
 function patchRemove (element, parent, children, index, length) {
 	var i = index
-	var prev = element
 	var next = element
+	var prev = element
 	
-	while (i++ < length) {
-		next = (prev = next).next
-		commitUnmount(children.remove(prev), parent, 0)
-	}
+	while (i++ < length)
+		commitUnmount(children.remove((next = (prev = next).next, prev)), parent, 0)
 }

@@ -6,7 +6,7 @@ Element.prototype.toString = function toString () {
 
 	switch (flag) {
 		case ElementComponent:
-			return (componentMount(this), this.children.toString())
+			return componentMount(this).toString()
 		case ElementText:
 			return escape(this.children)
 	}

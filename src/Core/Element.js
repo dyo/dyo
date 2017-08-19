@@ -6,13 +6,13 @@ function Element (flag) {
 	this.flag = flag
 	this.sync = 0
 	this.keyed = false
+	this.xmlns = ''
 	this.key = null
 	this.ref = null
 	this.type = null
 	this.props = null
 	this.state = null
 	this.children = null
-	this.xmlns = null
 	this.owner = null
 	this.instance = null
 	this.host = null
@@ -24,48 +24,54 @@ function Element (flag) {
 	this.next = null
 	this.prev = null
 }
-/**
- * @type {Object}
- */
-Element.prototype = Object.create(null, {
-	constructor: {value: Element} 
-})
 
 /**
- * @param {*} child
+ * @param {*} content
  * @return {Element}
  */
-function elementText (child) {
+function elementText (content) {
 	var element = new Element(ElementText)
 
 	element.type = TypeText
-	element.children = child
+	element.children = content
 
 	return element
 }
 
 /**
- * @param {(Array|List)} child
  * @return {Element}
  */
-function elementFragment (child) {
+function elementIntermediate () {
+	var element = new Element(ElementIntermediate)
+
+	element.context = {}
+	element.DOM = {node: null}
+
+	return element
+}
+
+/**
+ * @param {(Element|Array|List)} fragment
+ * @return {Element}
+ */
+function elementFragment (fragment) {
 	var element = new Element(ElementFragment)
 	var children = new List()
 	
 	element.type = TypeFragment
 	element.children = children
 
-	switch (child.constructor) {
+	switch (fragment.constructor) {
 		case Element:
-			elementChildren(element, children, child, 0, 0)
+			elementChildren(element, children, fragment, 0, 0)
 			break
 		case Array:
-			for (var i = 0; i < child.length; i++)
-				elementChildren(element, children, child[i], i, 0)
+			for (var i = 0; i < fragment.length; i++)
+				elementChildren(element, children, fragment[i], i, 0)
 			break
 		case List:
-			child.forEach(function (child, i) {
-				elementChildren(element, children, child, i, 0)
+			fragment.forEach(function (fragment, i) {
+				elementChildren(element, children, fragment, i, 0)
 			})
 	}
 
@@ -105,7 +111,7 @@ function elementUnknown (child) {
 }
 
 /**
- * @param {Eleemnt} element
+ * @param {Element} element
  * @param {number} signature
  * @return {Element}
  */
@@ -115,7 +121,7 @@ function elementSibling (element, signature) {
 	else if (isValidElement(element.next))
 		return element.next
 	else
-		return shared.Element
+		return elementIntermediate()
 }
 
 /**
