@@ -8,8 +8,8 @@ const strict = `'use strict'`
 
 const umd = [
 	'../src/Core/Utility.js',
-	'../src/Core/Element.js',
 	'../src/Core/Constant.js',
+	'../src/Core/Element.js',
 	'../src/Core/Lifecycle.js',
 	'../src/Core/Component.js',
 	'../src/Core/Commit.js',
@@ -22,9 +22,10 @@ const umd = [
 
 const node = [
 	'../src/Core/Utility.js',
+	'../src/Core/Constant.js',
+	
 	'../src/Server/Utility.js',
 	'../src/Server/Constant.js',
-	'../src/Core/Constant.js',
 	'../src/Server/String.js',
 	'../src/Server/JSON.js',
 	'../src/Server/Stream.js',

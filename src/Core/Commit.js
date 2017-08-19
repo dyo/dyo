@@ -304,7 +304,7 @@ function commitReference (element, callback, signature, key) {
 		case 'function':
 			switch (signature) {
 				case -1:
-					return lifecycleCallback(element.host, callback, element.ref = null, callback, key, element)
+					return lifecycleCallback(element.host, callback, element.ref = null, key, element)
 				case 0:
 					element.ref = callback
 				case 1:

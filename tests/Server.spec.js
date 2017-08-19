@@ -30,15 +30,15 @@ module.exports = ({h, render}) => {
 		ok(`${h(Baz)}` === '<head></head><body></body>', 'render fragment')
 
 		var output = ''
-		var element = [h('h1', 1, 2, h('p', 'Hello'), h('span'), h('img'))]
-		var destination = new require('stream').Writable({
+		var element = h('h1', 1, 2, h('p', 'Hello'), h('span'), h('img'))
+		var writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
 	      output += chunk.toString()
 	      callback()
 		  }
 		})
 
-		dio.render(element, destination).on('end', () => {
+		dio.render(element, writable, () => {
 			ok(output === '<h1>12<p>Hello</p><span></span><img></h1>', 'render stream')
 			end()
 		})

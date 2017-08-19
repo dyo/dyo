@@ -1,8 +1,13 @@
 /**
  * @return {Stream}
  */
-function toStream () {
-	return new Stream(this)
+function toStream (callback) {
+	var readable = new Stream(this)
+
+	if (typeof callback === 'function')
+		readable.on('end', callback)
+
+	return readable
 }
 
 /**
@@ -53,8 +58,6 @@ function toChunk (element, stack) {
  */
 function Stream (element) {
 	this.stack = [commitElement(element)]
-	this.type = 'text/html'
-
 	Readable.call(this)
 }
 

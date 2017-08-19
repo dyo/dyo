@@ -148,6 +148,50 @@
 	 */
 	function noop () {}
 	
+	var Node = window.Node || noop
+	var Symbol = window.Symbol || noop
+	var Iterator = Symbol.iterator
+	var Promise = window.Promise || noop
+	var Map = window.Map || Hash
+	var WeakMap = window.WeakMap || Hash
+	
+	var root = new WeakMap()
+	var document = window.document || noop
+	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+	
+	var ElementPromise = -3
+	var ElementFragment = -2
+	var ElementPortal = -1
+	var ElementIntermediate = 0
+	var ElementComponent = 1
+	var ElementNode = 2
+	var ElementText = 3
+	
+	var PriorityLow = -2
+	var PriorityTask = -1
+	var PriorityHigh = 1
+	
+	var LifecycleCallback = 'callback'
+	var LifecycleRender = 'render'
+	var LifecycleConstructor = 'constructor'
+	var LifecycleWillMount = 'componentWillMount'
+	var LifecycleDidMount = 'componentDidMount'
+	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
+	var LifecycleShouldUpdate = 'shouldComponentUpdate'
+	var LifecycleWillUpdate = 'componentWillUpdate'
+	var LifecycleDidUpdate = 'componentDidUpdate'
+	var LifecycleWillUnmount = 'componentWillUnmount'
+	var LifecycleDidCatch = 'componentDidCatch'
+	var LifecycleChildContext = 'getChildContext'
+	var LifecycleInitialState = 'getInitialState'
+	
+	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
+	var NSXlink = 'http://www.w3.org/1999/xlink'
+	var NSSVG = 'http://www.w3.org/2000/svg'
+	
+	var TypeFragment = '#Fragment'
+	var TypeText = '#Text'
+	
 	/**
 	 * @constructor
 	 * @param {number} flag
@@ -423,50 +467,6 @@
 	
 		return element
 	}
-	
-	var Node = window.Node || noop
-	var Symbol = window.Symbol || noop
-	var Iterator = Symbol.iterator
-	var Promise = window.Promise || noop
-	var Map = window.Map || Hash
-	var WeakMap = window.WeakMap || Hash
-	
-	var root = new WeakMap()
-	var document = window.document || noop
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
-	
-	var ElementPromise = -3
-	var ElementFragment = -2
-	var ElementPortal = -1
-	var ElementIntermediate = 0
-	var ElementComponent = 1
-	var ElementNode = 2
-	var ElementText = 3
-	
-	var PriorityLow = -2
-	var PriorityTask = -1
-	var PriorityHigh = 1
-	
-	var LifecycleCallback = 'callback'
-	var LifecycleRender = 'render'
-	var LifecycleConstructor = 'constructor'
-	var LifecycleWillMount = 'componentWillMount'
-	var LifecycleDidMount = 'componentDidMount'
-	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
-	var LifecycleShouldUpdate = 'shouldComponentUpdate'
-	var LifecycleWillUpdate = 'componentWillUpdate'
-	var LifecycleDidUpdate = 'componentDidUpdate'
-	var LifecycleWillUnmount = 'componentWillUnmount'
-	var LifecycleDidCatch = 'componentDidCatch'
-	var LifecycleChildContext = 'getChildContext'
-	var LifecycleInitialState = 'getInitialState'
-	
-	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
-	var NSXlink = 'http://www.w3.org/1999/xlink'
-	var NSSVG = 'http://www.w3.org/2000/svg'
-	
-	var TypeFragment = '#Fragment'
-	var TypeText = '#Text'
 	
 	/**
 	 * @param {Element} element
@@ -1200,7 +1200,7 @@
 			case 'function':
 				switch (signature) {
 					case -1:
-						return lifecycleCallback(element.host, callback, element.ref = null, callback, key, element)
+						return lifecycleCallback(element.host, callback, element.ref = null, key, element)
 					case 0:
 						element.ref = callback
 					case 1:
@@ -1785,12 +1785,13 @@
 	/**
 	 * @param {*} subject
 	 * @param {Node?} target
+	 * @param {function=} callback
 	 */
-	function render (subject, target) {
+	function render (subject, target, callback) {
 		if (!isValidElement(subject))
-			return render(commitElement(subject), target)
+			return render(commitElement(subject), target, callback)
 		if (!target)
-			return render(subject, DOMDocument())
+			return render(subject, DOMDocument(), callback)
 			
 		if (root.has(target))
 			return patchElement(root.get(target), commitElement(subject))
@@ -1799,6 +1800,9 @@
 	
 		root.set(element.DOM.node = target, subject)
 		commitMount(subject, subject, element, element, (DOMContent(element.DOM), 0))
+	
+		if (typeof callback === 'function')
+			lifecycleCallback(subject, callback)
 	}
 
 	/**

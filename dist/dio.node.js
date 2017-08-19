@@ -138,6 +138,50 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	 */
 	function noop () {}
 	
+	var Node = window.Node || noop
+	var Symbol = window.Symbol || noop
+	var Iterator = Symbol.iterator
+	var Promise = window.Promise || noop
+	var Map = window.Map || Hash
+	var WeakMap = window.WeakMap || Hash
+	
+	var root = new WeakMap()
+	var document = window.document || noop
+	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+	
+	var ElementPromise = -3
+	var ElementFragment = -2
+	var ElementPortal = -1
+	var ElementIntermediate = 0
+	var ElementComponent = 1
+	var ElementNode = 2
+	var ElementText = 3
+	
+	var PriorityLow = -2
+	var PriorityTask = -1
+	var PriorityHigh = 1
+	
+	var LifecycleCallback = 'callback'
+	var LifecycleRender = 'render'
+	var LifecycleConstructor = 'constructor'
+	var LifecycleWillMount = 'componentWillMount'
+	var LifecycleDidMount = 'componentDidMount'
+	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
+	var LifecycleShouldUpdate = 'shouldComponentUpdate'
+	var LifecycleWillUpdate = 'componentWillUpdate'
+	var LifecycleDidUpdate = 'componentDidUpdate'
+	var LifecycleWillUnmount = 'componentWillUnmount'
+	var LifecycleDidCatch = 'componentDidCatch'
+	var LifecycleChildContext = 'getChildContext'
+	var LifecycleInitialState = 'getInitialState'
+	
+	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
+	var NSXlink = 'http://www.w3.org/1999/xlink'
+	var NSSVG = 'http://www.w3.org/2000/svg'
+	
+	var TypeFragment = '#Fragment'
+	var TypeText = '#Text'
+	
 	/**
 	 * @param {*} value
 	 * @return {string}
@@ -195,50 +239,6 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	Element.prototype.toString = toString
 	Element.prototype.toStream = toStream
 	Element.prototype.toJSON = toJSON
-	
-	var Node = window.Node || noop
-	var Symbol = window.Symbol || noop
-	var Iterator = Symbol.iterator
-	var Promise = window.Promise || noop
-	var Map = window.Map || Hash
-	var WeakMap = window.WeakMap || Hash
-	
-	var root = new WeakMap()
-	var document = window.document || noop
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
-	
-	var ElementPromise = -3
-	var ElementFragment = -2
-	var ElementPortal = -1
-	var ElementIntermediate = 0
-	var ElementComponent = 1
-	var ElementNode = 2
-	var ElementText = 3
-	
-	var PriorityLow = -2
-	var PriorityTask = -1
-	var PriorityHigh = 1
-	
-	var LifecycleCallback = 'callback'
-	var LifecycleRender = 'render'
-	var LifecycleConstructor = 'constructor'
-	var LifecycleWillMount = 'componentWillMount'
-	var LifecycleDidMount = 'componentDidMount'
-	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
-	var LifecycleShouldUpdate = 'shouldComponentUpdate'
-	var LifecycleWillUpdate = 'componentWillUpdate'
-	var LifecycleDidUpdate = 'componentDidUpdate'
-	var LifecycleWillUnmount = 'componentWillUnmount'
-	var LifecycleDidCatch = 'componentDidCatch'
-	var LifecycleChildContext = 'getChildContext'
-	var LifecycleInitialState = 'getInitialState'
-	
-	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
-	var NSXlink = 'http://www.w3.org/1999/xlink'
-	var NSSVG = 'http://www.w3.org/2000/svg'
-	
-	var TypeFragment = '#Fragment'
-	var TypeText = '#Text'
 	
 	/**
 	 * @return {string}
@@ -356,8 +356,13 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	/**
 	 * @return {Stream}
 	 */
-	function toStream () {
-		return new Stream(this)
+	function toStream (callback) {
+		var readable = new Stream(this)
+	
+		if (typeof callback === 'function')
+			readable.on('end', callback)
+	
+		return readable
 	}
 	
 	/**
@@ -408,8 +413,6 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	 */
 	function Stream (element) {
 		this.stack = [commitElement(element)]
-		this.type = 'text/html'
-	
 		Readable.call(this)
 	}
 	
@@ -434,20 +437,15 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	/**
 	 * @param {*} subject
 	 * @param {Stream?} target
-	 * @param {function?} callback
+	 * @param {function=} callback
 	 */
 	return function (subject, target, callback) {
 		if (!target || !target.writable)
 			return render(subject, target, callback)
 	
-		var readable = new Stream(subject)
-	
 		if (typeof target.getHeader === 'function' && !target.getHeader('Content-Type'))
 			target.setHeader('Content-Type', 'text/html')
 	
-		if (typeof callback === 'function')
-			readable.on('end', callback)
-	
-		return readable.pipe(target), readable
+		commitElement(subject).toStream(callback).pipe(target)
 	}
 }
