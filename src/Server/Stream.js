@@ -31,18 +31,27 @@ Stream.prototype = Object.create(Readable.prototype, {
 
 		switch (element.flag) {
 			case ElementText:
-				output = escape(element.children)
+				output = escapeText(element.children)
 				break
 			case ElementNode:
 				output = '<' + (type = element.type) + toProps(element.props) + '>'
-				
-				if (!length)
-					output += bool(type) > 0 ? '</'+type+'>' : ''
+					
+				if (element.html) {
+					output += element.html
+					element.html = ''
+					length = 0
+				}	
+
+				if (!length) {
+					output += elementType(type) > 0 ? '</'+type+'>' : ''
+					break
+				}
 			default:
-				children.prev.chunk = element.flag !== ElementFragment ? '</'+type+'>' : ''  
+				if (element.flag !== ElementFragment)
+					children.prev.chunk = '</'+type+'>'
 
 				while (length-- > 0)
-					stack.push(children = children.prev) 
+					stack.push(children = children.prev)
 		}
 
 		return output + element.chunk

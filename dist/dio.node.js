@@ -142,15 +142,15 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	 * @param {*} value
 	 * @return {string}
 	 */
-	function escape (value) {
-		return (value+'').replace(/[<>&"']/g, encode)
+	function escapeText (value) {
+		return (value+'').replace(RegExpEscape, encodeText)
 	}
 	
 	/**
 	 * @param {string} character
 	 * @return {string}
 	 */
-	function encode (character) {
+	function encodeText (character) {
 		switch (character) {
 			case '<': return '&lt;'
 			case '>': return '&gt;'
@@ -164,8 +164,8 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	/**
 	 * @param {string}
 	 */
-	function bool (name) {
-		switch (name) {
+	function elementType (type) {
+		switch (type) {
 			case 'area':
 			case 'base':
 			case 'br':
@@ -187,6 +187,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	}
 	
 	var Readable = require('stream').Readable
+	var RegExpEscape = /[<>&"']/g
 	
 	var Node = window.Node || noop
 	var Symbol = window.Symbol || noop
@@ -251,15 +252,17 @@ module.exports = function (Element, render, componentMount, commitElement) {
 		var length = children.length
 		var output = flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
 	
-		switch (bool(type)) {
+		switch (elementType(type)) {
 			case 0:
 				return output
 			default:
 				if (!this.html)
 					while (length-- > 0)
 						output += (children = children.next).toString()
-				else
+				else {
 					output += this.html
+					this.html = ''
+				}
 		}
 	
 		return flag > ElementIntermediate ? output + '</'+type+'>' : output
@@ -285,7 +288,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 					break
 				case 'defaultValue':
 					if (!props.value)
-						output += ' value="'+escape(value)+'"'
+						output += ' value="'+escapeText(value)+'"'
 				case 'key':
 				case 'ref':
 				case 'children':
@@ -297,7 +300,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 					key = 'class'
 				default:
 					if (value !== false && value != null)
-						output += ' '+ key + (value !== true ? '="'+escape(value)+'"' : '')
+						output += ' '+ key + (value !== true ? '="'+escapeText(value)+'"' : '')
 					else
 						continue
 			}
@@ -381,18 +384,27 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	
 			switch (element.flag) {
 				case ElementText:
-					output = escape(element.children)
+					output = escapeText(element.children)
 					break
 				case ElementNode:
 					output = '<' + (type = element.type) + toProps(element.props) + '>'
-					
-					if (!length)
-						output += bool(type) > 0 ? '</'+type+'>' : ''
+						
+					if (element.html) {
+						output += element.html
+						element.html = ''
+						length = 0
+					}	
+	
+					if (!length) {
+						output += elementType(type) > 0 ? '</'+type+'>' : ''
+						break
+					}
 				default:
-					children.prev.chunk = element.flag !== ElementFragment ? '</'+type+'>' : ''  
+					if (element.flag !== ElementFragment)
+						children.prev.chunk = '</'+type+'>'
 	
 					while (length-- > 0)
-						stack.push(children = children.prev) 
+						stack.push(children = children.prev)
 			}
 	
 			return output + element.chunk

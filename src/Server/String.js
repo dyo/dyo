@@ -17,15 +17,17 @@ Element.prototype.toString = function toString () {
 	var length = children.length
 	var output = flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
 
-	switch (bool(type)) {
+	switch (elementType(type)) {
 		case 0:
 			return output
 		default:
 			if (!this.html)
 				while (length-- > 0)
 					output += (children = children.next).toString()
-			else
+			else {
 				output += this.html
+				this.html = ''
+			}
 	}
 
 	return flag > ElementIntermediate ? output + '</'+type+'>' : output
@@ -51,7 +53,7 @@ function toProps (element, props) {
 				break
 			case 'defaultValue':
 				if (!props.value)
-					output += ' value="'+escape(value)+'"'
+					output += ' value="'+escapeText(value)+'"'
 			case 'key':
 			case 'ref':
 			case 'children':
@@ -63,7 +65,7 @@ function toProps (element, props) {
 				key = 'class'
 			default:
 				if (value !== false && value != null)
-					output += ' '+ key + (value !== true ? '="'+escape(value)+'"' : '')
+					output += ' '+ key + (value !== true ? '="'+escapeText(value)+'"' : '')
 				else
 					continue
 		}

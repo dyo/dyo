@@ -17,8 +17,7 @@ const umd = [
 	'../src/Core/Event.js',
 	'../src/Core/Error.js',
 	'../src/Core/DOM.js',
-	'../src/Core/Render.js',
-	'../src/Core/Hydrate.js'
+	'../src/Core/Render.js'
 ]
 
 const node = [
@@ -43,8 +42,6 @@ exports.h = exports.createElement = window.h = createElement
 exports.isValidElement = isValidElement
 exports.cloneElement = cloneElement
 exports.Component = Component
-
-// exports.hydrate = !server ? hydrate : noop
 exports.render = !server ? render : __require__('./dio.node.js')(${imports})
 `
 
