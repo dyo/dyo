@@ -24,6 +24,9 @@ function Element (flag) {
 	this.next = null
 	this.prev = null
 }
+Element.prototype = Object.create(null, {
+	constructor: {value: Element}
+})
 
 /**
  * @param {*} content
@@ -39,11 +42,12 @@ function elementText (content) {
 }
 
 /**
- * @return {Element}
+ * @return {Element} children
  */
-function elementIntermediate () {
+function elementIntermediate (children) {
 	var element = new Element(ElementIntermediate)
 
+	element.children = children
 	element.context = {}
 	element.DOM = {node: null}
 
@@ -121,7 +125,7 @@ function elementSibling (element, signature) {
 	else if (isValidElement(element.next))
 		return element.next
 	else
-		return elementIntermediate()
+		return elementIntermediate(element)
 }
 
 /**

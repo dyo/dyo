@@ -11,9 +11,8 @@ function render (subject, target) {
 	if (root.has(target))
 		return patchElement(root.get(target), commitElement(subject))
 
-	var parent = elementIntermediate()
+	var element = elementIntermediate(subject)
 
-	root.set(parent.DOM.node = target, subject)
-
-	commitMount(subject, subject, parent, parent, 0)
+	root.set(element.DOM.node = target, subject)
+	commitMount(subject, subject, element, element, (DOMContent(element.DOM), 0))
 }

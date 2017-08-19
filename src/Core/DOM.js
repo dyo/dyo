@@ -2,7 +2,7 @@
  * @return {Node}
  */
 function DOMDocument () {
-	return document.body || document.documentElement
+	return document.documentElement
 }
 
 /**
@@ -72,12 +72,18 @@ function DOMEvent (element, type, listener, signature) {
 		element.node.removeEventListener(type, listener, false)
 }
 
+/**
+ * @param {Object} element
+ */
+function DOMContent (element) {
+	element.node.textContent = ''
+}
 
 /**
  * @param {Object} element
  * @param {(string|number)} value
  */
-function DOMContent (element, value) {
+function DOMValue (element, value) {
 	element.node.nodeValue = value
 }
 
@@ -86,9 +92,7 @@ function DOMContent (element, value) {
  * @return {Object}
  */
 function DOMText (value) {
-	return {
-		node: document.createTextNode(value)
-	}
+	return {node: document.createTextNode(value)}
 }
 
 /**
@@ -97,9 +101,7 @@ function DOMText (value) {
  * @return {Object}
  */
 function DOMElement (type, xmlns) {
-	return {
-		node: !xmlns ? document.createElement(type) : document.createElementNS(xmlns, type)
-	}
+	return {node: !xmlns ? document.createElement(type) : document.createElementNS(xmlns, type)}
 }
 
 /**

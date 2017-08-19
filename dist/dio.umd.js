@@ -20,54 +20,57 @@
 		this.prev = this
 		this.length = 0
 	}
-	/**
-	 * @param {Element} element
-	 * @param {Element} sibling
-	 * @return {Element}
-	 */
-	List.prototype.insert = function insert (element, sibling) {
-		element.next = sibling
-		element.prev = sibling.prev
-		sibling.prev.next = element
-		sibling.prev = element
-		this.length++
-		
-		return element
-	}
-	/**
-	 * @param {Element} element
-	 * @return {Element}
-	 */
-	List.prototype.remove = function remove (element) {
-		if (this.length < 1) 
-			return
-		
-		element.next.prev = element.prev
-		element.prev.next = element.next
-		this.length--
-		
-		return element
-	}
-	/**
-	 * @return {Element}
-	 */
-	List.prototype.pop = function pop () {
-		return this.remove(this.prev)
-	}
-	/**
-	 * @param {Element} element
-	 * @return {Element}
-	 */
-	List.prototype.push = function push (element) {
-		return this.insert(element, this)
-	}
-	/**
-	 * @param {function} callback
-	 */
-	List.prototype.forEach = function forEach (callback) {
-		for (var i = 0, element = this; i < this.length; i++)
-			callback.call(this, element = element.next, i)
-	}
+	List.prototype = Object.create(null, {
+		constructor: {value: List},
+		/**
+		 * @param {Element} element
+		 * @param {Element} sibling
+		 * @return {Element}
+		 */
+		insert: {value: function insert (element, sibling) {
+			element.next = sibling
+			element.prev = sibling.prev
+			sibling.prev.next = element
+			sibling.prev = element
+			this.length++
+			
+			return element
+		}},
+		/**
+		 * @param {Element} element
+		 * @return {Element}
+		 */
+		remove: {value: function remove (element) {
+			if (this.length < 1) 
+				return
+			
+			element.next.prev = element.prev
+			element.prev.next = element.next
+			this.length--
+			
+			return element
+		}},
+		/**
+		 * @return {Element}
+		 */
+		pop: {value: function pop () {
+			return this.remove(this.prev)
+		}},
+		/**
+		 * @param {Element} element
+		 * @return {Element}
+		 */
+		push: {value: function push (element) {
+			return this.insert(element, this)
+		}},
+		/**
+		 * @param {function} callback
+		 */
+		forEach: {value: function forEach (callback) {
+			for (var i = 0, element = this; i < this.length; i++)
+				callback.call(this, element = element.next, i)
+		}}
+	})
 	
 	/**
 	 * @constructor
@@ -76,19 +79,36 @@
 		this.k = []
 		this.v = []
 	}
-	Hash.prototype.set = function set (key, value) {
-		var k = this.k
-		var i = k.lastIndexOf(key)
+	Hash.prototype = Object.create(null, {
+		/**
+		 * @param  {*} key
+		 * @param  {*} value
+		 * @return {Hash}
+		 */
+		set: {value: function set (key, value) {
+			var k = this.k
+			var i = k.lastIndexOf(key)
 	
-		k[i < 0 ? (i = k.length) : i] = key
-		this.v[i] = value
-	}
-	Hash.prototype.get = function get (key) {
+			k[i < 0 ? (i = k.length) : i] = key
+			this.v[i] = value
+	
+			return this
+		}},
+		/**
+		 * @param  {*} key
+		 * @return {*}
+		 */
+		get: {value: function get (key) {
 			return this.v[this.k.lastIndexOf(key)]
-		}
-	Hash.prototype.has = function has (key) {
-		return this.k.lastIndexOf(key) > -1
-	}
+		}},
+		/**
+		 * @param {*} key
+		 * @return {boolean}
+		 */
+		has: {value: function has (key) {
+			return this.k.lastIndexOf(key) > -1
+		}}
+	})
 	
 	/**
 	 * @param {Object} destination
@@ -154,6 +174,9 @@
 		this.next = null
 		this.prev = null
 	}
+	Element.prototype = Object.create(null, {
+		constructor: {value: Element}
+	})
 	
 	/**
 	 * @param {*} content
@@ -169,11 +192,12 @@
 	}
 	
 	/**
-	 * @return {Element}
+	 * @return {Element} children
 	 */
-	function elementIntermediate () {
+	function elementIntermediate (children) {
 		var element = new Element(ElementIntermediate)
 	
+		element.children = children
 		element.context = {}
 		element.DOM = {node: null}
 	
@@ -251,7 +275,7 @@
 		else if (isValidElement(element.next))
 			return element.next
 		else
-			return elementIntermediate()
+			return elementIntermediate(element)
 	}
 	
 	/**
@@ -530,11 +554,11 @@
 	/**
 	 * @type {Object}
 	 */
-	var description = {
-		forceUpdate: {value: forceUpdate},
+	Component.prototype = Object.create(null, {
+		constructor: {value: Component},
+		forceUpdate: {value: forceUpdate}, 
 		setState: {value: setState}
-	}
-	Component.prototype = Object.create(null, description)
+	})
 	
 	/**
 	 * @param {(Object|function)} state
@@ -625,6 +649,16 @@
 	}
 	
 	/**
+	 * @param {Object}
+	 */
+	function componentPrototype (prototype) {
+		Object.defineProperties(prototype, {
+			setState: setState,
+			forceUpdate: forceUpdate
+		}) 
+	}
+	
+	/**
 	 * @param {Element} element
 	 * @return {number}
 	 */
@@ -637,7 +671,7 @@
 	
 		if (prototype && prototype.render) {
 			if (!prototype.setState)
-				Object.defineProperties(prototype, description)
+				componentPrototype(prototype)
 	
 			instance = owner = getChildInstance(element) || new Component()
 		} else {
@@ -1184,7 +1218,7 @@
 	 * @param {Element} snapshot
 	 */
 	function commitText (element, snapshot) {
-		DOMContent(element.DOM, element.children = snapshot.children)
+		DOMValue(element.DOM, element.children = snapshot.children)
 	}
 	
 	/**
@@ -1622,7 +1656,7 @@
 	 * @return {Node}
 	 */
 	function DOMDocument () {
-		return document.body || document.documentElement
+		return document.documentElement
 	}
 	
 	/**
@@ -1693,9 +1727,16 @@
 	
 	/**
 	 * @param {Object} element
+	 */
+	function DOMContent (element) {
+		element.node.textContent = ''
+	}
+	
+	/**
+	 * @param {Object} element
 	 * @param {(string|number)} value
 	 */
-	function DOMContent (element, value) {
+	function DOMValue (element, value) {
 		element.node.nodeValue = value
 	}
 	
@@ -1704,9 +1745,7 @@
 	 * @return {Object}
 	 */
 	function DOMText (value) {
-		return {
-			node: document.createTextNode(value)
-		}
+		return {node: document.createTextNode(value)}
 	}
 	
 	/**
@@ -1715,9 +1754,7 @@
 	 * @return {Object}
 	 */
 	function DOMElement (type, xmlns) {
-		return {
-			node: !xmlns ? document.createElement(type) : document.createElementNS(xmlns, type)
-		}
+		return {node: !xmlns ? document.createElement(type) : document.createElementNS(xmlns, type)}
 	}
 	
 	/**
@@ -1758,11 +1795,10 @@
 		if (root.has(target))
 			return patchElement(root.get(target), commitElement(subject))
 	
-		var parent = elementIntermediate()
+		var element = elementIntermediate(subject)
 	
-		root.set(parent.DOM.node = target, subject)
-	
-		commitMount(subject, subject, parent, parent, 0)
+		root.set(element.DOM.node = target, subject)
+		commitMount(subject, subject, element, element, (DOMContent(element.DOM), 0))
 	}
 	
 	/**
@@ -1847,6 +1883,6 @@
 	exports.cloneElement = cloneElement
 	exports.Component = Component
 	
-	exports.hydrate = !server ? hydrate : noop
+	// exports.hydrate = !server ? hydrate : noop
 	exports.render = !server ? render : __require__('./dio.node.js')(Element, render, componentMount, commitElement)
 }))

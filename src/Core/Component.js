@@ -11,11 +11,11 @@ function Component (props, context) {
 /**
  * @type {Object}
  */
-var description = {
-	forceUpdate: {value: forceUpdate},
+Component.prototype = Object.create(null, {
+	constructor: {value: Component},
+	forceUpdate: {value: forceUpdate}, 
 	setState: {value: setState}
-}
-Component.prototype = Object.create(null, description)
+})
 
 /**
  * @param {(Object|function)} state
@@ -106,6 +106,16 @@ function enqueueUpdate (element, instance, callback, signature) {
 }
 
 /**
+ * @param {Object}
+ */
+function componentPrototype (prototype) {
+	Object.defineProperties(prototype, {
+		setState: setState,
+		forceUpdate: forceUpdate
+	}) 
+}
+
+/**
  * @param {Element} element
  * @return {number}
  */
@@ -118,7 +128,7 @@ function componentMount (element) {
 
 	if (prototype && prototype.render) {
 		if (!prototype.setState)
-			Object.defineProperties(prototype, description)
+			componentPrototype(prototype)
 
 		instance = owner = getChildInstance(element) || new Component()
 	} else {

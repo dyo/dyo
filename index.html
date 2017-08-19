@@ -1,5 +1,5 @@
 <body>
-	<div id="root"><h1>Hello World</h1></div>
+	<div id="root"></div>
 	<script src=dist/dio.umd.js></script>
 	<script>
 		const {h, render, Component} = dio
@@ -374,14 +374,25 @@
 
 		var ref = (e) => {console.log(e)}
 
-		class Main extends dio.Component {
+		class Main {
 		  render(){
-		  	console.log(this.props.children)
-		  	return h(Timer, {ref: ref})
+		  	return [
+		  		h('head', 
+		  			h('title', 'Hello World', performance.now()),
+		  		),
+		  		h('body', 
+		  			h(Timer, {ref: ref})
+		  		)
+		  	]
 		  }
 		}
 
-		dio.render(h(Main, null, 1, 2))
+		// dio.render(h(Main, null, 1, 2))
+
+		setTimeout(function foo () {
+			dio.render(h(Main, null, 1, 2))
+			setTimeout(foo, 1000)
+		})
 		
 		class Hello {
 			render () {
@@ -390,6 +401,6 @@
 		}
 
 
-		dio.hydrate(Hello, root)
+		// dio.hydrate(Hello, root)
 	</script>
 </body>

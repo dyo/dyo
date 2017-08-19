@@ -322,7 +322,7 @@ function commitReference (element, callback, signature, key) {
  * @param {Element} snapshot
  */
 function commitText (element, snapshot) {
-	DOMContent(element.DOM, element.children = snapshot.children)
+	DOMValue(element.DOM, element.children = snapshot.children)
 }
 
 /**

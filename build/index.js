@@ -44,7 +44,7 @@ exports.isValidElement = isValidElement
 exports.cloneElement = cloneElement
 exports.Component = Component
 
-exports.hydrate = !server ? hydrate : noop
+// exports.hydrate = !server ? hydrate : noop
 exports.render = !server ? render : __require__('./dio.node.js')(${imports})
 `
 
