@@ -1,21 +1,18 @@
 /**
  * @return {string}
  */
-Element.prototype.html = ''
-Element.prototype.toString = function toString () {
-	var flag = this.flag
-
-	switch (flag) {
+function toString () {
+	switch (this.flag) {
 		case ElementComponent:
 			return componentMount(this).toString()
 		case ElementText:
-			return escape(this.children)
+			return escapeText(this.children)
 	}
 
 	var type = this.type
 	var children = this.children
 	var length = children.length
-	var output = flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
+	var output = this.flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
 
 	switch (elementType(type)) {
 		case 0:
@@ -30,7 +27,7 @@ Element.prototype.toString = function toString () {
 			}
 	}
 
-	return flag > ElementIntermediate ? output + '</'+type+'>' : output
+	return this.flag > ElementIntermediate ? output + '</'+type+'>' : output
 }
 
 /**

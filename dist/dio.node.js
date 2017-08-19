@@ -189,6 +189,13 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	var Readable = require('stream').Readable
 	var RegExpEscape = /[<>&"']/g
 	
+	Element.prototype.html = ''
+	Element.prototype.chunk = ''
+	
+	Element.prototype.toString = toString
+	Element.prototype.toStream = toStream
+	Element.prototype.toJSON = toJSON
+	
 	var Node = window.Node || noop
 	var Symbol = window.Symbol || noop
 	var Iterator = Symbol.iterator
@@ -236,21 +243,18 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	/**
 	 * @return {string}
 	 */
-	Element.prototype.html = ''
-	Element.prototype.toString = function toString () {
-		var flag = this.flag
-	
-		switch (flag) {
+	function toString () {
+		switch (this.flag) {
 			case ElementComponent:
 				return componentMount(this).toString()
 			case ElementText:
-				return escape(this.children)
+				return escapeText(this.children)
 		}
 	
 		var type = this.type
 		var children = this.children
 		var length = children.length
-		var output = flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
+		var output = this.flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
 	
 		switch (elementType(type)) {
 			case 0:
@@ -265,7 +269,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 				}
 		}
 	
-		return flag > ElementIntermediate ? output + '</'+type+'>' : output
+		return this.flag > ElementIntermediate ? output + '</'+type+'>' : output
 	}
 	
 	/**
@@ -331,10 +335,8 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	/**
 	 * @return {string}
 	 */
-	Element.prototype.toJSON = function toJSON () {
-		var flag = this.flag
-	
-		switch (flag) {
+	function toJSON () {
+		switch (this.flag) {
 			case ElementComponent:
 				return componentMount(this).toJSON()
 			case ElementText:
@@ -348,15 +350,56 @@ module.exports = function (Element, render, componentMount, commitElement) {
 		while (length-- > 0)
 			output.children.push((children = children.next).toJSON())
 	
-		return flag < ElementFragment ? output : output.children
+		return this.flag < ElementIntermediate ? output : output.children
 	}
 	
 	/**
 	 * @return {Stream}
 	 */
-	Element.prototype.chunk = ''
-	Element.prototype.toStream = function toStream () {
+	function toStream () {
 		return new Stream(this)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Array} stack
+	 * @return {string}
+	 */
+	function toChunk (element, stack) {
+		var type = element.type
+		var children = element.children
+		var length = children.length
+		var output = ''
+	
+		while (element.flag === ElementComponent)
+			element = componentMount(element)
+	
+		switch (element.flag) {
+			case ElementText:
+				output = escapeText(element.children)
+				break
+			case ElementNode:
+				output = '<' + (type = element.type) + toProps(element.props) + '>'
+					
+				if (element.html) {
+					output += element.html
+					element.html = ''
+					length = 0
+				}	
+	
+				if (!length) {
+					output += elementType(type) > 0 ? '</'+type+'>' : ''
+					break
+				}
+			default:
+				if (element.flag > ElementIntermediate)
+					children.prev.chunk = '</'+type+'>'
+	
+				while (length-- > 0)
+					stack.push(children = children.prev)
+		}
+	
+		return output + element.chunk
 	}
 	
 	/**
@@ -369,46 +412,14 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	
 		Readable.call(this)
 	}
+	
 	/**
 	 * @type {Object}
 	 */
 	Stream.prototype = Object.create(Readable.prototype, {
-		commit: {value: function commit (element, stack, index, done) {
-			var type = element.type
-			var children = element.children
-			var length = children.length
-			var output = ''
-	
-			while (element.flag === ElementComponent)
-				element = componentMount(element)
-	
-			switch (element.flag) {
-				case ElementText:
-					output = escapeText(element.children)
-					break
-				case ElementNode:
-					output = '<' + (type = element.type) + toProps(element.props) + '>'
-						
-					if (element.html) {
-						output += element.html
-						element.html = ''
-						length = 0
-					}	
-	
-					if (!length) {
-						output += elementType(type) > 0 ? '</'+type+'>' : ''
-						break
-					}
-				default:
-					if (element.flag !== ElementFragment)
-						children.prev.chunk = '</'+type+'>'
-	
-					while (length-- > 0)
-						stack.push(children = children.prev)
-			}
-	
-			return output + element.chunk
-		}},
+		/**
+		 * @return {void}
+		 */
 		_read: {value: function read () {
 			var stack = this.stack
 			var length = stack.length
@@ -416,7 +427,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 			if (length === 0)
 				return void this.push(null)
 	
-			this.push(this.commit(stack.pop(), stack, length-1, false))
+			this.push(toChunk(stack.pop(), stack))
 		}}
 	})
 	

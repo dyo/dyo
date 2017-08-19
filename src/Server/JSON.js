@@ -1,10 +1,8 @@
 /**
  * @return {string}
  */
-Element.prototype.toJSON = function toJSON () {
-	var flag = this.flag
-
-	switch (flag) {
+function toJSON () {
+	switch (this.flag) {
 		case ElementComponent:
 			return componentMount(this).toJSON()
 		case ElementText:
@@ -18,5 +16,5 @@ Element.prototype.toJSON = function toJSON () {
 	while (length-- > 0)
 		output.children.push((children = children.next).toJSON())
 
-	return flag < ElementFragment ? output : output.children
+	return this.flag < ElementIntermediate ? output : output.children
 }
