@@ -82,8 +82,8 @@ dio.render(
 
 ### Errors
 
-1. Cascading error boundaries
-2. `componentDidCatch`
+1. Cascading error boundaries with `componentDidCatch`
+3. Additional support for rendering/returning an error state from `componentDidCatch`
 
 ### setState
 
