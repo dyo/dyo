@@ -185,10 +185,9 @@
 	var LifecycleChildContext = 'getChildContext'
 	var LifecycleInitialState = 'getInitialState'
 	
+	var NSSvg = 'http://www.w3.org/2000/svg'
 	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
 	var NSXlink = 'http://www.w3.org/1999/xlink'
-	var NSSVG = 'http://www.w3.org/2000/svg'
-	var NSHTML = 'http://www.w3.org/1999/xhtml'
 	
 	/**
 	 * @constructor
@@ -939,27 +938,6 @@
 	}
 	
 	/**
-	 * @param {Element} parent
-	 * @param {string} type
-	 * @param {string} xmlns
-	 * @param {string} namespace
-	 */
-	function commitNamespace (parent, type, xmlns, namespace) {
-		switch (type) {
-			case 'svg':
-				return NSSVG
-			case 'math':
-				return NSMathML
-			default:
-				if (namespace && !xmlns)
-					if (parent.type !== 'foreignObject')
-						return namespace
-		}
-	
-		return xmlns
-	}
-	
-	/**
 	 * @param {Element} element
 	 * @param {Element} sibling
 	 * @param {Element} host
@@ -1014,7 +992,17 @@
 	 			element.DOM = {node: parent.DOM.node}
 	 			break
 	 		case ElementNode:
-	 			element.xmlns = commitNamespace(parent, element.type, element.xmlns, parent.xmlns)
+	 			switch (element.type) {
+	 				case 'svg':
+	 					element.xmlns = NSSvg
+	 					break
+	 				case 'math':
+	 					element.xmlns = NSMathML
+	 					break
+	 				default:
+	 					if (parent.xmlns && !element.xmlns && parent.type !== 'foreignObject')
+							element.xmlns = parent.xmlns
+	 			}
 	 		case ElementText:
 	 			element.DOM = commitDOM(element)
 	 			
