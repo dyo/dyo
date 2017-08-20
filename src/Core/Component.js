@@ -91,7 +91,7 @@ function enqueueUpdate (element, instance, callback, signature) {
 			enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 		})
 
-	if (element.sync !== PriorityHigh)
+	if (element.sync < PriorityHigh)
 		return setImmediate(function () {
 			enqueueUpdate(element, instance, callback, signature)
 		})
@@ -99,7 +99,7 @@ function enqueueUpdate (element, instance, callback, signature) {
 	if (!element.DOM)
 		return
 
-	componentUpdate(element, element, element.flag, signature)
+	componentUpdate(element, element, signature)
 
 	if (typeof callback === 'function')
 		enqueueCallback(element, instance, callback)
@@ -145,7 +145,7 @@ function componentMount (element) {
 	element.instance = instance
 
 	if (owner[LifecycleInitialState])
-		instance.state = getInitialState(element, instance)
+		instance.state = getInitialState(element, instance, lifecycleData(element, LifecycleInitialState))
 	else if (!instance.state)
 		instance.state = {}
 	
@@ -161,10 +161,9 @@ function componentMount (element) {
 /**
  * @param {Element} element
  * @param {Element} snapshot
- * @param {number} flag
  * @param {number} signature
  */
-function componentUpdate (element, snapshot, flag, signature) {
+function componentUpdate (element, snapshot, signature) {
 	if (element.sync < PriorityHigh)
 		return
 
@@ -245,16 +244,14 @@ function componentReference (value, key, element) {
 /**
  * @param {Element} element
  * @param {(Component|Element)} instance
+ * @param {Object} state
  * @return {Object}
  */
-function getInitialState (element, instance) {
-	var state = lifecycleData(element, LifecycleInitialState)
-	
+function getInitialState (element, instance, state) {	
 	if (state)
 		switch (state.constructor) {
 			case Promise:
-				if (element.sync = PriorityLow && !server)
-					enqueuePending(element, instance, state)
+				enqueuePending(element, instance, state)
 			case Boolean:
 				break
 			default:
@@ -315,6 +312,14 @@ function getHostElement (element) {
  */
 function getHostChildren (element) {
 	return isValidElement(element) ? element : element.children	
+}
+
+/**
+ * @param {function} func
+ * @return {string}
+ */
+function getDisplayName (func) {
+	return func.displayName || func.name || 'anonymous'
 }
 
 /**

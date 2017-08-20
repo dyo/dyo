@@ -14,8 +14,6 @@ module.exports = ({h, render}) => {
 			}
 		}
 
-		console.log('works')
-
 		class Faz {
 			render() {
 				return h('h1', {className: 'faz', style: {marginTop: '20px'}}, 'Faz')

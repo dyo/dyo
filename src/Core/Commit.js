@@ -85,7 +85,9 @@ function commitMount (element, sibling, parent, host, signature) {
 
  	switch (element.flag) {
  		case ElementComponent:
- 			componentMount((element.sync = PriorityTask, element))
+ 			element.sync = PriorityTask
+ 			
+ 			componentMount(element)
 
  			if (element.owner[LifecycleWillMount]) 
  				lifecycleMount(element, LifecycleWillMount)

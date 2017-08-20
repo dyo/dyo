@@ -4,7 +4,7 @@
 function toString () {
 	switch (this.flag) {
 		case ElementComponent:
-			return componentMount(this).toString()
+			return (componentMount(this), this.children.toString())
 		case ElementText:
 			return escapeText(this.children)
 	}

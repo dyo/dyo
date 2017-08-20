@@ -157,8 +157,8 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	var ElementNode = 2
 	var ElementText = 3
 	
-	var PriorityLow = -2
-	var PriorityTask = -1
+	var PriorityLow = -9
+	var PriorityTask = 0
 	var PriorityHigh = 1
 	
 	var LifecycleCallback = 'callback'
@@ -257,7 +257,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	function toString () {
 		switch (this.flag) {
 			case ElementComponent:
-				return componentMount(this).toString()
+				return (componentMount(this), this.children.toString())
 			case ElementText:
 				return escapeText(this.children)
 		}
@@ -349,7 +349,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	function toJSON () {
 		switch (this.flag) {
 			case ElementComponent:
-				return componentMount(this).toJSON()
+				return (componentMount(this), this.children.toJSON())
 			case ElementText:
 				return this.children
 		}
@@ -396,26 +396,30 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @return {string}
 	 */
 	function write (element, stack) {
+		while (element.flag === ElementComponent)
+			element = (componentMount(element), element.children)		
+	
 		var type = element.type
 		var children = element.children
 		var length = children.length
 		var output = ''
 	
-		while (element.flag === ElementComponent)
-			element = componentMount(element)
-	
 		switch (element.flag) {
+			case ElementPromise:
+				return void element.type.then(function (element) {
+						write(commitElement(element), stack)
+				})
 			case ElementText:
-				output = escapeText(element.children)
+				output = escapeText(children)
 				break
 			case ElementNode:
-				output = '<' + (type = element.type) + toProps(element, element.props) + '>'
+				output = '<' + type + toProps(element, element.props) + '>'
 					
 				if (element.html) {
 					output += element.html
 					element.html = ''
 					length = 0
-				}	
+				}
 	
 				if (!length) {
 					output += elementType(type) > 0 ? '</'+type+'>' : ''

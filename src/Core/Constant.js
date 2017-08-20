@@ -17,8 +17,8 @@ var ElementComponent = 1
 var ElementNode = 2
 var ElementText = 3
 
-var PriorityLow = -2
-var PriorityTask = -1
+var PriorityLow = -9
+var PriorityTask = 0
 var PriorityHigh = 1
 
 var LifecycleCallback = 'callback'

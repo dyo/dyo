@@ -8,9 +8,17 @@ module.exports = ({h, render}) => {
 			}
 		}
 
+		var promise = Promise.resolve(h('h1', 'Promise'))
+
 		class Faz {
 			render () {
 				return h('h1', {id: 1}, '2')
+			}
+		}
+
+		class Boo {
+			render() {
+				return h(promise, h('h1', 'Loading...'))
 			}
 		}
 
@@ -46,6 +54,12 @@ module.exports = ({h, render}) => {
 		render([h('h1', 'Hello'), h(portal, h('h1', 'World'))], container)
 		ok(container.innerHTML === '<h1>Hello</h1>' && portal.innerHTML === '<h1>World</h1>', 'render portal')
 
-		end()
+		render(null, container)
+		render(Boo, container)
+
+		promise.then(() => {
+			ok(container.innerHTML === '<h1>Promise</h1>', 'render promise')
+			end()
+		})
 	})
 }

@@ -167,8 +167,8 @@
 	var ElementNode = 2
 	var ElementText = 3
 	
-	var PriorityLow = -2
-	var PriorityTask = -1
+	var PriorityLow = -9
+	var PriorityTask = 0
 	var PriorityHigh = 1
 	
 	var LifecycleCallback = 'callback'
@@ -631,7 +631,7 @@
 				enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 			})
 	
-		if (element.sync !== PriorityHigh)
+		if (element.sync < PriorityHigh)
 			return setImmediate(function () {
 				enqueueUpdate(element, instance, callback, signature)
 			})
@@ -639,7 +639,7 @@
 		if (!element.DOM)
 			return
 	
-		componentUpdate(element, element, element.flag, signature)
+		componentUpdate(element, element, signature)
 	
 		if (typeof callback === 'function')
 			enqueueCallback(element, instance, callback)
@@ -685,7 +685,7 @@
 		element.instance = instance
 	
 		if (owner[LifecycleInitialState])
-			instance.state = getInitialState(element, instance)
+			instance.state = getInitialState(element, instance, lifecycleData(element, LifecycleInitialState))
 		else if (!instance.state)
 			instance.state = {}
 		
@@ -701,10 +701,9 @@
 	/**
 	 * @param {Element} element
 	 * @param {Element} snapshot
-	 * @param {number} flag
 	 * @param {number} signature
 	 */
-	function componentUpdate (element, snapshot, flag, signature) {
+	function componentUpdate (element, snapshot, signature) {
 		if (element.sync < PriorityHigh)
 			return
 	
@@ -785,16 +784,14 @@
 	/**
 	 * @param {Element} element
 	 * @param {(Component|Element)} instance
+	 * @param {Object} state
 	 * @return {Object}
 	 */
-	function getInitialState (element, instance) {
-		var state = lifecycleData(element, LifecycleInitialState)
-		
+	function getInitialState (element, instance, state) {	
 		if (state)
 			switch (state.constructor) {
 				case Promise:
-					if (element.sync = PriorityLow && !server)
-						enqueuePending(element, instance, state)
+					enqueuePending(element, instance, state)
 				case Boolean:
 					break
 				default:
@@ -855,6 +852,14 @@
 	 */
 	function getHostChildren (element) {
 		return isValidElement(element) ? element : element.children	
+	}
+	
+	/**
+	 * @param {function} func
+	 * @return {string}
+	 */
+	function getDisplayName (func) {
+		return func.displayName || func.name || 'anonymous'
 	}
 	
 	/**
@@ -960,7 +965,9 @@
 	
 	 	switch (element.flag) {
 	 		case ElementComponent:
-	 			componentMount((element.sync = PriorityTask, element))
+	 			element.sync = PriorityTask
+	 			
+	 			componentMount(element)
 	
 	 			if (element.owner[LifecycleWillMount]) 
 	 				lifecycleMount(element, LifecycleWillMount)
@@ -1302,7 +1309,7 @@
 			case ElementFragment:
 				return patchChildren(element, snapshot)
 			case ElementComponent:
-				return componentUpdate(element, snapshot, element.flag, 1)
+				return componentUpdate(element, snapshot, 1)
 			case ElementText:
 				if (element.children !== snapshot.children)
 					commitText(element, snapshot)
@@ -1555,7 +1562,7 @@
 				if (state && instance)
 					lifecycleReturn(host, state)
 			} catch (e) {
-				Boundary(host, e, 'on'+type+':'+((callback.handleEvent || callback).name)||'anonymous')
+				Boundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback))
 			}
 		}}
 	})
@@ -1568,33 +1575,33 @@
 		if (!(this instanceof Error))
 			return Exception.call(new Error(this), element, from)
 	
+		var trace = ''
 		var tabs = ''
-		var info = ''
 		var host = element
 		var stack = this.stack
 	
 		while (host.type) {
-			info += tabs + '<' + (host.type.displayName || host.type.name || 'anonymous') + '>\n'
+			trace += tabs + '<' + getDisplayName(host.type) + '>\n'
 			tabs += '  '
 			host = host.host
 		}
 	
-		console.error('Error caught in `\n\n'+info+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
+		console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
 	
 		this.from = from
-		this.info = info
+		this.trace = trace
 	
 		return this
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @param {Error} err
+	 * @param {Error} error
 	 * @param {string} from
 	 * @param {Element}
 	 */
-	function Boundary (element, err, from) {	
-		return Recovery(element, Exception.call(err, element, from), from)
+	function Boundary (element, error, from) {	
+		return Recovery(element, Exception.call(error, element, from), from)
 	}
 	
 	/**
@@ -1611,21 +1618,15 @@
 			return Recovery(element.host, error, from)
 	
 		try {
-			element.sync = PriorityLow
+			element.sync = PriorityTask
 			error.children = element.owner[LifecycleDidCatch].call(element.instance, error)
 			element.sync = PriorityHigh
 	
-			switch (typeof error.children) {
-				case 'boolean':
-				case 'undefined':
-					break
-				default:
-					if (from === LifecycleRender)
-						return commitElement(error.children)
+			if (from === LifecycleRender)
+				return commitElement(error.children)
 	
-					if (!server)
-						patchElement(getHostElement(element), commitElement(error.children))
-			}
+			if (!server)
+				patchElement(getHostElement(element), commitElement(error.children))
 		} catch (e) {
 			Boundary(element.host, e, LifecycleDidCatch)
 		}

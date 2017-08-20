@@ -6,33 +6,33 @@ function Exception (element, from) {
 	if (!(this instanceof Error))
 		return Exception.call(new Error(this), element, from)
 
+	var trace = ''
 	var tabs = ''
-	var info = ''
 	var host = element
 	var stack = this.stack
 
 	while (host.type) {
-		info += tabs + '<' + (host.type.displayName || host.type.name || 'anonymous') + '>\n'
+		trace += tabs + '<' + getDisplayName(host.type) + '>\n'
 		tabs += '  '
 		host = host.host
 	}
 
-	console.error('Error caught in `\n\n'+info+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
+	console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
 
 	this.from = from
-	this.info = info
+	this.trace = trace
 
 	return this
 }
 
 /**
  * @param {Element} element
- * @param {Error} err
+ * @param {Error} error
  * @param {string} from
  * @param {Element}
  */
-function Boundary (element, err, from) {	
-	return Recovery(element, Exception.call(err, element, from), from)
+function Boundary (element, error, from) {	
+	return Recovery(element, Exception.call(error, element, from), from)
 }
 
 /**
@@ -49,21 +49,15 @@ function Recovery (element, error, from) {
 		return Recovery(element.host, error, from)
 
 	try {
-		element.sync = PriorityLow
+		element.sync = PriorityTask
 		error.children = element.owner[LifecycleDidCatch].call(element.instance, error)
 		element.sync = PriorityHigh
 
-		switch (typeof error.children) {
-			case 'boolean':
-			case 'undefined':
-				break
-			default:
-				if (from === LifecycleRender)
-					return commitElement(error.children)
+		if (from === LifecycleRender)
+			return commitElement(error.children)
 
-				if (!server)
-					patchElement(getHostElement(element), commitElement(error.children))
-		}
+		if (!server)
+			patchElement(getHostElement(element), commitElement(error.children))
 	} catch (e) {
 		Boundary(element.host, e, LifecycleDidCatch)
 	}

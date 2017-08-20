@@ -34,7 +34,7 @@ Event.prototype = Object.create(null, {
 			if (state && instance)
 				lifecycleReturn(host, state)
 		} catch (e) {
-			Boundary(host, e, 'on'+type+':'+((callback.handleEvent || callback).name)||'anonymous')
+			Boundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback))
 		}
 	}}
 })

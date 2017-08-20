@@ -4,7 +4,7 @@
 function toJSON () {
 	switch (this.flag) {
 		case ElementComponent:
-			return componentMount(this).toJSON()
+			return (componentMount(this), this.children.toJSON())
 		case ElementText:
 			return this.children
 	}

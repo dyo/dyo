@@ -54,7 +54,7 @@ function patchElement (element, snapshot) {
 		case ElementFragment:
 			return patchChildren(element, snapshot)
 		case ElementComponent:
-			return componentUpdate(element, snapshot, element.flag, 1)
+			return componentUpdate(element, snapshot, 1)
 		case ElementText:
 			if (element.children !== snapshot.children)
 				commitText(element, snapshot)
