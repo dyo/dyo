@@ -87,7 +87,7 @@ dio.render(
 
 ### setState
 
-1. Returning an `Object` is equivalent to calling `this.setState`.
+1. Additionally returning an `Object` is equivalent to calling `this.setState`.
 
 ### Context
 
