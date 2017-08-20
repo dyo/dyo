@@ -72,8 +72,8 @@ dio.render(
 
 ### Components
 
-1. Statefull function Components
-2. Plain class Components
+1. Statefull function components.
+2. Plain class components.
 
 ### Events
 
@@ -82,27 +82,31 @@ dio.render(
 
 ### Errors
 
-1. Cascading error boundaries with `componentDidCatch`
-3. Additional support for rendering/returning an error state from `componentDidCatch`
+1. Cascading error boundaries with `componentDidCatch`.
+3. Additional support for rendering/returning an error state from `componentDidCatch`.
 
 ### setState
 
-1. Returning an `Object` is equivalent to calling `this.setState`
+1. Returning an `Object` is equivalent to calling `this.setState`.
 
 ### Context
 
 1. `getChildContext` supports context updates.
-2. `context` cascades without the need for `contextTypes` or `childContextTypes`
-3. `context` cascades irrespective of `shouldComponentUpdate`
+2. `context` cascades without the need for `contextTypes` or `childContextTypes`.
+3. `context` cascades irrespective of `shouldComponentUpdate`.
 
 ### Lifecycle
 
-1. additinonal support for lifecycles on function components
-2. additional support for async `componentDidUnmount`
-3. additional support for async `getInitialState`
+1. additinonal support for lifecycles on function components.
+2. additional support for async `componentDidUnmount`.
+3. additional support for async `getInitialState`.
 
 ### Children
 
-1. `this.props.children` is an opaque data-structure
+1. `this.props.children` is an opaque data-structure.
+
+### Refs
+
+1. Support for string/function refs on both function and class components.
 
 The easiest way to get started with DIO is to read the [Introduction to DIO](https://dio.js.org/introduction.html) or look at the [API Documentation](https://dio.js.org/api.html).
