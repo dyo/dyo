@@ -35,7 +35,7 @@ Element.prototype = Object.create(null, {
 function elementText (content) {
 	var element = new Element(ElementText)
 
-	element.type = TypeText
+	element.type = '#text'
 	element.children = content
 
 	return element
@@ -62,7 +62,7 @@ function elementFragment (fragment) {
 	var element = new Element(ElementFragment)
 	var children = new List()
 	
-	element.type = TypeFragment
+	element.type = '#fragment'
 	element.children = children
 
 	switch (fragment.constructor) {
@@ -97,15 +97,6 @@ function elementIterable (iterable, element) {
 	}
 
 	return element
-}
-
-/**
- * @param {string} summary
- * @param {string} details
- * @return {Element}
- */
-function elementDetails (summary, details) {
-	return createElement('details', createElement('summary', summary), h('br'), h('pre', details))
 }
 
 /**

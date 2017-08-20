@@ -49,7 +49,7 @@ function patchElement (element, snapshot) {
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
 		return commitMerge(element, snapshot)
 			
-	switch (snapshot.flag) {
+	switch (element.flag) {
 		case ElementPortal:
 		case ElementFragment:
 			return patchChildren(element, snapshot)

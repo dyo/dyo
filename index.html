@@ -369,6 +369,7 @@
 
 		  componentDidCatch(err) {
 		  	return err
+		  	// return [h('h1', 'Something went wrong'), err]
 		  	// console.dir(err)
 		  	// return {...err}
 		  }
@@ -382,6 +383,13 @@
 		  }
 
 		  render() {
+		  	// return h('svg', 
+		  	// 	h('h1', 'Hello'), 
+		  	// 	h('foreignObject', 
+	  		// 		h('h1', {xmlns: 'http://www.w3.org/1999/xhtml'}, 'World')
+		  	// 	)
+		  	// )
+		  	// return [1, null, 2]
 		  	// return h(null)
 		  	// throw 'end'
 		    return (

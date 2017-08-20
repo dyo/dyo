@@ -80,7 +80,7 @@ function toStyle (obj) {
 
 	for (var key in obj) {
 		if (key !== key.toLowerCase())
-			name = key.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
+			name = key.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
 		else
 			name = key
 		

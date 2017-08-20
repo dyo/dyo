@@ -54,6 +54,27 @@ function commitDOM (element) {
 }
 
 /**
+ * @param {Element} parent
+ * @param {string} type
+ * @param {string} xmlns
+ * @param {string} namespace
+ */
+function commitNamespace (parent, type, xmlns, namespace) {
+	switch (type) {
+		case 'svg':
+			return NSSVG
+		case 'math':
+			return NSMathML
+		default:
+			if (namespace && !xmlns)
+				if (parent.type !== 'foreignObject')
+					return namespace
+	}
+
+	return xmlns
+}
+
+/**
  * @param {Element} element
  * @param {Element} sibling
  * @param {Element} host
@@ -108,16 +129,7 @@ function commitMount (element, sibling, parent, host, signature) {
  			element.DOM = {node: parent.DOM.node}
  			break
  		case ElementNode:
- 			switch (element.type) {
- 				case 'svg':
- 					element.xmlns = NSSVG
- 					break
- 				case 'math':
- 					element.xmlns = NSMathML
- 					break
- 				default:
- 					element.xmlns = parent.xmlns
- 			}
+ 			element.xmlns = commitNamespace(parent, element.type, element.xmlns, parent.xmlns)
  		case ElementText:
  			element.DOM = commitDOM(element)
  			

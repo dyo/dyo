@@ -178,9 +178,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
 	var NSXlink = 'http://www.w3.org/1999/xlink'
 	var NSSVG = 'http://www.w3.org/2000/svg'
-	
-	var TypeFragment = '#Fragment'
-	var TypeText = '#Text'
+	var NSHTML = 'http://www.w3.org/1999/xhtml'
 	
 	/**
 	 * @param {*} value
@@ -240,6 +238,8 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	
 	var Readable = require('stream').Readable
 	var RegExpEscape = /[<>&"']/g
+	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/
+	var RegExpVendor = /^(ms|webkit|moz)/
 	
 	Element.prototype.html = ''
 	Element.prototype.chunk = ''
@@ -333,7 +333,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	
 		for (var key in obj) {
 			if (key !== key.toLowerCase())
-				name = key.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
+				name = key.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
 			else
 				name = key
 			
