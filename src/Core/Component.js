@@ -120,9 +120,8 @@ function componentPrototype (prototype) {
  * @return {number}
  */
 function componentMount (element) {
-	var type = element.type
-	var prototype = type.prototype
-	var owner = type
+	var owner = element.type
+	var prototype = owner.prototype
 	var instance = null
 	var children = null
 
@@ -133,7 +132,7 @@ function componentMount (element) {
 		instance = owner = getChildInstance(element) || new Component()
 	} else {
 		instance = new Component()
-		instance.render = type
+		instance.render = owner
 	}
 
 	instance.refs = {}
@@ -303,7 +302,7 @@ function getChildContext (element) {
  * @return {Element}
  */
 function getHostElement (element) {
-	return element.flag > ElementComponent ? element : getHostElement(element.children)
+	return element.flag !== ElementComponent ? element : getHostElement(element.children)
 }
 
 /**

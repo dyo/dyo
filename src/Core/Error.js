@@ -56,7 +56,7 @@ function Recovery (element, error, from) {
 		if (from === LifecycleRender)
 			return commitElement(error.children)
 
-		if (!server)
+		if (!server && from.indexOf('on') !== 0)
 			patchElement(getHostElement(element), commitElement(error.children))
 	} catch (e) {
 		Boundary(element.host, e, LifecycleDidCatch)

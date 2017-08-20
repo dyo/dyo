@@ -107,7 +107,7 @@ function commitMount (element, sibling, parent, host, signature) {
  		case ElementPromise:
  			commitPromise(element, element)
  		case ElementFragment:
- 			element.DOM = parent.DOM
+ 			element.DOM = {node: parent.DOM.node}
  			break
  		case ElementNode:
  			switch (element.type) {

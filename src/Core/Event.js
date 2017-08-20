@@ -15,8 +15,8 @@ Event.prototype = Object.create(null, {
 	 */
 	handleEvent: {value: function handleEvent (event) {
 		try {
-			var type = event.type
-			var callback = this['on'+type]
+			var type = 'on'+event.type
+			var callback = this[type]
 			var element = this.element
 			var host = element.host
 			var instance = host.instance
@@ -34,7 +34,7 @@ Event.prototype = Object.create(null, {
 			if (state && instance)
 				lifecycleReturn(host, state)
 		} catch (e) {
-			Boundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback))
+			Boundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
 		}
 	}}
 })

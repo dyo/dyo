@@ -358,16 +358,29 @@
 		  }
 
 		  componentDidMount() {
-		    this.interval = setInterval(() => this.tick(), 1000)
+		    // this.interval = setInterval(() => this.tick(), 1000)
 		  }
 
 		  componentWillUnmount() {
 		    clearInterval(this.interval)
 		  }
 
+		  componentDidCatch() {
+
+		  }
+
+		  handleEvent(e) {
+		  	console.log(e)
+		  }
+
 		  render() {
+		  	throw 'end'
+		  	
 		    return (
-		    	h('div', 'Seconds Elapsed:', this.state.secondsElapsed)
+		    	[
+		    		h('div', 'Seconds Elapsed:', this.state.secondsElapsed),
+		    		h('button', {onClick: this}, 'button')
+		    	]
 		    )
 		  }
 		}
@@ -389,10 +402,10 @@
 
 		// dio.render(h(Main, null, 1, 2))
 
-		setTimeout(function foo () {
+		// setTimeout(function foo () {
 			dio.render(h(Main, null, 1, 2))
-			setTimeout(foo, 1000)
-		})
+			// setTimeout(foo, 1000)
+		// })
 		
 		class Hello {
 			render () {

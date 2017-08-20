@@ -660,9 +660,8 @@
 	 * @return {number}
 	 */
 	function componentMount (element) {
-		var type = element.type
-		var prototype = type.prototype
-		var owner = type
+		var owner = element.type
+		var prototype = owner.prototype
 		var instance = null
 		var children = null
 	
@@ -673,7 +672,7 @@
 			instance = owner = getChildInstance(element) || new Component()
 		} else {
 			instance = new Component()
-			instance.render = type
+			instance.render = owner
 		}
 	
 		instance.refs = {}
@@ -843,7 +842,7 @@
 	 * @return {Element}
 	 */
 	function getHostElement (element) {
-		return element.flag > ElementComponent ? element : getHostElement(element.children)
+		return element.flag !== ElementComponent ? element : getHostElement(element.children)
 	}
 	
 	/**
@@ -987,7 +986,7 @@
 	 		case ElementPromise:
 	 			commitPromise(element, element)
 	 		case ElementFragment:
-	 			element.DOM = parent.DOM
+	 			element.DOM = {node: parent.DOM.node}
 	 			break
 	 		case ElementNode:
 	 			switch (element.type) {
@@ -1543,8 +1542,8 @@
 		 */
 		handleEvent: {value: function handleEvent (event) {
 			try {
-				var type = event.type
-				var callback = this['on'+type]
+				var type = 'on'+event.type
+				var callback = this[type]
 				var element = this.element
 				var host = element.host
 				var instance = host.instance
@@ -1562,7 +1561,7 @@
 				if (state && instance)
 					lifecycleReturn(host, state)
 			} catch (e) {
-				Boundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback))
+				Boundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
 			}
 		}}
 	})
@@ -1625,7 +1624,7 @@
 			if (from === LifecycleRender)
 				return commitElement(error.children)
 	
-			if (!server)
+			if (!server && from.indexOf('on') !== 0)
 				patchElement(getHostElement(element), commitElement(error.children))
 		} catch (e) {
 			Boundary(element.host, e, LifecycleDidCatch)
