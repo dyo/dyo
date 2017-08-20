@@ -318,24 +318,6 @@ function getHostChildren (element) {
 }
 
 /**
- * @param {function} owner
- * @param {Object} types
- * @param {number} signature
- */
-function getHostTypes (owner, types, signature) {
-	try {
-		var name = owner.dislayName || owner.name
-		var error = null
-
-		for (var key in types)
-			if (error = types[key](element.props, key, name), signature > 0 ? 'context' : 'prop')
-				console.error(error)
-	} catch (e) {
-		console.error(e)
-	}
-}
-
-/**
  * @param {Element} element
  * @param {(Object|function)} defaultProps
  * @param {Object} props

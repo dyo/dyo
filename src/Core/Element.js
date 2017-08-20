@@ -254,8 +254,6 @@ function createElement (type, props) {
 		case Function:
 			if (type.defaultProps != null)
 				element.props = getDefaultProps(element, type.defaultProps, props)
-			else if (type.propTypes != null)
-				getHostTypes(type, type.propTypes, 0)
 		case String:
 			break
 		case Element:

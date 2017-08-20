@@ -448,8 +448,6 @@
 			case Function:
 				if (type.defaultProps != null)
 					element.props = getDefaultProps(element, type.defaultProps, props)
-				else if (type.propTypes != null)
-					getHostTypes(type, type.propTypes, 0)
 			case String:
 				break
 			case Element:
@@ -858,24 +856,6 @@
 	 */
 	function getHostChildren (element) {
 		return isValidElement(element) ? element : element.children	
-	}
-	
-	/**
-	 * @param {function} owner
-	 * @param {Object} types
-	 * @param {number} signature
-	 */
-	function getHostTypes (owner, types, signature) {
-		try {
-			var name = owner.dislayName || owner.name
-			var error = null
-	
-			for (var key in types)
-				if (error = types[key](element.props, key, name), signature > 0 ? 'context' : 'prop')
-					console.error(error)
-		} catch (e) {
-			console.error(e)
-		}
 	}
 	
 	/**
