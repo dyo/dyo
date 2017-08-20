@@ -261,15 +261,15 @@
 	
 		switch (fragment.constructor) {
 			case Element:
-				elementChildren(element, children, fragment, 0, 0)
+				elementChildren(element, children, fragment, 0)
 				break
 			case Array:
 				for (var i = 0; i < fragment.length; i++)
-					elementChildren(element, children, fragment[i], i, 0)
+					elementChildren(element, children, fragment[i], i)
 				break
 			case List:
 				fragment.forEach(function (fragment, i) {
-					elementChildren(element, children, fragment, i, 0)
+					elementChildren(element, children, fragment, i)
 				})
 		}
 	
@@ -286,7 +286,7 @@
 		var value = iterable.next()
 	
 		while (value.done !== true) {
-			index = elementChildren(element, children, value.value, index, 0)
+			index = elementChildren(element, children, value.value, index)
 			value = iterable.next(value.value)
 		}
 	
@@ -327,11 +327,10 @@
 	 * @param {List} children
 	 * @param {*} child
 	 * @param {number} index
-	 * @param {number} scope
 	 */
-	function elementChildren (element, children, child, index, scope) {
+	function elementChildren (element, children, child, index) {
 		if (child == null)
-			return elementChildren(element, children, elementText(''), index, scope)
+			return elementChildren(element, children, elementText(''), index)
 		else
 			switch (child.constructor) {
 				case Element:
@@ -343,22 +342,22 @@
 				case List:
 				case Array:
 					for (var i = 0; i < child.length; i++)
-						elementChildren(element, children, child[i], index+i, scope+1)
+						elementChildren(element, children, child[i], index+i)
 	
 					return index+i
 				case String:
 				case Number:
 				case Error:
 				case Date:
-					return elementChildren(element, children, elementText(child), index, scope)
+					return elementChildren(element, children, elementText(child), index)
 				case Function:
 				case Promise:
-					return elementChildren(element, children, createElement(child), index, scope)
+					return elementChildren(element, children, createElement(child), index)
 				case Boolean:
 				case Symbol:
-					return elementChildren(element, children, null, index, scope)
+					return elementChildren(element, children, null, index)
 				default:
-					return elementChildren(element, children, elementUnknown(child), index, scope) 
+					return elementChildren(element, children, elementUnknown(child), index)
 			}
 	
 		return index + 1
@@ -431,7 +430,7 @@
 		if ((size = length - i) > 0) {
 			if (flag !== ElementComponent)
 				for (children = element.children = new List(); i < length; i++)
-					index = elementChildren(element, children, arguments[i], index, 0)
+					index = elementChildren(element, children, arguments[i], index)
 			else {
 				if (size > 1)
 					for (children = Array(size); i < length; i++)

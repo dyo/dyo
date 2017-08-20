@@ -32,7 +32,7 @@ A Library For Building User Interfaces.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/7.1.0/dio.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/8.0.0/dio.min.js></script>
 ```
 
 ```html
@@ -60,6 +60,8 @@ dio.render(
 )
 ```
 
+The easiest way to get started with DIO is to walk through the [Introduction to DIO](https://dio.js.org/introduction.html) or the [API Documentation](https://dio.js.org/api.html).
+
 ## Highlights
 
 ### Render
@@ -68,7 +70,7 @@ dio.render(
 2. Promises
 3. Iterables
 4. Strings
-5. etc...
+5. Portals
 
 ### Components
 
@@ -78,28 +80,27 @@ dio.render(
 ### Events
 
 1. Additional support for the `handleEvent` interface.
-2. Event listeners `this` points to the closest `Component` instance by default.
+2. Event listeners `this` defaults to the closest `Component` relegating the need to `.bind`
 
 ### Errors
 
 1. Cascading error boundaries with `componentDidCatch`.
-3. Additional support for rendering/returning an error state from `componentDidCatch`.
+3. Additional support for recovering from an error state from `componentDidCatch` return signature.
 
 ### setState
 
-1. Additionally returning an `Object` is equivalent to calling `this.setState`.
+1. Optionally returning an `Object` is equivalent to calling `this.setState`.
+2. Additional support for `this.setState(Promise)`
 
 ### Context
 
 1. `getChildContext` supports context updates.
-2. `context` cascades without the need for `contextTypes` or `childContextTypes`.
-3. `context` cascades irrespective of `shouldComponentUpdate`.
+3. `context` cascades irrespective of `shouldComponentUpdate` or `contextTypes` and `childContextTypes`.
 
 ### Lifecycle
 
-1. additinonal support for lifecycles on function components.
-2. additional support for async `componentDidUnmount`.
-3. additional support for async `getInitialState`.
+1. Function components lifecycles.
+2. Additional support for async `componentDidUnmount` and async `getInitialState`
 
 ### Children
 
@@ -108,5 +109,3 @@ dio.render(
 ### Refs
 
 1. Support for string/function refs on both function and class components.
-
-The easiest way to get started with DIO is to read the [Introduction to DIO](https://dio.js.org/introduction.html) or look at the [API Documentation](https://dio.js.org/api.html).
