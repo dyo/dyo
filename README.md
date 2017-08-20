@@ -2,7 +2,7 @@
 
 [![dio.js](https://dio.js.org/imgs/logo.svg)](https://dio.js.org/)
 
-a library for building user interfaces.
+A Library For Building User Interfaces.
 
 - ~6kb
 
@@ -23,13 +23,13 @@ a library for building user interfaces.
 
 ## Installation
 
-#### direct download
+#### Direct Download
 
 ```html
 <script src=dio.min.js></script>
 ```
 
-#### cdn
+#### CDN
 
 ```html
 <script src=https://cdnjs.cloudflare.com/ajax/libs/dio/7.1.0/dio.min.js></script>
@@ -43,7 +43,7 @@ a library for building user interfaces.
 <script src=https://unpkg.com/dio.js@latest/dio.min.js></script>
 ```
 
-#### npm
+#### NPM
 
 ```
 npm install dio.js --save
@@ -59,5 +59,50 @@ dio.render(
   document.getElementById('root')
 )
 ```
+
+## Highlights
+
+### Render
+
+1. Fragments
+2. Promises
+3. Iterables
+4. Strings
+5. etc...
+
+### Components
+
+1. Statefull function Components
+2. Plain class Components
+
+### Events
+
+1. Additional support for the `handleEvent` interface.
+2. Event listeners `this` points to the closest `Component` instance by default.
+
+### Errors
+
+1. Cascading error boundaries
+2. `componentDidCatch`
+
+### setState
+
+1. Returning an `Object` is equivalent to calling `this.setState`
+
+### Context
+
+1. `getChildContext` supports context updates.
+2. `context` cascades without the need for `contextTypes` or `childContextTypes`
+3. `context` cascades irrespective of `shouldComponentUpdate`
+
+### Lifecycle
+
+1. additinonal support for lifecycles on function components
+2. additional support for async `componentDidUnmount`
+3. additional support for async `getInitialState`
+
+### Children
+
+1. `this.props.children` is an opaque data-structure
 
 The easiest way to get started with DIO is to read the [Introduction to DIO](https://dio.js.org/introduction.html) or look at the [API Documentation](https://dio.js.org/api.html).
