@@ -1,5 +1,5 @@
 /* DIO 8.0.0 */
-module.exports = function (Element, render, componentMount, commitElement) {
+module.exports = function (exports, componentMount, commitElement, Element) {
 	'use strict'
 	
 	/**
@@ -230,6 +230,14 @@ module.exports = function (Element, render, componentMount, commitElement) {
 		}
 	}
 	
+	/**
+	 * @param {Response} response
+	 */
+	function setHeader (response) {
+		if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
+			response.setHeader('Content-Type', 'text/html')
+	}
+	
 	var Readable = require('stream').Readable
 	var RegExpEscape = /[<>&"']/g
 	
@@ -239,6 +247,9 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	Element.prototype.toString = toString
 	Element.prototype.toStream = toStream
 	Element.prototype.toJSON = toJSON
+	
+	exports.renderToString = renderToString
+	exports.renderToStream = renderToStream
 	
 	/**
 	 * @return {string}
@@ -354,6 +365,20 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	}
 	
 	/**
+	 * @constructor
+	 * @param {Element}
+	 */
+	function Stream (element) {
+		this.stack = [element]
+		Readable.call(this)
+	}
+	/**
+	 * @type {Object}
+	 */
+	Stream.prototype = Object.create(Readable.prototype, {_read: {value: read}})
+	
+	/**
+	 * @param {function=}
 	 * @return {Stream}
 	 */
 	function toStream (callback) {
@@ -370,7 +395,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 	 * @param {Array} stack
 	 * @return {string}
 	 */
-	function toChunk (element, stack) {
+	function write (element, stack) {
 		var type = element.type
 		var children = element.children
 		var length = children.length
@@ -384,7 +409,7 @@ module.exports = function (Element, render, componentMount, commitElement) {
 				output = escapeText(element.children)
 				break
 			case ElementNode:
-				output = '<' + (type = element.type) + toProps(element.props) + '>'
+				output = '<' + (type = element.type) + toProps(element, element.props) + '>'
 					
 				if (element.html) {
 					output += element.html
@@ -404,48 +429,44 @@ module.exports = function (Element, render, componentMount, commitElement) {
 					stack.push(children = children.prev)
 		}
 	
-		return output + element.chunk
+		if (element.chunk) {
+			output += element.chunk
+			element.chunk = ''
+		}
+	
+		return output
 	}
 	
 	/**
-	 * @constructor
-	 * @param {Element}
+	 * @return {void}
 	 */
-	function Stream (element) {
-		this.stack = [commitElement(element)]
-		Readable.call(this)
+	function read () {
+		this.push(this.stack.length ? write(this.stack.pop(), this.stack) : null)
 	}
 	
 	/**
-	 * @type {Object}
+	 * @param {*} subject
+	 * @param {Stream?} target
+	 * @param {function=}
 	 */
-	Stream.prototype = Object.create(Readable.prototype, {
-		/**
-		 * @return {void}
-		 */
-		_read: {value: function read () {
-			var stack = this.stack
-			var length = stack.length
+	function renderToString (subject, target, callback) {
+		if (!target || !target.writable)
+			return commitElement(subject).toString()
 	
-			if (length === 0)
-				return void this.push(null)
-	
-			this.push(toChunk(stack.pop(), stack))
-		}}
-	})
+		setHeader(target)
+		target.end(commitElement(subject).toString(), 'utf8', callback)
+	}
 	
 	/**
 	 * @param {*} subject
 	 * @param {Stream?} target
 	 * @param {function=} callback
 	 */
-	return function (subject, target, callback) {
+	function renderToStream (subject, target, callback) {
 		if (!target || !target.writable)
-			return render(subject, target, callback)
+			return commitElement(subject).toStream()
 	
-		if (typeof target.getHeader === 'function' && !target.getHeader('Content-Type'))
-			target.setHeader('Content-Type', 'text/html')
-	
+		setHeader(target)
 		commitElement(subject).toStream(callback).pipe(target)
 	}
 }

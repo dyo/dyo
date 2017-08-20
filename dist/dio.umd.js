@@ -1785,13 +1785,12 @@
 	/**
 	 * @param {*} subject
 	 * @param {Node?} target
-	 * @param {function=} callback
 	 */
-	function render (subject, target, callback) {
+	function render (subject, target) {
 		if (!isValidElement(subject))
-			return render(commitElement(subject), target, callback)
+			return render(commitElement(subject), target)
 		if (!target)
-			return render(subject, DOMDocument(), callback)
+			return render(subject, DOMDocument())
 			
 		if (root.has(target))
 			return patchElement(root.get(target), commitElement(subject))
@@ -1800,9 +1799,6 @@
 	
 		root.set(element.DOM.node = target, subject)
 		commitMount(subject, subject, element, element, (DOMContent(element.DOM), 0))
-	
-		if (typeof callback === 'function')
-			lifecycleCallback(subject, callback)
 	}
 
 	/**
@@ -1813,5 +1809,8 @@
 	exports.isValidElement = isValidElement
 	exports.cloneElement = cloneElement
 	exports.Component = Component
-	exports.render = !server ? render : __require__('./dio.node.js')(Element, render, componentMount, commitElement)
+	exports.render = render
+	
+	if (server)
+		__require__('./dio.node.js')(exports, componentMount, commitElement, Element)
 }))

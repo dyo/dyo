@@ -1,4 +1,18 @@
 /**
+ * @constructor
+ * @param {Element}
+ */
+function Stream (element) {
+	this.stack = [element]
+	Readable.call(this)
+}
+/**
+ * @type {Object}
+ */
+Stream.prototype = Object.create(Readable.prototype, {_read: {value: read}})
+
+/**
+ * @param {function=}
  * @return {Stream}
  */
 function toStream (callback) {
@@ -15,7 +29,7 @@ function toStream (callback) {
  * @param {Array} stack
  * @return {string}
  */
-function toChunk (element, stack) {
+function write (element, stack) {
 	var type = element.type
 	var children = element.children
 	var length = children.length
@@ -29,7 +43,7 @@ function toChunk (element, stack) {
 			output = escapeText(element.children)
 			break
 		case ElementNode:
-			output = '<' + (type = element.type) + toProps(element.props) + '>'
+			output = '<' + (type = element.type) + toProps(element, element.props) + '>'
 				
 			if (element.html) {
 				output += element.html
@@ -49,32 +63,17 @@ function toChunk (element, stack) {
 				stack.push(children = children.prev)
 	}
 
-	return output + element.chunk
+	if (element.chunk) {
+		output += element.chunk
+		element.chunk = ''
+	}
+
+	return output
 }
 
 /**
- * @constructor
- * @param {Element}
+ * @return {void}
  */
-function Stream (element) {
-	this.stack = [commitElement(element)]
-	Readable.call(this)
+function read () {
+	this.push(this.stack.length ? write(this.stack.pop(), this.stack) : null)
 }
-
-/**
- * @type {Object}
- */
-Stream.prototype = Object.create(Readable.prototype, {
-	/**
-	 * @return {void}
-	 */
-	_read: {value: function read () {
-		var stack = this.stack
-		var length = stack.length
-
-		if (length === 0)
-			return void this.push(null)
-
-		this.push(toChunk(stack.pop(), stack))
-	}}
-})

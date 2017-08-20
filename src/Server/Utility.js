@@ -45,3 +45,11 @@ function elementType (type) {
 		default: return 2
 	}
 }
+
+/**
+ * @param {Response} response
+ */
+function setHeader (response) {
+	if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
+		response.setHeader('Content-Type', 'text/html')
+}

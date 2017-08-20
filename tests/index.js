@@ -115,7 +115,7 @@ let search = '.spec.js';
 
 const bootstrap = () => {
 	const files = fs.readdirSync(__dirname).filter((file) => {
-		return file.lastIndexOf(search) !== -1
+		return file.lastIndexOf(search) > -1
 	});
 	const specs = files.map((file) => {
 		return path.resolve(__dirname, file)

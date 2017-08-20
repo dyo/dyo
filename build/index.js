@@ -32,8 +32,6 @@ const node = [
 	'../src/Server/Render.js'
 ]
 
-const imports = 'Element, render, componentMount, commitElement'
-
 const getExports = () => `
 /**
  * @exports
@@ -43,8 +41,13 @@ exports.h = exports.createElement = window.h = createElement
 exports.isValidElement = isValidElement
 exports.cloneElement = cloneElement
 exports.Component = Component
-exports.render = !server ? render : __require__('./dio.node.js')(${imports})
+exports.render = render
+
+if (server)
+	__require__('./dio.node.js')(${imports})
 `
+
+const imports = 'exports, componentMount, commitElement, Element'
 
 const builder = (file) => {
 	return fs.readFileSync(path.join(__dirname, file), 'utf8');

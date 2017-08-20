@@ -44,9 +44,7 @@ module.exports = ({h, render}) => {
 		ok(container.innerHTML === '<h1>Hello</h1><h1>World</h1>', 'render fragment')
 
 		render([h('h1', 'Hello'), h(portal, h('h1', 'World'))], container)
-		ok(container.innerHTML === '<h1>Hello</h1>' && portal.innerHTML === '<h1>World</h1>', 'render')
-
-		// @TODO render Promise..
+		ok(container.innerHTML === '<h1>Hello</h1>' && portal.innerHTML === '<h1>World</h1>', 'render portal')
 
 		end()
 	})

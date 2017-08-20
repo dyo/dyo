@@ -69,6 +69,4 @@ module.exports = ({h, Component, render}) => {
 
 		end()
 	})
-
-	// @TODO test async render and unmount animation
 }

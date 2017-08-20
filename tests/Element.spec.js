@@ -8,7 +8,7 @@ module.exports = ({h, isValidElement, cloneElement}) => {
 		ok(h('h1', {xmlns: 'bar'}).xmlns === 'bar', '#createElement(..., {xmlns: ...})')
 		ok(h('div', [1, 2], 3, h('h1')).children.length===4, '#createElement(..., children)')
 		ok(h('div', h('h1', {key: 1})).keyed, '#createElement(..., keyed children)')
-
+		
 		end()
 	})
 }

@@ -1,14 +1,25 @@
 /**
  * @param {*} subject
  * @param {Stream?} target
+ * @param {function=}
+ */
+function renderToString (subject, target, callback) {
+	if (!target || !target.writable)
+		return commitElement(subject).toString()
+
+	setHeader(target)
+	target.end(commitElement(subject).toString(), 'utf8', callback)
+}
+
+/**
+ * @param {*} subject
+ * @param {Stream?} target
  * @param {function=} callback
  */
-return function (subject, target, callback) {
+function renderToStream (subject, target, callback) {
 	if (!target || !target.writable)
-		return render(subject, target, callback)
+		return commitElement(subject).toStream()
 
-	if (typeof target.getHeader === 'function' && !target.getHeader('Content-Type'))
-		target.setHeader('Content-Type', 'text/html')
-
+	setHeader(target)
 	commitElement(subject).toStream(callback).pipe(target)
 }

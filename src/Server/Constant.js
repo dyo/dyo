@@ -7,3 +7,6 @@ Element.prototype.chunk = ''
 Element.prototype.toString = toString
 Element.prototype.toStream = toStream
 Element.prototype.toJSON = toJSON
+
+exports.renderToString = renderToString
+exports.renderToStream = renderToStream
