@@ -69,4 +69,27 @@ module.exports = ({h, Component, render}) => {
 
 		end()
 	})
+
+	test('Error Boundaries', ({ok, end}) => {
+		var error = console.error
+		var container = document.createElement('div')
+
+		console.error = () => {}
+
+		class A {
+			componentDidCatch({message}) {
+				ok(true, 'componentDidCatch')
+				return message
+			}
+			render() {
+				throw 'render'
+			}
+		}
+
+		render(A, container)
+		ok(container.innerHTML === 'render', 'componentDidCatch#render')
+
+		console.error = error
+		end()
+	})
 }

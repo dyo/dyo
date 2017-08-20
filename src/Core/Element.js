@@ -100,6 +100,15 @@ function elementIterable (iterable, element) {
 }
 
 /**
+ * @param {string} summary
+ * @param {string} details
+ * @return {Element}
+ */
+function elementDetails (summary, details) {
+	return createElement('details', createElement('summary', summary), h('br'), h('pre', details))
+}
+
+/**
  * @param {*} child
  * @return {Element}
  */
@@ -110,8 +119,10 @@ function elementUnknown (child) {
 		return elementUnknown(child[Iterator]())
 	else if (typeof child === 'function')
 		return elementUnknown(child())
-	else
+	else if (child.constructor !== Error)
 		return createElement('pre', JSON.stringify(child, null, 2))
+
+	return createElement('details', createElement('summary', child+''), h('pre', (child.trace||'')+'\n'+child.stack))
 }
 
 /**
@@ -153,8 +164,6 @@ function elementChildren (element, children, child, index) {
 				return index+i
 			case String:
 			case Number:
-			case Error:
-			case Date:
 				return elementChildren(element, children, elementText(child), index)
 			case Function:
 			case Promise:

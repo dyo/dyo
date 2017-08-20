@@ -294,6 +294,15 @@
 	}
 	
 	/**
+	 * @param {string} summary
+	 * @param {string} details
+	 * @return {Element}
+	 */
+	function elementDetails (summary, details) {
+		return createElement('details', createElement('summary', summary), h('br'), h('pre', details))
+	}
+	
+	/**
 	 * @param {*} child
 	 * @return {Element}
 	 */
@@ -304,8 +313,10 @@
 			return elementUnknown(child[Iterator]())
 		else if (typeof child === 'function')
 			return elementUnknown(child())
-		else
+		else if (child.constructor !== Error)
 			return createElement('pre', JSON.stringify(child, null, 2))
+	
+		return createElement('details', createElement('summary', child+''), h('pre', (child.trace||'')+'\n'+child.stack))
 	}
 	
 	/**
@@ -347,8 +358,6 @@
 					return index+i
 				case String:
 				case Number:
-				case Error:
-				case Date:
 					return elementChildren(element, children, elementText(child), index)
 				case Function:
 				case Promise:
@@ -736,7 +745,7 @@
 		try {
 			return callback.call(instance, instance.state)
 		} catch (e) {
-			Boundary(element, e, LifecycleCallback)
+			Boundary(element, e, LifecycleCallback+':'+getDisplayName(callback))
 		}
 	}
 	
@@ -854,11 +863,19 @@
 	}
 	
 	/**
-	 * @param {function} func
+	 * @param {(function|string)} subject
 	 * @return {string}
 	 */
-	function getDisplayName (func) {
-		return func.displayName || func.name || 'anonymous'
+	function getDisplayName (subject) {
+		switch (typeof subject) {
+			case 'function':
+				return getDisplayName(subject.displayName || subject.name)
+			case 'string':
+				if (subject)
+					return subject
+			default:
+				return 'anonymous'
+		}
 	}
 	
 	/**
@@ -891,8 +908,6 @@
 					return elementFragment(element)
 				case String:
 				case Number:
-				case Date:
-				case Error:
 					return elementText(element)
 				case Function:
 				case Promise:
@@ -1599,7 +1614,7 @@
 	 * @param {Element?}
 	 */
 	function Boundary (element, error, from) {
-		return Recovery(element, Exception.call(error, element, from), from, {})
+		return Recovery(element, Exception.call(error, element, from), from)
 	}
 	
 	/**
@@ -1608,22 +1623,21 @@
 	 * @param {string} from
 	 * @return {Element?}
 	 */
-	function Recovery (element, error, from) {
-		var children = elementText('')
-	
-		if (/on\w+:\w+/.test(from))
-			return
-	
-		if (!element || !element.owner)
-			return children
-		
-		if (!element.owner[LifecycleDidCatch])
-			return Recovery(element.host, error, from)
-	
+	function Recovery (element, error, from) {	
 		try {
-			element.sync = PriorityTask
-			children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
-			element.sync = PriorityHigh
+			var children = elementText('')
+	
+			if (/on\w+:\w+/.test(from))
+				return
+	
+			if (element && element.owner) {
+				if (!element.owner[LifecycleDidCatch])
+					return Recovery(element.host, error, from)
+	
+				element.sync = PriorityTask
+				children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
+				element.sync = PriorityHigh
+			}
 	
 			if (from === LifecycleRender)
 				return children

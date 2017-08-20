@@ -12,8 +12,6 @@ function commitElement (element) {
 				return elementFragment(element)
 			case String:
 			case Number:
-			case Date:
-			case Error:
 				return elementText(element)
 			case Function:
 			case Promise:

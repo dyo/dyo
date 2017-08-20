@@ -196,7 +196,7 @@ function enqueueCallback (element, instance, callback) {
 	try {
 		return callback.call(instance, instance.state)
 	} catch (e) {
-		Boundary(element, e, LifecycleCallback)
+		Boundary(element, e, LifecycleCallback+':'+getDisplayName(callback))
 	}
 }
 
@@ -314,11 +314,19 @@ function getHostChildren (element) {
 }
 
 /**
- * @param {function} func
+ * @param {(function|string)} subject
  * @return {string}
  */
-function getDisplayName (func) {
-	return func.displayName || func.name || 'anonymous'
+function getDisplayName (subject) {
+	switch (typeof subject) {
+		case 'function':
+			return getDisplayName(subject.displayName || subject.name)
+		case 'string':
+			if (subject)
+				return subject
+		default:
+			return 'anonymous'
+	}
 }
 
 /**

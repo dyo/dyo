@@ -31,7 +31,7 @@ function Exception (element, from) {
  * @param {Element?}
  */
 function Boundary (element, error, from) {
-	return Recovery(element, Exception.call(error, element, from), from, {})
+	return Recovery(element, Exception.call(error, element, from), from)
 }
 
 /**
@@ -40,22 +40,21 @@ function Boundary (element, error, from) {
  * @param {string} from
  * @return {Element?}
  */
-function Recovery (element, error, from) {
-	var children = elementText('')
-
-	if (/on\w+:\w+/.test(from))
-		return
-
-	if (!element || !element.owner)
-		return children
-	
-	if (!element.owner[LifecycleDidCatch])
-		return Recovery(element.host, error, from)
-
+function Recovery (element, error, from) {	
 	try {
-		element.sync = PriorityTask
-		children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
-		element.sync = PriorityHigh
+		var children = elementText('')
+
+		if (/on\w+:\w+/.test(from))
+			return
+
+		if (element && element.owner) {
+			if (!element.owner[LifecycleDidCatch])
+				return Recovery(element.host, error, from)
+
+			element.sync = PriorityTask
+			children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
+			element.sync = PriorityHigh
+		}
 
 		if (from === LifecycleRender)
 			return children

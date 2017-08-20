@@ -359,6 +359,7 @@
 		  }
 
 		  componentDidMount() {
+		  	// throw 'end'
 		    // this.interval = setInterval(() => this.tick(), 1000)
 		  }
 
@@ -367,18 +368,22 @@
 		  }
 
 		  componentDidCatch(err) {
-		  	console.dir(err)
-		  	return {...err}
+		  	return err
+		  	// console.dir(err)
+		  	// return {...err}
 		  }
 
 		  handleEvent(e) {
-		  	console.log(e)
+		  	this.setState({}, ()=>{
+		  		throw 'end'
+		  	})
+		  	// console.log(e)
 		  	// throw 'end'
 		  }
 
 		  render() {
-		  	throw 'end'
-
+		  	// return h(null)
+		  	// throw 'end'
 		    return (
 		    	[
 		    		h('div', 'Seconds Elapsed:', this.state.secondsElapsed),
@@ -391,17 +396,45 @@
 		var ref = (e) => {console.log(e)}
 
 		class Main {
+			componentDidCatch(err){
+				// console.log(1)
+				// return h('h1', {style: 'color:red'}, 'Error', {...err})
+			}
 		  render(){
 		  	return [
 		  		h('head', 
 		  			h('title', 'Hello World', performance.now()),
 		  		),
+		  		'Hello World',
 		  		h('body', 
 		  			h(Timer, {ref: ref})
 		  		)
 		  	]
 		  }
 		}
+
+		window.onerror = function (msg, url, lineNo, columnNo, error) {
+			console.log(msg, url, lineNo, columnNo, error)
+	    // var string = msg.toLowerCase();
+	    // var substring = "script error";
+	    // if (string.indexOf(substring) > -1){
+	    //     alert('Script Error: See Browser Console for Detail');
+	    // } else {
+	    //     var message = [
+	    //         'Message: ' + msg,
+	    //         'URL: ' + url,
+	    //         'Line: ' + lineNo,
+	    //         'Column: ' + columnNo,
+	    //         'Error object: ' + JSON.stringify(error)
+	    //     ].join(' - ');
+
+	    //     alert(message);
+	    // }
+
+	    return false
+		};
+
+		// throw 'end'
 
 		// dio.render(h(Main, null, 1, 2))
 
