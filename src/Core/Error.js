@@ -9,7 +9,6 @@ function Exception (element, from) {
 	var trace = ''
 	var tabs = ''
 	var host = element
-	var stack = this.stack
 
 	while (host.type) {
 		trace += tabs + '<' + getDisplayName(host.type) + '>\n'
@@ -17,10 +16,10 @@ function Exception (element, from) {
 		host = host.host
 	}
 
-	console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
-
 	this.from = from
 	this.trace = trace
+
+	console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n')
 
 	return this
 }
@@ -29,10 +28,10 @@ function Exception (element, from) {
  * @param {Element} element
  * @param {Error} error
  * @param {string} from
- * @param {Element}
+ * @param {Element?}
  */
-function Boundary (element, error, from) {	
-	return Recovery(element, Exception.call(error, element, from), from)
+function Boundary (element, error, from) {
+	return Recovery(element, Exception.call(error, element, from), from, {})
 }
 
 /**
@@ -42,23 +41,28 @@ function Boundary (element, error, from) {
  * @return {Element?}
  */
 function Recovery (element, error, from) {
+	var children = elementText('')
+
+	if (/on\w+:\w+/.test(from))
+		return
+
 	if (!element || !element.owner)
-		return elementText('')
+		return children
 	
 	if (!element.owner[LifecycleDidCatch])
 		return Recovery(element.host, error, from)
 
 	try {
 		element.sync = PriorityTask
-		error.children = element.owner[LifecycleDidCatch].call(element.instance, error)
+		children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
 		element.sync = PriorityHigh
 
 		if (from === LifecycleRender)
-			return commitElement(error.children)
+			return children
 
-		if (!server && from.indexOf('on') !== 0)
-			patchElement(getHostElement(element), commitElement(error.children))
+		if (!server)
+			patchElement(getHostElement(element), children)
 	} catch (e) {
-		Boundary(element.host, e, LifecycleDidCatch)
+		return Boundary(element.host, e, LifecycleDidCatch)
 	}
 }

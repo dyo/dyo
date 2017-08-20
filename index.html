@@ -345,9 +345,10 @@
 		
 		// dio.render(Main)
 
-		class Timer extends dio.Component {
-		  constructor(props) {
-		    super(props)
+		class Timer {
+		  constructor(props, context) {
+		    // super(props)
+		    console.log(props, context)
 		    this.state = { secondsElapsed: 0 }
 		  }
 
@@ -365,17 +366,19 @@
 		    clearInterval(this.interval)
 		  }
 
-		  componentDidCatch() {
-
+		  componentDidCatch(err) {
+		  	console.dir(err)
+		  	return {...err}
 		  }
 
 		  handleEvent(e) {
 		  	console.log(e)
+		  	// throw 'end'
 		  }
 
 		  render() {
 		  	throw 'end'
-		  	
+
 		    return (
 		    	[
 		    		h('div', 'Seconds Elapsed:', this.state.secondsElapsed),

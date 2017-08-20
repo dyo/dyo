@@ -33,85 +33,12 @@ function forceUpdate (callback) {
 }
 
 /**
- * @param {Element} Element
- * @param {Component} instance
- * @param {(Object|function)} state
- * @param {function?} callback
- */
-function enqueueState (element, instance, state, callback) {
-	if (state)
-		switch (state.constructor) {
-			case Promise:
-				return enqueuePending(element, instance, state, callback)
-			case Function:
-				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
-			default:
-				element.state = element.sync === PriorityHigh ? state : assign({}, element.state, state)
-
-				enqueueUpdate(element, instance, callback, 2)
-		}
-}
-
-/**
- * @param {Element} Element
- * @param {Component} instance
- * @param {function} callback
- */
-function enqueueCallback (element, instance, callback) {
-	try {
-		return callback.call(instance, instance.state)
-	} catch (e) {
-		Boundary(element, e, LifecycleCallback)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Component} instance
- * @param {Promise} state
- * @param {function?} callback
- */
-function enqueuePending (element, instance, state, callback) {
-	state.then(function (value) {
-		setImmediate(function () {
-			enqueueState(element, instance, value, callback)
-		})
-	})
-}
-
-/**
- * @param {Element} element
- * @param {Component} instance
- * @param {function=} callback
- * @param {number} signature
- */
-function enqueueUpdate (element, instance, callback, signature) {
-	if (element == null)
-		return setImmediate(function () {
-			enqueueUpdate(getHostChildren(instance), instance, callback, signature)
-		})
-
-	if (element.sync < PriorityHigh)
-		return setImmediate(function () {
-			enqueueUpdate(element, instance, callback, signature)
-		})
-
-	if (!element.DOM)
-		return
-
-	componentUpdate(element, element, signature)
-
-	if (typeof callback === 'function')
-		enqueueCallback(element, instance, callback)
-}
-
-/**
  * @param {Object}
  */
-function componentPrototype (prototype) {
+function componentPrototype (owner, prototype) {
 	Object.defineProperties(prototype, {
-		setState: setState,
-		forceUpdate: forceUpdate
+		setState: {value: setState},
+		forceUpdate: {value: forceUpdate}
 	}) 
 }
 
@@ -127,7 +54,7 @@ function componentMount (element) {
 
 	if (prototype && prototype.render) {
 		if (!prototype.setState)
-			componentPrototype(prototype)
+			componentPrototype(owner, prototype)
 
 		instance = owner = getChildInstance(element) || new Component()
 	} else {
@@ -238,6 +165,79 @@ function componentReference (value, key, element) {
 
 		this.refs[key] = element.instance
 	}
+}
+
+/**
+ * @param {Element} Element
+ * @param {Component} instance
+ * @param {(Object|function)} state
+ * @param {function?} callback
+ */
+function enqueueState (element, instance, state, callback) {
+	if (state)
+		switch (state.constructor) {
+			case Promise:
+				return enqueuePending(element, instance, state, callback)
+			case Function:
+				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
+			default:
+				element.state = element.sync === PriorityHigh ? state : assign({}, element.state, state)
+
+				enqueueUpdate(element, instance, callback, 2)
+		}
+}
+
+/**
+ * @param {Element} Element
+ * @param {Component} instance
+ * @param {function} callback
+ */
+function enqueueCallback (element, instance, callback) {
+	try {
+		return callback.call(instance, instance.state)
+	} catch (e) {
+		Boundary(element, e, LifecycleCallback)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {Component} instance
+ * @param {Promise} state
+ * @param {function?} callback
+ */
+function enqueuePending (element, instance, state, callback) {
+	state.then(function (value) {
+		setImmediate(function () {
+			enqueueState(element, instance, value, callback)
+		})
+	})
+}
+
+/**
+ * @param {Element} element
+ * @param {Component} instance
+ * @param {function=} callback
+ * @param {number} signature
+ */
+function enqueueUpdate (element, instance, callback, signature) {
+	if (element == null)
+		return setImmediate(function () {
+			enqueueUpdate(getHostChildren(instance), instance, callback, signature)
+		})
+
+	if (element.sync < PriorityHigh)
+		return setImmediate(function () {
+			enqueueUpdate(element, instance, callback, signature)
+		})
+
+	if (!element.DOM)
+		return
+
+	componentUpdate(element, element, signature)
+
+	if (typeof callback === 'function')
+		enqueueCallback(element, instance, callback)
 }
 
 /**

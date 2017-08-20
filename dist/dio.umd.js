@@ -573,85 +573,12 @@
 	}
 	
 	/**
-	 * @param {Element} Element
-	 * @param {Component} instance
-	 * @param {(Object|function)} state
-	 * @param {function?} callback
-	 */
-	function enqueueState (element, instance, state, callback) {
-		if (state)
-			switch (state.constructor) {
-				case Promise:
-					return enqueuePending(element, instance, state, callback)
-				case Function:
-					return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
-				default:
-					element.state = element.sync === PriorityHigh ? state : assign({}, element.state, state)
-	
-					enqueueUpdate(element, instance, callback, 2)
-			}
-	}
-	
-	/**
-	 * @param {Element} Element
-	 * @param {Component} instance
-	 * @param {function} callback
-	 */
-	function enqueueCallback (element, instance, callback) {
-		try {
-			return callback.call(instance, instance.state)
-		} catch (e) {
-			Boundary(element, e, LifecycleCallback)
-		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Component} instance
-	 * @param {Promise} state
-	 * @param {function?} callback
-	 */
-	function enqueuePending (element, instance, state, callback) {
-		state.then(function (value) {
-			setImmediate(function () {
-				enqueueState(element, instance, value, callback)
-			})
-		})
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Component} instance
-	 * @param {function=} callback
-	 * @param {number} signature
-	 */
-	function enqueueUpdate (element, instance, callback, signature) {
-		if (element == null)
-			return setImmediate(function () {
-				enqueueUpdate(getHostChildren(instance), instance, callback, signature)
-			})
-	
-		if (element.sync < PriorityHigh)
-			return setImmediate(function () {
-				enqueueUpdate(element, instance, callback, signature)
-			})
-	
-		if (!element.DOM)
-			return
-	
-		componentUpdate(element, element, signature)
-	
-		if (typeof callback === 'function')
-			enqueueCallback(element, instance, callback)
-	}
-	
-	/**
 	 * @param {Object}
 	 */
-	function componentPrototype (prototype) {
+	function componentPrototype (owner, prototype) {
 		Object.defineProperties(prototype, {
-			setState: setState,
-			forceUpdate: forceUpdate
+			setState: {value: setState},
+			forceUpdate: {value: forceUpdate}
 		}) 
 	}
 	
@@ -667,7 +594,7 @@
 	
 		if (prototype && prototype.render) {
 			if (!prototype.setState)
-				componentPrototype(prototype)
+				componentPrototype(owner, prototype)
 	
 			instance = owner = getChildInstance(element) || new Component()
 		} else {
@@ -778,6 +705,79 @@
 	
 			this.refs[key] = element.instance
 		}
+	}
+	
+	/**
+	 * @param {Element} Element
+	 * @param {Component} instance
+	 * @param {(Object|function)} state
+	 * @param {function?} callback
+	 */
+	function enqueueState (element, instance, state, callback) {
+		if (state)
+			switch (state.constructor) {
+				case Promise:
+					return enqueuePending(element, instance, state, callback)
+				case Function:
+					return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
+				default:
+					element.state = element.sync === PriorityHigh ? state : assign({}, element.state, state)
+	
+					enqueueUpdate(element, instance, callback, 2)
+			}
+	}
+	
+	/**
+	 * @param {Element} Element
+	 * @param {Component} instance
+	 * @param {function} callback
+	 */
+	function enqueueCallback (element, instance, callback) {
+		try {
+			return callback.call(instance, instance.state)
+		} catch (e) {
+			Boundary(element, e, LifecycleCallback)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Component} instance
+	 * @param {Promise} state
+	 * @param {function?} callback
+	 */
+	function enqueuePending (element, instance, state, callback) {
+		state.then(function (value) {
+			setImmediate(function () {
+				enqueueState(element, instance, value, callback)
+			})
+		})
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Component} instance
+	 * @param {function=} callback
+	 * @param {number} signature
+	 */
+	function enqueueUpdate (element, instance, callback, signature) {
+		if (element == null)
+			return setImmediate(function () {
+				enqueueUpdate(getHostChildren(instance), instance, callback, signature)
+			})
+	
+		if (element.sync < PriorityHigh)
+			return setImmediate(function () {
+				enqueueUpdate(element, instance, callback, signature)
+			})
+	
+		if (!element.DOM)
+			return
+	
+		componentUpdate(element, element, signature)
+	
+		if (typeof callback === 'function')
+			enqueueCallback(element, instance, callback)
 	}
 	
 	/**
@@ -1577,7 +1577,6 @@
 		var trace = ''
 		var tabs = ''
 		var host = element
-		var stack = this.stack
 	
 		while (host.type) {
 			trace += tabs + '<' + getDisplayName(host.type) + '>\n'
@@ -1585,10 +1584,10 @@
 			host = host.host
 		}
 	
-		console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
-	
 		this.from = from
 		this.trace = trace
+	
+		console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n')
 	
 		return this
 	}
@@ -1597,10 +1596,10 @@
 	 * @param {Element} element
 	 * @param {Error} error
 	 * @param {string} from
-	 * @param {Element}
+	 * @param {Element?}
 	 */
-	function Boundary (element, error, from) {	
-		return Recovery(element, Exception.call(error, element, from), from)
+	function Boundary (element, error, from) {
+		return Recovery(element, Exception.call(error, element, from), from, {})
 	}
 	
 	/**
@@ -1610,24 +1609,29 @@
 	 * @return {Element?}
 	 */
 	function Recovery (element, error, from) {
+		var children = elementText('')
+	
+		if (/on\w+:\w+/.test(from))
+			return
+	
 		if (!element || !element.owner)
-			return elementText('')
+			return children
 		
 		if (!element.owner[LifecycleDidCatch])
 			return Recovery(element.host, error, from)
 	
 		try {
 			element.sync = PriorityTask
-			error.children = element.owner[LifecycleDidCatch].call(element.instance, error)
+			children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
 			element.sync = PriorityHigh
 	
 			if (from === LifecycleRender)
-				return commitElement(error.children)
+				return children
 	
-			if (!server && from.indexOf('on') !== 0)
-				patchElement(getHostElement(element), commitElement(error.children))
+			if (!server)
+				patchElement(getHostElement(element), children)
 		} catch (e) {
-			Boundary(element.host, e, LifecycleDidCatch)
+			return Boundary(element.host, e, LifecycleDidCatch)
 		}
 	}
 	
