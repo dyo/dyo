@@ -152,12 +152,10 @@
 	var Symbol = window.Symbol || noop
 	var Iterator = Symbol.iterator
 	var Promise = window.Promise || noop
-	var Map = window.Map || Hash
 	var WeakMap = window.WeakMap || Hash
 	
 	var root = new WeakMap()
 	var document = window.document || noop
-	var dispatchEvent = window.dispatchEvent || noop
 	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
 	
 	var ElementPromise = -3
