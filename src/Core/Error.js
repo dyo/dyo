@@ -6,6 +6,7 @@ function Exception (element, from) {
 	if (!(this instanceof Error))
 		return Exception.call(new Error(this), element, from)
 
+	var stack = this.stack
 	var trace = ''
 	var tabs = ''
 	var host = element
@@ -16,10 +17,10 @@ function Exception (element, from) {
 		host = host.host
 	}
 
-	this.from = from
 	this.trace = trace
+	this.from = from
 
-	console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n')
+	console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
 
 	return this
 }
@@ -30,8 +31,8 @@ function Exception (element, from) {
  * @param {string} from
  * @param {Element?}
  */
-function Boundary (element, error, from) {
-	return Recovery(element, Exception.call(error, element, from), from)
+function errorBoundary (element, error, from) {
+	return errorRecovery(element, Exception.call(error, element, from), from)
 }
 
 /**
@@ -40,7 +41,7 @@ function Boundary (element, error, from) {
  * @param {string} from
  * @return {Element?}
  */
-function Recovery (element, error, from) {	
+function errorRecovery (element, error, from) {	
 	try {
 		var children = elementText('')
 
@@ -49,7 +50,7 @@ function Recovery (element, error, from) {
 
 		if (element && element.owner) {
 			if (!element.owner[LifecycleDidCatch])
-				return Recovery(element.host, error, from)
+				return errorRecovery(element.host, error, from)
 
 			element.sync = PriorityTask
 			children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
@@ -62,6 +63,6 @@ function Recovery (element, error, from) {
 		if (!server)
 			patchElement(getHostElement(element), children)
 	} catch (e) {
-		return Boundary(element.host, e, LifecycleDidCatch)
+		return errorBoundary(element.host, e, LifecycleDidCatch)
 	}
 }

@@ -1,32 +1,5 @@
 /**
  * @param {Element} element
- * @param {function} callback
- * @param {*} primary
- * @param {*} secondary
- * @param {*} optional
- */
-function lifecycleCallback (element, callback, primary, secondary, optional) {
-	try {
-		return callback.call(element.instance, primary, secondary, optional)
-	} catch (e) {
-		Boundary(element, e, LifecycleCallback)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- */
-function lifecycleData (element, name) {
-	try {
-		return element.owner[name].call(element.instance)
-	} catch (e) {
-		Boundary(element, e, name)
-	}
-}
-
-/**
- * @param {Element} element
  * @param {Object?} state
  */
 function lifecycleReturn (element, state) {
@@ -42,6 +15,33 @@ function lifecycleReturn (element, state) {
 
 /**
  * @param {Element} element
+ * @param {function} callback
+ * @param {*} primary
+ * @param {*} secondary
+ * @param {*} optional
+ */
+function lifecycleCallback (element, callback, primary, secondary, optional) {
+	try {
+		return callback.call(element.instance, primary, secondary, optional)
+	} catch (e) {
+		errorBoundary(element, e, LifecycleCallback)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ */
+function lifecycleGet (element, name) {
+	try {
+		return element.owner[name].call(element.instance)
+	} catch (e) {
+		errorBoundary(element, e, name)
+	}
+}
+
+/**
+ * @param {Element} element
  * @param {string} name
  */
 function lifecycleMount (element, name) {
@@ -50,7 +50,7 @@ function lifecycleMount (element, name) {
 			
 		return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
 	} catch (e) {
-		Boundary(element, e, name)
+		errorBoundary(element, e, name)
 	}
 }
 
@@ -67,6 +67,6 @@ function lifecycleUpdate (element, name, props, state, context) {
 
 		return typeof state !== 'object' ? state : lifecycleReturn(element, state)
 	} catch (e) {
-		Boundary(element, e, name)
+		errorBoundary(element, e, name)
 	}
 }

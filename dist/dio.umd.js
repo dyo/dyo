@@ -157,6 +157,7 @@
 	
 	var root = new WeakMap()
 	var document = window.document || noop
+	var dispatchEvent = window.dispatchEvent || noop
 	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
 	
 	var ElementPromise = -3
@@ -464,33 +465,6 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {function} callback
-	 * @param {*} primary
-	 * @param {*} secondary
-	 * @param {*} optional
-	 */
-	function lifecycleCallback (element, callback, primary, secondary, optional) {
-		try {
-			return callback.call(element.instance, primary, secondary, optional)
-		} catch (e) {
-			Boundary(element, e, LifecycleCallback)
-		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} name
-	 */
-	function lifecycleData (element, name) {
-		try {
-			return element.owner[name].call(element.instance)
-		} catch (e) {
-			Boundary(element, e, name)
-		}
-	}
-	
-	/**
-	 * @param {Element} element
 	 * @param {Object?} state
 	 */
 	function lifecycleReturn (element, state) {
@@ -506,6 +480,33 @@
 	
 	/**
 	 * @param {Element} element
+	 * @param {function} callback
+	 * @param {*} primary
+	 * @param {*} secondary
+	 * @param {*} optional
+	 */
+	function lifecycleCallback (element, callback, primary, secondary, optional) {
+		try {
+			return callback.call(element.instance, primary, secondary, optional)
+		} catch (e) {
+			errorBoundary(element, e, LifecycleCallback)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} name
+	 */
+	function lifecycleGet (element, name) {
+		try {
+			return element.owner[name].call(element.instance)
+		} catch (e) {
+			errorBoundary(element, e, name)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
 	 * @param {string} name
 	 */
 	function lifecycleMount (element, name) {
@@ -514,7 +515,7 @@
 				
 			return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
 		} catch (e) {
-			Boundary(element, e, name)
+			errorBoundary(element, e, name)
 		}
 	}
 	
@@ -531,7 +532,7 @@
 	
 			return typeof state !== 'object' ? state : lifecycleReturn(element, state)
 		} catch (e) {
-			Boundary(element, e, name)
+			errorBoundary(element, e, name)
 		}
 	}
 	
@@ -548,11 +549,12 @@
 	/**
 	 * @type {Object}
 	 */
-	Component.prototype = Object.create(null, {
-		constructor: {value: Component},
-		forceUpdate: {value: forceUpdate}, 
-		setState: {value: setState}
-	})
+	var descriptors = {forceUpdate: {value: forceUpdate}, setState: {value: setState}}
+	
+	/**
+	 * @type {Object}
+	 */
+	Component.prototype = Object.create(null, merge({render: {value: noop}}, descriptors))
 	
 	/**
 	 * @param {(Object|function)} state
@@ -570,16 +572,6 @@
 	}
 	
 	/**
-	 * @param {Object}
-	 */
-	function componentPrototype (owner, prototype) {
-		Object.defineProperties(prototype, {
-			setState: {value: setState},
-			forceUpdate: {value: forceUpdate}
-		}) 
-	}
-	
-	/**
 	 * @param {Element} element
 	 * @return {number}
 	 */
@@ -591,9 +583,9 @@
 	
 		if (prototype && prototype.render) {
 			if (!prototype.setState)
-				componentPrototype(owner, prototype)
+				Object.defineProperties(prototype, descriptors)
 	
-			instance = owner = getChildInstance(element) || new Component()
+			instance = owner = getChildInstance(element)
 		} else {
 			instance = new Component()
 			instance.render = owner
@@ -608,7 +600,7 @@
 		element.instance = instance
 	
 		if (owner[LifecycleInitialState])
-			instance.state = getInitialState(element, instance, lifecycleData(element, LifecycleInitialState))
+			instance.state = getInitialState(element, instance, lifecycleGet(element, LifecycleInitialState))
 		else if (!instance.state)
 			instance.state = {}
 		
@@ -733,7 +725,7 @@
 		try {
 			return callback.call(instance, instance.state)
 		} catch (e) {
-			Boundary(element, e, LifecycleCallback+':'+getDisplayName(callback))
+			errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback))
 		}
 	}
 	
@@ -805,7 +797,7 @@
 		try {
 			return new element.type(element.props, element.context)
 		} catch (e) {
-			Boundary(element.host, e, LifecycleConstructor)
+			return errorBoundary(element.host, e, LifecycleConstructor), new Component()
 		}
 	}
 	
@@ -819,7 +811,7 @@
 				element.instance.render(element.instance.props, element.instance.state, element.context)
 			)
 		} catch (e) {
-			return Boundary(element, e, LifecycleRender)
+			return errorBoundary(element, e, LifecycleRender)
 		}
 	}
 	
@@ -829,7 +821,7 @@
 	 */
 	function getChildContext (element) {
 		if (element.owner[LifecycleChildContext])
-			return lifecycleData(element, LifecycleChildContext) || element.context || {}
+			return lifecycleGet(element, LifecycleChildContext) || element.context || {}
 		else
 			return element.context || {}
 	}
@@ -933,7 +925,7 @@
 		try {
 			return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
 		} catch (e) {
-			return commitDOM(Boundary(element, e, LifecycleRender))
+			return commitDOM(errorBoundary(element, e, LifecycleRender))
 		}
 	}
 	
@@ -1565,7 +1557,7 @@
 				if (state && instance)
 					lifecycleReturn(host, state)
 			} catch (e) {
-				Boundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
+				errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
 			}
 		}}
 	})
@@ -1578,6 +1570,7 @@
 		if (!(this instanceof Error))
 			return Exception.call(new Error(this), element, from)
 	
+		var stack = this.stack
 		var trace = ''
 		var tabs = ''
 		var host = element
@@ -1588,10 +1581,10 @@
 			host = host.host
 		}
 	
-		this.from = from
 		this.trace = trace
+		this.from = from
 	
-		console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n')
+		console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
 	
 		return this
 	}
@@ -1602,8 +1595,8 @@
 	 * @param {string} from
 	 * @param {Element?}
 	 */
-	function Boundary (element, error, from) {
-		return Recovery(element, Exception.call(error, element, from), from)
+	function errorBoundary (element, error, from) {
+		return errorRecovery(element, Exception.call(error, element, from), from)
 	}
 	
 	/**
@@ -1612,7 +1605,7 @@
 	 * @param {string} from
 	 * @return {Element?}
 	 */
-	function Recovery (element, error, from) {	
+	function errorRecovery (element, error, from) {	
 		try {
 			var children = elementText('')
 	
@@ -1621,7 +1614,7 @@
 	
 			if (element && element.owner) {
 				if (!element.owner[LifecycleDidCatch])
-					return Recovery(element.host, error, from)
+					return errorRecovery(element.host, error, from)
 	
 				element.sync = PriorityTask
 				children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
@@ -1634,7 +1627,7 @@
 			if (!server)
 				patchElement(getHostElement(element), children)
 		} catch (e) {
-			return Boundary(element.host, e, LifecycleDidCatch)
+			return errorBoundary(element.host, e, LifecycleDidCatch)
 		}
 	}
 	

@@ -34,7 +34,7 @@ Event.prototype = Object.create(null, {
 			if (state && instance)
 				lifecycleReturn(host, state)
 		} catch (e) {
-			Boundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
+			errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
 		}
 	}}
 })

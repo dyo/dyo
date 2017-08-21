@@ -11,11 +11,12 @@ function Component (props, context) {
 /**
  * @type {Object}
  */
-Component.prototype = Object.create(null, {
-	constructor: {value: Component},
-	forceUpdate: {value: forceUpdate}, 
-	setState: {value: setState}
-})
+var descriptors = {forceUpdate: {value: forceUpdate}, setState: {value: setState}}
+
+/**
+ * @type {Object}
+ */
+Component.prototype = Object.create(null, merge({render: {value: noop}}, descriptors))
 
 /**
  * @param {(Object|function)} state
@@ -33,16 +34,6 @@ function forceUpdate (callback) {
 }
 
 /**
- * @param {Object}
- */
-function componentPrototype (owner, prototype) {
-	Object.defineProperties(prototype, {
-		setState: {value: setState},
-		forceUpdate: {value: forceUpdate}
-	}) 
-}
-
-/**
  * @param {Element} element
  * @return {number}
  */
@@ -54,9 +45,9 @@ function componentMount (element) {
 
 	if (prototype && prototype.render) {
 		if (!prototype.setState)
-			componentPrototype(owner, prototype)
+			Object.defineProperties(prototype, descriptors)
 
-		instance = owner = getChildInstance(element) || new Component()
+		instance = owner = getChildInstance(element)
 	} else {
 		instance = new Component()
 		instance.render = owner
@@ -71,7 +62,7 @@ function componentMount (element) {
 	element.instance = instance
 
 	if (owner[LifecycleInitialState])
-		instance.state = getInitialState(element, instance, lifecycleData(element, LifecycleInitialState))
+		instance.state = getInitialState(element, instance, lifecycleGet(element, LifecycleInitialState))
 	else if (!instance.state)
 		instance.state = {}
 	
@@ -196,7 +187,7 @@ function enqueueCallback (element, instance, callback) {
 	try {
 		return callback.call(instance, instance.state)
 	} catch (e) {
-		Boundary(element, e, LifecycleCallback+':'+getDisplayName(callback))
+		errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback))
 	}
 }
 
@@ -268,7 +259,7 @@ function getChildInstance (element) {
 	try {
 		return new element.type(element.props, element.context)
 	} catch (e) {
-		Boundary(element.host, e, LifecycleConstructor)
+		return errorBoundary(element.host, e, LifecycleConstructor), new Component()
 	}
 }
 
@@ -282,7 +273,7 @@ function getChildElement (element) {
 			element.instance.render(element.instance.props, element.instance.state, element.context)
 		)
 	} catch (e) {
-		return Boundary(element, e, LifecycleRender)
+		return errorBoundary(element, e, LifecycleRender)
 	}
 }
 
@@ -292,7 +283,7 @@ function getChildElement (element) {
  */
 function getChildContext (element) {
 	if (element.owner[LifecycleChildContext])
-		return lifecycleData(element, LifecycleChildContext) || element.context || {}
+		return lifecycleGet(element, LifecycleChildContext) || element.context || {}
 	else
 		return element.context || {}
 }

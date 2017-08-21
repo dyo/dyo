@@ -383,6 +383,7 @@
 		  }
 
 		  render() {
+		  	throw new Error('error')
 		  	// return h('svg', 
 		  	// 	h('h1', 'Hello'), 
 		  	// 	h('foreignObject', 
@@ -408,7 +409,7 @@
 				// console.log(1)
 				// return h('h1', {style: 'color:red'}, 'Error', {...err})
 			}
-		  render(){
+		  render(){		  	
 		  	return [
 		  		h('head', 
 		  			h('title', 'Hello World', performance.now()),
@@ -421,30 +422,13 @@
 		  }
 		}
 
-		window.onerror = function (msg, url, lineNo, columnNo, error) {
-			console.log(msg, url, lineNo, columnNo, error)
-	    // var string = msg.toLowerCase();
-	    // var substring = "script error";
-	    // if (string.indexOf(substring) > -1){
-	    //     alert('Script Error: See Browser Console for Detail');
-	    // } else {
-	    //     var message = [
-	    //         'Message: ' + msg,
-	    //         'URL: ' + url,
-	    //         'Line: ' + lineNo,
-	    //         'Column: ' + columnNo,
-	    //         'Error object: ' + JSON.stringify(error)
-	    //     ].join(' - ');
-
-	    //     alert(message);
-	    // }
-
-	    return false
-		};
-
 		// throw 'end'
 
 		// dio.render(h(Main, null, 1, 2))
+
+		window.onerror = () => {
+		  alert('works')
+		}
 
 		// setTimeout(function foo () {
 			dio.render(h(Main, null, 1, 2))

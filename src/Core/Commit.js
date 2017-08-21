@@ -49,7 +49,7 @@ function commitDOM (element) {
 	try {
 		return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
 	} catch (e) {
-		return commitDOM(Boundary(element, e, LifecycleRender))
+		return commitDOM(errorBoundary(element, e, LifecycleRender))
 	}
 }
 

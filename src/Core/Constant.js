@@ -7,6 +7,7 @@ var WeakMap = window.WeakMap || Hash
 
 var root = new WeakMap()
 var document = window.document || noop
+var dispatchEvent = window.dispatchEvent || noop
 var requestAnimationFrame = window.requestAnimationFrame || setTimeout
 
 var ElementPromise = -3
