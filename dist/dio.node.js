@@ -360,7 +360,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		while (length-- > 0)
 			output.children.push((children = children.next).toJSON())
 	
-		return this.flag < ElementIntermediate ? output : output.children
+		return this.flag < ElementIntermediate ? output.children : output
 	}
 	
 	/**

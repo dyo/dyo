@@ -35,6 +35,16 @@ module.exports = ({h, render}) => {
 		var result = '<h1 class="foo">12<p>Hello</p><span></span><img></h1>'
 		var element = [h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))]
 
+		var jsonComposite = '{"type":"h1","props":{"className":"faz","style":{"marginTop":"20px"}},"children":["Faz"]}'
+		var jsonElement = '{"type":"h1","props":{},"children":["Faz"]}'
+		var jsonComponent = '{"type":"h1","props":{"className":"faz","style":{"marginTop":"20px"}},"children":["Faz"]}'
+		var jsonFragment = '[{"type":"head","props":{},"children":[]},{"type":"body","props":{},"children":[]}]'
+
+		ok(JSON.stringify(h(Foo)) === jsonComposite, 'Composite.toJSON')
+		ok(JSON.stringify(h(Faz)) === jsonComponent, 'Component.toJSON')
+		ok(JSON.stringify(h('h1', 'Faz')) === jsonElement, 'Element.toJSON')
+		ok(JSON.stringify(h(Baz)) === jsonFragment, 'Fragment.toJSON')
+
 		var writable = Writable({
 		  write(chunk, encoding, callback) {
 	      output += chunk.toString()
