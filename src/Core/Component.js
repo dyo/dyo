@@ -40,8 +40,8 @@ function forceUpdate (callback) {
 function componentMount (element) {
 	var owner = element.type
 	var prototype = owner.prototype
-	var instance = null
-	var children = null
+	var instance
+	var children
 
 	if (prototype && prototype.render) {
 		if (!prototype.setState)

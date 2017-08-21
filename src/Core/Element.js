@@ -4,7 +4,7 @@
  */
 function Element (flag) {
 	this.flag = flag
-	this.sync = 0
+	this.sync = PriorityHigh
 	this.keyed = false
 	this.xmlns = ''
 	this.key = null
@@ -206,10 +206,10 @@ function createElement (type, props) {
 	var size = 0
 	var index = 0
 	var flag = typeof type !== 'function' ? ElementNode : ElementComponent
-	var children = null
 	var length = arguments.length
 	var element = new Element(flag)
-
+	var children
+	
 	if (i < 2)
 		switch (props.constructor) {
 			case Object:

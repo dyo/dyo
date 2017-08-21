@@ -207,7 +207,7 @@ function commitMerge (element, snapshot) {
 function commitProperties (element) {
 	var props = element.props
 	var xmlns = !!element.xmlns
-	var value = null
+	var value
 
 	for (var key in props)
 		if ((value = props[key]) != null)
@@ -244,12 +244,8 @@ function commitProperty (element, name, value, signature, xmlns) {
 		case 'xlink:href':
 			return DOMAttribute(element, name, value, signature, xmlns, 1)
 		case 'style':
-			if (value != null && typeof value !== 'string') {
-				if (signature > 1)
-					return DOMAttribute(element.DOM, name, patchStyle(element.style, value), signature, xmlns, 0)
-				else
-					return DOMAttribute(element.DOM, name, element.style = value, signature, xmlns, 0)
-			}
+			if (value != null && typeof value !== 'string')
+				return DOMAttribute(element.DOM, name, patchStyle(element, value, signature), signature, xmlns, 0)
 		default:
 			if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
 				return commitEvent(element, name.toLowerCase(), value, signature)

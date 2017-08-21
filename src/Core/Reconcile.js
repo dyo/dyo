@@ -1,17 +1,22 @@
 /**
- * @param {Object} prev
+ * @param {Object} element
  * @param {Object} next
  */
-function patchStyle (prev, next) {
-	var value, delta = {}
+function patchStyle (element, next, signature) {
+	var value 
+	var delta = {}
+	var prev = element.style
 
-	for (var key in next)
-		switch (value = next[key]) {
-			case prev[key]:
-				break
-			default:
-				delta[key] = value
-		}
+	if (signature > 1) {
+		for (var key in next)
+			switch (value = next[key]) {
+				case prev[key]:
+					break
+				default:
+					delta[key] = value
+			}
+	} else
+		delta = next
 
 	return element.style = next, delta
 }
@@ -25,7 +30,7 @@ function patchProps (element, snapshot, signature) {
 	var props = element.props
 	var delta = assign({}, props, snapshot.props)
 	var xmlns = !!element.xmlns
-	var value = null
+	var value
 
 	for (var key in delta)
 		switch (value = delta[key]) {
@@ -48,7 +53,7 @@ function patchElement (element, snapshot) {
 
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
 		return commitMerge(element, snapshot)
-			
+
 	switch (element.flag) {
 		case ElementPortal:
 		case ElementFragment:

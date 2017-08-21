@@ -20,7 +20,7 @@ Event.prototype = Object.create(null, {
 			var element = this.element
 			var host = element.host
 			var instance = host.instance
-			var state = null
+			var state
 
 			switch (typeof callback) {
 				case 'object':

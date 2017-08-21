@@ -194,7 +194,7 @@
 	 */
 	function Element (flag) {
 		this.flag = flag
-		this.sync = 0
+		this.sync = PriorityHigh
 		this.keyed = false
 		this.xmlns = ''
 		this.key = null
@@ -396,10 +396,10 @@
 		var size = 0
 		var index = 0
 		var flag = typeof type !== 'function' ? ElementNode : ElementComponent
-		var children = null
 		var length = arguments.length
 		var element = new Element(flag)
-	
+		var children
+		
 		if (i < 2)
 			switch (props.constructor) {
 				case Object:
@@ -576,8 +576,8 @@
 	function componentMount (element) {
 		var owner = element.type
 		var prototype = owner.prototype
-		var instance = null
-		var children = null
+		var instance
+		var children
 	
 		if (prototype && prototype.render) {
 			if (!prototype.setState)
@@ -1081,7 +1081,7 @@
 	function commitProperties (element) {
 		var props = element.props
 		var xmlns = !!element.xmlns
-		var value = null
+		var value
 	
 		for (var key in props)
 			if ((value = props[key]) != null)
@@ -1118,12 +1118,8 @@
 			case 'xlink:href':
 				return DOMAttribute(element, name, value, signature, xmlns, 1)
 			case 'style':
-				if (value != null && typeof value !== 'string') {
-					if (signature > 1)
-						return DOMAttribute(element.DOM, name, patchStyle(element.style, value), signature, xmlns, 0)
-					else
-						return DOMAttribute(element.DOM, name, element.style = value, signature, xmlns, 0)
-				}
+				if (value != null && typeof value !== 'string')
+					return DOMAttribute(element.DOM, name, patchStyle(element, value, signature), signature, xmlns, 0)
 			default:
 				if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
 					return commitEvent(element, name.toLowerCase(), value, signature)
@@ -1247,19 +1243,24 @@
 	}
 	
 	/**
-	 * @param {Object} prev
+	 * @param {Object} element
 	 * @param {Object} next
 	 */
-	function patchStyle (prev, next) {
-		var value, delta = {}
+	function patchStyle (element, next, signature) {
+		var value 
+		var delta = {}
+		var prev = element.style
 	
-		for (var key in next)
-			switch (value = next[key]) {
-				case prev[key]:
-					break
-				default:
-					delta[key] = value
-			}
+		if (signature > 1) {
+			for (var key in next)
+				switch (value = next[key]) {
+					case prev[key]:
+						break
+					default:
+						delta[key] = value
+				}
+		} else
+			delta = next
 	
 		return element.style = next, delta
 	}
@@ -1273,7 +1274,7 @@
 		var props = element.props
 		var delta = assign({}, props, snapshot.props)
 		var xmlns = !!element.xmlns
-		var value = null
+		var value
 	
 		for (var key in delta)
 			switch (value = delta[key]) {
@@ -1296,7 +1297,7 @@
 	
 		if (element.key !== snapshot.key || element.type !== snapshot.type)
 			return commitMerge(element, snapshot)
-				
+	
 		switch (element.flag) {
 			case ElementPortal:
 			case ElementFragment:
@@ -1541,7 +1542,7 @@
 				var element = this.element
 				var host = element.host
 				var instance = host.instance
-				var state = null
+				var state
 	
 				switch (typeof callback) {
 					case 'object':
