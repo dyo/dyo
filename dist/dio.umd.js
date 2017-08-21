@@ -589,13 +589,13 @@
 			instance.render = owner
 		}
 	
-		instance.refs = {}
-		instance.props = element.props
-		instance.context = element.context
-		instance.children = element
-	
 		element.owner = owner
 		element.instance = instance
+		
+		instance.refs = {}
+		instance.props = element.props
+		instance.context = element.context = element.context || {}
+		instance.children = element
 	
 		if (owner[LifecycleInitialState])
 			instance.state = getInitialState(element, instance, lifecycleGet(element, LifecycleInitialState))
