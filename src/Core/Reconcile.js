@@ -30,7 +30,10 @@ function patchProperties (element, prev, next, delta) {
 		var value = next[key]
 
 		if (value !== prev[key])
-			delta[key] = value
+			if (key === 'style' && next !== null && typeof next === 'object')
+				delta[key] = patchStyle(element, element.style || {}, value, {})
+			else
+				delta[key] = value
 	}
 
 	return element.props = next, delta

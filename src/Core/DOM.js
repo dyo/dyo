@@ -34,7 +34,7 @@ function DOMAttribute (element, name, value, signature, xmlns, type) {
 			case 2:
 				return DOMProperty(element, name, value)
 			case 3:
-				if (xmlns === false)
+				if (!xmlns)
 					return DOMProperty(element, name, value)
 			default:
 				if (xmlns === false && name in element.node)

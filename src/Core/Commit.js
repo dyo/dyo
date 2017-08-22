@@ -266,15 +266,9 @@ function commitEvent (element, type, listener, signature) {
  * @param {string} name
  * @param {*} value
  * @param {number} signature
- * @param {boolean} xmlns
  */
-function commitStyle (element, name, value, signature, xmlns) {
-	if (signature > 1)
-		patchStyle(element, element.style, value, {})
-	else
-		element.style = value
-
-	DOMAttribute(element.DOM, name, element.style, signature, xmlns, 0)
+function commitStyle (element, name, value, signature) {
+	DOMAttribute(element.DOM, name, element.style = value, signature, element.xmlns, 0)
 }
 
 /**
@@ -283,13 +277,8 @@ function commitStyle (element, name, value, signature, xmlns) {
  * @param {number} signature
  */
 function commitProperties (element, props, signature) {
-	var xmlns = !!element.xmlns
-
-	for (var key in props) {
-		var value = props[key]
-
-		commitProperty(element, key, value, value != null ? signature : 0, xmlns)
-	}
+	for (var key in props)
+		commitProperty(element, key, props[key], props[key] != null ? signature : 0, element.xmlns)
 }
 
 /**
@@ -322,8 +311,8 @@ function commitProperty (element, name, value, signature, xmlns) {
 		case 'xlink:href':
 			return DOMAttribute(element, name, value, signature, xmlns, 1)
 		case 'style':
-			if (value != null && typeof value !== 'string')
-				return commitStyle(element, name, value, signature, xmlns)
+			if (typeof value === 'object' && value !== null)
+				return commitStyle(element, name, value, signature)
 		default:
 			if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
 				return commitEvent(element, name.toLowerCase(), value, signature)
