@@ -132,7 +132,7 @@ function commitMount (element, sibling, parent, host, signature) {
  	}
 
 	commitChildren(element, element, host)
-	commitProperties(element)
+	commitProperties(element, element.props, 1)
 }
 
 /**
@@ -203,19 +203,6 @@ function commitMerge (element, snapshot) {
 
 /**
  * @param {Element} element
- */
-function commitProperties (element) {
-	var props = element.props
-	var xmlns = !!element.xmlns
-	var value
-
-	for (var key in props)
-		if ((value = props[key]) != null)
-			commitProperty(element, key, value, 1, xmlns)
-}
-
-/**
- * @param {Element} element
  * @param {Element} instance
  * @param {string} key
  * @param {(function|string)?} callback
@@ -282,9 +269,27 @@ function commitEvent (element, type, listener, signature) {
  * @param {boolean} xmlns
  */
 function commitStyle (element, name, value, signature, xmlns) {
-	element.style = signature > 1 ? patchStyle(element.style, value, {}) : value
+	if (signature > 1)
+		patchStyle(element, element.style, value, {})
+	else
+		element.style = value
 
 	DOMAttribute(element.DOM, name, element.style, signature, xmlns, 0)
+}
+
+/**
+ * @param {Element} element
+ * @param {Object} props
+ * @param {number} signature
+ */
+function commitProperties (element, props, signature) {
+	var xmlns = !!element.xmlns
+
+	for (var key in props) {
+		var value = props[key]
+
+		commitProperty(element, key, value, value != null ? signature : 0, xmlns)
+	}
 }
 
 /**

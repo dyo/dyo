@@ -1,39 +1,39 @@
 /**
+ * @param {Element} element
  * @param {Object} prev
  * @param {Object} next
  * @param {Object} delta
  */
-function patchStyle (prev, next, delta) {
+function patchStyle (element, prev, next, delta) {
 	for (var key in next) {
 		var value = next[key]
 
 		if (value !== prev[key])
-			delta[key] = value		
+			delta[key] = value
 	}
 
-	return delta
+	return element.style = next, delta
 }
 
 /**
  * @param {Element} element
- * @param {Element} snapshot
- * @param {number} signature
+ * @param {Object} prev
+ * @param {Object} next
+ * @param {Object} delta
  */
-function patchProps (element, snapshot, signature) {
-	var props = element.props
-	var delta = assign({}, props, snapshot.props)
-	var xmlns = !!element.xmlns
-	var value
+function patchProperties (element, prev, next, delta) {
+	for (var key in prev)
+		if (!next.hasOwnProperty(key))
+			delta[key] = null
 
-	for (var key in delta)
-		switch (value = delta[key]) {
-			case props[key]:
-				break
-			default:
-				commitProperty(element, key, value, value == null ? 0 : 2, xmlns)
-		}
+	for (var key in next) {
+		var value = next[key]
 
-	element.props = snapshot.props
+		if (value !== prev[key])
+			delta[key] = value
+	}
+
+	return element.props = next, delta
 }
 
 /**
@@ -59,7 +59,7 @@ function patchElement (element, snapshot) {
 			break
 		case ElementNode:
 			patchChildren(element, snapshot)
-			patchProps(element, snapshot, 1)
+			commitProperties(element, patchProperties(element, element.props, snapshot.props, {}), 2)
 	}
 }
 

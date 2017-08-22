@@ -1006,7 +1006,7 @@
 	 	}
 	
 		commitChildren(element, element, host)
-		commitProperties(element)
+		commitProperties(element, element.props, 1)
 	}
 	
 	/**
@@ -1077,19 +1077,6 @@
 	
 	/**
 	 * @param {Element} element
-	 */
-	function commitProperties (element) {
-		var props = element.props
-		var xmlns = !!element.xmlns
-		var value
-	
-		for (var key in props)
-			if ((value = props[key]) != null)
-				commitProperty(element, key, value, 1, xmlns)
-	}
-	
-	/**
-	 * @param {Element} element
 	 * @param {Element} instance
 	 * @param {string} key
 	 * @param {(function|string)?} callback
@@ -1156,9 +1143,27 @@
 	 * @param {boolean} xmlns
 	 */
 	function commitStyle (element, name, value, signature, xmlns) {
-		element.style = signature > 1 ? patchStyle(element.style, value, {}) : value
+		if (signature > 1)
+			patchStyle(element, element.style, value, {})
+		else
+			element.style = value
 	
 		DOMAttribute(element.DOM, name, element.style, signature, xmlns, 0)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Object} props
+	 * @param {number} signature
+	 */
+	function commitProperties (element, props, signature) {
+		var xmlns = !!element.xmlns
+	
+		for (var key in props) {
+			var value = props[key]
+	
+			commitProperty(element, key, value, value != null ? signature : 0, xmlns)
+		}
 	}
 	
 	/**
@@ -1256,41 +1261,41 @@
 	}
 	
 	/**
+	 * @param {Element} element
 	 * @param {Object} prev
 	 * @param {Object} next
 	 * @param {Object} delta
 	 */
-	function patchStyle (prev, next, delta) {
+	function patchStyle (element, prev, next, delta) {
 		for (var key in next) {
 			var value = next[key]
 	
 			if (value !== prev[key])
-				delta[key] = value		
+				delta[key] = value
 		}
 	
-		return delta
+		return element.style = next, delta
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} snapshot
-	 * @param {number} signature
+	 * @param {Object} prev
+	 * @param {Object} next
+	 * @param {Object} delta
 	 */
-	function patchProps (element, snapshot, signature) {
-		var props = element.props
-		var delta = assign({}, props, snapshot.props)
-		var xmlns = !!element.xmlns
-		var value
+	function patchProperties (element, prev, next, delta) {
+		for (var key in prev)
+			if (!next.hasOwnProperty(key))
+				delta[key] = null
 	
-		for (var key in delta)
-			switch (value = delta[key]) {
-				case props[key]:
-					break
-				default:
-					commitProperty(element, key, value, value == null ? 0 : 2, xmlns)
-			}
+		for (var key in next) {
+			var value = next[key]
 	
-		element.props = snapshot.props
+			if (value !== prev[key])
+				delta[key] = value
+		}
+	
+		return element.props = next, delta
 	}
 	
 	/**
@@ -1316,7 +1321,7 @@
 				break
 			case ElementNode:
 				patchChildren(element, snapshot)
-				patchProps(element, snapshot, 1)
+				commitProperties(element, patchProperties(element, element.props, snapshot.props, {}), 2)
 		}
 	}
 	
