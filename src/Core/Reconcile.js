@@ -1,24 +1,17 @@
 /**
- * @param {Object} element
+ * @param {Object} prev
  * @param {Object} next
+ * @param {Object} delta
  */
-function patchStyle (element, next, signature) {
-	var value 
-	var delta = {}
-	var prev = element.style
+function patchStyle (prev, next, delta) {
+	for (var key in next) {
+		var value = next[key]
 
-	if (signature > 1) {
-		for (var key in next)
-			switch (value = next[key]) {
-				case prev[key]:
-					break
-				default:
-					delta[key] = value
-			}
-	} else
-		delta = next
+		if (value !== prev[key])
+			delta[key] = value		
+	}
 
-	return element.style = next, delta
+	return delta
 }
 
 /**
@@ -155,16 +148,10 @@ function patchChildren (element, snapshot) {
 
 	// step 2, insert/append/remove
 	if (aPos > aEnd) {
-		if (bPos <= bEnd++) {
-			if (bEnd < bLength)
-				i = 1
-			else
-				bHead = bHead.next
-
-			patchInsert(bHead, aTail, element, host, children, bPos, bEnd, i)
-		}
+		if (bPos <= bEnd++)
+			patchInsert(bEnd < bLength ? (i = 1, bHead) : bHead.next, aTail, element, host, children, bPos, bEnd, i)
 	} else if (bPos > bEnd)
-		patchRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
+			patchRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
 		else
 			patchMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
 }

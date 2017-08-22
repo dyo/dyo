@@ -216,41 +216,32 @@ function commitProperties (element) {
 
 /**
  * @param {Element} element
- * @param {string} name
- * @param {*} value
+ * @param {Element} instance
+ * @param {string} key
+ * @param {(function|string)?} callback
  * @param {number} signature
- * @param {boolean} xmlns
+ * @param {*} key
  */
-function commitProperty (element, name, value, signature, xmlns) {	
-	switch (name) {
-		case 'dangerouslySetInnerHTML':
-			if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
-				return
-			else
-				return commitProperty(element, 'innerHTML', value.__html, signature, xmlns)
-		case 'ref':
-			commitReference(element, value, signature)
-		case 'key':
-		case 'xmlns':
-		case 'children':
-			break
-		case 'className':
-			if (xmlns)
-				return commitProperty(element, 'class', value, signature, !xmlns)
-		case 'id':
-			return DOMAttribute(element.DOM, name, value, signature, xmlns, 3)
-		case 'innerHTML':
-			return DOMAttribute(element.DOM, name, value, signature, xmlns, 2)
-		case 'xlink:href':
-			return DOMAttribute(element, name, value, signature, xmlns, 1)
-		case 'style':
-			if (value != null && typeof value !== 'string')
-				return DOMAttribute(element.DOM, name, patchStyle(element, value, signature), signature, xmlns, 0)
-		default:
-			if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
-				return commitEvent(element, name.toLowerCase(), value, signature)
-
-			DOMAttribute(element.DOM, name, value, signature, xmlns, 4)
+function commitReference (element, callback, signature, key) {
+	switch (typeof callback) {
+		case 'string':
+			return commitReference(element, componentReference, signature, callback)
+		case 'undefined':
+		case 'object':
+			return commitReference(element, element.ref || noop, -1, key)
+		case 'function':
+			switch (signature) {
+				case -1:
+					return lifecycleCallback(element.host, callback, element.ref = null, key, element)
+				case 0:
+					element.ref = callback
+				case 1:
+					lifecycleCallback(element.host, callback, element.instance || element.DOM.node, key, element)
+					break
+				case 2:
+					commitReference(element, callback, -1, key)
+					commitReference(element, callback, 0, key)
+			}
 	}
 }
 
@@ -285,32 +276,54 @@ function commitEvent (element, type, listener, signature) {
 
 /**
  * @param {Element} element
- * @param {Element} instance
- * @param {string} key
- * @param {(function|string)?} callback
+ * @param {string} name
+ * @param {*} value
  * @param {number} signature
- * @param {*} key
+ * @param {boolean} xmlns
  */
-function commitReference (element, callback, signature, key) {
-	switch (typeof callback) {
-		case 'string':
-			return commitReference(element, componentReference, signature, callback)
-		case 'undefined':
-		case 'object':
-			return commitReference(element, element.ref || noop, -1, key)
-		case 'function':
-			switch (signature) {
-				case -1:
-					return lifecycleCallback(element.host, callback, element.ref = null, key, element)
-				case 0:
-					element.ref = callback
-				case 1:
-					lifecycleCallback(element.host, callback, element.instance || element.DOM.node, key, element)
-					break
-				case 2:
-					commitReference(element, callback, -1, key)
-					commitReference(element, callback, 0, key)
-			}
+function commitStyle (element, name, value, signature, xmlns) {
+	element.style = signature > 1 ? patchStyle(element.style, value, {}) : value
+
+	DOMAttribute(element.DOM, name, element.style, signature, xmlns, 0)
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {*} value
+ * @param {number} signature
+ * @param {boolean} xmlns
+ */
+function commitProperty (element, name, value, signature, xmlns) {	
+	switch (name) {
+		case 'dangerouslySetInnerHTML':
+			if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
+				return
+
+			return commitProperty(element, 'innerHTML', value.__html, signature, xmlns)
+		case 'ref':
+			commitReference(element, value, signature)
+		case 'key':
+		case 'xmlns':
+		case 'children':
+			break
+		case 'className':
+			if (xmlns)
+				return commitProperty(element, 'class', value, signature, !xmlns)
+		case 'id':
+			return DOMAttribute(element.DOM, name, value, signature, xmlns, 3)
+		case 'innerHTML':
+			return DOMAttribute(element.DOM, name, value, signature, xmlns, 2)
+		case 'xlink:href':
+			return DOMAttribute(element, name, value, signature, xmlns, 1)
+		case 'style':
+			if (value != null && typeof value !== 'string')
+				return commitStyle(element, name, value, signature, xmlns)
+		default:
+			if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
+				return commitEvent(element, name.toLowerCase(), value, signature)
+
+			DOMAttribute(element.DOM, name, value, signature, xmlns, 4)
 	}
 }
 
