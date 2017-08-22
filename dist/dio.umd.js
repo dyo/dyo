@@ -1280,11 +1280,12 @@
 		for (var key in next) {
 			var value = next[key]
 	
-			if (value !== prev[key])
+			if (value !== prev[key]) {
 				if (key === 'style' && next !== null && typeof next === 'object')
 					delta[key] = patchStyle(element, element.style || {}, value, {})
 				else
 					delta[key] = value
+			}
 		}
 	
 		return element.props = next, delta
