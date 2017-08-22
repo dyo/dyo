@@ -29,14 +29,8 @@ module.exports = ({h, render}) => {
 		var container = document.createElement('div')
 		var portal = document.createElement('div')
 
-		render(h('h1', {id: 1}, '0'), container);
-		ok(container.innerHTML === '<h1 id="1">0</h1>', 'render element')
-
-		render(h(Foo), container);
-		ok(container.innerHTML === '<h1 id="1">1</h1>', 'render function')
-
-		render((Faz), container)
-		ok(container.innerHTML === '<h1 id="1">2</h1>', 'render class')
+		render(h('h1', {dangerouslySetInnerHTML: {__html: '<div>test</div>'}}), container)
+		ok(container.innerHTML === '<h1><div>test</div></h1>', 'render element dangerouslySetInnerHTML')
 
 		render(null, container)
 		ok(container.innerHTML === '', 'render null')
@@ -44,6 +38,26 @@ module.exports = ({h, render}) => {
 		render('hello', container)
 		ok(container.innerHTML === 'hello', 'render text')
 
+		render(h('h1', {className: 1}, '0'), container)
+		ok(container.innerHTML === '<h1 class="1">0</h1>', 'render element className')
+
+		render(h('h1', {class: 1}, '0'), container)
+		ok(container.innerHTML === '<h1 class="1">0</h1>', 'render element class')
+
+		render(h('h1', {style: {width: '100px'}}, '0'), container)
+		ok(container.firstChild.style.width === '100px', 'render element style object')
+
+		render(h('h1', {style: 'width:100px'}, '0'), container)
+		ok(container.firstChild.style.width === '100px', 'render element style string')
+
+		render(h('img', {width: '100px'}), container)
+		ok(container.firstChild.getAttribute('width') === '100px', 'render element img width')
+
+		render(h(Foo), container);
+		ok(container.innerHTML === '<h1 id="1">1</h1>', 'render function')
+
+		render((Faz), container)
+		ok(container.innerHTML === '<h1 id="1">2</h1>', 'render class')
 
 		render(Bar, container)
 		ok(container.innerHTML === '123', 'render iteratable')

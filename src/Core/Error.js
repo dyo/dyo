@@ -2,27 +2,23 @@
  * @param {Element} element
  * @param {string} from
  */
-function Exception (element, from) {
+function errorException (element, from) {
 	if (!(this instanceof Error))
-		return Exception.call(new Error(this), element, from)
+		return errorException.call(new Error(this), element, from)
 
-	var stack = this.stack
-	var trace = ''
+	var children = ''
 	var tabs = ''
 	var host = element
 
 	while (host.type) {
-		trace += tabs + '<' + getDisplayName(host.type) + '>\n'
+		children += tabs + '<' + getDisplayName(host.type) + '>\n'
 		tabs += '  '
 		host = host.host
 	}
 
-	this.trace = trace
-	this.from = from
+	console.error('Error caught in `\n\n'+(this.children = children)+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n')
 
-	console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
-
-	return this
+	return this.from = from, this
 }
 
 /**
@@ -32,37 +28,39 @@ function Exception (element, from) {
  * @param {Element?}
  */
 function errorBoundary (element, error, from) {
-	return errorRecovery(element, Exception.call(error, element, from), from)
+	return errorRecovery(element, errorException.call(error, element, from), from)
 }
 
 /**
  * @param {Element} element
  * @param {Error} error
  * @param {string} from
- * @return {Element?}
+ * @return {Element}
  */
 function errorRecovery (element, error, from) {	
+	var children = elementText('')
+
 	try {
-		var children = elementText('')
+		if (!/on\w+:\w+/.test(from)) {
+				if (element.owner && element.owner[LifecycleDidCatch]) {
+					element.work = WorkTask
+					children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
+					element.work = WorkSync
+				} else if (element.host.owner)
+					setImmediate(function () {
+						errorBoundary(element.host, error, from)
+					})
 
-		if (/on\w+:\w+/.test(from))
-			return
-
-		if (element && element.owner) {
-			if (!element.owner[LifecycleDidCatch])
-				return errorRecovery(element.host, error, from)
-
-			element.sync = PriorityTask
-			children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
-			element.sync = PriorityHigh
+			if (from !== LifecycleRender && !server)
+				setImmediate(function () {
+					reconcileElement(getHostElement(element), children)
+				})
 		}
-
-		if (from === LifecycleRender)
-			return children
-
-		if (!server)
-			patchElement(getHostElement(element), children)
 	} catch (e) {
-		return errorBoundary(element.host, e, LifecycleDidCatch)
+		setImmediate(function () {
+			errorBoundary(element.host, e, LifecycleDidCatch)
+		})
 	}
+
+	return children
 }

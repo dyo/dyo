@@ -156,9 +156,8 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	var ElementNode = 2
 	var ElementText = 3
 	
-	var PriorityLow = -9
-	var PriorityTask = 0
-	var PriorityHigh = 1
+	var WorkTask = 0
+	var WorkSync = 1
 	
 	var LifecycleCallback = 'callback'
 	var LifecycleRender = 'render'

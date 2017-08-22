@@ -1,50 +1,35 @@
 /**
  * @param {Element} element
- * @param {Object} prev
- * @param {Object} next
- * @param {Object} delta
+ * @param {Element} snapshot
  */
-function patchStyle (element, prev, next, delta) {
-	for (var key in next) {
-		var value = next[key]
+function reconcileProperties (element, snapshot) {
+	var xmlns = element.xmlns
+	var next = snapshot.props
+	var prev = element.props
+	var value = null
+	var style = null
 
-		if (value !== prev[key])
-			delta[key] = value
-	}
-
-	return element.style = next, delta
-}
-
-/**
- * @param {Element} element
- * @param {Object} prev
- * @param {Object} next
- * @param {Object} delta
- */
-function patchProperties (element, prev, next, delta) {
 	for (var key in prev)
 		if (!next.hasOwnProperty(key))
-			delta[key] = null
+			commitProperty(element, key, value, xmlns, 0)
 
-	for (var key in next) {
-		var value = next[key]
+	for (var key in next)
+		if ((value = next[key]) !== (style = prev[key]))
+			if (key === 'style' && next !== null && typeof next === 'object') {
+				for (var name in value)
+					if (!style || value[name] !== style[name])
+						commitStyle(element, name, value[name], 1)
+			} else
+				commitProperty(element, key, value, xmlns, value != null ? 1 : 0)
 
-		if (value !== prev[key]) {
-			if (key === 'style' && next !== null && typeof next === 'object')
-				delta[key] = patchStyle(element, element.style || {}, value, {})
-			else
-				delta[key] = value
-		}
-	}
-
-	return element.props = next, delta
+	element.props = next
 }
 
 /**
  * @param {Element} element
  * @param {Element} snapshot
  */
-function patchElement (element, snapshot) {	
+function reconcileElement (element, snapshot) {	
 	if (snapshot.flag === ElementPromise)
 		return commitPromise(element, snapshot)
 
@@ -54,7 +39,7 @@ function patchElement (element, snapshot) {
 	switch (element.flag) {
 		case ElementPortal:
 		case ElementFragment:
-			return patchChildren(element, snapshot)
+			return reconcileChildren(element, snapshot)
 		case ElementComponent:
 			return componentUpdate(element, snapshot, 1)
 		case ElementText:
@@ -62,8 +47,8 @@ function patchElement (element, snapshot) {
 				commitText(element, snapshot)
 			break
 		case ElementNode:
-			patchChildren(element, snapshot)
-			commitProperties(element, patchProperties(element, element.props, snapshot.props, {}), 2)
+			reconcileChildren(element, snapshot)
+			reconcileProperties(element, snapshot)
 	}
 }
 
@@ -71,7 +56,7 @@ function patchElement (element, snapshot) {
  * @param {Element} element
  * @param {Element} snapshot
  */
-function patchChildren (element, snapshot) {
+function reconcileChildren (element, snapshot) {
 	var host = element.host
 	var children = element.children
 	var siblings = snapshot.children
@@ -86,9 +71,9 @@ function patchChildren (element, snapshot) {
 		case 0:
 			return
 		case aLength:
-			return patchRemove(aHead, element, children, 0, aLength)
+			return reconcileRemove(aHead, element, children, 0, aLength)
 		case bLength:
-			return patchInsert(bHead, bHead, element, host, children, 0, bLength, 0)
+			return reconcileInsert(bHead, bHead, element, host, children, 0, bLength, 0)
 	}
 
 	// non-keyed
@@ -96,7 +81,7 @@ function patchChildren (element, snapshot) {
 		i = aLength > bLength ? bLength : aLength
 
 		while (i--) { 
-			patchElement(aHead, bHead) 
+			reconcileElement(aHead, bHead) 
 			bHead = bHead.next
 			aHead = aHead.next
 		}
@@ -126,7 +111,7 @@ function patchChildren (element, snapshot) {
 	// step 1, prefix/suffix
 	outer: while (true) {
 		while (aHead.key === bHead.key) {
-			patchElement(aHead, bHead)
+			reconcileElement(aHead, bHead)
 			aPos++
 			bPos++
 			
@@ -137,7 +122,7 @@ function patchChildren (element, snapshot) {
 			bHead = bHead.next
 		}
 		while (aTail.key === bTail.key) {
-			patchElement(aTail, bTail)
+			reconcileElement(aTail, bTail)
 			aEnd--
 			bEnd--
 
@@ -153,11 +138,11 @@ function patchChildren (element, snapshot) {
 	// step 2, insert/append/remove
 	if (aPos > aEnd) {
 		if (bPos <= bEnd++)
-			patchInsert(bEnd < bLength ? (i = 1, bHead) : bHead.next, aTail, element, host, children, bPos, bEnd, i)
+			reconcileInsert(bEnd < bLength ? (i = 1, bHead) : bHead.next, aTail, element, host, children, bPos, bEnd, i)
 	} else if (bPos > bEnd)
-			patchRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
+			reconcileRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
 		else
-			patchMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
+			reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
 }
 
 /**
@@ -171,7 +156,7 @@ function patchChildren (element, snapshot) {
  * @param  {number} aEnd
  * @param  {number} bEnd
  */
-function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd) {
+function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd) {
 	var aIndx = aPos
 	var bIndx = bPos
 	var aNode = aHead
@@ -192,7 +177,7 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
 			continue
 		}
 
-		patchElement(aNode, bNode)
+		reconcileElement(aNode, bNode)
 
 		aNode = aNode.next
 		bNode = bNode.next
@@ -213,7 +198,7 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
 				else
 					commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
 
-				patchElement(aNext, bNode)
+				reconcileElement(aNext, bNode)
 				delete aPool[bHash]
 			} else if (aNode === children)
 				commitMount(children.push(bNode), bNode, element, host, 0)
@@ -227,8 +212,8 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
 			for (bHash in aPool)
 				commitUnmount(children.remove(aPool[bHash]), element, 0)
 	} else {
-		patchRemove(aHead, element, children, 0, aEnd)
-		patchInsert(bHead, bHead, element, host, children, 0, bEnd, 0)
+		reconcileRemove(aHead, element, children, 0, aEnd)
+		reconcileInsert(bHead, bHead, element, host, children, 0, bEnd, 0)
 	}
 }
 
@@ -242,7 +227,7 @@ function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEn
  * @param {number} length
  * @param {number} signature
  */
-function patchInsert (element, sibling, parent, host, children, index, length, signature) {
+function reconcileInsert (element, sibling, parent, host, children, index, length, signature) {
 	var i = index
 	var next = element
 	var prev = element
@@ -258,7 +243,7 @@ function patchInsert (element, sibling, parent, host, children, index, length, s
  * @param {number} index
  * @param {number} length
  */
-function patchRemove (element, parent, children, index, length) {
+function reconcileRemove (element, parent, children, index, length) {
 	var i = index
 	var next = element
 	var prev = element

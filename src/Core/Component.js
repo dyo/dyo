@@ -81,10 +81,10 @@ function componentMount (element) {
  * @param {number} signature
  */
 function componentUpdate (element, snapshot, signature) {
-	if (element.sync < PriorityHigh)
+	if (element.work < WorkSync)
 		return
 
-	element.sync = PriorityTask
+	element.work = WorkTask
 
 	var instance = element.instance
 	var owner = element.owner
@@ -115,7 +115,7 @@ function componentUpdate (element, snapshot, signature) {
 	instance.state = nextState
 	instance.props = nextProps
 
-	patchElement(element.children, getChildElement(element))
+	reconcileElement(element.children, getChildElement(element))
 
 	if (owner[LifecycleDidUpdate])
 		lifecycleUpdate(element, LifecycleDidUpdate, prevProps, prevState, context)
@@ -123,7 +123,7 @@ function componentUpdate (element, snapshot, signature) {
 	if (element.ref !== snapshot.ref)
 		commitReference(element, snapshot.ref, 2)
 
-	element.sync = PriorityHigh
+	element.work = WorkSync
 }
 
 /**
@@ -172,7 +172,7 @@ function enqueueState (element, instance, state, callback) {
 			case Function:
 				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 			default:
-				element.state = element.sync === PriorityHigh ? state : assign({}, element.state, state)
+				element.state = element.work === WorkSync ? state : assign({}, element.state, state)
 
 				enqueueUpdate(element, instance, callback, 2)
 		}
@@ -217,7 +217,7 @@ function enqueueUpdate (element, instance, callback, signature) {
 			enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 		})
 
-	if (element.sync < PriorityHigh)
+	if (element.work < WorkSync)
 		return setImmediate(function () {
 			enqueueUpdate(element, instance, callback, signature)
 		})

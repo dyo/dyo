@@ -6,85 +6,83 @@ function DOMDocument () {
 }
 
 /**
- * @param {Object} element
+ * @param {Element} element
  * @param {string} name
  * @param {*} value
  */
 function DOMProperty (element, name, value) {
 	try {
-		element.node[name] = value
+		element.DOM.node[name] = value
 	} catch (e) {}
 }
 
 /**
- * @param {Object} element
+ * @param {Element} element
  * @param {string} name
  * @param {*} value
  * @param {number} signature
- * @param {boolean} xmlns
- * @param {number} type
  */
-function DOMAttribute (element, name, value, signature, xmlns, type) {
-	if (signature > 0)
-		switch (type) {
-			case 0:
-				return merge(element.node[name], value)
-			case 1:
-				return element.node.setAttributeNS(NSXlink, name, value)
-			case 2:
-				return DOMProperty(element, name, value)
-			case 3:
-				if (!xmlns)
-					return DOMProperty(element, name, value)
-			default:
-				if (xmlns === false && name in element.node)
-					switch (name) {
-						case 'width':
-						case 'height':
-							if (typeof value === 'string')
-								break
-						default:
-							return DOMProperty(element, name, value)
-					}
+function DOMStyle (element, name, value, signature) {
+	if (signature > 0) {
+		if (name.charCodeAt(0) !== 45)
+			element.DOM.node.style[name] = value
+		else
+			element.DOM.node.style.setProperty(name, value)
+	} else
+		for (var key in value)
+			DOMStyle(element, key, value[key], 1)
+}
 
-				if (value !== false)
-					element.node.setAttribute(name, value)
-				else
-					DOMAttribute(element, name, value, -1, xmlns, type)
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {*} value
+ * @param {boolean} xmlns
+ * @param {number} hash
+ * @param {number} signature
+ */
+function DOMAttribute (element, name, value, xmlns, hash, signature) {
+	if (signature < 1)
+		return element.DOM.node[hash !== 1 ? 'removeAttribute' : 'removeAttributeNS'](name)
+
+	switch (hash) {
+		case 1:
+			return element.DOM.node.setAttributeNS(NSXlink, name, value)
+		case 2:
+			return DOMProperty(element, name, value)
+		case 3:
+			if (!xmlns)
+				return DOMProperty(element, name, value)
+	}
+
+	if (xmlns === false && name in element.DOM.node)
+		switch (name) {
+			case 'width':
+			case 'height':
+				if (element.type === 'img')
+					break
+			default:
+				return DOMProperty(element, name, value)
 		}
-	else if (type !== 1)
-		element.node.removeAttribute(name)
+
+	if (value !== false)
+		element.DOM.node.setAttribute(name, value)
 	else
-		element.node.removeAttributeNS(name)
+		DOMAttribute(element, name, value, xmlns, hash, -1)
 }
 
 
 /**
- * @param {Object} element
+ * @param {Element} element
  * @param {string} type
  * @param {(function|EventListener)} listener
  * @param {number} signature
  */
 function DOMEvent (element, type, listener, signature) {
 	if (signature > 0)
-		element.node.addEventListener(type, listener, false)
+		element.DOM.node.addEventListener(type, listener, false)
 	else
-		element.node.removeEventListener(type, listener, false)
-}
-
-/**
- * @param {Object} element
- */
-function DOMContent (element) {
-	element.node.textContent = ''
-}
-
-/**
- * @param {Object} element
- * @param {(string|number)} value
- */
-function DOMValue (element, value) {
-	element.node.nodeValue = value
+		element.DOM.node.removeEventListener(type, listener, false)
 }
 
 /**
@@ -96,35 +94,49 @@ function DOMText (value) {
 }
 
 /**
- * @param {string} type
- * @param {string?} xmlns
+ * @param {Element} element
  * @return {Object}
  */
-function DOMElement (type, xmlns) {
-	return {node: !xmlns ? document.createElement(type) : document.createElementNS(xmlns, type)}
+function DOMElement (element) {
+	return {node: element.xmlns ? document.createElementNS(xmlns, type) : document.createElement(element.type)}
 }
 
 /**
- * @param {Object} element
- * @param {Object} parent
+ * @param {Element} element
+ */
+function DOMContent (element) {
+	element.DOM.node.textContent = ''
+}
+
+/**
+ * @param {Element} element
+ * @param {(string|number)} value
+ */
+function DOMValue (element, value) {
+	element.DOM.node.nodeValue = value
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} parent
  */
 function DOMRemove (element, parent) {
-	parent.node.removeChild(element.node)
+	parent.DOM.node.removeChild(element.DOM.node)
 }
 
 /**
- * @param {Object} element
- * @param {Object} sibling
- * @param {Object} parent
+ * @param {Element} element
+ * @param {Element} sibling
+ * @param {Element} parent
  */
 function DOMInsert (element, sibling, parent) {
-	parent.node.insertBefore(element.node, sibling.node)
+	parent.DOM.node.insertBefore(element.DOM.node, sibling.DOM.node)
 }
 
 /**
- * @param {Object} element
- * @param {Object} parent
+ * @param {Element} element
+ * @param {Element} parent
  */
 function DOMAppend (element, parent) {
-	parent.node.appendChild(element.node)
+	parent.DOM.node.appendChild(element.DOM.node)
 }

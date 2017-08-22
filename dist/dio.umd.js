@@ -166,9 +166,8 @@
 	var ElementNode = 2
 	var ElementText = 3
 	
-	var PriorityLow = -9
-	var PriorityTask = 0
-	var PriorityHigh = 1
+	var WorkTask = 0
+	var WorkSync = 1
 	
 	var LifecycleCallback = 'callback'
 	var LifecycleRender = 'render'
@@ -194,7 +193,7 @@
 	 */
 	function Element (flag) {
 		this.flag = flag
-		this.sync = PriorityHigh
+		this.work = WorkSync
 		this.keyed = false
 		this.xmlns = ''
 		this.key = null
@@ -290,6 +289,15 @@
 	}
 	
 	/**
+	 * @param {string} summary
+	 * @param {string} details
+	 * @return {Element}
+	 */
+	function elementError (summary, details) {
+		return createElement('details', createElement('summary', summary), h('pre', details))
+	}
+	
+	/**
 	 * @param {*} child
 	 * @return {Element}
 	 */
@@ -300,10 +308,10 @@
 			return elementUnknown(child[Iterator]())
 		else if (typeof child === 'function')
 			return elementUnknown(child())
-		else if (child.constructor !== Error)
+		else if (child.constructor === Error)
+			return elementError(child+'', (child.children||'')+'\n'+child.stack)
+		else
 			return createElement('pre', JSON.stringify(child, null, 2))
-	
-		return createElement('details', createElement('summary', child+''), h('pre', (child.trace||'')+'\n'+child.stack))
 	}
 	
 	/**
@@ -617,10 +625,10 @@
 	 * @param {number} signature
 	 */
 	function componentUpdate (element, snapshot, signature) {
-		if (element.sync < PriorityHigh)
+		if (element.work < WorkSync)
 			return
 	
-		element.sync = PriorityTask
+		element.work = WorkTask
 	
 		var instance = element.instance
 		var owner = element.owner
@@ -651,7 +659,7 @@
 		instance.state = nextState
 		instance.props = nextProps
 	
-		patchElement(element.children, getChildElement(element))
+		reconcileElement(element.children, getChildElement(element))
 	
 		if (owner[LifecycleDidUpdate])
 			lifecycleUpdate(element, LifecycleDidUpdate, prevProps, prevState, context)
@@ -659,7 +667,7 @@
 		if (element.ref !== snapshot.ref)
 			commitReference(element, snapshot.ref, 2)
 	
-		element.sync = PriorityHigh
+		element.work = WorkSync
 	}
 	
 	/**
@@ -708,7 +716,7 @@
 				case Function:
 					return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 				default:
-					element.state = element.sync === PriorityHigh ? state : assign({}, element.state, state)
+					element.state = element.work === WorkSync ? state : assign({}, element.state, state)
 	
 					enqueueUpdate(element, instance, callback, 2)
 			}
@@ -753,7 +761,7 @@
 				enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 			})
 	
-		if (element.sync < PriorityHigh)
+		if (element.work < WorkSync)
 			return setImmediate(function () {
 				enqueueUpdate(element, instance, callback, signature)
 			})
@@ -909,22 +917,10 @@
 			if (!element.DOM)
 				return
 			if (element.flag === ElementPromise)
-				patchChildren(element, elementFragment(commitElement(value)))
+				reconcileChildren(element, elementFragment(commitElement(value)))
 			else
-				patchElement(element, commitElement(value))
+				reconcileElement(element, commitElement(value))
 		})
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Object}
-	 */
-	function commitDOM (element) {
-		try {
-			return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
-		} catch (e) {
-			return commitDOM(errorBoundary(element, e, LifecycleRender))
-		}
 	}
 	
 	/**
@@ -957,7 +953,7 @@
 	
 	 	switch (element.flag) {
 	 		case ElementComponent:
-	 			element.sync = PriorityTask
+	 			element.work = WorkTask
 	 			
 	 			componentMount(element)
 	
@@ -971,7 +967,7 @@
 	 			if (element.owner[LifecycleDidMount]) 
 	 				lifecycleMount(element, LifecycleDidMount)
 	
-	 			element.sync = PriorityHigh
+	 			element.work = WorkSync
 	 			return
 	 		case ElementPortal:
 	 			element.DOM = {node: element.type}
@@ -1006,7 +1002,7 @@
 	 	}
 	
 		commitChildren(element, element, host)
-		commitProperties(element, element.props, 1)
+		commitProperties(element)
 	}
 	
 	/**
@@ -1108,67 +1104,24 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {string} type
-	 * @param {(function|EventListener)} listener
-	 * @param {number} signature
 	 */
-	function commitEvent (element, type, listener, signature) {
-		switch (signature) {
-			case -1:
-				if (element.event !== null && element.event.length > 0) {
-					delete element.event[type]
+	function commitProperties (element) {
+		var xmlns = element.xmlns
+		var props = element.props
 	
-					if (--element.event.length === 0)
-						DOMEvent(element.DOM, type.substring(2), element.event, 0)
-				}
-				break
-			case 0:
-				commitEvent(element, type, listener, signature-1)
-			case 1:
-				if (element.event === null)
-					element.event = new Event(element)
-	
-				element.event[type] = listener
-				element.event.length++
-	
-				DOMEvent(element.DOM, type.substring(2), element.event, 1)
-		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} name
-	 * @param {*} value
-	 * @param {number} signature
-	 */
-	function commitStyle (element, name, value, signature) {
-		DOMAttribute(element.DOM, name, element.style = value, signature, element.xmlns, 0)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Object} props
-	 * @param {number} signature
-	 */
-	function commitProperties (element, props, signature) {
 		for (var key in props)
-			commitProperty(element, key, props[key], props[key] != null ? signature : 0, element.xmlns)
+			commitProperty(element, key, props[key], xmlns, props[key] != null ? 1 : 0)
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {string} name
 	 * @param {*} value
-	 * @param {number} signature
 	 * @param {boolean} xmlns
+	 * @param {number} signature
 	 */
-	function commitProperty (element, name, value, signature, xmlns) {	
+	function commitProperty (element, name, value, xmlns, signature) {	
 		switch (name) {
-			case 'dangerouslySetInnerHTML':
-				if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
-					return
-	
-				return commitProperty(element, 'innerHTML', value.__html, signature, xmlns)
 			case 'ref':
 				commitReference(element, value, signature)
 			case 'key':
@@ -1177,22 +1130,90 @@
 				break
 			case 'className':
 				if (xmlns)
-					return commitProperty(element, 'class', value, signature, !xmlns)
+					return commitProperty(element, 'class', value, !xmlns, signature)
 			case 'id':
-				return DOMAttribute(element.DOM, name, value, signature, xmlns, 3)
+				return commitAttribute(element, name, value, xmlns, 3, signature)
 			case 'innerHTML':
-				return DOMAttribute(element.DOM, name, value, signature, xmlns, 2)
+				return commitAttribute(element, name, value, xmlns, 2, signature)
+			case 'dangerouslySetInnerHTML':
+				if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
+					return
+	
+				return commitProperty(element, 'innerHTML', value ? value.__html : '', xmlns, 2, signature)
 			case 'xlink:href':
-				return DOMAttribute(element, name, value, signature, xmlns, 1)
+				return commitAttribute(element, name, value, xmlns, 1, signature)
 			case 'style':
 				if (typeof value === 'object' && value !== null)
-					return commitStyle(element, name, value, signature)
+					return commitStyle(element, name, value, 0)
 			default:
 				if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
 					return commitEvent(element, name.toLowerCase(), value, signature)
 	
-				DOMAttribute(element.DOM, name, value, signature, xmlns, 4)
+				commitAttribute(element, name, value, xmlns, 4, signature)
 		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} type
+	 * @param {(function|EventListener)} listener
+	 * @param {number} signature
+	 */
+	function commitEvent (element, type, listener, signature) {	
+		switch (signature) {
+			case -1:
+				if (element.event != null && element.event.length > 0) {
+					delete element.event[type]
+	
+					if (--element.event.length === 0)
+						DOMEvent(element, type.substring(2), element.event, 0)
+				}
+				break
+			case 0:
+				commitEvent(element, type, listener, signature-1)
+			case 1:
+				if (element.event == null)
+					element.event = new Event(element)
+	
+				element.event[type] = listener
+				element.event.length++
+	
+				DOMEvent(element, type.substring(2), element.event, 1)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Object}
+	 */
+	function commitDOM (element) {
+		try {
+			return element.flag === ElementNode ? DOMElement(element) : DOMText(element.children)
+		} catch (e) {
+			return commitDOM(errorBoundary(element, e, LifecycleRender))
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} name
+	 * @param {Object} value
+	 * @param {number} signature
+	 */
+	function commitStyle (element, name, value, signature) {
+		DOMStyle(element, name, value, signature)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} name
+	 * @param {*} value
+	 * @param {boolean} xmlns
+	 * @param {number} signature
+	 * @param {boolean} hash
+	 */
+	function commitAttribute (element, name, value, xmlns, hash, signature) {
+		DOMAttribute(element, name, value, xmlns, hash, signature)
 	}
 	
 	/**
@@ -1200,7 +1221,14 @@
 	 * @param {Element} snapshot
 	 */
 	function commitText (element, snapshot) {
-		DOMValue(element.DOM, element.children = snapshot.children)
+		DOMValue(element, element.children = snapshot.children)
+	}
+	
+	/**
+	 * @param {Element} element
+	 */
+	function commitContent (element) {
+		DOMContent(element)
 	}
 	
 	/**
@@ -1209,7 +1237,7 @@
 	 */
 	function commitRemove (element, parent) {
 		if (element.flag > ElementIntermediate)
-			DOMRemove(element.DOM, parent.DOM)
+			DOMRemove(element, parent)
 		else
 			element.children.forEach(function (children) {
 				commitRemove(children, element.flag < ElementPortal ? parent : element)
@@ -1226,7 +1254,7 @@
 			return commitInsert(element, elementSibling(sibling, 1), parent)
 	
 		if (element.flag > ElementIntermediate)
-			DOMInsert(element.DOM, sibling.DOM, parent.DOM)
+			DOMInsert(element, sibling, parent)
 		else if (element.flag < ElementPortal)
 			element.children.forEach(function (children) {
 				commitInsert(children, sibling, parent)
@@ -1242,7 +1270,7 @@
 			return commitInsert(element, elementSibling(parent, 0), parent)
 	
 		if (element.flag > ElementIntermediate)
-			DOMAppend(element.DOM, parent.DOM)
+			DOMAppend(element, parent)
 		else if (element.flag < ElementPortal)
 			element.children.forEach(function (children) {
 				commitAppend(children, parent)
@@ -1251,51 +1279,36 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {Object} prev
-	 * @param {Object} next
-	 * @param {Object} delta
+	 * @param {Element} snapshot
 	 */
-	function patchStyle (element, prev, next, delta) {
-		for (var key in next) {
-			var value = next[key]
+	function reconcileProperties (element, snapshot) {
+		var xmlns = element.xmlns
+		var next = snapshot.props
+		var prev = element.props
+		var value = null
+		var style = null
 	
-			if (value !== prev[key])
-				delta[key] = value
-		}
-	
-		return element.style = next, delta
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Object} prev
-	 * @param {Object} next
-	 * @param {Object} delta
-	 */
-	function patchProperties (element, prev, next, delta) {
 		for (var key in prev)
 			if (!next.hasOwnProperty(key))
-				delta[key] = null
+				commitProperty(element, key, value, xmlns, 0)
 	
-		for (var key in next) {
-			var value = next[key]
+		for (var key in next)
+			if ((value = next[key]) !== (style = prev[key]))
+				if (key === 'style' && next !== null && typeof next === 'object') {
+					for (var name in value)
+						if (!style || value[name] !== style[name])
+							commitStyle(element, name, value[name], 1)
+				} else
+					commitProperty(element, key, value, xmlns, value != null ? 1 : 0)
 	
-			if (value !== prev[key]) {
-				if (key === 'style' && next !== null && typeof next === 'object')
-					delta[key] = patchStyle(element, element.style || {}, value, {})
-				else
-					delta[key] = value
-			}
-		}
-	
-		return element.props = next, delta
+		element.props = next
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {Element} snapshot
 	 */
-	function patchElement (element, snapshot) {	
+	function reconcileElement (element, snapshot) {	
 		if (snapshot.flag === ElementPromise)
 			return commitPromise(element, snapshot)
 	
@@ -1305,7 +1318,7 @@
 		switch (element.flag) {
 			case ElementPortal:
 			case ElementFragment:
-				return patchChildren(element, snapshot)
+				return reconcileChildren(element, snapshot)
 			case ElementComponent:
 				return componentUpdate(element, snapshot, 1)
 			case ElementText:
@@ -1313,8 +1326,8 @@
 					commitText(element, snapshot)
 				break
 			case ElementNode:
-				patchChildren(element, snapshot)
-				commitProperties(element, patchProperties(element, element.props, snapshot.props, {}), 2)
+				reconcileChildren(element, snapshot)
+				reconcileProperties(element, snapshot)
 		}
 	}
 	
@@ -1322,7 +1335,7 @@
 	 * @param {Element} element
 	 * @param {Element} snapshot
 	 */
-	function patchChildren (element, snapshot) {
+	function reconcileChildren (element, snapshot) {
 		var host = element.host
 		var children = element.children
 		var siblings = snapshot.children
@@ -1337,9 +1350,9 @@
 			case 0:
 				return
 			case aLength:
-				return patchRemove(aHead, element, children, 0, aLength)
+				return reconcileRemove(aHead, element, children, 0, aLength)
 			case bLength:
-				return patchInsert(bHead, bHead, element, host, children, 0, bLength, 0)
+				return reconcileInsert(bHead, bHead, element, host, children, 0, bLength, 0)
 		}
 	
 		// non-keyed
@@ -1347,7 +1360,7 @@
 			i = aLength > bLength ? bLength : aLength
 	
 			while (i--) { 
-				patchElement(aHead, bHead) 
+				reconcileElement(aHead, bHead) 
 				bHead = bHead.next
 				aHead = aHead.next
 			}
@@ -1377,7 +1390,7 @@
 		// step 1, prefix/suffix
 		outer: while (true) {
 			while (aHead.key === bHead.key) {
-				patchElement(aHead, bHead)
+				reconcileElement(aHead, bHead)
 				aPos++
 				bPos++
 				
@@ -1388,7 +1401,7 @@
 				bHead = bHead.next
 			}
 			while (aTail.key === bTail.key) {
-				patchElement(aTail, bTail)
+				reconcileElement(aTail, bTail)
 				aEnd--
 				bEnd--
 	
@@ -1404,11 +1417,11 @@
 		// step 2, insert/append/remove
 		if (aPos > aEnd) {
 			if (bPos <= bEnd++)
-				patchInsert(bEnd < bLength ? (i = 1, bHead) : bHead.next, aTail, element, host, children, bPos, bEnd, i)
+				reconcileInsert(bEnd < bLength ? (i = 1, bHead) : bHead.next, aTail, element, host, children, bPos, bEnd, i)
 		} else if (bPos > bEnd)
-				patchRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
+				reconcileRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
 			else
-				patchMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
+				reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
 	}
 	
 	/**
@@ -1422,7 +1435,7 @@
 	 * @param  {number} aEnd
 	 * @param  {number} bEnd
 	 */
-	function patchMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd) {
+	function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd) {
 		var aIndx = aPos
 		var bIndx = bPos
 		var aNode = aHead
@@ -1443,7 +1456,7 @@
 				continue
 			}
 	
-			patchElement(aNode, bNode)
+			reconcileElement(aNode, bNode)
 	
 			aNode = aNode.next
 			bNode = bNode.next
@@ -1464,7 +1477,7 @@
 					else
 						commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
 	
-					patchElement(aNext, bNode)
+					reconcileElement(aNext, bNode)
 					delete aPool[bHash]
 				} else if (aNode === children)
 					commitMount(children.push(bNode), bNode, element, host, 0)
@@ -1478,8 +1491,8 @@
 				for (bHash in aPool)
 					commitUnmount(children.remove(aPool[bHash]), element, 0)
 		} else {
-			patchRemove(aHead, element, children, 0, aEnd)
-			patchInsert(bHead, bHead, element, host, children, 0, bEnd, 0)
+			reconcileRemove(aHead, element, children, 0, aEnd)
+			reconcileInsert(bHead, bHead, element, host, children, 0, bEnd, 0)
 		}
 	}
 	
@@ -1493,7 +1506,7 @@
 	 * @param {number} length
 	 * @param {number} signature
 	 */
-	function patchInsert (element, sibling, parent, host, children, index, length, signature) {
+	function reconcileInsert (element, sibling, parent, host, children, index, length, signature) {
 		var i = index
 		var next = element
 		var prev = element
@@ -1509,7 +1522,7 @@
 	 * @param {number} index
 	 * @param {number} length
 	 */
-	function patchRemove (element, parent, children, index, length) {
+	function reconcileRemove (element, parent, children, index, length) {
 		var i = index
 		var next = element
 		var prev = element
@@ -1563,27 +1576,23 @@
 	 * @param {Element} element
 	 * @param {string} from
 	 */
-	function Exception (element, from) {
+	function errorException (element, from) {
 		if (!(this instanceof Error))
-			return Exception.call(new Error(this), element, from)
+			return errorException.call(new Error(this), element, from)
 	
-		var stack = this.stack
-		var trace = ''
+		var children = ''
 		var tabs = ''
 		var host = element
 	
 		while (host.type) {
-			trace += tabs + '<' + getDisplayName(host.type) + '>\n'
+			children += tabs + '<' + getDisplayName(host.type) + '>\n'
 			tabs += '  '
 			host = host.host
 		}
 	
-		this.trace = trace
-		this.from = from
+		console.error('Error caught in `\n\n'+(this.children = children)+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n')
 	
-		console.error('Error caught in `\n\n'+trace+'\n`'+' from "'+from+'"'+'\n\n'+stack+'\n\n')
-	
-		return this
+		return this.from = from, this
 	}
 	
 	/**
@@ -1593,39 +1602,41 @@
 	 * @param {Element?}
 	 */
 	function errorBoundary (element, error, from) {
-		return errorRecovery(element, Exception.call(error, element, from), from)
+		return errorRecovery(element, errorException.call(error, element, from), from)
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {Error} error
 	 * @param {string} from
-	 * @return {Element?}
+	 * @return {Element}
 	 */
 	function errorRecovery (element, error, from) {	
+		var children = elementText('')
+	
 		try {
-			var children = elementText('')
+			if (!/on\w+:\w+/.test(from)) {
+					if (element.owner && element.owner[LifecycleDidCatch]) {
+						element.work = WorkTask
+						children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
+						element.work = WorkSync
+					} else if (element.host.owner)
+						setImmediate(function () {
+							errorBoundary(element.host, error, from)
+						})
 	
-			if (/on\w+:\w+/.test(from))
-				return
-	
-			if (element && element.owner) {
-				if (!element.owner[LifecycleDidCatch])
-					return errorRecovery(element.host, error, from)
-	
-				element.sync = PriorityTask
-				children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
-				element.sync = PriorityHigh
+				if (from !== LifecycleRender && !server)
+					setImmediate(function () {
+						reconcileElement(getHostElement(element), children)
+					})
 			}
-	
-			if (from === LifecycleRender)
-				return children
-	
-			if (!server)
-				patchElement(getHostElement(element), children)
 		} catch (e) {
-			return errorBoundary(element.host, e, LifecycleDidCatch)
+			setImmediate(function () {
+				errorBoundary(element.host, e, LifecycleDidCatch)
+			})
 		}
+	
+		return children
 	}
 	
 	/**
@@ -1636,84 +1647,82 @@
 	}
 	
 	/**
-	 * @param {Object} element
+	 * @param {Element} element
 	 * @param {string} name
 	 * @param {*} value
 	 */
 	function DOMProperty (element, name, value) {
 		try {
-			element.node[name] = value
+			element.DOM.node[name] = value
 		} catch (e) {}
 	}
 	
 	/**
-	 * @param {Object} element
+	 * @param {Element} element
 	 * @param {string} name
 	 * @param {*} value
 	 * @param {number} signature
-	 * @param {boolean} xmlns
-	 * @param {number} type
 	 */
-	function DOMAttribute (element, name, value, signature, xmlns, type) {
-		if (signature > 0)
-			switch (type) {
-				case 0:
-					return merge(element.node[name], value)
-				case 1:
-					return element.node.setAttributeNS(NSXlink, name, value)
-				case 2:
-					return DOMProperty(element, name, value)
-				case 3:
-					if (!xmlns)
-						return DOMProperty(element, name, value)
-				default:
-					if (xmlns === false && name in element.node)
-						switch (name) {
-							case 'width':
-							case 'height':
-								if (typeof value === 'string')
-									break
-							default:
-								return DOMProperty(element, name, value)
-						}
-	
-					if (value !== false)
-						element.node.setAttribute(name, value)
-					else
-						DOMAttribute(element, name, value, -1, xmlns, type)
-			}
-		else if (type !== 1)
-			element.node.removeAttribute(name)
-		else
-			element.node.removeAttributeNS(name)
+	function DOMStyle (element, name, value, signature) {
+		if (signature > 0) {
+			if (name.charCodeAt(0) !== 45)
+				element.DOM.node.style[name] = value
+			else
+				element.DOM.node.style.setProperty(name, value)
+		} else
+			for (var key in value)
+				DOMStyle(element, key, value[key], 1)
 	}
 	
 	/**
-	 * @param {Object} element
+	 * @param {Element} element
+	 * @param {string} name
+	 * @param {*} value
+	 * @param {boolean} xmlns
+	 * @param {number} hash
+	 * @param {number} signature
+	 */
+	function DOMAttribute (element, name, value, xmlns, hash, signature) {
+		if (signature < 1)
+			return element.DOM.node[hash !== 1 ? 'removeAttribute' : 'removeAttributeNS'](name)
+	
+		switch (hash) {
+			case 1:
+				return element.DOM.node.setAttributeNS(NSXlink, name, value)
+			case 2:
+				return DOMProperty(element, name, value)
+			case 3:
+				if (!xmlns)
+					return DOMProperty(element, name, value)
+		}
+	
+		if (xmlns === false && name in element.DOM.node)
+			switch (name) {
+				case 'width':
+				case 'height':
+					if (element.type === 'img')
+						break
+				default:
+					return DOMProperty(element, name, value)
+			}
+	
+		if (value !== false)
+			element.DOM.node.setAttribute(name, value)
+		else
+			DOMAttribute(element, name, value, xmlns, hash, -1)
+	}
+	
+	/**
+	 * @param {Element} element
 	 * @param {string} type
 	 * @param {(function|EventListener)} listener
 	 * @param {number} signature
 	 */
 	function DOMEvent (element, type, listener, signature) {
 		if (signature > 0)
-			element.node.addEventListener(type, listener, false)
+			element.DOM.node.addEventListener(type, listener, false)
 		else
-			element.node.removeEventListener(type, listener, false)
-	}
-	
-	/**
-	 * @param {Object} element
-	 */
-	function DOMContent (element) {
-		element.node.textContent = ''
-	}
-	
-	/**
-	 * @param {Object} element
-	 * @param {(string|number)} value
-	 */
-	function DOMValue (element, value) {
-		element.node.nodeValue = value
+			element.DOM.node.removeEventListener(type, listener, false)
 	}
 	
 	/**
@@ -1725,37 +1734,51 @@
 	}
 	
 	/**
-	 * @param {string} type
-	 * @param {string?} xmlns
+	 * @param {Element} element
 	 * @return {Object}
 	 */
-	function DOMElement (type, xmlns) {
-		return {node: !xmlns ? document.createElement(type) : document.createElementNS(xmlns, type)}
+	function DOMElement (element) {
+		return {node: element.xmlns ? document.createElementNS(xmlns, type) : document.createElement(element.type)}
 	}
 	
 	/**
-	 * @param {Object} element
-	 * @param {Object} parent
+	 * @param {Element} element
+	 */
+	function DOMContent (element) {
+		element.DOM.node.textContent = ''
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {(string|number)} value
+	 */
+	function DOMValue (element, value) {
+		element.DOM.node.nodeValue = value
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} parent
 	 */
 	function DOMRemove (element, parent) {
-		parent.node.removeChild(element.node)
+		parent.DOM.node.removeChild(element.DOM.node)
 	}
 	
 	/**
-	 * @param {Object} element
-	 * @param {Object} sibling
-	 * @param {Object} parent
+	 * @param {Element} element
+	 * @param {Element} sibling
+	 * @param {Element} parent
 	 */
 	function DOMInsert (element, sibling, parent) {
-		parent.node.insertBefore(element.node, sibling.node)
+		parent.DOM.node.insertBefore(element.DOM.node, sibling.DOM.node)
 	}
 	
 	/**
-	 * @param {Object} element
-	 * @param {Object} parent
+	 * @param {Element} element
+	 * @param {Element} parent
 	 */
 	function DOMAppend (element, parent) {
-		parent.node.appendChild(element.node)
+		parent.DOM.node.appendChild(element.DOM.node)
 	}
 	
 	/**
@@ -1765,16 +1788,29 @@
 	function render (subject, target) {
 		if (!isValidElement(subject))
 			return render(commitElement(subject), target)
+		
 		if (!target)
 			return render(subject, DOMDocument())
 			
 		if (root.has(target))
-			return patchElement(root.get(target), commitElement(subject))
+			reconcileElement(root.get(target), commitElement(subject))
+		else
+			mount(subject, elementIntermediate(subject), target, 1)	
+	}
 	
-		var element = elementIntermediate(subject)
+	/**
+	 * @param {*} subject
+	 * @param {*} parent
+	 * @param {Node?} target
+	 * @param {number} signature
+	 */
+	function mount (subject, parent, target, signature) {
+		root.set(parent.DOM.node = target, subject)
 	
-		root.set(element.DOM.node = target, subject)
-		commitMount(subject, subject, element, element, (DOMContent(element.DOM), 0))
+		if (signature > 0) {
+			commitContent(parent)
+			commitMount(subject, subject, parent, parent, 0)
+		}
 	}
 
 	/**

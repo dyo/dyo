@@ -35,22 +35,10 @@ function commitPromise (element, snapshot) {
 		if (!element.DOM)
 			return
 		if (element.flag === ElementPromise)
-			patchChildren(element, elementFragment(commitElement(value)))
+			reconcileChildren(element, elementFragment(commitElement(value)))
 		else
-			patchElement(element, commitElement(value))
+			reconcileElement(element, commitElement(value))
 	})
-}
-
-/**
- * @param {Element} element
- * @return {Object}
- */
-function commitDOM (element) {
-	try {
-		return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
-	} catch (e) {
-		return commitDOM(errorBoundary(element, e, LifecycleRender))
-	}
 }
 
 /**
@@ -83,7 +71,7 @@ function commitMount (element, sibling, parent, host, signature) {
 
  	switch (element.flag) {
  		case ElementComponent:
- 			element.sync = PriorityTask
+ 			element.work = WorkTask
  			
  			componentMount(element)
 
@@ -97,7 +85,7 @@ function commitMount (element, sibling, parent, host, signature) {
  			if (element.owner[LifecycleDidMount]) 
  				lifecycleMount(element, LifecycleDidMount)
 
- 			element.sync = PriorityHigh
+ 			element.work = WorkSync
  			return
  		case ElementPortal:
  			element.DOM = {node: element.type}
@@ -132,7 +120,7 @@ function commitMount (element, sibling, parent, host, signature) {
  	}
 
 	commitChildren(element, element, host)
-	commitProperties(element, element.props, 1)
+	commitProperties(element)
 }
 
 /**
@@ -234,67 +222,24 @@ function commitReference (element, callback, signature, key) {
 
 /**
  * @param {Element} element
- * @param {string} type
- * @param {(function|EventListener)} listener
- * @param {number} signature
  */
-function commitEvent (element, type, listener, signature) {
-	switch (signature) {
-		case -1:
-			if (element.event !== null && element.event.length > 0) {
-				delete element.event[type]
+function commitProperties (element) {
+	var xmlns = element.xmlns
+	var props = element.props
 
-				if (--element.event.length === 0)
-					DOMEvent(element.DOM, type.substring(2), element.event, 0)
-			}
-			break
-		case 0:
-			commitEvent(element, type, listener, signature-1)
-		case 1:
-			if (element.event === null)
-				element.event = new Event(element)
-
-			element.event[type] = listener
-			element.event.length++
-
-			DOMEvent(element.DOM, type.substring(2), element.event, 1)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {*} value
- * @param {number} signature
- */
-function commitStyle (element, name, value, signature) {
-	DOMAttribute(element.DOM, name, element.style = value, signature, element.xmlns, 0)
-}
-
-/**
- * @param {Element} element
- * @param {Object} props
- * @param {number} signature
- */
-function commitProperties (element, props, signature) {
 	for (var key in props)
-		commitProperty(element, key, props[key], props[key] != null ? signature : 0, element.xmlns)
+		commitProperty(element, key, props[key], xmlns, props[key] != null ? 1 : 0)
 }
 
 /**
  * @param {Element} element
  * @param {string} name
  * @param {*} value
- * @param {number} signature
  * @param {boolean} xmlns
+ * @param {number} signature
  */
-function commitProperty (element, name, value, signature, xmlns) {	
+function commitProperty (element, name, value, xmlns, signature) {	
 	switch (name) {
-		case 'dangerouslySetInnerHTML':
-			if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
-				return
-
-			return commitProperty(element, 'innerHTML', value.__html, signature, xmlns)
 		case 'ref':
 			commitReference(element, value, signature)
 		case 'key':
@@ -303,22 +248,90 @@ function commitProperty (element, name, value, signature, xmlns) {
 			break
 		case 'className':
 			if (xmlns)
-				return commitProperty(element, 'class', value, signature, !xmlns)
+				return commitProperty(element, 'class', value, !xmlns, signature)
 		case 'id':
-			return DOMAttribute(element.DOM, name, value, signature, xmlns, 3)
+			return commitAttribute(element, name, value, xmlns, 3, signature)
 		case 'innerHTML':
-			return DOMAttribute(element.DOM, name, value, signature, xmlns, 2)
+			return commitAttribute(element, name, value, xmlns, 2, signature)
+		case 'dangerouslySetInnerHTML':
+			if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
+				return
+
+			return commitProperty(element, 'innerHTML', value ? value.__html : '', xmlns, 2, signature)
 		case 'xlink:href':
-			return DOMAttribute(element, name, value, signature, xmlns, 1)
+			return commitAttribute(element, name, value, xmlns, 1, signature)
 		case 'style':
 			if (typeof value === 'object' && value !== null)
-				return commitStyle(element, name, value, signature)
+				return commitStyle(element, name, value, 0)
 		default:
 			if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
 				return commitEvent(element, name.toLowerCase(), value, signature)
 
-			DOMAttribute(element.DOM, name, value, signature, xmlns, 4)
+			commitAttribute(element, name, value, xmlns, 4, signature)
 	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} type
+ * @param {(function|EventListener)} listener
+ * @param {number} signature
+ */
+function commitEvent (element, type, listener, signature) {	
+	switch (signature) {
+		case -1:
+			if (element.event != null && element.event.length > 0) {
+				delete element.event[type]
+
+				if (--element.event.length === 0)
+					DOMEvent(element, type.substring(2), element.event, 0)
+			}
+			break
+		case 0:
+			commitEvent(element, type, listener, signature-1)
+		case 1:
+			if (element.event == null)
+				element.event = new Event(element)
+
+			element.event[type] = listener
+			element.event.length++
+
+			DOMEvent(element, type.substring(2), element.event, 1)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @return {Object}
+ */
+function commitDOM (element) {
+	try {
+		return element.flag === ElementNode ? DOMElement(element) : DOMText(element.children)
+	} catch (e) {
+		return commitDOM(errorBoundary(element, e, LifecycleRender))
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {Object} value
+ * @param {number} signature
+ */
+function commitStyle (element, name, value, signature) {
+	DOMStyle(element, name, value, signature)
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {*} value
+ * @param {boolean} xmlns
+ * @param {number} signature
+ * @param {boolean} hash
+ */
+function commitAttribute (element, name, value, xmlns, hash, signature) {
+	DOMAttribute(element, name, value, xmlns, hash, signature)
 }
 
 /**
@@ -326,7 +339,14 @@ function commitProperty (element, name, value, signature, xmlns) {
  * @param {Element} snapshot
  */
 function commitText (element, snapshot) {
-	DOMValue(element.DOM, element.children = snapshot.children)
+	DOMValue(element, element.children = snapshot.children)
+}
+
+/**
+ * @param {Element} element
+ */
+function commitContent (element) {
+	DOMContent(element)
 }
 
 /**
@@ -335,7 +355,7 @@ function commitText (element, snapshot) {
  */
 function commitRemove (element, parent) {
 	if (element.flag > ElementIntermediate)
-		DOMRemove(element.DOM, parent.DOM)
+		DOMRemove(element, parent)
 	else
 		element.children.forEach(function (children) {
 			commitRemove(children, element.flag < ElementPortal ? parent : element)
@@ -352,7 +372,7 @@ function commitInsert (element, sibling, parent) {
 		return commitInsert(element, elementSibling(sibling, 1), parent)
 
 	if (element.flag > ElementIntermediate)
-		DOMInsert(element.DOM, sibling.DOM, parent.DOM)
+		DOMInsert(element, sibling, parent)
 	else if (element.flag < ElementPortal)
 		element.children.forEach(function (children) {
 			commitInsert(children, sibling, parent)
@@ -368,7 +388,7 @@ function commitAppend (element, parent) {
 		return commitInsert(element, elementSibling(parent, 0), parent)
 
 	if (element.flag > ElementIntermediate)
-		DOMAppend(element.DOM, parent.DOM)
+		DOMAppend(element, parent)
 	else if (element.flag < ElementPortal)
 		element.children.forEach(function (children) {
 			commitAppend(children, parent)

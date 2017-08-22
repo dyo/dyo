@@ -4,7 +4,7 @@
  */
 function Element (flag) {
 	this.flag = flag
-	this.sync = PriorityHigh
+	this.work = WorkSync
 	this.keyed = false
 	this.xmlns = ''
 	this.key = null
@@ -100,6 +100,15 @@ function elementIterable (iterable, element) {
 }
 
 /**
+ * @param {string} summary
+ * @param {string} details
+ * @return {Element}
+ */
+function elementError (summary, details) {
+	return createElement('details', createElement('summary', summary), h('pre', details))
+}
+
+/**
  * @param {*} child
  * @return {Element}
  */
@@ -110,10 +119,10 @@ function elementUnknown (child) {
 		return elementUnknown(child[Iterator]())
 	else if (typeof child === 'function')
 		return elementUnknown(child())
-	else if (child.constructor !== Error)
+	else if (child.constructor === Error)
+		return elementError(child+'', (child.children||'')+'\n'+child.stack)
+	else
 		return createElement('pre', JSON.stringify(child, null, 2))
-
-	return createElement('details', createElement('summary', child+''), h('pre', (child.trace||'')+'\n'+child.stack))
 }
 
 /**
