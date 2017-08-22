@@ -59,6 +59,22 @@ function commitChildren (element, sibling, host) {
 
 /**
  * @param {Element} element
+ * @param {Element} parent
+ * @return {string}
+ */
+function commitXmlns (element, parent) {
+	switch (element.type) {
+		case 'svg':
+			return 'http://www.w3.org/2000/svg'
+		case 'math':
+			return 'http://www.w3.org/1998/Math/MathML'
+	}
+
+	return parent.xmlns && !element.xmlns && parent.type !== 'foreignObject' ? parent.xmlns : ''
+}
+
+/**
+ * @param {Element} element
  * @param {Element} sibling
  * @param {Element} parent
  * @param {Element} host
@@ -96,17 +112,7 @@ function commitMount (element, sibling, parent, host, signature) {
  			element.DOM = {node: parent.DOM.node}
  			break
  		case ElementNode:
- 			switch (element.type) {
- 				case 'svg':
- 					element.xmlns = NSSvg
- 					break
- 				case 'math':
- 					element.xmlns = NSMathML
- 					break
- 				default:
- 					if (parent.xmlns && !element.xmlns && parent.type !== 'foreignObject')
-						element.xmlns = parent.xmlns
- 			}
+ 			element.xmlns = commitXmlns(element, parent)
  		case ElementText:
  			element.DOM = commitDOM(element)
  			

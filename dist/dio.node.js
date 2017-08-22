@@ -173,10 +173,6 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	var LifecycleChildContext = 'getChildContext'
 	var LifecycleInitialState = 'getInitialState'
 	
-	var NSSvg = 'http://www.w3.org/2000/svg'
-	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
-	var NSXlink = 'http://www.w3.org/1999/xlink'
-	
 	/**
 	 * @param {*} value
 	 * @return {string}

@@ -9,6 +9,44 @@ function DOMDocument () {
  * @param {Element} element
  * @param {string} name
  * @param {*} value
+ * @param {boolean} xmlns
+ * @param {number} hash
+ * @param {number} signature
+ */
+function DOMAttribute (element, name, value, xmlns, hash, signature) {
+	if (signature < 1)
+		return hash !== 1 ? element.DOM.node.removeAttribute(name) : element.DOM.node.removeAttributeNS(name)
+
+	switch (hash) {
+		case 1:
+			return element.DOM.node.setAttributeNS('http://www.w3.org/1999/xlink', name, value)
+		case 2:
+			return DOMProperty(element, name, value)
+		case 3:
+			if (!xmlns)
+				return DOMProperty(element, name, value)
+	}
+
+	if (!xmlns && name in element.DOM.node)
+		switch (name) {
+			case 'width':
+			case 'height':
+				if (element.type === 'img')
+					break
+			default:
+				return DOMProperty(element, name, value)
+		}
+
+	if (value !== false)
+		element.DOM.node.setAttribute(name, value)
+	else
+		DOMAttribute(element, name, value, xmlns, hash, -1)
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {*} value
  */
 function DOMProperty (element, name, value) {
 	try {
@@ -31,44 +69,6 @@ function DOMStyle (element, name, value, signature) {
 	} else
 		for (var key in value)
 			DOMStyle(element, key, value[key], 1)
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {*} value
- * @param {boolean} xmlns
- * @param {number} hash
- * @param {number} signature
- */
-function DOMAttribute (element, name, value, xmlns, hash, signature) {
-	if (signature < 1)
-		return element.DOM.node[hash !== 1 ? 'removeAttribute' : 'removeAttributeNS'](name)
-
-	switch (hash) {
-		case 1:
-			return element.DOM.node.setAttributeNS(NSXlink, name, value)
-		case 2:
-			return DOMProperty(element, name, value)
-		case 3:
-			if (!xmlns)
-				return DOMProperty(element, name, value)
-	}
-
-	if (xmlns === false && name in element.DOM.node)
-		switch (name) {
-			case 'width':
-			case 'height':
-				if (element.type === 'img')
-					break
-			default:
-				return DOMProperty(element, name, value)
-		}
-
-	if (value !== false)
-		element.DOM.node.setAttribute(name, value)
-	else
-		DOMAttribute(element, name, value, xmlns, hash, -1)
 }
 
 

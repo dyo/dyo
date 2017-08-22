@@ -183,10 +183,6 @@
 	var LifecycleChildContext = 'getChildContext'
 	var LifecycleInitialState = 'getInitialState'
 	
-	var NSSvg = 'http://www.w3.org/2000/svg'
-	var NSMathML = 'http://www.w3.org/1998/Math/MathML'
-	var NSXlink = 'http://www.w3.org/1999/xlink'
-	
 	/**
 	 * @constructor
 	 * @param {number} flag
@@ -941,6 +937,22 @@
 	
 	/**
 	 * @param {Element} element
+	 * @param {Element} parent
+	 * @return {string}
+	 */
+	function commitXmlns (element, parent) {
+		switch (element.type) {
+			case 'svg':
+				return 'http://www.w3.org/2000/svg'
+			case 'math':
+				return 'http://www.w3.org/1998/Math/MathML'
+		}
+	
+		return parent.xmlns && !element.xmlns && parent.type !== 'foreignObject' ? parent.xmlns : ''
+	}
+	
+	/**
+	 * @param {Element} element
 	 * @param {Element} sibling
 	 * @param {Element} parent
 	 * @param {Element} host
@@ -978,17 +990,7 @@
 	 			element.DOM = {node: parent.DOM.node}
 	 			break
 	 		case ElementNode:
-	 			switch (element.type) {
-	 				case 'svg':
-	 					element.xmlns = NSSvg
-	 					break
-	 				case 'math':
-	 					element.xmlns = NSMathML
-	 					break
-	 				default:
-	 					if (parent.xmlns && !element.xmlns && parent.type !== 'foreignObject')
-							element.xmlns = parent.xmlns
-	 			}
+	 			element.xmlns = commitXmlns(element, parent)
 	 		case ElementText:
 	 			element.DOM = commitDOM(element)
 	 			
@@ -1650,6 +1652,44 @@
 	 * @param {Element} element
 	 * @param {string} name
 	 * @param {*} value
+	 * @param {boolean} xmlns
+	 * @param {number} hash
+	 * @param {number} signature
+	 */
+	function DOMAttribute (element, name, value, xmlns, hash, signature) {
+		if (signature < 1)
+			return hash !== 1 ? element.DOM.node.removeAttribute(name) : element.DOM.node.removeAttributeNS(name)
+	
+		switch (hash) {
+			case 1:
+				return element.DOM.node.setAttributeNS('http://www.w3.org/1999/xlink', name, value)
+			case 2:
+				return DOMProperty(element, name, value)
+			case 3:
+				if (!xmlns)
+					return DOMProperty(element, name, value)
+		}
+	
+		if (!xmlns && name in element.DOM.node)
+			switch (name) {
+				case 'width':
+				case 'height':
+					if (element.type === 'img')
+						break
+				default:
+					return DOMProperty(element, name, value)
+			}
+	
+		if (value !== false)
+			element.DOM.node.setAttribute(name, value)
+		else
+			DOMAttribute(element, name, value, xmlns, hash, -1)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} name
+	 * @param {*} value
 	 */
 	function DOMProperty (element, name, value) {
 		try {
@@ -1672,44 +1712,6 @@
 		} else
 			for (var key in value)
 				DOMStyle(element, key, value[key], 1)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} name
-	 * @param {*} value
-	 * @param {boolean} xmlns
-	 * @param {number} hash
-	 * @param {number} signature
-	 */
-	function DOMAttribute (element, name, value, xmlns, hash, signature) {
-		if (signature < 1)
-			return element.DOM.node[hash !== 1 ? 'removeAttribute' : 'removeAttributeNS'](name)
-	
-		switch (hash) {
-			case 1:
-				return element.DOM.node.setAttributeNS(NSXlink, name, value)
-			case 2:
-				return DOMProperty(element, name, value)
-			case 3:
-				if (!xmlns)
-					return DOMProperty(element, name, value)
-		}
-	
-		if (xmlns === false && name in element.DOM.node)
-			switch (name) {
-				case 'width':
-				case 'height':
-					if (element.type === 'img')
-						break
-				default:
-					return DOMProperty(element, name, value)
-			}
-	
-		if (value !== false)
-			element.DOM.node.setAttribute(name, value)
-		else
-			DOMAttribute(element, name, value, xmlns, hash, -1)
 	}
 	
 	/**
