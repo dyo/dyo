@@ -3,8 +3,8 @@
  * @param {Object} element
  */
 function Event (element) {
-	this.length = 0
 	this.element = element
+	this.length = 0
 }
 /**
  * @type {Object}

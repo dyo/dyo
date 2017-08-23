@@ -9,6 +9,7 @@ function errorException (element, from) {
 	var children = ''
 	var tabs = ''
 	var host = element
+	var stack = this.stack
 
 	while (host.type) {
 		children += tabs + '<' + getDisplayName(host.type) + '>\n'
@@ -16,9 +17,12 @@ function errorException (element, from) {
 		host = host.host
 	}
 
-	console.error('Error caught in `\n\n'+(this.children = children)+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n')
+	this.children = children
+	this.from = from
 
-	return this.from = from, this
+	console.error('Error caught in `\n\n'+children+'\n` from "'+from+'"\n\n'+stack+'\n\n')
+	
+	return this
 }
 
 /**

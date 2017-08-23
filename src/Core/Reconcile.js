@@ -10,17 +10,22 @@ function reconcileProperties (element, snapshot) {
 	var style = null
 
 	for (var key in prev)
-		if (!next.hasOwnProperty(key))
+		if (next[key] == null)
 			commitProperty(element, key, value, xmlns, 0)
 
 	for (var key in next)
 		if ((value = next[key]) !== (style = prev[key]))
-			if (key === 'style' && next !== null && typeof next === 'object') {
+			if (key !== 'style' || typeof value !== 'object') {
+				commitProperty(element, key, value, xmlns, 1)
+			} else {
+				for (var name in style)
+					if (!value || value[name] == null)
+						commitStyle(element, name, null, 1)
+
 				for (var name in value)
 					if (!style || value[name] !== style[name])
 						commitStyle(element, name, value[name], 1)
-			} else
-				commitProperty(element, key, value, xmlns, value != null ? 1 : 0)
+			}
 
 	element.props = next
 }

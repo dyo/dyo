@@ -76,8 +76,7 @@
 	 * @constructor
 	 */
 	function Hash () {
-		this.k = []
-		this.v = []
+		this.hash = ''
 	}
 	Hash.prototype = Object.create(null, {
 		/**
@@ -86,27 +85,21 @@
 		 * @return {Hash}
 		 */
 		set: {value: function set (key, value) {
-			var k = this.k
-			var i = k.lastIndexOf(key)
-	
-			k[i < 0 ? (i = k.length) : i] = key
-			this.v[i] = value
-	
-			return this
+			key[this.hash] = value
 		}},
 		/**
 		 * @param  {*} key
 		 * @return {*}
 		 */
 		get: {value: function get (key) {
-			return this.v[this.k.lastIndexOf(key)]
+			return key[this.hash]
 		}},
 		/**
 		 * @param {*} key
 		 * @return {boolean}
 		 */
 		has: {value: function has (key) {
-			return this.k.lastIndexOf(key) > -1
+			return this.hash in key
 		}}
 	})
 	
@@ -227,14 +220,14 @@
 	}
 	
 	/**
-	 * @return {Element} children
+	 * @param {Object} object
+	 * @return {Element}
 	 */
-	function elementIntermediate (children) {
+	function elementIntermediate (object) {
 		var element = new Element(ElementIntermediate)
 	
-		element.children = children
 		element.context = {}
-		element.DOM = {node: null}
+		element.DOM = object
 	
 		return element
 	}
@@ -257,11 +250,6 @@
 			case Array:
 				for (var i = 0; i < fragment.length; i++)
 					elementChildren(element, children, fragment[i], i)
-				break
-			case List:
-				fragment.forEach(function (fragment, i) {
-					elementChildren(element, children, fragment, i)
-				})
 		}
 	
 		return element
@@ -321,7 +309,7 @@
 		else if (isValidElement(element.next))
 			return element.next
 		else
-			return elementIntermediate(element)
+			return elementIntermediate({node: null})
 	}
 	
 	/**
@@ -341,7 +329,6 @@
 	
 					children.push(child)
 					break
-				case List:
 				case Array:
 					for (var i = 0; i < child.length; i++)
 						elementChildren(element, children, child[i], index+i)
@@ -885,7 +872,6 @@
 			switch (element.constructor) {
 				case Element:
 					return element
-				case List:
 				case Array:
 					return elementFragment(element)
 				case String:
@@ -1046,11 +1032,15 @@
 					}
 		}
 	
-		if (signature < 1)
-			element.context = element.DOM = null
-	
 		if (element.ref)
 			commitReference(element, element.ref, -1)
+	
+		if (signature < 1) {
+			element.context = null
+			element.state = null
+			element.event = null
+			element.DOM = null
+		}
 	}
 	
 	/**
@@ -1291,17 +1281,22 @@
 		var style = null
 	
 		for (var key in prev)
-			if (!next.hasOwnProperty(key))
+			if (next[key] == null)
 				commitProperty(element, key, value, xmlns, 0)
 	
 		for (var key in next)
 			if ((value = next[key]) !== (style = prev[key]))
-				if (key === 'style' && next !== null && typeof next === 'object') {
+				if (key !== 'style' || typeof value !== 'object') {
+					commitProperty(element, key, value, xmlns, 1)
+				} else {
+					for (var name in style)
+						if (!value || value[name] == null)
+							commitStyle(element, name, null, 1)
+	
 					for (var name in value)
 						if (!style || value[name] !== style[name])
 							commitStyle(element, name, value[name], 1)
-				} else
-					commitProperty(element, key, value, xmlns, value != null ? 1 : 0)
+				}
 	
 		element.props = next
 	}
@@ -1538,8 +1533,8 @@
 	 * @param {Object} element
 	 */
 	function Event (element) {
-		this.length = 0
 		this.element = element
+		this.length = 0
 	}
 	/**
 	 * @type {Object}
@@ -1585,6 +1580,7 @@
 		var children = ''
 		var tabs = ''
 		var host = element
+		var stack = this.stack
 	
 		while (host.type) {
 			children += tabs + '<' + getDisplayName(host.type) + '>\n'
@@ -1592,9 +1588,12 @@
 			host = host.host
 		}
 	
-		console.error('Error caught in `\n\n'+(this.children = children)+'\n`'+' from "'+from+'"'+'\n\n'+this.stack+'\n\n')
+		this.children = children
+		this.from = from
 	
-		return this.from = from, this
+		console.error('Error caught in `\n\n'+children+'\n` from "'+from+'"\n\n'+stack+'\n\n')
+		
+		return this
 	}
 	
 	/**
@@ -1708,7 +1707,7 @@
 			if (name.charCodeAt(0) !== 45)
 				element.DOM.node.style[name] = value
 			else
-				element.DOM.node.style.setProperty(name, value)
+				element.DOM.node.style[value == null ? 'setProperty' : 'removeProperty'](name, value)
 		} else
 			for (var key in value)
 				DOMStyle(element, key, value[key], 1)
@@ -1784,8 +1783,8 @@
 	}
 	
 	/**
-	 * @param {*} subject
-	 * @param {Node?} target
+	 * @param {Element} subject
+	 * @param {Node} target
 	 */
 	function render (subject, target) {
 		if (!isValidElement(subject))
@@ -1795,24 +1794,21 @@
 			return render(subject, DOMDocument())
 			
 		if (root.has(target))
-			reconcileElement(root.get(target), commitElement(subject))
-		else
-			mount(subject, elementIntermediate(subject), target, 1)	
+			return reconcileElement(root.get(target), commitElement(subject))
+	
+		mount(subject, elementIntermediate({node: target}), target)	
 	}
 	
 	/**
-	 * @param {*} subject
-	 * @param {*} parent
-	 * @param {Node?} target
-	 * @param {number} signature
+	 * @param {Element} subject
+	 * @param {Element} parent
+	 * @param {Node} target
 	 */
-	function mount (subject, parent, target, signature) {
-		root.set(parent.DOM.node = target, subject)
+	function mount (subject, parent, target) {
+		root.set(target, subject)
 	
-		if (signature > 0) {
-			commitContent(parent)
-			commitMount(subject, subject, parent, parent, 0)
-		}
+		commitContent(parent)
+		commitMount(subject, subject, parent, parent, 0)
 	}
 
 	/**

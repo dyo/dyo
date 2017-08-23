@@ -42,14 +42,14 @@ function elementText (content) {
 }
 
 /**
- * @return {Element} children
+ * @param {Object} object
+ * @return {Element}
  */
-function elementIntermediate (children) {
+function elementIntermediate (object) {
 	var element = new Element(ElementIntermediate)
 
-	element.children = children
 	element.context = {}
-	element.DOM = {node: null}
+	element.DOM = object
 
 	return element
 }
@@ -72,11 +72,6 @@ function elementFragment (fragment) {
 		case Array:
 			for (var i = 0; i < fragment.length; i++)
 				elementChildren(element, children, fragment[i], i)
-			break
-		case List:
-			fragment.forEach(function (fragment, i) {
-				elementChildren(element, children, fragment, i)
-			})
 	}
 
 	return element
@@ -136,7 +131,7 @@ function elementSibling (element, signature) {
 	else if (isValidElement(element.next))
 		return element.next
 	else
-		return elementIntermediate(element)
+		return elementIntermediate({node: null})
 }
 
 /**
@@ -156,7 +151,6 @@ function elementChildren (element, children, child, index) {
 
 				children.push(child)
 				break
-			case List:
 			case Array:
 				for (var i = 0; i < child.length; i++)
 					elementChildren(element, children, child[i], index+i)

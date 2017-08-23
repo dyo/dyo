@@ -7,7 +7,6 @@ function commitElement (element) {
 		switch (element.constructor) {
 			case Element:
 				return element
-			case List:
 			case Array:
 				return elementFragment(element)
 			case String:
@@ -168,11 +167,15 @@ function commitDemount (element, flag, signature) {
 				}
 	}
 
-	if (signature < 1)
-		element.context = element.DOM = null
-
 	if (element.ref)
 		commitReference(element, element.ref, -1)
+
+	if (signature < 1) {
+		element.context = null
+		element.state = null
+		element.event = null
+		element.DOM = null
+	}
 }
 
 /**

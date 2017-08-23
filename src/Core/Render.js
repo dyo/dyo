@@ -1,6 +1,6 @@
 /**
- * @param {*} subject
- * @param {Node?} target
+ * @param {Element} subject
+ * @param {Node} target
  */
 function render (subject, target) {
 	if (!isValidElement(subject))
@@ -10,22 +10,19 @@ function render (subject, target) {
 		return render(subject, DOMDocument())
 		
 	if (root.has(target))
-		reconcileElement(root.get(target), commitElement(subject))
-	else
-		mount(subject, elementIntermediate(subject), target, 1)	
+		return reconcileElement(root.get(target), commitElement(subject))
+
+	mount(subject, elementIntermediate({node: target}), target)	
 }
 
 /**
- * @param {*} subject
- * @param {*} parent
- * @param {Node?} target
- * @param {number} signature
+ * @param {Element} subject
+ * @param {Element} parent
+ * @param {Node} target
  */
-function mount (subject, parent, target, signature) {
-	root.set(parent.DOM.node = target, subject)
+function mount (subject, parent, target) {
+	root.set(target, subject)
 
-	if (signature > 0) {
-		commitContent(parent)
-		commitMount(subject, subject, parent, parent, 0)
-	}
+	commitContent(parent)
+	commitMount(subject, subject, parent, parent, 0)
 }
