@@ -1596,23 +1596,16 @@
 		 * @param {Event} event
 		 */
 		handleEvent: function handleEvent (event) {
-			this.hasOwnProperty('on'+event.type, event.target)
-		},
-		hasOwnProperty: function hasOwnProperty (type, target) {
-			if (this[type] && this[type].has(target))
-				this.dispatch(event, type)
+			this.dispatchEvent('on'+event.type, event, event.target)
 		},
 		/**
-		 * @param {Element} element
 		 * @param {string} type
+		 * @param {Event} event
+		 * @return {Boolean}
 		 */
-		attach: function attach (element, type) {
-			if (!this[type]) {
-				this[type] = new Map()
-				this.addEventListener(type.substring(2))
-			}
-	
-			this[type].set(element.DOM.node, element)
+		dispatchEvent: function dispatchEvent (type, event) {
+			if (this[type] && this[type].has(event.target))
+				this.dispatch(event, type)
 		},
 		/**
 		 * @param {Event} event
@@ -1639,6 +1632,18 @@
 			} catch (e) {
 				errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
 			}
+		},
+		/**
+		 * @param {Element} element
+		 * @param {string} type
+		 */
+		attach: function attach (element, type) {
+			if (!this[type]) {
+				this[type] = new Map()
+				this.addEventListener(type.substring(2))
+			}
+	
+			this[type].set(element.DOM.node, element)
 		}
 	}
 	

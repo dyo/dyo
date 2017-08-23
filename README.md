@@ -79,8 +79,9 @@ The easiest way to get started with DIO is to walk through the [Introduction to 
 
 ### Events
 
-1. Additional support for the `handleEvent` interface.
-2. Event listeners `this` defaults to the closest `Component` relegating the need to `.bind`
+1. Event delegation by default.
+2. Additional support for the `handleEvent` interface.
+3. Event listeners `this` defaults to the closest `Component` relegating the need to `.bind` methods.
 
 ### Errors
 
