@@ -62,7 +62,7 @@ function DOMProperty (element, name, value) {
  */
 function DOMStyle (element, name, value, signature) {
 	if (signature > 0) {
-		if (name.charCodeAt(0) !== 45)
+		if (name.indexOf('-') < 0)
 			element.DOM.node.style[name] = value
 		else
 			element.DOM.node.style[value != null ? 'setProperty' : 'removeProperty'](name, value)
