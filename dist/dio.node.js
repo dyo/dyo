@@ -66,8 +66,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @constructor
 	 */
 	function Hash () {
-		this.maps = {}
-		this.hash = 0
+		this.hash = ''
 	}
 	Hash.prototype = Object.create(null, {
 		/**
@@ -75,21 +74,21 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		 * @param {*} value
 		 */
 		set: {value: function set (key, value) {
-			this.maps[key[''] = --this.hash] = value
+			key[this.hash] = value
 		}},
 		/**
 		 * @param {*} key
 		 * @return {*}
 		 */
 		get: {value: function get (key) {
-			return this.maps[key['']]
+			return key[this.hash]
 		}},
 		/**
 		 * @param {*} key
 		 * @return {boolean}
 		 */
 		has: {value: function has (key) {
-			return '' in key
+			return this.hash in key
 		}}
 	})
 	
