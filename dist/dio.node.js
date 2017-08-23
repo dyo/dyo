@@ -57,7 +57,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		 * @param {function} callback
 		 */
 		forEach: {value: function forEach (callback) {
-			for (var i = 0, element = this; i < this.length; i++)
+			for (var i = 0, element = this; i < this.length; ++i)
 				callback.call(this, element = element.next, i)
 		}}
 	})
@@ -66,70 +66,106 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @constructor
 	 */
 	function Hash () {
-		this.hash = ''
+		this.maps = {}
+		this.hash = 0
 	}
 	Hash.prototype = Object.create(null, {
 		/**
-		 * @param  {*} key
-		 * @param  {*} value
-		 * @return {Hash}
+		 * @param {*} key
+		 * @param {*} value
 		 */
 		set: {value: function set (key, value) {
-			key[this.hash] = value
+			this.maps[key[''] = --this.hash] = value
 		}},
 		/**
-		 * @param  {*} key
+		 * @param {*} key
 		 * @return {*}
 		 */
 		get: {value: function get (key) {
-			return key[this.hash]
+			return this.maps[key['']]
 		}},
 		/**
 		 * @param {*} key
 		 * @return {boolean}
 		 */
 		has: {value: function has (key) {
-			return this.hash in key
+			return '' in key
 		}}
 	})
 	
 	/**
-	 * @param {Object} destination
-	 * @param {Object} source
+	 * @return {void}
 	 */
-	function merge (destination, source) {
-		for (var key in source)
-			destination[key] = source[key]
+	function noop () {}
+	
+	/**
+	 * @param {Object} object
+	 * @param {Object} primary
+	 */
+	function merge (object, primary) {
+		for (var key in primary)
+			object[key] = primary[key]
 	}
 	
 	/**
-	 * @param {Object} destination
-	 * @param {Object} source
-	 * @param {Object} delta
+	 * @param {Object} object
+	 * @param {Object} primary
+	 * @param {Object} secondary
 	 * @return {Object}
 	 */
-	function assign (destination, source, delta) {
-		for (var key in source)
-			destination[key] = source[key]
+	function assign (object, primary, secondary) {
+		for (var key in primary)
+			object[key] = primary[key]
 		
-		for (var key in delta)
-			destination[key] = delta[key]
+		for (var key in secondary)
+			object[key] = secondary[key]
 	
-		return destination
+		return object
+	}
+	
+	/**
+	 * @param {Array} array
+	 * @param {Array} output
+	 * @return {Array}
+	 */
+	function flatten (array, output) {	
+		for (var i = 0; i < array.length; ++i) {
+			if (array[i] instanceof Array)
+				flatten(array[i], output)
+			else
+				output.push(array[i])
+		}
+		
+		return output
+	}
+	
+	/**
+	 * @param {Iterable} iterable
+	 * @param {function} callback
+	 */
+	function each (iterable, callback) {
+		var value = iterable.next()
+	
+		while (value.done !== true) {
+			callback(value.value)
+			value = iterable.next(value.value)
+		}
 	}
 	
 	/**
 	 * @param {function} callback
 	 */
-	function setImmediate (callback) {
+	function enqueue (callback) {
 		requestAnimationFrame(callback, 16)
 	}
 	
 	/**
-	 * @type {function}
-	 * @return {void}
+	 * @param {string} from
+	 * @param {string} message
 	 */
-	function noop () {}
+	function invariant (from, message) {
+		throw new Error('#'+from+'(...): '+message+'.')
+	}
 	
 	var Node = window.Node || noop
 	var Symbol = window.Symbol || noop

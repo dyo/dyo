@@ -26,7 +26,7 @@ module.exports = ({h, Component, render}) => {
 		var stages = []
 
 		class A {
-			componentWillUnmount() {stages.push('1')}
+			componentWillUnmount() {stages.push('0')}
 			render(){}
 		}
 
@@ -35,7 +35,7 @@ module.exports = ({h, Component, render}) => {
 			componentWillUpdate(nextProps, nextState) {stages.push('4')}
 			shouldComponentUpdate() {stages.push('3')}
 			componentWillReceiveProps() {stages.push('2')}
-			componentWillMount() {stages.push('0')}
+			componentWillMount() {stages.push('1')}
 			render(){}
 		}
 

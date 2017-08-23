@@ -17,7 +17,8 @@ const umd = [
 	'../src/Core/Event.js',
 	'../src/Core/Error.js',
 	'../src/Core/DOM.js',
-	'../src/Core/Render.js'
+	'../src/Core/Render.js',
+	'../src/Core/Children.js'
 ]
 
 const node = [
@@ -41,6 +42,7 @@ exports.h = exports.createElement = window.h = createElement
 exports.isValidElement = isValidElement
 exports.cloneElement = cloneElement
 exports.Component = Component
+exports.Children = Children
 exports.render = render
 
 if (server)

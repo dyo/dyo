@@ -132,13 +132,14 @@ function commitMount (element, sibling, parent, host, signature) {
  * @param {Element} element
  * @param {Element} parent
  * @param {number} signature
+ * @param {(boolean|void)}
  */
 function commitUnmount (element, parent, signature) {
-	if (element.flag !== ElementComponent) {
-		commitRemove(element, parent)
-		commitDemount(element, 1, signature)
-	} else
-		componentUnmount(element, element.children, parent, signature, 1)
+	if (element.flag === ElementComponent)
+		return componentUnmount(element, element.children, parent, signature, 1)
+
+	commitRemove(element, parent)
+	commitDemount(element, 1, signature)
 }
 
 /**
@@ -183,8 +184,20 @@ function commitDemount (element, flag, signature) {
  * @param {Element} snapshot
  */
 function commitMerge (element, snapshot) {
-	commitMount(snapshot, element, element.parent, element.host, 1)	
-	commitUnmount(element, element.parent, 1)
+	if (commitUnmount(element, element.parent, 1))
+		element.state.then(function () {
+			commitRebase(element, snapshot)
+		})
+	else
+		commitRebase(element, snapshot)
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} snapshot
+ */
+function commitRebase (element, snapshot) {
+	commitMount(snapshot, elementSibling(element, 0), element.parent, element.host, 1)
 
 	for (var key in snapshot)
 		switch (key) {

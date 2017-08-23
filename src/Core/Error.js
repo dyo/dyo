@@ -51,17 +51,17 @@ function errorRecovery (element, error, from) {
 					children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
 					element.work = WorkSync
 				} else if (element.host.owner)
-					setImmediate(function () {
+					enqueue(function () {
 						errorBoundary(element.host, error, from)
 					})
 
 			if (from !== LifecycleRender && !server)
-				setImmediate(function () {
+				enqueue(function () {
 					reconcileElement(getHostElement(element), children)
 				})
 		}
 	} catch (e) {
-		setImmediate(function () {
+		enqueue(function () {
 			errorBoundary(element.host, e, LifecycleDidCatch)
 		})
 	}

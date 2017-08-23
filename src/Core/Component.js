@@ -11,7 +11,10 @@ function Component (props, context) {
 /**
  * @type {Object}
  */
-var descriptors = {forceUpdate: {value: forceUpdate}, setState: {value: setState}}
+var descriptors = {
+	forceUpdate: {value: forceUpdate}, 
+	setState: {value: setState}
+}
 
 /**
  * @type {Object}
@@ -62,7 +65,7 @@ function componentMount (element) {
 	instance.children = element
 
 	if (owner[LifecycleInitialState])
-		instance.state = getInitialState(element, instance, lifecycleGet(element, LifecycleInitialState))
+		instance.state = getInitialState(element, instance, lifecycleData(element, LifecycleInitialState))
 	else if (!instance.state)
 		instance.state = {}
 	
@@ -127,18 +130,18 @@ function componentUpdate (element, snapshot, signature) {
 }
 
 /**
- * @param {Element} host
+ * @param {Element} element
  * @param {List} children
  * @param {Element} parent
  * @param {number} signature
  * @param {number} resolve
  */
-function componentUnmount (host, children, parent, signature, resolve) {
-	if (resolve > 0 && host.owner[LifecycleWillUnmount])
-		if (host.state = lifecycleMount(host, LifecycleWillUnmount))
-			if (host.state.constructor === Promise)
-				return void host.state.then(function () {
-					host.state = componentUnmount(host, children, element, parent, signature, 0)
+function componentUnmount (element, children, parent, signature, resolve) {
+	if (resolve > 0 && element.owner[LifecycleWillUnmount])
+		if (element.state = lifecycleMount(element, LifecycleWillUnmount))
+			if (element.state.constructor === Promise)
+				return !!element.state.then(function () {
+					element.state = void commitUnmount(children, parent, signature)
 				})
 
 	commitUnmount(children, parent, signature)
@@ -199,7 +202,7 @@ function enqueueCallback (element, instance, callback) {
  */
 function enqueuePending (element, instance, state, callback) {
 	state.then(function (value) {
-		setImmediate(function () {
+		enqueue(function () {
 			enqueueState(element, instance, value, callback)
 		})
 	})
@@ -213,12 +216,12 @@ function enqueuePending (element, instance, state, callback) {
  */
 function enqueueUpdate (element, instance, callback, signature) {
 	if (element == null)
-		return setImmediate(function () {
+		return enqueue(function () {
 			enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 		})
 
 	if (element.work < WorkSync)
-		return setImmediate(function () {
+		return enqueue(function () {
 			enqueueUpdate(element, instance, callback, signature)
 		})
 
@@ -283,7 +286,7 @@ function getChildElement (element) {
  */
 function getChildContext (element) {
 	if (element.owner[LifecycleChildContext])
-		return lifecycleGet(element, LifecycleChildContext) || element.context || {}
+		return lifecycleData(element, LifecycleChildContext) || element.context || {}
 	else
 		return element.context || {}
 }

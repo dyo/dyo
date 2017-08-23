@@ -70,7 +70,7 @@ function elementFragment (fragment) {
 			elementChildren(element, children, fragment, 0)
 			break
 		case Array:
-			for (var i = 0; i < fragment.length; i++)
+			for (var i = 0; i < fragment.length; ++i)
 				elementChildren(element, children, fragment[i], i)
 	}
 
@@ -83,13 +83,10 @@ function elementFragment (fragment) {
  */
 function elementIterable (iterable, element) {	
 	var index = 0
-	var children = element.children
-	var value = iterable.next()
 
-	while (value.done !== true) {
-		index = elementChildren(element, children, value.value, index)
-		value = iterable.next(value.value)
-	}
+	each(iterable, function (value) {
+		index = elementChildren(element, element.children, value, index)
+	})
 
 	return element
 }
@@ -110,7 +107,7 @@ function elementError (summary, details) {
 function elementUnknown (child) {
 	if (typeof child.next === 'function')
 		return elementIterable(child, elementFragment(child))
-	else if (typeof child[Iterator] === 'function')
+	if (typeof child[Iterator] === 'function')
 		return elementUnknown(child[Iterator]())
 	else if (typeof child === 'function')
 		return elementUnknown(child())
@@ -146,13 +143,15 @@ function elementChildren (element, children, child, index) {
 	else
 		switch (child.constructor) {
 			case Element:
-				if (child.key !== null && element.keyed === false)
+				if (child.key == null)
+					child.key += '#'+index
+				else if (element.keyed === false)
 					element.keyed = true
 
 				children.push(child)
 				break
 			case Array:
-				for (var i = 0; i < child.length; i++)
+				for (var i = 0; i < child.length; ++i)
 					elementChildren(element, children, child[i], index+i)
 
 				return index+i
@@ -238,11 +237,11 @@ function createElement (type, props) {
 
 	if ((size = length - i) > 0) {
 		if (flag !== ElementComponent)
-			for (children = element.children = new List(); i < length; i++)
+			for (children = element.children = new List(); i < length; ++i)
 				index = elementChildren(element, children, arguments[i], index)
 		else {
 			if (size > 1)
-				for (children = Array(size); i < length; i++)
+				for (children = Array(size); i < length; ++i)
 					children[index++] = arguments[i]
 			else
 				children = arguments[i]

@@ -32,7 +32,7 @@ function lifecycleCallback (element, callback, primary, secondary, optional) {
  * @param {Element} element
  * @param {string} name
  */
-function lifecycleGet (element, name) {
+function lifecycleData (element, name) {
 	try {
 		return element.owner[name].call(element.instance)
 	} catch (e) {
@@ -47,8 +47,11 @@ function lifecycleGet (element, name) {
 function lifecycleMount (element, name) {
 	try {
 		var state = element.owner[name].call(element.instance, element.DOM ? element.DOM.node : null)
-			
-		return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
+		
+		if (state instanceof Promise)
+			return state
+
+		lifecycleReturn(element, state)
 	} catch (e) {
 		errorBoundary(element, e, name)
 	}
@@ -65,7 +68,10 @@ function lifecycleUpdate (element, name, props, state, context) {
 	try {
 		var state = element.owner[name].call(element.instance, props, state, context)
 
-		return typeof state !== 'object' ? state : lifecycleReturn(element, state)
+		if (typeof state !== 'object')
+			return state
+
+		lifecycleReturn(element, state)
 	} catch (e) {
 		errorBoundary(element, e, name)
 	}

@@ -67,7 +67,7 @@
 		 * @param {function} callback
 		 */
 		forEach: {value: function forEach (callback) {
-			for (var i = 0, element = this; i < this.length; i++)
+			for (var i = 0, element = this; i < this.length; ++i)
 				callback.call(this, element = element.next, i)
 		}}
 	})
@@ -76,70 +76,106 @@
 	 * @constructor
 	 */
 	function Hash () {
-		this.hash = ''
+		this.maps = {}
+		this.hash = 0
 	}
 	Hash.prototype = Object.create(null, {
 		/**
-		 * @param  {*} key
-		 * @param  {*} value
-		 * @return {Hash}
+		 * @param {*} key
+		 * @param {*} value
 		 */
 		set: {value: function set (key, value) {
-			key[this.hash] = value
+			this.maps[key[''] = --this.hash] = value
 		}},
 		/**
-		 * @param  {*} key
+		 * @param {*} key
 		 * @return {*}
 		 */
 		get: {value: function get (key) {
-			return key[this.hash]
+			return this.maps[key['']]
 		}},
 		/**
 		 * @param {*} key
 		 * @return {boolean}
 		 */
 		has: {value: function has (key) {
-			return this.hash in key
+			return '' in key
 		}}
 	})
 	
 	/**
-	 * @param {Object} destination
-	 * @param {Object} source
+	 * @return {void}
 	 */
-	function merge (destination, source) {
-		for (var key in source)
-			destination[key] = source[key]
+	function noop () {}
+	
+	/**
+	 * @param {Object} object
+	 * @param {Object} primary
+	 */
+	function merge (object, primary) {
+		for (var key in primary)
+			object[key] = primary[key]
 	}
 	
 	/**
-	 * @param {Object} destination
-	 * @param {Object} source
-	 * @param {Object} delta
+	 * @param {Object} object
+	 * @param {Object} primary
+	 * @param {Object} secondary
 	 * @return {Object}
 	 */
-	function assign (destination, source, delta) {
-		for (var key in source)
-			destination[key] = source[key]
+	function assign (object, primary, secondary) {
+		for (var key in primary)
+			object[key] = primary[key]
 		
-		for (var key in delta)
-			destination[key] = delta[key]
+		for (var key in secondary)
+			object[key] = secondary[key]
 	
-		return destination
+		return object
+	}
+	
+	/**
+	 * @param {Array} array
+	 * @param {Array} output
+	 * @return {Array}
+	 */
+	function flatten (array, output) {	
+		for (var i = 0; i < array.length; ++i) {
+			if (array[i] instanceof Array)
+				flatten(array[i], output)
+			else
+				output.push(array[i])
+		}
+		
+		return output
+	}
+	
+	/**
+	 * @param {Iterable} iterable
+	 * @param {function} callback
+	 */
+	function each (iterable, callback) {
+		var value = iterable.next()
+	
+		while (value.done !== true) {
+			callback(value.value)
+			value = iterable.next(value.value)
+		}
 	}
 	
 	/**
 	 * @param {function} callback
 	 */
-	function setImmediate (callback) {
+	function enqueue (callback) {
 		requestAnimationFrame(callback, 16)
 	}
 	
 	/**
-	 * @type {function}
-	 * @return {void}
+	 * @param {string} from
+	 * @param {string} message
 	 */
-	function noop () {}
+	function invariant (from, message) {
+		throw new Error('#'+from+'(...): '+message+'.')
+	}
 	
 	var Node = window.Node || noop
 	var Symbol = window.Symbol || noop
@@ -248,7 +284,7 @@
 				elementChildren(element, children, fragment, 0)
 				break
 			case Array:
-				for (var i = 0; i < fragment.length; i++)
+				for (var i = 0; i < fragment.length; ++i)
 					elementChildren(element, children, fragment[i], i)
 		}
 	
@@ -261,13 +297,10 @@
 	 */
 	function elementIterable (iterable, element) {	
 		var index = 0
-		var children = element.children
-		var value = iterable.next()
 	
-		while (value.done !== true) {
-			index = elementChildren(element, children, value.value, index)
-			value = iterable.next(value.value)
-		}
+		each(iterable, function (value) {
+			index = elementChildren(element, element.children, value, index)
+		})
 	
 		return element
 	}
@@ -288,7 +321,7 @@
 	function elementUnknown (child) {
 		if (typeof child.next === 'function')
 			return elementIterable(child, elementFragment(child))
-		else if (typeof child[Iterator] === 'function')
+		if (typeof child[Iterator] === 'function')
 			return elementUnknown(child[Iterator]())
 		else if (typeof child === 'function')
 			return elementUnknown(child())
@@ -324,13 +357,15 @@
 		else
 			switch (child.constructor) {
 				case Element:
-					if (child.key !== null && element.keyed === false)
+					if (child.key == null)
+						child.key += '#'+index
+					else if (element.keyed === false)
 						element.keyed = true
 	
 					children.push(child)
 					break
 				case Array:
-					for (var i = 0; i < child.length; i++)
+					for (var i = 0; i < child.length; ++i)
 						elementChildren(element, children, child[i], index+i)
 	
 					return index+i
@@ -416,11 +451,11 @@
 	
 		if ((size = length - i) > 0) {
 			if (flag !== ElementComponent)
-				for (children = element.children = new List(); i < length; i++)
+				for (children = element.children = new List(); i < length; ++i)
 					index = elementChildren(element, children, arguments[i], index)
 			else {
 				if (size > 1)
-					for (children = Array(size); i < length; i++)
+					for (children = Array(size); i < length; ++i)
 						children[index++] = arguments[i]
 				else
 					children = arguments[i]
@@ -486,7 +521,7 @@
 	 * @param {Element} element
 	 * @param {string} name
 	 */
-	function lifecycleGet (element, name) {
+	function lifecycleData (element, name) {
 		try {
 			return element.owner[name].call(element.instance)
 		} catch (e) {
@@ -501,8 +536,11 @@
 	function lifecycleMount (element, name) {
 		try {
 			var state = element.owner[name].call(element.instance, element.DOM ? element.DOM.node : null)
-				
-			return state && state.constructor === Promise ? state : lifecycleReturn(element, state)
+			
+			if (state instanceof Promise)
+				return state
+	
+			lifecycleReturn(element, state)
 		} catch (e) {
 			errorBoundary(element, e, name)
 		}
@@ -519,7 +557,10 @@
 		try {
 			var state = element.owner[name].call(element.instance, props, state, context)
 	
-			return typeof state !== 'object' ? state : lifecycleReturn(element, state)
+			if (typeof state !== 'object')
+				return state
+	
+			lifecycleReturn(element, state)
 		} catch (e) {
 			errorBoundary(element, e, name)
 		}
@@ -538,7 +579,10 @@
 	/**
 	 * @type {Object}
 	 */
-	var descriptors = {forceUpdate: {value: forceUpdate}, setState: {value: setState}}
+	var descriptors = {
+		forceUpdate: {value: forceUpdate}, 
+		setState: {value: setState}
+	}
 	
 	/**
 	 * @type {Object}
@@ -589,7 +633,7 @@
 		instance.children = element
 	
 		if (owner[LifecycleInitialState])
-			instance.state = getInitialState(element, instance, lifecycleGet(element, LifecycleInitialState))
+			instance.state = getInitialState(element, instance, lifecycleData(element, LifecycleInitialState))
 		else if (!instance.state)
 			instance.state = {}
 		
@@ -654,18 +698,18 @@
 	}
 	
 	/**
-	 * @param {Element} host
+	 * @param {Element} element
 	 * @param {List} children
 	 * @param {Element} parent
 	 * @param {number} signature
 	 * @param {number} resolve
 	 */
-	function componentUnmount (host, children, parent, signature, resolve) {
-		if (resolve > 0 && host.owner[LifecycleWillUnmount])
-			if (host.state = lifecycleMount(host, LifecycleWillUnmount))
-				if (host.state.constructor === Promise)
-					return void host.state.then(function () {
-						host.state = componentUnmount(host, children, element, parent, signature, 0)
+	function componentUnmount (element, children, parent, signature, resolve) {
+		if (resolve > 0 && element.owner[LifecycleWillUnmount])
+			if (element.state = lifecycleMount(element, LifecycleWillUnmount))
+				if (element.state.constructor === Promise)
+					return !!element.state.then(function () {
+						element.state = void commitUnmount(children, parent, signature)
 					})
 	
 		commitUnmount(children, parent, signature)
@@ -726,7 +770,7 @@
 	 */
 	function enqueuePending (element, instance, state, callback) {
 		state.then(function (value) {
-			setImmediate(function () {
+			enqueue(function () {
 				enqueueState(element, instance, value, callback)
 			})
 		})
@@ -740,12 +784,12 @@
 	 */
 	function enqueueUpdate (element, instance, callback, signature) {
 		if (element == null)
-			return setImmediate(function () {
+			return enqueue(function () {
 				enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 			})
 	
 		if (element.work < WorkSync)
-			return setImmediate(function () {
+			return enqueue(function () {
 				enqueueUpdate(element, instance, callback, signature)
 			})
 	
@@ -810,7 +854,7 @@
 	 */
 	function getChildContext (element) {
 		if (element.owner[LifecycleChildContext])
-			return lifecycleGet(element, LifecycleChildContext) || element.context || {}
+			return lifecycleData(element, LifecycleChildContext) || element.context || {}
 		else
 			return element.context || {}
 	}
@@ -997,13 +1041,14 @@
 	 * @param {Element} element
 	 * @param {Element} parent
 	 * @param {number} signature
+	 * @param {(boolean|void)}
 	 */
 	function commitUnmount (element, parent, signature) {
-		if (element.flag !== ElementComponent) {
-			commitRemove(element, parent)
-			commitDemount(element, 1, signature)
-		} else
-			componentUnmount(element, element.children, parent, signature, 1)
+		if (element.flag === ElementComponent)
+			return componentUnmount(element, element.children, parent, signature, 1)
+	
+		commitRemove(element, parent)
+		commitDemount(element, 1, signature)
 	}
 	
 	/**
@@ -1048,8 +1093,20 @@
 	 * @param {Element} snapshot
 	 */
 	function commitMerge (element, snapshot) {
-		commitMount(snapshot, element, element.parent, element.host, 1)	
-		commitUnmount(element, element.parent, 1)
+		if (commitUnmount(element, element.parent, 1))
+			element.state.then(function () {
+				commitRebase(element, snapshot)
+			})
+		else
+			commitRebase(element, snapshot)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} snapshot
+	 */
+	function commitRebase (element, snapshot) {
+		commitMount(snapshot, elementSibling(element, 0), element.parent, element.host, 1)
 	
 		for (var key in snapshot)
 			switch (key) {
@@ -1622,17 +1679,17 @@
 						children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
 						element.work = WorkSync
 					} else if (element.host.owner)
-						setImmediate(function () {
+						enqueue(function () {
 							errorBoundary(element.host, error, from)
 						})
 	
 				if (from !== LifecycleRender && !server)
-					setImmediate(function () {
+					enqueue(function () {
 						reconcileElement(getHostElement(element), children)
 					})
 			}
 		} catch (e) {
-			setImmediate(function () {
+			enqueue(function () {
 				errorBoundary(element.host, e, LifecycleDidCatch)
 			})
 		}
@@ -1805,10 +1862,88 @@
 	 * @param {Node} target
 	 */
 	function mount (subject, parent, target) {
+		if (!isValidPortal(target))
+			return invariant('render', 'Target container is not a DOM element')
+	
 		root.set(target, subject)
 	
 		commitContent(parent)
 		commitMount(subject, subject, parent, parent, 0)
+	}
+	
+	/**
+	 * @param {*} children
+	 * @param {function} callback
+	 * @param {*} thisArg
+	 */
+	function childrenEach (children, callback, thisArg) {
+		if (children != null)
+			childrenArray(children).forEach(callback, thisArg)
+	}
+	
+	/**
+	 * @param {*} children
+	 * @param {function} callback
+	 * @return {Array}
+	 */
+	function childrenMap (children, callback, thisArg) {
+		if (children != null)
+			return childrenArray(children).map(callback, thisArg)
+		else
+			return children
+	}
+	
+	/**
+	 * @param {*} children 
+	 * @return {Array}
+	 */
+	function childrenArray (children) {
+		var array = []
+	
+		if (children == null)
+			return array
+		else if (typeof children !== 'object')
+			return [children]
+		else if (children instanceof Array)
+			array = children
+		else if (typeof children.next === 'function')
+			each(children, function (value) {
+				array.push(value)
+			})
+		else if (typeof children[Iterator] === 'function')
+			return childrenArray(child[Iterator]())
+	
+		return flatten(children, [])
+	}
+	
+	/**
+	 * @param {*} children 
+	 * @return {Element}
+	 */
+	function childrenOnly (children) {
+		if (!isValidElement(children))
+			invariant('Children.only', 'Expected to receive a single element')
+		else
+			return children
+	}
+	
+	/**
+	 * @param {*} children 
+	 * @return {number}
+	 */
+	function childrenCount (children) {
+		return toArray(children).length
+	}
+	
+	/**
+	 * @type {Object}
+	 */
+	var Children = {
+		toArray: childrenArray,
+		forEach: childrenEach, 
+		map: childrenMap,
+		count: childrenCount,
+		only: childrenOnly
 	}
 
 	/**
@@ -1819,6 +1954,7 @@
 	exports.isValidElement = isValidElement
 	exports.cloneElement = cloneElement
 	exports.Component = Component
+	exports.Children = Children
 	exports.render = render
 	
 	if (server)

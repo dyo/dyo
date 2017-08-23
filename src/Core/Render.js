@@ -21,6 +21,9 @@ function render (subject, target) {
  * @param {Node} target
  */
 function mount (subject, parent, target) {
+	if (!isValidPortal(target))
+		return invariant('render', 'Target container is not a DOM element')
+
 	root.set(target, subject)
 
 	commitContent(parent)
