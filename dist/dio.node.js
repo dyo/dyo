@@ -69,6 +69,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		this.hash = ''
 	}
 	Hash.prototype = Object.create(null, {
+		constructor: {value: Hash},
 		/**
 		 * @param {*} key
 		 * @param {*} value

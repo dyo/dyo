@@ -1,15 +1,16 @@
 /**
  * @constructor
- * @param {Object} element
+ * @param {Element} children
  */
-function Event (element) {
-	this.element = element
+function Event (children) {
+	this.children = children
 	this.length = 0
 }
 /**
  * @type {Object}
  */
 Event.prototype = Object.create(null, {
+	constructor: {value: Event},
 	/**
 	 * @param {Event} event
 	 */
@@ -17,8 +18,8 @@ Event.prototype = Object.create(null, {
 		try {
 			var type = 'on'+event.type
 			var callback = this[type]
-			var element = this.element
-			var host = element.host
+			var children = this.children
+			var host = children.host
 			var instance = host.instance
 			var state
 

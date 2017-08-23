@@ -1,3 +1,19 @@
+## 8.0.0 (24 August 2016)
+
+- Support `componentDidCatch`.
+- Support statefull functional components.
+- Support for fragments.
+- Support rendering `Iterables`.
+- Support `handleEvent` interface.
+- Support context `getChildContext`.
+- Support strings `refs` for functional components.
+- Support string & function `refs` for Component instances.
+- Make `this.props.children` into a opaque data-strucuture.
+- Add `#Children...` API's for dealing with the `children` opaque data-strucuture.
+- Add basic invarient errors for `render` if target container is invalid.
+- Add support for mount to `html`.
+
+
 ## 7.1.0 (24 July 2016)
 
 - Allow lazy loading primitive to render while loading module.

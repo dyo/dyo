@@ -79,6 +79,7 @@
 		this.hash = ''
 	}
 	Hash.prototype = Object.create(null, {
+		constructor: {value: Hash},
 		/**
 		 * @param {*} key
 		 * @param {*} value
@@ -231,7 +232,6 @@
 		this.host = null
 		this.parent = null
 		this.event = null
-		this.style = null
 		this.DOM = null
 		this.context = null
 		this.next = null
@@ -578,15 +578,21 @@
 	/**
 	 * @type {Object}
 	 */
-	var descriptors = {
-		forceUpdate: {value: forceUpdate}, 
+	var ComponentMethods = {
+		forceUpdate: {value: forceUpdate},
 		setState: {value: setState}
 	}
-	
 	/**
 	 * @type {Object}
 	 */
-	Component.prototype = Object.create(null, merge({render: {value: noop}}, descriptors))
+	var ComponentDefaults = {
+		constructor: {value: Component},
+		render: {value: noop}
+	}
+	/**
+	 * @type {Object}
+	 */
+	Component.prototype = Object.create(null, merge(ComponentDefaults, ComponentMethods))
 	
 	/**
 	 * @param {(Object|function)} state
@@ -615,7 +621,7 @@
 	
 		if (prototype && prototype.render) {
 			if (!prototype.setState)
-				Object.defineProperties(prototype, descriptors)
+				Object.defineProperties(prototype, ComponentMethods)
 	
 			instance = owner = getChildInstance(element)
 		} else {
@@ -1005,6 +1011,7 @@
 	
 	 			if ((element.DOM = element.children.DOM, element.ref)) 
 	 				commitReference(element, element.ref, 1)
+	 			
 	 			if (element.owner[LifecycleDidMount]) 
 	 				lifecycleMount(element, LifecycleDidMount)
 	
@@ -1586,16 +1593,17 @@
 	
 	/**
 	 * @constructor
-	 * @param {Object} element
+	 * @param {Element} children
 	 */
-	function Event (element) {
-		this.element = element
+	function Event (children) {
+		this.children = children
 		this.length = 0
 	}
 	/**
 	 * @type {Object}
 	 */
 	Event.prototype = Object.create(null, {
+		constructor: {value: Event},
 		/**
 		 * @param {Event} event
 		 */
@@ -1603,8 +1611,8 @@
 			try {
 				var type = 'on'+event.type
 				var callback = this[type]
-				var element = this.element
-				var host = element.host
+				var children = this.children
+				var host = children.host
 				var instance = host.instance
 				var state
 	

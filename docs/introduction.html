@@ -45,7 +45,7 @@ dio.render(
 		<p>DIO can be installed through any one of the following CDN's.</p>
 
 		<ol>
-			<li><a href=https://cdnjs.cloudflare.com/ajax/libs/dio/7.1.0/dio.min.js>cdnjs.cloudflare.com/ajax/libs/dio/7.0.3/dio.min.js</a></li>
+			<li><a href=https://cdnjs.cloudflare.com/ajax/libs/dio/8.0.0/dio.min.js>cdnjs.cloudflare.com/ajax/libs/dio/7.0.3/dio.min.js</a></li>
 			<li><a href=https://cdn.jsdelivr.net/npm/dio.js@latest/dio.min.js>cdn.jsdelivr.net/npm/dio.js@latest/dio.min.js</a></li>
 			<li><a href=https://unpkg.com/dio.js@latest/dio.min.js>unpkg.com/dio.js@latest/dio.min.js</a></li>
 		</ol>
@@ -279,9 +279,9 @@ const Welcome = return h('h1', {
 		<p>Portals are DOM elements outside of the immediate element context.</p>
 
 <pre><code>
-const el = document.querySelector('.modal')
+const modal = document.querySelector('.modal')
 const body = document.body
-const portal = h(el, 'Welcome', 'Back')
+const portal = h(modal, 'Welcome', 'Back')
 
 dio.render(['Fox', portal], body)
 </code></pre>

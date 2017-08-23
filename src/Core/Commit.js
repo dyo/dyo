@@ -97,6 +97,7 @@ function commitMount (element, sibling, parent, host, signature) {
 
  			if ((element.DOM = element.children.DOM, element.ref)) 
  				commitReference(element, element.ref, 1)
+ 			
  			if (element.owner[LifecycleDidMount]) 
  				lifecycleMount(element, LifecycleDidMount)
 

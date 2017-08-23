@@ -127,34 +127,27 @@ function* Welcome () {
 
 		<p>
 			Both <code>function</code> and <code>class</code> components can make use of lifcycles <label for=1></label>.
-			<span class=note>
-				With the exception of <code>`getInitialState`</code> that is reserved soley for <code>`class`</code> components; Useful when setting the initial state of a component is a requirement.
-			</span>
 		</p>
 
-		<p>When required any lifecycle on a <code>`class`</code> based component can call <code>`this.setState`</code> or return a state update object to update the state.</p>
+		<p>When required any lifecycle on a component can call <code>`this.setState`</code> or return a state update object to update the state.</p>
 
 		<h2>Data</h2>
 
 		<p>
-			The default return value that <code>`getInitialState`</code> expects is an object representing the initial state of the component; However <code>`getInitialState`</code> also accepts a <code>`Promise`</code> when the data the component requires is network bound <label for=2></label>.
+			The default return value that <code>`getInitialState`</code> expects is an object representing the initial state of the component; However <code>`getInitialState`</code> also accepts a <code>`Promise`</code> when the data requirements are network bound <label for=2></label>.
 			<span class=note>That is to say you can asynchronous-ly retrieve a components initial state.</span>
 		</p>
 
 <pre><code>
 class Welcome {
 	getInitialState() {}
+	render() {}
 }
 </code></pre>
 
 		<h2 id=refs>Refs</h2>
 
-		<p>
-			Refs are either functions of strings that provide access to the underlining DOM node; While <code>string</code>
-			<label for=3></label>
-			<span class=note>String refs are only usefull on <code>class</code> based components.</span>
-			refs can be dynamic, <code>function</code>
-			refs can also return or call <code>`this.setState`</code> to update the component.</p>
+		<p>Refs are either functions of strings that provide access to the underlining DOM an element or Instance of a component.</p>
 
 <pre><code>
 class Welcome {
@@ -173,7 +166,7 @@ class Welcome {
 
 		<p>Mounting happens in a bottom-up fashion in that the lifecycle method of child components will be invoked before the parent.</p>
 
-		<p>Both lifecycle methods <code>`componentWillMount`</code> &amp; <code>`componentDidMount`</code> receive the mounting DOM node as an argument.</p>
+		<p>The lifecycle method <code>`componentDidMount`</code> receive the mounting DOM node as an argument.</p>
 
 <pre><code>
 class Welcome {
@@ -223,7 +216,7 @@ class Welcome {
 
 		<p>On the other hand <code>`componentWillUnmount`</code> can return a <code>Promise</code>; When used the unmounting DOM node will be removed once the <code>Promise</code> resolves.</p>
 
-		<p>Like <code>componentWillMount</code> &amp; <code>componentDidMount</code>, <code>`componentWillUnmount`</code> also recieves the unmounting DOM node as an argument.</p>
+		<p>Like <code>componentDidMount</code>, <code>`componentWillUnmount`</code> also recieves the unmounting DOM node as an argument.</p>
 
 <pre><code>
 class Welcome {
@@ -312,7 +305,7 @@ dio.render('Hello World', document.body)
 
 		<h2 id=server>Server</h2>
 
-		<p>The recommended way to render from the server is to use <code>`dio.render`</code> which can also render to a response object.</p>
+		<p>The recommended way to render from the server is to use <code>`dio.renderToStream`</code> or <code>`dio.renderToString`</code> which can also render to a writable stream.</p>
 
 <pre><code>
 const http = require('http')
@@ -330,45 +323,29 @@ const webpage = (
 )
 
 const server = (request, response) => {
-	dio.render(webpage, response)
+	dio.renderToStream(webpage, response, () => console.log('callback'))
 }
 
 http.createServer(server).listen(2000)
 </code></pre>
 
-		<p>By design using <code>`dio.render`</code> to render on the server uses a stream to send the response to the client in chunks, on the other hand the <code>`toString`</code> method on virtual elements returns the element as a string. Which allows us to render a string in the following way.</p>
+		<p>By design using <code>`dio.renderToStream`</code> to render on the server uses a stream to send the response to the client in chunks, on the other hand <code>`dio.renderToString`</code> and the <code>`toString`</code> method on virtual elements returns the element as a string. Which allows us to render a string in the following ways.</p>
 
 <pre><code>
-`${h('html')}` === `&lt;html>&lt;/html>`
+dio.renderToString(h('html')) === `${h('html')}` === `&lt;html>&lt;/html>`
 </code></pre>
 
-		<h2 id=hydration>Hydration</h2>
+		<h2 id=testing>toJSON</h2>
 
-		<p>To hydrate server rendered content <code>`render`</code> accepts a third argument that is either a callback or a DOM node to hydrate.</p>
-
-<pre><code>
-dio.render(
-	h('h1', 'Hello World'),
-	document.body,
-	document.body.firstChild
-)
-</code></pre>
-
-		<p>In this case <code>`document.body`</code> is the containing node and <code>`document.body.firstChild`</code> is the DOM node to hydrate.</p>
-
-		<h2 id=shallow>Shallow</h2>
-
-		<p><code>`dio.shallow`</code> does not render to the DOM or a string but rather returns a shallow render of the element. This is useful when used for testing purposes.</p>
+		<p>All elements on the server have a `toJSON` method that returns a flat element representation, that can be used for testing.</p>
 
 <pre><code>
-dio.shallow(() => {
-	return 'Hello World';
-})
+h('html').toJSON()
 </code></pre>
 
 		<h1 id=version>Version</h1>
 
-		<p>Retrieves the current version of DIO in use, ex. <code>`7.0.0`</code></p>
+		<p>Retrieves the current version of DIO in use, ex. <code>`8.0.0`</code></p>
 
 <pre><code>
 console.log(dio.version)
@@ -376,17 +353,12 @@ console.log(dio.version)
 
 		<h1 id=other>Other</h1>
 
-		<h2 id=statics>Static PropTypes/defaultProps</h2>
+		<h2 id=statics>Static defaultProps</h2>
 
 		<p>The following would resemble attaching the returned object of the functions to the <code>`Welcome` class</code>.</p>
 
 <pre><code>
 class Welcome {
-	static propTypes () {
-		return {
-			id: PropTypes.func.isRequired
-		}
-	}
 	static defaultProps () {
 		return {id: 1}
 	}
@@ -398,12 +370,17 @@ class Welcome {
 
 		<h2 id=error-boundaries>Error Boundary</h2>
 
-		<p>All components are error safe; This means that if any error where to throw at any point in the components lifecycle DIO would catch it and pass it the <code>`componentDidThrow`</code> method if it exists which can in turn show an error view or try to manually recover from the error state.</p>
+		<p>
+			All components have a default error boundary that cascades to the nearest parent component if the component does not define
+			a `componentDidCatch` method.
+		</p>
 <pre><code>
 class Welcome {
-	componentDidThrow({location, message}) {
-		if (location === 'render')
-			return h('h1', 'Error State')
+	componentDidThrow({from, message, children, stack}) {
+		if (from === 'render')
+			return h('h1', 'Error State for render Error')
+		else
+			return h('h1', 'Error State for another Error')
 	}
 	render () {
 		throw ''
@@ -415,11 +392,11 @@ class Welcome {
 
 		<ol>
 			<li>We create a components that intentionally throws in the render phase.</li>
-			<li>DIO catches this and passes it to the <code>`componentDidThrow`</code> method if it exists.</li>
-			<li>Our <code>`componentDidThrow`</code> method detects if the error comes from <code>`render`</code> and responds with an error state.</li>
+			<li>DIO catches this and passes it to the <code>`componentDidCatch`</code> method if it exists.</li>
+			<li>Our <code>`componentDidCatch`</code> method detects if the error comes from <code>`render`</code> and responds with an error state.</li>
 		</ol>
 
-		<p>On the other hand if the error happend in the update phase and we did not handle it, DIO would simply resolve to the last rendered state.</p>
+		<p>On the other hand if the error happend in the update phase and we did not handle it, DIO would simply resolve to the nearest parent component that defines `componentDidCatch`. If does not exist a component in the render tree that defines a `componentDidCatch` error state, DIO will unmount all component from the root.</p>
 
 		<h2 id=non-deterministic>Non-Deterministic</h2>
 
@@ -463,18 +440,16 @@ class Welcome {
 
 		<p>Putting multiple instances of this component in a list will result in a random update order whenever an update is invoked.</p>
 
-		<h2 id=coroutine>Coroutine</h2>
+		<h2 id=coroutine>Iterables</h2>
 
-		<p>In other words JavaScript <code>`generators`</code><label for=7></label><span class=note>A generator is a special type of function that works as a factory for iterators. A function becomes a generator if it contains one or more yield expressions and if it uses the <code>`function*`</code> syntax.</span>; The example that follows will continue to return a button and increment the <code>`supply`</code> variable whenever an update is invoked through a <code>`click`</code> of the button element.</p>
-
-		<p>Though generators are not a well known/used feature in JavaScript they do introduce interesting ways to model behaviour beyond normal functons.</p>
+		<p>DIO supports render any `Iterables` including `Generators`.</p>
 
 <pre><code>
-class Coroutine {
+class Generator {
 	*render(props, state) {
 		let supply = 0
 
-		while (true) {
+		while (supply < 10) {
 			yield h('button', {
 				onclick: this.forceUpdate
 			}, 'Click Me - ', supply++)
@@ -485,7 +460,7 @@ class Coroutine {
 
 		<h2 id=animations>Animations</h2>
 
-		<p>There is no specialized API for animations in DIO, however the mount lifecycles methods have been designed with animations in mind.</p>
+		<p>There is no specialized API for animations in DIO, however the mount/unmount lifecycles methods have been designed with animations in mind.</p>
 
 		<p>Making use of the <code>`componentWillUnmount`</code> lifecycle return signature and <code>`componentDidMount`</code> we can animate any component; For example, using the new <a href=https://developer.mozilla.org/en-US/docs/Web/API/Element/animate>Element.animate</a><label for=8></label><span class=note>The Web Animations API opens the browser’s animation engine to developers and manipulation by JavaScript. This API was designed to underlie implementations of both CSS Animations and CSS Transitions, and leaves the door open to future animation effects. It is one of the most performant ways to animate on the Web where supported, letting the browser make its own internal optimizations without hacks, coercion, or Window.requestAnimationFrame(). <a href=https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API>Using the Web Animations API.</a></span> API:</p>
 
@@ -502,14 +477,14 @@ const animations = {
 }
 
 class Item {
-	componentDidMount(el) {
-		el.animate(animations.fadeIn, {
+	componentDidMount(node) {
+		node.animate(animations.fadeIn, {
 			duration: 200
 		});
 	}
-	componentWillUnmount(el) {
+	componentWillUnmount(node) {
 		return new Promise((resolve) => {
-			el.animate(animations.fadeOut, {
+			node.animate(animations.fadeOut, {
 				duration: 200
 			}).onfinish = resolve
 		})
@@ -544,33 +519,28 @@ setTimeout(dio.render, 800, h(List, 1, 2, 3))
 			<li>After <code>`800ms`</code> we remove one <code>`Item`</code> child from our <code>`List`</code> component, which in turn invokes our <code>fadeOut</code> animation in <code>`componentWillUnmount`</code>.</li>
 		</ol>
 
-		<h2 id=lazy-loading>Lazy Loading</h2>
+		<h2 id=promises>Promises</h2>
 
 		<p>In large applications, bundles might become too big to send to the client in one chunk, this suggests the need to divide the app into smaller chunks and only load a component from the server when it is actually needed.</p>
 
 		<p>To make this task easier DIO allows a <code>Promise</code> return type from Components that you can use to control when a component renders, essentially baking the  
-		<a href="https://en.wikipedia.org/wiki/Lazy_loading">lazy loading</a><label for=9></label><span class="note">Lazy loading is a design pattern commonly used in computer programming to defer initialization of an object until the point at which it is needed. It can contribute to efficiency in the program's operation if properly and appropriately used.</span> design pattern into the component model.
+		<a href="https://en.wikipedia.org/wiki/Lazy_loading">"Lazy loading"</a><label for=9></label><span class="note">Lazy loading is a design pattern commonly used in computer programming to defer initialization of an object until the point at which it is needed. It can contribute to efficiency in the program's operation if properly and appropriately used.</span> design pattern into the component model.
+		</p>
+
+		<p>
+			However when talking about lazy loading, we have to consider what we want to display while we wait for the network to resolve.
+			In this case DIO supports an optional children to define what component will show while waiting for the network.
 		</p>
 
 <pre><code>
 class Welcome {
 	render() {
-		return import('./welcome.js')
+		return h(import('./welcome.js'), h('h1', 'Loading'))
 	}
 }		
 </code></pre>
 
-		<p>As demonstrated above this allows us to lazy load components when we need them and as demontstrated below what to display before the requested module has been resolved.</p>
-
-<pre><code>
-class Welcome {
-	render() {
-		return h(import('./welcome.js'),
-			h('h1', 'Loading...')
-		)
-	}
-}		
-</code></pre>
+		<p>As demonstrated above this allows us to lazy load components when we need them and what to display before the requested module has been resolved.</p>
 
 	</article>
 	<script src=js/highlight.js></script>

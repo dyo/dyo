@@ -18,7 +18,6 @@ function Element (flag) {
 	this.host = null
 	this.parent = null
 	this.event = null
-	this.style = null
 	this.DOM = null
 	this.context = null
 	this.next = null

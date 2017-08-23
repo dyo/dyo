@@ -65,6 +65,7 @@ function Hash () {
 	this.hash = ''
 }
 Hash.prototype = Object.create(null, {
+	constructor: {value: Hash},
 	/**
 	 * @param {*} key
 	 * @param {*} value
