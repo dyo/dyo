@@ -1211,29 +1211,23 @@
 	/**
 	 * @param {Element} element
 	 * @param {string} type
-	 * @param {(function|EventListener)} listener
+	 * @param {(function|EventListener)} callback
 	 * @param {number} signature
 	 */
-	function commitEvent (element, type, listener, signature) {	
+	function commitEvent (element, type, callback, signature) {	
 		switch (signature) {
 			case -1:
-				if (element.event != null && element.event.length > 0) {
+				if (element.event)
 					delete element.event[type]
-	
-					if (--element.event.length === 0)
-						DOMEvent(element, type.substring(2), element.event, 0)
-				}
 				break
 			case 0:
-				commitEvent(element, type, listener, signature-1)
+				commitEvent(element, type, callback, signature-1)
 			case 1:
-				if (element.event == null)
-					element.event = new Event(element)
-	
-				element.event[type] = listener
-				element.event.length++
-	
-				DOMEvent(element, type.substring(2), element.event, 1)
+				if (!element.event)
+					element.event = {}
+				
+				element.event[type] = callback
+				Events.attach(element, type)
 		}
 	}
 	
@@ -1592,46 +1586,61 @@
 	}
 	
 	/**
-	 * @constructor
-	 * @param {Element} children
-	 */
-	function Event (children) {
-		this.children = children
-		this.length = 0
-	}
-	/**
 	 * @type {Object}
 	 */
-	Event.prototype = Object.create(null, {
-		constructor: {value: Event},
+	var Events = {
+		addEventListener: function addEventListener (type) {
+			document.addEventListener(type, this, true)
+		},
 		/**
 		 * @param {Event} event
 		 */
-		handleEvent: {value: function handleEvent (event) {
+		handleEvent: function handleEvent (event) {
+			this.hasOwnProperty('on'+event.type, event.target)
+		},
+		hasOwnProperty: function hasOwnProperty (type, target) {
+			if (this[type] && this[type].has(target))
+				this.dispatch(event, type)
+		},
+		/**
+		 * @param {Element} element
+		 * @param {string} type
+		 */
+		attach: function attach (element, type) {
+			if (!this[type]) {
+				this[type] = new Map()
+				this.addEventListener(type.substring(2))
+			}
+	
+			this[type].set(element.DOM.node, element)
+		},
+		/**
+		 * @param {Event} event
+		 * @param {string} type
+		 */
+		dispatch: function dispatch (event, type) {
 			try {
-				var type = 'on'+event.type
-				var callback = this[type]
-				var children = this.children
-				var host = children.host
+				var element = this[type].get(event.target)
+				var host = element.host
 				var instance = host.instance
-				var state
+				var callback = element.event[type]
+				var state = null
 	
-				switch (typeof callback) {
-					case 'object':
-						if (callback && typeof callback.handleEvent === 'function')
-							state = callback.handleEvent(event)
-						break
-					case 'function':
-						state = callback.call(instance, event)
-				}
+				if (!callback)
+					return
 	
-				if (state && instance)
+				if (typeof callback === 'function')
+					state = callback.call(instance, event)
+				else if (typeof callback.handleEvent === 'function')
+					state = callback.handleEvent(event)
+	
+				if (instance && state)
 					lifecycleReturn(host, state)
 			} catch (e) {
 				errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
 			}
-		}}
-	})
+		}
+	}
 	
 	/**
 	 * @param {Element} element
@@ -1775,19 +1784,6 @@
 		} else
 			for (var key in value)
 				DOMStyle(element, key, value[key], 1)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} type
-	 * @param {(function|EventListener)} listener
-	 * @param {number} signature
-	 */
-	function DOMEvent (element, type, listener, signature) {
-		if (signature > 0)
-			element.DOM.node.addEventListener(type, listener, false)
-		else
-			element.DOM.node.removeEventListener(type, listener, false)
 	}
 	
 	/**

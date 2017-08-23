@@ -297,29 +297,23 @@ function commitProperty (element, name, value, xmlns, signature) {
 /**
  * @param {Element} element
  * @param {string} type
- * @param {(function|EventListener)} listener
+ * @param {(function|EventListener)} callback
  * @param {number} signature
  */
-function commitEvent (element, type, listener, signature) {	
+function commitEvent (element, type, callback, signature) {	
 	switch (signature) {
 		case -1:
-			if (element.event != null && element.event.length > 0) {
+			if (element.event)
 				delete element.event[type]
-
-				if (--element.event.length === 0)
-					DOMEvent(element, type.substring(2), element.event, 0)
-			}
 			break
 		case 0:
-			commitEvent(element, type, listener, signature-1)
+			commitEvent(element, type, callback, signature-1)
 		case 1:
-			if (element.event == null)
-				element.event = new Event(element)
-
-			element.event[type] = listener
-			element.event.length++
-
-			DOMEvent(element, type.substring(2), element.event, 1)
+			if (!element.event)
+				element.event = {}
+			
+			element.event[type] = callback
+			Events.attach(element, type)
 	}
 }
 

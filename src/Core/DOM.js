@@ -71,20 +71,6 @@ function DOMStyle (element, name, value, signature) {
 			DOMStyle(element, key, value[key], 1)
 }
 
-
-/**
- * @param {Element} element
- * @param {string} type
- * @param {(function|EventListener)} listener
- * @param {number} signature
- */
-function DOMEvent (element, type, listener, signature) {
-	if (signature > 0)
-		element.DOM.node.addEventListener(type, listener, false)
-	else
-		element.DOM.node.removeEventListener(type, listener, false)
-}
-
 /**
  * @param {(string|number)} value
  * @return {Object}
