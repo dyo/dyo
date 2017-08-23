@@ -1707,7 +1707,7 @@
 			if (name.charCodeAt(0) !== 45)
 				element.DOM.node.style[name] = value
 			else
-				element.DOM.node.style[value == null ? 'setProperty' : 'removeProperty'](name, value)
+				element.DOM.node.style[value != null ? 'setProperty' : 'removeProperty'](name, value)
 		} else
 			for (var key in value)
 				DOMStyle(element, key, value[key], 1)
