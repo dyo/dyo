@@ -15,11 +15,11 @@ function DOMDocument () {
  */
 function DOMAttribute (element, name, value, xmlns, hash, signature) {
 	if (signature < 1)
-		return hash !== 1 ? element.DOM.node.removeAttribute(name) : element.DOM.node.removeAttributeNS(name)
+		return hash !== 1 ? element.DOM.target.removeAttribute(name) : element.DOM.target.removeAttributeNS(name)
 
 	switch (hash) {
 		case 1:
-			return element.DOM.node.setAttributeNS('http://www.w3.org/1999/xlink', name, value)
+			return element.DOM.target.setAttributeNS('http://www.w3.org/1999/xlink', name, value)
 		case 2:
 			return DOMProperty(element, name, value)
 		case 3:
@@ -27,7 +27,7 @@ function DOMAttribute (element, name, value, xmlns, hash, signature) {
 				return DOMProperty(element, name, value)
 	}
 
-	if (!xmlns && name in element.DOM.node)
+	if (!xmlns && name in element.DOM.target)
 		switch (name) {
 			case 'width':
 			case 'height':
@@ -38,7 +38,7 @@ function DOMAttribute (element, name, value, xmlns, hash, signature) {
 		}
 
 	if (value !== false)
-		element.DOM.node.setAttribute(name, value)
+		element.DOM.target.setAttribute(name, value)
 	else
 		DOMAttribute(element, name, value, xmlns, hash, -1)
 }
@@ -50,7 +50,7 @@ function DOMAttribute (element, name, value, xmlns, hash, signature) {
  */
 function DOMProperty (element, name, value) {
 	try {
-		element.DOM.node[name] = value
+		element.DOM.target[name] = value
 	} catch (e) {}
 }
 
@@ -63,9 +63,9 @@ function DOMProperty (element, name, value) {
 function DOMStyle (element, name, value, signature) {
 	if (signature > 0) {
 		if (name.indexOf('-') < 0)
-			element.DOM.node.style[name] = value
+			element.DOM.target.style[name] = value
 		else
-			element.DOM.node.style[value != null ? 'setProperty' : 'removeProperty'](name, value)
+			element.DOM.target.style[value != null ? 'setProperty' : 'removeProperty'](name, value)
 	} else
 		for (var key in value)
 			DOMStyle(element, key, value[key], 1)
@@ -76,7 +76,7 @@ function DOMStyle (element, name, value, signature) {
  * @return {Object}
  */
 function DOMText (value) {
-	return {node: document.createTextNode(value)}
+	return {target: document.createTextNode(value)}
 }
 
 /**
@@ -84,14 +84,14 @@ function DOMText (value) {
  * @return {Object}
  */
 function DOMElement (element) {
-	return {node: element.xmlns ? document.createElementNS(xmlns, type) : document.createElement(element.type)}
+	return {target: element.xmlns ? document.createElementNS(xmlns, type) : document.createElement(element.type)}
 }
 
 /**
  * @param {Element} element
  */
 function DOMContent (element) {
-	element.DOM.node.textContent = ''
+	element.DOM.target.textContent = ''
 }
 
 /**
@@ -99,7 +99,7 @@ function DOMContent (element) {
  * @param {(string|number)} value
  */
 function DOMValue (element, value) {
-	element.DOM.node.nodeValue = value
+	element.DOM.target.nodeValue = value
 }
 
 /**
@@ -107,7 +107,7 @@ function DOMValue (element, value) {
  * @param {Element} parent
  */
 function DOMRemove (element, parent) {
-	parent.DOM.node.removeChild(element.DOM.node)
+	parent.DOM.target.removeChild(element.DOM.target)
 }
 
 /**
@@ -116,7 +116,7 @@ function DOMRemove (element, parent) {
  * @param {Element} parent
  */
 function DOMInsert (element, sibling, parent) {
-	parent.DOM.node.insertBefore(element.DOM.node, sibling.DOM.node)
+	parent.DOM.target.insertBefore(element.DOM.target, sibling.DOM.target)
 }
 
 /**
@@ -124,5 +124,5 @@ function DOMInsert (element, sibling, parent) {
  * @param {Element} parent
  */
 function DOMAppend (element, parent) {
-	parent.DOM.node.appendChild(element.DOM.node)
+	parent.DOM.target.appendChild(element.DOM.target)
 }

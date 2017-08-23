@@ -12,7 +12,7 @@ function render (subject, target) {
 	if (root.has(target))
 		return reconcileElement(root.get(target), commitElement(subject))
 
-	mount(subject, elementIntermediate({node: target}), target)	
+	mount(subject, elementIntermediate({target: target}), target)	
 }
 
 /**

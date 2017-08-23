@@ -88,8 +88,12 @@
 		  }
 
 		  handleEvent(e) {
+		  	console.log(dio.findDOMNode(this))
+
+		  	if (e.type === 'submit')
+		  		e.preventDefault()
 		  	// console.log('works', e.target, e.currentTarget)
-		  	return {secondsElapsed: this.state.secondsElapsed + 1}
+		  	return {secondsElapsed: this.state.secondsElapsed + 1,value: e.target.value}
 		  	// this.setState({}, ()=>{
 		  	// 	throw 'end'
 		  	// })
@@ -97,10 +101,14 @@
 
 		  render() {
 		    return (
-		    	[
+		    	h('section',
 		    		h('div', 'Seconds Elapsed:', this.state.secondsElapsed),
-		    		h('div', {style: 'background:red;', onClick: this}, h('button', {onClick: null}, 'button'))
-		    	]
+		    		h('div', {style: 'background:red;', onClick: this}, h('button', {onClick: null}, 'button')),
+		    		h('form', {onSubmit: this},
+		    			h('input', {onInput: this, value: this.state.value}),
+		    			h('input', {type: 'submit'})
+		    		)
+		    	)
 		    )
 		  }
 		}

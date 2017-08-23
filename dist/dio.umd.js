@@ -341,7 +341,7 @@
 		else if (isValidElement(element.next))
 			return element.next
 		else
-			return elementIntermediate({node: null})
+			return elementIntermediate({target: null})
 	}
 	
 	/**
@@ -534,7 +534,7 @@
 	 */
 	function lifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, element.DOM ? element.DOM.node : null)
+			var state = element.owner[name].call(element.instance, element.DOM ? element.DOM.target : null)
 			
 			if (state instanceof Promise)
 				return state
@@ -578,21 +578,21 @@
 	/**
 	 * @type {Object}
 	 */
-	var ComponentMethods = {
+	var ComponentMethod = {
 		forceUpdate: {value: forceUpdate},
 		setState: {value: setState}
 	}
 	/**
 	 * @type {Object}
 	 */
-	var ComponentDefaults = {
+	var ComponentDefault = {
 		constructor: {value: Component},
 		render: {value: noop}
 	}
 	/**
 	 * @type {Object}
 	 */
-	Component.prototype = Object.create(null, merge(ComponentDefaults, ComponentMethods))
+	Component.prototype = Object.create(null, merge(ComponentDefault, ComponentMethod))
 	
 	/**
 	 * @param {(Object|function)} state
@@ -621,7 +621,7 @@
 	
 		if (prototype && prototype.render) {
 			if (!prototype.setState)
-				Object.defineProperties(prototype, ComponentMethods)
+				Object.defineProperties(prototype, ComponentMethod)
 	
 			instance = owner = getChildInstance(element)
 		} else {
@@ -1018,12 +1018,12 @@
 	 			element.work = WorkSync
 	 			return
 	 		case ElementPortal:
-	 			element.DOM = {node: element.type}
+	 			element.DOM = {target: element.type}
 	 			break
 	 		case ElementPromise:
 	 			commitPromise(element, element)
 	 		case ElementFragment:
-	 			element.DOM = {node: parent.DOM.node}
+	 			element.DOM = {target: parent.DOM.target}
 	 			break
 	 		case ElementNode:
 	 			element.xmlns = commitXmlns(element, parent)
@@ -1148,7 +1148,7 @@
 					case 0:
 						element.ref = callback
 					case 1:
-						lifecycleCallback(element.host, callback, element.instance || element.DOM.node, key, element)
+						lifecycleCallback(element.host, callback, element.instance || element.DOM.target, key, element)
 						break
 					case 2:
 						commitReference(element, callback, -1, key)
@@ -1646,7 +1646,7 @@
 				this.attachEvent(type.substring(2))
 			}
 	
-			this[type].set(element.DOM.node, element)
+			this[type].set(element.DOM.target, element)
 		}
 	}
 	
@@ -1738,11 +1738,11 @@
 	 */
 	function DOMAttribute (element, name, value, xmlns, hash, signature) {
 		if (signature < 1)
-			return hash !== 1 ? element.DOM.node.removeAttribute(name) : element.DOM.node.removeAttributeNS(name)
+			return hash !== 1 ? element.DOM.target.removeAttribute(name) : element.DOM.target.removeAttributeNS(name)
 	
 		switch (hash) {
 			case 1:
-				return element.DOM.node.setAttributeNS('http://www.w3.org/1999/xlink', name, value)
+				return element.DOM.target.setAttributeNS('http://www.w3.org/1999/xlink', name, value)
 			case 2:
 				return DOMProperty(element, name, value)
 			case 3:
@@ -1750,7 +1750,7 @@
 					return DOMProperty(element, name, value)
 		}
 	
-		if (!xmlns && name in element.DOM.node)
+		if (!xmlns && name in element.DOM.target)
 			switch (name) {
 				case 'width':
 				case 'height':
@@ -1761,7 +1761,7 @@
 			}
 	
 		if (value !== false)
-			element.DOM.node.setAttribute(name, value)
+			element.DOM.target.setAttribute(name, value)
 		else
 			DOMAttribute(element, name, value, xmlns, hash, -1)
 	}
@@ -1773,7 +1773,7 @@
 	 */
 	function DOMProperty (element, name, value) {
 		try {
-			element.DOM.node[name] = value
+			element.DOM.target[name] = value
 		} catch (e) {}
 	}
 	
@@ -1786,9 +1786,9 @@
 	function DOMStyle (element, name, value, signature) {
 		if (signature > 0) {
 			if (name.indexOf('-') < 0)
-				element.DOM.node.style[name] = value
+				element.DOM.target.style[name] = value
 			else
-				element.DOM.node.style[value != null ? 'setProperty' : 'removeProperty'](name, value)
+				element.DOM.target.style[value != null ? 'setProperty' : 'removeProperty'](name, value)
 		} else
 			for (var key in value)
 				DOMStyle(element, key, value[key], 1)
@@ -1799,7 +1799,7 @@
 	 * @return {Object}
 	 */
 	function DOMText (value) {
-		return {node: document.createTextNode(value)}
+		return {target: document.createTextNode(value)}
 	}
 	
 	/**
@@ -1807,14 +1807,14 @@
 	 * @return {Object}
 	 */
 	function DOMElement (element) {
-		return {node: element.xmlns ? document.createElementNS(xmlns, type) : document.createElement(element.type)}
+		return {target: element.xmlns ? document.createElementNS(xmlns, type) : document.createElement(element.type)}
 	}
 	
 	/**
 	 * @param {Element} element
 	 */
 	function DOMContent (element) {
-		element.DOM.node.textContent = ''
+		element.DOM.target.textContent = ''
 	}
 	
 	/**
@@ -1822,7 +1822,7 @@
 	 * @param {(string|number)} value
 	 */
 	function DOMValue (element, value) {
-		element.DOM.node.nodeValue = value
+		element.DOM.target.nodeValue = value
 	}
 	
 	/**
@@ -1830,7 +1830,7 @@
 	 * @param {Element} parent
 	 */
 	function DOMRemove (element, parent) {
-		parent.DOM.node.removeChild(element.DOM.node)
+		parent.DOM.target.removeChild(element.DOM.target)
 	}
 	
 	/**
@@ -1839,7 +1839,7 @@
 	 * @param {Element} parent
 	 */
 	function DOMInsert (element, sibling, parent) {
-		parent.DOM.node.insertBefore(element.DOM.node, sibling.DOM.node)
+		parent.DOM.target.insertBefore(element.DOM.target, sibling.DOM.target)
 	}
 	
 	/**
@@ -1847,7 +1847,7 @@
 	 * @param {Element} parent
 	 */
 	function DOMAppend (element, parent) {
-		parent.DOM.node.appendChild(element.DOM.node)
+		parent.DOM.target.appendChild(element.DOM.target)
 	}
 	
 	/**
@@ -1864,7 +1864,7 @@
 		if (root.has(target))
 			return reconcileElement(root.get(target), commitElement(subject))
 	
-		mount(subject, elementIntermediate({node: target}), target)	
+		mount(subject, elementIntermediate({target: target}), target)	
 	}
 	
 	/**
@@ -1880,6 +1880,28 @@
 	
 		commitContent(parent)
 		commitMount(subject, subject, parent, parent, 0)
+	}
+	
+	/**
+	 * @param {(Component|Element|DOM|Node)} element
+	 * @return {Node?}
+	 */
+	function findDOMNode (element) {
+		if (element) {
+			if (isValidElement(element))
+				return findDOMNode(element.DOM)
+			
+			if (isValidElement(element.children))
+				return findDOMNode(element.children)
+			
+			if (isValidPortal(element.target))
+				return element.target
+	
+			if (isValidPortal(element))
+				return element
+		}
+	
+		return null
 	}
 	
 	/**
@@ -1961,12 +1983,13 @@
 	 * @exports
 	 */
 	exports.version = version
-	exports.h = exports.createElement = window.h = createElement
-	exports.isValidElement = isValidElement
-	exports.cloneElement = cloneElement
+	exports.render = render
 	exports.Component = Component
 	exports.Children = Children
-	exports.render = render
+	exports.findDOMNode = findDOMNode
+	exports.cloneElement = cloneElement
+	exports.isValidElement = isValidElement
+	exports.h = exports.createElement = window.h = createElement
 	
 	if (server)
 		__require__('./dio.node.js')(exports, componentMount, commitElement, Element)

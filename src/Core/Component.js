@@ -11,21 +11,21 @@ function Component (props, context) {
 /**
  * @type {Object}
  */
-var ComponentMethods = {
+var ComponentMethod = {
 	forceUpdate: {value: forceUpdate},
 	setState: {value: setState}
 }
 /**
  * @type {Object}
  */
-var ComponentDefaults = {
+var ComponentDefault = {
 	constructor: {value: Component},
 	render: {value: noop}
 }
 /**
  * @type {Object}
  */
-Component.prototype = Object.create(null, merge(ComponentDefaults, ComponentMethods))
+Component.prototype = Object.create(null, merge(ComponentDefault, ComponentMethod))
 
 /**
  * @param {(Object|function)} state
@@ -54,7 +54,7 @@ function componentMount (element) {
 
 	if (prototype && prototype.render) {
 		if (!prototype.setState)
-			Object.defineProperties(prototype, ComponentMethods)
+			Object.defineProperties(prototype, ComponentMethod)
 
 		instance = owner = getChildInstance(element)
 	} else {

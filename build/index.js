@@ -18,6 +18,7 @@ const umd = [
 	'../src/Core/Error.js',
 	'../src/Core/DOM.js',
 	'../src/Core/Render.js',
+	'../src/Core/Other.js',
 	'../src/Core/Children.js'
 ]
 
@@ -38,12 +39,13 @@ const getExports = () => `
  * @exports
  */
 exports.version = version
-exports.h = exports.createElement = window.h = createElement
-exports.isValidElement = isValidElement
-exports.cloneElement = cloneElement
+exports.render = render
 exports.Component = Component
 exports.Children = Children
-exports.render = render
+exports.findDOMNode = findDOMNode
+exports.cloneElement = cloneElement
+exports.isValidElement = isValidElement
+exports.h = exports.createElement = window.h = createElement
 
 if (server)
 	__require__('./dio.node.js')(${imports})

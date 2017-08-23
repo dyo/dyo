@@ -59,6 +59,6 @@ var Events = {
 			this.attachEvent(type.substring(2))
 		}
 
-		this[type].set(element.DOM.node, element)
+		this[type].set(element.DOM.target, element)
 	}
 }

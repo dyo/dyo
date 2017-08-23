@@ -127,7 +127,7 @@ function elementSibling (element, signature) {
 	else if (isValidElement(element.next))
 		return element.next
 	else
-		return elementIntermediate({node: null})
+		return elementIntermediate({target: null})
 }
 
 /**
