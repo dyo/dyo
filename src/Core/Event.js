@@ -2,9 +2,6 @@
  * @type {Object}
  */
 var Events = {
-	addEventListener: function addEventListener (type) {
-		document.addEventListener(type, this, true)
-	},
 	/**
 	 * @param {Event} event
 	 */
@@ -19,6 +16,12 @@ var Events = {
 	dispatchEvent: function dispatchEvent (type, event) {
 		if (this[type] && this[type].has(event.target))
 			this.dispatch(event, type)
+	},
+	/**
+	 * @param {string} type
+	 */
+	attachEvent: function attachEvent (type) {
+		document.addEventListener(type, this, true)
 	},
 	/**
 	 * @param {Event} event
@@ -53,7 +56,7 @@ var Events = {
 	attach: function attach (element, type) {
 		if (!this[type]) {
 			this[type] = new Map()
-			this.addEventListener(type.substring(2))
+			this.attachEvent(type.substring(2))
 		}
 
 		this[type].set(element.DOM.node, element)
