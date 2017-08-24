@@ -1,8 +1,8 @@
 {
   "name": "dio.js",
-  "main": "dist/dio.umd.js",
+  "main": "dist/dio.js",
   "types": "dio.d.ts",
-  "description": "a library for building user interfaces",
+  "description": "A Library For Building User Interfaces.",
   "version": "8.0.0",
   "homepage": "https://github.com/thysultan/dio.js",
   "license": "MIT",

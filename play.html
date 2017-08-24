@@ -1,6 +1,6 @@
 <body>
 	<div id="root"></div>
-	<script src=dist/dio.umd.js></script>
+	<script src=dist/dio.js></script>
 	<script>
 		const {h, render, Component} = dio
 		const root = document.getElementById('root')
@@ -149,7 +149,7 @@
 			}
 		}
 
-		// dio.Children.only(1)
+		dio.Children.only(1)
 
 		// dio.render(h(Hello, {remove: false}))
 		// dio.render(Hello, {remove: true})
@@ -157,17 +157,17 @@
 		// dio.render(h(Main), null, ()=>{throw new Error('callback')})
 		// dio.render(h(ContextProvider, {currentUser: 'Sultan'}))
 
-		var counter = 0
-		class C {
-			shouldComponentUpdate({update}) {
-				return update
-			}
-			render() {
-				return ++counter
-			}
-		}
-		dio.render(h(C, {update: false}))
-		dio.render(h(C, {update: false}))
-		dio.render(h(C, {update: true}))
+		// var counter = 0
+		// class C {
+		// 	shouldComponentUpdate({update}) {
+		// 		return update
+		// 	}
+		// 	render() {
+		// 		return ++counter
+		// 	}
+		// }
+		// dio.render(h(C, {update: false}))
+		// dio.render(h(C, {update: false}))
+		// dio.render(h(C, {update: true}))
 	</script>
 </body>
