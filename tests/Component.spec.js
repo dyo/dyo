@@ -24,6 +24,7 @@ module.exports = ({h, Component, render}) => {
 		render(null, container)
 
 		var stages = []
+		var counter = 0
 
 		class A {
 			componentWillUnmount() {stages.push('0')}
@@ -39,11 +40,30 @@ module.exports = ({h, Component, render}) => {
 			render(){}
 		}
 
+		class C {
+			shouldComponentUpdate({update}){
+				return update
+			}
+			render() {
+				return ++counter
+			}
+		}
+
 		render(A, container)
 		render(B, container)
 		render(B, container)
 
 		ok(stages.join('') === '012345', 'Will/DidMount, ReceiveProps, shouldUpdate, Will/Didupdate, WillUnmount')
+
+		render(h(C, {update: false}), container)
+		render(h(C, {update: false}), container)
+		ok(container.innerHTML === '1', 'shouldComponentUpdate(false)')
+		console.log(container.innerHTML)
+		
+		render(h(C, {update: true}), container)
+		console.log(container.innerHTML)
+		ok(container.innerHTML === '2', 'shouldComponentUpdate(true)')
+
 
 		end()
 	})
