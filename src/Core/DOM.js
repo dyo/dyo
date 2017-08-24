@@ -1,8 +1,40 @@
 /**
+ * @param {Node} target
+ */
+function DOM (target) {
+	return {target: target}
+}
+
+/**
  * @return {Node}
  */
 function DOMRoot () {
 	return document.documentElement
+}
+
+/**
+ * @param {Node} target
+ * @param {boolean}
+ */
+function DOMValid (target) {
+	return target instanceof Node
+}
+
+/**
+ * @param {string} type
+ * @param {string} xmlns
+ * @return {DOM}
+ */
+function DOMElement (type, xmlns) {
+	return DOM(xmlns ? document.createElementNS(xmlns, type) : document.createElement(type))
+}
+
+/**
+ * @param {(string|number)} value
+ * @return {DOM}
+ */
+function DOMText (value) {
+	return DOM(document.createTextNode(value))
 }
 
 /**
@@ -78,22 +110,6 @@ function DOMStyle (element, name, value, signature) {
 	} else
 		for (var key in value)
 			DOMStyle(element, key, value[key], 1)
-}
-
-/**
- * @param {(string|number)} value
- * @return {Object}
- */
-function DOMText (value) {
-	return {target: document.createTextNode(value)}
-}
-
-/**
- * @param {Element} element
- * @return {Object}
- */
-function DOMElement (element) {
-	return {target: element.xmlns ? document.createElementNS(xmlns, type) : document.createElement(element.type)}
 }
 
 /**

@@ -131,8 +131,8 @@
 		  			h('title', 'Hello World', performance.now()),
 		  		),
 		  		'Hello World',
-		  		h('body', {ref: (e)=>console.log()},
-		  			h(Timer, {ref: (e) => {console.log()}})
+		  		h('body', {ref: (e)=>console.log(-1, e)},
+		  			h(Timer, {ref: (e) => {console.log(-1, e)}})
 		  		)
 		  	]
 		  }

@@ -104,12 +104,12 @@ function commitMount (element, sibling, parent, host, signature) {
  			element.work = WorkSync
  			return
  		case ElementPortal:
- 			element.DOM = {target: element.type}
+ 			element.DOM = DOM(element.type)
  			break
  		case ElementPromise:
  			commitPromise(element, element)
  		case ElementFragment:
- 			element.DOM = {target: parent.DOM.target}
+ 			element.DOM = DOM(parent.DOM.target)
  			break
  		case ElementNode:
  			element.xmlns = commitXmlns(element, parent)
@@ -234,7 +234,7 @@ function commitReference (element, callback, signature, key) {
 				case 0:
 					element.ref = callback
 				case 1:
-					lifecycleCallback(element.host, callback, element.instance || element.DOM.target, key, element)
+					lifecycleCallback(element.host, callback, element.instance || findDOMNode(element), key, element)
 					break
 				case 2:
 					commitReference(element, callback, -1, key)
@@ -313,7 +313,7 @@ function commitEvent (element, type, callback) {
  */
 function commitDOM (element) {
 	try {
-		return element.flag === ElementNode ? DOMElement(element) : DOMText(element.children)
+		return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
 	} catch (e) {
 		return commitDOM(errorBoundary(element, e, LifecycleRender))
 	}

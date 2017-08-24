@@ -341,7 +341,7 @@
 		else if (isValidElement(element.next))
 			return element.next
 		else
-			return elementIntermediate({target: null})
+			return elementIntermediate(DOM(null))
 	}
 	
 	/**
@@ -390,14 +390,6 @@
 	 */
 	function isValidElement (element) {
 		return element instanceof Element
-	}
-	
-	/**
-	 * @param {Object}
-	 * @return {boolean}
-	 */
-	function isValidPortal (element) {
-		return element instanceof Node
 	}
 	
 	/**
@@ -479,7 +471,7 @@
 				element.flag = ElementPromise
 				break
 			default:
-				if (isValidPortal(type))
+				if (DOMValid(type))
 					element.flag = ElementPortal
 		}
 	
@@ -1018,12 +1010,12 @@
 	 			element.work = WorkSync
 	 			return
 	 		case ElementPortal:
-	 			element.DOM = {target: element.type}
+	 			element.DOM = DOM(element.type)
 	 			break
 	 		case ElementPromise:
 	 			commitPromise(element, element)
 	 		case ElementFragment:
-	 			element.DOM = {target: parent.DOM.target}
+	 			element.DOM = DOM(parent.DOM.target)
 	 			break
 	 		case ElementNode:
 	 			element.xmlns = commitXmlns(element, parent)
@@ -1148,7 +1140,7 @@
 					case 0:
 						element.ref = callback
 					case 1:
-						lifecycleCallback(element.host, callback, element.instance || element.DOM.target, key, element)
+						lifecycleCallback(element.host, callback, element.instance || findDOMNode(element), key, element)
 						break
 					case 2:
 						commitReference(element, callback, -1, key)
@@ -1227,7 +1219,7 @@
 	 */
 	function commitDOM (element) {
 		try {
-			return element.flag === ElementNode ? DOMElement(element) : DOMText(element.children)
+			return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
 		} catch (e) {
 			return commitDOM(errorBoundary(element, e, LifecycleRender))
 		}
@@ -1693,10 +1685,42 @@
 	}
 	
 	/**
+	 * @param {Node} target
+	 */
+	function DOM (target) {
+		return {target: target}
+	}
+	
+	/**
 	 * @return {Node}
 	 */
 	function DOMRoot () {
 		return document.documentElement
+	}
+	
+	/**
+	 * @param {Node} target
+	 * @param {boolean}
+	 */
+	function DOMValid (target) {
+		return target instanceof Node
+	}
+	
+	/**
+	 * @param {string} type
+	 * @param {string} xmlns
+	 * @return {DOM}
+	 */
+	function DOMElement (type, xmlns) {
+		return DOM(xmlns ? document.createElementNS(xmlns, type) : document.createElement(type))
+	}
+	
+	/**
+	 * @param {(string|number)} value
+	 * @return {DOM}
+	 */
+	function DOMText (value) {
+		return DOM(document.createTextNode(value))
 	}
 	
 	/**
@@ -1775,22 +1799,6 @@
 	}
 	
 	/**
-	 * @param {(string|number)} value
-	 * @return {Object}
-	 */
-	function DOMText (value) {
-		return {target: document.createTextNode(value)}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Object}
-	 */
-	function DOMElement (element) {
-		return {target: element.xmlns ? document.createElementNS(xmlns, type) : document.createElement(element.type)}
-	}
-	
-	/**
 	 * @param {Element} element
 	 */
 	function DOMContent (element) {
@@ -1844,7 +1852,7 @@
 		if (root.has(target))
 			return reconcileElement(root.get(target), commitElement(subject))
 	
-		mount(subject, elementIntermediate({target: target}), target)	
+		mount(subject, elementIntermediate(DOM(target)), target)	
 	}
 	
 	/**
@@ -1853,7 +1861,7 @@
 	 * @param {Node} target
 	 */
 	function mount (subject, parent, target) {
-		if (!isValidPortal(target))
+		if (!DOMValid(target))
 			return invariant('render', 'Target container is not a DOM element')
 	
 		root.set(target, subject)
@@ -1868,10 +1876,10 @@
 	 */
 	function findDOMNode (element) {
 		if (element) {
-			if (isValidPortal(element))
+			if (DOMValid(element))
 				return element
 	
-			if (isValidPortal(element.target))
+			if (DOMValid(element.target))
 				return element.target
 	
 			if (isValidElement(element.children))

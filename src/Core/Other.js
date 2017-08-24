@@ -4,10 +4,10 @@
  */
 function findDOMNode (element) {
 	if (element) {
-		if (isValidPortal(element))
+		if (DOMValid(element))
 			return element
 
-		if (isValidPortal(element.target))
+		if (DOMValid(element.target))
 			return element.target
 
 		if (isValidElement(element.children))

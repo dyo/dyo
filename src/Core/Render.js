@@ -12,7 +12,7 @@ function render (subject, target) {
 	if (root.has(target))
 		return reconcileElement(root.get(target), commitElement(subject))
 
-	mount(subject, elementIntermediate({target: target}), target)	
+	mount(subject, elementIntermediate(DOM(target)), target)	
 }
 
 /**
@@ -21,7 +21,7 @@ function render (subject, target) {
  * @param {Node} target
  */
 function mount (subject, parent, target) {
-	if (!isValidPortal(target))
+	if (!DOMValid(target))
 		return invariant('render', 'Target container is not a DOM element')
 
 	root.set(target, subject)

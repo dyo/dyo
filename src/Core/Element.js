@@ -127,7 +127,7 @@ function elementSibling (element, signature) {
 	else if (isValidElement(element.next))
 		return element.next
 	else
-		return elementIntermediate({target: null})
+		return elementIntermediate(DOM(null))
 }
 
 /**
@@ -176,14 +176,6 @@ function elementChildren (element, children, child, index) {
  */
 function isValidElement (element) {
 	return element instanceof Element
-}
-
-/**
- * @param {Object}
- * @return {boolean}
- */
-function isValidPortal (element) {
-	return element instanceof Node
 }
 
 /**
@@ -265,7 +257,7 @@ function createElement (type, props) {
 			element.flag = ElementPromise
 			break
 		default:
-			if (isValidPortal(type))
+			if (DOMValid(type))
 				element.flag = ElementPortal
 	}
 
