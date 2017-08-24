@@ -11,7 +11,7 @@ function findDOMNode (element) {
 			return findDOMNode(element.children)
 		
 		if (isValidPortal(element.target))
-			return element.target
+			return element.flag > ElementFragment ? element.target : findDOMNode(elementSibling(element, 1))
 
 		if (isValidPortal(element))
 			return element
