@@ -4,17 +4,17 @@
  */
 function findDOMNode (element) {
 	if (element) {
-		if (isValidElement(element))
-			return findDOMNode(element.DOM)
-		
-		if (isValidElement(element.children))
-			return findDOMNode(element.children)
-		
-		if (isValidPortal(element.target))
-			return element.flag > ElementFragment ? element.target : findDOMNode(elementSibling(element, 1))
-
 		if (isValidPortal(element))
 			return element
+
+		if (isValidPortal(element.target))
+			return element.target
+
+		if (isValidElement(element.children))
+			return findDOMNode(element.children)
+
+		if (isValidElement(element))
+			return findDOMNode(element.flag > ElementFragment ? element.DOM : elementSibling(element, 1))
 	}
 
 	return null

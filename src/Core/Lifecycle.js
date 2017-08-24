@@ -46,7 +46,7 @@ function lifecycleData (element, name) {
  */
 function lifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, element.DOM ? element.DOM.target : null)
+		var state = element.owner[name].call(element.instance, findDOMNode(element))
 		
 		if (state instanceof Promise)
 			return state

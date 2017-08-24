@@ -75,7 +75,13 @@
 		    }))
 		  }
 
-		  componentDidMount() {
+		  componentWillMount(node) {
+		  	console.log(0, node)
+		  }
+
+		  componentDidMount(node) {
+		  	console.log(1, node)
+		  	console.log(2, dio.findDOMNode(this))
 		    // this.interval = setInterval(() => this.tick(), 1000)
 		  }
 
@@ -101,14 +107,16 @@
 
 		  render() {
 		    return (
-		    	h('section',
+		    	// h('section',
+		    	[
 		    		h('div', 'Seconds Elapsed:', this.state.secondsElapsed),
 		    		h('div', {style: 'background:red;', onClick: this}, h('button', {onClick: null}, 'button')),
 		    		h('form', {onSubmit: this},
 		    			h('input', {onInput: this, value: this.state.value}),
 		    			h('input', {type: 'submit'})
 		    		)
-		    	)
+		    	]
+		    	// )
 		    )
 		  }
 		}
@@ -123,8 +131,8 @@
 		  			h('title', 'Hello World', performance.now()),
 		  		),
 		  		'Hello World',
-		  		h('body', {ref: (e)=>console.log(e)},
-		  			h(Timer, {ref: (e) => {console.log(e)}})
+		  		h('body', {ref: (e)=>console.log()},
+		  			h(Timer, {ref: (e) => {console.log()}})
 		  		)
 		  	]
 		  }

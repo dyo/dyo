@@ -534,7 +534,7 @@
 	 */
 	function lifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, element.DOM ? element.DOM.target : null)
+			var state = element.owner[name].call(element.instance, findDOMNode(element))
 			
 			if (state instanceof Promise)
 				return state
@@ -1012,7 +1012,7 @@
 	 			if ((element.DOM = element.children.DOM, element.ref)) 
 	 				commitReference(element, element.ref, 1)
 	 			
-	 			if (element.owner[LifecycleDidMount]) 
+	 			if (element.owner[LifecycleDidMount])
 	 				lifecycleMount(element, LifecycleDidMount)
 	
 	 			element.work = WorkSync
@@ -1859,17 +1859,17 @@
 	 */
 	function findDOMNode (element) {
 		if (element) {
-			if (isValidElement(element))
-				return findDOMNode(element.DOM)
-			
-			if (isValidElement(element.children))
-				return findDOMNode(element.children)
-			
-			if (isValidPortal(element.target))
-				return element.flag > ElementFragment ? element.target : findDOMNode(elementSibling(element, 1))
-	
 			if (isValidPortal(element))
 				return element
+	
+			if (isValidPortal(element.target))
+				return element.target
+	
+			if (isValidElement(element.children))
+				return findDOMNode(element.children)
+	
+			if (isValidElement(element))
+				return findDOMNode(element.flag > ElementFragment ? element.DOM : elementSibling(element, 1))
 		}
 	
 		return null
