@@ -92,8 +92,8 @@
 
 		  	if (e.type === 'submit')
 		  		e.preventDefault()
-		  	// console.log('works', e.target, e.currentTarget)
-		  	return {secondsElapsed: this.state.secondsElapsed + 1,value: e.target.value}
+		  	return {secondsElapsed: this.state.secondsElapsed + 1,value: e.target.value||this.state.value}
+
 		  	// this.setState({}, ()=>{
 		  	// 	throw 'end'
 		  	// })

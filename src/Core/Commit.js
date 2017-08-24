@@ -288,7 +288,7 @@ function commitProperty (element, name, value, xmlns, signature) {
 				return commitStyle(element, name, value, 0)
 		default:
 			if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
-				return commitEvent(element, name.toLowerCase(), value, signature)
+				return commitEvent(element, name.toLowerCase(), value)
 
 			commitAttribute(element, name, value, xmlns, 4, signature)
 	}
@@ -298,23 +298,13 @@ function commitProperty (element, name, value, xmlns, signature) {
  * @param {Element} element
  * @param {string} type
  * @param {(function|EventListener)} callback
- * @param {number} signature
  */
-function commitEvent (element, type, callback, signature) {	
-	switch (signature) {
-		case -1:
-			if (element.event)
-				delete element.event[type]
-			break
-		case 0:
-			commitEvent(element, type, callback, signature-1)
-		case 1:
-			if (!element.event)
-				element.event = {}
-			
-			element.event[type] = callback
-			Event.addEventListener(element, type)
-	}
+function commitEvent (element, type, callback) {
+	if (!element.event)
+		element.event = {}
+	
+	element.event[type] = callback
+	Event.addEventListener(element, type)
 }
 
 /**
