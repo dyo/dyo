@@ -663,8 +663,8 @@
 	 */
 	function componentUpdate (element, snapshot, signature) {
 		if (element.work < WorkSync)
-			return WorkTask
-		
+			return
+	
 		element.work = WorkTask
 	
 		var instance = element.instance
@@ -687,7 +687,7 @@
 			case 2:
 				if (owner[LifecycleShouldUpdate])
 					if (lifecycleUpdate(element, LifecycleShouldUpdate, nextProps, nextState, context) === false)
-						return element.work = WorkSync
+						return void (element.work = WorkSync)
 		}
 	
 		if (owner[LifecycleWillUpdate])
@@ -704,7 +704,7 @@
 		if (element.ref !== snapshot.ref)
 			commitReference(element, snapshot.ref, 2)
 	
-		return element.work = WorkSync
+		element.work = WorkSync
 	}
 	
 	/**

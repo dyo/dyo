@@ -58,12 +58,9 @@ module.exports = ({h, Component, render}) => {
 		render(h(C, {update: false}), container)
 		render(h(C, {update: false}), container)
 		ok(container.innerHTML === '1', 'shouldComponentUpdate(false)')
-		console.log(container.innerHTML)
-		
-		render(h(C, {update: true}), container)
-		console.log(container.innerHTML)
-		ok(container.innerHTML === '2', 'shouldComponentUpdate(true)')
 
+		render(h(C, {update: true}), container)
+		ok(container.innerHTML === '2', 'shouldComponentUpdate(true)')
 
 		end()
 	})
