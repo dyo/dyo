@@ -1,18 +1,22 @@
 /**
  * @param {Element} subject
  * @param {Node} target
+ * @param {function=} callback
  */
-function render (subject, target) {
+function render (subject, target, callback) {
 	if (!isValidElement(subject))
-		return render(commitElement(subject), target)
+		return render(commitElement(subject), target, callback)
 	
 	if (!target)
-		return render(subject, DOMRoot())
+		return render(subject, DOMRoot(), callback)
 		
 	if (root.has(target))
-		return reconcileElement(root.get(target), commitElement(subject))
+		reconcileElement(root.get(target), commitElement(subject))
+	else
+		mount(subject, elementIntermediate(DOM(target)), target)
 
-	mount(subject, elementIntermediate(DOM(target)), target)	
+	if (typeof callback === 'function')
+		lifecycleCallback(subject, callback, findDOMNode(subject))
 }
 
 /**

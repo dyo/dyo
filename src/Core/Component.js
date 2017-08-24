@@ -196,7 +196,7 @@ function enqueueCallback (element, instance, callback) {
 	try {
 		return callback.call(instance, instance.state)
 	} catch (e) {
-		errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback))
+		errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback), 1)
 	}
 }
 
@@ -268,7 +268,8 @@ function getChildInstance (element) {
 	try {
 		return new element.type(element.props, element.context)
 	} catch (e) {
-		return errorBoundary(element.host, e, LifecycleConstructor), new Component()
+		errorBoundary(element.host, e, LifecycleConstructor, 1)
+		return new Component()
 	}
 }
 
@@ -282,7 +283,7 @@ function getChildElement (element) {
 			element.instance.render(element.instance.props, element.instance.state, element.context)
 		)
 	} catch (e) {
-		return errorBoundary(element, e, LifecycleRender)
+		return errorBoundary(element, e, LifecycleRender, 1)
 	}
 }
 

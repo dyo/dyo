@@ -221,6 +221,10 @@
 	var LifecycleChildContext = 'getChildContext'
 	var LifecycleInitialState = 'getInitialState'
 	
+	var NsLink = 'http://www.w3.org/1999/xlink'
+	var NsSvg = 'http://www.w3.org/2000/svg'
+	var NsMath = 'http://www.w3.org/1998/Math/MathML'
+	
 	/**
 	 * @constructor
 	 * @param {number} flag
@@ -513,7 +517,7 @@
 		try {
 			return callback.call(element.instance, primary, secondary, optional)
 		} catch (e) {
-			errorBoundary(element, e, LifecycleCallback)
+			errorBoundary(element, e, LifecycleCallback, 0)
 		}
 	}
 	
@@ -525,7 +529,7 @@
 		try {
 			return element.owner[name].call(element.instance)
 		} catch (e) {
-			errorBoundary(element, e, name)
+			errorBoundary(element, e, name, 1)
 		}
 	}
 	
@@ -542,7 +546,7 @@
 	
 			lifecycleReturn(element, state)
 		} catch (e) {
-			errorBoundary(element, e, name)
+			errorBoundary(element, e, name, 1)
 		}
 	}
 	
@@ -562,7 +566,7 @@
 	
 			lifecycleReturn(element, state)
 		} catch (e) {
-			errorBoundary(element, e, name)
+			errorBoundary(element, e, name, 1)
 		}
 	}
 	
@@ -764,7 +768,7 @@
 		try {
 			return callback.call(instance, instance.state)
 		} catch (e) {
-			errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback))
+			errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback), 1)
 		}
 	}
 	
@@ -836,7 +840,8 @@
 		try {
 			return new element.type(element.props, element.context)
 		} catch (e) {
-			return errorBoundary(element.host, e, LifecycleConstructor), new Component()
+			errorBoundary(element.host, e, LifecycleConstructor, 1)
+			return new Component()
 		}
 	}
 	
@@ -850,7 +855,7 @@
 				element.instance.render(element.instance.props, element.instance.state, element.context)
 			)
 		} catch (e) {
-			return errorBoundary(element, e, LifecycleRender)
+			return errorBoundary(element, e, LifecycleRender, 1)
 		}
 	}
 	
@@ -979,9 +984,9 @@
 	function commitXmlns (element, parent) {
 		switch (element.type) {
 			case 'svg':
-				return 'http://www.w3.org/2000/svg'
+				return NsSvg
 			case 'math':
-				return 'http://www.w3.org/1998/Math/MathML'
+				return NsMath
 		}
 	
 		return parent.xmlns && !element.xmlns && parent.type !== 'foreignObject' ? parent.xmlns : ''
@@ -1024,7 +1029,7 @@
 	 		case ElementPromise:
 	 			commitPromise(element, element)
 	 		case ElementFragment:
-	 			element.DOM = DOM(parent.DOM.target)
+	 			element.DOM = DOM(DOMNode(parent))
 	 			break
 	 		case ElementNode:
 	 			element.xmlns = commitXmlns(element, parent)
@@ -1230,7 +1235,7 @@
 		try {
 			return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
 		} catch (e) {
-			return commitDOM(errorBoundary(element, e, LifecycleRender))
+			return commitDOM(errorBoundary(element, e, LifecycleRender, 1))
 		}
 	}
 	
@@ -1590,7 +1595,7 @@
 				DOMEvent(type.substring(2), this, true)
 			}
 	
-			this[type].set(element.DOM.target, element)
+			this[type].set(DOMNode(element), element)
 		},
 		/**
 		 * @param {Event} event
@@ -1617,7 +1622,7 @@
 					if (instance && state)
 						lifecycleReturn(host, state)
 				} catch (e) {
-					errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
+					errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback), 0)
 				}
 		}
 	}
@@ -1653,30 +1658,32 @@
 	 * @param {Element} element
 	 * @param {Error} error
 	 * @param {string} from
+	 * @param {number} signature
 	 * @param {Element?}
 	 */
-	function errorBoundary (element, error, from) {
-		return errorRecovery(element, errorException.call(error, element, from), from)
+	function errorBoundary (element, error, from, signature) {
+		return errorRecovery(element, errorException.call(error, element, from), from, signature)
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {Error} error
 	 * @param {string} from
+	 * @param {number} signature
 	 * @return {Element}
 	 */
-	function errorRecovery (element, error, from) {	
+	function errorRecovery (element, error, from, signature) {	
 		var children = elementText('')
 	
 		try {
-			if (!/on\w+:\w+/.test(from)) {
+			if (signature > 0) {
 					if (element.owner && element.owner[LifecycleDidCatch]) {
 						element.work = WorkTask
 						children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
 						element.work = WorkSync
 					} else if (element.host.owner)
 						enqueue(function () {
-							errorBoundary(element.host, error, from)
+							errorRecovery(element.host, error, from, signature)
 						})
 	
 				if (from !== LifecycleRender && !server)
@@ -1686,7 +1693,7 @@
 			}
 		} catch (e) {
 			enqueue(function () {
-				errorBoundary(element.host, e, LifecycleDidCatch)
+				errorBoundary(element.host, e, LifecycleDidCatch, signature)
 			})
 		}
 	
@@ -1708,11 +1715,28 @@
 	}
 	
 	/**
+	 * @param {string} type
+	 * @param {EventListener} listener
+	 * @param {*} options
+	 */
+	function DOMEvent (type, listener, options) {
+		document.addEventListener(type, listener, options)
+	}
+	
+	/**
 	 * @param {Node} target
 	 * @param {boolean}
 	 */
 	function DOMValid (target) {
 		return target instanceof Node
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Node}
+	 */
+	function DOMNode (element) {
+		return element.DOM.target
 	}
 	
 	/**
@@ -1733,15 +1757,6 @@
 	}
 	
 	/**
-	 * @param {string} type
-	 * @param {EventListener} listener
-	 * @param {*} options
-	 */
-	function DOMEvent (type, listener, options) {
-		document.addEventListener(type, listener, options)
-	}
-	
-	/**
 	 * @param {Element} element
 	 * @param {string} name
 	 * @param {*} value
@@ -1750,33 +1765,35 @@
 	 * @param {number} signature
 	 */
 	function DOMAttribute (element, name, value, xmlns, hash, signature) {
-		if (signature < 1)
-			return hash !== 1 ? element.DOM.target.removeAttribute(name) : element.DOM.target.removeAttributeNS(name)
-	
-		switch (hash) {
-			case 1:
-				return element.DOM.target.setAttributeNS('http://www.w3.org/1999/xlink', name, value)
-			case 2:
-				return DOMProperty(element, name, value)
-			case 3:
-				if (!xmlns)
+		if (signature > 0) {
+			switch (hash) {
+				case 1:
+					return DOMNode(element).setAttributeNS(NsLink, name, value)
+				case 2:
 					return DOMProperty(element, name, value)
-		}
-	
-		if (!xmlns && name in element.DOM.target)
-			switch (name) {
-				case 'width':
-				case 'height':
-					if (element.type === 'img')
-						break
-				default:
-					return DOMProperty(element, name, value)
+				case 3:
+					if (!xmlns)
+						return DOMProperty(element, name, value)
 			}
 	
-		if (value !== false)
-			element.DOM.target.setAttribute(name, value)
-		else
-			DOMAttribute(element, name, value, xmlns, hash, -1)
+			if (!xmlns && name in DOMNode(element))
+				switch (name) {
+					case 'width':
+					case 'height':
+						if (element.type === 'img')
+							break
+					default:
+						return DOMProperty(element, name, value)
+				}
+	
+			if (value !== false)
+				DOMNode(element).setAttribute(name, value)
+			else
+				DOMAttribute(element, name, value, xmlns, hash, -1)
+		} else if (hash !== 1)
+				DOMNode(element).removeAttribute(name)
+			else
+				DOMNode(element).removeAttributeNS(NsLink, name)
 	}
 	
 	/**
@@ -1785,9 +1802,7 @@
 	 * @param {*} value
 	 */
 	function DOMProperty (element, name, value) {
-		try {
-			element.DOM.target[name] = value
-		} catch (e) {}
+		DOMNode(element)[name] = value
 	}
 	
 	/**
@@ -1799,9 +1814,9 @@
 	function DOMStyle (element, name, value, signature) {
 		if (signature > 0) {
 			if (name.indexOf('-') < 0)
-				element.DOM.target.style[name] = value
+				DOMNode(element).style[name] = value
 			else
-				element.DOM.target.style[value != null ? 'setProperty' : 'removeProperty'](name, value)
+				DOMNode(element).style.setProperty(name, value)
 		} else
 			for (var key in value)
 				DOMStyle(element, key, value[key], 1)
@@ -1811,7 +1826,7 @@
 	 * @param {Element} element
 	 */
 	function DOMContent (element) {
-		element.DOM.target.textContent = ''
+		DOMNode(element).textContent = ''
 	}
 	
 	/**
@@ -1819,7 +1834,7 @@
 	 * @param {(string|number)} value
 	 */
 	function DOMValue (element, value) {
-		element.DOM.target.nodeValue = value
+		DOMNode(element).nodeValue = value
 	}
 	
 	/**
@@ -1827,7 +1842,7 @@
 	 * @param {Element} parent
 	 */
 	function DOMRemove (element, parent) {
-		parent.DOM.target.removeChild(element.DOM.target)
+		DOMNode(parent).removeChild(DOMNode(element))
 	}
 	
 	/**
@@ -1836,7 +1851,7 @@
 	 * @param {Element} parent
 	 */
 	function DOMInsert (element, sibling, parent) {
-		parent.DOM.target.insertBefore(element.DOM.target, sibling.DOM.target)
+		DOMNode(parent).insertBefore(DOMNode(element), DOMNode(sibling))
 	}
 	
 	/**
@@ -1844,24 +1859,28 @@
 	 * @param {Element} parent
 	 */
 	function DOMAppend (element, parent) {
-		parent.DOM.target.appendChild(element.DOM.target)
+		DOMNode(parent).appendChild(DOMNode(element))
 	}
 	
 	/**
 	 * @param {Element} subject
 	 * @param {Node} target
+	 * @param {function=} callback
 	 */
-	function render (subject, target) {
+	function render (subject, target, callback) {
 		if (!isValidElement(subject))
-			return render(commitElement(subject), target)
+			return render(commitElement(subject), target, callback)
 		
 		if (!target)
-			return render(subject, DOMRoot())
+			return render(subject, DOMRoot(), callback)
 			
 		if (root.has(target))
-			return reconcileElement(root.get(target), commitElement(subject))
+			reconcileElement(root.get(target), commitElement(subject))
+		else
+			mount(subject, elementIntermediate(DOM(target)), target)
 	
-		mount(subject, elementIntermediate(DOM(target)), target)	
+		if (typeof callback === 'function')
+			lifecycleCallback(subject, callback, findDOMNode(subject))
 	}
 	
 	/**

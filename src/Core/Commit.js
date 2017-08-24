@@ -64,9 +64,9 @@ function commitChildren (element, sibling, host) {
 function commitXmlns (element, parent) {
 	switch (element.type) {
 		case 'svg':
-			return 'http://www.w3.org/2000/svg'
+			return NsSvg
 		case 'math':
-			return 'http://www.w3.org/1998/Math/MathML'
+			return NsMath
 	}
 
 	return parent.xmlns && !element.xmlns && parent.type !== 'foreignObject' ? parent.xmlns : ''
@@ -109,7 +109,7 @@ function commitMount (element, sibling, parent, host, signature) {
  		case ElementPromise:
  			commitPromise(element, element)
  		case ElementFragment:
- 			element.DOM = DOM(parent.DOM.target)
+ 			element.DOM = DOM(DOMNode(parent))
  			break
  		case ElementNode:
  			element.xmlns = commitXmlns(element, parent)
@@ -315,7 +315,7 @@ function commitDOM (element) {
 	try {
 		return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
 	} catch (e) {
-		return commitDOM(errorBoundary(element, e, LifecycleRender))
+		return commitDOM(errorBoundary(element, e, LifecycleRender, 1))
 	}
 }
 

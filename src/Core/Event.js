@@ -12,7 +12,7 @@ var Event = {
 			DOMEvent(type.substring(2), this, true)
 		}
 
-		this[type].set(element.DOM.target, element)
+		this[type].set(DOMNode(element), element)
 	},
 	/**
 	 * @param {Event} event
@@ -39,7 +39,7 @@ var Event = {
 				if (instance && state)
 					lifecycleReturn(host, state)
 			} catch (e) {
-				errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback))
+				errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback), 0)
 			}
 	}
 }

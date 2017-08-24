@@ -24,7 +24,7 @@ function lifecycleCallback (element, callback, primary, secondary, optional) {
 	try {
 		return callback.call(element.instance, primary, secondary, optional)
 	} catch (e) {
-		errorBoundary(element, e, LifecycleCallback)
+		errorBoundary(element, e, LifecycleCallback, 0)
 	}
 }
 
@@ -36,7 +36,7 @@ function lifecycleData (element, name) {
 	try {
 		return element.owner[name].call(element.instance)
 	} catch (e) {
-		errorBoundary(element, e, name)
+		errorBoundary(element, e, name, 1)
 	}
 }
 
@@ -53,7 +53,7 @@ function lifecycleMount (element, name) {
 
 		lifecycleReturn(element, state)
 	} catch (e) {
-		errorBoundary(element, e, name)
+		errorBoundary(element, e, name, 1)
 	}
 }
 
@@ -73,6 +73,6 @@ function lifecycleUpdate (element, name, props, state, context) {
 
 		lifecycleReturn(element, state)
 	} catch (e) {
-		errorBoundary(element, e, name)
+		errorBoundary(element, e, name, 1)
 	}
 }

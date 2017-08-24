@@ -29,30 +29,32 @@ function errorException (element, from) {
  * @param {Element} element
  * @param {Error} error
  * @param {string} from
+ * @param {number} signature
  * @param {Element?}
  */
-function errorBoundary (element, error, from) {
-	return errorRecovery(element, errorException.call(error, element, from), from)
+function errorBoundary (element, error, from, signature) {
+	return errorRecovery(element, errorException.call(error, element, from), from, signature)
 }
 
 /**
  * @param {Element} element
  * @param {Error} error
  * @param {string} from
+ * @param {number} signature
  * @return {Element}
  */
-function errorRecovery (element, error, from) {	
+function errorRecovery (element, error, from, signature) {	
 	var children = elementText('')
 
 	try {
-		if (!/on\w+:\w+/.test(from)) {
+		if (signature > 0) {
 				if (element.owner && element.owner[LifecycleDidCatch]) {
 					element.work = WorkTask
 					children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
 					element.work = WorkSync
 				} else if (element.host.owner)
 					enqueue(function () {
-						errorBoundary(element.host, error, from)
+						errorRecovery(element.host, error, from, signature)
 					})
 
 			if (from !== LifecycleRender && !server)
@@ -62,7 +64,7 @@ function errorRecovery (element, error, from) {
 		}
 	} catch (e) {
 		enqueue(function () {
-			errorBoundary(element.host, e, LifecycleDidCatch)
+			errorBoundary(element.host, e, LifecycleDidCatch, signature)
 		})
 	}
 

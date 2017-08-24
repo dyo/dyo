@@ -13,11 +13,28 @@ function DOMRoot () {
 }
 
 /**
+ * @param {string} type
+ * @param {EventListener} listener
+ * @param {*} options
+ */
+function DOMEvent (type, listener, options) {
+	document.addEventListener(type, listener, options)
+}
+
+/**
  * @param {Node} target
  * @param {boolean}
  */
 function DOMValid (target) {
 	return target instanceof Node
+}
+
+/**
+ * @param {Element} element
+ * @return {Node}
+ */
+function DOMNode (element) {
+	return element.DOM.target
 }
 
 /**
@@ -38,15 +55,6 @@ function DOMText (value) {
 }
 
 /**
- * @param {string} type
- * @param {EventListener} listener
- * @param {*} options
- */
-function DOMEvent (type, listener, options) {
-	document.addEventListener(type, listener, options)
-}
-
-/**
  * @param {Element} element
  * @param {string} name
  * @param {*} value
@@ -55,33 +63,35 @@ function DOMEvent (type, listener, options) {
  * @param {number} signature
  */
 function DOMAttribute (element, name, value, xmlns, hash, signature) {
-	if (signature < 1)
-		return hash !== 1 ? element.DOM.target.removeAttribute(name) : element.DOM.target.removeAttributeNS(name)
-
-	switch (hash) {
-		case 1:
-			return element.DOM.target.setAttributeNS('http://www.w3.org/1999/xlink', name, value)
-		case 2:
-			return DOMProperty(element, name, value)
-		case 3:
-			if (!xmlns)
+	if (signature > 0) {
+		switch (hash) {
+			case 1:
+				return DOMNode(element).setAttributeNS(NsLink, name, value)
+			case 2:
 				return DOMProperty(element, name, value)
-	}
-
-	if (!xmlns && name in element.DOM.target)
-		switch (name) {
-			case 'width':
-			case 'height':
-				if (element.type === 'img')
-					break
-			default:
-				return DOMProperty(element, name, value)
+			case 3:
+				if (!xmlns)
+					return DOMProperty(element, name, value)
 		}
 
-	if (value !== false)
-		element.DOM.target.setAttribute(name, value)
-	else
-		DOMAttribute(element, name, value, xmlns, hash, -1)
+		if (!xmlns && name in DOMNode(element))
+			switch (name) {
+				case 'width':
+				case 'height':
+					if (element.type === 'img')
+						break
+				default:
+					return DOMProperty(element, name, value)
+			}
+
+		if (value !== false)
+			DOMNode(element).setAttribute(name, value)
+		else
+			DOMAttribute(element, name, value, xmlns, hash, -1)
+	} else if (hash !== 1)
+			DOMNode(element).removeAttribute(name)
+		else
+			DOMNode(element).removeAttributeNS(NsLink, name)
 }
 
 /**
@@ -90,9 +100,7 @@ function DOMAttribute (element, name, value, xmlns, hash, signature) {
  * @param {*} value
  */
 function DOMProperty (element, name, value) {
-	try {
-		element.DOM.target[name] = value
-	} catch (e) {}
+	DOMNode(element)[name] = value
 }
 
 /**
@@ -104,9 +112,9 @@ function DOMProperty (element, name, value) {
 function DOMStyle (element, name, value, signature) {
 	if (signature > 0) {
 		if (name.indexOf('-') < 0)
-			element.DOM.target.style[name] = value
+			DOMNode(element).style[name] = value
 		else
-			element.DOM.target.style[value != null ? 'setProperty' : 'removeProperty'](name, value)
+			DOMNode(element).style.setProperty(name, value)
 	} else
 		for (var key in value)
 			DOMStyle(element, key, value[key], 1)
@@ -116,7 +124,7 @@ function DOMStyle (element, name, value, signature) {
  * @param {Element} element
  */
 function DOMContent (element) {
-	element.DOM.target.textContent = ''
+	DOMNode(element).textContent = ''
 }
 
 /**
@@ -124,7 +132,7 @@ function DOMContent (element) {
  * @param {(string|number)} value
  */
 function DOMValue (element, value) {
-	element.DOM.target.nodeValue = value
+	DOMNode(element).nodeValue = value
 }
 
 /**
@@ -132,7 +140,7 @@ function DOMValue (element, value) {
  * @param {Element} parent
  */
 function DOMRemove (element, parent) {
-	parent.DOM.target.removeChild(element.DOM.target)
+	DOMNode(parent).removeChild(DOMNode(element))
 }
 
 /**
@@ -141,7 +149,7 @@ function DOMRemove (element, parent) {
  * @param {Element} parent
  */
 function DOMInsert (element, sibling, parent) {
-	parent.DOM.target.insertBefore(element.DOM.target, sibling.DOM.target)
+	DOMNode(parent).insertBefore(DOMNode(element), DOMNode(sibling))
 }
 
 /**
@@ -149,5 +157,5 @@ function DOMInsert (element, sibling, parent) {
  * @param {Element} parent
  */
 function DOMAppend (element, parent) {
-	parent.DOM.target.appendChild(element.DOM.target)
+	DOMNode(parent).appendChild(DOMNode(element))
 }
