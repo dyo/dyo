@@ -313,7 +313,7 @@ function commitEvent (element, type, callback, signature) {
 				element.event = {}
 			
 			element.event[type] = callback
-			Events.attach(element, type)
+			Event.addEventListener(element, type)
 	}
 }
 
