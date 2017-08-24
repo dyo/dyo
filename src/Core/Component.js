@@ -6,7 +6,7 @@ function Component (props, context) {
 	this.state = null
 	this.props = props
 	this.context = context
-	this.children = null
+	this[UUID] = null
 }
 /**
  * @type {Object}
@@ -32,14 +32,14 @@ Component.prototype = Object.create(null, merge(ComponentDefault, ComponentMetho
  * @param {function?} callback
  */
 function setState (state, callback) {
-	enqueueState(this.children, this, state, callback)
+	enqueueState(this[UUID], this, state, callback)
 }
 
 /**
  * @param {function} callback
  */
 function forceUpdate (callback) {
-	enqueueUpdate(this.children, this, callback, 0)
+	enqueueUpdate(this[UUID], this, callback, 0)
 }
 
 /**
@@ -65,10 +65,10 @@ function componentMount (element) {
 	element.owner = owner
 	element.instance = instance
 	
+	instance[UUID] = element	
 	instance.refs = {}
 	instance.props = element.props
 	instance.context = element.context = element.context || {}
-	instance.children = element
 
 	if (owner[LifecycleInitialState])
 		instance.state = getInitialState(element, instance, lifecycleData(element, LifecycleInitialState))
@@ -310,7 +310,7 @@ function getHostElement (element) {
  * @return {Element?}
  */
 function getHostChildren (element) {
-	return isValidElement(element) ? element : element.children	
+	return isValidElement(element) ? element : element[UUID]
 }
 
 /**

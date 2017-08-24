@@ -94,6 +94,14 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	})
 	
 	/**
+	 * @param {*} description
+	 * @return {string}
+	 */
+	function Unique (description) {
+		return 'Symbol('+description+')'
+	}
+	
+	/**
 	 * @return {void}
 	 */
 	function noop () {}
@@ -167,11 +175,12 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		throw new Error('#'+from+'(...): '+message+'.')
 	}
 	
-	var Node = window.Node || noop
-	var Symbol = window.Symbol || noop
-	var Iterator = Symbol.iterator
-	var Promise = window.Promise || noop
+	var Symbol = window.Symbol || Unique
 	var WeakMap = window.WeakMap || Hash
+	var Promise = window.Promise || noop
+	var Node = window.Node || noop
+	var UUID = Symbol('dio.UUID')
+	var Iterator = Symbol.iterator || UUID
 	
 	var root = new WeakMap()
 	var document = window.document || noop

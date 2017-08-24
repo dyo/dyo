@@ -104,6 +104,14 @@
 	})
 	
 	/**
+	 * @param {*} description
+	 * @return {string}
+	 */
+	function Unique (description) {
+		return 'Symbol('+description+')'
+	}
+	
+	/**
 	 * @return {void}
 	 */
 	function noop () {}
@@ -177,11 +185,12 @@
 		throw new Error('#'+from+'(...): '+message+'.')
 	}
 	
-	var Node = window.Node || noop
-	var Symbol = window.Symbol || noop
-	var Iterator = Symbol.iterator
-	var Promise = window.Promise || noop
+	var Symbol = window.Symbol || Unique
 	var WeakMap = window.WeakMap || Hash
+	var Promise = window.Promise || noop
+	var Node = window.Node || noop
+	var UUID = Symbol('dio.UUID')
+	var Iterator = Symbol.iterator || UUID
 	
 	var root = new WeakMap()
 	var document = window.document || noop
@@ -565,7 +574,7 @@
 		this.state = null
 		this.props = props
 		this.context = context
-		this.children = null
+		this[UUID] = null
 	}
 	/**
 	 * @type {Object}
@@ -591,14 +600,14 @@
 	 * @param {function?} callback
 	 */
 	function setState (state, callback) {
-		enqueueState(this.children, this, state, callback)
+		enqueueState(this[UUID], this, state, callback)
 	}
 	
 	/**
 	 * @param {function} callback
 	 */
 	function forceUpdate (callback) {
-		enqueueUpdate(this.children, this, callback, 0)
+		enqueueUpdate(this[UUID], this, callback, 0)
 	}
 	
 	/**
@@ -624,10 +633,10 @@
 		element.owner = owner
 		element.instance = instance
 		
+		instance[UUID] = element	
 		instance.refs = {}
 		instance.props = element.props
 		instance.context = element.context = element.context || {}
-		instance.children = element
 	
 		if (owner[LifecycleInitialState])
 			instance.state = getInitialState(element, instance, lifecycleData(element, LifecycleInitialState))
@@ -869,7 +878,7 @@
 	 * @return {Element?}
 	 */
 	function getHostChildren (element) {
-		return isValidElement(element) ? element : element.children	
+		return isValidElement(element) ? element : element[UUID]
 	}
 	
 	/**
@@ -1882,8 +1891,8 @@
 			if (DOMValid(element.target))
 				return element.target
 	
-			if (isValidElement(element.children))
-				return findDOMNode(element.children)
+			if (isValidElement(element[UUID]))
+				return findDOMNode(element[UUID])
 	
 			if (isValidElement(element))
 				return findDOMNode(element.flag > ElementFragment ? element.DOM : elementSibling(element, 1))

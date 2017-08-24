@@ -90,6 +90,14 @@ Hash.prototype = Object.create(null, {
 })
 
 /**
+ * @param {*} description
+ * @return {string}
+ */
+function Unique (description) {
+	return 'Symbol('+description+')'
+}
+
+/**
  * @return {void}
  */
 function noop () {}
