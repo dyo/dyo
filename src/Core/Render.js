@@ -7,7 +7,7 @@ function render (subject, target) {
 		return render(commitElement(subject), target)
 	
 	if (!target)
-		return render(subject, DOMDocument())
+		return render(subject, DOMRoot())
 		
 	if (root.has(target))
 		return reconcileElement(root.get(target), commitElement(subject))

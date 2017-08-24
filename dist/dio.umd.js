@@ -1586,7 +1586,7 @@
 		addEventListener: function addEventListener (element, type) {
 			if (!this[type]) {
 				this[type] = new Map()
-				document.addEventListener(type.substring(2), this, true)
+				DOMEvent(type.substring(2), this, true)
 			}
 	
 			this[type].set(element.DOM.target, element)
@@ -1695,8 +1695,17 @@
 	/**
 	 * @return {Node}
 	 */
-	function DOMDocument () {
+	function DOMRoot () {
 		return document.documentElement
+	}
+	
+	/**
+	 * @param {string} type
+	 * @param {EventListener} listener
+	 * @param {*} options
+	 */
+	function DOMEvent (type, listener, options) {
+		document.addEventListener(type, listener, options)
 	}
 	
 	/**
@@ -1830,7 +1839,7 @@
 			return render(commitElement(subject), target)
 		
 		if (!target)
-			return render(subject, DOMDocument())
+			return render(subject, DOMRoot())
 			
 		if (root.has(target))
 			return reconcileElement(root.get(target), commitElement(subject))

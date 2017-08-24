@@ -9,7 +9,7 @@ var Event = {
 	addEventListener: function addEventListener (element, type) {
 		if (!this[type]) {
 			this[type] = new Map()
-			document.addEventListener(type.substring(2), this, true)
+			DOMEvent(type.substring(2), this, true)
 		}
 
 		this[type].set(element.DOM.target, element)

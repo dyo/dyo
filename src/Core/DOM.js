@@ -1,8 +1,17 @@
 /**
  * @return {Node}
  */
-function DOMDocument () {
+function DOMRoot () {
 	return document.documentElement
+}
+
+/**
+ * @param {string} type
+ * @param {EventListener} listener
+ * @param {*} options
+ */
+function DOMEvent (type, listener, options) {
+	document.addEventListener(type, listener, options)
 }
 
 /**
