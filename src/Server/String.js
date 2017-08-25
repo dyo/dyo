@@ -36,10 +36,12 @@ function toString () {
  * @return {String}
  */
 function toProps (element, props) {
-	var value, output = ''
+	var output = ''
 
 	for (var key in props) {
-		switch (value = props[key], key) {
+		var value = props[key]
+		
+		switch (key) {
 			case 'dangerouslySetInnerHTML':
 				if (value && value.__html)
 					value = value.__html
@@ -63,8 +65,6 @@ function toProps (element, props) {
 			default:
 				if (value !== false && value != null)
 					output += ' '+ key + (value !== true ? '="'+escapeText(value)+'"' : '')
-				else
-					continue
 		}
 	}
 

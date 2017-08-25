@@ -1,18 +1,20 @@
 const DOMToNativeScriptPrimitivesIdeas = `
-<ul      ...props> -> list views
+<ul      ...props> -> list view
 <label   ...props> -> label view
 <header  ...props> -> action bar view
-<footer  ...props> -> tap bar view
+<footer  ...props> -> tapbar view
 <img     ...props> -> image view
 <button  ...props> -> button view
 <input   ...props> -> input view
 <text    ...props> -> text view
 <page    ...props> -> page view
 <layout  ...props> -> layout view
+<dialog  ...props> -> dialog view
 
-<shape   ...props> -> generic shape
-<control ...props> -> generic control
-<view    ...props> -> generic view
+<canvas  ...props> -> generic canvas primitive
+<shape   ...props> -> generic shape primitive
+<control ...props> -> generic control primitive
+<view    ...props> -> generic view primitive
 `
 
 const DOMToNativeAPIShims = `

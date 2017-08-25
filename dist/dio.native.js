@@ -1829,7 +1829,7 @@
 	}
 	
 	/**
-	 * @param {Node} target
+	 * @param {View} target
 	 */
 	function DOM (target) {
 		return {target: target}
@@ -1837,22 +1837,22 @@
 	
 	/**
 	 * @param {Element} element
-	 * @return {Node}
+	 * @return {View}
 	 */
 	function DOMNode (element) {
 		return element.DOM.target
 	}
 	
 	/**
-	 * @param {Node} target
+	 * @param {View} target
 	 * @param {boolean}
 	 */
 	function DOMValid (target) {
-	
+		return target instanceof View
 	}
 	
 	/**
-	 * @return {Node}
+	 * @return {View}
 	 */
 	function DOMRoot () {
 	
@@ -1875,7 +1875,7 @@
 	function DOMElement (type, xmlns) {
 		switch (type) {
 			default:
-				return new View()
+				return DOM(new View())
 		}
 	}
 	

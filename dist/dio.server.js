@@ -324,10 +324,12 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @return {String}
 	 */
 	function toProps (element, props) {
-		var value, output = ''
+		var output = ''
 	
 		for (var key in props) {
-			switch (value = props[key], key) {
+			var value = props[key]
+			
+			switch (key) {
 				case 'dangerouslySetInnerHTML':
 					if (value && value.__html)
 						value = value.__html
@@ -351,8 +353,6 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 				default:
 					if (value !== false && value != null)
 						output += ' '+ key + (value !== true ? '="'+escapeText(value)+'"' : '')
-					else
-						continue
 			}
 		}
 	
@@ -410,7 +410,14 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	/**
 	 * @type {Object}
 	 */
-	Stream.prototype = Object.create(Readable.prototype, {_read: {value: read}})
+	Stream.prototype = Object.create(Readable.prototype, {
+		/**
+		 * @return {void}
+		 */
+		_read: {value: function read () {
+			this.push(this.stack.length ? toChunk(this.stack.pop(), this.stack) : null)
+		}}
+	})
 	
 	/**
 	 * @param {function=}
@@ -430,7 +437,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @param {Array} stack
 	 * @return {string}
 	 */
-	function write (element, stack) {
+	function toChunk (element, stack) {
 		while (element.flag === ElementComponent)
 			element = (componentMount(element), element.children)		
 	
@@ -442,7 +449,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		switch (element.flag) {
 			case ElementPromise:
 				return void element.type.then(function (element) {
-						write(commitElement(element), stack)
+						toChunk(commitElement(element), stack)
 				})
 			case ElementText:
 				output = escapeText(children)
@@ -477,13 +484,6 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	}
 	
 	/**
-	 * @return {void}
-	 */
-	function read () {
-		this.push(this.stack.length ? write(this.stack.pop(), this.stack) : null)
-	}
-	
-	/**
 	 * @param {*} subject
 	 * @param {Stream?} target
 	 * @param {function=}
@@ -493,6 +493,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 			return commitElement(subject).toString()
 	
 		setHeader(target)
+		
 		target.end(commitElement(subject).toString(), 'utf8', callback)
 	}
 	
@@ -506,6 +507,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 			return commitElement(subject).toStream()
 	
 		setHeader(target)
+		
 		commitElement(subject).toStream(callback).pipe(target)
 	}
 }

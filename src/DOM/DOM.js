@@ -85,12 +85,14 @@ function DOMAttribute (element, name, value, xmlns, hash, signature) {
 
 		if (!xmlns && name in DOMNode(element))
 			switch (name) {
+				case 'style':
+					break
 				case 'width':
 				case 'height':
 					if (element.type === 'img')
 						break
 				default:
-					return DOMNode(element)[name] = value
+					return DOMProperty(element, name, value)
 			}
 
 		if (value !== false)

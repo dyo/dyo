@@ -9,7 +9,14 @@ function Stream (element) {
 /**
  * @type {Object}
  */
-Stream.prototype = Object.create(Readable.prototype, {_read: {value: read}})
+Stream.prototype = Object.create(Readable.prototype, {
+	/**
+	 * @return {void}
+	 */
+	_read: {value: function read () {
+		this.push(this.stack.length ? toChunk(this.stack.pop(), this.stack) : null)
+	}}
+})
 
 /**
  * @param {function=}
@@ -29,7 +36,7 @@ function toStream (callback) {
  * @param {Array} stack
  * @return {string}
  */
-function write (element, stack) {
+function toChunk (element, stack) {
 	while (element.flag === ElementComponent)
 		element = (componentMount(element), element.children)		
 
@@ -41,7 +48,7 @@ function write (element, stack) {
 	switch (element.flag) {
 		case ElementPromise:
 			return void element.type.then(function (element) {
-					write(commitElement(element), stack)
+					toChunk(commitElement(element), stack)
 			})
 		case ElementText:
 			output = escapeText(children)
@@ -73,11 +80,4 @@ function write (element, stack) {
 	}
 
 	return output
-}
-
-/**
- * @return {void}
- */
-function read () {
-	this.push(this.stack.length ? write(this.stack.pop(), this.stack) : null)
 }
