@@ -34,7 +34,7 @@ function DOMRoot () {
  * @param {*} options
  */
 function DOMEvent (type, listener, options) {
-
+	DOMRoot().addEventListener(type, listener.handleEvent, listener)
 }
 
 /**
@@ -43,7 +43,10 @@ function DOMEvent (type, listener, options) {
  * @return {DOM}
  */
 function DOMElement (type, xmlns) {
-
+	switch (type) {
+		default:
+			return new View()
+	}
 }
 
 /**
@@ -51,7 +54,7 @@ function DOMElement (type, xmlns) {
  * @return {DOM}
  */
 function DOMText (value) {
-
+	return DOM(new Span())
 }
 
 /**
@@ -60,7 +63,7 @@ function DOMText (value) {
  * @param {*} value
  */
 function DOMProperty (element, name, value) {
-
+	DOMNode(element).set(name, value)
 }
 
 /**
@@ -72,7 +75,9 @@ function DOMProperty (element, name, value) {
  * @param {number} signature
  */
 function DOMAttribute (element, name, value, xmlns, hash, signature) {
+	switch (name) {
 
+	}
 }
 
 
@@ -98,7 +103,7 @@ function DOMContent (element) {
  * @param {(string|number)} value
  */
 function DOMValue (element, value) {
-
+	DOMNode(element).text = value
 }
 
 /**

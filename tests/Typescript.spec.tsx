@@ -13,8 +13,7 @@ class A extends dio.Component<P, S> {
 		super(props)
 	}
 	render(props: P) {
-		return h('h1', {dangerouslySetInnerHTML: {__html: 1}})
-		// return <h1 style='color:red;'>Hello World</h1>
+		return <h1 style='color:red;'>Hello World</h1>
 	}
 }
 

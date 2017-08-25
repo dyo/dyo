@@ -1859,7 +1859,7 @@
 	 * @param {*} options
 	 */
 	function DOMEvent (type, listener, options) {
-	
+		DOMRoot().addEventListener(type, listener.handleEvent, listener)
 	}
 	
 	/**
@@ -1868,7 +1868,10 @@
 	 * @return {DOM}
 	 */
 	function DOMElement (type, xmlns) {
-	
+		switch (type) {
+			default:
+				return new View()
+		}
 	}
 	
 	/**
@@ -1876,7 +1879,7 @@
 	 * @return {DOM}
 	 */
 	function DOMText (value) {
-	
+		return DOM(new Span())
 	}
 	
 	/**
@@ -1885,7 +1888,7 @@
 	 * @param {*} value
 	 */
 	function DOMProperty (element, name, value) {
-	
+		DOMNode(element).set(name, value)
 	}
 	
 	/**
@@ -1897,7 +1900,9 @@
 	 * @param {number} signature
 	 */
 	function DOMAttribute (element, name, value, xmlns, hash, signature) {
+		switch (name) {
 	
+		}
 	}
 	
 	/**
@@ -1922,7 +1927,7 @@
 	 * @param {(string|number)} value
 	 */
 	function DOMValue (element, value) {
-	
+		DOMNode(element).text = value
 	}
 	
 	/**
