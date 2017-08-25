@@ -7,9 +7,7 @@ const DOM = new JSDOM('<!DOCTYPE html>')
 global.window = DOM.window
 global.document = DOM.window.document
 global.Node = DOM.window.Node
-global.dio = require('../dist/dio.js')
-
-// return
+global.dio = require('../../dist/dio.js')
 
 /**
  * deepEqual
@@ -114,11 +112,13 @@ global.test = (name, body) => {
 let search = '.spec.js';
 
 const bootstrap = () => {
-	const files = fs.readdirSync(__dirname).filter((file) => {
+	const dirpath = path.resolve(__dirname, '../../tests')
+	const files = fs.readdirSync(dirpath).filter((file) => {
 		return file.lastIndexOf(search) > -1
 	});
+	
 	const specs = files.map((file) => {
-		return path.resolve(__dirname, file)
+		return path.join(dirpath, file)
 	});
 
 	specs.forEach((spec)=>{

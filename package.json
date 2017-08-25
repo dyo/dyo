@@ -1,7 +1,7 @@
 {
   "name": "dio.js",
   "main": "dist/dio.js",
-  "types": "dio.d.ts",
+  "types": "types/dio.d.ts",
   "description": "A Library For Building User Interfaces.",
   "version": "8.0.0",
   "homepage": "https://github.com/thysultan/dio.js",
@@ -24,9 +24,9 @@
     "dist"
   ],
   "scripts": {
-    "test": "node ./tests",
-    "dev": "node ./build",
-    "build": "node ./build --build"
+    "test": "node ./scripts/tests",
+    "dev": "node ./scripts/build",
+    "build": "node ./scripts/build --bundle"
   },
   "devDependencies": {
     "chokidar": "^1.7.0",

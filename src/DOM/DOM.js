@@ -56,6 +56,15 @@ function DOMText (value) {
 
 /**
  * @param {Element} element
+ * @param {string} name 
+ * @param {*} value
+ */
+function DOMProperty (element, name, value) {
+	DOMNode(element)[name] = value
+}
+
+/**
+ * @param {Element} element
  * @param {string} name
  * @param {*} value
  * @param {boolean} xmlns
@@ -68,10 +77,10 @@ function DOMAttribute (element, name, value, xmlns, hash, signature) {
 			case 1:
 				return DOMNode(element).setAttributeNS(NsLink, name, value)
 			case 2:
-				return DOMNode(element)[name] = value
+				return DOMProperty(element, name, value)
 			case 3:
 				if (!xmlns)
-					return DOMNode(element)[name] = value
+					return DOMProperty(element, name, value)
 		}
 
 		if (!xmlns && name in DOMNode(element))

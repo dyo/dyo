@@ -15,11 +15,11 @@ function Element (flag) {
 	this.children = null
 	this.owner = null
 	this.instance = null
-	this.host = null
-	this.parent = null
 	this.event = null
 	this.DOM = null
 	this.context = null
+	this.parent = null
+	this.host = null
 	this.next = null
 	this.prev = null
 }

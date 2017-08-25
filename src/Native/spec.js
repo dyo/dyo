@@ -7,13 +7,19 @@ const DOMToNativeScriptPrimitivesIdeas = `
 <button  ...props> -> button view
 <input   ...props> -> input view
 <text    ...props> -> text view
+<page    ...props> -> page view
+<layout  ...props> -> layout view
 
-<page    ...props> -> generic page view
-<control ...props> -> generic control view
+<shape   ...props> -> generic shape
+<control ...props> -> generic control
 <view    ...props> -> generic view
+`
 
-Node#create -> create view
-Node#remove -> remove view
-Node#append -> append view
-Node#insert -> insert view
+const DOMToNativeAPIShims = `
+#create   -> create view
+#remove   -> remove view
+#append   -> append view
+#insert   -> insert view
+#value    -> set text
+#property -> set property
 `

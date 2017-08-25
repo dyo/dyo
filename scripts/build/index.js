@@ -2,46 +2,46 @@ const fs = require('fs')
 const path = require('path')
 const chokidar = require('chokidar')
 const UglifyJS = require('uglify-js')
-const package = require('../package.json')
+const package = require('../../package.json')
 const options = {compress: {}}
 const strict = `'use strict'`
 
 const shared = [
-	'../src/Core/Utility.js',
-	'../src/Core/Constant.js',
+	'../../src/Core/Utility.js',
+	'../../src/Core/Constant.js',
 ]
 
 const core = [
-	'../src/Core/Element.js',
-	'../src/Core/Lifecycle.js',
-	'../src/Core/Component.js',
-	'../src/Core/Commit.js',
-	'../src/Core/Reconcile.js',
-	'../src/Core/Event.js',
-	'../src/Core/Error.js',
-	'../src/Core/Render.js',
-	'../src/Core/Other.js',
-	'../src/Core/Children.js'
+	'../../src/Core/Element.js',
+	'../../src/Core/Lifecycle.js',
+	'../../src/Core/Component.js',
+	'../../src/Core/Commit.js',
+	'../../src/Core/Reconcile.js',
+	'../../src/Core/Event.js',
+	'../../src/Core/Error.js',
+	'../../src/Core/Render.js',
+	'../../src/Core/Other.js',
+	'../../src/Core/Children.js'
 ]
 
 const dom = [
-	'../src/DOM/DOM.js',
+	'../../src/DOM/DOM.js',
 ]
 
 const server = [
 	...shared,
-	'../src/Server/Utility.js',
-	'../src/Server/Constant.js',
-	'../src/Server/String.js',
-	'../src/Server/JSON.js',
-	'../src/Server/Stream.js',
-	'../src/Server/Render.js'
+	'../../src/Server/Utility.js',
+	'../../src/Server/Constant.js',
+	'../../src/Server/String.js',
+	'../../src/Server/JSON.js',
+	'../../src/Server/Stream.js',
+	'../../src/Server/Render.js'
 ]
 
 const native = [
 	...shared,
 	...core,
-	'../src/Native/Native.js'
+	'../../src/Native/DOM.js'
 ]
 
 const umd = [
@@ -129,7 +129,7 @@ const wrapper = (open, module, content, close, version) => {
 	}
 }
 
-const build = (module, files, location) => {
+const bundle = (module, files, location) => {
 	let version = package.version
 	let open = '/* DIO '+version+' */\n'
 	let close = '\n}))'
@@ -152,21 +152,21 @@ const build = (module, files, location) => {
 }
 
 const resolve = () => {
-	build('umd', umd, '../dist/dio.js')
-	build('server', server, '../dist/dio.server.js')
-	build('native', native, '../dist/dio.native.js')
+	bundle('umd', umd, '../../dist/dio.js')
+	bundle('server', server, '../../dist/dio.server.js')
+	bundle('native', native, '../../dist/dio.native.js')
 
 	console.log(
-		'\x1b[32m\x1b[1m\x1b[2m' + '\nBuild: '+
-		'\n  dio.js,'+
-		'\n  dio.min.js'+
-		'\n  dio.server.js,'+
-		'\n  dio.native.js,'+
+		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled: '+
+		'\n – dio.js,'+
+		'\n – dio.min.js'+
+		'\n – dio.server.js,'+
+		'\n – dio.native.js,'+
 		'\x1b[0m\n'
 	)
 }
 
-if ((process.argv.pop()+'').indexOf('--build') !== -1) {
+if ((process.argv.pop()+'').indexOf('--bundle') !== -1) {
 	return resolve()
 }
 
@@ -175,8 +175,8 @@ const watcher = (file) => {
 		console.log('\nwatching..', 'src/')
 	} else {
 		if (file.indexOf('package.json') > -1) {
-			delete require.cache[require.resolve('../package.json')];
-			package.version = require('../package.json').version
+			delete require.cache[require.resolve('../../package.json')];
+			package.version = require('../../package.json').version
 		}
 		console.log('changed > ' + file)
 	}
@@ -184,10 +184,14 @@ const watcher = (file) => {
 	resolve()
 }
 
-const watch = chokidar.watch(['./src/', 'package.json'], {ignored: /[\/\\]\./})
+const watch = chokidar.watch([
+	'./scripts/build/UMD.js',
+	'./src/', 
+	'./package.json',
+	], {ignored: /[\/\\]\./})
 
 watch.on('change', watcher)
 watch.on('ready', watcher)
 
 process.stdout.write('\033c')
-process.stdout.write("\033]0;" + 'DIO build' + '\007')
+process.stdout.write("\033]0;" + 'DIO bundle' + '\007')

@@ -32,15 +32,7 @@ A Library For Building User Interfaces.
 #### CDN
 
 ```html
-<script src=https://cdnjs.cloudflare.com/ajax/libs/dio/8.0.0/dio.min.js></script>
-```
-
-```html
-<script src=https://cdn.jsdelivr.net/npm/dio.js@latest/dio.min.js></script>
-```
-
-```html
-<script src=https://unpkg.com/dio.js@latest/dio.min.js></script>
+<script src=https://unpkg.com/dio.js@latest/dist/dio.min.js></script>
 ```
 
 #### NPM
@@ -66,11 +58,11 @@ The easiest way to get started with DIO is to walk through the [Introduction to 
 
 ### Render
 
-1. Fragments
-2. Promises
-3. Iterables
-4. Strings
-5. Portals
+1. Fragments.
+2. Promises.
+3. Iterables.
+4. Strings.
+5. Portals.
 
 ### Components
 

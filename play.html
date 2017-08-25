@@ -131,10 +131,7 @@
 		  			h('title', 'Hello World', performance.now()),
 		  		),
 		  		'Hello World',
-		  		h('body', {ref: (e)=> {
-		  			console.log(-1, e); 
-		  			throw new Error('ref')
-		  		}},
+		  		h('body', {ref: (e)=> {}},
 		  			h(Timer, {ref: (e) => {console.log(-1, e)}})
 		  		)
 		  	]
@@ -149,25 +146,8 @@
 			}
 		}
 
-		dio.Children.only(1)
-
-		// dio.render(h(Hello, {remove: false}))
-		// dio.render(Hello, {remove: true})
-
-		// dio.render(h(Main), null, ()=>{throw new Error('callback')})
+		// dio.Children.only(1)
+		dio.render(h(Main))
 		// dio.render(h(ContextProvider, {currentUser: 'Sultan'}))
-
-		// var counter = 0
-		// class C {
-		// 	shouldComponentUpdate({update}) {
-		// 		return update
-		// 	}
-		// 	render() {
-		// 		return ++counter
-		// 	}
-		// }
-		// dio.render(h(C, {update: false}))
-		// dio.render(h(C, {update: false}))
-		// dio.render(h(C, {update: true}))
 	</script>
 </body>

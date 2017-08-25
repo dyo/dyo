@@ -56,6 +56,15 @@ function DOMText (value) {
 
 /**
  * @param {Element} element
+ * @param {string} name 
+ * @param {*} value
+ */
+function DOMProperty (element, name, value) {
+
+}
+
+/**
+ * @param {Element} element
  * @param {string} name
  * @param {*} value
  * @param {boolean} xmlns
