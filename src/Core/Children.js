@@ -11,7 +11,7 @@ var Children = {
 
 		if (children == null)
 			return array
-		else if (typeof children !== 'object')
+		else if (isValidElement(children) || typeof children !== 'object')
 			return [children]
 		else if (children instanceof Array)
 			array = children
@@ -21,8 +21,10 @@ var Children = {
 			})
 		else if (typeof children[Iterator] === 'function')
 			return this.toArray(child[Iterator]())
+		else
+			return this.toArray([children])
 
-		return flatten(children, [])
+		return flatten(array, [])
 	},
 	/**
 	 * @param {*} children

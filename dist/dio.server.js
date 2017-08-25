@@ -179,7 +179,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	var WeakMap = window.WeakMap || Hash
 	var Promise = window.Promise || noop
 	var Node = window.Node || noop
-	var UUID = Symbol('dio.UUID')
+	var UUID = Symbol('dio')
 	var Iterator = Symbol.iterator || UUID
 	
 	var root = new WeakMap()

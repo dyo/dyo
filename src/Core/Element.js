@@ -201,20 +201,23 @@ function createElement (type, props) {
 	var flag = typeof type !== 'function' ? ElementNode : ElementComponent
 	var length = arguments.length
 	var element = new Element(flag)
-	var children
+	var children = element.children = new List()
 	
 	if (i < 2)
 		switch (props.constructor) {
 			case Object:
 				if (props[Iterator] === undefined) {
-					if (props.key != null)
+					if (props.key !== undefined)
 						element.key = props.key
 
-					if (props.xmlns != null)
+					if (props.xmlns !== undefined)
 						element.xmlns = props.xmlns
 
-					if (props.ref != null)
+					if (props.ref !== undefined)
 						element.ref = props.ref
+
+					if (props.children !== undefined)
+						elementChildren(element, children, props.children, index)
 
 					element.props = props
 					i++
@@ -228,7 +231,7 @@ function createElement (type, props) {
 
 	if ((size = length - i) > 0) {
 		if (flag !== ElementComponent)
-			for (children = element.children = new List(); i < length; ++i)
+			for (; i < length; ++i)
 				index = elementChildren(element, children, arguments[i], index)
 		else {
 			if (size > 1)
@@ -239,8 +242,7 @@ function createElement (type, props) {
 
 			element.props.children = children
 		}
-	} else if (flag === ElementNode)
-		element.children = new List()
+	}	
 
 	switch ((element.type = type).constructor) {
 		case Function:

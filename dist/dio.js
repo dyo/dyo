@@ -189,7 +189,7 @@
 	var WeakMap = window.WeakMap || Hash
 	var Promise = window.Promise || noop
 	var Node = window.Node || noop
-	var UUID = Symbol('dio.UUID')
+	var UUID = Symbol('dio')
 	var Iterator = Symbol.iterator || UUID
 	
 	var root = new WeakMap()
@@ -428,20 +428,23 @@
 		var flag = typeof type !== 'function' ? ElementNode : ElementComponent
 		var length = arguments.length
 		var element = new Element(flag)
-		var children
+		var children = element.children = new List()
 		
 		if (i < 2)
 			switch (props.constructor) {
 				case Object:
 					if (props[Iterator] === undefined) {
-						if (props.key != null)
+						if (props.key !== undefined)
 							element.key = props.key
 	
-						if (props.xmlns != null)
+						if (props.xmlns !== undefined)
 							element.xmlns = props.xmlns
 	
-						if (props.ref != null)
+						if (props.ref !== undefined)
 							element.ref = props.ref
+	
+						if (props.children !== undefined)
+							elementChildren(element, children, props.children, index)
 	
 						element.props = props
 						i++
@@ -455,7 +458,7 @@
 	
 		if ((size = length - i) > 0) {
 			if (flag !== ElementComponent)
-				for (children = element.children = new List(); i < length; ++i)
+				for (; i < length; ++i)
 					index = elementChildren(element, children, arguments[i], index)
 			else {
 				if (size > 1)
@@ -466,8 +469,7 @@
 	
 				element.props.children = children
 			}
-		} else if (flag === ElementNode)
-			element.children = new List()
+		}	
 	
 		switch ((element.type = type).constructor) {
 			case Function:
@@ -637,7 +639,7 @@
 		element.owner = owner
 		element.instance = instance
 		
-		instance[UUID] = element	
+		instance[UUID] = element
 		instance.refs = {}
 		instance.props = element.props
 		instance.context = element.context = element.context || {}
@@ -669,7 +671,7 @@
 	
 		var instance = element.instance
 		var owner = element.owner
-		var context = instance.context
+		var nextContext = instance.context
 		var prevState = instance.state
 		var nextState = signature > 1 ? assign({}, prevState, element.state) : prevState
 		var prevProps = element.props
@@ -682,16 +684,17 @@
 			case 0:
 				break
 			case 1:
-				if (owner[LifecycleWillReceiveProps])
-					lifecycleUpdate(element, LifecycleWillReceiveProps, nextProps, nextState, context)
+				if (owner[LifecycleWillReceiveProps]) {
+					lifecycleUpdate(element, LifecycleWillReceiveProps, nextProps, nextContext)
+				}
 			case 2:
 				if (owner[LifecycleShouldUpdate])
-					if (lifecycleUpdate(element, LifecycleShouldUpdate, nextProps, nextState, context) === false)
+					if (lifecycleUpdate(element, LifecycleShouldUpdate, nextProps, nextState, nextContext) === false)
 						return void (element.work = WorkSync)
 		}
 	
 		if (owner[LifecycleWillUpdate])
-			lifecycleUpdate(element, LifecycleWillUpdate, nextProps, nextState, context)
+			lifecycleUpdate(element, LifecycleWillUpdate, nextProps, nextState, nextContext)
 	
 		instance.state = nextState
 		instance.props = nextProps
@@ -1771,7 +1774,7 @@
 	
 			if (children == null)
 				return array
-			else if (typeof children !== 'object')
+			else if (isValidElement(children) || typeof children !== 'object')
 				return [children]
 			else if (children instanceof Array)
 				array = children
@@ -1781,8 +1784,10 @@
 				})
 			else if (typeof children[Iterator] === 'function')
 				return this.toArray(child[Iterator]())
+			else
+				return this.toArray([children])
 	
-			return flatten(children, [])
+			return flatten(array, [])
 		},
 		/**
 		 * @param {*} children

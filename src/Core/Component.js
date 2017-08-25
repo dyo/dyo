@@ -65,7 +65,7 @@ function componentMount (element) {
 	element.owner = owner
 	element.instance = instance
 	
-	instance[UUID] = element	
+	instance[UUID] = element
 	instance.refs = {}
 	instance.props = element.props
 	instance.context = element.context = element.context || {}
@@ -97,7 +97,7 @@ function componentUpdate (element, snapshot, signature) {
 
 	var instance = element.instance
 	var owner = element.owner
-	var context = instance.context
+	var nextContext = instance.context
 	var prevState = instance.state
 	var nextState = signature > 1 ? assign({}, prevState, element.state) : prevState
 	var prevProps = element.props
@@ -110,16 +110,17 @@ function componentUpdate (element, snapshot, signature) {
 		case 0:
 			break
 		case 1:
-			if (owner[LifecycleWillReceiveProps])
-				lifecycleUpdate(element, LifecycleWillReceiveProps, nextProps, nextState, context)
+			if (owner[LifecycleWillReceiveProps]) {
+				lifecycleUpdate(element, LifecycleWillReceiveProps, nextProps, nextContext)
+			}
 		case 2:
 			if (owner[LifecycleShouldUpdate])
-				if (lifecycleUpdate(element, LifecycleShouldUpdate, nextProps, nextState, context) === false)
+				if (lifecycleUpdate(element, LifecycleShouldUpdate, nextProps, nextState, nextContext) === false)
 					return void (element.work = WorkSync)
 	}
 
 	if (owner[LifecycleWillUpdate])
-		lifecycleUpdate(element, LifecycleWillUpdate, nextProps, nextState, context)
+		lifecycleUpdate(element, LifecycleWillUpdate, nextProps, nextState, nextContext)
 
 	instance.state = nextState
 	instance.props = nextProps
