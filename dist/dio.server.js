@@ -1,4 +1,9 @@
-/* DIO 8.0.0 */
+/*
+ * DIO
+ *
+ * version 8.0.0
+ * license MIT
+ */
 module.exports = function (exports, componentMount, commitElement, Element) {
 	'use strict'
 	

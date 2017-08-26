@@ -21,7 +21,8 @@
     "url": "https://github.com/thysultan/dio.js/issues"
   },
   "files": [
-    "dist"
+    "dist",
+    "types"
   ],
   "scripts": {
     "test": "node ./scripts/tests",

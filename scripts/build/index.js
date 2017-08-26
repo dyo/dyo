@@ -56,11 +56,8 @@ const getExports = (module) => {
 
 const imports = 'exports, componentMount, commitElement, Element'
 const template = {
-	server: `\nif (server)\n__require__('./dio.server.js')(${imports})`,
+	server: `\nif (server)\n\t__require__('./dio.server.js')(${imports})`,
 	export: `
-/**
- * @exports
- */
 exports.version = version
 exports.render = render
 exports.Component = Component
@@ -129,9 +126,19 @@ const wrapper = (open, module, content, close, version) => {
 	}
 }
 
+const comment = (version, license) => `
+/*
+ * DIO
+ *
+ * version ${version}
+ * license ${license}
+ */
+`
+
 const bundle = (module, files, location) => {
 	let version = package.version
-	let open = '/* DIO '+version+' */\n'
+	let license = package.license
+	let open = comment(version, license)
 	let close = '\n}))'
 	let public = module !== 'server' ? pad(getExports(module).trim()) : ''
 
@@ -176,7 +183,7 @@ const watcher = (file) => {
 	} else {
 		if (file.indexOf('package.json') > -1) {
 			delete require.cache[require.resolve('../../package.json')];
-			package.version = require('../../package.json').version
+			package = require('../../package.json')
 		}
 		console.log('changed > ' + file)
 	}

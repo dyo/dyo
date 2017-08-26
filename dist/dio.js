@@ -1,4 +1,9 @@
-/* DIO 8.0.0 */
+/*
+ * DIO
+ *
+ * version 8.0.0
+ * license MIT
+ */
 (function (factory) {
 	/* eslint-disable */
 	if (typeof exports === 'object' && typeof module !== 'undefined')
@@ -1993,9 +1998,6 @@
 		DOMNode(parent).appendChild(DOMNode(element))
 	}
 
-	/**
-	 * @exports
-	 */
 	exports.version = version
 	exports.render = render
 	exports.Component = Component
@@ -2006,5 +2008,5 @@
 	exports.h = exports.createElement = window.h = createElement
 	
 	if (server)
-	__require__('./dio.server.js')(exports, componentMount, commitElement, Element)
+		__require__('./dio.server.js')(exports, componentMount, commitElement, Element)
 }))
