@@ -702,7 +702,7 @@
 		reconcileElement(element.children, getChildElement(element))
 	
 		if (owner[LifecycleDidUpdate])
-			lifecycleUpdate(element, LifecycleDidUpdate, prevProps, prevState, context)
+			lifecycleUpdate(element, LifecycleDidUpdate, prevProps, prevState, nextContext)
 	
 		if (element.ref !== snapshot.ref)
 			commitReference(element, snapshot.ref, 2)
@@ -769,7 +769,7 @@
 	 */
 	function enqueueCallback (element, instance, callback) {
 		try {
-			return callback.call(instance, instance.state)
+			return callback.call(instance, instance.state, instance.props)
 		} catch (e) {
 			errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback), 1)
 		}
@@ -1168,6 +1168,19 @@
 	
 	/**
 	 * @param {Element} element
+	 * @param {string} type
+	 * @param {(function|EventListener)} callback
+	 */
+	function commitEvent (element, type, callback) {
+		if (!element.event)
+			element.event = {}
+		
+		element.event[type] = callback
+		Event.addEventListener(element, type)
+	}
+	
+	/**
+	 * @param {Element} element
 	 */
 	function commitProperties (element) {
 		var xmlns = element.xmlns
@@ -1219,15 +1232,24 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {string} type
-	 * @param {(function|EventListener)} callback
+	 * @param {string} name
+	 * @param {*} value
+	 * @param {boolean} xmlns
+	 * @param {number} signature
+	 * @param {boolean} hash
 	 */
-	function commitEvent (element, type, callback) {
-		if (!element.event)
-			element.event = {}
-		
-		element.event[type] = callback
-		Event.addEventListener(element, type)
+	function commitAttribute (element, name, value, xmlns, hash, signature) {
+		DOMAttribute(element, name, value, xmlns, hash, signature)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} name
+	 * @param {Object} value
+	 * @param {number} signature
+	 */
+	function commitStyle (element, name, value, signature) {
+		DOMStyle(element, name, value, signature)
 	}
 	
 	/**
@@ -1244,32 +1266,10 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {string} name
-	 * @param {Object} value
-	 * @param {number} signature
+	 * @param {(string|number)} value
 	 */
-	function commitStyle (element, name, value, signature) {
-		DOMStyle(element, name, value, signature)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} name
-	 * @param {*} value
-	 * @param {boolean} xmlns
-	 * @param {number} signature
-	 * @param {boolean} hash
-	 */
-	function commitAttribute (element, name, value, xmlns, hash, signature) {
-		DOMAttribute(element, name, value, xmlns, hash, signature)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} snapshot
-	 */
-	function commitText (element, snapshot) {
-		DOMValue(element, element.children = snapshot.children)
+	function commitValue (element, value) {
+		DOMValue(element, value)
 	}
 	
 	/**
@@ -1376,7 +1376,7 @@
 				return componentUpdate(element, snapshot, 1)
 			case ElementText:
 				if (element.children !== snapshot.children)
-					commitText(element, snapshot)
+					commitValue(element, element.children = snapshot.children)
 				break
 			case ElementNode:
 				reconcileChildren(element, snapshot)

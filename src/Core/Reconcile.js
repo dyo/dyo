@@ -49,7 +49,7 @@ function reconcileElement (element, snapshot) {
 			return componentUpdate(element, snapshot, 1)
 		case ElementText:
 			if (element.children !== snapshot.children)
-				commitText(element, snapshot)
+				commitValue(element, element.children = snapshot.children)
 			break
 		case ElementNode:
 			reconcileChildren(element, snapshot)

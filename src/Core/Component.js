@@ -128,7 +128,7 @@ function componentUpdate (element, snapshot, signature) {
 	reconcileElement(element.children, getChildElement(element))
 
 	if (owner[LifecycleDidUpdate])
-		lifecycleUpdate(element, LifecycleDidUpdate, prevProps, prevState, context)
+		lifecycleUpdate(element, LifecycleDidUpdate, prevProps, prevState, nextContext)
 
 	if (element.ref !== snapshot.ref)
 		commitReference(element, snapshot.ref, 2)
@@ -195,7 +195,7 @@ function enqueueState (element, instance, state, callback) {
  */
 function enqueueCallback (element, instance, callback) {
 	try {
-		return callback.call(instance, instance.state)
+		return callback.call(instance, instance.state, instance.props)
 	} catch (e) {
 		errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback), 1)
 	}
