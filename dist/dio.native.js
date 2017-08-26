@@ -1510,7 +1510,6 @@
 			}
 	
 			reconcileElement(aNode, bNode)
-	
 			aNode = aNode.next
 			bNode = bNode.next
 			aIndx++
@@ -1531,7 +1530,9 @@
 						commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
 	
 					reconcileElement(aNext, bNode)
-					delete aPool[bHash]
+					
+					if (delete aPool[bHash])
+						aSize--
 				} else if (aNode === children)
 					commitMount(children.push(bNode), bNode, element, host, 0)
 					else
