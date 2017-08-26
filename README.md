@@ -58,21 +58,21 @@ The easiest way to get started with DIO is to walk through the [Introduction to 
 
 ### Render
 
-1. Fragments.
-2. Promises.
-3. Iterables.
-4. Strings.
-5. Portals.
+1. Elements.
+2. Primitives: `Strings, Numbers, null, undefined`.
+3. Fragments: `Arrays, Iterables`.
+4. Async: `Promises`.
+6. Other: `Portals, Errors, Objects` etc.
 
 ### Components
 
-1. Statefull function components.
+1. Statefull functional components.
 2. Plain class components.
 
 ### Events
 
-1. Event delegation by default.
-2. Additional support for the `handleEvent` interface.
+1. Event delegation.
+2. Support for the `handleEvent` interface.
 3. Event listeners `this` defaults to the closest `Component` relegating the need to `.bind` methods.
 
 ### Errors
@@ -82,23 +82,14 @@ The easiest way to get started with DIO is to walk through the [Introduction to 
 
 ### setState
 
-1. Optionally returning an `Object` is equivalent to calling `this.setState`.
-2. Additional support for `this.setState(Promise)`
-
-### Context
-
-1. `getChildContext` supports context updates.
-3. `context` cascades irrespective of `shouldComponentUpdate` or `contextTypes` and `childContextTypes`.
+1. Support for returning an `Object` from an events.
+2. Support for Promises `this.setState(Promise)`.
 
 ### Lifecycle
 
-1. Function components lifecycles.
-2. Additional support for async `componentDidUnmount` and async `getInitialState`
-
-### Children
-
-1. `this.props.children` is an opaque data-structure.
+1. Functional component lifecycles.
+2. Support async `componentWillUnmount`.
 
 ### Refs
 
-1. Support for string/function refs on both function and class components.
+1. Support for string/function refs on both functional and class components.
