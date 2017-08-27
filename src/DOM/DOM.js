@@ -126,10 +126,7 @@ function DOMProperty (element, name, value) {
  * @param {string} key
  */
 function DOMAttribute (element, name, value, xmlns, key) {
-	if (xmlns)
-		DOMNode(element)[key+'NS'](xmlns, name, value)
-	else
-		DOMNode(element)[key](name, value)
+	xmlns ? DOMNode(element)[key+'NS'](xmlns, name, value) : DOMNode(element)[key](name, value)
 }
 
 /**
@@ -142,7 +139,7 @@ function DOMProperties (element, name, value, xmlns) {
 	switch (name) {
 		case 'xlink:href':
 			if (!xmlns)
-				DOMProperties(element, name, value, 'http://www.w3.org/1999/xlink')
+				return DOMProperties(element, name, value, 'http://www.w3.org/1999/xlink')
 		case 'key':
 		case 'xmlns':
 		case 'children':
@@ -166,8 +163,11 @@ function DOMProperties (element, name, value, xmlns) {
 			if (!xmlns && name in DOMNode(element))
 				return DOMProperty(element, name, value)
 	}
-	
-	DOMAttribute(element, name, value, xmlns, (value != null && value !== false ? 'set' : 'remove') + 'Attribute')
+
+	if (value == null)
+		DOMProperties(element, name, false, xmlns)
+	else
+		DOMAttribute(element, name, value, xmlns, (value === false ? 'remove' : 'set') + 'Attribute')
 }
 
 /**
@@ -183,6 +183,6 @@ function DOMScope (type, xmlns) {
 		case 'foreignObject':
 			return ''
 	}
-
+	
 	return xmlns
 }

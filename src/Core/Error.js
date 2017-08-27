@@ -57,7 +57,7 @@ function errorRecovery (element, error, from, signature) {
 						errorRecovery(element.host, error, from, signature)
 					})
 
-			if (from !== LifecycleRender && !server)
+			if (from !== LifecycleRender && client)
 				enqueue(function () {
 					reconcileElement(getHostElement(element), children)
 				})

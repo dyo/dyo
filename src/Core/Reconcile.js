@@ -1,22 +1,28 @@
 /**
- * @param {Object} from
- * @param {Object} to
+ * @param {Object} prevObject
+ * @param {Object} nextObject
  * @return {Object?}
  */
-function reconcileObject (from, to) {
-	var value, prev, next, delta, length = 0, delta = {}
+function reconcileObject (prevObject, nextObject) {
+	var length = 0
+	var delta = {}
+	var value
 
-	for (var key in from)
-		if (to[key] == null)
+	for (var key in prevObject)
+		if (nextObject[key] == null)
 			delta[(length++, key)] = null
 
-	for (var key in to)
-		if ((next = to[key]) !== (prev = from[key])) {
+	for (var key in nextObject) {
+		var next = nextObject[key]
+		var prev = prevObject[key]
+
+		if (next !== prev) {
 			if (typeof next !== 'object' || next === null)
 				delta[(length++, key)] = next
 			else if (value = reconcileObject(prev || {}, next))
 				delta[(length++, key)] = value
 		}
+	}
 
 	if (length > 0)
 		return delta

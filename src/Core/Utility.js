@@ -6,14 +6,13 @@ function List () {
 	this.prev = this
 	this.length = 0
 }
-List.prototype = Object.create(null, {
-	constructor: {value: List},
+List.prototype = {
 	/**
 	 * @param {Element} element
 	 * @param {Element} sibling
 	 * @return {Element}
 	 */
-	insert: {value: function insert (element, sibling) {
+	insert: function insert (element, sibling) {
 		element.next = sibling
 		element.prev = sibling.prev
 		sibling.prev.next = element
@@ -21,12 +20,12 @@ List.prototype = Object.create(null, {
 		this.length++
 		
 		return element
-	}},
+	},
 	/**
 	 * @param {Element} element
 	 * @return {Element}
 	 */
-	remove: {value: function remove (element) {
+	remove: function remove (element) {
 		if (this.length < 1) 
 			return
 		
@@ -35,28 +34,28 @@ List.prototype = Object.create(null, {
 		this.length--
 		
 		return element
-	}},
+	},
 	/**
 	 * @return {Element}
 	 */
-	pop: {value: function pop () {
+	pop: function pop () {
 		return this.remove(this.prev)
-	}},
+	},
 	/**
 	 * @param {Element} element
 	 * @return {Element}
 	 */
-	push: {value: function push (element) {
+	push: function push (element) {
 		return this.insert(element, this)
-	}},
+	},
 	/**
 	 * @param {function} callback
 	 */
-	forEach: {value: function forEach (callback) {
+	forEach: function forEach (callback) {
 		for (var i = 0, element = this; i < this.length; ++i)
 			callback.call(this, element = element.next, i)
-	}}
-})
+	}
+}
 
 /**
  * @constructor
@@ -64,37 +63,28 @@ List.prototype = Object.create(null, {
 function Hash () {
 	this.hash = ''
 }
-Hash.prototype = Object.create(null, {
-	constructor: {value: Hash},
+Hash.prototype = {
 	/**
 	 * @param {*} key
 	 * @param {*} value
 	 */
-	set: {value: function set (key, value) {
+	set: function set (key, value) {
 		key[this.hash] = value
-	}},
+	},
 	/**
 	 * @param {*} key
 	 * @return {*}
 	 */
-	get: {value: function get (key) {
+	get: function get (key) {
 		return key[this.hash]
-	}},
+	},
 	/**
 	 * @param {*} key
 	 * @return {boolean}
 	 */
-	has: {value: function has (key) {
+	has: function has (key) {
 		return this.hash in key
-	}}
-})
-
-/**
- * @param {*} description
- * @return {string}
- */
-function Unique (description) {
-	return 'Symbol('+description+')'
+	}
 }
 
 /**
@@ -109,6 +99,8 @@ function noop () {}
 function merge (object, primary) {
 	for (var key in primary)
 		object[key] = primary[key]
+
+	return object
 }
 
 /**
@@ -160,7 +152,7 @@ function each (iterable, callback) {
  * @param {function} callback
  */
 function enqueue (callback) {
-	requestAnimationFrame(callback, 16)
+	setTimeout(callback, 16)
 }
 
 /**

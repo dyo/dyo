@@ -23,9 +23,6 @@ function Element (flag) {
 	this.next = null
 	this.prev = null
 }
-Element.prototype = Object.create(null, {
-	constructor: {value: Element}
-})
 
 /**
  * @param {*} content
@@ -106,8 +103,8 @@ function elementError (summary, details) {
 function elementUnknown (child) {
 	if (typeof child.next === 'function')
 		return elementIterable(child, elementFragment(child))
-	if (typeof child[Iterator] === 'function')
-		return elementUnknown(child[Iterator]())
+	if (typeof child[SymbolIterator] === 'function')
+		return elementUnknown(child[SymbolIterator]())
 	else if (typeof child === 'function')
 		return elementUnknown(child())
 	else if (child.constructor === Error)
@@ -201,23 +198,25 @@ function createElement (type, props) {
 	var flag = typeof type !== 'function' ? ElementNode : ElementComponent
 	var length = arguments.length
 	var element = new Element(flag)
-	var children = element.children = new List()
+	var children = flag !== ElementComponent ? new List() : null
 	
 	if (i < 2)
 		switch (props.constructor) {
 			case Object:
-				if (props[Iterator] === undefined) {
+				if (props[SymbolIterator] === undefined) {
 					if (props.key !== undefined)
 						element.key = props.key
-
-					if (props.xmlns !== undefined)
-						element.xmlns = props.xmlns
 
 					if (props.ref !== undefined)
 						element.ref = props.ref
 
-					if (props.children !== undefined)
-						elementChildren(element, children, props.children, index)
+					if (flag !== ElementComponent) {
+						if (props.xmlns !== undefined)
+							element.xmlns = props.xmlns
+
+						if (props.children !== undefined)
+							elementChildren(element, children, props.children, index)
+					}
 
 					element.props = props
 					i++
@@ -244,7 +243,7 @@ function createElement (type, props) {
 		}
 	}	
 
-	switch ((element.type = type).constructor) {
+	switch ((element.children = children, element.type = type).constructor) {
 		case Function:
 			if (type.defaultProps != null)
 				element.props = getDefaultProps(element, type.defaultProps, props)

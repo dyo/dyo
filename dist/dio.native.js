@@ -7,15 +7,15 @@
 (function (factory) {
 	/* eslint-disable */
 	if (typeof exports === 'object' && typeof module !== 'undefined')
-		factory(exports, global, typeof __webpack_require__ === 'undefined' ? require : global)
+		factory(exports, global, typeof __webpack_require__ === 'undefined' ? require : 0)
 	else
-		factory(window.dio = {}, window, window)
-}(function (exports, window, __require__) {
+		factory(window.dio = {}, window, 0)
+}(function (exports, window, require) {
 	/* eslint-disable */
 	'use strict'
 
 	var version = '8.0.0'
-	var server = false
+	var client = true
 
 	/**
 	 * @constructor
@@ -25,14 +25,13 @@
 		this.prev = this
 		this.length = 0
 	}
-	List.prototype = Object.create(null, {
-		constructor: {value: List},
+	List.prototype = {
 		/**
 		 * @param {Element} element
 		 * @param {Element} sibling
 		 * @return {Element}
 		 */
-		insert: {value: function insert (element, sibling) {
+		insert: function insert (element, sibling) {
 			element.next = sibling
 			element.prev = sibling.prev
 			sibling.prev.next = element
@@ -40,12 +39,12 @@
 			this.length++
 			
 			return element
-		}},
+		},
 		/**
 		 * @param {Element} element
 		 * @return {Element}
 		 */
-		remove: {value: function remove (element) {
+		remove: function remove (element) {
 			if (this.length < 1) 
 				return
 			
@@ -54,28 +53,28 @@
 			this.length--
 			
 			return element
-		}},
+		},
 		/**
 		 * @return {Element}
 		 */
-		pop: {value: function pop () {
+		pop: function pop () {
 			return this.remove(this.prev)
-		}},
+		},
 		/**
 		 * @param {Element} element
 		 * @return {Element}
 		 */
-		push: {value: function push (element) {
+		push: function push (element) {
 			return this.insert(element, this)
-		}},
+		},
 		/**
 		 * @param {function} callback
 		 */
-		forEach: {value: function forEach (callback) {
+		forEach: function forEach (callback) {
 			for (var i = 0, element = this; i < this.length; ++i)
 				callback.call(this, element = element.next, i)
-		}}
-	})
+		}
+	}
 	
 	/**
 	 * @constructor
@@ -83,37 +82,28 @@
 	function Hash () {
 		this.hash = ''
 	}
-	Hash.prototype = Object.create(null, {
-		constructor: {value: Hash},
+	Hash.prototype = {
 		/**
 		 * @param {*} key
 		 * @param {*} value
 		 */
-		set: {value: function set (key, value) {
+		set: function set (key, value) {
 			key[this.hash] = value
-		}},
+		},
 		/**
 		 * @param {*} key
 		 * @return {*}
 		 */
-		get: {value: function get (key) {
+		get: function get (key) {
 			return key[this.hash]
-		}},
+		},
 		/**
 		 * @param {*} key
 		 * @return {boolean}
 		 */
-		has: {value: function has (key) {
+		has: function has (key) {
 			return this.hash in key
-		}}
-	})
-	
-	/**
-	 * @param {*} description
-	 * @return {string}
-	 */
-	function Unique (description) {
-		return 'Symbol('+description+')'
+		}
 	}
 	
 	/**
@@ -128,6 +118,8 @@
 	function merge (object, primary) {
 		for (var key in primary)
 			object[key] = primary[key]
+	
+		return object
 	}
 	
 	/**
@@ -179,7 +171,7 @@
 	 * @param {function} callback
 	 */
 	function enqueue (callback) {
-		requestAnimationFrame(callback, 16)
+		setTimeout(callback, 16)
 	}
 	
 	/**
@@ -190,16 +182,18 @@
 		throw new Error('#'+from+'(...): '+message+'.')
 	}
 	
-	var Symbol = window.Symbol || Unique
+	var Symbol = window.Symbol || function (d) {return 'Symbol('+d+')'}
 	var WeakMap = window.WeakMap || Hash
 	var Promise = window.Promise || noop
 	var Node = window.Node || noop
-	var UUID = Symbol('dio')
-	var Iterator = Symbol.iterator || UUID
+	
+	var SymbolIterator = Symbol.iterator || Symbol('Iterator')
+	var SymbolElement = Symbol('Element')
+	var SymbolComponent = Symbol('Component')
 	
 	var root = new WeakMap()
 	var document = window.document || noop
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+	var setTimeout = window.setTimeout
 	
 	var ElementPromise = -3
 	var ElementFragment = -2
@@ -251,9 +245,6 @@
 		this.next = null
 		this.prev = null
 	}
-	Element.prototype = Object.create(null, {
-		constructor: {value: Element}
-	})
 	
 	/**
 	 * @param {*} content
@@ -334,8 +325,8 @@
 	function elementUnknown (child) {
 		if (typeof child.next === 'function')
 			return elementIterable(child, elementFragment(child))
-		if (typeof child[Iterator] === 'function')
-			return elementUnknown(child[Iterator]())
+		if (typeof child[SymbolIterator] === 'function')
+			return elementUnknown(child[SymbolIterator]())
 		else if (typeof child === 'function')
 			return elementUnknown(child())
 		else if (child.constructor === Error)
@@ -429,23 +420,25 @@
 		var flag = typeof type !== 'function' ? ElementNode : ElementComponent
 		var length = arguments.length
 		var element = new Element(flag)
-		var children = element.children = new List()
+		var children = flag !== ElementComponent ? new List() : null
 		
 		if (i < 2)
 			switch (props.constructor) {
 				case Object:
-					if (props[Iterator] === undefined) {
+					if (props[SymbolIterator] === undefined) {
 						if (props.key !== undefined)
 							element.key = props.key
-	
-						if (props.xmlns !== undefined)
-							element.xmlns = props.xmlns
 	
 						if (props.ref !== undefined)
 							element.ref = props.ref
 	
-						if (props.children !== undefined)
-							elementChildren(element, children, props.children, index)
+						if (flag !== ElementComponent) {
+							if (props.xmlns !== undefined)
+								element.xmlns = props.xmlns
+	
+							if (props.children !== undefined)
+								elementChildren(element, children, props.children, index)
+						}
 	
 						element.props = props
 						i++
@@ -472,7 +465,7 @@
 			}
 		}	
 	
-		switch ((element.type = type).constructor) {
+		switch ((element.children = children, element.type = type).constructor) {
 			case Function:
 				if (type.defaultProps != null)
 					element.props = getDefaultProps(element, type.defaultProps, props)
@@ -504,7 +497,7 @@
 				if (!state)
 					break
 			case 'function':
-				if (!server)
+				if (client)
 					enqueueState(element, element.instance, state)
 		}
 	}
@@ -581,40 +574,43 @@
 		this.state = null
 		this.props = props
 		this.context = context
-		this[UUID] = null
+		this[SymbolElement] = null
 	}
 	/**
 	 * @type {Object}
 	 */
-	var ComponentMethod = {
-		forceUpdate: {value: forceUpdate},
+	var ComponentPrototype = {
+		forceUpdate: {value: forceUpdate}, 
 		setState: {value: setState}
 	}
 	/**
 	 * @type {Object}
 	 */
-	var ComponentDefault = {
-		constructor: {value: Component},
-		render: {value: noop}
-	}
+	createComponent(Component.prototype)
+	
 	/**
-	 * @type {Object}
+	 * @param {Object} prototype
+	 * @return {Object}
 	 */
-	Component.prototype = Object.create(null, merge(ComponentDefault, ComponentMethod))
+	function createComponent (prototype) {
+		return Object.defineProperty(Object.defineProperties(prototype, ComponentPrototype), SymbolComponent, {
+			value: SymbolComponent
+		})
+	}
 	
 	/**
 	 * @param {(Object|function)} state
 	 * @param {function?} callback
 	 */
 	function setState (state, callback) {
-		enqueueState(this[UUID], this, state, callback)
+		enqueueState(this[SymbolElement], this, state, callback)
 	}
 	
 	/**
 	 * @param {function} callback
 	 */
 	function forceUpdate (callback) {
-		enqueueUpdate(this[UUID], this, callback, 0)
+		enqueueUpdate(this[SymbolElement], this, callback, 0)
 	}
 	
 	/**
@@ -624,12 +620,12 @@
 	function componentMount (element) {
 		var owner = element.type
 		var prototype = owner.prototype
-		var instance
 		var children
+		var instance
 	
 		if (prototype && prototype.render) {
-			if (!prototype.setState)
-				Object.defineProperties(prototype, ComponentMethod)
+			if (prototype[SymbolComponent] !== SymbolComponent)
+				createComponent(prototype)
 	
 			instance = owner = getChildInstance(element)
 		} else {
@@ -640,7 +636,7 @@
 		element.owner = owner
 		element.instance = instance
 		
-		instance[UUID] = element
+		instance[SymbolElement] = element
 		instance.refs = {}
 		instance.props = element.props
 		instance.context = element.context = element.context || {}
@@ -845,8 +841,9 @@
 			return new element.type(element.props, element.context)
 		} catch (e) {
 			errorBoundary(element.host, e, LifecycleConstructor, 1)
-			return new Component()
 		}
+	
+		return new Component()
 	}
 	
 	/**
@@ -887,7 +884,7 @@
 	 * @return {Element?}
 	 */
 	function getHostChildren (element) {
-		return isValidElement(element) ? element : element[UUID]
+		return isValidElement(element) ? element : element[SymbolElement]
 	}
 	
 	/**
@@ -1238,24 +1235,30 @@
 	}
 	
 	/**
-	 * @param {Object} from
-	 * @param {Object} to
+	 * @param {Object} prevObject
+	 * @param {Object} nextObject
 	 * @return {Object?}
 	 */
-	function reconcileObject (from, to) {
-		var value, prev, next, delta, length = 0, delta = {}
+	function reconcileObject (prevObject, nextObject) {
+		var length = 0
+		var delta = {}
+		var value
 	
-		for (var key in from)
-			if (to[key] == null)
+		for (var key in prevObject)
+			if (nextObject[key] == null)
 				delta[(length++, key)] = null
 	
-		for (var key in to)
-			if ((next = to[key]) !== (prev = from[key])) {
+		for (var key in nextObject) {
+			var next = nextObject[key]
+			var prev = prevObject[key]
+	
+			if (next !== prev) {
 				if (typeof next !== 'object' || next === null)
 					delta[(length++, key)] = next
 				else if (value = reconcileObject(prev || {}, next))
 					delta[(length++, key)] = value
 			}
+		}
 	
 		if (length > 0)
 			return delta
@@ -1603,7 +1606,7 @@
 							errorRecovery(element.host, error, from, signature)
 						})
 	
-				if (from !== LifecycleRender && !server)
+				if (from !== LifecycleRender && client)
 					enqueue(function () {
 						reconcileElement(getHostElement(element), children)
 					})
@@ -1665,8 +1668,8 @@
 			if (DOMValid(element.target))
 				return element.target
 	
-			if (isValidElement(element[UUID]))
-				return findDOMNode(element[UUID])
+			if (isValidElement(element[SymbolElement]))
+				return findDOMNode(element[SymbolElement])
 	
 			if (isValidElement(element))
 				return findDOMNode(element.flag > ElementFragment ? element.DOM : elementSibling(element, 1))
@@ -1696,8 +1699,8 @@
 				each(children, function (value) {
 					array.push(value)
 				})
-			else if (typeof children[Iterator] === 'function')
-				return this.toArray(child[Iterator]())
+			else if (typeof children[SymbolIterator] === 'function')
+				return this.toArray(child[SymbolIterator]())
 			else
 				return this.toArray([children])
 	

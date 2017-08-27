@@ -8,7 +8,7 @@ function lifecycleReturn (element, state) {
 			if (!state)
 				break
 		case 'function':
-			if (!server)
+			if (client)
 				enqueueState(element, element.instance, state)
 	}
 }

@@ -19,8 +19,8 @@ var Children = {
 			each(children, function (value) {
 				array.push(value)
 			})
-		else if (typeof children[Iterator] === 'function')
-			return this.toArray(child[Iterator]())
+		else if (typeof children[SymbolIterator] === 'function')
+			return this.toArray(child[SymbolIterator]())
 		else
 			return this.toArray([children])
 

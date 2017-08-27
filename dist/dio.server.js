@@ -15,14 +15,13 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		this.prev = this
 		this.length = 0
 	}
-	List.prototype = Object.create(null, {
-		constructor: {value: List},
+	List.prototype = {
 		/**
 		 * @param {Element} element
 		 * @param {Element} sibling
 		 * @return {Element}
 		 */
-		insert: {value: function insert (element, sibling) {
+		insert: function insert (element, sibling) {
 			element.next = sibling
 			element.prev = sibling.prev
 			sibling.prev.next = element
@@ -30,12 +29,12 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 			this.length++
 			
 			return element
-		}},
+		},
 		/**
 		 * @param {Element} element
 		 * @return {Element}
 		 */
-		remove: {value: function remove (element) {
+		remove: function remove (element) {
 			if (this.length < 1) 
 				return
 			
@@ -44,28 +43,28 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 			this.length--
 			
 			return element
-		}},
+		},
 		/**
 		 * @return {Element}
 		 */
-		pop: {value: function pop () {
+		pop: function pop () {
 			return this.remove(this.prev)
-		}},
+		},
 		/**
 		 * @param {Element} element
 		 * @return {Element}
 		 */
-		push: {value: function push (element) {
+		push: function push (element) {
 			return this.insert(element, this)
-		}},
+		},
 		/**
 		 * @param {function} callback
 		 */
-		forEach: {value: function forEach (callback) {
+		forEach: function forEach (callback) {
 			for (var i = 0, element = this; i < this.length; ++i)
 				callback.call(this, element = element.next, i)
-		}}
-	})
+		}
+	}
 	
 	/**
 	 * @constructor
@@ -73,37 +72,28 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	function Hash () {
 		this.hash = ''
 	}
-	Hash.prototype = Object.create(null, {
-		constructor: {value: Hash},
+	Hash.prototype = {
 		/**
 		 * @param {*} key
 		 * @param {*} value
 		 */
-		set: {value: function set (key, value) {
+		set: function set (key, value) {
 			key[this.hash] = value
-		}},
+		},
 		/**
 		 * @param {*} key
 		 * @return {*}
 		 */
-		get: {value: function get (key) {
+		get: function get (key) {
 			return key[this.hash]
-		}},
+		},
 		/**
 		 * @param {*} key
 		 * @return {boolean}
 		 */
-		has: {value: function has (key) {
+		has: function has (key) {
 			return this.hash in key
-		}}
-	})
-	
-	/**
-	 * @param {*} description
-	 * @return {string}
-	 */
-	function Unique (description) {
-		return 'Symbol('+description+')'
+		}
 	}
 	
 	/**
@@ -118,6 +108,8 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	function merge (object, primary) {
 		for (var key in primary)
 			object[key] = primary[key]
+	
+		return object
 	}
 	
 	/**
@@ -169,7 +161,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @param {function} callback
 	 */
 	function enqueue (callback) {
-		requestAnimationFrame(callback, 16)
+		setTimeout(callback, 16)
 	}
 	
 	/**
@@ -180,16 +172,18 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		throw new Error('#'+from+'(...): '+message+'.')
 	}
 	
-	var Symbol = window.Symbol || Unique
+	var Symbol = window.Symbol || function (d) {return 'Symbol('+d+')'}
 	var WeakMap = window.WeakMap || Hash
 	var Promise = window.Promise || noop
 	var Node = window.Node || noop
-	var UUID = Symbol('dio')
-	var Iterator = Symbol.iterator || UUID
+	
+	var SymbolIterator = Symbol.iterator || Symbol('Iterator')
+	var SymbolElement = Symbol('Element')
+	var SymbolComponent = Symbol('Component')
 	
 	var root = new WeakMap()
 	var document = window.document || noop
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+	var setTimeout = window.setTimeout
 	
 	var ElementPromise = -3
 	var ElementFragment = -2

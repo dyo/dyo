@@ -56,7 +56,7 @@ const getExports = (module) => {
 
 const imports = 'exports, componentMount, commitElement, Element'
 const template = {
-	server: `\nif (server)\n\t__require__('./dio.server.js')(${imports})`,
+	server: `\nif (!client)\n\trequire('./dio.server.js')(${imports})`,
 	export: `
 exports.version = version
 exports.render = render
@@ -105,7 +105,7 @@ const wrapper = (open, module, content, close, version) => {
 					fs.readFileSync(path.join(__dirname, 'UMD.js'), 
 					'utf8').trim() + '\n\n' + 
 					"\tvar version = '"+version+"'\n"+
-					'\tvar server = false\n\n'
+					'\tvar client = true\n\n'
 				),
 				body: pad(format(content)),
 				close: close
@@ -117,7 +117,7 @@ const wrapper = (open, module, content, close, version) => {
 					fs.readFileSync(path.join(__dirname, 'UMD.js'), 
 					'utf8').trim() + '\n\n' + 
 					"\tvar version = '"+version+"'\n"+
-					'\tvar server = __require__ !== window\n\n'
+					'\tvar client = !require\n\n'
 				),
 				body: pad(format(content)),
 				close: close

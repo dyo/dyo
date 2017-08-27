@@ -10,8 +10,8 @@ function findDOMNode (element) {
 		if (DOMValid(element.target))
 			return element.target
 
-		if (isValidElement(element[UUID]))
-			return findDOMNode(element[UUID])
+		if (isValidElement(element[SymbolElement]))
+			return findDOMNode(element[SymbolElement])
 
 		if (isValidElement(element))
 			return findDOMNode(element.flag > ElementFragment ? element.DOM : elementSibling(element, 1))

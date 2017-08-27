@@ -6,40 +6,43 @@ function Component (props, context) {
 	this.state = null
 	this.props = props
 	this.context = context
-	this[UUID] = null
+	this[SymbolElement] = null
 }
 /**
  * @type {Object}
  */
-var ComponentMethod = {
-	forceUpdate: {value: forceUpdate},
+var ComponentPrototype = {
+	forceUpdate: {value: forceUpdate}, 
 	setState: {value: setState}
 }
 /**
  * @type {Object}
  */
-var ComponentDefault = {
-	constructor: {value: Component},
-	render: {value: noop}
-}
+createComponent(Component.prototype)
+
 /**
- * @type {Object}
+ * @param {Object} prototype
+ * @return {Object}
  */
-Component.prototype = Object.create(null, merge(ComponentDefault, ComponentMethod))
+function createComponent (prototype) {
+	return Object.defineProperty(Object.defineProperties(prototype, ComponentPrototype), SymbolComponent, {
+		value: SymbolComponent
+	})
+}
 
 /**
  * @param {(Object|function)} state
  * @param {function?} callback
  */
 function setState (state, callback) {
-	enqueueState(this[UUID], this, state, callback)
+	enqueueState(this[SymbolElement], this, state, callback)
 }
 
 /**
  * @param {function} callback
  */
 function forceUpdate (callback) {
-	enqueueUpdate(this[UUID], this, callback, 0)
+	enqueueUpdate(this[SymbolElement], this, callback, 0)
 }
 
 /**
@@ -49,12 +52,12 @@ function forceUpdate (callback) {
 function componentMount (element) {
 	var owner = element.type
 	var prototype = owner.prototype
-	var instance
 	var children
+	var instance
 
 	if (prototype && prototype.render) {
-		if (!prototype.setState)
-			Object.defineProperties(prototype, ComponentMethod)
+		if (prototype[SymbolComponent] !== SymbolComponent)
+			createComponent(prototype)
 
 		instance = owner = getChildInstance(element)
 	} else {
@@ -65,7 +68,7 @@ function componentMount (element) {
 	element.owner = owner
 	element.instance = instance
 	
-	instance[UUID] = element
+	instance[SymbolElement] = element
 	instance.refs = {}
 	instance.props = element.props
 	instance.context = element.context = element.context || {}
@@ -270,8 +273,9 @@ function getChildInstance (element) {
 		return new element.type(element.props, element.context)
 	} catch (e) {
 		errorBoundary(element.host, e, LifecycleConstructor, 1)
-		return new Component()
 	}
+
+	return new Component()
 }
 
 /**
@@ -312,7 +316,7 @@ function getHostElement (element) {
  * @return {Element?}
  */
 function getHostChildren (element) {
-	return isValidElement(element) ? element : element[UUID]
+	return isValidElement(element) ? element : element[SymbolElement]
 }
 
 /**

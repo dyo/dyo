@@ -1,13 +1,15 @@
-var Symbol = window.Symbol || Unique
+var Symbol = window.Symbol || function (d) {return 'Symbol('+d+')'}
 var WeakMap = window.WeakMap || Hash
 var Promise = window.Promise || noop
 var Node = window.Node || noop
-var UUID = Symbol('dio')
-var Iterator = Symbol.iterator || UUID
+
+var SymbolIterator = Symbol.iterator || Symbol('Iterator')
+var SymbolElement = Symbol('Element')
+var SymbolComponent = Symbol('Component')
 
 var root = new WeakMap()
 var document = window.document || noop
-var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+var setTimeout = window.setTimeout
 
 var ElementPromise = -3
 var ElementFragment = -2
