@@ -58,22 +58,6 @@ function commitChildren (element, sibling, host) {
 
 /**
  * @param {Element} element
- * @param {Element} parent
- * @return {string}
- */
-function commitXmlns (element, parent) {
-	switch (element.type) {
-		case 'svg':
-			return NsSvg
-		case 'math':
-			return NsMath
-	}
-
-	return parent.xmlns && !element.xmlns && parent.type !== 'foreignObject' ? parent.xmlns : ''
-}
-
-/**
- * @param {Element} element
  * @param {Element} sibling
  * @param {Element} parent
  * @param {Element} host
@@ -96,7 +80,7 @@ function commitMount (element, sibling, parent, host, signature) {
  			commitMount(element.children, sibling, parent, element, signature)
 
  			if ((element.DOM = element.children.DOM, element.ref)) 
- 				commitReference(element, element.ref, 1)
+ 				commitRef(element, element.ref, 1)
  			
  			if (element.owner[LifecycleDidMount])
  				lifecycleMount(element, LifecycleDidMount)
@@ -112,7 +96,7 @@ function commitMount (element, sibling, parent, host, signature) {
  			element.DOM = DOM(DOMNode(parent))
  			break
  		case ElementNode:
- 			element.xmlns = commitXmlns(element, parent)
+ 			element.xmlns = DOMScope(element.type, parent.xmlns)
  		case ElementText:
  			element.DOM = commitDOM(element)
  			
@@ -126,78 +110,33 @@ function commitMount (element, sibling, parent, host, signature) {
  	}
 
 	commitChildren(element, element, host)
-	commitProperties(element)
+	commitProps(element, element.props, 1)
 }
 
 /**
  * @param {Element} element
  * @param {Element} parent
  * @param {number} signature
- * @param {(boolean|void)}
  */
 function commitUnmount (element, parent, signature) {
 	if (element.flag === ElementComponent)
 		return componentUnmount(element, element.children, parent, signature, 1)
 
 	commitRemove(element, parent)
-	commitDemount(element, 1, signature)
+	commitDetach(element, signature)
 }
 
 /**
  * @param {Element} element
- * @param {number} flag
+ * @param {Element} snapshot
  * @param {number} signature
  */
-function commitDemount (element, flag, signature) {
-	switch (element.flag*flag) {
-		case ElementText:
-			break
-		default:
-			var index = 0
-			var children = element.children
-			var length = children.length
-			var next = children.next
-
-			while (index++ < length)
-				switch (next.flag) {
-					case ElementComponent:
-						if (next.owner[LifecycleWillUnmount])
-							lifecycleMount(next, LifecycleWillUnmount)
-					default:
-						commitDemount(next, 1, 1)
-						next = next.next
-				}
-	}
-
-	if (element.ref)
-		commitReference(element, element.ref, -1)
-
-	if (signature < 1) {
-		element.context = null
-		element.state = null
-		element.event = null
-		element.DOM = null
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Element} snapshot
- */
-function commitMerge (element, snapshot) {
-	if (commitUnmount(element, element.parent, 1))
-		element.state.then(function () {
-			commitRebase(element, snapshot)
+function commitReplace (element, snapshot, signature) {
+	if (signature > 0 && commitUnmount(element, element.parent, 1))
+		return void element.state.then(function () {
+			commitReplace(element, snapshot, 0)
 		})
-	else
-		commitRebase(element, snapshot)
-}
 
-/**
- * @param {Element} element
- * @param {Element} snapshot
- */
-function commitRebase (element, snapshot) {
 	commitMount(snapshot, elementSibling(element, 0), element.parent, element.host, 1)
 
 	for (var key in snapshot)
@@ -214,19 +153,47 @@ function commitRebase (element, snapshot) {
 
 /**
  * @param {Element} element
- * @param {Element} instance
- * @param {string} key
+ * @param {number} signature
+ */
+function commitDetach (element, signature) {
+	if (element.flag !== ElementText) {
+		var index = 0
+		var children = element.children
+		var length = children.length
+		var next = children.next
+
+		while (index++ < length)
+			switch (next.flag) {
+				case ElementComponent:
+					if (next.owner[LifecycleWillUnmount])
+						lifecycleMount(next, LifecycleWillUnmount)
+				default:
+					commitDetach(next, 1)
+					next = next.next
+			}
+	}
+
+	if (element.ref)
+		commitRef(element, element.ref, -1)
+
+	if (signature < 1) {
+		element.context = null
+		element.state = null
+		element.event = null
+		element.DOM = null
+	}
+}
+
+/**
+ * @param {Element} element
  * @param {(function|string)?} callback
  * @param {number} signature
  * @param {*} key
  */
-function commitReference (element, callback, signature, key) {
+function commitRef (element, callback, signature, key) {
 	switch (typeof callback) {
 		case 'string':
-			return commitReference(element, componentReference, signature, callback)
-		case 'undefined':
-		case 'object':
-			return commitReference(element, element.ref || noop, -1, key)
+			return commitRef(element, componentRef, signature, callback)			
 		case 'function':
 			switch (signature) {
 				case -1:
@@ -234,12 +201,14 @@ function commitReference (element, callback, signature, key) {
 				case 0:
 					element.ref = callback
 				case 1:
-					lifecycleCallback(element.host, callback, element.instance || findDOMNode(element), key, element)
-					break
+					return lifecycleCallback(element.host, callback, element.instance || findDOMNode(element), key, element)
 				case 2:
-					commitReference(element, callback, -1, key)
-					commitReference(element, callback, 0, key)
+					commitRef(element, callback, -1, key)
+					commitRef(element, callback, 0, key)
 			}
+			break
+		default:
+			commitRef(element, element.ref || noop, -1, key)
 	}
 }
 
@@ -258,75 +227,17 @@ function commitEvent (element, type, callback) {
 
 /**
  * @param {Element} element
+ * @param {Object} props
+ * @param {number} signature
  */
-function commitProperties (element) {
-	var xmlns = element.xmlns
-	var props = element.props
-
+function commitProps (element, props, signature) {
 	for (var key in props)
-		commitProperty(element, key, props[key], xmlns, props[key] != null ? 1 : 0)
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {*} value
- * @param {boolean} xmlns
- * @param {number} signature
- */
-function commitProperty (element, name, value, xmlns, signature) {	
-	switch (name) {
-		case 'ref':
-			commitReference(element, value, signature)
-		case 'key':
-		case 'xmlns':
-		case 'children':
-			break
-		case 'className':
-			if (xmlns)
-				return commitProperty(element, 'class', value, !xmlns, signature)
-		case 'id':
-			return commitAttribute(element, name, value, xmlns, 3, signature)
-		case 'innerHTML':
-			return commitAttribute(element, name, value, xmlns, 2, signature)
-		case 'dangerouslySetInnerHTML':
-			if (signature > 1 && (!value || !element.props[name] || element.props[name].__html !== value.__html))
-				return
-
-			return commitProperty(element, 'innerHTML', value ? value.__html : '', xmlns, 2, signature)
-		case 'xlink:href':
-			return commitAttribute(element, name, value, xmlns, 1, signature)
-		case 'style':
-			if (typeof value === 'object' && value !== null)
-				return commitStyle(element, name, value, 0)
-		default:
-			if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110)
-				return commitEvent(element, name.toLowerCase(), value)
-
-			commitAttribute(element, name, value, xmlns, 4, signature)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {*} value
- * @param {boolean} xmlns
- * @param {number} signature
- * @param {boolean} hash
- */
-function commitAttribute (element, name, value, xmlns, hash, signature) {
-	DOMAttribute(element, name, value, xmlns, hash, signature)
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {Object} value
- * @param {number} signature
- */
-function commitStyle (element, name, value, signature) {
-	DOMStyle(element, name, value, signature)
+		if (key === 'ref')
+			commitRef(element, props[key], signature)
+		else if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
+			commitEvent(element, key.toLowerCase(), props[key])
+		else
+			DOMProperties(element, key, props[key], element.xmlns)
 }
 
 /**
@@ -335,7 +246,7 @@ function commitStyle (element, name, value, signature) {
  */
 function commitDOM (element) {
 	try {
-		return element.flag === ElementNode ? DOMElement(element.type, element.xmlns) : DOMText(element.children)
+		return element.flag === ElementNode ? DOMElement(element) : DOMText(element)
 	} catch (e) {
 		return commitDOM(errorBoundary(element, e, LifecycleRender, 1))
 	}

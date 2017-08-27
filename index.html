@@ -154,7 +154,7 @@
 
 			class Timer {
 			  constructor(props, context) {
-			    this.state = { secondsElapsed: 0 }
+			    this.state = { secondsElapsed: 0, value: '' }
 			  }
 
 			  tick() {
@@ -182,7 +182,7 @@
 			  }
 
 			  handleEvent(e) {
-			  	console.log(dio.findDOMNode(this))
+			  	console.log(dio.findDOMNode(this), this)
 
 			  	if (e.type === 'submit')
 			  		e.preventDefault()
@@ -219,8 +219,8 @@
 			  			h('title', 'Hello World', performance.now()),
 			  		),
 			  		'Hello World',
-			  		h('body', {ref: (e)=> {}},
-			  			h(Timer, {ref: (e) => {console.log(-1, e)}})
+			  		h('body', {ref: e=>console.log(-1, e)},
+			  			h(Timer, {ref: e=>console.log(-2, e)})
 			  		)
 			  	]
 			  }

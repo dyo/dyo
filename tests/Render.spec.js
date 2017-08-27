@@ -30,22 +30,24 @@ module.exports = ({h, render}) => {
 		var portal = document.createElement('div')
 
 		render(h('h1', {dangerouslySetInnerHTML: {__html: '<div>test</div>'}}), container)
-		ok(container.innerHTML === '<h1><div>test</div></h1>', 'render element dangerouslySetInnerHTML')
+		ok(compare(container, '<h1><div>test</div></h1>'), 'render element dangerouslySetInnerHTML')
 
 		render(null, container)
 		ok(container.innerHTML === '', 'render null')
 
 		render('hello', container)
-		ok(container.innerHTML === 'hello', 'render text')
+		ok(compare(container, 'hello'), 'render text')
 
 		render(h('h1', {className: 1}, '0'), container)
-		ok(container.innerHTML === '<h1 class="1">0</h1>', 'render element className')
+		ok(compare(container, '<h1 class="1">0</h1>'), 'render element className')
 
 		render(h('h1', {class: 1}, '0'), container)
-		ok(container.innerHTML === '<h1 class="1">0</h1>', 'render element class')
+		ok(compare(container, '<h1 class="1">0</h1>'), 'render element class')
 
 		render(h('h1', {style: {width: '100px'}}, '0'), container)
 		ok(container.firstChild.style.width === '100px', 'render element style object')
+		
+		return end()
 
 		render(h('h1', {style: 'width:100px'}, '0'), container)
 		ok(container.firstChild.style.width === '100px', 'render element style string')
@@ -54,19 +56,19 @@ module.exports = ({h, render}) => {
 		ok(container.firstChild.getAttribute('width') === '100px', 'render element img width')
 
 		render(h(Foo), container);
-		ok(container.innerHTML === '<h1 id="1">1</h1>', 'render function')
+		ok(compare(container, '<h1 id="1">1</h1>'), 'render function')
 
 		render((Faz), container)
-		ok(container.innerHTML === '<h1 id="1">2</h1>', 'render class')
+		ok(compare(container, '<h1 id="1">2</h1>'), 'render class')
 
 		render(Bar, container)
-		ok(container.innerHTML === '123', 'render iteratable')
+		ok(compare(container, '123'), 'render iteratable')
 
 		render(Baz, container)
-		ok(container.innerHTML === '<h1>Hello</h1><h1>World</h1>', 'render fragment')
+		ok(compare(container, '<h1>Hello</h1><h1>World</h1>'), 'render fragment')
 
 		render([h('h1', 'Hello'), h(portal, h('h1', 'World'))], container)
-		ok(container.innerHTML === '<h1>Hello</h1>' && portal.innerHTML === '<h1>World</h1>', 'render portal')
+		ok(compare(container, '<h1>Hello</h1>') && compare(portal, '<h1>World</h1>'), 'render portal')
 
 		render(null, container)
 		render(Boo, container)

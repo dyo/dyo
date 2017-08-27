@@ -32,7 +32,7 @@ global.deepEqual = (x, y) => {
  * @return {Boolean}
  */
 global.compare = (a, b) => {
-	return a.innerHTML === b.replace(/[\n\t ]/g, '');
+	return a.innerHTML === b.replace(/\n|\t|  +/g, '');
 }
 
 /**

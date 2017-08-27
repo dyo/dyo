@@ -57,10 +57,10 @@ module.exports = ({h, Component, render}) => {
 
 		render(h(C, {update: false}), container)
 		render(h(C, {update: false}), container)
-		ok(container.innerHTML === '1', 'shouldComponentUpdate(false)')
+		ok(compare(container, '1'), 'shouldComponentUpdate(false)')
 
 		render(h(C, {update: true}), container)
-		ok(container.innerHTML === '2', 'shouldComponentUpdate(true)')
+		ok(compare(container, '2'), 'shouldComponentUpdate(true)')
 
 		end()
 	})
@@ -79,10 +79,10 @@ module.exports = ({h, Component, render}) => {
 		}
 
 		render(h(A, {value: 'Hello'}), container)
-		ok(container.innerHTML === '<h1>Hello</h1>', 'super(props)')
+		ok(compare(container, '<h1>Hello</h1>'), 'super(props)')
 
 		render(h(B, {value: 'Hello'}), container)
-		ok(container.innerHTML === '<h1>Hello</h1>', 'super()')
+		ok(compare(container, '<h1>Hello</h1>'), 'super()')
 
 		end()
 	})
@@ -104,7 +104,7 @@ module.exports = ({h, Component, render}) => {
 		}
 
 		render(A, container)
-		ok(container.innerHTML === 'render', 'componentDidCatch#render')
+		ok(compare(container, 'render'), 'componentDidCatch#render')
 
 		console.error = error
 		end()

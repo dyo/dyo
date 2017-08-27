@@ -1,33 +1,34 @@
 /**
+ * @param {Object} from
+ * @param {Object} to
+ * @return {Object?}
+ */
+function reconcileObject (from, to) {
+	var value, prev, next, delta, length = 0, delta = {}
+
+	for (var key in from)
+		if (to[key] == null)
+			delta[(length++, key)] = null
+
+	for (var key in to)
+		if ((next = to[key]) !== (prev = from[key])) {
+			if (typeof next !== 'object' || next === null)
+				delta[(length++, key)] = next
+			else if (value = reconcileObject(prev || {}, next))
+				delta[(length++, key)] = value
+		}
+
+	if (length > 0)
+		return delta
+}
+
+/**
  * @param {Element} element
  * @param {Element} snapshot
  */
-function reconcileProperties (element, snapshot) {
-	var xmlns = element.xmlns
-	var next = snapshot.props
-	var prev = element.props
-	var value = null
-	var style = null
-
-	for (var key in prev)
-		if (next[key] == null)
-			commitProperty(element, key, value, xmlns, 0)
-
-	for (var key in next)
-		if ((value = next[key]) !== (style = prev[key]))
-			if (key !== 'style' || typeof value !== 'object') {
-				commitProperty(element, key, value, xmlns, 1)
-			} else {
-				for (var name in style)
-					if (!value || value[name] == null)
-						commitStyle(element, name, null, 1)
-
-				for (var name in value)
-					if (!style || value[name] !== style[name])
-						commitStyle(element, name, value[name], 1)
-			}
-
-	element.props = next
+function reconcileProps (element, snapshot) {
+	commitProps(element, reconcileObject(element.props, snapshot.props), 2)
+	element.props = snapshot.props
 }
 
 /**
@@ -39,7 +40,7 @@ function reconcileElement (element, snapshot) {
 		return commitPromise(element, snapshot)
 
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
-		return commitMerge(element, snapshot)
+		return commitReplace(element, snapshot, 1)
 
 	switch (element.flag) {
 		case ElementPortal:
@@ -53,7 +54,7 @@ function reconcileElement (element, snapshot) {
 			break
 		case ElementNode:
 			reconcileChildren(element, snapshot)
-			reconcileProperties(element, snapshot)
+			reconcileProps(element, snapshot)
 	}
 }
 

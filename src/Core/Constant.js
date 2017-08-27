@@ -33,7 +33,3 @@ var LifecycleWillUnmount = 'componentWillUnmount'
 var LifecycleDidCatch = 'componentDidCatch'
 var LifecycleChildContext = 'getChildContext'
 var LifecycleInitialState = 'getInitialState'
-
-var NsLink = 'http://www.w3.org/1999/xlink'
-var NsSvg = 'http://www.w3.org/2000/svg'
-var NsMath = 'http://www.w3.org/1998/Math/MathML'

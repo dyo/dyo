@@ -131,7 +131,7 @@ function componentUpdate (element, snapshot, signature) {
 		lifecycleUpdate(element, LifecycleDidUpdate, prevProps, prevState, nextContext)
 
 	if (element.ref !== snapshot.ref)
-		commitReference(element, snapshot.ref, 2)
+		commitRef(element, snapshot.ref, 2)
 
 	element.work = WorkSync
 }
@@ -159,7 +159,7 @@ function componentUnmount (element, children, parent, signature, resolve) {
  * @param {*} key
  * @param {Element} element
  */
-function componentReference (value, key, element) {
+function componentRef (value, key, element) {
 	if (this.refs) {
 		if (key !== element.ref)
 			delete this.refs[element.ref]

@@ -22,13 +22,6 @@ function DOMValid (target) {
 }
 
 /**
- * @return {Node}
- */
-function DOMRoot () {
-	return document.documentElement
-}
-
-/**
  * @param {string} type
  * @param {EventListener} listener
  * @param {*} options
@@ -38,88 +31,29 @@ function DOMEvent (type, listener, options) {
 }
 
 /**
- * @param {string} type
- * @param {string} xmlns
+ * @return {Node}
+ */
+function DOMRoot () {
+	return document.documentElement
+}
+
+/**
+ * @param {Element} element
  * @return {DOM}
  */
-function DOMElement (type, xmlns) {
-	return DOM(xmlns ? document.createElementNS(xmlns, type) : document.createElement(type))
+function DOMElement (element) {
+	if (element.xmlns) 
+		return DOM(document.createElementNS(element.xmlns, element.type))
+
+	return DOM(document.createElement(element.type))
 }
 
 /**
- * @param {(string|number)} value
+ * @param {Element} element
  * @return {DOM}
  */
-function DOMText (value) {
-	return DOM(document.createTextNode(value))
-}
-
-/**
- * @param {Element} element
- * @param {string} name 
- * @param {*} value
- */
-function DOMProperty (element, name, value) {
-	DOMNode(element)[name] = value
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {*} value
- * @param {boolean} xmlns
- * @param {number} hash
- * @param {number} signature
- */
-function DOMAttribute (element, name, value, xmlns, hash, signature) {
-	if (signature > 0) {
-		switch (hash) {
-			case 1:
-				return DOMNode(element).setAttributeNS(NsLink, name, value)
-			case 2:
-				return DOMProperty(element, name, value)
-			case 3:
-				if (!xmlns)
-					return DOMProperty(element, name, value)
-		}
-
-		if (!xmlns && name in DOMNode(element))
-			switch (name) {
-				case 'style':
-					break
-				case 'width':
-				case 'height':
-					if (element.type === 'img')
-						break
-				default:
-					return DOMProperty(element, name, value)
-			}
-
-		if (value !== false)
-			DOMNode(element).setAttribute(name, value)
-		else
-			DOMAttribute(element, name, value, xmlns, hash, -1)
-	} else if (hash !== 1)
-			DOMNode(element).removeAttribute(name)
-		else
-			DOMNode(element).removeAttributeNS(NsLink, name)
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {*} value
- * @param {number} signature
- */
-function DOMStyle (element, name, value, signature) {
-	if (signature > 0) {
-		if (name.indexOf('-') < 0)
-			DOMNode(element).style[name] = value
-		else
-			DOMNode(element).style.setProperty(name, value)
-	} else
-		for (var key in value)
-			DOMStyle(element, key, value[key], 1)
+function DOMText (element) {
+	return DOM(document.createTextNode(element.children))
 }
 
 /**
@@ -160,4 +94,95 @@ function DOMInsert (element, sibling, parent) {
  */
 function DOMAppend (element, parent) {
 	DOMNode(parent).appendChild(DOMNode(element))
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {*} value
+ */
+function DOMStyle (element, value) {
+	for (var key in value)
+		if (key.indexOf('-') < 0)
+			DOMNode(element).style[key] = value[key]
+		else
+			DOMNode(element).style.setProperty(key, value[key])
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name 
+ * @param {*} value
+ */
+function DOMProperty (element, name, value) {
+	DOMNode(element)[name] = value
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {*} value
+ * @param {string} xmlns
+ * @param {string} key
+ */
+function DOMAttribute (element, name, value, xmlns, key) {
+	if (xmlns)
+		DOMNode(element)[key+'NS'](xmlns, name, value)
+	else
+		DOMNode(element)[key](name, value)
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {*} value
+ * @param {string} xmlns
+ */
+function DOMProperties (element, name, value, xmlns) {
+	switch (name) {
+		case 'xlink:href':
+			if (!xmlns)
+				DOMProperties(element, name, value, 'http://www.w3.org/1999/xlink')
+		case 'key':
+		case 'xmlns':
+		case 'children':
+			return
+		case 'dangerouslySetInnerHTML':
+			return DOMProperties(element, 'innerHTML', value && value.__html, '')
+		case 'style':
+			if (typeof value === 'object')
+				return DOMStyle(element, value)
+			break
+		case 'className':
+			if (xmlns || value === null)
+				return DOMProperties(element, 'class', value, xmlns)
+		case 'id':
+			return DOMProperty(element, name, value)
+		case 'width':
+		case 'height':
+			if (element.type === 'img')
+				break			
+		default:
+			if (!xmlns && name in DOMNode(element))
+				return DOMProperty(element, name, value)
+	}
+	
+	DOMAttribute(element, name, value, xmlns, (value != null && value !== false ? 'set' : 'remove') + 'Attribute')
+}
+
+/**
+ * @param {string} type
+ * @param {string} xmlns
+ */
+function DOMScope (type, xmlns) {
+	switch (type) {
+		case 'svg':
+			return 'http://www.w3.org/2000/svg'
+		case 'math':
+			return 'http://www.w3.org/1998/Math/MathML'
+		case 'foreignObject':
+			return ''
+	}
+
+	return xmlns
 }
