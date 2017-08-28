@@ -1,6 +1,6 @@
 var Readable = require('stream').Readable
 var RegExpEscape = /[<>&"']/g
-var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/
+var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
 var RegExpVendor = /^(ms|webkit|moz)/
 
 Element.prototype.html = ''

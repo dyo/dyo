@@ -270,7 +270,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	
 	var Readable = require('stream').Readable
 	var RegExpEscape = /[<>&"']/g
-	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/
+	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
 	var RegExpVendor = /^(ms|webkit|moz)/
 	
 	Element.prototype.html = ''
@@ -412,7 +412,10 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		 * @return {void}
 		 */
 		_read: {value: function read () {
-			this.push(this.stack.length ? toChunk(this.stack.pop(), this.stack) : null)
+			if (this.stack.length)
+				toChunk(this.stack.pop(), this.stack, this)
+			else
+				this.push(null)
 		}}
 	})
 	
@@ -432,9 +435,10 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	/**
 	 * @param {Element} element
 	 * @param {Array} stack
+	 * @param {Writable} writable
 	 * @return {string}
 	 */
-	function toChunk (element, stack) {
+	function toChunk (element, stack, writable) {
 		while (element.flag === ElementComponent)
 			element = (componentMount(element), element.children)		
 	
@@ -446,7 +450,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 		switch (element.flag) {
 			case ElementPromise:
 				return void element.type.then(function (element) {
-						toChunk(commitElement(element), stack)
+					toChunk(commitElement(element), stack, writable)
 				})
 			case ElementText:
 				output = escapeText(children)
@@ -477,7 +481,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 			element.chunk = ''
 		}
 	
-		return output
+		writable.push(output)
 	}
 	
 	/**

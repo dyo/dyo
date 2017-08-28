@@ -14,7 +14,10 @@ Stream.prototype = Object.create(Readable.prototype, {
 	 * @return {void}
 	 */
 	_read: {value: function read () {
-		this.push(this.stack.length ? toChunk(this.stack.pop(), this.stack) : null)
+		if (this.stack.length)
+			toChunk(this.stack.pop(), this.stack, this)
+		else
+			this.push(null)
 	}}
 })
 
@@ -34,9 +37,10 @@ function toStream (callback) {
 /**
  * @param {Element} element
  * @param {Array} stack
+ * @param {Writable} writable
  * @return {string}
  */
-function toChunk (element, stack) {
+function toChunk (element, stack, writable) {
 	while (element.flag === ElementComponent)
 		element = (componentMount(element), element.children)		
 
@@ -48,7 +52,7 @@ function toChunk (element, stack) {
 	switch (element.flag) {
 		case ElementPromise:
 			return void element.type.then(function (element) {
-					toChunk(commitElement(element), stack)
+				toChunk(commitElement(element), stack, writable)
 			})
 		case ElementText:
 			output = escapeText(children)
@@ -79,5 +83,5 @@ function toChunk (element, stack) {
 		element.chunk = ''
 	}
 
-	return output
+	writable.push(output)
 }
