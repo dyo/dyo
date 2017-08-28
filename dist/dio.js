@@ -1604,14 +1604,14 @@
 	
 		try {
 			if (signature > 0) {
-					if (element.owner && element.owner[LifecycleDidCatch]) {
-						element.work = WorkTask
-						children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
-						element.work = WorkSync
-					} else if (element.host.owner)
-						enqueue(function () {
-							errorRecovery(element.host, error, from, signature)
-						})
+				if (element.owner && element.owner[LifecycleDidCatch]) {
+					element.work = WorkTask
+					children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
+					element.work = WorkSync
+				} else if (element.host.owner)
+					enqueue(function () {
+						errorRecovery(element.host, error, from, signature)
+					})
 	
 				if (from !== LifecycleRender && client)
 					enqueue(function () {
