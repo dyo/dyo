@@ -48,7 +48,7 @@ function lifecycleMount (element, name) {
 	try {
 		var state = element.owner[name].call(element.instance, findDOMNode(element))
 		
-		if (state instanceof Promise)
+		if (name === LifecycleWillUnmount)
 			return state
 
 		lifecycleReturn(element, state)
@@ -68,7 +68,7 @@ function lifecycleUpdate (element, name, props, state, context) {
 	try {
 		var state = element.owner[name].call(element.instance, props, state, context)
 
-		if (typeof state !== 'object')
+		if (name === LifecycleShouldUpdate)
 			return state
 
 		lifecycleReturn(element, state)

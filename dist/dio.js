@@ -541,7 +541,7 @@
 		try {
 			var state = element.owner[name].call(element.instance, findDOMNode(element))
 			
-			if (state instanceof Promise)
+			if (name === LifecycleWillUnmount)
 				return state
 	
 			lifecycleReturn(element, state)
@@ -561,7 +561,7 @@
 		try {
 			var state = element.owner[name].call(element.instance, props, state, context)
 	
-			if (typeof state !== 'object')
+			if (name === LifecycleShouldUpdate)
 				return state
 	
 			lifecycleReturn(element, state)
@@ -1395,9 +1395,9 @@
 			if (bPos <= bEnd++)
 				reconcileInsert(bEnd < bLength ? (i = 1, bHead) : bHead.next, aTail, element, host, children, bPos, bEnd, i)
 		} else if (bPos > bEnd)
-				reconcileRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
-			else
-				reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
+			reconcileRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
+		else
+			reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
 	}
 	
 	/**
@@ -1458,8 +1458,8 @@
 						aSize--
 				} else if (aNode === children)
 					commitMount(children.push(bNode), bNode, element, host, 0)
-					else
-						commitMount(children.insert(bNode, aNode), aNode, element, host, 1)	
+				else
+					commitMount(children.insert(bNode, aNode), aNode, element, host, 1)	
 	
 				bNode = bNext
 			}
