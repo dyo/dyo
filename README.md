@@ -59,36 +59,36 @@ The easiest way to get started with DIO is to walk through the [Introduction to 
 ### Render
 
 1. Elements.
-2. Primitives: `Strings, Numbers, null, undefined`.
-3. Fragments: `Arrays, Iterables`.
-4. Async: `Promises`.
-6. Other: `Portals, Errors, Objects` etc.
+1. Primitives: `Strings, Numbers, null, undefined`.
+1. Fragments: `Arrays, Iterables`.
+1. Async: `Promises`.
+1. Other: `Portals, Errors, Objects` etc.
 
 ### Components
 
 1. Statefull functional components.
-2. Plain class components.
+1. Plain class components.
 
 ### Events
 
 1. Event delegation.
-2. Support for the `handleEvent` interface.
-3. Event listeners `this` defaults to the closest `Component` relegating the need to `.bind` methods.
+1. Support for the `handleEvent` interface.
+1. Event listeners `this` defaults to the closest `Component` relegating the need to `.bind` methods.
 
 ### Errors
 
 1. Cascading error boundaries with `componentDidCatch`.
-3. Additional support for recovering from an error state from `componentDidCatch` return signature.
+1. Additional support for recovering from an error state from `componentDidCatch` return signature.
 
 ### setState
 
-1. Support for returning an `Object` from an events.
-2. Support for Promises `this.setState(Promise)`.
+1. Support for returning an `Object` from an event.
+1. Support for Promises `this.setState(Promise)`.
 
 ### Lifecycle
 
 1. Functional component lifecycles.
-2. Support async `componentWillUnmount`.
+1. Support async `componentWillUnmount`.
 
 ### Refs
 

@@ -16,7 +16,6 @@ function commitElement (element) {
 			case Promise:
 				return createElement(element)
 			case Boolean:
-			case Symbol:
 				break
 			default:
 				return elementUnknown(element)
@@ -37,6 +36,8 @@ function commitPromise (element, snapshot) {
 			reconcileChildren(element, elementFragment(commitElement(value)))
 		else
 			reconcileElement(element, commitElement(value))
+	}).catch(function (e) {
+		errorBoundary(element, e, LifecycleAsync+':'+LifecycleRender, 1)
 	})
 }
 

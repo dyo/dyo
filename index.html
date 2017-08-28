@@ -5,10 +5,10 @@
 		var React = dio
 		var ReactDOM = dio
 	</script>
-	<script src=https://unpkg.com/react-router-dom/umd/react-router-dom.js></script>
-	<!-- <script src=react-router-dom.js></script> -->
+	<!-- <script src=https://unpkg.com/react-router-dom/umd/react-router-dom.js></script> -->
 	<script>
 		(function () {
+			var ReactRouterDOM = window.ReactRouterDOM || {}
 			var {h, render, Component, Children} = dio
 			var {BrowserRouter, Route, Link} = ReactRouterDOM
 			var Router = BrowserRouter
@@ -84,7 +84,7 @@
 			)
 
 			// dio.render(h(ParamsExample), document.getElementById('root'))
-			dio.render(h(BasicExample), document.getElementById('root'))
+			// dio.render(h(BasicExample), document.getElementById('root'))
 		})()
 	</script>
 
@@ -210,10 +210,15 @@
 			}
 
 			class Main {
+				componentDidCatch(err) {
+					return err
+				}
 				componentDidMount(){
 					console.log('componentDidMount')
 				}
 			  render() {
+			  	throw new Error('Something wrong happened')
+
 			  	return [
 			  		h('head', 
 			  			h('title', 'Hello World', performance.now()),
@@ -237,6 +242,31 @@
 			// dio.Children.only(1)
 			// dio.render(h(Main))
 			// dio.render(h(ContextProvider, {currentUser: 'Sultan'}))
+
+			class Faz {
+				componentDidCatch(err){
+					return err
+				}
+				handleEvent() {
+					// return this.setState(()=>{throw 'end'})
+
+					this.setState(new Promise(function () {
+						throw 'end'
+					}))
+				}
+				render() {
+					return h(new Promise(()=>{throw 'end'}), 'Hello')
+					// return new Date()
+					// return {
+					// 	id: 1,
+					// 	name: 'id'
+					// }
+					return h('button', {onclick: this}, 'Button')
+				}
+			}
+
+
+			dio.render(Faz, document.getElementById('root'))
 		})()
 	</script>
 </body>

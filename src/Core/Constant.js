@@ -10,6 +10,7 @@ var SymbolComponent = Symbol('Component')
 var root = new WeakMap()
 var document = window.document || noop
 var setTimeout = window.setTimeout
+var requestAnimationFrame = window.requestAnimationFrame || setTimeout
 
 var ElementPromise = -3
 var ElementFragment = -2
@@ -25,6 +26,8 @@ var WorkSync = 1
 var LifecycleCallback = 'callback'
 var LifecycleRender = 'render'
 var LifecycleConstructor = 'constructor'
+var LifecycleAsync = 'async'
+var LifecycleState = 'setState'
 var LifecycleWillMount = 'componentWillMount'
 var LifecycleDidMount = 'componentDidMount'
 var LifecycleWillReceiveProps = 'componentWillReceiveProps'

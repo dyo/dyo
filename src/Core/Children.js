@@ -22,7 +22,7 @@ var Children = {
 		else if (typeof children[SymbolIterator] === 'function')
 			return this.toArray(child[SymbolIterator]())
 		else
-			return this.toArray([children])
+			return [children]
 
 		return flatten(array, [])
 	},

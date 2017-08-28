@@ -152,7 +152,7 @@ function each (iterable, callback) {
  * @param {function} callback
  */
 function enqueue (callback) {
-	setTimeout(callback, 16)
+	requestAnimationFrame(callback, 16)
 }
 
 /**

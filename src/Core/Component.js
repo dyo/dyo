@@ -200,7 +200,7 @@ function enqueueCallback (element, instance, callback) {
 	try {
 		return callback.call(instance, instance.state, instance.props)
 	} catch (e) {
-		errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback), 1)
+		errorBoundary(element, e, LifecycleState+':'+LifecycleCallback, 1)
 	}
 }
 
@@ -215,6 +215,8 @@ function enqueuePending (element, instance, state, callback) {
 		enqueue(function () {
 			enqueueState(element, instance, value, callback)
 		})
+	}).catch(function (e) {
+		errorBoundary(element, e, LifecycleAsync+':'+LifecycleState, 1)
 	})
 }
 
@@ -331,7 +333,7 @@ function getDisplayName (subject) {
 			if (subject)
 				return subject
 		default:
-			return 'anonymous'
+			return subject ? subject.constructor.name : 'anonymous'
 	}
 }
 

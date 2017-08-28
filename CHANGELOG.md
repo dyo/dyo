@@ -1,7 +1,7 @@
 ## 8.0.0 (27 August 2016)
 
 - Support `componentDidCatch`.
-- Support statefull functional components.
+- Support stateful functional components.
 - Support fragments.
 - Support rendering Iterables.
 - Support handleEvent interface.

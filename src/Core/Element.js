@@ -107,10 +107,12 @@ function elementUnknown (child) {
 		return elementUnknown(child[SymbolIterator]())
 	else if (typeof child === 'function')
 		return elementUnknown(child())
-	else if (child.constructor === Error)
+	else if (child instanceof Error)
 		return elementError(child+'', (child.children||'')+'\n'+child.stack)
-	else
-		return createElement('pre', JSON.stringify(child, null, 2))
+	else if (child instanceof Date)
+		return elementText(child)
+
+	invariant('render', 'Invalid element '+JSON.stringify(child))
 }
 
 /**
@@ -150,7 +152,7 @@ function elementChildren (element, children, child, index) {
 				for (var i = 0; i < child.length; ++i)
 					elementChildren(element, children, child[i], index+i)
 
-				return index+i
+				return index + i
 			case String:
 			case Number:
 				return elementChildren(element, children, elementText(child), index)
@@ -158,7 +160,6 @@ function elementChildren (element, children, child, index) {
 			case Promise:
 				return elementChildren(element, children, createElement(child), index)
 			case Boolean:
-			case Symbol:
 				return elementChildren(element, children, null, index)
 			default:
 				return elementChildren(element, children, elementUnknown(child), index)

@@ -151,7 +151,7 @@ function DOMProperties (element, name, value, xmlns) {
 				return DOMStyle(element, value)
 			break
 		case 'className':
-			if (xmlns || value === null)
+			if (xmlns || value == null)
 				return DOMProperties(element, 'class', value, xmlns)
 		case 'id':
 			return DOMProperty(element, name, value)

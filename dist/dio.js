@@ -171,7 +171,7 @@
 	 * @param {function} callback
 	 */
 	function enqueue (callback) {
-		setTimeout(callback, 16)
+		requestAnimationFrame(callback, 16)
 	}
 	
 	/**
@@ -194,6 +194,7 @@
 	var root = new WeakMap()
 	var document = window.document || noop
 	var setTimeout = window.setTimeout
+	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
 	
 	var ElementPromise = -3
 	var ElementFragment = -2
@@ -209,6 +210,8 @@
 	var LifecycleCallback = 'callback'
 	var LifecycleRender = 'render'
 	var LifecycleConstructor = 'constructor'
+	var LifecycleAsync = 'async'
+	var LifecycleState = 'setState'
 	var LifecycleWillMount = 'componentWillMount'
 	var LifecycleDidMount = 'componentDidMount'
 	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
@@ -329,10 +332,12 @@
 			return elementUnknown(child[SymbolIterator]())
 		else if (typeof child === 'function')
 			return elementUnknown(child())
-		else if (child.constructor === Error)
+		else if (child instanceof Error)
 			return elementError(child+'', (child.children||'')+'\n'+child.stack)
-		else
-			return createElement('pre', JSON.stringify(child, null, 2))
+		else if (child instanceof Date)
+			return elementText(child)
+	
+		invariant('render', 'Invalid element '+JSON.stringify(child))
 	}
 	
 	/**
@@ -372,7 +377,7 @@
 					for (var i = 0; i < child.length; ++i)
 						elementChildren(element, children, child[i], index+i)
 	
-					return index+i
+					return index + i
 				case String:
 				case Number:
 					return elementChildren(element, children, elementText(child), index)
@@ -380,7 +385,6 @@
 				case Promise:
 					return elementChildren(element, children, createElement(child), index)
 				case Boolean:
-				case Symbol:
 					return elementChildren(element, children, null, index)
 				default:
 					return elementChildren(element, children, elementUnknown(child), index)
@@ -768,7 +772,7 @@
 		try {
 			return callback.call(instance, instance.state, instance.props)
 		} catch (e) {
-			errorBoundary(element, e, LifecycleCallback+':'+getDisplayName(callback), 1)
+			errorBoundary(element, e, LifecycleState+':'+LifecycleCallback, 1)
 		}
 	}
 	
@@ -783,6 +787,8 @@
 			enqueue(function () {
 				enqueueState(element, instance, value, callback)
 			})
+		}).catch(function (e) {
+			errorBoundary(element, e, LifecycleAsync+':'+LifecycleState, 1)
 		})
 	}
 	
@@ -899,7 +905,7 @@
 				if (subject)
 					return subject
 			default:
-				return 'anonymous'
+				return subject ? subject.constructor.name : 'anonymous'
 		}
 	}
 	
@@ -937,7 +943,6 @@
 				case Promise:
 					return createElement(element)
 				case Boolean:
-				case Symbol:
 					break
 				default:
 					return elementUnknown(element)
@@ -958,6 +963,8 @@
 				reconcileChildren(element, elementFragment(commitElement(value)))
 			else
 				reconcileElement(element, commitElement(value))
+		}).catch(function (e) {
+			errorBoundary(element, e, LifecycleAsync+':'+LifecycleRender, 1)
 		})
 	}
 	
@@ -1702,7 +1709,7 @@
 			else if (typeof children[SymbolIterator] === 'function')
 				return this.toArray(child[SymbolIterator]())
 			else
-				return this.toArray([children])
+				return [children]
 	
 			return flatten(array, [])
 		},
@@ -1898,7 +1905,7 @@
 					return DOMStyle(element, value)
 				break
 			case 'className':
-				if (xmlns || value === null)
+				if (xmlns || value == null)
 					return DOMProperties(element, 'class', value, xmlns)
 			case 'id':
 				return DOMProperty(element, name, value)
