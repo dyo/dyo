@@ -1518,7 +1518,7 @@
 		 */
 		addEventListener: function addEventListener (element, type) {
 			if (!this[type]) {
-				this[type] = new Map()
+				this[type] = new WeakMap()
 				DOMEvent(type.substring(2), this, true)
 			}
 	
