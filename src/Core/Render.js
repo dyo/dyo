@@ -26,7 +26,7 @@ function render (subject, target, callback) {
  */
 function mount (subject, parent, target) {
 	if (!DOMValid(target))
-		return invariant('render', 'Target container is not a DOM element')
+		invariant('render', 'Target container is not a DOM element')
 
 	root.set(target, subject)
 

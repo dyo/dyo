@@ -161,7 +161,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @param {function} callback
 	 */
 	function enqueue (callback) {
-		requestAnimationFrame(callback, 16)
+		requestAnimationFrame(callback)
 	}
 	
 	/**
@@ -183,8 +183,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	
 	var root = new WeakMap()
 	var document = window.document || noop
-	var setTimeout = window.setTimeout
-	var requestAnimationFrame = window.requestAnimationFrame || setTimeout
+	var requestAnimationFrame = window.requestAnimationFrame || function(c) {setTimeout(c, 16)}
 	
 	var ElementPromise = -3
 	var ElementFragment = -2
