@@ -46,7 +46,7 @@ function lifecycleData (element, name) {
  */
 function lifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, findDOMNode(element))
+		var state = element.owner[name].call(element.instance, element.DOM ? DOMNode(element) : null)
 		
 		if (name === LifecycleWillUnmount)
 			return state

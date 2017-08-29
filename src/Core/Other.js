@@ -1,19 +1,23 @@
 /**
- * @param {(Component|Element|DOM|Node)} element
- * @return {Node?}
+ * @param {(Component|Element|Node)} element
+ * @return {Node}
  */
 function findDOMNode (element) {
-	if (element) {
-		if (isValidElement(element[SymbolElement]))
-			return findDOMNode(element[SymbolElement])
+	if (!element)
+		invariant(LifecycleFindDOMNode, 'Expected to receive a component')
 
-		if (isValidElement(element)) {
-			if (element.flag < ElementPortal)
-				return findDOMNode(elementSibling(element, 1))
-			else if (element.DOM)
-				return DOMNode(element)
-		}
+	if (isValidElement(element[SymbolElement]))
+		return findDOMNode(element[SymbolElement])
+		
+	if (isValidElement(element)) {
+		if (element.flag < ElementPortal)
+			return findDOMNode(elementSibling(element, 1))
+		else if (element.DOM)
+			return DOMNode(element)
 	}
 
-	return null
+	if (DOMValid(element))
+		return element
+
+	invariant(LifecycleFindDOMNode, 'Called on an unmounted component')
 }

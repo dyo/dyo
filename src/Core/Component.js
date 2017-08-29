@@ -333,7 +333,7 @@ function getDisplayName (subject) {
 			if (subject)
 				return subject
 		default:
-			return subject ? subject.constructor.name : 'anonymous'
+			return (subject && subject.constructor.name) || 'anonymous'
 	}
 }
 

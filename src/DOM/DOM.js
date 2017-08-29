@@ -125,7 +125,11 @@ function DOMProperty (element, name, value) {
  * @param {string} key
  */
 function DOMAttribute (element, name, value, xmlns, key) {
-	xmlns ? DOMNode(element)[key+'NS'](xmlns, name, value) : DOMNode(element)[key](name, value)
+	console.log(DOMNode(element), key)
+	if (xmlns)
+		DOMNode(element)[key+'NS'](xmlns, name, value)
+	else
+		DOMNode(element)[key](name, value)
 }
 
 /**
@@ -150,23 +154,25 @@ function DOMProperties (element, name, value, xmlns) {
 				return DOMStyle(element, value)
 			break
 		case 'className':
-			if (xmlns || value == null)
+			if (xmlns)
 				return DOMProperties(element, 'class', value, xmlns)
+			if (value === false)
+				break
 		case 'id':
 			return DOMProperty(element, name, value)
 		case 'width':
 		case 'height':
 			if (element.type === 'img')
-				break			
+				break
 		default:
 			if (!xmlns && name in DOMNode(element))
 				return DOMProperty(element, name, value)
 	}
 
-	if (value == null)
-		DOMProperties(element, name, false, xmlns)
+	if (typeof value === 'object')
+		DOMProperty(element, name, value)
 	else
-		DOMAttribute(element, name, value, xmlns, (value === false ? 'remove' : 'set') + 'Attribute')
+		DOMAttribute(element, name, value, xmlns, (value !== false ? 'set' : 'remove') + 'Attribute')
 }
 
 /**

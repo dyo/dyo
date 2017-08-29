@@ -1,35 +1,35 @@
 /**
- * @param {Element} subject
+ * @param {Element} element
  * @param {Node} target
  * @param {function=} callback
  */
-function render (subject, target, callback) {
-	if (!isValidElement(subject))
-		return render(commitElement(subject), target, callback)
+function render (element, target, callback) {
+	if (!isValidElement(element))
+		return render(commitElement(element), target, callback)
 	
 	if (!target)
-		return render(subject, DOMRoot(), callback)
+		return render(element, DOMRoot(), callback)
 		
 	if (root.has(target))
-		reconcileElement(root.get(target), commitElement(subject))
+		reconcileElement(root.get(target), commitElement(element))
 	else
-		mount(subject, elementIntermediate(DOM(target)), target)
+		mount(element, elementIntermediate(DOM(target)), target)
 
 	if (typeof callback === 'function')
-		lifecycleCallback(subject, callback, findDOMNode(subject))
+		lifecycleCallback(element, callback, findDOMNode(element))
 }
 
 /**
- * @param {Element} subject
+ * @param {Element} element
  * @param {Element} parent
  * @param {Node} target
  */
-function mount (subject, parent, target) {
+function mount (element, parent, target) {
 	if (!DOMValid(target))
-		invariant('render', 'Target container is not a DOM element')
+		invariant(LifecycleRender, 'Target container is not a DOM element')
 
-	root.set(target, subject)
+	root.set(target, element)
 
 	commitContent(parent)
-	commitMount(subject, subject, parent, parent, 0)
+	commitMount(element, element, parent, parent, 0)
 }

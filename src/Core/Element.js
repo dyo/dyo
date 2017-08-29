@@ -103,7 +103,7 @@ function elementUnknown (child) {
 	else if (child instanceof Date)
 		return elementText(child)
 
-	invariant('render', 'Invalid element '+JSON.stringify(child))
+	invariant(LifecycleRender, 'Invalid element [object '+getDisplayName(child)+']')
 }
 
 /**

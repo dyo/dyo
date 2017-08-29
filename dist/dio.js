@@ -202,6 +202,7 @@
 	var LifecycleConstructor = 'constructor'
 	var LifecycleAsync = 'async'
 	var LifecycleState = 'setState'
+	var LifecycleFindDOMNode = 'findDOMNode'
 	var LifecycleWillMount = 'componentWillMount'
 	var LifecycleDidMount = 'componentDidMount'
 	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
@@ -329,7 +330,7 @@
 		else if (child instanceof Date)
 			return elementText(child)
 	
-		invariant('render', 'Invalid element '+JSON.stringify(child))
+		invariant(LifecycleRender, 'Invalid element [object '+getDisplayName(child)+']')
 	}
 	
 	/**
@@ -531,7 +532,7 @@
 	 */
 	function lifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, findDOMNode(element))
+			var state = element.owner[name].call(element.instance, element.DOM ? DOMNode(element) : null)
 			
 			if (name === LifecycleWillUnmount)
 				return state
@@ -897,7 +898,7 @@
 				if (subject)
 					return subject
 			default:
-				return subject ? subject.constructor.name : 'anonymous'
+				return (subject && subject.constructor.name) || 'anonymous'
 		}
 	}
 	
@@ -1246,7 +1247,7 @@
 	
 		for (var key in prevObject)
 			if (nextObject[key] == null)
-				delta[(length++, key)] = null
+				delta[(length++, key)] = false
 	
 		for (var key in nextObject) {
 			var next = nextObject[key]
@@ -1604,59 +1605,63 @@
 	}
 	
 	/**
-	 * @param {Element} subject
+	 * @param {Element} element
 	 * @param {Node} target
 	 * @param {function=} callback
 	 */
-	function render (subject, target, callback) {
-		if (!isValidElement(subject))
-			return render(commitElement(subject), target, callback)
+	function render (element, target, callback) {
+		if (!isValidElement(element))
+			return render(commitElement(element), target, callback)
 		
 		if (!target)
-			return render(subject, DOMRoot(), callback)
+			return render(element, DOMRoot(), callback)
 			
 		if (root.has(target))
-			reconcileElement(root.get(target), commitElement(subject))
+			reconcileElement(root.get(target), commitElement(element))
 		else
-			mount(subject, elementIntermediate(DOM(target)), target)
+			mount(element, elementIntermediate(DOM(target)), target)
 	
 		if (typeof callback === 'function')
-			lifecycleCallback(subject, callback, findDOMNode(subject))
+			lifecycleCallback(element, callback, findDOMNode(element))
 	}
 	
 	/**
-	 * @param {Element} subject
+	 * @param {Element} element
 	 * @param {Element} parent
 	 * @param {Node} target
 	 */
-	function mount (subject, parent, target) {
+	function mount (element, parent, target) {
 		if (!DOMValid(target))
-			invariant('render', 'Target container is not a DOM element')
+			invariant(LifecycleRender, 'Target container is not a DOM element')
 	
-		root.set(target, subject)
+		root.set(target, element)
 	
 		commitContent(parent)
-		commitMount(subject, subject, parent, parent, 0)
+		commitMount(element, element, parent, parent, 0)
 	}
 	
 	/**
-	 * @param {(Component|Element|DOM|Node)} element
-	 * @return {Node?}
+	 * @param {(Component|Element|Node)} element
+	 * @return {Node}
 	 */
 	function findDOMNode (element) {
-		if (element) {
-			if (isValidElement(element[SymbolElement]))
-				return findDOMNode(element[SymbolElement])
+		if (!element)
+			invariant(LifecycleFindDOMNode, 'Expected to receive a component')
 	
-			if (isValidElement(element)) {
-				if (element.flag < ElementPortal)
-					return findDOMNode(elementSibling(element, 1))
-				else if (element.DOM)
-					return DOMNode(element)
-			}
+		if (isValidElement(element[SymbolElement]))
+			return findDOMNode(element[SymbolElement])
+			
+		if (isValidElement(element)) {
+			if (element.flag < ElementPortal)
+				return findDOMNode(elementSibling(element, 1))
+			else if (element.DOM)
+				return DOMNode(element)
 		}
 	
-		return null
+		if (DOMValid(element))
+			return element
+	
+		invariant(LifecycleFindDOMNode, 'Called on an unmounted component')
 	}
 	
 	/**
@@ -1853,7 +1858,11 @@
 	 * @param {string} key
 	 */
 	function DOMAttribute (element, name, value, xmlns, key) {
-		xmlns ? DOMNode(element)[key+'NS'](xmlns, name, value) : DOMNode(element)[key](name, value)
+		console.log(DOMNode(element), key)
+		if (xmlns)
+			DOMNode(element)[key+'NS'](xmlns, name, value)
+		else
+			DOMNode(element)[key](name, value)
 	}
 	
 	/**
@@ -1878,23 +1887,25 @@
 					return DOMStyle(element, value)
 				break
 			case 'className':
-				if (xmlns || value == null)
+				if (xmlns)
 					return DOMProperties(element, 'class', value, xmlns)
+				if (value === false)
+					break
 			case 'id':
 				return DOMProperty(element, name, value)
 			case 'width':
 			case 'height':
 				if (element.type === 'img')
-					break			
+					break
 			default:
 				if (!xmlns && name in DOMNode(element))
 					return DOMProperty(element, name, value)
 		}
 	
-		if (value == null)
-			DOMProperties(element, name, false, xmlns)
+		if (typeof value === 'object')
+			DOMProperty(element, name, value)
 		else
-			DOMAttribute(element, name, value, xmlns, (value === false ? 'remove' : 'set') + 'Attribute')
+			DOMAttribute(element, name, value, xmlns, (value !== false ? 'set' : 'remove') + 'Attribute')
 	}
 	
 	/**
