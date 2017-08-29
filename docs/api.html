@@ -136,6 +136,50 @@ class Welcome {
 }
 </code></pre>
 
+		<h2 id=props>Events</h2>
+		
+		<p>
+			All events in DIO are prefixed with `on` and case insensitve making `onClick` and `onclick` equivalent.
+		</p>
+
+<pre><code>
+class Welcome {
+	handleClick() {}
+	render() {
+		return h('button', {onClick: this.handleClick})
+	}
+}
+</code></pre>
+		
+
+		<p>The value of an event property is either of a `function` type or an <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListener</a>.</p>
+
+		<p>
+			When assigning events, DIO has prior knownledge of the host component that the related element is a part of.
+			This allows us to attach events as they are and guarantee that the `this` reference always points to the host component.
+		</p>
+
+<pre><code>
+class Welcome {
+	handleClick() {}
+	render() {
+		return h('button', {onClick: this.handleClick})
+	}
+}
+</code></pre>
+
+		<h2>dangerouslySetInnerHTML</h2>
+
+		<p>dangerouslySetInnerHTML is a special propery that can be used to set the `innerHTML` of elements.</p>
+
+<pre><code>
+class Welcome {
+	render() {
+		return h('div', {dangerouslySetInnerHTML: {__html: '<h1>Welcome</h1>'}})
+	}
+}
+</code></pre>
+
 		<h2 id=refs>Refs</h2>
 
 		<p>
@@ -286,7 +330,7 @@ class Welcome {
 }
 </code></pre>
 
-		<h1 id=setstate>forceUpdate</h1>
+		<h1 id=forceupdate>forceUpdate</h1>
 
 		<p>Used when you want to invoke an update without a state update.</p>
 
