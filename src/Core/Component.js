@@ -25,7 +25,7 @@ createComponent(Component.prototype)
  * @return {Object}
  */
 function createComponent (prototype) {
-	return Object.defineProperty(Object.defineProperties(prototype, ComponentPrototype), SymbolComponent, {
+	return defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {
 		value: SymbolComponent
 	})
 }
@@ -346,7 +346,7 @@ function getDefaultProps (element, defaultProps, props) {
 	if (typeof defaultProps !== 'function')
 		return assign({}, defaultProps, props)
 
-	Object.defineProperty(element.type, 'defaultProps', {
+	defineProperty(element.type, 'defaultProps', {
 		value: getDefaultProps(element, lifecycleCallback(element, defaultProps), props)
 	})
 

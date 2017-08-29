@@ -184,6 +184,8 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	var root = new WeakMap()
 	var document = window.document || noop
 	var requestAnimationFrame = window.requestAnimationFrame || function(c) {setTimeout(c, 16)}
+	var defineProperty = Object.defineProperty
+	var defineProperties = Object.defineProperties
 	
 	var ElementPromise = -3
 	var ElementFragment = -2

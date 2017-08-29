@@ -6,11 +6,11 @@ function DOM (target) {
 }
 
 /**
- * @param {Element} element
+ * @param {Node} target
  * @return {Node}
  */
-function DOMNode (element) {
-	return element.DOM.target
+function DOMParent (target) {
+	return target.parentNode
 }
 
 /**
@@ -19,6 +19,14 @@ function DOMNode (element) {
  */
 function DOMValid (target) {
 	return target instanceof Node
+}
+
+/**
+ * @param {Element} element
+ * @return {Node}
+ */
+function DOMNode (element) {
+	return element.DOM.target
 }
 
 /**

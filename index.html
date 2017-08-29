@@ -139,7 +139,7 @@
 			}
 
 			function Foo (props, state, context) {
-				return h('div', h('button', {onClick: handleClick, ref: 'button'}, 'Click Me!'), {...props, ...state, ...context})
+				// return h('div', h('button', {onClick: handleClick, ref: 'button'}, 'Click Me!'), {...props, ...state, ...context})
 			}
 
 			Foo.defaultProps = {
@@ -148,7 +148,7 @@
 
 			class Bar {
 				async render(props, state) {
-					return h('div', h('button', {onClick: handleClick}, 'Click Me!'), {...state})
+					// return h('div', h('button', {onClick: handleClick}, 'Click Me!'), {...state})
 				}
 			}
 
@@ -247,21 +247,25 @@
 				componentDidCatch(err){
 					return err
 				}
-				handleEvent() {
+				handleEvent(e) {
+					console.log('works', e.target)
 					// return this.setState(()=>{throw 'end'})
 
-					this.setState(new Promise(function () {
-						throw 'end'
-					}))
+					// this.setState(new Promise(function () {
+					// 	throw 'end'
+					// }))
 				}
 				render() {
-					return h(new Promise(()=>{throw 'end'}), 'Hello')
+					return h('div', {onClick: this, style: 'background:red'},
+						h('button', 'Button')
+					)
+					// return h(new Promise(()=>{throw 'end'}), 'Hello')
 					// return new Date()
 					// return {
 					// 	id: 1,
 					// 	name: 'id'
 					// }
-					return h('button', {onclick: this}, 'Button')
+					// return h('button', {onclick: this}, 'Button')
 				}
 			}
 
