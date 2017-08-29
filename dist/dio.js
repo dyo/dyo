@@ -1855,13 +1855,19 @@
 	 * @param {string} name
 	 * @param {*} value
 	 * @param {string} xmlns
-	 * @param {string} key
 	 */
-	function DOMAttribute (element, name, value, xmlns, key) {
-		if (xmlns)
-			DOMNode(element)[key+'NS'](xmlns, name, value)
-		else
-			DOMNode(element)[key](name, value)
+	function DOMAttribute (element, name, value, xmlns) {
+		if (value !== false && value != null) {
+			if (!xmlns)
+				DOMNode(element).setAttribute(name, value)
+			else
+				DOMNode(element).setAttributeNS(xmlns, name, value)
+		} else {
+			if (!xmlns)
+				DOMNode(element).setAttribute(name, value)
+			else
+				DOMNode(element).removeAttributeNS(xmlns, name)
+		}
 	}
 	
 	/**
@@ -1873,24 +1879,22 @@
 	function DOMProperties (element, name, value, xmlns) {
 		switch (name) {
 			case 'xlink:href':
-				if (!xmlns)
-					return DOMProperties(element, name, value, 'http://www.w3.org/1999/xlink')
+				return DOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
 			case 'key':
 			case 'xmlns':
 			case 'children':
 				return
 			case 'dangerouslySetInnerHTML':
-				return DOMProperties(element, 'innerHTML', value && value.__html, '')
+				return DOMProperty(element, 'innerHTML', value ? value.__html : '')
 			case 'style':
 				if (typeof value === 'object')
 					return DOMStyle(element, value)
+				
 				break
 			case 'className':
-				if (xmlns)
-					return DOMProperties(element, 'class', value, xmlns)
-				if (value === false)
-					break
-			case 'id':
+				if (xmlns || value === false || value == null)
+					return DOMAttribute(element, 'class', value, xmlns)
+				
 				return DOMProperty(element, name, value)
 			case 'width':
 			case 'height':
@@ -1904,7 +1908,7 @@
 		if (typeof value === 'object')
 			DOMProperty(element, name, value)
 		else
-			DOMAttribute(element, name, value, xmlns, (value !== false ? 'set' : 'remove') + 'Attribute')
+			DOMAttribute(element, name, value, xmlns)
 	}
 	
 	/**
