@@ -71,7 +71,6 @@ The easiest way to get started with DIO is to walk through the [Introduction to 
 
 ### Events
 
-1. Event delegation.
 1. Support for the `handleEvent` interface.
 1. Event listeners `this` defaults to the closest `Component` relegating the need to `.bind` methods.
 
