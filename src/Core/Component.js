@@ -78,13 +78,10 @@ function componentMount (element) {
 	else if (!instance.state)
 		instance.state = {}
 	
-	if (owner[LifecycleChildContext])
-		element.context = getChildContext(element)
-
 	children = getChildElement(element)
 	children.context = element.context
 
-	return element.children = children
+	element.children = children
 }
 
 /**

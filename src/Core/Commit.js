@@ -78,6 +78,9 @@ function commitMount (element, sibling, parent, host, signature) {
  			if (element.owner[LifecycleWillMount]) 
  				lifecycleMount(element, LifecycleWillMount)
 
+ 			if (element.owner[LifecycleChildContext])
+ 				element.context = getChildContext(element)
+
  			commitMount(element.children, sibling, parent, element, signature)
 
  			element.DOM = element.children.DOM

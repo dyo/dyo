@@ -4,7 +4,7 @@
  * version 8.0.0
  * license MIT
  */
-module.exports = function (exports, componentMount, commitElement, Element) {
+module.exports = function (exports, componentMount, commitElement, getChildContext, Element) {
 	'use strict'
 	
 	var ElementPromise = -3
@@ -17,6 +17,36 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	
 	var WorkTask = 0
 	var WorkSync = 1
+	
+	var LifecycleCallback = 'callback'
+	var LifecycleRender = 'render'
+	var LifecycleConstructor = 'constructor'
+	var LifecycleAsync = 'async'
+	var LifecycleState = 'setState'
+	var LifecycleFindDOMNode = 'findDOMNode'
+	var LifecycleWillMount = 'componentWillMount'
+	var LifecycleDidMount = 'componentDidMount'
+	var LifecycleWillReceiveProps = 'componentWillReceiveProps'
+	var LifecycleShouldUpdate = 'shouldComponentUpdate'
+	var LifecycleWillUpdate = 'componentWillUpdate'
+	var LifecycleDidUpdate = 'componentDidUpdate'
+	var LifecycleWillUnmount = 'componentWillUnmount'
+	var LifecycleDidCatch = 'componentDidCatch'
+	var LifecycleChildContext = 'getChildContext'
+	var LifecycleInitialState = 'getInitialState'
+	
+	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	function elementComponent (element) {
+		componentMount(element)
+	
+		if (element.owner[LifecycleChildContext])
+			element.context = getChildContext(element)
+		
+		return element.children
+	}
 	
 	/**
 	 * @param {*} value
@@ -93,32 +123,34 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @return {string}
 	 */
 	function toString () {
-		switch (this.flag) {
+		var element = this
+	
+		switch (element.flag) {
 			case ElementComponent:
-				return (componentMount(this), this.children.toString())
+				return elementComponent(element).toString()
 			case ElementText:
-				return escapeText(this.children)
+				return escapeText(element.children)
 		}
 	
-		var type = this.type
-		var children = this.children
+		var type = element.type
+		var children = element.children
 		var length = children.length
-		var output = this.flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
+		var output = element.flag > ElementIntermediate ? '<' + type + toProps(element, element.props) + '>' : ''
 	
 		switch (elementType(type)) {
 			case 0:
 				return output
 			default:
-				if (!this.html)
+				if (!element.html)
 					while (length-- > 0)
 						output += (children = children.next).toString()
 				else {
-					output += this.html
-					this.html = ''
+					output += element.html
+					element.html = ''
 				}
 		}
 	
-		return this.flag > ElementIntermediate ? output + '</'+type+'>' : output
+		return element.flag > ElementIntermediate ? output + '</'+type+'>' : output
 	}
 	
 	/**
@@ -185,21 +217,23 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 * @return {string}
 	 */
 	function toJSON () {
-		switch (this.flag) {
+		var element = this
+		
+		switch (element.flag) {
 			case ElementComponent:
-				return (componentMount(this), this.children.toJSON())
+				return elementComponent(element).toJSON()
 			case ElementText:
-				return this.children
+				return element.children
 		}
 	
-		var output = {type: this.type, props: this.props, children: []}
-		var children = this.children
+		var output = {type: element.type, props: element.props, children: []}
+		var children = element.children
 		var length = children.length
 	
 		while (length-- > 0)
 			output.children.push((children = children.next).toJSON())
 	
-		return this.flag < ElementIntermediate ? output.children : output
+		return element.flag < ElementIntermediate ? output.children : output
 	}
 	
 	/**
@@ -246,7 +280,7 @@ module.exports = function (exports, componentMount, commitElement, Element) {
 	 */
 	function toChunk (element, stack, writable) {
 		while (element.flag === ElementComponent)
-			element = (componentMount(element), element.children)		
+			element = elementComponent(element)
 	
 		var type = element.type
 		var children = element.children

@@ -2,32 +2,34 @@
  * @return {string}
  */
 function toString () {
-	switch (this.flag) {
+	var element = this
+
+	switch (element.flag) {
 		case ElementComponent:
-			return (componentMount(this), this.children.toString())
+			return elementComponent(element).toString()
 		case ElementText:
-			return escapeText(this.children)
+			return escapeText(element.children)
 	}
 
-	var type = this.type
-	var children = this.children
+	var type = element.type
+	var children = element.children
 	var length = children.length
-	var output = this.flag > ElementIntermediate ? '<' + type + toProps(this, this.props) + '>' : ''
+	var output = element.flag > ElementIntermediate ? '<' + type + toProps(element, element.props) + '>' : ''
 
 	switch (elementType(type)) {
 		case 0:
 			return output
 		default:
-			if (!this.html)
+			if (!element.html)
 				while (length-- > 0)
 					output += (children = children.next).toString()
 			else {
-				output += this.html
-				this.html = ''
+				output += element.html
+				element.html = ''
 			}
 	}
 
-	return this.flag > ElementIntermediate ? output + '</'+type+'>' : output
+	return element.flag > ElementIntermediate ? output + '</'+type+'>' : output
 }
 
 /**

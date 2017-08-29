@@ -2,19 +2,21 @@
  * @return {string}
  */
 function toJSON () {
-	switch (this.flag) {
+	var element = this
+	
+	switch (element.flag) {
 		case ElementComponent:
-			return (componentMount(this), this.children.toJSON())
+			return elementComponent(element).toJSON()
 		case ElementText:
-			return this.children
+			return element.children
 	}
 
-	var output = {type: this.type, props: this.props, children: []}
-	var children = this.children
+	var output = {type: element.type, props: element.props, children: []}
+	var children = element.children
 	var length = children.length
 
 	while (length-- > 0)
 		output.children.push((children = children.next).toJSON())
 
-	return this.flag < ElementIntermediate ? output.children : output
+	return element.flag < ElementIntermediate ? output.children : output
 }

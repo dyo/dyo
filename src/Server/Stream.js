@@ -42,7 +42,7 @@ function toStream (callback) {
  */
 function toChunk (element, stack, writable) {
 	while (element.flag === ElementComponent)
-		element = (componentMount(element), element.children)		
+		element = elementComponent(element)
 
 	var type = element.type
 	var children = element.children

@@ -1,4 +1,17 @@
 /**
+ * @param {Element} element
+ * @return {Element}
+ */
+function elementComponent (element) {
+	componentMount(element)
+
+	if (element.owner[LifecycleChildContext])
+		element.context = getChildContext(element)
+	
+	return element.children
+}
+
+/**
  * @param {*} value
  * @return {string}
  */

@@ -8,9 +8,9 @@ const strict = `'use strict'`
 
 
 const core = [
-	'../../src/Core/Utility.js',
-	'../../src/Core/Constant.js',
 	'../../src/Core/Enum.js',
+	'../../src/Core/Constant.js',
+	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
 	'../../src/Core/Lifecycle.js',
 	'../../src/Core/Component.js',
@@ -51,7 +51,7 @@ const getExports = (module) => {
 	return template.export + (module !== 'native' ? template.server : '')
 }
 
-const imports = 'exports, componentMount, commitElement, Element'
+const imports = 'exports, componentMount, commitElement, getChildContext, Element'
 const template = {
 	server: `\nif (!client)\n\trequire('./dio.server.js')(${imports})`,
 	export: `

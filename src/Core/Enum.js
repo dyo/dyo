@@ -8,3 +8,20 @@ var ElementText = 3
 
 var WorkTask = 0
 var WorkSync = 1
+
+var LifecycleCallback = 'callback'
+var LifecycleRender = 'render'
+var LifecycleConstructor = 'constructor'
+var LifecycleAsync = 'async'
+var LifecycleState = 'setState'
+var LifecycleFindDOMNode = 'findDOMNode'
+var LifecycleWillMount = 'componentWillMount'
+var LifecycleDidMount = 'componentDidMount'
+var LifecycleWillReceiveProps = 'componentWillReceiveProps'
+var LifecycleShouldUpdate = 'shouldComponentUpdate'
+var LifecycleWillUpdate = 'componentWillUpdate'
+var LifecycleDidUpdate = 'componentDidUpdate'
+var LifecycleWillUnmount = 'componentWillUnmount'
+var LifecycleDidCatch = 'componentDidCatch'
+var LifecycleChildContext = 'getChildContext'
+var LifecycleInitialState = 'getInitialState'

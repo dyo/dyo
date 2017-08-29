@@ -125,7 +125,6 @@ function DOMProperty (element, name, value) {
  * @param {string} key
  */
 function DOMAttribute (element, name, value, xmlns, key) {
-	console.log(DOMNode(element), key)
 	if (xmlns)
 		DOMNode(element)[key+'NS'](xmlns, name, value)
 	else
