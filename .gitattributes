@@ -1,6 +1,3 @@
 * text=auto
 
-dist/dio.js binary
-dist/dio.min.js binary
-dist/dio.server.js binary
-dist/dio.native.js binary
+dist/* linguist-generated
