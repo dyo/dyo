@@ -80,7 +80,9 @@ function commitMount (element, sibling, parent, host, signature) {
 
  			commitMount(element.children, sibling, parent, element, signature)
 
- 			if ((element.DOM = element.children.DOM, element.ref)) 
+ 			element.DOM = element.children.DOM
+
+ 			if (element.ref)
  				commitRef(element, element.ref, 1)
  			
  			if (element.owner[LifecycleDidMount])
@@ -220,10 +222,9 @@ function commitRef (element, callback, signature, key) {
  */
 function commitEvent (element, type, callback) {
 	if (!element.event)
-		element.event = {}
-	
+		DOMEvent((element.event = {}, element), type)
+
 	element.event[type] = callback
-	Event.addEventListener(element, type)
 }
 
 /**
@@ -236,7 +237,7 @@ function commitProps (element, props, signature) {
 		if (key === 'ref')
 			commitRef(element, props[key], signature)
 		else if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
-			commitEvent(element, key.toLowerCase(), props[key])
+			commitEvent(element, key.substring(2).toLowerCase(), props[key])
 		else
 			DOMProperties(element, key, props[key], element.xmlns)
 }

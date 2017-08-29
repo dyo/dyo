@@ -1008,7 +1008,9 @@
 	
 	 			commitMount(element.children, sibling, parent, element, signature)
 	
-	 			if ((element.DOM = element.children.DOM, element.ref)) 
+	 			element.DOM = element.children.DOM
+	
+	 			if (element.ref)
 	 				commitRef(element, element.ref, 1)
 	 			
 	 			if (element.owner[LifecycleDidMount])
@@ -1148,10 +1150,9 @@
 	 */
 	function commitEvent (element, type, callback) {
 		if (!element.event)
-			element.event = {}
-		
+			DOMEvent((element.event = {}, element), type)
+	
 		element.event[type] = callback
-		Event.addEventListener(element, type)
 	}
 	
 	/**
@@ -1164,7 +1165,7 @@
 			if (key === 'ref')
 				commitRef(element, props[key], signature)
 			else if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
-				commitEvent(element, key.toLowerCase(), props[key])
+				commitEvent(element, key.substring(2).toLowerCase(), props[key])
 			else
 				DOMProperties(element, key, props[key], element.xmlns)
 	}
@@ -1512,25 +1513,15 @@
 	/**
 	 * @type {Object}
 	 */
-	var Event = {
-		/**
-		 * @param {Element} element
-		 * @param {string} type
-		 */
-		addEventListener: function addEventListener (element, type) {
-			if (!this[type]) {
-				this[type] = new WeakMap()
-				DOMEvent(type.substring(2), this, true)
-			}
-	
-			this[type].set(DOMNode(element), element)
-		},
-		dispatchEvent: function (element, type, event) {
+	Object.defineProperty(Element.prototype, 'handleEvent', {
+		value: function handleEvent (event) {
 			try {
+				var type = event.type
+				var element = this
 				var host = element.host
 				var instance = host.instance
 				var callback = element.event[type]
-				var state = null
+				var state
 	
 				if (!callback)
 					return
@@ -1543,27 +1534,10 @@
 				if (instance && state)
 					lifecycleReturn(host, state)
 			} catch (e) {
-				errorBoundary(host, e, type+':'+getDisplayName(callback.handleEvent || callback), 0)
+				errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), 0)
 			}
-		},
-		/**
-		 * @param {Event} event
-		 */
-		handleEvent: function handleEvent (event) {
-			var type = 'on'+event.type
-			var target = event.target
-			var bubbles = event.bubbles
-			var map = this[type]
-	
-			while (target)
-				if (map.has(target))
-					return this.dispatchEvent(map.get(target), type, defineProperty(event, 'currentTarget', {value: target}))
-				else if (bubbles)
-					target = DOMParent(target)
-				else
-					break
 		}
-	}
+	})
 	
 	/**
 	 * @param {Element} element
@@ -1680,17 +1654,15 @@
 	 */
 	function findDOMNode (element) {
 		if (element) {
-			if (DOMValid(element))
-				return element
-	
-			if (DOMValid(element.target))
-				return element.target
-	
 			if (isValidElement(element[SymbolElement]))
 				return findDOMNode(element[SymbolElement])
 	
-			if (isValidElement(element))
-				return findDOMNode(element.flag > ElementFragment ? element.DOM : elementSibling(element, 1))
+			if (isValidElement(element)) {
+				if (element.flag < ElementPortal)
+					return findDOMNode(elementSibling(element, 1))
+				else if (element.DOM)
+					return DOMNode(element)
+			}
 		}
 	
 		return null
@@ -1771,11 +1743,10 @@
 	}
 	
 	/**
-	 * @param {Node} target
 	 * @return {Node}
 	 */
-	function DOMParent (target) {
-		return target.parentNode
+	function DOMRoot () {
+		return document.documentElement
 	}
 	
 	/**
@@ -1795,19 +1766,11 @@
 	}
 	
 	/**
+	 * @param {(EventListener|Element)} element
 	 * @param {string} type
-	 * @param {EventListener} listener
-	 * @param {*} options
 	 */
-	function DOMEvent (type, listener, options) {
-		document.addEventListener(type, listener, options)
-	}
-	
-	/**
-	 * @return {Node}
-	 */
-	function DOMRoot () {
-		return document.documentElement
+	function DOMEvent (element, type) {
+		DOMNode(element).addEventListener(type, element, false)
 	}
 	
 	/**

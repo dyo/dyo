@@ -6,11 +6,10 @@ function DOM (target) {
 }
 
 /**
- * @param {Node} target
  * @return {Node}
  */
-function DOMParent (target) {
-	return target.parentNode
+function DOMRoot () {
+	return document.documentElement
 }
 
 /**
@@ -30,19 +29,11 @@ function DOMNode (element) {
 }
 
 /**
+ * @param {(EventListener|Element)} element
  * @param {string} type
- * @param {EventListener} listener
- * @param {*} options
  */
-function DOMEvent (type, listener, options) {
-	document.addEventListener(type, listener, options)
-}
-
-/**
- * @return {Node}
- */
-function DOMRoot () {
-	return document.documentElement
+function DOMEvent (element, type) {
+	DOMNode(element).addEventListener(type, element, false)
 }
 
 /**

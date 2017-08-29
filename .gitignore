@@ -12,3 +12,4 @@ npm-debug.log
 .vscode
 *.swp
 *.swo
+./index.html
