@@ -1857,7 +1857,7 @@
 	 * @param {string} xmlns
 	 */
 	function DOMAttribute (element, name, value, xmlns) {
-		if (value !== false && value != null) {
+		if (value !== false && value !== undefined) {
 			if (!xmlns)
 				DOMNode(element).setAttribute(name, value)
 			else
