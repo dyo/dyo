@@ -6,12 +6,11 @@ const package = require('../../package.json')
 const options = {compress: {}}
 const strict = `'use strict'`
 
-const shared = [
-	'../../src/Core/Utility.js',
-	'../../src/Core/Constant.js',
-]
 
 const core = [
+	'../../src/Core/Utility.js',
+	'../../src/Core/Constant.js',
+	'../../src/Core/Enum.js',
 	'../../src/Core/Element.js',
 	'../../src/Core/Lifecycle.js',
 	'../../src/Core/Component.js',
@@ -29,7 +28,7 @@ const dom = [
 ]
 
 const server = [
-	...shared,
+	'../../src/Core/Enum.js',
 	'../../src/Server/Utility.js',
 	'../../src/Server/Constant.js',
 	'../../src/Server/String.js',
@@ -39,13 +38,11 @@ const server = [
 ]
 
 const native = [
-	...shared,
 	...core,
 	'../../src/Native/DOM.js'
 ]
 
 const umd = [
-	...shared,
 	...core,
 	...dom
 ]

@@ -197,17 +197,6 @@
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
 	
-	var ElementPromise = -3
-	var ElementFragment = -2
-	var ElementPortal = -1
-	var ElementIntermediate = 0
-	var ElementComponent = 1
-	var ElementNode = 2
-	var ElementText = 3
-	
-	var WorkTask = 0
-	var WorkSync = 1
-	
 	var LifecycleCallback = 'callback'
 	var LifecycleRender = 'render'
 	var LifecycleConstructor = 'constructor'
@@ -223,6 +212,17 @@
 	var LifecycleDidCatch = 'componentDidCatch'
 	var LifecycleChildContext = 'getChildContext'
 	var LifecycleInitialState = 'getInitialState'
+	
+	var ElementPromise = -3
+	var ElementFragment = -2
+	var ElementPortal = -1
+	var ElementIntermediate = 0
+	var ElementComponent = 1
+	var ElementNode = 2
+	var ElementText = 3
+	
+	var WorkTask = 0
+	var WorkSync = 1
 	
 	/**
 	 * @constructor
