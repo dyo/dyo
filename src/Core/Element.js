@@ -88,15 +88,6 @@ function elementIterable (iterable, element) {
 }
 
 /**
- * @param {string} summary
- * @param {string} details
- * @return {Element}
- */
-function elementError (summary, details) {
-	return createElement('details', createElement('summary', summary), h('pre', details))
-}
-
-/**
  * @param {*} child
  * @return {Element}
  */
@@ -108,7 +99,7 @@ function elementUnknown (child) {
 	else if (typeof child === 'function')
 		return elementUnknown(child())
 	else if (child instanceof Error)
-		return elementError(child+'', (child.children||'')+'\n'+child.stack)
+		return createElement('details', createElement('summary', child+''), h('pre', child.trace || child.stack))
 	else if (child instanceof Date)
 		return elementText(child)
 

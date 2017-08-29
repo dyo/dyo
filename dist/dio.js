@@ -314,15 +314,6 @@
 	}
 	
 	/**
-	 * @param {string} summary
-	 * @param {string} details
-	 * @return {Element}
-	 */
-	function elementError (summary, details) {
-		return createElement('details', createElement('summary', summary), h('pre', details))
-	}
-	
-	/**
 	 * @param {*} child
 	 * @return {Element}
 	 */
@@ -334,7 +325,7 @@
 		else if (typeof child === 'function')
 			return elementUnknown(child())
 		else if (child instanceof Error)
-			return elementError(child+'', (child.children||'')+'\n'+child.stack)
+			return createElement('details', createElement('summary', child+''), h('pre', child.trace || child.stack))
 		else if (child instanceof Date)
 			return elementText(child)
 	
@@ -1513,7 +1504,7 @@
 	/**
 	 * @type {Object}
 	 */
-	Object.defineProperty(Element.prototype, 'handleEvent', {
+	defineProperty(Element.prototype, 'handleEvent', {
 		value: function handleEvent (event) {
 			try {
 				var type = event.type
@@ -1547,21 +1538,21 @@
 		if (!(this instanceof Error))
 			return errorException.call(new Error(this), element, from)
 	
-		var children = ''
+		var tree = ''
 		var tabs = ''
 		var host = element
 		var stack = this.stack
 	
 		while (host.type) {
-			children += tabs + '<' + getDisplayName(host.type) + '>\n'
+			tree += tabs + '<' + getDisplayName(host.type) + '>\n'
 			tabs += '  '
 			host = host.host
 		}
 	
-		this.children = children
 		this.from = from
+		this.trace = 'Error caught in `\n\n'+tree+'\n` from "'+from+'"\n\n'+stack+'\n\n'
 	
-		console.error('Error caught in `\n\n'+children+'\n` from "'+from+'"\n\n'+stack+'\n\n')
+		console.error(this.trace)
 		
 		return this
 	}
@@ -1587,26 +1578,26 @@
 	function errorRecovery (element, error, from, signature) {	
 		var children = elementText('')
 	
-		try {
-			if (signature > 0) {
-				if (element.owner && element.owner[LifecycleDidCatch]) {
+		if (signature > 0 && element.flag !== ElementIntermediate) {
+			if (element.owner && element.owner[LifecycleDidCatch])
+				try {
 					element.work = WorkTask
 					children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
 					element.work = WorkSync
-				} else if (element.host.owner)
+				} catch (e) {
 					enqueue(function () {
-						errorRecovery(element.host, error, from, signature)
+						errorBoundary(element.host, e, LifecycleDidCatch, signature)
 					})
+				}
+			else
+				enqueue(function () {
+					errorRecovery(element.host, error, from, signature)
+				})
 	
-				if (from !== LifecycleRender && client)
-					enqueue(function () {
-						reconcileElement(getHostElement(element), children)
-					})
-			}
-		} catch (e) {
-			enqueue(function () {
-				errorBoundary(element.host, e, LifecycleDidCatch, signature)
-			})
+			if (from !== LifecycleRender && client)
+				enqueue(function () {
+					reconcileElement(getHostElement(element), children)
+				})
 		}
 	
 		return children

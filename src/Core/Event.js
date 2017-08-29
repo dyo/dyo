@@ -1,7 +1,7 @@
 /**
  * @type {Object}
  */
-Object.defineProperty(Element.prototype, 'handleEvent', {
+defineProperty(Element.prototype, 'handleEvent', {
 	value: function handleEvent (event) {
 		try {
 			var type = event.type
