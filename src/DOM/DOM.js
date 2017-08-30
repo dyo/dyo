@@ -114,7 +114,10 @@ function DOMStyle (element, value) {
  * @param {*} value
  */
 function DOMProperty (element, name, value) {
-	DOMNode(element)[name] = value
+	if (value != null)
+		DOMNode(element)[name] = value
+	else
+		DOMAttribute(element, name, value, '')
 }
 
 /**
@@ -124,16 +127,20 @@ function DOMProperty (element, name, value) {
  * @param {string} xmlns
  */
 function DOMAttribute (element, name, value, xmlns) {
-	if (value !== false && value !== undefined) {
-		if (!xmlns)
-			DOMNode(element).setAttribute(name, value)
-		else
-			DOMNode(element).setAttributeNS(xmlns, name, value)
-	} else {
-		if (!xmlns)
-			DOMNode(element).setAttribute(name, value)
-		else
-			DOMNode(element).removeAttributeNS(xmlns, name)
+	switch (value) {
+		case null:
+		case false:
+		case undefined:
+			if (!xmlns)
+				DOMNode(element).removeAttribute(name)
+			else
+				DOMNode(element).removeAttributeNS(xmlns, name)
+			break
+		default:
+			if (!xmlns)
+				DOMNode(element).setAttribute(name, value)
+			else
+				DOMNode(element).setAttributeNS(xmlns, name, value)
 	}
 }
 
@@ -145,24 +152,23 @@ function DOMAttribute (element, name, value, xmlns) {
  */
 function DOMProperties (element, name, value, xmlns) {
 	switch (name) {
-		case 'xlink:href':
-			return DOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
-		case 'dangerouslySetInnerHTML':
-			return DOMProperty(element, 'innerHTML', value ? value.__html : '')
-		case 'style':
-			if (typeof value === 'object')
-				return DOMStyle(element, value)
-			
-			break
 		case 'className':
-			if (xmlns || value === false || value == null)
-				DOMAttribute(element, 'class', value, xmlns)
+			if (xmlns || value == null)
+				DOMProperties(element, 'class', value, xmlns)
 			else
 				DOMProperty(element, name, value)
 		case 'key':
 		case 'xmlns':
 		case 'children':
 			return
+		case 'style':
+			if (typeof value === 'object')
+				return DOMStyle(element, value)
+			break
+		case 'xlink:href':
+			return DOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
+		case 'dangerouslySetInnerHTML':
+			return DOMProperty(element, 'innerHTML', value ? value.__html : '')
 		case 'width':
 		case 'height':
 			if (element.type === 'img')
@@ -172,12 +178,10 @@ function DOMProperties (element, name, value, xmlns) {
 				return DOMProperty(element, name, value)
 	}
 
-	if (value === null)
-		DOMAttribute(element, name, void value, xmlns)
-	else if (typeof value !== 'object')
-		DOMAttribute(element, name, value, xmlns)
+	if (typeof value === 'object')
+		DOMProperty(element, name, value)
 	else
-		DOMProperty(element, name, value)		
+		DOMAttribute(element, name, value, '')
 }
 
 /**

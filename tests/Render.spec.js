@@ -41,6 +41,12 @@ module.exports = ({h, render}) => {
 		render(h('h1', {className: 1}, '0'), container)
 		ok(compare(container, '<h1 class="1">0</h1>'), 'render element className')
 
+		render(h('h1', {className: undefined}, '0'), container)
+		ok(compare(container, '<h1>0</h1>'), 'render element property(undefined)')
+
+		render(h('h1', {className: null}, '0'), container)
+		ok(compare(container, '<h1>0</h1>'), 'render element property(null)')
+
 		render(h('h1', {class: 1}, '0'), container)
 		ok(compare(container, '<h1 class="1">0</h1>'), 'render element class')
 
