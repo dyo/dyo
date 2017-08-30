@@ -28,7 +28,7 @@ module.exports = ({h, render}) => {
 
 		ok(`${h(Foo)}` === '<h1 class="faz" style="margin-top:20px;">Faz</h1>', 'Composite.toString()')
 		ok(`${h(Faz)}` === '<h1 class="faz" style="margin-top:20px;">Faz</h1>', 'Component.toString()')
-		ok(`${h('h1', 'Faz')}` === '<h1>Faz</h1>', 'Element.toString()')
+		ok(`${h('h1', {onClick: function () {}}, 'Faz')}` === '<h1>Faz</h1>', 'Element.toString()')
 		ok(`${h(Baz)}` === '<head></head><body></body>', 'Fragment.toString()')
 
 		var output = ''

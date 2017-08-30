@@ -186,8 +186,14 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 				case 'className':
 					key = 'class'
 				default:
-					if (value !== false && value != null)
-						output += ' '+ key + (value !== true ? '="'+escapeText(value)+'"' : '')
+					switch (typeof value) {
+						case 'boolean':
+							if (value === false)
+								break
+						case 'string':
+						case 'number':
+							output += ' '+ key + (value !== true ? '="'+escapeText(value)+'"' : '')
+					}
 			}
 		}
 	
