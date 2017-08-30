@@ -1905,10 +1905,12 @@
 					return DOMProperty(element, name, value)
 		}
 	
-		if (typeof value === 'object')
-			DOMProperty(element, name, value)
-		else
+		if (value === null)
+			DOMAttribute(element, name, void value, xmlns)
+		else if (typeof value !== 'object')
 			DOMAttribute(element, name, value, xmlns)
+		else
+			DOMProperty(element, name, value)		
 	}
 	
 	/**
