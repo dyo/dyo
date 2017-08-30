@@ -147,10 +147,6 @@ function DOMProperties (element, name, value, xmlns) {
 	switch (name) {
 		case 'xlink:href':
 			return DOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
-		case 'key':
-		case 'xmlns':
-		case 'children':
-			return
 		case 'dangerouslySetInnerHTML':
 			return DOMProperty(element, 'innerHTML', value ? value.__html : '')
 		case 'style':
@@ -160,9 +156,13 @@ function DOMProperties (element, name, value, xmlns) {
 			break
 		case 'className':
 			if (xmlns || value === false || value == null)
-				return DOMAttribute(element, 'class', value, xmlns)
-			
-			return DOMProperty(element, name, value)
+				DOMAttribute(element, 'class', value, xmlns)
+			else
+				DOMProperty(element, name, value)
+		case 'key':
+		case 'xmlns':
+		case 'children':
+			return
 		case 'width':
 		case 'height':
 			if (element.type === 'img')
