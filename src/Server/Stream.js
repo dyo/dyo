@@ -59,15 +59,18 @@ function toChunk (element, stack, writable) {
 			break
 		case ElementNode:
 			output = '<' + type + toProps(element, element.props) + '>'
-				
+			
+			if (elementType(type) < 1)
+				break
+			
 			if (element.html) {
 				output += element.html
 				element.html = ''
 				length = 0
 			}
 
-			if (!length) {
-				output += elementType(type) > 0 ? '</'+type+'>' : ''
+			if (length < 1) {
+				output += '</'+type+'>'
 				break
 			}
 		default:

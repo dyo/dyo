@@ -43,22 +43,23 @@ function commitPromise (element, snapshot) {
 
 /**
  * @param {Element} element
- * @param {Element} sibling
+ * @param {List} children
  * @param {Element} host
+ * @param {number} signature
  * @param {number} mode
  */
-function commitChildren (element, children, host, mode) {
+function commitChildren (element, children, host, signature, mode) {
 	var length = children.length
 	var sibling = children.next
 	var next = sibling
 
 	while (length-- > 0) {
-		if (!next.DOM && mode > 0) {
+		if (!next.DOM && signature > ModePull) {
 			children.insert(next = merge(new Element(ElementNode), sibling = next), sibling)
 			children.remove(sibling)
 		}
 
-		commitMount(next, element, element, host, mode, 0)
+		commitMount(next, element, element, host, signature, mode)
 		next = next.next
 	}
 }
@@ -68,10 +69,10 @@ function commitChildren (element, children, host, mode) {
  * @param {Element} sibling
  * @param {Element} parent
  * @param {Element} host
- * @param {number} mode
  * @param {number} signature
+ * @param {number} mode
  */
-function commitMount (element, sibling, parent, host, mode, signature) {
+function commitMount (element, sibling, parent, host, signature, mode) {
 	element.host = host
 	element.parent = parent
 	element.context = host.context
@@ -88,11 +89,11 @@ function commitMount (element, sibling, parent, host, mode, signature) {
  			if (element.owner[LifecycleChildContext])
  				element.context = getChildContext(element)
 
- 			commitMount(element.children, sibling, parent, element, mode, signature)
+ 			commitMount(element.children, sibling, parent, element, signature, mode)
  			element.DOM = element.children.DOM
 
  			if (element.ref)
- 				commitRef(element, element.ref, 1)
+ 				commitRef(element, element.ref, RefAssign)
  			
  			if (element.owner[LifecycleDidMount])
  				lifecycleMount(element, LifecycleDidMount)
@@ -100,35 +101,35 @@ function commitMount (element, sibling, parent, host, mode, signature) {
  			element.work = WorkSync
  			return
  		case ElementPortal:
- 			element.DOM = {target: element.type}
+ 			element.DOM = DOM(element.type)
  			break
  		case ElementPromise:
  			commitPromise(element, element)
  		case ElementFragment:
- 			element.DOM = {target: DOMTarget(parent)}
+ 			element.DOM = DOM(DOMTarget(parent))
  			break
  		case ElementNode:
  			element.xmlns = DOMType(element.type, parent.xmlns)
  		case ElementText:
  			switch (mode) {
- 				case 0:
+ 				case ModePull:
  					if (element.DOM = DOMFind(element, elementPrev(element), parent))
  						break
- 				case 1:
+ 				default:
  					element.DOM = commitDOM(element)
  					
- 					if (signature < 1)
+ 					if (signature < MountInsert)
  						commitAppend(element, parent)
  					else
  						commitInsert(element, sibling, parent)
  			}
- 
+
  			if (element.flag > ElementNode)
  				return
  	}
 
-	commitChildren(element, element.children, host, mode)
-	commitProps(element, element.props, 1)
+ 	commitChildren(element, element.children, host, MountAppend, mode)
+ 	commitProps(element, element.props, PropsAppend)	
 }
 
 /**
@@ -138,7 +139,7 @@ function commitMount (element, sibling, parent, host, mode, signature) {
  */
 function commitUnmount (element, parent, signature) {
 	if (element.flag === ElementComponent)
-		return componentUnmount(element, element.children, parent, signature, 1)
+		return componentUnmount(element, element.children, parent, signature)
 
 	commitRemove(element, parent)
 	commitDetach(element, signature)
@@ -150,12 +151,12 @@ function commitUnmount (element, parent, signature) {
  * @param {number} signature
  */
 function commitReplace (element, snapshot, signature) {
-	if (signature > 0 && commitUnmount(element, element.parent, 1))
+	if (signature > MountInsert && commitUnmount(element, element.parent, MountReplace))
 		return void element.state.then(function () {
-			commitReplace(element, snapshot, 0)
+			commitReplace(element, snapshot, MountInsert)
 		})
 
-	commitMount(snapshot, elementNext(element, 0), element.parent, element.host, 1, 1)
+	commitMount(snapshot, elementNext(element, MountAppend), element.parent, element.host, MountInsert, ModePush)
 
 	for (var key in snapshot)
 		switch (key) {
@@ -186,15 +187,15 @@ function commitDetach (element, signature) {
 					if (next.owner[LifecycleWillUnmount])
 						lifecycleMount(next, LifecycleWillUnmount)
 				default:
-					commitDetach(next, 1)
+					commitDetach(next, MountAppend)
 					next = next.next
 			}
 	}
 
 	if (element.ref)
-		commitRef(element, element.ref, -1)
+		commitRef(element, element.ref, RefRemove)
 
-	if (signature < 1) {
+	if (signature < MountReplace) {
 		element.context = null
 		element.state = null
 		element.event = null
@@ -214,19 +215,18 @@ function commitRef (element, callback, signature, key) {
 			return commitRef(element, componentRef, signature, callback)			
 		case 'function':
 			switch (signature) {
-				case -1:
+				case RefRemove:
 					return lifecycleCallback(element.host, callback, element.ref = null, key, element)
-				case 0:
+				case RefAssign:
 					element.ref = callback
-				case 1:
-					return lifecycleCallback(element.host, callback, element.instance || findDOMTarget(element), key, element)
-				case 2:
-					commitRef(element, callback, -1, key)
-					commitRef(element, callback, 0, key)
+					return lifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
+				case RefReplace:
+					commitRef(element, callback, RefRemove, key)
+					commitRef(element, callback, RefAssign, key)
 			}
 			break
 		default:
-			commitRef(element, element.ref || noop, -1, key)
+			commitRef(element, element.ref || noop, RefRemove, key)
 	}
 }
 
@@ -244,7 +244,7 @@ function commitEvent (element, type, callback) {
 
 /**
  * @param {Element} element
- * @param {Object} props
+ * @param {number} props
  * @param {number} signature
  */
 function commitProps (element, props, signature) {
@@ -304,7 +304,7 @@ function commitRemove (element, parent) {
  */
 function commitInsert (element, sibling, parent) {
 	if (sibling.flag < ElementIntermediate)
-		return commitInsert(element, elementNext(sibling, 1), parent)
+		return commitInsert(element, elementNext(sibling, MountInsert), parent)
 
 	if (element.flag > ElementIntermediate)
 		DOMInsert(element, sibling, parent)
@@ -320,7 +320,7 @@ function commitInsert (element, sibling, parent) {
  */
 function commitAppend (element, parent) {
 	if (parent.flag < ElementPortal)
-		return commitInsert(element, elementNext(parent, 0), parent)
+		return commitInsert(element, elementNext(parent, MountAppend), parent)
 
 	if (element.flag > ElementIntermediate)
 		DOMAppend(element, parent)

@@ -1,3 +1,7 @@
+function DOM (target) {
+	return {target: target}
+}
+
 /**
  * @return {Node}
  */
@@ -35,9 +39,9 @@ function DOMEvent (element, type) {
  */
 function DOMElement (element) {
 	if (element.xmlns)
-		return {target: document.createElementNS(element.xmlns, element.type)}
+		return DOM(document.createElementNS(element.xmlns, element.type))
 	else
-		return {target: document.createElement(element.type)}
+		return DOM(document.createElement(element.type))
 }
 
 /**
@@ -45,9 +49,7 @@ function DOMElement (element) {
  * @return {DOM}
  */
 function DOMText (element) {
-	return {
-		target: document.createTextNode(element.children)
-	}
+	return DOM(document.createTextNode(element.children))
 }
 
 /**
@@ -207,11 +209,15 @@ function DOMFind (element, sibling, parent) {
 
 	while (value)
 		switch (nodeName = value.nodeName.toLowerCase()) {
-			case element.type:
-				if (element.flag === ElementText && element.next.flag === ElementText)
-					(value = value.splitText(element.children.length)).nodeValue = element.children
+			case element.type.toLowerCase():
+				if (element.flag === ElementText) {
+					if (element.next.flag === ElementText)
+						value = value.splitText(element.children.length)
 
-				return {target: value}
+					value.nodeValue = element.children
+				}
+
+				return DOM(value)
 			default:
 				value = value.nextSibling
 		}

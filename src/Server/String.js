@@ -16,17 +16,15 @@ function toString () {
 	var length = children.length
 	var output = element.flag > ElementIntermediate ? '<' + type + toProps(element, element.props) + '>' : ''
 
-	switch (elementType(type)) {
-		case 0:
-			return output
-		default:
-			if (!element.html)
-				while (length-- > 0)
-					output += (children = children.next).toString()
-			else {
-				output += element.html
-				element.html = ''
-			}
+	if (elementType(type) < 1)
+		return output
+
+	if (!element.html)
+		while (length-- > 0)
+			output += (children = children.next).toString()
+	else {
+		output += element.html
+		element.html = ''
 	}
 
 	return element.flag > ElementIntermediate ? output + '</'+type+'>' : output

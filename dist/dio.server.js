@@ -18,6 +18,22 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 	var WorkTask = 0
 	var WorkSync = 1
 	
+	var ModePull = 0
+	var ModePush = 1
+	
+	var MountRemove = 0
+	var MountAppend = 1
+	var MountInsert = 2
+	var MountReplace = 3
+	
+	var RefRemove = -1
+	var RefAssign = 0
+	var RefDispatch = 1
+	var RefReplace = 2
+	
+	var PropsAppend = 1
+	var PropsReplace = 2
+	
 	var LifecycleCallback = 'callback'
 	var LifecycleRender = 'render'
 	var LifecycleConstructor = 'constructor'
@@ -92,7 +108,7 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 			case 'input':
 			case 'hr':
 			case '!doctype': return 0
-			default: return 2
+			default: return 1
 		}
 	}
 	
@@ -137,17 +153,15 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 		var length = children.length
 		var output = element.flag > ElementIntermediate ? '<' + type + toProps(element, element.props) + '>' : ''
 	
-		switch (elementType(type)) {
-			case 0:
-				return output
-			default:
-				if (!element.html)
-					while (length-- > 0)
-						output += (children = children.next).toString()
-				else {
-					output += element.html
-					element.html = ''
-				}
+		if (elementType(type) < 1)
+			return output
+	
+		if (!element.html)
+			while (length-- > 0)
+				output += (children = children.next).toString()
+		else {
+			output += element.html
+			element.html = ''
 		}
 	
 		return element.flag > ElementIntermediate ? output + '</'+type+'>' : output
@@ -303,15 +317,18 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 				break
 			case ElementNode:
 				output = '<' + type + toProps(element, element.props) + '>'
-					
+				
+				if (elementType(type) < 1)
+					break
+				
 				if (element.html) {
 					output += element.html
 					element.html = ''
 					length = 0
 				}
 	
-				if (!length) {
-					output += elementType(type) > 0 ? '</'+type+'>' : ''
+				if (length < 1) {
+					output += '</'+type+'>'
 					break
 				}
 			default:

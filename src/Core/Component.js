@@ -130,7 +130,7 @@ function componentUpdate (element, snapshot, signature) {
 		lifecycleUpdate(element, LifecycleDidUpdate, prevProps, prevState, nextContext)
 
 	if (element.ref !== snapshot.ref)
-		commitRef(element, snapshot.ref, 2)
+		commitRef(element, snapshot.ref, RefReplace)
 
 	element.work = WorkSync
 }
@@ -140,10 +140,9 @@ function componentUpdate (element, snapshot, signature) {
  * @param {List} children
  * @param {Element} parent
  * @param {number} signature
- * @param {number} resolve
  */
-function componentUnmount (element, children, parent, signature, resolve) {
-	if (resolve > 0 && element.owner[LifecycleWillUnmount])
+function componentUnmount (element, children, parent, signature) {
+	if (element.owner[LifecycleWillUnmount])
 		if (element.state = lifecycleMount(element, LifecycleWillUnmount))
 			if (element.state.constructor === Promise)
 				return !!element.state.then(function () {

@@ -9,6 +9,22 @@ var ElementText = 3
 var WorkTask = 0
 var WorkSync = 1
 
+var ModePull = 0
+var ModePush = 1
+
+var MountRemove = 0
+var MountAppend = 1
+var MountInsert = 2
+var MountReplace = 3
+
+var RefRemove = -1
+var RefAssign = 0
+var RefDispatch = 1
+var RefReplace = 2
+
+var PropsAppend = 1
+var PropsReplace = 2
+
 var LifecycleCallback = 'callback'
 var LifecycleRender = 'render'
 var LifecycleConstructor = 'constructor'

@@ -31,7 +31,7 @@ module.exports = ({h, render}) => {
 
 		render(h('h1', {dangerouslySetInnerHTML: {__html: '<div>test</div>'}}), container)
 		ok(compare(container, '<h1><div>test</div></h1>'), 'render element dangerouslySetInnerHTML')
-
+		
 		render(null, container)
 		ok(container.innerHTML === '', 'render null')
 
@@ -53,8 +53,6 @@ module.exports = ({h, render}) => {
 		render(h('h1', {style: {width: '100px'}}, '0'), container)
 		ok(container.firstChild.style.width === '100px', 'render element style object')
 		
-		return end()
-
 		render(h('h1', {style: 'width:100px'}, '0'), container)
 		ok(container.firstChild.style.width === '100px', 'render element style string')
 

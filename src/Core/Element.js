@@ -131,12 +131,12 @@ function elementNext (element, signature) {
  * @return {Element}
  */
 function elementSibling (element, direction, signature) {
-	if (signature > 0 && element.flag !== ElementPortal && isValidElement(element.children[direction]))
+	if (signature > MountAppend && element.flag !== ElementPortal && isValidElement(element.children[direction]))
 		return element.children[direction]
 	else if (isValidElement(element[direction]))
 		return element[direction]
 
-	return elementIntermediate({target: null})
+	return elementIntermediate(DOM(null))
 }
 
 /**

@@ -17,7 +17,7 @@ function errorException (element, from) {
 		host = host.host
 	}
 
-	console.error(trace += '\n` from "'+from+'"\n\n'+stack+'\n\n')
+	console.error(trace + '\n` from "'+from+'"\n\n'+stack+'\n\n')
 	
 	return this
 }

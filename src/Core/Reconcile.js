@@ -33,7 +33,7 @@ function reconcileObject (prevObject, nextObject) {
  * @param {Element} snapshot
  */
 function reconcileProps (element, snapshot) {
-	commitProps(element, reconcileObject(element.props, snapshot.props), 2)
+	commitProps(element, reconcileObject(element.props, snapshot.props), PropsReplace)
 	element.props = snapshot.props
 }
 
@@ -46,7 +46,7 @@ function reconcileElement (element, snapshot) {
 		return commitPromise(element, snapshot)
 
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
-		return commitReplace(element, snapshot, 1)
+		return commitReplace(element, snapshot, MountReplace)
 
 	switch (element.flag) {
 		case ElementPortal:
@@ -85,7 +85,7 @@ function reconcileChildren (element, snapshot) {
 		case aLength:
 			return reconcileRemove(aHead, element, children, 0, aLength)
 		case bLength:
-			return reconcileInsert(bHead, bHead, element, host, children, 0, bLength, 0)
+			return reconcileInsert(bHead, bHead, element, host, children, 0, bLength, MountAppend)
 	}
 
 	// non-keyed
@@ -106,7 +106,7 @@ function reconcileChildren (element, snapshot) {
 				while (aLength < bLength) {
 					aHead = bHead
 					bHead = bHead.next
-					commitMount(children.push(aHead), aHead, element, host, 1, 0)
+					commitMount(children.push(aHead), aHead, element, host, MountAppend, ModePush)
 					aLength++
 				}
 		return
@@ -149,8 +149,12 @@ function reconcileChildren (element, snapshot) {
 
 	// step 2, insert/append/remove
 	if (aPos > aEnd) {
-		if (bPos <= bEnd++)
-			reconcileInsert(bEnd < bLength ? (i = 1, bHead) : bHead.next, aTail, element, host, children, bPos, bEnd, i)
+		if (bPos <= bEnd++) {
+			if (bEnd < bLength)
+				reconcileInsert(bHead, aTail, element, host, children, bPos, bEnd, MountInsert)
+			else
+				reconcileInsert(bHead.next, aTail, element, host, children, bPos, bEnd, MountAppend)
+		}
 	} else if (bPos > bEnd)
 		reconcileRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
 	else
@@ -214,9 +218,9 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 				if (delete aPool[bHash])
 					aSize--
 			} else if (aNode === children)
-				commitMount(children.push(bNode), bNode, element, host, 1, 0)
+				commitMount(children.push(bNode), bNode, element, host, MountAppend, ModePush)
 			else
-				commitMount(children.insert(bNode, aNode), aNode, element, host, 1, 1)	
+				commitMount(children.insert(bNode, aNode), aNode, element, host, MountInsert, ModePush)	
 
 			bNode = bNext
 		}
@@ -226,7 +230,7 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 				commitUnmount(children.remove(aPool[bHash]), element, 0)
 	} else {
 		reconcileRemove(aHead, element, children, 0, aEnd)
-		reconcileInsert(bHead, bHead, element, host, children, 0, bEnd, 0)
+		reconcileInsert(bHead, bHead, element, host, children, 0, bEnd, MountAppend)
 	}
 }
 
@@ -246,7 +250,7 @@ function reconcileInsert (element, sibling, parent, host, children, index, lengt
 	var prev = element
 
 	while (i++ < length)
-		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, 1, signature)
+		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature, ModePush)
 }
 
 /**

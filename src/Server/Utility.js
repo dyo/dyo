@@ -55,7 +55,7 @@ function elementType (type) {
 		case 'input':
 		case 'hr':
 		case '!doctype': return 0
-		default: return 2
+		default: return 1
 	}
 }
 

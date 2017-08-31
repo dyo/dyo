@@ -17,7 +17,7 @@ module.exports = ({h, Component, render}) => {
 			componentWillUnmount() { ok(true, 'componentWillUnmount') }
 			shouldComponentUpdate() { ok(true, 'shouldComponentUpdate') }
 			render() { return Bar }
-		}			
+		}
 
 		render(h(Foo, {id: 1}), container)
 		render(h(Foo, {id: 1}), container)

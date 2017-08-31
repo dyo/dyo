@@ -10,7 +10,7 @@ function render (element, target, callback) {
 	if (root.has(target))
 		reconcileElement(root.get(target), commitElement(element))
 	else
-		mount(element, target, callback, 1)
+		mount(element, target, callback, ModePush)
 }
 
 /**
@@ -25,12 +25,13 @@ function hydrate (element, target, callback) {
 	if (root.has(target))
 		render(element, target, callback)
 	else
-		mount(element, target, callback, 0)
+		mount(element, target, callback, ModePull)
 }
 
 /**
  * @param {Element} element
- * @param {Node?} parent
+ * @param {Element} parent
+ * @param {function} callback
  * @param {number} mode
  */
 function mount (element, parent, callback, mode) {
@@ -38,17 +39,17 @@ function mount (element, parent, callback, mode) {
 		return mount(commitElement(element), parent, callback, mode)
 
 	if (!isValidElement(parent))
-		return mount(element, elementIntermediate({target: parent}), callback, mode)
+		return mount(element, elementIntermediate(DOM(parent)), callback, mode)
 
 	if (!DOMValid(DOMTarget(parent)))
 		invariant(LifecycleRender, 'Target container is not a DOM element')
 
 	root.set(DOMTarget(parent), element)
 
-	if (mode > 0)
+	if (mode > ModePull)
 		commitContent(parent)
 	
-	commitMount(element, element, parent, parent, mode, 0)
+	commitMount(element, element, parent, parent, MountAppend, mode)
 
 	if (typeof callback === 'function')
 		lifecycleCallback(element, callback, findDOMNode(element))
