@@ -45,14 +45,20 @@ function commitPromise (element, snapshot) {
  * @param {Element} element
  * @param {Element} sibling
  * @param {Element} host
+ * @param {number} mode
  */
-function commitChildren (element, sibling, host) {
-	var children = element.children
+function commitChildren (element, children, host, mode) {
 	var length = children.length
-	var next = children.next
+	var sibling = children.next
+	var next = sibling
 
 	while (length-- > 0) {
-		commitMount(!next.DOM ? next : merge(new Element(ElementNode), next), sibling, element, host, 0)
+		if (!next.DOM && mode > 0) {
+			children.insert(next = merge(new Element(ElementNode), sibling = next), sibling)
+			children.remove(sibling)
+		}
+
+		commitMount(next, element, element, host, mode, 0)
 		next = next.next
 	}
 }
@@ -62,9 +68,10 @@ function commitChildren (element, sibling, host) {
  * @param {Element} sibling
  * @param {Element} parent
  * @param {Element} host
+ * @param {number} mode
  * @param {number} signature
  */
-function commitMount (element, sibling, parent, host, signature) {
+function commitMount (element, sibling, parent, host, mode, signature) {
 	element.host = host
 	element.parent = parent
 	element.context = host.context
@@ -81,8 +88,7 @@ function commitMount (element, sibling, parent, host, signature) {
  			if (element.owner[LifecycleChildContext])
  				element.context = getChildContext(element)
 
- 			commitMount(element.children, sibling, parent, element, signature)
-
+ 			commitMount(element.children, sibling, parent, element, mode, signature)
  			element.DOM = element.children.DOM
 
  			if (element.ref)
@@ -94,28 +100,34 @@ function commitMount (element, sibling, parent, host, signature) {
  			element.work = WorkSync
  			return
  		case ElementPortal:
- 			element.DOM = DOM(element.type)
+ 			element.DOM = {target: element.type}
  			break
  		case ElementPromise:
  			commitPromise(element, element)
  		case ElementFragment:
- 			element.DOM = DOM(DOMNode(parent))
+ 			element.DOM = {target: DOMTarget(parent)}
  			break
  		case ElementNode:
- 			element.xmlns = DOMScope(element.type, parent.xmlns)
+ 			element.xmlns = DOMType(element.type, parent.xmlns)
  		case ElementText:
- 			element.DOM = commitDOM(element)
- 			
- 			if (signature < 1) 
- 				commitAppend(element, parent)
- 			else
- 				commitInsert(element, sibling, parent)
+ 			switch (mode) {
+ 				case 0:
+ 					if (element.DOM = DOMFind(element, elementPrev(element), parent))
+ 						break
+ 				case 1:
+ 					element.DOM = commitDOM(element)
+ 					
+ 					if (signature < 1)
+ 						commitAppend(element, parent)
+ 					else
+ 						commitInsert(element, sibling, parent)
+ 			}
  
  			if (element.flag > ElementNode)
  				return
  	}
 
-	commitChildren(element, element, host)
+	commitChildren(element, element.children, host, mode)
 	commitProps(element, element.props, 1)
 }
 
@@ -143,7 +155,7 @@ function commitReplace (element, snapshot, signature) {
 			commitReplace(element, snapshot, 0)
 		})
 
-	commitMount(snapshot, elementSibling(element, 0), element.parent, element.host, 1)
+	commitMount(snapshot, elementNext(element, 0), element.parent, element.host, 1, 1)
 
 	for (var key in snapshot)
 		switch (key) {
@@ -207,7 +219,7 @@ function commitRef (element, callback, signature, key) {
 				case 0:
 					element.ref = callback
 				case 1:
-					return lifecycleCallback(element.host, callback, element.instance || findDOMNode(element), key, element)
+					return lifecycleCallback(element.host, callback, element.instance || findDOMTarget(element), key, element)
 				case 2:
 					commitRef(element, callback, -1, key)
 					commitRef(element, callback, 0, key)
@@ -253,7 +265,7 @@ function commitDOM (element) {
 	try {
 		return element.flag === ElementNode ? DOMElement(element) : DOMText(element)
 	} catch (e) {
-		return commitDOM(errorBoundary(element, e, LifecycleRender, 1))
+		return commitDOM(commitElement(errorBoundary(element, e, LifecycleRender, 1)))
 	}
 }
 
@@ -292,7 +304,7 @@ function commitRemove (element, parent) {
  */
 function commitInsert (element, sibling, parent) {
 	if (sibling.flag < ElementIntermediate)
-		return commitInsert(element, elementSibling(sibling, 1), parent)
+		return commitInsert(element, elementNext(sibling, 1), parent)
 
 	if (element.flag > ElementIntermediate)
 		DOMInsert(element, sibling, parent)
@@ -308,7 +320,7 @@ function commitInsert (element, sibling, parent) {
  */
 function commitAppend (element, parent) {
 	if (parent.flag < ElementPortal)
-		return commitInsert(element, elementSibling(parent, 0), parent)
+		return commitInsert(element, elementNext(parent, 0), parent)
 
 	if (element.flag > ElementIntermediate)
 		DOMAppend(element, parent)

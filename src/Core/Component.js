@@ -15,9 +15,7 @@ var ComponentPrototype = {
 	forceUpdate: {value: forceUpdate}, 
 	setState: {value: setState}
 }
-/**
- * @type {Object}
- */
+
 createComponent(Component.prototype)
 
 /**
@@ -25,9 +23,10 @@ createComponent(Component.prototype)
  * @return {Object}
  */
 function createComponent (prototype) {
-	return defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {
-		value: SymbolComponent
-	})
+	defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {value: SymbolComponent})
+
+	if (!prototype.hasOwnProperty(LifecycleRender))
+		defineProperty(prototype, LifecycleRender, {value: noop, writable: true})
 }
 
 /**
@@ -98,10 +97,10 @@ function componentUpdate (element, snapshot, signature) {
 	var instance = element.instance
 	var owner = element.owner
 	var nextContext = instance.context
-	var prevState = instance.state
-	var nextState = signature > 1 ? assign({}, prevState, element.state) : prevState
 	var prevProps = element.props
 	var nextProps = snapshot.props
+	var prevState = instance.state
+	var nextState = signature > 1 ? assign({}, prevState, element.state) : prevState
 
 	if (owner[LifecycleChildContext])
 		merge(element.context, getChildContext(element))
@@ -182,7 +181,7 @@ function enqueueState (element, instance, state, callback) {
 			case Function:
 				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 			default:
-				element.state = element.work === WorkSync ? state : assign({}, element.state, state)
+				element.state = element.work > WorkTask ? state : assign(instance.state, element.state, state)
 
 				enqueueUpdate(element, instance, callback, 2)
 		}
@@ -209,7 +208,7 @@ function enqueueCallback (element, instance, callback) {
  */
 function enqueuePending (element, instance, state, callback) {
 	state.then(function (value) {
-		enqueue(function () {
+		requestAnimationFrame(function () {
 			enqueueState(element, instance, value, callback)
 		})
 	}).catch(function (e) {
@@ -225,12 +224,12 @@ function enqueuePending (element, instance, state, callback) {
  */
 function enqueueUpdate (element, instance, callback, signature) {
 	if (element == null)
-		return enqueue(function () {
+		return void requestAnimationFrame(function () {
 			enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 		})
 
 	if (element.work < WorkSync)
-		return enqueue(function () {
+		return void requestAnimationFrame(function () {
 			enqueueUpdate(element, instance, callback, signature)
 		})
 
@@ -271,7 +270,7 @@ function getChildInstance (element) {
 	try {
 		return new element.type(element.props, element.context)
 	} catch (e) {
-		errorBoundary(element.host, e, LifecycleConstructor, 1)
+		errorBoundary(element, e, LifecycleConstructor, 1)
 	}
 
 	return new Component()
@@ -283,11 +282,9 @@ function getChildInstance (element) {
  */
 function getChildElement (element) {
 	try {
-		return commitElement(
-			element.instance.render(element.instance.props, element.instance.state, element.context)
-		)
+		return commitElement(element.instance.render(element.instance.props, element.instance.state, element.context))
 	} catch (e) {
-		return errorBoundary(element, e, LifecycleRender, 1)
+		return commitElement(errorBoundary(element, e, LifecycleRender, 1))
 	}
 }
 

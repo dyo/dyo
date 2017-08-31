@@ -1,14 +1,7 @@
 /**
- * @param {Node} target
- */
-function DOM (target) {
-	return {target: target}
-}
-
-/**
  * @return {Node}
  */
-function DOMRoot () {
+function DOMDocument () {
 	return document.documentElement
 }
 
@@ -24,7 +17,7 @@ function DOMValid (target) {
  * @param {Element} element
  * @return {Node}
  */
-function DOMNode (element) {
+function DOMTarget (element) {
 	return element.DOM.target
 }
 
@@ -33,7 +26,7 @@ function DOMNode (element) {
  * @param {string} type
  */
 function DOMEvent (element, type) {
-	DOMNode(element).addEventListener(type, element, false)
+	DOMTarget(element).addEventListener(type, element, false)
 }
 
 /**
@@ -41,10 +34,10 @@ function DOMEvent (element, type) {
  * @return {DOM}
  */
 function DOMElement (element) {
-	if (element.xmlns) 
-		return DOM(document.createElementNS(element.xmlns, element.type))
-
-	return DOM(document.createElement(element.type))
+	if (element.xmlns)
+		return {target: document.createElementNS(element.xmlns, element.type)}
+	else
+		return {target: document.createElement(element.type)}
 }
 
 /**
@@ -52,14 +45,16 @@ function DOMElement (element) {
  * @return {DOM}
  */
 function DOMText (element) {
-	return DOM(document.createTextNode(element.children))
+	return {
+		target: document.createTextNode(element.children)
+	}
 }
 
 /**
  * @param {Element} element
  */
 function DOMContent (element) {
-	DOMNode(element).textContent = ''
+	DOMTarget(element).textContent = ''
 }
 
 /**
@@ -67,7 +62,7 @@ function DOMContent (element) {
  * @param {(string|number)} value
  */
 function DOMValue (element, value) {
-	DOMNode(element).nodeValue = value
+	DOMTarget(element).nodeValue = value
 }
 
 /**
@@ -75,7 +70,7 @@ function DOMValue (element, value) {
  * @param {Element} parent
  */
 function DOMRemove (element, parent) {
-	DOMNode(parent).removeChild(DOMNode(element))
+	DOMTarget(parent).removeChild(DOMTarget(element))
 }
 
 /**
@@ -84,7 +79,7 @@ function DOMRemove (element, parent) {
  * @param {Element} parent
  */
 function DOMInsert (element, sibling, parent) {
-	DOMNode(parent).insertBefore(DOMNode(element), DOMNode(sibling))
+	DOMTarget(parent).insertBefore(DOMTarget(element), DOMTarget(sibling))
 }
 
 /**
@@ -92,7 +87,7 @@ function DOMInsert (element, sibling, parent) {
  * @param {Element} parent
  */
 function DOMAppend (element, parent) {
-	DOMNode(parent).appendChild(DOMNode(element))
+	DOMTarget(parent).appendChild(DOMTarget(element))
 }
 
 /**
@@ -103,9 +98,9 @@ function DOMAppend (element, parent) {
 function DOMStyle (element, value) {
 	for (var key in value)
 		if (key.indexOf('-') < 0)
-			DOMNode(element).style[key] = value[key]
+			DOMTarget(element).style[key] = value[key]
 		else
-			DOMNode(element).style.setProperty(key, value[key])
+			DOMTarget(element).style.setProperty(key, value[key])
 }
 
 /**
@@ -115,7 +110,7 @@ function DOMStyle (element, value) {
  */
 function DOMProperty (element, name, value) {
 	if (value != null)
-		DOMNode(element)[name] = value
+		DOMTarget(element)[name] = value
 	else
 		DOMAttribute(element, name, value, '')
 }
@@ -132,15 +127,15 @@ function DOMAttribute (element, name, value, xmlns) {
 		case false:
 		case undefined:
 			if (!xmlns)
-				DOMNode(element).removeAttribute(name)
+				DOMTarget(element).removeAttribute(name)
 			else
-				DOMNode(element).removeAttributeNS(xmlns, name)
+				DOMTarget(element).removeAttributeNS(xmlns, name)
 			break
 		default:
 			if (!xmlns)
-				DOMNode(element).setAttribute(name, value)
+				DOMTarget(element).setAttribute(name, value)
 			else
-				DOMNode(element).setAttributeNS(xmlns, name, value)
+				DOMTarget(element).setAttributeNS(xmlns, name, value)
 	}
 }
 
@@ -174,7 +169,7 @@ function DOMProperties (element, name, value, xmlns) {
 			if (element.type === 'img')
 				break
 		default:
-			if (!xmlns && name in DOMNode(element))
+			if (!xmlns && name in DOMTarget(element))
 				return DOMProperty(element, name, value)
 	}
 
@@ -188,7 +183,7 @@ function DOMProperties (element, name, value, xmlns) {
  * @param {string} type
  * @param {string} xmlns
  */
-function DOMScope (type, xmlns) {
+function DOMType (type, xmlns) {
 	switch (type) {
 		case 'svg':
 			return 'http://www.w3.org/2000/svg'
@@ -199,4 +194,25 @@ function DOMScope (type, xmlns) {
 	}
 	
 	return xmlns
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} sibling
+ * @param {Element} parent
+ */
+function DOMFind (element, sibling, parent) {
+	var value = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
+	var nodeName = ''
+
+	while (value)
+		switch (nodeName = value.nodeName.toLowerCase()) {
+			case element.type:
+				if (element.flag === ElementText && element.next.flag === ElementText)
+					(value = value.splitText(element.children.length)).nodeValue = element.children
+
+				return {target: value}
+			default:
+				value = value.nextSibling
+		}
 }

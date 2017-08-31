@@ -11,9 +11,9 @@ function findDOMNode (element) {
 		
 	if (isValidElement(element)) {
 		if (element.flag < ElementPortal)
-			return findDOMNode(elementSibling(element, 1))
+			return findDOMNode(elementNext(element, 1))
 		else if (element.DOM)
-			return DOMNode(element)
+			return DOMTarget(element)
 	}
 
 	if (DOMValid(element))

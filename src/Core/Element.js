@@ -38,14 +38,14 @@ function elementText (content) {
 }
 
 /**
- * @param {Object} object
+ * @param {*} node
  * @return {Element}
  */
-function elementIntermediate (object) {
+function elementIntermediate (node) {
 	var element = new Element(ElementIntermediate)
 
 	element.context = {}
-	element.DOM = object
+	element.DOM = node
 
 	return element
 }
@@ -111,13 +111,32 @@ function elementUnknown (child) {
  * @param {number} signature
  * @return {Element}
  */
-function elementSibling (element, signature) {
-	if (signature > 0 && element.flag !== ElementPortal && isValidElement(element.children.next))
-		return element.children.next
-	else if (isValidElement(element.next))
-		return element.next
-	else
-		return elementIntermediate(DOM(null))
+function elementPrev (element, signature) {
+	return elementSibling(element, 'prev', signature)
+}
+
+/**
+ * @param {Element} element
+ * @param {number} signature
+ * @return {Element}
+ */
+function elementNext (element, signature) {
+	return elementSibling(element, 'next', signature)
+}
+
+/**
+ * @param {Element} element
+ * @param {string} direction
+ * @param {number} signature
+ * @return {Element}
+ */
+function elementSibling (element, direction, signature) {
+	if (signature > 0 && element.flag !== ElementPortal && isValidElement(element.children[direction]))
+		return element.children[direction]
+	else if (isValidElement(element[direction]))
+		return element[direction]
+
+	return elementIntermediate({target: null})
 }
 
 /**
@@ -133,7 +152,7 @@ function elementChildren (element, children, child, index) {
 		switch (child.constructor) {
 			case Element:
 				if (child.key == null)
-					child.key += '#'+index
+					child.key = '0|'+index
 				else if (element.keyed === false)
 					element.keyed = true
 
@@ -141,7 +160,7 @@ function elementChildren (element, children, child, index) {
 				break
 			case Array:
 				for (var i = 0; i < child.length; ++i)
-					elementChildren(element, children, child[i], index+i)
+					elementChildren(element, children, child[i], index + i)
 
 				return index + i
 			case String:
@@ -207,7 +226,7 @@ function createElement (type, props) {
 							element.xmlns = props.xmlns
 
 						if (props.children !== undefined)
-							elementChildren(element, children, props.children, index)
+							props.children = void elementChildren(element, children, props.children, index)
 					}
 
 					element.props = props

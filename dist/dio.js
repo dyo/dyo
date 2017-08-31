@@ -211,13 +211,6 @@
 	}
 	
 	/**
-	 * @param {function} callback
-	 */
-	function enqueue (callback) {
-		requestAnimationFrame(callback)
-	}
-	
-	/**
 	 * @param {string} from
 	 * @param {string} message
 	 */
@@ -265,14 +258,14 @@
 	}
 	
 	/**
-	 * @param {Object} object
+	 * @param {*} node
 	 * @return {Element}
 	 */
-	function elementIntermediate (object) {
+	function elementIntermediate (node) {
 		var element = new Element(ElementIntermediate)
 	
 		element.context = {}
-		element.DOM = object
+		element.DOM = node
 	
 		return element
 	}
@@ -338,13 +331,32 @@
 	 * @param {number} signature
 	 * @return {Element}
 	 */
-	function elementSibling (element, signature) {
-		if (signature > 0 && element.flag !== ElementPortal && isValidElement(element.children.next))
-			return element.children.next
-		else if (isValidElement(element.next))
-			return element.next
-		else
-			return elementIntermediate(DOM(null))
+	function elementPrev (element, signature) {
+		return elementSibling(element, 'prev', signature)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {number} signature
+	 * @return {Element}
+	 */
+	function elementNext (element, signature) {
+		return elementSibling(element, 'next', signature)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} direction
+	 * @param {number} signature
+	 * @return {Element}
+	 */
+	function elementSibling (element, direction, signature) {
+		if (signature > 0 && element.flag !== ElementPortal && isValidElement(element.children[direction]))
+			return element.children[direction]
+		else if (isValidElement(element[direction]))
+			return element[direction]
+	
+		return elementIntermediate({target: null})
 	}
 	
 	/**
@@ -360,7 +372,7 @@
 			switch (child.constructor) {
 				case Element:
 					if (child.key == null)
-						child.key += '#'+index
+						child.key = '0|'+index
 					else if (element.keyed === false)
 						element.keyed = true
 	
@@ -368,7 +380,7 @@
 					break
 				case Array:
 					for (var i = 0; i < child.length; ++i)
-						elementChildren(element, children, child[i], index+i)
+						elementChildren(element, children, child[i], index + i)
 	
 					return index + i
 				case String:
@@ -434,7 +446,7 @@
 								element.xmlns = props.xmlns
 	
 							if (props.children !== undefined)
-								elementChildren(element, children, props.children, index)
+								props.children = void elementChildren(element, children, props.children, index)
 						}
 	
 						element.props = props
@@ -532,7 +544,7 @@
 	 */
 	function lifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, element.DOM ? DOMNode(element) : null)
+			var state = element.owner[name].call(element.instance, element.DOM ? DOMTarget(element) : null)
 			
 			if (name === LifecycleWillUnmount)
 				return state
@@ -580,9 +592,7 @@
 		forceUpdate: {value: forceUpdate}, 
 		setState: {value: setState}
 	}
-	/**
-	 * @type {Object}
-	 */
+	
 	createComponent(Component.prototype)
 	
 	/**
@@ -590,9 +600,10 @@
 	 * @return {Object}
 	 */
 	function createComponent (prototype) {
-		return defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {
-			value: SymbolComponent
-		})
+		defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {value: SymbolComponent})
+	
+		if (!prototype.hasOwnProperty(LifecycleRender))
+			defineProperty(prototype, LifecycleRender, {value: noop, writable: true})
 	}
 	
 	/**
@@ -663,10 +674,10 @@
 		var instance = element.instance
 		var owner = element.owner
 		var nextContext = instance.context
-		var prevState = instance.state
-		var nextState = signature > 1 ? assign({}, prevState, element.state) : prevState
 		var prevProps = element.props
 		var nextProps = snapshot.props
+		var prevState = instance.state
+		var nextState = signature > 1 ? assign({}, prevState, element.state) : prevState
 	
 		if (owner[LifecycleChildContext])
 			merge(element.context, getChildContext(element))
@@ -747,7 +758,7 @@
 				case Function:
 					return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 				default:
-					element.state = element.work === WorkSync ? state : assign({}, element.state, state)
+					element.state = element.work > WorkTask ? state : assign(instance.state, element.state, state)
 	
 					enqueueUpdate(element, instance, callback, 2)
 			}
@@ -774,7 +785,7 @@
 	 */
 	function enqueuePending (element, instance, state, callback) {
 		state.then(function (value) {
-			enqueue(function () {
+			requestAnimationFrame(function () {
 				enqueueState(element, instance, value, callback)
 			})
 		}).catch(function (e) {
@@ -790,12 +801,12 @@
 	 */
 	function enqueueUpdate (element, instance, callback, signature) {
 		if (element == null)
-			return enqueue(function () {
+			return void requestAnimationFrame(function () {
 				enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 			})
 	
 		if (element.work < WorkSync)
-			return enqueue(function () {
+			return void requestAnimationFrame(function () {
 				enqueueUpdate(element, instance, callback, signature)
 			})
 	
@@ -836,7 +847,7 @@
 		try {
 			return new element.type(element.props, element.context)
 		} catch (e) {
-			errorBoundary(element.host, e, LifecycleConstructor, 1)
+			errorBoundary(element, e, LifecycleConstructor, 1)
 		}
 	
 		return new Component()
@@ -848,11 +859,9 @@
 	 */
 	function getChildElement (element) {
 		try {
-			return commitElement(
-				element.instance.render(element.instance.props, element.instance.state, element.context)
-			)
+			return commitElement(element.instance.render(element.instance.props, element.instance.state, element.context))
 		} catch (e) {
-			return errorBoundary(element, e, LifecycleRender, 1)
+			return commitElement(errorBoundary(element, e, LifecycleRender, 1))
 		}
 	}
 	
@@ -962,14 +971,20 @@
 	 * @param {Element} element
 	 * @param {Element} sibling
 	 * @param {Element} host
+	 * @param {number} mode
 	 */
-	function commitChildren (element, sibling, host) {
-		var children = element.children
+	function commitChildren (element, children, host, mode) {
 		var length = children.length
-		var next = children.next
+		var sibling = children.next
+		var next = sibling
 	
 		while (length-- > 0) {
-			commitMount(!next.DOM ? next : merge(new Element(ElementNode), next), sibling, element, host, 0)
+			if (!next.DOM && mode > 0) {
+				children.insert(next = merge(new Element(ElementNode), sibling = next), sibling)
+				children.remove(sibling)
+			}
+	
+			commitMount(next, element, element, host, mode, 0)
 			next = next.next
 		}
 	}
@@ -979,9 +994,10 @@
 	 * @param {Element} sibling
 	 * @param {Element} parent
 	 * @param {Element} host
+	 * @param {number} mode
 	 * @param {number} signature
 	 */
-	function commitMount (element, sibling, parent, host, signature) {
+	function commitMount (element, sibling, parent, host, mode, signature) {
 		element.host = host
 		element.parent = parent
 		element.context = host.context
@@ -998,8 +1014,7 @@
 	 			if (element.owner[LifecycleChildContext])
 	 				element.context = getChildContext(element)
 	
-	 			commitMount(element.children, sibling, parent, element, signature)
-	
+	 			commitMount(element.children, sibling, parent, element, mode, signature)
 	 			element.DOM = element.children.DOM
 	
 	 			if (element.ref)
@@ -1011,28 +1026,34 @@
 	 			element.work = WorkSync
 	 			return
 	 		case ElementPortal:
-	 			element.DOM = DOM(element.type)
+	 			element.DOM = {target: element.type}
 	 			break
 	 		case ElementPromise:
 	 			commitPromise(element, element)
 	 		case ElementFragment:
-	 			element.DOM = DOM(DOMNode(parent))
+	 			element.DOM = {target: DOMTarget(parent)}
 	 			break
 	 		case ElementNode:
-	 			element.xmlns = DOMScope(element.type, parent.xmlns)
+	 			element.xmlns = DOMType(element.type, parent.xmlns)
 	 		case ElementText:
-	 			element.DOM = commitDOM(element)
-	 			
-	 			if (signature < 1) 
-	 				commitAppend(element, parent)
-	 			else
-	 				commitInsert(element, sibling, parent)
+	 			switch (mode) {
+	 				case 0:
+	 					if (element.DOM = DOMFind(element, elementPrev(element), parent))
+	 						break
+	 				case 1:
+	 					element.DOM = commitDOM(element)
+	 					
+	 					if (signature < 1)
+	 						commitAppend(element, parent)
+	 					else
+	 						commitInsert(element, sibling, parent)
+	 			}
 	 
 	 			if (element.flag > ElementNode)
 	 				return
 	 	}
 	
-		commitChildren(element, element, host)
+		commitChildren(element, element.children, host, mode)
 		commitProps(element, element.props, 1)
 	}
 	
@@ -1060,7 +1081,7 @@
 				commitReplace(element, snapshot, 0)
 			})
 	
-		commitMount(snapshot, elementSibling(element, 0), element.parent, element.host, 1)
+		commitMount(snapshot, elementNext(element, 0), element.parent, element.host, 1, 1)
 	
 		for (var key in snapshot)
 			switch (key) {
@@ -1124,7 +1145,7 @@
 					case 0:
 						element.ref = callback
 					case 1:
-						return lifecycleCallback(element.host, callback, element.instance || findDOMNode(element), key, element)
+						return lifecycleCallback(element.host, callback, element.instance || findDOMTarget(element), key, element)
 					case 2:
 						commitRef(element, callback, -1, key)
 						commitRef(element, callback, 0, key)
@@ -1170,7 +1191,7 @@
 		try {
 			return element.flag === ElementNode ? DOMElement(element) : DOMText(element)
 		} catch (e) {
-			return commitDOM(errorBoundary(element, e, LifecycleRender, 1))
+			return commitDOM(commitElement(errorBoundary(element, e, LifecycleRender, 1)))
 		}
 	}
 	
@@ -1209,7 +1230,7 @@
 	 */
 	function commitInsert (element, sibling, parent) {
 		if (sibling.flag < ElementIntermediate)
-			return commitInsert(element, elementSibling(sibling, 1), parent)
+			return commitInsert(element, elementNext(sibling, 1), parent)
 	
 		if (element.flag > ElementIntermediate)
 			DOMInsert(element, sibling, parent)
@@ -1225,7 +1246,7 @@
 	 */
 	function commitAppend (element, parent) {
 		if (parent.flag < ElementPortal)
-			return commitInsert(element, elementSibling(parent, 0), parent)
+			return commitInsert(element, elementNext(parent, 0), parent)
 	
 		if (element.flag > ElementIntermediate)
 			DOMAppend(element, parent)
@@ -1343,7 +1364,7 @@
 					while (aLength < bLength) {
 						aHead = bHead
 						bHead = bHead.next
-						commitMount(children.push(aHead), aHead, element, host, 0)
+						commitMount(children.push(aHead), aHead, element, host, 1, 0)
 						aLength++
 					}
 			return
@@ -1451,9 +1472,9 @@
 					if (delete aPool[bHash])
 						aSize--
 				} else if (aNode === children)
-					commitMount(children.push(bNode), bNode, element, host, 0)
+					commitMount(children.push(bNode), bNode, element, host, 1, 0)
 				else
-					commitMount(children.insert(bNode, aNode), aNode, element, host, 1)	
+					commitMount(children.insert(bNode, aNode), aNode, element, host, 1, 1)	
 	
 				bNode = bNext
 			}
@@ -1483,7 +1504,7 @@
 		var prev = element
 	
 		while (i++ < length)
-			commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature)
+			commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, 1, signature)
 	}
 	
 	/**
@@ -1503,33 +1524,33 @@
 	}
 	
 	/**
-	 * @type {Object}
+	 * @param {Event}
 	 */
-	defineProperty(Element.prototype, 'handleEvent', {
-		value: function handleEvent (event) {
-			try {
-				var type = event.type
-				var element = this
-				var host = element.host
-				var instance = host.instance
-				var callback = element.event[type]
-				var state
+	function handleEvent (event) {
+		try {
+			var type = event.type
+			var element = this
+			var host = element.host
+			var instance = host.instance
+			var callback = element.event[type]
+			var state
 	
-				if (!callback)
-					return
+			if (!callback)
+				return
 	
-				if (typeof callback === 'function')
-					state = callback.call(instance, event)
-				else if (typeof callback.handleEvent === 'function')
-					state = callback.handleEvent(event)
+			if (typeof callback === 'function')
+				state = callback.call(instance, event)
+			else if (typeof callback.handleEvent === 'function')
+				state = callback.handleEvent(event)
 	
-				if (instance && state)
-					lifecycleReturn(host, state)
-			} catch (e) {
-				errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), 0)
-			}
+			if (instance && state)
+				lifecycleReturn(host, state)
+		} catch (e) {
+			errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), 0)
 		}
-	})
+	}
+	
+	defineProperty(Element.prototype, 'handleEvent', {value: handleEvent})
 	
 	/**
 	 * @param {Element} element
@@ -1539,69 +1560,62 @@
 		if (!(this instanceof Error))
 			return errorException.call(new Error(this), element, from)
 	
-		var tree = ''
+		var trace = 'Error caught in `\n\n'
 		var tabs = ''
 		var host = element
 		var stack = this.stack
 	
 		while (host.type) {
-			tree += tabs + '<' + getDisplayName(host.type) + '>\n'
+			trace += tabs + '<' + getDisplayName(host.type) + '>\n'
 			tabs += '  '
 			host = host.host
 		}
 	
-		this.from = from
-		this.trace = 'Error caught in `\n\n'+tree+'\n` from "'+from+'"\n\n'+stack+'\n\n'
-	
-		console.error(this.trace)
+		console.error(trace += '\n` from "'+from+'"\n\n'+stack+'\n\n')
 		
 		return this
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @param {Error} error
+	 * @param {*} error
 	 * @param {string} from
 	 * @param {number} signature
 	 * @param {Element?}
 	 */
 	function errorBoundary (element, error, from, signature) {
-		return errorRecovery(element, errorException.call(error, element, from), from, signature)
+		return errorElement(element, {}, errorException.call(error, element, from), from, signature)
 	}
 	
 	/**
-	 * @param {Element} element
-	 * @param {Error} error
-	 * @param {string} from
-	 * @param {number} signature
-	 * @return {Element}
+	 * @param  {Element} element
+	 * @param  {Object} snapshot
+	 * @param  {Error} error
+	 * @param  {string} from
+	 * @param  {number} signature
+	 * @return {*}
 	 */
-	function errorRecovery (element, error, from, signature) {	
-		var children = elementText('')
+	function errorElement (element, snapshot, error, from, signature) {	
+		if (!signature || !element.owner)
+			return
 	
-		if (signature > 0 && element.flag !== ElementIntermediate) {
-			if (element.owner && element.owner[LifecycleDidCatch])
-				try {
-					element.work = WorkTask
-					children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
-					element.work = WorkSync
-				} catch (e) {
-					enqueue(function () {
-						errorBoundary(element.host, e, LifecycleDidCatch, signature)
-					})
-				}
-			else
-				enqueue(function () {
-					errorRecovery(element.host, error, from, signature)
-				})
+		if (element.owner[LifecycleDidCatch])
+			try {
+				element.sync = WorkTask
+				snapshot.children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
+				element.sync = WorkSync
+			} catch (e) {
+				return errorBoundary(element.host, e, LifecycleDidCatch, signature)
+			}
+		else
+			errorElement(element.host, snapshot, error, from, signature)
 	
-			if (from !== LifecycleRender && client)
-				enqueue(function () {
-					reconcileElement(getHostElement(element), children)
-				})
-		}
-	
-		return children
+		if (from === LifecycleRender)
+			return snapshot.children
+		else if (client)
+			requestAnimationFrame(function () {
+				reconcileElement(getHostElement(element), snapshot.children)
+			})
 	}
 	
 	/**
@@ -1609,35 +1623,55 @@
 	 * @param {Node} target
 	 * @param {function=} callback
 	 */
-	function render (element, target, callback) {
-		if (!isValidElement(element))
-			return render(commitElement(element), target, callback)
-		
+	function render (element, target, callback) {	
 		if (!target)
-			return render(element, DOMRoot(), callback)
-			
+			return render(element, DOMDocument(), callback)
+	
 		if (root.has(target))
 			reconcileElement(root.get(target), commitElement(element))
 		else
-			mount(element, elementIntermediate(DOM(target)), target)
-	
-		if (typeof callback === 'function')
-			lifecycleCallback(element, callback, findDOMNode(element))
+			mount(element, target, callback, 1)
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} parent
 	 * @param {Node} target
+	 * @param {function=} callback
 	 */
-	function mount (element, parent, target) {
-		if (!DOMValid(target))
+	function hydrate (element, target, callback) {
+		if (!target)
+			return hydrate(element, DOMDocument(), callback)
+		
+		if (root.has(target))
+			render(element, target, callback)
+		else
+			mount(element, target, callback, 0)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Node?} parent
+	 * @param {number} mode
+	 */
+	function mount (element, parent, callback, mode) {
+		if (!isValidElement(element))
+			return mount(commitElement(element), parent, callback, mode)
+	
+		if (!isValidElement(parent))
+			return mount(element, elementIntermediate({target: parent}), callback, mode)
+	
+		if (!DOMValid(DOMTarget(parent)))
 			invariant(LifecycleRender, 'Target container is not a DOM element')
 	
-		root.set(target, element)
+		root.set(DOMTarget(parent), element)
 	
-		commitContent(parent)
-		commitMount(element, element, parent, parent, 0)
+		if (mode > 0)
+			commitContent(parent)
+		
+		commitMount(element, element, parent, parent, mode, 0)
+	
+		if (typeof callback === 'function')
+			lifecycleCallback(element, callback, findDOMNode(element))
 	}
 	
 	/**
@@ -1653,9 +1687,9 @@
 			
 		if (isValidElement(element)) {
 			if (element.flag < ElementPortal)
-				return findDOMNode(elementSibling(element, 1))
+				return findDOMNode(elementNext(element, 1))
 			else if (element.DOM)
-				return DOMNode(element)
+				return DOMTarget(element)
 		}
 	
 		if (DOMValid(element))
@@ -1732,16 +1766,9 @@
 	}
 	
 	/**
-	 * @param {Node} target
-	 */
-	function DOM (target) {
-		return {target: target}
-	}
-	
-	/**
 	 * @return {Node}
 	 */
-	function DOMRoot () {
+	function DOMDocument () {
 		return document.documentElement
 	}
 	
@@ -1757,7 +1784,7 @@
 	 * @param {Element} element
 	 * @return {Node}
 	 */
-	function DOMNode (element) {
+	function DOMTarget (element) {
 		return element.DOM.target
 	}
 	
@@ -1766,7 +1793,7 @@
 	 * @param {string} type
 	 */
 	function DOMEvent (element, type) {
-		DOMNode(element).addEventListener(type, element, false)
+		DOMTarget(element).addEventListener(type, element, false)
 	}
 	
 	/**
@@ -1774,10 +1801,10 @@
 	 * @return {DOM}
 	 */
 	function DOMElement (element) {
-		if (element.xmlns) 
-			return DOM(document.createElementNS(element.xmlns, element.type))
-	
-		return DOM(document.createElement(element.type))
+		if (element.xmlns)
+			return {target: document.createElementNS(element.xmlns, element.type)}
+		else
+			return {target: document.createElement(element.type)}
 	}
 	
 	/**
@@ -1785,14 +1812,16 @@
 	 * @return {DOM}
 	 */
 	function DOMText (element) {
-		return DOM(document.createTextNode(element.children))
+		return {
+			target: document.createTextNode(element.children)
+		}
 	}
 	
 	/**
 	 * @param {Element} element
 	 */
 	function DOMContent (element) {
-		DOMNode(element).textContent = ''
+		DOMTarget(element).textContent = ''
 	}
 	
 	/**
@@ -1800,7 +1829,7 @@
 	 * @param {(string|number)} value
 	 */
 	function DOMValue (element, value) {
-		DOMNode(element).nodeValue = value
+		DOMTarget(element).nodeValue = value
 	}
 	
 	/**
@@ -1808,7 +1837,7 @@
 	 * @param {Element} parent
 	 */
 	function DOMRemove (element, parent) {
-		DOMNode(parent).removeChild(DOMNode(element))
+		DOMTarget(parent).removeChild(DOMTarget(element))
 	}
 	
 	/**
@@ -1817,7 +1846,7 @@
 	 * @param {Element} parent
 	 */
 	function DOMInsert (element, sibling, parent) {
-		DOMNode(parent).insertBefore(DOMNode(element), DOMNode(sibling))
+		DOMTarget(parent).insertBefore(DOMTarget(element), DOMTarget(sibling))
 	}
 	
 	/**
@@ -1825,7 +1854,7 @@
 	 * @param {Element} parent
 	 */
 	function DOMAppend (element, parent) {
-		DOMNode(parent).appendChild(DOMNode(element))
+		DOMTarget(parent).appendChild(DOMTarget(element))
 	}
 	
 	/**
@@ -1836,9 +1865,9 @@
 	function DOMStyle (element, value) {
 		for (var key in value)
 			if (key.indexOf('-') < 0)
-				DOMNode(element).style[key] = value[key]
+				DOMTarget(element).style[key] = value[key]
 			else
-				DOMNode(element).style.setProperty(key, value[key])
+				DOMTarget(element).style.setProperty(key, value[key])
 	}
 	
 	/**
@@ -1848,7 +1877,7 @@
 	 */
 	function DOMProperty (element, name, value) {
 		if (value != null)
-			DOMNode(element)[name] = value
+			DOMTarget(element)[name] = value
 		else
 			DOMAttribute(element, name, value, '')
 	}
@@ -1865,15 +1894,15 @@
 			case false:
 			case undefined:
 				if (!xmlns)
-					DOMNode(element).removeAttribute(name)
+					DOMTarget(element).removeAttribute(name)
 				else
-					DOMNode(element).removeAttributeNS(xmlns, name)
+					DOMTarget(element).removeAttributeNS(xmlns, name)
 				break
 			default:
 				if (!xmlns)
-					DOMNode(element).setAttribute(name, value)
+					DOMTarget(element).setAttribute(name, value)
 				else
-					DOMNode(element).setAttributeNS(xmlns, name, value)
+					DOMTarget(element).setAttributeNS(xmlns, name, value)
 		}
 	}
 	
@@ -1907,7 +1936,7 @@
 				if (element.type === 'img')
 					break
 			default:
-				if (!xmlns && name in DOMNode(element))
+				if (!xmlns && name in DOMTarget(element))
 					return DOMProperty(element, name, value)
 		}
 	
@@ -1921,7 +1950,7 @@
 	 * @param {string} type
 	 * @param {string} xmlns
 	 */
-	function DOMScope (type, xmlns) {
+	function DOMType (type, xmlns) {
 		switch (type) {
 			case 'svg':
 				return 'http://www.w3.org/2000/svg'
@@ -1933,9 +1962,31 @@
 		
 		return xmlns
 	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} sibling
+	 * @param {Element} parent
+	 */
+	function DOMFind (element, sibling, parent) {
+		var value = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
+		var nodeName = ''
+	
+		while (value)
+			switch (nodeName = value.nodeName.toLowerCase()) {
+				case element.type:
+					if (element.flag === ElementText && element.next.flag === ElementText)
+						(value = value.splitText(element.children.length)).nodeValue = element.children
+	
+					return {target: value}
+				default:
+					value = value.nextSibling
+			}
+	}
 
 	exports.version = version
 	exports.render = render
+	exports.hydrate = hydrate
 	exports.Component = Component
 	exports.Children = Children
 	exports.findDOMNode = findDOMNode

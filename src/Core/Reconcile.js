@@ -106,7 +106,7 @@ function reconcileChildren (element, snapshot) {
 				while (aLength < bLength) {
 					aHead = bHead
 					bHead = bHead.next
-					commitMount(children.push(aHead), aHead, element, host, 0)
+					commitMount(children.push(aHead), aHead, element, host, 1, 0)
 					aLength++
 				}
 		return
@@ -214,9 +214,9 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 				if (delete aPool[bHash])
 					aSize--
 			} else if (aNode === children)
-				commitMount(children.push(bNode), bNode, element, host, 0)
+				commitMount(children.push(bNode), bNode, element, host, 1, 0)
 			else
-				commitMount(children.insert(bNode, aNode), aNode, element, host, 1)	
+				commitMount(children.insert(bNode, aNode), aNode, element, host, 1, 1)	
 
 			bNode = bNext
 		}
@@ -246,7 +246,7 @@ function reconcileInsert (element, sibling, parent, host, children, index, lengt
 	var prev = element
 
 	while (i++ < length)
-		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature)
+		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, 1, signature)
 }
 
 /**
