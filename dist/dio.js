@@ -756,7 +756,7 @@
 			if (key !== element.ref)
 				delete this.refs[element.ref]
 	
-			this.refs[key] = element.instance
+			this.refs[key] = value
 		}
 	}
 	
@@ -1158,10 +1158,11 @@
 			case 'function':
 				switch (signature) {
 					case RefRemove:
-						return lifecycleCallback(element.host, callback, element.ref = null, key, element)
+						return void lifecycleCallback(element.host, callback, element.ref = null, key, element)
 					case RefAssign:
 						element.ref = callback
-						return lifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
+					case RefDispatch:
+						return void lifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
 					case RefReplace:
 						commitRef(element, callback, RefRemove, key)
 						commitRef(element, callback, RefAssign, key)
@@ -1191,12 +1192,19 @@
 	 */
 	function commitProps (element, props, signature) {
 		for (var key in props)
-			if (key === 'ref')
-				commitRef(element, props[key], signature)
-			else if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
-				commitEvent(element, key.substring(2).toLowerCase(), props[key])
-			else
-				DOMProperties(element, key, props[key], element.xmlns)
+			switch (key) {
+				case 'ref':
+					commitRef(element, props[key], signature)
+				case 'key':
+				case 'xmlns':
+				case 'children':
+					break
+				default:
+					if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
+						commitEvent(element, key.substring(2).toLowerCase(), props[key])
+					else
+						DOMProperties(element, key, props[key], element.xmlns)
+			}
 	}
 	
 	/**
@@ -1942,9 +1950,6 @@
 					DOMProperties(element, 'class', value, xmlns)
 				else
 					DOMProperty(element, name, value)
-			case 'key':
-			case 'xmlns':
-			case 'children':
 				return
 			case 'style':
 				if (typeof value === 'object')
@@ -2002,7 +2007,8 @@
 						if (element.next.flag === ElementText)
 							value = value.splitText(element.children.length)
 	
-						value.nodeValue = element.children
+						if (value.nodeValue !== element.children)
+							value.nodeValue = element.children
 					}
 	
 					return DOM(value)

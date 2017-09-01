@@ -162,7 +162,7 @@ function componentRef (value, key, element) {
 		if (key !== element.ref)
 			delete this.refs[element.ref]
 
-		this.refs[key] = element.instance
+		this.refs[key] = value
 	}
 }
 

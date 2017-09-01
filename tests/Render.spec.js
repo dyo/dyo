@@ -22,12 +22,56 @@ module.exports = ({h, render}) => {
 			}
 		}
 
+		class Fooly {
+			render() {
+				return h(Cooly, {
+					ref: (value) => {
+						ok(value instanceof Cooly, 'ref function(instance)')
+					} 
+				})
+			}
+		}
+
+		class Cooly {
+			componentDidMount() {
+				ok(this.refs.wooly instanceof Wooly, 'ref string(instance)')
+			}
+			render() {
+				return h(Wooly, {
+					ref: 'wooly'
+				})
+			}
+		}
+
+		class Wooly {
+			componentWillUnmount() {
+				Promise.resolve().then(()=>{
+					ok(this.refs.heading === null, 'ref string(unmount)')
+				})
+			}
+			componentDidMount() {
+				ok(this.refs.heading.nodeType, 'ref string(node)')
+			}
+			render() {
+				return h('div', {
+					ref: (value) => {
+						if (value)
+							ok(value.nodeType, 'ref function(node)')
+						else
+							ok(value === null, 'ref function(unmount)')
+					}
+				}, h('h1', {ref: 'heading'}))
+			}
+		}
+
 		const Foo = () => h('h1', {id: 1}, '1')
 		const Bar = () => iterable
 		const Baz = () => [h('h1', 'Hello'), h('h1', 'World')]
 
 		var container = document.createElement('div')
 		var portal = document.createElement('div')
+
+		render(Fooly, container)
 
 		render(h('h1', {dangerouslySetInnerHTML: {__html: '<div>test</div>'}}), container)
 		ok(compare(container, '<h1><div>test</div></h1>'), 'render element dangerouslySetInnerHTML')

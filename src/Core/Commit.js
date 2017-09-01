@@ -219,7 +219,8 @@ function commitRef (element, callback, signature, key) {
 					return lifecycleCallback(element.host, callback, element.ref = null, key, element)
 				case RefAssign:
 					element.ref = callback
-					return lifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
+				case RefDispatch:
+					return void lifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
 				case RefReplace:
 					commitRef(element, callback, RefRemove, key)
 					commitRef(element, callback, RefAssign, key)
@@ -249,12 +250,19 @@ function commitEvent (element, type, callback) {
  */
 function commitProps (element, props, signature) {
 	for (var key in props)
-		if (key === 'ref')
-			commitRef(element, props[key], signature)
-		else if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
-			commitEvent(element, key.substring(2).toLowerCase(), props[key])
-		else
-			DOMProperties(element, key, props[key], element.xmlns)
+		switch (key) {
+			case 'ref':
+				commitRef(element, props[key], signature)
+			case 'key':
+			case 'xmlns':
+			case 'children':
+				break
+			default:
+				if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
+					commitEvent(element, key.substring(2).toLowerCase(), props[key])
+				else
+					DOMProperties(element, key, props[key], element.xmlns)
+		}
 }
 
 /**

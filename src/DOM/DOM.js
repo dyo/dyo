@@ -154,9 +154,6 @@ function DOMProperties (element, name, value, xmlns) {
 				DOMProperties(element, 'class', value, xmlns)
 			else
 				DOMProperty(element, name, value)
-		case 'key':
-		case 'xmlns':
-		case 'children':
 			return
 		case 'style':
 			if (typeof value === 'object')
@@ -214,7 +211,8 @@ function DOMFind (element, sibling, parent) {
 					if (element.next.flag === ElementText)
 						value = value.splitText(element.children.length)
 
-					value.nodeValue = element.children
+					if (value.nodeValue !== element.children)
+						value.nodeValue = element.children
 				}
 
 				return DOM(value)
