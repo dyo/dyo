@@ -239,7 +239,10 @@ function commitRef (element, callback, signature, key) {
  */
 function commitEvent (element, type, callback) {
 	if (!element.event)
-		DOMEvent((element.event = {}, element), type)
+		element.event = {}
+
+	if (!element.event[type])
+		DOMEvent(element, type)
 
 	element.event[type] = callback
 }
