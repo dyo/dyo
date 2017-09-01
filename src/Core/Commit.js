@@ -216,7 +216,7 @@ function commitRef (element, callback, signature, key) {
 		case 'function':
 			switch (signature) {
 				case RefRemove:
-					return lifecycleCallback(element.host, callback, element.ref = null, key, element)
+					return void lifecycleCallback(element.host, callback, element.ref = null, key, element)
 				case RefAssign:
 					element.ref = callback
 				case RefDispatch:
