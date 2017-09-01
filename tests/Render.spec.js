@@ -86,7 +86,6 @@ module.exports = ({h, render}) => {
 		ok(compare(container, '<h1>0</h1>'), 'render element property(undefined)')
 
 		render(h('h1', {prop: null}, '0'), container)
-		console.log(container.innerHTML)
 		ok(compare(container, '<h1>0</h1>'), 'render element property(null)')
 
 		render(h('h1', {class: 1}, '0'), container)
@@ -94,6 +93,9 @@ module.exports = ({h, render}) => {
 
 		render(h('h1', {className: 2}, '0'), container)
 		ok(compare(container, '<h1 class="2">0</h1>'), 'render element className')
+
+		render(h('input', {value: undefined}, '0'), container)
+		ok(compare(container, '<input>'), 'render undefined prop')
 
 		render(h('h1', {style: {width: '100px'}}, '0'), container)
 		ok(container.firstChild.style.width === '100px', 'render element style object')
