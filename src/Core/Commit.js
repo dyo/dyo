@@ -54,7 +54,7 @@ function commitChildren (element, children, host, signature, mode) {
 	var next = sibling
 
 	while (length-- > 0) {
-		if (!next.DOM && signature > ModePull) {
+		if (!next.DOM && mode > ModePull) {
 			children.insert(next = merge(new Element(ElementNode), sibling = next), sibling)
 			children.remove(sibling)
 		}
