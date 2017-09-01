@@ -26,10 +26,8 @@
 		<h1 id=getting-started>Getting Started</h1>
 
 		<p>
-			The easiest way to get started with DIO is to use this <a href=https://jsbin.com/movuti/edit?js,output>Hello World Example</a> and follow along through the code snippets.
+			To follow along with this introduction you can use this <a href=https://jsbin.com/movuti/edit?js,output>Hello World Example</a> as code REPL.
 		</p>
-
-		<p>The Hello World of DIO:</p>
 
 <pre><code>
 dio.render(
@@ -38,13 +36,11 @@ dio.render(
 )</code>
 </pre>
 
-		<p>This renders a heading saying with the text "Hello World".</p>
-
-		<p>The next few sections will gradually introduce you to the building blocks that make up an application; Elements, Components &amp; Events. Once you master them, you can create simple–to–complex applications.</p>
+		<p>This Hello World example should render a heading with the content "Hello World".</p>
 
 		<h1 id=installation>Installation</h1>
 
-		<p>DIO can be installed through any one of the following CDN's.</p>
+		<p>DIO can be installed through the following CDN's.</p>
 
 		<ol>
 			<li><a href=https://unpkg.com/dio.js@latest/dist/dio.min.js>unpkg.com/dio.js@latest/dist/dio.min.js</a></li>
@@ -57,31 +53,21 @@ npm install dio.js --save
 
 		<h1 id=elements>Introducing Elements</h1>
 
-		<p>Elements are the smallest building blocks of an application.</p>
-		<p>An element describes what you want to see on the screen:</p>
+		<p>
+			Elements are the smallest building blocks of an interface. 
+			They allow use to create the building blocks that describe what you see on the screen.
+		</p>
 <pre><code>
 const element = h('h1', 'Hello World');
 </code></pre>
 		<p>
-			Elements are backed by JavaScript objects that describe what and how the that particular element should behave.
+			Elements are backed by JavaScript objects that describe what and how the that particular element should look and behave.
 		</p>
 		<p>
-			Knowing what to render at any one point in time DIO's underlining reconciler takes care of updating the native DOM to match the elements you create.
+			Given what to render at any one point in time, the underlining reconciler takes care of updating/mounting these elements correctly to reflect the current state of the interface.
 		</p>
 		<p>
-			Elements are composed of three parts; type <label for="1"></label>,
-			<span class=note>
-				type represents the type of element that should be rendered.
-			</span>
-			props <label for="2"></label> and
-			<span class=note>
-				props represent the properties associated with the element.
-			</span>
-			children <label for="3"></label>.
-			Each part describes a specific aspect of the element.
-			<span class=note>
-				children represents the children contained within the element.
-			</span>
+			Elements are composed of three distinct parts &mdash; type, props and children. These can be used to assign the desired behaviours and properties that we want our elements to assume.
 		</p>
 	
 <pre><code>
@@ -92,19 +78,20 @@ const element = h('h1', {
 
 		<h1 id=components>Components</h1>
 
-		<p>Components let you split an interface into independent, reusable pieces.</p>
+		<p>Components allow use to categorize an interface into (in)dependent, reusable pieces.</p>
 
 		<p>Conceptually, components are like JavaScript functions. They accept arbitrary arguments (called "props") and return elements describing what should appear on the screen.</p>
 
 		<h2>Functions and Classes</h2>
 
-		<p>The first varient of a component is a JavaScript Function.</p>
+		<p>The first varient of a component is a JavaScript <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions>Function</a> that accepts "props" and returns an element.</p>
 <pre><code>
 function Welcome (props) {
 	return h('h1', 'Hello', props.name)
 }
 </code></pre>
-		<p>The second varient of a component is a <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">JavaScript Class</a>.</p>
+
+		<p>The second varient of a component is a <a href=https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes>JavaScript Class</a> which implements a "render" method that returns an element.</p>
 
 <pre><code>
 class Welcome {
@@ -113,13 +100,11 @@ class Welcome {
 	}
 }
 </code></pre>
+	
+		<p>Functions accept "props" arguments and Class components accept "props" &amp; "state".</p>
 
 		<p>
-			Both of these units accept <code>props</code>, <code>state</code> and <code>`context`</code> as arguments and return elements.
-		</p>
-
-		<p>
-			Function and Class Components are for the most part equivalent with a few exceptions.
+			Apart from this difference Function and Class components are for the most part equivalent.
 		</p>
 
 		<h2>Rendering a Component</h2>
@@ -138,7 +123,7 @@ dio.render(
 		<h1 id=lifecycles>Lifecycles</h1>
 
 		<p>
-			Lifecycles allow us to observer the different states that our component units go through in the render piple.
+			Lifecycles allow us to observer the different states that a component unit goes through in the render process.
 		</p>
 
 		<h2>Function Lifecycles</h2>
@@ -162,7 +147,7 @@ class Welcome {
 </code></pre>
 
 		<p>
-			Lifecycles are invoked in certain stages of the components render pipeline.
+			When implementated lifecycles are invoked in certain stages of the components render process.
 		</p>
 
 		<hr>
@@ -188,10 +173,6 @@ class Welcome {
 					<td>After mounting</td>
 				</tr>
 				<tr>
-					<td><code>componentWillUnmount</code></td>
-					<td>Before removed</td>
-				</tr>
-				<tr>
 					<td><code>componentWillReceiveProps</code></td>
 					<td>Before new props are received</td>
 				</tr>
@@ -201,11 +182,15 @@ class Welcome {
 				</tr>
 				<tr>
 					<td><code>componentWillUpdate</code></td>
-					<td>After <code>shouldComponentUpdate</code></td>
+					<td>Before the component is updated</td>
 				</tr>
 				<tr>
 					<td><code>componentDidUpdate</code></td>
 					<td>After the component has updated</td>
+				</tr>
+				<tr>
+					<td><code>componentWillUnmount</code></td>
+					<td>Before removed</td>
 				</tr>
 			</tbody>
 		</table>
@@ -223,7 +208,10 @@ class Input {
 	}
 	render() {
 		return [
-			h('input', {type: 'text', oninput: this.handleInput}),
+			h('input', {
+				type: 'text', 
+				oninput: this.handleInput
+			}),
 			h('h1', this.state.value)
 		]
 	}
@@ -235,13 +223,13 @@ dio.render(h(Input), document.getElementById('root'))
 		<h1 id=interoperability>Interoperability</h1>
 
 		<p>
-			Outside of the the elements DIO can create we sometimes need a mechanism to interop with the native DOM, this is where the concept of refs come into play.
+			Outside of the the elements DIO can create we sometimes need a mechanism to interop with the native View, this is where the concept of refs come into play.
 		</p>
 
 		<h2>Refs</h2>
 
 		<p>
-			Refs allow us to reference the underline native DOM node represented the element DIO creates.
+			Refs allow us to reference the underline native View node that an element creates.
 		</p>
 
 <pre><code>
@@ -260,39 +248,41 @@ const Welcome = return h('h1', {
 const portal = document.querySelector('.modal')
 
 dio.render(
-	['Fox', h(portal, 'Welcome', 'Back')], 
+	['Hey', h(portal, 'Welcome', 'Back')], 
 	document.getElementById('root')
 )
 </code></pre>
 
 		<p>
-			While <code>Fox</code> will render in the defined root container, our two text elements
-			<code>Welcome</code> &amp; <code>Back</code> will render in our portal.
+			While "Hey" will render in the defined root container, our two text elements
+			"Welcome" &amp; "Back" will render within the defined portal.
 		</p>
 
 
-		<h1 id=jsx>Introduction JSX</h1>
+		<h1 id=jsx>Introducing JSX</h1>
 
 		<p>
 			JSX is an optional syntax extension that enables you to write HTML tags interspersed with JavaScript.
 		</p>
 
 		<p>
-			It is not required in DIO, but it may be more pleasing to use depending on your preferences.
+			It is not a requirement, but it may be more pleasing to use depending on your preferences.
 		</p>
 
-		<p>For example writing <code>`h('h1', 'Hello')`</code> as <code>`&lt;h1>Hello&lt;/h1>`</code></p>
+		<p>For example writing <code>h('h1', 'Hello')</code> as <code>&lt;h1>Hello&lt;/h1></code></p>
 
 		<h2>JSX Pragma</h2>
 
-		<p>A pragma <code>/* @jsx h */</code> is a comment that instructs the JSX compiler to use a function for example. <code>`h`</code> as the calling function, in turn transforming <code>`&lt;h1>Hello&lt;/h1>`</code> into <code>h('h1', null, 'Hello')</code></p>
+		<p>A pragma <code>/* @jsx h */</code> is a comment that instructs the JSX compiler to use a function.</p>
 
-		<p>Most JSX compilers will support pragma comments but they are only scoped to the files they are defined. This might make for sub-optimal experience depending on your preferences; But it is possible to define a project setup through Babel/Typescript.</p>
+		<p>For example <code>h</code> as the calling function, in turn transforming <code>&lt;h1>Hello&lt;/h1></code> into <code>h('h1', null, 'Hello')</code></p>
+
+		<p>Most JSX compilers will support pragma comments but they are only scoped to the files they are defined. This might make for a sub-optimal experience depending on your preferences; But it is possible to define a project setup through Babel/Typescript.</p>
 
 		<h2>Setup</h2>
 
 		<p>
-			Babel <label for=4></label> 
+			Babel <label></label> 
 			<span class=note>
 				<a href=http://babeljs.io>Babel</a> is a JavaScript transpiler best known for its ability to turn ES6 (the next version of JavaScript) into code that runs in your browser (or on your server) today.
 			</span>
@@ -308,7 +298,7 @@ dio.render(
 </code></pre>
 
 		<p>
-			Typescript <label for=5></label> 
+			Typescript <label></label> 
 			<span class=note>
 				<a href=https://www.typescriptlang.org>Typescript</a> is a typed superset of JavaScript that compiles to plain JavaScript.
 			</span>
@@ -326,7 +316,7 @@ dio.render(
 
 		<h1>Moving Foward</h1>
 
-		<p>There's still a few pieces we haven't gone into that the <a href=api.html>API</a> documentation will help hopefully shed more light upon.</p>
+		<p>There's still a few pieces we haven't gone into that the <a href=api.html>API</a> documentation will hopefully help shed some light upon.</p>
 
 		<p>At this point you can jump right into creating something with DIO, look at some <a href=examples.html>Examples</a> or learn how DIO works under the hood on <a href=https://github.com/thysultan/dio.js>GitHub</a>.</p>
 

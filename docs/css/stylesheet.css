@@ -144,7 +144,7 @@ article {
 }
 
 p, li, pre {
-  width: 60%;
+  width: 64%;
 }
 
 p, ol, ul {
@@ -217,7 +217,7 @@ li label:after {
 .margin {
   float: right;
   clear: right;
-  margin-right: -60%;
+  margin-right: -54%;
   width: 50%;
   margin-top: 0;
   margin-bottom: 1.8em;
@@ -321,4 +321,8 @@ td:last-child {
 
 th {
 	text-transform: capitalize;
+}
+
+p code * {
+  color: #C41A16 !important;
 }

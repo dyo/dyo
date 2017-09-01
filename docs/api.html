@@ -35,7 +35,7 @@
 
 		<ol>
 			<li>type &mdash; type of element that should be rendered.</li>
-			<li>props &mdash; properties associated the element.</li>
+			<li>props &mdash; properties associated with the element.</li>
 			<li>children &mdash; children contained within the element</li>
 		</ol>
 
@@ -56,19 +56,15 @@ const h1 = h('h1', {
 	class: 'large'
 }, 'Hello World')
 
-const h2 = h(h1, {
+const h2 = dio.cloneElement(h1, {
 	class: 'small'
 }, 'The Fox')
 </code></pre>
 
-		<p>
-			This is also how the <code>`dio.cloneElement`</code> API works.
-		</p>
-
 		<h2 id=portals>Portals</h2>
 
 		<p>
-			A portal is created when the first argument of an element: its type, is a DOM node.
+			A portal is created when the first argument of an element, its type, is a DOM node.
 		</p>
 
 <pre><code>
@@ -78,7 +74,7 @@ dio.render(h('div', 1, h(document.body, 2, 3)))
 		<h1 id=components>Components</h1>
 
 		<p>
-			Components are either a Classes or Functions.
+			Components are either of a Class or Function.
 		</p>
 
 		<h2>Classes</h2>
@@ -109,19 +105,20 @@ function Welcome () {
 	return 'Welcome'
 }
 </code></pre>
-
+	
+		<p>All components <code>this</code> references the components instance, including function components.</p>
 
 		<h1 id=lifecycle>Lifecycle</h1>
 
 		<p>
-			Both <code>function</code> and <code>class</code> are state-full and can make full use of lifecycles.
+			Both <code>function</code> and <code>class</code> are state-full and can make use of lifecycles and state.
 		</p>
 
 		<h2>Data</h2>
 
 		<p>
-			<code>getInitialState</code> assigns initial state, on the other hand
-			<code>getChildContext</code> is used to declare context that cascades the components children.
+			The lifecycle method <code>getInitialState</code> can be used to assigns an initial state, while on the other hand
+			<code>getChildContext</code> can be used to declare context that cascades to the components children.
 		</p>
 
 <pre><code>
@@ -139,7 +136,7 @@ class Welcome {
 		<h2 id=props>Events</h2>
 		
 		<p>
-			All events in DIO are prefixed with `on` and case insensitve making `onClick` and `onclick` equivalent.
+			All events in DIO are prefixed with <code>on</code> and case insensitve making both <code>onClick</code> and <code>onclick</code> equivalent.
 		</p>
 
 <pre><code>
@@ -152,16 +149,23 @@ class Welcome {
 </code></pre>
 		
 
-		<p>The value of an event property is either of a `function` type or an <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListener</a>.</p>
+		<p>The value of an event property is either a <code>function</code> type or, an <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListener</a>, that is to say any object that defines a <code>handleEvent</code> method.</p>
+
+<pre><code>
+{
+	handleEvent() {}
+}
+</code></pre>
 
 		<p>
-			When assigning events, DIO has prior knownledge of the host component that the related element is a part of.
-			This allows us to attach events as they are and guarantee that the `this` reference always points to the host component.
+			When assigning events, the reconciler will always have prior knownledge of host component that an element stems from. This allows us to attach events as they are and guarantee that references to <code>this</code> always point to the host components instance.
 		</p>
 
 <pre><code>
 class Welcome {
-	handleClick() {}
+	handleClick() {
+		this instanceof Welcome
+	}
 	render() {
 		return h('button', {onClick: this.handleClick})
 	}
@@ -170,12 +174,14 @@ class Welcome {
 
 		<h2>dangerouslySetInnerHTML</h2>
 
-		<p>dangerouslySetInnerHTML is a special propery that can be used to set the `innerHTML` of elements.</p>
+		<p>dangerouslySetInnerHTML is a special propery that can be used to set the <code>innerHTML</code> of elements.</p>
 
 <pre><code>
 class Welcome {
 	render() {
-		return h('div', {dangerouslySetInnerHTML: {__html: '<h1>Welcome</h1>'}})
+		return h('div', {
+			dangerouslySetInnerHTML: {__html: '<h1>Welcome</h1>'}
+		})
 	}
 }
 </code></pre>
@@ -183,7 +189,7 @@ class Welcome {
 		<h2 id=refs>Refs</h2>
 
 		<p>
-			A Ref is either a function or a string that provides access to the underlining native DOM node or component instance.
+			A Ref is either a function or a string that provides access to the underlining native View node or component instance.
 		</p>
 
 <pre><code>
@@ -206,7 +212,7 @@ class Welcome {
 		</p>
 
 		<p>
-			The lifecycle method <code>componentDidMount</code> receives the mounting native DOM node as an argument.
+			The lifecycle method <code>componentDidMount</code> receives the mounting native View node as an argument.
 		</p>
 
 <pre><code>
@@ -224,7 +230,7 @@ class Welcome {
 		<h2 id=updating>Updating</h2>
 
 		<p>
-			Certain lifecycles are only invoked in the update phase; When an update is triggerd through <code>this.setState</code> or <code>this.forceUpdate</code>, the <code>componentWillReceiveProps</code> lifecycle will not be invoked because new props are not received.
+			Certain lifecycles are only invoked in the update phase; When an update is triggerd through <code>this.setState</code> or <code>this.forceUpdate</code>, the lifecycle method <code>componentWillReceiveProps</code> will not be invoked because new props are not received.
 		</p>
 
 		<p>
@@ -258,15 +264,11 @@ class Welcome {
 		<h2 id=unmounting>Umounting</h2>
 
 		<p>
-			Unlike mounting unmounting happens in a top-down fashion.
+			When/if the <code>componentWillUnmount</code> lifecycle method return a <code>Promise</code> the unmounting native View node will be removed only once the <code>Promise</code> has resolved.
 		</p>
 
 		<p>
-			If the <code>componentWillUnmount</code> method return a <code>Promise</code> the unmounting native DOM node will be removed only once the <code>Promise</code> has resolved.
-		</p>
-
-		<p>
-			Like <code>componentDidMount</code>, <code>componentWillUnmount</code> also receives the unmounting native DOM node as an argument.
+			Like <code>componentDidMount</code>, <code>componentWillUnmount</code> also receives the unmounting native View node as an argument.
 		</p>
 
 <pre><code>
@@ -278,11 +280,11 @@ class Welcome {
 		<h1 id=setstate>setState</h1>
 
 		<p>
-			A component can update its state by invoking <code>this.setState</code> with an Object representing how to update the state or a <code>Promise</code> that resolves to an Object.
+			A component can update its state by invoking <code>this.setState</code> with an Object representing how to update the state or a <code>Promise</code> that resolves to an with the same purpose.
 		</p>
 
 		<p>
-			In addition to explicit <code>this.setState</code> API, DIO supports an implicit Object return value to update the state.
+			In addition to the explicit <code>this.setState</code> API, a component can return an Object value to update the state.
 		</p>
 
 		<h2>Data</h2>
@@ -332,14 +334,12 @@ class Welcome {
 
 		<h1 id=forceupdate>forceUpdate</h1>
 
-		<p>Used when you want to invoke an update without a state update.</p>
+		<p>When invoked, dispatches an update skipping <code>shouldComponentUpdate</code>.</p>
 
 		<h1 id=render>Render</h1>
 
 		<p>
-			The first argument is the element <label for=1></label>
-			<span class=note>This includes strings, numbers, functions, null, arrays, etc.</span>
-			you want to render, the second is the native container DOM node you want render to and the third argument is an optional callback.
+			The first argument is the element you want to render, the second the native container View node you want to render to, the third argument is an optional callback.
 		</p>
 
 <pre><code>
@@ -347,7 +347,7 @@ dio.render('Hello World', document.documentElement)
 </code></pre>
 
 		<p>
-			When ommitted the second argument defaults to the top-level <code>`&lt;html>`</code> DOM node.
+			When ommitted the second argument defaults to the top-level <code>&lt;html></code> DOM node.
 		</p>
 
 		<pre><code>
@@ -382,17 +382,18 @@ http.createServer(server).listen(2000)
 </code></pre>
 
 		<p>
-			<code>dio.renderToStream</code> uses a Readable Stream to send the asynchronous payload in chunks to the Writable Stream, while on the other hand <code>dio.renderToString</code> and the <code>Element#toString</code> are synchronous operations.
+			<code>dio.renderToStream</code> uses a readable Stream to send the asynchronous payload in chunks to the writable stream. On the other hand <code>dio.renderToString</code> and the <code>Element#toString</code> are synchronous operations.
 		</p>
 
 <pre><code>
-dio.renderToString(h('html')) === `${h('html')}` === `&lt;html>&lt;/html>`
+dio.renderToString(h('html')) === `&lt;html>&lt;/html>`
+`${h('html')}` === `&lt;html>&lt;/html>`
 </code></pre>
 
 		<h2 id=testing>toJSON</h2>
 
 		<p>
-			All elements on the server have a `toJSON` method that returns a flat element representation that could be used for testing purposes.
+			Like <code>toString</code> all elements on the server have a <code>toJSON</code> method that returns a flat element representation.
 		</p>
 
 <pre><code>
@@ -428,19 +429,19 @@ class Welcome {
 }
 </code></pre>
 
-		<p>If the error happened in the update phase and we did not handle it, DIO would simply resolve to the nearest parent component that defines <code>componentDidCatch</code>, if there does not exist a component in the render tree that defines a <code>componentDidCatch</code> error state, DIO will unmount all component from the root.</p>
+		<p>Consider the error happened in the update phase, and we avoid handling the error. In this case the error boundary would simply resolve to the nearest parent component that defines <code>componentDidCatch</code>, if there does not exist a component in the render tree that defines a <code>componentDidCatch</code> error state, all components from the root down will unmount.</p>
 
 		<h2 id=non-deterministic>Non-Deterministic</h2>
 
 		<p>
-			By default rendering something is a <a href=https://en.wikipedia.org/wiki/Deterministic_system>deterministic</a> <label for=2></label><span class=note>A deterministic system is a system in which no randomness is involved in the development of future states of the system.</span> operation,
+			By default rendering something is a <a href=https://en.wikipedia.org/wiki/Deterministic_system>deterministic</a> <label></label><span class=note>A deterministic system is a system in which no randomness is involved in the development of future states of the system.</span> operation,
 			given the following children <code>`[A, B, C, D]`</code> the path the flow would take would be.
 		</p>
 
 		<p class=math>A &#x2192; B &#x2192; C &#x2192; D</p>
 
 		<p>
-			But <a href=https://en.wikipedia.org/wiki/Nondeterministic_algorithm>non-deterministic</a> <label for=3></label>
+			But <a href=https://en.wikipedia.org/wiki/Nondeterministic_algorithm>non-deterministic</a> <label></label>
 			<span class=note>A non-deterministic algorithm is an algorithm that, even for the same input, can exhibit different behaviors on different runs.</span>
 			introduces the aspect of non-linear updates, where instead of <code>`A &#x2192; B &#x2192; C &#x2192; D`</code> you could get an array of different update sequences;
 		</p>
@@ -474,7 +475,7 @@ class Welcome {
 
 		<h2 id=coroutine>Iterables</h2>
 
-		<p>DIO supports rendering any <code>Iterables</code> including <code>Generators</code>.</p>
+		<p>Both <code>Iterables</code> and <code>Generators</code> are supported as render elements.</p>
 
 <pre><code>
 class Welcome {
@@ -496,7 +497,7 @@ class Welcome {
 
 		<p>Making use of the <code>componentWillUnmount</code> lifecycle return signature and <code>componentDidMount</code> we can animate any components mount and unmount cycles;</p>
 
-		<p>As an example, using the new <a href=https://developer.mozilla.org/en-US/docs/Web/API/Element/animate>Element.animate</a><label for=4></label><span class=note>The Web Animations API opens the browser’s animation engine to developers and manipulation by JavaScript. This API was designed to underlie implementations of both CSS Animations and CSS Transitions, and leaves the door open to future animation effects. It is one of the most performant ways to animate on the Web where supported, letting the browser make its own internal optimizations without hacks, coercion, or Window.requestAnimationFrame(). <a href=https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API>Using the Web Animations API.</a></span> API:</p>
+		<p>As an example, using the experimental <a href=https://developer.mozilla.org/en-US/docs/Web/API/Element/animate>Element.animate</a><label></label><span class=note>The Web Animations API opens the browser’s animation engine to developers and manipulation by JavaScript. This API was designed to underlie implementations of both CSS Animations and CSS Transitions, and leaves the door open to future animation effects. It is one of the most performant ways to animate on the Web where supported, letting the browser make its own internal optimizations without hacks, coercion, or Window.requestAnimationFrame(). <a href=https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API>Using the Web Animations API.</a></span> API:</p>
 
 <pre><code>
 const animations = {
@@ -546,12 +547,10 @@ setTimeout(dio.render, 800, h(List, 1, 2, 3))
 
 		<p>In large applications, bundles might become too big to send to the client in one chunk, this suggests the need to divide the app into smaller chunks and only load a component from the server when it is actually needed.</p>
 
-		<p>To make this task easier DIO allows a <code>Promise</code> return type from Components that you can use to control when a component renders, essentially baking the  
-		<a href="https://en.wikipedia.org/wiki/Lazy_loading">"Lazy loading"</a><label for=5></label><span class="note">Lazy loading is a design pattern commonly used in computer programming to defer initialization of an object until the point at which it is needed. It can contribute to efficiency in the program's operation if properly and appropriately used.</span> design pattern into the component model.
-		</p>
+		<p>To make this task easier components are allowed a <code>Promise</code> return type that you can be used to control when a component renders.
 
 		<p>
-			However when talking about lazy loading, we have to consider what we want to display while we wait for the network to resolve, for this specific reason DIO also supports optional children what define what element/component will render while waiting for the network.
+			However at the same time when talking about async operations we have to consider what we want to display while we wait for the network to resolve
 		</p>
 
 <pre><code>
@@ -562,11 +561,11 @@ class Welcome {
 }		
 </code></pre>
 
-		<p>This allows us to lazy load components when we need them and what to display before the requested module has been resolved.</p>
+		<p>When the children of a <code>Promise</code> element are specified the reconciler renders these children for the time it takes for the promise to resolve.</p>
 
 		<h1 id=Children>Children</h2>
 
-		<p>Because <code>this.props.children</code> is an opaque data-strucuture DIO provides utility functions to normalize working with the opaque data-strucuture when needed.</p>
+		<p>Because <code>this.props.children</code> is an opaque data-strucuture utilities are provided to help to normalize working with this where needed.</p>
 			
 		<h2>Children.map</h2>
 
