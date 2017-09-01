@@ -21,6 +21,7 @@
 	var ElementFragment = -2
 	var ElementPortal = -1
 	var ElementIntermediate = 0
+	var ElementVoid = 0
 	var ElementComponent = 1
 	var ElementNode = 2
 	var ElementText = 3
@@ -1590,7 +1591,7 @@
 			host = host.host
 		}
 	
-		console.error(trace + '\n` from "'+from+'"\n\n'+stack+'\n\n')
+		console.error(trace + '\n` from "' + from + '"\n\n' + stack + '\n\n')
 		
 		return this
 	}

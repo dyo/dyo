@@ -60,7 +60,7 @@ function toChunk (element, stack, writable) {
 		case ElementNode:
 			output = '<' + type + toProps(element, element.props) + '>'
 			
-			if (elementType(type) < 1)
+			if (elementType(type) === ElementVoid)
 				break
 			
 			if (element.html) {

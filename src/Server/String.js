@@ -16,7 +16,7 @@ function toString () {
 	var length = children.length
 	var output = element.flag > ElementIntermediate ? '<' + type + toProps(element, element.props) + '>' : ''
 
-	if (elementType(type) < 1)
+	if (elementType(type) === ElementVoid)
 		return output
 
 	if (!element.html)

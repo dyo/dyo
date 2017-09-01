@@ -11,6 +11,7 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 	var ElementFragment = -2
 	var ElementPortal = -1
 	var ElementIntermediate = 0
+	var ElementVoid = 0
 	var ElementComponent = 1
 	var ElementNode = 2
 	var ElementText = 3
@@ -107,8 +108,8 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 			case 'link':
 			case 'input':
 			case 'hr':
-			case '!doctype': return 0
-			default: return 1
+			case '!doctype': return ElementVoid
+			default: return ElementNode
 		}
 	}
 	
@@ -153,7 +154,7 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 		var length = children.length
 		var output = element.flag > ElementIntermediate ? '<' + type + toProps(element, element.props) + '>' : ''
 	
-		if (elementType(type) < 1)
+		if (elementType(type) === ElementVoid)
 			return output
 	
 		if (!element.html)
@@ -318,7 +319,7 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 			case ElementNode:
 				output = '<' + type + toProps(element, element.props) + '>'
 				
-				if (elementType(type) < 1)
+				if (elementType(type) === ElementVoid)
 					break
 				
 				if (element.html) {

@@ -54,8 +54,8 @@ function elementType (type) {
 		case 'link':
 		case 'input':
 		case 'hr':
-		case '!doctype': return 0
-		default: return 1
+		case '!doctype': return ElementVoid
+		default: return ElementNode
 	}
 }
 

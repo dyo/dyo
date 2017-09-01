@@ -205,11 +205,11 @@ function DOMType (type, xmlns) {
  */
 function DOMFind (element, sibling, parent) {
 	var value = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
-	var nodeName = ''
+	var type = element.type.toLowerCase()
 
 	while (value)
-		switch (nodeName = value.nodeName.toLowerCase()) {
-			case element.type.toLowerCase():
+		switch (value.nodeName.toLowerCase()) {
+			case type:
 				if (element.flag === ElementText) {
 					if (element.next.flag === ElementText)
 						value = value.splitText(element.children.length)
