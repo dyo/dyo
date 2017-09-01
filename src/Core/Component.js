@@ -41,7 +41,7 @@ function setState (state, callback) {
  * @param {function} callback
  */
 function forceUpdate (callback) {
-	enqueueUpdate(this[SymbolElement], this, callback, 0)
+	enqueueUpdate(this[SymbolElement], this, callback, ComponentForce)
 }
 
 /**
@@ -100,19 +100,19 @@ function componentUpdate (element, snapshot, signature) {
 	var prevProps = element.props
 	var nextProps = snapshot.props
 	var prevState = instance.state
-	var nextState = signature > 1 ? assign({}, prevState, element.state) : prevState
+	var nextState = signature === ComponentUpdate ? assign({}, prevState, element.state) : prevState
 
 	if (owner[LifecycleChildContext])
 		merge(element.context, getChildContext(element))
 
 	switch (signature) {
-		case 0:
+		case ComponentForce:
 			break
-		case 1:
+		case ComponentReconcile:
 			if (owner[LifecycleWillReceiveProps]) {
 				lifecycleUpdate(element, LifecycleWillReceiveProps, nextProps, nextContext)
 			}
-		case 2:
+		case ComponentUpdate:
 			if (owner[LifecycleShouldUpdate])
 				if (lifecycleUpdate(element, LifecycleShouldUpdate, nextProps, nextState, nextContext) === false)
 					return void (element.work = WorkSync)
@@ -182,7 +182,7 @@ function enqueueState (element, instance, state, callback) {
 			default:
 				element.state = element.work > WorkTask ? state : assign(instance.state, element.state, state)
 
-				enqueueUpdate(element, instance, callback, 2)
+				enqueueUpdate(element, instance, callback, ComponentUpdate)
 		}
 }
 
@@ -195,7 +195,7 @@ function enqueueCallback (element, instance, callback) {
 	try {
 		return callback.call(instance, instance.state, instance.props)
 	} catch (e) {
-		errorBoundary(element, e, LifecycleState+':'+LifecycleCallback, 1)
+		errorBoundary(element, e, LifecycleSetState+':'+LifecycleCallback, ErrorActive)
 	}
 }
 
@@ -211,7 +211,7 @@ function enqueuePending (element, instance, state, callback) {
 			enqueueState(element, instance, value, callback)
 		})
 	}).catch(function (e) {
-		errorBoundary(element, e, LifecycleAsync+':'+LifecycleState, 1)
+		errorBoundary(element, e, LifecycleAsync+':'+LifecycleSetState, ErrorActive)
 	})
 }
 
@@ -269,7 +269,7 @@ function getChildInstance (element) {
 	try {
 		return new element.type(element.props, element.context)
 	} catch (e) {
-		errorBoundary(element, e, LifecycleConstructor, 1)
+		errorBoundary(element, e, LifecycleConstructor, ErrorActive)
 	}
 
 	return new Component()
@@ -283,7 +283,7 @@ function getChildElement (element) {
 	try {
 		return commitElement(element.instance.render(element.instance.props, element.instance.state, element.context))
 	} catch (e) {
-		return commitElement(errorBoundary(element, e, LifecycleRender, 1))
+		return commitElement(errorBoundary(element, e, LifecycleRender, ErrorActive))
 	}
 }
 

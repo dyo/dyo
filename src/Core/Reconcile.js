@@ -53,7 +53,7 @@ function reconcileElement (element, snapshot) {
 		case ElementFragment:
 			return reconcileChildren(element, snapshot)
 		case ElementComponent:
-			return componentUpdate(element, snapshot, 1)
+			return componentUpdate(element, snapshot, ComponentReconcile)
 		case ElementText:
 			if (element.children !== snapshot.children)
 				commitValue(element, element.children = snapshot.children)
@@ -92,7 +92,7 @@ function reconcileChildren (element, snapshot) {
 	if (!snapshot.keyed) {
 		i = aLength > bLength ? bLength : aLength
 
-		while (i--) { 
+		while (i-- > 0) { 
 			reconcileElement(aHead, bHead) 
 			bHead = bHead.next
 			aHead = aHead.next

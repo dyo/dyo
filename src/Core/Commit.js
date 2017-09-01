@@ -37,7 +37,7 @@ function commitPromise (element, snapshot) {
 		else
 			reconcileElement(element, commitElement(value))
 	}).catch(function (e) {
-		errorBoundary(element, e, LifecycleAsync+':'+LifecycleRender, 1)
+		errorBoundary(element, e, LifecycleAsync+':'+LifecycleRender, ErrorActive)
 	})
 }
 
@@ -54,8 +54,9 @@ function commitChildren (element, children, host, signature, mode) {
 	var next = sibling
 
 	while (length-- > 0) {
-		if (!next.DOM && mode > ModePull) {
-			children.insert(next = merge(new Element(ElementNode), sibling = next), sibling)
+		if (next.DOM !== null && mode !== ModePull) {
+			sibling = next
+			children.insert(next = merge(new Element(ElementNode), next), sibling)
 			children.remove(sibling)
 		}
 
@@ -113,7 +114,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case ElementText:
  			switch (mode) {
  				case ModePull:
- 					if (element.DOM = DOMFind(element, elementPrev(element), parent))
+ 					if (element.DOM = DOMFind(element, elementPrev(element, MountAppend), parent))
  						break
  				default:
  					element.DOM = commitDOM(element)
@@ -273,7 +274,7 @@ function commitDOM (element) {
 	try {
 		return element.flag === ElementNode ? DOMElement(element) : DOMText(element)
 	} catch (e) {
-		return commitDOM(commitElement(errorBoundary(element, e, LifecycleRender, 1)))
+		return commitDOM(commitElement(errorBoundary(element, e, LifecycleRender, ErrorActive)))
 	}
 }
 

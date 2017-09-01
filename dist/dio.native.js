@@ -26,6 +26,10 @@
 	var ElementNode = 2
 	var ElementText = 3
 	
+	var ComponentForce = 0
+	var ComponentReconcile = 1
+	var ComponentUpdate = 2
+	
 	var WorkTask = 0
 	var WorkSync = 1
 	
@@ -45,11 +49,14 @@
 	var PropsAppend = 1
 	var PropsReplace = 2
 	
+	var ErrorPassive = 0
+	var ErrorActive = 1
+	
 	var LifecycleCallback = 'callback'
 	var LifecycleRender = 'render'
 	var LifecycleConstructor = 'constructor'
 	var LifecycleAsync = 'async'
-	var LifecycleState = 'setState'
+	var LifecycleSetState = 'setState'
 	var LifecycleFindDOMNode = 'findDOMNode'
 	var LifecycleWillMount = 'componentWillMount'
 	var LifecycleDidMount = 'componentDidMount'
@@ -67,15 +74,15 @@
 	var Promise = window.Promise || noop
 	var Node = window.Node || noop
 	
-	var SymbolIterator = Symbol.iterator || Symbol('Iterator')
-	var SymbolElement = Symbol('Element')
-	var SymbolComponent = Symbol('Component')
-	
 	var root = new WeakMap()
 	var document = window.document || noop
 	var requestAnimationFrame = window.requestAnimationFrame || function(c) {setTimeout(c, 16)}
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
+	
+	var SymbolIterator = Symbol.iterator || Symbol('Iterator')
+	var SymbolElement = Symbol('Element')
+	var SymbolComponent = Symbol('Component')
 	
 	/**
 	 * @constructor
@@ -368,7 +375,7 @@
 	 * @return {Element}
 	 */
 	function elementSibling (element, direction, signature) {
-		if (signature > MountAppend && element.flag !== ElementPortal && isValidElement(element.children[direction]))
+		if (signature === MountInsert && element.flag !== ElementPortal && isValidElement(element.children[direction]))
 			return element.children[direction]
 		else if (isValidElement(element[direction]))
 			return element[direction]
@@ -385,32 +392,32 @@
 	function elementChildren (element, children, child, index) {
 		if (child == null)
 			return elementChildren(element, children, elementText(''), index)
-		else
-			switch (child.constructor) {
-				case Element:
-					if (child.key == null)
-						child.key = '0|'+index
-					else if (element.keyed === false)
-						element.keyed = true
 	
-					children.push(child)
-					break
-				case Array:
-					for (var i = 0; i < child.length; ++i)
-						elementChildren(element, children, child[i], index + i)
+		switch (child.constructor) {
+			case Element:
+				if (child.key == null)
+					child.key = '0|'+index
+				else if (element.keyed === false)
+					element.keyed = true
 	
-					return index + i
-				case String:
-				case Number:
-					return elementChildren(element, children, elementText(child), index)
-				case Function:
-				case Promise:
-					return elementChildren(element, children, createElement(child), index)
-				case Boolean:
-					return elementChildren(element, children, null, index)
-				default:
-					return elementChildren(element, children, elementUnknown(child), index)
-			}
+				children.push(child)
+				break
+			case Array:
+				for (var i = 0; i < child.length; ++i)
+					elementChildren(element, children, child[i], index + i)
+	
+				return index + i
+			case String:
+			case Number:
+				return elementChildren(element, children, elementText(child), index)
+			case Function:
+			case Promise:
+				return elementChildren(element, children, createElement(child), index)
+			case Boolean:
+				return elementChildren(element, children, null, index)
+			default:
+				return elementChildren(element, children, elementUnknown(child), index)
+		}
 	
 		return index + 1
 	}
@@ -493,7 +500,7 @@
 	
 		switch ((element.children = children, element.type = type).constructor) {
 			case Function:
-				if (type.defaultProps != null)
+				if (type.defaultProps)
 					element.props = getDefaultProps(element, type.defaultProps, props)
 			case String:
 				break
@@ -539,7 +546,7 @@
 		try {
 			return callback.call(element.instance, primary, secondary, optional)
 		} catch (e) {
-			errorBoundary(element, e, LifecycleCallback, 0)
+			errorBoundary(element, e, LifecycleCallback, ErrorPassive)
 		}
 	}
 	
@@ -551,7 +558,7 @@
 		try {
 			return element.owner[name].call(element.instance)
 		} catch (e) {
-			errorBoundary(element, e, name, 1)
+			errorBoundary(element, e, name, ErrorActive)
 		}
 	}
 	
@@ -568,7 +575,7 @@
 	
 			lifecycleReturn(element, state)
 		} catch (e) {
-			errorBoundary(element, e, name, 1)
+			errorBoundary(element, e, name, ErrorActive)
 		}
 	}
 	
@@ -588,7 +595,7 @@
 	
 			lifecycleReturn(element, state)
 		} catch (e) {
-			errorBoundary(element, e, name, 1)
+			errorBoundary(element, e, name, ErrorActive)
 		}
 	}
 	
@@ -635,7 +642,7 @@
 	 * @param {function} callback
 	 */
 	function forceUpdate (callback) {
-		enqueueUpdate(this[SymbolElement], this, callback, 0)
+		enqueueUpdate(this[SymbolElement], this, callback, ComponentForce)
 	}
 	
 	/**
@@ -694,19 +701,19 @@
 		var prevProps = element.props
 		var nextProps = snapshot.props
 		var prevState = instance.state
-		var nextState = signature > 1 ? assign({}, prevState, element.state) : prevState
+		var nextState = signature === ComponentUpdate ? assign({}, prevState, element.state) : prevState
 	
 		if (owner[LifecycleChildContext])
 			merge(element.context, getChildContext(element))
 	
 		switch (signature) {
-			case 0:
+			case ComponentForce:
 				break
-			case 1:
+			case ComponentReconcile:
 				if (owner[LifecycleWillReceiveProps]) {
 					lifecycleUpdate(element, LifecycleWillReceiveProps, nextProps, nextContext)
 				}
-			case 2:
+			case ComponentUpdate:
 				if (owner[LifecycleShouldUpdate])
 					if (lifecycleUpdate(element, LifecycleShouldUpdate, nextProps, nextState, nextContext) === false)
 						return void (element.work = WorkSync)
@@ -776,7 +783,7 @@
 				default:
 					element.state = element.work > WorkTask ? state : assign(instance.state, element.state, state)
 	
-					enqueueUpdate(element, instance, callback, 2)
+					enqueueUpdate(element, instance, callback, ComponentUpdate)
 			}
 	}
 	
@@ -789,7 +796,7 @@
 		try {
 			return callback.call(instance, instance.state, instance.props)
 		} catch (e) {
-			errorBoundary(element, e, LifecycleState+':'+LifecycleCallback, 1)
+			errorBoundary(element, e, LifecycleSetState+':'+LifecycleCallback, ErrorActive)
 		}
 	}
 	
@@ -805,7 +812,7 @@
 				enqueueState(element, instance, value, callback)
 			})
 		}).catch(function (e) {
-			errorBoundary(element, e, LifecycleAsync+':'+LifecycleState, 1)
+			errorBoundary(element, e, LifecycleAsync+':'+LifecycleSetState, ErrorActive)
 		})
 	}
 	
@@ -863,7 +870,7 @@
 		try {
 			return new element.type(element.props, element.context)
 		} catch (e) {
-			errorBoundary(element, e, LifecycleConstructor, 1)
+			errorBoundary(element, e, LifecycleConstructor, ErrorActive)
 		}
 	
 		return new Component()
@@ -877,7 +884,7 @@
 		try {
 			return commitElement(element.instance.render(element.instance.props, element.instance.state, element.context))
 		} catch (e) {
-			return commitElement(errorBoundary(element, e, LifecycleRender, 1))
+			return commitElement(errorBoundary(element, e, LifecycleRender, ErrorActive))
 		}
 	}
 	
@@ -979,7 +986,7 @@
 			else
 				reconcileElement(element, commitElement(value))
 		}).catch(function (e) {
-			errorBoundary(element, e, LifecycleAsync+':'+LifecycleRender, 1)
+			errorBoundary(element, e, LifecycleAsync+':'+LifecycleRender, ErrorActive)
 		})
 	}
 	
@@ -996,8 +1003,9 @@
 		var next = sibling
 	
 		while (length-- > 0) {
-			if (!next.DOM && mode > ModePull) {
-				children.insert(next = merge(new Element(ElementNode), sibling = next), sibling)
+			if (next.DOM !== null && mode !== ModePull) {
+				sibling = next
+				children.insert(next = merge(new Element(ElementNode), next), sibling)
 				children.remove(sibling)
 			}
 	
@@ -1055,7 +1063,7 @@
 	 		case ElementText:
 	 			switch (mode) {
 	 				case ModePull:
-	 					if (element.DOM = DOMFind(element, elementPrev(element), parent))
+	 					if (element.DOM = DOMFind(element, elementPrev(element, MountAppend), parent))
 	 						break
 	 				default:
 	 					element.DOM = commitDOM(element)
@@ -1215,7 +1223,7 @@
 		try {
 			return element.flag === ElementNode ? DOMElement(element) : DOMText(element)
 		} catch (e) {
-			return commitDOM(commitElement(errorBoundary(element, e, LifecycleRender, 1)))
+			return commitDOM(commitElement(errorBoundary(element, e, LifecycleRender, ErrorActive)))
 		}
 	}
 	
@@ -1335,7 +1343,7 @@
 			case ElementFragment:
 				return reconcileChildren(element, snapshot)
 			case ElementComponent:
-				return componentUpdate(element, snapshot, 1)
+				return componentUpdate(element, snapshot, ComponentReconcile)
 			case ElementText:
 				if (element.children !== snapshot.children)
 					commitValue(element, element.children = snapshot.children)
@@ -1374,7 +1382,7 @@
 		if (!snapshot.keyed) {
 			i = aLength > bLength ? bLength : aLength
 	
-			while (i--) { 
+			while (i-- > 0) { 
 				reconcileElement(aHead, bHead) 
 				bHead = bHead.next
 				aHead = aHead.next
@@ -1574,7 +1582,7 @@
 			if (instance && state)
 				lifecycleReturn(host, state)
 		} catch (e) {
-			errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), 0)
+			errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), ErrorPassive)
 		}
 	}
 	
@@ -1624,7 +1632,7 @@
 	 * @return {*}
 	 */
 	function errorElement (element, snapshot, error, from, signature) {	
-		if (!signature || !element.owner)
+		if (signature === ErrorPassive || !element.owner)
 			return
 	
 		if (element.owner[LifecycleDidCatch])
@@ -1716,7 +1724,7 @@
 			
 		if (isValidElement(element)) {
 			if (element.flag < ElementPortal)
-				return findDOMNode(elementNext(element, 1))
+				return findDOMNode(elementNext(element, MountAppend))
 			else if (element.DOM)
 				return DOMTarget(element)
 		}
@@ -1772,18 +1780,18 @@
 		map: function map (children, callback, thisArg) {
 			if (children != null)
 				return this.toArray(children).map(callback, thisArg)
-			else
-				return children
+	
+			return children
 		},
 		/**
 		 * @param {*} children 
 		 * @return {Element}
 		 */
 		only: function only (children) {
-			if (!isValidElement(children))
-				invariant('Children.only', 'Expected to receive a single element')
-			else
+			if (isValidElement(children))
 				return children
+			
+			invariant('Children.only', 'Expected to receive a single element')
 		},
 		/**
 		 * @param {*} children 

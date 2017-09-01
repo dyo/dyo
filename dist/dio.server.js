@@ -16,6 +16,10 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 	var ElementNode = 2
 	var ElementText = 3
 	
+	var ComponentForce = 0
+	var ComponentReconcile = 1
+	var ComponentUpdate = 2
+	
 	var WorkTask = 0
 	var WorkSync = 1
 	
@@ -35,11 +39,14 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 	var PropsAppend = 1
 	var PropsReplace = 2
 	
+	var ErrorPassive = 0
+	var ErrorActive = 1
+	
 	var LifecycleCallback = 'callback'
 	var LifecycleRender = 'render'
 	var LifecycleConstructor = 'constructor'
 	var LifecycleAsync = 'async'
-	var LifecycleState = 'setState'
+	var LifecycleSetState = 'setState'
 	var LifecycleFindDOMNode = 'findDOMNode'
 	var LifecycleWillMount = 'componentWillMount'
 	var LifecycleDidMount = 'componentDidMount'

@@ -131,7 +131,7 @@ function elementNext (element, signature) {
  * @return {Element}
  */
 function elementSibling (element, direction, signature) {
-	if (signature > MountAppend && element.flag !== ElementPortal && isValidElement(element.children[direction]))
+	if (signature === MountInsert && element.flag !== ElementPortal && isValidElement(element.children[direction]))
 		return element.children[direction]
 	else if (isValidElement(element[direction]))
 		return element[direction]
@@ -148,32 +148,32 @@ function elementSibling (element, direction, signature) {
 function elementChildren (element, children, child, index) {
 	if (child == null)
 		return elementChildren(element, children, elementText(''), index)
-	else
-		switch (child.constructor) {
-			case Element:
-				if (child.key == null)
-					child.key = '0|'+index
-				else if (element.keyed === false)
-					element.keyed = true
 
-				children.push(child)
-				break
-			case Array:
-				for (var i = 0; i < child.length; ++i)
-					elementChildren(element, children, child[i], index + i)
+	switch (child.constructor) {
+		case Element:
+			if (child.key == null)
+				child.key = '0|'+index
+			else if (element.keyed === false)
+				element.keyed = true
 
-				return index + i
-			case String:
-			case Number:
-				return elementChildren(element, children, elementText(child), index)
-			case Function:
-			case Promise:
-				return elementChildren(element, children, createElement(child), index)
-			case Boolean:
-				return elementChildren(element, children, null, index)
-			default:
-				return elementChildren(element, children, elementUnknown(child), index)
-		}
+			children.push(child)
+			break
+		case Array:
+			for (var i = 0; i < child.length; ++i)
+				elementChildren(element, children, child[i], index + i)
+
+			return index + i
+		case String:
+		case Number:
+			return elementChildren(element, children, elementText(child), index)
+		case Function:
+		case Promise:
+			return elementChildren(element, children, createElement(child), index)
+		case Boolean:
+			return elementChildren(element, children, null, index)
+		default:
+			return elementChildren(element, children, elementUnknown(child), index)
+	}
 
 	return index + 1
 }
@@ -256,7 +256,7 @@ function createElement (type, props) {
 
 	switch ((element.children = children, element.type = type).constructor) {
 		case Function:
-			if (type.defaultProps != null)
+			if (type.defaultProps)
 				element.props = getDefaultProps(element, type.defaultProps, props)
 		case String:
 			break

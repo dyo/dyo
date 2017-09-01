@@ -201,22 +201,24 @@ function DOMType (type, xmlns) {
  * @param {Element} parent
  */
 function DOMFind (element, sibling, parent) {
-	var value = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
+	var target = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
 	var type = element.type.toLowerCase()
 
-	while (value)
-		switch (value.nodeName.toLowerCase()) {
+	while (target)
+		switch (target.nodeName.toLowerCase()) {
 			case type:
 				if (element.flag === ElementText) {
 					if (element.next.flag === ElementText)
-						value = value.splitText(element.children.length)
+						target = target.splitText(element.children.length)
 
-					if (value.nodeValue !== element.children)
-						value.nodeValue = element.children
+					if (target.nodeValue !== element.children)
+						target.nodeValue = element.children
 				}
 
-				return DOM(value)
+				return DOM(target)
 			default:
-				value = value.nextSibling
+				target = target.nextSibling
 		}
+
+	return null
 }

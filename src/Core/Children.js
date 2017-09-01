@@ -43,18 +43,18 @@ var Children = {
 	map: function map (children, callback, thisArg) {
 		if (children != null)
 			return this.toArray(children).map(callback, thisArg)
-		else
-			return children
+
+		return children
 	},
 	/**
 	 * @param {*} children 
 	 * @return {Element}
 	 */
 	only: function only (children) {
-		if (!isValidElement(children))
-			invariant('Children.only', 'Expected to receive a single element')
-		else
+		if (isValidElement(children))
 			return children
+		
+		invariant('Children.only', 'Expected to receive a single element')
 	},
 	/**
 	 * @param {*} children 

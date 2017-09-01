@@ -42,7 +42,7 @@ function errorBoundary (element, error, from, signature) {
  * @return {*}
  */
 function errorElement (element, snapshot, error, from, signature) {	
-	if (!signature || !element.owner)
+	if (signature === ErrorPassive || !element.owner)
 		return
 
 	if (element.owner[LifecycleDidCatch])

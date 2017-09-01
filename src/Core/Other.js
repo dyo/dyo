@@ -11,7 +11,7 @@ function findDOMNode (element) {
 		
 	if (isValidElement(element)) {
 		if (element.flag < ElementPortal)
-			return findDOMNode(elementNext(element, 1))
+			return findDOMNode(elementNext(element, MountAppend))
 		else if (element.DOM)
 			return DOMTarget(element)
 	}

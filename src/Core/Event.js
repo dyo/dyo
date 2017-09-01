@@ -21,7 +21,7 @@ function handleEvent (event) {
 		if (instance && state)
 			lifecycleReturn(host, state)
 	} catch (e) {
-		errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), 0)
+		errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), ErrorPassive)
 	}
 }
 
