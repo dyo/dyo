@@ -133,7 +133,97 @@ class Welcome {
 }
 </code></pre>
 
-		<h2 id=props>Events</h2>
+		<h2 id=mounting>Mounting</h2>
+
+		<p>
+			Mounting happens in a bottom-up fashion in that the lifecycle method of child components will be invoked before the parent.
+		</p>
+
+		<p>
+			Lifecycle method <code>componentDidMount</code> receives the mounting native View node as an argument.
+		</p>
+
+<pre><code>
+class Welcome {
+	componentWillMount() {}
+}
+</code></pre>
+
+<pre><code>
+class Welcome {
+	componentDidMount() {}
+}
+</code></pre>
+
+		<h2 id=rendering>Rendering</h2>
+
+		<p>A components render method is called before the component is mounted/updated. The render method accept "props", "state" &amp; "context" as its arguments.</p>
+
+<pre><code>
+class Welcome {
+	render(props, state, context) {
+
+	}
+}
+
+function Welcome (props, state, context) {
+	
+}
+</code></pre>
+
+		<h2 id=updating>Updating</h2>
+
+		<p>
+			Certain lifecycles are only invoked in the update phase; When an update is triggerd through <code>this.setState</code> or <code>this.forceUpdate</code>, the lifecycle method <code>componentWillReceiveProps</code> will not be invoked because new props are not received.
+		</p>
+
+		<p>
+			On the other hand if <code>shouldComponentUpdate</code> returns <code>false</code> then that would halt a components update phase.
+		</p>
+
+<pre><code>
+class Welcome {
+	componentWillReceiveProps() {}
+}
+</code></pre>
+
+<pre><code>
+class Welcome {
+	shouldComponentUpdate() {}
+}
+</code></pre>
+
+<pre><code>
+class Welcome {
+	componentWillUpdate() {}
+}
+</code></pre>
+
+<pre><code>
+class Welcome {
+	componentDidUpdate() {}
+}
+</code></pre>
+
+		<h2 id=unmounting>Umounting</h2>
+
+		<p>
+			When/if the <code>componentWillUnmount</code> lifecycle method return a <code>Promise</code> the unmounting native View node will be removed only once the <code>Promise</code> has resolved.
+		</p>
+
+		<p>
+			Like <code>componentDidMount</code>, <code>componentWillUnmount</code> also receives the unmounting native View node as an argument.
+		</p>
+
+<pre><code>
+class Welcome {
+	componentWillUnmount() {}
+}
+</code></pre>
+
+		<h1 id=props>Props</h1>
+
+		<h2 id=events>Events</h2>
 		
 		<p>
 			All events in DIO are prefixed with <code>on</code> and case insensitve making both <code>onClick</code> and <code>onclick</code> equivalent.
@@ -205,79 +295,7 @@ class Welcome {
 }
 </code></pre>
 
-		<h2 id=mounting>Mounting</h2>
-
-		<p>
-			Mounting happens in a bottom-up fashion in that the lifecycle method of child components will be invoked before the parent.
-		</p>
-
-		<p>
-			The lifecycle method <code>componentDidMount</code> receives the mounting native View node as an argument.
-		</p>
-
-<pre><code>
-class Welcome {
-	componentWillMount() {}
-}
-</code></pre>
-
-<pre><code>
-class Welcome {
-	componentDidMount() {}
-}
-</code></pre>
-
-		<h2 id=updating>Updating</h2>
-
-		<p>
-			Certain lifecycles are only invoked in the update phase; When an update is triggerd through <code>this.setState</code> or <code>this.forceUpdate</code>, the lifecycle method <code>componentWillReceiveProps</code> will not be invoked because new props are not received.
-		</p>
-
-		<p>
-			On the other hand if <code>shouldComponentUpdate</code> returns <code>false</code> then that would halt a components update phase.
-		</p>
-
-<pre><code>
-class Welcome {
-	componentWillReceiveProps() {}
-}
-</code></pre>
-
-<pre><code>
-class Welcome {
-	shouldComponentUpdate() {}
-}
-</code></pre>
-
-<pre><code>
-class Welcome {
-	componentWillUpdate() {}
-}
-</code></pre>
-
-<pre><code>
-class Welcome {
-	componentDidUpdate() {}
-}
-</code></pre>
-
-		<h2 id=unmounting>Umounting</h2>
-
-		<p>
-			When/if the <code>componentWillUnmount</code> lifecycle method return a <code>Promise</code> the unmounting native View node will be removed only once the <code>Promise</code> has resolved.
-		</p>
-
-		<p>
-			Like <code>componentDidMount</code>, <code>componentWillUnmount</code> also receives the unmounting native View node as an argument.
-		</p>
-
-<pre><code>
-class Welcome {
-	componentWillUnmount() {}
-}
-</code></pre>
-
-		<h1 id=setstate>setState</h1>
+		<h1 id=state>State</h1>
 
 		<p>
 			A component can update its state by invoking <code>this.setState</code> with an Object representing how to update the state or a <code>Promise</code> that resolves to an with the same purpose.
