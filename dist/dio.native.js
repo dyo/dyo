@@ -568,7 +568,7 @@
 	 */
 	function lifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, element.DOM ? DOMTarget(element) : null)
+			var state = element.owner[name].call(element.instance, element.DOM && findDOMNode(element))
 			
 			if (name === LifecycleWillUnmount)
 				return state
@@ -1726,10 +1726,10 @@
 	
 		if (isValidElement(element[SymbolElement]))
 			return findDOMNode(element[SymbolElement])
-			
+	
 		if (isValidElement(element)) {
 			if (element.flag < ElementPortal)
-				return findDOMNode(elementNext(element, MountAppend))
+				return findDOMNode(elementNext(element, MountInsert))
 			else if (element.DOM)
 				return DOMTarget(element)
 		}

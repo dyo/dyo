@@ -8,10 +8,10 @@ function findDOMNode (element) {
 
 	if (isValidElement(element[SymbolElement]))
 		return findDOMNode(element[SymbolElement])
-		
+
 	if (isValidElement(element)) {
 		if (element.flag < ElementPortal)
-			return findDOMNode(elementNext(element, MountAppend))
+			return findDOMNode(elementNext(element, MountInsert))
 		else if (element.DOM)
 			return DOMTarget(element)
 	}
