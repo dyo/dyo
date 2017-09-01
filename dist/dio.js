@@ -1601,7 +1601,7 @@
 		var host = element
 		var stack = this.stack
 	
-		while (host.type) {
+		while (host && host.type) {
 			trace += tabs + '<' + getDisplayName(host.type) + '>\n'
 			tabs += '  '
 			host = host.host
@@ -1620,7 +1620,7 @@
 	 * @param {Element?}
 	 */
 	function errorBoundary (element, error, from, signature) {
-		return errorElement(element, {}, errorException.call(error, element, from), from, signature)
+		return errorElement(element, errorException.call(error, element, from), from, signature)
 	}
 	
 	/**
@@ -1631,26 +1631,28 @@
 	 * @param  {number} signature
 	 * @return {*}
 	 */
-	function errorElement (element, snapshot, error, from, signature) {	
-		if (signature === ErrorPassive || !element.owner)
+	function errorElement (element, error, from, signature) {	
+		var snapshot
+	
+		if (signature === ErrorPassive || !element || !element.owner)
 			return
 	
 		if (element.owner[LifecycleDidCatch])
 			try {
 				element.sync = WorkTask
-				snapshot.children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
+				snapshot = element.owner[LifecycleDidCatch].call(element.instance, error)
 				element.sync = WorkSync
 			} catch (e) {
 				return errorBoundary(element.host, e, LifecycleDidCatch, signature)
 			}
 		else
-			errorElement(element.host, snapshot, error, from, signature)
+			errorElement(element.host, error, from, signature)
 	
 		if (from === LifecycleRender)
-			return snapshot.children
+			return commitElement(snapshot)
 		else if (client)
 			requestAnimationFrame(function () {
-				reconcileElement(getHostElement(element), snapshot.children)
+				reconcileElement(getHostElement(element), commitElement(snapshot))
 			})
 	}
 	
@@ -1915,10 +1917,14 @@
 	 * @param {*} value
 	 */
 	function DOMProperty (element, name, value) {
-		if (value != null)
-			DOMTarget(element)[name] = value
-		else
-			DOMAttribute(element, name, value, '')
+		switch (value) {
+			case null:
+			case false:
+			case undefined:
+				return DOMProperty(element, name, '')
+		}
+	
+		DOMTarget(element)[name] = value
 	}
 	
 	/**
@@ -1936,13 +1942,15 @@
 					DOMTarget(element).removeAttribute(name)
 				else
 					DOMTarget(element).removeAttributeNS(xmlns, name)
-				break
-			default:
-				if (!xmlns)
-					DOMTarget(element).setAttribute(name, value)
-				else
-					DOMTarget(element).setAttributeNS(xmlns, name, value)
+				return
+			case true:
+				return DOMAttribute(element, name, '', xmlns)
 		}
+	
+		if (!xmlns)
+			DOMTarget(element).setAttribute(name, value)
+		else
+			DOMTarget(element).setAttributeNS(xmlns, name, value)
 	}
 	
 	/**
@@ -1954,11 +1962,10 @@
 	function DOMProperties (element, name, value, xmlns) {
 		switch (name) {
 			case 'className':
-				if (xmlns || value == null)
-					DOMProperties(element, 'class', value, xmlns)
-				else
-					DOMProperty(element, name, value)
-				return
+				if (!xmlns && value)
+					return DOMProperty(element, name, value)
+			case 'class':
+				return DOMAttribute(element, 'class', value, '')
 			case 'style':
 				if (typeof value === 'object')
 					return DOMStyle(element, value)

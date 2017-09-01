@@ -111,10 +111,14 @@ function DOMStyle (element, value) {
  * @param {*} value
  */
 function DOMProperty (element, name, value) {
-	if (value != null)
-		DOMTarget(element)[name] = value
-	else
-		DOMAttribute(element, name, value, '')
+	switch (value) {
+		case null:
+		case false:
+		case undefined:
+			return DOMProperty(element, name, '')
+	}
+
+	DOMTarget(element)[name] = value
 }
 
 /**
@@ -132,13 +136,15 @@ function DOMAttribute (element, name, value, xmlns) {
 				DOMTarget(element).removeAttribute(name)
 			else
 				DOMTarget(element).removeAttributeNS(xmlns, name)
-			break
-		default:
-			if (!xmlns)
-				DOMTarget(element).setAttribute(name, value)
-			else
-				DOMTarget(element).setAttributeNS(xmlns, name, value)
+			return
+		case true:
+			return DOMAttribute(element, name, '', xmlns)
 	}
+
+	if (!xmlns)
+		DOMTarget(element).setAttribute(name, value)
+	else
+		DOMTarget(element).setAttributeNS(xmlns, name, value)
 }
 
 /**
@@ -150,11 +156,10 @@ function DOMAttribute (element, name, value, xmlns) {
 function DOMProperties (element, name, value, xmlns) {
 	switch (name) {
 		case 'className':
-			if (xmlns || value == null)
-				DOMProperties(element, 'class', value, xmlns)
-			else
-				DOMProperty(element, name, value)
-			return
+			if (!xmlns && value)
+				return DOMProperty(element, name, value)
+		case 'class':
+			return DOMAttribute(element, 'class', value, '')
 		case 'style':
 			if (typeof value === 'object')
 				return DOMStyle(element, value)

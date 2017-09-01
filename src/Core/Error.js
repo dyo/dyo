@@ -11,7 +11,8 @@ function errorException (element, from) {
 	var host = element
 	var stack = this.stack
 
-	while (host.type) {
+
+	while (host && host.type) {
 		trace += tabs + '<' + getDisplayName(host.type) + '>\n'
 		tabs += '  '
 		host = host.host
@@ -30,7 +31,7 @@ function errorException (element, from) {
  * @param {Element?}
  */
 function errorBoundary (element, error, from, signature) {
-	return errorElement(element, {}, errorException.call(error, element, from), from, signature)
+	return errorElement(element, errorException.call(error, element, from), from, signature)
 }
 
 /**
@@ -41,25 +42,27 @@ function errorBoundary (element, error, from, signature) {
  * @param  {number} signature
  * @return {*}
  */
-function errorElement (element, snapshot, error, from, signature) {	
-	if (signature === ErrorPassive || !element.owner)
+function errorElement (element, error, from, signature) {	
+	var snapshot
+
+	if (signature === ErrorPassive || !element || !element.owner)
 		return
 
 	if (element.owner[LifecycleDidCatch])
 		try {
 			element.sync = WorkTask
-			snapshot.children = commitElement(element.owner[LifecycleDidCatch].call(element.instance, error))
+			snapshot = element.owner[LifecycleDidCatch].call(element.instance, error)
 			element.sync = WorkSync
 		} catch (e) {
 			return errorBoundary(element.host, e, LifecycleDidCatch, signature)
 		}
 	else
-		errorElement(element.host, snapshot, error, from, signature)
+		errorElement(element.host, error, from, signature)
 
 	if (from === LifecycleRender)
-		return snapshot.children
+		return commitElement(snapshot)
 	else if (client)
 		requestAnimationFrame(function () {
-			reconcileElement(getHostElement(element), snapshot.children)
+			reconcileElement(getHostElement(element), commitElement(snapshot))
 		})
 }

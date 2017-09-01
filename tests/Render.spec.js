@@ -82,17 +82,18 @@ module.exports = ({h, render}) => {
 		render('hello', container)
 		ok(compare(container, 'hello'), 'render text')
 
-		render(h('h1', {className: 1}, '0'), container)
-		ok(compare(container, '<h1 class="1">0</h1>'), 'render element className')
-
 		render(h('h1', {className: undefined}, '0'), container)
 		ok(compare(container, '<h1>0</h1>'), 'render element property(undefined)')
 
-		render(h('h1', {className: null}, '0'), container)
+		render(h('h1', {prop: null}, '0'), container)
+		console.log(container.innerHTML)
 		ok(compare(container, '<h1>0</h1>'), 'render element property(null)')
 
 		render(h('h1', {class: 1}, '0'), container)
 		ok(compare(container, '<h1 class="1">0</h1>'), 'render element class')
+
+		render(h('h1', {className: 2}, '0'), container)
+		ok(compare(container, '<h1 class="2">0</h1>'), 'render element className')
 
 		render(h('h1', {style: {width: '100px'}}, '0'), container)
 		ok(container.firstChild.style.width === '100px', 'render element style object')
