@@ -79,7 +79,7 @@ The easiest way to get started with DIO is to walk through the [Introduction to 
 
 1. Error Boundary, "componentDidCatch".
 
-### setState
+### State
 
 1. Object.
 1. Promise.
