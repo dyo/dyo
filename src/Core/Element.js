@@ -1,10 +1,10 @@
 /**
  * @constructor
- * @param {number} flag
+ * @param {number} id
  */
-function Element (flag) {
-	this.flag = flag
-	this.work = WorkSync
+function Element (id) {
+	this.id = id
+	this.work = SharedWorkSync
 	this.keyed = false
 	this.xmlns = ''
 	this.key = null
@@ -29,7 +29,7 @@ function Element (flag) {
  * @return {Element}
  */
 function elementText (content) {
-	var element = new Element(ElementText)
+	var element = new Element(SharedElementText)
 
 	element.type = '#text'
 	element.children = content
@@ -42,7 +42,7 @@ function elementText (content) {
  * @return {Element}
  */
 function elementIntermediate (node) {
-	var element = new Element(ElementIntermediate)
+	var element = new Element(SharedElementIntermediate)
 
 	element.context = {}
 	element.DOM = node
@@ -55,7 +55,7 @@ function elementIntermediate (node) {
  * @return {Element}
  */
 function elementFragment (fragment) {
-	var element = new Element(ElementFragment)
+	var element = new Element(SharedElementFragment)
 	var children = new List()
 	
 	element.type = '#fragment'
@@ -103,7 +103,7 @@ function elementUnknown (child) {
 	else if (child instanceof Date)
 		return elementText(child)
 
-	invariant(LifecycleRender, 'Invalid element [object '+getDisplayName(child)+']')
+	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(child)+']')
 }
 
 /**
@@ -131,10 +131,14 @@ function elementNext (element, signature) {
  * @return {Element}
  */
 function elementSibling (element, direction, signature) {
-	if (signature === MountInsert && element.flag !== ElementPortal && isValidElement(element.children[direction]))
-		return element.children[direction]
-	else if (isValidElement(element[direction]))
-		return element[direction]
+	if (signature < SharedElementIntermediate)
+		return element.id < SharedElementIntermediate ? elementSibling(element, direction, -signature) : element
+
+	if (signature === SharedMountInsert && element.id < SharedElementPortal && isValidElement(element.children[direction]))
+		return elementSibling(element.children[direction], direction, -signature)
+	
+	if (isValidElement(element[direction]))
+		return elementSibling(element[direction], direction, -signature)
 
 	return elementIntermediate(DOM(null))
 }
@@ -206,10 +210,10 @@ function createElement (type, props) {
 	var i = props != null ? 1 : 2
 	var size = 0
 	var index = 0
-	var flag = typeof type !== 'function' ? ElementNode : ElementComponent
+	var id = typeof type !== 'function' ? SharedElementNode : SharedElementComponent
 	var length = arguments.length
-	var element = new Element(flag)
-	var children = flag !== ElementComponent ? new List() : null
+	var element = new Element(id)
+	var children = id !== SharedElementComponent ? new List() : null
 	
 	if (i < 2)
 		switch (props.constructor) {
@@ -221,7 +225,7 @@ function createElement (type, props) {
 					if (props.ref !== undefined)
 						element.ref = props.ref
 
-					if (flag !== ElementComponent) {
+					if (id !== SharedElementComponent) {
 						if (props.xmlns !== undefined)
 							element.xmlns = props.xmlns
 
@@ -240,7 +244,7 @@ function createElement (type, props) {
 		element.props = {}
 
 	if ((size = length - i) > 0) {
-		if (flag !== ElementComponent)
+		if (id !== SharedElementComponent)
 			for (; i < length; ++i)
 				index = elementChildren(element, children, arguments[i], index)
 		else {
@@ -261,16 +265,16 @@ function createElement (type, props) {
 		case String:
 			break
 		case Element:
-			element.flag = type.flag
+			element.id = type.id
 			element.type = type.type
 			element.props = assign({}, type.props, element.props)						
 			break
 		case Promise:
-			element.flag = ElementPromise
+			element.id = SharedElementPromise
 			break
 		default:
 			if (DOMValid(type))
-				element.flag = ElementPortal
+				element.id = SharedElementPortal
 	}
 
 	return element

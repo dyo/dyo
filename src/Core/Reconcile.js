@@ -32,8 +32,8 @@ function reconcileObject (prevObject, nextObject) {
  * @param {Element} element
  * @param {Element} snapshot
  */
-function reconcileProps (element, snapshot) {
-	commitProps(element, reconcileObject(element.props, snapshot.props), PropsReplace)
+function reconcileProperties (element, snapshot) {
+	commitProperties(element, reconcileObject(element.props, snapshot.props), SharedPropsUpdate)
 	element.props = snapshot.props
 }
 
@@ -42,25 +42,25 @@ function reconcileProps (element, snapshot) {
  * @param {Element} snapshot
  */
 function reconcileElement (element, snapshot) {	
-	if (snapshot.flag === ElementPromise)
+	if (snapshot.id === SharedElementPromise)
 		return commitPromise(element, snapshot)
 
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
-		return commitReplace(element, snapshot, MountReplace)
+		return commitReplace(element, snapshot, SharedMountReplace)
 
-	switch (element.flag) {
-		case ElementPortal:
-		case ElementFragment:
+	switch (element.id) {
+		case SharedElementPortal:
+		case SharedElementFragment:
 			return reconcileChildren(element, snapshot)
-		case ElementComponent:
-			return componentUpdate(element, snapshot, ComponentReconcile)
-		case ElementText:
+		case SharedElementComponent:
+			return componentUpdate(element, snapshot, SharedComponentPropsUpdate)
+		case SharedElementText:
 			if (element.children !== snapshot.children)
 				commitValue(element, element.children = snapshot.children)
 			break
-		case ElementNode:
+		case SharedElementNode:
 			reconcileChildren(element, snapshot)
-			reconcileProps(element, snapshot)
+			reconcileProperties(element, snapshot)
 	}
 }
 
@@ -85,7 +85,7 @@ function reconcileChildren (element, snapshot) {
 		case aLength:
 			return reconcileRemove(aHead, element, children, 0, aLength)
 		case bLength:
-			return reconcileInsert(bHead, bHead, element, host, children, 0, bLength, MountAppend)
+			return reconcileInsert(bHead, bHead, element, host, children, 0, bLength, SharedMountAppend)
 	}
 
 	// non-keyed
@@ -106,7 +106,7 @@ function reconcileChildren (element, snapshot) {
 				while (aLength < bLength) {
 					aHead = bHead
 					bHead = bHead.next
-					commitMount(children.push(aHead), aHead, element, host, MountAppend, ModePush)
+					commitMount(children.push(aHead), aHead, element, host, SharedMountAppend, SharedMountCommit)
 					aLength++
 				}
 		return
@@ -151,9 +151,9 @@ function reconcileChildren (element, snapshot) {
 	if (aPos > aEnd) {
 		if (bPos <= bEnd++) {
 			if (bEnd < bLength)
-				reconcileInsert(bHead, aTail, element, host, children, bPos, bEnd, MountInsert)
+				reconcileInsert(bHead, aTail, element, host, children, bPos, bEnd, SharedMountInsert)
 			else
-				reconcileInsert(bHead.next, aTail, element, host, children, bPos, bEnd, MountAppend)
+				reconcileInsert(bHead.next, aTail, element, host, children, bPos, bEnd, SharedMountAppend)
 		}
 	} else if (bPos > bEnd)
 		reconcileRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
@@ -218,9 +218,9 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 				if (delete aPool[bHash])
 					aSize--
 			} else if (aNode === children)
-				commitMount(children.push(bNode), bNode, element, host, MountAppend, ModePush)
+				commitMount(children.push(bNode), bNode, element, host, SharedMountAppend, SharedMountCommit)
 			else
-				commitMount(children.insert(bNode, aNode), aNode, element, host, MountInsert, ModePush)	
+				commitMount(children.insert(bNode, aNode), aNode, element, host, SharedMountInsert, SharedMountCommit)	
 
 			bNode = bNext
 		}
@@ -230,7 +230,7 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 				commitUnmount(children.remove(aPool[bHash]), element, 0)
 	} else {
 		reconcileRemove(aHead, element, children, 0, aEnd)
-		reconcileInsert(bHead, bHead, element, host, children, 0, bEnd, MountAppend)
+		reconcileInsert(bHead, bHead, element, host, children, 0, bEnd, SharedMountAppend)
 	}
 }
 
@@ -250,7 +250,7 @@ function reconcileInsert (element, sibling, parent, host, children, index, lengt
 	var prev = element
 
 	while (i++ < length)
-		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature, ModePush)
+		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature, SharedMountCommit)
 }
 
 /**

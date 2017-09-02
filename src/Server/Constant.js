@@ -2,13 +2,13 @@ var Readable = require('stream').Readable
 var RegExpEscape = /[<>&"']/g
 var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
 var RegExpVendor = /^(ms|webkit|moz)/
+var ElementPrototype = Element.prototype
 
-Element.prototype.html = ''
-Element.prototype.chunk = ''
-
-Element.prototype.toString = toString
-Element.prototype.toStream = toStream
-Element.prototype.toJSON = toJSON
+ElementPrototype.html = ''
+ElementPrototype.chunk = ''
+ElementPrototype.toString = toString
+ElementPrototype.toStream = toStream
+ElementPrototype.toJSON = toJSON
 
 exports.renderToString = renderToString
 exports.renderToStream = renderToStream

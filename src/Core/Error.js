@@ -45,29 +45,30 @@ function errorException (element, error, from) {
  * @param  {Error} error
  * @param  {string} from
  * @param  {number} signature
- * @return {Element}
+ * @return {Element?}
  */
 function errorElement (element, error, from, signature) {	
 	var snapshot
 
-	if (signature === ErrorPassive || !element || !element.owner)
+	if (signature === SharedErrorPassive || !element || !element.owner)
 		return
 
-	if (element.owner[LifecycleDidCatch])
+	if (element.owner[SharedComponentDidCatch])
 		try {
-			element.sync = WorkTask
-			snapshot = element.owner[LifecycleDidCatch].call(element.instance, error, {})
-			element.sync = WorkSync
+			element.sync = SharedWorkTask
+			snapshot = element.owner[SharedComponentDidCatch].call(element.instance, error, {})
+			element.sync = SharedWorkSync
 		} catch (e) {
-			return errorBoundary(element.host, e, LifecycleDidCatch, signature)
+			return errorBoundary(element.host, e, SharedComponentDidCatch, signature)
 		}
 	else
 		errorElement(element.host, error, from, signature)
 
-	if (client && from !== LifecycleRender)
+	if (from === SharedSiteRender)
+		return commitElement(snapshot)
+
+	if (element.DOM)
 		requestAnimationFrame(function () {
 			reconcileElement(getHostElement(element), commitElement(snapshot))
 		})
-
-	return commitElement(snapshot)
 }

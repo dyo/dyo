@@ -19,9 +19,9 @@ function handleEvent (event) {
 			state = callback.handleEvent(event)
 
 		if (instance && state)
-			lifecycleReturn(host, state)
+			getLifecycleReturn(host, state)
 	} catch (e) {
-		errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), ErrorPassive)
+		errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
 	}
 }
 

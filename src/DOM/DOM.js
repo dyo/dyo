@@ -14,7 +14,7 @@ function DOMDocument () {
  * @param {boolean}
  */
 function DOMValid (target) {
-	return target instanceof Node
+	return !!(target && target.ELEMENT_NODE)
 }
 
 /**
@@ -210,14 +210,15 @@ function DOMType (type, xmlns) {
  * @param {Element} parent
  */
 function DOMFind (element, sibling, parent) {
-	var target = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
 	var type = element.type.toLowerCase()
+	var target = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
+	var previous = target
 
 	while (target)
 		switch (target.nodeName.toLowerCase()) {
 			case type:
-				if (element.flag === ElementText) {
-					if (element.next.flag === ElementText)
+				if (element.id === SharedElementText) {
+					if (element.next.id === SharedElementText)
 						target = target.splitText(element.children.length)
 
 					if (target.nodeValue !== element.children)
@@ -226,7 +227,8 @@ function DOMFind (element, sibling, parent) {
 
 				return DOM(target)
 			default:
-				target.parentNode.removeChild((target = target.nextSibling).previousSibling)
+				target = (previous = target).nextSibling
+				previous.parentNode.removeChild(previous)
 		}
 
 	return null

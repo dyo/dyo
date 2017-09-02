@@ -4,10 +4,10 @@
 function toJSON () {
 	var element = this
 	
-	switch (element.flag) {
-		case ElementComponent:
-			return elementComponent(element).toJSON()
-		case ElementText:
+	switch (element.id) {
+		case SharedElementComponent:
+			return componentMount(element).toJSON()
+		case SharedElementText:
 			return element.children
 	}
 
@@ -18,5 +18,5 @@ function toJSON () {
 	while (length-- > 0)
 		output.children.push((children = children.next).toJSON())
 
-	return element.flag < ElementIntermediate ? output.children : output
+	return element.id < SharedElementIntermediate ? output.children : output
 }

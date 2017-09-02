@@ -1,17 +1,4 @@
 /**
- * @param {Element} element
- * @return {Element}
- */
-function elementComponent (element) {
-	componentMount(element)
-
-	if (element.owner[LifecycleChildContext])
-		element.context = getChildContext(element)
-	
-	return element.children
-}
-
-/**
  * @param {*} value
  * @return {string}
  */
@@ -54,8 +41,8 @@ function elementType (type) {
 		case 'link':
 		case 'input':
 		case 'hr':
-		case '!doctype': return ElementVoid
-		default: return ElementNode
+		case '!doctype': return SharedElementIntermediate
+		default: return SharedElementNode
 	}
 }
 

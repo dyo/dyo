@@ -4,19 +4,19 @@
 function toString () {
 	var element = this
 
-	switch (element.flag) {
-		case ElementComponent:
-			return elementComponent(element).toString()
-		case ElementText:
+	switch (element.id) {
+		case SharedElementComponent:
+			return componentMount(element).toString()
+		case SharedElementText:
 			return escapeText(element.children)
 	}
 
 	var type = element.type
 	var children = element.children
 	var length = children.length
-	var output = element.flag > ElementIntermediate ? '<' + type + toProps(element, element.props) + '>' : ''
+	var output = element.id === SharedElementNode ? '<' + type + toProps(element, element.props) + '>' : ''
 
-	if (elementType(type) === ElementVoid)
+	if (elementType(type) === SharedElementIntermediate)
 		return output
 
 	if (!element.html)
@@ -27,7 +27,7 @@ function toString () {
 		element.html = ''
 	}
 
-	return element.flag > ElementIntermediate ? output + '</'+type+'>' : output
+	return element.id === SharedElementNode ? output + '</'+type+'>' : output
 }
 
 /**

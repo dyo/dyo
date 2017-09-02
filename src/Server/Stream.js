@@ -41,26 +41,26 @@ function toStream (callback) {
  * @return {string}
  */
 function toChunk (element, stack, writable) {
-	while (element.flag === ElementComponent)
-		element = elementComponent(element)
+	while (element.id === SharedElementComponent)
+		element = componentMount(element)
 
 	var type = element.type
 	var children = element.children
 	var length = children.length
 	var output = ''
 
-	switch (element.flag) {
-		case ElementPromise:
+	switch (element.id) {
+		case SharedElementPromise:
 			return void element.type.then(function (element) {
 				toChunk(commitElement(element), stack, writable)
 			})
-		case ElementText:
+		case SharedElementText:
 			output = escapeText(children)
 			break
-		case ElementNode:
+		case SharedElementNode:
 			output = '<' + type + toProps(element, element.props) + '>'
 			
-			if (elementType(type) === ElementVoid)
+			if (elementType(type) === SharedElementIntermediate)
 				break
 			
 			if (element.html) {
@@ -74,7 +74,7 @@ function toChunk (element, stack, writable) {
 				break
 			}
 		default:
-			if (element.flag > ElementIntermediate)
+			if (element.id === SharedElementNode)
 				children.prev.chunk = '</'+type+'>'
 
 			while (length-- > 0)

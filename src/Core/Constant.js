@@ -1,7 +1,6 @@
 var Symbol = window.Symbol || function (d) {return 'Symbol('+d+')'}
 var WeakMap = window.WeakMap || Hash
 var Promise = window.Promise || noop
-var Node = window.Node || noop
 
 var root = new WeakMap()
 var document = window.document || noop

@@ -32,12 +32,13 @@ function commitPromise (element, snapshot) {
 	snapshot.type.then(function (value) {
 		if (!element.DOM)
 			return
-		if (element.flag === ElementPromise)
+
+		if (element.id === SharedElementPromise)
 			reconcileChildren(element, elementFragment(commitElement(value)))
 		else
 			reconcileElement(element, commitElement(value))
 	}).catch(function (e) {
-		errorBoundary(element, e, LifecycleAsync+':'+LifecycleRender, ErrorActive)
+		errorBoundary(element, e, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 	})
 }
 
@@ -54,9 +55,9 @@ function commitChildren (element, children, host, signature, mode) {
 	var next = sibling
 
 	while (length-- > 0) {
-		if (next.DOM !== null && mode !== ModePull) {
+		if (next.DOM !== null && mode !== SharedMountClone) {
 			sibling = next
-			children.insert(next = merge(new Element(ElementNode), next), sibling)
+			children.insert(next = merge(new Element(SharedElementNode), next), sibling)
 			children.remove(sibling)
 		}
 
@@ -78,59 +79,51 @@ function commitMount (element, sibling, parent, host, signature, mode) {
 	element.parent = parent
 	element.context = host.context
 
- 	switch (element.flag) {
- 		case ElementComponent:
- 			element.work = WorkTask
+ 	switch (element.id) {
+ 		case SharedElementComponent:
+ 			element.work = SharedWorkTask
  			
- 			componentMount(element)
-
- 			if (element.owner[LifecycleWillMount]) 
- 				lifecycleMount(element, LifecycleWillMount)
-
- 			if (element.owner[LifecycleChildContext])
- 				element.context = getChildContext(element)
-
- 			commitMount(element.children, sibling, parent, element, signature, mode)
+ 			commitMount(componentMount(element), sibling, parent, element, signature, mode)
  			element.DOM = element.children.DOM
 
  			if (element.ref)
- 				commitRef(element, element.ref, RefAssign)
+ 				commitReference(element, element.ref, SharedReferenceAssign)
  			
- 			if (element.owner[LifecycleDidMount])
- 				lifecycleMount(element, LifecycleDidMount)
+ 			if (element.owner[SharedComponentDidMount])
+ 				getLifecycleMount(element, SharedComponentDidMount)
 
- 			element.work = WorkSync
+ 			element.work = SharedWorkSync
  			return
- 		case ElementPortal:
+ 		case SharedElementPortal:
  			element.DOM = DOM(element.type)
  			break
- 		case ElementPromise:
+ 		case SharedElementPromise:
  			commitPromise(element, element)
- 		case ElementFragment:
+ 		case SharedElementFragment:
  			element.DOM = DOM(DOMTarget(parent))
  			break
- 		case ElementNode:
+ 		case SharedElementNode:
  			element.xmlns = DOMType(element.type, parent.xmlns)
- 		case ElementText:
+ 		case SharedElementText:
  			switch (mode) {
- 				case ModePull:
- 					if (element.DOM = DOMFind(element, elementPrev(element, MountAppend), parent))
+ 				case SharedMountClone:
+ 					if (element.DOM = DOMFind(element, elementPrev(element, SharedMountAppend), parent))
  						break
  				default:
  					element.DOM = commitDOM(element)
  					
- 					if (signature < MountInsert)
+ 					if (signature < SharedMountInsert)
  						commitAppend(element, parent)
  					else
  						commitInsert(element, sibling, parent)
  			}
 
- 			if (element.flag > ElementNode)
+ 			if (element.id === SharedElementText)
  				return
  	}
 
- 	commitChildren(element, element.children, host, MountAppend, mode)
- 	commitProps(element, element.props, PropsAppend)
+ 	commitChildren(element, element.children, host, SharedMountAppend, mode)
+ 	commitProperties(element, element.props, SharedPropsMount)
 }
 
 /**
@@ -139,7 +132,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  * @param {number} signature
  */
 function commitUnmount (element, parent, signature) {
-	if (element.flag === ElementComponent)
+	if (element.id === SharedElementComponent)
 		return componentUnmount(element, element.children, parent, signature)
 
 	commitRemove(element, parent)
@@ -152,12 +145,12 @@ function commitUnmount (element, parent, signature) {
  * @param {number} signature
  */
 function commitReplace (element, snapshot, signature) {
-	if (signature > MountInsert && commitUnmount(element, element.parent, MountReplace))
+	if (signature > SharedMountInsert && commitUnmount(element, element.parent, SharedMountReplace))
 		return void element.state.then(function () {
-			commitReplace(element, snapshot, MountInsert)
+			commitReplace(element, snapshot, SharedMountInsert)
 		})
 
-	commitMount(snapshot, elementNext(element, MountAppend), element.parent, element.host, MountInsert, ModePush)
+	commitMount(snapshot, elementNext(element, SharedMountAppend), element.parent, element.host, SharedMountInsert, SharedMountCommit)
 
 	for (var key in snapshot)
 		switch (key) {
@@ -176,27 +169,27 @@ function commitReplace (element, snapshot, signature) {
  * @param {number} signature
  */
 function commitDetach (element, signature) {
-	if (element.flag !== ElementText) {
+	if (element.id !== SharedElementText) {
 		var index = 0
 		var children = element.children
 		var length = children.length
 		var next = children.next
 
 		while (index++ < length)
-			switch (next.flag) {
-				case ElementComponent:
-					if (next.owner[LifecycleWillUnmount])
-						lifecycleMount(next, LifecycleWillUnmount)
+			switch (next.id) {
+				case SharedElementComponent:
+					if (next.owner[SharedComponentWillUnmount])
+						getLifecycleMount(next, SharedComponentWillUnmount)
 				default:
-					commitDetach(next, MountAppend)
+					commitDetach(next, SharedMountAppend)
 					next = next.next
 			}
 	}
 
 	if (element.ref)
-		commitRef(element, element.ref, RefRemove)
+		commitReference(element, element.ref, SharedReferenceRemove)
 
-	if (signature < MountReplace) {
+	if (signature < SharedMountReplace) {
 		element.context = null
 		element.state = null
 		element.event = null
@@ -210,25 +203,25 @@ function commitDetach (element, signature) {
  * @param {number} signature
  * @param {*} key
  */
-function commitRef (element, callback, signature, key) {
+function commitReference (element, callback, signature, key) {
 	switch (typeof callback) {
 		case 'string':
-			return commitRef(element, componentRef, signature, callback)			
+			return commitReference(element, componentReference, signature, callback)			
 		case 'function':
 			switch (signature) {
-				case RefRemove:
-					return void lifecycleCallback(element.host, callback, element.ref = null, key, element)
-				case RefAssign:
+				case SharedReferenceRemove:
+					return void getLifecycleCallback(element.host, callback, element.ref = null, key, element)
+				case SharedReferenceAssign:
 					element.ref = callback
-				case RefDispatch:
-					return void lifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
-				case RefReplace:
-					commitRef(element, callback, RefRemove, key)
-					commitRef(element, callback, RefAssign, key)
+				case SharedReferenceDispatch:
+					return void getLifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
+				case SharedReferenceReplace:
+					commitReference(element, callback, SharedReferenceRemove, key)
+					commitReference(element, callback, SharedReferenceAssign, key)
 			}
 			break
 		default:
-			commitRef(element, element.ref || noop, RefRemove, key)
+			commitReference(element, element.ref || noop, SharedReferenceRemove, key)
 	}
 }
 
@@ -252,11 +245,11 @@ function commitEvent (element, type, callback) {
  * @param {number} props
  * @param {number} signature
  */
-function commitProps (element, props, signature) {
+function commitProperties (element, props, signature) {
 	for (var key in props)
 		switch (key) {
 			case 'ref':
-				commitRef(element, props[key], signature)
+				commitReference(element, props[key], signature)
 			case 'key':
 			case 'xmlns':
 			case 'children':
@@ -275,9 +268,9 @@ function commitProps (element, props, signature) {
  */
 function commitDOM (element) {
 	try {
-		return element.flag === ElementNode ? DOMElement(element) : DOMText(element)
+		return element.id === SharedElementNode ? DOMElement(element) : DOMText(element)
 	} catch (e) {
-		return commitDOM(commitElement(errorBoundary(element, e, LifecycleRender, ErrorActive)))
+		return commitDOM(commitElement(errorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
 	}
 }
 
@@ -301,11 +294,11 @@ function commitContent (element) {
  * @param {Element} parent
  */
 function commitRemove (element, parent) {
-	if (element.flag > ElementIntermediate)
+	if (element.id > SharedElementIntermediate)
 		DOMRemove(element, parent)
 	else
 		element.children.forEach(function (children) {
-			commitRemove(children, element.flag < ElementPortal ? parent : element)
+			commitRemove(children, element.id < SharedElementPortal ? parent : element)
 		})
 }
 
@@ -315,12 +308,12 @@ function commitRemove (element, parent) {
  * @param {Element} parent
  */
 function commitInsert (element, sibling, parent) {
-	if (sibling.flag < ElementIntermediate)
-		return commitInsert(element, elementNext(sibling, MountInsert), parent)
+	if (sibling.id < SharedElementIntermediate)
+		return commitInsert(element, elementNext(sibling, SharedMountInsert), parent)
 
-	if (element.flag > ElementIntermediate)
+	if (element.id > SharedElementIntermediate)
 		DOMInsert(element, sibling, parent)
-	else if (element.flag < ElementPortal)
+	else if (element.id < SharedElementPortal)
 		element.children.forEach(function (children) {
 			commitInsert(children, sibling, parent)
 		})
@@ -331,12 +324,12 @@ function commitInsert (element, sibling, parent) {
  * @param {Element} parent
  */
 function commitAppend (element, parent) {
-	if (parent.flag < ElementPortal)
-		return commitInsert(element, elementNext(parent, MountAppend), parent)
+	if (parent.id < SharedElementPortal)
+		return commitInsert(element, elementNext(parent, SharedMountAppend), parent)
 
-	if (element.flag > ElementIntermediate)
+	if (element.id > SharedElementIntermediate)
 		DOMAppend(element, parent)
-	else if (element.flag < ElementPortal)
+	else if (element.id < SharedElementPortal)
 		element.children.forEach(function (children) {
 			commitAppend(children, parent)
 		})

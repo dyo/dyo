@@ -12,14 +12,12 @@ const core = [
 	'../../src/Core/Constant.js',
 	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
-	'../../src/Core/Lifecycle.js',
 	'../../src/Core/Component.js',
 	'../../src/Core/Commit.js',
 	'../../src/Core/Reconcile.js',
 	'../../src/Core/Event.js',
 	'../../src/Core/Error.js',
 	'../../src/Core/Render.js',
-	'../../src/Core/Other.js',
 	'../../src/Core/Children.js'
 ]
 
@@ -51,9 +49,9 @@ const getExports = (module) => {
 	return template.export + (module !== 'native' ? template.server : '')
 }
 
-const imports = 'exports, componentMount, commitElement, getChildContext, Element'
+const imports = 'exports, Element, componentMount, commitElement'
 const template = {
-	server: `\nif (!client)\n\trequire('./dio.server.js')(${imports})`,
+	server: `\nrequire && require('./dio.server.js')(${imports})`,
 	export: `
 exports.version = version
 exports.render = render
@@ -102,8 +100,7 @@ const wrapper = (open, module, content, close, version) => {
 					open+
 					fs.readFileSync(path.join(__dirname, 'UMD.js'), 
 					'utf8').trim() + '\n\n' + 
-					"\tvar version = '"+version+"'\n"+
-					'\tvar client = true\n\n'
+					"\tvar version = '"+version+"'\n\n"
 				),
 				body: pad(format(content)),
 				close: close
@@ -114,8 +111,7 @@ const wrapper = (open, module, content, close, version) => {
 					open+
 					fs.readFileSync(path.join(__dirname, 'UMD.js'), 
 					'utf8').trim() + '\n\n' + 
-					"\tvar version = '"+version+"'\n"+
-					'\tvar client = !require\n\n'
+					"\tvar version = '"+version+"'\n\n"
 				),
 				body: pad(format(content)),
 				close: close
@@ -125,12 +121,7 @@ const wrapper = (open, module, content, close, version) => {
 }
 
 const comment = (version, license) => `
-/*
- * DIO
- *
- * version ${version}
- * license ${license}
- */
+/*! DIO ${version} @license ${license} */
 `
 
 const bundle = (module, files, location) => {

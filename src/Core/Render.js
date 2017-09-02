@@ -10,7 +10,7 @@ function render (element, target, callback) {
 	if (root.has(target))
 		reconcileElement(root.get(target), commitElement(element))
 	else
-		mount(element, target, callback, ModePush)
+		mount(element, target, callback, SharedMountCommit)
 }
 
 /**
@@ -25,7 +25,7 @@ function hydrate (element, target, callback) {
 	if (root.has(target))
 		render(element, target, callback)
 	else
-		mount(element, target, callback, ModePull)
+		mount(element, target, callback, SharedMountClone)
 }
 
 /**
@@ -42,15 +42,15 @@ function mount (element, parent, callback, mode) {
 		return mount(element, elementIntermediate(DOM(parent)), callback, mode)
 
 	if (!DOMValid(DOMTarget(parent)))
-		invariant(LifecycleRender, 'Target container is not a DOM element')
+		invariant(SharedSiteRender, 'Target container is not a DOM element')
 
 	root.set(DOMTarget(parent), element)
 
-	if (mode > ModePull)
+	if (mode > SharedMountClone)
 		commitContent(parent)
 	
-	commitMount(element, element, parent, parent, MountAppend, mode)
+	commitMount(element, element, parent, parent, SharedMountAppend, mode)
 
 	if (typeof callback === 'function')
-		lifecycleCallback(element, callback, findDOMNode(element))
+		getLifecycleCallback(element, callback, findDOMNode(element))
 }
