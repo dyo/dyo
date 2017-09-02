@@ -343,7 +343,7 @@
 		else if (typeof child === 'function')
 			return elementUnknown(child())
 		else if (child instanceof Error)
-			return createElement('details', createElement('summary', child+''), h('pre', child.trace || child.stack))
+			return createElement('details', createElement('summary', child+''), h('pre', child.report || child.stack))
 		else if (child instanceof Date)
 			return elementText(child)
 	
@@ -1593,40 +1593,43 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {string} from
-	 */
-	function errorException (element, from) {
-		if (!(this instanceof Error))
-			return errorException.call(new Error(this), element, from)
-	
-		var trace = 'Error caught in `\n\n'
-		var tabs = ''
-		var host = element
-		var stack = this.stack
-	
-		while (host && host.type) {
-			trace += tabs + '<' + getDisplayName(host.type) + '>\n'
-			tabs += '  '
-			host = host.host
-		}
-	
-		this.trace = trace += '\n` from "' + from + '"\n\n' + stack + '\n\n'
-		this.error = this
-	
-		console.error(trace)
-		
-		return this
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {*} error
+	 * @param {*} e
 	 * @param {string} from
 	 * @param {number} signature
 	 * @param {Element?}
 	 */
-	function errorBoundary (element, error, from, signature) {
-		return errorElement(element, errorException.call(error, element, from), from, signature)
+	function errorBoundary (element, e, from, signature) {
+		var error = errorException(element, e, from)
+		var element = errorElement(element, error, from, signature)
+	
+		if (error.report)
+			console.error(error.report)
+	
+		return element
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Error} error
+	 * @param {string} from
+	 */
+	function errorException (element, error, from) {
+		if (!(error instanceof Error))
+			return errorException(element, new Error(error), from)
+	
+		var report = 'Error caught in `\n\n'
+		var tabs = ''
+		var host = element
+	
+		while (host && host.type) {
+			report += tabs + '<' + getDisplayName(host.type) + '>\n'
+			tabs += '  '
+			host = host.host
+		}
+	
+		error.report = report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n'
+		
+		return Object.defineProperty(error, 'error', {value: error})
 	}
 	
 	/**
@@ -1635,7 +1638,7 @@
 	 * @param  {Error} error
 	 * @param  {string} from
 	 * @param  {number} signature
-	 * @return {*}
+	 * @return {Element}
 	 */
 	function errorElement (element, error, from, signature) {	
 		var snapshot
@@ -1646,7 +1649,7 @@
 		if (element.owner[LifecycleDidCatch])
 			try {
 				element.sync = WorkTask
-				snapshot = element.owner[LifecycleDidCatch].call(element.instance, error)
+				snapshot = element.owner[LifecycleDidCatch].call(element.instance, error, {})
 				element.sync = WorkSync
 			} catch (e) {
 				return errorBoundary(element.host, e, LifecycleDidCatch, signature)
@@ -1654,12 +1657,12 @@
 		else
 			errorElement(element.host, error, from, signature)
 	
-		if (from === LifecycleRender)
-			return commitElement(snapshot)
-		else if (client)
+		if (client && from !== LifecycleRender)
 			requestAnimationFrame(function () {
 				reconcileElement(getHostElement(element), commitElement(snapshot))
 			})
+	
+		return commitElement(snapshot)
 	}
 	
 	/**

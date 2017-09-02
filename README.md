@@ -96,7 +96,7 @@ class Input {
 	constructor() {
 		this.state = {value: ''}
 	}
-	componentDidCatch ({error, stack, message, trace}) {
+	componentDidCatch ({error, stack, message, report}) {
 		return error
 	}
 	async handleChange({target}) {

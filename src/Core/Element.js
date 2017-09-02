@@ -99,7 +99,7 @@ function elementUnknown (child) {
 	else if (typeof child === 'function')
 		return elementUnknown(child())
 	else if (child instanceof Error)
-		return createElement('details', createElement('summary', child+''), h('pre', child.trace || child.stack))
+		return createElement('details', createElement('summary', child+''), h('pre', child.report || child.stack))
 	else if (child instanceof Date)
 		return elementText(child)
 

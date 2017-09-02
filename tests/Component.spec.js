@@ -88,14 +88,11 @@ module.exports = ({h, Component, render}) => {
 	})
 
 	test('Error Boundaries', ({ok, end}) => {
-		var error = console.error
 		var container = document.createElement('div')
 
-		console.error = () => {}
-
 		class A {
-			componentDidCatch({message}) {
-				ok(true, 'componentDidCatch')
+			componentDidCatch({message, error}) {
+				error.report = !ok(true, 'componentDidCatch')
 				return message
 			}
 			render() {
@@ -106,7 +103,6 @@ module.exports = ({h, Component, render}) => {
 		render(A, container)
 		ok(compare(container, 'render'), 'componentDidCatch#render')
 
-		console.error = error
 		end()
 	})
 }
