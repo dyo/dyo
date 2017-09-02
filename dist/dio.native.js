@@ -1079,7 +1079,7 @@
 	 	}
 	
 	 	commitChildren(element, element.children, host, MountAppend, mode)
-	 	commitProps(element, element.props, PropsAppend)	
+	 	commitProps(element, element.props, PropsAppend)
 	}
 	
 	/**

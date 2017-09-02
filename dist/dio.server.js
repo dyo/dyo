@@ -59,6 +59,21 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 	var LifecycleChildContext = 'getChildContext'
 	var LifecycleInitialState = 'getInitialState'
 	
+	var Readable = require('stream').Readable
+	var RegExpEscape = /[<>&"']/g
+	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
+	var RegExpVendor = /^(ms|webkit|moz)/
+	
+	Element.prototype.html = ''
+	Element.prototype.chunk = ''
+	
+	Element.prototype.toString = toString
+	Element.prototype.toStream = toStream
+	Element.prototype.toJSON = toJSON
+	
+	exports.renderToString = renderToString
+	exports.renderToStream = renderToStream
+	
 	/**
 	 * @param {Element} element
 	 * @return {Element}
@@ -127,21 +142,6 @@ module.exports = function (exports, componentMount, commitElement, getChildConte
 		if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
 			response.setHeader('Content-Type', 'text/html')
 	}
-	
-	var Readable = require('stream').Readable
-	var RegExpEscape = /[<>&"']/g
-	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
-	var RegExpVendor = /^(ms|webkit|moz)/
-	
-	Element.prototype.html = ''
-	Element.prototype.chunk = ''
-	
-	Element.prototype.toString = toString
-	Element.prototype.toStream = toStream
-	Element.prototype.toJSON = toJSON
-	
-	exports.renderToString = renderToString
-	exports.renderToStream = renderToStream
 	
 	/**
 	 * @return {string}

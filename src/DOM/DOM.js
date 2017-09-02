@@ -167,7 +167,11 @@ function DOMProperties (element, name, value, xmlns) {
 		case 'xlink:href':
 			return DOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
 		case 'dangerouslySetInnerHTML':
-			return DOMProperty(element, 'innerHTML', value ? value.__html : '')
+			return DOMProperties(element, 'innerHTML', value ? value.__html : '', '')
+		case 'innerHTML':
+			if (DOMTarget(element)[name] !== value)
+				DOMProperty(element, name, value)
+			return
 		case 'width':
 		case 'height':
 			if (element.type === 'img')
@@ -222,7 +226,7 @@ function DOMFind (element, sibling, parent) {
 
 				return DOM(target)
 			default:
-				target = target.nextSibling
+				target.parentNode.removeChild((target = target.nextSibling).previousSibling)
 		}
 
 	return null

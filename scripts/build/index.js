@@ -8,7 +8,7 @@ const strict = `'use strict'`
 
 
 const core = [
-	'../../src/Core/Enum.js',
+	'../../src/Core/Shared.js',
 	'../../src/Core/Constant.js',
 	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
@@ -28,9 +28,9 @@ const dom = [
 ]
 
 const server = [
-	'../../src/Core/Enum.js',
-	'../../src/Server/Utility.js',
+	'../../src/Core/Shared.js',
 	'../../src/Server/Constant.js',
+	'../../src/Server/Utility.js',
 	'../../src/Server/String.js',
 	'../../src/Server/JSON.js',
 	'../../src/Server/Stream.js',
