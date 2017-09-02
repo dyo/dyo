@@ -54,41 +54,60 @@ dio.render(
 
 The easiest way to get started with DIO is to walk through the [Introduction to DIO](https://dio.js.org/introduction.html) or the [API Documentation](https://dio.js.org/api.html).
 
-## Highlights
+## Features
 
 ### Render
 
-1. Elements.
-1. Primitives: `Strings, Numbers, null, undefined`.
-1. Fragments: `Arrays, Iterables`.
-1. Async: `Promises`.
-1. Other: `Portals, Errors, Objects` etc.
+1. Element.
+1. Component.
+1. Primitive: strings, number, null, undefined.
+1. Fragment: Array, Iterable.
+1. Async: Promise.
+1. Other: Portal, Error.
 
-### Components
+### Component
 
-1. Statefull functional components.
-1. Plain class components.
+1. Statefull function component.
+1. Plain class component.
 
-### Events
+### Event
 
-1. Support for the `handleEvent` interface.
-1. Event listeners `this` defaults to the closest `Component` relegating the need to `.bind` methods.
+1. Function or [EventListner](https://developer.mozilla.org/en/docs/Web/API/EventListener).
+1. Preserve "this" reference.
 
 ### Errors
 
-1. Cascading error boundaries with `componentDidCatch`.
-1. Additional support for recovering from an error state from `componentDidCatch` return signature.
+1. Error Boundary, "componentDidCatch".
 
 ### setState
 
-1. Support for returning an `Object` from an event.
-1. Support for Promises `this.setState(Promise)`.
+1. Object.
+1. Promise.
+1. Return.
 
 ### Lifecycle
 
-1. Functional component lifecycles.
-1. Support async `componentWillUnmount`.
+1. async componentWillUnmount.
 
-### Refs
+## Example
 
-1. Support for string/function refs on both functional and class components.
+```js
+class Input {
+	constructor() {
+		this.state = {value: ''}
+	}
+	componentDidCatch ({error, stack, message, trace}) {
+		return error
+	}
+	async handleChange({target}) {
+		return {target: target.value}
+	}
+	render(props, state, context) {
+		return [
+			h('input', {onInput: this.handleChange, value: state.value})
+		]
+	}
+}
+
+dio.render(h(Input))
+```

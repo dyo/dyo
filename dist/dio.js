@@ -1610,7 +1610,10 @@
 			host = host.host
 		}
 	
-		console.error(trace + '\n` from "' + from + '"\n\n' + stack + '\n\n')
+		this.trace = trace += '\n` from "' + from + '"\n\n' + stack + '\n\n'
+		this.error = this
+	
+		console.error(trace)
 		
 		return this
 	}

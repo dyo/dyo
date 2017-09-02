@@ -11,14 +11,16 @@ function errorException (element, from) {
 	var host = element
 	var stack = this.stack
 
-
 	while (host && host.type) {
 		trace += tabs + '<' + getDisplayName(host.type) + '>\n'
 		tabs += '  '
 		host = host.host
 	}
 
-	console.error(trace + '\n` from "' + from + '"\n\n' + stack + '\n\n')
+	this.trace = trace += '\n` from "' + from + '"\n\n' + stack + '\n\n'
+	this.error = this
+
+	console.error(trace)
 	
 	return this
 }
