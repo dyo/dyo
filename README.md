@@ -100,7 +100,7 @@ class Input {
 		return error
 	}
 	async handleChange({target}) {
-		return {target: target.value}
+		return {value: target.value}
 	}
 	render(props, state, context) {
 		return [
