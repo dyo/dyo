@@ -1883,7 +1883,6 @@
 	 * @param {Element} parent
 	 */
 	function DOMRemove (element, parent) {
-		console.log(DOMTarget(element).nodeName, DOMTarget(parent).nodeName)
 		DOMTarget(parent).removeChild(DOMTarget(element))
 	}
 	
