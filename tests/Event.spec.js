@@ -1,4 +1,4 @@
-module.exports = ({render, h, isValidElement, cloneElement}) => {
+module.exports = ({render, h, cloneElement}) => {
 	test('Event', ({ok, end}) => {
 		var container = document.createElement('div')
 		var click = new Event('click')

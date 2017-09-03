@@ -72,6 +72,7 @@ function DOMValue (element, value) {
  * @param {Element} parent
  */
 function DOMRemove (element, parent) {
+	console.log(DOMTarget(element).nodeName, DOMTarget(parent).nodeName)
 	DOMTarget(parent).removeChild(DOMTarget(element))
 }
 
@@ -213,23 +214,28 @@ function DOMFind (element, sibling, parent) {
 	var type = element.type.toLowerCase()
 	var target = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
 	var previous = target
+	var node = null
 
 	while (target)
 		switch (target.nodeName.toLowerCase()) {
 			case type:
 				if (element.id === SharedElementText) {
-					if (element.next.id === SharedElementText)
+					if (element.next && element.next.id === SharedElementText)
 						target = target.splitText(element.children.length)
 
 					if (target.nodeValue !== element.children)
 						target.nodeValue = element.children
 				}
 
-				return DOM(target)
-			default:
-				target = (previous = target).nextSibling
-				previous.parentNode.removeChild(previous)
+				node = DOM(target)
+				type = ''
+
+				if (!(target = target.nextSibling) || element.next)
+					break
+		default:
+			target = (previous = target).nextSibling
+			previous.parentNode.removeChild(previous)
 		}
 
-	return null
+	return node
 }
