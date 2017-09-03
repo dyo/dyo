@@ -108,37 +108,31 @@ function elementUnknown (child) {
 
 /**
  * @param {Element} element
- * @param {number} signature
+ * @param {string} string
  * @return {Element}
  */
-function elementPrev (element, signature) {
-	return elementSibling(element, 'prev', signature)
-}
-
-/**
- * @param {Element} element
- * @param {number} signature
- * @return {Element}
- */
-function elementNext (element, signature) {
-	return elementSibling(element, 'next', signature)
-}
-
-/**
- * @param {Element} element
- * @param {string} direction
- * @param {number} signature
- * @return {Element}
- */
-function elementSibling (element, direction, signature) {
-	if (signature < SharedElementIntermediate)
-		return element.id < SharedElementIntermediate ? elementSibling(element, direction, -signature) : element
-
-	if (signature === SharedMountInsert && element.id < SharedElementPortal && isValidElement(element.children[direction]))
-		return elementSibling(element.children[direction], direction, -signature)
-	
+function elementSibling (element, direction) {
 	if (isValidElement(element[direction]))
-		return elementSibling(element[direction], direction, -signature)
+		return element[direction]
+
+	if (element.host && element.host.id === SharedElementComponent)
+		return elementSibling(element.host, direction)
+}
+
+/**
+ * @param {Element} element
+ * @param {number} signature
+ * @return {Element}
+ */
+function elementAdjacent (element, signature) {
+	if (signature < SharedElementIntermediate)
+		return element.id < SharedElementIntermediate ? elementSibling(element, -signature) : element
+
+	if (signature === SharedMountInsert && element.id < SharedElementPortal && isValidElement(element.children.next))
+		return elementSibling(element.children.next, -signature)
+	
+	if (isValidElement(element.next))
+		return elementSibling(element.next, -signature)
 
 	return elementIntermediate(DOM(null))
 }

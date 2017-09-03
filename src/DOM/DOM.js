@@ -206,12 +206,16 @@ function DOMType (type, xmlns) {
 
 /**
  * @param {Element} element
- * @param {Element} sibling
  * @param {Element} parent
  */
-function DOMFind (element, sibling, parent) {
+function DOMFind (element, parent) {
 	var type = element.type.toLowerCase()
-	var target = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
+	var prev = elementSibling(element, 'prev')
+	var next = elementSibling(element, 'next')
+
+	var reference = prev && DOMTarget(prev)
+	var sibling = reference ? reference.nextSibling : DOMTarget(parent).firstChild 
+	var target = sibling
 	var previous = target
 	var node = null
 
@@ -219,8 +223,8 @@ function DOMFind (element, sibling, parent) {
 		switch (target.nodeName.toLowerCase()) {
 			case type:
 				if (element.id === SharedElementText) {
-					if (element.next && element.next.id === SharedElementText)
-						target = target.splitText(element.children.length)
+					if (next && next.id === SharedElementText)
+						target.splitText(element.children.length)
 
 					if (target.nodeValue !== element.children)
 						target.nodeValue = element.children
@@ -229,11 +233,13 @@ function DOMFind (element, sibling, parent) {
 				node = DOM(target)
 				type = ''
 
-				if (!(target = target.nextSibling) || element.next)
+				if (!(target = target.nextSibling) || next)
 					break
 		default:
 			target = (previous = target).nextSibling
-			previous.parentNode.removeChild(previous)
+
+			if (!reference || sibling !== previous)
+				previous.parentNode.removeChild(previous)
 		}
 
 	return node

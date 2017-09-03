@@ -3,6 +3,7 @@ const path = require('path')
 const chokidar = require('chokidar')
 const {JSDOM} = require("jsdom")
 const DOM = new JSDOM('<!DOCTYPE html>')
+const search = '.spec.js'
 
 global.document = DOM.window.document
 global.Node = DOM.window.Node
@@ -21,7 +22,7 @@ global.deepEqual = (x, y) => {
   return x && y && tx === 'object' && tx === ty ? (
     ok(x).length === ok(y).length &&
       ok(x).every(key => deepEqual(x[key], y[key]))
-  ) : (x === y);
+  ) : (x === y)
 }
 
 /**
@@ -32,7 +33,7 @@ global.deepEqual = (x, y) => {
  * @return {Boolean}
  */
 global.compare = (a, b) => {
-	return a.innerHTML === b.replace(/\n|\t|\s{2,}/g, '');
+	return a.innerHTML === b.replace(/\n|\t|\s{2,}/g, '')
 }
 
 /**
@@ -41,8 +42,8 @@ global.compare = (a, b) => {
  * @param  {Function} body
  */
 global.test = (name, body) => {
-	const failed = [];
-	const passed = [];
+	const failed = []
+	const passed = []
 
 	let ended = false
 
@@ -52,18 +53,18 @@ global.test = (name, body) => {
 		}
 		console.log(underline+'\n'+pass +' assertions passed.\n'+fail+ ' assertions failed.\n');
 		if (fail > 0) {
-			setTimeout(exit);
+			setTimeout(exit)
 		}
 	}
 	const log = (status, {msg, type}) => {
 		switch (status) {
 			case 'FAIL': {
-				console.log('\x1b[31m', type+': ✖', msg||'', '\x1b[0m');
+				console.log('\x1b[31m', type+': ✖', msg||'', '\x1b[0m')
 				break;
 			}
 			case 'PASS': {
-				console.log('\x1b[32m', type+': ✓', msg||'', '\x1b[0m');
-				break;
+				console.log('\x1b[32m', type+': ✓', msg||'', '\x1b[0m')
+				break
 			}
 		}
 	}
@@ -84,13 +85,13 @@ global.test = (name, body) => {
 		}
 		if (passed.length > 0) {
 			console.log('Passed Tests');
-			passed.forEach((v) => log('PASS', v));
+			passed.forEach((v) => log('PASS', v))
 		}
-		report(passed.length, failed.length);
+		report(passed.length, failed.length)
 	}
 
 	const ok = (value, msg) => {
-		(value ? passed : failed).push({type: 'OK', msg: msg});
+		(value ? passed : failed).push({type: 'OK', msg: msg})
 	}
 
 	const equal = (actual, expected, msg) => {
@@ -100,7 +101,7 @@ global.test = (name, body) => {
 	try {
 		body({end, ok, equal, deepEqual})
 	} catch (err) {
-		console.error('\x1b[31m', err, '\x1b[0m');
+		console.error('\x1b[31m', err, '\x1b[0m')
 
 		failed.push({
 			type: 'ERR',
@@ -109,21 +110,19 @@ global.test = (name, body) => {
 	}
 }
 
-let search = '.spec.js';
-
 const bootstrap = () => {
 	const dirpath = path.resolve(__dirname, '../../tests')
 	const files = fs.readdirSync(dirpath).filter((file) => {
 		return file.lastIndexOf(search) > -1
-	});
+	})
 	
 	const specs = files.map((file) => {
 		return path.join(dirpath, file)
-	});
+	})
 
 	specs.forEach((spec)=>{
 		delete require.cache[require.resolve(spec)];
-	});
+	})
 
 	try {
 		console.log('\n');
@@ -131,7 +130,7 @@ const bootstrap = () => {
 
 		setTimeout(()=>{
 			console.log('-----------------------------------------------------------\n');
-		});
+		})
 	} catch (err) {
 		console.error('\x1b[31m', err, '\x1b[0m');
 	}
@@ -152,16 +151,13 @@ if (type.indexOf('--watch') !== -1) {
 		} else {
 			console.log('changed > ' + file);
 		}
-		bootstrap();
+		bootstrap()
 	}
 
-	const watch = chokidar.watch(specs, {ignored: /[\/\\]\./});
+	const watch = chokidar.watch(specs, {ignored: /[\/\\]\./})
 
-	watch.on('change', watcher);
-	watch.on('ready', watcher);
+	watch.on('change', watcher)
+	watch.on('ready', watcher)
 } else {
-	if (type.length !== 0 && type.indexOf(__dirname) === -1) {
-		search = type + search;
-	}
-	bootstrap();
+	bootstrap()
 }

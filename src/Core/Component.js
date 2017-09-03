@@ -365,7 +365,7 @@ function findDOMNode (element) {
 
 	if (isValidElement(element)) {
 		if (element.id < SharedElementPortal)
-			return findDOMNode(elementNext(element, SharedMountInsert))
+			return findDOMNode(elementAdjacent(element, SharedMountInsert))
 		else if (element.DOM)
 			return DOMTarget(element)
 	}

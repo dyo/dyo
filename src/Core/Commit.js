@@ -55,7 +55,7 @@ function commitChildren (element, children, host, signature, mode) {
 	var next = sibling
 
 	while (length-- > 0) {
-		if (next.DOM !== null && mode !== SharedMountClone) {
+		if (next.DOM !== null) {
 			sibling = next
 			children.insert(next = merge(new Element(SharedElementNode), next), sibling)
 			children.remove(sibling)
@@ -107,8 +107,8 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementText:
  			switch (mode) {
  				case SharedMountClone:
- 					if (element.DOM = DOMFind(element, elementPrev(element, SharedMountAppend), parent))
- 						break
+ 					if (element.DOM = DOMFind(element, parent))
+	 					break
  				default:
  					element.DOM = commitDOM(element)
  					
@@ -150,7 +150,7 @@ function commitReplace (element, snapshot, signature) {
 			commitReplace(element, snapshot, SharedMountInsert)
 		})
 
-	commitMount(snapshot, elementNext(element, SharedMountAppend), element.parent, element.host, SharedMountInsert, SharedMountCommit)
+	commitMount(snapshot, elementAdjacent(element, SharedMountAppend), element.parent, element.host, SharedMountInsert, SharedMountCommit)
 
 	for (var key in snapshot)
 		switch (key) {
@@ -309,7 +309,7 @@ function commitRemove (element, parent) {
  */
 function commitInsert (element, sibling, parent) {
 	if (sibling.id < SharedElementIntermediate)
-		return commitInsert(element, elementNext(sibling, SharedMountInsert), parent)
+		return commitInsert(element, elementAdjacent(sibling, SharedMountInsert), parent)
 
 	if (element.id > SharedElementIntermediate)
 		DOMInsert(element, sibling, parent)
@@ -325,7 +325,7 @@ function commitInsert (element, sibling, parent) {
  */
 function commitAppend (element, parent) {
 	if (parent.id < SharedElementPortal)
-		return commitInsert(element, elementNext(parent, SharedMountAppend), parent)
+		return commitInsert(element, elementAdjacent(parent, SharedMountAppend), parent)
 
 	if (element.id > SharedElementIntermediate)
 		DOMAppend(element, parent)

@@ -46,7 +46,7 @@ function mount (element, parent, callback, mode) {
 
 	root.set(DOMTarget(parent), element)
 
-	if (mode > SharedMountClone)
+	if (mode === SharedMountCommit)
 		commitContent(parent)
 	
 	commitMount(element, element, parent, parent, SharedMountAppend, mode)

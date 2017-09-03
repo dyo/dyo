@@ -345,37 +345,31 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {number} signature
+	 * @param {string} string
 	 * @return {Element}
 	 */
-	function elementPrev (element, signature) {
-		return elementSibling(element, 'prev', signature)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {number} signature
-	 * @return {Element}
-	 */
-	function elementNext (element, signature) {
-		return elementSibling(element, 'next', signature)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} direction
-	 * @param {number} signature
-	 * @return {Element}
-	 */
-	function elementSibling (element, direction, signature) {
-		if (signature < SharedElementIntermediate)
-			return element.id < SharedElementIntermediate ? elementSibling(element, direction, -signature) : element
-	
-		if (signature === SharedMountInsert && element.id < SharedElementPortal && isValidElement(element.children[direction]))
-			return elementSibling(element.children[direction], direction, -signature)
-		
+	function elementSibling (element, direction) {
 		if (isValidElement(element[direction]))
-			return elementSibling(element[direction], direction, -signature)
+			return element[direction]
+	
+		if (element.host && element.host.id === SharedElementComponent)
+			return elementSibling(element.host, direction)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {number} signature
+	 * @return {Element}
+	 */
+	function elementAdjacent (element, signature) {
+		if (signature < SharedElementIntermediate)
+			return element.id < SharedElementIntermediate ? elementSibling(element, -signature) : element
+	
+		if (signature === SharedMountInsert && element.id < SharedElementPortal && isValidElement(element.children.next))
+			return elementSibling(element.children.next, -signature)
+		
+		if (isValidElement(element.next))
+			return elementSibling(element.next, -signature)
 	
 		return elementIntermediate(DOM(null))
 	}
@@ -884,7 +878,7 @@
 	
 		if (isValidElement(element)) {
 			if (element.id < SharedElementPortal)
-				return findDOMNode(elementNext(element, SharedMountInsert))
+				return findDOMNode(elementAdjacent(element, SharedMountInsert))
 			else if (element.DOM)
 				return DOMTarget(element)
 		}
@@ -1030,7 +1024,7 @@
 		var next = sibling
 	
 		while (length-- > 0) {
-			if (next.DOM !== null && mode !== SharedMountClone) {
+			if (next.DOM !== null) {
 				sibling = next
 				children.insert(next = merge(new Element(SharedElementNode), next), sibling)
 				children.remove(sibling)
@@ -1082,8 +1076,8 @@
 	 		case SharedElementText:
 	 			switch (mode) {
 	 				case SharedMountClone:
-	 					if (element.DOM = DOMFind(element, elementPrev(element, SharedMountAppend), parent))
-	 						break
+	 					if (element.DOM = DOMFind(element, parent))
+		 					break
 	 				default:
 	 					element.DOM = commitDOM(element)
 	 					
@@ -1125,7 +1119,7 @@
 				commitReplace(element, snapshot, SharedMountInsert)
 			})
 	
-		commitMount(snapshot, elementNext(element, SharedMountAppend), element.parent, element.host, SharedMountInsert, SharedMountCommit)
+		commitMount(snapshot, elementAdjacent(element, SharedMountAppend), element.parent, element.host, SharedMountInsert, SharedMountCommit)
 	
 		for (var key in snapshot)
 			switch (key) {
@@ -1284,7 +1278,7 @@
 	 */
 	function commitInsert (element, sibling, parent) {
 		if (sibling.id < SharedElementIntermediate)
-			return commitInsert(element, elementNext(sibling, SharedMountInsert), parent)
+			return commitInsert(element, elementAdjacent(sibling, SharedMountInsert), parent)
 	
 		if (element.id > SharedElementIntermediate)
 			DOMInsert(element, sibling, parent)
@@ -1300,7 +1294,7 @@
 	 */
 	function commitAppend (element, parent) {
 		if (parent.id < SharedElementPortal)
-			return commitInsert(element, elementNext(parent, SharedMountAppend), parent)
+			return commitInsert(element, elementAdjacent(parent, SharedMountAppend), parent)
 	
 		if (element.id > SharedElementIntermediate)
 			DOMAppend(element, parent)
@@ -1733,7 +1727,7 @@
 	
 		root.set(DOMTarget(parent), element)
 	
-		if (mode > SharedMountClone)
+		if (mode === SharedMountCommit)
 			commitContent(parent)
 		
 		commitMount(element, element, parent, parent, SharedMountAppend, mode)
@@ -2017,12 +2011,16 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} sibling
 	 * @param {Element} parent
 	 */
-	function DOMFind (element, sibling, parent) {
+	function DOMFind (element, parent) {
 		var type = element.type.toLowerCase()
-		var target = sibling.type ? DOMTarget(sibling).nextSibling : DOMTarget(parent).firstChild
+		var prev = elementSibling(element, 'prev')
+		var next = elementSibling(element, 'next')
+	
+		var reference = prev && DOMTarget(prev)
+		var sibling = reference ? reference.nextSibling : DOMTarget(parent).firstChild 
+		var target = sibling
 		var previous = target
 		var node = null
 	
@@ -2030,8 +2028,8 @@
 			switch (target.nodeName.toLowerCase()) {
 				case type:
 					if (element.id === SharedElementText) {
-						if (element.next && element.next.id === SharedElementText)
-							target = target.splitText(element.children.length)
+						if (next && next.id === SharedElementText)
+							target.splitText(element.children.length)
 	
 						if (target.nodeValue !== element.children)
 							target.nodeValue = element.children
@@ -2040,11 +2038,13 @@
 					node = DOM(target)
 					type = ''
 	
-					if (!(target = target.nextSibling) || element.next)
+					if (!(target = target.nextSibling) || next)
 						break
 			default:
 				target = (previous = target).nextSibling
-				previous.parentNode.removeChild(previous)
+	
+				if (!reference || sibling !== previous)
+					previous.parentNode.removeChild(previous)
 			}
 	
 		return node
