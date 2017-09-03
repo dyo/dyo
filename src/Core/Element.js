@@ -115,7 +115,7 @@ function elementSibling (element, direction) {
 	if (isValidElement(element[direction]))
 		return element[direction]
 
-	if (element.host && element.host.id === SharedElementComponent)
+	if (getHostElement(element.host) === element)
 		return elementSibling(element.host, direction)
 }
 

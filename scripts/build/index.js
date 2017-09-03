@@ -150,14 +150,14 @@ const bundle = (module, files, location) => {
 const resolve = () => {
 	bundle('umd', umd, '../../dist/dio.js')
 	bundle('server', server, '../../dist/dio.server.js')
-	bundle('native', native, '../../dist/dio.native.js')
+	// bundle('native', native, '../../dist/dio.native.js')
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled: '+
 		'\n – dio.js,'+
 		'\n – dio.min.js'+
 		'\n – dio.server.js,'+
-		'\n – dio.native.js,'+
+		// '\n – dio.native.js,'+
 		'\x1b[0m\n'
 	)
 }

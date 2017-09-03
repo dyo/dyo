@@ -7,6 +7,7 @@
 		factory(window.dio = {}, window, 0)
 }(function (exports, window, require) {
 	/* eslint-disable */
+	
 	'use strict'
 
 	var version = '8.0.0'
@@ -352,7 +353,7 @@
 		if (isValidElement(element[direction]))
 			return element[direction]
 	
-		if (element.host && element.host.id === SharedElementComponent)
+		if (getHostElement(element.host) === element)
 			return elementSibling(element.host, direction)
 	}
 	
@@ -822,7 +823,10 @@
 	 * @return {Element}
 	 */
 	function getHostElement (element) {
-		return element.id !== SharedElementComponent ? element : getHostElement(element.children)
+		if (isValidElement(element) && element.id === SharedElementComponent)
+			return getHostElement(element.children)
+		else
+			return element
 	}
 	
 	/**
@@ -830,7 +834,10 @@
 	 * @return {Element?}
 	 */
 	function getHostChildren (element) {
-		return isValidElement(element) ? element : element[SymbolElement]
+		if (isValidElement(element))
+			return element
+		else
+			element[SymbolElement]
 	}
 	
 	/**
@@ -863,30 +870,6 @@
 		})
 	
 		return element.type.defaultProps
-	}
-	
-	/**
-	 * @param {(Component|Element|Node)} element
-	 * @return {Node}
-	 */
-	function findDOMNode (element) {
-		if (!element)
-			invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-	
-		if (isValidElement(element[SymbolElement]))
-			return findDOMNode(element[SymbolElement])
-	
-		if (isValidElement(element)) {
-			if (element.id < SharedElementPortal)
-				return findDOMNode(elementAdjacent(element, SharedMountInsert))
-			else if (element.DOM)
-				return DOMTarget(element)
-		}
-	
-		if (DOMValid(element))
-			return element
-	
-		invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 	}
 	
 	/**
@@ -965,6 +948,30 @@
 		} catch (e) {
 			errorBoundary(element, e, SharedSiteCallback, SharedErrorPassive)
 		}
+	}
+	
+	/**
+	 * @param {(Component|Element|Node)} element
+	 * @return {Node}
+	 */
+	function findDOMNode (element) {
+		if (!element)
+			invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+	
+		if (isValidElement(element[SymbolElement]))
+			return findDOMNode(element[SymbolElement])
+	
+		if (isValidElement(element)) {
+			if (element.id < SharedElementPortal)
+				return findDOMNode(elementAdjacent(element, SharedMountInsert))
+			else if (element.DOM)
+				return DOMTarget(element)
+		}
+	
+		if (DOMValid(element))
+			return element
+	
+		invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 	}
 	
 	/**

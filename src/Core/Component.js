@@ -309,7 +309,10 @@ function getChildContext (element) {
  * @return {Element}
  */
 function getHostElement (element) {
-	return element.id !== SharedElementComponent ? element : getHostElement(element.children)
+	if (isValidElement(element) && element.id === SharedElementComponent)
+		return getHostElement(element.children)
+	else
+		return element
 }
 
 /**
@@ -317,7 +320,10 @@ function getHostElement (element) {
  * @return {Element?}
  */
 function getHostChildren (element) {
-	return isValidElement(element) ? element : element[SymbolElement]
+	if (isValidElement(element))
+		return element
+	else
+		element[SymbolElement]
 }
 
 /**
@@ -350,30 +356,6 @@ function getDefaultProps (element, defaultProps, props) {
 	})
 
 	return element.type.defaultProps
-}
-
-/**
- * @param {(Component|Element|Node)} element
- * @return {Node}
- */
-function findDOMNode (element) {
-	if (!element)
-		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-
-	if (isValidElement(element[SymbolElement]))
-		return findDOMNode(element[SymbolElement])
-
-	if (isValidElement(element)) {
-		if (element.id < SharedElementPortal)
-			return findDOMNode(elementAdjacent(element, SharedMountInsert))
-		else if (element.DOM)
-			return DOMTarget(element)
-	}
-
-	if (DOMValid(element))
-		return element
-
-	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }
 
 /**
@@ -452,4 +434,28 @@ function getLifecycleCallback (element, callback, first, second, third) {
 	} catch (e) {
 		errorBoundary(element, e, SharedSiteCallback, SharedErrorPassive)
 	}
+}
+
+/**
+ * @param {(Component|Element|Node)} element
+ * @return {Node}
+ */
+function findDOMNode (element) {
+	if (!element)
+		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+
+	if (isValidElement(element[SymbolElement]))
+		return findDOMNode(element[SymbolElement])
+
+	if (isValidElement(element)) {
+		if (element.id < SharedElementPortal)
+			return findDOMNode(elementAdjacent(element, SharedMountInsert))
+		else if (element.DOM)
+			return DOMTarget(element)
+	}
+
+	if (DOMValid(element))
+		return element
+
+	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }
