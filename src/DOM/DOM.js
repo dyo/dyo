@@ -212,35 +212,35 @@ function DOMFind (element, parent) {
 	var type = element.type.toLowerCase()
 	var prev = elementSibling(element, 'prev')
 	var next = elementSibling(element, 'next')
+	var prevNode = prev.DOM
+	var nextNode = null
 
-	var reference = prev && DOMTarget(prev)
-	var sibling = reference ? reference.nextSibling : DOMTarget(parent).firstChild 
-	var target = sibling
-	var previous = target
-	var node = null
+	var target = prevNode ? DOMTarget(prev).nextSibling : DOMTarget(parent).firstChild 
+	var current = target
+	var sibling = target
 
 	while (target)
 		switch (target.nodeName.toLowerCase()) {
 			case type:
 				if (element.id === SharedElementText) {
-					if (next && next.id === SharedElementText)
+					if (next.id === SharedElementText && next !== element)
 						target.splitText(element.children.length)
 
 					if (target.nodeValue !== element.children)
 						target.nodeValue = element.children
 				}
 
-				node = DOM(target)
+				nextNode = DOM(target)
 				type = ''
 
-				if (!(target = target.nextSibling) || next)
+				if (!(target = target.nextSibling) || next !== element)
 					break
 		default:
-			target = (previous = target).nextSibling
+			target = (sibling = target).nextSibling
 
-			if (!reference || sibling !== previous)
-				previous.parentNode.removeChild(previous)
+			if (!prevNode || current !== sibling)
+				sibling.parentNode.removeChild(sibling)
 		}
 
-	return node
+	return nextNode
 }

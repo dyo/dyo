@@ -17,11 +17,13 @@ var SharedComponentStateUpdate = 2
 
 var SharedMountClone = 0
 var SharedMountCommit = 1
-
 var SharedMountRemove = 2
 var SharedMountAppend = 3
 var SharedMountInsert = 4
 var SharedMountReplace = 5
+
+var SharedSiblingElement = 0
+var SharedSiblingChildren = 1
 
 var SharedWorkTask = 0
 var SharedWorkSync = 1

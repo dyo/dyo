@@ -26,6 +26,24 @@ function commitElement (element) {
 
 /**
  * @param {Element} element
+ * @param {number} signature
+ * @return {Element}
+ */
+function commitSibling (element, signature) {
+	if (!element)
+		return elementIntermediate(DOM(null))
+
+	if (element.id > SharedElementIntermediate)
+		return element
+
+	if (signature === SharedSiblingElement)
+		return commitSibling(element.next, signature)
+	else
+		return commitSibling(element.children.next, signature)
+}
+
+/**
+ * @param {Element} element
  * @param {Element} snapshot
  */
 function commitPromise (element, snapshot) {
@@ -150,7 +168,14 @@ function commitReplace (element, snapshot, signature) {
 			commitReplace(element, snapshot, SharedMountInsert)
 		})
 
-	commitMount(snapshot, elementAdjacent(element, SharedMountAppend), element.parent, element.host, SharedMountInsert, SharedMountCommit)
+	commitMount(
+		snapshot, 
+		commitSibling(element.next, SharedSiblingElement), 
+		element.parent, 
+		element.host, 
+		SharedMountInsert, 
+		SharedMountCommit
+	)
 
 	for (var key in snapshot)
 		switch (key) {
@@ -210,11 +235,11 @@ function commitReference (element, callback, signature, key) {
 		case 'function':
 			switch (signature) {
 				case SharedReferenceRemove:
-					return void getLifecycleCallback(element.host, callback, element.ref = null, key, element)
+					return getLifecycleCallback(element.host, callback, element.ref = null, key, element)
 				case SharedReferenceAssign:
 					element.ref = callback
 				case SharedReferenceDispatch:
-					return void getLifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
+					return getLifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
 				case SharedReferenceReplace:
 					commitReference(element, callback, SharedReferenceRemove, key)
 					commitReference(element, callback, SharedReferenceAssign, key)
@@ -309,7 +334,7 @@ function commitRemove (element, parent) {
  */
 function commitInsert (element, sibling, parent) {
 	if (sibling.id < SharedElementIntermediate)
-		return commitInsert(element, elementAdjacent(sibling, SharedMountInsert), parent)
+		return commitInsert(element, commitSibling(sibling, SharedSiblingChildren), parent)
 
 	if (element.id > SharedElementIntermediate)
 		DOMInsert(element, sibling, parent)
@@ -325,7 +350,7 @@ function commitInsert (element, sibling, parent) {
  */
 function commitAppend (element, parent) {
 	if (parent.id < SharedElementPortal)
-		return commitInsert(element, elementAdjacent(parent, SharedMountAppend), parent)
+		return commitInsert(element, commitSibling(parent, SharedSiblingElement), parent)
 
 	if (element.id > SharedElementIntermediate)
 		DOMAppend(element, parent)

@@ -31,11 +31,13 @@
 	
 	var SharedMountClone = 0
 	var SharedMountCommit = 1
-	
 	var SharedMountRemove = 2
 	var SharedMountAppend = 3
 	var SharedMountInsert = 4
 	var SharedMountReplace = 5
+	
+	var SharedSiblingElement = 0
+	var SharedSiblingChildren = 1
 	
 	var SharedWorkTask = 0
 	var SharedWorkSync = 1
@@ -276,20 +278,19 @@
 	}
 	
 	/**
-	 * @param {*} node
+	 * @param {DOM} node
 	 * @return {Element}
 	 */
 	function elementIntermediate (node) {
 		var element = new Element(SharedElementIntermediate)
 	
-		element.context = {}
 		element.DOM = node
 	
 		return element
 	}
 	
 	/**
-	 * @param {(Element|Array|List)} fragment
+	 * @param {(Element|Array)} fragment
 	 * @return {Element}
 	 */
 	function elementFragment (fragment) {
@@ -326,27 +327,27 @@
 	}
 	
 	/**
-	 * @param {*} child
+	 * @param {*} element
 	 * @return {Element}
 	 */
-	function elementUnknown (child) {
-		if (typeof child.next === 'function')
-			return elementIterable(child, elementFragment(child))
-		if (typeof child[SymbolIterator] === 'function')
-			return elementUnknown(child[SymbolIterator]())
-		else if (typeof child === 'function')
-			return elementUnknown(child())
-		else if (child instanceof Error)
-			return createElement('details', createElement('summary', child+''), h('pre', child.report || child.stack))
-		else if (child instanceof Date)
-			return elementText(child)
+	function elementUnknown (element) {
+		if (typeof element.next === 'function')
+			return elementIterable(element, elementFragment(element))
+		if (typeof element[SymbolIterator] === 'function')
+			return elementUnknown(element[SymbolIterator]())
+		else if (typeof element === 'function')
+			return elementUnknown(element())
+		else if (element instanceof Error)
+			return createElement('details', createElement('summary', element+''), h('pre', element.report || element.stack))
+		else if (element instanceof Date)
+			return elementText(element)
 	
-		invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(child)+']')
+		invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @param {string} string
+	 * @param {string} direction
 	 * @return {Element}
 	 */
 	function elementSibling (element, direction) {
@@ -355,60 +356,44 @@
 	
 		if (getHostElement(element.host) === element)
 			return elementSibling(element.host, direction)
+	
+		return element
 	}
 	
 	/**
-	 * @param {Element} element
-	 * @param {number} signature
-	 * @return {Element}
-	 */
-	function elementAdjacent (element, signature) {
-		if (signature < SharedElementIntermediate)
-			return element.id < SharedElementIntermediate ? elementSibling(element, -signature) : element
-	
-		if (signature === SharedMountInsert && element.id < SharedElementPortal && isValidElement(element.children.next))
-			return elementSibling(element.children.next, -signature)
-		
-		if (isValidElement(element.next))
-			return elementSibling(element.next, -signature)
-	
-		return elementIntermediate(DOM(null))
-	}
-	
-	/**
-	 * @param {Element} element
+	 * @param {Element} parent
 	 * @param {List} children
-	 * @param {*} child
+	 * @param {*} element
 	 * @param {number} index
 	 */
-	function elementChildren (element, children, child, index) {
-		if (child == null)
-			return elementChildren(element, children, elementText(''), index)
+	function elementChildren (parent, children, element, index) {
+		if (element == null)
+			return elementChildren(parent, children, elementText(''), index)
 	
-		switch (child.constructor) {
+		switch (element.constructor) {
 			case Element:
-				if (child.key == null)
-					child.key = '0|'+index
-				else if (element.keyed === false)
-					element.keyed = true
+				if (element.key == null)
+					element.key = '0|'+index
+				else if (parent.keyed === false)
+					parent.keyed = true
 	
-				children.push(child)
+				children.push(element)
 				break
 			case Array:
-				for (var i = 0; i < child.length; ++i)
-					elementChildren(element, children, child[i], index + i)
+				for (var i = 0; i < element.length; ++i)
+					elementChildren(parent, children, element[i], index + i)
 	
 				return index + i
 			case String:
 			case Number:
-				return elementChildren(element, children, elementText(child), index)
+				return elementChildren(parent, children, elementText(element), index)
 			case Function:
 			case Promise:
-				return elementChildren(element, children, createElement(child), index)
+				return elementChildren(parent, children, createElement(element), index)
 			case Boolean:
-				return elementChildren(element, children, null, index)
+				return elementChildren(parent, children, null, index)
 			default:
-				return elementChildren(element, children, elementUnknown(child), index)
+				return elementChildren(parent, children, elementUnknown(element), index)
 		}
 	
 		return index + 1
@@ -565,7 +550,6 @@
 	function componentMount (element) {
 		var owner = element.type
 		var prototype = owner.prototype
-		var children
 		var instance
 	
 		if (prototype && prototype.render) {
@@ -580,19 +564,20 @@
 	
 		element.owner = owner
 		element.instance = instance
+		element.context = element.context || {}
 		
 		instance[SymbolElement] = element
 		instance.refs = {}
 		instance.props = element.props
-		instance.context = element.context = element.context || {}
+		instance.context = element.context
 	
 		if (owner[SharedGetInitialState])
 			instance.state = getInitialState(element, instance, getLifecycleData(element, SharedGetInitialState))
 		else if (!instance.state)
 			instance.state = {}
 		
-		element.children = children = getChildElement(element)
-		children.context = element.context
+		element.children = getChildElement(element)
+		element.children.context = element.context
 	
 		if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 			getLifecycleMount(element, SharedComponentWillMount)
@@ -600,7 +585,7 @@
 		if (owner[SharedGetChildContext])
 			element.context = getChildContext(element)
 	
-		return children
+		return element.children
 	}
 	
 	/**
@@ -962,8 +947,8 @@
 			return findDOMNode(element[SymbolElement])
 	
 		if (isValidElement(element)) {
-			if (element.id < SharedElementPortal)
-				return findDOMNode(elementAdjacent(element, SharedMountInsert))
+			if (element.id < SharedElementIntermediate)
+				return findDOMNode(element.children.next)
 			else if (element.DOM)
 				return DOMTarget(element)
 		}
@@ -998,6 +983,24 @@
 			}
 	
 		return elementText('')
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {number} signature
+	 * @return {Element}
+	 */
+	function commitSibling (element, signature) {
+		if (!element)
+			return elementIntermediate(DOM(null))
+	
+		if (element.id > SharedElementIntermediate)
+			return element
+	
+		if (signature === SharedSiblingElement)
+			return commitSibling(element.next, signature)
+		else
+			return commitSibling(element.children.next, signature)
 	}
 	
 	/**
@@ -1126,7 +1129,14 @@
 				commitReplace(element, snapshot, SharedMountInsert)
 			})
 	
-		commitMount(snapshot, elementAdjacent(element, SharedMountAppend), element.parent, element.host, SharedMountInsert, SharedMountCommit)
+		commitMount(
+			snapshot, 
+			commitSibling(element.next, SharedSiblingElement), 
+			element.parent, 
+			element.host, 
+			SharedMountInsert, 
+			SharedMountCommit
+		)
 	
 		for (var key in snapshot)
 			switch (key) {
@@ -1186,11 +1196,11 @@
 			case 'function':
 				switch (signature) {
 					case SharedReferenceRemove:
-						return void getLifecycleCallback(element.host, callback, element.ref = null, key, element)
+						return getLifecycleCallback(element.host, callback, element.ref = null, key, element)
 					case SharedReferenceAssign:
 						element.ref = callback
 					case SharedReferenceDispatch:
-						return void getLifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
+						return getLifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
 					case SharedReferenceReplace:
 						commitReference(element, callback, SharedReferenceRemove, key)
 						commitReference(element, callback, SharedReferenceAssign, key)
@@ -1285,7 +1295,7 @@
 	 */
 	function commitInsert (element, sibling, parent) {
 		if (sibling.id < SharedElementIntermediate)
-			return commitInsert(element, elementAdjacent(sibling, SharedMountInsert), parent)
+			return commitInsert(element, commitSibling(sibling, SharedSiblingChildren), parent)
 	
 		if (element.id > SharedElementIntermediate)
 			DOMInsert(element, sibling, parent)
@@ -1301,7 +1311,7 @@
 	 */
 	function commitAppend (element, parent) {
 		if (parent.id < SharedElementPortal)
-			return commitInsert(element, elementAdjacent(parent, SharedMountAppend), parent)
+			return commitInsert(element, commitSibling(parent, SharedSiblingElement), parent)
 	
 		if (element.id > SharedElementIntermediate)
 			DOMAppend(element, parent)
@@ -2024,37 +2034,37 @@
 		var type = element.type.toLowerCase()
 		var prev = elementSibling(element, 'prev')
 		var next = elementSibling(element, 'next')
+		var prevNode = prev.DOM
+		var nextNode = null
 	
-		var reference = prev && DOMTarget(prev)
-		var sibling = reference ? reference.nextSibling : DOMTarget(parent).firstChild 
-		var target = sibling
-		var previous = target
-		var node = null
+		var target = prevNode ? DOMTarget(prev).nextSibling : DOMTarget(parent).firstChild 
+		var current = target
+		var sibling = target
 	
 		while (target)
 			switch (target.nodeName.toLowerCase()) {
 				case type:
 					if (element.id === SharedElementText) {
-						if (next && next.id === SharedElementText)
+						if (next.id === SharedElementText && next !== element)
 							target.splitText(element.children.length)
 	
 						if (target.nodeValue !== element.children)
 							target.nodeValue = element.children
 					}
 	
-					node = DOM(target)
+					nextNode = DOM(target)
 					type = ''
 	
-					if (!(target = target.nextSibling) || next)
+					if (!(target = target.nextSibling) || next !== element)
 						break
 			default:
-				target = (previous = target).nextSibling
+				target = (sibling = target).nextSibling
 	
-				if (!reference || sibling !== previous)
-					previous.parentNode.removeChild(previous)
+				if (!prevNode || current !== sibling)
+					sibling.parentNode.removeChild(sibling)
 			}
 	
-		return node
+		return nextNode
 	}
 
 	exports.version = version

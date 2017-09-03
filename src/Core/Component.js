@@ -51,7 +51,6 @@ function forceUpdate (callback) {
 function componentMount (element) {
 	var owner = element.type
 	var prototype = owner.prototype
-	var children
 	var instance
 
 	if (prototype && prototype.render) {
@@ -66,19 +65,20 @@ function componentMount (element) {
 
 	element.owner = owner
 	element.instance = instance
+	element.context = element.context || {}
 	
 	instance[SymbolElement] = element
 	instance.refs = {}
 	instance.props = element.props
-	instance.context = element.context = element.context || {}
+	instance.context = element.context
 
 	if (owner[SharedGetInitialState])
 		instance.state = getInitialState(element, instance, getLifecycleData(element, SharedGetInitialState))
 	else if (!instance.state)
 		instance.state = {}
 	
-	element.children = children = getChildElement(element)
-	children.context = element.context
+	element.children = getChildElement(element)
+	element.children.context = element.context
 
 	if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 		getLifecycleMount(element, SharedComponentWillMount)
@@ -86,7 +86,7 @@ function componentMount (element) {
 	if (owner[SharedGetChildContext])
 		element.context = getChildContext(element)
 
-	return children
+	return element.children
 }
 
 /**
@@ -448,8 +448,8 @@ function findDOMNode (element) {
 		return findDOMNode(element[SymbolElement])
 
 	if (isValidElement(element)) {
-		if (element.id < SharedElementPortal)
-			return findDOMNode(elementAdjacent(element, SharedMountInsert))
+		if (element.id < SharedElementIntermediate)
+			return findDOMNode(element.children.next)
 		else if (element.DOM)
 			return DOMTarget(element)
 	}

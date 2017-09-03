@@ -38,20 +38,19 @@ function elementText (content) {
 }
 
 /**
- * @param {*} node
+ * @param {DOM} node
  * @return {Element}
  */
 function elementIntermediate (node) {
 	var element = new Element(SharedElementIntermediate)
 
-	element.context = {}
 	element.DOM = node
 
 	return element
 }
 
 /**
- * @param {(Element|Array|List)} fragment
+ * @param {(Element|Array)} fragment
  * @return {Element}
  */
 function elementFragment (fragment) {
@@ -88,27 +87,27 @@ function elementIterable (iterable, element) {
 }
 
 /**
- * @param {*} child
+ * @param {*} element
  * @return {Element}
  */
-function elementUnknown (child) {
-	if (typeof child.next === 'function')
-		return elementIterable(child, elementFragment(child))
-	if (typeof child[SymbolIterator] === 'function')
-		return elementUnknown(child[SymbolIterator]())
-	else if (typeof child === 'function')
-		return elementUnknown(child())
-	else if (child instanceof Error)
-		return createElement('details', createElement('summary', child+''), h('pre', child.report || child.stack))
-	else if (child instanceof Date)
-		return elementText(child)
+function elementUnknown (element) {
+	if (typeof element.next === 'function')
+		return elementIterable(element, elementFragment(element))
+	if (typeof element[SymbolIterator] === 'function')
+		return elementUnknown(element[SymbolIterator]())
+	else if (typeof element === 'function')
+		return elementUnknown(element())
+	else if (element instanceof Error)
+		return createElement('details', createElement('summary', element+''), h('pre', element.report || element.stack))
+	else if (element instanceof Date)
+		return elementText(element)
 
-	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(child)+']')
+	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 }
 
 /**
  * @param {Element} element
- * @param {string} string
+ * @param {string} direction
  * @return {Element}
  */
 function elementSibling (element, direction) {
@@ -117,60 +116,44 @@ function elementSibling (element, direction) {
 
 	if (getHostElement(element.host) === element)
 		return elementSibling(element.host, direction)
+
+	return element
 }
 
 /**
- * @param {Element} element
- * @param {number} signature
- * @return {Element}
- */
-function elementAdjacent (element, signature) {
-	if (signature < SharedElementIntermediate)
-		return element.id < SharedElementIntermediate ? elementSibling(element, -signature) : element
-
-	if (signature === SharedMountInsert && element.id < SharedElementPortal && isValidElement(element.children.next))
-		return elementSibling(element.children.next, -signature)
-	
-	if (isValidElement(element.next))
-		return elementSibling(element.next, -signature)
-
-	return elementIntermediate(DOM(null))
-}
-
-/**
- * @param {Element} element
+ * @param {Element} parent
  * @param {List} children
- * @param {*} child
+ * @param {*} element
  * @param {number} index
  */
-function elementChildren (element, children, child, index) {
-	if (child == null)
-		return elementChildren(element, children, elementText(''), index)
+function elementChildren (parent, children, element, index) {
+	if (element == null)
+		return elementChildren(parent, children, elementText(''), index)
 
-	switch (child.constructor) {
+	switch (element.constructor) {
 		case Element:
-			if (child.key == null)
-				child.key = '0|'+index
-			else if (element.keyed === false)
-				element.keyed = true
+			if (element.key == null)
+				element.key = '0|'+index
+			else if (parent.keyed === false)
+				parent.keyed = true
 
-			children.push(child)
+			children.push(element)
 			break
 		case Array:
-			for (var i = 0; i < child.length; ++i)
-				elementChildren(element, children, child[i], index + i)
+			for (var i = 0; i < element.length; ++i)
+				elementChildren(parent, children, element[i], index + i)
 
 			return index + i
 		case String:
 		case Number:
-			return elementChildren(element, children, elementText(child), index)
+			return elementChildren(parent, children, elementText(element), index)
 		case Function:
 		case Promise:
-			return elementChildren(element, children, createElement(child), index)
+			return elementChildren(parent, children, createElement(element), index)
 		case Boolean:
-			return elementChildren(element, children, null, index)
+			return elementChildren(parent, children, null, index)
 		default:
-			return elementChildren(element, children, elementUnknown(child), index)
+			return elementChildren(parent, children, elementUnknown(element), index)
 	}
 
 	return index + 1
