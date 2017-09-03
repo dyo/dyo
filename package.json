@@ -33,5 +33,6 @@
     "chokidar": "^1.7.0",
     "jsdom": "^11.1.0",
     "uglify-js": "^3.0.27"
-  }
+  },
+  "unpkg": "dist/dio.min.js"
 }
