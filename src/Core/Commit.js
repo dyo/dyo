@@ -34,15 +34,15 @@ function commitSibling (element, signature) {
 		return elementIntermediate(DOM(null))
 
 	if (signature < SharedElementIntermediate)
-		return element
+		return element.id < SharedElementIntermediate ? commitSibling(element, SharedSiblingChildren) : element
 
 	if (signature === SharedSiblingElement)
-		return commitSibling(element.next, -signature)
+		return commitSibling(element.next, -SharedSiblingElement)
 
-	if (!isValidElement(element.children.next))
-		return commitSibling(element.next, signature)
+	if (!element.children.length)
+		return commitSibling(element.next, SharedSiblingChildren)
 
-	return element.children.next
+	return commitSibling(element.children.next, -SharedSiblingChildren)
 }
 
 /**
