@@ -1,5 +1,7 @@
 /**
  * @constructor
+ * @param {Object?} props
+ * @param {Object?} context
  */
 function Component (props, context) {
 	this.refs = null
@@ -57,7 +59,7 @@ function componentMount (element) {
 		if (prototype[SymbolComponent] !== SymbolComponent)
 			createComponent(prototype)
 
-		instance = owner = getChildInstance(element)
+		instance = owner = getChildInstance(element, owner)
 	} else {
 		instance = new Component()
 		instance.render = owner
@@ -228,7 +230,7 @@ function enqueuePending (element, instance, state, callback) {
  * @param {number} signature
  */
 function enqueueUpdate (element, instance, callback, signature) {
-	if (element == null)
+	if (!element)
 		return void requestAnimationFrame(function () {
 			enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 		})
@@ -249,31 +251,29 @@ function enqueueUpdate (element, instance, callback, signature) {
 
 /**
  * @param {Element} element
- * @param {(Component|Element)} instance
+ * @param {Component} instance
  * @param {Object} state
  * @return {Object}
  */
 function getInitialState (element, instance, state) {	
-	if (state)
-		switch (state.constructor) {
-			case Promise:
-				enqueuePending(element, instance, state)
-			case Boolean:
-				break
-			default:
-				return state
-		}
+	if (state) {
+		if (state.constructor !== Promise)
+			return typeof state === 'object' ? state : Object(state)
+		else
+			enqueuePending(element, instance, state)
+	}
 
 	return instance.state || {}
 }
 
 /**
  * @param {Element} element
+ * @param {function} owner
  * @return {Component}
  */
-function getChildInstance (element) {
+function getChildInstance (element, owner) {
 	try {
-		return new element.type(element.props, element.context)
+		return new owner(element.props, element.context)
 	} catch (e) {
 		errorBoundary(element, e, SharedSiteConstructor, SharedErrorActive)
 	}
@@ -323,7 +323,7 @@ function getHostChildren (element) {
 	if (isValidElement(element))
 		return element
 	else
-		element[SymbolElement]
+		return element[SymbolElement]
 }
 
 /**
@@ -364,7 +364,7 @@ function getDefaultProps (element, defaultProps, props) {
  */
 function getLifecycleData (element, name) {
 	try {
-		return element.owner[name].call(element.instance)
+		return element.owner[name].call(element.instance, element.props)
 	} catch (e) {
 		errorBoundary(element, e, name, SharedErrorActive)
 	}

@@ -50,10 +50,10 @@ function errorException (element, error, from) {
 function errorElement (element, error, from, signature) {	
 	var snapshot
 
-	if (signature === SharedErrorPassive || !element || !element.owner)
+	if (signature === SharedErrorPassive || !element || !element.host)
 		return
 
-	if (element.owner[SharedComponentDidCatch])
+	if (element.owner && element.owner[SharedComponentDidCatch])
 		try {
 			element.sync = SharedWorkTask
 			snapshot = element.owner[SharedComponentDidCatch].call(element.instance, error, {})

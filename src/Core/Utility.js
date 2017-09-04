@@ -141,9 +141,10 @@ function flatten (array, output) {
  */
 function each (iterable, callback) {
 	var value = iterable.next()
+	var index = 0
 
 	while (value.done !== true) {
-		callback(value.value)
+		index = callback(value.value, index)|0
 		value = iterable.next(value.value)
 	}
 }

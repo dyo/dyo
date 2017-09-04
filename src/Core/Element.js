@@ -56,18 +56,16 @@ function elementIntermediate (node) {
 function elementFragment (fragment) {
 	var element = new Element(SharedElementFragment)
 	var children = new List()
-	
+	var i = 0
+
 	element.type = '#fragment'
 	element.children = children
 
-	switch (fragment.constructor) {
-		case Element:
-			elementChildren(element, children, fragment, 0)
-			break
-		case Array:
-			for (var i = 0; i < fragment.length; ++i)
-				elementChildren(element, children, fragment[i], i)
-	}
+	if (isValidElement(fragment))
+		elementChildren(element, children, fragment, i)
+	else if (Array.isArray(fragment))
+		for (; i < fragment.length; ++i)
+			elementChildren(element, children, fragment[i], i)				
 
 	return element
 }
@@ -79,8 +77,8 @@ function elementFragment (fragment) {
 function elementIterable (iterable, element) {	
 	var index = 0
 
-	each(iterable, function (value) {
-		index = elementChildren(element, element.children, value, index)
+	each(iterable, function (value, index) {
+		return elementChildren(element, element.children, value, index)
 	})
 
 	return element

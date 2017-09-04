@@ -30,16 +30,16 @@ function commitElement (element) {
  * @return {Element}
  */
 function commitSibling (element, signature) {
-	if (!element)
+	if (!isValidElement(element))
 		return elementIntermediate(DOM(null))
 
-	if (element.id > SharedElementIntermediate)
+	if (element.id > SharedElementIntermediate || signature < SharedElementIntermediate)
 		return element
 
 	if (signature === SharedSiblingElement)
-		return commitSibling(element.next, signature)
+		return commitSibling(element.next, -signature)
 	else
-		return commitSibling(element.children.next, signature)
+		return commitSibling(element.children.next, -signature)
 }
 
 /**
@@ -73,7 +73,7 @@ function commitChildren (element, children, host, signature, mode) {
 	var next = sibling
 
 	while (length-- > 0) {
-		if (next.DOM !== null) {
+		if (next.DOM) {
 			sibling = next
 			children.insert(next = merge(new Element(SharedElementNode), next), sibling)
 			children.remove(sibling)
@@ -163,7 +163,7 @@ function commitUnmount (element, parent, signature) {
  * @param {number} signature
  */
 function commitReplace (element, snapshot, signature) {
-	if (signature > SharedMountInsert && commitUnmount(element, element.parent, SharedMountReplace))
+	if (signature === SharedMountReplace && commitUnmount(element, element.parent, SharedMountReplace))
 		return void element.state.then(function () {
 			commitReplace(element, snapshot, SharedMountInsert)
 		})
@@ -195,12 +195,11 @@ function commitReplace (element, snapshot, signature) {
  */
 function commitDetach (element, signature) {
 	if (element.id !== SharedElementText) {
-		var index = 0
 		var children = element.children
 		var length = children.length
 		var next = children.next
 
-		while (index++ < length)
+		while (length-- > 0)
 			switch (next.id) {
 				case SharedElementComponent:
 					if (next.owner[SharedComponentWillUnmount])

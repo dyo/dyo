@@ -36,9 +36,6 @@
 	var SharedMountInsert = 4
 	var SharedMountReplace = 5
 	
-	var SharedSiblingElement = 0
-	var SharedSiblingChildren = 1
-	
 	var SharedWorkTask = 0
 	var SharedWorkSync = 1
 	
@@ -47,6 +44,9 @@
 	
 	var SharedPropsMount = 1
 	var SharedPropsUpdate = 2
+	
+	var SharedSiblingElement = 1
+	var SharedSiblingChildren = 2
 	
 	var SharedSiteCallback = 'callback'
 	var SharedSiteRender = 'render'
@@ -223,9 +223,10 @@
 	 */
 	function each (iterable, callback) {
 		var value = iterable.next()
+		var index = 0
 	
 		while (value.done !== true) {
-			callback(value.value)
+			index = callback(value.value, index)|0
 			value = iterable.next(value.value)
 		}
 	}
@@ -296,18 +297,16 @@
 	function elementFragment (fragment) {
 		var element = new Element(SharedElementFragment)
 		var children = new List()
-		
+		var i = 0
+	
 		element.type = '#fragment'
 		element.children = children
 	
-		switch (fragment.constructor) {
-			case Element:
-				elementChildren(element, children, fragment, 0)
-				break
-			case Array:
-				for (var i = 0; i < fragment.length; ++i)
-					elementChildren(element, children, fragment[i], i)
-		}
+		if (isValidElement(fragment))
+			elementChildren(element, children, fragment, i)
+		else if (Array.isArray(fragment))
+			for (; i < fragment.length; ++i)
+				elementChildren(element, children, fragment[i], i)				
 	
 		return element
 	}
@@ -319,8 +318,8 @@
 	function elementIterable (iterable, element) {	
 		var index = 0
 	
-		each(iterable, function (value) {
-			index = elementChildren(element, element.children, value, index)
+		each(iterable, function (value, index) {
+			return elementChildren(element, element.children, value, index)
 		})
 	
 		return element
@@ -499,6 +498,8 @@
 	
 	/**
 	 * @constructor
+	 * @param {Object?} props
+	 * @param {Object?} context
 	 */
 	function Component (props, context) {
 		this.refs = null
@@ -556,7 +557,7 @@
 			if (prototype[SymbolComponent] !== SymbolComponent)
 				createComponent(prototype)
 	
-			instance = owner = getChildInstance(element)
+			instance = owner = getChildInstance(element, owner)
 		} else {
 			instance = new Component()
 			instance.render = owner
@@ -727,7 +728,7 @@
 	 * @param {number} signature
 	 */
 	function enqueueUpdate (element, instance, callback, signature) {
-		if (element == null)
+		if (!element)
 			return void requestAnimationFrame(function () {
 				enqueueUpdate(getHostChildren(instance), instance, callback, signature)
 			})
@@ -748,31 +749,29 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {(Component|Element)} instance
+	 * @param {Component} instance
 	 * @param {Object} state
 	 * @return {Object}
 	 */
 	function getInitialState (element, instance, state) {	
-		if (state)
-			switch (state.constructor) {
-				case Promise:
-					enqueuePending(element, instance, state)
-				case Boolean:
-					break
-				default:
-					return state
-			}
+		if (state) {
+			if (state.constructor !== Promise)
+				return typeof state === 'object' ? state : Object(state)
+			else
+				enqueuePending(element, instance, state)
+		}
 	
 		return instance.state || {}
 	}
 	
 	/**
 	 * @param {Element} element
+	 * @param {function} owner
 	 * @return {Component}
 	 */
-	function getChildInstance (element) {
+	function getChildInstance (element, owner) {
 		try {
-			return new element.type(element.props, element.context)
+			return new owner(element.props, element.context)
 		} catch (e) {
 			errorBoundary(element, e, SharedSiteConstructor, SharedErrorActive)
 		}
@@ -822,7 +821,7 @@
 		if (isValidElement(element))
 			return element
 		else
-			element[SymbolElement]
+			return element[SymbolElement]
 	}
 	
 	/**
@@ -863,7 +862,7 @@
 	 */
 	function getLifecycleData (element, name) {
 		try {
-			return element.owner[name].call(element.instance)
+			return element.owner[name].call(element.instance, element.props)
 		} catch (e) {
 			errorBoundary(element, e, name, SharedErrorActive)
 		}
@@ -991,16 +990,16 @@
 	 * @return {Element}
 	 */
 	function commitSibling (element, signature) {
-		if (!element)
+		if (!isValidElement(element))
 			return elementIntermediate(DOM(null))
 	
-		if (element.id > SharedElementIntermediate)
+		if (element.id > SharedElementIntermediate || signature < SharedElementIntermediate)
 			return element
 	
 		if (signature === SharedSiblingElement)
-			return commitSibling(element.next, signature)
+			return commitSibling(element.next, -signature)
 		else
-			return commitSibling(element.children.next, signature)
+			return commitSibling(element.children.next, -signature)
 	}
 	
 	/**
@@ -1034,7 +1033,7 @@
 		var next = sibling
 	
 		while (length-- > 0) {
-			if (next.DOM !== null) {
+			if (next.DOM) {
 				sibling = next
 				children.insert(next = merge(new Element(SharedElementNode), next), sibling)
 				children.remove(sibling)
@@ -1124,7 +1123,7 @@
 	 * @param {number} signature
 	 */
 	function commitReplace (element, snapshot, signature) {
-		if (signature > SharedMountInsert && commitUnmount(element, element.parent, SharedMountReplace))
+		if (signature === SharedMountReplace && commitUnmount(element, element.parent, SharedMountReplace))
 			return void element.state.then(function () {
 				commitReplace(element, snapshot, SharedMountInsert)
 			})
@@ -1156,12 +1155,11 @@
 	 */
 	function commitDetach (element, signature) {
 		if (element.id !== SharedElementText) {
-			var index = 0
 			var children = element.children
 			var length = children.length
 			var next = children.next
 	
-			while (index++ < length)
+			while (length-- > 0)
 				switch (next.id) {
 					case SharedElementComponent:
 						if (next.owner[SharedComponentWillUnmount])
@@ -1673,10 +1671,10 @@
 	function errorElement (element, error, from, signature) {	
 		var snapshot
 	
-		if (signature === SharedErrorPassive || !element || !element.owner)
+		if (signature === SharedErrorPassive || !element || !element.host)
 			return
 	
-		if (element.owner[SharedComponentDidCatch])
+		if (element.owner && element.owner[SharedComponentDidCatch])
 			try {
 				element.sync = SharedWorkTask
 				snapshot = element.owner[SharedComponentDidCatch].call(element.instance, error, {})
