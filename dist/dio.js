@@ -1365,8 +1365,8 @@
 	 * @param {Element} element
 	 * @param {Element} snapshot
 	 */
-	function reconcileElement (element, snapshot) {	
-		if (snapshot.id === SharedElementPromise)
+	function reconcileElement (element, snapshot) {
+		if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
 			return commitPromise(element, snapshot)
 	
 		if (element.key !== snapshot.key || element.type !== snapshot.type)
