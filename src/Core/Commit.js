@@ -33,13 +33,16 @@ function commitSibling (element, signature) {
 	if (!isValidElement(element))
 		return elementIntermediate(DOM(null))
 
-	if (element.id > SharedElementIntermediate || signature < SharedElementIntermediate)
+	if (signature < SharedElementIntermediate)
 		return element
 
 	if (signature === SharedSiblingElement)
 		return commitSibling(element.next, -signature)
-	else
-		return commitSibling(element.children.next, -signature)
+
+	if (!isValidElement(element.children.next))
+		return commitSibling(element.next, signature)
+
+	return element.children.next
 }
 
 /**
@@ -170,7 +173,7 @@ function commitReplace (element, snapshot, signature) {
 
 	commitMount(
 		snapshot, 
-		commitSibling(element.next, SharedSiblingElement), 
+		commitSibling(element, SharedSiblingElement), 
 		element.parent, 
 		element.host, 
 		SharedMountInsert, 
