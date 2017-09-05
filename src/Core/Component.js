@@ -8,7 +8,6 @@ function Component (props, context) {
 	this.state = null
 	this.props = props
 	this.context = context
-	this[SymbolElement] = null
 }
 /**
  * @type {Object}
@@ -52,8 +51,10 @@ function forceUpdate (callback) {
  */
 function componentMount (element) {
 	var owner = element.type
+	var context = element.context || {}
 	var prototype = owner.prototype
 	var instance
+	var children
 
 	if (prototype && prototype.render) {
 		if (prototype[SymbolComponent] !== SymbolComponent)
@@ -67,20 +68,19 @@ function componentMount (element) {
 
 	element.owner = owner
 	element.instance = instance
-	element.context = element.context || {}
+	element.context = context
 	
 	instance[SymbolElement] = element
 	instance.refs = {}
 	instance.props = element.props
-	instance.context = element.context
+	instance.context = context
 
 	if (owner[SharedGetInitialState])
 		instance.state = getInitialState(element, instance, getLifecycleData(element, SharedGetInitialState))
 	else if (!instance.state)
 		instance.state = {}
 	
-	element.children = getChildElement(element)
-	element.children.context = element.context
+	children = element.children = getChildElement(element)
 
 	if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 		getLifecycleMount(element, SharedComponentWillMount)
@@ -88,7 +88,7 @@ function componentMount (element) {
 	if (owner[SharedGetChildContext])
 		element.context = getChildContext(element)
 
-	return element.children
+	return children
 }
 
 /**

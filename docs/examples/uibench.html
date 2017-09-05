@@ -180,7 +180,7 @@
 						dio.render(h(Main, {data: state}), container);
 					},
 					function(samples) {
-						dio.render(samples, container);
+						dio.render(h('pre', JSON.stringify(samples, null, 2)), container);
 					}
 				);
 			});

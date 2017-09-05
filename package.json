@@ -1,6 +1,7 @@
 {
   "name": "dio.js",
   "main": "dist/dio.js",
+  "unpkg": "dist/dio.min.js",
   "types": "types/dio.d.ts",
   "description": "A Library For Building User Interfaces.",
   "version": "8.0.0",
@@ -33,6 +34,5 @@
     "chokidar": "^1.7.0",
     "jsdom": "^11.1.0",
     "uglify-js": "^3.0.27"
-  },
-  "unpkg": "dist/dio.min.js"
+  }
 }

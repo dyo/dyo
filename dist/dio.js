@@ -506,7 +506,6 @@
 		this.state = null
 		this.props = props
 		this.context = context
-		this[SymbolElement] = null
 	}
 	/**
 	 * @type {Object}
@@ -550,8 +549,10 @@
 	 */
 	function componentMount (element) {
 		var owner = element.type
+		var context = element.context || {}
 		var prototype = owner.prototype
 		var instance
+		var children
 	
 		if (prototype && prototype.render) {
 			if (prototype[SymbolComponent] !== SymbolComponent)
@@ -565,20 +566,19 @@
 	
 		element.owner = owner
 		element.instance = instance
-		element.context = element.context || {}
+		element.context = context
 		
 		instance[SymbolElement] = element
 		instance.refs = {}
 		instance.props = element.props
-		instance.context = element.context
+		instance.context = context
 	
 		if (owner[SharedGetInitialState])
 			instance.state = getInitialState(element, instance, getLifecycleData(element, SharedGetInitialState))
 		else if (!instance.state)
 			instance.state = {}
 		
-		element.children = getChildElement(element)
-		element.children.context = element.context
+		children = element.children = getChildElement(element)
 	
 		if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 			getLifecycleMount(element, SharedComponentWillMount)
@@ -586,7 +586,7 @@
 		if (owner[SharedGetChildContext])
 			element.context = getChildContext(element)
 	
-		return element.children
+		return children
 	}
 	
 	/**
@@ -1600,21 +1600,30 @@
 		try {
 			var type = event.type
 			var element = this
+			var callback = element.event[type]
 			var host = element.host
 			var instance = host.instance
-			var callback = element.event[type]
+			var props
 			var state
+			var context
+			var result
 	
 			if (!callback)
 				return
+			
+			if (instance) {
+				props = instance.props
+				state = instance.state
+				context = instance.context
+			}
 	
 			if (typeof callback === 'function')
-				state = callback.call(instance, event)
+				result = callback.call(instance, event, props, state, context)
 			else if (typeof callback.handleEvent === 'function')
-				state = callback.handleEvent(event)
+				result = callback.handleEvent(event, props, state, context)
 	
-			if (instance && state)
-				getLifecycleReturn(host, state)
+			if (result && instance)
+				getLifecycleReturn(host, result)
 		} catch (e) {
 			errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
 		}
@@ -1658,9 +1667,9 @@
 			host = host.host
 		}
 	
-		error.report = report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n'
-		
-		return Object.defineProperty(error, 'error', {value: error})
+		return defineProperties(error, {
+			report: {value: report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n', writable: true}
+		})
 	}
 	
 	/**
@@ -1917,15 +1926,17 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {string} name
-	 * @param {*} value
+	 * @param {Object} declaration
 	 */
-	function DOMStyle (element, value) {
-		for (var key in value)
+	function DOMStyle (element, declaration) {
+		for (var key in declaration) {
+			var value = declaration[key]
+	
 			if (key.indexOf('-') < 0)
-				DOMTarget(element).style[key] = value[key]
+				DOMTarget(element).style[key] = value !== false && value !== undefined ? value : null
 			else
-				DOMTarget(element).style.setProperty(key, value[key])
+				DOMTarget(element).style.setProperty(key, value)
+		}
 	}
 	
 	/**

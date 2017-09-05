@@ -60,13 +60,12 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	var RegExpEscape = /[<>&"']/g
 	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
 	var RegExpVendor = /^(ms|webkit|moz)/
-	var ElementPrototype = Element.prototype
 	
-	ElementPrototype.html = ''
-	ElementPrototype.chunk = ''
-	ElementPrototype.toString = toString
-	ElementPrototype.toStream = toStream
-	ElementPrototype.toJSON = toJSON
+	Object.defineProperties(Element.prototype, {
+		toJSON: {value: toJSON},
+		toString: {value: toString},
+		toStream: {value: toStream}
+	})
 	
 	exports.renderToString = renderToString
 	exports.renderToStream = renderToStream
@@ -148,12 +147,12 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 		if (elementType(type) === SharedElementIntermediate)
 			return output
 	
-		if (!element.html)
+		if (typeof element.DOM !== 'string')
 			while (length-- > 0)
 				output += (children = children.next).toString()
 		else {
-			output += element.html
-			element.html = ''
+			output += element.DOM
+			element.DOM = null
 		}
 	
 		return element.id === SharedElementNode ? output + '</'+type+'>' : output
@@ -177,7 +176,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 					else
 						break
 				case 'innerHTML':
-					element.html = value
+					element.DOM = value+''
 					break
 				case 'defaultValue':
 					if (!props.value)
@@ -313,27 +312,27 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 				if (elementType(type) === SharedElementIntermediate)
 					break
 				
-				if (element.html) {
-					output += element.html
-					element.html = ''
+				if (typeof element.DOM === 'string') {
+					output += element.DOM
+					element.DOM = null
 					length = 0
 				}
 	
-				if (length < 1) {
+				if (length === 0) {
 					output += '</'+type+'>'
 					break
 				}
 			default:
 				if (element.id === SharedElementNode)
-					children.prev.chunk = '</'+type+'>'
+					children.prev.DOM = '</'+type+'>'
 	
 				while (length-- > 0)
 					stack.push(children = children.prev)
 		}
 	
-		if (element.chunk) {
-			output += element.chunk
-			element.chunk = ''
+		if (typeof element.DOM === 'string') {
+			output += element.DOM
+			element.DOM = null
 		}
 	
 		writable.push(output)

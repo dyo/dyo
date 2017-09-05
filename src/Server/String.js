@@ -19,12 +19,12 @@ function toString () {
 	if (elementType(type) === SharedElementIntermediate)
 		return output
 
-	if (!element.html)
+	if (typeof element.DOM !== 'string')
 		while (length-- > 0)
 			output += (children = children.next).toString()
 	else {
-		output += element.html
-		element.html = ''
+		output += element.DOM
+		element.DOM = null
 	}
 
 	return element.id === SharedElementNode ? output + '</'+type+'>' : output
@@ -48,7 +48,7 @@ function toProps (element, props) {
 				else
 					break
 			case 'innerHTML':
-				element.html = value
+				element.DOM = value+''
 				break
 			case 'defaultValue':
 				if (!props.value)

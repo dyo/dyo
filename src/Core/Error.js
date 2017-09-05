@@ -34,9 +34,9 @@ function errorException (element, error, from) {
 		host = host.host
 	}
 
-	error.report = report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n'
-	
-	return Object.defineProperty(error, 'error', {value: error})
+	return defineProperties(error, {
+		report: {value: report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n', writable: true}
+	})
 }
 
 /**

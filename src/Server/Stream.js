@@ -63,27 +63,27 @@ function toChunk (element, stack, writable) {
 			if (elementType(type) === SharedElementIntermediate)
 				break
 			
-			if (element.html) {
-				output += element.html
-				element.html = ''
+			if (typeof element.DOM === 'string') {
+				output += element.DOM
+				element.DOM = null
 				length = 0
 			}
 
-			if (length < 1) {
+			if (length === 0) {
 				output += '</'+type+'>'
 				break
 			}
 		default:
 			if (element.id === SharedElementNode)
-				children.prev.chunk = '</'+type+'>'
+				children.prev.DOM = '</'+type+'>'
 
 			while (length-- > 0)
 				stack.push(children = children.prev)
 	}
 
-	if (element.chunk) {
-		output += element.chunk
-		element.chunk = ''
+	if (typeof element.DOM === 'string') {
+		output += element.DOM
+		element.DOM = null
 	}
 
 	writable.push(output)

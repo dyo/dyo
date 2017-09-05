@@ -94,15 +94,17 @@ function DOMAppend (element, parent) {
 
 /**
  * @param {Element} element
- * @param {string} name
- * @param {*} value
+ * @param {Object} declaration
  */
-function DOMStyle (element, value) {
-	for (var key in value)
+function DOMStyle (element, declaration) {
+	for (var key in declaration) {
+		var value = declaration[key]
+
 		if (key.indexOf('-') < 0)
-			DOMTarget(element).style[key] = value[key]
+			DOMTarget(element).style[key] = value !== false && value !== undefined ? value : null
 		else
-			DOMTarget(element).style.setProperty(key, value[key])
+			DOMTarget(element).style.setProperty(key, value)
+	}
 }
 
 /**

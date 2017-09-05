@@ -91,9 +91,9 @@ module.exports = ({h, Component, render}) => {
 		var container = document.createElement('div')
 
 		class A {
-			componentDidCatch({message, error}) {
+			componentDidCatch(error) {
 				error.report = !ok(true, 'componentDidCatch')
-				return message
+				return error.message
 			}
 			render() {
 				throw 'render'
