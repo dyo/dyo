@@ -1683,7 +1683,7 @@
 	function errorElement (element, error, from, signature) {	
 		var snapshot
 	
-		if (signature === SharedErrorPassive || !element || !element.host)
+		if (signature === SharedErrorPassive || !element || element.id === SharedElementIntermediate )
 			return
 	
 		if (element.owner && element.owner[SharedComponentDidCatch])
