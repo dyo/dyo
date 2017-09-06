@@ -247,7 +247,7 @@
 	 */
 	function compare (a, b) {
 	  for (var key in a)
-	  	if (!hasOwnProperty.call(a, key))
+	  	if (!hasOwnProperty.call(b, key))
 	  		return true
 	  
 	  for (var key in b)
@@ -2126,7 +2126,7 @@
 	
 					if (!(target = target.nextSibling) || next !== element)
 						break
-			default:	
+			default:
 				target = (sibling = target).nextSibling
 	
 				if (!prevNode || current !== sibling)

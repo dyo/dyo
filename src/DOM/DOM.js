@@ -240,7 +240,7 @@ function DOMFind (element, parent) {
 
 				if (!(target = target.nextSibling) || next !== element)
 					break
-		default:	
+		default:
 			target = (sibling = target).nextSibling
 
 			if (!prevNode || current !== sibling)
