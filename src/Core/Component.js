@@ -17,7 +17,16 @@ var ComponentPrototype = {
 	setState: {value: setState}
 }
 
-createComponent(Component.prototype)
+/**
+ * @param {Object?} props
+ * @param {Object?} context
+ */
+function PureComponent (props, context) {
+	Component.call(this, props, context)
+}
+PureComponent.prototype = Object.create(createComponent(Component.prototype), {
+	shouldComponentUpdate: {value: shouldComponentUpdate}
+})
 
 /**
  * @param {Object} prototype
@@ -28,6 +37,17 @@ function createComponent (prototype) {
 
 	if (!prototype.hasOwnProperty(SharedSiteRender))
 		defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
+
+	return prototype
+}
+
+/**
+ * @param {Object} props
+ * @param {Object} state
+ * @return {boolean}
+ */
+function shouldComponentUpdate (props, state) {
+	return compare(this.props, props) || compare(this.state, state)
 }
 
 /**

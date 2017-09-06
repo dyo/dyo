@@ -4,7 +4,7 @@
 
 A Library For Building User Interfaces.
 
-- ~5kb
+- ~6kb
 
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
@@ -93,18 +93,15 @@ The easiest way to get started with DIO is to walk through the [Introduction to 
 
 ```js
 class Input {
-	constructor() {
-		this.state = {value: ''}
-	}
 	componentDidCatch ({error, stack, message, report}) {
 		return error
 	}
-	async handleChange({target}) {
+	async handleInput({target}, props, state) {
 		return {value: target.value}
 	}
-	render(props, state, context) {
+	render(props, {value}, context) {
 		return [
-			h('input', {onInput: this.handleChange, value: state.value})
+			h('input', {onInput: this.handleInput, value: value})
 		]
 	}
 }

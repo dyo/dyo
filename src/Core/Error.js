@@ -35,7 +35,8 @@ function errorException (element, error, from) {
 	}
 
 	return defineProperties(error, {
-		report: {value: report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n', writable: true}
+		report: {value: report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n', writable: true},
+		error: {value: error}
 	})
 }
 

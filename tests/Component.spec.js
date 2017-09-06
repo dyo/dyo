@@ -1,4 +1,4 @@
-module.exports = ({h, Component, render}) => {
+module.exports = ({h, Component, render, PureComponent}) => {
 	test('Lifecycle', ({ok, end}) => {
 		var container = document.createElement('div')
 
@@ -103,6 +103,24 @@ module.exports = ({h, Component, render}) => {
 		render(A, container)
 		ok(compare(container, 'render'), 'componentDidCatch#render')
 
+		end()
+	})
+
+	test('PureComponent', ({ok, end}) => {
+		var container = document.createElement('div')
+		var counter = 0
+
+		class A extends PureComponent {
+			render () {
+				return h('div', counter++)
+			}
+		}
+
+		render(h(A, {id: 1}), container)
+		render(h(A, {id: 1}), container)
+		ok(compare(container, '<div>0</div>'), 'shouldComponentUpdate(false)')
+		render(h(A, {id: 2}), container)
+		ok(compare(container, '<div>1</div>'), 'shouldComponentUpdate(true)')
 		end()
 	})
 }

@@ -240,6 +240,23 @@
 	}
 	
 	/**
+	 * @param {Object} a
+	 * @param {Object} b
+	 * @return {boolean}
+	 */
+	function compare (a, b) {
+	  for (var i in a)
+	  	if (a[i] !== b[i]) 
+	  		return true
+	  
+	  for (var i in b) 
+	  	if (a[i] !== b[i]) 
+	  		return true
+	  
+	  return false
+	}
+	
+	/**
 	 * @constructor
 	 * @param {number} id
 	 */
@@ -515,7 +532,16 @@
 		setState: {value: setState}
 	}
 	
-	createComponent(Component.prototype)
+	/**
+	 * @param {Object?} props
+	 * @param {Object?} context
+	 */
+	function PureComponent (props, context) {
+		Component.call(this, props, context)
+	}
+	PureComponent.prototype = Object.create(createComponent(Component.prototype), {
+		shouldComponentUpdate: {value: shouldComponentUpdate}
+	})
 	
 	/**
 	 * @param {Object} prototype
@@ -526,6 +552,17 @@
 	
 		if (!prototype.hasOwnProperty(SharedSiteRender))
 			defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
+	
+		return prototype
+	}
+	
+	/**
+	 * @param {Object} props
+	 * @param {Object} state
+	 * @return {boolean}
+	 */
+	function shouldComponentUpdate (props, state) {
+		return compare(this.props, props) || compare(this.state, state)
 	}
 	
 	/**
@@ -1671,7 +1708,8 @@
 		}
 	
 		return defineProperties(error, {
-			report: {value: report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n', writable: true}
+			report: {value: report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n', writable: true},
+			error: {value: error}
 		})
 	}
 	
@@ -2086,6 +2124,7 @@
 	exports.render = render
 	exports.hydrate = hydrate
 	exports.Component = Component
+	exports.PureComponent = PureComponent
 	exports.Children = Children
 	exports.findDOMNode = findDOMNode
 	exports.cloneElement = cloneElement

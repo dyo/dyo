@@ -57,6 +57,7 @@ exports.version = version
 exports.render = render
 exports.hydrate = hydrate
 exports.Component = Component
+exports.PureComponent = PureComponent
 exports.Children = Children
 exports.findDOMNode = findDOMNode
 exports.cloneElement = cloneElement

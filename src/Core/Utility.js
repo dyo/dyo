@@ -156,3 +156,20 @@ function each (iterable, callback) {
 function invariant (from, message) {
 	throw new Error('#'+from+'(...): '+message+'.')
 }
+
+/**
+ * @param {Object} a
+ * @param {Object} b
+ * @return {boolean}
+ */
+function compare (a, b) {
+  for (var i in a)
+  	if (a[i] !== b[i]) 
+  		return true
+  
+  for (var i in b) 
+  	if (a[i] !== b[i]) 
+  		return true
+  
+  return false
+}
