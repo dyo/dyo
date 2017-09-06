@@ -75,6 +75,7 @@
 	var requestAnimationFrame = window.requestAnimationFrame || function(c) {setTimeout(c, 16)}
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
+	var hasOwnProperty = Object.hasOwnProperty
 	
 	var SymbolIterator = Symbol.iterator || Symbol('Iterator')
 	var SymbolElement = Symbol('Element')
@@ -245,15 +246,27 @@
 	 * @return {boolean}
 	 */
 	function compare (a, b) {
-	  for (var i in a)
-	  	if (a[i] !== b[i]) 
+	  for (var key in a)
+	  	if (!hasOwnProperty.call(a, key))
 	  		return true
 	  
-	  for (var i in b) 
-	  	if (a[i] !== b[i]) 
+	  for (var key in b)
+	  	if (!is(a[key], b[key]))
 	  		return true
-	  
+	
 	  return false
+	}
+	
+	/**
+	 * @param {*} a
+	 * @param {*} b
+	 * @return {boolean}
+	 */
+	function is (a, b) {
+	  if (a === b)
+	    return a !== 0 || b !== 0 || 1/a === 1/b
+	  else
+	    return a !== a && b !== b
 	}
 	
 	/**
@@ -550,7 +563,7 @@
 	function createComponent (prototype) {
 		defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {value: SymbolComponent})
 	
-		if (!prototype.hasOwnProperty(SharedSiteRender))
+		if (!hasOwnProperty.call(prototype, SharedSiteRender))
 			defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
 	
 		return prototype
@@ -1072,14 +1085,13 @@
 	 */
 	function commitChildren (element, children, host, signature, mode) {
 		var length = children.length
-		var sibling = children.next
-		var next = sibling
+		var next = children.next
+		var sibling = next
 	
 		while (length-- > 0) {
 			if (next.DOM) {
-				sibling = next
-				children.insert(next = merge(new Element(SharedElementNode), next), sibling)
-				children.remove(sibling)
+				children.insert(next = merge(new Element(SharedElementNode), sibling = next), sibling)
+				children.remove(sibling)		
 			}
 	
 			commitMount(next, element, element, host, signature, mode)
@@ -1216,7 +1228,8 @@
 		if (element.ref)
 			commitReference(element, element.ref, SharedReferenceRemove)
 	
-		if (signature < SharedMountReplace) {
+		if (signature !== SharedMountReplace) {
+			element.instance = null
 			element.context = null
 			element.state = null
 			element.event = null
@@ -2090,6 +2103,9 @@
 		var prevNode = prev.DOM
 		var nextNode = null
 	
+		if (element.id === SharedElementText && element.children.length === 0)
+			return nextNode
+	
 		var target = prevNode ? DOMTarget(prev).nextSibling : DOMTarget(parent).firstChild 
 		var current = target
 		var sibling = target
@@ -2110,7 +2126,7 @@
 	
 					if (!(target = target.nextSibling) || next !== element)
 						break
-			default:
+			default:	
 				target = (sibling = target).nextSibling
 	
 				if (!prevNode || current !== sibling)

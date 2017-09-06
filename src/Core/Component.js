@@ -35,7 +35,7 @@ PureComponent.prototype = Object.create(createComponent(Component.prototype), {
 function createComponent (prototype) {
 	defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {value: SymbolComponent})
 
-	if (!prototype.hasOwnProperty(SharedSiteRender))
+	if (!hasOwnProperty.call(prototype, SharedSiteRender))
 		defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
 
 	return prototype

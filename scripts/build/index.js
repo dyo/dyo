@@ -45,8 +45,20 @@ const umd = [
 	...dom
 ]
 
+const esm = [
+	...core,
+	...dom
+]
+
 const getExports = (module) => {
-	return template.export + (module !== 'native' ? template.server : '')
+	switch (module) {
+		case 'native':
+			return template.export
+		case 'umd':
+			return template.export + template.server
+		case 'esm':
+			return template.module
+	}
 }
 
 const imports = 'exports, Element, componentMount, commitElement'
@@ -63,6 +75,21 @@ exports.findDOMNode = findDOMNode
 exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
 exports.h = exports.createElement = window.h = createElement
+`,
+	module: `
+export {
+	version, 
+	render, 
+	hydrate, 
+	Component, 
+	PureComponent, 
+	Children, 
+	findDOMNode, 
+	cloneElement, 
+	isValidElement, 
+	createElement,
+	createElement as h
+}
 `
 }
 
@@ -106,7 +133,16 @@ const wrapper = (open, module, content, close, version) => {
 				body: pad(format(content)),
 				close: close
 			}
-		default: {
+		case 'esm':
+			return {
+				open: (
+					open+
+					"var version = '"+version+"'\n\n"
+				),
+				body: format(content),
+				close: ''
+			}
+		default:
 			return {
 				open: (
 					open+
@@ -117,7 +153,6 @@ const wrapper = (open, module, content, close, version) => {
 				body: pad(format(content)),
 				close: close
 			}
-		}
 	}
 }
 
@@ -130,7 +165,16 @@ const bundle = (module, files, location) => {
 	let license = package.license
 	let open = comment(version, license)
 	let close = '\n}))'
-	let public = module !== 'server' ? pad(getExports(module).trim()) : ''
+	let public = ''
+
+	switch (module) {
+		case 'umd':
+			public += pad(getExports(module).trim())
+			break
+		case 'esm':
+			public += getExports(module).trim()
+			break
+	}
 
 	let content = wrapper(open, module, files.map(builder).join('\n'), close, version)
 	let uncompressed = (content.open + content.body + '\n\n' + public + content.close).trim()+'\n'
@@ -150,14 +194,17 @@ const bundle = (module, files, location) => {
 
 const resolve = () => {
 	bundle('umd', umd, '../../dist/dio.js')
+	bundle('esm', esm, '../../dist/dio.esm.js')
+
 	bundle('server', server, '../../dist/dio.server.js')
 	// bundle('native', native, '../../dist/dio.native.js')
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled: '+
-		'\n – dio.js,'+
+		'\n – dio.js'+
+		'\n – dio.esm.js'+
 		'\n – dio.min.js'+
-		'\n – dio.server.js,'+
+		'\n – dio.server.js'+
 		// '\n – dio.native.js,'+
 		'\x1b[0m\n'
 	)

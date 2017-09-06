@@ -1,6 +1,7 @@
 {
   "name": "dio.js",
   "main": "dist/dio.js",
+  "module": "dist/dio.esm.js",
   "unpkg": "dist/dio.min.js",
   "types": "types/dio.d.ts",
   "description": "A Library For Building User Interfaces.",

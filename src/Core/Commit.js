@@ -72,14 +72,13 @@ function commitPromise (element, snapshot) {
  */
 function commitChildren (element, children, host, signature, mode) {
 	var length = children.length
-	var sibling = children.next
-	var next = sibling
+	var next = children.next
+	var sibling = next
 
 	while (length-- > 0) {
 		if (next.DOM) {
-			sibling = next
-			children.insert(next = merge(new Element(SharedElementNode), next), sibling)
-			children.remove(sibling)
+			children.insert(next = merge(new Element(SharedElementNode), sibling = next), sibling)
+			children.remove(sibling)		
 		}
 
 		commitMount(next, element, element, host, signature, mode)
@@ -216,7 +215,8 @@ function commitDetach (element, signature) {
 	if (element.ref)
 		commitReference(element, element.ref, SharedReferenceRemove)
 
-	if (signature < SharedMountReplace) {
+	if (signature !== SharedMountReplace) {
+		element.instance = null
 		element.context = null
 		element.state = null
 		element.event = null

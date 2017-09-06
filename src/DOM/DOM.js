@@ -217,6 +217,9 @@ function DOMFind (element, parent) {
 	var prevNode = prev.DOM
 	var nextNode = null
 
+	if (element.id === SharedElementText && element.children.length === 0)
+		return nextNode
+
 	var target = prevNode ? DOMTarget(prev).nextSibling : DOMTarget(parent).firstChild 
 	var current = target
 	var sibling = target
@@ -237,7 +240,7 @@ function DOMFind (element, parent) {
 
 				if (!(target = target.nextSibling) || next !== element)
 					break
-		default:
+		default:	
 			target = (sibling = target).nextSibling
 
 			if (!prevNode || current !== sibling)
