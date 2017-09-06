@@ -26,6 +26,17 @@ module.exports = ({h, render}) => {
 			}
 		}
 
+		class Err {
+			componentDidCatch(err) {
+				err.report = ''
+				return 'Hello'
+			}
+			render () {
+				throw 'error'
+			}
+		}
+
+		ok(`${h(Err)}` === 'Hello', 'Component#componentDidCatch')
 		ok(`${h(Foo)}` === '<h1 class="faz" style="margin-top:20px;">Faz</h1>', 'Composite.toString()')
 		ok(`${h(Faz)}` === '<h1 class="faz" style="margin-top:20px;">Faz</h1>', 'Component.toString()')
 		ok(`${h('h1', {onClick: function () {}}, 'Faz')}` === '<h1>Faz</h1>', 'Element.toString()')
