@@ -2,10 +2,10 @@
 type Text = string|number|null|void
 type Key = Text
 type Ref = string|Function
-type Type = any
+type Type = string|Function|Promise<any>|Element
 type State = Object|Promise<Object>
 type Return = State|Promise<State>|void
-type Render = any
+type Render = Element|number|string|null|void|Promise<any>|Array<any>|Function
 type Event = EventListener|EventHandler
 
 interface List {
@@ -239,23 +239,31 @@ interface Element {
 }
 
 interface isValidElement {
-	(any): boolean
+	(element: any): boolean
 }
 
 interface findDOMNode {
-	(any): Node
+	(component: any): Node
 }
 
 interface Children {
-	forEach: (any) => void
-	map: (any) => Array<any>
-	toArray: (any) => Array<any>
-	count: (any) => number
-	only: (any) => Element
+	forEach: (children: any, callback: Function) => void
+	map: (children: any, callback: Function) => Array<any>
+	toArray: (children: any) => Array<any>
+	count: (children: any) => number
+	only: (children: Element) => Element
 }
 
 interface render {
-	(subject: any, container?: Node, callback?: Function): void
+	(subject: any, target?: Node, callback?: Function): void
+}
+
+interface renderToStream {
+	(subject: any, target?: object, callback?: Function): void
+}
+
+interface renderToString {
+	(subject: any, target?: object, callback?: Function): void
 }
 
 interface Component<P, S> {
@@ -271,10 +279,13 @@ declare global {
 		export const version: string
 		export const h: h
 		export const createElement: createElement
-		export const render: render
 		export const isValidElement: isValidElement
 		export const findDOMNode: findDOMNode
 		export const Children: Children
+
+		export const render: render
+		export const renderToString: renderToString
+		export const renderToStream: renderToStream
 
 		export abstract class Component<P, S> {
 			readonly state: Readonly<S>
