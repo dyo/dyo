@@ -50,7 +50,7 @@ function errorException (element, error, from) {
 function errorElement (element, error, from, signature) {	
 	var snapshot
 
-	if (signature === SharedErrorPassive || !element || element.id === SharedElementIntermediate )
+	if (signature === SharedErrorPassive || !element || element.id === SharedElementIntermediate)
 		return
 
 	if (element.owner && element.owner[SharedComponentDidCatch])

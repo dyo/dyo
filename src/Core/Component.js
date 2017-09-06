@@ -79,11 +79,11 @@ function componentMount (element) {
 		instance.state = getInitialState(element, instance, getLifecycleData(element, SharedGetInitialState))
 	else if (!instance.state)
 		instance.state = {}
-	
-	children = element.children = getChildElement(element)
 
 	if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 		getLifecycleMount(element, SharedComponentWillMount)
+	
+	children = element.children = getChildElement(element)
 
 	if (owner[SharedGetChildContext])
 		element.context = getChildContext(element)
@@ -188,7 +188,10 @@ function enqueueState (element, instance, state, callback) {
 			case Function:
 				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 			default:
-				element.state = element.work !== SharedWorkTask ? state : assign(instance.state, element.state, state)
+				if (element.work !== SharedWorkSync && !element.DOM)
+					return void assign(instance.state, element.state, state)
+				else
+					element.state = state
 
 				enqueueUpdate(element, instance, callback, SharedComponentStateUpdate)
 		}

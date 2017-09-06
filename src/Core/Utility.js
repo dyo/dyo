@@ -60,10 +60,10 @@ List.prototype = {
 /**
  * @constructor
  */
-function Hash () {
+function WeakHash () {
 	this.hash = ''
 }
-Hash.prototype = {
+WeakHash.prototype = {
 	/**
 	 * @param {*} key
 	 * @param {*} value

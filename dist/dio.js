@@ -67,7 +67,7 @@
 	var SharedGetInitialState = 'getInitialState'
 	
 	var Symbol = window.Symbol || function (d) {return 'Symbol('+d+')'}
-	var WeakMap = window.WeakMap || Hash
+	var WeakMap = window.WeakMap || WeakHash
 	var Promise = window.Promise || noop
 	
 	var root = new WeakMap()
@@ -142,10 +142,10 @@
 	/**
 	 * @constructor
 	 */
-	function Hash () {
+	function WeakHash () {
 		this.hash = ''
 	}
-	Hash.prototype = {
+	WeakHash.prototype = {
 		/**
 		 * @param {*} key
 		 * @param {*} value
@@ -577,11 +577,11 @@
 			instance.state = getInitialState(element, instance, getLifecycleData(element, SharedGetInitialState))
 		else if (!instance.state)
 			instance.state = {}
-		
-		children = element.children = getChildElement(element)
 	
 		if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 			getLifecycleMount(element, SharedComponentWillMount)
+		
+		children = element.children = getChildElement(element)
 	
 		if (owner[SharedGetChildContext])
 			element.context = getChildContext(element)
@@ -686,7 +686,10 @@
 				case Function:
 					return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 				default:
-					element.state = element.work !== SharedWorkTask ? state : assign(instance.state, element.state, state)
+					if (element.work !== SharedWorkSync && !element.DOM)
+						return void assign(instance.state, element.state, state)
+					else
+						element.state = state
 	
 					enqueueUpdate(element, instance, callback, SharedComponentStateUpdate)
 			}
@@ -1683,7 +1686,7 @@
 	function errorElement (element, error, from, signature) {	
 		var snapshot
 	
-		if (signature === SharedErrorPassive || !element || element.id === SharedElementIntermediate )
+		if (signature === SharedErrorPassive || !element || element.id === SharedElementIntermediate)
 			return
 	
 		if (element.owner && element.owner[SharedComponentDidCatch])

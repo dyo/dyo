@@ -25,7 +25,7 @@ interface createElement {
 interface h extends createElement {}
 
 interface EventHandler {
-	(e: Event): Return
+	(e: Event, props: object, state: object): Return
 }
 
 interface EventListener {
