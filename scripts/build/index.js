@@ -202,7 +202,7 @@ const bundle = (module, files, location) => {
 
 const minify = (uglify, {content, module, filename, filepath}) => {
 	const min = filepath.replace(module, module+'.min')
-	const map = filepath + '.map'
+	const map = min.replace('.js', '.js.map')
 
 	if (module === 'umd')
 		content = content.replace(/(dio\.\w+).(\js)/, '$1.min.$2')
@@ -210,7 +210,7 @@ const minify = (uglify, {content, module, filename, filepath}) => {
 	const compressed = uglify.minify({[filename]: content}, {
     sourceMap: {
       filename: filename,
-      url: filename+'.map'
+      url: filename.replace('.js', '.min.js.map')
     }
 	})
 
