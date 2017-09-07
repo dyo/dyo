@@ -150,13 +150,55 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  * @param {Element} element
  * @param {Element} parent
  * @param {number} signature
+ * @return {(boolean|void)}
  */
 function commitUnmount (element, parent, signature) {
 	if (element.id === SharedElementComponent)
 		return componentUnmount(element, element.children, parent, signature)
 
 	commitRemove(element, parent)
-	commitDetach(element, signature)
+	commitDemount(element, signature)
+}
+
+/**
+ * @param {Element} element
+ * @param {number} signature
+ */
+function commitDemount (element, signature) {
+	switch (element.id) {
+		case SharedElementComponent:
+			if (element.owner[SharedComponentWillUnmount])
+				getLifecycleMount(element, SharedComponentWillUnmount)
+
+			commitDemount(element.children, signature)
+		case SharedElementText:
+			break
+		default:
+			var children = element.children
+			var length = children.length
+
+			while (length-- > 0)
+				commitDemount(children = children.next, SharedMountAppend)
+	}
+
+	commitRelease(element, signature)
+}
+
+/**
+ * @param {Element} element
+ * @param {number} signature
+ */
+function commitRelease (element, signature) {
+	if (element.ref)
+		commitReference(element, element.ref, SharedReferenceRemove)
+
+	if (signature !== SharedMountReplace) {
+		element.instance = null
+		element.context = null
+		element.state = null
+		element.event = null
+		element.DOM = null
+	}
 }
 
 /**
@@ -165,10 +207,9 @@ function commitUnmount (element, parent, signature) {
  * @param {number} signature
  */
 function commitReplace (element, snapshot, signature) {
-	if (signature === SharedMountReplace && commitUnmount(element, element.parent, SharedMountReplace))
-		return void element.state.then(function () {
-			commitReplace(element, snapshot, SharedMountInsert)
-		})
+	if (signature === SharedMountReplace)
+		if (element.state = commitUnmount(element, element.parent, SharedMountReplace))
+			return commitRebase(element, snapshot, element, -signature)
 
 	commitMount(
 		snapshot, 
@@ -193,35 +234,19 @@ function commitReplace (element, snapshot, signature) {
 
 /**
  * @param {Element} element
+ * @param {Element} children
+ * @param {Element} parent
  * @param {number} signature
  */
-function commitDetach (element, signature) {
-	if (element.id !== SharedElementText) {
-		var children = element.children
-		var length = children.length
-		var next = children.next
+function commitRebase (element, children, parent, signature) {
+	return element.state.then(function () {
+		if (signature < SharedElementIntermediate)
+			commitReplace(element, children, signature)
+		else
+			commitUnmount(children, parent, signature)
 
-		while (length-- > 0)
-			switch (next.id) {
-				case SharedElementComponent:
-					if (next.owner[SharedComponentWillUnmount])
-						getLifecycleMount(next, SharedComponentWillUnmount)
-				default:
-					commitDetach(next, SharedMountAppend)
-					next = next.next
-			}
-	}
-
-	if (element.ref)
-		commitReference(element, element.ref, SharedReferenceRemove)
-
-	if (signature !== SharedMountReplace) {
-		element.instance = null
-		element.context = null
-		element.state = null
-		element.event = null
-		element.DOM = null
-	}
+		commitRelease(element, signature)
+	})
 }
 
 /**

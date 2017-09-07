@@ -26,7 +26,10 @@ module.exports = ({h, render}) => {
 			render() {
 				return h(Cooly, {
 					ref: (value) => {
-						ok(value instanceof Cooly, 'ref function(instance)')
+						if (value)
+							ok(value instanceof Cooly, 'ref function(instance#mount)')
+						else
+							ok(value === null, 'ref function(instance#unmount)')
 					} 
 				})
 			}
@@ -34,7 +37,7 @@ module.exports = ({h, render}) => {
 
 		class Cooly {
 			componentDidMount() {
-				ok(this.refs.wooly instanceof Wooly, 'ref string(instance)')
+				ok(this.refs.wooly instanceof Wooly, 'ref string(instance#mount)')
 			}
 			render() {
 				return h(Wooly, {
@@ -46,19 +49,19 @@ module.exports = ({h, render}) => {
 		class Wooly {
 			componentWillUnmount() {
 				Promise.resolve().then(()=>{
-					ok(this.refs.heading === null, 'ref string(unmount)')
+					ok(this.refs.heading === null, 'ref string(node#unmount)')
 				})
 			}
 			componentDidMount() {
-				ok(this.refs.heading.nodeType, 'ref string(node)')
+				ok(this.refs.heading.nodeType, 'ref string(node#mount)')
 			}
 			render() {
 				return h('div', {
 					ref: (value) => {
 						if (value)
-							ok(value.nodeType, 'ref function(node)')
+							ok(value.nodeType, 'ref function(node#mount)')
 						else
-							ok(value === null, 'ref function(unmount)')
+							ok(value === null, 'ref function(node#unmount)')
 					}
 				}, h('h1', {ref: 'heading'}))
 			}

@@ -2,7 +2,7 @@
   "name": "dio.js",
   "main": "dist/dio.js",
   "module": "dist/dio.esm.js",
-  "unpkg": "dist/dio.min.js",
+  "unpkg": "dist/dio.js",
   "types": "types/dio.d.ts",
   "description": "A Library For Building User Interfaces.",
   "version": "8.0.0",

@@ -101,7 +101,7 @@ function reconcileChildren (element, snapshot) {
 		if (aLength !== bLength)
 			if (aLength > bLength)
 				while (aLength > bLength)
-					commitUnmount(children.pop(), element, (aLength--, 0))
+					commitUnmount(children.pop(), element, (aLength--, SharedMountRemove))
 			else
 				while (aLength < bLength) {
 					aHead = bHead
@@ -227,7 +227,7 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 
 		if (aSize > 0)
 			for (bHash in aPool)
-				commitUnmount(children.remove(aPool[bHash]), element, 0)
+				commitUnmount(children.remove(aPool[bHash]), element, SharedMountRemove)
 	} else {
 		reconcileRemove(aHead, element, children, 0, aEnd)
 		reconcileInsert(bHead, bHead, element, host, children, 0, bEnd, SharedMountAppend)
@@ -266,5 +266,5 @@ function reconcileRemove (element, parent, children, index, length) {
 	var prev = element
 	
 	while (i++ < length)
-		commitUnmount(children.remove((next = (prev = next).next, prev)), parent, 0)
+		commitUnmount(children.remove((next = (prev = next).next, prev)), parent, SharedMountRemove)
 }

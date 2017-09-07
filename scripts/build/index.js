@@ -220,7 +220,7 @@ const watcher = (file) => {
 	} else {
 		if (file.indexOf('package.json') > -1) {
 			delete require.cache[require.resolve('../../package.json')];
-			package = require('../../package.json')
+			Object.assign(package, require('../../package.json'))
 		}
 		console.log('changed > ' + file)
 	}

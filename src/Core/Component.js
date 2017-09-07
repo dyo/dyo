@@ -165,19 +165,17 @@ function componentUpdate (element, snapshot, signature) {
 
 /**
  * @param {Element} element
- * @param {List} children
+ * @param {Element}
  * @param {Element} parent
  * @param {number} signature
+ * @return {(boolean|void)}
  */
 function componentUnmount (element, children, parent, signature) {
 	if (element.owner[SharedComponentWillUnmount])
-		if (element.state = getLifecycleMount(element, SharedComponentWillUnmount))
-			if (element.state.constructor === Promise)
-				return !!element.state.then(function () {
-					element.state = void commitUnmount(children, parent, signature)
-				})
+		if ((element.state = getLifecycleMount(element, SharedComponentWillUnmount)) instanceof Promise)
+			return commitRebase(element, children, parent, signature)
 
-	commitUnmount(children, parent, signature)
+	return commitUnmount(children, parent, (commitRelease(element, signature), signature))
 }
 
 /**

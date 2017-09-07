@@ -49,6 +49,21 @@ module.exports = ({h, Component, render, PureComponent}) => {
 			}
 		}
 
+		class X {
+			componentWillUnmount() {
+				stages.push('x')
+			}
+			render({child}) {
+				return h('div', child)
+			}
+		}
+
+		class Y {
+			render({children}) {
+				return children
+			}	
+		}
+
 		render(A, container)
 		render(B, container)
 		render(B, container)
@@ -61,6 +76,14 @@ module.exports = ({h, Component, render, PureComponent}) => {
 
 		render(h(C, {update: true}), container)
 		ok(compare(container, '2'), 'shouldComponentUpdate(true)')
+
+		stages = []
+
+		render(h(Y, h(X, {child: h(X, {child: h(X, {child: h(X, {child: h(X)})})})})), container)
+		ok(compare(container, '<div><div><div><div><div></div></div></div></div></div>'), 'componentDidMount#deep')
+		
+		render(h(Y, h(X)), container)
+		ok(compare(container, '<div></div>') && stages.join(',') === 'x,x,x,x', 'componentWillUnmount#deep')
 
 		end()
 	})
