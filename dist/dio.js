@@ -91,9 +91,9 @@
 	}
 	List.prototype = {
 		/**
-		 * @param {Element} element
-		 * @param {Element} sibling
-		 * @return {Element}
+		 * @param {(Element|List)} element
+		 * @param {(Element|List)} sibling
+		 * @return {(Element|List)}
 		 */
 		insert: function insert (element, sibling) {
 			element.next = sibling
@@ -105,12 +105,12 @@
 			return element
 		},
 		/**
-		 * @param {Element} element
-		 * @return {Element}
+		 * @param {(Element|List)} element
+		 * @return {(Element|List)}
 		 */
 		remove: function remove (element) {
 			if (this.length < 1) 
-				return
+				return element
 			
 			element.next.prev = element.prev
 			element.prev.next = element.next
@@ -119,14 +119,14 @@
 			return element
 		},
 		/**
-		 * @return {Element}
+		 * @return {(Element|List)}
 		 */
 		pop: function pop () {
 			return this.remove(this.prev)
 		},
 		/**
-		 * @param {Element} element
-		 * @return {Element}
+		 * @param {(Element|List)} element
+		 * @return {(Element|List)}
 		 */
 		push: function push (element) {
 			return this.insert(element, this)
