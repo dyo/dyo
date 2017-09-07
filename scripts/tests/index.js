@@ -8,7 +8,7 @@ const search = '.spec.js'
 global.document = DOM.window.document
 global.Node = DOM.window.Node
 global.Event = DOM.window.Event
-global.dio = require('../../dist/dio.js')
+global.dio = require('../../dist/dio.umd.js')
 
 /**
  * deepEqual
