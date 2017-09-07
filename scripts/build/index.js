@@ -2,15 +2,16 @@ const fs = require('fs')
 const path = require('path')
 const chokidar = require('chokidar')
 const UglifyJS = require('uglify-js')
+const UglifyES = require("uglify-es")
+
 const package = require('../../package.json')
 const options = {compress: {}}
 const strict = `'use strict'`
 const filenames = {
-	umd: 'dio.js',
+	umd: 'dio.umd.js',
 	esm: 'dio.esm.js',
 	min: 'dio.min.js',
 	node: 'dio.node.js',
-	native: 'dio.native.js',
 	map: 'dio.js.map'
 }
 
@@ -125,7 +126,7 @@ const wrapper = (open, module, content, close, version) => {
 		case 'node': {
 			return {
 				open: open,
-				body: `module.exports = function (${imports}) {\n${pad(strict+'\n\n'+format(content))}\n}`,
+				body: `module.exports = function (${imports}) {\n${pad('\n'+strict+'\n\n'+format(content))}\n}`,
 				close: ''
 			}
 		}
@@ -164,7 +165,7 @@ const wrapper = (open, module, content, close, version) => {
 }
 
 const comment = (version, license) => `
-/*! DIO ${version} @license ${license} */
+/*! DIO ${version} @license ${license} */\n
 `
 
 const bundle = (module, files, location) => {
@@ -173,7 +174,8 @@ const bundle = (module, files, location) => {
 	let open = comment(version, license)
 	let close = '\n}))'
 	let public = ''
-	let file = filenames[module]
+	let filename = filenames[module]
+	let filepath = location+filename
 
 	switch (module) {
 		case 'umd':
@@ -185,25 +187,38 @@ const bundle = (module, files, location) => {
 	}
 
 	let content = wrapper(open, module, files.map(builder).join('\n'), close, version)
-	let uncompressed = (content.open + content.body + '\n\n' + public + content.close).trim()+'\n'
+			content = (content.open + content.body + '\n\n' + public + content.close).trim()+'\n'
 	
-	fs.writeFileSync(path.join(__dirname, location+file), uncompressed)
+	fs.writeFileSync(path.join(__dirname, filepath), content)
 
-	if (module === 'umd') {
-		let compressed = UglifyJS.minify({[file]: uncompressed}, {
-	    sourceMap: {
-        filename: filenames.umd,
-        url: filenames.map
-	    }
-		})
-
-		if (compressed.error) {
-			console.error(compressed.error)
-		} else {
-			fs.writeFileSync(path.join(__dirname, location+filenames.min), compressed.code)
-			fs.writeFileSync(path.join(__dirname, location+filenames.map), compressed.map)
-		}
+	switch (module) {
+		case 'node':
+		case 'umd':
+			return minify(UglifyJS, {content, filename, module, filepath})
+		case 'esm':
+			return minify(UglifyES, {content, filename, module, filepath})
 	}
+}
+
+const minify = (uglify, {content, module, filename, filepath}) => {
+	const min = filepath.replace(module, module+'.min')
+	const map = filepath + '.map'
+
+	if (module === 'umd')
+		content = content.replace(/(dio\.\w+).(\js)/, '$1.min.$2')
+
+	const compressed = uglify.minify({[filename]: content}, {
+    sourceMap: {
+      filename: filename,
+      url: filename+'.map'
+    }
+	})
+
+	if (compressed.error)
+		return console.error(compressed.error)
+
+	fs.writeFileSync(path.join(__dirname, min), compressed.code)
+	fs.writeFileSync(path.join(__dirname, map), compressed.map)
 }
 
 const resolve = () => {

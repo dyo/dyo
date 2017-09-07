@@ -1,8 +1,8 @@
 {
   "name": "dio.js",
-  "main": "dist/dio.js",
+  "main": "dist/dio.umd.js",
+  "unpkg": "dist/dio.umd.js",
   "module": "dist/dio.esm.js",
-  "unpkg": "dist/dio.js",
   "types": "types/dio.d.ts",
   "description": "A Library For Building User Interfaces.",
   "version": "8.0.0",
@@ -34,6 +34,7 @@
   "devDependencies": {
     "chokidar": "^1.7.0",
     "jsdom": "^11.1.0",
-    "uglify-js": "^3.0.27"
+    "uglify-js": "^3.0.28",
+    "uglify-es": "^3.0.28"
   }
 }
