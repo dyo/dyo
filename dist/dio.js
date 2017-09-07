@@ -1686,7 +1686,7 @@
 	
 			if (!callback)
 				return
-			
+	
 			if (instance) {
 				props = instance.props
 				state = instance.state
@@ -2170,5 +2170,5 @@
 	exports.isValidElement = isValidElement
 	exports.h = exports.createElement = window.h = createElement
 	
-	require && require('./dio.server.js')(exports, Element, componentMount, commitElement)
+	require && require('./dio.node.js')(exports, Element, componentMount, commitElement)
 }))

@@ -5,7 +5,14 @@ const UglifyJS = require('uglify-js')
 const package = require('../../package.json')
 const options = {compress: {}}
 const strict = `'use strict'`
-
+const filenames = {
+	umd: 'dio.js',
+	esm: 'dio.esm.js',
+	min: 'dio.min.js',
+	node: 'dio.node.js',
+	native: 'dio.native.js',
+	map: 'dio.js.map'
+}
 
 const core = [
 	'../../src/Core/Shared.js',
@@ -25,7 +32,7 @@ const dom = [
 	'../../src/DOM/DOM.js',
 ]
 
-const server = [
+const node = [
 	'../../src/Core/Shared.js',
 	'../../src/Server/Constant.js',
 	'../../src/Server/Utility.js',
@@ -55,7 +62,7 @@ const getExports = (module) => {
 		case 'native':
 			return template.export
 		case 'umd':
-			return template.export + template.server
+			return template.export + template.node
 		case 'esm':
 			return template.module
 	}
@@ -63,7 +70,7 @@ const getExports = (module) => {
 
 const imports = 'exports, Element, componentMount, commitElement'
 const template = {
-	server: `\nrequire && require('./dio.server.js')(${imports})`,
+	node: `\nrequire && require('./dio.node.js')(${imports})`,
 	export: `
 exports.version = version
 exports.render = render
@@ -115,7 +122,7 @@ const pad = (content) => content.replace(/^/gm, '\t')
 
 const wrapper = (open, module, content, close, version) => {
 	switch (module) {
-		case 'server': {
+		case 'node': {
 			return {
 				open: open,
 				body: `module.exports = function (${imports}) {\n${pad(strict+'\n\n'+format(content))}\n}`,
@@ -166,6 +173,7 @@ const bundle = (module, files, location) => {
 	let open = comment(version, license)
 	let close = '\n}))'
 	let public = ''
+	let file = filenames[module]
 
 	switch (module) {
 		case 'umd':
@@ -179,33 +187,39 @@ const bundle = (module, files, location) => {
 	let content = wrapper(open, module, files.map(builder).join('\n'), close, version)
 	let uncompressed = (content.open + content.body + '\n\n' + public + content.close).trim()+'\n'
 	
-	fs.writeFileSync(path.join(__dirname, location), uncompressed)
+	fs.writeFileSync(path.join(__dirname, location+file), uncompressed)
 
 	if (module === 'umd') {
-		let compressed = UglifyJS.minify(uncompressed)
+		let compressed = UglifyJS.minify({[file]: uncompressed}, {
+	    sourceMap: {
+        filename: filenames.umd,
+        url: filenames.map
+	    }
+		})
 
 		if (compressed.error) {
 			console.error(compressed.error)
 		} else {
-			fs.writeFileSync(path.join(__dirname, location.replace(/.js$/, '.min.js')), compressed.code)			
+			fs.writeFileSync(path.join(__dirname, location+filenames.min), compressed.code)
+			fs.writeFileSync(path.join(__dirname, location+filenames.map), compressed.map)
 		}
 	}
 }
 
 const resolve = () => {
-	bundle('umd', umd, '../../dist/dio.js')
-	bundle('esm', esm, '../../dist/dio.esm.js')
-
-	bundle('server', server, '../../dist/dio.server.js')
+	bundle('umd', umd, '../../dist/')
+	bundle('esm', esm, '../../dist/')
+	bundle('node', node, '../../dist/')
 	// bundle('native', native, '../../dist/dio.native.js')
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled: '+
-		'\n – dio.js'+
-		'\n – dio.esm.js'+
-		'\n – dio.min.js'+
-		'\n – dio.server.js'+
-		// '\n – dio.native.js,'+
+		'\n – '+filenames.umd+
+		'\n – '+filenames.min+
+		'\n – '+filenames.map+
+		'\n – '+filenames.esm+
+		'\n – '+filenames.node+
+		// '\n – 'filenames.native+
 		'\x1b[0m\n'
 	)
 }

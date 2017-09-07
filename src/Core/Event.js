@@ -15,7 +15,7 @@ function handleEvent (event) {
 
 		if (!callback)
 			return
-		
+
 		if (instance) {
 			props = instance.props
 			state = instance.state
