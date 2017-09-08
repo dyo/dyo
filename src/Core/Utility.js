@@ -8,52 +8,52 @@ function List () {
 }
 List.prototype = {
 	/**
-	 * @param {(Element|List)} element
-	 * @param {(Element|List)} sibling
-	 * @return {(Element|List)}
+	 * @param {Object} node
+	 * @param {Object} before
+	 * @return {Object}
 	 */
-	insert: function insert (element, sibling) {
-		element.next = sibling
-		element.prev = sibling.prev
-		sibling.prev.next = element
-		sibling.prev = element
+	insert: function insert (node, before) {
+		node.next = before
+		node.prev = before.prev
+		before.prev.next = node
+		before.prev = node
 		this.length++
 		
-		return element
+		return node
 	},
 	/**
-	 * @param {(Element|List)} element
-	 * @return {(Element|List)}
+	 * @param {Object} node
+	 * @return {Object}
 	 */
-	remove: function remove (element) {
+	remove: function remove (node) {
 		if (this.length < 1) 
-			return element
+			return node
 		
-		element.next.prev = element.prev
-		element.prev.next = element.next
+		node.next.prev = node.prev
+		node.prev.next = node.next
 		this.length--
 		
-		return element
+		return node
 	},
 	/**
-	 * @return {(Element|List)}
+	 * @param {Object} node
+	 * @return {Object}
+	 */
+	push: function push (node) {
+		return this.insert(node, this)
+	},
+	/**
+	 * @return {Object}
 	 */
 	pop: function pop () {
 		return this.remove(this.prev)
 	},
 	/**
-	 * @param {(Element|List)} element
-	 * @return {(Element|List)}
-	 */
-	push: function push (element) {
-		return this.insert(element, this)
-	},
-	/**
 	 * @param {function} callback
 	 */
 	forEach: function forEach (callback) {
-		for (var i = 0, element = this; i < this.length; ++i)
-			callback.call(this, element = element.next, i)
+		for (var i = 0, node = this; i < this.length; ++i)
+			callback.call(this, node = node.next, i)
 	}
 }
 

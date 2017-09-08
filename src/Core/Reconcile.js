@@ -10,7 +10,7 @@ function reconcileObject (prevObject, nextObject) {
 
 	for (var key in prevObject)
 		if (nextObject[key] == null)
-			delta[(length++, key)] = false
+			delta[(length++, key)] = undefined
 
 	for (var key in nextObject) {
 		var next = nextObject[key]

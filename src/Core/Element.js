@@ -248,7 +248,7 @@ function createElement (type, props) {
 			element.id = SharedElementPromise
 			break
 		default:
-			if (DOMValid(type))
+			if (isValidDOMNode(type))
 				element.id = SharedElementPortal
 	}
 

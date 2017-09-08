@@ -94,52 +94,52 @@
 	}
 	List.prototype = {
 		/**
-		 * @param {(Element|List)} element
-		 * @param {(Element|List)} sibling
-		 * @return {(Element|List)}
+		 * @param {Object} node
+		 * @param {Object} before
+		 * @return {Object}
 		 */
-		insert: function insert (element, sibling) {
-			element.next = sibling
-			element.prev = sibling.prev
-			sibling.prev.next = element
-			sibling.prev = element
+		insert: function insert (node, before) {
+			node.next = before
+			node.prev = before.prev
+			before.prev.next = node
+			before.prev = node
 			this.length++
 			
-			return element
+			return node
 		},
 		/**
-		 * @param {(Element|List)} element
-		 * @return {(Element|List)}
+		 * @param {Object} node
+		 * @return {Object}
 		 */
-		remove: function remove (element) {
+		remove: function remove (node) {
 			if (this.length < 1) 
-				return element
+				return node
 			
-			element.next.prev = element.prev
-			element.prev.next = element.next
+			node.next.prev = node.prev
+			node.prev.next = node.next
 			this.length--
 			
-			return element
+			return node
 		},
 		/**
-		 * @return {(Element|List)}
+		 * @param {Object} node
+		 * @return {Object}
+		 */
+		push: function push (node) {
+			return this.insert(node, this)
+		},
+		/**
+		 * @return {Object}
 		 */
 		pop: function pop () {
 			return this.remove(this.prev)
 		},
 		/**
-		 * @param {(Element|List)} element
-		 * @return {(Element|List)}
-		 */
-		push: function push (element) {
-			return this.insert(element, this)
-		},
-		/**
 		 * @param {function} callback
 		 */
 		forEach: function forEach (callback) {
-			for (var i = 0, element = this; i < this.length; ++i)
-				callback.call(this, element = element.next, i)
+			for (var i = 0, node = this; i < this.length; ++i)
+				callback.call(this, node = node.next, i)
 		}
 	}
 	
@@ -522,7 +522,7 @@
 				element.id = SharedElementPromise
 				break
 			default:
-				if (DOMValid(type))
+				if (isValidDOMNode(type))
 					element.id = SharedElementPortal
 		}
 	
@@ -734,7 +734,7 @@
 				case Function:
 					return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 				default:
-					if (element.work !== SharedWorkSync && !DOMContains(element))
+					if (element.work !== SharedWorkSync && !hasDOMNode(element))
 						return void assign(instance.state, element.state, state)
 					else
 						element.state = state
@@ -789,7 +789,7 @@
 				enqueueUpdate(element, instance, callback, signature)
 			})
 	
-		if (!DOMContains(element))
+		if (!hasDOMNode(element))
 			return
 	
 		componentUpdate(element, element, signature)
@@ -923,7 +923,7 @@
 	 */
 	function getLifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, DOMContains(element) && findDOMNode(element))
+			var state = element.owner[name].call(element.instance, hasDOMNode(element) && findDOMNode(element))
 			
 			if (name === SharedComponentWillUnmount && state instanceof Promise)
 				return state
@@ -997,11 +997,11 @@
 		if (isValidElement(element)) {
 			if (element.id < SharedElementEmpty)
 				return findDOMNode(getHostChildren(element).next)
-			else if (DOMContains(element))
-				return DOMTarget(element)
+			else if (hasDOMNode(element))
+				return getDOMNode(element)
 		}
 	
-		if (DOMValid(element))
+		if (isValidDOMNode(element))
 			return element
 	
 		invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
@@ -1060,7 +1060,7 @@
 	 */
 	function commitPromise (element, snapshot) {
 		snapshot.type.then(function (value) {
-			if (DOMContains(element))
+			if (hasDOMNode(element))
 				if (element.id === SharedElementPromise)
 					reconcileChildren(element, elementFragment(commitElement(value)))
 				else
@@ -1083,7 +1083,7 @@
 		var sibling = next
 	
 		while (length-- > 0) {
-			if (DOMContains(next)) {
+			if (hasDOMNode(next)) {
 				children.insert(next = merge(new Element(SharedElementNode), sibling = next), sibling)
 				children.remove(sibling)		
 			}
@@ -1127,17 +1127,17 @@
 	 		case SharedElementPromise:
 	 			commitPromise(element, element)
 	 		case SharedElementFragment:
-	 			element.DOM = DOM(DOMTarget(parent))
+	 			element.DOM = DOM(getDOMNode(parent))
 	 			break
 	 		case SharedElementNode:
-	 			element.xmlns = DOMType(element.type, parent.xmlns)
+	 			element.xmlns = getDOMType(element.type, parent.xmlns)
 	 		case SharedElementText:
 	 			switch (mode) {
 	 				case SharedMountClone:
-	 					if (element.DOM = DOMQuery(element, parent))
+	 					if (element.DOM = commitQuery(element, parent, element.id === SharedElementText))
 		 					break
 	 				default:
-	 					element.DOM = commitDOM(element)
+	 					element.DOM = commitCreate(element)
 	 					
 	 					if (signature < SharedMountInsert)
 	 						commitAppend(element, parent)
@@ -1270,7 +1270,7 @@
 					case SharedReferenceAssign:
 						element.ref = callback
 					case SharedReferenceDispatch:
-						return getLifecycleCallback(element.host, callback, element.instance || DOMTarget(element), key, element)
+						return getLifecycleCallback(element.host, callback, element.instance || getDOMNode(element), key, element)
 					case SharedReferenceReplace:
 						commitReference(element, callback, SharedReferenceRemove, key)
 						commitReference(element, callback, SharedReferenceAssign, key)
@@ -1291,7 +1291,7 @@
 			element.event = {}
 	
 		if (!element.event[type])
-			DOMEvent(element, type)
+			setDOMEvent(element, type)
 	
 		element.event[type] = callback
 	}
@@ -1314,7 +1314,7 @@
 					if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
 						commitEvent(element, key.substring(2).toLowerCase(), props[key])
 					else
-						DOMProperties(element, key, props[key], element.xmlns)
+						setDOMProperties(element, key, props[key], element.xmlns)
 			}
 	}
 	
@@ -1322,12 +1322,25 @@
 	 * @param {Element} element
 	 * @return {Object}
 	 */
-	function commitDOM (element) {
+	function commitCreate (element) {
 		try {
-			return element.id === SharedElementNode ? DOMElement(element) : DOMText(element)
+			return element.id === SharedElementNode ? createDOMElement(element) : createDOMText(element)
 		} catch (e) {
-			return commitDOM(commitElement(errorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
+			return commitDOMNode(commitElement(errorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
 		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} parent
+	 * @param {boolean} signature
+	 * @return {DOM?}
+	 */
+	function commitQuery (element, parent, signature) {
+		if (signature && element.children.length === 0)
+			return null
+	
+		return getDOMQuery(element, parent, elementSibling(element, 'prev'), elementSibling(element, 'next'), signature)
 	}
 	
 	/**
@@ -1335,14 +1348,14 @@
 	 * @param {(string|number)} value
 	 */
 	function commitValue (element, value) {
-		DOMValue(element, value)
+		setDOMValue(element, value)
 	}
 	
 	/**
 	 * @param {Element} element
 	 */
 	function commitContent (element) {
-		DOMContent(element)
+		setDOMContent(element)
 	}
 	
 	/**
@@ -1351,7 +1364,7 @@
 	 */
 	function commitRemove (element, parent) {
 		if (element.id > SharedElementEmpty)
-			DOMRemove(element, parent)
+			removeDOMNode(element, parent)
 		else
 			getHostChildren(element).forEach(function (children) {
 				commitRemove(children, element.id < SharedElementPortal ? parent : element)
@@ -1368,7 +1381,7 @@
 			return commitInsert(element, commitSibling(sibling, SharedSiblingChildren), parent)
 	
 		if (element.id > SharedElementEmpty)
-			DOMInsert(element, sibling, parent)
+			insertDOMNode(element, sibling, parent)
 		else if (element.id < SharedElementPortal)
 			getHostChildren(element).forEach(function (children) {
 				commitInsert(children, sibling, parent)
@@ -1384,7 +1397,7 @@
 			return commitInsert(element, commitSibling(parent, SharedSiblingElement), parent)
 	
 		if (element.id > SharedElementEmpty)
-			DOMAppend(element, parent)
+			appendDOMNode(element, parent)
 		else if (element.id < SharedElementPortal)
 			getHostChildren(element).forEach(function (children) {
 				commitAppend(children, parent)
@@ -1403,7 +1416,7 @@
 	
 		for (var key in prevObject)
 			if (nextObject[key] == null)
-				delta[(length++, key)] = false
+				delta[(length++, key)] = undefined
 	
 		for (var key in nextObject) {
 			var next = nextObject[key]
@@ -1770,7 +1783,7 @@
 		if (from === SharedSiteRender)
 			return commitElement(snapshot)
 	
-		if (DOMContains(element))
+		if (hasDOMNode(element))
 			requestAnimationFrame(function () {
 				reconcileElement(getHostElement(element), commitElement(snapshot))
 			})
@@ -1783,7 +1796,7 @@
 	 */
 	function render (element, target, callback) {	
 		if (!target)
-			return render(element, DOMDocument(), callback)
+			return render(element, getDOMDocument(), callback)
 	
 		if (root.has(target))
 			reconcileElement(root.get(target), commitElement(element))
@@ -1798,7 +1811,7 @@
 	 */
 	function hydrate (element, target, callback) {
 		if (!target)
-			return hydrate(element, DOMDocument(), callback)
+			return hydrate(element, getDOMDocument(), callback)
 		
 		if (root.has(target))
 			render(element, target, callback)
@@ -1819,10 +1832,10 @@
 		if (!isValidElement(parent))
 			return mount(element, elementEmpty(DOM(parent)), callback, mode)
 	
-		if (!DOMValid(DOMTarget(parent)))
+		if (!isValidDOMNode(getDOMNode(parent)))
 			invariant(SharedSiteRender, 'Target container is not a DOM element')
 	
-		root.set(DOMTarget(parent), element)
+		root.set(getDOMNode(parent), element)
 	
 		if (mode === SharedMountCommit)
 			commitContent(parent)
@@ -1908,17 +1921,10 @@
 	}
 	
 	/**
-	 * @return {Node}
-	 */
-	function DOMDocument () {
-		return document.documentElement
-	}
-	
-	/**
 	 * @param {Element} element
 	 * @param {boolean}
 	 */
-	function DOMContains (element) {
+	function hasDOMNode (element) {
 		return !!element.DOM
 	}
 	
@@ -1926,97 +1932,45 @@
 	 * @param {Node} target
 	 * @param {boolean}
 	 */
-	function DOMValid (target) {
+	function isValidDOMNode (target) {
 		return !!(target && target.ELEMENT_NODE)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Node}
-	 */
-	function DOMTarget (element) {
-		return element.DOM.target
 	}
 	
 	/**
 	 * @param {(EventListener|Element)} element
 	 * @param {string} type
 	 */
-	function DOMEvent (element, type) {
-		DOMTarget(element).addEventListener(type, element, false)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {DOM}
-	 */
-	function DOMElement (element) {
-		if (element.xmlns)
-			return DOM(document.createElementNS(element.xmlns, element.type))
-		else
-			return DOM(document.createElement(element.type))
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {DOM}
-	 */
-	function DOMText (element) {
-		return DOM(document.createTextNode(element.children))
+	function setDOMEvent (element, type) {
+		getDOMNode(element).addEventListener(type, element, false)
 	}
 	
 	/**
 	 * @param {Element} element
 	 */
-	function DOMContent (element) {
-		DOMTarget(element).textContent = ''
+	function setDOMContent (element) {
+		getDOMNode(element).textContent = ''
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {(string|number)} value
 	 */
-	function DOMValue (element, value) {
-		DOMTarget(element).nodeValue = value
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} parent
-	 */
-	function DOMRemove (element, parent) {
-		DOMTarget(parent).removeChild(DOMTarget(element))
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} sibling
-	 * @param {Element} parent
-	 */
-	function DOMInsert (element, sibling, parent) {
-		DOMTarget(parent).insertBefore(DOMTarget(element), DOMTarget(sibling))
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} parent
-	 */
-	function DOMAppend (element, parent) {
-		DOMTarget(parent).appendChild(DOMTarget(element))
+	function setDOMValue (element, value) {
+		getDOMNode(element).nodeValue = value
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {Object} declaration
 	 */
-	function DOMStyle (element, declaration) {
+	function setDOMStyle (element, declaration) {
 		for (var key in declaration) {
 			var value = declaration[key]
 	
 			if (key.indexOf('-') < 0)
-				DOMTarget(element).style[key] = value !== false && value !== undefined ? value : null
+				getDOMNode(element).style[key] = value !== false && value !== undefined ? value : null
 			else
-				DOMTarget(element).style.setProperty(key, value)
+				getDOMNode(element).style.setProperty(key, value)
 		}
 	}
 	
@@ -2025,15 +1979,15 @@
 	 * @param {string} name 
 	 * @param {*} value
 	 */
-	function DOMProperty (element, name, value) {
+	function setDOMProperty (element, name, value) {
 		switch (value) {
 			case null:
 			case false:
 			case undefined:
-				return DOMProperty(element, name, '')
+				return setDOMProperty(element, name, '')
 		}
 	
-		DOMTarget(element)[name] = value
+		getDOMNode(element)[name] = value
 	}
 	
 	/**
@@ -2042,24 +1996,24 @@
 	 * @param {*} value
 	 * @param {string} xmlns
 	 */
-	function DOMAttribute (element, name, value, xmlns) {
+	function setDOMAttribute (element, name, value, xmlns) {
 		switch (value) {
 			case null:
 			case false:
 			case undefined:
 				if (!xmlns)
-					DOMTarget(element).removeAttribute(name)
+					getDOMNode(element).removeAttribute(name)
 				else
-					DOMTarget(element).removeAttributeNS(xmlns, name)
+					getDOMNode(element).removeAttributeNS(xmlns, name)
 				return
 			case true:
 				return DOMAttribute(element, name, '', xmlns)
 		}
 	
 		if (!xmlns)
-			DOMTarget(element).setAttribute(name, value)
+			getDOMNode(element).setAttribute(name, value)
 		else
-			DOMTarget(element).setAttributeNS(xmlns, name, value)
+			getDOMNode(element).setAttributeNS(xmlns, name, value)
 	}
 	
 	/**
@@ -2068,45 +2022,60 @@
 	 * @param {*} value
 	 * @param {string} xmlns
 	 */
-	function DOMProperties (element, name, value, xmlns) {
+	function setDOMProperties (element, name, value, xmlns) {
 		switch (name) {
 			case 'className':
 				if (!xmlns && value)
-					return DOMProperty(element, name, value)
+					return setDOMProperty(element, name, value)
 			case 'class':
-				return DOMAttribute(element, 'class', value, '')
+				return setDOMAttribute(element, 'class', value, '')
 			case 'style':
 				if (typeof value === 'object')
-					return DOMStyle(element, value)
+					return setDOMStyle(element, value)
 				break
 			case 'xlink:href':
-				return DOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
+				return setDOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
 			case 'dangerouslySetInnerHTML':
-				return DOMProperties(element, 'innerHTML', value ? value.__html : '', '')
+				return setDOMProperties(element, 'innerHTML', value ? value.__html : '', '')
 			case 'innerHTML':
-				if (DOMTarget(element)[name] !== value)
-					DOMProperty(element, name, value)
+				if (getDOMNode(element)[name] !== value)
+					setDOMProperty(element, name, value)
 				return
 			case 'width':
 			case 'height':
 				if (element.type === 'img')
 					break
 			default:
-				if (!xmlns && name in DOMTarget(element))
-					return DOMProperty(element, name, value)
+				if (!xmlns && name in getDOMNode(element))
+					return setDOMProperty(element, name, value)
 		}
 	
 		if (typeof value === 'object')
-			DOMProperty(element, name, value)
-		else
-			DOMAttribute(element, name, value, '')
+			setDOMProperty(element, name, value)
+		else 
+			setDOMAttribute(element, name, value, '')
+	}
+	
+	/**
+	 * @return {Node}
+	 */
+	function getDOMDocument () {
+		return document.documentElement
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Node}
+	 */
+	function getDOMNode (element) {
+		return element.DOM.target
 	}
 	
 	/**
 	 * @param {string} type
 	 * @param {string} xmlns
 	 */
-	function DOMType (type, xmlns) {
+	function getDOMType (type, xmlns) {
 		switch (type) {
 			case 'svg':
 				return 'http://www.w3.org/2000/svg'
@@ -2122,30 +2091,25 @@
 	/**
 	 * @param {Element} element
 	 * @param {Element} parent
+	 * @param {Element} prev
+	 * @param {Element} next
+	 * @param {boolean} signature
 	 */
-	function DOMQuery (element, parent) {
-		var id = element.id
+	function getDOMQuery (element, parent, prev, next, signature) {
 		var type = element.type.toLowerCase()
 		var children = element.children
-		var length = children.length
 		var node = null
-	
-		if (id === SharedElementText && length === 0)
-			return node
-	
-		var prev = elementSibling(element, 'prev')
-		var next = elementSibling(element, 'next')
-		var previous = prev.DOM && DOMTarget(previous)
-		var target = previous ? previous.nextSibling : DOMTarget(parent).firstChild 
+		var previous = hasDOMNode(prev) && getDOMNode(previous)
+		var target = previous ? previous.nextSibling : getDOMNode(parent).firstChild 
 		var current = target
 		var sibling = target
 	
 		while (target)
 			switch (target.nodeName.toLowerCase()) {
 				case type:
-					if (id === SharedElementText) {
-						if (next !== element && next.id === SharedElementText)
-							target.splitText(length)
+					if (signature) {
+						if (element !== next && element.id === next.id)
+							target.splitText(children.length)
 	
 						if (target.nodeValue !== children)
 							target.nodeValue = children
@@ -2164,6 +2128,50 @@
 			}
 	
 		return node
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {DOM}
+	 */
+	function createDOMElement (element) {
+		if (element.xmlns)
+			return DOM(document.createElementNS(element.xmlns, element.type))
+		else
+			return DOM(document.createElement(element.type))
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {DOM}
+	 */
+	function createDOMText (element) {
+		return DOM(document.createTextNode(element.children))
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} parent
+	 */
+	function removeDOMNode (element, parent) {
+		getDOMNode(parent).removeChild(getDOMNode(element))
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} sibling
+	 * @param {Element} parent
+	 */
+	function insertDOMNode (element, sibling, parent) {
+		getDOMNode(parent).insertBefore(getDOMNode(element), getDOMNode(sibling))
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} parent
+	 */
+	function appendDOMNode (element, parent) {
+		getDOMNode(parent).appendChild(getDOMNode(element))
 	}
 
 	exports.version = version

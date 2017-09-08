@@ -5,7 +5,7 @@
  */
 function render (element, target, callback) {	
 	if (!target)
-		return render(element, DOMDocument(), callback)
+		return render(element, getDOMDocument(), callback)
 
 	if (root.has(target))
 		reconcileElement(root.get(target), commitElement(element))
@@ -20,7 +20,7 @@ function render (element, target, callback) {
  */
 function hydrate (element, target, callback) {
 	if (!target)
-		return hydrate(element, DOMDocument(), callback)
+		return hydrate(element, getDOMDocument(), callback)
 	
 	if (root.has(target))
 		render(element, target, callback)
@@ -41,10 +41,10 @@ function mount (element, parent, callback, mode) {
 	if (!isValidElement(parent))
 		return mount(element, elementEmpty(DOM(parent)), callback, mode)
 
-	if (!DOMValid(DOMTarget(parent)))
+	if (!isValidDOMNode(getDOMNode(parent)))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
 
-	root.set(DOMTarget(parent), element)
+	root.set(getDOMNode(parent), element)
 
 	if (mode === SharedMountCommit)
 		commitContent(parent)

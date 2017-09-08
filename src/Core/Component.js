@@ -203,7 +203,7 @@ function enqueueState (element, instance, state, callback) {
 			case Function:
 				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 			default:
-				if (element.work !== SharedWorkSync && !DOMContains(element))
+				if (element.work !== SharedWorkSync && !hasDOMNode(element))
 					return void assign(instance.state, element.state, state)
 				else
 					element.state = state
@@ -258,7 +258,7 @@ function enqueueUpdate (element, instance, callback, signature) {
 			enqueueUpdate(element, instance, callback, signature)
 		})
 
-	if (!DOMContains(element))
+	if (!hasDOMNode(element))
 		return
 
 	componentUpdate(element, element, signature)
@@ -392,7 +392,7 @@ function getLifecycleData (element, name) {
  */
 function getLifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, DOMContains(element) && findDOMNode(element))
+		var state = element.owner[name].call(element.instance, hasDOMNode(element) && findDOMNode(element))
 		
 		if (name === SharedComponentWillUnmount && state instanceof Promise)
 			return state
@@ -466,11 +466,11 @@ function findDOMNode (element) {
 	if (isValidElement(element)) {
 		if (element.id < SharedElementEmpty)
 			return findDOMNode(getHostChildren(element).next)
-		else if (DOMContains(element))
-			return DOMTarget(element)
+		else if (hasDOMNode(element))
+			return getDOMNode(element)
 	}
 
-	if (DOMValid(element))
+	if (isValidDOMNode(element))
 		return element
 
 	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
