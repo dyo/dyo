@@ -1,3 +1,6 @@
+/**
+ * @param {Node} target
+ */
 function DOM (target) {
 	return {target: target}
 }
@@ -7,6 +10,14 @@ function DOM (target) {
  */
 function DOMDocument () {
 	return document.documentElement
+}
+
+/**
+ * @param {Element} element
+ * @param {boolean}
+ */
+function DOMContains (element) {
+	return !!element.DOM
 }
 
 /**
@@ -210,20 +221,20 @@ function DOMType (type, xmlns) {
  * @param {Element} element
  * @param {Element} parent
  */
-function DOMFind (element, parent) {
+function DOMQuery (element, parent) {
 	var id = element.id
 	var type = element.type.toLowerCase()
 	var children = element.children
 	var length = children.length
-	var prev = elementSibling(element, 'prev')
-	var next = elementSibling(element, 'next')
-	var prevNode = prev.DOM
-	var nextNode = null
+	var node = null
 
 	if (id === SharedElementText && length === 0)
-		return nextNode
+		return node
 
-	var target = prevNode ? DOMTarget(prev).nextSibling : DOMTarget(parent).firstChild 
+	var prev = elementSibling(element, 'prev')
+	var next = elementSibling(element, 'next')
+	var previous = prev.DOM && DOMTarget(previous)
+	var target = previous ? previous.nextSibling : DOMTarget(parent).firstChild 
 	var current = target
 	var sibling = target
 
@@ -238,7 +249,7 @@ function DOMFind (element, parent) {
 						target.nodeValue = children
 				}
 
-				nextNode = DOM(target)
+				node = DOM(target)
 				type = ''
 
 				if (!(target = target.nextSibling) || next !== element)
@@ -246,9 +257,9 @@ function DOMFind (element, parent) {
 		default:
 			target = (sibling = target).nextSibling
 
-			if (!prevNode || current !== sibling)
+			if (!previous || current !== sibling)
 				sibling.parentNode.removeChild(sibling)
 		}
 
-	return nextNode
+	return node
 }

@@ -25,8 +25,8 @@ var SharedMountReplace = 5
 var SharedWorkTask = 0
 var SharedWorkSync = 1
 
-var SharedErrorPassive = 0
-var SharedErrorActive = 1
+var SharedErrorPassive = -2
+var SharedErrorActive = -1
 
 var SharedPropsMount = 1
 var SharedPropsUpdate = 2

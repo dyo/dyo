@@ -68,7 +68,7 @@ function errorElement (element, error, from, signature) {
 	if (from === SharedSiteRender)
 		return commitElement(snapshot)
 
-	if (element.DOM)
+	if (DOMContains(element))
 		requestAnimationFrame(function () {
 			reconcileElement(getHostElement(element), commitElement(snapshot))
 		})

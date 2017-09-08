@@ -103,7 +103,7 @@ function componentMount (element) {
 	if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 		getLifecycleMount(element, SharedComponentWillMount)
 	
-	children = element.children = getChildElement(element)
+	children = element.children = getChildElement(element, instance)
 
 	if (owner[SharedGetChildContext])
 		element.context = getChildContext(element)
@@ -155,7 +155,7 @@ function componentUpdate (element, snapshot, signature) {
 	if (signature === SharedComponentStateUpdate)
 		instance.state = nextState
 
-	reconcileElement(getHostChildren(element), getChildElement(element))
+	reconcileElement(getHostChildren(element), getChildElement(element, instance))
 
 	if (owner[SharedComponentDidUpdate])
 		getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
@@ -203,7 +203,7 @@ function enqueueState (element, instance, state, callback) {
 			case Function:
 				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
 			default:
-				if (element.work !== SharedWorkSync && !element.DOM)
+				if (element.work !== SharedWorkSync && !DOMContains(element))
 					return void assign(instance.state, element.state, state)
 				else
 					element.state = state
@@ -258,7 +258,7 @@ function enqueueUpdate (element, instance, callback, signature) {
 			enqueueUpdate(element, instance, callback, signature)
 		})
 
-	if (!element.DOM)
+	if (!DOMContains(element))
 		return
 
 	componentUpdate(element, element, signature)
@@ -301,11 +301,12 @@ function getChildInstance (element, owner) {
 
 /**
  * @param {Element} element
+ * @param {Component}
  * @return {Element}
  */
-function getChildElement (element) {
+function getChildElement (element, instance) {
 	try {
-		return commitElement(element.instance.render(element.instance.props, element.instance.state, element.context))
+		return commitElement(instance.render(instance.props, instance.state, element.context))
 	} catch (e) {
 		return commitElement(errorBoundary(element, e, SharedSiteRender, SharedErrorActive))
 	}
@@ -391,7 +392,7 @@ function getLifecycleData (element, name) {
  */
 function getLifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, element.DOM && findDOMNode(element))
+		var state = element.owner[name].call(element.instance, DOMContains(element) && findDOMNode(element))
 		
 		if (name === SharedComponentWillUnmount && state instanceof Promise)
 			return state
@@ -465,7 +466,7 @@ function findDOMNode (element) {
 	if (isValidElement(element)) {
 		if (element.id < SharedElementEmpty)
 			return findDOMNode(getHostChildren(element).next)
-		else if (element.DOM)
+		else if (DOMContains(element))
 			return DOMTarget(element)
 	}
 

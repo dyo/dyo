@@ -37,12 +37,12 @@ function commitSibling (element, signature) {
 		return element.id < SharedElementEmpty ? commitSibling(element, SharedSiblingChildren) : element
 
 	if (signature === SharedSiblingElement)
-		return commitSibling(element.next, -SharedSiblingElement)
+		return commitSibling(element.next, -signature)
 
-	if (!getHostChildren(element).length)
-		return commitSibling(element.next, SharedSiblingChildren)
+	if (getHostChildren(element).length === 0)
+		return commitSibling(element.next, signature)
 
-	return commitSibling(getHostChildren(element).next, -SharedSiblingChildren)
+	return commitSibling(getHostChildren(element).next, -signature)
 }
 
 /**
@@ -51,13 +51,11 @@ function commitSibling (element, signature) {
  */
 function commitPromise (element, snapshot) {
 	snapshot.type.then(function (value) {
-		if (!element.DOM)
-			return
-
-		if (element.id === SharedElementPromise)
-			reconcileChildren(element, elementFragment(commitElement(value)))
-		else
-			reconcileElement(element, commitElement(value))
+		if (DOMContains(element))
+			if (element.id === SharedElementPromise)
+				reconcileChildren(element, elementFragment(commitElement(value)))
+			else
+				reconcileElement(element, commitElement(value))
 	}).catch(function (e) {
 		errorBoundary(element, e, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 	})
@@ -76,7 +74,7 @@ function commitChildren (element, children, host, signature, mode) {
 	var sibling = next
 
 	while (length-- > 0) {
-		if (next.DOM) {
+		if (DOMContains(next)) {
 			children.insert(next = merge(new Element(SharedElementNode), sibling = next), sibling)
 			children.remove(sibling)		
 		}
@@ -127,7 +125,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementText:
  			switch (mode) {
  				case SharedMountClone:
- 					if (element.DOM = DOMFind(element, parent))
+ 					if (element.DOM = DOMQuery(element, parent))
 	 					break
  				default:
  					element.DOM = commitDOM(element)
@@ -154,17 +152,32 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  */
 function commitUnmount (element, parent, signature) {
 	if (signature > SharedElementEmpty)
-		commitDemount(element, signature)
+		commitDismount(element, signature)
 
 	if (element.id !== SharedElementComponent)
 		return commitRemove(element, parent)
 
 	if (queue > 0)
-		return Promise.all(stack).then(function () {			
-			commitUnmount(getHostChildren(element), parent, queue = stack.length = SharedElementEmpty)
-		})
+		return Promise.all(stack)
+			.then(commitResolve(element, parent, signature))
+			.catch(commitResolve(element, parent, SharedErrorPassive))
 
 	commitUnmount(getHostChildren(element), parent, SharedElementEmpty)
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} parent
+ * @param {number} signature
+ * @return {function}
+ */
+function commitResolve (element, parent, signature) {
+	return function (e) {
+		commitUnmount(getHostChildren(element), parent, queue = stack.length = SharedElementEmpty)
+
+		if (signature === SharedErrorPassive)
+			errorBoundary(element, e, SharedComponentWillUnmount, signature)
+	}
 }
 
 /**
@@ -172,11 +185,11 @@ function commitUnmount (element, parent, signature) {
  * @param {number} signature
  * @param {boolean}
  */
-function commitDemount (element, signature) {
+function commitDismount (element, signature) {
 	switch (element.id) {
 		case SharedElementComponent:
 			componentUnmount(element)
-			commitDemount(getHostChildren(element), -signature)
+			commitDismount(getHostChildren(element), -signature)
 		case SharedElementText:
 			break
 		default:
@@ -184,7 +197,7 @@ function commitDemount (element, signature) {
 			var length = children.length
 
 			while (length-- > 0)
-				commitDemount(children = children.next, -signature)
+				commitDismount(children = children.next, -signature)
 	}
 
 	if (element.ref)
@@ -194,6 +207,7 @@ function commitDemount (element, signature) {
 /**
  * @param {Element} element
  * @param {Element} snapshot
+ * @param {Element} parent
  * @param {number} signature
  */
 function commitReplace (element, snapshot, parent, signature) {
@@ -203,14 +217,20 @@ function commitReplace (element, snapshot, parent, signature) {
 				commitReplace(element, snapshot, parent, -signature)
 			})
 
-	commitMount(
-		snapshot, 
-		commitSibling(element, SharedSiblingElement), 
-		parent, 
-		element.host, 
-		SharedMountInsert, 
-		SharedMountCommit
-	)
+	commitPatch(elementSibling(element, 'next'), element, snapshot, parent)
+}
+
+/**
+ * @param {Element} sibling
+ * @param {Element} element
+ * @param {Element} snapshot
+ * @param {Element} parent
+ */
+function commitPatch (sibling, element, snapshot, parent) {
+	if (sibling === element)
+		return commitPatch(commitSibling(element, SharedSiblingElement), element, snapshot, parent)
+
+	commitMount(snapshot, sibling, parent, element.host, SharedMountInsert, SharedMountCommit)
 
 	for (var key in snapshot)
 		switch (key) {
