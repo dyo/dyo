@@ -1185,7 +1185,7 @@
 			commitUnmount(getHostChildren(element), parent, queue = stack.length = SharedElementEmpty)
 	
 			if (signature === SharedErrorPassive)
-				errorBoundary(element, e, SharedComponentWillUnmount, signature)
+				errorBoundary(element, e, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
 		}
 	}
 	
