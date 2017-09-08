@@ -4,6 +4,8 @@ var Promise = window.Promise || noop
 
 var root = new WeakMap()
 var document = window.document || noop
+var stack = []
+var queue = 0
 var requestAnimationFrame = window.requestAnimationFrame || function(c) {setTimeout(c, 16)}
 var defineProperty = Object.defineProperty
 var defineProperties = Object.defineProperties

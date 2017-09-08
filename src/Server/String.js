@@ -16,7 +16,7 @@ function toString () {
 	var length = children.length
 	var output = element.id === SharedElementNode ? '<' + type + toProps(element, element.props) + '>' : ''
 
-	if (elementType(type) === SharedElementIntermediate)
+	if (elementType(type) === SharedElementEmpty)
 		return output
 
 	if (typeof element.DOM !== 'string')

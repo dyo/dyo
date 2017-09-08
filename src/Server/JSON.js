@@ -18,5 +18,5 @@ function toJSON () {
 	while (length-- > 0)
 		output.children.push((children = children.next).toJSON())
 
-	return element.id < SharedElementIntermediate ? output.children : output
+	return element.id < SharedElementEmpty ? output.children : output
 }

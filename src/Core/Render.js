@@ -39,7 +39,7 @@ function mount (element, parent, callback, mode) {
 		return mount(commitElement(element), parent, callback, mode)
 
 	if (!isValidElement(parent))
-		return mount(element, elementIntermediate(DOM(parent)), callback, mode)
+		return mount(element, elementEmpty(DOM(parent)), callback, mode)
 
 	if (!DOMValid(DOMTarget(parent)))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')

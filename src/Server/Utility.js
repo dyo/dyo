@@ -41,7 +41,7 @@ function elementType (type) {
 		case 'link':
 		case 'input':
 		case 'hr':
-		case '!doctype': return SharedElementIntermediate
+		case '!doctype': return SharedElementEmpty
 		default: return SharedElementNode
 	}
 }

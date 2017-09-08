@@ -16,7 +16,7 @@
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
 	var SharedElementPortal = -1
-	var SharedElementIntermediate = 0
+	var SharedElementEmpty = 0
 	var SharedElementComponent = 1
 	var SharedElementNode = 2
 	var SharedElementText = 3
@@ -73,6 +73,8 @@
 	
 	var root = new WeakMap()
 	var document = window.document || noop
+	var stack = []
+	var queue = 0
 	var requestAnimationFrame = window.requestAnimationFrame || function(c) {setTimeout(c, 16)}
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
@@ -304,7 +306,7 @@
 		var element = new Element(SharedElementText)
 	
 		element.type = '#text'
-		element.children = content
+		element.children = content+''
 	
 		return element
 	}
@@ -313,8 +315,8 @@
 	 * @param {DOM} node
 	 * @return {Element}
 	 */
-	function elementIntermediate (node) {
-		var element = new Element(SharedElementIntermediate)
+	function elementEmpty (node) {
+		var element = new Element(SharedElementEmpty)
 	
 		element.DOM = node
 	
@@ -678,10 +680,13 @@
 		if (owner[SharedComponentWillUpdate])
 			getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)
 	
-		instance.state = nextState
-		instance.props = nextProps
+		if (signature === SharedComponentPropsUpdate)
+			instance.props = nextProps
 	
-		reconcileElement(element.children, getChildElement(element))
+		if (signature === SharedComponentStateUpdate)
+			instance.state = nextState
+	
+		reconcileElement(getHostChildren(element), getChildElement(element))
 	
 		if (owner[SharedComponentDidUpdate])
 			getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
@@ -694,17 +699,11 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element}
-	 * @param {Element} parent
-	 * @param {number} signature
-	 * @return {(boolean|void)}
 	 */
-	function componentUnmount (element, children, parent, signature) {
+	function componentUnmount (element) {
 		if (element.owner[SharedComponentWillUnmount])
-			if ((element.state = getLifecycleMount(element, SharedComponentWillUnmount)) instanceof Promise)
-				return commitRebase(element, children, parent, signature)
-	
-		return commitUnmount(children, parent, (commitRelease(element, signature), signature))
+			if (element.state = getLifecycleMount(element, SharedComponentWillUnmount))
+				stack[queue++] = element.state
 	}
 	
 	/**
@@ -782,7 +781,7 @@
 	function enqueueUpdate (element, instance, callback, signature) {
 		if (!element)
 			return void requestAnimationFrame(function () {
-				enqueueUpdate(getHostChildren(instance), instance, callback, signature)
+				enqueueUpdate(element[SymbolElement], instance, callback, signature)
 			})
 	
 		if (element.work === SharedWorkTask)
@@ -860,20 +859,17 @@
 	 */
 	function getHostElement (element) {
 		if (isValidElement(element) && element.id === SharedElementComponent)
-			return getHostElement(element.children)
+			return getHostElement(getHostChildren(element))
 		else
 			return element
 	}
 	
 	/**
-	 * @param  {(Element|Component)} element
-	 * @return {Element?}
+	 * @param  {Element} element
+	 * @return {Element}
 	 */
 	function getHostChildren (element) {
-		if (isValidElement(element))
-			return element
-		else
-			return element[SymbolElement]
+		return element.children
 	}
 	
 	/**
@@ -928,12 +924,12 @@
 		try {
 			var state = element.owner[name].call(element.instance, element.DOM && findDOMNode(element))
 			
-			if (name === SharedComponentWillUnmount)
+			if (name === SharedComponentWillUnmount && state instanceof Promise)
 				return state
 	
 			getLifecycleReturn(element, state)
 		} catch (e) {
-			errorBoundary(element, e, name, SharedErrorActive)
+			errorBoundary(element, e, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
 		}
 	}
 	
@@ -998,8 +994,8 @@
 			return findDOMNode(element[SymbolElement])
 	
 		if (isValidElement(element)) {
-			if (element.id < SharedElementIntermediate)
-				return findDOMNode(element.children.next)
+			if (element.id < SharedElementEmpty)
+				return findDOMNode(getHostChildren(element).next)
 			else if (element.DOM)
 				return DOMTarget(element)
 		}
@@ -1043,18 +1039,18 @@
 	 */
 	function commitSibling (element, signature) {
 		if (!isValidElement(element))
-			return elementIntermediate(DOM(null))
+			return elementEmpty(DOM(null))
 	
-		if (signature < SharedElementIntermediate)
-			return element.id < SharedElementIntermediate ? commitSibling(element, SharedSiblingChildren) : element
+		if (signature < SharedElementEmpty)
+			return element.id < SharedElementEmpty ? commitSibling(element, SharedSiblingChildren) : element
 	
 		if (signature === SharedSiblingElement)
 			return commitSibling(element.next, -SharedSiblingElement)
 	
-		if (!element.children.length)
+		if (!getHostChildren(element).length)
 			return commitSibling(element.next, SharedSiblingChildren)
 	
-		return commitSibling(element.children.next, -SharedSiblingChildren)
+		return commitSibling(getHostChildren(element).next, -SharedSiblingChildren)
 	}
 	
 	/**
@@ -1116,7 +1112,7 @@
 	 			element.work = SharedWorkTask
 	 			
 	 			commitMount(componentMount(element), sibling, parent, element, signature, mode)
-	 			element.DOM = element.children.DOM
+	 			element.DOM = getHostChildren(element).DOM
 	
 	 			if (element.ref)
 	 				commitReference(element, element.ref, SharedReferenceAssign)
@@ -1162,27 +1158,33 @@
 	 * @param {Element} element
 	 * @param {Element} parent
 	 * @param {number} signature
-	 * @return {(boolean|void)}
+	 * @return {(Promise|void)}
 	 */
 	function commitUnmount (element, parent, signature) {
-		if (element.id === SharedElementComponent)
-			return componentUnmount(element, element.children, parent, signature)
+		if (signature > SharedElementEmpty)
+			commitDemount(element, signature)
 	
-		commitRemove(element, parent)
-		commitDemount(element, signature)
+		if (element.id !== SharedElementComponent)
+			return commitRemove(element, parent)
+	
+		if (queue > 0)
+			return Promise.all(stack).then(function () {			
+				commitUnmount(getHostChildren(element), parent, queue = stack.length = SharedElementEmpty)
+			})
+	
+		commitUnmount(getHostChildren(element), parent, SharedElementEmpty)
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {number} signature
+	 * @param {boolean}
 	 */
 	function commitDemount (element, signature) {
 		switch (element.id) {
 			case SharedElementComponent:
-				if (element.owner[SharedComponentWillUnmount])
-					getLifecycleMount(element, SharedComponentWillUnmount)
-	
-				commitDemount(element.children, signature)
+				componentUnmount(element)
+				commitDemount(getHostChildren(element), -signature)
 			case SharedElementText:
 				break
 			default:
@@ -1190,27 +1192,11 @@
 				var length = children.length
 	
 				while (length-- > 0)
-					commitDemount(children = children.next, SharedMountAppend)
+					commitDemount(children = children.next, -signature)
 		}
 	
-		commitRelease(element, signature)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {number} signature
-	 */
-	function commitRelease (element, signature) {
 		if (element.ref)
 			commitReference(element, element.ref, SharedReferenceRemove)
-	
-		if (signature !== SharedMountReplace) {
-			element.instance = null
-			element.context = null
-			element.state = null
-			element.event = null
-			element.DOM = null
-		}
 	}
 	
 	/**
@@ -1218,15 +1204,17 @@
 	 * @param {Element} snapshot
 	 * @param {number} signature
 	 */
-	function commitReplace (element, snapshot, signature) {
+	function commitReplace (element, snapshot, parent, signature) {
 		if (signature === SharedMountReplace)
-			if (element.state = commitUnmount(element, element.parent, SharedMountReplace))
-				return commitRebase(element, snapshot, element, -signature)
+			if (element.state = commitUnmount(element, parent, signature))
+				return void element.state.then(function () {
+					commitReplace(element, snapshot, parent, -signature)
+				})
 	
 		commitMount(
 			snapshot, 
 			commitSibling(element, SharedSiblingElement), 
-			element.parent, 
+			parent, 
 			element.host, 
 			SharedMountInsert, 
 			SharedMountCommit
@@ -1242,23 +1230,6 @@
 				default:
 					element[key] = snapshot[key]	
 			}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} children
-	 * @param {Element} parent
-	 * @param {number} signature
-	 */
-	function commitRebase (element, children, parent, signature) {
-		return element.state.then(function () {
-			if (signature < SharedElementIntermediate)
-				commitReplace(element, children, signature)
-			else
-				commitUnmount(children, parent, signature)
-	
-			commitRelease(element, signature)
-		})
 	}
 	
 	/**
@@ -1358,10 +1329,10 @@
 	 * @param {Element} parent
 	 */
 	function commitRemove (element, parent) {
-		if (element.id > SharedElementIntermediate)
+		if (element.id > SharedElementEmpty)
 			DOMRemove(element, parent)
 		else
-			element.children.forEach(function (children) {
+			getHostChildren(element).forEach(function (children) {
 				commitRemove(children, element.id < SharedElementPortal ? parent : element)
 			})
 	}
@@ -1372,13 +1343,13 @@
 	 * @param {Element} parent
 	 */
 	function commitInsert (element, sibling, parent) {
-		if (sibling.id < SharedElementIntermediate)
+		if (sibling.id < SharedElementEmpty)
 			return commitInsert(element, commitSibling(sibling, SharedSiblingChildren), parent)
 	
-		if (element.id > SharedElementIntermediate)
+		if (element.id > SharedElementEmpty)
 			DOMInsert(element, sibling, parent)
 		else if (element.id < SharedElementPortal)
-			element.children.forEach(function (children) {
+			getHostChildren(element).forEach(function (children) {
 				commitInsert(children, sibling, parent)
 			})
 	}
@@ -1391,10 +1362,10 @@
 		if (parent.id < SharedElementPortal)
 			return commitInsert(element, commitSibling(parent, SharedSiblingElement), parent)
 	
-		if (element.id > SharedElementIntermediate)
+		if (element.id > SharedElementEmpty)
 			DOMAppend(element, parent)
 		else if (element.id < SharedElementPortal)
-			element.children.forEach(function (children) {
+			getHostChildren(element).forEach(function (children) {
 				commitAppend(children, parent)
 			})
 	}
@@ -1447,7 +1418,7 @@
 			return commitPromise(element, snapshot)
 	
 		if (element.key !== snapshot.key || element.type !== snapshot.type)
-			return commitReplace(element, snapshot, SharedMountReplace)
+			return commitReplace(element, snapshot, element.parent, SharedMountReplace)
 	
 		switch (element.id) {
 			case SharedElementPortal:
@@ -1761,7 +1732,7 @@
 	function errorElement (element, error, from, signature) {	
 		var snapshot
 	
-		if (signature === SharedErrorPassive || !element || element.id === SharedElementIntermediate)
+		if (signature === SharedErrorPassive || !element || element.id === SharedElementEmpty)
 			return
 	
 		if (element.owner && element.owner[SharedComponentDidCatch])
@@ -1825,7 +1796,7 @@
 			return mount(commitElement(element), parent, callback, mode)
 	
 		if (!isValidElement(parent))
-			return mount(element, elementIntermediate(DOM(parent)), callback, mode)
+			return mount(element, elementEmpty(DOM(parent)), callback, mode)
 	
 		if (!DOMValid(DOMTarget(parent)))
 			invariant(SharedSiteRender, 'Target container is not a DOM element')
@@ -2121,13 +2092,16 @@
 	 * @param {Element} parent
 	 */
 	function DOMFind (element, parent) {
+		var id = element.id
 		var type = element.type.toLowerCase()
+		var children = element.children
+		var length = children.length
 		var prev = elementSibling(element, 'prev')
 		var next = elementSibling(element, 'next')
 		var prevNode = prev.DOM
 		var nextNode = null
 	
-		if (element.id === SharedElementText && element.children.length === 0)
+		if (id === SharedElementText && length === 0)
 			return nextNode
 	
 		var target = prevNode ? DOMTarget(prev).nextSibling : DOMTarget(parent).firstChild 
@@ -2137,12 +2111,12 @@
 		while (target)
 			switch (target.nodeName.toLowerCase()) {
 				case type:
-					if (element.id === SharedElementText) {
-						if (next.id === SharedElementText && next !== element)
-							target.splitText(element.children.length)
+					if (id === SharedElementText) {
+						if (next !== element && next.id === SharedElementText)
+							target.splitText(length)
 	
-						if (target.nodeValue !== element.children)
-							target.nodeValue = element.children
+						if (target.nodeValue !== children)
+							target.nodeValue = children
 					}
 	
 					nextNode = DOM(target)

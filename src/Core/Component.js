@@ -149,10 +149,13 @@ function componentUpdate (element, snapshot, signature) {
 	if (owner[SharedComponentWillUpdate])
 		getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)
 
-	instance.state = nextState
-	instance.props = nextProps
+	if (signature === SharedComponentPropsUpdate)
+		instance.props = nextProps
 
-	reconcileElement(element.children, getChildElement(element))
+	if (signature === SharedComponentStateUpdate)
+		instance.state = nextState
+
+	reconcileElement(getHostChildren(element), getChildElement(element))
 
 	if (owner[SharedComponentDidUpdate])
 		getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
@@ -165,17 +168,11 @@ function componentUpdate (element, snapshot, signature) {
 
 /**
  * @param {Element} element
- * @param {Element}
- * @param {Element} parent
- * @param {number} signature
- * @return {(boolean|void)}
  */
-function componentUnmount (element, children, parent, signature) {
+function componentUnmount (element) {
 	if (element.owner[SharedComponentWillUnmount])
-		if ((element.state = getLifecycleMount(element, SharedComponentWillUnmount)) instanceof Promise)
-			return commitRebase(element, children, parent, signature)
-
-	return commitUnmount(children, parent, (commitRelease(element, signature), signature))
+		if (element.state = getLifecycleMount(element, SharedComponentWillUnmount))
+			stack[queue++] = element.state
 }
 
 /**
@@ -253,7 +250,7 @@ function enqueuePending (element, instance, state, callback) {
 function enqueueUpdate (element, instance, callback, signature) {
 	if (!element)
 		return void requestAnimationFrame(function () {
-			enqueueUpdate(getHostChildren(instance), instance, callback, signature)
+			enqueueUpdate(element[SymbolElement], instance, callback, signature)
 		})
 
 	if (element.work === SharedWorkTask)
@@ -331,20 +328,17 @@ function getChildContext (element) {
  */
 function getHostElement (element) {
 	if (isValidElement(element) && element.id === SharedElementComponent)
-		return getHostElement(element.children)
+		return getHostElement(getHostChildren(element))
 	else
 		return element
 }
 
 /**
- * @param  {(Element|Component)} element
- * @return {Element?}
+ * @param  {Element} element
+ * @return {Element}
  */
 function getHostChildren (element) {
-	if (isValidElement(element))
-		return element
-	else
-		return element[SymbolElement]
+	return element.children
 }
 
 /**
@@ -399,12 +393,12 @@ function getLifecycleMount (element, name) {
 	try {
 		var state = element.owner[name].call(element.instance, element.DOM && findDOMNode(element))
 		
-		if (name === SharedComponentWillUnmount)
+		if (name === SharedComponentWillUnmount && state instanceof Promise)
 			return state
 
 		getLifecycleReturn(element, state)
 	} catch (e) {
-		errorBoundary(element, e, name, SharedErrorActive)
+		errorBoundary(element, e, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
 	}
 }
 
@@ -469,8 +463,8 @@ function findDOMNode (element) {
 		return findDOMNode(element[SymbolElement])
 
 	if (isValidElement(element)) {
-		if (element.id < SharedElementIntermediate)
-			return findDOMNode(element.children.next)
+		if (element.id < SharedElementEmpty)
+			return findDOMNode(getHostChildren(element).next)
 		else if (element.DOM)
 			return DOMTarget(element)
 	}

@@ -32,7 +32,7 @@ function elementText (content) {
 	var element = new Element(SharedElementText)
 
 	element.type = '#text'
-	element.children = content
+	element.children = content+''
 
 	return element
 }
@@ -41,8 +41,8 @@ function elementText (content) {
  * @param {DOM} node
  * @return {Element}
  */
-function elementIntermediate (node) {
-	var element = new Element(SharedElementIntermediate)
+function elementEmpty (node) {
+	var element = new Element(SharedElementEmpty)
 
 	element.DOM = node
 

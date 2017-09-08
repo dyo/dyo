@@ -60,7 +60,7 @@ function toChunk (element, stack, writable) {
 		case SharedElementNode:
 			output = '<' + type + toProps(element, element.props) + '>'
 			
-			if (elementType(type) === SharedElementIntermediate)
+			if (elementType(type) === SharedElementEmpty)
 				break
 			
 			if (typeof element.DOM === 'string') {

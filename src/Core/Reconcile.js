@@ -46,7 +46,7 @@ function reconcileElement (element, snapshot) {
 		return commitPromise(element, snapshot)
 
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
-		return commitReplace(element, snapshot, SharedMountReplace)
+		return commitReplace(element, snapshot, element.parent, SharedMountReplace)
 
 	switch (element.id) {
 		case SharedElementPortal:

@@ -211,13 +211,16 @@ function DOMType (type, xmlns) {
  * @param {Element} parent
  */
 function DOMFind (element, parent) {
+	var id = element.id
 	var type = element.type.toLowerCase()
+	var children = element.children
+	var length = children.length
 	var prev = elementSibling(element, 'prev')
 	var next = elementSibling(element, 'next')
 	var prevNode = prev.DOM
 	var nextNode = null
 
-	if (element.id === SharedElementText && element.children.length === 0)
+	if (id === SharedElementText && length === 0)
 		return nextNode
 
 	var target = prevNode ? DOMTarget(prev).nextSibling : DOMTarget(parent).firstChild 
@@ -227,12 +230,12 @@ function DOMFind (element, parent) {
 	while (target)
 		switch (target.nodeName.toLowerCase()) {
 			case type:
-				if (element.id === SharedElementText) {
-					if (next.id === SharedElementText && next !== element)
-						target.splitText(element.children.length)
+				if (id === SharedElementText) {
+					if (next !== element && next.id === SharedElementText)
+						target.splitText(length)
 
-					if (target.nodeValue !== element.children)
-						target.nodeValue = element.children
+					if (target.nodeValue !== children)
+						target.nodeValue = children
 				}
 
 				nextNode = DOM(target)

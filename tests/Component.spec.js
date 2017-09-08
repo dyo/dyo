@@ -146,4 +146,56 @@ module.exports = ({h, Component, render, PureComponent}) => {
 		ok(compare(container, '<div>1</div>'), 'shouldComponentUpdate(true)')
 		end()
 	})
+
+	test('setState', ({ok, end}) => {		
+		const {render, h} = dio
+		const stack = []
+
+		forceUpdateChild = null;
+		Child = function(props) {
+		  forceUpdateChild = this.forceUpdate.bind(this);
+		  return h('div', props.x);
+		};
+
+		setState = null;
+		Root = function() {
+		  setState = this.setState.bind(this);
+		  return h('div', h(Child, {
+		    x: this.state.locale['xxx']
+		  }));
+		};
+		Root.getInitialState = function() {return {locale: {}}}
+
+		container = document.createElement('div');
+		render(h(Root), container);
+		stack.push(container.innerHTML)
+		setState({
+		  locale: {
+		    'xxx': 'abc'
+		  }
+		});
+		stack.push(container.innerHTML)
+		forceUpdateChild();
+		stack.push(container.innerHTML)
+
+		ok(
+			stack.join('') === '<div><div></div></div><div><div>abc</div></div><div><div>abc</div></div>',
+			'maintain props on state update'
+		)
+
+		class A {
+			componentDidMount() {
+				return {x: 'value'}
+			}
+			componentDidUpdate() {
+				ok(compare(container, '<div>value</div>'), 'implicit setState from lifecycle')
+				end()
+			}
+			render () {
+				return h('div', this.state.x)
+			}
+		}
+
+		render(h(A), container)
+	})
 }

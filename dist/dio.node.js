@@ -7,7 +7,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
 	var SharedElementPortal = -1
-	var SharedElementIntermediate = 0
+	var SharedElementEmpty = 0
 	var SharedElementComponent = 1
 	var SharedElementNode = 2
 	var SharedElementText = 3
@@ -115,7 +115,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 			case 'link':
 			case 'input':
 			case 'hr':
-			case '!doctype': return SharedElementIntermediate
+			case '!doctype': return SharedElementEmpty
 			default: return SharedElementNode
 		}
 	}
@@ -146,7 +146,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 		var length = children.length
 		var output = element.id === SharedElementNode ? '<' + type + toProps(element, element.props) + '>' : ''
 	
-		if (elementType(type) === SharedElementIntermediate)
+		if (elementType(type) === SharedElementEmpty)
 			return output
 	
 		if (typeof element.DOM !== 'string')
@@ -246,7 +246,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 		while (length-- > 0)
 			output.children.push((children = children.next).toJSON())
 	
-		return element.id < SharedElementIntermediate ? output.children : output
+		return element.id < SharedElementEmpty ? output.children : output
 	}
 	
 	/**
@@ -311,7 +311,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 			case SharedElementNode:
 				output = '<' + type + toProps(element, element.props) + '>'
 				
-				if (elementType(type) === SharedElementIntermediate)
+				if (elementType(type) === SharedElementEmpty)
 					break
 				
 				if (typeof element.DOM === 'string') {
