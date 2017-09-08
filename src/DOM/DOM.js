@@ -184,7 +184,7 @@ function getDOMQuery (element, parent, prev, next, signature) {
 	var type = element.type.toLowerCase()
 	var children = element.children
 	var node = null
-	var previous = hasDOMNode(prev) && getDOMNode(previous)
+	var previous = hasDOMNode(prev) && getDOMNode(prev)
 	var target = previous ? previous.nextSibling : getDOMNode(parent).firstChild 
 	var current = target
 	var sibling = target
