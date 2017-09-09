@@ -101,7 +101,7 @@ List.prototype = {
 	 * @return {Object}
 	 */
 	remove: function remove (node) {
-		if (this.length < 1) 
+		if (this.length === 0) 
 			return node
 		
 		node.next.prev = node.prev
@@ -289,13 +289,15 @@ function Element (id) {
 
 /**
  * @param {*} content
+ * @param {number} index
  * @return {Element}
  */
-function elementText (content) {
+function elementText (content, index) {
 	var element = new Element(SharedElementText)
 
 	element.type = '#text'
 	element.children = content+''
+	element.key = '.'+index
 
 	return element
 }
@@ -349,19 +351,28 @@ function elementIterable (iterable, element) {
 
 /**
  * @param {*} element
+ * @param {number} index
  * @return {Element}
  */
-function elementUnknown (element) {
+function elementUnknown (element, index) {
+	switch (element.constructor) {
+		case Promise:
+		case Function:
+			return createElement(element)
+		case Boolean:
+			return elementText('', index)
+		case Date:
+			return elementText(element, index)			
+	}
+
 	if (typeof element.next === 'function')
 		return elementIterable(element, elementFragment(element))
 	if (typeof element[SymbolIterator] === 'function')
 		return elementUnknown(element[SymbolIterator]())
-	else if (typeof element === 'function')
+	if (typeof element === 'function')
 		return elementUnknown(element())
-	else if (element instanceof Error)
+	if (element instanceof Error)
 		return createElement('details', createElement('summary', element+''), h('pre', element.report || element.stack))
-	else if (element instanceof Date)
-		return elementText(element)
 
 	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 }
@@ -388,34 +399,28 @@ function elementSibling (element, direction) {
  * @param {number} index
  */
 function elementChildren (parent, children, element, index) {
-	if (element == null)
-		return elementChildren(parent, children, elementText(''), index)
+	if (element != null)
+		switch (element.constructor) {
+			case Element:
+				if (element.key !== null && parent.keyed === false)
+					parent.keyed = true
 
-	switch (element.constructor) {
-		case Element:
-			if (element.key == null)
-				element.key = '0|'+index
-			else if (parent.keyed === false)
-				parent.keyed = true
+				children.push(element)
+				break
+			case Array:
+				for (var i = 0; i < element.length; ++i)
+					elementChildren(parent, children, element[i], index + i)
 
-			children.push(element)
-			break
-		case Array:
-			for (var i = 0; i < element.length; ++i)
-				elementChildren(parent, children, element[i], index + i)
-
-			return index + i
-		case String:
-		case Number:
-			return elementChildren(parent, children, elementText(element), index)
-		case Function:
-		case Promise:
-			return elementChildren(parent, children, createElement(element), index)
-		case Boolean:
-			return elementChildren(parent, children, null, index)
-		default:
-			return elementChildren(parent, children, elementUnknown(element), index)
-	}
+				return index + i
+			case String:
+			case Number:
+				children.push(elementText(element, index))
+				break
+			default:
+				children.push(elementUnknown(element, index))
+		}
+	else
+		children.push(elementText('', index))
 
 	return index + 1
 }
@@ -1009,17 +1014,12 @@ function commitElement (element) {
 				return elementFragment(element)
 			case String:
 			case Number:
-				return elementText(element)
-			case Function:
-			case Promise:
-				return createElement(element)
-			case Boolean:
-				break
+				return elementText(element, SharedElementEmpty)
 			default:
-				return elementUnknown(element)
+				return elementUnknown(element, SharedElementEmpty)
 		}
 
-	return elementText('')
+	return elementText('', SharedElementEmpty)
 }
 
 /**
@@ -1200,6 +1200,8 @@ function commitDismount (element, signature) {
 
 	if (element.ref)
 		commitReference(element, element.ref, SharedReferenceRemove)
+
+	element.key = null
 }
 
 /**
@@ -1464,56 +1466,24 @@ function reconcileElement (element, snapshot) {
  * @param {Element} snapshot
  */
 function reconcileChildren (element, snapshot) {
+	var signature = SharedMountAppend
 	var host = element.host
 	var children = element.children
 	var siblings = snapshot.children
 	var aLength = children.length
 	var bLength = siblings.length
-	var aHead = children.next
-	var bHead = siblings.next
-	var i = 0
 
-	// batch-op/no-op
-	switch (aLength+bLength) {
-		case 0:
-			return
-		case aLength:
-			return reconcileRemove(aHead, element, children, 0, aLength)
-		case bLength:
-			return reconcileInsert(bHead, bHead, element, host, children, 0, bLength, SharedMountAppend)
-	}
-
-	// non-keyed
-	if (!snapshot.keyed) {
-		i = aLength > bLength ? bLength : aLength
-
-		while (i-- > 0) { 
-			reconcileElement(aHead, bHead) 
-			bHead = bHead.next
-			aHead = aHead.next
-		}
-
-		if (aLength !== bLength)
-			if (aLength > bLength)
-				while (aLength > bLength)
-					commitUnmount(children.pop(), element, (aLength--, SharedMountRemove))
-			else
-				while (aLength < bLength) {
-					aHead = bHead
-					bHead = bHead.next
-					commitMount(children.push(aHead), aHead, element, host, SharedMountAppend, SharedMountCommit)
-					aLength++
-				}
+	if (aLength+bLength === 0)
 		return
-	}
 
-	// keyed
 	var aPos = 0
 	var bPos = 0
 	var aEnd = aLength - 1
 	var bEnd = bLength - 1
+	var aHead = children.next
+	var bHead = siblings.next
 	var aTail = children.prev
-	var bTail = siblings.prev	
+	var bTail = siblings.prev
 
 	// step 1, prefix/suffix
 	outer: while (true) {
@@ -1543,17 +1513,23 @@ function reconcileChildren (element, snapshot) {
 	}
 
 	// step 2, insert/append/remove
-	if (aPos > aEnd) {
+	if (aPos > aEnd++) {
 		if (bPos <= bEnd++) {
-			if (bEnd < bLength)
-				reconcileInsert(bHead, aTail, element, host, children, bPos, bEnd, SharedMountInsert)
-			else
-				reconcileInsert(bHead.next, aTail, element, host, children, bPos, bEnd, SharedMountAppend)
+			if (bEnd < bLength) 
+				signature = SharedMountInsert
+			else if (aLength > 0)
+				bHead = bHead.next
+
+			reconcileInsert(bHead, aTail, element, host, children, bPos, bEnd, signature)
 		}
-	} else if (bPos > bEnd)
-		reconcileRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
-	else
-		reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
+	} else if (bPos > bEnd++) {
+		if (bEnd === bLength && bLength > 0)
+			aHead = aHead.next
+
+		reconcileRemove(aHead, element, children, aPos, aEnd)
+	} else {
+		reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd)
+	}
 }
 
 /**
@@ -1644,8 +1620,10 @@ function reconcileInsert (element, sibling, parent, host, children, index, lengt
 	var next = element
 	var prev = element
 
-	while (i++ < length)
-		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature, SharedMountCommit)
+	while (i++ < length) {
+		next = (prev = next).next
+		commitMount(children.push(prev), sibling, parent, host, signature, SharedMountCommit)
+	}
 }
 
 /**
@@ -1658,10 +1636,11 @@ function reconcileInsert (element, sibling, parent, host, children, index, lengt
 function reconcileRemove (element, parent, children, index, length) {
 	var i = index
 	var next = element
-	var prev = element
 	
-	while (i++ < length)
-		commitUnmount(children.remove((next = (prev = next).next, prev)), parent, SharedMountRemove)
+	while (i++ < length) {
+		commitUnmount(children.remove(next), parent, SharedMountRemove)
+		next = next.next
+	}
 }
 
 /**

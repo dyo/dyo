@@ -26,7 +26,7 @@ List.prototype = {
 	 * @return {Object}
 	 */
 	remove: function remove (node) {
-		if (this.length < 1) 
+		if (this.length === 0) 
 			return node
 		
 		node.next.prev = node.prev

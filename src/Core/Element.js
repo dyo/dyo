@@ -26,13 +26,15 @@ function Element (id) {
 
 /**
  * @param {*} content
+ * @param {number} index
  * @return {Element}
  */
-function elementText (content) {
+function elementText (content, index) {
 	var element = new Element(SharedElementText)
 
 	element.type = '#text'
 	element.children = content+''
+	element.key = '.'+index
 
 	return element
 }
@@ -86,19 +88,28 @@ function elementIterable (iterable, element) {
 
 /**
  * @param {*} element
+ * @param {number} index
  * @return {Element}
  */
-function elementUnknown (element) {
+function elementUnknown (element, index) {
+	switch (element.constructor) {
+		case Promise:
+		case Function:
+			return createElement(element)
+		case Boolean:
+			return elementText('', index)
+		case Date:
+			return elementText(element, index)			
+	}
+
 	if (typeof element.next === 'function')
 		return elementIterable(element, elementFragment(element))
 	if (typeof element[SymbolIterator] === 'function')
 		return elementUnknown(element[SymbolIterator]())
-	else if (typeof element === 'function')
+	if (typeof element === 'function')
 		return elementUnknown(element())
-	else if (element instanceof Error)
+	if (element instanceof Error)
 		return createElement('details', createElement('summary', element+''), h('pre', element.report || element.stack))
-	else if (element instanceof Date)
-		return elementText(element)
 
 	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 }
@@ -125,34 +136,28 @@ function elementSibling (element, direction) {
  * @param {number} index
  */
 function elementChildren (parent, children, element, index) {
-	if (element == null)
-		return elementChildren(parent, children, elementText(''), index)
+	if (element != null)
+		switch (element.constructor) {
+			case Element:
+				if (element.key !== null && parent.keyed === false)
+					parent.keyed = true
 
-	switch (element.constructor) {
-		case Element:
-			if (element.key == null)
-				element.key = '0|'+index
-			else if (parent.keyed === false)
-				parent.keyed = true
+				children.push(element)
+				break
+			case Array:
+				for (var i = 0; i < element.length; ++i)
+					elementChildren(parent, children, element[i], index + i)
 
-			children.push(element)
-			break
-		case Array:
-			for (var i = 0; i < element.length; ++i)
-				elementChildren(parent, children, element[i], index + i)
-
-			return index + i
-		case String:
-		case Number:
-			return elementChildren(parent, children, elementText(element), index)
-		case Function:
-		case Promise:
-			return elementChildren(parent, children, createElement(element), index)
-		case Boolean:
-			return elementChildren(parent, children, null, index)
-		default:
-			return elementChildren(parent, children, elementUnknown(element), index)
-	}
+				return index + i
+			case String:
+			case Number:
+				children.push(elementText(element, index))
+				break
+			default:
+				children.push(elementUnknown(element, index))
+		}
+	else
+		children.push(elementText('', index))
 
 	return index + 1
 }

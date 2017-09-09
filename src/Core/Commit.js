@@ -11,17 +11,12 @@ function commitElement (element) {
 				return elementFragment(element)
 			case String:
 			case Number:
-				return elementText(element)
-			case Function:
-			case Promise:
-				return createElement(element)
-			case Boolean:
-				break
+				return elementText(element, SharedElementEmpty)
 			default:
-				return elementUnknown(element)
+				return elementUnknown(element, SharedElementEmpty)
 		}
 
-	return elementText('')
+	return elementText('', SharedElementEmpty)
 }
 
 /**
@@ -202,6 +197,8 @@ function commitDismount (element, signature) {
 
 	if (element.ref)
 		commitReference(element, element.ref, SharedReferenceRemove)
+
+	element.key = null
 }
 
 /**

@@ -69,56 +69,24 @@ function reconcileElement (element, snapshot) {
  * @param {Element} snapshot
  */
 function reconcileChildren (element, snapshot) {
+	var signature = SharedMountAppend
 	var host = element.host
 	var children = element.children
 	var siblings = snapshot.children
 	var aLength = children.length
 	var bLength = siblings.length
-	var aHead = children.next
-	var bHead = siblings.next
-	var i = 0
 
-	// batch-op/no-op
-	switch (aLength+bLength) {
-		case 0:
-			return
-		case aLength:
-			return reconcileRemove(aHead, element, children, 0, aLength)
-		case bLength:
-			return reconcileInsert(bHead, bHead, element, host, children, 0, bLength, SharedMountAppend)
-	}
-
-	// non-keyed
-	if (!snapshot.keyed) {
-		i = aLength > bLength ? bLength : aLength
-
-		while (i-- > 0) { 
-			reconcileElement(aHead, bHead) 
-			bHead = bHead.next
-			aHead = aHead.next
-		}
-
-		if (aLength !== bLength)
-			if (aLength > bLength)
-				while (aLength > bLength)
-					commitUnmount(children.pop(), element, (aLength--, SharedMountRemove))
-			else
-				while (aLength < bLength) {
-					aHead = bHead
-					bHead = bHead.next
-					commitMount(children.push(aHead), aHead, element, host, SharedMountAppend, SharedMountCommit)
-					aLength++
-				}
+	if (aLength+bLength === 0)
 		return
-	}
 
-	// keyed
 	var aPos = 0
 	var bPos = 0
 	var aEnd = aLength - 1
 	var bEnd = bLength - 1
+	var aHead = children.next
+	var bHead = siblings.next
 	var aTail = children.prev
-	var bTail = siblings.prev	
+	var bTail = siblings.prev
 
 	// step 1, prefix/suffix
 	outer: while (true) {
@@ -148,17 +116,23 @@ function reconcileChildren (element, snapshot) {
 	}
 
 	// step 2, insert/append/remove
-	if (aPos > aEnd) {
+	if (aPos > aEnd++) {
 		if (bPos <= bEnd++) {
-			if (bEnd < bLength)
-				reconcileInsert(bHead, aTail, element, host, children, bPos, bEnd, SharedMountInsert)
-			else
-				reconcileInsert(bHead.next, aTail, element, host, children, bPos, bEnd, SharedMountAppend)
+			if (bEnd < bLength) 
+				signature = SharedMountInsert
+			else if (aLength > 0)
+				bHead = bHead.next
+
+			reconcileInsert(bHead, aTail, element, host, children, bPos, bEnd, signature)
 		}
-	} else if (bPos > bEnd)
-		reconcileRemove(bEnd+1 < bLength ? aHead : aHead.next, element, children, aPos, aEnd+1)
-	else
-		reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd+1, bEnd+1)
+	} else if (bPos > bEnd++) {
+		if (bEnd === bLength && bLength > 0)
+			aHead = aHead.next
+
+		reconcileRemove(aHead, element, children, aPos, aEnd)
+	} else {
+		reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd)
+	}
 }
 
 /**
@@ -249,8 +223,10 @@ function reconcileInsert (element, sibling, parent, host, children, index, lengt
 	var next = element
 	var prev = element
 
-	while (i++ < length)
-		commitMount(children.push((next = (prev = next).next, prev)), sibling, parent, host, signature, SharedMountCommit)
+	while (i++ < length) {
+		next = (prev = next).next
+		commitMount(children.push(prev), sibling, parent, host, signature, SharedMountCommit)
+	}
 }
 
 /**
@@ -263,8 +239,9 @@ function reconcileInsert (element, sibling, parent, host, children, index, lengt
 function reconcileRemove (element, parent, children, index, length) {
 	var i = index
 	var next = element
-	var prev = element
 	
-	while (i++ < length)
-		commitUnmount(children.remove((next = (prev = next).next, prev)), parent, SharedMountRemove)
+	while (i++ < length) {
+		commitUnmount(children.remove(next), parent, SharedMountRemove)
+		next = next.next
+	}
 }
