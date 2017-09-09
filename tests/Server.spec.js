@@ -1,6 +1,6 @@
-module.exports = ({h, render}) => {	
+module.exports = ({h, render, renderToStream, renderToString}) => {	
 	test('Server', ({ok, end}) => {
-		const Writable = new require('stream').Writable
+		var Writable = new require('stream').Writable
 
 		class Foo {
 			render () {
@@ -63,7 +63,7 @@ module.exports = ({h, render}) => {
 		  }
 		})
 
-		dio.renderToStream(element, writable, () => {
+		renderToStream(element, writable, () => {
 			ok(output === result, '#renderToStream(element, writable, callback)')
 
 			output = ''
@@ -74,9 +74,9 @@ module.exports = ({h, render}) => {
 			  }
 			})
 
-			dio.renderToString(element, writable, () => {
+			renderToString(element, writable, () => {
 				ok(output === result, '#renderToString(element, writable, callback)')
-				ok(dio.renderToString(element) === result, '#renderToString(element)')
+				ok(renderToString(element) === result, '#renderToString(element)')
 
 				end()
 			})

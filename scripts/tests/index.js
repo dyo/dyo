@@ -4,15 +4,14 @@ const chokidar = require('chokidar')
 const {JSDOM} = require("jsdom")
 const DOM = new JSDOM('<!DOCTYPE html>')
 const search = '.spec.js'
+const dirpath = path.resolve(__dirname, '../../tests')
+const status = {return: false}
 
 global.document = DOM.window.document
 global.Node = DOM.window.Node
 global.Event = DOM.window.Event
-global.dio = require('../../dist/dio.umd.js')
 
 /**
- * deepEqual
- *
  * @param  {Object} x
  * @param  {Object} y
  * @return {Boolean}
@@ -26,8 +25,6 @@ global.deepEqual = (x, y) => {
 }
 
 /**
- * compare
- *
  * @param  {Node} a
  * @param  {String} b
  * @return {Boolean}
@@ -37,48 +34,51 @@ global.compare = (a, b) => {
 }
 
 /**
- * Test
  * @param  {String} name
  * @param  {Function} body
  */
 global.test = (name, body) => {
 	const failed = []
 	const passed = []
+	const underline = '----------------'
 
-	let ended = false
+	const exit = () => {
+		if (!argv('--watch')) {
+			process.exit(1)
+		}
+	}
 
 	const report = (pass, fail) => {
 		if (pass === 0 && fail === 0) {
 			console.log('/* could not find any tests */')
 		}
-		console.log(underline+'\n'+pass +' assertions passed.\n'+fail+ ' assertions failed.\n');
+		
+		console.log(underline+'\n'+pass +' assertions passed.\n'+fail+ ' assertions failed.\n')
+
 		if (fail > 0) {
 			setTimeout(exit)
 		}
 	}
+
 	const log = (status, {msg, type}) => {
 		switch (status) {
-			case 'FAIL': {
+			case 'FAIL':
 				console.log('\x1b[31m', type+': ✖', msg||'', '\x1b[0m')
-				break;
-			}
-			case 'PASS': {
-				console.log('\x1b[32m', type+': ✓', msg||'', '\x1b[0m')
 				break
-			}
+			case 'PASS':
+				console.log('\x1b[32m', type+': ✓', msg||'', '\x1b[0m')
 		}
 	}
 
-	const underline = '----------------';
+	const failure = (report) => status.return = (failed.push(report), end)
+	const sucess = (report) => passed.push(report)
 
 	const end = () => {
-		ended = true
-		console.log(
-			'\x1b[36m%s',
-			name,
-			'\n'+underline,
-			'\x1b[0m'
-		);
+		if (status.return && status.return !== end)
+			return
+
+		console.log('\x1b[36m%s', name, '\n'+underline, '\x1b[0m')
+
 		if (failed.length > 0) {
 			console.log('Failed Tests')
 			failed.forEach((v) => log('FAIL', v))
@@ -87,77 +87,84 @@ global.test = (name, body) => {
 			console.log('Passed Tests');
 			passed.forEach((v) => log('PASS', v))
 		}
+
 		report(passed.length, failed.length)
 	}
 
-	const ok = (value, msg) => {
-		(value ? passed : failed).push({type: 'OK', msg: msg})
-	}
-
-	const equal = (actual, expected, msg) => {
-		(actual === expected ? passed : failed).push({type: 'EQUAL', msg: msg})
-	}
+	const ok = (value, msg) => (value ? sucess : failure)({type: 'OK', msg: msg})
+	const equal = (value, expect, msg) => (value === expect ? sucess : failure)({type: 'EQUAL', msg: msg})
+	const fail = (msg) => failure({type: 'FAIL', msg})
+	const pass = (msg) => failure({type: 'PASS', msg})
 
 	try {
-		body({end, ok, equal, deepEqual})
+		body({end, ok, equal, deepEqual, fail, pass})
 	} catch (err) {
 		console.error('\x1b[31m', err, '\x1b[0m')
-
-		failed.push({
-			type: 'ERR',
-			msg: err
-		})
+		failure({type: 'ERR', msg: err})
 	}
 }
 
-const bootstrap = () => {
-	const dirpath = path.resolve(__dirname, '../../tests')
-	const files = fs.readdirSync(dirpath).filter((file) => {
-		return file.lastIndexOf(search) > -1
-	})
-	
-	const specs = files.map((file) => {
-		return path.join(dirpath, file)
-	})
+/**
+ * @return {}
+ */
+const argv = (filter) => process.argv.join('').indexOf(filter) > -1
 
-	specs.forEach((spec)=>{
-		delete require.cache[require.resolve(spec)];
-	})
+/**
+ * @param {string} filepath
+ * @return {*}
+ */
+const load = (filepath) => {
+	delete require.cache[require.resolve(filepath)]
+	return require(filepath)
+}
+
+/**
+ * @return {void}
+ */
+const factory = (type) => {
+	const files = fs.readdirSync(dirpath).filter((file) => file.lastIndexOf(search) > -1)
+	const dependency = load('../../dist/dio.umd.js')
 
 	try {
-		console.log('\n');
-		specs.map(spec=>require(spec)).map(spec=>typeof spec === 'function' ? spec(dio) : spec);
+		console.log('\n')
 
-		setTimeout(()=>{
-			console.log('-----------------------------------------------------------\n');
+		const specs = files.map((file) => path.join(dirpath, file))[type]((spec) => {
+			delete require.cache[require.resolve(spec)]
+			require(spec)(dependency)
+
+			return status.return
 		})
+
 	} catch (err) {
-		console.error('\x1b[31m', err, '\x1b[0m');
+		console.error('\x1b[31m', err, '\x1b[0m')
 	}
 }
 
-const exit = () => {
-	if (type.indexOf('--watch') === -1) {
-		process.exit(1)
-	}
+/**
+ * @param {string} file
+ */
+const listener = (file) => {
+	if (!file)
+		console.log('\nwatching..', 'tests')
+	else
+		console.log('changed > ' + file)
+
+	status.return = false
+
+	factory('some')
 }
 
-const type = (process.argv.pop() + '')
+/**
+ * @return {void}
+ */
+const startup = () => {
+	const watch = argv('--watch') && chokidar.watch(dirpath, {ignored: /[\/\\]\./})
+	
+	if (!watch)		
+		return factory('map')
 
-if (type.indexOf('--watch') !== -1) {
-	const watcher = (file) => {
-		if (!file) {
-			console.log('\nwatching..', 'tests/');
-		} else {
-			console.log('changed > ' + file);
-		}
-		bootstrap()
-	}
-
-	const watch = chokidar.watch(specs, {ignored: /[\/\\]\./})
-
-	watch.on('change', watcher)
-	watch.on('ready', watcher)
-} else {
-	bootstrap()
+	watch.on('ready', listener)
+	watch.on('change', listener)
 }
+
+startup()

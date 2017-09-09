@@ -115,7 +115,7 @@ module.exports = ({h, Component, render, PureComponent}) => {
 
 		class A {
 			componentDidCatch(error) {
-				error.report = !ok(true, 'componentDidCatch')
+				error.report = ok(true, 'componentDidCatch')
 				return error.message
 			}
 			render() {
@@ -148,10 +148,9 @@ module.exports = ({h, Component, render, PureComponent}) => {
 	})
 
 	test('setState', ({ok, end}) => {		
-		const {render, h} = dio
-		const stack = []
-
-		forceUpdateChild = null;
+		var stack = []
+		var forceUpdateChild = null;
+		
 		Child = function(props) {
 		  forceUpdateChild = this.forceUpdate.bind(this);
 		  return h('div', props.x);
