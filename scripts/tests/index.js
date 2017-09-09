@@ -5,6 +5,7 @@ const {JSDOM} = require("jsdom")
 const DOM = new JSDOM('<!DOCTYPE html>')
 const search = '.spec.js'
 const dirpath = path.resolve(__dirname, '../../tests')
+const libpath = path.resolve(__dirname, '../../dist')
 const status = {return: false}
 
 global.document = DOM.window.document
@@ -17,10 +18,10 @@ global.Event = DOM.window.Event
  * @return {Boolean}
  */
 global.deepEqual = (x, y) => {
-  const ok = Object.keys, tx = typeof x, ty = typeof y;
+  const keys = Object.keys, tx = typeof x, ty = typeof y;
   return x && y && tx === 'object' && tx === ty ? (
-    ok(x).length === ok(y).length &&
-      ok(x).every(key => deepEqual(x[key], y[key]))
+    keys(x).length === keys(y).length &&
+      keys(x).every(key => deepEqual(x[key], y[key]))
   ) : (x === y)
 }
 
@@ -63,18 +64,18 @@ global.test = (name, body) => {
 	const log = (status, {msg, type}) => {
 		switch (status) {
 			case 'FAIL':
-				console.log('\x1b[31m', type+': ✖', msg||'', '\x1b[0m')
+				console.log('\x1b[31m✖', msg||'', '\x1b[0m')
 				break
 			case 'PASS':
-				console.log('\x1b[32m', type+': ✓', msg||'', '\x1b[0m')
+				console.log('\x1b[32m✓', msg||'', '\x1b[0m')
 		}
 	}
 
-	const failure = (report) => status.return = (failed.push(report), end)
+	const failure = (report) => status.return = (failed.push(report), done)
 	const sucess = (report) => passed.push(report)
 
-	const end = () => {
-		if (status.return && status.return !== end)
+	const done = () => {
+		if (status.return && status.return !== done)
 			return
 
 		console.log('\x1b[36m%s', name, '\n'+underline, '\x1b[0m')
@@ -91,13 +92,13 @@ global.test = (name, body) => {
 		report(passed.length, failed.length)
 	}
 
-	const ok = (value, msg) => (value ? sucess : failure)({type: 'OK', msg: msg})
+	const assert = (value, msg) => (value ? sucess : failure)({type: 'ASSERT', msg: msg})
 	const equal = (value, expect, msg) => (value === expect ? sucess : failure)({type: 'EQUAL', msg: msg})
 	const fail = (msg) => failure({type: 'FAIL', msg})
 	const pass = (msg) => failure({type: 'PASS', msg})
 
 	try {
-		body({end, ok, equal, deepEqual, fail, pass})
+		body({done, assert, equal, deepEqual, fail, pass})
 	} catch (err) {
 		console.error('\x1b[31m', err, '\x1b[0m')
 		failure({type: 'ERR', msg: err})
@@ -123,14 +124,16 @@ const load = (filepath) => {
  */
 const factory = (type) => {
 	const files = fs.readdirSync(dirpath).filter((file) => file.lastIndexOf(search) > -1)
-	const dependency = load('../../dist/dio.umd.js')
+
+	Object.assign(global, load(path.join(libpath, 'dio.umd.js')))
 
 	try {
 		console.log('\n')
 
 		const specs = files.map((file) => path.join(dirpath, file))[type]((spec) => {
 			delete require.cache[require.resolve(spec)]
-			require(spec)(dependency)
+			require(spec)
+			require(spec)
 
 			return status.return
 		})
@@ -158,7 +161,10 @@ const listener = (file) => {
  * @return {void}
  */
 const startup = () => {
-	const watch = argv('--watch') && chokidar.watch(dirpath, {ignored: /[\/\\]\./})
+	const watch = argv('--watch') && chokidar.watch([
+		dirpath,
+		libpath
+	], {ignored: /[\/\\]\./})
 	
 	if (!watch)		
 		return factory('map')
