@@ -34,15 +34,15 @@ function elementImmutable (element) {
 
 /**
  * @param {*} content
- * @param {number} index
+ * @param {*} key
  * @return {Element}
  */
-function elementText (content, index) {
+function elementText (content, key) {
 	var element = new Element(SharedElementText)
 
-	element.type = '#text'
+	element.type = SharedTypeText
+	element.key = SharedTypeKey+key
 	element.children = content+''
-	element.key = '.'+index
 
 	return element
 }
@@ -68,7 +68,7 @@ function elementFragment (fragment) {
 	var children = new List()
 	var i = 0
 
-	element.type = '#fragment'
+	element.type = SharedTypeFragment
 	element.children = children
 
 	if (isValidElement(fragment))
@@ -96,18 +96,18 @@ function elementIterable (iterable, element) {
 
 /**
  * @param {*} element
- * @param {number} index
+ * @param {*} key
  * @return {Element}
  */
-function elementUnknown (element, index) {
+function elementUnknown (element, key) {
 	switch (element.constructor) {
 		case Promise:
 		case Function:
 			return createElement(element)
 		case Boolean:
-			return elementText('', index)
+			return elementText('', key)
 		case Date:
-			return elementText(element, index)			
+			return elementText(element, key)			
 	}
 
 	if (typeof element.next === 'function')

@@ -34,6 +34,10 @@ var SharedPropsUpdate = 2
 var SharedSiblingElement = 1
 var SharedSiblingChildren = 2
 
+var SharedTypeKey = '.'
+var SharedTypeText = '#text'
+var SharedTypeFragment = '#fragment'
+
 var SharedSiteCallback = 'callback'
 var SharedSiteRender = 'render'
 var SharedSiteConstructor = 'constructor'

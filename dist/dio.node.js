@@ -40,6 +40,10 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	var SharedSiblingElement = 1
 	var SharedSiblingChildren = 2
 	
+	var SharedTypeKey = '.'
+	var SharedTypeText = '#text'
+	var SharedTypeFragment = '#fragment'
+	
 	var SharedSiteCallback = 'callback'
 	var SharedSiteRender = 'render'
 	var SharedSiteConstructor = 'constructor'

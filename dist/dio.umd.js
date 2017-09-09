@@ -49,6 +49,10 @@
 	var SharedSiblingElement = 1
 	var SharedSiblingChildren = 2
 	
+	var SharedTypeKey = '.'
+	var SharedTypeText = '#text'
+	var SharedTypeFragment = '#fragment'
+	
 	var SharedSiteCallback = 'callback'
 	var SharedSiteRender = 'render'
 	var SharedSiteConstructor = 'constructor'
@@ -308,15 +312,15 @@
 	
 	/**
 	 * @param {*} content
-	 * @param {number} index
+	 * @param {*} key
 	 * @return {Element}
 	 */
-	function elementText (content, index) {
+	function elementText (content, key) {
 		var element = new Element(SharedElementText)
 	
-		element.type = '#text'
+		element.type = SharedTypeText
+		element.key = SharedTypeKey+key
 		element.children = content+''
-		element.key = '.'+index
 	
 		return element
 	}
@@ -342,7 +346,7 @@
 		var children = new List()
 		var i = 0
 	
-		element.type = '#fragment'
+		element.type = SharedTypeFragment
 		element.children = children
 	
 		if (isValidElement(fragment))
@@ -370,18 +374,18 @@
 	
 	/**
 	 * @param {*} element
-	 * @param {number} index
+	 * @param {*} key
 	 * @return {Element}
 	 */
-	function elementUnknown (element, index) {
+	function elementUnknown (element, key) {
 		switch (element.constructor) {
 			case Promise:
 			case Function:
 				return createElement(element)
 			case Boolean:
-				return elementText('', index)
+				return elementText('', key)
 			case Date:
-				return elementText(element, index)			
+				return elementText(element, key)			
 		}
 	
 		if (typeof element.next === 'function')
@@ -1033,12 +1037,12 @@
 					return elementFragment(element)
 				case String:
 				case Number:
-					return elementText(element, SharedElementEmpty)
+					return elementText(element, SharedTypeKey)
 				default:
-					return elementUnknown(element, SharedElementEmpty)
+					return elementUnknown(element, SharedTypeKey)
 			}
 	
-		return elementText('', SharedElementEmpty)
+		return elementText('', SharedTypeKey)
 	}
 	
 	/**

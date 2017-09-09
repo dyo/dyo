@@ -11,12 +11,12 @@ function commitElement (element) {
 				return elementFragment(element)
 			case String:
 			case Number:
-				return elementText(element, SharedElementEmpty)
+				return elementText(element, SharedTypeKey)
 			default:
-				return elementUnknown(element, SharedElementEmpty)
+				return elementUnknown(element, SharedTypeKey)
 		}
 
-	return elementText('', SharedElementEmpty)
+	return elementText('', SharedTypeKey)
 }
 
 /**
