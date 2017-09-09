@@ -98,6 +98,7 @@ module.exports = ({h, render}) => {
 		ok(compare(container, '<h1 class="2">0</h1>'), 'render element className')
 
 		render(h('input', {value: undefined}, '0'), container)
+		console.log(0, container.innerHTML)
 		ok(compare(container, '<input>'), 'render undefined prop')
 
 		render(h('h1', {style: {width: '100px'}}, '0'), container)

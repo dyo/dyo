@@ -110,7 +110,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  			element.DOM = DOM(getDOMNode(parent))
  			break
  		case SharedElementNode:
- 			element.xmlns = getDOMType(element.type, parent.xmlns)
+ 			element.xmlns = getDOMType(element, parent.xmlns)
  		case SharedElementText:
  			switch (mode) {
  				case SharedMountClone:

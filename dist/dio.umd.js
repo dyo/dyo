@@ -1136,7 +1136,7 @@
 	 			element.DOM = DOM(getDOMNode(parent))
 	 			break
 	 		case SharedElementNode:
-	 			element.xmlns = getDOMType(element.type, parent.xmlns)
+	 			element.xmlns = getDOMType(element, parent.xmlns)
 	 		case SharedElementText:
 	 			switch (mode) {
 	 				case SharedMountClone:
@@ -1984,7 +1984,7 @@
 					getDOMNode(element).removeAttributeNS(xmlns, name)
 				return
 			case true:
-				return DOMAttribute(element, name, '', xmlns)
+				return setDOMAttribute(element, name, '', xmlns)
 		}
 	
 		if (!xmlns)
@@ -2049,11 +2049,11 @@
 	}
 	
 	/**
-	 * @param {string} type
+	 * @param {Element} element
 	 * @param {string} xmlns
 	 */
-	function getDOMType (type, xmlns) {
-		switch (type) {
+	function getDOMType (element, xmlns) {
+		switch (element.type) {
 			case 'svg':
 				return 'http://www.w3.org/2000/svg'
 			case 'math':
