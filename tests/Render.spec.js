@@ -132,4 +132,51 @@ module.exports = ({h, render}) => {
 			end()
 		})
 	})
+
+	test('Immutable', ({ok, end})=>{
+		var container = document.createElement('div')
+		var without = (array, filtered) => array.filter(n => n != filtered)
+
+		class Ripple {
+			getInitialState() {
+				return {$waves: []}
+			}
+			ripple({$$el}) {
+				var {$waves} = this.state
+				var $wave = h('div', {class: 'wave', key: 'a'}, 'wave')
+				
+				this.setState({$waves: $waves.concat($wave)})
+				
+				setTimeout(()=>{
+					var {$waves} = this.state
+					this.setState({$waves: without(this.state.$waves, $wave)})
+				})
+			}
+			render() {
+				var element = h('div', {
+					class: 'ripple', onmousedown: (e) => this.ripple({$$el: e.currentTarget})
+				}, this.state.$waves)
+
+				return element
+			}
+		}
+
+		render(Ripple, container)
+
+		var r = container.querySelector('.ripple')
+		var event = new Event('mousedown')
+
+		r.dispatchEvent(event)
+		r.dispatchEvent(event)
+
+		setTimeout(()=>{
+			r.dispatchEvent(event)
+			r.dispatchEvent(event)
+
+			setTimeout(()=>{
+				ok(compare(container, '<div class="ripple"></div>'), 'handle hoisted elements')
+				end()
+			})
+		})
+	})
 }

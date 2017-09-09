@@ -25,6 +25,14 @@ function Element (id) {
 }
 
 /**
+ * @param {Element} element
+ * @return {Element}
+ */
+function elementImmutable (element) {
+	return merge(new Element(SharedElementNode), element)
+}
+
+/**
  * @param {*} content
  * @param {number} index
  * @return {Element}
@@ -40,7 +48,7 @@ function elementText (content, index) {
 }
 
 /**
- * @param {DOM} node
+ * @param {DOM?} node
  * @return {Element}
  */
 function elementEmpty (node) {
@@ -142,7 +150,7 @@ function elementChildren (parent, children, element, index) {
 				if (element.key !== null && parent.keyed === false)
 					parent.keyed = true
 
-				children.push(element)
+				children.push(element.DOM === null ? element : elementImmutable(element))
 				break
 			case Array:
 				for (var i = 0; i < element.length; ++i)

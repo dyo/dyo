@@ -66,14 +66,8 @@ function commitPromise (element, snapshot) {
 function commitChildren (element, children, host, signature, mode) {
 	var length = children.length
 	var next = children.next
-	var sibling = next
 
 	while (length-- > 0) {
-		if (hasDOMNode(next)) {
-			children.insert(next = merge(new Element(SharedElementNode), sibling = next), sibling)
-			children.remove(sibling)		
-		}
-
 		commitMount(next, element, element, host, signature, mode)
 		next = next.next
 	}
@@ -197,8 +191,6 @@ function commitDismount (element, signature) {
 
 	if (element.ref)
 		commitReference(element, element.ref, SharedReferenceRemove)
-
-	element.key = null
 }
 
 /**
