@@ -1,15 +1,16 @@
 /**
- * @return {string}
+ * @param {boolean} shallow
+ * @return {Object}
  */
 function toJSON () {
 	var element = this
 	var id = element.id
 	
 	switch (element.id) {
-		case SharedElementComponent:
-			return mountComponent(element).toJSON()
 		case SharedElementText:
 			return element.children
+		case SharedElementComponent:
+			return mountComponent(element).toJSON()
 	}
 
 	var output = {type: element.type, props: element.props, children: []}

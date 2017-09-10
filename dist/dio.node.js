@@ -146,10 +146,10 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 		var id = element.id
 	
 		switch (id) {
-			case SharedElementComponent:
-				return mountComponent(element).toString()
 			case SharedElementText:
 				return getTextEscape(element.children)
+			case SharedElementComponent:
+				return mountComponent(element).toString()
 		}
 	
 		var type = element.type
@@ -199,7 +199,7 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 				case 'children':
 					break
 				case 'style':
-					output += ' style="' + (typeof value === 'string' ? value : toStyle(value)) + '"'				
+					output += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'				
 					break
 				case 'className':
 					key = 'class'
@@ -222,7 +222,7 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	 * @param {Object} obj
 	 * @return {string}
 	 */
-	function toStyle (obj) {
+	function getStringStyle (obj) {
 		var name, output = ''
 	
 		for (var key in obj) {
@@ -238,17 +238,18 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	}
 	
 	/**
-	 * @return {string}
+	 * @param {boolean} shallow
+	 * @return {Object}
 	 */
 	function toJSON () {
 		var element = this
 		var id = element.id
 		
 		switch (element.id) {
-			case SharedElementComponent:
-				return mountComponent(element).toJSON()
 			case SharedElementText:
 				return element.children
+			case SharedElementComponent:
+				return mountComponent(element).toJSON()
 		}
 	
 		var output = {type: element.type, props: element.props, children: []}
