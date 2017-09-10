@@ -2,15 +2,15 @@
  * @param {*} value
  * @return {string}
  */
-function escapeText (value) {
-	return (value+'').replace(RegExpEscape, encodeText)
+function getTextEscape (value) {
+	return (value+'').replace(RegExpEscape, getTextEncode)
 }
 
 /**
  * @param {string} character
  * @return {string}
  */
-function encodeText (character) {
+function getTextEncode (character) {
 	switch (character) {
 		case '<': return '&lt;'
 		case '>': return '&gt;'
@@ -24,7 +24,7 @@ function encodeText (character) {
 /**
  * @param {string}
  */
-function elementType (type) {
+function getElementType (type) {
 	switch (type) {
 		case 'area':
 		case 'base':

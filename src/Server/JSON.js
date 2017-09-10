@@ -3,10 +3,11 @@
  */
 function toJSON () {
 	var element = this
+	var id = element.id
 	
 	switch (element.id) {
 		case SharedElementComponent:
-			return componentMount(element).toJSON()
+			return mountComponent(element).toJSON()
 		case SharedElementText:
 			return element.children
 	}
@@ -15,8 +16,15 @@ function toJSON () {
 	var children = element.children
 	var length = children.length
 
+	if (id < SharedElementEmpty)
+		children = (length--, children.next)
+
 	while (length-- > 0)
 		output.children.push((children = children.next).toJSON())
 
-	return element.id < SharedElementEmpty ? output.children : output
+	if (id < SharedElementEmpty)
+		if (output = output.children)
+			output.pop()
+
+	return output
 }

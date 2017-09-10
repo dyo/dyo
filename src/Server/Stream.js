@@ -1,4 +1,17 @@
 /**
+ * @param {function=}
+ * @return {Stream}
+ */
+function toStream (callback) {
+	var readable = new Stream(this)
+
+	if (typeof callback === 'function')
+		readable.on('end', callback)
+
+	return readable
+}
+
+/**
  * @constructor
  * @param {Element}
  */
@@ -15,24 +28,11 @@ Stream.prototype = Object.create(Readable.prototype, {
 	 */
 	_read: {value: function read () {
 		if (this.stack.length)
-			toChunk(this.stack.pop(), this.stack, this)
+			setStreamChunk(this.stack.pop(), this.stack, this)
 		else
 			this.push(null)
 	}}
 })
-
-/**
- * @param {function=}
- * @return {Stream}
- */
-function toStream (callback) {
-	var readable = new Stream(this)
-
-	if (typeof callback === 'function')
-		readable.on('end', callback)
-
-	return readable
-}
 
 /**
  * @param {Element} element
@@ -40,27 +40,28 @@ function toStream (callback) {
  * @param {Writable} writable
  * @return {string}
  */
-function toChunk (element, stack, writable) {
+function setStreamChunk (element, stack, writable) {
 	while (element.id === SharedElementComponent)
-		element = componentMount(element)
+		element = mountComponent(element)
 
+	var id = element.id
 	var type = element.type
 	var children = element.children
 	var length = children.length
 	var output = ''
 
-	switch (element.id) {
+	switch (id) {
 		case SharedElementPromise:
 			return void element.type.then(function (element) {
-				toChunk(commitElement(element), stack, writable)
+				setStreamChunk(commitElement(element), stack, writable)
 			})
 		case SharedElementText:
-			output = escapeText(children)
+			output = getTextEscape(children)
 			break
 		case SharedElementNode:
-			output = '<' + type + toProps(element, element.props) + '>'
+			output = '<' + type + getStringProps(element, element.props) + '>'
 			
-			if (elementType(type) === SharedElementEmpty)
+			if (getElementType(type) === SharedElementEmpty)
 				break
 			
 			if (typeof element.DOM === 'string') {
@@ -74,7 +75,7 @@ function toChunk (element, stack, writable) {
 				break
 			}
 		default:
-			if (element.id === SharedElementNode)
+			if (id === SharedElementNode)
 				children.prev.DOM = '</'+type+'>'
 
 			while (length-- > 0)

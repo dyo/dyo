@@ -8,7 +8,6 @@ function renderToString (subject, target, callback) {
 		return commitElement(subject).toString()
 
 	setHeader(target)
-	
 	target.end(commitElement(subject).toString(), 'utf8', callback)
 }
 
@@ -22,6 +21,5 @@ function renderToStream (subject, target, callback) {
 		return commitElement(subject).toStream()
 
 	setHeader(target)
-	
 	commitElement(subject).toStream(callback).pipe(target)
 }

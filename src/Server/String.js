@@ -3,20 +3,21 @@
  */
 function toString () {
 	var element = this
+	var id = element.id
 
-	switch (element.id) {
+	switch (id) {
 		case SharedElementComponent:
-			return componentMount(element).toString()
+			return mountComponent(element).toString()
 		case SharedElementText:
-			return escapeText(element.children)
+			return getTextEscape(element.children)
 	}
 
 	var type = element.type
 	var children = element.children
 	var length = children.length
-	var output = element.id === SharedElementNode ? '<' + type + toProps(element, element.props) + '>' : ''
+	var output = id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
 
-	if (elementType(type) === SharedElementEmpty)
+	if (getElementType(type) === SharedElementEmpty)
 		return output
 
 	if (typeof element.DOM !== 'string')
@@ -27,7 +28,7 @@ function toString () {
 		element.DOM = null
 	}
 
-	return element.id === SharedElementNode ? output + '</'+type+'>' : output
+	return id === SharedElementNode ? output + '</'+type+'>' : output
 }
 
 /**
@@ -35,7 +36,7 @@ function toString () {
  * @param  {Object} props
  * @return {String}
  */
-function toProps (element, props) {
+function getStringProps (element, props) {
 	var output = ''
 
 	for (var key in props) {
@@ -52,7 +53,7 @@ function toProps (element, props) {
 				break
 			case 'defaultValue':
 				if (!props.value)
-					output += ' value="'+escapeText(value)+'"'
+					output += ' value="'+getTextEscape(value)+'"'
 			case 'key':
 			case 'ref':
 			case 'children':
@@ -69,7 +70,7 @@ function toProps (element, props) {
 							break
 					case 'string':
 					case 'number':
-						output += ' '+ key + (value !== true ? '="'+escapeText(value)+'"' : '')
+						output += ' '+ key + (value !== true ? '="'+getTextEscape(value)+'"' : '')
 				}
 		}
 	}

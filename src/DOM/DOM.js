@@ -216,6 +216,14 @@ function getDOMQuery (element, parent, prev, next, signature) {
 }
 
 /**
+ * @param {Node} target
+ * @return {DOM}
+ */
+function createDOMObject (target) {
+	return DOM(target)
+}
+
+/**
  * @param {Element} element
  * @return {DOM}
  */

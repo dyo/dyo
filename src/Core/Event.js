@@ -30,7 +30,7 @@ function handleEvent (event) {
 		if (result && instance)
 			getLifecycleReturn(host, result)
 	} catch (e) {
-		errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
+		invokeErrorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
 	}
 }
 

@@ -38,9 +38,8 @@ var SharedPropsUpdate = 2
 var SharedSiblingElement = 1
 var SharedSiblingChildren = 2
 
-var SharedTypeKey = '.'
-var SharedTypeText = '#text'
-var SharedTypeFragment = '#fragment'
+var SharedSiblingPrevious = 'prev'
+var SharedSiblingNext = 'next'
 
 var SharedSiteCallback = 'callback'
 var SharedSiteRender = 'render'
@@ -48,6 +47,10 @@ var SharedSiteConstructor = 'constructor'
 var SharedSiteAsync = 'async'
 var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
+
+var SharedTypeKey = '.'
+var SharedTypeText = '#text'
+var SharedTypeFragment = '#fragment'
 
 var SharedComponentWillMount = 'componentWillMount'
 var SharedComponentDidMount = 'componentDidMount'
@@ -60,18 +63,20 @@ var SharedComponentDidCatch = 'componentDidCatch'
 var SharedGetChildContext = 'getChildContext'
 var SharedGetInitialState = 'getInitialState'
 
+var SharedDOMObject = {target: null}
+var SharedElementObject = {DOM: null}
+
 var Symbol = window.Symbol || function (d) {return 'Symbol('+d+')'}
 var WeakMap = window.WeakMap || WeakHash
 var Promise = window.Promise || noop
 
 var root = new WeakMap()
 var document = window.document || noop
-var stack = []
-var queue = 0
 var requestAnimationFrame = window.requestAnimationFrame || function(c) {setTimeout(c, 16)}
 var defineProperty = Object.defineProperty
 var defineProperties = Object.defineProperties
 var hasOwnProperty = Object.hasOwnProperty
+var isArray = Array.isArray
 
 var SymbolIterator = Symbol.iterator || Symbol('Iterator')
 var SymbolElement = Symbol('Element')
@@ -113,19 +118,6 @@ List.prototype = {
 		this.length--
 		
 		return node
-	},
-	/**
-	 * @param {Object} node
-	 * @return {Object}
-	 */
-	push: function push (node) {
-		return this.insert(node, this)
-	},
-	/**
-	 * @return {Object}
-	 */
-	pop: function pop () {
-		return this.remove(this.prev)
 	},
 	/**
 	 * @param {function} callback
@@ -204,12 +196,11 @@ function assign (object, primary, secondary) {
  * @return {Array}
  */
 function flatten (array, output) {	
-	for (var i = 0; i < array.length; ++i) {
+	for (var i = 0; i < array.length; ++i)
 		if (array[i] instanceof Array)
 			flatten(array[i], output)
 		else
 			output.push(array[i])
-	}
 	
 	return output
 }
@@ -222,7 +213,7 @@ function each (iterable, callback) {
 	var value = iterable.next()
 	var index = 0
 
-	while (value.done !== true) {
+	while (!value.done) {
 		index = callback(value.value, index)|0
 		value = iterable.next(value.value)
 	}
@@ -295,8 +286,8 @@ function Element (id) {
  * @param {Element} element
  * @return {Element}
  */
-function elementImmutable (element) {
-	return merge(new Element(SharedElementNode), element)
+function createElementImmutable (element) {
+	return assign(new Element(SharedElementNode), element, SharedElementObject)
 }
 
 /**
@@ -304,7 +295,7 @@ function elementImmutable (element) {
  * @param {*} key
  * @return {Element}
  */
-function elementText (content, key) {
+function createElementText (content, key) {
 	var element = new Element(SharedElementText)
 
 	element.type = SharedTypeText
@@ -318,7 +309,7 @@ function elementText (content, key) {
  * @param {DOM?} node
  * @return {Element}
  */
-function elementEmpty (node) {
+function createElementNode (node) {
 	var element = new Element(SharedElementEmpty)
 
 	element.DOM = node
@@ -330,7 +321,7 @@ function elementEmpty (node) {
  * @param {(Element|Array)} fragment
  * @return {Element}
  */
-function elementFragment (fragment) {
+function createElementFragment (iterable) {
 	var element = new Element(SharedElementFragment)
 	var children = new List()
 	var i = 0
@@ -338,11 +329,13 @@ function elementFragment (fragment) {
 	element.type = SharedTypeFragment
 	element.children = children
 
-	if (isValidElement(fragment))
-		elementChildren(element, children, fragment, i)
-	else if (Array.isArray(fragment))
-		for (; i < fragment.length; ++i)
-			elementChildren(element, children, fragment[i], i)				
+	if (isValidElement(iterable))
+		setElementChildren(element, children, iterable, i)
+	else if (isArray(iterable))
+		for (; i < iterable.length; ++i)
+			setElementChildren(element, children, iterable[i], i)				
+
+	setElementFragment(children)
 
 	return element
 }
@@ -351,11 +344,11 @@ function elementFragment (fragment) {
  * @param {Iterable} iterable
  * @param {Element} element
  */
-function elementIterable (iterable, element) {	
-	var index = 0
+function createElementIterable (iterable) {	
+	var element = createElementFragment(iterable)
 
 	each(iterable, function (value, index) {
-		return elementChildren(element, element.children, value, index)
+		return setElementChildren(element, element.children, value, index)
 	})
 
 	return element
@@ -366,75 +359,27 @@ function elementIterable (iterable, element) {
  * @param {*} key
  * @return {Element}
  */
-function elementUnknown (element, key) {
+function createElementBranch (element, key) {
 	switch (element.constructor) {
 		case Promise:
 		case Function:
 			return createElement(element)
 		case Boolean:
-			return elementText('', key)
+			return createElementText('', key)
 		case Date:
-			return elementText(element, key)			
+			return createElementText(element, key)			
 	}
 
 	if (typeof element.next === 'function')
-		return elementIterable(element, elementFragment(element))
+		return createElementIterable(element)
 	if (typeof element[SymbolIterator] === 'function')
-		return elementUnknown(element[SymbolIterator]())
+		return createElementBranch(element[SymbolIterator]())
 	if (typeof element === 'function')
-		return elementUnknown(element())
+		return createElementBranch(element())
 	if (element instanceof Error)
 		return createElement('details', createElement('summary', element+''), h('pre', element.report || element.stack))
 
 	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
-}
-
-/**
- * @param {Element} element
- * @param {string} direction
- * @return {Element}
- */
-function elementSibling (element, direction) {
-	if (isValidElement(element[direction]))
-		return element[direction]
-
-	if (getHostElement(element.host) === element)
-		return elementSibling(element.host, direction)
-
-	return element
-}
-
-/**
- * @param {Element} parent
- * @param {List} children
- * @param {*} element
- * @param {number} index
- */
-function elementChildren (parent, children, element, index) {
-	if (element != null)
-		switch (element.constructor) {
-			case Element:
-				if (element.key !== null && parent.keyed === false)
-					parent.keyed = true
-
-				children.push(element.DOM === null ? element : elementImmutable(element))
-				break
-			case Array:
-				for (var i = 0; i < element.length; ++i)
-					elementChildren(parent, children, element[i], index + i)
-
-				return index + i
-			case String:
-			case Number:
-				children.push(elementText(element, index))
-				break
-			default:
-				children.push(elementUnknown(element, index))
-		}
-	else
-		children.push(elementText('', index))
-
-	return index + 1
 }
 
 /**
@@ -485,7 +430,7 @@ function createElement (type, props) {
 							element.xmlns = props.xmlns
 
 						if (props.children !== undefined)
-							props.children = void elementChildren(element, children, props.children, index)
+							props.children = void setElementChildren(element, children, props.children, index)
 					}
 
 					element.props = props
@@ -501,7 +446,7 @@ function createElement (type, props) {
 	if ((size = length - i) > 0) {
 		if (id !== SharedElementComponent)
 			for (; i < length; ++i)
-				index = elementChildren(element, children, arguments[i], index)
+				index = setElementChildren(element, children, arguments[i], index)
 		else {
 			if (size > 1)
 				for (children = Array(size); i < length; ++i)
@@ -526,13 +471,147 @@ function createElement (type, props) {
 			break
 		case Promise:
 			element.id = SharedElementPromise
-			break
 		default:
 			if (isValidDOMNode(type))
 				element.id = SharedElementPortal
+
+			setElementFragment(children)
 	}
 
 	return element
+}
+
+/**
+ * @param {Element} parent
+ * @param {List} children
+ * @param {*} element
+ * @param {number} index
+ */
+function setElementChildren (parent, children, element, index) {
+	if (element != null)
+		switch (element.constructor) {
+			case Element:
+				if (element.key !== null && parent.keyed === false)
+					parent.keyed = true
+
+				children.insert(element.DOM === null ? element : createElementImmutable(element), children)
+				break
+			case Array:
+				for (var i = 0; i < element.length; ++i)
+					setElementChildren(parent, children, element[i], index + i)
+
+				return index + i
+			case String:
+			case Number:
+				children.insert(createElementText(element, index), children)
+				break
+			default:
+				children.insert(createElementBranch(element, index), children)
+		}
+	else
+		children.insert(createElementText('', index), children)
+
+	return index + 1
+}
+
+/**
+ * @param {List} children
+ */
+function setElementFragment (children) {
+	children.insert(createElementText('', SharedTypeKey), children)
+	children.insert(createElementText('', SharedTypeKey), children.next)
+}
+
+/**
+ * @param {Element} element
+ * @param {(Object|function)} defaultProps
+ * @param {Object} props
+ */
+function getDefaultProps (element, defaultProps, props) {
+	if (typeof defaultProps !== 'function')
+		return assign({}, defaultProps, props)
+
+	defineProperty(element.type, 'defaultProps', {
+		value: getDefaultProps(element, getLifecycleCallback(element, defaultProps), props)
+	})
+
+	return element.type.defaultProps
+}
+
+/**
+ * @param {(function|string)} subject
+ * @return {string}
+ */
+function getDisplayName (subject) {
+	switch (typeof subject) {
+		case 'function':
+			return getDisplayName(subject.displayName || subject.name)
+		case 'string':
+			if (subject)
+				return subject
+		default:
+			return (subject && subject.constructor.name) || 'anonymous'
+	}
+}
+
+/**
+ * @param  {Element} element
+ * @return {Element}
+ */
+function getElementChildren (element) {
+	return element.children
+}
+
+/**
+ * @param {Element}
+ * @param {Element} 
+ */
+function getElementParent (element) {
+	if (element.id < SharedElementPortal)
+		return getElementParent(element.parent)
+	
+	if (element.id === SharedElementPortal)
+		return createElementNode(createDOMObject(element.type))
+	else
+		return element
+}
+
+/**
+ * @param {Element} element
+ * @return {Element}
+ */
+function getElementDescription (element) {
+	if (isValidElement(element) && element.id === SharedElementComponent)
+		return getElementDescription(getElementChildren(element))
+	else
+		return element
+}
+
+/**
+ * @param {Element} element
+ * @param {string} direction
+ * @return {Element} 
+ */
+function getElementBoundary (element, direction) {
+	if (element.id < SharedElementEmpty)
+		return getElementBoundary(getElementChildren(element)[direction])
+	else
+		return element
+}
+
+/**
+ * @param {Element} element
+ * @param {string} direction
+ * @return {Element}
+ */
+function getElementSibling (element, direction) {
+	if (isValidElement(element[direction]))
+		return element[direction]
+
+	if (getElementDescription(element.host) === element)
+		return getElementSibling(element.host, direction)
+
+	return createElementNode(SharedDOMObject)
 }
 
 /**
@@ -592,21 +671,21 @@ function shouldComponentUpdate (props, state) {
  * @param {function?} callback
  */
 function setState (state, callback) {
-	enqueueState(this[SymbolElement], this, state, callback)
+	enqueueStateUpdate(this[SymbolElement], this, state, callback)
 }
 
 /**
  * @param {function} callback
  */
 function forceUpdate (callback) {
-	enqueueUpdate(this[SymbolElement], this, callback, SharedComponentForceUpdate)
+	enqueueComponentUpdate(this[SymbolElement], this, callback, SharedComponentForceUpdate)
 }
 
 /**
  * @param {Element} element
  * @return {number}
  */
-function componentMount (element) {
+function mountComponent (element) {
 	var owner = element.type
 	var context = element.context || {}
 	var prototype = owner.prototype
@@ -617,7 +696,7 @@ function componentMount (element) {
 		if (prototype[SymbolComponent] !== SymbolComponent)
 			createComponent(prototype)
 
-		instance = owner = getChildInstance(element, owner)
+		instance = owner = getComponentInstance(element, owner)
 	} else {
 		instance = new Component()
 		instance.render = owner
@@ -633,17 +712,17 @@ function componentMount (element) {
 	instance.context = context
 
 	if (owner[SharedGetInitialState])
-		instance.state = getInitialState(element, instance, getLifecycleData(element, SharedGetInitialState))
+		instance.state = getComponentState(element, instance, getLifecycleData(element, SharedGetInitialState))
 	else if (!instance.state)
 		instance.state = {}
 
 	if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 		getLifecycleMount(element, SharedComponentWillMount)
 	
-	children = element.children = getChildElement(element, instance)
+	children = element.children = getComponentElement(element, instance)
 
 	if (owner[SharedGetChildContext])
-		element.context = getChildContext(element)
+		element.context = getComponentContext(element)
 
 	return children
 }
@@ -653,7 +732,7 @@ function componentMount (element) {
  * @param {Element} snapshot
  * @param {number} signature
  */
-function componentUpdate (element, snapshot, signature) {
+function updateComponent (element, snapshot, signature) {
 	if (element.work === SharedWorkTask)
 		return
 
@@ -668,7 +747,7 @@ function componentUpdate (element, snapshot, signature) {
 	var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, element.state) : prevState
 
 	if (owner[SharedGetChildContext])
-		merge(element.context, getChildContext(element))
+		merge(element.context, getComponentContext(element))
 
 	switch (signature) {
 		case SharedComponentForceUpdate:
@@ -692,7 +771,7 @@ function componentUpdate (element, snapshot, signature) {
 	if (signature === SharedComponentStateUpdate)
 		instance.state = nextState
 
-	reconcileElement(getHostChildren(element), getChildElement(element, instance))
+	reconcileElement(getElementChildren(element), getComponentElement(element, instance))
 
 	if (owner[SharedComponentDidUpdate])
 		getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
@@ -706,24 +785,35 @@ function componentUpdate (element, snapshot, signature) {
 /**
  * @param {Element} element
  */
-function componentUnmount (element) {
-	if (element.owner[SharedComponentWillUnmount])
-		if (element.state = getLifecycleMount(element, SharedComponentWillUnmount))
-			stack[queue++] = element.state
+function unmountComponent (element) {
+	if ((element.state = null, element.owner[SharedComponentWillUnmount]))
+		element.state = getLifecycleMount(element, SharedComponentWillUnmount)
 }
 
 /**
- * @param {(Component|Node)?} value
- * @param {*} key
  * @param {Element} element
+ * @param {Component} instance
+ * @param {function?} callback
+ * @param {number} signature
  */
-function componentReference (value, key, element) {
-	if (this.refs) {
-		if (key !== element.ref)
-			delete this.refs[element.ref]
+function enqueueComponentUpdate (element, instance, callback, signature) {
+	if (!element)
+		return void requestAnimationFrame(function () {
+			enqueueComponentUpdate(element[SymbolElement], instance, callback, signature)
+		})
 
-		this.refs[key] = value
-	}
+	if (element.work === SharedWorkTask)
+		return void requestAnimationFrame(function () {
+			enqueueComponentUpdate(element, instance, callback, signature)
+		})
+
+	if (!hasDOMNode(element))
+		return
+
+	updateComponent(element, element, signature)
+
+	if (typeof callback === 'function')
+		enqueueStateCallback(element, instance, callback)
 }
 
 /**
@@ -732,34 +822,21 @@ function componentReference (value, key, element) {
  * @param {(Object|function)} state
  * @param {function?} callback
  */
-function enqueueState (element, instance, state, callback) {
+function enqueueStateUpdate (element, instance, state, callback) {
 	if (state)
 		switch (state.constructor) {
 			case Promise:
-				return enqueuePending(element, instance, state, callback)
+				return enqueueStatePromise(element, instance, state, callback)
 			case Function:
-				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
+				return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 			default:
 				if (element.work !== SharedWorkSync && !hasDOMNode(element))
 					return void assign(instance.state, element.state, state)
 				else
 					element.state = state
 
-				enqueueUpdate(element, instance, callback, SharedComponentStateUpdate)
+				enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
 		}
-}
-
-/**
- * @param {Element} Element
- * @param {Component} instance
- * @param {function} callback
- */
-function enqueueCallback (element, instance, callback) {
-	try {
-		return callback.call(instance, instance.state, instance.props)
-	} catch (e) {
-		errorBoundary(element, e, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
-	}
 }
 
 /**
@@ -768,40 +845,27 @@ function enqueueCallback (element, instance, callback) {
  * @param {Promise} state
  * @param {function?} callback
  */
-function enqueuePending (element, instance, state, callback) {
+function enqueueStatePromise (element, instance, state, callback) {
 	state.then(function (value) {
 		requestAnimationFrame(function () {
-			enqueueState(element, instance, value, callback)
+			enqueueStateUpdate(element, instance, value, callback)
 		})
 	}).catch(function (e) {
-		errorBoundary(element, e, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
+		invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
 	})
 }
 
 /**
  * @param {Element} element
  * @param {Component} instance
- * @param {function=} callback
- * @param {number} signature
+ * @param {function} callback
  */
-function enqueueUpdate (element, instance, callback, signature) {
-	if (!element)
-		return void requestAnimationFrame(function () {
-			enqueueUpdate(element[SymbolElement], instance, callback, signature)
-		})
-
-	if (element.work === SharedWorkTask)
-		return void requestAnimationFrame(function () {
-			enqueueUpdate(element, instance, callback, signature)
-		})
-
-	if (!hasDOMNode(element))
-		return
-
-	componentUpdate(element, element, signature)
-
-	if (typeof callback === 'function')
-		enqueueCallback(element, instance, callback)
+function enqueueStateCallback (element, instance, callback) {
+	try {
+		return callback.call(instance, instance.state, instance.props)
+	} catch (e) {
+		invokeErrorBoundary(element, e, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
+	}
 }
 
 /**
@@ -810,13 +874,12 @@ function enqueueUpdate (element, instance, callback, signature) {
  * @param {Object} state
  * @return {Object}
  */
-function getInitialState (element, instance, state) {	
-	if (state) {
-		if (state.constructor !== Promise)
-			return typeof state === 'object' ? state : Object(state)
-		else
-			enqueuePending(element, instance, state)
-	}
+function getComponentState (element, instance, state) {	
+	if (state instanceof Object)
+		return state
+
+	if (state instanceof Promise)
+		enqueueStatePromise(element, instance, state)
 
 	return instance.state || {}
 }
@@ -826,11 +889,11 @@ function getInitialState (element, instance, state) {
  * @param {function} owner
  * @return {Component}
  */
-function getChildInstance (element, owner) {
+function getComponentInstance (element, owner) {
 	try {
 		return new owner(element.props, element.context)
 	} catch (e) {
-		errorBoundary(element, e, SharedSiteConstructor, SharedErrorActive)
+		invokeErrorBoundary(element, e, SharedSiteConstructor, SharedErrorActive)
 	}
 
 	return new Component()
@@ -841,11 +904,11 @@ function getChildInstance (element, owner) {
  * @param {Component}
  * @return {Element}
  */
-function getChildElement (element, instance) {
+function getComponentElement (element, instance) {
 	try {
 		return commitElement(instance.render(instance.props, instance.state, element.context))
 	} catch (e) {
-		return commitElement(errorBoundary(element, e, SharedSiteRender, SharedErrorActive))
+		return commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive))
 	}
 }
 
@@ -853,62 +916,11 @@ function getChildElement (element, instance) {
  * @param {Element} element
  * @return {Object?}
  */
-function getChildContext (element) {
+function getComponentContext (element) {
 	if (element.owner[SharedGetChildContext])
 		return getLifecycleData(element, SharedGetChildContext) || element.context || {}
 	else
 		return element.context || {}
-}
-
-/**
- * @param {Element} element
- * @return {Element}
- */
-function getHostElement (element) {
-	if (isValidElement(element) && element.id === SharedElementComponent)
-		return getHostElement(getHostChildren(element))
-	else
-		return element
-}
-
-/**
- * @param  {Element} element
- * @return {Element}
- */
-function getHostChildren (element) {
-	return element.children
-}
-
-/**
- * @param {(function|string)} subject
- * @return {string}
- */
-function getDisplayName (subject) {
-	switch (typeof subject) {
-		case 'function':
-			return getDisplayName(subject.displayName || subject.name)
-		case 'string':
-			if (subject)
-				return subject
-		default:
-			return (subject && subject.constructor.name) || 'anonymous'
-	}
-}
-
-/**
- * @param {Element} element
- * @param {(Object|function)} defaultProps
- * @param {Object} props
- */
-function getDefaultProps (element, defaultProps, props) {
-	if (typeof defaultProps !== 'function')
-		return assign({}, defaultProps, props)
-
-	defineProperty(element.type, 'defaultProps', {
-		value: getDefaultProps(element, getLifecycleCallback(element, defaultProps), props)
-	})
-
-	return element.type.defaultProps
 }
 
 /**
@@ -919,7 +931,7 @@ function getLifecycleData (element, name) {
 	try {
 		return element.owner[name].call(element.instance, element.props)
 	} catch (e) {
-		errorBoundary(element, e, name, SharedErrorActive)
+		invokeErrorBoundary(element, e, name, SharedErrorActive)
 	}
 }
 
@@ -936,7 +948,7 @@ function getLifecycleMount (element, name) {
 
 		getLifecycleReturn(element, state)
 	} catch (e) {
-		errorBoundary(element, e, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
+		invokeErrorBoundary(element, e, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
 	}
 }
 
@@ -956,7 +968,7 @@ function getLifecycleUpdate (element, name, props, state, context) {
 
 		getLifecycleReturn(element, state)
 	} catch (e) {
-		errorBoundary(element, e, name, SharedErrorActive)
+		invokeErrorBoundary(element, e, name, SharedErrorActive)
 	}
 }
 
@@ -970,7 +982,7 @@ function getLifecycleReturn (element, state) {
 			if (!state)
 				break
 		case 'function':
-			enqueueState(element, element.instance, state)
+			enqueueStateUpdate(element, element.instance, state)
 	}
 }
 
@@ -985,7 +997,21 @@ function getLifecycleCallback (element, callback, first, second, third) {
 	try {
 		return callback.call(element.instance, first, second, third)
 	} catch (e) {
-		errorBoundary(element, e, SharedSiteCallback, SharedErrorPassive)
+		invokeErrorBoundary(element, e, SharedSiteCallback, SharedErrorPassive)
+	}
+}
+
+/**
+ * @param {(Component|Node)?} value
+ * @param {*} key
+ * @param {Element} element
+ */
+function setComponentReference (value, key, element) {
+	if (this.refs) {
+		if (key !== element.ref)
+			delete this.refs[element.ref]
+
+		this.refs[key] = value
 	}
 }
 
@@ -1000,12 +1026,11 @@ function findDOMNode (element) {
 	if (isValidElement(element[SymbolElement]))
 		return findDOMNode(element[SymbolElement])
 
-	if (isValidElement(element)) {
+	if (isValidElement(element))
 		if (element.id < SharedElementEmpty)
-			return findDOMNode(getHostChildren(element).next)
+			return findDOMNode(getElementBoundary(element, SharedSiblingNext))
 		else if (hasDOMNode(element))
 			return getDOMNode(element)
-	}
 
 	if (isValidDOMNode(element))
 		return element
@@ -1023,67 +1048,31 @@ function commitElement (element) {
 			case Element:
 				return element
 			case Array:
-				return elementFragment(element)
+				return createElementFragment(element)
 			case String:
 			case Number:
-				return elementText(element, SharedTypeKey)
+				return createElementText(element, SharedTypeKey)
 			default:
-				return elementUnknown(element, SharedTypeKey)
+				return createElementBranch(element, SharedTypeKey)
 		}
 
-	return elementText('', SharedTypeKey)
+	return createElementText('', SharedTypeKey)
 }
 
 /**
  * @param {Element} element
- * @param {number} signature
- * @return {Element}
- */
-function commitSibling (element, signature) {
-	if (!isValidElement(element))
-		return elementEmpty(DOM(null))
-
-	if (signature < SharedElementEmpty)
-		return element.id < SharedElementEmpty ? commitSibling(element, SharedSiblingChildren) : element
-
-	if (signature === SharedSiblingElement)
-		return commitSibling(element.next, -signature)
-
-	if (getHostChildren(element).length === 0)
-		return commitSibling(element.next, signature)
-
-	return commitSibling(getHostChildren(element).next, -signature)
-}
-
-/**
- * @param {Element} element
- * @param {Element} snapshot
- */
-function commitPromise (element, snapshot) {
-	snapshot.type.then(function (value) {
-		if (hasDOMNode(element))
-			if (element.id === SharedElementPromise)
-				reconcileChildren(element, elementFragment(commitElement(value)))
-			else
-				reconcileElement(element, commitElement(value))
-	}).catch(function (e) {
-		errorBoundary(element, e, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
-	})
-}
-
-/**
- * @param {Element} element
- * @param {List} children
+ * @param {Element} sibling
  * @param {Element} host
  * @param {number} signature
  * @param {number} mode
  */
-function commitChildren (element, children, host, signature, mode) {
+function commitChildren (element, sibling, host, signature, mode) {
+	var children = element.children
 	var length = children.length
 	var next = children.next
 
 	while (length-- > 0) {
-		commitMount(next, element, element, host, signature, mode)
+		commitMount(next, sibling, element, host, signature, mode)
 		next = next.next
 	}
 }
@@ -1105,8 +1094,8 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementComponent:
  			element.work = SharedWorkTask
  			
- 			commitMount(componentMount(element), sibling, parent, element, signature, mode)
- 			element.DOM = getHostChildren(element).DOM
+ 			commitMount(mountComponent(element), sibling, parent, element, signature, mode)
+ 			element.DOM = getElementChildren(element).DOM
 
  			if (element.ref)
  				commitReference(element, element.ref, SharedReferenceAssign)
@@ -1116,14 +1105,13 @@ function commitMount (element, sibling, parent, host, signature, mode) {
 
  			element.work = SharedWorkSync
  			return
- 		case SharedElementPortal:
- 			element.DOM = DOM(element.type)
- 			break
  		case SharedElementPromise:
- 			commitPromise(element, element)
+ 			commitWillReconcile(element, element)
  		case SharedElementFragment:
- 			element.DOM = DOM(getDOMNode(parent))
- 			break
+ 		case SharedElementPortal:
+ 			commitChildren(element, sibling, host, signature, mode)
+ 			element.DOM = commitCreate(element)
+ 			return
  		case SharedElementNode:
  			element.xmlns = getDOMType(element, parent.xmlns)
  		case SharedElementText:
@@ -1144,44 +1132,8 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  				return
  	}
 
- 	commitChildren(element, element.children, host, SharedMountAppend, mode)
+ 	commitChildren(element, element, host, SharedMountAppend, mode)
  	commitProperties(element, element.props, SharedPropsMount)
-}
-
-/**
- * @param {Element} element
- * @param {Element} parent
- * @param {number} signature
- * @return {(Promise|void)}
- */
-function commitUnmount (element, parent, signature) {
-	if (signature > SharedElementEmpty)
-		commitDismount(element, signature)
-
-	if (element.id !== SharedElementComponent)
-		return commitRemove(element, parent)
-
-	if (queue > 0)
-		return Promise.all(stack)
-			.then(commitResolve(element, parent, signature))
-			.catch(commitResolve(element, parent, SharedErrorPassive))
-
-	commitUnmount(getHostChildren(element), parent, SharedElementEmpty)
-}
-
-/**
- * @param {Element} element
- * @param {Element} parent
- * @param {number} signature
- * @return {function}
- */
-function commitResolve (element, parent, signature) {
-	return function (e) {
-		commitUnmount(getHostChildren(element), parent, queue = stack.length = SharedElementEmpty)
-
-		if (signature === SharedErrorPassive)
-			errorBoundary(element, e, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
-	}
 }
 
 /**
@@ -1192,8 +1144,8 @@ function commitResolve (element, parent, signature) {
 function commitDismount (element, signature) {
 	switch (element.id) {
 		case SharedElementComponent:
-			componentUnmount(element)
-			commitDismount(getHostChildren(element), -signature)
+			unmountComponent(element)
+			commitDismount(getElementChildren(element), -signature)
 		case SharedElementText:
 			break
 		default:
@@ -1210,42 +1162,97 @@ function commitDismount (element, signature) {
 
 /**
  * @param {Element} element
- * @param {Element} snapshot
  * @param {Element} parent
  * @param {number} signature
+ * @return {(Promise|void)}
  */
-function commitReplace (element, snapshot, parent, signature) {
-	if (signature === SharedMountReplace)
-		if (element.state = commitUnmount(element, parent, signature))
-			return void element.state.then(function () {
-				commitReplace(element, snapshot, parent, -signature)
-			})
+function commitUnmount (element, parent, signature) {
+	if (signature > SharedElementEmpty)
+		commitDismount(element, signature)
 
-	commitPatch(elementSibling(element, 'next'), element, snapshot, parent)
+	if (element.id !== SharedElementComponent)
+		return commitRemove(element, parent)
+
+	if (element.state)
+		return element.state
+			.then(commitWillUnmount(element, parent, SharedElementEmpty))
+			.catch(commitWillUnmount(element, parent, SharedErrorPassive))
+
+	commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
 }
 
 /**
- * @param {Element} sibling
+ * @param {Element} element
+ * @param {Element} parent
+ * @param {number} signature
+ * @return {function}
+ */
+function commitWillUnmount (element, parent, signature) {	
+	return function (e) {
+		commitUnmount(getElementChildren(element), parent)
+
+		if (signature === SharedErrorPassive)
+			invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} snapshot
+ */
+function commitWillReconcile (element, snapshot) {
+	snapshot.type.then(function (value) {
+		if (hasDOMNode(element))
+			if (element.id === SharedElementPromise)
+				reconcileChildren(element, createElementFragment(commitElement(value)))
+			else
+				reconcileElement(element, commitElement(value))
+	}).catch(function (e) {
+		invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
+	})
+}
+
+/**
  * @param {Element} element
  * @param {Element} snapshot
  * @param {Element} parent
+ * @param {Element} host
+ * @param {number} signature
  */
-function commitPatch (sibling, element, snapshot, parent) {
-	if (sibling === element)
-		return commitPatch(commitSibling(element, SharedSiblingElement), element, snapshot, parent)
+function commitReplace (element, snapshot, parent, host, signature) {
+	if (signature === SharedMountReplace)
+		if (element.state instanceof Promise)
+			return element.state = commitWillReplace(element, snapshot, parent, host, signature)
+		else if (element.state = commitUnmount(element, parent, signature))
+			return commitWillReplace(element, snapshot, parent, host, -signature)
 
-	commitMount(snapshot, sibling, parent, element.host, SharedMountInsert, SharedMountCommit)
-
+	commitMount(snapshot, getElementSibling(element, SharedSiblingNext), parent, host, SharedMountInsert, SharedMountCommit)
+	
 	for (var key in snapshot)
 		switch (key) {
 			case 'DOM':
 				merge(element[key], snapshot[key])
-			case 'next':
-			case 'prev':
+			case SharedSiblingNext:
+			case SharedSiblingPrevious:
 				break
 			default:
 				element[key] = snapshot[key]	
 		}
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} snapshot
+ * @param {Element} parent
+ * @param {Element} host
+ * @param {number} signature
+ */
+function commitWillReplace (element, snapshot, parent, host, signature) {
+	return void element.state.then(function () {
+		commitReplace(element, snapshot, parent, host, signature)
+	}).catch(function () {
+		invokeErrorBoundary(snapshot, e, SharedSiteRender, SharedErrorActive)
+	})
 }
 
 /**
@@ -1257,7 +1264,7 @@ function commitPatch (sibling, element, snapshot, parent) {
 function commitReference (element, callback, signature, key) {
 	switch (typeof callback) {
 		case 'string':
-			return commitReference(element, componentReference, signature, callback)			
+			return commitReference(element, setComponentReference, signature, callback)			
 		case 'function':
 			switch (signature) {
 				case SharedReferenceRemove:
@@ -1319,9 +1326,16 @@ function commitProperties (element, props, signature) {
  */
 function commitCreate (element) {
 	try {
-		return element.id === SharedElementNode ? createDOMElement(element) : createDOMText(element)
+		switch (element.id) {
+			case SharedElementNode:
+				return createDOMElement(element)
+			case SharedElementText:
+				return createDOMText(element)
+			default:
+				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
+		}
 	} catch (e) {
-		return commitDOMNode(commitElement(errorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
+		return commitDOMNode(commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
 	}
 }
 
@@ -1335,7 +1349,13 @@ function commitQuery (element, parent, signature) {
 	if (signature && element.children.length === 0)
 		return null
 
-	return getDOMQuery(element, parent, elementSibling(element, 'prev'), elementSibling(element, 'next'), signature)
+	return getDOMQuery(
+		element, 
+		parent, 
+		getElementSibling(element, SharedSiblingPrevious), 
+		getElementSibling(element, SharedSiblingNext), 
+		signature
+	)
 }
 
 /**
@@ -1348,21 +1368,17 @@ function commitValue (element, value) {
 
 /**
  * @param {Element} element
- */
-function commitContent (element) {
-	setDOMContent(element)
-}
-
-/**
- * @param {Element} element
  * @param {Element} parent
  */
 function commitRemove (element, parent) {
+	if (parent.id < SharedElementEmpty)
+		return commitRemove(element, getElementParent(parent))
+
 	if (element.id > SharedElementEmpty)
 		removeDOMNode(element, parent)
 	else
-		getHostChildren(element).forEach(function (children) {
-			commitRemove(children, element.id < SharedElementPortal ? parent : element)
+		getElementChildren(element).forEach(function (children) {
+			commitRemove(children, element)
 		})
 }
 
@@ -1372,14 +1388,14 @@ function commitRemove (element, parent) {
  * @param {Element} parent
  */
 function commitInsert (element, sibling, parent) {
-	if (sibling.id < SharedElementEmpty)
-		return commitInsert(element, commitSibling(sibling, SharedSiblingChildren), parent)
+	if (parent.id < SharedElementEmpty)
+		return commitInsert(element, sibling, getElementParent(parent))
 
 	if (element.id > SharedElementEmpty)
 		insertDOMNode(element, sibling, parent)
-	else if (element.id < SharedElementPortal)
-		getHostChildren(element).forEach(function (children) {
-			commitInsert(children, sibling, parent)
+	else
+		getElementChildren(element).forEach(function (children) {
+			commitInsert(children, sibling, element)
 		})
 }
 
@@ -1388,14 +1404,17 @@ function commitInsert (element, sibling, parent) {
  * @param {Element} parent
  */
 function commitAppend (element, parent) {
-	if (parent.id < SharedElementPortal)
-		return commitInsert(element, commitSibling(parent, SharedSiblingElement), parent)
+	if (parent.id < SharedElementEmpty)
+		if (hasDOMNode(parent))
+			return commitInsert(element, getElementBoundary(parent, SharedSiblingPrevious), parent)
+		else
+			return commitAppend(element, getElementParent(parent))
 
 	if (element.id > SharedElementEmpty)
 		appendDOMNode(element, parent)
-	else if (element.id < SharedElementPortal)
-		getHostChildren(element).forEach(function (children) {
-			commitAppend(children, parent)
+	else
+		getElementChildren(element).forEach(function (children) {
+			commitAppend(children, element)
 		})
 }
 
@@ -1434,8 +1453,7 @@ function reconcileObject (prevObject, nextObject) {
  * @param {Element} snapshot
  */
 function reconcileProperties (element, snapshot) {
-	commitProperties(element, reconcileObject(element.props, snapshot.props), SharedPropsUpdate)
-	element.props = snapshot.props
+	commitProperties(element, reconcileObject(element.props, element.props = snapshot.props), SharedPropsUpdate)
 }
 
 /**
@@ -1444,17 +1462,17 @@ function reconcileProperties (element, snapshot) {
  */
 function reconcileElement (element, snapshot) {
 	if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
-		return commitPromise(element, snapshot)
+		return commitWillReconcile(element, snapshot)
 
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
-		return commitReplace(element, snapshot, element.parent, SharedMountReplace)
+		return commitReplace(element, snapshot, element.parent, element.host, SharedMountReplace)
 
 	switch (element.id) {
 		case SharedElementPortal:
 		case SharedElementFragment:
 			return reconcileChildren(element, snapshot)
 		case SharedElementComponent:
-			return componentUpdate(element, snapshot, SharedComponentPropsUpdate)
+			return updateComponent(element, snapshot, SharedComponentPropsUpdate)
 		case SharedElementText:
 			if (element.children !== snapshot.children)
 				commitValue(element, element.children = snapshot.children)
@@ -1524,54 +1542,21 @@ function reconcileChildren (element, snapshot) {
 			else if (aLength > 0)
 				bHead = bHead.next
 
-			reconcileInsert(bHead, aTail, element, host, children, bPos, bEnd, signature)
+			while (bPos++ < bEnd) {
+				bHead = (aHead = bHead).next
+				commitMount(children.insert(aHead, aTail), aTail, element, host, signature, SharedMountCommit)
+			}
 		}
 	} else if (bPos > bEnd++) {
 		if (bEnd === bLength && bLength > 0)
 			aHead = aHead.next
 
-		reconcileRemove(aHead, element, children, aPos, aEnd)
+		while (aPos++ < aEnd) {
+			aHead = (bHead = aHead).next
+			commitUnmount(children.remove(bHead), element, SharedMountRemove)
+		}
 	} else {
-		reconcileMove(element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Element} sibling
- * @param {Element} parent
- * @param {Element} host
- * @param {List} children
- * @param {number} index
- * @param {number} length
- * @param {number} signature
- */
-function reconcileInsert (element, sibling, parent, host, children, index, length, signature) {
-	var i = index
-	var next = element
-	var prev = element
-
-	while (i++ < length) {
-		next = (prev = next).next
-		commitMount(children.insert(prev, sibling), sibling, parent, host, signature, SharedMountCommit)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Element} parent
- * @param {List} children
- * @param {number} index
- * @param {number} length
- */
-function reconcileRemove (element, parent, children, index, length) {
-	var i = index
-	var next = element
-	var prev = element
-
-	while (i++ < length) {
-		next = (prev = next).next
-		commitUnmount(children.remove(prev), parent, SharedMountRemove)
+		reconcileSiblings(element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd)
 	}
 }
 
@@ -1586,7 +1571,7 @@ function reconcileRemove (element, parent, children, index, length) {
  * @param  {number} aEnd
  * @param  {number} bEnd
  */
-function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd) {
+function reconcileSiblings (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd) {
 	var aIndx = aPos
 	var bIndx = bPos
 	var aNode = aHead
@@ -1612,7 +1597,7 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 			bIndx++
 		}
 
-	// step 4, insert/remove
+	// step 4, insert/append
 	while (bIndx++ < bEnd) {
 		bHash = bNode.key
 		bNext = bNode.next
@@ -1620,7 +1605,7 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 
 		if (aNext = aPool[bHash]) {
 			if (aNode === children)
-				commitAppend(children.push(children.remove(aNext)), element)
+				commitAppend(children.insert(children.remove(aNext), aNode), element)
 			else
 				commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
 
@@ -1629,13 +1614,14 @@ function reconcileMove (element, host, children, aHead, bHead, aPos, bPos, aEnd,
 			if (delete aPool[bHash])
 				aSize--
 		} else if (aNode === children)
-			commitMount(children.push(bNode), bNode, element, host, SharedMountAppend, SharedMountCommit)
+			commitMount(children.insert(bNode, aNode), bNode, element, host, SharedMountAppend, SharedMountCommit)
 		else
 			commitMount(children.insert(bNode, aNode), aNode, element, host, SharedMountInsert, SharedMountCommit)	
 
 		bNode = bNext
 	}
 
+	// step 5, remove
 	if (aSize > 0)
 		for (bHash in aPool)
 			commitUnmount(children.remove(aPool[bHash]), element, SharedMountRemove)
@@ -1673,7 +1659,7 @@ function handleEvent (event) {
 		if (result && instance)
 			getLifecycleReturn(host, result)
 	} catch (e) {
-		errorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
+		invokeErrorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
 	}
 }
 
@@ -1686,9 +1672,9 @@ defineProperty(Element.prototype, 'handleEvent', {value: handleEvent})
  * @param {number} signature
  * @param {Element?}
  */
-function errorBoundary (element, e, from, signature) {
-	var error = errorException(element, e, from)
-	var element = errorElement(element, error, from, signature)
+function invokeErrorBoundary (element, e, from, signature) {
+	var error = getErrorException(element, e, from)
+	var element = getErrorElement(element, error, from, signature)
 
 	if (error.report)
 		console.error(error.report)
@@ -1701,9 +1687,9 @@ function errorBoundary (element, e, from, signature) {
  * @param {Error} error
  * @param {string} from
  */
-function errorException (element, error, from) {
+function getErrorException (element, error, from) {
 	if (!(error instanceof Error))
-		return errorException(element, new Error(error), from)
+		return getErrorException(element, new Error(error), from)
 
 	var report = 'Error caught in `\n\n'
 	var tabs = ''
@@ -1722,14 +1708,14 @@ function errorException (element, error, from) {
 }
 
 /**
- * @param  {Element} element
- * @param  {Object} snapshot
- * @param  {Error} error
- * @param  {string} from
- * @param  {number} signature
+ * @param {Element} element
+ * @param {Object} snapshot
+ * @param {Error} error
+ * @param {string} from
+ * @param {number} signature
  * @return {Element?}
  */
-function errorElement (element, error, from, signature) {	
+function getErrorElement (element, error, from, signature) {	
 	var snapshot
 
 	if (signature === SharedErrorPassive || !element || element.id === SharedElementEmpty)
@@ -1741,17 +1727,17 @@ function errorElement (element, error, from, signature) {
 			snapshot = element.owner[SharedComponentDidCatch].call(element.instance, error, {})
 			element.sync = SharedWorkSync
 		} catch (e) {
-			return errorBoundary(element.host, e, SharedComponentDidCatch, signature)
+			return invokeErrorBoundary(element.host, e, SharedComponentDidCatch, signature)
 		}
 	else
-		errorElement(element.host, error, from, signature)
+		getErrorElement(element.host, error, from, signature)
 
 	if (from === SharedSiteRender)
 		return commitElement(snapshot)
 
 	if (hasDOMNode(element))
 		requestAnimationFrame(function () {
-			reconcileElement(getHostElement(element), commitElement(snapshot))
+			reconcileElement(getElementDescription(element), commitElement(snapshot))
 		})
 }
 
@@ -1796,7 +1782,7 @@ function mount (element, parent, callback, mode) {
 		return mount(commitElement(element), parent, callback, mode)
 
 	if (!isValidElement(parent))
-		return mount(element, elementEmpty(DOM(parent)), callback, mode)
+		return mount(element, createElementNode(createDOMObject(parent)), callback, mode)
 
 	if (!isValidDOMNode(getDOMNode(parent)))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
@@ -1804,7 +1790,7 @@ function mount (element, parent, callback, mode) {
 	root.set(getDOMNode(parent), element)
 
 	if (mode === SharedMountCommit)
-		commitContent(parent)
+		setDOMContent(parent)
 	
 	commitMount(element, element, parent, parent, SharedMountAppend, mode)
 
@@ -2094,6 +2080,14 @@ function getDOMQuery (element, parent, prev, next, signature) {
 		}
 
 	return node
+}
+
+/**
+ * @param {Node} target
+ * @return {DOM}
+ */
+function createDOMObject (target) {
+	return DOM(target)
 }
 
 /**

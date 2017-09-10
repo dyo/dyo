@@ -36,19 +36,6 @@ List.prototype = {
 		return node
 	},
 	/**
-	 * @param {Object} node
-	 * @return {Object}
-	 */
-	push: function push (node) {
-		return this.insert(node, this)
-	},
-	/**
-	 * @return {Object}
-	 */
-	pop: function pop () {
-		return this.remove(this.prev)
-	},
-	/**
 	 * @param {function} callback
 	 */
 	forEach: function forEach (callback) {
@@ -125,12 +112,11 @@ function assign (object, primary, secondary) {
  * @return {Array}
  */
 function flatten (array, output) {	
-	for (var i = 0; i < array.length; ++i) {
+	for (var i = 0; i < array.length; ++i)
 		if (array[i] instanceof Array)
 			flatten(array[i], output)
 		else
 			output.push(array[i])
-	}
 	
 	return output
 }
@@ -143,7 +129,7 @@ function each (iterable, callback) {
 	var value = iterable.next()
 	var index = 0
 
-	while (value.done !== true) {
+	while (!value.done) {
 		index = callback(value.value, index)|0
 		value = iterable.next(value.value)
 	}

@@ -39,7 +39,7 @@ function mount (element, parent, callback, mode) {
 		return mount(commitElement(element), parent, callback, mode)
 
 	if (!isValidElement(parent))
-		return mount(element, elementEmpty(DOM(parent)), callback, mode)
+		return mount(element, createElementNode(createDOMObject(parent)), callback, mode)
 
 	if (!isValidDOMNode(getDOMNode(parent)))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
@@ -47,7 +47,7 @@ function mount (element, parent, callback, mode) {
 	root.set(getDOMNode(parent), element)
 
 	if (mode === SharedMountCommit)
-		commitContent(parent)
+		setDOMContent(parent)
 	
 	commitMount(element, element, parent, parent, SharedMountAppend, mode)
 

@@ -1,6 +1,6 @@
 /*! DIO 8.0.0 @license MIT */
 
-module.exports = function (exports, Element, componentMount, commitElement) {
+module.exports = function (exports, Element, mountComponent, commitElement) {
 	
 	'use strict'
 	
@@ -40,9 +40,8 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	var SharedSiblingElement = 1
 	var SharedSiblingChildren = 2
 	
-	var SharedTypeKey = '.'
-	var SharedTypeText = '#text'
-	var SharedTypeFragment = '#fragment'
+	var SharedSiblingPrevious = 'prev'
+	var SharedSiblingNext = 'next'
 	
 	var SharedSiteCallback = 'callback'
 	var SharedSiteRender = 'render'
@@ -50,6 +49,10 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	var SharedSiteAsync = 'async'
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
+	
+	var SharedTypeKey = '.'
+	var SharedTypeText = '#text'
+	var SharedTypeFragment = '#fragment'
 	
 	var SharedComponentWillMount = 'componentWillMount'
 	var SharedComponentDidMount = 'componentDidMount'
@@ -61,6 +64,9 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	var SharedComponentDidCatch = 'componentDidCatch'
 	var SharedGetChildContext = 'getChildContext'
 	var SharedGetInitialState = 'getInitialState'
+	
+	var SharedDOMObject = {target: null}
+	var SharedElementObject = {DOM: null}
 	
 	var Readable = require('stream').Readable
 	var RegExpEscape = /[<>&"']/g
@@ -80,15 +86,15 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	 * @param {*} value
 	 * @return {string}
 	 */
-	function escapeText (value) {
-		return (value+'').replace(RegExpEscape, encodeText)
+	function getTextEscape (value) {
+		return (value+'').replace(RegExpEscape, getTextEncode)
 	}
 	
 	/**
 	 * @param {string} character
 	 * @return {string}
 	 */
-	function encodeText (character) {
+	function getTextEncode (character) {
 		switch (character) {
 			case '<': return '&lt;'
 			case '>': return '&gt;'
@@ -102,7 +108,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	/**
 	 * @param {string}
 	 */
-	function elementType (type) {
+	function getElementType (type) {
 		switch (type) {
 			case 'area':
 			case 'base':
@@ -137,20 +143,21 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	 */
 	function toString () {
 		var element = this
+		var id = element.id
 	
-		switch (element.id) {
+		switch (id) {
 			case SharedElementComponent:
-				return componentMount(element).toString()
+				return mountComponent(element).toString()
 			case SharedElementText:
-				return escapeText(element.children)
+				return getTextEscape(element.children)
 		}
 	
 		var type = element.type
 		var children = element.children
 		var length = children.length
-		var output = element.id === SharedElementNode ? '<' + type + toProps(element, element.props) + '>' : ''
+		var output = id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
 	
-		if (elementType(type) === SharedElementEmpty)
+		if (getElementType(type) === SharedElementEmpty)
 			return output
 	
 		if (typeof element.DOM !== 'string')
@@ -161,7 +168,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 			element.DOM = null
 		}
 	
-		return element.id === SharedElementNode ? output + '</'+type+'>' : output
+		return id === SharedElementNode ? output + '</'+type+'>' : output
 	}
 	
 	/**
@@ -169,7 +176,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	 * @param  {Object} props
 	 * @return {String}
 	 */
-	function toProps (element, props) {
+	function getStringProps (element, props) {
 		var output = ''
 	
 		for (var key in props) {
@@ -186,7 +193,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 					break
 				case 'defaultValue':
 					if (!props.value)
-						output += ' value="'+escapeText(value)+'"'
+						output += ' value="'+getTextEscape(value)+'"'
 				case 'key':
 				case 'ref':
 				case 'children':
@@ -203,7 +210,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 								break
 						case 'string':
 						case 'number':
-							output += ' '+ key + (value !== true ? '="'+escapeText(value)+'"' : '')
+							output += ' '+ key + (value !== true ? '="'+getTextEscape(value)+'"' : '')
 					}
 			}
 		}
@@ -235,10 +242,11 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	 */
 	function toJSON () {
 		var element = this
+		var id = element.id
 		
 		switch (element.id) {
 			case SharedElementComponent:
-				return componentMount(element).toJSON()
+				return mountComponent(element).toJSON()
 			case SharedElementText:
 				return element.children
 		}
@@ -247,10 +255,30 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 		var children = element.children
 		var length = children.length
 	
+		if (id < SharedElementEmpty)
+			children = (length--, children.next)
+	
 		while (length-- > 0)
 			output.children.push((children = children.next).toJSON())
 	
-		return element.id < SharedElementEmpty ? output.children : output
+		if (id < SharedElementEmpty)
+			if (output = output.children)
+				output.pop()
+	
+		return output
+	}
+	
+	/**
+	 * @param {function=}
+	 * @return {Stream}
+	 */
+	function toStream (callback) {
+		var readable = new Stream(this)
+	
+		if (typeof callback === 'function')
+			readable.on('end', callback)
+	
+		return readable
 	}
 	
 	/**
@@ -270,24 +298,11 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 		 */
 		_read: {value: function read () {
 			if (this.stack.length)
-				toChunk(this.stack.pop(), this.stack, this)
+				setStreamChunk(this.stack.pop(), this.stack, this)
 			else
 				this.push(null)
 		}}
 	})
-	
-	/**
-	 * @param {function=}
-	 * @return {Stream}
-	 */
-	function toStream (callback) {
-		var readable = new Stream(this)
-	
-		if (typeof callback === 'function')
-			readable.on('end', callback)
-	
-		return readable
-	}
 	
 	/**
 	 * @param {Element} element
@@ -295,27 +310,28 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 	 * @param {Writable} writable
 	 * @return {string}
 	 */
-	function toChunk (element, stack, writable) {
+	function setStreamChunk (element, stack, writable) {
 		while (element.id === SharedElementComponent)
-			element = componentMount(element)
+			element = mountComponent(element)
 	
+		var id = element.id
 		var type = element.type
 		var children = element.children
 		var length = children.length
 		var output = ''
 	
-		switch (element.id) {
+		switch (id) {
 			case SharedElementPromise:
 				return void element.type.then(function (element) {
-					toChunk(commitElement(element), stack, writable)
+					setStreamChunk(commitElement(element), stack, writable)
 				})
 			case SharedElementText:
-				output = escapeText(children)
+				output = getTextEscape(children)
 				break
 			case SharedElementNode:
-				output = '<' + type + toProps(element, element.props) + '>'
+				output = '<' + type + getStringProps(element, element.props) + '>'
 				
-				if (elementType(type) === SharedElementEmpty)
+				if (getElementType(type) === SharedElementEmpty)
 					break
 				
 				if (typeof element.DOM === 'string') {
@@ -329,7 +345,7 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 					break
 				}
 			default:
-				if (element.id === SharedElementNode)
+				if (id === SharedElementNode)
 					children.prev.DOM = '</'+type+'>'
 	
 				while (length-- > 0)
@@ -354,7 +370,6 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 			return commitElement(subject).toString()
 	
 		setHeader(target)
-		
 		target.end(commitElement(subject).toString(), 'utf8', callback)
 	}
 	
@@ -368,7 +383,6 @@ module.exports = function (exports, Element, componentMount, commitElement) {
 			return commitElement(subject).toStream()
 	
 		setHeader(target)
-		
 		commitElement(subject).toStream(callback).pipe(target)
 	}
 }

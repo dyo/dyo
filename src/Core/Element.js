@@ -28,8 +28,8 @@ function Element (id) {
  * @param {Element} element
  * @return {Element}
  */
-function elementImmutable (element) {
-	return merge(new Element(SharedElementNode), element)
+function createElementImmutable (element) {
+	return assign(new Element(SharedElementNode), element, SharedElementObject)
 }
 
 /**
@@ -37,7 +37,7 @@ function elementImmutable (element) {
  * @param {*} key
  * @return {Element}
  */
-function elementText (content, key) {
+function createElementText (content, key) {
 	var element = new Element(SharedElementText)
 
 	element.type = SharedTypeText
@@ -51,7 +51,7 @@ function elementText (content, key) {
  * @param {DOM?} node
  * @return {Element}
  */
-function elementEmpty (node) {
+function createElementNode (node) {
 	var element = new Element(SharedElementEmpty)
 
 	element.DOM = node
@@ -63,7 +63,7 @@ function elementEmpty (node) {
  * @param {(Element|Array)} fragment
  * @return {Element}
  */
-function elementFragment (fragment) {
+function createElementFragment (iterable) {
 	var element = new Element(SharedElementFragment)
 	var children = new List()
 	var i = 0
@@ -71,11 +71,13 @@ function elementFragment (fragment) {
 	element.type = SharedTypeFragment
 	element.children = children
 
-	if (isValidElement(fragment))
-		elementChildren(element, children, fragment, i)
-	else if (Array.isArray(fragment))
-		for (; i < fragment.length; ++i)
-			elementChildren(element, children, fragment[i], i)				
+	if (isValidElement(iterable))
+		setElementChildren(element, children, iterable, i)
+	else if (isArray(iterable))
+		for (; i < iterable.length; ++i)
+			setElementChildren(element, children, iterable[i], i)				
+
+	setElementFragment(children)
 
 	return element
 }
@@ -84,11 +86,11 @@ function elementFragment (fragment) {
  * @param {Iterable} iterable
  * @param {Element} element
  */
-function elementIterable (iterable, element) {	
-	var index = 0
+function createElementIterable (iterable) {	
+	var element = createElementFragment(iterable)
 
 	each(iterable, function (value, index) {
-		return elementChildren(element, element.children, value, index)
+		return setElementChildren(element, element.children, value, index)
 	})
 
 	return element
@@ -99,75 +101,27 @@ function elementIterable (iterable, element) {
  * @param {*} key
  * @return {Element}
  */
-function elementUnknown (element, key) {
+function createElementBranch (element, key) {
 	switch (element.constructor) {
 		case Promise:
 		case Function:
 			return createElement(element)
 		case Boolean:
-			return elementText('', key)
+			return createElementText('', key)
 		case Date:
-			return elementText(element, key)			
+			return createElementText(element, key)			
 	}
 
 	if (typeof element.next === 'function')
-		return elementIterable(element, elementFragment(element))
+		return createElementIterable(element)
 	if (typeof element[SymbolIterator] === 'function')
-		return elementUnknown(element[SymbolIterator]())
+		return createElementBranch(element[SymbolIterator]())
 	if (typeof element === 'function')
-		return elementUnknown(element())
+		return createElementBranch(element())
 	if (element instanceof Error)
 		return createElement('details', createElement('summary', element+''), h('pre', element.report || element.stack))
 
 	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
-}
-
-/**
- * @param {Element} element
- * @param {string} direction
- * @return {Element}
- */
-function elementSibling (element, direction) {
-	if (isValidElement(element[direction]))
-		return element[direction]
-
-	if (getHostElement(element.host) === element)
-		return elementSibling(element.host, direction)
-
-	return element
-}
-
-/**
- * @param {Element} parent
- * @param {List} children
- * @param {*} element
- * @param {number} index
- */
-function elementChildren (parent, children, element, index) {
-	if (element != null)
-		switch (element.constructor) {
-			case Element:
-				if (element.key !== null && parent.keyed === false)
-					parent.keyed = true
-
-				children.push(element.DOM === null ? element : elementImmutable(element))
-				break
-			case Array:
-				for (var i = 0; i < element.length; ++i)
-					elementChildren(parent, children, element[i], index + i)
-
-				return index + i
-			case String:
-			case Number:
-				children.push(elementText(element, index))
-				break
-			default:
-				children.push(elementUnknown(element, index))
-		}
-	else
-		children.push(elementText('', index))
-
-	return index + 1
 }
 
 /**
@@ -218,7 +172,7 @@ function createElement (type, props) {
 							element.xmlns = props.xmlns
 
 						if (props.children !== undefined)
-							props.children = void elementChildren(element, children, props.children, index)
+							props.children = void setElementChildren(element, children, props.children, index)
 					}
 
 					element.props = props
@@ -234,7 +188,7 @@ function createElement (type, props) {
 	if ((size = length - i) > 0) {
 		if (id !== SharedElementComponent)
 			for (; i < length; ++i)
-				index = elementChildren(element, children, arguments[i], index)
+				index = setElementChildren(element, children, arguments[i], index)
 		else {
 			if (size > 1)
 				for (children = Array(size); i < length; ++i)
@@ -259,11 +213,145 @@ function createElement (type, props) {
 			break
 		case Promise:
 			element.id = SharedElementPromise
-			break
 		default:
 			if (isValidDOMNode(type))
 				element.id = SharedElementPortal
+
+			setElementFragment(children)
 	}
 
 	return element
+}
+
+/**
+ * @param {Element} parent
+ * @param {List} children
+ * @param {*} element
+ * @param {number} index
+ */
+function setElementChildren (parent, children, element, index) {
+	if (element != null)
+		switch (element.constructor) {
+			case Element:
+				if (element.key !== null && parent.keyed === false)
+					parent.keyed = true
+
+				children.insert(element.DOM === null ? element : createElementImmutable(element), children)
+				break
+			case Array:
+				for (var i = 0; i < element.length; ++i)
+					setElementChildren(parent, children, element[i], index + i)
+
+				return index + i
+			case String:
+			case Number:
+				children.insert(createElementText(element, index), children)
+				break
+			default:
+				children.insert(createElementBranch(element, index), children)
+		}
+	else
+		children.insert(createElementText('', index), children)
+
+	return index + 1
+}
+
+/**
+ * @param {List} children
+ */
+function setElementFragment (children) {
+	children.insert(createElementText('', SharedTypeKey), children)
+	children.insert(createElementText('', SharedTypeKey), children.next)
+}
+
+/**
+ * @param {Element} element
+ * @param {(Object|function)} defaultProps
+ * @param {Object} props
+ */
+function getDefaultProps (element, defaultProps, props) {
+	if (typeof defaultProps !== 'function')
+		return assign({}, defaultProps, props)
+
+	defineProperty(element.type, 'defaultProps', {
+		value: getDefaultProps(element, getLifecycleCallback(element, defaultProps), props)
+	})
+
+	return element.type.defaultProps
+}
+
+/**
+ * @param {(function|string)} subject
+ * @return {string}
+ */
+function getDisplayName (subject) {
+	switch (typeof subject) {
+		case 'function':
+			return getDisplayName(subject.displayName || subject.name)
+		case 'string':
+			if (subject)
+				return subject
+		default:
+			return (subject && subject.constructor.name) || 'anonymous'
+	}
+}
+
+/**
+ * @param  {Element} element
+ * @return {Element}
+ */
+function getElementChildren (element) {
+	return element.children
+}
+
+/**
+ * @param {Element}
+ * @param {Element} 
+ */
+function getElementParent (element) {
+	if (element.id < SharedElementPortal)
+		return getElementParent(element.parent)
+	
+	if (element.id === SharedElementPortal)
+		return createElementNode(createDOMObject(element.type))
+	else
+		return element
+}
+
+/**
+ * @param {Element} element
+ * @return {Element}
+ */
+function getElementDescription (element) {
+	if (isValidElement(element) && element.id === SharedElementComponent)
+		return getElementDescription(getElementChildren(element))
+	else
+		return element
+}
+
+/**
+ * @param {Element} element
+ * @param {string} direction
+ * @return {Element} 
+ */
+function getElementBoundary (element, direction) {
+	if (element.id < SharedElementEmpty)
+		return getElementBoundary(getElementChildren(element)[direction])
+	else
+		return element
+}
+
+/**
+ * @param {Element} element
+ * @param {string} direction
+ * @return {Element}
+ */
+function getElementSibling (element, direction) {
+	if (isValidElement(element[direction]))
+		return element[direction]
+
+	if (getElementDescription(element.host) === element)
+		return getElementSibling(element.host, direction)
+
+	return createElementNode(SharedDOMObject)
 }

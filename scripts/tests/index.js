@@ -108,14 +108,13 @@ global.test = (name, body) => {
 /**
  * @return {}
  */
-const argv = (filter) => process.argv.join('').indexOf(filter) > -1
+const argv = (needle) => process.argv.filter((value) => value === needle)
 
 /**
  * @param {string} filepath
  * @return {*}
  */
 const load = (filepath) => {
-	delete require.cache[require.resolve(filepath)]
 	return require(filepath)
 }
 
@@ -123,7 +122,19 @@ const load = (filepath) => {
  * @return {void}
  */
 const factory = (type) => {
-	const files = fs.readdirSync(dirpath).filter((file) => file.lastIndexOf(search) > -1)
+	let only = []
+	let files = fs.readdirSync(dirpath).filter((file) => {
+		if (argv(file).length > 0)
+			only.push(file)
+
+		return file.lastIndexOf(search) > -1
+	})
+
+	if (only.length > 0) {
+		files = files.filter((file) => {
+			return only.includes(file)
+		})
+	}
 
 	Object.assign(global, load(path.join(libpath, 'dio.umd.js')))
 
@@ -132,7 +143,6 @@ const factory = (type) => {
 
 		const specs = files.map((file) => path.join(dirpath, file))[type]((spec) => {
 			delete require.cache[require.resolve(spec)]
-			require(spec)
 			require(spec)
 
 			return status.return
@@ -161,9 +171,9 @@ const listener = (file) => {
  * @return {void}
  */
 const startup = () => {
-	const watch = argv('--watch') && chokidar.watch([
-		dirpath,
-		libpath
+	const args = argv('--watch').length
+	const watch = args && chokidar.watch([
+		dirpath
 	], {ignored: /[\/\\]\./})
 	
 	if (!watch)		

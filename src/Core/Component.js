@@ -55,21 +55,21 @@ function shouldComponentUpdate (props, state) {
  * @param {function?} callback
  */
 function setState (state, callback) {
-	enqueueState(this[SymbolElement], this, state, callback)
+	enqueueStateUpdate(this[SymbolElement], this, state, callback)
 }
 
 /**
  * @param {function} callback
  */
 function forceUpdate (callback) {
-	enqueueUpdate(this[SymbolElement], this, callback, SharedComponentForceUpdate)
+	enqueueComponentUpdate(this[SymbolElement], this, callback, SharedComponentForceUpdate)
 }
 
 /**
  * @param {Element} element
  * @return {number}
  */
-function componentMount (element) {
+function mountComponent (element) {
 	var owner = element.type
 	var context = element.context || {}
 	var prototype = owner.prototype
@@ -80,7 +80,7 @@ function componentMount (element) {
 		if (prototype[SymbolComponent] !== SymbolComponent)
 			createComponent(prototype)
 
-		instance = owner = getChildInstance(element, owner)
+		instance = owner = getComponentInstance(element, owner)
 	} else {
 		instance = new Component()
 		instance.render = owner
@@ -96,17 +96,17 @@ function componentMount (element) {
 	instance.context = context
 
 	if (owner[SharedGetInitialState])
-		instance.state = getInitialState(element, instance, getLifecycleData(element, SharedGetInitialState))
+		instance.state = getComponentState(element, instance, getLifecycleData(element, SharedGetInitialState))
 	else if (!instance.state)
 		instance.state = {}
 
 	if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 		getLifecycleMount(element, SharedComponentWillMount)
 	
-	children = element.children = getChildElement(element, instance)
+	children = element.children = getComponentElement(element, instance)
 
 	if (owner[SharedGetChildContext])
-		element.context = getChildContext(element)
+		element.context = getComponentContext(element)
 
 	return children
 }
@@ -116,7 +116,7 @@ function componentMount (element) {
  * @param {Element} snapshot
  * @param {number} signature
  */
-function componentUpdate (element, snapshot, signature) {
+function updateComponent (element, snapshot, signature) {
 	if (element.work === SharedWorkTask)
 		return
 
@@ -131,7 +131,7 @@ function componentUpdate (element, snapshot, signature) {
 	var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, element.state) : prevState
 
 	if (owner[SharedGetChildContext])
-		merge(element.context, getChildContext(element))
+		merge(element.context, getComponentContext(element))
 
 	switch (signature) {
 		case SharedComponentForceUpdate:
@@ -155,7 +155,7 @@ function componentUpdate (element, snapshot, signature) {
 	if (signature === SharedComponentStateUpdate)
 		instance.state = nextState
 
-	reconcileElement(getHostChildren(element), getChildElement(element, instance))
+	reconcileElement(getElementChildren(element), getComponentElement(element, instance))
 
 	if (owner[SharedComponentDidUpdate])
 		getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
@@ -169,24 +169,35 @@ function componentUpdate (element, snapshot, signature) {
 /**
  * @param {Element} element
  */
-function componentUnmount (element) {
-	if (element.owner[SharedComponentWillUnmount])
-		if (element.state = getLifecycleMount(element, SharedComponentWillUnmount))
-			stack[queue++] = element.state
+function unmountComponent (element) {
+	if ((element.state = null, element.owner[SharedComponentWillUnmount]))
+		element.state = getLifecycleMount(element, SharedComponentWillUnmount)
 }
 
 /**
- * @param {(Component|Node)?} value
- * @param {*} key
  * @param {Element} element
+ * @param {Component} instance
+ * @param {function?} callback
+ * @param {number} signature
  */
-function componentReference (value, key, element) {
-	if (this.refs) {
-		if (key !== element.ref)
-			delete this.refs[element.ref]
+function enqueueComponentUpdate (element, instance, callback, signature) {
+	if (!element)
+		return void requestAnimationFrame(function () {
+			enqueueComponentUpdate(element[SymbolElement], instance, callback, signature)
+		})
 
-		this.refs[key] = value
-	}
+	if (element.work === SharedWorkTask)
+		return void requestAnimationFrame(function () {
+			enqueueComponentUpdate(element, instance, callback, signature)
+		})
+
+	if (!hasDOMNode(element))
+		return
+
+	updateComponent(element, element, signature)
+
+	if (typeof callback === 'function')
+		enqueueStateCallback(element, instance, callback)
 }
 
 /**
@@ -195,34 +206,21 @@ function componentReference (value, key, element) {
  * @param {(Object|function)} state
  * @param {function?} callback
  */
-function enqueueState (element, instance, state, callback) {
+function enqueueStateUpdate (element, instance, state, callback) {
 	if (state)
 		switch (state.constructor) {
 			case Promise:
-				return enqueuePending(element, instance, state, callback)
+				return enqueueStatePromise(element, instance, state, callback)
 			case Function:
-				return enqueueState(element, instance, enqueueCallback(element, instance, state), callback)
+				return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 			default:
 				if (element.work !== SharedWorkSync && !hasDOMNode(element))
 					return void assign(instance.state, element.state, state)
 				else
 					element.state = state
 
-				enqueueUpdate(element, instance, callback, SharedComponentStateUpdate)
+				enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
 		}
-}
-
-/**
- * @param {Element} Element
- * @param {Component} instance
- * @param {function} callback
- */
-function enqueueCallback (element, instance, callback) {
-	try {
-		return callback.call(instance, instance.state, instance.props)
-	} catch (e) {
-		errorBoundary(element, e, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
-	}
 }
 
 /**
@@ -231,40 +229,27 @@ function enqueueCallback (element, instance, callback) {
  * @param {Promise} state
  * @param {function?} callback
  */
-function enqueuePending (element, instance, state, callback) {
+function enqueueStatePromise (element, instance, state, callback) {
 	state.then(function (value) {
 		requestAnimationFrame(function () {
-			enqueueState(element, instance, value, callback)
+			enqueueStateUpdate(element, instance, value, callback)
 		})
 	}).catch(function (e) {
-		errorBoundary(element, e, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
+		invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
 	})
 }
 
 /**
  * @param {Element} element
  * @param {Component} instance
- * @param {function=} callback
- * @param {number} signature
+ * @param {function} callback
  */
-function enqueueUpdate (element, instance, callback, signature) {
-	if (!element)
-		return void requestAnimationFrame(function () {
-			enqueueUpdate(element[SymbolElement], instance, callback, signature)
-		})
-
-	if (element.work === SharedWorkTask)
-		return void requestAnimationFrame(function () {
-			enqueueUpdate(element, instance, callback, signature)
-		})
-
-	if (!hasDOMNode(element))
-		return
-
-	componentUpdate(element, element, signature)
-
-	if (typeof callback === 'function')
-		enqueueCallback(element, instance, callback)
+function enqueueStateCallback (element, instance, callback) {
+	try {
+		return callback.call(instance, instance.state, instance.props)
+	} catch (e) {
+		invokeErrorBoundary(element, e, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
+	}
 }
 
 /**
@@ -273,13 +258,12 @@ function enqueueUpdate (element, instance, callback, signature) {
  * @param {Object} state
  * @return {Object}
  */
-function getInitialState (element, instance, state) {	
-	if (state) {
-		if (state.constructor !== Promise)
-			return typeof state === 'object' ? state : Object(state)
-		else
-			enqueuePending(element, instance, state)
-	}
+function getComponentState (element, instance, state) {	
+	if (state instanceof Object)
+		return state
+
+	if (state instanceof Promise)
+		enqueueStatePromise(element, instance, state)
 
 	return instance.state || {}
 }
@@ -289,11 +273,11 @@ function getInitialState (element, instance, state) {
  * @param {function} owner
  * @return {Component}
  */
-function getChildInstance (element, owner) {
+function getComponentInstance (element, owner) {
 	try {
 		return new owner(element.props, element.context)
 	} catch (e) {
-		errorBoundary(element, e, SharedSiteConstructor, SharedErrorActive)
+		invokeErrorBoundary(element, e, SharedSiteConstructor, SharedErrorActive)
 	}
 
 	return new Component()
@@ -304,11 +288,11 @@ function getChildInstance (element, owner) {
  * @param {Component}
  * @return {Element}
  */
-function getChildElement (element, instance) {
+function getComponentElement (element, instance) {
 	try {
 		return commitElement(instance.render(instance.props, instance.state, element.context))
 	} catch (e) {
-		return commitElement(errorBoundary(element, e, SharedSiteRender, SharedErrorActive))
+		return commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive))
 	}
 }
 
@@ -316,62 +300,11 @@ function getChildElement (element, instance) {
  * @param {Element} element
  * @return {Object?}
  */
-function getChildContext (element) {
+function getComponentContext (element) {
 	if (element.owner[SharedGetChildContext])
 		return getLifecycleData(element, SharedGetChildContext) || element.context || {}
 	else
 		return element.context || {}
-}
-
-/**
- * @param {Element} element
- * @return {Element}
- */
-function getHostElement (element) {
-	if (isValidElement(element) && element.id === SharedElementComponent)
-		return getHostElement(getHostChildren(element))
-	else
-		return element
-}
-
-/**
- * @param  {Element} element
- * @return {Element}
- */
-function getHostChildren (element) {
-	return element.children
-}
-
-/**
- * @param {(function|string)} subject
- * @return {string}
- */
-function getDisplayName (subject) {
-	switch (typeof subject) {
-		case 'function':
-			return getDisplayName(subject.displayName || subject.name)
-		case 'string':
-			if (subject)
-				return subject
-		default:
-			return (subject && subject.constructor.name) || 'anonymous'
-	}
-}
-
-/**
- * @param {Element} element
- * @param {(Object|function)} defaultProps
- * @param {Object} props
- */
-function getDefaultProps (element, defaultProps, props) {
-	if (typeof defaultProps !== 'function')
-		return assign({}, defaultProps, props)
-
-	defineProperty(element.type, 'defaultProps', {
-		value: getDefaultProps(element, getLifecycleCallback(element, defaultProps), props)
-	})
-
-	return element.type.defaultProps
 }
 
 /**
@@ -382,7 +315,7 @@ function getLifecycleData (element, name) {
 	try {
 		return element.owner[name].call(element.instance, element.props)
 	} catch (e) {
-		errorBoundary(element, e, name, SharedErrorActive)
+		invokeErrorBoundary(element, e, name, SharedErrorActive)
 	}
 }
 
@@ -399,7 +332,7 @@ function getLifecycleMount (element, name) {
 
 		getLifecycleReturn(element, state)
 	} catch (e) {
-		errorBoundary(element, e, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
+		invokeErrorBoundary(element, e, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
 	}
 }
 
@@ -419,7 +352,7 @@ function getLifecycleUpdate (element, name, props, state, context) {
 
 		getLifecycleReturn(element, state)
 	} catch (e) {
-		errorBoundary(element, e, name, SharedErrorActive)
+		invokeErrorBoundary(element, e, name, SharedErrorActive)
 	}
 }
 
@@ -433,7 +366,7 @@ function getLifecycleReturn (element, state) {
 			if (!state)
 				break
 		case 'function':
-			enqueueState(element, element.instance, state)
+			enqueueStateUpdate(element, element.instance, state)
 	}
 }
 
@@ -448,7 +381,21 @@ function getLifecycleCallback (element, callback, first, second, third) {
 	try {
 		return callback.call(element.instance, first, second, third)
 	} catch (e) {
-		errorBoundary(element, e, SharedSiteCallback, SharedErrorPassive)
+		invokeErrorBoundary(element, e, SharedSiteCallback, SharedErrorPassive)
+	}
+}
+
+/**
+ * @param {(Component|Node)?} value
+ * @param {*} key
+ * @param {Element} element
+ */
+function setComponentReference (value, key, element) {
+	if (this.refs) {
+		if (key !== element.ref)
+			delete this.refs[element.ref]
+
+		this.refs[key] = value
 	}
 }
 
@@ -463,12 +410,11 @@ function findDOMNode (element) {
 	if (isValidElement(element[SymbolElement]))
 		return findDOMNode(element[SymbolElement])
 
-	if (isValidElement(element)) {
+	if (isValidElement(element))
 		if (element.id < SharedElementEmpty)
-			return findDOMNode(getHostChildren(element).next)
+			return findDOMNode(getElementBoundary(element, SharedSiblingNext))
 		else if (hasDOMNode(element))
 			return getDOMNode(element)
-	}
 
 	if (isValidDOMNode(element))
 		return element

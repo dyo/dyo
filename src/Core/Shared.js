@@ -34,9 +34,8 @@ var SharedPropsUpdate = 2
 var SharedSiblingElement = 1
 var SharedSiblingChildren = 2
 
-var SharedTypeKey = '.'
-var SharedTypeText = '#text'
-var SharedTypeFragment = '#fragment'
+var SharedSiblingPrevious = 'prev'
+var SharedSiblingNext = 'next'
 
 var SharedSiteCallback = 'callback'
 var SharedSiteRender = 'render'
@@ -44,6 +43,10 @@ var SharedSiteConstructor = 'constructor'
 var SharedSiteAsync = 'async'
 var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
+
+var SharedTypeKey = '.'
+var SharedTypeText = '#text'
+var SharedTypeFragment = '#fragment'
 
 var SharedComponentWillMount = 'componentWillMount'
 var SharedComponentDidMount = 'componentDidMount'
@@ -55,3 +58,6 @@ var SharedComponentWillUnmount = 'componentWillUnmount'
 var SharedComponentDidCatch = 'componentDidCatch'
 var SharedGetChildContext = 'getChildContext'
 var SharedGetInitialState = 'getInitialState'
+
+var SharedDOMObject = {target: null}
+var SharedElementObject = {DOM: null}

@@ -69,7 +69,7 @@ const getExports = (module) => {
 	}
 }
 
-const imports = 'exports, Element, componentMount, commitElement'
+const imports = 'exports, Element, mountComponent, commitElement'
 const template = {
 	node: `\nrequire && require('./dio.node.js')(${imports})`,
 	export: `

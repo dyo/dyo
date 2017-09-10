@@ -5,9 +5,9 @@
  * @param {number} signature
  * @param {Element?}
  */
-function errorBoundary (element, e, from, signature) {
-	var error = errorException(element, e, from)
-	var element = errorElement(element, error, from, signature)
+function invokeErrorBoundary (element, e, from, signature) {
+	var error = getErrorException(element, e, from)
+	var element = getErrorElement(element, error, from, signature)
 
 	if (error.report)
 		console.error(error.report)
@@ -20,9 +20,9 @@ function errorBoundary (element, e, from, signature) {
  * @param {Error} error
  * @param {string} from
  */
-function errorException (element, error, from) {
+function getErrorException (element, error, from) {
 	if (!(error instanceof Error))
-		return errorException(element, new Error(error), from)
+		return getErrorException(element, new Error(error), from)
 
 	var report = 'Error caught in `\n\n'
 	var tabs = ''
@@ -41,14 +41,14 @@ function errorException (element, error, from) {
 }
 
 /**
- * @param  {Element} element
- * @param  {Object} snapshot
- * @param  {Error} error
- * @param  {string} from
- * @param  {number} signature
+ * @param {Element} element
+ * @param {Object} snapshot
+ * @param {Error} error
+ * @param {string} from
+ * @param {number} signature
  * @return {Element?}
  */
-function errorElement (element, error, from, signature) {	
+function getErrorElement (element, error, from, signature) {	
 	var snapshot
 
 	if (signature === SharedErrorPassive || !element || element.id === SharedElementEmpty)
@@ -60,16 +60,16 @@ function errorElement (element, error, from, signature) {
 			snapshot = element.owner[SharedComponentDidCatch].call(element.instance, error, {})
 			element.sync = SharedWorkSync
 		} catch (e) {
-			return errorBoundary(element.host, e, SharedComponentDidCatch, signature)
+			return invokeErrorBoundary(element.host, e, SharedComponentDidCatch, signature)
 		}
 	else
-		errorElement(element.host, error, from, signature)
+		getErrorElement(element.host, error, from, signature)
 
 	if (from === SharedSiteRender)
 		return commitElement(snapshot)
 
 	if (hasDOMNode(element))
 		requestAnimationFrame(function () {
-			reconcileElement(getHostElement(element), commitElement(snapshot))
+			reconcileElement(getElementDescription(element), commitElement(snapshot))
 		})
 }
