@@ -5,7 +5,7 @@
 function Element (id) {
 	this.id = id
 	this.work = SharedWorkSync
-	this.keyed = false
+	this.active = false
 	this.xmlns = ''
 	this.key = null
 	this.ref = null
@@ -233,10 +233,7 @@ function setElementChildren (parent, children, element, index) {
 	if (element != null)
 		switch (element.constructor) {
 			case Element:
-				if (element.key !== null && parent.keyed === false)
-					parent.keyed = true
-
-				children.insert(element.DOM === null ? element : createElementImmutable(element), children)
+				children.insert(element.active === false ? element : createElementImmutable(element), children)
 				break
 			case Array:
 				for (var i = 0; i < element.length; ++i)

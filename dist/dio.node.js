@@ -66,7 +66,7 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	var SharedGetInitialState = 'getInitialState'
 	
 	var SharedDOMObject = {target: null}
-	var SharedElementObject = {DOM: null}
+	var SharedElementObject = {active: false, DOM: null}
 	
 	var Readable = require('stream').Readable
 	var RegExpEscape = /[<>&"']/g

@@ -6,6 +6,5 @@ test('Element', ({assert, done}) => {
 	assert(h('h1', {ref: 'bar'}).ref === 'bar', '#createElement(..., {ref: ...})')
 	assert(h('h1', {xmlns: 'bar'}).xmlns === 'bar', '#createElement(..., {xmlns: ...})')
 	assert(h('div', [1, 2], 3, h('h1')).children.length===4, '#createElement(..., children)')
-	assert(h('div', h('h1', {key: 1})).keyed, '#createElement(..., keyed children)')
 	done()
 })

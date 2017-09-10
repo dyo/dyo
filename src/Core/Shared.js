@@ -60,4 +60,4 @@ var SharedGetChildContext = 'getChildContext'
 var SharedGetInitialState = 'getInitialState'
 
 var SharedDOMObject = {target: null}
-var SharedElementObject = {DOM: null}
+var SharedElementObject = {active: false, DOM: null}

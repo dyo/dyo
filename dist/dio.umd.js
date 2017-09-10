@@ -75,7 +75,7 @@
 	var SharedGetInitialState = 'getInitialState'
 	
 	var SharedDOMObject = {target: null}
-	var SharedElementObject = {DOM: null}
+	var SharedElementObject = {active: false, DOM: null}
 	
 	var Symbol = window.Symbol || function (d) {return 'Symbol('+d+')'}
 	var WeakMap = window.WeakMap || WeakHash
@@ -274,7 +274,7 @@
 	function Element (id) {
 		this.id = id
 		this.work = SharedWorkSync
-		this.keyed = false
+		this.active = false
 		this.xmlns = ''
 		this.key = null
 		this.ref = null
@@ -502,10 +502,7 @@
 		if (element != null)
 			switch (element.constructor) {
 				case Element:
-					if (element.key !== null && parent.keyed === false)
-						parent.keyed = true
-	
-					children.insert(element.DOM === null ? element : createElementImmutable(element), children)
+					children.insert(element.active === false ? element : createElementImmutable(element), children)
 					break
 				case Array:
 					for (var i = 0; i < element.length; ++i)
@@ -818,7 +815,7 @@
 				enqueueComponentUpdate(element, instance, callback, signature)
 			})
 	
-		if (!hasDOMNode(element))
+		if (!element.active)
 			return
 	
 		updateComponent(element, element, signature)
@@ -841,7 +838,7 @@
 				case Function:
 					return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 				default:
-					if (element.work !== SharedWorkSync && !hasDOMNode(element))
+					if (element.work !== SharedWorkSync && !element.active)
 						return void assign(instance.state, element.state, state)
 					else
 						element.state = state
@@ -952,7 +949,7 @@
 	 */
 	function getLifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, hasDOMNode(element) && findDOMNode(element))
+			var state = element.owner[name].call(element.instance, element.active && findDOMNode(element))
 			
 			if (name === SharedComponentWillUnmount && state instanceof Promise)
 				return state
@@ -1037,11 +1034,8 @@
 		if (isValidElement(element[SymbolElement]))
 			return findDOMNode(element[SymbolElement])
 	
-		if (isValidElement(element))
-			if (element.id < SharedElementEmpty)
-				return findDOMNode(getElementBoundary(element, SharedSiblingNext))
-			else if (hasDOMNode(element))
-				return getDOMNode(element)
+		if (element.active && isValidElement(element))
+			return getDOMNode(element)
 	
 		if (isValidDOMNode(element))
 			return element
@@ -1106,7 +1100,7 @@
 	 			element.work = SharedWorkTask
 	 			
 	 			commitMount(mountComponent(element), sibling, parent, element, signature, mode)
-	 			element.DOM = getElementChildren(element).DOM
+	 			element.DOM = commitCreate(element)
 	
 	 			if (element.ref)
 	 				commitReference(element, element.ref, SharedReferenceAssign)
@@ -1169,6 +1163,8 @@
 	
 		if (element.ref)
 			commitReference(element, element.ref, SharedReferenceRemove)
+	
+		element.active = false
 	}
 	
 	/**
@@ -1189,7 +1185,8 @@
 				.then(commitWillUnmount(element, parent, SharedElementEmpty))
 				.catch(commitWillUnmount(element, parent, SharedErrorPassive))
 	
-		commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
+		if (!element.active)
+			commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
 	}
 	
 	/**
@@ -1213,7 +1210,7 @@
 	 */
 	function commitWillReconcile (element, snapshot) {
 		snapshot.type.then(function (value) {
-			if (hasDOMNode(element))
+			if (element.active)
 				if (element.id === SharedElementPromise)
 					reconcileChildren(element, createElementFragment(commitElement(value)))
 				else
@@ -1336,12 +1333,14 @@
 	 * @return {Object}
 	 */
 	function commitCreate (element) {
-		try {
-			switch (element.id) {
+		try {		
+			switch ((element.active = true, element.id)) {
 				case SharedElementNode:
 					return createDOMElement(element)
 				case SharedElementText:
 					return createDOMText(element)
+				case SharedElementComponent:
+					return getElementChildren(element).DOM
 				default:
 					return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 			}
@@ -1356,8 +1355,8 @@
 	 * @param {boolean} signature
 	 * @return {DOM?}
 	 */
-	function commitQuery (element, parent, signature) {
-		if (signature && element.children.length === 0)
+	function commitQuery (element, parent, signature) {	
+		if (signature === (element.active = true) && element.children.length === 0)
 			return null
 	
 		return getDOMQuery(
@@ -1416,7 +1415,7 @@
 	 */
 	function commitAppend (element, parent) {
 		if (parent.id < SharedElementEmpty)
-			if (hasDOMNode(parent))
+			if (parent.active)
 				return commitInsert(element, getElementBoundary(parent, SharedSiblingPrevious), parent)
 			else
 				return commitAppend(element, getElementParent(parent))
@@ -1746,7 +1745,7 @@
 		if (from === SharedSiteRender)
 			return commitElement(snapshot)
 	
-		if (hasDOMNode(element))
+		if (element.active)
 			requestAnimationFrame(function () {
 				reconcileElement(getElementDescription(element), commitElement(snapshot))
 			})
@@ -1881,14 +1880,6 @@
 	 */
 	function DOM (target) {
 		return {target: target}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {boolean}
-	 */
-	function hasDOMNode (element) {
-		return !!element.DOM
 	}
 	
 	/**
@@ -2062,7 +2053,7 @@
 		var type = element.type.toLowerCase()
 		var children = element.children
 		var node = null
-		var previous = hasDOMNode(prev) && getDOMNode(prev)
+		var previous = prev.active && getDOMNode(prev)
 		var target = previous ? previous.nextSibling : getDOMNode(parent).firstChild 
 		var current = target
 		var sibling = target

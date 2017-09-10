@@ -6,14 +6,6 @@ function DOM (target) {
 }
 
 /**
- * @param {Element} element
- * @param {boolean}
- */
-function hasDOMNode (element) {
-	return !!element.DOM
-}
-
-/**
  * @param {Node} target
  * @param {boolean}
  */
@@ -184,7 +176,7 @@ function getDOMQuery (element, parent, prev, next, signature) {
 	var type = element.type.toLowerCase()
 	var children = element.children
 	var node = null
-	var previous = hasDOMNode(prev) && getDOMNode(prev)
+	var previous = prev.active && getDOMNode(prev)
 	var target = previous ? previous.nextSibling : getDOMNode(parent).firstChild 
 	var current = target
 	var sibling = target

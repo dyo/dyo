@@ -191,7 +191,7 @@ function enqueueComponentUpdate (element, instance, callback, signature) {
 			enqueueComponentUpdate(element, instance, callback, signature)
 		})
 
-	if (!hasDOMNode(element))
+	if (!element.active)
 		return
 
 	updateComponent(element, element, signature)
@@ -214,7 +214,7 @@ function enqueueStateUpdate (element, instance, state, callback) {
 			case Function:
 				return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 			default:
-				if (element.work !== SharedWorkSync && !hasDOMNode(element))
+				if (element.work !== SharedWorkSync && !element.active)
 					return void assign(instance.state, element.state, state)
 				else
 					element.state = state
@@ -325,7 +325,7 @@ function getLifecycleData (element, name) {
  */
 function getLifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, hasDOMNode(element) && findDOMNode(element))
+		var state = element.owner[name].call(element.instance, element.active && findDOMNode(element))
 		
 		if (name === SharedComponentWillUnmount && state instanceof Promise)
 			return state
@@ -410,11 +410,8 @@ function findDOMNode (element) {
 	if (isValidElement(element[SymbolElement]))
 		return findDOMNode(element[SymbolElement])
 
-	if (isValidElement(element))
-		if (element.id < SharedElementEmpty)
-			return findDOMNode(getElementBoundary(element, SharedSiblingNext))
-		else if (hasDOMNode(element))
-			return getDOMNode(element)
+	if (element.active && isValidElement(element))
+		return getDOMNode(element)
 
 	if (isValidDOMNode(element))
 		return element

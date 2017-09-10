@@ -89,7 +89,6 @@ test('Fragment', ({assert, done})=>{
 		h(Fragment, {key: 2}, 2)
 	], container)
 	assert(compare(container, '<br>1<br>3<br>2'), 'insert nested fragment into middle')
-	console.log(container.innerHTML)
 
 	done()
 })

@@ -55,7 +55,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  			element.work = SharedWorkTask
  			
  			commitMount(mountComponent(element), sibling, parent, element, signature, mode)
- 			element.DOM = getElementChildren(element).DOM
+ 			element.DOM = commitCreate(element)
 
  			if (element.ref)
  				commitReference(element, element.ref, SharedReferenceAssign)
@@ -118,6 +118,8 @@ function commitDismount (element, signature) {
 
 	if (element.ref)
 		commitReference(element, element.ref, SharedReferenceRemove)
+
+	element.active = false
 }
 
 /**
@@ -138,7 +140,8 @@ function commitUnmount (element, parent, signature) {
 			.then(commitWillUnmount(element, parent, SharedElementEmpty))
 			.catch(commitWillUnmount(element, parent, SharedErrorPassive))
 
-	commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
+	if (!element.active)
+		commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
 }
 
 /**
@@ -162,7 +165,7 @@ function commitWillUnmount (element, parent, signature) {
  */
 function commitWillReconcile (element, snapshot) {
 	snapshot.type.then(function (value) {
-		if (hasDOMNode(element))
+		if (element.active)
 			if (element.id === SharedElementPromise)
 				reconcileChildren(element, createElementFragment(commitElement(value)))
 			else
@@ -285,12 +288,14 @@ function commitProperties (element, props, signature) {
  * @return {Object}
  */
 function commitCreate (element) {
-	try {
-		switch (element.id) {
+	try {		
+		switch ((element.active = true, element.id)) {
 			case SharedElementNode:
 				return createDOMElement(element)
 			case SharedElementText:
 				return createDOMText(element)
+			case SharedElementComponent:
+				return getElementChildren(element).DOM
 			default:
 				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
@@ -305,8 +310,8 @@ function commitCreate (element) {
  * @param {boolean} signature
  * @return {DOM?}
  */
-function commitQuery (element, parent, signature) {
-	if (signature && element.children.length === 0)
+function commitQuery (element, parent, signature) {	
+	if (signature === (element.active = true) && element.children.length === 0)
 		return null
 
 	return getDOMQuery(
@@ -365,7 +370,7 @@ function commitInsert (element, sibling, parent) {
  */
 function commitAppend (element, parent) {
 	if (parent.id < SharedElementEmpty)
-		if (hasDOMNode(parent))
+		if (parent.active)
 			return commitInsert(element, getElementBoundary(parent, SharedSiblingPrevious), parent)
 		else
 			return commitAppend(element, getElementParent(parent))
