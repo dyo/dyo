@@ -1,5 +1,4 @@
 /**
- * @param {boolean} shallow
  * @return {Object}
  */
 function toJSON () {

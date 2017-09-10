@@ -238,7 +238,6 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	}
 	
 	/**
-	 * @param {boolean} shallow
 	 * @return {Object}
 	 */
 	function toJSON () {
