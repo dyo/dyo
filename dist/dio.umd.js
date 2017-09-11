@@ -809,12 +809,13 @@
 	function enqueueComponentUpdate (element, instance, callback, signature) {
 		if (!element)
 			return void requestAnimationFrame(function () {
-				enqueueComponentUpdate(element[SymbolElement], instance, callback, signature)
+				enqueueComponentUpdate(instance[SymbolElement], instance, callback, signature)
 			})
 	
 		if (element.work === SharedWorkTask)
 			return void requestAnimationFrame(function () {
-				enqueueComponentUpdate(element, instance, callback, signature)
+				if (element.id === SharedElementComponent)
+					enqueueComponentUpdate(element, instance, callback, signature)
 			})
 	
 		if (!element.active)
@@ -1402,6 +1403,9 @@
 	function commitInsert (element, sibling, parent) {
 		if (parent.id < SharedElementEmpty)
 			return commitInsert(element, sibling, getElementParent(parent))
+	
+		if (sibling.id === SharedElementPortal)
+			return commitInsert(element, getElementSibling(sibling, SharedSiblingNext), parent)
 	
 		if (element.id > SharedElementEmpty)
 			insertDOMNode(element, sibling, parent)

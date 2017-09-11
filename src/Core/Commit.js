@@ -356,6 +356,9 @@ function commitInsert (element, sibling, parent) {
 	if (parent.id < SharedElementEmpty)
 		return commitInsert(element, sibling, getElementParent(parent))
 
+	if (sibling.id === SharedElementPortal)
+		return commitInsert(element, getElementSibling(sibling, SharedSiblingNext), parent)
+
 	if (element.id > SharedElementEmpty)
 		insertDOMNode(element, sibling, parent)
 	else

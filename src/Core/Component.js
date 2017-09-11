@@ -183,12 +183,13 @@ function unmountComponent (element) {
 function enqueueComponentUpdate (element, instance, callback, signature) {
 	if (!element)
 		return void requestAnimationFrame(function () {
-			enqueueComponentUpdate(element[SymbolElement], instance, callback, signature)
+			enqueueComponentUpdate(instance[SymbolElement], instance, callback, signature)
 		})
 
 	if (element.work === SharedWorkTask)
 		return void requestAnimationFrame(function () {
-			enqueueComponentUpdate(element, instance, callback, signature)
+			if (element.id === SharedElementComponent)
+				enqueueComponentUpdate(element, instance, callback, signature)
 		})
 
 	if (!element.active)

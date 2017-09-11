@@ -13,13 +13,22 @@ test('Fixture I', ({assert, done}) => {
 	var setState = null
 	var updated2 = false
 	
-	var P = function() {
+	var P = function(props, state) {
 	  if (updated2 === false) {
 	    updated2 = true
 	    this.forceUpdate()
 	  }
 	  setState = this.setState.bind(this)
-	  return h('p', h('form', 'x'), this.state.test ? C : [])
+
+	  if (state.change)
+	  	return h('p',
+	  		[
+		  		h('form'), 
+		  		this.state.test ? C : void 0
+		  	].filter(Boolean) 
+		  )
+
+	  return h('p', h('form', 'x'), state.test ? C : [])
 	}
 
 	P.getInitialState = function() {
@@ -34,9 +43,17 @@ test('Fixture I', ({assert, done}) => {
 	  test: true
 	})
 
-	setTimeout(function() {
+	setTimeout(() => {
 		assert(compare(container, '<p><form>x</form><div>child</div></p>'), 'calling forceUpdate from render')
-	  done()
+		setState({
+			change: true,
+		  test: true
+		})
+
+	  setTimeout(() => {
+	  	assert(compare(container, '<p><form></form><div>child</div></p>'), 'handle async mutations')
+	  	done()
+	  }, 20)
 	}, 20)
 })
 
