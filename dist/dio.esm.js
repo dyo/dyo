@@ -491,6 +491,9 @@ function setElementChildren (parent, children, element, index) {
 	if (element != null)
 		switch (element.constructor) {
 			case Element:
+				if (element.key === null)
+					element.key = SharedTypeKey + index
+
 				children.insert(element.active === false ? element : createElementImmutable(element), children)
 				break
 			case Array:
