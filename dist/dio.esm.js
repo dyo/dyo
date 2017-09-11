@@ -494,10 +494,8 @@ function setElementChildren (parent, children, element, index) {
 				children.insert(element.active === false ? element : createElementImmutable(element), children)
 				break
 			case Array:
-				var i = 0
-				do {
+				for (var i = 0; i < element.length; ++i)
 					setElementChildren(parent, children, element[i], index + i)
-				} while (++i < element.length)
 
 				return index + i
 			case String:
