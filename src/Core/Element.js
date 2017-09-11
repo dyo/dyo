@@ -77,7 +77,7 @@ function createElementFragment (iterable) {
 		for (; i < iterable.length; ++i)
 			setElementChildren(element, children, iterable[i], i)				
 
-	setElementFragment(children)
+	setElementBoundary(children)
 
 	return element
 }
@@ -217,7 +217,7 @@ function createElement (type, props) {
 			if (isValidDOMNode(type))
 				element.id = SharedElementPortal
 
-			setElementFragment(children)
+			setElementBoundary(children)
 	}
 
 	return element
@@ -256,9 +256,14 @@ function setElementChildren (parent, children, element, index) {
 /**
  * @param {List} children
  */
-function setElementFragment (children) {
-	children.insert(createElementText('', SharedTypeKey), children)
-	children.insert(createElementText('', SharedTypeKey), children.next)
+function setElementBoundary (children) {
+	var head = createElementText('', SharedTypeKey)
+	var tail = createElementText('', SharedTypeKey)
+	
+	head.xmlns = tail.xmlns = SharedTypeText
+
+	children.insert(head, children)
+	children.insert(tail, children.next)
 }
 
 /**

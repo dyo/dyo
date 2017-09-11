@@ -170,10 +170,10 @@ function getDOMType (element, xmlns) {
  * @param {Element} parent
  * @param {Element} prev
  * @param {Element} next
- * @param {boolean} signature
  */
-function getDOMQuery (element, parent, prev, next, signature) {
+function getDOMQuery (element, parent, prev, next) {
 	var type = element.type.toLowerCase()
+	var xmlns = element.xmlns
 	var children = element.children
 	var node = null
 	var previous = prev.active && getDOMNode(prev)
@@ -184,7 +184,7 @@ function getDOMQuery (element, parent, prev, next, signature) {
 	while (target)
 		switch (target.nodeName.toLowerCase()) {
 			case type:
-				if (signature) {
+				if (type === '#text') {
 					if (element !== next && element.id === next.id)
 						target.splitText(children.length)
 
@@ -198,6 +198,10 @@ function getDOMQuery (element, parent, prev, next, signature) {
 				if (!(target = target.nextSibling) || next !== element)
 					break
 		default:
+			if (type === '#text' && (xmlns === type || children.length === 0))
+				if (getDOMNode(parent).insertBefore((node = createDOMText(element)).target, target))
+					return node
+
 			target = (sibling = target).nextSibling
 
 			if (!previous || current !== sibling)

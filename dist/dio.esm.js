@@ -335,7 +335,7 @@ function createElementFragment (iterable) {
 		for (; i < iterable.length; ++i)
 			setElementChildren(element, children, iterable[i], i)				
 
-	setElementFragment(children)
+	setElementBoundary(children)
 
 	return element
 }
@@ -475,7 +475,7 @@ function createElement (type, props) {
 			if (isValidDOMNode(type))
 				element.id = SharedElementPortal
 
-			setElementFragment(children)
+			setElementBoundary(children)
 	}
 
 	return element
@@ -514,9 +514,14 @@ function setElementChildren (parent, children, element, index) {
 /**
  * @param {List} children
  */
-function setElementFragment (children) {
-	children.insert(createElementText('', SharedTypeKey), children)
-	children.insert(createElementText('', SharedTypeKey), children.next)
+function setElementBoundary (children) {
+	var head = createElementText('', SharedTypeKey)
+	var tail = createElementText('', SharedTypeKey)
+	
+	head.xmlns = tail.xmlns = SharedTypeText
+
+	children.insert(head, children)
+	children.insert(tail, children.next)
 }
 
 /**
@@ -1104,6 +1109,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  			commitWillReconcile(element, element)
  		case SharedElementFragment:
  		case SharedElementPortal:
+ 			element.DOM = parent.DOM
  			commitChildren(element, sibling, host, signature, mode)
  			element.DOM = commitCreate(element)
  			return
@@ -1112,7 +1118,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementText:
  			switch (mode) {
  				case SharedMountClone:
- 					if (element.DOM = commitQuery(element, parent, element.id === SharedElementText))
+ 					if (element.DOM = commitQuery(element, parent))
 	 					break
  				default:
  					element.DOM = commitCreate(element)
@@ -1345,17 +1351,14 @@ function commitCreate (element) {
  * @param {boolean} signature
  * @return {DOM?}
  */
-function commitQuery (element, parent, signature) {	
-	if (signature === (element.active = true) && element.children.length === 0)
-		return null
-
-	return getDOMQuery(
-		element, 
-		parent, 
-		getElementSibling(element, SharedSiblingPrevious), 
-		getElementSibling(element, SharedSiblingNext), 
-		signature
-	)
+function commitQuery (element, parent, signature) {
+	if (element.active = true)
+		return getDOMQuery(
+			element,
+			parent,
+			getElementSibling(element, SharedSiblingPrevious),
+			getElementSibling(element, SharedSiblingNext)
+		)
 }
 
 /**
@@ -2040,10 +2043,10 @@ function getDOMType (element, xmlns) {
  * @param {Element} parent
  * @param {Element} prev
  * @param {Element} next
- * @param {boolean} signature
  */
-function getDOMQuery (element, parent, prev, next, signature) {
+function getDOMQuery (element, parent, prev, next) {
 	var type = element.type.toLowerCase()
+	var xmlns = element.xmlns
 	var children = element.children
 	var node = null
 	var previous = prev.active && getDOMNode(prev)
@@ -2054,7 +2057,7 @@ function getDOMQuery (element, parent, prev, next, signature) {
 	while (target)
 		switch (target.nodeName.toLowerCase()) {
 			case type:
-				if (signature) {
+				if (type === '#text') {
 					if (element !== next && element.id === next.id)
 						target.splitText(children.length)
 
@@ -2068,6 +2071,10 @@ function getDOMQuery (element, parent, prev, next, signature) {
 				if (!(target = target.nextSibling) || next !== element)
 					break
 		default:
+			if (type === '#text' && (xmlns === type || children.length === 0))
+				if (getDOMNode(parent).insertBefore((node = createDOMText(element)).target, target))
+					return node
+
 			target = (sibling = target).nextSibling
 
 			if (!previous || current !== sibling)

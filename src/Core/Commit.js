@@ -69,6 +69,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  			commitWillReconcile(element, element)
  		case SharedElementFragment:
  		case SharedElementPortal:
+ 			element.DOM = parent.DOM
  			commitChildren(element, sibling, host, signature, mode)
  			element.DOM = commitCreate(element)
  			return
@@ -77,7 +78,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementText:
  			switch (mode) {
  				case SharedMountClone:
- 					if (element.DOM = commitQuery(element, parent, element.id === SharedElementText))
+ 					if (element.DOM = commitQuery(element, parent))
 	 					break
  				default:
  					element.DOM = commitCreate(element)
@@ -310,17 +311,14 @@ function commitCreate (element) {
  * @param {boolean} signature
  * @return {DOM?}
  */
-function commitQuery (element, parent, signature) {	
-	if (signature === (element.active = true) && element.children.length === 0)
-		return null
-
-	return getDOMQuery(
-		element, 
-		parent, 
-		getElementSibling(element, SharedSiblingPrevious), 
-		getElementSibling(element, SharedSiblingNext), 
-		signature
-	)
+function commitQuery (element, parent, signature) {
+	if (element.active = true)
+		return getDOMQuery(
+			element,
+			parent,
+			getElementSibling(element, SharedSiblingPrevious),
+			getElementSibling(element, SharedSiblingNext)
+		)
 }
 
 /**
