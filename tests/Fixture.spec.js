@@ -103,3 +103,44 @@ test('Fixture II', ({assert, done})=>{
 		})
 	})
 })
+
+test('Fixture III', ({assert, done, deepEqual}) => {
+	var container = document.body.appendChild(document.createElement('div'))
+	var setState = null
+	var stack = []
+	var X = function () {
+	  return h('div', 'x')
+	}
+
+	var List = function() {
+	  setState = this.setState.bind(this);
+
+	  return h('div', 
+	  	this.state.on === true ? X : void 0, 
+	  	h('div', 'y'), 
+	  	this.state.on === true ? X : void 0
+	  )
+	}
+
+	List.getInitialState = function() {
+	  return {on: false}
+	}
+
+	render(h(List), container)
+	stack.push(container.innerHTML)
+	setState({on: true})
+	stack.push(container.innerHTML)
+	setState({on: true})
+	stack.push(container.innerHTML)
+
+	assert(
+		deepEqual(stack, [
+			'<div><div>y</div></div>', 
+			'<div><div>x</div><div>y</div><div>x</div></div>', 
+			'<div><div>x</div><div>y</div><div>x</div></div>'
+		]),
+		'should noop reconcile after replacement'
+	)
+
+	done()
+})
