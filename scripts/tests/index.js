@@ -101,6 +101,7 @@ global.test = (name, body) => {
 		body({done, assert, equal, deepEqual, fail, pass})
 	} catch (err) {
 		console.error('\x1b[31m', err, '\x1b[0m')
+		console.error('\nError:', name, 'spec')
 		failure({type: 'ERR', msg: err})
 	}
 }

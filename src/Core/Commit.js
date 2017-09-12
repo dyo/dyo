@@ -99,22 +99,27 @@ function commitMount (element, sibling, parent, host, signature, mode) {
 
 /**
  * @param {Element} element
+ * @param {Element} parent
  * @param {number} signature
  * @param {boolean}
  */
-function commitDismount (element, signature) {
+function commitDismount (element, parent, signature) {
 	switch (element.id) {
 		case SharedElementComponent:
 			unmountComponent(element)
-			commitDismount(getElementChildren(element), -signature)
+			commitDismount(getElementChildren(element), parent, -signature)
 		case SharedElementText:
 			break
+		case SharedElementPortal:
+			if (signature < SharedElementEmpty)
+				if (parent.id > SharedElementEmpty)
+					commitRemove(element, parent)
 		default:
 			var children = element.children
 			var length = children.length
 
 			while (length-- > 0)
-				commitDismount(children = children.next, -signature)
+				commitDismount(children = children.next, element, -signature)
 	}
 
 	if (element.ref)
@@ -131,7 +136,7 @@ function commitDismount (element, signature) {
  */
 function commitUnmount (element, parent, signature) {
 	if (signature > SharedElementEmpty)
-		commitDismount(element, signature)
+		commitDismount(element, parent, signature)
 
 	if (element.id !== SharedElementComponent)
 		return commitRemove(element, parent)

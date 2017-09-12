@@ -70,5 +70,16 @@ test('Portal', ({assert, done})=>{
 	container)
 	assert(compare(body, '<main><div><li>2nd</li><br></div></main><ul><li>1st</li></ul>'), 'insert before portal')
 
+	render(
+		h('div', 
+			createPortal(h('li', {key: '1st'}, '1st'), portal),
+			h('br')
+		), 
+	container)
+	assert(compare(body, '<main><div><br></div></main><ul><li>1st</li></ul>'), 'alias top-level #createPortal API')
+
+	render(null, container)
+	assert(compare(body, '<main></main><ul></ul>'), 'remove nested child portal')
+
 	done()
 })

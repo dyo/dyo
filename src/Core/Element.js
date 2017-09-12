@@ -143,6 +143,16 @@ function cloneElement () {
 }
 
 /**
+ * @param {(Element|Array)} children
+ * @param {Object} container
+ * @param {(string|number|Symbol)=} key
+ * @return {Element}
+ */
+function createPortal (children, container, key) {
+	return createElement(container, key !== undefined ? {key: key} : key, children)
+}
+
+/**
  * @param {(string|function|Promise)} type
  * @param {Object?=} props
  * @param {...}

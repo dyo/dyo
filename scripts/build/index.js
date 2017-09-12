@@ -82,6 +82,7 @@ exports.Children = Children
 exports.findDOMNode = findDOMNode
 exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
+exports.createPortal = createPortal
 exports.h = exports.createElement = window.h = createElement
 `,
 	module: `
@@ -94,7 +95,8 @@ export {
 	Children, 
 	findDOMNode, 
 	cloneElement, 
-	isValidElement, 
+	isValidElement,
+	createPortal, 
 	createElement,
 	createElement as h
 }
