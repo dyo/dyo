@@ -459,8 +459,8 @@ function createElement (type, props) {
 				index = setElementChildren(element, children, arguments[i], index)
 		else {
 			if (size > 1)
-				for (children = Array(size); i < length; ++i)
-					children[index++] = arguments[i]
+				for (children = []; i < length; ++i)
+					children.push(arguments[i])
 			else
 				children = arguments[i]
 
@@ -1841,7 +1841,7 @@ var Children = {
 			array = children
 		else if (typeof children.next === 'function')
 			each(children, function (value) {
-				array.push(value)
+				return array.push(value)
 			})
 		else if (typeof children[SymbolIterator] === 'function')
 			return this.toArray(child[SymbolIterator]())
@@ -2154,17 +2154,33 @@ function appendDOMNode (element, parent) {
 	getDOMNode(parent).appendChild(getDOMNode(element))
 }
 
+var exports = {}
+
+exports.version = version
+exports.render = render
+exports.hydrate = hydrate
+exports.Component = Component
+exports.PureComponent = PureComponent
+exports.Children = Children
+exports.findDOMNode = findDOMNode
+exports.cloneElement = cloneElement
+exports.isValidElement = isValidElement
+exports.createPortal = createPortal
+exports.createElement = createElement
+exports.h = window.h = createElement
+
+export default exports
 export {
-	version, 
-	render, 
-	hydrate, 
-	Component, 
-	PureComponent, 
-	Children, 
-	findDOMNode, 
-	cloneElement, 
+	version,
+	render,
+	hydrate,
+	Component,
+	PureComponent,
+	Children,
+	findDOMNode,
+	cloneElement,
 	isValidElement,
-	createPortal, 
+	createPortal,
 	createElement,
 	createElement as h
 }

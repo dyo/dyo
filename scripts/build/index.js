@@ -69,10 +69,16 @@ const getExports = (module) => {
 	}
 }
 
-const imports = 'exports, Element, mountComponent, commitElement'
-const template = {
-	node: `\nrequire && require('./dio.node.js')(${imports})`,
-	export: `
+/**
+ * @return {string}
+ */
+const transform = (str) => {
+	return str.replace(/.*\.h[\s=].*/g, '')
+						.replace(/(export)s\.(\w+).*/g, '\t$2,')
+						.trim()
+}
+
+const api = `
 exports.version = version
 exports.render = render
 exports.hydrate = hydrate
@@ -83,24 +89,22 @@ exports.findDOMNode = findDOMNode
 exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
 exports.createPortal = createPortal
-exports.h = exports.createElement = window.h = createElement
-`,
-	module: `
-export {
-	version, 
-	render, 
-	hydrate, 
-	Component, 
-	PureComponent, 
-	Children, 
-	findDOMNode, 
-	cloneElement, 
-	isValidElement,
-	createPortal, 
-	createElement,
-	createElement as h
-}
+exports.createElement = createElement
+exports.h = window.h = createElement
 `
+
+const imports = 'exports, Element, mountComponent, commitElement'
+const template = {
+	node: `\nrequire && require('./dio.node.js')(${imports})`,
+	export: api,
+	module: `
+var exports = {}
+${api}
+export default exports
+export {
+	${transform(api)}
+	createElement as h
+}`
 }
 
 const builder = (file) => {

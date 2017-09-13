@@ -470,8 +470,8 @@
 					index = setElementChildren(element, children, arguments[i], index)
 			else {
 				if (size > 1)
-					for (children = Array(size); i < length; ++i)
-						children[index++] = arguments[i]
+					for (children = []; i < length; ++i)
+						children.push(arguments[i])
 				else
 					children = arguments[i]
 	
@@ -1852,7 +1852,7 @@
 				array = children
 			else if (typeof children.next === 'function')
 				each(children, function (value) {
-					array.push(value)
+					return array.push(value)
 				})
 			else if (typeof children[SymbolIterator] === 'function')
 				return this.toArray(child[SymbolIterator]())
@@ -2175,7 +2175,8 @@
 	exports.cloneElement = cloneElement
 	exports.isValidElement = isValidElement
 	exports.createPortal = createPortal
-	exports.h = exports.createElement = window.h = createElement
+	exports.createElement = createElement
+	exports.h = window.h = createElement
 	
 	require && require('./dio.node.js')(exports, Element, mountComponent, commitElement)
 }))

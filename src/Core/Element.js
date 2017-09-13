@@ -201,8 +201,8 @@ function createElement (type, props) {
 				index = setElementChildren(element, children, arguments[i], index)
 		else {
 			if (size > 1)
-				for (children = Array(size); i < length; ++i)
-					children[index++] = arguments[i]
+				for (children = []; i < length; ++i)
+					children.push(arguments[i])
 			else
 				children = arguments[i]
 
