@@ -1,4 +1,4 @@
-test('Fixture I', ({assert, done}) => {
+test('Calling Lifecycle From Render', ({assert, done}) => {
 	var updated = false
 	var container = document.createElement('div')
 	
@@ -57,7 +57,7 @@ test('Fixture I', ({assert, done}) => {
 	}, 20)
 })
 
-test('Fixture II', ({assert, done})=>{
+test('Immutable Elements', ({assert, done})=>{
 	var container = document.createElement('div')
 	var without = (array, filtered) => array.filter(n => n != filtered)
 
@@ -104,7 +104,7 @@ test('Fixture II', ({assert, done})=>{
 	})
 })
 
-test('Fixture III', ({assert, done, deepEqual}) => {
+test('Stable Reconciler', ({assert, done, deepEqual}) => {
 	var container = document.body.appendChild(document.createElement('div'))
 	var setState = null
 	var stack = []
@@ -143,4 +143,42 @@ test('Fixture III', ({assert, done, deepEqual}) => {
 	)
 
 	done()
+})
+
+test('Updating Component Props', ({assert, done, deepEqual}) => {
+	var container = document.createElement('div')
+	var stack = []
+
+	setStateChild = null
+	Child = function({x}) {
+	  setStateChild = this.setState.bind(this)
+	  return h('div', x)
+	}
+
+	Child.shouldComponentUpdate = function(props, state) {
+		stack.push(this.props, props)
+	  return PureComponent.prototype.shouldComponentUpdate.call(this, props, state)
+	}
+
+	setState = null
+	Parent = function() {
+	  setState = this.setState.bind(this)
+	  return h('div', h(Child, {x: this.state.x}))
+	}
+	Parent.getInitialState = function() {return {x: 'abc'}}
+
+	render(h(Parent), container)
+	setState({x: 'xxx'})
+	assert(deepEqual(stack[0], {x: 'abc'}) && deepEqual(stack[1], {x: 'xxx'}), 'pass props to component')
+
+	setStateChild({abc: 1})
+	assert(deepEqual(stack[2], {x: 'xxx'}) && deepEqual(stack[3], {x: 'xxx'}), 'update component props')
+	done()
+
+	// Expected
+	// Object{x: 'abc'}, Object{x: 'xxx'}
+	// Object{x: 'xxx'}, Object{x: 'xxx'}
+	// Received
+	// Object{x: 'abc'}, Object{x: 'xxx'}
+	// Object{x: 'xxx'}, Object{x: 'abc'}
 })

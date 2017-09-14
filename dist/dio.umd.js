@@ -437,11 +437,12 @@
 	
 	/**
 	 * @param {(string|function|Promise)} type
-	 * @param {Object?=} props
+	 * @param {Object?=} properties
 	 * @param {...}
 	 * @return {Element}
 	 */
-	function createElement (type, props) {
+	function createElement (type, properties) {
+		var props = properties
 		var i = props != null ? 1 : 2
 		var size = 0
 		var index = 0
@@ -468,15 +469,14 @@
 								props.children = void setElementChildren(children, props.children, index)
 						}
 	
-						element.props = props
 						i++
 						break
 					}
 				default:
-					element.props = {}
+					props = {}
 			}
 		else
-			element.props = {}
+			props = {}
 	
 		if ((size = length - i) > 0) {
 			if (id !== SharedElementComponent)
@@ -489,20 +489,19 @@
 				else
 					children = arguments[i]
 	
-				element.props.children = children
+				props.children = children
 			}
 		}	
 	
-		switch ((element.children = children, element.type = type).constructor) {
+		switch (type.constructor) {
 			case Function:
 				if (type.defaultProps)
-					element.props = getDefaultProps(element, type.defaultProps, props)
+					props = getDefaultProps(element, type.defaultProps, props)
 			case String:
 				break
 			case Element:
-				element.id = type.id
-				element.type = type.type
-				element.props = assign({}, type.props, element.props)						
+				props = assign({}, type.props, (element.id = type.id, props))	
+				type = type.type
 				break
 			case Promise:
 				id = SharedElementPromise
@@ -512,6 +511,10 @@
 	
 				setElementBoundary((element.id = id, children))
 		}
+	
+		element.type = type
+		element.props = props
+		element.children = children
 	
 		return element
 	}
@@ -805,7 +808,7 @@
 			getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)
 	
 		if (signature === SharedComponentPropsUpdate)
-			instance.props = nextProps
+			instance.props = element.props = nextProps
 	
 		if (signature === SharedComponentStateUpdate)
 			instance.state = nextState

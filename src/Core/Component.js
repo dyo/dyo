@@ -150,7 +150,7 @@ function updateComponent (element, snapshot, signature) {
 		getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)
 
 	if (signature === SharedComponentPropsUpdate)
-		instance.props = nextProps
+		instance.props = element.props = nextProps
 
 	if (signature === SharedComponentStateUpdate)
 		instance.state = nextState
