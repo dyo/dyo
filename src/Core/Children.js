@@ -43,6 +43,18 @@ function childrenEach (children, callback, thisArg) {
 }
 
 /**
+ * @param {*} children
+ * @param {function} callback
+ * @return {Array}
+ */
+function childrenMap (children, callback, thisArg) {
+	if (children != null)
+		return childrenArray(children).map(callback, thisArg)
+
+	return children
+}
+
+/**
  * @param {*} children 
  * @return {number}
  */
@@ -59,16 +71,4 @@ function childrenOnly (children) {
 		return children
 	
 	invariant('Children.only', 'Expected to receive a single element')
-}
-
-/**
- * @param {*} children
- * @param {function} callback
- * @return {Array}
- */
-function childrenMap (children, callback, thisArg) {
-	if (children != null)
-		return childrenArray(children).map(callback, thisArg)
-
-	return children
 }

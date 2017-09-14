@@ -240,6 +240,17 @@ function createDOMText (element) {
 
 /**
  * @param {Element} element
+ * @return {DOM}
+ */
+function createDOMPortal (element) {
+	if (typeof element.type === 'string')
+		return DOM(document.querySelector(element.type))
+	else
+		return DOM(element.type)
+}
+
+/**
+ * @param {Element} element
  * @param {Element} parent
  */
 function removeDOMNode (element, parent) {

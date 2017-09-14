@@ -126,7 +126,7 @@ function flatten (array, output) {
  * @param {function} callback
  */
 function each (iterable, callback) {
-	if (typeof iterable.forEach === 'function')
+	if (iterable.forEach)
 		return iterable.forEach(callback)
 
 	var value = iterable.next()

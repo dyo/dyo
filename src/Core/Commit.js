@@ -23,16 +23,16 @@ function commitElement (element) {
  * @param {Element} element
  * @param {Element} sibling
  * @param {Element} host
+ * @param {number} operation
  * @param {number} signature
- * @param {number} mode
  */
-function commitChildren (element, sibling, host, signature, mode) {
+function commitChildren (element, sibling, host, operation, signature) {
 	var children = element.children
 	var length = children.length
 	var next = children.next
 
 	while (length-- > 0) {
-		commitMount(next, sibling, element, host, signature, mode)
+		commitMount(next, sibling, element, host, operation, signature)
 		next = next.next
 	}
 }
@@ -42,10 +42,10 @@ function commitChildren (element, sibling, host, signature, mode) {
  * @param {Element} sibling
  * @param {Element} parent
  * @param {Element} host
+ * @param {number} operation
  * @param {number} signature
- * @param {number} mode
  */
-function commitMount (element, sibling, parent, host, signature, mode) {
+function commitMount (element, sibling, parent, host, operation, signature) {
 	element.host = host
 	element.parent = parent
 	element.context = host.context
@@ -54,7 +54,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementComponent:
  			element.work = SharedWorkTask
  			
- 			commitMount(mountComponent(element), sibling, parent, element, signature, mode)
+ 			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
  			element.DOM = commitCreate(element)
 
  			if (element.ref)
@@ -70,20 +70,20 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementFragment:
  		case SharedElementPortal:
  			element.DOM = parent.DOM
- 			commitChildren(element, sibling, host, signature, mode)
+ 			commitChildren(element, sibling, host, operation, signature)
  			element.DOM = commitCreate(element)
  			return
  		case SharedElementNode:
  			element.xmlns = getDOMType(element, parent.xmlns)
  		case SharedElementText:
- 			switch (mode) {
+ 			switch (signature) {
  				case SharedMountClone:
  					if (element.DOM = commitQuery(element, parent))
 	 					break
  				default:
  					element.DOM = commitCreate(element)
  					
- 					if (signature < SharedMountInsert)
+ 					if (operation === SharedMountAppend)
  						commitAppend(element, parent)
  					else
  						commitInsert(element, sibling, parent)
@@ -93,7 +93,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  				return
  	}
 
- 	commitChildren(element, element, host, SharedMountAppend, mode)
+ 	commitChildren(element, element, host, SharedMountAppend, signature)
  	commitProperties(element, element.props, SharedPropsMount)
 }
 
@@ -306,7 +306,7 @@ function commitCreate (element) {
 				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
 	} catch (e) {
-		return commitDOMNode(commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
+		return commitCreate(commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
 	}
 }
 

@@ -72,10 +72,10 @@ function createElementFragment (iterable) {
 	element.children = children
 
 	if (isValidElement(iterable))
-		setElementChildren(element, children, iterable, i)
+		setElementChildren(children, iterable, i)
 	else if (isArray(iterable))
 		for (; i < iterable.length; ++i)
-			setElementChildren(element, children, iterable[i], i)				
+			setElementChildren(children, iterable[i], i)				
 
 	setElementBoundary(children)
 
@@ -90,7 +90,7 @@ function createElementIterable (iterable) {
 	var element = createElementFragment(iterable)
 
 	each(iterable, function (value, index) {
-		return setElementChildren(element, element.children, value, index)
+		return setElementChildren(element.children, value, index)
 	})
 
 	return element
@@ -143,13 +143,24 @@ function cloneElement () {
 }
 
 /**
- * @param {(Element|Array)} children
+ * @param {(Element|Array)} element
  * @param {Object} container
  * @param {(string|number|Symbol)=} key
  * @return {Element}
  */
-function createPortal (children, container, key) {
-	return createElement(container, key !== undefined ? {key: key} : key, children)
+function createPortal (element, container, key) {
+	var portal = new Element(SharedElementPortal)
+	var children = portal.children = new List()
+	
+	setElementChildren(children, element, 0)
+	setElementBoundary(children)
+
+	portal.type = container
+
+	if (key != null)
+		portal.key = key
+
+	return portal
 }
 
 /**
@@ -182,7 +193,7 @@ function createElement (type, props) {
 							element.xmlns = props.xmlns
 
 						if (props.children !== undefined)
-							props.children = void setElementChildren(element, children, props.children, index)
+							props.children = void setElementChildren(children, props.children, index)
 					}
 
 					element.props = props
@@ -198,7 +209,7 @@ function createElement (type, props) {
 	if ((size = length - i) > 0) {
 		if (id !== SharedElementComponent)
 			for (; i < length; ++i)
-				index = setElementChildren(element, children, arguments[i], index)
+				index = setElementChildren(children, arguments[i], index)
 		else {
 			if (size > 1)
 				for (children = []; i < length; ++i)
@@ -222,24 +233,23 @@ function createElement (type, props) {
 			element.props = assign({}, type.props, element.props)						
 			break
 		case Promise:
-			element.id = SharedElementPromise
+			id = SharedElementPromise
 		default:
-			if (isValidDOMNode(type))
-				element.id = SharedElementPortal
+			if (id !== SharedElementPromise && isValidDOMNode(type))
+				id = SharedElementPortal	
 
-			setElementBoundary(children)
+			setElementBoundary((element.id = id, children))
 	}
 
 	return element
 }
 
 /**
- * @param {Element} parent
  * @param {List} children
  * @param {*} element
  * @param {number} index
  */
-function setElementChildren (parent, children, element, index) {
+function setElementChildren (children, element, index) {
 	if (element != null)
 		switch (element.constructor) {
 			case Element:
@@ -250,7 +260,7 @@ function setElementChildren (parent, children, element, index) {
 				break
 			case Array:
 				for (var i = 0; i < element.length; ++i)
-					setElementChildren(parent, children, element[i], index + i)
+					setElementChildren(children, element[i], index + i)
 
 				return index + i
 			case String:
@@ -328,7 +338,7 @@ function getElementParent (element) {
 		return getElementParent(element.parent)
 	
 	if (element.id === SharedElementPortal)
-		return createElementNode(createDOMObject(element.type))
+		return createElementNode(createDOMPortal(element))
 	else
 		return element
 }

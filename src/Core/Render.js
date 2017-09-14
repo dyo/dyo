@@ -32,24 +32,24 @@ function hydrate (element, target, callback) {
  * @param {Element} element
  * @param {Element} parent
  * @param {function} callback
- * @param {number} mode
+ * @param {number} signature
  */
-function mount (element, parent, callback, mode) {
+function mount (element, parent, callback, signature) {
 	if (!isValidElement(element))
-		return mount(commitElement(element), parent, callback, mode)
+		return mount(commitElement(element), parent, callback, signature)
 
 	if (!isValidElement(parent))
-		return mount(element, createElementNode(createDOMObject(parent)), callback, mode)
+		return mount(element, createElementNode(createDOMObject(parent)), callback, signature)
 
 	if (!isValidDOMNode(getDOMNode(parent)))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
 
 	root.set(getDOMNode(parent), element)
 
-	if (mode === SharedMountCommit)
+	if (signature === SharedMountCommit)
 		setDOMContent(parent)
 	
-	commitMount(element, element, parent, parent, SharedMountAppend, mode)
+	commitMount(element, element, parent, parent, SharedMountAppend, signature)
 
 	if (typeof callback === 'function')
 		getLifecycleCallback(element, callback, findDOMNode(element))

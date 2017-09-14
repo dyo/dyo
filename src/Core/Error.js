@@ -7,7 +7,7 @@
  */
 function invokeErrorBoundary (element, e, from, signature) {
 	var error = getErrorException(element, e, from)
-	var element = getErrorElement(element, error, from, signature)
+	var element = getErrorElement(element, error, from, 0, signature)
 
 	if (error.report)
 		console.error(error.report)
@@ -45,10 +45,11 @@ function getErrorException (element, error, from) {
  * @param {Object} snapshot
  * @param {Error} error
  * @param {string} from
+ * @param {number} depth
  * @param {number} signature
  * @return {Element?}
  */
-function getErrorElement (element, error, from, signature) {	
+function getErrorElement (element, error, from, depth, signature) {	
 	var snapshot
 
 	if (signature === SharedErrorPassive || !element || element.id === SharedElementEmpty)
@@ -62,8 +63,10 @@ function getErrorElement (element, error, from, signature) {
 		} catch (e) {
 			return invokeErrorBoundary(element.host, e, SharedComponentDidCatch, signature)
 		}
+	else if (depth === 0)
+		return getErrorElement(element.host, error, from, depth + 1, signature)
 	else
-		getErrorElement(element.host, error, from, signature)
+		getErrorElement(element.host, error, from, depth, signature)
 
 	if (from === SharedSiteRender)
 		return commitElement(snapshot)

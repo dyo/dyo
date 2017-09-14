@@ -210,7 +210,7 @@ function flatten (array, output) {
  * @param {function} callback
  */
 function each (iterable, callback) {
-	if (typeof iterable.forEach === 'function')
+	if (iterable.forEach)
 		return iterable.forEach(callback)
 
 	var value = iterable.next()
@@ -333,10 +333,10 @@ function createElementFragment (iterable) {
 	element.children = children
 
 	if (isValidElement(iterable))
-		setElementChildren(element, children, iterable, i)
+		setElementChildren(children, iterable, i)
 	else if (isArray(iterable))
 		for (; i < iterable.length; ++i)
-			setElementChildren(element, children, iterable[i], i)				
+			setElementChildren(children, iterable[i], i)				
 
 	setElementBoundary(children)
 
@@ -351,7 +351,7 @@ function createElementIterable (iterable) {
 	var element = createElementFragment(iterable)
 
 	each(iterable, function (value, index) {
-		return setElementChildren(element, element.children, value, index)
+		return setElementChildren(element.children, value, index)
 	})
 
 	return element
@@ -404,13 +404,24 @@ function cloneElement () {
 }
 
 /**
- * @param {(Element|Array)} children
+ * @param {(Element|Array)} element
  * @param {Object} container
  * @param {(string|number|Symbol)=} key
  * @return {Element}
  */
-function createPortal (children, container, key) {
-	return createElement(container, key !== undefined ? {key: key} : key, children)
+function createPortal (element, container, key) {
+	var portal = new Element(SharedElementPortal)
+	var children = portal.children = new List()
+	
+	setElementChildren(children, element, 0)
+	setElementBoundary(children)
+
+	portal.type = container
+
+	if (key != null)
+		portal.key = key
+
+	return portal
 }
 
 /**
@@ -443,7 +454,7 @@ function createElement (type, props) {
 							element.xmlns = props.xmlns
 
 						if (props.children !== undefined)
-							props.children = void setElementChildren(element, children, props.children, index)
+							props.children = void setElementChildren(children, props.children, index)
 					}
 
 					element.props = props
@@ -459,7 +470,7 @@ function createElement (type, props) {
 	if ((size = length - i) > 0) {
 		if (id !== SharedElementComponent)
 			for (; i < length; ++i)
-				index = setElementChildren(element, children, arguments[i], index)
+				index = setElementChildren(children, arguments[i], index)
 		else {
 			if (size > 1)
 				for (children = []; i < length; ++i)
@@ -483,24 +494,23 @@ function createElement (type, props) {
 			element.props = assign({}, type.props, element.props)						
 			break
 		case Promise:
-			element.id = SharedElementPromise
+			id = SharedElementPromise
 		default:
-			if (isValidDOMNode(type))
-				element.id = SharedElementPortal
+			if (id !== SharedElementPromise && isValidDOMNode(type))
+				id = SharedElementPortal	
 
-			setElementBoundary(children)
+			setElementBoundary((element.id = id, children))
 	}
 
 	return element
 }
 
 /**
- * @param {Element} parent
  * @param {List} children
  * @param {*} element
  * @param {number} index
  */
-function setElementChildren (parent, children, element, index) {
+function setElementChildren (children, element, index) {
 	if (element != null)
 		switch (element.constructor) {
 			case Element:
@@ -511,7 +521,7 @@ function setElementChildren (parent, children, element, index) {
 				break
 			case Array:
 				for (var i = 0; i < element.length; ++i)
-					setElementChildren(parent, children, element[i], index + i)
+					setElementChildren(children, element[i], index + i)
 
 				return index + i
 			case String:
@@ -589,7 +599,7 @@ function getElementParent (element) {
 		return getElementParent(element.parent)
 	
 	if (element.id === SharedElementPortal)
-		return createElementNode(createDOMObject(element.type))
+		return createElementNode(createDOMPortal(element))
 	else
 		return element
 }
@@ -1079,16 +1089,16 @@ function commitElement (element) {
  * @param {Element} element
  * @param {Element} sibling
  * @param {Element} host
+ * @param {number} operation
  * @param {number} signature
- * @param {number} mode
  */
-function commitChildren (element, sibling, host, signature, mode) {
+function commitChildren (element, sibling, host, operation, signature) {
 	var children = element.children
 	var length = children.length
 	var next = children.next
 
 	while (length-- > 0) {
-		commitMount(next, sibling, element, host, signature, mode)
+		commitMount(next, sibling, element, host, operation, signature)
 		next = next.next
 	}
 }
@@ -1098,10 +1108,10 @@ function commitChildren (element, sibling, host, signature, mode) {
  * @param {Element} sibling
  * @param {Element} parent
  * @param {Element} host
+ * @param {number} operation
  * @param {number} signature
- * @param {number} mode
  */
-function commitMount (element, sibling, parent, host, signature, mode) {
+function commitMount (element, sibling, parent, host, operation, signature) {
 	element.host = host
 	element.parent = parent
 	element.context = host.context
@@ -1110,7 +1120,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementComponent:
  			element.work = SharedWorkTask
  			
- 			commitMount(mountComponent(element), sibling, parent, element, signature, mode)
+ 			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
  			element.DOM = commitCreate(element)
 
  			if (element.ref)
@@ -1126,20 +1136,20 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  		case SharedElementFragment:
  		case SharedElementPortal:
  			element.DOM = parent.DOM
- 			commitChildren(element, sibling, host, signature, mode)
+ 			commitChildren(element, sibling, host, operation, signature)
  			element.DOM = commitCreate(element)
  			return
  		case SharedElementNode:
  			element.xmlns = getDOMType(element, parent.xmlns)
  		case SharedElementText:
- 			switch (mode) {
+ 			switch (signature) {
  				case SharedMountClone:
  					if (element.DOM = commitQuery(element, parent))
 	 					break
  				default:
  					element.DOM = commitCreate(element)
  					
- 					if (signature < SharedMountInsert)
+ 					if (operation === SharedMountAppend)
  						commitAppend(element, parent)
  					else
  						commitInsert(element, sibling, parent)
@@ -1149,7 +1159,7 @@ function commitMount (element, sibling, parent, host, signature, mode) {
  				return
  	}
 
- 	commitChildren(element, element, host, SharedMountAppend, mode)
+ 	commitChildren(element, element, host, SharedMountAppend, signature)
  	commitProperties(element, element.props, SharedPropsMount)
 }
 
@@ -1362,7 +1372,7 @@ function commitCreate (element) {
 				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
 	} catch (e) {
-		return commitDOMNode(commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
+		return commitCreate(commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
 	}
 }
 
@@ -1701,7 +1711,7 @@ defineProperty(Element.prototype, 'handleEvent', {value: handleEvent})
  */
 function invokeErrorBoundary (element, e, from, signature) {
 	var error = getErrorException(element, e, from)
-	var element = getErrorElement(element, error, from, signature)
+	var element = getErrorElement(element, error, from, 0, signature)
 
 	if (error.report)
 		console.error(error.report)
@@ -1739,10 +1749,11 @@ function getErrorException (element, error, from) {
  * @param {Object} snapshot
  * @param {Error} error
  * @param {string} from
+ * @param {number} depth
  * @param {number} signature
  * @return {Element?}
  */
-function getErrorElement (element, error, from, signature) {	
+function getErrorElement (element, error, from, depth, signature) {	
 	var snapshot
 
 	if (signature === SharedErrorPassive || !element || element.id === SharedElementEmpty)
@@ -1756,8 +1767,10 @@ function getErrorElement (element, error, from, signature) {
 		} catch (e) {
 			return invokeErrorBoundary(element.host, e, SharedComponentDidCatch, signature)
 		}
+	else if (depth === 0)
+		return getErrorElement(element.host, error, from, depth + 1, signature)
 	else
-		getErrorElement(element.host, error, from, signature)
+		getErrorElement(element.host, error, from, depth, signature)
 
 	if (from === SharedSiteRender)
 		return commitElement(snapshot)
@@ -1802,24 +1815,24 @@ function hydrate (element, target, callback) {
  * @param {Element} element
  * @param {Element} parent
  * @param {function} callback
- * @param {number} mode
+ * @param {number} signature
  */
-function mount (element, parent, callback, mode) {
+function mount (element, parent, callback, signature) {
 	if (!isValidElement(element))
-		return mount(commitElement(element), parent, callback, mode)
+		return mount(commitElement(element), parent, callback, signature)
 
 	if (!isValidElement(parent))
-		return mount(element, createElementNode(createDOMObject(parent)), callback, mode)
+		return mount(element, createElementNode(createDOMObject(parent)), callback, signature)
 
 	if (!isValidDOMNode(getDOMNode(parent)))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
 
 	root.set(getDOMNode(parent), element)
 
-	if (mode === SharedMountCommit)
+	if (signature === SharedMountCommit)
 		setDOMContent(parent)
 	
-	commitMount(element, element, parent, parent, SharedMountAppend, mode)
+	commitMount(element, element, parent, parent, SharedMountAppend, signature)
 
 	if (typeof callback === 'function')
 		getLifecycleCallback(element, callback, findDOMNode(element))
@@ -1870,6 +1883,18 @@ function childrenEach (children, callback, thisArg) {
 }
 
 /**
+ * @param {*} children
+ * @param {function} callback
+ * @return {Array}
+ */
+function childrenMap (children, callback, thisArg) {
+	if (children != null)
+		return childrenArray(children).map(callback, thisArg)
+
+	return children
+}
+
+/**
  * @param {*} children 
  * @return {number}
  */
@@ -1886,18 +1911,6 @@ function childrenOnly (children) {
 		return children
 	
 	invariant('Children.only', 'Expected to receive a single element')
-}
-
-/**
- * @param {*} children
- * @param {function} callback
- * @return {Array}
- */
-function childrenMap (children, callback, thisArg) {
-	if (children != null)
-		return childrenArray(children).map(callback, thisArg)
-
-	return children
 }
 
 /**
@@ -2138,6 +2151,17 @@ function createDOMElement (element) {
  */
 function createDOMText (element) {
 	return DOM(document.createTextNode(element.children))
+}
+
+/**
+ * @param {Element} element
+ * @return {DOM}
+ */
+function createDOMPortal (element) {
+	if (typeof element.type === 'string')
+		return DOM(document.querySelector(element.type))
+	else
+		return DOM(element.type)
 }
 
 /**
