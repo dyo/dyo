@@ -2,65 +2,73 @@
  * @type {Object}
  */
 var Children = {
-	/**
-	 * @param {*} children 
-	 * @return {Array}
-	 */
-	toArray: function toArray (children) {
-		var array = []
+	toArray: childrenArray,
+	forEach: childrenEach,
+	count: childrenCount,
+	only: childrenOnly,
+	map: childrenMap
+}
 
-		if (children == null)
-			return array
-		else if (isValidElement(children) || typeof children !== 'object')
-			return [children]
-		else if (children instanceof Array)
-			array = children
-		else if (typeof children.next === 'function')
-			each(children, function (value) {
-				return array.push(value)
-			})
-		else if (typeof children[SymbolIterator] === 'function')
-			return this.toArray(child[SymbolIterator]())
-		else
-			return [children]
+/**
+ * @param {*} children 
+ * @return {Array}
+ */
+function childrenArray (children) {
+	var array = []
 
-		return flatten(array, [])
-	},
-	/**
-	 * @param {*} children
-	 * @param {function} callback
-	 * @param {*} thisArg
-	 */
-	forEach: function forEach (children, callback, thisArg) {
-		if (children != null)
-			this.toArray(children).forEach(callback, thisArg)
-	},
-	/**
-	 * @param {*} children
-	 * @param {function} callback
-	 * @return {Array}
-	 */
-	map: function map (children, callback, thisArg) {
-		if (children != null)
-			return this.toArray(children).map(callback, thisArg)
+	if (children == null)
+		return array
+	else if (isValidElement(children) || typeof children !== 'object')
+		return [children]
+	else if (isArray(children))
+		return flatten(children, array)
+	else if (typeof children[SymbolIterator] === 'function')
+		return childrenArray(child[SymbolIterator]())
+	else if (typeof children.next === 'function' || children instanceof List)
+		each(children, function (element) {
+			return array.push(element)
+		})
 
+	return flatten(array, [])
+}
+
+/**
+ * @param {*} children
+ * @param {function} callback
+ * @param {*} thisArg
+ */
+function childrenEach (children, callback, thisArg) {
+	if (children != null)
+		childrenArray(children).forEach(callback, thisArg)
+}
+
+/**
+ * @param {*} children 
+ * @return {number}
+ */
+function childrenCount (children) {
+	return childrenArray(children).length
+}
+
+/**
+ * @param {*} children 
+ * @return {Element}
+ */
+function childrenOnly (children) {
+	if (isValidElement(children))
 		return children
-	},
-	/**
-	 * @param {*} children 
-	 * @return {Element}
-	 */
-	only: function only (children) {
-		if (isValidElement(children))
-			return children
-		
-		invariant('Children.only', 'Expected to receive a single element')
-	},
-	/**
-	 * @param {*} children 
-	 * @return {number}
-	 */
-	count: function count (children) {
-		return this.toArray(children).length
-	}
+	
+	invariant('Children.only', 'Expected to receive a single element')
+}
+
+/**
+ * @param {*} children
+ * @param {function} callback
+ * @return {Array}
+ */
+function childrenMap (children, callback, thisArg) {
+	if (children != null)
+		return childrenArray(children).map(callback, thisArg)
+
+	return children
 }

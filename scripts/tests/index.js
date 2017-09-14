@@ -18,11 +18,17 @@ global.Event = DOM.window.Event
  * @return {Boolean}
  */
 global.deepEqual = (x, y) => {
-  const keys = Object.keys, tx = typeof x, ty = typeof y;
-  return x && y && tx === 'object' && tx === ty ? (
-    keys(x).length === keys(y).length &&
-      keys(x).every(key => deepEqual(x[key], y[key]))
-  ) : (x === y)
+	if (x !== y && typeof x === 'object' && x !== null && typeof x === typeof y) {
+  	if (Array.isArray(x))
+  		return x.length === y.length && x.every((val, i) => deepEqual(val, y[i]))
+  	else
+  		return (
+  			Object.keys(x).length === Object.keys(y).length && 
+  			Object.keys(x).every(key => deepEqual(x[key], y[key]))
+  		)
+  }
+  
+  return x === y
 }
 
 /**

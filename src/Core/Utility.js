@@ -126,11 +126,14 @@ function flatten (array, output) {
  * @param {function} callback
  */
 function each (iterable, callback) {
+	if (typeof iterable.forEach === 'function')
+		return iterable.forEach(callback)
+
 	var value = iterable.next()
 	var index = 0
 
 	while (!value.done) {
-		index = callback(value.value, index)|0
+		index = callback(value.value, index)
 		value = iterable.next(value.value)
 	}
 }

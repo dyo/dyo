@@ -1,10 +1,13 @@
 const fs = require('fs')
 const path = require('path')
+const zlib = require('zlib')
 const chokidar = require('chokidar')
 const UglifyJS = require('uglify-js')
 const UglifyES = require("uglify-es")
-
 const package = require('../../package.json')
+
+let filesize = ''
+
 const options = {compress: {}}
 const strict = `'use strict'`
 const filenames = {
@@ -223,8 +226,34 @@ const minify = (uglify, {content, module, filename, filepath}) => {
 	if (compressed.error)
 		return console.error(compressed.error)
 
+	if (module === 'umd') {
+		gzipsize(compressed.code)
+	}
+
 	fs.writeFileSync(path.join(__dirname, min), compressed.code)
 	fs.writeFileSync(path.join(__dirname, map), compressed.map)
+}
+
+const estimate = (num) => {
+	return '~'+num+'kb'
+}
+
+const gzipsize = (content) => {
+	var size = parseInt(zlib.gzipSync(content, {level: 9}).length)/1000
+
+	if (size !== filesize) {
+		var kbSize = '~'+Math.round(size)+'kb'
+
+		if (Math.round(size) !== Math.round(filesize)) {
+			var readpath = path.join(__dirname, '../../README.md')
+
+			fs.writeFileSync(readpath, fs.readFileSync(readpath).toString().replace(/(-\s+)~?\d+kb/, '$1'+kbSize))
+		}
+	}
+
+	console.log('\ngzip: ~' + (filesize ? filesize + 'kb –> ~' : '') +size+'kb')
+
+	filesize = size
 }
 
 const resolve = () => {
@@ -234,10 +263,8 @@ const resolve = () => {
 	// bundle('native', native, '../../dist/dio.native.js')
 
 	console.log(
-		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled: '+
+		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled:\n'+
 		'\n – '+filenames.umd+
-		'\n – '+filenames.min+
-		'\n – '+filenames.map+
 		'\n – '+filenames.esm+
 		'\n – '+filenames.node+
 		// '\n – 'filenames.native+
