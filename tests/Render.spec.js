@@ -99,6 +99,9 @@ test('Render', ({assert, done}) => {
 	render(h('input', {value: undefined}, '0'), container)
 	assert(compare(container, '<input>'), 'render undefined prop')
 
+	render(h('a', {href: undefined}, '0'), container)
+	assert(compare(container, '<a>0</a>'), 'render undefined prop II')
+
 	render(h('h1', {style: {width: '100px'}}, '0'), container)
 	assert(container.firstChild.style.width === '100px', 'render element style object')
 	

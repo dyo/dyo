@@ -61,7 +61,7 @@ function setDOMProperty (element, name, value) {
 		case null:
 		case false:
 		case undefined:
-			return setDOMProperty(element, name, '')
+			return setDOMAttribute(element, name, value, getDOMNode(element)[name] = '')
 	}
 
 	getDOMNode(element)[name] = value

@@ -41,8 +41,8 @@ function createElementText (content, key) {
 	var element = new Element(SharedElementText)
 
 	element.type = SharedTypeText
-	element.key = SharedTypeKey+key
-	element.children = content+''
+	element.key = SharedTypeKey + key
+	element.children = content + ''
 
 	return element
 }
@@ -103,13 +103,13 @@ function createElementIterable (iterable) {
  */
 function createElementBranch (element, key) {
 	switch (element.constructor) {
-		case Promise:
-		case Function:
-			return createElement(element)
 		case Boolean:
 			return createElementText('', key)
 		case Date:
-			return createElementText(element, key)			
+			return createElementText(element, key)
+		case Promise:
+		case Function:
+			return createElement(element)
 	}
 
 	if (typeof element.next === 'function')
@@ -119,7 +119,7 @@ function createElementBranch (element, key) {
 	if (typeof element === 'function')
 		return createElementBranch(element())
 	if (element instanceof Error)
-		return createElement('details', createElement('summary', element+''), h('pre', element.report || element.stack))
+		return createElement('details', createElement('summary', element + ''), h('pre', element.report || element.stack))
 
 	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 }
@@ -271,7 +271,7 @@ function setElementChildren (children, element, index) {
 				children.insert(createElementText(element, index), children)
 				break
 			default:
-				children.insert(createElementBranch(element, index), children)
+				return setElementChildren(children, createElementBranch(element, index), index)
 		}
 	else
 		children.insert(createElementText('', index), children)

@@ -174,11 +174,34 @@ test('Updating Component Props', ({assert, done, deepEqual}) => {
 	setStateChild({abc: 1})
 	assert(deepEqual(stack[2], {x: 'xxx'}) && deepEqual(stack[3], {x: 'xxx'}), 'update component props')
 	done()
+})
 
-	// Expected
-	// Object{x: 'abc'}, Object{x: 'xxx'}
-	// Object{x: 'xxx'}, Object{x: 'xxx'}
-	// Received
-	// Object{x: 'abc'}, Object{x: 'xxx'}
-	// Object{x: 'xxx'}, Object{x: 'abc'}
+test('Assign Implicit Keys', ({assert, done, deepEqual}) => {
+	var setState = null
+	var stack = []
+	var Y = function() {return h('div', 'y')}
+	var X = function(props, {x, arr}) {
+	  setState = this.setState.bind(this)
+
+	  return h('div', (this.state.x ? [this.state.arr[0]] : this.state.arr).concat([h('div')]))
+	}
+
+	X.getInitialState = function() {return {x: false, arr: [Y, Y, Y]}}
+
+	var container = document.createElement('div')
+
+	render(X, container)
+	stack.push(container.innerHTML)
+	setState({x: true})
+	stack.push(container.innerHTML)
+
+	assert(
+		deepEqual(stack, [
+			'<div><div>y</div><div>y</div><div>y</div><div></div></div>', 
+			'<div><div>y</div><div></div></div>'
+		]), 
+		'assign implicit keys'
+	)
+
+	done()
 })
