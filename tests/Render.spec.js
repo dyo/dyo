@@ -111,6 +111,9 @@ test('Render', ({assert, done}) => {
 	render(h('img', {width: '100px'}), container)
 	assert(container.firstChild.getAttribute('width') === '100px', 'render element img width')
 
+	render(h('input', {value: 0.4, step: 0.1, type: 'range', min: 0, max: 1}), container)
+	assert(container.firstChild.value === '0.4', 'render element input with un-ordered props')
+
 	render(h(Foo), container);
 	assert(compare(container, '<h1 id="1">1</h1>'), 'render function')
 
