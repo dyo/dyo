@@ -1382,10 +1382,9 @@ function commitCreate (element) {
 /**
  * @param {Element} element
  * @param {Element} parent
- * @param {boolean} signature
  * @return {DOM?}
  */
-function commitQuery (element, parent, signature) {
+function commitQuery (element, parent) {
 	if (element.active = true)
 		return getDOMQuery(
 			element,
