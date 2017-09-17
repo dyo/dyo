@@ -160,24 +160,21 @@ function getDOMType (element, xmlns) {
 			return 'http://www.w3.org/1998/Math/MathML'
 		case 'foreignObject':
 			return ''
-		case 'input':
-			element.props = getDOMInput(element.props, {type: null})
 	}
 	
 	return xmlns
 }
 
 /**
- * @param {Object} props
- * @param {Object} object
+ * @param {Element} element
  * @return {Object}
  */
-function getDOMInput (props, object) {
-	switch (props.type) {
-		case 'range':
-			return assign(object, {step: null, min: null, max: null}, props)
+function getDOMProps (element) {
+	switch (element.type) {
+		case 'input':
+			return merge({type: null, step: null, min: null, max: null}, element.props)
 		default:
-			return merge(object, props)
+			return element.props
 	}
 }
 

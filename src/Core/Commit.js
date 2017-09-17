@@ -94,7 +94,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
  	}
 
  	commitChildren(element, element, host, SharedMountAppend, signature)
- 	commitProperties(element, element.props, SharedPropsMount)
+ 	commitProperties(element, getDOMProps(element), SharedPropsMount)
 }
 
 /**
