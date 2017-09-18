@@ -22,15 +22,12 @@ function hydrate (element, target, callback) {
 	if (!target)
 		return hydrate(element, getDOMDocument(), callback)
 	
-	if (root.has(target))
-		render(element, target, callback)
-	else
-		mount(element, target, callback, SharedMountClone)
+	mount(element, target, callback, SharedMountClone)
 }
 
 /**
  * @param {Element} element
- * @param {Element} parent
+ * @param {(Element|Node)} parent
  * @param {function} callback
  * @param {number} signature
  */
@@ -53,4 +50,32 @@ function mount (element, parent, callback, signature) {
 
 	if (typeof callback === 'function')
 		getLifecycleCallback(element, callback, findDOMNode(element))
+}
+
+/**
+ * @param {Node} target
+ * @return {boolean}
+ */
+function unmountComponentAtNode (target) {
+	return root.has(target) && !render(null, target)
+}
+
+/**
+ * @param {(Component|Element|Node)} element
+ * @return {Node}
+ */
+function findDOMNode (element) {
+	if (!element)
+		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+
+	if (isValidElement(element[SymbolElement]))
+		return findDOMNode(element[SymbolElement])
+
+	if (element.active && isValidElement(element))
+		return getDOMNode(element)
+
+	if (isValidDOMNode(element))
+		return element
+
+	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }

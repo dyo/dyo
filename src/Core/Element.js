@@ -54,6 +54,7 @@ function createElementText (content, key) {
 function createElementNode (node) {
 	var element = new Element(SharedElementEmpty)
 
+	element.type = SharedTypeNode
 	element.DOM = node
 
 	return element
@@ -232,12 +233,8 @@ function createElement (type, properties) {
 			type = type.type
 			break
 		case Promise:
-			id = SharedElementPromise
-		default:
-			if (id !== SharedElementPromise && isValidDOMNode(type))
-				id = SharedElementPortal	
-
-			setElementBoundary((element.id = id, children))
+			element.id = SharedElementPromise
+			setElementBoundary(children)
 	}
 
 	element.type = type
@@ -333,7 +330,7 @@ function getElementChildren (element) {
 }
 
 /**
- * @param {Element}
+ * @param {Element} element
  * @param {Element} 
  */
 function getElementParent (element) {
@@ -380,6 +377,9 @@ function getElementSibling (element, direction) {
 
 	if (getElementDescription(element.host) === element)
 		return getElementSibling(element.host, direction)
+	
+	if (element.parent.id < SharedElementEmpty)
+		return getElementSibling(element.parent, direction)
 
 	return createElementNode(SharedDOMObject)
 }

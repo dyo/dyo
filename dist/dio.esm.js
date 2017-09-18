@@ -49,6 +49,7 @@ var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
 
 var SharedTypeKey = '.'
+var SharedTypeNode = '#node'
 var SharedTypeText = '#text'
 var SharedTypeFragment = '#fragment'
 
@@ -315,6 +316,7 @@ function createElementText (content, key) {
 function createElementNode (node) {
 	var element = new Element(SharedElementEmpty)
 
+	element.type = SharedTypeNode
 	element.DOM = node
 
 	return element
@@ -493,12 +495,8 @@ function createElement (type, properties) {
 			type = type.type
 			break
 		case Promise:
-			id = SharedElementPromise
-		default:
-			if (id !== SharedElementPromise && isValidDOMNode(type))
-				id = SharedElementPortal	
-
-			setElementBoundary((element.id = id, children))
+			element.id = SharedElementPromise
+			setElementBoundary(children)
 	}
 
 	element.type = type
@@ -594,7 +592,7 @@ function getElementChildren (element) {
 }
 
 /**
- * @param {Element}
+ * @param {Element} element
  * @param {Element} 
  */
 function getElementParent (element) {
@@ -641,6 +639,9 @@ function getElementSibling (element, direction) {
 
 	if (getElementDescription(element.host) === element)
 		return getElementSibling(element.host, direction)
+	
+	if (element.parent.id < SharedElementEmpty)
+		return getElementSibling(element.parent, direction)
 
 	return createElementNode(SharedDOMObject)
 }
@@ -1045,26 +1046,6 @@ function setComponentReference (value, key, element) {
 
 		this.refs[key] = value
 	}
-}
-
-/**
- * @param {(Component|Element|Node)} element
- * @return {Node}
- */
-function findDOMNode (element) {
-	if (!element)
-		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-
-	if (isValidElement(element[SymbolElement]))
-		return findDOMNode(element[SymbolElement])
-
-	if (element.active && isValidElement(element))
-		return getDOMNode(element)
-
-	if (isValidDOMNode(element))
-		return element
-
-	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }
 
 /**
@@ -1807,15 +1788,12 @@ function hydrate (element, target, callback) {
 	if (!target)
 		return hydrate(element, getDOMDocument(), callback)
 	
-	if (root.has(target))
-		render(element, target, callback)
-	else
-		mount(element, target, callback, SharedMountClone)
+	mount(element, target, callback, SharedMountClone)
 }
 
 /**
  * @param {Element} element
- * @param {Element} parent
+ * @param {(Element|Node)} parent
  * @param {function} callback
  * @param {number} signature
  */
@@ -1838,6 +1816,34 @@ function mount (element, parent, callback, signature) {
 
 	if (typeof callback === 'function')
 		getLifecycleCallback(element, callback, findDOMNode(element))
+}
+
+/**
+ * @param {Node} target
+ * @return {boolean}
+ */
+function unmountComponentAtNode (target) {
+	return root.has(target) && !render(null, target)
+}
+
+/**
+ * @param {(Component|Element|Node)} element
+ * @return {Node}
+ */
+function findDOMNode (element) {
+	if (!element)
+		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+
+	if (isValidElement(element[SymbolElement]))
+		return findDOMNode(element[SymbolElement])
+
+	if (element.active && isValidElement(element))
+		return getDOMNode(element)
+
+	if (isValidDOMNode(element))
+		return element
+
+	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }
 
 /**
@@ -1955,11 +1961,11 @@ function setDOMValue (element, value) {
 
 /**
  * @param {Element} element
- * @param {Object} declaration
+ * @param {Object} object
  */
-function setDOMStyle (element, declaration) {
-	for (var key in declaration) {
-		var value = declaration[key]
+function setDOMStyle (element, object) {
+	for (var key in object) {
+		var value = object[key]
 
 		if (key.indexOf('-') < 0)
 			getDOMNode(element).style[key] = value !== false && value !== undefined ? value : null
@@ -2125,11 +2131,14 @@ function getDOMQuery (element, parent, prev, next) {
 				node = DOM(target)
 				type = ''
 
-				if (!(target = target.nextSibling) || next !== element)
+				if (!(target = target.nextSibling))
 					break
+
+				if (target.nodeName.toLowerCase() === next.type.toLowerCase())
+					return node
 		default:
 			if (type === '#text' && (xmlns === type || children.length === 0))
-				if (getDOMNode(parent).insertBefore((node = createDOMText(element)).target, target))
+				if (target.parentNode.insertBefore((node = createDOMText(element)).target, target))
 					return node
 
 			target = (sibling = target).nextSibling
@@ -2175,8 +2184,11 @@ function createDOMText (element) {
 function createDOMPortal (element) {
 	if (typeof element.type === 'string')
 		return DOM(document.querySelector(element.type))
-	else
+
+	if (isValidDOMNode(element.type))
 		return DOM(element.type)
+
+	return DOM(getDOMDocument())
 }
 
 /**
@@ -2213,6 +2225,7 @@ exports.Component = Component
 exports.PureComponent = PureComponent
 exports.Children = Children
 exports.findDOMNode = findDOMNode
+exports.unmountComponentAtNode = unmountComponentAtNode
 exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
 exports.createPortal = createPortal
@@ -2228,6 +2241,7 @@ export {
 	PureComponent,
 	Children,
 	findDOMNode,
+	unmountComponentAtNode,
 	cloneElement,
 	isValidElement,
 	createPortal,

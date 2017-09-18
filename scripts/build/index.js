@@ -89,6 +89,7 @@ exports.Component = Component
 exports.PureComponent = PureComponent
 exports.Children = Children
 exports.findDOMNode = findDOMNode
+exports.unmountComponentAtNode = unmountComponentAtNode
 exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
 exports.createPortal = createPortal

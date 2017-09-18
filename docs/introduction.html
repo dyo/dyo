@@ -23,21 +23,6 @@
 		</nav>
 	</header>
 	<article>
-		<h1 id=getting-started>Getting Started</h1>
-
-		<p>
-			To follow along with this introduction you can use this <a href=https://jsbin.com/movuti/edit?js,output>Hello World Example</a> as code REPL.
-		</p>
-
-<pre><code>
-dio.render(
-  h('h1', 'Hello, world!'),
-  document.getElementById('root')
-)</code>
-</pre>
-
-		<p>This Hello World example should render a heading with the content "Hello World".</p>
-
 		<h1 id=installation>Installation</h1>
 
 		<p>DIO can be installed through the following CDN's.</p>
@@ -51,17 +36,28 @@ dio.render(
 npm install dio.js --save
 </code></pre>
 
-		<h1 id=elements>Introducing Elements</h1>
+		<h1 id=getting-started>Getting Started</h1>
 
 		<p>
-			Elements are the smallest building blocks of an interface. 
-			They allow use to create the building blocks that describe what you see on the screen.
+			To follow along with this introduction you can use this <a href=https://jsbin.com/movuti/edit?js,output>Hello World Example</a>.
 		</p>
+
+<pre><code>
+dio.render(
+  h('h1', 'Hello, world!'),
+  document.getElementById('root')
+)</code>
+</pre>
+
+		<p>This Hello World example should render a heading with the content "Hello World".</p>
+
+		<h1 id=elements>Introducing Elements</h1>
+
 <pre><code>
 const element = h('h1', 'Hello World');
 </code></pre>
 		<p>
-			Elements are backed by JavaScript objects that describe what and how the that particular element should look and behave.
+			Elements are backed by JavaScript objects that describe what and how a particular element should look and behave.
 		</p>
 		<p>
 			Given what to render at any one point in time, the underlining reconciler takes care of updating/mounting these elements correctly to reflect the current state of the interface.
@@ -78,20 +74,20 @@ const element = h('h1', {
 
 		<h1 id=components>Components</h1>
 
-		<p>Components allow use to categorize an interface into (in)dependent, reusable pieces.</p>
+		<p>Components are units that allow us to sub-divide an interface into (in)dependent, reusable pieces.</p>
 
-		<p>Conceptually, components are like JavaScript functions. They accept arbitrary arguments (called "props") and return elements describing what should appear on the screen.</p>
+		<p>Conceptually, components are like JavaScript functions. They accept arbitrary arguments and return elements describing the look and behavior of the interface.</p>
 
 		<h2>Functions and Classes</h2>
 
-		<p>The first varient of a component is a JavaScript <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions>Function</a> that accepts "props" and returns an element.</p>
+		<p>The first varient of a component is a JavaScript <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions>Function</a>.</p>
 <pre><code>
 function Welcome (props) {
 	return h('h1', 'Hello', props.name)
 }
 </code></pre>
 
-		<p>The second varient of a component is a <a href=https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes>JavaScript Class</a> which implements a "render" method that returns an element.</p>
+		<p>The second varient, a <a href=https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes>JavaScript Class</a> that implements a "render" method.</p>
 
 <pre><code>
 class Welcome {
@@ -101,10 +97,10 @@ class Welcome {
 }
 </code></pre>
 	
-		<p>Components accept "props", "state" &amp; "context" as arguments.</p>
+		<p>Components accept <code>"props"</code>, <code>"state"</code> &amp; <code>"context"</code> as arguments.</p>
 
 		<p>
-			For the most part function and class components are equivalent.
+			For the most part function and class components are equivalent in what you can archive with them, and like their counter part(class components) function components can also retain state.
 		</p>
 
 		<h2>Rendering a Component</h2>
@@ -120,13 +116,19 @@ dio.render(
 )
 </code></pre>
 
+		<p>The example demonstrates that we render components just as we would elements but it also shows us that when required we can pass arbitrary arguments to a component.</p>
+
 		<h1 id=lifecycles>Lifecycles</h1>
 
 		<p>
-			Lifecycles allow us to observer the different states that a component unit goes through in the render process.
+			Lifecycles allow us to observe the different phases that a component unit goes through throughout the render process, and like state, function components can hold lifecycle methods.
 		</p>
 
-		<h2>Function Lifecycles</h2>
+		<p>
+			When implementated lifecycles are invoked in certain stages of the components life.
+		</p>
+
+		<h2>Function Lifecycle</h2>
 
 <pre><code>
 function Welcome () {
@@ -135,7 +137,7 @@ function Welcome () {
 Welcome.componentDidMount = () => {}
 </code></pre>
 
-		<h2>Class Lifecycles</h2>
+		<h2>Class Lifecycle</h2>
 
 <pre><code>
 class Welcome {
@@ -145,10 +147,6 @@ class Welcome {
 	}
 }
 </code></pre>
-
-		<p>
-			When implementated lifecycles are invoked in certain stages of the components render process.
-		</p>
 
 		<hr>
 
@@ -197,9 +195,7 @@ class Welcome {
 
 		<h1 id=events>Events &amp; State</h1>
 	
-		<p>Events allow us to respond to interactive behaviour.</p>
-
-		<p class=math>V=f(s)</p>
+		<p>Events allow us to respond to behaviour.</p>
 
 <pre><code>
 class Input {
@@ -210,7 +206,7 @@ class Input {
 		return [
 			h('input', {
 				type: 'text', 
-				oninput: this.handleInput
+				onInput: this.handleInput
 			}),
 			h('h1', this.state.value)
 		]
@@ -220,16 +216,18 @@ class Input {
 dio.render(h(Input), document.getElementById('root'))
 </code></pre>
 
+		<p>The example demonstrates how we can listen to events on an element and respond in kind.</p>
+
+		<p>In this particular example we update the value of our <code>&lt;h1></code> element to contain the value of the <code>&lt;input></code> whenever an <code>input</code> event is triggered.</p>
+
 		<h1 id=interoperability>Interoperability</h1>
 
-		<p>
-			Outside of the the elements DIO can create we sometimes need a mechanism to interop with the native View, this is where the concept of refs come into play.
-		</p>
+		<p>There two main machanisms that make interoperability with the native DOM possible.</p>
 
 		<h2>Refs</h2>
 
 		<p>
-			Refs allow us to reference the underline native View node that an element creates.
+			Refs allow us to reference the underline native DOM node that an element renders to the DOM.
 		</p>
 
 <pre><code>
@@ -241,21 +239,21 @@ const Welcome = return h('h1', {
 		<h2>Portals</h2>
 
 		<p>
-			Portals allow us to render some of a components children outside of itself while preserving the colocation relationship between the two.
+			Portals allow us to render some part of a components outside of itself while preserving the colocation relationship between the two.
 		</p>
 
 <pre><code>
 const portal = document.querySelector('.modal')
 
 dio.render(
-	['Hey', h(portal, 'Welcome', 'Back')], 
+	['Hey', dio.createPortal(['Welcome', 'Back'], portal)], 
 	document.getElementById('root')
 )
 </code></pre>
 
 		<p>
-			While "Hey" will render in the defined root container, our two text elements
-			"Welcome" &amp; "Back" will render within the defined portal.
+			In this example while <code>"Hey"</code> will render in the defined root container, our two text elements
+			<code>"Welcome"</code> &amp; <code>"Back"</code> will render within the defined portal.
 		</p>
 
 

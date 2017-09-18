@@ -23,61 +23,71 @@
 		</nav>
 	</header>
 	<article>
-		<h1>API</h1>
+		<nav>
+	    <h1>Contents</h2>
+			<ol>
+				<li>
+					<a href="#Element">Element</a>
+					<ol>
+						<li><a href="#cloneElement">cloneElement</a></li>
+						<li><a href="#isValidElement">isValidElement</a></li>
+					</ol>
+				</li>
+				<li>
+					<a href="#Component">Component</a>
+					<ol>
+						<li><a href="#Class">Class</a></li>
+						<li><a href="#Extend">Extend</a></li>
+						<li><a href="#Function">Function</a></li>
+					</ol>
+				</li>
+				<!-- TODO -->
+			</ol>
+		</nav>
 
-		<p>
-			DIO's API surface is small to a benefit, <br>with a close resemblance to React.
-		</p>
-
-		<h1 id=elements>Elements</h1>
-
-		<p>Elements are made up of three parts</p>
-
-		<ol>
-			<li>type &mdash; type of element that should be rendered.</li>
-			<li>props &mdash; properties associated with the element.</li>
-			<li>children &mdash; children contained within the element</li>
-		</ol>
-
-<pre><code>
-const h1 = h('h1', {
-	class: 'heading'
-}, 'Hello World')
-</code></pre>
-
-		<h2 id=clone>cloneElement</h2>
-
-		<p>
-			When the first argument of an element, its type, is a virtual element, the element is cloned with new children replacing old children and props shallow merged.
-		</p>
+		<h1 id=Element>Element</h1>
 
 <pre><code>
-const h1 = h('h1', {
-	class: 'large'
-}, 'Hello World')
-
-const h2 = dio.cloneElement(h1, {
-	class: 'small'
-}, 'The Fox')
+dio.createElement(
+	type: string|Function|Promise
+	props?: Object
+	...children?: [any]
+)
 </code></pre>
 
-		<h2 id=portals>Portals</h2>
+		<h2 id=cloneElement>cloneElement</h2>
 
-		<p>
-			A portal is created when the first argument of an element, its type, is a DOM node.
-		</p>
+		<p>Properties are shallow merged while new children replace the old.</p>
 
 <pre><code>
-dio.render(h('div', 1, h(document.body, 2, 3)))
+dio.cloneElement(
+	element: Element 
+	props?: Object
+	...children?: [Any]
+)
 </code></pre>
 
-		<h1 id=components>Components</h1>
+		<h2 id=isValidElement>isValidElement</h2>
 
-		<p>
-			Components are either of a Class or Function.
-		</p>
+<pre><code>
+dio.isValidElement(
+	element: Any
+)
+</code></pre>
 
-		<h2>Classes</h2>
+		<h2 id=portals>createPortal</h2>
+
+<pre><code>
+dio.createPortal(
+	element: Element,
+	container: Node|String,
+	key?: any
+)
+</code></pre>
+
+		<h1 id=Components>Component</h1>
+
+		<h2 id=Class>Class</h2>
 
 <pre><code>
 class Welcome {
@@ -87,6 +97,8 @@ class Welcome {
 }
 </code></pre>
 
+	<h2 id=Extend>Extend</h2>
+
 <pre><code>
 class Welcome extends dio.Component {
 	render() {
@@ -95,7 +107,7 @@ class Welcome extends dio.Component {
 }
 </code></pre>
 
-		<h2>Functions</h2>
+		<h2 id=Function>Function</h2>
 <pre><code>
 const Welcome = () => {
 	return 'Welcome'
@@ -106,9 +118,7 @@ function Welcome () {
 }
 </code></pre>
 	
-		<p>All components <code>this</code> references the components instance, including function components.</p>
-
-		<h1 id=lifecycle>Lifecycle</h1>
+		<h1 id=Lifecycle>Lifecycle</h1>
 
 		<p>
 			Both <code>function</code> and <code>class</code> are state-full and can make use of lifecycles and state.

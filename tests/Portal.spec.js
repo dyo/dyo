@@ -7,9 +7,9 @@ test('Portal', ({assert, done})=>{
 
 	render(
 		h('div', 
-			h(portal, 
+			createPortal([
 				h('li', {key: '1st'}, '1st')
-			),
+			], portal),
 			h('br')
 		), 
 	container)
@@ -17,10 +17,10 @@ test('Portal', ({assert, done})=>{
 	
 	render(
 		h('div', 
-			h(portal, 
+			createPortal([
 				h('li', {key: '1st'}, '1st'),
 				h('li', {key: '2nd'}, '2nd')
-			),
+			], portal),
 			h('br')
 		), 
 	container)
@@ -28,11 +28,11 @@ test('Portal', ({assert, done})=>{
 
 	render(
 		h('div', 
-			h(portal, 
+			createPortal([
 				h('li', {key: '1st'}, '1st'),
 				h('li', {key: '3rd'}, '3rd'),
 				h('li', {key: '2nd'}, '2nd')
-			),
+			], portal),
 			h('br')
 		), 
 	container)
@@ -40,10 +40,10 @@ test('Portal', ({assert, done})=>{
 
 	render(
 		h('div', 
-			h(portal, 
+			createPortal([
 				h('li', {key: '1st'}, '1st'),
 				h('li', {key: '2nd'}, '2nd')
-			),
+			], portal),
 			h('br')
 		), 
 	container)
@@ -51,9 +51,9 @@ test('Portal', ({assert, done})=>{
 
 	render(
 		h('div', 
-			h(portal, 
+			createPortal([
 				h('li', {key: '1st'}, '1st')
-			),
+			], portal),
 			h('br')
 		), 
 	container)
@@ -62,9 +62,9 @@ test('Portal', ({assert, done})=>{
 	render(
 		h('div', 
 			h('li', {key: '2nd'}, '2nd'),
-			h(portal, 
+			createPortal([
 				h('li', {key: '1st'}, '1st')
-			),
+			], portal),
 			h('br')
 		), 
 	container)
@@ -76,7 +76,7 @@ test('Portal', ({assert, done})=>{
 			h('br')
 		), 
 	container)
-	assert(compare(body, '<main><div><br></div></main><ul><li>1st</li></ul>'), 'alias top-level #createPortal API')
+	assert(compare(body, '<main><div><br></div></main><ul><li>1st</li></ul>'), '#createPortal element argument')
 
 	render(null, container)
 	assert(compare(body, '<main></main><ul></ul>'), 'remove nested child portal')

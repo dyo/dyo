@@ -126,9 +126,6 @@ test('Render', ({assert, done}) => {
 	render(Baz, container)
 	assert(compare(container, '<h1>Hello</h1><h1>World</h1>'), 'render fragment')
 
-	render([h('h1', 'Hello'), h(portal, h('h1', 'World'))], container)
-	assert(compare(container, '<h1>Hello</h1>') && compare(portal, '<h1>World</h1>'), 'render portal')
-
 	render(null, container)
 	render(Boo, container)
 

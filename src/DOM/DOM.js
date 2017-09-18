@@ -38,11 +38,11 @@ function setDOMValue (element, value) {
 
 /**
  * @param {Element} element
- * @param {Object} declaration
+ * @param {Object} object
  */
-function setDOMStyle (element, declaration) {
-	for (var key in declaration) {
-		var value = declaration[key]
+function setDOMStyle (element, object) {
+	for (var key in object) {
+		var value = object[key]
 
 		if (key.indexOf('-') < 0)
 			getDOMNode(element).style[key] = value !== false && value !== undefined ? value : null
@@ -208,11 +208,14 @@ function getDOMQuery (element, parent, prev, next) {
 				node = DOM(target)
 				type = ''
 
-				if (!(target = target.nextSibling) || next !== element)
+				if (!(target = target.nextSibling))
 					break
+
+				if (target.nodeName.toLowerCase() === next.type.toLowerCase())
+					return node
 		default:
 			if (type === '#text' && (xmlns === type || children.length === 0))
-				if (getDOMNode(parent).insertBefore((node = createDOMText(element)).target, target))
+				if (target.parentNode.insertBefore((node = createDOMText(element)).target, target))
 					return node
 
 			target = (sibling = target).nextSibling
@@ -258,8 +261,11 @@ function createDOMText (element) {
 function createDOMPortal (element) {
 	if (typeof element.type === 'string')
 		return DOM(document.querySelector(element.type))
-	else
+
+	if (isValidDOMNode(element.type))
 		return DOM(element.type)
+
+	return DOM(getDOMDocument())
 }
 
 /**
