@@ -126,7 +126,8 @@ test('Render', ({assert, done}) => {
 	render(Baz, container)
 	assert(compare(container, '<h1>Hello</h1><h1>World</h1>'), 'render fragment')
 
-	render(null, container)
+	assert(unmountComponentAtNode(container) && compare(container, ''), 'unmountComponentAtNode(container)')
+
 	render(Boo, container)
 
 	promise.then(() => {
