@@ -45,7 +45,6 @@ var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
 
 var SharedTypeKey = '.'
-var SharedTypeNode = '#node'
 var SharedTypeText = '#text'
 var SharedTypeFragment = '#fragment'
 

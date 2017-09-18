@@ -26,5 +26,24 @@ test('Hydrate', ({assert, done}) => {
 	assert(compare(container, '<head><title>xxx</title></head>'), 'hydrate fragment')
 	assert(container.childNodes.length === 4, 'hydrate empty string')
 
+	const A = () => h('span', 'aaa')
+	const B = () => h('span', 'bbb')
+	const C = () => [A]
+	const D = () => [B]
+
+	container = document.createElement('div')
+	container.innerHTML = '<span>pre-dio</span>'
+	first = container.querySelector('span')
+	hydrate(C, container)
+	second = container.querySelector('span')
+	hydrate(D, container)
+
+	assert(
+		container.childNodes.length === 3 && 
+		compare(container, '<span>bbb</span>') &&
+		first.innerHTML === 'bbb' && second.innerHTML === 'bbb',
+		'repeat nested fragment hydration case'
+	)
+
 	done()
 })

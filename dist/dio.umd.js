@@ -60,7 +60,6 @@
 	var SharedSiteFindDOMNode = 'findDOMNode'
 	
 	var SharedTypeKey = '.'
-	var SharedTypeNode = '#node'
 	var SharedTypeText = '#text'
 	var SharedTypeFragment = '#fragment'
 	
@@ -327,7 +326,6 @@
 	function createElementNode (node) {
 		var element = new Element(SharedElementEmpty)
 	
-		element.type = SharedTypeNode
 		element.DOM = node
 	
 		return element
@@ -2122,6 +2120,7 @@
 		var type = element.type.toLowerCase()
 		var xmlns = element.xmlns
 		var children = element.children
+		var text = '#text'
 		var node = null
 		var previous = prev.active && getDOMNode(prev)
 		var target = previous ? previous.nextSibling : getDOMNode(parent).firstChild 
@@ -2131,7 +2130,7 @@
 		while (target)
 			switch (target.nodeName.toLowerCase()) {
 				case type:
-					if (type === '#text') {
+					if (type === text) {
 						if (element !== next && element.id === next.id)
 							target.splitText(children.length)
 	
@@ -2140,17 +2139,20 @@
 					}
 	
 					node = DOM(target)
-					type = ''
+					type = null
 	
 					if (!(target = target.nextSibling))
 						break
 	
-					if (target.nodeName.toLowerCase() === next.type.toLowerCase())
+					if (next.type)
 						return node
 			default:
-				if (type === '#text' && (xmlns === type || children.length === 0))
+				if (type === text && (xmlns === type || children.length === 0))
 					if (target.parentNode.insertBefore((node = createDOMText(element)).target, target))
-						return node
+						if (next.type)
+							return node
+						else
+							type = current = null
 	
 				target = (sibling = target).nextSibling
 	

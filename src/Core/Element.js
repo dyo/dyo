@@ -54,7 +54,6 @@ function createElementText (content, key) {
 function createElementNode (node) {
 	var element = new Element(SharedElementEmpty)
 
-	element.type = SharedTypeNode
 	element.DOM = node
 
 	return element
