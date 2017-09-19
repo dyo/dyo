@@ -2131,10 +2131,8 @@ function getDOMQuery (element, parent, prev, next) {
 	var children = element.children
 	var text = '#text'
 	var node = null
-	var previous = prev.active && getDOMNode(prev)
-	var target = previous ? previous.nextSibling : getDOMNode(parent).firstChild 
-	var current = target
-	var sibling = target
+	var target = prev.active ? getDOMNode(prev).nextSibling : getDOMNode(parent).firstChild 
+	var previous = target
 
 	while (target)
 		switch (target.nodeName.toLowerCase()) {
@@ -2161,12 +2159,10 @@ function getDOMQuery (element, parent, prev, next) {
 					if (next.type)
 						return node
 					else
-						type = current = null
+						type = null
 
-			target = (sibling = target).nextSibling
-
-			if (!previous || current !== sibling)
-				sibling.parentNode.removeChild(sibling)
+			target = (previous = target).nextSibling
+			previous.parentNode.removeChild(previous)
 		}
 
 	return node

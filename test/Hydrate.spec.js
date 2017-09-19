@@ -1,5 +1,5 @@
 describe('Hydrate', () => {
-	it('should mount to an empty node', () => {
+	it('should mount to an empty element', () => {
 		let container = document.createElement('div')
 		let refs = null
 
@@ -16,7 +16,7 @@ describe('Hydrate', () => {
 		assert.html(container, '<section class="class"><div>context</div></section>')
 	})
 
-	it('should repair invalid markup', () => {
+	it('should repair invalid elements', () => {
 		let container = document.createElement('div')
 		container.innerHTML = '<section><div>incorrect</div><h1>extra</h1></section>'
 		
@@ -24,7 +24,15 @@ describe('Hydrate', () => {
 		assert.html(container, '<section class="class"><div>context</div></section>')
 	})
 
-	it('should hydrate a fragment', () => {
+	it('should remove invalid elements', () => {
+		let container = document.createElement('div')
+		container.innerHTML = '<div><div>xxx</div></div>'
+
+		hydrate(() => h('div', [undefined, h('span')]), container)
+		assert.html(container, '<div><span></span></div>')
+	})
+
+	it('should hydrate a fragment element', () => {
 		let container = document.createElement('html')
 		container.innerHTML = '<head></head><body></body>'
 
@@ -32,7 +40,7 @@ describe('Hydrate', () => {
 		assert.html(container, '<head><title>xxx</title></head>')
 	})
 
-	it('should hydrate empty string', () => {
+	it('should hydrate empty string element', () => {
 		let container = document.createElement('html')
 		hydrate('', container)
 		assert.lengthOf(container.childNodes, 1)
