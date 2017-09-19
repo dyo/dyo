@@ -7,12 +7,12 @@
  */
 function invokeErrorBoundary (element, e, from, signature) {
 	var error = getErrorException(element, e, from)
-	var element = getErrorElement(element, error, from, 0, signature)
+	var snapshot = getErrorElement(element, error, from, 0, signature)
 
 	if (error.report)
 		console.error(error.report)
 
-	return element
+	return snapshot
 }
 
 /**

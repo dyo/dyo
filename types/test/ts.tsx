@@ -1,4 +1,4 @@
-/// <reference path="../types/dio.d.ts" />
+/// <reference path="../dio.d.ts" />
 
 interface P {
 	children: Array<any>
@@ -12,7 +12,7 @@ class A extends dio.Component<P, S> {
 	constructor(props: P){
 		super(props)
 	}
-	render(props: P) {
+	render(props: Readonly<P>, state: Readonly<S>) {
 		return <h1 style='color:red;'>Hello World</h1>
 	}
 }

@@ -2,15 +2,15 @@
 type Text = string|number|null|void
 type Key = Text
 type Ref = string|Function
-type Type = string|Function|Promise<any>|Element
+type Type = string|Function|Promise<any>|ElementShape
 type State = Object|Promise<Object>
 type Return = State|Promise<State>|void
-type Render = Element|number|string|null|void|Promise<any>|Array<any>|Function
+type Render = ElementShape|number|string|null|void|Promise<any>|Array<any>|Function
 type Event = EventListener|EventHandler
 
 interface List {
-	next: Element|List
-	prev: Element|List
+	next: ElementShape|List
+	prev: ElementShape|List
 	length: number
 }
 
@@ -19,7 +19,7 @@ interface Refs {
 }
 
 interface createElement {
-	(type: Type, props?: Props, ...children: Array<any>): Element
+	(type: Type, props?: Props, ...children: Array<any>): ElementShape
 }
 
 interface h extends createElement {}
@@ -217,7 +217,7 @@ interface Props extends Events {
 	dangerouslySetInnerHTML?: {__html: any}
 }
 
-interface Element {
+interface ElementShape {
 	id: number
 	work: number
 	keyed: boolean
@@ -251,7 +251,7 @@ interface Children {
 	map: (children: any, callback: Function) => Array<any>
 	toArray: (children: any) => Array<any>
 	count: (children: any) => number
-	only: (children: Element) => Element
+	only: (children: ElementShape) => ElementShape
 }
 
 interface render {
@@ -272,6 +272,7 @@ interface Component<P, S> {
   componentWillMount(): Return
 	componentWillUnmount(node: Node): Return
   componentDidMount(node: Node): Promise<any>|void
+  shouldComponentUpdate(nextProps: P, nextState: S): boolean
 }
 
 declare global {
@@ -297,15 +298,14 @@ declare global {
 			setState<K extends keyof S>(state: Pick<S, K>, callback?: () => Return): void
 			
 			constructor (props: Readonly<P>)
-			abstract shouldComponentUpdate(nextProps: P, nextState: S): boolean
-			abstract render(props: Readonly<P>, state: Readonly<S>): Render
+			abstract render(props?: Readonly<P>, state?: Readonly<S>): ElementShape
 		}
 	}
 
 	const h: h
 
 	namespace JSX {
-		interface Element {}
+		interface ElementShape {}
 		interface ElementClass extends Component<Props, State> {}
 		interface ElementAttributesProperty {props: any}
 		interface ElementChildrenAttribute {children: any}

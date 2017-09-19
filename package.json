@@ -1,20 +1,20 @@
 {
   "name": "dio.js",
+  "version": "8.0.0",
+  "license": "MIT",
+  "description": "A Library For Building User Interfaces.",
+  "homepage": "https://github.com/thysultan/dio.js",
+
   "main": "dist/dio.umd.js",
   "unpkg": "dist/dio.umd.js",
   "module": "dist/dio.esm.js",
   "types": "types/dio.d.ts",
-  "description": "A Library For Building User Interfaces.",
-  "version": "8.0.0",
-  "homepage": "https://github.com/thysultan/dio.js",
-  "license": "MIT",
+  "files": ["dist", "types/dio.d.ts"],
+
   "author": {
     "name": "Sultan Tarimo",
     "email": "sultantarimo@me.com"
   },
-  "keywords": [
-    "dio"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/thysultan/dio.js"
@@ -22,19 +22,19 @@
   "bugs": {
     "url": "https://github.com/thysultan/dio.js/issues"
   },
-  "files": [
-    "dist",
-    "types"
-  ],
+
   "scripts": {
-    "test": "node ./scripts/tests",
-    "dev": "node ./scripts/build",
-    "build": "node ./scripts/build --bundle"
+    "dev": "node ./script/build",
+    "build": "node ./script/build --bundle",
+    "test": "mocha --require script/test/index.js"
   },
+  
   "devDependencies": {
+    "chai": "^4.1.2",
     "chokidar": "^1.7.0",
     "jsdom": "^11.1.0",
-    "uglify-js": "^3.0.28",
-    "uglify-es": "^3.0.28"
+    "mocha": "^3.5.3",
+    "uglify-es": "^3.0.28",
+    "uglify-js": "^3.0.28"
   }
 }

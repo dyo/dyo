@@ -55,7 +55,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
  			element.work = SharedWorkTask
  			
  			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
- 			element.DOM = commitCreate(element)
+ 			commitCreate(element)
 
  			if (element.ref)
  				commitReference(element, element.ref, SharedReferenceAssign)
@@ -71,8 +71,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
  		case SharedElementPortal:
  			element.DOM = parent.DOM
  			commitChildren(element, sibling, host, operation, signature)
- 			element.DOM = commitCreate(element)
- 			return
+ 			return void commitCreate(element)
  		case SharedElementNode:
  			element.xmlns = getDOMType(element, parent.xmlns)
  		case SharedElementText:
@@ -81,12 +80,10 @@ function commitMount (element, sibling, parent, host, operation, signature) {
  					if (element.DOM = commitQuery(element, parent))
 	 					break
  				default:
- 					element.DOM = commitCreate(element)
- 					
- 					if (operation === SharedMountAppend)
- 						commitAppend(element, parent)
+ 					if (commitCreate(element))
+ 						operation === SharedMountAppend ? commitAppend(element, parent) : commitInsert(element, sibling, parent)
  					else
- 						commitInsert(element, sibling, parent)
+ 						return void commitMount(element, sibling, parent, host, operation, signature)
  			}
 
  			if (element.id === SharedElementText)
@@ -195,8 +192,15 @@ function commitReplace (element, snapshot, parent, host, signature) {
 		else if (element.state = commitUnmount(element, parent, signature))
 			return commitWillReplace(element, snapshot, parent, host, -signature)
 
-	commitMount(snapshot, getElementSibling(element, SharedSiblingNext), parent, host, SharedMountInsert, SharedMountCommit)
-	
+	commitMount(snapshot, getElementSibling(element, SharedSiblingNext), parent, host, SharedMountInsert, SharedMountCommit)	
+	commitMerge(element, snapshot)
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} snapshot
+ */
+function commitMerge (element, snapshot) {
 	for (var key in snapshot)
 		switch (key) {
 			case 'DOM':
@@ -233,7 +237,10 @@ function commitWillReplace (element, snapshot, parent, host, signature) {
 function commitReference (element, callback, signature, key) {
 	switch (typeof callback) {
 		case 'string':
-			return commitReference(element, setComponentReference, signature, callback)			
+			if (signature === SharedReferenceRemove)
+				return commitReference(element, setComponentReference, SharedReferenceRemove, callback)
+			else
+				return commitReference(element, setComponentReference, SharedReferenceDispatch, callback)
 		case 'function':
 			switch (signature) {
 				case SharedReferenceRemove:
@@ -291,22 +298,27 @@ function commitProperties (element, props, signature) {
 
 /**
  * @param {Element} element
- * @return {Object}
+ * @return {boolean}
  */
 function commitCreate (element) {
-	try {		
-		switch ((element.active = true, element.id)) {
+	try {
+		switch (element.id) {
 			case SharedElementNode:
-				return createDOMElement(element)
+				element.DOM = createDOMElement(element)
+				break
 			case SharedElementText:
-				return createDOMText(element)
+				element.DOM = createDOMText(element)
+				break
 			case SharedElementComponent:
-				return getElementChildren(element).DOM
+				element.DOM = getElementChildren(element).DOM
+				break
 			default:
-				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
+				element.DOM = createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
+
+		return element.active = true
 	} catch (e) {
-		return commitCreate(commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
+		return !!commitMerge(element, commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
 	}
 }
 
