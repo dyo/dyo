@@ -1741,36 +1741,44 @@
 	 * @param {Object} snapshot
 	 * @param {Error} error
 	 * @param {string} from
-	 * @param {number} depth
 	 * @param {number} signature
 	 * @return {Element?}
 	 */
-	function getErrorElement (element, error, from, depth, signature) {	
-		var snapshot
-	
-		if (signature === SharedErrorPassive || !element || element.id === SharedElementEmpty)
+	function getErrorElement (element, error, from, signature) {	
+		if (signature === SharedErrorPassive || !isValidElement(element))
 			return
 	
-		if (element.owner && element.owner[SharedComponentDidCatch])
-			try {
-				element.sync = SharedWorkTask
-				snapshot = element.owner[SharedComponentDidCatch].call(element.instance, error, {})
-				element.sync = SharedWorkSync
-			} catch (e) {
-				return invokeErrorBoundary(element.host, e, SharedComponentDidCatch, signature)
-			}
-		else if (depth === 0)
-			return getErrorElement(element.host, error, from, depth + 1, signature)
-		else
-			getErrorElement(element.host, error, from, depth, signature)
+		var owner = element.owner
+		var host = element.host
+		var snapshot = commitElement('')
 	
-		if (from === SharedSiteRender)
-			return commitElement(snapshot)
+		switch (element.id) {
+			case SharedElementEmpty:
+				return
+			case SharedElementNode:
+			case SharedElementText:
+				return getErrorElement(host, error, from, signature)
+			default:
+				if (!owner || !owner[SharedComponentDidCatch])
+					return void getErrorElement(host, error, from, signature)
+		}
 	
-		if (element.active)
+		element.sync = SharedWorkTask
+	
+		try {
+			snapshot = commitElement(owner[SharedComponentDidCatch].call(element.instance, error, {}))
+		} catch (e) {
+			invokeErrorBoundary(host, e, SharedComponentDidCatch, signature)
+		}
+	
+		element.sync = SharedWorkSync
+	
+		if (from !== SharedSiteRender && element.active)
 			requestAnimationFrame(function () {
-				reconcileElement(getElementDescription(element), commitElement(snapshot))
+				reconcileElement(getElementDescription(element), snapshot)
 			})
+	
+		return snapshot
 	}
 	
 	/**

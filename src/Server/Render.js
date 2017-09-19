@@ -1,7 +1,7 @@
 /**
  * @param {*} subject
  * @param {Stream?} target
- * @param {function=}
+ * @param {function=} callback
  */
 function renderToString (subject, target, callback) {
 	if (!target || !target.writable)

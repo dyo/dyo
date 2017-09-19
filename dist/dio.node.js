@@ -142,33 +142,41 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	 * @return {string}
 	 */
 	function toString () {
-		var element = this
-		var id = element.id
+		return getStringElement(this, null)
+	}
 	
-		switch (id) {
+	/**
+	 * @param {Element} element
+	 * @param {Element?} host
+	 * @return {string}
+	 */
+	function getStringElement (element, host) {
+		switch (element.host = host, element.id) {
 			case SharedElementText:
 				return getTextEscape(element.children)
 			case SharedElementComponent:
-				return mountComponent(element).toString()
+				return getStringElement(mountComponent(element), element)
 		}
 	
 		var type = element.type
 		var children = element.children
 		var length = children.length
-		var output = id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
-	
+		var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
+		
 		if (getElementType(type) === SharedElementEmpty)
 			return output
 	
-		if (typeof element.DOM !== 'string')
-			while (length-- > 0)
-				output += (children = children.next).toString()
-		else {
-			output += element.DOM
+		if (!element.DOM)
+			while (length-- > 0) {
+				output += getStringElement(children = children.next, host)
+			}
+		else (output += element.DOM)
 			element.DOM = null
-		}
 	
-		return id === SharedElementNode ? output + '</'+type+'>' : output
+		if (element.id === SharedElementNode)
+			return output + '</' + type + '>'
+		else
+			return output
 	}
 	
 	/**
@@ -189,11 +197,11 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 					else
 						break
 				case 'innerHTML':
-					element.DOM = value+''
+					element.DOM = value + ''
 					break
 				case 'defaultValue':
 					if (!props.value)
-						output += ' value="'+getTextEscape(value)+'"'
+						output += ' value="' + getTextEscape(value) + '"'
 				case 'key':
 				case 'ref':
 				case 'children':
@@ -210,7 +218,7 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 								break
 						case 'string':
 						case 'number':
-							output += ' '+ key + (value !== true ? '="'+getTextEscape(value)+'"' : '')
+							output += ' ' + key + (value !== true ? '="'+getTextEscape(value) + '"' : '')
 					}
 			}
 		}
@@ -219,19 +227,19 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	}
 	
 	/**
-	 * @param {Object} obj
+	 * @param {Object} object
 	 * @return {string}
 	 */
-	function getStringStyle (obj) {
-		var name, output = ''
+	function getStringStyle (object) {
+		var output = ''
 	
-		for (var key in obj) {
+		for (var key in object) {
+			var value = object[key]
+	
 			if (key !== key.toLowerCase())
-				name = key.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
-			else
-				name = key
-			
-			output += name+':'+obj[key]+';'
+				key = key.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
+	
+			output += key + ':' + value + ';'
 		}
 	
 		return output
@@ -286,7 +294,9 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	 * @param {Element}
 	 */
 	function Stream (element) {
+		this.host = null
 		this.stack = [element]
+	
 		Readable.call(this)
 	}
 	/**
@@ -294,76 +304,62 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	 */
 	Stream.prototype = Object.create(Readable.prototype, {
 		/**
+		 * @param {Element} element
+		 * @param {Element?} host
+		 * @param {Array} stack
+		 * @param {Writable} writable
+		 */
+		write: {value: function write (element, host, stack, writable) {
+			var output = ''
+	
+			switch (element.host = host, element.id) {
+				case SharedElementComponent:
+					return write(mountComponent(element), writable.host = element, stack, writable)
+				case SharedElementPromise:
+					return void element.type.then(function (value) {
+						write(commitElement(value), host, stack, writable)
+					})
+				case SharedElementText:
+					return void writable.push(element.children)
+				case SharedElementNode:
+					if (element.DOM)
+						return element.DOM = void writable.push(element.DOM)
+	
+					var output = '<' + element.type + getStringProps(element, element.props) + '>'
+					
+					if (getElementType(element.type) === SharedElementEmpty)
+						return void writable.push(output)
+					
+					if (element.DOM)
+						output += element.DOM
+	
+					element.DOM = '</' + element.type + '>'
+					stack.push(element)
+				default:
+					var children = element.children
+					var length = children.length
+	
+					while (length-- > 0)
+						stack.push(children = children.prev)
+			}
+	
+			writable.push(output)
+		}},
+		/**
 		 * @return {void}
 		 */
 		_read: {value: function read () {
-			if (this.stack.length)
-				setStreamChunk(this.stack.pop(), this.stack, this)
+			if (this.stack.length > 0)
+				this.write(this.stack.pop(), this.host, this.stack, this)
 			else
 				this.push(null)
 		}}
 	})
 	
 	/**
-	 * @param {Element} element
-	 * @param {Array} stack
-	 * @param {Writable} writable
-	 * @return {string}
-	 */
-	function setStreamChunk (element, stack, writable) {
-		while (element.id === SharedElementComponent)
-			element = mountComponent(element)
-	
-		var id = element.id
-		var type = element.type
-		var children = element.children
-		var length = children.length
-		var output = ''
-	
-		switch (id) {
-			case SharedElementPromise:
-				return void element.type.then(function (element) {
-					setStreamChunk(commitElement(element), stack, writable)
-				})
-			case SharedElementText:
-				output = getTextEscape(children)
-				break
-			case SharedElementNode:
-				output = '<' + type + getStringProps(element, element.props) + '>'
-				
-				if (getElementType(type) === SharedElementEmpty)
-					break
-				
-				if (typeof element.DOM === 'string') {
-					output += element.DOM
-					element.DOM = null
-					length = 0
-				}
-	
-				if (length === 0) {
-					output += '</'+type+'>'
-					break
-				}
-			default:
-				if (id === SharedElementNode)
-					children.prev.DOM = '</'+type+'>'
-	
-				while (length-- > 0)
-					stack.push(children = children.prev)
-		}
-	
-		if (typeof element.DOM === 'string') {
-			output += element.DOM
-			element.DOM = null
-		}
-	
-		writable.push(output)
-	}
-	
-	/**
 	 * @param {*} subject
 	 * @param {Stream?} target
-	 * @param {function=}
+	 * @param {function=} callback
 	 */
 	function renderToString (subject, target, callback) {
 		if (!target || !target.writable)

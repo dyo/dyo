@@ -35,11 +35,22 @@ test('Server', ({assert, done}) => {
 		}
 	}
 
+	var Throw = () => {
+		throw new Error('x')
+	}
+	var Root = () => h('div', Throw)
+
+	Root.componentDidCatch = (e) => {
+		e.report = false
+		assert(true, 'bubble componentDidCatch')
+	}
+
 	assert(`${h(Err)}` === 'Hello', 'Component#componentDidCatch')
 	assert(`${h(Foo)}` === '<h1 class="faz" style="margin-top:20px;">Faz</h1>', 'Composite.toString()')
 	assert(`${h(Faz)}` === '<h1 class="faz" style="margin-top:20px;">Faz</h1>', 'Component.toString()')
 	assert(`${h('h1', {onClick: function () {}}, 'Faz')}` === '<h1>Faz</h1>', 'Element.toString()')
 	assert(`${h(Baz)}` === '<head></head><body></body>', 'Fragment.toString()')
+	assert(`${h(Root)}` === '<div></div>', 'handle component errors')
 
 	var output = ''
 	var result = '<h1 class="foo">12<p>Hello</p><span></span><img></h1>'

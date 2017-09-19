@@ -2,33 +2,41 @@
  * @return {string}
  */
 function toString () {
-	var element = this
-	var id = element.id
+	return getStringElement(this, null)
+}
 
-	switch (id) {
+/**
+ * @param {Element} element
+ * @param {Element?} host
+ * @return {string}
+ */
+function getStringElement (element, host) {
+	switch (element.host = host, element.id) {
 		case SharedElementText:
 			return getTextEscape(element.children)
 		case SharedElementComponent:
-			return mountComponent(element).toString()
+			return getStringElement(mountComponent(element), element)
 	}
 
 	var type = element.type
 	var children = element.children
 	var length = children.length
-	var output = id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
-
+	var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
+	
 	if (getElementType(type) === SharedElementEmpty)
 		return output
 
-	if (typeof element.DOM !== 'string')
-		while (length-- > 0)
-			output += (children = children.next).toString()
-	else {
-		output += element.DOM
+	if (!element.DOM)
+		while (length-- > 0) {
+			output += getStringElement(children = children.next, host)
+		}
+	else (output += element.DOM)
 		element.DOM = null
-	}
 
-	return id === SharedElementNode ? output + '</'+type+'>' : output
+	if (element.id === SharedElementNode)
+		return output + '</' + type + '>'
+	else
+		return output
 }
 
 /**
@@ -49,11 +57,11 @@ function getStringProps (element, props) {
 				else
 					break
 			case 'innerHTML':
-				element.DOM = value+''
+				element.DOM = value + ''
 				break
 			case 'defaultValue':
 				if (!props.value)
-					output += ' value="'+getTextEscape(value)+'"'
+					output += ' value="' + getTextEscape(value) + '"'
 			case 'key':
 			case 'ref':
 			case 'children':
@@ -70,7 +78,7 @@ function getStringProps (element, props) {
 							break
 					case 'string':
 					case 'number':
-						output += ' '+ key + (value !== true ? '="'+getTextEscape(value)+'"' : '')
+						output += ' ' + key + (value !== true ? '="'+getTextEscape(value) + '"' : '')
 				}
 		}
 	}
@@ -79,19 +87,19 @@ function getStringProps (element, props) {
 }
 
 /**
- * @param {Object} obj
+ * @param {Object} object
  * @return {string}
  */
-function getStringStyle (obj) {
-	var name, output = ''
+function getStringStyle (object) {
+	var output = ''
 
-	for (var key in obj) {
+	for (var key in object) {
+		var value = object[key]
+
 		if (key !== key.toLowerCase())
-			name = key.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
-		else
-			name = key
-		
-		output += name+':'+obj[key]+';'
+			key = key.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
+
+		output += key + ':' + value + ';'
 	}
 
 	return output
