@@ -24,11 +24,51 @@
 	</header>
 	<article>
 		<h1 id=class>Class</h1>
+
+<pre><code>
+class Default {  }
+class Default extends Component {  }
+class Pure extends PureComponent {  }
+</code></pre>
+
 		<h1 id=function>Function</h1>
+
+<pre><code>
+const Default = function () {  }
+const Arrow = () => {  }
+</code></pre>
+
 		<h1 id=element>Element</h1>
+
+<pre><code>
+h(
+	type: function, 
+	props?: Props, 
+	...children?: Children
+)
+</code></pre>
+
 		<h1 id=props>Props</h1>
+
+<pre><code>
+interface Props {
+	readonly [prop: string]: any
+	readonly children?: any
+}
+</code></pre>
+
 			<h2 id=children>Children</h2>
+
+<pre><code>
+type Children = any
+</code></pre>
+
 		<h1 id=state>State</h1>
+
+<pre><code>
+type State = Readonly&lt;Object>
+</code></pre>
+
 		<h1 id=render>Render</h1>
 		<h1 id=lifecycle>Lifecycle</h1>
 	</article>

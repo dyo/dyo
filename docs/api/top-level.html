@@ -24,19 +24,37 @@
 	</header>
 	<article>
 
-		<h1 id=Element>Element</h1>
+<h1 id=render>render</h1>
+
+<pre><code>
+render(
+	element: Element|Array|number|string
+	target?: Node
+	callback?: function
+)
+</code></pre>
+
+<h1 id=hydrate>hydrate</h1>
+
+<pre><code>
+hydrate(
+	element: Element|Array|number|string
+	target?: Node
+	callback?: function
+)
+</code></pre>
 		
-		<h2 id=createElement>createElement</h2>
+		<h1 id=createElement>createElement</h1>
 
 <pre><code>
 createElement(
 	type: string|Function|Promise
 	props?: object
-	...children?: [any]
+	...children?: Array
 ): Element
 </code></pre>
 
-		<h2 id=cloneElement>cloneElement</h2>
+		<h1 id=cloneElement>cloneElement</h1>
 
 		<p>Properties are shallow merged while new children replace the old.</p>
 
@@ -44,11 +62,11 @@ createElement(
 cloneElement(
 	element: Element 
 	props?: object
-	...children?: [any]
+	...children?: Array
 ): Element
 </code></pre>
 
-		<h2 id=isValidElement>isValidElement</h2>
+		<h1 id=isValidElement>isValidElement</h1>
 
 <pre><code>
 isValidElement(
@@ -56,7 +74,7 @@ isValidElement(
 ): boolean
 </code></pre>
 
-		<h2 id=portals>createPortal</h2>
+		<h1 id=createPortal>createPortal</h1>
 
 <pre><code>
 createPortal(
@@ -96,7 +114,7 @@ class PureComponent {
 	<h2 id=toArray>toArray</h2>
 
 <pre><code>
-toArray(children: any): [any]
+toArray(children: any): Array
 </code></pre>	
 
 	<h2 id=forEach>forEach</h2>
@@ -108,7 +126,7 @@ forEach(children: any, callback: function)
 	<h2 id=map>map</h2>
 
 <pre><code>
-map(children: any, callback: function): [any]
+map(children: any, callback: function): Array
 </code></pre>	
 
 	<h2 id=only>only</h2>
@@ -129,7 +147,7 @@ count(children: any): number
 findDOMNode(instance: Component|Element): Node
 </code></pre>
 
-	<h1 id=findDOMNode>unmountComponentAtNode</h1>
+	<h1 id=unmountComponentAtNode>unmountComponentAtNode</h1>
 
 <pre><code>
 unmountComponentAtNode(target: Node): boolean

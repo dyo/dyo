@@ -6,7 +6,7 @@ const UglifyJS = require('uglify-js')
 const UglifyES = require("uglify-es")
 const package = require('../../package.json')
 
-let filesize = ''
+let filesize = NaN
 
 const options = {compress: {}}
 const strict = `'use strict'`
@@ -243,9 +243,9 @@ const gzipsize = (content) => {
 	var size = parseInt(zlib.gzipSync(content, {level: 9}).length)/1000
 
 	if (size !== filesize) {
-		var kbSize = '~'+Math.round(size)+'kb'
+		var kbSize = '~'+Math.trunc(size)+'kb'
 
-		if (Math.toFixed(size) !== Math.toFixed(filesize)) {
+		if (Math.trunc(size) !== Math.trunc(filesize)) {
 			var readpath = path.join(__dirname, '../../README.md')
 
 			fs.writeFileSync(readpath, fs.readFileSync(readpath).toString().replace(/(-\s+)~?\d+kb/, '$1'+kbSize))
