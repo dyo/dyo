@@ -6,7 +6,6 @@
   "homepage": "https://github.com/thysultan/dio.js",
 
   "main": "dist/dio.umd.js",
-  "unpkg": "dist/dio.umd.js",
   "module": "dist/dio.esm.js",
   "types": "types/dio.d.ts",
   "files": ["dist", "types/dio.d.ts"],

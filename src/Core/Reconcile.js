@@ -4,6 +4,9 @@
  * @return {Object?}
  */
 function reconcileObject (prevObject, nextObject) {
+	if (prevObject === nextObject)
+		return
+
 	var length = 0
 	var delta = {}
 	var value
@@ -47,6 +50,9 @@ function reconcileElement (element, snapshot) {
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
 		return commitReplace(element, snapshot, element.parent, element.host, SharedMountReplace)
 
+	if (element === snapshot)
+		return
+
 	switch (element.id) {
 		case SharedElementPortal:
 		case SharedElementFragment:
@@ -75,7 +81,7 @@ function reconcileChildren (element, snapshot) {
 	var aLength = children.length
 	var bLength = siblings.length
 
-	if (aLength+bLength === 0)
+	if (aLength + bLength === 0)
 		return
 
 	var aPos = 0

@@ -28,7 +28,7 @@ function getErrorElement (element, error, from, signature) {
 
 	var owner = element.owner
 	var host = element.host
-	var snapshot = commitElement('')
+	var snapshot
 
 	if (!owner || !owner[SharedComponentDidCatch])
 		return host ? void getErrorElement(host, error, from, signature) : snapshot

@@ -32,7 +32,8 @@ A Library For Building User Interfaces.
 #### CDN
 
 ```html
-<script src=https://unpkg.com/dio.js@latest/dist/dio.umd.min.js></script>
+<script src=https://unpkg.com/dio.js@latest></script>
+<script src=https://cdn.jsdelivr.net/npm/dio.js@latest></script>
 ```
 
 #### NPM

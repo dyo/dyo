@@ -24,7 +24,7 @@ function childrenArray (children) {
 		return flatten(children, array)
 	else if (typeof children[SymbolIterator] === 'function')
 		return childrenArray(child[SymbolIterator]())
-	else if (typeof children.next === 'function' || children instanceof List)
+	else if (typeof children.next === 'function' || typeof children.forEach === 'function')
 		each(children, function (element) {
 			return array.push(element)
 		})
