@@ -4,13 +4,11 @@
   <meta charset=utf-8>
   <meta http-equiv=X-UA-Compatible content=IE=edge>
   <meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DIO - Benchmark</title>
-  <link rel=stylesheet href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel=icon type=image/png href=../imgs/favicon-large.png sizes=32x32>
-  <link rel=icon type=image/png href=../imgs/favicon-small.png sizes=16x16>
+  <title>Benchmark</title>
+  <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css>
   <script src=https://unpkg.com/dio.js@latest/dist/dio.min.js></script>
 </head>
-  <div id=main></div>
+  <div id=root></div>
 
   <style>
   	body {padding: 10px 0 0 0;margin: 0;overflow-y: scroll;}
@@ -249,7 +247,7 @@
     }
   }
 
-  dio.render(h(Main), document.getElementById('main'));
+  dio.render(h(Main), document.getElementById('root'));
   </script>
 </body>
 </html>

@@ -5,20 +5,20 @@
 	<meta http-equiv=X-UA-Compatible content=IE=edge>
 	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>DIO – Introduction</title>
-	<link rel=stylesheet href=css/stylesheet.css>
-	<link rel=icon type=image/png href=../imgs/favicon-large.png sizes=32x32>
-	<link rel=icon type=image/png href=../imgs/favicon-small.png sizes=16x16>
+	<link rel=stylesheet href=../assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=../assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=../assets/images/favicon-small.png sizes=16x16>
 </head>
 <body>
-	<a href=./ title=index class=logo>
-		<img src=imgs/logo.svg alt=logo>
+	<a href=../ title=index class=logo>
+		<img src=../assets/images/logo.svg alt=logo>
 	</a>
 	<header>
 		<nav>
-			<a href=./>Index</a>
-			<a href=./introduction.html>Introduction</a>
-			<a href=./api.html>API</a>
-			<a href=./examples.html>Examples</a>
+			<a href=../>Index</a>
+			<a href=../introduction/>Introduction</a>
+			<a href=../api>API</a>
+			<a href=../examples>Examples</a>
 			<a href=https://github.com/thysultan/dio.js>GitHub</a>
 		</nav>
 	</header>
@@ -49,7 +49,7 @@ dio.render(
 )</code>
 </pre>
 
-		<p>This Hello World example should render a heading with the content "Hello World".</p>
+		<p>This Hello World example should render a heading with the content `Hello World`.</p>
 
 		<h1 id=elements>Introducing Elements</h1>
 
@@ -87,7 +87,7 @@ function Welcome (props) {
 }
 </code></pre>
 
-		<p>The second varient, a <a href=https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes>JavaScript Class</a> that implements a "render" method.</p>
+		<p>The second varient, a <a href=https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes>JavaScript Class</a> that implements a render method.</p>
 
 <pre><code>
 class Welcome {
@@ -97,7 +97,7 @@ class Welcome {
 }
 </code></pre>
 	
-		<p>Components accept <code>"props"</code>, <code>"state"</code> &amp; <code>"context"</code> as arguments.</p>
+		<p>Components accept <code>props</code>, <code>state</code> &amp; <code>context</code> as arguments.</p>
 
 		<p>
 			For the most part function and class components are equivalent in what you can archive with them, and like their counter part(class components) function components can also retain state.
@@ -252,8 +252,8 @@ dio.render(
 </code></pre>
 
 		<p>
-			In this example while <code>"Hey"</code> will render in the defined root container, our two text elements
-			<code>"Welcome"</code> &amp; <code>"Back"</code> will render within the defined portal.
+			In this example while <code>`Hey`</code> will render in the defined root container, our two text elements
+			<code>`Welcome`</code> &amp; <code>`Back`</code> will render within the defined portal.
 		</p>
 
 
@@ -280,12 +280,12 @@ dio.render(
 		<h2>Setup</h2>
 
 		<p>
-			Babel <label></label> 
-			<span class=note>
-				<a href=http://babeljs.io>Babel</a> is a JavaScript transpiler best known for its ability to turn ES6 (the next version of JavaScript) into code that runs in your browser (or on your server) today.
-			</span>
-			&mdash;
+			Babel &mdash;
 		</p>
+
+		<blockquote>
+			<a href=http://babeljs.io>Babel</a> is a JavaScript transpiler best known for its ability to turn ES6 (the next version of JavaScript) into code that runs in your browser (or on your server) today.
+		</blockquote>
 
 <pre><code>
 {
@@ -296,12 +296,12 @@ dio.render(
 </code></pre>
 
 		<p>
-			Typescript <label></label> 
-			<span class=note>
-				<a href=https://www.typescriptlang.org>Typescript</a> is a typed superset of JavaScript that compiles to plain JavaScript.
-			</span>
-			&mdash;
+			Typescript &mdash;
 		</p>
+
+		<blockquote>
+			<a href=https://www.typescriptlang.org>Typescript</a> is a typed superset of JavaScript that compiles to plain JavaScript.
+		</blockquote>
 
 <pre><code>
 {
@@ -314,14 +314,13 @@ dio.render(
 
 		<h1>Moving Foward</h1>
 
-		<p>There's still a few pieces we haven't gone into that the <a href=api.html>API</a> documentation will hopefully help shed some light upon.</p>
+		<p>There's still a few pieces we haven't gone into that the <a href=../api>API</a> documentation will hopefully help shed some light upon.</p>
 
-		<p>At this point you can jump right into creating something with DIO, look at some <a href=examples.html>Examples</a> or learn how DIO works under the hood on <a href=https://github.com/thysultan/dio.js>GitHub</a>.</p>
+		<p>At this point you can jump right into creating something with DIO, look at some <a href=../examples>Examples</a> or learn how DIO works under the hood on <a href=https://github.com/thysultan/dio.js>GitHub</a>.</p>
 
 		<p>If you've made anything with DIO i'd be happy to add it to the small list of examples currently available.</p>
 	</article>
 
-	<script src=js/highlight.js></script>
-	<script src=js/main.js></script>
+	<script src=../assets/javascript/index.js></script>
 </body>
 </html>

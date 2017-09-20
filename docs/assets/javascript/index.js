@@ -104,5 +104,5 @@
 		});
 	}
 
-	window.highlight = highlight;
+	highlight()
 }());

@@ -4,38 +4,11 @@
 	<meta charset=utf-8>
 	<meta http-equiv=X-UA-Compatible content=IE=edge>
 	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title>DIO - 5K</title>
-	<link rel=stylesheet href=../css/stylesheet.css>
-	<link rel=icon type=image/png href=../imgs/favicon-large.png sizes=32x32>
-	<link rel=icon type=image/png href=../imgs/favicon-small.png sizes=16x16>
-	<script src=../js/highlight.js></script>
-	<script src=../js/main.js></script>
+	<title>5K</title>
 	<script src=https://unpkg.com/dio.js@latest/dist/dio.min.js></script>
 </head>
 <body>
-	<a href=../ title=index class=logo>
-		<img src=../imgs/logo.svg alt=logo>
-	</a>
-	<header>
-		<nav>
-			<a href=../>Index</a>
-			<a href=../introduction.html>Introduction</a>
-			<a href=../api.html>API</a>
-			<a href=../examples.html>Examples</a>
-			<a href=https://github.com/thysultan/dio.js>GitHub</a>
-		</nav>
-	</header>
-	<article>
-		<h1>5K components</h1>
-
-		<hr>
-
-		<p>Five thousand components, using a component for each pixel randomly animating the <code>`color`</code> style of each pixel over time.</p>
-
-		<hr>
-
-		<div id=root></div>
-	</article>
+	<div id=root></div>
 
 	<style>
 		#root div {
@@ -51,6 +24,7 @@
 			padding: 0;
 		}
 	</style>
+	
 	<script>
 		class Pixel {
 			render () {
