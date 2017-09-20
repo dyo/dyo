@@ -39,6 +39,7 @@ var SharedSiblingNext = 'next'
 
 var SharedSiteCallback = 'callback'
 var SharedSiteRender = 'render'
+var SharedSiteElement = 'element'
 var SharedSiteConstructor = 'constructor'
 var SharedSiteAsync = 'async'
 var SharedSiteSetState = 'setState'

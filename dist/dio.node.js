@@ -45,6 +45,7 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	
 	var SharedSiteCallback = 'callback'
 	var SharedSiteRender = 'render'
+	var SharedSiteElement = 'element'
 	var SharedSiteConstructor = 'constructor'
 	var SharedSiteAsync = 'async'
 	var SharedSiteSetState = 'setState'

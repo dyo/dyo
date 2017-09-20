@@ -54,6 +54,7 @@
 	
 	var SharedSiteCallback = 'callback'
 	var SharedSiteRender = 'render'
+	var SharedSiteElement = 'element'
 	var SharedSiteConstructor = 'constructor'
 	var SharedSiteAsync = 'async'
 	var SharedSiteSetState = 'setState'
@@ -1114,7 +1115,7 @@
 	 			element.work = SharedWorkTask
 	 			
 	 			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
-	 			commitCreate(element)
+	 			element.DOM = commitCreate(element)
 	
 	 			if (element.ref)
 	 				commitReference(element, element.ref, SharedReferenceAssign)
@@ -1130,7 +1131,8 @@
 	 		case SharedElementPortal:
 	 			element.DOM = parent.DOM
 	 			commitChildren(element, sibling, host, operation, signature)
-	 			return void commitCreate(element)
+	 			element.DOM = commitCreate(element)
+	 			return
 	 		case SharedElementNode:
 	 			element.xmlns = getDOMType(element, parent.xmlns)
 	 		case SharedElementText:
@@ -1139,10 +1141,12 @@
 	 					if (element.DOM = commitQuery(element, parent))
 		 					break
 	 				default:
-	 					if (commitCreate(element))
-	 						operation === SharedMountAppend ? commitAppend(element, parent) : commitInsert(element, sibling, parent)
-	 					else
-	 						return void commitMount(element, sibling, parent, host, operation, signature)
+	 					element.DOM = commitCreate(element)
+	
+						if (operation === SharedMountAppend)
+							commitAppend(element, parent)
+						else
+							commitInsert(element, sibling, parent)
 	 			}
 	
 	 			if (element.id === SharedElementText)
@@ -1251,15 +1255,15 @@
 			else if (element.state = commitUnmount(element, parent, signature))
 				return commitWillReplace(element, snapshot, parent, host, -signature)
 	
-		commitMount(snapshot, getElementSibling(element, SharedSiblingNext), parent, host, SharedMountInsert, SharedMountCommit)	
-		commitMerge(element, snapshot)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} snapshot
-	 */
-	function commitMerge (element, snapshot) {
+		commitMount(
+			snapshot,
+			getElementSibling(element, SharedSiblingNext),
+			parent,
+			host,
+			SharedMountInsert,
+			SharedMountCommit
+		)	
+		
 		for (var key in snapshot)
 			switch (key) {
 				case 'DOM':
@@ -1284,6 +1288,21 @@
 			commitReplace(element, snapshot, parent, host, signature)
 		}).catch(function () {
 			invokeErrorBoundary(snapshot, e, SharedSiteRender, SharedErrorActive)
+		})
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} snapshot
+	 * @param {Element}
+	 */
+	function commitRebase (element, snapshot) {
+		return assign(element, snapshot, {
+			key: element.key, 
+			prev: element.prev, 
+			next: element.next,
+			host: element.host,
+			parent: element.parent
 		})
 	}
 	
@@ -1357,27 +1376,21 @@
 	
 	/**
 	 * @param {Element} element
-	 * @return {boolean}
 	 */
 	function commitCreate (element) {
 		try {
-			switch (element.id) {
+			switch (element.active = true, element.id) {
 				case SharedElementNode:
-					element.DOM = createDOMElement(element)
-					break
+					return createDOMElement(element)
 				case SharedElementText:
-					element.DOM = createDOMText(element)
-					break
+					return createDOMText(element)
 				case SharedElementComponent:
-					element.DOM = getElementChildren(element).DOM
-					break
+					return getElementChildren(element).DOM
 				default:
-					element.DOM = createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
+					return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 			}
-	
-			return element.active = true
 		} catch (e) {
-			return !!commitMerge(element, commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive)))
+			return commitCreate(commitRebase(element, invokeErrorBoundary(element, e, SharedSiteElement, SharedErrorActive)))
 		}
 	}
 	
@@ -1715,10 +1728,47 @@
 	 */
 	function invokeErrorBoundary (element, e, from, signature) {
 		var error = getErrorException(element, e, from)
-		var snapshot = getErrorElement(element, error, from, 0, signature)
+		var snapshot = getErrorElement(element, error, from, signature)
 	
 		if (error.report)
 			console.error(error.report)
+	
+		return commitElement(snapshot)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Error} error
+	 * @param {string} from
+	 * @param {number} signature
+	 * @return {Element?}
+	 */
+	function getErrorElement (element, error, from, signature) {	
+		if (signature === SharedErrorPassive || !isValidElement(element))
+			return
+	
+		var owner = element.owner
+		var host = element.host
+		var snapshot = commitElement('')
+	
+		if (!owner || !owner[SharedComponentDidCatch])
+			return host ? void getErrorElement(host, error, from, signature) : snapshot
+	
+		element.sync = SharedWorkTask
+	
+		try {
+			snapshot = owner[SharedComponentDidCatch].call(element.instance, error, {})
+		} catch (e) {
+			invokeErrorBoundary(host, e, SharedComponentDidCatch, signature)
+		}
+	
+		element.sync = SharedWorkSync
+	
+		if (from !== SharedSiteRender)
+			requestAnimationFrame(function () {
+				if (element.active)
+					reconcileElement(getElementDescription(element), commitElement(snapshot))
+			})
 	
 		return snapshot
 	}
@@ -1746,51 +1796,6 @@
 			report: {value: report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n', writable: true},
 			error: {value: error}
 		})
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Object} snapshot
-	 * @param {Error} error
-	 * @param {string} from
-	 * @param {number} signature
-	 * @return {Element?}
-	 */
-	function getErrorElement (element, error, from, signature) {	
-		if (signature === SharedErrorPassive || !isValidElement(element))
-			return
-	
-		var owner = element.owner
-		var host = element.host
-		var snapshot = commitElement('')
-	
-		switch (element.id) {
-			case SharedElementEmpty:
-				return
-			case SharedElementNode:
-			case SharedElementText:
-				return getErrorElement(host, error, from, signature)
-			default:
-				if (!owner || !owner[SharedComponentDidCatch])
-					return void getErrorElement(host, error, from, signature)
-		}
-	
-		element.sync = SharedWorkTask
-	
-		try {
-			snapshot = commitElement(owner[SharedComponentDidCatch].call(element.instance, error, {}))
-		} catch (e) {
-			invokeErrorBoundary(host, e, SharedComponentDidCatch, signature)
-		}
-	
-		element.sync = SharedWorkSync
-	
-		if (from !== SharedSiteRender && element.active)
-			requestAnimationFrame(function () {
-				reconcileElement(getElementDescription(element), snapshot)
-			})
-	
-		return snapshot
 	}
 	
 	/**
