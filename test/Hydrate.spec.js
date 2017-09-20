@@ -16,22 +16,6 @@ describe('Hydrate', () => {
 		assert.html(container, '<section class="class"><div>context</div></section>')
 	})
 
-	it('should repair invalid elements', () => {
-		let container = document.createElement('div')
-		container.innerHTML = '<section><div>incorrect</div><h1>extra</h1></section>'
-		
-		hydrate(h('section', {class: 'class'}, h('div', 'context')), container)
-		assert.html(container, '<section class="class"><div>context</div></section>')
-	})
-
-	it('should remove invalid elements', () => {
-		let container = document.createElement('div')
-		container.innerHTML = '<div><div>xxx</div></div>'
-
-		hydrate(() => h('div', [undefined, h('span')]), container)
-		assert.html(container, '<div><span></span></div>')
-	})
-
 	it('should hydrate a fragment element', () => {
 		let container = document.createElement('html')
 		container.innerHTML = '<head></head><body></body>'
@@ -65,5 +49,37 @@ describe('Hydrate', () => {
 		assert.html(container, '<span>bbb</span>')
 		assert.html(first, 'bbb')
 		assert.html(second, 'bbb')
+	})
+
+	it('should repair incorrect text', () => {
+		let container = document.createElement('div')
+		container.innerHTML = '<section><div>incorrect</div></section>'
+		
+		hydrate(h('section', {class: 'class'}, h('div', 'correct')), container)
+		assert.html(container, '<section class="class"><div>correct</div></section>')
+	})
+
+	it('should repair incorrect properties', () => {
+		let container = document.createElement('div')
+		container.innerHTML = `<div data-id=true style="color:red"><span></span></div>`
+
+		hydrate(h('div', {id: 1}, [undefined, h('span')]), container)
+		assert.html(container, '<div id="1"><span></span></div>')
+	})
+
+	it('should remove incorrect in-between elements', () => {
+		let container = document.createElement('div')
+		container.innerHTML = '<div><div>xxx</div></div>'
+
+		hydrate(() => h('div', [undefined, h('span')]), container)
+		assert.html(container, '<div><span></span></div>')
+	})
+
+	it('should remove incorrect tail elements', () => {
+		let container = document.createElement('div')
+		container.innerHTML = '<section><div>correct</div><h1>extra</h1></section>'
+		
+		hydrate(h('section', {class: 'class'}, h('div', 'correct')), container)
+		assert.html(container, '<section class="class"><div>correct</div></section>')
 	})
 })

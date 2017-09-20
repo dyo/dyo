@@ -181,48 +181,51 @@ function getDOMProps (element) {
 /**
  * @param {Element} element
  * @param {Element} parent
- * @param {Element} prev
+ * @param {Element} previous
  * @param {Element} next
  */
-function getDOMQuery (element, parent, prev, next) {
+function getDOMQuery (element, parent, previous, next) {
 	var type = element.type.toLowerCase()
-	var xmlns = element.xmlns
+	var props = element.props
 	var children = element.children
-	var text = '#text'
+	var target = previous.active ? getDOMNode(previous).nextSibling : getDOMNode(parent).firstChild 
+	var sibling = target
 	var node = null
-	var target = prev.active ? getDOMNode(prev).nextSibling : getDOMNode(parent).firstChild 
-	var previous = target
 
-	while (target)
-		switch (target.nodeName.toLowerCase()) {
-			case type:
-				if (type === text) {
-					if (element !== next && element.id === next.id)
-						target.splitText(children.length)
+	while (target) {
+		if (target.nodeName.toLowerCase() === type) {
+			if (type === '#text') {
+				if (element.id === next.id)
+					target.splitText(children.length)
 
-					if (target.nodeValue !== children)
-						target.nodeValue = children
-				}
+				if (target.nodeValue !== children)
+					target.nodeValue = children
+			}
 
-				node = DOM(target)
-				type = null
+			node = DOM(target)
+			type = null
 
-				if (!(target = target.nextSibling))
-					break
-
-				if (next.type)
-					return node
-		default:
-			if (type === text && (xmlns === type || children.length === 0))
-				if (target.parentNode.insertBefore((node = createDOMText(element)).target, target))
-					if (next.type)
-						return node
-					else
-						type = null
-
-			target = (previous = target).nextSibling
-			previous.parentNode.removeChild(previous)
+			if (!(target = target.nextSibling) || next.type)
+				break
 		}
+
+		if (type === '#text' && (children.length === 0 || element.xmlns === type)) {
+			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {
+				if (next.type)
+					break
+				else
+					type = null
+			}
+		}
+
+		target = (sibling = target).nextSibling
+		sibling.parentNode.removeChild(sibling)
+	}
+
+	if (node && (target = node.target).nodeName.toLowerCase() !== '#text')
+		for (var attributes = target.attributes, i = attributes.length - 1, attr, name; i >= 0; --i)
+			if ((attr = attributes[i]).value !== props[name = attr.name] + '')
+				target.removeAttribute(name)
 
 	return node
 }

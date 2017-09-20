@@ -245,7 +245,7 @@ const gzipsize = (content) => {
 	if (size !== filesize) {
 		var kbSize = '~'+Math.round(size)+'kb'
 
-		if (Math.round(size) !== Math.round(filesize)) {
+		if (Math.toFixed(size) !== Math.toFixed(filesize)) {
 			var readpath = path.join(__dirname, '../../README.md')
 
 			fs.writeFileSync(readpath, fs.readFileSync(readpath).toString().replace(/(-\s+)~?\d+kb/, '$1'+kbSize))
