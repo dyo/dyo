@@ -188,6 +188,7 @@ function getDOMQuery (element, parent, previous, next) {
 	var type = element.type.toLowerCase()
 	var props = element.props
 	var children = element.children
+	var length = children.length
 	var target = previous.active ? getDOMNode(previous).nextSibling : getDOMNode(parent).firstChild 
 	var sibling = target
 	var node = null
@@ -196,10 +197,12 @@ function getDOMQuery (element, parent, previous, next) {
 		if (target.nodeName.toLowerCase() === type) {
 			if (type === '#text') {
 				if (element.id === next.id)
-					target.splitText(children.length)
+					target.splitText(length)
 
 				if (target.nodeValue !== children)
 					target.nodeValue = children
+			} else if (length === 0) {
+				target.textContent = ''
 			}
 
 			node = DOM(target)
@@ -209,7 +212,7 @@ function getDOMQuery (element, parent, previous, next) {
 				break
 		}
 
-		if (type === '#text' && (children.length === 0 || element.xmlns === type)) {
+		if (type === '#text' && (length === 0 || element.xmlns === type)) {
 			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {
 				if (next.type)
 					break

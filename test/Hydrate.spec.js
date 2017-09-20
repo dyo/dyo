@@ -59,6 +59,14 @@ describe('Hydrate', () => {
 		assert.html(container, '<section class="class"><div>correct</div></section>')
 	})
 
+	it('should remove incorrect content', () => {
+		let container = document.body.appendChild(document.createElement('div'))
+		container.innerHTML = `<div id=1 style="color:red"><div>xxx</div></div>`
+
+		hydrate(h('div', h('div')), container)
+		assert.html(container, '<div><div></div></div>')
+	})
+
 	it('should repair incorrect properties', () => {
 		let container = document.createElement('div')
 		container.innerHTML = `<div data-id=true style="color:red"><span></span></div>`
