@@ -36,6 +36,10 @@ body {
 	text-align: center;
 }
 
+section {
+  max-width: 800px;
+}
+
 .cards {
   clear: both;
 }
@@ -44,6 +48,7 @@ body {
 	float: left;
 	max-width: 400px;
   min-width: 240px;
+  margin-bottom: 20px;
 }
 
 .card a {
@@ -51,7 +56,7 @@ body {
 }
 
 .card p {
-	width: 90%;
+	max-width: 90%;
 }
 
 .logo img {

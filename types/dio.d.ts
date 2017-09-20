@@ -267,6 +267,7 @@ interface renderToString {
 }
 
 interface Component<P, S> {
+	componentWillReceiveProps(nextProps: P)
   componentWillUpdate(nextProps: P, nextState: S): Return
   componentDidUpdate(prevProps: P, prevState: S): Return
   componentWillMount(): Return

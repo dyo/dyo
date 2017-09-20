@@ -23,11 +23,52 @@
 		</nav>
 	</header>
 	<article>
+		<h1>Server</h1>
+		
 		<h1 id=toString>toString</h1>
-		<h1 id=toStream>toStream</h1>
+
+<pre><code>
+interface Element {
+	toString(): string
+}
+</code></pre>
+
 		<h1 id=toJSON>toJSON</h1>
+
+<pre><code>
+interface Element {
+	toJSON(): string
+}
+</code></pre>
+
+	<h1 id=toStream>toStream</h1>
+
+<pre><code>
+interface Element {
+	toStream(): Readable
+}
+</code></pre>
+
 		<h1 id=renderToString>renderToString</h1>
+
+<pre><code>
+renderToString(
+	element: null|void|string|number|Element|Array,
+	target?: Writable
+	callback?: function 
+)
+</code></pre>
+
 		<h1 id=renderToStream>renderToStream</h1>
+
+<pre><code>
+renderToStream(
+	element: null|void|string|number|Element|Array|Promise,
+	target?: Writable
+	callback?: function 
+)
+</code></pre>
+
 	</article>
 	<script src=../assets/javascript/index.js></script>
 </body>

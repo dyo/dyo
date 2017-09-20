@@ -23,6 +23,9 @@
 		</nav>
 	</header>
 	<article>
+
+		<h1>Component</h1>
+		
 		<h1 id=class>Class</h1>
 
 <pre><code>
@@ -66,11 +69,122 @@ type Children = any
 		<h1 id=state>State</h1>
 
 <pre><code>
-type State = Readonly&lt;Object>
+type State = Readonly&lt;object>
 </code></pre>
 
 		<h1 id=render>Render</h1>
-		<h1 id=lifecycle>Lifecycle</h1>
+
+<pre><code>
+abstract render(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): null|void|string|function|number|Element|Promise
+</code></pre>
+
+		<h1 id=setState>setState</h1>
+
+<pre><code>
+setState(
+	state: object|function|Promise
+	callback?: function
+)
+</code></pre>
+
+		<h1 id=forceUpdate>forceUpdate</h1>
+
+<pre><code>
+forceUpdate(
+	callback?: function
+)
+</code></pre>
+
+		<h1 id=getInitialState>getInitialState</h1>
+
+<pre><code>
+abstract getInitialState(
+	props: Readonly&lt;object>
+): object
+</code></pre>
+
+		<h1 id=getChildContext>getChildContext</h1>
+
+<pre><code>
+abstract getChildContext(
+	props: Readonly&lt;object>
+): object
+</code></pre>
+
+		<h1 id=componentWillMount>componentWillMount</h1>
+
+<pre><code>
+abstract componentWillMount(): void|object|Promise
+</code></pre>
+
+		<h1 id=componentDidMount>componentDidMount</h1>
+		
+<pre><code>
+abstract componentDidMount(
+	node: Node
+): void|object|Promise
+</code></pre>
+
+		<h1 id=componentWillReceiveProps>componentWillReceiveProps</h1>
+
+<pre><code>
+abstract componentWillReceiveProps(
+	nextProps: Readonly&lt;object>
+	context: Readonly&lt;object>
+): void|object|Promise
+</code></pre>
+
+
+		<h1 id=shouldComponentUpdate>shouldComponentUpdate</h1>
+
+<pre><code>
+abstract shouldComponentUpdate(
+	nextProps: Readonly&lt;object>
+	nextState: Readonly&lt;object>
+	context: Readonly&lt;object>
+): boolean
+</code></pre>
+
+		<h1 id=componentWillUpdate>componentWillUpdate</h1>
+
+<pre><code>
+abstract componentWillUpdate(
+	nextProps: Readonly&lt;object>
+	nextState: Readonly&lt;object>
+	context: Readonly&lt;object>
+): void|object|Promise
+</code></pre>
+
+		<h1 id=componentDidUpdate>componentDidUpdate</h1>
+
+<pre><code>
+abstract componentDidUpdate(
+	prevProps: Readonly&lt;object>
+	prevState: Readonly&lt;object>
+	context: Readonly&lt;object>
+): void|object|Promise
+</code></pre>
+
+		<h1 id=componentWillUnmount>componentWillUnmount</h1>
+
+<pre><code>
+abstract componentWillUnmount(
+	node: Node
+): void|Promise
+</code></pre>
+
+		<h1 id=componentDidCatch>componentDidCatch</h1>
+
+<pre><code>
+abstract componentDidCatch(
+	error: Error
+): any
+</code></pre>
+
 	</article>
 	<script src=../assets/javascript/index.js></script>
 </body>
