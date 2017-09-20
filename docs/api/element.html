@@ -23,13 +23,191 @@
 		</nav>
 	</header>
 	<article>
+
+		<h1 id=element>Element</h1>
+
+<pre><code>
+h(
+	type: Type
+	props?: Props
+	...children: [Children]
+): Element
+
+createElement(
+	type: Type
+	props?: Props
+	...children: [Children]
+): Element
+</code></pre>
+
 		<h1 id=type>Type</h1>
+
+<pre><code>
+type Type = string|function|Promise
+
+h(
+	type: Type
+): Element
+
+createElement(
+	type: Type
+): Element
+</code></pre>
+
+		<h2 id=host>Host Element</h2>
+
+<pre><code>
+type Host = string
+
+h('h1'): Element
+
+createElement('h1'): Element
+</code></pre>
+
+		<h2 id=host>Component Element</h2>
+
+<pre><code>
+type Component = function
+
+h(() => {
+	return createElement(Hello)
+}): Element
+
+createElement(() => {
+	return createElement(Hello)
+}): Element
+</code></pre>
+
+		<h2 id=host>Async Element</h2>
+
+<pre><code>
+type Promise = Promise
+
+h(Promise.resolve('Hello')): Element
+
+createElement(Promise.resolve('Hello')): Element
+</code></pre>
+
 		<h1 id=props>Props</h1>
+
+<pre><code>
+interface Props {
+	[prop: string]: any
+	on[event: string]: Handler
+	key?: Key
+	ref?: Ref
+	children?: Children
+	dangerouslySetInnerHTML?: {__html: any}
+}
+
+h(
+	type: Type
+	props?: Props
+): Element
+
+createElement(
+	type: Type
+	props?: Props
+): Element
+</code></pre>
+
 			<h2 id=keys>Keys</h2>
-			<h2 id=keys>Refs</h2>
+
+<pre><code>
+type Key = string|number|Symbol
+
+h(Type, {
+	key: 'heading'
+})
+
+createElement(Type, {
+	key: 'heading'
+})
+</code></pre>
+
+			<h2 id=refs>Refs</h2>
+
+<pre><code>
+type Ref = string|function
+</code></pre>
+
+				<h3 id=function>string</h3>
+
+<pre><code>
+h(Type, {
+	ref: 'heading'
+})
+
+createElement(Type, {
+	ref: 'heading'
+})
+</code></pre>
+
+				<h3 id=function>function</h3>
+
+<pre><code>
+h(Type, {
+	ref: (ref: Node|Component) => {}
+})
+
+createElement(Type, {
+	ref: (ref: Node|Component) => {}
+})
+</code></pre>
+
 			<h2 id=events>Events</h2>
-			<h2 id=keys>dangerouslySetInnerHTML</h2>	
-		<h1 id=children>Children</h1>				
+
+<pre><code>
+type Handler = function|EventListener
+
+interface EventListener {
+	handleEvent(e) {}
+}
+</code></pre>
+
+<pre><code>
+h(Type, {
+	onclick: (e) => {}
+})
+
+h(Type, {
+	onClick: (e) => {}
+})
+
+createElement(Type, {
+	onclick: (e) => {}
+})
+
+createElement(Type, {
+	onClick: (e) => {}
+})
+</code></pre>
+
+			<h2 id=dangerouslySetInnerHTML>dangerouslySetInnerHTML</h2>
+
+<pre><code>
+h(Type, {
+	dangerouslySetInnerHTML: {__html: ''}
+})
+</code></pre>
+
+		<h1 id=children>Children</h1>
+
+<pre><code>
+type Children = function|string|number|Element|Promise|Iterable
+
+h(
+	type: Type
+	props?: Props
+	...children?: Children
+): Element
+
+createElement(
+	type: Type
+	props?: Props
+	...children?: Children
+): Element
+</code></pre>		
 	</article>
 	<script src=../assets/javascript/index.js></script>
 </body>
