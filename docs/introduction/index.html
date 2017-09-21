@@ -42,15 +42,15 @@ npm install dio.js --save
 		<h1 id=getting-started>Getting Started</h1>
 
 		<p>
-			This <a href=https://jsbin.com/movuti/edit?js,output>Hello World</a> example can be used try out code you see in this introduction.
+			This <a href=../repl>Hello World</a> example can be used try out code you see in this introduction.
 		</p>
 
 <pre><code>
-dio.render(
+render(
   h('h1', 'Hello, world!'),
   document.getElementById('root')
-)</code>
-</pre>
+)
+</code></pre>
 
 		<p>This Hello World example should render a heading with the content 'Hello World!'.</p>
 
@@ -113,7 +113,7 @@ function Welcome({name}) {
   return h('h1', name)
 }
 
-dio.render(
+render(
   h(Welcome, {name: 'World'}),
   document.getElementById('root')
 )
@@ -216,7 +216,7 @@ class Input {
 	}
 }
 
-dio.render(h(Input), document.getElementById('root'))
+render(h(Input), document.getElementById('root'))
 </code></pre>
 
 		<p>The example demonstrates how we can listen to events on an element and respond in kind.</p>
@@ -248,8 +248,8 @@ const Welcome = return h('h1', {
 <pre><code>
 const portal = document.querySelector('.modal')
 
-dio.render(
-	['Hey', dio.createPortal(['Welcome', 'Back'], portal)], 
+render(
+	['Hey', createPortal(['Welcome', 'Back'], portal)], 
 	document.getElementById('root')
 )
 </code></pre>
