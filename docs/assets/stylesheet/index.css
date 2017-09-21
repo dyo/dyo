@@ -179,7 +179,10 @@ nav ol {
   margin: 1em 0.8em;
 }
 
-p > a:link, li > a:link {
+p > a:link, 
+li > a:link,
+h1 a:hover,
+h2 a:hover {
 	background-position-y: 87%, 87%, 87%;
   text-decoration: none;
   background: -webkit-linear-gradient(#fffff8, #fffff8), -webkit-linear-gradient(#fffff8, #fffff8), -webkit-linear-gradient(#333, #333);
@@ -305,4 +308,9 @@ th {
 
 p code * {
   color: #C41A16 !important;
+}
+
+h1 a,
+h2 a {
+  color: inherit;
 }
