@@ -89,6 +89,51 @@ describe('Component', () => {
 		])
 	})
 
+	it('should call (un)mount in the right order', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class A {
+			componentDidMount() {
+				stack.push('mount A')
+			}
+			componentWillUnmount() {
+				stack.push('unmount A')
+			}
+			render() {
+				return class B {
+					componentDidMount() {
+						stack.push('mount B')
+					}
+					componentWillUnmount() {
+						stack.push('unmount B')
+					}
+					render() {
+						return 'B'
+					}
+				}
+			}
+		}, container)
+
+		render(class C {
+			componentDidMount() {
+				stack.push('mount C')
+			}
+			render() {
+				return 'C'
+			}
+		}, container)
+
+		assert.html(container, 'C')
+		assert.deepEqual(stack, [
+			'mount B',
+			'mount A',
+			'mount C',
+			'unmount B',
+			'unmount A'
+		])
+	})
+
 	it('should update Component', () => {
 		let container = document.createElement('div')
 		let A = class {

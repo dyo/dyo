@@ -187,7 +187,6 @@ function reconcileSiblings (element, host, children, aHead, bHead, aPos, bPos, a
 	while (bIndx++ < bEnd) {
 		bHash = bNode.key
 		bNext = bNode.next
-		aNext = aPool[bHash]
 
 		if (aNext = aPool[bHash]) {
 			if (aNode === children)

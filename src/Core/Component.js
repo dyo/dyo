@@ -235,8 +235,8 @@ function enqueueStatePromise (element, instance, state, callback) {
 		requestAnimationFrame(function () {
 			enqueueStateUpdate(element, instance, value, callback)
 		})
-	}).catch(function (e) {
-		invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
+	}).catch(function (err) {
+		invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
 	})
 }
 
@@ -248,8 +248,8 @@ function enqueueStatePromise (element, instance, state, callback) {
 function enqueueStateCallback (element, instance, callback) {
 	try {
 		return callback.call(instance, instance.state, instance.props)
-	} catch (e) {
-		invokeErrorBoundary(element, e, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
 	}
 }
 
@@ -277,8 +277,8 @@ function getComponentState (element, instance, state) {
 function getComponentInstance (element, owner) {
 	try {
 		return new owner(element.props, element.context)
-	} catch (e) {
-		invokeErrorBoundary(element, e, SharedSiteConstructor, SharedErrorActive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, SharedSiteConstructor, SharedErrorActive)
 	}
 
 	return new Component()
@@ -292,8 +292,8 @@ function getComponentInstance (element, owner) {
 function getComponentElement (element, instance) {
 	try {
 		return commitElement(instance.render(instance.props, instance.state, element.context))
-	} catch (e) {
-		return commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive))
+	} catch (err) {
+		return commitElement(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
 	}
 }
 
@@ -315,8 +315,8 @@ function getComponentContext (element) {
 function getLifecycleData (element, name) {
 	try {
 		return element.owner[name].call(element.instance, element.props)
-	} catch (e) {
-		invokeErrorBoundary(element, e, name, SharedErrorActive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, SharedErrorActive)
 	}
 }
 
@@ -332,8 +332,8 @@ function getLifecycleMount (element, name) {
 			return state
 
 		getLifecycleReturn(element, state)
-	} catch (e) {
-		invokeErrorBoundary(element, e, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
 	}
 }
 
@@ -352,8 +352,8 @@ function getLifecycleUpdate (element, name, props, state, context) {
 			return state
 
 		getLifecycleReturn(element, state)
-	} catch (e) {
-		invokeErrorBoundary(element, e, name, SharedErrorActive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, SharedErrorActive)
 	}
 }
 
@@ -381,8 +381,8 @@ function getLifecycleReturn (element, state) {
 function getLifecycleCallback (element, callback, first, second, third) {
 	try {
 		return callback.call(element.instance, first, second, third)
-	} catch (e) {
-		invokeErrorBoundary(element, e, SharedSiteCallback, SharedErrorPassive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, SharedSiteCallback, SharedErrorPassive)
 	}
 }
 

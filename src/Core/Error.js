@@ -1,12 +1,12 @@
 /**
  * @param {Element} element
- * @param {*} e
+ * @param {*} err
  * @param {string} from
  * @param {number} signature
  * @param {Element?}
  */
-function invokeErrorBoundary (element, e, from, signature) {
-	var error = getErrorException(element, e, from)
+function invokeErrorBoundary (element, err, from, signature) {
+	var error = getErrorException(element, err, from)
 	var snapshot = getErrorElement(element, error, from, signature)
 
 	if (error.report)
@@ -37,8 +37,8 @@ function getErrorElement (element, error, from, signature) {
 
 	try {
 		snapshot = owner[SharedComponentDidCatch].call(element.instance, error, {})
-	} catch (e) {
-		invokeErrorBoundary(host, e, SharedComponentDidCatch, signature)
+	} catch (err) {
+		invokeErrorBoundary(host, err, SharedComponentDidCatch, signature)
 	}
 
 	element.sync = SharedWorkSync

@@ -101,13 +101,12 @@ function commitMount (element, sibling, parent, host, operation, signature) {
  * @param {Element} element
  * @param {Element} parent
  * @param {number} signature
- * @param {boolean}
  */
 function commitDismount (element, parent, signature) {
-	switch (element.id) {
+	switch (element.active = false, element.id) {
 		case SharedElementComponent:
-			unmountComponent(element)
 			commitDismount(getElementChildren(element), parent, -signature)
+			unmountComponent(element)
 		case SharedElementText:
 			break
 		case SharedElementPortal:
@@ -124,15 +123,12 @@ function commitDismount (element, parent, signature) {
 
 	if (element.ref)
 		commitReference(element, element.ref, SharedReferenceRemove)
-
-	element.active = false
 }
 
 /**
  * @param {Element} element
  * @param {Element} parent
  * @param {number} signature
- * @return {(Promise|void)}
  */
 function commitUnmount (element, parent, signature) {
 	if (signature > SharedElementEmpty)
@@ -142,12 +138,11 @@ function commitUnmount (element, parent, signature) {
 		return commitRemove(element, parent)
 
 	if (element.state)
-		return element.state
-			.then(commitWillUnmount(element, parent, SharedElementEmpty))
+		return element.state = void element.state
+			.then(commitWillUnmount(element, parent, SharedErrorActive))
 			.catch(commitWillUnmount(element, parent, SharedErrorPassive))
 
-	if (!element.active)
-		commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
+	commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
 }
 
 /**
@@ -156,12 +151,20 @@ function commitUnmount (element, parent, signature) {
  * @param {number} signature
  * @return {function}
  */
-function commitWillUnmount (element, parent, signature) {	
-	return function (e) {
-		commitUnmount(getElementChildren(element), parent)
+function commitWillUnmount (element, parent, signature) {
+	if (signature === SharedErrorPassive)
+		element.host = createElementImmutable(element.host)
+
+	if (element.id === SharedElementComponent)
+		return commitWillUnmount(merge(getElementChildren(element), {
+			DOM: createDOMObject(getDOMNode(element))
+		}), parent, signature)
+	
+	return function (err) {
+		commitUnmount(element, parent)
 
 		if (signature === SharedErrorPassive)
-			invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
+			invokeErrorBoundary(element.host, err, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
 	}
 }
 
@@ -176,8 +179,8 @@ function commitWillReconcile (element, snapshot) {
 				reconcileChildren(element, createElementFragment(commitElement(value)))
 			else
 				reconcileElement(element, commitElement(value))
-	}).catch(function (e) {
-		invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
+	}).catch(function (err) {
+		invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 	})
 }
 
@@ -189,20 +192,8 @@ function commitWillReconcile (element, snapshot) {
  * @param {number} signature
  */
 function commitReplace (element, snapshot, parent, host, signature) {
-	if (signature === SharedMountReplace)
-		if (element.state instanceof Promise)
-			return element.state = commitWillReplace(element, snapshot, parent, host, signature)
-		else if (element.state = commitUnmount(element, parent, signature))
-			return commitWillReplace(element, snapshot, parent, host, -signature)
-
-	commitMount(
-		snapshot,
-		getElementSibling(element, SharedSiblingNext),
-		parent,
-		host,
-		SharedMountInsert,
-		SharedMountCommit
-	)	
+	commitMount(snapshot, element, parent, host, SharedMountInsert, SharedMountCommit)
+	commitUnmount(element, parent, signature)		
 	
 	for (var key in snapshot)
 		switch (key) {
@@ -214,21 +205,6 @@ function commitReplace (element, snapshot, parent, host, signature) {
 			default:
 				element[key] = snapshot[key]	
 		}
-}
-
-/**
- * @param {Element} element
- * @param {Element} snapshot
- * @param {Element} parent
- * @param {Element} host
- * @param {number} signature
- */
-function commitWillReplace (element, snapshot, parent, host, signature) {
-	return void element.state.then(function () {
-		commitReplace(element, snapshot, parent, host, signature)
-	}).catch(function () {
-		invokeErrorBoundary(snapshot, e, SharedSiteRender, SharedErrorActive)
-	})
 }
 
 /**
@@ -329,15 +305,15 @@ function commitCreate (element) {
 			default:
 				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
-	} catch (e) {
-		return commitCreate(commitRebase(element, invokeErrorBoundary(element, e, SharedSiteElement, SharedErrorActive)))
+	} catch (err) {
+		return commitCreate(commitRebase(element, invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)))
 	}
 }
 
 /**
  * @param {Element} element
  * @param {Element} parent
- * @return {DOM?}
+ * @return {Object?}
  */
 function commitQuery (element, parent) {
 	if (element.active = true)
@@ -380,7 +356,12 @@ function commitRemove (element, parent) {
  */
 function commitInsert (element, sibling, parent) {
 	if (parent.id < SharedElementEmpty)
-		return commitInsert(element, sibling, getElementParent(parent))
+		if (parent.id !== SharedElementPortal || sibling.parent === parent)
+			return commitInsert(element, sibling, getElementParent(parent))
+		else if (!parent.active)
+			return commitInsert(element, createElementNode(SharedDOMObject), getElementParent(parent))
+		else
+			return
 
 	if (sibling.id === SharedElementPortal)
 		return commitInsert(element, getElementSibling(sibling, SharedSiblingNext), parent)

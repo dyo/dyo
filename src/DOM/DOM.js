@@ -1,12 +1,5 @@
 /**
  * @param {Node} target
- */
-function DOM (target) {
-	return {target: target}
-}
-
-/**
- * @param {Node} target
  * @param {boolean}
  */
 function isValidDOMNode (target) {
@@ -201,11 +194,11 @@ function getDOMQuery (element, parent, previous, next) {
 
 				if (target.nodeValue !== children)
 					target.nodeValue = children
-			} else if (length === 0) {
+			} else if (length === 0 && target.firstChild) {
 				target.textContent = ''
 			}
 
-			node = DOM(target)
+			node = createDOMObject(target)
 			type = null
 
 			if (!(target = target.nextSibling) || next.type)
@@ -235,43 +228,43 @@ function getDOMQuery (element, parent, previous, next) {
 
 /**
  * @param {Node} target
- * @return {DOM}
+ * @param {Object}
  */
 function createDOMObject (target) {
-	return DOM(target)
+	return {target: target}
 }
 
 /**
  * @param {Element} element
- * @return {DOM}
+ * @return {Object}
  */
 function createDOMElement (element) {
 	if (element.xmlns)
-		return DOM(document.createElementNS(element.xmlns, element.type))
+		return createDOMObject(document.createElementNS(element.xmlns, element.type))
 	else
-		return DOM(document.createElement(element.type))
+		return createDOMObject(document.createElement(element.type))
 }
 
 /**
  * @param {Element} element
- * @return {DOM}
+ * @return {Object}
  */
 function createDOMText (element) {
-	return DOM(document.createTextNode(element.children))
+	return createDOMObject(document.createTextNode(element.children))
 }
 
 /**
  * @param {Element} element
- * @return {DOM}
+ * @return {Object}
  */
 function createDOMPortal (element) {
 	if (typeof element.type === 'string')
-		return DOM(document.querySelector(element.type))
+		return createDOMObject(document.querySelector(element.type))
 
 	if (isValidDOMNode(element.type))
-		return DOM(element.type)
+		return createDOMObject(element.type)
 
-	return DOM(getDOMDocument())
+	return createDOMObject(getDOMDocument())
 }
 
 /**

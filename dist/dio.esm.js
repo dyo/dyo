@@ -310,13 +310,13 @@ function createElementText (content, key) {
 }
 
 /**
- * @param {DOM?} node
+ * @param {Object} object
  * @return {Element}
  */
-function createElementNode (node) {
+function createElementNode (object) {
 	var element = new Element(SharedElementEmpty)
 
-	element.DOM = node
+	element.DOM = object
 
 	return element
 }
@@ -882,8 +882,8 @@ function enqueueStatePromise (element, instance, state, callback) {
 		requestAnimationFrame(function () {
 			enqueueStateUpdate(element, instance, value, callback)
 		})
-	}).catch(function (e) {
-		invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
+	}).catch(function (err) {
+		invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
 	})
 }
 
@@ -895,8 +895,8 @@ function enqueueStatePromise (element, instance, state, callback) {
 function enqueueStateCallback (element, instance, callback) {
 	try {
 		return callback.call(instance, instance.state, instance.props)
-	} catch (e) {
-		invokeErrorBoundary(element, e, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
 	}
 }
 
@@ -924,8 +924,8 @@ function getComponentState (element, instance, state) {
 function getComponentInstance (element, owner) {
 	try {
 		return new owner(element.props, element.context)
-	} catch (e) {
-		invokeErrorBoundary(element, e, SharedSiteConstructor, SharedErrorActive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, SharedSiteConstructor, SharedErrorActive)
 	}
 
 	return new Component()
@@ -939,8 +939,8 @@ function getComponentInstance (element, owner) {
 function getComponentElement (element, instance) {
 	try {
 		return commitElement(instance.render(instance.props, instance.state, element.context))
-	} catch (e) {
-		return commitElement(invokeErrorBoundary(element, e, SharedSiteRender, SharedErrorActive))
+	} catch (err) {
+		return commitElement(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
 	}
 }
 
@@ -962,8 +962,8 @@ function getComponentContext (element) {
 function getLifecycleData (element, name) {
 	try {
 		return element.owner[name].call(element.instance, element.props)
-	} catch (e) {
-		invokeErrorBoundary(element, e, name, SharedErrorActive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, SharedErrorActive)
 	}
 }
 
@@ -979,8 +979,8 @@ function getLifecycleMount (element, name) {
 			return state
 
 		getLifecycleReturn(element, state)
-	} catch (e) {
-		invokeErrorBoundary(element, e, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
 	}
 }
 
@@ -999,8 +999,8 @@ function getLifecycleUpdate (element, name, props, state, context) {
 			return state
 
 		getLifecycleReturn(element, state)
-	} catch (e) {
-		invokeErrorBoundary(element, e, name, SharedErrorActive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, SharedErrorActive)
 	}
 }
 
@@ -1028,8 +1028,8 @@ function getLifecycleReturn (element, state) {
 function getLifecycleCallback (element, callback, first, second, third) {
 	try {
 		return callback.call(element.instance, first, second, third)
-	} catch (e) {
-		invokeErrorBoundary(element, e, SharedSiteCallback, SharedErrorPassive)
+	} catch (err) {
+		invokeErrorBoundary(element, err, SharedSiteCallback, SharedErrorPassive)
 	}
 }
 
@@ -1150,13 +1150,12 @@ function commitMount (element, sibling, parent, host, operation, signature) {
  * @param {Element} element
  * @param {Element} parent
  * @param {number} signature
- * @param {boolean}
  */
 function commitDismount (element, parent, signature) {
-	switch (element.id) {
+	switch (element.active = false, element.id) {
 		case SharedElementComponent:
-			unmountComponent(element)
 			commitDismount(getElementChildren(element), parent, -signature)
+			unmountComponent(element)
 		case SharedElementText:
 			break
 		case SharedElementPortal:
@@ -1173,15 +1172,12 @@ function commitDismount (element, parent, signature) {
 
 	if (element.ref)
 		commitReference(element, element.ref, SharedReferenceRemove)
-
-	element.active = false
 }
 
 /**
  * @param {Element} element
  * @param {Element} parent
  * @param {number} signature
- * @return {(Promise|void)}
  */
 function commitUnmount (element, parent, signature) {
 	if (signature > SharedElementEmpty)
@@ -1191,12 +1187,11 @@ function commitUnmount (element, parent, signature) {
 		return commitRemove(element, parent)
 
 	if (element.state)
-		return element.state
-			.then(commitWillUnmount(element, parent, SharedElementEmpty))
+		return element.state = void element.state
+			.then(commitWillUnmount(element, parent, SharedErrorActive))
 			.catch(commitWillUnmount(element, parent, SharedErrorPassive))
 
-	if (!element.active)
-		commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
+	commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
 }
 
 /**
@@ -1205,12 +1200,20 @@ function commitUnmount (element, parent, signature) {
  * @param {number} signature
  * @return {function}
  */
-function commitWillUnmount (element, parent, signature) {	
-	return function (e) {
-		commitUnmount(getElementChildren(element), parent)
+function commitWillUnmount (element, parent, signature) {
+	if (signature === SharedErrorPassive)
+		element.host = createElementImmutable(element.host)
+
+	if (element.id === SharedElementComponent)
+		return commitWillUnmount(merge(getElementChildren(element), {
+			DOM: createDOMObject(getDOMNode(element))
+		}), parent, signature)
+	
+	return function (err) {
+		commitUnmount(element, parent)
 
 		if (signature === SharedErrorPassive)
-			invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
+			invokeErrorBoundary(element.host, err, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
 	}
 }
 
@@ -1225,8 +1228,8 @@ function commitWillReconcile (element, snapshot) {
 				reconcileChildren(element, createElementFragment(commitElement(value)))
 			else
 				reconcileElement(element, commitElement(value))
-	}).catch(function (e) {
-		invokeErrorBoundary(element, e, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
+	}).catch(function (err) {
+		invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 	})
 }
 
@@ -1238,20 +1241,8 @@ function commitWillReconcile (element, snapshot) {
  * @param {number} signature
  */
 function commitReplace (element, snapshot, parent, host, signature) {
-	if (signature === SharedMountReplace)
-		if (element.state instanceof Promise)
-			return element.state = commitWillReplace(element, snapshot, parent, host, signature)
-		else if (element.state = commitUnmount(element, parent, signature))
-			return commitWillReplace(element, snapshot, parent, host, -signature)
-
-	commitMount(
-		snapshot,
-		getElementSibling(element, SharedSiblingNext),
-		parent,
-		host,
-		SharedMountInsert,
-		SharedMountCommit
-	)	
+	commitMount(snapshot, element, parent, host, SharedMountInsert, SharedMountCommit)
+	commitUnmount(element, parent, signature)		
 	
 	for (var key in snapshot)
 		switch (key) {
@@ -1263,21 +1254,6 @@ function commitReplace (element, snapshot, parent, host, signature) {
 			default:
 				element[key] = snapshot[key]	
 		}
-}
-
-/**
- * @param {Element} element
- * @param {Element} snapshot
- * @param {Element} parent
- * @param {Element} host
- * @param {number} signature
- */
-function commitWillReplace (element, snapshot, parent, host, signature) {
-	return void element.state.then(function () {
-		commitReplace(element, snapshot, parent, host, signature)
-	}).catch(function () {
-		invokeErrorBoundary(snapshot, e, SharedSiteRender, SharedErrorActive)
-	})
 }
 
 /**
@@ -1378,15 +1354,15 @@ function commitCreate (element) {
 			default:
 				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
-	} catch (e) {
-		return commitCreate(commitRebase(element, invokeErrorBoundary(element, e, SharedSiteElement, SharedErrorActive)))
+	} catch (err) {
+		return commitCreate(commitRebase(element, invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)))
 	}
 }
 
 /**
  * @param {Element} element
  * @param {Element} parent
- * @return {DOM?}
+ * @return {Object?}
  */
 function commitQuery (element, parent) {
 	if (element.active = true)
@@ -1429,7 +1405,12 @@ function commitRemove (element, parent) {
  */
 function commitInsert (element, sibling, parent) {
 	if (parent.id < SharedElementEmpty)
-		return commitInsert(element, sibling, getElementParent(parent))
+		if (parent.id !== SharedElementPortal || sibling.parent === parent)
+			return commitInsert(element, sibling, getElementParent(parent))
+		else if (!parent.active)
+			return commitInsert(element, createElementNode(SharedDOMObject), getElementParent(parent))
+		else
+			return
 
 	if (sibling.id === SharedElementPortal)
 		return commitInsert(element, getElementSibling(sibling, SharedSiblingNext), parent)
@@ -1650,7 +1631,6 @@ function reconcileSiblings (element, host, children, aHead, bHead, aPos, bPos, a
 	while (bIndx++ < bEnd) {
 		bHash = bNode.key
 		bNext = bNode.next
-		aNext = aPool[bHash]
 
 		if (aNext = aPool[bHash]) {
 			if (aNode === children)
@@ -1707,8 +1687,8 @@ function handleEvent (event) {
 
 		if (result && instance)
 			getLifecycleReturn(host, result)
-	} catch (e) {
-		invokeErrorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
+	} catch (err) {
+		invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
 	}
 }
 
@@ -1716,13 +1696,13 @@ defineProperty(Element.prototype, 'handleEvent', {value: handleEvent})
 
 /**
  * @param {Element} element
- * @param {*} e
+ * @param {*} err
  * @param {string} from
  * @param {number} signature
  * @param {Element?}
  */
-function invokeErrorBoundary (element, e, from, signature) {
-	var error = getErrorException(element, e, from)
+function invokeErrorBoundary (element, err, from, signature) {
+	var error = getErrorException(element, err, from)
 	var snapshot = getErrorElement(element, error, from, signature)
 
 	if (error.report)
@@ -1753,8 +1733,8 @@ function getErrorElement (element, error, from, signature) {
 
 	try {
 		snapshot = owner[SharedComponentDidCatch].call(element.instance, error, {})
-	} catch (e) {
-		invokeErrorBoundary(host, e, SharedComponentDidCatch, signature)
+	} catch (err) {
+		invokeErrorBoundary(host, err, SharedComponentDidCatch, signature)
 	}
 
 	element.sync = SharedWorkSync
@@ -1948,13 +1928,6 @@ function childrenOnly (children) {
 		return children
 	
 	invariant('Children.only', 'Expected to receive a single element')
-}
-
-/**
- * @param {Node} target
- */
-function DOM (target) {
-	return {target: target}
 }
 
 /**
@@ -2153,11 +2126,11 @@ function getDOMQuery (element, parent, previous, next) {
 
 				if (target.nodeValue !== children)
 					target.nodeValue = children
-			} else if (length === 0) {
+			} else if (length === 0 && target.firstChild) {
 				target.textContent = ''
 			}
 
-			node = DOM(target)
+			node = createDOMObject(target)
 			type = null
 
 			if (!(target = target.nextSibling) || next.type)
@@ -2187,43 +2160,43 @@ function getDOMQuery (element, parent, previous, next) {
 
 /**
  * @param {Node} target
- * @return {DOM}
+ * @param {Object}
  */
 function createDOMObject (target) {
-	return DOM(target)
+	return {target: target}
 }
 
 /**
  * @param {Element} element
- * @return {DOM}
+ * @return {Object}
  */
 function createDOMElement (element) {
 	if (element.xmlns)
-		return DOM(document.createElementNS(element.xmlns, element.type))
+		return createDOMObject(document.createElementNS(element.xmlns, element.type))
 	else
-		return DOM(document.createElement(element.type))
+		return createDOMObject(document.createElement(element.type))
 }
 
 /**
  * @param {Element} element
- * @return {DOM}
+ * @return {Object}
  */
 function createDOMText (element) {
-	return DOM(document.createTextNode(element.children))
+	return createDOMObject(document.createTextNode(element.children))
 }
 
 /**
  * @param {Element} element
- * @return {DOM}
+ * @return {Object}
  */
 function createDOMPortal (element) {
 	if (typeof element.type === 'string')
-		return DOM(document.querySelector(element.type))
+		return createDOMObject(document.querySelector(element.type))
 
 	if (isValidDOMNode(element.type))
-		return DOM(element.type)
+		return createDOMObject(element.type)
 
-	return DOM(getDOMDocument())
+	return createDOMObject(getDOMDocument())
 }
 
 /**

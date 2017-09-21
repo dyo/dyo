@@ -48,13 +48,13 @@ function createElementText (content, key) {
 }
 
 /**
- * @param {DOM?} node
+ * @param {Object} object
  * @return {Element}
  */
-function createElementNode (node) {
+function createElementNode (object) {
 	var element = new Element(SharedElementEmpty)
 
-	element.DOM = node
+	element.DOM = object
 
 	return element
 }
