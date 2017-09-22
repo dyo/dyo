@@ -6,9 +6,12 @@ A Library For Building User Interfaces.
 
 - ~6kb
 
+[![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md)
+[![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js)
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
-[![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js) [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md) [![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
- ![dependencies](https://img.shields.io/badge/dependencies-none-green.svg?style=flat) [![Join the chat at https://gitter.im/thysultan/dio.js](https://img.shields.io/badge/chat-gitter-green.svg?style=flat)](https://gitter.im/thysultan/dio.js)
+[![Build Status](https://semaphoreci.com/api/v1/thysultan/dio-js/branches/master/shields_badge.svg)](https://semaphoreci.com/thysultan/dio-js)
+![dependencies](https://img.shields.io/badge/dependencies-none-green.svg?style=flat)
+[![Join the chat at https://gitter.im/thysultan/dio.js](https://img.shields.io/badge/chat-gitter-green.svg?style=flat)](https://gitter.im/thysultan/dio.js)
 
 ## Support
 
@@ -53,44 +56,48 @@ dio.render(
 )
 ```
 
-The easiest way to get started with DIO is to walk through the [Introduction to DIO](https://dio.js.org/introduction.html) or the [API Documentation](https://dio.js.org/api.html).
+The easiest way to get started with DIO is to walk through the [Introduction to DIO](https://dio.js.org/introduction) or the [API Documentation](https://dio.js.org/api).
 
 ## Features
 
-### Render
+The following is an overview of the features DIO allows you to make use of.
 
-1. Element.
-1. Component.
-1. Primitive: strings, number, null, undefined.
-1. Fragment: Array, Iterable.
-1. Async: Promise.
-1. Other: Portal, Error.
+1. ### Rendering
 
-### Component
+	1. Elements
+	1. Components
+	1. Primitives like strings, number, null, undefined
+	1. Fragment like Array, Iterable
+	1. and others renderables like Promises and Portals
 
-1. Statefull function component.
-1. Plain class component.
+1. ### Components
 
-### Event
+	1. function component(statefull)
+	1. Class component(statefull)
 
-1. Function or [EventListner](https://developer.mozilla.org/en/docs/Web/API/EventListener).
-1. Preserve "this" reference.
+1. ### Events
 
-### Errors
+	1. Functions or [EventListener](https://developer.mozilla.org/en/docs/Web/API/EventListener).
+	1. Preserve "this" reference.
 
-1. Error Boundary, "componentDidCatch".
+1. ### Errors
 
-### State
+	1. Error Boundaries, `componentDidCatch`.
 
-1. Object.
-1. Promise.
-1. Return.
+1. ### setState
 
-### Lifecycle
+	1. As an Object
+	1. As a Promise
+	1. As an Implicit return
 
-1. async componentWillUnmount.
+1. ### Lifecycle
+
+	1. async componentWillUnmount
 
 ## Example
+
+This examples presents a few features detailed above, namely – error boundaries, an implicit setState return
+and fragments.
 
 ```js
 class Input {
@@ -109,3 +116,11 @@ class Input {
 
 dio.render(h(Input))
 ```
+
+--
+
+## Links
+
+1. [Introduction to DIO](https://dio.js.org/introduction)
+2. [API Documentation](https://dio.js.org/api)
+3. [REPL](https://dio.js.org/repl)
