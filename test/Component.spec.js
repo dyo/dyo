@@ -306,4 +306,18 @@ describe('Component', () => {
 			done()
 		})
 	})
+
+	it('should update a nested component in a hoisted tree', () => {
+		let container = document.createElement('div')
+		let props = {x: 1}
+		let A = ({x}) => h(B, {x})
+		let B = ({x}) => x
+		let hoist = h(A, props)
+
+		render(hoist, container)
+		Object.assign(props, {x: 2})
+		render(hoist, container)
+
+		assert.html(container, '2')
+	})
 })

@@ -1505,9 +1505,6 @@
 		if (element.key !== snapshot.key || element.type !== snapshot.type)
 			return commitReplace(element, snapshot, element.parent, element.host, SharedMountReplace)
 	
-		if (element === snapshot)
-			return
-	
 		switch (element.id) {
 			case SharedElementPortal:
 			case SharedElementFragment:
