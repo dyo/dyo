@@ -1,6 +1,14 @@
 describe('Element', () => {
 	it('should validate an element', () => {
-		assert.equal(isValidElement(h('div')), true)
+		assert.isTrue(isValidElement(h('div')))
+	})
+
+	it('should not validate a non-element', () => {
+		assert.isFalse(isValidElement('div'))
+		assert.isFalse(isValidElement(1))
+		assert.isFalse(isValidElement(function () {}))
+		assert.isFalse(isValidElement({}))
+		assert.isFalse(isValidElement(Object.assign({}, h('div'))))
 	})
 
 	it('should clone an element', () => {

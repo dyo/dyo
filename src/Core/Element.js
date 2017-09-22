@@ -372,7 +372,10 @@ function getElementBoundary (element, direction) {
  */
 function getElementSibling (element, direction) {
 	if (isValidElement(element[direction]))
-		return element[direction]
+		if (element[direction] !== SharedElementPortal)
+			return element[direction]
+		else
+			return getElementSibling(element[direction], direction)
 
 	if (getElementDescription(element.host) === element)
 		return getElementSibling(element.host, direction)

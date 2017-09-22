@@ -315,7 +315,7 @@ function commitCreate (element) {
  * @param {Element} parent
  * @return {Object?}
  */
-function commitQuery (element, parent) {
+function commitQuery (element, parent) {	
 	if (element.active = true)
 		return getDOMQuery(
 			element,

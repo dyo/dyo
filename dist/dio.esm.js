@@ -634,7 +634,10 @@ function getElementBoundary (element, direction) {
  */
 function getElementSibling (element, direction) {
 	if (isValidElement(element[direction]))
-		return element[direction]
+		if (element[direction] !== SharedElementPortal)
+			return element[direction]
+		else
+			return getElementSibling(element[direction], direction)
 
 	if (getElementDescription(element.host) === element)
 		return getElementSibling(element.host, direction)
@@ -1364,7 +1367,7 @@ function commitCreate (element) {
  * @param {Element} parent
  * @return {Object?}
  */
-function commitQuery (element, parent) {
+function commitQuery (element, parent) {	
 	if (element.active = true)
 		return getDOMQuery(
 			element,
@@ -2107,6 +2110,7 @@ function getDOMProps (element) {
  * @param {Element} next
  */
 function getDOMQuery (element, parent, previous, next) {
+	var id = element.id
 	var type = element.type.toLowerCase()
 	var props = element.props
 	var children = element.children
@@ -2117,8 +2121,11 @@ function getDOMQuery (element, parent, previous, next) {
 
 	while (target) {
 		if (target.nodeName.toLowerCase() === type) {
-			if (type === '#text') {
-				if (element.id === next.id)
+			if (parent.id === SharedElementPortal)
+				return void target.parentNode.removeChild(target)
+
+			if (id === SharedElementText) {
+				if (next.id === SharedElementText)
 					target.splitText(length)
 
 				if (target.nodeValue !== children)
@@ -2134,7 +2141,7 @@ function getDOMQuery (element, parent, previous, next) {
 				break
 		}
 
-		if (type === '#text' && (length === 0 || element.xmlns === type)) {
+		if (id === SharedElementText && (length === 0 || element.xmlns === type)) {
 			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {
 				if (next.type)
 					break

@@ -90,4 +90,34 @@ describe('Hydrate', () => {
 		hydrate(h('section', {class: 'class'}, h('div', 'correct')), container)
 		assert.html(container, '<section class="class"><div>correct</div></section>')
 	})
+
+	it('should allow out of order server rendering with portals', () => {
+		let html = document.createElement('html')
+		let head = html.appendChild(document.createElement('head'))
+		let container = html.appendChild(document.createElement('div'))
+		container.innerHTML = `<div><h1>Before</h1><title>Portal</title><h1>After</h1></div>`
+		
+		let portal = createPortal(h('title', 'Title', h('meta', 'Portal')), head)
+		let element = h('div', h('h1', 'Before'), portal, h('h1', 'After'))
+
+		hydrate(element, container)
+		assert.html(container, `
+			<div>
+				<h1>Before</h1>
+				<h1>After</h1>
+			</div>
+		`)
+		assert.html(head, `<title>Title<meta></title>`)
+		assert.html(html, `
+			<head>
+				<title>Title<meta></title>
+			</head>
+			<div>
+				<div>
+					<h1>Before</h1>
+					<h1>After</h1>
+				</div>
+			</div>
+		`)
+	})
 })
