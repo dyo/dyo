@@ -67,7 +67,7 @@ For example, eveything in `Core/` manages aspects related to creating snapshot e
 The distrution artifacts in `./dist/` are made of the bundle of the related sources mentioned above. You can create or update a build by running the following command.
 
 ```
-npm build
+npm run build
 ```
 
 Alternatively you can run the following to generate a build everytime you make changes to `src/`.
