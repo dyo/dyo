@@ -237,15 +237,15 @@ function invariant (from, message) {
  * @return {boolean}
  */
 function compare (a, b) {
-  for (var key in a)
-  	if (!hasOwnProperty.call(b, key))
-  		return true
-  
-  for (var key in b)
-  	if (!is(a[key], b[key]))
-  		return true
+	for (var key in a)
+		if (!hasOwnProperty.call(b, key))
+			return true
+	
+	for (var key in b)
+		if (!is(a[key], b[key]))
+			return true
 
-  return false
+	return false
 }
 
 /**
@@ -254,10 +254,10 @@ function compare (a, b) {
  * @return {boolean}
  */
 function is (a, b) {
-  if (a === b)
-    return a !== 0 || 1/a === 1/b
-  else
-    return a !== a && b !== b
+	if (a === b)
+		return a !== 0 || 1/a === 1/b
+	else
+		return a !== a && b !== b
 }
 
 /**
@@ -629,21 +629,22 @@ function getElementBoundary (element, direction) {
 
 /**
  * @param {Element} element
+ * @param {Element} parent
  * @param {string} direction
  * @return {Element}
  */
-function getElementSibling (element, direction) {
+function getElementSibling (element, parent, direction) {
 	if (isValidElement(element[direction]))
-		if (element[direction] !== SharedElementPortal)
-			return element[direction]
+		if (element[direction].id === SharedElementPortal)
+			return getElementSibling(element[direction], parent, direction)
 		else
-			return getElementSibling(element[direction], direction)
+			return element[direction]
 
 	if (getElementDescription(element.host) === element)
-		return getElementSibling(element.host, direction)
-	
-	if (element.parent.id < SharedElementEmpty)
-		return getElementSibling(element.parent, direction)
+		return getElementSibling(element.host, parent, direction)
+
+	if (parent.id < SharedElementEmpty)
+		return getElementSibling(parent, parent.parent, direction)
 
 	return createElementNode(SharedDOMObject)
 }
@@ -1102,51 +1103,51 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 	element.parent = parent
 	element.context = host.context
 
- 	switch (element.id) {
- 		case SharedElementComponent:
- 			element.work = SharedWorkTask
- 			
- 			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
- 			element.DOM = commitCreate(element)
+	switch (element.id) {
+		case SharedElementComponent:
+			element.work = SharedWorkTask
+			
+			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
+			element.DOM = commitCreate(element)
 
- 			if (element.ref)
- 				commitReference(element, element.ref, SharedReferenceAssign)
- 			
- 			if (element.owner[SharedComponentDidMount])
- 				getLifecycleMount(element, SharedComponentDidMount)
+			if (element.ref)
+				commitReference(element, element.ref, SharedReferenceAssign)
+			
+			if (element.owner[SharedComponentDidMount])
+				getLifecycleMount(element, SharedComponentDidMount)
 
- 			element.work = SharedWorkSync
- 			return
- 		case SharedElementPromise:
- 			commitWillReconcile(element, element)
- 		case SharedElementFragment:
- 		case SharedElementPortal:
- 			element.DOM = parent.DOM
- 			commitChildren(element, sibling, host, operation, signature)
- 			element.DOM = commitCreate(element)
- 			return
- 		case SharedElementNode:
- 			element.xmlns = getDOMType(element, parent.xmlns)
- 		case SharedElementText:
- 			switch (signature) {
- 				case SharedMountClone:
- 					if (element.DOM = commitQuery(element, parent))
-	 					break
- 				default:
- 					element.DOM = commitCreate(element)
+			element.work = SharedWorkSync
+			return
+		case SharedElementPromise:
+			commitWillReconcile(element, element)
+		case SharedElementFragment:
+		case SharedElementPortal:
+			element.DOM = parent.DOM
+			commitChildren(element, sibling, host, operation, signature)
+			element.DOM = commitCreate(element)
+			return
+		case SharedElementNode:
+			element.xmlns = getDOMType(element, parent.xmlns)
+		case SharedElementText:
+			switch (signature) {
+				case SharedMountClone:
+					if (element.DOM = commitQuery(element, parent))
+						break
+				default:
+					element.DOM = commitCreate(element)
 
 					if (operation === SharedMountAppend)
 						commitAppend(element, parent)
 					else
 						commitInsert(element, sibling, parent)
- 			}
+			}
 
- 			if (element.id === SharedElementText)
- 				return
- 	}
+			if (element.id === SharedElementText)
+				return
+	}
 
- 	commitChildren(element, element, host, SharedMountAppend, signature)
- 	commitProperties(element, getDOMProps(element), SharedPropsMount)
+	commitChildren(element, element, host, SharedMountAppend, signature)
+	commitProperties(element, getDOMProps(element), SharedPropsMount)
 }
 
 /**
@@ -1372,8 +1373,8 @@ function commitQuery (element, parent) {
 		return getDOMQuery(
 			element,
 			parent,
-			getElementSibling(element, SharedSiblingPrevious),
-			getElementSibling(element, SharedSiblingNext)
+			getElementSibling(element, parent, SharedSiblingPrevious),
+			getElementSibling(element, parent, SharedSiblingNext)
 		)
 }
 
@@ -1416,7 +1417,7 @@ function commitInsert (element, sibling, parent) {
 			return
 
 	if (sibling.id === SharedElementPortal)
-		return commitInsert(element, getElementSibling(sibling, SharedSiblingNext), parent)
+		return commitInsert(element, getElementSibling(sibling, parent, SharedSiblingNext), parent)
 
 	if (element.id > SharedElementEmpty)
 		insertDOMNode(element, sibling, parent)
@@ -2112,6 +2113,7 @@ function getDOMProps (element) {
 function getDOMQuery (element, parent, previous, next) {
 	var id = element.id
 	var type = element.type.toLowerCase()
+	var xmlns = element.xmlns
 	var props = element.props
 	var children = element.children
 	var length = children.length
@@ -2121,9 +2123,6 @@ function getDOMQuery (element, parent, previous, next) {
 
 	while (target) {
 		if (target.nodeName.toLowerCase() === type) {
-			if (parent.id === SharedElementPortal)
-				return void target.parentNode.removeChild(target)
-
 			if (id === SharedElementText) {
 				if (next.id === SharedElementText)
 					target.splitText(length)
@@ -2134,19 +2133,22 @@ function getDOMQuery (element, parent, previous, next) {
 				target.textContent = ''
 			}
 
-			node = createDOMObject(target)
-			type = null
+			if (parent.id === SharedElementPortal)
+				createDOMPortal(parent).target.appendChild(target)
+
+			node = createDOMObject(target)			
+			type = ''
 
 			if (!(target = target.nextSibling) || next.type)
 				break
 		}
 
-		if (id === SharedElementText && (length === 0 || element.xmlns === type)) {
-			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {
+		if (id === SharedElementText && (length === 0 || xmlns === type)) {
+			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {				
 				if (next.type)
 					break
 				else
-					type = null
+					type = ''
 			}
 		}
 

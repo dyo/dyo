@@ -367,21 +367,22 @@ function getElementBoundary (element, direction) {
 
 /**
  * @param {Element} element
+ * @param {Element} parent
  * @param {string} direction
  * @return {Element}
  */
-function getElementSibling (element, direction) {
+function getElementSibling (element, parent, direction) {
 	if (isValidElement(element[direction]))
-		if (element[direction] !== SharedElementPortal)
-			return element[direction]
+		if (element[direction].id === SharedElementPortal)
+			return getElementSibling(element[direction], parent, direction)
 		else
-			return getElementSibling(element[direction], direction)
+			return element[direction]
 
 	if (getElementDescription(element.host) === element)
-		return getElementSibling(element.host, direction)
-	
-	if (element.parent.id < SharedElementEmpty)
-		return getElementSibling(element.parent, direction)
+		return getElementSibling(element.host, parent, direction)
+
+	if (parent.id < SharedElementEmpty)
+		return getElementSibling(parent, parent.parent, direction)
 
 	return createElementNode(SharedDOMObject)
 }

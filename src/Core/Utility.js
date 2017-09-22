@@ -152,15 +152,15 @@ function invariant (from, message) {
  * @return {boolean}
  */
 function compare (a, b) {
-  for (var key in a)
-  	if (!hasOwnProperty.call(b, key))
-  		return true
-  
-  for (var key in b)
-  	if (!is(a[key], b[key]))
-  		return true
+	for (var key in a)
+		if (!hasOwnProperty.call(b, key))
+			return true
+	
+	for (var key in b)
+		if (!is(a[key], b[key]))
+			return true
 
-  return false
+	return false
 }
 
 /**
@@ -169,8 +169,8 @@ function compare (a, b) {
  * @return {boolean}
  */
 function is (a, b) {
-  if (a === b)
-    return a !== 0 || 1/a === 1/b
-  else
-    return a !== a && b !== b
+	if (a === b)
+		return a !== 0 || 1/a === 1/b
+	else
+		return a !== a && b !== b
 }

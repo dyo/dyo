@@ -180,6 +180,7 @@ function getDOMProps (element) {
 function getDOMQuery (element, parent, previous, next) {
 	var id = element.id
 	var type = element.type.toLowerCase()
+	var xmlns = element.xmlns
 	var props = element.props
 	var children = element.children
 	var length = children.length
@@ -189,9 +190,6 @@ function getDOMQuery (element, parent, previous, next) {
 
 	while (target) {
 		if (target.nodeName.toLowerCase() === type) {
-			if (parent.id === SharedElementPortal)
-				return void target.parentNode.removeChild(target)
-
 			if (id === SharedElementText) {
 				if (next.id === SharedElementText)
 					target.splitText(length)
@@ -202,19 +200,22 @@ function getDOMQuery (element, parent, previous, next) {
 				target.textContent = ''
 			}
 
-			node = createDOMObject(target)
-			type = null
+			if (parent.id === SharedElementPortal)
+				createDOMPortal(parent).target.appendChild(target)
+
+			node = createDOMObject(target)			
+			type = ''
 
 			if (!(target = target.nextSibling) || next.type)
 				break
 		}
 
-		if (id === SharedElementText && (length === 0 || element.xmlns === type)) {
-			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {
+		if (id === SharedElementText && (length === 0 || xmlns === type)) {
+			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {				
 				if (next.type)
 					break
 				else
-					type = null
+					type = ''
 			}
 		}
 

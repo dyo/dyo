@@ -50,51 +50,51 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 	element.parent = parent
 	element.context = host.context
 
- 	switch (element.id) {
- 		case SharedElementComponent:
- 			element.work = SharedWorkTask
- 			
- 			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
- 			element.DOM = commitCreate(element)
+	switch (element.id) {
+		case SharedElementComponent:
+			element.work = SharedWorkTask
+			
+			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
+			element.DOM = commitCreate(element)
 
- 			if (element.ref)
- 				commitReference(element, element.ref, SharedReferenceAssign)
- 			
- 			if (element.owner[SharedComponentDidMount])
- 				getLifecycleMount(element, SharedComponentDidMount)
+			if (element.ref)
+				commitReference(element, element.ref, SharedReferenceAssign)
+			
+			if (element.owner[SharedComponentDidMount])
+				getLifecycleMount(element, SharedComponentDidMount)
 
- 			element.work = SharedWorkSync
- 			return
- 		case SharedElementPromise:
- 			commitWillReconcile(element, element)
- 		case SharedElementFragment:
- 		case SharedElementPortal:
- 			element.DOM = parent.DOM
- 			commitChildren(element, sibling, host, operation, signature)
- 			element.DOM = commitCreate(element)
- 			return
- 		case SharedElementNode:
- 			element.xmlns = getDOMType(element, parent.xmlns)
- 		case SharedElementText:
- 			switch (signature) {
- 				case SharedMountClone:
- 					if (element.DOM = commitQuery(element, parent))
-	 					break
- 				default:
- 					element.DOM = commitCreate(element)
+			element.work = SharedWorkSync
+			return
+		case SharedElementPromise:
+			commitWillReconcile(element, element)
+		case SharedElementFragment:
+		case SharedElementPortal:
+			element.DOM = parent.DOM
+			commitChildren(element, sibling, host, operation, signature)
+			element.DOM = commitCreate(element)
+			return
+		case SharedElementNode:
+			element.xmlns = getDOMType(element, parent.xmlns)
+		case SharedElementText:
+			switch (signature) {
+				case SharedMountClone:
+					if (element.DOM = commitQuery(element, parent))
+						break
+				default:
+					element.DOM = commitCreate(element)
 
 					if (operation === SharedMountAppend)
 						commitAppend(element, parent)
 					else
 						commitInsert(element, sibling, parent)
- 			}
+			}
 
- 			if (element.id === SharedElementText)
- 				return
- 	}
+			if (element.id === SharedElementText)
+				return
+	}
 
- 	commitChildren(element, element, host, SharedMountAppend, signature)
- 	commitProperties(element, getDOMProps(element), SharedPropsMount)
+	commitChildren(element, element, host, SharedMountAppend, signature)
+	commitProperties(element, getDOMProps(element), SharedPropsMount)
 }
 
 /**
@@ -320,8 +320,8 @@ function commitQuery (element, parent) {
 		return getDOMQuery(
 			element,
 			parent,
-			getElementSibling(element, SharedSiblingPrevious),
-			getElementSibling(element, SharedSiblingNext)
+			getElementSibling(element, parent, SharedSiblingPrevious),
+			getElementSibling(element, parent, SharedSiblingNext)
 		)
 }
 
@@ -364,7 +364,7 @@ function commitInsert (element, sibling, parent) {
 			return
 
 	if (sibling.id === SharedElementPortal)
-		return commitInsert(element, getElementSibling(sibling, SharedSiblingNext), parent)
+		return commitInsert(element, getElementSibling(sibling, parent, SharedSiblingNext), parent)
 
 	if (element.id > SharedElementEmpty)
 		insertDOMNode(element, sibling, parent)

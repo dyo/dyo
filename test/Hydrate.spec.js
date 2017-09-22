@@ -91,7 +91,7 @@ describe('Hydrate', () => {
 		assert.html(container, '<section class="class"><div>correct</div></section>')
 	})
 
-	it('should allow out of order server rendering with portals', () => {
+	it('should hydrate portals', () => {
 		let html = document.createElement('html')
 		let head = html.appendChild(document.createElement('head'))
 		let container = html.appendChild(document.createElement('div'))
@@ -108,16 +108,23 @@ describe('Hydrate', () => {
 			</div>
 		`)
 		assert.html(head, `<title>Title<meta></title>`)
-		assert.html(html, `
-			<head>
-				<title>Title<meta></title>
-			</head>
+	})
+
+	it('should repair elements after portals ', () => {
+		let html = document.createElement('html')
+		let head = html.appendChild(document.createElement('head'))
+		let container = html.appendChild(document.createElement('div'))
+		container.innerHTML = `<div><h1>Before</h1><title>Portal</title><h1>After</h1></div>`
+		
+		let portal = createPortal(h('title', 'Title', h('meta', 'Portal')), head)
+		let element = h('div', h('h1', 'Before'), portal)
+
+		hydrate(element, container)
+		assert.html(container, `
 			<div>
-				<div>
-					<h1>Before</h1>
-					<h1>After</h1>
-				</div>
+				<h1>Before</h1>
 			</div>
 		`)
+		assert.html(head, `<title>Title<meta></title>`)
 	})
 })
