@@ -1727,32 +1727,33 @@
 	 * @param {number} signature
 	 * @return {Element?}
 	 */
-	function getErrorElement (element, error, from, signature) {	
+	function getErrorElement (element, error, from, signature) {
 		if (signature === SharedErrorPassive || !isValidElement(element))
 			return
 	
 		var owner = element.owner
 		var host = element.host
+		var boundary = owner && owner[SharedComponentDidCatch] 
+		var propagate = !boundary && !!host
 		var snapshot
 	
-		if (!owner || !owner[SharedComponentDidCatch])
-			return host ? void getErrorElement(host, error, from, signature) : snapshot
-	
-		element.sync = SharedWorkTask
-	
-		try {
-			snapshot = owner[SharedComponentDidCatch].call(element.instance, error, error)
-		} catch (err) {
-			invokeErrorBoundary(host, err, SharedComponentDidCatch, signature)
+		if (boundary) {
+			element.sync = SharedWorkTask
+			try {
+				snapshot = boundary.call(element.instance, error, error)
+			} catch (err) {
+				invokeErrorBoundary(host, err, SharedComponentDidCatch, signature)
+			}
+			element.sync = SharedWorkSync
 		}
 	
-		element.sync = SharedWorkSync
+		requestAnimationFrame(function () {
+			if (element.active)
+				reconcileElement(getElementDescription(element), commitElement(snapshot))
+		})
 	
-		if (from !== SharedSiteRender)
-			requestAnimationFrame(function () {
-				if (element.active)
-					reconcileElement(getElementDescription(element), commitElement(snapshot))
-			})
+		if (propagate)
+			getErrorElement(host, error, from, signature)
 	
 		return snapshot
 	}

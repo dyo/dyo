@@ -491,32 +491,6 @@ describe('Component', () => {
 		})
 	})
 
-	it('should recover from async getInitialState error', (done) => {
-		let container = document.createElement('div')
-		let stack = []
-
-		render(class {
-			componentDidCatch(err) {
-				stack.push(err)
-				err.preventDefault()
-				return 'Hello World'
-			}
-			getInitialState() {
-				return Promise.reject({x: '!!'})
-			}
-			render(props, {x}) {
-				stack.push(x)
-				return h('h1', 'Hello World', x)
-			}
-		}, container)
-
-		nextTick(() => {
-			assert.html(container, 'Hello World')
-			assert.lengthOf(stack, 1)
-			done()
-		})
-	})
-
 	it('should async mount', (done) => {
 		let container = document.createElement('div')
 		let refs = Promise.resolve(h('h1', 'Hello'))
@@ -561,31 +535,5 @@ describe('Component', () => {
 
 		assert.html(container, '<h1>Hello</h1>')
 		refs.then(() => assert.html(container, '')).then(done)
-	})
-
-	it('should recover from an async element error', (done) => {
-		let container = document.createElement('div')
-		let stack = []
-		let refs = Promise.reject('')
-		
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push('error')
-				return 'Hello World'
-			}
-			render(props, state) {
-				stack.push('render')
-				return refs
-			}
-		}, container)
-
-		refs.catch(() => {
-			nextTick(() => {
-				assert.lengthOf(stack, 2)
-				assert.html(container, 'Hello World')
-				done()
-			})
-		})
 	})
 })

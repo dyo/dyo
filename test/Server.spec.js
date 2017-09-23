@@ -244,32 +244,4 @@ describe('Server', () => {
 			done()
 		})
 	})
-
-	it('should recover from an async component stream error', (done) => {
-		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
-		})
-
-		let element = h(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				return h('h1', 'Error!')
-			}
-			getInitialState() {
-				return Promise.reject({x: '!'})
-			}
-			render(props, {x}) {
-				return h('h1', 'Hello World', x)
-			}
-		})
-		let output = ''
-
-		renderToStream(element, writable, () => {
-			assert.html(output, '<h1>Error!</h1>')
-			done()
-		})
-	})
 })
