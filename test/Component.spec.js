@@ -134,6 +134,140 @@ describe('Component', () => {
 		])
 	})
 
+	it('should provide context', () => {
+		let container = document.createElement('div')
+		let counter = 0
+		let A = class {
+			getChildContext() {
+				return {
+					children: counter++
+				}
+			}
+			render() {
+				return class {
+					render() {
+						return class {
+							render(props, state, {children}) {
+								return class {
+									render(props, state, {children}) {
+										return children
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		render(A, container)
+
+		assert.html(container, '0')
+	})
+
+	it('should update context', () => {
+		let container = document.createElement('div')
+		let counter = 0
+		let A = class {
+			getChildContext() {
+				return {
+					children: counter++
+				}
+			}
+			render() {
+				return class {
+					render() {
+						return class {
+							render(props, state, {children}) {
+								return class {
+									render(props, state, {children}) {
+										return children
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		render(A, container)
+		render(A, container)
+
+		assert.html(container, '1')
+	})
+
+	it('should update context with shouldComponentUpdate present', () => {
+		let container = document.createElement('div')
+		let counter = 0
+		let A = class {
+			getChildContext() {
+				return {
+					children: counter++
+				}
+			}
+			render() {
+				return class {
+					render() {
+						return class {
+							shouldComponentUpdate() {
+								return false
+							}
+							render(props, state, {children}) {
+								return class {
+									render(props, state, {children}) {
+										return children
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		render(A, container)
+		render(A, container)
+
+		assert.html(container, '1')
+	})
+
+	it('should branch context', () => {
+		let container = document.createElement('div')
+		let counter = 0
+		let A = class {
+			getChildContext() {
+				return {
+					children: counter++
+				}
+			}
+			render() {
+				return class {
+					render() {
+						return class {
+							getChildContext(props, state, context) {
+								return {
+									children: context.children + 1
+								}
+							}
+							render(props, state, {children}) {
+								return class {
+									render(props, state, {children}) {
+										return children
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		render(A, container)
+
+		assert.html(container, '1')
+	})
+
 	it('should update Component', () => {
 		let container = document.createElement('div')
 		let A = class {

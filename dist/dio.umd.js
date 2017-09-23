@@ -968,7 +968,12 @@
 	 */
 	function getLifecycleData (element, name) {
 		try {
-			return element.owner[name].call(element.instance, element.props)
+			return element.owner[name].call(
+				element.instance,
+				element.instance.props,
+				element.instance.state,
+				element.instance.context
+			)
 		} catch (err) {
 			invokeErrorBoundary(element, err, name, SharedErrorActive)
 		}
