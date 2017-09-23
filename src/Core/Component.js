@@ -160,7 +160,7 @@ function updateComponent (element, snapshot, signature) {
 	if (signature === SharedComponentStateUpdate)
 		instance.state = nextState
 
-	reconcileElement(getElementChildren(element), getComponentElement(element, instance))
+	reconcileElement(element.children, getComponentElement(element, instance))
 
 	if (owner[SharedComponentDidUpdate])
 		getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)

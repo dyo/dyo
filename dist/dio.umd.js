@@ -597,14 +597,6 @@
 	}
 	
 	/**
-	 * @param  {Element} element
-	 * @return {Element}
-	 */
-	function getElementChildren (element) {
-		return element.children
-	}
-	
-	/**
 	 * @param {Element} element
 	 * @param {Element} 
 	 */
@@ -619,12 +611,23 @@
 	}
 	
 	/**
+	 * @param  {Element} element
+	 * @return {Element}
+	 */
+	function getElementChildren (element) {
+		if (element && element.id === SharedElementComponent)
+			return element.children
+		else
+			return element
+	}
+	
+	/**
 	 * @param {Element} element
 	 * @return {Element}
 	 */
 	function getElementDescription (element) {
-		if (isValidElement(element) && element.id === SharedElementComponent)
-			return getElementDescription(getElementChildren(element))
+		if (element && element.id === SharedElementComponent)
+			return getElementDescription(element.children)
 		else
 			return element
 	}
@@ -636,7 +639,7 @@
 	 */
 	function getElementBoundary (element, direction) {
 		if (element.id < SharedElementEmpty)
-			return getElementBoundary(getElementChildren(element)[direction])
+			return getElementBoundary(element.children[direction])
 		else
 			return element
 	}
@@ -825,7 +828,7 @@
 		if (signature === SharedComponentStateUpdate)
 			instance.state = nextState
 	
-		reconcileElement(getElementChildren(element), getComponentElement(element, instance))
+		reconcileElement(element.children, getComponentElement(element, instance))
 	
 		if (owner[SharedComponentDidUpdate])
 			getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
@@ -1166,7 +1169,7 @@
 	function commitDismount (element, parent, signature) {
 		switch (element.active = false, element.id) {
 			case SharedElementComponent:
-				commitDismount(getElementChildren(element), parent, -signature)
+				commitDismount(element.children, parent, -signature)
 				unmountComponent(element)
 			case SharedElementText:
 				break
@@ -1203,7 +1206,7 @@
 				.then(commitWillUnmount(element, parent, SharedErrorActive))
 				.catch(commitWillUnmount(element, parent, SharedErrorPassive))
 	
-		commitUnmount(getElementChildren(element), parent, SharedElementEmpty)
+		commitUnmount(element.children, parent, SharedElementEmpty)
 	}
 	
 	/**
@@ -1217,7 +1220,7 @@
 			element.host = createElementImmutable(element.host)
 	
 		if (element.id === SharedElementComponent)
-			return commitWillUnmount(merge(getElementChildren(element), {
+			return commitWillUnmount(merge(element.children, {
 				DOM: createDOMObject(getDOMNode(element))
 			}), parent, signature)
 		
@@ -1362,7 +1365,7 @@
 				case SharedElementText:
 					return createDOMText(element)
 				case SharedElementComponent:
-					return getElementChildren(element).DOM
+					return element.children.DOM
 				default:
 					return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 			}
@@ -1405,7 +1408,7 @@
 		if (element.id > SharedElementEmpty)
 			removeDOMNode(element, parent)
 		else
-			getElementChildren(element).forEach(function (children) {
+			element.children.forEach(function (children) {
 				commitRemove(children, element)
 			})
 	}
@@ -1430,7 +1433,7 @@
 		if (element.id > SharedElementEmpty)
 			insertDOMNode(element, sibling, parent)
 		else
-			getElementChildren(element).forEach(function (children) {
+			element.children.forEach(function (children) {
 				commitInsert(children, sibling, element)
 			})
 	}
@@ -1449,7 +1452,7 @@
 		if (element.id > SharedElementEmpty)
 			appendDOMNode(element, parent)
 		else
-			getElementChildren(element).forEach(function (children) {
+			element.children.forEach(function (children) {
 				commitAppend(children, element)
 			})
 	}
@@ -1749,7 +1752,7 @@
 	
 		requestAnimationFrame(function () {
 			if (element.active)
-				reconcileElement(getElementDescription(element), commitElement(snapshot))
+				reconcileElement(getElementChildren(element), commitElement(snapshot))
 		})
 	
 		if (propagate)

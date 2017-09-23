@@ -182,4 +182,37 @@ describe('Error', () => {
 			done()
 		})
 	})
+
+	it('should unmount child components', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let error = console.error
+		console.error = () => {}
+
+		render(class {
+			componentWillUnmount() {
+				stack.push(1)
+			}
+			getInitialState() {
+				throw new Error('Error!')
+			}
+			render() {
+				return class {
+					componentWillUnmount() {
+						stack.push(1)
+					}
+					render() {
+						return h('div', 'xxx')
+					}
+				}
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.lengthOf(stack, 1)
+			assert.html(container, '')
+			console.error = error
+			done()
+		})
+	})
 })

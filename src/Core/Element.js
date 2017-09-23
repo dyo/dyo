@@ -324,14 +324,6 @@ function getDisplayName (subject) {
 }
 
 /**
- * @param  {Element} element
- * @return {Element}
- */
-function getElementChildren (element) {
-	return element.children
-}
-
-/**
  * @param {Element} element
  * @param {Element} 
  */
@@ -346,12 +338,23 @@ function getElementParent (element) {
 }
 
 /**
+ * @param  {Element} element
+ * @return {Element}
+ */
+function getElementChildren (element) {
+	if (element && element.id === SharedElementComponent)
+		return element.children
+	else
+		return element
+}
+
+/**
  * @param {Element} element
  * @return {Element}
  */
 function getElementDescription (element) {
-	if (isValidElement(element) && element.id === SharedElementComponent)
-		return getElementDescription(getElementChildren(element))
+	if (element && element.id === SharedElementComponent)
+		return getElementDescription(element.children)
 	else
 		return element
 }
@@ -363,7 +366,7 @@ function getElementDescription (element) {
  */
 function getElementBoundary (element, direction) {
 	if (element.id < SharedElementEmpty)
-		return getElementBoundary(getElementChildren(element)[direction])
+		return getElementBoundary(element.children[direction])
 	else
 		return element
 }

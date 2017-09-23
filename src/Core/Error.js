@@ -44,7 +44,7 @@ function getErrorElement (element, error, from, signature) {
 
 	requestAnimationFrame(function () {
 		if (element.active)
-			reconcileElement(getElementDescription(element), commitElement(snapshot))
+			reconcileElement(getElementChildren(element), commitElement(snapshot))
 	})
 
 	if (propagate)
