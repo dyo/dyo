@@ -72,6 +72,26 @@ describe('Server', () => {
 		)
 	})
 
+	it('should render void elements to a string', () => {
+		assert.html(h('area'), '<area>')
+		assert.html(h('base'), '<base>')
+		assert.html(h('br'), '<br>')
+		assert.html(h('meta'), '<meta>')
+		assert.html(h('source'), '<source>')
+		assert.html(h('area'), '<area>')
+		assert.html(h('keygen'), '<keygen>')
+		assert.html(h('img'), '<img>')
+		assert.html(h('col'), '<col>')
+		assert.html(h('embed'), '<embed>')
+		assert.html(h('track'), '<track>')
+		assert.html(h('track'), '<track>')
+		assert.html(h('param'), '<param>')
+		assert.html(h('link'), '<link>')
+		assert.html(h('input'), '<input>')
+		assert.html(h('hr'), '<hr>')
+		assert.html(h('!doctype'), '<!doctype>')
+	})
+
 	it('should render a string to string', () => {
 		assert.html(
 			h(class {

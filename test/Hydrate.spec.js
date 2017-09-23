@@ -91,6 +91,14 @@ describe('Hydrate', () => {
 		assert.html(container, '<section class="class"><div>correct</div></section>')
 	})
 
+	it('should remove incorrect tail elements after text', () => {
+		let container = document.createElement('div')
+		container.innerHTML = '<div>abc<a>XXX</a></div>'
+
+		hydrate(h('div', 'abc'), container)
+		assert.html(container, '<div>abc</div>')
+	})
+
 	it('should hydrate portals', () => {
 		let html = document.createElement('html')
 		let head = html.appendChild(document.createElement('head'))
@@ -107,7 +115,7 @@ describe('Hydrate', () => {
 				<h1>After</h1>
 			</div>
 		`)
-		assert.html(head, `<title>Title<meta></title>`)
+		assert.html(head, '<title>Title<meta></title>')
 	})
 
 	it('should repair elements after portals ', () => {

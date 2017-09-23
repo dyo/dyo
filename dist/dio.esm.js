@@ -2143,7 +2143,7 @@ function getDOMQuery (element, parent, previous, next) {
 				break
 		}
 
-		if (id === SharedElementText && (length === 0 || xmlns === type)) {
+		if (id === SharedElementText && (length === 0 || xmlns === '#text')) {
 			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {				
 				if (next.type)
 					break
