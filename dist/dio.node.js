@@ -1,6 +1,6 @@
 /*! DIO 8.0.0 @license MIT */
 
-module.exports = function (exports, Element, mountComponent, commitElement) {
+module.exports = function (exports, Element, mountComponent, commitElement, invokeErrorBoundary) {
 	
 	'use strict'
 	
@@ -303,83 +303,99 @@ module.exports = function (exports, Element, mountComponent, commitElement) {
 	/**
 	 * @type {Object}
 	 */
-	Stream.prototype = Object.create(Readable.prototype, {
-		/**
-		 * @param {Element} element
-		 * @param {Element?} host
-		 * @param {Array} stack
-		 * @param {Writable} writable
-		 */
-		write: {value: function write (element, host, stack, writable) {
-			var output = ''
+	Stream.prototype = Object.create(Readable.prototype, {_read: {value: getStreamElement}})
 	
-			switch (element.host = host, element.id) {
-				case SharedElementComponent:
-					return write(mountComponent(element), writable.host = element, stack, writable)
-				case SharedElementPromise:
-					return void element.type.then(function (value) {
-						write(commitElement(value), host, stack, writable)
-					})
-				case SharedElementText:
-					return void writable.push(element.children)
-				case SharedElementNode:
-					if (element.DOM)
-						return element.DOM = void writable.push(element.DOM)
+	/**
+	 * @return {void}
+	 */
+	function getStreamElement () {
+		if (this.stack.length > 0)
+			readStreamElement(this.stack.pop(), this.host, this.stack, this)
+		else
+			this.push(null)
+	}
 	
-					var output = '<' + element.type + getStringProps(element, element.props) + '>'
-					
-					if (getElementType(element.type) === SharedElementEmpty)
-						return void writable.push(output)
-					
-					if (element.DOM)
-						output += element.DOM
+	/**
+	 * @param {Element} element
+	 * @param {Element?} host
+	 * @param {Array} stack
+	 * @param {Readable} readable
+	 */
+	function readStreamElement (element, host, stack, readable) {
+		var output = ''
 	
-					element.DOM = '</' + element.type + '>'
-					stack.push(element)
-				default:
-					var children = element.children
-					var length = children.length
+		switch (element.host = host, element.id) {
+			case SharedElementComponent:
+				return readStreamElement(mountComponent(element), readable.host = element, stack, readable)
+			case SharedElementPromise:
+				return void element.type.then(function (value) {
+					readStreamElement(commitElement(value), host, stack, readable)
+				}).catch(function (err) {
+					invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
+				})
+			case SharedElementText:
+				return writeStreamElement(element.children, readable)
+			case SharedElementNode:
+				if (element.DOM)
+					return element.DOM = writeStreamElement(element.DOM, readable)
 	
-					while (length-- > 0)
-						stack.push(children = children.prev)
-			}
+				output += '<' + element.type + getStringProps(element, element.props) + '>'
+				
+				if (getElementType(element.type) === SharedElementEmpty)
+					return writeStreamElement(output, readable)
+				
+				if (element.DOM)
+					output += element.DOM
 	
-			writable.push(output)
-		}},
-		/**
-		 * @return {void}
-		 */
-		_read: {value: function read () {
-			if (this.stack.length > 0)
-				this.write(this.stack.pop(), this.host, this.stack, this)
-			else
-				this.push(null)
-		}}
-	})
+				element.DOM = '</' + element.type + '>'
+				stack.push(element)
+			default:
+				var children = element.children
+				var length = children.length
+	
+				while (length-- > 0)
+					stack.push(children = children.prev)
+		}
+	
+		writeStreamElement(output, readable)
+	}
+	
+	/**
+	 * @param {string} output
+	 * @param {Readable} readable
+	 */
+	function writeStreamElement (output, readable) {
+		readable.push(output)
+	
+		if (!output)
+			readable.read(0)
+	}
 	
 	/**
 	 * @param {*} subject
-	 * @param {Stream?} target
+	 * @param {Writable?} target
 	 * @param {function=} callback
 	 */
 	function renderToString (subject, target, callback) {
 		if (!target || !target.writable)
 			return commitElement(subject).toString()
-	
-		setHeader(target)
-		target.end(commitElement(subject).toString(), 'utf8', callback)
+		else
+			setHeader(target)
+		
+		return target.end(commitElement(subject).toString(), 'utf8', callback)
 	}
 	
 	/**
 	 * @param {*} subject
-	 * @param {Stream?} target
+	 * @param {Writable?} target
 	 * @param {function=} callback
 	 */
 	function renderToStream (subject, target, callback) {
 		if (!target || !target.writable)
 			return commitElement(subject).toStream()
-	
-		setHeader(target)
-		commitElement(subject).toStream(callback).pipe(target)
+		else
+			setHeader(target)
+		
+		return commitElement(subject).toStream(callback).pipe(target)
 	}
 }

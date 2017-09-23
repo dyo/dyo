@@ -136,14 +136,40 @@ describe('Server', () => {
 		})
 	})
 
-	it('should render stream to writable', (done) => {
+	it('should render to a writable stream', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
 	      output += chunk.toString()
 	      callback()
 		  }
 		})
+
 		let element = [h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))]
+		let output = ''
+
+		renderToStream(element, writable, () => {
+			assert.html(output, `
+				<h1 class="foo">
+					12
+					<p>Hello</p>
+					<span></span>
+					<img>
+				</h1>
+			`)
+
+			done()
+		})
+	})
+
+	it('should render an async element to a writable stream', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let element = Promise.resolve([h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))])
 		let output = ''
 
 		renderToStream(element, writable, () => {

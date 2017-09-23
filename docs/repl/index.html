@@ -137,7 +137,7 @@ render(
 		var mirror = CodeMirror(editor, {value: value.trim(), mode: 'javascript', lineNumbers: true})
 
 		var script = document.createElement('script')
-	  		script.src = '../../dist/dio.umd.js'
+	  		script.src = 'https://unpkg.com/dio.js@latest'
 	  		script.onload = load
 
 	  var iframe = preview.contentDocument || preview.contentWindow.document

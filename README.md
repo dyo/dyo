@@ -72,17 +72,17 @@ The following is an overview of the features DIO allows you to make use of.
 
 1. ### Components
 
-	1. function component(statefull)
-	1. Class component(statefull)
+	1. Functional stateful components
+	1. Class stateful components
 
 1. ### Events
 
-	1. Functions or [EventListener](https://developer.mozilla.org/en/docs/Web/API/EventListener).
-	1. Preserve "this" reference.
+	1. Functions or [EventListener](https://developer.mozilla.org/en/docs/Web/API/EventListener)
+	1. Preserve "this" reference
 
 1. ### Errors
 
-	1. Error Boundaries, `componentDidCatch`.
+	1. Error Boundaries, `componentDidCatch`
 
 1. ### setState
 

@@ -2255,5 +2255,5 @@
 	exports.createElement = createElement
 	exports.h = window.h = createElement
 	
-	require && require('./dio.node.js')(exports, Element, mountComponent, commitElement)
+	require && require('./dio.node.js')(exports, Element, mountComponent, commitElement, invokeErrorBoundary)
 }))
