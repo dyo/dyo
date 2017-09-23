@@ -1,6 +1,6 @@
 /*! DIO 8.0.0 @license MIT */
 
-module.exports = function (exports, Element, mountComponent, commitElement, invokeErrorBoundary) {
+module.exports = function (exports, Element, mountComponent, commitElement, getComponentElement, invokeErrorBoundary) {
 	
 	'use strict'
 	
@@ -84,6 +84,11 @@ module.exports = function (exports, Element, mountComponent, commitElement, invo
 	exports.renderToStream = renderToStream
 	
 	/**
+	 * @return {void}
+	 */
+	function noop () {}
+	
+	/**
 	 * @param {*} value
 	 * @return {string}
 	 */
@@ -110,7 +115,7 @@ module.exports = function (exports, Element, mountComponent, commitElement, invo
 	 * @param {string}
 	 */
 	function getElementType (type) {
-		switch (type) {
+		switch ((type+'').toLowerCase()) {
 			case 'area':
 			case 'base':
 			case 'br':
@@ -317,24 +322,52 @@ module.exports = function (exports, Element, mountComponent, commitElement, invo
 	
 	/**
 	 * @param {Element} element
+	 * @param {Array} stack
+	 * @param {Readable} readable
+	 * @param {number} id
+	 * @param {number} signature
+	 */
+	function pendingStreamElement (element, stack, readable, id, signature) {
+		return function (value) {
+			var children
+	
+			if (signature !== SharedErrorActive)
+				children = invokeErrorBoundary(element, value, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
+			else if (id !== SharedElementComponent)
+				children = commitElement(value)
+			else
+				children = getComponentElement(element, (element.instance.state = value || {}, element.instance))
+	
+			readStreamElement(children, element, stack, readable)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
 	 * @param {Element?} host
 	 * @param {Array} stack
 	 * @param {Readable} readable
 	 */
 	function readStreamElement (element, host, stack, readable) {
 		var output = ''
+		var children = element.children
 	
 		switch (element.host = host, element.id) {
 			case SharedElementComponent:
-				return readStreamElement(mountComponent(element), readable.host = element, stack, readable)
+				children = mountComponent(readable.host = element)
+	
+				if (element.state.constructor !== Promise)
+					return readStreamElement(children, element, stack, readable)
+	
+				return void element.state
+					.then(pendingStreamElement(element, stack, readable, SharedElementComponent, SharedErrorActive))
+					.catch(pendingStreamElement(element, stack, readable, SharedElementComponent, SharedErrorPassive))
 			case SharedElementPromise:
-				return void element.type.then(function (value) {
-					readStreamElement(commitElement(value), host, stack, readable)
-				}).catch(function (err) {
-					invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
-				})
+			return void element.type
+				.then(pendingStreamElement(element, stack, readable, SharedElementPromise, SharedErrorActive))
+				.catch(pendingStreamElement(element, stack, readable, SharedElementPromise, SharedErrorPassive))
 			case SharedElementText:
-				return writeStreamElement(element.children, readable)
+				return writeStreamElement(children, readable)
 			case SharedElementNode:
 				if (element.DOM)
 					return element.DOM = writeStreamElement(element.DOM, readable)
@@ -350,7 +383,6 @@ module.exports = function (exports, Element, mountComponent, commitElement, invo
 				element.DOM = '</' + element.type + '>'
 				stack.push(element)
 			default:
-				var children = element.children
 				var length = children.length
 	
 				while (length-- > 0)

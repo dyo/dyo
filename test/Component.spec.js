@@ -320,4 +320,138 @@ describe('Component', () => {
 
 		assert.html(container, '2')
 	})
+
+	it('should getInitialState', () => {
+		let container = document.createElement('div')
+
+		render(class {
+			getInitialState() {
+				return {x: '!!'}
+			}
+			render(props, {x}) {
+				return h('h1', 'Hello World', x)
+			}
+		}, container)
+
+		assert.html(container, '<h1>Hello World!!</h1>')
+	})
+
+	it('should async getInitialState', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			getInitialState() {
+				return Promise.resolve({x: '!!'})
+			}
+			render(props, {x}) {
+				stack.push(x)
+				return h('h1', 'Hello World', x)
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '<h1>Hello World!!</h1>')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should recover from async getInitialState error', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				stack.push(err)
+				err.report = ''
+				return 'Hello World'
+			}
+			getInitialState() {
+				return Promise.reject({x: '!!'})
+			}
+			render(props, {x}) {
+				stack.push(x)
+				return h('h1', 'Hello World', x)
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, 'Hello World')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should async mount', (done) => {
+		let container = document.createElement('div')
+		let refs = Promise.resolve(h('h1', 'Hello'))
+
+		render(class {
+			render() {
+				return refs
+			}
+		}, container)
+
+		assert.html(container, '')
+		refs.then(() => assert.html(container, '<h1>Hello</h1>')).then(done)
+	})
+
+	it('should render a placeholder before async mount', (done) => {
+		let container = document.createElement('div')
+		let refs = Promise.resolve(h('h1', 'Hello'))
+
+		render(class {
+			render() {
+				return h(refs, h('h1', 'Loading'))
+			}
+		}, container)
+
+		assert.html(container, '<h1>Loading</h1>')
+		refs.then(() => assert.html(container, '<h1>Hello</h1>')).then(done)
+	})
+
+	it('should async unmount', (done) => {
+		let container = document.createElement('div')
+		let refs = new Promise((resolve) => resolve())
+
+		render(class {
+			componentWillUnmount() {
+				return refs
+			}
+			render() {
+				return h('h1', 'Hello')
+			}
+		}, container)
+		unmountComponentAtNode(container)
+
+		assert.html(container, '<h1>Hello</h1>')
+		refs.then(() => assert.html(container, '')).then(done)
+	})
+
+	it('should recover from an async element error', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = Promise.reject('')
+		
+		render(class {
+			componentDidCatch(err) {
+				err.report = ''
+				stack.push('error')
+				return 'Hello World'
+			}
+			render(props, state) {
+				stack.push('render')
+				return refs
+			}
+		}, container)
+
+		refs.catch(() => {
+			nextTick(() => {
+				assert.lengthOf(stack, 2)
+				assert.html(container, 'Hello World')
+				done()
+			})
+		})
+	})
 })

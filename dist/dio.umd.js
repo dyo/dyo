@@ -758,19 +758,24 @@
 		instance.context = context
 	
 		if (owner[SharedGetInitialState])
-			instance.state = getComponentState(element, instance, getLifecycleData(element, SharedGetInitialState))
-		else if (!instance.state)
+			if ((instance.state = getLifecycleData(element, SharedGetInitialState) || {}).constructor === Promise)
+				if (element.work === SharedWorkTask)
+					enqueueStatePromise(element, instance, children = instance.state)
+				else
+					children = element.state = instance.state
+	
+		if (!instance.state)
 			instance.state = {}
 	
 		if (owner[SharedComponentWillMount] && element.work === SharedWorkTask) 
 			getLifecycleMount(element, SharedComponentWillMount)
-		
-		children = element.children = getComponentElement(element, instance)
+	
+		children = children === undefined ? getComponentElement(element, instance) : commitElement(null)
 	
 		if (owner[SharedGetChildContext])
 			element.context = getComponentContext(element)
 	
-		return children
+		return element.children = children
 	}
 	
 	/**
@@ -878,7 +883,7 @@
 					return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 				default:
 					if (element.work !== SharedWorkSync && !element.active)
-						return void assign(instance.state, element.state, state)
+						return void (instance.state = assign({}, instance.state, state))
 					else
 						element.state = state
 	
@@ -913,22 +918,6 @@
 		} catch (err) {
 			invokeErrorBoundary(element, err, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
 		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Component} instance
-	 * @param {Object} state
-	 * @return {Object}
-	 */
-	function getComponentState (element, instance, state) {	
-		if (state instanceof Object)
-			return state
-	
-		if (state instanceof Promise)
-			enqueueStatePromise(element, instance, state)
-	
-		return instance.state || {}
 	}
 	
 	/**
@@ -990,10 +979,10 @@
 		try {
 			var state = element.owner[name].call(element.instance, element.active && findDOMNode(element))
 			
-			if (name === SharedComponentWillUnmount && state instanceof Promise)
+			if (name !== SharedComponentWillUnmount)
+				getLifecycleReturn(element, state)
+			else if (state instanceof Promise)
 				return state
-	
-			getLifecycleReturn(element, state)
 		} catch (err) {
 			invokeErrorBoundary(element, err, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
 		}
@@ -2255,5 +2244,5 @@
 	exports.createElement = createElement
 	exports.h = window.h = createElement
 	
-	require && require('./dio.node.js')(exports, Element, mountComponent, commitElement, invokeErrorBoundary)
+	require && require('./dio.node.js')(exports, Element, mountComponent, commitElement, getComponentElement, invokeErrorBoundary)
 }))

@@ -97,7 +97,7 @@ exports.createElement = createElement
 exports.h = window.h = createElement
 `
 
-const imports = 'exports, Element, mountComponent, commitElement, invokeErrorBoundary'
+const imports = 'exports, Element, mountComponent, commitElement, getComponentElement, invokeErrorBoundary'
 const template = {
 	node: `\nrequire && require('./dio.node.js')(${imports})`,
 	export: api,

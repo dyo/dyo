@@ -78,18 +78,33 @@ describe('Server', () => {
 		assert.html(h('br'), '<br>')
 		assert.html(h('meta'), '<meta>')
 		assert.html(h('source'), '<source>')
-		assert.html(h('area'), '<area>')
 		assert.html(h('keygen'), '<keygen>')
 		assert.html(h('img'), '<img>')
 		assert.html(h('col'), '<col>')
 		assert.html(h('embed'), '<embed>')
-		assert.html(h('track'), '<track>')
 		assert.html(h('track'), '<track>')
 		assert.html(h('param'), '<param>')
 		assert.html(h('link'), '<link>')
 		assert.html(h('input'), '<input>')
 		assert.html(h('hr'), '<hr>')
 		assert.html(h('!doctype'), '<!doctype>')
+
+		assert.html(h('AREA'), '<AREA>')
+		assert.html(h('BASE'), '<BASE>')
+		assert.html(h('BR'), '<BR>')
+		assert.html(h('META'), '<META>')
+		assert.html(h('SOURCE'), '<SOURCE>')
+		assert.html(h('AREA'), '<AREA>')
+		assert.html(h('KEYGEN'), '<KEYGEN>')
+		assert.html(h('IMG'), '<IMG>')
+		assert.html(h('COL'), '<COL>')
+		assert.html(h('EMBED'), '<EMBED>')
+		assert.html(h('TRACK'), '<TRACK>')
+		assert.html(h('PARAM'), '<PARAM>')
+		assert.html(h('LINK'), '<LINK>')
+		assert.html(h('INPUT'), '<INPUT>')
+		assert.html(h('HR'), '<HR>')
+		assert.html(h('!DOCTYPE'), '<!DOCTYPE>')
 	})
 
 	it('should render a string to string', () => {
@@ -132,7 +147,7 @@ describe('Server', () => {
 		)
 	})
 
-	it('should render string to writable', (done) => {
+	it('should render element string to a stream', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
 	      output += chunk.toString()
@@ -156,7 +171,7 @@ describe('Server', () => {
 		})
 	})
 
-	it('should render to a writable stream', (done) => {
+	it('should render element stream to a stream', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
 	      output += chunk.toString()
@@ -181,7 +196,7 @@ describe('Server', () => {
 		})
 	})
 
-	it('should render an async element to a writable stream', (done) => {
+	it('should render an async element stream to stream', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
 	      output += chunk.toString()
@@ -202,6 +217,58 @@ describe('Server', () => {
 				</h1>
 			`)
 
+			done()
+		})
+	})
+
+	it('should render an async component stream to a stream', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let element = h(class {
+			getInitialState() {
+				return Promise.resolve({x: '!'})
+			}
+			render(props, {x}) {
+				return h('h1', 'Hello World', x)
+			}
+		})
+		let output = ''
+
+		renderToStream(element, writable, () => {
+			assert.html(output, '<h1>Hello World!</h1>')
+			done()
+		})
+	})
+
+	it('should recover from an async component stream error', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let element = h(class {
+			componentDidCatch(err) {
+				err.report = ''
+				return h('h1', 'Error!')
+			}
+			getInitialState() {
+				return Promise.reject({x: '!'})
+			}
+			render(props, {x}) {
+				return h('h1', 'Hello World', x)
+			}
+		})
+		let output = ''
+
+		renderToStream(element, writable, () => {
+			assert.html(output, '<h1>Error!</h1>')
 			done()
 		})
 	})

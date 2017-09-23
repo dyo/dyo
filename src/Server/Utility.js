@@ -1,4 +1,9 @@
 /**
+ * @return {void}
+ */
+function noop () {}
+
+/**
  * @param {*} value
  * @return {string}
  */
@@ -25,7 +30,7 @@ function getTextEncode (character) {
  * @param {string}
  */
 function getElementType (type) {
-	switch (type) {
+	switch ((type+'').toLowerCase()) {
 		case 'area':
 		case 'base':
 		case 'br':
