@@ -392,7 +392,10 @@
 		if (typeof element === 'function')
 			return createElementBranch(element())
 		if (element instanceof Error)
-			return createElement('details', createElement('summary', element + ''), h('pre', element.report || element.stack))
+			return createElement('details',
+				createElement('summary', element + ''),
+				h('pre', element.componentStack || element.stack)
+			)
 	
 		invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 	}
@@ -1706,8 +1709,8 @@
 		var error = getErrorException(element, err, from)
 		var snapshot = getErrorElement(element, error, from, signature)
 	
-		if (error.report)
-			console.error(error.report)
+		if (!error.defaultPrevented)
+			console.error(error.componentStack)
 	
 		return commitElement(snapshot)
 	}
@@ -1733,7 +1736,7 @@
 		element.sync = SharedWorkTask
 	
 		try {
-			snapshot = owner[SharedComponentDidCatch].call(element.instance, error, {})
+			snapshot = owner[SharedComponentDidCatch].call(element.instance, error, error)
 		} catch (err) {
 			invokeErrorBoundary(host, err, SharedComponentDidCatch, signature)
 		}
@@ -1758,20 +1761,37 @@
 		if (!(error instanceof Error))
 			return getErrorException(element, new Error(error), from)
 	
-		var report = 'Error caught in `\n\n'
+		var componentStack = 'Error caught in `\n\n'
 		var tabs = ''
 		var host = element
+		var stack = error.stack
+		var message = error.message
 	
 		while (host && host.type) {
-			report += tabs + '<' + getDisplayName(host.type) + '>\n'
+			componentStack += tabs + '<' + getDisplayName(host.type) + '>\n'
 			tabs += '  '
 			host = host.host
 		}
 	
+		componentStack += '\n` from "' + from + '"\n\n' + stack + '\n\n'
+	
 		return defineProperties(error, {
-			report: {value: report + '\n` from "' + from + '"\n\n' + error.stack + '\n\n', writable: true},
-			error: {value: error}
+			stack: getErrorDescription(stack),
+			message: getErrorDescription(message),
+			componentStack: getErrorDescription(componentStack),
+			defaultPrevented: getErrorDescription(false),
+			preventDefault: getErrorDescription(function () {
+				defineProperty(error, 'defaultPrevented', getErrorDescription(true))
+			}),
 		})
+	}
+	
+	/**
+	 * @param {*} value
+	 * @return {Object}
+	 */
+	function getErrorDescription (value) {
+		return {enumerable: true, configurable: true, value: value}
 	}
 	
 	/**

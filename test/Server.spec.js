@@ -3,8 +3,8 @@ describe('Server', () => {
 		let error = null
 		assert.html(h(class {
 			componentDidCatch(err) {
+				err.preventDefault()
 				error = err
-				err.report = false
 			}
 			render () {
 				throw new Error('Error!')
@@ -20,8 +20,8 @@ describe('Server', () => {
 
 		assert.html(h(class {
 			componentDidCatch(err) {
+				err.preventDefault()
 				error = err
-				err.report = false
 			}
 			render () {
 				return h('div', A)
@@ -255,7 +255,7 @@ describe('Server', () => {
 
 		let element = h(class {
 			componentDidCatch(err) {
-				err.report = ''
+				err.preventDefault()
 				return h('h1', 'Error!')
 			}
 			getInitialState() {

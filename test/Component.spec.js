@@ -364,7 +364,7 @@ describe('Component', () => {
 		render(class {
 			componentDidCatch(err) {
 				stack.push(err)
-				err.report = ''
+				err.preventDefault()
 				return 'Hello World'
 			}
 			getInitialState() {
@@ -436,7 +436,7 @@ describe('Component', () => {
 		
 		render(class {
 			componentDidCatch(err) {
-				err.report = ''
+				err.preventDefault()
 				stack.push('error')
 				return 'Hello World'
 			}

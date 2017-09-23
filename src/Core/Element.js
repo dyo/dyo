@@ -119,7 +119,10 @@ function createElementBranch (element, key) {
 	if (typeof element === 'function')
 		return createElementBranch(element())
 	if (element instanceof Error)
-		return createElement('details', createElement('summary', element + ''), h('pre', element.report || element.stack))
+		return createElement('details',
+			createElement('summary', element + ''),
+			h('pre', element.componentStack || element.stack)
+		)
 
 	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 }
