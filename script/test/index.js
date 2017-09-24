@@ -14,8 +14,11 @@ let json = (obj, str, msg) => {
 	return assert.equal(JSON.stringify(obj), minify(str), msg)
 }
 
-let nextTick = (callback) => {
-	return setTimeout(callback, 20)
+let nextTick = (callback, tick) => {
+	if (tick|0 > 0)
+		return setTimeout(() => nextTick(callback, tick - 1), 20)
+	else
+		return setTimeout(callback, 20)
 }
 
 Object.assign(assert, {html, json})

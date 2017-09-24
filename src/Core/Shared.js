@@ -15,7 +15,7 @@ var SharedComponentForceUpdate = 0
 var SharedComponentPropsUpdate = 1
 var SharedComponentStateUpdate = 2
 
-var SharedMountClone = 0
+var SharedMountQuery = 0
 var SharedMountCommit = 1
 var SharedMountRemove = 2
 var SharedMountAppend = 3

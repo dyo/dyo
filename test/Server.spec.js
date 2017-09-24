@@ -14,23 +14,6 @@ describe('Server', () => {
 		assert.instanceOf(error, Error)
 	})
 
-	it('should bubble errors', () => {
-		let A = () => { throw new Error('x') }
-		let error = null
-
-		assert.html(h(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				error = err
-			}
-			render () {
-				return h('div', A)
-			}
-		}), '<div></div>')
-
-		assert.instanceOf(error, Error)
-	})
-
 	it('should render an element to string', () => {
 		assert.html(
 			h('h1', {className: 'faz', style: {marginTop: '20px'}}, 'Faz'), 

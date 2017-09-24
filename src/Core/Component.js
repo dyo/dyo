@@ -327,7 +327,7 @@ function getLifecycleMount (element, name) {
 		else if (state instanceof Promise)
 			return state
 	} catch (err) {
-		invokeErrorBoundary(element, err, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
+		invokeErrorBoundary(element, err, name, SharedErrorActive)
 	}
 }
 

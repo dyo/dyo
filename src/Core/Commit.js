@@ -58,7 +58,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			element.DOM = commitCreate(element)
 
 			if (element.ref)
-				commitReference(element, element.ref, SharedReferenceAssign)
+				commitReference(element, element.ref, SharedReferenceDispatch)
 			
 			if (element.owner[SharedComponentDidMount])
 				getLifecycleMount(element, SharedComponentDidMount)
@@ -77,7 +77,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			element.xmlns = getDOMType(element, parent.xmlns)
 		case SharedElementText:
 			switch (signature) {
-				case SharedMountClone:
+				case SharedMountQuery:
 					if (element.DOM = commitQuery(element, parent))
 						break
 				default:
@@ -306,7 +306,12 @@ function commitCreate (element) {
 				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
 	} catch (err) {
-		return commitCreate(commitRebase(element, invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)))
+		return commitCreate(
+			commitRebase(
+				(element.active = false, element),
+				invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)
+			)
+		)
 	}
 }
 

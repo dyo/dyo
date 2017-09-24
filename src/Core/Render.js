@@ -22,7 +22,7 @@ function hydrate (element, target, callback) {
 	if (!target)
 		return hydrate(element, getDOMDocument(), callback)
 	
-	mount(element, target, callback, SharedMountClone)
+	mount(element, target, callback, SharedMountQuery)
 }
 
 /**

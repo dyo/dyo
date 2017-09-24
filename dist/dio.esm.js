@@ -19,7 +19,7 @@ var SharedComponentForceUpdate = 0
 var SharedComponentPropsUpdate = 1
 var SharedComponentStateUpdate = 2
 
-var SharedMountClone = 0
+var SharedMountQuery = 0
 var SharedMountCommit = 1
 var SharedMountRemove = 2
 var SharedMountAppend = 3
@@ -380,11 +380,6 @@ function createElementBranch (element, key) {
 		return createElementBranch(element[SymbolIterator]())
 	if (typeof element === 'function')
 		return createElementBranch(element())
-	if (element instanceof Error)
-		return createElement('details',
-			createElement('summary', element + ''),
-			h('pre', element.componentStack || element.stack)
-		)
 
 	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 }
@@ -549,8 +544,8 @@ function setElementBoundary (children) {
 	
 	head.xmlns = tail.xmlns = SharedTypeText
 
-	children.insert(head, children)
-	children.insert(tail, children.next)
+	children.insert(head, children.next)
+	children.insert(tail, children)
 }
 
 /**
@@ -984,7 +979,7 @@ function getLifecycleMount (element, name) {
 		else if (state instanceof Promise)
 			return state
 	} catch (err) {
-		invokeErrorBoundary(element, err, name, name === SharedComponentWillMount ? SharedErrorActive : SharedErrorPassive)
+		invokeErrorBoundary(element, err, name, SharedErrorActive)
 	}
 }
 
@@ -1111,7 +1106,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			element.DOM = commitCreate(element)
 
 			if (element.ref)
-				commitReference(element, element.ref, SharedReferenceAssign)
+				commitReference(element, element.ref, SharedReferenceDispatch)
 			
 			if (element.owner[SharedComponentDidMount])
 				getLifecycleMount(element, SharedComponentDidMount)
@@ -1130,7 +1125,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			element.xmlns = getDOMType(element, parent.xmlns)
 		case SharedElementText:
 			switch (signature) {
-				case SharedMountClone:
+				case SharedMountQuery:
 					if (element.DOM = commitQuery(element, parent))
 						break
 				default:
@@ -1359,7 +1354,12 @@ function commitCreate (element) {
 				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
 	} catch (err) {
-		return commitCreate(commitRebase(element, invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)))
+		return commitCreate(
+			commitRebase(
+				(element.active = false, element),
+				invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)
+			)
+		)
 	}
 }
 
@@ -1703,13 +1703,7 @@ defineProperty(Element.prototype, 'handleEvent', {value: handleEvent})
  * @param {Element?}
  */
 function invokeErrorBoundary (element, err, from, signature) {
-	var error = getErrorException(element, err, from)
-	var snapshot = getErrorElement(element, error, from, signature)
-
-	if (!error.defaultPrevented)
-		console.error(error.componentStack)
-
-	return commitElement(snapshot)
+	return commitElement(getErrorElement(element, getErrorException(element, err, from), from, signature))
 }
 
 /**
@@ -1720,34 +1714,65 @@ function invokeErrorBoundary (element, err, from, signature) {
  * @return {Element?}
  */
 function getErrorElement (element, error, from, signature) {
-	if (signature === SharedErrorPassive || !isValidElement(element))
-		return
+	if (signature === SharedErrorPassive || !isValidElement(element) || !element.id === SharedElementEmpty)
+		return throwErrorException(error)
 
 	var owner = element.owner
-	var host = element.host
 	var boundary = owner && owner[SharedComponentDidCatch] 
-	var propagate = !boundary && !!host
+	var host = element.host
+	var next = !boundary && host
 	var snapshot
 
 	if (boundary) {
-		element.sync = SharedWorkTask
+		element.work = SharedWorkTask
 		try {
 			snapshot = boundary.call(element.instance, error, error)
 		} catch (err) {
 			invokeErrorBoundary(host, err, SharedComponentDidCatch, signature)
 		}
-		element.sync = SharedWorkSync
+		element.work = SharedWorkSync
 	}
 
+	if (element.active)
+		recoverErrorBoundary(element, snapshot)
+	else
+		requestAnimationFrame(function () {
+			if (element.active)
+				recoverErrorBoundary(element, snapshot)
+		})
+
 	requestAnimationFrame(function () {
-		if (element.active)
-			reconcileElement(getElementChildren(element), commitElement(snapshot))
+		getErrorElement(next, error, from, signature)
 	})
 
-	if (propagate)
-		getErrorElement(host, error, from, signature)
-
 	return snapshot
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} snapshot
+ */
+function recoverErrorBoundary (element, snapshot) {
+	reconcileElement(getElementChildren(element), commitElement(snapshot))
+}
+
+/**
+ * @param {Error} error
+ */
+function throwErrorException (error) {
+	if (error.defaultPrevented)
+		return
+
+	console.error(error)
+	console.error(error.errorMessage)
+}
+
+/**
+ * @param {*} value
+ * @return {Object}
+ */
+function getErrorDescription (value) {
+	return {enumerable: true, configurable: true, value: value}
 }
 
 /**
@@ -1759,7 +1784,8 @@ function getErrorException (element, error, from) {
 	if (!(error instanceof Error))
 		return getErrorException(element, new Error(error), from)
 
-	var componentStack = 'Error caught in `\n\n'
+	var componentStack = ''
+	var errorMessage = ''
 	var tabs = ''
 	var host = element
 	var stack = error.stack
@@ -1771,25 +1797,17 @@ function getErrorException (element, error, from) {
 		host = host.host
 	}
 
-	componentStack += '\n` from "' + from + '"\n\n' + stack + '\n\n'
+	errorMessage = 'The above error occurred in `\n' + '    ' + componentStack + '` from "' + from + '"'
 
 	return defineProperties(error, {
-		stack: getErrorDescription(stack),
-		message: getErrorDescription(message),
+		errorLocation: getErrorDescription(from),
+		errorMessage: getErrorDescription(errorMessage),
 		componentStack: getErrorDescription(componentStack),
 		defaultPrevented: getErrorDescription(false),
 		preventDefault: getErrorDescription(function () {
 			defineProperty(error, 'defaultPrevented', getErrorDescription(true))
 		}),
 	})
-}
-
-/**
- * @param {*} value
- * @return {Object}
- */
-function getErrorDescription (value) {
-	return {enumerable: true, configurable: true, value: value}
 }
 
 /**
@@ -1816,7 +1834,7 @@ function hydrate (element, target, callback) {
 	if (!target)
 		return hydrate(element, getDOMDocument(), callback)
 	
-	mount(element, target, callback, SharedMountClone)
+	mount(element, target, callback, SharedMountQuery)
 }
 
 /**

@@ -6,13 +6,7 @@
  * @param {Element?}
  */
 function invokeErrorBoundary (element, err, from, signature) {
-	var error = getErrorException(element, err, from)
-	var snapshot = getErrorElement(element, error, from, signature)
-
-	if (!error.defaultPrevented)
-		console.error(error.componentStack)
-
-	return commitElement(snapshot)
+	return commitElement(getErrorElement(element, getErrorException(element, err, from), from, signature))
 }
 
 /**
@@ -23,34 +17,65 @@ function invokeErrorBoundary (element, err, from, signature) {
  * @return {Element?}
  */
 function getErrorElement (element, error, from, signature) {
-	if (signature === SharedErrorPassive || !isValidElement(element))
-		return
+	if (signature === SharedErrorPassive || !isValidElement(element) || !element.id === SharedElementEmpty)
+		return throwErrorException(error)
 
 	var owner = element.owner
-	var host = element.host
 	var boundary = owner && owner[SharedComponentDidCatch] 
-	var propagate = !boundary && !!host
+	var host = element.host
+	var next = !boundary && host
 	var snapshot
 
 	if (boundary) {
-		element.sync = SharedWorkTask
+		element.work = SharedWorkTask
 		try {
 			snapshot = boundary.call(element.instance, error, error)
 		} catch (err) {
 			invokeErrorBoundary(host, err, SharedComponentDidCatch, signature)
 		}
-		element.sync = SharedWorkSync
+		element.work = SharedWorkSync
 	}
 
+	if (element.active)
+		recoverErrorBoundary(element, snapshot)
+	else
+		requestAnimationFrame(function () {
+			if (element.active)
+				recoverErrorBoundary(element, snapshot)
+		})
+
 	requestAnimationFrame(function () {
-		if (element.active)
-			reconcileElement(getElementChildren(element), commitElement(snapshot))
+		getErrorElement(next, error, from, signature)
 	})
 
-	if (propagate)
-		getErrorElement(host, error, from, signature)
-
 	return snapshot
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} snapshot
+ */
+function recoverErrorBoundary (element, snapshot) {
+	reconcileElement(getElementChildren(element), commitElement(snapshot))
+}
+
+/**
+ * @param {Error} error
+ */
+function throwErrorException (error) {
+	if (error.defaultPrevented)
+		return
+
+	console.error(error)
+	console.error(error.errorMessage)
+}
+
+/**
+ * @param {*} value
+ * @return {Object}
+ */
+function getErrorDescription (value) {
+	return {enumerable: true, configurable: true, value: value}
 }
 
 /**
@@ -62,7 +87,8 @@ function getErrorException (element, error, from) {
 	if (!(error instanceof Error))
 		return getErrorException(element, new Error(error), from)
 
-	var componentStack = 'Error caught in `\n\n'
+	var componentStack = ''
+	var errorMessage = ''
 	var tabs = ''
 	var host = element
 	var stack = error.stack
@@ -74,23 +100,15 @@ function getErrorException (element, error, from) {
 		host = host.host
 	}
 
-	componentStack += '\n` from "' + from + '"\n\n' + stack + '\n\n'
+	errorMessage = 'The above error occurred in `\n' + '    ' + componentStack + '` from "' + from + '"'
 
 	return defineProperties(error, {
-		stack: getErrorDescription(stack),
-		message: getErrorDescription(message),
+		errorLocation: getErrorDescription(from),
+		errorMessage: getErrorDescription(errorMessage),
 		componentStack: getErrorDescription(componentStack),
 		defaultPrevented: getErrorDescription(false),
 		preventDefault: getErrorDescription(function () {
 			defineProperty(error, 'defaultPrevented', getErrorDescription(true))
 		}),
 	})
-}
-
-/**
- * @param {*} value
- * @return {Object}
- */
-function getErrorDescription (value) {
-	return {enumerable: true, configurable: true, value: value}
 }

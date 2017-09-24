@@ -118,11 +118,6 @@ function createElementBranch (element, key) {
 		return createElementBranch(element[SymbolIterator]())
 	if (typeof element === 'function')
 		return createElementBranch(element())
-	if (element instanceof Error)
-		return createElement('details',
-			createElement('summary', element + ''),
-			h('pre', element.componentStack || element.stack)
-		)
 
 	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
 }
@@ -287,8 +282,8 @@ function setElementBoundary (children) {
 	
 	head.xmlns = tail.xmlns = SharedTypeText
 
-	children.insert(head, children)
-	children.insert(tail, children.next)
+	children.insert(head, children.next)
+	children.insert(tail, children)
 }
 
 /**
