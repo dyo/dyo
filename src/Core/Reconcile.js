@@ -9,11 +9,10 @@ function reconcileObject (prevObject, nextObject) {
 
 	var length = 0
 	var delta = {}
-	var value
 
 	for (var key in prevObject)
-		if (nextObject[key] == null)
-			delta[(length++, key)] = undefined
+		if (!hasOwnProperty.call(nextObject, key))
+			delta[(length++, key)] = null
 
 	for (var key in nextObject) {
 		var next = nextObject[key]
@@ -22,8 +21,8 @@ function reconcileObject (prevObject, nextObject) {
 		if (next !== prev) {
 			if (typeof next !== 'object' || next === null)
 				delta[(length++, key)] = next
-			else if (value = reconcileObject(prev || {}, next))
-				delta[(length++, key)] = value
+			else if (next = reconcileObject(prev || {}, next))
+				delta[(length++, key)] = next
 		}
 	}
 
@@ -48,7 +47,7 @@ function reconcileElement (element, snapshot) {
 		return commitWillReconcile(element, snapshot)
 
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
-		return commitReplace(element, snapshot, element.parent, element.host, SharedMountReplace)
+		return commitReplace(element, snapshot, element.parent, element.host)
 
 	switch (element.id) {
 		case SharedElementPortal:
@@ -75,71 +74,71 @@ function reconcileChildren (element, snapshot) {
 	var host = element.host
 	var children = element.children
 	var siblings = snapshot.children
-	var aLength = children.length
-	var bLength = siblings.length
+	var oldLength = children.length
+	var newLength = siblings.length
 
-	if (aLength + bLength === 0)
+	if (oldLength + newLength === 0)
 		return
 
-	var aPos = 0
-	var bPos = 0
-	var aEnd = aLength - 1
-	var bEnd = bLength - 1
-	var aHead = children.next
-	var bHead = siblings.next
-	var aTail = children.prev
-	var bTail = siblings.prev
+	var oldPos = 0
+	var newPos = 0
+	var oldEnd = oldLength - 1
+	var newEnd = newLength - 1
+	var oldHead = children.next
+	var newHead = siblings.next
+	var oldTail = children.prev
+	var newTail = siblings.prev
 
 	// step 1, prefix/suffix
 	outer: while (true) {
-		while (aHead.key === bHead.key) {
-			reconcileElement(aHead, bHead)
-			aPos++
-			bPos++
+		while (oldHead.key === newHead.key) {
+			reconcileElement(oldHead, newHead)
+			oldPos++
+			newPos++
 			
-			if (aPos > aEnd || bPos > bEnd) 
+			if (oldPos > oldEnd || newPos > newEnd) 
 				break outer
 			
-			aHead = aHead.next
-			bHead = bHead.next
+			oldHead = oldHead.next
+			newHead = newHead.next
 		}
-		while (aTail.key === bTail.key) {
-			reconcileElement(aTail, bTail)
-			aEnd--
-			bEnd--
+		while (oldTail.key === newTail.key) {
+			reconcileElement(oldTail, newTail)
+			oldEnd--
+			newEnd--
 
-			if (aPos > aEnd || bPos > bEnd) 
+			if (oldPos > oldEnd || newPos > newEnd) 
 				break outer
 			
-			aTail = aTail.prev
-			bTail = bTail.prev
+			oldTail = oldTail.prev
+			newTail = newTail.prev
 		}
 		break
 	}
 
 	// step 2, insert/append/remove
-	if (aPos > aEnd++) {
-		if (bPos <= bEnd++) {
-			if (bEnd < bLength) 
+	if (oldPos > oldEnd++) {
+		if (newPos <= newEnd++) {
+			if (newEnd < newLength) 
 				signature = SharedMountInsert
-			else if (aLength > 0)
-				bHead = bHead.next
+			else if (oldLength > 0)
+				newHead = newHead.next
 
-			while (bPos++ < bEnd) {
-				bHead = (aHead = bHead).next
-				commitMount(children.insert(aHead, aTail), aTail, element, host, signature, SharedMountCommit)
+			while (newPos++ < newEnd) {
+				newHead = (oldHead = newHead).next
+				commitMount(children.insert(oldHead, oldTail), oldTail, element, host, signature, SharedMountCommit)
 			}
 		}
-	} else if (bPos > bEnd++) {
-		if (bEnd === bLength && bLength > 0)
-			aHead = aHead.next
+	} else if (newPos > newEnd++) {
+		if (newEnd === newLength && newLength > 0)
+			oldHead = oldHead.next
 
-		while (aPos++ < aEnd) {
-			aHead = (bHead = aHead).next
-			commitUnmount(children.remove(bHead), element, SharedMountRemove)
+		while (oldPos++ < oldEnd) {
+			oldHead = (newHead = oldHead).next
+			commitUnmount(children.remove(newHead), element, SharedMountRemove)
 		}
 	} else {
-		reconcileSiblings(element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd)
+		reconcileSiblings(element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd)
 	}
 }
 
@@ -147,64 +146,65 @@ function reconcileChildren (element, snapshot) {
  * @param  {Element} element
  * @param  {Element} host
  * @param  {List} children
- * @param  {Element} aHead
- * @param  {Element} bHead
- * @param  {number} aPos
- * @param  {number} bPos
- * @param  {number} aEnd
- * @param  {number} bEnd
+ * @param  {Element} oldHead
+ * @param  {Element} newHead
+ * @param  {number} oldPos
+ * @param  {number} newPos
+ * @param  {number} oldEnd
+ * @param  {number} newEnd
  */
-function reconcileSiblings (element, host, children, aHead, bHead, aPos, bPos, aEnd, bEnd) {
-	var aIndx = aPos
-	var bIndx = bPos
-	var aNode = aHead
-	var bNode = bHead
-	var aNext = aHead
-	var bNext = bHead
-	var bHash = ''
-	var aSize = 0
-	var aPool = {}
+function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd) {
+	var oldIndex = oldPos
+	var newIndex = newPos
+	var oldChild = oldHead
+	var newChild = newHead
+	var oldNext = oldHead
+	var newNext = newHead
+	var newHash = ''
+	var oldSize = 0
+	var oldPool = {}
 
 	// step 3, hashmap
-	while (aIndx < aEnd)
-		if (aNode.key !== bNode.key) {
-			aPool[aNode.key] = aNode
-			aNode = aNode.next
-			aSize++
-			aIndx++
+	while (oldIndex < oldEnd)
+		if (oldChild.key !== newChild.key) {
+			oldPool[oldChild.key] = oldChild
+			oldChild = oldChild.next
+			oldSize++
+			oldIndex++
 		} else {
-			reconcileElement(aNode, bNode)
-			aNode = aNode.next
-			bNode = bNode.next
-			aIndx++
-			bIndx++
+			reconcileElement(oldChild, newChild)
+			oldChild = oldChild.next
+			newChild = newChild.next
+			oldIndex++
+			newIndex++
 		}
 
 	// step 4, insert/append
-	while (bIndx++ < bEnd) {
-		bHash = bNode.key
-		bNext = bNode.next
+	while (newIndex++ < newEnd) {
+		newHash = newChild.key
+		newNext = newChild.next
+		oldNext = oldPool[newHash]
 
-		if (aNext = aPool[bHash]) {
-			if (aNode === children)
-				commitAppend(children.insert(children.remove(aNext), aNode), element)
+		if (oldNext) {
+			if (oldChild === children)
+				commitAppend(children.insert(children.remove(oldNext), oldChild), element)
 			else
-				commitInsert(children.insert(children.remove(aNext), aNode), aNode, element)
+				commitInsert(children.insert(children.remove(oldNext), oldChild), oldChild, element)
 
-			reconcileElement(aNext, bNode)
+			reconcileElement(oldNext, newChild)
 			
-			if (delete aPool[bHash])
-				aSize--
-		} else if (aNode === children)
-			commitMount(children.insert(bNode, aNode), bNode, element, host, SharedMountAppend, SharedMountCommit)
+			if (delete oldPool[newHash])
+				oldSize--
+		} else if (oldChild === children)
+			commitMount(children.insert(newChild, oldChild), newChild, element, host, SharedMountAppend, SharedMountCommit)
 		else
-			commitMount(children.insert(bNode, aNode), aNode, element, host, SharedMountInsert, SharedMountCommit)	
+			commitMount(children.insert(newChild, oldChild), oldChild, element, host, SharedMountInsert, SharedMountCommit)	
 
-		bNode = bNext
+		newChild = newNext
 	}
 
 	// step 5, remove
-	if (aSize > 0)
-		for (bHash in aPool)
-			commitUnmount(children.remove(aPool[bHash]), element, SharedMountRemove)
+	if (oldSize > 0)
+		for (newHash in oldPool)
+			commitUnmount(children.remove(oldPool[newHash]), element, SharedMountRemove)
 }

@@ -20,19 +20,16 @@ var SharedMountCommit = 1
 var SharedMountRemove = 2
 var SharedMountAppend = 3
 var SharedMountInsert = 4
-var SharedMountReplace = 5
 
-var SharedWorkTask = 0
-var SharedWorkSync = 1
+var SharedWorkMounting = -1
+var SharedWorkUpdating = 0
+var SharedWorkIdle = 1
 
 var SharedErrorPassive = -2
 var SharedErrorActive = -1
 
 var SharedPropsMount = 1
 var SharedPropsUpdate = 2
-
-var SharedSiblingElement = 1
-var SharedSiblingChildren = 2
 
 var SharedSiblingPrevious = 'prev'
 var SharedSiblingNext = 'next'

@@ -27,9 +27,8 @@ function getStringElement (element, host) {
 		return output
 
 	if (!element.DOM)
-		while (length-- > 0) {
+		while (length-- > 0)
 			output += getStringElement(children = children.next, host)
-		}
 	else (output += element.DOM)
 		element.DOM = null
 

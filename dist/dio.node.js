@@ -26,19 +26,16 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	var SharedMountRemove = 2
 	var SharedMountAppend = 3
 	var SharedMountInsert = 4
-	var SharedMountReplace = 5
 	
-	var SharedWorkTask = 0
-	var SharedWorkSync = 1
+	var SharedWorkMounting = -1
+	var SharedWorkUpdating = 0
+	var SharedWorkIdle = 1
 	
 	var SharedErrorPassive = -2
 	var SharedErrorActive = -1
 	
 	var SharedPropsMount = 1
 	var SharedPropsUpdate = 2
-	
-	var SharedSiblingElement = 1
-	var SharedSiblingChildren = 2
 	
 	var SharedSiblingPrevious = 'prev'
 	var SharedSiblingNext = 'next'
@@ -102,12 +99,18 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	 */
 	function getTextEncode (character) {
 		switch (character) {
-			case '<': return '&lt;'
-			case '>': return '&gt;'
-			case '"': return '&quot;'
-			case "'": return '&#x27;'
-			case '&': return '&amp;'
-			default: return character
+			case '<':
+				return '&lt;'
+			case '>':
+				return '&gt;'
+			case '"':
+				return '&quot;'
+			case "'":
+				return '&#x27;'
+			case '&':
+				return '&amp;'
+			default:
+				return character
 		}
 	}
 	
@@ -131,8 +134,10 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 			case 'link':
 			case 'input':
 			case 'hr':
-			case '!doctype': return SharedElementEmpty
-			default: return SharedElementNode
+			case '!doctype':
+				return SharedElementEmpty
+			default:
+				return SharedElementNode
 		}
 	}
 	
@@ -173,9 +178,8 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 			return output
 	
 		if (!element.DOM)
-			while (length-- > 0) {
+			while (length-- > 0)
 				output += getStringElement(children = children.next, host)
-			}
 		else (output += element.DOM)
 			element.DOM = null
 	
@@ -256,7 +260,6 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	 */
 	function toJSON () {
 		var element = this
-		var id = element.id
 		
 		switch (element.id) {
 			case SharedElementText:
@@ -269,13 +272,13 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 		var children = element.children
 		var length = children.length
 	
-		if (id < SharedElementEmpty)
+		if (element.id < SharedElementEmpty)
 			children = (length--, children.next)
 	
 		while (length-- > 0)
 			output.children.push((children = children.next).toJSON())
 	
-		if (id < SharedElementEmpty)
+		if (element.id < SharedElementEmpty)
 			if (output = output.children)
 				output.pop()
 	
@@ -322,12 +325,13 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	
 	/**
 	 * @param {Element} element
+	 * @param {Element} host
 	 * @param {Array} stack
 	 * @param {Readable} readable
 	 * @param {number} id
 	 * @param {number} signature
 	 */
-	function pendingStreamElement (element, stack, readable, id, signature) {
+	function pendingStreamElement (element, host, stack, readable, id, signature) {
 		return function (value) {
 			var children
 	
@@ -338,7 +342,7 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 			else
 				children = getComponentElement(element, (element.instance.state = value || {}, element.instance))
 	
-			readStreamElement(children, element, stack, readable)
+			readStreamElement(children, host, stack, readable)
 		}
 	}
 	
@@ -356,16 +360,16 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 			case SharedElementComponent:
 				children = mountComponent(readable.host = element)
 	
-				if (element.state.constructor !== Promise)
+				if (!element.state || element.state.constructor !== Promise)
 					return readStreamElement(children, element, stack, readable)
 	
 				return void element.state
-					.then(pendingStreamElement(element, stack, readable, SharedElementComponent, SharedErrorActive))
-					.catch(pendingStreamElement(element, stack, readable, SharedElementComponent, SharedErrorPassive))
+					.then(pendingStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
+					.catch(pendingStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
 			case SharedElementPromise:
-			return void element.type
-				.then(pendingStreamElement(element, stack, readable, SharedElementPromise, SharedErrorActive))
-				.catch(pendingStreamElement(element, stack, readable, SharedElementPromise, SharedErrorPassive))
+				return void element.type
+					.then(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
+					.catch(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 			case SharedElementText:
 				return writeStreamElement(children, readable)
 			case SharedElementNode:

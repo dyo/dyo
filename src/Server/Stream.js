@@ -38,12 +38,13 @@ function getStreamElement () {
 
 /**
  * @param {Element} element
+ * @param {Element} host
  * @param {Array} stack
  * @param {Readable} readable
  * @param {number} id
  * @param {number} signature
  */
-function pendingStreamElement (element, stack, readable, id, signature) {
+function pendingStreamElement (element, host, stack, readable, id, signature) {
 	return function (value) {
 		var children
 
@@ -54,7 +55,7 @@ function pendingStreamElement (element, stack, readable, id, signature) {
 		else
 			children = getComponentElement(element, (element.instance.state = value || {}, element.instance))
 
-		readStreamElement(children, element, stack, readable)
+		readStreamElement(children, host, stack, readable)
 	}
 }
 
@@ -72,16 +73,16 @@ function readStreamElement (element, host, stack, readable) {
 		case SharedElementComponent:
 			children = mountComponent(readable.host = element)
 
-			if (element.state.constructor !== Promise)
+			if (!element.state || element.state.constructor !== Promise)
 				return readStreamElement(children, element, stack, readable)
 
 			return void element.state
-				.then(pendingStreamElement(element, stack, readable, SharedElementComponent, SharedErrorActive))
-				.catch(pendingStreamElement(element, stack, readable, SharedElementComponent, SharedErrorPassive))
+				.then(pendingStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
+				.catch(pendingStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
 		case SharedElementPromise:
-		return void element.type
-			.then(pendingStreamElement(element, stack, readable, SharedElementPromise, SharedErrorActive))
-			.catch(pendingStreamElement(element, stack, readable, SharedElementPromise, SharedErrorPassive))
+			return void element.type
+				.then(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
+				.catch(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 		case SharedElementText:
 			return writeStreamElement(children, readable)
 		case SharedElementNode:

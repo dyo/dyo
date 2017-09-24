@@ -224,9 +224,13 @@ function getDOMQuery (element, parent, previous, next) {
 	}
 
 	if (node && (target = node.target).nodeName.toLowerCase() !== '#text')
-		for (var attributes = target.attributes, i = attributes.length - 1, attr, name; i >= 0; --i)
-			if ((attr = attributes[i]).value !== props[name = attr.name] + '')
+		for (var attributes = target.attributes, i = attributes.length - 1; i >= 0; --i) {
+			var attr = attributes[i]
+			var name = attr.name
+
+			if (attr.value !== props[name] + '')
 				target.removeAttribute(name)
+		}
 
 	return node
 }

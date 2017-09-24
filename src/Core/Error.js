@@ -3,7 +3,7 @@
  * @param {*} err
  * @param {string} from
  * @param {number} signature
- * @param {Element?}
+ * @param {Element}
  */
 function invokeErrorBoundary (element, err, from, signature) {
 	return commitElement(getErrorElement(element, getErrorException(element, err, from), from, signature))
@@ -22,31 +22,25 @@ function getErrorElement (element, error, from, signature) {
 
 	var owner = element.owner
 	var boundary = owner && owner[SharedComponentDidCatch] 
-	var host = element.host
-	var next = !boundary && host
-	var snapshot
-
-	if (boundary) {
-		element.work = SharedWorkTask
-		try {
-			snapshot = boundary.call(element.instance, error, error)
-		} catch (err) {
-			invokeErrorBoundary(host, err, SharedComponentDidCatch, signature)
-		}
-		element.work = SharedWorkSync
-	}
-
-	if (element.active)
-		recoverErrorBoundary(element, snapshot)
-	else
-		requestAnimationFrame(function () {
-			if (element.active)
-				recoverErrorBoundary(element, snapshot)
-		})
+	var host = !boundary && element.host
+	var snapshot = commitElement(null)
 
 	requestAnimationFrame(function () {
-		getErrorElement(next, error, from, signature)
+		if (element.active)
+			recoverErrorBoundary(element, snapshot)
 	})
+
+	if (boundary) {
+		element.work = SharedWorkUpdating
+		try {
+			merge(snapshot, commitElement(boundary.call(element.instance, error, error)))
+		} catch (err) {
+			invokeErrorBoundary(element.host, err, SharedComponentDidCatch, signature)
+		}
+		element.work = SharedWorkIdle
+	}
+
+	getErrorElement(host, error, from, signature)
 
 	return snapshot
 }
@@ -89,10 +83,8 @@ function getErrorException (element, error, from) {
 
 	var componentStack = ''
 	var errorMessage = ''
-	var tabs = ''
+	var tabs = '    '
 	var host = element
-	var stack = error.stack
-	var message = error.message
 
 	while (host && host.type) {
 		componentStack += tabs + '<' + getDisplayName(host.type) + '>\n'
@@ -100,7 +92,7 @@ function getErrorException (element, error, from) {
 		host = host.host
 	}
 
-	errorMessage = 'The above error occurred in `\n' + '    ' + componentStack + '` from "' + from + '"'
+	errorMessage = 'The above error occurred in `\n' + componentStack + '` from "' + from + '"'
 
 	return defineProperties(error, {
 		errorLocation: getErrorDescription(from),

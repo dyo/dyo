@@ -52,7 +52,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 
 	switch (element.id) {
 		case SharedElementComponent:
-			element.work = SharedWorkTask
+			element.work = SharedWorkMounting
 			
 			commitMount(mountComponent(element), sibling, parent, element, operation, signature)
 			element.DOM = commitCreate(element)
@@ -63,7 +63,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			if (element.owner[SharedComponentDidMount])
 				getLifecycleMount(element, SharedComponentDidMount)
 
-			element.work = SharedWorkSync
+			element.work = SharedWorkIdle
 			return
 		case SharedElementPromise:
 			commitWillReconcile(element, element)
@@ -161,7 +161,7 @@ function commitWillUnmount (element, parent, signature) {
 		}), parent, signature)
 	
 	return function (err) {
-		commitUnmount(element, parent)
+		commitUnmount(element, parent, SharedMountRemove)
 
 		if (signature === SharedErrorPassive)
 			invokeErrorBoundary(element.host, err, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
@@ -189,11 +189,10 @@ function commitWillReconcile (element, snapshot) {
  * @param {Element} snapshot
  * @param {Element} parent
  * @param {Element} host
- * @param {number} signature
  */
-function commitReplace (element, snapshot, parent, host, signature) {
+function commitReplace (element, snapshot, parent, host) {
 	commitMount(snapshot, element, parent, host, SharedMountInsert, SharedMountCommit)
-	commitUnmount(element, parent, signature)		
+	commitUnmount(element, parent, SharedMountRemove)
 	
 	for (var key in snapshot)
 		switch (key) {
@@ -306,12 +305,7 @@ function commitCreate (element) {
 				return createDOMObject(getDOMNode(getElementBoundary(element, SharedSiblingNext)))
 		}
 	} catch (err) {
-		return commitCreate(
-			commitRebase(
-				(element.active = false, element),
-				invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)
-			)
-		)
+		return commitCreate(commitRebase(element, invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)))
 	}
 }
 

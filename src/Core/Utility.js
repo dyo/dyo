@@ -40,7 +40,7 @@ List.prototype = {
 	 */
 	forEach: function forEach (callback) {
 		for (var i = 0, node = this; i < this.length; ++i)
-			callback.call(this, node = node.next, i)
+			callback(node = node.next, i)
 	}
 }
 

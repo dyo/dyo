@@ -4,7 +4,7 @@
  */
 function Element (id) {
 	this.id = id
-	this.work = SharedWorkSync
+	this.work = SharedWorkIdle
 	this.active = false
 	this.xmlns = ''
 	this.key = null
@@ -87,19 +87,13 @@ function createElementFragment (iterable) {
  * @param {Element} element
  */
 function createElementIterable (iterable) {	
-	var element = createElementFragment(iterable)
-
-	each(iterable, function (value, index) {
-		return setElementChildren(element.children, value, index)
-	})
-
-	return element
+	return createElementFragment(childrenArray(iterable))
 }
 
 /**
  * @param {*} element
  * @param {*} key
- * @return {Element}
+ * @return {Element?}
  */
 function createElementBranch (element, key) {
 	switch (element.constructor) {
@@ -115,11 +109,11 @@ function createElementBranch (element, key) {
 	if (typeof element.next === 'function')
 		return createElementIterable(element)
 	if (typeof element[SymbolIterator] === 'function')
-		return createElementBranch(element[SymbolIterator]())
+		return createElementBranch(element[SymbolIterator](), key)
 	if (typeof element === 'function')
-		return createElementBranch(element())
+		return createElementBranch(element(), key)
 
-	invariant(SharedSiteRender, 'Invalid element [object '+getDisplayName(element)+']')
+	invariant(SharedSiteRender, 'Invalid element [object ' + getDisplayName(element) + ']')
 }
 
 /**
@@ -131,9 +125,9 @@ function isValidElement (element) {
 }
 
 /**
- * @param {Element}
- * @param {Object=}
- * @param {...}
+ * @param {Element} element
+ * @param {Object=} props
+ * @param {...} children
  * @return {Element}
  */
 function cloneElement () {
@@ -164,7 +158,7 @@ function createPortal (element, container, key) {
 /**
  * @param {(string|function|Promise)} type
  * @param {Object?=} properties
- * @param {...}
+ * @param {...} children
  * @return {Element}
  */
 function createElement (type, properties) {
@@ -177,7 +171,7 @@ function createElement (type, properties) {
 	var element = new Element(id)
 	var children = id !== SharedElementComponent ? new List() : null
 	
-	if (i < 2)
+	if (i === 1)
 		switch (props.constructor) {
 			case Object:
 				if (props[SymbolIterator] === undefined) {

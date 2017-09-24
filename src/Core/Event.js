@@ -11,7 +11,7 @@ function handleEvent (event) {
 		var props
 		var state
 		var context
-		var result
+		var value
 
 		if (!callback)
 			return
@@ -23,12 +23,12 @@ function handleEvent (event) {
 		}
 
 		if (typeof callback === 'function')
-			result = callback.call(instance, event, props, state, context)
+			value = callback.call(instance, event, props, state, context)
 		else if (typeof callback.handleEvent === 'function')
-			result = callback.handleEvent(event, props, state, context)
+			value = callback.handleEvent(event, props, state, context)
 
-		if (result && instance)
-			getLifecycleReturn(host, result)
+		if (value && instance)
+			getLifecycleReturn(host, value)
 	} catch (err) {
 		invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
 	}

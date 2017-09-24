@@ -17,12 +17,18 @@ function getTextEscape (value) {
  */
 function getTextEncode (character) {
 	switch (character) {
-		case '<': return '&lt;'
-		case '>': return '&gt;'
-		case '"': return '&quot;'
-		case "'": return '&#x27;'
-		case '&': return '&amp;'
-		default: return character
+		case '<':
+			return '&lt;'
+		case '>':
+			return '&gt;'
+		case '"':
+			return '&quot;'
+		case "'":
+			return '&#x27;'
+		case '&':
+			return '&amp;'
+		default:
+			return character
 	}
 }
 
@@ -46,8 +52,10 @@ function getElementType (type) {
 		case 'link':
 		case 'input':
 		case 'hr':
-		case '!doctype': return SharedElementEmpty
-		default: return SharedElementNode
+		case '!doctype':
+			return SharedElementEmpty
+		default:
+			return SharedElementNode
 	}
 }
 

@@ -22,12 +22,12 @@ function childrenArray (children) {
 		return [children]
 	else if (isArray(children))
 		return flatten(children, array)
-	else if (typeof children[SymbolIterator] === 'function')
-		return childrenArray(child[SymbolIterator]())
 	else if (typeof children.next === 'function' || typeof children.forEach === 'function')
 		each(children, function (element) {
 			return array.push(element)
 		})
+	else if (typeof children[SymbolIterator] === 'function')
+		return childrenArray(children[SymbolIterator]())
 
 	return flatten(array, [])
 }

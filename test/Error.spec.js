@@ -92,7 +92,7 @@ describe('Error', () => {
 				assert.lengthOf(stack, 2)
 				assert.html(container, 'Hello World')
 				done()
-			})
+			}, 2)
 		})
 	})
 
