@@ -6,7 +6,7 @@ notifications:
     on_failure: always
 language: node_js
 node_js:
-  - node
+  - 8
 cache:
   directories:
     - node_modules
@@ -16,4 +16,3 @@ script:
   - npm test
 after_success:
   - npm run coverage
-  - npm run report-coverage
