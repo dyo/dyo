@@ -5,8 +5,17 @@
 function toStream (callback) {
 	var readable = new Stream(this)
 
-	if (typeof callback === 'function')
-		readable.on('end', callback)
+	switch (typeof callback) {
+		case 'function':
+			readable.on('end', callback)
+			break
+		case 'string':
+			readable.setEncoding(callback)
+			break
+		default:
+			readable.setEncoding('utf8')
+
+	}
 
 	return readable
 }
@@ -114,7 +123,7 @@ function readStreamElement (element, host, stack, readable) {
  * @param {Readable} readable
  */
 function writeStreamElement (output, readable) {
-	readable.push(output)
+	readable.push(output, 'utf8')
 
 	if (!output)
 		readable.read(0)

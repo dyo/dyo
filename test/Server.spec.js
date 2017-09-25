@@ -165,7 +165,7 @@ describe('Server', () => {
 		let element = [h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))]
 		let output = ''
 
-		renderToStream(element, writable, () => {
+		renderToNodeStream(element, writable, () => {
 			assert.html(output, `
 				<h1 class="foo">
 					12
@@ -190,7 +190,7 @@ describe('Server', () => {
 		let element = Promise.resolve([h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))])
 		let output = ''
 
-		renderToStream(element, writable, () => {
+		renderToNodeStream(element, writable, () => {
 			assert.html(output, `
 				<h1 class="foo">
 					12
@@ -222,7 +222,7 @@ describe('Server', () => {
 		})
 		let output = ''
 
-		renderToStream(element, writable, () => {
+		renderToNodeStream(element, writable, () => {
 			assert.html(output, '<h1>Hello World!</h1>')
 			done()
 		})

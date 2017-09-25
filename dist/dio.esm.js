@@ -265,6 +265,7 @@ function Element (id) {
 	this.id = id
 	this.work = SharedWorkIdle
 	this.active = false
+	this.time = 0
 	this.xmlns = ''
 	this.key = null
 	this.ref = null
@@ -857,23 +858,30 @@ function enqueueComponentUpdate (element, instance, callback, signature) {
  * @param {function?} callback
  */
 function enqueueStateUpdate (element, instance, state, callback) {
-	if (state)
-		switch (state.constructor) {
-			case Promise:
-				return enqueueStatePromise(element, instance, state, callback)
-			case Function:
-				return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
-			default:
-				switch (element.work) {
-					case SharedWorkMounting:
-						if (!element.active)
-							return void (instance.state = assign({}, instance.state, state))
-					default:
-						element.state = state
-				}
+	if (!state)
+		return
 
-				enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
-		}
+	if (!element)
+		return void requestAnimationFrame(function () {
+			enqueueStateUpdate(instance[SymbolElement], instance, state, callback)
+		})
+
+	switch (state.constructor) {
+		case Promise:
+			return enqueueStatePromise(element, instance, state, callback)
+		case Function:
+			return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
+		default:
+			switch (element.work) {
+				case SharedWorkMounting:
+					if (!element.active)
+						return void (instance.state = assign({}, instance.state, state))
+				default:
+					element.state = state
+			}
+
+			enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
+	}
 }
 
 /**
@@ -964,7 +972,7 @@ function getLifecycleData (element, name) {
  */
 function getLifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, element.active ? findDOMNode(element) : undefined)
+		var state = element.owner[name].call(element.instance, element.active && findDOMNode(element))
 		
 		if (name !== SharedComponentWillUnmount)
 			getLifecycleReturn(element, state)
@@ -992,6 +1000,20 @@ function getLifecycleUpdate (element, name, props, state, context) {
 		getLifecycleReturn(element, state)
 	} catch (err) {
 		invokeErrorBoundary(element, err, name, SharedErrorActive)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {Error} error
+ * @param {Object} info
+ */
+function getLifecycleBoundary (element, name, error, info) {
+	try {
+		getLifecycleReturn(element, element.owner[name].call(element.instance, error, info))
+	} catch (err) {
+		invokeErrorBoundary(element.host, err, SharedComponentDidCatch, SharedErrorActive)
 	}
 }
 
@@ -1701,31 +1723,25 @@ function invokeErrorBoundary (element, err, from, signature) {
  */
 function getErrorElement (element, error, from, signature) {
 	if (signature === SharedErrorPassive || !isValidElement(element) || !element.id === SharedElementEmpty)
-		return throwErrorException(error)
+		return reportErrorException(error)
 
-	var owner = element.owner
-	var boundary = owner && owner[SharedComponentDidCatch] 
-	var host = !boundary && element.host
-	var snapshot = commitElement(null)
+	var boundary = element.owner && !!element.owner[SharedComponentDidCatch] 
+	var host = element.host
+	var time = element.time
 
 	requestAnimationFrame(function () {
 		if (element.active)
-			recoverErrorBoundary(element, snapshot)
+			recoverErrorBoundary(element, commitElement(null))
 	})
 
-	if (boundary) {
-		element.work = SharedWorkUpdating
-		try {
-			merge(snapshot, commitElement(boundary.call(element.instance, error, error)))
-		} catch (err) {
-			invokeErrorBoundary(element.host, err, SharedComponentDidCatch, signature)
+	if (boundary)
+		if (boundary = (element.time = Date.now()) - time > 16) {
+			element.work = SharedWorkUpdating
+			getLifecycleBoundary(element, SharedComponentDidCatch, error, error)
+			element.work = SharedWorkIdle
 		}
-		element.work = SharedWorkIdle
-	}
 
-	getErrorElement(host, error, from, signature)
-
-	return snapshot
+	return getErrorElement(!boundary && host, error, from, signature)
 }
 
 /**
@@ -1739,7 +1755,7 @@ function recoverErrorBoundary (element, snapshot) {
 /**
  * @param {Error} error
  */
-function throwErrorException (error) {
+function reportErrorException (error) {
 	if (error.defaultPrevented)
 		return
 
@@ -1789,7 +1805,7 @@ function getErrorException (element, error, from) {
 }
 
 /**
- * @param {Element} element
+ * @param {*} element
  * @param {Node} target
  * @param {function=} callback
  */
@@ -1804,7 +1820,7 @@ function render (element, target, callback) {
 }
 
 /**
- * @param {Element} element
+ * @param {*} element
  * @param {Node} target
  * @param {function=} callback
  */

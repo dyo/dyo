@@ -10,4 +10,4 @@ Object.defineProperties(Element.prototype, {
 })
 
 exports.renderToString = renderToString
-exports.renderToStream = renderToStream
+exports.renderToNodeStream = renderToNodeStream

@@ -6,6 +6,7 @@ function Element (id) {
 	this.id = id
 	this.work = SharedWorkIdle
 	this.active = false
+	this.time = 0
 	this.xmlns = ''
 	this.key = null
 	this.ref = null

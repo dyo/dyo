@@ -215,23 +215,30 @@ function enqueueComponentUpdate (element, instance, callback, signature) {
  * @param {function?} callback
  */
 function enqueueStateUpdate (element, instance, state, callback) {
-	if (state)
-		switch (state.constructor) {
-			case Promise:
-				return enqueueStatePromise(element, instance, state, callback)
-			case Function:
-				return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
-			default:
-				switch (element.work) {
-					case SharedWorkMounting:
-						if (!element.active)
-							return void (instance.state = assign({}, instance.state, state))
-					default:
-						element.state = state
-				}
+	if (!state)
+		return
 
-				enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
-		}
+	if (!element)
+		return void requestAnimationFrame(function () {
+			enqueueStateUpdate(instance[SymbolElement], instance, state, callback)
+		})
+
+	switch (state.constructor) {
+		case Promise:
+			return enqueueStatePromise(element, instance, state, callback)
+		case Function:
+			return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
+		default:
+			switch (element.work) {
+				case SharedWorkMounting:
+					if (!element.active)
+						return void (instance.state = assign({}, instance.state, state))
+				default:
+					element.state = state
+			}
+
+			enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
+	}
 }
 
 /**
@@ -322,7 +329,7 @@ function getLifecycleData (element, name) {
  */
 function getLifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, element.active ? findDOMNode(element) : undefined)
+		var state = element.owner[name].call(element.instance, element.active && findDOMNode(element))
 		
 		if (name !== SharedComponentWillUnmount)
 			getLifecycleReturn(element, state)
@@ -350,6 +357,20 @@ function getLifecycleUpdate (element, name, props, state, context) {
 		getLifecycleReturn(element, state)
 	} catch (err) {
 		invokeErrorBoundary(element, err, name, SharedErrorActive)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {Error} error
+ * @param {Object} info
+ */
+function getLifecycleBoundary (element, name, error, info) {
+	try {
+		getLifecycleReturn(element, element.owner[name].call(element.instance, error, info))
+	} catch (err) {
+		invokeErrorBoundary(element.host, err, SharedComponentDidCatch, SharedErrorActive)
 	}
 }
 

@@ -26,6 +26,7 @@
     "dev": "node ./script/build",
     "build": "node ./script/build --bundle",
     "test": "nyc mocha --require script/test/index.js",
+    "test:dev": "mocha --require script/test/index.js --watch",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "nyc": {

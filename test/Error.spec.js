@@ -79,9 +79,12 @@ describe('Error', () => {
 			componentDidCatch(err) {
 				err.preventDefault()
 				stack.push('error')
-				return 'Hello World'
+				return {children: 'Hello World'}
 			}
-			render(props, state) {
+			render(props, {children}) {
+				if (children)
+					return children
+
 				stack.push('render')
 				return refs
 			}
@@ -107,19 +110,19 @@ describe('Error', () => {
 		let element = h(class {
 			componentDidCatch(err) {
 				err.preventDefault()
-				return h('h1', 'Error!')
+				return {children: h('h1', 'Error!')}
 			}
 			getInitialState() {
 				return Promise.reject({x: '!'})
 			}
-			render(props, {x}) {
+			render(props, {x, children}) {
 				return h('h1', 'Hello World', x)
 			}
 		})
 		let output = ''
 
-		renderToStream(element, writable, () => {
-			assert.html(output, '<h1>Error!</h1>')
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, '')
 			done()
 		})
 	})
@@ -153,12 +156,15 @@ describe('Error', () => {
 			componentDidCatch(err) {
 				stack.push(err)
 				err.preventDefault()
-				return 'Hello World'
+				return {children: 'Hello World'}
 			}
 			getInitialState() {
 				return Promise.reject({x: '!!'})
 			}
-			render(props, {x}) {
+			render(props, {x, children}) {
+				if (children)
+					return children
+
 				stack.push(x)
 				return h('h1', 'Hello World', x)
 			}
@@ -204,7 +210,7 @@ describe('Error', () => {
 		}, 2)
 	})
 
-	it('should recover through setState', (done) => {
+	it('should recover from setState', (done) => {
 		let container = document.createElement('div')
 		let click = new Event('click')
 		let refs = null
@@ -349,6 +355,38 @@ describe('Error', () => {
 		nextTick(() => {
 			assert.html(container, '')
 			assert.include(stack, true)
+			done()
+		})
+	})
+
+	it('should handle recursive errors', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+			}
+			render() {
+				return class {
+					componentDidCatch(err, {componentStack}) {
+						err.preventDefault()
+						return {error: true}
+					}
+					render() {
+						if (this.state.error)
+							stack.push(true)
+
+						throw new Error('Error!')
+					}
+				}
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.include(stack, true)
+			assert.lengthOf(stack, 1)
 			done()
 		})
 	})

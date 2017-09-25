@@ -18,31 +18,25 @@ function invokeErrorBoundary (element, err, from, signature) {
  */
 function getErrorElement (element, error, from, signature) {
 	if (signature === SharedErrorPassive || !isValidElement(element) || !element.id === SharedElementEmpty)
-		return throwErrorException(error)
+		return reportErrorException(error)
 
-	var owner = element.owner
-	var boundary = owner && owner[SharedComponentDidCatch] 
-	var host = !boundary && element.host
-	var snapshot = commitElement(null)
+	var boundary = element.owner && !!element.owner[SharedComponentDidCatch] 
+	var host = element.host
+	var time = element.time
 
 	requestAnimationFrame(function () {
 		if (element.active)
-			recoverErrorBoundary(element, snapshot)
+			recoverErrorBoundary(element, commitElement(null))
 	})
 
-	if (boundary) {
-		element.work = SharedWorkUpdating
-		try {
-			merge(snapshot, commitElement(boundary.call(element.instance, error, error)))
-		} catch (err) {
-			invokeErrorBoundary(element.host, err, SharedComponentDidCatch, signature)
+	if (boundary)
+		if (boundary = (element.time = Date.now()) - time > 16) {
+			element.work = SharedWorkUpdating
+			getLifecycleBoundary(element, SharedComponentDidCatch, error, error)
+			element.work = SharedWorkIdle
 		}
-		element.work = SharedWorkIdle
-	}
 
-	getErrorElement(host, error, from, signature)
-
-	return snapshot
+	return getErrorElement(!boundary && host, error, from, signature)
 }
 
 /**
@@ -56,7 +50,7 @@ function recoverErrorBoundary (element, snapshot) {
 /**
  * @param {Error} error
  */
-function throwErrorException (error) {
+function reportErrorException (error) {
 	if (error.defaultPrevented)
 		return
 

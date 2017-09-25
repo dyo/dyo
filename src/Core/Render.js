@@ -1,5 +1,5 @@
 /**
- * @param {Element} element
+ * @param {*} element
  * @param {Node} target
  * @param {function=} callback
  */
@@ -14,7 +14,7 @@ function render (element, target, callback) {
 }
 
 /**
- * @param {Element} element
+ * @param {*} element
  * @param {Node} target
  * @param {function=} callback
  */

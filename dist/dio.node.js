@@ -78,7 +78,7 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	})
 	
 	exports.renderToString = renderToString
-	exports.renderToStream = renderToStream
+	exports.renderToNodeStream = renderToNodeStream
 	
 	/**
 	 * @return {void}
@@ -292,8 +292,17 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	function toStream (callback) {
 		var readable = new Stream(this)
 	
-		if (typeof callback === 'function')
-			readable.on('end', callback)
+		switch (typeof callback) {
+			case 'function':
+				readable.on('end', callback)
+				break
+			case 'string':
+				readable.setEncoding(callback)
+				break
+			default:
+				readable.setEncoding('utf8')
+	
+		}
 	
 		return readable
 	}
@@ -401,37 +410,39 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	 * @param {Readable} readable
 	 */
 	function writeStreamElement (output, readable) {
-		readable.push(output)
+		readable.push(output, 'utf8')
 	
 		if (!output)
 			readable.read(0)
 	}
 	
 	/**
-	 * @param {*} subject
+	 * @param {*} element
 	 * @param {Writable?} target
 	 * @param {function=} callback
 	 */
-	function renderToString (subject, target, callback) {
+	function renderToString (element, target, callback) {
 		if (!target || !target.writable)
-			return commitElement(subject).toString()
+			return commitElement(element).toString()
 		else
 			setHeader(target)
 		
-		return target.end(commitElement(subject).toString(), 'utf8', callback)
+		return target.end(commitElement(element).toString(), 'utf8', callback)
 	}
 	
 	/**
-	 * @param {*} subject
+	 * @param {*} element
 	 * @param {Writable?} target
 	 * @param {function=} callback
 	 */
-	function renderToStream (subject, target, callback) {
+	function renderToNodeStream (element, target, callback) {
 		if (!target || !target.writable)
-			return commitElement(subject).toStream()
+			return commitElement(element).toStream()
 		else
 			setHeader(target)
 		
-		return commitElement(subject).toStream(callback).pipe(target)
+		return commitElement(element).toStream(function () {
+			target.end(callback)
+		}).pipe(target)
 	}
 }

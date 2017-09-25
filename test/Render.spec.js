@@ -140,6 +140,24 @@ describe('Render', () => {
 		assert.equal(refs.instance, null, 'ref string(node#unmount)')
 	})
 
+	it('should unmount undefined ref', () => {
+		let container = document.createElement('div')
+		let refs = undefined
+		
+		render(h('h1', {ref: (value) => refs = value}), container)
+		render(h('h1', {ref: undefined}), container)
+		assert.equal(refs, null)
+	})
+
+	it('should unmount null ref', () => {
+		let container = document.createElement('div')
+		let refs = undefined
+		
+		render(h('h1', {ref: (value) => refs = value}), container)
+		render(h('h1', {ref: null}), container)
+		assert.equal(refs, null)
+	})
+
 	it('should render nested array children', () => {
 		render(h('div', 1, [2, 3, [4, 5]]), container)
 		assert.html(container, `<div>12345</div>`)

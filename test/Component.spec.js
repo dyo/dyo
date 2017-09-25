@@ -313,7 +313,7 @@ describe('Component', () => {
 		let counter = 0
 
 		render(h(A, {children: 1}), container)
-		render(h(A, {children: 2}), container)
+		render(h(A, {children: 1, new: true}), container)
 
 		assert.html(container, '2')
 	})
@@ -636,5 +636,43 @@ describe('Component', () => {
 		render(h('div', function *render() {yield 1}), container)
 
 		assert.html(container, '<div>1</div>')
+	})
+
+	it('should handle setState in constructor', (done) => {
+		let container = document.createElement('div')
+
+		render(class {
+			constructor() {
+				this.setState({id: 1})
+			}
+			render () {
+				return this.state.id
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '1')
+			done()
+		})
+	})
+
+	it('should handle forceUpdate in constructor', (done) => {
+		let container = document.createElement('div')
+		let counter = 0
+
+		render(class {
+			constructor() {
+				counter++
+				this.forceUpdate()
+			}
+			render () {
+				return counter
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '1')
+			done()
+		})
 	})
 })

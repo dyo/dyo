@@ -1,27 +1,29 @@
 /**
- * @param {*} subject
+ * @param {*} element
  * @param {Writable?} target
  * @param {function=} callback
  */
-function renderToString (subject, target, callback) {
+function renderToString (element, target, callback) {
 	if (!target || !target.writable)
-		return commitElement(subject).toString()
+		return commitElement(element).toString()
 	else
 		setHeader(target)
 	
-	return target.end(commitElement(subject).toString(), 'utf8', callback)
+	return target.end(commitElement(element).toString(), 'utf8', callback)
 }
 
 /**
- * @param {*} subject
+ * @param {*} element
  * @param {Writable?} target
  * @param {function=} callback
  */
-function renderToStream (subject, target, callback) {
+function renderToNodeStream (element, target, callback) {
 	if (!target || !target.writable)
-		return commitElement(subject).toStream()
+		return commitElement(element).toStream()
 	else
 		setHeader(target)
 	
-	return commitElement(subject).toStream(callback).pipe(target)
+	return commitElement(element).toStream(function () {
+		target.end(callback)
+	}).pipe(target)
 }

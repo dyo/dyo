@@ -220,7 +220,7 @@ interface Props extends Events {
 interface ElementShape {
 	id: number
 	work: number
-	keyed: boolean
+	active: number
 	xmlns: string
 	key: Key
 	ref: Ref
