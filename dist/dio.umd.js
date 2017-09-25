@@ -481,9 +481,9 @@
 	
 				props.children = children
 			}
-		}	
+		}
 	
-		switch (type.constructor) {
+		switch ((element.type = type).constructor) {
 			case Function:
 				if (type.defaultProps)
 					props = getDefaultProps(element, type.defaultProps, props)
@@ -491,14 +491,13 @@
 				break
 			case Element:
 				props = assign({}, type.props, (element.id = type.id, props))	
-				type = type.type
+				element.type = type.type
 				break
 			case Promise:
 				element.id = SharedElementPromise
 				setElementBoundary(children)
 		}
 	
-		element.type = type
 		element.props = props
 		element.children = children
 	
@@ -950,10 +949,7 @@
 	 * @return {Object?}
 	 */
 	function getComponentContext (element) {
-		if (element.owner[SharedGetChildContext])
-			return getLifecycleData(element, SharedGetChildContext) || element.context || {}
-		else
-			return element.context || {}
+		return getLifecycleData(element, SharedGetChildContext) || element.context || {}
 	}
 	
 	/**

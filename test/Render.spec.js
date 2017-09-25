@@ -139,4 +139,51 @@ describe('Render', () => {
 		unmountComponentAtNode(container)
 		assert.equal(refs.instance, null, 'ref string(node#unmount)')
 	})
+
+	it('should render nested array children', () => {
+		render(h('div', 1, [2, 3, [4, 5]]), container)
+		assert.html(container, `<div>12345</div>`)
+	})
+
+	it('should not render booleans', () => {
+		render(h('div', true, false), container),
+		assert.html(container, '<div></div>')
+	})
+
+	it('should not render dates', () => {
+		let date = new Date()
+
+		render(h('div', date), container)
+		assert.html(container, '<div>'+date+'</div>')
+	})
+
+	it('should not render unknown objects', () => {
+		assert.throws(() => {			
+			render(h('div', null, {}), container)
+		})
+	})
+
+	it('should render svg', () => {
+		render(h('svg', h('path')), container)
+		assert.html(container, `
+			<svg>
+				<path></path>
+			</svg>
+		`)
+		assert.propertyVal(container.firstChild, 'namespaceURI', 'http://www.w3.org/2000/svg')
+		assert.propertyVal(container.firstChild.firstChild, 'namespaceURI', 'http://www.w3.org/2000/svg')
+	})
+
+	it('should render math', () => {
+		render(h('math'), container)
+		assert.html(container, `<math></math>`)
+		assert.propertyVal(container.firstChild, 'namespaceURI', 'http://www.w3.org/1998/Math/MathML')
+	})
+
+	it('should render foreignObject in svg', () => {
+		render(h('svg', h('foreignObject')), container)
+		assert.html(container, `<svg><foreignobject></foreignobject></svg>`)
+		assert.propertyVal(container.firstChild, 'namespaceURI', 'http://www.w3.org/2000/svg')
+		assert.notPropertyVal(container.firstChild.firstChild, 'namespaceURI', 'http://www.w3.org/2000/svg')
+	})
 })

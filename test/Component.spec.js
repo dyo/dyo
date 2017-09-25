@@ -536,4 +536,105 @@ describe('Component', () => {
 		assert.html(container, '<h1>Hello</h1>')
 		refs.then(() => assert.html(container, '')).then(done)
 	})
+
+	it('should render defaultProps(object)', () => {
+		let container = document.createElement('div')
+		class A {
+			render() {
+				return this.props.children
+			}
+		}
+		A.defaultProps = {children: 1}
+
+		render(A, container)
+		assert.html(container, '1')
+	})
+
+	it('should render defaultProps(function)', () => {
+		let container = document.createElement('div')
+		class A {
+			static defaultProps() {
+				return {children: 2}
+			}
+			render() {
+				return this.props.children
+			}
+		}
+
+		render(A, container)
+		assert.html(container, '2')
+	})
+
+	it('should update component ref', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		class A {
+			componentWillMount() {
+				refs = this
+			}
+			render() {
+				return 'Hello'
+			}
+		}
+
+		render(h(A, {ref: (value) => stack.push(value)}), container)
+		render(h(A, {ref: (value) => stack.push(value)}), container)
+		assert.html(container, 'Hello')
+		assert.include(stack, null)
+		assert.include(stack, refs)
+	})
+
+	it('should not update component ref', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = (value) => stack.push(value)
+
+		class A {
+			render() {
+				return 'Hello'
+			}
+		}
+
+		render(h(A, {ref: refs}), container)
+		render(h(A, {ref: refs}), container)
+		assert.html(container, 'Hello')
+		assert.lengthOf(stack, 1)
+	})
+
+	it('should pass multiple children to component', () => {
+		let container = document.createElement('div')
+		let refs = null
+
+		render(h(class {
+			render() {
+				refs = this.props.children
+			}
+		}, 1, 2, [3, 4]), container)
+
+		assert.lengthOf(refs, 3)
+	})
+
+	it('should render a generator(iterator)', () => {
+		let container = document.createElement('div')
+
+		render(class {
+			*render() {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}, container)
+
+		assert.html(container, '123')
+	})
+
+	it('should render a generator(function)', () => {
+		let container = document.createElement('div')
+		
+		render(h('div', function *render() {yield 1}), container)
+
+		assert.html(container, '<div>1</div>')
+	})
 })

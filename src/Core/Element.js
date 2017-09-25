@@ -211,9 +211,9 @@ function createElement (type, properties) {
 
 			props.children = children
 		}
-	}	
+	}
 
-	switch (type.constructor) {
+	switch ((element.type = type).constructor) {
 		case Function:
 			if (type.defaultProps)
 				props = getDefaultProps(element, type.defaultProps, props)
@@ -221,14 +221,13 @@ function createElement (type, properties) {
 			break
 		case Element:
 			props = assign({}, type.props, (element.id = type.id, props))	
-			type = type.type
+			element.type = type.type
 			break
 		case Promise:
 			element.id = SharedElementPromise
 			setElementBoundary(children)
 	}
 
-	element.type = type
 	element.props = props
 	element.children = children
 

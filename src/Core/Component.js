@@ -296,10 +296,7 @@ function getComponentElement (element, instance) {
  * @return {Object?}
  */
 function getComponentContext (element) {
-	if (element.owner[SharedGetChildContext])
-		return getLifecycleData(element, SharedGetChildContext) || element.context || {}
-	else
-		return element.context || {}
+	return getLifecycleData(element, SharedGetChildContext) || element.context || {}
 }
 
 /**

@@ -4,6 +4,15 @@ describe('Children', () => {
 	let element = h('h1', '1')
 
 	it('should convert .toArray children', () => {
+		assert.deepEqual(toArray(null), [])
+		assert.deepEqual(toArray({
+			[Symbol.iterator]: function* () {
+		    yield 1
+		    yield 2
+		    yield 3
+			}
+		}), [1, 2, 3])
+
 		assert.deepEqual(toArray([1, '2', true]), [1, '2', true], 'toArray([])')
 		assert.deepEqual(toArray([1, '2', [true]]), [1, '2', true], 'toArray([nested])')
 		assert.deepEqual(toArray('string'), ['string'], 'toArray(string)')
@@ -13,6 +22,7 @@ describe('Children', () => {
 	})
 
 	it('should .map children', () => {
+		assert.equal(map(null), null)
 		assert.deepEqual(map([1, [2, 3]], x => x+1), [2, 3, 4], 'map([])')
 		assert.deepEqual(map(1, x => x+1), [2], 'map(number)')
 		assert.deepEqual(map('1', x => x+1), ['11'], 'map(string)')

@@ -3,6 +3,10 @@ describe('Portal', ()=>{
 	let container = body.appendChild(document.createElement('main'))
 	let portal = body.appendChild(document.createElement('ul'))
 
+	it('should assign a key to a portal', () => {
+		assert.propertyVal(createPortal(h('title'), 'head', '#head'), 'key', '#head')
+	})
+
 	it('should render a portal', () => {
 		render(
 			h('div', 

@@ -1,12 +1,11 @@
-sudo: required
-dist: trusty
+sudo: false
 notifications:
   email:
     on_success: change
     on_failure: always
 language: node_js
 node_js:
-  - 8
+  - "8"
 cache:
   directories:
     - node_modules
