@@ -12,4 +12,5 @@ npm-debug.log
 .vscode
 *.swp
 *.swo
+/coverage
 /index*

@@ -4,12 +4,13 @@
   "license": "MIT",
   "description": "A Library For Building User Interfaces.",
   "homepage": "https://github.com/thysultan/dio.js",
-
   "main": "dist/dio.umd.js",
   "module": "dist/dio.esm.js",
   "types": "types/dio.d.ts",
-  "files": ["dist", "types/dio.d.ts"],
-
+  "files": [
+    "dist",
+    "types/dio.d.ts"
+  ],
   "author": {
     "name": "Sultan Tarimo",
     "email": "sultantarimo@me.com"
@@ -21,18 +22,25 @@
   "bugs": {
     "url": "https://github.com/thysultan/dio.js/issues"
   },
-
   "scripts": {
     "dev": "node ./script/build",
     "build": "node ./script/build --bundle",
-    "test": "mocha --require script/test/index.js"
+    "test": "nyc mocha --require script/test/index.js",
+    "report-coverage": "cat ./coverage/lcov.info | coveralls"
   },
-  
+  "nyc": {
+    "temp-directory": "./coverage/.nyc_output",
+    "reporter": [
+      "lcov",
+      "text"
+    ]
+  },
   "devDependencies": {
     "chai": "^4.1.2",
     "chokidar": "^1.7.0",
     "jsdom": "^11.1.0",
     "mocha": "^3.5.3",
+    "nyc": "^11.2.1",
     "uglify-es": "^3.0.28",
     "uglify-js": "^3.0.28"
   }
