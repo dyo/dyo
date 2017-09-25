@@ -59,10 +59,9 @@ The distribution bundle is made of different sources that are separeted in terms
   - Core/
   - DOM/
   - Server/
-  - Native/
 ```
 
-For example, eveything in `Core/` manages aspects related to creating snapshot elements, diffing and reconciling while everyhing in `DOM` is related only to the layer that touches the native document model. The same can be said for `Server/` in related to Node and server side rendering. On the other hand `Native/` is currently still an expiremental future layer meant to target other native stacks.
+For example, eveything in `Core/` manages aspects related to creating snapshot elements, diffing and reconciling while everyhing in `DOM` is related only to the layer that touches the native document model. The same can be said for `Server/` in related to Node and server side rendering.
 
 The distrution artifacts in `./dist/` are made of the bundle of the related sources mentioned above. You can create or update a build by running the following command.
 

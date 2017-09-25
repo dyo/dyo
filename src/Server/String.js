@@ -45,40 +45,48 @@ function getStringElement (element, host) {
  */
 function getStringProps (element, props) {
 	var output = ''
+	var xmlns = element.xmlns
 
-	for (var key in props) {
-		var value = props[key]
+	for (var name in props) {
+		var value = props[name]
 		
-		switch (key) {
+		switch (name) {
 			case 'dangerouslySetInnerHTML':
 				if (value && value.__html)
 					value = value.__html
 				else
-					break
+					continue
 			case 'innerHTML':
 				element.DOM = value + ''
-				break
+				continue
 			case 'defaultValue':
 				if (!props.value)
 					output += ' value="' + getTextEscape(value) + '"'
 			case 'key':
 			case 'ref':
 			case 'children':
-				break
+				continue
 			case 'style':
 				output += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'				
-				break
+				continue
 			case 'className':
-				key = 'class'
-			default:
-				switch (typeof value) {
-					case 'boolean':
-						if (value === false)
-							break
-					case 'string':
-					case 'number':
-						output += ' ' + key + (value !== true ? '="'+getTextEscape(value) + '"' : '')
-				}
+				name = 'class'
+				break
+			case 'acceptCharset':
+				name = 'accept-charset'
+				break
+			case 'httpEquiv':
+				name = 'http-equiv'
+		}
+
+		switch (typeof value) {
+			case 'boolean':
+				if (value)
+					output += ' ' + name
+				break
+			case 'string':
+			case 'number':
+				output += ' ' + name + '="' + getTextEscape(value) + '"'
 		}
 	}
 
@@ -86,19 +94,19 @@ function getStringProps (element, props) {
 }
 
 /**
- * @param {Object} object
+ * @param {Object} props
  * @return {string}
  */
-function getStringStyle (object) {
+function getStringStyle (props) {
 	var output = ''
 
-	for (var key in object) {
-		var value = object[key]
+	for (var name in props) {
+		var value = props[name]
 
-		if (key !== key.toLowerCase())
-			key = key.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
+		if (name !== name.toLowerCase())
+			name = name.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
 
-		output += key + ':' + value + ';'
+		output += name + ':' + value + ';'
 	}
 
 	return output

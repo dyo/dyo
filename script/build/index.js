@@ -46,11 +46,6 @@ const node = [
 	'../../src/Server/Render.js'
 ]
 
-const native = [
-	...core,
-	'../../src/Native/DOM.js'
-]
-
 const umd = [
 	...core,
 	...dom
@@ -63,8 +58,6 @@ const esm = [
 
 const getExports = (module) => {
 	switch (module) {
-		case 'native':
-			return template.export
 		case 'umd':
 			return template.export + template.node
 		case 'esm':
@@ -140,17 +133,6 @@ const wrapper = (open, module, content, close, version) => {
 				close: ''
 			}
 		}
-		case 'native':
-			return {
-				open: (
-					open+
-					fs.readFileSync(path.join(__dirname, 'UMD.js'), 
-					'utf8').trim() + '\n\n' + 
-					"\tvar version = '"+version+"'\n\n"
-				),
-				body: pad(format(content)),
-				close: close
-			}
 		case 'esm':
 			return {
 				open: (
@@ -261,14 +243,12 @@ const resolve = () => {
 	bundle('umd', umd, '../../dist/')
 	bundle('esm', esm, '../../dist/')
 	bundle('node', node, '../../dist/')
-	// bundle('native', native, '../../dist/dio.native.js')
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled:\n'+
 		'\n – '+filenames.umd+
 		'\n – '+filenames.esm+
 		'\n – '+filenames.node+
-		// '\n – 'filenames.native+
 		'\x1b[0m\n'
 	)
 }

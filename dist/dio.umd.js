@@ -2005,11 +2005,11 @@
 	
 	/**
 	 * @param {Element} element
-	 * @param {Object} object
+	 * @param {Object} props
 	 */
-	function setDOMStyle (element, object) {
-		for (var key in object) {
-			var value = object[key]
+	function setDOMStyle (element, props) {
+		for (var key in props) {
+			var value = props[key]
 	
 			if (key.indexOf('-') < 0)
 				getDOMNode(element).style[key] = value !== false && value !== undefined ? value : null
@@ -2085,6 +2085,10 @@
 				if (getDOMNode(element)[name] !== value)
 					setDOMProperty(element, name, value)
 				return
+			case 'acceptCharset':
+				return setDOMProperties(element, 'accept-charset', value, xmlns)
+			case 'httpEquiv':
+				return setDOMProperties(element, 'http-equiv', value, xmlns)
 			case 'width':
 			case 'height':
 				if (element.type === 'img')
@@ -2094,10 +2098,13 @@
 					return setDOMProperty(element, name, value)
 		}
 	
-		if (typeof value === 'object')
-			setDOMProperty(element, name, value)
-		else 
-			setDOMAttribute(element, name, value, '')
+		switch (typeof value) {
+			case 'object':
+			case 'function':
+				return setDOMProperty(element, name, value)						
+		}
+	
+		setDOMAttribute(element, name, value, '')
 	}
 	
 	/**
