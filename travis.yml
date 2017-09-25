@@ -1,0 +1,19 @@
+sudo: required
+dist: trusty
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+language: node_js
+node_js:
+  - node
+cache:
+  directories:
+    - node_modules
+install:
+  - npm install
+script:
+  - npm test
+after_success:
+  - npm run coverage
+  - npm run report-coverage
