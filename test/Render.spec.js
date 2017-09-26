@@ -272,6 +272,7 @@ describe('Render', () => {
 	})
 
 	it('should execute render callback', () => {
+		let container = document.createElement('div')
 		let stack = []
 		let refs = null
 		let A = class {

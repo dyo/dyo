@@ -781,7 +781,7 @@ describe('Component', () => {
 		refs.dispatchEvent(new Event('click'))
 		
 		assert.html(container, '<button></button>')
-		assert.lengthOf(stack, 2)
+		assert.lengthOf(stack, 1)
 		console.error = error
 	})
 
@@ -1046,7 +1046,71 @@ describe('Component', () => {
 		}, container)
 
 		assert.html(container, '<div></div>')
-		assert.lengthOf(stack, 2)
+		assert.lengthOf(stack, 1)
 		console.error = error
+	})
+
+	it('should update a promise element', (done) => {
+		let container = document.createElement('div')
+		let A = class {
+			render({children}) {
+				return children
+			}
+		}
+
+		render(h(A, Promise.resolve(h('div', 1))), container)
+		render(h(A, Promise.resolve(h('div', 2))), container)
+
+		nextTick(() => {
+			assert.html(container, '<div>2</div>')
+			done()
+		})
+	})
+
+	it('should reject async promise element', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		render(h(A, Promise.reject(h('div', 1))), container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should throw in async unmount', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let error = console.error
+		let spy = console.error = () => stack.push(1)
+
+		let A = class {
+			componentWillUnmount() {
+				return Promise.reject()
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		render(h(A), container)
+		render(null, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
 	})
 })

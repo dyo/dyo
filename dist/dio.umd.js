@@ -1769,8 +1769,7 @@
 		if (error.defaultPrevented)
 			return
 	
-		console.error(error)
-		console.error(error.errorMessage)
+		console.error(error.stack + '\n\n' + error.errorMessage)
 	}
 	
 	/**
