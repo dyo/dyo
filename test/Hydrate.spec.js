@@ -16,8 +16,23 @@ describe('Hydrate', () => {
 		assert.html(container, '<section class="class"><div>context</div></section>')
 	})
 
+	it('should hydrate sibling text elements', () => {
+		let container = document.createElement('div')
+		let element = h('div', '1', '2')
+		let children = element.children
+
+		container.innerHTML = '<div>12</div>'
+
+		hydrate(element, container)
+		assert.equal(container.firstChild.childNodes.length, 2)
+		assert.doesNotThrow(() => {
+			findDOMNode(children.next)
+			findDOMNode(children.prev)
+		})
+	})
+
 	it('should hydrate a fragment element', () => {
-		let container = document.createElement('html')
+		let container = document.createElement('div')
 		container.innerHTML = '<head></head><body></body>'
 
 		hydrate([h('head', h('title', 'xxx')), ''], container)
@@ -25,7 +40,7 @@ describe('Hydrate', () => {
 	})
 
 	it('should hydrate empty string element', () => {
-		let container = document.createElement('html')
+		let container = document.createElement('div')
 		hydrate('', container)
 		assert.lengthOf(container.childNodes, 1)
 	})
@@ -100,7 +115,7 @@ describe('Hydrate', () => {
 	})
 
 	it('should hydrate portals', () => {
-		let html = document.createElement('html')
+		let html = document.createElement('div')
 		let head = html.appendChild(document.createElement('head'))
 		let container = html.appendChild(document.createElement('div'))
 		container.innerHTML = `<div><h1>Before</h1><title>Portal</title><h1>After</h1></div>`
@@ -119,7 +134,7 @@ describe('Hydrate', () => {
 	})
 
 	it('should repair elements after portals ', () => {
-		let html = document.createElement('html')
+		let html = document.createElement('div')
 		let head = html.appendChild(document.createElement('head'))
 		let container = html.appendChild(document.createElement('div'))
 		container.innerHTML = `<div><h1>Before</h1><title>Portal</title><h1>After</h1></div>`

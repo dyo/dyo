@@ -149,7 +149,7 @@ function updateComponent (element, snapshot, signature) {
 			}
 		case SharedComponentStateUpdate:
 			if (owner[SharedComponentShouldUpdate])
-				if (getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext) === false)
+				if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
 					return void (element.work = SharedWorkIdle)
 	}
 
@@ -381,8 +381,6 @@ function getLifecycleBoundary (element, name, error, info) {
 function getLifecycleReturn (element, state) {
 	switch (typeof state) {
 		case 'object':
-			if (!state)
-				break
 		case 'function':
 			enqueueStateUpdate(element, element.instance, state)
 	}
@@ -397,7 +395,8 @@ function getLifecycleReturn (element, state) {
  */
 function getLifecycleCallback (element, callback, first, second, third) {
 	try {
-		return callback.call(element.instance, first, second, third)
+		if (typeof callback === 'function')
+			return callback.call(element.instance, first, second, third)
 	} catch (err) {
 		invokeErrorBoundary(element, err, SharedSiteCallback, SharedErrorPassive)
 	}

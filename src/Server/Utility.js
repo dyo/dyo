@@ -1,9 +1,4 @@
 /**
- * @return {void}
- */
-function noop () {}
-
-/**
  * @param {*} value
  * @return {string}
  */
@@ -27,8 +22,6 @@ function getTextEncode (character) {
 			return '&#x27;'
 		case '&':
 			return '&amp;'
-		default:
-			return character
 	}
 }
 

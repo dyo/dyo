@@ -1,12 +1,12 @@
 describe('Error', () => {
 	it('should catch an invalid render error', (done) => {
 		let container = document.createElement('div')
-		let error = []
+		let stack = []
 
 		render(class {
 			componentDidCatch(err) {
 				err.preventDefault()
-				error.push(err)
+				stack.push(err)
 			}
 			render() {
 				return h('!invalid')
@@ -14,8 +14,7 @@ describe('Error', () => {
 		}, container)
 
 		nextTick(() => {
-			assert.lengthOf(error, 1)
-			assert.html(container, '')
+			assert.lengthOf(stack, 1)
 			done()
 		})
 	})

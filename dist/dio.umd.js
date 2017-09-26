@@ -803,7 +803,7 @@
 				}
 			case SharedComponentStateUpdate:
 				if (owner[SharedComponentShouldUpdate])
-					if (getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext) === false)
+					if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
 						return void (element.work = SharedWorkIdle)
 		}
 	
@@ -1035,8 +1035,6 @@
 	function getLifecycleReturn (element, state) {
 		switch (typeof state) {
 			case 'object':
-				if (!state)
-					break
 			case 'function':
 				enqueueStateUpdate(element, element.instance, state)
 		}
@@ -1051,7 +1049,8 @@
 	 */
 	function getLifecycleCallback (element, callback, first, second, third) {
 		try {
-			return callback.call(element.instance, first, second, third)
+			if (typeof callback === 'function')
+				return callback.call(element.instance, first, second, third)
 		} catch (err) {
 			invokeErrorBoundary(element, err, SharedSiteCallback, SharedErrorPassive)
 		}
@@ -1825,7 +1824,7 @@
 			return render(element, getDOMDocument(), callback)
 	
 		if (root.has(target))
-			reconcileElement(root.get(target), commitElement(element))
+			update(root.get(target), commitElement(element), callback)
 		else
 			mount(element, target, callback, SharedMountCommit)
 	}
@@ -1840,6 +1839,18 @@
 			return hydrate(element, getDOMDocument(), callback)
 		
 		mount(element, target, callback, SharedMountQuery)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} snapshot
+	 * @param {Element} callback
+	 */
+	function update (element, snapshot, callback) {
+		reconcileElement(element, snapshot)
+	
+		if (callback)
+			getLifecycleCallback(element, callback)
 	}
 	
 	/**
@@ -1863,10 +1874,10 @@
 		if (signature === SharedMountCommit)
 			setDOMContent(parent)
 		
-		commitMount(element, element, parent, parent, SharedMountAppend, signature)
+		commitMount(element, element, parent, parent, SharedMountAppend, signature)	
 	
-		if (typeof callback === 'function')
-			getLifecycleCallback(element, callback, findDOMNode(element))
+		if (callback)
+			getLifecycleCallback(element, callback)
 	}
 	
 	/**
@@ -2045,11 +2056,10 @@
 			case null:
 			case false:
 			case undefined:
-				if (!xmlns)
-					getDOMNode(element).removeAttribute(name)
-				else
+				if (xmlns)
 					getDOMNode(element).removeAttributeNS(xmlns, name)
-				return
+	
+				return getDOMNode(element).removeAttribute(name)				
 			case true:
 				return setDOMAttribute(element, name, '', xmlns)
 		}

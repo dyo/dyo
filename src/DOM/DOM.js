@@ -71,11 +71,10 @@ function setDOMAttribute (element, name, value, xmlns) {
 		case null:
 		case false:
 		case undefined:
-			if (!xmlns)
-				getDOMNode(element).removeAttribute(name)
-			else
+			if (xmlns)
 				getDOMNode(element).removeAttributeNS(xmlns, name)
-			return
+
+			return getDOMNode(element).removeAttribute(name)				
 		case true:
 			return setDOMAttribute(element, name, '', xmlns)
 	}

@@ -204,4 +204,93 @@ describe('Render', () => {
 		assert.propertyVal(container.firstChild, 'namespaceURI', 'http://www.w3.org/2000/svg')
 		assert.notPropertyVal(container.firstChild.firstChild, 'namespaceURI', 'http://www.w3.org/2000/svg')
 	})
+
+	it('should render dash-case acceptCharset attribute', () => {
+		render(h('form', {acceptCharset: 'ISO-8859-1'}), container)
+		assert.html(container, '<form accept-charset="ISO-8859-1"></form>')
+	})
+
+	it('should render dash-case httpEquiv attribute', () => {
+		render(h('meta', {httpEquiv: 'refresh'}), container)
+		assert.html(container, '<meta http-equiv="refresh">')
+	})
+
+	it('should render to documentElement', () => {
+		let container = document.createElement('div')
+		let documentElement = document.documentElement
+
+		Object.defineProperty(document, 'documentElement', {
+		  enumerable: true,
+		  configurable: true,
+		  writable: true,
+		  value: container
+		})
+
+		render(1)
+
+		assert.html(container, '1')
+
+		Object.defineProperty(document, 'documentElement', {
+		  enumerable: true,
+		  configurable: true,
+		  writable: true,
+		  value: documentElement
+		})
+	})
+
+	it('should render xlink:href attribute', () => {
+		render(h('use', {'xlink:href': '#id'}), container)
+		assert.html(container, '<use xlink:href="#id"></use>')
+	})
+
+	it('should remove xlink:href attribute', () => {
+		render(h('use', {'xlink:href': null}), container)
+		assert.html(container, '<use></use>')
+	})
+
+	it('should render an attribute without a value', () => {
+		render(h('div', {custom: true}), container)
+		assert.html(container, '<div custom=""></div>')
+	})
+
+	it('should render camel case styles', () => {
+		render(h('div', {style: {'-webkit-transform': 'scale(2)'}}), container)
+		assert.equal(container.firstChild.style.WebkitTransform, 'scale(2)')
+	})
+
+	it('should render and update styles', () => {
+		render(h('div', {style: {color: 'red'}}), container)
+		render(h('div', {style: {color: 'blue'}}), container)
+
+		assert.equal(container.firstChild.style.color, 'blue')
+	})
+
+	it('should not render to an invalid container', () => {
+		assert.throws(() => {
+			render('1', {})
+		})
+	})
+
+	it('should execute render callback', () => {
+		let stack = []
+		let refs = null
+		let A = class {
+			render() {
+				return 1
+			}
+		}
+
+		render(h(A), container, function () {
+			stack.push(refs = this)
+		})
+
+		render(h(A), container, function () {
+			stack.push(refs = this)
+		})
+
+		assert.html(container, '1')
+		assert.notEqual(refs, null)
+		assert.instanceOf(refs, A)
+		assert.lengthOf(stack, 2)
+	})
 })

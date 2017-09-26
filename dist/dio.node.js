@@ -81,11 +81,6 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	exports.renderToNodeStream = renderToNodeStream
 	
 	/**
-	 * @return {void}
-	 */
-	function noop () {}
-	
-	/**
 	 * @param {*} value
 	 * @return {string}
 	 */
@@ -109,8 +104,6 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 				return '&#x27;'
 			case '&':
 				return '&amp;'
-			default:
-				return character
 		}
 	}
 	

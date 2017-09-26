@@ -130,6 +130,19 @@ describe('Server', () => {
 		)
 	})
 
+	it('should render element string', () => {
+		let element = [h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))]
+
+		assert.html(renderToString(element), `
+			<h1 class="foo">
+				12
+				<p>Hello</p>
+				<span></span>
+				<img>
+			</h1>
+		`)
+	})
+
 	it('should render element string to a stream', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
@@ -226,5 +239,71 @@ describe('Server', () => {
 			assert.html(output, '<h1>Hello World!</h1>')
 			done()
 		})
+	})
+
+	it('should render a component stream to a stream', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let element = h(class {
+			getInitialState() {
+				return {x: '!'}
+			}
+			render(props, {x}) {
+				return h('h1', 'Hello World', x)
+			}
+		})
+		let output = ''
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, '<h1>Hello World!</h1>')
+			done()
+		})
+	})
+
+	it('should render dangerouslySetInnerHTML', () => {
+		assert.html(h('div', {
+			dangerouslySetInnerHTML: {__html: '1'}
+		}), '<div>1</div>')
+	})
+
+	it('should render defaultValue', () => {
+		assert.html(h('input', {
+			defaultValue: 1
+		}), '<input value="1">')
+	})
+
+	it('should not render defaultValue', () => {
+		assert.html(h('input', {
+			defaultValue: 1,
+			value: '2'
+		}), '<input value="2">')
+	})
+
+	it('should render acceptCharset', () => {
+		assert.html(h('meta', {
+			acceptCharset: true
+		}), '<meta accept-charset>')
+	})
+
+	it('should render httpEquiv', () => {
+		assert.html(h('meta', {
+			httpEquiv: true
+		}), '<meta http-equiv>')
+	})
+
+	it('should render booleans', () => {
+		assert.html(h('meta', {
+			show: true,
+			hidden: false
+		}), '<meta show>')
+	})
+
+	it('should escape test', () => {
+		assert.html(h('div', 'a<>"\'&b'), '<div>a&lt;&gt;&quot;&#x27;&amp;b</div>')
 	})
 })
