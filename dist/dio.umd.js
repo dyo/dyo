@@ -1813,8 +1813,6 @@
 			return getErrorException(element, new Error(error), from)
 	
 		var componentStack = ''
-		var errorMessage = ''
-		var errorStack = error.stack + '\n\n' + errorMessage
 		var tabs = '    '
 		var host = element
 	
@@ -1824,7 +1822,8 @@
 			host = host.host
 		}
 	
-		errorMessage = 'The above error occurred in `\n' + componentStack + '` from "' + from + '"'
+		var errorMessage = 'The above error occurred in `\n' + componentStack + '` from "' + from + '"'
+		var errorStack = error.stack + '\n\n' + errorMessage
 	
 		return defineProperties(error, {
 			errorLocation: getErrorDescription(from),
