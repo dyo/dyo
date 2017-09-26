@@ -20,8 +20,8 @@ const filenames = {
 
 const core = [
 	'../../src/Core/Shared.js',
-	'../../src/Core/Constant.js',
 	'../../src/Core/Utility.js',
+	'../../src/Core/Constant.js',
 	'../../src/Core/Element.js',
 	'../../src/Core/Component.js',
 	'../../src/Core/Commit.js',
@@ -38,8 +38,8 @@ const dom = [
 
 const node = [
 	'../../src/Core/Shared.js',
-	'../../src/Server/Constant.js',
 	'../../src/Server/Utility.js',
+	'../../src/Server/Constant.js',
 	'../../src/Server/String.js',
 	'../../src/Server/JSON.js',
 	'../../src/Server/Stream.js',

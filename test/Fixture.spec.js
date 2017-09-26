@@ -223,4 +223,64 @@ describe('Fixture', () => {
 			findDOMNode(h('div'))
 		})
 	})
+
+	it('should fall back to polyfills', () => {		
+		let container = document.createElement('div')
+		let stack = []
+		let file = '../dist/dio.umd.js'
+		let WeakMap = global.WeakMap
+		let Symbol = global.Symbol
+
+		delete require.cache[require.resolve(file)]
+
+		global.WeakMap = undefined
+		global.Symbol = undefined
+		
+		assert.equal(global.WeakMap, undefined)
+		assert.equal(global.Symbol, undefined)
+
+		let {render, h} = require(file)
+		let A = class {
+			componentWillUnmount() {
+				stack.push('should not push')
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		assert.doesNotThrow(() => {
+			render(h(A, 1), container)
+			render(h(A, 2), container)
+		})
+
+		assert.html(container, '2')
+		assert.lengthOf(stack, 0)
+
+		global.WeakMap = WeakMap
+		global.Symbol = Symbol
+
+		delete require.cache[require.resolve(file)]
+
+		Object.assign(global, require(file))
+
+		assert.equal(global.WeakMap, WeakMap)
+		assert.equal(global.Symbol, Symbol)
+		assert.notEqual(render, global.render)
+	})
+
+	it('should not remove children from empty List data-structure', () => {
+		let element = h('h1', 1)
+		let children = element.children
+		let child = children.next
+		let next = null
+
+		next = children.remove(child)
+		assert.lengthOf(children, 0)
+		assert.equal(next, child)
+
+		next = children.remove(next)
+		assert.lengthOf(children, 0)
+		assert.equal(next, child)
+	})
 })

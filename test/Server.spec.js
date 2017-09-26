@@ -265,10 +265,78 @@ describe('Server', () => {
 		})
 	})
 
+	it('should render element to a stream manually', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+		let element = h('div', {dangerouslySetInnerHTML: {__html: '1'}})
+		let output = ''
+		let renderer = renderToNodeStream(element)
+
+		renderer.on('end', () => {
+			assert.html(output, `<div>1</div>`)
+			done()
+		})
+
+		renderer.pipe(writable)
+	})
+
+	it('should render setHeader on response stream', (done) => {
+		let stack = []
+		let Writable = new require('stream').Writable
+		let writable = Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+		writable.setHeader = () => stack.push(1)
+		writable.getHeader = () => false
+
+		let element = h('div', {dangerouslySetInnerHTML: {__html: '1'}})
+		let output = ''
+		let renderer = renderToNodeStream(element, writable, () => {
+			assert.html(output, `<div>1</div>`)
+			assert.lengthOf(stack, 1)
+			done()
+		})
+
+		assert.instanceOf(renderer, Writable)
+	})
+
+	it('should render dangerouslySetInnerHTML to a stream', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+		let element = h('div', {dangerouslySetInnerHTML: {__html: '1'}})
+		let output = ''
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, `<div>1</div>`)
+			done()
+		})
+	})
+
 	it('should render dangerouslySetInnerHTML', () => {
 		assert.html(h('div', {
 			dangerouslySetInnerHTML: {__html: '1'}
 		}), '<div>1</div>')
+	})
+
+	it('should not render dangerouslySetInnerHTML', () => {
+		assert.html(h('div', {
+			dangerouslySetInnerHTML: {}
+		}), '<div></div>')
+
+		assert.html(h('div', {
+			dangerouslySetInnerHTML: undefined
+		}), '<div></div>')
 	})
 
 	it('should render defaultValue', () => {

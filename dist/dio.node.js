@@ -66,20 +66,6 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 	var SharedDOMObject = {target: null}
 	var SharedElementObject = {active: false, DOM: null}
 	
-	var Readable = require('stream').Readable
-	var RegExpEscape = /[<>&"']/g
-	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
-	var RegExpVendor = /^(ms|webkit|moz)/
-	
-	Object.defineProperties(Element.prototype, {
-		toJSON: {value: toJSON},
-		toString: {value: toString},
-		toStream: {value: toStream}
-	})
-	
-	exports.renderToString = renderToString
-	exports.renderToNodeStream = renderToNodeStream
-	
 	/**
 	 * @param {*} value
 	 * @return {string}
@@ -141,6 +127,20 @@ module.exports = function (exports, Element, mountComponent, commitElement, getC
 		if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
 			response.setHeader('Content-Type', 'text/html')
 	}
+	
+	var Readable = require('stream').Readable
+	var RegExpEscape = /[<>&"']/g
+	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
+	var RegExpVendor = /^(ms|webkit|moz)/
+	
+	Object.defineProperties(Element.prototype, {
+		toJSON: {value: toJSON},
+		toString: {value: toString},
+		toStream: {value: toStream}
+	})
+	
+	exports.renderToString = renderToString
+	exports.renderToNodeStream = renderToNodeStream
 	
 	/**
 	 * @return {string}
