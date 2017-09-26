@@ -62,4 +62,34 @@ describe('Event', () => {
 		refs.dispatchEvent(new Event('mousedown'))
 		assert.lengthOf(event, 2)
 	})
+
+	it('should replace event', () => {
+		let container = document.createElement('div')
+		let event = []
+		let refs = null
+		
+		render(h('div', {onClick: () => event.push(1), ref: (value) => refs = value}), container)
+		refs.dispatchEvent(new Event('click'))
+		assert.lengthOf(event, 1)
+		assert.include(event, 1)
+
+		render(h('div', {onClick: () => event.push(2), ref: (value) => refs = value}), container)
+		refs.dispatchEvent(new Event('click'))
+		assert.lengthOf(event, 2)
+		assert.include(event, 2)
+	})
+
+	it('should remove event', () => {
+		let container = document.createElement('div')
+		let event = []
+		let refs = null
+		
+		render(h('div', {onClick: () => event.push(1), ref: (value) => refs = value}), container)
+		refs.dispatchEvent(new Event('click'))
+
+		render(h('div', {ref: (value) => refs = value}), container)
+		refs.dispatchEvent(new Event('click'))
+		assert.include(event, 1)
+		assert.include(event, 1)
+	})
 })

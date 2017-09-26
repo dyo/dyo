@@ -21,6 +21,13 @@ describe('Server', () => {
 		)
 	})
 
+	it('should render an element style(string) to string', () => {
+		assert.html(
+			h('h1', {className: 'faz', style: 'margin-top:20px;'}, 'Faz'), 
+			`<h1 class="faz" style="margin-top:20px;">Faz</h1>`
+		)
+	})
+
 	it('should not render event props to string', () => {
 		assert.html(h('h1', {onClick: () => {}}, 'Faz'), '<h1>Faz</h1>')
 	})
@@ -321,6 +328,24 @@ describe('Server', () => {
 			assert.html(output, `<div>1</div>`)
 			done()
 		})
+	})
+
+	it('should render to stream through Element.toStream', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+		let renderer = h('div', 1, 2, 3).toStream('utf8')
+		let output = ''
+
+		renderer.on('end', () => {
+			assert.html(output, `<div>123</div>`)			
+			done()
+		})
+
+		renderer.pipe(writable)
 	})
 
 	it('should render dangerouslySetInnerHTML', () => {

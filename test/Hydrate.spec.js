@@ -150,4 +150,36 @@ describe('Hydrate', () => {
 		`)
 		assert.html(head, `<title>Title<meta></title>`)
 	})
+
+	it('should hydrate from the documentElement', () => {
+		let container = document.createElement('html')
+		let documentElement = document.documentElement
+		let children = [h('head', h('title', 'title')), h('body', h('div'))]
+
+		container.innerHTML = '<head><title>title</title></head><body><div></div></body>'
+
+		Object.defineProperty(document, 'documentElement', {
+		  enumerable: true,
+		  configurable: true,
+		  writable: true,
+		  value: container
+		})
+
+		hydrate(children)
+		assert.doesNotThrow(() => {
+			findDOMNode(children[0])
+			findDOMNode(children[1])
+		})
+		assert.html(container, '<head><title>title</title></head><body><div></div></body>')
+
+		render([h('head', h('title', 'title')), h('body', h('div', 'text'))])
+		assert.html(container, '<head><title>title</title></head><body><div>text</div></body>')
+
+		Object.defineProperty(document, 'documentElement', {
+		  enumerable: true,
+		  configurable: true,
+		  writable: true,
+		  value: documentElement
+		})
+	})
 })
