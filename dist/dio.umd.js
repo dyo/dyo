@@ -1791,10 +1791,8 @@
 	 * @param {Error} error
 	 */
 	function reportErrorException (error) {
-		if (error.defaultPrevented)
-			return
-	
-		console.error(error.inspect())
+		if (!error.defaultPrevented)
+			console.error(error.inspect())
 	}
 	
 	/**
