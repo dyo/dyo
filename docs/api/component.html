@@ -180,8 +180,20 @@ abstract componentWillUnmount(
 		<h1 id=componentDidCatch>componentDidCatch</h1>
 
 <pre><code>
+interface Error {
+	message: string
+	stack: string
+	errorMessage: string
+	errorStack: string
+	errorLocation: string
+	componentStack: string
+	defaultPrevented: boolean
+	preventDefault: function
+}
+
 abstract componentDidCatch(
-	error: Error
+	error: Error,
+	info: Error
 ): any
 </code></pre>
 

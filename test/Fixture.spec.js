@@ -271,4 +271,67 @@ describe('Fixture', () => {
 			done()
 		})
 	})
+
+	it('should always execute setState callback', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		class App extends Component {
+		  getInitialState() {
+		    return {
+		    	count: 0
+		    }
+		  }
+		  componentWillMount() {
+		    this.setState({count: 1}, () => {
+		      stack.push('setState')
+		    })
+
+		    this.forceUpdate(() => {
+		    	stack.push('forceUpdate')
+		    })
+		  }
+		  componentDidMount() {
+		  	this.setState({count: 3}, () => {
+		  		stack.push('didMount')
+		  	})
+		  }
+		  componentDidUpdate() {
+		    stack.push('didUpdate')
+		  }
+		  inc() {
+		  	this.setState({
+		    	count: this.state.count + 1
+		  	})
+			}
+		  dec() {
+		  	this.setState({
+		    	count: this.state.count - 1
+		  	})
+			}
+		  render() {
+		  	return h('div',
+		  		h('h2', this.state.count),
+		  		h('button', {onClick: this.inc, ref: (value) => refs = value}, 'Increment'),
+		  		h('button', {onClick: this.dec}, 'Decrement')
+		  	)
+		  }
+		}
+
+		render(App, container),
+
+		nextTick(() => {
+			assert.html(container, '<div><h2>3</h2><button>Increment</button><button>Decrement</button></div>')
+			
+			refs.dispatchEvent(new Event('click'))
+			
+			assert.html(container, '<div><h2>4</h2><button>Increment</button><button>Decrement</button></div>')
+			assert.include(stack, 'setState')
+			assert.include(stack, 'forceUpdate')
+			assert.include(stack, 'didMount')
+			assert.include(stack, 'didUpdate')
+			done()
+		})
+	})
 })

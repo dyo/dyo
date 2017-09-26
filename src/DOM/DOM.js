@@ -270,7 +270,7 @@ function findDOMNode (element) {
 		return element
 
 	if (isValidDOMEvent(element))
-		return element.target
+		return element.currentTarget
 
 	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }

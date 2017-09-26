@@ -54,7 +54,7 @@ function reportErrorException (error) {
 	if (error.defaultPrevented)
 		return
 
-	console.error(error.stack + '\n\n' + error.errorMessage)
+	console.error(error.inspect())
 }
 
 /**
@@ -76,6 +76,7 @@ function getErrorException (element, error, from) {
 
 	var componentStack = ''
 	var errorMessage = ''
+	var errorStack = error.stack + '\n\n' + errorMessage
 	var tabs = '    '
 	var host = element
 
@@ -89,11 +90,15 @@ function getErrorException (element, error, from) {
 
 	return defineProperties(error, {
 		errorLocation: getErrorDescription(from),
+		errorStack: getErrorDescription(errorStack),
 		errorMessage: getErrorDescription(errorMessage),
 		componentStack: getErrorDescription(componentStack),
 		defaultPrevented: getErrorDescription(false),
 		preventDefault: getErrorDescription(function () {
-			defineProperty(error, 'defaultPrevented', getErrorDescription(true))
+			return !!defineProperty(error, 'defaultPrevented', getErrorDescription(true))
 		}),
+		inspect: getErrorDescription(function () {
+			return errorStack
+		})
 	})
 }

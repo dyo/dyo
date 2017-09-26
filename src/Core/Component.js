@@ -193,18 +193,23 @@ function enqueueComponentUpdate (element, instance, callback, signature) {
 			enqueueComponentUpdate(instance[SymbolElement], instance, callback, signature)
 		})
 
-	if (element.work !== SharedWorkIdle)
-		return void requestAnimationFrame(function () {
-			if (element.id === SharedElementComponent)
-				enqueueComponentUpdate(element, instance, callback, signature)
-		})
+	switch (element.work) {
+		case SharedWorkMounting:
+			if (!element.active)
+				if (signature === SharedComponentStateUpdate)
+					if (instance.state = assign({}, instance.state, element.state))
+						break
+		case SharedWorkUpdating:
+			return void requestAnimationFrame(function () {
+				if (element.id === SharedElementComponent)
+					enqueueComponentUpdate(element, instance, callback, signature)
+			})
+	}
 
-	if (!element.active)
-		return
+	if (element.active)
+		updateComponent(element, element, signature)
 
-	updateComponent(element, element, signature)
-
-	if (typeof callback === 'function')
+	if (callback)
 		enqueueStateCallback(element, instance, callback)
 }
 
@@ -240,16 +245,10 @@ function enqueueStateUpdate (element, instance, state, callback) {
 		case Function:
 			return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 		default:
-			switch (element.work) {
-				case SharedWorkMounting:
-					if (!element.active)
-						return void (instance.state = assign({}, instance.state, state))
-				default:
-					element.state = state
-			}
-
-			enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
+			element.state = state			
 	}
+
+	enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
 }
 
 /**
@@ -275,7 +274,8 @@ function enqueueStatePromise (element, instance, state, callback) {
  */
 function enqueueStateCallback (element, instance, callback) {
 	try {
-		return callback.call(instance, instance.state, instance.props, instance.context)
+		if (typeof callback === 'function')
+			return callback.call(instance, instance.state, instance.props, instance.context)
 	} catch (err) {
 		invokeErrorBoundary(element, err, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
 	}
