@@ -65,8 +65,8 @@ describe('Fixture', () => {
 		let C = class {
 			render() {
 				if (updated === false) {
-				  updated = true
-				  this.forceUpdate()
+					updated = true
+					this.forceUpdate()
 				}
 				return h('div', 'child')
 			}
@@ -77,24 +77,24 @@ describe('Fixture', () => {
 			}
 			getInitialState() {
 				return {
-				  test: false
+					test: false
 				}
 			}
 			render(props, {change, test}) {
-			  if (updated2 === false) {
-			    updated2 = true
-			    this.forceUpdate()
-			  }
+				if (updated2 === false) {
+					updated2 = true
+					this.forceUpdate()
+				}
 
-			  if (change)
-			  	return h('p',
-			  		[
-				  		h('form'), 
-				  		this.state.test ? C : void 0
-				  	].filter(Boolean) 
-				  )
+				if (change)
+					return h('p',
+						[
+							h('form'), 
+							this.state.test ? C : void 0
+						].filter(Boolean) 
+					)
 
-			  return h('p', h('form', 'x'), test ? C : [])
+				return h('p', h('form', 'x'), test ? C : [])
 			}
 		}
 
@@ -109,7 +109,7 @@ describe('Fixture', () => {
 
 			setState({
 				change: true,
-			  test: true
+				test: true
 			}, () => {
 				assert.html(container, '<p><form></form><div>child</div></p>', 'handle async mutations')
 				done()
@@ -282,5 +282,55 @@ describe('Fixture', () => {
 		next = children.remove(next)
 		assert.lengthOf(children, 0)
 		assert.equal(next, child)
+	})
+
+	it('should render conditional components', (done) => {
+		let container = document.createElement('div')
+		let idx = 0
+		let msgs = ['A','B','C','D','E','F','G','H']
+
+		class Comp extends Component {                                                  
+			componentWillMount() {
+				this.innerMsg = msgs[(idx++ % 8)]
+			}
+			render() {
+				return h('div', this.innerMsg)
+			}
+		}
+
+		class GoodContainer extends Component {
+			constructor(props) {
+				super(props)
+				this.state = { alt: false }
+			}
+			componentDidMount() {
+				this.setState({ alt: true })
+			}
+			render() {
+				let alt = this.state.alt
+				
+				return (
+					h('div',
+						null,
+						alt ? null : h(Comp, {alt: alt}),
+						alt ? null : h(Comp, {alt: alt}),
+						alt ? h(Comp, {alt: alt}) : null,
+						alt ? h(Comp, {alt: alt}) : null
+					)
+				)
+			}
+		}
+
+		render(h(GoodContainer), container)
+
+		nextTick(() => {
+			assert.html(container, `
+				<div>
+					<div>C</div>
+					<div>D</div>
+				</div>
+			`)
+			done()
+		})
 	})
 })
