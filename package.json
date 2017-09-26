@@ -27,7 +27,7 @@
     "build": "node ./script/build --bundle",
     "test": "nyc mocha --require script/test/index.js",
     "test:dev": "mocha --require script/test/index.js --watch",
-    "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "nyc": {
     "temp-directory": "./coverage/.nyc_output",
@@ -39,7 +39,6 @@
   "devDependencies": {
     "chai": "^4.1.2",
     "chokidar": "^1.7.0",
-    "codecov": "^2.3.0",
     "coveralls": "^2.13.1",
     "jsdom": "^11.1.0",
     "mocha": "^3.5.3",
