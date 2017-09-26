@@ -1902,26 +1902,6 @@ function unmountComponentAtNode (target) {
 }
 
 /**
- * @param {(Component|Element|Node)} element
- * @return {Node}
- */
-function findDOMNode (element) {
-	if (!element)
-		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-
-	if (isValidElement(element[SymbolElement]))
-		return findDOMNode(element[SymbolElement])
-
-	if (element.active && isValidElement(element))
-		return getDOMNode(element)
-
-	if (isValidDOMNode(element))
-		return element
-
-	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
-}
-
-/**
  * @type {Object}
  */
 var Children = {
@@ -2002,6 +1982,14 @@ function childrenOnly (children) {
  */
 function isValidDOMNode (target) {
 	return !!(target && target.ELEMENT_NODE)
+}
+
+/**
+ * @param {Event} event
+ * @return {boolean}
+ */
+function isValidDOMEvent (event) {
+	return !!(event && event.BUBBLING_PHASE)
 }
 
 /**
@@ -2240,6 +2228,29 @@ function getDOMQuery (element, parent, previous, next) {
 		}
 
 	return node
+}
+
+/**
+ * @param {(Component|Element|Node|Event)} element
+ * @return {Node}
+ */
+function findDOMNode (element) {
+	if (!element)
+		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+
+	if (isValidElement(element[SymbolElement]))
+		return findDOMNode(element[SymbolElement])
+
+	if (element.active && isValidElement(element))
+		return getDOMNode(element)
+
+	if (isValidDOMNode(element))
+		return element
+
+	if (isValidDOMEvent(element))
+		return element.target
+
+	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }
 
 /**

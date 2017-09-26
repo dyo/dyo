@@ -71,23 +71,3 @@ function mount (element, parent, callback, signature) {
 function unmountComponentAtNode (target) {
 	return root.has(target) && !render(null, target)
 }
-
-/**
- * @param {(Component|Element|Node)} element
- * @return {Node}
- */
-function findDOMNode (element) {
-	if (!element)
-		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-
-	if (isValidElement(element[SymbolElement]))
-		return findDOMNode(element[SymbolElement])
-
-	if (element.active && isValidElement(element))
-		return getDOMNode(element)
-
-	if (isValidDOMNode(element))
-		return element
-
-	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
-}
