@@ -1113,4 +1113,29 @@ describe('Component', () => {
 			done()
 		})
 	})
+
+	it('should ensure a pending component update is resolved', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			componentDidCatch(err) {
+				err.preventDefault()
+			}
+			componentDidMount() {
+				render(h(A, 2), container)
+
+				nextTick(() => {
+					assert.html(container, '2')
+					assert.lengthOf(stack, 2)
+					done()
+				})
+			}
+			render({children}, {name}) {
+				stack.push(1)
+				return children
+			}
+		}
+
+		render(h(A, 1), container)
+	})
 })

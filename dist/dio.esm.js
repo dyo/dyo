@@ -768,7 +768,7 @@ function mountComponent (element) {
  */
 function updateComponent (element, snapshot, signature) {
 	if (element.work !== SharedWorkIdle)
-		return
+		return requestAnimationFrame(enqueuePendingUpdate(element, snapshot, signature))
 
 	element.work = SharedWorkUpdating
 
@@ -849,6 +849,17 @@ function enqueueComponentUpdate (element, instance, callback, signature) {
 
 	if (typeof callback === 'function')
 		enqueueStateCallback(element, instance, callback)
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} snapshot
+ * @param {number} signature
+ */
+function enqueuePendingUpdate (element, snapshot, signature) {
+	return function () {
+		updateComponent(element, snapshot, signature)		
+	}
 }
 
 /**
@@ -2264,7 +2275,7 @@ function createDOMText (element) {
  */
 function createDOMPortal (element) {
 	if (typeof element.type === 'string')
-		return createDOMObject(document.querySelector(element.type))
+		return createDOMObject(getDOMDocument().querySelector(element.type))
 
 	if (isValidDOMNode(element.type))
 		return createDOMObject(element.type)

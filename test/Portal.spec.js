@@ -174,4 +174,90 @@ describe('Portal', ()=>{
 			<ul>
 			</ul>`)
 	})
+
+	it('should render a portal with a string container', () => {
+		let html = document.createElement('html')
+		let documentElement = document.documentElement
+		html.innerHTML = '<head></head><body><div class="modal"></div><div class="container"></div></body>'
+		let container = html.querySelector('.container')
+
+		Object.defineProperty(document, 'documentElement', {
+		  enumerable: true,
+		  configurable: true,
+		  writable: true,
+		  value: html
+		})
+
+		render(
+			h('div', 
+				createPortal(h('li', {key: '1st'}, '1st'), '.modal'),
+				h('br')
+			), 
+		container)
+
+		assert.html(html, `
+			<head>
+			</head>
+			<body>
+				<div class="modal">
+					<li>1st</li>
+				</div>
+				<div class="container">
+					<div>
+						<br>
+					</div>
+				</div>
+			</body>
+		`)
+
+		Object.defineProperty(document, 'documentElement', {
+		  enumerable: true,
+		  configurable: true,
+		  writable: true,
+		  value: documentElement
+		})
+	})
+
+	it('should render a portal to the implicit root container', () => {
+		let html = document.createElement('html')
+		let documentElement = document.documentElement
+		html.innerHTML = '<head></head><body><div class="modal"></div><div class="container"></div></body>'
+		let container = html.querySelector('.container')
+
+		Object.defineProperty(document, 'documentElement', {
+		  enumerable: true,
+		  configurable: true,
+		  writable: true,
+		  value: html
+		})
+
+		render(
+			h('div', 
+				createPortal(h('li', {key: '1st'}, '1st')),
+				h('br')
+			), 
+		container)
+
+		assert.html(html, `
+			<head>
+			</head>
+			<body>
+				<div class="modal">
+				</div>
+				<div class="container">
+					<div>
+						<br>
+					</div>
+				</div>
+			</body>
+			<li>1st</li>
+		`)
+
+		Object.defineProperty(document, 'documentElement', {
+		  enumerable: true,
+		  configurable: true,
+		  writable: true,
+		  value: documentElement
+		})
+	})
 })

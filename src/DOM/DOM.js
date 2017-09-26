@@ -277,7 +277,7 @@ function createDOMText (element) {
  */
 function createDOMPortal (element) {
 	if (typeof element.type === 'string')
-		return createDOMObject(document.querySelector(element.type))
+		return createDOMObject(getDOMDocument().querySelector(element.type))
 
 	if (isValidDOMNode(element.type))
 		return createDOMObject(element.type)
