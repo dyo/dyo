@@ -294,4 +294,22 @@ describe('Render', () => {
 		assert.instanceOf(refs, A)
 		assert.lengthOf(stack, 2)
 	})
+
+	it('should render and update autofocus', () => {
+		let refs = null
+		
+		render([
+			h('input', {autofocus: true, ref: (value) => refs = value}),
+			h('input', {autofocus: false})
+		], container)
+
+		assert.equal(document.activeElement, refs)
+
+		render([
+			h('input', {autofocus: !true}),
+			h('input', {autofocus: !false, ref: (value) => refs = value})
+		], container)
+
+		assert.equal(document.activeElement, refs)
+	})
 })

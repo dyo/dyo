@@ -1423,15 +1423,24 @@ function commitInsert (element, sibling, parent) {
 		else
 			return
 
-	if (sibling.id === SharedElementPortal)
-		return commitInsert(element, getElementSibling(sibling, parent, SharedSiblingNext), parent)
+	switch (sibling.id) {
+		case SharedElementComponent:
+			return commitInsert(element, getElementDescription(sibling), parent)
+		case SharedElementPortal:
+			return commitInsert(element, getElementSibling(sibling, parent, SharedSiblingNext), parent)
+	}
 
-	if (element.id > SharedElementEmpty)
-		insertDOMNode(element, sibling, parent)
-	else
-		element.children.forEach(function (children) {
-			commitInsert(children, sibling, element)
-		})
+	switch (element.id) {
+		case SharedElementNode:
+		case SharedElementText:
+			return insertDOMNode(element, sibling, parent)
+		case SharedElementComponent:
+			return commitInsert(getElementDescription(element), sibling, parent)
+	}
+
+	element.children.forEach(function (children) {
+		commitInsert(children, sibling, element)
+	})
 }
 
 /**
@@ -1445,12 +1454,17 @@ function commitAppend (element, parent) {
 		else
 			return commitAppend(element, getElementParent(parent))
 
-	if (element.id > SharedElementEmpty)
-		appendDOMNode(element, parent)
-	else
-		element.children.forEach(function (children) {
-			commitAppend(children, element)
-		})
+	switch (element.id) {
+		case SharedElementNode:
+		case SharedElementText:
+			return appendDOMNode(element, parent)
+		case SharedElementComponent:
+			return commitAppend(getElementDescription(element), parent)
+	}
+
+	element.children.forEach(function (children) {
+		commitAppend(children, element)
+	})
 }
 
 /**
@@ -2087,6 +2101,9 @@ function setDOMProperties (element, name, value, xmlns) {
 			return setDOMProperties(element, 'accept-charset', value, xmlns)
 		case 'httpEquiv':
 			return setDOMProperties(element, 'http-equiv', value, xmlns)
+		case 'autofocus':
+		case 'autoFocus':
+			return getDOMNode(element)[value ? 'focus' : 'blur']()
 		case 'width':
 		case 'height':
 			if (element.type === 'img')

@@ -114,6 +114,9 @@ function setDOMProperties (element, name, value, xmlns) {
 			return setDOMProperties(element, 'accept-charset', value, xmlns)
 		case 'httpEquiv':
 			return setDOMProperties(element, 'http-equiv', value, xmlns)
+		case 'autofocus':
+		case 'autoFocus':
+			return getDOMNode(element)[value ? 'focus' : 'blur']()
 		case 'width':
 		case 'height':
 			if (element.type === 'img')

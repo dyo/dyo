@@ -166,4 +166,18 @@ describe('Fragment', () => {
 			<br>2
 		`)
 	})
+
+	it('should move a fragment', () => {
+		render([
+			h(Fragment, {key: 1}, 1),
+			h(Fragment, {key: 2}, 2),
+			h(Fragment, {key: 3}, 3)
+		], container)
+
+		assert.html(container, `
+			<br>1
+			<br>2
+			<br>3
+		`)
+	})
 })
