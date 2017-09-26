@@ -23,7 +23,5 @@ function renderToNodeStream (element, target, callback) {
 	else
 		setHeader(target)
 	
-	return commitElement(element).toStream(function () {
-		target.end(callback)
-	}).pipe(target)
+	return commitElement(element).toStream(callback).pipe(target)
 }
