@@ -29,8 +29,24 @@ function Element (id) {
  * @param {Element} element
  * @return {Element}
  */
-function createElementImmutable (element) {
-	return assign(new Element(SharedElementNode), element, SharedElementObject)
+function createElementImmutable (snapshot) {
+	var element = new Element(snapshot.id)
+
+	element.type = snapshot.type
+	element.props = snapshot.props
+	element.xmlns = snapshot.xmlns
+	element.key = snapshot.key
+	element.ref = snapshot.ref
+	element.children = snapshot.children
+
+	return element
+}
+
+/**
+ * @return {Element}
+ */
+function createElementDescription () {
+	return new Element(SharedElementIntermediate)	
 }
 
 /**
@@ -49,13 +65,15 @@ function createElementText (content, key) {
 }
 
 /**
- * @param {Object} object
+ * @param {*} key
  * @return {Element}
  */
-function createElementNode (object) {
+function createElementEmpty (key) {
 	var element = new Element(SharedElementEmpty)
 
-	element.DOM = object
+	element.type = SharedTypeEmpty
+	element.key = SharedTypeKey + key
+	element.children = ''
 
 	return element
 }
@@ -99,7 +117,7 @@ function createElementIterable (iterable) {
 function createElementBranch (element, key) {
 	switch (element.constructor) {
 		case Boolean:
-			return createElementText('', key)
+			return createElementEmpty(key)
 		case Date:
 			return createElementText(element, key)
 		case Promise:
@@ -217,7 +235,7 @@ function createElement (type, properties) {
 	switch ((element.type = type).constructor) {
 		case Function:
 			if (type.defaultProps)
-				props = getDefaultProps(element, type.defaultProps, props)
+				props = getDefaultProps(element, type, type.defaultProps, props)
 		case String:
 			break
 		case Element:
@@ -262,7 +280,7 @@ function setElementChildren (children, element, index) {
 				return setElementChildren(children, createElementBranch(element, index), index)
 		}
 	else
-		children.insert(createElementText('', index), children)
+		children.insert(createElementEmpty(index), children)
 
 	return index + 1
 }
@@ -271,8 +289,8 @@ function setElementChildren (children, element, index) {
  * @param {List} children
  */
 function setElementBoundary (children) {
-	var head = createElementText('', SharedTypeKey)
-	var tail = createElementText('', SharedTypeKey)
+	var head = createElementEmpty(SharedTypeKey)
+	var tail = createElementEmpty(SharedTypeKey)
 	
 	head.xmlns = tail.xmlns = SharedTypeText
 
@@ -282,34 +300,44 @@ function setElementBoundary (children) {
 
 /**
  * @param {Element} element
+ * @param {function} type
  * @param {(Object|function)} defaultProps
  * @param {Object} props
  */
-function getDefaultProps (element, defaultProps, props) {
+function getDefaultProps (element, type, defaultProps, props) {
 	if (typeof defaultProps !== 'function')
 		return assign({}, defaultProps, props)
 
-	defineProperty(element.type, 'defaultProps', {
-		value: getDefaultProps(element, getLifecycleCallback(element, defaultProps), props)
+	defineProperty(type, 'defaultProps', {
+		value: getDefaultProps(element, type, getLifecycleCallback(element, defaultProps), props)
 	})
 
-	return element.type.defaultProps
+	return type.defaultProps
 }
 
 /**
- * @param {(function|string)} subject
+ * @param {(function|string)} type
  * @return {string}
  */
-function getDisplayName (subject) {
-	switch (typeof subject) {
+function getDisplayName (type) {
+	switch (typeof type) {
 		case 'function':
-			return getDisplayName(subject.displayName || subject.name)
+			return getDisplayName(type.displayName || type.name)
 		case 'string':
-			if (subject)
-				return subject
+			if (type)
+				return type
 		default:
-			return (subject && subject.constructor.name) || 'anonymous'
+			return (type && type.constructor.name) || 'anonymous'
 	}
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} parent
+ * @return {Element}
+ */
+function getElementPortal (element, parent) {
+	return (setDOMNode(element, getDOMPortal(parent)), element)
 }
 
 /**
@@ -319,19 +347,19 @@ function getDisplayName (subject) {
 function getElementParent (element) {
 	if (element.id < SharedElementPortal)
 		return getElementParent(element.parent)
-	
+
 	if (element.id === SharedElementPortal)
-		return createElementNode(createDOMPortal(element))
+		return getElementPortal(createElementDescription(), element)
 	else
 		return element
 }
 
 /**
- * @param  {Element} element
+ * @param {Element} element
  * @return {Element}
  */
 function getElementChildren (element) {
-	if (element && element.id === SharedElementComponent)
+	if (element.id === SharedElementComponent)
 		return element.children
 	else
 		return element
@@ -342,7 +370,7 @@ function getElementChildren (element) {
  * @return {Element}
  */
 function getElementDescription (element) {
-	if (element && element.id === SharedElementComponent)
+	if (element.id === SharedElementComponent)
 		return getElementDescription(element.children)
 	else
 		return element
@@ -354,7 +382,7 @@ function getElementDescription (element) {
  * @return {Element} 
  */
 function getElementBoundary (element, direction) {
-	if (element.id < SharedElementEmpty)
+	if (element.id < SharedElementIntermediate)
 		return getElementBoundary(element.children[direction])
 	else
 		return element
@@ -373,11 +401,32 @@ function getElementSibling (element, parent, direction) {
 		else
 			return element[direction]
 
-	if (getElementDescription(element.host) === element)
+	if (element.host && getElementDescription(element.host) === element)
 		return getElementSibling(element.host, parent, direction)
 
-	if (parent.id < SharedElementEmpty)
+	if (parent.id < SharedElementIntermediate)
 		return getElementSibling(parent, parent.parent, direction)
 
-	return createElementNode(SharedDOMObject)
+	return createElementDescription()
+}
+
+/**
+ * @param {*} element
+ * @return {Element}
+ */
+function getElementFrom (element) {
+	if (element == null)
+		return createElementEmpty(SharedTypeKey)
+	
+	switch (element.constructor) {
+		case Element:
+			return element
+		case Array:
+			return createElementFragment(element)
+		case String:
+		case Number:
+			return createElementText(element, SharedTypeKey)
+		default:
+			return createElementBranch(element, SharedTypeKey)
+	}
 }

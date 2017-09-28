@@ -8,9 +8,9 @@ function render (element, target, callback) {
 		return render(element, getDOMDocument(), callback)
 
 	if (root.has(target))
-		update(root.get(target), commitElement(element), callback)
+		update(root.get(target), getElementFrom(element), callback)
 	else
-		mount(element, target, callback, SharedMountCommit)
+		mount(element, null, target, callback, SharedMountCommit)
 }
 
 /**
@@ -22,7 +22,7 @@ function hydrate (element, target, callback) {
 	if (!target)
 		return hydrate(element, getDOMDocument(), callback)
 	
-	mount(element, target, callback, SharedMountQuery)
+	mount(element, null, target, callback, SharedMountQuery)
 }
 
 /**
@@ -39,21 +39,22 @@ function update (element, snapshot, callback) {
 
 /**
  * @param {Element} element
- * @param {(Element|Node)} parent
+ * @param {Element?} parent
+ * @param {Node} target
  * @param {function} callback
  * @param {number} signature
  */
-function mount (element, parent, callback, signature) {
+function mount (element, parent, target, callback, signature) {
+	if (parent === null)
+		return mount(element, createElementDescription(), target, callback, signature)
+
 	if (!isValidElement(element))
-		return mount(commitElement(element), parent, callback, signature)
+		return mount(getElementFrom(element), parent, target, callback, signature)
 
-	if (!isValidElement(parent))
-		return mount(element, createElementNode(createDOMObject(parent)), callback, signature)
-
-	if (!isValidDOMNode(getDOMNode(parent)))
+	if (!isValidDOMNode(target))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
 
-	root.set(getDOMNode(parent), element)
+	root.set((setDOMNode(parent, target), target), element)
 
 	if (signature === SharedMountCommit)
 		setDOMContent(parent)
@@ -70,4 +71,18 @@ function mount (element, parent, callback, signature) {
  */
 function unmountComponentAtNode (target) {
 	return root.has(target) && !render(null, target)
+}
+
+/**
+ * @param {(string|function|Object)} renderer
+ */
+function DOM (renderer) {
+	if (typeof renderer === 'function')
+		return factory(window, function () {
+			return renderer
+		}, '')
+	else
+		return DOM(function () {
+			return renderer
+		})
 }

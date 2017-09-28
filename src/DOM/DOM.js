@@ -1,25 +1,9 @@
 /**
+ * @param {Element} eleemnt
  * @param {Node} target
- * @param {boolean}
  */
-function isValidDOMNode (target) {
-	return !!(target && target.ELEMENT_NODE)
-}
-
-/**
- * @param {Event} event
- * @return {boolean}
- */
-function isValidDOMEvent (event) {
-	return !!(event && event.BUBBLING_PHASE)
-}
-
-/**
- * @param {(EventListener|Element)} element
- * @param {string} type
- */
-function setDOMEvent (element, type) {
-	getDOMNode(element).addEventListener(type, element, false)
+function setDOMNode (element, target) {
+	element.DOM = {target: target}
 }
 
 /**
@@ -35,6 +19,14 @@ function setDOMContent (element) {
  */
 function setDOMValue (element, value) {
 	getDOMNode(element).nodeValue = value
+}
+
+/**
+ * @param {(EventListener|Element)} element
+ * @param {string} type
+ */
+function setDOMEvent (element, type) {
+	getDOMNode(element).addEventListener(type, element, false)
 }
 
 /**
@@ -152,14 +144,6 @@ function getDOMDocument () {
 
 /**
  * @param {Element} element
- * @return {Node}
- */
-function getDOMNode (element) {
-	return element.DOM.target
-}
-
-/**
- * @param {Element} element
  * @param {string} xmlns
  */
 function getDOMType (element, xmlns) {
@@ -190,13 +174,21 @@ function getDOMProps (element) {
 
 /**
  * @param {Element} element
+ * @return {Node}
+ */
+function getDOMNode (element) {
+	return element.DOM.target
+}
+
+/**
+ * @param {Element} element
  * @param {Element} parent
  * @param {Element} previous
  * @param {Element} next
  */
 function getDOMQuery (element, parent, previous, next) {
 	var id = element.id
-	var type = element.type.toLowerCase()
+	var type = id > SharedElementNode ? '#text' : element.type.toLowerCase()
 	var xmlns = element.xmlns
 	var props = element.props
 	var children = element.children
@@ -207,8 +199,8 @@ function getDOMQuery (element, parent, previous, next) {
 
 	while (target) {
 		if (target.nodeName.toLowerCase() === type) {
-			if (id === SharedElementText) {
-				if (next.id === SharedElementText)
+			if (id > SharedElementNode) {
+				if (next.id > SharedElementNode)
 					target.splitText(length)
 
 				if (target.nodeValue !== children)
@@ -218,21 +210,21 @@ function getDOMQuery (element, parent, previous, next) {
 			}
 
 			if (parent.id === SharedElementPortal)
-				createDOMPortal(parent).target.appendChild(target)
+				getDOMPortal(parent).appendChild(target)
 
-			node = createDOMObject(target)			
-			type = ''
+			node = target
+			type = null
 
 			if (!(target = target.nextSibling) || next.type)
 				break
 		}
 
-		if (id === SharedElementText && (length === 0 || xmlns === '#text')) {
-			if (target.parentNode.insertBefore((node = createDOMText(element)).target, target)) {				
+		if (id > SharedElementNode && (length === 0 || xmlns === type)) {
+			if (target.parentNode.insertBefore((node = createDOMText(element)), target)) {				
 				if (next.type)
 					break
 				else
-					type = ''
+					type = null
 			}
 		}
 
@@ -240,13 +232,13 @@ function getDOMQuery (element, parent, previous, next) {
 		sibling.parentNode.removeChild(sibling)
 	}
 
-	if (node && (target = node.target).nodeName.toLowerCase() !== '#text')
-		for (var attributes = target.attributes, i = attributes.length - 1; i >= 0; --i) {
+	if (node && !node.splitText)
+		for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i) {
 			var attr = attributes[i]
 			var name = attr.name
 
 			if (attr.value !== props[name] + '')
-				target.removeAttribute(name)
+				node.removeAttribute(name)
 		}
 
 	return node
@@ -260,8 +252,8 @@ function findDOMNode (element) {
 	if (!element)
 		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
 
-	if (isValidElement(element[SymbolElement]))
-		return findDOMNode(element[SymbolElement])
+	if (isValidElement(getComponentElement(element)))
+		return findDOMNode(getComponentElement(element))
 
 	if (element.active && isValidElement(element))
 		return getDOMNode(element)
@@ -277,43 +269,18 @@ function findDOMNode (element) {
 
 /**
  * @param {Node} target
- * @param {Object}
+ * @param {boolean}
  */
-function createDOMObject (target) {
-	return {target: target}
+function isValidDOMNode (target) {
+	return !!(target && target.ELEMENT_NODE)
 }
 
 /**
- * @param {Element} element
- * @return {Object}
+ * @param {Event} event
+ * @return {boolean}
  */
-function createDOMElement (element) {
-	if (element.xmlns)
-		return createDOMObject(document.createElementNS(element.xmlns, element.type))
-	else
-		return createDOMObject(document.createElement(element.type))
-}
-
-/**
- * @param {Element} element
- * @return {Object}
- */
-function createDOMText (element) {
-	return createDOMObject(document.createTextNode(element.children))
-}
-
-/**
- * @param {Element} element
- * @return {Object}
- */
-function createDOMPortal (element) {
-	if (typeof element.type === 'string')
-		return createDOMObject(getDOMDocument().querySelector(element.type))
-
-	if (isValidDOMNode(element.type))
-		return createDOMObject(element.type)
-
-	return createDOMObject(getDOMDocument())
+function isValidDOMEvent (event) {
+	return !!(event && event.BUBBLING_PHASE)
 }
 
 /**
@@ -339,4 +306,118 @@ function insertDOMNode (element, sibling, parent) {
  */
 function appendDOMNode (element, parent) {
 	getDOMNode(parent).appendChild(getDOMNode(element))
+}
+
+/**
+ * @param {Element} element
+ * @return {Object}
+ */
+function createDOMElement (element) {
+	if (element.xmlns)
+		return document.createElementNS(element.xmlns, element.type)
+	else
+		return document.createElement(element.type)
+}
+
+/**
+ * @param {Element} element
+ * @return {Object}
+ */
+function createDOMText (element) {
+	return document.createTextNode(element.children)
+}
+
+/**
+ * @param {Element} element
+ * @return {Object}
+ */
+function getDOMPortal (element) {
+	if (typeof element.type === 'string')
+		return getDOMDocument().querySelector(element.type)
+
+	if (isValidDOMNode(element.type))
+		return element.type
+
+	return getDOMDocument()
+}
+
+/**
+ * @param {Object} renderer
+ */
+function createDOMClient (renderer) {
+	for (var name in renderer) {
+		var value = renderer[name]
+
+		switch (name) {
+			case 'setDOMNode':
+				setDOMNode = value
+				break
+			case 'setDOMContent':
+				setDOMContent = value
+				break
+			case 'setDOMValue':
+				setDOMValue = value
+				break
+			case 'setDOMEvent':
+				setDOMEvent = value
+				break
+			case 'setDOMStyle':
+				setDOMStyle = value
+				break
+			case 'setDOMProperty':
+				setDOMProperty = value
+				break
+			case 'setDOMProperties':
+				setDOMProperties = value
+				break
+			case 'getDOMDocument':
+				getDOMDocument = value
+				break
+			case 'getDOMType':
+				getDOMType = value
+				break
+			case 'getDOMProps':
+				getDOMProps = value
+				break
+			case 'getDOMNode':
+				getDOMNode = value
+				break
+			case 'getDOMPortal':
+				getDOMPortal = value
+				break
+			case 'getDOMQuery':
+				getDOMQuery = value
+				break
+			case 'createDOMElement':
+				createDOMElement = value
+				break
+			case 'createDOMText':
+				createDOMText = value
+				break
+			case 'removeDOMNode':
+				removeDOMNode = value
+				break
+			case 'insertDOMNode':
+				insertDOMNode = value
+				break
+			case 'findDOMNode':
+				findDOMNode = value
+				break
+			case 'isValidDOMNode':
+				isValidDOMNode = value
+				break
+			case 'isValidDOMEvent':
+				isValidDOMEvent = value
+				break
+			case 'removeDOMNode':
+				removeDOMNode = value
+				break
+			case 'insertDOMNode':
+				insertDOMNode = value
+				break
+			case 'appendDOMNode':
+				appendDOMNode = value
+				break
+		}
+	}
 }

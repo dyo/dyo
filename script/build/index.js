@@ -7,19 +7,22 @@ const UglifyES = require("uglify-es")
 const package = require('../../package.json')
 
 let filesize = NaN
+let search = "'{%module%}'"
 
 const options = {compress: {}}
 const strict = `'use strict'`
 const filenames = {
-	umd: 'dio.umd.js',
-	esm: 'dio.esm.js',
-	min: 'dio.min.js',
-	node: 'dio.node.js',
-	map: 'dio.js.map'
+	umd: 'umd.js',
+	esm: 'esm.js',
+	node: 'node.js'
 }
 
+const shared = [
+'../../src/Core/Shared.js'
+]
+
 const core = [
-	'../../src/Core/Shared.js',
+	...shared,
 	'../../src/Core/Utility.js',
 	'../../src/Core/Constant.js',
 	'../../src/Core/Element.js',
@@ -28,22 +31,22 @@ const core = [
 	'../../src/Core/Reconcile.js',
 	'../../src/Core/Event.js',
 	'../../src/Core/Error.js',
-	'../../src/Core/Render.js',
-	'../../src/Core/Children.js'
-]
-
-const dom = [
-	'../../src/DOM/DOM.js',
+	'../../src/Core/Children.js',
+	'../../src/Core/Render.js'
 ]
 
 const node = [
-	'../../src/Core/Shared.js',
+	...shared,
 	'../../src/Server/Utility.js',
 	'../../src/Server/Constant.js',
 	'../../src/Server/String.js',
 	'../../src/Server/JSON.js',
 	'../../src/Server/Stream.js',
 	'../../src/Server/Render.js'
+]
+
+const dom = [
+	'../../src/DOM/DOM.js',
 ]
 
 const umd = [
@@ -56,131 +59,131 @@ const esm = [
 	...dom
 ]
 
-const getExports = (module) => {
-	switch (module) {
-		case 'umd':
-			return template.export + template.node
-		case 'esm':
-			return template.module
-	}
-}
-
 /**
  * @return {string}
  */
 const transform = (str) => {
-	return str.replace(/.*\.h[\s=].*/g, '')
-						.replace(/(export)s\.(\w+).*/g, '\t$2,')
+	return str.replace(/,?\s*.*h\b.*:.*/g, '')
+						.replace(/\s*(\w+):\s+\S+,?/gm, '$1,\n')
 						.trim()
+						.replace(/,$/, '')
 }
 
-const api = `
-exports.version = version
-exports.render = render
-exports.hydrate = hydrate
-exports.Component = Component
-exports.PureComponent = PureComponent
-exports.Children = Children
-exports.findDOMNode = findDOMNode
-exports.unmountComponentAtNode = unmountComponentAtNode
-exports.cloneElement = cloneElement
-exports.isValidElement = isValidElement
-exports.createPortal = createPortal
-exports.createElement = createElement
-exports.h = window.h = createElement
+const pad = (content, tabs) => {
+	if (tabs > 1)
+		return content.replace(/^/gm, '\t\t')
+	else
+		return content.replace(/^/gm, '\t')
+}
+
+var factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
+var exports = `
+var exports = {
+version: version,
+render: render,
+hydrate: hydrate,
+Component: Component,
+PureComponent: PureComponent,
+Children: Children,
+findDOMNode: findDOMNode,
+unmountComponentAtNode: unmountComponentAtNode,
+cloneElement: cloneElement,
+isValidElement: isValidElement,
+createPortal: createPortal,
+createElement: createElement,
+DOM: DOM,
+h: window.h = createElement
+}
 `
 
-const imports = 'exports, Element, mountComponent, commitElement, getComponentElement, invokeErrorBoundary'
-const template = {
-	node: `\nrequire && require('./dio.node.js')(${imports})`,
-	export: api,
-	module: `
-var exports = {}
-${api}
-export default exports
-export {
-	${transform(api)}
-	createElement as h
-}`
+const platform = `
+Element,
+mountComponentElement,
+unmountComponentElement,
+getComponentElement,
+getComponentChildren,
+invokeErrorBoundary,
+getElementFrom,
+getElementDescription`
+
+const template = () => {
+	return `\
+if (require)
+createDOMClient.call(window, require(define).call(
+exports, ${(platform)}
+),
+factory
+)
+`
 }
+
+const parse = (head, body, tail, factory) => {
+	return factory.replace(
+		search,
+		'\n'+
+		pad(
+			head+
+			format(body)+
+			'\n'+
+			exports+
+			'\n'+
+			template()+
+			'\nreturn exports'
+		)
+	)
+}
+
 
 const builder = (file) => {
 	return fs.readFileSync(path.join(__dirname, file), 'utf8');
-}
-
-const parse = (v) => {
-	switch (/\w as \w/.test(v)) {
-		case true:
-			return parse(v.substring(v.lastIndexOf(' as ')+4).trim())
-			.replace(/\w*$/, v.substring(0, v.indexOf(' as ')).trim())
-		case false:
-			return '\n\t'+ v.trim() + ': ' + v.trim()
-	}
 }
 
 const format = (content) => content.trim()
 	.replace(/\s*import\s+[\S\s]+?['`"][\S\s]+?\.js['"`]\s*/g, '\n')
 	.replace(/(^\s*)export\s+/gm, '$1').replace(/\n\n\n+/g, '\n\n')
 
-const pad = (content) => content.replace(/^/gm, '\t')
-
-const wrapper = (open, module, content, close, version) => {
+const wrapper = (module, content, version, factory) => {
+	var head = "var version = '"+version+"'\n\n"
+	
 	switch (module) {
 		case 'node': {
 			return {
-				open: open,
-				body: `module.exports = function (${imports}) {\n${pad('\n'+strict+'\n\n'+format(content))}\n}`,
-				close: ''
+				head: '',
+				body: 'module.exports = function ('+(platform)+'\n) {'+strict+
+					('\n\n'+format(content))+'\n\n}',
+				tail: ''
 			}
 		}
 		case 'esm':
 			return {
-				open: (
-					open+
-					"var version = '"+version+"'\n\n"
-				),
-				body: format(content),
-				close: ''
+				head: '',
+				body: parse(head, content, '', factory),
+				tail: 'export default dio\n'+
+							exports
+								.replace(/[\S\s]*\{|\s*\}|,|\S\s*h:[\S\s]*|window.*h.*=\s*/g, '')
+								.replace(/(\w+):\s*(\w+)/g, 'export const $1 = dio.$2 ')
+								.trim()
 			}
 		default:
 			return {
-				open: (
-					open+
-					fs.readFileSync(path.join(__dirname, 'UMD.js'), 
-					'utf8').trim() + '\n\n' + 
-					"\tvar version = '"+version+"'\n\n"
-				),
-				body: pad(format(content)),
-				close: close
+				head: '',
+				body: parse(head, content, '', factory),
+				tail: ''
 			}
 	}
 }
 
-const comment = (version, license) => `
-/*! DIO ${version} @license ${license} */\n
-`
+const comment = (version, license) => ''
 
 const bundle = (module, files, location) => {
 	let version = package.version
-	let license = package.license
-	let open = comment(version, license)
-	let close = '\n}))'
-	let public = ''
 	let filename = filenames[module]
 	let filepath = location+filename
+	var factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
 
-	switch (module) {
-		case 'umd':
-			public += pad(getExports(module).trim())
-			break
-		case 'esm':
-			public += getExports(module).trim()
-			break
-	}
+	let content = wrapper(module, files.map(builder).join('\n'), version, factory)
+			content = (content.head + content.body + '\n\n' + content.tail).trim()+'\n'
 
-	let content = wrapper(open, module, files.map(builder).join('\n'), close, version)
-			content = (content.open + content.body + '\n\n' + public + content.close).trim()+'\n'
-	
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 
 	switch (module) {
@@ -272,7 +275,7 @@ const watcher = (file) => {
 }
 
 const watch = chokidar.watch([
-	'./scripts/build/UMD.js',
+	'./script/build/UMD.js',
 	'./src/', 
 	'./package.json',
 	], {ignored: /[\/\\]\./})

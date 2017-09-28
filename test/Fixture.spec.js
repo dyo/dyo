@@ -165,7 +165,7 @@ describe('Fixture', () => {
 	it('should fall back to polyfills', () => {		
 		let container = document.createElement('div')
 		let stack = []
-		let file = '../dist/dio.umd.js'
+		let file = '../dist/umd.js'
 		let WeakMap = global.WeakMap
 		let Symbol = global.Symbol
 

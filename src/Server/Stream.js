@@ -14,7 +14,6 @@ function toStream (callback) {
 			break
 		default:
 			readable.setEncoding('utf8')
-
 	}
 
 	return readable
@@ -60,9 +59,9 @@ function pendingStreamElement (element, host, stack, readable, id, signature) {
 		if (signature !== SharedErrorActive)
 			children = invokeErrorBoundary(element, value, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
 		else if (id !== SharedElementComponent)
-			children = commitElement(value)
+			children = getElementFrom(value)
 		else
-			children = getComponentElement(element, (element.instance.state = value || {}, element.instance))
+			children = getComponentChildren(element, (element.instance.state = value || {}, element.instance))
 
 		readStreamElement(children, host, stack, readable)
 	}
@@ -80,7 +79,7 @@ function readStreamElement (element, host, stack, readable) {
 
 	switch (element.host = host, element.id) {
 		case SharedElementComponent:
-			children = mountComponent(readable.host = element)
+			children = mountComponentElement(readable.host = element)
 
 			if (!element.state || element.state.constructor !== Promise)
 				return readStreamElement(children, element, stack, readable)
@@ -93,6 +92,7 @@ function readStreamElement (element, host, stack, readable) {
 				.then(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
 				.catch(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 		case SharedElementText:
+		case SharedElementEmpty:
 			return writeStreamElement(children, readable)
 		case SharedElementNode:
 			if (element.DOM)
@@ -100,7 +100,7 @@ function readStreamElement (element, host, stack, readable) {
 
 			output += '<' + element.type + getStringProps(element, element.props) + '>'
 			
-			if (getElementType(element.type) === SharedElementEmpty)
+			if (getElementType(element.type))
 				return writeStreamElement(output, readable)
 			
 			if (element.DOM)

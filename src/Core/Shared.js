@@ -1,10 +1,11 @@
 var SharedElementPromise = -3
 var SharedElementFragment = -2
 var SharedElementPortal = -1
-var SharedElementEmpty = 0
+var SharedElementIntermediate = 0
 var SharedElementComponent = 1
 var SharedElementNode = 2
 var SharedElementText = 3
+var SharedElementEmpty = 4
 
 var SharedReferenceRemove = -1
 var SharedReferenceAssign = 0
@@ -43,6 +44,7 @@ var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
 
 var SharedTypeKey = '.'
+var SharedTypeEmpty = '#empty'
 var SharedTypeText = '#text'
 var SharedTypeFragment = '#fragment'
 
@@ -56,6 +58,3 @@ var SharedComponentWillUnmount = 'componentWillUnmount'
 var SharedComponentDidCatch = 'componentDidCatch'
 var SharedGetChildContext = 'getChildContext'
 var SharedGetInitialState = 'getInitialState'
-
-var SharedDOMObject = {target: null}
-var SharedElementObject = {active: false, DOM: null}

@@ -23,4 +23,4 @@ let nextTick = (callback, tick) => {
 
 Object.assign(assert, {html, json})
 Object.assign(global, {assert, expect, should, document, Event, nextTick})
-Object.assign(global, require('../../dist/dio.umd.js'))
+Object.assign(global, require('../../dist/umd.js'))

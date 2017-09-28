@@ -268,6 +268,36 @@ describe('Component', () => {
 		assert.html(container, '1')
 	})
 
+	it('should always set an object as context', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			getChildContext() {
+				
+			}
+			render() {
+				return class {
+					render() {
+						return class {
+							render(props, state, {children}) {
+								return class {
+									render(props, state, context) {
+										stack.push(context != null)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		render(h('div', A), container)
+
+		assert.html(container, '<div></div>')
+		assert.include(stack, true)
+	})
+
 	it('should update Component', () => {
 		let container = document.createElement('div')
 		let A = class {
@@ -1137,5 +1167,31 @@ describe('Component', () => {
 		}
 
 		render(h(A, 1), container)
+	})
+
+	it('should should remove a component from a list of host elements', () => {
+		let container = document.createElement('div')
+		let A = () => h('h1', 'A')
+
+		render(
+			h('div',
+				h(A, {key: 'A'}),
+				h('div', {key: 'B'}, 'B')
+			),
+			container
+		)
+
+		render(
+			h('div', 
+				h('div', {key: 'B'}, 'B')
+			),
+			container
+		)
+
+		assert.html(container, `
+			<div>
+				<div>B</div>
+			</div>
+		`)
 	})
 })

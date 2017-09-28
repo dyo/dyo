@@ -10,6 +10,6 @@ var defineProperties = Object.defineProperties
 var hasOwnProperty = Object.hasOwnProperty
 var isArray = Array.isArray
 
-var SymbolIterator = Symbol.iterator || Symbol('Iterator')
+var SymbolIterator = Symbol.iterator || '@@iterator'
 var SymbolElement = Symbol('Element')
 var SymbolComponent = Symbol('Component')

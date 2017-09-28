@@ -46,9 +46,9 @@ function getElementType (type) {
 		case 'input':
 		case 'hr':
 		case '!doctype':
-			return SharedElementEmpty
+			return true
 		default:
-			return SharedElementNode
+			return false
 	}
 }
 

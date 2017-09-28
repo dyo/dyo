@@ -55,20 +55,20 @@ function shouldComponentUpdate (props, state) {
  * @param {function?} callback
  */
 function setState (state, callback) {
-	enqueueStateUpdate(this[SymbolElement], this, state, callback)
+	enqueueStateUpdate(getComponentElement(this), this, state, callback)
 }
 
 /**
  * @param {function} callback
  */
 function forceUpdate (callback) {
-	enqueueComponentUpdate(this[SymbolElement], this, callback, SharedComponentForceUpdate)
+	enqueueComponentUpdate(getComponentElement(this), this, callback, SharedComponentForceUpdate)
 }
 
 /**
  * @param {Element} element
  */
-function mountComponent (element) {
+function mountComponentElement (element) {
 	var owner = element.type
 	var context = element.context || {}
 	var prototype = owner.prototype
@@ -108,9 +108,9 @@ function mountComponent (element) {
 		getLifecycleMount(element, SharedComponentWillMount)
 
 	if (children === undefined)
-		children = getComponentElement(element, instance)
+		children = getComponentChildren(element, instance)
 	else
-		children = commitElement(null)
+		children = getElementFrom(null)
 
 	if (owner[SharedGetChildContext])
 		element.context = getComponentContext(element)
@@ -162,7 +162,7 @@ function updateComponent (element, snapshot, signature) {
 	if (signature === SharedComponentStateUpdate)
 		instance.state = nextState
 
-	reconcileElement(element.children, getComponentElement(element, instance))
+	reconcileElement(element.children, getComponentChildren(element, instance))
 
 	if (owner[SharedComponentDidUpdate])
 		getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
@@ -176,7 +176,7 @@ function updateComponent (element, snapshot, signature) {
 /**
  * @param {Element} element
  */
-function unmountComponent (element) {
+function unmountComponentElement (element) {
 	if ((element.state = null, element.owner[SharedComponentWillUnmount]))
 		element.state = getLifecycleMount(element, SharedComponentWillUnmount)
 }
@@ -301,12 +301,20 @@ function getComponentInstance (element, owner) {
  * @param {Component} instance
  * @return {Element}
  */
-function getComponentElement (element, instance) {
+function getComponentChildren (element, instance) {
 	try {
-		return commitElement(instance.render(instance.props, instance.state, element.context))
+		return getElementFrom(instance.render(instance.props, instance.state, element.context))
 	} catch (err) {
-		return commitElement(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
+		return getElementFrom(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
 	}
+}
+
+/**
+ * @param {Component} instance
+ * @return {Element?}
+ */
+function getComponentElement (instance) {
+	return instance[SymbolElement]
 }
 
 /**
