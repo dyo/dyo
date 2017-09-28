@@ -16,4 +16,4 @@ else
 	temp = factory(global)
 
 return temp
-})(typeof window !== 'undefined' ? window : global)
+})(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))

@@ -248,6 +248,7 @@ function factory (window, require, define) {
 	var WeakMap = window.WeakMap || WeakHash
 	var Promise = window.Promise || noop
 	
+	var console = window.console || {error: noop}
 	var setTimeout = window.setTimeout || function (callback) { Promise.resolve().then(callback) }
 	var requestAnimationFrame = window.requestAnimationFrame || function (callback) { setTimeout(callback, 16) }
 	var defineProperty = Object.defineProperty
@@ -2513,7 +2514,7 @@ else
 	temp = factory(global)
 
 return temp
-})(typeof window !== 'undefined' ? window : global)
+})(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))
 
 export default dio
 export const version = dio.version 
