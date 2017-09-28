@@ -8,7 +8,7 @@ function render (element, target, callback) {
 		return render(element, getDOMDocument(), callback)
 
 	if (root.has(target))
-		update(root.get(target), getElementFrom(element), callback)
+		update(root.get(target), getElementDefinition(element), callback)
 	else
 		mount(element, null, target, callback, SharedMountCommit)
 }
@@ -49,7 +49,7 @@ function mount (element, parent, target, callback, signature) {
 		return mount(element, createElementDescription(), target, callback, signature)
 
 	if (!isValidElement(element))
-		return mount(getElementFrom(element), parent, target, callback, signature)
+		return mount(getElementDefinition(element), parent, target, callback, signature)
 
 	if (!isValidDOMNode(target))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')

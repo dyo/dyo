@@ -28,7 +28,7 @@ function getTextEncode (character) {
 /**
  * @param {string}
  */
-function getElementType (type) {
+function voidElementType (type) {
 	switch ((type+'').toLowerCase()) {
 		case 'area':
 		case 'base':
@@ -55,7 +55,7 @@ function getElementType (type) {
 /**
  * @param {Response} response
  */
-function setHeader (response) {
+function setResponseHeader (response) {
 	if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
 		response.setHeader('Content-Type', 'text/html')
 }

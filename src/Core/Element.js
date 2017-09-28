@@ -333,15 +333,6 @@ function getDisplayName (type) {
 
 /**
  * @param {Element} element
- * @param {Element} parent
- * @return {Element}
- */
-function getElementPortal (element, parent) {
-	return (setDOMNode(element, getDOMPortal(parent)), element)
-}
-
-/**
- * @param {Element} element
  * @param {Element} 
  */
 function getElementParent (element) {
@@ -350,40 +341,6 @@ function getElementParent (element) {
 
 	if (element.id === SharedElementPortal)
 		return getElementPortal(createElementDescription(), element)
-	else
-		return element
-}
-
-/**
- * @param {Element} element
- * @return {Element}
- */
-function getElementChildren (element) {
-	if (element.id === SharedElementComponent)
-		return element.children
-	else
-		return element
-}
-
-/**
- * @param {Element} element
- * @return {Element}
- */
-function getElementDescription (element) {
-	if (element.id === SharedElementComponent)
-		return getElementDescription(element.children)
-	else
-		return element
-}
-
-/**
- * @param {Element} element
- * @param {string} direction
- * @return {Element} 
- */
-function getElementBoundary (element, direction) {
-	if (element.id < SharedElementIntermediate)
-		return getElementBoundary(element.children[direction])
 	else
 		return element
 }
@@ -411,10 +368,44 @@ function getElementSibling (element, parent, direction) {
 }
 
 /**
+ * @param {Element} element
+ * @return {Element}
+ */
+function getElementChildren (element) {
+	if (element.id === SharedElementComponent)
+		return element.children
+	else
+		return element
+}
+
+/**
+ * @param {Element} element
+ * @param {string} direction
+ * @return {Element} 
+ */
+function getElementBoundary (element, direction) {
+	if (element.id < SharedElementIntermediate)
+		return getElementBoundary(element.children[direction])
+	else
+		return element
+}
+
+/**
+ * @param {Element} element
+ * @return {Element}
+ */
+function getElementDescription (element) {
+	if (element.id === SharedElementComponent)
+		return getElementDescription(element.children)
+	else
+		return element
+}
+
+/**
  * @param {*} element
  * @return {Element}
  */
-function getElementFrom (element) {
+function getElementDefinition (element) {
 	if (element == null)
 		return createElementEmpty(SharedTypeKey)
 	
@@ -429,4 +420,13 @@ function getElementFrom (element) {
 		default:
 			return createElementBranch(element, SharedTypeKey)
 	}
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} parent
+ * @return {Element}
+ */
+function getElementPortal (element, parent) {
+	return (setDOMNode(element, getDOMPortal(parent)), element)
 }

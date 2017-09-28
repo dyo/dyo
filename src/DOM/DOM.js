@@ -331,6 +331,14 @@ function createDOMText (element) {
  * @param {Element} element
  * @return {Object}
  */
+function createDOMEmpty (element) {
+	return document.createTextNode('')
+}
+
+/**
+ * @param {Element} element
+ * @return {Object}
+ */
 function getDOMPortal (element) {
 	if (typeof element.type === 'string')
 		return getDOMDocument().querySelector(element.type)
@@ -393,6 +401,9 @@ function createDOMClient (renderer) {
 				break
 			case 'createDOMText':
 				createDOMText = value
+				break
+			case 'createDOMEmpty':
+				createDOMEmpty = value
 				break
 			case 'removeDOMNode':
 				removeDOMNode = value

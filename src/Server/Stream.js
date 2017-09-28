@@ -59,7 +59,7 @@ function pendingStreamElement (element, host, stack, readable, id, signature) {
 		if (signature !== SharedErrorActive)
 			children = invokeErrorBoundary(element, value, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
 		else if (id !== SharedElementComponent)
-			children = getElementFrom(value)
+			children = getElementDefinition(value)
 		else
 			children = getComponentChildren(element, (element.instance.state = value || {}, element.instance))
 
@@ -100,7 +100,7 @@ function readStreamElement (element, host, stack, readable) {
 
 			output += '<' + element.type + getStringProps(element, element.props) + '>'
 			
-			if (getElementType(element.type))
+			if (voidElementType(element.type))
 				return writeStreamElement(output, readable)
 			
 			if (element.DOM)

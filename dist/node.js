@@ -1,13 +1,6 @@
-module.exports = function (
-Element,
-mountComponentElement,
-unmountComponentElement,
-getComponentElement,
-getComponentChildren,
-invokeErrorBoundary,
-getElementFrom,
-getElementDescription
-) {'use strict'
+/*! DIO 8.0.0 @license MIT */
+
+module.exports = function (Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription) {'use strict'/* eslint-disable */
 
 var SharedElementPromise = -3
 var SharedElementFragment = -2
@@ -100,7 +93,7 @@ function getTextEncode (character) {
 /**
  * @param {string}
  */
-function getElementType (type) {
+function voidElementType (type) {
 	switch ((type+'').toLowerCase()) {
 		case 'area':
 		case 'base':
@@ -127,7 +120,7 @@ function getElementType (type) {
 /**
  * @param {Response} response
  */
-function setHeader (response) {
+function setResponseHeader (response) {
 	if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
 		response.setHeader('Content-Type', 'text/html')
 }
@@ -161,7 +154,7 @@ function toString () {
 function getStringElement (element, host) {
 	switch (element.host = host, element.id) {
 		case SharedElementText:
-		case SharedElementIntermediate:
+		case SharedElementEmpty:
 			return getTextEscape(element.children)
 		case SharedElementComponent:
 			return getStringElement(mountComponentElement(element), element)
@@ -172,7 +165,7 @@ function getStringElement (element, host) {
 	var length = children.length
 	var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
 	
-	if (getElementType(type))
+	if (voidElementType(type))
 		return output
 
 	if (!element.DOM)
@@ -353,7 +346,7 @@ function pendingStreamElement (element, host, stack, readable, id, signature) {
 		if (signature !== SharedErrorActive)
 			children = invokeErrorBoundary(element, value, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
 		else if (id !== SharedElementComponent)
-			children = getElementFrom(value)
+			children = getElementDefinition(value)
 		else
 			children = getComponentChildren(element, (element.instance.state = value || {}, element.instance))
 
@@ -394,7 +387,7 @@ function readStreamElement (element, host, stack, readable) {
 
 			output += '<' + element.type + getStringProps(element, element.props) + '>'
 			
-			if (getElementType(element.type))
+			if (voidElementType(element.type))
 				return writeStreamElement(output, readable)
 			
 			if (element.DOM)
@@ -430,11 +423,11 @@ function writeStreamElement (output, readable) {
  */
 function renderToString (element, target, callback) {
 	if (!target || !target.writable)
-		return getElementFrom(element).toString()
+		return getElementDefinition(element).toString()
 	else
-		setHeader(target)
+		setResponseHeader(target)
 	
-	return target.end(getElementFrom(element).toString(), 'utf8', callback)
+	return target.end(getElementDefinition(element).toString(), 'utf8', callback)
 }
 
 /**
@@ -444,11 +437,11 @@ function renderToString (element, target, callback) {
  */
 function renderToNodeStream (element, target, callback) {
 	if (!target || !target.writable)
-		return getElementFrom(element).toStream()
+		return getElementDefinition(element).toStream()
 	else
-		setHeader(target)
+		setResponseHeader(target)
 	
-	return getElementFrom(element).toStream(callback).pipe(target)
+	return getElementDefinition(element).toStream(callback).pipe(target)
 }
 
 }

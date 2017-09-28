@@ -5,11 +5,11 @@
  */
 function renderToString (element, target, callback) {
 	if (!target || !target.writable)
-		return getElementFrom(element).toString()
+		return getElementDefinition(element).toString()
 	else
-		setHeader(target)
+		setResponseHeader(target)
 	
-	return target.end(getElementFrom(element).toString(), 'utf8', callback)
+	return target.end(getElementDefinition(element).toString(), 'utf8', callback)
 }
 
 /**
@@ -19,9 +19,9 @@ function renderToString (element, target, callback) {
  */
 function renderToNodeStream (element, target, callback) {
 	if (!target || !target.writable)
-		return getElementFrom(element).toStream()
+		return getElementDefinition(element).toStream()
 	else
-		setHeader(target)
+		setResponseHeader(target)
 	
-	return getElementFrom(element).toStream(callback).pipe(target)
+	return getElementDefinition(element).toStream(callback).pipe(target)
 }

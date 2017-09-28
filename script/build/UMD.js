@@ -1,5 +1,5 @@
-/*! DIO 8.0.0 @license MIT */
 var dio = (function (global) {'use strict'/* eslint-disable */
+
 function factory (window, require, define) {
 '{%module%}'
 }

@@ -110,7 +110,7 @@ function mountComponentElement (element) {
 	if (children === undefined)
 		children = getComponentChildren(element, instance)
 	else
-		children = getElementFrom(null)
+		children = getElementDefinition(null)
 
 	if (owner[SharedGetChildContext])
 		element.context = getComponentContext(element)
@@ -303,9 +303,9 @@ function getComponentInstance (element, owner) {
  */
 function getComponentChildren (element, instance) {
 	try {
-		return getElementFrom(instance.render(instance.props, instance.state, element.context))
+		return getElementDefinition(instance.render(instance.props, instance.state, element.context))
 	} catch (err) {
-		return getElementFrom(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
+		return getElementDefinition(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
 	}
 }
 

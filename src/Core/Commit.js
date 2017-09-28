@@ -156,9 +156,9 @@ function commitWillReconcile (element, snapshot) {
 	snapshot.type.then(function (value) {
 		if (element.active)
 			if (element.id === SharedElementPromise)
-				reconcileChildren(element, createElementFragment(getElementFrom(value)))
+				reconcileChildren(element, createElementFragment(getElementDefinition(value)))
 			else
-				reconcileElement(element, getElementFrom(value))
+				reconcileElement(element, getElementDefinition(value))
 	}).catch(function (err) {
 		invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 	})
@@ -278,8 +278,9 @@ function commitCreate (element) {
 			case SharedElementNode:
 				return setDOMNode(element, createDOMElement(element))
 			case SharedElementText:
-			case SharedElementEmpty:
 				return setDOMNode(element, createDOMText(element))
+			case SharedElementEmpty:
+				return setDOMNode(element, createDOMEmpty(element))
 			case SharedElementComponent:
 				return setDOMNode(element, getDOMNode(element.children))
 			default:

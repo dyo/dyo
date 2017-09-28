@@ -13,7 +13,7 @@ function toString () {
 function getStringElement (element, host) {
 	switch (element.host = host, element.id) {
 		case SharedElementText:
-		case SharedElementIntermediate:
+		case SharedElementEmpty:
 			return getTextEscape(element.children)
 		case SharedElementComponent:
 			return getStringElement(mountComponentElement(element), element)
@@ -24,7 +24,7 @@ function getStringElement (element, host) {
 	var length = children.length
 	var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
 	
-	if (getElementType(type))
+	if (voidElementType(type))
 		return output
 
 	if (!element.DOM)

@@ -6,7 +6,7 @@
  * @param {Element}
  */
 function invokeErrorBoundary (element, err, from, signature) {
-	return getElementFrom(getErrorElement(element, getErrorException(element, err, from), from, signature))
+	return getElementDefinition(getErrorElement(element, getErrorException(element, err, from), from, signature))
 }
 
 /**
@@ -26,7 +26,7 @@ function getErrorElement (element, error, from, signature) {
 
 	requestAnimationFrame(function () {
 		if (element.active)
-			recoverErrorBoundary(element, getElementFrom(null))
+			recoverErrorBoundary(element, getElementDefinition(null))
 	})
 
 	if (boundary)
@@ -44,7 +44,7 @@ function getErrorElement (element, error, from, signature) {
  * @param {Element} snapshot
  */
 function recoverErrorBoundary (element, snapshot) {
-	reconcileElement(getElementChildren(element), getElementFrom(snapshot))
+	reconcileElement(getElementChildren(element), getElementDefinition(snapshot))
 }
 
 /**

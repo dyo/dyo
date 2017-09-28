@@ -1,5 +1,7 @@
 /*! DIO 8.0.0 @license MIT */
+
 var dio = (function (global) {'use strict'/* eslint-disable */
+
 function factory (window, require, define) {
 
 	var version = '8.0.0'
@@ -593,15 +595,6 @@ function factory (window, require, define) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} parent
-	 * @return {Element}
-	 */
-	function getElementPortal (element, parent) {
-		return (setDOMNode(element, getDOMPortal(parent)), element)
-	}
-	
-	/**
-	 * @param {Element} element
 	 * @param {Element} 
 	 */
 	function getElementParent (element) {
@@ -610,40 +603,6 @@ function factory (window, require, define) {
 	
 		if (element.id === SharedElementPortal)
 			return getElementPortal(createElementDescription(), element)
-		else
-			return element
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Element}
-	 */
-	function getElementChildren (element) {
-		if (element.id === SharedElementComponent)
-			return element.children
-		else
-			return element
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Element}
-	 */
-	function getElementDescription (element) {
-		if (element.id === SharedElementComponent)
-			return getElementDescription(element.children)
-		else
-			return element
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} direction
-	 * @return {Element} 
-	 */
-	function getElementBoundary (element, direction) {
-		if (element.id < SharedElementIntermediate)
-			return getElementBoundary(element.children[direction])
 		else
 			return element
 	}
@@ -671,10 +630,44 @@ function factory (window, require, define) {
 	}
 	
 	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	function getElementChildren (element) {
+		if (element.id === SharedElementComponent)
+			return element.children
+		else
+			return element
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} direction
+	 * @return {Element} 
+	 */
+	function getElementBoundary (element, direction) {
+		if (element.id < SharedElementIntermediate)
+			return getElementBoundary(element.children[direction])
+		else
+			return element
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	function getElementDescription (element) {
+		if (element.id === SharedElementComponent)
+			return getElementDescription(element.children)
+		else
+			return element
+	}
+	
+	/**
 	 * @param {*} element
 	 * @return {Element}
 	 */
-	function getElementFrom (element) {
+	function getElementDefinition (element) {
 		if (element == null)
 			return createElementEmpty(SharedTypeKey)
 		
@@ -689,6 +682,15 @@ function factory (window, require, define) {
 			default:
 				return createElementBranch(element, SharedTypeKey)
 		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} parent
+	 * @return {Element}
+	 */
+	function getElementPortal (element, parent) {
+		return (setDOMNode(element, getDOMPortal(parent)), element)
 	}
 	
 	/**
@@ -803,7 +805,7 @@ function factory (window, require, define) {
 		if (children === undefined)
 			children = getComponentChildren(element, instance)
 		else
-			children = getElementFrom(null)
+			children = getElementDefinition(null)
 	
 		if (owner[SharedGetChildContext])
 			element.context = getComponentContext(element)
@@ -996,9 +998,9 @@ function factory (window, require, define) {
 	 */
 	function getComponentChildren (element, instance) {
 		try {
-			return getElementFrom(instance.render(instance.props, instance.state, element.context))
+			return getElementDefinition(instance.render(instance.props, instance.state, element.context))
 		} catch (err) {
-			return getElementFrom(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
+			return getElementDefinition(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
 		}
 	}
 	
@@ -1286,9 +1288,9 @@ function factory (window, require, define) {
 		snapshot.type.then(function (value) {
 			if (element.active)
 				if (element.id === SharedElementPromise)
-					reconcileChildren(element, createElementFragment(getElementFrom(value)))
+					reconcileChildren(element, createElementFragment(getElementDefinition(value)))
 				else
-					reconcileElement(element, getElementFrom(value))
+					reconcileElement(element, getElementDefinition(value))
 		}).catch(function (err) {
 			invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 		})
@@ -1408,8 +1410,9 @@ function factory (window, require, define) {
 				case SharedElementNode:
 					return setDOMNode(element, createDOMElement(element))
 				case SharedElementText:
-				case SharedElementEmpty:
 					return setDOMNode(element, createDOMText(element))
+				case SharedElementEmpty:
+					return setDOMNode(element, createDOMEmpty(element))
 				case SharedElementComponent:
 					return setDOMNode(element, getDOMNode(element.children))
 				default:
@@ -1783,7 +1786,7 @@ function factory (window, require, define) {
 	 * @param {Element}
 	 */
 	function invokeErrorBoundary (element, err, from, signature) {
-		return getElementFrom(getErrorElement(element, getErrorException(element, err, from), from, signature))
+		return getElementDefinition(getErrorElement(element, getErrorException(element, err, from), from, signature))
 	}
 	
 	/**
@@ -1803,7 +1806,7 @@ function factory (window, require, define) {
 	
 		requestAnimationFrame(function () {
 			if (element.active)
-				recoverErrorBoundary(element, getElementFrom(null))
+				recoverErrorBoundary(element, getElementDefinition(null))
 		})
 	
 		if (boundary)
@@ -1821,7 +1824,7 @@ function factory (window, require, define) {
 	 * @param {Element} snapshot
 	 */
 	function recoverErrorBoundary (element, snapshot) {
-		reconcileElement(getElementChildren(element), getElementFrom(snapshot))
+		reconcileElement(getElementChildren(element), getElementDefinition(snapshot))
 	}
 	
 	/**
@@ -1962,7 +1965,7 @@ function factory (window, require, define) {
 			return render(element, getDOMDocument(), callback)
 	
 		if (root.has(target))
-			update(root.get(target), getElementFrom(element), callback)
+			update(root.get(target), getElementDefinition(element), callback)
 		else
 			mount(element, null, target, callback, SharedMountCommit)
 	}
@@ -2003,7 +2006,7 @@ function factory (window, require, define) {
 			return mount(element, createElementDescription(), target, callback, signature)
 	
 		if (!isValidElement(element))
-			return mount(getElementFrom(element), parent, target, callback, signature)
+			return mount(getElementDefinition(element), parent, target, callback, signature)
 	
 		if (!isValidDOMNode(target))
 			invariant(SharedSiteRender, 'Target container is not a DOM element')
@@ -2374,6 +2377,14 @@ function factory (window, require, define) {
 	 * @param {Element} element
 	 * @return {Object}
 	 */
+	function createDOMEmpty (element) {
+		return document.createTextNode('')
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Object}
+	 */
 	function getDOMPortal (element) {
 		if (typeof element.type === 'string')
 			return getDOMDocument().querySelector(element.type)
@@ -2437,6 +2448,9 @@ function factory (window, require, define) {
 				case 'createDOMText':
 					createDOMText = value
 					break
+				case 'createDOMEmpty':
+					createDOMEmpty = value
+					break
 				case 'removeDOMNode':
 					removeDOMNode = value
 					break
@@ -2464,38 +2478,24 @@ function factory (window, require, define) {
 			}
 		}
 	}
-	
-	var exports = {
-	version: version,
-	render: render,
-	hydrate: hydrate,
-	Component: Component,
-	PureComponent: PureComponent,
-	Children: Children,
-	findDOMNode: findDOMNode,
-	unmountComponentAtNode: unmountComponentAtNode,
-	cloneElement: cloneElement,
-	isValidElement: isValidElement,
-	createPortal: createPortal,
-	createElement: createElement,
-	DOM: DOM,
-	h: window.h = createElement
+	var exports = {	
+		version: version,
+		render: render,
+		hydrate: hydrate,
+		Component: Component,
+		PureComponent: PureComponent,
+		Children: Children,
+		findDOMNode: findDOMNode,
+		unmountComponentAtNode: unmountComponentAtNode,
+		cloneElement: cloneElement,
+		isValidElement: isValidElement,
+		createPortal: createPortal,
+		createElement: createElement,
+		DOM: DOM,
+		h: window.h = createElement
 	}
-	
 	if (require)
-	createDOMClient.call(window, require(define).call(
-	exports, 
-	Element,
-	mountComponentElement,
-	unmountComponentElement,
-	getComponentElement,
-	getComponentChildren,
-	invokeErrorBoundary,
-	getElementFrom,
-	getElementDescription
-	),
-	factory
-	)
+		createDOMClient.call(window, require(define).call(exports, Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription), factory)
 	
 	return exports
 }

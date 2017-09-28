@@ -10,7 +10,7 @@ let filesize = NaN
 let search = "'{%module%}'"
 
 const options = {compress: {}}
-const strict = `'use strict'`
+const strict = `'use strict'/* eslint-disable */`
 const filenames = {
 	umd: 'umd.js',
 	esm: 'esm.js',
@@ -78,7 +78,6 @@ const pad = (content, tabs) => {
 
 var factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
 var exports = `
-var exports = {
 version: version,
 render: render,
 hydrate: hydrate,
@@ -92,9 +91,7 @@ isValidElement: isValidElement,
 createPortal: createPortal,
 createElement: createElement,
 DOM: DOM,
-h: window.h = createElement
-}
-`
+h: window.h = createElement`
 
 const platform = `
 Element,
@@ -103,17 +100,13 @@ unmountComponentElement,
 getComponentElement,
 getComponentChildren,
 invokeErrorBoundary,
-getElementFrom,
-getElementDescription`
+getElementDefinition,
+getElementDescription`.replace(/\s+/g, ' ').trim()
 
 const template = () => {
 	return `\
 if (require)
-createDOMClient.call(window, require(define).call(
-exports, ${(platform)}
-),
-factory
-)
+	createDOMClient.call(window, require(define).call(exports, ${(platform)}), factory)
 `
 }
 
@@ -125,7 +118,9 @@ const parse = (head, body, tail, factory) => {
 			head+
 			format(body)+
 			'\n'+
-			exports+
+			'var exports = {'+
+			pad(exports)+
+			'\n}'+
 			'\n'+
 			template()+
 			'\nreturn exports'
@@ -142,21 +137,21 @@ const format = (content) => content.trim()
 	.replace(/\s*import\s+[\S\s]+?['`"][\S\s]+?\.js['"`]\s*/g, '\n')
 	.replace(/(^\s*)export\s+/gm, '$1').replace(/\n\n\n+/g, '\n\n')
 
-const wrapper = (module, content, version, factory) => {
+const wrapper = (module, content, factory, version, license) => {
 	var head = "var version = '"+version+"'\n\n"
 	
 	switch (module) {
 		case 'node': {
 			return {
-				head: '',
-				body: 'module.exports = function ('+(platform)+'\n) {'+strict+
+				head: comment(version, license),
+				body: 'module.exports = function ('+(platform)+') {'+strict+
 					('\n\n'+format(content))+'\n\n}',
 				tail: ''
 			}
 		}
 		case 'esm':
 			return {
-				head: '',
+				head: comment(version, license),
 				body: parse(head, content, '', factory),
 				tail: 'export default dio\n'+
 							exports
@@ -166,22 +161,25 @@ const wrapper = (module, content, version, factory) => {
 			}
 		default:
 			return {
-				head: '',
+				head: comment(version, license),
 				body: parse(head, content, '', factory),
 				tail: ''
 			}
 	}
 }
 
-const comment = (version, license) => ''
+const comment = (version, license) => {
+	return `/*! DIO ${version} @license MIT */\n\n`
+}
 
 const bundle = (module, files, location) => {
 	let version = package.version
+	let license = package.license
 	let filename = filenames[module]
 	let filepath = location+filename
 	var factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
 
-	let content = wrapper(module, files.map(builder).join('\n'), version, factory)
+	let content = wrapper(module, files.map(builder).join('\n'), factory, version, license)
 			content = (content.head + content.body + '\n\n' + content.tail).trim()+'\n'
 
 	fs.writeFileSync(path.join(__dirname, filepath), content)
