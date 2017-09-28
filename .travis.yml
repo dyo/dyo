@@ -14,9 +14,11 @@ install:
 script:
   - npm test
 before_install:
-  - if [ ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)|(^(docs|examples))/' ]; then
-      echo "Only docs were updated, stopping build process."
-      exit
-    fi
+  - |
+      echo Checking whether $TRAVIS_COMMIT_RANGE changed only docs
+      git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)|(^(docs|examples))/' || {
+        echo "Only docs were updated, stopping build process."
+        exit
+      }
 after_success:
   - npm run coverage
