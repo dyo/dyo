@@ -248,8 +248,6 @@ function factory (window, require, define) {
 	var WeakMap = window.WeakMap || WeakHash
 	var Promise = window.Promise || noop
 	
-	var console = window.console || {error: noop}
-	var setTimeout = window.setTimeout || function (callback) { Promise.resolve().then(callback) }
 	var requestAnimationFrame = window.requestAnimationFrame || function (callback) { setTimeout(callback, 16) }
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
@@ -2032,63 +2030,31 @@ function factory (window, require, define) {
 		return root.has(target) && !render(null, target)
 	}
 	
-	/**
-	 * @param {Object|function} renderer
-	 */
-	function createDOMBridge (renderer) {
-		if (!renderer)
-			return
+	var setDOMNode = define.setDOMNode || noop
+	var setDOMContent = define.setDOMContent || noop
+	var setDOMValue = define.setDOMValue || noop
+	var setDOMEvent = define.setDOMEvent || noop
+	var setDOMStyle = define.setDOMStyle || noop
+	var setDOMProperty = define.setDOMProperty || noop
+	var setDOMAttribute = define.setDOMAttribute || noop
+	var setDOMProperties = define.setDOMProperties || noop
+	var getDOMDocument = define.getDOMDocument || noop
+	var getDOMType = define.getDOMType || noop
+	var getDOMProps = define.getDOMProps || noop
+	var getDOMNode = define.getDOMNode || noop
+	var getDOMQuery = define.getDOMQuery || noop
+	var findDOMNode = define.findDOMNode || noop
+	var isValidDOMNode = define.isValidDOMNode || noop
+	var isValidDOMEvent = define.isValidDOMEvent || noop
+	var removeDOMNode = define.removeDOMNode || noop
+	var insertDOMNode = define.insertDOMNode || noop
+	var appendDOMNode = define.appendDOMNode || noop
+	var createDOMElement = define.createDOMElement || noop
+	var createDOMText = define.createDOMText || noop
+	var createDOMEmpty = define.createDOMEmpty || noop
+	var getDOMPortal = define.getDOMPortal || noop
 	
-		setDOMNode = renderer.setDOMNode || noop
-		setDOMContent = renderer.setDOMContent || noop
-		setDOMValue = renderer.setDOMValue || noop
-		setDOMEvent = renderer.setDOMEvent || noop
-		setDOMProperties = renderer.setDOMProperties || noop
-		getDOMDocument = renderer.getDOMDocument || noop
-		getDOMType = renderer.getDOMType || noop
-		getDOMProps = renderer.getDOMProps || noop
-		getDOMNode = renderer.getDOMNode || noop
-		getDOMPortal = renderer.getDOMPortal || noop
-		getDOMQuery = renderer.getDOMQuery || noop
-		createDOMElement = renderer.createDOMElement || noop
-		createDOMText = renderer.createDOMText || noop
-		createDOMEmpty = renderer.createDOMEmpty || noop
-		removeDOMNode = renderer.removeDOMNode  || noop
-		insertDOMNode = renderer.insertDOMNode || noop
-		findDOMNode = renderer.findDOMNode || noop
-		isValidDOMNode = renderer.isValidDOMNode || noop
-		removeDOMNode = renderer.removeDOMNode || noop
-		insertDOMNode = renderer.insertDOMNode || noop
-		appendDOMNode = renderer.appendDOMNode || noop
-	
-		return this
-	}
-	
-	var setDOMNode = noop
-	var setDOMContent = noop
-	var setDOMValue = noop
-	var setDOMEvent = noop
-	var setDOMStyle = noop
-	var setDOMProperty = noop
-	var setDOMAttribute = noop
-	var setDOMProperties = noop
-	var getDOMDocument = noop
-	var getDOMType = noop
-	var getDOMProps = noop
-	var getDOMNode = noop
-	var getDOMQuery = noop
-	var findDOMNode = noop
-	var isValidDOMNode = noop
-	var isValidDOMEvent = noop
-	var removeDOMNode = noop
-	var insertDOMNode = noop
-	var appendDOMNode = noop
-	var createDOMElement = noop
-	var createDOMText = noop
-	var createDOMEmpty = noop
-	var getDOMPortal = noop
-	
-	var exports = {	
+	var exports = {
 		version: version,
 		render: render,
 		hydrate: hydrate,
@@ -2104,12 +2070,10 @@ function factory (window, require, define) {
 		h: createElement
 	}
 	
-	if (typeof define !== 'string')
-		return createDOMBridge.call(exports, define)
-	else
+	if (typeof define === 'string')
 		return function bridge (renderer) {
 			if (typeof renderer === 'function')
-				return factory(window, false, renderer())
+				return factory(window, false, renderer(exports))
 		
 			return factory(window, false, renderer)
 		}

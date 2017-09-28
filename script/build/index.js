@@ -61,8 +61,7 @@ const esm = [
 ]
 
 const bridge = [
-	...core,
-	'../../src/DOM/Bridge.js',
+	...core
 ]
 
 /**
@@ -101,7 +100,7 @@ h: createElement`
 const DOM = ((file) => {
 	let content = fs.readFileSync(path.join(__dirname, file), 'utf8').trim()
 			content = content.replace(/^((?!function[^'"])[\S\s])*$/gm, '')
-			content = content.replace(/function\s*(\w+)\s*.*/g, 'var $1 = noop')
+			content = content.replace(/function\s*(\w+)\s*.*/g, 'var $1 = define.$1 || noop')
 			content = content.replace(/\n\n+/g, '\n')
 
 	return '\n\n'+content.trim()
@@ -123,12 +122,10 @@ const template = (type) => {
 	switch (type) {
 		case 'bridge':
 			return `\
-if (typeof define !== 'string')
-	return createDOMBridge.call(exports, define)
-else
+if (typeof define === 'string')
 	return function bridge (renderer) {
 		if (typeof renderer === 'function')
-			return factory(window, false, renderer())
+			return factory(window, false, renderer(exports))
 	
 		return factory(window, false, renderer)
 	}
@@ -159,7 +156,7 @@ const format = (content) => content.trim()
 
 const wrapper = (module, content, factory, version, license) => {
 	var head = "var version = '"+version+"'\n\n"
-	var expo = '\n\n'+'var exports = {'+pad(api)+'\n}'+'\n\n'
+	var expo = '\n\n'+'var exports = {\n'+pad(api.trim())+'\n}'+'\n\n'
 	var mainTail = expo+template('main')
 	var bridgeTail = DOM+expo+template('bridge')
 

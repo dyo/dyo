@@ -24,7 +24,7 @@ function getStringElement (element, host) {
 	var length = children.length
 	var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
 	
-	if (voidElementType(type))
+	if (isVoidType(type))
 		return output
 
 	if (!element.DOM)

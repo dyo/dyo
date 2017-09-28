@@ -248,8 +248,6 @@ function factory (window, require, define) {
 	var WeakMap = window.WeakMap || WeakHash
 	var Promise = window.Promise || noop
 	
-	var console = window.console || {error: noop}
-	var setTimeout = window.setTimeout || function (callback) { Promise.resolve().then(callback) }
 	var requestAnimationFrame = window.requestAnimationFrame || function (callback) { setTimeout(callback, 16) }
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
@@ -2383,7 +2381,7 @@ function factory (window, require, define) {
 		return getDOMDocument()
 	}
 	
-	var exports = {	
+	var exports = {
 		version: version,
 		render: render,
 		hydrate: hydrate,

@@ -100,7 +100,7 @@ function readStreamElement (element, host, stack, readable) {
 
 			output += '<' + element.type + getStringProps(element, element.props) + '>'
 			
-			if (voidElementType(element.type))
+			if (isVoidType(element.type))
 				return writeStreamElement(output, readable)
 			
 			if (element.DOM)

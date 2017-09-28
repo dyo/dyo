@@ -93,7 +93,7 @@ function getTextEncode (character) {
 /**
  * @param {string}
  */
-function voidElementType (type) {
+function isVoidType (type) {
 	switch ((type+'').toLowerCase()) {
 		case 'area':
 		case 'base':
@@ -165,7 +165,7 @@ function getStringElement (element, host) {
 	var length = children.length
 	var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
 	
-	if (voidElementType(type))
+	if (isVoidType(type))
 		return output
 
 	if (!element.DOM)
@@ -387,7 +387,7 @@ function readStreamElement (element, host, stack, readable) {
 
 			output += '<' + element.type + getStringProps(element, element.props) + '>'
 			
-			if (voidElementType(element.type))
+			if (isVoidType(element.type))
 				return writeStreamElement(output, readable)
 			
 			if (element.DOM)

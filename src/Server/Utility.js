@@ -28,7 +28,7 @@ function getTextEncode (character) {
 /**
  * @param {string}
  */
-function voidElementType (type) {
+function isVoidType (type) {
 	switch ((type+'').toLowerCase()) {
 		case 'area':
 		case 'base':
