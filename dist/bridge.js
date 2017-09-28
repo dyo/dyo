@@ -2033,355 +2033,60 @@ function factory (window, require, define) {
 	}
 	
 	/**
-	 * @param {Element} eleemnt
-	 * @param {Node} target
+	 * @param {Object|function} renderer
 	 */
-	function setDOMNode (element, target) {
-		element.DOM = {target: target}
+	function createDOMBridge (renderer) {
+		if (!renderer)
+			return
+	
+		setDOMNode = renderer.setDOMNode || noop
+		setDOMContent = renderer.setDOMContent || noop
+		setDOMValue = renderer.setDOMValue || noop
+		setDOMEvent = renderer.setDOMEvent || noop
+		setDOMProperties = renderer.setDOMProperties || noop
+		getDOMDocument = renderer.getDOMDocument || noop
+		getDOMType = renderer.getDOMType || noop
+		getDOMProps = renderer.getDOMProps || noop
+		getDOMNode = renderer.getDOMNode || noop
+		getDOMPortal = renderer.getDOMPortal || noop
+		getDOMQuery = renderer.getDOMQuery || noop
+		createDOMElement = renderer.createDOMElement || noop
+		createDOMText = renderer.createDOMText || noop
+		createDOMEmpty = renderer.createDOMEmpty || noop
+		removeDOMNode = renderer.removeDOMNode  || noop
+		insertDOMNode = renderer.insertDOMNode || noop
+		findDOMNode = renderer.findDOMNode || noop
+		isValidDOMNode = renderer.isValidDOMNode || noop
+		removeDOMNode = renderer.removeDOMNode || noop
+		insertDOMNode = renderer.insertDOMNode || noop
+		appendDOMNode = renderer.appendDOMNode || noop
+	
+		return this
 	}
 	
-	/**
-	 * @param {Element} element
-	 */
-	function setDOMContent (element) {
-		getDOMNode(element).textContent = ''
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {(string|number)} value
-	 */
-	function setDOMValue (element, value) {
-		getDOMNode(element).nodeValue = value
-	}
-	
-	/**
-	 * @param {(EventListener|Element)} element
-	 * @param {string} type
-	 */
-	function setDOMEvent (element, type) {
-		getDOMNode(element).addEventListener(type, element, false)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Object} props
-	 */
-	function setDOMStyle (element, props) {
-		for (var key in props) {
-			var value = props[key]
-	
-			if (key.indexOf('-') < 0)
-				getDOMNode(element).style[key] = value !== false && value !== undefined ? value : null
-			else
-				getDOMNode(element).style.setProperty(key, value)
-		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} name 
-	 * @param {*} value
-	 */
-	function setDOMProperty (element, name, value) {
-		switch (value) {
-			case null:
-			case false:
-			case undefined:
-				return setDOMAttribute(element, name, value, getDOMNode(element)[name] = '')
-		}
-	
-		getDOMNode(element)[name] = value
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} name
-	 * @param {*} value
-	 * @param {string} xmlns
-	 */
-	function setDOMAttribute (element, name, value, xmlns) {
-		switch (value) {
-			case null:
-			case false:
-			case undefined:
-				if (xmlns)
-					getDOMNode(element).removeAttributeNS(xmlns, name)
-	
-				return getDOMNode(element).removeAttribute(name)				
-			case true:
-				return setDOMAttribute(element, name, '', xmlns)
-		}
-	
-		if (!xmlns)
-			getDOMNode(element).setAttribute(name, value)
-		else
-			getDOMNode(element).setAttributeNS(xmlns, name, value)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} name
-	 * @param {*} value
-	 * @param {string} xmlns
-	 */
-	function setDOMProperties (element, name, value, xmlns) {
-		switch (name) {
-			case 'className':
-				if (!xmlns && value)
-					return setDOMProperty(element, name, value)
-			case 'class':
-				return setDOMAttribute(element, 'class', value, '')
-			case 'style':
-				if (typeof value === 'object')
-					return setDOMStyle(element, value)
-				break
-			case 'xlink:href':
-				return setDOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
-			case 'dangerouslySetInnerHTML':
-				return setDOMProperties(element, 'innerHTML', value ? value.__html : '', '')
-			case 'innerHTML':
-				if (getDOMNode(element)[name] !== value)
-					setDOMProperty(element, name, value)
-				return
-			case 'acceptCharset':
-				return setDOMProperties(element, 'accept-charset', value, xmlns)
-			case 'httpEquiv':
-				return setDOMProperties(element, 'http-equiv', value, xmlns)
-			case 'autofocus':
-			case 'autoFocus':
-				return getDOMNode(element)[value ? 'focus' : 'blur']()
-			case 'width':
-			case 'height':
-				if (element.type === 'img')
-					break
-			default:
-				if (!xmlns && name in getDOMNode(element))
-					return setDOMProperty(element, name, value)
-		}
-	
-		switch (typeof value) {
-			case 'object':
-			case 'function':
-				return setDOMProperty(element, name, value)						
-		}
-	
-		setDOMAttribute(element, name, value, '')
-	}
-	
-	/**
-	 * @return {Node}
-	 */
-	function getDOMDocument () {
-		return document.documentElement
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {string} xmlns
-	 */
-	function getDOMType (element, xmlns) {
-		switch (element.type) {
-			case 'svg':
-				return 'http://www.w3.org/2000/svg'
-			case 'math':
-				return 'http://www.w3.org/1998/Math/MathML'
-			case 'foreignObject':
-				return ''
-		}
-		
-		return xmlns
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Object}
-	 */
-	function getDOMProps (element) {
-		switch (element.type) {
-			case 'input':
-				return merge({type: null, step: null, min: null, max: null}, element.props)
-			default:
-				return element.props
-		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Node}
-	 */
-	function getDOMNode (element) {
-		return element.DOM.target
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} parent
-	 * @param {Element} previous
-	 * @param {Element} next
-	 */
-	function getDOMQuery (element, parent, previous, next) {
-		var id = element.id
-		var type = id > SharedElementNode ? '#text' : element.type.toLowerCase()
-		var xmlns = element.xmlns
-		var props = element.props
-		var children = element.children
-		var length = children.length
-		var target = previous.active ? getDOMNode(previous).nextSibling : getDOMNode(parent).firstChild 
-		var sibling = target
-		var node = null
-	
-		while (target) {
-			if (target.nodeName.toLowerCase() === type) {
-				if (id > SharedElementNode) {
-					if (next.id > SharedElementNode)
-						target.splitText(length)
-	
-					if (target.nodeValue !== children)
-						target.nodeValue = children
-				} else if (length === 0 && target.firstChild) {
-					target.textContent = ''
-				}
-	
-				if (parent.id === SharedElementPortal)
-					getDOMPortal(parent).appendChild(target)
-	
-				node = target
-				type = null
-	
-				if (!(target = target.nextSibling) || next.type)
-					break
-			}
-	
-			if (id > SharedElementNode && (length === 0 || xmlns === type)) {
-				if (target.parentNode.insertBefore((node = createDOMText(element)), target)) {				
-					if (next.type)
-						break
-					else
-						type = null
-				}
-			}
-	
-			target = (sibling = target).nextSibling
-			sibling.parentNode.removeChild(sibling)
-		}
-	
-		if (node && !node.splitText)
-			for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i) {
-				var attr = attributes[i]
-				var name = attr.name
-	
-				if (attr.value !== props[name] + '')
-					node.removeAttribute(name)
-			}
-	
-		return node
-	}
-	
-	/**
-	 * @param {(Component|Element|Node|Event)} element
-	 * @return {Node}
-	 */
-	function findDOMNode (element) {
-		if (!element)
-			invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-	
-		if (isValidElement(getComponentElement(element)))
-			return findDOMNode(getComponentElement(element))
-	
-		if (element.active && isValidElement(element))
-			return getDOMNode(element)
-	
-		if (isValidDOMNode(element))
-			return element
-	
-		if (isValidDOMEvent(element))
-			return element.currentTarget
-	
-		invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
-	}
-	
-	/**
-	 * @param {Node} target
-	 * @param {boolean}
-	 */
-	function isValidDOMNode (target) {
-		return !!(target && target.ELEMENT_NODE)
-	}
-	
-	/**
-	 * @param {Event} event
-	 * @return {boolean}
-	 */
-	function isValidDOMEvent (event) {
-		return !!(event && event.BUBBLING_PHASE)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} parent
-	 */
-	function removeDOMNode (element, parent) {
-		getDOMNode(parent).removeChild(getDOMNode(element))
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} sibling
-	 * @param {Element} parent
-	 */
-	function insertDOMNode (element, sibling, parent) {
-		getDOMNode(parent).insertBefore(getDOMNode(element), getDOMNode(sibling))
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} parent
-	 */
-	function appendDOMNode (element, parent) {
-		getDOMNode(parent).appendChild(getDOMNode(element))
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Object}
-	 */
-	function createDOMElement (element) {
-		if (element.xmlns)
-			return document.createElementNS(element.xmlns, element.type)
-		else
-			return document.createElement(element.type)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Object}
-	 */
-	function createDOMText (element) {
-		return document.createTextNode(element.children)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Object}
-	 */
-	function createDOMEmpty (element) {
-		return document.createTextNode('')
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Object}
-	 */
-	function getDOMPortal (element) {
-		if (typeof element.type === 'string')
-			return getDOMDocument().querySelector(element.type)
-	
-		if (isValidDOMNode(element.type))
-			return element.type
-	
-		return getDOMDocument()
-	}
+	var setDOMNode = noop
+	var setDOMContent = noop
+	var setDOMValue = noop
+	var setDOMEvent = noop
+	var setDOMStyle = noop
+	var setDOMProperty = noop
+	var setDOMAttribute = noop
+	var setDOMProperties = noop
+	var getDOMDocument = noop
+	var getDOMType = noop
+	var getDOMProps = noop
+	var getDOMNode = noop
+	var getDOMQuery = noop
+	var findDOMNode = noop
+	var isValidDOMNode = noop
+	var isValidDOMEvent = noop
+	var removeDOMNode = noop
+	var insertDOMNode = noop
+	var appendDOMNode = noop
+	var createDOMElement = noop
+	var createDOMText = noop
+	var createDOMEmpty = noop
+	var getDOMPortal = noop
 	
 	var exports = {	
 		version: version,
@@ -2399,8 +2104,15 @@ function factory (window, require, define) {
 		h: createElement
 	}
 	
-	if (require)
-		require(define)(exports, Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription)
+	if (typeof define !== 'string')
+		return createDOMBridge.call(exports, define)
+	else
+		return function bridge (renderer) {
+			if (typeof renderer === 'function')
+				return factory(window, false, renderer())
+		
+			return factory(window, false, renderer)
+		}
 	
 	return exports
 	
@@ -2419,18 +2131,3 @@ else
 
 return temp
 })(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))
-
-export default dio
-export const version = dio.version 
-export const render = dio.render 
-export const hydrate = dio.hydrate 
-export const Component = dio.Component 
-export const PureComponent = dio.PureComponent 
-export const Children = dio.Children 
-export const findDOMNode = dio.findDOMNode 
-export const unmountComponentAtNode = dio.unmountComponentAtNode 
-export const cloneElement = dio.cloneElement 
-export const isValidElement = dio.isValidElement 
-export const createPortal = dio.createPortal 
-export const createElement = dio.createElement 
-export const h = dio.createElement

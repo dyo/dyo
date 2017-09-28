@@ -2033,20 +2033,6 @@ function factory (window, require, define) {
 	}
 	
 	/**
-	 * @param {(string|function|Object)} renderer
-	 */
-	function DOM (renderer) {
-		if (typeof renderer === 'function')
-			return factory(window, function () {
-				return renderer
-			}, '')
-		else
-			return DOM(function () {
-				return renderer
-			})
-	}
-	
-	/**
 	 * @param {Element} eleemnt
 	 * @param {Node} target
 	 */
@@ -2397,89 +2383,6 @@ function factory (window, require, define) {
 		return getDOMDocument()
 	}
 	
-	/**
-	 * @param {Object} renderer
-	 */
-	function createDOMClient (renderer) {
-		for (var name in renderer) {
-			var value = renderer[name]
-	
-			switch (name) {
-				case 'setDOMNode':
-					setDOMNode = value
-					break
-				case 'setDOMContent':
-					setDOMContent = value
-					break
-				case 'setDOMValue':
-					setDOMValue = value
-					break
-				case 'setDOMEvent':
-					setDOMEvent = value
-					break
-				case 'setDOMStyle':
-					setDOMStyle = value
-					break
-				case 'setDOMProperty':
-					setDOMProperty = value
-					break
-				case 'setDOMProperties':
-					setDOMProperties = value
-					break
-				case 'getDOMDocument':
-					getDOMDocument = value
-					break
-				case 'getDOMType':
-					getDOMType = value
-					break
-				case 'getDOMProps':
-					getDOMProps = value
-					break
-				case 'getDOMNode':
-					getDOMNode = value
-					break
-				case 'getDOMPortal':
-					getDOMPortal = value
-					break
-				case 'getDOMQuery':
-					getDOMQuery = value
-					break
-				case 'createDOMElement':
-					createDOMElement = value
-					break
-				case 'createDOMText':
-					createDOMText = value
-					break
-				case 'createDOMEmpty':
-					createDOMEmpty = value
-					break
-				case 'removeDOMNode':
-					removeDOMNode = value
-					break
-				case 'insertDOMNode':
-					insertDOMNode = value
-					break
-				case 'findDOMNode':
-					findDOMNode = value
-					break
-				case 'isValidDOMNode':
-					isValidDOMNode = value
-					break
-				case 'isValidDOMEvent':
-					isValidDOMEvent = value
-					break
-				case 'removeDOMNode':
-					removeDOMNode = value
-					break
-				case 'insertDOMNode':
-					insertDOMNode = value
-					break
-				case 'appendDOMNode':
-					appendDOMNode = value
-					break
-			}
-		}
-	}
 	var exports = {	
 		version: version,
 		render: render,
@@ -2493,13 +2396,14 @@ function factory (window, require, define) {
 		isValidElement: isValidElement,
 		createPortal: createPortal,
 		createElement: createElement,
-		DOM: DOM,
-		h: window.h = createElement
+		h: createElement
 	}
+	
 	if (require)
-		createDOMClient.call(window, require(define).call(exports, Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription), factory)
+		require(define)(exports, Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription)
 	
 	return exports
+	
 }
 
 var temp
@@ -2508,10 +2412,10 @@ if (typeof exports === 'object' && typeof module !== 'undefined')
 	module.exports = factory(global, typeof __webpack_require__ === 'undefined' && require, './node.js')
 /* istanbul ignore next */
 else if (typeof define === 'function' && define.amd)
-	define(temp = factory(global))
+	define(temp = factory(global, false, ''))
 /* istanbul ignore next */
 else
-	temp = factory(global)
+	temp = factory(global, false, '')
 
 return temp
 })(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))

@@ -72,17 +72,3 @@ function mount (element, parent, target, callback, signature) {
 function unmountComponentAtNode (target) {
 	return root.has(target) && !render(null, target)
 }
-
-/**
- * @param {(string|function|Object)} renderer
- */
-function DOM (renderer) {
-	if (typeof renderer === 'function')
-		return factory(window, function () {
-			return renderer
-		}, '')
-	else
-		return DOM(function () {
-			return renderer
-		})
-}

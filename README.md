@@ -4,7 +4,7 @@
 
 A Library For Building User Interfaces.
 
-- ~7kb
+- ~6kb
 
 [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md)
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js)

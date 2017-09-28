@@ -14,7 +14,8 @@ const strict = `'use strict'/* eslint-disable */`
 const filenames = {
 	umd: 'umd.js',
 	esm: 'esm.js',
-	node: 'node.js'
+	node: 'node.js',
+	bridge: 'bridge.js'
 }
 
 const shared = [
@@ -59,6 +60,11 @@ const esm = [
 	...dom
 ]
 
+const bridge = [
+	...core,
+	'../../src/DOM/Bridge.js',
+]
+
 /**
  * @return {string}
  */
@@ -76,8 +82,8 @@ const pad = (content, tabs) => {
 		return content.replace(/^/gm, '\t')
 }
 
-var factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
-var exports = `
+const factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
+const api = `
 version: version,
 render: render,
 hydrate: hydrate,
@@ -90,10 +96,19 @@ cloneElement: cloneElement,
 isValidElement: isValidElement,
 createPortal: createPortal,
 createElement: createElement,
-DOM: DOM,
-h: window.h = createElement`
+h: createElement`
+
+const DOM = ((file) => {
+	let content = fs.readFileSync(path.join(__dirname, file), 'utf8').trim()
+			content = content.replace(/^((?!function[^'"])[\S\s])*$/gm, '')
+			content = content.replace(/function\s*(\w+)\s*.*/g, 'var $1 = noop')
+			content = content.replace(/\n\n+/g, '\n')
+
+	return '\n\n'+content.trim()
+})(dom[0])
 
 const platform = `
+exports,
 Element,
 mountComponentElement,
 unmountComponentElement,
@@ -101,33 +116,38 @@ getComponentElement,
 getComponentChildren,
 invokeErrorBoundary,
 getElementDefinition,
-getElementDescription`.replace(/\s+/g, ' ').trim()
+getElementDescription
+`.replace(/\s+/g, ' ').trim()
 
-const template = () => {
-	return `\
-if (require)
-	createDOMClient.call(window, require(define).call(exports, ${(platform)}), factory)
+const template = (type) => {
+	switch (type) {
+		case 'bridge':
+			return `\
+if (typeof define !== 'string')
+	return createDOMBridge.call(exports, define)
+else
+	return function bridge (renderer) {
+		if (typeof renderer === 'function')
+			return factory(window, false, renderer())
+	
+		return factory(window, false, renderer)
+	}
+
+return exports
 `
+		default:
+			return `\
+if (require)
+	require(define)(${(platform)})
+
+return exports
+`
+	}
 }
 
 const parse = (head, body, tail, factory) => {
-	return factory.replace(
-		search,
-		'\n'+
-		pad(
-			head+
-			format(body)+
-			'\n'+
-			'var exports = {'+
-			pad(exports)+
-			'\n}'+
-			'\n'+
-			template()+
-			'\nreturn exports'
-		)
-	)
+	return factory.replace(search,'\n'+pad(head+format(body)+tail))
 }
-
 
 const builder = (file) => {
 	return fs.readFileSync(path.join(__dirname, file), 'utf8');
@@ -139,7 +159,10 @@ const format = (content) => content.trim()
 
 const wrapper = (module, content, factory, version, license) => {
 	var head = "var version = '"+version+"'\n\n"
-	
+	var expo = '\n\n'+'var exports = {'+pad(api)+'\n}'+'\n\n'
+	var mainTail = expo+template('main')
+	var bridgeTail = DOM+expo+template('bridge')
+
 	switch (module) {
 		case 'node': {
 			return {
@@ -152,17 +175,23 @@ const wrapper = (module, content, factory, version, license) => {
 		case 'esm':
 			return {
 				head: comment(version, license),
-				body: parse(head, content, '', factory),
+				body: parse(head, content, mainTail, factory),
 				tail: 'export default dio\n'+
-							exports
+							api
 								.replace(/[\S\s]*\{|\s*\}|,|\S\s*h:[\S\s]*|window.*h.*=\s*/g, '')
 								.replace(/(\w+):\s*(\w+)/g, 'export const $1 = dio.$2 ')
 								.trim()
 			}
+		case 'bridge':
+			return {
+				head: comment(version, license),
+				body: parse(head, content, bridgeTail, factory),
+				tail: ''
+			}
 		default:
 			return {
 				head: comment(version, license),
-				body: parse(head, content, '', factory),
+				body: parse(head, content, mainTail, factory),
 				tail: ''
 			}
 	}
@@ -185,11 +214,10 @@ const bundle = (module, files, location) => {
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 
 	switch (module) {
-		case 'node':
-		case 'umd':
-			return minify(UglifyJS, {content, filename, module, filepath})
 		case 'esm':
 			return minify(UglifyES, {content, filename, module, filepath})
+		default:
+			return minify(UglifyJS, {content, filename, module, filepath})
 	}
 }
 
@@ -244,12 +272,14 @@ const resolve = () => {
 	bundle('umd', umd, '../../dist/')
 	bundle('esm', esm, '../../dist/')
 	bundle('node', node, '../../dist/')
+	bundle('bridge', bridge, '../../dist/')
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled:\n'+
 		'\n – '+filenames.umd+
 		'\n – '+filenames.esm+
 		'\n – '+filenames.node+
+		'\n – '+filenames.bridge+
 		'\x1b[0m\n'
 	)
 }

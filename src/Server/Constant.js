@@ -9,5 +9,5 @@ Object.defineProperties(Element.prototype, {
 	toStream: {value: toStream}
 })
 
-this.renderToString = renderToString
-this.renderToNodeStream = renderToNodeStream
+exports.renderToString = renderToString
+exports.renderToNodeStream = renderToNodeStream

@@ -1,6 +1,6 @@
 /*! DIO 8.0.0 @license MIT */
 
-module.exports = function (Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription) {'use strict'/* eslint-disable */
+module.exports = function (exports, Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription) {'use strict'/* eslint-disable */
 
 var SharedElementPromise = -3
 var SharedElementFragment = -2
@@ -136,8 +136,8 @@ Object.defineProperties(Element.prototype, {
 	toStream: {value: toStream}
 })
 
-this.renderToString = renderToString
-this.renderToNodeStream = renderToNodeStream
+exports.renderToString = renderToString
+exports.renderToNodeStream = renderToNodeStream
 
 /**
  * @return {string}
