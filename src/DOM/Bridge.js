@@ -26,6 +26,4 @@ function createDOMBridge (renderer) {
 	removeDOMNode = renderer.removeDOMNode || noop
 	insertDOMNode = renderer.insertDOMNode || noop
 	appendDOMNode = renderer.appendDOMNode || noop
-
-	return this
 }
