@@ -364,6 +364,38 @@ describe('Component', () => {
 		assert.html(container, '1')
 	})
 
+	it('should update PureComponent with -0', () => {
+		let container = document.createElement('div')
+		let A = class extends PureComponent {
+			render () {
+				return ++counter
+			}
+		}
+
+		let counter = 0
+
+		render(h(A, {children: 0}), container)
+		render(h(A, {children: -0}), container)
+
+		assert.html(container, '2')
+	})
+
+	it('should not update PureComponent with NaN', () => {
+		let container = document.createElement('div')
+		let A = class extends PureComponent {
+			render () {
+				return ++counter
+			}
+		}
+
+		let counter = 0
+
+		render(h(A, {children: NaN}), container)
+		render(h(A, {children: NaN}), container)
+
+		assert.html(container, '1')
+	})
+
 	it('should update component props', () => {
 		let container = document.createElement('div')
 		let stack = []
@@ -1193,5 +1225,84 @@ describe('Component', () => {
 				<div>B</div>
 			</div>
 		`)
+	})
+
+	it('should replace async mount before resolve', (done) => {
+		let container = document.createElement('div')
+		let refs = Promise.resolve(h('h1', 'Hello'))
+
+		render(class {
+			render() {
+				return refs
+			}
+		}, container)
+		render(h('div'), container)
+
+		assert.html(container, '<div></div>')
+		refs.then(() => assert.html(container, '<div></div>')).then(done)
+	})
+
+	it('should call setState(callback)', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidMount() {
+				this.setState({}, () => {
+					stack.push(true)
+				})
+			}
+			render() {
+				return 1
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '1')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should call forceUpdate(callback)', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidMount() {
+				this.forceUpdate(() => {
+					stack.push(true)
+				})
+			}
+			render() {
+				return 1
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '1')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should not call setState(callback)', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidMount() {
+				this.setState({}, 'should not throw')
+			}
+			render() {
+				return 1
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '1')
+			assert.lengthOf(stack, 0)
+			done()
+		})
 	})
 })

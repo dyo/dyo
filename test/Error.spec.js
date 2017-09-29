@@ -389,4 +389,52 @@ describe('Error', () => {
 			done()
 		})
 	})
+
+	it('should handle nested componentWillUnmount errors', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		class A {
+			componentDidCatch(err) {
+				err.preventDefault()
+				this.setState({error: true})
+				stack.push('componentDidCatch')
+			}
+			componentWillUnmount() {
+				stack.push('A componentWillUnmount')
+			}
+			render(props) {
+				return class B {
+					componentWillUnmount() {
+						stack.push('B componentWillUnmount')
+						throw new Error('Error!')
+					}
+					render() {
+						return class C {
+							componentWillUnmount() {
+								stack.push('C componentWillUnmount')
+								throw new Error('Error!')
+							}
+							render() {
+								return h('h1', 'Hello')
+							}
+						}
+					}
+				}
+			}
+		}
+
+		render(A, container)
+		render(null, container)
+
+		assert.html(container, '')
+		assert.deepEqual(stack, [
+			'C componentWillUnmount',
+			'componentDidCatch',
+			'B componentWillUnmount',
+			'componentDidCatch',
+			'A componentWillUnmount'
+		])
+		done()
+	})
 })

@@ -90,6 +90,22 @@ describe('Hydrate', () => {
 		assert.html(container, '<div id="1"><span></span></div>')
 	})
 
+	it('should not repair correct properties', () => {
+		let container = document.createElement('div')
+		container.innerHTML = `<div id="1"><span></span></div>`
+
+		hydrate(h('div', {id: 1}, [undefined, h('span')]), container)
+		assert.html(container, '<div id="1"><span></span></div>')
+	})
+
+	it('should not repair correct camleCase attributes', () => {
+		let container = document.createElement('div')
+		container.innerHTML = `<video autoplay=""><video>`
+
+		hydrate(h('video', {autoPlay: true}), container)
+		assert.html(container, '<video autoplay=""></video>')
+	})
+
 	it('should remove incorrect in-between elements', () => {
 		let container = document.createElement('div')
 		container.innerHTML = '<div><div>xxx</div></div>'
@@ -181,5 +197,15 @@ describe('Hydrate', () => {
 		  writable: true,
 		  value: documentElement
 		})
+	})
+
+	it('should hydrate an empty string element', () => {
+		let container = document.createElement('div')
+		container.innerHTML = '<span></span>'
+
+		hydrate('', container)
+		assert.html(container, '')
+		assert.lengthOf(container.childNodes, 1)
+		assert.equal(container.firstChild.nodeType, 3)
 	})
 })

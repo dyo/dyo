@@ -14,6 +14,7 @@ function factory (window, require, define) {
 	var SharedElementNode = 2
 	var SharedElementText = 3
 	var SharedElementEmpty = 4
+	var SharedElementContainer = 5
 	
 	var SharedReferenceRemove = -1
 	var SharedReferenceAssign = 0
@@ -31,8 +32,8 @@ function factory (window, require, define) {
 	var SharedMountInsert = 4
 	
 	var SharedWorkMounting = -1
-	var SharedWorkUpdating = 0
-	var SharedWorkIdle = 1
+	var SharedWorkIdle = 0
+	var SharedWorkProcessing = 1
 	
 	var SharedErrorPassive = -2
 	var SharedErrorActive = -1
@@ -305,10 +306,11 @@ function factory (window, require, define) {
 	}
 	
 	/**
+	 * @param {number} id
 	 * @return {Element}
 	 */
-	function createElementDescription () {
-		return new Element(SharedElementIntermediate)	
+	function createElementDescription (id) {
+		return new Element(id)
 	}
 	
 	/**
@@ -354,7 +356,7 @@ function factory (window, require, define) {
 	
 		if (isValidElement(iterable))
 			setElementChildren(children, iterable, i)
-		else if (isArray(iterable))
+		else
 			for (; i < iterable.length; ++i)
 				setElementChildren(children, iterable[i], i)				
 	
@@ -595,20 +597,6 @@ function factory (window, require, define) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} 
-	 */
-	function getElementParent (element) {
-		if (element.id < SharedElementPortal)
-			return getElementParent(element.parent)
-	
-		if (element.id === SharedElementPortal)
-			return getElementPortal(createElementDescription(), element)
-		else
-			return element
-	}
-	
-	/**
-	 * @param {Element} element
 	 * @param {Element} parent
 	 * @param {string} direction
 	 * @return {Element}
@@ -626,18 +614,18 @@ function factory (window, require, define) {
 		if (parent.id < SharedElementIntermediate)
 			return getElementSibling(parent, parent.parent, direction)
 	
-		return createElementDescription()
+		return createElementDescription(SharedElementIntermediate)
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @return {Element}
+	 * @param {Element} 
 	 */
-	function getElementChildren (element) {
-		if (element.id === SharedElementComponent)
-			return element.children
-		else
-			return element
+	function getElementParent (element) {
+		if (element.id < SharedElementPortal)
+			return getElementParent(element.parent)
+	
+		return element
 	}
 	
 	/**
@@ -648,8 +636,8 @@ function factory (window, require, define) {
 	function getElementBoundary (element, direction) {
 		if (element.id < SharedElementIntermediate)
 			return getElementBoundary(element.children[direction])
-		else
-			return element
+	
+		return element
 	}
 	
 	/**
@@ -659,8 +647,8 @@ function factory (window, require, define) {
 	function getElementDescription (element) {
 		if (element.id === SharedElementComponent)
 			return getElementDescription(element.children)
-		else
-			return element
+	
+		return element
 	}
 	
 	/**
@@ -682,15 +670,6 @@ function factory (window, require, define) {
 			default:
 				return createElementBranch(element, SharedTypeKey)
 		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} parent
-	 * @return {Element}
-	 */
-	function getElementPortal (element, parent) {
-		return (setDOMNode(element, getDOMPortal(parent)), element)
 	}
 	
 	/**
@@ -822,7 +801,7 @@ function factory (window, require, define) {
 		if (element.work !== SharedWorkIdle)
 			return requestAnimationFrame(enqueuePendingUpdate(element, snapshot, signature))
 	
-		element.work = SharedWorkUpdating
+		element.work = SharedWorkProcessing
 	
 		var instance = element.instance
 		var owner = element.owner
@@ -888,20 +867,14 @@ function factory (window, require, define) {
 				enqueueComponentUpdate(instance[SymbolElement], instance, callback, signature)
 			})
 	
-		switch (element.work) {
-			case SharedWorkMounting:
-				if (!element.active)
-					if (signature === SharedComponentStateUpdate)
-						if (instance.state = assign({}, instance.state, element.state))
-							break
-			case SharedWorkUpdating:
-				return void requestAnimationFrame(function () {
-					if (element.id === SharedElementComponent)
-						enqueueComponentUpdate(element, instance, callback, signature)
-				})
-		}
+		if (element.work === SharedWorkProcessing)
+			return void requestAnimationFrame(function () {
+				enqueueComponentUpdate(element, instance, callback, signature)
+			})
 	
-		if (element.active)
+		if (!element.active)
+			instance.state = assign({}, instance.state, element.state)
+		else if (element.id === SharedElementComponent)
 			updateComponent(element, element, signature)
 	
 		if (callback)
@@ -940,7 +913,7 @@ function factory (window, require, define) {
 			case Function:
 				return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 			default:
-				element.state = state			
+				element.state = state
 		}
 	
 		enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
@@ -1017,7 +990,7 @@ function factory (window, require, define) {
 	 * @return {Object?}
 	 */
 	function getComponentContext (element) {
-		return getLifecycleData(element, SharedGetChildContext) || element.context || {}
+		return getLifecycleData(element, SharedGetChildContext) || element.context
 	}
 	
 	/**
@@ -1043,7 +1016,7 @@ function factory (window, require, define) {
 	 */
 	function getLifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, element.active && findDOMNode(element))
+			var state = element.owner[name].call(element.instance, element.active && element.DOM.node)
 			
 			if (name !== SharedComponentWillUnmount)
 				getLifecycleReturn(element, state)
@@ -1122,12 +1095,10 @@ function factory (window, require, define) {
 	 * @param {Element} element
 	 */
 	function setComponentReference (value, key, element) {
-		if (this.refs) {
-			if (key !== element.ref)
-				delete this.refs[element.ref]
+		if (key !== element.ref)
+			delete this.refs[element.ref]
 	
-			this.refs[key] = value
-		}
+		this.refs[key] = value
 	}
 	
 	/**
@@ -1178,9 +1149,9 @@ function factory (window, require, define) {
 				return
 			case SharedElementPromise:
 				commitWillReconcile(element, element)
-			case SharedElementFragment:
 			case SharedElementPortal:
-				setDOMNode(element, getDOMNode(parent))
+			case SharedElementFragment:
+				commitNode(element, element.id !== SharedElementPortal ? parent.DOM.node : getDOMPortal(element))
 				commitChildren(element, sibling, host, operation, signature)
 				commitCreate(element)
 				return
@@ -1222,9 +1193,8 @@ function factory (window, require, define) {
 			case SharedElementEmpty:
 				break
 			case SharedElementPortal:
-				if (signature < SharedElementIntermediate)
-					if (parent.id > SharedElementIntermediate)
-						commitRemove(element, parent)
+				if (signature < SharedElementIntermediate && parent.id > SharedElementIntermediate)
+					commitRemove(element, parent)
 			default:
 				var children = element.children
 				var length = children.length
@@ -1248,11 +1218,11 @@ function factory (window, require, define) {
 	
 		if (element.id !== SharedElementComponent)
 			return commitRemove(element, parent)
-	
+		
 		if (element.state)
 			return element.state = void element.state
-				.then(commitWillUnmount(element, parent, SharedErrorActive))
-				.catch(commitWillUnmount(element, parent, SharedErrorPassive))
+				.then(commitWillUnmount(element, parent, element, SharedErrorPassive))
+				.catch(commitWillUnmount(element, parent, element, SharedErrorActive))
 	
 		commitUnmount(element.children, parent, SharedElementIntermediate)
 	}
@@ -1260,24 +1230,22 @@ function factory (window, require, define) {
 	/**
 	 * @param {Element} element
 	 * @param {Element} parent
+	 * @param {Element} host
 	 * @param {number} signature
 	 * @return {function}
 	 */
-	function commitWillUnmount (element, parent, signature) {
-		if (signature === SharedErrorPassive)
-			element.host = createElementImmutable(element.host)
+	function commitWillUnmount (element, parent, host, signature) {
+		if (element.id === SharedElementComponent)
+			return commitWillUnmount(element.children, parent, merge({}, host), signature)
 	
-		if (element.id !== SharedElementComponent)	
-			return function (err) {
-				commitUnmount(element, parent, SharedMountRemove)
+		commitNode(element, host.DOM.node)
 	
-				if (signature === SharedErrorPassive)
-					invokeErrorBoundary(element.host, err, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
-			}
+		return function (err) {
+			commitUnmount(element, parent, SharedMountRemove)
 	
-		setDOMNode(element.children, getDOMNode(element))
-	
-		return commitWillUnmount(element.children, parent, signature)
+			if (signature === SharedErrorActive)
+				invokeErrorBoundary(element.host, err, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
+		}
 	}
 	
 	/**
@@ -1287,10 +1255,7 @@ function factory (window, require, define) {
 	function commitWillReconcile (element, snapshot) {
 		snapshot.type.then(function (value) {
 			if (element.active)
-				if (element.id === SharedElementPromise)
-					reconcileChildren(element, createElementFragment(getElementDefinition(value)))
-				else
-					reconcileElement(element, getElementDefinition(value))
+				reconcileChildren(element, createElementFragment(getElementDefinition(value)))
 		}).catch(function (err) {
 			invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 		})
@@ -1320,21 +1285,6 @@ function factory (window, require, define) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} snapshot
-	 * @param {Element}
-	 */
-	function commitRebase (element, snapshot) {
-		return assign(element, snapshot, {
-			key: element.key, 
-			prev: element.prev, 
-			next: element.next,
-			host: element.host,
-			parent: element.parent
-		})
-	}
-	
-	/**
-	 * @param {Element} element
 	 * @param {(function|string)?} callback
 	 * @param {number} signature
 	 * @param {*} key
@@ -1353,7 +1303,7 @@ function factory (window, require, define) {
 					case SharedReferenceAssign:
 						element.ref = callback
 					case SharedReferenceDispatch:
-						return getLifecycleCallback(element.host, callback, element.instance || getDOMNode(element), key, element)
+						return getLifecycleCallback(element.host, callback, element.instance || element.DOM.node, key, element)
 					case SharedReferenceReplace:
 						commitReference(element, callback, SharedReferenceRemove, key)
 						commitReference(element, callback, SharedReferenceAssign, key)
@@ -1408,15 +1358,17 @@ function factory (window, require, define) {
 		try {
 			switch (element.active = true, element.id) {
 				case SharedElementNode:
-					return setDOMNode(element, createDOMElement(element))
+					return commitNode(element, createDOMElement(element))
 				case SharedElementText:
-					return setDOMNode(element, createDOMText(element))
+					return commitNode(element, createDOMText(element))
 				case SharedElementEmpty:
-					return setDOMNode(element, createDOMEmpty(element))
+					return commitNode(element, createDOMEmpty(element))
 				case SharedElementComponent:
-					return setDOMNode(element, getDOMNode(element.children))
+					element.DOM = element.children.DOM
+				case SharedElementPortal:
+					break
 				default:
-					setDOMNode(element, getDOMNode(getElementBoundary(element, SharedSiblingNext)))
+					element.DOM = getElementBoundary(element, SharedSiblingNext).DOM
 			}
 		} catch (err) {
 			return commitCreate(commitRebase(element, invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)))
@@ -1425,27 +1377,57 @@ function factory (window, require, define) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} parent
-	 * @return {boolean}
+	 * @param {Element} snapshot
+	 * @param {Element}
 	 */
-	function commitQuery (element, parent) {	
-		if (element.active = true)
-			setDOMNode(
-				element, 
-				getDOMQuery(
-					element,
-					parent,
-					getElementSibling(element, parent, SharedSiblingPrevious),
-					getElementSibling(element, parent, SharedSiblingNext)
-				)
-			)
-	
-		return !!getDOMNode(element)
+	function commitRebase (element, snapshot) {
+		return assign(element, snapshot, {
+			key: element.key, 
+			prev: element.prev, 
+			next: element.next,
+			host: element.host,
+			parent: element.parent
+		})
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @param {(string|number)} value
+	 * @param {Element} parent
+	 * @return {boolean}
+	 */
+	function commitQuery (element, parent) {		
+		commitNode(
+			element, 
+			getDOMQuery(
+				element,
+				parent,
+				getElementSibling(element, parent, SharedSiblingPrevious),
+				getElementSibling(element, parent, SharedSiblingNext)
+			)
+		)
+	
+		return element.active = !!element.DOM.node
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Object} node
+	 */
+	function commitNode (element, node) {
+		element.DOM = {node: node}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {*}
+	 */
+	function commitContent (element, value) {
+		setDOMContent(element, value)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} value
 	 */
 	function commitValue (element, value) {
 		setDOMValue(element, value)
@@ -1456,7 +1438,7 @@ function factory (window, require, define) {
 	 * @param {Element} parent
 	 */
 	function commitRemove (element, parent) {
-		if (parent.id < SharedElementIntermediate)
+		if (parent.id < SharedElementPortal)
 			return commitRemove(element, getElementParent(parent))
 	
 		if (element.id > SharedElementIntermediate)
@@ -1474,12 +1456,13 @@ function factory (window, require, define) {
 	 */
 	function commitInsert (element, sibling, parent) {
 		if (parent.id < SharedElementIntermediate)
-			if (parent.id !== SharedElementPortal || sibling.parent === parent)
+			if (parent.id < SharedElementPortal)
 				return commitInsert(element, sibling, getElementParent(parent))
-			else if (!parent.active)
-				return commitAppend(element, getElementParent(parent))
-			else
-				return
+			else if (parent !== sibling.parent)
+				if (!parent.active)
+					return commitAppend(element, parent)
+				else
+					return
 	
 		switch (sibling.id) {
 			case SharedElementComponent:
@@ -1512,7 +1495,7 @@ function factory (window, require, define) {
 		if (parent.id < SharedElementIntermediate)
 			if (parent.active)
 				return commitInsert(element, getElementBoundary(parent, SharedSiblingPrevious), parent)
-			else
+			else if (parent.id < SharedElementPortal)
 				return commitAppend(element, getElementParent(parent))
 	
 		switch (element.id) {
@@ -1549,12 +1532,11 @@ function factory (window, require, define) {
 			var next = nextObject[key]
 			var prev = prevObject[key]
 	
-			if (next !== prev) {
+			if (next !== prev)
 				if (typeof next !== 'object' || next === null)
 					delta[(length++, key)] = next
 				else if (next = reconcileObject(prev || {}, next))
 					delta[(length++, key)] = next
-			}
 		}
 	
 		if (length > 0)
@@ -1723,9 +1705,8 @@ function factory (window, require, define) {
 					commitInsert(children.insert(children.remove(oldNext), oldChild), oldChild, element)
 	
 				reconcileElement(oldNext, newChild)
-				
-				if (delete oldPool[newHash])
-					oldSize--
+	
+				delete oldPool[(oldSize--, newHash)]
 			} else if (oldChild === children)
 				commitMount(children.insert(newChild, oldChild), newChild, element, host, SharedMountAppend, SharedMountCommit)
 			else
@@ -1797,26 +1778,28 @@ function factory (window, require, define) {
 	 * @return {Element?}
 	 */
 	function getErrorElement (element, error, from, signature) {
-		if (signature === SharedErrorPassive || !isValidElement(element) || !element.id === SharedElementEmpty)
+		if (signature === SharedErrorPassive)
 			return reportErrorException(error)
 	
-		var boundary = element.owner && !!element.owner[SharedComponentDidCatch] 
 		var host = element.host
 		var time = element.time
+		var caught = false
 	
 		requestAnimationFrame(function () {
 			if (element.active)
 				recoverErrorBoundary(element, getElementDefinition(null))
 		})
 	
-		if (boundary)
-			if (boundary = (element.time = Date.now()) - time > 16) {
-				element.work = SharedWorkUpdating
-				getLifecycleBoundary(element, SharedComponentDidCatch, error, error)
-				element.work = SharedWorkIdle
-			}
+		if (caught = (element.owner && element.owner[SharedComponentDidCatch])) {
+			element.work = SharedWorkProcessing
+			getLifecycleBoundary(element, SharedComponentDidCatch, error, error)
+			element.work = SharedWorkIdle
+		}
 	
-		return getErrorElement(!boundary && host, error, from, signature)
+		if (!caught && isValidElement(host) && element.id !== SharedElementContainer)
+			return getErrorElement(host, error, from, signature)
+	
+		return getErrorElement(element, error, from, SharedErrorPassive)
 	}
 	
 	/**
@@ -1824,7 +1807,7 @@ function factory (window, require, define) {
 	 * @param {Element} snapshot
 	 */
 	function recoverErrorBoundary (element, snapshot) {
-		reconcileElement(getElementChildren(element), getElementDefinition(snapshot))
+		reconcileElement(element.id === SharedElementComponent ? element.children : element, snapshot)
 	}
 	
 	/**
@@ -1910,6 +1893,8 @@ function factory (window, require, define) {
 			})
 		else if (typeof children[SymbolIterator] === 'function')
 			return childrenArray(children[SymbolIterator]())
+		else
+			array.push(children)
 	
 		return flatten(array, [])
 	}
@@ -1957,29 +1942,29 @@ function factory (window, require, define) {
 	
 	/**
 	 * @param {*} element
-	 * @param {Node} target
+	 * @param {Node} container
 	 * @param {function=} callback
 	 */
-	function render (element, target, callback) {	
-		if (!target)
+	function render (element, container, callback) {	
+		if (!container)
 			return render(element, getDOMDocument(), callback)
 	
-		if (root.has(target))
-			update(root.get(target), getElementDefinition(element), callback)
+		if (root.has(container))
+			update(root.get(container), getElementDefinition(element), callback)
 		else
-			mount(element, null, target, callback, SharedMountCommit)
+			mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountCommit)
 	}
 	
 	/**
 	 * @param {*} element
-	 * @param {Node} target
+	 * @param {Node} container
 	 * @param {function=} callback
 	 */
-	function hydrate (element, target, callback) {
-		if (!target)
+	function hydrate (element, container, callback) {
+		if (!container)
 			return hydrate(element, getDOMDocument(), callback)
-		
-		mount(element, null, target, callback, SharedMountQuery)
+	
+		mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountQuery)
 	}
 	
 	/**
@@ -1996,25 +1981,24 @@ function factory (window, require, define) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element?} parent
-	 * @param {Node} target
+	 * @param {Element} parent
+	 * @param {Node} container
 	 * @param {function} callback
 	 * @param {number} signature
 	 */
-	function mount (element, parent, target, callback, signature) {
-		if (parent === null)
-			return mount(element, createElementDescription(), target, callback, signature)
-	
+	function mount (element, parent, container, callback, signature) {
 		if (!isValidElement(element))
-			return mount(getElementDefinition(element), parent, target, callback, signature)
+			return mount(getElementDefinition(element), parent, container, callback, signature)
 	
-		if (!isValidDOMNode(target))
+		if (!isValidDOMNode(container))
 			invariant(SharedSiteRender, 'Target container is not a DOM element')
 	
-		root.set((setDOMNode(parent, target), target), element)
+		commitNode(parent, container)
+		
+		root.set(container, element)
 	
 		if (signature === SharedMountCommit)
-			setDOMContent(parent)
+			commitContent(parent, null)
 		
 		commitMount(element, element, parent, parent, SharedMountAppend, signature)	
 	
@@ -2023,26 +2007,19 @@ function factory (window, require, define) {
 	}
 	
 	/**
-	 * @param {Node} target
+	 * @param {Node} container
 	 * @return {boolean}
 	 */
-	function unmountComponentAtNode (target) {
-		return root.has(target) && !render(null, target)
-	}
-	
-	/**
-	 * @param {Element} eleemnt
-	 * @param {Node} target
-	 */
-	function setDOMNode (element, target) {
-		element.DOM = {target: target}
+	function unmountComponentAtNode (container) {
+		return root.has(container) && !render(null, container)
 	}
 	
 	/**
 	 * @param {Element} element
+	 * @param {*}
 	 */
-	function setDOMContent (element) {
-		getDOMNode(element).textContent = ''
+	function setDOMContent (element, value) {
+		getDOMNode(element).textContent = value
 	}
 	
 	/**
@@ -2137,10 +2114,8 @@ function factory (window, require, define) {
 			case 'xlink:href':
 				return setDOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
 			case 'dangerouslySetInnerHTML':
-				return setDOMProperties(element, 'innerHTML', value ? value.__html : '', '')
+				return setDOMInnerHTML(element, value ? value.__html : null, [])
 			case 'innerHTML':
-				if (getDOMNode(element)[name] !== value)
-					setDOMProperty(element, name, value)
 				return
 			case 'acceptCharset':
 				return setDOMProperties(element, 'accept-charset', value, xmlns)
@@ -2165,6 +2140,25 @@ function factory (window, require, define) {
 		}
 	
 		setDOMAttribute(element, name, value, '')
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {*} value
+	 * @param {Array} nodes
+	 */
+	function setDOMInnerHTML (element, value, nodes) {
+		if (getDOMNode(element).innerHTML)
+			element.children.forEach(function (children) {
+				nodes.push(getDOMNode(children))
+			})
+	
+		if (getDOMNode(element).innerHTML = value != null ? value : '')
+			nodes.push.apply(nodes, getDOMNode(element).childNodes)
+	
+		nodes.forEach(function (node) {
+			getDOMNode(element).appendChild(node)
+		})
 	}
 	
 	/**
@@ -2209,7 +2203,7 @@ function factory (window, require, define) {
 	 * @return {Node}
 	 */
 	function getDOMNode (element) {
-		return element.DOM.target
+		return element.DOM.node
 	}
 	
 	/**
@@ -2251,13 +2245,13 @@ function factory (window, require, define) {
 					break
 			}
 	
-			if (id > SharedElementNode && (length === 0 || xmlns === type)) {
-				if (target.parentNode.insertBefore((node = createDOMText(element)), target)) {				
-					if (next.type)
-						break
-					else
-						type = null
-				}
+			if (id > SharedElementNode && length === 0) {
+				target.parentNode.insertBefore((node = createDOMText(element)), target)
+				
+				if (!next.type)				
+					type = null
+				else
+					break
 			}
 	
 			target = (sibling = target).nextSibling
@@ -2268,8 +2262,9 @@ function factory (window, require, define) {
 			for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i) {
 				var attr = attributes[i]
 				var name = attr.name
+				var value = props[name] + ''
 	
-				if (attr.value !== props[name] + '')
+				if (attr.value !== value && attr.value !== value.toLowerCase())
 					node.removeAttribute(name)
 			}
 	
@@ -2401,22 +2396,20 @@ function factory (window, require, define) {
 		require(define)(exports, Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription)
 	
 	return exports
-	
 }
 
 var temp
 
+/* istanbul ignore next */
 if (typeof exports === 'object' && typeof module !== 'undefined')
 	module.exports = factory(global, typeof __webpack_require__ === 'undefined' && require, './node.js')
-/* istanbul ignore next */
 else if (typeof define === 'function' && define.amd)
 	define(temp = factory(global, false, ''))
-/* istanbul ignore next */
 else
 	temp = factory(global, false, '')
 
 return temp
-})(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))
+})(/* istanbul ignore next */typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))
 
 export default dio
 export const version = dio.version 

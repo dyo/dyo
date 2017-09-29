@@ -6,6 +6,7 @@ var SharedElementComponent = 1
 var SharedElementNode = 2
 var SharedElementText = 3
 var SharedElementEmpty = 4
+var SharedElementContainer = 5
 
 var SharedReferenceRemove = -1
 var SharedReferenceAssign = 0
@@ -23,8 +24,8 @@ var SharedMountAppend = 3
 var SharedMountInsert = 4
 
 var SharedWorkMounting = -1
-var SharedWorkUpdating = 0
-var SharedWorkIdle = 1
+var SharedWorkIdle = 0
+var SharedWorkProcessing = 1
 
 var SharedErrorPassive = -2
 var SharedErrorActive = -1

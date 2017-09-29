@@ -46,17 +46,22 @@ describe('Render', () => {
 
 	it('should render style objects', () => {
 		render(h('h1', {style: {width: '100px'}}, '0'), container)
-		assert.equal(container.firstChild.style.width, '100px', 'render element style object')
+		assert.equal(container.firstChild.style.width, '100px')
 	})
 
 	it('should render style strings', () => {
 		render(h('h1', {style: 'width:100px'}, '0'), container)
-		assert.equal(container.firstChild.style.width, '100px', 'render element style string')
+		assert.equal(container.firstChild.style.width, '100px')
+	})
+
+	it('should render width attribute', () => {
+		render(h('div', {width: '100px'}), container)
+		assert.equal(container.firstChild.getAttribute('width'), '100px')
 	})
 
 	it('should render img width', () => {
 		render(h('img', {width: '100px'}), container)
-		assert.equal(container.firstChild.getAttribute('width'), '100px', 'render element img width')
+		assert.equal(container.firstChild.getAttribute('width'), '100px')
 	})
 
 	it('should render un-ordered input attributes', () => {
@@ -79,14 +84,18 @@ describe('Render', () => {
 	})
 
 	it('should render a iteratable', () => {
-		render(() => ({
+		let iteratable = {
 			[Symbol.iterator]: function* () {
 		    yield 1
 		    yield 2
 		    yield 3
 			}
-		}), container)
+		}
+		render(() => iteratable, container)
 		assert.html(container, '123')
+
+		render(h('div', iteratable), container)
+		assert.html(container, '<div>123</div>')
 	})
 
 	it('should render a array', () => {
@@ -254,6 +263,11 @@ describe('Render', () => {
 	})
 
 	it('should render camel case styles', () => {
+		render(h('div', {style: {WebkitTransform: 'scale(2)'}}), container)
+		assert.equal(container.firstChild.style.WebkitTransform, 'scale(2)')
+	})
+
+	it('should render dash case styles', () => {
 		render(h('div', {style: {'-webkit-transform': 'scale(2)'}}), container)
 		assert.equal(container.firstChild.style.WebkitTransform, 'scale(2)')
 	})
@@ -263,6 +277,13 @@ describe('Render', () => {
 		render(h('div', {style: {color: 'blue'}}), container)
 
 		assert.equal(container.firstChild.style.color, 'blue')
+	})
+
+	it('should render and not update styles', () => {
+		render(h('div', {style: {color: 'red'}}), container)
+		render(h('div', {style: {color: 'red'}}), container)
+
+		assert.equal(container.firstChild.style.color, 'red')
 	})
 
 	it('should not render to an invalid container', () => {
@@ -289,6 +310,10 @@ describe('Render', () => {
 			stack.push(refs = this)
 		})
 
+		assert.doesNotThrow(() => {
+			render(h(A), container, 'not a function')
+		})
+
 		assert.html(container, '1')
 		assert.notEqual(refs, null)
 		assert.instanceOf(refs, A)
@@ -311,5 +336,71 @@ describe('Render', () => {
 		], container)
 
 		assert.equal(document.activeElement, refs)
+	})
+
+	it('should render dangerouslySetInnerHTML with children', () => {
+		let container = document.createElement('div')
+
+		render(
+			h('div', {dangerouslySetInnerHTML: {__html: '<span>X</span><span>Y</span>'}},
+				h('h1', 1),
+				h('h1', 2)
+			),
+			container
+		)
+
+		assert.html(container, `
+			<div>
+				<h1>1</h1>
+				<h1>2</h1>
+				<span>X</span>
+				<span>Y</span>
+			</div>
+		`)
+
+		render(
+			h('div', 
+				h('h1', 1),
+				h('h1', 2)
+			),
+			container
+		)
+
+		assert.html(container, `
+			<div>
+				<h1>1</h1>
+				<h1>2</h1>
+			</div>
+		`)
+	})
+
+	it('should not set innerHTML directly', () => {
+		let container = document.createElement('div')
+
+		render(
+			h('div', {innerHTML: '<span>X</span><span>Y</span>'}),
+			container
+		)
+
+		assert.html(container, `<div></div>`)
+	})
+
+	it('should remove undefine styles', () => {
+		let container = document.createElement('div')
+
+		render(h('div', {style: {color: 'red'}}), container)
+		assert.html(container, '<div style="color: red;"></div>')
+
+		render(h('div', {style: {color: undefined}}), container)
+		assert.html(container, `<div style=""></div>`)
+	})
+
+	it('should handle undefined refs', () => {
+		let container = document.createElement('div')
+
+		assert.doesNotThrow(() => {
+			render(h('div', {ref: null}), container)
+			render(h('div', {ref: undefined}), container)
+		})
 	})
 })

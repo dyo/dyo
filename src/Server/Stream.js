@@ -103,10 +103,8 @@ function readStreamElement (element, host, stack, readable) {
 			if (isVoidType(element.type))
 				return writeStreamElement(output, readable)
 			
-			if (element.DOM)
-				output += element.DOM
+			element.DOM = (element.DOM || '') + '</' + element.type + '>'
 
-			element.DOM = '</' + element.type + '>'
 			stack.push(element)
 		default:
 			var length = children.length

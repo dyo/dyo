@@ -1,16 +1,9 @@
 /**
- * @param {Element} eleemnt
- * @param {Node} target
- */
-function setDOMNode (element, target) {
-	element.DOM = {target: target}
-}
-
-/**
  * @param {Element} element
+ * @param {*}
  */
-function setDOMContent (element) {
-	getDOMNode(element).textContent = ''
+function setDOMContent (element, value) {
+	getDOMNode(element).textContent = value
 }
 
 /**
@@ -105,10 +98,8 @@ function setDOMProperties (element, name, value, xmlns) {
 		case 'xlink:href':
 			return setDOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
 		case 'dangerouslySetInnerHTML':
-			return setDOMProperties(element, 'innerHTML', value ? value.__html : '', '')
+			return setDOMInnerHTML(element, value ? value.__html : null, [])
 		case 'innerHTML':
-			if (getDOMNode(element)[name] !== value)
-				setDOMProperty(element, name, value)
 			return
 		case 'acceptCharset':
 			return setDOMProperties(element, 'accept-charset', value, xmlns)
@@ -133,6 +124,25 @@ function setDOMProperties (element, name, value, xmlns) {
 	}
 
 	setDOMAttribute(element, name, value, '')
+}
+
+/**
+ * @param {Element} element
+ * @param {*} value
+ * @param {Array} nodes
+ */
+function setDOMInnerHTML (element, value, nodes) {
+	if (getDOMNode(element).innerHTML)
+		element.children.forEach(function (children) {
+			nodes.push(getDOMNode(children))
+		})
+
+	if (getDOMNode(element).innerHTML = value != null ? value : '')
+		nodes.push.apply(nodes, getDOMNode(element).childNodes)
+
+	nodes.forEach(function (node) {
+		getDOMNode(element).appendChild(node)
+	})
 }
 
 /**
@@ -177,7 +187,7 @@ function getDOMProps (element) {
  * @return {Node}
  */
 function getDOMNode (element) {
-	return element.DOM.target
+	return element.DOM.node
 }
 
 /**
@@ -219,13 +229,13 @@ function getDOMQuery (element, parent, previous, next) {
 				break
 		}
 
-		if (id > SharedElementNode && (length === 0 || xmlns === type)) {
-			if (target.parentNode.insertBefore((node = createDOMText(element)), target)) {				
-				if (next.type)
-					break
-				else
-					type = null
-			}
+		if (id > SharedElementNode && length === 0) {
+			target.parentNode.insertBefore((node = createDOMText(element)), target)
+			
+			if (!next.type)				
+				type = null
+			else
+				break
 		}
 
 		target = (sibling = target).nextSibling
@@ -236,8 +246,9 @@ function getDOMQuery (element, parent, previous, next) {
 		for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i) {
 			var attr = attributes[i]
 			var name = attr.name
+			var value = props[name] + ''
 
-			if (attr.value !== props[name] + '')
+			if (attr.value !== value && attr.value !== value.toLowerCase())
 				node.removeAttribute(name)
 		}
 

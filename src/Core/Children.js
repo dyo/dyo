@@ -28,6 +28,8 @@ function childrenArray (children) {
 		})
 	else if (typeof children[SymbolIterator] === 'function')
 		return childrenArray(children[SymbolIterator]())
+	else
+		array.push(children)
 
 	return flatten(array, [])
 }

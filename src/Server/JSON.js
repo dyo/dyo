@@ -23,8 +23,7 @@ function toJSON () {
 		output.children.push((children = children.next).toJSON())
 
 	if (element.id < SharedElementIntermediate)
-		if (output = output.children)
-			output.pop()
+		(output = output.children).pop()
 
 	return output
 }

@@ -4,9 +4,9 @@
   "license": "MIT",
   "description": "A Library For Building User Interfaces.",
   "homepage": "https://github.com/thysultan/dio.js",
-  "main": "dist/dio.umd.js",
-  "module": "dist/dio.esm.js",
-  "types": "types/dio.d.ts",
+  "main": "dist/umd.js",
+  "module": "dist/esm.js",
+  "types": "types/typescript.d.ts",
   "files": [
     "dist",
     "types/dio.d.ts"
@@ -27,6 +27,7 @@
     "build": "node ./script/build --bundle",
     "test": "nyc mocha --require script/test/index.js",
     "test:dev": "mocha --require script/test/index.js --watch",
+    "test:debug": "mocha --require script/test/index.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "nyc": {

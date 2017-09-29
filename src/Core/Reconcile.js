@@ -18,12 +18,11 @@ function reconcileObject (prevObject, nextObject) {
 		var next = nextObject[key]
 		var prev = prevObject[key]
 
-		if (next !== prev) {
+		if (next !== prev)
 			if (typeof next !== 'object' || next === null)
 				delta[(length++, key)] = next
 			else if (next = reconcileObject(prev || {}, next))
 				delta[(length++, key)] = next
-		}
 	}
 
 	if (length > 0)
@@ -192,9 +191,8 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 				commitInsert(children.insert(children.remove(oldNext), oldChild), oldChild, element)
 
 			reconcileElement(oldNext, newChild)
-			
-			if (delete oldPool[newHash])
-				oldSize--
+
+			delete oldPool[(oldSize--, newHash)]
 		} else if (oldChild === children)
 			commitMount(children.insert(newChild, oldChild), newChild, element, host, SharedMountAppend, SharedMountCommit)
 		else

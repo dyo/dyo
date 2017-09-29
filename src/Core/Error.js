@@ -17,26 +17,28 @@ function invokeErrorBoundary (element, err, from, signature) {
  * @return {Element?}
  */
 function getErrorElement (element, error, from, signature) {
-	if (signature === SharedErrorPassive || !isValidElement(element) || !element.id === SharedElementEmpty)
+	if (signature === SharedErrorPassive)
 		return reportErrorException(error)
 
-	var boundary = element.owner && !!element.owner[SharedComponentDidCatch] 
 	var host = element.host
 	var time = element.time
+	var caught = false
 
 	requestAnimationFrame(function () {
 		if (element.active)
 			recoverErrorBoundary(element, getElementDefinition(null))
 	})
 
-	if (boundary)
-		if (boundary = (element.time = Date.now()) - time > 16) {
-			element.work = SharedWorkUpdating
-			getLifecycleBoundary(element, SharedComponentDidCatch, error, error)
-			element.work = SharedWorkIdle
-		}
+	if (caught = (element.owner && element.owner[SharedComponentDidCatch])) {
+		element.work = SharedWorkProcessing
+		getLifecycleBoundary(element, SharedComponentDidCatch, error, error)
+		element.work = SharedWorkIdle
+	}
 
-	return getErrorElement(!boundary && host, error, from, signature)
+	if (!caught && isValidElement(host) && element.id !== SharedElementContainer)
+		return getErrorElement(host, error, from, signature)
+
+	return getErrorElement(element, error, from, SharedErrorPassive)
 }
 
 /**
@@ -44,7 +46,7 @@ function getErrorElement (element, error, from, signature) {
  * @param {Element} snapshot
  */
 function recoverErrorBoundary (element, snapshot) {
-	reconcileElement(getElementChildren(element), getElementDefinition(snapshot))
+	reconcileElement(element.id === SharedElementComponent ? element.children : element, snapshot)
 }
 
 /**

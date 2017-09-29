@@ -92,4 +92,19 @@ describe('Event', () => {
 		assert.include(event, 1)
 		assert.include(event, 1)
 	})
+
+	it('should not trigger invalid event', () => {
+		let container = document.createElement('div')
+		let event = []
+		let refs = null
+		let element = h('div', {onClick: () => event.push(1)})
+
+		render(element, container)
+		render(h('div', {onClick: 'invalid event', ref: (value) => refs = value}), container)
+
+		assert.doesNotThrow(() => {
+			refs.dispatchEvent(new Event('click'))
+			assert.lengthOf(event, 0)
+		})
+	})
 })

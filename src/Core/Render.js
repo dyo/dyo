@@ -1,28 +1,28 @@
 /**
  * @param {*} element
- * @param {Node} target
+ * @param {Node} container
  * @param {function=} callback
  */
-function render (element, target, callback) {	
-	if (!target)
+function render (element, container, callback) {	
+	if (!container)
 		return render(element, getDOMDocument(), callback)
 
-	if (root.has(target))
-		update(root.get(target), getElementDefinition(element), callback)
+	if (root.has(container))
+		update(root.get(container), getElementDefinition(element), callback)
 	else
-		mount(element, null, target, callback, SharedMountCommit)
+		mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountCommit)
 }
 
 /**
  * @param {*} element
- * @param {Node} target
+ * @param {Node} container
  * @param {function=} callback
  */
-function hydrate (element, target, callback) {
-	if (!target)
+function hydrate (element, container, callback) {
+	if (!container)
 		return hydrate(element, getDOMDocument(), callback)
-	
-	mount(element, null, target, callback, SharedMountQuery)
+
+	mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountQuery)
 }
 
 /**
@@ -39,25 +39,24 @@ function update (element, snapshot, callback) {
 
 /**
  * @param {Element} element
- * @param {Element?} parent
- * @param {Node} target
+ * @param {Element} parent
+ * @param {Node} container
  * @param {function} callback
  * @param {number} signature
  */
-function mount (element, parent, target, callback, signature) {
-	if (parent === null)
-		return mount(element, createElementDescription(), target, callback, signature)
-
+function mount (element, parent, container, callback, signature) {
 	if (!isValidElement(element))
-		return mount(getElementDefinition(element), parent, target, callback, signature)
+		return mount(getElementDefinition(element), parent, container, callback, signature)
 
-	if (!isValidDOMNode(target))
+	if (!isValidDOMNode(container))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
 
-	root.set((setDOMNode(parent, target), target), element)
+	commitNode(parent, container)
+	
+	root.set(container, element)
 
 	if (signature === SharedMountCommit)
-		setDOMContent(parent)
+		commitContent(parent, null)
 	
 	commitMount(element, element, parent, parent, SharedMountAppend, signature)	
 
@@ -66,9 +65,9 @@ function mount (element, parent, target, callback, signature) {
 }
 
 /**
- * @param {Node} target
+ * @param {Node} container
  * @return {boolean}
  */
-function unmountComponentAtNode (target) {
-	return root.has(target) && !render(null, target)
+function unmountComponentAtNode (container) {
+	return root.has(container) && !render(null, container)
 }

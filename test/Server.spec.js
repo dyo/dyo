@@ -16,8 +16,20 @@ describe('Server', () => {
 
 	it('should render an element to string', () => {
 		assert.html(
-			h('h1', {className: 'faz', style: {marginTop: '20px'}}, 'Faz'), 
-			`<h1 class="faz" style="margin-top:20px;">Faz</h1>`
+			h('h1', {className: 'faz'}, 'Faz'), 
+			`<h1 class="faz">Faz</h1>`
+		)
+	})
+
+	it('should render an element style(object) to string', () => {
+		assert.html(
+			h('h1', {style: {marginTop: '20px'}}, 'Faz'), 
+			`<h1 style="margin-top:20px;">Faz</h1>`
+		)
+
+		assert.html(
+			h('h1', {style: {color: 'red'}}, 'Faz'), 
+			`<h1 style="color:red;">Faz</h1>`
 		)
 	})
 
@@ -248,6 +260,33 @@ describe('Server', () => {
 		})
 	})
 
+	it('should not set async component state to null', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+		let state = null
+
+		let element = h(class {
+			getInitialState() {
+				return Promise.resolve(null)
+			}
+			render(props, {x}) {
+				state = this.state
+				return h('h1', 'Hello World', x)
+			}
+		})
+		let output = ''
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, '<h1>Hello World</h1>')
+			assert.instanceOf(state, Object)
+			done()
+		})
+	})
+
 	it('should render a component stream to a stream', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
@@ -314,22 +353,6 @@ describe('Server', () => {
 		assert.instanceOf(renderer, Writable)
 	})
 
-	it('should render dangerouslySetInnerHTML to a stream', (done) => {
-		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
-		})
-		let element = h('div', {dangerouslySetInnerHTML: {__html: '1'}})
-		let output = ''
-
-		renderToNodeStream(element, writable, () => {
-			assert.html(output, `<div>1</div>`)
-			done()
-		})
-	})
-
 	it('should render to stream through Element.toStream', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
@@ -348,13 +371,65 @@ describe('Server', () => {
 		renderer.pipe(writable)
 	})
 
-	it('should render dangerouslySetInnerHTML', () => {
+	it('should render defaultValue to string', () => {
+		assert.html(h('input', {
+			defaultValue: 1
+		}), '<input value="1">')
+	})
+
+	it('should not render defaultValue to string', () => {
+		assert.html(h('input', {
+			defaultValue: 1,
+			value: '2'
+		}), '<input value="2">')
+	})
+
+	it('should render acceptCharset to string', () => {
+		assert.html(h('meta', {
+			acceptCharset: true
+		}), '<meta accept-charset>')
+	})
+
+	it('should render httpEquiv to string', () => {
+		assert.html(h('meta', {
+			httpEquiv: true
+		}), '<meta http-equiv>')
+	})
+
+	it('should render booleans to string', () => {
+		assert.html(h('meta', {
+			show: true,
+			hidden: false
+		}), '<meta show>')
+	})
+
+	it('should escape test', () => {
+		assert.html(h('div', 'a<>"\'&b'), '<div>a&lt;&gt;&quot;&#x27;&amp;b</div>')
+	})
+
+	it('should render dangerouslySetInnerHTML to a stream', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+		let element = h('div', {dangerouslySetInnerHTML: {__html: '1'}})
+		let output = ''
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, `<div>1</div>`)
+			done()
+		})
+	})
+
+	it('should render dangerouslySetInnerHTML to string', () => {
 		assert.html(h('div', {
 			dangerouslySetInnerHTML: {__html: '1'}
 		}), '<div>1</div>')
 	})
 
-	it('should not render dangerouslySetInnerHTML', () => {
+	it('should not render dangerouslySetInnerHTML to string', () => {
 		assert.html(h('div', {
 			dangerouslySetInnerHTML: {}
 		}), '<div></div>')
@@ -364,39 +439,13 @@ describe('Server', () => {
 		}), '<div></div>')
 	})
 
-	it('should render defaultValue', () => {
-		assert.html(h('input', {
-			defaultValue: 1
-		}), '<input value="1">')
-	})
+	it('should not render innerHTML to string', () => {
+		assert.html(h('div', {
+			innerHTML: {__html: 'value'}
+		}), '<div></div>')
 
-	it('should not render defaultValue', () => {
-		assert.html(h('input', {
-			defaultValue: 1,
-			value: '2'
-		}), '<input value="2">')
-	})
-
-	it('should render acceptCharset', () => {
-		assert.html(h('meta', {
-			acceptCharset: true
-		}), '<meta accept-charset>')
-	})
-
-	it('should render httpEquiv', () => {
-		assert.html(h('meta', {
-			httpEquiv: true
-		}), '<meta http-equiv>')
-	})
-
-	it('should render booleans', () => {
-		assert.html(h('meta', {
-			show: true,
-			hidden: false
-		}), '<meta show>')
-	})
-
-	it('should escape test', () => {
-		assert.html(h('div', 'a<>"\'&b'), '<div>a&lt;&gt;&quot;&#x27;&amp;b</div>')
+		assert.html(h('div', {
+			innerHTML: 'value'
+		}), '<div></div>')
 	})
 })

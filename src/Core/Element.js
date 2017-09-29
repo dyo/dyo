@@ -43,10 +43,11 @@ function createElementImmutable (snapshot) {
 }
 
 /**
+ * @param {number} id
  * @return {Element}
  */
-function createElementDescription () {
-	return new Element(SharedElementIntermediate)	
+function createElementDescription (id) {
+	return new Element(id)
 }
 
 /**
@@ -92,7 +93,7 @@ function createElementFragment (iterable) {
 
 	if (isValidElement(iterable))
 		setElementChildren(children, iterable, i)
-	else if (isArray(iterable))
+	else
 		for (; i < iterable.length; ++i)
 			setElementChildren(children, iterable[i], i)				
 
@@ -333,20 +334,6 @@ function getDisplayName (type) {
 
 /**
  * @param {Element} element
- * @param {Element} 
- */
-function getElementParent (element) {
-	if (element.id < SharedElementPortal)
-		return getElementParent(element.parent)
-
-	if (element.id === SharedElementPortal)
-		return getElementPortal(createElementDescription(), element)
-	else
-		return element
-}
-
-/**
- * @param {Element} element
  * @param {Element} parent
  * @param {string} direction
  * @return {Element}
@@ -364,18 +351,18 @@ function getElementSibling (element, parent, direction) {
 	if (parent.id < SharedElementIntermediate)
 		return getElementSibling(parent, parent.parent, direction)
 
-	return createElementDescription()
+	return createElementDescription(SharedElementIntermediate)
 }
 
 /**
  * @param {Element} element
- * @return {Element}
+ * @param {Element} 
  */
-function getElementChildren (element) {
-	if (element.id === SharedElementComponent)
-		return element.children
-	else
-		return element
+function getElementParent (element) {
+	if (element.id < SharedElementPortal)
+		return getElementParent(element.parent)
+
+	return element
 }
 
 /**
@@ -386,8 +373,8 @@ function getElementChildren (element) {
 function getElementBoundary (element, direction) {
 	if (element.id < SharedElementIntermediate)
 		return getElementBoundary(element.children[direction])
-	else
-		return element
+
+	return element
 }
 
 /**
@@ -397,8 +384,8 @@ function getElementBoundary (element, direction) {
 function getElementDescription (element) {
 	if (element.id === SharedElementComponent)
 		return getElementDescription(element.children)
-	else
-		return element
+
+	return element
 }
 
 /**
@@ -420,13 +407,4 @@ function getElementDefinition (element) {
 		default:
 			return createElementBranch(element, SharedTypeKey)
 	}
-}
-
-/**
- * @param {Element} element
- * @param {Element} parent
- * @return {Element}
- */
-function getElementPortal (element, parent) {
-	return (setDOMNode(element, getDOMPortal(parent)), element)
 }

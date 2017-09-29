@@ -99,11 +99,12 @@ h: createElement`
 
 const DOM = ((file) => {
 	let content = fs.readFileSync(path.join(__dirname, file), 'utf8').trim()
-			content = content.replace(/^((?!function[^'"])[\S\s])*$/gm, '')
-			content = content.replace(/function\s*(\w+)\s*.*/g, 'var $1 = define.$1 || noop')
-			content = content.replace(/\n\n+/g, '\n')
+			content = content.replace(/^((?!^\s*function[^'"])[\S\s])*$/gm, '')
+			// content = content.replace(/function\s*(\w+)\s*.*/g, 'var $1 = define.$1 || noop')
+			content = content.replace(/function\s*(\w+)\s*.*/g, '$1,').replace(/\s/g, '')
 
-	return '\n\n'+content.trim()
+	return content.split(',')
+	// return '\n\n'+content.replace(/\n\n+/g, '\n').trim()
 })(dom[0])
 
 const platform = `
@@ -130,15 +131,13 @@ if (typeof define === 'string')
 		return factory(window, false, renderer)
 	}
 
-return exports
-`
+return exports`
 		default:
 			return `\
 if (require)
 	require(define)(${(platform)})
 
-return exports
-`
+return exports`
 	}
 }
 
@@ -158,7 +157,6 @@ const wrapper = (module, content, factory, version, license) => {
 	var head = "var version = '"+version+"'\n\n"
 	var expo = '\n\n'+'var exports = {\n'+pad(api.trim())+'\n}'+'\n\n'
 	var mainTail = expo+template('main')
-	var bridgeTail = DOM+expo+template('bridge')
 
 	switch (module) {
 		case 'node': {
@@ -180,6 +178,15 @@ const wrapper = (module, content, factory, version, license) => {
 								.trim()
 			}
 		case 'bridge':
+			var bridgeTail = ''
+			var str = DOM.map((func) => {
+				if (content.indexOf(func) > -1 && func) {
+					return 'var '+func+' = define.'+func
+				}
+			}).filter(Boolean).join('\n')
+
+			var bridgeTail = '\n\n'+str+expo+template('bridge')
+
 			return {
 				head: comment(version, license),
 				body: parse(head, content, bridgeTail, factory),

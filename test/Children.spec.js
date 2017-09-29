@@ -17,6 +17,7 @@ describe('Children', () => {
 		assert.deepEqual(toArray([1, '2', [true]]), [1, '2', true], 'toArray([nested])')
 		assert.deepEqual(toArray('string'), ['string'], 'toArray(string)')
 		assert.deepEqual(toArray(1), [1], 'toArray(number)')
+		assert.deepEqual(toArray({}), [{}], 'toArray(Object)')
 		assert.equal(toArray(element)[0], element, 'toArray(element)')
 		assert.equal(toArray(h('h1', 1, 2, 3).children).length, 3, 'toArray(element.children)')
 	})
@@ -41,6 +42,9 @@ describe('Children', () => {
 
 		forEach(element, (x) => index = x)
 		assert.equal(index, element, 'forEach(element)')
+
+		forEach(null, (x) => index = x)
+		assert.equal(index, element, 'forEach(null)')
 	})
 
 	it('should count children', () => {

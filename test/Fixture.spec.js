@@ -168,14 +168,17 @@ describe('Fixture', () => {
 		let file = '../dist/umd.js'
 		let WeakMap = global.WeakMap
 		let Symbol = global.Symbol
+		let Promise = global.Promise
 
 		delete require.cache[require.resolve(file)]
 
 		global.WeakMap = undefined
 		global.Symbol = undefined
+		global.Promise = undefined
 		
 		assert.equal(global.WeakMap, undefined)
 		assert.equal(global.Symbol, undefined)
+		assert.equal(global.Promise, undefined)
 
 		let {render, h} = require(file)
 		let A = class {
@@ -197,6 +200,7 @@ describe('Fixture', () => {
 
 		global.WeakMap = WeakMap
 		global.Symbol = Symbol
+		global.Promise = Promise
 
 		delete require.cache[require.resolve(file)]
 
@@ -333,5 +337,46 @@ describe('Fixture', () => {
 			assert.include(stack, 'didUpdate')
 			done()
 		})
+	})
+
+	it('should handle alternating dangerouslySetInnerHTML', () => {
+		let container = document.createElement('div')
+		let A = class {
+			render({alt}) {
+				return alt ? h('div', h('h1')) : h('div', {dangerouslySetInnerHTML: {__html: '<span></span>'}})
+			}
+		}
+		
+		assert.doesNotThrow(() => {
+			render(h(A, {alt: true}), container)
+			render(h(A, {alt: false}), container)
+			render(h(A, {alt: true}), container)
+			render(h(A, {alt: false}), container)
+		})
+
+		assert.html(container, `
+			<div>
+				<span></span>
+			</div>
+		`)
+	})
+
+	it('should not hit the require branch when bundling with webpack', () => {		
+		let container = document.createElement('div')
+		let stack = []
+		let file = '../dist/umd.js'
+
+		delete require.cache[require.resolve(file)]
+
+		global.__webpack_require__ = () => stack.push('should not require')
+
+		let dio = require(file)
+		assert.lengthOf(stack, 0)
+
+		global.__webpack_require__ = undefined
+
+		delete require.cache[require.resolve(file)]
+
+		Object.assign(global, require(file))
 	})
 })

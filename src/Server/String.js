@@ -27,16 +27,16 @@ function getStringElement (element, host) {
 	if (isVoidType(type))
 		return output
 
-	if (!element.DOM)
-		while (length-- > 0)
-			output += getStringElement(children = children.next, host)
-	else (output += element.DOM)
-		element.DOM = null
+	while (length-- > 0)
+		output += getStringElement(children = children.next, host)
 
-	if (element.id === SharedElementNode)
-		return output + '</' + type + '>'
-	else
+	if (element.id !== SharedElementNode)
 		return output
+
+	if (element.DOM)
+		element.DOM = void (output += element.DOM)
+
+	return output + '</' + type + '>'
 }
 
 /**
@@ -53,12 +53,8 @@ function getStringProps (element, props) {
 		
 		switch (name) {
 			case 'dangerouslySetInnerHTML':
-				if (value && value.__html)
-					value = value.__html
-				else
-					continue
+				element.DOM = (value && value.__html) || ''
 			case 'innerHTML':
-				element.DOM = value + ''
 				continue
 			case 'defaultValue':
 				if (!props.value)
