@@ -349,16 +349,17 @@ describe('Fixture', () => {
 		
 		assert.doesNotThrow(() => {
 			render(h(A, {alt: true}), container)
-			render(h(A, {alt: false}), container)
-			render(h(A, {alt: true}), container)
-			render(h(A, {alt: false}), container)
-		})
+			assert.html(container, `<div><h1></h1></div>`)
 
-		assert.html(container, `
-			<div>
-				<span></span>
-			</div>
-		`)
+			render(h(A, {alt: false}), container)
+			assert.html(container, `<div><span></span></div>`)
+
+			render(h(A, {alt: true}), container)
+			assert.html(container, `<div><h1></h1></div>`)
+
+			render(h(A, {alt: false}), container)
+			assert.html(container, `<div><span></span></div>`)
+		})
 	})
 
 	it('should not hit the require branch when bundling with webpack', () => {		

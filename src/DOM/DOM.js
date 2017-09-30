@@ -27,13 +27,13 @@ function setDOMEvent (element, type) {
  * @param {Object} props
  */
 function setDOMStyle (element, props) {
-	for (var key in props) {
-		var value = props[key]
+	for (var name in props) {
+		var value = props[name]
 
-		if (key.indexOf('-') < 0)
-			getDOMNode(element).style[key] = value !== false && value !== undefined ? value : null
+		if (name.indexOf('-') < 0)
+			getDOMNode(element).style[name] = value !== false && value !== undefined ? value : ''
 		else
-			getDOMNode(element).style.setProperty(key, value)
+			getDOMNode(element).style.setProperty(name, value)
 	}
 }
 
@@ -48,9 +48,9 @@ function setDOMProperty (element, name, value) {
 		case false:
 		case undefined:
 			return setDOMAttribute(element, name, value, getDOMNode(element)[name] = '')
+		default:
+			getDOMNode(element)[name] = value
 	}
-
-	getDOMNode(element)[name] = value
 }
 
 /**
@@ -70,12 +70,12 @@ function setDOMAttribute (element, name, value, xmlns) {
 			return getDOMNode(element).removeAttribute(name)				
 		case true:
 			return setDOMAttribute(element, name, '', xmlns)
+		default:
+			if (!xmlns)
+				getDOMNode(element).setAttribute(name, value)
+			else
+				getDOMNode(element).setAttributeNS(xmlns, name, value)
 	}
-
-	if (!xmlns)
-		getDOMNode(element).setAttribute(name, value)
-	else
-		getDOMNode(element).setAttributeNS(xmlns, name, value)
 }
 
 /**
@@ -97,10 +97,10 @@ function setDOMProperties (element, name, value, xmlns) {
 			break
 		case 'xlink:href':
 			return setDOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
-		case 'dangerouslySetInnerHTML':
-			return setDOMInnerHTML(element, value ? value.__html : null, [])
 		case 'innerHTML':
-			return
+			return setDOMInnerHTML(element, name, value ? value : '', [])
+		case 'dangerouslySetInnerHTML':
+			return setDOMProperties(element, 'innerHTML', value && value.__html, xmlns)
 		case 'acceptCharset':
 			return setDOMProperties(element, 'accept-charset', value, xmlns)
 		case 'httpEquiv':
@@ -120,24 +120,25 @@ function setDOMProperties (element, name, value, xmlns) {
 	switch (typeof value) {
 		case 'object':
 		case 'function':
-			return setDOMProperty(element, name, value)						
+			return setDOMProperty(element, name, value)		
+		default:
+			setDOMAttribute(element, name, value, '')
 	}
-
-	setDOMAttribute(element, name, value, '')
 }
 
 /**
  * @param {Element} element
- * @param {*} value
+ * @param {string} name
+ * @param {string} value
  * @param {Array} nodes
  */
-function setDOMInnerHTML (element, value, nodes) {
-	if (getDOMNode(element).innerHTML)
+function setDOMInnerHTML (element, name, value, nodes) {
+	if (getDOMNode(element)[name])
 		element.children.forEach(function (children) {
 			nodes.push(getDOMNode(children))
 		})
 
-	if (getDOMNode(element).innerHTML = value != null ? value : '')
+	if (getDOMNode(element)[name] = value)
 		nodes.push.apply(nodes, getDOMNode(element).childNodes)
 
 	nodes.forEach(function (node) {
@@ -244,38 +245,13 @@ function getDOMQuery (element, parent, previous, next) {
 
 	if (node && !node.splitText)
 		for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i) {
-			var attr = attributes[i]
-			var name = attr.name
-			var value = props[name] + ''
+			var name = attributes[i].name
 
-			if (attr.value !== value && attr.value !== value.toLowerCase())
+			if (props[name] === undefined)
 				node.removeAttribute(name)
 		}
 
 	return node
-}
-
-/**
- * @param {(Component|Element|Node|Event)} element
- * @return {Node}
- */
-function findDOMNode (element) {
-	if (!element)
-		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-
-	if (isValidElement(getComponentElement(element)))
-		return findDOMNode(getComponentElement(element))
-
-	if (element.active && isValidElement(element))
-		return getDOMNode(element)
-
-	if (isValidDOMNode(element))
-		return element
-
-	if (isValidDOMEvent(element))
-		return element.currentTarget
-
-	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }
 
 /**

@@ -71,3 +71,27 @@ function mount (element, parent, container, callback, signature) {
 function unmountComponentAtNode (container) {
 	return root.has(container) && !render(null, container)
 }
+
+/**
+ * @param {(Component|Element|Node|Event)} element
+ * @return {Node}
+ */
+function findDOMNode (element) {
+	if (!element)
+		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+
+	if (isValidElement(getComponentElement(element)))
+		return findDOMNode(getComponentElement(element))
+
+	if (isValidElement(element))
+		if (element.active)
+			return findDOMNode(element.DOM.node)
+
+	if (isValidDOMNode(element))
+		return element
+
+	if (isValidDOMEvent(element))
+		return element.currentTarget
+
+	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
+}

@@ -2014,23 +2014,47 @@ function factory (window, require, define) {
 		return root.has(container) && !render(null, container)
 	}
 	
-	var setDOMContent = define.setDOMContent
-	var setDOMValue = define.setDOMValue
-	var setDOMEvent = define.setDOMEvent
-	var setDOMProperties = define.setDOMProperties
-	var getDOMDocument = define.getDOMDocument
-	var getDOMType = define.getDOMType
-	var getDOMProps = define.getDOMProps
-	var getDOMQuery = define.getDOMQuery
-	var findDOMNode = define.findDOMNode
-	var isValidDOMNode = define.isValidDOMNode
-	var removeDOMNode = define.removeDOMNode
-	var insertDOMNode = define.insertDOMNode
-	var appendDOMNode = define.appendDOMNode
-	var createDOMElement = define.createDOMElement
-	var createDOMText = define.createDOMText
-	var createDOMEmpty = define.createDOMEmpty
-	var getDOMPortal = define.getDOMPortal
+	/**
+	 * @param {(Component|Element|Node|Event)} element
+	 * @return {Node}
+	 */
+	function findDOMNode (element) {
+		if (!element)
+			invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+	
+		if (isValidElement(getComponentElement(element)))
+			return findDOMNode(getComponentElement(element))
+	
+		if (isValidElement(element))
+			if (element.active)
+				return findDOMNode(element.DOM.node)
+	
+		if (isValidDOMNode(element))
+			return element
+	
+		if (isValidDOMEvent(element))
+			return element.currentTarget
+	
+		invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
+	}
+	
+	var setDOMContent = typeof define.setDOMContent === 'function' ? define.setDOMContent : noop
+	var setDOMValue = typeof define.setDOMValue === 'function' ? define.setDOMValue : noop
+	var setDOMEvent = typeof define.setDOMEvent === 'function' ? define.setDOMEvent : noop
+	var setDOMProperties = typeof define.setDOMProperties === 'function' ? define.setDOMProperties : noop
+	var getDOMDocument = typeof define.getDOMDocument === 'function' ? define.getDOMDocument : noop
+	var getDOMType = typeof define.getDOMType === 'function' ? define.getDOMType : noop
+	var getDOMProps = typeof define.getDOMProps === 'function' ? define.getDOMProps : noop
+	var getDOMQuery = typeof define.getDOMQuery === 'function' ? define.getDOMQuery : noop
+	var isValidDOMNode = typeof define.isValidDOMNode === 'function' ? define.isValidDOMNode : noop
+	var isValidDOMEvent = typeof define.isValidDOMEvent === 'function' ? define.isValidDOMEvent : noop
+	var removeDOMNode = typeof define.removeDOMNode === 'function' ? define.removeDOMNode : noop
+	var insertDOMNode = typeof define.insertDOMNode === 'function' ? define.insertDOMNode : noop
+	var appendDOMNode = typeof define.appendDOMNode === 'function' ? define.appendDOMNode : noop
+	var createDOMElement = typeof define.createDOMElement === 'function' ? define.createDOMElement : noop
+	var createDOMText = typeof define.createDOMText === 'function' ? define.createDOMText : noop
+	var createDOMEmpty = typeof define.createDOMEmpty === 'function' ? define.createDOMEmpty : noop
+	var getDOMPortal = typeof define.getDOMPortal === 'function' ? define.getDOMPortal : noop
 	
 	var exports = {
 		version: version,

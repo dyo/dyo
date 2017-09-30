@@ -429,6 +429,12 @@ describe('Server', () => {
 		}), '<div>1</div>')
 	})
 
+	it('should render innerHTML to string', () => {
+		assert.html(h('div', {
+			innerHTML: 'value'
+		}), '<div>value</div>')
+	})
+
 	it('should not render dangerouslySetInnerHTML to string', () => {
 		assert.html(h('div', {
 			dangerouslySetInnerHTML: {}
@@ -436,16 +442,6 @@ describe('Server', () => {
 
 		assert.html(h('div', {
 			dangerouslySetInnerHTML: undefined
-		}), '<div></div>')
-	})
-
-	it('should not render innerHTML to string', () => {
-		assert.html(h('div', {
-			innerHTML: {__html: 'value'}
-		}), '<div></div>')
-
-		assert.html(h('div', {
-			innerHTML: 'value'
 		}), '<div></div>')
 	})
 })

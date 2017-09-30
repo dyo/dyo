@@ -100,11 +100,9 @@ h: createElement`
 const DOM = ((file) => {
 	let content = fs.readFileSync(path.join(__dirname, file), 'utf8').trim()
 			content = content.replace(/^((?!^\s*function[^'"])[\S\s])*$/gm, '')
-			// content = content.replace(/function\s*(\w+)\s*.*/g, 'var $1 = define.$1 || noop')
 			content = content.replace(/function\s*(\w+)\s*.*/g, '$1,').replace(/\s/g, '')
 
 	return content.split(',')
-	// return '\n\n'+content.replace(/\n\n+/g, '\n').trim()
 })(dom[0])
 
 const platform = `
@@ -163,7 +161,7 @@ const wrapper = (module, content, factory, version, license) => {
 			return {
 				head: comment(version, license),
 				body: 'module.exports = function ('+(platform)+') {'+strict+
-					('\n\n'+format(content))+'\n\n}',
+					('\n\n'+pad(format(content)))+'\n}',
 				tail: ''
 			}
 		}
@@ -178,14 +176,13 @@ const wrapper = (module, content, factory, version, license) => {
 								.trim()
 			}
 		case 'bridge':
-			var bridgeTail = ''
-			var str = DOM.map((func) => {
+			var bridgeTail = DOM.map((func) => {
 				if (content.indexOf(func) > -1 && func) {
-					return 'var '+func+' = define.'+func
+					return `var ${func} = typeof define.${func} === 'function' ? define.${func} : noop`
 				}
 			}).filter(Boolean).join('\n')
 
-			var bridgeTail = '\n\n'+str+expo+template('bridge')
+			bridgeTail = '\n\n'+bridgeTail+expo+template('bridge')
 
 			return {
 				head: comment(version, license),

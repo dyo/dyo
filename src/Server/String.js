@@ -53,8 +53,9 @@ function getStringProps (element, props) {
 		
 		switch (name) {
 			case 'dangerouslySetInnerHTML':
-				element.DOM = (value && value.__html) || ''
+				value = value && value.__html
 			case 'innerHTML':
+				element.DOM = value ? value : ''
 				continue
 			case 'defaultValue':
 				if (!props.value)

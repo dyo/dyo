@@ -374,7 +374,43 @@ describe('Render', () => {
 		`)
 	})
 
-	it('should not set innerHTML directly', () => {
+	it('should render innerHTML with children', () => {
+		let container = document.createElement('div')
+
+		render(
+			h('div', {innerHTML: '<span>X</span><span>Y</span>'},
+				h('h1', 1),
+				h('h1', 2)
+			),
+			container
+		)
+
+		assert.html(container, `
+			<div>
+				<h1>1</h1>
+				<h1>2</h1>
+				<span>X</span>
+				<span>Y</span>
+			</div>
+		`)
+
+		render(
+			h('div', 
+				h('h1', 1),
+				h('h1', 2)
+			),
+			container
+		)
+
+		assert.html(container, `
+			<div>
+				<h1>1</h1>
+				<h1>2</h1>
+			</div>
+		`)
+	})
+
+	it('should set innerHTML', () => {
 		let container = document.createElement('div')
 
 		render(
@@ -382,7 +418,7 @@ describe('Render', () => {
 			container
 		)
 
-		assert.html(container, `<div></div>`)
+		assert.html(container, `<div><span>X</span><span>Y</span></div>`)
 	})
 
 	it('should remove undefine styles', () => {
