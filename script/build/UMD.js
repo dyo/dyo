@@ -8,7 +8,7 @@ var temp
 
 /* istanbul ignore next */
 if (typeof exports === 'object' && typeof module !== 'undefined')
-	module.exports = factory(global, typeof __webpack_require__ === 'undefined' && require, './node.js')
+	module.exports = factory(global, typeof __webpack_require__ === 'undefined' && require, './node')
 else if (typeof define === 'function' && define.amd)
 	define(temp = factory(global, false, ''))
 else

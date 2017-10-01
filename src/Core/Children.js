@@ -10,7 +10,7 @@ var Children = {
 }
 
 /**
- * @param {*} children 
+ * @param {*} children
  * @return {Array}
  */
 function childrenArray (children) {
@@ -20,7 +20,7 @@ function childrenArray (children) {
 		return array
 	else if (isValidElement(children) || typeof children !== 'object')
 		return [children]
-	else if (isArray(children))
+	else if (children instanceof Array)
 		return flatten(children, array)
 	else if (typeof children.next === 'function' || typeof children.forEach === 'function')
 		each(children, function (element) {
@@ -57,7 +57,7 @@ function childrenMap (children, callback, thisArg) {
 }
 
 /**
- * @param {*} children 
+ * @param {*} children
  * @return {number}
  */
 function childrenCount (children) {
@@ -65,12 +65,12 @@ function childrenCount (children) {
 }
 
 /**
- * @param {*} children 
+ * @param {*} children
  * @return {Element}
  */
 function childrenOnly (children) {
 	if (isValidElement(children))
 		return children
-	
+
 	invariant('Children.only', 'Expected to receive a single element')
 }

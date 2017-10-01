@@ -6,10 +6,8 @@ var requestAnimationFrame = window.requestAnimationFrame || function (callback) 
 var defineProperty = Object.defineProperty
 var defineProperties = Object.defineProperties
 var hasOwnProperty = Object.hasOwnProperty
-var isArray = Array.isArray
-
 var SymbolIterator = Symbol.iterator || '@@iterator'
+var SymbolError = Symbol('Error')
 var SymbolElement = Symbol('Element')
 var SymbolComponent = Symbol('Component')
-
-var root = new WeakMap()
+var DOMMap = new WeakMap()

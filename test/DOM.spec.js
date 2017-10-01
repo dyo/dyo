@@ -35,7 +35,6 @@ describe('DOM', () => {
 	it('should findDOMNode from DOM node', () => {
 		let container = document.createElement('div')
 		let refs = null
-		let element = null
 
 		render(class {
 			componentDidMount(node) {

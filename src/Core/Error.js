@@ -21,17 +21,18 @@ function getErrorElement (element, error, from, signature) {
 		return reportErrorException(error)
 
 	var host = element.host
-	var time = element.time
-	var caught = false
+	var owner = element.owner
+	var instance = element.instance
+	var caught = instance && !instance[SymbolError] && owner && owner[SharedComponentDidCatch]
 
 	requestAnimationFrame(function () {
 		if (element.active)
 			recoverErrorBoundary(element, getElementDefinition(null))
 	})
 
-	if (caught = (element.owner && element.owner[SharedComponentDidCatch])) {
+	if (caught) {
 		element.work = SharedWorkProcessing
-		getLifecycleBoundary(element, SharedComponentDidCatch, error, error)
+		getLifecycleBoundary(element, SharedComponentDidCatch, error, instance[SymbolError] = error)
 		element.work = SharedWorkIdle
 	}
 

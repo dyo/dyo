@@ -9,7 +9,7 @@
   "types": "types/typescript.d.ts",
   "files": [
     "dist",
-    "types/dio.d.ts"
+    "types/typescript.d.ts"
   ],
   "author": {
     "name": "Sultan Tarimo",
@@ -25,9 +25,9 @@
   "scripts": {
     "dev": "node ./script/build",
     "build": "node ./script/build --bundle",
-    "test": "nyc mocha --require script/test/index.js",
-    "test:dev": "mocha --require script/test/index.js --watch",
-    "test:debug": "mocha --require script/test/index.js",
+    "test": "nyc mocha --recursive --require script/test/index.js",
+    "test:dev": "nyc mocha --recursive --require script/test/index.js --watch",
+    "test:debug": "mocha --recursive --require script/test/index.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "nyc": {

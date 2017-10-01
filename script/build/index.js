@@ -19,7 +19,7 @@ const filenames = {
 }
 
 const shared = [
-'../../src/Core/Shared.js'
+	'../../src/Core/Shared.js'
 ]
 
 const core = [
@@ -39,7 +39,6 @@ const core = [
 const node = [
 	...shared,
 	'../../src/Server/Utility.js',
-	'../../src/Server/Constant.js',
 	'../../src/Server/String.js',
 	'../../src/Server/JSON.js',
 	'../../src/Server/Stream.js',
@@ -95,7 +94,7 @@ cloneElement: cloneElement,
 isValidElement: isValidElement,
 createPortal: createPortal,
 createElement: createElement,
-h: createElement`
+h: window.h = createElement`
 
 const DOM = ((file) => {
 	let content = fs.readFileSync(path.join(__dirname, file), 'utf8').trim()
@@ -109,66 +108,47 @@ const platform = `
 exports,
 Element,
 mountComponentElement,
-unmountComponentElement,
-getComponentElement,
 getComponentChildren,
 invokeErrorBoundary,
-getElementDefinition,
-getElementDescription
+getElementDefinition
 `.replace(/\s+/g, ' ').trim()
 
 const template = (type) => {
 	switch (type) {
 		case 'bridge':
-			return `\
-if (typeof define === 'string')
-	return function bridge (renderer) {
-		if (typeof renderer === 'function')
-			return factory(window, false, renderer(exports))
-	
-		return factory(window, false, renderer)
-	}
-
-return exports`
+			return `if (typeof require !== 'object') return function (r) { factory(window, r) }`
 		default:
-			return `\
-if (require)
-	require(define)(${(platform)})
-
-return exports`
+			return `if (typeof require === 'function') require(define)(${(platform)})`
 	}
 }
 
 const parse = (head, body, tail, factory) => {
-	return factory.replace(search,'\n'+pad(head+format(body)+tail))
+	return factory.replace(search,'\n'+pad(head+body+tail))
 }
 
 const builder = (file) => {
-	return fs.readFileSync(path.join(__dirname, file), 'utf8');
+	return fs.readFileSync(path.join(__dirname, file), 'utf8')
 }
-
-const format = (content) => content.trim()
-	.replace(/\s*import\s+[\S\s]+?['`"][\S\s]+?\.js['"`]\s*/g, '\n')
-	.replace(/(^\s*)export\s+/gm, '$1').replace(/\n\n\n+/g, '\n\n')
 
 const wrapper = (module, content, factory, version, license) => {
 	var head = "var version = '"+version+"'\n\n"
-	var expo = '\n\n'+'var exports = {\n'+pad(api.trim())+'\n}'+'\n\n'
-	var mainTail = expo+template('main')
+	var expo = '\n'+'var exports = {\n'+pad(api.trim())+'\n}'+'\n\n'
+	var temp = '\n\nreturn exports'
+	var tail = expo+template('main')+temp
 
 	switch (module) {
 		case 'node': {
 			return {
 				head: comment(version, license),
 				body: 'module.exports = function ('+(platform)+') {'+strict+
-					('\n\n'+pad(format(content)))+'\n}',
+					'\n\n'+pad(content.trim())+'\n}',
 				tail: ''
 			}
 		}
 		case 'esm':
 			return {
 				head: comment(version, license),
-				body: parse(head, content, mainTail, factory),
+				body: parse(head, content, expo+temp.trim(), factory),
 				tail: 'export default dio\n'+
 							api
 								.replace(/[\S\s]*\{|\s*\}|,|\S\s*h:[\S\s]*|window.*h.*=\s*/g, '')
@@ -176,23 +156,23 @@ const wrapper = (module, content, factory, version, license) => {
 								.trim()
 			}
 		case 'bridge':
-			var bridgeTail = DOM.map((func) => {
+			tail = DOM.map((func) => {
 				if (content.indexOf(func) > -1 && func) {
-					return `var ${func} = typeof define.${func} === 'function' ? define.${func} : noop`
+					return `var ${func} = typeof require.${func} === 'function' ? require.${func} : noop`
 				}
-			}).filter(Boolean).join('\n')
+			}).filter(Boolean).join('\n')+'\n'
 
-			bridgeTail = '\n\n'+bridgeTail+expo+template('bridge')
+			tail = '\n'+tail+expo+template('bridge')+temp
 
 			return {
 				head: comment(version, license),
-				body: parse(head, content, bridgeTail, factory),
+				body: parse(head, content, tail, factory),
 				tail: ''
 			}
 		default:
 			return {
 				head: comment(version, license),
-				body: parse(head, content, mainTail, factory),
+				body: parse(head, content, tail, factory),
 				tail: ''
 			}
 	}
@@ -273,14 +253,14 @@ const resolve = () => {
 	bundle('umd', umd, '../../dist/')
 	bundle('esm', esm, '../../dist/')
 	bundle('node', node, '../../dist/')
-	bundle('bridge', bridge, '../../dist/')
+	// bundle('bridge', bridge, '../../dist/') // for another release/another package
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled:\n'+
 		'\n – '+filenames.umd+
 		'\n – '+filenames.esm+
 		'\n – '+filenames.node+
-		'\n – '+filenames.bridge+
+		// '\n – '+filenames.bridge+
 		'\x1b[0m\n'
 	)
 }
@@ -305,7 +285,7 @@ const watcher = (file) => {
 
 const watch = chokidar.watch([
 	'./script/build/UMD.js',
-	'./src/', 
+	'./src/',
 	'./package.json',
 	], {ignored: /[\/\\]\./})
 

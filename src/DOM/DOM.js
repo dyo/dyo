@@ -1,9 +1,39 @@
 /**
- * @param {Element} element
- * @param {*}
+ * @param {(Component|Element|Node|Event)} element
+ * @return {Node}
  */
-function setDOMContent (element, value) {
-	getDOMNode(element).textContent = value
+function findDOMNode (element) {
+	if (!element)
+		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+
+	if (isValidElement(getComponentElement(element)))
+		return findDOMNode(getComponentElement(element))
+
+	if (isValidElement(element) && element.active)
+		return getDOMNode(element)
+
+	if (isValidDOMEvent(element))
+		return element.currentTarget
+
+	if (isValidDOMNode(element))
+		return element
+
+	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
+}
+
+/**
+ * @param {Element} element
+ */
+function initDOMRoot (element) {
+	getDOMNode(element).textContent = ''
+}
+
+/**
+ * @param {Element} element
+ * @param {Node} node
+ */
+function setDOMNode (element, node) {
+	element.DOM = {node: node}
 }
 
 /**
@@ -39,7 +69,7 @@ function setDOMStyle (element, props) {
 
 /**
  * @param {Element} element
- * @param {string} name 
+ * @param {string} name
  * @param {*} value
  */
 function setDOMProperty (element, name, value) {
@@ -67,7 +97,7 @@ function setDOMAttribute (element, name, value, xmlns) {
 			if (xmlns)
 				getDOMNode(element).removeAttributeNS(xmlns, name)
 
-			return getDOMNode(element).removeAttribute(name)				
+			return getDOMNode(element).removeAttribute(name)
 		case true:
 			return setDOMAttribute(element, name, '', xmlns)
 		default:
@@ -105,6 +135,8 @@ function setDOMProperties (element, name, value, xmlns) {
 			return setDOMProperties(element, 'accept-charset', value, xmlns)
 		case 'httpEquiv':
 			return setDOMProperties(element, 'http-equiv', value, xmlns)
+		case 'tabIndex':
+			return setDOMProperties(element, name.toLowerCase(), value, xmlns)
 		case 'autofocus':
 		case 'autoFocus':
 			return getDOMNode(element)[value ? 'focus' : 'blur']()
@@ -120,7 +152,7 @@ function setDOMProperties (element, name, value, xmlns) {
 	switch (typeof value) {
 		case 'object':
 		case 'function':
-			return setDOMProperty(element, name, value)		
+			return setDOMProperty(element, name, value)
 		default:
 			setDOMAttribute(element, name, value, '')
 	}
@@ -166,7 +198,7 @@ function getDOMType (element, xmlns) {
 		case 'foreignObject':
 			return ''
 	}
-	
+
 	return xmlns
 }
 
@@ -193,6 +225,20 @@ function getDOMNode (element) {
 
 /**
  * @param {Element} element
+ * @return {Node}
+ */
+function getDOMPortal (element) {
+	if (typeof element.type === 'string')
+		return getDOMDocument().querySelector(element.type)
+
+	if (isValidDOMNode(element.type))
+		return element.type
+
+	return getDOMDocument()
+}
+
+/**
+ * @param {Element} element
  * @param {Element} parent
  * @param {Element} previous
  * @param {Element} next
@@ -200,11 +246,10 @@ function getDOMNode (element) {
 function getDOMQuery (element, parent, previous, next) {
 	var id = element.id
 	var type = id > SharedElementNode ? '#text' : element.type.toLowerCase()
-	var xmlns = element.xmlns
 	var props = element.props
 	var children = element.children
 	var length = children.length
-	var target = previous.active ? getDOMNode(previous).nextSibling : getDOMNode(parent).firstChild 
+	var target = previous.active ? getDOMNode(previous).nextSibling : getDOMNode(parent).firstChild
 	var sibling = target
 	var node = null
 
@@ -232,8 +277,8 @@ function getDOMQuery (element, parent, previous, next) {
 
 		if (id > SharedElementNode && length === 0) {
 			target.parentNode.insertBefore((node = createDOMText(element)), target)
-			
-			if (!next.type)				
+
+			if (!next.type)
 				type = null
 			else
 				break
@@ -297,7 +342,7 @@ function appendDOMNode (element, parent) {
 
 /**
  * @param {Element} element
- * @return {Object}
+ * @return {Node}
  */
 function createDOMElement (element) {
 	if (element.xmlns)
@@ -308,7 +353,7 @@ function createDOMElement (element) {
 
 /**
  * @param {Element} element
- * @return {Object}
+ * @return {Node}
  */
 function createDOMText (element) {
 	return document.createTextNode(element.children)
@@ -316,22 +361,8 @@ function createDOMText (element) {
 
 /**
  * @param {Element} element
- * @return {Object}
+ * @return {Node}
  */
 function createDOMEmpty (element) {
 	return document.createTextNode('')
-}
-
-/**
- * @param {Element} element
- * @return {Object}
- */
-function getDOMPortal (element) {
-	if (typeof element.type === 'string')
-		return getDOMDocument().querySelector(element.type)
-
-	if (isValidDOMNode(element.type))
-		return element.type
-
-	return getDOMDocument()
 }

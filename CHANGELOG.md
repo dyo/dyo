@@ -16,6 +16,7 @@
 - Adds top-level API `findDOMNode`.
 - Adds top-level API `hydrate`.
 - Adds top-level API `Children`.
+- Adds top-level API `unmountComponentAtNode`
 - Adds invarient errors for `render` if target container is invalid.
 
 ### Breaking Changes.

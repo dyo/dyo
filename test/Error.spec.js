@@ -73,7 +73,7 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let refs = Promise.reject('')
-		
+
 		render(class {
 			componentDidCatch(err) {
 				err.preventDefault()
@@ -95,34 +95,6 @@ describe('Error', () => {
 				assert.html(container, 'Hello World')
 				done()
 			}, 2)
-		})
-	})
-
-	it('should recover from an async component stream error', (done) => {
-		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
-		})
-
-		let element = h(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				return {children: h('h1', 'Error!')}
-			}
-			getInitialState() {
-				return Promise.reject({x: '!'})
-			}
-			render(props, {x, children}) {
-				return h('h1', 'Hello World', x)
-			}
-		})
-		let output = ''
-
-		renderToNodeStream(element, writable, () => {
-			assert.html(output, '')
-			done()
 		})
 	})
 
@@ -219,7 +191,7 @@ describe('Error', () => {
 		    super(props);
 		    this.state = { error: null, errorInfo: null };
 		  }
-		  
+
 		  componentDidCatch(error, errorInfo) {
 		  	error.preventDefault()
 		    this.setState({
@@ -227,7 +199,7 @@ describe('Error', () => {
 		      errorInfo: errorInfo
 		    })
 		  }
-		  
+
 		  render() {
 		    if (this.state.errorInfo) {
 		      return (
@@ -242,7 +214,7 @@ describe('Error', () => {
 		      );
 		    }
 		    return this.props.children
-		  }  
+		  }
 		}
 
 		class BuggyCounter extends Component {
@@ -251,13 +223,13 @@ describe('Error', () => {
 		    this.state = { counter: 0 };
 		    this.handleClick = this.handleClick.bind(this);
 		  }
-		  
+
 		  handleClick() {
 		    this.setState(({counter}) => ({
 		      counter: counter + 1
 		    }));
 		  }
-		  
+
 		  render() {
 		    if (this.state.counter !== 0) {
 		      throw new Error('I crashed!');
@@ -268,31 +240,11 @@ describe('Error', () => {
 
 		render(h(ErrorBoundary, h(BuggyCounter)), container)
 		refs.dispatchEvent(click)
-			
+
 		nextTick(() => {
 			assert.notEqual(container, '')
 			done()
 		}, 2)
-	})
-
-	it('should propagate errors on the server', (done) => {
-		let A = () => { throw new Error('x') }
-		let error = null
-
-		assert.html(h(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				error = err
-			}
-			render () {
-				return h('div', A)
-			}
-		}), '<div></div>')
-
-		nextTick(() => {
-			assert.instanceOf(error, Error)
-			done()
-		})
 	})
 
 	it('should pass errorMessage to boundary', (done) => {
@@ -361,15 +313,17 @@ describe('Error', () => {
 	it('should handle recursive errors', (done) => {
 		let container = document.createElement('div')
 		let stack = []
+		let count = 0
+		let error = console.error
+		let spy = console.error = () => { count++ }
 
 		render(class {
 			componentDidCatch(err) {
-				err.preventDefault()
+				stack.push(true)
 			}
 			render() {
 				return class {
 					componentDidCatch(err, {componentStack}) {
-						err.preventDefault()
 						return {error: true}
 					}
 					render() {
@@ -385,7 +339,10 @@ describe('Error', () => {
 		nextTick(() => {
 			assert.html(container, '')
 			assert.include(stack, true)
-			assert.lengthOf(stack, 1)
+			assert.lengthOf(stack, 2)
+			assert.equal(count, 2)
+
+			console.error = error
 			done()
 		})
 	})
@@ -393,6 +350,9 @@ describe('Error', () => {
 	it('should handle nested componentWillUnmount errors', (done) => {
 		let container = document.createElement('div')
 		let stack = []
+		let error = console.error
+
+		console.error = () => {}
 
 		class A {
 			componentDidCatch(err) {
@@ -432,9 +392,10 @@ describe('Error', () => {
 			'C componentWillUnmount',
 			'componentDidCatch',
 			'B componentWillUnmount',
-			'componentDidCatch',
 			'A componentWillUnmount'
 		])
+
+		console.error = error
 		done()
 	})
 })

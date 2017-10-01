@@ -273,7 +273,7 @@ describe('Component', () => {
 		let stack = []
 		let A = class {
 			getChildContext() {
-				
+
 			}
 			render() {
 				return class {
@@ -694,7 +694,7 @@ describe('Component', () => {
 
 	it('should render a generator(function)', () => {
 		let container = document.createElement('div')
-		
+
 		render(h('div', function *render() {yield 1}), container)
 
 		assert.html(container, '<div>1</div>')
@@ -841,7 +841,7 @@ describe('Component', () => {
 		}, container)
 
 		refs.dispatchEvent(new Event('click'))
-		
+
 		assert.html(container, '<button></button>')
 		assert.lengthOf(stack, 1)
 		console.error = error
@@ -1214,7 +1214,7 @@ describe('Component', () => {
 		)
 
 		render(
-			h('div', 
+			h('div',
 				h('div', {key: 'B'}, 'B')
 			),
 			container
@@ -1304,5 +1304,38 @@ describe('Component', () => {
 			assert.lengthOf(stack, 0)
 			done()
 		})
+	})
+
+	it('should pass node argument to componentDidMount', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidMount(node) {
+				stack.push(node.innerHTML === '<span></span>')
+			}
+			render() {
+				return h('h1', h('span'))
+			}
+		}, container)
+
+		assert.include(stack, true)
+	})
+
+	it('should pass node argument to componentWillUnmount', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentWillUnmount(node) {
+				stack.push(node.innerHTML === '<span></span>')
+			}
+			render() {
+				return h('h1', h('span'))
+			}
+		}, container)
+
+		unmountComponentAtNode(container)
+		assert.include(stack, true)
 	})
 })

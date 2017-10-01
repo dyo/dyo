@@ -46,26 +46,27 @@ describe('Render', () => {
 
 	it('should render style objects', () => {
 		render(h('h1', {style: {width: '100px'}}, '0'), container)
-		assert.equal(container.firstChild.style.width, '100px')
+		assert.html(container, '<h1 style="width: 100px;">0</h1>')
 	})
 
 	it('should render style strings', () => {
 		render(h('h1', {style: 'width:100px'}, '0'), container)
-		assert.equal(container.firstChild.style.width, '100px')
+		assert.html(container, '<h1 style="width:100px">0</h1>')
 	})
 
 	it('should render width attribute', () => {
 		render(h('div', {width: '100px'}), container)
-		assert.equal(container.firstChild.getAttribute('width'), '100px')
+		assert.html(container, '<div width="100px"></div>')
 	})
 
 	it('should render img width', () => {
 		render(h('img', {width: '100px'}), container)
-		assert.equal(container.firstChild.getAttribute('width'), '100px')
+		assert.html(container, '<img width="100px">')
 	})
 
 	it('should render un-ordered input attributes', () => {
 		render(h('input', {value: 0.4, step: 0.1, type: 'range', min: 0, max: 1}), container)
+		assert.html(container, '<input type="range" step="0.1" min="0" max="1">')
 		assert.equal(container.firstChild.value, '0.4')
 	})
 
@@ -438,5 +439,25 @@ describe('Render', () => {
 			render(h('div', {ref: null}), container)
 			render(h('div', {ref: undefined}), container)
 		})
+	})
+
+	it('should render tabIndex', () => {
+		let container = document.createElement('div')
+
+		render(h('svg', {tabIndex: 2}), container)
+		assert.html(container, '<svg tabindex="2"></svg>')
+	})
+
+	it('should render children prop', () => {
+		let container = document.createElement('div')
+
+		render(h('div', {children: h('span')}), container)
+		assert.html(container, '<div><span></span></div>')
+
+		render(h('div', {children: [h('span'), h('hr')]}), container)
+		assert.html(container, '<div><span></span><hr></div>')
+
+		render(h('div', {children: [h('span'), h('hr')]}, h('h1', 1)), container)
+		assert.html(container, '<div><span></span><hr><h1>1</h1></div>')
 	})
 })

@@ -23,7 +23,7 @@ function getStringElement (element, host) {
 	var children = element.children
 	var length = children.length
 	var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
-	
+
 	if (isVoidType(type))
 		return output
 
@@ -50,7 +50,7 @@ function getStringProps (element, props) {
 
 	for (var name in props) {
 		var value = props[name]
-		
+
 		switch (name) {
 			case 'dangerouslySetInnerHTML':
 				value = value && value.__html
@@ -65,7 +65,7 @@ function getStringProps (element, props) {
 			case 'children':
 				continue
 			case 'style':
-				output += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'				
+				output += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'
 				continue
 			case 'className':
 				name = 'class'
@@ -75,6 +75,10 @@ function getStringProps (element, props) {
 				break
 			case 'httpEquiv':
 				name = 'http-equiv'
+				break
+			case 'tabIndex':
+				name = name.toLowerCase()
+				break
 		}
 
 		switch (typeof value) {
@@ -101,10 +105,14 @@ function getStringStyle (props) {
 	for (var name in props) {
 		var value = props[name]
 
-		if (name !== name.toLowerCase())
-			name = name.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
+		switch (typeof value) {
+			case 'string':
+			case 'number':
+				if (name !== name.toLowerCase())
+					name = name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
 
-		output += name + ':' + value + ';'
+				output += name + ':' + value + ';'
+		}
 	}
 
 	return output

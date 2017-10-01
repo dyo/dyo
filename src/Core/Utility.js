@@ -18,7 +18,7 @@ List.prototype = {
 		before.prev.next = node
 		before.prev = node
 		this.length++
-		
+
 		return node
 	},
 	/**
@@ -28,11 +28,11 @@ List.prototype = {
 	remove: function remove (node) {
 		if (this.length === 0)
 			return node
-		
+
 		node.next.prev = node.prev
 		node.prev.next = node.next
 		this.length--
-		
+
 		return node
 	},
 	/**
@@ -99,7 +99,7 @@ function merge (object, primary) {
 function assign (object, primary, secondary) {
 	for (var key in primary)
 		object[key] = primary[key]
-	
+
 	for (var key in secondary)
 		object[key] = secondary[key]
 
@@ -111,13 +111,13 @@ function assign (object, primary, secondary) {
  * @param {Array} output
  * @return {Array}
  */
-function flatten (array, output) {	
+function flatten (array, output) {
 	for (var i = 0; i < array.length; ++i)
 		if (array[i] instanceof Array)
 			flatten(array[i], output)
 		else
 			output.push(array[i])
-	
+
 	return output
 }
 
@@ -155,7 +155,7 @@ function compare (a, b) {
 	for (var key in a)
 		if (!hasOwnProperty.call(b, key))
 			return true
-	
+
 	for (var key in b)
 		if (!is(a[key], b[key]))
 			return true

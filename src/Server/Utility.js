@@ -3,7 +3,7 @@
  * @return {string}
  */
 function getTextEscape (value) {
-	return (value+'').replace(RegExpEscape, getTextEncode)
+	return (value+'').replace(/[<>&"']/g, getTextEncode)
 }
 
 /**
@@ -55,7 +55,7 @@ function isVoidType (type) {
 /**
  * @param {Response} response
  */
-function setResponseHeader (response) {
+function setHeader (response) {
 	if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
 		response.setHeader('Content-Type', 'text/html')
 }

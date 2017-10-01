@@ -1,4 +1,9 @@
 /**
+ * @type {constructor}
+ */
+var Readable = require && require('stream').Readable
+
+/**
  * @param {function=}
  * @return {Stream}
  */
@@ -93,16 +98,16 @@ function readStreamElement (element, host, stack, readable) {
 				.catch(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 		case SharedElementText:
 		case SharedElementEmpty:
-			return writeStreamElement(children, readable)
+			return writeStreamElement(getTextEscape(children), readable)
 		case SharedElementNode:
 			if (element.DOM)
 				return element.DOM = writeStreamElement(element.DOM, readable)
 
 			output += '<' + element.type + getStringProps(element, element.props) + '>'
-			
+
 			if (isVoidType(element.type))
 				return writeStreamElement(output, readable)
-			
+
 			element.DOM = (element.DOM || '') + '</' + element.type + '>'
 
 			stack.push(element)

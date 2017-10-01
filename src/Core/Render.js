@@ -3,12 +3,12 @@
  * @param {Node} container
  * @param {function=} callback
  */
-function render (element, container, callback) {	
+function render (element, container, callback) {
 	if (!container)
 		return render(element, getDOMDocument(), callback)
 
-	if (root.has(container))
-		update(root.get(container), getElementDefinition(element), callback)
+	if (DOMMap.has(container))
+		update(DOMMap.get(container), getElementDefinition(element), callback)
 	else
 		mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountCommit)
 }
@@ -51,14 +51,14 @@ function mount (element, parent, container, callback, signature) {
 	if (!isValidDOMNode(container))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
 
-	commitNode(parent, container)
-	
-	root.set(container, element)
+	DOMMap.set(container, element)
+
+	setDOMNode(parent, container)
 
 	if (signature === SharedMountCommit)
-		commitContent(parent, null)
-	
-	commitMount(element, element, parent, parent, SharedMountAppend, signature)	
+		initDOMRoot(parent)
+
+	commitMount(element, element, parent, parent, SharedMountAppend, signature)
 
 	if (callback)
 		getLifecycleCallback(element, callback)
@@ -69,29 +69,5 @@ function mount (element, parent, container, callback, signature) {
  * @return {boolean}
  */
 function unmountComponentAtNode (container) {
-	return root.has(container) && !render(null, container)
-}
-
-/**
- * @param {(Component|Element|Node|Event)} element
- * @return {Node}
- */
-function findDOMNode (element) {
-	if (!element)
-		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-
-	if (isValidElement(getComponentElement(element)))
-		return findDOMNode(getComponentElement(element))
-
-	if (isValidElement(element))
-		if (element.active)
-			return findDOMNode(element.DOM.node)
-
-	if (isValidDOMNode(element))
-		return element
-
-	if (isValidDOMEvent(element))
-		return element.currentTarget
-
-	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
+	return DOMMap.has(container) && !render(null, container)
 }

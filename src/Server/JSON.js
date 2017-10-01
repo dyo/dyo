@@ -2,14 +2,16 @@
  * @return {Object}
  */
 function toJSON () {
-	var element = this
-	
-	switch (element.id) {
+	return getJSONElement(this, null)
+}
+
+function getJSONElement (element, host) {
+	switch (element.host = host, element.id) {
 		case SharedElementText:
 		case SharedElementEmpty:
 			return element.children
 		case SharedElementComponent:
-			return mountComponentElement(element).toJSON()
+			return getJSONElement(mountComponentElement(element), element)
 	}
 
 	var output = {type: element.type, props: element.props, children: []}
@@ -20,7 +22,7 @@ function toJSON () {
 		children = (length--, children.next)
 
 	while (length-- > 0)
-		output.children.push((children = children.next).toJSON())
+		output.children.push(getJSONElement(children = children.next, host))
 
 	if (element.id < SharedElementIntermediate)
 		(output = output.children).pop()

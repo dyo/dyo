@@ -6,7 +6,6 @@ function Element (id) {
 	this.id = id
 	this.work = SharedWorkIdle
 	this.active = false
-	this.time = 0
 	this.xmlns = ''
 	this.key = null
 	this.ref = null
@@ -95,7 +94,7 @@ function createElementFragment (iterable) {
 		setElementChildren(children, iterable, i)
 	else
 		for (; i < iterable.length; ++i)
-			setElementChildren(children, iterable[i], i)				
+			setElementChildren(children, iterable[i], i)
 
 	setElementBoundary(children)
 
@@ -106,7 +105,7 @@ function createElementFragment (iterable) {
  * @param {Iterable} iterable
  * @param {Element} element
  */
-function createElementIterable (iterable) {	
+function createElementIterable (iterable) {
 	return createElementFragment(childrenArray(iterable))
 }
 
@@ -163,7 +162,7 @@ function cloneElement () {
 function createPortal (element, container, key) {
 	var portal = new Element(SharedElementPortal)
 	var children = portal.children = new List()
-	
+
 	setElementChildren(children, element, 0)
 	setElementBoundary(children)
 
@@ -190,7 +189,7 @@ function createElement (type, properties) {
 	var length = arguments.length
 	var element = new Element(id)
 	var children = id !== SharedElementComponent ? new List() : null
-	
+
 	if (i === 1)
 		switch (props.constructor) {
 			case Object:
@@ -206,7 +205,7 @@ function createElement (type, properties) {
 							element.xmlns = props.xmlns
 
 						if (props.children !== undefined)
-							props.children = void setElementChildren(children, props.children, index)
+							props.children = void (index = setElementChildren(children, props.children, index))
 					}
 
 					i++
@@ -240,7 +239,7 @@ function createElement (type, properties) {
 		case String:
 			break
 		case Element:
-			props = assign({}, type.props, (element.id = type.id, props))	
+			props = assign({}, type.props, (element.id = type.id, props))
 			element.type = type.type
 			break
 		case Promise:
@@ -292,8 +291,8 @@ function setElementChildren (children, element, index) {
 function setElementBoundary (children) {
 	var head = createElementEmpty(SharedTypeKey)
 	var tail = createElementEmpty(SharedTypeKey)
-	
-	head.xmlns = tail.xmlns = SharedTypeText
+
+	head.xmlns = tail.xmlns = SharedTypeFragment
 
 	children.insert(head, children.next)
 	children.insert(tail, children)
@@ -309,7 +308,7 @@ function getDefaultProps (element, type, defaultProps, props) {
 	if (typeof defaultProps !== 'function')
 		return assign({}, defaultProps, props)
 
-	defineProperty(type, 'defaultProps', {
+	Object.defineProperty(type, 'defaultProps', {
 		value: getDefaultProps(element, type, getLifecycleCallback(element, defaultProps), props)
 	})
 
@@ -356,7 +355,7 @@ function getElementSibling (element, parent, direction) {
 
 /**
  * @param {Element} element
- * @param {Element} 
+ * @param {Element}
  */
 function getElementParent (element) {
 	if (element.id < SharedElementPortal)
@@ -368,7 +367,7 @@ function getElementParent (element) {
 /**
  * @param {Element} element
  * @param {string} direction
- * @return {Element} 
+ * @return {Element}
  */
 function getElementBoundary (element, direction) {
 	if (element.id < SharedElementIntermediate)
@@ -395,7 +394,7 @@ function getElementDescription (element) {
 function getElementDefinition (element) {
 	if (element == null)
 		return createElementEmpty(SharedTypeKey)
-	
+
 	switch (element.constructor) {
 		case Element:
 			return element

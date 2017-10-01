@@ -16,26 +16,56 @@ describe('Server', () => {
 
 	it('should render an element to string', () => {
 		assert.html(
-			h('h1', {className: 'faz'}, 'Faz'), 
+			h('h1', {className: 'faz'}, 'Faz'),
 			`<h1 class="faz">Faz</h1>`
 		)
 	})
 
 	it('should render an element style(object) to string', () => {
 		assert.html(
-			h('h1', {style: {marginTop: '20px'}}, 'Faz'), 
+			h('h1', {style: {marginTop: '20px'}}, 'Faz'),
 			`<h1 style="margin-top:20px;">Faz</h1>`
 		)
 
 		assert.html(
-			h('h1', {style: {color: 'red'}}, 'Faz'), 
+			h('h1', {style: {color: 'red'}}, 'Faz'),
 			`<h1 style="color:red;">Faz</h1>`
+		)
+
+		assert.html(
+			h('h1', {style: {lineHeight: 100}}, 'Faz'),
+			`<h1 style="line-height:100;">Faz</h1>`
+		)
+
+		assert.html(
+			h('h1', {style: {color: undefined}}, 'Faz'),
+			`<h1 style="">Faz</h1>`
+		)
+
+		assert.html(
+			h('h1', {style: {color: null}}, 'Faz'),
+			`<h1 style="">Faz</h1>`
+		)
+
+		assert.html(
+			h('h1', {style: {color: false}}, 'Faz'),
+			`<h1 style="">Faz</h1>`
+		)
+
+		assert.html(
+			h('h1', {style: {color: true}}, 'Faz'),
+			`<h1 style="">Faz</h1>`
+		)
+
+		assert.html(
+			h('h1', {style: {color: {}}}, 'Faz'),
+			`<h1 style="">Faz</h1>`
 		)
 	})
 
 	it('should render an element style(string) to string', () => {
 		assert.html(
-			h('h1', {className: 'faz', style: 'margin-top:20px;'}, 'Faz'), 
+			h('h1', {className: 'faz', style: 'margin-top:20px;'}, 'Faz'),
 			`<h1 class="faz" style="margin-top:20px;">Faz</h1>`
 		)
 	})
@@ -58,7 +88,7 @@ describe('Server', () => {
 				render() {
 					return [h('head'), h('body')]
 				}
-			}), 
+			}),
 			'<head></head><body></body>'
 		)
 	})
@@ -69,7 +99,7 @@ describe('Server', () => {
 				render() {
 					return h('div', createPortal(h('div', {class: 'modal'}), 'body'))
 				}
-			}), 
+			}),
 			'<div><div class="modal"></div></div>'
 		)
 	})
@@ -115,14 +145,14 @@ describe('Server', () => {
 				render() {
 					return '1'
 				}
-			}), 
+			}),
 			'1'
 		)
 	})
 
 	it('should render an element to json', () => {
 		assert.json(
-			h('h1', {className: 'faz', style: {marginTop: '20px'}}, 'Faz'), 
+			h('h1', {className: 'faz', style: {marginTop: '20px'}}, 'Faz'),
 			`{"type":"h1","props":{"className":"faz","style":{"marginTop":"20px"}},"children":["Faz"]}`
 		)
 	})
@@ -133,7 +163,7 @@ describe('Server', () => {
 				render() {
 					return [h('head'), h('body')]
 				}
-			}), 
+			}),
 			`[{"type":"head","props":{},"children":[]},{"type":"body","props":{},"children":[]}]`
 		)
 	})
@@ -144,7 +174,7 @@ describe('Server', () => {
 				render() {
 					return '1'
 				}
-			}), 
+			}),
 			'"1"'
 		)
 	})
@@ -364,7 +394,7 @@ describe('Server', () => {
 		let output = ''
 
 		renderer.on('end', () => {
-			assert.html(output, `<div>123</div>`)			
+			assert.html(output, `<div>123</div>`)
 			done()
 		})
 
@@ -443,5 +473,57 @@ describe('Server', () => {
 		assert.html(h('div', {
 			dangerouslySetInnerHTML: undefined
 		}), '<div></div>')
+	})
+
+	it('should render tabIndex to string', () => {
+		assert.html(h('div', {tabIndex: 2}), '<div tabindex="2"></div>')
+	})
+
+	it('should recover from an async component stream error', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let element = h(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				return {children: h('h1', 'Error!')}
+			}
+			getInitialState() {
+				return Promise.reject({x: '!'})
+			}
+			render(props, {x, children}) {
+				return h('h1', 'Hello World', x)
+			}
+		})
+		let output = ''
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, '')
+			done()
+		})
+	})
+
+	it('should propagate errors', (done) => {
+		let A = () => { throw new Error('x') }
+		let error = null
+
+		assert.html(h(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				error = err
+			}
+			render () {
+				return h('div', A)
+			}
+		}), '<div></div>')
+
+		nextTick(() => {
+			assert.instanceOf(error, Error)
+			done()
+		})
 	})
 })

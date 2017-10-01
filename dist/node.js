@@ -1,6 +1,6 @@
 /*! DIO 8.0.0 @license MIT */
 
-module.exports = function (exports, Element, mountComponentElement, unmountComponentElement, getComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition, getElementDescription) {'use strict'/* eslint-disable */
+module.exports = function (exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition) {'use strict'/* eslint-disable */
 
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -69,7 +69,7 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 	 * @return {string}
 	 */
 	function getTextEscape (value) {
-		return (value+'').replace(RegExpEscape, getTextEncode)
+		return (value+'').replace(/[<>&"']/g, getTextEncode)
 	}
 	
 	/**
@@ -121,24 +121,10 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 	/**
 	 * @param {Response} response
 	 */
-	function setResponseHeader (response) {
+	function setHeader (response) {
 		if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
 			response.setHeader('Content-Type', 'text/html')
 	}
-	
-	var Readable = require('stream').Readable
-	var RegExpEscape = /[<>&"']/g
-	var RegExpDashCase = /([a-zA-Z])(?=[A-Z])/g
-	var RegExpVendor = /^(ms|webkit|moz)/
-	
-	Object.defineProperties(Element.prototype, {
-		toJSON: {value: toJSON},
-		toString: {value: toString},
-		toStream: {value: toStream}
-	})
-	
-	exports.renderToString = renderToString
-	exports.renderToNodeStream = renderToNodeStream
 	
 	/**
 	 * @return {string}
@@ -165,7 +151,7 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 		var children = element.children
 		var length = children.length
 		var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
-		
+	
 		if (isVoidType(type))
 			return output
 	
@@ -192,7 +178,7 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 	
 		for (var name in props) {
 			var value = props[name]
-			
+	
 			switch (name) {
 				case 'dangerouslySetInnerHTML':
 					value = value && value.__html
@@ -207,7 +193,7 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 				case 'children':
 					continue
 				case 'style':
-					output += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'				
+					output += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'
 					continue
 				case 'className':
 					name = 'class'
@@ -217,6 +203,10 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 					break
 				case 'httpEquiv':
 					name = 'http-equiv'
+					break
+				case 'tabIndex':
+					name = name.toLowerCase()
+					break
 			}
 	
 			switch (typeof value) {
@@ -243,10 +233,14 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 		for (var name in props) {
 			var value = props[name]
 	
-			if (name !== name.toLowerCase())
-				name = name.replace(RegExpDashCase, '$1-').replace(RegExpVendor, '-$1').toLowerCase()
+			switch (typeof value) {
+				case 'string':
+				case 'number':
+					if (name !== name.toLowerCase())
+						name = name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
 	
-			output += name + ':' + value + ';'
+					output += name + ':' + value + ';'
+			}
 		}
 	
 		return output
@@ -256,14 +250,16 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 	 * @return {Object}
 	 */
 	function toJSON () {
-		var element = this
-		
-		switch (element.id) {
+		return getJSONElement(this, null)
+	}
+	
+	function getJSONElement (element, host) {
+		switch (element.host = host, element.id) {
 			case SharedElementText:
 			case SharedElementEmpty:
 				return element.children
 			case SharedElementComponent:
-				return mountComponentElement(element).toJSON()
+				return getJSONElement(mountComponentElement(element), element)
 		}
 	
 		var output = {type: element.type, props: element.props, children: []}
@@ -274,13 +270,18 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 			children = (length--, children.next)
 	
 		while (length-- > 0)
-			output.children.push((children = children.next).toJSON())
+			output.children.push(getJSONElement(children = children.next, host))
 	
 		if (element.id < SharedElementIntermediate)
 			(output = output.children).pop()
 	
 		return output
 	}
+	
+	/**
+	 * @type {constructor}
+	 */
+	var Readable = require && require('stream').Readable
 	
 	/**
 	 * @param {function=}
@@ -377,16 +378,16 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 					.catch(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 			case SharedElementText:
 			case SharedElementEmpty:
-				return writeStreamElement(children, readable)
+				return writeStreamElement(getTextEscape(children), readable)
 			case SharedElementNode:
 				if (element.DOM)
 					return element.DOM = writeStreamElement(element.DOM, readable)
 	
 				output += '<' + element.type + getStringProps(element, element.props) + '>'
-				
+	
 				if (isVoidType(element.type))
 					return writeStreamElement(output, readable)
-				
+	
 				element.DOM = (element.DOM || '') + '</' + element.type + '>'
 	
 				stack.push(element)
@@ -420,8 +421,8 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 		if (!target || !target.writable)
 			return getElementDefinition(element).toString()
 		else
-			setResponseHeader(target)
-		
+			setHeader(target)
+	
 		return target.end(getElementDefinition(element).toString(), 'utf8', callback)
 	}
 	
@@ -434,8 +435,17 @@ module.exports = function (exports, Element, mountComponentElement, unmountCompo
 		if (!target || !target.writable)
 			return getElementDefinition(element).toStream()
 		else
-			setResponseHeader(target)
-		
+			setHeader(target)
+	
 		return getElementDefinition(element).toStream(callback).pipe(target)
 	}
+	
+	Object.defineProperties(Element.prototype, {
+		toJSON: {value: toJSON},
+		toString: {value: toString},
+		toStream: {value: toStream}
+	})
+	
+	exports.renderToString = renderToString
+	exports.renderToNodeStream = renderToNodeStream
 }

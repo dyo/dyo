@@ -12,7 +12,7 @@ function reconcileObject (prevObject, nextObject) {
 
 	for (var key in prevObject)
 		if (!hasOwnProperty.call(nextObject, key))
-			delta[(length++, key)] = null
+			delta[(++length, key)] = null
 
 	for (var key in nextObject) {
 		var next = nextObject[key]
@@ -20,9 +20,9 @@ function reconcileObject (prevObject, nextObject) {
 
 		if (next !== prev)
 			if (typeof next !== 'object' || next === null)
-				delta[(length++, key)] = next
+				delta[(++length, key)] = next
 			else if (next = reconcileObject(prev || {}, next))
-				delta[(length++, key)] = next
+				delta[(++length, key)] = next
 	}
 
 	if (length > 0)
@@ -92,23 +92,23 @@ function reconcileChildren (element, snapshot) {
 	outer: while (true) {
 		while (oldHead.key === newHead.key) {
 			reconcileElement(oldHead, newHead)
-			oldPos++
-			newPos++
-			
-			if (oldPos > oldEnd || newPos > newEnd) 
+			++oldPos
+			++newPos
+
+			if (oldPos > oldEnd || newPos > newEnd)
 				break outer
-			
+
 			oldHead = oldHead.next
 			newHead = newHead.next
 		}
 		while (oldTail.key === newTail.key) {
 			reconcileElement(oldTail, newTail)
-			oldEnd--
-			newEnd--
+			--oldEnd
+			--newEnd
 
-			if (oldPos > oldEnd || newPos > newEnd) 
+			if (oldPos > oldEnd || newPos > newEnd)
 				break outer
-			
+
 			oldTail = oldTail.prev
 			newTail = newTail.prev
 		}
@@ -118,9 +118,9 @@ function reconcileChildren (element, snapshot) {
 	// step 2, insert/append/remove
 	if (oldPos > oldEnd++) {
 		if (newPos <= newEnd++) {
-			if (newEnd < newLength) 
+			if (newEnd < newLength)
 				signature = SharedMountInsert
-			else if (oldLength > 0)
+			else if ((oldTail = children, oldLength > 0))
 				newHead = newHead.next
 
 			while (newPos++ < newEnd) {
@@ -168,14 +168,14 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 		if (oldChild.key !== newChild.key) {
 			oldPool[oldChild.key] = oldChild
 			oldChild = oldChild.next
-			oldSize++
-			oldIndex++
+			++oldSize
+			++oldIndex
 		} else {
 			reconcileElement(oldChild, newChild)
 			oldChild = oldChild.next
 			newChild = newChild.next
-			oldIndex++
-			newIndex++
+			++oldIndex
+			++newIndex
 		}
 
 	// step 4, insert/append
@@ -192,11 +192,11 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 
 			reconcileElement(oldNext, newChild)
 
-			delete oldPool[(oldSize--, newHash)]
+			delete oldPool[(--oldSize, newHash)]
 		} else if (oldChild === children)
 			commitMount(children.insert(newChild, oldChild), newChild, element, host, SharedMountAppend, SharedMountCommit)
 		else
-			commitMount(children.insert(newChild, oldChild), oldChild, element, host, SharedMountInsert, SharedMountCommit)	
+			commitMount(children.insert(newChild, oldChild), oldChild, element, host, SharedMountInsert, SharedMountCommit)
 
 		newChild = newNext
 	}

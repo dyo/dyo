@@ -1,6 +1,6 @@
 describe('Fixture', () => {
 	it('should reconcile no-op', () => {
-		let container = document.body.appendChild(document.createElement('div'))
+		let container = document.createElement('div')
 		let stack = []
 		let X = () => h('div', 'x')
 		let List = class {
@@ -162,55 +162,6 @@ describe('Fixture', () => {
 		})
 	})
 
-	it('should fall back to polyfills', () => {		
-		let container = document.createElement('div')
-		let stack = []
-		let file = '../dist/umd.js'
-		let WeakMap = global.WeakMap
-		let Symbol = global.Symbol
-		let Promise = global.Promise
-
-		delete require.cache[require.resolve(file)]
-
-		global.WeakMap = undefined
-		global.Symbol = undefined
-		global.Promise = undefined
-		
-		assert.equal(global.WeakMap, undefined)
-		assert.equal(global.Symbol, undefined)
-		assert.equal(global.Promise, undefined)
-
-		let {render, h} = require(file)
-		let A = class {
-			componentWillUnmount() {
-				stack.push('should not push')
-			}
-			render({children}) {
-				return children
-			}
-		}
-
-		assert.doesNotThrow(() => {
-			render(h(A, 1), container)
-			render(h(A, 2), container)
-		})
-
-		assert.html(container, '2')
-		assert.lengthOf(stack, 0)
-
-		global.WeakMap = WeakMap
-		global.Symbol = Symbol
-		global.Promise = Promise
-
-		delete require.cache[require.resolve(file)]
-
-		Object.assign(global, require(file))
-
-		assert.equal(global.WeakMap, WeakMap)
-		assert.equal(global.Symbol, Symbol)
-		assert.notEqual(render, global.render)
-	})
-
 	it('should not remove children from empty children', () => {
 		let element = h('h1', 1)
 		let children = element.children
@@ -323,7 +274,7 @@ describe('Fixture', () => {
 		  }
 		}
 
-		render(App, container),
+		render(App, container)
 
 		nextTick(() => {
 			assert.html(container, '<div><h2>3</h2><button>Increment</button><button>Decrement</button></div>')
@@ -362,10 +313,59 @@ describe('Fixture', () => {
 		})
 	})
 
+	it('should fall back to polyfills', () => {		
+		let container = document.createElement('div')
+		let stack = []
+		let file = '../dist/umd'
+		let WeakMap = global.WeakMap
+		let Symbol = global.Symbol
+		let Promise = global.Promise
+
+		delete require.cache[require.resolve(file)]
+
+		global.WeakMap = undefined
+		global.Symbol = undefined
+		global.Promise = undefined
+		
+		assert.equal(global.WeakMap, undefined)
+		assert.equal(global.Symbol, undefined)
+		assert.equal(global.Promise, undefined)
+
+		let {render, h} = require(file)
+		let A = class {
+			componentWillUnmount() {
+				stack.push('should not push')
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		assert.doesNotThrow(() => {
+			render(h(A, 1), container)
+			render(h(A, 2), container)
+		})
+
+		assert.html(container, '2')
+		assert.lengthOf(stack, 0)
+
+		global.WeakMap = WeakMap
+		global.Symbol = Symbol
+		global.Promise = Promise
+
+		delete require.cache[require.resolve(file)]
+
+		Object.assign(global, require(file))
+
+		assert.equal(global.WeakMap, WeakMap)
+		assert.equal(global.Symbol, Symbol)
+		assert.notEqual(render, global.render)
+	})
+
 	it('should not hit the require branch when bundling with webpack', () => {		
 		let container = document.createElement('div')
 		let stack = []
-		let file = '../dist/umd.js'
+		let file = '../dist/umd'
 
 		delete require.cache[require.resolve(file)]
 
