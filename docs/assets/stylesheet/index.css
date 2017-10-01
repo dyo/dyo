@@ -146,7 +146,7 @@ article {
 	padding: 1.4em 0 4em;
 }
 
-p, li {
+p {
   max-width: 64%;
 }
 
@@ -179,7 +179,7 @@ nav ol {
   margin: 1em 0.8em;
 }
 
-p > a:link, 
+p > a:link,
 li > a:link,
 h1 a:hover,
 h2 a:hover {

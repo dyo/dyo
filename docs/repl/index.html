@@ -13,7 +13,7 @@
 	<iframe id=preview></iframe>
 
 	<style>
-		html, 
+		html,
 		body {
 			margin: 0;
 			padding: 0;
@@ -40,8 +40,8 @@
 			background: #fff;
 			z-index: 2;
 		}
-	
-		html, 
+
+		html,
 		body,
 		:root .CodeMirror,
 		:root .CodeMirror-gutters {
@@ -98,11 +98,11 @@
 			color: #444;
 		}
 	</style>
-	
+
 	<link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.30.0/codemirror.min.css>
 	<script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.30.0/codemirror.min.js></script>
 	<script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.30.0/mode/javascript/javascript.min.js></script>
-	
+
 	<script>
 		function change () {
 		  clearTimeout(delay)
@@ -110,7 +110,7 @@
 		}
 
 		function load () {
-	  	try {	  		
+	  	try {
 	  		preview.contentWindow.eval('Object.assign(window, window.dio)')
 	  		preview.contentWindow.eval(mirror.getValue())
 	  		iframe.documentElement.appendChild(style)
@@ -118,7 +118,7 @@
 	  		console.error(e)
 	  	}
 	  }
-		
+
 		function mount () {
   		iframe.head.appendChild(script)
 		  mirror.on('change', change)

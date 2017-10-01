@@ -414,30 +414,30 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	
 	/**
 	 * @param {*} element
-	 * @param {Writable?} target
+	 * @param {Writable?} container
 	 * @param {function=} callback
 	 */
-	function renderToString (element, target, callback) {
-		if (!target || !target.writable)
+	function renderToString (element, container, callback) {
+		if (!container || !container.writable)
 			return getElementDefinition(element).toString()
 		else
-			setHeader(target)
+			setHeader(container)
 	
-		return target.end(getElementDefinition(element).toString(), 'utf8', callback)
+		return container.end(getElementDefinition(element).toString(), 'utf8', callback)
 	}
 	
 	/**
 	 * @param {*} element
-	 * @param {Writable?} target
+	 * @param {Writable?} container
 	 * @param {function=} callback
 	 */
-	function renderToNodeStream (element, target, callback) {
-		if (!target || !target.writable)
+	function renderToNodeStream (element, container, callback) {
+		if (!container || !container.writable)
 			return getElementDefinition(element).toStream()
 		else
-			setHeader(target)
+			setHeader(container)
 	
-		return getElementDefinition(element).toStream(callback).pipe(target)
+		return getElementDefinition(element).toStream(callback).pipe(container)
 	}
 	
 	Object.defineProperties(Element.prototype, {

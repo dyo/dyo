@@ -23,7 +23,7 @@
 		</nav>
 	</header>
 	<article>
-	
+
 	<h1>Top-Level API</h1>
 
 	<h1 id=render>render</h1>
@@ -31,7 +31,7 @@
 <pre><code>
 render(
 	element: Element|Array|number|string
-	target?: Node
+	container?: Node
 	callback?: function
 )
 </code></pre>
@@ -41,11 +41,11 @@ render(
 <pre><code>
 hydrate(
 	element: Element|Array|number|string
-	target?: Node
+	container?: Node
 	callback?: function
 )
 </code></pre>
-		
+
 		<h1 id=createElement>createElement</h1>
 
 <pre><code>
@@ -62,7 +62,7 @@ createElement(
 
 <pre><code>
 cloneElement(
-	element: Element 
+	element: Element
 	props?: object
 	...children?: Array
 ): Element
@@ -80,7 +80,7 @@ isValidElement(
 
 <pre><code>
 createPortal(
-	element: Element|Array,
+	element: Element|Array|number|string,
 	container: Node|string,
 	key?: any
 ): Element
@@ -93,7 +93,7 @@ class Component {
 	constructor (props: object)
 	forceUpdate(callback?: function)
 	setState(state?: object, callback?: function)
-	
+
 	abstract render(props: object, state: object, context: object)
 }
 </code></pre>
@@ -106,7 +106,7 @@ class PureComponent {
 	forceUpdate(callback?: function)
 	setState(state?: object, callback?: function)
 	shouldComponentUpdate(props: object, state: object, context: object)
-	
+
 	abstract render(props: object, state: object, context: object)
 }
 </code></pre>
@@ -117,25 +117,25 @@ class PureComponent {
 
 <pre><code>
 toArray(children: any): Array
-</code></pre>	
+</code></pre>
 
 	<h2 id=forEach>forEach</h2>
 
 <pre><code>
 forEach(children: any, callback: function)
-</code></pre>	
+</code></pre>
 
 	<h2 id=map>map</h2>
 
 <pre><code>
 map(children: any, callback: function): Array
-</code></pre>	
+</code></pre>
 
 	<h2 id=only>only</h2>
 
 <pre><code>
 only(children: Element): Element
-</code></pre>	
+</code></pre>
 
 	<h2 id=count>count</h2>
 
@@ -152,7 +152,7 @@ findDOMNode(instance: Component|Element|Node|Event): Node
 	<h1 id=unmountComponentAtNode>unmountComponentAtNode</h1>
 
 <pre><code>
-unmountComponentAtNode(target: Node): boolean
+unmountComponentAtNode(container: Node): boolean
 </code></pre>
 
 	<h1 id=version>version</h1>

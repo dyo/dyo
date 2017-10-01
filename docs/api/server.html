@@ -24,7 +24,7 @@
 	</header>
 	<article>
 		<h1>Server</h1>
-		
+
 		<h1 id=toString>toString</h1>
 
 <pre><code>
@@ -54,18 +54,18 @@ interface Element {
 <pre><code>
 renderToString(
 	element: null|void|string|number|Element|Array,
-	target?: Writable
-	callback?: function 
+	container?: Writable
+	callback?: function
 )
 </code></pre>
 
 		<h1 id=renderToNodeStream>renderToNodeStream</h1>
 
 <pre><code>
-renderToStream(
+renderToNodeStream(
 	element: null|void|string|number|Element|Array|Promise,
-	target?: Writable
-	callback?: function 
+	container?: Writable
+	callback?: function
 )
 </code></pre>
 

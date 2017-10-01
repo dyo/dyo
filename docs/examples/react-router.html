@@ -45,8 +45,8 @@
 	      ),
 	      h(Route, {path: `${match.url}/:topicId`, component: Topic}),
 	      h(Route, {
-	        exact: true, 
-	        path: match.url, 
+	        exact: true,
+	        path: match.url,
 	        render: () => h('h3', 'Please select topic')
 	      })
 	    )
