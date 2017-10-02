@@ -56,7 +56,7 @@ function mount (element, parent, container, callback, signature) {
 	setDOMNode(parent, container)
 
 	if (signature === SharedMountCommit)
-		initDOMRoot(parent)
+		setDOMContent(parent, '')
 
 	commitMount(element, element, parent, parent, SharedMountAppend, signature)
 

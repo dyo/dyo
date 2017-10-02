@@ -235,7 +235,7 @@ const gzipsize = (content) => {
 	var size = parseInt(zlib.gzipSync(content, {level: 9}).length)/1000
 
 	if (size !== filesize) {
-		var kbSize = '~'+Math.trunc(size)+'kb'
+		var kbSize = '~'+Math.trunc(size+.1)+'kb'
 
 		if (Math.trunc(size) !== Math.trunc(filesize)) {
 			var readpath = path.join(__dirname, '../../README.md')

@@ -26,7 +26,7 @@
     "dev": "node ./script/build",
     "build": "node ./script/build --bundle",
     "test": "nyc mocha --recursive --require script/test/index.js",
-    "test:dev": "nyc mocha --recursive --require script/test/index.js --watch",
+    "test:watch": "mocha --recursive --require script/test/index.js --watch",
     "test:debug": "mocha --recursive --require script/test/index.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },

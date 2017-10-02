@@ -20,7 +20,7 @@ function childrenArray (children) {
 		return array
 	else if (isValidElement(children) || typeof children !== 'object')
 		return [children]
-	else if (children instanceof Array)
+	else if (isArray(children))
 		return flatten(children, array)
 	else if (typeof children.next === 'function' || typeof children.forEach === 'function')
 		each(children, function (element) {

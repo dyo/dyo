@@ -146,9 +146,8 @@ function updateComponent (element, snapshot, signature) {
 		case SharedComponentForceUpdate:
 			break
 		case SharedComponentPropsUpdate:
-			if (owner[SharedComponentWillReceiveProps]) {
+			if (owner[SharedComponentWillReceiveProps])
 				getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext)
-			}
 		case SharedComponentStateUpdate:
 			if (owner[SharedComponentShouldUpdate])
 				if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
@@ -348,7 +347,7 @@ function getLifecycleMount (element, name) {
 
 		if (name !== SharedComponentWillUnmount)
 			getLifecycleReturn(element, state)
-		else if (state instanceof Promise)
+		else if (state && state.constructor === Promise)
 			return state
 	} catch (err) {
 		invokeErrorBoundary(element, err, name, SharedErrorActive)

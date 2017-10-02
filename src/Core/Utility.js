@@ -113,7 +113,7 @@ function assign (object, primary, secondary) {
  */
 function flatten (array, output) {
 	for (var i = 0; i < array.length; ++i)
-		if (array[i] instanceof Array)
+		if (isArray(array[i]))
 			flatten(array[i], output)
 		else
 			output.push(array[i])

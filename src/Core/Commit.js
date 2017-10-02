@@ -36,13 +36,14 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			commitMount(mountComponentElement(element), sibling, parent, element, operation, signature)
 			commitCreate(element)
 
+			element.work = SharedWorkIdle
+
 			if (element.ref)
 				commitReference(element, element.ref, SharedReferenceDispatch)
 
 			if (element.owner[SharedComponentDidMount])
 				getLifecycleMount(element, SharedComponentDidMount)
 
-			element.work = SharedWorkIdle
 			return
 		case SharedElementPromise:
 			commitWillReconcile(element, element)

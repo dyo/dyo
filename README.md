@@ -66,8 +66,8 @@ The following is an overview of the features DIO allows you to make use of.
 
 	1. Elements
 	1. Components
-	1. Primitives like strings, number, null, undefined
-	1. Fragment like Array, Iterable
+	1. Primitives like strings, numbers, null, undefined
+	1. Fragments like Arrays, Iterables
 	1. and others renderables like Promises and Portals
 
 1. ### Components
@@ -82,13 +82,13 @@ The following is an overview of the features DIO allows you to make use of.
 
 1. ### Errors
 
-	1. Error Boundaries, `componentDidCatch`
+	1. Error boundaries through `componentDidCatch`
 
 1. ### setState
 
-	1. As an Object
-	1. As a Promise
-	1. As an Implicit return
+	1. As with a Object
+	1. As with a Promise
+	1. As with an implicit return
 
 1. ### Lifecycle
 
@@ -96,20 +96,26 @@ The following is an overview of the features DIO allows you to make use of.
 
 ## Example
 
-This examples presents a few features detailed above, namely – error boundaries, an implicit setState return
-and fragments.
+This examples presents a few features detailed above, namely – error boundaries, an implicit setState return, Promise setState and fragments.
 
 ```js
 class Input {
-	componentDidCatch ({error, stack, message, report}) {
-		return error
+	// Error Boundary
+	componentDidCatch ({stack, message}) {
+		return {error: true}
 	}
+	// Implicit Promise setState
 	async handleInput({target}, props, state) {
 		return {value: target.value}
 	}
-	render(props, {value}, context) {
+	render(props, {value, error}, context) {
+		if (error)
+			return h('h1', 'Something went wrong!')
+
+		// Fragment
 		return [
-			h('input', {onInput: this.handleInput, value: value})
+			h('input', {onInput: this.handleInput, value: value}),
+			h('p', value)
 		]
 	}
 }

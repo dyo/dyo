@@ -23,13 +23,6 @@ function findDOMNode (element) {
 
 /**
  * @param {Element} element
- */
-function initDOMRoot (element) {
-	getDOMNode(element).textContent = ''
-}
-
-/**
- * @param {Element} element
  * @param {Node} node
  */
 function setDOMNode (element, node) {
@@ -38,7 +31,15 @@ function setDOMNode (element, node) {
 
 /**
  * @param {Element} element
- * @param {(string|number)} value
+ * @param {string} value
+ */
+function setDOMContent (element, value) {
+	getDOMNode(element).textContent = value
+}
+
+/**
+ * @param {Element} element
+ * @param {string} value
  */
 function setDOMValue (element, value) {
 	getDOMNode(element).nodeValue = value
@@ -347,8 +348,8 @@ function appendDOMNode (element, parent) {
 function createDOMElement (element) {
 	if (element.xmlns)
 		return document.createElementNS(element.xmlns, element.type)
-	else
-		return document.createElement(element.type)
+
+	return document.createElement(element.type)
 }
 
 /**

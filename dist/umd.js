@@ -183,7 +183,7 @@ function factory (window, require, define) {
 	 */
 	function flatten (array, output) {
 		for (var i = 0; i < array.length; ++i)
-			if (array[i] instanceof Array)
+			if (isArray(array[i]))
 				flatten(array[i], output)
 			else
 				output.push(array[i])
@@ -245,7 +245,7 @@ function factory (window, require, define) {
 			return a !== a && b !== b
 	}
 	
-	var Symbol = window.Symbol || function (d) {return 'Symbol('+d+')'}
+	var Symbol = window.Symbol || function (d) { return 'Symbol('+d+')' }
 	var WeakMap = window.WeakMap || WeakHash
 	var Promise = window.Promise || noop
 	
@@ -253,6 +253,7 @@ function factory (window, require, define) {
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
 	var hasOwnProperty = Object.hasOwnProperty
+	var isArray = Array.isArray
 	var SymbolIterator = Symbol.iterator || '@@iterator'
 	var SymbolError = Symbol('Error')
 	var SymbolElement = Symbol('Element')
@@ -817,9 +818,8 @@ function factory (window, require, define) {
 			case SharedComponentForceUpdate:
 				break
 			case SharedComponentPropsUpdate:
-				if (owner[SharedComponentWillReceiveProps]) {
+				if (owner[SharedComponentWillReceiveProps])
 					getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext)
-				}
 			case SharedComponentStateUpdate:
 				if (owner[SharedComponentShouldUpdate])
 					if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
@@ -1019,7 +1019,7 @@ function factory (window, require, define) {
 	
 			if (name !== SharedComponentWillUnmount)
 				getLifecycleReturn(element, state)
-			else if (state instanceof Promise)
+			else if (state && state.constructor === Promise)
 				return state
 		} catch (err) {
 			invokeErrorBoundary(element, err, name, SharedErrorActive)
@@ -1138,13 +1138,14 @@ function factory (window, require, define) {
 				commitMount(mountComponentElement(element), sibling, parent, element, operation, signature)
 				commitCreate(element)
 	
+				element.work = SharedWorkIdle
+	
 				if (element.ref)
 					commitReference(element, element.ref, SharedReferenceDispatch)
 	
 				if (element.owner[SharedComponentDidMount])
 					getLifecycleMount(element, SharedComponentDidMount)
 	
-				element.work = SharedWorkIdle
 				return
 			case SharedElementPromise:
 				commitWillReconcile(element, element)
@@ -1871,7 +1872,7 @@ function factory (window, require, define) {
 			return array
 		else if (isValidElement(children) || typeof children !== 'object')
 			return [children]
-		else if (children instanceof Array)
+		else if (isArray(children))
 			return flatten(children, array)
 		else if (typeof children.next === 'function' || typeof children.forEach === 'function')
 			each(children, function (element) {
@@ -1984,7 +1985,7 @@ function factory (window, require, define) {
 		setDOMNode(parent, container)
 	
 		if (signature === SharedMountCommit)
-			initDOMRoot(parent)
+			setDOMContent(parent, '')
 	
 		commitMount(element, element, parent, parent, SharedMountAppend, signature)
 	
@@ -2025,13 +2026,6 @@ function factory (window, require, define) {
 	
 	/**
 	 * @param {Element} element
-	 */
-	function initDOMRoot (element) {
-		getDOMNode(element).textContent = ''
-	}
-	
-	/**
-	 * @param {Element} element
 	 * @param {Node} node
 	 */
 	function setDOMNode (element, node) {
@@ -2040,7 +2034,15 @@ function factory (window, require, define) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {(string|number)} value
+	 * @param {string} value
+	 */
+	function setDOMContent (element, value) {
+		getDOMNode(element).textContent = value
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} value
 	 */
 	function setDOMValue (element, value) {
 		getDOMNode(element).nodeValue = value
@@ -2349,8 +2351,8 @@ function factory (window, require, define) {
 	function createDOMElement (element) {
 		if (element.xmlns)
 			return document.createElementNS(element.xmlns, element.type)
-		else
-			return document.createElement(element.type)
+	
+		return document.createElement(element.type)
 	}
 	
 	/**

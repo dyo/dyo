@@ -1176,21 +1176,24 @@ describe('Component', () => {
 		})
 	})
 
-	it('should ensure a pending component update is resolved', (done) => {
+	it('should ensure a pending update from componentWillUpdate update is resolved', (done) => {
 		let container = document.createElement('div')
 		let stack = []
+		let counter = 0
 		let A = class {
 			componentDidCatch(err) {
 				err.preventDefault()
 			}
-			componentDidMount() {
-				render(h(A, 2), container)
-
-				nextTick(() => {
-					assert.html(container, '2')
-					assert.lengthOf(stack, 2)
-					done()
-				})
+			componentWillUpdate() {
+				if (counter++ > 0) {
+					nextTick(() => {
+						assert.html(container, '2')
+						assert.lengthOf(stack, 3)
+						done()
+					})
+				} else {
+					render(h(A, 2), container)
+				}
 			}
 			render({children}, {name}) {
 				stack.push(1)
@@ -1198,6 +1201,34 @@ describe('Component', () => {
 			}
 		}
 
+		render(h(A, 1), container)
+		render(h(A, 1), container)
+	})
+
+	it('should ensure a pending update from componentDidUpdate update is resolved', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let counter = 0
+		let A = class {
+			componentDidCatch(err) {
+				err.preventDefault()
+			}
+			componentDidUpdate() {
+				if (counter++ > 0) {
+					assert.html(container, '2')
+					assert.lengthOf(stack, 3)
+					done()
+				} else {
+					render(h(A, 2), container)
+				}
+			}
+			render({children}, {name}) {
+				stack.push(1)
+				return children
+			}
+		}
+
+		render(h(A, 1), container)
 		render(h(A, 1), container)
 	})
 
@@ -1337,5 +1368,38 @@ describe('Component', () => {
 
 		unmountComponentAtNode(container)
 		assert.include(stack, true)
+	})
+
+	it('should call componenWillMount synchronously', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		let A = (props, {x}) => {
+			stack.push(true)
+			return h('h1', 'Hello, ', x)
+		}
+
+		A.componentWillMount = () => ({x: 'World'})
+		render(h(A), container)
+
+		assert.html(container, '<h1>Hello, World</h1>')
+		assert.lengthOf(stack, 1)
+	})
+
+	it('should call componenDidMount synchronously', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		let A = (props, {x}) => {
+			stack.push(true)
+			return h('h1', 'Hello, ', x)
+		}
+
+		A.componentDidMount = () => ({x: 'World'})
+
+		render(h(A), container)
+
+		assert.html(container, '<h1>Hello, World</h1>')
+		assert.lengthOf(stack, 2)
 	})
 })
