@@ -208,4 +208,20 @@ describe('Hydrate', () => {
 		assert.lengthOf(container.childNodes, 1)
 		assert.equal(container.firstChild.nodeType, 3)
 	})
+
+	it('should distinguish adjacent text components', () => {
+		let container = document.createElement('div')
+		let A = () => 'a'
+		let B = () => 'b'
+		let C = () => 'c'
+
+		container.innerHTML = h('div', A, B, C).toString()
+		assert.html(container, '<div>abc</div>')
+
+		hydrate(h('div', A, B, C), container)
+		assert.equal(container.firstChild.childNodes.length, 3)
+		assert.equal(container.firstChild.firstChild.nodeValue, 'a')
+		assert.equal(container.firstChild.firstChild.nextSibling.nodeValue, 'b')
+		assert.equal(container.firstChild.lastChild.nodeValue, 'c')
+	})
 })

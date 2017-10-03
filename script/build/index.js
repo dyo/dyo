@@ -136,9 +136,9 @@ const template = (type) => {
 	(function () {
 		try {
 			require('./node')(${(platform)})
-		} catch (e) {
+		} catch (err) {
 			/* istanbul ignore next */
-			console.error(e+'\\nSomething went wrong trying to import the server module.')
+			console.error(err+'\\nSomething went wrong trying to import the server module.')
 		}
 	}())`
 	}

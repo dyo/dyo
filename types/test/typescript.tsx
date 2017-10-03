@@ -1,4 +1,4 @@
-/// <reference path="../dio.d.ts" />
+/// <reference path="../typescript.d.ts" />
 
 interface P {
 	children: Array<any>
@@ -17,7 +17,10 @@ class A extends dio.Component<P, S> {
 	}
 }
 
-const foo = h('h1', {className: 1}, 'foo')
+const foo = h('h1', {className: 1, onClick: (e) => {
+	return {type: e.target}
+}}, 'foo')
+
 const clone = h(foo)
 const component = h(A)
 

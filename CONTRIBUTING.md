@@ -29,14 +29,12 @@ If you find a bug in the source code, you can help by
 - Commas last `,`
 - 2 tabs for indentation
 - Prefer `'` over `"`
-- Write "descriptive" code
-
 
 ## Repository Layout
 
 ### Tests
 
-Test make us of the [mocha](https://mochajs.org/) framework and [chai](chaijs.com) assertion library. 
+Test make us of the [mocha](https://mochajs.org/) framework and [chai](chaijs.com) assertion library.
 
 The following command will run  the complete test suite.
 
@@ -52,7 +50,7 @@ npm test -- --watch
 
 ### Source
 
-The distribution bundle is made of different sources that are separeted in terms of a separation of concerns.
+The distribution bundle is made of different sources that are separeted with regards their concerns.
 
 ```
 - src/
@@ -61,9 +59,9 @@ The distribution bundle is made of different sources that are separeted in terms
   - Server/
 ```
 
-For example, eveything in `Core/` manages aspects related to creating snapshot elements, diffing and reconciling while everyhing in `DOM` is related only to the layer that touches the native document model. The same can be said for `Server/` in related to Node and server side rendering.
+For example, eveything in `Core/` manages core aspects related to creating snapshot elements, diffing and reconciling while `DOM` is related to the layer that touches the native document model. The same can be said for `Server/` in relation to server side rendering.
 
-The distrution artifacts in `./dist/` are made of the bundle of the related sources mentioned above. You can create or update a build by running the following command.
+The distrution artifacts in `./dist/` are bundles of the related sources mentioned above. You can create or update a build by running the following command.
 
 ```
 npm run build

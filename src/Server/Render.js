@@ -6,10 +6,9 @@
 function renderToString (element, container, callback) {
 	if (!container || !container.writable)
 		return getElementDefinition(element).toString()
-	else
-		setHeader(container)
 
-	return container.end(getElementDefinition(element).toString(), 'utf8', callback)
+	setHeader(container)
+	container.end(getElementDefinition(element).toString(), 'utf8', callback)
 }
 
 /**
@@ -20,9 +19,8 @@ function renderToString (element, container, callback) {
 function renderToNodeStream (element, container, callback) {
 	if (!container || !container.writable)
 		return getElementDefinition(element).toStream()
-	else
-		setHeader(container)
 
-	return getElementDefinition(element).toStream(callback).pipe(container)
+	setHeader(container)
+	getElementDefinition(element).toStream(callback).pipe(container)
 }
 

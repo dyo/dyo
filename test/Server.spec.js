@@ -360,7 +360,7 @@ describe('Server', () => {
 		renderer.pipe(writable)
 	})
 
-	it('should render setHeader on response stream', (done) => {
+	it('should setHeader on a Response container', (done) => {
 		let stack = []
 		let Writable = new require('stream').Writable
 		let writable = Writable({
@@ -369,18 +369,19 @@ describe('Server', () => {
 	      callback()
 		  }
 		})
-		writable.setHeader = () => stack.push(1)
-		writable.getHeader = () => false
+
+		writable.setHeader = (type, value) => stack.push(type, value)
 
 		let element = h('div', {dangerouslySetInnerHTML: {__html: '1'}})
 		let output = ''
-		let renderer = renderToNodeStream(element, writable, () => {
+
+		renderToNodeStream(element, writable, () => {
 			assert.html(output, `<div>1</div>`)
-			assert.lengthOf(stack, 1)
+			assert.lengthOf(stack, 2)
+			assert.include(stack, 'text/html')
+			assert.include(stack, 'Content-Type')
 			done()
 		})
-
-		assert.instanceOf(renderer, Writable)
 	})
 
 	it('should render to stream through Element.toStream', (done) => {

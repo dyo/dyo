@@ -13,4 +13,3 @@ npm-debug.log
 *.swp
 *.swo
 coverage
-/index*

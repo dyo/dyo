@@ -3,10 +3,9 @@ type Text = string|number|null|void
 type Key = Text
 type Ref = string|Function
 type Type = string|Function|Promise<any>|ElementShape
-type State = Object|Promise<Object>
-type Return = State|Promise<State>|void
+type State = object
+type Return = State|Function|Promise<State>|void
 type Render = ElementShape|number|string|null|void|Promise<any>|Array<any>|Function
-type Event = EventListener|EventHandler
 
 interface List {
 	next: ElementShape|List
@@ -25,7 +24,7 @@ interface createElement {
 interface h extends createElement {}
 
 interface EventHandler {
-	(e: Event, props: object, state: object): Return
+	(e: Event, props: object, state: object, context: object): Return
 }
 
 interface EventListener {
@@ -33,169 +32,169 @@ interface EventListener {
 }
 
 interface Events {
-	onabort?: Event
-	onauxclick?: Event
-	onbeforecopy?: Event
-	onbeforecut?: Event
-	onbeforepaste?: Event
-	onblur?: Event
-	oncancel?: Event
-	oncanplay?: Event
-	oncanplaythrough?: Event
-	onchange?: Event
-	onclick?: Event
-	onclose?: Event
-	oncontextmenu?: Event
-	oncopy?: Event
-	oncuechange?: Event
-	oncut?: Event
-	ondblclick?: Event
-	ondrag?: Event
-	ondragend?: Event
-	ondragenter?: Event
-	ondragleave?: Event
-	ondragover?: Event
-	ondragstart?: Event
-	ondrop?: Event
-	ondurationchange?: Event
-	onemptied?: Event
-	onended?: Event
-	onerror?: Event
-	onfocus?: Event
-	ongotpointercapture?: Event
-	oninput?: Event
-	oninvalid?: Event
-	onkeydown?: Event
-	onkeypress?: Event
-	onkeyup?: Event
-	onload?: Event
-	onloadeddata?: Event
-	onloadedmetadata?: Event
-	onloadstart?: Event
-	onlostpointercapture?: Event
-	onmousedown?: Event
-	onmouseenter?: Event
-	onmouseleave?: Event
-	onmousemove?: Event
-	onmouseout?: Event
-	onmouseover?: Event
-	onmouseup?: Event
-	onmousewheel?: Event
-	onpaste?: Event
-	onpause?: Event
-	onplay?: Event
-	onplaying?: Event
-	onpointercancel?: Event
-	onpointerdown?: Event
-	onpointerenter?: Event
-	onpointerleave?: Event
-	onpointermove?: Event
-	onpointerout?: Event
-	onpointerover?: Event
-	onpointerup?: Event
-	onprogress?: Event
-	onratechange?: Event
-	onreset?: Event
-	onresize?: Event
-	onscroll?: Event
-	onsearch?: Event
-	onseeked?: Event
-	onseeking?: Event
-	onselect?: Event
-	onselectstart?: Event
-	onshow?: Event
-	onstalled?: Event
-	onsubmit?: Event
-	onsuspend?: Event
-	ontimeupdate?: Event
-	ontoggle?: Event
-	onvolumechange?: Event
-	onwaiting?: Event
-	onwebkitfullscreenchange?: Event
-	onwebkitfullscreenerror?: Event
-	onwheel?: Event
+	onabort?: EventListener|EventHandler
+	onauxclick?: EventListener|EventHandler
+	onbeforecopy?: EventListener|EventHandler
+	onbeforecut?: EventListener|EventHandler
+	onbeforepaste?: EventListener|EventHandler
+	onblur?: EventListener|EventHandler
+	oncancel?: EventListener|EventHandler
+	oncanplay?: EventListener|EventHandler
+	oncanplaythrough?: EventListener|EventHandler
+	onchange?: EventListener|EventHandler
+	onclick?: EventListener|EventHandler
+	onclose?: EventListener|EventHandler
+	oncontextmenu?: EventListener|EventHandler
+	oncopy?: EventListener|EventHandler
+	oncuechange?: EventListener|EventHandler
+	oncut?: EventListener|EventHandler
+	ondblclick?: EventListener|EventHandler
+	ondrag?: EventListener|EventHandler
+	ondragend?: EventListener|EventHandler
+	ondragenter?: EventListener|EventHandler
+	ondragleave?: EventListener|EventHandler
+	ondragover?: EventListener|EventHandler
+	ondragstart?: EventListener|EventHandler
+	ondrop?: EventListener|EventHandler
+	ondurationchange?: EventListener|EventHandler
+	onemptied?: EventListener|EventHandler
+	onended?: EventListener|EventHandler
+	onerror?: EventListener|EventHandler
+	onfocus?: EventListener|EventHandler
+	ongotpointercapture?: EventListener|EventHandler
+	oninput?: EventListener|EventHandler
+	oninvalid?: EventListener|EventHandler
+	onkeydown?: EventListener|EventHandler
+	onkeypress?: EventListener|EventHandler
+	onkeyup?: EventListener|EventHandler
+	onload?: EventListener|EventHandler
+	onloadeddata?: EventListener|EventHandler
+	onloadedmetadata?: EventListener|EventHandler
+	onloadstart?: EventListener|EventHandler
+	onlostpointercapture?: EventListener|EventHandler
+	onmousedown?: EventListener|EventHandler
+	onmouseenter?: EventListener|EventHandler
+	onmouseleave?: EventListener|EventHandler
+	onmousemove?: EventListener|EventHandler
+	onmouseout?: EventListener|EventHandler
+	onmouseover?: EventListener|EventHandler
+	onmouseup?: EventListener|EventHandler
+	onmousewheel?: EventListener|EventHandler
+	onpaste?: EventListener|EventHandler
+	onpause?: EventListener|EventHandler
+	onplay?: EventListener|EventHandler
+	onplaying?: EventListener|EventHandler
+	onpointercancel?: EventListener|EventHandler
+	onpointerdown?: EventListener|EventHandler
+	onpointerenter?: EventListener|EventHandler
+	onpointerleave?: EventListener|EventHandler
+	onpointermove?: EventListener|EventHandler
+	onpointerout?: EventListener|EventHandler
+	onpointerover?: EventListener|EventHandler
+	onpointerup?: EventListener|EventHandler
+	onprogress?: EventListener|EventHandler
+	onratechange?: EventListener|EventHandler
+	onreset?: EventListener|EventHandler
+	onresize?: EventListener|EventHandler
+	onscroll?: EventListener|EventHandler
+	onsearch?: EventListener|EventHandler
+	onseeked?: EventListener|EventHandler
+	onseeking?: EventListener|EventHandler
+	onselect?: EventListener|EventHandler
+	onselectstart?: EventListener|EventHandler
+	onshow?: EventListener|EventHandler
+	onstalled?: EventListener|EventHandler
+	onsubmit?: EventListener|EventHandler
+	onsuspend?: EventListener|EventHandler
+	ontimeupdate?: EventListener|EventHandler
+	ontoggle?: EventListener|EventHandler
+	onvolumechange?: EventListener|EventHandler
+	onwaiting?: EventListener|EventHandler
+	onwebkitfullscreenchange?: EventListener|EventHandler
+	onwebkitfullscreenerror?: EventListener|EventHandler
+	onwheel?: EventListener|EventHandler
 
-	onAbort?: Event
-	onAuxClick?: Event
-	onBeforeCopy?: Event
-	onBeforeCut?: Event
-	onBeforePaste?: Event
-	onBlur?: Event
-	onCancel?: Event
-	onCanPlay?: Event
-	onCanPlayThrough?: Event
-	onChange?: Event
-	onClick?: Event
-	onClose?: Event
-	onContextMenu?: Event
-	onCopy?: Event
-	onCueChange?: Event
-	onCut?: Event
-	onDblClick?: Event
-	onDrag?: Event
-	onDragEnd?: Event
-	onDragEnter?: Event
-	onDragLeave?: Event
-	onDragOver?: Event
-	onDragStart?: Event
-	onDrop?: Event
-	onDurationChange?: Event
-	onEmptied?: Event
-	onEnded?: Event
-	onError?: Event
-	onFocus?: Event
-	onGotPointerCapture?: Event
-	onInput?: Event
-	onInvalid?: Event
-	onKeydown?: Event
-	onKeypress?: Event
-	onKeyup?: Event
-	onLoad?: Event
-	onLoadedData?: Event
-	onLoadedMetaData?: Event
-	onLoadStart?: Event
-	onLostPointerCapture?: Event
-	onMouseDown?: Event
-	onMouseEnter?: Event
-	onMouseLeave?: Event
-	onMouseMove?: Event
-	onMouseOut?: Event
-	onMouseOver?: Event
-	onMouseUp?: Event
-	onMouseWheel?: Event
-	onPaste?: Event
-	onPause?: Event
-	onPlay?: Event
-	onPlaying?: Event
-	onPointerCancel?: Event
-	onPointerDown?: Event
-	onPointerEnter?: Event
-	onPointerLeave?: Event
-	onPointerMove?: Event
-	onPointerOut?: Event
-	onPointerOver?: Event
-	onPointerUp?: Event
-	onProgress?: Event
-	onRateChange?: Event
-	onReset?: Event
-	onResize?: Event
-	onScroll?: Event
-	onSearch?: Event
-	onSeeked?: Event
-	onSeeking?: Event
-	onSelect?: Event
-	onSelectStart?: Event
-	onShow?: Event
-	onStalled?: Event
-	onSubmit?: Event
-	onSuspend?: Event
-	onTimeUpdate?: Event
-	onToggle?: Event
-	onVolumeChange?: Event
-	onWaiting?: Event
-	onWebkitFullScreenChange?: Event
-	onWebkitFullScreenError?: Event
-	onWheel?: Event
+	onAbort?: EventListener|EventHandler
+	onAuxClick?: EventListener|EventHandler
+	onBeforeCopy?: EventListener|EventHandler
+	onBeforeCut?: EventListener|EventHandler
+	onBeforePaste?: EventListener|EventHandler
+	onBlur?: EventListener|EventHandler
+	onCancel?: EventListener|EventHandler
+	onCanPlay?: EventListener|EventHandler
+	onCanPlayThrough?: EventListener|EventHandler
+	onChange?: EventListener|EventHandler
+	onClick?: EventListener|EventHandler
+	onClose?: EventListener|EventHandler
+	onContextMenu?: EventListener|EventHandler
+	onCopy?: EventListener|EventHandler
+	onCueChange?: EventListener|EventHandler
+	onCut?: EventListener|EventHandler
+	onDblClick?: EventListener|EventHandler
+	onDrag?: EventListener|EventHandler
+	onDragEnd?: EventListener|EventHandler
+	onDragEnter?: EventListener|EventHandler
+	onDragLeave?: EventListener|EventHandler
+	onDragOver?: EventListener|EventHandler
+	onDragStart?: EventListener|EventHandler
+	onDrop?: EventListener|EventHandler
+	onDurationChange?: EventListener|EventHandler
+	onEmptied?: EventListener|EventHandler
+	onEnded?: EventListener|EventHandler
+	onError?: EventListener|EventHandler
+	onFocus?: EventListener|EventHandler
+	onGotPointerCapture?: EventListener|EventHandler
+	onInput?: EventListener|EventHandler
+	onInvalid?: EventListener|EventHandler
+	onKeydown?: EventListener|EventHandler
+	onKeypress?: EventListener|EventHandler
+	onKeyup?: EventListener|EventHandler
+	onLoad?: EventListener|EventHandler
+	onLoadedData?: EventListener|EventHandler
+	onLoadedMetaData?: EventListener|EventHandler
+	onLoadStart?: EventListener|EventHandler
+	onLostPointerCapture?: EventListener|EventHandler
+	onMouseDown?: EventListener|EventHandler
+	onMouseEnter?: EventListener|EventHandler
+	onMouseLeave?: EventListener|EventHandler
+	onMouseMove?: EventListener|EventHandler
+	onMouseOut?: EventListener|EventHandler
+	onMouseOver?: EventListener|EventHandler
+	onMouseUp?: EventListener|EventHandler
+	onMouseWheel?: EventListener|EventHandler
+	onPaste?: EventListener|EventHandler
+	onPause?: EventListener|EventHandler
+	onPlay?: EventListener|EventHandler
+	onPlaying?: EventListener|EventHandler
+	onPointerCancel?: EventListener|EventHandler
+	onPointerDown?: EventListener|EventHandler
+	onPointerEnter?: EventListener|EventHandler
+	onPointerLeave?: EventListener|EventHandler
+	onPointerMove?: EventListener|EventHandler
+	onPointerOut?: EventListener|EventHandler
+	onPointerOver?: EventListener|EventHandler
+	onPointerUp?: EventListener|EventHandler
+	onProgress?: EventListener|EventHandler
+	onRateChange?: EventListener|EventHandler
+	onReset?: EventListener|EventHandler
+	onResize?: EventListener|EventHandler
+	onScroll?: EventListener|EventHandler
+	onSearch?: EventListener|EventHandler
+	onSeeked?: EventListener|EventHandler
+	onSeeking?: EventListener|EventHandler
+	onSelect?: EventListener|EventHandler
+	onSelectStart?: EventListener|EventHandler
+	onShow?: EventListener|EventHandler
+	onStalled?: EventListener|EventHandler
+	onSubmit?: EventListener|EventHandler
+	onSuspend?: EventListener|EventHandler
+	onTimeUpdate?: EventListener|EventHandler
+	onToggle?: EventListener|EventHandler
+	onVolumeChange?: EventListener|EventHandler
+	onWaiting?: EventListener|EventHandler
+	onWebkitFullScreenChange?: EventListener|EventHandler
+	onWebkitFullScreenError?: EventListener|EventHandler
+	onWheel?: EventListener|EventHandler
 }
 
 interface Props extends Events {
@@ -213,8 +212,11 @@ interface Props extends Events {
 	width?: Text
 	height?: Text
 	defaultValue?: Text
+	tabIndex?: number
+	tabindex?: number
 	hidden?: boolean
 	dangerouslySetInnerHTML?: {__html: any}
+	innerHTML?: any
 }
 
 interface ElementShape {
@@ -236,6 +238,8 @@ interface ElementShape {
 	host: any
 	next: any
 	prev: any
+	handlEvent: (e: Event) => void
+	toString: () => string
 }
 
 interface isValidElement {
@@ -246,24 +250,28 @@ interface findDOMNode {
 	(component: any): Node
 }
 
+interface unmountComponentAtNode {
+	(node: object): boolean
+}
+
 interface Children {
-	forEach: (children: any, callback: Function) => void
-	map: (children: any, callback: Function) => Array<any>
+	forEach: (children: any, callback: Function, thisArg: any) => void
+	map: (children: any, callback: Function, thisArg: any) => Array<any>
 	toArray: (children: any) => Array<any>
 	count: (children: any) => number
 	only: (children: ElementShape) => ElementShape
 }
 
 interface render {
-	(subject: any, target?: Node, callback?: Function): void
-}
-
-interface renderToStream {
-	(subject: any, target?: object, callback?: Function): void
+	(element: any, container?: object, callback?: Function): void
 }
 
 interface renderToString {
-	(subject: any, target?: object, callback?: Function): void
+	(element: any, container?: object, callback?: Function): void
+}
+
+interface renderToNodeStream {
+	(element: any, container?: object, callback?: Function): void
 }
 
 interface Component<P, S> {
@@ -284,20 +292,21 @@ declare global {
 		export const isValidElement: isValidElement
 		export const findDOMNode: findDOMNode
 		export const Children: Children
+		export const unmountComponentAtNode: unmountComponentAtNode
 
 		export const render: render
 		export const renderToString: renderToString
-		export const renderToStream: renderToStream
+		export const renderToNodeStream: renderToNodeStream
 
 		export abstract class Component<P, S> {
 			readonly state: Readonly<S>
 			readonly props: Readonly<P>
 			readonly context: Readonly<Object>
 			readonly refs: Refs
-			
+
 			forceUpdate (callback?: () => Return): void
 			setState<K extends keyof S>(state: Pick<S, K>, callback?: () => Return): void
-			
+
 			constructor (props: Readonly<P>)
 			abstract render(props?: Readonly<P>, state?: Readonly<S>): ElementShape
 		}

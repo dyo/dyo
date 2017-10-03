@@ -8,12 +8,12 @@ function factory (window, require) {
 var temp
 
 /* istanbul ignore next */
-if (typeof exports === 'object' && typeof module !== 'undefined')
-	module.exports = temp = factory(global, typeof __webpack_require__ === 'undefined' && require)
+if (typeof exports === 'object' && typeof module === 'object' && module !== null)
+	temp = module.exports = factory(global, typeof __webpack_require__ === 'undefined' && typeof require === 'function' && require)
 else if (typeof define === 'function' && define.amd)
 	define(temp = factory(global))
 else
-	temp = factory(global)
+	temp = global.dio = factory(global)
 
 return temp
 })(/* istanbul ignore next */typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))

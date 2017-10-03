@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
 	<meta charset=utf-8>
@@ -23,10 +23,9 @@
 		</nav>
 	</header>
 	<article>
+		<h1>Top-Level API</h1>
 
-	<h1>Top-Level API</h1>
-
-	<h1 id=render>render</h1>
+		<h1 id=render>render</h1>
 
 <pre><code>
 render(
@@ -36,7 +35,7 @@ render(
 )
 </code></pre>
 
-<h1 id=hydrate>hydrate</h1>
+		<h1 id=hydrate>hydrate</h1>
 
 <pre><code>
 hydrate(
@@ -86,7 +85,7 @@ createPortal(
 ): Element
 </code></pre>
 
-	<h1 id=Component>Component</h1>
+		<h1 id=Component>Component</h1>
 
 <pre><code>
 class Component {
@@ -98,7 +97,7 @@ class Component {
 }
 </code></pre>
 
-	<h1 id=PureComponent>PureComponent</h1>
+		<h1 id=PureComponent>PureComponent</h1>
 
 <pre><code>
 class PureComponent {
@@ -111,51 +110,51 @@ class PureComponent {
 }
 </code></pre>
 
-	<h1 id=Children>Children</h1>
+		<h1 id=Children>Children</h1>
 
-	<h2 id=toArray>toArray</h2>
+		<h2 id=toArray>toArray</h2>
 
 <pre><code>
 toArray(children: any): Array
 </code></pre>
 
-	<h2 id=forEach>forEach</h2>
+		<h2 id=forEach>forEach</h2>
 
 <pre><code>
 forEach(children: any, callback: function)
 </code></pre>
 
-	<h2 id=map>map</h2>
+		<h2 id=map>map</h2>
 
 <pre><code>
 map(children: any, callback: function): Array
 </code></pre>
 
-	<h2 id=only>only</h2>
+		<h2 id=only>only</h2>
 
 <pre><code>
 only(children: Element): Element
 </code></pre>
 
-	<h2 id=count>count</h2>
+		<h2 id=count>count</h2>
 
 <pre><code>
 count(children: any): number
 </code></pre>
 
-	<h1 id=findDOMNode>findDOMNode</h1>
+		<h1 id=findDOMNode>findDOMNode</h1>
 
 <pre><code>
 findDOMNode(instance: Component|Element|Node|Event): Node
 </code></pre>
 
-	<h1 id=unmountComponentAtNode>unmountComponentAtNode</h1>
+		<h1 id=unmountComponentAtNode>unmountComponentAtNode</h1>
 
 <pre><code>
 unmountComponentAtNode(container: Node): boolean
 </code></pre>
 
-	<h1 id=version>version</h1>
+		<h1 id=version>version</h1>
 
 <pre><code>
 version: string

@@ -1,4 +1,4 @@
-/*! DIO 8.0.0-alpha.0 @license MIT */
+/*! DIO 8.0.0-alpha.1 @license MIT */
 
 module.exports = function (exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition) {/* eslint-disable */'use strict'
 
@@ -122,7 +122,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	 * @param {Response} response
 	 */
 	function setHeader (response) {
-		if (typeof response.getHeader === 'function' && !response.getHeader('Content-Type'))
+		if (typeof response.setHeader === 'function')
 			response.setHeader('Content-Type', 'text/html')
 	}
 	
@@ -420,10 +420,9 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	function renderToString (element, container, callback) {
 		if (!container || !container.writable)
 			return getElementDefinition(element).toString()
-		else
-			setHeader(container)
 	
-		return container.end(getElementDefinition(element).toString(), 'utf8', callback)
+		setHeader(container)
+		container.end(getElementDefinition(element).toString(), 'utf8', callback)
 	}
 	
 	/**
@@ -434,10 +433,9 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	function renderToNodeStream (element, container, callback) {
 		if (!container || !container.writable)
 			return getElementDefinition(element).toStream()
-		else
-			setHeader(container)
 	
-		return getElementDefinition(element).toStream(callback).pipe(container)
+		setHeader(container)
+		getElementDefinition(element).toStream(callback).pipe(container)
 	}
 	
 	Object.defineProperties(Element.prototype, {
