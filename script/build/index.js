@@ -10,7 +10,7 @@ let filesize = NaN
 let search = "'{%module%}'"
 
 const options = {compress: {}}
-const strict = `'use strict'/* eslint-disable */`
+const strict = `/* eslint-disable */'use strict'`
 const filenames = {
 	umd: 'umd.js',
 	esm: 'esm.js',
@@ -62,6 +62,17 @@ const esm = [
 const bridge = [
 	...core
 ]
+
+const server = `
+Object.defineProperties(Element.prototype, {
+	toJSON: {value: toJSON},
+	toString: {value: toString},
+	toStream: {value: toStream}
+})
+
+exports.renderToString = renderToString
+exports.renderToNodeStream = renderToNodeStream
+`
 
 /**
  * @return {string}
@@ -116,9 +127,20 @@ getElementDefinition
 const template = (type) => {
 	switch (type) {
 		case 'bridge':
-			return `if (typeof require !== 'object') return function (r) { factory(window, r) }`
+			return `if (typeof require !== 'object')
+	return function (r) {
+		factory(window, r)
+	}`
 		default:
-			return `if (typeof require === 'function') require(define)(${(platform)})`
+			return `if (typeof require === 'function')
+	(function () {
+		try {
+			require('./node')(${(platform)})
+		} catch (e) {
+			/* istanbul ignore next */
+			console.error(e+'\\nSomething went wrong trying to import the server module.')
+		}
+	}())`
 	}
 }
 
@@ -141,7 +163,7 @@ const wrapper = (module, content, factory, version, license) => {
 			return {
 				head: comment(version, license),
 				body: 'module.exports = function ('+(platform)+') {'+strict+
-					'\n\n'+pad(content.trim())+'\n}',
+					'\n\n'+pad(content.trim()+'\n\n'+server.trim())+'\n}',
 				tail: ''
 			}
 		}

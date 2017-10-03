@@ -26,12 +26,3 @@ function renderToNodeStream (element, container, callback) {
 	return getElementDefinition(element).toStream(callback).pipe(container)
 }
 
-Object.defineProperties(Element.prototype, {
-	toJSON: {value: toJSON},
-	toString: {value: toString},
-	toStream: {value: toStream}
-})
-
-exports.renderToString = renderToString
-exports.renderToNodeStream = renderToNodeStream
-

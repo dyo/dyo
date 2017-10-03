@@ -153,7 +153,7 @@ describe('Render', () => {
 	it('should unmount undefined ref', () => {
 		let container = document.createElement('div')
 		let refs = undefined
-		
+
 		render(h('h1', {ref: (value) => refs = value}), container)
 		render(h('h1', {ref: undefined}), container)
 		assert.equal(refs, null)
@@ -162,7 +162,7 @@ describe('Render', () => {
 	it('should unmount null ref', () => {
 		let container = document.createElement('div')
 		let refs = undefined
-		
+
 		render(h('h1', {ref: (value) => refs = value}), container)
 		render(h('h1', {ref: null}), container)
 		assert.equal(refs, null)
@@ -186,7 +186,7 @@ describe('Render', () => {
 	})
 
 	it('should not render unknown objects', () => {
-		assert.throws(() => {			
+		assert.throws(() => {
 			render(h('div', null, {}), container)
 		})
 	})
@@ -323,7 +323,7 @@ describe('Render', () => {
 
 	it('should render and update autofocus', () => {
 		let refs = null
-		
+
 		render([
 			h('input', {autofocus: true, ref: (value) => refs = value}),
 			h('input', {autofocus: false})
@@ -360,7 +360,7 @@ describe('Render', () => {
 		`)
 
 		render(
-			h('div', 
+			h('div',
 				h('h1', 1),
 				h('h1', 2)
 			),
@@ -396,7 +396,7 @@ describe('Render', () => {
 		`)
 
 		render(
-			h('div', 
+			h('div',
 				h('h1', 1),
 				h('h1', 2)
 			),
@@ -460,4 +460,33 @@ describe('Render', () => {
 		render(h('div', {children: [h('span'), h('hr')]}, h('h1', 1)), container)
 		assert.html(container, '<div><span></span><hr><h1>1</h1></div>')
 	})
+
+	it('should no-op duplicate keys', () => {
+		let container = document.createElement('div')
+
+		render(h('div', [
+			h('h1', {key: 1}),
+			h('h2', {key: 1}),
+			h('h3', {key: 2})
+		]), container)
+
+		render(h('div', [
+			h('h1', {key: 1}),
+			h('h2', {key: 1}),
+			h('h3', {key: 2})
+		]), container)
+
+		assert.html(container, '<div><h1></h1><h2></h2><h3></h3></div>')
+	})
+
+	it('should mount into a document fragment', () => {
+		var container = document.createElement('div')
+		var fragment = document.createDocumentFragment()
+
+		render(h('div', 'foo'), fragment)
+		assert.html(container, '')
+
+		container.appendChild(fragment)
+		assert.html(container, '<div>foo</div>')
+ 	})
 })

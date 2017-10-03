@@ -53,7 +53,7 @@ describe('Hydrate', () => {
 		let B = () => h('span', 'bbb')
 		let C = () => [A]
 		let D = () => [B]
-		
+
 		let first = container.querySelector('span')
 		hydrate(C, container)
 
@@ -69,7 +69,7 @@ describe('Hydrate', () => {
 	it('should repair incorrect text', () => {
 		let container = document.createElement('div')
 		container.innerHTML = '<section><div>incorrect</div></section>'
-		
+
 		hydrate(h('section', {class: 'class'}, h('div', 'correct')), container)
 		assert.html(container, '<section class="class"><div>correct</div></section>')
 	})
@@ -117,7 +117,7 @@ describe('Hydrate', () => {
 	it('should remove incorrect tail elements', () => {
 		let container = document.createElement('div')
 		container.innerHTML = '<section><div>correct</div><h1>extra</h1></section>'
-		
+
 		hydrate(h('section', {class: 'class'}, h('div', 'correct')), container)
 		assert.html(container, '<section class="class"><div>correct</div></section>')
 	})
@@ -135,7 +135,7 @@ describe('Hydrate', () => {
 		let head = html.appendChild(document.createElement('head'))
 		let container = html.appendChild(document.createElement('div'))
 		container.innerHTML = `<div><h1>Before</h1><title>Portal</title><h1>After</h1></div>`
-		
+
 		let portal = createPortal(h('title', 'Title', h('meta', 'Portal')), head)
 		let element = h('div', h('h1', 'Before'), portal, h('h1', 'After'))
 
@@ -154,7 +154,7 @@ describe('Hydrate', () => {
 		let head = html.appendChild(document.createElement('head'))
 		let container = html.appendChild(document.createElement('div'))
 		container.innerHTML = `<div><h1>Before</h1><title>Portal</title><h1>After</h1></div>`
-		
+
 		let portal = createPortal(h('title', 'Title', h('meta', 'Portal')), head)
 		let element = h('div', h('h1', 'Before'), portal)
 

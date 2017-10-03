@@ -13,9 +13,9 @@ describe('Fixture', () => {
 				}
 			}
 			render() {
-				return h('div', 
-					this.state.on === true ? X : void 0, 
-					h('div', 'y'), 
+				return h('div',
+					this.state.on === true ? X : void 0,
+					h('div', 'y'),
 					this.state.on === true ? X : void 0
 				)
 			}
@@ -28,7 +28,7 @@ describe('Fixture', () => {
 
 		setState({on: true})
 		assert.html(container, '<div><div>x</div><div>y</div><div>x</div></div>')
-		
+
 		setState({on: true})
 		assert.html(container, '<div><div>x</div><div>y</div><div>x</div></div>')
 	})
@@ -43,7 +43,7 @@ describe('Fixture', () => {
 			}
 			getInitialState() {
 				return {
-					x: false, 
+					x: false,
 					arr: [Y, Y, Y]
 				}
 			}
@@ -89,9 +89,9 @@ describe('Fixture', () => {
 				if (change)
 					return h('p',
 						[
-							h('form'), 
+							h('form'),
 							this.state.test ? C : void 0
-						].filter(Boolean) 
+						].filter(Boolean)
 					)
 
 				return h('p', h('form', 'x'), test ? C : [])
@@ -101,7 +101,7 @@ describe('Fixture', () => {
 		let setState = null
 		let updated = false
 		let updated2 = false
-		
+
 		render(h(P), container)
 
 		setState({test: true}, () => {
@@ -129,12 +129,12 @@ describe('Fixture', () => {
 			}
 			ripple({$$el}) {
 				let $wave = h('div', {class: 'wave', key: 'a'}, 'wave')
-				
+
 				this.setState({$waves: this.state.$waves.concat($wave)}, () => {
 					nextTick(() => {
 						this.setState({$waves: without(this.state.$waves, $wave)})
 					})
-				})				
+				})
 			}
 			render() {
 				return h('div', {
@@ -182,7 +182,7 @@ describe('Fixture', () => {
 		let idx = 0
 		let msgs = ['A','B','C','D','E','F','G','H']
 
-		class Comp extends Component {                                                  
+		class Comp extends Component {
 			componentWillMount() {
 				this.innerMsg = msgs[(idx++ % 8)]
 			}
@@ -201,7 +201,7 @@ describe('Fixture', () => {
 			}
 			render() {
 				let alt = this.state.alt
-				
+
 				return (
 					h('div',
 						null,
@@ -278,9 +278,9 @@ describe('Fixture', () => {
 
 		nextTick(() => {
 			assert.html(container, '<div><h2>3</h2><button>Increment</button><button>Decrement</button></div>')
-			
+
 			refs.dispatchEvent(new Event('click'))
-			
+
 			assert.html(container, '<div><h2>4</h2><button>Increment</button><button>Decrement</button></div>')
 			assert.include(stack, 'setState')
 			assert.include(stack, 'forceUpdate')
@@ -297,7 +297,7 @@ describe('Fixture', () => {
 				return alt ? h('div', h('h1')) : h('div', {dangerouslySetInnerHTML: {__html: '<span></span>'}})
 			}
 		}
-		
+
 		assert.doesNotThrow(() => {
 			render(h(A, {alt: true}), container)
 			assert.html(container, `<div><h1></h1></div>`)
@@ -313,7 +313,7 @@ describe('Fixture', () => {
 		})
 	})
 
-	it('should fall back to polyfills', () => {		
+	it('should fall back to polyfills', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let file = '../dist/umd'
@@ -326,7 +326,7 @@ describe('Fixture', () => {
 		global.WeakMap = undefined
 		global.Symbol = undefined
 		global.Promise = undefined
-		
+
 		assert.equal(global.WeakMap, undefined)
 		assert.equal(global.Symbol, undefined)
 		assert.equal(global.Promise, undefined)
@@ -362,7 +362,7 @@ describe('Fixture', () => {
 		assert.notEqual(render, global.render)
 	})
 
-	it('should not hit the require branch when bundling with webpack', () => {		
+	it('should not hit the require branch when bundling with webpack', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let file = '../dist/umd'

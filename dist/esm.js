@@ -1,10 +1,11 @@
-/*! DIO 8.0.0 @license MIT */
+/*! DIO 8.0.0-alpha.0 @license MIT */
 
-var dio = (function (global) {'use strict'/* eslint-disable */
+// eslint-disable-next-line
+var dio = (function (global) {/* eslint-disable */'use strict'
 
-function factory (window, require, define) {
+function factory (window, require) {
 
-	var version = '8.0.0'
+	var version = '8.0.0-alpha.0'
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -2394,11 +2395,11 @@ var temp
 
 /* istanbul ignore next */
 if (typeof exports === 'object' && typeof module !== 'undefined')
-	module.exports = factory(global, typeof __webpack_require__ === 'undefined' && require, './node')
+	module.exports = temp = factory(global, typeof __webpack_require__ === 'undefined' && require)
 else if (typeof define === 'function' && define.amd)
-	define(temp = factory(global, false, ''))
+	define(temp = factory(global))
 else
-	temp = factory(global, false, '')
+	temp = factory(global)
 
 return temp
 })(/* istanbul ignore next */typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))

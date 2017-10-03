@@ -63,7 +63,7 @@ describe('DOM', () => {
 	it('should findDOMNode from event', () => {
 		let event = new Event('click')
 		let node = document.createElement('div')
-		
+
 		Object.defineProperty(event, 'currentTarget', {value: node})
 
 		assert.doesNotThrow(() => {

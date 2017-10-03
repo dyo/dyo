@@ -1,6 +1,6 @@
-/*! DIO 8.0.0 @license MIT */
+/*! DIO 8.0.0-alpha.0 @license MIT */
 
-module.exports = function (exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition) {'use strict'/* eslint-disable */
+module.exports = function (exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -266,13 +266,13 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 		var children = element.children
 		var length = children.length
 	
-		if (element.id < SharedElementIntermediate)
+		if (element.id !== SharedElementNode)
 			children = (length--, children.next)
 	
 		while (length-- > 0)
 			output.children.push(getJSONElement(children = children.next, host))
 	
-		if (element.id < SharedElementIntermediate)
+		if (element.id !== SharedElementNode)
 			(output = output.children).pop()
 	
 		return output

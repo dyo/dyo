@@ -18,13 +18,13 @@ function getJSONElement (element, host) {
 	var children = element.children
 	var length = children.length
 
-	if (element.id < SharedElementIntermediate)
+	if (element.id !== SharedElementNode)
 		children = (length--, children.next)
 
 	while (length-- > 0)
 		output.children.push(getJSONElement(children = children.next, host))
 
-	if (element.id < SharedElementIntermediate)
+	if (element.id !== SharedElementNode)
 		(output = output.children).pop()
 
 	return output

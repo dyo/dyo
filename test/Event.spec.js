@@ -45,7 +45,7 @@ describe('Event', () => {
 		let container = document.createElement('div')
 		let event = []
 		let refs = null
-		
+
 		render(class {
 			handleEvent(e) {
 				event.push(e)
@@ -67,7 +67,7 @@ describe('Event', () => {
 		let container = document.createElement('div')
 		let event = []
 		let refs = null
-		
+
 		render(h('div', {onClick: () => event.push(1), ref: (value) => refs = value}), container)
 		refs.dispatchEvent(new Event('click'))
 		assert.lengthOf(event, 1)
@@ -83,7 +83,7 @@ describe('Event', () => {
 		let container = document.createElement('div')
 		let event = []
 		let refs = null
-		
+
 		render(h('div', {onClick: () => event.push(1), ref: (value) => refs = value}), container)
 		refs.dispatchEvent(new Event('click'))
 

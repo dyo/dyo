@@ -126,7 +126,7 @@ describe('Fragment', () => {
 			<br>1
 		`)
 	})
-	
+
 	it('should append a fragment to the end of a fragment', () => {
 		render([
 			h(Fragment, {key: 1}, 1),
