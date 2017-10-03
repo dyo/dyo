@@ -1,11 +1,11 @@
-/*! DIO 8.0.0-alpha.1 @license MIT */
+/*! DIO 8.0.0-beta.0 @license MIT */
 
 // eslint-disable-next-line
 var dio = (function (global) {/* eslint-disable */'use strict'
 
-function factory (window, require) {
+function factory (window, __require__) {
 
-	var version = '8.0.0-alpha.1'
+	var version = '8.0.0-beta.0'
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -2387,10 +2387,10 @@ function factory (window, require) {
 		h: window.h = createElement
 	}
 	
-	if (typeof require === 'function')
+	if (typeof __require__ === 'function')
 		(function () {
 			try {
-				require('./node')(exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition)
+				__require__('./node')(exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition)
 			} catch (err) {
 				/* istanbul ignore next */
 				console.error(err+'\nSomething went wrong trying to import the server module.')
@@ -2403,12 +2403,17 @@ function factory (window, require) {
 var temp
 
 /* istanbul ignore next */
-if (typeof exports === 'object' && typeof module === 'object' && module !== null)
-	temp = module.exports = factory(global, typeof __webpack_require__ === 'undefined' && typeof require === 'function' && require)
-else if (typeof define === 'function' && define.amd)
+if (typeof exports === 'object' && typeof module === 'object' && module !== null) {
+	if (typeof __webpack_require__ === 'undefined' && typeof require === 'function') {
+		module.exports = factory(global, require)
+	} else {
+		module.exports = factory(global)
+	}
+} else if (typeof define === 'function' && define.amd) {
 	define(temp = factory(global))
-else
+} else {
 	temp = global.dio = factory(global)
+}
 
 return temp
 })(/* istanbul ignore next */typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this))

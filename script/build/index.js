@@ -127,15 +127,15 @@ getElementDefinition
 const template = (type) => {
 	switch (type) {
 		case 'bridge':
-			return `if (typeof require !== 'object')
+			return `if (typeof __require__ !== 'object')
 	return function (r) {
 		factory(window, r)
 	}`
 		default:
-			return `if (typeof require === 'function')
+			return `if (typeof __require__ === 'function')
 	(function () {
 		try {
-			require('./node')(${(platform)})
+			__require__('./node')(${(platform)})
 		} catch (err) {
 			/* istanbul ignore next */
 			console.error(err+'\\nSomething went wrong trying to import the server module.')
@@ -273,14 +273,14 @@ const gzipsize = (content) => {
 
 const resolve = () => {
 	bundle('umd', umd, '../../dist/')
-	bundle('esm', esm, '../../dist/')
+	// bundle('esm', esm, '../../dist/') // future? webpack seems to be shipping esm module incorrectly ATM
 	bundle('node', node, '../../dist/')
 	// bundle('bridge', bridge, '../../dist/') // for another release/another package
 
 	console.log(
 		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled:\n'+
 		'\n – '+filenames.umd+
-		'\n – '+filenames.esm+
+		// '\n – '+filenames.esm+
 		'\n – '+filenames.node+
 		// '\n – '+filenames.bridge+
 		'\x1b[0m\n'
