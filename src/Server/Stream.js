@@ -1,7 +1,7 @@
 /**
  * @type {constructor}
  */
-var Readable = require && require('stream').Readable
+var Readable = require('stream').Readable
 
 /**
  * @param {function=}
@@ -11,12 +11,11 @@ function toStream (callback) {
 	var readable = new Stream(this)
 
 	switch (typeof callback) {
-		case 'function':
-			readable.on('end', callback)
-			break
 		case 'string':
 			readable.setEncoding(callback)
 			break
+		case 'function':
+			readable.on('end', callback)
 		default:
 			readable.setEncoding('utf8')
 	}
@@ -57,7 +56,7 @@ function getStreamElement () {
  * @param {number} id
  * @param {number} signature
  */
-function pendingStreamElement (element, host, stack, readable, id, signature) {
+function enqueueStreamElement (element, host, stack, readable, id, signature) {
 	return function (value) {
 		var children
 
@@ -90,12 +89,12 @@ function readStreamElement (element, host, stack, readable) {
 				return readStreamElement(children, element, stack, readable)
 
 			return void element.state
-				.then(pendingStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
-				.catch(pendingStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
+				.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
+				.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
 		case SharedElementPromise:
 			return void element.type
-				.then(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
-				.catch(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
+				.then(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
+				.catch(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 		case SharedElementText:
 		case SharedElementEmpty:
 			return writeStreamElement(getTextEscape(children), readable)

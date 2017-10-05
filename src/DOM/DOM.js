@@ -13,7 +13,7 @@ function findDOMNode (element) {
 		return getDOMNode(element)
 
 	if (isValidDOMEvent(element))
-		return element.currentTarget
+		return getDOMTarget(element)
 
 	if (isValidDOMNode(element))
 		return element
@@ -31,10 +31,9 @@ function setDOMNode (element, node) {
 
 /**
  * @param {Element} element
- * @param {string} value
  */
-function setDOMContent (element, value) {
-	getDOMNode(element).textContent = value
+function setDOMContent (element) {
+	getDOMNode(element).textContent = ''
 }
 
 /**
@@ -184,6 +183,14 @@ function setDOMInnerHTML (element, name, value, nodes) {
  */
 function getDOMDocument () {
 	return document.documentElement
+}
+
+/**
+ * @param {Event} event
+ * @return {Node}
+ */
+function getDOMTarget (event) {
+	return event.currentTarget
 }
 
 /**

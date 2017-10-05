@@ -3,7 +3,6 @@ const path = require('path')
 const zlib = require('zlib')
 const chokidar = require('chokidar')
 const UglifyJS = require('uglify-js')
-const UglifyES = require("uglify-es")
 const package = require('../../package.json')
 
 let filesize = NaN
@@ -216,12 +215,7 @@ const bundle = (module, files, location) => {
 
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 
-	switch (module) {
-		case 'esm':
-			return minify(UglifyES, {content, filename, module, filepath})
-		default:
-			return minify(UglifyJS, {content, filename, module, filepath})
-	}
+	minify(UglifyJS, {content, filename, module, filepath})
 }
 
 const minify = (uglify, {content, module, filename, filepath}) => {
@@ -278,16 +272,11 @@ const resolve = () => {
 	// bundle('bridge', bridge, '../../dist/') // for another release/another package
 
 	console.log(
-		'\x1b[32m\x1b[1m\x1b[2m' + '\nBundled:\n'+
-		'\n – '+filenames.umd+
-		// '\n – '+filenames.esm+
-		'\n – '+filenames.node+
-		// '\n – '+filenames.bridge+
-		'\x1b[0m\n'
+		'build complete..'
 	)
 }
 
-if ((process.argv.pop()+'').indexOf('--bundle') !== -1) {
+if ((process.argv.pop()+'').indexOf('watch') < 0) {
 	return resolve()
 }
 
@@ -299,7 +288,7 @@ const watcher = (file) => {
 			delete require.cache[require.resolve('../../package.json')];
 			Object.assign(package, require('../../package.json'))
 		}
-		console.log('changed > ' + file)
+		console.log('\nchanged: ' + file)
 	}
 
 	resolve()
@@ -313,6 +302,3 @@ const watch = chokidar.watch([
 
 watch.on('change', watcher)
 watch.on('ready', watcher)
-
-process.stdout.write('\033c')
-process.stdout.write("\033]0;" + 'DIO bundle' + '\007')

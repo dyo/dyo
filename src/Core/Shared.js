@@ -6,7 +6,6 @@ var SharedElementComponent = 1
 var SharedElementNode = 2
 var SharedElementText = 3
 var SharedElementEmpty = 4
-var SharedElementContainer = 5
 
 var SharedReferenceRemove = -1
 var SharedReferenceAssign = 0

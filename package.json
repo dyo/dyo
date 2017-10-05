@@ -1,11 +1,10 @@
 {
   "name": "dio.js",
-  "version": "8.0.0-beta.0",
+  "version": "8.0.0-beta.1",
   "license": "MIT",
   "description": "A Library For Building User Interfaces.",
   "homepage": "https://github.com/thysultan/dio.js",
   "main": "dist/umd.js",
-  "module": "dist/esm.js",
   "unpkg": "dist/umd.min.js",
   "jsdelivr": "dist/umd.min.js",
   "types": "types/typescript.d.ts",
@@ -25,8 +24,9 @@
     "url": "https://github.com/thysultan/dio.js/issues"
   },
   "scripts": {
-    "dev": "node ./script/build",
-    "build": "node ./script/build --bundle",
+    "build": "node ./script/build",
+    "build:watch": "node ./script/build -- --watch",
+
     "test": "nyc mocha --recursive --require script/test/index.js",
     "test:watch": "mocha --recursive --require script/test/index.js --watch",
     "test:debug": "mocha --recursive --require script/test/index.js",
@@ -46,7 +46,6 @@
     "jsdom": "^11.1.0",
     "mocha": "^3.5.3",
     "nyc": "^11.2.1",
-    "uglify-es": "^3.0.28",
     "uglify-js": "^3.0.28"
   }
 }

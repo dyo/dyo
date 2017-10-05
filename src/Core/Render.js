@@ -10,7 +10,7 @@ function render (element, container, callback) {
 	if (DOMMap.has(container))
 		update(DOMMap.get(container), getElementDefinition(element), callback)
 	else
-		mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountCommit)
+		mount(element, createElementIntermediate(), container, callback, SharedMountCommit)
 }
 
 /**
@@ -22,7 +22,7 @@ function hydrate (element, container, callback) {
 	if (!container)
 		return hydrate(element, getDOMDocument(), callback)
 
-	mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountQuery)
+	mount(element, createElementIntermediate(), container, callback, SharedMountQuery)
 }
 
 /**
@@ -56,7 +56,7 @@ function mount (element, parent, container, callback, signature) {
 	setDOMNode(parent, container)
 
 	if (signature === SharedMountCommit)
-		setDOMContent(parent, '')
+		setDOMContent(parent)
 
 	commitMount(element, element, parent, parent, SharedMountAppend, signature)
 

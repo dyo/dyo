@@ -1,11 +1,11 @@
-/*! DIO 8.0.0-beta.0 @license MIT */
+/*! DIO 8.0.0-beta.1 @license MIT */
 
 // eslint-disable-next-line
 var dio = (function (global) {/* eslint-disable */'use strict'
 
 function factory (window, __require__) {
 
-	var version = '8.0.0-beta.0'
+	var version = '8.0.0-beta.1'
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -15,7 +15,6 @@ function factory (window, __require__) {
 	var SharedElementNode = 2
 	var SharedElementText = 3
 	var SharedElementEmpty = 4
-	var SharedElementContainer = 5
 	
 	var SharedReferenceRemove = -1
 	var SharedReferenceAssign = 0
@@ -304,11 +303,10 @@ function factory (window, __require__) {
 	}
 	
 	/**
-	 * @param {number} id
 	 * @return {Element}
 	 */
-	function createElementDescription (id) {
-		return new Element(id)
+	function createElementIntermediate () {
+		return new Element(SharedElementIntermediate)
 	}
 	
 	/**
@@ -376,7 +374,7 @@ function factory (window, __require__) {
 	 * @param {*} key
 	 * @return {Element?}
 	 */
-	function createElementBranch (element, key) {
+	function createElementUnknown (element, key) {
 		switch (element.constructor) {
 			case Boolean:
 				return createElementEmpty(key)
@@ -390,9 +388,9 @@ function factory (window, __require__) {
 		if (typeof element.next === 'function')
 			return createElementIterable(element)
 		if (typeof element[SymbolIterator] === 'function')
-			return createElementBranch(element[SymbolIterator](), key)
+			return createElementUnknown(element[SymbolIterator](), key)
 		if (typeof element === 'function')
-			return createElementBranch(element(), key)
+			return createElementUnknown(element(), key)
 	
 		invariant(SharedSiteRender, 'Invalid element [object ' + getDisplayName(element) + ']')
 	}
@@ -539,7 +537,7 @@ function factory (window, __require__) {
 					children.insert(createElementText(element, index), children)
 					break
 				default:
-					return setElementChildren(children, createElementBranch(element, index), index)
+					return setElementChildren(children, createElementUnknown(element, index), index)
 			}
 		else
 			children.insert(createElementEmpty(index), children)
@@ -551,13 +549,8 @@ function factory (window, __require__) {
 	 * @param {List} children
 	 */
 	function setElementBoundary (children) {
-		var head = createElementEmpty(SharedTypeKey)
-		var tail = createElementEmpty(SharedTypeKey)
-	
-		head.xmlns = tail.xmlns = SharedTypeFragment
-	
-		children.insert(head, children.next)
-		children.insert(tail, children)
+		children.insert(createElementEmpty(SharedTypeKey), children.next)
+		children.insert(createElementEmpty(SharedTypeKey), children)
 	}
 	
 	/**
@@ -612,7 +605,7 @@ function factory (window, __require__) {
 		if (parent.id < SharedElementIntermediate)
 			return getElementSibling(parent, parent.parent, direction)
 	
-		return createElementDescription(SharedElementIntermediate)
+		return createElementIntermediate()
 	}
 	
 	/**
@@ -666,7 +659,7 @@ function factory (window, __require__) {
 			case Number:
 				return createElementText(element, SharedTypeKey)
 			default:
-				return createElementBranch(element, SharedTypeKey)
+				return createElementUnknown(element, SharedTypeKey)
 		}
 	}
 	
@@ -1783,7 +1776,7 @@ function factory (window, __require__) {
 			element.work = SharedWorkIdle
 		}
 	
-		if (!caught && isValidElement(host) && element.id !== SharedElementContainer)
+		if (!caught && isValidElement(host) && element.id !== SharedElementIntermediate)
 			return getErrorElement(host, error, from, signature)
 	
 		return getErrorElement(element, error, from, SharedErrorPassive)
@@ -1939,7 +1932,7 @@ function factory (window, __require__) {
 		if (DOMMap.has(container))
 			update(DOMMap.get(container), getElementDefinition(element), callback)
 		else
-			mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountCommit)
+			mount(element, createElementIntermediate(), container, callback, SharedMountCommit)
 	}
 	
 	/**
@@ -1951,7 +1944,7 @@ function factory (window, __require__) {
 		if (!container)
 			return hydrate(element, getDOMDocument(), callback)
 	
-		mount(element, createElementDescription(SharedElementContainer), container, callback, SharedMountQuery)
+		mount(element, createElementIntermediate(), container, callback, SharedMountQuery)
 	}
 	
 	/**
@@ -1985,7 +1978,7 @@ function factory (window, __require__) {
 		setDOMNode(parent, container)
 	
 		if (signature === SharedMountCommit)
-			setDOMContent(parent, '')
+			setDOMContent(parent)
 	
 		commitMount(element, element, parent, parent, SharedMountAppend, signature)
 	
@@ -2016,7 +2009,7 @@ function factory (window, __require__) {
 			return getDOMNode(element)
 	
 		if (isValidDOMEvent(element))
-			return element.currentTarget
+			return getDOMTarget(element)
 	
 		if (isValidDOMNode(element))
 			return element
@@ -2034,10 +2027,9 @@ function factory (window, __require__) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {string} value
 	 */
-	function setDOMContent (element, value) {
-		getDOMNode(element).textContent = value
+	function setDOMContent (element) {
+		getDOMNode(element).textContent = ''
 	}
 	
 	/**
@@ -2187,6 +2179,14 @@ function factory (window, __require__) {
 	 */
 	function getDOMDocument () {
 		return document.documentElement
+	}
+	
+	/**
+	 * @param {Event} event
+	 * @return {Node}
+	 */
+	function getDOMTarget (event) {
+		return event.currentTarget
 	}
 	
 	/**

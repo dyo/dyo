@@ -36,7 +36,7 @@ function getErrorElement (element, error, from, signature) {
 		element.work = SharedWorkIdle
 	}
 
-	if (!caught && isValidElement(host) && element.id !== SharedElementContainer)
+	if (!caught && isValidElement(host) && element.id !== SharedElementIntermediate)
 		return getErrorElement(host, error, from, signature)
 
 	return getErrorElement(element, error, from, SharedErrorPassive)

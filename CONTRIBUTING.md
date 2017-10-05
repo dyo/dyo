@@ -61,7 +61,7 @@ The distribution bundle is made of different sources that are separeted with reg
 
 For example, eveything in `Core/` manages core aspects related to creating snapshot elements, diffing and reconciling while `DOM` is related to the layer that touches the native document model. The same can be said for `Server/` in relation to server side rendering.
 
-The distrution artifacts in `./dist/` are bundles of the related sources mentioned above. You can create or update a build by running the following command.
+The distribution artifacts in `./dist/` are bundles of the related sources mentioned above. You can create or update a build by running the following command.
 
 ```
 npm run build
@@ -70,7 +70,7 @@ npm run build
 Alternatively you can run the following to generate a build everytime you make changes to `src/`.
 
 ```
-npm run dev
+npm run build:watch
 ```
 
 ### Documentation

@@ -2,7 +2,7 @@
  * @return {string}
  */
 function toString () {
-	return getStringElement(this, null)
+	return getStringElement(this, this.host)
 }
 
 /**

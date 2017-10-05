@@ -2,7 +2,7 @@
  * @return {Object}
  */
 function toJSON () {
-	return getJSONElement(this, null)
+	return getJSONElement(this, this.host)
 }
 
 function getJSONElement (element, host) {

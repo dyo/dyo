@@ -1,4 +1,4 @@
-/*! DIO 8.0.0-beta.0 @license MIT */
+/*! DIO 8.0.0-beta.1 @license MIT */
 
 module.exports = function (exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition) {/* eslint-disable */'use strict'
 
@@ -10,7 +10,6 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	var SharedElementNode = 2
 	var SharedElementText = 3
 	var SharedElementEmpty = 4
-	var SharedElementContainer = 5
 	
 	var SharedReferenceRemove = -1
 	var SharedReferenceAssign = 0
@@ -130,7 +129,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	 * @return {string}
 	 */
 	function toString () {
-		return getStringElement(this, null)
+		return getStringElement(this, this.host)
 	}
 	
 	/**
@@ -250,7 +249,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	 * @return {Object}
 	 */
 	function toJSON () {
-		return getJSONElement(this, null)
+		return getJSONElement(this, this.host)
 	}
 	
 	function getJSONElement (element, host) {
@@ -281,7 +280,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	/**
 	 * @type {constructor}
 	 */
-	var Readable = require && require('stream').Readable
+	var Readable = require('stream').Readable
 	
 	/**
 	 * @param {function=}
@@ -291,12 +290,11 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 		var readable = new Stream(this)
 	
 		switch (typeof callback) {
-			case 'function':
-				readable.on('end', callback)
-				break
 			case 'string':
 				readable.setEncoding(callback)
 				break
+			case 'function':
+				readable.on('end', callback)
 			default:
 				readable.setEncoding('utf8')
 		}
@@ -337,7 +335,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	 * @param {number} id
 	 * @param {number} signature
 	 */
-	function pendingStreamElement (element, host, stack, readable, id, signature) {
+	function enqueueStreamElement (element, host, stack, readable, id, signature) {
 		return function (value) {
 			var children
 	
@@ -370,12 +368,12 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 					return readStreamElement(children, element, stack, readable)
 	
 				return void element.state
-					.then(pendingStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
-					.catch(pendingStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
+					.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
+					.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
 			case SharedElementPromise:
 				return void element.type
-					.then(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
-					.catch(pendingStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
+					.then(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
+					.catch(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 			case SharedElementText:
 			case SharedElementEmpty:
 				return writeStreamElement(getTextEscape(children), readable)
