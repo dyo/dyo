@@ -4,7 +4,7 @@
 	<meta charset=utf-8>
 	<meta http-equiv=X-UA-Compatible content=IE=edge>
 	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title>Server API – DIO</title>
+	<title>Misc – DIO</title>
 	<link rel=stylesheet href=../assets/stylesheet/index.css>
 	<link rel=icon type=image/png href=../assets/images/favicon-large.png sizes=32x32>
 	<link rel=icon type=image/png href=../assets/images/favicon-small.png sizes=16x16>
@@ -24,52 +24,27 @@
 		</nav>
 	</header>
 	<article>
-		<h1>Server</h1>
+		<h1>Miscellaneous</h1>
 
-		<h1 id=toString>toString</h1>
+		<h1>Table of Contents</h1>
 
-<pre><code>
-interface Element {
-	toString(): string
-}
-</code></pre>
-
-		<h1 id=toJSON>toJSON</h1>
-
-<pre><code>
-interface Element {
-	toJSON(): object
-}
-</code></pre>
-
-		<h1 id=toStream>toStream</h1>
-
-<pre><code>
-interface Element {
-	toStream(): Readable
-}
-</code></pre>
-
-		<h1 id=renderToString>renderToString</h1>
-
-<pre><code>
-renderToString(
-	element: null|void|string|number|Element|Array,
-	container?: Writable
-	callback?: function
-)
-</code></pre>
-
-		<h1 id=renderToNodeStream>renderToNodeStream</h1>
-
-<pre><code>
-renderToNodeStream(
-	element: null|void|string|number|Element|Array|Promise,
-	container?: Writable
-	callback?: function
-)
-</code></pre>
-
+		<nav>
+			<ol>
+				<li>
+					<a href=comparison.html>Comparison</a>
+					<ol>
+						<li><a href=comparison.html#api>API</a></li>
+						<li><a href=comparison.html#rendering>Rendering</a></li>
+						<li><a href=comparison.html#components>Components</a></li>
+						<li><a href=comparison.html#events>Events</a></li>
+						<li><a href=comparison.html#implicit-state>Implicit setState</a></li>
+						<li><a href=comparison.html#async-state>async setState</a></li>
+						<li><a href=comparison.html#async-initial-state>async getInitialState</a></li>
+						<li><a href=comparison.html#async-unmount>async componentWillUnmount</a></li>
+					</ol>
+				</li>
+			</ol>
+		</nav>
 	</article>
 	<script src=../assets/javascript/index.js></script>
 </body>

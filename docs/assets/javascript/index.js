@@ -30,7 +30,7 @@
 		[words, /[\w$]+/],
 		[unknown, /./]
 	]
-	
+
 	var keywords = '^(\
 		a(bstract|lias|nd|rguments|rray|s(m|sert)?|uto)|\
 		b(ase|egin|ool(ean)?|reak|yte)|\
@@ -68,7 +68,7 @@
 		'.syntax-comment{color:#007400}',
 		font
 	]
-	
+
 	var tokenize = function (text) {
 		var stack = []
 		var split = false
@@ -83,10 +83,10 @@
 				if ((type = tokens[i][0]) === regex && split)
 					continue
 
-				if (regex.test((value = matches[0])) && type === words) 
+				if (regex.test((value = matches[0])) && type === words)
 					type = keys
 
-				if (type !== space) 
+				if (type !== space)
 					split = type === number || type === words
 
 				text = text.slice(value.length)
@@ -103,7 +103,7 @@
 
 	collection.forEach(function (node) {
 		var stack = tokenize(node.textContent.trim())
-		
+
 		node.textContent = ''
 
 		stack.forEach(function (type) {

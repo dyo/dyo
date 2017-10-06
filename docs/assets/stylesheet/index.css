@@ -51,6 +51,10 @@ section {
   margin-bottom: 20px;
 }
 
+.card.half {
+  max-width: 50%;
+}
+
 .card a {
   word-wrap: normal;
 }
