@@ -1,6 +1,6 @@
 # DIO
 
-[![dio.js](https://dio.js.org/imgs/logo.svg)](https://dio.js.org/)
+[![dio.js](https://dio.js.org/assets/images/logo.svg)](https://dio.js.org/)
 
 A Library For Building User Interfaces.
 
@@ -9,8 +9,8 @@ A Library For Building User Interfaces.
 [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md)
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js)
 [![CDNJS](https://img.shields.io/cdnjs/v/dio.svg?style=flat)](https://cdnjs.com/libraries/dio)
-[![Build Status](https://travis-ci.org/thysultan/dio.js.svg?branch=V8)](https://travis-ci.org/thysultan/dio.js)
-[![Coverage Status](https://coveralls.io/repos/github/thysultan/dio.js/badge.svg?branch=V8)](https://coveralls.io/github/thysultan/dio.js?branch=V8)
+[![Build Status](https://travis-ci.org/thysultan/dio.js.svg)](https://travis-ci.org/thysultan/dio.js)
+[![Coverage Status](https://coveralls.io/repos/github/thysultan/dio.js/badge.svg)](https://coveralls.io/github/thysultan/dio.js)
 ![dependencies](https://img.shields.io/badge/dependencies-none-green.svg?style=flat)
 [![Join the chat at https://gitter.im/thysultan/dio.js](https://img.shields.io/badge/chat-gitter-green.svg?style=flat)](https://gitter.im/thysultan/dio.js)
 
