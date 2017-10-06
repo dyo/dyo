@@ -94,28 +94,38 @@ The following is an overview of the features DIO allows you to make use of.
 1. ### Lifecycle
 
 	1. async componentWillUnmount
+	1. async getInitialState
 
 ## Example
 
-This examples presents a few features detailed above, namely – error boundaries, an implicit setState return, Promise setState and fragments.
+This intentionally overloaded example presents a few features detailed above, namely – error boundaries, an implicit setState return, Promise setState and rendering Promises & Fragments.
 
 ```js
 class Input {
 	// Error Boundary
-	componentDidCatch ({stack, message}) {
+	componentDidCatch ({stack, message, ...error}, {componentStack}) {
 		return {error: true}
+	}
+	// Isomorphic Async getInitialState
+	async getInitialState() {
+		return {value: 'Hi!'}
 	}
 	// Implicit Promise setState
 	async handleInput({target}, props, state) {
 		return {value: target.value}
 	}
-	render(props, {value, error}, context) {
+	// Rendering Promises
+	async render(props, {value, error}, context) {
 		if (error)
 			return h('h1', 'Something went wrong!')
 
-		// Fragment
+		// Rendering Fragments
 		return [
-			h('input', {onInput: this.handleInput, value: value}),
+			h('input', {
+				value: value,
+				// bonus: events preserve "this" reference
+				onInput: this.handleInput
+			}),
 			h('p', value)
 		]
 	}
