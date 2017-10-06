@@ -1,41 +1,51 @@
 {
-	"name": "dio.js",
-	"main": "dio.js",
-	"types": "dio.d.ts",
-	"description": "a library for building user interfaces",
-	"version": "7.1.0",
-	"homepage": "https://github.com/thysultan/dio.js",
-	"license": "MIT",
-	"author": {
-		"name": "Sultan Tarimo",
-		"email": "sultantarimo@me.com"
-	},
-	"keywords": [
-		"dio"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/thysultan/dio.js"
-	},
-	"bugs": {
-		"url": "https://github.com/thysultan/dio.js/issues"
-	},
-	"files": [
-		"dio.js",
-		"dio.min.js",
-		"dio.server.js",
-		"dio.d.ts"
-	],
-	"scripts": {
-		"test": "node ./tests",
-		"tests": "node ./tests --watch",
-		"build": "node ./bundle --bundle && node ./bundle/minify",
-		"bundle": "node ./bundle --bundle && node ./bundle/minify",
-		"dev": "node ./bundle"
-	},
-	"devDependencies": {
-		"chokidar": "^1.6.1",
-		"uglify-js": "^2.8.16",
-		"jsdom": "^10.0.0"
-	}
+  "name": "dio.js",
+  "version": "8.0.0-beta.1",
+  "license": "MIT",
+  "description": "A Library For Building User Interfaces.",
+  "homepage": "https://github.com/thysultan/dio.js",
+  "main": "dist/umd.js",
+  "unpkg": "dist/umd.min.js",
+  "jsdelivr": "dist/umd.min.js",
+  "types": "types/typescript.d.ts",
+  "files": [
+    "dist",
+    "types/typescript.d.ts"
+  ],
+  "author": {
+    "name": "Sultan Tarimo",
+    "email": "sultantarimo@me.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thysultan/dio.js"
+  },
+  "bugs": {
+    "url": "https://github.com/thysultan/dio.js/issues"
+  },
+  "scripts": {
+    "build": "node ./script/build",
+    "build:watch": "node ./script/build -- --watch",
+
+    "test": "nyc mocha --recursive --require script/test/index.js",
+    "test:watch": "mocha --recursive --require script/test/index.js --watch",
+    "test:debug": "mocha --recursive --require script/test/index.js",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "nyc": {
+    "temp-directory": "./coverage/.nyc_output",
+    "reporter": [
+      "lcov",
+      "text"
+    ]
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chokidar": "^1.7.0",
+    "coveralls": "^2.13.1",
+    "jsdom": "^11.1.0",
+    "mocha": "^3.5.3",
+    "nyc": "^11.2.1",
+    "uglify-js": "^3.0.28"
+  }
 }

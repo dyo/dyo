@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Top-Level API – DIO</title>
+	<link rel=stylesheet href=../assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=../assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=../assets/images/favicon-small.png sizes=16x16>
+</head>
+<body>
+	<a href=../ title=index class=logo>
+		<img src=../assets/images/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=../>Index</a>
+			<a href=../introduction>Introduction</a>
+			<a href=../API>API</a>
+			<a href=../examples>Examples</a>
+			<a href=https://github.com/thysultan/dio.js>GitHub</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Top-Level API</h1>
+
+		<h1 id=render>render</h1>
+
+<pre><code>
+render(
+	element: Element|Array|number|string
+	container?: Node
+	callback?: function
+)
+</code></pre>
+
+		<h1 id=hydrate>hydrate</h1>
+
+<pre><code>
+hydrate(
+	element: Element|Array|number|string
+	container?: Node
+	callback?: function
+)
+</code></pre>
+
+		<h1 id=createElement>createElement</h1>
+
+<pre><code>
+createElement(
+	type: string|Function|Promise
+	props?: object
+	...children?: Array
+): Element
+</code></pre>
+
+		<h1 id=cloneElement>cloneElement</h1>
+
+		<p>Properties are shallow merged while new children replace the old.</p>
+
+<pre><code>
+cloneElement(
+	element: Element
+	props?: object
+	...children?: Array
+): Element
+</code></pre>
+
+		<h1 id=isValidElement>isValidElement</h1>
+
+<pre><code>
+isValidElement(
+	element: any
+): boolean
+</code></pre>
+
+		<h1 id=createPortal>createPortal</h1>
+
+<pre><code>
+createPortal(
+	element: Element|Array|number|string,
+	container: Node|string,
+	key?: any
+): Element
+</code></pre>
+
+		<h1 id=Component>Component</h1>
+
+<pre><code>
+class Component {
+	constructor (props: object)
+	forceUpdate(callback?: function)
+	setState(state?: object, callback?: function)
+
+	abstract render(props: object, state: object, context: object)
+}
+</code></pre>
+
+		<h1 id=PureComponent>PureComponent</h1>
+
+<pre><code>
+class PureComponent {
+	constructor (props: object)
+	forceUpdate(callback?: function)
+	setState(state?: object, callback?: function)
+	shouldComponentUpdate(props: object, state: object, context: object)
+
+	abstract render(props: object, state: object, context: object)
+}
+</code></pre>
+
+		<h1 id=Children>Children</h1>
+
+		<h2 id=toArray>toArray</h2>
+
+<pre><code>
+toArray(children: any): Array
+</code></pre>
+
+		<h2 id=forEach>forEach</h2>
+
+<pre><code>
+forEach(children: any, callback: function)
+</code></pre>
+
+		<h2 id=map>map</h2>
+
+<pre><code>
+map(children: any, callback: function): Array
+</code></pre>
+
+		<h2 id=only>only</h2>
+
+<pre><code>
+only(children: Element): Element
+</code></pre>
+
+		<h2 id=count>count</h2>
+
+<pre><code>
+count(children: any): number
+</code></pre>
+
+		<h1 id=findDOMNode>findDOMNode</h1>
+
+<pre><code>
+findDOMNode(instance: Component|Element|Node|Event): Node
+</code></pre>
+
+		<h1 id=unmountComponentAtNode>unmountComponentAtNode</h1>
+
+<pre><code>
+unmountComponentAtNode(container: Node): boolean
+</code></pre>
+
+		<h1 id=version>version</h1>
+
+<pre><code>
+version: string
+</code></pre>
+	</article>
+	<script src=../assets/javascript/index.js></script>
+</body>
+</html>

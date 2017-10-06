@@ -1,48 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
 	<meta charset=utf-8>
 	<meta http-equiv=X-UA-Compatible content=IE=edge>
 	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title>DIO – particles</title>
-	<link rel=stylesheet href=../css/stylesheet.css>
-	<link rel=icon type=image/png href=../imgs/favicon-large.png sizes=32x32>
-	<link rel=icon type=image/png href=../imgs/favicon-small.png sizes=16x16>
-	<script src=../js/highlight.js></script>
-	<script src=../js/main.js></script>
-	<script src=https://unpkg.com/dio.js@latest/dio.min.js></script>
-	<script src="https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js"></script>
+	<title>Particles</title>
+	<script src=https://unpkg.com/dio.js></script>
 </head>
 <body>
-	<a href=../ title=index class=logo>
-		<img src=../imgs/logo.svg alt=logo>
-	</a>
-	<header>
-		<nav>
-			<a href=../>Index</a>
-			<a href=../introduction.html>Introduction</a>
-			<a href=../api.html>API</a>
-			<a href=../examples.html>Examples</a>
-			<a href=https://github.com/thysultan/dio.js>GitHub</a>
-		</nav>
-	</header>
-	<article>
-		<h1>Particles</h1>
-
-		<hr>
-
-		<p>Animating six hundred components, using a component for each particle, in response to the movement of the mouse.</p>
-
-		<div id=root></div>
-	</article>
+	<div id=root></div>
 
 	<style>
-		.logo,
-		nav a {
-			transform: translateZ(0);
-			position: relative;
-			z-index: 100;
-		}
 		body {
 			overflow-x: hidden;
 		}
@@ -70,11 +38,8 @@
 			opacity: 0.8;
 		}
 	</style>
-	<script>
-		perfMonitor.startFPSMonitor()
-		perfMonitor.startMemMonitor()
-		perfMonitor.initProfiler("render");
 
+	<script>
 		const DAMPING = 0.999
 		const width  = window.innerWidth
 		const height = window.innerHeight
@@ -124,16 +89,11 @@
 			}
 		}
 
-		const root = document.getElementById('root')
+		const container = document.getElementById('root')
 		const element = h(Particles, {length: 600})
 
 		const loop = () => {
-			perfMonitor.startProfile("render")
-
-			dio.render(element, root)
-
-			perfMonitor.endProfile("render")
-
+			dio.render(element, container)
 			requestAnimationFrame(loop)
 		}
 
