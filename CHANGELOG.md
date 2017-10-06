@@ -1,4 +1,4 @@
-## 8.0.0 (Unreleased)
+## 8.0.0 (06 October 2017)
 
 ### Overview
 
