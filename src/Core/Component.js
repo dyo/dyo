@@ -126,18 +126,23 @@ function mountComponentElement (element) {
  * @param {number} signature
  */
 function updateComponent (element, snapshot, signature) {
-	if (element.work !== SharedWorkIdle)
-		return requestAnimationFrame(enqueuePendingUpdate(element, snapshot, signature))
+	switch (element.work) {
+		case SharedWorkProcessing:
+			requestAnimationFrame(enqueuePendingUpdate(element, snapshot, signature))
+		case SharedWorkIntermediate:
+			return
+	}
 
-	element.work = SharedWorkProcessing
+	element.work = SharedWorkIntermediate
 
 	var instance = element.instance
 	var owner = element.owner
 	var nextContext = instance.context
 	var prevProps = element.props
 	var nextProps = snapshot.props
+	var tempState = element.state
 	var prevState = instance.state
-	var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, element.state) : prevState
+	var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, tempState) : prevState
 
 	if (owner[SharedGetChildContext])
 		merge(element.context, getComponentContext(element))
@@ -153,6 +158,11 @@ function updateComponent (element, snapshot, signature) {
 				if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
 					return void (element.work = SharedWorkIdle)
 	}
+
+	element.work = SharedWorkProcessing
+
+	if (tempState !== element.state)
+		merge(nextState, element.state)
 
 	if (owner[SharedComponentWillUpdate])
 		getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)

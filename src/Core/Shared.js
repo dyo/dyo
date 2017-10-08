@@ -22,9 +22,10 @@ var SharedMountRemove = 2
 var SharedMountAppend = 3
 var SharedMountInsert = 4
 
-var SharedWorkMounting = -1
-var SharedWorkIdle = 0
-var SharedWorkProcessing = 1
+var SharedWorkMounting = -2
+var SharedWorkProcessing = -1
+var SharedWorkIntermediate = 0
+var SharedWorkIdle = 1
 
 var SharedErrorPassive = -2
 var SharedErrorActive = -1

@@ -1402,4 +1402,38 @@ describe('Component', () => {
 		assert.html(container, '<h1>Hello, World</h1>')
 		assert.lengthOf(stack, 2)
 	})
+
+	it('should update state from componentWillReceiveProps synchronously', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		class A {
+			getInitialState() {
+				return {
+					name: 'Empty'
+				}
+			}
+			componentWillReceiveProps() {
+				stack.push('componentWillReceiveProps')
+				this.setState({name: 'World'})
+			}
+			render() {
+				stack.push(this.state.name)
+				return h('h1', 'Hello ', this.state.name)
+			}
+		}
+
+		render(A, container)
+		assert.html(container, '<h1>Hello Empty</h1>')
+
+		render(A, container)
+		assert.html(container, '<h1>Hello World</h1>')
+
+		assert.lengthOf(stack, 3)
+		assert.deepEqual(stack, [
+			'Empty',
+			'componentWillReceiveProps',
+			'World'
+		])
+	})
 })

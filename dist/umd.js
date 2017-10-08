@@ -1,9 +1,9 @@
-/*! DIO 8.0.1 @license MIT */
+/*! DIO 8.0.2 @license MIT */
 
 ;(function (global) {/* eslint-disable */'use strict'
 function factory (window, __require__) {
 
-	var version = '8.0.1'
+	var version = '8.0.2'
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -29,9 +29,10 @@ function factory (window, __require__) {
 	var SharedMountAppend = 3
 	var SharedMountInsert = 4
 	
-	var SharedWorkMounting = -1
-	var SharedWorkIdle = 0
-	var SharedWorkProcessing = 1
+	var SharedWorkMounting = -2
+	var SharedWorkProcessing = -1
+	var SharedWorkIntermediate = 0
+	var SharedWorkIdle = 1
 	
 	var SharedErrorPassive = -2
 	var SharedErrorActive = -1
@@ -789,18 +790,23 @@ function factory (window, __require__) {
 	 * @param {number} signature
 	 */
 	function updateComponent (element, snapshot, signature) {
-		if (element.work !== SharedWorkIdle)
-			return requestAnimationFrame(enqueuePendingUpdate(element, snapshot, signature))
+		switch (element.work) {
+			case SharedWorkProcessing:
+				requestAnimationFrame(enqueuePendingUpdate(element, snapshot, signature))
+			case SharedWorkIntermediate:
+				return
+		}
 	
-		element.work = SharedWorkProcessing
+		element.work = SharedWorkIntermediate
 	
 		var instance = element.instance
 		var owner = element.owner
 		var nextContext = instance.context
 		var prevProps = element.props
 		var nextProps = snapshot.props
+		var tempState = element.state
 		var prevState = instance.state
-		var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, element.state) : prevState
+		var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, tempState) : prevState
 	
 		if (owner[SharedGetChildContext])
 			merge(element.context, getComponentContext(element))
@@ -816,6 +822,11 @@ function factory (window, __require__) {
 					if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
 						return void (element.work = SharedWorkIdle)
 		}
+	
+		element.work = SharedWorkProcessing
+	
+		if (tempState !== element.state)
+			merge(nextState, element.state)
 	
 		if (owner[SharedComponentWillUpdate])
 			getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)

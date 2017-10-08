@@ -232,8 +232,10 @@ const minify = (uglify, {content, module, filename, filepath}) => {
     }
 	})
 
-	if (compressed.error)
-		return console.error(compressed.error)
+	if (compressed.error) {
+		let {message, filename, line, col} = compressed.error
+		return console.error(message, filename, `${line}:${col}`)
+	}
 
 	if (module === 'umd') {
 		gzipsize(compressed.code)

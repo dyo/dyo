@@ -1,3 +1,11 @@
+## 8.0.2 (08 October 2017)
+
+- reflect `setState` calls from `componentWillReceiveProps` lifecycle to update state synchronously like React.
+
+## 8.0.1 (06 October 2017)
+
+- patch `dio.version` to reflect the right version.
+
 ## 8.0.0 (06 October 2017)
 
 ### Overview
