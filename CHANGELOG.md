@@ -1,3 +1,7 @@
+## 8.0.3 (09 October 2017)
+
+- patch error when used with brunch, fusebox and browserfy bundlers.
+
 ## 8.0.2 (08 October 2017)
 
 - reflect `setState` calls from `componentWillReceiveProps` lifecycle to update state synchronously like React.

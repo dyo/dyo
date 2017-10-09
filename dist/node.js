@@ -1,4 +1,4 @@
-/*! DIO 8.0.2 @license MIT */
+/*! DIO 8.0.3 @license MIT */
 
 module.exports = function (exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition) {/* eslint-disable */'use strict'
 

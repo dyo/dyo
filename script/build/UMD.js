@@ -5,7 +5,7 @@ function factory (window, __require__) {
 
 /* istanbul ignore next */
 if (typeof exports === 'object' && typeof module === 'object' && module !== null) {
-	if (typeof __webpack_require__ === 'undefined' && typeof require === 'function') {
+	if (typeof __webpack_require__ === 'undefined' && typeof require === 'function' && global.global === global && global.process) {
 		module.exports = factory(global, require)
 	} else {
 		module.exports = factory(global)
