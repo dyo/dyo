@@ -15,4 +15,4 @@ if (typeof exports === 'object' && typeof module === 'object' && module !== null
 } else {
 	global.dio = factory(global)
 }
-})(/* istanbul ignore next */typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this));
+})(/* istanbul ignore next */typeof window === 'object' ? window : (typeof global === 'object' ? global : this));

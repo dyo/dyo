@@ -14,7 +14,7 @@ const filenames = {
 	umd: 'umd.js',
 	esm: 'esm.js',
 	node: 'node.js',
-	bridge: 'bridge.js'
+	noop: 'noop.js'
 }
 
 const shared = [
@@ -31,8 +31,9 @@ const core = [
 	'../../src/Core/Reconcile.js',
 	'../../src/Core/Event.js',
 	'../../src/Core/Error.js',
+	'../../src/Core/Find.js',
 	'../../src/Core/Children.js',
-	'../../src/Core/Render.js'
+	'../../src/Core/Render.js',
 ]
 
 const node = [
@@ -45,7 +46,7 @@ const node = [
 ]
 
 const dom = [
-	'../../src/DOM/DOM.js',
+	'../../src/DOM/DOM.js'
 ]
 
 const umd = [
@@ -58,8 +59,9 @@ const esm = [
 	...dom
 ]
 
-const bridge = [
-	...core
+const noop = [
+	...core,
+	'../../src/DOM/NOOP.js'
 ]
 
 const server = `
@@ -92,27 +94,19 @@ const pad = (content, tabs) => {
 
 const factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
 const api = `
-version: version,
-render: render,
-hydrate: hydrate,
-Component: Component,
-PureComponent: PureComponent,
-Children: Children,
-findDOMNode: findDOMNode,
-unmountComponentAtNode: unmountComponentAtNode,
-cloneElement: cloneElement,
-isValidElement: isValidElement,
-createPortal: createPortal,
-createElement: createElement,
-h: window.h = createElement`
-
-const DOM = ((file) => {
-	let content = fs.readFileSync(path.join(__dirname, file), 'utf8').trim()
-			content = content.replace(/^((?!^\s*function[^'"])[\S\s])*$/gm, '')
-			content = content.replace(/function\s*(\w+)\s*.*/g, '$1,').replace(/\s/g, '')
-
-	return content.split(',')
-})(dom[0])
+exports.render = render
+exports.hydrate = hydrate
+exports.Component = Component
+exports.PureComponent = PureComponent
+exports.Children = Children
+exports.findDOMNode = findDOMNode
+exports.unmountComponentAtNode = unmountComponentAtNode
+exports.cloneElement = cloneElement
+exports.isValidElement = isValidElement
+exports.createPortal = createPortal
+exports.createElement = createElement
+exports.h = window.h = createElement
+`
 
 const platform = `
 exports,
@@ -125,13 +119,27 @@ getElementDefinition
 
 const template = (type) => {
 	switch (type) {
-		case 'bridge':
-			return `if (typeof __require__ !== 'object')
-	return function (r) {
-		factory(window, r)
+		case 'noop':
+			return `
+exports.__SECRET_INTERNALS__ = {
+	mountComponentElement: mountComponentElement,
+	getComponentChildren: getComponentChildren,
+	invokeErrorBoundary: invokeErrorBoundary,
+	getElementDefinition: getElementDefinition
+}
+
+if (typeof __require__ !== 'object')
+	return function (config) {
+		try {
+			factory.call(config, window, config)
+		} catch (e) {
+			/* istanbul ignore next */
+			console.error(err+'\\nSomething went wrong trying to create a custom renderer.')
+		}
 	}`
 		default:
-			return `if (typeof __require__ === 'function')
+			return `
+if (typeof __require__ === 'function')
 	(function () {
 		try {
 			__require__('./node')(${(platform)})
@@ -152,10 +160,10 @@ const builder = (file) => {
 }
 
 const wrapper = (module, content, factory, version, license) => {
-	var head = "var version = '"+version+"'\n\n"
-	var expo = '\n'+'var exports = {\n'+pad(api.trim())+'\n}'+'\n\n'
+	var head = `var exports = {version: '${version}'}\n\n`
+	var expo = '\n'+api.trim()+'\n\n'
 	var temp = '\n\nreturn exports'
-	var tail = expo+template('main')+temp
+	var tail = expo+template('main').trim()+temp
 
 	switch (module) {
 		case 'node': {
@@ -176,14 +184,8 @@ const wrapper = (module, content, factory, version, license) => {
 								.replace(/(\w+):\s*(\w+)/g, 'export const $1 = dio.$2 ')
 								.trim()
 			}
-		case 'bridge':
-			tail = DOM.map((func) => {
-				if (content.indexOf(func) > -1 && func) {
-					return `var ${func} = typeof require.${func} === 'function' ? require.${func} : noop`
-				}
-			}).filter(Boolean).join('\n')+'\n'
-
-			tail = '\n'+tail+expo+template('bridge')+temp
+		case 'noop':
+			tail = expo+template('noop').trim()+temp
 
 			return {
 				head: comment(version, license),
@@ -215,7 +217,12 @@ const bundle = (module, files, location) => {
 
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 
-	minify(UglifyJS, {content, filename, module, filepath})
+	switch (module) {
+		case 'node':
+			break
+		default:
+			minify(UglifyJS, {content, filename, module, filepath})
+	}
 }
 
 const minify = (uglify, {content, module, filename, filepath}) => {
@@ -271,7 +278,7 @@ const resolve = () => {
 	bundle('umd', umd, '../../dist/')
 	// bundle('esm', esm, '../../dist/') // future? webpack seems to be shipping esm module incorrectly ATM
 	bundle('node', node, '../../dist/')
-	// bundle('bridge', bridge, '../../dist/') // for another release/another package
+	bundle('noop', noop, '../../dist/') // for another release/another package
 
 	console.log(
 		'build complete..'

@@ -24,6 +24,9 @@ var ComponentPrototype = {
 function PureComponent (props, context) {
 	Component.call(this, props, context)
 }
+/**
+ * @type {Object}
+ */
 PureComponent.prototype = Object.create(createComponent(Component.prototype), {
 	shouldComponentUpdate: {value: shouldComponentUpdate}
 })
