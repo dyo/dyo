@@ -2,6 +2,14 @@
  * @param {Element} element
  * @param {Node} node
  */
+function setDOMHost (element, node) {
+	client.set(node, element)
+}
+
+/**
+ * @param {Element} element
+ * @param {Node} node
+ */
 function setDOMNode (element, node) {
 	element.DOM = {node: node}
 }
@@ -91,7 +99,7 @@ function setDOMAttribute (element, name, value, xmlns) {
  * @param {*} value
  * @param {string} xmlns
  */
-function setDOMProperties (element, name, value, xmlns) {
+function setDOMProps (element, name, value, xmlns) {
 	switch (name) {
 		case 'className':
 			if (!xmlns && value)
@@ -107,13 +115,13 @@ function setDOMProperties (element, name, value, xmlns) {
 		case 'innerHTML':
 			return setDOMInnerHTML(element, name, value ? value : '', [])
 		case 'dangerouslySetInnerHTML':
-			return setDOMProperties(element, 'innerHTML', value && value.__html, xmlns)
+			return setDOMProps(element, 'innerHTML', value && value.__html, xmlns)
 		case 'acceptCharset':
-			return setDOMProperties(element, 'accept-charset', value, xmlns)
+			return setDOMProps(element, 'accept-charset', value, xmlns)
 		case 'httpEquiv':
-			return setDOMProperties(element, 'http-equiv', value, xmlns)
+			return setDOMProps(element, 'http-equiv', value, xmlns)
 		case 'tabIndex':
-			return setDOMProperties(element, name.toLowerCase(), value, xmlns)
+			return setDOMProps(element, name.toLowerCase(), value, xmlns)
 		case 'autofocus':
 		case 'autoFocus':
 			return getDOMNode(element)[value ? 'focus' : 'blur']()
@@ -153,6 +161,22 @@ function setDOMInnerHTML (element, name, value, nodes) {
 	nodes.forEach(function (node) {
 		getDOMNode(element).appendChild(node)
 	})
+}
+
+/**
+ * @param {Node} node
+ * @return {Element}
+ */
+function getDOMHost (node) {
+	return client.get(node)
+}
+
+/**
+ * @param {Element} element
+ * @return {Node}
+ */
+function getDOMNode (element) {
+	return element.DOM.node
 }
 
 /**
@@ -198,14 +222,6 @@ function getDOMProps (element) {
 		default:
 			return element.props
 	}
-}
-
-/**
- * @param {Element} element
- * @return {Node}
- */
-function getDOMNode (element) {
-	return element.DOM.node
 }
 
 /**
@@ -282,6 +298,14 @@ function getDOMQuery (element, parent, previous, next) {
 		}
 
 	return node
+}
+
+/**
+ * @param {Node} node
+ * @return {boolean}
+ */
+function isValidDOMHost (node) {
+	return client.has(node)
 }
 
 /**

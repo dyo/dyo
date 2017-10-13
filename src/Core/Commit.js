@@ -49,12 +49,12 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			commitWillReconcile(element, element)
 		case SharedElementPortal:
 		case SharedElementFragment:
-			setDOMNode(element, element.id !== SharedElementPortal ? getDOMNode(parent) : getDOMPortal(element))
+			setClientNode(element, element.id !== SharedElementPortal ? getClientNode(parent) : getClientPortal(element))
 			commitChildren(element, sibling, host, operation, signature)
 			commitCreate(element)
 			return
 		case SharedElementNode:
-			element.xmlns = getDOMType(element, parent.xmlns)
+			element.xmlns = getClientType(element, parent.xmlns)
 		default:
 			switch (signature) {
 				case SharedMountQuery:
@@ -74,7 +74,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 	}
 
 	commitChildren(element, sibling, host, SharedMountAppend, signature)
-	commitProperties(element, getDOMProps(element), SharedPropsMount)
+	commitProperties(element, getClientProps(element), SharedPropsMount)
 }
 
 /**
@@ -138,7 +138,7 @@ function commitWillUnmount (element, parent, host, signature) {
 	if (element.id === SharedElementComponent)
 		return commitWillUnmount(element.children, parent, merge({}, host), signature)
 
-	setDOMNode(element, getDOMNode(host))
+	setClientNode(element, getClientNode(host))
 
 	return function (err) {
 		commitUnmount(element, parent, SharedMountRemove)
@@ -203,7 +203,7 @@ function commitReference (element, callback, signature, key) {
 				case SharedReferenceAssign:
 					element.ref = callback
 				case SharedReferenceDispatch:
-					return getLifecycleCallback(element.host, callback, element.instance || getDOMNode(element), key, element)
+					return getLifecycleCallback(element.host, callback, element.instance || getClientNode(element), key, element)
 				case SharedReferenceReplace:
 					commitReference(element, callback, SharedReferenceRemove, key)
 					commitReference(element, callback, SharedReferenceAssign, key)
@@ -224,7 +224,7 @@ function commitEvent (element, type, callback) {
 		element.event = {}
 
 	if (!element.event[type])
-		setDOMEvent(element, type)
+		setClientEvent(element, type)
 
 	element.event[type] = callback
 }
@@ -244,10 +244,10 @@ function commitProperties (element, props, signature) {
 			case 'children':
 				break
 			default:
-				if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
+				if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 && key.length > 2)
 					commitEvent(element, key.substring(2).toLowerCase(), props[key])
 				else
-					setDOMProperties(element, key, props[key], element.xmlns)
+					setClientProps(element, key, props[key], element.xmlns)
 		}
 }
 
@@ -258,11 +258,11 @@ function commitCreate (element) {
 	try {
 		switch (element.active = true, element.id) {
 			case SharedElementNode:
-				return setDOMNode(element, createDOMElement(element))
+				return setClientNode(element, createClientElement(element))
 			case SharedElementText:
-				return setDOMNode(element, createDOMText(element))
+				return setClientNode(element, createClientText(element))
 			case SharedElementEmpty:
-				return setDOMNode(element, createDOMEmpty(element))
+				return setClientNode(element, createClientEmpty(element))
 			case SharedElementComponent:
 				element.DOM = element.children.DOM
 			case SharedElementPortal:
@@ -296,9 +296,9 @@ function commitRebase (element, snapshot) {
  * @return {boolean}
  */
 function commitQuery (element, parent) {
-	setDOMNode(
+	setClientNode(
 		element,
-		getDOMQuery(
+		getClientQuery(
 			element,
 			parent,
 			getElementSibling(element, parent, SharedSiblingPrevious),
@@ -306,15 +306,15 @@ function commitQuery (element, parent) {
 		)
 	)
 
-	return element.active = !!getDOMNode(element)
+	return element.active = !!getClientNode(element)
 }
 
 /**
  * @param {Element} element
  * @param {string} value
  */
-function commitValue (element, value) {
-	setDOMValue(element, value)
+function commitText (element, value) {
+	setClientText(element, value)
 }
 
 /**
@@ -326,7 +326,7 @@ function commitRemove (element, parent) {
 		return commitRemove(element, getElementParent(parent))
 
 	if (element.id > SharedElementIntermediate)
-		removeDOMNode(element, parent)
+		removeClientNode(element, parent)
 	else
 		element.children.forEach(function (children) {
 			commitRemove(getElementDescription(children), element)
@@ -361,7 +361,7 @@ function commitInsert (element, sibling, parent) {
 		case SharedElementNode:
 		case SharedElementText:
 		case SharedElementEmpty:
-			return insertDOMNode(element, sibling, parent)
+			return insertClientNode(element, sibling, parent)
 		case SharedElementComponent:
 			return commitInsert(getElementDescription(element), sibling, parent)
 	}
@@ -386,7 +386,7 @@ function commitAppend (element, parent) {
 		case SharedElementNode:
 		case SharedElementText:
 		case SharedElementEmpty:
-			return appendDOMNode(element, parent)
+			return appendClientNode(element, parent)
 		case SharedElementComponent:
 			return commitAppend(getElementDescription(element), parent)
 	}

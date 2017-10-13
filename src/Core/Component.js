@@ -356,7 +356,7 @@ function getLifecycleData (element, name) {
  */
 function getLifecycleMount (element, name) {
 	try {
-		var state = element.owner[name].call(element.instance, element.active && getDOMNode(element))
+		var state = element.owner[name].call(element.instance, element.active && getClientNode(element))
 
 		if (name !== SharedComponentWillUnmount)
 			getLifecycleReturn(element, state)

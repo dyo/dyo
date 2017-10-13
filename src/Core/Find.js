@@ -10,12 +10,12 @@ function findDOMNode (element) {
 		return findDOMNode(getComponentElement(element))
 
 	if (isValidElement(element) && element.active)
-		return getDOMNode(element)
+		return getClientNode(element)
 
-	if (isValidDOMEvent(element))
-		return getDOMTarget(element)
+	if (isValidClientEvent(element))
+		return getClientTarget(element)
 
-	if (isValidDOMNode(element))
+	if (isValidClientNode(element))
 		return element
 
 	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')

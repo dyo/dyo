@@ -1,9 +1,9 @@
-/*! DIO 8.1.0 @license MIT */
+/*! DIO 8.0.3 @license MIT */
 
 ;(function (global) {/* eslint-disable */'use strict'
-function factory (window, __require__) {
+function factory (window, config, require) {
 
-	var exports = {version: '8.1.0'}
+	var exports = {version: '8.0.3'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -248,15 +248,16 @@ function factory (window, __require__) {
 	var WeakMap = window.WeakMap || WeakHash
 	var Symbol = window.Symbol || function (d) { return 'Symbol('+d+')' }
 	var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
+	
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
 	var hasOwnProperty = Object.hasOwnProperty
 	var isArray = Array.isArray
+	
 	var SymbolIterator = Symbol.iterator || '@@iterator'
 	var SymbolError = Symbol('Error')
 	var SymbolElement = Symbol('Element')
 	var SymbolComponent = Symbol('Component')
-	var DOMMap = new WeakMap()
 	
 	/**
 	 * @constructor
@@ -1020,7 +1021,7 @@ function factory (window, __require__) {
 	 */
 	function getLifecycleMount (element, name) {
 		try {
-			var state = element.owner[name].call(element.instance, element.active && getDOMNode(element))
+			var state = element.owner[name].call(element.instance, element.active && getClientNode(element))
 	
 			if (name !== SharedComponentWillUnmount)
 				getLifecycleReturn(element, state)
@@ -1156,12 +1157,12 @@ function factory (window, __require__) {
 				commitWillReconcile(element, element)
 			case SharedElementPortal:
 			case SharedElementFragment:
-				setDOMNode(element, element.id !== SharedElementPortal ? getDOMNode(parent) : getDOMPortal(element))
+				setClientNode(element, element.id !== SharedElementPortal ? getClientNode(parent) : getClientPortal(element))
 				commitChildren(element, sibling, host, operation, signature)
 				commitCreate(element)
 				return
 			case SharedElementNode:
-				element.xmlns = getDOMType(element, parent.xmlns)
+				element.xmlns = getClientType(element, parent.xmlns)
 			default:
 				switch (signature) {
 					case SharedMountQuery:
@@ -1181,7 +1182,7 @@ function factory (window, __require__) {
 		}
 	
 		commitChildren(element, sibling, host, SharedMountAppend, signature)
-		commitProperties(element, getDOMProps(element), SharedPropsMount)
+		commitProperties(element, getClientProps(element), SharedPropsMount)
 	}
 	
 	/**
@@ -1245,7 +1246,7 @@ function factory (window, __require__) {
 		if (element.id === SharedElementComponent)
 			return commitWillUnmount(element.children, parent, merge({}, host), signature)
 	
-		setDOMNode(element, getDOMNode(host))
+		setClientNode(element, getClientNode(host))
 	
 		return function (err) {
 			commitUnmount(element, parent, SharedMountRemove)
@@ -1310,7 +1311,7 @@ function factory (window, __require__) {
 					case SharedReferenceAssign:
 						element.ref = callback
 					case SharedReferenceDispatch:
-						return getLifecycleCallback(element.host, callback, element.instance || getDOMNode(element), key, element)
+						return getLifecycleCallback(element.host, callback, element.instance || getClientNode(element), key, element)
 					case SharedReferenceReplace:
 						commitReference(element, callback, SharedReferenceRemove, key)
 						commitReference(element, callback, SharedReferenceAssign, key)
@@ -1331,7 +1332,7 @@ function factory (window, __require__) {
 			element.event = {}
 	
 		if (!element.event[type])
-			setDOMEvent(element, type)
+			setClientEvent(element, type)
 	
 		element.event[type] = callback
 	}
@@ -1351,10 +1352,10 @@ function factory (window, __require__) {
 				case 'children':
 					break
 				default:
-					if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110)
+					if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 && key.length > 2)
 						commitEvent(element, key.substring(2).toLowerCase(), props[key])
 					else
-						setDOMProperties(element, key, props[key], element.xmlns)
+						setClientProps(element, key, props[key], element.xmlns)
 			}
 	}
 	
@@ -1365,11 +1366,11 @@ function factory (window, __require__) {
 		try {
 			switch (element.active = true, element.id) {
 				case SharedElementNode:
-					return setDOMNode(element, createDOMElement(element))
+					return setClientNode(element, createClientElement(element))
 				case SharedElementText:
-					return setDOMNode(element, createDOMText(element))
+					return setClientNode(element, createClientText(element))
 				case SharedElementEmpty:
-					return setDOMNode(element, createDOMEmpty(element))
+					return setClientNode(element, createClientEmpty(element))
 				case SharedElementComponent:
 					element.DOM = element.children.DOM
 				case SharedElementPortal:
@@ -1403,9 +1404,9 @@ function factory (window, __require__) {
 	 * @return {boolean}
 	 */
 	function commitQuery (element, parent) {
-		setDOMNode(
+		setClientNode(
 			element,
-			getDOMQuery(
+			getClientQuery(
 				element,
 				parent,
 				getElementSibling(element, parent, SharedSiblingPrevious),
@@ -1413,15 +1414,15 @@ function factory (window, __require__) {
 			)
 		)
 	
-		return element.active = !!getDOMNode(element)
+		return element.active = !!getClientNode(element)
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {string} value
 	 */
-	function commitValue (element, value) {
-		setDOMValue(element, value)
+	function commitText (element, value) {
+		setClientText(element, value)
 	}
 	
 	/**
@@ -1433,7 +1434,7 @@ function factory (window, __require__) {
 			return commitRemove(element, getElementParent(parent))
 	
 		if (element.id > SharedElementIntermediate)
-			removeDOMNode(element, parent)
+			removeClientNode(element, parent)
 		else
 			element.children.forEach(function (children) {
 				commitRemove(getElementDescription(children), element)
@@ -1468,7 +1469,7 @@ function factory (window, __require__) {
 			case SharedElementNode:
 			case SharedElementText:
 			case SharedElementEmpty:
-				return insertDOMNode(element, sibling, parent)
+				return insertClientNode(element, sibling, parent)
 			case SharedElementComponent:
 				return commitInsert(getElementDescription(element), sibling, parent)
 		}
@@ -1493,7 +1494,7 @@ function factory (window, __require__) {
 			case SharedElementNode:
 			case SharedElementText:
 			case SharedElementEmpty:
-				return appendDOMNode(element, parent)
+				return appendClientNode(element, parent)
 			case SharedElementComponent:
 				return commitAppend(getElementDescription(element), parent)
 		}
@@ -1561,7 +1562,7 @@ function factory (window, __require__) {
 				return updateComponent(element, snapshot, SharedComponentPropsUpdate)
 			case SharedElementText:
 				if (element.children !== snapshot.children)
-					commitValue(element, element.children = snapshot.children)
+					commitText(element, element.children = snapshot.children)
 				break
 			case SharedElementNode:
 				reconcileChildren(element, snapshot)
@@ -1867,15 +1868,25 @@ function factory (window, __require__) {
 			return findDOMNode(getComponentElement(element))
 	
 		if (isValidElement(element) && element.active)
-			return getDOMNode(element)
+			return getClientNode(element)
 	
-		if (isValidDOMEvent(element))
-			return getDOMTarget(element)
+		if (isValidClientEvent(element))
+			return getClientTarget(element)
 	
-		if (isValidDOMNode(element))
+		if (isValidClientNode(element))
 			return element
 	
 		invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
+	}
+	
+	function createFactory (config) {
+		switch (typeof config) {
+			case 'object':
+				if (config !== null && !isValidElement(config))
+					return factory(window, config, require)
+			default:
+				return createElement.bind(null, config)
+		}
 	}
 	
 	/**
@@ -1962,10 +1973,10 @@ function factory (window, __require__) {
 	 */
 	function render (element, container, callback) {
 		if (!container)
-			return render(element, getDOMDocument(), callback)
+			return render(element, getClientDocument(), callback)
 	
-		if (DOMMap.has(container))
-			update(DOMMap.get(container), getElementDefinition(element), callback)
+		if (isValidClientHost(container))
+			update(getClientHost(container), getElementDefinition(element), callback)
 		else
 			mount(element, createElementIntermediate(), container, callback, SharedMountCommit)
 	}
@@ -1977,7 +1988,7 @@ function factory (window, __require__) {
 	 */
 	function hydrate (element, container, callback) {
 		if (!container)
-			return hydrate(element, getDOMDocument(), callback)
+			return hydrate(element, getClientDocument(), callback)
 	
 		mount(element, createElementIntermediate(), container, callback, SharedMountQuery)
 	}
@@ -2005,15 +2016,14 @@ function factory (window, __require__) {
 		if (!isValidElement(element))
 			return mount(getElementDefinition(element), parent, container, callback, signature)
 	
-		if (!isValidDOMNode(container))
+		if (!isValidClientNode(container))
 			invariant(SharedSiteRender, 'Target container is not a DOM element')
 	
-		DOMMap.set(container, element)
-	
-		setDOMNode(parent, container)
+		setClientHost(element, container)
+		setClientNode(parent, container)
 	
 		if (signature === SharedMountCommit)
-			setDOMContent(parent)
+			setClientContent(parent)
 	
 		commitMount(element, element, parent, parent, SharedMountAppend, signature)
 	
@@ -2026,7 +2036,15 @@ function factory (window, __require__) {
 	 * @return {boolean}
 	 */
 	function unmountComponentAtNode (container) {
-		return DOMMap.has(container) && !render(null, container)
+		return isValidClientHost(container) && !render(null, container)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Node} node
+	 */
+	function setDOMHost (element, node) {
+		client.set(node, element)
 	}
 	
 	/**
@@ -2122,7 +2140,7 @@ function factory (window, __require__) {
 	 * @param {*} value
 	 * @param {string} xmlns
 	 */
-	function setDOMProperties (element, name, value, xmlns) {
+	function setDOMProps (element, name, value, xmlns) {
 		switch (name) {
 			case 'className':
 				if (!xmlns && value)
@@ -2138,13 +2156,13 @@ function factory (window, __require__) {
 			case 'innerHTML':
 				return setDOMInnerHTML(element, name, value ? value : '', [])
 			case 'dangerouslySetInnerHTML':
-				return setDOMProperties(element, 'innerHTML', value && value.__html, xmlns)
+				return setDOMProps(element, 'innerHTML', value && value.__html, xmlns)
 			case 'acceptCharset':
-				return setDOMProperties(element, 'accept-charset', value, xmlns)
+				return setDOMProps(element, 'accept-charset', value, xmlns)
 			case 'httpEquiv':
-				return setDOMProperties(element, 'http-equiv', value, xmlns)
+				return setDOMProps(element, 'http-equiv', value, xmlns)
 			case 'tabIndex':
-				return setDOMProperties(element, name.toLowerCase(), value, xmlns)
+				return setDOMProps(element, name.toLowerCase(), value, xmlns)
 			case 'autofocus':
 			case 'autoFocus':
 				return getDOMNode(element)[value ? 'focus' : 'blur']()
@@ -2184,6 +2202,22 @@ function factory (window, __require__) {
 		nodes.forEach(function (node) {
 			getDOMNode(element).appendChild(node)
 		})
+	}
+	
+	/**
+	 * @param {Node} node
+	 * @return {Element}
+	 */
+	function getDOMHost (node) {
+		return client.get(node)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Node}
+	 */
+	function getDOMNode (element) {
+		return element.DOM.node
 	}
 	
 	/**
@@ -2229,14 +2263,6 @@ function factory (window, __require__) {
 			default:
 				return element.props
 		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @return {Node}
-	 */
-	function getDOMNode (element) {
-		return element.DOM.node
 	}
 	
 	/**
@@ -2316,6 +2342,14 @@ function factory (window, __require__) {
 	}
 	
 	/**
+	 * @param {Node} node
+	 * @return {boolean}
+	 */
+	function isValidDOMHost (node) {
+		return client.has(node)
+	}
+	
+	/**
 	 * @param {Node} target
 	 * @param {boolean}
 	 */
@@ -2383,6 +2417,36 @@ function factory (window, __require__) {
 		return document.createTextNode('')
 	}
 	
+	var client = new WeakMap()
+	
+	var setClientHost = config.setHost || setDOMHost
+	var setClientNode = config.setNode || setDOMNode
+	var setClientContent = config.setContent || setDOMContent
+	var setClientText = config.setText || setDOMValue
+	var setClientEvent = config.setEvent || setDOMEvent
+	var setClientProps = config.setProps || setDOMProps
+	
+	var getClientDocument = config.getDocument || getDOMDocument
+	var getClientTarget = config.getTarget || getDOMTarget
+	var getClientHost = config.getHost || getDOMHost
+	var getClientType = config.getType || getDOMType
+	var getClientProps = config.getProps || getDOMProps
+	var getClientNode = config.getNode || getDOMNode
+	var getClientPortal = config.getPortal || getDOMPortal
+	var getClientQuery = config.getQuery || getDOMQuery
+	
+	var isValidClientHost = config.isValidHost || isValidDOMHost
+	var isValidClientNode = config.isValidNode || isValidDOMNode
+	var isValidClientEvent = config.isValidEvent || isValidDOMEvent
+	
+	var removeClientNode = config.removeNode || removeDOMNode
+	var insertClientNode = config.insertNode || insertDOMNode
+	var appendClientNode = config.appendNode || appendDOMNode
+	
+	var createClientElement = config.createElement || createDOMElement
+	var createClientText = config.createText || createDOMText
+	var createClientEmpty = config.createEmpty || createDOMEmpty
+	
 	exports.render = render
 	exports.hydrate = hydrate
 	exports.Component = Component
@@ -2390,21 +2454,32 @@ function factory (window, __require__) {
 	exports.Children = Children
 	exports.findDOMNode = findDOMNode
 	exports.unmountComponentAtNode = unmountComponentAtNode
+	exports.createFactory = createFactory
 	exports.cloneElement = cloneElement
 	exports.isValidElement = isValidElement
 	exports.createPortal = createPortal
 	exports.createElement = createElement
-	exports.h = window.h = createElement
+	exports.h = createElement
 	
-	if (typeof __require__ === 'function')
+	if (typeof require === 'function')
 		(function () {
 			try {
-				__require__('./node')(exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition)
+				require('./cjs')(exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition)
 			} catch (err) {
 				/* istanbul ignore next */
 				console.error(err+'\nSomething went wrong trying to import the server module.')
 			}
 		}())
+	
+	if (typeof config === 'object')
+		exports.__SECRET_INTERNALS__ = {
+			mountComponentElement: mountComponentElement,
+			getComponentChildren: getComponentChildren,
+			invokeErrorBoundary: invokeErrorBoundary,
+			getElementDefinition: getElementDefinition
+		}
+	else
+		window.h = createElement
 	
 	return exports
 }
@@ -2412,13 +2487,13 @@ function factory (window, __require__) {
 /* istanbul ignore next */
 if (typeof exports === 'object' && typeof module === 'object' && module !== null) {
 	if (typeof __webpack_require__ === 'undefined' && typeof require === 'function' && global.global === global && global.process) {
-		module.exports = factory(global, require)
+		module.exports = factory(global, false, require)
 	} else {
-		module.exports = factory(global)
+		module.exports = factory(global, false)
 	}
 } else if (typeof define === 'function' && define.amd) {
-	define(factory(global))
+	define(factory(global, false))
 } else {
-	global.dio = factory(global)
+	global.dio = factory(global, false)
 }
 })(/* istanbul ignore next */typeof window === 'object' ? window : (typeof global === 'object' ? global : this));

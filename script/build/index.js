@@ -13,8 +13,7 @@ const strict = `/* eslint-disable */'use strict'`
 const filenames = {
 	umd: 'umd.js',
 	esm: 'esm.js',
-	node: 'node.js',
-	noop: 'noop.js'
+	cjs: 'cjs.js'
 }
 
 const shared = [
@@ -32,11 +31,12 @@ const core = [
 	'../../src/Core/Event.js',
 	'../../src/Core/Error.js',
 	'../../src/Core/Find.js',
+	'../../src/Core/Factory.js',
 	'../../src/Core/Children.js',
 	'../../src/Core/Render.js',
 ]
 
-const node = [
+const cjs = [
 	...shared,
 	'../../src/Server/Utility.js',
 	'../../src/Server/String.js',
@@ -46,7 +46,8 @@ const node = [
 ]
 
 const dom = [
-	'../../src/DOM/DOM.js'
+	'../../src/DOM/DOM.js',
+	'../../src/DOM/Client.js'
 ]
 
 const umd = [
@@ -57,11 +58,6 @@ const umd = [
 const esm = [
 	...core,
 	...dom
-]
-
-const noop = [
-	...core,
-	'../../src/DOM/NOOP.js'
 ]
 
 const server = `
@@ -101,14 +97,15 @@ exports.PureComponent = PureComponent
 exports.Children = Children
 exports.findDOMNode = findDOMNode
 exports.unmountComponentAtNode = unmountComponentAtNode
+exports.createFactory = createFactory
 exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
 exports.createPortal = createPortal
 exports.createElement = createElement
-exports.h = window.h = createElement
+exports.h = createElement
 `
 
-const platform = `
+const internals = `
 exports,
 Element,
 mountComponentElement,
@@ -117,39 +114,27 @@ invokeErrorBoundary,
 getElementDefinition
 `.replace(/\s+/g, ' ').trim()
 
-const template = (type) => {
-	switch (type) {
-		case 'noop':
-			return `
-exports.__SECRET_INTERNALS__ = {
-	mountComponentElement: mountComponentElement,
-	getComponentChildren: getComponentChildren,
-	invokeErrorBoundary: invokeErrorBoundary,
-	getElementDefinition: getElementDefinition
-}
-
-if (typeof __require__ !== 'object')
-	return function (config) {
-		try {
-			factory.call(config, window, config)
-		} catch (e) {
-			/* istanbul ignore next */
-			console.error(err+'\\nSomething went wrong trying to create a custom renderer.')
-		}
-	}`
-		default:
-			return `
-if (typeof __require__ === 'function')
+const template = `
+if (typeof require === 'function')
 	(function () {
 		try {
-			__require__('./node')(${(platform)})
+			require('./cjs')(${(internals)})
 		} catch (err) {
 			/* istanbul ignore next */
 			console.error(err+'\\nSomething went wrong trying to import the server module.')
 		}
-	}())`
+	}())
+
+if (typeof config === 'object')
+	exports.__SECRET_INTERNALS__ = {
+		mountComponentElement: mountComponentElement,
+		getComponentChildren: getComponentChildren,
+		invokeErrorBoundary: invokeErrorBoundary,
+		getElementDefinition: getElementDefinition
 	}
-}
+else
+	window.h = createElement
+`.trim()
 
 const parse = (head, body, tail, factory) => {
 	return factory.replace(search,'\n'+pad(head+body+tail))
@@ -163,13 +148,13 @@ const wrapper = (module, content, factory, version, license) => {
 	var head = `var exports = {version: '${version}'}\n\n`
 	var expo = '\n'+api.trim()+'\n\n'
 	var temp = '\n\nreturn exports'
-	var tail = expo+template('main').trim()+temp
+	var tail = expo+template+temp
 
 	switch (module) {
-		case 'node': {
+		case 'cjs': {
 			return {
 				head: comment(version, license),
-				body: 'module.exports = function ('+(platform)+') {'+strict+
+				body: 'module.exports = function ('+(internals)+') {'+strict+
 					'\n\n'+pad(content.trim()+'\n\n'+server.trim())+'\n}',
 				tail: ''
 			}
@@ -183,14 +168,6 @@ const wrapper = (module, content, factory, version, license) => {
 								.replace(/[\S\s]*\{|\s*\}|,|\S\s*h:[\S\s]*|window.*h.*=\s*/g, '')
 								.replace(/(\w+):\s*(\w+)/g, 'export const $1 = dio.$2 ')
 								.trim()
-			}
-		case 'noop':
-			tail = expo+template('noop').trim()+temp
-
-			return {
-				head: comment(version, license),
-				body: parse(head, content, tail, factory),
-				tail: ''
 			}
 		default:
 			return {
@@ -218,7 +195,7 @@ const bundle = (module, files, location) => {
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 
 	switch (module) {
-		case 'node':
+		case 'cjs':
 			break
 		default:
 			minify(UglifyJS, {content, filename, module, filepath})
@@ -276,13 +253,9 @@ const gzipsize = (content) => {
 
 const resolve = () => {
 	bundle('umd', umd, '../../dist/')
-	// bundle('esm', esm, '../../dist/') // future? webpack seems to be shipping esm module incorrectly ATM
-	bundle('node', node, '../../dist/')
-	bundle('noop', noop, '../../dist/') // for another release/another package
+	bundle('cjs', cjs, '../../dist/')
 
-	console.log(
-		'build complete..'
-	)
+	console.log('build complete..')
 }
 
 if ((process.argv.pop()+'').indexOf('watch') < 0) {

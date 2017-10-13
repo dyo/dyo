@@ -56,7 +56,7 @@ function reconcileElement (element, snapshot) {
 			return updateComponent(element, snapshot, SharedComponentPropsUpdate)
 		case SharedElementText:
 			if (element.children !== snapshot.children)
-				commitValue(element, element.children = snapshot.children)
+				commitText(element, element.children = snapshot.children)
 			break
 		case SharedElementNode:
 			reconcileChildren(element, snapshot)
