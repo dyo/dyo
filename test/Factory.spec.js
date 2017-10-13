@@ -21,8 +21,6 @@ describe('Factory', () => {
 	it('should create a render factory', () => {
 		// @TODO build a test renderer
 		let config = {
-			setHost: () => {},
-			setNode: () => {},
 			setContent: () => {},
 			setText: () => {},
 			setEvent: () => {},
@@ -30,10 +28,8 @@ describe('Factory', () => {
 
 			getDocument: () => {},
 			getTarget: () => {},
-			getHost: () => {},
 			getType: () => {},
 			getProps: () => {},
-			getNode: () => {},
 			getPortal: () => {},
 			getQuery: () => {},
 

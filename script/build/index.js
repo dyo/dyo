@@ -132,8 +132,6 @@ if (typeof config === 'object')
 		invokeErrorBoundary: invokeErrorBoundary,
 		getElementDefinition: getElementDefinition
 	}
-else
-	window.h = createElement
 `.trim()
 
 const parse = (head, body, tail, factory) => {

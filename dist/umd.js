@@ -2478,8 +2478,6 @@ function factory (window, config, require) {
 			invokeErrorBoundary: invokeErrorBoundary,
 			getElementDefinition: getElementDefinition
 		}
-	else
-		window.h = createElement
 	
 	return exports
 }
