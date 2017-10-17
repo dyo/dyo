@@ -16,8 +16,9 @@ function setDOMNode (element, node) {
 
 /**
  * @param {Element} element
+ * @param {Element} children
  */
-function setDOMContent (element) {
+function setDOMContent (element, children) {
 	getDOMNode(element).textContent = ''
 }
 
@@ -25,7 +26,7 @@ function setDOMContent (element) {
  * @param {Element} element
  * @param {string} value
  */
-function setDOMValue (element, value) {
+function setDOMText (element, value) {
 	getDOMNode(element).nodeValue = value
 }
 

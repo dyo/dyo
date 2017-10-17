@@ -1,6 +1,6 @@
-describe('Fragment', () => {
+describe('List', () => {
 	let container = document.createElement('div')
-	let Fragment = class {
+	let List = class {
 		render() {
 			return [h('br'), this.props.children]
 		}
@@ -100,7 +100,7 @@ describe('Fragment', () => {
 
 	it('should render a single fragment within a fragment', () => {
 		render([
-			h(Fragment, {key: 1}, 1),
+			h(List, {key: 1}, 1),
 		], container)
 
 		assert.html(container, `
@@ -110,8 +110,8 @@ describe('Fragment', () => {
 
 	it('should render multiple fragments within a fragment', () => {
 		render([
-			h(Fragment, {key: 1}, 1),
-			h(Fragment, {key: 2}, 2)
+			h(List, {key: 1}, 1),
+			h(List, {key: 2}, 2)
 		], container)
 
 		assert.html(container, '<br>1<br>2')
@@ -119,7 +119,7 @@ describe('Fragment', () => {
 
 	it('should remove a fragment from a fragment', () => {
 		render([
-			h(Fragment, {key: 1}, 1),
+			h(List, {key: 1}, 1),
 		], container)
 
 		assert.html(container, `
@@ -129,9 +129,9 @@ describe('Fragment', () => {
 
 	it('should append a fragment to the end of a fragment', () => {
 		render([
-			h(Fragment, {key: 1}, 1),
-			h(Fragment, {key: 3}, 3),
-			h(Fragment, {key: 2}, 2)
+			h(List, {key: 1}, 1),
+			h(List, {key: 3}, 3),
+			h(List, {key: 2}, 2)
 		], container)
 
 		assert.html(container, `
@@ -143,8 +143,8 @@ describe('Fragment', () => {
 
 	it('should remove a fragment from the middle of a fragment', () => {
 		render([
-			h(Fragment, {key: 1}, 1),
-			h(Fragment, {key: 2}, 2),
+			h(List, {key: 1}, 1),
+			h(List, {key: 2}, 2),
 		], container)
 
 		assert.html(container, `
@@ -155,9 +155,9 @@ describe('Fragment', () => {
 
 	it('should insert a fragment into the middle of a fragment', () => {
 		render([
-			h(Fragment, {key: 1}, 1),
-			h(Fragment, {key: 3}, 3),
-			h(Fragment, {key: 2}, 2)
+			h(List, {key: 1}, 1),
+			h(List, {key: 3}, 3),
+			h(List, {key: 2}, 2)
 		], container)
 
 		assert.html(container, `
@@ -169,15 +169,23 @@ describe('Fragment', () => {
 
 	it('should move a fragment', () => {
 		render([
-			h(Fragment, {key: 1}, 1),
-			h(Fragment, {key: 2}, 2),
-			h(Fragment, {key: 3}, 3)
+			h(List, {key: 1}, 1),
+			h(List, {key: 2}, 2),
+			h(List, {key: 3}, 3)
 		], container)
 
 		assert.html(container, `
 			<br>1
 			<br>2
 			<br>3
+		`)
+	})
+
+	it('should render Fragment component', () => {
+		render(h(Fragment, h('h1', {key: '1st'}, '1st')), container)
+
+		assert.html(container, `
+			<h1>1st</h1>
 		`)
 	})
 })

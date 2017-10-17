@@ -1,4 +1,12 @@
 /**
+ * @param {Element} element
+ * @param {Element} snapshot
+ */
+function reconcileProps (element, snapshot) {
+	commitProps(element, reconcileObject(element.props, element.props = snapshot.props), SharedPropsUpdate)
+}
+
+/**
  * @param {Object} prevObject
  * @param {Object} nextObject
  * @return {Object?}
@@ -33,14 +41,6 @@ function reconcileObject (prevObject, nextObject) {
  * @param {Element} element
  * @param {Element} snapshot
  */
-function reconcileProperties (element, snapshot) {
-	commitProperties(element, reconcileObject(element.props, element.props = snapshot.props), SharedPropsUpdate)
-}
-
-/**
- * @param {Element} element
- * @param {Element} snapshot
- */
 function reconcileElement (element, snapshot) {
 	if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
 		return commitWillReconcile(element, snapshot)
@@ -60,7 +60,7 @@ function reconcileElement (element, snapshot) {
 			break
 		case SharedElementNode:
 			reconcileChildren(element, snapshot)
-			reconcileProperties(element, snapshot)
+			reconcileProps(element, snapshot)
 	}
 }
 

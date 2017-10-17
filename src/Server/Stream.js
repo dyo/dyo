@@ -83,7 +83,8 @@ function readStreamElement (element, host, stack, readable) {
 
 	switch (element.host = host, element.id) {
 		case SharedElementComponent:
-			children = mountComponentElement(readable.host = element)
+			if (!(readable.host = element).active)
+				children = mountComponentElement(element)
 
 			if (!element.state || element.state.constructor !== Promise)
 				return readStreamElement(children, element, stack, readable)
@@ -99,16 +100,15 @@ function readStreamElement (element, host, stack, readable) {
 		case SharedElementEmpty:
 			return writeStreamElement(getTextEscape(children), readable)
 		case SharedElementNode:
-			if (element.DOM)
-				return element.DOM = writeStreamElement(element.DOM, readable)
+			if (element.state)
+				return element.state = void writeStreamElement(element.state, readable)
 
 			output += '<' + element.type + getStringProps(element, element.props) + '>'
 
 			if (isVoidType(element.type))
 				return writeStreamElement(output, readable)
 
-			element.DOM = (element.DOM || '') + '</' + element.type + '>'
-
+			element.state = (element.state || '') + '</' + element.type + '>'
 			stack.push(element)
 		default:
 			var length = children.length

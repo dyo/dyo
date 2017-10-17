@@ -93,6 +93,7 @@ const api = `
 exports.render = render
 exports.hydrate = hydrate
 exports.Component = Component
+exports.Fragment = Fragment
 exports.PureComponent = PureComponent
 exports.Children = Children
 exports.findDOMNode = findDOMNode
@@ -108,9 +109,9 @@ exports.h = createElement
 const internals = `
 exports,
 Element,
+invokeErrorBoundary,
 mountComponentElement,
 getComponentChildren,
-invokeErrorBoundary,
 getElementDefinition
 `.replace(/\s+/g, ' ').trim()
 
@@ -125,13 +126,18 @@ if (typeof require === 'function')
 		}
 	}())
 
-if (typeof config === 'object')
-	exports.__SECRET_INTERNALS__ = {
+if (typeof config === 'object' && typeof config.getExports === 'function') {
+	return config.getExports({
+		exports: exports,
+		Element: Element,
+		invokeErrorBoundary: invokeErrorBoundary,
 		mountComponentElement: mountComponentElement,
 		getComponentChildren: getComponentChildren,
-		invokeErrorBoundary: invokeErrorBoundary,
-		getElementDefinition: getElementDefinition
-	}
+		getElementDefinition: getElementDefinition,
+		update: update,
+		mount: mount
+	}) || exports
+}
 `.trim()
 
 const parse = (head, body, tail, factory) => {

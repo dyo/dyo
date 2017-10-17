@@ -55,7 +55,7 @@ function mount (element, parent, container, callback, signature) {
 	setClientNode(parent, container)
 
 	if (signature === SharedMountCommit)
-		setClientContent(parent)
+		setClientContent(parent, element)
 
 	commitMount(element, element, parent, parent, SharedMountAppend, signature)
 

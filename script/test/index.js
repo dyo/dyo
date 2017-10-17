@@ -7,7 +7,7 @@ let minify = (str) => {
 }
 
 let html = (obj, str, msg) => {
-	return assert.equal(obj.innerHTML === undefined ? obj + '': obj.innerHTML, minify(str), msg)
+	return assert.equal(obj.innerHTML === undefined ? obj + '' : obj.innerHTML, minify(str), msg)
 }
 
 let json = (obj, str, msg) => {

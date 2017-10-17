@@ -15,6 +15,15 @@ describe('Element', () => {
 		assert.equal(cloneElement(h('h1', {className: 'head'})).props.className, 'head')
 	})
 
+	it('should not clone an invalid element', () => {
+		let element = {
+			type: 'h1',
+			props: {className: 'head'},
+			children: []
+		}
+		assert.equal(cloneElement(element).props.className, undefined)
+	})
+
 	it('should create an element', () => {
 		assert.equal(h('h1', 'Hello World').type, 'h1')
 	})

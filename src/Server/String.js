@@ -16,6 +16,9 @@ function getStringElement (element, host) {
 		case SharedElementEmpty:
 			return getTextEscape(element.children)
 		case SharedElementComponent:
+			if (element.active)
+				return getStringElement(element.children, element)
+
 			return getStringElement(mountComponentElement(element), element)
 	}
 
@@ -33,8 +36,8 @@ function getStringElement (element, host) {
 	if (element.id !== SharedElementNode)
 		return output
 
-	if (element.DOM)
-		element.DOM = void (output += element.DOM)
+	if (element.state)
+		element.state = void (output += element.state)
 
 	return output + '</' + type + '>'
 }
@@ -55,7 +58,7 @@ function getStringProps (element, props) {
 			case 'dangerouslySetInnerHTML':
 				value = value && value.__html
 			case 'innerHTML':
-				element.DOM = value ? value : ''
+				element.state = value ? value : ''
 				continue
 			case 'defaultValue':
 				if (!props.value)
@@ -111,7 +114,7 @@ function getStringStyle (props) {
 				if (name !== name.toLowerCase())
 					name = name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
 
-				output += name + ':' + value + ';'
+				output += name + ': ' + value + ';'
 		}
 	}
 

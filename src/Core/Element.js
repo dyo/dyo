@@ -25,6 +25,14 @@ function Element (id) {
 }
 
 /**
+ * @type {Object}
+ */
+defineProperties(Element.prototype, {
+	UUID: {value: SymbolElement},
+	handleEvent: {value: handleEvent}
+})
+
+/**
  * @param {Element} element
  * @return {Element}
  */
@@ -49,7 +57,7 @@ function createElementIntermediate () {
 }
 
 /**
- * @param {*} content
+ * @param {(string|number|Date)} content
  * @param {*} key
  * @return {Element}
  */
@@ -139,7 +147,7 @@ function createElementUnknown (element, key) {
  * @return {boolean}
  */
 function isValidElement (element) {
-	return element instanceof Element
+	return element != null && element.UUID === SymbolElement
 }
 
 /**
@@ -216,11 +224,11 @@ function createElement (type, properties) {
 	else
 		props = {}
 
-	if ((size = length - i) > 0) {
-		if (id !== SharedElementComponent)
+	if ((size = length - i) > 0)
+		if (id !== SharedElementComponent) {
 			for (; i < length; ++i)
 				index = setElementChildren(children, arguments[i], index)
-		else {
+		} else {
 			if (size > 1)
 				for (children = []; i < length; ++i)
 					children.push(arguments[i])
@@ -229,23 +237,26 @@ function createElement (type, properties) {
 
 			props.children = children
 		}
-	}
 
-	switch ((element.type = type).constructor) {
+	switch (type.constructor) {
+		case String:
+			break
 		case Function:
 			if (type.defaultProps)
 				props = getDefaultProps(element, type, type.defaultProps, props)
-		case String:
-			break
-		case Element:
-			props = assign({}, type.props, (element.id = type.id, props))
-			element.type = type.type
 			break
 		case Promise:
 			element.id = SharedElementPromise
 			setElementBoundary(children)
+			break
+		default:
+			if (type.UUID === SymbolElement) {
+				props = assign({}, type.props, (element.id = type.id, props))
+				type = type.type
+			}
 	}
 
+	element.type = type
 	element.props = props
 	element.children = children
 
@@ -259,24 +270,25 @@ function createElement (type, properties) {
  */
 function setElementChildren (children, element, index) {
 	if (element != null)
-		switch (element.constructor) {
-			case Element:
-				if (element.key === null)
-					element.key = SharedTypeKey + index
+		if (element.UUID === SymbolElement) {
+			if (element.key === null)
+				element.key = SharedTypeKey + index
 
-				children.insert(element.active === false ? element : createElementImmutable(element), children)
-				break
-			case Array:
-				for (var i = 0; i < element.length; ++i)
-					setElementChildren(children, element[i], index + i)
+			children.insert(element.active === false ? element : createElementImmutable(element), children)
+		} else {
+			switch (element.constructor) {
+				case String:
+				case Number:
+					children.insert(createElementText(element, index), children)
+					break
+				case Array:
+					for (var i = 0; i < element.length; ++i)
+						setElementChildren(children, element[i], index + i)
 
-				return index + i
-			case String:
-			case Number:
-				children.insert(createElementText(element, index), children)
-				break
-			default:
-				return setElementChildren(children, createElementUnknown(element, index), index)
+					return index + i
+				default:
+					return setElementChildren(children, createElementUnknown(element, index), index)
+			}
 		}
 	else
 		children.insert(createElementEmpty(index), children)
@@ -389,14 +401,15 @@ function getElementDefinition (element) {
 	if (element == null)
 		return createElementEmpty(SharedTypeKey)
 
+	if (element.UUID === SymbolElement)
+		return element
+
 	switch (element.constructor) {
-		case Element:
-			return element
-		case Array:
-			return createElementFragment(element)
 		case String:
 		case Number:
 			return createElementText(element, SharedTypeKey)
+		case Array:
+			return createElementFragment(element)
 		default:
 			return createElementUnknown(element, SharedTypeKey)
 	}

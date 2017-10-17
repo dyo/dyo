@@ -8,7 +8,9 @@ var defineProperties = Object.defineProperties
 var hasOwnProperty = Object.hasOwnProperty
 var isArray = Array.isArray
 
+var SymbolFor = Symbol.for || Symbol
 var SymbolIterator = Symbol.iterator || '@@iterator'
-var SymbolError = Symbol('Error')
-var SymbolElement = Symbol('Element')
-var SymbolComponent = Symbol('Component')
+
+var SymbolError = SymbolFor('dio.Error')
+var SymbolElement = SymbolFor('dio.Element')
+var SymbolComponent = SymbolFor('dio.Component')

@@ -24,17 +24,17 @@ describe('Server', () => {
 	it('should render an element style(object) to string', () => {
 		assert.html(
 			h('h1', {style: {marginTop: '20px'}}, 'Faz'),
-			`<h1 style="margin-top:20px;">Faz</h1>`
+			`<h1 style="margin-top: 20px;">Faz</h1>`
 		)
 
 		assert.html(
 			h('h1', {style: {color: 'red'}}, 'Faz'),
-			`<h1 style="color:red;">Faz</h1>`
+			`<h1 style="color: red;">Faz</h1>`
 		)
 
 		assert.html(
 			h('h1', {style: {lineHeight: 100}}, 'Faz'),
-			`<h1 style="line-height:100;">Faz</h1>`
+			`<h1 style="line-height: 100;">Faz</h1>`
 		)
 
 		assert.html(
@@ -168,7 +168,7 @@ describe('Server', () => {
 		)
 	})
 
-	it('should render a string to json', () => {
+	it('should render a component to json', () => {
 		assert.json(
 			h(class {
 				render() {

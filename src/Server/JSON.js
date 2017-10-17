@@ -11,6 +11,9 @@ function getJSONElement (element, host) {
 		case SharedElementEmpty:
 			return element.children
 		case SharedElementComponent:
+			if (element.active)
+				return getJSONElement(element.children, element)
+
 			return getJSONElement(mountComponentElement(element), element)
 	}
 

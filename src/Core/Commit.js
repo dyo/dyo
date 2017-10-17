@@ -39,7 +39,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			element.work = SharedWorkIdle
 
 			if (element.ref)
-				commitReference(element, element.ref, SharedReferenceDispatch)
+				commitRefs(element, element.ref, SharedReferenceDispatch)
 
 			if (element.owner[SharedComponentDidMount])
 				getLifecycleMount(element, SharedComponentDidMount)
@@ -74,7 +74,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 	}
 
 	commitChildren(element, sibling, host, SharedMountAppend, signature)
-	commitProperties(element, getClientProps(element), SharedPropsMount)
+	commitProps(element, getClientProps(element), SharedPropsMount)
 }
 
 /**
@@ -102,7 +102,7 @@ function commitDismount (element, parent, signature) {
 	}
 
 	if (element.ref)
-		commitReference(element, element.ref, SharedReferenceRemove)
+		commitRefs(element, element.ref, SharedReferenceRemove)
 
 	element.active = false
 }
@@ -185,33 +185,24 @@ function commitReplace (element, snapshot, parent, host) {
 
 /**
  * @param {Element} element
- * @param {(function|string)?} callback
+ * @param {number} props
  * @param {number} signature
- * @param {*} key
  */
-function commitReference (element, callback, signature, key) {
-	switch (typeof callback) {
-		case 'string':
-			if (signature === SharedReferenceRemove)
-				return commitReference(element, setComponentReference, SharedReferenceRemove, callback)
-			else
-				return commitReference(element, setComponentReference, SharedReferenceDispatch, callback)
-		case 'function':
-			switch (signature) {
-				case SharedReferenceRemove:
-					return getLifecycleCallback(element.host, callback, element.ref = null, key, element)
-				case SharedReferenceAssign:
-					element.ref = callback
-				case SharedReferenceDispatch:
-					return getLifecycleCallback(element.host, callback, element.instance || getClientNode(element), key, element)
-				case SharedReferenceReplace:
-					commitReference(element, callback, SharedReferenceRemove, key)
-					commitReference(element, callback, SharedReferenceAssign, key)
-			}
-			break
-		default:
-			commitReference(element, element.ref || noop, SharedReferenceRemove, key)
-	}
+function commitProps (element, props, signature) {
+	for (var key in props)
+		switch (key) {
+			case 'ref':
+				commitRefs(element, props[key], signature)
+			case 'key':
+			case 'xmlns':
+			case 'children':
+				break
+			default:
+				if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 && key.length > 2)
+					commitEvents(element, key.substring(2).toLowerCase(), props[key])
+				else
+					setClientProps(element, key, props[key], element.xmlns)
+		}
 }
 
 /**
@@ -219,7 +210,7 @@ function commitReference (element, callback, signature, key) {
  * @param {string} type
  * @param {(function|EventListener)} callback
  */
-function commitEvent (element, type, callback) {
+function commitEvents (element, type, callback) {
 	if (!element.event)
 		element.event = {}
 
@@ -231,24 +222,33 @@ function commitEvent (element, type, callback) {
 
 /**
  * @param {Element} element
- * @param {number} props
+ * @param {(function|string)?} callback
  * @param {number} signature
+ * @param {*} key
  */
-function commitProperties (element, props, signature) {
-	for (var key in props)
-		switch (key) {
-			case 'ref':
-				commitReference(element, props[key], signature)
-			case 'key':
-			case 'xmlns':
-			case 'children':
-				break
-			default:
-				if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 && key.length > 2)
-					commitEvent(element, key.substring(2).toLowerCase(), props[key])
-				else
-					setClientProps(element, key, props[key], element.xmlns)
-		}
+function commitRefs (element, callback, signature, key) {
+	switch (typeof callback) {
+		case 'string':
+			if (signature === SharedReferenceRemove)
+				return commitRefs(element, setComponentRefs, SharedReferenceRemove, callback)
+			else
+				return commitRefs(element, setComponentRefs, SharedReferenceDispatch, callback)
+		case 'function':
+			switch (signature) {
+				case SharedReferenceRemove:
+					return getLifecycleCallback(element.host, callback, element.ref = null, key, element)
+				case SharedReferenceAssign:
+					element.ref = callback
+				case SharedReferenceDispatch:
+					return getLifecycleCallback(element.host, callback, element.instance || getClientNode(element), key, element)
+				case SharedReferenceReplace:
+					commitRefs(element, callback, SharedReferenceRemove, key)
+					commitRefs(element, callback, SharedReferenceAssign, key)
+			}
+			break
+		default:
+			commitRefs(element, element.ref || noop, SharedReferenceRemove, key)
+	}
 }
 
 /**

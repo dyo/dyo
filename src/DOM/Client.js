@@ -3,16 +3,16 @@ var client = new WeakMap()
 var setClientHost = config.setHost || setDOMHost
 var setClientNode = config.setNode || setDOMNode
 var setClientContent = config.setContent || setDOMContent
-var setClientText = config.setText || setDOMValue
+var setClientText = config.setText || setDOMText
 var setClientEvent = config.setEvent || setDOMEvent
 var setClientProps = config.setProps || setDOMProps
 
+var getClientHost = config.getHost || getDOMHost
+var getClientNode = config.getNode || getDOMNode
 var getClientDocument = config.getDocument || getDOMDocument
 var getClientTarget = config.getTarget || getDOMTarget
-var getClientHost = config.getHost || getDOMHost
 var getClientType = config.getType || getDOMType
 var getClientProps = config.getProps || getDOMProps
-var getClientNode = config.getNode || getDOMNode
 var getClientPortal = config.getPortal || getDOMPortal
 var getClientQuery = config.getQuery || getDOMQuery
 

@@ -254,10 +254,12 @@ function factory (window, config, require) {
 	var hasOwnProperty = Object.hasOwnProperty
 	var isArray = Array.isArray
 	
+	var SymbolFor = Symbol.for || Symbol
 	var SymbolIterator = Symbol.iterator || '@@iterator'
-	var SymbolError = Symbol('Error')
-	var SymbolElement = Symbol('Element')
-	var SymbolComponent = Symbol('Component')
+	
+	var SymbolError = SymbolFor('dio.Error')
+	var SymbolElement = SymbolFor('dio.Element')
+	var SymbolComponent = SymbolFor('dio.Component')
 	
 	/**
 	 * @constructor
@@ -286,6 +288,14 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @type {Object}
+	 */
+	defineProperties(Element.prototype, {
+		UUID: {value: SymbolElement},
+		handleEvent: {value: handleEvent}
+	})
+	
+	/**
 	 * @param {Element} element
 	 * @return {Element}
 	 */
@@ -310,7 +320,7 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {*} content
+	 * @param {(string|number|Date)} content
 	 * @param {*} key
 	 * @return {Element}
 	 */
@@ -400,7 +410,7 @@ function factory (window, config, require) {
 	 * @return {boolean}
 	 */
 	function isValidElement (element) {
-		return element instanceof Element
+		return element != null && element.UUID === SymbolElement
 	}
 	
 	/**
@@ -477,11 +487,11 @@ function factory (window, config, require) {
 		else
 			props = {}
 	
-		if ((size = length - i) > 0) {
-			if (id !== SharedElementComponent)
+		if ((size = length - i) > 0)
+			if (id !== SharedElementComponent) {
 				for (; i < length; ++i)
 					index = setElementChildren(children, arguments[i], index)
-			else {
+			} else {
 				if (size > 1)
 					for (children = []; i < length; ++i)
 						children.push(arguments[i])
@@ -490,23 +500,26 @@ function factory (window, config, require) {
 	
 				props.children = children
 			}
-		}
 	
-		switch ((element.type = type).constructor) {
+		switch (type.constructor) {
+			case String:
+				break
 			case Function:
 				if (type.defaultProps)
 					props = getDefaultProps(element, type, type.defaultProps, props)
-			case String:
-				break
-			case Element:
-				props = assign({}, type.props, (element.id = type.id, props))
-				element.type = type.type
 				break
 			case Promise:
 				element.id = SharedElementPromise
 				setElementBoundary(children)
+				break
+			default:
+				if (type.UUID === SymbolElement) {
+					props = assign({}, type.props, (element.id = type.id, props))
+					type = type.type
+				}
 		}
 	
+		element.type = type
 		element.props = props
 		element.children = children
 	
@@ -520,24 +533,25 @@ function factory (window, config, require) {
 	 */
 	function setElementChildren (children, element, index) {
 		if (element != null)
-			switch (element.constructor) {
-				case Element:
-					if (element.key === null)
-						element.key = SharedTypeKey + index
+			if (element.UUID === SymbolElement) {
+				if (element.key === null)
+					element.key = SharedTypeKey + index
 	
-					children.insert(element.active === false ? element : createElementImmutable(element), children)
-					break
-				case Array:
-					for (var i = 0; i < element.length; ++i)
-						setElementChildren(children, element[i], index + i)
+				children.insert(element.active === false ? element : createElementImmutable(element), children)
+			} else {
+				switch (element.constructor) {
+					case String:
+					case Number:
+						children.insert(createElementText(element, index), children)
+						break
+					case Array:
+						for (var i = 0; i < element.length; ++i)
+							setElementChildren(children, element[i], index + i)
 	
-					return index + i
-				case String:
-				case Number:
-					children.insert(createElementText(element, index), children)
-					break
-				default:
-					return setElementChildren(children, createElementUnknown(element, index), index)
+						return index + i
+					default:
+						return setElementChildren(children, createElementUnknown(element, index), index)
+				}
 			}
 		else
 			children.insert(createElementEmpty(index), children)
@@ -650,14 +664,15 @@ function factory (window, config, require) {
 		if (element == null)
 			return createElementEmpty(SharedTypeKey)
 	
+		if (element.UUID === SymbolElement)
+			return element
+	
 		switch (element.constructor) {
-			case Element:
-				return element
-			case Array:
-				return createElementFragment(element)
 			case String:
 			case Number:
 				return createElementText(element, SharedTypeKey)
+			case Array:
+				return createElementFragment(element)
 			default:
 				return createElementUnknown(element, SharedTypeKey)
 		}
@@ -677,12 +692,29 @@ function factory (window, config, require) {
 	/**
 	 * @type {Object}
 	 */
-	var ComponentPrototype = {
-		forceUpdate: {value: forceUpdate},
-		setState: {value: setState}
-	}
+	var ComponentDescription = {forceUpdate: {value: forceUpdate}, setState: {value: setState}}
+	/**
+	 * @type {Object}
+	 */
+	var ComponentPrototype = createComponent(Component.prototype)
 	
 	/**
+	 * @constructor
+	 * @param {Object?} props
+	 * @param {Object?} context
+	 */
+	function Fragment (props, context) {
+		Component.call(this, props, context)
+	}
+	/**
+	 * @type {Object}
+	 */
+	Fragment.prototype = Object.create(ComponentPrototype, {
+		render: {value: function (props) { return props.children }}
+	})
+	
+	/**
+	 * @constructor
 	 * @param {Object?} props
 	 * @param {Object?} context
 	 */
@@ -692,7 +724,7 @@ function factory (window, config, require) {
 	/**
 	 * @type {Object}
 	 */
-	PureComponent.prototype = Object.create(createComponent(Component.prototype), {
+	PureComponent.prototype = Object.create(ComponentPrototype, {
 		shouldComponentUpdate: {value: shouldComponentUpdate}
 	})
 	
@@ -701,7 +733,7 @@ function factory (window, config, require) {
 	 * @return {Object}
 	 */
 	function createComponent (prototype) {
-		defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {value: SymbolComponent})
+		defineProperty(defineProperties(prototype, ComponentDescription), SymbolComponent, {value: SymbolComponent})
 	
 		if (!hasOwnProperty.call(prototype, SharedSiteRender))
 			defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
@@ -847,7 +879,7 @@ function factory (window, config, require) {
 			getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
 	
 		if (element.ref !== snapshot.ref)
-			commitReference(element, snapshot.ref, SharedReferenceReplace)
+			commitRefs(element, snapshot.ref, SharedReferenceReplace)
 	
 		element.work = SharedWorkIdle
 	}
@@ -1099,7 +1131,7 @@ function factory (window, config, require) {
 	 * @param {*} key
 	 * @param {Element} element
 	 */
-	function setComponentReference (value, key, element) {
+	function setComponentRefs (value, key, element) {
 		if (key !== element.ref)
 			delete this.refs[element.ref]
 	
@@ -1147,7 +1179,7 @@ function factory (window, config, require) {
 				element.work = SharedWorkIdle
 	
 				if (element.ref)
-					commitReference(element, element.ref, SharedReferenceDispatch)
+					commitRefs(element, element.ref, SharedReferenceDispatch)
 	
 				if (element.owner[SharedComponentDidMount])
 					getLifecycleMount(element, SharedComponentDidMount)
@@ -1182,7 +1214,7 @@ function factory (window, config, require) {
 		}
 	
 		commitChildren(element, sibling, host, SharedMountAppend, signature)
-		commitProperties(element, getClientProps(element), SharedPropsMount)
+		commitProps(element, getClientProps(element), SharedPropsMount)
 	}
 	
 	/**
@@ -1210,7 +1242,7 @@ function factory (window, config, require) {
 		}
 	
 		if (element.ref)
-			commitReference(element, element.ref, SharedReferenceRemove)
+			commitRefs(element, element.ref, SharedReferenceRemove)
 	
 		element.active = false
 	}
@@ -1293,33 +1325,24 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {(function|string)?} callback
+	 * @param {number} props
 	 * @param {number} signature
-	 * @param {*} key
 	 */
-	function commitReference (element, callback, signature, key) {
-		switch (typeof callback) {
-			case 'string':
-				if (signature === SharedReferenceRemove)
-					return commitReference(element, setComponentReference, SharedReferenceRemove, callback)
-				else
-					return commitReference(element, setComponentReference, SharedReferenceDispatch, callback)
-			case 'function':
-				switch (signature) {
-					case SharedReferenceRemove:
-						return getLifecycleCallback(element.host, callback, element.ref = null, key, element)
-					case SharedReferenceAssign:
-						element.ref = callback
-					case SharedReferenceDispatch:
-						return getLifecycleCallback(element.host, callback, element.instance || getClientNode(element), key, element)
-					case SharedReferenceReplace:
-						commitReference(element, callback, SharedReferenceRemove, key)
-						commitReference(element, callback, SharedReferenceAssign, key)
-				}
-				break
-			default:
-				commitReference(element, element.ref || noop, SharedReferenceRemove, key)
-		}
+	function commitProps (element, props, signature) {
+		for (var key in props)
+			switch (key) {
+				case 'ref':
+					commitRefs(element, props[key], signature)
+				case 'key':
+				case 'xmlns':
+				case 'children':
+					break
+				default:
+					if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 && key.length > 2)
+						commitEvents(element, key.substring(2).toLowerCase(), props[key])
+					else
+						setClientProps(element, key, props[key], element.xmlns)
+			}
 	}
 	
 	/**
@@ -1327,7 +1350,7 @@ function factory (window, config, require) {
 	 * @param {string} type
 	 * @param {(function|EventListener)} callback
 	 */
-	function commitEvent (element, type, callback) {
+	function commitEvents (element, type, callback) {
 		if (!element.event)
 			element.event = {}
 	
@@ -1339,24 +1362,33 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {number} props
+	 * @param {(function|string)?} callback
 	 * @param {number} signature
+	 * @param {*} key
 	 */
-	function commitProperties (element, props, signature) {
-		for (var key in props)
-			switch (key) {
-				case 'ref':
-					commitReference(element, props[key], signature)
-				case 'key':
-				case 'xmlns':
-				case 'children':
-					break
-				default:
-					if (key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 && key.length > 2)
-						commitEvent(element, key.substring(2).toLowerCase(), props[key])
-					else
-						setClientProps(element, key, props[key], element.xmlns)
-			}
+	function commitRefs (element, callback, signature, key) {
+		switch (typeof callback) {
+			case 'string':
+				if (signature === SharedReferenceRemove)
+					return commitRefs(element, setComponentRefs, SharedReferenceRemove, callback)
+				else
+					return commitRefs(element, setComponentRefs, SharedReferenceDispatch, callback)
+			case 'function':
+				switch (signature) {
+					case SharedReferenceRemove:
+						return getLifecycleCallback(element.host, callback, element.ref = null, key, element)
+					case SharedReferenceAssign:
+						element.ref = callback
+					case SharedReferenceDispatch:
+						return getLifecycleCallback(element.host, callback, element.instance || getClientNode(element), key, element)
+					case SharedReferenceReplace:
+						commitRefs(element, callback, SharedReferenceRemove, key)
+						commitRefs(element, callback, SharedReferenceAssign, key)
+				}
+				break
+			default:
+				commitRefs(element, element.ref || noop, SharedReferenceRemove, key)
+		}
 	}
 	
 	/**
@@ -1505,6 +1537,14 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {Element} element
+	 * @param {Element} snapshot
+	 */
+	function reconcileProps (element, snapshot) {
+		commitProps(element, reconcileObject(element.props, element.props = snapshot.props), SharedPropsUpdate)
+	}
+	
+	/**
 	 * @param {Object} prevObject
 	 * @param {Object} nextObject
 	 * @return {Object?}
@@ -1539,14 +1579,6 @@ function factory (window, config, require) {
 	 * @param {Element} element
 	 * @param {Element} snapshot
 	 */
-	function reconcileProperties (element, snapshot) {
-		commitProperties(element, reconcileObject(element.props, element.props = snapshot.props), SharedPropsUpdate)
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} snapshot
-	 */
 	function reconcileElement (element, snapshot) {
 		if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
 			return commitWillReconcile(element, snapshot)
@@ -1566,7 +1598,7 @@ function factory (window, config, require) {
 				break
 			case SharedElementNode:
 				reconcileChildren(element, snapshot)
-				reconcileProperties(element, snapshot)
+				reconcileProps(element, snapshot)
 		}
 	}
 	
@@ -1723,19 +1755,14 @@ function factory (window, config, require) {
 			var callback = element.event[type]
 			var host = element.host
 			var instance = host.instance
-			var props
-			var state
-			var context
+			var owner = instance ? instance : element
+			var props = owner.props
+			var state = owner.state
+			var context = owner.context
 			var value
 	
 			if (!callback)
 				return
-	
-			if (instance) {
-				props = instance.props
-				state = instance.state
-				context = instance.context
-			}
 	
 			if (typeof callback === 'function')
 				value = callback.call(instance, event, props, state, context)
@@ -1748,8 +1775,6 @@ function factory (window, config, require) {
 			invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
 		}
 	}
-	
-	defineProperty(Element.prototype, 'handleEvent', {value: handleEvent})
 	
 	/**
 	 * @param {Element} element
@@ -2023,7 +2048,7 @@ function factory (window, config, require) {
 		setClientNode(parent, container)
 	
 		if (signature === SharedMountCommit)
-			setClientContent(parent)
+			setClientContent(parent, element)
 	
 		commitMount(element, element, parent, parent, SharedMountAppend, signature)
 	
@@ -2057,8 +2082,9 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {Element} element
+	 * @param {Element} children
 	 */
-	function setDOMContent (element) {
+	function setDOMContent (element, children) {
 		getDOMNode(element).textContent = ''
 	}
 	
@@ -2066,7 +2092,7 @@ function factory (window, config, require) {
 	 * @param {Element} element
 	 * @param {string} value
 	 */
-	function setDOMValue (element, value) {
+	function setDOMText (element, value) {
 		getDOMNode(element).nodeValue = value
 	}
 	
@@ -2422,16 +2448,16 @@ function factory (window, config, require) {
 	var setClientHost = config.setHost || setDOMHost
 	var setClientNode = config.setNode || setDOMNode
 	var setClientContent = config.setContent || setDOMContent
-	var setClientText = config.setText || setDOMValue
+	var setClientText = config.setText || setDOMText
 	var setClientEvent = config.setEvent || setDOMEvent
 	var setClientProps = config.setProps || setDOMProps
 	
+	var getClientHost = config.getHost || getDOMHost
+	var getClientNode = config.getNode || getDOMNode
 	var getClientDocument = config.getDocument || getDOMDocument
 	var getClientTarget = config.getTarget || getDOMTarget
-	var getClientHost = config.getHost || getDOMHost
 	var getClientType = config.getType || getDOMType
 	var getClientProps = config.getProps || getDOMProps
-	var getClientNode = config.getNode || getDOMNode
 	var getClientPortal = config.getPortal || getDOMPortal
 	var getClientQuery = config.getQuery || getDOMQuery
 	
@@ -2450,6 +2476,7 @@ function factory (window, config, require) {
 	exports.render = render
 	exports.hydrate = hydrate
 	exports.Component = Component
+	exports.Fragment = Fragment
 	exports.PureComponent = PureComponent
 	exports.Children = Children
 	exports.findDOMNode = findDOMNode
@@ -2464,20 +2491,25 @@ function factory (window, config, require) {
 	if (typeof require === 'function')
 		(function () {
 			try {
-				require('./cjs')(exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition)
+				require('./cjs')(exports, Element, invokeErrorBoundary, mountComponentElement, getComponentChildren, getElementDefinition)
 			} catch (err) {
 				/* istanbul ignore next */
 				console.error(err+'\nSomething went wrong trying to import the server module.')
 			}
 		}())
 	
-	if (typeof config === 'object')
-		exports.__SECRET_INTERNALS__ = {
+	if (typeof config === 'object' && typeof config.getExports === 'function') {
+		return config.getExports({
+			exports: exports,
+			Element: Element,
+			invokeErrorBoundary: invokeErrorBoundary,
 			mountComponentElement: mountComponentElement,
 			getComponentChildren: getComponentChildren,
-			invokeErrorBoundary: invokeErrorBoundary,
-			getElementDefinition: getElementDefinition
-		}
+			getElementDefinition: getElementDefinition,
+			update: update,
+			mount: mount
+		}) || exports
+	}
 	
 	return exports
 }

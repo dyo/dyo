@@ -8,19 +8,14 @@ function handleEvent (event) {
 		var callback = element.event[type]
 		var host = element.host
 		var instance = host.instance
-		var props
-		var state
-		var context
+		var owner = instance ? instance : element
+		var props = owner.props
+		var state = owner.state
+		var context = owner.context
 		var value
 
 		if (!callback)
 			return
-
-		if (instance) {
-			props = instance.props
-			state = instance.state
-			context = instance.context
-		}
 
 		if (typeof callback === 'function')
 			value = callback.call(instance, event, props, state, context)
@@ -33,5 +28,3 @@ function handleEvent (event) {
 		invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
 	}
 }
-
-defineProperty(Element.prototype, 'handleEvent', {value: handleEvent})

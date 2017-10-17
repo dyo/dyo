@@ -1,6 +1,6 @@
 /*! DIO 8.0.3 @license MIT */
 
-module.exports = function (exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition) {/* eslint-disable */'use strict'
+module.exports = function (exports, Element, invokeErrorBoundary, mountComponentElement, getComponentChildren, getElementDefinition) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -144,6 +144,9 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 			case SharedElementEmpty:
 				return getTextEscape(element.children)
 			case SharedElementComponent:
+				if (element.active)
+					return getStringElement(element.children, element)
+	
 				return getStringElement(mountComponentElement(element), element)
 		}
 	
@@ -161,8 +164,8 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 		if (element.id !== SharedElementNode)
 			return output
 	
-		if (element.DOM)
-			element.DOM = void (output += element.DOM)
+		if (element.state)
+			element.state = void (output += element.state)
 	
 		return output + '</' + type + '>'
 	}
@@ -183,7 +186,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 				case 'dangerouslySetInnerHTML':
 					value = value && value.__html
 				case 'innerHTML':
-					element.DOM = value ? value : ''
+					element.state = value ? value : ''
 					continue
 				case 'defaultValue':
 					if (!props.value)
@@ -239,7 +242,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 					if (name !== name.toLowerCase())
 						name = name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
 	
-					output += name + ':' + value + ';'
+					output += name + ': ' + value + ';'
 			}
 		}
 	
@@ -259,6 +262,9 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 			case SharedElementEmpty:
 				return element.children
 			case SharedElementComponent:
+				if (element.active)
+					return getJSONElement(element.children, element)
+	
 				return getJSONElement(mountComponentElement(element), element)
 		}
 	
@@ -363,7 +369,8 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	
 		switch (element.host = host, element.id) {
 			case SharedElementComponent:
-				children = mountComponentElement(readable.host = element)
+				if (!(readable.host = element).active)
+					children = mountComponentElement(element)
 	
 				if (!element.state || element.state.constructor !== Promise)
 					return readStreamElement(children, element, stack, readable)
@@ -379,16 +386,15 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 			case SharedElementEmpty:
 				return writeStreamElement(getTextEscape(children), readable)
 			case SharedElementNode:
-				if (element.DOM)
-					return element.DOM = writeStreamElement(element.DOM, readable)
+				if (element.state)
+					return element.state = void writeStreamElement(element.state, readable)
 	
 				output += '<' + element.type + getStringProps(element, element.props) + '>'
 	
 				if (isVoidType(element.type))
 					return writeStreamElement(output, readable)
 	
-				element.DOM = (element.DOM || '') + '</' + element.type + '>'
-	
+				element.state = (element.state || '') + '</' + element.type + '>'
 				stack.push(element)
 			default:
 				var length = children.length

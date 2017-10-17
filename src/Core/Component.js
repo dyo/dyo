@@ -12,12 +12,29 @@ function Component (props, context) {
 /**
  * @type {Object}
  */
-var ComponentPrototype = {
-	forceUpdate: {value: forceUpdate},
-	setState: {value: setState}
-}
+var ComponentDescription = {forceUpdate: {value: forceUpdate}, setState: {value: setState}}
+/**
+ * @type {Object}
+ */
+var ComponentPrototype = createComponent(Component.prototype)
 
 /**
+ * @constructor
+ * @param {Object?} props
+ * @param {Object?} context
+ */
+function Fragment (props, context) {
+	Component.call(this, props, context)
+}
+/**
+ * @type {Object}
+ */
+Fragment.prototype = Object.create(ComponentPrototype, {
+	render: {value: function (props) { return props.children }}
+})
+
+/**
+ * @constructor
  * @param {Object?} props
  * @param {Object?} context
  */
@@ -27,7 +44,7 @@ function PureComponent (props, context) {
 /**
  * @type {Object}
  */
-PureComponent.prototype = Object.create(createComponent(Component.prototype), {
+PureComponent.prototype = Object.create(ComponentPrototype, {
 	shouldComponentUpdate: {value: shouldComponentUpdate}
 })
 
@@ -36,7 +53,7 @@ PureComponent.prototype = Object.create(createComponent(Component.prototype), {
  * @return {Object}
  */
 function createComponent (prototype) {
-	defineProperty(defineProperties(prototype, ComponentPrototype), SymbolComponent, {value: SymbolComponent})
+	defineProperty(defineProperties(prototype, ComponentDescription), SymbolComponent, {value: SymbolComponent})
 
 	if (!hasOwnProperty.call(prototype, SharedSiteRender))
 		defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
@@ -182,7 +199,7 @@ function updateComponent (element, snapshot, signature) {
 		getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
 
 	if (element.ref !== snapshot.ref)
-		commitReference(element, snapshot.ref, SharedReferenceReplace)
+		commitRefs(element, snapshot.ref, SharedReferenceReplace)
 
 	element.work = SharedWorkIdle
 }
@@ -434,7 +451,7 @@ function getLifecycleCallback (element, callback, first, second, third) {
  * @param {*} key
  * @param {Element} element
  */
-function setComponentReference (value, key, element) {
+function setComponentRefs (value, key, element) {
 	if (key !== element.ref)
 		delete this.refs[element.ref]
 

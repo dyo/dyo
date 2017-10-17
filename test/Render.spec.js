@@ -178,7 +178,7 @@ describe('Render', () => {
 		assert.html(container, '<div></div>')
 	})
 
-	it('should not render dates', () => {
+	it('should render dates', () => {
 		let date = new Date()
 
 		render(h('div', date), container)
