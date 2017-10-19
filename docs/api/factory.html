@@ -34,25 +34,31 @@ createFactory(
 ): function
 </code></pre>
 
-		<h2 id=string>string</h2>
+		<h2>string</h2>
 
 <pre><code>
 createFactory(type: string): (...args) => h(type, ...args)
 </code></pre>
 
-		<h2 id=function>function</h2>
+		<h2>function</h2>
 
 <pre><code>
 	createFactory(type: function): (...args) => h(type, ...args)
 </code></pre>
 
-		<h2 id=element>element</h2>
+		<h2>element</h2>
 
 <pre><code>
 	createFactory(type: Element): (...args) => h(type, ...args)
 </code></pre>
 
-		<h1 id=render>Render</h1>
+		<h1 id=client>Client</h1>
+
+		<p>A DOM client renderer is shipped by default, however the <code>createFactory</code> API allows you to also create different client renderers that might target different platforms and enviroments.</p>
+
+		<p>The creation of a client is assumed when an object argument supplied to <code>createFactory</code> does not satisfy the conditions for an element factory.</p>
+
+		<p>This object should implement the methods it needs to render to the desired target enviroment.</p>
 
 <pre><code>
 createFactory(
