@@ -1437,7 +1437,7 @@ describe('Component', () => {
 		])
 	})
 
-	it.only('should async import a "default" component module', (done) => {
+	it('should async import a "default" component module', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 		let queue = null
