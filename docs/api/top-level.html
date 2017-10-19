@@ -26,6 +26,12 @@
 	<article>
 		<h1>Top-Level API</h1>
 
+<h1 id=version>version</h1>
+
+<pre><code>
+version: string
+</code></pre>
+
 		<h1 id=render>render</h1>
 
 <pre><code>
@@ -155,10 +161,16 @@ findDOMNode(instance: Component|Element|Node|Event): Node
 unmountComponentAtNode(container: Node): boolean
 </code></pre>
 
-		<h1 id=version>version</h1>
+		<h1 id=createFactory>createFactory</h1>
+
+		<p>
+			Facilitates the creation of <a href=factory.html#element>Element</a> and <a href=factory.html#render>Render</a> factories.
+		</p>
 
 <pre><code>
-version: string
+createFactory(
+	type: function|string|Element|{...}
+): function|object
 </code></pre>
 	</article>
 	<script src=../assets/javascript/index.js></script>

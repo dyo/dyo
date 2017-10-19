@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Factory API – DIO</title>
+	<link rel=stylesheet href=../assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=../assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=../assets/images/favicon-small.png sizes=16x16>
+</head>
+<body>
+	<a href=../ title=index class=logo>
+		<img src=../assets/images/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=../>Index</a>
+			<a href=../introduction>Introduction</a>
+			<a href=../api>API</a>
+			<a href=../misc>Miscellaneous</a>
+			<a href=../examples>Examples</a>
+			<a href=https://github.com/thysultan/dio.js>GitHub</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Factory API</h1>
+
+		<h1 id=element>Element</h1>
+
+<pre><code>
+createFactory(
+	type: function|string|Element
+): function
+</code></pre>
+
+		<h2 id=string>string</h2>
+
+<pre><code>
+createFactory(type: string): (...args) => h(type, ...args)
+</code></pre>
+
+		<h2 id=function>function</h2>
+
+<pre><code>
+	createFactory(type: function): (...args) => h(type, ...args)
+</code></pre>
+
+		<h2 id=element>element</h2>
+
+<pre><code>
+	createFactory(type: Element): (...args) => h(type, ...args)
+</code></pre>
+
+		<h1 id=render>Render</h1>
+
+<pre><code>
+createFactory(
+	type: {...}
+): object
+</code></pre>
+
+		<h2 id=setHost>setHost</h2>
+
+		<p>Called when mounting to a host container. Use this to setup references that you can retrieve in <a href=getHost>getHost</a> for the update phase.</p>
+
+<pre><code>
+	setHost: (element: Element, node: object) => void
+</code></pre>
+
+		<h2 id=setNode>setNode</h2>
+
+		<p>Called when assigning an elements node. Use this to set references to instances created in <a href=createElement>createElement</a>, <a href=createText>createText</a> and <a href=createEmpty>createEmpty</a></p>
+
+<pre><code>
+	setNode: (element: Element, node: object) => void
+</code></pre>
+
+		<h2 id=setContent>setContent</h2>
+
+		<p>Called when initialiazing a mount container. Use this to setup the native view for a mount.</p>
+
+<pre><code>
+	setContent: (element: Element, children: Element) => void
+</code></pre>
+
+		<h2 id=setText>setText</h2>
+
+		<p>Called when updating a text elements value.</p>
+
+<pre><code>
+	setText: (element: Element, value: string) => void
+</code></pre>
+
+		<h2 id=setEvent>setEvent</h2>
+
+		<p>Called when assigning an elements event listeners. Use this to setup native event listeners. When an event is dispatched call <code>Element.handleEvent</code> with an <a href=https://developer.mozilla.org/en-US/docs/Web/API/Event>Event</a> object. The type of event <code>type</code> is the only required property in an <code>Event</code> object.</p>
+
+<pre><code>
+	setEvent: (element: Element, type: string) => void
+</code></pre>
+
+		<h2 id=setProps>setProps</h2>
+
+		<p>Called when setting an elements individual properties. Use this to update or initialize properties.</p>
+
+<pre><code>
+	setProps: (element: Element, name: string, value: any, xmlns: string) => void
+</code></pre>
+
+	</article>
+	<script src=../assets/javascript/index.js></script>
+</body>
+</html>

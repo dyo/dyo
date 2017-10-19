@@ -2390,11 +2390,11 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {Node} target
+	 * @param {Node} node
 	 * @param {boolean}
 	 */
-	function isValidDOMNode (target) {
-		return !!(target && target.ELEMENT_NODE)
+	function isValidDOMNode (node) {
+		return !!(node && node.ELEMENT_NODE)
 	}
 	
 	/**
