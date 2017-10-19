@@ -51,7 +51,7 @@ function factory (window, config, require) {
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
 	
-	var SharedTypeKey = '.'
+	var SharedTypeKey = '&|'
 	var SharedTypeEmpty = '#empty'
 	var SharedTypeText = '#text'
 	var SharedTypeFragment = '#fragment'
@@ -563,8 +563,8 @@ function factory (window, config, require) {
 	 * @param {List} children
 	 */
 	function setElementBoundary (children) {
-		children.insert(createElementEmpty(SharedTypeFragment+'.head'), children.next)
-		children.insert(createElementEmpty(SharedTypeFragment+'.tail'), children)
+		children.insert(createElementEmpty('<>'), children.next)
+		children.insert(createElementEmpty('</>'), children)
 	}
 	
 	/**

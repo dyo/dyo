@@ -48,7 +48,7 @@ module.exports = function (exports, Element, invokeErrorBoundary, mountComponent
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
 	
-	var SharedTypeKey = '.'
+	var SharedTypeKey = '&|'
 	var SharedTypeEmpty = '#empty'
 	var SharedTypeText = '#text'
 	var SharedTypeFragment = '#fragment'

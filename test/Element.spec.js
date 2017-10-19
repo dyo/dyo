@@ -4,11 +4,14 @@ describe('Element', () => {
 	})
 
 	it('should not validate a non-element', () => {
+		let element = Object.defineProperty(h('div'), 'UUID', {value: null})
+
 		assert.isFalse(isValidElement('div'))
 		assert.isFalse(isValidElement(1))
 		assert.isFalse(isValidElement(function () {}))
 		assert.isFalse(isValidElement({}))
 		assert.isFalse(isValidElement(Object.assign({}, h('div'))))
+		assert.isFalse(isValidElement(element))
 	})
 
 	it('should clone an element', () => {

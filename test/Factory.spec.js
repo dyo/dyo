@@ -53,6 +53,7 @@ describe('Factory', () => {
 		createEmpty
 	}
 
+	let renderer
 	let render
 	let unmountComponentAtNode
 	let renderToNodeStream
@@ -124,8 +125,7 @@ describe('Factory', () => {
 	})
 
 	it('should create noop renderer', () => {
-		let renderer = createFactory(config)
-
+		renderer = createFactory(config)
 		render = renderer.render
 		unmountComponentAtNode = renderer.unmountComponentAtNode
 		renderToNodeStream = renderer.renderToNodeStream
@@ -133,6 +133,11 @@ describe('Factory', () => {
 		assert.notEqual(render, undefined)
 		assert.notEqual(unmountComponentAtNode, undefined)
 		assert.notEqual(renderToNodeStream, undefined)
+	})
+
+	it('should validate elements cross realm', () => {
+		assert.isTrue(renderer.isValidElement(h('div')))
+		assert.isTrue(isValidElement(renderer.h('div')))
 	})
 
 	it('should render null', () => {

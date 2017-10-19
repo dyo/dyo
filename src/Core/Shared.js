@@ -44,7 +44,7 @@ var SharedSiteAsync = 'async'
 var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
 
-var SharedTypeKey = '.'
+var SharedTypeKey = '&|'
 var SharedTypeEmpty = '#empty'
 var SharedTypeText = '#text'
 var SharedTypeFragment = '#fragment'

@@ -300,8 +300,8 @@ function setElementChildren (children, element, index) {
  * @param {List} children
  */
 function setElementBoundary (children) {
-	children.insert(createElementEmpty(SharedTypeFragment+'.head'), children.next)
-	children.insert(createElementEmpty(SharedTypeFragment+'.tail'), children)
+	children.insert(createElementEmpty('<>'), children.next)
+	children.insert(createElementEmpty('</>'), children)
 }
 
 /**
