@@ -563,8 +563,8 @@ function factory (window, config, require) {
 	 * @param {List} children
 	 */
 	function setElementBoundary (children) {
-		children.insert(createElementEmpty(SharedTypeKey), children.next)
-		children.insert(createElementEmpty(SharedTypeKey), children)
+		children.insert(createElementEmpty(SharedTypeFragment+'.head'), children.next)
+		children.insert(createElementEmpty(SharedTypeFragment+'.tail'), children)
 	}
 	
 	/**
@@ -676,6 +676,17 @@ function factory (window, config, require) {
 			default:
 				return createElementUnknown(element, SharedTypeKey)
 		}
+	}
+	
+	/**
+	 * @param {*} element
+	 * @return {Element}
+	 */
+	function getElementModule (element) {
+		if (!isValidElement(element) && typeof element === 'object' && element && hasOwnProperty.call(element, 'default'))
+			return getElementModule(element.default)
+	
+		return createElementFragment(getElementDefinition(element))
 	}
 	
 	/**
@@ -1295,7 +1306,7 @@ function factory (window, config, require) {
 	function commitWillReconcile (element, snapshot) {
 		snapshot.type.then(function (value) {
 			if (element.active)
-				reconcileChildren(element, createElementFragment(getElementDefinition(value)))
+				reconcileChildren(element, getElementModule(value))
 		}).catch(function (err) {
 			invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 		})

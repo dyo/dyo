@@ -300,8 +300,8 @@ function setElementChildren (children, element, index) {
  * @param {List} children
  */
 function setElementBoundary (children) {
-	children.insert(createElementEmpty(SharedTypeKey), children.next)
-	children.insert(createElementEmpty(SharedTypeKey), children)
+	children.insert(createElementEmpty(SharedTypeFragment+'.head'), children.next)
+	children.insert(createElementEmpty(SharedTypeFragment+'.tail'), children)
 }
 
 /**
@@ -413,4 +413,15 @@ function getElementDefinition (element) {
 		default:
 			return createElementUnknown(element, SharedTypeKey)
 	}
+}
+
+/**
+ * @param {*} element
+ * @return {Element}
+ */
+function getElementModule (element) {
+	if (!isValidElement(element) && typeof element === 'object' && element && hasOwnProperty.call(element, 'default'))
+		return getElementModule(element.default)
+
+	return createElementFragment(getElementDefinition(element))
 }

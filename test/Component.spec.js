@@ -1436,4 +1436,66 @@ describe('Component', () => {
 			'World'
 		])
 	})
+
+	it.only('should async import a "default" component module', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let queue = null
+
+		// tests that it successfully desugars
+		// import('./file.js') --> import('./file.js').then((module) => module.default)
+		// assuming file.js exports a default export
+		let importShim = (url) => {
+			if (url === null)
+				return h('h1', 'null')
+
+			return queue = new Promise((resolve, reject) => {
+				switch (url) {
+					case 'string':
+						return void resolve('string')
+					case 'number':
+						return void resolve(1)
+					case 'element':
+						return void resolve(h('h1', 'element'))
+					case 'component':
+						return void resolve(() => h('h1', 'component'))
+					case 'module':
+						return void resolve({
+							default: () => h('h1', 'module')
+						})
+				}
+			})
+		}
+
+		let A = class {
+			componentDidMount() {
+				stack.push(container.innerHTML)
+			}
+			componentDidUpdate() {
+				queue.then(() => stack.push(container.innerHTML))
+			}
+			render({type}) {
+				return importShim(type)
+			}
+		}
+
+		render(h(A, {type: null}), container)
+		render(h(A, {type: 'string'}), container)
+		render(h(A, {type: 'number'}), container)
+		render(h(A, {type: 'element'}), container)
+		render(h(A, {type: 'component'}), container)
+		render(h(A, {type: 'module'}), container)
+
+		assert.notEqual(queue, null)
+		queue.then(() => {
+			assert.deepEqual(stack, [
+				'<h1>null</h1>',
+				'string',
+				'1',
+				'<h1>element</h1>',
+				'<h1>component</h1>',
+				'<h1>module</h1>'
+			])
+		}).then(done).catch(done)
+	})
 })

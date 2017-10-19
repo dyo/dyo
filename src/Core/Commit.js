@@ -155,7 +155,7 @@ function commitWillUnmount (element, parent, host, signature) {
 function commitWillReconcile (element, snapshot) {
 	snapshot.type.then(function (value) {
 		if (element.active)
-			reconcileChildren(element, createElementFragment(getElementDefinition(value)))
+			reconcileChildren(element, getElementModule(value))
 	}).catch(function (err) {
 		invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 	})
