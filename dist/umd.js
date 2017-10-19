@@ -51,7 +51,10 @@ function factory (window, config, require) {
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
 	
-	var SharedTypeKey = '&|'
+	var SharedKeySigil = '&|'
+	var SharedKeyHead = '&head'
+	var SharedKeyTail = '&tail'
+	
 	var SharedTypeEmpty = '#empty'
 	var SharedTypeText = '#text'
 	var SharedTypeFragment = '#fragment'
@@ -328,7 +331,7 @@ function factory (window, config, require) {
 		var element = new Element(SharedElementText)
 	
 		element.type = SharedTypeText
-		element.key = SharedTypeKey + key
+		element.key = SharedKeySigil + key
 		element.children = content + ''
 	
 		return element
@@ -342,7 +345,7 @@ function factory (window, config, require) {
 		var element = new Element(SharedElementEmpty)
 	
 		element.type = SharedTypeEmpty
-		element.key = SharedTypeKey + key
+		element.key = SharedKeySigil + key
 		element.children = ''
 	
 		return element
@@ -535,7 +538,7 @@ function factory (window, config, require) {
 		if (element != null)
 			if (element.UUID === SymbolElement) {
 				if (element.key === null)
-					element.key = SharedTypeKey + index
+					element.key = SharedKeySigil + index
 	
 				children.insert(element.active === false ? element : createElementImmutable(element), children)
 			} else {
@@ -563,8 +566,8 @@ function factory (window, config, require) {
 	 * @param {List} children
 	 */
 	function setElementBoundary (children) {
-		children.insert(createElementEmpty('<>'), children.next)
-		children.insert(createElementEmpty('</>'), children)
+		children.insert(createElementEmpty(SharedKeyHead), children.next)
+		children.insert(createElementEmpty(SharedKeyTail), children)
 	}
 	
 	/**
@@ -662,7 +665,7 @@ function factory (window, config, require) {
 	 */
 	function getElementDefinition (element) {
 		if (element == null)
-			return createElementEmpty(SharedTypeKey)
+			return createElementEmpty(SharedKeySigil)
 	
 		if (element.UUID === SymbolElement)
 			return element
@@ -670,11 +673,11 @@ function factory (window, config, require) {
 		switch (element.constructor) {
 			case String:
 			case Number:
-				return createElementText(element, SharedTypeKey)
+				return createElementText(element, SharedKeySigil)
 			case Array:
 				return createElementFragment(element)
 			default:
-				return createElementUnknown(element, SharedTypeKey)
+				return createElementUnknown(element, SharedKeySigil)
 		}
 	}
 	

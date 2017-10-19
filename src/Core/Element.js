@@ -65,7 +65,7 @@ function createElementText (content, key) {
 	var element = new Element(SharedElementText)
 
 	element.type = SharedTypeText
-	element.key = SharedTypeKey + key
+	element.key = SharedKeySigil + key
 	element.children = content + ''
 
 	return element
@@ -79,7 +79,7 @@ function createElementEmpty (key) {
 	var element = new Element(SharedElementEmpty)
 
 	element.type = SharedTypeEmpty
-	element.key = SharedTypeKey + key
+	element.key = SharedKeySigil + key
 	element.children = ''
 
 	return element
@@ -272,7 +272,7 @@ function setElementChildren (children, element, index) {
 	if (element != null)
 		if (element.UUID === SymbolElement) {
 			if (element.key === null)
-				element.key = SharedTypeKey + index
+				element.key = SharedKeySigil + index
 
 			children.insert(element.active === false ? element : createElementImmutable(element), children)
 		} else {
@@ -300,8 +300,8 @@ function setElementChildren (children, element, index) {
  * @param {List} children
  */
 function setElementBoundary (children) {
-	children.insert(createElementEmpty('<>'), children.next)
-	children.insert(createElementEmpty('</>'), children)
+	children.insert(createElementEmpty(SharedKeyHead), children.next)
+	children.insert(createElementEmpty(SharedKeyTail), children)
 }
 
 /**
@@ -399,7 +399,7 @@ function getElementDescription (element) {
  */
 function getElementDefinition (element) {
 	if (element == null)
-		return createElementEmpty(SharedTypeKey)
+		return createElementEmpty(SharedKeySigil)
 
 	if (element.UUID === SymbolElement)
 		return element
@@ -407,11 +407,11 @@ function getElementDefinition (element) {
 	switch (element.constructor) {
 		case String:
 		case Number:
-			return createElementText(element, SharedTypeKey)
+			return createElementText(element, SharedKeySigil)
 		case Array:
 			return createElementFragment(element)
 		default:
-			return createElementUnknown(element, SharedTypeKey)
+			return createElementUnknown(element, SharedKeySigil)
 	}
 }
 
