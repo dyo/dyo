@@ -1,6 +1,6 @@
 /*! DIO 8.0.3 @license MIT */
 
-module.exports = function (exports, Element, invokeErrorBoundary, mountComponentElement, getComponentChildren, getElementDefinition) {/* eslint-disable */'use strict'
+module.exports = function (exports, Element, getComponentChildren, getComponentElement, getElementDefinition, mountComponentElement, invokeErrorBoundary) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2

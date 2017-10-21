@@ -1918,14 +1918,39 @@ function factory (window, config, require) {
 		invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 	}
 	
-	function createFactory (config) {
-		switch (typeof config) {
-			case 'object':
-				if (config !== null && !isValidElement(config))
-					return factory(window, config, require)
-			default:
-				return createElement.bind(null, config)
-		}
+	/**
+	 * @param {string|function|Object|Element} type
+	 * @return {function|Object}
+	 */
+	function createFactory (type) {
+		if (typeof type === 'object' && type !== null && !isValidElement(type))
+			return factory(window, type, require)
+	
+		return createElementFactory(type)
+	}
+	
+	/**
+	 * @param {string|function|Element} type
+	 * @return {function}
+	 */
+	function createElementFactory (type) {
+		return createElement.bind(null, type)
+	}
+	
+	
+	/**
+	 * @param {Object?} type
+	 * @param {function} value
+	 * @return {function}
+	 */
+	function createClientFactory (type, value) {
+		if (!config)
+			return value
+	
+		if (typeof config[type] !== 'function')
+			config[type] = value
+	
+		return config[type]
 	}
 	
 	/**
@@ -2459,33 +2484,33 @@ function factory (window, config, require) {
 	
 	var client = new WeakMap()
 	
-	var setClientHost = config.setHost || setDOMHost
-	var setClientNode = config.setNode || setDOMNode
-	var setClientContent = config.setContent || setDOMContent
-	var setClientText = config.setText || setDOMText
-	var setClientEvent = config.setEvent || setDOMEvent
-	var setClientProps = config.setProps || setDOMProps
+	var setClientHost = createClientFactory('setHost', setDOMHost)
+	var setClientNode = createClientFactory('setNode', setDOMNode)
+	var setClientContent = createClientFactory('setContent', setDOMContent)
+	var setClientText = createClientFactory('setText', setDOMText)
+	var setClientEvent = createClientFactory('setEvent', setDOMEvent)
+	var setClientProps = createClientFactory('setProps', setDOMProps)
 	
-	var getClientHost = config.getHost || getDOMHost
-	var getClientNode = config.getNode || getDOMNode
-	var getClientDocument = config.getDocument || getDOMDocument
-	var getClientTarget = config.getTarget || getDOMTarget
-	var getClientType = config.getType || getDOMType
-	var getClientProps = config.getProps || getDOMProps
-	var getClientPortal = config.getPortal || getDOMPortal
-	var getClientQuery = config.getQuery || getDOMQuery
+	var getClientHost = createClientFactory('getHost', getDOMHost)
+	var getClientNode = createClientFactory('getNode', getDOMNode)
+	var getClientDocument = createClientFactory('getDocument', getDOMDocument)
+	var getClientTarget = createClientFactory('getTarget', getDOMTarget)
+	var getClientType = createClientFactory('getType', getDOMType)
+	var getClientProps = createClientFactory('getProps', getDOMProps)
+	var getClientPortal = createClientFactory('getPortal', getDOMPortal)
+	var getClientQuery = createClientFactory('getQuery', getDOMQuery)
 	
-	var isValidClientHost = config.isValidHost || isValidDOMHost
-	var isValidClientNode = config.isValidNode || isValidDOMNode
-	var isValidClientEvent = config.isValidEvent || isValidDOMEvent
+	var isValidClientHost = createClientFactory('isValidHost', isValidDOMHost)
+	var isValidClientNode = createClientFactory('isValidNode', isValidDOMNode)
+	var isValidClientEvent = createClientFactory('isValidEvent', isValidDOMEvent)
 	
-	var removeClientNode = config.removeNode || removeDOMNode
-	var insertClientNode = config.insertNode || insertDOMNode
-	var appendClientNode = config.appendNode || appendDOMNode
+	var removeClientNode = createClientFactory('removeNode', removeDOMNode)
+	var insertClientNode = createClientFactory('insertNode', insertDOMNode)
+	var appendClientNode = createClientFactory('appendNode', appendDOMNode)
 	
-	var createClientElement = config.createElement || createDOMElement
-	var createClientText = config.createText || createDOMText
-	var createClientEmpty = config.createEmpty || createDOMEmpty
+	var createClientElement = createClientFactory('createElement', createDOMElement)
+	var createClientText = createClientFactory('createText', createDOMText)
+	var createClientEmpty = createClientFactory('createEmpty', createDOMEmpty)
 	
 	exports.render = render
 	exports.hydrate = hydrate
@@ -2505,24 +2530,15 @@ function factory (window, config, require) {
 	if (typeof require === 'function')
 		(function () {
 			try {
-				require('./cjs')(exports, Element, invokeErrorBoundary, mountComponentElement, getComponentChildren, getElementDefinition)
+				require('./cjs')(exports, Element, getComponentChildren, getComponentElement, getElementDefinition, mountComponentElement, invokeErrorBoundary)
 			} catch (err) {
 				/* istanbul ignore next */
 				console.error(err+'\nSomething went wrong trying to import the server module.')
 			}
 		}())
 	
-	if (typeof config === 'object' && typeof config.getExports === 'function') {
-		return config.getExports({
-			exports: exports,
-			Element: Element,
-			invokeErrorBoundary: invokeErrorBoundary,
-			mountComponentElement: mountComponentElement,
-			getComponentChildren: getComponentChildren,
-			getElementDefinition: getElementDefinition,
-			update: update,
-			mount: mount
-		}) || exports
+	if (typeof config === 'object' && typeof config.createExport === 'function') {
+		return config.createExport(exports, Element, getComponentChildren, getComponentElement, getElementDefinition, mountComponentElement, invokeErrorBoundary) || exports
 	}
 	
 	return exports
@@ -2531,13 +2547,13 @@ function factory (window, config, require) {
 /* istanbul ignore next */
 if (typeof exports === 'object' && typeof module === 'object' && module !== null) {
 	if (typeof __webpack_require__ === 'undefined' && typeof require === 'function' && global.global === global && global.process) {
-		module.exports = factory(global, false, require)
+		module.exports = factory(global, undefined, require)
 	} else {
-		module.exports = factory(global, false)
+		module.exports = factory(global)
 	}
 } else if (typeof define === 'function' && define.amd) {
-	define(factory(global, false))
+	define(factory(global))
 } else {
-	global.dio = factory(global, false)
+	global.dio = factory(global)
 }
 })(/* istanbul ignore next */typeof window === 'object' ? window : (typeof global === 'object' ? global : this));

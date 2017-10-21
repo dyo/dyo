@@ -50,7 +50,13 @@ describe('Factory', () => {
 		appendNode,
 		createElement,
 		createText,
-		createEmpty
+		createEmpty,
+		createExport: function (exports) {
+			if (typeof this.getNode !== 'function')
+				throw 'failed to fallback to internal config'
+
+			return exports
+		}
 	}
 
 	let renderer
@@ -78,11 +84,11 @@ describe('Factory', () => {
 	})
 
 	it('should create a render factory', () => {
-		let stack = null
+		let stack = []
 
 		assert.deepEqual(Object.keys(
 			createFactory({
-				getExports: ({render}) => {return {render}}
+				createExport: ({render}) => {return {render}}
 			})
 		), [
 			'render'
@@ -90,7 +96,21 @@ describe('Factory', () => {
 
 		assert.deepEqual(Object.keys(
 			createFactory({
-				getExports: (internals) => { stack = Object.keys(internals) }
+				createExport: function (
+					exports,
+					Element,
+					mountComponentElement,
+					getComponentChildren,
+					getElementDefinition,
+					invokeErrorBoundary
+				) {
+					stack.slice.call(arguments).forEach(fn => {
+						if (typeof fn === 'function')
+							stack.push(fn.name)
+						else
+							stack.push('exports')
+					})
+				}
 			})
 		), [
 			'version',
@@ -115,12 +135,11 @@ describe('Factory', () => {
 		assert.deepEqual(stack, [
 			'exports',
 			'Element',
-			'invokeErrorBoundary',
-			'mountComponentElement',
 			'getComponentChildren',
+			'getComponentElement',
 			'getElementDefinition',
-			'update',
-			'mount'
+			'mountComponentElement',
+			'invokeErrorBoundary'
 		])
 	})
 

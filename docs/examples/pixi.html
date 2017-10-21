@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<meta http-equiv=X-UA-Compatible content=IE=edge>
+		<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<title>Pixi Client</title>
+	</head>
+	<body></body>
+	<!-- <script src=https://unpkg.com/dio.js></script> -->
+	<script src=../../dist/umd.js></script>
+	<script src=https://cdn.jsdelivr.net/npm/pixi.js@4.5.6/dist/pixi.min.js></script>
+	<script>
+		var app = null
+		var getNode = (element) => element.DOM.node
+
+		var PixiClient = dio.createFactory({
+			setProps: (element, name, value, xmlns) => {
+				switch (name) {
+					case 'anchor':
+						getNode(element)[name].x = value.x
+						getNode(element)[name].y = value.y
+						break
+					default:
+						getNode(element)[name] = value
+				}
+			},
+			getDocument: () => {
+				if (!app)
+					document.body.appendChild((app = new PIXI.Application(300, 300, {backgroundColor : 0x1099bb})).view)
+
+				return app.stage
+			},
+			getProps: (element) => {
+				return element.props
+			},
+			removeNode: () => {},
+			insertNode: (element, sibling, parent) => {
+				getNode(parent).addChildAt(getNode(element), getNode(parent).getChildIndex(getNode(sibling)))
+			},
+			appendNode: (element, parent) => {
+				getNode(parent).addChild(getNode(element))
+			},
+			isValidNode:  (target) => {
+				return target && !!target.addChild
+			},
+			createElement: (element) => {
+				switch (element.type) {
+					case 'image':
+						return PIXI.Sprite.fromImage(element.props.src)
+				}
+			},
+			createText: (element) => {
+				return new PIXI.Text(element.children)
+			},
+			createEmpty: (element) => {
+				return new PIXI.Container()
+			}
+		})
+	</script>
+	<script>
+		var {h, render} = PixiClient
+		var bunny = 'http://pixijs.github.io/examples/required/assets/basics/bunny.png'
+
+		render([
+			'This is a PixiJS text',
+			h('image', {
+				src: bunny,
+				x: 100,
+				y: 100,
+				anchor: {x: 0.5, y: 0.5},
+				rotation: 0}
+			)
+		])
+
+		requestAnimationFrame(function loop (time) {
+			render([
+				'This is a PixiJS text',
+				h('image', {
+					src: bunny,
+					x: 100,
+					y: 100,
+					anchor: {x: 0.5, y: 0.5},
+					rotation: 0.1 * (time/16)
+				}),
+				h('image', {
+					src: bunny,
+					x: 200,
+					y: 200,
+					anchor: {x: 0.5, y: 0.5},
+					rotation: 0.1 * (time/16)
+				})
+			])
+			requestAnimationFrame(loop)
+		})
+	</script>
+</html>

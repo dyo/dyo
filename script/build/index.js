@@ -109,34 +109,26 @@ exports.h = createElement
 const internals = `
 exports,
 Element,
-invokeErrorBoundary,
-mountComponentElement,
 getComponentChildren,
-getElementDefinition
+getComponentElement,
+getElementDefinition,
+mountComponentElement,
+invokeErrorBoundary
 `.replace(/\s+/g, ' ').trim()
 
 const template = `
 if (typeof require === 'function')
 	(function () {
 		try {
-			require('./cjs')(${(internals)})
+			require('./cjs')(${internals})
 		} catch (err) {
 			/* istanbul ignore next */
 			console.error(err+'\\nSomething went wrong trying to import the server module.')
 		}
 	}())
 
-if (typeof config === 'object' && typeof config.getExports === 'function') {
-	return config.getExports({
-		exports: exports,
-		Element: Element,
-		invokeErrorBoundary: invokeErrorBoundary,
-		mountComponentElement: mountComponentElement,
-		getComponentChildren: getComponentChildren,
-		getElementDefinition: getElementDefinition,
-		update: update,
-		mount: mount
-	}) || exports
+if (typeof config === 'object' && typeof config.createExport === 'function') {
+	return config.createExport(${internals}) || exports
 }
 `.trim()
 

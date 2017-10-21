@@ -1,29 +1,29 @@
 var client = new WeakMap()
 
-var setClientHost = config.setHost || setDOMHost
-var setClientNode = config.setNode || setDOMNode
-var setClientContent = config.setContent || setDOMContent
-var setClientText = config.setText || setDOMText
-var setClientEvent = config.setEvent || setDOMEvent
-var setClientProps = config.setProps || setDOMProps
+var setClientHost = createClientFactory('setHost', setDOMHost)
+var setClientNode = createClientFactory('setNode', setDOMNode)
+var setClientContent = createClientFactory('setContent', setDOMContent)
+var setClientText = createClientFactory('setText', setDOMText)
+var setClientEvent = createClientFactory('setEvent', setDOMEvent)
+var setClientProps = createClientFactory('setProps', setDOMProps)
 
-var getClientHost = config.getHost || getDOMHost
-var getClientNode = config.getNode || getDOMNode
-var getClientDocument = config.getDocument || getDOMDocument
-var getClientTarget = config.getTarget || getDOMTarget
-var getClientType = config.getType || getDOMType
-var getClientProps = config.getProps || getDOMProps
-var getClientPortal = config.getPortal || getDOMPortal
-var getClientQuery = config.getQuery || getDOMQuery
+var getClientHost = createClientFactory('getHost', getDOMHost)
+var getClientNode = createClientFactory('getNode', getDOMNode)
+var getClientDocument = createClientFactory('getDocument', getDOMDocument)
+var getClientTarget = createClientFactory('getTarget', getDOMTarget)
+var getClientType = createClientFactory('getType', getDOMType)
+var getClientProps = createClientFactory('getProps', getDOMProps)
+var getClientPortal = createClientFactory('getPortal', getDOMPortal)
+var getClientQuery = createClientFactory('getQuery', getDOMQuery)
 
-var isValidClientHost = config.isValidHost || isValidDOMHost
-var isValidClientNode = config.isValidNode || isValidDOMNode
-var isValidClientEvent = config.isValidEvent || isValidDOMEvent
+var isValidClientHost = createClientFactory('isValidHost', isValidDOMHost)
+var isValidClientNode = createClientFactory('isValidNode', isValidDOMNode)
+var isValidClientEvent = createClientFactory('isValidEvent', isValidDOMEvent)
 
-var removeClientNode = config.removeNode || removeDOMNode
-var insertClientNode = config.insertNode || insertDOMNode
-var appendClientNode = config.appendNode || appendDOMNode
+var removeClientNode = createClientFactory('removeNode', removeDOMNode)
+var insertClientNode = createClientFactory('insertNode', insertDOMNode)
+var appendClientNode = createClientFactory('appendNode', appendDOMNode)
 
-var createClientElement = config.createElement || createDOMElement
-var createClientText = config.createText || createDOMText
-var createClientEmpty = config.createEmpty || createDOMEmpty
+var createClientElement = createClientFactory('createElement', createDOMElement)
+var createClientText = createClientFactory('createText', createDOMText)
+var createClientEmpty = createClientFactory('createEmpty', createDOMEmpty)

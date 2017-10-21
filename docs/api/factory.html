@@ -43,7 +43,7 @@ createFactory(
 </code></pre>
 
 		<p>
-			A client for the DOM is shipped by default, however the <code>createFactory</code> API allows us to also create different client renderers that might target different platforms.
+			A client for the DOM is shipped by default, however the <code>createFactory</code> API allows us to also create different clients that might target different platforms.
 		</p>
 
 		<p>
@@ -55,7 +55,7 @@ createFactory(
 		</p>
 
 		<blockquote>
-			 A polyfill for <code>setTimeout</code> is required if the platforms runtime does not provide a implementation.
+			 A polyfill for <code>setTimeout</code> is required if the platforms runtime does not provide an implementation.
 		</blockquote>
 
 		<h2 id=setHost>setHost</h2>
@@ -266,7 +266,7 @@ appendNode: (element: Element, parent: Element) => void
 		<h2 id=createElement>createElement</h2>
 
 		<p>
-			Called when creating an element instance.
+			Called when creating a element instance.
 		</p>
 
 <pre><code>
@@ -277,7 +277,7 @@ createElement: (element: Element) => Node
 		<h2 id=createText>createText</h2>
 
 		<p>
-			Called when creating an element instance.
+			Called when creating a text instance.
 		</p>
 
 <pre><code>
@@ -287,11 +287,29 @@ createText: (element: Element) => Node
 		<h2 id=createEmpty>createEmpty</h2>
 
 		<p>
-			Called when creating an element instance.
+			Called when creating a empty instance.
 		</p>
 
 <pre><code>
 createEmpty: (element: Element) => Node
+</code></pre>
+
+		<h2 id=createExport>createExport</h2>
+
+		<p>
+			Called when creating a client, before <a href=top-level.html#createFactory>createFactory</a> returns a clients exports. Use this to define the clients public API.
+		</p>
+
+<pre><code>
+createExport: (
+	exports: object,
+	Element: function,
+	getComponentChildren: function,
+	getComponentElement: function,
+	getElementDefinition: function,
+	mountComponentElement: function,
+	invokeErrorBoundary: function
+) => object
 </code></pre>
 
 	</article>
