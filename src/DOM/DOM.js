@@ -259,7 +259,7 @@ function getDOMQuery (element, parent, previous, next) {
 		if (target.nodeName.toLowerCase() === type) {
 			if (id > SharedElementNode) {
 				if (next.id > SharedElementNode)
-					target.splitText(length > target.nodeValue.length ? 0 : length)
+					target.splitText(0)
 
 				if (target.nodeValue !== children)
 					target.nodeValue = children
