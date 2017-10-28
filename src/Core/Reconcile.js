@@ -115,7 +115,7 @@ function reconcileChildren (element, snapshot) {
 		break
 	}
 
-	// step 2, insert/append/remove
+	// step 2, mount/remove
 	if (oldPos > oldEnd++) {
 		if (newPos <= newEnd++) {
 			if (newEnd < newLength)
@@ -142,67 +142,66 @@ function reconcileChildren (element, snapshot) {
 }
 
 /**
- * @param  {Element} element
- * @param  {Element} host
- * @param  {List} children
- * @param  {Element} oldHead
- * @param  {Element} newHead
- * @param  {number} oldPos
- * @param  {number} newPos
- * @param  {number} oldEnd
- * @param  {number} newEnd
+ * @param {Element} element
+ * @param {Element} host
+ * @param {List} children
+ * @param {Element} oldHead
+ * @param {Element} newHead
+ * @param {number} oldPos
+ * @param {number} newPos
+ * @param {number} oldEnd
+ * @param {number} newEnd
  */
 function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd) {
 	var oldIndex = oldPos
 	var newIndex = newPos
 	var oldChild = oldHead
 	var newChild = newHead
-	var oldNext = oldHead
-	var newNext = newHead
-	var newHash = ''
-	var oldSize = 0
-	var oldPool = {}
+	var prevChild = oldChild
+	var nextChild = oldChild
+	var prevMoved = oldChild
+	var nextMoved = oldChild
+	var prevNodes = {}
+	var nextNodes = {}
 
 	// step 3, hashmap
-	while (oldIndex < oldEnd)
-		if (oldChild.key !== newChild.key) {
-			oldPool[oldChild.key] = oldChild
-			oldChild = oldChild.next
-			++oldSize
-			++oldIndex
-		} else {
-			reconcileElement(oldChild, newChild)
-			oldChild = oldChild.next
+	while (oldIndex < oldEnd || newIndex < newEnd) {
+		if (oldIndex < oldEnd)
+			oldChild = (++oldIndex, prevNodes[oldChild.key] = oldChild).next
+
+		if (newIndex < newEnd && (nextNodes[newChild.key] = newChild, ++newIndex !== newEnd))
 			newChild = newChild.next
-			++oldIndex
-			++newIndex
-		}
-
-	// step 4, insert/append
-	while (newIndex++ < newEnd) {
-		newHash = newChild.key
-		newNext = newChild.next
-		oldNext = oldPool[newHash]
-
-		if (oldNext) {
-			if (oldChild === children)
-				commitAppend(children.insert(children.remove(oldNext), oldChild), element)
-			else
-				commitInsert(children.insert(children.remove(oldNext), oldChild), oldChild, element)
-
-			reconcileElement(oldNext, newChild)
-
-			delete oldPool[(--oldSize, newHash)]
-		} else if (oldChild === children)
-			commitMount(children.insert(newChild, oldChild), newChild, element, host, SharedMountAppend, SharedMountCommit)
-		else
-			commitMount(children.insert(newChild, oldChild), oldChild, element, host, SharedMountInsert, SharedMountCommit)
-
-		newChild = newNext
 	}
 
-	// step 5, remove
-	if (oldSize > 0)
-		for (newHash in oldPool)
-			commitUnmount(children.remove(oldPool[newHash]), element, SharedMountRemove)
+	// step 4, mount/move
+	while (newIndex-- > newPos) {
+		prevChild = newChild.prev
+		nextChild = newChild.next
+		prevMoved = prevNodes[newChild.key]
+		nextMoved = prevNodes[nextChild.key]
+
+		if (isValidElement(prevMoved)) {
+			if (!isValidElement(nextChild)) {
+				if (isValidElement(nextChild = prevMoved.next) && isValidElement(nextNodes[nextChild.key]))
+					commitAppend(children.insert(children.remove(prevMoved), children), element)
+			} else if (prevChild.key !== prevMoved.prev.key) {
+				if ((nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)).key !== prevMoved.next.key)
+					commitInsert(children.insert(children.remove(prevMoved), nextChild), nextChild, element)
+			}
+		} else if (!isValidElement(nextChild)) {
+			commitMount(children.insert(newChild, children), newChild, element, host, SharedMountAppend, SharedMountCommit)
+		} else {
+			nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)
+			commitMount(children.insert(newChild, nextChild), nextChild, element, host, SharedMountInsert, SharedMountCommit)
+		}
+
+		newChild = prevChild
+	}
+
+	// step 5, remove/update
+	for (var oldKey in prevNodes)
+		if (isValidElement((oldChild = prevNodes[oldKey], newChild = nextNodes[oldKey])))
+			reconcileElement(oldChild, newChild)
+		else
+			commitUnmount(children.remove(oldChild), element, SharedMountRemove)
 }

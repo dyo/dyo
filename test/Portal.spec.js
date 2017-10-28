@@ -12,15 +12,13 @@ describe('Portal', ()=>{
 			h('div',
 				createPortal([
 					h('li', {key: '1st'}, '1st')
-				], portal),
-				h('br')
+				], portal, 'portal-1'),
 			),
 		container)
 
 		assert.html(body, `
 			<main>
 				<div>
-					<br>
 				</div>
 			</main>
 			<ul>
@@ -35,15 +33,13 @@ describe('Portal', ()=>{
 				createPortal([
 					h('li', {key: '1st'}, '1st'),
 					h('li', {key: '2nd'}, '2nd')
-				], portal),
-				h('br')
+				], portal, 'portal-1'),
 			),
 		container)
 
 		assert.html(body, `
 			<main>
 				<div>
-					<br>
 				</div>
 			</main>
 			<ul>
@@ -53,22 +49,20 @@ describe('Portal', ()=>{
 		`)
 	})
 
-	it('insert into portal middle', () => {
+	it('should insert into portal middle', () => {
 		render(
 			h('div',
 				createPortal([
 					h('li', {key: '1st'}, '1st'),
 					h('li', {key: '3rd'}, '3rd'),
 					h('li', {key: '2nd'}, '2nd')
-				], portal),
-				h('br')
+				], portal, 'portal-1')
 			),
 		container)
 
 		assert.html(body, `
 			<main>
 				<div>
-					<br>
 				</div>
 			</main>
 			<ul>
@@ -78,44 +72,64 @@ describe('Portal', ()=>{
 			</ul>`)
 	})
 
-	it('remove from portal middle', () => {
+	it('should move portal children', () => {
 		render(
 			h('div',
 				createPortal([
 					h('li', {key: '1st'}, '1st'),
-					h('li', {key: '2nd'}, '2nd')
-				], portal),
-				h('br')
+					h('li', {key: '2nd'}, '2nd'),
+					h('li', {key: '3rd'}, '3rd'),
+				], portal, 'portal-1')
 			),
 		container)
 
 		assert.html(body, `
 			<main>
 				<div>
-					<br>
 				</div>
 			</main>
 			<ul>
 				<li>1st</li>
 				<li>2nd</li>
+				<li>3rd</li>
 			</ul>
 			`)
 	})
 
-	it('remove from portal end', () => {
+	it('should remove from portal middle', () => {
 		render(
 			h('div',
 				createPortal([
-					h('li', {key: '1st'}, '1st')
-				], portal),
-				h('br')
+					h('li', {key: '1st'}, '1st'),
+					h('li', {key: '3rd'}, '3rd')
+				], portal, 'portal-1')
 			),
 		container)
 
 		assert.html(body, `
 			<main>
 				<div>
-					<br>
+				</div>
+			</main>
+			<ul>
+				<li>1st</li>
+				<li>3rd</li>
+			</ul>
+			`)
+	})
+
+	it('should remove from portal end', () => {
+		render(
+			h('div',
+				createPortal([
+					h('li', {key: '1st'}, '1st')
+				], portal, 'portal-1')
+			),
+		container)
+
+		assert.html(body, `
+			<main>
+				<div>
 				</div>
 			</main>
 			<ul>
@@ -129,8 +143,7 @@ describe('Portal', ()=>{
 				h('li', {key: '2nd'}, '2nd'),
 				createPortal([
 					h('li', {key: '1st'}, '1st')
-				], portal),
-				h('br')
+				], portal, 'portal-1'),
 			),
 		container)
 
@@ -138,7 +151,6 @@ describe('Portal', ()=>{
 			<main>
 				<div>
 					<li>2nd</li>
-					<br>
 				</div>
 			</main>
 			<ul>
@@ -147,20 +159,98 @@ describe('Portal', ()=>{
 	})
 
 	it('should create a portal with a single child', () => {
+		unmountComponentAtNode(container)
+
 		render(
 			h('div',
-				createPortal(h('li', {key: '1st'}, '1st'), portal),
-				h('br')
+				createPortal(h('li', {key: '1st'}, '1st'), portal, 'portal-1')
 			),
 		container)
 
 		assert.html(body, `
 			<main>
 				<div>
-					<br>
 				</div>
 			</main>
 			<ul>
+				<li>1st</li>
+			</ul>`)
+	})
+
+	it('should noop append nested portal', () => {
+		unmountComponentAtNode(container)
+
+		render(
+			h('div',
+				createPortal([
+					h('li', {key: '1st'}, '1st'),
+					createPortal([
+						h('li', {key: '2nd'}, '2nd')
+					], portal, 'portal-2')
+				], portal, 'portal-1'),
+				h('li', {key: '2nd'}, '2nd'),
+			),
+		container)
+
+		render(
+			h('div',
+				h('li', {key: '2nd'}, '2nd'),
+				createPortal([
+					createPortal([
+						h('li', {key: '2nd'}, '2nd')
+					], portal, 'portal-2'),
+					h('li', {key: '1st'}, '1st')
+				], portal, 'portal-1')
+			),
+		container)
+
+		assert.html(body, `
+			<main>
+				<div>
+					<li>2nd</li>
+				</div>
+			</main>
+			<ul>
+				<li>2nd</li>
+				<li>1st</li>
+			</ul>`)
+	})
+
+	it('should noop insert nested portal', () => {
+		unmountComponentAtNode(container)
+
+		render(
+			h('div',
+				h('li', {key: '2nd'}, '2nd'),
+				createPortal([
+					createPortal([
+						h('li', {key: '2nd'}, '2nd')
+					], portal, 'portal-2'),
+					h('li', {key: '1st'}, '1st')
+				], portal, 'portal-1')
+			),
+		container)
+
+		render(
+			h('div',
+				createPortal([
+					h('li', {key: '1st'}, '1st'),
+					createPortal([
+						h('li', {key: '2nd'}, '2nd')
+					], portal, 'portal-2')
+				], portal, 'portal-1'),
+				h('li', {key: '2nd'}, '2nd'),
+			),
+		container)
+
+		assert.html(body, `
+			<main>
+				<div>
+					<li>2nd</li>
+				</div>
+			</main>
+			<ul>
+				<li>2nd</li>
 				<li>1st</li>
 			</ul>`)
 	})
@@ -172,6 +262,81 @@ describe('Portal', ()=>{
 			<main>
 			</main>
 			<ul>
+			</ul>`)
+	})
+
+	it('should insert into nested portal', () => {
+		unmountComponentAtNode(container)
+
+		render(
+			h('div',
+				createPortal([
+					createPortal([
+						h('li', {key: '1st'}, '1st')
+					], portal, 'portal-2'),
+				], portal, 'portal-1'),
+			),
+		container)
+
+		render(
+			h('div',
+				createPortal([
+					createPortal([
+						h('li', {key: '2nd'}, '2nd')
+					], portal, 'portal-3'),
+					createPortal([
+						h('li', {key: '1st'}, '1st')
+					], portal, 'portal-2'),
+				], portal, 'portal-1'),
+			),
+		container)
+
+		assert.html(body, `
+			<main>
+				<div>
+				</div>
+			</main>
+			<ul>
+				<li>1st</li>
+				<li>2nd</li>
+			</ul>`)
+	})
+
+	it('should append to one of two portals with the same container', () => {
+		unmountComponentAtNode(container)
+
+		render(
+			h('div',
+					createPortal([
+						h('li', {key: '1st'}, '1st')
+					], portal, 'portal-1'),
+					createPortal([
+						h('li', {key: '1st'}, '1st')
+					], portal, 'portal-2'),
+			),
+		container)
+
+		render(
+			h('div',
+				createPortal([
+					h('li', {key: '1st'}, '1st'),
+					h('li', {key: '2nd'}, '2nd')
+				], portal, 'portal-1'),
+				createPortal([
+					h('li', {key: '3rd'}, '3rd')
+				], portal, 'portal-2'),
+			),
+		container)
+
+		assert.html(body, `
+			<main>
+				<div>
+				</div>
+			</main>
+			<ul>
+				<li>1st</li>
+				<li>2nd</li>
+				<li>3rd</li>
 			</ul>`)
 	})
 
@@ -190,8 +355,7 @@ describe('Portal', ()=>{
 
 		render(
 			h('div',
-				createPortal(h('li', {key: '1st'}, '1st'), '.modal'),
-				h('br')
+				createPortal(h('li', {key: '1st'}, '1st'), '.modal')
 			),
 		container)
 
@@ -204,7 +368,6 @@ describe('Portal', ()=>{
 				</div>
 				<div class="container">
 					<div>
-						<br>
 					</div>
 				</div>
 			</body>
@@ -233,8 +396,7 @@ describe('Portal', ()=>{
 
 		render(
 			h('div',
-				createPortal(h('li', {key: '1st'}, '1st')),
-				h('br')
+				createPortal(h('li', {key: '1st'}, '1st'))
 			),
 		container)
 
@@ -246,7 +408,6 @@ describe('Portal', ()=>{
 				</div>
 				<div class="container">
 					<div>
-						<br>
 					</div>
 				</div>
 			</body>

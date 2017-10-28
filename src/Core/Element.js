@@ -23,13 +23,12 @@ function Element (id) {
 	this.next = null
 	this.prev = null
 }
-
 /**
  * @type {Object}
  */
-defineProperties(Element.prototype, {
-	UUID: {value: SymbolElement},
-	handleEvent: {value: handleEvent}
+merge(Element.prototype, {
+	UUID: SymbolElement,
+	handleEvent: handleEvent
 })
 
 /**
@@ -94,7 +93,7 @@ function createElementFragment (iterable) {
 	var children = new List()
 	var i = 0
 
-	element.type = SharedTypeFragment
+	element.type = SymbolFragment
 	element.children = children
 
 	if (isValidElement(iterable))
@@ -106,14 +105,6 @@ function createElementFragment (iterable) {
 	setElementBoundary(children)
 
 	return element
-}
-
-/**
- * @param {Iterable} iterable
- * @param {Element} element
- */
-function createElementIterable (iterable) {
-	return createElementFragment(childrenArray(iterable))
 }
 
 /**
@@ -133,7 +124,7 @@ function createElementUnknown (element, key) {
 	}
 
 	if (typeof element.next === 'function')
-		return createElementIterable(element)
+		return createElementFragment(childrenArray(element))
 	if (typeof element[SymbolIterator] === 'function')
 		return createElementUnknown(element[SymbolIterator](), key)
 	if (typeof element === 'function')
@@ -175,7 +166,7 @@ function createPortal (element, container, key) {
 
 	portal.type = container
 
-	if (key != null)
+	if (key !== undefined)
 		portal.key = key
 
 	return portal
@@ -249,6 +240,13 @@ function createElement (type, properties) {
 			element.id = SharedElementPromise
 			setElementBoundary(children)
 			break
+		case Number:
+		case Symbol:
+			if (type === SymbolFragment) {
+				element.id = SharedElementFragment
+				setElementBoundary(children)
+			}
+			break
 		default:
 			if (type.UUID === SymbolElement) {
 				props = assign({}, type.props, (element.id = type.id, props))
@@ -269,7 +267,7 @@ function createElement (type, properties) {
  * @param {number} index
  */
 function setElementChildren (children, element, index) {
-	if (element != null)
+	if (element != null) {
 		if (element.UUID === SymbolElement) {
 			if (element.key === null)
 				element.key = SharedKeySigil + index
@@ -290,8 +288,9 @@ function setElementChildren (children, element, index) {
 					return setElementChildren(children, createElementUnknown(element, index), index)
 			}
 		}
-	else
+	} else {
 		children.insert(createElementEmpty(index), children)
+	}
 
 	return index + 1
 }
@@ -314,7 +313,7 @@ function getDefaultProps (element, type, defaultProps, props) {
 	if (typeof defaultProps !== 'function')
 		return assign({}, defaultProps, props)
 
-	Object.defineProperty(type, 'defaultProps', {
+	defineProperty(type, 'defaultProps', {
 		value: getDefaultProps(element, type, getLifecycleCallback(element, defaultProps), props)
 	})
 
@@ -322,13 +321,16 @@ function getDefaultProps (element, type, defaultProps, props) {
 }
 
 /**
- * @param {(function|string)} type
+ * @param {(function|string|number|symbol)} type
  * @return {string}
  */
 function getDisplayName (type) {
 	switch (typeof type) {
 		case 'function':
 			return getDisplayName(type.displayName || type.name)
+		case 'number':
+		case 'symbol':
+			return getDisplayName(type.toString())
 		case 'string':
 			if (type)
 				return type

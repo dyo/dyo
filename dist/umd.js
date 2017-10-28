@@ -57,7 +57,6 @@ function factory (window, config, require) {
 	
 	var SharedTypeEmpty = '#empty'
 	var SharedTypeText = '#text'
-	var SharedTypeFragment = '#fragment'
 	
 	var SharedComponentWillMount = 'componentWillMount'
 	var SharedComponentDidMount = 'componentDidMount'
@@ -78,7 +77,10 @@ function factory (window, config, require) {
 		this.prev = this
 		this.length = 0
 	}
-	List.prototype = {
+	/**
+	 * @type {Object}
+	 */
+	merge(List.prototype, {
 		/**
 		 * @param {Object} node
 		 * @param {Object} before
@@ -114,7 +116,7 @@ function factory (window, config, require) {
 			for (var i = 0, node = this; i < this.length; ++i)
 				callback(node = node.next, i)
 		}
-	}
+	})
 	
 	/**
 	 * @constructor
@@ -122,7 +124,10 @@ function factory (window, config, require) {
 	function WeakHash () {
 		this.hash = ''
 	}
-	WeakHash.prototype = {
+	/**
+	 * @type {Object}
+	 */
+	merge(WeakHash.prototype, {
 		/**
 		 * @param {*} key
 		 * @param {*} value
@@ -144,7 +149,7 @@ function factory (window, config, require) {
 		has: function has (key) {
 			return this.hash in key
 		}
-	}
+	})
 	
 	/**
 	 * @return {void}
@@ -247,11 +252,21 @@ function factory (window, config, require) {
 			return a !== a && b !== b
 	}
 	
+	/**
+	 * @param {string} str
+	 * @return {number}
+	 */
+	function hash (str) {
+		for (var i = 0, code = 0; i < str.length; ++i)
+			code = ((code << 5) - code) + str.charCodeAt(i)
+	
+		return code >>> 0
+	}
+	
 	var Promise = window.Promise || {}
 	var WeakMap = window.WeakMap || WeakHash
-	var Symbol = window.Symbol || function (d) { return 'Symbol('+d+')' }
+	var Symbol = window.Symbol || function (d) { return hash(d) }
 	var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
-	
 	var defineProperty = Object.defineProperty
 	var defineProperties = Object.defineProperties
 	var hasOwnProperty = Object.hasOwnProperty
@@ -259,9 +274,9 @@ function factory (window, config, require) {
 	
 	var SymbolFor = Symbol.for || Symbol
 	var SymbolIterator = Symbol.iterator || '@@iterator'
-	
 	var SymbolError = SymbolFor('dio.Error')
 	var SymbolElement = SymbolFor('dio.Element')
+	var SymbolFragment = SymbolFor('dio.Fragment')
 	var SymbolComponent = SymbolFor('dio.Component')
 	
 	/**
@@ -289,13 +304,12 @@ function factory (window, config, require) {
 		this.next = null
 		this.prev = null
 	}
-	
 	/**
 	 * @type {Object}
 	 */
-	defineProperties(Element.prototype, {
-		UUID: {value: SymbolElement},
-		handleEvent: {value: handleEvent}
+	merge(Element.prototype, {
+		UUID: SymbolElement,
+		handleEvent: handleEvent
 	})
 	
 	/**
@@ -360,7 +374,7 @@ function factory (window, config, require) {
 		var children = new List()
 		var i = 0
 	
-		element.type = SharedTypeFragment
+		element.type = SymbolFragment
 		element.children = children
 	
 		if (isValidElement(iterable))
@@ -372,14 +386,6 @@ function factory (window, config, require) {
 		setElementBoundary(children)
 	
 		return element
-	}
-	
-	/**
-	 * @param {Iterable} iterable
-	 * @param {Element} element
-	 */
-	function createElementIterable (iterable) {
-		return createElementFragment(childrenArray(iterable))
 	}
 	
 	/**
@@ -399,7 +405,7 @@ function factory (window, config, require) {
 		}
 	
 		if (typeof element.next === 'function')
-			return createElementIterable(element)
+			return createElementFragment(childrenArray(element))
 		if (typeof element[SymbolIterator] === 'function')
 			return createElementUnknown(element[SymbolIterator](), key)
 		if (typeof element === 'function')
@@ -441,7 +447,7 @@ function factory (window, config, require) {
 	
 		portal.type = container
 	
-		if (key != null)
+		if (key !== undefined)
 			portal.key = key
 	
 		return portal
@@ -515,6 +521,13 @@ function factory (window, config, require) {
 				element.id = SharedElementPromise
 				setElementBoundary(children)
 				break
+			case Number:
+			case Symbol:
+				if (type === SymbolFragment) {
+					element.id = SharedElementFragment
+					setElementBoundary(children)
+				}
+				break
 			default:
 				if (type.UUID === SymbolElement) {
 					props = assign({}, type.props, (element.id = type.id, props))
@@ -535,7 +548,7 @@ function factory (window, config, require) {
 	 * @param {number} index
 	 */
 	function setElementChildren (children, element, index) {
-		if (element != null)
+		if (element != null) {
 			if (element.UUID === SymbolElement) {
 				if (element.key === null)
 					element.key = SharedKeySigil + index
@@ -556,8 +569,9 @@ function factory (window, config, require) {
 						return setElementChildren(children, createElementUnknown(element, index), index)
 				}
 			}
-		else
+		} else {
 			children.insert(createElementEmpty(index), children)
+		}
 	
 		return index + 1
 	}
@@ -580,7 +594,7 @@ function factory (window, config, require) {
 		if (typeof defaultProps !== 'function')
 			return assign({}, defaultProps, props)
 	
-		Object.defineProperty(type, 'defaultProps', {
+		defineProperty(type, 'defaultProps', {
 			value: getDefaultProps(element, type, getLifecycleCallback(element, defaultProps), props)
 		})
 	
@@ -588,13 +602,16 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {(function|string)} type
+	 * @param {(function|string|number|symbol)} type
 	 * @return {string}
 	 */
 	function getDisplayName (type) {
 		switch (typeof type) {
 			case 'function':
 				return getDisplayName(type.displayName || type.name)
+			case 'number':
+			case 'symbol':
+				return getDisplayName(type.toString())
 			case 'string':
 				if (type)
 					return type
@@ -703,29 +720,6 @@ function factory (window, config, require) {
 		this.props = props
 		this.context = context
 	}
-	/**
-	 * @type {Object}
-	 */
-	var ComponentDescription = {forceUpdate: {value: forceUpdate}, setState: {value: setState}}
-	/**
-	 * @type {Object}
-	 */
-	var ComponentPrototype = createComponent(Component.prototype)
-	
-	/**
-	 * @constructor
-	 * @param {Object?} props
-	 * @param {Object?} context
-	 */
-	function Fragment (props, context) {
-		Component.call(this, props, context)
-	}
-	/**
-	 * @type {Object}
-	 */
-	Fragment.prototype = Object.create(ComponentPrototype, {
-		render: {value: function (props) { return props.children }}
-	})
 	
 	/**
 	 * @constructor
@@ -738,7 +732,7 @@ function factory (window, config, require) {
 	/**
 	 * @type {Object}
 	 */
-	PureComponent.prototype = Object.create(ComponentPrototype, {
+	PureComponent.prototype = Object.create(createComponent(Component.prototype), {
 		shouldComponentUpdate: {value: shouldComponentUpdate}
 	})
 	
@@ -747,7 +741,10 @@ function factory (window, config, require) {
 	 * @return {Object}
 	 */
 	function createComponent (prototype) {
-		defineProperty(defineProperties(prototype, ComponentDescription), SymbolComponent, {value: SymbolComponent})
+		defineProperty(defineProperties(prototype, {
+			forceUpdate: {value: forceUpdate},
+			setState: {value: setState}
+		}), SymbolComponent, {value: SymbolComponent})
 	
 		if (!hasOwnProperty.call(prototype, SharedSiteRender))
 			defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
@@ -1496,11 +1493,8 @@ function factory (window, config, require) {
 		if (parent.id < SharedElementIntermediate)
 			if (parent.id < SharedElementPortal)
 				return commitInsert(element, sibling, getElementParent(parent))
-			else if (parent !== sibling.parent)
-				if (!parent.active)
-					return commitAppend(element, parent)
-				else
-					return
+			else if (!parent.active)
+				return commitAppend(element, parent)
 	
 		switch (sibling.id) {
 			case SharedElementComponent:
@@ -1518,6 +1512,8 @@ function factory (window, config, require) {
 				return insertClientNode(element, sibling, parent)
 			case SharedElementComponent:
 				return commitInsert(getElementDescription(element), sibling, parent)
+			case SharedElementPortal:
+				return
 		}
 	
 		element.children.forEach(function (children) {
@@ -1543,6 +1539,8 @@ function factory (window, config, require) {
 				return appendClientNode(element, parent)
 			case SharedElementComponent:
 				return commitAppend(getElementDescription(element), parent)
+			case SharedElementPortal:
+				return
 		}
 	
 		element.children.forEach(function (children) {
@@ -1667,7 +1665,7 @@ function factory (window, config, require) {
 			break
 		}
 	
-		// step 2, insert/append/remove
+		// step 2, mount/remove
 		if (oldPos > oldEnd++) {
 			if (newPos <= newEnd++) {
 				if (newEnd < newLength)
@@ -1694,69 +1692,68 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param  {Element} element
-	 * @param  {Element} host
-	 * @param  {List} children
-	 * @param  {Element} oldHead
-	 * @param  {Element} newHead
-	 * @param  {number} oldPos
-	 * @param  {number} newPos
-	 * @param  {number} oldEnd
-	 * @param  {number} newEnd
+	 * @param {Element} element
+	 * @param {Element} host
+	 * @param {List} children
+	 * @param {Element} oldHead
+	 * @param {Element} newHead
+	 * @param {number} oldPos
+	 * @param {number} newPos
+	 * @param {number} oldEnd
+	 * @param {number} newEnd
 	 */
 	function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd) {
 		var oldIndex = oldPos
 		var newIndex = newPos
 		var oldChild = oldHead
 		var newChild = newHead
-		var oldNext = oldHead
-		var newNext = newHead
-		var newHash = ''
-		var oldSize = 0
-		var oldPool = {}
+		var prevChild = oldChild
+		var nextChild = oldChild
+		var prevMoved = oldChild
+		var nextMoved = oldChild
+		var prevNodes = {}
+		var nextNodes = {}
 	
 		// step 3, hashmap
-		while (oldIndex < oldEnd)
-			if (oldChild.key !== newChild.key) {
-				oldPool[oldChild.key] = oldChild
-				oldChild = oldChild.next
-				++oldSize
-				++oldIndex
-			} else {
-				reconcileElement(oldChild, newChild)
-				oldChild = oldChild.next
+		while (oldIndex < oldEnd || newIndex < newEnd) {
+			if (oldIndex < oldEnd)
+				oldChild = (++oldIndex, prevNodes[oldChild.key] = oldChild).next
+	
+			if (newIndex < newEnd && (nextNodes[newChild.key] = newChild, ++newIndex !== newEnd))
 				newChild = newChild.next
-				++oldIndex
-				++newIndex
-			}
-	
-		// step 4, insert/append
-		while (newIndex++ < newEnd) {
-			newHash = newChild.key
-			newNext = newChild.next
-			oldNext = oldPool[newHash]
-	
-			if (oldNext) {
-				if (oldChild === children)
-					commitAppend(children.insert(children.remove(oldNext), oldChild), element)
-				else
-					commitInsert(children.insert(children.remove(oldNext), oldChild), oldChild, element)
-	
-				reconcileElement(oldNext, newChild)
-	
-				delete oldPool[(--oldSize, newHash)]
-			} else if (oldChild === children)
-				commitMount(children.insert(newChild, oldChild), newChild, element, host, SharedMountAppend, SharedMountCommit)
-			else
-				commitMount(children.insert(newChild, oldChild), oldChild, element, host, SharedMountInsert, SharedMountCommit)
-	
-			newChild = newNext
 		}
 	
-		// step 5, remove
-		if (oldSize > 0)
-			for (newHash in oldPool)
-				commitUnmount(children.remove(oldPool[newHash]), element, SharedMountRemove)
+		// step 4, mount/move
+		while (newIndex-- > newPos) {
+			prevChild = newChild.prev
+			nextChild = newChild.next
+			prevMoved = prevNodes[newChild.key]
+			nextMoved = prevNodes[nextChild.key]
+	
+			if (isValidElement(prevMoved)) {
+				if (!isValidElement(nextChild)) {
+					if (isValidElement(nextChild = prevMoved.next) && isValidElement(nextNodes[nextChild.key]))
+						commitAppend(children.insert(children.remove(prevMoved), children), element)
+				} else if (prevChild.key !== prevMoved.prev.key) {
+					if ((nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)).key !== prevMoved.next.key)
+						commitInsert(children.insert(children.remove(prevMoved), nextChild), nextChild, element)
+				}
+			} else if (!isValidElement(nextChild)) {
+				commitMount(children.insert(newChild, children), newChild, element, host, SharedMountAppend, SharedMountCommit)
+			} else {
+				nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)
+				commitMount(children.insert(newChild, nextChild), nextChild, element, host, SharedMountInsert, SharedMountCommit)
+			}
+	
+			newChild = prevChild
+		}
+	
+		// step 5, remove/update
+		for (var oldKey in prevNodes)
+			if (isValidElement((oldChild = prevNodes[oldKey], newChild = nextNodes[oldKey])))
+				reconcileElement(oldChild, newChild)
+			else
+				commitUnmount(children.remove(oldChild), element, SharedMountRemove)
 	}
 	
 	/**
@@ -2515,7 +2512,7 @@ function factory (window, config, require) {
 	exports.render = render
 	exports.hydrate = hydrate
 	exports.Component = Component
-	exports.Fragment = Fragment
+	exports.Fragment = SymbolFragment
 	exports.PureComponent = PureComponent
 	exports.Children = Children
 	exports.findDOMNode = findDOMNode

@@ -342,11 +342,8 @@ function commitInsert (element, sibling, parent) {
 	if (parent.id < SharedElementIntermediate)
 		if (parent.id < SharedElementPortal)
 			return commitInsert(element, sibling, getElementParent(parent))
-		else if (parent !== sibling.parent)
-			if (!parent.active)
-				return commitAppend(element, parent)
-			else
-				return
+		else if (!parent.active)
+			return commitAppend(element, parent)
 
 	switch (sibling.id) {
 		case SharedElementComponent:
@@ -364,6 +361,8 @@ function commitInsert (element, sibling, parent) {
 			return insertClientNode(element, sibling, parent)
 		case SharedElementComponent:
 			return commitInsert(getElementDescription(element), sibling, parent)
+		case SharedElementPortal:
+			return
 	}
 
 	element.children.forEach(function (children) {
@@ -389,6 +388,8 @@ function commitAppend (element, parent) {
 			return appendClientNode(element, parent)
 		case SharedElementComponent:
 			return commitAppend(getElementDescription(element), parent)
+		case SharedElementPortal:
+			return
 	}
 
 	element.children.forEach(function (children) {

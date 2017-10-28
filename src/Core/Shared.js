@@ -50,7 +50,6 @@ var SharedKeyTail = '&tail'
 
 var SharedTypeEmpty = '#empty'
 var SharedTypeText = '#text'
-var SharedTypeFragment = '#fragment'
 
 var SharedComponentWillMount = 'componentWillMount'
 var SharedComponentDidMount = 'componentDidMount'

@@ -9,29 +9,6 @@ function Component (props, context) {
 	this.props = props
 	this.context = context
 }
-/**
- * @type {Object}
- */
-var ComponentDescription = {forceUpdate: {value: forceUpdate}, setState: {value: setState}}
-/**
- * @type {Object}
- */
-var ComponentPrototype = createComponent(Component.prototype)
-
-/**
- * @constructor
- * @param {Object?} props
- * @param {Object?} context
- */
-function Fragment (props, context) {
-	Component.call(this, props, context)
-}
-/**
- * @type {Object}
- */
-Fragment.prototype = Object.create(ComponentPrototype, {
-	render: {value: function (props) { return props.children }}
-})
 
 /**
  * @constructor
@@ -44,7 +21,7 @@ function PureComponent (props, context) {
 /**
  * @type {Object}
  */
-PureComponent.prototype = Object.create(ComponentPrototype, {
+PureComponent.prototype = Object.create(createComponent(Component.prototype), {
 	shouldComponentUpdate: {value: shouldComponentUpdate}
 })
 
@@ -53,7 +30,10 @@ PureComponent.prototype = Object.create(ComponentPrototype, {
  * @return {Object}
  */
 function createComponent (prototype) {
-	defineProperty(defineProperties(prototype, ComponentDescription), SymbolComponent, {value: SymbolComponent})
+	defineProperty(defineProperties(prototype, {
+		forceUpdate: {value: forceUpdate},
+		setState: {value: setState}
+	}), SymbolComponent, {value: SymbolComponent})
 
 	if (!hasOwnProperty.call(prototype, SharedSiteRender))
 		defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})

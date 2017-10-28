@@ -6,7 +6,10 @@ function List () {
 	this.prev = this
 	this.length = 0
 }
-List.prototype = {
+/**
+ * @type {Object}
+ */
+merge(List.prototype, {
 	/**
 	 * @param {Object} node
 	 * @param {Object} before
@@ -42,7 +45,7 @@ List.prototype = {
 		for (var i = 0, node = this; i < this.length; ++i)
 			callback(node = node.next, i)
 	}
-}
+})
 
 /**
  * @constructor
@@ -50,7 +53,10 @@ List.prototype = {
 function WeakHash () {
 	this.hash = ''
 }
-WeakHash.prototype = {
+/**
+ * @type {Object}
+ */
+merge(WeakHash.prototype, {
 	/**
 	 * @param {*} key
 	 * @param {*} value
@@ -72,7 +78,7 @@ WeakHash.prototype = {
 	has: function has (key) {
 		return this.hash in key
 	}
-}
+})
 
 /**
  * @return {void}
@@ -173,4 +179,15 @@ function is (a, b) {
 		return a !== 0 || 1/a === 1/b
 	else
 		return a !== a && b !== b
+}
+
+/**
+ * @param {string} str
+ * @return {number}
+ */
+function hash (str) {
+	for (var i = 0, code = 0; i < str.length; ++i)
+		code = ((code << 5) - code) + str.charCodeAt(i)
+
+	return code >>> 0
 }
