@@ -12,7 +12,7 @@ describe('Portal', ()=>{
 			h('div',
 				createPortal([
 					h('li', {key: '1st'}, '1st')
-				], portal, 'portal-1'),
+				], portal, 'portal-1')
 			),
 		container)
 
@@ -33,7 +33,7 @@ describe('Portal', ()=>{
 				createPortal([
 					h('li', {key: '1st'}, '1st'),
 					h('li', {key: '2nd'}, '2nd')
-				], portal, 'portal-1'),
+				], portal, 'portal-1')
 			),
 		container)
 
@@ -143,7 +143,7 @@ describe('Portal', ()=>{
 				h('li', {key: '2nd'}, '2nd'),
 				createPortal([
 					h('li', {key: '1st'}, '1st')
-				], portal, 'portal-1'),
+				], portal, 'portal-1')
 			),
 		container)
 
@@ -188,7 +188,7 @@ describe('Portal', ()=>{
 						h('li', {key: '2nd'}, '2nd')
 					], portal, 'portal-2')
 				], portal, 'portal-1'),
-				h('li', {key: '2nd'}, '2nd'),
+				h('li', {key: '2nd'}, '2nd')
 			),
 		container)
 
@@ -239,7 +239,7 @@ describe('Portal', ()=>{
 						h('li', {key: '2nd'}, '2nd')
 					], portal, 'portal-2')
 				], portal, 'portal-1'),
-				h('li', {key: '2nd'}, '2nd'),
+				h('li', {key: '2nd'}, '2nd')
 			),
 		container)
 
@@ -273,8 +273,8 @@ describe('Portal', ()=>{
 				createPortal([
 					createPortal([
 						h('li', {key: '1st'}, '1st')
-					], portal, 'portal-2'),
-				], portal, 'portal-1'),
+					], portal, 'portal-2')
+				], portal, 'portal-1')
 			),
 		container)
 
@@ -286,8 +286,8 @@ describe('Portal', ()=>{
 					], portal, 'portal-3'),
 					createPortal([
 						h('li', {key: '1st'}, '1st')
-					], portal, 'portal-2'),
-				], portal, 'portal-1'),
+					], portal, 'portal-2')
+				], portal, 'portal-1')
 			),
 		container)
 
@@ -324,7 +324,7 @@ describe('Portal', ()=>{
 				], portal, 'portal-1'),
 				createPortal([
 					h('li', {key: '3rd'}, '3rd')
-				], portal, 'portal-2'),
+				], portal, 'portal-2')
 			),
 		container)
 
