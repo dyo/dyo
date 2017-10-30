@@ -432,12 +432,15 @@ describe('Render', () => {
 		assert.html(container, `<div style=""></div>`)
 	})
 
-	it('should handle undefined refs', () => {
+	it('should handle invalid refs', () => {
 		let container = document.createElement('div')
 
 		assert.doesNotThrow(() => {
 			render(h('div', {ref: null}), container)
 			render(h('div', {ref: undefined}), container)
+			render(h('div', {ref: 100}), container)
+			render(h('div', {ref: Symbol('')}), container)
+			render(h('div', {ref: {}}), container)
 		})
 	})
 

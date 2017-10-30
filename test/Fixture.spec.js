@@ -371,7 +371,7 @@ describe('Fixture', () => {
 
 		global.__webpack_require__ = () => stack.push('should not require')
 
-		let dio = require(file)
+		assert.doesNotHaveAnyKeys(require(file), ['renderToString', 'renderToNodeStream'])
 		assert.lengthOf(stack, 0)
 
 		global.__webpack_require__ = undefined
@@ -379,5 +379,113 @@ describe('Fixture', () => {
 		delete require.cache[require.resolve(file)]
 
 		Object.assign(global, require(file))
+	})
+
+	it('should communication between parent and children with events & context', () => {
+		let container = document.createElement('div')
+
+		let Option = class {
+		  render({children, value}, state, {active, open, handleEvent}) {
+		    if (active === value || open === true)
+		      return h('div', {onClick: handleEvent, active: active === value}, children)
+		  }
+		}
+
+		let Select = class {
+		  getChildContext(props, {open, active}) {
+		    return {open: open, active: active, handleEvent: this}
+		  }
+		  getInitialState({value}) {
+		    return {open: false, active: value}
+		  }
+		  handleEvent(e, {value}, state, {open}) {
+		    return {open: !open, active: value}
+		  }
+		  render({style, children}) {
+		    return h('div', children)
+		  }
+		}
+
+		let First = () => h(Option, {value: 1}, 'First')
+		let Second = () => h(Option, {value: 2}, 'Second')
+
+		render(h(Select, {value: 1},
+		  h(First),
+		  h(Second),
+		  h(Option, {value: 3}, 'Third')
+		), container)
+
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+			</div>
+		`)
+
+		let select = container.firstChild
+		let event = new Event('click')
+
+		select.firstChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+				<div>Second</div>
+				<div>Third</div>
+			</div>
+		`)
+
+		select.firstChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+			</div>
+		`)
+
+		select.firstChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+				<div>Second</div>
+				<div>Third</div>
+			</div>
+		`)
+
+		select.firstChild.nextSibling.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">Second</div>
+			</div>
+		`)
+
+		select.firstChild.nextSibling.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div>First</div>
+				<div active="">Second</div>
+				<div>Third</div>
+			</div>
+		`)
+
+		select.lastChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">Third</div>
+			</div>
+		`)
+
+		select.lastChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div>First</div>
+				<div>Second</div>
+				<div active="">Third</div>
+			</div>
+		`)
+
+		select.firstChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+			</div>
+		`)
 	})
 })

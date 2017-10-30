@@ -137,7 +137,7 @@ function reconcileChildren (element, snapshot) {
 			commitUnmount(children.remove(newHead), element, SharedMountRemove)
 		}
 	} else {
-		reconcileSiblings(element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd)
+		reconcileSiblings(element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd, oldLength)
 	}
 }
 
@@ -151,8 +151,9 @@ function reconcileChildren (element, snapshot) {
  * @param {number} newPos
  * @param {number} oldEnd
  * @param {number} newEnd
+ * @param {number} oldLength
  */
-function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd) {
+function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd, oldLength) {
 	var oldIndex = oldPos
 	var newIndex = newPos
 	var oldChild = oldHead
@@ -166,8 +167,8 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 
 	// step 3, hashmap
 	while (oldIndex < oldEnd || newIndex < newEnd) {
-		if (oldIndex < oldEnd)
-			oldChild = (++oldIndex, prevNodes[oldChild.key] = oldChild).next
+		if (oldIndex < oldEnd && (prevNodes[oldChild.key] = oldChild, ++oldIndex !== oldLength))
+			oldChild = oldChild.next
 
 		if (newIndex < newEnd && (nextNodes[newChild.key] = newChild, ++newIndex !== newEnd))
 			newChild = newChild.next
@@ -183,7 +184,11 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 		if (isValidElement(prevMoved)) {
 			if (!isValidElement(nextChild)) {
 				if (isValidElement(nextChild = prevMoved.next) && isValidElement(nextNodes[nextChild.key]))
-					commitAppend(children.insert(children.remove(prevMoved), children), element)
+					if (prevChild.key === oldChild.key)
+						commitAppend(children.insert(children.remove(prevMoved), children), element)
+					else if (nextChild !== oldChild)
+						if (isValidElement(nextNodes[oldChild.key]) || nextChild.key !== oldChild.prev.key)
+							commitInsert(children.insert(children.remove(prevMoved), oldChild), oldChild, element)
 			} else if (prevChild.key !== prevMoved.prev.key) {
 				if ((nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)).key !== prevMoved.next.key)
 					commitInsert(children.insert(children.remove(prevMoved), nextChild), nextChild, element)

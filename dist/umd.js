@@ -781,10 +781,12 @@ function factory (window, config, require) {
 	 */
 	function mountComponentElement (element) {
 		var owner = element.type
+		var props = element.props
 		var context = element.context || {}
 		var prototype = owner.prototype
 		var instance
 		var children
+		var state
 	
 		if (prototype && prototype.render) {
 			if (prototype[SymbolComponent] !== SymbolComponent)
@@ -802,31 +804,26 @@ function factory (window, config, require) {
 	
 		instance[SymbolElement] = element
 		instance.refs = {}
-		instance.props = element.props
+		instance.props = props
 		instance.context = context
+		instance.state = state = instance.state || {}
 	
 		if (owner[SharedGetInitialState])
-			if (element.state = instance.state = getLifecycleData(element, SharedGetInitialState))
-				if (element.state.constructor === Promise) {
+			if (element.state = getLifecycleData(element, SharedGetInitialState, props, state, context))
+				if ((instance.state = state = element.state).constructor === Promise) {
 					if (element.work === SharedWorkMounting)
-						enqueueStatePromise(element, instance, instance.state)
+						enqueueStatePromise(element, instance, state)
 	
 					children = null
 				}
 	
-		if (!instance.state)
-			instance.state = {}
-	
 		if (owner[SharedComponentWillMount] && element.work !== SharedWorkIdle)
 			getLifecycleMount(element, SharedComponentWillMount)
 	
-		if (children !== null)
-			children = getComponentChildren(element, instance)
-		else
-			children = getElementDefinition(children)
+		children = children !== null ? getComponentChildren(element, instance) : getElementDefinition(children)
 	
 		if (owner[SharedGetChildContext])
-			element.context = getComponentContext(element)
+			element.context = getComponentContext(element, props, state, context)
 	
 		return element.children = children
 	}
@@ -856,7 +853,7 @@ function factory (window, config, require) {
 		var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, tempState) : prevState
 	
 		if (owner[SharedGetChildContext])
-			merge(element.context, getComponentContext(element))
+			merge(element.context, getComponentContext(element, nextProps, nextState, nextContext))
 	
 		switch (signature) {
 			case SharedComponentForceUpdate:
@@ -1035,24 +1032,26 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {Element} element
+	 * @param {Object} props
+	 * @param {Object} state
+	 * @param {Object} context
 	 * @return {Object?}
 	 */
-	function getComponentContext (element) {
-		return getLifecycleData(element, SharedGetChildContext) || element.context
+	function getComponentContext (element, props, state, context) {
+		return getLifecycleData(element, SharedGetChildContext, props, state, context) || context
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {string} name
+	 * @param {Object} props
+	 * @param {Object} state
+	 * @param {Object} context
+	 * @return {Object?}
 	 */
-	function getLifecycleData (element, name) {
+	function getLifecycleData (element, name, props, state, context) {
 		try {
-			return element.owner[name].call(
-				element.instance,
-				element.instance.props,
-				element.instance.state,
-				element.instance.context
-			)
+			return element.owner[name].call(element.instance, props, state, context)
 		} catch (err) {
 			invokeErrorBoundary(element, err, name, SharedErrorActive)
 		}
@@ -1061,6 +1060,7 @@ function factory (window, config, require) {
 	/**
 	 * @param {Element} element
 	 * @param {string} name
+	 * @return {Promise?}
 	 */
 	function getLifecycleMount (element, name) {
 		try {
@@ -1081,6 +1081,7 @@ function factory (window, config, require) {
 	 * @param {Object} props
 	 * @param {Object} state
 	 * @param {Object} context
+	 * @return {boolean?}
 	 */
 	function getLifecycleUpdate (element, name, props, state, context) {
 		try {
@@ -1127,6 +1128,7 @@ function factory (window, config, require) {
 	 * @param {*} first
 	 * @param {*} second
 	 * @param {*} third
+	 * @return {*?}
 	 */
 	function getLifecycleCallback (element, callback, first, second, third) {
 		try {
@@ -1398,7 +1400,7 @@ function factory (window, config, require) {
 				}
 				break
 			default:
-				commitRefs(element, element.ref || noop, SharedReferenceRemove, key)
+				commitRefs(element, element.ref === callback ? noop : element.ref, SharedReferenceRemove, key)
 		}
 	}
 	
@@ -1517,7 +1519,7 @@ function factory (window, config, require) {
 		}
 	
 		element.children.forEach(function (children) {
-			commitInsert(getElementDescription(children), sibling, element)
+			commitInsert(getElementDescription(children), sibling, parent)
 		})
 	}
 	
@@ -1526,11 +1528,8 @@ function factory (window, config, require) {
 	 * @param {Element} parent
 	 */
 	function commitAppend (element, parent) {
-		if (parent.id < SharedElementIntermediate)
-			if (parent.active)
-				return commitInsert(element, getElementBoundary(parent, SharedSiblingPrevious), parent)
-			else if (parent.id < SharedElementPortal)
-				return commitAppend(element, getElementParent(parent))
+	 if (parent.id < SharedElementPortal)
+			return commitAppend(element, getElementParent(parent))
 	
 		switch (element.id) {
 			case SharedElementNode:
@@ -1544,7 +1543,7 @@ function factory (window, config, require) {
 		}
 	
 		element.children.forEach(function (children) {
-			commitAppend(getElementDescription(children), element)
+			commitAppend(getElementDescription(children), parent)
 		})
 	}
 	
@@ -1687,7 +1686,7 @@ function factory (window, config, require) {
 				commitUnmount(children.remove(newHead), element, SharedMountRemove)
 			}
 		} else {
-			reconcileSiblings(element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd)
+			reconcileSiblings(element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd, oldLength)
 		}
 	}
 	
@@ -1701,8 +1700,9 @@ function factory (window, config, require) {
 	 * @param {number} newPos
 	 * @param {number} oldEnd
 	 * @param {number} newEnd
+	 * @param {number} oldLength
 	 */
-	function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd) {
+	function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd, oldLength) {
 		var oldIndex = oldPos
 		var newIndex = newPos
 		var oldChild = oldHead
@@ -1716,8 +1716,8 @@ function factory (window, config, require) {
 	
 		// step 3, hashmap
 		while (oldIndex < oldEnd || newIndex < newEnd) {
-			if (oldIndex < oldEnd)
-				oldChild = (++oldIndex, prevNodes[oldChild.key] = oldChild).next
+			if (oldIndex < oldEnd && (prevNodes[oldChild.key] = oldChild, ++oldIndex !== oldLength))
+				oldChild = oldChild.next
 	
 			if (newIndex < newEnd && (nextNodes[newChild.key] = newChild, ++newIndex !== newEnd))
 				newChild = newChild.next
@@ -1733,7 +1733,11 @@ function factory (window, config, require) {
 			if (isValidElement(prevMoved)) {
 				if (!isValidElement(nextChild)) {
 					if (isValidElement(nextChild = prevMoved.next) && isValidElement(nextNodes[nextChild.key]))
-						commitAppend(children.insert(children.remove(prevMoved), children), element)
+						if (prevChild.key === oldChild.key)
+							commitAppend(children.insert(children.remove(prevMoved), children), element)
+						else if (nextChild !== oldChild)
+							if (isValidElement(nextNodes[oldChild.key]) || nextChild.key !== oldChild.prev.key)
+								commitInsert(children.insert(children.remove(prevMoved), oldChild), oldChild, element)
 				} else if (prevChild.key !== prevMoved.prev.key) {
 					if ((nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)).key !== prevMoved.next.key)
 						commitInsert(children.insert(children.remove(prevMoved), nextChild), nextChild, element)
@@ -1775,10 +1779,14 @@ function factory (window, config, require) {
 			if (!callback)
 				return
 	
-			if (typeof callback === 'function')
+			if (typeof callback === 'function') {
 				value = callback.call(instance, event, props, state, context)
-			else if (typeof callback.handleEvent === 'function')
+			} else if (typeof callback.handleEvent === 'function') {
+				if (instance !== callback && callback[SymbolComponent] === SymbolComponent)
+					host = getComponentElement(instance = callback)
+	
 				value = callback.handleEvent(event, props, state, context)
+			}
 	
 			if (value && instance)
 				getLifecycleReturn(host, value)

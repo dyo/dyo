@@ -17,10 +17,14 @@ function handleEvent (event) {
 		if (!callback)
 			return
 
-		if (typeof callback === 'function')
+		if (typeof callback === 'function') {
 			value = callback.call(instance, event, props, state, context)
-		else if (typeof callback.handleEvent === 'function')
+		} else if (typeof callback.handleEvent === 'function') {
+			if (instance !== callback && callback[SymbolComponent] === SymbolComponent)
+				host = getComponentElement(instance = callback)
+
 			value = callback.handleEvent(event, props, state, context)
+		}
 
 		if (value && instance)
 			getLifecycleReturn(host, value)

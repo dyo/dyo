@@ -70,10 +70,12 @@ function forceUpdate (callback) {
  */
 function mountComponentElement (element) {
 	var owner = element.type
+	var props = element.props
 	var context = element.context || {}
 	var prototype = owner.prototype
 	var instance
 	var children
+	var state
 
 	if (prototype && prototype.render) {
 		if (prototype[SymbolComponent] !== SymbolComponent)
@@ -91,31 +93,26 @@ function mountComponentElement (element) {
 
 	instance[SymbolElement] = element
 	instance.refs = {}
-	instance.props = element.props
+	instance.props = props
 	instance.context = context
+	instance.state = state = instance.state || {}
 
 	if (owner[SharedGetInitialState])
-		if (element.state = instance.state = getLifecycleData(element, SharedGetInitialState))
-			if (element.state.constructor === Promise) {
+		if (element.state = getLifecycleData(element, SharedGetInitialState, props, state, context))
+			if ((instance.state = state = element.state).constructor === Promise) {
 				if (element.work === SharedWorkMounting)
-					enqueueStatePromise(element, instance, instance.state)
+					enqueueStatePromise(element, instance, state)
 
 				children = null
 			}
 
-	if (!instance.state)
-		instance.state = {}
-
 	if (owner[SharedComponentWillMount] && element.work !== SharedWorkIdle)
 		getLifecycleMount(element, SharedComponentWillMount)
 
-	if (children !== null)
-		children = getComponentChildren(element, instance)
-	else
-		children = getElementDefinition(children)
+	children = children !== null ? getComponentChildren(element, instance) : getElementDefinition(children)
 
 	if (owner[SharedGetChildContext])
-		element.context = getComponentContext(element)
+		element.context = getComponentContext(element, props, state, context)
 
 	return element.children = children
 }
@@ -145,7 +142,7 @@ function updateComponent (element, snapshot, signature) {
 	var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, tempState) : prevState
 
 	if (owner[SharedGetChildContext])
-		merge(element.context, getComponentContext(element))
+		merge(element.context, getComponentContext(element, nextProps, nextState, nextContext))
 
 	switch (signature) {
 		case SharedComponentForceUpdate:
@@ -324,24 +321,26 @@ function getComponentElement (instance) {
 
 /**
  * @param {Element} element
+ * @param {Object} props
+ * @param {Object} state
+ * @param {Object} context
  * @return {Object?}
  */
-function getComponentContext (element) {
-	return getLifecycleData(element, SharedGetChildContext) || element.context
+function getComponentContext (element, props, state, context) {
+	return getLifecycleData(element, SharedGetChildContext, props, state, context) || context
 }
 
 /**
  * @param {Element} element
  * @param {string} name
+ * @param {Object} props
+ * @param {Object} state
+ * @param {Object} context
+ * @return {Object?}
  */
-function getLifecycleData (element, name) {
+function getLifecycleData (element, name, props, state, context) {
 	try {
-		return element.owner[name].call(
-			element.instance,
-			element.instance.props,
-			element.instance.state,
-			element.instance.context
-		)
+		return element.owner[name].call(element.instance, props, state, context)
 	} catch (err) {
 		invokeErrorBoundary(element, err, name, SharedErrorActive)
 	}
@@ -350,6 +349,7 @@ function getLifecycleData (element, name) {
 /**
  * @param {Element} element
  * @param {string} name
+ * @return {Promise?}
  */
 function getLifecycleMount (element, name) {
 	try {
@@ -370,6 +370,7 @@ function getLifecycleMount (element, name) {
  * @param {Object} props
  * @param {Object} state
  * @param {Object} context
+ * @return {boolean?}
  */
 function getLifecycleUpdate (element, name, props, state, context) {
 	try {
@@ -416,6 +417,7 @@ function getLifecycleReturn (element, state) {
  * @param {*} first
  * @param {*} second
  * @param {*} third
+ * @return {*?}
  */
 function getLifecycleCallback (element, callback, first, second, third) {
 	try {

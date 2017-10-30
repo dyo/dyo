@@ -167,7 +167,7 @@ describe('List', () => {
 		`)
 	})
 
-	it('should move a fragment', () => {
+	it('should move(append) a nested fragment', () => {
 		render([
 			h(List, {key: 1}, 1),
 			h(List, {key: 2}, 2),
@@ -186,6 +186,28 @@ describe('List', () => {
 
 		assert.html(container, `
 			<h1>1st</h1>
+		`)
+	})
+
+	it('should move(append) an element within a fragment', () => {
+		unmountComponentAtNode(container)
+
+		render([
+			h('li', {key: 1}, 1),
+			h('li', {key: 3}, 3),
+			h('li', {key: 2}, 2)
+		], container)
+
+		render([
+			h('li', {key: 1}, 1),
+			h('li', {key: 2}, 2),
+			h('li', {key: 3}, 3)
+		], container)
+
+		assert.html(container, `
+			<li>1</li>
+			<li>2</li>
+			<li>3</li>
 		`)
 	})
 })

@@ -3,7 +3,7 @@ describe('Children', () => {
 	let index = 0
 	let element = h('h1', '1')
 
-	it('should convert .toArray children', () => {
+	it('should convert toArray children', () => {
 		assert.deepEqual(toArray(null), [])
 		assert.deepEqual(toArray({
 			[Symbol.iterator]: function* () {
@@ -22,7 +22,7 @@ describe('Children', () => {
 		assert.equal(toArray(h('h1', 1, 2, 3).children).length, 3, 'toArray(element.children)')
 	})
 
-	it('should .map children', () => {
+	it('should map children', () => {
 		assert.equal(map(null), null)
 		assert.deepEqual(map([1, [2, 3]], x => x+1), [2, 3, 4], 'map([])')
 		assert.deepEqual(map(1, x => x+1), [2], 'map(number)')
@@ -30,7 +30,7 @@ describe('Children', () => {
 		assert.equal(map(element, x => x)[0], element, 'map(element)')
 	})
 
-	it('should .forEach children', () => {
+	it('should forEach children', () => {
 		forEach([1, [2, 3]], (x) => index += x)
 		assert.equal(index, 6, 'forEach([])')
 

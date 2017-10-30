@@ -247,7 +247,7 @@ function commitRefs (element, callback, signature, key) {
 			}
 			break
 		default:
-			commitRefs(element, element.ref || noop, SharedReferenceRemove, key)
+			commitRefs(element, element.ref === callback ? noop : element.ref, SharedReferenceRemove, key)
 	}
 }
 
@@ -366,7 +366,7 @@ function commitInsert (element, sibling, parent) {
 	}
 
 	element.children.forEach(function (children) {
-		commitInsert(getElementDescription(children), sibling, element)
+		commitInsert(getElementDescription(children), sibling, parent)
 	})
 }
 
@@ -375,11 +375,8 @@ function commitInsert (element, sibling, parent) {
  * @param {Element} parent
  */
 function commitAppend (element, parent) {
-	if (parent.id < SharedElementIntermediate)
-		if (parent.active)
-			return commitInsert(element, getElementBoundary(parent, SharedSiblingPrevious), parent)
-		else if (parent.id < SharedElementPortal)
-			return commitAppend(element, getElementParent(parent))
+ if (parent.id < SharedElementPortal)
+		return commitAppend(element, getElementParent(parent))
 
 	switch (element.id) {
 		case SharedElementNode:
@@ -393,6 +390,6 @@ function commitAppend (element, parent) {
 	}
 
 	element.children.forEach(function (children) {
-		commitAppend(getElementDescription(children), element)
+		commitAppend(getElementDescription(children), parent)
 	})
 }
