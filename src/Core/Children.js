@@ -18,11 +18,11 @@ function childrenArray (children) {
 
 	if (children == null)
 		return array
-	else if (isValidElement(children) || typeof children !== 'object')
+	if (isValidElement(children) || typeof children !== 'object')
 		return [children]
-	else if (isArray(children))
+	if (isArray(children))
 		return flatten(children, array)
-	else if (typeof children.next === 'function' || typeof children.forEach === 'function')
+	if (typeof children.next === 'function' || typeof children.forEach === 'function')
 		each(children, function (element) {
 			return array.push(element)
 		})

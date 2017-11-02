@@ -1,11 +1,12 @@
-var Promise = window.Promise || {}
-var WeakMap = window.WeakMap || WeakHash
-var Symbol = window.Symbol || function (d) { return hash(d) }
-var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
 var defineProperty = Object.defineProperty
 var defineProperties = Object.defineProperties
 var hasOwnProperty = Object.hasOwnProperty
 var isArray = Array.isArray
+
+var WeakMap = window.WeakMap || WeakHash
+var Symbol = window.Symbol || function (d) { return hash(d) }
+var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
+var console = window.console || {error: window.printErr || window.print}
 
 var SymbolFor = Symbol.for || Symbol
 var SymbolIterator = Symbol.iterator || '@@iterator'

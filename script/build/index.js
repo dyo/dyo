@@ -22,8 +22,8 @@ const shared = [
 
 const core = [
 	...shared,
-	'../../src/Core/Utility.js',
 	'../../src/Core/Constant.js',
+	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
 	'../../src/Core/Component.js',
 	'../../src/Core/Commit.js',
@@ -123,7 +123,9 @@ if (typeof require === 'function')
 			require('./cjs')(${internals})
 		} catch (err) {
 			/* istanbul ignore next */
-			console.error(err+'\\nSomething went wrong trying to import the server module.')
+			console.error(err)
+			/* istanbul ignore next */
+			console.error('Something went wrong trying to import the server module')
 		}
 	}())
 

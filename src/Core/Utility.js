@@ -9,13 +9,13 @@ function List () {
 /**
  * @type {Object}
  */
-merge(List.prototype, {
+defineProperties(List.prototype, {
 	/**
 	 * @param {Object} node
 	 * @param {Object} before
 	 * @return {Object}
 	 */
-	insert: function insert (node, before) {
+	insert: {value: function insert (node, before) {
 		node.next = before
 		node.prev = before.prev
 		before.prev.next = node
@@ -23,12 +23,12 @@ merge(List.prototype, {
 		this.length++
 
 		return node
-	},
+	}},
 	/**
 	 * @param {Object} node
 	 * @return {Object}
 	 */
-	remove: function remove (node) {
+	remove: {value: function remove (node) {
 		if (this.length === 0)
 			return node
 
@@ -37,14 +37,14 @@ merge(List.prototype, {
 		this.length--
 
 		return node
-	},
+	}},
 	/**
 	 * @param {function} callback
 	 */
-	forEach: function forEach (callback) {
+	forEach: {value: function forEach (callback) {
 		for (var i = 0, node = this; i < this.length; ++i)
 			callback(node = node.next, i)
-	}
+	}}
 })
 
 /**
@@ -56,28 +56,28 @@ function WeakHash () {
 /**
  * @type {Object}
  */
-merge(WeakHash.prototype, {
+defineProperties(WeakHash.prototype, {
 	/**
 	 * @param {*} key
 	 * @param {*} value
 	 */
-	set: function set (key, value) {
+	set: {value: function set (key, value) {
 		key[this.hash] = value
-	},
+	}},
 	/**
 	 * @param {*} key
 	 * @return {*}
 	 */
-	get: function get (key) {
+	get: {value: function get (key) {
 		return key[this.hash]
-	},
+	}},
 	/**
 	 * @param {*} key
 	 * @return {boolean}
 	 */
-	has: function has (key) {
+	has: {value: function has (key) {
 		return this.hash in key
-	}
+	}}
 })
 
 /**
@@ -135,13 +135,11 @@ function each (iterable, callback) {
 	if (iterable.forEach)
 		return iterable.forEach(callback)
 
-	var value = iterable.next()
 	var index = 0
+	var value = iterable.next(value, index++)
 
-	while (!value.done) {
-		index = callback(value.value, index)
-		value = iterable.next(value.value)
-	}
+	while (!value.done)
+		value = iterable.next(value.value, index = callback(value.value, index))
 }
 
 /**
@@ -177,8 +175,8 @@ function compare (a, b) {
 function is (a, b) {
 	if (a === b)
 		return a !== 0 || 1/a === 1/b
-	else
-		return a !== a && b !== b
+
+	return a !== a && b !== b
 }
 
 /**

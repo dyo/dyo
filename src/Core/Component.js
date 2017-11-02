@@ -99,7 +99,7 @@ function mountComponentElement (element) {
 
 	if (owner[SharedGetInitialState])
 		if (element.state = getLifecycleData(element, SharedGetInitialState, props, state, context))
-			if ((instance.state = state = element.state).constructor === Promise) {
+			if (typeof (state = instance.state = element.state).then === 'function') {
 				if (element.work === SharedWorkMounting)
 					enqueueStatePromise(element, instance, state)
 
@@ -241,12 +241,13 @@ function enqueueStateUpdate (element, instance, state, callback) {
 			enqueueStateUpdate(instance[SymbolElement], instance, state, callback)
 		})
 
-	switch (state.constructor) {
-		case Promise:
-			return enqueueStatePromise(element, instance, state, callback)
-		case Function:
+	if (typeof state.then === 'function')
+		return enqueueStatePromise(element, instance, state, callback)
+
+	switch (typeof state) {
+		case 'function':
 			return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
-		default:
+		case 'object':
 			element.state = state
 	}
 
@@ -357,7 +358,7 @@ function getLifecycleMount (element, name) {
 
 		if (name !== SharedComponentWillUnmount)
 			getLifecycleReturn(element, state)
-		else if (state && state.constructor === Promise)
+		else if (state && typeof state.then === 'function')
 			return state
 	} catch (err) {
 		invokeErrorBoundary(element, err, name, SharedErrorActive)

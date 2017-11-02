@@ -178,13 +178,6 @@ describe('Render', () => {
 		assert.html(container, '<div></div>')
 	})
 
-	it('should render dates', () => {
-		let date = new Date()
-
-		render(h('div', date), container)
-		assert.html(container, '<div>'+date+'</div>')
-	})
-
 	it('should not render unknown objects', () => {
 		assert.throws(() => {
 			render(h('div', null, {}), container)

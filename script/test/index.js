@@ -1,6 +1,16 @@
 let {JSDOM} = require("jsdom")
 let {assert, should, expect} = require('chai')
-let {document, Node, Document, Event} = (new JSDOM('<!DOCTYPE html>')).window
+let {
+  document,
+  location,
+  history,
+  addEventListener,
+  removeEventListener,
+  dispatchEvent,
+  Node,
+  Document,
+  Event
+} = (new JSDOM('<!DOCTYPE html>', {url: 'http://localhost/'})).window
 
 let minify = (markup) => {
 	return markup.replace(/[\n\t]|\s{2,}/g, '')
@@ -78,5 +88,19 @@ let nextTick = (callback, tick) => {
 }
 
 Object.assign(assert, {html, json, trace})
-Object.assign(global, {assert, expect, should, document, nextTick, document, Node, Document, Event})
 Object.assign(global, require('../../dist/umd.js'))
+Object.assign(global, {
+  assert,
+  expect,
+  should,
+  nextTick,
+  document,
+  location,
+  history,
+  addEventListener,
+  removeEventListener,
+  dispatchEvent,
+  Node,
+  Document,
+  Event
+})

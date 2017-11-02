@@ -17,7 +17,6 @@ function createElementFactory (type) {
 	return createElement.bind(null, type)
 }
 
-
 /**
  * @param {Object?} type
  * @param {function} value

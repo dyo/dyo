@@ -375,12 +375,12 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 				if (!(readable.host = element).active)
 					children = mountComponentElement(element)
 	
-				if (!element.state || element.state.constructor !== Promise)
-					return readStreamElement(children, element, stack, readable)
+				if (element.state && typeof element.state.then === 'function')
+					return void element.state
+						.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
+						.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
 	
-				return void element.state
-					.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
-					.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
+				return readStreamElement(children, element, stack, readable)
 			case SharedElementPromise:
 				return void element.type
 					.then(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
