@@ -276,8 +276,12 @@ function setElementChildren (children, element, index) {
 					children.insert(createElementText(element, index), children)
 					break
 				case 'object':
-					if (isArray(element))
-						return setElementSiblings(children, element, index)
+					if (isArray(element)) {
+						for (var i = 0; i < element.length; ++i)
+							setElementChildren(children, element[i], index + i)
+
+						return index + i
+					}
 				default:
 					return setElementChildren(children, createElementUnknown(element, index), index)
 			}
@@ -287,19 +291,6 @@ function setElementChildren (children, element, index) {
 	}
 
 	return index + 1
-}
-
-/**
- * @param {List} children
- * @param {Array} element
- * @param {number} index
- * @return {number}
- */
-function setElementSiblings (children, element, index) {
-	for (var i = 0; i < element.length; ++i)
-		setElementChildren(children, element[i], index + i)
-
-	return index + i
 }
 
 /**

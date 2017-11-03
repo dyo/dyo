@@ -123,9 +123,9 @@ if (typeof require === 'function')
 			require('./cjs')(${internals})
 		} catch (err) {
 			/* istanbul ignore next */
-			console.error(err)
+			printErrorException(err)
 			/* istanbul ignore next */
-			console.error('Something went wrong trying to import the server module')
+			printErrorException('Something went wrong trying to import the server module')
 		}
 	}())
 

@@ -55,7 +55,21 @@ function recoverErrorBoundary (element, snapshot) {
  */
 function reportErrorException (error) {
 	if (!error.defaultPrevented)
-		console.error(error.inspect())
+		printErrorException(error.inspect())
+}
+
+/**
+ * @param {(Error|string)} error
+ */
+function printErrorException (err) {
+	if (typeof console === 'object')
+		return console.error(err)
+
+	if (typeof printErr === 'function')
+		return printErr(err)
+
+	if (typeof print === 'function')
+		return print(err)
 }
 
 /**

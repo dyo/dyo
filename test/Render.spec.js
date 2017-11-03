@@ -182,6 +182,14 @@ describe('Render', () => {
 		assert.throws(() => {
 			render(h('div', null, {}), container)
 		})
+
+		assert.throws(() => {
+			render(h('div', null, Object.create(null)), container)
+		})
+
+		assert.throws(() => {
+			render(h('div', null, new Date()), container)
+		})
 	})
 
 	it('should render svg', () => {

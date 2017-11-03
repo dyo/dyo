@@ -77,7 +77,6 @@ function factory (window, config, require) {
 	var WeakMap = window.WeakMap || WeakHash
 	var Symbol = window.Symbol || function (d) { return hash(d) }
 	var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
-	var console = window.console || {error: window.printErr || window.print}
 	
 	var SymbolFor = Symbol.for || Symbol
 	var SymbolIterator = Symbol.iterator || '@@iterator'
@@ -556,8 +555,12 @@ function factory (window, config, require) {
 						children.insert(createElementText(element, index), children)
 						break
 					case 'object':
-						if (isArray(element))
-							return setElementSiblings(children, element, index)
+						if (isArray(element)) {
+							for (var i = 0; i < element.length; ++i)
+								setElementChildren(children, element[i], index + i)
+	
+							return index + i
+						}
 					default:
 						return setElementChildren(children, createElementUnknown(element, index), index)
 				}
@@ -567,19 +570,6 @@ function factory (window, config, require) {
 		}
 	
 		return index + 1
-	}
-	
-	/**
-	 * @param {List} children
-	 * @param {Array} element
-	 * @param {number} index
-	 * @return {number}
-	 */
-	function setElementSiblings (children, element, index) {
-		for (var i = 0; i < element.length; ++i)
-			setElementChildren(children, element[i], index + i)
-	
-		return index + i
 	}
 	
 	/**
@@ -1858,7 +1848,21 @@ function factory (window, config, require) {
 	 */
 	function reportErrorException (error) {
 		if (!error.defaultPrevented)
-			console.error(error.inspect())
+			printErrorException(error.inspect())
+	}
+	
+	/**
+	 * @param {(Error|string)} error
+	 */
+	function printErrorException (err) {
+		if (typeof console === 'object')
+			return console.error(err)
+	
+		if (typeof printErr === 'function')
+			return printErr(err)
+	
+		if (typeof print === 'function')
+			return print(err)
 	}
 	
 	/**
@@ -2552,9 +2556,9 @@ function factory (window, config, require) {
 				require('./cjs')(exports, Element, getComponentChildren, getComponentElement, getElementDefinition, mountComponentElement, invokeErrorBoundary)
 			} catch (err) {
 				/* istanbul ignore next */
-				console.error(err)
+				logErrorException(err)
 				/* istanbul ignore next */
-				console.error('Something went wrong trying to import the server module')
+				logErrorException('Something went wrong trying to import the server module')
 			}
 		}())
 	

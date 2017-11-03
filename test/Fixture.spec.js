@@ -632,45 +632,47 @@ describe('Fixture', () => {
 
 		global.printErr = () => { stack.push('printErr') }
 		global.print = () => { stack.push('print') }
-		delete require.cache[require.resolve(umdfile)]
 
-		let A = class {
+		Object.defineProperty(global, 'console', {value: undefined})
+
+		render(class {
 			componentDidCatch() {
-				stack.push(true)
+				stack.push(1)
 			}
 			render() {
 				throw new Error('Error!')
 			}
-		}
+		}, container)
 
-		{
-			Object.defineProperty(global, 'console', {value: undefined})
-			let {render} = require(umdfile)
-			Object.defineProperty(global, 'console', {value: defaultConsole})
+		delete global.printErr
 
-			render(A, container)
-			assert.html(container, '')
-			assert.include(stack, 'printErr')
-			assert.include(stack, true)
-			assert.lengthOf(stack, 2)
+		render(class {
+			componentDidCatch() {
+				stack.push(2)
+			}
+			render() {
+				throw new Error('Error!')
+			}
+		}, container)
 
-			delete global.printErr
-			delete require.cache[require.resolve(umdfile)]
-		}
+		delete global.print
 
-		{
-			Object.defineProperty(global, 'console', {value: undefined})
-			let {render} = require(umdfile)
-			Object.defineProperty(global, 'console', {value: defaultConsole})
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch() {
+					stack.push(3)
+				}
+				render() {
+					throw new Error('Error!')
+				}
+			}, container)
+		})
 
-			render(A, container)
-			assert.html(container, '')
-			assert.include(stack, 'print')
-			assert.lengthOf(stack, 4)
+		Object.defineProperty(global, 'console', {value: defaultConsole})
 
-			delete global.print
-			delete require.cache[require.resolve(umdfile)]
-		}
+		assert.html(container, '')
+		assert.sameMembers(stack, ['printErr', 'print', 1, 2, 3])
+		assert.lengthOf(stack, 5)
 
 		assert.equal(global.printErr, undefined)
 		assert.equal(global.print, undefined)
