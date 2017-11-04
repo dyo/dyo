@@ -67,9 +67,6 @@ function printErrorException (err) {
 
 	if (typeof printErr === 'function')
 		return printErr(err)
-
-	if (typeof print === 'function')
-		return print(err)
 }
 
 /**

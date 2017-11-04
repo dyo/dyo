@@ -631,8 +631,6 @@ describe('Fixture', () => {
 		let defaultConsole = global.console
 
 		global.printErr = () => { stack.push('printErr') }
-		global.print = () => { stack.push('print') }
-
 		Object.defineProperty(global, 'console', {value: undefined})
 
 		render(class {
@@ -646,21 +644,10 @@ describe('Fixture', () => {
 
 		delete global.printErr
 
-		render(class {
-			componentDidCatch() {
-				stack.push(2)
-			}
-			render() {
-				throw new Error('Error!')
-			}
-		}, container)
-
-		delete global.print
-
 		assert.doesNotThrow(() => {
 			render(class {
 				componentDidCatch() {
-					stack.push(3)
+					stack.push(2)
 				}
 				render() {
 					throw new Error('Error!')
@@ -671,11 +658,10 @@ describe('Fixture', () => {
 		Object.defineProperty(global, 'console', {value: defaultConsole})
 
 		assert.html(container, '')
-		assert.sameMembers(stack, ['printErr', 'print', 1, 2, 3])
-		assert.lengthOf(stack, 5)
+		assert.sameMembers(stack, ['printErr', 1, 2])
+		assert.lengthOf(stack, 3)
 
 		assert.equal(global.printErr, undefined)
-		assert.equal(global.print, undefined)
 		assert.equal(global.console, defaultConsole)
 	})
 })
