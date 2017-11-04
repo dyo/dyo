@@ -630,6 +630,17 @@ describe('Fixture', () => {
 		let stack = []
 		let defaultConsole = global.console
 
+		Object.defineProperty(global, 'console', {value: {log: () => { stack.push('log') }}})
+
+		render(class {
+			componentDidCatch() {
+				stack.push(0)
+			}
+			render() {
+				throw new Error('Error!')
+			}
+		}, container)
+
 		global.printErr = () => { stack.push('printErr') }
 		Object.defineProperty(global, 'console', {value: undefined})
 
@@ -658,8 +669,8 @@ describe('Fixture', () => {
 		Object.defineProperty(global, 'console', {value: defaultConsole})
 
 		assert.html(container, '')
-		assert.sameMembers(stack, ['printErr', 1, 2])
-		assert.lengthOf(stack, 3)
+		assert.sameMembers(stack, ['log', 'printErr', 0, 1, 2])
+		assert.lengthOf(stack, 5)
 
 		assert.equal(global.printErr, undefined)
 		assert.equal(global.console, defaultConsole)

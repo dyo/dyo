@@ -62,8 +62,8 @@ function reportErrorException (error) {
  * @param {(Error|string)} error
  */
 function printErrorException (err) {
-	if (typeof console === 'object')
-		return console.error(err)
+	if (typeof console !== 'undefined')
+		return (console.error || console.log).call(console, err)
 
 	if (typeof printErr === 'function')
 		return printErr(err)
