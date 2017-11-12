@@ -128,11 +128,25 @@ function flatten (array, output) {
 }
 
 /**
+ * @param {Array} haystack
+ * @param {function} callback
+ * @param {*} thisArg
+ */
+function find (haystack, callback, thisArg) {
+	if (typeof haystack.find === 'function')
+		return haystack.find(callback, thisArg)
+
+  for (var i = 0; i < haystack.length; ++i)
+  	if (callback.call(thisArg, haystack[i], i, haystack))
+  		return haystack[i]
+}
+
+/**
  * @param {Iterable} iterable
  * @param {function} callback
  */
 function each (iterable, callback) {
-	if (iterable.forEach)
+	if (typeof iterable.forEach === 'function')
 		return iterable.forEach(callback)
 
 	var index = 0

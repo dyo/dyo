@@ -1,5 +1,5 @@
 describe('Children', () => {
-	let {map, only, count, forEach, toArray} = Children
+	let {map, only, count, forEach, toArray, find, filter} = Children
 	let index = 0
 	let element = h('h1', '1')
 
@@ -55,5 +55,32 @@ describe('Children', () => {
 	it('should only accept one child', () => {
 		assert.equal(only(element), element, 'only(element)')
 		assert.throws(only, '#Children.only(...): Expected to receive a single element.')
+	})
+
+	it('should filter children', () => {
+		assert.equal(filter(null), null)
+		assert.deepEqual(filter([1, [2, 3]], x => x > 1), [2, 3], 'filter([])')
+		assert.deepEqual(filter(1, x => x === 1), [1], 'filter(number)')
+		assert.deepEqual(filter('1', x => x !== '1'), [], 'filter(string)')
+		assert.equal(filter(element, x => x === element)[0], element, 'filter(element)')
+	})
+
+	it('should find children', () => {
+		assert.equal(find(null), null)
+		assert.equal(find([1, 2, 3], x => x === NaN), undefined)
+		assert.equal(find([1, [2, 3]], x => x === 3), 3, 'find([])')
+		assert.equal(find(1, x => x === 1), 1, 'find(number)')
+		assert.equal(find('1', x => x === '1'), '1', 'find(string)')
+		assert.equal(find(element, x => x === element), element, 'find(element)')
+
+		let defaultFind = Array.prototype.find
+
+		Object.defineProperty(Array.prototype, 'find', {value: undefined})
+
+		assert.equal(find([1, [2, 3]], x => x === 3), 3, 'find([])')
+
+		Object.defineProperty(Array.prototype, 'find', {value: defaultFind})
+
+		assert.equal(Array.prototype.find, defaultFind)
 	})
 })

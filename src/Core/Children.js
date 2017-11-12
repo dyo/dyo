@@ -4,9 +4,11 @@
 var Children = {
 	toArray: childrenArray,
 	forEach: childrenEach,
+	map: childrenMap,
+	filter: childrenFilter,
+	find: childrenFind,
 	count: childrenCount,
-	only: childrenOnly,
-	map: childrenMap
+	only: childrenOnly
 }
 
 /**
@@ -52,6 +54,30 @@ function childrenEach (children, callback, thisArg) {
 function childrenMap (children, callback, thisArg) {
 	if (children != null)
 		return childrenArray(children).map(callback, thisArg)
+
+	return children
+}
+
+/**
+ * @param {*} children
+ * @param {function} callback
+ * @param {*} thisArg
+ */
+function childrenFilter (children, callback, thisArg) {
+	if (children != null)
+		return childrenArray(children).filter(callback, thisArg)
+
+	return children
+}
+
+/**
+ * @param {*} children
+ * @param {function} callback
+ * @param {*} thisArg
+ */
+function childrenFind (children, callback, thisArg) {
+	if (children != null)
+		return find(childrenArray(children), callback, thisArg)
 
 	return children
 }

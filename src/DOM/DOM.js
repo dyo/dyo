@@ -1,12 +1,5 @@
 /**
  * @param {Element} element
- */
-function setDOMContext (element) {
-	element.context = {}
-}
-
-/**
- * @param {Element} element
  * @param {Node} node
  */
 function setDOMHost (element, node) {

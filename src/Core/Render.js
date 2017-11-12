@@ -51,7 +51,6 @@ function mount (element, parent, container, callback, signature) {
 	if (!isValidClientNode(container))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
 
-	setClientContext(parent)
 	setClientNode(parent, container)
 	setClientHost(element, container)
 

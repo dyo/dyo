@@ -128,13 +128,13 @@ toArray(children: any): Array
 		<h2 id=forEach>forEach</h2>
 
 <pre><code>
-forEach(children: any, callback: function)
+forEach(children: any, callback: function, thisArg: any)
 </code></pre>
 
 		<h2 id=map>map</h2>
 
 <pre><code>
-map(children: any, callback: function): Array
+map(children: any, callback: function, thisArg: any): Array
 </code></pre>
 
 		<h2 id=only>only</h2>
@@ -147,6 +147,18 @@ only(children: Element): Element
 
 <pre><code>
 count(children: any): number
+</code></pre>
+
+		<h2 id=filter>filter</h2>
+
+<pre><code>
+filter(children: any, callback: function, thisArg: any): Array
+</code></pre>
+
+		<h2 id=find>find</h2>
+
+<pre><code>
+find(children: any, callback: function, thisArg: any): any
 </code></pre>
 
 		<h1 id=findDOMNode>findDOMNode</h1>

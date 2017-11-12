@@ -215,11 +215,25 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {Array} haystack
+	 * @param {function} callback
+	 * @param {*} thisArg
+	 */
+	function find (haystack, callback, thisArg) {
+		if (typeof haystack.find === 'function')
+			return haystack.find(callback, thisArg)
+	
+	  for (var i = 0; i < haystack.length; ++i)
+	  	if (callback.call(thisArg, haystack[i], i, haystack))
+	  		return haystack[i]
+	}
+	
+	/**
 	 * @param {Iterable} iterable
 	 * @param {function} callback
 	 */
 	function each (iterable, callback) {
-		if (iterable.forEach)
+		if (typeof iterable.forEach === 'function')
 			return iterable.forEach(callback)
 	
 		var index = 0
@@ -1970,9 +1984,11 @@ function factory (window, config, require) {
 	var Children = {
 		toArray: childrenArray,
 		forEach: childrenEach,
+		map: childrenMap,
+		filter: childrenFilter,
+		find: childrenFind,
 		count: childrenCount,
-		only: childrenOnly,
-		map: childrenMap
+		only: childrenOnly
 	}
 	
 	/**
@@ -2018,6 +2034,30 @@ function factory (window, config, require) {
 	function childrenMap (children, callback, thisArg) {
 		if (children != null)
 			return childrenArray(children).map(callback, thisArg)
+	
+		return children
+	}
+	
+	/**
+	 * @param {*} children
+	 * @param {function} callback
+	 * @param {*} thisArg
+	 */
+	function childrenFilter (children, callback, thisArg) {
+		if (children != null)
+			return childrenArray(children).filter(callback, thisArg)
+	
+		return children
+	}
+	
+	/**
+	 * @param {*} children
+	 * @param {function} callback
+	 * @param {*} thisArg
+	 */
+	function childrenFind (children, callback, thisArg) {
+		if (children != null)
+			return find(childrenArray(children), callback, thisArg)
 	
 		return children
 	}
@@ -2094,7 +2134,6 @@ function factory (window, config, require) {
 		if (!isValidClientNode(container))
 			invariant(SharedSiteRender, 'Target container is not a DOM element')
 	
-		setClientContext(parent)
 		setClientNode(parent, container)
 		setClientHost(element, container)
 	
@@ -2113,13 +2152,6 @@ function factory (window, config, require) {
 	 */
 	function unmountComponentAtNode (container) {
 		return isValidClientHost(container) && !render(null, container)
-	}
-	
-	/**
-	 * @param {Element} element
-	 */
-	function setDOMContext (element) {
-		element.context = {}
 	}
 	
 	/**
@@ -2503,7 +2535,6 @@ function factory (window, config, require) {
 	
 	var client = new WeakMap()
 	
-	var setClientContext = createClientFactory('setContext', setDOMContext)
 	var setClientHost = createClientFactory('setHost', setDOMHost)
 	var setClientNode = createClientFactory('setNode', setDOMNode)
 	var setClientContent = createClientFactory('setContent', setDOMContent)
@@ -2553,9 +2584,9 @@ function factory (window, config, require) {
 				require('./cjs')(exports, Element, getComponentChildren, getComponentElement, getElementDefinition, mountComponentElement, invokeErrorBoundary)
 			} catch (err) {
 				/* istanbul ignore next */
-				logErrorException(err)
+				printErrorException(err)
 				/* istanbul ignore next */
-				logErrorException('Something went wrong trying to import the server module')
+				printErrorException('Something went wrong trying to import the server module')
 			}
 		}())
 	
