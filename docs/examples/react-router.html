@@ -14,6 +14,7 @@
 	</script>
 	<script src=https://unpkg.com/react-router-dom/umd/react-router-dom.js></script>
 	<script>
+		var {render, h} = dio
 	  var {BrowserRouter, Route, Link} = ReactRouterDOM
 	  var Router = BrowserRouter
 
@@ -72,6 +73,6 @@
 	    h('div', h('h3', 'ID:', match.params.id))
 	  )
 
-	  dio.render(h(BasicExample), document.body)
+	  render(h(BasicExample), document.body)
 	</script>
 </html>

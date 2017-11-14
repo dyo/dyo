@@ -256,6 +256,7 @@
 
 	<script>
 		const container = document.getElementById('root');
+		const {render, h} = dio
 
 		function bootstrap () {
 			'use strict';
@@ -300,7 +301,7 @@
 				data = ENV.generateData().toArray();
 				perfMonitor.startProfile("render");
 
-				dio.render(h(Monster), container);
+				render(h(Monster), container);
 
 				perfMonitor.endProfile("render");
 				requestAnimationFrame(loop);

@@ -14,6 +14,7 @@
 	</script>
 	<script src=https://unpkg.com/styled-components@2.1.2/dist/styled-components.js></script>
 	<script>
+		var {render, h} = dio
 		var {ThemeProvider, withTheme} = styled
 		styled = styled.default
 
@@ -21,7 +22,7 @@
 		var Child = styled.div`color: ${props => props.theme.color};`
 		var theme = {color: 'papayawhip'}
 
-		dio.render(
+		render(
 		  h(ThemeProvider, {theme: theme},
 		  	h(Parent,
 		  		h(Child,

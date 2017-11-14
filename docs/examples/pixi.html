@@ -11,7 +11,8 @@
 	<script src=../../dist/umd.js></script>
 	<script src=https://cdn.jsdelivr.net/npm/pixi.js@4.5.6/dist/pixi.min.js></script>
 	<script>
-		var app = null
+		var app = new PIXI.Application(300, 300, {backgroundColor : 0x1099bb})
+
 		var getNode = (element) => element.DOM.node
 
 		var PixiClient = dio.createFactory({
@@ -26,9 +27,6 @@
 				}
 			},
 			getDocument: () => {
-				if (!app)
-					document.body.appendChild((app = new PIXI.Application(300, 300, {backgroundColor : 0x1099bb})).view)
-
 				return app.stage
 			},
 			getProps: (element) => {
@@ -57,10 +55,12 @@
 				return new PIXI.Container()
 			}
 		})
+
+		document.body.appendChild(app.view)
 	</script>
 	<script>
 		var {h, render} = PixiClient
-		var bunny = 'http://pixijs.github.io/examples/required/assets/basics/bunny.png'
+		var bunny = 'http://pixijs.io/examples/required/assets/basics/bunny.png'
 
 		render([
 			'This is a PixiJS text',

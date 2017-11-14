@@ -1,9 +1,9 @@
-/*! DIO 8.0.3 @license MIT */
+/*! DIO 8.1.0-alpha.0 @license MIT */
 
 ;(function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.0.3'}
+	var exports = {version: '8.1.0-alpha.0'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -2288,15 +2288,29 @@ function factory (window, config, require) {
 					break
 			default:
 				if (!xmlns && name in getDOMNode(element))
-					return setDOMProperty(element, name, value)
+					return setDOMPropsValue(element, name, value, true)
 		}
 	
+		setDOMPropsValue(element, name, value, false)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {string} name
+	 * @param {*} value
+	 * @param {boolean} signature
+	 */
+	function setDOMPropsValue (element, name, value, signature) {
 		switch (typeof value) {
+			case 'string':
+			case 'number':
+			case 'boolean':
+				return signature ? setDOMProperty(element, name, value, '') : setDOMAttribute(element, name, value, '')
 			case 'object':
-			case 'function':
-				return setDOMProperty(element, name, value)
+				if (value)
+					return setDOMProperty(element, name, assign({}, getDOMNode(element)[name], value))
 			default:
-				setDOMAttribute(element, name, value, '')
+				setDOMProperty(element, name, value)
 		}
 	}
 	

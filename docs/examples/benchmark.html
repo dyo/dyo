@@ -6,7 +6,8 @@
   <meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Benchmark</title>
   <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css>
-  <script src=https://unpkg.com/dio.js></script>
+  <!-- <script src=https://unpkg.com/dio.js></script> -->
+  <script src=../../dist/umd.js></script>
 </head>
   <div id=root></div>
 
@@ -119,7 +120,7 @@
 
   <script>
   const {Store, startMeasure, stopMeasure} = store;
-  const {version} = dio;
+  const {render, version, h} = dio;
 
   class Main {
     printDuration() {
@@ -227,7 +228,7 @@
         ),
         h('table', {className: 'table table-hover table-striped test-data'},
           h('tbody', {onClick: this.handleClick}, data.map(({id, label}) => {
-          		return h('tr', {key: id, className: id === selected ? 'danger' : ''},
+          		return h('tr', {className: id === selected ? 'danger' : ''},
           			h('td', {className: 'col-md-1'}, id),
           			h('td', {className: 'col-md-4'},
           				h('a', {value: {id: id, fn: this.select}}, label)
@@ -247,7 +248,7 @@
     }
   }
 
-  dio.render(h(Main), document.getElementById('root'));
+  render(h(Main), document.getElementById('root'));
   </script>
 </body>
 </html>

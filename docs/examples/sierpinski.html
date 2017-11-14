@@ -19,6 +19,8 @@
     </style>
 
     <script>
+      var {render, h} = dio
+
       var dotStyle = {
         position: 'absolute',
         background: '#61dafb',
@@ -144,7 +146,7 @@
 
       var start = new Date().getTime();
       function update() {
-        dio.render(
+        render(
           h(ExampleApplication, {elapsed: new Date().getTime() - start}),
           document.getElementById('root')
         );

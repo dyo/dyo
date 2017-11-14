@@ -493,4 +493,33 @@ describe('Render', () => {
 		container.appendChild(fragment)
 		assert.html(container, '<div>foo</div>')
  	})
+
+ 	it('should render non-primitive attributes', () => {
+ 		let container = document.createElement('div')
+ 		let fn = () => {}
+
+ 		render(h('h1', {custom: {first: 1}}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.deepEqual(container.firstChild.custom, {first: 1})
+
+ 		render(h('h1', {custom: {first: 1, second: 2}}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.deepEqual(container.firstChild.custom, {first: 1, second: 2})
+
+ 		render(h('h1', {custom: null}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.equal(container.firstChild.custom, '')
+
+ 		render(h('h1', {custom: {first: 1}}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.deepEqual(container.firstChild.custom, {first: 1})
+
+ 		render(h('h1', {custom: fn}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.equal(container.firstChild.custom, fn)
+
+ 		render(h('h1', {custom: {first: 1, second: 2}}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.deepEqual(container.firstChild.custom, {first: 1, second: 2})
+ 	})
 })
