@@ -2288,7 +2288,7 @@ function factory (window, config, require) {
 	
 		switch (typeof value) {
 			case 'object':
-				return setDOMProperty(element, name, value && assign({}, getDOMNode(element)[name], value))
+				return setDOMProperty(element, name, getDOMProps(element)[name])
 			case 'string':
 			case 'number':
 			case 'boolean':
