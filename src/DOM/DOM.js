@@ -108,9 +108,7 @@ function setDOMProps (element, name, value, xmlns) {
 		case 'class':
 			return setDOMAttribute(element, 'class', value, '')
 		case 'style':
-			if (typeof value === 'object')
-				return setDOMStyle(element, value)
-			break
+			return typeof value === 'object' ? setDOMStyle(element, value) : setDOMAttribute(element, name, value, '')
 		case 'xlink:href':
 			return setDOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
 		case 'innerHTML':
@@ -129,30 +127,17 @@ function setDOMProps (element, name, value, xmlns) {
 		case 'width':
 		case 'height':
 			if (element.type === 'img')
-				break
-		default:
-			if (!xmlns && name in getDOMNode(element))
-				return setDOMPropsValue(element, name, value, true)
+				return setDOMAttribute(element, name, value, '')
 	}
 
-	setDOMPropsValue(element, name, value, false)
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {*} value
- * @param {boolean} signature
- */
-function setDOMPropsValue (element, name, value, signature) {
 	switch (typeof value) {
+		case 'object':
+			return setDOMProperty(element, name, value && assign({}, getDOMNode(element)[name], value))
 		case 'string':
 		case 'number':
 		case 'boolean':
-			return signature ? setDOMProperty(element, name, value, '') : setDOMAttribute(element, name, value, '')
-		case 'object':
-			if (value)
-				return setDOMProperty(element, name, assign({}, getDOMNode(element)[name], value))
+			if (xmlns || !(name in getDOMNode(element)))
+				return setDOMAttribute(element, name, value, '')
 		default:
 			setDOMProperty(element, name, value)
 	}
