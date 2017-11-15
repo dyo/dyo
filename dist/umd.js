@@ -1,9 +1,9 @@
-/*! DIO 8.1.0-alpha.1 @license MIT */
+/*! DIO 8.1.0-alpha.2 @license MIT */
 
 ;(function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.1.0-alpha.1'}
+	var exports = {version: '8.1.0-alpha.2'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -2288,7 +2288,7 @@ function factory (window, config, require) {
 	
 		switch (typeof value) {
 			case 'object':
-				return setDOMProperty(element, name, getDOMProps(element)[name])
+				return setDOMProperty(element, name, value && getDOMProps(element)[name])
 			case 'string':
 			case 'number':
 			case 'boolean':

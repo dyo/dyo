@@ -132,7 +132,7 @@ function setDOMProps (element, name, value, xmlns) {
 
 	switch (typeof value) {
 		case 'object':
-			return setDOMProperty(element, name, getDOMProps(element)[name])
+			return setDOMProperty(element, name, value && getDOMProps(element)[name])
 		case 'string':
 		case 'number':
 		case 'boolean':
