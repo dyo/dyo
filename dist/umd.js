@@ -1,9 +1,9 @@
-/*! DIO 8.1.0-alpha.2 @license MIT */
+/*! DIO 8.1.0-alpha.3 @license MIT */
 
 ;(function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.1.0-alpha.2'}
+	var exports = {version: '8.1.0-alpha.3'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -342,14 +342,19 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {Element} snapshot
 	 * @return {Element}
 	 */
-	function createElementIntermediate () {
-		return new Element(SharedElementIntermediate)
+	function createElementIntermediate (snapshot) {
+		var element = new Element(SharedElementIntermediate)
+	
+		element.children = snapshot
+	
+		return element
 	}
 	
 	/**
-	 * @param {(string|number|Date)} content
+	 * @param {(string|number)} content
 	 * @param {*} key
 	 * @return {Element}
 	 */
@@ -561,7 +566,7 @@ function factory (window, config, require) {
 				if (element.key === null)
 					element.key = SharedKeySigil + index
 	
-				children.insert(element.active === false ? element : createElementImmutable(element), children)
+				children.insert(element.next === null ? element : createElementImmutable(element), children)
 			} else {
 				switch (typeof element) {
 					case 'string':
@@ -592,6 +597,16 @@ function factory (window, config, require) {
 	function setElementBoundary (children) {
 		children.insert(createElementEmpty(SharedKeyHead), children.next)
 		children.insert(createElementEmpty(SharedKeyTail), children)
+	}
+	
+	/**
+	 * @param {List} children
+	 * @param {Element} element
+	 * @param {Element} snapshot
+	 */
+	function replaceElementChildren (children, element, snapshot) {
+		children.insert(snapshot, element)
+		children.remove(element)
 	}
 	
 	/**
@@ -647,7 +662,7 @@ function factory (window, config, require) {
 		if (parent.id < SharedElementIntermediate)
 			return getElementSibling(parent, parent.parent, direction)
 	
-		return createElementIntermediate()
+		return createElementIntermediate(element)
 	}
 	
 	/**
@@ -756,7 +771,7 @@ function factory (window, config, require) {
 		}), SymbolComponent, {value: SymbolComponent})
 	
 		if (!hasOwnProperty.call(prototype, SharedSiteRender))
-			defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
+			defineProperty(prototype, SharedSiteRender, {value: noop})
 	
 		return prototype
 	}
@@ -803,8 +818,7 @@ function factory (window, config, require) {
 	
 			instance = owner = getComponentInstance(element, owner)
 		} else {
-			instance = new Component()
-			instance.render = owner
+			defineProperty(instance = new Component(), SharedSiteRender, {value: owner})
 		}
 	
 		element.owner = owner
@@ -926,10 +940,10 @@ function factory (window, config, require) {
 				enqueueComponentUpdate(element, instance, callback, signature)
 			})
 	
-		if (!element.active)
-			instance.state = assign({}, instance.state, element.state)
-		else if (element.id === SharedElementComponent)
+		if (element.active)
 			updateComponent(element, element, signature)
+		else
+			instance.state = assign({}, instance.state, element.state)
 	
 		if (callback)
 			enqueueStateCallback(element, instance, callback)
@@ -1163,6 +1177,29 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {Element} element
+	 * @param {Element} snapshot
+	 */
+	function commitReplace (element, snapshot) {
+		var host = element.host
+		var parent = element.parent
+	
+		commitMount(snapshot, element, parent, host, SharedMountInsert, SharedMountCommit)
+		commitUnmount(element, parent, SharedMountRemove)
+	
+		if (host.children !== element) {
+			replaceElementChildren(parent.children, element, snapshot)
+		} else {
+			host.children = snapshot
+	
+			while (getClientNode(host) === getClientNode(element)) {
+				setClientNode(host, getClientNode(snapshot))
+				host = host.host
+			}
+		}
+	}
+	
+	/**
+	 * @param {Element} element
 	 * @param {Element} sibling
 	 * @param {Element} host
 	 * @param {number} operation
@@ -1299,15 +1336,13 @@ function factory (window, config, require) {
 	 */
 	function commitWillUnmount (element, parent, host, signature) {
 		if (element.id === SharedElementComponent)
-			return commitWillUnmount(element.children, parent, merge({}, host), signature)
-	
-		setClientNode(element, getClientNode(host))
+			return commitWillUnmount(element.children, parent, host, signature)
 	
 		return function (err) {
 			commitUnmount(element, parent, SharedMountRemove)
 	
 			if (signature === SharedErrorActive)
-				invokeErrorBoundary(element.host, err, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
+				invokeErrorBoundary(host, err, SharedSiteAsync+':'+SharedComponentWillUnmount, signature)
 		}
 	}
 	
@@ -1322,28 +1357,6 @@ function factory (window, config, require) {
 		}).catch(function (err) {
 			invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteRender, SharedErrorActive)
 		})
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element} snapshot
-	 * @param {Element} parent
-	 * @param {Element} host
-	 */
-	function commitReplace (element, snapshot, parent, host) {
-		commitMount(snapshot, element, parent, host, SharedMountInsert, SharedMountCommit)
-		commitUnmount(element, parent, SharedMountRemove)
-	
-		for (var key in snapshot)
-			switch (key) {
-				case 'DOM':
-					merge(element[key], snapshot[key])
-				case SharedSiblingNext:
-				case SharedSiblingPrevious:
-					break
-				default:
-					element[key] = snapshot[key]
-			}
 	}
 	
 	/**
@@ -1427,11 +1440,11 @@ function factory (window, config, require) {
 				case SharedElementEmpty:
 					return setClientNode(element, createClientEmpty(element))
 				case SharedElementComponent:
-					element.DOM = element.children.DOM
+					return setClientNode(element, getClientNode(element.children))
 				case SharedElementPortal:
 					break
 				default:
-					element.DOM = getElementBoundary(element, SharedSiblingNext).DOM
+					setClientNode(element, getClientNode(getElementBoundary(element, SharedSiblingNext)))
 			}
 		} catch (err) {
 			return commitCreate(commitRebase(element, invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorActive)))
@@ -1489,11 +1502,11 @@ function factory (window, config, require) {
 			return commitRemove(element, getElementParent(parent))
 	
 		if (element.id > SharedElementIntermediate)
-			removeClientNode(element, parent)
-		else
-			element.children.forEach(function (children) {
-				commitRemove(getElementDescription(children), element)
-			})
+			return removeClientNode(element, parent)
+	
+		element.children.forEach(function (children) {
+			commitRemove(getElementDescription(children), element)
+		})
 	}
 	
 	/**
@@ -1513,6 +1526,9 @@ function factory (window, config, require) {
 				return commitInsert(element, getElementDescription(sibling), parent)
 			case SharedElementPortal:
 				return commitInsert(element, getElementSibling(sibling, parent, SharedSiblingNext), parent)
+			case SharedElementFragment:
+			case SharedElementPromise:
+				return commitInsert(element, getElementBoundary(sibling, SharedSiblingNext), parent)
 			case SharedElementIntermediate:
 				return commitAppend(element, parent)
 		}
@@ -1605,7 +1621,7 @@ function factory (window, config, require) {
 			return commitWillReconcile(element, snapshot)
 	
 		if (element.key !== snapshot.key || element.type !== snapshot.type)
-			return commitReplace(element, snapshot, element.parent, element.host)
+			return commitReplace(element, snapshot)
 	
 		switch (element.id) {
 			case SharedElementPortal:
@@ -1646,30 +1662,43 @@ function factory (window, config, require) {
 		var newHead = siblings.next
 		var oldTail = children.prev
 		var newTail = siblings.prev
+		var oldNext = oldHead
+		var newNext = newHead
+		var oldPrev = oldTail
+		var newPrev = newTail
 	
 		// step 1, prefix/suffix
 		outer: while (true) {
 			while (oldHead.key === newHead.key) {
+				oldNext = oldHead.next
+				newNext = newHead.next
+	
 				reconcileElement(oldHead, newHead)
+	
 				++oldPos
 				++newPos
 	
 				if (oldPos > oldEnd || newPos > newEnd)
 					break outer
 	
-				oldHead = oldHead.next
-				newHead = newHead.next
+				oldHead = oldNext
+				newHead = newNext
 			}
+	
 			while (oldTail.key === newTail.key) {
+				oldPrev = oldTail.prev
+				newPrev = newTail.prev
+	
 				reconcileElement(oldTail, newTail)
+	
 				--oldEnd
 				--newEnd
 	
 				if (oldPos > oldEnd || newPos > newEnd)
 					break outer
 	
-				oldTail = oldTail.prev
-				newTail = newTail.prev
+				oldTail = oldPrev
+				newTail = newPrev
 			}
 			break
 		}
@@ -1680,7 +1709,7 @@ function factory (window, config, require) {
 				if (newEnd < newLength)
 					signature = SharedMountInsert
 				else if ((oldTail = children, oldLength > 0))
-					newHead = newHead.next
+					newHead = newNext
 	
 				while (newPos++ < newEnd) {
 					newHead = (oldHead = newHead).next
@@ -1689,7 +1718,7 @@ function factory (window, config, require) {
 			}
 		} else if (newPos > newEnd++) {
 			if (newEnd === newLength && newLength > 0)
-				oldHead = oldHead.next
+				oldHead = oldNext
 	
 			while (oldPos++ < oldEnd) {
 				oldHead = (newHead = oldHead).next
@@ -2091,9 +2120,9 @@ function factory (window, config, require) {
 			return render(element, getClientDocument(), callback)
 	
 		if (isValidClientHost(container))
-			update(getClientHost(container), getElementDefinition(element), callback)
-		else
-			mount(element, createElementIntermediate(), container, callback, SharedMountCommit)
+			return update(getClientHost(container), getElementDefinition(element), callback)
+	
+		mount(element, container, callback, SharedMountCommit)
 	}
 	
 	/**
@@ -2105,7 +2134,26 @@ function factory (window, config, require) {
 		if (!container)
 			return hydrate(element, getClientDocument(), callback)
 	
-		mount(element, createElementIntermediate(), container, callback, SharedMountQuery)
+		mount(element, container, callback, SharedMountQuery)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Node} container
+	 * @param {function} callback
+	 * @param {number} signature
+	 */
+	function mount (element, container, callback, signature) {
+		if (!isValidElement(element))
+			return mount(getElementDefinition(element), container, callback, signature)
+	
+		if (!isValidClientNode(container))
+			invariant(SharedSiteRender, 'Target container is not a DOM element')
+	
+		mountComponentAtNode(element, createElementIntermediate(element), container, signature)
+	
+		if (callback)
+			getLifecycleCallback(element, callback)
 	}
 	
 	/**
@@ -2124,26 +2172,16 @@ function factory (window, config, require) {
 	 * @param {Element} element
 	 * @param {Element} parent
 	 * @param {Node} container
-	 * @param {function} callback
 	 * @param {number} signature
 	 */
-	function mount (element, parent, container, callback, signature) {
-		if (!isValidElement(element))
-			return mount(getElementDefinition(element), parent, container, callback, signature)
-	
-		if (!isValidClientNode(container))
-			invariant(SharedSiteRender, 'Target container is not a DOM element')
-	
+	function mountComponentAtNode (element, parent, container, signature) {
 		setClientNode(parent, container)
-		setClientHost(element, container)
+		setClientHost(parent, container)
 	
 		if (signature === SharedMountCommit)
-			setClientContent(parent, element)
+			setClientContent(parent)
 	
 		commitMount(element, element, parent, parent, SharedMountAppend, signature)
-	
-		if (callback)
-			getLifecycleCallback(element, callback)
 	}
 	
 	/**
@@ -2159,7 +2197,7 @@ function factory (window, config, require) {
 	 * @param {Node} node
 	 */
 	function setDOMHost (element, node) {
-		client.set(node, element)
+		weakClientMap.set(node, element)
 	}
 	
 	/**
@@ -2167,15 +2205,14 @@ function factory (window, config, require) {
 	 * @param {Node} node
 	 */
 	function setDOMNode (element, node) {
-		element.DOM = {node: node}
+		element.DOM = node
 	}
 	
 	/**
-	 * @param {Element} element
-	 * @param {Element} children
+	 * @param {Element} parent
 	 */
-	function setDOMContent (element, children) {
-		getDOMNode(element).textContent = ''
+	function setDOMContent (parent) {
+		getDOMNode(parent).textContent = ''
 	}
 	
 	/**
@@ -2324,7 +2361,7 @@ function factory (window, config, require) {
 	 * @return {Element}
 	 */
 	function getDOMHost (node) {
-		return client.get(node)
+		return weakClientMap.get(node).children
 	}
 	
 	/**
@@ -2332,7 +2369,7 @@ function factory (window, config, require) {
 	 * @return {Node}
 	 */
 	function getDOMNode (element) {
-		return element.DOM.node
+		return element.DOM
 	}
 	
 	/**
@@ -2461,7 +2498,7 @@ function factory (window, config, require) {
 	 * @return {boolean}
 	 */
 	function isValidDOMHost (node) {
-		return client.has(node)
+		return weakClientMap.has(node)
 	}
 	
 	/**
@@ -2532,7 +2569,7 @@ function factory (window, config, require) {
 		return document.createTextNode('')
 	}
 	
-	var client = new WeakMap()
+	var weakClientMap = new WeakMap()
 	
 	var setClientHost = createClientFactory('setHost', setDOMHost)
 	var setClientNode = createClientFactory('setNode', setDOMNode)

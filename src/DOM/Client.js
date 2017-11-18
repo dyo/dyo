@@ -1,4 +1,4 @@
-var client = new WeakMap()
+var weakClientMap = new WeakMap()
 
 var setClientHost = createClientFactory('setHost', setDOMHost)
 var setClientNode = createClientFactory('setNode', setDOMNode)

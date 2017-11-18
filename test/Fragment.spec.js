@@ -1,4 +1,4 @@
-describe('List', () => {
+describe('Fragment', () => {
 	let container = document.createElement('div')
 	let List = class {
 		render() {

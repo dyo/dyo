@@ -46,7 +46,7 @@ function reconcileElement (element, snapshot) {
 		return commitWillReconcile(element, snapshot)
 
 	if (element.key !== snapshot.key || element.type !== snapshot.type)
-		return commitReplace(element, snapshot, element.parent, element.host)
+		return commitReplace(element, snapshot)
 
 	switch (element.id) {
 		case SharedElementPortal:
@@ -87,30 +87,43 @@ function reconcileChildren (element, snapshot) {
 	var newHead = siblings.next
 	var oldTail = children.prev
 	var newTail = siblings.prev
+	var oldNext = oldHead
+	var newNext = newHead
+	var oldPrev = oldTail
+	var newPrev = newTail
 
 	// step 1, prefix/suffix
 	outer: while (true) {
 		while (oldHead.key === newHead.key) {
+			oldNext = oldHead.next
+			newNext = newHead.next
+
 			reconcileElement(oldHead, newHead)
+
 			++oldPos
 			++newPos
 
 			if (oldPos > oldEnd || newPos > newEnd)
 				break outer
 
-			oldHead = oldHead.next
-			newHead = newHead.next
+			oldHead = oldNext
+			newHead = newNext
 		}
+
 		while (oldTail.key === newTail.key) {
+			oldPrev = oldTail.prev
+			newPrev = newTail.prev
+
 			reconcileElement(oldTail, newTail)
+
 			--oldEnd
 			--newEnd
 
 			if (oldPos > oldEnd || newPos > newEnd)
 				break outer
 
-			oldTail = oldTail.prev
-			newTail = newTail.prev
+			oldTail = oldPrev
+			newTail = newPrev
 		}
 		break
 	}
@@ -121,7 +134,7 @@ function reconcileChildren (element, snapshot) {
 			if (newEnd < newLength)
 				signature = SharedMountInsert
 			else if ((oldTail = children, oldLength > 0))
-				newHead = newHead.next
+				newHead = newNext
 
 			while (newPos++ < newEnd) {
 				newHead = (oldHead = newHead).next
@@ -130,7 +143,7 @@ function reconcileChildren (element, snapshot) {
 		}
 	} else if (newPos > newEnd++) {
 		if (newEnd === newLength && newLength > 0)
-			oldHead = oldHead.next
+			oldHead = oldNext
 
 		while (oldPos++ < oldEnd) {
 			oldHead = (newHead = oldHead).next

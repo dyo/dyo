@@ -3,7 +3,7 @@
  * @param {Node} node
  */
 function setDOMHost (element, node) {
-	client.set(node, element)
+	weakClientMap.set(node, element)
 }
 
 /**
@@ -11,15 +11,14 @@ function setDOMHost (element, node) {
  * @param {Node} node
  */
 function setDOMNode (element, node) {
-	element.DOM = {node: node}
+	element.DOM = node
 }
 
 /**
- * @param {Element} element
- * @param {Element} children
+ * @param {Element} parent
  */
-function setDOMContent (element, children) {
-	getDOMNode(element).textContent = ''
+function setDOMContent (parent) {
+	getDOMNode(parent).textContent = ''
 }
 
 /**
@@ -168,7 +167,7 @@ function setDOMInnerHTML (element, name, value, nodes) {
  * @return {Element}
  */
 function getDOMHost (node) {
-	return client.get(node)
+	return weakClientMap.get(node).children
 }
 
 /**
@@ -176,7 +175,7 @@ function getDOMHost (node) {
  * @return {Node}
  */
 function getDOMNode (element) {
-	return element.DOM.node
+	return element.DOM
 }
 
 /**
@@ -305,7 +304,7 @@ function getDOMQuery (element, parent, previous, next) {
  * @return {boolean}
  */
 function isValidDOMHost (node) {
-	return client.has(node)
+	return weakClientMap.has(node)
 }
 
 /**

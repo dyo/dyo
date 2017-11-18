@@ -36,7 +36,7 @@ function createComponent (prototype) {
 	}), SymbolComponent, {value: SymbolComponent})
 
 	if (!hasOwnProperty.call(prototype, SharedSiteRender))
-		defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
+		defineProperty(prototype, SharedSiteRender, {value: noop})
 
 	return prototype
 }
@@ -83,8 +83,7 @@ function mountComponentElement (element) {
 
 		instance = owner = getComponentInstance(element, owner)
 	} else {
-		instance = new Component()
-		instance.render = owner
+		defineProperty(instance = new Component(), SharedSiteRender, {value: owner})
 	}
 
 	element.owner = owner
@@ -206,10 +205,10 @@ function enqueueComponentUpdate (element, instance, callback, signature) {
 			enqueueComponentUpdate(element, instance, callback, signature)
 		})
 
-	if (!element.active)
-		instance.state = assign({}, instance.state, element.state)
-	else if (element.id === SharedElementComponent)
+	if (element.active)
 		updateComponent(element, element, signature)
+	else
+		instance.state = assign({}, instance.state, element.state)
 
 	if (callback)
 		enqueueStateCallback(element, instance, callback)

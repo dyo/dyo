@@ -4,11 +4,11 @@
 var Readable = require('stream').Readable
 
 /**
- * @param {function=}
+ * @param {function=} callback
  * @return {Stream}
  */
 function toStream (callback) {
-	var readable = new Stream(this)
+	var readable = new Stream(this, this.host)
 
 	switch (typeof callback) {
 		case 'string':
@@ -25,10 +25,11 @@ function toStream (callback) {
 
 /**
  * @constructor
- * @param {Element}
+ * @param {Element} element
+ * @param {Element?} host
  */
-function Stream (element) {
-	this.host = null
+function Stream (element, host) {
+	this.host = host
 	this.stack = [element]
 
 	Readable.call(this)

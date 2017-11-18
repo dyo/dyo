@@ -2,17 +2,17 @@ describe('Factory', () => {
 	let rootContainer = {}
 	let container = {}
 
-	let setNode = (element, node) => { element.DOM = {node: node} }
-	let setContent = (element, children) => {
-		getNode(element).toString = () => children.toString()
-		getNode(element).toJSON = () => children.toJSON()
+	let setNode = (element, node) => { element.DOM = node }
+	let setContent = (element) => {
+		getNode(element).toString = () => element.children.toString()
+		getNode(element).toJSON = () => element.children.toJSON()
 	}
 
 	let setText = (element, value) => {}
 	let setEvent = (element, type) => {}
 	let setProps = (element, name, value, xmlns) => {}
 
-	let getNode = (element) => { return element.DOM.node }
+	let getNode = (element) => { return element.DOM }
 	let getDocument = () => { return rootContainer }
 	let getTarget = (event) => { return {} }
 	let getType = (element, xmlns) => { return xmlns }

@@ -560,4 +560,79 @@ describe('Reconcile', () => {
 			</ul>
 		`)
 	})
+
+	it('[replace] - 0, 1 -> 0, 1, 2*', () => {
+		render(
+			h('ul',
+				h('li', {key: 0}, 0),
+				h('li', {key: 1}, 1)
+			),
+		container)
+
+		render(
+			h('ul',
+				h('li', {key: 0}, 0),
+				h('li', {key: 1}, 1),
+				h('h2', {key: 2}, 2)
+			),
+		container)
+
+		assert.html(container, `
+			<ul>
+				<li>0</li>
+				<li>1</li>
+				<h2>2</h2>
+			</ul>
+		`)
+	})
+
+	it('[replace] - 0, 1 -> 0, 1*, 2', () => {
+		render(
+			h('ul',
+				h('li', {key: 0}, 0),
+				h('li', {key: 1}, 1)
+			),
+		container)
+
+		render(
+			h('ul',
+				h('li', {key: 0}, 0),
+				h('h2', {key: 1}, 1),
+				h('li', {key: 2}, 2)
+			),
+		container)
+
+		assert.html(container, `
+			<ul>
+				<li>0</li>
+				<h2>1</h2>
+				<li>2</li>
+			</ul>
+		`)
+	})
+
+	it('[replace] - 0, 1 -> 0*, 1, 2', () => {
+		render(
+			h('ul',
+				h('li', {key: 0}, 0),
+				h('li', {key: 1}, 1)
+			),
+		container)
+
+		render(
+			h('ul',
+				h('h2', {key: 0}, 0),
+				h('li', {key: 1}, 1),
+				h('li', {key: 2}, 2)
+			),
+		container)
+
+		assert.html(container, `
+			<ul>
+				<h2>0</h2>
+				<li>1</li>
+				<li>2</li>
+			</ul>
+		`)
+	})
 })

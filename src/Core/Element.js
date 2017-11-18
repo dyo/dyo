@@ -49,14 +49,19 @@ function createElementImmutable (snapshot) {
 }
 
 /**
+ * @param {Element} snapshot
  * @return {Element}
  */
-function createElementIntermediate () {
-	return new Element(SharedElementIntermediate)
+function createElementIntermediate (snapshot) {
+	var element = new Element(SharedElementIntermediate)
+
+	element.children = snapshot
+
+	return element
 }
 
 /**
- * @param {(string|number|Date)} content
+ * @param {(string|number)} content
  * @param {*} key
  * @return {Element}
  */
@@ -268,7 +273,7 @@ function setElementChildren (children, element, index) {
 			if (element.key === null)
 				element.key = SharedKeySigil + index
 
-			children.insert(element.active === false ? element : createElementImmutable(element), children)
+			children.insert(element.next === null ? element : createElementImmutable(element), children)
 		} else {
 			switch (typeof element) {
 				case 'string':
@@ -299,6 +304,16 @@ function setElementChildren (children, element, index) {
 function setElementBoundary (children) {
 	children.insert(createElementEmpty(SharedKeyHead), children.next)
 	children.insert(createElementEmpty(SharedKeyTail), children)
+}
+
+/**
+ * @param {List} children
+ * @param {Element} element
+ * @param {Element} snapshot
+ */
+function replaceElementChildren (children, element, snapshot) {
+	children.insert(snapshot, element)
+	children.remove(element)
 }
 
 /**
@@ -354,7 +369,7 @@ function getElementSibling (element, parent, direction) {
 	if (parent.id < SharedElementIntermediate)
 		return getElementSibling(parent, parent.parent, direction)
 
-	return createElementIntermediate()
+	return createElementIntermediate(element)
 }
 
 /**

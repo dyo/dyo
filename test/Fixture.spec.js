@@ -120,7 +120,7 @@ describe('Fixture', () => {
 		})
 	})
 
-	it('should handle handle mutable elements', (done) => {
+	it('should handle static elements', (done) => {
 		let container = document.createElement('div')
 		let without = (array, filtered) => array.filter(n => n != filtered)
 
@@ -163,6 +163,33 @@ describe('Fixture', () => {
 				done()
 			})
 		})
+	})
+
+	it('should handle replacing static elements', () => {
+		let container = document.createElement('div')
+		let element = h('span')
+		let A = class {
+			render({showText}) {
+				return h('div', showText ? 'test' : element)
+			}
+		}
+
+		render(h(A, {showText: false}), container)
+		assert.html(container, `<div><span></span></div>`)
+
+		render(h(A, {showText: true}), container)
+		assert.html(container, `<div>test</div>`)
+
+		render(h(A, {showText: false}), container)
+		assert.html(container, `<div><span></span></div>`)
+	})
+
+	it('should handle duplicate static children', () => {
+		let container = document.createElement('div')
+		let element = h('h1', 'x')
+
+		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
+		assert.html(container, `<div><h2>x</h2><h1>x</h1><h1>x</h1><h2>y</h2></div>`)
 	})
 
 	it('should not remove children from empty children', () => {
