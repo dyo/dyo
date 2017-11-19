@@ -192,6 +192,14 @@ describe('Fixture', () => {
 		assert.html(container, `<div><h2>x</h2><h1>x</h1><h1>x</h1><h2>y</h2></div>`)
 	})
 
+	it('should handle duplicate static(keyed) children', () => {
+		let container = document.createElement('div')
+		let element = h('h1', {key: 'x'}, 'x')
+
+		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
+		assert.html(container, `<div><h2>x</h2><h1>x</h1><h1>x</h1><h2>y</h2></div>`)
+	})
+
 	it('should not remove children from empty children', () => {
 		let element = h('h1', 1)
 		let children = element.children
