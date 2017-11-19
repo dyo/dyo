@@ -1,9 +1,9 @@
-/*! DIO 8.1.0-rc @license MIT */
+/*! DIO 8.1.0 @license MIT */
 
 ;(function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.1.0-rc'}
+	var exports = {version: '8.1.0'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2

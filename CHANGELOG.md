@@ -14,11 +14,11 @@ The `createFactory` API can be used to create element factories and additionally
 
 #### Children.find
 
-The `Children.find` API works like the Array.find API in that it allows you find a single element from the opaque children data-structure.
+The `Children.find` API works like the `Array.find` API in that it allows you find a single element from the opaque children data-structure.
 
 #### Children.filter
 
-The `Children.filter` API works like the Array.filter API in that it allows you filter element from the opaque children data-structure.
+The `Children.filter` API works like the `Array.filter` API in that it allows you filter elements from the opaque children data-structure.
 
 #### Reconciler Improvements
 
