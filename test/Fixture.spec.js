@@ -189,7 +189,35 @@ describe('Fixture', () => {
 		let element = h('h1', 'x')
 
 		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
-		assert.html(container, `<div><h2>x</h2><h1>x</h1><h1>x</h1><h2>y</h2></div>`)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+
+		render(h('div', h('h2', 'x'), element, h('h2', 'z'), element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h2>z</h2>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+
+		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
 	})
 
 	it('should handle duplicate static(keyed) children', () => {
@@ -197,7 +225,35 @@ describe('Fixture', () => {
 		let element = h('h1', {key: 'x'}, 'x')
 
 		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
-		assert.html(container, `<div><h2>x</h2><h1>x</h1><h1>x</h1><h2>y</h2></div>`)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+
+		render(h('div', h('h2', 'x'), element, h('h2', 'z'), element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h2>z</h2>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+
+		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
 	})
 
 	it('should not remove children from empty children', () => {
