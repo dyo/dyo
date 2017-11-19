@@ -1,0 +1,318 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Factory API – DIO</title>
+	<link rel=stylesheet href=../assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=../assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=../assets/images/favicon-small.png sizes=16x16>
+</head>
+<body>
+	<a href=../ title=index class=logo>
+		<img src=../assets/images/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=../>Index</a>
+			<a href=../introduction>Introduction</a>
+			<a href=../api>API</a>
+			<a href=../misc>Miscellaneous</a>
+			<a href=../examples>Examples</a>
+			<a href=https://github.com/thysultan/dio.js>GitHub</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Factory API</h1>
+
+		<h1 id=element>Element</h1>
+
+<pre><code>
+createFactory(
+	type: function|string|Element
+):  (...args) => h(type, ...args)
+</code></pre>
+
+		<h1 id=client>Client</h1>
+
+<pre><code>
+createFactory(
+	type: {...}
+): object
+</code></pre>
+
+		<p>
+			A client for the DOM is shipped by default, however the <code>createFactory</code> API allows us to also create different clients that might target different platforms.
+		</p>
+
+		<p>
+			The creation of a client is assumed when an object argument supplied to <code>createFactory</code> does not satisfy the conditions for an element factory.
+		</p>
+
+		<p>
+			This object should implement the methods it needs to render to the desired target enviroment.
+		</p>
+
+		<blockquote>
+			 A polyfill for <code>setTimeout</code> is required if the platforms runtime does not provide an implementation.
+		</blockquote>
+
+		<h2 id=setHost>setHost</h2>
+
+		<p>
+			Called when mounting to a host container. Use this to setup references that you can retrieve in <a href=#getHost>getHost</a>.
+		</p>
+
+<pre><code>
+setHost: (element: Element, node: object) => void
+</code></pre>
+
+		<h2 id=setNode>setNode</h2>
+
+		<p>
+			Called when assigning an elements node. Use this to set references to instances created in <a href=#createElement>createElement</a>, <a href=#createText>createText</a> and <a href=#createEmpty>createEmpty</a>
+		</p>
+
+<pre><code>
+setNode: (element: Element, node: object) => void
+</code></pre>
+
+		<h2 id=setContent>setContent</h2>
+
+		<p>
+			Called when initialiazing a mount container. Use this to setup the native view before a mount.
+		</p>
+
+<pre><code>
+setContent: (parent: Element) => void
+</code></pre>
+
+		<h2 id=setText>setText</h2>
+
+		<p>
+			Called when updating a text nodes value has changed. Use this to update a native text instance value.
+		</p>
+
+<pre><code>
+setText: (element: Element, value: string) => void
+</code></pre>
+
+		<h2 id=setEvent>setEvent</h2>
+
+		<p>
+			Called when assigning an elements event listeners. Use this to setup native event listeners. To dispatch events call <code>Element.handleEvent</code> with an <a href=https://developer.mozilla.org/en-US/docs/Web/API/Event>Event</a> object. The <code>type</code> of the event is the only required property in the event object.
+		</p>
+
+<pre><code>
+setEvent: (element: Element, type: string) => void
+</code></pre>
+
+		<h2 id=setProps>setProps</h2>
+
+		<p>
+			Called when setting an elements individual properties. Use this to update or initialize properties.
+		</p>
+
+<pre><code>
+setProps: (element: Element, name: string, value: any, xmlns: string) => void
+</code></pre>
+
+		<h2 id=getHost>getHost</h2>
+
+		<p>
+			Called when retrieving a host container. Use this to retrieve host elements assigned in <a href=#setHost>setHost</a>.
+		</p>
+
+<pre><code>
+getHost: (node: node) => Element
+</code></pre>
+
+		<h2 id=getNode>getNode</h2>
+
+		<p>
+			Called when retrieving an elements node. Use this to retrieve references to instances assigned in <a href=#setNode>setNode</a>.
+		</p>
+
+<pre><code>
+getNode: (element: Element) => Node
+</code></pre>
+
+		<h2 id=getDocument>getDocument</h2>
+
+		<p>
+			Called when retrieving a default container. Use this to setup a default container when a container is not explicity passed to <a href=top-level.html#render>render</a>
+		</p>
+
+<pre><code>
+getDocument: () => Node
+</code></pre>
+
+		<h2 id=getTarget>getTarget</h2>
+
+		<p>
+		Called when retrieving a node from an event object.
+	</p>
+
+<pre><code>
+getTarget: (event) => Node
+</code></pre>
+
+		<h2 id=getType>getType</h2>
+
+		<p>
+			Called when retrieving an element namespace, before <a href=#createElement>createElement</a>, <a href=#createText>createText</a> or <a href=#createEmpty>createEmpty</a>. Use this to setup a new element namespace based on an elements type or props.
+		</p>
+
+<pre><code>
+getType: (element, xmlns) => string
+</code></pre>
+
+		<h2 id=getProps>getProps</h2>
+
+		<p>
+			Called when retrieving an element props, after <a href=#createElement>createElement</a> but before <a href=#setProps>setProps</a>.
+		</p>
+
+<pre><code>
+getProps: (element) => object
+</code></pre>
+
+		<h2 id=getPortal>getPortal</h2>
+
+		<p>
+			Called when retrieving a portal instance. Use this to query or find a portal instance.
+		</p>
+
+<pre><code>
+getPortal: (element) => node
+</code></pre>
+
+		<h2 id=getQuery>getQuery</h2>
+
+		<p>
+			Called when hydrating a container. Use this to find the existing instance.
+		</p>
+
+<pre><code>
+getQuery: (
+	element: Element,
+	parent: Element,
+	previous: Element,
+	next: Element
+) => node
+</code></pre>
+
+		<h2 id=isValidHost>isValidHost</h2>
+
+		<p>
+			Called when validating a host container. Use this to determine if the container has a host element associated with it.
+		</p>
+
+<pre><code>
+isValidHost: (node: object) => boolean
+</code></pre>
+
+		<h2 id=isValidNode>isValidNode</h2>
+
+		<p>
+			Called when validating a instance object.
+		</p>
+
+<pre><code>
+isValidNode: (node: object) => boolean
+</code></pre>
+
+		<h2 id=isValidEvent>isValidEvent</h2>
+
+		<p>
+			Called when validating an event object.
+		</p>
+
+<pre><code>
+isValidEvent: (event: object) => boolean
+</code></pre>
+
+		<h2 id=removeNode>removeNode</h2>
+
+		<p>
+			Called when removing an <a href=#createElement>element</a>, <a href=#createText>text</a> or <a href=#createEmpty>empty</a> instance.
+		</p>
+
+<pre><code>
+removeNode: (element: Element, parent: Element) => void
+</code></pre>
+
+		<h2 id=insertNode>insertNode</h2>
+
+		<p>
+			Called when inserting an <a href=#createElement>element</a>, <a href=#createText>text</a> or <a href=#createEmpty>empty</a> instance.
+		</p>
+
+<pre><code>
+insertNode: (element: Element, sibling: Element,parent: Element) => void
+</code></pre>
+
+		<h2 id=appendNode>appendNode</h2>
+
+		<p>
+			Called when appending an <a href=#createElement>element</a>, <a href=#createText>text</a> or <a href=#createEmpty>empty</a> instance.
+		</p>
+
+<pre><code>
+appendNode: (element: Element, parent: Element) => void
+</code></pre>
+
+		<h2 id=createElement>createElement</h2>
+
+		<p>
+			Called when creating a element instance.
+		</p>
+
+<pre><code>
+createElement: (element: Element) => Node
+</code></pre>
+
+
+		<h2 id=createText>createText</h2>
+
+		<p>
+			Called when creating a text instance.
+		</p>
+
+<pre><code>
+createText: (element: Element) => Node
+</code></pre>
+
+		<h2 id=createEmpty>createEmpty</h2>
+
+		<p>
+			Called when creating a empty instance.
+		</p>
+
+<pre><code>
+createEmpty: (element: Element) => Node
+</code></pre>
+
+		<h2 id=createExport>createExport</h2>
+
+		<p>
+			Called when creating a client, before <a href=top-level.html#createFactory>createFactory</a> returns a clients exports. Use this to define the clients public API.
+		</p>
+
+<pre><code>
+createExport: (
+	exports: object,
+	Element: function,
+	getComponentChildren: function,
+	getComponentElement: function,
+	getElementDefinition: function,
+	mountComponentElement: function,
+	invokeErrorBoundary: function
+) => object
+</code></pre>
+
+	</article>
+	<script src=../assets/javascript/index.js></script>
+</body>
+</html>

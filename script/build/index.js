@@ -13,8 +13,7 @@ const strict = `/* eslint-disable */'use strict'`
 const filenames = {
 	umd: 'umd.js',
 	esm: 'esm.js',
-	node: 'node.js',
-	bridge: 'bridge.js'
+	cjs: 'cjs.js'
 }
 
 const shared = [
@@ -23,19 +22,21 @@ const shared = [
 
 const core = [
 	...shared,
-	'../../src/Core/Utility.js',
 	'../../src/Core/Constant.js',
+	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
 	'../../src/Core/Component.js',
 	'../../src/Core/Commit.js',
 	'../../src/Core/Reconcile.js',
 	'../../src/Core/Event.js',
 	'../../src/Core/Error.js',
+	'../../src/Core/Find.js',
+	'../../src/Core/Factory.js',
 	'../../src/Core/Children.js',
-	'../../src/Core/Render.js'
+	'../../src/Core/Render.js',
 ]
 
-const node = [
+const cjs = [
 	...shared,
 	'../../src/Server/Utility.js',
 	'../../src/Server/String.js',
@@ -46,6 +47,7 @@ const node = [
 
 const dom = [
 	'../../src/DOM/DOM.js',
+	'../../src/DOM/Client.js'
 ]
 
 const umd = [
@@ -56,10 +58,6 @@ const umd = [
 const esm = [
 	...core,
 	...dom
-]
-
-const bridge = [
-	...core
 ]
 
 const server = `
@@ -92,56 +90,49 @@ const pad = (content, tabs) => {
 
 const factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
 const api = `
-version: version,
-render: render,
-hydrate: hydrate,
-Component: Component,
-PureComponent: PureComponent,
-Children: Children,
-findDOMNode: findDOMNode,
-unmountComponentAtNode: unmountComponentAtNode,
-cloneElement: cloneElement,
-isValidElement: isValidElement,
-createPortal: createPortal,
-createElement: createElement,
-h: window.h = createElement`
+exports.render = render
+exports.hydrate = hydrate
+exports.Component = Component
+exports.Fragment = SymbolFragment
+exports.PureComponent = PureComponent
+exports.Children = Children
+exports.findDOMNode = findDOMNode
+exports.unmountComponentAtNode = unmountComponentAtNode
+exports.createFactory = createFactory
+exports.cloneElement = cloneElement
+exports.isValidElement = isValidElement
+exports.createPortal = createPortal
+exports.createElement = createElement
+exports.h = createElement
+`
 
-const DOM = ((file) => {
-	let content = fs.readFileSync(path.join(__dirname, file), 'utf8').trim()
-			content = content.replace(/^((?!^\s*function[^'"])[\S\s])*$/gm, '')
-			content = content.replace(/function\s*(\w+)\s*.*/g, '$1,').replace(/\s/g, '')
-
-	return content.split(',')
-})(dom[0])
-
-const platform = `
+const internals = `
 exports,
 Element,
-mountComponentElement,
 getComponentChildren,
-invokeErrorBoundary,
-getElementDefinition
+getComponentElement,
+getElementDefinition,
+mountComponentElement,
+invokeErrorBoundary
 `.replace(/\s+/g, ' ').trim()
 
-const template = (type) => {
-	switch (type) {
-		case 'bridge':
-			return `if (typeof __require__ !== 'object')
-	return function (r) {
-		factory(window, r)
-	}`
-		default:
-			return `if (typeof __require__ === 'function')
+const template = `
+if (typeof require === 'function')
 	(function () {
 		try {
-			__require__('./node')(${(platform)})
+			require('./cjs')(${internals})
 		} catch (err) {
 			/* istanbul ignore next */
-			console.error(err+'\\nSomething went wrong trying to import the server module.')
+			printErrorException(err)
+			/* istanbul ignore next */
+			printErrorException('Something went wrong trying to import the server module')
 		}
-	}())`
-	}
+	}())
+
+if (typeof config === 'object' && typeof config.createExport === 'function') {
+	return config.createExport(${internals}) || exports
 }
+`.trim()
 
 const parse = (head, body, tail, factory) => {
 	return factory.replace(search,'\n'+pad(head+body+tail))
@@ -152,16 +143,16 @@ const builder = (file) => {
 }
 
 const wrapper = (module, content, factory, version, license) => {
-	var head = "var version = '"+version+"'\n\n"
-	var expo = '\n'+'var exports = {\n'+pad(api.trim())+'\n}'+'\n\n'
+	var head = `var exports = {version: '${version}'}\n\n`
+	var expo = '\n'+api.trim()+'\n\n'
 	var temp = '\n\nreturn exports'
-	var tail = expo+template('main')+temp
+	var tail = expo+template+temp
 
 	switch (module) {
-		case 'node': {
+		case 'cjs': {
 			return {
 				head: comment(version, license),
-				body: 'module.exports = function ('+(platform)+') {'+strict+
+				body: 'module.exports = function ('+(internals)+') {'+strict+
 					'\n\n'+pad(content.trim()+'\n\n'+server.trim())+'\n}',
 				tail: ''
 			}
@@ -175,20 +166,6 @@ const wrapper = (module, content, factory, version, license) => {
 								.replace(/[\S\s]*\{|\s*\}|,|\S\s*h:[\S\s]*|window.*h.*=\s*/g, '')
 								.replace(/(\w+):\s*(\w+)/g, 'export const $1 = dio.$2 ')
 								.trim()
-			}
-		case 'bridge':
-			tail = DOM.map((func) => {
-				if (content.indexOf(func) > -1 && func) {
-					return `var ${func} = typeof require.${func} === 'function' ? require.${func} : noop`
-				}
-			}).filter(Boolean).join('\n')+'\n'
-
-			tail = '\n'+tail+expo+template('bridge')+temp
-
-			return {
-				head: comment(version, license),
-				body: parse(head, content, tail, factory),
-				tail: ''
 			}
 		default:
 			return {
@@ -215,7 +192,12 @@ const bundle = (module, files, location) => {
 
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 
-	minify(UglifyJS, {content, filename, module, filepath})
+	switch (module) {
+		case 'cjs':
+			break
+		default:
+			minify(UglifyJS, {content, filename, module, filepath})
+	}
 }
 
 const minify = (uglify, {content, module, filename, filepath}) => {
@@ -269,13 +251,9 @@ const gzipsize = (content) => {
 
 const resolve = () => {
 	bundle('umd', umd, '../../dist/')
-	// bundle('esm', esm, '../../dist/') // future? webpack seems to be shipping esm module incorrectly ATM
-	bundle('node', node, '../../dist/')
-	// bundle('bridge', bridge, '../../dist/') // for another release/another package
+	bundle('cjs', cjs, '../../dist/')
 
-	console.log(
-		'build complete..'
-	)
+	console.log('build complete..')
 }
 
 if ((process.argv.pop()+'').indexOf('watch') < 0) {

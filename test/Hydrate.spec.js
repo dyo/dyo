@@ -219,9 +219,25 @@ describe('Hydrate', () => {
 		assert.html(container, '<div>abc</div>')
 
 		hydrate(h('div', A, B, C), container)
+		assert.html(container, '<div>abc</div>')
+
 		assert.equal(container.firstChild.childNodes.length, 3)
 		assert.equal(container.firstChild.firstChild.nodeValue, 'a')
 		assert.equal(container.firstChild.firstChild.nextSibling.nodeValue, 'b')
 		assert.equal(container.firstChild.lastChild.nodeValue, 'c')
+	})
+
+	it('should hydrate adjacent text nodes with a differing lengths', () => {
+		let container = document.createElement('div')
+		var A = () => h('div', 'abcabcabc', 'xxx')
+
+		container.innerHTML = '<div>buy now</div>'
+
+		hydrate(A, container)
+		assert.html(container, '<div>abcabcabcxxx</div>')
+
+		assert.equal(container.firstChild.childNodes.length, 2)
+		assert.equal(container.firstChild.firstChild.nodeValue, 'abcabcabc')
+		assert.equal(container.firstChild.lastChild.nodeValue, 'xxx')
 	})
 })

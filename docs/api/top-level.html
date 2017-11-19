@@ -26,6 +26,12 @@
 	<article>
 		<h1>Top-Level API</h1>
 
+<h1 id=version>version</h1>
+
+<pre><code>
+version: string
+</code></pre>
+
 		<h1 id=render>render</h1>
 
 <pre><code>
@@ -122,13 +128,13 @@ toArray(children: any): Array
 		<h2 id=forEach>forEach</h2>
 
 <pre><code>
-forEach(children: any, callback: function)
+forEach(children: any, callback: function, thisArg: any)
 </code></pre>
 
 		<h2 id=map>map</h2>
 
 <pre><code>
-map(children: any, callback: function): Array
+map(children: any, callback: function, thisArg: any): Array
 </code></pre>
 
 		<h2 id=only>only</h2>
@@ -143,6 +149,18 @@ only(children: Element): Element
 count(children: any): number
 </code></pre>
 
+		<h2 id=filter>filter</h2>
+
+<pre><code>
+filter(children: any, callback: function, thisArg: any): Array
+</code></pre>
+
+		<h2 id=find>find</h2>
+
+<pre><code>
+find(children: any, callback: function, thisArg: any): any
+</code></pre>
+
 		<h1 id=findDOMNode>findDOMNode</h1>
 
 <pre><code>
@@ -155,10 +173,16 @@ findDOMNode(instance: Component|Element|Node|Event): Node
 unmountComponentAtNode(container: Node): boolean
 </code></pre>
 
-		<h1 id=version>version</h1>
+		<h1 id=createFactory>createFactory</h1>
+
+		<p>
+			Facilitates the creation of <a href=factory.html#element>Element</a> and <a href=factory.html#client>Client</a> factories.
+		</p>
 
 <pre><code>
-version: string
+createFactory(
+	type: function|string|Element|{...}
+): function|object
 </code></pre>
 	</article>
 	<script src=../assets/javascript/index.js></script>

@@ -1,5 +1,5 @@
 describe('Error', () => {
-	it('should catch an invalid render error', (done) => {
+	it('should catch an invalid element(string) render error', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -14,12 +14,55 @@ describe('Error', () => {
 		}, container)
 
 		nextTick(() => {
+			assert.html(container, '')
 			assert.lengthOf(stack, 1)
 			done()
 		})
 	})
 
-	it('should unmount a corrupted tree', (done) => {
+	it('should catch an invalid element(number) render error', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(err)
+			}
+			render() {
+				return h(1)
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should catch an invalid element(symbol) render error', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(err)
+			}
+			render() {
+				return h(Symbol('invalid.Element'))
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should unmount a corrupted element tree', (done) => {
 		let container = document.createElement('div')
 
 		render(class A {

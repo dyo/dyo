@@ -5,7 +5,7 @@
 	<meta http-equiv=X-UA-Compatible content=IE=edge>
 	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>DBmonster</title>
-	<script src=https://unpkg.com/dio.js></script>
+	<script src=https://unpkg.com/dio.js@next></script>
 	<script src=https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js></script>
 </head>
 <body>
@@ -256,6 +256,7 @@
 
 	<script>
 		const container = document.getElementById('root');
+		const {render, h} = dio
 
 		function bootstrap () {
 			'use strict';
@@ -300,7 +301,7 @@
 				data = ENV.generateData().toArray();
 				perfMonitor.startProfile("render");
 
-				dio.render(h(Monster), container);
+				render(h(Monster), container);
 
 				perfMonitor.endProfile("render");
 				requestAnimationFrame(loop);

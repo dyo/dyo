@@ -1,5 +1,8 @@
 describe('Fixture', () => {
-	it('should reconcile no-op', () => {
+	let umdfile = '../dist/umd'
+	let pkgfile = '../package.json'
+
+	it('should no-op reconcile', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let X = () => h('div', 'x')
@@ -60,7 +63,7 @@ describe('Fixture', () => {
 		assert.html(container, '<div><div>y</div><div></div></div>')
 	})
 
-	it('should handle calling forceUpdate from Render', (done) => {
+	it('should handle calling forceUpdate from render', (done) => {
 		let container = document.createElement('div')
 		let C = class {
 			render() {
@@ -117,7 +120,7 @@ describe('Fixture', () => {
 		})
 	})
 
-	it('should handle handle mutable elements', (done) => {
+	it('should handle static elements', (done) => {
 		let container = document.createElement('div')
 		let without = (array, filtered) => array.filter(n => n != filtered)
 
@@ -160,6 +163,97 @@ describe('Fixture', () => {
 				done()
 			})
 		})
+	})
+
+	it('should handle replacing static elements', () => {
+		let container = document.createElement('div')
+		let element = h('span')
+		let A = class {
+			render({showText}) {
+				return h('div', showText ? 'test' : element)
+			}
+		}
+
+		render(h(A, {showText: false}), container)
+		assert.html(container, `<div><span></span></div>`)
+
+		render(h(A, {showText: true}), container)
+		assert.html(container, `<div>test</div>`)
+
+		render(h(A, {showText: false}), container)
+		assert.html(container, `<div><span></span></div>`)
+	})
+
+	it('should handle duplicate static children', () => {
+		let container = document.createElement('div')
+		let element = h('h1', 'x')
+
+		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+
+		render(h('div', h('h2', 'x'), element, h('h2', 'z'), element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h2>z</h2>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+
+		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+	})
+
+	it('should handle duplicate static(keyed) children', () => {
+		let container = document.createElement('div')
+		let element = h('h1', {key: 'x'}, 'x')
+
+		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+
+		render(h('div', h('h2', 'x'), element, h('h2', 'z'), element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h2>z</h2>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
+
+		render(h('div', h('h2', 'x'), element, element, h('h2', 'y')), container)
+		assert.html(container, `
+			<div>
+				<h2>x</h2>
+				<h1>x</h1>
+				<h1>x</h1>
+				<h2>y</h2>
+			</div>
+		`)
 	})
 
 	it('should not remove children from empty children', () => {
@@ -316,12 +410,11 @@ describe('Fixture', () => {
 	it('should fall back to polyfills', () => {
 		let container = document.createElement('div')
 		let stack = []
-		let file = '../dist/umd'
 		let WeakMap = global.WeakMap
 		let Symbol = global.Symbol
 		let Promise = global.Promise
 
-		delete require.cache[require.resolve(file)]
+		delete require.cache[require.resolve(umdfile)]
 
 		global.WeakMap = undefined
 		global.Symbol = undefined
@@ -331,7 +424,7 @@ describe('Fixture', () => {
 		assert.equal(global.Symbol, undefined)
 		assert.equal(global.Promise, undefined)
 
-		let {render, h} = require(file)
+		let {render, h} = require(umdfile)
 		let A = class {
 			componentWillUnmount() {
 				stack.push('should not push')
@@ -353,9 +446,7 @@ describe('Fixture', () => {
 		global.Symbol = Symbol
 		global.Promise = Promise
 
-		delete require.cache[require.resolve(file)]
-
-		Object.assign(global, require(file))
+		delete require.cache[require.resolve(umdfile)]
 
 		assert.equal(global.WeakMap, WeakMap)
 		assert.equal(global.Symbol, Symbol)
@@ -365,19 +456,314 @@ describe('Fixture', () => {
 	it('should not hit the require branch when bundling with webpack', () => {
 		let container = document.createElement('div')
 		let stack = []
-		let file = '../dist/umd'
 
-		delete require.cache[require.resolve(file)]
+		delete require.cache[require.resolve(umdfile)]
 
 		global.__webpack_require__ = () => stack.push('should not require')
 
-		let dio = require(file)
+		assert.doesNotHaveAnyKeys(require(umdfile), ['renderToString', 'renderToNodeStream'])
 		assert.lengthOf(stack, 0)
 
 		global.__webpack_require__ = undefined
 
-		delete require.cache[require.resolve(file)]
+		delete require.cache[require.resolve(umdfile)]
+	})
 
-		Object.assign(global, require(file))
+	it('should establish communication between parent and children with events & context', () => {
+		let container = document.createElement('div')
+
+		let Option = class {
+		  render({children, value}, state, {active, open, handleEvent}) {
+		    if (active === value || open === true)
+		      return h('div', {onClick: handleEvent, active: active === value}, children)
+		  }
+		}
+
+		let Select = class {
+		  getChildContext(props, {open, active}) {
+		    return {open: open, active: active, handleEvent: this}
+		  }
+		  getInitialState({value}) {
+		    return {open: false, active: value}
+		  }
+		  handleEvent(e, {value}, state, {open}) {
+		    return {open: !open, active: value}
+		  }
+		  render({style, children}) {
+		    return h('div', children)
+		  }
+		}
+
+		let First = () => h(Option, {value: 1}, 'First')
+		let Second = () => h(Option, {value: 2}, 'Second')
+
+		render(h(Select, {value: 1},
+		  h(First),
+		  h(Second),
+		  h(Option, {value: 3}, 'Third')
+		), container)
+
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+			</div>
+		`)
+
+		let select = container.firstChild
+		let event = new Event('click')
+
+		select.firstChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+				<div>Second</div>
+				<div>Third</div>
+			</div>
+		`)
+
+		select.firstChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+			</div>
+		`)
+
+		select.firstChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+				<div>Second</div>
+				<div>Third</div>
+			</div>
+		`)
+
+		select.firstChild.nextSibling.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">Second</div>
+			</div>
+		`)
+
+		select.firstChild.nextSibling.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div>First</div>
+				<div active="">Second</div>
+				<div>Third</div>
+			</div>
+		`)
+
+		select.lastChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">Third</div>
+			</div>
+		`)
+
+		select.lastChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div>First</div>
+				<div>Second</div>
+				<div active="">Third</div>
+			</div>
+		`)
+
+		select.firstChild.dispatchEvent(event)
+		assert.html(container, `
+			<div>
+				<div active="">First</div>
+			</div>
+		`)
+	})
+
+	it('should establish communication between multple components to implement a router', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		class Route {
+			render({path, children}, state, {active, match}) {
+				return active === path ? h(children, {match: match}) : null
+			}
+		}
+
+		class Link {
+			render(props) {
+				return h('a', Object.assign({}, props, {onClick: this}))
+			}
+			handleEvent(event, {href, title}, state, {router}) {
+				event.preventDefault()
+				router.pushState({}, title, href, event)
+			}
+		}
+
+		class Router {
+			componentWillMount() {
+				addEventListener('popstate', this)
+			}
+			componentWillUnmount() {
+				stack.push(true)
+				removeEventListener('popstate', this)
+			}
+			getChildContext() {
+				return {
+					router: this,
+					active: this.getActive(),
+					match: null
+				}
+			}
+			render({children}) {
+				return children
+			}
+			getActive() {
+				return location.pathname
+			}
+			pushState (state, title, href, event) {
+				history.pushState(state, title, href)
+				this.handleEvent(event)
+			}
+			handleEvent() {
+				this.forceUpdate()
+			}
+		}
+
+		let BasicExample = () => (
+		  h(Router,
+		    h('div',
+		      h('ul',
+		      	h('li', h(Link, {href: '/'}, 'Home')),
+		        h('li', h(Link, {href: '/about'}, 'About')),
+		        h('li', h(Link, {href: '/topic'}, 'Topic'))
+		      ),
+		      h('hr'),
+		      h(Route, {path: '/'}, Home),
+		      h(Route, {path: '/about'}, About),
+		      h(Route, {path: '/topic'}, Topic)
+		    )
+		  )
+		)
+
+		let Home = () => h('div', h('h2', 'Home'))
+		let About = () => h('div', h('h2', 'About'))
+		let Topic = () => h('div', h('h2', 'Topic'))
+
+		render(BasicExample, container)
+
+		let ref = container.firstChild.firstChild.firstChild
+		let homeAnchor = ref.firstChild
+		let aboutAnchor = ref.nextSibling.firstChild
+		let topicAnchor = ref.nextSibling.nextSibling.firstChild
+
+		homeAnchor.dispatchEvent(new Event('click'))
+		assert.html(container, `
+			<div>
+				<ul>
+					<li><a href="/">Home</a></li>
+					<li><a href="/about">About</a></li>
+					<li><a href="/topic">Topic</a></li>
+				</ul>
+				<hr>
+				<div>
+					<h2>Home</h2>
+				</div>
+			</div>
+		`)
+
+		aboutAnchor.dispatchEvent(new Event('click'))
+		assert.html(container, `
+			<div>
+				<ul>
+					<li><a href="/">Home</a></li>
+					<li><a href="/about">About</a></li>
+					<li><a href="/topic">Topic</a></li>
+				</ul>
+				<hr>
+				<div>
+					<h2>About</h2>
+				</div>
+			</div>
+		`)
+
+		topicAnchor.dispatchEvent(new Event('click'))
+		assert.html(container, `
+			<div>
+				<ul>
+					<li><a href="/">Home</a></li>
+					<li><a href="/about">About</a></li>
+					<li><a href="/topic">Topic</a></li>
+				</ul>
+				<hr>
+				<div>
+					<h2>Topic</h2>
+				</div>
+			</div>
+		`)
+
+		unmountComponentAtNode(container)
+		assert.html(container, '')
+		assert.include(stack, true)
+		assert.lengthOf(stack, 1)
+
+		dispatchEvent(new Event('popstate'))
+		assert.lengthOf(stack, 1)
+	})
+
+	it('should match version with package.json', () => {
+		delete require.cache[require.resolve(pkgfile)]
+
+		assert.equal(require(pkgfile).version, version)
+
+		delete require.cache[require.resolve(pkgfile)]
+	})
+
+	it('should handle errors in enviroments that do not have a console implemention', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let defaultConsole = global.console
+
+		Object.defineProperty(global, 'console', {value: {log: () => { stack.push('log') }}})
+
+		render(class {
+			componentDidCatch() {
+				stack.push(0)
+			}
+			render() {
+				throw new Error('Error!')
+			}
+		}, container)
+
+		global.printErr = () => { stack.push('printErr') }
+		Object.defineProperty(global, 'console', {value: undefined})
+
+		render(class {
+			componentDidCatch() {
+				stack.push(1)
+			}
+			render() {
+				throw new Error('Error!')
+			}
+		}, container)
+
+		delete global.printErr
+
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch() {
+					stack.push(2)
+				}
+				render() {
+					throw new Error('Error!')
+				}
+			}, container)
+		})
+
+		Object.defineProperty(global, 'console', {value: defaultConsole})
+
+		assert.html(container, '')
+		assert.sameMembers(stack, ['log', 'printErr', 0, 1, 2])
+		assert.lengthOf(stack, 5)
+
+		assert.equal(global.printErr, undefined)
+		assert.equal(global.console, defaultConsole)
 	})
 })

@@ -29,27 +29,28 @@ function getTextEncode (character) {
  * @param {string}
  */
 function isVoidType (type) {
-	switch ((type+'').toLowerCase()) {
-		case 'area':
-		case 'base':
-		case 'br':
-		case 'meta':
-		case 'source':
-		case 'keygen':
-		case 'img':
-		case 'col':
-		case 'embed':
-		case 'wbr':
-		case 'track':
-		case 'param':
-		case 'link':
-		case 'input':
-		case 'hr':
-		case '!doctype':
-			return true
-		default:
-			return false
-	}
+	if (typeof type === 'string')
+		switch (type.toLowerCase()) {
+			case 'area':
+			case 'base':
+			case 'br':
+			case 'meta':
+			case 'source':
+			case 'keygen':
+			case 'img':
+			case 'col':
+			case 'embed':
+			case 'wbr':
+			case 'track':
+			case 'param':
+			case 'link':
+			case 'input':
+			case 'hr':
+			case '!doctype':
+				return true
+		}
+
+	return false
 }
 
 /**

@@ -44,10 +44,12 @@ var SharedSiteAsync = 'async'
 var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
 
-var SharedTypeKey = '.'
+var SharedKeySigil = '&|'
+var SharedKeyHead = '&head'
+var SharedKeyTail = '&tail'
+
 var SharedTypeEmpty = '#empty'
 var SharedTypeText = '#text'
-var SharedTypeFragment = '#fragment'
 
 var SharedComponentWillMount = 'componentWillMount'
 var SharedComponentDidMount = 'componentDidMount'

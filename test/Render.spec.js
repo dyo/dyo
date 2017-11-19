@@ -178,16 +178,17 @@ describe('Render', () => {
 		assert.html(container, '<div></div>')
 	})
 
-	it('should not render dates', () => {
-		let date = new Date()
-
-		render(h('div', date), container)
-		assert.html(container, '<div>'+date+'</div>')
-	})
-
 	it('should not render unknown objects', () => {
 		assert.throws(() => {
 			render(h('div', null, {}), container)
+		})
+
+		assert.throws(() => {
+			render(h('div', null, Object.create(null)), container)
+		})
+
+		assert.throws(() => {
+			render(h('div', null, new Date()), container)
 		})
 	})
 
@@ -432,12 +433,15 @@ describe('Render', () => {
 		assert.html(container, `<div style=""></div>`)
 	})
 
-	it('should handle undefined refs', () => {
+	it('should handle invalid refs', () => {
 		let container = document.createElement('div')
 
 		assert.doesNotThrow(() => {
 			render(h('div', {ref: null}), container)
 			render(h('div', {ref: undefined}), container)
+			render(h('div', {ref: 100}), container)
+			render(h('div', {ref: Symbol('')}), container)
+			render(h('div', {ref: {}}), container)
 		})
 	})
 
@@ -488,5 +492,34 @@ describe('Render', () => {
 
 		container.appendChild(fragment)
 		assert.html(container, '<div>foo</div>')
+ 	})
+
+ 	it('should render non-primitive attributes', () => {
+ 		let container = document.createElement('div')
+ 		let fn = () => {}
+
+ 		render(h('h1', {custom: {first: 1}}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.deepEqual(container.firstChild.custom, {first: 1})
+
+ 		render(h('h1', {custom: {first: 1, second: 2}}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.deepEqual(container.firstChild.custom, {first: 1, second: 2})
+
+ 		render(h('h1', {custom: null}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.equal(container.firstChild.custom, '')
+
+ 		render(h('h1', {custom: {first: 1}}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.deepEqual(container.firstChild.custom, {first: 1})
+
+ 		render(h('h1', {custom: fn}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.equal(container.firstChild.custom, fn)
+
+ 		render(h('h1', {custom: {first: 1, second: 2}}, '0'), container)
+ 		assert.html(container, '<h1>0</h1>')
+ 		assert.deepEqual(container.firstChild.custom, {first: 1, second: 2})
  	})
 })

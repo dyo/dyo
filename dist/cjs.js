@@ -1,6 +1,6 @@
-/*! DIO 8.0.3 @license MIT */
+/*! DIO 8.1.0-rc @license MIT */
 
-module.exports = function (exports, Element, mountComponentElement, getComponentChildren, invokeErrorBoundary, getElementDefinition) {/* eslint-disable */'use strict'
+module.exports = function (exports, Element, getComponentChildren, getComponentElement, getElementDefinition, mountComponentElement, invokeErrorBoundary) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -48,10 +48,12 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
 	
-	var SharedTypeKey = '.'
+	var SharedKeySigil = '&|'
+	var SharedKeyHead = '&head'
+	var SharedKeyTail = '&tail'
+	
 	var SharedTypeEmpty = '#empty'
 	var SharedTypeText = '#text'
-	var SharedTypeFragment = '#fragment'
 	
 	var SharedComponentWillMount = 'componentWillMount'
 	var SharedComponentDidMount = 'componentDidMount'
@@ -95,27 +97,28 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	 * @param {string}
 	 */
 	function isVoidType (type) {
-		switch ((type+'').toLowerCase()) {
-			case 'area':
-			case 'base':
-			case 'br':
-			case 'meta':
-			case 'source':
-			case 'keygen':
-			case 'img':
-			case 'col':
-			case 'embed':
-			case 'wbr':
-			case 'track':
-			case 'param':
-			case 'link':
-			case 'input':
-			case 'hr':
-			case '!doctype':
-				return true
-			default:
-				return false
-		}
+		if (typeof type === 'string')
+			switch (type.toLowerCase()) {
+				case 'area':
+				case 'base':
+				case 'br':
+				case 'meta':
+				case 'source':
+				case 'keygen':
+				case 'img':
+				case 'col':
+				case 'embed':
+				case 'wbr':
+				case 'track':
+				case 'param':
+				case 'link':
+				case 'input':
+				case 'hr':
+				case '!doctype':
+					return true
+			}
+	
+		return false
 	}
 	
 	/**
@@ -144,6 +147,9 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 			case SharedElementEmpty:
 				return getTextEscape(element.children)
 			case SharedElementComponent:
+				if (element.active)
+					return getStringElement(element.children, element)
+	
 				return getStringElement(mountComponentElement(element), element)
 		}
 	
@@ -161,8 +167,8 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 		if (element.id !== SharedElementNode)
 			return output
 	
-		if (element.DOM)
-			element.DOM = void (output += element.DOM)
+		if (element.state)
+			element.state = void (output += element.state)
 	
 		return output + '</' + type + '>'
 	}
@@ -183,7 +189,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 				case 'dangerouslySetInnerHTML':
 					value = value && value.__html
 				case 'innerHTML':
-					element.DOM = value ? value : ''
+					element.state = value ? value : ''
 					continue
 				case 'defaultValue':
 					if (!props.value)
@@ -239,7 +245,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 					if (name !== name.toLowerCase())
 						name = name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
 	
-					output += name + ':' + value + ';'
+					output += name + ': ' + value + ';'
 			}
 		}
 	
@@ -259,6 +265,9 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 			case SharedElementEmpty:
 				return element.children
 			case SharedElementComponent:
+				if (element.active)
+					return getJSONElement(element.children, element)
+	
 				return getJSONElement(mountComponentElement(element), element)
 		}
 	
@@ -284,11 +293,11 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	var Readable = require('stream').Readable
 	
 	/**
-	 * @param {function=}
+	 * @param {function=} callback
 	 * @return {Stream}
 	 */
 	function toStream (callback) {
-		var readable = new Stream(this)
+		var readable = new Stream(this, this.host)
 	
 		switch (typeof callback) {
 			case 'string':
@@ -305,10 +314,11 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	
 	/**
 	 * @constructor
-	 * @param {Element}
+	 * @param {Element} element
+	 * @param {Element?} host
 	 */
-	function Stream (element) {
-		this.host = null
+	function Stream (element, host) {
+		this.host = host
 		this.stack = [element]
 	
 		Readable.call(this)
@@ -363,14 +373,15 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	
 		switch (element.host = host, element.id) {
 			case SharedElementComponent:
-				children = mountComponentElement(readable.host = element)
+				if (!(readable.host = element).active)
+					children = mountComponentElement(element)
 	
-				if (!element.state || element.state.constructor !== Promise)
-					return readStreamElement(children, element, stack, readable)
+				if (element.state && typeof element.state.then === 'function')
+					return void element.state
+						.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
+						.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
 	
-				return void element.state
-					.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
-					.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
+				return readStreamElement(children, element, stack, readable)
 			case SharedElementPromise:
 				return void element.type
 					.then(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
@@ -379,16 +390,15 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 			case SharedElementEmpty:
 				return writeStreamElement(getTextEscape(children), readable)
 			case SharedElementNode:
-				if (element.DOM)
-					return element.DOM = writeStreamElement(element.DOM, readable)
+				if (element.state)
+					return element.state = void writeStreamElement(element.state, readable)
 	
 				output += '<' + element.type + getStringProps(element, element.props) + '>'
 	
 				if (isVoidType(element.type))
 					return writeStreamElement(output, readable)
 	
-				element.DOM = (element.DOM || '') + '</' + element.type + '>'
-	
+				element.state = (element.state || '') + '</' + element.type + '>'
 				stack.push(element)
 			default:
 				var length = children.length

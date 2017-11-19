@@ -23,6 +23,30 @@ describe('Component', () => {
 		assert.html(container, '1')
 	})
 
+	it('should provide a render fallback method', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		assert.doesNotThrow(() => {
+			render(h(class A extends Component {
+				componentDidCatch(err) {
+					stack.length = 0
+					err.preventDefault()
+				}
+				componentWillMount() {
+					stack.push('willMount')
+				}
+				componentDidMount() {
+					stack.push('didMount')
+				}
+			}), container)
+		})
+
+		assert.html(container, '')
+		assert.include(stack, 'willMount')
+		assert.include(stack, 'didMount')
+	})
+
 	it('should call lifecycle methods on class component', () => {
 		let container = document.createElement('div')
 		let stack = []
@@ -298,6 +322,46 @@ describe('Component', () => {
 		assert.include(stack, true)
 	})
 
+	it('should pass new state, props and context to getChildContext', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			getInitialState() {
+				return {
+					updated: false
+				}
+			}
+			getChildContext(props, state, context) {
+				context.updated && stack.push('error')
+				state.updated && stack.push('state')
+				props.updated && stack.push('props')
+
+				return {
+					updated: true
+				}
+			}
+			shouldComponentUpdate() {
+				return false
+			}
+			componentDidMount() {
+				return {
+					updated: true
+				}
+			}
+			render() {
+
+			}
+		}
+
+		render(h('div', h(A, {updated: false})), container)
+		render(h('div', h(A, {updated: true})), container)
+
+		assert.html(container, '<div></div>')
+		assert.include(stack, 'state')
+		assert.include(stack, 'props')
+		assert.notInclude(stack, 'error')
+	})
+
 	it('should update Component', () => {
 		let container = document.createElement('div')
 		let A = class {
@@ -551,6 +615,46 @@ describe('Component', () => {
 			assert.lengthOf(stack, 1)
 			done()
 		})
+	})
+
+	it('should pass props, state and context to getInitialState', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			getChildContext() {
+				return {
+					passed: true
+				}
+			}
+			render() {
+				return class {
+					constructor() {
+						this.state = {
+							passed: true
+						}
+					}
+					static defaultProps() {
+						return {
+							passed: true
+						}
+					}
+					getInitialState(props, state, context) {
+						props.passed && stack.push('props')
+						state.passed && stack.push('state')
+						context.passed && stack.push('context')
+					}
+					render() {
+
+					}
+				}
+			}
+		}, container)
+
+		assert.html(container, '')
+		assert.include(stack, 'props')
+		assert.include(stack, 'state')
+		assert.include(stack, 'context')
 	})
 
 	it('should async mount', (done) => {
@@ -1370,7 +1474,7 @@ describe('Component', () => {
 		assert.include(stack, true)
 	})
 
-	it('should call componenWillMount synchronously', () => {
+	it('should call componentWillMount synchronously', () => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -1386,7 +1490,7 @@ describe('Component', () => {
 		assert.lengthOf(stack, 1)
 	})
 
-	it('should call componenDidMount synchronously', () => {
+	it('should call componentDidMount synchronously', () => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -1435,5 +1539,77 @@ describe('Component', () => {
 			'componentWillReceiveProps',
 			'World'
 		])
+	})
+
+	it('should async import a "default" component module', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let queue = null
+
+		// tests that it successfully desugars
+		// import('./file.js') --> import('./file.js').then((module) => module.default)
+		// assuming file.js exports a default export
+		let importShim = (url) => {
+			if (url === null)
+				return h('h1', 'null')
+
+			return queue = new Promise((resolve, reject) => {
+				switch (url) {
+					case 'string':
+						return void resolve('string')
+					case 'number':
+						return void resolve(1)
+					case 'element':
+						return void resolve(h('h1', 'element'))
+					case 'component':
+						return void resolve(() => h('h1', 'component'))
+					case 'module':
+						return void resolve({
+							default: () => h('h1', 'module')
+						})
+				}
+			})
+		}
+
+		let A = class {
+			componentDidMount() {
+				stack.push(container.innerHTML)
+			}
+			componentDidUpdate() {
+				queue.then(() => stack.push(container.innerHTML))
+			}
+			render({type}) {
+				return importShim(type)
+			}
+		}
+
+		render(h(A, {type: null}), container)
+		render(h(A, {type: 'string'}), container)
+		render(h(A, {type: 'number'}), container)
+		render(h(A, {type: 'element'}), container)
+		render(h(A, {type: 'component'}), container)
+		render(h(A, {type: 'module'}), container)
+
+		assert.notEqual(queue, null)
+		queue.then(() => {
+			assert.deepEqual(stack, [
+				'<h1>null</h1>',
+				'string',
+				'1',
+				'<h1>element</h1>',
+				'<h1>component</h1>',
+				'<h1>module</h1>'
+			])
+		}).then(done).catch(done)
+	})
+
+	it('should allow dynamic mutation of render method', () => {
+		assert.instanceOf(Component.prototype.render, Function)
+		assert.deepInclude(Object.getOwnPropertyDescriptor(Component.prototype, 'render'), {
+			configurable: false,
+			enumerable: false,
+			writable: true,
+			value: Component.prototype.render
+		})
 	})
 })

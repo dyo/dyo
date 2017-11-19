@@ -1,6 +1,6 @@
 {
   "name": "dio.js",
-  "version": "8.0.3",
+  "version": "8.1.0-rc",
   "license": "MIT",
   "description": "A Library For Building User Interfaces.",
   "homepage": "https://github.com/thysultan/dio.js",
@@ -34,10 +34,8 @@
   },
   "nyc": {
     "temp-directory": "./coverage/.nyc_output",
-    "reporter": [
-      "lcov",
-      "text"
-    ]
+    "exclude": ["script/*", "test/*"],
+    "reporter": ["lcov", "text"]
   },
   "devDependencies": {
     "chai": "^4.1.2",

@@ -4,11 +4,11 @@
 var Readable = require('stream').Readable
 
 /**
- * @param {function=}
+ * @param {function=} callback
  * @return {Stream}
  */
 function toStream (callback) {
-	var readable = new Stream(this)
+	var readable = new Stream(this, this.host)
 
 	switch (typeof callback) {
 		case 'string':
@@ -25,10 +25,11 @@ function toStream (callback) {
 
 /**
  * @constructor
- * @param {Element}
+ * @param {Element} element
+ * @param {Element?} host
  */
-function Stream (element) {
-	this.host = null
+function Stream (element, host) {
+	this.host = host
 	this.stack = [element]
 
 	Readable.call(this)
@@ -83,14 +84,15 @@ function readStreamElement (element, host, stack, readable) {
 
 	switch (element.host = host, element.id) {
 		case SharedElementComponent:
-			children = mountComponentElement(readable.host = element)
+			if (!(readable.host = element).active)
+				children = mountComponentElement(element)
 
-			if (!element.state || element.state.constructor !== Promise)
-				return readStreamElement(children, element, stack, readable)
+			if (element.state && typeof element.state.then === 'function')
+				return void element.state
+					.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
+					.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
 
-			return void element.state
-				.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
-				.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
+			return readStreamElement(children, element, stack, readable)
 		case SharedElementPromise:
 			return void element.type
 				.then(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
@@ -99,16 +101,15 @@ function readStreamElement (element, host, stack, readable) {
 		case SharedElementEmpty:
 			return writeStreamElement(getTextEscape(children), readable)
 		case SharedElementNode:
-			if (element.DOM)
-				return element.DOM = writeStreamElement(element.DOM, readable)
+			if (element.state)
+				return element.state = void writeStreamElement(element.state, readable)
 
 			output += '<' + element.type + getStringProps(element, element.props) + '>'
 
 			if (isVoidType(element.type))
 				return writeStreamElement(output, readable)
 
-			element.DOM = (element.DOM || '') + '</' + element.type + '>'
-
+			element.state = (element.state || '') + '</' + element.type + '>'
 			stack.push(element)
 		default:
 			var length = children.length

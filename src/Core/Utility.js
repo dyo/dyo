@@ -6,13 +6,16 @@ function List () {
 	this.prev = this
 	this.length = 0
 }
-List.prototype = {
+/**
+ * @type {Object}
+ */
+defineProperties(List.prototype, {
 	/**
 	 * @param {Object} node
 	 * @param {Object} before
 	 * @return {Object}
 	 */
-	insert: function insert (node, before) {
+	insert: {value: function insert (node, before) {
 		node.next = before
 		node.prev = before.prev
 		before.prev.next = node
@@ -20,12 +23,12 @@ List.prototype = {
 		this.length++
 
 		return node
-	},
+	}},
 	/**
 	 * @param {Object} node
 	 * @return {Object}
 	 */
-	remove: function remove (node) {
+	remove: {value: function remove (node) {
 		if (this.length === 0)
 			return node
 
@@ -34,15 +37,15 @@ List.prototype = {
 		this.length--
 
 		return node
-	},
+	}},
 	/**
 	 * @param {function} callback
 	 */
-	forEach: function forEach (callback) {
+	forEach: {value: function forEach (callback) {
 		for (var i = 0, node = this; i < this.length; ++i)
 			callback(node = node.next, i)
-	}
-}
+	}}
+})
 
 /**
  * @constructor
@@ -50,29 +53,32 @@ List.prototype = {
 function WeakHash () {
 	this.hash = ''
 }
-WeakHash.prototype = {
+/**
+ * @type {Object}
+ */
+defineProperties(WeakHash.prototype, {
 	/**
 	 * @param {*} key
 	 * @param {*} value
 	 */
-	set: function set (key, value) {
+	set: {value: function set (key, value) {
 		key[this.hash] = value
-	},
+	}},
 	/**
 	 * @param {*} key
 	 * @return {*}
 	 */
-	get: function get (key) {
+	get: {value: function get (key) {
 		return key[this.hash]
-	},
+	}},
 	/**
 	 * @param {*} key
 	 * @return {boolean}
 	 */
-	has: function has (key) {
+	has: {value: function has (key) {
 		return this.hash in key
-	}
-}
+	}}
+})
 
 /**
  * @return {void}
@@ -122,20 +128,32 @@ function flatten (array, output) {
 }
 
 /**
+ * @param {Array} haystack
+ * @param {function} callback
+ * @param {*} thisArg
+ */
+function find (haystack, callback, thisArg) {
+	if (typeof haystack.find === 'function')
+		return haystack.find(callback, thisArg)
+
+  for (var i = 0; i < haystack.length; ++i)
+  	if (callback.call(thisArg, haystack[i], i, haystack))
+  		return haystack[i]
+}
+
+/**
  * @param {Iterable} iterable
  * @param {function} callback
  */
 function each (iterable, callback) {
-	if (iterable.forEach)
+	if (typeof iterable.forEach === 'function')
 		return iterable.forEach(callback)
 
-	var value = iterable.next()
 	var index = 0
+	var value = iterable.next(value, index++)
 
-	while (!value.done) {
-		index = callback(value.value, index)
-		value = iterable.next(value.value)
-	}
+	while (!value.done)
+		value = iterable.next(value.value, index = callback(value.value, index))
 }
 
 /**
@@ -171,6 +189,17 @@ function compare (a, b) {
 function is (a, b) {
 	if (a === b)
 		return a !== 0 || 1/a === 1/b
-	else
-		return a !== a && b !== b
+
+	return a !== a && b !== b
+}
+
+/**
+ * @param {string} str
+ * @return {number}
+ */
+function hash (str) {
+	for (var i = 0, code = 0; i < str.length; ++i)
+		code = ((code << 5) - code) + str.charCodeAt(i)
+
+	return code >>> 0
 }

@@ -1,3 +1,56 @@
+## 8.1.0 (19 November 2017)
+
+- Adds top-level API `createFactory` to create element or renderer factories.
+- Adds `Children.find` and `Children.filter` to the top-level `Children` API.
+- Adds support for cross-realm element construction/consumption.
+- Improvements to the reconciler.
+- Improves importing async components with `import(...)`.
+- Fix [#39](https://github.com/thysultan/dio.js/issues/39) hydration of differing text node length.
+- Fix [#40](https://github.com/thysultan/dio.js/issues/40) improves handling static hoisted elements.
+
+#### createFactory
+
+The `createFactory` API can be used to create element factories and additionally provides an interface to create client renderers that can target different platforms/targets.
+
+#### Children.find
+
+The `Children.find` API works like the Array.find API in that it allows you find a single element from the opaque children data-structure.
+
+#### Children.filter
+
+The `Children.filter` API works like the Array.filter API in that it allows you filter element from the opaque children data-structure.
+
+#### Reconciler Improvements
+
+The reconciler has gone through some improvments that aim to insure the shorterst path is taken to reach a reconciled state.
+
+#### Import(...)
+
+This release includes improvements to the way(syntax sugar) you can dynamically import components.
+
+```js
+// A.js
+export default class {
+	render() {}
+}
+```
+
+```js
+// Before
+class {
+	render() {
+		return import('./A.js').then(A => A.default)
+	}
+}
+
+// After
+class {
+	render() {
+		return import('./A.js')
+	}
+}
+```
+
 ## 8.0.3 (09 October 2017)
 
 - patch error when used with brunch, fusebox and browserfy bundlers.

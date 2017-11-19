@@ -5,12 +5,12 @@
  */
 function render (element, container, callback) {
 	if (!container)
-		return render(element, getDOMDocument(), callback)
+		return render(element, getClientDocument(), callback)
 
-	if (DOMMap.has(container))
-		update(DOMMap.get(container), getElementDefinition(element), callback)
-	else
-		mount(element, createElementIntermediate(), container, callback, SharedMountCommit)
+	if (isValidClientHost(container))
+		return update(getClientHost(container), getElementDefinition(element), callback)
+
+	mount(element, container, callback, SharedMountCommit)
 }
 
 /**
@@ -20,9 +20,28 @@ function render (element, container, callback) {
  */
 function hydrate (element, container, callback) {
 	if (!container)
-		return hydrate(element, getDOMDocument(), callback)
+		return hydrate(element, getClientDocument(), callback)
 
-	mount(element, createElementIntermediate(), container, callback, SharedMountQuery)
+	mount(element, container, callback, SharedMountQuery)
+}
+
+/**
+ * @param {Element} element
+ * @param {Node} container
+ * @param {function} callback
+ * @param {number} signature
+ */
+function mount (element, container, callback, signature) {
+	if (!isValidElement(element))
+		return mount(getElementDefinition(element), container, callback, signature)
+
+	if (!isValidClientNode(container))
+		invariant(SharedSiteRender, 'Target container is not a DOM element')
+
+	mountComponentAtNode(element, createElementIntermediate(element), container, signature)
+
+	if (callback)
+		getLifecycleCallback(element, callback)
 }
 
 /**
@@ -41,27 +60,16 @@ function update (element, snapshot, callback) {
  * @param {Element} element
  * @param {Element} parent
  * @param {Node} container
- * @param {function} callback
  * @param {number} signature
  */
-function mount (element, parent, container, callback, signature) {
-	if (!isValidElement(element))
-		return mount(getElementDefinition(element), parent, container, callback, signature)
-
-	if (!isValidDOMNode(container))
-		invariant(SharedSiteRender, 'Target container is not a DOM element')
-
-	DOMMap.set(container, element)
-
-	setDOMNode(parent, container)
+function mountComponentAtNode (element, parent, container, signature) {
+	setClientNode(parent, container)
+	setClientHost(parent, container)
 
 	if (signature === SharedMountCommit)
-		setDOMContent(parent)
+		setClientContent(parent)
 
 	commitMount(element, element, parent, parent, SharedMountAppend, signature)
-
-	if (callback)
-		getLifecycleCallback(element, callback)
 }
 
 /**
@@ -69,5 +77,5 @@ function mount (element, parent, container, callback, signature) {
  * @return {boolean}
  */
 function unmountComponentAtNode (container) {
-	return DOMMap.has(container) && !render(null, container)
+	return isValidClientHost(container) && !render(null, container)
 }

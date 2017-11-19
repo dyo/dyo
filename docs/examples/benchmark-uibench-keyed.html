@@ -6,13 +6,15 @@
 		<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<title>UIBench</title>
 		<link rel=stylesheet href=https://localvoid.github.io/uibench-base/0.1.0/styles.css>
-		<script src=https://unpkg.com/dio.js></script>
+		<script src=https://unpkg.com/dio.js@next></script>
 		<script src=https://localvoid.github.io/uibench-base/0.1.0/uibench.js></script>
 	</head>
 	<body>
 		<div id=root></div>
 
 		<script>
+			const {render, h, version} = dio
+
 			class TableCell extends dio.Component {
 				shouldComponentUpdate(nextProps, nextState) {
 					return this.props.text !== nextProps.text;
@@ -170,17 +172,17 @@
 				}
 			}
 
-			uibench.init('DIO', dio.version);
+			uibench.init('DIO', version);
 
 			document.addEventListener('DOMContentLoaded', function(e) {
 				const container = document.querySelector('#root');
 
 				uibench.run(
 					function(state) {
-						dio.render(h(Main, {data: state}), container);
+						render(h(Main, {data: state}), container);
 					},
 					function(samples) {
-						dio.render(h('pre', JSON.stringify(samples, null, 2)), container);
+						render(h('pre', JSON.stringify(samples, null, 2)), container);
 					}
 				);
 			});

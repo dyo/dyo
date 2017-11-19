@@ -1,24 +1,9 @@
 /**
- * @param {(Component|Element|Node|Event)} element
- * @return {Node}
+ * @param {Element} element
+ * @param {Node} node
  */
-function findDOMNode (element) {
-	if (!element)
-		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
-
-	if (isValidElement(getComponentElement(element)))
-		return findDOMNode(getComponentElement(element))
-
-	if (isValidElement(element) && element.active)
-		return getDOMNode(element)
-
-	if (isValidDOMEvent(element))
-		return getDOMTarget(element)
-
-	if (isValidDOMNode(element))
-		return element
-
-	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
+function setDOMHost (element, node) {
+	weakClientMap.set(node, element)
 }
 
 /**
@@ -26,21 +11,21 @@ function findDOMNode (element) {
  * @param {Node} node
  */
 function setDOMNode (element, node) {
-	element.DOM = {node: node}
+	element.DOM = node
 }
 
 /**
- * @param {Element} element
+ * @param {Element} parent
  */
-function setDOMContent (element) {
-	getDOMNode(element).textContent = ''
+function setDOMContent (parent) {
+	getDOMNode(parent).textContent = ''
 }
 
 /**
  * @param {Element} element
  * @param {string} value
  */
-function setDOMValue (element, value) {
+function setDOMText (element, value) {
 	getDOMNode(element).nodeValue = value
 }
 
@@ -114,7 +99,7 @@ function setDOMAttribute (element, name, value, xmlns) {
  * @param {*} value
  * @param {string} xmlns
  */
-function setDOMProperties (element, name, value, xmlns) {
+function setDOMProps (element, name, value, xmlns) {
 	switch (name) {
 		case 'className':
 			if (!xmlns && value)
@@ -122,39 +107,38 @@ function setDOMProperties (element, name, value, xmlns) {
 		case 'class':
 			return setDOMAttribute(element, 'class', value, '')
 		case 'style':
-			if (typeof value === 'object')
-				return setDOMStyle(element, value)
-			break
+			return typeof value === 'object' ? setDOMStyle(element, value) : setDOMAttribute(element, name, value, '')
 		case 'xlink:href':
 			return setDOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
 		case 'innerHTML':
 			return setDOMInnerHTML(element, name, value ? value : '', [])
 		case 'dangerouslySetInnerHTML':
-			return setDOMProperties(element, 'innerHTML', value && value.__html, xmlns)
+			return setDOMProps(element, 'innerHTML', value && value.__html, xmlns)
 		case 'acceptCharset':
-			return setDOMProperties(element, 'accept-charset', value, xmlns)
+			return setDOMProps(element, 'accept-charset', value, xmlns)
 		case 'httpEquiv':
-			return setDOMProperties(element, 'http-equiv', value, xmlns)
+			return setDOMProps(element, 'http-equiv', value, xmlns)
 		case 'tabIndex':
-			return setDOMProperties(element, name.toLowerCase(), value, xmlns)
+			return setDOMProps(element, name.toLowerCase(), value, xmlns)
 		case 'autofocus':
 		case 'autoFocus':
 			return getDOMNode(element)[value ? 'focus' : 'blur']()
 		case 'width':
 		case 'height':
 			if (element.type === 'img')
-				break
-		default:
-			if (!xmlns && name in getDOMNode(element))
-				return setDOMProperty(element, name, value)
+				return setDOMAttribute(element, name, value, '')
 	}
 
 	switch (typeof value) {
 		case 'object':
-		case 'function':
-			return setDOMProperty(element, name, value)
+			return setDOMProperty(element, name, value && getDOMProps(element)[name])
+		case 'string':
+		case 'number':
+		case 'boolean':
+			if (xmlns || !(name in getDOMNode(element)))
+				return setDOMAttribute(element, name, value, '')
 		default:
-			setDOMAttribute(element, name, value, '')
+			setDOMProperty(element, name, value)
 	}
 }
 
@@ -176,6 +160,22 @@ function setDOMInnerHTML (element, name, value, nodes) {
 	nodes.forEach(function (node) {
 		getDOMNode(element).appendChild(node)
 	})
+}
+
+/**
+ * @param {Node} node
+ * @return {Element}
+ */
+function getDOMHost (node) {
+	return weakClientMap.get(node).children
+}
+
+/**
+ * @param {Element} element
+ * @return {Node}
+ */
+function getDOMNode (element) {
+	return element.DOM
 }
 
 /**
@@ -227,14 +227,6 @@ function getDOMProps (element) {
  * @param {Element} element
  * @return {Node}
  */
-function getDOMNode (element) {
-	return element.DOM.node
-}
-
-/**
- * @param {Element} element
- * @return {Node}
- */
 function getDOMPortal (element) {
 	if (typeof element.type === 'string')
 		return getDOMDocument().querySelector(element.type)
@@ -265,7 +257,7 @@ function getDOMQuery (element, parent, previous, next) {
 		if (target.nodeName.toLowerCase() === type) {
 			if (id > SharedElementNode) {
 				if (next.id > SharedElementNode)
-					target.splitText(length)
+					target.splitText(0)
 
 				if (target.nodeValue !== children)
 					target.nodeValue = children
@@ -308,11 +300,19 @@ function getDOMQuery (element, parent, previous, next) {
 }
 
 /**
- * @param {Node} target
+ * @param {Node} node
+ * @return {boolean}
+ */
+function isValidDOMHost (node) {
+	return weakClientMap.has(node)
+}
+
+/**
+ * @param {Node} node
  * @param {boolean}
  */
-function isValidDOMNode (target) {
-	return !!(target && target.ELEMENT_NODE)
+function isValidDOMNode (node) {
+	return !!(node && node.ELEMENT_NODE)
 }
 
 /**

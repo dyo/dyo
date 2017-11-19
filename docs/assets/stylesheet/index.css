@@ -212,6 +212,7 @@ blockquote {
   font-size: 1em;
   vertical-align: baseline;
   background: rgba(196, 26, 22, 0.04);
+  margin: 20px 0;
 }
 
 blockquote strong {
