@@ -36,7 +36,7 @@ function createComponent (prototype) {
 	}), SymbolComponent, {value: SymbolComponent})
 
 	if (!hasOwnProperty.call(prototype, SharedSiteRender))
-		defineProperty(prototype, SharedSiteRender, {value: noop})
+		defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
 
 	return prototype
 }
@@ -83,7 +83,7 @@ function mountComponentElement (element) {
 
 		instance = owner = getComponentInstance(element, owner)
 	} else {
-		defineProperty(instance = new Component(), SharedSiteRender, {value: owner})
+		defineProperty(instance = new Component(), SharedSiteRender, {value: owner, writable: true})
 	}
 
 	element.owner = owner

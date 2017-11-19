@@ -1,9 +1,9 @@
-/*! DIO 8.1.0-beta @license MIT */
+/*! DIO 8.1.0-beta.0 @license MIT */
 
 ;(function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.1.0-beta'}
+	var exports = {version: '8.1.0-beta.0'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -771,7 +771,7 @@ function factory (window, config, require) {
 		}), SymbolComponent, {value: SymbolComponent})
 	
 		if (!hasOwnProperty.call(prototype, SharedSiteRender))
-			defineProperty(prototype, SharedSiteRender, {value: noop})
+			defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
 	
 		return prototype
 	}
@@ -818,7 +818,7 @@ function factory (window, config, require) {
 	
 			instance = owner = getComponentInstance(element, owner)
 		} else {
-			defineProperty(instance = new Component(), SharedSiteRender, {value: owner})
+			defineProperty(instance = new Component(), SharedSiteRender, {value: owner, writable: true})
 		}
 	
 		element.owner = owner

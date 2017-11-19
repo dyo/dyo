@@ -1602,4 +1602,14 @@ describe('Component', () => {
 			])
 		}).then(done).catch(done)
 	})
+
+	it('should allow dynamic mutation of render method', () => {
+		assert.instanceOf(Component.prototype.render, Function)
+		assert.deepInclude(Object.getOwnPropertyDescriptor(Component.prototype, 'render'), {
+			configurable: false,
+			enumerable: false,
+			writable: true,
+			value: Component.prototype.render
+		})
+	})
 })
