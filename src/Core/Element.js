@@ -39,15 +39,12 @@ function createElementImmutable (snapshot) {
 	var element = new Element(snapshot.id)
 	var children = snapshot.children
 
-	if (typeof children === 'object' && children !== null)
-		children = createChildrenImmutable(children)
-
 	element.type = snapshot.type
 	element.props = snapshot.props
 	element.xmlns = snapshot.xmlns
 	element.key = snapshot.key
 	element.ref = snapshot.ref
-	element.children = children
+	element.children = typeof children === 'object' ? createChildrenImmutable(children) : children
 
 	return element
 }
@@ -209,7 +206,7 @@ function createElement (type, config) {
 	var length = arguments.length
 	var element = new Element(id)
 	var props = {}
-	var children = id !== SharedElementComponent ? new List() : null
+	var children = id !== SharedElementComponent ? new List() : undefined
 
 	if (i === 1 && typeof config === 'object' && config[SymbolIterator] === undefined) {
 		switch (config.constructor) {
