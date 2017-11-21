@@ -220,7 +220,7 @@ describe('Fixture', () => {
 		`)
 	})
 
-	it('should handle duplicate static(keyed) children', () => {
+	it('should handle duplicate static siblings', () => {
 		let container = document.createElement('div')
 		let element = h('h1', {key: 'x'}, 'x')
 
@@ -254,6 +254,71 @@ describe('Fixture', () => {
 				<h2>y</h2>
 			</div>
 		`)
+	})
+
+	it('should handle static children', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		let A = () => h('div', 'A')
+		A.componentDidMount = () => stack.push('mount A')
+		A.componentWillUnmount = () => stack.push('unmount A')
+
+		let B = () => h('div', 'B')
+		B.componentDidMount = () => stack.push('mount B')
+		B.componentWillUnmount = () => stack.push('unmount B')
+
+		let setState = null
+		let cachedState = null
+
+		let Parent = function () {
+		  setState = this.setState.bind(this)
+		  return h('div', this.state.child)
+		}
+		Parent.getInitialState = () => cachedState || {child: h('div', A)}
+
+		let setStateRoot = null
+
+		let Root = function (props, state) {
+		  setStateRoot = this.setState.bind(this)
+		  return h('div', this.state.isMounted ? Parent : null)
+		}
+		Root.getInitialState = () => ({isMounted: true})
+
+		// mount A
+		render(Root, container)
+		assert.html(container, `<div><div><div><div>A</div></div></div></div>`)
+
+		// mount B, unmount A
+		setState(cachedState = {child: h('div', B, '!!!')})
+		assert.html(container, `<div><div><div><div>B</div>!!!</div></div></div>`)
+
+		// unmount B
+		setStateRoot({isMounted: false})
+		assert.html(container, `<div></div>`)
+
+		// mount B
+		setStateRoot({isMounted: true})
+		assert.html(container, `<div><div><div><div>B</div>!!!</div></div></div>`)
+
+		// mount A, unmount B
+		setState({child: h('div', A)})
+		assert.html(container, `<div><div><div><div>A</div></div></div></div>`)
+
+		// unmount A
+		setStateRoot({isMounted: false})
+		assert.html(container, `<div></div>`)
+
+		assert.deepEqual(stack, [
+			'mount A',
+			'mount B',
+			'unmount A',
+			'unmount B',
+			'mount B',
+			'mount A',
+			'unmount B',
+			'unmount A'
+		])
 	})
 
 	it('should not remove children from empty children', () => {

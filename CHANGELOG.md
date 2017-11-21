@@ -1,3 +1,7 @@
+## 8.1.1 (21 November 2017)
+
+- Improvements to treatment of static cached/hoisted children.
+
 ## 8.1.0 (19 November 2017)
 
 - Adds top-level API `createFactory` to create element or renderer factories.

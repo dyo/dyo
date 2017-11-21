@@ -37,15 +37,33 @@ defineProperties(Element.prototype, {
  */
 function createElementImmutable (snapshot) {
 	var element = new Element(snapshot.id)
+	var children = snapshot.children
 
 	element.type = snapshot.type
 	element.props = snapshot.props
 	element.xmlns = snapshot.xmlns
 	element.key = snapshot.key
 	element.ref = snapshot.ref
-	element.children = snapshot.children
+	element.children = typeof children === 'object' ? createChildrenImmutable(children) : children
 
 	return element
+}
+
+/**
+ * @param {List} iterable
+ * @return {List}
+ */
+function createChildrenImmutable (iterable) {
+	var children = new List()
+	var length = iterable.length
+	var element = iterable.next
+
+	while (length-- > 0) {
+		children.insert(createElementImmutable(element), children)
+		element = element.next
+	}
+
+	return children
 }
 
 /**
