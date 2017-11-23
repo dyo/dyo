@@ -3,6 +3,7 @@ const path = require('path')
 const zlib = require('zlib')
 const chokidar = require('chokidar')
 const UglifyJS = require('uglify-js')
+const UglifyES = require('uglify-es')
 const package = require('../../package.json')
 
 let filesize = NaN
@@ -88,6 +89,19 @@ const pad = (content, tabs) => {
 		return content.replace(/^/gm, '\t')
 }
 
+const modulize = (content) => {
+	return content
+		.replace(
+			/if\s*\(typeof[^]*(factory\(global.*\))[^]*}(?!\))/g,
+			'return $1'
+		).replace(
+			/^(;)([^]*)/g,
+			'$1var dio = $2\n' + api.replace(/(export)s\.(\w+).*/g, '$1 var $2 = dio.$2;')
+		) + '\nexport default dio;'
+
+	return content
+}
+
 const factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
 const api = `
 exports.render = render
@@ -160,12 +174,8 @@ const wrapper = (module, content, factory, version, license) => {
 		case 'esm':
 			return {
 				head: comment(version, license),
-				body: parse(head, content, expo+temp.trim(), factory),
-				tail: 'export default dio\n'+
-							api
-								.replace(/[\S\s]*\{|\s*\}|,|\S\s*h:[\S\s]*|window.*h.*=\s*/g, '')
-								.replace(/(\w+):\s*(\w+)/g, 'export const $1 = dio.$2 ')
-								.trim()
+				body: parse(head, content, tail, modulize(factory)),
+				tail: ''
 			}
 		default:
 			return {
@@ -193,6 +203,8 @@ const bundle = (module, files, location) => {
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 
 	switch (module) {
+		case 'esm':
+			minify(UglifyES, {content, filename, module, filepath})
 		case 'cjs':
 			break
 		default:
@@ -203,9 +215,6 @@ const bundle = (module, files, location) => {
 const minify = (uglify, {content, module, filename, filepath}) => {
 	const min = filepath.replace(module, module+'.min')
 	const map = min.replace('.js', '.js.map')
-
-	if (module === 'umd')
-		content = content.replace(/(dio\.\w+).(\js)/, '$1.min.$2')
 
 	const compressed = uglify.minify({[filename]: content}, {
     sourceMap: {
@@ -252,6 +261,7 @@ const gzipsize = (content) => {
 const resolve = () => {
 	bundle('umd', umd, '../../dist/')
 	bundle('cjs', cjs, '../../dist/')
+	bundle('esm', esm, '../../dist/')
 
 	console.log('build complete..')
 }
