@@ -421,7 +421,7 @@ describe('Reconcile', () => {
 		`)
 	})
 
-	it('[complex] - 2, 3, 4, 5, 6, 1 -> 1, 2, 3, 4, 5, 6]', () => {
+	it('[complex] - 2, 3, 4, 5, 6, 1 -> 1, 2, 3, 4, 5, 6', () => {
 		render(h(List, {type: 'li', data: [2, 3, 4, 5, 6, 1]}), container)
 
 		assert.trace(() => {

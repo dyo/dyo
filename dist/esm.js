@@ -1718,6 +1718,7 @@ function factory (window, config, require) {
 				oldTail = oldPrev
 				newTail = newPrev
 			}
+	
 			break
 		}
 	

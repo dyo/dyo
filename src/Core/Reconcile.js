@@ -125,6 +125,7 @@ function reconcileChildren (element, snapshot) {
 			oldTail = oldPrev
 			newTail = newPrev
 		}
+
 		break
 	}
 

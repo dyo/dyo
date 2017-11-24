@@ -9,7 +9,13 @@
   "jsdelivr": "dist/umd.min.js",
   "types": "types/typescript.d.ts",
   "files": [
-    "dist",
+    "dist/cjs.js",
+    "dist/esm.js",
+    "dist/esm.min.js",
+    "dist/esm.map.js",
+    "dist/umd.js",
+    "dist/umd.min.js"
+    "dist/umd.map.js",
     "types/typescript.d.ts"
   ],
   "author": {
