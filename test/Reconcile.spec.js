@@ -635,4 +635,95 @@ describe('Reconcile', () => {
 			</ul>
 		`)
 	})
+
+	it('[react-worst-case] - 0, 1, 2, 3, 4, 5, 6 -> 5, 1, 2, 3, 4', () => {
+		render(h(List, {type: 'li', data: [0, 1, 2, 3, 4, 5, 6]}), container)
+
+		assert.trace(() => {
+			render(h(List, {type: 'li', data: [5, 1, 2, 3, 4]}), container)
+		}, {
+			removeChild: 2,
+			insertBefore: 1,
+			length: 3
+		})
+
+		assert.html(container, `
+			<ul>
+				<li>5</li>
+				<li>1</li>
+				<li>2</li>
+				<li>3</li>
+				<li>4</li>
+			</ul>
+		`)
+	})
+
+	it('[snabbdom-worst-case] - 0, 1, 2, 3, 4, 5, 6 -> 1, 2, 3, 4, 6, 0, 5', () => {
+		render(h(List, {type: 'li', data: [0, 1, 2, 3, 4, 5, 6]}), container)
+
+		assert.trace(() => {
+			render(h(List, {type: 'li', data: [1, 2, 3, 4, 6, 0, 5]}), container)
+		}, {
+			insertBefore: 2,
+			length: 2
+		})
+
+		assert.html(container, `
+			<ul>
+				<li>1</li>
+				<li>2</li>
+				<li>3</li>
+				<li>4</li>
+				<li>6</li>
+				<li>0</li>
+				<li>5</li>
+			</ul>
+		`)
+	})
+
+	it('[ivi-worst-case] - 0, 1, 2, 3, 4, 5, 6 -> 5, 4, 3, 2, 1', () => {
+		render(h(List, {type: 'li', data: [0, 1, 2, 3, 4, 5, 6]}), container)
+
+		assert.trace(() => {
+			render(h(List, {type: 'li', data: [5, 4, 3, 2, 1]}), container)
+		}, {
+			removeChild: 2,
+			insertBefore: 4,
+			length: 6
+		})
+
+		assert.html(container, `
+			<ul>
+				<li>5</li>
+				<li>4</li>
+				<li>3</li>
+				<li>2</li>
+				<li>1</li>
+			</ul>
+		`)
+	})
+
+	it('[virtual-dom-worst-case] - 0, 1, 2, 3, 4, 5, 6 -> 2, 3, 4, 5, 6, 0, 1', () => {
+		render(h(List, {type: 'li', data: [0, 1, 2, 3, 4, 5, 6]}), container)
+
+		assert.trace(() => {
+			render(h(List, {type: 'li', data: [2, 3, 4, 5, 6, 0, 1]}), container)
+		}, {
+			appendChild: 1,
+			insertBefore: 1,
+			length: 2
+		})
+
+		assert.html(container, `
+			<ul>
+				<li>2</li>
+				<li>3</li>
+				<li>4</li>
+				<li>5</li>
+				<li>6</li>
+				<li>0</li>
+				<li>1</li>
+			</ul>
+		`)
+	})
 })

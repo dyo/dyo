@@ -14,7 +14,7 @@
     "dist/esm.min.js",
     "dist/esm.map.js",
     "dist/umd.js",
-    "dist/umd.min.js"
+    "dist/umd.min.js",
     "dist/umd.map.js",
     "types/typescript.d.ts"
   ],
