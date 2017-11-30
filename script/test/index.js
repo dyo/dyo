@@ -80,6 +80,21 @@ let trace = (callback, expected, message) => {
   return assert.deepInclude(report, expected, message)
 }
 
+const shuffle = (arr) => {
+  let array = arr.slice()
+  let length = array.length
+
+  while (length) {
+    let index = Math.floor(Math.random() * length--)
+    let temp = array[length]
+
+    array[length] = array[index]
+    array[index] = temp
+  }
+
+  return array
+}
+
 let nextTick = (callback, tick) => {
   if (tick|0 > 0)
     return setTimeout(() => nextTick(callback, tick - 1), 20)
@@ -93,6 +108,7 @@ Object.assign(global, {
   assert,
   expect,
   should,
+  shuffle,
   nextTick,
   document,
   location,

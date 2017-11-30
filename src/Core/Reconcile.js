@@ -211,9 +211,18 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 						}
 					}
 				}
-			} else if (prevChild.key !== prevMoved.prev.key) {
-				if ((nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)).key !== prevMoved.next.key)
-					commitInsert(children.insert(children.remove(prevMoved), nextChild), nextChild, element)
+			} else {
+				nextChild = nextChild.active ? nextChild : nextMoved || oldChild
+				nextMoved = prevMoved.next
+
+				if (nextChild.key !== nextMoved.key) {
+					while (isValidElement(nextMoved) && !isValidElement(nextNodes[nextMoved.key]))
+						nextMoved = nextMoved.next
+
+					if (nextChild.key !== nextMoved.key)
+						if (prevChild.key !== prevMoved.prev.key || nextChild.key !== nextMoved.next.key)
+							commitInsert(children.insert(children.remove(prevMoved), nextChild), nextChild, element)
+				}
 			}
 		} else if (!isValidElement(nextChild)) {
 			commitMount(children.insert(newChild, children), newChild, element, host, SharedMountAppend, SharedMountCommit)

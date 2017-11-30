@@ -726,4 +726,154 @@ describe('Reconcile', () => {
 			</ul>
 		`)
 	})
+
+	it('[shuffle] - 2, 7, 8, 3, 4, 6, 9, 5, 0, 1 -> 0, 4, 6, 9, 5, 2, 8, 7, 3, 1', () => {
+		render(h(List, {type: 'li', data: [2, 7, 8, 3, 4, 6, 9, 5, 0, 1]}), container)
+		render(h(List, {type: 'li', data: [0, 4, 6, 9, 5, 2, 8, 7, 3, 1]}), container)
+
+		assert.html(container, `
+			<ul>
+				<li>0</li>
+				<li>4</li>
+				<li>6</li>
+				<li>9</li>
+				<li>5</li>
+				<li>2</li>
+				<li>8</li>
+				<li>7</li>
+				<li>3</li>
+				<li>1</li>
+			</ul>
+		`)
+	})
+
+	it('[shuffle] - 5, 7, 2, 1, 9, 6, 8, 0, 3, 4 -> 8, 0, 3, 9, 4, 5, 7, 2, 6, 1', () => {
+		render(h(List, {type: 'li', data: [5, 7, 2, 1, 9, 6, 8, 0, 3, 4]}), container)
+		render(h(List, {type: 'li', data: [8, 0, 3, 9, 4, 5, 7, 2, 6, 1]}), container)
+
+		assert.html(container, `
+			<ul>
+				<li>8</li>
+				<li>0</li>
+				<li>3</li>
+				<li>9</li>
+				<li>4</li>
+				<li>5</li>
+				<li>7</li>
+				<li>2</li>
+				<li>6</li>
+				<li>1</li>
+			</ul>
+		`)
+	})
+
+	it('[shuffle] - 5, 6, 7, 0, 1, 2, 9, 3, 8, 4 -> 1, 0, 3, 8, 2, 4, 5, 7, 6, 9', () => {
+		render(h(List, {type: 'li', data: [5, 6, 7, 0, 1, 2, 9, 3, 8, 4]}), container)
+		render(h(List, {type: 'li', data: [1, 0, 3, 8, 2, 4, 5, 7, 6, 9]}), container)
+
+		assert.html(container, `
+			<ul>
+				<li>1</li>
+				<li>0</li>
+				<li>3</li>
+				<li>8</li>
+				<li>2</li>
+				<li>4</li>
+				<li>5</li>
+				<li>7</li>
+				<li>6</li>
+				<li>9</li>
+			</ul>
+		`)
+	})
+
+	it('[shuffle] - 4, 3, 1, 5, 6, 7, 8, 0, 2, 9 -> 4, 1, 3, 7, 0, 9, 8, 2, 5, 6', () => {
+		render(h(List, {type: 'li', data: [4, 3, 1, 5, 6, 7, 8, 0, 2, 9]}), container)
+		render(h(List, {type: 'li', data: [4, 1, 3, 7, 0, 9, 8, 2, 5, 6]}), container)
+
+		assert.html(container, `
+			<ul>
+				<li>4</li>
+				<li>1</li>
+				<li>3</li>
+				<li>7</li>
+				<li>0</li>
+				<li>9</li>
+				<li>8</li>
+				<li>2</li>
+				<li>5</li>
+				<li>6</li>
+			</ul>
+		`)
+	})
+
+	it('[shuffle] - 8, 1, 0, 6, 5, 4, 3, 7, 9, 2 -> 4, 3, 1, 5, 6, 7, 8, 0, 2, 9', () => {
+		render(h(List, {type: 'li', data: [8, 1, 0, 6, 5, 4, 3, 7, 9, 2]}), container)
+		render(h(List, {type: 'li', data: [4, 3, 1, 5, 6, 7, 8, 0, 2, 9]}), container)
+
+		assert.html(container, `
+			<ul>
+				<li>4</li>
+				<li>3</li>
+				<li>1</li>
+				<li>5</li>
+				<li>6</li>
+				<li>7</li>
+				<li>8</li>
+				<li>0</li>
+				<li>2</li>
+				<li>9</li>
+			</ul>
+		`)
+	})
+
+	it('[fuzz(100)] - shuffle(20) -> shuffle(20)', function () {
+		const seed = Array.from({length: 20}, (v, i) => i)
+		const fuzz = Array.from({length: 100}, (v, i) => shuffle(seed))
+
+		fuzz.forEach((v, i) => {
+			render(h('ul', v.map(v => h('li', {key: v}, v))), container)
+			assert.html(container, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
+		})
+	})
+
+	it('[fuzz(100)] - shuffle(40) -> shuffle(40)', function () {
+		const seed = Array.from({length: 40}, (v, i) => i)
+		const fuzz = Array.from({length: 100}, (v, i) => shuffle(seed))
+
+		fuzz.forEach((v, i) => {
+			render(h('ul', v.map(v => h('li', {key: v}, v))), container)
+			assert.html(container, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
+		})
+	})
+
+	it('[fuzz(100)] - shuffle(60) -> shuffle(60)', function () {
+		const seed = Array.from({length: 60}, (v, i) => i)
+		const fuzz = Array.from({length: 100}, (v, i) => shuffle(seed))
+
+		fuzz.forEach((v, i) => {
+			render(h('ul', v.map(v => h('li', {key: v}, v))), container)
+			assert.html(container, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
+		})
+	})
+
+	it('[fuzz(100)] - shuffle(80) -> shuffle(80)', function () {
+		const seed = Array.from({length: 80}, (v, i) => i)
+		const fuzz = Array.from({length: 100}, (v, i) => shuffle(seed))
+
+		fuzz.forEach((v, i) => {
+			render(h('ul', v.map(v => h('li', {key: v}, v))), container)
+			assert.html(container, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
+		})
+	})
+
+	it('[fuzz(100)] - shuffle(100) -> shuffle(100)', function () {
+		const seed = Array.from({length: 100}, (v, i) => i)
+		const fuzz = Array.from({length: 100}, (v, i) => shuffle(seed))
+
+		fuzz.forEach((v, i) => {
+			render(h('ul', v.map(v => h('li', {key: v}, v))), container)
+			assert.html(container, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
+		})
+	})
 })
