@@ -80,12 +80,20 @@ let trace = (callback, expected, message) => {
   return assert.deepInclude(report, expected, message)
 }
 
+const random = (() => {
+  let seed = 4022871197
+  let length = 2147483647
+  let value = seed % length
+
+  return () => ((value = value * 16807 % length - 1) - 1) / length
+})()
+
 const shuffle = (arr) => {
   let array = arr.slice()
   let length = array.length
 
   while (length) {
-    let index = Math.floor(Math.random() * length--)
+    let index = Math.floor(random() * length--)
     let temp = array[length]
 
     array[length] = array[index]
