@@ -924,6 +924,32 @@ describe('Component', () => {
 		assert.html(container, '<button>1</button>')
 	})
 
+	it('should setState(function)', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		render(class {
+			handleEvent(e) {
+				this.setState((state) => {
+					stack.push(state === this.state)
+
+					return {id: 1}
+				})
+			}
+			componentDidMount(node) {
+				refs = node
+			}
+			render() {
+				return h('button', {onClick: this.handleEvent}, this.state.id)
+			}
+		}, container)
+
+		refs.dispatchEvent(new Event('click'))
+		assert.html(container, '<button>1</button>')
+		assert.deepEqual(stack, [true])
+	})
+
 	it('should update a promise element', (done) => {
 		let container = document.createElement('div')
 		let A = class {
