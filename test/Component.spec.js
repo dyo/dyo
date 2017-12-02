@@ -1,5 +1,5 @@
 describe('Component', () => {
-	it('should extend Component', () => {
+	it('should render a class that extends Component', () => {
 		let container = document.createElement('div')
 
 		render(class extends Component {
@@ -11,7 +11,7 @@ describe('Component', () => {
 		assert.html(container, '1')
 	})
 
-	it('should not extend Component', () => {
+	it('should render a class that does not extend Component', () => {
 		let container = document.createElement('div')
 
 		render(class {
@@ -113,7 +113,7 @@ describe('Component', () => {
 		])
 	})
 
-	it('should call (un)mount in the right order', () => {
+	it('should call (un)mount lifecycle in the right order', () => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -221,7 +221,7 @@ describe('Component', () => {
 		assert.html(container, '1')
 	})
 
-	it('should update context with shouldComponentUpdate present', () => {
+	it('should update context with shouldComponentUpdate(false) ', () => {
 		let container = document.createElement('div')
 		let counter = 0
 		let A = class {
@@ -977,7 +977,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should error from setState(callback)', (done) => {
+	it('should error from setState(..., callback)', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -1377,7 +1377,7 @@ describe('Component', () => {
 		refs.then(() => assert.html(container, '<div></div>')).then(done)
 	})
 
-	it('should call setState(callback)', (done) => {
+	it('should call setState(..., callback)', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -1421,7 +1421,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should not call setState(callback)', (done) => {
+	it('should not call setState(..., callback)', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 

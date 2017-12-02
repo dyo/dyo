@@ -472,7 +472,7 @@ describe('Fixture', () => {
 		})
 	})
 
-	it('should fall back to polyfills', () => {
+	it('should fallback to polyfills', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let WeakMap = global.WeakMap

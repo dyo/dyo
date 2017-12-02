@@ -157,7 +157,7 @@ describe('Server', () => {
 		)
 	})
 
-	it('should render an fragment to json', () => {
+	it('should render a fragment to json', () => {
 		assert.json(
 			h(class {
 				render() {

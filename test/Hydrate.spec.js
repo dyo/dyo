@@ -167,7 +167,7 @@ describe('Hydrate', () => {
 		assert.html(head, `<title>Title<meta></title>`)
 	})
 
-	it('should hydrate from the documentElement', () => {
+	it('should hydrate from the implicit root container', () => {
 		let container = document.createElement('html')
 		let documentElement = document.documentElement
 		let children = [h('head', h('title', 'title')), h('body', h('div'))]
@@ -227,7 +227,7 @@ describe('Hydrate', () => {
 		assert.equal(container.firstChild.lastChild.nodeValue, 'c')
 	})
 
-	it('should hydrate adjacent text nodes with a differing lengths', () => {
+	it('should hydrate adjacent text nodes with differing lengths', () => {
 		let container = document.createElement('div')
 		var A = () => h('div', 'abcabcabc', 'xxx')
 
