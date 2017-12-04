@@ -331,7 +331,10 @@ render(
 <pre><code>
 {
   "plugins": [
-  	["transform-react-jsx", { "pragma":"h" }]
+  	["transform-react-jsx", {
+  		"pragma": "dio.createElement",
+  		"pragmaFrag": "dio.Fragment"
+  	}]
   ]
 }
 </code></pre>
@@ -348,7 +351,7 @@ render(
 {
   "compilerOptions": {
     "jsx": "React",
-    "jsxFactory": "h"
+    "jsxFactory": "dio.createElement"
   }
 }
 </code></pre>

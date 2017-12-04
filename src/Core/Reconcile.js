@@ -125,6 +125,7 @@ function reconcileChildren (element, snapshot) {
 			oldTail = oldPrev
 			newTail = newPrev
 		}
+
 		break
 	}
 
@@ -196,15 +197,32 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 
 		if (isValidElement(prevMoved)) {
 			if (!isValidElement(nextChild)) {
-				if (isValidElement(nextChild = prevMoved.next) && isValidElement(nextNodes[nextChild.key]))
-					if (prevChild.key === oldChild.key)
+				if (isValidElement(nextMoved = prevMoved.next) && isValidElement(nextNodes[nextMoved.key])) {
+					if (prevChild.key === oldChild.key) {
 						commitAppend(children.insert(children.remove(prevMoved), children), element)
-					else if (nextChild !== oldChild)
-						if (isValidElement(nextNodes[oldChild.key]) || nextChild.key !== oldChild.prev.key)
+					} else if (nextMoved !== oldChild) {
+						if (isValidElement(nextChild = nextNodes[oldChild.key])) {
+							if (oldChild.prev.key === nextChild.prev.key)
+								commitAppend(children.insert(children.remove(prevMoved), children), element)
+							else
+								commitInsert(children.insert(children.remove(prevMoved), oldChild), oldChild, element)
+						} else if (nextMoved.key !== oldChild.prev.key) {
 							commitInsert(children.insert(children.remove(prevMoved), oldChild), oldChild, element)
-			} else if (prevChild.key !== prevMoved.prev.key) {
-				if ((nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)).key !== prevMoved.next.key)
-					commitInsert(children.insert(children.remove(prevMoved), nextChild), nextChild, element)
+						}
+					}
+				}
+			} else {
+				nextChild = nextChild.active ? nextChild : nextMoved || oldChild
+				nextMoved = prevMoved.next
+
+				if (nextChild.key !== nextMoved.key) {
+					while (isValidElement(nextMoved) && !isValidElement(nextNodes[nextMoved.key]))
+						nextMoved = nextMoved.next
+
+					if (nextChild.key !== nextMoved.key)
+						if (prevChild.key !== prevMoved.prev.key || nextChild.key !== nextMoved.next.key)
+							commitInsert(children.insert(children.remove(prevMoved), nextChild), nextChild, element)
+				}
 			}
 		} else if (!isValidElement(nextChild)) {
 			commitMount(children.insert(newChild, children), newChild, element, host, SharedMountAppend, SharedMountCommit)

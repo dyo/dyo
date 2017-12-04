@@ -77,7 +77,7 @@ describe('Fragment', () => {
 		`)
 	})
 
-	it('should insert an element as to the head of a fragment', () => {
+	it('should insert an element to the head of a fragment', () => {
 		render([
 			h('h1', {key: '4th'}, '4th'),
 			h('h1', {key: '1st'}, '1st'),

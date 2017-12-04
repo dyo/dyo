@@ -1,6 +1,6 @@
 /*! DIO 8.2.0 @license MIT */
 
-;(function (global) {/* eslint-disable */'use strict'
+;var dio = (function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
 	var exports = {version: '8.2.0'}
@@ -2670,15 +2670,22 @@ function factory (window, config, require) {
 }
 
 /* istanbul ignore next */
-if (typeof exports === 'object' && typeof module === 'object' && module !== null) {
-	if (typeof __webpack_require__ === 'undefined' && typeof require === 'function' && global.global === global && global.process) {
-		module.exports = factory(global, undefined, require)
-	} else {
-		module.exports = factory(global)
-	}
-} else if (typeof define === 'function' && define.amd) {
-	define(factory(global))
-} else {
-	global.dio = factory(global)
-}
+return factory(global)
 })(/* istanbul ignore next */typeof window === 'object' ? window : (typeof global === 'object' ? global : this));
+
+export var render = dio.render;
+export var hydrate = dio.hydrate;
+export var Component = dio.Component;
+export var Fragment = dio.Fragment;
+export var PureComponent = dio.PureComponent;
+export var Children = dio.Children;
+export var findDOMNode = dio.findDOMNode;
+export var unmountComponentAtNode = dio.unmountComponentAtNode;
+export var createFactory = dio.createFactory;
+export var cloneElement = dio.cloneElement;
+export var isValidElement = dio.isValidElement;
+export var createPortal = dio.createPortal;
+export var createElement = dio.createElement;
+export var h = dio.h;
+
+export default dio;

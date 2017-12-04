@@ -1,6 +1,6 @@
 {
   "name": "dio.js",
-  "version": "8.1.1",
+  "version": "8.2.0",
   "license": "MIT",
   "description": "A Library For Building User Interfaces.",
   "homepage": "https://github.com/thysultan/dio.js",
@@ -9,7 +9,13 @@
   "jsdelivr": "dist/umd.min.js",
   "types": "types/typescript.d.ts",
   "files": [
-    "dist",
+    "dist/cjs.js",
+    "dist/esm.js",
+    "dist/esm.min.js",
+    "dist/esm.min.js.map",
+    "dist/umd.js",
+    "dist/umd.min.js",
+    "dist/umd.min.js.map",
     "types/typescript.d.ts"
   ],
   "author": {
@@ -44,6 +50,7 @@
     "jsdom": "^11.1.0",
     "mocha": "^3.5.3",
     "nyc": "^11.2.1",
-    "uglify-js": "^3.0.28"
+    "uglify-js": "^3.0.28",
+    "uglify-es": "^3.1.10"
   }
 }

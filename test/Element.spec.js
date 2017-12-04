@@ -36,7 +36,7 @@ describe('Element', () => {
 		assert.equal(h('h1', {ref: 'bar'}).ref, 'bar')
 	})
 
-	it('should create an element with an xmlns', () => {
+	it('should create an element with xmlns namespace', () => {
 		assert.equal(h('h1', {xmlns: 'bar'}).xmlns, 'bar')
 	})
 
@@ -100,7 +100,7 @@ describe('Element', () => {
 		assert.doesNotHaveAnyKeys(h('div', h('h1')).props, ['type', 'props', 'children'])
 	})
 
-	it('should never use arrays as props', () => {
+	it('should not assign an array as props', () => {
 		let mock = Object.defineProperty([1, 2, 3], Symbol.iterator, {value: undefined})
 
 		assert.equal(mock[Symbol.iterator], undefined)

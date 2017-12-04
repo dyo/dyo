@@ -1,3 +1,8 @@
+## 8.2.0 (04 December 2017)
+
+- Produce an ESM module bundle.
+- Improve reconciler.
+
 ## 8.1.1 (21 November 2017)
 
 - Improvements to treatment of static cached/hoisted children.

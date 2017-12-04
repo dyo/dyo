@@ -59,7 +59,7 @@ describe('Render', () => {
 		assert.html(container, '<div width="100px"></div>')
 	})
 
-	it('should render img width', () => {
+	it('should render img width attribute', () => {
 		render(h('img', {width: '100px'}), container)
 		assert.html(container, '<img width="100px">')
 	})
@@ -84,7 +84,7 @@ describe('Render', () => {
 		assert.html(container, '<h1 id="1">1</h1>')
 	})
 
-	it('should render a iteratable', () => {
+	it('should render an iteratable', () => {
 		let iteratable = {
 			[Symbol.iterator]: function* () {
 		    yield 1
@@ -99,7 +99,7 @@ describe('Render', () => {
 		assert.html(container, '<div>123</div>')
 	})
 
-	it('should render a array', () => {
+	it('should render an array', () => {
 		render(() => [h('h1', 'Hello'), h('h1', 'World')], container)
 		assert.html(container, '<h1>Hello</h1><h1>World</h1>')
 	})
@@ -192,7 +192,7 @@ describe('Render', () => {
 		})
 	})
 
-	it('should render svg', () => {
+	it('should render svg elements', () => {
 		render(h('svg', h('path')), container)
 		assert.html(container, `
 			<svg>
@@ -203,7 +203,7 @@ describe('Render', () => {
 		assert.propertyVal(container.firstChild.firstChild, 'namespaceURI', 'http://www.w3.org/2000/svg')
 	})
 
-	it('should render math', () => {
+	it('should render mathml elements', () => {
 		render(h('math'), container)
 		assert.html(container, `<math></math>`)
 		assert.propertyVal(container.firstChild, 'namespaceURI', 'http://www.w3.org/1998/Math/MathML')

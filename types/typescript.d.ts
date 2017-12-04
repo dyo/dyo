@@ -2,14 +2,19 @@
 type Text = string|number|null|void
 type Key = Text
 type Ref = string|Function
-type Type = string|Function|Promise<any>|ElementShape
+type Fragment = symbol
+type Type = string|Function|Promise<any>|ElementNode|Fragment
 type State = object
-type Return = State|Function|Promise<State>|void
-type Render = ElementShape|number|string|null|void|Promise<any>|Array<any>|Function
+type Renderable = ElementNode|Text|Promise<any>|Array<any>|Function
+
+interface Link {
+	next: Link
+	prev: Link
+}
 
 interface List {
-	next: ElementShape|List
-	prev: ElementShape|List
+	next: Link
+	prev: Link
 	length: number
 }
 
@@ -18,13 +23,23 @@ interface Refs {
 }
 
 interface createElement {
-	(type: Type, props?: Props, ...children: Array<any>): ElementShape
+	(type: Type, props?: Props|Renderable, ...children: Array<Renderable>): ElementNode
 }
 
-interface h extends createElement {}
+interface ErrorInfo {
+	stack: string
+	message: string
+	errorLocation: string
+	errorStack: string
+	errorMessage: string
+	componentStack: string
+	defaultPrevented: boolean
+	preventDefault: () => void
+	inspect: () => string
+}
 
 interface EventHandler {
-	(e: Event, props: object, state: object, context: object): Return
+	(e: Event, props: object, state: object, context: object): any
 }
 
 interface EventListener {
@@ -219,7 +234,7 @@ interface Props extends Events {
 	innerHTML?: any
 }
 
-interface ElementShape {
+interface ElementNode extends Link {
 	id: number
 	work: number
 	active: boolean
@@ -228,6 +243,7 @@ interface ElementShape {
 	ref: Ref
 	type: Type
 	props: Props
+	state: any
 	children: List
 	owner: any
 	instance: any
@@ -236,8 +252,6 @@ interface ElementShape {
 	context: any
 	parent: any
 	host: any
-	next: any
-	prev: any
 	handlEvent: (e: Event) => void
 	toString: () => string
 }
@@ -259,10 +273,14 @@ interface Children {
 	map: (children: any, callback: Function, thisArg: any) => Array<any>
 	toArray: (children: any) => Array<any>
 	count: (children: any) => number
-	only: (children: ElementShape) => ElementShape
+	only: (children: ElementNode) => ElementNode
 }
 
 interface render {
+	(element: any, container?: object, callback?: Function): void
+}
+
+interface hydrate {
 	(element: any, container?: object, callback?: Function): void
 }
 
@@ -274,49 +292,75 @@ interface renderToNodeStream {
 	(element: any, container?: object, callback?: Function): void
 }
 
-interface Component<P, S> {
-	componentWillReceiveProps(nextProps: P)
-  componentWillUpdate(nextProps: P, nextState: S): Return
-  componentDidUpdate(prevProps: P, prevState: S): Return
-  componentWillMount(): Return
-	componentWillUnmount(node: Node): Return
-  componentDidMount(node: Node): Promise<any>|void
-  shouldComponentUpdate(nextProps: P, nextState: S): boolean
+interface createFactory {
+	(type: ElementNode|Function|string|object): Function|object
+}
+
+interface createPortal {
+	(element: ElementNode, container: Node, key: any): ElementNode
+}
+
+interface cloneElement {
+	(element: ElementNode, props?: Props|Renderable, ...children: Array<Renderable>): ElementNode
+}
+
+interface AbstractComponent<P, S> {
+	defaultProps?: Partial<P>
+	displayName?: string
+
+	getChildContext(props: P, state: S, context: object): object
+	getInitialState(props: P): S
+
+	componentDidCatch(error: Error, info: ErrorInfo): any
+
+	componentWillReceiveProps(nextProps: P, nextContext: object): any
+	shouldComponentUpdate(nextProps: P, nextState: S): boolean
+	componentWillUpdate(nextProps: P, nextState: S): any
+	componentDidUpdate(prevProps: P, prevState: S): any
+	componentWillMount(): any
+	componentDidMount(node: Node): any
+	componentWillUnmount(node: Node): any
+}
+
+declare abstract class AbstractComponent<P, S> {
+	state: Readonly<S>
+	props: Readonly<P>
+	context: Object
+	refs: Refs
+	constructor (props?: Readonly<P>)
+
+	render(props?: Readonly<P>, state?: Readonly<S>): Renderable
+
+	forceUpdate (callback?: () => any): void
+	setState<K extends keyof S>(state: (prevState: Readonly<S>, props: P) => Pick<S, K>, callback?: () => any): void
+	setState<K extends keyof S>(state: Pick<S, K>, callback?: () => any): void
 }
 
 declare global {
 	namespace dio {
 		export const version: string
-		export const h: h
+		export const h: createElement
 		export const createElement: createElement
 		export const isValidElement: isValidElement
 		export const findDOMNode: findDOMNode
 		export const Children: Children
 		export const unmountComponentAtNode: unmountComponentAtNode
+		export const Fragment: Fragment
+		export const cloneElement: cloneElement
+		export const createPortal: createPortal
+		export const createFactory: createFactory
 
 		export const render: render
 		export const renderToString: renderToString
 		export const renderToNodeStream: renderToNodeStream
 
-		export abstract class Component<P, S> {
-			readonly state: Readonly<S>
-			readonly props: Readonly<P>
-			readonly context: Readonly<Object>
-			readonly refs: Refs
-
-			forceUpdate (callback?: () => Return): void
-			setState<K extends keyof S>(state: Pick<S, K>, callback?: () => Return): void
-
-			constructor (props: Readonly<P>)
-			abstract render(props?: Readonly<P>, state?: Readonly<S>): ElementShape
-		}
+		export abstract class Component<P, S> extends AbstractComponent<P, S> {}
+		export abstract class PureComponent<P, S> extends AbstractComponent<P, S> {}
 	}
 
-	const h: h
-
 	namespace JSX {
-		interface ElementShape {}
-		interface ElementClass extends Component<Props, State> {}
+		interface Element extends ElementNode {}
+		interface ElementClass extends AbstractComponent<P, S> {}
 		interface ElementAttributesProperty {props: any}
 		interface ElementChildrenAttribute {children: any}
 		interface IntrinsicAttributes extends Props {}

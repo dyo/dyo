@@ -441,4 +441,295 @@ describe('Error', () => {
 		console.error = error
 		done()
 	})
+
+	it('should error from an event', () => {
+		let container = document.createElement('div')
+		let refs = null
+		let stack = []
+		let error = console.error
+		let spy = console.error = () => stack.push(1)
+
+		render(class {
+			handleEvent(e) {
+				throw new Error('Error!')
+			}
+			componentDidMount(node) {
+				refs = node
+			}
+			render() {
+				return h('button', {onClick: this.handleEvent}, this.state.id)
+			}
+		}, container)
+
+		refs.dispatchEvent(new Event('click'))
+
+		assert.html(container, '<button></button>')
+		assert.lengthOf(stack, 1)
+		console.error = error
+	})
+
+	it('should error from setState(function)', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			componentDidMount() {
+				this.setState(() => {
+					throw new Error('Error!')
+				})
+			}
+			render() {
+				return 1
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should error from setState(..., callback)', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			componentDidMount() {
+				this.setState({}, () => {
+					throw new Error('Error!')
+				})
+			}
+			render() {
+				return 1
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		}, 1)
+	})
+
+	it('should error from setState(promise)', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = Promise.reject('Error!')
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			componentDidMount() {
+				this.setState(refs)
+			}
+			render() {
+				return 1
+			}
+		}, container)
+
+		refs.catch(() => {
+			nextTick(() => {
+				assert.html(container, '')
+				assert.lengthOf(stack, 1)
+				done()
+			})
+		})
+	})
+
+	it('should error from componentWillMount', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			componentWillMount() {
+				throw new Error('Error!')
+			}
+			render() {
+				return 1
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should error from componentDidMount', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			componentDidMount() {
+				throw new Error('Error!')
+			}
+			render() {
+				return 1
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should error from componentWillUpdate', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			componentWillUpdate() {
+				throw new Error('Error!')
+			}
+			render() {
+				return 1
+			}
+		}
+
+		render(A, container)
+		render(A, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should error from componentWillReceiveProps', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			componentWillReceiveProps() {
+				throw new Error('Error!')
+			}
+			render() {
+				return 1
+			}
+		}
+
+		render(A, container)
+		render(A, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should error from shouldComponentUpdate', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			shouldComponentUpdate() {
+				throw new Error('Error!')
+			}
+			componentDidUpdate() {
+				stack.push('should not push')
+			}
+			render() {
+				return 1
+			}
+		}
+
+		render(A, container)
+		render(A, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should error from constructor', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(1)
+			}
+			render() {
+				return B
+			}
+		}
+		let B = class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push(2)
+			}
+			constructor() {
+				throw new Error('Error!')
+			}
+			render() {
+				return 1
+			}
+		}
+
+		render(A, container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
+	})
+
+	it('should error from a ref callback', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let error = console.error
+		let spy = console.error = () => stack.push(1)
+
+		render(class {
+			componentDidCatch(err) {
+				err.preventDefault()
+				stack.push('should not push')
+			}
+			render() {
+				return h('div', {
+					ref: () => {throw new Error('Error!')}
+				})
+			}
+		}, container)
+
+		assert.html(container, '<div></div>')
+		assert.lengthOf(stack, 1)
+		console.error = error
+	})
 })
