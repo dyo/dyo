@@ -213,7 +213,6 @@ interface Events {
 }
 
 interface Props extends Events {
-	[props: string]: any
 	children?: any
 	ref?: Ref
 	key?: Key
@@ -360,7 +359,7 @@ declare global {
 
 	namespace JSX {
 		interface Element extends ElementNode {}
-		interface ElementClass extends AbstractComponent<{}, {}> {}
+		interface ElementClass extends AbstractComponent<P, S> {}
 		interface ElementAttributesProperty {props: any}
 		interface ElementChildrenAttribute {children: any}
 		interface IntrinsicAttributes extends Props {}
