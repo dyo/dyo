@@ -359,7 +359,7 @@ declare global {
 
 	namespace JSX {
 		interface Element extends ElementNode {}
-		interface ElementClass extends AbstractComponent<P, S> {}
+		interface ElementClass extends AbstractComponent<any, any> {}
 		interface ElementAttributesProperty {props: any}
 		interface ElementChildrenAttribute {children: any}
 		interface IntrinsicAttributes extends Props {}
