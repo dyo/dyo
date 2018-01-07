@@ -354,8 +354,8 @@ declare global {
 		export const renderToString: renderToString
 		export const renderToNodeStream: renderToNodeStream
 
-		export abstract class Component<P, S> extends AbstractComponent<P, S> {}
-		export abstract class PureComponent<P, S> extends AbstractComponent<P, S> {}
+		export abstract class Component<P = {}, S = {}> extends AbstractComponent<P, S> {}
+		export abstract class PureComponent<P = {}, S = {}> extends AbstractComponent<P, S> {}
 	}
 
 	namespace JSX {
