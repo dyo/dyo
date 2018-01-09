@@ -213,7 +213,6 @@ interface Events {
 }
 
 interface Props extends Events {
-	[props: string]: any
 	children?: any
 	ref?: Ref
 	key?: Key
@@ -354,13 +353,13 @@ declare global {
 		export const renderToString: renderToString
 		export const renderToNodeStream: renderToNodeStream
 
-		export abstract class Component<P, S> extends AbstractComponent<P, S> {}
-		export abstract class PureComponent<P, S> extends AbstractComponent<P, S> {}
+		export abstract class Component<P = {}, S = {}> extends AbstractComponent<P, S> {}
+		export abstract class PureComponent<P = {}, S = {}> extends AbstractComponent<P, S> {}
 	}
 
 	namespace JSX {
 		interface Element extends ElementNode {}
-		interface ElementClass extends AbstractComponent<P, S> {}
+		interface ElementClass extends AbstractComponent<any, any> {}
 		interface ElementAttributesProperty {props: any}
 		interface ElementChildrenAttribute {children: any}
 		interface IntrinsicAttributes extends Props {}
