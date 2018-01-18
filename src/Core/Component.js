@@ -105,7 +105,7 @@ function mountComponentElement (element) {
 				children = null
 			}
 
-	if (owner[SharedComponentWillMount] && element.work !== SharedWorkIdle)
+	if (owner[SharedComponentWillMount])
 		getLifecycleMount(element, SharedComponentWillMount)
 
 	children = children !== null ? getComponentChildren(element, instance) : getElementDefinition(children)

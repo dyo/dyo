@@ -5,9 +5,10 @@
 function commitReplace (element, snapshot) {
 	var host = element.host
 	var parent = element.parent
+	var sibling = getElementSibling(element, parent, SharedSiblingNext)
 
-	commitMount(snapshot, element, parent, host, SharedMountInsert, SharedMountCommit)
 	commitUnmount(element, parent, SharedMountRemove)
+	commitMount(snapshot, sibling, parent, host, SharedMountInsert, SharedMountCommit)
 
 	if (host.children !== element) {
 		replaceElementChildren(parent.children, element, snapshot)

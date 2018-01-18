@@ -152,9 +152,9 @@ describe('Component', () => {
 		assert.deepEqual(stack, [
 			'mount B',
 			'mount A',
-			'mount C',
 			'unmount B',
-			'unmount A'
+			'unmount A',
+			'mount C'
 		])
 	})
 

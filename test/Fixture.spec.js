@@ -311,12 +311,12 @@ describe('Fixture', () => {
 
 		assert.deepEqual(stack, [
 			'mount A',
-			'mount B',
 			'unmount A',
+			'mount B',
 			'unmount B',
 			'mount B',
-			'mount A',
 			'unmount B',
+			'mount A',
 			'unmount A'
 		])
 	})

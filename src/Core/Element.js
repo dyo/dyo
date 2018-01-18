@@ -381,7 +381,7 @@ function getElementSibling (element, parent, direction) {
 		else
 			return element[direction]
 
-	if (element.host && getElementDescription(element.host) === element)
+	if (element.host && element.host.children === element)
 		return getElementSibling(element.host, parent, direction)
 
 	if (parent.id < SharedElementIntermediate)

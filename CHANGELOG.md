@@ -1,3 +1,8 @@
+## 8.2.1 (18 December 2018)
+
+- patch order of calling component ref when unmounting.
+- patch server side rendering, call to `componentWillMount` lifecycle.
+
 ## 8.2.0 (04 December 2017)
 
 - Produce an ESM module bundle.

@@ -1,9 +1,9 @@
-/*! DIO 8.2.0 @license MIT */
+/*! DIO 8.2.1 @license MIT */
 
 ;var dio = (function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.2.0'}
+	var exports = {version: '8.2.1'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -674,7 +674,7 @@ function factory (window, config, require) {
 			else
 				return element[direction]
 	
-		if (element.host && getElementDescription(element.host) === element)
+		if (element.host && element.host.children === element)
 			return getElementSibling(element.host, parent, direction)
 	
 		if (parent.id < SharedElementIntermediate)
@@ -858,7 +858,7 @@ function factory (window, config, require) {
 					children = null
 				}
 	
-		if (owner[SharedComponentWillMount] && element.work !== SharedWorkIdle)
+		if (owner[SharedComponentWillMount])
 			getLifecycleMount(element, SharedComponentWillMount)
 	
 		children = children !== null ? getComponentChildren(element, instance) : getElementDefinition(children)
@@ -1200,9 +1200,10 @@ function factory (window, config, require) {
 	function commitReplace (element, snapshot) {
 		var host = element.host
 		var parent = element.parent
+		var sibling = getElementSibling(element, parent, SharedSiblingNext)
 	
-		commitMount(snapshot, element, parent, host, SharedMountInsert, SharedMountCommit)
 		commitUnmount(element, parent, SharedMountRemove)
+		commitMount(snapshot, sibling, parent, host, SharedMountInsert, SharedMountCommit)
 	
 		if (host.children !== element) {
 			replaceElementChildren(parent.children, element, snapshot)

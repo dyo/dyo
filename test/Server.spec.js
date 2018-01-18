@@ -9,7 +9,7 @@ describe('Server', () => {
 			render () {
 				throw new Error('Error!')
 			}
-		}).toString(), '')
+		}), '')
 
 		assert.instanceOf(error, Error)
 	})
@@ -526,5 +526,34 @@ describe('Server', () => {
 			assert.instanceOf(error, Error)
 			done()
 		})
+	})
+
+	it('should update state from componentWillMount before rendering to string', () => {
+		assert.html(h(class {
+			getInitialState() {
+				return {i: 0}
+			}
+			componentWillMount() {
+				this.setState({i: this.state.i + 1})
+			}
+			componentDidMount() {
+				throw 'SSR should not call componentDidMount'
+			}
+			componentWillUpdate() {
+				throw 'SSR should not call componentWillUpdate'
+			}
+			componentDidUpdate() {
+				throw 'SSR should not call componentDidUpdate'
+			}
+			shouldComponentUpdate() {
+				throw 'SSR should not call shouldComponentUpdate'
+			}
+			componentWillRecieveProps() {
+				throw 'SSR should not call componentWillRecieveProps'
+			}
+			render () {
+				return this.state.i
+			}
+		}), '1')
 	})
 })
