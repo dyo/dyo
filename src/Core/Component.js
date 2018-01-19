@@ -240,15 +240,16 @@ function enqueueStateUpdate (element, instance, state, callback) {
 			enqueueStateUpdate(instance[SymbolElement], instance, state, callback)
 		})
 
-	if (typeof state.then === 'function')
-		return enqueueStatePromise(element, instance, state, callback)
-
 	switch (typeof state) {
 		case 'function':
 			return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 		case 'object':
 			element.state = state
 	}
+
+	if (typeof state.then === 'function')
+		if (element.active)
+			return enqueueStatePromise(element, instance, state, callback)
 
 	enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
 }

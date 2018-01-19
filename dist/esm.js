@@ -1,9 +1,9 @@
-/*! DIO 8.2.1 @license MIT */
+/*! DIO 8.2.2 @license MIT */
 
 ;var dio = (function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.2.1'}
+	var exports = {version: '8.2.2'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -993,15 +993,16 @@ function factory (window, config, require) {
 				enqueueStateUpdate(instance[SymbolElement], instance, state, callback)
 			})
 	
-		if (typeof state.then === 'function')
-			return enqueueStatePromise(element, instance, state, callback)
-	
 		switch (typeof state) {
 			case 'function':
 				return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
 			case 'object':
 				element.state = state
 		}
+	
+		if (typeof state.then === 'function')
+			if (element.active)
+				return enqueueStatePromise(element, instance, state, callback)
 	
 		enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
 	}

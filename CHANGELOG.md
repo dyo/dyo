@@ -1,3 +1,7 @@
+## 8.2.2 (19 January 2018)
+
+- patch async setState in `componentWillMount` lifecycle to work on server-side renderer.
+
 ## 8.2.1 (18 January 2018)
 
 - patch order of calling component ref when unmounting.

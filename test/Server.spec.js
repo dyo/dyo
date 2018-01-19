@@ -556,4 +556,31 @@ describe('Server', () => {
 			}
 		}), '1')
 	})
+
+	it('should async update state from componentWillMount while rendering stream', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let element = h(class {
+			getInitialState() {
+				return {i: 0}
+			}
+			componentWillMount() {
+				return Promise.resolve({i: this.state.i + 1})
+			}
+			render () {
+				return this.state.i
+			}
+		})
+		let output = ''
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, '1')
+			done()
+		})
+	})
 })
