@@ -219,10 +219,10 @@ function createElement (type, config) {
 				if (typeof config.then === 'function')
 					break
 
-				setElementProps(element, (i++, props = config))
+				setElementProps(element, (++i, props = config))
 
 				if (props.children !== undefined && id !== SharedElementComponent)
-					props.children = void (index = setElementChildren(children, props.children, index))
+					props.children = void (length - i < 1 ? (index = setElementChildren(children, props.children, index)) : 0)
 		}
 	}
 

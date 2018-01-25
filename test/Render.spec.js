@@ -461,8 +461,11 @@ describe('Render', () => {
 		render(h('div', {children: [h('span'), h('hr')]}), container)
 		assert.html(container, '<div><span></span><hr></div>')
 
-		render(h('div', {children: [h('span'), h('hr')]}, h('h1', 1)), container)
+		render(h('div', {children: [h('span'), h('hr'), h('h1', 1)]}), container)
 		assert.html(container, '<div><span></span><hr><h1>1</h1></div>')
+
+		render(h('div', {children: 'secondary'}, 'primary'), container)
+		assert.html(container, '<div>primary</div>')
 	})
 
 	it('should no-op duplicate keys', () => {

@@ -98,12 +98,9 @@ function mountComponentElement (element) {
 
 	if (owner[SharedGetInitialState])
 		if (element.state = getLifecycleData(element, SharedGetInitialState, props, state, context))
-			if (typeof (state = instance.state = element.state).then === 'function') {
-				if (element.work === SharedWorkMounting)
+			if (typeof (state = instance.state = element.state).then === 'function')
+				if ((children = null, element.work === SharedWorkMounting))
 					enqueueStatePromise(element, instance, state)
-
-				children = null
-			}
 
 	if (owner[SharedComponentWillMount])
 		getLifecycleMount(element, SharedComponentWillMount)
@@ -141,7 +138,7 @@ function updateComponent (element, snapshot, signature) {
 	var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, tempState) : prevState
 
 	if (owner[SharedGetChildContext])
-		merge(element.context, getComponentContext(element, nextProps, nextState, nextContext))
+		enqueueContextUpdate(element, getComponentContext(element, nextProps, nextState, nextContext))
 
 	switch (signature) {
 		case SharedComponentForceUpdate:
@@ -282,6 +279,15 @@ function enqueueStateCallback (element, instance, callback) {
 	} catch (err) {
 		invokeErrorBoundary(element, err, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
 	}
+}
+
+/**
+ * @param {Element} element
+ * @param {object} context
+ */
+function enqueueContextUpdate (element, context) {
+	if (element.context !== context)
+		merge(element.context, context)
 }
 
 /**

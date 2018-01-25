@@ -1,9 +1,9 @@
-/*! DIO 8.2.2 @license MIT */
+/*! DIO 8.2.3 @license MIT */
 
 ;var dio = (function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.2.2'}
+	var exports = {version: '8.2.3'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -512,10 +512,10 @@ function factory (window, config, require) {
 					if (typeof config.then === 'function')
 						break
 	
-					setElementProps(element, (i++, props = config))
+					setElementProps(element, (++i, props = config))
 	
 					if (props.children !== undefined && id !== SharedElementComponent)
-						props.children = void (index = setElementChildren(children, props.children, index))
+						props.children = void (length - i < 1 ? (index = setElementChildren(children, props.children, index)) : 0)
 			}
 		}
 	
@@ -851,12 +851,9 @@ function factory (window, config, require) {
 	
 		if (owner[SharedGetInitialState])
 			if (element.state = getLifecycleData(element, SharedGetInitialState, props, state, context))
-				if (typeof (state = instance.state = element.state).then === 'function') {
-					if (element.work === SharedWorkMounting)
+				if (typeof (state = instance.state = element.state).then === 'function')
+					if ((children = null, element.work === SharedWorkMounting))
 						enqueueStatePromise(element, instance, state)
-	
-					children = null
-				}
 	
 		if (owner[SharedComponentWillMount])
 			getLifecycleMount(element, SharedComponentWillMount)
@@ -894,7 +891,7 @@ function factory (window, config, require) {
 		var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, tempState) : prevState
 	
 		if (owner[SharedGetChildContext])
-			merge(element.context, getComponentContext(element, nextProps, nextState, nextContext))
+			enqueueContextUpdate(element, getComponentContext(element, nextProps, nextState, nextContext))
 	
 		switch (signature) {
 			case SharedComponentForceUpdate:
@@ -1035,6 +1032,15 @@ function factory (window, config, require) {
 		} catch (err) {
 			invokeErrorBoundary(element, err, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
 		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {object} context
+	 */
+	function enqueueContextUpdate (element, context) {
+		if (element.context !== context)
+			merge(element.context, context)
 	}
 	
 	/**

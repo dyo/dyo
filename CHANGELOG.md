@@ -1,3 +1,7 @@
+## 8.2.3 (25 January 2018)
+
+- patch children props sementics when coupled with both children props and children elements to behave like React and prefer children elements instead of the accumulation of both.
+
 ## 8.2.2 (19 January 2018)
 
 - patch async setState in `componentWillMount` lifecycle to work on server-side renderer.
