@@ -4,11 +4,15 @@
  * @param {Object?} context
  */
 function Component (props, context) {
-	this.refs = null
-	this.state = null
+	this.refs = {}
+	this.state = {}
 	this.props = props
 	this.context = context
 }
+/**
+ * @type {Object}
+ */
+Component[SharedSitePrototype] = createComponentPrototype(Component[SharedSitePrototype])
 
 /**
  * @constructor
@@ -21,25 +25,9 @@ function PureComponent (props, context) {
 /**
  * @type {Object}
  */
-PureComponent.prototype = Object.create(createComponent(Component.prototype), {
-	shouldComponentUpdate: {value: shouldComponentUpdate}
+PureComponent[SharedSitePrototype] = extend(Component[SharedSitePrototype], {
+	shouldComponentUpdate: shouldComponentUpdate
 })
-
-/**
- * @param {Object} prototype
- * @return {Object}
- */
-function createComponent (prototype) {
-	defineProperty(defineProperties(prototype, {
-		forceUpdate: {value: forceUpdate},
-		setState: {value: setState}
-	}), SymbolComponent, {value: SymbolComponent})
-
-	if (!hasOwnProperty.call(prototype, SharedSiteRender))
-		defineProperty(prototype, SharedSiteRender, {value: noop, writable: true})
-
-	return prototype
-}
 
 /**
  * @param {Object} props
@@ -66,49 +54,68 @@ function forceUpdate (callback) {
 }
 
 /**
+ * @param {Object} prototype
+ * @return {Object}
+ */
+function createComponentPrototype (prototype) {
+	prototype[SharedSiteForceUpdate] = forceUpdate
+	prototype[SharedSiteSetState] = setState
+	prototype[SharedSiteRender] = prototype[SharedSiteRender] || noop
+	prototype[SymbolComponent] = true
+
+	return prototype
+}
+
+/**
  * @param {Element} element
  */
 function mountComponentElement (element) {
-	var owner = element.type
+	var type = element.type
 	var props = element.props
-	var context = element.context || {}
-	var prototype = owner.prototype
-	var instance
+	var host = Object(element.host)
+	var context = element.context = Object(host.context)
+	var prototype = type[SharedSitePrototype]
 	var children
 	var state
+	var owner
 
 	if (prototype && prototype.render) {
-		if (prototype[SymbolComponent] !== SymbolComponent)
-			createComponent(prototype)
+		if (!prototype[SymbolComponent])
+			createComponentPrototype(prototype)
 
-		instance = owner = getComponentInstance(element, owner)
+		owner = getLifecycleClass(element, type, props, context)
 	} else {
-		defineProperty(instance = new Component(), SharedSiteRender, {value: owner, writable: true})
+		owner = extend(Component[SharedSitePrototype], merge({render: type}, type))
 	}
 
 	element.owner = owner
-	element.instance = instance
-	element.context = context
+	owner[SymbolContext] = element.xmlns = host.xmlns
+	owner[SymbolElement] = element
+	owner.props = props
+	owner.context = context
 
-	instance[SymbolElement] = element
-	instance.refs = {}
-	instance.props = props
-	instance.context = context
-	instance.state = state = instance.state || {}
+	owner.state = state = Object(owner.state)
+	owner.refs = Object(owner.refs)
 
 	if (owner[SharedGetInitialState])
-		if (element.state = getLifecycleData(element, SharedGetInitialState, props, state, context))
-			if (typeof (state = instance.state = element.state).then === 'function')
-				if ((children = null, element.work === SharedWorkMounting))
-					enqueueStatePromise(element, instance, state)
+		owner.state = getLifecyclePayload(element, SharedGetInitialState, props, state, context) || state
 
 	if (owner[SharedComponentWillMount])
-		getLifecycleMount(element, SharedComponentWillMount)
+		getLifecycleMount(element, SharedComponentWillMount, owner)
 
-	children = children !== null ? getComponentChildren(element, instance) : getElementDefinition(children)
+	if (!thenable(state = owner.state))
+		children = getComponentSnapshot(element, owner)
+	else
+		children = createElement(enqueueStatePromise(element, owner, state).then(function () {
+			return {
+				then: function (resolve) {
+					resolve(children === element.children && getComponentSnapshot(element, owner))
+				}
+			}
+		}))
 
 	if (owner[SharedGetChildContext])
-		element.context = getComponentContext(element, props, state, context)
+		element.context = getLifecyclePayload(element, SharedGetChildContext, props, state, context) || context
 
 	return element.children = children
 }
@@ -118,223 +125,188 @@ function mountComponentElement (element) {
  * @param {Element} snapshot
  * @param {number} signature
  */
-function updateComponent (element, snapshot, signature) {
+function updateComponentElement (element, snapshot, signature) {
 	switch (element.work) {
 		case SharedWorkProcessing:
-			requestAnimationFrame(enqueuePendingUpdate(element, snapshot, signature))
+			requestAnimationFrame(function () {
+				updateComponentElement(element, snapshot, signature)
+			})
 		case SharedWorkIntermediate:
 			return
 	}
 
-	element.work = SharedWorkIntermediate
-
-	var instance = element.instance
 	var owner = element.owner
-	var nextContext = instance.context
 	var prevProps = element.props
 	var nextProps = snapshot.props
-	var tempState = element.state
-	var prevState = instance.state
-	var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, tempState) : prevState
-
-	if (owner[SharedGetChildContext])
-		enqueueContextUpdate(element, getComponentContext(element, nextProps, nextState, nextContext))
+	var nextContext = owner.context
+	var prevState = owner.state
+	var nextState = signature === SharedComponentStateUpdate ? assign({}, prevState, element.cache) : prevState
 
 	switch (signature) {
-		case SharedComponentForceUpdate:
-			break
 		case SharedComponentPropsUpdate:
 			if (owner[SharedComponentWillReceiveProps])
-				getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext)
+				getLifecycleReceive(element, SharedComponentWillReceiveProps, nextProps, nextState, nextContext)
 		case SharedComponentStateUpdate:
 			if (owner[SharedComponentShouldUpdate])
-				if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
-					return void (element.work = SharedWorkIdle)
+				if (!getLifecycleShould(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
+					return
 	}
-
-	element.work = SharedWorkProcessing
-
-	if (tempState !== element.state)
-		merge(nextState, element.state)
 
 	if (owner[SharedComponentWillUpdate])
 		getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)
 
+	if (owner[SharedGetChildContext])
+		merge(element.context, getLifecyclePayload(element, SharedGetChildContext, nextProps, nextState, nextContext))
+
 	if (signature === SharedComponentPropsUpdate)
-		instance.props = element.props = nextProps
+		owner.props = element.props = nextProps
 
 	if (signature === SharedComponentStateUpdate)
-		instance.state = nextState
+		owner.state = nextState
 
-	reconcileElement(element.children, getComponentChildren(element, instance))
+	reconcileElement(element.children, getComponentSnapshot(element, owner))
 
 	if (owner[SharedComponentDidUpdate])
 		getLifecycleUpdate(element, SharedComponentDidUpdate, prevProps, prevState, nextContext)
 
 	if (element.ref !== snapshot.ref)
-		commitRefs(element, snapshot.ref, SharedReferenceReplace)
-
-	element.work = SharedWorkIdle
+		commitRefs(element, snapshot.ref, SharedRefsReplace)
 }
 
 /**
  * @param {Element} element
  */
 function unmountComponentElement (element) {
-	if ((element.state = null, element.owner[SharedComponentWillUnmount]))
-		element.state = getLifecycleMount(element, SharedComponentWillUnmount)
+	if (element.owner[SharedComponentWillUnmount])
+		if (element.cache = getLifecycleUnmount(element, SharedComponentWillUnmount, element.owner))
+			if (thenable(element.cache))
+				return
+
+	element.cache = null
 }
 
 /**
  * @param {Element} element
- * @param {Component} instance
+ * @param {Component} owner
  * @param {function?} callback
- * @param {number} signature
  */
-function enqueueComponentUpdate (element, instance, callback, signature) {
+function enqueueComponentUpdate (element, owner, callback, signature) {
 	if (!element)
-		return void requestAnimationFrame(function () {
-			enqueueComponentUpdate(getComponentElement(instance), instance, callback, signature)
+		return requestAnimationFrame(function () {
+			enqueueComponentUpdate(getComponentElement(owner), owner, callback, signature)
 		})
 
 	if (element.work === SharedWorkProcessing)
-		return void requestAnimationFrame(function () {
-			enqueueComponentUpdate(element, instance, callback, signature)
+		return requestAnimationFrame(function () {
+			enqueueComponentUpdate(element, owner, callback, signature)
 		})
 
 	if (element.active)
-		updateComponent(element, element, signature)
+		updateComponentElement(element, element, signature)
 	else
-		instance.state = assign({}, instance.state, element.state)
+		merge(owner.state, element.cache)
 
 	if (callback)
-		enqueueStateCallback(element, instance, callback)
+		enqueueStateCallback(element, owner, callback)
 }
 
 /**
  * @param {Element} element
- * @param {Element} snapshot
- * @param {number} signature
- */
-function enqueuePendingUpdate (element, snapshot, signature) {
-	return function () {
-		updateComponent(element, snapshot, signature)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Component} instance
+ * @param {Component} owner
  * @param {(Object|function)} state
  * @param {function?} callback
  */
-function enqueueStateUpdate (element, instance, state, callback) {
-	if (!state)
-		return
-
-	if (!element)
-		return void requestAnimationFrame(function () {
-			enqueueStateUpdate(instance[SymbolElement], instance, state, callback)
-		})
-
-	switch (typeof state) {
-		case 'function':
-			return enqueueStateUpdate(element, instance, enqueueStateCallback(element, instance, state), callback)
-		case 'object':
-			element.state = state
+function enqueueStateUpdate (element, owner, state, callback) {
+	if (state) {
+		if (element)
+			switch (typeof state) {
+				case 'function':
+					return enqueueStateUpdate(element, owner, enqueueStateCallback(element, owner, state), callback)
+				case 'object':
+					if (thenable(element.cache = state))
+						enqueueStatePromise(element, owner, state, callback)
+					else
+						enqueueComponentUpdate(element, owner, callback, SharedComponentStateUpdate)
+			}
+		else
+			return requestAnimationFrame(function () {
+				enqueueStateUpdate(getComponentElement(owner), owner, state, callback)
+			})
 	}
-
-	if (typeof state.then === 'function')
-		if (element.active)
-			return enqueueStatePromise(element, instance, state, callback)
-
-	enqueueComponentUpdate(element, instance, callback, SharedComponentStateUpdate)
 }
 
 /**
  * @param {Element} element
- * @param {Component} instance
+ * @param {Component} owner
  * @param {Promise} state
  * @param {function?} callback
+ * @param {Promise}
  */
-function enqueueStatePromise (element, instance, state, callback) {
-	state.then(function (value) {
-		requestAnimationFrame(function () {
-			enqueueStateUpdate(element, instance, value, callback)
-		})
-	}).catch(function (err) {
-		invokeErrorBoundary(element, err, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
+function enqueueStatePromise (element, owner, state, callback) {
+	return state.then(function (value) {
+		if (value)
+			if (fetchable(value))
+				enqueueStateUpdate(element, owner, value.json(), callback)
+			else
+				enqueueStateUpdate(element, owner, value, callback)
+	}, function (err) {
+		invokeErrorBoundary(element, err, SharedSitePromise+':'+SharedSiteSetState, SharedErrorCatch)
 	})
 }
 
 /**
  * @param {Element} element
- * @param {Component} instance
+ * @param {Component} owner
  * @param {function} callback
  */
-function enqueueStateCallback (element, instance, callback) {
+function enqueueStateCallback (element, owner, callback) {
 	try {
 		if (typeof callback === 'function')
-			return callback.call(instance, instance.state, instance.props, instance.context)
+			return callback.call(owner, owner.state, owner.props, owner.context)
 	} catch (err) {
-		invokeErrorBoundary(element, err, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorActive)
+		invokeErrorBoundary(element, err, SharedSiteSetState+':'+SharedSiteCallback, SharedErrorCatch)
 	}
 }
 
 /**
  * @param {Element} element
- * @param {object} context
+ * @param {Object?} state
  */
-function enqueueContextUpdate (element, context) {
-	if (element.context !== context)
-		merge(element.context, context)
+function getLifecycleState (element, state) {
+	switch (typeof state) {
+		case 'object':
+		case 'function':
+			enqueueStateUpdate(element, element.owner, state)
+	}
+}
+
+/**
+ * @param {(Component|object)?} value
+ * @param {*} key
+ * @param {Element} element
+ */
+function getLifecycleRefs (value, key, element) {
+	if (key !== element.ref)
+		delete this.refs[element.ref]
+
+	this.refs[key] = value
 }
 
 /**
  * @param {Element} element
- * @param {function} owner
+ * @param {function} type
+ * @param {object} props
+ * @param {object} context
  * @return {Component}
  */
-function getComponentInstance (element, owner) {
+function getLifecycleClass (element, type, props, context) {
 	try {
-		return new owner(element.props, element.context)
+		element.owner = new type(props, context)
 	} catch (err) {
-		invokeErrorBoundary(element, err, SharedSiteConstructor, SharedErrorActive)
+		invokeErrorBoundary((element.owner = new Component(props, context), element), err, SharedSiteConstructor, SharedErrorCatch)
+	} finally {
+		return element.owner
 	}
-
-	return new Component()
-}
-
-/**
- * @param {Element} element
- * @param {Component} instance
- * @return {Element}
- */
-function getComponentChildren (element, instance) {
-	try {
-		return getElementDefinition(instance.render(instance.props, instance.state, element.context))
-	} catch (err) {
-		return getElementDefinition(invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorActive))
-	}
-}
-
-/**
- * @param {Component} instance
- * @return {Element?}
- */
-function getComponentElement (instance) {
-	return instance[SymbolElement]
-}
-
-/**
- * @param {Element} element
- * @param {Object} props
- * @param {Object} state
- * @param {Object} context
- * @return {Object?}
- */
-function getComponentContext (element, props, state, context) {
-	return getLifecycleData(element, SharedGetChildContext, props, state, context) || context
 }
 
 /**
@@ -345,29 +317,93 @@ function getComponentContext (element, props, state, context) {
  * @param {Object} context
  * @return {Object?}
  */
-function getLifecycleData (element, name, props, state, context) {
+function getLifecyclePayload (element, name, props, state, context) {
 	try {
-		return element.owner[name].call(element.instance, props, state, context)
+		return element.owner[name](props, state, context)
 	} catch (err) {
-		invokeErrorBoundary(element, err, name, SharedErrorActive)
+		invokeErrorBoundary(element, err, name, SharedErrorCatch)
 	}
 }
 
 /**
  * @param {Element} element
  * @param {string} name
+ * @param {Component} owner
  * @return {Promise?}
  */
-function getLifecycleMount (element, name) {
+function getLifecycleUnmount (element, name, owner) {
 	try {
-		var state = element.owner[name].call(element.instance, element.active && getClientNode(element))
-
-		if (name !== SharedComponentWillUnmount)
-			getLifecycleReturn(element, state)
-		else if (state && typeof state.then === 'function')
-			return state
+		return owner[name](getNodeOwner(getElementDescription(element)))
 	} catch (err) {
-		invokeErrorBoundary(element, err, name, SharedErrorActive)
+		invokeErrorBoundary(element, err, name, SharedErrorCatch)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {Component} owner
+ */
+function getLifecycleMount (element, name, owner) {
+	try {
+		getLifecycleState(element, owner[name](element.active && getNodeOwner(getElementDescription(element))))
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, SharedErrorCatch)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {Object} props
+ * @param {Object} state
+ * @param {Object} context
+ * @return {boolean?}
+ */
+function getLifecycleShould (element, name, props, state, context) {
+	try {
+		return element.owner[name](props, state, context)
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, SharedErrorCatch)
+	} finally {
+		element.work = SharedWorkIdle
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {Object} props
+ * @param {Object} state
+ * @param {Object} context
+ * @return {boolean?}
+ */
+function getLifecycleReceive (element, name, props, state, context) {
+	try {
+		getLifecycleState((element.work = SharedWorkIntermediate, element), element.owner[name](props, context))
+	} catch (err) {
+		invokeErrorBoundary(element, err, name, SharedErrorCatch)
+	} finally {
+		if (state !== (element.work = SharedWorkIdle, element.cache))
+			merge(state, element.cache)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {*} error
+ * @param {Exception} exception
+ * @param {number} work
+ * @return {boolean?}
+ */
+function getLifecycleBoundary (element, name, error, exception, work) {
+	try {
+		getLifecycleState(element, element.owner[name](error, exception))
+	} catch (err) {
+		invokeErrorBoundary(element.host, err, SharedComponentDidCatch, SharedErrorCatch)
+	} finally {
+		exception.bubbles = false
 	}
 }
 
@@ -381,68 +417,67 @@ function getLifecycleMount (element, name) {
  */
 function getLifecycleUpdate (element, name, props, state, context) {
 	try {
-		var state = element.owner[name].call(element.instance, props, state, context)
-
-		if (name === SharedComponentShouldUpdate)
-			return state
-
-		getLifecycleReturn(element, state)
+		getLifecycleState(element, element.owner[name](props, state, context))
 	} catch (err) {
-		invokeErrorBoundary(element, err, name, SharedErrorActive)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {Error} error
- * @param {Object} info
- */
-function getLifecycleBoundary (element, name, error, info) {
-	try {
-		getLifecycleReturn(element, element.owner[name].call(element.instance, error, info))
-	} catch (err) {
-		invokeErrorBoundary(element.host, err, SharedComponentDidCatch, SharedErrorActive)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Object?} state
- */
-function getLifecycleReturn (element, state) {
-	switch (typeof state) {
-		case 'object':
-		case 'function':
-			enqueueStateUpdate(element, element.instance, state)
+		invokeErrorBoundary(element, err, name, SharedErrorCatch)
 	}
 }
 
 /**
  * @param {Element} element
  * @param {function} callback
- * @param {*} first
- * @param {*} second
- * @param {*} third
+ * @param {object?} props
+ * @param {string?} name
+ * @param {object?} state
  * @return {*?}
  */
-function getLifecycleCallback (element, callback, first, second, third) {
+function getLifecycleCallback (element, callback, props, name, state) {
 	try {
 		if (typeof callback === 'function')
-			return callback.call(element.instance, first, second, third)
+			return callback.call(element.owner, props, name, state)
 	} catch (err) {
-		invokeErrorBoundary(element, err, SharedSiteCallback, SharedErrorPassive)
+		invokeErrorBoundary(element, err, SharedSiteCallback, SharedErrorCatch)
 	}
 }
 
 /**
- * @param {(Component|Node)?} value
- * @param {*} key
- * @param {Element} element
+ * @param {Component} owner
+ * @param {string} name
+ * @param {function} callback
  */
-function setComponentRefs (value, key, element) {
-	if (key !== element.ref)
-		delete this.refs[element.ref]
+function getLifecycleOnce (owner, name, callback) {
+	return owner[name] = function () {
+		return delete this[name] && callback(this)
+	}
+}
 
-	this.refs[key] = value
+/**
+ * @param {Element} element
+ * @param {Component} owner
+ * @return {Element}
+ */
+function getComponentSnapshot (element, owner) {
+	try {
+		return getElementDefinition(owner.render(owner.props, owner.state, owner.context))
+	} catch (err) {
+		if (!invokeErrorBoundary(element, err, SharedSiteRender, SharedErrorCatch))
+			return getElementDefinition()
+	}
+}
+
+
+/**
+ * @param {Component} owner
+ * @return {Element}
+ */
+function getComponentElement (owner) {
+	return owner[SymbolElement]
+}
+
+/**
+ * @param {Component} owner
+ * @return {Element}
+ */
+function getComponentChildren (owner) {
+	return getComponentElement(owner).children
 }

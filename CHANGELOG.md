@@ -1,6 +1,10 @@
-## 8.2.4 (11 March 2018)
+## 9.0.0 (Unreleased)
 
-- Patch [#53](https://github.com/thysultan/dio.js/issues/53)
+- New: `createContext` API.
+- New: support for auto resolution of json `fetch` based Promises passed to setState/getInitialState.
+- Improve: error boundaries implementation to support possible future `Timeout` and `Placeholder` React components.
+- Improve: `async getInitialState` implementation to use the same code path for both server and client implementations.
+- Breaking: Improve Error Boundaries to act more like React and `try..catch`.
 
 ## 8.2.3 (25 January 2018)
 

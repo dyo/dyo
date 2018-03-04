@@ -395,10 +395,11 @@ describe('Component', () => {
 	it('should async getInitialState', (done) => {
 		let container = document.createElement('div')
 		let stack = []
+		let refs = null
 
 		render(class {
 			getInitialState() {
-				return Promise.resolve({x: '!!'})
+				return refs = Promise.resolve({x: '!!'})
 			}
 			render(props, {x}) {
 				stack.push(x)
@@ -406,10 +407,50 @@ describe('Component', () => {
 			}
 		}, container)
 
-		nextTick(() => {
-			assert.html(container, '<h1>Hello World!!</h1>')
-			assert.lengthOf(stack, 1)
-			done()
+		refs.then(() => {
+			nextTick(() => {
+				assert.html(container, '<h1>Hello World!!</h1>')
+				assert.lengthOf(stack, 1)
+				done()
+			}, 1)
+		})
+	})
+
+	it('should fallback to default object when getInitialState returns nothing', () => {
+		let container = document.createElement('div')
+
+		render(class {
+			getInitialState() {
+			}
+			render(props, state) {
+				return h('h1', 'Hello World', JSON.stringify(state))
+			}
+		}, container)
+
+		assert.html(container, '<h1>Hello World{}</h1>')
+	})
+
+	it('should async state', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		render(class {
+			constructor() {
+				refs = this.state = Promise.resolve({x: '!!'})
+			}
+			render(props, {x}) {
+				stack.push(x)
+				return h('h1', 'Hello World', x)
+			}
+		}, container)
+
+		refs.then(() => {
+			nextTick(() => {
+				assert.html(container, '<h1>Hello World!!</h1>')
+				assert.lengthOf(stack, 1)
+				done()
+			}, 1)
 		})
 	})
 
@@ -763,54 +804,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should reject async promise element', (done) => {
-		let container = document.createElement('div')
-		let stack = []
-		let A = class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(1)
-			}
-			render({children}) {
-				return children
-			}
-		}
-
-		render(h(A, Promise.reject(h('div', 1))), container)
-
-		nextTick(() => {
-			assert.html(container, '')
-			assert.lengthOf(stack, 1)
-			done()
-		})
-	})
-
-	it('should throw in async unmount', (done) => {
-		let container = document.createElement('div')
-		let stack = []
-		let error = console.error
-		let spy = console.error = () => stack.push(1)
-
-		let A = class {
-			componentWillUnmount() {
-				return Promise.reject()
-			}
-			render({children}) {
-				return children
-			}
-		}
-
-		render(h(A), container)
-		render(null, container)
-
-		nextTick(() => {
-			assert.html(container, '')
-			assert.lengthOf(stack, 1)
-			done()
-		})
-	})
-
-	it('should ensure a pending update from componentWillUpdate update is resolved', (done) => {
+	it('should ensure an update from componentWillUpdate update is resolved', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 		let counter = 0
@@ -821,22 +815,23 @@ describe('Component', () => {
 			componentWillUpdate() {
 				if (counter++ > 0) {
 					nextTick(() => {
-						assert.html(container, '2')
-						assert.lengthOf(stack, 3)
+						assert.html(container, '3')
+						assert.deepEqual(stack, [1, 2, '2', 3])
 						done()
 					})
 				} else {
 					render(h(A, 2), container)
+					stack.push(container.innerHTML)
 				}
 			}
 			render({children}, {name}) {
-				stack.push(1)
+				stack.push(children)
 				return children
 			}
 		}
 
 		render(h(A, 1), container)
-		render(h(A, 1), container)
+		render(h(A, 3), container)
 	})
 
 	it('should ensure a pending update from componentDidUpdate update is resolved', (done) => {
@@ -1004,7 +999,7 @@ describe('Component', () => {
 		assert.include(stack, true)
 	})
 
-	it('should call componentWillMount synchronously', () => {
+	it('should setState synchronously from componentWillMount', () => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -1136,8 +1131,8 @@ describe('Component', () => {
 	it('should allow dynamic mutation of render method', () => {
 		assert.instanceOf(Component.prototype.render, Function)
 		assert.deepInclude(Object.getOwnPropertyDescriptor(Component.prototype, 'render'), {
-			configurable: false,
-			enumerable: false,
+			configurable: true,
+			enumerable: true,
 			writable: true,
 			value: Component.prototype.render
 		})

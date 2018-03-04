@@ -773,63 +773,60 @@ describe('Fixture', () => {
 		assert.lengthOf(stack, 1)
 	})
 
+	it('should read json from fetch response', (done) => {
+		let container = document.createElement('div')
+		let refs = null
+
+		let fetch = (url) => {
+			return new Promise((resolve) => {
+				resolve({
+					url: url,
+					status: 200,
+					statusText: '',
+					ok: true,
+					bodyUsed: false,
+					json() {
+						return new Promise((resolve) => {
+							resolve({value: 'works!'})
+						})
+					},
+					text() {
+						return new Promise((resolve) => {
+							resolve(JSON.stringify({value: 'works!'}))
+						})
+					},
+					blob() {
+
+					}
+				})
+			})
+		}
+
+		let Users = class {
+		  getInitialState() {
+		    return refs = fetch('https://reqres.in/api/users')
+		  }
+		  render(props, {value}) {
+		    return h('h1', value)
+		  }
+		}
+
+		render(Users, container)
+
+		refs.then(() => {
+			nextTick(() => {
+				assert.html(container, '<h1>works!</h1>')
+				done()
+			}, 1)
+		})
+	})
+
 	it('should match version with package.json', () => {
 		delete require.cache[require.resolve(pkgfile)]
 
 		assert.equal(require(pkgfile).version, version)
 
 		delete require.cache[require.resolve(pkgfile)]
-	})
-
-	it('should handle errors in enviroments that do not have a console implemention', () => {
-		let container = document.createElement('div')
-		let stack = []
-		let defaultConsole = global.console
-
-		Object.defineProperty(global, 'console', {value: {log: () => { stack.push('log') }}})
-
-		render(class {
-			componentDidCatch() {
-				stack.push(0)
-			}
-			render() {
-				throw new Error('Error!')
-			}
-		}, container)
-
-		global.printErr = () => { stack.push('printErr') }
-		Object.defineProperty(global, 'console', {value: undefined})
-
-		render(class {
-			componentDidCatch() {
-				stack.push(1)
-			}
-			render() {
-				throw new Error('Error!')
-			}
-		}, container)
-
-		delete global.printErr
-
-		assert.doesNotThrow(() => {
-			render(class {
-				componentDidCatch() {
-					stack.push(2)
-				}
-				render() {
-					throw new Error('Error!')
-				}
-			}, container)
-		})
-
-		Object.defineProperty(global, 'console', {value: defaultConsole})
-
-		assert.html(container, '')
-		assert.sameMembers(stack, ['log', 'printErr', 0, 1, 2])
-		assert.lengthOf(stack, 5)
-
-		assert.equal(global.printErr, undefined)
-		assert.equal(global.console, defaultConsole)
 	})
 
 	it('should handle mutable component elements', () => {

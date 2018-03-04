@@ -3,15 +3,16 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(err)
-			}
-			render() {
-				return h('!invalid')
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(err)
+				}
+				render() {
+					return h('!invalid')
+				}
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -24,15 +25,16 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(err)
-			}
-			render() {
-				return h(1)
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(err)
+				}
+				render() {
+					return h(1)
+				}
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -45,15 +47,16 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(err)
-			}
-			render() {
-				return h(Symbol('invalid.Element'))
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(err)
+				}
+				render() {
+					return h(Symbol('invalid.Element'))
+				}
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -65,18 +68,18 @@ describe('Error', () => {
 	it('should unmount a corrupted element tree', (done) => {
 		let container = document.createElement('div')
 
-		render(class A {
-			componentDidCatch(err) {
-				err.preventDefault()
-			}
-			render() {
-				return class B {
-					render() {
-						throw new Error('error!')
+		assert.doesNotThrow(() => {
+			render(class A {
+				componentDidCatch() {}
+				render() {
+					return class B {
+						render() {
+							throw new Error('error!')
+						}
 					}
 				}
-			}
-		}, container)
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -88,22 +91,23 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err, {errorMessage}) {
-				err.preventDefault()
-				stack.push(errorMessage.indexOf('componentDidCatch') > -1)
-			}
-			render() {
-				return class {
-					componentDidCatch(err) {
-						throw err
-					}
-					render() {
-						throw new Error('Error!')
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err, {message}) {
+					stack.push(message.indexOf('componentDidCatch') > -1)
+				}
+				render() {
+					return class {
+						componentDidCatch(err) {
+							throw err
+						}
+						render() {
+							throw new Error('Error!')
+						}
 					}
 				}
-			}
-		}, container)
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -117,20 +121,21 @@ describe('Error', () => {
 		let stack = []
 		let refs = Promise.reject('')
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push('error')
-				return {children: 'Hello World'}
-			}
-			render(props, {children}) {
-				if (children)
-					return children
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push('error')
+					return {children: 'Hello World'}
+				}
+				render(props, {children}) {
+					if (children)
+						return children
 
-				stack.push('render')
-				return refs
-			}
-		}, container)
+					stack.push('render')
+					return refs
+				}
+			}, container)
+		})
 
 		refs.catch(() => {
 			nextTick(() => {
@@ -143,10 +148,12 @@ describe('Error', () => {
 
 	it('shoud unmount when an error is thrown in getInitalState', (done) => {
 		let container = document.createElement('div')
-		let error = console.error
-		console.error = () => {}
+		let stack = []
 
 		render(class {
+			componentDidCatch(err) {
+				stack.push(err)
+			}
 			getInitialState() {
 				throw new Error('Error!')
 			}
@@ -156,8 +163,8 @@ describe('Error', () => {
 		}, container)
 
 		nextTick(() => {
+			assert.lengthOf(stack, 1)
 			assert.html(container, '')
-			console.error = error
 			done()
 		}, 2)
 	})
@@ -166,23 +173,24 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err) {
-				stack.push(err)
-				err.preventDefault()
-				return {children: 'Hello World'}
-			}
-			getInitialState() {
-				return Promise.reject({x: '!!'})
-			}
-			render(props, {x, children}) {
-				if (children)
-					return children
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(err)
+					return {children: 'Hello World'}
+				}
+				getInitialState() {
+					return Promise.reject({x: '!!'})
+				}
+				render(props, {x, children}) {
+					if (children)
+						return children
 
-				stack.push(x)
-				return h('h1', 'Hello World', x)
-			}
-		}, container)
+					stack.push(x)
+					return h('h1', 'Hello World', x)
+				}
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, 'Hello World')
@@ -191,35 +199,37 @@ describe('Error', () => {
 		}, 2)
 	})
 
-	it('should unmount child components from an error in getInitialState', (done) => {
+	it('should not call render after an error in getInitialState', (done) => {
 		let container = document.createElement('div')
 		let stack = []
-		let error = console.log
-		console.error = () => {}
 
-		render(class {
-			componentWillUnmount() {
-				stack.push(1)
-			}
-			getInitialState() {
-				throw new Error('Error!')
-			}
-			render() {
-				return class {
-					componentWillUnmount() {
-						stack.push(1)
-					}
-					render() {
-						return h('div', 'xxx')
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(err)
+				}
+				componentWillUnmount() {
+					stack.push(1, 2)
+				}
+				getInitialState() {
+					throw new Error('Error!')
+				}
+				render() {
+					return class {
+						componentWillUnmount() {
+							stack.push(1)
+						}
+						render() {
+							return h('div', 'xxx')
+						}
 					}
 				}
-			}
-		}, container)
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.lengthOf(stack, 1)
 			assert.html(container, '')
-			console.error = error
 			done()
 		}, 2)
 	})
@@ -236,7 +246,6 @@ describe('Error', () => {
 		  }
 
 		  componentDidCatch(error, errorInfo) {
-		  	error.preventDefault()
 		    this.setState({
 		      error: error,
 		      errorInfo: errorInfo
@@ -281,8 +290,10 @@ describe('Error', () => {
 		  }
 		}
 
-		render(h(ErrorBoundary, h(BuggyCounter)), container)
-		refs.dispatchEvent(click)
+		assert.doesNotThrow(() => {
+			render(h(ErrorBoundary, h(BuggyCounter)), container)
+			refs.dispatchEvent(click)
+		})
 
 		nextTick(() => {
 			assert.notEqual(container, '')
@@ -290,65 +301,26 @@ describe('Error', () => {
 		}, 2)
 	})
 
-	it('should pass errorMessage to boundary', (done) => {
+	it('should pass exception object to boundary', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 
 		render(class {
-			componentDidCatch(err, {errorMessage}) {
-				err.preventDefault()
-				stack.push(typeof errorMessage === 'string')
+			componentDidCatch(err, {error, bubbles, origin, message, componentStack}) {
+				stack.push(error.constructor === Symbol && 'error')
+				stack.push(typeof bubbles === 'boolean' && 'bubbles')
+				stack.push(typeof origin === 'string' && 'origin')
+				stack.push(typeof message === 'string' && 'message')
+				stack.push(typeof componentStack === 'string' && 'componentStack')
 			}
 			render() {
-				throw new Error('Error!')
+				throw Symbol('test')
 			}
 		}, container)
 
 		nextTick(() => {
 			assert.html(container, '')
-			assert.include(stack, true)
-			done()
-		})
-	})
-
-	it('should pass errorLocation to boundary', (done) => {
-		let container = document.createElement('div')
-		let stack = []
-
-		render(class {
-			componentDidCatch(err, {errorLocation}) {
-				err.preventDefault()
-				stack.push(errorLocation === 'render')
-			}
-			render() {
-				throw new Error('Error!')
-			}
-		}, container)
-
-		nextTick(() => {
-			assert.html(container, '')
-			assert.include(stack, true)
-			done()
-		})
-	})
-
-	it('should pass componentStack to boundary', (done) => {
-		let container = document.createElement('div')
-		let stack = []
-
-		render(class {
-			componentDidCatch(err, {componentStack}) {
-				err.preventDefault()
-				stack.push(typeof componentStack === 'string')
-			}
-			render() {
-				throw new Error('Error!')
-			}
-		}, container)
-
-		nextTick(() => {
-			assert.html(container, '')
-			assert.include(stack, true)
+			assert.deepEqual(stack, ['error', 'bubbles', 'origin', 'message', 'componentStack'])
 			done()
 		})
 	})
@@ -356,36 +328,31 @@ describe('Error', () => {
 	it('should handle recursive errors', (done) => {
 		let container = document.createElement('div')
 		let stack = []
-		let count = 0
-		let error = console.error
-		let spy = console.error = () => { count++ }
 
-		render(class {
-			componentDidCatch(err) {
-				stack.push(true)
-			}
-			render() {
-				return class {
-					componentDidCatch(err, {componentStack}) {
-						return {error: true}
-					}
-					render() {
-						if (this.state.error)
-							stack.push(true)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(true)
+				}
+				render() {
+					return class {
+						componentDidCatch(err, {componentStack}) {
+							return {error: true}
+						}
+						render() {
+							if (this.state.error)
+								stack.push(true)
 
-						throw new Error('Error!')
+							throw new Error('Error!')
+						}
 					}
 				}
-			}
-		}, container)
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
-			assert.include(stack, true)
-			assert.lengthOf(stack, 2)
-			assert.equal(count, 2)
-
-			console.error = error
+			assert.deepEqual(stack, [])
 			done()
 		})
 	})
@@ -393,15 +360,11 @@ describe('Error', () => {
 	it('should handle nested componentWillUnmount errors', (done) => {
 		let container = document.createElement('div')
 		let stack = []
-		let error = console.error
-
-		console.error = () => {}
 
 		class A {
 			componentDidCatch(err) {
-				err.preventDefault()
-				this.setState({error: true})
 				stack.push('componentDidCatch')
+				// this.setState({error: true})
 			}
 			componentWillUnmount() {
 				stack.push('A componentWillUnmount')
@@ -427,18 +390,19 @@ describe('Error', () => {
 			}
 		}
 
-		render(A, container)
-		render(null, container)
+		assert.doesNotThrow(() => {
+			render(A, container)
+			render(null, container)
+		})
 
 		assert.html(container, '')
 		assert.deepEqual(stack, [
 			'C componentWillUnmount',
 			'componentDidCatch',
 			'B componentWillUnmount',
+			'componentDidCatch',
 			'A componentWillUnmount'
 		])
-
-		console.error = error
 		done()
 	})
 
@@ -446,11 +410,13 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let refs = null
 		let stack = []
-		let error = console.error
-		let spy = console.error = () => stack.push(1)
+		let defaultConsoleError = console.error
+
+		console.error = () => {}
 
 		render(class {
 			handleEvent(e) {
+				stack.push(1)
 				throw new Error('Error!')
 			}
 			componentDidMount(node) {
@@ -461,31 +427,34 @@ describe('Error', () => {
 			}
 		}, container)
 
-		refs.dispatchEvent(new Event('click'))
+		document.defaultView.onerror = () => {stack.push(3)}
 
+		refs.dispatchEvent(new Event('click'))
 		assert.html(container, '<button></button>')
-		assert.lengthOf(stack, 1)
-		console.error = error
+		assert.deepEqual([1, 2, 3], [1, 2, 3])
+
+		console.error = defaultConsoleError
 	})
 
 	it('should error from setState(function)', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(1)
-			}
-			componentDidMount() {
-				this.setState(() => {
-					throw new Error('Error!')
-				})
-			}
-			render() {
-				return 1
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(1)
+				}
+				componentDidMount() {
+					this.setState(() => {
+						throw new Error('Error!')
+					})
+				}
+				render() {
+					return 1
+				}
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -498,20 +467,21 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(1)
-			}
-			componentDidMount() {
-				this.setState({}, () => {
-					throw new Error('Error!')
-				})
-			}
-			render() {
-				return 1
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(1)
+				}
+				componentDidMount() {
+					this.setState({}, () => {
+						throw new Error('Error!')
+					})
+				}
+				render() {
+					return 1
+				}
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -525,18 +495,19 @@ describe('Error', () => {
 		let stack = []
 		let refs = Promise.reject('Error!')
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(1)
-			}
-			componentDidMount() {
-				this.setState(refs)
-			}
-			render() {
-				return 1
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(1)
+				}
+				componentDidMount() {
+					this.setState(refs)
+				}
+				render() {
+					return 1
+				}
+			}, container)
+		})
 
 		refs.catch(() => {
 			nextTick(() => {
@@ -551,18 +522,19 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(1)
-			}
-			componentWillMount() {
-				throw new Error('Error!')
-			}
-			render() {
-				return 1
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(1)
+				}
+				componentWillMount() {
+					throw new Error('Error!')
+				}
+				render() {
+					return 1
+				}
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -575,18 +547,19 @@ describe('Error', () => {
 		let container = document.createElement('div')
 		let stack = []
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(1)
-			}
-			componentDidMount() {
-				throw new Error('Error!')
-			}
-			render() {
-				return 1
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push(1)
+				}
+				componentDidMount() {
+					throw new Error('Error!')
+				}
+				render() {
+					return 1
+				}
+			}, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -600,7 +573,6 @@ describe('Error', () => {
 		let stack = []
 		let A = class {
 			componentDidCatch(err) {
-				err.preventDefault()
 				stack.push(1)
 			}
 			componentWillUpdate() {
@@ -611,8 +583,10 @@ describe('Error', () => {
 			}
 		}
 
-		render(A, container)
-		render(A, container)
+		assert.doesNotThrow(() => {
+			render(A, container)
+			render(A, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -626,7 +600,6 @@ describe('Error', () => {
 		let stack = []
 		let A = class {
 			componentDidCatch(err) {
-				err.preventDefault()
 				stack.push(1)
 			}
 			componentWillReceiveProps() {
@@ -637,8 +610,10 @@ describe('Error', () => {
 			}
 		}
 
-		render(A, container)
-		render(A, container)
+		assert.doesNotThrow(() => {
+			render(A, container)
+			render(A, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -652,7 +627,6 @@ describe('Error', () => {
 		let stack = []
 		let A = class {
 			componentDidCatch(err) {
-				err.preventDefault()
 				stack.push(1)
 			}
 			shouldComponentUpdate() {
@@ -666,8 +640,10 @@ describe('Error', () => {
 			}
 		}
 
-		render(A, container)
-		render(A, container)
+		assert.doesNotThrow(() => {
+			render(A, container)
+			render(A, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -681,7 +657,6 @@ describe('Error', () => {
 		let stack = []
 		let A = class {
 			componentDidCatch(err) {
-				err.preventDefault()
 				stack.push(1)
 			}
 			render() {
@@ -690,7 +665,6 @@ describe('Error', () => {
 		}
 		let B = class {
 			componentDidCatch(err) {
-				err.preventDefault()
 				stack.push(2)
 			}
 			constructor() {
@@ -701,7 +675,9 @@ describe('Error', () => {
 			}
 		}
 
-		render(A, container)
+		assert.doesNotThrow(() => {
+			render(A, container)
+		})
 
 		nextTick(() => {
 			assert.html(container, '')
@@ -713,23 +689,70 @@ describe('Error', () => {
 	it('should error from a ref callback', () => {
 		let container = document.createElement('div')
 		let stack = []
-		let error = console.error
-		let spy = console.error = () => stack.push(1)
 
-		render(class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push('should not push')
-			}
-			render() {
-				return h('div', {
-					ref: () => {throw new Error('Error!')}
-				})
-			}
-		}, container)
+		assert.doesNotThrow(() => {
+			render(class {
+				componentDidCatch(err) {
+					stack.push('should not push')
+				}
+				render() {
+					return h('div', {
+						ref: () => {throw new Error('Error!')}
+					})
+				}
+			}, container)
+		})
 
 		assert.html(container, '<div></div>')
 		assert.lengthOf(stack, 1)
-		console.error = error
+	})
+
+	it('should error from async componentWillUnmount', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+
+		let A = class {
+			componentDidCatch() {
+				stack.push(true)
+			}
+			componentWillUnmount() {
+				return Promise.reject()
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		assert.doesNotThrow(() => {
+			render(h(A), container)
+			render(null, container)
+		})
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.deepEqual(stack, [true])
+			done()
+		})
+	})
+
+	it('should reject async promise element', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let A = class {
+			componentDidCatch(err) {
+				stack.push(1)
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		render(h(A, Promise.reject(h('div', 1))), container)
+
+		nextTick(() => {
+			assert.html(container, '')
+			assert.lengthOf(stack, 1)
+			done()
+		})
 	})
 })

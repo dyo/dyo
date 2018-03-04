@@ -56,7 +56,6 @@ function isVoidType (type) {
 /**
  * @param {Response} response
  */
-function setHeader (response) {
-	if (typeof response.setHeader === 'function')
-		response.setHeader('Content-Type', 'text/html')
+function setResponseHeader (response) {
+	typeof response.setHeader === 'function' && response.setHeader('Content-Type', 'text/html')
 }

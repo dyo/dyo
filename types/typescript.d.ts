@@ -234,21 +234,13 @@ interface Props extends Events {
 }
 
 interface ElementNode extends Link {
-	id: number
-	work: number
-	active: boolean
 	xmlns: string
 	key: Key
 	ref: Ref
 	type: Type
 	props: Props
-	state: any
 	children: List
 	owner: any
-	instance: any
-	event: any
-	DOM: any
-	context: any
 	parent: any
 	host: any
 	handlEvent: (e: Event) => void

@@ -1,24 +1,8 @@
 /**
  * @param {Element} element
- * @param {Node} node
  */
-function setDOMHost (element, node) {
-	weakClientMap.set(node, element)
-}
-
-/**
- * @param {Element} element
- * @param {Node} node
- */
-function setDOMNode (element, node) {
-	element.DOM = node
-}
-
-/**
- * @param {Element} parent
- */
-function setDOMContent (parent) {
-	getDOMNode(parent).textContent = ''
+function setDOMContent (element) {
+	element.owner.textContent = ''
 }
 
 /**
@@ -26,7 +10,7 @@ function setDOMContent (parent) {
  * @param {string} value
  */
 function setDOMText (element, value) {
-	getDOMNode(element).nodeValue = value
+	element.owner.nodeValue = value
 }
 
 /**
@@ -34,22 +18,26 @@ function setDOMText (element, value) {
  * @param {string} type
  */
 function setDOMEvent (element, type) {
-	getDOMNode(element).addEventListener(type, element, false)
+	element.owner.addEventListener(type, element, false)
 }
 
 /**
  * @param {Element} element
- * @param {Object} props
+ * @param {string} name
+ * @param {(object|string)?} value
  */
-function setDOMStyle (element, props) {
-	for (var name in props) {
-		var value = props[name]
+function setDOMStyle (element, name, value) {
+	if (typeof value === 'object')
+		for (var property in value) {
+			var declaration = value[property]
 
-		if (name.indexOf('-') < 0)
-			getDOMNode(element).style[name] = value !== false && value !== undefined ? value : ''
-		else
-			getDOMNode(element).style.setProperty(name, value)
-	}
+			if (property.indexOf('-') === -1)
+				element.owner.style[property] = declaration !== false && declaration !== undefined ? declaration : ''
+			else
+				element.owner.style.setProperty(property, declaration)
+		}
+	else
+		setDOMAttribute(element, name, value, '')
 }
 
 /**
@@ -62,9 +50,9 @@ function setDOMProperty (element, name, value) {
 		case null:
 		case false:
 		case undefined:
-			return setDOMAttribute(element, name, value, getDOMNode(element)[name] = '')
+			return setDOMAttribute(element, name, value, element.owner[name] = '')
 		default:
-			getDOMNode(element)[name] = value
+			element.owner[name] = value
 	}
 }
 
@@ -72,7 +60,7 @@ function setDOMProperty (element, name, value) {
  * @param {Element} element
  * @param {string} name
  * @param {*} value
- * @param {string} xmlns
+ * @param {string?} xmlns
  */
 function setDOMAttribute (element, name, value, xmlns) {
 	switch (value) {
@@ -80,16 +68,16 @@ function setDOMAttribute (element, name, value, xmlns) {
 		case false:
 		case undefined:
 			if (xmlns)
-				getDOMNode(element).removeAttributeNS(xmlns, name)
+				element.owner.removeAttributeNS(xmlns, name)
 
-			return getDOMNode(element).removeAttribute(name)
+			return element.owner.removeAttribute(name)
 		case true:
 			return setDOMAttribute(element, name, '', xmlns)
 		default:
 			if (!xmlns)
-				getDOMNode(element).setAttribute(name, value)
+				element.owner.setAttribute(name, value)
 			else
-				getDOMNode(element).setAttributeNS(xmlns, name, value)
+				element.owner.setAttributeNS(xmlns, name, value)
 	}
 }
 
@@ -97,7 +85,7 @@ function setDOMAttribute (element, name, value, xmlns) {
  * @param {Element} element
  * @param {string} name
  * @param {*} value
- * @param {string} xmlns
+ * @param {string?} xmlns
  */
 function setDOMProps (element, name, value, xmlns) {
 	switch (name) {
@@ -106,8 +94,6 @@ function setDOMProps (element, name, value, xmlns) {
 				return setDOMProperty(element, name, value)
 		case 'class':
 			return setDOMAttribute(element, 'class', value, '')
-		case 'style':
-			return typeof value === 'object' ? setDOMStyle(element, value) : setDOMAttribute(element, name, value, '')
 		case 'xlink:href':
 			return setDOMAttribute(element, name, value, 'http://www.w3.org/1999/xlink')
 		case 'innerHTML':
@@ -122,7 +108,7 @@ function setDOMProps (element, name, value, xmlns) {
 			return setDOMProps(element, name.toLowerCase(), value, xmlns)
 		case 'autofocus':
 		case 'autoFocus':
-			return getDOMNode(element)[value ? 'focus' : 'blur']()
+			return element.owner[value ? 'focus' : 'blur']()
 		case 'width':
 		case 'height':
 			if (element.type === 'img')
@@ -135,7 +121,7 @@ function setDOMProps (element, name, value, xmlns) {
 		case 'string':
 		case 'number':
 		case 'boolean':
-			if (xmlns || !(name in getDOMNode(element)))
+			if (xmlns || !(name in element.owner))
 				return setDOMAttribute(element, name, value, '')
 		default:
 			setDOMProperty(element, name, value)
@@ -149,33 +135,25 @@ function setDOMProps (element, name, value, xmlns) {
  * @param {Array} nodes
  */
 function setDOMInnerHTML (element, name, value, nodes) {
-	if (getDOMNode(element)[name])
+	if (element.owner[name])
 		element.children.forEach(function (children) {
-			nodes.push(getDOMNode(children))
+			nodes.push(children.owner)
 		})
 
-	if (getDOMNode(element)[name] = value)
-		nodes.push.apply(nodes, getDOMNode(element).childNodes)
+	if (element.owner[name] = value)
+		nodes.push.apply(nodes, element.owner.childNodes)
 
 	nodes.forEach(function (node) {
-		getDOMNode(element).appendChild(node)
+		element.owner.appendChild(node)
 	})
 }
 
 /**
- * @param {Node} node
- * @return {Element}
- */
-function getDOMHost (node) {
-	return weakClientMap.get(node).children
-}
-
-/**
  * @param {Element} element
- * @return {Node}
+ * @return {object}
  */
-function getDOMNode (element) {
-	return element.DOM
+function getDOMOwner (element) {
+	return element.owner
 }
 
 /**
@@ -204,10 +182,10 @@ function getDOMType (element, xmlns) {
 		case 'math':
 			return 'http://www.w3.org/1998/Math/MathML'
 		case 'foreignObject':
-			return ''
+			return
+		default:
+			return xmlns
 	}
-
-	return xmlns
 }
 
 /**
@@ -231,7 +209,7 @@ function getDOMPortal (element) {
 	if (typeof element.type === 'string')
 		return getDOMDocument().querySelector(element.type)
 
-	if (isValidDOMNode(element.type))
+	if (isValidDOMTarget(element.type))
 		return element.type
 
 	return getDOMDocument()
@@ -240,23 +218,23 @@ function getDOMPortal (element) {
 /**
  * @param {Element} element
  * @param {Element} parent
- * @param {Element} previous
- * @param {Element} next
+ * @param {Element} previousSibling
+ * @param {Element} nextSibling
  */
-function getDOMQuery (element, parent, previous, next) {
+function getDOMQuery (element, parent, previousSibling, nextSibling) {
 	var id = element.id
 	var type = id > SharedElementNode ? '#text' : element.type.toLowerCase()
 	var props = element.props
 	var children = element.children
 	var length = children.length
-	var target = previous.active ? getDOMNode(previous).nextSibling : getDOMNode(parent).firstChild
+	var target = previousSibling.active ? previousSibling.owner.nextSibling : parent.owner.firstChild
 	var sibling = target
 	var node = null
 
 	while (target) {
 		if (target.nodeName.toLowerCase() === type) {
 			if (id > SharedElementNode) {
-				if (next.id > SharedElementNode)
+				if (nextSibling.id > SharedElementNode)
 					target.splitText(0)
 
 				if (target.nodeValue !== children)
@@ -271,14 +249,14 @@ function getDOMQuery (element, parent, previous, next) {
 			node = target
 			type = null
 
-			if (!(target = target.nextSibling) || next.type)
+			if (!(target = target.nextSibling) || nextSibling.type)
 				break
 		}
 
 		if (id > SharedElementNode && length === 0) {
-			target.parentNode.insertBefore((node = createDOMText(element)), target)
+			target.parentNode.insertBefore(node = createDOMText(element), target)
 
-			if (!next.type)
+			if (!nextSibling.type)
 				type = null
 			else
 				break
@@ -289,46 +267,35 @@ function getDOMQuery (element, parent, previous, next) {
 	}
 
 	if (node && !node.splitText)
-		for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i) {
-			var name = attributes[i].name
-
-			if (props[name] === undefined)
-				node.removeAttribute(name)
-		}
+		for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i)
+			if (props[type = attributes[i].name] == null)
+				node.removeAttribute(type)
 
 	return node
 }
 
 /**
- * @param {Node} node
- * @return {boolean}
- */
-function isValidDOMHost (node) {
-	return weakClientMap.has(node)
-}
-
-/**
- * @param {Node} node
+ * @param {object?} target
  * @param {boolean}
  */
-function isValidDOMNode (node) {
-	return !!(node && node.ELEMENT_NODE)
+function isValidDOMTarget (target) {
+	return target != null && target.ELEMENT_NODE === 1
 }
 
 /**
- * @param {Event} event
+ * @param {object?} event
  * @return {boolean}
  */
 function isValidDOMEvent (event) {
-	return !!(event && event.BUBBLING_PHASE)
+	return event != null && event.BUBBLING_PHASE === 3
 }
 
 /**
  * @param {Element} element
  * @param {Element} parent
  */
-function removeDOMNode (element, parent) {
-	getDOMNode(parent).removeChild(getDOMNode(element))
+function removeDOMChild (element, parent) {
+	parent.owner.removeChild(element.owner)
 }
 
 /**
@@ -336,27 +303,16 @@ function removeDOMNode (element, parent) {
  * @param {Element} sibling
  * @param {Element} parent
  */
-function insertDOMNode (element, sibling, parent) {
-	getDOMNode(parent).insertBefore(getDOMNode(element), getDOMNode(sibling))
+function insertDOMBefore (element, sibling, parent) {
+	parent.owner.insertBefore(element.owner, sibling.owner)
 }
 
 /**
  * @param {Element} element
  * @param {Element} parent
  */
-function appendDOMNode (element, parent) {
-	getDOMNode(parent).appendChild(getDOMNode(element))
-}
-
-/**
- * @param {Element} element
- * @return {Node}
- */
-function createDOMElement (element) {
-	if (element.xmlns)
-		return document.createElementNS(element.xmlns, element.type)
-
-	return document.createElement(element.type)
+function appendDOMChild (element, parent) {
+	parent.owner.appendChild(element.owner)
 }
 
 /**
@@ -373,4 +329,12 @@ function createDOMText (element) {
  */
 function createDOMEmpty (element) {
 	return document.createTextNode('')
+}
+
+/**
+ * @param {Element} element
+ * @return {Node}
+ */
+function createDOMElement (element) {
+	return element.xmlns ? document.createElementNS(element.xmlns, element.type) : document.createElement(element.type)
 }

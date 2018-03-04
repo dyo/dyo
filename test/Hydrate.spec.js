@@ -60,7 +60,7 @@ describe('Hydrate', () => {
 		let second = container.querySelector('span')
 		hydrate(D, container)
 
-		assert.lengthOf(container.childNodes, 3)
+		assert.equal(container.childNodes.length, 3)
 		assert.html(container, '<span>bbb</span>')
 		assert.html(first, 'bbb')
 		assert.html(second, 'bbb')

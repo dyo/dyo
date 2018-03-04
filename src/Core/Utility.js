@@ -9,43 +9,46 @@ function List () {
 /**
  * @type {Object}
  */
-defineProperties(List.prototype, {
+List.prototype = {
 	/**
 	 * @param {Object} node
 	 * @param {Object} before
 	 * @return {Object}
 	 */
-	insert: {value: function insert (node, before) {
+	insert: function insert (node, before) {
 		node.next = before
 		node.prev = before.prev
+
 		before.prev.next = node
 		before.prev = node
+
 		this.length++
 
 		return node
-	}},
+	},
 	/**
 	 * @param {Object} node
 	 * @return {Object}
 	 */
-	remove: {value: function remove (node) {
+	remove: function remove (node) {
 		if (this.length === 0)
 			return node
 
 		node.next.prev = node.prev
 		node.prev.next = node.next
+
 		this.length--
 
 		return node
-	}},
+	},
 	/**
 	 * @param {function} callback
 	 */
-	forEach: {value: function forEach (callback) {
-		for (var i = 0, node = this; i < this.length; ++i)
-			callback(node = node.next, i)
-	}}
-})
+	forEach: function forEach (callback) {
+		for (var node = this, length = node.length; length > 0; --length)
+			callback(node = node.next)
+	}
+}
 
 /**
  * @constructor
@@ -56,29 +59,29 @@ function WeakHash () {
 /**
  * @type {Object}
  */
-defineProperties(WeakHash.prototype, {
+WeakHash[SharedSitePrototype] = {
 	/**
 	 * @param {*} key
 	 * @param {*} value
 	 */
-	set: {value: function set (key, value) {
+	set: function set (key, value) {
 		key[this.hash] = value
-	}},
+	},
 	/**
 	 * @param {*} key
 	 * @return {*}
 	 */
-	get: {value: function get (key) {
+	get: function get (key) {
 		return key[this.hash]
-	}},
+	},
 	/**
 	 * @param {*} key
 	 * @return {boolean}
 	 */
-	has: {value: function has (key) {
+	has: function has (key) {
 		return this.hash in key
-	}}
-})
+	}
+}
 
 /**
  * @return {void}
@@ -202,4 +205,35 @@ function hash (str) {
 		code = ((code << 5) - code) + str.charCodeAt(i)
 
 	return code >>> 0
+}
+
+/**
+ * @return {boolean}
+ */
+function fetchable (object) {
+	return (
+		typeof object.blob === 'function' &&
+		typeof object.text === 'function' &&
+		typeof object.json === 'function'
+	)
+}
+
+/**
+ * @param {object} object
+ * @return {boolean}
+ */
+function thenable (object) {
+	return typeof object.then === 'function'
+}
+
+/**
+ * @param {object} prototype
+ * @param {object} extension
+ * @return {object}
+ */
+function extend (prototype, extension) {
+	function ctor () {}
+	ctor.prototype = assign({}, prototype, extension)
+
+	return new ctor()
 }

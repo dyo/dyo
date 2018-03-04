@@ -1,44 +1,42 @@
 /**
  * @param {*} element
- * @param {Node} container
+ * @param {object} container
  * @param {function=} callback
  */
 function render (element, container, callback) {
 	if (!container)
-		return render(element, getClientDocument(), callback)
-
-	if (isValidClientHost(container))
-		return update(getClientHost(container), getElementDefinition(element), callback)
-
-	mount(element, container, callback, SharedMountCommit)
+		render(element, getNodeDocument(), callback)
+	else if (roots.has(container))
+		update(roots.get(container).children, getElementDefinition(element), callback)
+	else
+		mount(element, container, callback, SharedMountCommit)
 }
 
 /**
  * @param {*} element
- * @param {Node} container
+ * @param {object} container
  * @param {function=} callback
  */
 function hydrate (element, container, callback) {
 	if (!container)
-		return hydrate(element, getClientDocument(), callback)
-
-	mount(element, container, callback, SharedMountQuery)
+		hydrate(element, getNodeDocument(), callback)
+	else
+		mount(element, container, callback, SharedMountQuery)
 }
 
 /**
  * @param {Element} element
- * @param {Node} container
+ * @param {object} container
  * @param {function} callback
  * @param {number} signature
  */
 function mount (element, container, callback, signature) {
 	if (!isValidElement(element))
-		return mount(getElementDefinition(element), container, callback, signature)
-
-	if (!isValidClientNode(container))
+		mount(getElementDefinition(element), container, callback, signature)
+	else if (!isValidNodeTarget(container))
 		invariant(SharedSiteRender, 'Target container is not a DOM element')
-
-	mountComponentAtNode(element, createElementIntermediate(element), container, signature)
+	else
+		initialize(element, createElementIntermediate(element), container, signature)
 
 	if (callback)
 		getLifecycleCallback(element, callback)
@@ -59,15 +57,14 @@ function update (element, snapshot, callback) {
 /**
  * @param {Element} element
  * @param {Element} parent
- * @param {Node} container
+ * @param {object} container
  * @param {number} signature
  */
-function mountComponentAtNode (element, parent, container, signature) {
-	setClientNode(parent, container)
-	setClientHost(parent, container)
+function initialize (element, parent, container, signature) {
+	roots.set(parent.owner = container, parent)
 
 	if (signature === SharedMountCommit)
-		setClientContent(parent)
+		setNodeContent(parent)
 
 	commitMount(element, element, parent, parent, SharedMountAppend, signature)
 }
@@ -77,5 +74,5 @@ function mountComponentAtNode (element, parent, container, signature) {
  * @return {boolean}
  */
 function unmountComponentAtNode (container) {
-	return isValidClientHost(container) && !render(null, container)
+	return roots.has(container) && !render(null, container)
 }

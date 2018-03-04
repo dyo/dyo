@@ -2,20 +2,20 @@
  * @type {Object}
  */
 var Children = {
-	toArray: childrenArray,
-	forEach: childrenEach,
-	map: childrenMap,
-	filter: childrenFilter,
-	find: childrenFind,
-	count: childrenCount,
-	only: childrenOnly
+	toArray: arrayChildren,
+	forEach: eachChildren,
+	map: mapChildren,
+	filter: filterChildren,
+	find: findChildren,
+	count: countChildren,
+	only: onlyChildren
 }
 
 /**
  * @param {*} children
  * @return {Array}
  */
-function childrenArray (children) {
+function arrayChildren (children) {
 	var array = []
 
 	if (children == null)
@@ -24,12 +24,12 @@ function childrenArray (children) {
 		return [children]
 	if (isArray(children))
 		return flatten(children, array)
-	if (typeof children.next === 'function' || typeof children.forEach === 'function')
+	if (typeof children[SharedLinkedNext] === 'function' || typeof children.forEach === 'function')
 		each(children, function (element) {
 			return array.push(element)
 		})
 	else if (typeof children[SymbolIterator] === 'function')
-		return childrenArray(children[SymbolIterator]())
+		return arrayChildren(children[SymbolIterator]())
 	else
 		array.push(children)
 
@@ -41,9 +41,9 @@ function childrenArray (children) {
  * @param {function} callback
  * @param {*} thisArg
  */
-function childrenEach (children, callback, thisArg) {
+function eachChildren (children, callback, thisArg) {
 	if (children != null)
-		childrenArray(children).forEach(callback, thisArg)
+		arrayChildren(children).forEach(callback, thisArg)
 }
 
 /**
@@ -51,11 +51,8 @@ function childrenEach (children, callback, thisArg) {
  * @param {function} callback
  * @return {Array}
  */
-function childrenMap (children, callback, thisArg) {
-	if (children != null)
-		return childrenArray(children).map(callback, thisArg)
-
-	return children
+function mapChildren (children, callback, thisArg) {
+	return children != null ? arrayChildren(children).map(callback, thisArg) : children
 }
 
 /**
@@ -63,11 +60,8 @@ function childrenMap (children, callback, thisArg) {
  * @param {function} callback
  * @param {*} thisArg
  */
-function childrenFilter (children, callback, thisArg) {
-	if (children != null)
-		return childrenArray(children).filter(callback, thisArg)
-
-	return children
+function filterChildren (children, callback, thisArg) {
+	return children != null ? arrayChildren(children).filter(callback, thisArg) : children
 }
 
 /**
@@ -75,28 +69,22 @@ function childrenFilter (children, callback, thisArg) {
  * @param {function} callback
  * @param {*} thisArg
  */
-function childrenFind (children, callback, thisArg) {
-	if (children != null)
-		return find(childrenArray(children), callback, thisArg)
-
-	return children
+function findChildren (children, callback, thisArg) {
+	return children != null ? find(arrayChildren(children), callback, thisArg) : children
 }
 
 /**
  * @param {*} children
  * @return {number}
  */
-function childrenCount (children) {
-	return childrenArray(children).length
+function countChildren (children) {
+	return arrayChildren(children).length
 }
 
 /**
  * @param {*} children
- * @return {Element}
+ * @return {Element?}
  */
-function childrenOnly (children) {
-	if (isValidElement(children))
-		return children
-
-	invariant('Children.only', 'Expected to receive a single element')
+function onlyChildren (children) {
+	return isValidElement(children) ? children : invariant('Children.only', 'Expected to receive a single element')
 }

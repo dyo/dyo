@@ -1,21 +1,21 @@
 /**
- * @param {(Component|Element|Node|Event)} element
- * @return {Node}
+ * @param {*} element
+ * @return {object?}
  */
 function findDOMNode (element) {
 	if (!element)
 		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
 
-	if (isValidElement(getComponentElement(element)))
-		return findDOMNode(getComponentElement(element))
+	if (getComponentElement(element))
+		return findDOMNode(getElementDescription(getComponentElement(element)))
 
 	if (isValidElement(element) && element.active)
-		return getClientNode(element)
+		return getNodeOwner(element)
 
-	if (isValidClientEvent(element))
-		return getClientTarget(element)
+	if (isValidNodeEvent(element))
+		return getNodeTarget(element)
 
-	if (isValidClientNode(element))
+	if (isValidNodeTarget(element))
 		return element
 
 	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')

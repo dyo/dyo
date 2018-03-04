@@ -23,18 +23,20 @@ const shared = [
 
 const core = [
 	...shared,
-	'../../src/Core/Constant.js',
 	'../../src/Core/Utility.js',
+	'../../src/Core/Constant.js',
 	'../../src/Core/Element.js',
 	'../../src/Core/Component.js',
+	'../../src/Core/Context.js',
 	'../../src/Core/Commit.js',
 	'../../src/Core/Reconcile.js',
 	'../../src/Core/Event.js',
 	'../../src/Core/Error.js',
 	'../../src/Core/Find.js',
-	'../../src/Core/Factory.js',
 	'../../src/Core/Children.js',
 	'../../src/Core/Render.js',
+	'../../src/Core/Factory.js',
+	'../../src/Core/Node.js'
 ]
 
 const cjs = [
@@ -46,27 +48,24 @@ const cjs = [
 	'../../src/Server/Render.js'
 ]
 
-const dom = [
-	'../../src/DOM/DOM.js',
-	'../../src/DOM/Client.js'
+const client = [
+	'../../src/Client/DOM.js'
 ]
 
 const umd = [
 	...core,
-	...dom
+	...client
 ]
 
 const esm = [
 	...core,
-	...dom
+	...client
 ]
 
 const server = `
-Object.defineProperties(Element.prototype, {
-	toJSON: {value: toJSON},
-	toString: {value: toString},
-	toStream: {value: toStream}
-})
+Element.prototype.toJSON = toJSON
+Element.prototype.toString = toString
+Element.prototype.toStream = toStream
 
 exports.renderToString = renderToString
 exports.renderToNodeStream = renderToNodeStream
@@ -110,42 +109,45 @@ exports.Component = Component
 exports.Fragment = SymbolFragment
 exports.PureComponent = PureComponent
 exports.Children = Children
-exports.findDOMNode = findDOMNode
-exports.unmountComponentAtNode = unmountComponentAtNode
+exports.createContext = createContext
 exports.createFactory = createFactory
 exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
 exports.createPortal = createPortal
 exports.createElement = createElement
+exports.unmountComponentAtNode = unmountComponentAtNode
+exports.findDOMNode = findDOMNode
 exports.h = createElement
 `
 
 const internals = `
 exports,
 Element,
+mountComponentElement,
 getComponentChildren,
+getComponentSnapshot,
 getComponentElement,
 getElementDefinition,
-mountComponentElement,
-invokeErrorBoundary
+invokeErrorBoundary,
+getElementDescription,
+createElementIntermediate
 `.replace(/\s+/g, ' ').trim()
 
 const template = `
 if (typeof require === 'function')
 	(function () {
 		try {
-			require('./cjs')(${internals})
-		} catch (err) {
+			require('./'+'cjs')(${internals})
+		} catch (error) {
 			/* istanbul ignore next */
-			printErrorException(err)
+			printErrorException(error)
 			/* istanbul ignore next */
-			printErrorException('Something went wrong trying to import the server module')
+			printErrorException('Something went wrong when importing "server" module')
 		}
 	}())
 
-if (typeof config === 'object' && typeof config.createExport === 'function') {
+if (typeof config === 'object' && typeof config.createExport === 'function')
 	return config.createExport(${internals}) || exports
-}
 `.trim()
 
 const parse = (head, body, tail, factory) => {

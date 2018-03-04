@@ -1,33 +1,25 @@
 /**
- * @param {string|function|Object|Element} type
+ * @param {string|function|Element|Object} type
  * @return {function|Object}
  */
 function createFactory (type) {
-	if (typeof type === 'object' && type !== null && !isValidElement(type))
+	if (type !== null && typeof type === 'object' && !isValidElement(type))
 		return factory(window, type, require)
 
-	return createElementFactory(type)
-}
-
-/**
- * @param {string|function|Element} type
- * @return {function}
- */
-function createElementFactory (type) {
 	return createElement.bind(null, type)
 }
 
 /**
- * @param {Object?} type
+ * @param {string} type
  * @param {function} value
  * @return {function}
  */
-function createClientFactory (type, value) {
+function getFactory (type, value) {
 	if (!config)
 		return value
 
-	if (typeof config[type] !== 'function')
-		config[type] = value
+	if (typeof config[type] === 'function')
+		return config[type].bind(config)
 
-	return config[type]
+	return config[type] = value
 }

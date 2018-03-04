@@ -5,10 +5,9 @@ function handleEvent (event) {
 	try {
 		var type = event.type
 		var element = this
-		var callback = element.event[type]
+		var callback = element.cache[type]
 		var host = element.host
-		var instance = host.instance
-		var owner = instance ? instance : element
+		var owner = host.owner || element
 		var props = owner.props
 		var state = owner.state
 		var context = owner.context
@@ -18,17 +17,17 @@ function handleEvent (event) {
 			return
 
 		if (typeof callback === 'function') {
-			value = callback.call(instance, event, props, state, context)
+			value = callback.call(owner, event, props, state, context)
 		} else if (typeof callback.handleEvent === 'function') {
-			if (instance !== callback && callback[SymbolComponent] === SymbolComponent)
-				host = getComponentElement(instance = callback)
+			if (owner !== callback && callback[SymbolComponent])
+				host = getComponentElement(owner = callback)
 
 			value = callback.handleEvent(event, props, state, context)
 		}
 
-		if (value && instance)
-			getLifecycleReturn(host, value)
-	} catch (err) {
-		invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
+		if (value && owner[SymbolComponent])
+			getLifecycleState(host, value)
+	} catch (e) {
+		invokeErrorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorThrow)
 	}
 }

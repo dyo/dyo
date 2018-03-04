@@ -32,7 +32,6 @@
   "scripts": {
     "build": "node ./script/build",
     "build:watch": "node ./script/build -- --watch",
-
     "test": "nyc mocha --recursive --require script/test/index.js",
     "test:watch": "mocha --recursive --require script/test/index.js --watch",
     "test:debug": "mocha --recursive --require script/test/index.js",
@@ -40,17 +39,23 @@
   },
   "nyc": {
     "temp-directory": "./coverage/.nyc_output",
-    "exclude": ["script/*", "test/*"],
-    "reporter": ["lcov", "text"]
+    "exclude": [
+      "script/*",
+      "test/*"
+    ],
+    "reporter": [
+      "lcov",
+      "text"
+    ]
   },
   "devDependencies": {
     "chai": "^4.1.2",
     "chokidar": "^1.7.0",
     "coveralls": "^2.13.1",
-    "jsdom": "^11.1.0",
+    "jsdom": "^11.6.2",
     "mocha": "^3.5.3",
     "nyc": "^11.2.1",
-    "uglify-js": "^3.0.28",
-    "uglify-es": "^3.1.10"
+    "uglify-js": "^3.3.12",
+    "uglify-es": "^3.3.9"
   }
 }

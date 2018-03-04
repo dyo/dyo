@@ -1,58 +1,56 @@
-describe('Factory', () => {
-	let rootContainer = {}
+describe.skip('Factory', () => {
+	let doc = {}
 	let container = {}
 
-	let setNode = (element, node) => { element.DOM = node }
 	let setContent = (element) => {
-		getNode(element).toString = () => element.children.toString()
-		getNode(element).toJSON = () => element.children.toJSON()
+		element.owner.toString = () => element.children.toString()
+		element.owner.toJSON = () => element.children.toJSON()
 	}
 
 	let setText = (element, value) => {}
 	let setEvent = (element, type) => {}
 	let setProps = (element, name, value, xmlns) => {}
+	let setStyle = (element, name, value) => {}
 
-	let getNode = (element) => { return element.DOM }
-	let getDocument = () => { return rootContainer }
+	let getDocument = () => { return doc }
 	let getTarget = (event) => { return {} }
 	let getType = (element, xmlns) => { return xmlns }
 	let getProps = (element) => { return element.props }
 	let getPortal = (element) => { return {} }
 	let getQuery = (element, parent, previous, next) => { return null }
 
-	let isValidNode = (node) => { return node instanceof Object }
+	let isValidTarget = (node) => { return node instanceof Object }
 	let isValidEvent = (event) => { return event instanceof Object }
 
-	let removeNode = (element, parent) => {}
-	let insertNode = (element, sibling, parent) => {}
-	let appendNode = (element, parent) => {}
+	let removeChild = (element, parent) => {}
+	let insertBefore = (element, sibling, parent) => {}
+	let appendChild = (element, parent) => {}
 
 	let createElement = (element) => { return {} }
 	let createText = (element) => { return {} }
 	let createEmpty = (element) => { return {} }
 
 	let config = {
-		setNode,
 		setContent,
 		setText,
 		setEvent,
 		setProps,
+		setStyle,
 		getDocument,
 		getTarget,
 		getType,
-		getProps,
 		getPortal,
 		getQuery,
-		isValidNode,
+		isValidTarget,
 		isValidEvent,
-		removeNode,
-		insertNode,
-		appendNode,
+		removeChild,
+		insertBefore,
+		appendChild,
 		createElement,
 		createText,
 		createEmpty,
 		createExport: function (exports) {
-			if (typeof this.getNode !== 'function')
+			if (typeof this.getProps !== 'function')
 				throw 'failed to fallback to internal config'
 
 			return exports
@@ -96,14 +94,7 @@ describe('Factory', () => {
 
 		assert.deepEqual(Object.keys(
 			createFactory({
-				createExport: function (
-					exports,
-					Element,
-					mountComponentElement,
-					getComponentChildren,
-					getElementDefinition,
-					invokeErrorBoundary
-				) {
+				createExport: function () {
 					stack.slice.call(arguments).forEach(fn => {
 						if (typeof fn === 'function')
 							stack.push(fn.name)
@@ -120,13 +111,14 @@ describe('Factory', () => {
 		  'Fragment',
 		  'PureComponent',
 		  'Children',
-		  'findDOMNode',
-		  'unmountComponentAtNode',
+		  'createContext',
 		  'createFactory',
 		  'cloneElement',
 		  'isValidElement',
 		  'createPortal',
 		  'createElement',
+		  'unmountComponentAtNode',
+		  'findDOMNode',
 		  'h',
 		  'renderToString',
 		  'renderToNodeStream'
@@ -135,11 +127,13 @@ describe('Factory', () => {
 		assert.deepEqual(stack, [
 			'exports',
 			'Element',
-			'getComponentChildren',
+			'mountComponentElement',
+			'invokeLifecycleRender',
 			'getComponentElement',
 			'getElementDefinition',
-			'mountComponentElement',
-			'invokeErrorBoundary'
+			'invokeErrorBoundary',
+			'isActiveElement',
+			'getElementDescription'
 		])
 	})
 
@@ -319,11 +313,11 @@ describe('Factory', () => {
 		})
 	})
 
-	it('should render a component and string to json', () => {
+	it('should render a component string to json', () => {
 		let container = {}
 		let element = h(class {
 			render() {
-					return '1'
+				return '1'
 			}
 		})
 

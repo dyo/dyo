@@ -1,40 +1,32 @@
 /**
- * @param {Element} element
- * @param {Element} snapshot
- */
-function reconcileProps (element, snapshot) {
-	commitProps(element, reconcileObject(element.props, element.props = snapshot.props), SharedPropsUpdate)
-}
-
-/**
- * @param {Object} prevObject
- * @param {Object} nextObject
+ * @param {Object} prevProps
+ * @param {Object} nextProps
  * @return {Object?}
  */
-function reconcileObject (prevObject, nextObject) {
-	if (prevObject === nextObject)
+function reconcileProps (prevProps, nextProps) {
+	if (prevProps === nextProps)
 		return
 
 	var length = 0
-	var delta = {}
+	var props = {}
 
-	for (var key in prevObject)
-		if (!hasOwnProperty.call(nextObject, key))
-			delta[(++length, key)] = null
+	for (var key in prevProps)
+		if (!hasOwnProperty.call(nextProps, key))
+			props[(++length, key)] = null
 
-	for (var key in nextObject) {
-		var next = nextObject[key]
-		var prev = prevObject[key]
+	for (var key in nextProps) {
+		var next = nextProps[key]
+		var prev = prevProps[key]
 
 		if (next !== prev)
 			if (typeof next !== 'object' || next === null)
-				delta[(++length, key)] = next
-			else if (next = reconcileObject(prev || {}, next))
-				delta[(++length, key)] = next
+				props[(++length, key)] = next
+			else if (next = reconcileProps(prev || {}, next))
+				props[(++length, key)] = next
 	}
 
 	if (length > 0)
-		return delta
+		return props
 }
 
 /**
@@ -43,25 +35,24 @@ function reconcileObject (prevObject, nextObject) {
  */
 function reconcileElement (element, snapshot) {
 	if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
-		return commitWillReconcile(element, snapshot)
-
-	if (element.key !== snapshot.key || element.type !== snapshot.type)
-		return commitReplace(element, snapshot)
-
-	switch (element.id) {
-		case SharedElementPortal:
-		case SharedElementFragment:
-			return reconcileChildren(element, snapshot)
-		case SharedElementComponent:
-			return updateComponent(element, snapshot, SharedComponentPropsUpdate)
-		case SharedElementText:
-			if (element.children !== snapshot.children)
-				commitText(element, element.children = snapshot.children)
-			break
-		case SharedElementNode:
-			reconcileChildren(element, snapshot)
-			reconcileProps(element, snapshot)
-	}
+		commitPromise(element, snapshot)
+	else if (element.key === snapshot.key && element.type === snapshot.type)
+		switch (element.id) {
+			case SharedElementPortal:
+			case SharedElementFragment:
+				return reconcileChildren(element, snapshot)
+			case SharedElementComponent:
+				return updateComponentElement(element, snapshot, SharedComponentPropsUpdate)
+			case SharedElementText:
+				if (element.children !== snapshot.children)
+					commitText(element, element.children = snapshot.children)
+				break
+			case SharedElementNode:
+				reconcileChildren(element, snapshot)
+				commitProps(element, reconcileProps(element.props, element.props = snapshot.props), SharedPropsUpdate)
+		}
+	else if (element.active)
+		commitReplace(element, snapshot)
 }
 
 /**
