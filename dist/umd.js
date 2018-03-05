@@ -486,6 +486,15 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {Element} element
+	 * @param {object} generator
+	 * @return {Element}
+	 */
+	function createElementGenerator (element, generator) {
+		return (element.type.then = enqueueComponentGenerator(element, generator, {})) && element
+	}
+	
+	/**
 	 * @param {*} element
 	 * @param {*} key
 	 * @return {Element?}
@@ -495,7 +504,7 @@ function factory (window, config, require) {
 			return createElementFragment(arrayChildren(element))
 	
 		if (typeof element[SymbolAsyncIterator] === 'function')
-			return createElementPromise(enqueueComponentGenerator(element, {}))
+			return createElementGenerator(createElementPromise(noop), element)
 	
 		switch (typeof element) {
 			case 'boolean':
@@ -1041,15 +1050,22 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {Element} element
 	 * @param {AsyncGenerator} generator
 	 * @param {object} cache
 	 * @return {object}
 	 */
-	function enqueueComponentGenerator (generator, cache) {
+	function enqueueComponentGenerator (element, generator, cache) {
 		return function then (resolve, reject) {
 			requestAnimationFrame(function () {
 				generator.next(cache.value).then(function (value) {
-					!value.done && then((resolve(getElementDefinition(cache.value = value.value)), resolve), reject)
+					if (value.done === true && value.value === undefined)
+						return !element.active && resolve(getElementDefinition(cache.value))
+	
+					if ((cache.value = value.value, element.active))
+						resolve(getElementDescription(value.value))
+	
+					then(resolve, reject)
 				}, reject)
 			})
 		}

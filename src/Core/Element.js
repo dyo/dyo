@@ -154,6 +154,15 @@ function createElementPromise (callback) {
 }
 
 /**
+ * @param {Element} element
+ * @param {object} generator
+ * @return {Element}
+ */
+function createElementGenerator (element, generator) {
+	return (element.type.then = enqueueComponentGenerator(element, generator, {})) && element
+}
+
+/**
  * @param {*} element
  * @param {*} key
  * @return {Element?}
@@ -163,7 +172,7 @@ function createElementUnknown (element, key) {
 		return createElementFragment(arrayChildren(element))
 
 	if (typeof element[SymbolAsyncIterator] === 'function')
-		return createElementPromise(enqueueComponentGenerator(element, {}))
+		return createElementGenerator(createElementPromise(noop), element)
 
 	switch (typeof element) {
 		case 'boolean':

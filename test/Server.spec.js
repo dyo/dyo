@@ -610,4 +610,35 @@ describe('Server', () => {
 			done()
 		})
 	})
+
+	it('should pipe(renderToNodeStream) an async generator component', () => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+		let stack = []
+		let element = h(class {
+		  async *render() {
+		  	stack.push('')
+
+		  	var first = yield 'Hello'
+
+		  	stack.push(first)
+
+		  	var second = yield 'Hello World'
+
+		  	stack.push(second)
+		  }
+		})
+
+		let output = ''
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, 'Hello World')
+			assert.deepEqual(stack, ['', 'Hello'])
+			done()
+		})
+	})
 })

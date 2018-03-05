@@ -232,15 +232,22 @@ function enqueueComponentState (element, owner, state) {
 }
 
 /**
+ * @param {Element} element
  * @param {AsyncGenerator} generator
  * @param {object} cache
  * @return {object}
  */
-function enqueueComponentGenerator (generator, cache) {
+function enqueueComponentGenerator (element, generator, cache) {
 	return function then (resolve, reject) {
 		requestAnimationFrame(function () {
 			generator.next(cache.value).then(function (value) {
-				!value.done && then((resolve(getElementDefinition(cache.value = value.value)), resolve), reject)
+				if (value.done === true && value.value === undefined)
+					return !element.active && resolve(getElementDefinition(cache.value))
+
+				if ((cache.value = value.value, element.active))
+					resolve(getElementDescription(value.value))
+
+				then(resolve, reject)
 			}, reject)
 		})
 	}

@@ -1144,21 +1144,96 @@ describe('Component', () => {
 
 		render(class {
 		  async *render() {
-		  	stack.push(1)
+		  	stack.push('')
+
 		  	var first = yield 'Hello'
 
 		  	stack.push(first)
+
 		  	var second = yield 'Hello World'
 
 		  	stack.push(second)
-		  	yield 'Hello'
 		  }
 		}, container)
 
 		nextTick(() => {
-			assert.html(container, `Hello`)
-			assert.deepEqual(stack, [1, 'Hello', 'Hello World'])
+			assert.html(container, `Hello World`)
+			assert.deepEqual(stack, ['', 'Hello', 'Hello World'])
 			done()
 		}, 3)
 	})
+
+	it('should halt an async generator component with return', (done) => {
+		var container = document.createElement('div')
+		var stack = []
+
+		render(class {
+		  async *render() {
+		  	stack.push('')
+		  	var first = yield 'Hello'
+
+		  	stack.push(first)
+		  	return 'World'
+
+		  	var second = yield 'Hello World'
+
+		  	stack.push(second)
+		  }
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, `World`)
+			assert.deepEqual(stack, ['', 'Hello'])
+			done()
+		}, 3)
+	})
+
+	it('should not block an async generator component', (done) => {
+		var container = document.createElement('div')
+		var stack = []
+
+		render(class {
+		  async *render() {
+		  	var index = 0
+		  	while (index++ < 5) {
+		  		var value = yield index
+		  		stack.push(value)
+		  	}
+		  }
+		}, container)
+
+		assert.html(container, '')
+		assert.deepEqual(stack, [])
+
+		nextTick(() => {
+			assert.html(container, `5`)
+			assert.deepEqual(stack, [1, 2, 3, 4, 5])
+			done()
+		}, 6)
+	})
+
+	it('should capture errors from async generator components', (done) => {
+		var container = document.createElement('div')
+		var stack = []
+
+		render(class {
+			componentDidCatch(err) {
+				stack.push(err)
+			}
+			render() {
+				return class {
+				  async *render() {
+				  	throw '!'
+				  }
+				}
+			}
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, ``)
+			assert.deepEqual(stack, ['!'])
+			done()
+		}, 4)
+	})
+
 })
