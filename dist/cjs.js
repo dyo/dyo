@@ -1,6 +1,6 @@
 /*! DIO 8.2.4 @license MIT */
 
-module.exports = function (exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate, commitPromise) {/* eslint-disable */'use strict'
+module.exports = function (exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -403,9 +403,11 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 			getElementDefinition(element).toStream(callback).pipe((setResponseHeader(container), container))
 	}
 	
-	Element.prototype.toJSON = toJSON
-	Element.prototype.toString = toString
-	Element.prototype.toStream = toStream
+	Object.defineProperties(Element.prototype, {
+		toJSON: {value: toJSON},
+		toString: {value: toString},
+		toStream: {value: toStream}
+	})
 	
 	exports.renderToString = renderToString
 	exports.renderToNodeStream = renderToNodeStream

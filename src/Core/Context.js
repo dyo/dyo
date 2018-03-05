@@ -9,19 +9,19 @@ function ContextProvider (props, context) {
 /**
  * @type {Object}
  */
-ContextProvider[SharedSitePrototype] = extend(Component[SharedSitePrototype], {
-  getInitialState: function (props) {
+ContextProvider[SharedSitePrototype] = create(Component[SharedSitePrototype], {
+  getInitialState: {value: function (props) {
     return this[SymbolElement].xmlns = {provider: this, consumers: new List()}
-  },
-  render: function (props) {
+  }},
+  render: {value: function (props) {
     return props.children
-  },
-  componentDidUpdate: function (props) {
+  }},
+  componentDidUpdate: {value: function (props) {
     !is(this.props.value, props.value) && this.state.consumers.forEach(this.componentChildUpdate)
-  },
-  componentChildUpdate: function (consumer) {
+  }},
+  componentChildUpdate: {value: function (consumer) {
     consumer.didUpdate = consumer.didUpdate ? false : !!consumer[SharedSiteForceUpdate]()
-  }
+  }}
 })
 
 /**
@@ -35,22 +35,22 @@ function ContextConsumer (props, context) {
 /**
  * @type {Object}
  */
-ContextConsumer[SharedSitePrototype] = extend(Component[SharedSitePrototype], {
-  getInitialState: function (props) {
+ContextConsumer[SharedSitePrototype] = create(Component[SharedSitePrototype], {
+  getInitialState: {value: function (props) {
     return this[SymbolContext] || {provider: this}
-  },
-  render: function (props, state) {
+  }},
+  render: {value: function (props, state) {
     return props.children(state.provider.props.value)
-  },
-  componentWillReceiveProps: function () {
+  }},
+  componentWillReceiveProps: {value: function () {
     this.didUpdate = true
-  },
-  componentDidMount: function () {
+  }},
+  componentDidMount: {value: function () {
     this.state.consumers && this.state.consumers.insert(this, this.state.consumers)
-  },
-  componentWillUnmount: function () {
+  }},
+  componentWillUnmount: {value: function () {
     this.state.consumers && this.state.consumers.remove(this)
-  }
+  }}
 })
 
 /**

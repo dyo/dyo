@@ -225,15 +225,3 @@ function fetchable (object) {
 function thenable (object) {
 	return typeof object.then === 'function'
 }
-
-/**
- * @param {object} prototype
- * @param {object} extension
- * @return {object}
- */
-function extend (prototype, extension) {
-	function ctor () {}
-	ctor.prototype = assign({}, prototype, extension)
-
-	return new ctor()
-}

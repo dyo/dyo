@@ -1132,8 +1132,8 @@ describe('Component', () => {
 		assert.instanceOf(Component.prototype.render, Function)
 		assert.deepInclude(Object.getOwnPropertyDescriptor(Component.prototype, 'render'), {
 			configurable: true,
-			enumerable: true,
-			writable: true,
+			enumerable: false,
+			writable: false,
 			value: Component.prototype.render
 		})
 	})

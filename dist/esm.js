@@ -300,27 +300,18 @@ function factory (window, config, require) {
 		return typeof object.then === 'function'
 	}
 	
-	/**
-	 * @param {object} prototype
-	 * @param {object} extension
-	 * @return {object}
-	 */
-	function extend (prototype, extension) {
-		function ctor () {}
-		ctor.prototype = assign({}, prototype, extension)
-	
-		return new ctor()
-	}
-	
 	var Object = window.Object
 	var WeakMap = window.WeakMap || WeakHash
 	var Symbol = window.Symbol || window.Math.random
-	var hasOwnProperty = Object.hasOwnProperty
 	var isArray = window.Array.isArray
+	var hasOwnProperty = Object.hasOwnProperty
+	var defineProperty = Object.defineProperty
+	var create = Object.create
 	var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
 	
 	var SymbolFor = Symbol.for || hash
 	var SymbolIterator = Symbol.iterator || '@@iterator'
+	var SymbolAsyncIterator = Symbol.asyncIterator || '@@asyncIterator'
 	var SymbolElement = SymbolFor('dio.Element')
 	var SymbolFragment = SymbolFor('dio.Fragment')
 	var SymbolComponent = SymbolFor('dio.Component')
@@ -477,6 +468,14 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {function} callback
+	 * @return {Element}
+	 */
+	function createElementPromise (callback) {
+		return createElement({then: callback})
+	}
+	
+	/**
 	 * @param {*} element
 	 * @param {*} key
 	 * @return {Element?}
@@ -484,6 +483,9 @@ function factory (window, config, require) {
 	function createElementUnknown (element, key) {
 		if (typeof element[SymbolIterator] === 'function')
 			return createElementFragment(arrayChildren(element))
+	
+		if (typeof element[SymbolAsyncIterator] === 'function')
+			return createElementPromise(createComponentGenerator(element))
 	
 		switch (typeof element) {
 			case 'boolean':
@@ -820,8 +822,8 @@ function factory (window, config, require) {
 	/**
 	 * @type {Object}
 	 */
-	PureComponent[SharedSitePrototype] = extend(Component[SharedSitePrototype], {
-		shouldComponentUpdate: shouldComponentUpdate
+	PureComponent[SharedSitePrototype] = create(Component[SharedSitePrototype], {
+		shouldComponentUpdate: {value: shouldComponentUpdate}
 	})
 	
 	/**
@@ -849,16 +851,45 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {object} descriptor
+	 * @return {function}
+	 */
+	function createClass (description) {
+		function klass () {}
+	
+		for (var name in description)
+			description[name] = {value: description[name]}
+	
+		klass.prototype = create(Component[SharedSitePrototype], description)
+	
+		return klass
+	}
+	
+	/**
 	 * @param {Object} prototype
 	 * @return {Object}
 	 */
 	function createComponentPrototype (prototype) {
-		prototype[SharedSiteForceUpdate] = forceUpdate
-		prototype[SharedSiteSetState] = setState
-		prototype[SharedSiteRender] = prototype[SharedSiteRender] || noop
-		prototype[SymbolComponent] = true
+		defineProperty(prototype, SymbolComponent, {value: SymbolComponent})
+		defineProperty(prototype, SharedSiteSetState, {value: setState})
+		defineProperty(prototype, SharedSiteForceUpdate, {value: forceUpdate})
+	
+		if (!prototype[SharedSiteRender])
+			defineProperty(prototype, SharedSiteRender, {value: noop, configurable: true})
 	
 		return prototype
+	}
+	
+	/**
+	 * @param {AsyncGenerator} generator
+	 * @return {object}
+	 */
+	function createComponentGenerator (generator) {
+		return function then (resolve, reject) {
+			generator.next().then(function (value) {
+				!value.done && then((resolve(getElementDefinition(value.value)), resolve), reject)
+			})
+		}
 	}
 	
 	/**
@@ -874,16 +905,12 @@ function factory (window, config, require) {
 		var state
 		var owner
 	
-		if (prototype && prototype.render) {
-			if (!prototype[SymbolComponent])
-				createComponentPrototype(prototype)
+		if (prototype && prototype.render)
+			!prototype[SymbolComponent] && createComponentPrototype(prototype)
+		else
+			type = type[SymbolComponent] || (type[SymbolComponent] = createClass(merge({render: type}, type)))
 	
-			owner = getLifecycleClass(element, type, props, context)
-		} else {
-			owner = extend(Component[SharedSitePrototype], merge({render: type}, type))
-		}
-	
-		element.owner = owner
+		element.owner = owner = getLifecycleClass(element, type, props, context)
 		owner[SymbolContext] = element.xmlns = host.xmlns
 		owner[SymbolElement] = element
 		owner.props = props
@@ -901,13 +928,11 @@ function factory (window, config, require) {
 		if (!thenable(state = owner.state))
 			children = getComponentSnapshot(element, owner)
 		else
-			children = createElement(enqueueStatePromise(element, owner, state).then(function () {
-				return {
-					then: function (resolve) {
-						resolve(children === element.children && getComponentSnapshot(element, owner))
-					}
-				}
-			}))
+			children = createElementPromise(function (resolve, reject) {
+				enqueueStatePromise(element, owner, state).then(function () {
+					resolve(children === element.children && getComponentSnapshot(element, owner))
+				}, reject)
+			})
 	
 		if (owner[SharedGetChildContext])
 			element.context = getLifecyclePayload(element, SharedGetChildContext, props, state, context) || context
@@ -1288,19 +1313,19 @@ function factory (window, config, require) {
 	/**
 	 * @type {Object}
 	 */
-	ContextProvider[SharedSitePrototype] = extend(Component[SharedSitePrototype], {
-	  getInitialState: function (props) {
+	ContextProvider[SharedSitePrototype] = create(Component[SharedSitePrototype], {
+	  getInitialState: {value: function (props) {
 	    return this[SymbolElement].xmlns = {provider: this, consumers: new List()}
-	  },
-	  render: function (props) {
+	  }},
+	  render: {value: function (props) {
 	    return props.children
-	  },
-	  componentDidUpdate: function (props) {
+	  }},
+	  componentDidUpdate: {value: function (props) {
 	    !is(this.props.value, props.value) && this.state.consumers.forEach(this.componentChildUpdate)
-	  },
-	  componentChildUpdate: function (consumer) {
+	  }},
+	  componentChildUpdate: {value: function (consumer) {
 	    consumer.didUpdate = consumer.didUpdate ? false : !!consumer[SharedSiteForceUpdate]()
-	  }
+	  }}
 	})
 	
 	/**
@@ -1314,22 +1339,22 @@ function factory (window, config, require) {
 	/**
 	 * @type {Object}
 	 */
-	ContextConsumer[SharedSitePrototype] = extend(Component[SharedSitePrototype], {
-	  getInitialState: function (props) {
+	ContextConsumer[SharedSitePrototype] = create(Component[SharedSitePrototype], {
+	  getInitialState: {value: function (props) {
 	    return this[SymbolContext] || {provider: this}
-	  },
-	  render: function (props, state) {
+	  }},
+	  render: {value: function (props, state) {
 	    return props.children(state.provider.props.value)
-	  },
-	  componentWillReceiveProps: function () {
+	  }},
+	  componentWillReceiveProps: {value: function () {
 	    this.didUpdate = true
-	  },
-	  componentDidMount: function () {
+	  }},
+	  componentDidMount: {value: function () {
 	    this.state.consumers && this.state.consumers.insert(this, this.state.consumers)
-	  },
-	  componentWillUnmount: function () {
+	  }},
+	  componentWillUnmount: {value: function () {
 	    this.state.consumers && this.state.consumers.remove(this)
-	  }
+	  }}
 	})
 	
 	/**
@@ -2719,6 +2744,7 @@ function factory (window, config, require) {
 	exports.isValidElement = isValidElement
 	exports.createPortal = createPortal
 	exports.createElement = createElement
+	exports.createClass = createClass
 	exports.unmountComponentAtNode = unmountComponentAtNode
 	exports.findDOMNode = findDOMNode
 	exports.h = createElement
@@ -2726,17 +2752,17 @@ function factory (window, config, require) {
 	if (typeof require === 'function')
 		(function () {
 			try {
-				require('./'+'cjs')(exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate, commitPromise)
+				require('./'+'cjs')(exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate)
 			} catch (error) {
 				/* istanbul ignore next */
 				printErrorException(error)
 				/* istanbul ignore next */
-				printErrorException('Something went wrong trying to import "server" module')
+				printErrorException('Something went wrong when importing "server" module')
 			}
 		}())
 	
 	if (typeof config === 'object' && typeof config.createExport === 'function')
-		return config.createExport(exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate, commitPromise) || exports
+		return config.createExport(exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate) || exports
 	
 	return exports
 }
@@ -2757,6 +2783,7 @@ export var cloneElement = dio.cloneElement;
 export var isValidElement = dio.isValidElement;
 export var createPortal = dio.createPortal;
 export var createElement = dio.createElement;
+export var createClass = dio.createClass;
 export var unmountComponentAtNode = dio.unmountComponentAtNode;
 export var findDOMNode = dio.findDOMNode;
 export var h = dio.h;

@@ -146,6 +146,14 @@ function createElementFragment (iterable) {
 }
 
 /**
+ * @param {function} callback
+ * @return {Element}
+ */
+function createElementPromise (callback) {
+	return createElement({then: callback})
+}
+
+/**
  * @param {*} element
  * @param {*} key
  * @return {Element?}
@@ -153,6 +161,9 @@ function createElementFragment (iterable) {
 function createElementUnknown (element, key) {
 	if (typeof element[SymbolIterator] === 'function')
 		return createElementFragment(arrayChildren(element))
+
+	if (typeof element[SymbolAsyncIterator] === 'function')
+		return createElementPromise(createComponentGenerator(element))
 
 	switch (typeof element) {
 		case 'boolean':

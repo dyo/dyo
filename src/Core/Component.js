@@ -25,8 +25,8 @@ function PureComponent (props, context) {
 /**
  * @type {Object}
  */
-PureComponent[SharedSitePrototype] = extend(Component[SharedSitePrototype], {
-	shouldComponentUpdate: shouldComponentUpdate
+PureComponent[SharedSitePrototype] = create(Component[SharedSitePrototype], {
+	shouldComponentUpdate: {value: shouldComponentUpdate}
 })
 
 /**
@@ -54,16 +54,45 @@ function forceUpdate (callback) {
 }
 
 /**
+ * @param {object} descriptor
+ * @return {function}
+ */
+function createClass (description) {
+	function klass () {}
+
+	for (var name in description)
+		description[name] = {value: description[name]}
+
+	klass.prototype = create(Component[SharedSitePrototype], description)
+
+	return klass
+}
+
+/**
  * @param {Object} prototype
  * @return {Object}
  */
 function createComponentPrototype (prototype) {
-	prototype[SharedSiteForceUpdate] = forceUpdate
-	prototype[SharedSiteSetState] = setState
-	prototype[SharedSiteRender] = prototype[SharedSiteRender] || noop
-	prototype[SymbolComponent] = true
+	defineProperty(prototype, SymbolComponent, {value: SymbolComponent})
+	defineProperty(prototype, SharedSiteSetState, {value: setState})
+	defineProperty(prototype, SharedSiteForceUpdate, {value: forceUpdate})
+
+	if (!prototype[SharedSiteRender])
+		defineProperty(prototype, SharedSiteRender, {value: noop, configurable: true})
 
 	return prototype
+}
+
+/**
+ * @param {AsyncGenerator} generator
+ * @return {object}
+ */
+function createComponentGenerator (generator) {
+	return function then (resolve, reject) {
+		generator.next().then(function (value) {
+			!value.done && then((resolve(getElementDefinition(value.value)), resolve), reject)
+		})
+	}
 }
 
 /**
@@ -79,16 +108,12 @@ function mountComponentElement (element) {
 	var state
 	var owner
 
-	if (prototype && prototype.render) {
-		if (!prototype[SymbolComponent])
-			createComponentPrototype(prototype)
+	if (prototype && prototype.render)
+		!prototype[SymbolComponent] && createComponentPrototype(prototype)
+	else
+		type = type[SymbolComponent] || (type[SymbolComponent] = createClass(merge({render: type}, type)))
 
-		owner = getLifecycleClass(element, type, props, context)
-	} else {
-		owner = extend(Component[SharedSitePrototype], merge({render: type}, type))
-	}
-
-	element.owner = owner
+	element.owner = owner = getLifecycleClass(element, type, props, context)
 	owner[SymbolContext] = element.xmlns = host.xmlns
 	owner[SymbolElement] = element
 	owner.props = props
@@ -106,13 +131,11 @@ function mountComponentElement (element) {
 	if (!thenable(state = owner.state))
 		children = getComponentSnapshot(element, owner)
 	else
-		children = createElement(enqueueStatePromise(element, owner, state).then(function () {
-			return {
-				then: function (resolve) {
-					resolve(children === element.children && getComponentSnapshot(element, owner))
-				}
-			}
-		}))
+		children = createElementPromise(function (resolve, reject) {
+			enqueueStatePromise(element, owner, state).then(function () {
+				resolve(children === element.children && getComponentSnapshot(element, owner))
+			}, reject)
+		})
 
 	if (owner[SharedGetChildContext])
 		element.context = getLifecyclePayload(element, SharedGetChildContext, props, state, context) || context

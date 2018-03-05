@@ -63,9 +63,11 @@ const esm = [
 ]
 
 const server = `
-Element.prototype.toJSON = toJSON
-Element.prototype.toString = toString
-Element.prototype.toStream = toStream
+Object.defineProperties(Element.prototype, {
+	toJSON: {value: toJSON},
+	toString: {value: toString},
+	toStream: {value: toStream}
+})
 
 exports.renderToString = renderToString
 exports.renderToNodeStream = renderToNodeStream
@@ -115,6 +117,7 @@ exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
 exports.createPortal = createPortal
 exports.createElement = createElement
+exports.createClass = createClass
 exports.unmountComponentAtNode = unmountComponentAtNode
 exports.findDOMNode = findDOMNode
 exports.h = createElement
