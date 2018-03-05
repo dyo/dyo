@@ -233,13 +233,14 @@ function enqueueComponentState (element, owner, state) {
 
 /**
  * @param {AsyncGenerator} generator
+ * @param {object} cache
  * @return {object}
  */
-function enqueueComponentGenerator (generator) {
+function enqueueComponentGenerator (generator, cache) {
 	return function then (resolve, reject) {
-		requestAnimationFrame(function (timestamp) {
-			generator.next(timestamp).then(function (value) {
-				!value.done && then((resolve(getElementDefinition(value.value)), resolve), reject)
+		requestAnimationFrame(function () {
+			generator.next(cache.value).then(function (value) {
+				!value.done && then((resolve(getElementDefinition(cache.value = value.value)), resolve), reject)
 			}, reject)
 		})
 	}

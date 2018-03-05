@@ -163,7 +163,7 @@ function createElementUnknown (element, key) {
 		return createElementFragment(arrayChildren(element))
 
 	if (typeof element[SymbolAsyncIterator] === 'function')
-		return createElementPromise(enqueueComponentGenerator(element))
+		return createElementPromise(enqueueComponentGenerator(element, {}))
 
 	switch (typeof element) {
 		case 'boolean':

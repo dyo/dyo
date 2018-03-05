@@ -1138,25 +1138,27 @@ describe('Component', () => {
 		})
 	})
 
-	// TODO figure out how to test async generators in node pre-nightly versions
+	it('should render an async generator', (done) => {
+		var container = document.createElement('div')
+		var stack = []
 
-	// it.only('should render an async generator', () => {
-	// 	var container = document.createElement('div')
-	// 	var stack = []
+		render(class {
+		  async *render() {
+		  	stack.push(1)
+		  	var first = yield 'Hello'
 
-	// 	render(class {
-	// 	  async *render() {
-	// 	  	stack.push(1)
-	// 	  	yield 'Hello'
+		  	stack.push(first)
+		  	var second = yield 'Hello World'
 
-	// 	  	stack.push(2)
-	// 	  	yield 'Hello World'
-	// 	  }
-	// 	}, container)
+		  	stack.push(second)
+		  	yield 'Hello'
+		  }
+		}, container)
 
-	// 	nextTick(() => {
-	// 		assert.html(container, `Hello World`)
-	// 		assert.deepEqual(stack, [1, 2])
-	// 	})
-	// })
+		nextTick(() => {
+			assert.html(container, `Hello`)
+			assert.deepEqual(stack, [1, 'Hello', 'Hello World'])
+			done()
+		}, 3)
+	})
 })

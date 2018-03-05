@@ -287,9 +287,7 @@ function factory (window, config, require) {
 	 * @return {number}
 	 */
 	function timeout (callback) {
-		return setTimeout(function () {
-			callback(now())
-		}, 16)
+		return setTimeout(callback, 16)
 	}
 	
 	/**
@@ -497,7 +495,7 @@ function factory (window, config, require) {
 			return createElementFragment(arrayChildren(element))
 	
 		if (typeof element[SymbolAsyncIterator] === 'function')
-			return createElementPromise(enqueueComponentGenerator(element))
+			return createElementPromise(enqueueComponentGenerator(element, {}))
 	
 		switch (typeof element) {
 			case 'boolean':
@@ -1044,13 +1042,14 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {AsyncGenerator} generator
+	 * @param {object} cache
 	 * @return {object}
 	 */
-	function enqueueComponentGenerator (generator) {
+	function enqueueComponentGenerator (generator, cache) {
 		return function then (resolve, reject) {
-			requestAnimationFrame(function (timestamp) {
-				generator.next(timestamp).then(function (value) {
-					!value.done && then((resolve(getElementDefinition(value.value)), resolve), reject)
+			requestAnimationFrame(function () {
+				generator.next(cache.value).then(function (value) {
+					!value.done && then((resolve(getElementDefinition(cache.value = value.value)), resolve), reject)
 				}, reject)
 			})
 		}

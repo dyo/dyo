@@ -212,9 +212,7 @@ function hash (str) {
  * @return {number}
  */
 function timeout (callback) {
-	return setTimeout(function () {
-		callback(now())
-	}, 16)
+	return setTimeout(callback, 16)
 }
 
 /**
