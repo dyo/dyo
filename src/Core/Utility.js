@@ -9,7 +9,7 @@ function List () {
 /**
  * @type {Object}
  */
-List.prototype = {
+List[SharedSitePrototype] = {
 	/**
 	 * @param {Object} node
 	 * @param {Object} before
@@ -205,6 +205,16 @@ function hash (str) {
 		code = ((code << 5) - code) + str.charCodeAt(i)
 
 	return code >>> 0
+}
+
+/**
+ * @param {function} callback
+ * @return {number}
+ */
+function timeout (callback) {
+	return setTimeout(function () {
+		callback(now())
+	}, 16)
 }
 
 /**

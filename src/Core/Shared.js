@@ -46,6 +46,7 @@ var SharedSiteConstructor = 'constructor'
 var SharedSiteForceUpdate = 'forceUpdate'
 var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
+var SharedSiteDisplayName = 'displayName'
 
 var SharedKeyHead = '&|head'
 var SharedKeyBody = '&|'

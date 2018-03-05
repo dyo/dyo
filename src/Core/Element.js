@@ -163,7 +163,7 @@ function createElementUnknown (element, key) {
 		return createElementFragment(arrayChildren(element))
 
 	if (typeof element[SymbolAsyncIterator] === 'function')
-		return createElementPromise(createComponentGenerator(element))
+		return createElementPromise(enqueueComponentGenerator(element))
 
 	switch (typeof element) {
 		case 'boolean':
@@ -368,25 +368,27 @@ function getDefaultProps (element, type) {
 }
 
 /**
- * @param {(function|string|number|symbol)} type
+ * @param {*} value
  * @return {string}
  */
-function getDisplayName (type) {
-	switch (typeof type) {
+function getDisplayName (value) {
+	switch (typeof value) {
 		case 'number':
 		case 'symbol':
-			return getDisplayName(type.toString())
+			return getDisplayName(value.toString())
 		case 'function':
-			return getDisplayName(type.displayName || type.name)
+			return getDisplayName(value[SharedSiteDisplayName] || value.name)
 		case 'object':
-			if (type)
-				if (isValidElement(type))
-					return getDisplayName(type.type)
-				else if (thenable(type))
+			if (value)
+				if (isValidElement(value))
+					return getDisplayName(value.type)
+				else if (value[SharedSiteDisplayName])
+					return getDisplayName(value[SharedSiteDisplayName])
+				else if (thenable(value))
 					return '#promise'
 		case 'string':
-			if (type)
-				return type
+			if (value)
+				return value
 		default:
 			return '#anonymous'
 	}

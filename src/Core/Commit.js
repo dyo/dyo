@@ -206,7 +206,7 @@ function commitWillUnmount (element, parent, host, signature) {
  * @param {Element} snapshot
  */
 function commitPromise (element, snapshot) {
-	return snapshot.type.then(function (value) {
+	snapshot.type.then(function (value) {
 		return element.active ? reconcileChildren(element, getElementModule(value)) : value
 	}, function (err) {
 		invokeErrorBoundary(element, err, SharedSitePromise+':'+SharedSiteRender, SharedErrorCatch)

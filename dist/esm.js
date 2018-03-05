@@ -53,6 +53,7 @@ function factory (window, config, require) {
 	var SharedSiteForceUpdate = 'forceUpdate'
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
+	var SharedSiteDisplayName = 'displayName'
 	
 	var SharedKeyHead = '&|head'
 	var SharedKeyBody = '&|'
@@ -83,7 +84,7 @@ function factory (window, config, require) {
 	/**
 	 * @type {Object}
 	 */
-	List.prototype = {
+	List[SharedSitePrototype] = {
 		/**
 		 * @param {Object} node
 		 * @param {Object} before
@@ -282,6 +283,16 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {function} callback
+	 * @return {number}
+	 */
+	function timeout (callback) {
+		return setTimeout(function () {
+			callback(now())
+		}, 16)
+	}
+	
+	/**
 	 * @return {boolean}
 	 */
 	function fetchable (object) {
@@ -307,7 +318,8 @@ function factory (window, config, require) {
 	var hasOwnProperty = Object.hasOwnProperty
 	var defineProperty = Object.defineProperty
 	var create = Object.create
-	var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
+	var now = Date.now
+	var requestAnimationFrame = window.requestAnimationFrame || timeout
 	
 	var SymbolFor = Symbol.for || hash
 	var SymbolIterator = Symbol.iterator || '@@iterator'
@@ -485,7 +497,7 @@ function factory (window, config, require) {
 			return createElementFragment(arrayChildren(element))
 	
 		if (typeof element[SymbolAsyncIterator] === 'function')
-			return createElementPromise(createComponentGenerator(element))
+			return createElementPromise(enqueueComponentGenerator(element))
 	
 		switch (typeof element) {
 			case 'boolean':
@@ -690,25 +702,27 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {(function|string|number|symbol)} type
+	 * @param {*} value
 	 * @return {string}
 	 */
-	function getDisplayName (type) {
-		switch (typeof type) {
+	function getDisplayName (value) {
+		switch (typeof value) {
 			case 'number':
 			case 'symbol':
-				return getDisplayName(type.toString())
+				return getDisplayName(value.toString())
 			case 'function':
-				return getDisplayName(type.displayName || type.name)
+				return getDisplayName(value[SharedSiteDisplayName] || value.name)
 			case 'object':
-				if (type)
-					if (isValidElement(type))
-						return getDisplayName(type.type)
-					else if (thenable(type))
+				if (value)
+					if (isValidElement(value))
+						return getDisplayName(value.type)
+					else if (value[SharedSiteDisplayName])
+						return getDisplayName(value[SharedSiteDisplayName])
+					else if (thenable(value))
 						return '#promise'
 			case 'string':
-				if (type)
-					return type
+				if (value)
+					return value
 			default:
 				return '#anonymous'
 		}
@@ -851,16 +865,31 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {object} descriptor
+	 * @param {object} description
 	 * @return {function}
 	 */
 	function createClass (description) {
+		return createComponentClass(Object(description), getDisplayName(description))
+	}
+	
+	/**
+	 * @param {object} description
+	 * @param {string} displayName
+	 * @return {function}
+	 */
+	function createComponentClass (description, displayName) {
+		switch (typeof description) {
+			case 'function':
+				return description[SymbolComponent] = createComponentClass(merge({render: description}, description))
+			case 'object':
+				for (var name in description)
+					description[name] = {value: description[name]}
+		}
+	
 		function klass () {}
 	
-		for (var name in description)
-			description[name] = {value: description[name]}
-	
-		klass.prototype = create(Component[SharedSitePrototype], description)
+		klass[SharedSitePrototype] = create(Component[SharedSitePrototype], description)
+		klass[SharedSiteDisplayName] = displayName
 	
 		return klass
 	}
@@ -881,18 +910,6 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {AsyncGenerator} generator
-	 * @return {object}
-	 */
-	function createComponentGenerator (generator) {
-		return function then (resolve, reject) {
-			generator.next().then(function (value) {
-				!value.done && then((resolve(getElementDefinition(value.value)), resolve), reject)
-			})
-		}
-	}
-	
-	/**
 	 * @param {Element} element
 	 */
 	function mountComponentElement (element) {
@@ -908,7 +925,7 @@ function factory (window, config, require) {
 		if (prototype && prototype.render)
 			!prototype[SymbolComponent] && createComponentPrototype(prototype)
 		else
-			type = type[SymbolComponent] || (type[SymbolComponent] = createClass(merge({render: type}, type)))
+			type = type[SymbolComponent] || createComponentClass(type, getDisplayName(type))
 	
 		element.owner = owner = getLifecycleClass(element, type, props, context)
 		owner[SymbolContext] = element.xmlns = host.xmlns
@@ -928,11 +945,7 @@ function factory (window, config, require) {
 		if (!thenable(state = owner.state))
 			children = getComponentSnapshot(element, owner)
 		else
-			children = createElementPromise(function (resolve, reject) {
-				enqueueStatePromise(element, owner, state).then(function () {
-					resolve(children === element.children && getComponentSnapshot(element, owner))
-				}, reject)
-			})
+			children = createElementPromise(enqueueComponentState(element, owner, state))
 	
 		if (owner[SharedGetChildContext])
 			element.context = getLifecyclePayload(element, SharedGetChildContext, props, state, context) || context
@@ -948,9 +961,7 @@ function factory (window, config, require) {
 	function updateComponentElement (element, snapshot, signature) {
 		switch (element.work) {
 			case SharedWorkProcessing:
-				requestAnimationFrame(function () {
-					updateComponentElement(element, snapshot, signature)
-				})
+				requestAnimationFrame(enqueueComponentElement(element, snapshot, signature))
 			case SharedWorkIntermediate:
 				return
 		}
@@ -1003,6 +1014,46 @@ function factory (window, config, require) {
 					return
 	
 		element.cache = null
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} snapshot
+	 * @param {number} signature
+	 * @return {function}
+	 */
+	function enqueueComponentElement (element, snapshot, signature) {
+		return function then () {
+			updateComponentElement(element, snapshot, signature)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Component} owner
+	 * @param {object} state
+	 * @return {function}
+	 */
+	function enqueueComponentState (element, owner, state) {
+		return function then (resolve, reject) {
+			enqueueStatePromise(element, owner, state).then(function () {
+				resolve(element.children.type.then === then && getComponentSnapshot(element, owner))
+			}, reject)
+		}
+	}
+	
+	/**
+	 * @param {AsyncGenerator} generator
+	 * @return {object}
+	 */
+	function enqueueComponentGenerator (generator) {
+		return function then (resolve, reject) {
+			requestAnimationFrame(function (timestamp) {
+				generator.next(timestamp).then(function (value) {
+					!value.done && then((resolve(getElementDefinition(value.value)), resolve), reject)
+				}, reject)
+			})
+		}
 	}
 	
 	/**
@@ -1284,7 +1335,6 @@ function factory (window, config, require) {
 				return getElementDefinition()
 		}
 	}
-	
 	
 	/**
 	 * @param {Component} owner
@@ -1588,7 +1638,7 @@ function factory (window, config, require) {
 	 * @param {Element} snapshot
 	 */
 	function commitPromise (element, snapshot) {
-		return snapshot.type.then(function (value) {
+		snapshot.type.then(function (value) {
 			return element.active ? reconcileChildren(element, getElementModule(value)) : value
 		}, function (err) {
 			invokeErrorBoundary(element, err, SharedSitePromise+':'+SharedSiteRender, SharedErrorCatch)
@@ -2297,7 +2347,7 @@ function factory (window, config, require) {
 		if (!isValidElement(element))
 			mount(getElementDefinition(element), container, callback, signature)
 		else if (!isValidNodeTarget(container))
-			invariant(SharedSiteRender, 'Target container is not a DOM element')
+			invariant(SharedSiteRender, 'Target container is not a valid container')
 		else
 			initialize(element, createElementIntermediate(element), container, signature)
 	

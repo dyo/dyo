@@ -54,16 +54,31 @@ function forceUpdate (callback) {
 }
 
 /**
- * @param {object} descriptor
+ * @param {object} description
  * @return {function}
  */
 function createClass (description) {
+	return createComponentClass(Object(description), getDisplayName(description))
+}
+
+/**
+ * @param {object} description
+ * @param {string} displayName
+ * @return {function}
+ */
+function createComponentClass (description, displayName) {
+	switch (typeof description) {
+		case 'function':
+			return description[SymbolComponent] = createComponentClass(merge({render: description}, description))
+		case 'object':
+			for (var name in description)
+				description[name] = {value: description[name]}
+	}
+
 	function klass () {}
 
-	for (var name in description)
-		description[name] = {value: description[name]}
-
-	klass.prototype = create(Component[SharedSitePrototype], description)
+	klass[SharedSitePrototype] = create(Component[SharedSitePrototype], description)
+	klass[SharedSiteDisplayName] = displayName
 
 	return klass
 }
@@ -84,18 +99,6 @@ function createComponentPrototype (prototype) {
 }
 
 /**
- * @param {AsyncGenerator} generator
- * @return {object}
- */
-function createComponentGenerator (generator) {
-	return function then (resolve, reject) {
-		generator.next().then(function (value) {
-			!value.done && then((resolve(getElementDefinition(value.value)), resolve), reject)
-		})
-	}
-}
-
-/**
  * @param {Element} element
  */
 function mountComponentElement (element) {
@@ -111,7 +114,7 @@ function mountComponentElement (element) {
 	if (prototype && prototype.render)
 		!prototype[SymbolComponent] && createComponentPrototype(prototype)
 	else
-		type = type[SymbolComponent] || (type[SymbolComponent] = createClass(merge({render: type}, type)))
+		type = type[SymbolComponent] || createComponentClass(type, getDisplayName(type))
 
 	element.owner = owner = getLifecycleClass(element, type, props, context)
 	owner[SymbolContext] = element.xmlns = host.xmlns
@@ -131,11 +134,7 @@ function mountComponentElement (element) {
 	if (!thenable(state = owner.state))
 		children = getComponentSnapshot(element, owner)
 	else
-		children = createElementPromise(function (resolve, reject) {
-			enqueueStatePromise(element, owner, state).then(function () {
-				resolve(children === element.children && getComponentSnapshot(element, owner))
-			}, reject)
-		})
+		children = createElementPromise(enqueueComponentState(element, owner, state))
 
 	if (owner[SharedGetChildContext])
 		element.context = getLifecyclePayload(element, SharedGetChildContext, props, state, context) || context
@@ -151,9 +150,7 @@ function mountComponentElement (element) {
 function updateComponentElement (element, snapshot, signature) {
 	switch (element.work) {
 		case SharedWorkProcessing:
-			requestAnimationFrame(function () {
-				updateComponentElement(element, snapshot, signature)
-			})
+			requestAnimationFrame(enqueueComponentElement(element, snapshot, signature))
 		case SharedWorkIntermediate:
 			return
 	}
@@ -206,6 +203,46 @@ function unmountComponentElement (element) {
 				return
 
 	element.cache = null
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} snapshot
+ * @param {number} signature
+ * @return {function}
+ */
+function enqueueComponentElement (element, snapshot, signature) {
+	return function then () {
+		updateComponentElement(element, snapshot, signature)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {Component} owner
+ * @param {object} state
+ * @return {function}
+ */
+function enqueueComponentState (element, owner, state) {
+	return function then (resolve, reject) {
+		enqueueStatePromise(element, owner, state).then(function () {
+			resolve(element.children.type.then === then && getComponentSnapshot(element, owner))
+		}, reject)
+	}
+}
+
+/**
+ * @param {AsyncGenerator} generator
+ * @return {object}
+ */
+function enqueueComponentGenerator (generator) {
+	return function then (resolve, reject) {
+		requestAnimationFrame(function (timestamp) {
+			generator.next(timestamp).then(function (value) {
+				!value.done && then((resolve(getElementDefinition(value.value)), resolve), reject)
+			}, reject)
+		})
+	}
 }
 
 /**
@@ -487,7 +524,6 @@ function getComponentSnapshot (element, owner) {
 			return getElementDefinition()
 	}
 }
-
 
 /**
  * @param {Component} owner

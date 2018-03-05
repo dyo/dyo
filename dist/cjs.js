@@ -50,6 +50,7 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	var SharedSiteForceUpdate = 'forceUpdate'
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
+	var SharedSiteDisplayName = 'displayName'
 	
 	var SharedKeyHead = '&|head'
 	var SharedKeyBody = '&|'

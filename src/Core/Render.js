@@ -34,7 +34,7 @@ function mount (element, container, callback, signature) {
 	if (!isValidElement(element))
 		mount(getElementDefinition(element), container, callback, signature)
 	else if (!isValidNodeTarget(container))
-		invariant(SharedSiteRender, 'Target container is not a DOM element')
+		invariant(SharedSiteRender, 'Target container is not a valid container')
 	else
 		initialize(element, createElementIntermediate(element), container, signature)
 

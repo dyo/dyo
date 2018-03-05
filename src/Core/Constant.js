@@ -5,7 +5,8 @@ var isArray = window.Array.isArray
 var hasOwnProperty = Object.hasOwnProperty
 var defineProperty = Object.defineProperty
 var create = Object.create
-var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
+var now = Date.now
+var requestAnimationFrame = window.requestAnimationFrame || timeout
 
 var SymbolFor = Symbol.for || hash
 var SymbolIterator = Symbol.iterator || '@@iterator'
