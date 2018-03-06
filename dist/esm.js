@@ -1057,17 +1057,15 @@ function factory (window, config, require) {
 	 */
 	function enqueueComponentGenerator (element, generator, cache) {
 		return function then (resolve, reject) {
-			requestAnimationFrame(function () {
-				generator.next(cache.value).then(function (value) {
-					if (value.done === true && value.value === undefined)
-						return !element.active && resolve(getElementDefinition(cache.value))
+			generator.next(cache.value).then(function (value) {
+				if (value.done === true && value.value === undefined)
+					return !element.active && resolve(getElementDefinition(cache.value))
 	
-					if ((cache.value = value.value, element.active))
-						resolve(getElementDescription(value.value))
+				if ((cache.value = value.value, element.active))
+					resolve(getElementDescription(value.value))
 	
-					then(resolve, reject)
-				}, reject)
-			})
+				then(resolve, reject)
+			}, reject)
 		}
 	}
 	
@@ -1536,14 +1534,13 @@ function factory (window, config, require) {
 				commitMount(mountComponentElement(element), sibling, parent, element, operation, signature)
 				commitCreate(element)
 	
-				if (element.work === SharedWorkMounting)
-					element.work = SharedWorkIdle
-	
-				if (element.ref)
-					commitRefs(element, element.ref, SharedRefsDispatch)
+				element.work = SharedWorkIdle
 	
 				if (element.owner[SharedComponentDidMount])
 					getLifecycleMount(element, SharedComponentDidMount, element.owner)
+	
+				if (element.ref)
+					commitRefs(element, element.ref, SharedRefsDispatch)
 	
 				return
 			case SharedElementPromise:
@@ -1721,7 +1718,7 @@ function factory (window, config, require) {
 					case SharedRefsDispatch:
 						return getLifecycleCallback(element.host, callback, element.owner, key, element)
 					case SharedRefsReplace:
-						commitRefs(element, callback, SharedRefsRemove, key)
+						commitRefs(element, element.ref, SharedRefsRemove, key)
 						commitRefs(element, callback, SharedRefsAssign, key)
 				}
 	
@@ -2218,21 +2215,19 @@ function factory (window, config, require) {
 	 */
 	function findDOMNode (element) {
 		if (!element)
-			invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+			return element
 	
 		if (getComponentElement(element))
-			return findDOMNode(getElementDescription(getComponentElement(element)))
+			return findDOMNode(getComponentElement(element))
 	
-		if (isValidElement(element) && element.active)
-			return getNodeOwner(element)
+		if (isValidElement(element))
+			return element.active && getNodeOwner(getElementDescription(element))
 	
 		if (isValidNodeEvent(element))
 			return getNodeTarget(element)
 	
 		if (isValidNodeTarget(element))
 			return element
-	
-		invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 	}
 	
 	/**

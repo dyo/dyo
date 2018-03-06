@@ -606,6 +606,45 @@ describe('Component', () => {
 		assert.lengthOf(stack, 1)
 	})
 
+	it('should invoke component refs after componentDidMount', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		class A {
+			componentDidMount() {
+				stack.push('componentDidMount')
+			}
+			render() {
+				return 'Hello'
+			}
+		}
+
+		render(h(A, {ref: () => stack.push('ref')}), container)
+
+		assert.html(container, 'Hello')
+		assert.deepEqual(stack, ['componentDidMount', 'ref'])
+	})
+
+	it('should update component refs after componentDidUpdate', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		class A {
+			componentDidUpdate() {
+				stack.push('componentDidUpdate')
+			}
+			render() {
+				return 'Hello'
+			}
+		}
+
+		render(h(A), container)
+		render(h(A, {ref: () => stack.push('ref')}), container)
+
+		assert.html(container, 'Hello')
+		assert.deepEqual(stack, ['componentDidUpdate', 'ref'])
+	})
+
 	it('should pass multiple children to component', () => {
 		let container = document.createElement('div')
 		let refs = null

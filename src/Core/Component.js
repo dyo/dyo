@@ -239,17 +239,15 @@ function enqueueComponentState (element, owner, state) {
  */
 function enqueueComponentGenerator (element, generator, cache) {
 	return function then (resolve, reject) {
-		requestAnimationFrame(function () {
-			generator.next(cache.value).then(function (value) {
-				if (value.done === true && value.value === undefined)
-					return !element.active && resolve(getElementDefinition(cache.value))
+		generator.next(cache.value).then(function (value) {
+			if (value.done === true && value.value === undefined)
+				return !element.active && resolve(getElementDefinition(cache.value))
 
-				if ((cache.value = value.value, element.active))
-					resolve(getElementDescription(value.value))
+			if ((cache.value = value.value, element.active))
+				resolve(getElementDescription(value.value))
 
-				then(resolve, reject)
-			}, reject)
-		})
+			then(resolve, reject)
+		}, reject)
 	}
 }
 

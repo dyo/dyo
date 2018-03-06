@@ -4,19 +4,17 @@
  */
 function findDOMNode (element) {
 	if (!element)
-		invariant(SharedSiteFindDOMNode, 'Expected to receive a component')
+		return element
 
 	if (getComponentElement(element))
-		return findDOMNode(getElementDescription(getComponentElement(element)))
+		return findDOMNode(getComponentElement(element))
 
-	if (isValidElement(element) && element.active)
-		return getNodeOwner(element)
+	if (isValidElement(element))
+		return element.active && getNodeOwner(getElementDescription(element))
 
 	if (isValidNodeEvent(element))
 		return getNodeTarget(element)
 
 	if (isValidNodeTarget(element))
 		return element
-
-	invariant(SharedSiteFindDOMNode, 'Called on an unmounted component')
 }

@@ -89,14 +89,13 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			commitMount(mountComponentElement(element), sibling, parent, element, operation, signature)
 			commitCreate(element)
 
-			if (element.work === SharedWorkMounting)
-				element.work = SharedWorkIdle
-
-			if (element.ref)
-				commitRefs(element, element.ref, SharedRefsDispatch)
+			element.work = SharedWorkIdle
 
 			if (element.owner[SharedComponentDidMount])
 				getLifecycleMount(element, SharedComponentDidMount, element.owner)
+
+			if (element.ref)
+				commitRefs(element, element.ref, SharedRefsDispatch)
 
 			return
 		case SharedElementPromise:
@@ -274,7 +273,7 @@ function commitRefs (element, callback, signature, key) {
 				case SharedRefsDispatch:
 					return getLifecycleCallback(element.host, callback, element.owner, key, element)
 				case SharedRefsReplace:
-					commitRefs(element, callback, SharedRefsRemove, key)
+					commitRefs(element, element.ref, SharedRefsRemove, key)
 					commitRefs(element, callback, SharedRefsAssign, key)
 			}
 
