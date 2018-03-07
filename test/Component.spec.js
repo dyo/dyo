@@ -23,6 +23,18 @@ describe('Component', () => {
 		assert.html(container, '1')
 	})
 
+	it('should render a class that from createClass', () => {
+		let container = document.createElement('div')
+
+		render(createClass({
+			render() {
+				return '1'
+			}
+		}), container)
+
+		assert.html(container, '1')
+	})
+
 	it('should provide a render fallback method', () => {
 		let container = document.createElement('div')
 		let stack = []
@@ -1149,13 +1161,20 @@ describe('Component', () => {
 
 		render(h(A, {type: null}), container)
 		render(h(A, {type: 'string'}), container)
-		render(h(A, {type: 'number'}), container)
-		render(h(A, {type: 'element'}), container)
-		render(h(A, {type: 'component'}), container)
-		render(h(A, {type: 'module'}), container)
-
 		assert.notEqual(queue, null)
+
 		queue.then(() => {
+			render(h(A, {type: 'number'}), container)
+			return queue.then(() => {
+				render(h(A, {type: 'element'}), container)
+				return queue.then(() => {
+					render(h(A, {type: 'component'}), container)
+					return queue.then(() => {
+						render(h(A, {type: 'module'}), container)
+					})
+				})
+			})
+		}).then(() => {
 			assert.deepEqual(stack, [
 				'<h1>null</h1>',
 				'string',
@@ -1275,4 +1294,6 @@ describe('Component', () => {
 		}, 4)
 	})
 
+	// @TODO
+	// right test for when it should render the most recent update when updated from a parent
 })

@@ -1,11 +1,9 @@
-var Object = window.Object
 var WeakMap = window.WeakMap || WeakHash
 var Symbol = window.Symbol || window.Math.random
 var isArray = window.Array.isArray
 var hasOwnProperty = Object.hasOwnProperty
 var defineProperty = Object.defineProperty
 var create = Object.create
-var now = Date.now
 var requestAnimationFrame = window.requestAnimationFrame || timeout
 
 var SymbolFor = Symbol.for || hash
@@ -17,4 +15,5 @@ var SymbolComponent = SymbolFor('dio.Component')
 var SymbolContext = SymbolFor('dio.Context')
 var SymbolException = SymbolFor('dio.Exception')
 
+var uuids = 1
 var roots = new WeakMap()

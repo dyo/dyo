@@ -1,6 +1,6 @@
 /*! DIO 8.2.4 @license MIT */
 
-module.exports = function (exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate) {/* eslint-disable */'use strict'
+module.exports = function (exports, Element, createElementIntermediate, mountComponentElement, getElementDefinition, getElementDescription) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -11,20 +11,20 @@ module.exports = function (exports, Element, mountComponentElement, getComponent
 	var SharedElementText = 3
 	var SharedElementEmpty = 4
 	
-	var SharedRefsRemove = -1
-	var SharedRefsAssign = 0
 	var SharedRefsDispatch = 1
 	var SharedRefsReplace = 2
+	var SharedRefsRemove = 3
+	var SharedRefsAssign = 4
 	
-	var SharedComponentForceUpdate = 0
-	var SharedComponentPropsUpdate = 1
-	var SharedComponentStateUpdate = 2
+	var SharedComponentForceUpdate = 1
+	var SharedComponentPropsUpdate = 2
+	var SharedComponentStateUpdate = 3
 	
-	var SharedMountQuery = 0
-	var SharedMountCommit = 1
-	var SharedMountRemove = 2
-	var SharedMountAppend = 3
-	var SharedMountInsert = 4
+	var SharedMountQuery = 1
+	var SharedMountCommit = 2
+	var SharedMountRemove = 3
+	var SharedMountAppend = 4
+	var SharedMountInsert = 5
 	
 	var SharedWorkMounting = 1
 	var SharedWorkIdle = 2

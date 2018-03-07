@@ -136,9 +136,8 @@ function createElementFragment (iterable) {
 
 	if (isValidElement(iterable))
 		setElementChildren(children, iterable, i)
-	else
-		for (; i < iterable.length; ++i)
-			setElementChildren(children, iterable[i], i)
+	else for (; i < iterable.length; ++i)
+		setElementChildren(children, iterable[i], i)
 
 	setElementBoundary(children)
 
@@ -159,7 +158,7 @@ function createElementPromise (callback) {
  * @return {Element}
  */
 function createElementGenerator (element, generator) {
-	return (element.type.then = enqueueComponentGenerator(element, generator, {})) && element
+	return (element.type.then = enqueueComponentGenerator(element, generator)) && element
 }
 
 /**
@@ -287,7 +286,7 @@ function createElement (type, config) {
 			if (isValidElement(type))
 				type = (setElementProps(element, props = assign({}, type.props, props)), element.id = type.id, type.type)
 			else if (thenable(type))
-				setElementBoundary((element.id = SharedElementPromise, children))
+				setElementBoundary((element.id = SharedElementPromise, element.xmlns = ++uuids, children))
 	}
 
 	element.type = type

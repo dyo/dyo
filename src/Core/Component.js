@@ -148,12 +148,8 @@ function mountComponentElement (element) {
  * @param {number} signature
  */
 function updateComponentElement (element, snapshot, signature) {
-	switch (element.work) {
-		case SharedWorkProcessing:
-			requestAnimationFrame(enqueueComponentElement(element, snapshot, signature))
-		case SharedWorkIntermediate:
-			return
-	}
+	if (element.work === SharedWorkIntermediate)
+		return
 
 	var owner = element.owner
 	var prevProps = element.props
@@ -207,18 +203,6 @@ function unmountComponentElement (element) {
 
 /**
  * @param {Element} element
- * @param {Element} snapshot
- * @param {number} signature
- * @return {function}
- */
-function enqueueComponentElement (element, snapshot, signature) {
-	return function then () {
-		updateComponentElement(element, snapshot, signature)
-	}
-}
-
-/**
- * @param {Element} element
  * @param {Component} owner
  * @param {object} state
  * @return {function}
@@ -234,19 +218,18 @@ function enqueueComponentState (element, owner, state) {
 /**
  * @param {Element} element
  * @param {AsyncGenerator} generator
- * @param {object} cache
  * @return {object}
  */
-function enqueueComponentGenerator (element, generator, cache) {
-	return function then (resolve, reject) {
-		generator.next(cache.value).then(function (value) {
+function enqueueComponentGenerator (element, generator) {
+	return function then (resolve, reject, commit) {
+		generator.next(element.cache).then(function (value) {
 			if (value.done === true && value.value === undefined)
-				return !element.active && resolve(getElementDefinition(cache.value))
+				return !commit && resolve(element.cache)
 
-			if ((cache.value = value.value, element.active))
-				resolve(getElementDescription(value.value))
+			if (element.cache = value.value, commit)
+				resolve(element.cache)
 
-			then(resolve, reject)
+			then(resolve, reject, commit)
 		}, reject)
 	}
 }
@@ -260,11 +243,6 @@ function enqueueComponentUpdate (element, owner, callback, signature) {
 	if (!element)
 		return requestAnimationFrame(function () {
 			enqueueComponentUpdate(getComponentElement(owner), owner, callback, signature)
-		})
-
-	if (element.work === SharedWorkProcessing)
-		return requestAnimationFrame(function () {
-			enqueueComponentUpdate(element, owner, callback, signature)
 		})
 
 	if (element.active)
@@ -283,7 +261,7 @@ function enqueueComponentUpdate (element, owner, callback, signature) {
  * @param {function?} callback
  */
 function enqueueStateUpdate (element, owner, state, callback) {
-	if (state) {
+	if (state)
 		if (element)
 			switch (typeof state) {
 				case 'function':
@@ -298,7 +276,6 @@ function enqueueStateUpdate (element, owner, state, callback) {
 			return requestAnimationFrame(function () {
 				enqueueStateUpdate(getComponentElement(owner), owner, state, callback)
 			})
-	}
 }
 
 /**
@@ -537,12 +514,4 @@ function getComponentSnapshot (element, owner) {
  */
 function getComponentElement (owner) {
 	return owner[SymbolElement]
-}
-
-/**
- * @param {Component} owner
- * @return {Element}
- */
-function getComponentChildren (owner) {
-	return getComponentElement(owner).children
 }

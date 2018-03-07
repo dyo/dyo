@@ -14,20 +14,20 @@ function factory (window, config, require) {
 	var SharedElementText = 3
 	var SharedElementEmpty = 4
 	
-	var SharedRefsRemove = -1
-	var SharedRefsAssign = 0
 	var SharedRefsDispatch = 1
 	var SharedRefsReplace = 2
+	var SharedRefsRemove = 3
+	var SharedRefsAssign = 4
 	
-	var SharedComponentForceUpdate = 0
-	var SharedComponentPropsUpdate = 1
-	var SharedComponentStateUpdate = 2
+	var SharedComponentForceUpdate = 1
+	var SharedComponentPropsUpdate = 2
+	var SharedComponentStateUpdate = 3
 	
-	var SharedMountQuery = 0
-	var SharedMountCommit = 1
-	var SharedMountRemove = 2
-	var SharedMountAppend = 3
-	var SharedMountInsert = 4
+	var SharedMountQuery = 1
+	var SharedMountCommit = 2
+	var SharedMountRemove = 3
+	var SharedMountAppend = 4
+	var SharedMountInsert = 5
 	
 	var SharedWorkMounting = 1
 	var SharedWorkIdle = 2
@@ -309,14 +309,12 @@ function factory (window, config, require) {
 		return typeof object.then === 'function'
 	}
 	
-	var Object = window.Object
 	var WeakMap = window.WeakMap || WeakHash
 	var Symbol = window.Symbol || window.Math.random
 	var isArray = window.Array.isArray
 	var hasOwnProperty = Object.hasOwnProperty
 	var defineProperty = Object.defineProperty
 	var create = Object.create
-	var now = Date.now
 	var requestAnimationFrame = window.requestAnimationFrame || timeout
 	
 	var SymbolFor = Symbol.for || hash
@@ -328,6 +326,7 @@ function factory (window, config, require) {
 	var SymbolContext = SymbolFor('dio.Context')
 	var SymbolException = SymbolFor('dio.Exception')
 	
+	var uuids = 1
 	var roots = new WeakMap()
 	
 	/**
@@ -468,9 +467,8 @@ function factory (window, config, require) {
 	
 		if (isValidElement(iterable))
 			setElementChildren(children, iterable, i)
-		else
-			for (; i < iterable.length; ++i)
-				setElementChildren(children, iterable[i], i)
+		else for (; i < iterable.length; ++i)
+			setElementChildren(children, iterable[i], i)
 	
 		setElementBoundary(children)
 	
@@ -491,7 +489,7 @@ function factory (window, config, require) {
 	 * @return {Element}
 	 */
 	function createElementGenerator (element, generator) {
-		return (element.type.then = enqueueComponentGenerator(element, generator, {})) && element
+		return (element.type.then = enqueueComponentGenerator(element, generator)) && element
 	}
 	
 	/**
@@ -619,7 +617,7 @@ function factory (window, config, require) {
 				if (isValidElement(type))
 					type = (setElementProps(element, props = assign({}, type.props, props)), element.id = type.id, type.type)
 				else if (thenable(type))
-					setElementBoundary((element.id = SharedElementPromise, children))
+					setElementBoundary((element.id = SharedElementPromise, element.xmlns = ++uuids, children))
 		}
 	
 		element.type = type
@@ -966,12 +964,8 @@ function factory (window, config, require) {
 	 * @param {number} signature
 	 */
 	function updateComponentElement (element, snapshot, signature) {
-		switch (element.work) {
-			case SharedWorkProcessing:
-				requestAnimationFrame(enqueueComponentElement(element, snapshot, signature))
-			case SharedWorkIntermediate:
-				return
-		}
+		if (element.work === SharedWorkIntermediate)
+			return
 	
 		var owner = element.owner
 		var prevProps = element.props
@@ -1025,18 +1019,6 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} snapshot
-	 * @param {number} signature
-	 * @return {function}
-	 */
-	function enqueueComponentElement (element, snapshot, signature) {
-		return function then () {
-			updateComponentElement(element, snapshot, signature)
-		}
-	}
-	
-	/**
-	 * @param {Element} element
 	 * @param {Component} owner
 	 * @param {object} state
 	 * @return {function}
@@ -1052,19 +1034,18 @@ function factory (window, config, require) {
 	/**
 	 * @param {Element} element
 	 * @param {AsyncGenerator} generator
-	 * @param {object} cache
 	 * @return {object}
 	 */
-	function enqueueComponentGenerator (element, generator, cache) {
-		return function then (resolve, reject) {
-			generator.next(cache.value).then(function (value) {
+	function enqueueComponentGenerator (element, generator) {
+		return function then (resolve, reject, commit) {
+			generator.next(element.cache).then(function (value) {
 				if (value.done === true && value.value === undefined)
-					return !element.active && resolve(getElementDefinition(cache.value))
+					return !commit && resolve(element.cache)
 	
-				if ((cache.value = value.value, element.active))
-					resolve(getElementDescription(value.value))
+				if (element.cache = value.value, commit)
+					resolve(element.cache)
 	
-				then(resolve, reject)
+				then(resolve, reject, commit)
 			}, reject)
 		}
 	}
@@ -1078,11 +1059,6 @@ function factory (window, config, require) {
 		if (!element)
 			return requestAnimationFrame(function () {
 				enqueueComponentUpdate(getComponentElement(owner), owner, callback, signature)
-			})
-	
-		if (element.work === SharedWorkProcessing)
-			return requestAnimationFrame(function () {
-				enqueueComponentUpdate(element, owner, callback, signature)
 			})
 	
 		if (element.active)
@@ -1101,7 +1077,7 @@ function factory (window, config, require) {
 	 * @param {function?} callback
 	 */
 	function enqueueStateUpdate (element, owner, state, callback) {
-		if (state) {
+		if (state)
 			if (element)
 				switch (typeof state) {
 					case 'function':
@@ -1116,7 +1092,6 @@ function factory (window, config, require) {
 				return requestAnimationFrame(function () {
 					enqueueStateUpdate(getComponentElement(owner), owner, state, callback)
 				})
-		}
 	}
 	
 	/**
@@ -1358,14 +1333,6 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {Component} owner
-	 * @return {Element}
-	 */
-	function getComponentChildren (owner) {
-		return getComponentElement(owner).children
-	}
-	
-	/**
 	 * @constructor
 	 * @param {Object?} props
 	 * @param {Object?} context
@@ -1544,7 +1511,7 @@ function factory (window, config, require) {
 	
 				return
 			case SharedElementPromise:
-				commitPromise(element, element)
+				commitPromise(element, element.type, element.xmlns)
 			case SharedElementFragment:
 			case SharedElementPortal:
 				element.owner = element.id !== SharedElementPortal ? parent.owner : getNodePortal(element)
@@ -1647,14 +1614,15 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element} snapshot
+	 * @param {object} type
+	 * @param {number} xmlns
 	 */
-	function commitPromise (element, snapshot) {
-		snapshot.type.then(function (value) {
-			return element.active ? reconcileChildren(element, getElementModule(value)) : value
+	function commitPromise (element, type, xmlns) {
+		type.then(function (value) {
+			element.active && element.xmlns === xmlns && reconcileChildren(element, getElementModule(value))
 		}, function (err) {
 			invokeErrorBoundary(element, err, SharedSitePromise+':'+SharedSiteRender, SharedErrorCatch)
-		})
+		}, xmlns)
 	}
 	
 	/**
@@ -1868,25 +1836,32 @@ function factory (window, config, require) {
 	 * @param {Element} snapshot
 	 */
 	function reconcileElement (element, snapshot) {
+		if (!element.active)
+			return
+	
+		if (element.key !== snapshot.key)
+			return commitReplace(element, snapshot)
+	
 		if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
-			commitPromise(element, snapshot)
-		else if (element.key === snapshot.key && element.type === snapshot.type)
-			switch (element.id) {
-				case SharedElementPortal:
-				case SharedElementFragment:
-					return reconcileChildren(element, snapshot)
-				case SharedElementComponent:
-					return updateComponentElement(element, snapshot, SharedComponentPropsUpdate)
-				case SharedElementText:
-					if (element.children !== snapshot.children)
-						commitText(element, element.children = snapshot.children)
-					break
-				case SharedElementNode:
-					reconcileChildren(element, snapshot)
-					commitProps(element, reconcileProps(element.props, element.props = snapshot.props), SharedPropsUpdate)
-			}
-		else if (element.active)
-			commitReplace(element, snapshot)
+			return commitPromise(element, element.type = snapshot.type, element.xmlns = snapshot.xmlns)
+	
+		if (element.type !== snapshot.type)
+			return commitReplace(element, snapshot)
+	
+		switch (element.id) {
+			case SharedElementPortal:
+			case SharedElementFragment:
+				return reconcileChildren(element, snapshot)
+			case SharedElementComponent:
+				return updateComponentElement(element, snapshot, SharedComponentPropsUpdate)
+			case SharedElementText:
+				if (element.children !== snapshot.children)
+					commitText(element, element.children = snapshot.children)
+				break
+			case SharedElementNode:
+				reconcileChildren(element, snapshot)
+				commitProps(element, reconcileProps(element.props, element.props = snapshot.props), SharedPropsUpdate)
+		}
 	}
 	
 	/**
@@ -2812,7 +2787,7 @@ function factory (window, config, require) {
 	if (typeof require === 'function')
 		(function () {
 			try {
-				require('./'+'cjs')(exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate)
+				require('./'+'cjs')(exports, Element, createElementIntermediate, mountComponentElement, getElementDefinition, getElementDescription)
 			} catch (error) {
 				/* istanbul ignore next */
 				printErrorException(error)
@@ -2822,7 +2797,7 @@ function factory (window, config, require) {
 		}())
 	
 	if (typeof config === 'object' && typeof config.createExport === 'function')
-		return config.createExport(exports, Element, mountComponentElement, getComponentChildren, getComponentSnapshot, getComponentElement, getElementDefinition, invokeErrorBoundary, getElementDescription, createElementIntermediate) || exports
+		return config.createExport(exports, Element, createElementIntermediate, mountComponentElement, getElementDefinition, getElementDescription) || exports
 	
 	return exports
 }

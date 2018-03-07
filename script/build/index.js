@@ -126,14 +126,10 @@ exports.h = createElement
 const internals = `
 exports,
 Element,
+createElementIntermediate,
 mountComponentElement,
-getComponentChildren,
-getComponentSnapshot,
-getComponentElement,
 getElementDefinition,
-invokeErrorBoundary,
-getElementDescription,
-createElementIntermediate
+getElementDescription
 `.replace(/\s+/g, ' ').trim()
 
 const template = `
