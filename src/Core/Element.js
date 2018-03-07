@@ -286,7 +286,7 @@ function createElement (type, config) {
 			if (isValidElement(type))
 				type = (setElementProps(element, props = assign({}, type.props, props)), element.id = type.id, type.type)
 			else if (thenable(type))
-				setElementBoundary((element.id = SharedElementPromise, element.xmlns = ++uuids, children))
+				setElementBoundary((element.id = SharedElementPromise, children))
 	}
 
 	element.type = type

@@ -99,7 +99,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 
 			return
 		case SharedElementPromise:
-			commitPromise(element, element.type, element.xmlns)
+			commitPromise(element, element.type)
 		case SharedElementFragment:
 		case SharedElementPortal:
 			element.owner = element.id !== SharedElementPortal ? parent.owner : getNodePortal(element)
@@ -203,14 +203,13 @@ function commitWillUnmount (element, parent, host, signature) {
 /**
  * @param {Element} element
  * @param {object} type
- * @param {number} xmlns
  */
-function commitPromise (element, type, xmlns) {
+function commitPromise (element, type) {
 	type.then(function (value) {
-		element.active && element.xmlns === xmlns && reconcileChildren(element, getElementModule(value))
+		element.active && element.type === type && reconcileChildren(element, getElementModule(value))
 	}, function (err) {
 		invokeErrorBoundary(element, err, SharedSitePromise+':'+SharedSiteRender, SharedErrorCatch)
-	}, xmlns)
+	}, SymbolAsyncIterator)
 }
 
 /**

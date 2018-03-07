@@ -15,5 +15,4 @@ var SymbolComponent = SymbolFor('dio.Component')
 var SymbolContext = SymbolFor('dio.Context')
 var SymbolException = SymbolFor('dio.Exception')
 
-var uuids = 1
 var roots = new WeakMap()

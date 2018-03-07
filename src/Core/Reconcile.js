@@ -41,7 +41,7 @@ function reconcileElement (element, snapshot) {
 		return commitReplace(element, snapshot)
 
 	if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
-		return commitPromise(element, element.type = snapshot.type, element.xmlns = snapshot.xmlns)
+		return commitPromise(element, element.type = snapshot.type)
 
 	if (element.type !== snapshot.type)
 		return commitReplace(element, snapshot)

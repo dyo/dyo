@@ -221,15 +221,15 @@ function enqueueComponentState (element, owner, state) {
  * @return {object}
  */
 function enqueueComponentGenerator (element, generator) {
-	return function then (resolve, reject, commit) {
+	return function then (resolve, reject, iterate) {
 		generator.next(element.cache).then(function (value) {
 			if (value.done === true && value.value === undefined)
-				return !commit && resolve(element.cache)
+				return !iterate && resolve(element.cache)
 
-			if (element.cache = value.value, commit)
+			if (element.cache = value.value, iterate)
 				resolve(element.cache)
 
-			then(resolve, reject, commit)
+			then(resolve, reject, iterate)
 		}, reject)
 	}
 }

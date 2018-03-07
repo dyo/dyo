@@ -326,7 +326,6 @@ function factory (window, config, require) {
 	var SymbolContext = SymbolFor('dio.Context')
 	var SymbolException = SymbolFor('dio.Exception')
 	
-	var uuids = 1
 	var roots = new WeakMap()
 	
 	/**
@@ -617,7 +616,7 @@ function factory (window, config, require) {
 				if (isValidElement(type))
 					type = (setElementProps(element, props = assign({}, type.props, props)), element.id = type.id, type.type)
 				else if (thenable(type))
-					setElementBoundary((element.id = SharedElementPromise, element.xmlns = ++uuids, children))
+					setElementBoundary((element.id = SharedElementPromise, children))
 		}
 	
 		element.type = type
@@ -1037,15 +1036,15 @@ function factory (window, config, require) {
 	 * @return {object}
 	 */
 	function enqueueComponentGenerator (element, generator) {
-		return function then (resolve, reject, commit) {
+		return function then (resolve, reject, iterate) {
 			generator.next(element.cache).then(function (value) {
 				if (value.done === true && value.value === undefined)
-					return !commit && resolve(element.cache)
+					return !iterate && resolve(element.cache)
 	
-				if (element.cache = value.value, commit)
+				if (element.cache = value.value, iterate)
 					resolve(element.cache)
 	
-				then(resolve, reject, commit)
+				then(resolve, reject, iterate)
 			}, reject)
 		}
 	}
@@ -1511,7 +1510,7 @@ function factory (window, config, require) {
 	
 				return
 			case SharedElementPromise:
-				commitPromise(element, element.type, element.xmlns)
+				commitPromise(element, element.type)
 			case SharedElementFragment:
 			case SharedElementPortal:
 				element.owner = element.id !== SharedElementPortal ? parent.owner : getNodePortal(element)
@@ -1615,14 +1614,13 @@ function factory (window, config, require) {
 	/**
 	 * @param {Element} element
 	 * @param {object} type
-	 * @param {number} xmlns
 	 */
-	function commitPromise (element, type, xmlns) {
+	function commitPromise (element, type) {
 		type.then(function (value) {
-			element.active && element.xmlns === xmlns && reconcileChildren(element, getElementModule(value))
+			element.active && element.type === type && reconcileChildren(element, getElementModule(value))
 		}, function (err) {
 			invokeErrorBoundary(element, err, SharedSitePromise+':'+SharedSiteRender, SharedErrorCatch)
-		}, xmlns)
+		}, SymbolAsyncIterator)
 	}
 	
 	/**
@@ -1843,7 +1841,7 @@ function factory (window, config, require) {
 			return commitReplace(element, snapshot)
 	
 		if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
-			return commitPromise(element, element.type = snapshot.type, element.xmlns = snapshot.xmlns)
+			return commitPromise(element, element.type = snapshot.type)
 	
 		if (element.type !== snapshot.type)
 			return commitReplace(element, snapshot)
