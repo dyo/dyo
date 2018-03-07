@@ -55,11 +55,12 @@ function reconcileElement (element, snapshot) {
 		case SharedElementText:
 			if (element.children !== snapshot.children)
 				commitText(element, element.children = snapshot.children)
-			break
-		case SharedElementNode:
-			reconcileChildren(element, snapshot)
-			commitProps(element, reconcileProps(element.props, element.props = snapshot.props), SharedPropsUpdate)
+		case SharedElementEmpty:
+			return
 	}
+
+	reconcileChildren(element, snapshot)
+	commitProps(element, reconcileProps(element.props, element.props = snapshot.props), SharedPropsUpdate)
 }
 
 /**

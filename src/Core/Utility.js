@@ -233,3 +233,11 @@ function fetchable (object) {
 function thenable (object) {
 	return typeof object.then === 'function'
 }
+
+/**
+ * @param {string} seed
+ * @return {string}
+ */
+function random (seed) {
+	return seed + (Math.random()+1).toString(36).substring(2)
+}

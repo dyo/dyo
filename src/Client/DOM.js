@@ -291,6 +291,14 @@ function isValidDOMEvent (event) {
 }
 
 /**
+ * @param {function}  component
+ * @return {boolean}
+ */
+function isValidDOMComponent (component) {
+	return isValidDOMTarget(component)
+}
+
+/**
  * @param {Element} element
  * @param {Element} parent
  */
@@ -337,4 +345,21 @@ function createDOMEmpty (element) {
  */
 function createDOMElement (element) {
 	return element.xmlns ? document.createElementNS(element.xmlns, element.type) : document.createElement(element.type)
+}
+
+/**
+ * @param {Element} element
+ * @return {Node}
+ */
+function createDOMComponent (element) {
+	try {
+		return new element.owner(element.props)
+	} catch (e) {
+		if (typeof customElements !== 'object')
+			return createDOMElement(createElement('div'))
+		else
+			customElements.define(random('x-'+getDisplayName(element).toLowerCase()), element.owner)
+
+		return createDOMComponent(element)
+	}
 }

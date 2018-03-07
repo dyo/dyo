@@ -2,14 +2,16 @@
 
 module.exports = function (exports, Element, createElementIntermediate, mountComponentElement, getElementDefinition, getElementDescription) {/* eslint-disable */'use strict'
 
-	var SharedElementPromise = -3
-	var SharedElementFragment = -2
-	var SharedElementPortal = -1
-	var SharedElementIntermediate = 0
-	var SharedElementComponent = 1
-	var SharedElementNode = 2
-	var SharedElementText = 3
-	var SharedElementEmpty = 4
+	var SharedElementUnsigned = 0
+	var SharedElementPromise = 1
+	var SharedElementFragment = 2
+	var SharedElementPortal = 3
+	var SharedElementIntermediate = 4
+	var SharedElementComponent = 5
+	var SharedElementCustom = 6
+	var SharedElementNode = 7
+	var SharedElementText = 8
+	var SharedElementEmpty = 9
 	
 	var SharedRefsDispatch = 1
 	var SharedRefsReplace = 2

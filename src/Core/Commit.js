@@ -13,6 +13,9 @@ function commitCreate (element) {
 			case SharedElementEmpty:
 				element.owner = createNodeEmpty(element)
 				break
+			case SharedElementCustom:
+				element.owner = createNodeComponent(element)
+				break
 			case SharedElementComponent:
 			case SharedElementPortal:
 				break
@@ -108,6 +111,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 			commitCreate(element)
 
 			return
+		case SharedElementCustom:
 		case SharedElementNode:
 			element.xmlns = getNodeType(element, parent.xmlns)
 		default:
@@ -124,7 +128,7 @@ function commitMount (element, sibling, parent, host, operation, signature) {
 						commitInsert(element, sibling, parent)
 			}
 
-			if (element.id !== SharedElementNode)
+			if (element.id > SharedElementNode)
 				return
 	}
 
@@ -146,7 +150,7 @@ function commitDismount (element, parent, signature) {
 		case SharedElementEmpty:
 			break
 		case SharedElementPortal:
-			if (signature < SharedElementIntermediate && parent.id > SharedElementIntermediate)
+			if (signature < SharedElementUnsigned && parent.id > SharedElementIntermediate)
 				commitRemove(element, parent)
 		default:
 			var children = element.children
@@ -166,7 +170,7 @@ function commitDismount (element, parent, signature) {
  * @param {number} signature
  */
 function commitUnmount (element, parent, signature) {
-	if (signature > SharedElementIntermediate)
+	if (signature > SharedElementUnsigned)
 		commitDismount(element, parent, signature)
 
 	if (element.id !== SharedElementComponent)
@@ -178,7 +182,7 @@ function commitUnmount (element, parent, signature) {
 			commitWillUnmount(element, parent, element, SharedErrorCatch)
 		)
 
-	commitUnmount(element.children, parent, SharedElementIntermediate)
+	commitUnmount(element.children, parent, SharedElementUnsigned)
 }
 
 /**
@@ -336,31 +340,30 @@ function commitInsert (element, sibling, parent) {
 			return commitAppend(element, parent)
 
 	switch (sibling.id) {
+		case SharedElementPromise:
+		case SharedElementFragment:
+			return commitInsert(element, getElementBoundary(sibling, SharedLinkedNext), parent)
 		case SharedElementComponent:
 			return commitInsert(element, getElementDescription(sibling), parent)
 		case SharedElementPortal:
 			return commitInsert(element, getElementSibling(sibling, parent, SharedLinkedNext), parent)
-		case SharedElementFragment:
-		case SharedElementPromise:
-			return commitInsert(element, getElementBoundary(sibling, SharedLinkedNext), parent)
 		case SharedElementIntermediate:
 			return commitAppend(element, parent)
 	}
 
 	switch (element.id) {
-		case SharedElementNode:
-		case SharedElementText:
-		case SharedElementEmpty:
-			return insertNodeBefore(element, sibling, parent)
+		case SharedElementPromise:
+		case SharedElementFragment:
+			return element.children.forEach(function (children) {
+				commitInsert(getElementDescription(children), sibling, parent)
+			})
 		case SharedElementComponent:
 			return commitInsert(getElementDescription(element), sibling, parent)
 		case SharedElementPortal:
 			return
 	}
 
-	element.children.forEach(function (children) {
-		commitInsert(getElementDescription(children), sibling, parent)
-	})
+	insertNodeBefore(element, sibling, parent)
 }
 
 /**
@@ -372,17 +375,16 @@ function commitAppend (element, parent) {
 		return commitAppend(element, getElementParent(parent))
 
 	switch (element.id) {
-		case SharedElementNode:
-		case SharedElementText:
-		case SharedElementEmpty:
-			return appendNodeChild(element, parent)
+		case SharedElementPromise:
+		case SharedElementFragment:
+			return element.children.forEach(function (children) {
+				commitAppend(getElementDescription(children), parent)
+			})
 		case SharedElementComponent:
 			return commitAppend(getElementDescription(element), parent)
 		case SharedElementPortal:
 			return
 	}
 
-	element.children.forEach(function (children) {
-		commitAppend(getElementDescription(children), parent)
-	})
+	appendNodeChild(element, parent)
 }

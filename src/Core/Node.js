@@ -14,6 +14,7 @@ var getNodeQuery = getFactory('getQuery', getDOMQuery)
 
 var isValidNodeTarget = getFactory('isValidTarget', isValidDOMTarget)
 var isValidNodeEvent = getFactory('isValidEvent', isValidDOMEvent)
+var isValidNodeComponent = getFactory('isValidNodeComponent', isValidDOMComponent)
 
 var removeNodeChild = getFactory('removeChild', removeDOMChild)
 var appendNodeChild = getFactory('appendChild', appendDOMChild)
@@ -22,3 +23,4 @@ var insertNodeBefore = getFactory('insertBefore', insertDOMBefore)
 var createNodeText = getFactory('createText', createDOMText)
 var createNodeEmpty = getFactory('createEmpty', createDOMEmpty)
 var createNodeElement = getFactory('createElement', createDOMElement)
+var createNodeComponent = getFactory('createComponent', createDOMComponent)

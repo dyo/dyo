@@ -30,6 +30,21 @@ PureComponent[SharedSitePrototype] = create(Component[SharedSitePrototype], {
 })
 
 /**
+ * @constructor
+ * @param {Object?} props
+ * @param {Object?} context
+ */
+function CustomComponent (props, context) {
+	Component.call(this, props, context)
+}
+
+CustomComponent[SharedSitePrototype] = create(Component[SharedSitePrototype], {
+	render: {value: function () {
+		return createElementComponent(getComponentElement(this))
+	}}
+})
+
+/**
  * @param {Object} props
  * @param {Object} state
  * @return {boolean}
@@ -113,8 +128,10 @@ function mountComponentElement (element) {
 
 	if (prototype && prototype.render)
 		!prototype[SymbolComponent] && createComponentPrototype(prototype)
+	else if (!type[SymbolComponent])
+		type = isValidNodeComponent(type) ? CustomComponent : createComponentClass(type, getDisplayName(type))
 	else
-		type = type[SymbolComponent] || createComponentClass(type, getDisplayName(type))
+		type = type[SymbolComponent]
 
 	element.owner = owner = getLifecycleClass(element, type, props, context)
 	owner[SymbolContext] = element.xmlns = host.xmlns

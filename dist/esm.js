@@ -5,14 +5,16 @@ function factory (window, config, require) {
 
 	var exports = {version: '8.2.4'}
 	
-	var SharedElementPromise = -3
-	var SharedElementFragment = -2
-	var SharedElementPortal = -1
-	var SharedElementIntermediate = 0
-	var SharedElementComponent = 1
-	var SharedElementNode = 2
-	var SharedElementText = 3
-	var SharedElementEmpty = 4
+	var SharedElementUnsigned = 0
+	var SharedElementPromise = 1
+	var SharedElementFragment = 2
+	var SharedElementPortal = 3
+	var SharedElementIntermediate = 4
+	var SharedElementComponent = 5
+	var SharedElementCustom = 6
+	var SharedElementNode = 7
+	var SharedElementText = 8
+	var SharedElementEmpty = 9
 	
 	var SharedRefsDispatch = 1
 	var SharedRefsReplace = 2
@@ -309,9 +311,17 @@ function factory (window, config, require) {
 		return typeof object.then === 'function'
 	}
 	
+	/**
+	 * @param {string} seed
+	 * @return {string}
+	 */
+	function random (seed) {
+		return seed + (Math.random()+1).toString(36).substring(2)
+	}
+	
 	var WeakMap = window.WeakMap || WeakHash
-	var Symbol = window.Symbol || window.Math.random
-	var isArray = window.Array.isArray
+	var Symbol = window.Symbol || Math.random
+	var isArray = Array.isArray
 	var hasOwnProperty = Object.hasOwnProperty
 	var defineProperty = Object.defineProperty
 	var create = Object.create
@@ -453,28 +463,6 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {(Element|Array)} fragment
-	 * @return {Element}
-	 */
-	function createElementFragment (iterable) {
-		var element = new Element(SharedElementFragment)
-		var children = new List()
-		var i = 0
-	
-		element.type = SymbolFragment
-		element.children = children
-	
-		if (isValidElement(iterable))
-			setElementChildren(children, iterable, i)
-		else for (; i < iterable.length; ++i)
-			setElementChildren(children, iterable[i], i)
-	
-		setElementBoundary(children)
-	
-		return element
-	}
-	
-	/**
 	 * @param {function} callback
 	 * @return {Element}
 	 */
@@ -489,6 +477,35 @@ function factory (window, config, require) {
 	 */
 	function createElementGenerator (element, generator) {
 		return (element.type.then = enqueueComponentGenerator(element, generator)) && element
+	}
+	
+	/**
+	 * @param {(Element|Array)} iterable
+	 * @return {Element}
+	 */
+	function createElementFragment (iterable) {
+		var element = new Element(SharedElementFragment)
+	
+		element.type = SymbolFragment
+	
+		setElementBoundary(element.children = getElementChildren(new List(), iterable))
+	
+		return element
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	function createElementComponent (host) {
+		var element = new Element(SharedElementCustom)
+	
+		element.type = element.owner = host.type
+		element.props = host.props
+		element.context = host.context
+		element.children = getElementChildren(new List(), host.children)
+	
+		return element
 	}
 	
 	/**
@@ -697,6 +714,20 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {List} children
+	 * @param {(Element|Array)}
+	 */
+	function getElementChildren (children, iterable) {
+		if (isValidElement(iterable))
+			setElementChildren(children, iterable, 0)
+		else if (isArray(iterable))
+			for (var i = 0; i < iterable.length; ++i)
+				setElementChildren(children, iterable[i], i)
+	
+		return children
+	}
+	
+	/**
 	 * @param {Element} element
 	 * @param {function} type
 	 * @return {Object}
@@ -845,6 +876,21 @@ function factory (window, config, require) {
 	})
 	
 	/**
+	 * @constructor
+	 * @param {Object?} props
+	 * @param {Object?} context
+	 */
+	function CustomComponent (props, context) {
+		Component.call(this, props, context)
+	}
+	
+	CustomComponent[SharedSitePrototype] = create(Component[SharedSitePrototype], {
+		render: {value: function () {
+			return createElementComponent(getComponentElement(this))
+		}}
+	})
+	
+	/**
 	 * @param {Object} props
 	 * @param {Object} state
 	 * @return {boolean}
@@ -928,8 +974,10 @@ function factory (window, config, require) {
 	
 		if (prototype && prototype.render)
 			!prototype[SymbolComponent] && createComponentPrototype(prototype)
+		else if (!type[SymbolComponent])
+			type = isValidNodeComponent(type) ? CustomComponent : createComponentClass(type, getDisplayName(type))
 		else
-			type = type[SymbolComponent] || createComponentClass(type, getDisplayName(type))
+			type = type[SymbolComponent]
 	
 		element.owner = owner = getLifecycleClass(element, type, props, context)
 		owner[SymbolContext] = element.xmlns = host.xmlns
@@ -1424,6 +1472,9 @@ function factory (window, config, require) {
 				case SharedElementEmpty:
 					element.owner = createNodeEmpty(element)
 					break
+				case SharedElementCustom:
+					element.owner = createNodeComponent(element)
+					break
 				case SharedElementComponent:
 				case SharedElementPortal:
 					break
@@ -1519,6 +1570,7 @@ function factory (window, config, require) {
 				commitCreate(element)
 	
 				return
+			case SharedElementCustom:
 			case SharedElementNode:
 				element.xmlns = getNodeType(element, parent.xmlns)
 			default:
@@ -1535,7 +1587,7 @@ function factory (window, config, require) {
 							commitInsert(element, sibling, parent)
 				}
 	
-				if (element.id !== SharedElementNode)
+				if (element.id > SharedElementNode)
 					return
 		}
 	
@@ -1557,7 +1609,7 @@ function factory (window, config, require) {
 			case SharedElementEmpty:
 				break
 			case SharedElementPortal:
-				if (signature < SharedElementIntermediate && parent.id > SharedElementIntermediate)
+				if (signature < SharedElementUnsigned && parent.id > SharedElementIntermediate)
 					commitRemove(element, parent)
 			default:
 				var children = element.children
@@ -1577,7 +1629,7 @@ function factory (window, config, require) {
 	 * @param {number} signature
 	 */
 	function commitUnmount (element, parent, signature) {
-		if (signature > SharedElementIntermediate)
+		if (signature > SharedElementUnsigned)
 			commitDismount(element, parent, signature)
 	
 		if (element.id !== SharedElementComponent)
@@ -1589,7 +1641,7 @@ function factory (window, config, require) {
 				commitWillUnmount(element, parent, element, SharedErrorCatch)
 			)
 	
-		commitUnmount(element.children, parent, SharedElementIntermediate)
+		commitUnmount(element.children, parent, SharedElementUnsigned)
 	}
 	
 	/**
@@ -1747,31 +1799,30 @@ function factory (window, config, require) {
 				return commitAppend(element, parent)
 	
 		switch (sibling.id) {
+			case SharedElementPromise:
+			case SharedElementFragment:
+				return commitInsert(element, getElementBoundary(sibling, SharedLinkedNext), parent)
 			case SharedElementComponent:
 				return commitInsert(element, getElementDescription(sibling), parent)
 			case SharedElementPortal:
 				return commitInsert(element, getElementSibling(sibling, parent, SharedLinkedNext), parent)
-			case SharedElementFragment:
-			case SharedElementPromise:
-				return commitInsert(element, getElementBoundary(sibling, SharedLinkedNext), parent)
 			case SharedElementIntermediate:
 				return commitAppend(element, parent)
 		}
 	
 		switch (element.id) {
-			case SharedElementNode:
-			case SharedElementText:
-			case SharedElementEmpty:
-				return insertNodeBefore(element, sibling, parent)
+			case SharedElementPromise:
+			case SharedElementFragment:
+				return element.children.forEach(function (children) {
+					commitInsert(getElementDescription(children), sibling, parent)
+				})
 			case SharedElementComponent:
 				return commitInsert(getElementDescription(element), sibling, parent)
 			case SharedElementPortal:
 				return
 		}
 	
-		element.children.forEach(function (children) {
-			commitInsert(getElementDescription(children), sibling, parent)
-		})
+		insertNodeBefore(element, sibling, parent)
 	}
 	
 	/**
@@ -1783,19 +1834,18 @@ function factory (window, config, require) {
 			return commitAppend(element, getElementParent(parent))
 	
 		switch (element.id) {
-			case SharedElementNode:
-			case SharedElementText:
-			case SharedElementEmpty:
-				return appendNodeChild(element, parent)
+			case SharedElementPromise:
+			case SharedElementFragment:
+				return element.children.forEach(function (children) {
+					commitAppend(getElementDescription(children), parent)
+				})
 			case SharedElementComponent:
 				return commitAppend(getElementDescription(element), parent)
 			case SharedElementPortal:
 				return
 		}
 	
-		element.children.forEach(function (children) {
-			commitAppend(getElementDescription(children), parent)
-		})
+		appendNodeChild(element, parent)
 	}
 	
 	/**
@@ -1855,11 +1905,12 @@ function factory (window, config, require) {
 			case SharedElementText:
 				if (element.children !== snapshot.children)
 					commitText(element, element.children = snapshot.children)
-				break
-			case SharedElementNode:
-				reconcileChildren(element, snapshot)
-				commitProps(element, reconcileProps(element.props, element.props = snapshot.props), SharedPropsUpdate)
+			case SharedElementEmpty:
+				return
 		}
+	
+		reconcileChildren(element, snapshot)
+		commitProps(element, reconcileProps(element.props, element.props = snapshot.props), SharedPropsUpdate)
 	}
 	
 	/**
@@ -2415,6 +2466,7 @@ function factory (window, config, require) {
 	
 	var isValidNodeTarget = getFactory('isValidTarget', isValidDOMTarget)
 	var isValidNodeEvent = getFactory('isValidEvent', isValidDOMEvent)
+	var isValidNodeComponent = getFactory('isValidNodeComponent', isValidDOMComponent)
 	
 	var removeNodeChild = getFactory('removeChild', removeDOMChild)
 	var appendNodeChild = getFactory('appendChild', appendDOMChild)
@@ -2423,6 +2475,7 @@ function factory (window, config, require) {
 	var createNodeText = getFactory('createText', createDOMText)
 	var createNodeEmpty = getFactory('createEmpty', createDOMEmpty)
 	var createNodeElement = getFactory('createElement', createDOMElement)
+	var createNodeComponent = getFactory('createComponent', createDOMComponent)
 	
 	/**
 	 * @param {Element} element
@@ -2717,6 +2770,14 @@ function factory (window, config, require) {
 	}
 	
 	/**
+	 * @param {function}  component
+	 * @return {boolean}
+	 */
+	function isValidDOMComponent (component) {
+		return isValidDOMTarget(component)
+	}
+	
+	/**
 	 * @param {Element} element
 	 * @param {Element} parent
 	 */
@@ -2763,6 +2824,23 @@ function factory (window, config, require) {
 	 */
 	function createDOMElement (element) {
 		return element.xmlns ? document.createElementNS(element.xmlns, element.type) : document.createElement(element.type)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Node}
+	 */
+	function createDOMComponent (element) {
+		try {
+			return new element.owner(element.props)
+		} catch (e) {
+			if (typeof customElements !== 'object')
+				return createDOMElement(createElement('div'))
+			else
+				customElements.define(random('x-'+getDisplayName(element).toLowerCase()), element.owner)
+	
+			return createDOMComponent(element)
+		}
 	}
 	
 	exports.render = render

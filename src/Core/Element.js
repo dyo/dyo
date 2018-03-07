@@ -123,28 +123,6 @@ function createElementEmpty (key) {
 }
 
 /**
- * @param {(Element|Array)} fragment
- * @return {Element}
- */
-function createElementFragment (iterable) {
-	var element = new Element(SharedElementFragment)
-	var children = new List()
-	var i = 0
-
-	element.type = SymbolFragment
-	element.children = children
-
-	if (isValidElement(iterable))
-		setElementChildren(children, iterable, i)
-	else for (; i < iterable.length; ++i)
-		setElementChildren(children, iterable[i], i)
-
-	setElementBoundary(children)
-
-	return element
-}
-
-/**
  * @param {function} callback
  * @return {Element}
  */
@@ -159,6 +137,35 @@ function createElementPromise (callback) {
  */
 function createElementGenerator (element, generator) {
 	return (element.type.then = enqueueComponentGenerator(element, generator)) && element
+}
+
+/**
+ * @param {(Element|Array)} iterable
+ * @return {Element}
+ */
+function createElementFragment (iterable) {
+	var element = new Element(SharedElementFragment)
+
+	element.type = SymbolFragment
+
+	setElementBoundary(element.children = getElementChildren(new List(), iterable))
+
+	return element
+}
+
+/**
+ * @param {Element} element
+ * @return {Element}
+ */
+function createElementComponent (host) {
+	var element = new Element(SharedElementCustom)
+
+	element.type = element.owner = host.type
+	element.props = host.props
+	element.context = host.context
+	element.children = getElementChildren(new List(), host.children)
+
+	return element
 }
 
 /**
@@ -364,6 +371,20 @@ function setElementBoundary (children) {
 function setElementSibling (element, snapshot, children) {
 	children.insert(snapshot, element)
 	children.remove(element)
+}
+
+/**
+ * @param {List} children
+ * @param {(Element|Array)}
+ */
+function getElementChildren (children, iterable) {
+	if (isValidElement(iterable))
+		setElementChildren(children, iterable, 0)
+	else if (isArray(iterable))
+		for (var i = 0; i < iterable.length; ++i)
+			setElementChildren(children, iterable[i], i)
+
+	return children
 }
 
 /**
