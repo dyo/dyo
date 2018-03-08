@@ -1,4 +1,31 @@
 /**
+ * @param {Element} element
+ * @return {Element}
+ */
+function getCustomElement (element) {
+	return commitCreate(element) && getCustomProps(createElement('<!--', {}, element.children), element.owner)
+}
+
+/**
+ * @param {Element} element
+ * @param {object} owner
+ * @return {Element}
+ */
+function getCustomProps (element, owner) {
+	if (owner.nodeName)
+		element.type = owner.nodeName.toLowerCase()
+
+	if (owner.attributes)
+		for (var attributes = owner.attributes, i = attributes.length - 1; i >= 0; --i)
+			element.props[attributes[i].name] = attributes[i].value
+
+	if (owner.innerHTML)
+		element.props.innerHTML = owner.innerHTML
+
+	return element
+}
+
+/**
  * @param {*} value
  * @return {string}
  */

@@ -173,7 +173,7 @@ function getDOMTarget (event) {
 
 /**
  * @param {Element} element
- * @param {string} xmlns
+ * @param {string?} xmlns
  */
 function getDOMType (element, xmlns) {
 	switch (element.type) {
@@ -354,12 +354,8 @@ function createDOMElement (element) {
 function createDOMComponent (element) {
 	try {
 		return new element.owner(element.props)
-	} catch (e) {
-		if (typeof customElements !== 'object')
-			return createDOMElement(createElement('div'))
-		else
-			customElements.define(random('x-'+getDisplayName(element).toLowerCase()), element.owner)
-
-		return createDOMComponent(element)
+	} catch (err) {
+		if (!customElements.define(random(getDisplayName(element.owner).toLowerCase()+'-'), element.owner))
+			return createDOMComponent(element)
 	}
 }

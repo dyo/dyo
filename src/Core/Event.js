@@ -27,7 +27,7 @@ function handleEvent (event) {
 
 		if (value && owner[SymbolComponent])
 			getLifecycleState(host, value)
-	} catch (e) {
-		invokeErrorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorThrow)
+	} catch (err) {
+		invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorThrow)
 	}
 }

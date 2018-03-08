@@ -126,6 +126,9 @@ exports.h = createElement
 const internals = `
 exports,
 Element,
+commitCreate,
+createElementText,
+createElementEmpty,
 createElementIntermediate,
 mountComponentElement,
 getElementDefinition,

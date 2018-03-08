@@ -64,6 +64,8 @@ function read (element, host, queue, container) {
 		case SharedElementText:
 		case SharedElementEmpty:
 			return write(getTextEscape(children), container)
+		case SharedElementCustom:
+			return read(getCustomElement(element), host, queue, container)
 		case SharedElementComponent:
 			return read(!(container.host = element).active ? mountComponentElement(element) : children, element, queue, container)
 		case SharedElementPromise:

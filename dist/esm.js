@@ -199,10 +199,7 @@ function factory (window, config, require) {
 	 */
 	function flatten (array, output) {
 		for (var i = 0; i < array.length; ++i)
-			if (isArray(array[i]))
-				flatten(array[i], output)
-			else
-				output.push(array[i])
+			isArray(array[i]) ? flatten(array[i], output) : output.push(array[i])
 	
 		return output
 	}
@@ -312,11 +309,11 @@ function factory (window, config, require) {
 	}
 	
 	/**
-	 * @param {string} seed
+	 * @param {string} namespace
 	 * @return {string}
 	 */
-	function random (seed) {
-		return seed + (Math.random()+1).toString(36).substring(2)
+	function random (namespace) {
+		return namespace + (((seed = seed * 16807 % uuid - 1) - 1) / uuid).toString(36).substring(2)
 	}
 	
 	var WeakMap = window.WeakMap || WeakHash
@@ -336,7 +333,9 @@ function factory (window, config, require) {
 	var SymbolContext = SymbolFor('dio.Context')
 	var SymbolException = SymbolFor('dio.Exception')
 	
-	var roots = new WeakMap()
+	var uuid = 2147483647
+	var seed = 4022871197 % uuid
+	var root = new WeakMap()
 	
 	/**
 	 * @constructor
@@ -1484,7 +1483,7 @@ function factory (window, config, require) {
 		} catch (err) {
 			commitRebase(element, getElementDefinition(invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorCatch)))
 		} finally {
-			element.active = true
+			return element.active = true
 		}
 	}
 	
@@ -2120,8 +2119,8 @@ function factory (window, config, require) {
 	
 			if (value && owner[SymbolComponent])
 				getLifecycleState(host, value)
-		} catch (e) {
-			invokeErrorBoundary(host, e, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorThrow)
+		} catch (err) {
+			invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorThrow)
 		}
 	}
 	
@@ -2230,7 +2229,7 @@ function factory (window, config, require) {
 	 * @param {(object|string)} exception
 	 */
 	function printErrorException (exception) {
-		try { console.error(exception.toString()) } catch (e) {} finally { return exception }
+		try { console.error(exception.toString()) } catch (err) {} finally { return exception }
 	}
 	
 	/**
@@ -2353,8 +2352,8 @@ function factory (window, config, require) {
 	function render (element, container, callback) {
 		if (!container)
 			render(element, getNodeDocument(), callback)
-		else if (roots.has(container))
-			update(roots.get(container).children, getElementDefinition(element), callback)
+		else if (root.has(container))
+			update(root.get(container).children, getElementDefinition(element), callback)
 		else
 			mount(element, container, callback, SharedMountCommit)
 	}
@@ -2408,7 +2407,7 @@ function factory (window, config, require) {
 	 * @param {number} signature
 	 */
 	function initialize (element, parent, container, signature) {
-		roots.set(parent.owner = container, parent)
+		root.set(parent.owner = container, parent)
 	
 		if (signature === SharedMountCommit)
 			setNodeContent(parent)
@@ -2421,7 +2420,7 @@ function factory (window, config, require) {
 	 * @return {boolean}
 	 */
 	function unmountComponentAtNode (container) {
-		return roots.has(container) && !render(null, container)
+		return root.has(container) && !render(null, container)
 	}
 	
 	/**
@@ -2652,7 +2651,7 @@ function factory (window, config, require) {
 	
 	/**
 	 * @param {Element} element
-	 * @param {string} xmlns
+	 * @param {string?} xmlns
 	 */
 	function getDOMType (element, xmlns) {
 		switch (element.type) {
@@ -2833,13 +2832,9 @@ function factory (window, config, require) {
 	function createDOMComponent (element) {
 		try {
 			return new element.owner(element.props)
-		} catch (e) {
-			if (typeof customElements !== 'object')
-				return createDOMElement(createElement('div'))
-			else
-				customElements.define(random('x-'+getDisplayName(element).toLowerCase()), element.owner)
-	
-			return createDOMComponent(element)
+		} catch (err) {
+			if (!customElements.define(random(getDisplayName(element.owner).toLowerCase()+'-'), element.owner))
+				return createDOMComponent(element)
 		}
 	}
 	

@@ -73,6 +73,33 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	var SharedGetInitialState = 'getInitialState'
 	
 	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	function getCustomElement (element) {
+		return commitCreate(element) && getCustomProps(createElement('<!--', {}, element.children), element.owner)
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {object} owner
+	 * @return {Element}
+	 */
+	function getCustomProps (element, owner) {
+		if (owner.nodeName)
+			element.type = owner.nodeName.toLowerCase()
+	
+		if (owner.attributes)
+			for (var attributes = owner.attributes, i = attributes.length - 1; i >= 0; --i)
+				element.props[attributes[i].name] = attributes[i].value
+	
+		if (owner.innerHTML)
+			element.props.innerHTML = owner.innerHTML
+	
+		return element
+	}
+	
+	/**
 	 * @param {*} value
 	 * @return {string}
 	 */
@@ -151,6 +178,8 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 			case SharedElementText:
 			case SharedElementEmpty:
 				return getTextEscape(element.children)
+			case SharedElementCustom:
+				return getStringElement(getCustomElement(element), host)
 			case SharedElementComponent:
 				return getStringElement(element.active ? element.children : mountComponentElement(element), element)
 		}
@@ -270,6 +299,8 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 			case SharedElementText:
 			case SharedElementEmpty:
 				return element.children
+			case SharedElementCustom:
+				return getJSONElement(getCustomElement(element), host)
 			case SharedElementComponent:
 				return getJSONElement(element.active ? element.children : mountComponentElement(element), element)
 		}
@@ -356,6 +387,8 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 			case SharedElementText:
 			case SharedElementEmpty:
 				return write(getTextEscape(children), container)
+			case SharedElementCustom:
+				return read(getCustomElement(element), host, queue, container)
 			case SharedElementComponent:
 				return read(!(container.host = element).active ? mountComponentElement(element) : children, element, queue, container)
 			case SharedElementPromise:

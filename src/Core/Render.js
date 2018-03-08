@@ -6,8 +6,8 @@
 function render (element, container, callback) {
 	if (!container)
 		render(element, getNodeDocument(), callback)
-	else if (roots.has(container))
-		update(roots.get(container).children, getElementDefinition(element), callback)
+	else if (root.has(container))
+		update(root.get(container).children, getElementDefinition(element), callback)
 	else
 		mount(element, container, callback, SharedMountCommit)
 }
@@ -61,7 +61,7 @@ function update (element, snapshot, callback) {
  * @param {number} signature
  */
 function initialize (element, parent, container, signature) {
-	roots.set(parent.owner = container, parent)
+	root.set(parent.owner = container, parent)
 
 	if (signature === SharedMountCommit)
 		setNodeContent(parent)
@@ -74,5 +74,5 @@ function initialize (element, parent, container, signature) {
  * @return {boolean}
  */
 function unmountComponentAtNode (container) {
-	return roots.has(container) && !render(null, container)
+	return root.has(container) && !render(null, container)
 }

@@ -25,7 +25,7 @@ function commitCreate (element) {
 	} catch (err) {
 		commitRebase(element, getElementDefinition(invokeErrorBoundary(element, err, SharedSiteElement, SharedErrorCatch)))
 	} finally {
-		element.active = true
+		return element.active = true
 	}
 }
 

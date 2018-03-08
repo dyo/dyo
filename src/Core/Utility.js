@@ -122,10 +122,7 @@ function assign (object, primary, secondary) {
  */
 function flatten (array, output) {
 	for (var i = 0; i < array.length; ++i)
-		if (isArray(array[i]))
-			flatten(array[i], output)
-		else
-			output.push(array[i])
+		isArray(array[i]) ? flatten(array[i], output) : output.push(array[i])
 
 	return output
 }
@@ -235,9 +232,9 @@ function thenable (object) {
 }
 
 /**
- * @param {string} seed
+ * @param {string} namespace
  * @return {string}
  */
-function random (seed) {
-	return seed + (Math.random()+1).toString(36).substring(2)
+function random (namespace) {
+	return namespace + (((seed = seed * 16807 % uuid - 1) - 1) / uuid).toString(36).substring(2)
 }

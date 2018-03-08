@@ -103,5 +103,5 @@ function replaceErrorChildren (element, snapshot) {
  * @param {(object|string)} exception
  */
 function printErrorException (exception) {
-	try { console.error(exception.toString()) } catch (e) {} finally { return exception }
+	try { console.error(exception.toString()) } catch (err) {} finally { return exception }
 }

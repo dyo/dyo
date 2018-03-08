@@ -15,6 +15,8 @@ function getStringElement (element, host) {
 		case SharedElementText:
 		case SharedElementEmpty:
 			return getTextEscape(element.children)
+		case SharedElementCustom:
+			return getStringElement(getCustomElement(element), host)
 		case SharedElementComponent:
 			return getStringElement(element.active ? element.children : mountComponentElement(element), element)
 	}
