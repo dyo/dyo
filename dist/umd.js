@@ -1,9 +1,9 @@
-/*! DIO 8.2.3 @license MIT */
+/*! DIO 8.2.4 @license MIT */
 
 ;(function (global) {/* eslint-disable */'use strict'
 function factory (window, config, require) {
 
-	var exports = {version: '8.2.3'}
+	var exports = {version: '8.2.4'}
 	
 	var SharedElementPromise = -3
 	var SharedElementFragment = -2
@@ -332,12 +332,15 @@ function factory (window, config, require) {
 		var element = new Element(snapshot.id)
 		var children = snapshot.children
 	
+		if (typeof children === 'object' && snapshot.id !== SharedElementComponent)
+			children = createChildrenImmutable(children)
+	
 		element.type = snapshot.type
 		element.props = snapshot.props
 		element.xmlns = snapshot.xmlns
 		element.key = snapshot.key
 		element.ref = snapshot.ref
-		element.children = typeof children === 'object' ? createChildrenImmutable(children) : children
+		element.children = children
 	
 		return element
 	}

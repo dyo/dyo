@@ -39,12 +39,15 @@ function createElementImmutable (snapshot) {
 	var element = new Element(snapshot.id)
 	var children = snapshot.children
 
+	if (typeof children === 'object' && snapshot.id !== SharedElementComponent)
+		children = createChildrenImmutable(children)
+
 	element.type = snapshot.type
 	element.props = snapshot.props
 	element.xmlns = snapshot.xmlns
 	element.key = snapshot.key
 	element.ref = snapshot.ref
-	element.children = typeof children === 'object' ? createChildrenImmutable(children) : children
+	element.children = children
 
 	return element
 }

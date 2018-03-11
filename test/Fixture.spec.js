@@ -831,4 +831,38 @@ describe('Fixture', () => {
 		assert.equal(global.printErr, undefined)
 		assert.equal(global.console, defaultConsole)
 	})
+
+	it('should handle mutable component elements', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let setRootState = null
+		let setWrapperState = null
+
+		let Child = function() {
+		  return h('div', 'child')
+		}
+
+		let Wrapper = function({children}, {x}) {
+		  setWrapperState = this.setState.bind(this)
+		  stack.push(x)
+		  return h('div', children)
+		}
+
+		let Root = function(props, {x}) {
+		  setRootState = this.setState.bind(this)
+		  stack.push(x)
+		  return h('div', h(Wrapper, h(Child, ['xxx'])))
+		}
+
+		render(Root, container)
+		assert.html(container, `<div><div><div>child</div></div></div>`)
+
+		setRootState({x: 'root'})
+		assert.html(container, `<div><div><div>child</div></div></div>`)
+
+		assert.doesNotThrow(() => {
+			setWrapperState({x: 'wrapper'})
+			assert.html(container, `<div><div><div>child</div></div></div>`)
+		})
+	})
 })

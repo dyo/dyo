@@ -1,3 +1,7 @@
+## 8.2.4 (11 March 2018)
+
+- Patch [#53](https://github.com/thysultan/dio.js/issues/53)
+
 ## 8.2.3 (25 January 2018)
 
 - patch children props sementics when coupled with both children props and children elements to behave like React and prefer children elements instead of the accumulation of both.
