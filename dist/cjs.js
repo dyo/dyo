@@ -1,26 +1,29 @@
 /*! DIO 8.2.4 @license MIT */
 
-module.exports = function (exports, Element, createElementIntermediate, mountComponentElement, getElementDefinition, getElementDescription) {/* eslint-disable */'use strict'
+module.exports = function (exports, Element, mountComponentElement, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
-	var SharedElementUnsigned = 0
 	var SharedElementPromise = 1
 	var SharedElementFragment = 2
 	var SharedElementPortal = 3
-	var SharedElementIntermediate = 4
+	var SharedElementSnapshot = 4
 	var SharedElementComponent = 5
 	var SharedElementCustom = 6
 	var SharedElementNode = 7
-	var SharedElementText = 8
-	var SharedElementEmpty = 9
+	var SharedElementComment = 8
+	var SharedElementText = 9
+	var SharedElementEmpty = 10
+	
+	var SharedComponentForceUpdate = 1
+	var SharedComponentPropsUpdate = 2
+	var SharedComponentStateUpdate = 3
 	
 	var SharedRefsDispatch = 1
 	var SharedRefsReplace = 2
 	var SharedRefsRemove = 3
 	var SharedRefsAssign = 4
 	
-	var SharedComponentForceUpdate = 1
-	var SharedComponentPropsUpdate = 2
-	var SharedComponentStateUpdate = 3
+	var SharedPropsMount = 1
+	var SharedPropsUpdate = 2
 	
 	var SharedMountQuery = 1
 	var SharedMountCommit = 2
@@ -28,22 +31,15 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	var SharedMountAppend = 4
 	var SharedMountInsert = 5
 	
-	var SharedWorkMounting = 1
-	var SharedWorkIdle = 2
+	var SharedWorkIdle = 1
+	var SharedWorkUpdating = 2
 	var SharedWorkIntermediate = 3
-	var SharedWorkProcessing = 4
-	var SharedWorkPending = 5
-	
-	var SharedErrorCatch = 1
-	var SharedErrorThrow = 2
-	
-	var SharedPropsMount = 1
-	var SharedPropsUpdate = 2
 	
 	var SharedLinkedPrevious = 'prev'
 	var SharedLinkedNext = 'next'
 	
-	var SharedSitePromise = 'async'
+	var SharedSiteEvent = 'event'
+	var SharedSitePromise = 'promise'
 	var SharedSitePrototype = 'prototype'
 	var SharedSiteCallback = 'callback'
 	var SharedSiteRender = 'render'
@@ -54,10 +50,11 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	var SharedSiteFindDOMNode = 'findDOMNode'
 	var SharedSiteDisplayName = 'displayName'
 	
-	var SharedKeyHead = '&|head'
-	var SharedKeyBody = '&|'
-	var SharedKeyTail = '&|tail'
+	var SharedKeyHead = '&|head|'
+	var SharedKeyBody = '&|body|'
+	var SharedKeyTail = '&|tail|'
 	
+	var SharedLocalNameComment = '#comment'
 	var SharedLocalNameEmpty = '#empty'
 	var SharedLocalNameText = '#text'
 	
@@ -74,10 +71,40 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	
 	/**
 	 * @param {Element} element
+	 * @param {Exception} exception
+	 * @return {Element}
+	 */
+	function getErrorBoundary (element, exception) {
+		try {
+			delegateErrorBoundary(element, element, exception)
+		} finally {
+			return createElementEmpty()
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} host
+	 * @return {Element}
+	 */
+	function getComponentChildren (element, host) {
+		try {
+			return mountComponentElement(element)
+		} catch (err) {
+			return getErrorBoundary(host, err)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
 	 * @return {Element}
 	 */
 	function getCustomElement (element) {
-		return commitCreate(element) && getCustomProps(createElement('<!--', {}, element.children), element.owner)
+		try {
+			commitOwner(element)
+		} finally {
+			return getCustomProps(createElement('template', element.children), element.owner)
+		}
 	}
 	
 	/**
@@ -86,6 +113,9 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	 * @return {Element}
 	 */
 	function getCustomProps (element, owner) {
+		if (!owner)
+			return element
+	
 		if (owner.nodeName)
 			element.type = owner.nodeName.toLowerCase()
 	
@@ -165,7 +195,7 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	 * @return {string}
 	 */
 	function toString () {
-		return getStringElement(this, createElementIntermediate(this))
+		return getStringElement(this, this.host || createElementSnapshot(this))
 	}
 	
 	/**
@@ -178,10 +208,12 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 			case SharedElementText:
 			case SharedElementEmpty:
 				return getTextEscape(element.children)
+			case SharedElementComment:
+				return getStringComment(element)
 			case SharedElementCustom:
 				return getStringElement(getCustomElement(element), host)
 			case SharedElementComponent:
-				return getStringElement(element.active ? element.children : mountComponentElement(element), element)
+				return getStringElement(element.active ? element.children : getComponentChildren(element, host), element)
 		}
 	
 		var type = element.type
@@ -206,7 +238,7 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	
 	/**
 	 * @param {Element} element
-	 * @param  {Object} props
+	 * @param  {object} props
 	 * @return {String}
 	 */
 	function getStringProps (element, props) {
@@ -260,7 +292,7 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	}
 	
 	/**
-	 * @param {Object} props
+	 * @param {object} props
 	 * @return {string}
 	 */
 	function getStringStyle (props) {
@@ -283,10 +315,18 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	}
 	
 	/**
-	 * @return {Object}
+	 * @param {Element} element
+	 * @return {string}
+	 */
+	function getStringComment (element) {
+		return '<!--' + element.children + '-->'
+	}
+	
+	/**
+	 * @return {object}
 	 */
 	function toJSON () {
-		return getJSONElement(this, createElementIntermediate(this))
+		return getJSONElement(this, this.host || createElementSnapshot(this))
 	}
 	
 	/**
@@ -299,13 +339,15 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 			case SharedElementText:
 			case SharedElementEmpty:
 				return element.children
+			case SharedElementComment:
+				return getJSONObject(element, {}, element.children)
 			case SharedElementCustom:
 				return getJSONElement(getCustomElement(element), host)
 			case SharedElementComponent:
-				return getJSONElement(element.active ? element.children : mountComponentElement(element), element)
+				return getJSONElement(element.active ? element.children : getComponentChildren(element, host), element)
 		}
 	
-		var payload = {type: element.type, props: element.props, children: []}
+		var payload = getJSONObject(element, element.props, [])
 		var children = element.children
 		var length = children.length
 	
@@ -322,16 +364,26 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	}
 	
 	/**
+	 * @param {Element} element
+	 * @param {object?} props
+	 * @param {(string|number|object)?}
+	 * @return {object}
+	 */
+	function getJSONObject (element, props, children) {
+		return {type: element.type, props: props, children: children}
+	}
+	
+	/**
 	 * @type {constructor}
 	 */
 	var Readable = require('stream').Readable
 	
 	/**
-	 * @param {function=} callback
+	 * @param {function?} callback
 	 * @return {Stream}
 	 */
 	function toStream (callback) {
-		var container = new Stream(this, createElementIntermediate(this))
+		var container = new Stream(this, this.host || createElementSnapshot(this))
 	
 		if (typeof callback === 'function')
 			container.on('end', callback)
@@ -347,11 +399,10 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 	function Stream (element, host) {
 		this.host = host
 		this.queue = [element]
-	
 		Readable.call(this)
 	}
 	/**
-	 * @type {Object}
+	 * @type {object}
 	 */
 	Stream.prototype = Object.create(Readable.prototype, {
 		_read: {
@@ -387,15 +438,18 @@ module.exports = function (exports, Element, createElementIntermediate, mountCom
 			case SharedElementText:
 			case SharedElementEmpty:
 				return write(getTextEscape(children), container)
+			case SharedElementComment:
+				return write(getStringComment(element), container)
 			case SharedElementCustom:
 				return read(getCustomElement(element), host, queue, container)
 			case SharedElementComponent:
-				return read(!(container.host = element).active ? mountComponentElement(element) : children, element, queue, container)
+				return read((container.host = element).active ? children : getComponentChildren(element, host), element, queue, container)
 			case SharedElementPromise:
-				return element.type.then(function (value) {
-					read(getElementDefinition(value), host, queue, container)
-				}, function () {
-					read(getElementDefinition(), host, queue, container)
+				return element.context = element.type.then(function (value, done) {
+					if (done !== false)
+						read(getElementDefinition(value), host, queue, container)
+				}, function (err) {
+					read(getElementDefinition(getErrorBoundary(host, err)), host, queue, container)
 				})
 			case SharedElementNode:
 				if (element.context)

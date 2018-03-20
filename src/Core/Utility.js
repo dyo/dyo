@@ -7,90 +7,102 @@ function List () {
 	this.length = 0
 }
 /**
- * @type {Object}
+ * @type {object}
  */
-List[SharedSitePrototype] = {
+objectDefineProperties(objectDefineProperty(List[SharedSitePrototype], SymbolIterator, {value: noop}), {
 	/**
-	 * @param {Object} node
-	 * @param {Object} before
-	 * @return {Object}
+	 * @param {object} node
+	 * @param {object} before
+	 * @return {object}
 	 */
-	insert: function insert (node, before) {
-		node.next = before
-		node.prev = before.prev
+	insert: {
+		value: function insert (node, before) {
+			node.next = before
+			node.prev = before.prev
 
-		before.prev.next = node
-		before.prev = node
+			before.prev.next = node
+			before.prev = node
 
-		this.length++
+			this.length++
 
-		return node
+			return node
+		}
 	},
 	/**
-	 * @param {Object} node
-	 * @return {Object}
+	 * @param {object} node
+	 * @return {object}
 	 */
-	remove: function remove (node) {
-		if (this.length === 0)
+	remove: {
+			value: function remove (node) {
+			if (this.length === 0)
+				return node
+
+			node.next.prev = node.prev
+			node.prev.next = node.next
+
+			this.length--
+
 			return node
-
-		node.next.prev = node.prev
-		node.prev.next = node.next
-
-		this.length--
-
-		return node
+		}
 	},
 	/**
 	 * @param {function} callback
 	 */
-	forEach: function forEach (callback) {
-		for (var node = this, length = node.length; length > 0; --length)
-			callback(node = node.next)
+	forEach: {
+			value: function forEach (callback) {
+			for (var node = this, length = node.length; length > 0; --length)
+				callback(node = node.next)
+		}
 	}
-}
+})
 
 /**
  * @constructor
  */
 function WeakHash () {
-	this.hash = ''
+	this.hash = random()
 }
 /**
- * @type {Object}
+ * @type {object}
  */
-WeakHash[SharedSitePrototype] = {
+objectDefineProperties(WeakHash[SharedSitePrototype], {
 	/**
 	 * @param {*} key
 	 * @param {*} value
 	 */
-	set: function set (key, value) {
-		key[this.hash] = value
-	},
+	set: {
+		value: function set (key, value ) {
+			key[this.hash] = value
+	}},
 	/**
 	 * @param {*} key
 	 * @return {*}
 	 */
-	get: function get (key) {
-		return key[this.hash]
-	},
+	get: {
+		value: function get (key) {
+			return key[this.hash]
+	}},
 	/**
 	 * @param {*} key
 	 * @return {boolean}
 	 */
-	has: function has (key) {
-		return this.hash in key
+	has: {
+		value: function has (key) {
+			return this.hash in key
+		}
 	}
-}
+})
 
 /**
  * @return {void}
  */
-function noop () {}
+function noop () {
+	return true
+}
 
 /**
- * @param {Object} object
- * @param {Object} primary
+ * @param {object} object
+ * @param {object} primary
  */
 function merge (object, primary) {
 	for (var key in primary)
@@ -100,10 +112,10 @@ function merge (object, primary) {
 }
 
 /**
- * @param {Object} object
- * @param {Object} primary
- * @param {Object} secondary
- * @return {Object}
+ * @param {object} object
+ * @param {object} primary
+ * @param {object} secondary
+ * @return {object}
  */
 function assign (object, primary, secondary) {
 	for (var key in primary)
@@ -165,13 +177,13 @@ function invariant (from, message) {
 }
 
 /**
- * @param {Object} a
- * @param {Object} b
+ * @param {object} a
+ * @param {object} b
  * @return {boolean}
  */
 function compare (a, b) {
 	for (var key in a)
-		if (!hasOwnProperty.call(b, key))
+		if (!objectHasOwnProperty.call(b, key))
 			return true
 
 	for (var key in b)
@@ -205,14 +217,6 @@ function hash (str) {
 }
 
 /**
- * @param {function} callback
- * @return {number}
- */
-function timeout (callback) {
-	return setTimeout(callback, 16)
-}
-
-/**
  * @return {boolean}
  */
 function fetchable (object) {
@@ -228,13 +232,12 @@ function fetchable (object) {
  * @return {boolean}
  */
 function thenable (object) {
-	return typeof object.then === 'function'
+	return typeof object.then === 'function' && typeof object.catch === 'function'
 }
 
 /**
- * @param {string} namespace
  * @return {string}
  */
-function random (namespace) {
-	return namespace + (((seed = seed * 16807 % uuid - 1) - 1) / uuid).toString(36).substring(2)
+function random () {
+	return (((seed = seed * 16807 % uuid - 1) - 1) / uuid).toString(36).substring(2)
 }

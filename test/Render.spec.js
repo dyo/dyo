@@ -178,20 +178,6 @@ describe('Render', () => {
 		assert.html(container, '<div></div>')
 	})
 
-	it('should not render unknown objects', () => {
-		assert.throws(() => {
-			render(h('div', null, {}), container)
-		})
-
-		assert.throws(() => {
-			render(h('div', null, Object.create(null)), container)
-		})
-
-		assert.throws(() => {
-			render(h('div', null, new Date()), container)
-		})
-	})
-
 	it('should render svg elements', () => {
 		render(h('svg', h('path')), container)
 		assert.html(container, `
@@ -286,12 +272,6 @@ describe('Render', () => {
 		render(h('div', {style: {color: 'red'}}), container)
 
 		assert.equal(container.firstChild.style.color, 'red')
-	})
-
-	it('should not render to an invalid container', () => {
-		assert.throws(() => {
-			render('1', {})
-		})
 	})
 
 	it('should execute render callback', () => {

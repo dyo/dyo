@@ -240,4 +240,25 @@ describe('Hydrate', () => {
 		assert.equal(container.firstChild.firstChild.nodeValue, 'abcabcabc')
 		assert.equal(container.firstChild.lastChild.nodeValue, 'xxx')
 	})
+
+	it('should hydrate comment elements', () => {
+		let container = document.createElement('div')
+
+		hydrate(createComment('1st'), container)
+
+		assert.lengthOf(container.childNodes, 1)
+		assert.html(container, `<!--1st-->`)
+
+		container.innerHTML = '<!--2nd-->'
+		hydrate(createComment('2nd'), container)
+
+		assert.lengthOf(container.childNodes, 1)
+		assert.html(container, `<!--2nd-->`)
+
+		container.innerHTML = '<!--incorrect-->'
+		hydrate(createComment('3rd'), container)
+
+		assert.lengthOf(container.childNodes, 1)
+		assert.html(container, `<!--3rd-->`)
+	})
 })

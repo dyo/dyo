@@ -108,7 +108,7 @@ describe('Context', () => {
 		assert.deepEqual(stack, [true, true])
 	})
 
-	it('should update child context with shouldComponentUpdate(false) ', () => {
+	it('should update child context with shouldComponentUpdate:false ', () => {
 		let container = document.createElement('div')
 		let counter = 0
 		let A = class {
@@ -561,5 +561,158 @@ describe('Context', () => {
 
     render(null, container)
     assert.html(container, '')
+  })
+
+  it('should not run into infinite loops', () => {
+  	let container = document.createElement('div')
+  	let refs = null
+
+  	let people = [
+  	  {id: 1, name: "Bob", dateOfBirth: "12/12/1980"},
+  	  {id: 2, name: "Brenda", dateOfBirth: "01/06/1970"}
+  	]
+
+  	let Context = createContext(null)
+
+  	let List = ({ ascending }) => {
+  	  let sortedPeople = [...people].sort(
+  	    (personA, personB) => (ascending ? -1 : 1) * (personA.name < personB.name ? 1 : -1)
+  	  );
+
+  	  let list = sortedPeople.map(person =>
+  	    h("tr", {key: person.id},
+  	      h("td", h(Link, person.name)),
+  	      h("td", person.dateOfBirth)
+  	    )
+  	  )
+
+  	  return (
+  	  	h("div",
+  		    h("table",
+  		      h("thead",
+  		        h("tr",
+  		          h("th", h(Link, {href: "#"},"Name")),
+  		          h("th", "Date of Birth")
+  		        )
+  		      ),
+  		      h("tbody", list)
+  		    )
+  	  	)
+  	  );
+  	};
+
+  	let Link = ({ children, href }) => {
+  	  return (
+  	  	h(Context.Consumer,
+  	  		({ update }) => {
+  	  			return (
+  	  				h("a",
+  		  			  {
+  		  			  	id: 'btn',
+  		  			    href: href,
+  		  			    ref: (node) => refs = node,
+  		  			    onClick: () => {
+  		  			      update();
+  		  			      return false;
+  		  			    }
+  		  			  },
+  		  			  children
+  		  			)
+  	  			)
+  		  	}
+  		  )
+  	  );
+  	}
+
+  	class App {
+  	  constructor(props) {
+  	    this.state = {
+  	      ascending: true
+  	    };
+  	  }
+
+  	  render() {
+  	    return h(Context.Provider,
+  	      {
+  	        value: {
+  	          update: () => {
+  	            this.setState(({ ascending }) => {
+  	              return {
+  	                ascending: !ascending
+  	              };
+  	            });
+  	          },
+  	          ascending: this.state.ascending
+  	        }
+  	      },
+  	      this.props.children
+  	    );
+  	  }
+  	}
+
+  	assert.doesNotThrow(() => {
+  		render(
+  		  h(App,
+  		    h(Context.Consumer,
+  		    	({ ascending }) => {
+  		    		return (
+  		    			h(List, {
+  		        		ascending: ascending
+  		      		})
+  		    		)
+  		    	}
+  		    )
+  		  ),
+  		  container
+  		)
+  	})
+
+  	assert.html(container, `
+			<div>
+				<table>
+					<thead>
+						<tr>
+							<th><a id="btn" href="#">Name</a></th><th>Date of Birth</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><a id="btn">Bob</a></td>
+							<td>12/12/1980</td>
+						</tr>
+						<tr>
+							<td><a id="btn">Brenda</a></td>
+							<td>01/06/1970</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+  	`)
+
+  	assert.doesNotThrow(() => {
+  		refs.dispatchEvent(new Event('click'))
+  	})
+
+  	assert.html(container, `
+			<div>
+				<table>
+					<thead>
+						<tr>
+							<th><a id="btn" href="#">Name</a></th><th>Date of Birth</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><a id="btn">Brenda</a></td>
+							<td>01/06/1970</td>
+						</tr>
+						<tr>
+							<td><a id="btn">Bob</a></td>
+							<td>12/12/1980</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+  	`)
   })
 })

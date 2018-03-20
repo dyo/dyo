@@ -829,7 +829,7 @@ describe('Fixture', () => {
 		delete require.cache[require.resolve(pkgfile)]
 	})
 
-	it('should handle mutable component elements', () => {
+	it('should handle mutable component element children', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let setRootState = null

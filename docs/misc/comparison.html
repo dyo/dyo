@@ -68,6 +68,8 @@
 			<li>Portals</li>
 			<li>Promises</li>
 			<li>Generators</li>
+			<li>AsyncGenerators</li>
+			<li>CustomElements/WebComponents</li>
 		</ol>
 
 		<h1 id=components>Statefull Functional Components</h1>
@@ -95,7 +97,7 @@ User.getInitialState = (props) => {
 		<h1 id=events>Events</h1>
 
 		<p>
-			Events always maintain a <code>this</code> reference to the surrounding component.
+			Events always maintain a <code>this</code> reference within the surrounding component. That is to say you do not need to bind your event handlers if you are not sending them as callbacks to other components.
 		</p>
 
 <pre><code>
@@ -129,7 +131,7 @@ class User {
 </code></pre>
 
 		<p>
-			<a href=#implicit-state>Implicit setState</a> also compliments events, allowing us to construct components in the following way.
+			<a href=#implicit-state>Implicit setState</a> also compliments events, allowing us to construct components in the following functional way while maintaining the benefits of contained state.
 		</p>
 
 <pre><code>
@@ -215,7 +217,7 @@ User.getInitialState = async (props) => {
 		</p>
 
 		<p>
-			That is to say if you return a Promise from componentWillUnmount, the component will stay in a transient state in which in doesn't exist in the virtual tree but is kept alive in the native DOM untill the Promise has resolved.
+			That is to say if you return a Promise from <code>componentWillUnmount</code>, the component will stay in a transient state in which in doesn't exist in the virtual tree but is kept alive in the host enviroment untill the Promise has resolved.
 		</p>
 
 <pre><code>

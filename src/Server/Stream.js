@@ -4,11 +4,11 @@
 var Readable = require('stream').Readable
 
 /**
- * @param {function=} callback
+ * @param {function?} callback
  * @return {Stream}
  */
 function toStream (callback) {
-	var container = new Stream(this, createElementIntermediate(this))
+	var container = new Stream(this, this.host || createElementSnapshot(this))
 
 	if (typeof callback === 'function')
 		container.on('end', callback)
@@ -24,11 +24,10 @@ function toStream (callback) {
 function Stream (element, host) {
 	this.host = host
 	this.queue = [element]
-
 	Readable.call(this)
 }
 /**
- * @type {Object}
+ * @type {object}
  */
 Stream.prototype = Object.create(Readable.prototype, {
 	_read: {
@@ -64,15 +63,18 @@ function read (element, host, queue, container) {
 		case SharedElementText:
 		case SharedElementEmpty:
 			return write(getTextEscape(children), container)
+		case SharedElementComment:
+			return write(getStringComment(element), container)
 		case SharedElementCustom:
 			return read(getCustomElement(element), host, queue, container)
 		case SharedElementComponent:
-			return read(!(container.host = element).active ? mountComponentElement(element) : children, element, queue, container)
+			return read((container.host = element).active ? children : getComponentChildren(element, host), element, queue, container)
 		case SharedElementPromise:
-			return element.type.then(function (value) {
-				read(getElementDefinition(value), host, queue, container)
-			}, function () {
-				read(getElementDefinition(), host, queue, container)
+			return element.context = element.type.then(function (value, done) {
+				if (done !== false)
+					read(getElementDefinition(value), host, queue, container)
+			}, function (err) {
+				read(getElementDefinition(getErrorBoundary(host, err)), host, queue, container)
 			})
 		case SharedElementNode:
 			if (element.context)

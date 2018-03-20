@@ -1,5 +1,20 @@
 describe('Event', () => {
-	it('should dispatch EventListener events', () => {
+	it('should dispatch EventListener events to element', () => {
+		let container = document.createElement('div')
+		let event = []
+		let refs = null
+
+		render(h('button', {
+			ref: (node) => refs = node,
+			onClick: () => {event.push(true)}
+		}), container)
+
+		refs.dispatchEvent(new Event('click'))
+		assert.html(container, `<button></button>`)
+		assert.lengthOf(event, 1)
+	})
+
+	it('should dispatch EventListener events to component', () => {
 		let container = document.createElement('div')
 		let event = []
 		let refs = null
@@ -17,6 +32,7 @@ describe('Event', () => {
 		}, container)
 
 		refs.dispatchEvent(new Event('click'))
+		assert.html(container, `<button></button>`)
 		assert.lengthOf(event, 1)
 	})
 
@@ -106,5 +122,25 @@ describe('Event', () => {
 			refs.dispatchEvent(new Event('click'))
 			assert.lengthOf(event, 0)
 		})
+	})
+
+	it('should trigger an implicit setState from an event', () => {
+		let container = document.createElement('div')
+		let refs = null
+
+		render(class {
+			handleEvent(e) {
+				return {id: 1}
+			}
+			componentDidMount(node) {
+				refs = node
+			}
+			render() {
+				return h('button', {onClick: this.handleEvent}, this.state.id)
+			}
+		}, container)
+
+		refs.dispatchEvent(new Event('click'))
+		assert.html(container, '<button>1</button>')
 	})
 })

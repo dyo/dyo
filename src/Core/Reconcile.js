@@ -1,7 +1,7 @@
 /**
- * @param {Object} prevProps
- * @param {Object} nextProps
- * @return {Object?}
+ * @param {object} prevProps
+ * @param {object} nextProps
+ * @return {object}
  */
 function reconcileProps (prevProps, nextProps) {
 	if (prevProps === nextProps)
@@ -11,7 +11,7 @@ function reconcileProps (prevProps, nextProps) {
 	var props = {}
 
 	for (var key in prevProps)
-		if (!hasOwnProperty.call(nextProps, key))
+		if (!objectHasOwnProperty.call(nextProps, key))
 			props[(++length, key)] = null
 
 	for (var key in nextProps) {
@@ -21,7 +21,7 @@ function reconcileProps (prevProps, nextProps) {
 		if (next !== prev)
 			if (typeof next !== 'object' || next === null)
 				props[(++length, key)] = next
-			else if (next = reconcileProps(prev || {}, next))
+			else if (key !== 'children' && (next = reconcileProps(prev || {}, next)))
 				props[(++length, key)] = next
 	}
 
@@ -32,44 +32,46 @@ function reconcileProps (prevProps, nextProps) {
 /**
  * @param {Element} element
  * @param {Element} snapshot
+ * @param {Element} host
  */
-function reconcileElement (element, snapshot) {
+function reconcileElement (element, snapshot, host) {
 	if (!element.active)
 		return
 
 	if (element.key !== snapshot.key)
-		return commitReplace(element, snapshot)
+		return commitReplace(element, snapshot, host)
 
 	if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
-		return commitPromise(element, element.type = snapshot.type)
+		return commitPromise(element, host, element.type = snapshot.type)
 
 	if (element.type !== snapshot.type)
-		return commitReplace(element, snapshot)
+		return commitReplace(element, snapshot, host)
 
 	switch (element.id) {
-		case SharedElementPortal:
-		case SharedElementFragment:
-			return reconcileChildren(element, snapshot)
-		case SharedElementComponent:
-			return updateComponentElement(element, snapshot, SharedComponentPropsUpdate)
 		case SharedElementText:
+		case SharedElementComment:
 			if (element.children !== snapshot.children)
-				commitText(element, element.children = snapshot.children)
+				commitTextual(element, element.children = snapshot.children)
 		case SharedElementEmpty:
 			return
+		case SharedElementPortal:
+		case SharedElementFragment:
+			return reconcileChildren(element, snapshot, host)
+		case SharedElementComponent:
+			return updateComponentElement(element, snapshot, host, SharedComponentPropsUpdate)
 	}
 
-	reconcileChildren(element, snapshot)
-	commitProps(element, reconcileProps(element.props, element.props = snapshot.props), SharedPropsUpdate)
+	reconcileChildren(element, snapshot, host)
+	commitProps(element, reconcileProps(element.props, element.props = snapshot.props), element.xmlns, SharedPropsUpdate)
 }
 
 /**
  * @param {Element} element
  * @param {Element} snapshot
+ * @param {Element} host
  */
-function reconcileChildren (element, snapshot) {
+function reconcileChildren (element, snapshot, host) {
 	var signature = SharedMountAppend
-	var host = element.host
 	var children = element.children
 	var siblings = snapshot.children
 	var oldLength = children.length
@@ -97,7 +99,7 @@ function reconcileChildren (element, snapshot) {
 			oldNext = oldHead.next
 			newNext = newHead.next
 
-			reconcileElement(oldHead, newHead)
+			reconcileElement(oldHead, newHead, host)
 
 			++oldPos
 			++newPos
@@ -113,7 +115,7 @@ function reconcileChildren (element, snapshot) {
 			oldPrev = oldTail.prev
 			newPrev = newTail.prev
 
-			reconcileElement(oldTail, newTail)
+			reconcileElement(oldTail, newTail, host)
 
 			--oldEnd
 			--newEnd
@@ -138,7 +140,7 @@ function reconcileChildren (element, snapshot) {
 
 			while (newPos++ < newEnd) {
 				newHead = (oldHead = newHead).next
-				commitMount(children.insert(oldHead, oldTail), oldTail, element, host, signature, SharedMountCommit)
+				commitElement(children.insert(oldHead, oldTail), oldTail, element, host, signature, SharedMountCommit)
 			}
 		}
 	} else if (newPos > newEnd++) {
@@ -147,7 +149,7 @@ function reconcileChildren (element, snapshot) {
 
 		while (oldPos++ < oldEnd) {
 			oldHead = (newHead = oldHead).next
-			commitUnmount(children.remove(newHead), element, SharedMountRemove)
+			commitUnmount(children.remove(newHead), element)
 		}
 	} else {
 		reconcileSiblings(element, host, children, oldHead, newHead, oldPos, newPos, oldEnd, newEnd, oldLength)
@@ -224,10 +226,10 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 				}
 			}
 		} else if (!isValidElement(nextChild)) {
-			commitMount(children.insert(newChild, children), newChild, element, host, SharedMountAppend, SharedMountCommit)
+			commitElement(children.insert(newChild, children), newChild, element, host, SharedMountAppend, SharedMountCommit)
 		} else {
 			nextChild = nextChild.active ? nextChild : (nextMoved || oldChild)
-			commitMount(children.insert(newChild, nextChild), nextChild, element, host, SharedMountInsert, SharedMountCommit)
+			commitElement(children.insert(newChild, nextChild), nextChild, element, host, SharedMountInsert, SharedMountCommit)
 		}
 
 		newChild = prevChild
@@ -236,7 +238,7 @@ function reconcileSiblings (element, host, children, oldHead, newHead, oldPos, n
 	// step 5, remove/update
 	for (var oldKey in prevNodes)
 		if (isValidElement((oldChild = prevNodes[oldKey], newChild = nextNodes[oldKey])))
-			reconcileElement(oldChild, newChild)
+			reconcileElement(oldChild, newChild, host)
 		else
-			commitUnmount(children.remove(oldChild), element, SharedMountRemove)
+			commitUnmount(children.remove(oldChild), element)
 }

@@ -21,27 +21,12 @@ function Element (id) {
 	this.prev = null
 }
 /**
- * @type {Object}
+ * @type {object}
  */
-Element[SharedSitePrototype] = {
-	constructor: SymbolElement,
-	handleEvent: handleEvent
-}
-
-/**
- * @param {Element} element
- * @param {Element} snapshot
- * @return {Element}
- */
-function createElementRebase (element, snapshot) {
-	element.key = snapshot.key
-	element.prev = snapshot.prev
-	element.next = snapshot.next
-	element.host = snapshot.host
-	element.parent = snapshot.parent
-
-	return element
-}
+objectDefineProperties(objectDefineProperty(Element[SharedSitePrototype], SymbolIterator, {value: noop}), {
+ 	constructor: {value: SymbolElement},
+ 	handleEvent: {value: handleEvent}
+})
 
 /**
  * @param {Element} element
@@ -52,14 +37,14 @@ function createElementImmutable (snapshot) {
 	var children = snapshot.children
 
 	if (typeof children === 'object' && snapshot.id !== SharedElementComponent)
-		children = createChildrenImmutable(children)
+		children = createElementImmutableChildren(children)
 
 	element.type = snapshot.type
 	element.props = snapshot.props
 	element.xmlns = snapshot.xmlns
 	element.key = snapshot.key
 	element.ref = snapshot.ref
-	element.children = typeof children === 'object' ? createElementChildren(children) : children
+	element.children = children
 
 	return element
 }
@@ -68,7 +53,7 @@ function createElementImmutable (snapshot) {
  * @param {List} iterable
  * @return {List}
  */
-function createElementChildren (iterable) {
+function createElementImmutableChildren (iterable) {
 	var children = new List()
 	var length = iterable.length
 	var element = iterable.next
@@ -85,8 +70,8 @@ function createElementChildren (iterable) {
  * @param {Element} snapshot
  * @return {Element}
  */
-function createElementIntermediate (snapshot) {
-	var element = new Element(SharedElementIntermediate)
+function createElementSnapshot (snapshot) {
+	var element = new Element(SharedElementSnapshot)
 
 	element.children = snapshot
 
@@ -127,7 +112,7 @@ function createElementEmpty (key) {
  * @return {Element}
  */
 function createElementPromise (callback) {
-	return createElement({then: callback})
+	return createElement({then: callback, catch: noop})
 }
 
 /**
@@ -148,24 +133,41 @@ function createElementFragment (iterable) {
 
 	element.type = SymbolFragment
 
-	setElementBoundary(element.children = getElementChildren(new List(), iterable))
+	createElementBoundary(element.children = createElementChildren(iterable))
 
 	return element
 }
 
 /**
- * @param {Element} element
+ * @param {function} type
+ * @param {object} props
+ * @param {*} children
  * @return {Element}
  */
-function createElementComponent (host) {
+function createElementComponent (type, props, children) {
 	var element = new Element(SharedElementCustom)
 
-	element.type = element.owner = host.type
-	element.props = host.props
-	element.context = host.context
-	element.children = getElementChildren(new List(), host.children)
+	element.type = type
+	element.props = props
+	element.children = createElementChildren(createElementFragment(children))
 
 	return element
+}
+
+/**
+ * @param {object} iterable
+ * @return {List}
+ */
+function createElementChildren (iterable) {
+	var children = new List()
+
+	if (isArray(iterable))
+		for (var i = 0; i < iterable.length; ++i)
+			getElementChildren(children, iterable[i], i)
+	else
+		getElementChildren(children, iterable, 0)
+
+	return children
 }
 
 /**
@@ -174,16 +176,16 @@ function createElementComponent (host) {
  * @return {Element?}
  */
 function createElementUnknown (element, key) {
-	if (typeof element[SymbolIterator] === 'function')
-		return createElementFragment(arrayChildren(element))
-
-	if (typeof element[SymbolAsyncIterator] === 'function')
-		return createElementGenerator(createElementPromise(noop), element)
-
 	switch (typeof element) {
 		case 'boolean':
 			return createElementEmpty(key)
 		case 'object':
+			if (typeof element[SymbolIterator] === 'function')
+				return createElementFragment(arrayChildren(element))
+
+			if (typeof element[SymbolAsyncIterator] === 'function')
+				return createElementGenerator(createElementPromise(noop), element)
+
 			if (!thenable(element))
 				break
 		case 'function':
@@ -194,128 +196,21 @@ function createElementUnknown (element, key) {
 }
 
 /**
- * @param {Element} element
- * @return {boolean}
+ * @param {List} children
  */
-function isValidElement (element) {
-	return element != null && element.constructor === SymbolElement
+function createElementBoundary (children) {
+	children.insert(createElementEmpty(SharedKeyHead), children.next)
+	children.insert(createElementEmpty(SharedKeyTail), children)
 }
 
 /**
  * @param {Element} element
- * @param {Object=} props
- * @param {...} children
- * @return {Element}
+ * @param {Element} snapshot
+ * @param {List} children
  */
-function cloneElement () {
-	return createElement.apply(null, arguments)
-}
-
-/**
- * @param {(Element|Array)} element
- * @param {Object} container
- * @param {(string|number|Symbol)=} key
- * @return {Element}
- */
-function createPortal (element, container, key) {
-	var portal = new Element(SharedElementPortal)
-	var children = new List()
-
-	portal.type = container
-	portal.children = children
-	portal.key = key === undefined ? null : key
-
-	setElementChildren(children, element, 0)
-	setElementBoundary(children)
-
-	return portal
-}
-
-/**
- * @param {(string|function|Promise|Symbol)} type
- * @param {Object?=} config
- * @param {...} children
- * @return {Element}
- */
-function createElement (type, config) {
-	var i = config != null ? 1 : 2
-	var size = 0
-	var index = 0
-	var id = typeof type !== 'function' ? SharedElementNode : SharedElementComponent
-	var length = arguments.length
-	var element = new Element(id)
-	var props = {}
-	var children = id !== SharedElementComponent ? new List() : undefined
-
-	if (i === 1 && typeof config === 'object' && config[SymbolIterator] === undefined) {
-		switch (config.constructor) {
-			case SymbolElement:
-				break
-			default:
-				if (isArray(config))
-					break
-			case Object:
-				if (thenable(config))
-					break
-
-				setElementProps(element, (++i, props = config))
-
-				if (props.children !== undefined && id !== SharedElementComponent)
-					props.children = void (length - i < 1 ? (index = setElementChildren(children, props.children, index)) : 0)
-		}
-	}
-
-	if ((size = length - i) > 0)
-		if (id !== SharedElementComponent) {
-			for (; i < length; ++i)
-				index = setElementChildren(children, arguments[i], index)
-		} else {
-			if (size > 1)
-				for (children = []; i < length; ++i)
-					children.push(arguments[i])
-			else
-				children = arguments[i]
-
-			props.children = children
-		}
-
-	switch (typeof type) {
-		case 'function':
-			if (type.defaultProps)
-				props = assign({}, getDefaultProps(element, type), props)
-			break
-		case 'number':
-		case 'symbol':
-			if (type === SymbolFragment)
-				setElementBoundary((element.id = SharedElementFragment, children))
-			break
-		case 'object':
-			if (isValidElement(type))
-				type = (setElementProps(element, props = assign({}, type.props, props)), element.id = type.id, type.type)
-			else if (thenable(type))
-				setElementBoundary((element.id = SharedElementPromise, children))
-	}
-
-	element.type = type
-	element.props = props
-	element.children = children
-
-	return element
-}
-
-/**
- * @param {Element} element
- * @param {*} props
- */
-function setElementProps (element, props) {
-	if (props.key !== undefined)
-		element.key = props.key
-
-	if (props.ref !== undefined)
-		element.ref = props.ref
-
-	if (props.xmlns !== undefined)
-		element.xmlns = props.xmlns
+function replaceElementChildren (element, snapshot, children) {
+	children.insert(snapshot, element)
+	children.remove(element)
 }
 
 /**
@@ -324,7 +219,7 @@ function setElementProps (element, props) {
  * @param {number} index
  * @param {number}
  */
-function setElementChildren (children, element, index) {
+function getElementChildren (children, element, index) {
 	if (element != null) {
 		if (element.constructor === SymbolElement) {
 			if (element.key === null)
@@ -340,12 +235,12 @@ function setElementChildren (children, element, index) {
 				case 'object':
 					if (isArray(element)) {
 						for (var i = 0; i < element.length; ++i)
-							setElementChildren(children, element[i], index + i)
+							getElementChildren(children, element[i], index + i)
 
 						return index + i
 					}
 				default:
-					return setElementChildren(children, createElementUnknown(element, index), index)
+					return getElementChildren(children, createElementUnknown(element, index), index)
 			}
 		}
 	} else {
@@ -356,41 +251,24 @@ function setElementChildren (children, element, index) {
 }
 
 /**
- * @param {List} children
- */
-function setElementBoundary (children) {
-	children.insert(createElementEmpty(SharedKeyHead), children.next)
-	children.insert(createElementEmpty(SharedKeyTail), children)
-}
-
-/**
  * @param {Element} element
- * @param {Element} snapshot
- * @param {List} children
+ * @param {*} props
  */
-function setElementSibling (element, snapshot, children) {
-	children.insert(snapshot, element)
-	children.remove(element)
-}
+function getElementProps (element, props) {
+	if (props.key !== undefined)
+		element.key = props.key
 
-/**
- * @param {List} children
- * @param {(Element|Array)}
- */
-function getElementChildren (children, iterable) {
-	if (isValidElement(iterable))
-		setElementChildren(children, iterable, 0)
-	else if (isArray(iterable))
-		for (var i = 0; i < iterable.length; ++i)
-			setElementChildren(children, iterable[i], i)
+	if (props.ref !== undefined)
+		element.ref = props.ref
 
-	return children
+	if (props.xmlns !== undefined)
+		element.xmlns = props.xmlns
 }
 
 /**
  * @param {Element} element
  * @param {function} type
- * @return {Object}
+ * @return {object}
  */
 function getDefaultProps (element, type) {
 	return typeof type.defaultProps === 'function' ? getLifecycleCallback(element, type.defaultProps) : type.defaultProps
@@ -408,13 +286,11 @@ function getDisplayName (value) {
 		case 'function':
 			return getDisplayName(value[SharedSiteDisplayName] || value.name)
 		case 'object':
-			if (value)
-				if (isValidElement(value))
-					return getDisplayName(value.type)
-				else if (value[SharedSiteDisplayName])
-					return getDisplayName(value[SharedSiteDisplayName])
-				else if (thenable(value))
-					return '#promise'
+			if (isValidElement(value))
+				return getDisplayName(value.type)
+
+			if (thenable(value))
+				return '#promise'
 		case 'string':
 			if (value)
 				return value
@@ -439,10 +315,10 @@ function getElementSibling (element, parent, direction) {
 	if (element.host && element.host.children === element)
 		return getElementSibling(element.host, parent, direction)
 
-	if (parent.id < SharedElementIntermediate)
+	if (parent.id < SharedElementSnapshot)
 		return getElementSibling(parent, parent.parent, direction)
 
-	return createElementIntermediate(element)
+	return createElementSnapshot(element)
 }
 
 /**
@@ -459,7 +335,7 @@ function getElementParent (element) {
  * @return {Element}
  */
 function getElementBoundary (element, direction) {
-	return element.id < SharedElementIntermediate ? getElementBoundary(element.children[direction]) : element
+	return element.id < SharedElementSnapshot ? getElementBoundary(element.children[direction]) : element
 }
 
 /**
@@ -498,8 +374,129 @@ function getElementDefinition (element) {
  * @return {Element}
  */
 function getElementModule (element) {
-	if (!isValidElement(element) && hasOwnProperty.call(Object(element), 'default'))
+	if (!isValidElement(element) && objectHasOwnProperty.call(Object(element), 'default'))
 		return getElementModule(element.default)
 
 	return createElementFragment(getElementDefinition(element))
+}
+
+/**
+ * @param {(Element|Array)} element
+ * @param {object} container
+ * @param {(string|number|symbol)?} key
+ * @return {Element}
+ */
+function createPortal (element, container, key) {
+	var portal = new Element(SharedElementPortal)
+	var children = new List()
+
+	portal.type = container
+	portal.children = children
+	portal.key = key === undefined ? null : key
+
+	getElementChildren(children, element, 0)
+	createElementBoundary(children)
+
+	return portal
+}
+
+/**
+ * @param {(string|number)} content
+ * @param {(string|number|Symbol)?} key
+ * @return {Element}
+ */
+function createComment (content, key) {
+	var comment = new Element(SharedElementComment)
+
+	comment.type = SharedLocalNameComment
+	comment.children = content + ''
+	comment.key = key === undefined ? null : key
+
+	return comment
+}
+
+/**
+ * @param {(string|function|Promise|symbol)} type
+ * @param {object?} config
+ * @param {...} children
+ * @return {Element}
+ */
+function createElement (type, config) {
+	var i = config != null ? 1 : 2
+	var size = 0
+	var index = 0
+	var id = typeof type !== 'function' ? SharedElementNode : SharedElementComponent
+	var length = arguments.length
+	var element = new Element(id)
+	var props = {}
+	var children = element.children = id !== SharedElementComponent ? new List() : undefined
+
+	if (i === 1 && typeof config === 'object' && config[SymbolIterator] === undefined) {
+		switch (config.constructor) {
+			default:
+				if (isArray(config))
+					break
+			case Object:
+				if (thenable(config))
+					break
+
+				getElementProps(element, (++i, props = config))
+
+				if (props.children !== undefined && id !== SharedElementComponent)
+					length - i < 1 ? index = getElementChildren(children, props.children, index) : 0
+		}
+	}
+
+	if ((size = length - i) > 0)
+		if (id !== SharedElementComponent) {
+			for (; i < length; ++i)
+				index = getElementChildren(children, arguments[i], index)
+		} else {
+			if (size === 1)
+				children = arguments[i]
+			else for (children = []; i < length; ++i)
+				children.push(arguments[i])
+
+			props.children = children
+		}
+
+	switch (typeof type) {
+		case 'function':
+			if (type.defaultProps)
+				props = assign({}, getDefaultProps(element, type), props)
+			break
+		case 'number':
+		case 'symbol':
+			if (type === SymbolFragment)
+				createElementBoundary((element.id = SharedElementFragment, children))
+			break
+		case 'object':
+			if (isValidElement(type))
+				type = (getElementProps(element, props = assign({}, type.props, props)), element.id = type.id, type.type)
+			else if (thenable(type))
+				createElementBoundary((element.id = SharedElementPromise, children))
+	}
+
+	element.type = type
+	element.props = props
+
+	return element
+}
+
+/**
+ * @param {Element} element
+ * @param {object?} props
+ * @param {...} children
+ * @return {Element}
+ */
+function cloneElement () {
+	return createElement.apply(null, arguments)
+}
+
+/**
+ * @param {Element} element
+ * @return {boolean}
+ */
+function isValidElement (element) {
+	return element != null && element.constructor === SymbolElement
 }

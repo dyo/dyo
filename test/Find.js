@@ -59,10 +59,11 @@ describe('Find', () => {
 		})
 	})
 
-	it('should not findDOMNode from falsey values', () => {
+	it('should not findDOMNode from invalid values', () => {
 		assert.doesNotThrow(() => {
 			assert.ok(findDOMNode(null) == null)
 			assert.ok(findDOMNode(undefined) == null)
+			assert.ok(findDOMNode(true) == null)
 		})
 	})
 

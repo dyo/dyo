@@ -7,7 +7,7 @@ function handleEvent (event) {
 		var element = this
 		var callback = element.cache[type]
 		var host = element.host
-		var owner = host.owner || element
+		var owner = host.owner
 		var props = owner.props
 		var state = owner.state
 		var context = owner.context
@@ -20,14 +20,14 @@ function handleEvent (event) {
 			value = callback.call(owner, event, props, state, context)
 		} else if (typeof callback.handleEvent === 'function') {
 			if (owner !== callback && callback[SymbolComponent])
-				host = getComponentElement(owner = callback)
+				host = (owner = callback)[SymbolElement]
 
 			value = callback.handleEvent(event, props, state, context)
 		}
 
 		if (value && owner[SymbolComponent])
-			getLifecycleState(host, value)
+			enqueueComponentValue(host, SharedSiteEvent, value)
 	} catch (err) {
-		invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorThrow)
+		reportErrorException(host, err, SharedSiteEvent+':on'+type+'('+getDisplayName(callback.handleEvent || callback)+'')
 	}
 }

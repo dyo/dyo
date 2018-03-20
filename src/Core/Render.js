@@ -1,13 +1,13 @@
 /**
  * @param {*} element
  * @param {object} container
- * @param {function=} callback
+ * @param {function?} callback
  */
 function render (element, container, callback) {
 	if (!container)
 		render(element, getNodeDocument(), callback)
-	else if (root.has(container))
-		update(root.get(container).children, getElementDefinition(element), callback)
+	else if (registry.has(container))
+		update(registry.get(container).children, getElementDefinition(element), callback)
 	else
 		mount(element, container, callback, SharedMountCommit)
 }
@@ -15,7 +15,7 @@ function render (element, container, callback) {
 /**
  * @param {*} element
  * @param {object} container
- * @param {function=} callback
+ * @param {function?} callback
  */
 function hydrate (element, container, callback) {
 	if (!container)
@@ -36,7 +36,7 @@ function mount (element, container, callback, signature) {
 	else if (!isValidNodeTarget(container))
 		invariant(SharedSiteRender, 'Target container is not a valid container')
 	else
-		initialize(element, createElementIntermediate(element), container, signature)
+		initialize(element, createElementSnapshot(element), container, signature)
 
 	if (callback)
 		getLifecycleCallback(element, callback)
@@ -48,7 +48,7 @@ function mount (element, container, callback, signature) {
  * @param {Element} callback
  */
 function update (element, snapshot, callback) {
-	reconcileElement(element, snapshot)
+	reconcileElement(element, snapshot, element.host)
 
 	if (callback)
 		getLifecycleCallback(element, callback)
@@ -61,12 +61,12 @@ function update (element, snapshot, callback) {
  * @param {number} signature
  */
 function initialize (element, parent, container, signature) {
-	root.set(parent.owner = container, parent)
+	registry.set(parent.owner = container, parent)
 
 	if (signature === SharedMountCommit)
-		setNodeContent(parent)
+		setNodeDocument(parent)
 
-	commitMount(element, element, parent, parent, SharedMountAppend, signature)
+	commitElement(element, element, parent, parent, SharedMountAppend, signature)
 }
 
 /**
@@ -74,5 +74,5 @@ function initialize (element, parent, container, signature) {
  * @return {boolean}
  */
 function unmountComponentAtNode (container) {
-	return root.has(container) && !render(null, container)
+	return registry.has(container) && !render(null, container)
 }

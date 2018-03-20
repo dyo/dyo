@@ -3,24 +3,74 @@
  * @param {Element} element
  * @param {*} err
  * @param {string} origin
- * @param {number} signature
  */
-function Exception (element, err, origin, signature) {
-	var message = 'The following error occurred in `\n'
-	var componentStack = createExecptionStack(element.host, '<'+getDisplayName(element)+'>\n')
-
-	this.componentStack = componentStack
+function Exception (element, err, origin) {
 	this.error = err
-	this.bubbles = true
 	this.origin = origin
-	this.message = message + componentStack + '` from "' + origin + '"'
+	this.bubbles = true
+	this[SymbolElement] = element
 }
 /**
- * @type {Object}
+ * @type {object}
  */
-Exception.prototype = {
-	toString: function () {
-		return 'Error: ' + Object(this.error).toString() + '\n\n' + this.message
+objectDefineProperties(Exception[SharedSitePrototype], {
+	toString: {
+		value: function () {
+			return 'Error: ' + Object(this.error).toString() + '\n\n' + this.message
+		}
+	},
+	message: {
+		get: function () {
+			return 'The following error occurred in `\n' + this.componentStack + '` from "' + this.origin + '"'
+		}
+	},
+	componentStack: {
+		get: function () {
+			return this[SymbolComponent] = this[SymbolComponent] ? this[SymbolComponent] : (
+				createErrorStack(this[SymbolElement].host, '<'+getDisplayName(this[SymbolElement])+'>\n')
+			)
+		}
+	}
+})
+
+/**
+ * @param {Element} element
+ * @param {*} err
+ * @param {string} origin
+ */
+function createErrorException (element, err, origin) {
+	return new Exception(element, err, origin)
+}
+
+/**
+ * @throws Exception
+ * @param {Element} element
+ * @param {*} err
+ * @param {string} origin
+ */
+function throwErrorException (element, err, origin) {
+	throw createErrorException(element, err, origin)
+}
+
+/**
+ * @throws
+ * @param {Element} element
+ * @param {*} err
+ * @param {string} origin
+ */
+function reportErrorException (element, err, origin) {
+	throw printErrorException(createErrorException(element, err, origin))
+}
+
+/**
+ * @param {(object|string)} exception
+ * @return {*}
+ */
+function printErrorException (exception) {
+	try {
+		console.error(exception.toString())
+	} catch (err) {} finally {
+		return exception.error
 	}
 }
 
@@ -29,79 +79,74 @@ Exception.prototype = {
  * @param {string} stack
  * @return {string}
  */
-function createExecptionStack (element, stack) {
-	return element && element.host ? stack + createExecptionStack(element.host, '<' + getDisplayName(element) + '>\n') : stack
+function createErrorStack (host, stack) {
+	return host && host.host ? stack + createErrorStack(host.host, '<' + getDisplayName(host) + '>\n') : stack
 }
 
 /**
  * @param {Element} element
- * @param {*} err
- * @param {string} origin
- * @param {number} signature
  */
-function invokeErrorBoundary (element, err, origin, signature) {
-	propagateErrorBoundary(element, element.host, err, new Exception(element, err, origin, signature), origin, signature)
+function clearErrorBoundary (element) {
+	reconcileElement(element.children, getElementDefinition(), element)
 }
 
 /**
  * @param {Element} element
- * @param {*} err
+ * @param {Element} host
+ * @param {Element} parent
  * @param {Exception} exception
- * @param {string} origin
- * @param {number} signature
  */
-function propagateErrorBoundary (element, host, err, exception, origin, signature) {
-	if (signature === SharedErrorCatch && recoverErrorBoundary(element, host, err, exception, origin, signature, element.owner))
-		return propagateErrorBoundary(host, host.host, err, exception, origin, signature)
-
-	if (exception.bubbles && printErrorException(exception))
-		throw exception.error
+function replaceErrorBoundary (element, host, parent, exception) {
+	commitUnmount(element, parent)
+	delegateErrorBoundary(element, host, exception)
 }
 
 /**
  * @param {Element} element
- * @param {Element?} host
  * @param {*} err
- * @param {Exception} exception
  * @param {string} origin
- * @param {number} signature
+ */
+function invokeErrorBoundary (element, err, origin) {
+	propagateErrorBoundary(element, element, element.host, createErrorException(element, err, origin))
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} host
+ * @param {Exception} exception
+ */
+function delegateErrorBoundary (element, host, exception) {
+	propagateErrorBoundary(element, host, host, exception)
+}
+
+/**
+ * @param {Element} element
+ * @param {Exception} exception
  * @param {Component} owner
- * @param {boolean?}
  */
-function recoverErrorBoundary (element, host, err, exception, origin, signature, owner) {
-	switch (origin) {
-		case SharedComponentWillMount:
-		case SharedGetInitialState:
-			getLifecycleOnce(owner, SharedSiteRender, noop)
-		case SharedSiteRender:
-		case SharedComponentWillUnmount:
-			break
-		case SharedGetChildContext:
-		case SharedComponentShouldUpdate:
-		case SharedComponentWillUpdate:
-		case SharedComponentWillReceiveProps:
-			element.active && getLifecycleOnce(owner, SharedSiteRender, noop)
-		default:
-			element.active && replaceErrorChildren(element, getElementDefinition())
-	}
-
-	if (owner && !owner[SymbolException] && owner[SharedComponentDidCatch])
-		return owner[SymbolException] = getLifecycleBoundary(element, SharedComponentDidCatch, owner[SymbolException] = err, exception)
-
-	return isValidElement(host) && isValidElement(host.host)
+function catchErrorBoundary (element, exception, owner) {
+	if (owner && owner[SharedComponentDidCatch] && !owner[SymbolException])
+		owner[SymbolException] = getLifecycleBoundary(element, owner, owner[SymbolException] = exception)
 }
 
 /**
  * @param {Element} element
- * @param {Element} snapshot
+ * @param {Element} host
+ * @param {Element} parent
+ * @param {Exception} exception
  */
-function replaceErrorChildren (element, snapshot) {
-	reconcileElement(element.id === SharedElementComponent ? element.children : element, snapshot)
-}
+function propagateErrorBoundary (element, host, parent, exception) {
+	clearErrorBoundary(parent)
+	catchErrorBoundary(parent, exception, parent.owner)
 
-/**
- * @param {(object|string)} exception
- */
-function printErrorException (exception) {
-	try { console.error(exception.toString()) } catch (err) {} finally { return exception }
+	if (!exception.bubbles)
+		return
+
+	if (!isValidElement(parent.host))
+		throw printErrorException(exception)
+
+	if (element !== host)
+		throw exception
+
+	propagateErrorBoundary(element, host, parent.host, exception)
 }

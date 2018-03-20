@@ -23,8 +23,8 @@ const shared = [
 
 const core = [
 	...shared,
-	'../../src/Core/Utility.js',
 	'../../src/Core/Constant.js',
+	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
 	'../../src/Core/Component.js',
 	'../../src/Core/Context.js',
@@ -117,6 +117,7 @@ exports.cloneElement = cloneElement
 exports.isValidElement = isValidElement
 exports.createPortal = createPortal
 exports.createElement = createElement
+exports.createComment = createComment
 exports.createClass = createClass
 exports.unmountComponentAtNode = unmountComponentAtNode
 exports.findDOMNode = findDOMNode
@@ -126,20 +127,20 @@ exports.h = createElement
 const internals = `
 exports,
 Element,
-commitCreate,
-createElementText,
-createElementEmpty,
-createElementIntermediate,
 mountComponentElement,
+delegateErrorBoundary,
 getElementDefinition,
-getElementDescription
+createElementSnapshot,
+createElementEmpty,
+createElement,
+commitOwner
 `.replace(/\s+/g, ' ').trim()
 
 const template = `
-if (typeof require === 'function')
+if (typeof include === 'function')
 	(function () {
 		try {
-			require('./'+'cjs')(${internals})
+			include('./'+'cjs')(${internals})
 		} catch (error) {
 			/* istanbul ignore next */
 			printErrorException(error)
@@ -147,9 +148,6 @@ if (typeof require === 'function')
 			printErrorException('Something went wrong when importing "server" module')
 		}
 	}())
-
-if (typeof config === 'object' && typeof config.createExport === 'function')
-	return config.createExport(${internals}) || exports
 `.trim()
 
 const parse = (head, body, tail, factory) => {

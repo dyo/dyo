@@ -1,8 +1,8 @@
 /**
- * @return {Object}
+ * @return {object}
  */
 function toJSON () {
-	return getJSONElement(this, createElementIntermediate(this))
+	return getJSONElement(this, this.host || createElementSnapshot(this))
 }
 
 /**
@@ -15,13 +15,15 @@ function getJSONElement (element, host) {
 		case SharedElementText:
 		case SharedElementEmpty:
 			return element.children
+		case SharedElementComment:
+			return getJSONObject(element, {}, element.children)
 		case SharedElementCustom:
 			return getJSONElement(getCustomElement(element), host)
 		case SharedElementComponent:
-			return getJSONElement(element.active ? element.children : mountComponentElement(element), element)
+			return getJSONElement(element.active ? element.children : getComponentChildren(element, host), element)
 	}
 
-	var payload = {type: element.type, props: element.props, children: []}
+	var payload = getJSONObject(element, element.props, [])
 	var children = element.children
 	var length = children.length
 
@@ -35,4 +37,14 @@ function getJSONElement (element, host) {
 		(payload = payload.children).pop()
 
 	return payload
+}
+
+/**
+ * @param {Element} element
+ * @param {object?} props
+ * @param {(string|number|object)?}
+ * @return {object}
+ */
+function getJSONObject (element, props, children) {
+	return {type: element.type, props: props, children: children}
 }

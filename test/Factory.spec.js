@@ -1,18 +1,18 @@
-describe.skip('Factory', () => {
-	let doc = {}
+describe('Factory', () => {
+	let parent = {}
 	let container = {}
 
-	let setContent = (element) => {
+	let setDocument = (element) => {
 		element.owner.toString = () => element.children.toString()
 		element.owner.toJSON = () => element.children.toJSON()
 	}
 
+	let setComment = (element, value) => {}
 	let setText = (element, value) => {}
-	let setEvent = (element, type) => {}
 	let setProps = (element, name, value, xmlns) => {}
-	let setStyle = (element, name, value) => {}
 
-	let getDocument = () => { return doc }
+	let getOwner = () => { return element.owner }
+	let getDocument = () => { return parent }
 	let getTarget = (event) => { return {} }
 	let getType = (element, xmlns) => { return xmlns }
 	let getProps = (element) => { return element.props }
@@ -29,13 +29,13 @@ describe.skip('Factory', () => {
 	let createElement = (element) => { return {} }
 	let createText = (element) => { return {} }
 	let createEmpty = (element) => { return {} }
+	let createComponent = (element) => { return {} }
 
 	let config = {
-		setContent,
+		setDocument,
+		setComment,
 		setText,
-		setEvent,
 		setProps,
-		setStyle,
 		getDocument,
 		getTarget,
 		getType,
@@ -49,12 +49,7 @@ describe.skip('Factory', () => {
 		createElement,
 		createText,
 		createEmpty,
-		createExport: function (exports) {
-			if (typeof this.getProps !== 'function')
-				throw 'failed to fallback to internal config'
-
-			return exports
-		}
+		createComponent
 	}
 
 	let renderer
@@ -86,22 +81,7 @@ describe.skip('Factory', () => {
 
 		assert.deepEqual(Object.keys(
 			createFactory({
-				createExport: ({render}) => {return {render}}
-			})
-		), [
-			'render'
-		])
-
-		assert.deepEqual(Object.keys(
-			createFactory({
-				createExport: function () {
-					stack.slice.call(arguments).forEach(fn => {
-						if (typeof fn === 'function')
-							stack.push(fn.name)
-						else
-							stack.push('exports')
-					})
-				}
+				createExport: function () {}
 			})
 		), [
 			'version',
@@ -117,23 +97,13 @@ describe.skip('Factory', () => {
 		  'isValidElement',
 		  'createPortal',
 		  'createElement',
+		  'createComment',
+		  'createClass',
 		  'unmountComponentAtNode',
 		  'findDOMNode',
 		  'h',
 		  'renderToString',
 		  'renderToNodeStream'
-		])
-
-		assert.deepEqual(stack, [
-			'exports',
-			'Element',
-			'mountComponentElement',
-			'invokeLifecycleRender',
-			'getComponentElement',
-			'getElementDefinition',
-			'invokeErrorBoundary',
-			'isActiveElement',
-			'getElementDescription'
 		])
 	})
 
@@ -160,7 +130,7 @@ describe.skip('Factory', () => {
 
 	it('should render text', () => {
 		render('hello', container)
-		assert.html(container, 'hello', 'render text')
+		assert.html(container, 'hello')
 	})
 
 	it('should render a class component', () => {
@@ -618,5 +588,43 @@ describe.skip('Factory', () => {
 				<li>6</li>
 			</ul>
 		`)
+	})
+
+	it('should opt out of updating props', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let renderer = createFactory({
+			shouldUpdateProps: function (element, props) {
+				stack.push('shouldUpdateProps', props)
+				return false
+			}
+		})
+
+		renderer.render(h('h1', {id: 1, class: 'first'}, 'Hello World'), container)
+		assert.html(container, `<h1 id="1" class="first">Hello World</h1>`)
+
+		renderer.render(h('h1', {id: 1, class: 'second'}, 'Hello World'), container)
+		assert.html(container, `<h1 id="1" class="first">Hello World</h1>`)
+
+		assert.deepEqual(stack, ['shouldUpdateProps', {class: 'second'}])
+	})
+
+	it('should provide a default root context', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let renderer = createFactory({
+			getContext: function () {
+				return {children: 'Hello World'}
+			}
+		})
+
+		class A {
+			render(props, state, {children}) {
+				return children
+			}
+		}
+
+		renderer.render(h(A), container)
+		assert.html(container, `Hello World`)
 	})
 })

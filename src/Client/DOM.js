@@ -1,7 +1,7 @@
 /**
  * @param {Element} element
  */
-function setDOMContent (element) {
+function setDOMDocument (element) {
 	element.owner.textContent = ''
 }
 
@@ -14,11 +14,26 @@ function setDOMText (element, value) {
 }
 
 /**
- * @param {(EventListener|Element)} element
- * @param {string} type
+ * @param {Element} element
+ * @param {string} value
  */
-function setDOMEvent (element, type) {
-	element.owner.addEventListener(type, element, false)
+function setDOMComment (element, value) {
+	element.owner.nodeValue = value
+}
+
+/**
+ * @param {Element} element
+ * @param {string} type
+ * @param {(function|EventListener)?} callback
+ */
+function setDOMEvent (element, type, callback) {
+	if (!element.cache)
+		element.cache = {}
+
+	if (!element.cache[type])
+		element.owner.addEventListener(type, element, false)
+
+	element.cache[type] = callback
 }
 
 /**
@@ -89,6 +104,8 @@ function setDOMAttribute (element, name, value, xmlns) {
  */
 function setDOMProps (element, name, value, xmlns) {
 	switch (name) {
+		case 'style':
+			return setDOMStyle(element, name, value)
 		case 'className':
 			if (!xmlns && value)
 				return setDOMProperty(element, name, value)
@@ -115,9 +132,12 @@ function setDOMProps (element, name, value, xmlns) {
 				return setDOMAttribute(element, name, value, '')
 	}
 
+	if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 2)
+		return setDOMEvent(element, name.substring(2).toLowerCase(), value)
+
 	switch (typeof value) {
 		case 'object':
-			return setDOMProperty(element, name, value && getDOMProps(element)[name])
+			return setDOMProperty(element, name, value && element.props[name])
 		case 'string':
 		case 'number':
 		case 'boolean':
@@ -126,6 +146,16 @@ function setDOMProps (element, name, value, xmlns) {
 		default:
 			setDOMProperty(element, name, value)
 	}
+}
+
+/**
+ * @param {Element} element
+ * @param {object} props
+ * @param {string?} xmlns
+ * @return {boolean}
+ */
+function shouldDOMUpdateProps (element, props, xmlns) {
+	return true
 }
 
 /**
@@ -146,6 +176,14 @@ function setDOMInnerHTML (element, name, value, nodes) {
 	nodes.forEach(function (node) {
 		element.owner.appendChild(node)
 	})
+}
+
+/**
+ * @param {Element} element
+ * @return {object}
+ */
+function getDOMContext (element) {
+	return {}
 }
 
 /**
@@ -190,7 +228,7 @@ function getDOMType (element, xmlns) {
 
 /**
  * @param {Element} element
- * @return {Object}
+ * @return {object}
  */
 function getDOMProps (element) {
 	switch (element.type) {
@@ -220,10 +258,11 @@ function getDOMPortal (element) {
  * @param {Element} parent
  * @param {Element} previousSibling
  * @param {Element} nextSibling
+ * @return {object?}
  */
 function getDOMQuery (element, parent, previousSibling, nextSibling) {
 	var id = element.id
-	var type = id > SharedElementNode ? '#text' : element.type.toLowerCase()
+	var type = id > SharedElementComment ? '#text' : element.type.toLowerCase()
 	var props = element.props
 	var children = element.children
 	var length = children.length
@@ -234,8 +273,9 @@ function getDOMQuery (element, parent, previousSibling, nextSibling) {
 	while (target) {
 		if (target.nodeName.toLowerCase() === type) {
 			if (id > SharedElementNode) {
-				if (nextSibling.id > SharedElementNode)
-					target.splitText(0)
+				if (id > SharedElementComment)
+					if (nextSibling.id > SharedElementNode)
+						target.splitText(0)
 
 				if (target.nodeValue !== children)
 					target.nodeValue = children
@@ -253,7 +293,7 @@ function getDOMQuery (element, parent, previousSibling, nextSibling) {
 				break
 		}
 
-		if (id > SharedElementNode && length === 0) {
+		if (id > SharedElementComment && length === 0) {
 			target.parentNode.insertBefore(node = createDOMText(element), target)
 
 			if (!nextSibling.type)
@@ -266,7 +306,7 @@ function getDOMQuery (element, parent, previousSibling, nextSibling) {
 		sibling.parentNode.removeChild(sibling)
 	}
 
-	if (node && !node.splitText)
+	if (node && node.attributes)
 		for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i)
 			if (props[type = attributes[i].name] == null)
 				node.removeAttribute(type)
@@ -291,11 +331,11 @@ function isValidDOMEvent (event) {
 }
 
 /**
- * @param {function}  component
+ * @param {function} constructor
  * @return {boolean}
  */
-function isValidDOMComponent (component) {
-	return isValidDOMTarget(component)
+function isValidDOMComponent (constructor) {
+	return isValidDOMTarget(constructor[SharedSitePrototype])
 }
 
 /**
@@ -325,7 +365,7 @@ function appendDOMChild (element, parent) {
 
 /**
  * @param {Element} element
- * @return {Node}
+ * @return {object}
  */
 function createDOMText (element) {
 	return document.createTextNode(element.children)
@@ -333,7 +373,7 @@ function createDOMText (element) {
 
 /**
  * @param {Element} element
- * @return {Node}
+ * @return {object}
  */
 function createDOMEmpty (element) {
 	return document.createTextNode('')
@@ -341,7 +381,15 @@ function createDOMEmpty (element) {
 
 /**
  * @param {Element} element
- * @return {Node}
+ * @return {object}
+ */
+function createDOMComment (element) {
+	return document.createComment(element.children)
+}
+
+/**
+ * @param {Element} element
+ * @return {object}
  */
 function createDOMElement (element) {
 	return element.xmlns ? document.createElementNS(element.xmlns, element.type) : document.createElement(element.type)
@@ -349,13 +397,8 @@ function createDOMElement (element) {
 
 /**
  * @param {Element} element
- * @return {Node}
+ * @return {object}
  */
 function createDOMComponent (element) {
-	try {
-		return new element.owner(element.props)
-	} catch (err) {
-		if (!customElements.define(random(getDisplayName(element.owner).toLowerCase()+'-'), element.owner))
-			return createDOMComponent(element)
-	}
+	return new element.type(element.props)
 }

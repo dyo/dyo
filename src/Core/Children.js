@@ -1,5 +1,5 @@
 /**
- * @type {Object}
+ * @type {object}
  */
 var Children = {
 	toArray: arrayChildren,

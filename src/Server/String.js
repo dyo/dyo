@@ -2,7 +2,7 @@
  * @return {string}
  */
 function toString () {
-	return getStringElement(this, createElementIntermediate(this))
+	return getStringElement(this, this.host || createElementSnapshot(this))
 }
 
 /**
@@ -15,10 +15,12 @@ function getStringElement (element, host) {
 		case SharedElementText:
 		case SharedElementEmpty:
 			return getTextEscape(element.children)
+		case SharedElementComment:
+			return getStringComment(element)
 		case SharedElementCustom:
 			return getStringElement(getCustomElement(element), host)
 		case SharedElementComponent:
-			return getStringElement(element.active ? element.children : mountComponentElement(element), element)
+			return getStringElement(element.active ? element.children : getComponentChildren(element, host), element)
 	}
 
 	var type = element.type
@@ -43,7 +45,7 @@ function getStringElement (element, host) {
 
 /**
  * @param {Element} element
- * @param  {Object} props
+ * @param  {object} props
  * @return {String}
  */
 function getStringProps (element, props) {
@@ -97,7 +99,7 @@ function getStringProps (element, props) {
 }
 
 /**
- * @param {Object} props
+ * @param {object} props
  * @return {string}
  */
 function getStringStyle (props) {
@@ -117,4 +119,12 @@ function getStringStyle (props) {
 	}
 
 	return payload
+}
+
+/**
+ * @param {Element} element
+ * @return {string}
+ */
+function getStringComment (element) {
+	return '<!--' + element.children + '-->'
 }

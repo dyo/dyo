@@ -1,9 +1,39 @@
 /**
  * @param {Element} element
+ * @param {Exception} exception
+ * @return {Element}
+ */
+function getErrorBoundary (element, exception) {
+	try {
+		delegateErrorBoundary(element, element, exception)
+	} finally {
+		return createElementEmpty()
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} host
+ * @return {Element}
+ */
+function getComponentChildren (element, host) {
+	try {
+		return mountComponentElement(element)
+	} catch (err) {
+		return getErrorBoundary(host, err)
+	}
+}
+
+/**
+ * @param {Element} element
  * @return {Element}
  */
 function getCustomElement (element) {
-	return commitCreate(element) && getCustomProps(createElement('<!--', {}, element.children), element.owner)
+	try {
+		commitOwner(element)
+	} finally {
+		return getCustomProps(createElement('template', element.children), element.owner)
+	}
 }
 
 /**
@@ -12,6 +42,9 @@ function getCustomElement (element) {
  * @return {Element}
  */
 function getCustomProps (element, owner) {
+	if (!owner)
+		return element
+
 	if (owner.nodeName)
 		element.type = owner.nodeName.toLowerCase()
 

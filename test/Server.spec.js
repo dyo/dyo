@@ -268,37 +268,45 @@ describe('Server', () => {
 		}), '1')
 	})
 
-	it('should catch errors', () => {
-		let error = null
-		assert.html(h(class {
-			componentDidCatch(err) {
-				error = err
-			}
-			render () {
-				throw new Error('Error!')
-			}
-		}), '')
+	it('should render a custom component to json', () => {
+		let AppDrawer = function () {
+			var element = document.createElement('x-span')
+			element.setAttribute('class', 'foo')
+			element.innerHTML = '<p>innerHTML</p>'
+			return element
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
 
-		assert.instanceOf(error, Error)
+		assert.json(h(AppDrawer, 1, h('h1', 'Hello')), `
+			{
+				"type":"x-span",
+				"props":{"class":"foo","innerHTML":"<p>innerHTML</p>"},
+				"children":[
+					[
+						[
+							"1",
+							{
+								"type":"h1",
+								"props":{},
+								"children":["Hello"]
+							}
+						]
+					]
+				]
+			}
+		`)
 	})
 
-	it('should propagate errors', (done) => {
-		let A = () => { throw new Error('x') }
-		let error = null
+	it('should render a custom component to string', () => {
+		let AppDrawer = function () {
+			var element = document.createElement('x-span')
+			element.setAttribute('class', 'foo')
+			element.innerHTML = '<p>innerHTML</p>'
+			return element
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
 
-		assert.html(h(class {
-			componentDidCatch(err) {
-				error = err
-			}
-			render () {
-				return h('div', A)
-			}
-		}), '<div></div>')
-
-		nextTick(() => {
-			assert.instanceOf(error, Error)
-			done()
-		})
+		assert.html(h(AppDrawer, 1, h('h1', 'Hello')), `<x-span class="foo">1<h1>Hello</h1><p>innerHTML</p></x-span>`)
 	})
 
 	it('should pipe(renderToString) element to a stream', (done) => {
@@ -451,6 +459,29 @@ describe('Server', () => {
 		})
 	})
 
+	it('should pipe(renderToNodeStream) a custom component', (done) => {
+		let output = ''
+
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let AppDrawer = function () {
+			var element = document.createElement('x-span')
+			element.innerHTML = '<p>innerHTML</p>'
+			return element
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
+
+		renderToNodeStream(h(AppDrawer, 1, h('h1', 'Hello')), writable, () => {
+			assert.html(output, `<x-span>1<h1>Hello</h1><p>innerHTML</p></x-span>`)
+			done()
+		})
+	})
+
 	it('should pipe(renderToNodeStream) an async element stream to stream', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
@@ -476,7 +507,7 @@ describe('Server', () => {
 		})
 	})
 
-	it('should pipe(renderToNodeStream) an async component stream to a stream', (done) => {
+	it('should pipe(renderToNodeStream) an async component with async getInitialState', (done) => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
 	      output += chunk.toString()
@@ -492,6 +523,7 @@ describe('Server', () => {
 				return h('h1', 'Hello World', x)
 			}
 		})
+
 		let output = ''
 
 		renderToNodeStream(element, writable, () => {
@@ -527,90 +559,6 @@ describe('Server', () => {
 		})
 	})
 
-	it('should pipe(renderToNodeStream) an async component with async getInitialState', (done) => {
-		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
-		})
-
-		let element = h(class {
-			getInitialState() {
-				return Promise.resolve({x: '!'})
-			}
-			render(props, {x}) {
-				return h('h1', 'Hello World', x)
-			}
-		})
-
-		let output = ''
-
-		renderToNodeStream(element, writable, () => {
-			assert.html(output, '<h1>Hello World!</h1>')
-			done()
-		})
-	})
-
-	it('should recover from an async getInitialState error', (done) => {
-		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
-		})
-
-		let element = h(class {
-			componentDidCatch(err) {
-				return {x: ' Error!'}
-			}
-			getInitialState() {
-				return Promise.reject({x: '!'})
-			}
-			render(props, {x}) {
-				return h('h1', 'Hello World', x)
-			}
-		})
-
-		let output = ''
-
-		renderToNodeStream(element, writable, () => {
-			assert.html(output, '<h1>Hello World Error!</h1>')
-			done()
-		})
-	})
-
-	it('should not recover from async getInitialState error', (done) => {
-		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
-		})
-		let stack = []
-
-		let element = h(class {
-			getInitialState() {
-				return Promise.reject({x: '!'})
-			}
-			render(props, {x}) {
-				return h('h1', 'Hello World', x)
-			}
-		})
-
-		let output = ''
-		let defaultConsoleError = console.error
-
-		console.error = () => stack.push(true)
-
-		renderToNodeStream(element, writable, () => {
-			assert.html(output, '')
-			assert.deepEqual(stack, [true])
-			console.error = defaultConsoleError
-			done()
-		})
-	})
-
 	it('should pipe(renderToNodeStream) an async generator component', () => {
 		let writable = new require('stream').Writable({
 		  write(chunk, encoding, callback) {
@@ -638,6 +586,138 @@ describe('Server', () => {
 		renderToNodeStream(element, writable, () => {
 			assert.html(output, 'Hello World')
 			assert.deepEqual(stack, ['', 'Hello'])
+			done()
+		})
+	})
+
+	it('should catch errors', () => {
+		let error = null
+
+		class ErrorBoundary {
+			componentDidCatch(err) {
+				error = err
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		assert.html(h(ErrorBoundary, class {
+			render () {
+				throw new Error('Error!')
+			}
+		}), '')
+
+		assert.instanceOf(error, Error)
+	})
+
+	it('should propagate errors', () => {
+		let A = () => { throw new Error('x') }
+		let error = null
+
+		assert.html(h(class {
+			componentDidCatch(err) {
+				error = err
+			}
+			render () {
+				return h('div', A)
+			}
+		}), '<div></div>')
+
+		assert.instanceOf(error, Error)
+	})
+
+	it('should not recover from an async getInitialState error', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let error = null
+
+		class ErrorBoundary {
+			componentDidCatch(err) {
+				error = err
+				return {x: ' Error!'}
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		let element = h(ErrorBoundary, class {
+			getInitialState() {
+				return Promise.reject(new Error('!'))
+			}
+			render(props, {x}) {
+				return h('h1', 'Hello World', x)
+			}
+		})
+
+		let output = ''
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, '')
+			assert.instanceOf(error, Error)
+			done()
+		})
+	})
+
+	it('should not render a custom component that throws to string', () => {
+		let error = null
+
+		class ErrorBoundary {
+			componentDidCatch(err) {
+				error = err
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		let AppDrawer = function () {
+			throw 'error'
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
+
+		assert.html(h(ErrorBoundary, h(AppDrawer)), `<template></template>`)
+	})
+
+	it('should not render an invalid custom component to string', () => {
+		let AppDrawer = function () {
+			return {}
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
+
+		assert.html(h(AppDrawer, 1, h('h1', 'Hello')), `<template>1<h1>Hello</h1></template>`)
+	})
+
+	it('should render comments to string', () => {
+		assert.html(createComment('1st'), '<!--1st-->')
+		assert.html(h('div', 1, createComment('1st'), h('h1', 2)), '<div>1<!--1st--><h1>2</h1></div>')
+	})
+
+	it('should render comments to json', () => {
+		assert.json(createComment('1st'), `{"type":"#comment","props":{},"children":"1st"}`)
+		assert.json(createComment(1), `{"type":"#comment","props":{},"children":"1"}`)
+	})
+
+	it('should render comments to stream', (done) => {
+		let writable = new require('stream').Writable({
+		  write(chunk, encoding, callback) {
+	      output += chunk.toString()
+	      callback()
+		  }
+		})
+
+		let output = ''
+
+		let element = h('div', 1, createComment('1st'), h('h1'))
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, '<div>1<!--1st--><h1></h1></div>')
 			done()
 		})
 	})

@@ -6,8 +6,8 @@ function findDOMNode (element) {
 	if (!element)
 		return element
 
-	if (getComponentElement(element))
-		return findDOMNode(getComponentElement(element))
+	if (isValidElement(element[SymbolElement]))
+		return findDOMNode(element[SymbolElement])
 
 	if (isValidElement(element))
 		return element.active && getNodeOwner(getElementDescription(element))

@@ -1,5 +1,5 @@
 ;(function (global) {/* eslint-disable */'use strict'
-function factory (window, config, require) {
+function factory (window, config, include) {
 '{%module%}'
 }
 
