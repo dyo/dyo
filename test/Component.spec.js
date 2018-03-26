@@ -1363,8 +1363,11 @@ describe('Component', () => {
 			assert.html(container, `Loading!`)
 
 			wait(100).then(() => {
-				assert.html(container, `World`)
-			}).then(done)
+				nextTick(() => {
+					assert.html(container, `World`)
+					done()
+				})
+			})
 		})
 	})
 
