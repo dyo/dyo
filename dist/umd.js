@@ -3022,7 +3022,7 @@
 	/* istanbul ignore next */
 
 	if (typeof exports === 'object' && typeof module === 'object')
-		module['exports'] = factory(window['DTRACE_NET_SERVER_CONNECTION'] && typeof __ === 'function' && __('./cjs'))
+		module['exports'] = factory(window['process'] && window['process']['cwd'] && typeof __ === 'function' && __('./cjs'))
 	else if (typeof define === 'function' && define['amd'])
 		define(factory())
 	else
