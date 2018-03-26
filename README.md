@@ -144,17 +144,17 @@ dio.render(h(Input))
 
 ## Goals
 
-Public react compatibility with an [edge](#edge), this means that any react library should work as long as it does not make use of undocumented features for example API's prefixed with `unstable_`.
+Public react compatibility with an [edge](#edge), this means that any react library should work as long as it does not make use of undocumented/public features for example API's prefixed with `unstable_`.
 
 ## Differences
 
 #### Custom Reconciler, Config
 
-There are a few react-like libraries but at the date of this writing DIO might be the only one to afford the ability to create your own renderer. Now while both React and DIO expose a way to create your own renderer, there is a difference in how you create this custom renderer. 
+There are a few react-like libraries but at the date of this writing DIO might be the only one to afford the ability to create your own renderer. Now while both React and DIO expose a way to create your own renderer, there is a difference in how you create this custom renderer.
 
 While react might exposes a package called `react-reconciler` DIO exposes a public API for this as part of an overloaded `createFactory` API.
 
-This is coupled with fact that the config structure somewhat differ as do the arguments passed to the methodes implemented – for example react might pass the view instance(in the case of ReactDOM this might be a DOM node) to the method while DIO would pass the related virtual element(s) that have a reference to the DOM node, which you can then extract(by means of a property read), which can be argued gives renderers room to do more with what they have.
+This is coupled with fact that the config structure somewhat differ as do the arguments passed to the methodes implemented – for example react might pass the view instance(in the case of ReactDOM this might be a DOM node) to the method while DIO would pass the related virtual element(s) that have a reference to the DOM node, which you can then extract(by means of a readonly property), which can be argued gives renderers room to do more with what they have.
 
 All in all it is easy for DIO to consume the react reconcilers config, so the plan is that once the `react-reconciler` package is considererd stable by the React team DIO is in a position to consume the sementics of its config.
 
@@ -164,11 +164,11 @@ As a show of confidence DIO itself uses this interface to implement the DOM rend
 
 Events bubble in Portals as you would expect them to in the DOM, this avoid issues like [#11387](https://github.com/facebook/react/issues/11387) where bubbling them through the virtual tree has unintented behaviors.
 
-The `createPortal` API also supports string selectors which allows for server-side rendering portals and out-of-order rendering, a feature might also make it into react: [related issue](https://github.com/facebook/react/issues/10711).
+The `createPortal` API also supports string selectors which allows for server-side rendering portals and out-of-order rendering, a feature that might also make it into react: [related issue](https://github.com/facebook/react/issues/10711).
 
 #### Events, Delegation
 
-Though it may sound strange when considering all the articles about event delegation and performance/memory DIO on the other hand intentionally does not implement events with delegation to avoid the performance impact that comes with re-implementing(in JavaScript) event bubbling that browsers do which is almost always faster handled by the host enviroment.
+Though it may sound strange when considering all the articles about event delegation and performance/memory DIO on the other hand intentionally does not implement events with delegation to avoid the performance impact that comes with re-implementing(in JavaScript) event bubbling that browsers do, which is almost always efficiently handled by the host enviroment.
 
 However DIO's model does not create any more memory when attaching events than you might imagine React's event delegation model to use, interestingly it might just create less considerering that where react might create a Map entry for each element-event-pair the browser is in a better position to use an optimial reference pointer and data-strucuture to track the relationship between event handlers and elements when using addEventListener for each element.
 
@@ -198,7 +198,7 @@ Sadly some libraries do make use of these undocumented unstable API's that React
 
 ## Edge
 
-There a lot of small details that give DIO its edge that don't realy touch on new API's but rather on creating a larger surface area of what React already supports and adding to this. 
+There a lot of small details that give DIO its edge that don't realy touch on new API's but rather on creating a larger surface area of what React already supports and adding to this.
 
 For example React can render strings, numbers, elements and components but what if it was able to render Promises or Thenables? This would help solve a lot of "problems" with data fetching and lazy loading that is possible with React but not declaratively incentivised at the library level.
 
@@ -258,6 +258,24 @@ Events in React have the infamous legacy of `.bind`. The implementation details 
 
 #### Server Side Renderer
 
-While React 16 does allow some level of async server side rendering with `renderToNodeStream` DIO takes it a step further to make sure that the mentioned points about rendering Promises and Promise states applies just as well in a server side render. 
+While React 16 does allow some level of async server side rendering with `renderToNodeStream` DIO takes it a step further to make sure that the mentioned points about rendering Promises and Promise states applies just as well in a server side render.
 
 That is to say the server-side renderer can render whatever the client renderer can, including portals – which coupled with the client renderers hydration API allows for out of order rendering that is ordered on the client while hydrating.
+
+#### Custom Components
+
+Custom components are components that instantiate their own host elements. A custom elements constructor might fall under this group of components.
+
+
+```js
+class WordCount extends HTMLElement {
+	// ...
+}
+customElements.define('word-count', WordCount)
+```
+
+Given DIO's goal to support custom renderers that might not even target the DOM the definition of a what is a custom component is left up to the renderer to configure. In the case of the default DOM renderer this would match custom elements/web components allowing us to render the `WordCount` custom element given without knowing its `localName`.
+
+```js
+render(h(WordCount))
+```

@@ -1,4 +1,4 @@
-/*!dio 8.2.4 @license MIT */
+/*!dio 9.0.0-alpha @license MIT */
 /*!dio 8.2.4 @license MIT */
 ;(function (window, __) {
 	'use strict'
@@ -7,7 +7,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '8.2.4'}
+		var dio = {version: '9.0.0-alpha'}
 		
 		var SharedElementPromise = 1
 		var SharedElementFragment = 2
@@ -163,7 +163,7 @@
 		 * @constructor
 		 */
 		function WeakHash () {
-			this.hash = Math.random()
+			this.hash = Symbol()
 		}
 		/**
 		 * @type {object}
@@ -199,9 +199,7 @@
 		/**
 		 * @return {void}
 		 */
-		function noop () {
-			return true
-		}
+		function noop () {}
 		
 		/**
 		 * @param {object} object

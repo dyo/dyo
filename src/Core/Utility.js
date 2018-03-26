@@ -60,7 +60,7 @@ objectDefineProperties(objectDefineProperty(List[SharedSitePrototype], SymbolIte
  * @constructor
  */
 function WeakHash () {
-	this.hash = Math.random()
+	this.hash = Symbol()
 }
 /**
  * @type {object}
@@ -96,9 +96,7 @@ objectDefineProperties(WeakHash[SharedSitePrototype], {
 /**
  * @return {void}
  */
-function noop () {
-	return true
-}
+function noop () {}
 
 /**
  * @param {object} object

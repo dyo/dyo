@@ -2,11 +2,13 @@
 
 - Breaking: Improve Error Boundaries to act more like React and `try..catch`.
 - Improve: error boundaries implementation to support possible future `Timeout` and `Placeholder` React components.
-- Improve: `async getInitialState` implementation to use the same code path for both server and client implementations.
+- Improve: `async getInitialState` implementation.
 - New: `createClass` API.
 - New: `createContext` API.
 - New: `createComment` API.
 - New: support for auto resolution of json `fetch` based Promises passed to setState/getInitialState.
+- New: support for custom elements.
+- NEW: exposes `willUnmount` and `getUpdatedProps` methods to custom reconcilers.
 
 ## 8.2.3 (25 January 2018)
 
