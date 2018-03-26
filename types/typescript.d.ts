@@ -4,17 +4,17 @@ type Key = Text
 type Ref = string|Function
 type Fragment = symbol
 type Type = string|Function|Promise<any>|ElementNode|Fragment
-type State = object
+type State = void|Function|object|Promise<object>
 type Renderable = ElementNode|Text|Promise<any>|Array<any>|Function
 
-interface Link {
-	next: Link
-	prev: Link
+interface LinkedNode {
+	next: LinkedNode
+	prev: LinkedNode
 }
 
-interface List {
-	next: Link
-	prev: Link
+interface LinkedList {
+	next: LinkedNode
+	prev: LinkedNode
 	length: number
 }
 
@@ -27,15 +27,11 @@ interface createElement {
 }
 
 interface ErrorInfo {
-	stack: string
+	error: any
 	message: string
-	errorLocation: string
-	errorStack: string
-	errorMessage: string
+	origin: string
+	message: string
 	componentStack: string
-	defaultPrevented: boolean
-	preventDefault: () => void
-	inspect: () => string
 }
 
 interface EventHandler {
@@ -44,6 +40,10 @@ interface EventHandler {
 
 interface EventListener {
 	handleEvent: EventHandler
+}
+
+interface EventTarget extends LinkedNode {
+	handleEvent: (e: Event) => void
 }
 
 interface Events {
@@ -233,18 +233,16 @@ interface Props extends Events {
 	innerHTML?: any
 }
 
-interface ElementNode extends Link {
+interface ElementNode extends EventTarget {
 	xmlns: string
 	key: Key
 	ref: Ref
 	type: Type
 	props: Props
-	children: List
+	children: LinkedList
 	owner: any
 	parent: any
 	host: any
-	handlEvent: (e: Event) => void
-	toString: () => string
 }
 
 interface isValidElement {
@@ -291,8 +289,16 @@ interface createPortal {
 	(element: ElementNode, container: Node, key: any): ElementNode
 }
 
+interface createCommet {
+	(content: string|number, key: any): ElementNode
+}
+
 interface cloneElement {
 	(element: ElementNode, props?: Props|Renderable, ...children: Array<Renderable>): ElementNode
+}
+
+interface createClass {
+	(description: object): Component
 }
 
 interface AbstractComponent<P, S> {
@@ -302,15 +308,15 @@ interface AbstractComponent<P, S> {
 	getChildContext(props: P, state: S, context: object): object
 	getInitialState(props: P): S
 
-	componentDidCatch(error: Error, info: ErrorInfo): any
+	componentDidCatch(error: any, info: ErrorInfo): void
 
-	componentWillReceiveProps(nextProps: P, nextContext: object): any
-	shouldComponentUpdate(nextProps: P, nextState: S): boolean
-	componentWillUpdate(nextProps: P, nextState: S): any
-	componentDidUpdate(prevProps: P, prevState: S): any
-	componentWillMount(): any
-	componentDidMount(node: Node): any
-	componentWillUnmount(node: Node): any
+	componentWillReceiveProps(nextProps: object, nextContext: object): any
+	shouldComponentUpdate(nextProps: object, nextState: object): boolean
+	componentWillUpdate(nextProps: object, nextState: object): any
+	componentDidUpdate(prevProps: object, prevState: object): any
+	componentWillMount(): State
+	componentDidMount(node: Node): State
+	componentWillUnmount(node: Node): State
 }
 
 declare abstract class AbstractComponent<P, S> {
@@ -339,6 +345,8 @@ declare global {
 		export const Fragment: Fragment
 		export const cloneElement: cloneElement
 		export const createPortal: createPortal
+		export const createComment: createComment
+		export const createClass: createClass
 		export const createFactory: createFactory
 
 		export const render: render

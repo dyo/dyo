@@ -18,7 +18,7 @@ function getErrorBoundary (element, exception) {
  */
 function getComponentChildren (element, host) {
 	try {
-		return mountComponentElement(element)
+		return mountComponentInstance(element)
 	} catch (err) {
 		return getErrorBoundary(host, err)
 	}

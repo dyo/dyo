@@ -22,14 +22,16 @@ var SharedPropsMount = 1
 var SharedPropsUpdate = 2
 
 var SharedMountQuery = 1
-var SharedMountCommit = 2
-var SharedMountRemove = 3
-var SharedMountAppend = 4
-var SharedMountInsert = 5
+var SharedMountOwner = 2
+
+var SharedOwnerAppend = 4
+var SharedOwnerInsert = 5
+
+var SharedUnmountElement = 1
+var SharedUnmountChildren = 2
 
 var SharedWorkIdle = 1
 var SharedWorkUpdating = 2
-var SharedWorkIntermediate = 3
 
 var SharedLinkedPrevious = 'prev'
 var SharedLinkedNext = 'next'
@@ -45,6 +47,8 @@ var SharedSiteForceUpdate = 'forceUpdate'
 var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
 var SharedSiteDisplayName = 'displayName'
+var SharedDefaultProps = 'defaultProps'
+var SharedGetDefaultProps = 'getDefaultProps'
 
 var SharedKeyHead = '&|head|'
 var SharedKeyBody = '&|body|'

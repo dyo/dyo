@@ -1,5 +1,3 @@
-var Object = window.Object
-var Math = window.Math
 var WeakMap = window.WeakMap || WeakHash
 var Symbol = window.Symbol || Math.random
 var isArray = Array.isArray
@@ -11,6 +9,7 @@ var objectCreate = Object.create
 var objectKeys = Object.keys
 
 var SymbolFor = Symbol.for || hash
+var SymbolCache = SymbolFor('dio.Cache')
 var SymbolState = SymbolFor('dio.State')
 var SymbolContext = SymbolFor('dio.Context')
 var SymbolElement = SymbolFor('dio.Element')

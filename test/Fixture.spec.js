@@ -520,18 +520,16 @@ describe('Fixture', () => {
 
 	it('should not hit the require branch when bundling with webpack', () => {
 		let container = document.createElement('div')
-		let stack = []
+		let module = {exports: {}}
+		let __webpack_require__ = () => {throw 'fail'}
+		let source = require('fs').readFileSync(require.resolve(umdfile), 'utf8')
 
-		delete require.cache[require.resolve(umdfile)]
+		__webpack_require__.include = () => {}
 
-		global.__webpack_require__ = () => stack.push('should not require')
+		eval(`(function (module, exports, require) {${source}})(module, module.exports, __webpack_require__)`)
 
-		assert.doesNotHaveAnyKeys(require(umdfile), ['renderToString', 'renderToNodeStream'])
-		assert.lengthOf(stack, 0)
-
-		global.__webpack_require__ = undefined
-
-		delete require.cache[require.resolve(umdfile)]
+		assert.doesNotHaveAnyKeys(module.exports, ['renderToString', 'renderToNodeStream'])
+		assert.hasAnyKeys(module.exports, ['render', 'createElement'])
 	})
 
 	it('should establish communication between parent and children with events & context', () => {

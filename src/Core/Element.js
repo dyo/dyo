@@ -268,10 +268,11 @@ function getElementProps (element, props) {
 /**
  * @param {Element} element
  * @param {function} type
+ * @param {object} props
  * @return {object}
  */
-function getDefaultProps (element, type) {
-	return typeof type.defaultProps === 'function' ? getLifecycleCallback(element, type.defaultProps) : type.defaultProps
+function getDefaultProps (element, type, props) {
+	return typeof type[SharedDefaultProps] === 'function' ? type[SharedDefaultProps](props) : type[SharedDefaultProps]
 }
 
 /**
@@ -462,8 +463,8 @@ function createElement (type, config) {
 
 	switch (typeof type) {
 		case 'function':
-			if (type.defaultProps)
-				props = assign({}, getDefaultProps(element, type), props)
+			if (type[SharedDefaultProps])
+				props = assign({}, getDefaultProps(element, type, props), props)
 			break
 		case 'number':
 		case 'symbol':

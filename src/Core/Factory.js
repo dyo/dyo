@@ -4,7 +4,7 @@
  */
 function createFactory (type) {
 	if (type !== null && typeof type === 'object' && !isValidElement(type))
-		return factory(window, type, include)
+		return factory(module, type)
 
 	return createElement.bind(null, type)
 }
@@ -15,11 +15,11 @@ function createFactory (type) {
  * @return {function}
  */
 function getFactory (type, value) {
-	if (!config)
+	if (!exports)
 		return value
 
-	if (typeof config[type] === 'function')
-		return config[type].bind(config)
+	if (typeof exports[type] === 'function')
+		return exports[type].bind(exports)
 
-	return config[type] = value
+	return exports[type] = value
 }

@@ -1,6 +1,5 @@
-/*! DIO 8.2.4 @license MIT */
-
-module.exports = function (exports, Element, mountComponentElement, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
+/*!dio 8.2.4 @license MIT */
+module.exports = function (dio, Element, mountComponentInstance, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = 1
 	var SharedElementFragment = 2
@@ -26,14 +25,16 @@ module.exports = function (exports, Element, mountComponentElement, delegateErro
 	var SharedPropsUpdate = 2
 	
 	var SharedMountQuery = 1
-	var SharedMountCommit = 2
-	var SharedMountRemove = 3
-	var SharedMountAppend = 4
-	var SharedMountInsert = 5
+	var SharedMountOwner = 2
+	
+	var SharedOwnerAppend = 4
+	var SharedOwnerInsert = 5
+	
+	var SharedUnmountElement = 1
+	var SharedUnmountChildren = 2
 	
 	var SharedWorkIdle = 1
 	var SharedWorkUpdating = 2
-	var SharedWorkIntermediate = 3
 	
 	var SharedLinkedPrevious = 'prev'
 	var SharedLinkedNext = 'next'
@@ -49,6 +50,8 @@ module.exports = function (exports, Element, mountComponentElement, delegateErro
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
 	var SharedSiteDisplayName = 'displayName'
+	var SharedDefaultProps = 'defaultProps'
+	var SharedGetDefaultProps = 'getDefaultProps'
 	
 	var SharedKeyHead = '&|head|'
 	var SharedKeyBody = '&|body|'
@@ -89,7 +92,7 @@ module.exports = function (exports, Element, mountComponentElement, delegateErro
 	 */
 	function getComponentChildren (element, host) {
 		try {
-			return mountComponentElement(element)
+			return mountComponentInstance(element)
 		} catch (err) {
 			return getErrorBoundary(host, err)
 		}
@@ -499,6 +502,7 @@ module.exports = function (exports, Element, mountComponentElement, delegateErro
 		toStream: {value: toStream}
 	})
 	
-	exports.renderToString = renderToString
-	exports.renderToNodeStream = renderToNodeStream
+	dio.renderToString = renderToString
+	dio.renderToNodeStream = renderToNodeStream
 }
+/*!/dio*/

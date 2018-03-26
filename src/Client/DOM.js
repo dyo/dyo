@@ -150,16 +150,6 @@ function setDOMProps (element, name, value, xmlns) {
 
 /**
  * @param {Element} element
- * @param {object} props
- * @param {string?} xmlns
- * @return {boolean}
- */
-function shouldDOMUpdateProps (element, props, xmlns) {
-	return true
-}
-
-/**
- * @param {Element} element
  * @param {string} name
  * @param {string} value
  * @param {Array} nodes
@@ -210,6 +200,14 @@ function getDOMTarget (event) {
 }
 
 /**
+ * @param {Event} event
+ * @return {function}
+ */
+function getDOMListener (element, event) {
+	return element.cache[event.type]
+}
+
+/**
  * @param {Element} element
  * @param {string?} xmlns
  */
@@ -228,15 +226,23 @@ function getDOMType (element, xmlns) {
 
 /**
  * @param {Element} element
- * @return {object}
+ * @param {object} props
+ * @return {object?}
  */
-function getDOMProps (element) {
-	switch (element.type) {
-		case 'input':
-			return merge({type: null, step: null, min: null, max: null}, element.props)
-		default:
-			return element.props
-	}
+function getDOMInitialProps (element, props) {
+	if (element.type === 'input')
+		return merge({type: null, step: null, min: null, max: null}, props)
+
+	return props
+}
+
+/**
+ * @param {Element} element
+ * @param {object} props
+ * @return {object?}
+ */
+function getDOMUpdatedProps (element, props) {
+	return props
 }
 
 /**
@@ -315,6 +321,14 @@ function getDOMQuery (element, parent, previousSibling, nextSibling) {
 }
 
 /**
+ * @param {function} constructor
+ * @return {boolean}
+ */
+function isValidDOMComponent (constructor) {
+	return isValidDOMTarget(constructor[SharedSitePrototype])
+}
+
+/**
  * @param {object?} target
  * @param {boolean}
  */
@@ -331,27 +345,17 @@ function isValidDOMEvent (event) {
 }
 
 /**
- * @param {function} constructor
- * @return {boolean}
- */
-function isValidDOMComponent (constructor) {
-	return isValidDOMTarget(constructor[SharedSitePrototype])
-}
-
-/**
  * @param {Element} element
  * @param {Element} parent
  */
-function removeDOMChild (element, parent) {
-	parent.owner.removeChild(element.owner)
-}
+function willDOMUnmount (element, parent) {}
 
 /**
  * @param {Element} element
  * @param {Element} sibling
  * @param {Element} parent
  */
-function insertDOMBefore (element, sibling, parent) {
+function insertDOMChild (element, sibling, parent) {
 	parent.owner.insertBefore(element.owner, sibling.owner)
 }
 
@@ -361,6 +365,14 @@ function insertDOMBefore (element, sibling, parent) {
  */
 function appendDOMChild (element, parent) {
 	parent.owner.appendChild(element.owner)
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} parent
+ */
+function removeDOMChild (element, parent) {
+	parent.owner.removeChild(element.owner)
 }
 
 /**

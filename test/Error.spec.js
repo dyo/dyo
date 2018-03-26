@@ -1044,13 +1044,13 @@ describe('Error', () => {
 
 		assert.html(container, '')
 		assert.deepEqual(stack, [
-			'ErrorBoundary componentWillUnmount',
-			'A componentWillUnmount',
+			'C componentWillUnmount',
 			'ErrorBoundary componentDidCatch',
 			'B componentWillUnmount',
 			'ErrorBoundary componentDidCatch',
-			'C componentWillUnmount',
+			'A componentWillUnmount',
 			'ErrorBoundary componentDidCatch',
+			'ErrorBoundary componentWillUnmount'
 		])
 		done()
 	})

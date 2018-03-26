@@ -3,9 +3,8 @@
  */
 function handleEvent (event) {
 	try {
-		var type = event.type
 		var element = this
-		var callback = element.cache[type]
+		var callback = getNodeListener(element, event)
 		var host = element.host
 		var owner = host.owner
 		var props = owner.props
@@ -28,6 +27,6 @@ function handleEvent (event) {
 		if (value && owner[SymbolComponent])
 			enqueueComponentValue(host, SharedSiteEvent, value)
 	} catch (err) {
-		reportErrorException(host, err, SharedSiteEvent+':on'+type+'('+getDisplayName(callback.handleEvent || callback)+'')
+		reportErrorException(host, err, SharedSiteEvent+':'+getDisplayName(callback.handleEvent || callback))
 	}
 }

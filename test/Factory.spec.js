@@ -23,7 +23,7 @@ describe('Factory', () => {
 	let isValidEvent = (event) => { return event instanceof Object }
 
 	let removeChild = (element, parent) => {}
-	let insertBefore = (element, sibling, parent) => {}
+	let insertChild = (element, sibling, parent) => {}
 	let appendChild = (element, parent) => {}
 
 	let createElement = (element) => { return {} }
@@ -44,7 +44,7 @@ describe('Factory', () => {
 		isValidTarget,
 		isValidEvent,
 		removeChild,
-		insertBefore,
+		insertChild,
 		appendChild,
 		createElement,
 		createText,
@@ -80,9 +80,7 @@ describe('Factory', () => {
 		let stack = []
 
 		assert.deepEqual(Object.keys(
-			createFactory({
-				createExport: function () {}
-			})
+			createFactory({})
 		), [
 			'version',
 		  'render',
@@ -590,13 +588,13 @@ describe('Factory', () => {
 		`)
 	})
 
-	it('should opt out of updating props', () => {
+	it('should change updating props', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let renderer = createFactory({
-			shouldUpdateProps: function (element, props) {
-				stack.push('shouldUpdateProps', props)
-				return false
+			getUpdatedProps: function (element, props) {
+				stack.push('update', props)
+				return {}
 			}
 		})
 
@@ -605,8 +603,7 @@ describe('Factory', () => {
 
 		renderer.render(h('h1', {id: 1, class: 'second'}, 'Hello World'), container)
 		assert.html(container, `<h1 id="1" class="first">Hello World</h1>`)
-
-		assert.deepEqual(stack, ['shouldUpdateProps', {class: 'second'}])
+		assert.deepEqual(stack, ['update', {class: 'second'}])
 	})
 
 	it('should provide a default root context', () => {
@@ -626,5 +623,23 @@ describe('Factory', () => {
 
 		renderer.render(h(A), container)
 		assert.html(container, `Hello World`)
+	})
+
+	it('should invoke willUnmount when unmounting', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let renderer = createFactory({
+			willUnmount: function (element) {
+				stack.push(element.type)
+			}
+		})
+
+		renderer.render(h('h1', h('h2', h('h3'))), container)
+		assert.html(container, `<h1><h2><h3></h3></h2></h1>`)
+		assert.lengthOf(stack, 0)
+
+		renderer.render(null, container)
+		assert.html(container, ``)
+		assert.deepEqual(stack, ['h3', 'h2', 'h1'])
 	})
 })

@@ -7,9 +7,9 @@ function render (element, container, callback) {
 	if (!container)
 		render(element, getNodeDocument(), callback)
 	else if (registry.has(container))
-		update(registry.get(container).children, getElementDefinition(element), callback)
+		updateContainerElement(registry.get(container).children, getElementDefinition(element), callback)
 	else
-		mount(element, container, callback, SharedMountCommit)
+		mountContainerElement(element, container, callback, SharedMountOwner)
 }
 
 /**
@@ -21,7 +21,15 @@ function hydrate (element, container, callback) {
 	if (!container)
 		hydrate(element, getNodeDocument(), callback)
 	else
-		mount(element, container, callback, SharedMountQuery)
+		mountContainerElement(element, container, callback, SharedMountQuery)
+}
+
+/**
+ * @param {Node} container
+ * @return {boolean}
+ */
+function unmountComponentAtNode (container) {
+	return registry.has(container) && !render(null, container)
 }
 
 /**
@@ -30,13 +38,13 @@ function hydrate (element, container, callback) {
  * @param {function} callback
  * @param {number} signature
  */
-function mount (element, container, callback, signature) {
+function mountContainerElement (element, container, callback, signature) {
 	if (!isValidElement(element))
-		mount(getElementDefinition(element), container, callback, signature)
+		mountContainerElement(getElementDefinition(element), container, callback, signature)
 	else if (!isValidNodeTarget(container))
 		invariant(SharedSiteRender, 'Target container is not a valid container')
 	else
-		initialize(element, createElementSnapshot(element), container, signature)
+		commitContainerElement(element, createElementSnapshot(element), container, signature)
 
 	if (callback)
 		getLifecycleCallback(element, callback)
@@ -47,7 +55,7 @@ function mount (element, container, callback, signature) {
  * @param {Element} snapshot
  * @param {Element} callback
  */
-function update (element, snapshot, callback) {
+function updateContainerElement (element, snapshot, callback) {
 	reconcileElement(element, snapshot, element.host)
 
 	if (callback)
@@ -60,19 +68,11 @@ function update (element, snapshot, callback) {
  * @param {object} container
  * @param {number} signature
  */
-function initialize (element, parent, container, signature) {
+function commitContainerElement (element, parent, container, signature) {
 	registry.set(parent.owner = container, parent)
 
-	if (signature === SharedMountCommit)
+	if (signature === SharedMountOwner)
 		setNodeDocument(parent)
 
-	commitElement(element, element, parent, parent, SharedMountAppend, signature)
-}
-
-/**
- * @param {Node} container
- * @return {boolean}
- */
-function unmountComponentAtNode (container) {
-	return registry.has(container) && !render(null, container)
+	commitMountElement(element, element, parent, parent, SharedOwnerAppend, signature)
 }

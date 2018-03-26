@@ -49,7 +49,7 @@ createFactory(
 		</p>
 
 		<p>
-			The creation of a client is assumed when an object argument supplied to <code>createFactory</code> does not satisfy the conditions for an element factory.
+			The creation of a factory reconciler is assumed when an object argument supplied to <code>createFactory</code> does not satisfy the conditions for an element factory.
 		</p>
 
 		<p>
@@ -57,11 +57,11 @@ createFactory(
 		</p>
 
 		<p>
-			For example if we were creating an reconciler for a mobile platform we might need to implement every method, on the other hand if we were doing the same for a DOM based platform could get away with implemnting the methods we want to change to serve our specific need/heuristics.
+			For example if we were creating an reconciler for a mobile platform we might need to implement every method, on the other hand if we were doing the same for a DOM based platform, we could get away with implemnting only the methods we want to change to serve our specific need/heuristics.
 		</p>
 
 		<blockquote>
-			Within the type comments the following <code>{Element}</code> does not refer to a DOM <code>Element</code> but instead a DIO <code>{Element}</code> instance. The <code>Element</code> instance has all the meta data for the element. The <code>"owner"</code> property on an instance is reserved for referencing the host instance, additionally all <code>{Element}</code> instances have additional contextal meta data like <code>"next"</code>, <code>"prev"</code> and <code>"parent"</code> to reference sibling and parent references. An additional property <code>"cache"</code> exists for the need of storing any meta data you might have.
+			Within the type comments the following <code>{Element}</code> does not refer to a DOM <code>Element</code> but instead a DIO <code>{Element}</code> instance. The <code>Element</code> instance has all the meta data for the element. The <code>"owner"</code> property on an instance is a readonly property reserved for referencing the host instance, additionally all <code>{Element}</code> instances have additional contextal meta data like <code>"next"</code>, <code>"prev"</code> and <code>"parent"</code> to reference sibling and parent references. An additional property <code>"cache"</code> exists for the needs of storing any additional meta data a reconciler might want to cache.
 		</blockquote>
 
 		<h2 id=setDocument>setDocument</h2>
@@ -97,27 +97,17 @@ setComment: (element: Element, value: string) => void
 		<h2 id=setProps>setProps</h2>
 
 		<p>
-			Called when assigning an elements individual properties. Use this to update or initialize properties. This method is called in the mount and additionally in the update phase unless <a href="#shouldUpdateProps">shouldUpdateProps</a> returns false.
+			Called when assigning an elements individual properties. Use this to update or initialize properties.
 		</p>
 
 <pre><code>
 setProps: (element: Element, name: string, value: any, xmlns: string?) => void
 </code></pre>
 
-		<h2 id=shouldUpdateProps>shouldUpdateProps</h2>
-
-		<p>
-			Called before updating an elements properties. Use this to opt out of updating properties, for example when you want to apply a batch of properties manually. The default always returns <code>true</code>, when false is returned, <a href="#setProps">setProps</a> is not called. The props argument passed is only a diff of what has changed.
-		</p>
-
-<pre><code>
-shouldUpdateProps: (element: Element, props: object, xmlns: string?) => boolean
-</code></pre>
-
 		<h2 id=getOwner>getOwner</h2>
 
 		<p>
-			Called when retrieving an elements interface via <code>findDOMNode</code>. Use this to return a host node or a proxy that exposes a public interface into the host enviroment.
+			Called when retrieving an elements interface via <code>findDOMNode</code>. Use this to return a public host node or a proxy that exposes a public interface into the host enviroment.
 		</p>
 
 <pre><code>
@@ -154,6 +144,16 @@ getDocument: () => Node
 getTarget: (event: object) => Node
 </code></pre>
 
+		<h2 id=getListener>getListener</h2>
+
+		<p>
+			Called when retrieving an events listener/callback.
+		</p>
+
+<pre><code>
+getListener: (element: Element, event: object) => function
+</code></pre>
+
 		<h2 id=getType>getType</h2>
 
 		<p>
@@ -164,14 +164,24 @@ getTarget: (event: object) => Node
 getType: (element: Element, xmlns: string?) => string
 </code></pre>
 
-		<h2 id=getProps>getProps</h2>
+		<h2 id=getInitialProps>getInitialProps</h2>
 
 		<p>
-			Called when retrieving an elements props, after an instance has been created but before <a href=#setProps>setProps</a>. This is only called in the mounting phase.
+			Called before commiting an elements initial props, after an instance has been created but before <a href=#setProps>setProps</a>. This is only called in the mounting phase.
 		</p>
 
 <pre><code>
-getProps: (element: Element) => object
+getInitialProps: (element: Element, props: object) => object
+</code></pre>
+
+		<h2 id=getUpdatedProps>getUpdatedProps</h2>
+
+		<p>
+			Called before updating an elements props. Use this to define what props to update. This is only called in the update phase.
+		</p>
+
+<pre><code>
+getUpdatedProps: (element: Element, props: object) => object
 </code></pre>
 
 		<h2 id=getPortal>getPortal</h2>
@@ -187,7 +197,7 @@ getPortal: (element: Element) => Node
 		<h2 id=getQuery>getQuery</h2>
 
 		<p>
-			Called when hydrating a container. Use this to find the existing instance.
+			Called when hydrating a container. Use this to find a matching host instance.
 		</p>
 
 <pre><code>
@@ -199,24 +209,34 @@ getQuery: (
 ) => Node
 </code></pre>
 
-		<h2 id=isValidTarget>isValidTarget</h2>
+		<h2 id=willUnmount>willUnmount</h2>
 
 		<p>
-			Called when validating a instance object.
+			Called before an element and its children are unmounted.
 		</p>
 
 <pre><code>
-isValidTarget: (target: object) => boolean
+willUnmount: (element: Element) => boolean
 </code></pre>
 
 		<h2 id=isValidComponent>isValidComponent</h2>
 
 		<p>
-			Called when validating a custom component class. This corrosponds to <a href="#createComponent">createComponent</a>. When true, <a href="#createComponent">createComponent</a> is used to create the instance.
+			Called when validating a custom component class. This corresponds to <a href="#createComponent">createComponent</a>. When true, <a href="#createComponent">createComponent</a> is used to create the instance.
 		</p>
 
 <pre><code>
 isValidComponent: (target: object) => boolean
+</code></pre>
+
+		<h2 id=isValidTarget>isValidTarget</h2>
+
+		<p>
+			Called when validating an instance object.
+		</p>
+
+<pre><code>
+isValidTarget: (target: object) => boolean
 </code></pre>
 
 		<h2 id=isValidEvent>isValidEvent</h2>
@@ -239,14 +259,14 @@ isValidEvent: (event: object) => boolean
 removeChild: (element: Element, parent: Element) => void
 </code></pre>
 
-		<h2 id=insertBefore>insertBefore</h2>
+		<h2 id=insertChild>insertChild</h2>
 
 		<p>
 			Called when inserting an instance.
 		</p>
 
 <pre><code>
-insertBefore: (element: Element, sibling: Element, parent: Element) => void
+insertChild: (element: Element, sibling: Element, parent: Element) => void
 </code></pre>
 
 		<h2 id=appendChild>appendChild</h2>
@@ -307,18 +327,6 @@ createEmpty: (element: Element) => Node
 
 <pre><code>
 createComment: (element: Element) => Node
-</code></pre>
-
-		<h2 id=createExport>createExport</h2>
-
-		<p>
-			Called before <a href=top-level.html#createFactory>createFactory</a> returns exports. Use this to define the clients public API. By default all exports are returned, this serves as an official method to trim down the public API if you don't intend to expose all the API's exposed by DIO.
-		</p>
-
-<pre><code>
-createExport: (
-	exports: object
-) => object
 </code></pre>
 
 	</article>

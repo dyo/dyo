@@ -1,10 +1,12 @@
 ## 9.0.0 (Unreleased)
 
-- New: `createContext` API.
-- New: support for auto resolution of json `fetch` based Promises passed to setState/getInitialState.
+- Breaking: Improve Error Boundaries to act more like React and `try..catch`.
 - Improve: error boundaries implementation to support possible future `Timeout` and `Placeholder` React components.
 - Improve: `async getInitialState` implementation to use the same code path for both server and client implementations.
-- Breaking: Improve Error Boundaries to act more like React and `try..catch`.
+- New: `createClass` API.
+- New: `createContext` API.
+- New: `createComment` API.
+- New: support for auto resolution of json `fetch` based Promises passed to setState/getInitialState.
 
 ## 8.2.3 (25 January 2018)
 

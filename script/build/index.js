@@ -7,7 +7,7 @@ const UglifyES = require('uglify-es')
 const package = require('../../package.json')
 
 let filesize = NaN
-let search = "'{%module%}'"
+let search = "'{{%body%}}'"
 
 const options = {compress: {}}
 const strict = `/* eslint-disable */'use strict'`
@@ -26,16 +26,16 @@ const core = [
 	'../../src/Core/Constant.js',
 	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
+	'../../src/Core/Children.js',
+	'../../src/Core/Factory.js',
+	'../../src/Core/Error.js',
+	'../../src/Core/Event.js',
 	'../../src/Core/Component.js',
 	'../../src/Core/Context.js',
+	'../../src/Core/Find.js',
+	'../../src/Core/Render.js',
 	'../../src/Core/Commit.js',
 	'../../src/Core/Reconcile.js',
-	'../../src/Core/Event.js',
-	'../../src/Core/Error.js',
-	'../../src/Core/Find.js',
-	'../../src/Core/Children.js',
-	'../../src/Core/Render.js',
-	'../../src/Core/Factory.js',
 	'../../src/Core/Node.js'
 ]
 
@@ -69,8 +69,8 @@ Object.defineProperties(Element.prototype, {
 	toStream: {value: toStream}
 })
 
-exports.renderToString = renderToString
-exports.renderToNodeStream = renderToNodeStream
+dio.renderToString = renderToString
+dio.renderToNodeStream = renderToNodeStream
 `
 
 /**
@@ -91,43 +91,34 @@ const pad = (content, tabs) => {
 }
 
 const modulize = (content) => {
-	return content
-		.replace(
-			/if\s*\(typeof[^]*(factory\(global.*\))[^]*}(?!\))/g,
-			'return $1'
-		).replace(
-			/^(;)([^]*)/g,
-			'$1var dio = $2\n' + api.replace(/(export)s\.(\w+).*/g, '$1 var $2 = dio.$2;')
-		) + '\nexport default dio;'
-
-	return content
+	return content + '\n' + api.replace(/(dio)\.(\w+).*/g, 'export var $2 = dio.$2') + '\nexport default dio'
 }
 
 const factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
 const api = `
-exports.render = render
-exports.hydrate = hydrate
-exports.Component = Component
-exports.Fragment = SymbolFragment
-exports.PureComponent = PureComponent
-exports.Children = Children
-exports.createContext = createContext
-exports.createFactory = createFactory
-exports.cloneElement = cloneElement
-exports.isValidElement = isValidElement
-exports.createPortal = createPortal
-exports.createElement = createElement
-exports.createComment = createComment
-exports.createClass = createClass
-exports.unmountComponentAtNode = unmountComponentAtNode
-exports.findDOMNode = findDOMNode
-exports.h = createElement
+dio.render = render
+dio.hydrate = hydrate
+dio.Component = Component
+dio.Fragment = SymbolFragment
+dio.PureComponent = PureComponent
+dio.Children = Children
+dio.createContext = createContext
+dio.createFactory = createFactory
+dio.cloneElement = cloneElement
+dio.isValidElement = isValidElement
+dio.createPortal = createPortal
+dio.createElement = createElement
+dio.createComment = createComment
+dio.createClass = createClass
+dio.unmountComponentAtNode = unmountComponentAtNode
+dio.findDOMNode = findDOMNode
+dio.h = createElement
 `
 
 const internals = `
-exports,
+dio,
 Element,
-mountComponentElement,
+mountComponentInstance,
 delegateErrorBoundary,
 getElementDefinition,
 createElementSnapshot,
@@ -137,21 +128,13 @@ commitOwner
 `.replace(/\s+/g, ' ').trim()
 
 const template = `
-if (typeof include === 'function')
-	(function () {
-		try {
-			include('./'+'cjs')(${internals})
-		} catch (error) {
-			/* istanbul ignore next */
-			printErrorException(error)
-			/* istanbul ignore next */
-			printErrorException('Something went wrong when importing "server" module')
-		}
-	}())
+/* istanbul ignore next */
+
+if (typeof module === 'function') module(${internals})
 `.trim()
 
 const parse = (head, body, tail, factory) => {
-	return factory.replace(search,'\n'+pad(head+body+tail))
+	return factory.replace(search,'\n'+pad(head+body+tail, 2))
 }
 
 const builder = (file) => {
@@ -159,10 +142,9 @@ const builder = (file) => {
 }
 
 const wrapper = (module, content, factory, version, license) => {
-	var head = `var exports = {version: '${version}'}\n\n`
-	var expo = '\n'+api.trim()+'\n\n'
-	var temp = '\n\nreturn exports'
-	var tail = expo+template+temp
+	var head = `var dio = {version: '${version}'}\n\n`
+	var expo = '\n'+api.trim()
+	var temp = '\n\nreturn dio'
 
 	switch (module) {
 		case 'cjs': {
@@ -170,26 +152,26 @@ const wrapper = (module, content, factory, version, license) => {
 				head: comment(version, license),
 				body: 'module.exports = function ('+(internals)+') {'+strict+
 					'\n\n'+pad(content.trim()+'\n\n'+server.trim())+'\n}',
-				tail: ''
+				tail: '/*!/dio*/'
 			}
 		}
 		case 'esm':
 			return {
 				head: comment(version, license),
-				body: parse(head, content, tail, modulize(factory)),
-				tail: ''
+				body: parse(head, content, expo+temp, modulize(factory)),
+				tail: '/*!/dio*/'
 			}
 		default:
 			return {
 				head: comment(version, license),
-				body: parse(head, content, tail, factory),
-				tail: ''
+				body: parse(head, content, expo+'\n\n'+template+temp, factory),
+				tail: '/*!/dio*/'
 			}
 	}
 }
 
 const comment = (version, license) => {
-	return `/*! DIO ${version} @license MIT */\n\n`
+	return `/*!dio ${version} @license MIT */\n`
 }
 
 const bundle = (module, files, location) => {
@@ -200,7 +182,7 @@ const bundle = (module, files, location) => {
 	var factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
 
 	let content = wrapper(module, files.map(builder).join('\n'), factory, version, license)
-			content = (content.head + content.body + '\n\n' + content.tail).trim()+'\n'
+			content = (content.head + content.body + '\n' + content.tail).trim()+'\n'
 
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 

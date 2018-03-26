@@ -204,8 +204,8 @@ describe('Component', () => {
 			'willMount B',
 			'didMount B',
 			'didMount A',
-			'willUnmount A',
 			'willUnmount B',
+			'willUnmount A',
 			'willMount C',
 			'didMount C'
 		])
@@ -621,6 +621,34 @@ describe('Component', () => {
 		assert.html(container, '2')
 	})
 
+	it('should render getDefaultProps(object) from createClass component', () => {
+		let container = document.createElement('div')
+		let A = createClass({
+			getDefaultProps: {children: 2},
+			render() {
+				return this.props.children
+			}
+		})
+
+		render(A, container)
+		assert.html(container, '2')
+	})
+
+	it('should render getDefaultProps(function) from createClass component', () => {
+		let container = document.createElement('div')
+		let A = createClass({
+			getDefaultProps() {
+				return {children: 2}
+			},
+			render() {
+				return this.props.children
+			}
+		})
+
+		render(A, container)
+		assert.html(container, '2')
+	})
+
 	it('should update component ref', () => {
 		let container = document.createElement('div')
 		let stack = []
@@ -881,6 +909,34 @@ describe('Component', () => {
 		render(h(A, 3), container)
 	})
 
+	it('should ensure setState in componentWillUpdate is both stack(overflow) and async safe', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		class A {
+			getInitialState() {
+				return {value: 0}
+			}
+			componentWillUpdate(nextProps, nextState) {
+				this.setState({value: nextState.value + 1})
+			}
+			render() {
+				return stack.push(this.state.value) && h('h1', this.state.value)
+			}
+		}
+
+		render(h(A, {ref: (node) => refs = node}), container)
+		assert.html(container, `<h1>0</h1>`)
+
+		render(h(A, {ref: (node) => refs = node}), container)
+		assert.html(container, `<h1>1</h1>`)
+
+		refs.forceUpdate()
+		assert.html(container, `<h1>2</h1>`)
+		assert.deepEqual(stack, [0, 1, 2])
+	})
+
 	it('should ensure a pending update from componentDidUpdate update is resolved', (done) => {
 		let container = document.createElement('div')
 		let stack = []
@@ -1079,6 +1135,7 @@ describe('Component', () => {
 	it('should update state from componentWillReceiveProps synchronously', () => {
 		let container = document.createElement('div')
 		let stack = []
+		let refs
 
 		class A {
 			getInitialState() {
@@ -1086,7 +1143,8 @@ describe('Component', () => {
 					name: 'Empty'
 				}
 			}
-			componentWillReceiveProps() {
+			componentWillReceiveProps(props, context) {
+				refs = context
 				stack.push('componentWillReceiveProps')
 				this.setState({name: 'World'})
 			}
@@ -1108,6 +1166,7 @@ describe('Component', () => {
 			'componentWillReceiveProps',
 			'World'
 		])
+		assert.deepEqual(refs, {})
 	})
 
 	it('should async import a "default" component module', (done) => {

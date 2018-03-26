@@ -97,7 +97,7 @@ function clearErrorBoundary (element) {
  * @param {Exception} exception
  */
 function replaceErrorBoundary (element, host, parent, exception) {
-	commitUnmount(element, parent)
+	commitUnmountElement(element, parent)
 	delegateErrorBoundary(element, host, exception)
 }
 
