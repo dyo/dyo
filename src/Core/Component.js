@@ -130,12 +130,7 @@ function createComponentPrototype (prototype) {
  */
 function getComponentClass (type) {
 	if (!type[SharedSitePrototype] || !type[SharedSitePrototype][SharedSiteRender])
-		if (type[SymbolComponent])
-			return type[SymbolComponent]
-		else if (isValidNodeComponent(type))
-			return type[SymbolComponent] = CustomComponent
-		else
-			return createComponentClass(type, function () {})
+		return type[SymbolComponent] || (isValidNodeComponent(type) ? CustomComponent : createComponentClass(type, function () {}))
 
 	if (!type[SharedSitePrototype][SymbolComponent])
 		createComponentPrototype(type[SharedSitePrototype])

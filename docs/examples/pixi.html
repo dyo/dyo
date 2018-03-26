@@ -12,33 +12,31 @@
 	<script>
 		var app = new PIXI.Application(300, 300, {backgroundColor : 0x1099bb})
 
-		var getNode = (element) => element.DOM
-
 		var PixiClient = dio.createFactory({
 			setProps: (element, name, value, xmlns) => {
 				switch (name) {
 					case 'anchor':
-						getNode(element)[name].x = value.x
-						getNode(element)[name].y = value.y
+						element.owner[name].x = value.x
+						element.owner[name].y = value.y
 						break
 					default:
-						getNode(element)[name] = value
+						element.owner[name] = value
 				}
 			},
 			getDocument: () => {
 				return app.stage
 			},
-			getProps: (element) => {
-				return element.props
+			getInitialProps: (element, props) => {
+				return props
 			},
-			removeNode: () => {},
-			insertNode: (element, sibling, parent) => {
-				getNode(parent).addChildAt(getNode(element), getNode(parent).getChildIndex(getNode(sibling)))
+			removeChild: () => {},
+			insertChild: (element, sibling, parent) => {
+				parent.owner.addChildAt(element.owner, parent.owner.getChildIndex(sibling.owner))
 			},
-			appendNode: (element, parent) => {
-				getNode(parent).addChild(getNode(element))
+			appendChild: (element, parent) => {
+				parent.owner.addChild(element.owner)
 			},
-			isValidNode:  (target) => {
+			isValidTarget:  (target) => {
 				return target && !!target.addChild
 			},
 			createElement: (element) => {

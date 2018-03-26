@@ -60,7 +60,7 @@ objectDefineProperties(objectDefineProperty(List[SharedSitePrototype], SymbolIte
  * @constructor
  */
 function WeakHash () {
-	this.hash = random()
+	this.hash = Math.random()
 }
 /**
  * @type {object}
@@ -233,11 +233,4 @@ function fetchable (object) {
  */
 function thenable (object) {
 	return typeof object.then === 'function' && typeof object.catch === 'function'
-}
-
-/**
- * @return {string}
- */
-function random () {
-	return (((seed = seed * 16807 % uuid - 1) - 1) / uuid).toString(36).substring(2)
 }

@@ -134,6 +134,9 @@ if (typeof module === 'function') module(${internals})
 `.trim()
 
 const parse = (head, body, tail, factory) => {
+	if (factory.indexOf(search) === -1)
+		throw 'invalid umd wrapper'
+
 	return factory.replace(search,'\n'+pad(head+body+tail, 2))
 }
 
