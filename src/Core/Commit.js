@@ -58,14 +58,8 @@ function commitMountElement (element, sibling, parent, host, operation, signatur
  * @param {number} signature
  */
 function commitMountElementChildren (element, sibling, host, operation, signature) {
-	var children = element.children
-	var length = children.length
-	var next = children.next
-
-	while (length-- > 0) {
-		commitMountElement(next, sibling, element, host, operation, signature)
-		next = next.next
-	}
+	for (var children = element.children, length = children.length; length > 0; --length)
+		commitMountElement(children = children.next, sibling, element, host, operation, signature)
 }
 
 /**
@@ -143,11 +137,10 @@ function commitMountComponentChildren (element, sibling, parent, host, operation
 /**
  * @param {Element} element
  * @param {Element} parent
- * @param {Element} children
  */
-function commitUnmountPromise (element, parent, children) {
+function commitUnmountPromise (element, parent) {
 	element.cache.then(function () {
-		commitOwnerRemove(children, parent)
+		commitOwnerRemove(element, parent)
 	})
 }
 
@@ -156,44 +149,65 @@ function commitUnmountPromise (element, parent, children) {
  * @param {Element} parent
  */
 function commitUnmountElement (element, parent) {
-	if (element.active)
-		if (commitUnmountElementChildren(element, parent, SharedUnmountElement))
-			commitUnmountPromise(element, parent, getElementDescription(element))
-		else
-			commitOwnerRemove(element, parent)
+	if (!element.active)
+		return
+
+	commitUnmountElementChildren(element, parent, element)
+
+	if (element.id === SharedElementComponent)
+		if (element.cache)
+			return commitUnmountPromise(element, parent)
+
+	commitOwnerRemove(element, parent)
 }
 
 /**
  * @param {Element} element
  * @param {Element} parent
- * @param {number} signature
- * @return {boolean}
+ * @param {Element} host
  */
-function commitUnmountElementChildren (element, parent, signature) {
-	var id = element.id
-	var active = element.active = false
-	var children = element.children
+function commitUnmountElementChildren (element, parent, host) {
+	switch (element.active = false, element.id) {
+		case SharedElementComponent:
+			commitUnmountComponentElement(element, parent, host)
+		case SharedElementSnapshot:
+			break
+		case SharedElementText:
+		case SharedElementEmpty:
+		case SharedElementComment:
+			return willNodeUnmount(element, parent, host)
+		case SharedElementPortal:
+			if (element.active = (element !== host && parent.id > SharedElementSnapshot))
+				return commitUnmountElement(element, parent)
+		default:
+			for (var children = element.children, length = children.length; length > 0; --length)
+				commitUnmountElementChildren(children = children.next, element, host)
 
-	if (id !== SharedElementComponent) {
-		if (id < SharedElementComment)
-			for (var length = children.length; length > 0; --length)
-				commitUnmountElementChildren(children = children.next, element, SharedUnmountChildren)
-
-		willNodeUnmount(element, parent)
-
-		if (id === SharedElementPortal && signature === SharedUnmountChildren && parent.id > SharedElementSnapshot)
-			commitOwnerRemove(element, parent)
-	} else {
-		commitUnmountElementChildren(children, parent, signature)
-
-		if (unmountComponentInstance(element))
-			active = !active
+			willNodeUnmount(element, parent, host)
 	}
 
 	if (element.ref)
 		commitOwnerRefs(element, element.ref, SharedRefsRemove)
+}
 
-	return active
+/**
+ * @param {Element} element
+ * @param {Element} parent
+ * @param {Element} host
+ */
+function commitUnmountComponentElement (element, parent, host) {
+	commitUnmountComponentChildren(element, parent, host, element.children)
+	unmountComponentInstance(element)
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} parent
+ * @param {Element} host
+ * @param {Element} children
+ */
+function commitUnmountComponentChildren (element, parent, host, children) {
+	commitUnmountElementChildren(children, parent, element !== host ? host : children)
 }
 
 /**
@@ -235,14 +249,14 @@ function commitOwner (element) {
  * @return {boolean}
  */
 function commitOwnerQuery (element, parent) {
-	element.owner = getNodeQuery(
-		element,
-		parent,
-		getElementDescription(getElementSibling(element, parent, SharedLinkedPrevious)),
-		getElementSibling(element, parent, SharedLinkedNext)
+	return element.active = !!(
+		element.owner = getNodeQuery(
+			element,
+			parent,
+			getElementDescription(getElementSibling(element, parent, SharedLinkedPrevious)),
+			getElementSibling(element, parent, SharedLinkedNext)
+		)
 	)
-
-	return element.active = !!element.owner
 }
 
 /**

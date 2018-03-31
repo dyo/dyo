@@ -87,7 +87,7 @@ describe('Context', () => {
 							render(props, state, {children}) {
 								return class {
 									componentDidMount() {
-										stack.push(this.context === context)
+										stack.push(this.context !== context)
 									}
 									render(props, state, {children}) {
 										return children
@@ -104,7 +104,7 @@ describe('Context', () => {
 		render(A, container)
 
 		assert.html(container, '0')
-		assert.propertyVal(context, 'children', 0)
+		assert.propertyVal(context, 'children', -1)
 		assert.deepEqual(stack, [true, true])
 	})
 

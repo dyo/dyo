@@ -1,5 +1,6 @@
 /**
  * @constructor
+ * @extends Component
  * @param {object} props
  * @param {object} context
  */
@@ -11,8 +12,8 @@ function ContextProvider (props, context) {
  */
 ContextProvider[SharedSitePrototype] = objectCreate(Component[SharedSitePrototype], {
   getInitialState: {
-    value: function (props) {
-      return this[SymbolElement].cache = {provider: this, consumers: new List()}
+    value: function (props, state, context) {
+      return (this[SymbolElement].context = merge({}, context))[props.uuid] = {provider: this, consumers: new List()}
     }
   },
   render: {
@@ -34,6 +35,7 @@ ContextProvider[SharedSitePrototype] = objectCreate(Component[SharedSitePrototyp
 
 /**
  * @constructor
+ * @extends Component
  * @param {object} props
  * @param {object} context
  */
@@ -46,7 +48,7 @@ function ContextConsumer (props, context) {
 ContextConsumer[SharedSitePrototype] = objectCreate(Component[SharedSitePrototype], {
   getInitialState: {
     value: function (props) {
-      return this[SymbolContext] || {provider: this}
+      return this.context[props.uuid] || {provider: this}
     }
   },
   render: {
@@ -91,5 +93,5 @@ function createContextComponent (value) {
  * @return {object}
  */
 function createContext (value) {
-  return createContextComponent({value: value, children: noop})
+  return createContextComponent({value: value, children: noop, uuid: random('dio.Context')})
 }

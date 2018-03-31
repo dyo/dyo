@@ -1,5 +1,5 @@
 describe('Error', () => {
-	it('should not render unknown objects', () => {
+	it('should not render invalid objects', () => {
 		let container = document.createElement('div')
 
 		assert.throws(() => {
@@ -12,6 +12,30 @@ describe('Error', () => {
 
 		assert.throws(() => {
 			render(h('div', null, new Date()), container)
+		})
+
+		assert.throws(() => {
+			render(h({}), container)
+		})
+	})
+
+	it('should not render invalid primitives', () => {
+		let container = document.createElement('div')
+
+		assert.throws(() => {
+			render(h(null), container)
+		})
+
+		assert.throws(() => {
+			render(h(undefined), container)
+		})
+
+		assert.throws(() => {
+			render(h(1), container)
+		})
+
+		assert.throws(() => {
+			render(h(Symbol('foo')), container)
 		})
 	})
 

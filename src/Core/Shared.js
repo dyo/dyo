@@ -33,6 +33,14 @@ var SharedUnmountChildren = 2
 var SharedWorkIdle = 1
 var SharedWorkUpdating = 2
 
+var SharedKeyHead = '&|head|'
+var SharedKeyBody = '&|body|'
+var SharedKeyTail = '&|tail|'
+
+var SharedLocalNameComment = '#comment'
+var SharedLocalNameEmpty = '#empty'
+var SharedLocalNameText = '#text'
+
 var SharedLinkedPrevious = 'prev'
 var SharedLinkedNext = 'next'
 
@@ -47,16 +55,6 @@ var SharedSiteForceUpdate = 'forceUpdate'
 var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
 var SharedSiteDisplayName = 'displayName'
-var SharedDefaultProps = 'defaultProps'
-var SharedGetDefaultProps = 'getDefaultProps'
-
-var SharedKeyHead = '&|head|'
-var SharedKeyBody = '&|body|'
-var SharedKeyTail = '&|tail|'
-
-var SharedLocalNameComment = '#comment'
-var SharedLocalNameEmpty = '#empty'
-var SharedLocalNameText = '#text'
 
 var SharedComponentWillMount = 'componentWillMount'
 var SharedComponentDidMount = 'componentDidMount'
@@ -68,3 +66,5 @@ var SharedComponentWillUnmount = 'componentWillUnmount'
 var SharedComponentDidCatch = 'componentDidCatch'
 var SharedGetChildContext = 'getChildContext'
 var SharedGetInitialState = 'getInitialState'
+var SharedGetDefaultProps = 'getDefaultProps'
+var SharedDefaultProps = 'defaultProps'

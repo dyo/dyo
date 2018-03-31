@@ -1,4 +1,3 @@
-/*!dio 8.2.4 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -20,4 +19,3 @@
 		window : typeof global === 'object' && global['global'] === global ? global : this,
 	/* istanbul ignore next */typeof arguments === 'object' && arguments[1]
 ));
-/*!/dio*/

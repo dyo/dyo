@@ -67,13 +67,6 @@ describe('Factory', () => {
 		assert.propertyVal(element, 'type', 'h1')
 		assert.propertyVal(element.props, 'id', 'id')
 		assert.propertyVal(element.children.next, 'children', '1')
-
-		let composed = createFactory(element)('2')
-
-		assert.propertyVal(composed, 'type', 'h1')
-		assert.propertyVal(composed, 'type', 'h1')
-		assert.propertyVal(composed.props, 'id', 'id')
-		assert.propertyVal(composed.children.next, 'children', '2')
 	})
 
 	it('should create a render factory', () => {

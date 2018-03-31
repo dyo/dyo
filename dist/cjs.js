@@ -1,4 +1,4 @@
-/*!dio 9.0.0-alpha @license MIT */
+/*!dio 9.0.0-alpha.0 @license MIT */
 module.exports = function (dio, Element, mountComponentInstance, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = 1
@@ -36,6 +36,14 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	var SharedWorkIdle = 1
 	var SharedWorkUpdating = 2
 	
+	var SharedKeyHead = '&|head|'
+	var SharedKeyBody = '&|body|'
+	var SharedKeyTail = '&|tail|'
+	
+	var SharedLocalNameComment = '#comment'
+	var SharedLocalNameEmpty = '#empty'
+	var SharedLocalNameText = '#text'
+	
 	var SharedLinkedPrevious = 'prev'
 	var SharedLinkedNext = 'next'
 	
@@ -50,16 +58,6 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
 	var SharedSiteDisplayName = 'displayName'
-	var SharedDefaultProps = 'defaultProps'
-	var SharedGetDefaultProps = 'getDefaultProps'
-	
-	var SharedKeyHead = '&|head|'
-	var SharedKeyBody = '&|body|'
-	var SharedKeyTail = '&|tail|'
-	
-	var SharedLocalNameComment = '#comment'
-	var SharedLocalNameEmpty = '#empty'
-	var SharedLocalNameText = '#text'
 	
 	var SharedComponentWillMount = 'componentWillMount'
 	var SharedComponentDidMount = 'componentDidMount'
@@ -71,6 +69,8 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	var SharedComponentDidCatch = 'componentDidCatch'
 	var SharedGetChildContext = 'getChildContext'
 	var SharedGetInitialState = 'getInitialState'
+	var SharedGetDefaultProps = 'getDefaultProps'
+	var SharedDefaultProps = 'defaultProps'
 	
 	/**
 	 * @param {Element} element

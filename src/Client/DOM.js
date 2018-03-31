@@ -347,8 +347,9 @@ function isValidDOMEvent (event) {
 /**
  * @param {Element} element
  * @param {Element} parent
+ * @param {Element} host
  */
-function willDOMUnmount (element, parent) {}
+function willDOMUnmount (element, parent, host) {}
 
 /**
  * @param {Element} element

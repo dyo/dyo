@@ -232,3 +232,11 @@ function fetchable (object) {
 function thenable (object) {
 	return typeof object.then === 'function' && typeof object.catch === 'function'
 }
+
+/**
+ * @param {string} prefix
+ * @return {string}
+ */
+function random (prefix) {
+	return prefix + '.' + (((seed = seed * 16807 % uuid - 1) - 1) / uuid).toString(36).substring(2)
+}

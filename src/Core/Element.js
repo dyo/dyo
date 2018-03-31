@@ -54,14 +54,8 @@ function createElementImmutable (snapshot) {
  * @return {List}
  */
 function createElementImmutableChildren (iterable) {
-	var children = new List()
-	var length = iterable.length
-	var element = iterable.next
-
-	while (length-- > 0) {
-		children.insert(createElementImmutable(element), children)
-		element = element.next
-	}
+	for (var children = new List(), element = iterable, length = element.length; length > 0; --length)
+		children.insert(createElementImmutable(element = element.next), children)
 
 	return children
 }
@@ -132,8 +126,7 @@ function createElementFragment (iterable) {
 	var element = new Element(SharedElementFragment)
 
 	element.type = SymbolFragment
-
-	createElementBoundary(element.children = createElementChildren(iterable))
+	element.children = createElementChildren(iterable)
 
 	return element
 }
@@ -149,7 +142,21 @@ function createElementComponent (type, props, children) {
 
 	element.type = type
 	element.props = props
-	element.children = createElementChildren(createElementFragment(children))
+	element.children = createElementChildren(children)
+
+	return element
+}
+
+/**
+ * @param {*} type
+ * @param {object} props
+ * @param {Array} config
+ * @return {List}
+ */
+function createElementClone (type, props, config) {
+	var element = createElement.apply(null, [type].concat(config))
+
+	getElementProps(element, element.props = assign({}, props, element.props))
 
 	return element
 }
@@ -166,6 +173,8 @@ function createElementChildren (iterable) {
 			getElementChildren(children, iterable[i], i)
 	else
 		getElementChildren(children, iterable, 0)
+
+	createElementBoundary(children)
 
 	return children
 }
@@ -382,23 +391,19 @@ function getElementModule (element) {
 }
 
 /**
- * @param {(Element|Array)} element
+ * @param {(Element|Array)} children
  * @param {object} container
  * @param {(string|number|symbol)?} key
  * @return {Element}
  */
-function createPortal (element, container, key) {
-	var portal = new Element(SharedElementPortal)
-	var children = new List()
+function createPortal (children, container, key) {
+	var element = new Element(SharedElementPortal)
 
-	portal.type = container
-	portal.children = children
-	portal.key = key === undefined ? null : key
+	element.type = container
+	element.key = key === undefined ? null : key
+	element.children = createElementChildren(children)
 
-	getElementChildren(children, element, 0)
-	createElementBoundary(children)
-
-	return portal
+	return element
 }
 
 /**
@@ -407,19 +412,19 @@ function createPortal (element, container, key) {
  * @return {Element}
  */
 function createComment (content, key) {
-	var comment = new Element(SharedElementComment)
+	var element = new Element(SharedElementComment)
 
-	comment.type = SharedLocalNameComment
-	comment.children = content + ''
-	comment.key = key === undefined ? null : key
+	element.type = SharedLocalNameComment
+	element.key = key === undefined ? null : key
+	element.children = content + ''
 
-	return comment
+	return element
 }
 
 /**
- * @param {(string|function|Promise|symbol)} type
- * @param {object?} config
- * @param {...} children
+ * @param {*} type
+ * @param {*?} config
+ * @param {...*}
  * @return {Element}
  */
 function createElement (type, config) {
@@ -471,10 +476,8 @@ function createElement (type, config) {
 			if (type === SymbolFragment)
 				createElementBoundary((element.id = SharedElementFragment, children))
 			break
-		case 'object':
-			if (isValidElement(type))
-				type = (getElementProps(element, props = assign({}, type.props, props)), element.id = type.id, type.type)
-			else if (thenable(type))
+		default:
+			if (thenable(type))
 				createElementBoundary((element.id = SharedElementPromise, children))
 	}
 
@@ -486,12 +489,12 @@ function createElement (type, config) {
 
 /**
  * @param {Element} element
- * @param {object?} props
- * @param {...} children
- * @return {Element}
+ * @param {...*}
+ * @return {Element?}
  */
-function cloneElement () {
-	return createElement.apply(null, arguments)
+function cloneElement (element) {
+	if (isValidElement(element))
+		return createElementClone(element.type, element.props, [].slice.call(arguments, 1))
 }
 
 /**

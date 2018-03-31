@@ -281,18 +281,7 @@ describe('Server', () => {
 			{
 				"type":"x-span",
 				"props":{"class":"foo","innerHTML":"<p>innerHTML</p>"},
-				"children":[
-					[
-						[
-							"1",
-							{
-								"type":"h1",
-								"props":{},
-								"children":["Hello"]
-							}
-						]
-					]
-				]
+				"children":[["","1",{"type":"h1","props":{},"children":["Hello"]},""]]
 			}
 		`)
 	})

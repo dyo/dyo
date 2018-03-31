@@ -16,6 +16,7 @@ Component[SharedSitePrototype] = createComponentPrototype(Component[SharedSitePr
 
 /**
  * @constructor
+ * @extends Component
  * @param {object} props
  * @param {object} context
  */
@@ -31,6 +32,7 @@ PureComponent[SharedSitePrototype] = objectCreate(Component[SharedSitePrototype]
 
 /**
  * @constructor
+ * @extends Component
  * @param {object} props
  * @param {object} context
  */
@@ -153,9 +155,10 @@ function getComponentDescriptor (name, value) {
 		case SharedComponentDidUpdate:
 		case SharedComponentWillUnmount:
 		case SharedComponentDidCatch:
-		case SharedSiteConstructor:
+		case SharedGetDefaultProps:
 		case SharedGetChildContext:
 		case SharedGetInitialState:
+		case SharedSiteConstructor:
 		case SharedSiteDisplayName:
 		case SharedSiteRender:
 			return {value: value, writable: true, configurable: true, enumerable: false}
@@ -192,14 +195,13 @@ function mountComponentInstance (element) {
 	owner.context = context
 	owner.refs = owner.refs || {}
 	owner[SymbolState] = owner[SymbolCache] = {}
-	owner[SymbolContext] = element.cache = host.cache
 	owner[SymbolElement] = element
 
 	if (owner[SharedGetInitialState])
 		owner.state = getLifecycleUpdate(element, SharedGetInitialState, props, state, context) || state
 
 	if (owner[SharedComponentWillMount])
-		getLifecycleMount(element, SharedComponentWillMount)
+		getLifecycleUpdate(element, SharedComponentWillMount, props, state, context)
 
 	if (thenable(state = owner.state))
 		children = createElementPromise(enqueueComponentInitialState(element, owner, state))
@@ -207,7 +209,7 @@ function mountComponentInstance (element) {
 		children = getLifecycleRender(element, owner)
 
 	if (owner[SharedGetChildContext])
-		element.context = getLifecycleUpdate(element, SharedGetChildContext, props, state, context) || context
+		element.context = assign({}, context, getLifecycleUpdate(element, SharedGetChildContext, props, state, context))
 
 	return element.children = children
 }
@@ -465,7 +467,7 @@ function getLifecycleUnmount (element, name) {
  */
 function getLifecycleMount (element, name) {
 	try {
-		enqueueComponentValue(element, name, element.owner[name](element.active && getNodeOwner(getElementDescription(element))))
+		enqueueComponentValue(element, name, element.owner[name](getNodeOwner(getElementDescription(element))))
 	} catch (err) {
 		throwErrorException(element, err, name)
 	}
