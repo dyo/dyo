@@ -289,7 +289,7 @@ interface createPortal {
 	(element: ElementNode, container: Node, key: any): ElementNode
 }
 
-interface createCommet {
+interface createComment {
 	(content: string|number, key: any): ElementNode
 }
 

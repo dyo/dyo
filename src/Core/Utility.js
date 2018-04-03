@@ -1,16 +1,20 @@
 /**
+ * @name List
  * @constructor
+ * @property {object} next
+ * @property {object} prev
+ * @property {number} length
  */
 function List () {
 	this.next = this
 	this.prev = this
 	this.length = 0
 }
-/**
- * @type {object}
- */
-objectDefineProperties(objectDefineProperty(List[SharedSitePrototype], SymbolIterator, {value: noop}), {
+ObjectDefineProperties(ObjectDefineProperty(List[SharedSitePrototype], SymbolForIterator, {value: SymbolForIterator}), {
 	/**
+	 * @alias List#insert
+	 * @memberof List
+	 * @type {function}
 	 * @param {object} node
 	 * @param {object} before
 	 * @return {object}
@@ -29,11 +33,14 @@ objectDefineProperties(objectDefineProperty(List[SharedSitePrototype], SymbolIte
 		}
 	},
 	/**
+	 * @alias List#remove
+	 * @memberof List
+	 * @type {function}
 	 * @param {object} node
 	 * @return {object}
 	 */
 	remove: {
-			value: function remove (node) {
+		value: function remove (node) {
 			if (this.length === 0)
 				return node
 
@@ -46,10 +53,13 @@ objectDefineProperties(objectDefineProperty(List[SharedSitePrototype], SymbolIte
 		}
 	},
 	/**
+	 * @alias List#forEach
+	 * @memberof List
+	 * @type {function}
 	 * @param {function} callback
 	 */
 	forEach: {
-			value: function forEach (callback) {
+		value: function forEach (callback) {
 			for (var node = this, length = node.length; length > 0; --length)
 				callback(node = node.next)
 		}
@@ -57,33 +67,43 @@ objectDefineProperties(objectDefineProperty(List[SharedSitePrototype], SymbolIte
 })
 
 /**
+ * @name WeakHash
  * @constructor
+ * @property {symbol} hash
  */
 function WeakHash () {
 	this.hash = Symbol()
 }
-/**
- * @type {object}
- */
-objectDefineProperties(WeakHash[SharedSitePrototype], {
+ObjectDefineProperties(WeakHash[SharedSitePrototype], {
 	/**
-	 * @param {*} key
-	 * @param {*} value
+	 * @alias WeakHash#set
+	 * @memberof WeakHash
+	 * @type {function}
+	 * @param {any} key
+	 * @param {any} value
 	 */
 	set: {
-		value: function set (key, value ) {
+		value: function set (key, value) {
 			key[this.hash] = value
-	}},
+		}
+	},
 	/**
-	 * @param {*} key
-	 * @return {*}
+	 * @alias WeakHash#get
+	 * @memberof WeakHash
+	 * @type {function}
+	 * @param {any} key
+	 * @return {any}
 	 */
 	get: {
 		value: function get (key) {
 			return key[this.hash]
-	}},
+		}
+	},
 	/**
-	 * @param {*} key
+	 * @alias WeakHash#has
+	 * @memberof WeakHash
+	 * @type {function}
+	 * @param {any} key
 	 * @return {boolean}
 	 */
 	has: {
@@ -100,47 +120,47 @@ function noop () {}
 
 /**
  * @param {object} object
- * @param {object} primary
+ * @param {object} a
  */
-function merge (object, primary) {
-	for (var key in primary)
-		object[key] = primary[key]
+function merge (object, a) {
+	for (var key in a)
+		object[key] = a[key]
 
 	return object
 }
 
 /**
  * @param {object} object
- * @param {object} primary
- * @param {object} secondary
+ * @param {object} a
+ * @param {object} b
  * @return {object}
  */
-function assign (object, primary, secondary) {
-	for (var key in primary)
-		object[key] = primary[key]
+function assign (object, a, b) {
+	for (var key in a)
+		object[key] = a[key]
 
-	for (var key in secondary)
-		object[key] = secondary[key]
+	for (var key in b)
+		object[key] = b[key]
 
 	return object
 }
 
 /**
- * @param {Array} array
- * @param {Array} output
- * @return {Array}
+ * @param {Array<any>} array
+ * @param {Array<any>} output
+ * @return {Array<any>}
  */
 function flatten (array, output) {
 	for (var i = 0; i < array.length; ++i)
-		isArray(array[i]) ? flatten(array[i], output) : output.push(array[i])
+		ArrayisArray(array[i]) ? flatten(array[i], output) : output.push(array[i])
 
 	return output
 }
 
 /**
- * @param {Array} haystack
+ * @param {Array<any>} haystack
  * @param {function} callback
- * @param {*} thisArg
+ * @param {any} thisArg
  */
 function find (haystack, callback, thisArg) {
 	if (typeof haystack.find === 'function')
@@ -167,6 +187,7 @@ function each (iterable, callback) {
 }
 
 /**
+ * @throws {Error}
  * @param {string} from
  * @param {string} message
  */
@@ -181,7 +202,7 @@ function invariant (from, message) {
  */
 function compare (a, b) {
 	for (var key in a)
-		if (!objectHasOwnProperty.call(b, key))
+		if (!ObjectHasOwnProperty.call(b, key))
 			return true
 
 	for (var key in b)
@@ -192,8 +213,8 @@ function compare (a, b) {
 }
 
 /**
- * @param {*} a
- * @param {*} b
+ * @param {any} a
+ * @param {any} b
  * @return {boolean}
  */
 function is (a, b) {
@@ -238,5 +259,5 @@ function thenable (object) {
  * @return {string}
  */
 function random (prefix) {
-	return prefix + '.' + (((seed = seed * 16807 % uuid - 1) - 1) / uuid).toString(36).substring(2)
+	return prefix + '.' + (((SEED = SEED * 16807 % UUID - 1) - 1) / UUID).toString(36).substring(2)
 }

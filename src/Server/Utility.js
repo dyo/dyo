@@ -86,7 +86,8 @@ function getTextEncode (character) {
 }
 
 /**
- * @param {string}
+ * @param {string} type
+ * @return {boolean}
  */
 function isVoidType (type) {
 	if (typeof type === 'string')

@@ -1,6 +1,23 @@
 /**
+ * @name Element
  * @constructor
  * @param {number} id
+ * @property {number} id
+ * @property {boolean} active
+ * @property {number} work
+ * @property {string?} xmlns
+ * @property {(string|symbol)?} key
+ * @property {(string|function)?} ref
+ * @property {(function|string|object|symbol)?} type
+ * @property {object} props
+ * @property {object?} cache
+ * @property {any} children
+ * @property {(Component|object)?} owner
+ * @property {object?} context
+ * @property {Element?} parent
+ * @property {Element?} host
+ * @property {Element} next
+ * @property {Element} prev
  */
 function Element (id) {
 	this.id = id
@@ -20,12 +37,23 @@ function Element (id) {
 	this.next = null
 	this.prev = null
 }
-/**
- * @type {object}
- */
-objectDefineProperties(objectDefineProperty(Element[SharedSitePrototype], SymbolIterator, {value: noop}), {
- 	constructor: {value: SymbolElement},
- 	handleEvent: {value: handleEvent}
+ObjectDefineProperties(ObjectDefineProperty(Element[SharedSitePrototype], SymbolForIterator, {value: SymbolForIterator}), {
+	/**
+	 * @alias Element#constructor
+	 * @memberof Element
+	 * @type {symbol}
+	 */
+ 	constructor: {
+ 		value: SymbolForElement
+ 	},
+ 	/**
+ 	 * @alias Element#handleEvent
+ 	 * @memberof Element
+ 	 * @type {function}
+ 	 */
+ 	handleEvent: {
+ 		value: handleEvent
+ 	}
 })
 
 /**
@@ -74,7 +102,7 @@ function createElementSnapshot (snapshot) {
 
 /**
  * @param {(string|number)} content
- * @param {*} key
+ * @param {any} key
  * @return {Element}
  */
 function createElementText (content, key) {
@@ -88,7 +116,7 @@ function createElementText (content, key) {
 }
 
 /**
- * @param {*} key
+ * @param {any} key
  * @return {Element}
  */
 function createElementEmpty (key) {
@@ -125,7 +153,7 @@ function createElementGenerator (element, generator) {
 function createElementFragment (iterable) {
 	var element = new Element(SharedElementFragment)
 
-	element.type = SymbolFragment
+	element.type = SymbolForFragment
 	element.children = createElementChildren(iterable)
 
 	return element
@@ -134,7 +162,7 @@ function createElementFragment (iterable) {
 /**
  * @param {function} type
  * @param {object} props
- * @param {*} children
+ * @param {any} children
  * @return {Element}
  */
 function createElementComponent (type, props, children) {
@@ -148,9 +176,9 @@ function createElementComponent (type, props, children) {
 }
 
 /**
- * @param {*} type
+ * @param {any} type
  * @param {object} props
- * @param {Array} config
+ * @param {Array<any>} config
  * @return {List}
  */
 function createElementClone (type, props, config) {
@@ -168,7 +196,7 @@ function createElementClone (type, props, config) {
 function createElementChildren (iterable) {
 	var children = new List()
 
-	if (isArray(iterable))
+	if (ArrayisArray(iterable))
 		for (var i = 0; i < iterable.length; ++i)
 			getElementChildren(children, iterable[i], i)
 	else
@@ -180,8 +208,9 @@ function createElementChildren (iterable) {
 }
 
 /**
- * @param {*} element
- * @param {*} key
+ * @throws {Error} if a known element type is not found
+ * @param {any} element
+ * @param {any} key
  * @return {Element?}
  */
 function createElementUnknown (element, key) {
@@ -189,10 +218,10 @@ function createElementUnknown (element, key) {
 		case 'boolean':
 			return createElementEmpty(key)
 		case 'object':
-			if (typeof element[SymbolIterator] === 'function')
+			if (element[SymbolForIterator])
 				return createElementFragment(arrayChildren(element))
 
-			if (typeof element[SymbolAsyncIterator] === 'function')
+			if (element[SymbolForAsyncIterator])
 				return createElementGenerator(createElementPromise(noop), element)
 
 			if (!thenable(element))
@@ -224,13 +253,13 @@ function replaceElementChildren (element, snapshot, children) {
 
 /**
  * @param {List} children
- * @param {*} element
+ * @param {any} element
  * @param {number} index
  * @param {number}
  */
 function getElementChildren (children, element, index) {
 	if (element != null) {
-		if (element.constructor === SymbolElement) {
+		if (element.constructor === SymbolForElement) {
 			if (element.key === null)
 				element.key = SharedKeyBody + index
 
@@ -242,7 +271,7 @@ function getElementChildren (children, element, index) {
 					children.insert(createElementText(element, index), children)
 					break
 				case 'object':
-					if (isArray(element)) {
+					if (ArrayisArray(element)) {
 						for (var i = 0; i < element.length; ++i)
 							getElementChildren(children, element[i], index + i)
 
@@ -261,7 +290,7 @@ function getElementChildren (children, element, index) {
 
 /**
  * @param {Element} element
- * @param {*} props
+ * @param {any} props
  */
 function getElementProps (element, props) {
 	if (props.key !== undefined)
@@ -285,7 +314,7 @@ function getDefaultProps (element, type, props) {
 }
 
 /**
- * @param {*} value
+ * @param {any} value
  * @return {string}
  */
 function getDisplayName (value) {
@@ -357,14 +386,14 @@ function getElementDescription (element) {
 }
 
 /**
- * @param {*} element
+ * @param {any} element
  * @return {Element}
  */
 function getElementDefinition (element) {
 	if (element == null)
 		return createElementEmpty(SharedKeyBody)
 
-	if (element.constructor === SymbolElement)
+	if (element.constructor === SymbolForElement)
 		return element
 
 	switch (typeof element) {
@@ -372,7 +401,7 @@ function getElementDefinition (element) {
 		case 'number':
 			return createElementText(element, SharedKeyBody)
 		case 'object':
-			if (isArray(element))
+			if (ArrayisArray(element))
 				return createElementFragment(element)
 		default:
 			return createElementUnknown(element, SharedKeyBody)
@@ -380,11 +409,11 @@ function getElementDefinition (element) {
 }
 
 /**
- * @param {*} element
+ * @param {any} element
  * @return {Element}
  */
 function getElementModule (element) {
-	if (!isValidElement(element) && objectHasOwnProperty.call(Object(element), 'default'))
+	if (!isValidElement(element) && ObjectHasOwnProperty.call(Object(element), 'default'))
 		return getElementModule(element.default)
 
 	return createElementFragment(getElementDefinition(element))
@@ -395,6 +424,7 @@ function getElementModule (element) {
  * @param {object} container
  * @param {(string|number|symbol)?} key
  * @return {Element}
+ * @public
  */
 function createPortal (children, container, key) {
 	var element = new Element(SharedElementPortal)
@@ -408,8 +438,9 @@ function createPortal (children, container, key) {
 
 /**
  * @param {(string|number)} content
- * @param {(string|number|Symbol)?} key
+ * @param {(string|number|symbol)?} key
  * @return {Element}
+ * @public
  */
 function createComment (content, key) {
 	var element = new Element(SharedElementComment)
@@ -422,10 +453,11 @@ function createComment (content, key) {
 }
 
 /**
- * @param {*} type
- * @param {*?} config
- * @param {...*}
+ * @param {any} type
+ * @param {any?} config
+ * @param {...any}
  * @return {Element}
+ * @public
  */
 function createElement (type, config) {
 	var i = config != null ? 1 : 2
@@ -437,10 +469,10 @@ function createElement (type, config) {
 	var props = {}
 	var children = element.children = id !== SharedElementComponent ? new List() : undefined
 
-	if (i === 1 && typeof config === 'object' && config[SymbolIterator] === undefined) {
+	if (i === 1 && typeof config === 'object' && config[SymbolForIterator] === undefined) {
 		switch (config.constructor) {
 			default:
-				if (isArray(config))
+				if (ArrayisArray(config))
 					break
 			case Object:
 				if (thenable(config))
@@ -449,7 +481,8 @@ function createElement (type, config) {
 				getElementProps(element, (++i, props = config))
 
 				if (props.children !== undefined && id !== SharedElementComponent)
-					length - i < 1 ? index = getElementChildren(children, props.children, index) : 0
+					if (length - i < 1)
+						index = getElementChildren(children, props.children, index)
 		}
 	}
 
@@ -473,7 +506,7 @@ function createElement (type, config) {
 			break
 		case 'number':
 		case 'symbol':
-			if (type === SymbolFragment)
+			if (type === SymbolForFragment)
 				createElementBoundary((element.id = SharedElementFragment, children))
 			break
 		default:
@@ -489,8 +522,9 @@ function createElement (type, config) {
 
 /**
  * @param {Element} element
- * @param {...*}
+ * @param {...any}
  * @return {Element?}
+ * @public
  */
 function cloneElement (element) {
 	if (isValidElement(element))
@@ -500,7 +534,8 @@ function cloneElement (element) {
 /**
  * @param {Element} element
  * @return {boolean}
+ * @public
  */
 function isValidElement (element) {
-	return element != null && element.constructor === SymbolElement
+	return element != null && element.constructor === SymbolForElement
 }

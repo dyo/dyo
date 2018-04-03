@@ -1,7 +1,8 @@
 /**
- * @param {*} element
+ * @param {any} element
  * @param {Writable?} container
  * @param {function?} callback
+ * @return {string?}
  */
 function renderToString (element, container, callback) {
 	if (!container || !container.writable)
@@ -11,9 +12,10 @@ function renderToString (element, container, callback) {
 }
 
 /**
- * @param {*} element
+ * @param {any} element
  * @param {Writable?} container
  * @param {function?} callback
+ * @param {Stream?}
  */
 function renderToNodeStream (element, container, callback) {
 	if (!container || !container.writable)

@@ -1,5 +1,7 @@
 /**
- * @type {constructor}
+ * @name Readable
+ * @constructor
+ * @type {function}
  */
 var Readable = require('stream').Readable
 
@@ -17,7 +19,10 @@ function toStream (callback) {
 }
 
 /**
+ * @name Stream
  * @constructor
+ * @property {Element} host
+ * @property {Array<Element>} queue
  * @param {Element} element
  * @param {Element} host
  */
@@ -27,9 +32,17 @@ function Stream (element, host) {
 	Readable.call(this)
 }
 /**
+ * @alias Stream#prototype
+ * @memberof Stream
  * @type {object}
  */
 Stream.prototype = Object.create(Readable.prototype, {
+	/**
+	 * @alias Stream#_read
+	 * @memberof Stream
+	 * @private
+	 * @type {function}
+	 */
 	_read: {
 		value: function () {
 			if (this.queue.length > 0)
@@ -52,7 +65,7 @@ function write (payload, container) {
 /**
  * @param {Element} element
  * @param {Element} host
- * @param {Element[]} queue
+ * @param {Array<Element>} queue
  * @param {Readable} container
  */
 function read (element, host, queue, container) {

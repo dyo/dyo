@@ -1,13 +1,14 @@
 /**
- * @param {*} element
- * @return {object?}
+ * @param {any} element
+ * @return {(object|boolean)?}
+ * @public
  */
 function findDOMNode (element) {
 	if (!element)
 		return element
 
-	if (isValidElement(element[SymbolElement]))
-		return findDOMNode(element[SymbolElement])
+	if (isValidElement(element[SymbolForElement]))
+		return findDOMNode(element[SymbolForElement])
 
 	if (isValidElement(element))
 		return element.active && getNodeOwner(getElementDescription(element))

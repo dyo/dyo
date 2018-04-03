@@ -1,4 +1,4 @@
-/*!dio 9.0.0-alpha.0 @license MIT */
+/*!dio 9.0.0-beta @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.0-alpha.0'}
+		var dio = {version: '9.0.0-beta'}
 		
 		var SharedElementPromise = 1
 		var SharedElementFragment = 2
@@ -81,40 +81,44 @@
 		
 		var WeakMap = window.WeakMap || WeakHash
 		var Symbol = window.Symbol || Math.random
-		var isArray = Array.isArray
+		var ArrayisArray = Array.isArray
 		
-		var objectDefineProperties = Object.defineProperties
-		var objectDefineProperty = Object.defineProperty
-		var objectHasOwnProperty = Object.hasOwnProperty
-		var objectCreate = Object.create
-		var objectKeys = Object.keys
+		var ObjectDefineProperties = Object.defineProperties
+		var ObjectDefineProperty = Object.defineProperty
+		var ObjectHasOwnProperty = Object.hasOwnProperty
+		var ObjectCreate = Object.create
+		var ObjectKeys = Object.keys
 		
 		var SymbolFor = Symbol.for || hash
-		var SymbolCache = SymbolFor('dio.Cache')
-		var SymbolState = SymbolFor('dio.State')
-		var SymbolElement = SymbolFor('dio.Element')
-		var SymbolFragment = SymbolFor('dio.Fragment')
-		var SymbolComponent = SymbolFor('dio.Component')
-		var SymbolException = SymbolFor('dio.Exception')
-		var SymbolIterator = Symbol.iterator || '@@iterator'
-		var SymbolAsyncIterator = Symbol.asyncIterator || '@@asyncIterator'
+		var SymbolForCache = SymbolFor('dio.Cache')
+		var SymbolForState = SymbolFor('dio.State')
+		var SymbolForElement = SymbolFor('dio.Element')
+		var SymbolForFragment = SymbolFor('dio.Fragment')
+		var SymbolForComponent = SymbolFor('dio.Component')
+		var SymbolForException = SymbolFor('dio.Exception')
+		var SymbolForIterator = Symbol.iterator || '@@iterator'
+		var SymbolForAsyncIterator = Symbol.asyncIterator || '@@asyncIterator'
 		
-		var uuid = 2147483647
-		var seed = 4022871197 % uuid
+		var UUID = 2147483647
+		var SEED = 4022871197 % UUID
 		
 		/**
+		 * @name List
 		 * @constructor
+		 * @property {object} next
+		 * @property {object} prev
+		 * @property {number} length
 		 */
 		function List () {
 			this.next = this
 			this.prev = this
 			this.length = 0
 		}
-		/**
-		 * @type {object}
-		 */
-		objectDefineProperties(objectDefineProperty(List[SharedSitePrototype], SymbolIterator, {value: noop}), {
+		ObjectDefineProperties(ObjectDefineProperty(List[SharedSitePrototype], SymbolForIterator, {value: SymbolForIterator}), {
 			/**
+			 * @alias List#insert
+			 * @memberof List
+			 * @type {function}
 			 * @param {object} node
 			 * @param {object} before
 			 * @return {object}
@@ -133,11 +137,14 @@
 				}
 			},
 			/**
+			 * @alias List#remove
+			 * @memberof List
+			 * @type {function}
 			 * @param {object} node
 			 * @return {object}
 			 */
 			remove: {
-					value: function remove (node) {
+				value: function remove (node) {
 					if (this.length === 0)
 						return node
 		
@@ -150,10 +157,13 @@
 				}
 			},
 			/**
+			 * @alias List#forEach
+			 * @memberof List
+			 * @type {function}
 			 * @param {function} callback
 			 */
 			forEach: {
-					value: function forEach (callback) {
+				value: function forEach (callback) {
 					for (var node = this, length = node.length; length > 0; --length)
 						callback(node = node.next)
 				}
@@ -161,33 +171,43 @@
 		})
 		
 		/**
+		 * @name WeakHash
 		 * @constructor
+		 * @property {symbol} hash
 		 */
 		function WeakHash () {
 			this.hash = Symbol()
 		}
-		/**
-		 * @type {object}
-		 */
-		objectDefineProperties(WeakHash[SharedSitePrototype], {
+		ObjectDefineProperties(WeakHash[SharedSitePrototype], {
 			/**
-			 * @param {*} key
-			 * @param {*} value
+			 * @alias WeakHash#set
+			 * @memberof WeakHash
+			 * @type {function}
+			 * @param {any} key
+			 * @param {any} value
 			 */
 			set: {
-				value: function set (key, value ) {
+				value: function set (key, value) {
 					key[this.hash] = value
-			}},
+				}
+			},
 			/**
-			 * @param {*} key
-			 * @return {*}
+			 * @alias WeakHash#get
+			 * @memberof WeakHash
+			 * @type {function}
+			 * @param {any} key
+			 * @return {any}
 			 */
 			get: {
 				value: function get (key) {
 					return key[this.hash]
-			}},
+				}
+			},
 			/**
-			 * @param {*} key
+			 * @alias WeakHash#has
+			 * @memberof WeakHash
+			 * @type {function}
+			 * @param {any} key
 			 * @return {boolean}
 			 */
 			has: {
@@ -204,47 +224,47 @@
 		
 		/**
 		 * @param {object} object
-		 * @param {object} primary
+		 * @param {object} a
 		 */
-		function merge (object, primary) {
-			for (var key in primary)
-				object[key] = primary[key]
+		function merge (object, a) {
+			for (var key in a)
+				object[key] = a[key]
 		
 			return object
 		}
 		
 		/**
 		 * @param {object} object
-		 * @param {object} primary
-		 * @param {object} secondary
+		 * @param {object} a
+		 * @param {object} b
 		 * @return {object}
 		 */
-		function assign (object, primary, secondary) {
-			for (var key in primary)
-				object[key] = primary[key]
+		function assign (object, a, b) {
+			for (var key in a)
+				object[key] = a[key]
 		
-			for (var key in secondary)
-				object[key] = secondary[key]
+			for (var key in b)
+				object[key] = b[key]
 		
 			return object
 		}
 		
 		/**
-		 * @param {Array} array
-		 * @param {Array} output
-		 * @return {Array}
+		 * @param {Array<any>} array
+		 * @param {Array<any>} output
+		 * @return {Array<any>}
 		 */
 		function flatten (array, output) {
 			for (var i = 0; i < array.length; ++i)
-				isArray(array[i]) ? flatten(array[i], output) : output.push(array[i])
+				ArrayisArray(array[i]) ? flatten(array[i], output) : output.push(array[i])
 		
 			return output
 		}
 		
 		/**
-		 * @param {Array} haystack
+		 * @param {Array<any>} haystack
 		 * @param {function} callback
-		 * @param {*} thisArg
+		 * @param {any} thisArg
 		 */
 		function find (haystack, callback, thisArg) {
 			if (typeof haystack.find === 'function')
@@ -271,6 +291,7 @@
 		}
 		
 		/**
+		 * @throws {Error}
 		 * @param {string} from
 		 * @param {string} message
 		 */
@@ -285,7 +306,7 @@
 		 */
 		function compare (a, b) {
 			for (var key in a)
-				if (!objectHasOwnProperty.call(b, key))
+				if (!ObjectHasOwnProperty.call(b, key))
 					return true
 		
 			for (var key in b)
@@ -296,8 +317,8 @@
 		}
 		
 		/**
-		 * @param {*} a
-		 * @param {*} b
+		 * @param {any} a
+		 * @param {any} b
 		 * @return {boolean}
 		 */
 		function is (a, b) {
@@ -342,12 +363,29 @@
 		 * @return {string}
 		 */
 		function random (prefix) {
-			return prefix + '.' + (((seed = seed * 16807 % uuid - 1) - 1) / uuid).toString(36).substring(2)
+			return prefix + '.' + (((SEED = SEED * 16807 % UUID - 1) - 1) / UUID).toString(36).substring(2)
 		}
 		
 		/**
+		 * @name Element
 		 * @constructor
 		 * @param {number} id
+		 * @property {number} id
+		 * @property {boolean} active
+		 * @property {number} work
+		 * @property {string?} xmlns
+		 * @property {(string|symbol)?} key
+		 * @property {(string|function)?} ref
+		 * @property {(function|string|object|symbol)?} type
+		 * @property {object} props
+		 * @property {object?} cache
+		 * @property {any} children
+		 * @property {(Component|object)?} owner
+		 * @property {object?} context
+		 * @property {Element?} parent
+		 * @property {Element?} host
+		 * @property {Element} next
+		 * @property {Element} prev
 		 */
 		function Element (id) {
 			this.id = id
@@ -367,12 +405,23 @@
 			this.next = null
 			this.prev = null
 		}
-		/**
-		 * @type {object}
-		 */
-		objectDefineProperties(objectDefineProperty(Element[SharedSitePrototype], SymbolIterator, {value: noop}), {
-		 	constructor: {value: SymbolElement},
-		 	handleEvent: {value: handleEvent}
+		ObjectDefineProperties(ObjectDefineProperty(Element[SharedSitePrototype], SymbolForIterator, {value: SymbolForIterator}), {
+			/**
+			 * @alias Element#constructor
+			 * @memberof Element
+			 * @type {symbol}
+			 */
+		 	constructor: {
+		 		value: SymbolForElement
+		 	},
+		 	/**
+		 	 * @alias Element#handleEvent
+		 	 * @memberof Element
+		 	 * @type {function}
+		 	 */
+		 	handleEvent: {
+		 		value: handleEvent
+		 	}
 		})
 		
 		/**
@@ -421,7 +470,7 @@
 		
 		/**
 		 * @param {(string|number)} content
-		 * @param {*} key
+		 * @param {any} key
 		 * @return {Element}
 		 */
 		function createElementText (content, key) {
@@ -435,7 +484,7 @@
 		}
 		
 		/**
-		 * @param {*} key
+		 * @param {any} key
 		 * @return {Element}
 		 */
 		function createElementEmpty (key) {
@@ -472,7 +521,7 @@
 		function createElementFragment (iterable) {
 			var element = new Element(SharedElementFragment)
 		
-			element.type = SymbolFragment
+			element.type = SymbolForFragment
 			element.children = createElementChildren(iterable)
 		
 			return element
@@ -481,7 +530,7 @@
 		/**
 		 * @param {function} type
 		 * @param {object} props
-		 * @param {*} children
+		 * @param {any} children
 		 * @return {Element}
 		 */
 		function createElementComponent (type, props, children) {
@@ -495,9 +544,9 @@
 		}
 		
 		/**
-		 * @param {*} type
+		 * @param {any} type
 		 * @param {object} props
-		 * @param {Array} config
+		 * @param {Array<any>} config
 		 * @return {List}
 		 */
 		function createElementClone (type, props, config) {
@@ -515,7 +564,7 @@
 		function createElementChildren (iterable) {
 			var children = new List()
 		
-			if (isArray(iterable))
+			if (ArrayisArray(iterable))
 				for (var i = 0; i < iterable.length; ++i)
 					getElementChildren(children, iterable[i], i)
 			else
@@ -527,8 +576,9 @@
 		}
 		
 		/**
-		 * @param {*} element
-		 * @param {*} key
+		 * @throws {Error} if a known element type is not found
+		 * @param {any} element
+		 * @param {any} key
 		 * @return {Element?}
 		 */
 		function createElementUnknown (element, key) {
@@ -536,10 +586,10 @@
 				case 'boolean':
 					return createElementEmpty(key)
 				case 'object':
-					if (typeof element[SymbolIterator] === 'function')
+					if (element[SymbolForIterator])
 						return createElementFragment(arrayChildren(element))
 		
-					if (typeof element[SymbolAsyncIterator] === 'function')
+					if (element[SymbolForAsyncIterator])
 						return createElementGenerator(createElementPromise(noop), element)
 		
 					if (!thenable(element))
@@ -571,13 +621,13 @@
 		
 		/**
 		 * @param {List} children
-		 * @param {*} element
+		 * @param {any} element
 		 * @param {number} index
 		 * @param {number}
 		 */
 		function getElementChildren (children, element, index) {
 			if (element != null) {
-				if (element.constructor === SymbolElement) {
+				if (element.constructor === SymbolForElement) {
 					if (element.key === null)
 						element.key = SharedKeyBody + index
 		
@@ -589,7 +639,7 @@
 							children.insert(createElementText(element, index), children)
 							break
 						case 'object':
-							if (isArray(element)) {
+							if (ArrayisArray(element)) {
 								for (var i = 0; i < element.length; ++i)
 									getElementChildren(children, element[i], index + i)
 		
@@ -608,7 +658,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @param {*} props
+		 * @param {any} props
 		 */
 		function getElementProps (element, props) {
 			if (props.key !== undefined)
@@ -632,7 +682,7 @@
 		}
 		
 		/**
-		 * @param {*} value
+		 * @param {any} value
 		 * @return {string}
 		 */
 		function getDisplayName (value) {
@@ -704,14 +754,14 @@
 		}
 		
 		/**
-		 * @param {*} element
+		 * @param {any} element
 		 * @return {Element}
 		 */
 		function getElementDefinition (element) {
 			if (element == null)
 				return createElementEmpty(SharedKeyBody)
 		
-			if (element.constructor === SymbolElement)
+			if (element.constructor === SymbolForElement)
 				return element
 		
 			switch (typeof element) {
@@ -719,7 +769,7 @@
 				case 'number':
 					return createElementText(element, SharedKeyBody)
 				case 'object':
-					if (isArray(element))
+					if (ArrayisArray(element))
 						return createElementFragment(element)
 				default:
 					return createElementUnknown(element, SharedKeyBody)
@@ -727,11 +777,11 @@
 		}
 		
 		/**
-		 * @param {*} element
+		 * @param {any} element
 		 * @return {Element}
 		 */
 		function getElementModule (element) {
-			if (!isValidElement(element) && objectHasOwnProperty.call(Object(element), 'default'))
+			if (!isValidElement(element) && ObjectHasOwnProperty.call(Object(element), 'default'))
 				return getElementModule(element.default)
 		
 			return createElementFragment(getElementDefinition(element))
@@ -742,6 +792,7 @@
 		 * @param {object} container
 		 * @param {(string|number|symbol)?} key
 		 * @return {Element}
+		 * @public
 		 */
 		function createPortal (children, container, key) {
 			var element = new Element(SharedElementPortal)
@@ -755,8 +806,9 @@
 		
 		/**
 		 * @param {(string|number)} content
-		 * @param {(string|number|Symbol)?} key
+		 * @param {(string|number|symbol)?} key
 		 * @return {Element}
+		 * @public
 		 */
 		function createComment (content, key) {
 			var element = new Element(SharedElementComment)
@@ -769,10 +821,11 @@
 		}
 		
 		/**
-		 * @param {*} type
-		 * @param {*?} config
-		 * @param {...*}
+		 * @param {any} type
+		 * @param {any?} config
+		 * @param {...any}
 		 * @return {Element}
+		 * @public
 		 */
 		function createElement (type, config) {
 			var i = config != null ? 1 : 2
@@ -784,10 +837,10 @@
 			var props = {}
 			var children = element.children = id !== SharedElementComponent ? new List() : undefined
 		
-			if (i === 1 && typeof config === 'object' && config[SymbolIterator] === undefined) {
+			if (i === 1 && typeof config === 'object' && config[SymbolForIterator] === undefined) {
 				switch (config.constructor) {
 					default:
-						if (isArray(config))
+						if (ArrayisArray(config))
 							break
 					case Object:
 						if (thenable(config))
@@ -796,7 +849,8 @@
 						getElementProps(element, (++i, props = config))
 		
 						if (props.children !== undefined && id !== SharedElementComponent)
-							length - i < 1 ? index = getElementChildren(children, props.children, index) : 0
+							if (length - i < 1)
+								index = getElementChildren(children, props.children, index)
 				}
 			}
 		
@@ -820,7 +874,7 @@
 					break
 				case 'number':
 				case 'symbol':
-					if (type === SymbolFragment)
+					if (type === SymbolForFragment)
 						createElementBoundary((element.id = SharedElementFragment, children))
 					break
 				default:
@@ -836,8 +890,9 @@
 		
 		/**
 		 * @param {Element} element
-		 * @param {...*}
+		 * @param {...any}
 		 * @return {Element?}
+		 * @public
 		 */
 		function cloneElement (element) {
 			if (isValidElement(element))
@@ -847,13 +902,23 @@
 		/**
 		 * @param {Element} element
 		 * @return {boolean}
+		 * @public
 		 */
 		function isValidElement (element) {
-			return element != null && element.constructor === SymbolElement
+			return element != null && element.constructor === SymbolForElement
 		}
 		
 		/**
+		 * @name Children
 		 * @type {object}
+		 * @property {function} toArray
+		 * @property {function} forEach
+		 * @property {function} map
+		 * @property {function} filter
+		 * @property {function} find
+		 * @property {function} count
+		 * @property {function} only
+		 * @public
 		 */
 		var Children = {
 			toArray: arrayChildren,
@@ -866,8 +931,11 @@
 		}
 		
 		/**
-		 * @param {*} children
-		 * @return {Array}
+		 * @alias Children#toArray
+		 * @memberof Children
+		 * @param {any} children
+		 * @return {Array<any>}
+		 * @public
 		 */
 		function arrayChildren (children) {
 			var array = []
@@ -876,14 +944,14 @@
 				return array
 			if (isValidElement(children) || typeof children !== 'object')
 				return [children]
-			if (isArray(children))
+			if (ArrayisArray(children))
 				return flatten(children, array)
 			if (typeof children[SharedLinkedNext] === 'function' || typeof children.forEach === 'function')
 				each(children, function (element) {
 					return array.push(element)
 				})
-			else if (typeof children[SymbolIterator] === 'function')
-				return arrayChildren(children[SymbolIterator]())
+			else if (typeof children[SymbolForIterator] === 'function')
+				return arrayChildren(children[SymbolForIterator]())
 			else
 				array.push(children)
 		
@@ -891,9 +959,12 @@
 		}
 		
 		/**
-		 * @param {*} children
+		 * @alias Children#each
+		 * @memberof Children
+		 * @param {any} children
 		 * @param {function} callback
-		 * @param {*} thisArg
+		 * @param {any} thisArg
+		 * @public
 		 */
 		function eachChildren (children, callback, thisArg) {
 			if (children != null)
@@ -901,54 +972,71 @@
 		}
 		
 		/**
-		 * @param {*} children
+		 * @alias Children#map
+		 * @memberof Children
+		 * @param {any} children
 		 * @param {function} callback
-		 * @return {Array}
+		 * @return {Array<any>}
+		 * @public
 		 */
 		function mapChildren (children, callback, thisArg) {
 			return children != null ? arrayChildren(children).map(callback, thisArg) : children
 		}
 		
 		/**
-		 * @param {*} children
+		 * @alias Children#filter
+		 * @memberof Children
+		 * @param {any} children
 		 * @param {function} callback
-		 * @param {*} thisArg
+		 * @param {any} thisArg
+		 * @public
 		 */
 		function filterChildren (children, callback, thisArg) {
 			return children != null ? arrayChildren(children).filter(callback, thisArg) : children
 		}
 		
 		/**
-		 * @param {*} children
+		 * @alias Children#find
+		 * @memberof Children
+		 * @param {any} children
 		 * @param {function} callback
-		 * @param {*} thisArg
+		 * @param {any} thisArg
+		 * @public
 		 */
 		function findChildren (children, callback, thisArg) {
 			return children != null ? find(arrayChildren(children), callback, thisArg) : children
 		}
 		
 		/**
-		 * @param {*} children
+		 * @alias Children#count
+		 * @memberof Children
+		 * @param {any} children
 		 * @return {number}
+		 * @public
 		 */
 		function countChildren (children) {
 			return arrayChildren(children).length
 		}
 		
 		/**
-		 * @param {*} children
+		 * @throws {Error} if not a single valid element
+		 * @alias Children#only
+		 * @memberof Children
+		 * @param {any} children
 		 * @return {Element?}
+		 * @public
 		 */
 		function onlyChildren (children) {
 			return isValidElement(children) ? children : invariant('Children.only', 'Expected to receive a single element')
 		}
 		
 		/**
-		 * @param {string|function|object|Element} type
-		 * @return {function|object}
+		 * @param {(string|function|object)} type
+		 * @return {(function|object)}
+		 * @public
 		 */
 		function createFactory (type) {
-			if (type !== null && typeof type === 'object' && !isValidElement(type))
+			if (type !== null && typeof type === 'object' && !thenable(type))
 				return factory(module, type)
 		
 			return createElement.bind(null, type)
@@ -970,35 +1058,52 @@
 		}
 		
 		/**
+		 * @name Exception
 		 * @constructor
 		 * @param {Element} element
-		 * @param {*} err
+		 * @param {any} err
 		 * @param {string} origin
+		 * @property {any} error
+		 * @property {string} origin
+		 * @property {boolean} bubbles
 		 */
 		function Exception (element, err, origin) {
 			this.error = err
 			this.origin = origin
 			this.bubbles = true
-			this[SymbolElement] = element
+			this[SymbolForElement] = element
 		}
-		/**
-		 * @type {object}
-		 */
-		objectDefineProperties(Exception[SharedSitePrototype], {
+		ObjectDefineProperties(Exception[SharedSitePrototype], {
+			/**
+			 * @alias Exception#toString
+			 * @memberof Exception
+			 * @type {function}
+			 * @return {string}
+			 */
 			toString: {
 				value: function () {
 					return 'Error: ' + Object(this.error).toString() + '\n\n' + this.message
 				}
 			},
+			/**
+			 * @alias Exception#message
+			 * @memberof Exception
+			 * @type {string}
+			 */
 			message: {
 				get: function () {
 					return 'The following error occurred in `\n' + this.componentStack + '` from "' + this.origin + '"'
 				}
 			},
+			/**
+			 * @alias Exception#componentStack
+			 * @memberof Exception
+			 * @type {string}
+			 */
 			componentStack: {
 				get: function () {
-					return this[SymbolComponent] = this[SymbolComponent] ? this[SymbolComponent] : (
-						createErrorStack(this[SymbolElement].host, '<'+getDisplayName(this[SymbolElement])+'>\n')
+					return this[SymbolForComponent] = this[SymbolForComponent] ? this[SymbolForComponent] : (
+						createErrorStack(this[SymbolForElement].host, '<'+getDisplayName(this[SymbolForElement])+'>\n')
 					)
 				}
 			}
@@ -1006,8 +1111,9 @@
 		
 		/**
 		 * @param {Element} element
-		 * @param {*} err
+		 * @param {any} err
 		 * @param {string} origin
+		 * @return {Exception}
 		 */
 		function createErrorException (element, err, origin) {
 			return new Exception(element, err, origin)
@@ -1016,7 +1122,7 @@
 		/**
 		 * @throws Exception
 		 * @param {Element} element
-		 * @param {*} err
+		 * @param {any} err
 		 * @param {string} origin
 		 */
 		function throwErrorException (element, err, origin) {
@@ -1024,9 +1130,9 @@
 		}
 		
 		/**
-		 * @throws
+		 * @throws {any}
 		 * @param {Element} element
-		 * @param {*} err
+		 * @param {any} err
 		 * @param {string} origin
 		 */
 		function reportErrorException (element, err, origin) {
@@ -1034,8 +1140,8 @@
 		}
 		
 		/**
-		 * @param {(object|string)} exception
-		 * @return {*}
+		 * @param {(Exception|string)} exception
+		 * @return {any}
 		 */
 		function printErrorException (exception) {
 			try {
@@ -1074,7 +1180,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @param {*} err
+		 * @param {any} err
 		 * @param {string} origin
 		 */
 		function invokeErrorBoundary (element, err, origin) {
@@ -1096,11 +1202,12 @@
 		 * @param {Component} owner
 		 */
 		function catchErrorBoundary (element, exception, owner) {
-			if (owner && owner[SharedComponentDidCatch] && !owner[SymbolException])
-				owner[SymbolException] = getLifecycleBoundary(element, owner, owner[SymbolException] = exception)
+			if (owner && owner[SharedComponentDidCatch] && !owner[SymbolForException])
+				owner[SymbolForException] = getLifecycleBoundary(element, owner, owner[SymbolForException] = exception)
 		}
 		
 		/**
+		 * @throws {Exception} throws when an ErrorBoundary is not found.
 		 * @param {Element} element
 		 * @param {Element} host
 		 * @param {Element} parent
@@ -1123,7 +1230,10 @@
 		}
 		
 		/**
-		 * @param {Event}
+		 * @alias Element#handleEvent
+		 * @memberof Element
+		 * @this {Element}
+		 * @param {(Event|object)}
 		 */
 		function handleEvent (event) {
 			try {
@@ -1142,13 +1252,13 @@
 				if (typeof callback === 'function') {
 					value = callback.call(owner, event, props, state, context)
 				} else if (typeof callback.handleEvent === 'function') {
-					if (owner !== callback && callback[SymbolComponent])
-						host = (owner = callback)[SymbolElement]
+					if (owner !== callback && callback[SymbolForComponent])
+						host = (owner = callback)[SymbolForElement]
 		
 					value = callback.handleEvent(event, props, state, context)
 				}
 		
-				if (value && owner[SymbolComponent])
+				if (value && owner[SymbolForComponent])
 					enqueueComponentValue(host, SharedSiteEvent, value)
 			} catch (err) {
 				reportErrorException(host, err, SharedSiteEvent+':'+getDisplayName(callback.handleEvent || callback))
@@ -1156,9 +1266,15 @@
 		}
 		
 		/**
+		 * @name Component
 		 * @constructor
 		 * @param {object} props
 		 * @param {object} context
+		 * @property {object} refs
+		 * @property {object} state
+		 * @property {object} props
+		 * @property {object} context
+		 * @public
 		 */
 		function Component (props, context) {
 			this.refs = {}
@@ -1166,28 +1282,38 @@
 			this.props = props
 			this.context = context
 		}
-		/**
-		 * @type {object}
-		 */
 		Component[SharedSitePrototype] = createComponentPrototype(Component[SharedSitePrototype])
 		
 		/**
+		 * @type {symbol}
+		 * @public
+		 */
+		var Fragment = SymbolForFragment
+		
+		/**
+		 * @name PureComponent
 		 * @constructor
 		 * @extends Component
 		 * @param {object} props
 		 * @param {object} context
+		 * @public
 		 */
 		function PureComponent (props, context) {
 			Component.call(this, props, context)
 		}
-		/**
-		 * @type {object}
-		 */
-		PureComponent[SharedSitePrototype] = objectCreate(Component[SharedSitePrototype], {
-			shouldComponentUpdate: {value: shouldComponentUpdate}
+		PureComponent[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
+			/**
+			 * @alias PureComponent#shouldComponentUpdate
+			 * @memberof PureComponent
+			 * @type {function}
+			 */
+			shouldComponentUpdate: {
+				value: shouldComponentUpdate
+			}
 		})
 		
 		/**
+		 * @name CustomComponent
 		 * @constructor
 		 * @extends Component
 		 * @param {object} props
@@ -1196,18 +1322,25 @@
 		function CustomComponent (props, context) {
 			Component.call(this, props, context)
 		}
-		/**
-		 * @type {object}
-		 */
-		CustomComponent[SharedSitePrototype] = objectCreate(Component[SharedSitePrototype], {
+		CustomComponent[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
+			/**
+			 * @alias CustomComponent#render
+			 * @memberof CustomComponent
+			 * @type {function}
+			 * @param {object} props
+			 * @return {Element}
+			 */
 			render: {
-				value: function () {
-					return createElementComponent(this[SymbolElement].type, this.props, this.props.children)
+				value: function (props) {
+					return createElementComponent(this[SymbolForElement].type, props, props.children)
 				}
 			}
 		})
 		
 		/**
+		 * @alias PureComponent#shouldUpdateComponent
+		 * @memberof PureComponent
+		 * @this {Component}
 		 * @param {object} props
 		 * @param {object} state
 		 * @return {boolean}
@@ -1217,27 +1350,34 @@
 		}
 		
 		/**
+		 * @alias Component#setState
+		 * @memberof Component
+		 * @this {Component}
 		 * @param {(Object|function)} state
 		 * @param {function?} callback
 		 */
 		function setState (state, callback) {
-			enqueueComponentUpdate(this[SymbolElement], this, state, SharedComponentStateUpdate, callback)
+			enqueueComponentUpdate(this[SymbolForElement], this, state, SharedComponentStateUpdate, callback)
 		}
 		
 		/**
+		 * @alias Component#forceUpdate
+		 * @memberof Component
+		 * @this {Component}
 		 * @param {function} callback
 		 */
 		function forceUpdate (callback) {
-			enqueueComponentUpdate(this[SymbolElement], this, {}, SharedComponentForceUpdate, callback)
+			enqueueComponentUpdate(this[SymbolForElement], this, {}, SharedComponentForceUpdate, callback)
 		}
 		
 		/**
 		 * @param {object} description
 		 * @return {function}
+		 * @public
 		 */
 		function createClass (description) {
 			return createComponentClass(Object(description), function constructor (props, context) {
-				for (var i = 0, keys = objectKeys(constructor[SharedSitePrototype]); i < keys.length; ++i)
+				for (var i = 0, keys = ObjectKeys(constructor[SharedSitePrototype]); i < keys.length; ++i)
 					this[keys[i]] = this[keys[i]].bind(this)
 			})
 		}
@@ -1248,8 +1388,8 @@
 		 * @return {function}
 		 */
 		function createComponentClass (description, constructor) {
-			if (description[SymbolComponent])
-				return description[SymbolComponent]
+			if (description[SymbolForComponent])
+				return description[SymbolForComponent]
 		
 			if (typeof description === 'function' && !description[SharedSiteRender])
 				return createComponentClass(description[SharedSiteRender] = description, constructor)
@@ -1263,9 +1403,9 @@
 			for (var name in description)
 				description[name] = getComponentDescriptor(name, description[name])
 		
-			constructor[SharedSitePrototype] = objectCreate(Component[SharedSitePrototype], description)
+			constructor[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], description)
 		
-			return description[SymbolComponent] = constructor
+			return description[SymbolForComponent] = constructor
 		}
 		
 		/**
@@ -1273,12 +1413,12 @@
 		 * @return {object}
 		 */
 		function createComponentPrototype (prototype) {
-			objectDefineProperty(prototype, SymbolComponent, {value: SymbolComponent})
-			objectDefineProperty(prototype, SharedSiteSetState, {value: setState})
-			objectDefineProperty(prototype, SharedSiteForceUpdate, {value: forceUpdate})
+			ObjectDefineProperty(prototype, SymbolForComponent, {value: SymbolForComponent})
+			ObjectDefineProperty(prototype, SharedSiteSetState, {value: setState})
+			ObjectDefineProperty(prototype, SharedSiteForceUpdate, {value: forceUpdate})
 		
 			if (!prototype[SharedSiteRender])
-				objectDefineProperty(prototype, SharedSiteRender, getComponentDescriptor(SharedSiteRender, noop))
+				ObjectDefineProperty(prototype, SharedSiteRender, getComponentDescriptor(SharedSiteRender, noop))
 		
 			return prototype
 		}
@@ -1289,9 +1429,9 @@
 		 */
 		function getComponentClass (type) {
 			if (!type[SharedSitePrototype] || !type[SharedSitePrototype][SharedSiteRender])
-				return type[SymbolComponent] || (isValidNodeComponent(type) ? CustomComponent : createComponentClass(type, function () {}))
+				return type[SymbolForComponent] || (isValidNodeComponent(type) ? CustomComponent : createComponentClass(type, function () {}))
 		
-			if (!type[SharedSitePrototype][SymbolComponent])
+			if (!type[SharedSitePrototype][SymbolForComponent])
 				createComponentPrototype(type[SharedSitePrototype])
 		
 			return type
@@ -1299,7 +1439,7 @@
 		
 		/**
 		 * @param {string} name
-		 * @param {*} value
+		 * @param {any} value
 		 * @return {object}
 		 */
 		function getComponentDescriptor (name, value) {
@@ -1325,11 +1465,12 @@
 		}
 		
 		/**
+		 * @this {Component}
 		 * @param {(Component|object)?} value
-		 * @param {*} key
+		 * @param {any} key
 		 * @param {Element} element
 		 */
-		function getComponentReference (value, key, element) {
+		function getComponentRefs (value, key, element) {
 			if (key !== element.ref)
 				delete this.refs[element.ref]
 		
@@ -1351,8 +1492,8 @@
 			owner.props = props
 			owner.context = context
 			owner.refs = owner.refs || {}
-			owner[SymbolState] = owner[SymbolCache] = {}
-			owner[SymbolElement] = element
+			owner[SymbolForState] = owner[SymbolForCache] = {}
+			owner[SymbolForElement] = element
 		
 			if (owner[SharedGetInitialState])
 				owner.state = getLifecycleUpdate(element, SharedGetInitialState, props, state, context) || state
@@ -1373,7 +1514,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @return {Promise?}
+		 * @return {Promise<any>?}
 		 */
 		function unmountComponentInstance (element) {
 			if (element.owner[SharedComponentWillUnmount])
@@ -1411,7 +1552,7 @@
 			var nextProps = snapshot.props
 			var nextContext = owner.context
 			var prevState = owner.state
-			var tempState = owner[SymbolState] = owner[SymbolCache]
+			var tempState = owner[SymbolForState] = owner[SymbolForCache]
 			var nextState = prevState
 		
 			switch (signature) {
@@ -1419,13 +1560,13 @@
 					if (owner[SharedComponentWillReceiveProps])
 						getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext)
 		
-					if (tempState !== owner[SymbolCache])
+					if (tempState !== owner[SymbolForCache])
 						break
 				case SharedComponentForceUpdate:
 					tempState = nextState
 			}
 		
-			nextState = owner[SymbolState] = tempState !== nextState ? assign({}, prevState, tempState) : nextState
+			nextState = owner[SymbolForState] = tempState !== nextState ? assign({}, prevState, tempState) : nextState
 		
 			if (signature !== SharedComponentForceUpdate)
 				if (owner[SharedComponentShouldUpdate])
@@ -1463,8 +1604,8 @@
 		function enqueueComponentInitialState (element, owner, state) {
 			return function then (resolve, reject) {
 				enqueueStatePromise(element, owner, state, SharedComponentStateUpdate, function () {
-					if (owner[SymbolException])
-						reject(owner[SymbolException])
+					if (owner[SymbolForException])
+						reject(owner[SymbolForException])
 					else
 						resolve(element.children.type.then === then && getLifecycleRender(element, owner))
 				})
@@ -1502,7 +1643,7 @@
 					case 'function':
 						return enqueueComponentUpdate(element, owner, enqueueStateCallback(element, owner, state), signature, callback)
 					case 'object':
-						if (thenable(owner[SymbolCache] = state))
+						if (thenable(owner[SymbolForCache] = state))
 							return enqueueStatePromise(element, owner, state, signature, callback)
 						else
 							enqueueComponentElement(element, owner, signature)
@@ -1519,9 +1660,9 @@
 		 */
 		function enqueueComponentElement (element, owner, signature) {
 			if (!element.active)
-				merge(owner.state, owner[SymbolCache])
+				merge(owner.state, owner[SymbolForCache])
 			else if (element.work === SharedWorkUpdating)
-				merge(owner[SymbolState], owner[SymbolCache])
+				merge(owner[SymbolForState], owner[SymbolForCache])
 			else
 				updateComponentElement(element, element, element, signature)
 		}
@@ -1552,7 +1693,7 @@
 		/**
 		 * @param {Element} element
 		 * @param {Component} owner
-		 * @param {Promise} state
+		 * @param {Promise<object>} state
 		 * @param {number} signature
 		 * @param {function?} callback
 		 */
@@ -1566,7 +1707,7 @@
 				if (!thenable(element.children.type))
 					invokeErrorBoundary(element, err, SharedSiteSetState)
 				else try {
-					owner[SymbolException] = createErrorException(element, err, SharedSiteSetState)
+					owner[SymbolForException] = createErrorException(element, err, SharedSiteSetState)
 				} finally {
 					enqueueStateCallback(element, owner, callback)
 				}
@@ -1590,10 +1731,10 @@
 		/**
 		 * @param {Element} element
 		 * @param {function} callback
-		 * @param {*?} a
-		 * @param {*?} b
-		 * @param {*?} c
-		 * @return {*?}
+		 * @param {any?} a
+		 * @param {any?} b
+		 * @param {any?} c
+		 * @return {any?}
 		 */
 		function getLifecycleCallback (element, callback, a, b, c) {
 			try {
@@ -1607,7 +1748,6 @@
 		/**
 		 * @param {Element} element
 		 * @param {string} name
-		 * @param {*}
 		 */
 		function getLifecycleUnmount (element, name) {
 			try {
@@ -1620,7 +1760,6 @@
 		/**
 		 * @param {Element} element
 		 * @param {string} name
-		 * @param {*}
 		 */
 		function getLifecycleMount (element, name) {
 			try {
@@ -1679,7 +1818,7 @@
 		 * @param {object} props
 		 * @param {object} state
 		 * @param {object} context
-		 * @return {*}
+		 * @return {any}
 		 */
 		function getLifecycleUpdate (element, name, props, state, context) {
 			if (name !== SharedComponentDidUpdate)
@@ -1696,6 +1835,7 @@
 		
 		
 		/**
+		 * @name ContextProvider
 		 * @constructor
 		 * @extends Component
 		 * @param {object} props
@@ -1704,25 +1844,53 @@
 		function ContextProvider (props, context) {
 		  Component.call(this, props, context)
 		}
-		/**
-		 * @type {object}
-		 */
-		ContextProvider[SharedSitePrototype] = objectCreate(Component[SharedSitePrototype], {
+		ContextProvider[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
+		  /**
+		   * @alias ContextProvider#getInitialState
+		   * @memberof ContextProvider
+		   * @type {function}
+		   * @this {Component}
+		   * @param {object} props
+		   * @param {object} state
+		   * @param {object} context
+		   * @return {object}
+		   */
 		  getInitialState: {
 		    value: function (props, state, context) {
-		      return (this[SymbolElement].context = merge({}, context))[props.uuid] = {provider: this, consumers: new List()}
+		      return (this[SymbolForElement].context = merge({}, context))[props.uuid] = {provider: this, consumers: new List()}
 		    }
 		  },
+		  /**
+		   * @alias ContextProvider#render
+		   * @memberof ContextProvider
+		   * @type {function}
+		   * @param {object} props
+		   * @return {any}
+		   */
 		  render: {
 		    value: function (props) {
 		      return props.children
 		    }
 		  },
+		  /**
+		   * @alias ContextProvider#componentDidUpdate
+		   * @memberof ContextProvider
+		   * @type {function}
+		   * @this {Component}
+		   * @param {object} props
+		   * @param {object}
+		   */
 		  componentDidUpdate: {
 		    value: function (props) {
 		      !is(this.props.value, props.value) && this.state.consumers.forEach(this.componentChildUpdate)
 		    }
 		  },
+		  /**
+		   * @alias ContextProvider#componentChildUpdate
+		   * @memberof ContextProvider
+		   * @type {function}
+		   * @param {Component} consumer
+		   */
 		  componentChildUpdate: {
 		    value: function (consumer) {
 		      consumer.didUpdate = consumer.didUpdate ? false : !!consumer[SharedSiteForceUpdate]()
@@ -1731,6 +1899,7 @@
 		})
 		
 		/**
+		 * @name ContextConsumer
 		 * @constructor
 		 * @extends Component
 		 * @param {object} props
@@ -1739,30 +1908,61 @@
 		function ContextConsumer (props, context) {
 		  Component.call(this, props, context)
 		}
-		/**
-		 * @type {object}
-		 */
-		ContextConsumer[SharedSitePrototype] = objectCreate(Component[SharedSitePrototype], {
+		ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
+		  /**
+		   * @alias ContextConsumer#getInitialState
+		   * @memberof ContextConsumer
+		   * @type {function}
+		   * @this {Component}
+		   * @param {object} props
+		   * @return {object}
+		   */
 		  getInitialState: {
 		    value: function (props) {
 		      return this.context[props.uuid] || {provider: this}
 		    }
 		  },
+		  /**
+		   * @alias ContextConsumer#render
+		   * @memberof ContextConsumer
+		   * @type {function}
+		   * @param {object} props
+		   * @param {object} state
+		   * @return {any}
+		   */
 		  render: {
 		    value: function (props, state) {
 		      return props.children(state.provider.props.value)
 		    }
 		  },
+		  /**
+		   * @alias ContextConsumer#componentWillReceiveProps
+		   * @memberof ContextConsumer
+		   * @type {function}
+		   * @this {Component}
+		   */
 		  componentWillReceiveProps: {
 		    value: function () {
 		      this.didUpdate = true
 		    }
 		  },
+		  /**
+		   * @alias ContextConsumer#componentDidMount
+		   * @memberof ContextConsumer
+		   * @type {function}
+		   * @this {Component}
+		   */
 		  componentDidMount: {
 		    value: function () {
 		      this.state.consumers && this.state.consumers.insert(this, this.state.consumers)
 		    }
 		  },
+		  /**
+		   * @alias ContextConsumer#componentWillUnmount
+		   * @memberof ContextConsumer
+		   * @type {function}
+		   * @this {Component}
+		   */
 		  componentWillUnmount: {
 		    value: function () {
 		      this.state.consumers && this.state.consumers.remove(this)
@@ -1772,13 +1972,21 @@
 		
 		/**
 		 * @param {object} value
-		 * @return {object}
+		 * @return {{Provider, Consumer}}
 		 */
 		function createContextComponent (value) {
 		  return {
+		    /**
+		     * @param {object} props
+		     * @return {Element}
+		     */
 		    Provider: function Provider (props) {
 		      return createElement(ContextProvider, assign({}, value, props))
 		    },
+		    /**
+		     * @param {object} props
+		     * @return {Element}
+		     */
 		    Consumer: function Consumer (props) {
 		      return createElement(ContextConsumer, assign({}, value, props))
 		    }
@@ -1786,23 +1994,25 @@
 		}
 		
 		/**
-		 * @param {*} value
-		 * @return {object}
+		 * @param {any} value
+		 * @return {{Provider, Consumer}}
+		 * @public
 		 */
 		function createContext (value) {
 		  return createContextComponent({value: value, children: noop, uuid: random('dio.Context')})
 		}
 		
 		/**
-		 * @param {*} element
-		 * @return {object?}
+		 * @param {any} element
+		 * @return {(object|boolean)?}
+		 * @public
 		 */
 		function findDOMNode (element) {
 			if (!element)
 				return element
 		
-			if (isValidElement(element[SymbolElement]))
-				return findDOMNode(element[SymbolElement])
+			if (isValidElement(element[SymbolForElement]))
+				return findDOMNode(element[SymbolForElement])
 		
 			if (isValidElement(element))
 				return element.active && getNodeOwner(getElementDescription(element))
@@ -1815,9 +2025,10 @@
 		}
 		
 		/**
-		 * @param {*} element
+		 * @param {any} element
 		 * @param {object} container
 		 * @param {function?} callback
+		 * @public
 		 */
 		function render (element, container, callback) {
 			if (!container)
@@ -1829,9 +2040,10 @@
 		}
 		
 		/**
-		 * @param {*} element
+		 * @param {any} element
 		 * @param {object} container
 		 * @param {function?} callback
+		 * @public
 		 */
 		function hydrate (element, container, callback) {
 			if (!container)
@@ -1841,14 +2053,16 @@
 		}
 		
 		/**
-		 * @param {Node} container
+		 * @param {object} container
 		 * @return {boolean}
+		 * @public
 		 */
 		function unmountComponentAtNode (container) {
 			return registry.has(container) && !render(null, container)
 		}
 		
 		/**
+		 * @throws {Error} if invoked with an invalid container
 		 * @param {Element} element
 		 * @param {object} container
 		 * @param {function} callback
@@ -1983,7 +2197,7 @@
 		/**
 		 * @param {Element} element
 		 * @param {Element} host
-		 * @param {object} type
+		 * @param {Promise<any>} type
 		 */
 		function commitMountElementPromise (element, host, type) {
 			type.then(function (value) {
@@ -2158,15 +2372,15 @@
 		 * @param {Element} element
 		 * @param {(function|string)?} callback
 		 * @param {number} signature
-		 * @param {*} key
+		 * @param {any?} key
 		 */
 		function commitOwnerRefs (element, callback, signature, key) {
 			switch (typeof callback) {
 				case 'string':
 					if (signature === SharedRefsRemove)
-						commitOwnerRefs(element, getComponentReference, SharedRefsRemove, callback)
+						commitOwnerRefs(element, getComponentRefs, SharedRefsRemove, callback)
 					else
-						commitOwnerRefs(element, getComponentReference, SharedRefsDispatch, callback)
+						commitOwnerRefs(element, getComponentRefs, SharedRefsDispatch, callback)
 					break
 				case 'function':
 					switch (signature) {
@@ -2348,34 +2562,36 @@
 		}
 		
 		/**
-		 * @param {object} prevProps
-		 * @param {object} nextProps
+		 * @param {object} older
+		 * @param {object} newer
 		 * @return {object?}
 		 */
-		function reconcileElementProps (prevProps, nextProps) {
-			if (prevProps === nextProps)
+		function reconcileElementProps (older, newer) {
+			if (older === newer)
 				return
 		
 			var length = 0
-			var props = {}
+			var change = {}
 		
-			for (var key in prevProps)
-				if (!objectHasOwnProperty.call(nextProps, key))
-					props[(++length, key)] = null
+			for (var key in older)
+				if (!ObjectHasOwnProperty.call(newer, key))
+					change[(++length, key)] = null
 		
-			for (var key in nextProps) {
-				var next = nextProps[key]
-				var prev = prevProps[key]
+			for (var key in newer) {
+				var next = newer[key]
+				var prev = older[key]
 		
 				if (next !== prev)
+					// primitive
 					if (typeof next !== 'object' || next === null)
-						props[(++length, key)] = next
-					else if (key !== 'children' && (next = reconcileElementProps(prev || {}, next)))
-						props[(++length, key)] = next
+						change[(++length, key)] = next
+					// object/circular data-structure
+					else if (next === newer || next[SymbolForIterator] === SymbolForIterator || (next = reconcileElementProps(prev || {}, next)))
+						change[(++length, key)] = next
 			}
 		
 			if (length > 0)
-				return props
+				return change
 		}
 		
 		/**
@@ -2651,7 +2867,7 @@
 		/**
 		 * @param {Element} element
 		 * @param {string} name
-		 * @param {*} value
+		 * @param {any} value
 		 */
 		function setDOMProperty (element, name, value) {
 			switch (value) {
@@ -2667,7 +2883,7 @@
 		/**
 		 * @param {Element} element
 		 * @param {string} name
-		 * @param {*} value
+		 * @param {any} value
 		 * @param {string?} xmlns
 		 */
 		function setDOMAttribute (element, name, value, xmlns) {
@@ -2692,7 +2908,7 @@
 		/**
 		 * @param {Element} element
 		 * @param {string} name
-		 * @param {*} value
+		 * @param {any} value
 		 * @param {string?} xmlns
 		 */
 		function setDOMProps (element, name, value, xmlns) {
@@ -2745,7 +2961,7 @@
 		 * @param {Element} element
 		 * @param {string} name
 		 * @param {string} value
-		 * @param {Array} nodes
+		 * @param {Array<Node>} nodes
 		 */
 		function setDOMInnerHTML (element, name, value, nodes) {
 			if (element.owner[name])
@@ -2771,7 +2987,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @return {object}
+		 * @return {Node}
 		 */
 		function getDOMOwner (element) {
 			return element.owner
@@ -2857,7 +3073,7 @@
 		 * @param {Element} parent
 		 * @param {Element} previousSibling
 		 * @param {Element} nextSibling
-		 * @return {object?}
+		 * @return {Node?}
 		 */
 		function getDOMQuery (element, parent, previousSibling, nextSibling) {
 			var id = element.id
@@ -2971,7 +3187,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @return {object}
+		 * @return {Node}
 		 */
 		function createDOMText (element) {
 			return document.createTextNode(element.children)
@@ -2979,7 +3195,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @return {object}
+		 * @return {Node}
 		 */
 		function createDOMEmpty (element) {
 			return document.createTextNode('')
@@ -2987,7 +3203,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @return {object}
+		 * @return {Node}
 		 */
 		function createDOMComment (element) {
 			return document.createComment(element.children)
@@ -2995,7 +3211,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @return {object}
+		 * @return {Node}
 		 */
 		function createDOMElement (element) {
 			return element.xmlns ? document.createElementNS(element.xmlns, element.type) : document.createElement(element.type)
@@ -3003,7 +3219,7 @@
 		
 		/**
 		 * @param {Element} element
-		 * @return {object}
+		 * @return {Node}
 		 */
 		function createDOMComponent (element) {
 			return new element.type(element.props)
@@ -3012,7 +3228,7 @@
 		dio.render = render
 		dio.hydrate = hydrate
 		dio.Component = Component
-		dio.Fragment = SymbolFragment
+		dio.Fragment = Fragment
 		dio.PureComponent = PureComponent
 		dio.Children = Children
 		dio.createContext = createContext

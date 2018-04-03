@@ -1,5 +1,8 @@
 /**
- * @param {Event}
+ * @alias Element#handleEvent
+ * @memberof Element
+ * @this {Element}
+ * @param {(Event|object)}
  */
 function handleEvent (event) {
 	try {
@@ -18,13 +21,13 @@ function handleEvent (event) {
 		if (typeof callback === 'function') {
 			value = callback.call(owner, event, props, state, context)
 		} else if (typeof callback.handleEvent === 'function') {
-			if (owner !== callback && callback[SymbolComponent])
-				host = (owner = callback)[SymbolElement]
+			if (owner !== callback && callback[SymbolForComponent])
+				host = (owner = callback)[SymbolForElement]
 
 			value = callback.handleEvent(event, props, state, context)
 		}
 
-		if (value && owner[SymbolComponent])
+		if (value && owner[SymbolForComponent])
 			enqueueComponentValue(host, SharedSiteEvent, value)
 	} catch (err) {
 		reportErrorException(host, err, SharedSiteEvent+':'+getDisplayName(callback.handleEvent || callback))

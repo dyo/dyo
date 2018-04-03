@@ -7,7 +7,7 @@ function toString () {
 
 /**
  * @param {Element} element
- * @param {Element?} host
+ * @param {Element} host
  * @return {string}
  */
 function getStringElement (element, host) {
@@ -45,7 +45,7 @@ function getStringElement (element, host) {
 
 /**
  * @param {Element} element
- * @param  {object} props
+ * @param {object} props
  * @return {String}
  */
 function getStringProps (element, props) {

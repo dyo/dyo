@@ -448,6 +448,25 @@ describe('Render', () => {
 		assert.html(container, '<div>primary</div>')
 	})
 
+	it('should handle circular prop references', () => {
+		let container = document.createElement('div')
+		let refs = null
+
+		var obj = {foo: true}
+		obj.obj = obj
+
+		render(h('h1', {ref: (node) => refs = node, obj: obj}, 1), container)
+		assert.html(container, '<h1>1</h1>')
+		assert.equal(refs.obj, obj)
+
+		var obj = {foo: false}
+		obj.obj = obj
+
+		render(h('h1', {ref: (node) => refs = node, obj: obj}, 1), container)
+		assert.html(container, '<h1>1</h1>')
+		assert.equal(refs.obj, obj)
+	})
+
 	it('should no-op duplicate keys', () => {
 		let container = document.createElement('div')
 

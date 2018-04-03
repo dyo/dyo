@@ -1,33 +1,50 @@
 /**
+ * @name Exception
  * @constructor
  * @param {Element} element
- * @param {*} err
+ * @param {any} err
  * @param {string} origin
+ * @property {any} error
+ * @property {string} origin
+ * @property {boolean} bubbles
  */
 function Exception (element, err, origin) {
 	this.error = err
 	this.origin = origin
 	this.bubbles = true
-	this[SymbolElement] = element
+	this[SymbolForElement] = element
 }
-/**
- * @type {object}
- */
-objectDefineProperties(Exception[SharedSitePrototype], {
+ObjectDefineProperties(Exception[SharedSitePrototype], {
+	/**
+	 * @alias Exception#toString
+	 * @memberof Exception
+	 * @type {function}
+	 * @return {string}
+	 */
 	toString: {
 		value: function () {
 			return 'Error: ' + Object(this.error).toString() + '\n\n' + this.message
 		}
 	},
+	/**
+	 * @alias Exception#message
+	 * @memberof Exception
+	 * @type {string}
+	 */
 	message: {
 		get: function () {
 			return 'The following error occurred in `\n' + this.componentStack + '` from "' + this.origin + '"'
 		}
 	},
+	/**
+	 * @alias Exception#componentStack
+	 * @memberof Exception
+	 * @type {string}
+	 */
 	componentStack: {
 		get: function () {
-			return this[SymbolComponent] = this[SymbolComponent] ? this[SymbolComponent] : (
-				createErrorStack(this[SymbolElement].host, '<'+getDisplayName(this[SymbolElement])+'>\n')
+			return this[SymbolForComponent] = this[SymbolForComponent] ? this[SymbolForComponent] : (
+				createErrorStack(this[SymbolForElement].host, '<'+getDisplayName(this[SymbolForElement])+'>\n')
 			)
 		}
 	}
@@ -35,8 +52,9 @@ objectDefineProperties(Exception[SharedSitePrototype], {
 
 /**
  * @param {Element} element
- * @param {*} err
+ * @param {any} err
  * @param {string} origin
+ * @return {Exception}
  */
 function createErrorException (element, err, origin) {
 	return new Exception(element, err, origin)
@@ -45,7 +63,7 @@ function createErrorException (element, err, origin) {
 /**
  * @throws Exception
  * @param {Element} element
- * @param {*} err
+ * @param {any} err
  * @param {string} origin
  */
 function throwErrorException (element, err, origin) {
@@ -53,9 +71,9 @@ function throwErrorException (element, err, origin) {
 }
 
 /**
- * @throws
+ * @throws {any}
  * @param {Element} element
- * @param {*} err
+ * @param {any} err
  * @param {string} origin
  */
 function reportErrorException (element, err, origin) {
@@ -63,8 +81,8 @@ function reportErrorException (element, err, origin) {
 }
 
 /**
- * @param {(object|string)} exception
- * @return {*}
+ * @param {(Exception|string)} exception
+ * @return {any}
  */
 function printErrorException (exception) {
 	try {
@@ -103,7 +121,7 @@ function replaceErrorBoundary (element, host, parent, exception) {
 
 /**
  * @param {Element} element
- * @param {*} err
+ * @param {any} err
  * @param {string} origin
  */
 function invokeErrorBoundary (element, err, origin) {
@@ -125,11 +143,12 @@ function delegateErrorBoundary (element, host, exception) {
  * @param {Component} owner
  */
 function catchErrorBoundary (element, exception, owner) {
-	if (owner && owner[SharedComponentDidCatch] && !owner[SymbolException])
-		owner[SymbolException] = getLifecycleBoundary(element, owner, owner[SymbolException] = exception)
+	if (owner && owner[SharedComponentDidCatch] && !owner[SymbolForException])
+		owner[SymbolForException] = getLifecycleBoundary(element, owner, owner[SymbolForException] = exception)
 }
 
 /**
+ * @throws {Exception} throws when an ErrorBoundary is not found.
  * @param {Element} element
  * @param {Element} host
  * @param {Element} parent

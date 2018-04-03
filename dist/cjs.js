@@ -1,4 +1,4 @@
-/*!dio 9.0.0-alpha.0 @license MIT */
+/*!dio 9.0.0-beta @license MIT */
 module.exports = function (dio, Element, mountComponentInstance, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = 1
@@ -160,7 +160,8 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	}
 	
 	/**
-	 * @param {string}
+	 * @param {string} type
+	 * @return {boolean}
 	 */
 	function isVoidType (type) {
 		if (typeof type === 'string')
@@ -203,7 +204,7 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element?} host
+	 * @param {Element} host
 	 * @return {string}
 	 */
 	function getStringElement (element, host) {
@@ -241,7 +242,7 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	
 	/**
 	 * @param {Element} element
-	 * @param  {object} props
+	 * @param {object} props
 	 * @return {String}
 	 */
 	function getStringProps (element, props) {
@@ -377,7 +378,9 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	}
 	
 	/**
-	 * @type {constructor}
+	 * @name Readable
+	 * @constructor
+	 * @type {function}
 	 */
 	var Readable = require('stream').Readable
 	
@@ -395,7 +398,10 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	}
 	
 	/**
+	 * @name Stream
 	 * @constructor
+	 * @property {Element} host
+	 * @property {Array<Element>} queue
 	 * @param {Element} element
 	 * @param {Element} host
 	 */
@@ -405,9 +411,17 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 		Readable.call(this)
 	}
 	/**
+	 * @alias Stream#prototype
+	 * @memberof Stream
 	 * @type {object}
 	 */
 	Stream.prototype = Object.create(Readable.prototype, {
+		/**
+		 * @alias Stream#_read
+		 * @memberof Stream
+		 * @private
+		 * @type {function}
+		 */
 		_read: {
 			value: function () {
 				if (this.queue.length > 0)
@@ -430,7 +444,7 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	/**
 	 * @param {Element} element
 	 * @param {Element} host
-	 * @param {Element[]} queue
+	 * @param {Array<Element>} queue
 	 * @param {Readable} container
 	 */
 	function read (element, host, queue, container) {
@@ -473,9 +487,10 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	}
 	
 	/**
-	 * @param {*} element
+	 * @param {any} element
 	 * @param {Writable?} container
 	 * @param {function?} callback
+	 * @return {string?}
 	 */
 	function renderToString (element, container, callback) {
 		if (!container || !container.writable)
@@ -485,9 +500,10 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	}
 	
 	/**
-	 * @param {*} element
+	 * @param {any} element
 	 * @param {Writable?} container
 	 * @param {function?} callback
+	 * @param {Stream?}
 	 */
 	function renderToNodeStream (element, container, callback) {
 		if (!container || !container.writable)

@@ -1,7 +1,8 @@
 /**
- * @param {*} element
+ * @param {any} element
  * @param {object} container
  * @param {function?} callback
+ * @public
  */
 function render (element, container, callback) {
 	if (!container)
@@ -13,9 +14,10 @@ function render (element, container, callback) {
 }
 
 /**
- * @param {*} element
+ * @param {any} element
  * @param {object} container
  * @param {function?} callback
+ * @public
  */
 function hydrate (element, container, callback) {
 	if (!container)
@@ -25,14 +27,16 @@ function hydrate (element, container, callback) {
 }
 
 /**
- * @param {Node} container
+ * @param {object} container
  * @return {boolean}
+ * @public
  */
 function unmountComponentAtNode (container) {
 	return registry.has(container) && !render(null, container)
 }
 
 /**
+ * @throws {Error} if invoked with an invalid container
  * @param {Element} element
  * @param {object} container
  * @param {function} callback

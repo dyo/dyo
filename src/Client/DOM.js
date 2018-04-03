@@ -58,7 +58,7 @@ function setDOMStyle (element, name, value) {
 /**
  * @param {Element} element
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  */
 function setDOMProperty (element, name, value) {
 	switch (value) {
@@ -74,7 +74,7 @@ function setDOMProperty (element, name, value) {
 /**
  * @param {Element} element
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {string?} xmlns
  */
 function setDOMAttribute (element, name, value, xmlns) {
@@ -99,7 +99,7 @@ function setDOMAttribute (element, name, value, xmlns) {
 /**
  * @param {Element} element
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {string?} xmlns
  */
 function setDOMProps (element, name, value, xmlns) {
@@ -152,7 +152,7 @@ function setDOMProps (element, name, value, xmlns) {
  * @param {Element} element
  * @param {string} name
  * @param {string} value
- * @param {Array} nodes
+ * @param {Array<Node>} nodes
  */
 function setDOMInnerHTML (element, name, value, nodes) {
 	if (element.owner[name])
@@ -178,7 +178,7 @@ function getDOMContext (element) {
 
 /**
  * @param {Element} element
- * @return {object}
+ * @return {Node}
  */
 function getDOMOwner (element) {
 	return element.owner
@@ -264,7 +264,7 @@ function getDOMPortal (element) {
  * @param {Element} parent
  * @param {Element} previousSibling
  * @param {Element} nextSibling
- * @return {object?}
+ * @return {Node?}
  */
 function getDOMQuery (element, parent, previousSibling, nextSibling) {
 	var id = element.id
@@ -378,7 +378,7 @@ function removeDOMChild (element, parent) {
 
 /**
  * @param {Element} element
- * @return {object}
+ * @return {Node}
  */
 function createDOMText (element) {
 	return document.createTextNode(element.children)
@@ -386,7 +386,7 @@ function createDOMText (element) {
 
 /**
  * @param {Element} element
- * @return {object}
+ * @return {Node}
  */
 function createDOMEmpty (element) {
 	return document.createTextNode('')
@@ -394,7 +394,7 @@ function createDOMEmpty (element) {
 
 /**
  * @param {Element} element
- * @return {object}
+ * @return {Node}
  */
 function createDOMComment (element) {
 	return document.createComment(element.children)
@@ -402,7 +402,7 @@ function createDOMComment (element) {
 
 /**
  * @param {Element} element
- * @return {object}
+ * @return {Node}
  */
 function createDOMElement (element) {
 	return element.xmlns ? document.createElementNS(element.xmlns, element.type) : document.createElement(element.type)
@@ -410,7 +410,7 @@ function createDOMElement (element) {
 
 /**
  * @param {Element} element
- * @return {object}
+ * @return {Node}
  */
 function createDOMComponent (element) {
 	return new element.type(element.props)

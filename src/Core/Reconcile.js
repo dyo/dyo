@@ -35,34 +35,36 @@ function reconcileElement (element, snapshot, host) {
 }
 
 /**
- * @param {object} prevProps
- * @param {object} nextProps
+ * @param {object} older
+ * @param {object} newer
  * @return {object?}
  */
-function reconcileElementProps (prevProps, nextProps) {
-	if (prevProps === nextProps)
+function reconcileElementProps (older, newer) {
+	if (older === newer)
 		return
 
 	var length = 0
-	var props = {}
+	var change = {}
 
-	for (var key in prevProps)
-		if (!objectHasOwnProperty.call(nextProps, key))
-			props[(++length, key)] = null
+	for (var key in older)
+		if (!ObjectHasOwnProperty.call(newer, key))
+			change[(++length, key)] = null
 
-	for (var key in nextProps) {
-		var next = nextProps[key]
-		var prev = prevProps[key]
+	for (var key in newer) {
+		var next = newer[key]
+		var prev = older[key]
 
 		if (next !== prev)
+			// primitive
 			if (typeof next !== 'object' || next === null)
-				props[(++length, key)] = next
-			else if (key !== 'children' && (next = reconcileElementProps(prev || {}, next)))
-				props[(++length, key)] = next
+				change[(++length, key)] = next
+			// object/circular data-structure
+			else if (next === newer || next[SymbolForIterator] === SymbolForIterator || (next = reconcileElementProps(prev || {}, next)))
+				change[(++length, key)] = next
 	}
 
 	if (length > 0)
-		return props
+		return change
 }
 
 /**

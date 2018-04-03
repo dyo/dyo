@@ -1,9 +1,10 @@
 /**
- * @param {string|function|object|Element} type
- * @return {function|object}
+ * @param {(string|function|object)} type
+ * @return {(function|object)}
+ * @public
  */
 function createFactory (type) {
-	if (type !== null && typeof type === 'object' && !isValidElement(type))
+	if (type !== null && typeof type === 'object' && !thenable(type))
 		return factory(module, type)
 
 	return createElement.bind(null, type)

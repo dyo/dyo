@@ -88,7 +88,7 @@ function commitMountElementReplace (element, snapshot, host) {
 /**
  * @param {Element} element
  * @param {Element} host
- * @param {object} type
+ * @param {Promise<any>} type
  */
 function commitMountElementPromise (element, host, type) {
 	type.then(function (value) {
@@ -263,15 +263,15 @@ function commitOwnerQuery (element, parent) {
  * @param {Element} element
  * @param {(function|string)?} callback
  * @param {number} signature
- * @param {*} key
+ * @param {any?} key
  */
 function commitOwnerRefs (element, callback, signature, key) {
 	switch (typeof callback) {
 		case 'string':
 			if (signature === SharedRefsRemove)
-				commitOwnerRefs(element, getComponentReference, SharedRefsRemove, callback)
+				commitOwnerRefs(element, getComponentRefs, SharedRefsRemove, callback)
 			else
-				commitOwnerRefs(element, getComponentReference, SharedRefsDispatch, callback)
+				commitOwnerRefs(element, getComponentRefs, SharedRefsDispatch, callback)
 			break
 		case 'function':
 			switch (signature) {
