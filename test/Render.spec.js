@@ -524,4 +524,42 @@ describe('Render', () => {
  		assert.html(container, '<h1>0</h1>')
  		assert.deepEqual(container.firstChild.custom, {first: 1, second: 2})
  	})
+
+ 	it('should render defaultValue', () => {
+ 		let container = document.createElement('div')
+
+ 		render(h('input', {defaultValue: 1}), container)
+ 		assert.html(container, '<input>')
+ 		assert.propertyVal(container.firstChild, 'value', '1')
+
+ 		render(h('input', {defaultValue: 0}), container)
+ 		assert.html(container, '<input>')
+ 		assert.propertyVal(container.firstChild, 'value', '0')
+ 	})
+
+ 	it('should not render defaultValue to string', () => {
+ 		let container = document.createElement('div')
+
+ 		render(h('input', {defaultValue: null}), container)
+ 		assert.html(container, '<input>')
+
+ 		render(h('input', {defaultValue: false}), container)
+ 		assert.html(container, '<input>')
+
+ 		render(h('input', {defaultValue: 1, value: '2'}), container)
+ 		assert.html(container, '<input>')
+ 		assert.propertyVal(container.firstChild, 'value', '2')
+
+ 		render(h('input', {defaultValue: 1, value: 0}), container)
+ 		assert.html(container, '<input>')
+ 		assert.propertyVal(container.firstChild, 'value', '0')
+
+ 		render(h('input', {defaultValue: 0, value: null}), container)
+ 		assert.html(container, '<input>')
+ 		assert.propertyVal(container.firstChild, 'value', '')
+
+ 		render(h('input', {defaultValue: 0, value: undefined}), container)
+ 		assert.html(container, '<input>')
+ 		assert.propertyVal(container.firstChild, 'value', '')
+ 	})
 })

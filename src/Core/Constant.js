@@ -11,12 +11,10 @@ var ObjectKeys = Object.keys
 var SymbolFor = Symbol.for || hash
 var SymbolForCache = SymbolFor('dio.Cache')
 var SymbolForState = SymbolFor('dio.State')
+var SymbolForContext = SymbolFor('dio.Context')
 var SymbolForElement = SymbolFor('dio.Element')
 var SymbolForFragment = SymbolFor('dio.Fragment')
 var SymbolForComponent = SymbolFor('dio.Component')
 var SymbolForException = SymbolFor('dio.Exception')
 var SymbolForIterator = Symbol.iterator || '@@iterator'
 var SymbolForAsyncIterator = Symbol.asyncIterator || '@@asyncIterator'
-
-var UUID = 2147483647
-var SEED = 4022871197 % UUID

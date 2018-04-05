@@ -126,6 +126,10 @@ function setDOMProps (element, name, value, xmlns) {
 		case 'autofocus':
 		case 'autoFocus':
 			return element.owner[value ? 'focus' : 'blur']()
+		case 'defaultValue':
+			if (!('value' in element.props))
+				setDOMProps(element, 'value', value, xmlns)
+			return
 		case 'width':
 		case 'height':
 			if (element.type === 'img')

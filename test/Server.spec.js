@@ -71,13 +71,50 @@ describe('Server', () => {
 		assert.html(h('input', {
 			defaultValue: 1
 		}), '<input value="1">')
+
+		assert.html(h('input', {
+			defaultValue: 0
+		}), '<input value="0">')
+
+		assert.html(h('input', {
+			defaultValue: ''
+		}), '<input value="">')
 	})
 
 	it('should not render defaultValue to string', () => {
 		assert.html(h('input', {
+			defaultValue: null
+		}), '<input>')
+
+		assert.html(h('input', {
+			defaultValue: false
+		}), '<input>')
+
+		assert.html(h('input', {
 			defaultValue: 1,
 			value: '2'
 		}), '<input value="2">')
+
+		assert.html(h('input', {
+			defaultValue: 1,
+			value: 0
+		}), '<input value="0">')
+
+		assert.html(h('input', {
+			defaultValue: 0,
+			value: null
+		}), '<input>')
+
+		assert.html(h('input', {
+			defaultValue: 0,
+			value: undefined
+		}), '<input>')
+	})
+
+	it('should not render textContent to string', () => {
+		assert.html(h('div', {
+			textContent: 'foo'
+		}), '<div></div>')
 	})
 
 	it('should render acceptCharset to string', () => {

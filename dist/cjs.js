@@ -1,40 +1,37 @@
-/*!dio 9.0.0-beta @license MIT */
+/*!dio 9.0.0-rc @license MIT */
 module.exports = function (dio, Element, mountComponentInstance, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
-	var SharedElementPromise = 1
-	var SharedElementFragment = 2
-	var SharedElementPortal = 3
-	var SharedElementSnapshot = 4
-	var SharedElementComponent = 5
-	var SharedElementCustom = 6
-	var SharedElementNode = 7
-	var SharedElementComment = 8
-	var SharedElementText = 9
-	var SharedElementEmpty = 10
+	var SharedElementPromise = 0
+	var SharedElementFragment = 1
+	var SharedElementPortal = 2
+	var SharedElementSnapshot = 3
+	var SharedElementComponent = 4
+	var SharedElementCustom = 5
+	var SharedElementNode = 6
+	var SharedElementComment = 7
+	var SharedElementText = 8
+	var SharedElementEmpty = 9
 	
-	var SharedComponentForceUpdate = 1
-	var SharedComponentPropsUpdate = 2
-	var SharedComponentStateUpdate = 3
+	var SharedComponentForceUpdate = 0
+	var SharedComponentPropsUpdate = 1
+	var SharedComponentStateUpdate = 2
 	
-	var SharedRefsDispatch = 1
-	var SharedRefsReplace = 2
-	var SharedRefsRemove = 3
-	var SharedRefsAssign = 4
+	var SharedRefsDispatch = 0
+	var SharedRefsReplace = 1
+	var SharedRefsRemove = 2
+	var SharedRefsAssign = 3
 	
-	var SharedPropsMount = 1
-	var SharedPropsUpdate = 2
+	var SharedPropsMount = 0
+	var SharedPropsUpdate = 1
 	
-	var SharedMountQuery = 1
-	var SharedMountOwner = 2
+	var SharedMountQuery = 0
+	var SharedMountOwner = 1
 	
-	var SharedOwnerAppend = 4
-	var SharedOwnerInsert = 5
+	var SharedOwnerAppend = 0
+	var SharedOwnerInsert = 1
 	
-	var SharedUnmountElement = 1
-	var SharedUnmountChildren = 2
-	
-	var SharedWorkIdle = 1
-	var SharedWorkUpdating = 2
+	var SharedWorkIdle = 0
+	var SharedWorkUpdating = 1
 	
 	var SharedKeyHead = '&|head|'
 	var SharedKeyBody = '&|body|'
@@ -256,16 +253,13 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 					value = value && value.__html
 				case 'innerHTML':
 					element.context = value ? value : ''
-					continue
-				case 'defaultValue':
-					if (!props.value)
-						payload += ' value="' + getTextEscape(value) + '"'
 				case 'key':
 				case 'ref':
 				case 'children':
 					continue
 				case 'style':
 					payload += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'
+				case 'textContent':
 					continue
 				case 'className':
 					name = 'class'
@@ -279,6 +273,9 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 				case 'tabIndex':
 					name = 'tabindex'
 					break
+				case 'defaultValue':
+					if ((name = 'value') in props)
+						continue
 			}
 	
 			switch (typeof value) {

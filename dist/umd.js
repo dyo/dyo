@@ -1,4 +1,4 @@
-/*!dio 9.0.0-beta @license MIT */
+/*!dio 9.0.0-rc @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,42 +6,39 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.0-beta'}
+		var dio = {version: '9.0.0-rc'}
 		
-		var SharedElementPromise = 1
-		var SharedElementFragment = 2
-		var SharedElementPortal = 3
-		var SharedElementSnapshot = 4
-		var SharedElementComponent = 5
-		var SharedElementCustom = 6
-		var SharedElementNode = 7
-		var SharedElementComment = 8
-		var SharedElementText = 9
-		var SharedElementEmpty = 10
+		var SharedElementPromise = 0
+		var SharedElementFragment = 1
+		var SharedElementPortal = 2
+		var SharedElementSnapshot = 3
+		var SharedElementComponent = 4
+		var SharedElementCustom = 5
+		var SharedElementNode = 6
+		var SharedElementComment = 7
+		var SharedElementText = 8
+		var SharedElementEmpty = 9
 		
-		var SharedComponentForceUpdate = 1
-		var SharedComponentPropsUpdate = 2
-		var SharedComponentStateUpdate = 3
+		var SharedComponentForceUpdate = 0
+		var SharedComponentPropsUpdate = 1
+		var SharedComponentStateUpdate = 2
 		
-		var SharedRefsDispatch = 1
-		var SharedRefsReplace = 2
-		var SharedRefsRemove = 3
-		var SharedRefsAssign = 4
+		var SharedRefsDispatch = 0
+		var SharedRefsReplace = 1
+		var SharedRefsRemove = 2
+		var SharedRefsAssign = 3
 		
-		var SharedPropsMount = 1
-		var SharedPropsUpdate = 2
+		var SharedPropsMount = 0
+		var SharedPropsUpdate = 1
 		
-		var SharedMountQuery = 1
-		var SharedMountOwner = 2
+		var SharedMountQuery = 0
+		var SharedMountOwner = 1
 		
-		var SharedOwnerAppend = 4
-		var SharedOwnerInsert = 5
+		var SharedOwnerAppend = 0
+		var SharedOwnerInsert = 1
 		
-		var SharedUnmountElement = 1
-		var SharedUnmountChildren = 2
-		
-		var SharedWorkIdle = 1
-		var SharedWorkUpdating = 2
+		var SharedWorkIdle = 0
+		var SharedWorkUpdating = 1
 		
 		var SharedKeyHead = '&|head|'
 		var SharedKeyBody = '&|body|'
@@ -92,15 +89,13 @@
 		var SymbolFor = Symbol.for || hash
 		var SymbolForCache = SymbolFor('dio.Cache')
 		var SymbolForState = SymbolFor('dio.State')
+		var SymbolForContext = SymbolFor('dio.Context')
 		var SymbolForElement = SymbolFor('dio.Element')
 		var SymbolForFragment = SymbolFor('dio.Fragment')
 		var SymbolForComponent = SymbolFor('dio.Component')
 		var SymbolForException = SymbolFor('dio.Exception')
 		var SymbolForIterator = Symbol.iterator || '@@iterator'
 		var SymbolForAsyncIterator = Symbol.asyncIterator || '@@asyncIterator'
-		
-		var UUID = 2147483647
-		var SEED = 4022871197 % UUID
 		
 		/**
 		 * @name List
@@ -356,14 +351,6 @@
 		 */
 		function thenable (object) {
 			return typeof object.then === 'function' && typeof object.catch === 'function'
-		}
-		
-		/**
-		 * @param {string} prefix
-		 * @return {string}
-		 */
-		function random (prefix) {
-			return prefix + '.' + (((SEED = SEED * 16807 % UUID - 1) - 1) / UUID).toString(36).substring(2)
 		}
 		
 		/**
@@ -1493,6 +1480,7 @@
 			owner.context = context
 			owner.refs = owner.refs || {}
 			owner[SymbolForState] = owner[SymbolForCache] = {}
+			owner[SymbolForContext] = element.cache = host.cache
 			owner[SymbolForElement] = element
 		
 			if (owner[SharedGetInitialState])
@@ -1576,15 +1564,15 @@
 			if (owner[SharedComponentWillUpdate])
 				getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)
 		
-			if (owner[SharedGetChildContext])
-				merge(element.context, getLifecycleUpdate(element, SharedGetChildContext, nextProps, nextState, nextContext))
-		
 			switch (signature) {
 				case SharedComponentPropsUpdate:
 					owner.props = element.props = nextProps
 				case SharedComponentStateUpdate:
 					owner.state = nextState
 			}
+		
+			if (owner[SharedGetChildContext])
+				merge(element.context, getLifecycleUpdate(element, SharedGetChildContext, nextProps, nextState, nextContext))
 		
 			reconcileElement(element.children, getLifecycleRender(element, owner), element)
 		
@@ -1857,7 +1845,7 @@
 		   */
 		  getInitialState: {
 		    value: function (props, state, context) {
-		      return (this[SymbolForElement].context = merge({}, context))[props.uuid] = {provider: this, consumers: new List()}
+		      return this[SymbolForElement].cache = {provider: this, consumers: new List()}
 		    }
 		  },
 		  /**
@@ -1919,7 +1907,7 @@
 		   */
 		  getInitialState: {
 		    value: function (props) {
-		      return this.context[props.uuid] || {provider: this}
+		      return this[SymbolForContext] || {provider: this}
 		    }
 		  },
 		  /**
@@ -1999,7 +1987,7 @@
 		 * @public
 		 */
 		function createContext (value) {
-		  return createContextComponent({value: value, children: noop, uuid: random('dio.Context')})
+		  return createContextComponent({value: value, children: noop})
 		}
 		
 		/**
@@ -2009,7 +1997,7 @@
 		 */
 		function findDOMNode (element) {
 			if (!element)
-				return element
+				return
 		
 			if (isValidElement(element[SymbolForElement]))
 				return findDOMNode(element[SymbolForElement])
@@ -2935,6 +2923,10 @@
 				case 'autofocus':
 				case 'autoFocus':
 					return element.owner[value ? 'focus' : 'blur']()
+				case 'defaultValue':
+					if (!('value' in element.props))
+						setDOMProps(element, 'value', value, xmlns)
+					return
 				case 'width':
 				case 'height':
 					if (element.type === 'img')

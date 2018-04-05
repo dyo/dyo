@@ -226,6 +226,7 @@ function mountComponentInstance (element) {
 	owner.context = context
 	owner.refs = owner.refs || {}
 	owner[SymbolForState] = owner[SymbolForCache] = {}
+	owner[SymbolForContext] = element.cache = host.cache
 	owner[SymbolForElement] = element
 
 	if (owner[SharedGetInitialState])
@@ -309,15 +310,15 @@ function updateComponentChildren (element, snapshot, signature) {
 	if (owner[SharedComponentWillUpdate])
 		getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)
 
-	if (owner[SharedGetChildContext])
-		merge(element.context, getLifecycleUpdate(element, SharedGetChildContext, nextProps, nextState, nextContext))
-
 	switch (signature) {
 		case SharedComponentPropsUpdate:
 			owner.props = element.props = nextProps
 		case SharedComponentStateUpdate:
 			owner.state = nextState
 	}
+
+	if (owner[SharedGetChildContext])
+		merge(element.context, getLifecycleUpdate(element, SharedGetChildContext, nextProps, nextState, nextContext))
 
 	reconcileElement(element.children, getLifecycleRender(element, owner), element)
 

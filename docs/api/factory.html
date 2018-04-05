@@ -215,6 +215,8 @@ getQuery: (
 			Called before an element and its children are unmounted.
 		</p>
 
+		<p>This method only serves the niche purpose of allowing you to visit all elements that are affected by a remove operation without manually walking an elements subtree of children in <code>removeChild</code>, this can be effective in certain cases when you are manually managing pointer references between two distinct threads.</p>
+
 <pre><code>
 willUnmount: (element: Element, parent: Element, host: Element) => void
 </code></pre>

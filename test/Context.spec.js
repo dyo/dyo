@@ -69,6 +69,7 @@ describe('Context', () => {
 	it('should update child context reference', () => {
 		let container = document.createElement('div')
 		let stack = []
+		let refs = null
 		let context = {
 			children: 1,
 			get spy() {
@@ -77,7 +78,8 @@ describe('Context', () => {
 			set spy(_) {}
 		}
 		let A = class {
-			getChildContext() {
+			getChildContext(nextProps, nextState) {
+				stack.push(`state-stable:${this.state === nextState}`)
 				return context
 			}
 			render() {
@@ -101,11 +103,13 @@ describe('Context', () => {
 		}
 
 		render(A, container)
-		render(A, container)
+		render(h(A, {ref: node => refs = node}), container)
 
-		assert.html(container, '0')
-		assert.propertyVal(context, 'children', -1)
-		assert.deepEqual(stack, [true, true])
+		refs.setState({})
+
+		assert.html(container, '-1')
+		assert.propertyVal(context, 'children', -2)
+		assert.deepEqual(stack, ['state-stable:true', true, 'state-stable:true', true, 'state-stable:true', true])
 	})
 
 	it('should update child context with shouldComponentUpdate:false ', () => {
@@ -714,5 +718,106 @@ describe('Context', () => {
 				</table>
 			</div>
   	`)
+  })
+
+  it('should co-exist with old context', () => {
+  	let container = document.createElement('div')
+  	let stack = ['red', 'blue', 'orange']
+  	let index = 0
+  	let refs1 = null
+  	let refs2 = null
+
+  	class A extends Component {
+  	  constructor(props) {
+  	    super(props)
+  	    this.state = {
+  	      count: 0
+  	    };
+  	    this.countUp = this.countUp.bind(this)
+  	  }
+
+  	  getChildContext(nextProps, nextState) {
+  	    return {
+  	      ...this.context,
+  	      count: this.state.count,
+  	      countUp: this.countUp
+  	    };
+  	  }
+
+  	  render() {
+  	    return this.props.children
+  	  }
+
+  	  countUp() {
+  	    this.setState(({ count }) => {
+  	    	return { count: count + 1 }
+  	    })
+  	  }
+  	}
+
+  	const {Provider, Consumer} = createContext()
+
+  	class B extends Component {
+  	  constructor(props) {
+  	    super(props)
+  	    this.state = {
+  	      color: randomHexColor(),
+  	      newColor: this.newColor.bind(this)
+  	    }
+  	  }
+
+  	  render() {
+  	    return (
+  	    	h(Provider, {value: this.state}, this.props.children)
+  	    )
+  	  }
+
+  	  newColor() {
+  	    const color = randomHexColor()
+  	    this.setState(() => ({ color }))
+  	  }
+  	}
+
+  	function randomHexColor() {
+  		return stack[index++]
+  	}
+
+  	class C extends Component {
+  	  render() {
+  	    return (
+  	    	h(Consumer, ctx => (
+  	    		h(Fragment,
+  	    			h(D, {color: ctx.color}),
+  	    			h('button', {ref: (node) => refs2 = node, onClick: ctx.newColor}, 'Colors!')
+  	    		)
+  	    	))
+  	    )
+  	  }
+  	}
+
+  	class D extends Component {
+  	  render() {
+  	    return (
+  	    	h('button', {ref: (node) => refs1 = node, style: {color: this.props.color}, onClick: this.context.countUp},
+  	    		this.context.count
+  	    	)
+  	    )
+  	  }
+  	}
+
+  	render(h(A, h(B, h(C))), container)
+  	assert.html(container, `<button style="color: red;">0</button><button>Colors!</button>`)
+
+  	refs1.dispatchEvent(new Event('click'))
+  	assert.html(container, `<button style="color: red;">1</button><button>Colors!</button>`)
+
+  	refs1.dispatchEvent(new Event('click'))
+  	assert.html(container, `<button style="color: red;">2</button><button>Colors!</button>`)
+
+  	refs2.dispatchEvent(new Event('click'))
+  	assert.html(container, `<button style="color: blue;">2</button><button>Colors!</button>`)
+
+  	refs2.dispatchEvent(new Event('click'))
+  	assert.html(container, `<button style="color: orange;">2</button><button>Colors!</button>`)
   })
 })

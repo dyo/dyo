@@ -1,14 +1,17 @@
 ## 9.0.0 (Unreleased)
 
 - Breaking: Improve Error Boundaries to act more like React and `try..catch`.
+- Breaking: Name change to custom reconcilers method `getProps` to `getInitialProps`.
+- Breaking: Name change to custom reconcilers method `setContent` to `setDocument`.
 - Improve: error boundaries implementation to support possible future `Timeout` and `Placeholder` React components.
 - Improve: `async getInitialState` implementation.
-- New: `createClass` API.
-- New: `createContext` API.
-- New: `createComment` API.
+- Improve: support for `defaultValue` on select elements.
+- New: adds `createClass` API.
+- New: adds `createContext` API.
+- New: adds `createComment` API.
 - New: support for auto resolution of json `fetch` based Promises passed to setState/getInitialState.
 - New: support for custom elements.
-- NEW: exposes `willUnmount` and `getUpdatedProps` methods to custom reconcilers.
+- NEW: reconciler adds `getContext`, `createComment`, `setComment`, `willUnmount`, and `getUpdatedProps` methods to custom reconcilers.
 
 ## 8.2.3 (25 January 2018)
 

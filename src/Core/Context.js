@@ -21,7 +21,7 @@ ContextProvider[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
    */
   getInitialState: {
     value: function (props, state, context) {
-      return (this[SymbolForElement].context = merge({}, context))[props.uuid] = {provider: this, consumers: new List()}
+      return this[SymbolForElement].cache = {provider: this, consumers: new List()}
     }
   },
   /**
@@ -83,7 +83,7 @@ ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
    */
   getInitialState: {
     value: function (props) {
-      return this.context[props.uuid] || {provider: this}
+      return this[SymbolForContext] || {provider: this}
     }
   },
   /**
@@ -163,5 +163,5 @@ function createContextComponent (value) {
  * @public
  */
 function createContext (value) {
-  return createContextComponent({value: value, children: noop, uuid: random('dio.Context')})
+  return createContextComponent({value: value, children: noop})
 }

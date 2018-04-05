@@ -622,8 +622,12 @@ describe('Factory', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let renderer = createFactory({
-			willUnmount: function (element) {
-				stack.push(element.type)
+			willUnmount: function (element, parent, host) {
+				stack.push(
+					`element:${element.type}:${isValidElement(element)}`,
+					`parent:${parent.type}:${isValidElement(parent)}`,
+					`host:${host === element}`
+				)
 			}
 		})
 
@@ -633,6 +637,10 @@ describe('Factory', () => {
 
 		renderer.render(null, container)
 		assert.html(container, ``)
-		assert.deepEqual(stack, ['h3', 'h2', 'h1'])
+		assert.deepEqual(stack, [
+			'element:h3:true', 'parent:h2:true', 'host:false',
+			'element:h2:true', 'parent:h1:true', 'host:false',
+			'element:h1:true', 'parent:null:true', 'host:true',
+		])
 	})
 })

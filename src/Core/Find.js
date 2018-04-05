@@ -5,7 +5,7 @@
  */
 function findDOMNode (element) {
 	if (!element)
-		return element
+		return
 
 	if (isValidElement(element[SymbolForElement]))
 		return findDOMNode(element[SymbolForElement])

@@ -59,16 +59,13 @@ function getStringProps (element, props) {
 				value = value && value.__html
 			case 'innerHTML':
 				element.context = value ? value : ''
-				continue
-			case 'defaultValue':
-				if (!props.value)
-					payload += ' value="' + getTextEscape(value) + '"'
 			case 'key':
 			case 'ref':
 			case 'children':
 				continue
 			case 'style':
 				payload += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'
+			case 'textContent':
 				continue
 			case 'className':
 				name = 'class'
@@ -82,6 +79,9 @@ function getStringProps (element, props) {
 			case 'tabIndex':
 				name = 'tabindex'
 				break
+			case 'defaultValue':
+				if ((name = 'value') in props)
+					continue
 		}
 
 		switch (typeof value) {
