@@ -16,7 +16,7 @@ describe('Factory', () => {
 	let getTarget = (event) => { return {} }
 	let getType = (element, xmlns) => { return xmlns }
 	let getProps = (element) => { return element.props }
-	let getPortal = (element) => { return {} }
+	let getPortal = (element, container) => { return {} }
 	let getQuery = (element, parent, previous, next) => { return null }
 
 	let isValidTarget = (node) => { return node instanceof Object }
@@ -597,6 +597,27 @@ describe('Factory', () => {
 		renderer.render(h('h1', {id: 1, class: 'second'}, 'Hello World'), container)
 		assert.html(container, `<h1 id="1" class="first">Hello World</h1>`)
 		assert.deepEqual(stack, ['update', {class: 'second'}])
+	})
+
+	it('should ensure the signature arguments passed to setProps', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let renderer = createFactory({
+			setProps: function (element, value, name, xmlns, signature) {
+				if (signature === 0)
+					stack.push('phase:mount')
+				else
+					stack.push('phase:update')
+			}
+		})
+
+		renderer.render(h('h1', {id: 1}, 'Hello World'), container)
+		assert.html(container, `<h1>Hello World</h1>`)
+		assert.deepEqual(stack, ['phase:mount'])
+
+		renderer.render(h('h1', {id: 2}, 'Hello World'), container)
+		assert.html(container, `<h1>Hello World</h1>`)
+		assert.deepEqual(stack, ['phase:mount', 'phase:update'])
 	})
 
 	it('should provide a default root context', () => {

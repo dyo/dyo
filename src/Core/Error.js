@@ -23,7 +23,7 @@ ObjectDefineProperties(Exception[SharedSitePrototype], {
 	 */
 	toString: {
 		value: function () {
-			return 'Error: ' + Object(this.error).toString() + '\n\n' + this.message
+			return this.message
 		}
 	},
 	/**
@@ -33,7 +33,11 @@ ObjectDefineProperties(Exception[SharedSitePrototype], {
 	 */
 	message: {
 		get: function () {
-			return 'The following error occurred in `\n' + this.componentStack + '` from "' + this.origin + '"'
+			return this[SymbolForCache] = this[SymbolForCache] || (
+				'Exception: ' + Object(this.error).toString() + '\n\n' +
+				'The following error occurred in `\n' +
+				this.componentStack + '` from "' + this.origin + '"'
+			)
 		}
 	},
 	/**
@@ -43,7 +47,7 @@ ObjectDefineProperties(Exception[SharedSitePrototype], {
 	 */
 	componentStack: {
 		get: function () {
-			return this[SymbolForComponent] = this[SymbolForComponent] ? this[SymbolForComponent] : (
+			return this[SymbolForComponent] = this[SymbolForComponent] || (
 				createErrorStack(this[SymbolForElement].host, '<'+getDisplayName(this[SymbolForElement])+'>\n')
 			)
 		}
@@ -155,11 +159,12 @@ function catchErrorBoundary (element, exception, owner) {
  * @param {Exception} exception
  */
 function propagateErrorBoundary (element, host, parent, exception) {
-	clearErrorBoundary(parent)
 	catchErrorBoundary(parent, exception, parent.owner)
 
 	if (!exception.bubbles)
 		return
+
+	clearErrorBoundary(parent)
 
 	if (!isValidElement(parent.host))
 		throw printErrorException(exception)

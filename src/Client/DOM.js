@@ -101,8 +101,9 @@ function setDOMAttribute (element, name, value, xmlns) {
  * @param {string} name
  * @param {any} value
  * @param {string?} xmlns
+ * @param {number} signature
  */
-function setDOMProps (element, name, value, xmlns) {
+function setDOMProps (element, name, value, xmlns, signature) {
 	switch (name) {
 		case 'style':
 			return setDOMStyle(element, name, value)
@@ -116,20 +117,20 @@ function setDOMProps (element, name, value, xmlns) {
 		case 'innerHTML':
 			return setDOMInnerHTML(element, name, value ? value : '', [])
 		case 'dangerouslySetInnerHTML':
-			return setDOMProps(element, 'innerHTML', value && value.__html, xmlns)
+			return setDOMProps(element, 'innerHTML', value && value.__html, xmlns, signature)
 		case 'acceptCharset':
-			return setDOMProps(element, 'accept-charset', value, xmlns)
+			return setDOMProps(element, 'accept-charset', value, xmlns, signature)
 		case 'httpEquiv':
-			return setDOMProps(element, 'http-equiv', value, xmlns)
+			return setDOMProps(element, 'http-equiv', value, xmlns, signature)
 		case 'tabIndex':
-			return setDOMProps(element, name.toLowerCase(), value, xmlns)
+			return setDOMProps(element, name.toLowerCase(), value, xmlns, signature)
 		case 'autofocus':
 		case 'autoFocus':
 			return element.owner[value ? 'focus' : 'blur']()
 		case 'defaultValue':
-			if (!('value' in element.props))
-				setDOMProps(element, 'value', value, xmlns)
-			return
+			if (element.type === 'select')
+				return !signature && !('value' in element.props) && setDOMProps(element, 'value', value, xmlns, signature)
+			break
 		case 'width':
 		case 'height':
 			if (element.type === 'img')
@@ -223,9 +224,9 @@ function getDOMType (element, xmlns) {
 			return 'http://www.w3.org/1998/Math/MathML'
 		case 'foreignObject':
 			return
-		default:
-			return xmlns
 	}
+
+	return xmlns
 }
 
 /**
@@ -251,14 +252,15 @@ function getDOMUpdatedProps (element, props) {
 
 /**
  * @param {Element} element
+ * @param {any?} container
  * @return {Node}
  */
-function getDOMPortal (element) {
-	if (typeof element.type === 'string')
-		return getDOMDocument().querySelector(element.type)
+function getDOMPortal (element, container) {
+	if (typeof container === 'string')
+		return getDOMDocument().querySelector(container)
 
-	if (isValidDOMTarget(element.type))
-		return element.type
+	if (isValidDOMTarget(container))
+		return container
 
 	return getDOMDocument()
 }
@@ -294,7 +296,7 @@ function getDOMQuery (element, parent, previousSibling, nextSibling) {
 			}
 
 			if (parent.id === SharedElementPortal)
-				getDOMPortal(parent).appendChild(target)
+				getDOMPortal(parent, parent.type).appendChild(target)
 
 			node = target
 			type = null

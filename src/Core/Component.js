@@ -198,19 +198,6 @@ function getComponentDescriptor (name, value) {
 }
 
 /**
- * @this {Component}
- * @param {(Component|object)?} value
- * @param {any} key
- * @param {Element} element
- */
-function getComponentRefs (value, key, element) {
-	if (key !== element.ref)
-		delete this.refs[element.ref]
-
-	this.refs[key] = value
-}
-
-/**
  * @param {Element} element
  * @return {Element}
  */
@@ -465,15 +452,32 @@ function enqueueStateCallback (element, owner, callback) {
 /**
  * @param {Element} element
  * @param {function} callback
- * @param {any?} a
- * @param {any?} b
- * @param {any?} c
- * @return {any?}
  */
-function getLifecycleCallback (element, callback, a, b, c) {
+function getLifecycleCallback (element, callback) {
 	try {
 		if (typeof callback === 'function')
-			return callback.call(element.owner, a, b, c)
+			callback.call(element.owner)
+	} catch (err) {
+		throwErrorException(element, err, SharedSiteCallback)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {object?} owner
+ * @param {any?} value
+ */
+function getLifecycleRefs (element, owner, value) {
+	try {
+		switch (typeof value) {
+			case 'function':
+				return value.call(element.owner, owner)
+			case 'object':
+				return value.current = owner
+			default:
+				if (element.owner.refs)
+					element.owner.refs[value] = owner
+		}
 	} catch (err) {
 		throwErrorException(element, err, SharedSiteCallback)
 	}

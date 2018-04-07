@@ -97,11 +97,11 @@ setComment: (element: Element, value: string) => void
 		<h2 id=setProps>setProps</h2>
 
 		<p>
-			Called when assigning an elements individual properties. Use this to update or initialize properties.
+			Called when assigning an elements individual properties. Use this to update or initialize properties. The optional signature argument is "0" when called within the mount phase.
 		</p>
 
 <pre><code>
-setProps: (element: Element, name: string, value: any, xmlns: string?) => void
+setProps: (element: Element, name: string, value: any, xmlns: string?, signature?: number) => void
 </code></pre>
 
 		<h2 id=getOwner>getOwner</h2>
@@ -191,7 +191,7 @@ getUpdatedProps: (element: Element, props: object) => object
 		</p>
 
 <pre><code>
-getPortal: (element: Element) => Node
+getPortal: (element: Element, container: any?) => Node
 </code></pre>
 
 		<h2 id=getQuery>getQuery</h2>

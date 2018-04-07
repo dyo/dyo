@@ -18,8 +18,14 @@ function commitMountElement (element, sibling, parent, host, operation, signatur
 		case SharedElementPromise:
 			commitMountElementPromise(element, host, element.type)
 		case SharedElementFragment:
+			element.owner = parent.owner
+
+			commitMountElementChildren(element, sibling, host, operation, signature)
+			commitOwner(element)
+
+			return
 		case SharedElementPortal:
-			element.owner = element.id !== SharedElementPortal ? parent.owner : getNodePortal(element)
+			element.owner = getNodePortal(element, element.type)
 
 			commitMountElementChildren(element, sibling, host, operation, signature)
 			commitOwner(element)
@@ -261,33 +267,28 @@ function commitOwnerQuery (element, parent) {
 
 /**
  * @param {Element} element
- * @param {(function|string)?} callback
+ * @param {any?} value
  * @param {number} signature
- * @param {any?} key
  */
-function commitOwnerRefs (element, callback, signature, key) {
-	switch (typeof callback) {
-		case 'string':
-			if (signature === SharedRefsRemove)
-				commitOwnerRefs(element, getComponentRefs, SharedRefsRemove, callback)
-			else
-				commitOwnerRefs(element, getComponentRefs, SharedRefsDispatch, callback)
-			break
-		case 'function':
-			switch (signature) {
-				case SharedRefsRemove:
-					return getLifecycleCallback(element.host, callback, element.ref = null, key, element)
-				case SharedRefsAssign:
-					element.ref = callback
-				case SharedRefsDispatch:
-					return getLifecycleCallback(element.host, callback, element.owner, key, element)
-				case SharedRefsReplace:
-					commitOwnerRefs(element, element.ref, SharedRefsRemove, key)
-					commitOwnerRefs(element, callback, SharedRefsAssign, key)
-			}
-			break
-		default:
-			commitOwnerRefs(element, element.ref === callback ? noop : element.ref, SharedRefsRemove, key)
+function commitOwnerRefs (element, value, signature) {
+	switch (typeof value) {
+		case 'object':
+			if (value)
+				break
+		case 'undefined':
+			return commitOwnerRefs(element, element.ref === value ? noop : element.ref, SharedRefsRemove)
+	}
+
+	switch (signature) {
+		case SharedRefsRemove:
+			return getLifecycleRefs(element.host, element.ref = null, value)
+		case SharedRefsAssign:
+			element.ref = value
+		case SharedRefsDispatch:
+			return getLifecycleRefs(element.host, element.owner, value)
+		case SharedRefsReplace:
+			commitOwnerRefs(element, element.ref, SharedRefsRemove)
+			commitOwnerRefs(element, value, SharedRefsAssign)
 	}
 }
 
@@ -307,7 +308,7 @@ function commitOwnerProps (element, props, xmlns, signature) {
 			case 'children':
 				break
 			default:
-				setNodeProps(element, key, props[key], xmlns)
+				setNodeProps(element, key, props[key], xmlns, signature)
 		}
 }
 

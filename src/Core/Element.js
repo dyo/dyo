@@ -327,9 +327,6 @@ function getDisplayName (value) {
 		case 'object':
 			if (isValidElement(value))
 				return getDisplayName(value.type)
-
-			if (thenable(value))
-				return '#promise'
 		case 'string':
 			if (value)
 				return value

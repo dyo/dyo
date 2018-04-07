@@ -290,7 +290,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '')
+			assert.html(container, '1')
 			assert.lengthOf(stack, 1)
 			done()
 		})
@@ -323,7 +323,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '')
+			assert.html(container, '1')
 			assert.lengthOf(stack, 1)
 			done()
 		}, 1)
@@ -356,7 +356,7 @@ describe('Error', () => {
 
 		refs.catch(() => {
 			nextTick(() => {
-				assert.html(container, '')
+				assert.html(container, '1')
 				assert.lengthOf(stack, 1)
 				done()
 			})
@@ -453,7 +453,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '')
+			assert.html(container, '1')
 			assert.lengthOf(stack, 1)
 			done()
 		})
@@ -487,7 +487,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '')
+			assert.html(container, '1')
 			assert.lengthOf(stack, 1)
 			done()
 		})
@@ -524,7 +524,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '')
+			assert.html(container, '1')
 			assert.lengthOf(stack, 1)
 			done()
 		})

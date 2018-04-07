@@ -1,4 +1,4 @@
-/*!dio 9.0.0-rc @license MIT */
+/*!dio 9.0.0-rc.0 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.0-rc'}
+		var dio = {version: '9.0.0-rc.0'}
 		
 		var SharedElementPromise = 0
 		var SharedElementFragment = 1
@@ -682,9 +682,6 @@
 				case 'object':
 					if (isValidElement(value))
 						return getDisplayName(value.type)
-		
-					if (thenable(value))
-						return '#promise'
 				case 'string':
 					if (value)
 						return value
@@ -1069,7 +1066,7 @@
 			 */
 			toString: {
 				value: function () {
-					return 'Error: ' + Object(this.error).toString() + '\n\n' + this.message
+					return this.message
 				}
 			},
 			/**
@@ -1079,7 +1076,11 @@
 			 */
 			message: {
 				get: function () {
-					return 'The following error occurred in `\n' + this.componentStack + '` from "' + this.origin + '"'
+					return this[SymbolForCache] = this[SymbolForCache] || (
+						'Exception: ' + Object(this.error).toString() + '\n\n' +
+						'The following error occurred in `\n' +
+						this.componentStack + '` from "' + this.origin + '"'
+					)
 				}
 			},
 			/**
@@ -1089,7 +1090,7 @@
 			 */
 			componentStack: {
 				get: function () {
-					return this[SymbolForComponent] = this[SymbolForComponent] ? this[SymbolForComponent] : (
+					return this[SymbolForComponent] = this[SymbolForComponent] || (
 						createErrorStack(this[SymbolForElement].host, '<'+getDisplayName(this[SymbolForElement])+'>\n')
 					)
 				}
@@ -1201,11 +1202,12 @@
 		 * @param {Exception} exception
 		 */
 		function propagateErrorBoundary (element, host, parent, exception) {
-			clearErrorBoundary(parent)
 			catchErrorBoundary(parent, exception, parent.owner)
 		
 			if (!exception.bubbles)
 				return
+		
+			clearErrorBoundary(parent)
 		
 			if (!isValidElement(parent.host))
 				throw printErrorException(exception)
@@ -1449,19 +1451,6 @@
 				default:
 					return {value: value, writable: true, configurable: true, enumerable: typeof value === 'function'}
 			}
-		}
-		
-		/**
-		 * @this {Component}
-		 * @param {(Component|object)?} value
-		 * @param {any} key
-		 * @param {Element} element
-		 */
-		function getComponentRefs (value, key, element) {
-			if (key !== element.ref)
-				delete this.refs[element.ref]
-		
-			this.refs[key] = value
 		}
 		
 		/**
@@ -1719,15 +1708,32 @@
 		/**
 		 * @param {Element} element
 		 * @param {function} callback
-		 * @param {any?} a
-		 * @param {any?} b
-		 * @param {any?} c
-		 * @return {any?}
 		 */
-		function getLifecycleCallback (element, callback, a, b, c) {
+		function getLifecycleCallback (element, callback) {
 			try {
 				if (typeof callback === 'function')
-					return callback.call(element.owner, a, b, c)
+					callback.call(element.owner)
+			} catch (err) {
+				throwErrorException(element, err, SharedSiteCallback)
+			}
+		}
+		
+		/**
+		 * @param {Element} element
+		 * @param {object?} owner
+		 * @param {any?} value
+		 */
+		function getLifecycleRefs (element, owner, value) {
+			try {
+				switch (typeof value) {
+					case 'function':
+						return value.call(element.owner, owner)
+					case 'object':
+						return value.current = owner
+					default:
+						if (element.owner.refs)
+							element.owner.refs[value] = owner
+				}
 			} catch (err) {
 				throwErrorException(element, err, SharedSiteCallback)
 			}
@@ -2115,8 +2121,14 @@
 				case SharedElementPromise:
 					commitMountElementPromise(element, host, element.type)
 				case SharedElementFragment:
+					element.owner = parent.owner
+		
+					commitMountElementChildren(element, sibling, host, operation, signature)
+					commitOwner(element)
+		
+					return
 				case SharedElementPortal:
-					element.owner = element.id !== SharedElementPortal ? parent.owner : getNodePortal(element)
+					element.owner = getNodePortal(element, element.type)
 		
 					commitMountElementChildren(element, sibling, host, operation, signature)
 					commitOwner(element)
@@ -2358,33 +2370,28 @@
 		
 		/**
 		 * @param {Element} element
-		 * @param {(function|string)?} callback
+		 * @param {any?} value
 		 * @param {number} signature
-		 * @param {any?} key
 		 */
-		function commitOwnerRefs (element, callback, signature, key) {
-			switch (typeof callback) {
-				case 'string':
-					if (signature === SharedRefsRemove)
-						commitOwnerRefs(element, getComponentRefs, SharedRefsRemove, callback)
-					else
-						commitOwnerRefs(element, getComponentRefs, SharedRefsDispatch, callback)
-					break
-				case 'function':
-					switch (signature) {
-						case SharedRefsRemove:
-							return getLifecycleCallback(element.host, callback, element.ref = null, key, element)
-						case SharedRefsAssign:
-							element.ref = callback
-						case SharedRefsDispatch:
-							return getLifecycleCallback(element.host, callback, element.owner, key, element)
-						case SharedRefsReplace:
-							commitOwnerRefs(element, element.ref, SharedRefsRemove, key)
-							commitOwnerRefs(element, callback, SharedRefsAssign, key)
-					}
-					break
-				default:
-					commitOwnerRefs(element, element.ref === callback ? noop : element.ref, SharedRefsRemove, key)
+		function commitOwnerRefs (element, value, signature) {
+			switch (typeof value) {
+				case 'object':
+					if (value)
+						break
+				case 'undefined':
+					return commitOwnerRefs(element, element.ref === value ? noop : element.ref, SharedRefsRemove)
+			}
+		
+			switch (signature) {
+				case SharedRefsRemove:
+					return getLifecycleRefs(element.host, element.ref = null, value)
+				case SharedRefsAssign:
+					element.ref = value
+				case SharedRefsDispatch:
+					return getLifecycleRefs(element.host, element.owner, value)
+				case SharedRefsReplace:
+					commitOwnerRefs(element, element.ref, SharedRefsRemove)
+					commitOwnerRefs(element, value, SharedRefsAssign)
 			}
 		}
 		
@@ -2404,7 +2411,7 @@
 					case 'children':
 						break
 					default:
-						setNodeProps(element, key, props[key], xmlns)
+						setNodeProps(element, key, props[key], xmlns, signature)
 				}
 		}
 		
@@ -2898,8 +2905,9 @@
 		 * @param {string} name
 		 * @param {any} value
 		 * @param {string?} xmlns
+		 * @param {number} signature
 		 */
-		function setDOMProps (element, name, value, xmlns) {
+		function setDOMProps (element, name, value, xmlns, signature) {
 			switch (name) {
 				case 'style':
 					return setDOMStyle(element, name, value)
@@ -2913,20 +2921,20 @@
 				case 'innerHTML':
 					return setDOMInnerHTML(element, name, value ? value : '', [])
 				case 'dangerouslySetInnerHTML':
-					return setDOMProps(element, 'innerHTML', value && value.__html, xmlns)
+					return setDOMProps(element, 'innerHTML', value && value.__html, xmlns, signature)
 				case 'acceptCharset':
-					return setDOMProps(element, 'accept-charset', value, xmlns)
+					return setDOMProps(element, 'accept-charset', value, xmlns, signature)
 				case 'httpEquiv':
-					return setDOMProps(element, 'http-equiv', value, xmlns)
+					return setDOMProps(element, 'http-equiv', value, xmlns, signature)
 				case 'tabIndex':
-					return setDOMProps(element, name.toLowerCase(), value, xmlns)
+					return setDOMProps(element, name.toLowerCase(), value, xmlns, signature)
 				case 'autofocus':
 				case 'autoFocus':
 					return element.owner[value ? 'focus' : 'blur']()
 				case 'defaultValue':
-					if (!('value' in element.props))
-						setDOMProps(element, 'value', value, xmlns)
-					return
+					if (element.type === 'select')
+						return !signature && !('value' in element.props) && setDOMProps(element, 'value', value, xmlns, signature)
+					break
 				case 'width':
 				case 'height':
 					if (element.type === 'img')
@@ -3020,9 +3028,9 @@
 					return 'http://www.w3.org/1998/Math/MathML'
 				case 'foreignObject':
 					return
-				default:
-					return xmlns
 			}
+		
+			return xmlns
 		}
 		
 		/**
@@ -3048,14 +3056,15 @@
 		
 		/**
 		 * @param {Element} element
+		 * @param {any?} container
 		 * @return {Node}
 		 */
-		function getDOMPortal (element) {
-			if (typeof element.type === 'string')
-				return getDOMDocument().querySelector(element.type)
+		function getDOMPortal (element, container) {
+			if (typeof container === 'string')
+				return getDOMDocument().querySelector(container)
 		
-			if (isValidDOMTarget(element.type))
-				return element.type
+			if (isValidDOMTarget(container))
+				return container
 		
 			return getDOMDocument()
 		}
@@ -3091,7 +3100,7 @@
 					}
 		
 					if (parent.id === SharedElementPortal)
-						getDOMPortal(parent).appendChild(target)
+						getDOMPortal(parent, parent.type).appendChild(target)
 		
 					node = target
 					type = null
