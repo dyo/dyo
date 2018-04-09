@@ -2,21 +2,37 @@
  * @alias Element#handleEvent
  * @memberof Element
  * @this {Element}
- * @param {(Event|object)}
+ * @param {Event}
  */
 function handleEvent (event) {
+	var element = this
+	var callback = getNodeListener(element, event)
+
+	if (!callback)
+		return
+
+	if (typeof callback === 'object')
+		if (callback[SymbolForIterator] || ArrayIsArray(callback))
+			return iterate(callback, function (callback) {
+				dispatchEvent(element, event, callback)
+			})
+
+	dispatchEvent(element, event, callback)
+}
+
+/**
+ * @param {Element} element
+ * @param {Event} event
+ * @param {(function|object)?} callback
+ */
+function dispatchEvent (element, event, callback) {
 	try {
-		var element = this
-		var callback = getNodeListener(element, event)
 		var host = element.host
 		var owner = host.owner
 		var props = owner.props
 		var state = owner.state
 		var context = owner.context
 		var value
-
-		if (!callback)
-			return
 
 		if (typeof callback === 'function') {
 			value = callback.call(owner, event, props, state, context)

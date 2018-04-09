@@ -279,7 +279,7 @@ function updateComponentChildren (element, snapshot, signature) {
 	switch (signature) {
 		case SharedComponentPropsUpdate:
 			if (owner[SharedComponentWillReceiveProps])
-				getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext)
+				getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext, nextState)
 
 			if (tempState !== owner[SymbolForCache])
 				break
@@ -340,11 +340,11 @@ function enqueueComponentInitialState (element, owner, state) {
  */
 function enqueueComponentGenerator (element, generator) {
 	return function then (resolve, reject) {
-		return generator.next(element.cache).then(function (value) {
-			if (value.done !== true || value.value !== undefined)
-				resolve(element.cache = value.value, value.done, then(resolve, reject))
+		return generator.next(element.cache).then(function (sequence) {
+			if (sequence.done !== true || sequence.value !== undefined)
+				resolve(element.cache = sequence.value, sequence.done, then(resolve, reject))
 			else if (element.context)
-				resolve(element.cache, value.done)
+				resolve(element.cache, sequence.done)
 		}, reject)
 	}
 }

@@ -79,6 +79,27 @@ describe('Event', () => {
 		assert.lengthOf(event, 2)
 	})
 
+	it('should dispatch an array of valid events', () => {
+		let container = document.createElement('div')
+		let event = []
+		let refs = null
+
+		render(class {
+			handleEvent(e) {
+				event.push(e)
+			}
+			componentDidMount(node) {
+				refs = node
+			}
+			render() {
+				return h('button', {onClick: [this, null, this.handleEvent, undefined]})
+			}
+		}, container)
+
+		refs.dispatchEvent(new Event('click'))
+		assert.lengthOf(event, 2)
+	})
+
 	it('should replace event', () => {
 		let container = document.createElement('div')
 		let event = []

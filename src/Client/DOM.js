@@ -42,17 +42,17 @@ function setDOMEvent (element, type, callback) {
  * @param {(object|string)?} value
  */
 function setDOMStyle (element, name, value) {
-	if (typeof value === 'object')
-		for (var property in value) {
-			var declaration = value[property]
+	if (typeof value !== 'object')
+		return setDOMAttribute(element, name, value, '')
 
-			if (property.indexOf('-') === -1)
-				element.owner.style[property] = declaration !== false && declaration !== undefined ? declaration : ''
-			else
-				element.owner.style.setProperty(property, declaration)
-		}
-	else
-		setDOMAttribute(element, name, value, '')
+	for (var property in value) {
+		var declaration = value[property]
+
+		if (property.indexOf('-') === -1)
+			element.owner.style[property] = declaration !== false && declaration !== undefined ? declaration : ''
+		else
+			element.owner.style.setProperty(property, declaration)
+	}
 }
 
 /**
@@ -129,7 +129,7 @@ function setDOMProps (element, name, value, xmlns, signature) {
 			return element.owner[value ? 'focus' : 'blur']()
 		case 'defaultValue':
 			if (element.type === 'select')
-				return !signature && !('value' in element.props) && setDOMProps(element, 'value', value, xmlns, signature)
+				return
 			break
 		case 'width':
 		case 'height':
@@ -235,8 +235,12 @@ function getDOMType (element, xmlns) {
  * @return {object?}
  */
 function getDOMInitialProps (element, props) {
-	if (element.type === 'input')
-		return merge({type: null, step: null, min: null, max: null}, props)
+	switch (element.type) {
+		case 'input':
+			return merge({type: null, step: null, min: null, max: null}, props)
+		case 'select':
+			return merge({value: props.defaultValue}, props)
+	}
 
 	return props
 }

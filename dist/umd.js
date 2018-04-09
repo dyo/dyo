@@ -1,4 +1,4 @@
-/*!dio 9.0.0-rc.0 @license MIT */
+/*!dio 9.0.0-rc.1 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.0-rc.0'}
+		var dio = {version: '9.0.0-rc.1'}
 		
 		var SharedElementPromise = 0
 		var SharedElementFragment = 1
@@ -78,7 +78,7 @@
 		
 		var WeakMap = window.WeakMap || WeakHash
 		var Symbol = window.Symbol || Math.random
-		var ArrayisArray = Array.isArray
+		var ArrayIsArray = Array.isArray
 		
 		var ObjectDefineProperties = Object.defineProperties
 		var ObjectDefineProperty = Object.defineProperty
@@ -220,6 +220,7 @@
 		/**
 		 * @param {object} object
 		 * @param {object} a
+		 * @return {object}
 		 */
 		function merge (object, a) {
 			for (var key in a)
@@ -245,21 +246,9 @@
 		}
 		
 		/**
-		 * @param {Array<any>} array
-		 * @param {Array<any>} output
-		 * @return {Array<any>}
-		 */
-		function flatten (array, output) {
-			for (var i = 0; i < array.length; ++i)
-				ArrayisArray(array[i]) ? flatten(array[i], output) : output.push(array[i])
-		
-			return output
-		}
-		
-		/**
 		 * @param {Array<any>} haystack
 		 * @param {function} callback
-		 * @param {any} thisArg
+		 * @param {any?} thisArg
 		 */
 		function find (haystack, callback, thisArg) {
 			if (typeof haystack.find === 'function')
@@ -271,18 +260,36 @@
 		}
 		
 		/**
-		 * @param {Iterable} iterable
+		 * @param {any} iterable
 		 * @param {function} callback
 		 */
 		function each (iterable, callback) {
 			if (typeof iterable.forEach === 'function')
 				return iterable.forEach(callback)
 		
-			var index = 0
-			var value = iterable.next(value, index++)
+			var sequence = iterable.next(sequence)
 		
-			while (!value.done)
-				value = iterable.next(value.value, index = callback(value.value, index))
+			while (!sequence.done)
+				sequence = iterable.next(sequence.value, callback(sequence.value))
+		}
+		
+		/**
+		 * @param {any?} iterable
+		 * @param {function} callback
+		 */
+		function iterate (iterable, callback) {
+			if (iterable == null)
+				return
+		
+			if (typeof iterable === 'object')
+				if (typeof iterable.forEach === 'function' || typeof iterable.next === 'function')
+					return each(iterable, function (value) {
+						iterate(value, callback)
+					})
+				else if (typeof iterable[SymbolForIterator] === 'function')
+					return iterate(iterable[SymbolForIterator](), callback)
+		
+			callback(iterable)
 		}
 		
 		/**
@@ -551,7 +558,7 @@
 		function createElementChildren (iterable) {
 			var children = new List()
 		
-			if (ArrayisArray(iterable))
+			if (ArrayIsArray(iterable))
 				for (var i = 0; i < iterable.length; ++i)
 					getElementChildren(children, iterable[i], i)
 			else
@@ -626,7 +633,7 @@
 							children.insert(createElementText(element, index), children)
 							break
 						case 'object':
-							if (ArrayisArray(element)) {
+							if (ArrayIsArray(element)) {
 								for (var i = 0; i < element.length; ++i)
 									getElementChildren(children, element[i], index + i)
 		
@@ -753,7 +760,7 @@
 				case 'number':
 					return createElementText(element, SharedKeyBody)
 				case 'object':
-					if (ArrayisArray(element))
+					if (ArrayIsArray(element))
 						return createElementFragment(element)
 				default:
 					return createElementUnknown(element, SharedKeyBody)
@@ -824,7 +831,7 @@
 			if (i === 1 && typeof config === 'object' && config[SymbolForIterator] === undefined) {
 				switch (config.constructor) {
 					default:
-						if (ArrayisArray(config))
+						if (ArrayIsArray(config))
 							break
 					case Object:
 						if (thenable(config))
@@ -924,22 +931,11 @@
 		function arrayChildren (children) {
 			var array = []
 		
-			if (children == null)
-				return array
-			if (isValidElement(children) || typeof children !== 'object')
-				return [children]
-			if (ArrayisArray(children))
-				return flatten(children, array)
-			if (typeof children[SharedLinkedNext] === 'function' || typeof children.forEach === 'function')
-				each(children, function (element) {
-					return array.push(element)
-				})
-			else if (typeof children[SymbolForIterator] === 'function')
-				return arrayChildren(children[SymbolForIterator]())
-			else
+			iterate(children, function (children) {
 				array.push(children)
+			})
 		
-			return flatten(array, [])
+			return array
 		}
 		
 		/**
@@ -1222,21 +1218,37 @@
 		 * @alias Element#handleEvent
 		 * @memberof Element
 		 * @this {Element}
-		 * @param {(Event|object)}
+		 * @param {Event}
 		 */
 		function handleEvent (event) {
+			var element = this
+			var callback = getNodeListener(element, event)
+		
+			if (!callback)
+				return
+		
+			if (typeof callback === 'object')
+				if (callback[SymbolForIterator] || ArrayIsArray(callback))
+					return iterate(callback, function (callback) {
+						dispatchEvent(element, event, callback)
+					})
+		
+			dispatchEvent(element, event, callback)
+		}
+		
+		/**
+		 * @param {Element} element
+		 * @param {Event} event
+		 * @param {(function|object)?} callback
+		 */
+		function dispatchEvent (element, event, callback) {
 			try {
-				var element = this
-				var callback = getNodeListener(element, event)
 				var host = element.host
 				var owner = host.owner
 				var props = owner.props
 				var state = owner.state
 				var context = owner.context
 				var value
-		
-				if (!callback)
-					return
 		
 				if (typeof callback === 'function') {
 					value = callback.call(owner, event, props, state, context)
@@ -1535,7 +1547,7 @@
 			switch (signature) {
 				case SharedComponentPropsUpdate:
 					if (owner[SharedComponentWillReceiveProps])
-						getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext)
+						getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext, nextState)
 		
 					if (tempState !== owner[SymbolForCache])
 						break
@@ -1596,11 +1608,11 @@
 		 */
 		function enqueueComponentGenerator (element, generator) {
 			return function then (resolve, reject) {
-				return generator.next(element.cache).then(function (value) {
-					if (value.done !== true || value.value !== undefined)
-						resolve(element.cache = value.value, value.done, then(resolve, reject))
+				return generator.next(element.cache).then(function (sequence) {
+					if (sequence.done !== true || sequence.value !== undefined)
+						resolve(element.cache = sequence.value, sequence.done, then(resolve, reject))
 					else if (element.context)
-						resolve(element.cache, value.done)
+						resolve(element.cache, sequence.done)
 				}, reject)
 			}
 		}
@@ -2846,17 +2858,17 @@
 		 * @param {(object|string)?} value
 		 */
 		function setDOMStyle (element, name, value) {
-			if (typeof value === 'object')
-				for (var property in value) {
-					var declaration = value[property]
+			if (typeof value !== 'object')
+				return setDOMAttribute(element, name, value, '')
 		
-					if (property.indexOf('-') === -1)
-						element.owner.style[property] = declaration !== false && declaration !== undefined ? declaration : ''
-					else
-						element.owner.style.setProperty(property, declaration)
-				}
-			else
-				setDOMAttribute(element, name, value, '')
+			for (var property in value) {
+				var declaration = value[property]
+		
+				if (property.indexOf('-') === -1)
+					element.owner.style[property] = declaration !== false && declaration !== undefined ? declaration : ''
+				else
+					element.owner.style.setProperty(property, declaration)
+			}
 		}
 		
 		/**
@@ -2933,7 +2945,7 @@
 					return element.owner[value ? 'focus' : 'blur']()
 				case 'defaultValue':
 					if (element.type === 'select')
-						return !signature && !('value' in element.props) && setDOMProps(element, 'value', value, xmlns, signature)
+						return
 					break
 				case 'width':
 				case 'height':
@@ -3039,8 +3051,12 @@
 		 * @return {object?}
 		 */
 		function getDOMInitialProps (element, props) {
-			if (element.type === 'input')
-				return merge({type: null, step: null, min: null, max: null}, props)
+			switch (element.type) {
+				case 'input':
+					return merge({type: null, step: null, min: null, max: null}, props)
+				case 'select':
+					return merge({value: props.defaultValue}, props)
+			}
 		
 			return props
 		}

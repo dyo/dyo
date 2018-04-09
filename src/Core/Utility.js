@@ -121,6 +121,7 @@ function noop () {}
 /**
  * @param {object} object
  * @param {object} a
+ * @return {object}
  */
 function merge (object, a) {
 	for (var key in a)
@@ -146,21 +147,9 @@ function assign (object, a, b) {
 }
 
 /**
- * @param {Array<any>} array
- * @param {Array<any>} output
- * @return {Array<any>}
- */
-function flatten (array, output) {
-	for (var i = 0; i < array.length; ++i)
-		ArrayisArray(array[i]) ? flatten(array[i], output) : output.push(array[i])
-
-	return output
-}
-
-/**
  * @param {Array<any>} haystack
  * @param {function} callback
- * @param {any} thisArg
+ * @param {any?} thisArg
  */
 function find (haystack, callback, thisArg) {
 	if (typeof haystack.find === 'function')
@@ -172,18 +161,36 @@ function find (haystack, callback, thisArg) {
 }
 
 /**
- * @param {Iterable} iterable
+ * @param {any} iterable
  * @param {function} callback
  */
 function each (iterable, callback) {
 	if (typeof iterable.forEach === 'function')
 		return iterable.forEach(callback)
 
-	var index = 0
-	var value = iterable.next(value, index++)
+	var sequence = iterable.next(sequence)
 
-	while (!value.done)
-		value = iterable.next(value.value, index = callback(value.value, index))
+	while (!sequence.done)
+		sequence = iterable.next(sequence.value, callback(sequence.value))
+}
+
+/**
+ * @param {any?} iterable
+ * @param {function} callback
+ */
+function iterate (iterable, callback) {
+	if (iterable == null)
+		return
+
+	if (typeof iterable === 'object')
+		if (typeof iterable.forEach === 'function' || typeof iterable.next === 'function')
+			return each(iterable, function (value) {
+				iterate(value, callback)
+			})
+		else if (typeof iterable[SymbolForIterator] === 'function')
+			return iterate(iterable[SymbolForIterator](), callback)
+
+	callback(iterable)
 }
 
 /**

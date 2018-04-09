@@ -9,8 +9,10 @@
 - New: adds `createClass` API.
 - New: adds `createContext` API.
 - New: adds `createComment` API.
+- New: support for async generators/iterators.
 - New: support for auto resolution of json `fetch` based Promises passed to setState/getInitialState.
 - New: support for custom elements.
+- New: support multiple event handlers on a single event.
 - NEW: reconciler adds `getContext`, `createComment`, `setComment`, `willUnmount`, and `getUpdatedProps` methods to custom reconcilers.
 
 ## 8.2.3 (25 January 2018)

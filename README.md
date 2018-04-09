@@ -148,7 +148,7 @@ Public react compatibility with an [edge](#edge), this means that any react libr
 
 ## Differences
 
-#### Custom Reconciler, Config
+#### Custom Renderer, Factory
 
 There are a few react-like libraries but at the date of this writing DIO might be the only one to afford the ability to create your own renderer. Now while both React and DIO expose a way to create your own renderer, there is a difference in how you create this custom renderer.
 
@@ -254,7 +254,34 @@ class Input {
 
 #### Events & "This"
 
-Events in React have the infamous legacy of `.bind`. The implementation details of DIO allow it to avoid this legacy as demonstrated in the examples mentioned.
+Events in React have the infamous legacy of `.bind`. The implementation details of DIO allow it to avoid this legacy as demonstrated in the examples mentioned. In addition DIO allows for multiple event handlers on a single event as illustrated in the following example.
+
+```js
+class Input {
+	handleSubmit(e, props, state) {
+		// ...
+	}
+	handleReset(e, props, state) {
+		// ...
+	}
+	render() {
+		return h('form', {
+			onSubmit: [this.handleSubmit, this.handleReset]
+		})
+	}
+}
+```
+
+##### Async Generators
+
+```js
+class Suspense {
+	async *render() {
+		yield 'Loading...'
+		yield h('h1', 'Complete!')
+	}
+}
+```
 
 #### Server Side Renderer
 

@@ -196,7 +196,7 @@ function createElementClone (type, props, config) {
 function createElementChildren (iterable) {
 	var children = new List()
 
-	if (ArrayisArray(iterable))
+	if (ArrayIsArray(iterable))
 		for (var i = 0; i < iterable.length; ++i)
 			getElementChildren(children, iterable[i], i)
 	else
@@ -271,7 +271,7 @@ function getElementChildren (children, element, index) {
 					children.insert(createElementText(element, index), children)
 					break
 				case 'object':
-					if (ArrayisArray(element)) {
+					if (ArrayIsArray(element)) {
 						for (var i = 0; i < element.length; ++i)
 							getElementChildren(children, element[i], index + i)
 
@@ -398,7 +398,7 @@ function getElementDefinition (element) {
 		case 'number':
 			return createElementText(element, SharedKeyBody)
 		case 'object':
-			if (ArrayisArray(element))
+			if (ArrayIsArray(element))
 				return createElementFragment(element)
 		default:
 			return createElementUnknown(element, SharedKeyBody)
@@ -469,7 +469,7 @@ function createElement (type, config) {
 	if (i === 1 && typeof config === 'object' && config[SymbolForIterator] === undefined) {
 		switch (config.constructor) {
 			default:
-				if (ArrayisArray(config))
+				if (ArrayIsArray(config))
 					break
 			case Object:
 				if (thenable(config))

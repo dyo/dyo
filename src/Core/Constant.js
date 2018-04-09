@@ -1,6 +1,6 @@
 var WeakMap = window.WeakMap || WeakHash
 var Symbol = window.Symbol || Math.random
-var ArrayisArray = Array.isArray
+var ArrayIsArray = Array.isArray
 
 var ObjectDefineProperties = Object.defineProperties
 var ObjectDefineProperty = Object.defineProperty

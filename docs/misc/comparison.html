@@ -114,7 +114,7 @@ class User {
 </code></pre>
 
 		<p>
-			In additon events also support the <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListener</a> interface.
+			In additon events also supports <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListeners</a> and Arrays.
 		</p>
 
 <pre><code>
@@ -124,8 +124,9 @@ class User {
 			value: 'Fox'
 		}
 	}
+	handleClick () {}
 	render(props, {value}, context) {
-		return h('input', {onInput: this, value: value})
+		return h('input', {onInput: this, onClick: [this, this.handleClick], value: value})
 	}
 }
 </code></pre>

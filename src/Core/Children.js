@@ -30,22 +30,11 @@ var Children = {
 function arrayChildren (children) {
 	var array = []
 
-	if (children == null)
-		return array
-	if (isValidElement(children) || typeof children !== 'object')
-		return [children]
-	if (ArrayisArray(children))
-		return flatten(children, array)
-	if (typeof children[SharedLinkedNext] === 'function' || typeof children.forEach === 'function')
-		each(children, function (element) {
-			return array.push(element)
-		})
-	else if (typeof children[SymbolForIterator] === 'function')
-		return arrayChildren(children[SymbolForIterator]())
-	else
+	iterate(children, function (children) {
 		array.push(children)
+	})
 
-	return flatten(array, [])
+	return array
 }
 
 /**
