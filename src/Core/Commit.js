@@ -12,7 +12,7 @@ function commitMountElement (element, sibling, parent, host, operation, signatur
 
 	switch (element.id) {
 		case SharedElementComponent:
-			commitMountComponentElement(element, sibling, parent, host, operation, signature)
+			commitMountElementComponent(element, sibling, parent, host, operation, signature)
 
 			return
 		case SharedElementPromise:
@@ -112,9 +112,10 @@ function commitMountElementPromise (element, host, type) {
  * @param {number} operation
  * @param {number} signature
  */
-function commitMountComponentElement (element, sibling, parent, host, operation, signature) {
+function commitMountElementComponent (element, sibling, parent, host, operation, signature) {
 	try {
-		commitMountComponentChildren(mountComponentInstance(element), sibling, parent, element, operation, signature)
+		commitMountElement(mountComponentInstance(element), sibling, parent, element, operation, signature)
+		commitOwner(element)
 
 		if (element.owner[SharedComponentDidMount])
 			getLifecycleMount(element, SharedComponentDidMount, element.owner)
@@ -122,22 +123,9 @@ function commitMountComponentElement (element, sibling, parent, host, operation,
 		if (element.ref)
 			commitOwnerRefs(element, element.ref, SharedRefsDispatch)
 	} catch (err) {
-		commitMountComponentChildren(getElementDefinition(), sibling, parent, host, operation, signature)
-		replaceErrorBoundary(element, host, parent, err)
+		commitMountElementReplace(host.children, getElementDefinition(commitOwner(host)), host)
+		delegateErrorBoundary(element, host, err)
 	}
-}
-
-/**
- * @param {Element} element
- * @param {Element} sibling
- * @param {Element} parent
- * @param {Element} host
- * @param {number} operation
- * @param {number} signature
- */
-function commitMountComponentChildren (element, sibling, parent, host, operation, signature) {
-	commitMountElement(host.children = element, sibling, parent, host, operation, signature)
-	commitOwner(host)
 }
 
 /**
@@ -175,7 +163,8 @@ function commitUnmountElement (element, parent) {
 function commitUnmountElementChildren (element, parent, host) {
 	switch (element.active = false, element.id) {
 		case SharedElementComponent:
-			commitUnmountComponentElement(element, parent, host)
+			if (element.children)
+				commitUnmountElementComponent(element, parent, host, element.children)
 		case SharedElementSnapshot:
 			break
 		case SharedElementText:
@@ -200,20 +189,11 @@ function commitUnmountElementChildren (element, parent, host) {
  * @param {Element} element
  * @param {Element} parent
  * @param {Element} host
- */
-function commitUnmountComponentElement (element, parent, host) {
-	commitUnmountComponentChildren(element, parent, host, element.children)
-	unmountComponentInstance(element)
-}
-
-/**
- * @param {Element} element
- * @param {Element} parent
- * @param {Element} host
  * @param {Element} children
  */
-function commitUnmountComponentChildren (element, parent, host, children) {
+function commitUnmountElementComponent (element, parent, host, children) {
 	commitUnmountElementChildren(children, parent, element !== host ? host : children)
+	unmountComponentInstance(element)
 }
 
 /**

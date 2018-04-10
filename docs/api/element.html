@@ -128,7 +128,7 @@ createElement(Type, {
 			<h2 id=refs>Refs</h2>
 
 <pre><code>
-type Ref = string|function
+type Ref = string|function|object
 </code></pre>
 
 				<h3 id=function>string</h3>
@@ -155,31 +155,51 @@ createElement(Type, {
 })
 </code></pre>
 
+				<h3 id=object>object</h3>
+
+<pre><code>
+h(Type, {
+	ref: {current: null}
+})
+
+createElement(Type, {
+	ref: {current: null}
+})
+</code></pre>
+
 			<h2 id=events>Events</h2>
 
 <pre><code>
-type Handler = function|EventListener
+type Handler = function|EventListener|Array
 
 interface EventListener {
 	handleEvent(e) {}
 }
 </code></pre>
 
+		<h2 id=event-function>Event Function</h1>
+
 <pre><code>
-h(Type, {
-	onclick: (e) => {}
-})
-
-h(Type, {
+h('button', {
 	onClick: (e) => {}
 })
+</code></pre>
 
-createElement(Type, {
-	onclick: (e) => {}
+		<h2 id=event-listener>Event Listener</h1>
+
+<pre><code>
+h('button', {
+	onClick: {
+		handleEvent: (e) => {}
+	}
 })
+</code></pre>
 
-createElement(Type, {
-	onClick: (e) => {}
+		<h1 id=event-array>Event Array</h1>
+
+<pre><code>
+h('button', {
+	onClick: [(e) => {}, (e) => {}]
 })
 </code></pre>
 

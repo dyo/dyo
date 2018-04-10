@@ -159,6 +159,106 @@ describe('Error', () => {
 		})
 	})
 
+	it('should unmount a corrupted element tree with multiple children', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		class ErrorBoundary {
+			componentDidCatch(err) {
+				stack.push(err)
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		class A {
+			componentWillUnmount() {
+				stack.push('componentWillUnmount B')
+			}
+			componentDidMount() {
+				stack.push('componentDidMount B')
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		class B {
+			componentWillUnmount() {
+				stack.push('componentWillUnmount A')
+			}
+			componentDidMount() {
+				stack.push('componentDidMount A')
+			}
+			render() {
+				throw 'err'
+			}
+		}
+
+		render(h(ErrorBoundary, h('div', h(A, 1), h(A, 2), h(B, 3))), container)
+		assert.html(container, '')
+		assert.deepEqual(stack, [
+			'componentDidMount B',
+			'componentDidMount B',
+			'componentWillUnmount B',
+			'componentWillUnmount B',
+			'err'
+		])
+	})
+
+	it('should recover a corrupted element tree with multiple children', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		class ErrorBoundary {
+			componentDidCatch(err) {
+				stack.push(err)
+				return {error: true}
+			}
+			render({children}, {error}) {
+				if (error)
+					return 'Recovery!'
+
+				return children
+			}
+		}
+
+		class A {
+			componentWillUnmount() {
+				stack.push('componentWillUnmount B')
+			}
+			componentDidMount() {
+				stack.push('componentDidMount B')
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		class B {
+			componentWillUnmount() {
+				stack.push('componentWillUnmount A')
+			}
+			componentDidMount() {
+				stack.push('componentDidMount A')
+			}
+			render() {
+				throw 'err'
+			}
+		}
+
+		render(h(ErrorBoundary, h('div', h(A, 1), h(A, 2), h(B, 3))), container)
+		assert.html(container, 'Recovery!')
+		assert.deepEqual(stack, [
+			'componentDidMount B',
+			'componentDidMount B',
+			'componentWillUnmount B',
+			'componentWillUnmount B',
+			'err'
+		])
+	})
+
 	it('should unmount when an error is thrown in componentDidCatch', (done) => {
 		let container = document.createElement('div')
 		let stack = []
@@ -290,7 +390,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '1')
+			assert.html(container, '')
 			assert.lengthOf(stack, 1)
 			done()
 		})
@@ -323,7 +423,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '1')
+			assert.html(container, '')
 			assert.lengthOf(stack, 1)
 			done()
 		}, 1)
@@ -356,7 +456,7 @@ describe('Error', () => {
 
 		refs.catch(() => {
 			nextTick(() => {
-				assert.html(container, '1')
+				assert.html(container, '')
 				assert.lengthOf(stack, 1)
 				done()
 			})
@@ -453,7 +553,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '1')
+			assert.html(container, '')
 			assert.lengthOf(stack, 1)
 			done()
 		})
@@ -487,7 +587,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '1')
+			assert.html(container, '')
 			assert.lengthOf(stack, 1)
 			done()
 		})
@@ -524,7 +624,7 @@ describe('Error', () => {
 		})
 
 		nextTick(() => {
-			assert.html(container, '1')
+			assert.html(container, '')
 			assert.lengthOf(stack, 1)
 			done()
 		})

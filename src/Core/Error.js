@@ -114,17 +114,6 @@ function clearErrorBoundary (element) {
 
 /**
  * @param {Element} element
- * @param {Element} host
- * @param {Element} parent
- * @param {Exception} exception
- */
-function replaceErrorBoundary (element, host, parent, exception) {
-	commitUnmountElement(element, parent)
-	delegateErrorBoundary(element, host, exception)
-}
-
-/**
- * @param {Element} element
  * @param {any} err
  * @param {string} origin
  */
@@ -159,12 +148,11 @@ function catchErrorBoundary (element, exception, owner) {
  * @param {Exception} exception
  */
 function propagateErrorBoundary (element, host, parent, exception) {
+	clearErrorBoundary(parent)
 	catchErrorBoundary(parent, exception, parent.owner)
 
 	if (!exception.bubbles)
 		return
-
-	clearErrorBoundary(parent)
 
 	if (!isValidElement(parent.host))
 		throw printErrorException(exception)

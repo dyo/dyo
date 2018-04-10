@@ -41,6 +41,30 @@ const Default = function () {  }
 const Arrow = () => {  }
 </code></pre>
 
+		<h1 id=generator>Generator</h1>
+
+<pre><code>
+class {
+	*render() {
+		yield 1
+		yield 2
+		yield 3
+	}
+}
+</code></pre>
+
+		<h1 id=async-generator>Async Generator</h1>
+
+<pre><code>
+	class {
+		async *render() {
+			yield 1
+			yield 2
+			yield 3
+		}
+	}
+</code></pre>
+
 		<h1 id=element>Element</h1>
 
 <pre><code>
@@ -180,20 +204,16 @@ abstract componentWillUnmount(
 		<h1 id=componentDidCatch>componentDidCatch</h1>
 
 <pre><code>
-interface Error {
+interface Exception {
+	errror: string
+	origin: string
 	message: string
-	stack: string
-	errorMessage: string
-	errorStack: string
-	errorLocation: string
 	componentStack: string
-	defaultPrevented: boolean
-	preventDefault: function
 }
 
 abstract componentDidCatch(
-	error: Error,
-	info: Error
+	error: any,
+	exception: Exception
 ): any
 </code></pre>
 
