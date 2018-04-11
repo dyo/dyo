@@ -337,10 +337,10 @@ describe('Server', () => {
 
 	it('should pipe(renderToString) element to a stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 		let element = [h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))]
 		let output = ''
@@ -361,10 +361,10 @@ describe('Server', () => {
 
 	it('should pipe(toStream) element to stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 		let renderer = h('div', 1, 2, 3).toStream('utf8')
 		let output = ''
@@ -379,10 +379,10 @@ describe('Server', () => {
 
 	it('should pipe(renderToNodeStream) element to stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		let element = [h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))]
@@ -404,10 +404,10 @@ describe('Server', () => {
 
 	it('should pipe(renderToNodeStream) component to stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		let element = h(class {
@@ -428,10 +428,10 @@ describe('Server', () => {
 
 	it('should pipe(renderToNodeStream) element to stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 		let element = h('div', {dangerouslySetInnerHTML: {__html: '1'}})
 		let output = ''
@@ -447,10 +447,10 @@ describe('Server', () => {
 
 	it('should pipe(renderToNodeStream) element with dangerouslySetInnerHTML to stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 		let element = h('div', {dangerouslySetInnerHTML: {__html: '1'}})
 		let output = ''
@@ -465,10 +465,10 @@ describe('Server', () => {
 		let stack = []
 		let Writable = new require('stream').Writable
 		let writable = Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		writable.setHeader = (type, value) => stack.push(type, value)
@@ -489,10 +489,10 @@ describe('Server', () => {
 		let output = ''
 
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		let AppDrawer = function () {
@@ -510,10 +510,10 @@ describe('Server', () => {
 
 	it('should pipe(renderToNodeStream) an async element stream to stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		let element = Promise.resolve([h('h1', {className: 'foo'}, 1, 2, h('p', 'Hello'), h('span'), h('img'))])
@@ -535,10 +535,10 @@ describe('Server', () => {
 
 	it('should pipe(renderToNodeStream) an async component with async getInitialState', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		let element = h(class {
@@ -560,10 +560,10 @@ describe('Server', () => {
 
 	it('should pipe(renderToNodeStream) an async component with default getInitialState', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 		let state = null
 
@@ -587,24 +587,24 @@ describe('Server', () => {
 
 	it('should pipe(renderToNodeStream) an async generator component', () => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 		let stack = []
 		let element = h(class {
-		  async *render() {
-		  	stack.push('')
+			async *render() {
+				stack.push('')
 
-		  	var first = yield 'Hello'
+				var first = yield 'Hello'
 
-		  	stack.push(first)
+				stack.push(first)
 
-		  	var second = yield 'Hello World'
+				var second = yield 'Hello World'
 
-		  	stack.push(second)
-		  }
+				stack.push(second)
+			}
 		})
 
 		let output = ''
@@ -655,10 +655,10 @@ describe('Server', () => {
 
 	it('should not recover from an async getInitialState error', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		let error = null
@@ -732,10 +732,10 @@ describe('Server', () => {
 
 	it('should render comments to stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		let output = ''

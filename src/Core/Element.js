@@ -43,17 +43,17 @@ ObjectDefineProperties(ObjectDefineProperty(Element[SharedSitePrototype], Symbol
 	 * @memberof Element
 	 * @type {symbol}
 	 */
- 	constructor: {
- 		value: SymbolForElement
- 	},
- 	/**
- 	 * @alias Element#handleEvent
- 	 * @memberof Element
- 	 * @type {function}
- 	 */
- 	handleEvent: {
- 		value: handleEvent
- 	}
+	constructor: {
+		value: SymbolForElement
+	},
+	/**
+	 * @alias Element#handleEvent
+	 * @memberof Element
+	 * @type {function}
+	 */
+	handleEvent: {
+		value: handleEvent
+	}
 })
 
 /**

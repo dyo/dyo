@@ -751,9 +751,9 @@ describe('Error', () => {
 		render(h(ErrorBoundary, class {
 			render() {
 				return class {
-				  async *render() {
-				  	throw '!'
-				  }
+					async *render() {
+						throw '!'
+					}
 				}
 			}
 		}), container)
@@ -771,54 +771,54 @@ describe('Error', () => {
 		let refs = null
 
 		class ErrorBoundary extends Component {
-		  constructor(props) {
-		    super(props);
-		    this.state = { error: null, errorInfo: null };
-		  }
+			constructor(props) {
+				super(props);
+				this.state = { error: null, errorInfo: null };
+			}
 
-		  componentDidCatch(error, errorInfo) {
-		    this.setState({
-		      error: error,
-		      errorInfo: errorInfo
-		    })
-		  }
+			componentDidCatch(error, errorInfo) {
+				this.setState({
+					error: error,
+					errorInfo: errorInfo
+				})
+			}
 
-		  render() {
-		    if (this.state.errorInfo) {
-		      return (
-		      	h('div',
-		      		h('h2', 'Someting went wrong'),
-		      		h('details', {style: {whiteSpace: 'pre-wrap'}},
-		      			this.state.error && this.state.error.toString(),
-		      			h('br'),
-		      			this.state.errorInfo.componentStack
-		      		)
-		      	)
-		      );
-		    }
-		    return this.props.children
-		  }
+			render() {
+				if (this.state.errorInfo) {
+					return (
+						h('div',
+							h('h2', 'Someting went wrong'),
+							h('details', {style: {whiteSpace: 'pre-wrap'}},
+								this.state.error && this.state.error.toString(),
+								h('br'),
+								this.state.errorInfo.componentStack
+							)
+						)
+					);
+				}
+				return this.props.children
+			}
 		}
 
 		class BuggyCounter extends Component {
-		  constructor(props) {
-		    super(props);
-		    this.state = { counter: 0 };
-		    this.handleClick = this.handleClick.bind(this);
-		  }
+			constructor(props) {
+				super(props);
+				this.state = { counter: 0 };
+				this.handleClick = this.handleClick.bind(this);
+			}
 
-		  handleClick() {
-		    this.setState(({counter}) => ({
-		      counter: counter + 1
-		    }));
-		  }
+			handleClick() {
+				this.setState(({counter}) => ({
+					counter: counter + 1
+				}));
+			}
 
-		  render() {
-		    if (this.state.counter !== 0) {
-		      throw new Error('I crashed!');
-		    }
-		    return h('h1', {onClick: this.handleClick, ref: (value) => refs = value}, this.state.counter)
-		  }
+			render() {
+				if (this.state.counter !== 0) {
+					throw new Error('I crashed!');
+				}
+				return h('h1', {onClick: this.handleClick, ref: (value) => refs = value}, this.state.counter)
+			}
 		}
 
 		assert.doesNotThrow(() => {

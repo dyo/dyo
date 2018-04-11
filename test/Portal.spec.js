@@ -347,10 +347,10 @@ describe('Portal', ()=>{
 		let container = html.querySelector('.container')
 
 		Object.defineProperty(document, 'documentElement', {
-		  enumerable: true,
-		  configurable: true,
-		  writable: true,
-		  value: html
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: html
 		})
 
 		render(
@@ -374,10 +374,10 @@ describe('Portal', ()=>{
 		`)
 
 		Object.defineProperty(document, 'documentElement', {
-		  enumerable: true,
-		  configurable: true,
-		  writable: true,
-		  value: documentElement
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: documentElement
 		})
 	})
 
@@ -388,10 +388,10 @@ describe('Portal', ()=>{
 		let container = html.querySelector('.container')
 
 		Object.defineProperty(document, 'documentElement', {
-		  enumerable: true,
-		  configurable: true,
-		  writable: true,
-		  value: html
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: html
 		})
 
 		render(
@@ -415,10 +415,10 @@ describe('Portal', ()=>{
 		`)
 
 		Object.defineProperty(document, 'documentElement', {
-		  enumerable: true,
-		  configurable: true,
-		  writable: true,
-		  value: documentElement
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: documentElement
 		})
 	})
 })

@@ -155,9 +155,9 @@ function find (haystack, callback, thisArg) {
 	if (typeof haystack.find === 'function')
 		return haystack.find(callback, thisArg)
 
-  for (var i = 0; i < haystack.length; ++i)
-  	if (callback.call(thisArg, haystack[i], i, haystack))
-  		return haystack[i]
+	for (var i = 0; i < haystack.length; ++i)
+		if (callback.call(thisArg, haystack[i], i, haystack))
+			return haystack[i]
 }
 
 /**

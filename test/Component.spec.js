@@ -250,26 +250,26 @@ describe('Component', () => {
 		let refs = null
 
 		class Counter {
-		  constructor() {
-	      this.state = {counter: 0}
-	    }
-	    buttonClicked() {
-	      this.setState(state => ({ counter: state.counter + 1 }), () => {
-	      	this.refs.div.textContent = 'New DIO state: ' + JSON.stringify(this.state)
-	      })
-	    }
-	    shouldComponentUpdate() {
-	      return false
-	    }
-	    render() {
-	      return [
-	        h('button', {
-	        	ref: (node) => refs = node,
-	        	onClick: () => this.buttonClicked()
-	        }, 'Counter: ' + this.state.counter),
-	        h('div', {ref: 'div'})
-	      ]
-	    }
+			constructor() {
+				this.state = {counter: 0}
+			}
+			buttonClicked() {
+				this.setState(state => ({ counter: state.counter + 1 }), () => {
+					this.refs.div.textContent = 'New DIO state: ' + JSON.stringify(this.state)
+				})
+			}
+			shouldComponentUpdate() {
+				return false
+			}
+			render() {
+				return [
+					h('button', {
+						ref: (node) => refs = node,
+						onClick: () => this.buttonClicked()
+					}, 'Counter: ' + this.state.counter),
+					h('div', {ref: 'div'})
+				]
+			}
 		}
 
 		render(Counter, container)
@@ -357,7 +357,7 @@ describe('Component', () => {
 				return PureComponent.prototype.shouldComponentUpdate.call(this, props, state)
 			}
 			render({x}) {
-			  return h('div', x)
+				return h('div', x)
 			}
 		}
 		let Parent = class {
@@ -405,7 +405,7 @@ describe('Component', () => {
 			}
 			render() {
 				return h('div', h(Child, {
-				  x: this.state.locale['xxx']
+					x: this.state.locale['xxx']
 				}))
 			}
 		}
@@ -1234,17 +1234,17 @@ describe('Component', () => {
 		var stack = []
 
 		render(class {
-		  async *render() {
-		  	stack.push('')
+			async *render() {
+				stack.push('')
 
-		  	var first = yield 'Hello'
+				var first = yield 'Hello'
 
-		  	stack.push(first)
+				stack.push(first)
 
-		  	var second = yield 'Hello World'
+				var second = yield 'Hello World'
 
-		  	stack.push(second)
-		  }
+				stack.push(second)
+			}
 		}, container)
 
 		nextTick(() => {
@@ -1259,17 +1259,17 @@ describe('Component', () => {
 		var stack = []
 
 		render(class {
-		  async *render() {
-		  	stack.push('')
-		  	var first = yield 'Hello'
+			async *render() {
+				stack.push('')
+				var first = yield 'Hello'
 
-		  	stack.push(first)
-		  	return 'World'
+				stack.push(first)
+				return 'World'
 
-		  	var second = yield 'Hello World'
+				var second = yield 'Hello World'
 
-		  	stack.push(second)
-		  }
+				stack.push(second)
+			}
 		}, container)
 
 		nextTick(() => {
@@ -1284,13 +1284,13 @@ describe('Component', () => {
 		var stack = []
 
 		render(class {
-		  async *render() {
-		  	var index = 0
-		  	while (index++ < 5) {
-		  		var value = yield index
-		  		stack.push(value)
-		  	}
-		  }
+			async *render() {
+				var index = 0
+				while (index++ < 5) {
+					var value = yield index
+					stack.push(value)
+				}
+			}
 		}, container)
 
 		assert.html(container, '')

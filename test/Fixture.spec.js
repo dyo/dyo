@@ -272,16 +272,16 @@ describe('Fixture', () => {
 		let cachedState = null
 
 		let Parent = function () {
-		  setState = this.setState.bind(this)
-		  return h('div', this.state.child)
+			setState = this.setState.bind(this)
+			return h('div', this.state.child)
 		}
 		Parent.getInitialState = () => cachedState || {child: h('div', A)}
 
 		let setStateRoot = null
 
 		let Root = function (props, state) {
-		  setStateRoot = this.setState.bind(this)
-		  return h('div', this.state.isMounted ? Parent : null)
+			setStateRoot = this.setState.bind(this)
+			return h('div', this.state.isMounted ? Parent : null)
 		}
 		Root.getInitialState = () => ({isMounted: true})
 
@@ -392,45 +392,45 @@ describe('Fixture', () => {
 		let refs = null
 
 		class App extends Component {
-		  getInitialState() {
-		    return {
-		    	count: 0
-		    }
-		  }
-		  componentWillMount() {
-		    this.setState({count: 1}, () => {
-		      stack.push('setState')
-		    })
+			getInitialState() {
+				return {
+					count: 0
+				}
+			}
+			componentWillMount() {
+				this.setState({count: 1}, () => {
+					stack.push('setState')
+				})
 
-		    this.forceUpdate(() => {
-		    	stack.push('forceUpdate')
-		    })
-		  }
-		  componentDidMount() {
-		  	this.setState({count: 3}, () => {
-		  		stack.push('didMount')
-		  	})
-		  }
-		  componentDidUpdate() {
-		    stack.push('didUpdate')
-		  }
-		  inc() {
-		  	this.setState({
-		    	count: this.state.count + 1
-		  	})
+				this.forceUpdate(() => {
+					stack.push('forceUpdate')
+				})
 			}
-		  dec() {
-		  	this.setState({
-		    	count: this.state.count - 1
-		  	})
+			componentDidMount() {
+				this.setState({count: 3}, () => {
+					stack.push('didMount')
+				})
 			}
-		  render() {
-		  	return h('div',
-		  		h('h2', this.state.count),
-		  		h('button', {onClick: this.inc, ref: (value) => refs = value}, 'Increment'),
-		  		h('button', {onClick: this.dec}, 'Decrement')
-		  	)
-		  }
+			componentDidUpdate() {
+				stack.push('didUpdate')
+			}
+			inc() {
+				this.setState({
+					count: this.state.count + 1
+				})
+			}
+			dec() {
+				this.setState({
+					count: this.state.count - 1
+				})
+			}
+			render() {
+				return h('div',
+					h('h2', this.state.count),
+					h('button', {onClick: this.inc, ref: (value) => refs = value}, 'Increment'),
+					h('button', {onClick: this.dec}, 'Decrement')
+				)
+			}
 		}
 
 		render(App, container)
@@ -536,34 +536,34 @@ describe('Fixture', () => {
 		let container = document.createElement('div')
 
 		let Option = class {
-		  render({children, value}, state, {active, open, handleEvent}) {
-		    if (active === value || open === true)
-		      return h('div', {onClick: handleEvent, active: active === value}, children)
-		  }
+			render({children, value}, state, {active, open, handleEvent}) {
+				if (active === value || open === true)
+					return h('div', {onClick: handleEvent, active: active === value}, children)
+			}
 		}
 
 		let Select = class {
-		  getChildContext(props, {open, active}) {
-		    return {open: open, active: active, handleEvent: this}
-		  }
-		  getInitialState({value}) {
-		    return {open: false, active: value}
-		  }
-		  handleEvent(e, {value}, state, {open}) {
-		    return {open: !open, active: value}
-		  }
-		  render({style, children}) {
-		    return h('div', children)
-		  }
+			getChildContext(props, {open, active}) {
+				return {open: open, active: active, handleEvent: this}
+			}
+			getInitialState({value}) {
+				return {open: false, active: value}
+			}
+			handleEvent(e, {value}, state, {open}) {
+				return {open: !open, active: value}
+			}
+			render({style, children}) {
+				return h('div', children)
+			}
 		}
 
 		let First = () => h(Option, {value: 1}, 'First')
 		let Second = () => h(Option, {value: 2}, 'Second')
 
 		render(h(Select, {value: 1},
-		  h(First),
-		  h(Second),
-		  h(Option, {value: 3}, 'Third')
+			h(First),
+			h(Second),
+			h(Option, {value: 3}, 'Third')
 		), container)
 
 		assert.html(container, `
@@ -691,19 +691,19 @@ describe('Fixture', () => {
 		}
 
 		let BasicExample = () => (
-		  h(Router,
-		    h('div',
-		      h('ul',
-		      	h('li', h(Link, {href: '/'}, 'Home')),
-		        h('li', h(Link, {href: '/about'}, 'About')),
-		        h('li', h(Link, {href: '/topic'}, 'Topic'))
-		      ),
-		      h('hr'),
-		      h(Route, {path: '/'}, Home),
-		      h(Route, {path: '/about'}, About),
-		      h(Route, {path: '/topic'}, Topic)
-		    )
-		  )
+			h(Router,
+				h('div',
+					h('ul',
+						h('li', h(Link, {href: '/'}, 'Home')),
+						h('li', h(Link, {href: '/about'}, 'About')),
+						h('li', h(Link, {href: '/topic'}, 'Topic'))
+					),
+					h('hr'),
+					h(Route, {path: '/'}, Home),
+					h(Route, {path: '/about'}, About),
+					h(Route, {path: '/topic'}, Topic)
+				)
+			)
 		)
 
 		let Home = () => h('div', h('h2', 'Home'))
@@ -801,12 +801,12 @@ describe('Fixture', () => {
 		}
 
 		let Users = class {
-		  getInitialState() {
-		    return refs = fetch('https://reqres.in/api/users')
-		  }
-		  render(props, {value}) {
-		    return h('h1', value)
-		  }
+			getInitialState() {
+				return refs = fetch('https://reqres.in/api/users')
+			}
+			render(props, {value}) {
+				return h('h1', value)
+			}
 		}
 
 		render(Users, container)
@@ -834,19 +834,19 @@ describe('Fixture', () => {
 		let setWrapperState = null
 
 		let Child = function() {
-		  return h('div', 'child')
+			return h('div', 'child')
 		}
 
 		let Wrapper = function({children}, {x}) {
-		  setWrapperState = this.setState.bind(this)
-		  stack.push(x)
-		  return h('div', children)
+			setWrapperState = this.setState.bind(this)
+			stack.push(x)
+			return h('div', children)
 		}
 
 		let Root = function(props, {x}) {
-		  setRootState = this.setState.bind(this)
-		  stack.push(x)
-		  return h('div', h(Wrapper, h(Child, ['xxx'])))
+			setRootState = this.setState.bind(this)
+			stack.push(x)
+			return h('div', h(Wrapper, h(Child, ['xxx'])))
 		}
 
 		render(Root, container)

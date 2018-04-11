@@ -175,10 +175,10 @@ describe('Hydrate', () => {
 		container.innerHTML = '<head><title>title</title></head><body><div></div></body>'
 
 		Object.defineProperty(document, 'documentElement', {
-		  enumerable: true,
-		  configurable: true,
-		  writable: true,
-		  value: container
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: container
 		})
 
 		hydrate(children)
@@ -192,10 +192,10 @@ describe('Hydrate', () => {
 		assert.html(container, '<head><title>title</title></head><body><div>text</div></body>')
 
 		Object.defineProperty(document, 'documentElement', {
-		  enumerable: true,
-		  configurable: true,
-		  writable: true,
-		  value: documentElement
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: documentElement
 		})
 	})
 

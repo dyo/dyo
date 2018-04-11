@@ -87,9 +87,9 @@ describe('Render', () => {
 	it('should render an iteratable', () => {
 		let iteratable = {
 			[Symbol.iterator]: function* () {
-		    yield 1
-		    yield 2
-		    yield 3
+				yield 1
+				yield 2
+				yield 3
 			}
 		}
 		render(() => iteratable, container)
@@ -158,10 +158,10 @@ describe('Render', () => {
 		let documentElement = document.documentElement
 
 		Object.defineProperty(document, 'documentElement', {
-		  enumerable: true,
-		  configurable: true,
-		  writable: true,
-		  value: container
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: container
 		})
 
 		render(1)
@@ -169,10 +169,10 @@ describe('Render', () => {
 		assert.html(container, '1')
 
 		Object.defineProperty(document, 'documentElement', {
-		  enumerable: true,
-		  configurable: true,
-		  writable: true,
-		  value: documentElement
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: documentElement
 		})
 	})
 
@@ -429,98 +429,98 @@ describe('Render', () => {
 
 		container.appendChild(fragment)
 		assert.html(container, '<div>foo</div>')
- 	})
+	})
 
- 	it('should render non-primitive attributes', () => {
- 		let container = document.createElement('div')
- 		let refs = null
- 		let fn = () => {}
+	it('should render non-primitive attributes', () => {
+		let container = document.createElement('div')
+		let refs = null
+		let fn = () => {}
 
- 		render(h('h1', {ref: (node) => refs = node, custom: {first: 1}}, '0'), container)
- 		assert.html(container, '<h1>0</h1>')
- 		assert.deepEqual(refs.custom, {first: 1})
+		render(h('h1', {ref: (node) => refs = node, custom: {first: 1}}, '0'), container)
+		assert.html(container, '<h1>0</h1>')
+		assert.deepEqual(refs.custom, {first: 1})
 
- 		render(h('h1', {ref: (node) => refs = node, custom: {first: 1, second: 2}}, '0'), container)
- 		assert.html(container, '<h1>0</h1>')
- 		assert.deepEqual(refs.custom, {first: 1, second: 2})
+		render(h('h1', {ref: (node) => refs = node, custom: {first: 1, second: 2}}, '0'), container)
+		assert.html(container, '<h1>0</h1>')
+		assert.deepEqual(refs.custom, {first: 1, second: 2})
 
- 		render(h('h1', {ref: (node) => refs = node, custom: null}, '0'), container)
- 		assert.html(container, '<h1>0</h1>')
- 		assert.equal(refs.custom, '')
+		render(h('h1', {ref: (node) => refs = node, custom: null}, '0'), container)
+		assert.html(container, '<h1>0</h1>')
+		assert.equal(refs.custom, '')
 
- 		render(h('h1', {ref: (node) => refs = node, custom: {first: 1}}, '0'), container)
- 		assert.html(container, '<h1>0</h1>')
- 		assert.deepEqual(refs.custom, {first: 1})
+		render(h('h1', {ref: (node) => refs = node, custom: {first: 1}}, '0'), container)
+		assert.html(container, '<h1>0</h1>')
+		assert.deepEqual(refs.custom, {first: 1})
 
- 		render(h('h1', {ref: (node) => refs = node, custom: fn}, '0'), container)
- 		assert.html(container, '<h1>0</h1>')
- 		assert.equal(refs.custom, fn)
+		render(h('h1', {ref: (node) => refs = node, custom: fn}, '0'), container)
+		assert.html(container, '<h1>0</h1>')
+		assert.equal(refs.custom, fn)
 
- 		render(h('h1', {ref: (node) => refs = node, custom: {first: 1, second: 2}}, '0'), container)
- 		assert.html(container, '<h1>0</h1>')
- 		assert.deepEqual(refs.custom, {first: 1, second: 2})
- 	})
+		render(h('h1', {ref: (node) => refs = node, custom: {first: 1, second: 2}}, '0'), container)
+		assert.html(container, '<h1>0</h1>')
+		assert.deepEqual(refs.custom, {first: 1, second: 2})
+	})
 
- 	it('should render defaultValue', () => {
- 		let container = document.createElement('div')
- 		let refs = null
+	it('should render defaultValue', () => {
+		let container = document.createElement('div')
+		let refs = null
 
- 		render(h('input', {ref: (node) => refs = node, defaultValue: 1}), container)
- 		assert.equal(refs.value, '1')
+		render(h('input', {ref: (node) => refs = node, defaultValue: 1}), container)
+		assert.equal(refs.value, '1')
 
- 		render(h('input', {ref: (node) => refs = node, defaultValue: 0}), container)
- 		assert.equal(refs.value, '0')
+		render(h('input', {ref: (node) => refs = node, defaultValue: 0}), container)
+		assert.equal(refs.value, '0')
 
- 		render(h('select', {ref: (node) => refs = node, defaultValue: 2},
- 			h('option', {value: 1}, 1),
- 			h('option', {value: 2}, 2),
- 			h('option', {value: 3}, 3)
- 		), container)
- 		assert.html(container, `
- 			<select>
- 				<option value="1">1</option>
- 				<option value="2">2</option>
- 				<option value="3">3</option>
- 			</select>
- 		`)
- 		assert.equal(refs.value, '2')
- 	})
+		render(h('select', {ref: (node) => refs = node, defaultValue: 2},
+			h('option', {value: 1}, 1),
+			h('option', {value: 2}, 2),
+			h('option', {value: 3}, 3)
+		), container)
+		assert.html(container, `
+			<select>
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+			</select>
+		`)
+		assert.equal(refs.value, '2')
+	})
 
- 	it('should not prevent default selected option behaviour', () => {
- 		let container = document.createElement('div')
- 		let refs = []
+	it('should not prevent default selected option behaviour', () => {
+		let container = document.createElement('div')
+		let refs = []
 
- 		render([
- 			h('select', {ref: (node) => refs[0] = node},
- 				h('option', {value: '1'}, '1'),
- 				h('option', {value: '2'}, '2')
- 			),
- 			h('select', {ref: (node) => refs[1] = node, defaultValue: '2'},
- 				h('option', {value: '1'}, '1'),
- 				h('option', {value: '2'}, '2')
- 			),
- 			h('select', {ref: (node) => refs[2] = node, value: '2'},
- 				h('option', {value: '1'}, '1'),
- 				h('option', {value: '2'}, '2')
- 			),
+		render([
+			h('select', {ref: (node) => refs[0] = node},
+				h('option', {value: '1'}, '1'),
+				h('option', {value: '2'}, '2')
+			),
+			h('select', {ref: (node) => refs[1] = node, defaultValue: '2'},
+				h('option', {value: '1'}, '1'),
+				h('option', {value: '2'}, '2')
+			),
+			h('select', {ref: (node) => refs[2] = node, value: '2'},
+				h('option', {value: '1'}, '1'),
+				h('option', {value: '2'}, '2')
+			),
 
- 			h('select', {ref: (node) => refs[5] = node, multiple: false},
- 				h('option', {value: '1'}, '1'),
- 				h('option', {value: '2'}, '2')
- 			),
+			h('select', {ref: (node) => refs[5] = node, multiple: false},
+				h('option', {value: '1'}, '1'),
+				h('option', {value: '2'}, '2')
+			),
 
- 			h('select', {ref: (node) => refs[3] = node, multiple: true},
- 				h('option', {value: '1'}, '1'),
- 				h('option', {value: '2'}, '2')
- 			),
- 			h('select', {ref: (node) => refs[4] = node, multiple: true, defaultValue: '2'},
- 				h('option', {value: '1'}, '1'),
- 				h('option', {value: '2'}, '2')
- 			)],
- 			container
- 		)
+			h('select', {ref: (node) => refs[3] = node, multiple: true},
+				h('option', {value: '1'}, '1'),
+				h('option', {value: '2'}, '2')
+			),
+			h('select', {ref: (node) => refs[4] = node, multiple: true, defaultValue: '2'},
+				h('option', {value: '1'}, '1'),
+				h('option', {value: '2'}, '2')
+			)],
+			container
+		)
 
- 		assert.html(container, `
+		assert.html(container, `
 			<select><option value="1">1</option><option value="2">2</option></select>
 			<select><option value="1">1</option><option value="2">2</option></select>
 			<select><option value="1">1</option><option value="2">2</option></select>
@@ -529,37 +529,37 @@ describe('Render', () => {
 
 			<select multiple=""><option value="1">1</option><option value="2">2</option></select>
 			<select multiple=""><option value="1">1</option><option value="2">2</option></select>
- 		`)
- 		assert.equal(refs[0].value, '1')
- 		assert.equal(refs[1].value, '2')
- 		assert.equal(refs[2].value, '2')
+		`)
+		assert.equal(refs[0].value, '1')
+		assert.equal(refs[1].value, '2')
+		assert.equal(refs[2].value, '2')
 
- 		assert.equal(refs[5].value, '1')
+		assert.equal(refs[5].value, '1')
 
- 		assert.equal(refs[3].value, '1')
- 		assert.equal(refs[4].value, '2')
- 	})
+		assert.equal(refs[3].value, '1')
+		assert.equal(refs[4].value, '2')
+	})
 
- 	it('should not render defaultValue to string', () => {
- 		let container = document.createElement('div')
- 		let refs = null
+	it('should not render defaultValue to string', () => {
+		let container = document.createElement('div')
+		let refs = null
 
- 		render(h('input', {ref: (node) => refs = node, defaultValue: null}), container)
- 		assert.html(container, '<input value="">')
+		render(h('input', {ref: (node) => refs = node, defaultValue: null}), container)
+		assert.html(container, '<input value="">')
 
- 		render(h('input', {ref: (node) => refs = node, defaultValue: false}), container)
- 		assert.html(container, '<input value="">')
+		render(h('input', {ref: (node) => refs = node, defaultValue: false}), container)
+		assert.html(container, '<input value="">')
 
- 		render(h('input', {ref: (node) => refs = node, defaultValue: 1, value: '2'}), container)
- 		assert.equal(refs.value, '2')
+		render(h('input', {ref: (node) => refs = node, defaultValue: 1, value: '2'}), container)
+		assert.equal(refs.value, '2')
 
- 		render(h('input', {ref: (node) => refs = node, defaultValue: 1, value: 0}), container)
- 		assert.equal(refs.value, '0')
+		render(h('input', {ref: (node) => refs = node, defaultValue: 1, value: 0}), container)
+		assert.equal(refs.value, '0')
 
- 		render(h('input', {ref: (node) => refs = node, defaultValue: 0, value: null}), container)
- 		assert.equal(refs.value, '')
+		render(h('input', {ref: (node) => refs = node, defaultValue: 0, value: null}), container)
+		assert.equal(refs.value, '')
 
- 		render(h('input', {ref: (node) => refs = node, defaultValue: 0, value: undefined}), container)
- 		assert.equal(refs.value, '')
- 	})
+		render(h('input', {ref: (node) => refs = node, defaultValue: 0, value: undefined}), container)
+		assert.equal(refs.value, '')
+	})
 })

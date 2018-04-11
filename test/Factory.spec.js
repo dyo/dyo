@@ -76,25 +76,25 @@ describe('Factory', () => {
 			createFactory({})
 		), [
 			'version',
-		  'render',
-		  'hydrate',
-		  'Component',
-		  'Fragment',
-		  'PureComponent',
-		  'Children',
-		  'createContext',
-		  'createFactory',
-		  'cloneElement',
-		  'isValidElement',
-		  'createPortal',
-		  'createElement',
-		  'createComment',
-		  'createClass',
-		  'unmountComponentAtNode',
-		  'findDOMNode',
-		  'h',
-		  'renderToString',
-		  'renderToNodeStream'
+			'render',
+			'hydrate',
+			'Component',
+			'Fragment',
+			'PureComponent',
+			'Children',
+			'createContext',
+			'createFactory',
+			'cloneElement',
+			'isValidElement',
+			'createPortal',
+			'createElement',
+			'createComment',
+			'createClass',
+			'unmountComponentAtNode',
+			'findDOMNode',
+			'h',
+			'renderToString',
+			'renderToNodeStream'
 		])
 	})
 
@@ -141,9 +141,9 @@ describe('Factory', () => {
 	it('should render a iteratable', () => {
 		let iteratable = {
 			[Symbol.iterator]: function* () {
-		    yield 1
-		    yield 2
-		    yield 3
+				yield 1
+				yield 2
+				yield 3
 			}
 		}
 		render(() => iteratable, container)
@@ -251,10 +251,10 @@ describe('Factory', () => {
 
 	it('should render a component stream to a stream', (done) => {
 		let writable = new require('stream').Writable({
-		  write(chunk, encoding, callback) {
-	      output += chunk.toString()
-	      callback()
-		  }
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
 		})
 
 		let element = h(class {

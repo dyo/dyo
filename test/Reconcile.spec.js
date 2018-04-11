@@ -403,7 +403,7 @@ describe('Reconcile', () => {
 		render(h(List, {type: 'li', data: [1, 2, 3, 4, 5, 6]}), container)
 
 		assert.trace(() => {
-		  render(h(List, {type: 'li', data: [2, 3, 4, 5, 6, 1]}), container)
+			render(h(List, {type: 'li', data: [2, 3, 4, 5, 6, 1]}), container)
 		}, {
 			appendChild: 1,
 			length: 1

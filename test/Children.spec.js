@@ -7,9 +7,9 @@ describe('Children', () => {
 		assert.deepEqual(toArray(null), [])
 		assert.deepEqual(toArray({
 			[Symbol.iterator]: function* () {
-		    yield 1
-		    yield 2
-		    yield 3
+				yield 1
+				yield 2
+				yield 3
 			}
 		}), [1, 2, 3])
 

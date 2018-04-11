@@ -254,9 +254,9 @@
 			if (typeof haystack.find === 'function')
 				return haystack.find(callback, thisArg)
 		
-		  for (var i = 0; i < haystack.length; ++i)
-		  	if (callback.call(thisArg, haystack[i], i, haystack))
-		  		return haystack[i]
+			for (var i = 0; i < haystack.length; ++i)
+				if (callback.call(thisArg, haystack[i], i, haystack))
+					return haystack[i]
 		}
 		
 		/**
@@ -405,17 +405,17 @@
 			 * @memberof Element
 			 * @type {symbol}
 			 */
-		 	constructor: {
-		 		value: SymbolForElement
-		 	},
-		 	/**
-		 	 * @alias Element#handleEvent
-		 	 * @memberof Element
-		 	 * @type {function}
-		 	 */
-		 	handleEvent: {
-		 		value: handleEvent
-		 	}
+			constructor: {
+				value: SymbolForElement
+			},
+			/**
+			 * @alias Element#handleEvent
+			 * @memberof Element
+			 * @type {function}
+			 */
+			handleEvent: {
+				value: handleEvent
+			}
 		})
 		
 		/**
@@ -1535,7 +1535,7 @@
 			switch (signature) {
 				case SharedComponentPropsUpdate:
 					if (owner[SharedComponentWillReceiveProps])
-						getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext, nextState)
+						getLifecycleUpdate(element, SharedComponentWillReceiveProps, element.props = nextProps, nextContext, nextState)
 		
 					if (tempState !== owner[SymbolForCache])
 						break
@@ -1555,9 +1555,11 @@
 		
 			switch (signature) {
 				case SharedComponentPropsUpdate:
-					owner.props = element.props = nextProps
+					element.props = nextProps
 				case SharedComponentStateUpdate:
 					owner.state = nextState
+				case SharedComponentForceUpdate:
+					owner.props = element.props
 			}
 		
 			if (owner[SharedGetChildContext])
@@ -1638,7 +1640,7 @@
 		function enqueueComponentElement (element, owner, signature) {
 			if (!element.active)
 				merge(owner.state, owner[SymbolForCache])
-			else if (element.work === SharedWorkUpdating)
+			else if (signature === SharedComponentStateUpdate && element.work === SharedWorkUpdating)
 				merge(owner[SymbolForState], owner[SymbolForCache])
 			else
 				updateComponentElement(element, element, element, signature)
@@ -1836,60 +1838,60 @@
 		 * @param {object} context
 		 */
 		function ContextProvider (props, context) {
-		  Component.call(this, props, context)
+			Component.call(this, props, context)
 		}
 		ContextProvider[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
-		  /**
-		   * @alias ContextProvider#getInitialState
-		   * @memberof ContextProvider
-		   * @type {function}
-		   * @this {Component}
-		   * @param {object} props
-		   * @param {object} state
-		   * @param {object} context
-		   * @return {object}
-		   */
-		  getInitialState: {
-		    value: function (props, state, context) {
-		      return this[SymbolForElement].cache = {provider: this, consumers: new List()}
-		    }
-		  },
-		  /**
-		   * @alias ContextProvider#render
-		   * @memberof ContextProvider
-		   * @type {function}
-		   * @param {object} props
-		   * @return {any}
-		   */
-		  render: {
-		    value: function (props) {
-		      return props.children
-		    }
-		  },
-		  /**
-		   * @alias ContextProvider#componentDidUpdate
-		   * @memberof ContextProvider
-		   * @type {function}
-		   * @this {Component}
-		   * @param {object} props
-		   * @param {object}
-		   */
-		  componentDidUpdate: {
-		    value: function (props) {
-		      !is(this.props.value, props.value) && this.state.consumers.forEach(this.componentChildUpdate)
-		    }
-		  },
-		  /**
-		   * @alias ContextProvider#componentChildUpdate
-		   * @memberof ContextProvider
-		   * @type {function}
-		   * @param {Component} consumer
-		   */
-		  componentChildUpdate: {
-		    value: function (consumer) {
-		      consumer.didUpdate = consumer.didUpdate ? false : !!consumer[SharedSiteForceUpdate]()
-		    }
-		  }
+			/**
+			 * @alias ContextProvider#getInitialState
+			 * @memberof ContextProvider
+			 * @type {function}
+			 * @this {Component}
+			 * @param {object} props
+			 * @param {object} state
+			 * @param {object} context
+			 * @return {object}
+			 */
+			getInitialState: {
+				value: function (props, state, context) {
+					return this[SymbolForElement].cache = {provider: this, consumers: new List()}
+				}
+			},
+			/**
+			 * @alias ContextProvider#render
+			 * @memberof ContextProvider
+			 * @type {function}
+			 * @param {object} props
+			 * @return {any}
+			 */
+			render: {
+				value: function (props) {
+					return props.children
+				}
+			},
+			/**
+			 * @alias ContextProvider#componentDidUpdate
+			 * @memberof ContextProvider
+			 * @type {function}
+			 * @this {Component}
+			 * @param {object} props
+			 * @param {object}
+			 */
+			componentDidUpdate: {
+				value: function (props) {
+					!is(this.props.value, props.value) && this.state.consumers.forEach(this.componentChildUpdate)
+				}
+			},
+			/**
+			 * @alias ContextProvider#componentChildUpdate
+			 * @memberof ContextProvider
+			 * @type {function}
+			 * @param {Component} consumer
+			 */
+			componentChildUpdate: {
+				value: function (consumer) {
+					consumer.didUpdate = consumer.didUpdate ? false : !!consumer[SharedSiteForceUpdate]()
+				}
+			}
 		})
 		
 		/**
@@ -1900,68 +1902,68 @@
 		 * @param {object} context
 		 */
 		function ContextConsumer (props, context) {
-		  Component.call(this, props, context)
+			Component.call(this, props, context)
 		}
 		ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
-		  /**
-		   * @alias ContextConsumer#getInitialState
-		   * @memberof ContextConsumer
-		   * @type {function}
-		   * @this {Component}
-		   * @param {object} props
-		   * @return {object}
-		   */
-		  getInitialState: {
-		    value: function (props) {
-		      return this[SymbolForContext] || {provider: this}
-		    }
-		  },
-		  /**
-		   * @alias ContextConsumer#render
-		   * @memberof ContextConsumer
-		   * @type {function}
-		   * @param {object} props
-		   * @param {object} state
-		   * @return {any}
-		   */
-		  render: {
-		    value: function (props, state) {
-		      return props.children(state.provider.props.value)
-		    }
-		  },
-		  /**
-		   * @alias ContextConsumer#componentWillReceiveProps
-		   * @memberof ContextConsumer
-		   * @type {function}
-		   * @this {Component}
-		   */
-		  componentWillReceiveProps: {
-		    value: function () {
-		      this.didUpdate = true
-		    }
-		  },
-		  /**
-		   * @alias ContextConsumer#componentDidMount
-		   * @memberof ContextConsumer
-		   * @type {function}
-		   * @this {Component}
-		   */
-		  componentDidMount: {
-		    value: function () {
-		      this.state.consumers && this.state.consumers.insert(this, this.state.consumers)
-		    }
-		  },
-		  /**
-		   * @alias ContextConsumer#componentWillUnmount
-		   * @memberof ContextConsumer
-		   * @type {function}
-		   * @this {Component}
-		   */
-		  componentWillUnmount: {
-		    value: function () {
-		      this.state.consumers && this.state.consumers.remove(this)
-		    }
-		  }
+			/**
+			 * @alias ContextConsumer#getInitialState
+			 * @memberof ContextConsumer
+			 * @type {function}
+			 * @this {Component}
+			 * @param {object} props
+			 * @return {object}
+			 */
+			getInitialState: {
+				value: function (props) {
+					return this[SymbolForContext] || {provider: this}
+				}
+			},
+			/**
+			 * @alias ContextConsumer#render
+			 * @memberof ContextConsumer
+			 * @type {function}
+			 * @param {object} props
+			 * @param {object} state
+			 * @return {any}
+			 */
+			render: {
+				value: function (props, state) {
+					return props.children(state.provider.props.value)
+				}
+			},
+			/**
+			 * @alias ContextConsumer#componentWillReceiveProps
+			 * @memberof ContextConsumer
+			 * @type {function}
+			 * @this {Component}
+			 */
+			componentWillReceiveProps: {
+				value: function () {
+					this.didUpdate = true
+				}
+			},
+			/**
+			 * @alias ContextConsumer#componentDidMount
+			 * @memberof ContextConsumer
+			 * @type {function}
+			 * @this {Component}
+			 */
+			componentDidMount: {
+				value: function () {
+					this.state.consumers && this.state.consumers.insert(this, this.state.consumers)
+				}
+			},
+			/**
+			 * @alias ContextConsumer#componentWillUnmount
+			 * @memberof ContextConsumer
+			 * @type {function}
+			 * @this {Component}
+			 */
+			componentWillUnmount: {
+				value: function () {
+					this.state.consumers && this.state.consumers.remove(this)
+				}
+			}
 		})
 		
 		/**
@@ -1969,22 +1971,22 @@
 		 * @return {{Provider, Consumer}}
 		 */
 		function createContextComponent (value) {
-		  return {
-		    /**
-		     * @param {object} props
-		     * @return {Element}
-		     */
-		    Provider: function Provider (props) {
-		      return createElement(ContextProvider, assign({}, value, props))
-		    },
-		    /**
-		     * @param {object} props
-		     * @return {Element}
-		     */
-		    Consumer: function Consumer (props) {
-		      return createElement(ContextConsumer, assign({}, value, props))
-		    }
-		  }
+			return {
+				/**
+				 * @param {object} props
+				 * @return {Element}
+				 */
+				Provider: function Provider (props) {
+					return createElement(ContextProvider, assign({}, value, props))
+				},
+				/**
+				 * @param {object} props
+				 * @return {Element}
+				 */
+				Consumer: function Consumer (props) {
+					return createElement(ContextConsumer, assign({}, value, props))
+				}
+			}
 		}
 		
 		/**
@@ -1993,7 +1995,7 @@
 		 * @public
 		 */
 		function createContext (value) {
-		  return createContextComponent({value: value, children: noop})
+			return createContextComponent({value: value, children: noop})
 		}
 		
 		/**
