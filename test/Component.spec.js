@@ -1344,4 +1344,48 @@ describe('Component', () => {
 		render(h(AppDrawer, {className: 'custom'}, 1), container)
 		assert.html(container, `<x-span class="custom">1</x-span>`)
 	})
+
+	it('should should handle forceUpdate edge cases', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		class A {
+			constructor() {
+				this.state = {counter: 0}
+			}
+			handleEvent() {
+				this.setState(state => ({counter: state.counter + 1}))
+			}
+			render() {
+				return h('div', h(B, {counter: this.state.counter}),
+					h('button', {ref: (node) => refs = node, onClick: () => this.handleEvent()}, 'Increment')
+				)
+			}
+		}
+
+		class B {
+			shouldComponentUpdate(props, state) {
+				return false
+			}
+			componentWillReceiveProps(props) {
+				stack.push(props.counter)
+				this.forceUpdate()
+			}
+			render() {
+				return h('span', this.props.counter)
+			}
+		}
+
+		render(A, container)
+		assert.html(container, `<div><span>0</span><button>Increment</button></div>`)
+
+		refs.dispatchEvent(new Event('click'))
+		assert.html(container, `<div><span>1</span><button>Increment</button></div>`)
+
+		refs.dispatchEvent(new Event('click'))
+		assert.html(container, `<div><span>2</span><button>Increment</button></div>`)
+
+		assert.deepEqual(stack, [1, 2])
+	})
 })

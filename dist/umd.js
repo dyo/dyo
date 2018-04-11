@@ -1,4 +1,4 @@
-/*!dio 9.0.2 @license MIT */
+/*!dio 9.0.3 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.2'}
+		var dio = {version: '9.0.3'}
 		
 		var SharedElementPromise = 0
 		var SharedElementFragment = 1
@@ -1497,7 +1497,7 @@
 			if (element.owner[SharedComponentWillUnmount])
 				if (element.cache = getLifecycleUnmount(element, SharedComponentWillUnmount))
 					if (thenable(element.cache))
-						return element.cache.catch(function (err) {
+						return void element.cache.catch(function (err) {
 							invokeErrorBoundary(element, err, SharedComponentWillUnmount)
 						})
 		
@@ -1640,7 +1640,7 @@
 		function enqueueComponentElement (element, owner, signature) {
 			if (!element.active)
 				merge(owner.state, owner[SymbolForCache])
-			else if (signature === SharedComponentStateUpdate && element.work === SharedWorkUpdating)
+			else if (element.work === SharedWorkUpdating && signature === SharedComponentStateUpdate)
 				merge(owner[SymbolForState], owner[SymbolForCache])
 			else
 				updateComponentElement(element, element, element, signature)

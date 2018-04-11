@@ -1,3 +1,7 @@
+## 9.0.3 (11 April 2018)
+
+- Patch [#59](https://github.com/thysultan/dio.js/issues/59)
+
 ## 9.0.2 (11 April 2018)
 
 - Patch `select` element preventing default browser option selection behavior.

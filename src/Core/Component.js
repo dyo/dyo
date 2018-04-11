@@ -241,7 +241,7 @@ function unmountComponentInstance (element) {
 	if (element.owner[SharedComponentWillUnmount])
 		if (element.cache = getLifecycleUnmount(element, SharedComponentWillUnmount))
 			if (thenable(element.cache))
-				return element.cache.catch(function (err) {
+				return void element.cache.catch(function (err) {
 					invokeErrorBoundary(element, err, SharedComponentWillUnmount)
 				})
 
@@ -279,7 +279,7 @@ function updateComponentChildren (element, snapshot, signature) {
 	switch (signature) {
 		case SharedComponentPropsUpdate:
 			if (owner[SharedComponentWillReceiveProps])
-				getLifecycleUpdate(element, SharedComponentWillReceiveProps, nextProps, nextContext, nextState)
+				getLifecycleUpdate(element, SharedComponentWillReceiveProps, element.props = nextProps, nextContext, nextState)
 
 			if (tempState !== owner[SymbolForCache])
 				break
@@ -299,9 +299,11 @@ function updateComponentChildren (element, snapshot, signature) {
 
 	switch (signature) {
 		case SharedComponentPropsUpdate:
-			owner.props = element.props = nextProps
+			element.props = nextProps
 		case SharedComponentStateUpdate:
 			owner.state = nextState
+		case SharedComponentForceUpdate:
+			owner.props = element.props
 	}
 
 	if (owner[SharedGetChildContext])
@@ -382,7 +384,7 @@ function enqueueComponentUpdate (element, owner, state, signature, callback) {
 function enqueueComponentElement (element, owner, signature) {
 	if (!element.active)
 		merge(owner.state, owner[SymbolForCache])
-	else if (element.work === SharedWorkUpdating)
+	else if (element.work === SharedWorkUpdating && signature === SharedComponentStateUpdate)
 		merge(owner[SymbolForState], owner[SymbolForCache])
 	else
 		updateComponentElement(element, element, element, signature)
