@@ -239,7 +239,8 @@ function getDOMInitialProps (element, props) {
 		case 'input':
 			return merge({type: null, step: null, min: null, max: null}, props)
 		case 'select':
-			return merge({value: props.defaultValue}, props)
+			if (props.defaultValue != null || props.multiple)
+				return merge({value: props.defaultValue}, props)
 	}
 
 	return props

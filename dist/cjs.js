@@ -1,4 +1,4 @@
-/*!dio 9.0.1 @license MIT */
+/*!dio 9.0.2 @license MIT */
 module.exports = function (dio, Element, mountComponentInstance, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = 0

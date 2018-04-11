@@ -486,6 +486,60 @@ describe('Render', () => {
  		assert.equal(refs.value, '2')
  	})
 
+ 	it('should not prevent default selected option behaviour', () => {
+ 		let container = document.createElement('div')
+ 		let refs = []
+
+ 		render([
+ 			h('select', {ref: (node) => refs[0] = node},
+ 				h('option', {value: '1'}, '1'),
+ 				h('option', {value: '2'}, '2')
+ 			),
+ 			h('select', {ref: (node) => refs[1] = node, defaultValue: '2'},
+ 				h('option', {value: '1'}, '1'),
+ 				h('option', {value: '2'}, '2')
+ 			),
+ 			h('select', {ref: (node) => refs[2] = node, value: '2'},
+ 				h('option', {value: '1'}, '1'),
+ 				h('option', {value: '2'}, '2')
+ 			),
+
+ 			h('select', {ref: (node) => refs[5] = node, multiple: false},
+ 				h('option', {value: '1'}, '1'),
+ 				h('option', {value: '2'}, '2')
+ 			),
+
+ 			h('select', {ref: (node) => refs[3] = node, multiple: true},
+ 				h('option', {value: '1'}, '1'),
+ 				h('option', {value: '2'}, '2')
+ 			),
+ 			h('select', {ref: (node) => refs[4] = node, multiple: true, defaultValue: '2'},
+ 				h('option', {value: '1'}, '1'),
+ 				h('option', {value: '2'}, '2')
+ 			)],
+ 			container
+ 		)
+
+ 		assert.html(container, `
+			<select><option value="1">1</option><option value="2">2</option></select>
+			<select><option value="1">1</option><option value="2">2</option></select>
+			<select><option value="1">1</option><option value="2">2</option></select>
+
+			<select><option value="1">1</option><option value="2">2</option></select>
+
+			<select multiple=""><option value="1">1</option><option value="2">2</option></select>
+			<select multiple=""><option value="1">1</option><option value="2">2</option></select>
+ 		`)
+ 		assert.equal(refs[0].value, '1')
+ 		assert.equal(refs[1].value, '2')
+ 		assert.equal(refs[2].value, '2')
+
+ 		assert.equal(refs[5].value, '1')
+
+ 		assert.equal(refs[3].value, '1')
+ 		assert.equal(refs[4].value, '2')
+ 	})
+
  	it('should not render defaultValue to string', () => {
  		let container = document.createElement('div')
  		let refs = null

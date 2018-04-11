@@ -1,3 +1,7 @@
+## 9.0.2 (11 April 2018)
+
+- Patch `select` element preventing default browser option selection behavior.
+
 ## 9.0.1 (11 April 2018)
 
 - Patch `shouldComponentUpdate` preventing state update.

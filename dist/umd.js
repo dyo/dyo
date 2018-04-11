@@ -1,4 +1,4 @@
-/*!dio 9.0.1 @license MIT */
+/*!dio 9.0.2 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.1'}
+		var dio = {version: '9.0.2'}
 		
 		var SharedElementPromise = 0
 		var SharedElementFragment = 1
@@ -3023,7 +3023,8 @@
 				case 'input':
 					return merge({type: null, step: null, min: null, max: null}, props)
 				case 'select':
-					return merge({value: props.defaultValue}, props)
+					if (props.defaultValue != null || props.multiple)
+						return merge({value: props.defaultValue}, props)
 			}
 		
 			return props
