@@ -1,4 +1,4 @@
-/*!dio 9.0.0 @license MIT */
+/*!dio 9.0.1 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.0'}
+		var dio = {version: '9.0.1'}
 		
 		var SharedElementPromise = 0
 		var SharedElementFragment = 1
@@ -1548,7 +1548,7 @@
 			if (signature !== SharedComponentForceUpdate)
 				if (owner[SharedComponentShouldUpdate])
 					if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
-						return
+						return void(owner.state = nextState)
 		
 			if (owner[SharedComponentWillUpdate])
 				getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)

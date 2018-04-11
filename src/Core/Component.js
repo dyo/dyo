@@ -292,7 +292,7 @@ function updateComponentChildren (element, snapshot, signature) {
 	if (signature !== SharedComponentForceUpdate)
 		if (owner[SharedComponentShouldUpdate])
 			if (!getLifecycleUpdate(element, SharedComponentShouldUpdate, nextProps, nextState, nextContext))
-				return
+				return void(owner.state = nextState)
 
 	if (owner[SharedComponentWillUpdate])
 		getLifecycleUpdate(element, SharedComponentWillUpdate, nextProps, nextState, nextContext)

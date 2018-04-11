@@ -245,6 +245,42 @@ describe('Component', () => {
 		assert.html(container, '1')
 	})
 
+	it('should update Component state', () => {
+		let container = document.createElement('div')
+		let refs = null
+
+		class Counter {
+		  constructor() {
+	      this.state = {counter: 0}
+	    }
+	    buttonClicked() {
+	      this.setState(state => ({ counter: state.counter + 1 }), () => {
+	      	this.refs.div.textContent = 'New DIO state: ' + JSON.stringify(this.state)
+	      })
+	    }
+	    shouldComponentUpdate() {
+	      return false
+	    }
+	    render() {
+	      return [
+	        h('button', {
+	        	ref: (node) => refs = node,
+	        	onClick: () => this.buttonClicked()
+	        }, 'Counter: ' + this.state.counter),
+	        h('div', {ref: 'div'})
+	      ]
+	    }
+		}
+
+		render(Counter, container)
+
+		refs.dispatchEvent(new Event('click'))
+		assert.html(container, `<button>Counter: 0</button><div>New DIO state: {"counter":1}</div>`)
+
+		refs.dispatchEvent(new Event('click'))
+		assert.html(container, `<button>Counter: 0</button><div>New DIO state: {"counter":2}</div>`)
+	})
+
 	it('should update PureComponent', () => {
 		let container = document.createElement('div')
 		let A = class extends PureComponent {

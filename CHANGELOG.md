@@ -1,3 +1,7 @@
+## 9.0.1 (11 April 2018)
+
+- Patch `shouldComponentUpdate` preventing state update.
+
 ## 9.0.0 (11 April 2018)
 
 #### Core
