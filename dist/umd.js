@@ -1,4 +1,4 @@
-/*!dio 9.0.0-rc.2 @license MIT */
+/*!dio 9.0.0 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.0-rc.2'}
+		var dio = {version: '9.0.0'}
 		
 		var SharedElementPromise = 0
 		var SharedElementFragment = 1

@@ -1,19 +1,31 @@
-## 9.0.0 (Unreleased)
+## 9.0.0 (11 April 2018)
 
-- Breaking: Improve Error Boundaries to act more like React and `try..catch`.
-- Breaking: Name change to custom reconcilers method `getProps` to `getInitialProps`.
-- Breaking: Name change to custom reconcilers method `setContent` to `setDocument`.
-- Improve: error boundaries implementation to support possible future `Timeout` and `Placeholder` React components.
+#### Core
+
+- Breaking: Improve Error Boundaries to behave more inline with React and `try..catch` heuristics.
 - Improve: `async getInitialState` implementation.
 - Improve: support for `defaultValue` on select elements.
-- New: adds `createClass` API.
-- New: adds `createContext` API.
-- New: adds `createComment` API.
-- New: support for async generators/iterators.
-- New: support for auto resolution of json `fetch` based Promises passed to setState/getInitialState.
-- New: support for custom elements.
+- New: `createClass` top-level API.
+- New: `createContext` top-level API.
+- New: `createComment` top-level API.
+- New: support async generators/iterators.
+- New: support auto resolution of json `fetch` based Promises passed to setState/getInitialState.
+- New: support custom element constructors.
 - New: support multiple event handlers on a single event.
-- NEW: reconciler adds `getContext`, `createComment`, `setComment`, `willUnmount`, and `getUpdatedProps` methods to custom reconcilers.
+
+#### Reconciler
+
+- Breaking: Name change to custom reconcilers method `getProps` to `getInitialProps`.
+- Breaking: Name change to custom reconcilers method `setContent` to `setDocument`.
+- NEW: `getUpdatedProps` reconciler API.
+- NEW: `getContext` reconciler API.
+- NEW: `createComment` reconciler API.
+- NEW: `setComment` reconciler API.
+- NEW: `willUnmount` reconciler API.
+
+## 8.2.4 (11 March 2018)
+
+- Patch nested rendering with children array.
 
 ## 8.2.3 (25 January 2018)
 
