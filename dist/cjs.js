@@ -1,59 +1,60 @@
-/*! DIO 8.2.4 @license MIT */
+/*!dio 9.0.0 @license MIT */
+module.exports = function (dio, Element, mountComponentInstance, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
-module.exports = function (exports, Element, getComponentChildren, getComponentElement, getElementDefinition, mountComponentElement, invokeErrorBoundary) {/* eslint-disable */'use strict'
-
-	var SharedElementPromise = -3
-	var SharedElementFragment = -2
-	var SharedElementPortal = -1
-	var SharedElementIntermediate = 0
-	var SharedElementComponent = 1
-	var SharedElementNode = 2
-	var SharedElementText = 3
-	var SharedElementEmpty = 4
-	
-	var SharedReferenceRemove = -1
-	var SharedReferenceAssign = 0
-	var SharedReferenceDispatch = 1
-	var SharedReferenceReplace = 2
+	var SharedElementPromise = 0
+	var SharedElementFragment = 1
+	var SharedElementPortal = 2
+	var SharedElementSnapshot = 3
+	var SharedElementComponent = 4
+	var SharedElementCustom = 5
+	var SharedElementNode = 6
+	var SharedElementComment = 7
+	var SharedElementText = 8
+	var SharedElementEmpty = 9
 	
 	var SharedComponentForceUpdate = 0
 	var SharedComponentPropsUpdate = 1
 	var SharedComponentStateUpdate = 2
 	
+	var SharedRefsDispatch = 0
+	var SharedRefsReplace = 1
+	var SharedRefsRemove = 2
+	var SharedRefsAssign = 3
+	
+	var SharedPropsMount = 0
+	var SharedPropsUpdate = 1
+	
 	var SharedMountQuery = 0
-	var SharedMountCommit = 1
-	var SharedMountRemove = 2
-	var SharedMountAppend = 3
-	var SharedMountInsert = 4
+	var SharedMountOwner = 1
 	
-	var SharedWorkMounting = -2
-	var SharedWorkProcessing = -1
-	var SharedWorkIntermediate = 0
-	var SharedWorkIdle = 1
+	var SharedOwnerAppend = 0
+	var SharedOwnerInsert = 1
 	
-	var SharedErrorPassive = -2
-	var SharedErrorActive = -1
+	var SharedWorkIdle = 0
+	var SharedWorkUpdating = 1
 	
-	var SharedPropsMount = 1
-	var SharedPropsUpdate = 2
+	var SharedKeyHead = '&|head|'
+	var SharedKeyBody = '&|body|'
+	var SharedKeyTail = '&|tail|'
 	
-	var SharedSiblingPrevious = 'prev'
-	var SharedSiblingNext = 'next'
+	var SharedLocalNameComment = '#comment'
+	var SharedLocalNameEmpty = '#empty'
+	var SharedLocalNameText = '#text'
 	
+	var SharedLinkedPrevious = 'prev'
+	var SharedLinkedNext = 'next'
+	
+	var SharedSiteEvent = 'event'
+	var SharedSitePromise = 'promise'
+	var SharedSitePrototype = 'prototype'
 	var SharedSiteCallback = 'callback'
 	var SharedSiteRender = 'render'
 	var SharedSiteElement = 'element'
 	var SharedSiteConstructor = 'constructor'
-	var SharedSiteAsync = 'async'
+	var SharedSiteForceUpdate = 'forceUpdate'
 	var SharedSiteSetState = 'setState'
 	var SharedSiteFindDOMNode = 'findDOMNode'
-	
-	var SharedKeySigil = '&|'
-	var SharedKeyHead = '&head'
-	var SharedKeyTail = '&tail'
-	
-	var SharedTypeEmpty = '#empty'
-	var SharedTypeText = '#text'
+	var SharedSiteDisplayName = 'displayName'
 	
 	var SharedComponentWillMount = 'componentWillMount'
 	var SharedComponentDidMount = 'componentDidMount'
@@ -65,6 +66,68 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 	var SharedComponentDidCatch = 'componentDidCatch'
 	var SharedGetChildContext = 'getChildContext'
 	var SharedGetInitialState = 'getInitialState'
+	var SharedGetDefaultProps = 'getDefaultProps'
+	var SharedDefaultProps = 'defaultProps'
+	
+	/**
+	 * @param {Element} element
+	 * @param {Exception} exception
+	 * @return {Element}
+	 */
+	function getErrorBoundary (element, exception) {
+		try {
+			delegateErrorBoundary(element, element, exception)
+		} finally {
+			return createElementEmpty()
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} host
+	 * @return {Element}
+	 */
+	function getComponentChildren (element, host) {
+		try {
+			return mountComponentInstance(element)
+		} catch (err) {
+			return getErrorBoundary(host, err)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @return {Element}
+	 */
+	function getCustomElement (element) {
+		try {
+			commitOwner(element)
+		} finally {
+			return getCustomProps(createElement('template', element.children), element.owner)
+		}
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {object} owner
+	 * @return {Element}
+	 */
+	function getCustomProps (element, owner) {
+		if (!owner)
+			return element
+	
+		if (owner.nodeName)
+			element.type = owner.nodeName.toLowerCase()
+	
+		if (owner.attributes)
+			for (var attributes = owner.attributes, i = attributes.length - 1; i >= 0; --i)
+				element.props[attributes[i].name] = attributes[i].value
+	
+		if (owner.innerHTML)
+			element.props.innerHTML = owner.innerHTML
+	
+		return element
+	}
 	
 	/**
 	 * @param {*} value
@@ -94,7 +157,8 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 	}
 	
 	/**
-	 * @param {string}
+	 * @param {string} type
+	 * @return {boolean}
 	 */
 	function isVoidType (type) {
 		if (typeof type === 'string')
@@ -124,21 +188,20 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 	/**
 	 * @param {Response} response
 	 */
-	function setHeader (response) {
-		if (typeof response.setHeader === 'function')
-			response.setHeader('Content-Type', 'text/html')
+	function setResponseHeader (response) {
+		typeof response.setHeader === 'function' && response.setHeader('Content-Type', 'text/html')
 	}
 	
 	/**
 	 * @return {string}
 	 */
 	function toString () {
-		return getStringElement(this, this.host)
+		return getStringElement(this, this.host || createElementSnapshot(this))
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @param {Element?} host
+	 * @param {Element} host
 	 * @return {string}
 	 */
 	function getStringElement (element, host) {
@@ -146,41 +209,41 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 			case SharedElementText:
 			case SharedElementEmpty:
 				return getTextEscape(element.children)
+			case SharedElementComment:
+				return getStringComment(element)
+			case SharedElementCustom:
+				return getStringElement(getCustomElement(element), host)
 			case SharedElementComponent:
-				if (element.active)
-					return getStringElement(element.children, element)
-	
-				return getStringElement(mountComponentElement(element), element)
+				return getStringElement(element.active ? element.children : getComponentChildren(element, host), element)
 		}
 	
 		var type = element.type
 		var children = element.children
 		var length = children.length
-		var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
+		var payload = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
 	
 		if (isVoidType(type))
-			return output
+			return payload
 	
 		while (length-- > 0)
-			output += getStringElement(children = children.next, host)
+			payload += getStringElement(children = children.next, host)
 	
 		if (element.id !== SharedElementNode)
-			return output
+			return payload
 	
-		if (element.state)
-			element.state = void (output += element.state)
+		if (element.context)
+			element.context = void (payload += element.context)
 	
-		return output + '</' + type + '>'
+		return payload + '</' + type + '>'
 	}
 	
 	/**
 	 * @param {Element} element
-	 * @param  {Object} props
+	 * @param {object} props
 	 * @return {String}
 	 */
 	function getStringProps (element, props) {
-		var output = ''
-		var xmlns = element.xmlns
+		var payload = ''
 	
 		for (var name in props) {
 			var value = props[name]
@@ -189,17 +252,14 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 				case 'dangerouslySetInnerHTML':
 					value = value && value.__html
 				case 'innerHTML':
-					element.state = value ? value : ''
-					continue
-				case 'defaultValue':
-					if (!props.value)
-						output += ' value="' + getTextEscape(value) + '"'
+					element.context = value ? value : ''
 				case 'key':
 				case 'ref':
 				case 'children':
 					continue
 				case 'style':
-					output += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'
+					payload += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'
+				case 'textContent':
 					continue
 				case 'className':
 					name = 'class'
@@ -211,30 +271,33 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 					name = 'http-equiv'
 					break
 				case 'tabIndex':
-					name = name.toLowerCase()
+					name = 'tabindex'
 					break
+				case 'defaultValue':
+					if ((name = 'value') in props)
+						continue
 			}
 	
 			switch (typeof value) {
 				case 'boolean':
 					if (value)
-						output += ' ' + name
+						payload += ' ' + name
 					break
 				case 'string':
 				case 'number':
-					output += ' ' + name + '="' + getTextEscape(value) + '"'
+					payload += ' ' + name + '="' + getTextEscape(value) + '"'
 			}
 		}
 	
-		return output
+		return payload
 	}
 	
 	/**
-	 * @param {Object} props
+	 * @param {object} props
 	 * @return {string}
 	 */
 	function getStringStyle (props) {
-		var output = ''
+		var payload = ''
 	
 		for (var name in props) {
 			var value = props[name]
@@ -245,33 +308,47 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 					if (name !== name.toLowerCase())
 						name = name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
 	
-					output += name + ': ' + value + ';'
+					payload += name + ': ' + value + ';'
 			}
 		}
 	
-		return output
+		return payload
 	}
 	
 	/**
-	 * @return {Object}
+	 * @param {Element} element
+	 * @return {string}
 	 */
-	function toJSON () {
-		return getJSONElement(this, this.host)
+	function getStringComment (element) {
+		return '<!--' + element.children + '-->'
 	}
 	
+	/**
+	 * @return {object}
+	 */
+	function toJSON () {
+		return getJSONElement(this, this.host || createElementSnapshot(this))
+	}
+	
+	/**
+	 * @param {Element} element
+	 * @param {Element} host
+	 * @return {object}
+	 */
 	function getJSONElement (element, host) {
 		switch (element.host = host, element.id) {
 			case SharedElementText:
 			case SharedElementEmpty:
 				return element.children
+			case SharedElementComment:
+				return getJSONObject(element, {}, element.children)
+			case SharedElementCustom:
+				return getJSONElement(getCustomElement(element), host)
 			case SharedElementComponent:
-				if (element.active)
-					return getJSONElement(element.children, element)
-	
-				return getJSONElement(mountComponentElement(element), element)
+				return getJSONElement(element.active ? element.children : getComponentChildren(element, host), element)
 		}
 	
-		var output = {type: element.type, props: element.props, children: []}
+		var payload = getJSONObject(element, element.props, [])
 		var children = element.children
 		var length = children.length
 	
@@ -279,172 +356,157 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 			children = (length--, children.next)
 	
 		while (length-- > 0)
-			output.children.push(getJSONElement(children = children.next, host))
+			payload.children.push(getJSONElement(children = children.next, host))
 	
 		if (element.id !== SharedElementNode)
-			(output = output.children).pop()
+			(payload = payload.children).pop()
 	
-		return output
+		return payload
 	}
 	
 	/**
-	 * @type {constructor}
+	 * @param {Element} element
+	 * @param {object?} props
+	 * @param {(string|number|object)?}
+	 * @return {object}
+	 */
+	function getJSONObject (element, props, children) {
+		return {type: element.type, props: props, children: children}
+	}
+	
+	/**
+	 * @name Readable
+	 * @constructor
+	 * @type {function}
 	 */
 	var Readable = require('stream').Readable
 	
 	/**
-	 * @param {function=} callback
+	 * @param {function?} callback
 	 * @return {Stream}
 	 */
 	function toStream (callback) {
-		var readable = new Stream(this, this.host)
+		var container = new Stream(this, this.host || createElementSnapshot(this))
 	
-		switch (typeof callback) {
-			case 'string':
-				readable.setEncoding(callback)
-				break
-			case 'function':
-				readable.on('end', callback)
-			default:
-				readable.setEncoding('utf8')
-		}
+		if (typeof callback === 'function')
+			container.on('end', callback)
 	
-		return readable
+		return container.setEncoding('utf8')
 	}
 	
 	/**
+	 * @name Stream
 	 * @constructor
+	 * @property {Element} host
+	 * @property {Array<Element>} queue
 	 * @param {Element} element
-	 * @param {Element?} host
+	 * @param {Element} host
 	 */
 	function Stream (element, host) {
 		this.host = host
-		this.stack = [element]
-	
+		this.queue = [element]
 		Readable.call(this)
 	}
 	/**
-	 * @type {Object}
+	 * @alias Stream#prototype
+	 * @memberof Stream
+	 * @type {object}
 	 */
-	Stream.prototype = Object.create(Readable.prototype, {_read: {value: getStreamElement}})
+	Stream.prototype = Object.create(Readable.prototype, {
+		/**
+		 * @alias Stream#_read
+		 * @memberof Stream
+		 * @private
+		 * @type {function}
+		 */
+		_read: {
+			value: function () {
+				if (this.queue.length > 0)
+					read(this.queue.pop(), this.host, this.queue, this)
+				else
+					this.push(null)
+			}
+		}
+	})
 	
 	/**
-	 * @return {void}
+	 * @param {string} payload
+	 * @param {Readable} container
 	 */
-	function getStreamElement () {
-		if (this.stack.length > 0)
-			readStreamElement(this.stack.pop(), this.host, this.stack, this)
-		else
-			this.push(null)
+	function write (payload, container) {
+		if ((container.push(payload, 'utf8'), !payload))
+			container.read(0)
 	}
 	
 	/**
 	 * @param {Element} element
 	 * @param {Element} host
-	 * @param {Array} stack
-	 * @param {Readable} readable
-	 * @param {number} id
-	 * @param {number} signature
+	 * @param {Array<Element>} queue
+	 * @param {Readable} container
 	 */
-	function enqueueStreamElement (element, host, stack, readable, id, signature) {
-		return function (value) {
-			var children
-	
-			if (signature !== SharedErrorActive)
-				children = invokeErrorBoundary(element, value, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
-			else if (id !== SharedElementComponent)
-				children = getElementDefinition(value)
-			else
-				children = getComponentChildren(element, (element.instance.state = value || {}, element.instance))
-	
-			readStreamElement(children, host, stack, readable)
-		}
-	}
-	
-	/**
-	 * @param {Element} element
-	 * @param {Element?} host
-	 * @param {Array} stack
-	 * @param {Readable} readable
-	 */
-	function readStreamElement (element, host, stack, readable) {
-		var output = ''
+	function read (element, host, queue, container) {
+		var payload = ''
 		var children = element.children
 	
 		switch (element.host = host, element.id) {
-			case SharedElementComponent:
-				if (!(readable.host = element).active)
-					children = mountComponentElement(element)
-	
-				if (element.state && typeof element.state.then === 'function')
-					return void element.state
-						.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
-						.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
-	
-				return readStreamElement(children, element, stack, readable)
-			case SharedElementPromise:
-				return void element.type
-					.then(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
-					.catch(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 			case SharedElementText:
 			case SharedElementEmpty:
-				return writeStreamElement(getTextEscape(children), readable)
+				return write(getTextEscape(children), container)
+			case SharedElementComment:
+				return write(getStringComment(element), container)
+			case SharedElementCustom:
+				return read(getCustomElement(element), host, queue, container)
+			case SharedElementComponent:
+				return read((container.host = element).active ? children : getComponentChildren(element, host), element, queue, container)
+			case SharedElementPromise:
+				return element.context = element.type.then(function (value, done) {
+					if (done !== false)
+						read(getElementDefinition(value), host, queue, container)
+				}, function (err) {
+					read(getElementDefinition(getErrorBoundary(host, err)), host, queue, container)
+				})
 			case SharedElementNode:
-				if (element.state)
-					return element.state = void writeStreamElement(element.state, readable)
-	
-				output += '<' + element.type + getStringProps(element, element.props) + '>'
+				if (element.context)
+					return element.context = write(element.context, container)
+				else
+					payload += '<' + element.type + getStringProps(element, element.props) + '>'
 	
 				if (isVoidType(element.type))
-					return writeStreamElement(output, readable)
-	
-				element.state = (element.state || '') + '</' + element.type + '>'
-				stack.push(element)
+					return write(payload, container)
+				else
+					queue.push((element.context = (element.context || '') + '</' + element.type + '>', element))
 			default:
-				var length = children.length
-	
-				while (length-- > 0)
-					stack.push(children = children.prev)
+				for (var length = children.length; length > 0 ; --length)
+					queue.push(children = children.prev)
 		}
 	
-		writeStreamElement(output, readable)
+		write(payload, container)
 	}
 	
 	/**
-	 * @param {string} output
-	 * @param {Readable} readable
-	 */
-	function writeStreamElement (output, readable) {
-		readable.push(output, 'utf8')
-	
-		if (!output)
-			readable.read(0)
-	}
-	
-	/**
-	 * @param {*} element
+	 * @param {any} element
 	 * @param {Writable?} container
-	 * @param {function=} callback
+	 * @param {function?} callback
+	 * @return {string?}
 	 */
 	function renderToString (element, container, callback) {
 		if (!container || !container.writable)
 			return getElementDefinition(element).toString()
-	
-		setHeader(container)
-		container.end(getElementDefinition(element).toString(), 'utf8', callback)
+		else
+			container.end(getElementDefinition(element).toString(), 'utf8', (setResponseHeader(container), callback))
 	}
 	
 	/**
-	 * @param {*} element
+	 * @param {any} element
 	 * @param {Writable?} container
-	 * @param {function=} callback
+	 * @param {function?} callback
+	 * @param {Stream?}
 	 */
 	function renderToNodeStream (element, container, callback) {
 		if (!container || !container.writable)
 			return getElementDefinition(element).toStream()
-	
-		setHeader(container)
-		getElementDefinition(element).toStream(callback).pipe(container)
+		else
+			getElementDefinition(element).toStream(callback).pipe((setResponseHeader(container), container))
 	}
 	
 	Object.defineProperties(Element.prototype, {
@@ -453,6 +515,7 @@ module.exports = function (exports, Element, getComponentChildren, getComponentE
 		toStream: {value: toStream}
 	})
 	
-	exports.renderToString = renderToString
-	exports.renderToNodeStream = renderToNodeStream
+	dio.renderToString = renderToString
+	dio.renderToNodeStream = renderToNodeStream
 }
+/*!/dio*/

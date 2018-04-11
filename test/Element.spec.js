@@ -17,11 +17,13 @@ describe('Element', () => {
 		assert.equal(cloneElement(h('h1', {ref: 'ref'})).ref, 'ref')
 		assert.equal(cloneElement(h('h1', {xmlns: 'xmlns'})).xmlns, 'xmlns')
 		assert.equal(cloneElement(h('h1', {key: 'key'})).key, 'key')
+
+		assert.deepEqual(cloneElement(h(() => {}, {ref: 'ref'}, 1, 2)).props, {ref: 'ref', children: [1, 2]})
 	})
 
 	it('should not clone an invalid element', () => {
 		let element = {type: 'h1', props: {className: 'head'}, children: []}
-		assert.equal(cloneElement(element).props.className, undefined)
+		assert.equal(cloneElement(element), undefined)
 	})
 
 	it('should create an element', () => {

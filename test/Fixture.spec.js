@@ -520,18 +520,16 @@ describe('Fixture', () => {
 
 	it('should not hit the require branch when bundling with webpack', () => {
 		let container = document.createElement('div')
-		let stack = []
+		let module = {exports: {}}
+		let __webpack_require__ = () => {throw 'fail'}
+		let source = require('fs').readFileSync(require.resolve(umdfile), 'utf8')
 
-		delete require.cache[require.resolve(umdfile)]
+		__webpack_require__.include = () => {}
 
-		global.__webpack_require__ = () => stack.push('should not require')
+		eval(`(function (module, exports, require) {${source}})(module, module.exports, __webpack_require__)`)
 
-		assert.doesNotHaveAnyKeys(require(umdfile), ['renderToString', 'renderToNodeStream'])
-		assert.lengthOf(stack, 0)
-
-		global.__webpack_require__ = undefined
-
-		delete require.cache[require.resolve(umdfile)]
+		assert.doesNotHaveAnyKeys(module.exports, ['renderToString', 'renderToNodeStream'])
+		assert.hasAnyKeys(module.exports, ['render', 'createElement'])
 	})
 
 	it('should establish communication between parent and children with events & context', () => {
@@ -773,6 +771,54 @@ describe('Fixture', () => {
 		assert.lengthOf(stack, 1)
 	})
 
+	it('should read json from fetch response', (done) => {
+		let container = document.createElement('div')
+		let refs = null
+
+		let fetch = (url) => {
+			return new Promise((resolve) => {
+				resolve({
+					url: url,
+					status: 200,
+					statusText: '',
+					ok: true,
+					bodyUsed: false,
+					json() {
+						return new Promise((resolve) => {
+							resolve({value: 'works!'})
+						})
+					},
+					text() {
+						return new Promise((resolve) => {
+							resolve(JSON.stringify({value: 'works!'}))
+						})
+					},
+					blob() {
+
+					}
+				})
+			})
+		}
+
+		let Users = class {
+		  getInitialState() {
+		    return refs = fetch('https://reqres.in/api/users')
+		  }
+		  render(props, {value}) {
+		    return h('h1', value)
+		  }
+		}
+
+		render(Users, container)
+
+		refs.then(() => {
+			nextTick(() => {
+				assert.html(container, '<h1>works!</h1>')
+				done()
+			}, 1)
+		})
+	})
+
 	it('should match version with package.json', () => {
 		delete require.cache[require.resolve(pkgfile)]
 
@@ -781,58 +827,7 @@ describe('Fixture', () => {
 		delete require.cache[require.resolve(pkgfile)]
 	})
 
-	it('should handle errors in enviroments that do not have a console implemention', () => {
-		let container = document.createElement('div')
-		let stack = []
-		let defaultConsole = global.console
-
-		Object.defineProperty(global, 'console', {value: {log: () => { stack.push('log') }}})
-
-		render(class {
-			componentDidCatch() {
-				stack.push(0)
-			}
-			render() {
-				throw new Error('Error!')
-			}
-		}, container)
-
-		global.printErr = () => { stack.push('printErr') }
-		Object.defineProperty(global, 'console', {value: undefined})
-
-		render(class {
-			componentDidCatch() {
-				stack.push(1)
-			}
-			render() {
-				throw new Error('Error!')
-			}
-		}, container)
-
-		delete global.printErr
-
-		assert.doesNotThrow(() => {
-			render(class {
-				componentDidCatch() {
-					stack.push(2)
-				}
-				render() {
-					throw new Error('Error!')
-				}
-			}, container)
-		})
-
-		Object.defineProperty(global, 'console', {value: defaultConsole})
-
-		assert.html(container, '')
-		assert.sameMembers(stack, ['log', 'printErr', 0, 1, 2])
-		assert.lengthOf(stack, 5)
-
-		assert.equal(global.printErr, undefined)
-		assert.equal(global.console, defaultConsole)
-	})
-
-	it('should handle mutable component elements', () => {
+	it('should handle mutable component element children', () => {
 		let container = document.createElement('div')
 		let stack = []
 		let setRootState = null

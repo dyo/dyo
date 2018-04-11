@@ -23,16 +23,57 @@ describe('Component', () => {
 		assert.html(container, '1')
 	})
 
+	it('should render a class that from createClass', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		let description = {
+			displayName: 'Foo',
+			componentWillMount() {
+				stack.push(...Object.keys(this))
+			},
+			componentDidMount() {},
+			componentWillReceiveProps() {},
+			shouldComponentUpdate() {},
+			componentWillUpdate() {},
+			componentDidUpdate() {},
+			componentWillUnmount() {},
+			componentDidCatch() {},
+			getChildContext() {},
+			getInitialState() {},
+			handleEvent(self) {
+				stack.push(self === this)
+			},
+			render() {
+				return h(A, {self: this, callback: this.handleEvent})
+			}
+		}
+
+		let A = class {
+			constructor({callback, self}) {
+				callback(self)
+			}
+			render({handleEvent}) {
+				return 1
+			}
+		}
+
+		let B = createClass(description)
+		let C = createClass(description)
+
+		render(B, container)
+
+		assert.html(container, '1')
+		assert.equal(B, C)
+		assert.deepEqual(stack, ['handleEvent', 'state', 'props', 'context', 'refs', true])
+	})
+
 	it('should provide a render fallback method', () => {
 		let container = document.createElement('div')
 		let stack = []
 
 		assert.doesNotThrow(() => {
 			render(h(class A extends Component {
-				componentDidCatch(err) {
-					stack.length = 0
-					err.preventDefault()
-				}
 				componentWillMount() {
 					stack.push('willMount')
 				}
@@ -118,19 +159,25 @@ describe('Component', () => {
 		let stack = []
 
 		render(class A {
+			componentWillMount() {
+				stack.push('willMount A')
+			}
 			componentDidMount() {
-				stack.push('mount A')
+				stack.push('didMount A')
 			}
 			componentWillUnmount() {
-				stack.push('unmount A')
+				stack.push('willUnmount A')
 			}
 			render() {
 				return class B {
+					componentWillMount() {
+						stack.push('willMount B')
+					}
 					componentDidMount() {
-						stack.push('mount B')
+						stack.push('didMount B')
 					}
 					componentWillUnmount() {
-						stack.push('unmount B')
+						stack.push('willUnmount B')
 					}
 					render() {
 						return 'B'
@@ -140,8 +187,11 @@ describe('Component', () => {
 		}, container)
 
 		render(class C {
+			componentWillMount() {
+				stack.push('willMount C')
+			}
 			componentDidMount() {
-				stack.push('mount C')
+				stack.push('didMount C')
 			}
 			render() {
 				return 'C'
@@ -150,11 +200,14 @@ describe('Component', () => {
 
 		assert.html(container, 'C')
 		assert.deepEqual(stack, [
-			'mount B',
-			'mount A',
-			'unmount B',
-			'unmount A',
-			'mount C'
+			'willMount A',
+			'willMount B',
+			'didMount B',
+			'didMount A',
+			'willUnmount B',
+			'willUnmount A',
+			'willMount C',
+			'didMount C'
 		])
 	})
 
@@ -395,10 +448,11 @@ describe('Component', () => {
 	it('should async getInitialState', (done) => {
 		let container = document.createElement('div')
 		let stack = []
+		let refs = null
 
 		render(class {
 			getInitialState() {
-				return Promise.resolve({x: '!!'})
+				return refs = Promise.resolve({x: '!!'})
 			}
 			render(props, {x}) {
 				stack.push(x)
@@ -406,10 +460,50 @@ describe('Component', () => {
 			}
 		}, container)
 
-		nextTick(() => {
-			assert.html(container, '<h1>Hello World!!</h1>')
-			assert.lengthOf(stack, 1)
-			done()
+		refs.then(() => {
+			nextTick(() => {
+				assert.html(container, '<h1>Hello World!!</h1>')
+				assert.lengthOf(stack, 1)
+				done()
+			}, 1)
+		})
+	})
+
+	it('should fallback to default object when getInitialState returns nothing', () => {
+		let container = document.createElement('div')
+
+		render(class {
+			getInitialState() {
+			}
+			render(props, state) {
+				return h('h1', 'Hello World', JSON.stringify(state))
+			}
+		}, container)
+
+		assert.html(container, '<h1>Hello World{}</h1>')
+	})
+
+	it('should async state', (done) => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		render(class {
+			constructor() {
+				refs = this.state = Promise.resolve({x: '!!'})
+			}
+			render(props, {x}) {
+				stack.push(x)
+				return h('h1', 'Hello World', x)
+			}
+		}, container)
+
+		refs.then(() => {
+			nextTick(() => {
+				assert.html(container, '<h1>Hello World!!</h1>')
+				assert.lengthOf(stack, 1)
+				done()
+			}, 1)
 		})
 	})
 
@@ -527,42 +621,32 @@ describe('Component', () => {
 		assert.html(container, '2')
 	})
 
-	it('should update component ref', () => {
+	it('should render getDefaultProps(object) from createClass component', () => {
 		let container = document.createElement('div')
-		let stack = []
-		let refs = null
-
-		class A {
-			componentWillMount() {
-				refs = this
-			}
+		let A = createClass({
+			getDefaultProps: {children: 2},
 			render() {
-				return 'Hello'
+				return this.props.children
 			}
-		}
+		})
 
-		render(h(A, {ref: (value) => stack.push(value)}), container)
-		render(h(A, {ref: (value) => stack.push(value)}), container)
-		assert.html(container, 'Hello')
-		assert.include(stack, null)
-		assert.include(stack, refs)
+		render(A, container)
+		assert.html(container, '2')
 	})
 
-	it('should not update component ref', () => {
+	it('should render getDefaultProps(function) from createClass component', () => {
 		let container = document.createElement('div')
-		let stack = []
-		let refs = (value) => stack.push(value)
-
-		class A {
+		let A = createClass({
+			getDefaultProps() {
+				return {children: 2}
+			},
 			render() {
-				return 'Hello'
+				return this.props.children
 			}
-		}
+		})
 
-		render(h(A, {ref: refs}), container)
-		render(h(A, {ref: refs}), container)
-		assert.html(container, 'Hello')
-		assert.lengthOf(stack, 1)
+		render(A, container)
+		assert.html(container, '2')
 	})
 
 	it('should pass multiple children to component', () => {
@@ -576,28 +660,6 @@ describe('Component', () => {
 		}, 1, 2, [3, 4]), container)
 
 		assert.lengthOf(refs, 3)
-	})
-
-	it('should render a generator(iterator)', () => {
-		let container = document.createElement('div')
-
-		render(class {
-			*render() {
-				yield 1
-				yield 2
-				yield 3
-			}
-		}, container)
-
-		assert.html(container, '123')
-	})
-
-	it('should render a generator(function)', () => {
-		let container = document.createElement('div')
-
-		render(h('div', function *render() {yield 1}), container)
-
-		assert.html(container, '<div>1</div>')
 	})
 
 	it('should setState in constructor', (done) => {
@@ -700,26 +762,6 @@ describe('Component', () => {
 		})
 	})
 
-	it('should trigger an implicit setState from an event', () => {
-		let container = document.createElement('div')
-		let refs = null
-
-		render(class {
-			handleEvent(e) {
-				return {id: 1}
-			}
-			componentDidMount(node) {
-				refs = node
-			}
-			render() {
-				return h('button', {onClick: this.handleEvent}, this.state.id)
-			}
-		}, container)
-
-		refs.dispatchEvent(new Event('click'))
-		assert.html(container, '<button>1</button>')
-	})
-
 	it('should setState(function)', () => {
 		let container = document.createElement('div')
 		let stack = []
@@ -763,80 +805,59 @@ describe('Component', () => {
 		})
 	})
 
-	it('should reject async promise element', (done) => {
-		let container = document.createElement('div')
-		let stack = []
-		let A = class {
-			componentDidCatch(err) {
-				err.preventDefault()
-				stack.push(1)
-			}
-			render({children}) {
-				return children
-			}
-		}
-
-		render(h(A, Promise.reject(h('div', 1))), container)
-
-		nextTick(() => {
-			assert.html(container, '')
-			assert.lengthOf(stack, 1)
-			done()
-		})
-	})
-
-	it('should throw in async unmount', (done) => {
-		let container = document.createElement('div')
-		let stack = []
-		let error = console.error
-		let spy = console.error = () => stack.push(1)
-
-		let A = class {
-			componentWillUnmount() {
-				return Promise.reject()
-			}
-			render({children}) {
-				return children
-			}
-		}
-
-		render(h(A), container)
-		render(null, container)
-
-		nextTick(() => {
-			assert.html(container, '')
-			assert.lengthOf(stack, 1)
-			done()
-		})
-	})
-
-	it('should ensure a pending update from componentWillUpdate update is resolved', (done) => {
+	it('should ensure an update from componentWillUpdate update is resolved', (done) => {
 		let container = document.createElement('div')
 		let stack = []
 		let counter = 0
 		let A = class {
-			componentDidCatch(err) {
-				err.preventDefault()
-			}
 			componentWillUpdate() {
 				if (counter++ > 0) {
 					nextTick(() => {
-						assert.html(container, '2')
-						assert.lengthOf(stack, 3)
+						assert.html(container, '3')
+						assert.deepEqual(stack, [1, 2, '2', 3])
 						done()
 					})
 				} else {
 					render(h(A, 2), container)
+					stack.push(container.innerHTML)
 				}
 			}
 			render({children}, {name}) {
-				stack.push(1)
+				stack.push(children)
 				return children
 			}
 		}
 
 		render(h(A, 1), container)
-		render(h(A, 1), container)
+		render(h(A, 3), container)
+	})
+
+	it('should ensure setState in componentWillUpdate is both stack(overflow) and async safe', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		class A {
+			getInitialState() {
+				return {value: 0}
+			}
+			componentWillUpdate(nextProps, nextState) {
+				this.setState({value: nextState.value + 1})
+			}
+			render() {
+				return stack.push(this.state.value) && h('h1', this.state.value)
+			}
+		}
+
+		render(h(A, {ref: (node) => refs = node}), container)
+		assert.html(container, `<h1>0</h1>`)
+
+		render(h(A, {ref: (node) => refs = node}), container)
+		assert.html(container, `<h1>1</h1>`)
+
+		refs.forceUpdate()
+		assert.html(container, `<h1>2</h1>`)
+		assert.deepEqual(stack, [0, 1, 2])
 	})
 
 	it('should ensure a pending update from componentDidUpdate update is resolved', (done) => {
@@ -844,9 +865,6 @@ describe('Component', () => {
 		let stack = []
 		let counter = 0
 		let A = class {
-			componentDidCatch(err) {
-				err.preventDefault()
-			}
 			componentDidUpdate() {
 				if (counter++ > 0) {
 					assert.html(container, '2')
@@ -1004,7 +1022,7 @@ describe('Component', () => {
 		assert.include(stack, true)
 	})
 
-	it('should call componentWillMount synchronously', () => {
+	it('should setState synchronously from componentWillMount', () => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -1040,6 +1058,7 @@ describe('Component', () => {
 	it('should update state from componentWillReceiveProps synchronously', () => {
 		let container = document.createElement('div')
 		let stack = []
+		let refs
 
 		class A {
 			getInitialState() {
@@ -1047,7 +1066,8 @@ describe('Component', () => {
 					name: 'Empty'
 				}
 			}
-			componentWillReceiveProps() {
+			componentWillReceiveProps(props, context) {
+				refs = context
 				stack.push('componentWillReceiveProps')
 				this.setState({name: 'World'})
 			}
@@ -1069,6 +1089,7 @@ describe('Component', () => {
 			'componentWillReceiveProps',
 			'World'
 		])
+		assert.deepEqual(refs, {})
 	})
 
 	it('should async import a "default" component module', (done) => {
@@ -1115,13 +1136,20 @@ describe('Component', () => {
 
 		render(h(A, {type: null}), container)
 		render(h(A, {type: 'string'}), container)
-		render(h(A, {type: 'number'}), container)
-		render(h(A, {type: 'element'}), container)
-		render(h(A, {type: 'component'}), container)
-		render(h(A, {type: 'module'}), container)
-
 		assert.notEqual(queue, null)
+
 		queue.then(() => {
+			render(h(A, {type: 'number'}), container)
+			return queue.then(() => {
+				render(h(A, {type: 'element'}), container)
+				return queue.then(() => {
+					render(h(A, {type: 'component'}), container)
+					return queue.then(() => {
+						render(h(A, {type: 'module'}), container)
+					})
+				})
+			})
+		}).then(() => {
 			assert.deepEqual(stack, [
 				'<h1>null</h1>',
 				'string',
@@ -1136,10 +1164,148 @@ describe('Component', () => {
 	it('should allow dynamic mutation of render method', () => {
 		assert.instanceOf(Component.prototype.render, Function)
 		assert.deepInclude(Object.getOwnPropertyDescriptor(Component.prototype, 'render'), {
-			configurable: false,
+			configurable: true,
 			enumerable: false,
 			writable: true,
 			value: Component.prototype.render
 		})
+	})
+
+	it('should render a generator(iterator)', () => {
+		let container = document.createElement('div')
+
+		render(class {
+			*render() {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}, container)
+
+		assert.html(container, '123')
+	})
+
+	it('should render a generator(function)', () => {
+		let container = document.createElement('div')
+
+		render(h('div', function *render() {yield 1}), container)
+
+		assert.html(container, '<div>1</div>')
+	})
+
+	it('should render an generator(async)', (done) => {
+		var container = document.createElement('div')
+		var stack = []
+
+		render(class {
+		  async *render() {
+		  	stack.push('')
+
+		  	var first = yield 'Hello'
+
+		  	stack.push(first)
+
+		  	var second = yield 'Hello World'
+
+		  	stack.push(second)
+		  }
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, `Hello World`)
+			assert.deepEqual(stack, ['', 'Hello', 'Hello World'])
+			done()
+		}, 3)
+	})
+
+	it('should halt an generator(async) component with return', (done) => {
+		var container = document.createElement('div')
+		var stack = []
+
+		render(class {
+		  async *render() {
+		  	stack.push('')
+		  	var first = yield 'Hello'
+
+		  	stack.push(first)
+		  	return 'World'
+
+		  	var second = yield 'Hello World'
+
+		  	stack.push(second)
+		  }
+		}, container)
+
+		nextTick(() => {
+			assert.html(container, `World`)
+			assert.deepEqual(stack, ['', 'Hello'])
+			done()
+		}, 3)
+	})
+
+	it('should not block an generator(async) component', (done) => {
+		var container = document.createElement('div')
+		var stack = []
+
+		render(class {
+		  async *render() {
+		  	var index = 0
+		  	while (index++ < 5) {
+		  		var value = yield index
+		  		stack.push(value)
+		  	}
+		  }
+		}, container)
+
+		assert.html(container, '')
+		assert.deepEqual(stack, [])
+
+		nextTick(() => {
+			assert.html(container, `5`)
+			assert.deepEqual(stack, [1, 2, 3, 4, 5])
+			done()
+		}, 6)
+	})
+
+	it('should commit the most recent update when updating a generator', (done) => {
+		let container = document.createElement('div')
+
+		let wait = (value, time) => new Promise((resolve) => setTimeout(() => resolve(value), time))
+
+		let Foo = class {
+			async * render({children, loading, time}) {
+				yield loading
+				yield wait(children, time)
+			}
+		}
+
+		render(h(Foo, {children: 'Hello', loading: '...', time: 60}), container)
+		render(h(Foo, {children: 'World', loading: 'Loading!', time: 20}), container)
+
+		nextTick(() => {
+			assert.html(container, `Loading!`)
+
+			wait(100).then(() => {
+				nextTick(() => {
+					assert.html(container, `World`)
+					done()
+				})
+			})
+		})
+	})
+
+	it('should render and update a custom component', () => {
+		let container = document.createElement('div')
+
+		let AppDrawer = function () {
+			return document.createElement('x-span')
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
+
+		render(h(AppDrawer, {}, 1), container)
+		assert.html(container, `<x-span>1</x-span>`)
+
+		render(h(AppDrawer, {className: 'custom'}, 1), container)
+		assert.html(container, `<x-span class="custom">1</x-span>`)
 	})
 })

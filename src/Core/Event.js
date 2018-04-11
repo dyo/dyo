@@ -1,34 +1,51 @@
 /**
+ * @alias Element#handleEvent
+ * @memberof Element
+ * @this {Element}
  * @param {Event}
  */
 function handleEvent (event) {
+	var element = this
+	var callback = getNodeListener(element, event)
+
+	if (!callback)
+		return
+
+	if (typeof callback === 'object')
+		if (callback[SymbolForIterator] || ArrayIsArray(callback))
+			return iterate(callback, function (callback) {
+				dispatchEvent(element, event, callback)
+			})
+
+	dispatchEvent(element, event, callback)
+}
+
+/**
+ * @param {Element} element
+ * @param {Event} event
+ * @param {(function|object)?} callback
+ */
+function dispatchEvent (element, event, callback) {
 	try {
-		var type = event.type
-		var element = this
-		var callback = element.event[type]
 		var host = element.host
-		var instance = host.instance
-		var owner = instance ? instance : element
+		var owner = host.owner
 		var props = owner.props
 		var state = owner.state
 		var context = owner.context
 		var value
 
-		if (!callback)
-			return
-
 		if (typeof callback === 'function') {
-			value = callback.call(instance, event, props, state, context)
+			value = callback.call(owner, event, props, state, context)
 		} else if (typeof callback.handleEvent === 'function') {
-			if (instance !== callback && callback[SymbolComponent] === SymbolComponent)
-				host = getComponentElement(instance = callback)
+			if (owner !== callback && callback[SymbolForComponent])
+				host = (owner = callback)[SymbolForElement]
 
 			value = callback.handleEvent(event, props, state, context)
 		}
 
-		if (value && instance)
-			getLifecycleReturn(host, value)
+		if (value && owner[SymbolForComponent])
+			enqueueComponentValue(host, SharedSiteEvent, value)
 	} catch (err) {
-		invokeErrorBoundary(host, err, 'on'+type+':'+getDisplayName(callback.handleEvent || callback), SharedErrorPassive)
+		reportErrorException(host, err, SharedSiteEvent+':'+getDisplayName(callback.handleEvent || callback))
 	}
 }

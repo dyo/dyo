@@ -2,12 +2,12 @@
  * @return {string}
  */
 function toString () {
-	return getStringElement(this, this.host)
+	return getStringElement(this, this.host || createElementSnapshot(this))
 }
 
 /**
  * @param {Element} element
- * @param {Element?} host
+ * @param {Element} host
  * @return {string}
  */
 function getStringElement (element, host) {
@@ -15,41 +15,41 @@ function getStringElement (element, host) {
 		case SharedElementText:
 		case SharedElementEmpty:
 			return getTextEscape(element.children)
+		case SharedElementComment:
+			return getStringComment(element)
+		case SharedElementCustom:
+			return getStringElement(getCustomElement(element), host)
 		case SharedElementComponent:
-			if (element.active)
-				return getStringElement(element.children, element)
-
-			return getStringElement(mountComponentElement(element), element)
+			return getStringElement(element.active ? element.children : getComponentChildren(element, host), element)
 	}
 
 	var type = element.type
 	var children = element.children
 	var length = children.length
-	var output = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
+	var payload = element.id === SharedElementNode ? '<' + type + getStringProps(element, element.props) + '>' : ''
 
 	if (isVoidType(type))
-		return output
+		return payload
 
 	while (length-- > 0)
-		output += getStringElement(children = children.next, host)
+		payload += getStringElement(children = children.next, host)
 
 	if (element.id !== SharedElementNode)
-		return output
+		return payload
 
-	if (element.state)
-		element.state = void (output += element.state)
+	if (element.context)
+		element.context = void (payload += element.context)
 
-	return output + '</' + type + '>'
+	return payload + '</' + type + '>'
 }
 
 /**
  * @param {Element} element
- * @param  {Object} props
+ * @param {object} props
  * @return {String}
  */
 function getStringProps (element, props) {
-	var output = ''
-	var xmlns = element.xmlns
+	var payload = ''
 
 	for (var name in props) {
 		var value = props[name]
@@ -58,17 +58,14 @@ function getStringProps (element, props) {
 			case 'dangerouslySetInnerHTML':
 				value = value && value.__html
 			case 'innerHTML':
-				element.state = value ? value : ''
-				continue
-			case 'defaultValue':
-				if (!props.value)
-					output += ' value="' + getTextEscape(value) + '"'
+				element.context = value ? value : ''
 			case 'key':
 			case 'ref':
 			case 'children':
 				continue
 			case 'style':
-				output += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'
+				payload += ' style="' + (typeof value === 'string' ? value : getStringStyle(value)) + '"'
+			case 'textContent':
 				continue
 			case 'className':
 				name = 'class'
@@ -80,30 +77,33 @@ function getStringProps (element, props) {
 				name = 'http-equiv'
 				break
 			case 'tabIndex':
-				name = name.toLowerCase()
+				name = 'tabindex'
 				break
+			case 'defaultValue':
+				if ((name = 'value') in props)
+					continue
 		}
 
 		switch (typeof value) {
 			case 'boolean':
 				if (value)
-					output += ' ' + name
+					payload += ' ' + name
 				break
 			case 'string':
 			case 'number':
-				output += ' ' + name + '="' + getTextEscape(value) + '"'
+				payload += ' ' + name + '="' + getTextEscape(value) + '"'
 		}
 	}
 
-	return output
+	return payload
 }
 
 /**
- * @param {Object} props
+ * @param {object} props
  * @return {string}
  */
 function getStringStyle (props) {
-	var output = ''
+	var payload = ''
 
 	for (var name in props) {
 		var value = props[name]
@@ -114,9 +114,17 @@ function getStringStyle (props) {
 				if (name !== name.toLowerCase())
 					name = name.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').replace(/^(ms|webkit|moz)/, '-$1').toLowerCase()
 
-				output += name + ': ' + value + ';'
+				payload += name + ': ' + value + ';'
 		}
 	}
 
-	return output
+	return payload
+}
+
+/**
+ * @param {Element} element
+ * @return {string}
+ */
+function getStringComment (element) {
+	return '<!--' + element.children + '-->'
 }

@@ -1,26 +1,26 @@
 /**
- * @param {*} element
+ * @param {any} element
  * @param {Writable?} container
- * @param {function=} callback
+ * @param {function?} callback
+ * @return {string?}
  */
 function renderToString (element, container, callback) {
 	if (!container || !container.writable)
 		return getElementDefinition(element).toString()
-
-	setHeader(container)
-	container.end(getElementDefinition(element).toString(), 'utf8', callback)
+	else
+		container.end(getElementDefinition(element).toString(), 'utf8', (setResponseHeader(container), callback))
 }
 
 /**
- * @param {*} element
+ * @param {any} element
  * @param {Writable?} container
- * @param {function=} callback
+ * @param {function?} callback
+ * @param {Stream?}
  */
 function renderToNodeStream (element, container, callback) {
 	if (!container || !container.writable)
 		return getElementDefinition(element).toStream()
-
-	setHeader(container)
-	getElementDefinition(element).toStream(callback).pipe(container)
+	else
+		getElementDefinition(element).toStream(callback).pipe((setResponseHeader(container), container))
 }
 

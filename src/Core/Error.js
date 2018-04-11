@@ -1,115 +1,164 @@
 /**
+ * @name Exception
+ * @constructor
  * @param {Element} element
- * @param {*} err
- * @param {string} from
- * @param {number} signature
- * @param {Element}
+ * @param {any} err
+ * @param {string} origin
+ * @property {any} error
+ * @property {string} origin
+ * @property {boolean} bubbles
  */
-function invokeErrorBoundary (element, err, from, signature) {
-	return getElementDefinition(getErrorElement(element, getErrorException(element, err, from), from, signature))
+function Exception (element, err, origin) {
+	this.error = err
+	this.origin = origin
+	this.bubbles = true
+	this[SymbolForElement] = element
 }
-
-/**
- * @param {Element} element
- * @param {Error} error
- * @param {string} from
- * @param {number} signature
- * @return {Element?}
- */
-function getErrorElement (element, error, from, signature) {
-	if (signature === SharedErrorPassive)
-		return reportErrorException(error)
-
-	var host = element.host
-	var owner = element.owner
-	var instance = element.instance
-	var caught = instance && !instance[SymbolError] && owner && owner[SharedComponentDidCatch]
-
-	requestAnimationFrame(function () {
-		if (element.active)
-			recoverErrorBoundary(element, getElementDefinition(null))
-	})
-
-	if (caught) {
-		element.work = SharedWorkProcessing
-		getLifecycleBoundary(element, SharedComponentDidCatch, error, instance[SymbolError] = error)
-		element.work = SharedWorkIdle
+ObjectDefineProperties(Exception[SharedSitePrototype], {
+	/**
+	 * @alias Exception#toString
+	 * @memberof Exception
+	 * @type {function}
+	 * @return {string}
+	 */
+	toString: {
+		value: function () {
+			return this.message
+		}
+	},
+	/**
+	 * @alias Exception#message
+	 * @memberof Exception
+	 * @type {string}
+	 */
+	message: {
+		get: function () {
+			return this[SymbolForCache] = this[SymbolForCache] || (
+				'Exception: ' + Object(this.error).toString() + '\n\n' +
+				'The following error occurred in `\n' +
+				this.componentStack + '` from "' + this.origin + '"'
+			)
+		}
+	},
+	/**
+	 * @alias Exception#componentStack
+	 * @memberof Exception
+	 * @type {string}
+	 */
+	componentStack: {
+		get: function () {
+			return this[SymbolForComponent] = this[SymbolForComponent] || (
+				createErrorStack(this[SymbolForElement].host, '<'+getDisplayName(this[SymbolForElement])+'>\n')
+			)
+		}
 	}
-
-	if (!caught && isValidElement(host) && element.id !== SharedElementIntermediate)
-		return getErrorElement(host, error, from, signature)
-
-	return getErrorElement(element, error, from, SharedErrorPassive)
-}
+})
 
 /**
  * @param {Element} element
- * @param {Element} snapshot
+ * @param {any} err
+ * @param {string} origin
+ * @return {Exception}
  */
-function recoverErrorBoundary (element, snapshot) {
-	reconcileElement(element.id === SharedElementComponent ? element.children : element, snapshot)
+function createErrorException (element, err, origin) {
+	return new Exception(element, err, origin)
 }
 
 /**
- * @param {Error} error
- */
-function reportErrorException (error) {
-	if (!error.defaultPrevented)
-		printErrorException(error.inspect())
-}
-
-/**
- * @param {(Error|string)} error
- */
-function printErrorException (err) {
-	if (typeof console !== 'undefined')
-		return (console.error || console.log).call(console, err)
-
-	if (typeof printErr === 'function')
-		return printErr(err)
-}
-
-/**
- * @param {*} value
- * @return {Object}
- */
-function getErrorDescription (value) {
-	return {enumerable: true, configurable: true, value: value}
-}
-
-/**
+ * @throws Exception
  * @param {Element} element
- * @param {Error} error
- * @param {string} from
+ * @param {any} err
+ * @param {string} origin
  */
-function getErrorException (element, error, from) {
-	if (!(error instanceof Error))
-		return getErrorException(element, new Error(error), from)
+function throwErrorException (element, err, origin) {
+	throw createErrorException(element, err, origin)
+}
 
-	var componentStack = ''
-	var tabs = '    '
-	var host = element
+/**
+ * @throws {any}
+ * @param {Element} element
+ * @param {any} err
+ * @param {string} origin
+ */
+function reportErrorException (element, err, origin) {
+	throw printErrorException(createErrorException(element, err, origin))
+}
 
-	while (host && host.type) {
-		componentStack += tabs + '<' + getDisplayName(host.type) + '>\n'
-		tabs += '  '
-		host = host.host
+/**
+ * @param {(Exception|string)} exception
+ * @return {any}
+ */
+function printErrorException (exception) {
+	try {
+		console.error(exception.toString())
+	} catch (err) {} finally {
+		return exception.error
 	}
+}
 
-	var errorMessage = 'The above error occurred in `\n' + componentStack + '` from "' + from + '"'
-	var errorStack = error.stack + '\n\n' + errorMessage
+/**
+ * @param {Element} element
+ * @param {string} stack
+ * @return {string}
+ */
+function createErrorStack (host, stack) {
+	return host && host.host ? stack + createErrorStack(host.host, '<' + getDisplayName(host) + '>\n') : stack
+}
 
-	return defineProperties(error, {
-		errorLocation: getErrorDescription(from),
-		errorStack: getErrorDescription(errorStack),
-		errorMessage: getErrorDescription(errorMessage),
-		componentStack: getErrorDescription(componentStack),
-		defaultPrevented: getErrorDescription(false),
-		preventDefault: getErrorDescription(function () {
-			return !!defineProperty(error, 'defaultPrevented', getErrorDescription(true))
-		}),
-		inspect: getErrorDescription(function () {
-			return errorStack
-		})
-	})
+/**
+ * @param {Element} element
+ */
+function clearErrorBoundary (element) {
+	reconcileElement(element.children, getElementDefinition(), element)
+}
+
+/**
+ * @param {Element} element
+ * @param {any} err
+ * @param {string} origin
+ */
+function invokeErrorBoundary (element, err, origin) {
+	propagateErrorBoundary(element, element, element.host, createErrorException(element, err, origin))
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} host
+ * @param {Exception} exception
+ */
+function delegateErrorBoundary (element, host, exception) {
+	propagateErrorBoundary(element, host, host, exception)
+}
+
+/**
+ * @param {Element} element
+ * @param {Exception} exception
+ * @param {Component} owner
+ */
+function catchErrorBoundary (element, exception, owner) {
+	if (owner && owner[SharedComponentDidCatch] && !owner[SymbolForException])
+		owner[SymbolForException] = getLifecycleBoundary(element, owner, owner[SymbolForException] = exception)
+}
+
+/**
+ * @throws {Exception} throws when an ErrorBoundary is not found.
+ * @param {Element} element
+ * @param {Element} host
+ * @param {Element} parent
+ * @param {Exception} exception
+ */
+function propagateErrorBoundary (element, host, parent, exception) {
+	clearErrorBoundary(parent)
+	catchErrorBoundary(parent, exception, parent.owner)
+
+	if (!exception.bubbles)
+		return
+
+	if (!isValidElement(parent.host))
+		throw printErrorException(exception)
+
+	if (element !== host)
+		throw exception
+
+	propagateErrorBoundary(element, host, parent.host, exception)
 }

@@ -1,4 +1,64 @@
 /**
+ * @param {Element} element
+ * @param {Exception} exception
+ * @return {Element}
+ */
+function getErrorBoundary (element, exception) {
+	try {
+		delegateErrorBoundary(element, element, exception)
+	} finally {
+		return createElementEmpty()
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} host
+ * @return {Element}
+ */
+function getComponentChildren (element, host) {
+	try {
+		return mountComponentInstance(element)
+	} catch (err) {
+		return getErrorBoundary(host, err)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @return {Element}
+ */
+function getCustomElement (element) {
+	try {
+		commitOwner(element)
+	} finally {
+		return getCustomProps(createElement('template', element.children), element.owner)
+	}
+}
+
+/**
+ * @param {Element} element
+ * @param {object} owner
+ * @return {Element}
+ */
+function getCustomProps (element, owner) {
+	if (!owner)
+		return element
+
+	if (owner.nodeName)
+		element.type = owner.nodeName.toLowerCase()
+
+	if (owner.attributes)
+		for (var attributes = owner.attributes, i = attributes.length - 1; i >= 0; --i)
+			element.props[attributes[i].name] = attributes[i].value
+
+	if (owner.innerHTML)
+		element.props.innerHTML = owner.innerHTML
+
+	return element
+}
+
+/**
  * @param {*} value
  * @return {string}
  */
@@ -26,7 +86,8 @@ function getTextEncode (character) {
 }
 
 /**
- * @param {string}
+ * @param {string} type
+ * @return {boolean}
  */
 function isVoidType (type) {
 	if (typeof type === 'string')
@@ -56,7 +117,6 @@ function isVoidType (type) {
 /**
  * @param {Response} response
  */
-function setHeader (response) {
-	if (typeof response.setHeader === 'function')
-		response.setHeader('Content-Type', 'text/html')
+function setResponseHeader (response) {
+	typeof response.setHeader === 'function' && response.setHeader('Content-Type', 'text/html')
 }

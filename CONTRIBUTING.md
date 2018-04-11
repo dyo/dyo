@@ -13,7 +13,7 @@ Every significant change is documented in the changelog file.
 The best way to get your bug fixed is to provide a reduced test case / reproduction.
 
 If you find a bug in the source code, you can help by
-[submitting an issue](#submit-issue) or [submit a Pull Request](#submit-pr) with a failing test case / fix.
+[submitting an issue](#submit-issue) or [submit a pull Request](#submit-pr) with a failing test case / fix.
 
 ## Pull Requests
 
@@ -45,21 +45,21 @@ npm test
 The following runs an interactive test watcher.
 
 ```
-npm test -- --watch
+npm run test:watch
 ```
 
 ### Source
 
-The distribution bundle is made of different sources that are separeted with regards their concerns.
+The distribution bundle is made of different sources that are separeted with regards to their concerns.
 
 ```
 - src/
   - Core/
-  - DOM/
+  - Client/
   - Server/
 ```
 
-For example, eveything in `Core/` manages core aspects related to creating snapshot elements, diffing and reconciling while `DOM` is related to the layer that touches the native document model. The same can be said for `Server/` in relation to server side rendering.
+For example, eveything in `Core/` manages core aspects related to creating snapshot elements, diffing and reconciling while `Client` is related to the layer that touches the native document model. The same can be said for `Server/` in relation to server side rendering.
 
 The distribution artifacts in `./dist/` are bundles of the related sources mentioned above. You can create or update a build by running the following command.
 
@@ -81,17 +81,9 @@ The documentation site [dio.js.org](https://dio.js.org) is made of the following
 - docs/
   - introduction/
   - api/
-  	- index
-  	- top-level
-  	- element
-  	- component
-  	- server
   - examples/
   - repl/
   - assets/
-  	- javascript
-  	- stylesheet
-  	- images
 ```
 
 There currently is no build step(.md to .html) for the docs, though this may change if the need presents itself.

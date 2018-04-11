@@ -1,10 +1,10 @@
 # DIO
 
-[![dio.js](https://dio.js.org/assets/images/logo.svg)](https://dio.js.org/)
+[![dio.js](https://dio.js.org/assets/images/logo.svg)](https://dio.js.org)
 
 A Library For Building User Interfaces.
 
-- ~7kb
+- ~8kb
 
 [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md)
 [![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js)
@@ -56,19 +56,23 @@ dio.render(
 )
 ```
 
-The easiest way to get started with DIO is to walk through the [Introduction to DIO](https://dio.js.org/introduction) or the [API Documentation](https://dio.js.org/api).
+## Links
+
+1. [Introduction](https://dio.js.org/introduction)
+2. [API](https://dio.js.org/api)
+3. [REPL](https://dio.js.org/repl)
 
 ## Features
 
-The following is an overview of the features DIO allows you to make use of.
+The following is an overview of the features afforded.
 
 1. ### Rendering
 
 	1. Elements
 	1. Components
-	1. Primitives like strings, numbers, null, undefined
-	1. Fragments like Arrays, Iterables
-	1. and others renderables like Promises and Portals
+	1. Primitives
+	1. Fragments, Arrays, Iterables
+	1. Comments, Portals, and Promises
 
 1. ### Components
 
@@ -77,48 +81,47 @@ The following is an overview of the features DIO allows you to make use of.
 
 1. ### Events
 
-	1. Functions or [EventListener](https://developer.mozilla.org/en/docs/Web/API/EventListener)
-	1. Preserve "this" reference
+	1. Functions, [EventListener](https://developer.mozilla.org/en/docs/Web/API/EventListener) or an Array of either.
 
 1. ### Errors
 
-	1. Error boundaries through `componentDidCatch`
+	1. Error boundaries marked by the `componentDidCatch` lifecycle.
 
 1. ### setState
 
-	1. As with a Object
-	1. As with a Promise
-	1. As with an implicit return
+	1. Object
+	1. Promise
 
-1. ### Lifecycle
+1. ### Async Lifecycle
 
 	1. async componentWillUnmount
 	1. async getInitialState
 
 ## Example
 
-This intentionally overloaded example presents a few features detailed above, namely – error boundaries, an implicit setState return, Promise setState and rendering Promises & Fragments.
+The following overloaded example presents a few features detailed above, namely – error boundaries, an implicit setState return, Promise setState and rendering Promises & Fragments.
 
 ```js
 class Input {
-	// Error Boundary
-	componentDidCatch ({stack, message, ...error}, {componentStack}) {
+	// error boundary
+	componentDidCatch (err, {componentStack, origin, message}) {
 		return {error: true}
 	}
-	// Isomorphic Async getInitialState
+	// isomorphic async getInitialState
 	async getInitialState() {
 		return {value: 'Hi!'}
 	}
-	// Implicit Promise setState
+	// implicit promise setState
 	async handleInput({target}, props, state) {
 		return {value: target.value}
 	}
-	// Rendering Promises
+	// rendering promises
 	async render(props, {value, error}, context) {
+		// error state
 		if (error)
 			return h('h1', 'Something went wrong!')
 
-		// Rendering Fragments
+		// fragments
 		return [
 			h('input', {
 				value: value,
@@ -133,78 +136,51 @@ class Input {
 dio.render(h(Input))
 ```
 
-## Links
-
-1. [Introduction to DIO](https://dio.js.org/introduction)
-2. [API Documentation](https://dio.js.org/api)
-3. [REPL](https://dio.js.org/repl)
-
---
-
+---
 
 ## Goals
 
-Public react compatibility with an [edge](#edge), this means that any react library should work as long as it does not make use of undocumented features for example API's prefixed with `unstable_`.
+Public react compatibility with an [edge](#edge), this should mean that most react libraries can work as long as they does not make use of undocumented/public features, for example API's prefixed with `unstable_` and vice-versa.
 
-## Differences
+## Comparison, React
 
-#### Custom Reconciler, Config
+#### Custom Renderer, Factory
 
-There are a few react-like libraries but at the date of this writing DIO might be the only one to afford the ability to create your own renderer. Now while both React and DIO expose a way to create your own renderer, there is a difference in how you create this custom renderer. 
-
-While react might exposes a package called `react-reconciler` DIO exposes a public API for this as part of an overloaded `createFactory` API.
-
-This is coupled with fact that the config structure somewhat differ as do the arguments passed to the methodes implemented – for example react might pass the view instance(in the case of ReactDOM this might be a DOM node) to the method while DIO would pass the related virtual element(s) that have a reference to the DOM node, which you can then extract(by means of a property read), which can be argued gives renderers room to do more with what they have.
-
-All in all it is easy for DIO to consume the react reconcilers config, so the plan is that once the `react-reconciler` package is considererd stable by the React team DIO is in a position to consume the sementics of its config.
-
-As a show of confidence DIO itself uses this interface to implement the DOM renderer that it ships by default, which can be used to create any renderer.
+Affords the same ability as React to create your own renderer.
 
 #### Portals, Event Bubbling
 
-Events bubble in Portals as you would expect them to in the DOM, this avoid issues like [#11387](https://github.com/facebook/react/issues/11387) where bubbling them through the virtual tree has unintented behaviors.
+Events bubble in Portals as you would expect them to in the DOM, this avoids issues such as [#11387](https://github.com/facebook/react/issues/11387) where bubbling through the virtual tree has some unintended behaviors.
 
-The `createPortal` API also supports string selectors which allows for server-side rendering portals and out-of-order rendering, a feature might also make it into react: [related issue](https://github.com/facebook/react/issues/10711).
+In addition  `createPortal` supports string selectors and server-side rendering portals, a feature that might also make it into react: [related issue](https://github.com/facebook/react/issues/10711).
 
 #### Events, Delegation
 
-Though it may sound strange when considering all the articles about event delegation and performance/memory DIO on the other hand intentionally does not implement events with delegation to avoid the performance impact that comes with re-implementing(in JavaScript) event bubbling that browsers do which is almost always faster handled by the host enviroment.
+In contrary to the assumed pros of event delegation a general purpose event delegation model is intentionally avoided to avoid the performance and memory pitfalls that come with re-implementing this at the level of abstraction that JavaScript affords, when considering the standard event bubbling behaviour that the host platform implements. That is to say, implementing such a system involves doing more work than the host platform would otherwise do.
 
-However DIO's model does not create any more memory when attaching events than you might imagine React's event delegation model to use, interestingly it might just create less considerering that where react might create a Map entry for each element-event-pair the browser is in a better position to use an optimial reference pointer and data-strucuture to track the relationship between event handlers and elements when using addEventListener for each element.
+#### Hydration, Self Correction
 
-In simple terms implementing events with Reacts model of delegation(preserving the DOM model of bubbling) involves doing the same/more amount of work at assignment of the event and more work when emitting the events than a browser would otherwise do.
-
-#### Hydration, Self Correcting
-
-DIO goes the [whole 9 yards](https://en.wikipedia.org/wiki/The_whole_nine_yards) to correct differences when hydrating where react might otherwise error or ignore.
+Hydration goes the [whole 9 yards](https://en.wikipedia.org/wiki/The_whole_nine_yards) to correct differences when hydrating, where React might otherwise error or ignore.
 
 #### Error Messages
 
-There are error messages for incorrect use of top-level API's but react is famous for going the extra mile in both error messages and warnings regarding what is considered best practices in **dev mode** but the presence of error boundaries insures that if an error does occur DIO can give you a full trace of the component tree affected in a presentable error message and more.
+As opposed to React, the concept of developer warnings in a development build does not exist, The semantics that surround error boundaries help provide error messages when they occur at runtime.
 
 ## Tradeoffs
 
 #### Community.
 
-React hands down has the bigger community.
+React has a big community.
 
 #### Warnings
 
-React has dev mode warnings where DIO does not.
-
-#### unstable_API
-
-Sadly some libraries do make use of these undocumented unstable API's that React sometimes exposes with a `unstable_` prefix – which DIO intentionally ignores implementing due to their otherwise "considered" unstable nature.
+React has developer build warnings.
 
 ## Edge
 
-There a lot of small details that give DIO its edge that don't realy touch on new API's but rather on creating a larger surface area of what React already supports and adding to this. 
+#### Supporting Promises
 
-For example React can render strings, numbers, elements and components but what if it was able to render Promises or Thenables? This would help solve a lot of "problems" with data fetching and lazy loading that is possible with React but not declaratively incentivised at the library level.
-
-#### Supporting Thenables/Promises
-
-The ability to render thenables makes support for code-splitting and lazy loading easy at the library level. The ability to use a Promise for initial state makes data fetching more declartive at the library level and the ability to update state with a promise allows you to deal with async services without cutting back on the declarative nature that is afforded to first-class citizens like elements.
+The ability to render Promises makes support for code-splitting and lazy loading straight forward when supported at the library level. The ability to use a Promise for initial state makes data fetching more declarative and the ability to update state with a promise allows you to deal with async services without cutting back on the declarative nature that is afforded to other first-class citizens.
 
 ```js
 class Input {
@@ -223,18 +199,17 @@ class Input {
 }
 ```
 
-#### Supporting Pending Unmounts
+#### Supporting Delayed Unmount
 
-It's no suprise that declarative entry and outro animations in react are not at its best compared to other first-class citizens.
-Allowing a means to declaratively define a pending unmount that can trigger an outro animation before it is unmounted goes a long away in reducing the abstractions that go into dealing with this when this feature is abscent from the library level.
+It is no surprise that declarative entry and exit animations in React are not at its best compared to other first-class citizens.
+
+Allowing a means to declaratively define a delayed unmount that can enqueue  exit animations before an unmount goes a long away in reducing the abstractions that go into dealing with this in its absence.
 
 ```js
 class Input {
-	async componentWillUnmount(){
+	async componentWillUnmount(node){
 		return new Promise((resolve) => {
-			findDOMNode(this).animate([...], {
-				...
-			}).onfinish = resolve
+			node.animate([...], {...}).onfinish = resolve
 		})
 	}
 	async getInitialState() {
@@ -245,6 +220,7 @@ class Input {
 	}
 	async render() {
 		return h('input', {
+			ref: 'input'
 			value: value,
 			onInput: this.handleInput
 		})
@@ -252,12 +228,57 @@ class Input {
 }
 ```
 
-#### Events & "This"
+#### Event "this"
 
-Events in React have the infamous legacy of `.bind`. The implementation details of DIO allow it to avoid this legacy as demonstrated in the examples mentioned.
+React events outside of `createClass` components have an infamous relationship with `.bind`. The implementation details allow us to avoid this relationship and additionally allow multiple event handlers for a single event.
+
+```js
+class Input {
+	handleSubmit(e, props, state) {
+		this instanceof Input
+	}
+	handleReset(e, props, state) {
+		this instanceof Input
+	}
+	render() {
+		return h('form', {
+			onSubmit: [this.handleSubmit, this.handleReset]
+		})
+	}
+}
+```
+
+##### Async Generators
+
+Support for async iterators works much like regular iterators, but instead of a sequence of elements involve a sequence of states. This allows synchronous designs to emerge from otherwise asynchronous programs.
+
+```js
+class Suspense {
+	async *render() {
+		yield 'Loading...'
+		const data = await fetch('./')
+		yield h('pre', JSON.stringify(data))
+	}
+}
+```
 
 #### Server Side Renderer
 
-While React 16 does allow some level of async server side rendering with `renderToNodeStream` DIO takes it a step further to make sure that the mentioned points about rendering Promises and Promise states applies just as well in a server side render. 
+Rendering promises/awaiting promise states is afforded to components within the context of `renderToNodeStream` allowing both the previous example uses of `async getInitialState` and Async Generators to render just as well when delivering a rendered payload from a server.
 
-That is to say the server-side renderer can render whatever the client renderer can, including portals – which coupled with the client renderers hydration API allows for out of order rendering that is ordered on the client while hydrating.
+#### Custom Components
+
+Custom components are components that instantiate their own host elements. Within a DOM context a custom element constructor might fall under this group of components.
+
+```js
+class WordCount extends HTMLElement {
+	// ...
+}
+customElements.define('word-count', WordCount)
+```
+
+This allows us to render the given `WordCount` custom element without afore knowledge of its defined `localName`.
+
+```js
+render(h(WordCount))
+```

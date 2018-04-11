@@ -1,133 +1,108 @@
 /**
- * @type {constructor}
+ * @name Readable
+ * @constructor
+ * @type {function}
  */
 var Readable = require('stream').Readable
 
 /**
- * @param {function=} callback
+ * @param {function?} callback
  * @return {Stream}
  */
 function toStream (callback) {
-	var readable = new Stream(this, this.host)
+	var container = new Stream(this, this.host || createElementSnapshot(this))
 
-	switch (typeof callback) {
-		case 'string':
-			readable.setEncoding(callback)
-			break
-		case 'function':
-			readable.on('end', callback)
-		default:
-			readable.setEncoding('utf8')
-	}
+	if (typeof callback === 'function')
+		container.on('end', callback)
 
-	return readable
+	return container.setEncoding('utf8')
 }
 
 /**
+ * @name Stream
  * @constructor
+ * @property {Element} host
+ * @property {Array<Element>} queue
  * @param {Element} element
- * @param {Element?} host
+ * @param {Element} host
  */
 function Stream (element, host) {
 	this.host = host
-	this.stack = [element]
-
+	this.queue = [element]
 	Readable.call(this)
 }
 /**
- * @type {Object}
+ * @alias Stream#prototype
+ * @memberof Stream
+ * @type {object}
  */
-Stream.prototype = Object.create(Readable.prototype, {_read: {value: getStreamElement}})
+Stream.prototype = Object.create(Readable.prototype, {
+	/**
+	 * @alias Stream#_read
+	 * @memberof Stream
+	 * @private
+	 * @type {function}
+	 */
+	_read: {
+		value: function () {
+			if (this.queue.length > 0)
+				read(this.queue.pop(), this.host, this.queue, this)
+			else
+				this.push(null)
+		}
+	}
+})
 
 /**
- * @return {void}
+ * @param {string} payload
+ * @param {Readable} container
  */
-function getStreamElement () {
-	if (this.stack.length > 0)
-		readStreamElement(this.stack.pop(), this.host, this.stack, this)
-	else
-		this.push(null)
+function write (payload, container) {
+	if ((container.push(payload, 'utf8'), !payload))
+		container.read(0)
 }
 
 /**
  * @param {Element} element
  * @param {Element} host
- * @param {Array} stack
- * @param {Readable} readable
- * @param {number} id
- * @param {number} signature
+ * @param {Array<Element>} queue
+ * @param {Readable} container
  */
-function enqueueStreamElement (element, host, stack, readable, id, signature) {
-	return function (value) {
-		var children
-
-		if (signature !== SharedErrorActive)
-			children = invokeErrorBoundary(element, value, SharedSiteAsync+':'+SharedSiteSetState, SharedErrorActive)
-		else if (id !== SharedElementComponent)
-			children = getElementDefinition(value)
-		else
-			children = getComponentChildren(element, (element.instance.state = value || {}, element.instance))
-
-		readStreamElement(children, host, stack, readable)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Element?} host
- * @param {Array} stack
- * @param {Readable} readable
- */
-function readStreamElement (element, host, stack, readable) {
-	var output = ''
+function read (element, host, queue, container) {
+	var payload = ''
 	var children = element.children
 
 	switch (element.host = host, element.id) {
-		case SharedElementComponent:
-			if (!(readable.host = element).active)
-				children = mountComponentElement(element)
-
-			if (element.state && typeof element.state.then === 'function')
-				return void element.state
-					.then(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorActive))
-					.catch(enqueueStreamElement(element, element, stack, readable, SharedElementComponent, SharedErrorPassive))
-
-			return readStreamElement(children, element, stack, readable)
-		case SharedElementPromise:
-			return void element.type
-				.then(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorActive))
-				.catch(enqueueStreamElement(element, host, stack, readable, SharedElementPromise, SharedErrorPassive))
 		case SharedElementText:
 		case SharedElementEmpty:
-			return writeStreamElement(getTextEscape(children), readable)
+			return write(getTextEscape(children), container)
+		case SharedElementComment:
+			return write(getStringComment(element), container)
+		case SharedElementCustom:
+			return read(getCustomElement(element), host, queue, container)
+		case SharedElementComponent:
+			return read((container.host = element).active ? children : getComponentChildren(element, host), element, queue, container)
+		case SharedElementPromise:
+			return element.context = element.type.then(function (value, done) {
+				if (done !== false)
+					read(getElementDefinition(value), host, queue, container)
+			}, function (err) {
+				read(getElementDefinition(getErrorBoundary(host, err)), host, queue, container)
+			})
 		case SharedElementNode:
-			if (element.state)
-				return element.state = void writeStreamElement(element.state, readable)
-
-			output += '<' + element.type + getStringProps(element, element.props) + '>'
+			if (element.context)
+				return element.context = write(element.context, container)
+			else
+				payload += '<' + element.type + getStringProps(element, element.props) + '>'
 
 			if (isVoidType(element.type))
-				return writeStreamElement(output, readable)
-
-			element.state = (element.state || '') + '</' + element.type + '>'
-			stack.push(element)
+				return write(payload, container)
+			else
+				queue.push((element.context = (element.context || '') + '</' + element.type + '>', element))
 		default:
-			var length = children.length
-
-			while (length-- > 0)
-				stack.push(children = children.prev)
+			for (var length = children.length; length > 0 ; --length)
+				queue.push(children = children.prev)
 	}
 
-	writeStreamElement(output, readable)
-}
-
-/**
- * @param {string} output
- * @param {Readable} readable
- */
-function writeStreamElement (output, readable) {
-	readable.push(output, 'utf8')
-
-	if (!output)
-		readable.read(0)
+	write(payload, container)
 }

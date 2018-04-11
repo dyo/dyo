@@ -109,65 +109,6 @@ describe('Render', () => {
 		assert.html(container, '')
 	})
 
-	it('should (un)mount ref function(instance)', () => {
-		let refs = null
-		let A = class {
-			render() {
-				return null
-			}
-		}
-
-		render(class {
-			render() {
-				return h(A, {ref: (value) => refs = value})
-			}
-		}, container)
-		assert.instanceOf(refs, A, 'ref function(instance#mount)')
-
-		unmountComponentAtNode(container)
-		assert.equal(refs, null, 'ref function(instance#unmount)')
-	})
-
-	it('should (un)mount ref string(instance)', () => {
-		let refs = null
-		let A = class {
-			render() {
-				return null
-			}
-		}
-
-		render(class {
-			componentDidMount() {
-				refs = this.refs
-			}
-			render() {
-				return h(A, {ref: 'instance'})
-			}
-		}, container)
-		assert.instanceOf(refs.instance, A, 'ref string(instance#mount)')
-
-		unmountComponentAtNode(container)
-		assert.equal(refs.instance, null, 'ref string(node#unmount)')
-	})
-
-	it('should unmount undefined ref', () => {
-		let container = document.createElement('div')
-		let refs = undefined
-
-		render(h('h1', {ref: (value) => refs = value}), container)
-		render(h('h1', {ref: undefined}), container)
-		assert.equal(refs, null)
-	})
-
-	it('should unmount null ref', () => {
-		let container = document.createElement('div')
-		let refs = undefined
-
-		render(h('h1', {ref: (value) => refs = value}), container)
-		render(h('h1', {ref: null}), container)
-		assert.equal(refs, null)
-	})
-
 	it('should render nested array children', () => {
 		render(h('div', 1, [2, 3, [4, 5]]), container)
 		assert.html(container, `<div>12345</div>`)
@@ -176,20 +117,6 @@ describe('Render', () => {
 	it('should not render booleans', () => {
 		render(h('div', true, false), container),
 		assert.html(container, '<div></div>')
-	})
-
-	it('should not render unknown objects', () => {
-		assert.throws(() => {
-			render(h('div', null, {}), container)
-		})
-
-		assert.throws(() => {
-			render(h('div', null, Object.create(null)), container)
-		})
-
-		assert.throws(() => {
-			render(h('div', null, new Date()), container)
-		})
 	})
 
 	it('should render svg elements', () => {
@@ -288,12 +215,6 @@ describe('Render', () => {
 		assert.equal(container.firstChild.style.color, 'red')
 	})
 
-	it('should not render to an invalid container', () => {
-		assert.throws(() => {
-			render('1', {})
-		})
-	})
-
 	it('should execute render callback', () => {
 		let container = document.createElement('div')
 		let stack = []
@@ -314,6 +235,12 @@ describe('Render', () => {
 
 		assert.doesNotThrow(() => {
 			render(h(A), container, 'not a function')
+		})
+
+		assert.throws(() => {
+			render(h(A), container, function () {
+				throw 'error!'
+			})
 		})
 
 		assert.html(container, '1')
@@ -433,18 +360,6 @@ describe('Render', () => {
 		assert.html(container, `<div style=""></div>`)
 	})
 
-	it('should handle invalid refs', () => {
-		let container = document.createElement('div')
-
-		assert.doesNotThrow(() => {
-			render(h('div', {ref: null}), container)
-			render(h('div', {ref: undefined}), container)
-			render(h('div', {ref: 100}), container)
-			render(h('div', {ref: Symbol('')}), container)
-			render(h('div', {ref: {}}), container)
-		})
-	})
-
 	it('should render tabIndex', () => {
 		let container = document.createElement('div')
 
@@ -466,6 +381,25 @@ describe('Render', () => {
 
 		render(h('div', {children: 'secondary'}, 'primary'), container)
 		assert.html(container, '<div>primary</div>')
+	})
+
+	it('should handle circular prop references', () => {
+		let container = document.createElement('div')
+		let refs = null
+
+		var obj = {foo: true}
+		obj.obj = obj
+
+		render(h('h1', {ref: (node) => refs = node, obj: obj}, 1), container)
+		assert.html(container, '<h1>1</h1>')
+		assert.equal(refs.obj, obj)
+
+		var obj = {foo: false}
+		obj.obj = obj
+
+		render(h('h1', {ref: (node) => refs = node, obj: obj}, 1), container)
+		assert.html(container, '<h1>1</h1>')
+		assert.equal(refs.obj, obj)
 	})
 
 	it('should no-op duplicate keys', () => {
@@ -499,30 +433,79 @@ describe('Render', () => {
 
  	it('should render non-primitive attributes', () => {
  		let container = document.createElement('div')
+ 		let refs = null
  		let fn = () => {}
 
- 		render(h('h1', {custom: {first: 1}}, '0'), container)
+ 		render(h('h1', {ref: (node) => refs = node, custom: {first: 1}}, '0'), container)
  		assert.html(container, '<h1>0</h1>')
- 		assert.deepEqual(container.firstChild.custom, {first: 1})
+ 		assert.deepEqual(refs.custom, {first: 1})
 
- 		render(h('h1', {custom: {first: 1, second: 2}}, '0'), container)
+ 		render(h('h1', {ref: (node) => refs = node, custom: {first: 1, second: 2}}, '0'), container)
  		assert.html(container, '<h1>0</h1>')
- 		assert.deepEqual(container.firstChild.custom, {first: 1, second: 2})
+ 		assert.deepEqual(refs.custom, {first: 1, second: 2})
 
- 		render(h('h1', {custom: null}, '0'), container)
+ 		render(h('h1', {ref: (node) => refs = node, custom: null}, '0'), container)
  		assert.html(container, '<h1>0</h1>')
- 		assert.equal(container.firstChild.custom, '')
+ 		assert.equal(refs.custom, '')
 
- 		render(h('h1', {custom: {first: 1}}, '0'), container)
+ 		render(h('h1', {ref: (node) => refs = node, custom: {first: 1}}, '0'), container)
  		assert.html(container, '<h1>0</h1>')
- 		assert.deepEqual(container.firstChild.custom, {first: 1})
+ 		assert.deepEqual(refs.custom, {first: 1})
 
- 		render(h('h1', {custom: fn}, '0'), container)
+ 		render(h('h1', {ref: (node) => refs = node, custom: fn}, '0'), container)
  		assert.html(container, '<h1>0</h1>')
- 		assert.equal(container.firstChild.custom, fn)
+ 		assert.equal(refs.custom, fn)
 
- 		render(h('h1', {custom: {first: 1, second: 2}}, '0'), container)
+ 		render(h('h1', {ref: (node) => refs = node, custom: {first: 1, second: 2}}, '0'), container)
  		assert.html(container, '<h1>0</h1>')
- 		assert.deepEqual(container.firstChild.custom, {first: 1, second: 2})
+ 		assert.deepEqual(refs.custom, {first: 1, second: 2})
+ 	})
+
+ 	it('should render defaultValue', () => {
+ 		let container = document.createElement('div')
+ 		let refs = null
+
+ 		render(h('input', {ref: (node) => refs = node, defaultValue: 1}), container)
+ 		assert.equal(refs.value, '1')
+
+ 		render(h('input', {ref: (node) => refs = node, defaultValue: 0}), container)
+ 		assert.equal(refs.value, '0')
+
+ 		render(h('select', {ref: (node) => refs = node, defaultValue: 2},
+ 			h('option', {value: 1}, 1),
+ 			h('option', {value: 2}, 2),
+ 			h('option', {value: 3}, 3)
+ 		), container)
+ 		assert.html(container, `
+ 			<select>
+ 				<option value="1">1</option>
+ 				<option value="2">2</option>
+ 				<option value="3">3</option>
+ 			</select>
+ 		`)
+ 		assert.equal(refs.value, '2')
+ 	})
+
+ 	it('should not render defaultValue to string', () => {
+ 		let container = document.createElement('div')
+ 		let refs = null
+
+ 		render(h('input', {ref: (node) => refs = node, defaultValue: null}), container)
+ 		assert.html(container, '<input value="">')
+
+ 		render(h('input', {ref: (node) => refs = node, defaultValue: false}), container)
+ 		assert.html(container, '<input value="">')
+
+ 		render(h('input', {ref: (node) => refs = node, defaultValue: 1, value: '2'}), container)
+ 		assert.equal(refs.value, '2')
+
+ 		render(h('input', {ref: (node) => refs = node, defaultValue: 1, value: 0}), container)
+ 		assert.equal(refs.value, '0')
+
+ 		render(h('input', {ref: (node) => refs = node, defaultValue: 0, value: null}), container)
+ 		assert.equal(refs.value, '')
+
+ 		render(h('input', {ref: (node) => refs = node, defaultValue: 0, value: undefined}), container)
+ 		assert.equal(refs.value, '')
  	})
 })

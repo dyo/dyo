@@ -1,33 +1,26 @@
 /**
- * @param {string|function|Object|Element} type
- * @return {function|Object}
+ * @param {(string|function|object)} type
+ * @return {(function|object)}
+ * @public
  */
 function createFactory (type) {
-	if (typeof type === 'object' && type !== null && !isValidElement(type))
-		return factory(window, type, require)
+	if (type !== null && typeof type === 'object' && !thenable(type))
+		return factory(module, type)
 
-	return createElementFactory(type)
-}
-
-/**
- * @param {string|function|Element} type
- * @return {function}
- */
-function createElementFactory (type) {
 	return createElement.bind(null, type)
 }
 
 /**
- * @param {Object?} type
+ * @param {string} type
  * @param {function} value
  * @return {function}
  */
-function createClientFactory (type, value) {
-	if (!config)
+function getFactory (type, value) {
+	if (!exports)
 		return value
 
-	if (typeof config[type] !== 'function')
-		config[type] = value
+	if (typeof exports[type] === 'function')
+		return exports[type].bind(exports)
 
-	return config[type]
+	return exports[type] = value
 }

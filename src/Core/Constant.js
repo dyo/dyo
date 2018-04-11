@@ -1,15 +1,20 @@
-var defineProperty = Object.defineProperty
-var defineProperties = Object.defineProperties
-var hasOwnProperty = Object.hasOwnProperty
-var isArray = Array.isArray
-
 var WeakMap = window.WeakMap || WeakHash
-var Symbol = window.Symbol || function (d) { return hash(d) }
-var requestAnimationFrame = window.requestAnimationFrame || function (c) { setTimeout(c, 16) }
+var Symbol = window.Symbol || Math.random
+var ArrayIsArray = Array.isArray
 
-var SymbolFor = Symbol.for || Symbol
-var SymbolIterator = Symbol.iterator || '@@iterator'
-var SymbolError = SymbolFor('dio.Error')
-var SymbolElement = SymbolFor('dio.Element')
-var SymbolFragment = SymbolFor('dio.Fragment')
-var SymbolComponent = SymbolFor('dio.Component')
+var ObjectDefineProperties = Object.defineProperties
+var ObjectDefineProperty = Object.defineProperty
+var ObjectHasOwnProperty = Object.hasOwnProperty
+var ObjectCreate = Object.create
+var ObjectKeys = Object.keys
+
+var SymbolFor = Symbol.for || hash
+var SymbolForCache = SymbolFor('dio.Cache')
+var SymbolForState = SymbolFor('dio.State')
+var SymbolForContext = SymbolFor('dio.Context')
+var SymbolForElement = SymbolFor('dio.Element')
+var SymbolForFragment = SymbolFor('dio.Fragment')
+var SymbolForComponent = SymbolFor('dio.Component')
+var SymbolForException = SymbolFor('dio.Exception')
+var SymbolForIterator = Symbol.iterator || '@@iterator'
+var SymbolForAsyncIterator = Symbol.asyncIterator || '@@asyncIterator'

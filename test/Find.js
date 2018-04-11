@@ -1,4 +1,4 @@
-describe('DOM', () => {
+describe('Find', () => {
 	it('should findDOMNode from component', () => {
 		let container = document.createElement('div')
 		let refs = null
@@ -48,18 +48,6 @@ describe('DOM', () => {
 		assert.html(refs, '<span>1</span>')
 	})
 
-	it('should not findDOMNode from falsey value', () => {
-		assert.throws(() => {
-			findDOMNode(null)
-		})
-	})
-
-	it('should not findDOMNode from unmount component', () => {
-		assert.throws(() => {
-			findDOMNode(h('div'))
-		})
-	})
-
 	it('should findDOMNode from event', () => {
 		let event = new Event('click')
 		let node = document.createElement('div')
@@ -69,5 +57,57 @@ describe('DOM', () => {
 		assert.doesNotThrow(() => {
 			assert.equal(findDOMNode(event), node)
 		})
+	})
+
+	it('should not findDOMNode from invalid values', () => {
+		assert.doesNotThrow(() => {
+			assert.ok(findDOMNode(null) == null)
+			assert.ok(findDOMNode(undefined) == null)
+			assert.ok(findDOMNode(true) == null)
+		})
+	})
+
+	it('should findDOMNode from componentWillUnmount', () => {
+		let container = document.createElement('div')
+		let refs = null
+
+		render(class {
+			componentWillUnmount() {
+				refs = findDOMNode(this)
+			}
+			render() {}
+		}, container)
+
+		render(null, container)
+		assert.ok(refs != null)
+	})
+
+	it('should return false findDOMNode from an pre-mounted component', () => {
+		let container = document.createElement('div')
+		let refs = {}
+
+		render(class {
+			componentWillMount() {
+				assert.ok(findDOMNode(this) == false)
+			}
+			render() {}
+		}, container)
+	})
+
+	it('should return false findDOMNode from an unmounted component', (done) => {
+		let container = document.createElement('div')
+		let refs = {}
+
+		render(class {
+			componentWillUnmount() {
+				setTimeout(() => {
+					assert.ok(findDOMNode(this) == false)
+					done()
+				}, 0)
+			}
+			render() {}
+		}, container)
+
+		render(null, container)
 	})
 })

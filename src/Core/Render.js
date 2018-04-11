@@ -1,44 +1,54 @@
 /**
- * @param {*} element
- * @param {Node} container
- * @param {function=} callback
+ * @param {any} element
+ * @param {object} container
+ * @param {function?} callback
+ * @public
  */
 function render (element, container, callback) {
 	if (!container)
-		return render(element, getClientDocument(), callback)
-
-	if (isValidClientHost(container))
-		return update(getClientHost(container), getElementDefinition(element), callback)
-
-	mount(element, container, callback, SharedMountCommit)
+		render(element, getNodeDocument(), callback)
+	else if (registry.has(container))
+		updateContainerElement(registry.get(container).children, getElementDefinition(element), callback)
+	else
+		mountContainerElement(element, container, callback, SharedMountOwner)
 }
 
 /**
- * @param {*} element
- * @param {Node} container
- * @param {function=} callback
+ * @param {any} element
+ * @param {object} container
+ * @param {function?} callback
+ * @public
  */
 function hydrate (element, container, callback) {
 	if (!container)
-		return hydrate(element, getClientDocument(), callback)
-
-	mount(element, container, callback, SharedMountQuery)
+		hydrate(element, getNodeDocument(), callback)
+	else
+		mountContainerElement(element, container, callback, SharedMountQuery)
 }
 
 /**
+ * @param {object} container
+ * @return {boolean}
+ * @public
+ */
+function unmountComponentAtNode (container) {
+	return registry.has(container) && !render(null, container)
+}
+
+/**
+ * @throws {Error} if invoked with an invalid container
  * @param {Element} element
- * @param {Node} container
+ * @param {object} container
  * @param {function} callback
  * @param {number} signature
  */
-function mount (element, container, callback, signature) {
+function mountContainerElement (element, container, callback, signature) {
 	if (!isValidElement(element))
-		return mount(getElementDefinition(element), container, callback, signature)
-
-	if (!isValidClientNode(container))
-		invariant(SharedSiteRender, 'Target container is not a DOM element')
-
-	mountComponentAtNode(element, createElementIntermediate(element), container, signature)
+		mountContainerElement(getElementDefinition(element), container, callback, signature)
+	else if (!isValidNodeTarget(container))
+		invariant(SharedSiteRender, 'Target container is not a valid container')
+	else
+		commitContainerElement(element, createElementSnapshot(element), container, signature)
 
 	if (callback)
 		getLifecycleCallback(element, callback)
@@ -49,8 +59,8 @@ function mount (element, container, callback, signature) {
  * @param {Element} snapshot
  * @param {Element} callback
  */
-function update (element, snapshot, callback) {
-	reconcileElement(element, snapshot)
+function updateContainerElement (element, snapshot, callback) {
+	reconcileElement(element, snapshot, element.host)
 
 	if (callback)
 		getLifecycleCallback(element, callback)
@@ -59,23 +69,14 @@ function update (element, snapshot, callback) {
 /**
  * @param {Element} element
  * @param {Element} parent
- * @param {Node} container
+ * @param {object} container
  * @param {number} signature
  */
-function mountComponentAtNode (element, parent, container, signature) {
-	setClientNode(parent, container)
-	setClientHost(parent, container)
+function commitContainerElement (element, parent, container, signature) {
+	registry.set(parent.owner = container, parent)
 
-	if (signature === SharedMountCommit)
-		setClientContent(parent)
+	if (signature === SharedMountOwner)
+		setNodeDocument(parent)
 
-	commitMount(element, element, parent, parent, SharedMountAppend, signature)
-}
-
-/**
- * @param {Node} container
- * @return {boolean}
- */
-function unmountComponentAtNode (container) {
-	return isValidClientHost(container) && !render(null, container)
+	commitMountElement(element, element, parent, parent, SharedOwnerAppend, signature)
 }

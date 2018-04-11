@@ -9,7 +9,8 @@ let {
   dispatchEvent,
   Node,
   Document,
-  Event
+  Event,
+  HTMLElement
 } = (new JSDOM('<!DOCTYPE html>', {url: 'http://localhost/'})).window
 
 let minify = (markup) => {
@@ -126,5 +127,6 @@ Object.assign(global, {
   dispatchEvent,
   Node,
   Document,
-  Event
+  Event,
+  HTMLElement
 })

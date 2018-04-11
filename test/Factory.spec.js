@@ -1,62 +1,55 @@
 describe('Factory', () => {
-	let rootContainer = {}
+	let parent = {}
 	let container = {}
 
-	let setNode = (element, node) => { element.DOM = node }
-	let setContent = (element) => {
-		getNode(element).toString = () => element.children.toString()
-		getNode(element).toJSON = () => element.children.toJSON()
+	let setDocument = (element) => {
+		element.owner.toString = () => element.children.toString()
+		element.owner.toJSON = () => element.children.toJSON()
 	}
 
+	let setComment = (element, value) => {}
 	let setText = (element, value) => {}
-	let setEvent = (element, type) => {}
 	let setProps = (element, name, value, xmlns) => {}
 
-	let getNode = (element) => { return element.DOM }
-	let getDocument = () => { return rootContainer }
+	let getOwner = () => { return element.owner }
+	let getDocument = () => { return parent }
 	let getTarget = (event) => { return {} }
 	let getType = (element, xmlns) => { return xmlns }
 	let getProps = (element) => { return element.props }
-	let getPortal = (element) => { return {} }
+	let getPortal = (element, container) => { return {} }
 	let getQuery = (element, parent, previous, next) => { return null }
 
-	let isValidNode = (node) => { return node instanceof Object }
+	let isValidTarget = (node) => { return node instanceof Object }
 	let isValidEvent = (event) => { return event instanceof Object }
 
-	let removeNode = (element, parent) => {}
-	let insertNode = (element, sibling, parent) => {}
-	let appendNode = (element, parent) => {}
+	let removeChild = (element, parent) => {}
+	let insertChild = (element, sibling, parent) => {}
+	let appendChild = (element, parent) => {}
 
 	let createElement = (element) => { return {} }
 	let createText = (element) => { return {} }
 	let createEmpty = (element) => { return {} }
+	let createComponent = (element) => { return {} }
 
 	let config = {
-		setNode,
-		setContent,
+		setDocument,
+		setComment,
 		setText,
-		setEvent,
 		setProps,
 		getDocument,
 		getTarget,
 		getType,
-		getProps,
 		getPortal,
 		getQuery,
-		isValidNode,
+		isValidTarget,
 		isValidEvent,
-		removeNode,
-		insertNode,
-		appendNode,
+		removeChild,
+		insertChild,
+		appendChild,
 		createElement,
 		createText,
 		createEmpty,
-		createExport: function (exports) {
-			if (typeof this.getNode !== 'function')
-				throw 'failed to fallback to internal config'
-
-			return exports
-		}
+		createComponent
 	}
 
 	let renderer
@@ -74,44 +67,13 @@ describe('Factory', () => {
 		assert.propertyVal(element, 'type', 'h1')
 		assert.propertyVal(element.props, 'id', 'id')
 		assert.propertyVal(element.children.next, 'children', '1')
-
-		let composed = createFactory(element)('2')
-
-		assert.propertyVal(composed, 'type', 'h1')
-		assert.propertyVal(composed, 'type', 'h1')
-		assert.propertyVal(composed.props, 'id', 'id')
-		assert.propertyVal(composed.children.next, 'children', '2')
 	})
 
 	it('should create a render factory', () => {
 		let stack = []
 
 		assert.deepEqual(Object.keys(
-			createFactory({
-				createExport: ({render}) => {return {render}}
-			})
-		), [
-			'render'
-		])
-
-		assert.deepEqual(Object.keys(
-			createFactory({
-				createExport: function (
-					exports,
-					Element,
-					mountComponentElement,
-					getComponentChildren,
-					getElementDefinition,
-					invokeErrorBoundary
-				) {
-					stack.slice.call(arguments).forEach(fn => {
-						if (typeof fn === 'function')
-							stack.push(fn.name)
-						else
-							stack.push('exports')
-					})
-				}
-			})
+			createFactory({})
 		), [
 			'version',
 		  'render',
@@ -120,26 +82,19 @@ describe('Factory', () => {
 		  'Fragment',
 		  'PureComponent',
 		  'Children',
-		  'findDOMNode',
-		  'unmountComponentAtNode',
+		  'createContext',
 		  'createFactory',
 		  'cloneElement',
 		  'isValidElement',
 		  'createPortal',
 		  'createElement',
+		  'createComment',
+		  'createClass',
+		  'unmountComponentAtNode',
+		  'findDOMNode',
 		  'h',
 		  'renderToString',
 		  'renderToNodeStream'
-		])
-
-		assert.deepEqual(stack, [
-			'exports',
-			'Element',
-			'getComponentChildren',
-			'getComponentElement',
-			'getElementDefinition',
-			'mountComponentElement',
-			'invokeErrorBoundary'
 		])
 	})
 
@@ -166,7 +121,7 @@ describe('Factory', () => {
 
 	it('should render text', () => {
 		render('hello', container)
-		assert.html(container, 'hello', 'render text')
+		assert.html(container, 'hello')
 	})
 
 	it('should render a class component', () => {
@@ -319,11 +274,11 @@ describe('Factory', () => {
 		})
 	})
 
-	it('should render a component and string to json', () => {
+	it('should render a component string to json', () => {
 		let container = {}
 		let element = h(class {
 			render() {
-					return '1'
+				return '1'
 			}
 		})
 
@@ -624,5 +579,89 @@ describe('Factory', () => {
 				<li>6</li>
 			</ul>
 		`)
+	})
+
+	it('should change updating props', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let renderer = createFactory({
+			getUpdatedProps: function (element, props) {
+				stack.push('update', props)
+				return {}
+			}
+		})
+
+		renderer.render(h('h1', {id: 1, class: 'first'}, 'Hello World'), container)
+		assert.html(container, `<h1 id="1" class="first">Hello World</h1>`)
+
+		renderer.render(h('h1', {id: 1, class: 'second'}, 'Hello World'), container)
+		assert.html(container, `<h1 id="1" class="first">Hello World</h1>`)
+		assert.deepEqual(stack, ['update', {class: 'second'}])
+	})
+
+	it('should ensure the signature arguments passed to setProps', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let renderer = createFactory({
+			setProps: function (element, value, name, xmlns, signature) {
+				if (signature === 0)
+					stack.push('phase:mount')
+				else
+					stack.push('phase:update')
+			}
+		})
+
+		renderer.render(h('h1', {id: 1}, 'Hello World'), container)
+		assert.html(container, `<h1>Hello World</h1>`)
+		assert.deepEqual(stack, ['phase:mount'])
+
+		renderer.render(h('h1', {id: 2}, 'Hello World'), container)
+		assert.html(container, `<h1>Hello World</h1>`)
+		assert.deepEqual(stack, ['phase:mount', 'phase:update'])
+	})
+
+	it('should provide a default root context', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let renderer = createFactory({
+			getContext: function () {
+				return {children: 'Hello World'}
+			}
+		})
+
+		class A {
+			render(props, state, {children}) {
+				return children
+			}
+		}
+
+		renderer.render(h(A), container)
+		assert.html(container, `Hello World`)
+	})
+
+	it('should invoke willUnmount when unmounting', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let renderer = createFactory({
+			willUnmount: function (element, parent, host) {
+				stack.push(
+					`element:${element.type}:${isValidElement(element)}`,
+					`parent:${parent.type}:${isValidElement(parent)}`,
+					`host:${host === element}`
+				)
+			}
+		})
+
+		renderer.render(h('h1', h('h2', h('h3'))), container)
+		assert.html(container, `<h1><h2><h3></h3></h2></h1>`)
+		assert.lengthOf(stack, 0)
+
+		renderer.render(null, container)
+		assert.html(container, ``)
+		assert.deepEqual(stack, [
+			'element:h3:true', 'parent:h2:true', 'host:false',
+			'element:h2:true', 'parent:h1:true', 'host:false',
+			'element:h1:true', 'parent:null:true', 'host:true',
+		])
 	})
 })

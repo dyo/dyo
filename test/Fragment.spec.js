@@ -210,4 +210,45 @@ describe('Fragment', () => {
 			<li>3</li>
 		`)
 	})
+
+	it('should move(append) a fragment(promise)', (done) => {
+		unmountComponentAtNode(container)
+
+		render(h('div',
+			h(Promise.resolve(h('li', 1)), {key: 1}),
+			h(Promise.resolve(h('li', 3)), {key: 3}),
+			h(Promise.resolve(h('li', 2)), {key: 2})
+		), container)
+
+		nextTick(() => {
+			assert.html(container, `<div><li>1</li><li>3</li><li>2</li></div>`)
+
+			render(h('div',
+				h(Promise.resolve(h('li', 1)), {key: 1}),
+				h(Promise.resolve(h('li', 2)), {key: 2}),
+				h(Promise.resolve(h('li', 3)), {key: 3})
+			), container)
+
+			render(h('div',
+				h(Promise.resolve(h('li', 1)), {key: 1}),
+				h(Promise.resolve(h('li', 2)), {key: 2}),
+				h(Promise.resolve(h('li', 3)), {key: 3})
+			), container)
+
+			nextTick(() => {
+				assert.html(container, `<div><li>1</li><li>2</li><li>3</li></div>`)
+
+				render(h('div',
+					h(Promise.resolve(h('li', 3)), {key: 3}),
+					h(Promise.resolve(h('li', 1)), {key: 1}),
+					h(Promise.resolve(h('li', 2)), {key: 2})
+				), container)
+
+				nextTick(() => {
+					assert.html(container, `<div><li>3</li><li>1</li><li>2</li></div>`)
+					done()
+				})
+			})
+		})
+	})
 })

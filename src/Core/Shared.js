@@ -1,55 +1,57 @@
-var SharedElementPromise = -3
-var SharedElementFragment = -2
-var SharedElementPortal = -1
-var SharedElementIntermediate = 0
-var SharedElementComponent = 1
-var SharedElementNode = 2
-var SharedElementText = 3
-var SharedElementEmpty = 4
-
-var SharedReferenceRemove = -1
-var SharedReferenceAssign = 0
-var SharedReferenceDispatch = 1
-var SharedReferenceReplace = 2
+var SharedElementPromise = 0
+var SharedElementFragment = 1
+var SharedElementPortal = 2
+var SharedElementSnapshot = 3
+var SharedElementComponent = 4
+var SharedElementCustom = 5
+var SharedElementNode = 6
+var SharedElementComment = 7
+var SharedElementText = 8
+var SharedElementEmpty = 9
 
 var SharedComponentForceUpdate = 0
 var SharedComponentPropsUpdate = 1
 var SharedComponentStateUpdate = 2
 
+var SharedRefsDispatch = 0
+var SharedRefsReplace = 1
+var SharedRefsRemove = 2
+var SharedRefsAssign = 3
+
+var SharedPropsMount = 0
+var SharedPropsUpdate = 1
+
 var SharedMountQuery = 0
-var SharedMountCommit = 1
-var SharedMountRemove = 2
-var SharedMountAppend = 3
-var SharedMountInsert = 4
+var SharedMountOwner = 1
 
-var SharedWorkMounting = -2
-var SharedWorkProcessing = -1
-var SharedWorkIntermediate = 0
-var SharedWorkIdle = 1
+var SharedOwnerAppend = 0
+var SharedOwnerInsert = 1
 
-var SharedErrorPassive = -2
-var SharedErrorActive = -1
+var SharedWorkIdle = 0
+var SharedWorkUpdating = 1
 
-var SharedPropsMount = 1
-var SharedPropsUpdate = 2
+var SharedKeyHead = '&|head|'
+var SharedKeyBody = '&|body|'
+var SharedKeyTail = '&|tail|'
 
-var SharedSiblingPrevious = 'prev'
-var SharedSiblingNext = 'next'
+var SharedLocalNameComment = '#comment'
+var SharedLocalNameEmpty = '#empty'
+var SharedLocalNameText = '#text'
 
+var SharedLinkedPrevious = 'prev'
+var SharedLinkedNext = 'next'
+
+var SharedSiteEvent = 'event'
+var SharedSitePromise = 'promise'
+var SharedSitePrototype = 'prototype'
 var SharedSiteCallback = 'callback'
 var SharedSiteRender = 'render'
 var SharedSiteElement = 'element'
 var SharedSiteConstructor = 'constructor'
-var SharedSiteAsync = 'async'
+var SharedSiteForceUpdate = 'forceUpdate'
 var SharedSiteSetState = 'setState'
 var SharedSiteFindDOMNode = 'findDOMNode'
-
-var SharedKeySigil = '&|'
-var SharedKeyHead = '&head'
-var SharedKeyTail = '&tail'
-
-var SharedTypeEmpty = '#empty'
-var SharedTypeText = '#text'
+var SharedSiteDisplayName = 'displayName'
 
 var SharedComponentWillMount = 'componentWillMount'
 var SharedComponentDidMount = 'componentDidMount'
@@ -61,3 +63,5 @@ var SharedComponentWillUnmount = 'componentWillUnmount'
 var SharedComponentDidCatch = 'componentDidCatch'
 var SharedGetChildContext = 'getChildContext'
 var SharedGetInitialState = 'getInitialState'
+var SharedGetDefaultProps = 'getDefaultProps'
+var SharedDefaultProps = 'defaultProps'

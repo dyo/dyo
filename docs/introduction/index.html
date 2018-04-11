@@ -35,6 +35,10 @@
 			<li><a href=https://cdn.jsdelivr.net/npm/dio.js>cdn.jsdelivr.net/npm/dio.js</a></li>
 		</ol>
 
+<pre><code>
+&lt;script src="unpkg.com/dio.js">&lt;/script>
+</code></pre>
+
 		<p>OR through NPM &mdash;</p>
 <pre><code>
 npm install dio.js --save
@@ -64,7 +68,7 @@ const element = h('h1', 'Hello World');
 			Elements are represented by JavaScript objects that describe what and how a particular element should look and behave.
 		</p>
 		<p>
-			Given what to render at any one point in time, the underlining reconciler takes care of updating/mounting these elements correctly to reflect the current state of the interface.
+			Given what to render at any one point in time, the underlining reconciler takes care of updating/mounting these elements to reflect the current state of the interface.
 		</p>
 		<p>
 			Elements are composed of three distinct parts &mdash; type, props and children. These can be used to assign the desired behaviours and properties that we want our elements to assume.
@@ -120,7 +124,7 @@ render(
 )
 </code></pre>
 
-		<p>The example demonstrates that we can render components just as we would elements but it also shows us that when required we can pass arbitrary arguments "props" to a component.</p>
+		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments "props" to a component.</p>
 
 		<h1 id=lifecycles>Lifecycles</h1>
 
@@ -224,9 +228,9 @@ class Input {
 render(h(Input), document.getElementById('root'))
 </code></pre>
 
-		<p>The example demonstrates how we can listen to events on an element and respond in kind.</p>
+		<p>The example demonstrates how we might listen to events on an element and respond in kind.</p>
 
-		<p>In this particular example we update the value of our <code>&lt;h1></code> element to contain the value of the <code>&lt;input></code> whenever an <code>input</code> event is triggered.</p>
+		<p>In this particular example we update the value of our <code>&lt;h1></code> element to the value of the <code>&lt;input></code> element whenever an <code>input</code> event is dispatched.</p>
 
 		<h1 id=interoperability>Interoperability</h1>
 
@@ -293,8 +297,8 @@ render(
 </code></pre>
 
 		<p>
-			In this example the text <code>'Hey'</code> will render in the defined root container, while the text
-			<code>'Welcome Back'</code> will render within the defined portal.
+			In this example the text <code>'Welcome'</code> will render in the defined root container, while the text
+			<code>'Back'</code> will render within the defined portal.
 		</p>
 
 
@@ -358,9 +362,9 @@ render(
 
 		<h1>Moving Foward</h1>
 
-		<p>There are still details we haven't gone into that hopefully the <a href=../api>API</a> can help document.</p>
+		<p>There are details we haven't gone into that hopefully the <a href=../api>API</a> can help document.</p>
 
-		<p>At this point you can jump right into creating something with DIO, look at some <a href=../examples>Examples</a> or learn how DIO works on <a href=https://github.com/thysultan/dio.js>GitHub</a>.</p>
+		<p>At this point you can jump right into creating something with DIO, look at some <a href=../examples>Examples</a> or learn and contribute to DIO on <a href=https://github.com/thysultan/dio.js>GitHub</a>.</p>
 	</article>
 
 	<script src=../assets/javascript/index.js></script>

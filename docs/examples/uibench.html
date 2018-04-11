@@ -21,7 +21,6 @@
 				}
 
 				onClick(e) {
-					console.log('Clicked' + this.props.text);
 					e.stopPropagation();
 				}
 
@@ -65,7 +64,7 @@
 
 		    		for (var i = 0; i < length; i = i + 1) {
 		    			const item = items[i];
-						children[i] = h(TableRow, {key: item.id, data: item});
+							children[i] = h(TableRow, {key: item.id, data: item});
 		    		}
 
 			    	return h('table', {className: 'Table'}, h('tbody', children));
@@ -79,10 +78,10 @@
 
 				render() {
 					const { data } = this.props;
-			    	const time = data.time;
-		    		const style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+');';
+		    	const time = data.time;
+	    		const style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+');';
 
-		    		return h('div', {className: 'AnimBox', 'data-id': data.id, style: style});
+	    		return h('div', {className: 'AnimBox', 'data-id': data.id, style: style});
 				}
 			}
 
@@ -93,15 +92,15 @@
 
 				render() {
 					const items = this.props.data.items;
-			    	const length = items.length;
-		    		const children = new Array(length);
+		    	const length = items.length;
+	    		const children = new Array(length);
 
-		    		for (var i = 0; i < length; i = i + 1) {
-		    			const item = items[i];
-	      			children[i] = h(AnimBox, {key: item.id, data: item});
-		    		}
+	    		for (var i = 0; i < length; i = i + 1) {
+	    			const item = items[i];
+      			children[i] = h(AnimBox, {key: item.id, data: item});
+	    		}
 
-		    		return h('div', {className: 'Anim'}, children);
+	    		return h('div', {className: 'Anim'}, children);
 				}
 			}
 
@@ -121,7 +120,7 @@
 				}
 
 				render() {
-				   const { data } = this.props;
+			  	const { data } = this.props;
 					const length = data.children.length;
 					const children = new Array(length);
 
