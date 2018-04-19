@@ -4,11 +4,7 @@
  * @return {Element}
  */
 function getErrorBoundary (element, exception) {
-	try {
-		delegateErrorBoundary(element, element, exception)
-	} finally {
-		return createElementEmpty()
-	}
+	return createElementEmpty(delegateErrorBoundary(element, element, exception))
 }
 
 /**

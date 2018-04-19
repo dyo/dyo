@@ -1,4 +1,4 @@
-/*!dio 9.0.3 @license MIT */
+/*!dio 9.0.4 @license MIT */
 module.exports = function (dio, Element, mountComponentInstance, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = 0
@@ -75,11 +75,7 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	 * @return {Element}
 	 */
 	function getErrorBoundary (element, exception) {
-		try {
-			delegateErrorBoundary(element, element, exception)
-		} finally {
-			return createElementEmpty()
-		}
+		return createElementEmpty(delegateErrorBoundary(element, element, exception))
 	}
 	
 	/**

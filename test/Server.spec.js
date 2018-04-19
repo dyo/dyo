@@ -747,4 +747,29 @@ describe('Server', () => {
 			done()
 		})
 	})
+
+	it('it should propagate an uncaught error', () => {
+		let refs = null
+		let stack = []
+		let consoleError = console.error
+
+		console.error = () => stack.push(true)
+
+		class A {
+		  render () {
+		    throw 'A'
+		  }
+		}
+
+		try {
+		  h(A).toString()
+		} catch (err) {
+			refs = err
+		}
+
+		console.error = consoleError
+
+		assert.equal(refs, 'A')
+		assert.deepEqual(stack, [true])
+	})
 })

@@ -1178,4 +1178,26 @@ describe('Error', () => {
 		])
 		done()
 	})
+
+	it('should use displayName for function components when defined', () => {
+		let container = document.createElement('div')
+		let refs = null
+
+		class ErrorBoundary {
+			componentDidCatch(err, {componentStack}) {
+				refs = componentStack
+			}
+			render() {
+				return this.props.children
+			}
+		}
+
+		function A () {
+			throw 'End'
+		}
+		A.displayName = 'DisplayName'
+
+		render(h(ErrorBoundary, A), container)
+		assert.html(refs, '<DisplayName><ErrorBoundary>')
+	})
 })

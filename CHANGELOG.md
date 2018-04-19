@@ -1,3 +1,8 @@
+## 9.0.4 (19 April 2018)
+
+- Patch [#60](https://github.com/thysultan/dio.js/issues/60)
+- Patch [#61](https://github.com/thysultan/dio.js/issues/61)
+
 ## 9.0.3 (11 April 2018)
 
 - Patch [#59](https://github.com/thysultan/dio.js/issues/59)

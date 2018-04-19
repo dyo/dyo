@@ -1,4 +1,4 @@
-/*!dio 9.0.3 @license MIT */
+/*!dio 9.0.4 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.3'}
+		var dio = {version: '9.0.4'}
 		
 		var SharedElementPromise = 0
 		var SharedElementFragment = 1
@@ -342,6 +342,7 @@
 		}
 		
 		/**
+		 * @param {object}
 		 * @return {boolean}
 		 */
 		function fetchable (object) {
@@ -691,7 +692,7 @@
 						return getDisplayName(value.type)
 				case 'string':
 					if (value)
-						return value
+						return value.value || value
 				default:
 					return '#anonymous'
 			}

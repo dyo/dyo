@@ -329,7 +329,7 @@ function getDisplayName (value) {
 				return getDisplayName(value.type)
 		case 'string':
 			if (value)
-				return value
+				return value.value || value
 		default:
 			return '#anonymous'
 	}

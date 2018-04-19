@@ -18,7 +18,7 @@ let minify = (markup) => {
 }
 
 let html = (actual, expected, message) => {
-	return assert.equal(actual.innerHTML === undefined ? actual + '' : actual.innerHTML, minify(expected), message)
+	return assert.equal(actual.innerHTML === undefined ? minify(actual + '') : actual.innerHTML, minify(expected), message)
 }
 
 let json = (actual, expected, message) => {

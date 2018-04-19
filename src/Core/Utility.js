@@ -243,6 +243,7 @@ function hash (str) {
 }
 
 /**
+ * @param {object}
  * @return {boolean}
  */
 function fetchable (object) {
