@@ -53,7 +53,7 @@ function commitMountElement (element, sibling, parent, host, operation, signatur
 	}
 
 	commitMountElementChildren(element, sibling, host, SharedOwnerAppend, signature)
-	commitOwnerProps(element, getNodeInitialProps(element, element.props), element.xmlns, SharedPropsMount)
+	commitOwnerPropsInitial(element, element.props)
 }
 
 /**
@@ -261,11 +261,11 @@ function commitOwnerRefs (element, value, signature) {
 
 	switch (signature) {
 		case SharedRefsRemove:
-			return getLifecycleRefs(element.host, element.ref = null, value)
+			return getLifecycleRefs(element, element.ref = null, value)
 		case SharedRefsAssign:
 			element.ref = value
 		case SharedRefsDispatch:
-			return getLifecycleRefs(element.host, element.owner, value)
+			return getLifecycleRefs(element, element.owner, value)
 		case SharedRefsReplace:
 			commitOwnerRefs(element, element.ref, SharedRefsRemove)
 			commitOwnerRefs(element, value, SharedRefsAssign)
@@ -290,6 +290,14 @@ function commitOwnerProps (element, props, xmlns, signature) {
 			default:
 				setNodeProps(element, key, props[key], xmlns, signature)
 		}
+}
+
+/**
+ * @param {Element} element
+ * @param {object} props
+ */
+function commitOwnerPropsInitial (element, props) {
+	commitOwnerProps(element, getNodeInitialProps(element, props), element.xmlns, SharedPropsInitial)
 }
 
 /**
