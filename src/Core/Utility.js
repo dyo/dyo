@@ -147,6 +147,19 @@ function assign (object, a, b) {
 }
 
 /**
+ * @param {object} object
+ * @param {object} a
+ * @return {object}
+ */
+function pickout (object, a) {
+	for (var key in a)
+		if (object[key] === undefined)
+			object[key] = a[key]
+
+	return object
+}
+
+/**
  * @param {Array<any>} haystack
  * @param {function} callback
  * @param {any?} thisArg
@@ -239,11 +252,11 @@ function hash (str) {
 	for (var i = 0, code = 0; i < str.length; ++i)
 		code = ((code << 5) - code) + str.charCodeAt(i)
 
-	return code >>> 0
+	return (code >>> 0) - 9007199254740991
 }
 
 /**
- * @param {object}
+ * @param {object} object
  * @return {boolean}
  */
 function fetchable (object) {

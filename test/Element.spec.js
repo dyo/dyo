@@ -21,11 +21,6 @@ describe('Element', () => {
 		assert.deepEqual(cloneElement(h(() => {}, {ref: 'ref'}, 1, 2)).props, {ref: 'ref', children: [1, 2]})
 	})
 
-	it('should not clone an invalid element', () => {
-		let element = {type: 'h1', props: {className: 'head'}, children: []}
-		assert.equal(cloneElement(element), undefined)
-	})
-
 	it('should create an element', () => {
 		assert.equal(h('h1', 'Hello World').type, 'h1')
 	})
