@@ -39,9 +39,15 @@ PureComponent[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype]
 	 * @alias PureComponent#shouldComponentUpdate
 	 * @memberof PureComponent
 	 * @type {function}
+	 * @this {Component}
+	 * @param {object} props
+	 * @param {object} state
+	 * @return {boolean}
 	 */
 	shouldComponentUpdate: {
-		value: shouldComponentUpdate
+		value: function (props, state) {
+			return compare(this.props, props) || compare(this.state, state)
+		}
 	}
 })
 
@@ -60,33 +66,22 @@ CustomComponent[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
 	 * @alias CustomComponent#render
 	 * @memberof CustomComponent
 	 * @type {function}
+	 * @this {Component}
 	 * @param {object} props
 	 * @return {Element}
 	 */
 	render: {
 		value: function (props) {
-			return createElementComponent(this[SymbolForElement].type, props, props.children)
+			return createElementComponent(disableRef(this[SymbolForElement], noop).type, props)
 		}
 	}
 })
 
 /**
- * @alias PureComponent#shouldUpdateComponent
- * @memberof PureComponent
- * @this {Component}
- * @param {object} props
- * @param {object} state
- * @return {boolean}
- */
-function shouldComponentUpdate (props, state) {
-	return compare(this.props, props) || compare(this.state, state)
-}
-
-/**
  * @alias Component#setState
  * @memberof Component
  * @this {Component}
- * @param {(Object|function)} state
+ * @param {(object|function)} state
  * @param {function?} callback
  */
 function setState (state, callback) {
@@ -109,7 +104,7 @@ function forceUpdate (callback) {
  * @public
  */
 function createClass (description) {
-	return createComponentClass(Object(description), function constructor (props, context) {
+	return createComponentClass(Object(description), function constructor () {
 		for (var i = 0, keys = ObjectKeys(constructor[SharedSitePrototype]); i < keys.length; ++i)
 			this[keys[i]] = this[keys[i]].bind(this)
 	})
@@ -162,7 +157,12 @@ function createComponentPrototype (prototype) {
  */
 function getComponentClass (type) {
 	if (!type[SharedSitePrototype] || !type[SharedSitePrototype][SharedSiteRender])
-		return type[SymbolForComponent] || (isValidNodeComponent(type) ? CustomComponent : createComponentClass(type, function () {}))
+		if (type[SymbolForComponent])
+			return type[SymbolForComponent]
+		else if (isValidNodeComponent(type))
+			return type[SymbolForComponent] = CustomComponent
+		else
+			return createComponentClass(type, function () {})
 
 	if (!type[SharedSitePrototype][SymbolForComponent])
 		createComponentPrototype(type[SharedSitePrototype])
@@ -368,8 +368,8 @@ function enqueueComponentUpdate (element, owner, state, signature, callback) {
 			case 'object':
 				if (thenable(owner[SymbolForCache] = state))
 					return enqueueStatePromise(element, owner, state, signature, callback)
-				else
-					enqueueComponentElement(element, owner, signature)
+
+				enqueueComponentElement(element, owner, signature)
 		}
 
 	if (callback)
@@ -450,126 +450,3 @@ function enqueueStateCallback (element, owner, callback) {
 		invokeErrorBoundary(element, err, SharedSiteCallback)
 	}
 }
-
-/**
- * @param {Element} element
- * @param {function} callback
- */
-function getLifecycleCallback (element, callback) {
-	try {
-		if (typeof callback === 'function')
-			callback.call(element.owner)
-	} catch (err) {
-		throwErrorException(element, err, SharedSiteCallback)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {object?} owner
- * @param {any?} value
- */
-function getLifecycleRefs (element, owner, value) {
-	try {
-		switch (typeof value) {
-			case 'function':
-				return value.call(element.owner, owner)
-			case 'object':
-				return value.current = owner
-			default:
-				if (element.owner.refs)
-					element.owner.refs[value] = owner
-		}
-	} catch (err) {
-		throwErrorException(element, err, SharedSiteCallback)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- */
-function getLifecycleUnmount (element, name) {
-	try {
-		return element.owner[name](getNodeOwner(getElementDescription(element)))
-	} catch (err) {
-		invokeErrorBoundary(element, err, name)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- */
-function getLifecycleMount (element, name) {
-	try {
-		enqueueComponentValue(element, name, element.owner[name](getNodeOwner(getElementDescription(element))))
-	} catch (err) {
-		throwErrorException(element, err, name)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {function} type
- * @param {object} props
- * @param {object} context
- * @return {Component}
- */
-function getLifecycleInstance (element, type, props, context) {
-	try {
-		return element.owner = new type(props, context)
-	} catch (err) {
-		throwErrorException(element, err, SharedSiteConstructor)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Component} owner
- * @return {Element}
- */
-function getLifecycleRender (element, owner) {
-	try {
-		return getElementDefinition(owner.render(owner.props, owner.state, owner.context))
-	} catch (err) {
-		throwErrorException(element, err, SharedSiteRender)
-	}
-}
-
-/**
- * @param {Element} element
- * @param {Component} owner
- * @param {Exception} exception
- */
-function getLifecycleBoundary (element, owner, exception) {
-	try {
-		enqueueComponentValue(element, SharedComponentDidCatch, owner[SharedComponentDidCatch](exception.error, exception))
-	} catch (err) {
-		throwErrorException(element, err, SharedComponentDidCatch)
-	} finally {
-		exception.bubbles = false
-	}
-}
-
-/**
- * @param {Element} element
- * @param {string} name
- * @param {object} props
- * @param {object} state
- * @param {object} context
- * @return {any}
- */
-function getLifecycleUpdate (element, name, props, state, context) {
-	if (name !== SharedComponentDidUpdate)
-		element.work = SharedWorkUpdating
-
-	try {
-		return enqueueComponentValue(element, name, element.owner[name](props, state, context))
-	} catch (err) {
-		throwErrorException(element, err, name)
-	} finally {
-		element.work = SharedWorkIdle
-	}
-}
-

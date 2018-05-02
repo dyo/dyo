@@ -222,4 +222,46 @@ describe('Refs', () => {
 			render(h('div', {ref: () => {throw 'error!'}}), container)
 		}, 'error!')
 	})
+
+	it('should (un)mount object(createRef) refs', () => {
+		let container = document.createElement('div')
+		let refs = createRef()
+
+		render(h('h1', {ref: refs}), container)
+		assert.notEqual(refs.current, null)
+		assert.equal(refs.current.nodeName, 'H1')
+
+		unmountComponentAtNode(container)
+		assert.equal(refs.current, null)
+	})
+
+	it('should forward refs', () => {
+		let container = document.createElement('div')
+		let refs = createRef()
+		let A = forwardRef((props, ref) => h('h1', {...props, ref: refs}))
+
+		render(h(A), container)
+		assert.notEqual(refs.current, null)
+		assert.equal(refs.current.nodeName, 'H1')
+
+		unmountComponentAtNode(container)
+		assert.equal(refs.current, null)
+	})
+
+	it('should forward custom component refs', () => {
+		let container = document.createElement('div')
+		let refs = []
+
+		let AppDrawer = function () {
+			return document.createElement('x-span')
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
+
+		render(h(AppDrawer, {ref: (node) => refs.push(node && node.nodeName)}), container)
+		assert.html(container, `<x-span></x-span>`)
+		assert.deepEqual(refs, ['X-SPAN'])
+
+		unmountComponentAtNode(container)
+		assert.deepEqual(refs, ['X-SPAN', null])
+	})
 })
