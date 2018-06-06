@@ -38,9 +38,6 @@ var SharedLocalNameComment = '#comment'
 var SharedLocalNameEmpty = '#empty'
 var SharedLocalNameText = '#text'
 
-var SharedLinkedPrevious = 'prev'
-var SharedLinkedNext = 'next'
-
 var SharedSiteEvent = 'event'
 var SharedSitePromise = 'promise'
 var SharedSitePrototype = 'prototype'

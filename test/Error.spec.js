@@ -1115,7 +1115,7 @@ describe('Error', () => {
 		})
 	})
 
-	it('should handle nested componentWillUnmount errors', (done) => {
+	it('should handle nested componentWillUnmount errors', () => {
 		let container = document.createElement('div')
 		let stack = []
 
@@ -1176,7 +1176,6 @@ describe('Error', () => {
 			'ErrorBoundary componentDidCatch',
 			'ErrorBoundary componentWillUnmount'
 		])
-		done()
 	})
 
 	it('should use displayName for function components when defined', () => {
@@ -1199,5 +1198,51 @@ describe('Error', () => {
 
 		render(h(ErrorBoundary, A), container)
 		assert.html(refs, '<DisplayName><ErrorBoundary>')
+	})
+
+	it('should handle interleaved component errors', () => {
+		let container = document.createElement('div')
+		let stack = []
+		let refs = null
+
+		class A {
+			componentDidCatch(e) {
+				stack.push('catch:A')
+				this.badChildren = this.children
+				this.setState({})
+			}
+			render({children}) {
+				return this.badChildren === (this.children = children) ? h('div', 'ERR') : children
+			}
+		}
+
+		class B {
+			componentDidMount() {
+				stack.push('mount:B')
+			}
+			componentWillUnmount() {
+				stack.push('unmount:B')
+			}
+			render() {
+				return h('b', 'B')
+			}
+		}
+
+		class C {
+			componentDidCatch(e) {
+				stack.push('catch:C')
+			}
+			render() {
+				return h('c', h(A, 'Hello', () => {
+					throw new Error('x')
+				}, 'World'), h(B))
+			}
+		}
+
+		hydrate(h(C, {ref: (value) => refs = value}), container)
+		assert.deepEqual(stack, ['catch:A', 'mount:B'])
+
+		refs.setState({a: 'x'})
+		assert.deepEqual(stack, ['catch:A', 'mount:B', "catch:A"])
 	})
 })

@@ -41,13 +41,29 @@ ObjectDefineProperties(ObjectDefineProperty(List[SharedSitePrototype], SymbolFor
 	 */
 	remove: {
 		value: function remove (node) {
-			if (this.length === 0)
-				return node
-
 			node.next.prev = node.prev
 			node.prev.next = node.next
 
 			this.length--
+
+			return node
+		}
+	},
+	/**
+	 * @alias List#replace
+	 * @memberof List
+	 * @type {function}
+	 * @param {object} node
+	 * @param {object} before
+	 * @return {object}
+	 */
+	replace: {
+		value: function replace (node, before) {
+			node.next = before.next
+			node.prev = before.prev
+
+			before.next.prev = node
+			before.prev.next = node
 
 			return node
 		}

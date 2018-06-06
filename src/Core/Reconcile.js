@@ -4,17 +4,14 @@
  * @param {Element} host
  */
 function reconcileElement (element, snapshot, host) {
-	if (!element.active)
-		return
-
 	if (element.key !== snapshot.key)
-		return commitMountElementReplace(element, snapshot, host)
+		return commitMountElementReplacement(element, snapshot, host)
 
 	if (element.id === SharedElementPromise && snapshot.id === SharedElementPromise)
 		return commitMountElementPromise(element, host, element.type = snapshot.type)
 
 	if (element.type !== snapshot.type)
-		return commitMountElementReplace(element, snapshot, host)
+		return commitMountElementReplacement(element, snapshot, host)
 
 	switch (element.id) {
 		case SharedElementText:

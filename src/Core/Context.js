@@ -10,6 +10,15 @@ function ContextProvider (props, context) {
 }
 ContextProvider[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
 	/**
+	 * @alias ContextProvider#constructor
+	 * @memberof ContextProvider
+	 * @type {function}
+	 * @this {Component}
+	 */
+	constructor: {
+		value: ContextProvider
+	},
+	/**
 	 * @alias ContextProvider#getInitialState
 	 * @memberof ContextProvider
 	 * @type {function}
@@ -74,6 +83,15 @@ function ContextConsumer (props, context) {
 	Component.call(this, props, context)
 }
 ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
+	/**
+	 * @alias ContextConsumer#constructor
+	 * @memberof ContextConsumer
+	 * @type {function}
+	 * @this {Component}
+	 */
+	constructor: {
+		value: ContextConsumer
+	},
 	/**
 	 * @alias ContextConsumer#getInitialState
 	 * @memberof ContextConsumer

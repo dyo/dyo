@@ -36,6 +36,15 @@ function PureComponent (props, context) {
 }
 PureComponent[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
 	/**
+	 * @alias PureComponent#constructor
+	 * @memberof PureComponent
+	 * @type {function}
+	 * @this {Component}
+	 */
+	constructor: {
+		value: PureComponent
+	},
+	/**
 	 * @alias PureComponent#shouldComponentUpdate
 	 * @memberof PureComponent
 	 * @type {function}
@@ -63,6 +72,12 @@ function CustomComponent (props, context) {
 }
 CustomComponent[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
 	/**
+	 * @type {function}
+	 */
+	constructor: {
+		value: CustomComponent
+	},
+	/**
 	 * @alias CustomComponent#render
 	 * @memberof CustomComponent
 	 * @type {function}
@@ -72,7 +87,7 @@ CustomComponent[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
 	 */
 	render: {
 		value: function (props) {
-			return createElementComponent(disableRef(this[SymbolForElement], noop).type, props)
+			return createElementComponent(this[SymbolForElement].type, props)
 		}
 	}
 })
@@ -111,7 +126,7 @@ function createClass (description) {
 }
 
 /**
- * @param {object} description
+ * @param {(function|object)} description
  * @param {function} constructor
  * @return {function}
  */
@@ -152,22 +167,23 @@ function createComponentPrototype (prototype) {
 }
 
 /**
- * @param {function} type
+ * @param {function} constructor
+ * @param {object} prototype
  * @return {function}
  */
-function getComponentClass (type) {
-	if (!type[SharedSitePrototype] || !type[SharedSitePrototype][SharedSiteRender])
-		if (type[SymbolForComponent])
-			return type[SymbolForComponent]
-		else if (isValidNodeComponent(type))
-			return type[SymbolForComponent] = CustomComponent
+function getComponentClass (constructor, prototype) {
+	if (!prototype || !prototype[SharedSiteRender])
+		if (constructor[SymbolForComponent])
+			return constructor[SymbolForComponent]
+		else if (isValidNodeComponent(constructor))
+			return constructor[SymbolForComponent] = CustomComponent
 		else
-			return createComponentClass(type, function () {})
+			return createComponentClass(constructor, function () {})
 
-	if (!type[SharedSitePrototype][SymbolForComponent])
-		createComponentPrototype(type[SharedSitePrototype])
+	if (!prototype[SymbolForComponent])
+		createComponentPrototype(prototype)
 
-	return type
+	return constructor
 }
 
 /**
@@ -202,11 +218,12 @@ function getComponentDescriptor (name, value) {
  * @return {Element}
  */
 function mountComponentInstance (element) {
-	var children = element
+	var type = element.type
 	var props = element.props
+	var children = element
 	var host = element.host
 	var context = element.context = host.context || getNodeContext(element)
-	var owner = getLifecycleInstance(element, getComponentClass(element.type), props, context)
+	var owner = getLifecycleInstance(element, getComponentClass(type, type[SharedSitePrototype]), props, context)
 	var state = owner.state = owner.state || {}
 
 	owner.props = props
@@ -258,7 +275,7 @@ function updateComponentElement (element, snapshot, host, signature) {
 	try {
 		updateComponentChildren(element, snapshot, signature)
 	} catch (err) {
-		delegateErrorBoundary(element, host, err)
+		recoverErrorBoundary(element, host, err)
 	}
 }
 

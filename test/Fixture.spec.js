@@ -321,21 +321,6 @@ describe('Fixture', () => {
 		])
 	})
 
-	it('should not remove children from empty children', () => {
-		let element = h('h1', 1)
-		let children = element.children
-		let child = children.next
-		let next = null
-
-		next = children.remove(child)
-		assert.lengthOf(children, 0)
-		assert.equal(next, child)
-
-		next = children.remove(next)
-		assert.lengthOf(children, 0)
-		assert.equal(next, child)
-	})
-
 	it('should render conditional components', (done) => {
 		let container = document.createElement('div')
 		let idx = 0

@@ -280,7 +280,6 @@ function getDOMPortal (element, container) {
 function getDOMQuery (element, parent, previousSibling, nextSibling) {
 	var id = element.id
 	var type = id > SharedElementComment ? '#text' : element.type.toLowerCase()
-	var props = element.props
 	var children = element.children
 	var length = children.length
 	var target = previousSibling.active ? previousSibling.owner.nextSibling : parent.owner.firstChild
@@ -324,7 +323,7 @@ function getDOMQuery (element, parent, previousSibling, nextSibling) {
 	}
 
 	if (node && node.attributes)
-		for (var attributes = node.attributes, i = attributes.length - 1; i >= 0; --i)
+		for (var props = element.props, attributes = node.attributes, i = attributes.length - 1; i >= 0; --i)
 			if (props[type = attributes[i].name] == null)
 				node.removeAttribute(type)
 

@@ -10,6 +10,15 @@ function ForwardRef (props, context) {
 }
 ForwardRef[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
 	/**
+	 * @alias ForwardRef#constructor
+	 * @memberof ForwardRef
+	 * @type {function}
+	 * @this {Component}
+	 */
+	constructor: {
+		value: ForwardRef
+	},
+	/**
 	 * @alias ForwardRef#render
 	 * @memberof ForwardRef
 	 * @type {function}
@@ -24,20 +33,11 @@ ForwardRef[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
 })
 
 /**
- * @param {Element} element
- * @param {function} xmlns
- * @return {Element}
- */
-function disableRef (element, xmlns) {
-	return merge(element, {xmlns: xmlns})
-}
-
-/**
  * @param {function} children
  * @return {function}
  */
 function forwardRef (children) {
-	return disableRef(createElement(ForwardRef), children)
+	return createElementForward(ForwardRef, children)
 }
 
 /**

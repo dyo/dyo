@@ -18,8 +18,14 @@ function getLifecycleCallback (element, callback) {
  */
 function getLifecycleRefs (element, owner, value) {
 	try {
-		if (element.id === SharedElementComponent && typeof element.xmlns === 'function')
-			return
+		if (element.id === SharedElementComponent)
+			switch (element.owner.constructor) {
+				case CustomComponent:
+				case ContextProvider:
+				case ContextConsumer:
+				case ForwardRef:
+					return
+			}
 
 		switch (typeof value) {
 			case 'object':

@@ -160,7 +160,7 @@ function createElementFragment (iterable) {
 }
 
 /**
- * @param {Element} type
+ * @param {function} type
  * @param {object} props
  * @return {Element}
  */
@@ -177,19 +177,26 @@ function createElementComponent (type, props) {
 }
 
 /**
+ * @param {any} type
+ * @param {function} xmlns
+ * @return {Element}
+ */
+function createElementForward (type, xmlns) {
+	var element = createElement(type)
+
+	element.xmlns = xmlns
+
+	return element
+}
+
+/**
  * @param {object} iterable
  * @return {List}
  */
 function createElementChildren (iterable) {
 	var children = new List()
-	var i = 0
 
-	if (ArrayIsArray(iterable))
-		for (; i < iterable.length; ++i)
-			getElementChildren(children, iterable[i], i)
-	else
-		getElementChildren(children, iterable, i)
-
+	getElementChildren(children, iterable, 0)
 	createElementBoundary(children)
 
 	return children
@@ -227,16 +234,6 @@ function createElementUnknown (element, key) {
 function createElementBoundary (children) {
 	children.insert(createElementEmpty(SharedKeyHead), children.next)
 	children.insert(createElementEmpty(SharedKeyTail), children)
-}
-
-/**
- * @param {Element} element
- * @param {Element} snapshot
- * @param {List} children
- */
-function replaceElementChildren (element, snapshot, children) {
-	children.insert(snapshot, element)
-	children.remove(element)
 }
 
 /**
@@ -283,7 +280,11 @@ function getElementChildren (children, element, index) {
  * @return {any}
  */
 function getElementType (element, snapshot, props) {
-	return pickout(props, snapshot.props), element.xmlns = snapshot.xmlns, snapshot.type
+	element.xmlns = snapshot.xmlns
+
+	pickout(props, snapshot.props)
+
+	return snapshot.type
 }
 
 /**
@@ -418,20 +419,20 @@ function getElementIdentity (type) {
 }
 
 /**
- * @param {object}  props
+ * @param {object} props
  * @return {boolean}
  */
 function isValidProps (props) {
-	if (props == null || typeof props !== 'object' || props[SymbolForIterator] !== undefined)
-		return false
+	if (typeof props === 'object' && props[SymbolForIterator] === undefined)
+		switch (props.constructor) {
+			default:
+				if (ArrayIsArray(props))
+					break
+			case Object:
+				return !thenable(props)
+		}
 
-	switch (props.constructor) {
-		default:
-			if (ArrayIsArray(props))
-				return false
-		case Object:
-			return !thenable(props)
-	}
+	return false
 }
 
 /**
@@ -495,13 +496,14 @@ function createComment (content, key) {
  * @public
  */
 function createElement (type, value) {
+	var properties = value != null ? value : {}
 	var identity = getElementIdentity(type)
-	var i = isValidProps(value) ? 2 : 1
+	var i = isValidProps(properties) ? 2 : 1
 	var length = arguments.length
 	var size = length - i
 	var index = 0
 	var id = identity > 0 ? identity : -identity
-	var props = i === 2 ? value : {}
+	var props = i === 2 ? properties : {}
 	var children = id !== SharedElementComponent ? new List() : undefined
 	var element = new Element(id)
 

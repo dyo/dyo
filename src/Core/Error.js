@@ -107,13 +107,6 @@ function createErrorStack (host, stack) {
 
 /**
  * @param {Element} element
- */
-function clearErrorBoundary (element) {
-	reconcileElement(element.children, getElementDefinition(), element)
-}
-
-/**
- * @param {Element} element
  * @param {any} err
  * @param {string} origin
  */
@@ -127,17 +120,39 @@ function invokeErrorBoundary (element, err, origin) {
  * @param {Exception} exception
  */
 function delegateErrorBoundary (element, host, exception) {
-	propagateErrorBoundary(element, host, host, exception)
+	propagateErrorBoundary(exception[SymbolForElement], host, host, exception)
 }
 
 /**
  * @param {Element} element
+ * @param {Element} host
  * @param {Exception} exception
- * @param {Component} owner
  */
-function catchErrorBoundary (element, exception, owner) {
-	if (owner && owner[SharedComponentDidCatch] && !owner[SymbolForException])
-		owner[SymbolForException] = getLifecycleBoundary(element, owner, owner[SymbolForException] = exception)
+function recoverErrorBoundary (element, host, exception) {
+	propagateErrorBoundary(exception[SymbolForElement], host, element, exception)
+}
+
+/**
+ * @param {Element} element
+ * @param {Element} host
+ * @param {Element} children
+ */
+function clearErrorBoundary (element, host, children) {
+	commitUnmountElementSiblings(children, element)
+	commitMountElementReplacement(element, getElementDefinition(commitOwner(host)), host)
+}
+
+/**
+ * @param {Element} element
+ * @param {Component} owner
+ * @param {Exception} exception
+ */
+function catchErrorBoundary (element, owner, exception) {
+	if (owner[SharedComponentDidCatch])
+		if (!owner[SymbolForException])
+			owner[SymbolForException] = getLifecycleBoundary(element, owner, owner[SymbolForException] = exception)
+
+	return exception.bubbles
 }
 
 /**
@@ -148,10 +163,15 @@ function catchErrorBoundary (element, exception, owner) {
  * @param {Exception} exception
  */
 function propagateErrorBoundary (element, host, parent, exception) {
-	clearErrorBoundary(parent)
-	catchErrorBoundary(parent, exception, parent.owner)
+	if (element === parent)
+		if (element !== host)
+			throw exception
 
-	if (!exception.bubbles)
+	if (exception.origin !== SharedComponentWillUnmount)
+		if (exception.exception !== exception)
+			clearErrorBoundary(parent.children, parent, element)
+
+	if (!catchErrorBoundary(parent, Object(parent.owner), exception))
 		return
 
 	if (!isValidElement(parent.host))

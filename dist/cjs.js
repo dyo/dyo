@@ -41,9 +41,6 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	var SharedLocalNameEmpty = '#empty'
 	var SharedLocalNameText = '#text'
 	
-	var SharedLinkedPrevious = 'prev'
-	var SharedLinkedNext = 'next'
-	
 	var SharedSiteEvent = 'event'
 	var SharedSitePromise = 'promise'
 	var SharedSitePrototype = 'prototype'
@@ -75,7 +72,7 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	 * @return {Element}
 	 */
 	function getErrorBoundary (element, exception) {
-		return createElementEmpty(delegateErrorBoundary(element, element, exception))
+		return createElementEmpty(delegateErrorBoundary(element, element, exception.exception = exception))
 	}
 	
 	/**
