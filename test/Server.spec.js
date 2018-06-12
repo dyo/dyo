@@ -616,6 +616,63 @@ describe('Server', () => {
 		})
 	})
 
+	it('should render comments to string', () => {
+		assert.html(createComment('1st'), '<!--1st-->')
+		assert.html(h('div', 1, createComment('1st'), h('h1', 2)), '<div>1<!--1st--><h1>2</h1></div>')
+	})
+
+	it('should render comments to json', () => {
+		assert.json(createComment('1st'), `{"type":"#comment","props":{},"children":"1st"}`)
+		assert.json(createComment(1), `{"type":"#comment","props":{},"children":"1"}`)
+	})
+
+	it('should render comments to stream', (done) => {
+		let writable = new require('stream').Writable({
+			write(chunk, encoding, callback) {
+				output += chunk.toString()
+				callback()
+			}
+		})
+
+		let output = ''
+
+		let element = h('div', 1, createComment('1st'), h('h1'))
+
+		renderToNodeStream(element, writable, () => {
+			assert.html(output, '<div>1<!--1st--><h1></h1></div>')
+			done()
+		})
+	})
+
+	it('should not render a custom component that throws to string', () => {
+		let error = null
+
+		class ErrorBoundary {
+			componentDidCatch(err) {
+				error = err
+			}
+			render({children}) {
+				return children
+			}
+		}
+
+		let AppDrawer = function () {
+			throw 'error'
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
+
+		assert.html(h(ErrorBoundary, h(AppDrawer)), `<template></template>`)
+	})
+
+	it('should not render an invalid custom component to string', () => {
+		let AppDrawer = function () {
+			return {}
+		}
+		AppDrawer.prototype = Object.create(HTMLElement)
+
+		assert.html(h(AppDrawer, 1, h('h1', 'Hello')), `<template>1<h1>Hello</h1></template>`)
+	})
+
 	it('should catch errors', () => {
 		let error = null
 
@@ -687,63 +744,6 @@ describe('Server', () => {
 		renderToNodeStream(element, writable, () => {
 			assert.html(output, '')
 			assert.instanceOf(error, Error)
-			done()
-		})
-	})
-
-	it('should not render a custom component that throws to string', () => {
-		let error = null
-
-		class ErrorBoundary {
-			componentDidCatch(err) {
-				error = err
-			}
-			render({children}) {
-				return children
-			}
-		}
-
-		let AppDrawer = function () {
-			throw 'error'
-		}
-		AppDrawer.prototype = Object.create(HTMLElement)
-
-		assert.html(h(ErrorBoundary, h(AppDrawer)), `<template></template>`)
-	})
-
-	it('should not render an invalid custom component to string', () => {
-		let AppDrawer = function () {
-			return {}
-		}
-		AppDrawer.prototype = Object.create(HTMLElement)
-
-		assert.html(h(AppDrawer, 1, h('h1', 'Hello')), `<template>1<h1>Hello</h1></template>`)
-	})
-
-	it('should render comments to string', () => {
-		assert.html(createComment('1st'), '<!--1st-->')
-		assert.html(h('div', 1, createComment('1st'), h('h1', 2)), '<div>1<!--1st--><h1>2</h1></div>')
-	})
-
-	it('should render comments to json', () => {
-		assert.json(createComment('1st'), `{"type":"#comment","props":{},"children":"1st"}`)
-		assert.json(createComment(1), `{"type":"#comment","props":{},"children":"1"}`)
-	})
-
-	it('should render comments to stream', (done) => {
-		let writable = new require('stream').Writable({
-			write(chunk, encoding, callback) {
-				output += chunk.toString()
-				callback()
-			}
-		})
-
-		let output = ''
-
-		let element = h('div', 1, createComment('1st'), h('h1'))
-
-		renderToNodeStream(element, writable, () => {
-			assert.html(output, '<div>1<!--1st--><h1></h1></div>')
 			done()
 		})
 	})

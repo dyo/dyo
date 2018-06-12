@@ -41,13 +41,29 @@ ObjectDefineProperties(ObjectDefineProperty(List[SharedSitePrototype], SymbolFor
 	 */
 	remove: {
 		value: function remove (node) {
-			if (this.length === 0)
-				return node
-
 			node.next.prev = node.prev
 			node.prev.next = node.next
 
 			this.length--
+
+			return node
+		}
+	},
+	/**
+	 * @alias List#replace
+	 * @memberof List
+	 * @type {function}
+	 * @param {object} node
+	 * @param {object} before
+	 * @return {object}
+	 */
+	replace: {
+		value: function replace (node, before) {
+			node.next = before.next
+			node.prev = before.prev
+
+			before.next.prev = node
+			before.prev.next = node
 
 			return node
 		}
@@ -147,6 +163,19 @@ function assign (object, a, b) {
 }
 
 /**
+ * @param {object} object
+ * @param {object} a
+ * @return {object}
+ */
+function defaults (object, a) {
+	for (var key in a)
+		if (object[key] === undefined)
+			object[key] = a[key]
+
+	return object
+}
+
+/**
  * @param {Array<any>} haystack
  * @param {function} callback
  * @param {any?} thisArg
@@ -225,10 +254,7 @@ function compare (a, b) {
  * @return {boolean}
  */
 function is (a, b) {
-	if (a === b)
-		return a !== 0 || 1/a === 1/b
-
-	return a !== a && b !== b
+	return a === b ? (a !== 0 || 1/a === 1/b) : (a !== a && b !== b)
 }
 
 /**
@@ -239,11 +265,11 @@ function hash (str) {
 	for (var i = 0, code = 0; i < str.length; ++i)
 		code = ((code << 5) - code) + str.charCodeAt(i)
 
-	return code >>> 0
+	return (code >>> 0) - 9007199254740991
 }
 
 /**
- * @param {object}
+ * @param {object} object
  * @return {boolean}
  */
 function fetchable (object) {

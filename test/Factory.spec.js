@@ -90,6 +90,8 @@ describe('Factory', () => {
 			'createElement',
 			'createComment',
 			'createClass',
+			'createRef',
+			'forwardRef',
 			'unmountComponentAtNode',
 			'findDOMNode',
 			'h',

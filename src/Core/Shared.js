@@ -1,13 +1,13 @@
-var SharedElementPromise = 0
-var SharedElementFragment = 1
-var SharedElementPortal = 2
-var SharedElementSnapshot = 3
-var SharedElementComponent = 4
-var SharedElementCustom = 5
-var SharedElementNode = 6
-var SharedElementComment = 7
-var SharedElementText = 8
-var SharedElementEmpty = 9
+var SharedElementPromise = 1
+var SharedElementFragment = 2
+var SharedElementPortal = 3
+var SharedElementSnapshot = 4
+var SharedElementComponent = 5
+var SharedElementCustom = 6
+var SharedElementNode = 7
+var SharedElementComment = 8
+var SharedElementText = 9
+var SharedElementEmpty = 10
 
 var SharedComponentForceUpdate = 0
 var SharedComponentPropsUpdate = 1
@@ -18,7 +18,7 @@ var SharedRefsReplace = 1
 var SharedRefsRemove = 2
 var SharedRefsAssign = 3
 
-var SharedPropsMount = 0
+var SharedPropsInitial = 0
 var SharedPropsUpdate = 1
 
 var SharedMountQuery = 0

@@ -10,6 +10,15 @@ function ContextProvider (props, context) {
 }
 ContextProvider[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
 	/**
+	 * @alias ContextProvider#constructor
+	 * @memberof ContextProvider
+	 * @type {function}
+	 * @this {Component}
+	 */
+	constructor: {
+		value: ContextProvider
+	},
+	/**
 	 * @alias ContextProvider#getInitialState
 	 * @memberof ContextProvider
 	 * @type {function}
@@ -28,6 +37,7 @@ ContextProvider[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
 	 * @alias ContextProvider#render
 	 * @memberof ContextProvider
 	 * @type {function}
+	 * @this {Component}
 	 * @param {object} props
 	 * @return {any}
 	 */
@@ -74,6 +84,15 @@ function ContextConsumer (props, context) {
 }
 ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], {
 	/**
+	 * @alias ContextConsumer#constructor
+	 * @memberof ContextConsumer
+	 * @type {function}
+	 * @this {Component}
+	 */
+	constructor: {
+		value: ContextConsumer
+	},
+	/**
 	 * @alias ContextConsumer#getInitialState
 	 * @memberof ContextConsumer
 	 * @type {function}
@@ -90,6 +109,7 @@ ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
 	 * @alias ContextConsumer#render
 	 * @memberof ContextConsumer
 	 * @type {function}
+	 * @this {Component}
 	 * @param {object} props
 	 * @param {object} state
 	 * @return {any}
@@ -135,33 +155,19 @@ ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
 })
 
 /**
- * @param {object} value
- * @return {{Provider, Consumer}}
- */
-function createContextComponent (value) {
-	return {
-		/**
-		 * @param {object} props
-		 * @return {Element}
-		 */
-		Provider: function Provider (props) {
-			return createElement(ContextProvider, assign({}, value, props))
-		},
-		/**
-		 * @param {object} props
-		 * @return {Element}
-		 */
-		Consumer: function Consumer (props) {
-			return createElement(ContextConsumer, assign({}, value, props))
-		}
-	}
-}
-
-/**
  * @param {any} value
  * @return {{Provider, Consumer}}
  * @public
  */
 function createContext (value) {
-	return createContextComponent({value: value, children: noop})
+	return {
+		/**
+		 * @type {Element}
+		 */
+		Provider: createElement(ContextProvider, {value: value}),
+		/**
+		 * @type {Element}
+		 */
+		Consumer: createElement(ContextConsumer, {value: value, children: noop})
+	}
 }

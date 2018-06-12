@@ -31,6 +31,8 @@ const core = [
 	'../../src/Core/Error.js',
 	'../../src/Core/Event.js',
 	'../../src/Core/Component.js',
+	'../../src/Core/Lifecycle.js',
+	'../../src/Core/Refs.js',
 	'../../src/Core/Context.js',
 	'../../src/Core/Find.js',
 	'../../src/Core/Render.js',
@@ -110,6 +112,8 @@ dio.createPortal = createPortal
 dio.createElement = createElement
 dio.createComment = createComment
 dio.createClass = createClass
+dio.createRef = createRef
+dio.forwardRef = forwardRef
 dio.unmountComponentAtNode = unmountComponentAtNode
 dio.findDOMNode = findDOMNode
 dio.h = createElement

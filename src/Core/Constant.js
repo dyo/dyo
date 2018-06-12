@@ -1,3 +1,6 @@
+var Math = window.Math
+var Array = window.Array
+var Object = window.Object
 var WeakMap = window.WeakMap || WeakHash
 var Symbol = window.Symbol || Math.random
 var ArrayIsArray = Array.isArray

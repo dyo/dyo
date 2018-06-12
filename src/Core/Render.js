@@ -73,10 +73,10 @@ function updateContainerElement (element, snapshot, callback) {
  * @param {number} signature
  */
 function commitContainerElement (element, parent, container, signature) {
-	registry.set(parent.owner = container, parent)
-
-	if (signature === SharedMountOwner)
+	if (parent.owner = container, signature === SharedMountOwner)
 		setNodeDocument(parent)
 
 	commitMountElement(element, element, parent, parent, SharedOwnerAppend, signature)
+
+	registry.set(container, parent)
 }
