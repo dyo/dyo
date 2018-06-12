@@ -1,4 +1,4 @@
-/*!dio 9.0.4 @license MIT */
+/*!dio 9.1.0 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.0.4'}
+		var dio = {version: '9.1.0'}
 		
 		var SharedElementPromise = 1
 		var SharedElementFragment = 2
@@ -48,6 +48,9 @@
 		var SharedLocalNameEmpty = '#empty'
 		var SharedLocalNameText = '#text'
 		
+		var SharedLinkedPrevious = 'prev'
+		var SharedLinkedNext = 'next'
+		
 		var SharedSiteEvent = 'event'
 		var SharedSitePromise = 'promise'
 		var SharedSitePrototype = 'prototype'
@@ -73,6 +76,9 @@
 		var SharedGetDefaultProps = 'getDefaultProps'
 		var SharedDefaultProps = 'defaultProps'
 		
+		var Math = window.Math
+		var Array = window.Array
+		var Object = window.Object
 		var WeakMap = window.WeakMap || WeakHash
 		var Symbol = window.Symbol || Math.random
 		var ArrayIsArray = Array.isArray
@@ -263,7 +269,7 @@
 		 * @param {object} a
 		 * @return {object}
 		 */
-		function pickout (object, a) {
+		function defaults (object, a) {
 			for (var key in a)
 				if (object[key] === undefined)
 					object[key] = a[key]
@@ -350,10 +356,7 @@
 		 * @return {boolean}
 		 */
 		function is (a, b) {
-			if (a === b)
-				return a !== 0 || 1/a === 1/b
-		
-			return a !== a && b !== b
+			return a === b ? (a !== 0 || 1/a === 1/b) : (a !== a && b !== b)
 		}
 		
 		/**
@@ -415,9 +418,9 @@
 			this.type = null
 			this.props = null
 			this.children = null
-			this.xmlns = null
-			this.key = null
-			this.ref = null
+			this.xmlns = undefined
+			this.key = undefined
+			this.ref = undefined
 			this.cache = null
 			this.owner = null
 			this.context = null
@@ -669,11 +672,7 @@
 		 * @return {any}
 		 */
 		function getElementType (element, snapshot, props) {
-			element.xmlns = snapshot.xmlns
-		
-			pickout(props, snapshot.props)
-		
-			return snapshot.type
+			return element.xmlns = snapshot.xmlns, defaults(props, snapshot.props), snapshot.type
 		}
 		
 		/**
@@ -913,7 +912,7 @@
 			switch (id) {
 				case SharedElementComponent:
 					if (type[SharedDefaultProps])
-						pickout(props, getDefaultProps(element, type, props))
+						defaults(props, getDefaultProps(element, type, props))
 					break
 				case SharedElementPromise:
 				case SharedElementFragment:
@@ -1081,6 +1080,7 @@
 			this.error = err
 			this.origin = origin
 			this.bubbles = true
+			this.composed = false
 			this[SymbolForElement] = element
 		}
 		ObjectDefineProperties(Exception[SharedSitePrototype], {
@@ -1184,12 +1184,11 @@
 		}
 		
 		/**
-		 * @param {Element} element
 		 * @param {Element} host
 		 * @param {Exception} exception
 		 */
-		function delegateErrorBoundary (element, host, exception) {
-			propagateErrorBoundary(exception[SymbolForElement], host, host, exception)
+		function delegateErrorBoundary (host, exception) {
+			propagateErrorBoundary(exception[SymbolForElement], host, host, exception[SymbolForException] = exception)
 		}
 		
 		/**
@@ -1237,7 +1236,7 @@
 					throw exception
 		
 			if (exception.origin !== SharedComponentWillUnmount)
-				if (exception.exception !== exception)
+				if (!exception[SymbolForException])
 					clearErrorBoundary(parent.children, parent, element)
 		
 			if (!catchErrorBoundary(parent, Object(parent.owner), exception))
@@ -1473,23 +1472,23 @@
 		}
 		
 		/**
-		 * @param {function} constructor
+		 * @param {function} type
 		 * @param {object} prototype
 		 * @return {function}
 		 */
-		function getComponentClass (constructor, prototype) {
+		function getComponentClass (type, prototype) {
 			if (!prototype || !prototype[SharedSiteRender])
-				if (constructor[SymbolForComponent])
-					return constructor[SymbolForComponent]
-				else if (isValidNodeComponent(constructor))
-					return constructor[SymbolForComponent] = CustomComponent
+				if (type[SymbolForComponent])
+					return type[SymbolForComponent]
+				else if (isValidNodeComponent(type))
+					return type[SymbolForComponent] = CustomComponent
 				else
-					return createComponentClass(constructor, function () {})
+					return createComponentClass(type, function () {})
 		
 			if (!prototype[SymbolForComponent])
 				createComponentPrototype(prototype)
 		
-			return constructor
+			return type
 		}
 		
 		/**
@@ -2345,7 +2344,7 @@
 		 */
 		function commitMountElementReplacement (element, snapshot, host) {
 			var parent = element.parent
-			var sibling = getElementSibling(element, parent, 'next')
+			var sibling = getElementSibling(element, parent, SharedLinkedNext)
 		
 			commitUnmountElement(element, parent)
 		
@@ -2462,7 +2461,7 @@
 					case SharedElementPortal:
 						break
 					default:
-						element.owner = getElementBoundary(element, 'prev').owner
+						element.owner = getElementBoundary(element, SharedLinkedPrevious).owner
 				}
 			} catch (err) {
 				throwErrorException(element, err, SharedSiteRender)
@@ -2481,8 +2480,8 @@
 				element.owner = getNodeQuery(
 					element,
 					parent,
-					getElementDescription(getElementSibling(element, parent, 'prev')),
-					getElementSibling(element, parent, 'next')
+					getElementDescription(getElementSibling(element, parent, SharedLinkedPrevious)),
+					getElementSibling(element, parent, SharedLinkedNext)
 				)
 			)
 		}
@@ -2599,10 +2598,10 @@
 		
 			switch (sibling.id) {
 				case SharedElementPortal:
-					return commitOwnerInsert(element, getElementSibling(sibling, parent, 'next'), parent)
+					return commitOwnerInsert(element, getElementSibling(sibling, parent, SharedLinkedNext), parent)
 				case SharedElementPromise:
 				case SharedElementFragment:
-					return commitOwnerInsert(element, getElementBoundary(sibling, 'next'), parent)
+					return commitOwnerInsert(element, getElementBoundary(sibling, SharedLinkedNext), parent)
 				case SharedElementComponent:
 					return commitOwnerInsert(element, getElementDescription(sibling), parent)
 				case SharedElementSnapshot:

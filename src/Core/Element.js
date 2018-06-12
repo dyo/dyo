@@ -26,9 +26,9 @@ function Element (id) {
 	this.type = null
 	this.props = null
 	this.children = null
-	this.xmlns = null
-	this.key = null
-	this.ref = null
+	this.xmlns = undefined
+	this.key = undefined
+	this.ref = undefined
 	this.cache = null
 	this.owner = null
 	this.context = null
@@ -280,11 +280,7 @@ function getElementChildren (children, element, index) {
  * @return {any}
  */
 function getElementType (element, snapshot, props) {
-	element.xmlns = snapshot.xmlns
-
-	pickout(props, snapshot.props)
-
-	return snapshot.type
+	return element.xmlns = snapshot.xmlns, defaults(props, snapshot.props), snapshot.type
 }
 
 /**
@@ -524,7 +520,7 @@ function createElement (type, value) {
 	switch (id) {
 		case SharedElementComponent:
 			if (type[SharedDefaultProps])
-				pickout(props, getDefaultProps(element, type, props))
+				defaults(props, getDefaultProps(element, type, props))
 			break
 		case SharedElementPromise:
 		case SharedElementFragment:

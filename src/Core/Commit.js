@@ -111,7 +111,7 @@ function commitMountElementPromise (element, host, type) {
  */
 function commitMountElementReplacement (element, snapshot, host) {
 	var parent = element.parent
-	var sibling = getElementSibling(element, parent, 'next')
+	var sibling = getElementSibling(element, parent, SharedLinkedNext)
 
 	commitUnmountElement(element, parent)
 
@@ -228,7 +228,7 @@ function commitOwner (element) {
 			case SharedElementPortal:
 				break
 			default:
-				element.owner = getElementBoundary(element, 'prev').owner
+				element.owner = getElementBoundary(element, SharedLinkedPrevious).owner
 		}
 	} catch (err) {
 		throwErrorException(element, err, SharedSiteRender)
@@ -247,8 +247,8 @@ function commitOwnerQuery (element, parent) {
 		element.owner = getNodeQuery(
 			element,
 			parent,
-			getElementDescription(getElementSibling(element, parent, 'prev')),
-			getElementSibling(element, parent, 'next')
+			getElementDescription(getElementSibling(element, parent, SharedLinkedPrevious)),
+			getElementSibling(element, parent, SharedLinkedNext)
 		)
 	)
 }
@@ -365,10 +365,10 @@ function commitOwnerInsert (element, sibling, parent) {
 
 	switch (sibling.id) {
 		case SharedElementPortal:
-			return commitOwnerInsert(element, getElementSibling(sibling, parent, 'next'), parent)
+			return commitOwnerInsert(element, getElementSibling(sibling, parent, SharedLinkedNext), parent)
 		case SharedElementPromise:
 		case SharedElementFragment:
-			return commitOwnerInsert(element, getElementBoundary(sibling, 'next'), parent)
+			return commitOwnerInsert(element, getElementBoundary(sibling, SharedLinkedNext), parent)
 		case SharedElementComponent:
 			return commitOwnerInsert(element, getElementDescription(sibling), parent)
 		case SharedElementSnapshot:

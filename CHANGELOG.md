@@ -1,10 +1,10 @@
-## 9.1.0 (Unreleased)
+## 9.1.0 (12 June 2018)
 
 - Patch [#65](https://github.com/thysultan/dio.js/issues/65)
 - New: `forwardRef` top-level API.
 - New: `createRef` top-level API.
-- Improvments to Error Boundary implementation.
-- Improvments to `createElement` implementation.
+- Improvements to Error Boundary implementation.
+- Improvements to `createElement` implementation.
 
 ## 9.0.4 (19 April 2018)
 

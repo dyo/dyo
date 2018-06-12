@@ -167,23 +167,23 @@ function createComponentPrototype (prototype) {
 }
 
 /**
- * @param {function} constructor
+ * @param {function} type
  * @param {object} prototype
  * @return {function}
  */
-function getComponentClass (constructor, prototype) {
+function getComponentClass (type, prototype) {
 	if (!prototype || !prototype[SharedSiteRender])
-		if (constructor[SymbolForComponent])
-			return constructor[SymbolForComponent]
-		else if (isValidNodeComponent(constructor))
-			return constructor[SymbolForComponent] = CustomComponent
+		if (type[SymbolForComponent])
+			return type[SymbolForComponent]
+		else if (isValidNodeComponent(type))
+			return type[SymbolForComponent] = CustomComponent
 		else
-			return createComponentClass(constructor, function () {})
+			return createComponentClass(type, function () {})
 
 	if (!prototype[SymbolForComponent])
 		createComponentPrototype(prototype)
 
-	return constructor
+	return type
 }
 
 /**

@@ -167,7 +167,7 @@ function assign (object, a, b) {
  * @param {object} a
  * @return {object}
  */
-function pickout (object, a) {
+function defaults (object, a) {
 	for (var key in a)
 		if (object[key] === undefined)
 			object[key] = a[key]
@@ -254,10 +254,7 @@ function compare (a, b) {
  * @return {boolean}
  */
 function is (a, b) {
-	if (a === b)
-		return a !== 0 || 1/a === 1/b
-
-	return a !== a && b !== b
+	return a === b ? (a !== 0 || 1/a === 1/b) : (a !== a && b !== b)
 }
 
 /**

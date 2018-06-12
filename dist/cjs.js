@@ -1,4 +1,4 @@
-/*!dio 9.0.4 @license MIT */
+/*!dio 9.1.0 @license MIT */
 module.exports = function (dio, Element, mountComponentInstance, delegateErrorBoundary, getElementDefinition, createElementSnapshot, createElementEmpty, createElement, commitOwner) {/* eslint-disable */'use strict'
 
 	var SharedElementPromise = 1
@@ -41,6 +41,9 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	var SharedLocalNameEmpty = '#empty'
 	var SharedLocalNameText = '#text'
 	
+	var SharedLinkedPrevious = 'prev'
+	var SharedLinkedNext = 'next'
+	
 	var SharedSiteEvent = 'event'
 	var SharedSitePromise = 'promise'
 	var SharedSitePrototype = 'prototype'
@@ -72,7 +75,7 @@ module.exports = function (dio, Element, mountComponentInstance, delegateErrorBo
 	 * @return {Element}
 	 */
 	function getErrorBoundary (element, exception) {
-		return createElementEmpty(delegateErrorBoundary(element, element, exception.exception = exception))
+		return createElementEmpty(delegateErrorBoundary(element, exception))
 	}
 	
 	/**

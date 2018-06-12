@@ -1244,5 +1244,6 @@ describe('Error', () => {
 
 		refs.setState({a: 'x'})
 		assert.deepEqual(stack, ['catch:A', 'mount:B', "catch:A"])
+		assert.html(container, `<c><div>ERR</div><b>B</b></c>`)
 	})
 })

@@ -12,6 +12,7 @@ function Exception (element, err, origin) {
 	this.error = err
 	this.origin = origin
 	this.bubbles = true
+	this.composed = false
 	this[SymbolForElement] = element
 }
 ObjectDefineProperties(Exception[SharedSitePrototype], {
@@ -115,12 +116,11 @@ function invokeErrorBoundary (element, err, origin) {
 }
 
 /**
- * @param {Element} element
  * @param {Element} host
  * @param {Exception} exception
  */
-function delegateErrorBoundary (element, host, exception) {
-	propagateErrorBoundary(exception[SymbolForElement], host, host, exception)
+function delegateErrorBoundary (host, exception) {
+	propagateErrorBoundary(exception[SymbolForElement], host, host, exception[SymbolForException] = exception)
 }
 
 /**
@@ -168,7 +168,7 @@ function propagateErrorBoundary (element, host, parent, exception) {
 			throw exception
 
 	if (exception.origin !== SharedComponentWillUnmount)
-		if (exception.exception !== exception)
+		if (!exception[SymbolForException])
 			clearErrorBoundary(parent.children, parent, element)
 
 	if (!catchErrorBoundary(parent, Object(parent.owner), exception))
