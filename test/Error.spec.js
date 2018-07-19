@@ -1246,4 +1246,34 @@ describe('Error', () => {
 		assert.deepEqual(stack, ['catch:A', 'mount:B', "catch:A"])
 		assert.html(container, `<c><div>ERR</div><b>B</b></c>`)
 	})
+
+	it('should error from constructor with refs', () => {
+		let container = document.createElement('div')
+		let stack = []
+
+		class ErrorBoundary {
+			componentDidCatch(err, {componentStack}) {
+				stack.push(err)
+			}
+			render({children}) {
+				return h('div', children)
+			}
+		}
+
+		let A = class {
+			constructor() {
+				throw 'Error!'
+			}
+			render() {
+				return 1
+			}
+		}
+
+		assert.doesNotThrow(() => {
+			render(h(ErrorBoundary, h(A, {get ref() { return stack.push('ref') }})), container)
+		})
+
+		assert.html(container, '')
+		assert.deepEqual(stack, ['ref', 'Error!'])
+	})
 })

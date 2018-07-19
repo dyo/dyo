@@ -149,27 +149,32 @@ function commitUnmountElement (element, parent) {
  * @param {Element} host
  */
 function commitUnmountElementChildren (element, parent, host) {
-	switch (element.active = false, element.id) {
-		case SharedElementComponent:
-			if (element.children)
-				commitUnmountElementComponent(element, parent, host, element.children)
-			break
-		case SharedElementText:
-		case SharedElementEmpty:
-		case SharedElementComment:
-			return willNodeUnmount(element, parent, host)
-		case SharedElementPortal:
-			if (element.active = (element !== host && parent.id > SharedElementSnapshot))
-				return commitUnmountElement(element, parent)
-		default:
-			for (var children = element.children, length = children.length; length > 0; --length)
-				commitUnmountElementChildren(children = children.next, element, host)
+	if (element.active)
+		try {
+			switch (element.id) {
+				case SharedElementComponent:
+					// if (element.children)
+					commitUnmountElementComponent(element, parent, host, element.children)
+					break
+				case SharedElementText:
+				case SharedElementEmpty:
+				case SharedElementComment:
+					return willNodeUnmount(element, parent, host)
+				case SharedElementPortal:
+					if (element !== host && parent.id > SharedElementSnapshot)
+						return commitUnmountElement(element, parent)
+				default:
+					for (var children = element.children, length = children.length; length > 0; --length)
+						commitUnmountElementChildren(children = children.next, element, host)
 
-			willNodeUnmount(element, parent, host)
-	}
+					willNodeUnmount(element, parent, host)
+			}
 
-	if (element.ref)
-		commitOwnerRefs(element, element.ref, SharedRefsRemove)
+			if (element.ref)
+				commitOwnerRefs(element, element.ref, SharedRefsRemove)
+		} finally {
+			element.active = false
+		}
 }
 
 /**

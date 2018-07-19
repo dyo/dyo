@@ -562,4 +562,40 @@ describe('Render', () => {
 		render(h('input', {ref: (node) => refs = node, defaultValue: 0, value: undefined}), container)
 		assert.equal(refs.value, '')
 	})
+
+	it('should not set form property on input', () => {
+		let container = document.createElement('div')
+
+		assert.doesNotThrow(() => {
+			render(h('form',
+				h('input', {type: 'radio', form: '', name: 'device', value: 'computer'}),
+				h('input', {type: 'radio', form: null, name: 'device', value: 'mobile'})
+			), container)
+		})
+
+		assert.html(container, `
+			<form>
+				<input type="radio" form="" name="device" value="computer">
+				<input type="radio" name="device" value="mobile">
+			</form>
+		`)
+	})
+
+	it('should set form attribute on element', () => {
+		let container = document.createElement('div')
+
+		assert.doesNotThrow(() => {
+			render(h('div',
+				h('span', {form: ''}),
+				h('span', {form: null})
+			), container)
+		})
+
+		assert.html(container, `
+			<div>
+				<span form=""></span>
+				<span></span>
+			</div>
+		`)
+	})
 })

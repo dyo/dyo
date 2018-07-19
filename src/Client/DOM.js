@@ -135,6 +135,11 @@ function setDOMProps (element, name, value, xmlns, signature) {
 		case 'height':
 			if (element.type === 'img')
 				return setDOMAttribute(element, name, value, '')
+			break
+		case 'form':
+			if (element.type === 'input')
+				return setDOMAttribute(element, name, value, '')
+			break
 	}
 
 	if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 2)
