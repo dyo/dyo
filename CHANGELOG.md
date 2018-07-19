@@ -1,4 +1,4 @@
-## 9.1.0 (Unreleased)
+## 9.1.1 (19 July 2018)
 
 - Patch [#68](https://github.com/thysultan/dio.js/issues/68)
 - Patch [#69](https://github.com/thysultan/dio.js/issues/69)

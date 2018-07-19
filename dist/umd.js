@@ -1,4 +1,4 @@
-/*!dio 9.1.0 @license MIT */
+/*!dio 9.1.1 @license MIT */
 ;(function (window, __) {
 	'use strict'
 
@@ -6,7 +6,7 @@
 
 	function factory (module, exports) {
 		
-		var dio = {version: '9.1.0'}
+		var dio = {version: '9.1.1'}
 		
 		var SharedElementPromise = 1
 		var SharedElementFragment = 2
@@ -2386,7 +2386,6 @@
 				try {
 					switch (element.id) {
 						case SharedElementComponent:
-							// if (element.children)
 							commitUnmountElementComponent(element, parent, host, element.children)
 							break
 						case SharedElementText:

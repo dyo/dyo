@@ -153,7 +153,6 @@ function commitUnmountElementChildren (element, parent, host) {
 		try {
 			switch (element.id) {
 				case SharedElementComponent:
-					// if (element.children)
 					commitUnmountElementComponent(element, parent, host, element.children)
 					break
 				case SharedElementText:
