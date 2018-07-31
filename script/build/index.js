@@ -6,15 +6,23 @@ const UglifyJS = require('uglify-js')
 const UglifyES = require('uglify-es')
 const package = require('../../package.json')
 
-let filesize = NaN
 let search = "'{{%body%}}'"
 
 const options = {compress: {}}
 const strict = `/* eslint-disable */'use strict'`
+
 const filenames = {
-	umd: 'umd.js',
-	esm: 'esm.js',
-	cjs: 'cjs.js'
+	development: {
+		umd: 'dio.umd.development.js',
+		esm: 'dio.esm.development.js',
+		cjs: 'dio.cjs.development.js'
+	},
+
+	production: {
+		umd: 'dio.umd.production.js',
+		esm: 'dio.esm.production.js',
+		cjs: 'dio.cjs.production.js'
+	}
 }
 
 const shared = [
@@ -94,6 +102,12 @@ const pad = (content, tabs) => {
 
 const modulize = (content) => {
 	return content + '\n' + api.replace(/(dio)\.(\w+).*/g, 'export var $2 = dio.$2') + '\nexport default dio'
+}
+
+const replaceNodeEnv = (code, productive) => {
+	const replacement = productive ? "'production'" : "'development'";
+
+	return code.replace(/process\.env\.NODE_ENV/g, replacement);
 }
 
 const factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
@@ -181,45 +195,59 @@ const comment = (version, license) => {
 	return `/*!dio ${version} @license MIT */\n`
 }
 
-const bundle = (module, files, location) => {
-	let version = package.version
-	let license = package.license
-	let filename = filenames[module]
-	let filepath = location+filename
-	var factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
+const bundle = (module, files, location, productive) => {
+	const
+		version = package.version,
+		license = package.license,
+		filename = filenames[productive ? 'production' : 'development'][module],
+		filepath = location+filename,
+		factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim(),
 
-	let content = wrapper(module, files.map(builder).join('\n'), factory, version, license)
-			content = (content.head + content.body + '\n' + content.tail).trim()+'\n'
+		contentParts =
+			wrapper(module, files.map(builder).join('\n'), factory, version, license),
+
+		content = (
+			contentParts.head
+			+ replaceNodeEnv(contentParts.body, productive)
+			+ '\n' + contentParts.tail
+		).trim()+'\n'
 
 	fs.writeFileSync(path.join(__dirname, filepath), content)
 
 	switch (module) {
 		case 'esm':
-			minify(UglifyES, {content, filename, module, filepath})
+			minify(UglifyES, {content, filename, module, filepath}, false)
+			break
 		case 'cjs':
+			minify(UglifyJS, {content, filename, module, filepath}, false)
+			break
+		case 'umd':
+			minify(UglifyJS, {content, filename, module, filepath}, productive)
 			break
 		default:
-			minify(UglifyJS, {content, filename, module, filepath})
+			throw new Error('Illegal module type: ' + module)
 	}
 }
 
-const minify = (uglify, {content, module, filename, filepath}) => {
-	const min = filepath.replace(module, module+'.min')
-	const map = min.replace('.js', '.js.map')
+const minify = (uglify, {content, module, filename, filepath}, determineGzipFileSize) => {
+	const
+		min = filepath.replace('.js', '.min.js'),
+		map = min.replace('.js', '.js.map'),
 
-	const compressed = uglify.minify({[filename]: content}, {
-    sourceMap: {
-      filename: filename,
-      url: filename.replace('.js', '.min.js.map')
-    }
-	})
+		compressed = uglify.minify({[filename]: content}, {
+			sourceMap: {
+				filename: filename,
+				url: filename.replace('.js', '.min.js.map')
+			}
+		})
 
 	if (compressed.error) {
-		let {message, filename, line, col} = compressed.error
+		const {message, filename, line, col} = compressed.error
+
 		return console.error(message, filename, `${line}:${col}`)
 	}
 
-	if (module === 'umd') {
+	if (determineGzipFileSize) {
 		gzipsize(compressed.code)
 	}
 
@@ -232,27 +260,26 @@ const estimate = (num) => {
 }
 
 const gzipsize = (content) => {
-	var size = parseInt(zlib.gzipSync(content, {level: 9}).length)/1000
+	const
+		size = parseInt(zlib.gzipSync(content, {level: 9}).length)/1000,
+		kbSize = '~'+Math.trunc(size+.1)+'kb',
+		readpath = path.join(__dirname, '../../README.md')
 
-	if (size !== filesize) {
-		var kbSize = '~'+Math.trunc(size+.1)+'kb'
+	fs.writeFileSync(readpath, fs.readFileSync(readpath).toString().replace(/(-\s+)~?\d+kb/, '$1'+kbSize))
 
-		if (Math.trunc(size) !== Math.trunc(filesize)) {
-			var readpath = path.join(__dirname, '../../README.md')
-
-			fs.writeFileSync(readpath, fs.readFileSync(readpath).toString().replace(/(-\s+)~?\d+kb/, '$1'+kbSize))
-		}
-	}
-
-	console.log('\ngzip: ~' + (filesize ? filesize + 'kb –> ~' : '') +size+'kb')
-
-	filesize = size
+	console.log('\ngzip: ~'+size+'kb')
 }
 
 const resolve = () => {
-	bundle('umd', umd, '../../dist/')
-	bundle('cjs', cjs, '../../dist/')
-	bundle('esm', esm, '../../dist/')
+	// development bundles
+	bundle('umd', umd, '../../dist/', false)
+	bundle('cjs', cjs, '../../dist/', false)
+	bundle('esm', esm, '../../dist/', false)
+
+	// production bundles
+	bundle('umd', umd, '../../dist/', true)
+	bundle('cjs', cjs, '../../dist/', true)
+	bundle('esm', esm, '../../dist/', true)
 
 	console.log('build complete..')
 }

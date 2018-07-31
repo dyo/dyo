@@ -36,7 +36,8 @@ If you find a bug in the source code, you can help by
 
 Test make us of the [mocha](https://mochajs.org/) framework and [chai](chaijs.com) assertion library.
 
-The following command will run  the complete test suite.
+The following command will run  the complete test suite (for both development environment
+and production environment).
 
 ```
 npm test
@@ -44,8 +45,14 @@ npm test
 
 The following runs an interactive test watcher.
 
+For development environment:
 ```
-npm run test:watch
+npm run test-watch-dev
+```
+
+For production environment:
+```
+npm run test-watch-prod
 ```
 
 ### Source
@@ -70,7 +77,7 @@ npm run build
 Alternatively you can run the following to generate a build everytime you make changes to `src/`.
 
 ```
-npm run build:watch
+npm run build-watch
 ```
 
 ### Documentation
