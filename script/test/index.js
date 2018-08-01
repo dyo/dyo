@@ -113,9 +113,9 @@ let nextTick = (callback, tick) => {
 
 Object.assign(assert, {html, json, trace})
 Object.assign(global,
-  process.env.NODE_ENV === 'production'
-    ? require('../../dist/dio.umd.production.js')
-    : require('../../dist/dio.umd.development.js'))
+  process.env.NODE_ENV === 'development'
+    ? require('../../dist/dio.umd.development.js')
+    : require('../../dist/dio.umd.production.js'))
 Object.assign(global, {
   assert,
   expect,

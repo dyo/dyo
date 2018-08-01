@@ -1,8 +1,8 @@
 describe('Fixture', () => {
 	let umdfile =
-		process.env.NODE_ENV === 'production'
-			? '../dist/dio.umd.production.js'
-			: '../dist/dio.umd.development.js'
+		process.env.NODE_ENV === 'development'
+			? '../dist/dio.umd.development.js'
+			: '../dist/dio.umd.production.js'
 
 	let pkgfile = '../package.json'
 
