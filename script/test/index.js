@@ -111,6 +111,12 @@ let nextTick = (callback, tick) => {
     return setTimeout(callback, 20)
 }
 
+console.log(
+  '\n============================\n'
+  + ' Unit tests for '
+  + (process.env.NODE_ENV === 'development' ? 'development' : 'production')
+  + '\n============================')
+
 Object.assign(assert, {html, json, trace})
 Object.assign(global,
   process.env.NODE_ENV === 'development'
