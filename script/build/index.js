@@ -6,7 +6,8 @@ const UglifyJS = require('uglify-js')
 const UglifyES = require('uglify-es')
 const package = require('../../package.json')
 
-let search = "'{{%body%}}'"
+const bodyMarker = "'{{%body%}}'"
+const fileMarker = "'{{%file%}}'"
 
 const options = {compress: {}}
 const strict = `/* eslint-disable */'use strict'`
@@ -105,9 +106,9 @@ const modulize = (content) => {
 }
 
 const replaceNodeEnv = (code, productive) => {
-	const replacement = productive ? "'production'" : "'development'";
+	const replacement = productive ? "'production'" : "'development'"
 
-	return code.replace(/process\.env\.NODE_ENV/g, replacement);
+	return code.replace(/process\.env\.NODE_ENV/g, replacement)
 }
 
 const factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim()
@@ -151,18 +152,25 @@ const template = `
 if (typeof module === 'function') module(${internals})
 `.trim()
 
-const parse = (head, body, tail, factory) => {
-	if (factory.indexOf(search) === -1)
+const parse = (head, body, tail, factory, productive) => {
+	if (factory.indexOf(bodyMarker) === -1 || factory.indexOf(fileMarker) === -1)
 		throw 'invalid umd wrapper'
 
-	return factory.replace(search,'\n'+pad(head+body+tail, 2))
+	const file =
+		productive	
+			? './dio.cjs.production.js'
+			: './dio.cjs.development.js'
+
+	return factory
+			.replace(bodyMarker,'\n'+pad(head+body+tail, 2))
+			.replace(fileMarker, `'${file}'`)
 }
 
 const builder = (file) => {
 	return fs.readFileSync(path.join(__dirname, file), 'utf8')
 }
 
-const wrapper = (module, content, factory, version, license) => {
+const wrapper = (module, content, factory, version, license, productive) => {
 	var head = `var dio = {version: '${version}'}\n\n`
 	var expo = '\n'+api.trim()
 	var temp = '\n\nreturn dio'
@@ -179,13 +187,13 @@ const wrapper = (module, content, factory, version, license) => {
 		case 'esm':
 			return {
 				head: comment(version, license),
-				body: parse(head, content, expo+temp, modulize(factory)),
+				body: parse(head, content, expo+temp, modulize(factory), productive),
 				tail: '/*!/dio*/'
 			}
 		default:
 			return {
 				head: comment(version, license),
-				body: parse(head, content, expo+'\n\n'+template+temp, factory),
+				body: parse(head, content, expo+'\n\n'+template+temp, factory, productive),
 				tail: '/*!/dio*/'
 			}
 	}
@@ -204,7 +212,7 @@ const bundle = (module, files, location, productive) => {
 		factory = fs.readFileSync(path.join(__dirname, 'UMD.js'), 'utf8').trim(),
 
 		contentParts =
-			wrapper(module, files.map(builder).join('\n'), factory, version, license),
+			wrapper(module, files.map(builder).join('\n'), factory, version, license, productive),
 
 		content = (
 			contentParts.head
@@ -271,6 +279,12 @@ const gzipsize = (content) => {
 }
 
 const resolve = () => {
+	const distPath = path.join(__dirname, '../../dist')
+
+	if (!fs.existsSync(distPath)) {
+		fs.mkdirSync(distPath)
+	}
+
 	// development bundles
 	bundle('umd', umd, '../../dist/', false)
 	bundle('cjs', cjs, '../../dist/', false)
@@ -293,7 +307,7 @@ const watcher = (file) => {
 		console.log('\nwatching..', 'src/')
 	} else {
 		if (file.indexOf('package.json') > -1) {
-			delete require.cache[require.resolve('../../package.json')];
+			delete require.cache[require.resolve('../../package.json')]
 			Object.assign(package, require('../../package.json'))
 		}
 		console.log('\nchanged: ' + file)
