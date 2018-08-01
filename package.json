@@ -46,7 +46,7 @@
     "test": "cross-env NODE_ENV=development nyc mocha --harmony --recursive --require script/test && cross-env NODE_ENV=production nyc --no-clean mocha --harmony --recursive --require script/test",
     "test-watch-dev": "cross-env NODE_ENV=development mocha --harmony --recursive --require script/test --watch",
     "test-watch-prod": "cross-env NODE_ENV=production mocha --harmony --recursive --require script/test --watch",
-    "test-debug-dev": "mocha --harmony --recursive --require script/test",
+    "test-debug-dev": "cross-env NODE_ENV=development mocha --harmony --recursive --require script/test",
     "test-debug-prod": "cross-env NODE_ENV=production mocha --harmony --recursive --require script/test",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
