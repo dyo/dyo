@@ -1,3 +1,7 @@
+## 9.1.2 (not yet released)
+
+- Improvements to build scripts and test scripts [#72](https://github.com/thysultan/dio.js/issues/72): Separate development and production packages
+
 ## 9.1.1 (19 July 2018)
 
 - Patch [#68](https://github.com/thysultan/dio.js/issues/68)

@@ -10,7 +10,7 @@
 	/* istanbul ignore next */
 
 	if (typeof exports === 'object' && typeof module === 'object')
-		module['exports'] = factory(window['process'] && window['process']['exit'] && typeof __ === 'function' && __('./cjs'))
+		module['exports'] = factory(window['process'] && window['process']['exit'] && typeof __ === 'function' && __('{{%file%}}'))
 	else if (typeof define === 'function' && define['amd'])
 		define(factory())
 	else

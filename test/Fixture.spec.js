@@ -1,5 +1,9 @@
 describe('Fixture', () => {
-	let umdfile = '../dist/umd'
+	let umdfile =
+		process.env.NODE_ENV === 'development'
+			? '../dist/dio.umd.development.js'
+			: '../dist/dio.umd.production.js'
+
 	let pkgfile = '../package.json'
 
 	it('should no-op reconcile', () => {
