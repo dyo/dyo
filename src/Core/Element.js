@@ -303,7 +303,11 @@ function getDisplayName (value) {
 		case 'symbol':
 			return getDisplayName(value.toString())
 		case 'function':
-			return getDisplayName(value[SharedSiteDisplayName] || value.name)
+			return value === ContextProvider
+				? 'ContextProvider'
+				: value === ContextConsumer
+				? 'ContextConsumer'
+				: getDisplayName(value[SharedSiteDisplayName] || value.name)
 		case 'object':
 			if (isValidElement(value))
 				return getDisplayName(value.type)
@@ -339,7 +343,7 @@ function getElementSibling (element, parent, direction) {
 
 /**
  * @param {Element} element
- * @param {Element}
+ * @return {Element}
  */
 function getElementParent (element) {
 	return element.id < SharedElementPortal ? getElementParent(element.parent) : element

@@ -160,14 +160,28 @@ ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
  * @public
  */
 function createContext (value) {
+	var
+		Provider = createElement(ContextProvider, {value: value}),
+		Consumer = createElement(ContextConsumer, {value: value, children: noop})
+
+	Object.defineProperty(Provider, SharedPropTypes, {
+		get: function () {
+			return Provider.type[SharedPropTypes]
+		},
+
+		set: function (propTypes) {
+			Provider.type[SharedPropTypes] = propTypes
+		}
+	})
+
 	return {
 		/**
 		 * @type {Element}
 		 */
-		Provider: createElement(ContextProvider, {value: value}),
+		Provider: Provider,
 		/**
 		 * @type {Element}
 		 */
-		Consumer: createElement(ContextConsumer, {value: value, children: noop})
+		Consumer: Consumer
 	}
 }

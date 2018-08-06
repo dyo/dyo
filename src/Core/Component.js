@@ -142,11 +142,16 @@ function createComponentClass (description, constructor) {
 
 	if (description[SharedGetDefaultProps])
 		constructor[SharedDefaultProps] = description[SharedGetDefaultProps]
+	
+	if (description[SharedPropTypes])
+		constructor[SharedPropTypes] = description[SharedPropTypes]
+
+	var descriptors = {};
 
 	for (var name in description)
-		description[name] = getComponentDescriptor(name, description[name])
+		descriptors[name] = getComponentDescriptor(name, description[name])
 
-	constructor[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], description)
+	constructor[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], descriptors)
 
 	return description[SymbolForComponent] = constructor
 }
@@ -233,6 +238,9 @@ function mountComponentInstance (element) {
 	owner[SymbolForContext] = element.cache = host.cache
 	owner[SymbolForElement] = element
 
+	if (process.env.NODE_ENV === 'development')
+		checkPropTypes(element, props)
+
 	if (owner[SharedGetInitialState])
 		owner.state = getLifecycleUpdate(element, SharedGetInitialState, props, state, context) || state
 
@@ -295,11 +303,15 @@ function updateComponentChildren (element, snapshot, signature) {
 
 	switch (signature) {
 		case SharedComponentPropsUpdate:
+			if (process.env.NODE_ENV === 'development')
+				checkPropTypes(element, nextProps)
+
 			if (owner[SharedComponentWillReceiveProps])
 				getLifecycleUpdate(element, SharedComponentWillReceiveProps, element.props = nextProps, nextContext, nextState)
 
 			if (tempState !== owner[SymbolForCache])
 				break
+
 		case SharedComponentForceUpdate:
 			tempState = nextState
 	}
@@ -465,5 +477,73 @@ function enqueueStateCallback (element, owner, callback) {
 			return callback.call(owner, owner.state, owner.props, owner.context)
 	} catch (err) {
 		invokeErrorBoundary(element, err, SharedSiteCallback)
+	}
+}
+
+// The following functions are only availabe/used by the development package of DIO
+if (process.env.NODE_ENV === 'development') {
+	var getComponentPathInfo = function (element) {
+		var
+			path = [],
+			currElement = element
+
+		while (currElement && currElement.type) {
+			path.push(getDisplayName(currElement))
+			currElement = currElement.parent
+		}
+
+		return path.join(' < ')
+	}
+
+	var checkPropTypes = function (element, props) {
+		var
+			propTypes = element.type[SharedPropTypes],
+			componentPath = null,
+			componentName,
+			propName,
+			validator,
+			result,
+			resultIsError,
+			errorMsg
+
+		componentName = getDisplayName(element)
+
+		for (propName in propTypes) {
+			if (propTypes.hasOwnProperty(propName)) {
+				errorMsg = null
+				validator = propTypes[propName]
+
+				if (typeof validator === 'function') {
+					try {
+						result = validator(props, propName, componentName, 'prop', propName)
+						resultIsError = result instanceof Error
+
+						if (result !== null && !resultIsError) {
+							errorMsg = 'Invalid validation result for prop "'
+								+ propName
+								+ '" of component '
+								+ componentName
+						} else if (resultIsError) {
+							errorMsg = result.message
+						}
+					} catch (e) {
+						errorMsg = 'An unexpected error has been thrown while validating prop "'
+							+ propName
+							+ '" of component '
+							+ componentName
+							+ ': '
+							+ (e && e.message ? e.message : e)
+					}
+
+					if (errorMsg !== null) {
+						console.error(
+							'Error on prop type validation: '
+								+ errorMsg
+								+ '\n    in '
+								+ getComponentPathInfo(element))
+					}
+				}
+			}
+		}
 	}
 }
