@@ -44,7 +44,8 @@ CounterInfo.displayName = 'CounterInfo';
 CounterInfo.propTypes = {
   value: PropTypes.integer,
   dummy1: PropTypes.invalidResult,
-  dummy2: PropTypes.unexpectedError
+  dummy2: PropTypes.unexpectedError,
+  dummy3: 'this is not a validator'
 };
 
 class Counter extends Component {

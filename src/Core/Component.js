@@ -145,8 +145,11 @@ function createComponentClass (description, constructor) {
 	
 	if (description[SharedPropTypes])
 		constructor[SharedPropTypes] = description[SharedPropTypes]
+	
+	if (description[SharedContextTypes])
+		constructor[SharedContextTypes] = description[SharedContextTypes]
 
-	var descriptors = {};
+	var descriptors = {}
 
 	for (var name in description)
 		descriptors[name] = getComponentDescriptor(name, description[name])
@@ -477,71 +480,93 @@ function enqueueStateCallback (element, owner, callback) {
 			return callback.call(owner, owner.state, owner.props, owner.context)
 	} catch (err) {
 		invokeErrorBoundary(element, err, SharedSiteCallback)
-	}
+	} 
 }
 
-// The following functions are only availabe/used by the development package of DIO
+// The following is only availabe in the development packages of DIO
 if (process.env.NODE_ENV === 'development') {
-	var getComponentPathInfo = function (element) {
+	/**
+	 * @param {Element} element
+	 * @param {object} props property object to validate
+	 * @param {boolean?} checkForContext indicator whether "propTypes" or "contextTypes"
+	 * 										shall be checked (default is false)
+	 * 
+	 * @throws {Exception} will be thrown if validation fails
+	 */
+	var checkPropTypes = function (element, props, checkForContext) {
 		var
-			path = [],
-			currElement = element
+			validationType = checkForContext			// 'propTypes' or 'contextTypes'
+				? SharedContextTypes
+				: SharedPropTypes,
 
-		while (currElement && currElement.type) {
-			path.push(getDisplayName(currElement))
-			currElement = currElement.parent
+			propTypes = element.type[validationType],	// object with validation functions
+			errorMsg = null,							// message of error to throw
+			validationSubject,							// 'props' or 'context'
+			componentName,								// display name of the component
+			propName,									// name/key of property to validate
+			propInfo,									// `propTypes.${propName} of component ${componentName}`
+														// or `contextTypes.${propName} of component ${componentName}`
+			validator,									// validator function
+			result,										// result of the validator function invocation
+			resultIsError								// true if result is instance of error, otherwise false
+
+		if (!propTypes || typeof propTypes !== 'object') {
+			return
 		}
 
-		return path.join(' < ')
-	}
-
-	var checkPropTypes = function (element, props) {
-		var
-			propTypes = element.type[SharedPropTypes],
-			componentPath = null,
-			componentName,
-			propName,
-			validator,
-			result,
-			resultIsError,
-			errorMsg
-
+		validationSubject = checkForContext ? 'context' : 'props'
 		componentName = getDisplayName(element)
 
 		for (propName in propTypes) {
 			if (propTypes.hasOwnProperty(propName)) {
-				errorMsg = null
 				validator = propTypes[propName]
+				
+				propInfo =
+					validationType
+						+ '.' + propName
+						+ ' of component '
+						+ componentName
 
-				if (typeof validator === 'function') {
+				if (typeof validator !== 'function') {
+					errorMsg = 'Validator '
+						+ propInfo
+						+ ' must be a function'
+				} else {
 					try {
-						result = validator(props, propName, componentName, 'prop', propName)
+						result = validator(props, propName, componentName, validationSubject, propName)
 						resultIsError = result instanceof Error
 
 						if (result !== null && !resultIsError) {
-							errorMsg = 'Invalid validation result for prop "'
-								+ propName
-								+ '" of component '
-								+ componentName
+							errorMsg = 'Invalid validation result for '
+								+ propInfo
 						} else if (resultIsError) {
 							errorMsg = result.message
 						}
 					} catch (e) {
-						errorMsg = 'An unexpected error has been thrown while validating prop "'
-							+ propName
-							+ '" of component '
-							+ componentName
+						errorMsg = 'An unexpected error has been thrown while validating '
+							+ propInfo
 							+ ': '
 							+ (e && e.message ? e.message : e)
 					}
+				}
 
-					if (errorMsg !== null) {
+				if (errorMsg !== null) {
+					errorMsg = 'Validation failure for '
+						+ propInfo
+						+ ': '
+						+ errorMsg
+
+					if (typeof console !== 'undefined') {
 						console.error(
-							'Error on prop type validation: '
-								+ errorMsg
-								+ '\n    in '
-								+ getComponentPathInfo(element))
+							'Error: '
+							+ errorMsg
+							+ '\n   Location:\n'
+							+ createErrorStack(element, '')
+								.replace(/^\s+|\s+$/g, '')	// adjust error stack string
+								.replace(/^/mg, '     '))
 					}
+
+					throwErrorException(element, new Error(errorMsg), validationType)
 				}
 			}
 		}
