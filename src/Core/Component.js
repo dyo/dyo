@@ -241,9 +241,6 @@ function mountComponentInstance (element) {
 	owner[SymbolForContext] = element.cache = host.cache
 	owner[SymbolForElement] = element
 
-	if (process.env.NODE_ENV === 'development')
-		checkPropTypes(element, props)
-
 	if (owner[SharedGetInitialState])
 		owner.state = getLifecycleUpdate(element, SharedGetInitialState, props, state, context) || state
 
@@ -306,9 +303,6 @@ function updateComponentChildren (element, snapshot, signature) {
 
 	switch (signature) {
 		case SharedComponentPropsUpdate:
-			if (process.env.NODE_ENV === 'development')
-				checkPropTypes(element, nextProps)
-
 			if (owner[SharedComponentWillReceiveProps])
 				getLifecycleUpdate(element, SharedComponentWillReceiveProps, element.props = nextProps, nextContext, nextState)
 
@@ -486,36 +480,37 @@ function enqueueStateCallback (element, owner, callback) {
 // The following is only availabe in the development packages of DIO
 if (process.env.NODE_ENV === 'development') {
 	/**
-	 * @param {Element} element
+	 * @param {function} type component class or function 
 	 * @param {object} props property object to validate
 	 * @param {boolean?} checkForContext indicator whether "propTypes" or "contextTypes"
 	 * 										shall be checked (default is false)
 	 * 
 	 * @throws {Exception} will be thrown if validation fails
 	 */
-	var checkPropTypes = function (element, props, checkForContext) {
+	var checkPropTypes = function (type, props, checkForContext) {
 		var
-			validationType = checkForContext			// 'propTypes' or 'contextTypes'
+			validationType = checkForContext	// 'propTypes' or 'contextTypes'
 				? SharedContextTypes
 				: SharedPropTypes,
 
-			propTypes = element.type[validationType],	// object with validation functions
-			errorMsg = null,							// message of error to throw
-			validationSubject,							// 'props' or 'context'
-			componentName,								// display name of the component
-			propName,									// name/key of property to validate
-			propInfo,									// `propTypes.${propName} of component ${componentName}`
-														// or `contextTypes.${propName} of component ${componentName}`
-			validator,									// validator function
-			result,										// result of the validator function invocation
-			resultIsError								// true if result is instance of error, otherwise false
+			propTypes = type[validationType],	// object with validation functions
+			errorMsg = null,					// message of error to throw
+			error,								// error to throw
+			validationSubject,					// 'props' or 'context'
+			componentName,						// display name of the component
+			propName,							// name/key of property to validate
+			propInfo,							// `propTypes.${propName} of component ${componentName}`
+												// or `contextTypes.${propName} of component ${componentName}`
+			validator,							// validator function
+			result,								// result of the validator function invocation
+			resultIsError						// true if result is instance of error, otherwise false
 
 		if (!propTypes || typeof propTypes !== 'object') {
 			return
 		}
 
 		validationSubject = checkForContext ? 'context' : 'props'
-		componentName = getDisplayName(element)
+		componentName = getDisplayName(type)
 
 		for (propName in propTypes) {
 			if (propTypes.hasOwnProperty(propName)) {
@@ -534,11 +529,15 @@ if (process.env.NODE_ENV === 'development') {
 				} else {
 					try {
 						result = validator(props, propName, componentName, validationSubject, propName)
-						resultIsError = result instanceof Error
+
+						resultIsError = result !== null
+							&& typeof result === 'object'
+							&& typeof result.message === 'string'
 
 						if (result !== null && !resultIsError) {
 							errorMsg = 'Invalid validation result for '
 								+ propInfo
+								+ '(must be null or an error object)'
 						} else if (resultIsError) {
 							errorMsg = result.message
 						}
@@ -556,19 +555,16 @@ if (process.env.NODE_ENV === 'development') {
 						+ ': '
 						+ errorMsg
 
+					error = new Error(errorMsg)
+				
 					if (typeof console !== 'undefined') {
-						console.error(
-							'Error: '
-							+ errorMsg
-							+ '\n   Location:\n'
-							+ createErrorStack(element, '')
-								.replace(/^\s+|\s+$/g, '')	// adjust error stack string
-								.replace(/^/mg, '     '))
+						console.error(error.toString())
 					}
 
-					throwErrorException(element, new Error(errorMsg), validationType)
+					throw error 
 				}
 			}
 		}
 	}
 }
+
