@@ -146,15 +146,15 @@ describe('Element', () => {
 
 		FunctionalComponent2.propTypes = () => null
 
-		FunctionalComponent1.displayName = 'SFRComponent1'
-		FunctionalComponent2.displayName = 'SFRComponent2'
+		FunctionalComponent1.displayName = 'SFComponent1'
+		FunctionalComponent2.displayName = 'SFComponent2'
 
 		ClassBasedComponent.propTypes = () => ({
 			name: () => null
 		})
 
 		if (process.env.NODE_ENV === 'development') {
-			assert.throws(task1, 'Validation failed for prop "name" of SFRComponent1 (location: prop, fullPropName: null, props: {"name":"Jane Doe"}')
+			assert.throws(task1, 'Validation failed for prop "name" of SFComponent1 (location: prop, fullPropName: null, props: {"name":"Jane Doe"}')
 			assert.doesNotThrow(task2)
 			assert.doesNotThrow(task3)
 		} else {
