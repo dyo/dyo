@@ -819,5 +819,19 @@ describe('Context', () => {
 
 		refs2.dispatchEvent(new Event('click'))
 		assert.html(container, `<button style="color: orange;">2</button><button>Colors!</button>`)
+	}),
+
+	it('should write and read propTypes of context providers properly', () => {
+		const 
+			TestCtx1 = createContext(),
+			TestCtx2 = createContext(),
+			propTypes1 = {},
+			propTypes2 = {}
+
+		TestCtx1.Provider.propTypes = propTypes1
+		TestCtx2.Provider.propTypes = propTypes2
+
+		assert.equal(TestCtx1.Provider.propTypes, propTypes1)
+		assert.equal(TestCtx2.Provider.propTypes, propTypes2)
 	})
 })

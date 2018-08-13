@@ -158,7 +158,6 @@ declare namespace dio {
 			static displayName?: string
 			static defaultProps?: Partial<any> 			// TODO: <any> is too lax
 			static propTypes?: ValidationMap<any>		// TODO: <any> is too lax
-			static contextTypes?: ValidationMap<any>	// TODO: <any> is too lax
 
 			constructor (props?: Readonly<P>, context?: Readonly<object>)
 

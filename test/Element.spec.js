@@ -106,5 +106,84 @@ describe('Element', () => {
 
 		assert.deepEqual(element.props, {})
 		assert.lengthOf(element.children, 3)
+	}),
+
+	it('should validate propTypes in development envoironment and ignore in production environment', () => {
+		const
+			FunctionalComponent1 = ({ name }) => name,
+			FunctionalComponent2 = ({ name }) => name,
+
+			ClassBasedComponent = class extends Component {
+				render() {
+					return this.props.name
+				}
+			},
+
+			task1 = () => {
+				render(
+					createElement(FunctionalComponent1, { name: 'Jane Doe' }),
+					document.createElement('div'))
+			},
+			
+			task2 = () => {
+				render(
+					createElement(FunctionalComponent2, { name: 'Jane Doe' }),
+					document.createElement('div'))
+			},
+			
+			task3 = () => {
+				render(
+					createElement(ClassBasedComponent, { name: 'Jane Doe' }),
+					document.createElement('div'))
+			}
+
+		FunctionalComponent1.propTypes = {
+			name: (props, propName, componentName, location, fullPropName) =>
+				new Error('Validation failed for prop '
+					+ `"${propName}" of ${componentName} `
+					+ `(location: ${location}, fullPropName: ${fullPropName}, props: ${JSON.stringify(props)})`)
+		}
+
+		FunctionalComponent2.propTypes = () => null
+
+		FunctionalComponent1.displayName = 'SFRComponent1'
+		FunctionalComponent2.displayName = 'SFRComponent2'
+
+		ClassBasedComponent.propTypes = () => ({
+			name: () => null
+		})
+
+		if (process.env.NODE_ENV === 'development') {
+			assert.throws(task1, 'Validation failed for prop "name" of SFRComponent1 (location: prop, fullPropName: null, props: {"name":"Jane Doe"}')
+			assert.doesNotThrow(task2)
+			assert.doesNotThrow(task3)
+		} else {
+			assert.doesNotThrow(task1)
+			assert.doesNotThrow(task2)
+			assert.doesNotThrow(task3)
+		}
+	}),
+
+	it('should validate propTypes of ContextProvider in development environment and ignore in production environment', () => {
+		const
+			TestCtx = createContext(),
+
+			task = () =>
+				render(
+					createElement(TestCtx.Provider, { value: 42 }),
+					document.createElement('div'))
+
+		TestCtx.Provider.propTypes = {
+			value: (props, propName, componentName, location, fullPropName) =>
+				new Error('Validation failed for prop '
+					+ `"${propName}" of ${componentName} `
+					+ `(location: ${location}, fullPropName: ${fullPropName}, props: ${JSON.stringify(props)})`)
+		}
+
+		if (process.env.NODE_ENV === 'development') {
+			assert.throws(task, 'Validation failed for prop "value" of ContextProvider (location: prop, fullPropName: null, props: {"value":42}')
+		} else {
+			assert.doesNotThrow(task)
+		}
 	})
 })

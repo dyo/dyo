@@ -154,6 +154,9 @@ ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
 	}
 })
 
+ContextProvider.displayName = 'ContextProvider'
+ContextConsumer.displayName = 'ContextConsumer'
+
 /**
  * @param {any} value
  * @return {{Provider, Consumer}}

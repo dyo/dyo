@@ -303,11 +303,7 @@ function getDisplayName (value) {
 		case 'symbol':
 			return getDisplayName(value.toString())
 		case 'function':
-			return value === ContextProvider
-				? 'ContextProvider'
-				: value === ContextConsumer
-				? 'ContextConsumer'
-				: getDisplayName(value[SharedSiteDisplayName] || value.name)
+			return getDisplayName(value[SharedSiteDisplayName] || value.name)
 		case 'object':
 			if (isValidElement(value))
 				return getDisplayName(value.type)
@@ -527,6 +523,7 @@ function createElement (type, value) {
 			if (type[SharedDefaultProps])
 				defaults(props, getDefaultProps(element, type, props))
 
+			/* istanbul ignore next */
 			if (process.env.NODE_ENV === 'development')
 				checkPropTypes(type, props)
 
