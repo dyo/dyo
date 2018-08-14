@@ -154,8 +154,8 @@ ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
 	}
 })
 
-ContextProvider.displayName = 'ContextProvider'
-ContextConsumer.displayName = 'ContextConsumer'
+ContextProvider[SharedSiteDisplayName] = 'ContextProvider'
+ContextConsumer[SharedSiteDisplayName] = 'ContextConsumer'
 
 /**
  * @param {any} value
@@ -169,10 +169,16 @@ function createContext (value) {
 		ContextProvider.call(this, props, context)
 	}
 
-	CustomContextProvider[SharedSitePrototype] =
-		ObjectCreate(ContextProvider[SharedSitePrototype])
+	// Make CustomContextProvider look like ContextProvider
 
-	CustomContextProvider.displayName = 'ContextProvider'
+	CustomContextProvider[SharedSitePrototype] =
+		ObjectCreate(ContextProvider[SharedSitePrototype], {
+			constructor: {
+				value: ContextProvider
+			}
+		})
+
+	CustomContextProvider[SharedSiteDisplayName] = ContextProvider[SharedSiteDisplayName]
 
 	Provider = createElement(CustomContextProvider, {value: value}),
 	Consumer = createElement(ContextConsumer, {value: value, children: noop})
