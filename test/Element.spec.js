@@ -110,57 +110,96 @@ describe('Element', () => {
 
 	it('should validate propTypes in development envoironment and ignore in production environment', () => {
 		const
-			FunctionalComponent1 = ({ name }) => name,
-			FunctionalComponent2 = ({ name }) => name,
+			FunctionalComponent1 = ({name}) => name,
+			FunctionalComponent2 = ({name}) => name,
+			FunctionalComponent3 = ({name}) => name,
+			FunctionalComponent4 = ({name}) => name,
 
-			ClassBasedComponent = class extends Component {
+			TestBase = class extends Component {
 				render() {
 					return this.props.name
 				}
 			},
 
-			task1 = () => {
+			ClassBasedComponent1 = class extends TestBase {},
+			ClassBasedComponent2 = class extends TestBase {},
+			ClassBasedComponent3 = class extends TestBase {},
+			ClassBasedComponent4 = class extends TestBase {},
+
+			runTask = (type, name) => {
 				render(
-					createElement(FunctionalComponent1, { name: 'Jane Doe' }),
+					createElement(type, {name}),
 					document.createElement('div'))
 			},
-			
-			task2 = () => {
-				render(
-					createElement(FunctionalComponent2, { name: 'Jane Doe' }),
-					document.createElement('div'))
-			},
-			
-			task3 = () => {
-				render(
-					createElement(ClassBasedComponent, { name: 'Jane Doe' }),
-					document.createElement('div'))
-			}
+
+			task1 = () => runTask(FunctionalComponent1, 'Jane Doe'),
+			task2 = () => runTask(FunctionalComponent2, 'Jane Doe'),
+			task3 = () => runTask(FunctionalComponent3, 'Jane Doe'),
+			task4 = () => runTask(FunctionalComponent4, 'Jane Doe'),
+			task5 = () => runTask(ClassBasedComponent1, 'John Doe'),
+			task6 = () => runTask(ClassBasedComponent2, 'John Doe'),
+			task7 = () => runTask(ClassBasedComponent3, 'John Doe'),
+			task8 = () => runTask(ClassBasedComponent4, 'John Doe')
+
+		FunctionalComponent1.displayName = 'FunctionComponent1'
+		FunctionalComponent2.displayName = 'FunctionComponent2'
+		FunctionalComponent3.displayName = 'FunctionComponent3'
+		FunctionalComponent4.displayName = 'FunctionComponent4'
+
+		ClassBasedComponent1.displayName = 'ClassComponent1'
+		ClassBasedComponent2.displayName = 'ClassComponent2'
+		ClassBasedComponent3.displayName = 'ClassComponent3'
+		ClassBasedComponent4.displayName = 'ClassComponent4'
 
 		FunctionalComponent1.propTypes = {
-			name: (props, propName, componentName, location, fullPropName) =>
-				new Error('Validation failed for prop '
-					+ `"${propName}" of ${componentName} `
-					+ `(location: ${location}, fullPropName: ${fullPropName}, props: ${JSON.stringify(props)})`)
+			name: () => null
 		}
 
-		FunctionalComponent2.propTypes = () => null
+		FunctionalComponent2.propTypes = {
+			name: (...args) => new Error(JSON.stringify(args)) 
+		}
 
-		FunctionalComponent1.displayName = 'SFComponent1'
-		FunctionalComponent2.displayName = 'SFComponent2'
+		FunctionalComponent3.propTypes = {
+			name: 'This is not a validator function!'
+		}
 
-		ClassBasedComponent.propTypes = () => ({
-			name: () => null
-		})
+		FunctionalComponent4.propTypes = {
+			name: () => 'This is an illegal validation result!'
+		}
+
+		ClassBasedComponent1.propTypes = () => null
+
+		ClassBasedComponent2.propTypes = {
+			name: (...args) => new Error(JSON.stringify(args)) 
+		}
+
+		ClassBasedComponent3.propTypes = {
+			name: 'This is not a validator function!'
+		}
+
+		ClassBasedComponent4.propTypes = {
+			name: () => 'This is an illegal validation result!'
+		}
 
 		if (process.env.NODE_ENV === 'development') {
-			assert.throws(task1, 'Validation failed for prop "name" of SFComponent1 (location: prop, fullPropName: null, props: {"name":"Jane Doe"}')
-			assert.doesNotThrow(task2)
-			assert.doesNotThrow(task3)
+			assert.doesNotThrow(task1)
+			assert.throws(task2, '[{"name":"Jane Doe"},"name","FunctionComponent2","prop",null]')
+			assert.throws(task3, 'Validator for propTypes.name of component FunctionComponent3 must be a function')
+			assert.throws(task4, 'Invalid return value for validator propTypes.name of component FunctionComponent4, must either be null or an object of type Error')
+
+			assert.doesNotThrow(task5)
+			assert.throws(task6, '[{"name":"John Doe"},"name","ClassComponent2","prop",null]')
+			assert.throws(task7, 'Validator for propTypes.name of component ClassComponent3 must be a function')
+			assert.throws(task8, 'Invalid return value for validator propTypes.name of component ClassComponent4, must either be null or an object of type Error')
 		} else {
 			assert.doesNotThrow(task1)
 			assert.doesNotThrow(task2)
 			assert.doesNotThrow(task3)
+			assert.doesNotThrow(task4)
+			assert.doesNotThrow(task5)
+			assert.doesNotThrow(task6)
+			assert.doesNotThrow(task7)
+			assert.doesNotThrow(task8)
 		}
 	}),
 
@@ -170,7 +209,7 @@ describe('Element', () => {
 
 			task = () =>
 				render(
-					createElement(TestCtx.Provider, { value: 42 }),
+					createElement(TestCtx.Provider, {value: 42}),
 					document.createElement('div'))
 
 		TestCtx.Provider.propTypes = {
