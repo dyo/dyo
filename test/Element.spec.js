@@ -213,14 +213,11 @@ describe('Element', () => {
 					document.createElement('div'))
 
 		TestCtx.Provider.propTypes = {
-			value: (props, propName, componentName, location, fullPropName) =>
-				new Error('Validation failed for prop '
-					+ `"${propName}" of ${componentName} `
-					+ `(location: ${location}, fullPropName: ${fullPropName}, props: ${JSON.stringify(props)})`)
+			value: (...args) => new Error(JSON.stringify(args)) 
 		}
 
 		if (process.env.NODE_ENV === 'development') {
-			assert.throws(task, 'Validation failed for prop "value" of ContextProvider (location: prop, fullPropName: null, props: {"value":42}')
+			assert.throws(task, '[{"value":42},"value","ContextProvider","prop",null]')
 		} else {
 			assert.doesNotThrow(task)
 		}
