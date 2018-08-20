@@ -1,4 +1,3 @@
-/* istanbul ignore next */
 /**
  * Determines the propTypes declaration of the component
  * 
@@ -18,7 +17,6 @@ function getPropTypes(type, props) {
     : null
 }
 
-/* istanbul ignore next */
 /**
  * Checks whether the props satisfy the propTypes declaration of the componet
  *

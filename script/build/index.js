@@ -48,6 +48,9 @@ const core = [
 	'../../src/Core/Commit.js',
 	'../../src/Core/Reconcile.js',
 	'../../src/Core/Node.js',
+]
+
+const devOnlyCoreFiles = [
 	'../../src/Core/PropTypes.js',
 ]
 
@@ -287,9 +290,9 @@ const resolve = () => {
 	}
 
 	// development bundles
-	bundle('umd', umd, '../../dist/', false)
+	bundle('umd', [...umd, ...devOnlyCoreFiles], '../../dist/', false)
 	bundle('cjs', cjs, '../../dist/', false)
-	bundle('esm', esm, '../../dist/', false)
+	bundle('esm', [...esm, ...devOnlyCoreFiles], '../../dist/', false)
 
 	// production bundles
 	bundle('umd', umd, '../../dist/', true)
