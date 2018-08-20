@@ -32,6 +32,7 @@ const shared = [
 
 const core = [
 	...shared,
+	'../../src/Core/Check.js',
 	'../../src/Core/Constant.js',
 	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
