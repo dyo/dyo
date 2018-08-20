@@ -32,7 +32,6 @@ const shared = [
 
 const core = [
 	...shared,
-	'../../src/Core/Check.js',
 	'../../src/Core/Constant.js',
 	'../../src/Core/Utility.js',
 	'../../src/Core/Element.js',
@@ -48,7 +47,8 @@ const core = [
 	'../../src/Core/Render.js',
 	'../../src/Core/Commit.js',
 	'../../src/Core/Reconcile.js',
-	'../../src/Core/Node.js'
+	'../../src/Core/Node.js',
+	'../../src/Core/PropTypes.js',
 ]
 
 const cjs = [
