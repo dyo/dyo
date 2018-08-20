@@ -1,0 +1,92 @@
+<style>.red{color:red;}</style>
+<h1>Boot: <time></time></h1>
+<h1>Update: <time></time></h1>
+<main id="main">Remove Me!</main>
+<script type=module>
+	import {h, render, Component, Fragment} from './dist/dio.es.js'
+	// import {h, render, Component, Fragment} from 'https://unpkg.com/dio.js@9.1.1/dist/esm.js'
+
+	var i = 0
+
+	// remove
+
+	// render(h( 'ul', [1, 2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [1, 2, 3].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+	// render(h( 'ul', [1, 2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [1, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+	// render(h( 'ul', [1, 2, 3, 4, 5, 6].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [1, 2, 4, 5, 6].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+
+	// add
+
+	// render(h( 'ul', [1, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [1, 2, 3, 4].map(v => h('li', {key: v}, v)) ), 'main')
+
+	// render(h( 'ul', [1, 2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [1, 2, 3, 4, 5].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+	// render(h( 'ul', [2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [1, 2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+
+	// sort
+
+	// render(h( 'ul', [2, 5, 6, 7].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [2, 3, 4, 5, 6].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+	// render(h( 'ul', [1, 2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [4, 3, 2, 1].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+	// render(h( 'ul', [1, 2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [4, 3, 2, 1, 0].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+	// render(h( 'ul', [1, 2, 4, 5, 6].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [2, 3, 4, 5, 6].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+	// render(h( 'ul', [2, 5, 6, 7].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+	// render(h( 'ul', [1, 0, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+
+	class A extends Component {
+		componentWillMount() {
+			console.log('componentWillMount')
+		}
+		componentDidMount() {
+			console.log('componentDidMount')
+		}
+		componentWillUnmount() {
+			console.log('componentWillUnmount')
+		}
+		render() {
+			return h('h1', {ref: fn}, 'Works!')
+		}
+	}
+
+	var fn = (a) => console.log(a)
+	var obj = {}
+
+	// render([h(A, {ref: obj }), h('div', [1, 2, 3], 4)], 'main')
+	// render('null', 'main')
+
+	var children = Array.from({length: 10000}, (v, i) => {
+		return h('h1', {[`exp-${i}`]: true, class: i % 2 === 0 ? 'red' : null}, i)
+	})
+
+	var start = Date.now()
+
+	render(h('div', {id: 'app'}, h('button', "update"), children), document.querySelector('main'))
+
+	var end = Date.now()
+
+	document.querySelector('h1 time').textContent = end-start
+
+	var start = Date.now()
+
+	render(h('div', {id: 'app'}, h('button', "update"), children), document.querySelector('main'))
+
+	var end = Date.now()
+
+	document.querySelector('h1:last-of-type time').textContent = end-start
+</script>

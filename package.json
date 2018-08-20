@@ -1,0 +1,37 @@
+{
+  "name": "dio.js",
+  "description": "r",
+  "version": "9.0.0",
+  "homepage": "https://github.com/thysultan/dio.js",
+  "license": "MIT",
+  "author": {
+    "name": "Sultan Tarimo",
+    "email": "sultantarimo@me.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thysultan/dio.js"
+  },
+  "bugs": {
+    "url": "https://github.com/thysultan/dio.js/issues"
+  },
+  "devDependencies": {
+    "rollup": "^0.64.1"
+  },
+  "main": "index.js",
+  "unpkg": "",
+  "jsdelivr": "",
+  "types": "",
+  "module": "index.js",
+  "files": [
+    "./dist/",
+    "./types/",
+    "./index.js"
+  ],
+  "scripts": {
+    "prepare": "npm run build",
+    "pretest": "npm run build",
+    "build": "rollup --config ./scripts/build.js",
+    "start": "rollup --config ./scripts/build.js --watch"
+  }
+}
