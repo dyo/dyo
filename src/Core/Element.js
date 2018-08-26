@@ -520,12 +520,14 @@ function createElement (type, value) {
 
 	switch (id) {
 		case SharedElementComponent:
-			if (type[SharedDefaultProps])
-				defaults(props, getDefaultProps(element, type, props))
+			var componentType = type === ForwardRef ? arguments[0] : type
+
+			if (componentType[SharedDefaultProps])
+				defaults(props, getDefaultProps(element, componentType, props))
 
 			/* istanbul ignore next */
 			if (process.env.NODE_ENV === 'development')
-				checkPropTypes(type, props)
+				checkPropTypes(componentType, props)
 
 			break
 		case SharedElementPromise:

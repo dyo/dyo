@@ -31,30 +31,16 @@ function checkPropTypes(type, props) {
     var componentName = getDisplayName(type)
 
     for (var propName in propTypes) {
-      var validator = propTypes[propName]
+      var
+        validator = propTypes[propName],
+        result = validator(props, propName, componentName, 'prop', null)
 
-      if (typeof validator !== 'function') {
-        throw new Error(
-          'Validator for propTypes.'
-            + propName
-            + ' of component '
-            + componentName
-            + ' must be a function')
-      }
-
-      var error = validator(props, propName, componentName, 'prop', null)
-
-      if (error !== null) {
-        if (error instanceof Error) {
-          throw error
-        } else {
-          throw new Error(
-            'Invalid return value for validator propTypes.'
-              + propName
-              + ' of component '
-              + componentName
-              + ', must either be null or an object of type Error')
-        }
+      if (result instanceof Error) {
+        throw result
+      } else if (result === false) {
+        throw new Error(`Invalid value for prop '${propName}' of '${componentName}'`)
+      } else if (result && result !== true) {
+        throw new Error(result)
       }
     }
   }

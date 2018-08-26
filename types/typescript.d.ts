@@ -144,7 +144,7 @@ declare namespace dio {
 		}
 
 		interface Validator<T> {
-			(props: T, propName: keyof T, componentName: string, location: string, propFullName: string | null): null | Error;
+			(props: T, propName: keyof T, componentName: string, location: string, propFullName: string | null): any;
 		}
 
 		type ValidationMap<T> = { [K in keyof T]-?: Validator<T[K]> }
