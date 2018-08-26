@@ -154,53 +154,20 @@ ContextConsumer[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototyp
 	}
 })
 
-ContextProvider[SharedSiteDisplayName] = 'ContextProvider'
-ContextConsumer[SharedSiteDisplayName] = 'ContextConsumer'
-
 /**
  * @param {any} value
  * @return {{Provider, Consumer}}
  * @public
  */
 function createContext (value) {
-	var CustomContextProvider, Provider, Consumer
-
-	CustomContextProvider = function (props, context) {
-		ContextProvider.call(this, props, context)
-	}
-
-	// Make CustomContextProvider look like ContextProvider
-
-	CustomContextProvider[SharedSitePrototype] =
-		ObjectCreate(ContextProvider[SharedSitePrototype], {
-			constructor: {
-				value: ContextProvider
-			}
-		})
-
-	CustomContextProvider[SharedSiteDisplayName] = ContextProvider[SharedSiteDisplayName]
-
-	Provider = createElement(CustomContextProvider, {value: value}),
-	Consumer = createElement(ContextConsumer, {value: value, children: noop})
-
-	Object.defineProperty(Provider, SharedPropTypes, {
-		get: function () {
-			return CustomContextProvider[SharedPropTypes]
-		},
-
-		set: function (propTypes) {
-			CustomContextProvider[SharedPropTypes] = propTypes
-		}
-	})
-
 	return {
 		/**
 		 * @type {Element}
 		 */
-		Provider: Provider,
+		Provider: createElement(ContextProvider, {value: value}),
 		/**
 		 * @type {Element}
 		 */
-		Consumer: Consumer
+		Consumer: createElement(ContextConsumer, {value: value, children: noop})
 	}
 }
