@@ -143,13 +143,21 @@ declare namespace dio {
 			createComponent?(element: Element): Node
 		}
 
+		interface Validator<T> {
+			(props: T, propName: keyof T, componentName: string, location: string, propFullName: string | null): any;
+		}
+
+		type ValidationMap<T> = { [K in keyof T]-?: Validator<T[K]> }
+
 		abstract class Component<P = {}, S = {}> {
 			state: Readonly<S>
 			props: Readonly<P>
 			context: object
 			refs: object
-			defaultProps?: Partial<P>
-			displayName?: string
+			
+			static displayName?: string
+			static defaultProps?: Partial<any> 			// TODO: <any> is too lax
+			static propTypes?: ValidationMap<any>		// TODO: <any> is too lax
 
 			constructor (props?: Readonly<P>, context?: Readonly<object>)
 

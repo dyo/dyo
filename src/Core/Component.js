@@ -143,10 +143,15 @@ function createComponentClass (description, constructor) {
 	if (description[SharedGetDefaultProps])
 		constructor[SharedDefaultProps] = description[SharedGetDefaultProps]
 
-	for (var name in description)
-		description[name] = getComponentDescriptor(name, description[name])
+	if (description[SharedPropTypes])
+		constructor[SharedPropTypes] = description[SharedPropTypes]
 
-	constructor[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], description)
+	var descriptors = {}
+
+	for (var name in description)
+		descriptors[name] = getComponentDescriptor(name, description[name])
+
+	constructor[SharedSitePrototype] = ObjectCreate(Component[SharedSitePrototype], descriptors)
 
 	return description[SymbolForComponent] = constructor
 }
@@ -465,5 +470,5 @@ function enqueueStateCallback (element, owner, callback) {
 			return callback.call(owner, owner.state, owner.props, owner.context)
 	} catch (err) {
 		invokeErrorBoundary(element, err, SharedSiteCallback)
-	}
+	} 
 }

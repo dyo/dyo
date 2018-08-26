@@ -339,7 +339,7 @@ function getElementSibling (element, parent, direction) {
 
 /**
  * @param {Element} element
- * @param {Element}
+ * @return {Element}
  */
 function getElementParent (element) {
 	return element.id < SharedElementPortal ? getElementParent(element.parent) : element
@@ -489,6 +489,7 @@ function createComment (content, key) {
  * @param {(object|any)?} value
  * @param {...any?} children
  * @return {Element}
+ * @throws {Error} if prop type validation fails
  * @public
  */
 function createElement (type, value) {
@@ -521,6 +522,11 @@ function createElement (type, value) {
 		case SharedElementComponent:
 			if (type[SharedDefaultProps])
 				defaults(props, getDefaultProps(element, type, props))
+
+			/* istanbul ignore next */
+			if (process.env.NODE_ENV === 'development')
+				checkPropTypes(type, props)
+
 			break
 		case SharedElementPromise:
 		case SharedElementFragment:
