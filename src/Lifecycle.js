@@ -1,111 +1,33 @@
 import * as Constant from './Constant.js'
-import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Component from './Component.js'
-import * as Exception from './Exception.js'
 
 /**
- * @param {object} element
- * @param {function} type
- * @param {object} props
- * @param {object} context
- * @return {object}
- */
-export function constructor (element, type, props, context) {
-	try {
-		return element.owner = new type(props, context)
-	} catch (err) {
-		throw err
-		// Exception.raise(element, err, Constant.constructor)
-	}
-}
-
-/**
- * @param {object} element
  * @param {object} owner
  * @param {function} value
+ * @return {*}
  */
-export function callback (element, owner, value) {
-	try {
-		if (typeof value === 'function') {
-			return value.call(owner, owner.state, owner.props, owner.context)
-		}
-	} catch (err) {
-		throw err
-		// Exception.raise(element, err, Constant.callback)
+export function callback (owner, value) {
+	if (typeof value === 'function') {
+		return value.call(owner, owner.state, owner.props)
 	}
 }
 
 /**
  * @param {object} element
  * @param {*?} value
- * @param {number?} from
+ * @param {object?} owner
  */
 export function refs (element, value, owner) {
-	try {
-		switch (typeof value) {
-			case 'function':
-				return value.call(element, owner)
-			case 'object':
-				return Utility.object(value).current = owner
-			default:
-				if (Component.valid(element.host.owner)) {
-					Utility.object(element.host.owner[Constant.refs])[value] = owner
-				}
-		}
-	} catch (err) {
-		throw err
-		// Exception.raise(element.host, err, Constant.refs)
-	}
-}
-
-/**
- * @param {object} element
- * @param {object} owner
- * @return {object}
- */
-export function render (element, owner) {
-	try {
-		return Element.from(owner.render(owner.props, owner.state, owner.context), Constant.key)
-	} catch (err) {
-		throw err
-		// Exception.raise(element, err, Constant.render)
-	}
-}
-
-/**
- * @param {object} element
- * @param {string} from
- */
-export function mount (element, from) {
-	try {
-		return Component.resolve(element, element.owner[from](), from)
-	} catch (err) {
-		throw err
-		// Exception.raise(element, err, from)
-	}
-}
-
-/**
- * @param {object} element
- * @param {string} from
- * @param {object} props
- * @param {object} state
- * @param {object} context
- * @return {any}
- */
-export function update (element, from, props, state, context) {
-	if (from != Constant.componentDidUpdate) {
-		element.active = Constant.update
-	}
-
-	try {
-		return Component.resolve(element, element.owner[from](props, state, context), from)
-	} catch (err) {
-		throw err
-		// Exception.raise(element, err, from)
-	} finally {
-		element.active = Constant.active
+	switch (typeof value) {
+		case 'function':
+			return value.call(element.host, owner, element)
+		case 'object':
+			return value.current = owner
+		default:
+			if (element.host.id === Constant.component) {
+				element.host.owner.refs[value] = owner
+			}
 	}
 }
 
@@ -114,44 +36,87 @@ export function update (element, from, props, state, context) {
  * @param {object} from
  * @param {object} value
  * @param {object} callback
+ * @param {object} owner
  * @param {object} props
  * @param {object} state
- * @param {object} context
+ * @return {*}
  */
-export function event (element, from, value, callback, props, state, context) {
-	try {
-		if (typeof callback === 'function') {
-			Component.resolve(element, callback.call(owner, value, props, state, context), from)
-		} else if (typeof callback.handleEvent === 'function') {
-			Component.resolve(element, callback.handleEvent(value, props, state, context), from)
-		}
-	} catch (err) {
-		throw err
-		// Exception.report(element, err, from + '(' + value.type + ')' + ':' + Element.display(callback.handleEvent || callback))
+export function event (element, from, value, callback, owner, props, state) {
+	if (typeof callback === 'function') {
+		return resolve(element, callback.call(owner, value, props, state), from)
+	} else if (typeof callback.handleEvent === 'function') {
+		return resolve(element, callback.handleEvent(value, props, state), from)
 	}
 }
 
 /**
  * @param {object} element
  * @param {string} from
- * @param {object} value
+ * @param {*} error
+ * @param {object} exception
  */
-export function exception (element, from, value) {
-	try {
-		Component.resolve(element, element.owner[from](value.error, value), from)
-	} catch (err) {
-		throw err
-		// Exception.raise(element, err, from)
-	} finally {
-		value.bubbles = false
-	}
+export function exception (element, from, error, exception) {
+	resolve(element, element.owner[from](error, exception), from)
+}
+
+/**
+ * @param {function} type
+ * @param {object} props
+ * @return {object}
+ */
+export function construct (type, props) {
+	return new type(props)
 }
 
 /**
  * @param {object} owner
- * @param {string} from
- * @return {boolean}
+ * @param {object} props
+ * @param {object} state
+ * @return {object}
  */
-export function has (owner, from) {
-	return typeof owner[from] === 'function'
+export function render (owner, props, state) {
+	return Element.from(owner.render(props, state), 0)
+}
+
+/**
+ * @param {object} element
+ * @param {string} from
+ */
+export function mount (element, from) {
+	return resolve(element, element.owner[from](), from)
+}
+
+/**
+ * @param {object} element
+ * @param {string} from
+ * @param {object} props
+ * @param {object} state
+ * @return {any}
+ */
+export function update (element, from, props, state) {
+	return resolve(element, element.owner[from](props, state), from)
+}
+
+/**
+ * @param {Element} element
+ * @param {object?} value
+ * @param {string} from
+ */
+export function resolve (element, value, from) {
+	if (value) {
+		switch (typeof value) {
+			case 'object':
+			case 'function':
+				switch (from) {
+					case Constant.getInitialState:
+					case Constant.shouldComponentUpdate:
+					case Constant.componentWillUnmount:
+						break
+					default:
+						Component.resolve(element, element.owner, value, Constant.state)
+				}
+		}
+	}
+
+	return value
 }

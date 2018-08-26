@@ -1,57 +1,51 @@
 import * as Constant from './Constant.js'
 import * as Utility from './Utility.js'
+import * as Schedule from './Schedule.js'
 import * as Commit from './Commit.js'
-import * as Component from './Component.js'
 
 /**
- * @param {object} host
- * @param {object} parent
+ * @param {number} pid
  * @param {object} element
  * @param {object} snapshot
  * @param {number} index
  */
-export function update (host, parent, element, snapshot, index) {
-	if (element.type !== snapshot.type) {
-		if (element.uuid !== Constant.thenable || snapshot.uuid !== Constant.thenable) {
-			return Commit.replace(host, parent, element, snapshot, index)
+export function update (pid, element, snapshot, index) {
+	if (element.type === snapshot.type) {
+		switch (element.id) {
+			case Constant.text:
+			case Constant.comment:
+				if (element.children !== snapshot.children) {
+					Schedule.commit(pid, Constant.content, element, element.children, element.children = snapshot.children)
+				}
+			case Constant.empty:
+				return
+			case Constant.component:
+				return Schedule.commit(pid, Constant.component, element, snapshot, Constant.update)
+			case Constant.thenable:
+				return Schedule.commit(pid, Constant.thenable, element, snapshot, Constant.update)
+			default:
+				if (element.children !== snapshot.children) {
+					children(pid, element, element.children, snapshot.children)
+				}
+				if (element.props !== snapshot.props) {
+					Schedule.commit(pid, Constant.props, element, props(element.props, element.props = snapshot.props), Constant.update)
+				}
 		}
-	}
-
-	switch (element.uuid) {
-		case Constant.text:
-		case Constant.empty:
-		case Constant.comment:
-			return content(element, element.children, snapshot.children)
-		case Constant.component:
-			return Component.update(host, parent, element, snapshot, Constant.object, Constant.update)
-		case Constant.thenable:
-			return Commit.thenable(host, parent, element, index, element.type = snapshot.type)
-		default:
-			children(host, element, element.children, snapshot.children)
-			props(element, element.props, snapshot.props)
+	} else {
+		type(pid, element.parent, element, snapshot, index)
 	}
 }
 
 /**
- * @param {object} element
- * @param {(string|number)} a
- * @param {(string|number)} b
- */
-export function content (element, a, b) {
-	if (a != b) {
-		Commit.content(element, element.children = b)
-	}
-}
-
-/**
- * @param {object} element
+ * @param {number} pid
+ * @param {object} parent
  * @param {object} a
  * @param {object} b
+ * @param {number} idx
  */
-export function props (element, a, b) {
-	if (a !== b) {
-		Commit.props(element, object(a, element.props = b), element.xmlns, Constant.update)
-	}
+export function type (pid, parent, a, b, idx) {
+	Schedule.commit(pid, Constant.mount, parent, parent.children[idx] = Commit.create(parent.host, parent, b, Constant.create), a)
+	Schedule.commit(pid, Constant.unmount, parent, Commit.destroy(parent, a), idx)
 }
 
 /**
@@ -59,7 +53,7 @@ export function props (element, a, b) {
  * @param {object} b
  * @return {object?}
  */
-export function object (a, b) {
+export function props (a, b) {
 	var size = 0
 	var diff = {}
 
@@ -76,7 +70,7 @@ export function object (a, b) {
 		if (prev !== next) {
 			if (typeof next !== 'object' || next === null) {
 				diff[++size, key] = next
-			} else if (next = object(prev || {}, next)) {
+			} else if (next = props(prev || {}, next)) {
 				diff[++size, key] = next
 			}
 		}
@@ -88,12 +82,13 @@ export function object (a, b) {
 }
 
 /**
- * @param {object} host
+ * @param {number} pid
  * @param {object} parent
  * @param {object} a
- * @param {number} b
+ * @param {object} b
  */
-export function children (host, parent, a, b) {
+export function children (pid, parent, a, b) {
+	var host = parent.host
 	var prev = parent
 	var next = parent
 	var alen = a.length
@@ -105,14 +100,18 @@ export function children (host, parent, a, b) {
 	var idx = 0
 	var ptr = 0
 
+	if (max < 0) {
+		return
+	}
+
 	// step 1, prefix/suffix
 	outer: {
 		while ((prev = a[idx]).key === (next = b[idx]).key) {
-			update(host, parent, prev, next, idx)
+			Schedule.commit(pid, Constant.update, prev, next, idx)
 			if (++idx > min) { break outer }
 		}
 		while ((prev = a[aend]).key === (next = b[bend]).key) {
-			update(host, parent, a[max] = prev, next, bend)
+			Schedule.commit(pid, Constant.update, a[max] = prev, next, bend)
 			if (--aend, --bend, --max, idx > --min) { break outer }
 		}
 	}
@@ -121,21 +120,21 @@ export function children (host, parent, a, b) {
 	if (idx > aend++) {
 		if (idx <= bend++) {
 			if (bend < blen) do {
-				Commit.mount(parent, a[--bend] = Commit.create(host, parent, b[bend], Constant.create), a[bend + 1])
+				Schedule.commit(pid, Constant.mount, parent, a[--bend] = Commit.create(host, parent, b[bend], Constant.create), a[bend + 1])
 			} while (idx < bend) else do {
-				Commit.mount(parent, a[--bend] = Commit.create(host, parent, b[bend], Constant.create), null)
+				Schedule.commit(pid, Constant.mount, parent, a[--bend] = Commit.create(host, parent, b[bend], Constant.create), null)
 			} while (idx < bend)
 		}
 	} else if ((ptr = idx) > bend++) {
-		do { Commit.unmount(parent, Commit.destroy(parent, a[idx++])) } while (idx < aend)
+		do { Schedule.commit(pid, Constant.unmount, parent, Commit.destroy(parent, a[idx]), idx++) } while (idx < aend)
 		a.splice(ptr, aend - bend)
 	} else {
-		sort(host, parent, a, b, idx, aend, bend)
+		sort(parent, a, b, idx, aend, bend)
 	}
 }
 
 /**
- * @param {object} host
+ * @param {number} pid
  * @param {object} parent
  * @param {object} a
  * @param {object} b
@@ -143,14 +142,15 @@ export function children (host, parent, a, b) {
  * @param {number} aend
  * @param {number} bend
  */
-export function sort (host, parent, a, b, idx, aend, bend) {
+export function sort (pid, parent, a, b, idx, aend, bend) {
+	var host = parent.host
 	var aidx = idx
 	var bidx = idx
-	var akey = []
-	var bkey = []
+	var akey = {}
+	var bkey = {}
 	var move = 0
-	var pos = bend
-	var child = parent
+	var post = bend
+	var node = parent
 
 	// step 3, map
 	while (aidx < aend | bidx < bend) {
@@ -161,28 +161,28 @@ export function sort (host, parent, a, b, idx, aend, bend) {
 	// step 4, sort
 	while (aidx > idx | bidx > idx) {
 		if (aidx > idx) {
-			if ((move = bkey[(child = a[--aidx]).key]) !== undefined) {
-				update(host, parent, child, b[move], move)
+			if ((move = bkey[(node = a[--aidx]).key]) !== undefined) {
+				Schedule.commit(pid, Constant.update, node, b[move], aidx)
 
 				if (move < aidx & aidx !== 0) {
-					Commit.mount(parent, child, a[move])
+					Schedule.commit(pid, Constant.mount, parent, node, a[move])
 					a.splice(aidx++, 1)
-					a.splice(move, 0, child)
+					a.splice(move, 0, node)
 					continue
 				}
 			} else {
-				Commit.unmount(parent, Commit.destroy(parent, child))
+				Schedule.commit(pid, Constant.unmount, parent, Commit.destroy(parent, node), aidx)
 				a.splice(aidx, 1)
-				if (--pos) { continue }
+				if (--post) { continue }
 			}
 		}
 
 		if (bidx > idx) {
-			if ((move = akey[(child = b[--bidx]).key]) === undefined) {
-				Commit.mount(parent, child = Commit.create(host, parent, child, Constant.create), a[pos])
-				a.splice(pos, 0, child)
+			if ((move = akey[(node = b[--bidx]).key]) === undefined) {
+				Schedule.commit(pid, Constant.mount, parent, node = Commit.create(host, parent, node, Constant.create), a[post])
+				a.splice(post, 0, node)
 			} else {
-				pos = move
+				post = move
 			}
 		}
 	}

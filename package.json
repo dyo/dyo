@@ -16,22 +16,27 @@
     "url": "https://github.com/thysultan/dio.js/issues"
   },
   "devDependencies": {
-    "rollup": "^0.64.1"
+    "eslint": "^5.4.0",
+    "rollup": "^0.64.1",
+    "esm": "^3.0.80"
   },
-  "main": "index.js",
-  "unpkg": "",
-  "jsdelivr": "",
-  "types": "",
-  "module": "index.js",
-  "files": [
-    "./dist/",
-    "./types/",
-    "./index.js"
-  ],
   "scripts": {
+    "lint": "eslint ./src",
+    "test": "node scripts/tests.js",
+    "build": "rollup --config scripts/build.config.js",
+    "start": "npm run build -- --watch",
     "prepare": "npm run build",
-    "pretest": "npm run build",
-    "build": "rollup --config ./scripts/build.js",
-    "start": "rollup --config ./scripts/build.js --watch"
-  }
+    "pretest": "npm run build"
+  },
+  "main": "dist/dio.cj.js",
+  "module": "dist/dio.es.js",
+  "types": "",
+  "files": [
+    "./types",
+    "./dist",
+    "./src",
+    "./pkg"
+  ],
+  "unpkg": "",
+  "jsdelivr": ""
 }

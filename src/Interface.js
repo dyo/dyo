@@ -1,14 +1,30 @@
 import * as Constant from './Constant.js'
+import * as Utility from './Utility.js'
 
-export function prepare (target, registry) {
-	target.textContent = ''
+/**
+ * @param {object} target
+ * @return {object}
+ */
+export function context () {
+	return {}
 }
 
+/**
+ * @param {object} parent
+ */
+export function prepare (parent) {
+	owner(parent).textContent = ''
+}
+
+/**
+ * @param {object} element
+ * @param {string} xmlns
+ * @param {number} from
+ * @return {object}
+ */
 export function create (element, xmlns, from) {
-	if (from === Constant.search) {
-		return search(element, index) || create(element, xmlns, -from)
-	} else {
-		switch (element.uuid) {
+	if (from === Constant.create) {
+		switch (element.id) {
 			case Constant.node:
 				if (xmlns) {
 					return document.createElementNS(xmlns, element.type)
@@ -20,55 +36,76 @@ export function create (element, xmlns, from) {
 				return document.createTextNode(element.children)
 			case Constant.comment:
 				return document.createComment(element.children)
-			case Constant.portal:
-				return target(element.type)
 			case Constant.fragment:
 				return document.createDocumentFragment()
+			case Constant.portal:
+				return target(element.type)
+			case Constant.component:
+				if (element.type.DOCUMENT_FRAGMENT_NODE === 11) {
+					return new element.type()
+				}
 		}
+	} else {
+		return search(element) || create(element, xmlns, -from)
 	}
-
-	return element.owner
 }
 
+/**
+ * @param {object} parent
+ * @param {object} element
+ */
 export function remove (parent, element) {
-	parent.owner.removeChild(element.owner)
+	owner(parent).removeChild(owner(element))
 }
 
+/**
+ * @param {object} parent
+ * @param {object} element
+ */
 export function append (parent, element) {
-	parent.owner.appendChild(element.owner)
+	owner(parent).appendChild(owner(element))
 }
 
+/**
+ * @param {object} parent
+ * @param {object} element
+ * @param {object} sibling
+ */
 export function insert (parent, element, sibling) {
-	parent.owner.insertBefore(element.owner, sibling.owner)
+	owner(parent).insertBefore(owner(element), owner(sibling))
 }
 
+/**
+ * @param {object} element
+ * @param {(string|number)} value
+ */
 export function content (element, value) {
-	element.owner.nodeValue = value
+	owner(element).nodeValue = value
 }
 
-export function valid (value, type) {
-	switch (type) {
-		case Constant.event:
-			return value.BUBBLING_PHASE === 3
-		case Constant.owner:
-		case Constant.component:
-			return value.ELEMENT_NODE === 1
-	}
-}
-
-export function owner (value) {
-	return value
-}
-
+/**
+ * @param {object} value
+ * @return {object}
+ */
 export function target (value) {
 	if (value) {
-		return typeof value === 'string' ? document.querySelector(value) : value
+		if (typeof value === 'string') {
+			return document.querySelector(value)
+		} else if (value.DOCUMENT_FRAGMENT_NODE === 11) {
+			return value
+		} else {
+			throw Error('Invalid target!')
+		}
 	} else {
 		return document.documentElement
 	}
 }
 
-export function namespace (element, xmlns) {
+/**
+ * @param {object} element
+ * @param {string} value
+ */
+export function xmlns (element, xmlns) {
 	switch (element.type) {
 		case 'svg':
 			return 'http://www.w3.org/2000/svg'
@@ -81,31 +118,38 @@ export function namespace (element, xmlns) {
 	}
 }
 
-export function event (element, event) {
-	return element.state[event.type]
-}
-
+/**
+ * @param {object} element
+ * @param {object} props
+ * @param {number} from
+ */
 export function props (element, props, from) {
 	switch (from) {
-		case Constant.update:
+		case Constant.create:
 			switch (element.type) {
 				case 'input':
-					return merge({type: null, step: null, min: null, max: null}, props)
+					return Utility.assign({type: null, step: null, min: null, max: null}, props)
 				case 'select':
 					if (props.defaultValue != null || props.multiple) {
 						return Utility.assign({value: props.defaultValue}, props)
 					}
 			}
-		case Constant.create:
+		case Constant.update:
 			return props
 	}
 }
 
+/**
+ * @param {object} element
+ * @param {string} name
+ * @param {*} value
+ * @param {string} xmlns
+ * @param {number} from
+ */
 export function commit (element, name, value, xmlns, from) {
 	switch (name) {
 		case 'style':
-
-			break
+			return style(element, name, value)
 		case 'className':
 			if (!xmlns && value) {
 				return property(element, name, value)
@@ -113,20 +157,20 @@ export function commit (element, name, value, xmlns, from) {
 		case 'class':
 			return attribute(element, 'class', value, '')
 		case 'xlink:href':
-			return attribute()(element, name, value, 'http://www.w3.org/1999/xlink')
+			return attribute(element, name, value, 'http://www.w3.org/1999/xlink')
 		case 'innerHTML':
 			return html(element, name, value ? value : '', [])
 		case 'dangerouslySetInnerHTML':
-			return commit(element, 'innerHTML', value && value.__html, xmlns, signature)
+			return commit(element, 'innerHTML', value && value.__html, xmlns, from)
 		case 'acceptCharset':
-			return commit(element, 'accept-charset', value, xmlns, signature)
+			return commit(element, 'accept-charset', value, xmlns, from)
 		case 'httpEquiv':
-			return commit(element, 'http-equiv', value, xmlns, signature)
+			return commit(element, 'http-equiv', value, xmlns, from)
 		case 'tabIndex':
-			return commit(element, name.toLowerCase(), value, xmlns, signature)
+			return commit(element, name.toLowerCase(), value, xmlns, from)
 		case 'autofocus':
 		case 'autoFocus':
-			return element.owner[value ? 'focus' : 'blur']()
+			return owner(element)[value ? 'focus' : 'blur']()
 		case 'defaultValue':
 			if (element.type === 'select') {
 				return
@@ -142,60 +186,92 @@ export function commit (element, name, value, xmlns, from) {
 			if (element.type === 'input') {
 				return attribute(element, name, value, '')
 			}
-			break
 	}
 
-	if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110 && name.length > 2) {
-		if (element.state[name]) {
-			element.state[name] = value
-		} else {
-			element.owner.addEventListener(name.substring(2).toLowerCase(), element, false)
-		}
-	} else {
-		switch (typeof value) {
-			case 'object':
+	switch (typeof value) {
+		case 'function':
+		case 'object':
+			if (name.substr(0, 2) === 'on' && name.length > 4) {
+				return listen(element, name.substring(2).toLowerCase(), value)
+			} else {
 				return property(element, name, value && element.props[name])
-			case 'string':
-			case 'number':
-			case 'boolean':
-				if (xmlns || !(name in element.owner)) {
-					return attribute(element, name, value, '')
-				}
-			default:
-				property(element, name, value)
-		}
+			}
+		case 'string':
+		case 'number':
+		case 'boolean':
+			if (xmlns || !(name in owner(element))) {
+				return attribute(element, name, value, '')
+			}
+		default:
+			property(element, name, value)
 	}
+}
+
+/**
+ * @param {object} element
+ * @param {object} value
+ */
+export function event (element, event) {
+	return element.state[event.type]
 }
 
 /**
  * Helpers --------------------------------------------------------------------
  */
 
-function query () {
-
+/**
+ * @param {object} element
+ * @return {object}
+ */
+export function owner (element) {
+	return element.owner
 }
 
 /**
- * @param {Element} element
+ * @param {object} element
  * @param {string} name
- * @param {any} value
+ * @param {string} value
+ */
+function listen (element, name, value) {
+	if (!element.state) {
+		element.state = {}
+	}
+
+	if (!element.state[name]) {
+		owner(element).addEventListener(name, element, false)
+	}
+
+	element.state[name] = value
+}
+
+/**
+ * @param {object} element
+ * @return {object?}
+ */
+function search () {
+}
+
+/**
+ * @param {object} element
+ * @param {string} name
+ * @param {*} value
  */
 function property (element, name, value) {
 	switch (value) {
 		case null:
 		case false:
 		case undefined:
-			return attribute(element, name, value, element.owner[name] = '')
+			return attribute(element, name, value, owner(element)[name] = '')
 		default:
-			element.owner[name] = value
+			owner(element)[name] = value
 	}
 }
 
 /**
- * @param {Element} element
+ * @param {object} element
  * @param {string} name
- * @param {any} value
- * @param {string?} xmlns
+ * @param {*} value
+ * @param {string} xmlns
  */
 function attribute (element, name, value, xmlns) {
 	switch (value) {
@@ -203,46 +279,58 @@ function attribute (element, name, value, xmlns) {
 		case false:
 		case undefined:
 			if (xmlns) {
-				element.owner.removeAttributeNS(xmlns, name)
+				owner(element).removeAttributeNS(xmlns, name)
 			}
 
-			return element.owner.removeAttribute(name)
+			return owner(element).removeAttribute(name)
 		case true:
 			return attribute(element, name, '', xmlns)
 		default:
 			if (!xmlns) {
-				element.owner.setAttribute(name, value)
+				owner(element).setAttribute(name, value)
 			} else {
-				element.owner.setAttributeNS(xmlns, name, value)
+				owner(element).setAttributeNS(xmlns, name, value)
 			}
 	}
 }
 
-export function style (element, name, value) {
+/**
+ * @param {object} element
+ * @param {string} name
+ * @param {(string|object)} value
+ */
+function style (element, name, value) {
 	if (typeof value !== 'object') {
 		attribute(element, name, value, '')
 	} else {
 		for (var key in value) {
 			if (key.indexOf('-') === -1) {
-				element.owner.style[key] = value[key] !== false && value[key] !== undefined ? value[key] : ''
+				owner(element).style[key] = value[key] !== false && value[key] !== undefined ? value[key] : ''
 			} else {
-				element.owner.style.setProperty(key, value[key])
+				owner(element).style.setProperty(key, value[key])
 			}
 		}
 	}
 }
 
+/**
+ * @param {object} element
+ * @param {string} name
+ * @param {*} value
+ * @param {Array<object>} nodes
+ */
 function html (element, name, value, nodes) {
-	if (element.owner[name])
-		element.children.forEach(function (children) {
-			nodes.push(children.owner)
+	if (owner(element)[name]) {
+		element.children.forEach(function (element) {
+			nodes.push(owner(element))
 		})
+	}
 
-	if (element.owner[name] = value) {
-		nodes.push.apply(nodes, element.owner.childNodes)
+	if (owner(element)[name] = value) {
+		nodes.push.apply(nodes, owner(element).childNodes)
 	}
 
 	nodes.forEach(function (node) {
-		element.owner.appendChild(node)
+		owner(element).appendChild(node)
 	})
 }

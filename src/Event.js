@@ -8,7 +8,7 @@ import * as Interface from './Interface.js'
  * @param {object}
  */
 export function handle (event) {
-	dispatch(this.host, this, this.host.owner, event, Interface.event(element, event))
+	dispatch(this.host, this, this.host.owner, event, Interface.event(this, event))
 }
 
 /**
@@ -21,11 +21,11 @@ export function handle (event) {
 function dispatch (host, element, owner, event, callback) {
 	if (callback) {
 		if (Utility.iterable(callback)) {
-			Utility.each(function (value) {
-				dispatch(element, host, owner, event, callback)
-			}, callback)
+			Utility.each(function (callback) {
+				dispatch(host, element, owner, event, callback)
+			}, callback, 0)
 		} else {
-			Lifecycle.event(host, Constant.event, event, callback, owner.props, owner.state, owner.context)
+			Lifecycle.event(host, Constant.event, event, callback, owner, owner.props, owner.state)
 		}
 	}
 }

@@ -1,5 +1,9 @@
 import pkg from '../package.json'
 
+/**
+ * @param {object} warning
+ * @param {function} warn
+ */
 function onwarn (warning, warn) {
 	switch (warning.code) {
 		case 'CIRCULAR_DEPENDENCY':
@@ -11,12 +15,21 @@ function onwarn (warning, warn) {
 
 export default [
 	{
+		treeshake: {
+			propertyReadSideEffects: false
+		},
 		context: 'this',
 		onwarn: onwarn,
-		input: pkg.main,
+		input: 'index.js',
 		output: [
 			{
-				file: 'dist/dio.es.js',
+				file: pkg.main,
+				format: 'cjs',
+				freeze: false,
+			},
+			{
+				file: pkg.module,
+				freeze: false,
 				format: 'es'
 			}
 		]

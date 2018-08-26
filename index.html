@@ -1,10 +1,7 @@
-<style>.red{color:red;}</style>
-<h1>Boot: <time></time></h1>
-<h1>Update: <time></time></h1>
-<main id="main">Remove Me!</main>
+<main id="main"></main>
+<section id="section"></section>
 <script type=module>
-	import {h, render, Component, Fragment} from './dist/dio.es.js'
-	// import {h, render, Component, Fragment} from 'https://unpkg.com/dio.js@9.1.1/dist/esm.js'
+	import {h, render, Component, Fragment} from './index.js'
 
 	var i = 0
 
@@ -19,7 +16,6 @@
 	// render(h( 'ul', [1, 2, 3, 4, 5, 6].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
 	// render(h( 'ul', [1, 2, 4, 5, 6].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
 
-
 	// add
 
 	// render(h( 'ul', [1, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
@@ -30,7 +26,6 @@
 
 	// render(h( 'ul', [2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
 	// render(h( 'ul', [1, 2, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
-
 
 	// sort
 
@@ -49,44 +44,73 @@
 	// render(h( 'ul', [2, 5, 6, 7].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
 	// render(h( 'ul', [1, 0, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
 
+	class ErrorBoundary extends Component {
+		// componentDidCatch(...args) {
+		// 	// throw Error('componentDidCatch')
+		// 	console.log(...args)
+		// }
+	}
+
 	class A extends Component {
-		componentWillMount() {
-			console.log('componentWillMount')
+		getInitialState() {
+			// return new Promise((resolve, _) => {
+			// 	setTimeout(() => {
+			// 		resolve({foo: true})
+			// 	}, 2000)
+			// })
+			return {foo: true}
 		}
-		componentDidMount() {
-			console.log('componentDidMount')
+		static propTypes() {
+			return {
+				foo(...args) {
+					console.log('propTypes', ...args)
+				}
+			}
 		}
-		componentWillUnmount() {
-			console.log('componentWillUnmount')
+		componentWillMount(...args) {
+			// throw Error('componentWillMount')
+			console.log('componentWillMount', ...args)
+		}
+		componentDidMount(...args) {
+			// throw Error('componentDidMount')
+			console.log('componentDidMount', ...args, this)
+		}
+		componentWillUnmount(...args) {
+			// throw Error('componentWillUnmount')
+			console.log('componentWillUnmount', ...args)
+		}
+		componentWillReceiveProps(...args) {
+			// throw Error('componentWillReceiveProps')
+			console.log('componentWillReceiveProps', ...args)
+		}
+		componentWillUpdate(...args) {
+			// throw Error('componentWillUpdate')
+			console.log('componentWillUpdate', ...args)
+		}
+		componentDidUpdate(...args) {
+			// throw Error('componentDidUpdate')
+			console.log('componentDidUpdate', ...args)
+		}
+		shouldComponentUpdate(...args) {
+			// throw Error('shouldComponentUpdate')
+			return !console.log('shouldComponentUpdate', ...args)
 		}
 		render() {
-			return h('h1', {ref: fn}, 'Works!')
+			// throw Error('render')
+			return h('h1', 'Hello')
+			// return h({}, 'invalid')
+			return h('h1', 'Works!', i++, [2, 3])
 		}
 	}
 
-	var fn = (a) => console.log(a)
-	var obj = {}
+	// console.log(h('h1', null, null, 'Hello World', null))
+	// console.log(h(Fragment, null, 'Hello World'))
+	// console.log(h({then: () => {}}, null, 'Hello World'))
 
-	// render([h(A, {ref: obj }), h('div', [1, 2, 3], 4)], 'main')
-	// render('null', 'main')
-
-	var children = Array.from({length: 10000}, (v, i) => {
-		return h('h1', {[`exp-${i}`]: true, class: i % 2 === 0 ? 'red' : null}, i)
-	})
-
-	var start = Date.now()
-
-	render(h('div', {id: 'app'}, h('button', "update"), children), document.querySelector('main'))
-
-	var end = Date.now()
-
-	document.querySelector('h1 time').textContent = end-start
-
-	var start = Date.now()
-
-	render(h('div', {id: 'app'}, h('button', "update"), children), document.querySelector('main'))
-
-	var end = Date.now()
-
-	document.querySelector('h1:last-of-type time').textContent = end-start
+	// render(h('h1', 'Hello World'), 'main')
+	// render(h('h1', {style: 'color:red;'}, 'Hello World', 2), 'main')
+	// render(h('h1', {style: 'color:red;'}, 'Hello World'), 'main')
+	render(h(ErrorBoundary, h(A, {a: 1}, h('h1', 'Works!', 'A'))), 'main')
+	render(h(ErrorBoundary, h(A, {a: 1}, h('h1', 'Works!', 'A'))), 'main')
 </script>
+

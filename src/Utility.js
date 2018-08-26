@@ -1,25 +1,48 @@
 /**
  * @type {function}
- * @param {number}
- * @return {number}
- */
-export var abs = Math.abs
-
-/**
- * @type {function}
- * @return {number}
- */
-export var random = Math.random
-
-/**
- * @type {function}
  * @return {number}
  */
 export var now = Date.now
 
 /**
- * @param {*}
- * @return {(object|function)}
+ * @type {object}
+ */
+export var math = Math
+
+/**
+ * @type {function}
+ * @param {number}
+ * @return {number}
+ */
+export var abs = math.abs
+
+/**
+ * @type {function}
+ * @return {number}
+ */
+export var random = math.random
+
+/**
+ * @return {(symbol|number)} where number is not a valid array index
+ */
+export var symbol = typeof Symbol === 'function' && typeof Symbol.for === 'function' ? Symbol : define(function () {
+	return -random()
+}, 'for', function (value) {
+	for (var i = 0, h = 0; i < value.length; ++i) {
+		h = ((h << 5) - h) + value.charCodeAt(i)
+	}
+	return -h
+})
+
+/**
+ * @type {function}
+ * @param {number} length
+ */
+export var array = Array
+
+/**
+ * @type {function}
+ * @param {number} length
  */
 export var object = Object
 
@@ -29,50 +52,37 @@ export var object = Object
  * @param {(string|number|symbol)}
  * @return {object}
  */
-export var descriptors = Object.getOwnPropertyDescriptors
+export var descriptors = object.getOwnPropertyDescriptors
 
 /**
  * @type {function}
  * @param {object}
  * @return {Array<string>}
  */
-export var keys = Object.keys
-
-/**
- * @type {function}
- * @param {*}
- * @param {(string|number|symbol)}
- * @param {object}
- * @return {object}
- */
-export var define = Object.defineProperty
+export var keys = object.keys
 
 /**
  * @param {(object|function)?}
  * @param {object}
  * @return {object}
  */
-export var create = Object.create
+export var create = object.create
 
 /**
- * @return {(symbol|number)} where number is not a valid array index
+ * @type {function}
+ * @param {(object|function)}
+ * @param {(string|number|symbol)}
+ * @param {object}
+ * @return {object}
  */
-export var symbol = typeof Symbol === 'function' && typeof Symbol.for === 'function' ? Symbol : define(function () {
-	return -random()
-}, 'for', function (value) {
-  for (var i = 0, h = 0; i < value.length; ++i) {
-    h = ((h << 5) - h) + value.charCodeAt(i)
-  }
-
-  return -h
-})
+export var define = object.defineProperty
 
 /**
  * @param {number} value
  * @return {number}
  */
 export function hash (value) {
-	return -((-(value + 1)) >>> 0)
+	return -((-(value + 1)) >>> 0) + 1
 }
 
 /**
@@ -81,16 +91,7 @@ export function hash (value) {
  * @return {boolean}
  */
 export function has (object, key) {
-	return Object.hasOwnProperty.call(object, key)
-}
-
-/**
- * @param {function} value
- * @param {*} that
- * @return {boolean}
- */
-export function bind (value, that) {
-	return value.bind(that)
+	return object.hasOwnProperty.call(object, key)
 }
 
 /**
@@ -113,7 +114,7 @@ export function noop () {}
  * @param {string} message
  */
 export function invariant (message) {
-	throw new Error(message)
+	throw Error(message)
 }
 
 /**
@@ -121,7 +122,7 @@ export function invariant (message) {
  * @return {boolean}
  */
 export function fetchable (value) {
-	return typeof value.blob === 'function' && typeof value.text === 'function' && typeof value.json === 'function'
+	return typeof value.blob === 'function' && typeof value.json === 'function'
 }
 
 /**
@@ -129,7 +130,7 @@ export function fetchable (value) {
  * @return {boolean}
  */
 export function thenable (value) {
-	return typeof value.then === 'function' && typeof value.catch === 'function'
+	return typeof value.then === 'function'
 }
 
 /**
@@ -137,7 +138,7 @@ export function thenable (value) {
  * @param {boolean}
  */
 export function iterable (value) {
-	return typeof value[symbol.iterator] === 'function' || Array.isArray(value)
+	return typeof value[symbol.iterator] === 'function'
 }
 
 /**
@@ -207,26 +208,54 @@ export function compare (a, b) {
  */
 export function each (callback, value, index) {
 	if (value != null) {
-		if (Array.isArray(value)) {
-			for (var i = 0, j = index | 0; i < value.length; ++i) {
-				if (each(callback, value[i], i + j) != null) {
+		if (value.length > -1) {
+			for (var i = 0; i < value.length; ++i) {
+				if (each(callback, value[i], i + index) != null) {
 					break
 				}
 			}
-		} else if (iterable(value)) {
-			if (typeof value.next === 'function') {
-				for (var i = 0, j = index | 0, next = value.next(next); !next.done; ++i) {
-					if (each(callback, next.value, i + j) != null) {
-						break
-					} else {
-						next = value.next(next.value)
-					}
+		} else if (typeof value[symbol.iterator] === 'function') {
+			for (var i = index, j = value[symbol.iterator](), k = j.next(); !k.done; ++i) {
+				if (each(callback, k.value, i + index) == null) {
+					k = j.next()
+				} else {
+					break
 				}
-			} else {
-				each(callback, value[symbol.iterator](), index | 0)
 			}
 		} else {
-			return callback(value, index | 0)
+			return callback(value, index)
 		}
+	}
+}
+
+/**
+ * @param {(Promise<*>|Array<Promise<*>>)} value
+ * @param {function} fulfilled
+ * @param {function} rejected
+ */
+export function resolve (value, fulfilled, rejected) {
+	if (value.length > -1) {
+		var length = value.length
+		var result = []
+
+		each(function (value) {
+			resolve(value, function () {
+				if (result.push(value) === length) {
+					fulfilled(result)
+				}
+			}, rejected)
+		}, value, 0)
+	} else if (thenable(value)) {
+		value.then(function (value) {
+			if (value) {
+				if (fetchable(value)) {
+					return resolve(value.json(), fulfilled, rejected)
+				}
+			}
+
+			return fulfilled(value)
+		}, rejected)
+	} else {
+		fulfilled(value)
 	}
 }

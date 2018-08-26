@@ -1,0 +1,26 @@
+sudo: false
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+language: node_js
+node_js:
+  - "9.7.1"
+cache:
+  directories:
+    - node_modules
+install:
+  - npm install
+  - npm run build
+script:
+  - npm run lint
+  - npm test
+before_install:
+  - |
+      echo Checking whether $TRAVIS_COMMIT_RANGE changed only docs
+      git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)|(^(docs|examples))/' || {
+        echo "Only docs were updated, stopping build process."
+        exit
+      }
+after_success:
+  - npm run coverage

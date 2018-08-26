@@ -6,62 +6,40 @@ import * as Lifecycle from './Lifecycle.js'
 import * as Exception from './Exception.js'
 import * as Interface from './Interface.js'
 
-/*
- * @param {object} host
- * @param {object} parent
- * @param {object} element
- * @param {Promise<*>} type
- */
-export function thenable (host, parent, element, type) {
-	element.type.then(function (value) {
-		if (element.active > Constant.idle) {
-			if (element.type === type) {
-				// Reconcile.children(host, element, element.children, [Element.module(value, 0)])
-			}
-		}
-	}, function (err) {
-		Error.raise(element, err, Constant.render)
-	})
-}
-
-
-
-
-
-
-
-
-
 /**
  * @param {object} host
  * @param {object} parent
- * @param {object} element
+ * @param {object} snapshot
  * @param {number} from
  */
 export function create (host, parent, snapshot, from) {
+	var element = new Element.construct(host, parent, snapshot)
+	var current = parent
+
 	try {
-		var xmlns = Interface.namespace(snapshot, parent.xmlns)
-		var element = new Element.constructor(host, parent, snapshot, Interface.create(snapshot, xmlns, from))
-		var current = element
-
-		if (!element.owner) {
-			if (current = parent, element.uuid === Constant.component) {
-				return Component.finalize(element, Element.put(element, create(element, parent, Component.mount(host, element)), from))
-			}
+		if (element.owner = Interface.create(element, element.xmlns = Interface.xmlns(element, parent.xmlns), from)) {
+			current = element
+		} else if (element.id === Constant.component) {
+			return Component.finalize(element, Element.put(element, create(element, parent, Component.mount(element), from)), from)
 		}
-		if (element.uuid < Constant.text) {
+
+		if (element.id < Constant.text) {
 			for (var i = 0, j = element.children; i < j.length; ++i) {
-				append(current, j[i] = create(host, current, j[i], from), Constant.create)
+				append(current, j[i] = create(host, current, j[i], from))
 			}
-			if (element.props !== Constant.object) {
-				props(element, element.props, xmlns, Constant.create)
+			if (element.id > Constant.thenable) {
+				props(element, element.props, Constant.create)
+			} else {
+				thenable(element, element, Constant.create)
 			}
 		}
 
-		return element
-	} catch (err) {
-		throw err
+		element.active = Constant.active
+	} catch (error) {
+		return create(host, parent, Exception.create(element, error), from)
 	}
+
+	return element
 }
 
 /**
@@ -71,7 +49,7 @@ export function create (host, parent, snapshot, from) {
  */
 export function destroy (parent, element) {
 	try {
-		switch (element.active = Constant.idle, element.uuid) {
+		switch (element.active = Constant.idle, element.id) {
 			case Constant.component:
 				Component.unmount(element)
 			default:
@@ -85,22 +63,22 @@ export function destroy (parent, element) {
 		}
 	} finally {
 		if (element.ref) {
-			console.log(element, element.ref)
 			refs(element)
 		}
 	}
 }
 
 /**
- * @param {object} host
  * @param {object} parent
  * @param {object} element
- * @param {object} snapshot
- * @param {number} index
+ * @param {object} sibling
  */
-export function replace (host, parent, element, snapshot, index) {
-	mount(parent, parent.children[index] = create(host, parent, snapshot, Constant.create), element)
-	unmount(parent, destroy(parent, element))
+export function mount (parent, element, sibling) {
+	if (sibling) {
+		insert(parent, element, sibling)
+	} else {
+		append(parent, element)
+	}
 }
 
 /**
@@ -112,6 +90,8 @@ export function unmount (parent, element) {
 		if (Utility.thenable(element.state)) {
 			return element.state.then(function () {
 				remove(parent, element)
+			}, function (error) {
+				Exception.create(element, error)
 			})
 		}
 	}
@@ -122,22 +102,9 @@ export function unmount (parent, element) {
 /**
  * @param {object} parent
  * @param {object} element
- * @param {object} sibling
- */
-export function mount (parent, element, sibling) {
-	if (sibling) {
-		insert(parent, element, sibling, Constant.update)
-	} else {
-		append(parent, element, Constant.update)
-	}
-}
-
-/**
- * @param {object} parent
- * @param {object} element
  */
 export function remove (parent, element) {
-	if (element.uuid < Constant.node) {
+	if (element.id < Constant.node) {
 		element.children.forEach(function (element) {
 			remove(parent, element)
 		})
@@ -149,17 +116,18 @@ export function remove (parent, element) {
 /**
  * @param {object} parent
  * @param {object} element
- * @param {number} from
  */
-export function append (parent, element, from) {
-	if (element.uuid < Constant.node) {
-		if (element.uuid !== Constant.portal) {
+export function append (parent, element) {
+	if (element.id < Constant.node) {
+		if (element.id < Constant.portal) {
 			element.children.forEach(function (element) {
-				append(parent, element, from)
+				append(parent, element)
 			})
+		} else {
+			append(parent, Element.resolve(element))
 		}
 	} else {
-		Interface.append(Element.parent(parent, from), element)
+		Interface.append(Element.parent(parent), element)
 	}
 }
 
@@ -167,17 +135,18 @@ export function append (parent, element, from) {
  * @param {object} parent
  * @param {object} element
  * @param {object} sibling
- * @param {number} from
  */
-export function insert (parent, element, sibling, from) {
-	if (element.uuid < Constant.node) {
-		if (element.uuid !== Constant.portal) {
+export function insert (parent, element, sibling) {
+	if (element.id < Constant.node) {
+		if (element.id < Constant.portal) {
 			element.children.forEach(function (element) {
-				insert(parent, element, sibling, from)
+				insert(parent, element, sibling)
 			})
+		} else {
+			insert(parent, Element.resolve(element), sibling)
 		}
 	} else {
-		Interface.insert(Element.parent(parent, from), element, Element.node(sibling))
+		Interface.insert(Element.parent(parent), element, Element.resolve(sibling))
 	}
 }
 
@@ -192,20 +161,21 @@ export function content (element, value) {
 /**
  * @param {object} element
  * @param {object} props
- * @param {string?} xmlns
  * @param {number} from
  */
-export function props (element, props, xmlns, from) {
-	for (var key in Interface.props(element, props, from)) {
-		switch (key) {
-			case 'ref':
-				refs(element, props[key], from)
-			case 'key':
-			case 'xmlns':
-			case 'children':
-				break
-			default:
-				Interface.commit(element, key, props[key], xmlns, from)
+export function props (element, props, from) {
+	if (props) {
+		for (var key in Interface.props(element, props, from)) {
+			switch (key) {
+				case 'ref':
+					refs(element, element.ref = props[key], from)
+				case 'key':
+				case 'xmlns':
+				case 'children':
+					break
+				default:
+					Interface.commit(element, key, props[key], element.xmlns, from)
+			}
 		}
 	}
 }
@@ -224,4 +194,34 @@ export function refs (element, value, from) {
 				Lifecycle.refs(element, element.ref = value, element.owner)
 			}
 	}
+}
+
+
+
+/**
+ * ------------------- The fault: line Everyhing below this line is in flux
+ */
+
+
+
+/**
+ * TODO
+ * @param {object} element
+ * @param {object} snapshot
+ * @param {number} from
+ */
+export function thenable (element, snapshot, from) {
+	// try {
+	// 	Utility.resolve(snapshot.type, function (value) {
+	// 		if (element.active > Constant.idle) {
+	// 			if (element.type === snapshot.type) {
+	// 				// Schedule.update(-Schedule.identity(), Constant.thenable, element, Element.module(value), 0)
+	// 			}
+	// 		}
+	// 	}, function (error) {
+	// 		Exception.create(element, error)
+	// 	})
+	// } finally {
+	// 	element.type = snapshot.type
+	// }
 }

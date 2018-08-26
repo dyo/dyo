@@ -1,55 +1,39 @@
 import * as Constant from './Constant.js'
-import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Reconcile from './Reconcile.js'
 import * as Commit from './Commit.js'
-import * as Registry from './Registry.js'
+import * as Reconcile from './Reconcile.js'
 import * as Interface from './Interface.js'
 
-/**
- * @param {*} element
- * @param {*?} target
- * @param {function?} callback
- */
-export function render (element, target, callback) {
-	commit(Element.from(element, Constant.key), Interface.target(target), Constant.create, callback)
-}
+import Registry from './Registry.js'
 
 /**
  * @param {*} element
  * @param {*?} target
  * @param {function?} callback
  */
-export function hydrate (element, target, callback) {
-	commit(Element.from(element, Constant.key), Interface.target(target), Constant.search, callback)
+export function render (element, target) {
+	commit(element, Interface.target(target), Constant.create)
 }
 
 /**
- * @param {object} target
- * @return {boolean}
+ * @param {*} element
+ * @param {*?} target
+ * @param {function?} callback
  */
-export function unmount (target) {
-	return Registry.has(Interface.target(target)) && !render(null, target)
+export function hydrate (element, target) {
+	commit(element, Interface.target(target), Constant.search)
 }
 
 /**
- * @param {*} parent
  * @param {*} element
  * @param {*?} target
  * @param {number} from
- * @param {function?} callback
  */
-export function commit (element, target, from, callback) {
+export function commit (element, target, from) {
 	if (Registry.has(target)) {
-		update(Registry.get(target), element)
-	} else if (Interface.valid(target, Constant.owner)) {
-		mount(Element.target(target), element, target, from)
+		update(Registry.get(target), Element.root([Element.from(element, 0)]))
 	} else {
-		Utility.invariant('Invalid target!')
-	}
-
-	if (callback) {
-		Lifecycle.callback(element, callback)
+		create(Element.target(), Element.from(element, 0), target, from)
 	}
 }
 
@@ -59,9 +43,18 @@ export function commit (element, target, from, callback) {
  * @param {object} target
  * @param {number} from
  */
-export function mount (parent, element, target, from) {
-	Interface.prepare(target, Registry.set(target, parent))
-	Commit.append(parent, Element.put(parent, Commit.create(parent, parent, element, from)))
+export function create (parent, element, target, from) {
+	mount(parent, Element.put(parent, Commit.create(parent, parent, element, from)), parent.owner = target)
+}
+
+/**
+ * @param {object} parent
+ * @param {object} element
+ * @param {object} target
+ */
+export function mount (parent, element, target) {
+	Commit.append(parent, element)
+	Registry.set(target, parent)
 }
 
 /**
@@ -69,5 +62,5 @@ export function mount (parent, element, target, from) {
  * @param {object} snapshot
  */
 export function update (element, snapshot) {
-	Reconcile.children(element, element, element.children, Element.children(snapshot))
+	Reconcile.update(Constant.pid, element, snapshot)
 }

@@ -1,4 +1,3 @@
-import * as Constant from './Constant.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 
@@ -27,7 +26,7 @@ export function count (value) {
 
 	Utility.each(function () {
 		length++
-	}, value)
+	}, value, 0)
 
 	return length
 }
@@ -35,17 +34,17 @@ export function count (value) {
 /**
  * @param {*} value
  * @param {function} callback
- * @param {*} that
+ * @return {Array<*>}
  */
-export function filter (value, callback, that) {
+export function filter (value, callback) {
 	if (value != null) {
 		var children = []
 
 		Utility.each(function (v, i) {
-			if (callback.call(that, v, i, value)) {
-				children[i] = v
+			if (callback(v, i)) {
+				children.push(v)
 			}
-		}, value)
+		}, value, 0)
 
 		return children
 	}
@@ -54,17 +53,17 @@ export function filter (value, callback, that) {
 /**
  * @param {*} value
  * @param {function} callback
- * @param {*} that
+ * @return {*?}
  */
-export function find (value, callback, that) {
+export function find (value, callback) {
 	if (value != null) {
 		var children = null
 
 		Utility.each(function (v, i) {
-			if (callback.call(that, v, i, value)) {
+			if (callback(v, i)) {
 				return children = v
 			}
-		}, value)
+		}, value, 0)
 
 		return children
 	}
@@ -73,16 +72,15 @@ export function find (value, callback, that) {
 /**
  * @param {*} value
  * @param {function} callback
- * @param {*} that
  * @return {Array<*>}
  */
-export function map (value, callback, that) {
+export function map (value, callback) {
 	if (value != null) {
 		var children = []
 
 		Utility.each(function (v, i) {
-			children[i] = callback.call(that, v, i, value)
-		}, value)
+			children.push(callback(v, i))
+		}, value, 0)
 
 		return children
 	}
@@ -91,13 +89,10 @@ export function map (value, callback, that) {
 /**
  * @param {*} value
  * @param {function} callback
- * @param {*} that
  */
-export function each (value, callback, that) {
+export function each (value, callback) {
 	if (value != null) {
-		Utility.each(function (v, i) {
-			callback.call(that, v, i, value)
-		}, value)
+		Utility.each(callback, value, 0)
 	}
 }
 
@@ -110,7 +105,7 @@ export function array (value) {
 
 	Utility.each(function (v) {
 		children.push(v)
-	}, value)
+	}, value, 0)
 
 	return children
 }
