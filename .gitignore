@@ -13,5 +13,5 @@ npm-debug.log
 *.swp
 *.swo
 coverage
-dist
+dist/
 package-lock.json
