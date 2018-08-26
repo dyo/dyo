@@ -112,56 +112,5 @@ describe('PropTypes', () => {
 			assert.doesNotThrow(task4)
 			assert.doesNotThrow(task5)
 		}
-	}),
-
-	it('should validate propTypes for ref forwarders just on DEV not on PROD', () => {
-		const
-			RefForwarder1 = forwardRef(({ name }) => name)
-			RefForwarder2 = forwardRef(({ name }) => name)
-			RefForwarder3 = forwardRef(({ name }) => name)
-			RefForwarder4 = forwardRef(({ name }) => name)
-			RefForwarder5 = forwardRef(({ name }) => name)
-
-			runTask = (type, name) => {
-				render(
-					createElement(type, {name}),
-					document.createElement('div'))
-			},
-
-			task1 = () => runTask(RefForwarder1, 'Joan Doe')
-			task2 = () => runTask(RefForwarder2, 'Joan Doe')
-			task3 = () => runTask(RefForwarder3, 'Joan Doe')
-			task4 = () => runTask(RefForwarder4, 'Joan Doe')
-			task5 = () => runTask(RefForwarder5, 'Joan Doe')
-
-		RefForwarder2.propTypes = {
-			name: (...args) => new Error(JSON.stringify(args)) 
-		}
-
-		RefForwarder3.propTypes = {
-			name: 'This is not a validator function!'
-		}
-
-		RefForwarder4.propTypes = {
-			name: () => false 
-		}
-
-		RefForwarder5.propTypes = {
-			name: () => 'Some error message'
-		}
-
-		if (process.env.NODE_ENV === 'development') {
-			assert.doesNotThrow(task1)
-			assert.throws(task2, '[{"name":"Joan Doe"},"name","ForwardRef","prop",null]')
-			assert.throws(task3),
-			assert.throws(task4, "Invalid value for prop 'name' of 'ForwardRef'")
-			assert.throws(task5, 'Some error message')
-		} else {
-			assert.doesNotThrow(task1)
-			assert.doesNotThrow(task2)
-			assert.doesNotThrow(task3)
-			assert.doesNotThrow(task4)
-			assert.doesNotThrow(task5)
-		}
 	})
 })

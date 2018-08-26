@@ -657,28 +657,6 @@ describe('Component', () => {
 		assert.html(container, '2')
 	})
 
-	it('should render defaultProps(object) on ref forwarding', () => {
-		const
-			container = document.createElement('div'),
-			A = forwardRef(({a,b,c}) => `${a},${b},${c}` )
-
-		A.defaultProps = {a: 1, b: 2}
-
-		render(h(A, {c: 3}), container)
-		assert.html(container, '1,2,3')
-	})
-
-	it('should render defaultProps(function) on ref forwarding', () => {
-		const
-			container = document.createElement('div'),
-			A = forwardRef(({a,b,c}) => `${a},${b},${c}` )
-
-		A.defaultProps = () => ({a: 1, b: 2})
-
-		render(h(A, {c: 3}), container)
-		assert.html(container, '1,2,3')
-	})
-
 	it('should render getDefaultProps(object) from createClass component', () => {
 		let container = document.createElement('div')
 		let A = createClass({
