@@ -34,7 +34,7 @@ export function count (value) {
 /**
  * @param {*} value
  * @param {function} callback
- * @return {Array<*>}
+ * @return {Array}
  */
 export function filter (value, callback) {
 	if (value != null) {
@@ -72,7 +72,7 @@ export function find (value, callback) {
 /**
  * @param {*} value
  * @param {function} callback
- * @return {Array<*>}
+ * @return {Array}
  */
 export function map (value, callback) {
 	if (value != null) {
@@ -98,7 +98,7 @@ export function each (value, callback) {
 
 /**
  * @param {*} value
- * @return {Array<*>}
+ * @return {Array}
  */
 export function array (value) {
 	var children = []

@@ -1,5 +1,24 @@
-import * as Constant from './Constant.js'
+import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
+
+/**
+ * @param {*} value
+ * @param {*} a
+ * @param {*} b
+ * @param {*} b
+ * @return {*}
+ */
+export function callback (value, a, b, c) {
+	return value.call(a, b, c)
+}
+
+/**
+ * @param {object?} props
+ * @return {boolean?}
+ */
+export function offscreen (props) {
+	return props && props.hidden
+}
 
 /**
  * @param {object} target
@@ -18,35 +37,32 @@ export function prepare (parent) {
 
 /**
  * @param {object} element
- * @param {string} xmlns
+ * @param {number} index
  * @param {number} from
- * @return {object}
+ * @return {object?}
  */
-export function create (element, xmlns, from) {
-	if (from === Constant.create) {
-		switch (element.id) {
-			case Constant.node:
-				if (xmlns) {
-					return document.createElementNS(xmlns, element.type)
+export function create (element, index, from) {
+	if (from === Enum.create) {
+		switch (element.constructor) {
+			case Enum.thenable:
+			case Enum.fragment:
+				return document.createDocumentFragment()
+			case Enum.node:
+				if (element[Enum.namespace]) {
+					return document.createElementNS(element[Enum.namespace], element.type)
 				} else {
 					return document.createElement(element.type)
 				}
-			case Constant.text:
-			case Constant.empty:
+			case Enum.text:
+			case Enum.empty:
 				return document.createTextNode(element.children)
-			case Constant.comment:
+			case Enum.comment:
 				return document.createComment(element.children)
-			case Constant.fragment:
-				return document.createDocumentFragment()
-			case Constant.portal:
+			case Enum.portal:
 				return target(element.type)
-			case Constant.component:
-				if (element.type.DOCUMENT_FRAGMENT_NODE === 11) {
-					return new element.type()
-				}
 		}
 	} else {
-		return search(element) || create(element, xmlns, -from)
+		return search(element, index, from) || create(element, index, Enum.create)
 	}
 }
 
@@ -103,9 +119,9 @@ export function target (value) {
 
 /**
  * @param {object} element
- * @param {string} value
+ * @param {string} xmlns
  */
-export function xmlns (element, xmlns) {
+export function namespace (element, xmlns) {
 	switch (element.type) {
 		case 'svg':
 			return 'http://www.w3.org/2000/svg'
@@ -125,7 +141,7 @@ export function xmlns (element, xmlns) {
  */
 export function props (element, props, from) {
 	switch (from) {
-		case Constant.create:
+		case Enum.create:
 			switch (element.type) {
 				case 'input':
 					return Utility.assign({type: null, step: null, min: null, max: null}, props)
@@ -134,7 +150,7 @@ export function props (element, props, from) {
 						return Utility.assign({value: props.defaultValue}, props)
 					}
 			}
-		case Constant.update:
+		case Enum.update:
 			return props
 	}
 }
@@ -151,13 +167,12 @@ export function commit (element, name, value, xmlns, from) {
 		case 'style':
 			return style(element, name, value)
 		case 'className':
-			if (!xmlns && value) {
-				return property(element, name, value)
-			}
 		case 'class':
 			return attribute(element, 'class', value, '')
 		case 'xlink:href':
 			return attribute(element, name, value, 'http://www.w3.org/1999/xlink')
+		case 'xmlns':
+			return
 		case 'innerHTML':
 			return html(element, name, value ? value : '', [])
 		case 'dangerouslySetInnerHTML':
@@ -171,21 +186,19 @@ export function commit (element, name, value, xmlns, from) {
 		case 'autofocus':
 		case 'autoFocus':
 			return owner(element)[value ? 'focus' : 'blur']()
+		case 'width':
+		case 'height':
+			return attribute(element, name, value, '')
+		case 'form':
+			if (element.type === 'input') {
+				return attribute(element, name, value, '')
+			}
+			break
 		case 'defaultValue':
 			if (element.type === 'select') {
 				return
 			}
 			break
-		case 'width':
-		case 'height':
-			if (element.type === 'img') {
-				return attribute(element, name, value, '')
-			}
-			break
-		case 'form':
-			if (element.type === 'input') {
-				return attribute(element, name, value, '')
-			}
 	}
 
 	switch (typeof value) {
@@ -212,7 +225,7 @@ export function commit (element, name, value, xmlns, from) {
  * @param {object} value
  */
 export function event (element, event) {
-	return element.state[event.type]
+	return element[Enum.state][event.type]
 }
 
 /**
@@ -224,7 +237,7 @@ export function event (element, event) {
  * @return {object}
  */
 export function owner (element) {
-	return element.owner
+	return element[Enum.owner]
 }
 
 /**
@@ -233,15 +246,15 @@ export function owner (element) {
  * @param {string} value
  */
 function listen (element, name, value) {
-	if (!element.state) {
-		element.state = {}
+	if (!element[Enum.state]) {
+		element[Enum.state] = {}
 	}
 
-	if (!element.state[name]) {
+	if (!element[Enum.state][name]) {
 		owner(element).addEventListener(name, element, false)
 	}
 
-	element.state[name] = value
+	element[Enum.state][name] = value
 }
 
 /**
@@ -317,7 +330,7 @@ function style (element, name, value) {
  * @param {object} element
  * @param {string} name
  * @param {*} value
- * @param {Array<object>} nodes
+ * @param {Array} nodes
  */
 function html (element, name, value, nodes) {
 	if (owner(element)[name]) {

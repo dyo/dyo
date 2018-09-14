@@ -1,5 +1,4 @@
 /**
- * @type {function}
  * @return {number}
  */
 export var now = Date.now
@@ -10,52 +9,35 @@ export var now = Date.now
 export var math = Math
 
 /**
- * @type {function}
+ * @return {number}
+ */
+export var random = math.random
+
+/**
  * @param {number}
  * @return {number}
  */
 export var abs = math.abs
 
 /**
- * @type {function}
- * @return {number}
- */
-export var random = math.random
-
-/**
- * @return {(symbol|number)} where number is not a valid array index
- */
-export var symbol = typeof Symbol === 'function' && typeof Symbol.for === 'function' ? Symbol : define(function () {
-	return -random()
-}, 'for', function (value) {
-	for (var i = 0, h = 0; i < value.length; ++i) {
-		h = ((h << 5) - h) + value.charCodeAt(i)
-	}
-	return -h
-})
-
-/**
- * @type {function}
- * @param {number} length
+ * @constructor
+ * @param {number}
  */
 export var array = Array
 
 /**
- * @type {function}
- * @param {number} length
+ * @constructor
+ * @param {number}
  */
 export var object = Object
 
 /**
- * @type {function}
  * @param {*}
- * @param {(string|number|symbol)}
- * @return {object}
+ * @return {obejct}
  */
-export var descriptors = object.getOwnPropertyDescriptors
+export var error = Error
 
 /**
- * @type {function}
  * @param {object}
  * @return {Array<string>}
  */
@@ -69,13 +51,66 @@ export var keys = object.keys
 export var create = object.create
 
 /**
- * @type {function}
- * @param {(object|function)}
- * @param {(string|number|symbol)}
- * @param {object}
+ * @param {string?}
+ * @return {(symbol|number)}
+ */
+export var symbol = typeof Symbol === 'function' ? Symbol : function () { return (random() * 1e8) | 0 }
+
+/**
+ * @type {(symbol|string)}
+ */
+export var iterator = symbol.iterator || '@@iterator'
+
+/**
+ * @param {function}
+ * @param {...args?}
+ * @return {number}
+ */
+export var request = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : setTimeout
+
+/**
  * @return {object}
  */
-export var define = object.defineProperty
+export var timeout = (function (resolve) { return function () { return new promise(resolve) } })(thunk(request))
+
+/**
+ * @constructor
+ * @param {function} callback
+ */
+export var promise = typeof Promise === 'function' ? Promise : function (callback) {
+	try {
+		return this.resolve = define(function resolve (value) {
+			for (var i = 0, j = resolve.entries; i < j.length; ++i) {
+				j[i](value)
+			}
+		}, {
+			then: {value: function (callback) { this.entries.push(callback) }},
+			entries: {value: []}
+		})
+	} finally {
+		callback(this.resolve)
+	}
+}
+
+/**
+ * @constructor
+ */
+export var registry = typeof WeakMap === 'function' ? WeakMap : function () {
+	return {
+		key: symbol(),
+		has: function (key) { return has(key, this.key) },
+		get: function (key) { return key[this.key] },
+		set: function (key, value) { define(key, this.key, {value: value, configurable: true}) }
+	}
+}
+
+/**
+ * @param {function} functor
+ * @return {function}
+ */
+function thunk (functor) {
+	return function (value) { return functor(value) }
+}
 
 /**
  * @param {number} value
@@ -86,38 +121,14 @@ export function hash (value) {
 }
 
 /**
- * @param {object} object
- * @param {*} key
- * @return {boolean}
- */
-export function has (object, key) {
-	return object.hasOwnProperty.call(object, key)
-}
-
-/**
- * @param {function} constructor
- * @param {object} props
- * @param {object?} prototype
- * @return {function}
- */
-export function extend (constructor, properties, prototype) {
-	return define(constructor, 'prototype', {value: create(prototype || null, properties || {})})
-}
-
-/**
- * @return {void}
- */
-export function noop () {}
-
-/**
  * @throws {Error}
  * @param {string} message
  */
 export function invariant (message) {
-	throw Error(message)
+	throw error(message)
 }
 
-/**
+/*
  * @param {object} value
  * @return {boolean}
  */
@@ -138,7 +149,7 @@ export function thenable (value) {
  * @param {boolean}
  */
 export function iterable (value) {
-	return typeof value[symbol.iterator] === 'function'
+	return typeof value[iterator] === 'function'
 }
 
 /**
@@ -148,6 +159,35 @@ export function iterable (value) {
  */
 export function is (a, b) {
 	return a === b ? (a !== 0 || 1/a === 1/b) : (a !== a && b !== b)
+}
+
+/**
+ * @param {object} object
+ * @param {*} key
+ * @return {boolean}
+ */
+export function has (object, key) {
+	return object.hasOwnProperty.call(object, key)
+}
+
+/**
+ * @param {(object|function)} value
+ * @param {(object|string|number|symbol)} a
+ * @param {object?} b
+ * @return {(object|function)}
+ */
+export function define (value, a, b) {
+	return typeof b === 'object' ? object.defineProperty(value, a, b) : object.defineProperties(value, a)
+}
+
+/**
+ * @param {function} constructor
+ * @param {object} props
+ * @param {object?} prototype
+ * @return {function}
+ */
+export function extend (constructor, properties, prototype) {
+	return define(constructor, 'prototype', {value: create(prototype || null, properties || {})})
 }
 
 /**
@@ -214,8 +254,8 @@ export function each (callback, value, index) {
 					break
 				}
 			}
-		} else if (typeof value[symbol.iterator] === 'function') {
-			for (var i = index, j = value[symbol.iterator](), k = j.next(); !k.done; ++i) {
+		} else if (typeof value[iterator] === 'function') {
+			for (var i = index, j = value[iterator](), k = j.next(); !k.done; ++i) {
 				if (each(callback, k.value, i + index) == null) {
 					k = j.next()
 				} else {
@@ -229,24 +269,14 @@ export function each (callback, value, index) {
 }
 
 /**
- * @param {(Promise<*>|Array<Promise<*>>)} value
+ * @param {Promise<*>} value
  * @param {function} fulfilled
  * @param {function} rejected
+ * @return {Promise<*>?}
  */
 export function resolve (value, fulfilled, rejected) {
-	if (value.length > -1) {
-		var length = value.length
-		var result = []
-
-		each(function (value) {
-			resolve(value, function () {
-				if (result.push(value) === length) {
-					fulfilled(result)
-				}
-			}, rejected)
-		}, value, 0)
-	} else if (thenable(value)) {
-		value.then(function (value) {
+	if (thenable(value)) {
+		return value.then(function (value) {
 			if (value) {
 				if (fetchable(value)) {
 					return resolve(value.json(), fulfilled, rejected)
@@ -256,6 +286,6 @@ export function resolve (value, fulfilled, rejected) {
 			return fulfilled(value)
 		}, rejected)
 	} else {
-		fulfilled(value)
+		return fulfilled(value)
 	}
 }

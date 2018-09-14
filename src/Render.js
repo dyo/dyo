@@ -1,8 +1,9 @@
-import * as Constant from './Constant.js'
+import * as Enum from './Enum.js'
 import * as Element from './Element.js'
-import * as Commit from './Commit.js'
+import * as Node from './Node.js'
 import * as Reconcile from './Reconcile.js'
 import * as Interface from './Interface.js'
+import * as Schedule from './Schedule.js'
 
 import Registry from './Registry.js'
 
@@ -11,8 +12,8 @@ import Registry from './Registry.js'
  * @param {*?} target
  * @param {function?} callback
  */
-export function render (element, target) {
-	commit(element, Interface.target(target), Constant.create)
+export function hydrate (element, target, callback) {
+	dispatch(Element.root(element), Interface.target(target), callback, Enum.search)
 }
 
 /**
@@ -20,47 +21,52 @@ export function render (element, target) {
  * @param {*?} target
  * @param {function?} callback
  */
-export function hydrate (element, target) {
-	commit(element, Interface.target(target), Constant.search)
+export function render (element, target, callback) {
+	dispatch(Element.root(element), Interface.target(target), callback, Enum.create)
 }
 
 /**
  * @param {*} element
  * @param {*?} target
+ * @param {function?} callback
  * @param {number} from
  */
-export function commit (element, target, from) {
+export function dispatch (element, target, callback, from) {
+	Schedule.checkout(Schedule.create(Enum.active), Enum.pid, commit, element, element, target, from, callback)
+}
+
+/**
+ * @param {object} fiber
+ * @param {number} pid
+ * @param {object} element
+ * @param {object} children
+ * @param {*?} target
+ * @param {number} from
+ */
+export function commit (fiber, pid, element, children, target, from) {
 	if (Registry.has(target)) {
-		update(Registry.get(target), Element.root([Element.from(element, 0)]))
+		update(fiber, pid, Registry.get(target), children)
 	} else {
-		create(Element.target(), Element.from(element, 0), target, from)
+		create(fiber, pid, Registry.set(target, Element.portal(element, target)).get(target), from)
 	}
 }
 
 /**
+ * @param {object} fiber
+ * @param {number} pid
  * @param {object} parent
- * @param {object} element
- * @param {object} target
  * @param {number} from
  */
-export function create (parent, element, target, from) {
-	mount(parent, Element.put(parent, Commit.create(parent, parent, element, from)), parent.owner = target)
+export function create (fiber, pid, parent, from) {
+	Node.create(fiber, pid, parent, parent, parent, 0, from)
 }
 
 /**
+ * @param {object} fiber
+ * @param {number} pid
  * @param {object} parent
- * @param {object} element
- * @param {object} target
+ * @param {object} children
  */
-export function mount (parent, element, target) {
-	Commit.append(parent, element)
-	Registry.set(target, parent)
-}
-
-/**
- * @param {object} element
- * @param {object} snapshot
- */
-export function update (element, snapshot) {
-	Reconcile.update(Constant.pid, element, snapshot)
+export function update (fiber, pid, parent, children) {
+	Reconcile.children(fiber, pid, parent, parent, parent.children, [children])
 }

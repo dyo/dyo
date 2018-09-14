@@ -1,114 +1,212 @@
-import * as Constant from './Constant.js'
+import * as Enum from './Enum.js'
+import * as Utility from './Utility.js'
+import * as Element from './Element.js'
 import * as Reconcile from './Reconcile.js'
 import * as Commit from './Commit.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
 
-/**
- * The `commit` function is the entry port for every update
- * the process identifier `pid` uses the sign bit to represent the priority of the commit and the
- * rest of its significant bits as the unique identifier.
- *
- * Every commit is represented by a process id(pid), one identifier, and three payloads(a, b, c).
- *
- * For example:
- *
- * 		content(update text content) could be (a = element, b = (previous value), b = (previous value))
- *   	mount(insert/append a node) could be (a = parent, b = element, c = (sibling | null))
- *    unmount(remove node) could be (a = parent, b = eleemnt, c = index)
- *
- *  	etc...
- *
- * High priority updates are represented when `pid` is equal or greater than zero.
- * In this case `commit` is a opaque noop router between commits.
- *
- * Low priority updates are represented when `pid` is less than zero,
- * This branches into `queue` where the following takes place.
- *
- * When the last commit is an unresolved i/o dependency
- * The current commit is queued to retry a queue when it is resolved.
- *
- * Otherwise if the current commit is not a `callback` commit
- * the commit is pushed into its respective bucket.
- *
- * A `callback` commit then triggers a complete flush of the commit stream
- * represented by that `pid`.
- *
- * This flushes all queued commits back to `commit` with the signed bit fliped to represent high priority.
- *
- * If the callback commit has a function to be called the function is called with the supplied
- * arguments else noop.
- *
- * ATM of this writing there is only one bucket(the root bucket).
- *
- * The implementation is reasonably simple but extensible as requirements change without affecting other
- * pieces of the code base.
- */
+import Registry from './Registry.js'
 
+export var index = 0
+export var frame = 60
+export var delta = ((1000 / frame) - (300 / frame)) | 0
 export var queue = []
 
 /**
- * @param {number} pid
- * @param {number} id
- * @param {*} a
- * @param {*} b
- * @param {*} c
+ * @param {number} priority
+ * @return {object}
  */
-export function commit (pid, id, a, b, c) {
-	if (pid < 0) {
-		return enqueue(pid, id, a, b, c)
+export function create (priority) {
+	if (index) {
+		// TODO if the most previous update has the same priority, merge into that
+		// other wise create a new fiber.
+		// return queue[index - 1]
 	}
 
-	switch (id) {
-		case Constant.update:
-			return Reconcile.update(pid, a, b, c)
-		case Constant.component:
-			return Component.update(pid, a, b, c)
-		case Constant.callback:
-			return Lifecycle.callback(a, b)
-		case Constant.props:
-			return Commit.props(a, b, c)
-		case Constant.content:
-			return Commit.content(a, c)
-		case Constant.mount:
-			return Commit.mount(a, b, c)
-		case Constant.unmount:
-			return Commit.unmount(a, b)
-	}
+	return queue[index] = {index: index++, children: [], pending: false, timer: priority >= 0 ? 0 : Utility.now()}
 }
 
 /**
- * TODO: schedule low priority updates seperatly from high priority updates
- * given that high priority updates are commited immediatly.
- *
- * @param {number} pid
- * @param {number} id
- * @param {*} a
- * @param {*} b
- * @param {*} c
+ * @param {object} fiber
  */
-export function enqueue (pid, id, a, b, c) {
-	// while the last update is an unresolved I/O dependency
-	// enqueue to add after the dependency has been resolved
-	if (queue[queue.length].id === Constant.thenable) {
-		if (!queue[queue.length].a.resolved) {
-			return queue[queue.length].b.then(enqueue.bind(null, pid, id, a, b, c))
-		}
-	}
-
-	// eof
-	if (id !== Constant.callback) {
-		queue.push({pid: pid, id: id, a: a, b: b, c: c})
+export function destroy (fiber) {
+	if (fiber.pending) {
+		Utility.resolve(fiber.pending, function () {
+			destroy(fiber)
+		})
 	} else {
-		for (var i = 0, j; i < queue.length; ++i) {
-			commit(0, (j = queue[i]).pid, j.id, j.a, j.b, j.c)
+		try {
+			fiber.children.forEach(flush)
+		} finally {
+			if (queue[fiber.index] = fiber.index === 0) {
+				index = 0
+				queue = []
+			}
 		}
 	}
 }
 
 /**
+ * @param {object} fiber
+ * @param {number} pid
+ * @param {function} type
+ * @param {object} host
+ * @param {*} parent
+ * @param {*} primary
+ * @param {*} secondary
+ * @param {function} callback
+ */
+export function checkout (fiber, pid, type, host, parent, primary, secondary, callback) {
+	try {
+		type(fiber, pid, host, parent, primary, secondary)
+
+		if (callback) {
+			commit(fiber, pid, Enum.callback, host, parent, callback, primary)
+		}
+	} catch (error) {
+		try {
+			throw error
+		} finally {
+			clear(fiber)
+		}
+	} finally {
+		destroy(fiber)
+	}
+}
+
+/**
+ * @param {number} value
  * @return {number}
  */
-export function identity () {
-	return queue.length + 1
+export function accumulate (value) {
+	return value + 1
+}
+
+/**
+ * @param {object} value
+ * @param {object} fiber
+ * @param {number} pid
+ * @param {number} type
+ * @param {object} host
+ * @param {*} parent
+ * @param {*} primary
+ * @param {*} secondary
+ * @param {function} callback
+ */
+export function resolve (value, fiber, pid, type, host, parent, primary, secondary, callback) {
+	Utility.resolve(value, function () {
+		callback(fiber, Enum.pid, type, host, parent, primary, secondary)
+	})
+}
+
+/**
+ * @param {object} fiber
+ * @param {number} pid
+ * @param {number} type
+ * @param {object} host
+ * @param {*} parent
+ * @param {*} primary
+ * @param {*} secondary
+ * {function} callback
+ */
+export function timeout (fiber, pid, type, host, parent, primary, secondary, callback) {
+	resolve(suspend(fiber, Utility.timeout()), fiber, pid, type, host, parent, primary, secondary, callback)
+}
+
+/**
+ * @param {object} fiber
+ * @param {number} pid
+ * @param {number} type
+ * @param {object} host
+ * @param {*} parent
+ * @param {*} primary
+ * @param {*} secondary
+ */
+export function commit (fiber, pid, type, host, parent, primary, secondary) {
+	if (type > Enum.content) {
+		if (fiber.pending) {
+			return resolve(fiber.pending, fiber, pid, type, host, parent, primary, secondary, commit)
+		}
+
+		if (fiber.timer) {
+			if (Utility.now() - fiber.timer > delta) {
+				return timeout(fiber, pid, type, host, parent, primary, secondary, commit)
+			}
+		}
+
+		switch (type) {
+			case Enum.children:
+				return Reconcile.children(fiber, pid, host, parent, primary, secondary)
+			case Enum.component:
+				return Component.update(fiber, pid, host, parent, primary, secondary)
+		}
+	}
+
+	fiber.children.push({type: type, parent: parent, primary: primary, secondary: secondary})
+}
+
+/**
+ * @param {object} fiber
+ * @param {number} pid
+ * @param {number} type
+ * @param {object} host
+ * @param {*} parent
+ * @param {*} primary
+ * @param {*} secondary
+ */
+export function offscreen (fiber, pid, type, host, parent, primary, secondary) {
+	// Utility.timeout(function () {
+	// 	commit(fiber, Enum.pid, type, host, parent, primary, secondary)
+	// })
+}
+
+/**
+ * @param {object} fiber
+ */
+export function clear (fiber) {
+	fiber.children = []
+}
+
+/**
+ * @param {object} fiber
+ * @param {number} value
+ * @return {object}
+ */
+export function suspend (fiber, value) {
+	try {
+		return fiber.pending = value
+	} finally {
+		Utility.resolve(value, function () {
+			fiber.timer = Utility.now(fiber.pending = false)
+		})
+	}
+}
+
+/**
+ * @param {number} type
+ * @param {object} parent
+ * @param {object} primary
+ * @param {object} secondary
+ */
+export function dispatch (type, parent, primary, secondary) {
+	switch (type) {
+		case Enum.content:
+			return Commit.content(parent, primary)
+		case Enum.unmount:
+			return Commit.unmount(parent, primary)
+		case Enum.mount:
+			return Commit.mount(parent, primary, secondary)
+		case Enum.props:
+			return Commit.properties(parent, primary, secondary)
+		case Enum.callback:
+			return Commit.callback(parent, primary, secondary)
+	}
+}
+
+/**
+ * @param {object} value
+ */
+export function flush (value) {
+	dispatch(value.type, value.parent, value.primary, value.secondary)
 }

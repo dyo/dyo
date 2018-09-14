@@ -1,94 +1,80 @@
-import * as Constant from './Constant.js'
+import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
-import * as Schedule from './Schedule.js'
+import * as Component from './Component.js'
+import * as Node from './Node.js'
 import * as Commit from './Commit.js'
+import * as Schedule from './Schedule.js'
 
 /**
+ * @param {object} fiber
  * @param {number} pid
- * @param {object} element
- * @param {object} snapshot
- * @param {number} index
- */
-export function update (pid, element, snapshot, index) {
-	if (element.type === snapshot.type) {
-		switch (element.id) {
-			case Constant.text:
-			case Constant.comment:
-				if (element.children !== snapshot.children) {
-					Schedule.commit(pid, Constant.content, element, element.children, element.children = snapshot.children)
-				}
-			case Constant.empty:
-				return
-			case Constant.component:
-				return Schedule.commit(pid, Constant.component, element, snapshot, Constant.update)
-			case Constant.thenable:
-				return Schedule.commit(pid, Constant.thenable, element, snapshot, Constant.update)
-			default:
-				if (element.children !== snapshot.children) {
-					children(pid, element, element.children, snapshot.children)
-				}
-				if (element.props !== snapshot.props) {
-					Schedule.commit(pid, Constant.props, element, props(element.props, element.props = snapshot.props), Constant.update)
-				}
-		}
-	} else {
-		type(pid, element.parent, element, snapshot, index)
-	}
-}
-
-/**
- * @param {number} pid
+ * @param {object} host
  * @param {object} parent
  * @param {object} a
  * @param {object} b
+ * @param {object} c
  * @param {number} idx
  */
-export function type (pid, parent, a, b, idx) {
-	Schedule.commit(pid, Constant.mount, parent, parent.children[idx] = Commit.create(parent.host, parent, b, Constant.create), a)
-	Schedule.commit(pid, Constant.unmount, parent, Commit.destroy(parent, a), idx)
+export function resolve (fiber, pid, host, parent, a, b, c, idx) {
+	if (a.type === b.type) {
+		switch (a.constructor) {
+			case Enum.component:
+				return Schedule.commit(fiber, Schedule.accumulate(pid), Enum.component, host, a, b, Enum.props)
+			case Enum.thenable:
+				return Schedule.commit(fiber, pid, Enum.thenable, host, a, b, idx)
+			case Enum.text:
+			case Enum.comment:
+				if (a.children !== b.children) {
+					Schedule.commit(fiber, pid, Enum.content, host, a, a.children = b.children, idx)
+				}
+			case Enum.empty:
+				return
+			default:
+				children(fiber, pid, host, a, a.children, b.children)
+				props(fiber, pid, host, a, object(a.props, a.props = b.props))
+		}
+	} else {
+		type(fiber, pid, host, parent, a, b, c, idx)
+	}
 }
 
 /**
+ * @param {object} fiber
+ * @param {number} pid
+ * @param {object} host
+ * @param {object} parent
  * @param {object} a
  * @param {object} b
- * @return {object?}
+ * @param {object} c
+ * @param {number} idx
  */
-export function props (a, b) {
-	var size = 0
-	var diff = {}
+export function type (fiber, pid, host, parent, a, b, c, idx) {
+	Schedule.commit(fiber, pid, Enum.mount, host, parent, c[idx] = Node.create(fiber, pid, host, parent, b, idx, Enum.create), a)
+	Schedule.commit(fiber, pid, Enum.unmount, host, parent, Node.destroy(fiber, pid, host, a), null)
+}
 
-	for (var key in a) {
-		if (!Utility.has(b, key)) {
-			diff[++size, key] = null
-		}
-	}
-
-	for (var key in b) {
-		var prev = a[key]
-		var next = b[key]
-
-		if (prev !== next) {
-			if (typeof next !== 'object' || next === null) {
-				diff[++size, key] = next
-			} else if (next = props(prev || {}, next)) {
-				diff[++size, key] = next
-			}
-		}
-	}
-
-	if (size) {
-		return diff
+/**
+ * @param {object} fiber
+ * @param {number} pid
+ * @param {object} host
+ * @param {object} parent
+ * @param {object} a
+ */
+export function props (fiber, pid, host, parent, a) {
+	if (a) {
+		Schedule.commit(fiber, pid, Enum.props, host, parent, a, Enum.update)
 	}
 }
 
 /**
+ * @param {object} fiber
  * @param {number} pid
+ * @param {object} host
  * @param {object} parent
  * @param {object} a
  * @param {object} b
  */
-export function children (pid, parent, a, b) {
-	var host = parent.host
+export function children (fiber, pid, host, parent, a, b) {
 	var prev = parent
 	var next = parent
 	var alen = a.length
@@ -100,19 +86,22 @@ export function children (pid, parent, a, b) {
 	var idx = 0
 	var ptr = 0
 
-	if (max < 0) {
+	// step 0, noop
+	if (max === -1) {
 		return
 	}
 
 	// step 1, prefix/suffix
-	outer: {
-		while ((prev = a[idx]).key === (next = b[idx]).key) {
-			Schedule.commit(pid, Constant.update, prev, next, idx)
-			if (++idx > min) { break outer }
-		}
-		while ((prev = a[aend]).key === (next = b[bend]).key) {
-			Schedule.commit(pid, Constant.update, a[max] = prev, next, bend)
-			if (--aend, --bend, --max, idx > --min) { break outer }
+	if (min !== -1) {
+		outer: {
+			while ((prev = a[idx]).key === (next = b[idx]).key) {
+				resolve(fiber, pid, host, parent, prev, next, a, idx)
+				if (++idx > min) { break outer }
+			}
+			while ((prev = a[aend]).key === (next = b[bend]).key) {
+				resolve(fiber, pid, host, parent, a[max] = prev, next, a, bend)
+				if (--aend, --bend, --max, idx > --min) { break outer }
+			}
 		}
 	}
 
@@ -120,21 +109,25 @@ export function children (pid, parent, a, b) {
 	if (idx > aend++) {
 		if (idx <= bend++) {
 			if (bend < blen) do {
-				Schedule.commit(pid, Constant.mount, parent, a[--bend] = Commit.create(host, parent, b[bend], Constant.create), a[bend + 1])
+				Schedule.commit(fiber, pid, Enum.mount, host, parent, a[--bend] = Node.create(fiber, pid, host, parent, b[bend], bend, Enum.create), a[bend + 1])
 			} while (idx < bend) else do {
-				Schedule.commit(pid, Constant.mount, parent, a[--bend] = Commit.create(host, parent, b[bend], Constant.create), null)
+				Schedule.commit(fiber, pid, Enum.mount, host, parent, a[--bend] = Node.create(fiber, pid, host, parent, b[bend], bend, Enum.create), null)
 			} while (idx < bend)
 		}
 	} else if ((ptr = idx) > bend++) {
-		do { Schedule.commit(pid, Constant.unmount, parent, Commit.destroy(parent, a[idx]), idx++) } while (idx < aend)
+		do {
+			Schedule.commit(fiber, pid, Enum.unmount, host, parent, Node.destroy(fiber, pid, host, a[idx++]), null)
+		} while (idx < aend)
 		a.splice(ptr, aend - bend)
 	} else {
-		sort(parent, a, b, idx, aend, bend)
+		sort(fiber, pid, host, parent, a, b, idx, aend, bend)
 	}
 }
 
 /**
+ * @param {object} fiber
  * @param {number} pid
+ * @param {object} host
  * @param {object} parent
  * @param {object} a
  * @param {object} b
@@ -142,8 +135,7 @@ export function children (pid, parent, a, b) {
  * @param {number} aend
  * @param {number} bend
  */
-export function sort (pid, parent, a, b, idx, aend, bend) {
-	var host = parent.host
+export function sort (fiber, pid, host, parent, a, b, idx, aend, bend) {
 	var aidx = idx
 	var bidx = idx
 	var akey = {}
@@ -162,16 +154,16 @@ export function sort (pid, parent, a, b, idx, aend, bend) {
 	while (aidx > idx | bidx > idx) {
 		if (aidx > idx) {
 			if ((move = bkey[(node = a[--aidx]).key]) !== undefined) {
-				Schedule.commit(pid, Constant.update, node, b[move], aidx)
+				resolve(fiber, pid, host, parent, node, b[move], a, aidx)
 
 				if (move < aidx & aidx !== 0) {
-					Schedule.commit(pid, Constant.mount, parent, node, a[move])
+					Schedule.commit(fiber, pid, Enum.mount, host, parent, node, a[move])
 					a.splice(aidx++, 1)
 					a.splice(move, 0, node)
 					continue
 				}
 			} else {
-				Schedule.commit(pid, Constant.unmount, parent, Commit.destroy(parent, node), aidx)
+				Schedule.commit(fiber, pid, Enum.unmount, host, parent, Node.destroy(fiber, pid, host, node), null)
 				a.splice(aidx, 1)
 				if (--post) { continue }
 			}
@@ -179,11 +171,48 @@ export function sort (pid, parent, a, b, idx, aend, bend) {
 
 		if (bidx > idx) {
 			if ((move = akey[(node = b[--bidx]).key]) === undefined) {
-				Schedule.commit(pid, Constant.mount, parent, node = Commit.create(host, parent, node, Constant.create), a[post])
+				Schedule.commit(fiber, pid, Enum.mount, host, parent, node = Node.create(fiber, pid, host, parent, node, bidx, Enum.create), a[post])
 				a.splice(post, 0, node)
 			} else {
 				post = move
 			}
 		}
+	}
+}
+
+/**
+ * @param {object} a
+ * @param {object} b
+ * @return {object?}
+ */
+export function object (a, b) {
+	if (a === b) {
+		return
+	}
+
+	var size = 0
+	var diff = {}
+
+	for (var key in a) {
+		if (!Utility.has(b, key)) {
+			diff[++size, key] = null
+		}
+	}
+
+	for (var key in b) {
+		var prev = a[key]
+		var next = b[key]
+
+		if (prev !== next) {
+			if (typeof next !== 'object' || next === null) {
+				diff[++size, key] = next
+			} else if (next = object(prev || {}, next)) {
+				diff[++size, key] = next
+			}
+		}
+	}
+
+	if (size) {
+		return diff
 	}
 }

@@ -1,62 +1,20 @@
-import * as Constant from './Constant.js'
+import * as Enum from './Enum.js'
 import * as Element from './Element.js'
-import * as Component from './Component.js'
-
-/**
- * @param {object} owner
- * @param {function} value
- * @return {*}
- */
-export function callback (owner, value) {
-	if (typeof value === 'function') {
-		return value.call(owner, owner.state, owner.props)
-	}
-}
 
 /**
  * @param {object} element
  * @param {*?} value
- * @param {object?} owner
+ * @param {object?} instance
  */
-export function refs (element, value, owner) {
+export function refs (element, value, instance) {
 	switch (typeof value) {
 		case 'function':
-			return value.call(element.host, owner, element)
+			return value(instance)
 		case 'object':
-			return value.current = owner
+			return value.current = instance
 		default:
-			if (element.host.id === Constant.component) {
-				element.host.owner.refs[value] = owner
-			}
+			return element[Enum.host][Enum.owner].refs[value] = instance
 	}
-}
-
-/**
- * @param {object} element
- * @param {object} from
- * @param {object} value
- * @param {object} callback
- * @param {object} owner
- * @param {object} props
- * @param {object} state
- * @return {*}
- */
-export function event (element, from, value, callback, owner, props, state) {
-	if (typeof callback === 'function') {
-		return resolve(element, callback.call(owner, value, props, state), from)
-	} else if (typeof callback.handleEvent === 'function') {
-		return resolve(element, callback.handleEvent(value, props, state), from)
-	}
-}
-
-/**
- * @param {object} element
- * @param {string} from
- * @param {*} error
- * @param {object} exception
- */
-export function exception (element, from, error, exception) {
-	resolve(element, element.owner[from](error, exception), from)
 }
 
 /**
@@ -69,51 +27,66 @@ export function construct (type, props) {
 }
 
 /**
- * @param {object} owner
+ * @param {object} instance
  * @param {object} props
  * @param {object} state
  * @return {object}
  */
-export function render (owner, props, state) {
-	return Element.from(owner.render(props, state), 0)
+export function render (instance, props, state) {
+	return Element.root(instance.render(props, state))
 }
 
 /**
- * @param {object} element
- * @param {string} from
- */
-export function mount (element, from) {
-	return resolve(element, element.owner[from](), from)
-}
-
-/**
- * @param {object} element
- * @param {string} from
+ * @param {object} instance
+ * @param {object} event
  * @param {object} props
  * @param {object} state
- * @return {any}
+ * @param {object} callback
+ * @return {*}
  */
-export function update (element, from, props, state) {
-	return resolve(element, element.owner[from](props, state), from)
+export function event (instance, event, props, state, callback) {
+	if (typeof callback === 'function') {
+		resolve(instance, callback.call(instance, event, props, state), callback)
+	} else if (typeof callback.handleEvent === 'function') {
+		resolve(instance, callback.handleEvent(event, props, state), callback)
+	}
 }
 
 /**
- * @param {Element} element
+ * @param {object} instance
+ * @param {string} from
+ */
+export function mount (instance, from) {
+	return resolve(instance[from](instance.props, instance.state), from)
+}
+
+/**
+ * @param {object} instance
+ * @param {object} props
+ * @param {object} state
+ * @param {string} from
+ * @return {*}
+ */
+export function update (instance, props, state, from) {
+	return resolve(instance, instance[from](props, state), from)
+}
+
+/**
+ * @param {object} instance
  * @param {object?} value
  * @param {string} from
  */
-export function resolve (element, value, from) {
+export function resolve (instance, value, from) {
 	if (value) {
-		switch (typeof value) {
-			case 'object':
-			case 'function':
-				switch (from) {
-					case Constant.getInitialState:
-					case Constant.shouldComponentUpdate:
-					case Constant.componentWillUnmount:
-						break
-					default:
-						Component.resolve(element, element.owner, value, Constant.state)
+		switch (from) {
+			case Enum.shouldComponentUpdate:
+			case Enum.componentWillUnmount:
+				break
+			default:
+				switch (typeof value) {
+					case 'object':
+					case 'function':
+						instance.setState(value)
 				}
 		}
 	}

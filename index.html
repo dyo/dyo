@@ -1,7 +1,233 @@
+<style>
+	:root {
+		--color-page-text: #333;
+		--color-page-bg: #fff;
+		--color-button-bg: #f7f7f7;
+		--color-button-border: #e7e7e7;
+		--pt: 0.5em;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	body {
+		margin: 0;
+		padding: calc(var(--pt)*4);
+		font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+		color: var(--color-page-text);
+		background-color: var(--color-page-bg);
+	}
+
+	ul {
+		display: grid;
+		gap: 0.5em 0.5em;
+		grid-template-columns: repeat(auto-fill, 20em);
+		padding: 0px;
+		margin: 0px;
+	}
+
+	li {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1em;
+		background-color: var(--color-button-bg);
+		border: 1px solid var(--color-button-border);
+		border-radius: 1em;
+		cursor: pointer;
+	}
+
+	small {
+		display: block;
+		font-size: 1em;
+		margin-top: 0.5em;
+	}
+
+	.arrow {
+		width: 24;
+		height: 24;
+	}
+
+	.spinner {
+		width: 30;
+		height: 30;
+		stroke-dasharray: 100;
+		stroke-dashoffset: 0;
+		-webkit-transform-origin: center;
+		transform-origin: center;
+    animation: dash-keyframe 1.3s ease-in-out infinite;
+	}
+
+	.spinner circle {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 4;
+		stroke-linecap: round;
+		cx: 15;
+		cy: 15;
+		r: 11px;
+	}
+
+	@keyframes dash-keyframe {
+		0% { stroke-dashoffset: 100; }
+		50% { stroke-dashoffset: 50; transform: rotate(135deg); }
+		100% { stroke-dashoffset: 100; transform: rotate(450deg); }
+	}
+	@keyframes rotate-keyframe {
+	  0% { transform: rotate(0deg); }
+	  100% { transform: rotate(270deg); }
+	}
+</style>
 <main id="main"></main>
 <section id="section"></section>
+
 <script type=module>
-	import {h, render, Component, Fragment} from './index.js'
+	import {h, render, Component, Fragment, Children} from './index.js'
+
+	const data = {
+		entries: [
+			{
+				name: 'Andrew Clark',
+				username: 'acdlite'
+			}
+		]
+	}
+
+	class Placeholder {
+		getDerivedState() {
+			return {a: true}
+		}
+		componentDidCatch(error, info) {
+			if (typeof Object(error).then === 'function') {
+				var resolved = false
+
+				setTimeout(() => {
+					if (!resolved) {
+						// this.setState({children: h(LoadingSpinner, {hidden: false})})
+					}
+				}, 3100)
+
+				error.then(() => {
+					resolved = true
+					this.setState({children: this.props.fallback})
+				})
+			}
+		}
+		render(props, state) {
+			return state.children || props.children
+		}
+	}
+
+	class LoadingSpinner {
+		render({hidden}) {
+			return h('div', {class: 'spinner-container', hidden: hidden},
+				h('svg', {class: "spinner", viewBox: "0 0 30 30"}, h('circle'))
+			)
+		}
+	}
+
+	class ArrorIcon {
+		render({hidden}) {
+			return h('div', {class: 'arrow-container', hidden: hidden},
+				h('svg', {class: 'arrow', viewBox: '0 0 24 24'},
+					h('path', {fill: 'none', d: 'M0 0h24v24H0z'}),
+					h('path', {d: 'M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z'})
+				)
+			)
+		}
+	}
+
+	class ListItem {
+		handleEvent() {
+			return () => {
+				return {loading: !this.state.loading}
+			}
+		}
+		componentDidUpdate(props, state) {
+			return () => {
+				// throw Promise.resolve()
+				throw new Promise((resolve) => setTimeout(resolve, 3000))
+			}
+		}
+		render ({name, username}, {loading}) {
+			return h('li', {onClick: this.handleEvent},
+				h('div', h('strong', name), h('small', username)),
+				h(ArrorIcon, {hidden: loading}),
+				h(LoadingSpinner, {hidden: !loading})
+			)
+		}
+	}
+
+	class Application {
+		render({children}) {
+			return h(Placeholder, {fallback: h('h1', 'Success!!')},
+				h('h1', 'React Core Team'),
+				h('ul', Children.map(children, (props) => {
+					return h(ListItem, props)
+				}))
+			)
+		}
+	}
+
+	render(h(Application, data.entries), 'section')
+</script>
+
+<script type=!module>
+	import {h, render, Component, Fragment, createContext} from './index.js'
+
+	function expansiveWork () {
+		for (var i = 0, j = window || global; i < 4e5; ++i) {
+			j[Symbol.for('foo')] = i
+		}
+	}
+
+	class Boundary extends Component {
+		componentDidCatch(err, stack) {
+			this.setState((state, props) => {
+				expansiveWork()
+				// return new Promise((resolve) => setTimeout(() => console.log('async state') || resolve({caught: true}), 1000))
+				return {caught: true}
+			}, (props, state) => {
+				console.log('callback!!!!!')
+			})
+			console.log('caught', err)
+			// throw new Error('Hello World')
+			// console.log(stack.componentStack)
+		}
+		componentDidUpdate() {
+			console.log('componentDidUpdate')
+		}
+		componentDidMount() {
+			console.log('componentDidMount')
+		}
+		render({children}) {
+			if (this.state.caught) {
+				return h('h1', 'Caught')
+			}
+
+			return h('div', 'DIV ', children, 1)
+		}
+	}
+
+	class Throws extends Component {
+		render() {
+			// return h('h1', '!Throws')
+			throw 1
+			// return 'Throws'
+			return h('section', class Err {
+				render() {
+					throw 1
+				}
+			})
+		}
+	}
+
+	render(h(Boundary, h(Throws)), 'main')
+</script>
+
+<script type=!module>
+	import {h, render, Component, Fragment, createContext} from './index.js'
 
 	var i = 0
 
@@ -43,74 +269,164 @@
 
 	// render(h( 'ul', [2, 5, 6, 7].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
 	// render(h( 'ul', [1, 0, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
+</script>
+
+<script type=!module>
+	import {h, render, Component, Fragment, createContext} from './index.js'
 
 	class ErrorBoundary extends Component {
 		// componentDidCatch(...args) {
-		// 	// throw Error('componentDidCatch')
+		// 	throw Error('componentDidCatch ErrorBoundary')
 		// 	console.log(...args)
 		// }
 	}
 
-	class A extends Component {
-		getInitialState() {
+	class C extends Component {
+		constructor() {
+			super()
+			this.state = {value: 'Hello World!'}
+			// this.setState({value: 'Hello World - A'})
+		}
+		// getDerivedState(props, state) {
+		// 	console.log('getDerivedState', props, state, this.state === state, this.props === props)
+		// }
+		// getInitialState() {
 			// return new Promise((resolve, _) => {
 			// 	setTimeout(() => {
 			// 		resolve({foo: true})
 			// 	}, 2000)
 			// })
-			return {foo: true}
-		}
-		static propTypes() {
-			return {
-				foo(...args) {
-					console.log('propTypes', ...args)
-				}
-			}
-		}
-		componentWillMount(...args) {
-			// throw Error('componentWillMount')
-			console.log('componentWillMount', ...args)
-		}
+		// 	return {value: 'Hello World'}
+		// }
+		// static propTypes() {
+		// 	return {
+		// 		foo(...args) {
+		// 			console.log('propTypes', ...args)
+		// 		}
+		// 	}
+		// }
 		componentDidMount(...args) {
 			// throw Error('componentDidMount')
 			console.log('componentDidMount', ...args, this)
 		}
 		componentWillUnmount(...args) {
 			// throw Error('componentWillUnmount')
-			console.log('componentWillUnmount', ...args)
-		}
-		componentWillReceiveProps(...args) {
-			// throw Error('componentWillReceiveProps')
-			console.log('componentWillReceiveProps', ...args)
+			console.log('componentWillUnmount', ...args, this)
 		}
 		componentWillUpdate(...args) {
+			// this.setState({value: 'Hello World - A'})
 			// throw Error('componentWillUpdate')
-			console.log('componentWillUpdate', ...args)
+			// console.log('componentWillUpdate', ...args)
+			// this.setState({value: 'Hello - A'})
 		}
 		componentDidUpdate(...args) {
 			// throw Error('componentDidUpdate')
-			console.log('componentDidUpdate', ...args)
+			console.trace('componentDidUpdate', ...args, this)
 		}
-		shouldComponentUpdate(...args) {
+		// shouldComponentUpdate(...args) {
 			// throw Error('shouldComponentUpdate')
-			return !console.log('shouldComponentUpdate', ...args)
-		}
+			// return !console.log('shouldComponentUpdate', ...args)
+		// }
 		render() {
+			// return this.props.children
 			// throw Error('render')
-			return h('h1', 'Hello')
-			// return h({}, 'invalid')
-			return h('h1', 'Works!', i++, [2, 3])
+			// return h('h1', 'Hello')
+			// return h('*44', 'invalid')
+
+			return h('h1', {
+				onClick: e => {
+					this.setState(() => {
+						// throw 'Hello'
+						return {value: 'Hello!'}
+					})
+				}
+			}, this.state.value || '...')
 		}
 	}
 
+	const PromiseChildren = h('h1', 'Hello World')
+	const PromiseType = new Promise((resolve) => {
+		// return resolve(PromiseChildren)
+		setTimeout(resolve, 1000, PromiseChildren)
+	})
+	// render(h(PromiseType, {delay: 100}, "Loading..."), 'main', () => console.log('callback'))
+
 	// console.log(h('h1', null, null, 'Hello World', null))
 	// console.log(h(Fragment, null, 'Hello World'))
-	// console.log(h({then: () => {}}, null, 'Hello World'))
+	// console.log(h({then: () => {}}, null))
 
-	// render(h('h1', 'Hello World'), 'main')
+	// render(h('h1', ['Hello World']), 'main')
 	// render(h('h1', {style: 'color:red;'}, 'Hello World', 2), 'main')
 	// render(h('h1', {style: 'color:red;'}, 'Hello World'), 'main')
-	render(h(ErrorBoundary, h(A, {a: 1}, h('h1', 'Works!', 'A'))), 'main')
-	render(h(ErrorBoundary, h(A, {a: 1}, h('h1', 'Works!', 'A'))), 'main')
+
+	// render(h(ErrorBoundary, h(A, {a: 1}, h('h1', 'Works!', 'A'))), 'main')
+	// render(h(ErrorBoundary, h(A, {a: 1}, h('h1', 'Works!', 'B'))), 'main')
+
+	// function Foo () {
+		// return h('h1', 'Hello World!')
+	// }
 </script>
 
+<script type=!module>
+	// var A = createContext('Default A')
+	// var B = createContext('Default B')
+
+	// render(
+	// 	h('div',
+	// 		h(A.Provider, {value: "A"},
+	// 			h(B.Provider, {value: 'B'},
+	// 				h(A.Consumer,
+	// 					(value) => h('h1', `Consumer - ${value}`)
+	// 				),
+	// 				h(A.Consumer,
+	// 					(value) => h('h1', `Consumer - ${value}`)
+	// 				),
+	// 				h(B.Consumer,
+	// 					(value) => h('h1', `Consumer - ${value}`)
+	// 				)
+	// 			)
+	// 		),
+	// 		h(A.Consumer, () => null)
+	// 	),
+	// 	'main'
+	// )
+
+	// render(
+	// 	h('div',
+	// 		h(A.Provider, {value: "A - updated"},
+	// 			h(B.Provider, {value: 'B - updated'},
+	// 				h(A.Consumer,
+	// 					(value) => h('h1', `Consumer - ${value}`)
+	// 				),
+	// 				h(A.Consumer,
+	// 					(value) => h('h1', `Consumer - ${value}`)
+	// 				),
+	// 				h(B.Consumer,
+	// 					(value) => h('h1', `Consumer - ${value}`)
+	// 				)
+	// 			)
+	// 		),
+	// 		h(A.Consumer, () => null)
+	// 	),
+	// 	'main'
+	// )
+
+	// setTimeout(() => {
+	// 	render(
+	// 		h('div',
+	// 			h(A.Provider, {value: "A - finally"},
+	// 				h(B.Provider, {value: 'B - finally'},
+	// 					h(A.Consumer,
+	// 						(value) => h('h1', `Consumer - ${value}`)
+	// 					),
+	// 					h(B.Consumer,
+	// 						(value) => h('h1', `Consumer - ${value}`)
+	// 					)
+	// 				)
+	// 			),
+	// 			h(A.Consumer, () => null)
+	// 		),
+	// 		'main'
+	// 	)
+	// }, 400)
+</script>
