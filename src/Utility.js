@@ -80,9 +80,7 @@ export var timeout = (function (resolve) { return function () { return new promi
 export var promise = typeof Promise === 'function' ? Promise : function (callback) {
 	try {
 		return this.resolve = define(function resolve (value) {
-			for (var i = 0, j = resolve.entries; i < j.length; ++i) {
-				j[i](value)
-			}
+			resolve.entries.forEach(function (callback) { callback(value) })
 		}, {
 			then: {value: function (callback) { this.entries.push(callback) }},
 			entries: {value: []}
@@ -105,12 +103,10 @@ export var registry = typeof WeakMap === 'function' ? WeakMap : function () {
 }
 
 /**
- * @param {function} functor
+ * @param {function} value
  * @return {function}
  */
-function thunk (functor) {
-	return function (value) { return functor(value) }
-}
+function thunk (value) { return function () { return value.apply(this, arguments) } }
 
 /**
  * @param {number} value

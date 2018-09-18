@@ -13,20 +13,20 @@ import Registry from './Registry.js'
  */
 export var descriptors = {
 	/**
-	 * @param {function} callback
-	 */
-	forceUpdate: {
-		value: function (callback) {
-			dispatch(Registry.get(this), this, Enum.force, callback)
-		}
-	},
-	/**
 	 * @param {object} state
 	 * @param {function} callback
 	 */
 	setState: {
 		value: function (state, callback) {
 			dispatch(Registry.get(this), this, state, callback)
+		}
+	},
+	/**
+	 * @param {function} callback
+	 */
+	forceUpdate: {
+		value: function (callback) {
+			dispatch(Registry.get(this), this, Enum.force, callback)
 		}
 	}
 }
@@ -131,26 +131,26 @@ export function unmount (element, children) {
  * @param {function?} callback
  */
 export function dispatch (element, owner, value, callback) {
-	Schedule.checkout(Schedule.create(-Enum.pid), Enum.pid, commit, element[Enum.host], element, owner, value, callback)
+	Schedule.checkout(commit, element[Enum.host], element, owner, value, callback)
 }
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} host
  * @param {object} element
  * @param {object} owner
  * @param {(object|function)} value
  */
-export function commit (fiber, pid, host, element, owner, value) {
+export function commit (fiber, stack, host, element, owner, value) {
 	if (value) {
 		if (element.children.length) {
 			if (Utility.thenable(value)) {
 				return Utility.resolve(Schedule.suspend(fiber, value), function (value) {
-					commit(fiber, pid, host, element, owner, value)
+					commit(fiber, stack, host, element, owner, value)
 				})
-			} else if (element[Enum.active] === Enum.active) {
-				return Schedule.commit(fiber, pid, Enum.component, host, element, element, value)
+			} else if (element[Enum.active] !== Enum.update) {
+				return Schedule.commit(fiber, stack, Enum.component, host, element, element, value)
 			}
 		}
 
@@ -160,23 +160,23 @@ export function commit (fiber, pid, host, element, owner, value) {
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} host
  * @param {object} element
  * @param {object} snapshot
  * @param {object} value
  */
-export function update (fiber, pid, host, element, snapshot, value) {
-	var children = element.children
-	var parent = element[Enum.parent]
+export function update (fiber, stack, host, element, snapshot, value) {
 	var owner = element[Enum.owner]
+	var parent = element[Enum.parent]
+	var children = element.children
 	var state = owner.state
 	var props = snapshot.props
 
 	try {
 		if (element === snapshot) {
 			if (typeof value === 'function') {
-				return commit(fiber, pid, host, element, owner, value(state, props))
+				return commit(fiber, stack, host, element, owner, value(state, props))
 			}
 		}
 
@@ -186,7 +186,7 @@ export function update (fiber, pid, host, element, snapshot, value) {
 			Lifecycle.update(owner, props, state, Enum.getDerivedState)
 		}
 
-		if (element[Enum.active] = Enum.active, owner[Enum.shouldComponentUpdate]) {
+		if (element[Enum.active] = Enum.create, owner[Enum.shouldComponentUpdate]) {
 			if (value !== Enum.force) {
 				if (!Lifecycle.update(owner, props, state, Enum.shouldComponentUpdate)) {
 					return owner.state = state
@@ -199,30 +199,30 @@ export function update (fiber, pid, host, element, snapshot, value) {
 		owner.state = state
 		owner.props = props
 
-		callback(fiber, pid, host, element, Schedule.commit(fiber, pid, Enum.children, element, parent, children, [Lifecycle.render(owner, props, state)]))
+		callback(fiber, stack, host, element, Schedule.commit(fiber, stack, Enum.children, element, parent, children, [Lifecycle.render(owner, props, state)]))
 	} catch (error) {
-		Exception.create(host, element, error, pid)
+		Exception.create(host, element, stack, error)
 	}
 }
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} host
  * @param {object} element
  * @param {number} children
  */
-export function callback (fiber, pid, host, element, children) {
+export function callback (fiber, stack, host, element, children) {
 	try {
 		return children
 	} finally {
 		if (children) {
 			if (element[Enum.owner][Enum.componentDidMount]) {
-				Schedule.commit(fiber, pid, Enum.callback, host, element, Enum.componentDidMount, element[Enum.owner])
+				Schedule.commit(fiber, stack, Enum.callback, host, element, Enum.componentDidMount, element[Enum.owner])
 			}
 		} else {
 			if (element[Enum.owner][Enum.componentDidUpdate]) {
-				Schedule.commit(fiber, pid, Enum.callback, host, element, Enum.componentDidUpdate, element[Enum.owner])
+				Schedule.commit(fiber, stack, Enum.callback, host, element, Enum.componentDidUpdate, element[Enum.owner])
 			}
 		}
 	}

@@ -4,78 +4,86 @@ import * as Element from './Element.js'
 import * as Component from './Component.js'
 import * as Exception from './Exception.js'
 import * as Commit from './Commit.js'
+import * as Reconcile from './Reconcile.js'
 import * as Schedule from './Schedule.js'
 import * as Interface from './Interface.js'
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} host
  * @param {object} parent
- * @param {object} snapshot
+ * @param {object} element
+ * @param {object} children
  * @param {number} index
  * @param {number} from
  * @return {object}
  */
-export function resolve (fiber, pid, host, parent, element, index, from) {
+export function resolve (fiber, stack, host, parent, element, children, index, from) {
 	try {
-		return create(fiber, Schedule.accumulate(pid), host, parent, element, index, from)
+		return Component.callback(fiber, stack, host, element, create(fiber, Schedule.accumulate(stack), element, parent, children, index, from))
 	} catch (error) {
 		try {
-			return Element.put(host, create(fiber, pid, host, parent, Element.empty(Enum.nan), index, from))
+			return Component.callback(fiber, stack, host, element, Element.put(element, create(fiber, stack, element, parent, Element.empty(Enum.nan), index, from)))
 		} finally {
-			Exception.create(host, element, error, pid)
+			Exception.create(element, children, stack, error)
 		}
 	}
 }
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} host
  * @param {object} parent
- * @param {object} snapshot
+ * @param {object} element
  * @param {number} index
  * @param {number} from
  * @return {object}
  */
-export function create (fiber, pid, host, parent, element, index, from) {
+export function create (fiber, stack, host, parent, element, index, from) {
+	var constructor = element.constructor
+
 	element[Enum.host] = host
 	element[Enum.parent] = parent
+	element[Enum.active] = Enum.active
 
 	try {
-		switch (element.constructor) {
+		switch (constructor) {
 			case Enum.component:
-				return Component.callback(fiber, pid, host, element, resolve(fiber, pid, element, parent, Component.mount(host, element), index, from))
+				return resolve(fiber, stack, host, parent, element, Component.mount(host, element), index, from)
 			case Enum.node:
 				element[Enum.namespace] = Interface.namespace(element, parent[Enum.namespace])
 		}
 
 		element[Enum.owner] = Interface.create(element, index, from)
 
-		if (element.constructor < Enum.text) {
-			if (element.props) {
-				// if (Interface.offscreen(element.props)) {
-					// Schedule.offscreen(fiber, pid, Enum.children, element, element.children, element.children = Element.children())
-				// }
-			}
-			if (element.children) {
-				for (var i = 0, j = element.children; i < j.length; ++i) {
-					create(fiber, pid, host, element, j[i], i, from)
+		if (constructor < Enum.text) {
+			var children = element.children
+			var length = children.length
+			var props = element.props
+
+			if (children.length) {
+				if (Interface.offscreen(element, props)) {
+					// Schedule.offscreen(fiber, stack, Enum.children, host, element, children, children = Element.children())
+				}
+				for (var i = 0; i < length; ++i) {
+					create(fiber, stack, host, element, children[i], i, from)
 				}
 			}
-			if (element.props) {
-				Commit.properties(element, element.props, Enum.create)
-			}
-			if (element.constructor === Enum.thenable) {
-				enqueue(fiber, pid, element, element)
+
+			Commit.properties(element, props, Enum.create)
+
+			if (constructor === Enum.thenable) {
+				Reconcile.resolve(fiber, stack, host, parent, element, element)
 			}
 		}
-		if (element.constructor !== Enum.portal) {
+
+		if (constructor !== Enum.portal) {
 			Interface.append(parent, element)
 		}
 	} finally {
-		element[Enum.active] = Enum.active
+		element[Enum.active] = Enum.create
 	}
 
 	return element
@@ -83,50 +91,32 @@ export function create (fiber, pid, host, parent, element, index, from) {
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} host
  * @param {object} element
  * @return {object}
  */
-export function destroy (fiber, pid, host, element) {
-	element[Enum.active] = -Enum.active
+export function destroy (fiber, stack, host, element) {
+	element[Enum.active] = Enum.active
 
 	switch (element.constructor) {
 		case Enum.portal:
-			Schedule.commit(fiber, pid, Enum.unmount, host, element, element, null)
+			Schedule.commit(fiber, stack, Enum.unmount, host, element, element, null)
 		case Enum.text:
 		case Enum.empty:
 		case Enum.comment:
 			break
 		case Enum.component:
-			return destroy(fiber, pid, element, Component.unmount(element))
+			return destroy(fiber, stack, element, Component.unmount(element))
 		case Enum.node:
 			if (element.ref) {
 				refs(element)
 			}
 		default:
 			for (var i = 0, j = element.children; i < j.length; ++i) {
-				destroy(fiber, pid, host, j[i])
+				destroy(fiber, stack, host, j[i])
 			}
 	}
 
 	return element
-}
-
-/**
- * @param {object} fiber
- * @param {number} pid
- * @param {object} host
- * @param {object} element
- * @param {object} snapshot
- * @return {object}
- */
-export function enqueue (fiber, pid, host, element, snapshot) {
-	return Utility.resolve(element.type = snapshot.type, function (value) {
-		if (element[Enum.active] >= Enum.active) {
-			if (element.type === snapshot.type) {
-				Schedule.commit(fiber, pid, Enum.children, host, element, element.children, Element.children(value))
-			}
-		}
-	})
 }

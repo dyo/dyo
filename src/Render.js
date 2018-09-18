@@ -32,41 +32,41 @@ export function render (element, target, callback) {
  * @param {number} from
  */
 export function dispatch (element, target, callback, from) {
-	Schedule.checkout(Schedule.create(Enum.active), Enum.pid, commit, element, element, target, from, callback)
+	Schedule.checkout(commit, element, element, target, from, callback)
 }
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} element
  * @param {object} children
  * @param {*?} target
  * @param {number} from
  */
-export function commit (fiber, pid, element, children, target, from) {
+export function commit (fiber, stack, element, children, target, from) {
 	if (Registry.has(target)) {
-		update(fiber, pid, Registry.get(target), children)
+		update(fiber, stack, Registry.get(target), children)
 	} else {
-		create(fiber, pid, Registry.set(target, Element.portal(element, target)).get(target), from)
+		create(fiber, stack, Registry.set(target, Element.portal(element, target)).get(target), from)
 	}
 }
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} parent
  * @param {number} from
  */
-export function create (fiber, pid, parent, from) {
-	Node.create(fiber, pid, parent, parent, parent, 0, from)
+export function create (fiber, stack, parent, from) {
+	Node.create(fiber, stack, parent, parent, parent, 0, from)
 }
 
 /**
  * @param {object} fiber
- * @param {number} pid
+ * @param {number} stack
  * @param {object} parent
  * @param {object} children
  */
-export function update (fiber, pid, parent, children) {
-	Reconcile.children(fiber, pid, parent, parent, parent.children, [children])
+export function update (fiber, stack, parent, children) {
+	Reconcile.children(fiber, stack, parent, parent, parent.children, [children])
 }

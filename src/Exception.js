@@ -62,28 +62,28 @@ export function trace (host, element, stack) {
 /**
  * @param {object} host
  * @param {object} element
+ * @param {number} stack
  * @param {*} exception
- * @param {number} pid
  * @return {object?}
  */
-export function create (host, element, exception, pid) {
+export function create (host, element, stack, exception) {
 	if (exception instanceof construct) {
-		return recover(host, element, exception, pid)
+		return recover(host, element, stack, exception)
 	} else if (host === element) {
-		return create(host[Enum.host], element, exception, pid)
+		return create(host[Enum.host], element, stack, exception)
 	} else {
-		return create(host, element, new construct(host, element, exception), pid)
+		return create(host, element, stack, new construct(host, element, exception))
 	}
 }
 
 /**
  * @param {object} host
  * @param {object} element
+ * @param {number} stack
  * @param {object} exception
- * @param {number} pid
  * @return {object?}
  */
-export function recover (host, element, exception, pid) {
+export function recover (host, element, stack, exception) {
 	switch (host.constructor) {
 		case Enum.portal:
 			try {
@@ -98,12 +98,12 @@ export function recover (host, element, exception, pid) {
 				try {
 					return Lifecycle.update(host[Enum.owner], exception.error, exception, Enum.componentDidCatch)
 				} catch (error) {
-					return create(host[Enum.host], element, error, pid)
+					return create(host[Enum.host], element, stack, error)
 				}
 			}
 		default:
-			if (Utility.abs(pid) === Enum.pid) {
-				return recover(host[Enum.host], element, exception, pid)
+			if (Utility.abs(stack) === Enum.stack) {
+				return recover(host[Enum.host], element, stack, exception)
 			}
 	}
 

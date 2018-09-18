@@ -129,7 +129,7 @@ export function refs (element, value, from) {
 export function callback (element, value, instance) {
 	switch (typeof value) {
 		case 'function':
-			return value.call(instance, instance.props, instance.state)
+			return value.call(instance, instance)
 		case 'string':
 			return Lifecycle.resolve(instance, Interface.callback(instance[value], instance, element.props, element.state), value)
 	}

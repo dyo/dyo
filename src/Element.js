@@ -5,25 +5,15 @@ import * as Assert from './Assert.js'
 import * as Event from './Event.js'
 
 /**
- * @type {object}
- */
-export var descriptors = {handleEvent: {value: Event.handle}}
-
-/**
- * @constructor
  * @param {*} key
  * @param {*} type
  * @param {object} props
  * @param {object} children
  * @param {number} constructor
  */
-export var construct = Utility.extend(function (key, type, props, children, constructor) {
-	this.key = key
-	this.type = type
-	this.props = props
-	this.children = children
-	this.constructor = constructor
-}, descriptors)
+function construct (key, type, props, children, constructor) {
+	return {key: key, type: type, props: props, children: children, constructor: constructor, handleEvent: Event.handle, 0: Enum.active}
+}
 
 /**
  * @param {*} children
@@ -32,7 +22,7 @@ export var construct = Utility.extend(function (key, type, props, children, cons
  * @return {object}
  */
 export function portal (children, target, key) {
-	return new construct(key, target, null, [root([children])], Enum.portal)
+	return construct(key, target, null, [root([children])], Enum.portal)
 }
 
 /**
@@ -41,7 +31,7 @@ export function portal (children, target, key) {
  * @return {object}
  */
 export function fragment (children, key) {
-	return new construct(key, '#fragment', null, (children.push(empty(Enum.key)), children), Enum.fragment)
+	return construct(key, '#fragment', null, (children.push(empty(Enum.key)), children), Enum.fragment)
 }
 
 /**
@@ -50,7 +40,7 @@ export function fragment (children, key) {
  * @return {object}
  */
 export function text (children, key) {
-	return new construct(key, '#text', null, children, Enum.text)
+	return construct(key, '#text', null, children, Enum.text)
 }
 
 /**
@@ -58,7 +48,7 @@ export function text (children, key) {
  * @return {object}
  */
 export function empty (key) {
-	return new construct(key, '#empty', null, '', Enum.empty)
+	return construct(key, '#empty', null, '', Enum.empty)
 }
 
 /**
@@ -67,7 +57,7 @@ export function empty (key) {
  * @return {object}
  */
 export function comment (children, key) {
-	return new construct(key, '#comment', null, children, Enum.comment)
+	return construct(key, '#comment', null, children, Enum.comment)
 }
 
 /**
@@ -102,7 +92,7 @@ export function create (a, b) {
 	var type = a
 	var props = i === 2 && b || {}
 	var children = []
-	var element = new construct(props.key, type, props, children, constructor)
+	var element = construct(props.key, type, props, children, constructor)
 
 	if (constructor === Enum.component) {
 		if (size > 0) {
@@ -273,5 +263,5 @@ export function resolve (element) {
  * @return {object}
  */
 export function parent (element) {
-	return element.constructor < Enum.portal && element[Enum.active] >= Enum.active ? parent(element[Enum.parent]) : element
+	return element.constructor < Enum.portal && element[Enum.active] > Enum.active ? parent(element[Enum.parent]) : element
 }

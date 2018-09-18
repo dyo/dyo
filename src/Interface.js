@@ -16,23 +16,8 @@ export function callback (value, a, b, c) {
  * @param {object?} props
  * @return {boolean?}
  */
-export function offscreen (props) {
+export function offscreen (element, props) {
 	return props && props.hidden
-}
-
-/**
- * @param {object} target
- * @return {object}
- */
-export function context () {
-	return {}
-}
-
-/**
- * @param {object} parent
- */
-export function prepare (parent) {
-	owner(parent).textContent = ''
 }
 
 /**

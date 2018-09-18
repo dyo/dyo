@@ -1,6 +1,6 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
-import * as Lifecycle from './Lifecycle.js'
+import * as Schedule from './Schedule.js'
 import * as Interface from './Interface.js'
 
 /**
@@ -23,7 +23,7 @@ function dispatch (instance, event, callback) {
 				dispatch(instance, event, callback)
 			}, callback, 0)
 		} else {
-			Lifecycle.event(instance, event, instance.props, instance.state, callback)
+			Schedule.event(instance, event, instance.props, instance.state, callback)
 		}
 	}
 }

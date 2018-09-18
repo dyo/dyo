@@ -1,5 +1,5 @@
-// default process identifier
-export var pid = 1
+// default stack identifier
+export var stack = 1
 
 // static stable/unstable keys
 export var key = -(-1 >>> 0)
@@ -15,9 +15,9 @@ export var children = -2
 export var callback = -1
 
 // element properties
-export var host = 0
-export var parent = 1
-export var active = 2
+export var active = 0
+export var host = 1
+export var parent = 2
 export var owner = 3
 export var namespace = 4
 export var ref = 5

@@ -145,6 +145,8 @@
 			}
 		}
 		componentDidUpdate(props, state) {
+			console.log('didUpdate');
+
 			return () => {
 				// throw Promise.resolve()
 				throw new Promise((resolve) => setTimeout(resolve, 3000))
@@ -171,6 +173,8 @@
 	}
 
 	render(h(Application, data.entries), 'section')
+
+	// render(h(Promise.resolve(h('h1', 'Hello World'))), 'section')
 </script>
 
 <script type=!module>
@@ -186,10 +190,10 @@
 		componentDidCatch(err, stack) {
 			this.setState((state, props) => {
 				expansiveWork()
-				// return new Promise((resolve) => setTimeout(() => console.log('async state') || resolve({caught: true}), 1000))
+				return new Promise((resolve) => setTimeout(() => console.log('async state') || resolve({caught: true}), 1000))
 				return {caught: true}
-			}, (props, state) => {
-				console.log('callback!!!!!')
+			}, (a) => {
+				console.log('setState - callback', a)
 			})
 			console.log('caught', err)
 			// throw new Error('Hello World')
@@ -223,7 +227,9 @@
 		}
 	}
 
-	render(h(Boundary, h(Throws)), 'main')
+	render(h(Boundary, h(Throws)), 'main', (a) => {
+		console.log('render - callback', a)
+	})
 </script>
 
 <script type=!module>
