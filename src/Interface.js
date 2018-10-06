@@ -1,87 +1,35 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
-
-/**
- * @param {*} value
- * @param {*} a
- * @param {*} b
- * @param {*} b
- * @return {*}
- */
-export function callback (value, a, b, c) {
-	return value.call(a, b, c)
-}
-
-/**
- * @param {object?} props
- * @return {boolean?}
- */
-export function offscreen (element, props) {
-	return props && props.hidden
-}
+import * as Element from './Element.js'
 
 /**
  * @param {object} element
- * @param {number} index
- * @param {number} from
+ * @param {number} origin
  * @return {object?}
  */
-export function create (element, index, from) {
-	if (from === Enum.create) {
-		switch (element.constructor) {
-			case Enum.thenable:
-			case Enum.fragment:
-				return document.createDocumentFragment()
-			case Enum.node:
-				if (element[Enum.namespace]) {
-					return document.createElementNS(element[Enum.namespace], element.type)
-				} else {
-					return document.createElement(element.type)
-				}
-			case Enum.text:
-			case Enum.empty:
-				return document.createTextNode(element.children)
-			case Enum.comment:
-				return document.createComment(element.children)
-			case Enum.portal:
-				return target(element.type)
-		}
-	} else {
-		return search(element, index, from) || create(element, index, Enum.create)
+export function create (element, origin) {
+	if (origin < Enum.create) {
+		return search(element, origin)
 	}
-}
 
-/**
- * @param {object} parent
- * @param {object} element
- */
-export function remove (parent, element) {
-	owner(parent).removeChild(owner(element))
-}
-
-/**
- * @param {object} parent
- * @param {object} element
- */
-export function append (parent, element) {
-	owner(parent).appendChild(owner(element))
-}
-
-/**
- * @param {object} parent
- * @param {object} element
- * @param {object} sibling
- */
-export function insert (parent, element, sibling) {
-	owner(parent).insertBefore(owner(element), owner(sibling))
-}
-
-/**
- * @param {object} element
- * @param {(string|number)} value
- */
-export function content (element, value) {
-	owner(element).nodeValue = value
+	switch (element.constructor) {
+		case Enum.thenable:
+		case Enum.fragment:
+			return document.createDocumentFragment()
+		case Enum.node:
+			if (Element.get(element, Enum.context)) {
+				return document.createElementNS(Element.get(element, Enum.context), element.type)
+			} else {
+				return document.createElement(element.type)
+			}
+		case Enum.text:
+		case Enum.empty:
+			return document.createTextNode(element.children)
+		case Enum.comment:
+			return document.createComment(element.children)
+		case Enum.portal:
+			return target(element.type)
+	}
 }
 
 /**
@@ -91,11 +39,11 @@ export function content (element, value) {
 export function target (value) {
 	if (value) {
 		if (typeof value === 'string') {
-			return document.querySelector(value)
+			return target(document.querySelector(value))
 		} else if (value.DOCUMENT_FRAGMENT_NODE === 11) {
 			return value
 		} else {
-			throw Error('Invalid target!')
+			Utility.invariant('Invalid target!')
 		}
 	} else {
 		return document.documentElement
@@ -103,10 +51,52 @@ export function target (value) {
 }
 
 /**
+ * @param {object} parent
  * @param {object} element
- * @param {string} xmlns
  */
-export function namespace (element, xmlns) {
+export function remove (parent, element) {
+	Element.get(parent, Enum.owner).removeChild(Element.get(element, Enum.owner))
+}
+
+/**
+ * @param {object} parent
+ * @param {object} element
+ */
+export function append (parent, element) {
+	Element.get(parent, Enum.owner).appendChild(Element.get(element, Enum.owner))
+}
+
+/**
+ * @param {object} parent
+ * @param {object} element
+ * @param {object} sibling
+ */
+export function insert (parent, element, sibling) {
+	Element.get(parent, Enum.owner).insertBefore(Element.get(element, Enum.owner), Element.get(sibling, Enum.owner))
+}
+
+/**
+ * @param {object} element
+ * @param {(string|number)} value
+ */
+export function content (element, value) {
+	Element.get(element, Enum.owner).nodeValue = value
+}
+
+/**
+ * @param {object} element
+ * @param {object} target
+ * @return {object}
+ */
+export function prepare (element, target) {
+	return target.textContent = '', element
+}
+
+/**
+ * @param {object} element
+ * @param {string} namespace
+ */
+export function context (element, namespace) {
 	switch (element.type) {
 		case 'svg':
 			return 'http://www.w3.org/2000/svg'
@@ -115,17 +105,17 @@ export function namespace (element, xmlns) {
 		case 'foreignObject':
 			return ''
 		default:
-			return xmlns
+			return namespace
 	}
 }
 
 /**
  * @param {object} element
  * @param {object} props
- * @param {number} from
+ * @param {number} origin
  */
-export function props (element, props, from) {
-	switch (from) {
+export function props (element, props, origin) {
+	switch (origin) {
 		case Enum.create:
 			switch (element.type) {
 				case 'input':
@@ -144,10 +134,10 @@ export function props (element, props, from) {
  * @param {object} element
  * @param {string} name
  * @param {*} value
- * @param {string} xmlns
- * @param {number} from
+ * @param {string} namespace
+ * @param {number} origin
  */
-export function commit (element, name, value, xmlns, from) {
+export function commit (element, name, value, namespace, origin) {
 	switch (name) {
 		case 'style':
 			return style(element, name, value)
@@ -161,16 +151,16 @@ export function commit (element, name, value, xmlns, from) {
 		case 'innerHTML':
 			return html(element, name, value ? value : '', [])
 		case 'dangerouslySetInnerHTML':
-			return commit(element, 'innerHTML', value && value.__html, xmlns, from)
+			return commit(element, 'innerHTML', value && value.__html, namespace, origin)
 		case 'acceptCharset':
-			return commit(element, 'accept-charset', value, xmlns, from)
+			return commit(element, 'accept-charset', value, namespace, origin)
 		case 'httpEquiv':
-			return commit(element, 'http-equiv', value, xmlns, from)
+			return commit(element, 'http-equiv', value, namespace, origin)
 		case 'tabIndex':
-			return commit(element, name.toLowerCase(), value, xmlns, from)
+			return commit(element, name.toLowerCase(), value, namespace, origin)
 		case 'autofocus':
 		case 'autoFocus':
-			return owner(element)[value ? 'focus' : 'blur']()
+			return Element.get(element, Enum.owner)[value ? 'focus' : 'blur']()
 		case 'width':
 		case 'height':
 			return attribute(element, name, value, '')
@@ -197,7 +187,7 @@ export function commit (element, name, value, xmlns, from) {
 		case 'string':
 		case 'number':
 		case 'boolean':
-			if (xmlns || !(name in owner(element))) {
+			if (namespace || !(name in Element.get(element, Enum.owner))) {
 				return attribute(element, name, value, '')
 			}
 		default:
@@ -210,7 +200,7 @@ export function commit (element, name, value, xmlns, from) {
  * @param {object} value
  */
 export function event (element, event) {
-	return element[Enum.state][event.type]
+	return Element.get(element, Enum.state)[event.type]
 }
 
 /**
@@ -219,34 +209,19 @@ export function event (element, event) {
 
 /**
  * @param {object} element
- * @return {object}
- */
-export function owner (element) {
-	return element[Enum.owner]
-}
-
-/**
- * @param {object} element
  * @param {string} name
  * @param {string} value
  */
 function listen (element, name, value) {
-	if (!element[Enum.state]) {
-		element[Enum.state] = {}
+	if (!Element.get(element, Enum.state)) {
+		Element.set(element, Enum.state, {})
 	}
 
-	if (!element[Enum.state][name]) {
-		owner(element).addEventListener(name, element, false)
+	if (!Element.get(element, Enum.state)[name]) {
+		Element.get(element, Enum.owner).addEventListener(name, element, false)
 	}
 
-	element[Enum.state][name] = value
-}
-
-/**
- * @param {object} element
- * @return {object?}
- */
-function search () {
+	Element.get(element, Enum.state)[name] = value
 }
 
 /**
@@ -259,9 +234,9 @@ function property (element, name, value) {
 		case null:
 		case false:
 		case undefined:
-			return attribute(element, name, value, owner(element)[name] = '')
+			return attribute(element, name, value, Element.get(element, Enum.owner)[name] = '')
 		default:
-			owner(element)[name] = value
+			Element.get(element, Enum.owner)[name] = value
 	}
 }
 
@@ -269,25 +244,25 @@ function property (element, name, value) {
  * @param {object} element
  * @param {string} name
  * @param {*} value
- * @param {string} xmlns
+ * @param {string} namespace
  */
-function attribute (element, name, value, xmlns) {
+function attribute (element, name, value, namespace) {
 	switch (value) {
 		case null:
 		case false:
 		case undefined:
-			if (xmlns) {
-				owner(element).removeAttributeNS(xmlns, name)
+			if (namespace) {
+				Element.get(element, Enum.owner).removeAttributeNS(namespace, name)
 			}
 
-			return owner(element).removeAttribute(name)
+			return Element.get(element, Enum.owner).removeAttribute(name)
 		case true:
-			return attribute(element, name, '', xmlns)
+			return attribute(element, name, '', namespace)
 		default:
-			if (!xmlns) {
-				owner(element).setAttribute(name, value)
+			if (!namespace) {
+				Element.get(element, Enum.owner).setAttribute(name, value)
 			} else {
-				owner(element).setAttributeNS(xmlns, name, value)
+				Element.get(element, Enum.owner).setAttributeNS(namespace, name, value)
 			}
 	}
 }
@@ -303,9 +278,9 @@ function style (element, name, value) {
 	} else {
 		for (var key in value) {
 			if (key.indexOf('-') === -1) {
-				owner(element).style[key] = value[key] !== false && value[key] !== undefined ? value[key] : ''
+				Element.get(element, Enum.owner).style[key] = value[key] !== false && value[key] !== undefined ? value[key] : ''
 			} else {
-				owner(element).style.setProperty(key, value[key])
+				Element.get(element, Enum.owner).style.setProperty(key, value[key])
 			}
 		}
 	}
@@ -318,17 +293,24 @@ function style (element, name, value) {
  * @param {Array} nodes
  */
 function html (element, name, value, nodes) {
-	if (owner(element)[name]) {
+	if (Element.get(element, Enum.owner)[name]) {
 		element.children.forEach(function (element) {
-			nodes.push(owner(element))
+			nodes.push(Element.get(element, Enum.owner))
 		})
 	}
 
-	if (owner(element)[name] = value) {
-		nodes.push.apply(nodes, owner(element).childNodes)
+	if (Element.get(element, Enum.owner)[name] = value) {
+		nodes.push.apply(nodes, Element.get(element, Enum.owner).childNodes)
 	}
 
 	nodes.forEach(function (node) {
-		owner(element).appendChild(node)
+		Element.get(element, Enum.owner).appendChild(node)
 	})
+}
+
+/**
+ * @param {object} element
+ * @return {object?}
+ */
+function search () {
 }

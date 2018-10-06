@@ -5,244 +5,211 @@ import * as Reconcile from './Reconcile.js'
 import * as Commit from './Commit.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
-
-import Registry from './Registry.js'
+import * as Exception from './Exception.js'
 
 export var priority = -1
 export var length = 0
 export var timer = 0
-export var frame = 60
-export var delta = ((1000 / frame) - (300 / frame)) | 0
+export var delta = 16 - 6
 export var queue = []
 
 /**
- * @param {object} fiber
- * @param {number} stack
- * @param {function} type
- * @param {object} host
- * @param {*} parent
- * @param {*} primary
- * @param {*} secondary
+ * @param {number} priority
+ * @return {object}
  */
-export function flush (fiber, stack, type, host, parent, primary, secondary) {
-	if (fiber.pending) {
-		return resolve(fiber, stack, type, host, parent, primary, secondary, flush)
-	}
+export function struct (priority) {
+	return {priority: priority, children: [], pending: 0, process: 1}
+}
 
-	try {
-		reset(fiber.index)
-	} finally {
-		try {
-			fiber.children.forEach(pipe)
-		} finally {
-			clear(fiber)
-		}
-	}
+/**
+ * @return {object}
+ */
+export function create () {
+	return length * priority ? queue[length - 1] : queue[length++] = struct(timer = priority ? Utility.now() : priority--)
 }
 
 /**
  * @param {object} fiber
- * @param {number} stack
  * @param {number} type
  * @param {object} host
- * @param {*} parent
+ * @param {*} element
  * @param {*} primary
  * @param {*} secondary
  * @param {function} callback
  */
-export function resolve (fiber, stack, type, host, parent, primary, secondary, callback) {
+export function resolve (fiber, type, host, element, primary, secondary, callback) {
 	Utility.resolve(fiber.pending, function () {
-		if (parent[Enum.active] > Enum.active) {
-			callback(fiber, Enum.stack, type, host, parent, primary, secondary)
+		if (Element.has(element, Enum.parent)) {
+			callback(fiber, type, element, element, primary, secondary)
 		}
 	})
 }
 
 /**
  * @param {object} fiber
- * @param {number} stack
  * @param {number} type
  * @param {object} host
- * @param {*} parent
+ * @param {*} element
  * @param {*} primary
  * @param {*} secondary
  * {function} callback
  */
-export function timeout (fiber, stack, type, host, parent, primary, secondary, callback) {
+export function timeout (fiber, type, host, element, primary, secondary, callback) {
 	try {
 		suspend(fiber, Utility.timeout())
 	} finally {
-		resolve(fiber, stack, type, host, parent, primary, secondary, callback)
+		resolve(fiber, type, host, element, primary, secondary, callback)
 	}
 }
 
 /**
  * @param {object} fiber
- * @param {number} stack
- * @param {number} type
+ * @param {function} type
  * @param {object} host
- * @param {*} parent
+ * @param {*} element
+ * @param {*} primary
+ * @param {*} secondary
+ * @param {function?} callback
+ */
+export function checkout (fiber, type, host, element, primary, secondary, callback) {
+	callback(fiber, host, element, primary, secondary)
+	dispatch(fiber, Enum.callback, host, element, type, primary)
+}
+
+/**
+ * @param {object} fiber
+ * @param {*} type
+ * @param {object} host
+ * @param {*} element
  * @param {*} primary
  * @param {*} secondary
  */
-export function commit (fiber, stack, type, host, parent, primary, secondary) {
+export function dispatch (fiber, type, host, element, primary, secondary) {
+	if (fiber.pending) {
+		return resolve(fiber, type, host, element, primary, secondary, dispatch)
+	}
+
+	if (fiber.process) {
+		for (var i = fiber.process = 0, j = fiber.children, k = fiber.children = []; i < j.length; ++i) {
+			commit(fiber, (k = j[i]).type, k.element, k.primary, k.secondary)
+		}
+
+		if (fiber.process = !!fiber.pending | fiber.children.length) {
+			dispatch(fiber, Enum.dispatch, host, element, primary, secondary)
+		}
+
+		if (type !== Enum.dispatch) {
+			try {
+				commit(fiber, Enum.callback, element, primary, secondary)
+			} finally {
+				if (--length === 0) {
+					queue = []
+				}
+			}
+		}
+	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {number} type
+ * @param {object} host
+ * @param {*} element
+ * @param {*} primary
+ * @param {*} secondary
+ */
+export function enqueue (fiber, type, host, element, primary, secondary) {
 	if (type > Enum.content) {
 		if (fiber.pending) {
-			return resolve(fiber, stack, type, host, parent, primary, secondary, commit)
+			return resolve(fiber, type, host, element, primary, secondary, enqueue)
 		}
 
 		if (fiber.priority) {
 			if (Utility.now() - timer > delta) {
-				return timeout(fiber, stack, type, host, parent, primary, secondary, commit)
+				// return timeout(fiber, type, host, element, primary, secondary, enqueue)
 			}
 		}
 
 		switch (type) {
 			case Enum.children:
-				return Reconcile.children(fiber, stack, host, parent, primary, secondary)
+				return Reconcile.children(fiber, host, element, primary, secondary)
 			case Enum.component:
-				return Component.update(fiber, stack, host, parent, primary, secondary)
+				return Component.resolve(fiber, host, element, primary, secondary)
 		}
 	}
 
-	fiber.children.push({type: type, parent: parent, primary: primary, secondary: secondary})
+	fiber.children.push({type: type, element: element, primary: primary, secondary: secondary})
 }
 
 /**
- * TODO
  * @param {object} fiber
- * @param {number} stack
  * @param {number} type
- * @param {object} host
- * @param {*} parent
+ * @param {object} element
  * @param {*} primary
  * @param {*} secondary
  */
-export function offscreen (fiber, stack, type, host, parent, primary, secondary) {
-	console.log('offscreen', fiber, stack, type, host, parent, primary, secondary)
-	// Utility.timeout(function () {
-	// 	commit(fiber, Enum.stack, type, host, parent, primary, secondary)
-	// })
-}
-
-/**
- * @param {object} fiber
- * @param {number} value
- * @return {object}
- */
-export function suspend (fiber, value) {
-	try {
-		return fiber.pending = value
-	} finally {
-		Utility.resolve(value, function () {
-			timer = Utility.now(fiber.pending = false)
-		})
-	}
-}
-
-/**
- * @param {object} fiber
- */
-function clear (fiber) {
-	if (fiber.children.length) {
-		fiber.children = []
-	}
-}
-
-/**
- * @param {object} fiber
- */
-function reset (index) {
-	if (queue[index] = index === 0) {
-		length = 0, queue = []
-	}
-}
-
-/**
- * @param {number} value
- * @return {number}
- */
-export function accumulate (value) {
-	return value + 1
-}
-
-/**
- * @param {object} value
- */
-export function pipe (value) {
-	dispatch(value.type, value.parent, value.primary, value.secondary)
-}
-
-/**
- * @param {number} type
- * @param {object} parent
- * @param {object} primary
- * @param {object} secondary
- */
-export function dispatch (type, parent, primary, secondary) {
+export function commit (fiber, type, element, primary, secondary) {
 	switch (type) {
 		case Enum.content:
-			return Commit.content(parent, primary)
+			return Commit.content(element, primary)
 		case Enum.unmount:
-			return Commit.unmount(parent, primary)
+			return Commit.unmount(element, primary, secondary)
 		case Enum.mount:
-			return Commit.mount(parent, primary, secondary)
+			return Commit.mount(element, primary, secondary)
 		case Enum.props:
-			return Commit.properties(parent, primary, secondary)
-		case Enum.callback:
-			return Commit.callback(parent, primary, secondary)
+			return Commit.props(element, primary, secondary)
+	}
+
+	try {
+		Lifecycle.callback(element, primary, secondary, type)
+	} catch (error) {
+		Exception.resolve(fiber, element, element, error)
 	}
 }
 
 /**
- * @param {object} instance
- * @param {object} value
- * @param {object} primary
- * @param {object} secondary
- * @param {(function|object)} callback
+ * @param {object} fiber
+ * @param {*} type
+ * @return {object}
  */
-export function event (instance, value, primary, secondary, callback) {
+export function suspend (fiber, type) {
+	function restore () {
+		timer = Utility.now(fiber.pending = false)
+	}
+
+	try {
+		return fiber.pending = type
+	} finally {
+		Utility.resolve(type, restore, restore)
+	}
+}
+
+/**
+ * @param {function} callback
+ * @param {*} value
+ * @param {*} element
+ * @param {*} primary
+ * @param {*} secondary
+ */
+export function event (callback, value, element, primary, secondary) {
 	priority = 0
 
 	try {
-		Lifecycle.event(instance, value, primary, secondary, callback)
+		callback(value, element, primary, secondary)
 	} finally {
 		priority = -1
 	}
 }
 
 /**
- * @param {number} index
- * @return {object}
- */
-export function create (index) {
-	return {children: [], pending: false, index: index, priority: timer = priority < 0 ? Utility.now() : priority = 0}
-}
-
-/**
- * @param {function} type
- * @param {object} host
- * @param {*} parent
+ * @param {object} fiber
+ * @param {number} type
+ * @param {object} element
  * @param {*} primary
  * @param {*} secondary
- * @param {function} callback
+ * @param {*} tertiary
+ * @param {*} quaternary
  */
-export function checkout (type, host, parent, primary, secondary, callback) {
-	var fiber = priority & length ? queue[length - 1] : queue[length] = create(length++)
-
-	try {
-		type(fiber, Enum.stack, host, parent, primary, secondary)
-
-		if (callback) {
-			commit(fiber, Enum.stack, Enum.callback, host, parent, callback, primary)
-		}
-	} catch (error) {
-		try {
-			throw error
-		} finally {
-			clear(fiber)
-		}
-	} finally {
-		flush(fiber, Enum.stack, Enum.callback, host, parent, primary, secondary)
-	}
+export function callback (fiber, type, host, element, primary, secondary, tertiary, quaternary) {
+	enqueue(fiber, Enum.callback, host, element, [element, primary, secondary, tertiary, quaternary, type], null)
 }

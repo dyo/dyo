@@ -1,50 +1,50 @@
-// default stack identifier
-export var stack = 1
-
-// static stable/unstable keys
+// static values
 export var key = -(-1 >>> 0)
 export var nan = NaN
+export var obj = {}
 
-// commit identifiers
-export var force = -7
-export var props = -6
-export var mount = -5
-export var unmount = -4
-export var content = -3
-export var children = -2
-export var callback = -1
+// render identifiers
+export var search = -1
+export var update = 0
+export var create = 1
 
-// element properties
-export var active = 0
+// property identifiers
+export var context = 0
 export var host = 1
 export var parent = 2
 export var owner = 3
-export var namespace = 4
-export var ref = 5
-export var state = 6
+export var ref = 4
+export var state = 5
 
-// element types
-export var thenable = 10
-export var fragment = 11
-export var component = 12
-export var portal = 13
-export var node = 14
-export var text = 15
-export var empty = 16
-export var comment = 17
+// commit identifiers
+export var props = 10
+export var mount = 11
+export var unmount = 12
+export var content = 13
+export var children = 14
+export var callback = 15
+export var dispatch = 16
 
-// opaque identifiers
-export var search = 20
-export var create = 21
-export var update = 22
+// element identifiers
+export var thenable = 20
+export var fragment = 21
+export var component = 22
+export var portal = 23
+export var node = 24
+export var text = 25
+export var empty = 26
+export var comment = 27
 
 // static identifiers
-export var displayName = 'displayName'
 export var defaultProps = 'defaultProps'
+export var displayName = 'displayName'
 export var propTypes = 'propTypes'
+export var contextTypes = 'contextTypes'
 
 // lifecycles identifiers
+export var handleEvent = 'handleEvent'
 export var getDerivedState = 'getDerivedState'
+export var getChildContext = 'getChildContext'
 export var componentDidCatch = 'componentDidCatch'
 export var componentDidMount = 'componentDidMount'
 export var componentDidUpdate = 'componentDidUpdate'

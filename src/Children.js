@@ -92,7 +92,9 @@ export function map (value, callback) {
  */
 export function each (value, callback) {
 	if (value != null) {
-		Utility.each(callback, value, 0)
+		Utility.each(function (v, i) {
+			callback(v, i)
+		}, value, 0)
 	}
 }
 

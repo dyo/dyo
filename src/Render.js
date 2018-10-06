@@ -29,44 +29,41 @@ export function render (element, target, callback) {
  * @param {*} element
  * @param {*?} target
  * @param {function?} callback
- * @param {number} from
+ * @param {number} origin
  */
-export function dispatch (element, target, callback, from) {
-	Schedule.checkout(commit, element, element, target, from, callback)
+export function dispatch (element, target, callback, origin) {
+	Schedule.checkout(Schedule.create(), callback, element, element, target, origin, commit)
 }
 
 /**
  * @param {object} fiber
- * @param {number} stack
  * @param {object} element
  * @param {object} children
  * @param {*?} target
- * @param {number} from
+ * @param {number} origin
  */
-export function commit (fiber, stack, element, children, target, from) {
+export function commit (fiber, element, children, target, origin) {
 	if (Registry.has(target)) {
-		update(fiber, stack, Registry.get(target), children)
+		update(fiber, Registry.get(target), children)
 	} else {
-		create(fiber, stack, Registry.set(target, Element.portal(element, target)).get(target), from)
+		create(fiber, Registry.set(target, Interface.prepare(Element.portal(element, target), target)).get(target), origin)
 	}
 }
 
 /**
  * @param {object} fiber
- * @param {number} stack
  * @param {object} parent
- * @param {number} from
+ * @param {number} origin
  */
-export function create (fiber, stack, parent, from) {
-	Node.create(fiber, stack, parent, parent, parent, 0, from)
+export function create (fiber, parent, origin) {
+	Node.create(fiber, parent, parent, parent, origin)
 }
 
 /**
  * @param {object} fiber
- * @param {number} stack
  * @param {object} parent
  * @param {object} children
  */
-export function update (fiber, stack, parent, children) {
-	Reconcile.children(fiber, stack, parent, parent, parent.children, [children])
+export function update (fiber, parent, children) {
+	Reconcile.children(fiber, parent, parent, parent.children, [children])
 }

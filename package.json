@@ -1,42 +1,62 @@
 {
-  "name": "dio.js",
-  "description": "r",
-  "version": "9.0.0",
-  "homepage": "https://github.com/thysultan/dio.js",
-  "license": "MIT",
-  "author": {
-    "name": "Sultan Tarimo",
-    "email": "sultantarimo@me.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/thysultan/dio.js"
-  },
-  "bugs": {
-    "url": "https://github.com/thysultan/dio.js/issues"
-  },
-  "devDependencies": {
-    "eslint": "^5.4.0",
-    "rollup": "^0.64.1",
-    "esm": "^3.0.80"
-  },
-  "scripts": {
-    "lint": "eslint ./src",
-    "test": "node scripts/tests.js",
-    "build": "rollup --config scripts/build.config.js",
-    "start": "npm run build -- --watch",
-    "prepare": "npm run build",
-    "pretest": "npm run build"
-  },
-  "main": "dist/dio.cj.js",
-  "module": "dist/dio.es.js",
-  "types": "",
-  "files": [
-    "./types",
-    "./dist",
-    "./src",
-    "./pkg"
-  ],
-  "unpkg": "",
-  "jsdelivr": ""
+	"name": "dyo",
+	"description": "A Library For Building User Interfaces.",
+	"version": "9.0.0",
+	"homepage": "https://github.com/thysultan/dio.js",
+	"license": "MIT",
+	"author": {
+		"name": "Sultan Tarimo",
+		"email": "sultantarimo@me.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/thysultan/dio.js"
+	},
+	"bugs": {
+		"url": "https://github.com/thysultan/dio.js/issues"
+	},
+	"devDependencies": {
+		"dyo": "./",
+		"eslint": "5.6.1",
+		"rollup": "0.64.1",
+		"esm": "3.0.84",
+		"chai": "4.2.0",
+		"coveralls": "3.0.2",
+		"jsdom": "12.1.0",
+		"mocha": "5.2.0",
+		"nyc": "13.0.1"
+	},
+	"scripts": {
+		"lint": "eslint ./src",
+		"test": "mocha --harmony --recursive tests/ --require esm scripts/tests.config.js",
+		"coverage": "nyc report --reporter=text-lcov | coveralls",
+		"build": "rollup --config scripts/build.config.js",
+		"start": "npm run build -- --watch",
+		"prepare": "npm run build",
+		"pretest": "npm run build"
+	},
+	"nyc": {
+		"temp-directory": "./coverage/.nyc_output",
+		"exclude": [
+			"scripts/*",
+			"tests/*",
+			"pkg/*",
+			"src/*"
+		],
+		"reporter": [
+			"lcov",
+			"text"
+		]
+	},
+	"main": "dist/dio.es.js",
+	"module": "dist/dio.es.js",
+	"types": "",
+	"files": [
+		"./types",
+		"./dist",
+		"./src",
+		"./pkg"
+	],
+	"unpkg": "",
+	"jsdelivr": ""
 }

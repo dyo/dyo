@@ -1,6 +1,6 @@
-import {cloneElement, isValidElement, createElement, h} from 'dio'
+import {cloneElement, isValidElement, createElement, h} from 'dyo'
 
-describe('Element', () => {
+describe.only('Element', () => {
 	it('should validate an element', () => {
 		assert.isTrue(isValidElement(h('div')))
 	})
@@ -10,13 +10,12 @@ describe('Element', () => {
 		assert.isFalse(isValidElement(1))
 		assert.isFalse(isValidElement(function () {}))
 		assert.isFalse(isValidElement({}))
-		assert.isFalse(isValidElement(Object.assign({}, h('div'))))
 	})
 
 	it('should clone an element', () => {
 		assert.deepEqual(cloneElement(h('h1', {className: 'head'})).props, {className: 'head'})
 		assert.deepEqual(cloneElement(h('h1', {className: 'head'}), {className: 'change'}).props, {className: 'change'})
-		assert.deepEqual(cloneElement(h('h1', {ref: 'ref'})).ref, 'ref')
+		assert.deepEqual(cloneElement(h('h1', {ref: 'ref'})).props, {ref: 'ref'})
 		assert.deepEqual(cloneElement(h('h1', {xmlns: 'xmlns'})).props, {xmlns: 'xmlns'})
 		assert.deepEqual(cloneElement(h('h1', {key: 'key'})).props, {key: 'key'})
 		assert.deepEqual(cloneElement(h(() => {}, {ref: 'ref'}, 1, 2)).props, {ref: 'ref', children: [1, 2]})
@@ -31,7 +30,7 @@ describe('Element', () => {
 	})
 
 	it('should create an element with children', () => {
-		assert.deepEqual(h('div', [1, 2], 3, h('h1')).children.length, 4)
+		assert.deepEqual(h('div', [1, 2], 3, h('h1')).children.length, 3)
 	})
 
 	it('should assign children to a component element', () => {
@@ -43,39 +42,15 @@ describe('Element', () => {
 	})
 
 	it('should not assign children to a component element', () => {
-		assert.isFalse(Array.isArray(h(() => {}).props.children))
+		assert.deepEqual(h(() => {}).props.children, undefined)
 	})
 
 	it('should assign props to a component element', () => {
 		assert.deepEqual(h(() => {}, {id: 1}).props, {id: 1})
 	})
 
-	it('should assign props as a non-pojo object', () => {
-		assert.deepEqual(h('h1', new (function () { this.id = 1 })).props, {id: 1})
-	})
-
-	it('should assign props as an object with an empty prototype', () => {
-		assert.deepEqual(h('h1', Object.create(null, {id: {value: 1}})).props, {id: 1})
-	})
-
-	it('should assign array children', () => {
-		assert.lengthOf(h('h1', [1, 2]).children, 2)
-	})
-
-	it('should assign nested array children', () => {
-		assert.lengthOf(h('h1', [1, 2, [3, 4]]).children, 4)
-	})
-
-	it('should assign multiple array children', () => {
-		assert.lengthOf(h('h1', [1, 2], [1, 2]).children, 4)
-	})
-
-	it('should assign multiple nested array children', () => {
-		assert.lengthOf(h('h1', [1, 2, [3, 4]], [1, 2, [3, 4]]).children, 8)
-	})
-
-	it('should assign an empty props object', () => {
-		assert.deepEqual(h('h1').props, {})
+	it('should not assign non-props object', () => {
+		assert.deepEqual(h('h1', undefined).props, {})
 		assert.deepEqual(h('h1', null).props, {})
 		assert.deepEqual(h('h1', []).props, {})
 		assert.deepEqual(h('h1', h('h1')).props, {})
@@ -84,15 +59,23 @@ describe('Element', () => {
 		assert.deepEqual(h('h1', () => {}).props, {})
 	})
 
-	it('should not assign element as props', () => {
-		assert.doesNotHaveAnyKeys(h('div', h('h1')).props, ['type', 'props', 'children'])
+	it('should symlink "h" to "createElement"', () => {
+		assert.deepEqual(createElement, h)
 	})
 
-	it('should not assign an array as props', () => {
-		assert.deepEqual(h('div', Object.defineProperty([1, 2, 3], Symbol.iterator, {value: undefined})), h('div', {}, [1, 2, 3]))
+	it('should assign array children', () => {
+		assert.lengthOf(h('h1', [1, 2]).children, 1)
 	})
 
-	it('should share createElement and h identity', () => {
-		assert.isTrue(h === createElement)
+	it('should assign nested array children', () => {
+		assert.lengthOf(h('h1', [1, 2, [3, 4]]).children, 1)
+	})
+
+	it('should assign multiple array children', () => {
+		assert.lengthOf(h('h1', [1, 2], [1, 2]).children, 2)
+	})
+
+	it('should assign multiple nested array children', () => {
+		assert.lengthOf(h('h1', [1, 2, [3, 4]], [1, 2, [3, 4]]).children, 2)
 	})
 })

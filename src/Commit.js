@@ -1,8 +1,28 @@
 import * as Enum from './Enum.js'
+import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Lifecycle from './Lifecycle.js'
-import * as Node from './Node.js'
+import * as Schedule from './Schedule.js'
 import * as Interface from './Interface.js'
+
+/**
+ * @param {object} parent
+ * @param {object} element
+ * @param {object} children
+ */
+export function unmount (parent, element, children) {
+	if (Element.has(parent, Enum.parent)) {
+		if (element === children) {
+			remove(parent, children)
+		} else if (Utility.thenable(Element.get(element, Enum.context))) {
+			Utility.resolve(Element.get(element, Enum.context), function () {
+				unmount(parent, children)
+			})
+		} else {
+			remove(parent, children)
+		}
+	}
+}
 
 /**
  * @param {object} parent
@@ -15,22 +35,6 @@ export function mount (parent, element, sibling) {
 	} else {
 		append(parent, element)
 	}
-}
-
-/**
- * @param {object} parent
- * @param {object} element
- */
-export function unmount (parent, element) {
-	if (element[Enum.state]) {
-		if (Utility.thenable(element[Enum.state])) {
-			return element[Enum.state].then(function () {
-				remove(parent, element)
-			})
-		}
-	}
-
-	remove(parent, element)
 }
 
 /**
@@ -86,20 +90,20 @@ export function content (element, value) {
 
 /**
  * @param {object} element
- * @param {object} props
- * @param {number} from
+ * @param {object} value
+ * @param {number} origin
  */
-export function properties (element, props, from) {
-	if (props) {
-		for (var key in props) {
+export function props (element, value, origin) {
+	if (value) {
+		for (var key in value) {
 			switch (key) {
 				case 'ref':
-					refs(element, props[key], from)
+					refs(element, value[key], origin)
 				case 'key':
 				case 'children':
 					break
 				default:
-					Interface.commit(element, key, props[key], element[Enum.namespace], from)
+					Interface.commit(element, key, value[key], Element.get(element, Enum.context), origin)
 			}
 		}
 	}
@@ -108,29 +112,15 @@ export function properties (element, props, from) {
 /**
  * @param {object} element
  * @param {*?} value
- * @param {number?} from
+ * @param {number?} origin
  */
-export function refs (element, value, from) {
-	switch (from) {
+export function refs (element, value, origin) {
+	switch (origin) {
 		default:
-			Lifecycle.refs(element, element[Enum.ref], null)
+			Lifecycle.refs(element, Element.get(element, Enum.ref), null)
 		case Enum.create:
-			if (next) {
-				Lifecycle.refs(element, element[Enum.ref] = value, element.owner)
+			if (origin) {
+				Lifecycle.refs(element, Element.set(element, Enum.ref, value), Element.get(element, Enum.owner))
 			}
-	}
-}
-
-/**
- * @param {object} element
- * @param {function} value
- * @param {*} instance
- */
-export function callback (element, value, instance) {
-	switch (typeof value) {
-		case 'function':
-			return value.call(instance, instance)
-		case 'string':
-			return Lifecycle.resolve(instance, Interface.callback(instance[value], instance, element.props, element.state), value)
 	}
 }

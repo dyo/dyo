@@ -13,6 +13,9 @@ function onwarn (warning, warn) {
 	}
 }
 
+/**
+ * @type {object}
+ */
 export default [
 	{
 		treeshake: {

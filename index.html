@@ -83,6 +83,83 @@
 <section id="section"></section>
 
 <script type=module>
+	import {h, render, Component, PureComponent, Fragment, Children, cloneElement} from './index.js'
+
+	class Provider extends Component {
+		getChildContext() {
+			return {
+				value: `Hello World - ${Date.now()}`,
+				update: () => {
+					this.forceUpdate()
+				}
+			}
+		}
+	}
+
+	class Indirection extends Component {}
+
+	class Text extends Component {
+		static contextTypes() {
+			return {
+				value: (props, key, name, type) => {
+					if (typeof props[key] !== 'string') {
+						return new Error(`Invalid context type: ${key}`)
+					}
+				}
+			}
+		}
+		render({}, {}, {value, update}) {
+			return console.count('render'), h('h1', {onClick: update}, value)
+		}
+	}
+
+	console.log(cloneElement(h('h1', {className: 'head'})).props)
+
+	render(h(Provider, h(Indirection, Text)), 'main')
+</script>
+
+<script type=!module>
+	import {h, render, Component, Fragment, Children} from './index.js'
+
+	render(class Boundary {
+		componentDidCatch(error, info) {
+			console.log('componentDidCatch - Boundary')
+			this.setState({error})
+		}
+		componentDidMount() {
+			console.log('componentDidMount - Boundary')
+		}
+		componentDidUpdate() {
+			console.log('componentDidUpdate - Boundary')
+		}
+		render() {
+			if (this.state.error) {
+				console.log('------')
+				return this.state.error
+			}
+
+			return h(class A {
+				componentDidMount() {
+					console.log('componentDidMount - A')
+					throw h('h1', 'componentDidMount - A')
+				}
+				componentWillUnmount() {
+					console.log('componentWillUnmount - A')
+				}
+				render() {
+					return h(class B {
+						render() {
+							return '123'
+							throw 'Error!!'
+						}
+					})
+				}
+			})
+		}
+	}, 'section', () => console.log('render - callback'))
+</script>
+
+<script type=!module>
 	import {h, render, Component, Fragment, Children} from './index.js'
 
 	const data = {
@@ -95,16 +172,13 @@
 	}
 
 	class Placeholder {
-		getDerivedState() {
-			return {a: true}
-		}
 		componentDidCatch(error, info) {
 			if (typeof Object(error).then === 'function') {
 				var resolved = false
 
 				setTimeout(() => {
 					if (!resolved) {
-						// this.setState({children: h(LoadingSpinner, {hidden: false})})
+						this.setState({children: h(LoadingSpinner, {hidden: false})})
 					}
 				}, 3100)
 
@@ -112,6 +186,8 @@
 					resolved = true
 					this.setState({children: this.props.fallback})
 				})
+			} else {
+				this.setState({children: h('h1', 'Failed!!')})
 			}
 		}
 		render(props, state) {
@@ -138,22 +214,28 @@
 		}
 	}
 
+	var ref = (a) => console.log('ref', a)
+
 	class ListItem {
 		handleEvent() {
 			return () => {
 				return {loading: !this.state.loading}
 			}
 		}
+		componentWillUnmount() {
+			console.log('componentWillUnmount - ListItem')
+		}
 		componentDidUpdate(props, state) {
-			console.log('didUpdate');
-
+			console.log('componentDidUpdate - ListItem')
+			// throw 1
+			throw new Promise((resolve) => setTimeout(resolve, 3000))
 			return () => {
 				// throw Promise.resolve()
 				throw new Promise((resolve) => setTimeout(resolve, 3000))
 			}
 		}
 		render ({name, username}, {loading}) {
-			return h('li', {onClick: this.handleEvent},
+			return h('li', {ref: ref, onClick: this.handleEvent},
 				h('div', h('strong', name), h('small', username)),
 				h(ArrorIcon, {hidden: loading}),
 				h(LoadingSpinner, {hidden: !loading})
@@ -173,6 +255,10 @@
 	}
 
 	render(h(Application, data.entries), 'section')
+</script>
+
+<script type=!module>
+	import {h, render, Component, Fragment, Children} from './index.js'
 
 	// render(h(Promise.resolve(h('h1', 'Hello World'))), 'section')
 </script>
@@ -275,102 +361,6 @@
 
 	// render(h( 'ul', [2, 5, 6, 7].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
 	// render(h( 'ul', [1, 0, 3, 4].map(v => h('li', {key: v}, `${v} ${i++}`)) ), 'main')
-</script>
-
-<script type=!module>
-	import {h, render, Component, Fragment, createContext} from './index.js'
-
-	class ErrorBoundary extends Component {
-		// componentDidCatch(...args) {
-		// 	throw Error('componentDidCatch ErrorBoundary')
-		// 	console.log(...args)
-		// }
-	}
-
-	class C extends Component {
-		constructor() {
-			super()
-			this.state = {value: 'Hello World!'}
-			// this.setState({value: 'Hello World - A'})
-		}
-		// getDerivedState(props, state) {
-		// 	console.log('getDerivedState', props, state, this.state === state, this.props === props)
-		// }
-		// getInitialState() {
-			// return new Promise((resolve, _) => {
-			// 	setTimeout(() => {
-			// 		resolve({foo: true})
-			// 	}, 2000)
-			// })
-		// 	return {value: 'Hello World'}
-		// }
-		// static propTypes() {
-		// 	return {
-		// 		foo(...args) {
-		// 			console.log('propTypes', ...args)
-		// 		}
-		// 	}
-		// }
-		componentDidMount(...args) {
-			// throw Error('componentDidMount')
-			console.log('componentDidMount', ...args, this)
-		}
-		componentWillUnmount(...args) {
-			// throw Error('componentWillUnmount')
-			console.log('componentWillUnmount', ...args, this)
-		}
-		componentWillUpdate(...args) {
-			// this.setState({value: 'Hello World - A'})
-			// throw Error('componentWillUpdate')
-			// console.log('componentWillUpdate', ...args)
-			// this.setState({value: 'Hello - A'})
-		}
-		componentDidUpdate(...args) {
-			// throw Error('componentDidUpdate')
-			console.trace('componentDidUpdate', ...args, this)
-		}
-		// shouldComponentUpdate(...args) {
-			// throw Error('shouldComponentUpdate')
-			// return !console.log('shouldComponentUpdate', ...args)
-		// }
-		render() {
-			// return this.props.children
-			// throw Error('render')
-			// return h('h1', 'Hello')
-			// return h('*44', 'invalid')
-
-			return h('h1', {
-				onClick: e => {
-					this.setState(() => {
-						// throw 'Hello'
-						return {value: 'Hello!'}
-					})
-				}
-			}, this.state.value || '...')
-		}
-	}
-
-	const PromiseChildren = h('h1', 'Hello World')
-	const PromiseType = new Promise((resolve) => {
-		// return resolve(PromiseChildren)
-		setTimeout(resolve, 1000, PromiseChildren)
-	})
-	// render(h(PromiseType, {delay: 100}, "Loading..."), 'main', () => console.log('callback'))
-
-	// console.log(h('h1', null, null, 'Hello World', null))
-	// console.log(h(Fragment, null, 'Hello World'))
-	// console.log(h({then: () => {}}, null))
-
-	// render(h('h1', ['Hello World']), 'main')
-	// render(h('h1', {style: 'color:red;'}, 'Hello World', 2), 'main')
-	// render(h('h1', {style: 'color:red;'}, 'Hello World'), 'main')
-
-	// render(h(ErrorBoundary, h(A, {a: 1}, h('h1', 'Works!', 'A'))), 'main')
-	// render(h(ErrorBoundary, h(A, {a: 1}, h('h1', 'Works!', 'B'))), 'main')
-
-	// function Foo () {
-		// return h('h1', 'Hello World!')
-	// }
 </script>
 
 <script type=!module>

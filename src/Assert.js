@@ -2,27 +2,30 @@ import * as Element from './Element.js'
 
 /**
  * @param {object} element
- * @param {object?} values
- * @param {string} from
+ * @param {object?} properties
+ * @param {string} origin
  */
-export function types (element, values, from) {
-	validate(element, values, element.type[from], from)
+export function types (element, properties, origin) {
+	// TODO
+	if ('development' === 'development') {
+		validate(element, properties, element.type[origin], origin)
+	}
 }
 
 /**
  * @param {object} element
- * @param {object} values
+ * @param {object} properties
  * @param {object?} validators
- * @param {string} from
+ * @param {string} origin
  * @return {object}
  */
-export function validate (element, values, validators, from) {
+export function validate (element, properties, validators, origin) {
 	if (validators) {
 		if (typeof validators === 'function') {
-			validate(element, values, validators.call(element.type, values))
+			validate(element, properties, validators.call(element.type, properties), origin)
 		} else {
 			for (var key in validators) {
-				if (key = validators[key](values, key, Element.display(element), from)) {
+				if (key = validators[key](properties, key, Element.display(element), origin)) {
 					throw key
 				}
 			}
