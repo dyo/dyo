@@ -1,6 +1,6 @@
-import {cloneElement, isValidElement, createElement, h} from 'dyo'
+import {h, createElement, cloneElement, isValidElement} from 'dyo'
 
-describe.only('Element', () => {
+describe('Element', () => {
 	it('should validate an element', () => {
 		assert.isTrue(isValidElement(h('div')))
 	})

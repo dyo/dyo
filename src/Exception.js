@@ -78,7 +78,7 @@ export function propagate (fiber, host, element, exception, current) {
 			return report(exception)
 		case Enum.component:
 			if (current !== element) {
-				if (recover(fiber, host, current, exception, Element.get(current, Enum.owner), Enum.componentDidCatch)) {
+				if (recover(fiber, current, exception, Element.get(current, Enum.owner))) {
 					return true
 				}
 			}
@@ -93,14 +93,13 @@ export function propagate (fiber, host, element, exception, current) {
 
 /**
  * @param {object} fiber
- * @param {object} host
  * @param {object} element
  * @param {object} exception
  * @param {object} owner
  */
-export function recover (fiber, host, element, exception, owner, origin) {
-	if (Lifecycle.has(owner, origin)) {
-		return !Schedule.callback(fiber, origin, host, element, owner, exception.error, exception, exception)
+export function recover (fiber, element, exception, owner) {
+	if (Lifecycle.has(owner, Enum.componentDidCatch)) {
+		return !Schedule.callback(fiber, Enum.componentDidCatch, element, element, owner, exception.error, exception, exception)
 	}
 }
 

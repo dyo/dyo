@@ -24,64 +24,64 @@ export function struct (key, type, props, children, constructor) {
 }
 
 /**
- * @param {(number|string)} children
- * @param {*} key
- * @return {object}
- */
-export function text (children, key) {
-	return struct(key, '#text', Enum.obj, children, Enum.text)
-}
-
-/**
  * @param {*} key
  * @return {object}
  */
 export function empty (key) {
-	return struct(key, '#empty', Enum.obj, '', Enum.empty)
+	return struct(key, '#empty', null, '', Enum.empty)
 }
 
 /**
- * @param {(number|string)} children
+ * @param {(number|string)} value
  * @param {*} key
  * @return {object}
  */
-export function comment (children, key) {
-	return struct(key, '#comment', Enum.obj, children, Enum.comment)
+export function text (value, key) {
+	return struct(key, '#text', null, value, Enum.text)
 }
 
 /**
- * @param {object} children
+ * @param {(number|string)} value
  * @param {*} key
  * @return {object}
  */
-export function fragment (children, key) {
-	return struct(key, '#fragment', Enum.obj, (children.push(empty(Enum.key)), children), Enum.fragment)
+export function comment (value, key) {
+	return struct(key, '#comment', null, value, Enum.comment)
 }
 
 /**
- * @param {*} children
- * @param {*} target
+ * @param {object} value
  * @param {*} key
  * @return {object}
  */
-export function portal (children, target, key) {
-	return struct(key, target, Enum.obj, [root([children])], Enum.portal)
+export function fragment (value, key) {
+	return struct(key, '#fragment', null, (value.push(empty(Enum.key)), value), Enum.fragment)
 }
 
 /**
  * @param {*} value
+ * @param {*} target
+ * @param {*} props
  * @return {object}
  */
-export function children (value) {
-	return [root(value), empty(Enum.key)]
+export function portal (value, target, props) {
+	return struct(props && props.key, target, props, [root([value])], Enum.portal)
 }
 
 /**
- * @param {object} element
+ * @param {object} value
  * @return {object}
  */
-export function root (element) {
-	return from(element, 0)
+export function root (value) {
+	return from(value, 0)
+}
+
+/**
+ * @param {object} value
+ * @return {object}
+ */
+export function resolve (value) {
+	return [root(value !== null && typeof value === 'object' && 'default' in value ? value.default : value), empty(Enum.key)]
 }
 
 /**
@@ -109,12 +109,12 @@ export function from (value, index) {
 						return fragment([empty(Utility.hash(Enum.key)), value], value.key)
 					case Utility.array:
 						return fragment(value.map(from), Utility.hash(index))
-				}
-
-				if (Utility.iterable(value)) {
-					return fragment(Children.map(value, from), Utility.hash(index))
-				} else {
-					return create(value.default || value)
+					default:
+						if (Utility.iterable(value)) {
+							return fragment(Children.map(value, from), Utility.hash(index))
+						} else {
+							return create(value)
+						}
 				}
 		}
 	}
@@ -146,6 +146,7 @@ export function create (a, b) {
 				children.push(arguments[i])
 			}
 		}
+
 		if (type[Enum.defaultProps]) {
 			defaults(element, type[Enum.defaultProps])
 		}
@@ -185,23 +186,6 @@ export function identity (value) {
 }
 
 /**
- * @param {object} element
- * @param {object?} value
- * @return {object}
- */
-export function defaults (element, value) {
-	if (value) {
-		if (typeof value === 'function') {
-			defaults(element, value.call(element.type, element.props))
-		} else {
-			Utility.defaults(element.props, value)
-		}
-	}
-
-	return element
-}
-
-/**
  * @param {*} value
  * @return {string}
  */
@@ -216,6 +200,23 @@ export function display (value) {
 	}
 
 	return value
+}
+
+/**
+ * @param {object} element
+ * @param {object?} value
+ * @return {object}
+ */
+export function defaults (element, value) {
+	if (value) {
+		if (typeof value === 'function') {
+			defaults(element, value.call(element.type, element.props))
+		} else {
+			Utility.defaults(element.props, value)
+		}
+	}
+
+	return element
 }
 
 /**
@@ -239,16 +240,8 @@ export function valid (element) {
  * @param {object} element
  * @return {object}
  */
-export function resolve (element) {
-	return element.constructor < Enum.node ? resolve(pick(element)) : element
-}
-
-/**
- * @param {object} element
- * @return {object}
- */
-export function target (element) {
-	return element.constructor === Enum.component ? target(pick(element)) : element
+export function node (element) {
+	return element.constructor < Enum.node ? node(pick(element)) : element
 }
 
 /**

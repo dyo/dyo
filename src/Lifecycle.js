@@ -14,17 +14,17 @@ export function refs (element, value, owner) {
 			return value(owner)
 		case 'object':
 			return value.current = owner
-		default:
+		case 'string':
 			return Element.get(Element.get(element, Enum.host), Enum.owner).refs[value] = owner
 	}
 }
 
 /**
  * @param {object} element
- * @param {*} value
  * @param {*} owner
+ * @param {*} value
  */
-export function callback (element, value, owner) {
+export function callback (element, owner, value) {
 	if (value) {
 		switch (typeof value) {
 			case 'function':

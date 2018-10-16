@@ -33,6 +33,21 @@ export function resolve (fiber, host, parent, element, origin) {
 }
 
 /**
+ * @param {object} element
+ * @param {object} snapshot
+ * @return {object}
+ */
+export function replace (element, snapshot) {
+	try {
+		Element.set(element, Enum.owner, Interface.create(snapshot, Enum.create))
+	} finally {
+		element.type = snapshot.type
+	}
+
+	return element
+}
+
+/**
  * @param {object} fiber
  * @param {object} host
  * @param {object} parent
@@ -61,10 +76,11 @@ export function create (fiber, host, parent, element, origin) {
 			for (var i = 0, j = element.children, k = origin > -1 ? 1 : -1; i < j.length; ++i) {
 				create(fiber, host, element, j[i], k * (i + 1))
 			}
-			if (constructor === Enum.node) {
+
+			if (constructor !== Enum.thenable) {
 				Commit.props(element, element.props, Enum.create)
-			} else if (constructor === Enum.thenable) {
-				Reconcile.resolve(fiber, host, parent, element, element)
+			} else {
+				Reconcile.update(fiber, host, parent, element, element, j, k * (origin - 1))
 			}
 		}
 
@@ -90,7 +106,7 @@ export function destroy (fiber, element) {
 		case Enum.component:
 			return Component.destroy(fiber, element)
 		case Enum.portal:
-			Schedule.enqueue(fiber, Enum.unmount, element, element, element, element)
+			Schedule.commit(fiber, Enum.unmount, element, element, element, element)
 		case Enum.text:
 		case Enum.empty:
 		case Enum.comment:

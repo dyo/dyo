@@ -8,7 +8,7 @@ import * as Element from './Element.js'
  * @return {object?}
  */
 export function create (element, origin) {
-	if (origin < Enum.create) {
+	if (origin === Enum.search) {
 		return search(element, origin)
 	}
 
@@ -89,7 +89,7 @@ export function content (element, value) {
  * @return {object}
  */
 export function prepare (element, target) {
-	return target.textContent = '', element
+	return target.textContent = '', target
 }
 
 /**
@@ -137,43 +137,22 @@ export function props (element, props, origin) {
  * @param {string} namespace
  * @param {number} origin
  */
-export function commit (element, name, value, namespace, origin) {
+export function update (element, name, value, namespace, origin) {
 	switch (name) {
 		case 'style':
-			return style(element, name, value)
+			return style(element, name, value || false)
 		case 'className':
 		case 'class':
 			return attribute(element, 'class', value, '')
 		case 'xlink:href':
 			return attribute(element, name, value, 'http://www.w3.org/1999/xlink')
+		case 'width':
+		case 'height':
+			return attribute(element, name, value, '')
 		case 'xmlns':
 			return
 		case 'innerHTML':
 			return html(element, name, value ? value : '', [])
-		case 'dangerouslySetInnerHTML':
-			return commit(element, 'innerHTML', value && value.__html, namespace, origin)
-		case 'acceptCharset':
-			return commit(element, 'accept-charset', value, namespace, origin)
-		case 'httpEquiv':
-			return commit(element, 'http-equiv', value, namespace, origin)
-		case 'tabIndex':
-			return commit(element, name.toLowerCase(), value, namespace, origin)
-		case 'autofocus':
-		case 'autoFocus':
-			return Element.get(element, Enum.owner)[value ? 'focus' : 'blur']()
-		case 'width':
-		case 'height':
-			return attribute(element, name, value, '')
-		case 'form':
-			if (element.type === 'input') {
-				return attribute(element, name, value, '')
-			}
-			break
-		case 'defaultValue':
-			if (element.type === 'select') {
-				return
-			}
-			break
 	}
 
 	switch (typeof value) {
@@ -273,9 +252,7 @@ function attribute (element, name, value, namespace) {
  * @param {(string|object)} value
  */
 function style (element, name, value) {
-	if (typeof value !== 'object') {
-		attribute(element, name, value, '')
-	} else {
+	if (typeof value === 'object') {
 		for (var key in value) {
 			if (key.indexOf('-') === -1) {
 				Element.get(element, Enum.owner).style[key] = value[key] !== false && value[key] !== undefined ? value[key] : ''
@@ -283,6 +260,8 @@ function style (element, name, value) {
 				Element.get(element, Enum.owner).style.setProperty(key, value[key])
 			}
 		}
+	} else {
+		attribute(element, name, value, '')
 	}
 }
 

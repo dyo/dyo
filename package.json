@@ -17,18 +17,18 @@
 	},
 	"devDependencies": {
 		"dyo": "./",
-		"eslint": "5.6.1",
-		"rollup": "0.64.1",
 		"esm": "3.0.84",
+		"eslint": "5.6.1",
+		"rollup": "0.66.6",
+		"jsdom": "12.2.0",
+		"nyc": "13.0.1",
 		"chai": "4.2.0",
-		"coveralls": "3.0.2",
-		"jsdom": "12.1.0",
 		"mocha": "5.2.0",
-		"nyc": "13.0.1"
+		"coveralls": "3.0.2"
 	},
 	"scripts": {
 		"lint": "eslint ./src",
-		"test": "mocha --harmony --recursive tests/ --require esm scripts/tests.config.js",
+		"test": "mocha --harmony --require esm scripts/tests.config.js --recursive tests",
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
 		"build": "rollup --config scripts/build.config.js",
 		"start": "npm run build -- --watch",
@@ -48,7 +48,7 @@
 			"text"
 		]
 	},
-	"main": "dist/dio.es.js",
+	"main": "./index.js",
 	"module": "dist/dio.es.js",
 	"types": "",
 	"files": [

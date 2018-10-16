@@ -9,42 +9,42 @@ import * as Interface from './Interface.js'
  * @param {object} event
  */
 export function handle (event) {
-	resolve(event, Element.get(this, Enum.host), Interface.event(this, event))
+	resolve(Element.get(this, Enum.host), Interface.event(this, event), event)
 }
 
 /**
- * @param {object} event
  * @param {object} element
  * @param {*} callback
+ * @param {object} event
  */
-export function resolve (event, element, callback) {
-	dispatch(event, element, callback, Element.get(element, Enum.owner))
+export function resolve (element, callback, event) {
+	dispatch(element, callback, event, Element.get(element, Enum.owner))
 }
 
 /**
- * @param {object} event
  * @param {object} element
  * @param {*} callback
+ * @param {object} event
  * @param {object} instance
  */
-export function dispatch (event, element, callback, instance) {
-	Schedule.event(commit, event, element, callback, instance)
+export function dispatch (element, callback, event, instance) {
+	Schedule.forward(checkout, element, callback, instance, event)
 }
 
 /**
- * @param {object} event
  * @param {object} element
  * @param {*} callback
+ * @param {object} event
  * @param {object} instance
  */
-export function commit (event, element, callback, instance) {
+export function checkout (element, callback, event, instance) {
 	if (callback) {
 		if (Utility.iterable(callback)) {
 			Utility.each(function (callback) {
-				commit(event, element, callback, instance)
+				commit(element, callback, event, instance)
 			}, callback, 0)
 		} else {
-			Lifecycle.event(element, event, callback, instance.props, instance.state, instance.context)
+			Lifecycle.event(element, event, callback, instance, instance.props, instance.state, instance.context)
 		}
 	}
 }

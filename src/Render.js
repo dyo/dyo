@@ -13,7 +13,7 @@ import Registry from './Registry.js'
  * @param {function?} callback
  */
 export function hydrate (element, target, callback) {
-	dispatch(Element.root(element), Interface.target(target), callback, Enum.search)
+	resolve(element, Interface.target(target), callback, Enum.search)
 }
 
 /**
@@ -22,7 +22,21 @@ export function hydrate (element, target, callback) {
  * @param {function?} callback
  */
 export function render (element, target, callback) {
-	dispatch(Element.root(element), Interface.target(target), callback, Enum.create)
+	resolve(element, Interface.target(target), callback, Enum.create)
+}
+
+/**
+ * @param {*} element
+ * @param {*?} target
+ * @param {function?} callback
+ * @param {number} origin
+ */
+export function resolve (element, target, callback, origin) {
+	if (Registry.has(target)) {
+		dispatch(Registry.get(target), target, callback, [Element.root([element])])
+	} else {
+		dispatch(Registry.set(target, Element.portal(element, Interface.prepare(element, target))).get(target), target, callback, origin)
+	}
 }
 
 /**
@@ -32,38 +46,20 @@ export function render (element, target, callback) {
  * @param {number} origin
  */
 export function dispatch (element, target, callback, origin) {
-	Schedule.checkout(Schedule.create(), callback, element, element, target, origin, commit)
+	Schedule.checkout(checkout, element, element, target, origin, callback)
 }
 
 /**
  * @param {object} fiber
+ * @param {object} host
+ * @param {obejct} parent
  * @param {object} element
- * @param {object} children
- * @param {*?} target
  * @param {number} origin
  */
-export function commit (fiber, element, children, target, origin) {
-	if (Registry.has(target)) {
-		update(fiber, Registry.get(target), children)
+export function checkout (fiber, host, parent, primary, secondary) {
+	if (typeof secondary === 'object') {
+		Schedule.commit(fiber, Enum.children, host, parent, parent.children, secondary)
 	} else {
-		create(fiber, Registry.set(target, Interface.prepare(Element.portal(element, target), target)).get(target), origin)
+		Node.create(fiber, host, parent, parent, secondary)
 	}
-}
-
-/**
- * @param {object} fiber
- * @param {object} parent
- * @param {number} origin
- */
-export function create (fiber, parent, origin) {
-	Node.create(fiber, parent, parent, parent, origin)
-}
-
-/**
- * @param {object} fiber
- * @param {object} parent
- * @param {object} children
- */
-export function update (fiber, parent, children) {
-	Reconcile.children(fiber, parent, parent, parent.children, [children])
 }

@@ -1,7 +1,7 @@
 import {JSDOM} from 'jsdom'
 import {assert} from 'chai'
 
-const {window} = new JSDOM('<!DOCTYPE html>')
+const {window} = new JSDOM('<!doctype html>')
 const {document, location, history} = window
 
 function minify (value) {

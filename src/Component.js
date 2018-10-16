@@ -99,7 +99,7 @@ export function identity (constructor, prototype) {
  * @param {function?} callback
  */
 export function dispatch (element, owner, value, callback) {
-	Schedule.checkout(Schedule.create(), callback, element, element, owner, value, commit)
+	Schedule.checkout(checkout, element, element, owner, value, callback)
 }
 
 /**
@@ -109,20 +109,16 @@ export function dispatch (element, owner, value, callback) {
  * @param {object} owner
  * @param {(object|function)?} value
  */
-export function commit (fiber, host, element, owner, value) {
+export function checkout (fiber, host, element, owner, value) {
 	if (value) {
-		if (element.children.length) {
-			if (Utility.thenable(value)) {
-				Utility.resolve(Schedule.suspend(fiber, value), function (value) {
-					commit(fiber, host, element, owner, value)
-				}, function (value) {
-					commit(fiber, host, element, owner, function () { throw value })
-				})
-			} else {
-				resolve(fiber, host, element, element, value)
-			}
+		if (Utility.thenable(value)) {
+			Utility.resolve(Schedule.suspend(fiber, value), function (value) {
+				checkout(fiber, host, element, owner, value)
+			}, function (error) {
+				Exception.resolve(fiber, element, element, value)
+			})
 		} else {
-			owner.state = value
+			resolve(fiber, host, element, element, value)
 		}
 	}
 }
@@ -164,7 +160,7 @@ export function update (fiber, host, element, snapshot, value) {
 	Assert.types(element, context, Enum.contextTypes)
 
 	if (typeof value === 'function') {
-		return commit(fiber, host, element, owner, value(props, state, context))
+		return checkout(fiber, host, element, owner, value(props, state, context))
 	}
 
 	state = Utility.defaults(!force ? value : {}, state)
@@ -191,10 +187,10 @@ export function update (fiber, host, element, snapshot, value) {
 		Lifecycle.invoke(element, owner, props, state, context, Enum.getChildContext)
 	}
 
-	Schedule.enqueue(fiber, Enum.children, element, parent, element.children, [Lifecycle.render(owner, props, state, context)])
+	Schedule.commit(fiber, Enum.children, element, parent, element.children, [Lifecycle.render(owner, props, state, context)])
 
 	if (Lifecycle.has(owner, Enum.componentDidUpdate)) {
-		Schedule.callback(fiber, Enum.componentDidUpdate, host, element, owner, _props, _state, _context)
+		Schedule.callback(fiber, Enum.componentDidUpdate, element, element, owner, _props, _state, _context)
 	}
 }
 
@@ -209,10 +205,10 @@ export function update (fiber, host, element, snapshot, value) {
 export function create (fiber, host, parent, element, origin) {
 	var type = identity(element.type, element.type.prototype)
 	var props = element.props
-	var children = element
 	var context = Element.set(element, Enum.context, Element.get(host, Enum.context) || {})
 	var owner = Element.set(element, Enum.owner, new type(props, context))
 	var state = owner.state || {}
+	var children = element
 
 	Assert.types(element, context, Enum.contextTypes)
 
@@ -247,10 +243,11 @@ export function create (fiber, host, parent, element, origin) {
  */
 export function destroy (fiber, element) {
 	var owner = Element.get(element, Enum.owner)
+	var children = Element.pick(element)
 
 	if (Lifecycle.has(owner, Enum.componentWillUnmount)) {
 		Lifecycle.invoke(element, owner, owner.props, owner.state, owner.context, Enum.componentWillUnmount)
 	}
 
-	return Node.destroy(fiber, Element.pick(element))
+	return Node.destroy(fiber, children)
 }

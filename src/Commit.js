@@ -2,7 +2,6 @@ import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Lifecycle from './Lifecycle.js'
-import * as Schedule from './Schedule.js'
 import * as Interface from './Interface.js'
 
 /**
@@ -16,7 +15,7 @@ export function unmount (parent, element, children) {
 			remove(parent, children)
 		} else if (Utility.thenable(Element.get(element, Enum.context))) {
 			Utility.resolve(Element.get(element, Enum.context), function () {
-				unmount(parent, children)
+				unmount(parent, children, children)
 			})
 		} else {
 			remove(parent, children)
@@ -76,7 +75,7 @@ export function insert (parent, element, sibling) {
 			insert(parent, element, sibling)
 		})
 	} else {
-		Interface.insert(Element.parent(parent), element, Element.resolve(sibling))
+		Interface.insert(Element.parent(parent), element, Element.node(sibling))
 	}
 }
 
@@ -95,16 +94,26 @@ export function content (element, value) {
  */
 export function props (element, value, origin) {
 	if (value) {
-		for (var key in value) {
-			switch (key) {
-				case 'ref':
-					refs(element, value[key], origin)
-				case 'key':
-				case 'children':
-					break
-				default:
-					Interface.commit(element, key, value[key], Element.get(element, Enum.context), origin)
-			}
+		update(element, Interface.props(element, value, origin), Element.get(element, Enum.context), origin)
+	}
+}
+
+/**
+ * @param {object} element
+ * @param {object} value
+ * @param {*} namespace
+ * @param {number} origin
+ */
+export function update (element, value, namespace, origin)  {
+	for (var key in value) {
+		switch (key) {
+			case 'ref':
+				refs(element, value[key], origin)
+			case 'key':
+			case 'children':
+				break
+			default:
+				Interface.update(element, key, value[key], namespace, origin)
 		}
 	}
 }
@@ -119,7 +128,7 @@ export function refs (element, value, origin) {
 		default:
 			Lifecycle.refs(element, Element.get(element, Enum.ref), null)
 		case Enum.create:
-			if (origin) {
+			if (value) {
 				Lifecycle.refs(element, Element.set(element, Enum.ref, value), Element.get(element, Enum.owner))
 			}
 	}

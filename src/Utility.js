@@ -85,13 +85,28 @@ export var registry = typeof WeakMap === 'function' ? WeakMap : function () {
  * @param {function} callback
  */
 export var promise = typeof Promise === 'function' ? Promise : function (callback) {
-	callback(define(function resolve (value) {
-		resolve.entries.forEach(resolve.callback, value)
-	}, {
-		then: {value: function (callback) { this.entries.push(callback) }},
-		entries: {value: []},
-		callback: {value: function (callback) { callback(this) }}
-	}))
+	function resolve (value) {
+		for (var i = 0, j = resolve.entries; i < j.length; i++) {
+			j[i](value)
+		}
+	}
+
+	function then (callback) {
+		return promise(function (resolve) {
+			resolve.entries.push(callback, resolve)
+		})
+	}
+
+	return assign(resolve, {then: then, entries: []}), callback(resolve)
+}
+
+/**
+ * @param {function} callback
+ * @param {number} duration
+ * @return {number}
+ */
+export function timeout (callback, duration) {
+	return setTimeout(callback, duration > 16 ? duration : 16)
 }
 
 /**
@@ -105,7 +120,7 @@ export function request (callback) {
 /**
  * @return {object}
  */
-export function timeout () {
+export function deadline () {
 	return new promise(request)
 }
 
@@ -273,7 +288,7 @@ export function each (callback, value, index) {
  * @return {Promise?}
  */
 export function resolve (value, fulfilled, rejected) {
-	if (thenable(value)) {
+	if (value) {
 		return value.then(function (value) {
 			return fetchable(value) ? resolve(value.json(), fulfilled, rejected) : fulfilled(value)
 		}, rejected)

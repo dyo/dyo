@@ -83,6 +83,48 @@
 <section id="section"></section>
 
 <script type=module>
+	import {h, render, Component, createPortal} from './index.js'
+
+	// console.log(createPortal(1, 'section', {}))
+
+		;(() => {
+			// class Primary extends Component {
+			// 	componentWillUnmount() {
+			// 		return this.refs.heading.animate([{opacity: 1}, {opacity: 0}], {duration: 1500, fill: 'forwards'}).finished
+			// 	}
+			// }
+
+			// render(h(Primary, h('h1', {ref: 'heading'}, 'Hello World')), 'main', (current) => {
+			// 	console.log(current.textContent)
+			// })
+
+			// render(null, 'main', (current) => {
+			// 	console.log(current.textContent)
+			// })
+		})
+
+		;(() => {
+			class Primary extends Component {}
+
+			const A = new Promise((r) => r('1'))
+			const B = new Promise((r) => {
+				setTimeout(r, 3000, '2')
+				// r('2')
+			})
+
+			render(h('div', h(A, {timeout: 0}, 'Loading')), 'main', (current) => {
+				console.log(current.innerHTML)
+			})
+
+			console.log('-----')
+
+			render(h('div', h(B, {timeout: 1200}, 'Loading')), 'main', (current) => {
+				console.log(current.innerHTML)
+			})
+		});
+</script>
+
+<script type=!module>
 	import {h, render, Component, PureComponent, Fragment, Children, cloneElement} from './index.js'
 
 	class Provider extends Component {
@@ -112,8 +154,6 @@
 			return console.count('render'), h('h1', {onClick: update}, value)
 		}
 	}
-
-	console.log(cloneElement(h('h1', {className: 'head'})).props)
 
 	render(h(Provider, h(Indirection, Text)), 'main')
 </script>
