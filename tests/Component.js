@@ -1,6 +1,14 @@
 import {h, Component, PureComponent, render} from 'dyo'
 
 describe('Component', () => {
+	it('should forward component children', () => {
+		const target = document.createElement('div')
+
+		render(h(Component, 'Primary'), target, (current) => {
+			assert.html(current, 'Primary')
+		})
+	})
+
 	it('should render a function Component', () => {
 		const target = document.createElement('div')
 
