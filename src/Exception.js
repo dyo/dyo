@@ -46,7 +46,7 @@ export var struct = Utility.extend(function (host, element, value) {
  * @return {string}
  */
 export function trace (host, element, value) {
-	if (host.constructor === Enum.portal) {
+	if (host.constructor === Enum.target) {
 		return value + display(element)
 	} else {
 		return trace(Element.get(host, Enum.host), element, display(host) + value)

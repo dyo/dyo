@@ -28,7 +28,7 @@ export function resolve (element, callback, event) {
  * @param {object} instance
  */
 export function dispatch (element, callback, event, instance) {
-	Schedule.forward(checkout, element, callback, instance, event)
+	Schedule.forward(checkout, element, callback, event, instance)
 }
 
 /**
@@ -41,7 +41,7 @@ export function checkout (element, callback, event, instance) {
 	if (callback) {
 		if (Utility.iterable(callback)) {
 			Utility.each(function (callback) {
-				commit(element, callback, event, instance)
+				checkout(element, callback, event, instance)
 			}, callback, 0)
 		} else {
 			Lifecycle.event(element, event, callback, instance, instance.props, instance.state, instance.context)

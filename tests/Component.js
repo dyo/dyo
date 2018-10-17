@@ -541,30 +541,35 @@ describe('Component', () => {
 			refs.current.then(() => assert.html(current, ''))
 		})
 	})
-return // TODO
-	it('should render a placeholder before async mount', (done) => {
-		const target = document.createElement('div')
 
-		class Primary extends Component {}
-
-		render(h(Primary, h(Promise.resolve(1), 'Loading')), target, (current) => assert.html(target, '1'))
-		assert.html(target, 'Loading')
-	})
-
-	it('should replace async mount before resolve', () => {
+	it('should render a placeholder before async mount', () => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {}
 
 		render(h(Primary, h(Promise.resolve(1), 'Loading')), target, (current) => {
-			assert.html(current, `2`)
+			assert.html(target, '1')
 		})
 
-		render(2, target, (current) => {
-			assert.html(current, `2`)
-		})
+		assert.html(target, 'Loading')
 	})
 
+	it('should handle concurrect updates', () => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {}
+
+		render(h(Primary, h(Promise.resolve(1), 'Loading')), target, (current) => {
+			assert.html(current, '1')
+		})
+
+		assert.html(target, 'Loading')
+
+		render(2, target, (current) => {
+			assert.html(current, '2')
+		})
+	})
+return // TODO
 	it('should render an generator(async)', (done) => {
 		var target = document.createElement('div')
 		var stack = []
