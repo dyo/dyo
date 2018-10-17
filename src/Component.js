@@ -199,10 +199,10 @@ export function update (fiber, host, element, snapshot, value) {
  * @param {object} host
  * @param {object} parent
  * @param {object} element
- * @param {object} origin
+ * @param {object} index
  * @return {object}
  */
-export function create (fiber, host, parent, element, origin) {
+export function create (fiber, host, parent, element, index) {
 	var type = identity(element.type, element.type.prototype)
 	var props = element.props
 	var context = Element.set(element, Enum.context, Element.get(host, Enum.context) || {})
@@ -227,7 +227,7 @@ export function create (fiber, host, parent, element, origin) {
 		Lifecycle.invoke(element, owner, props, state, context, Enum.getChildContext)
 	}
 
-	children = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(owner, props, state, context)), origin)
+	children = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(owner, props, state, context)), index)
 
 	if (Lifecycle.has(owner, Enum.componentDidMount)) {
 		Schedule.callback(fiber, Enum.componentDidMount, element, element, owner, props, state, context)

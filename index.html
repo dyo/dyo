@@ -79,49 +79,56 @@
 	  100% { transform: rotate(270deg); }
 	}
 </style>
-<main id="main"></main>
+<main id="main">Remove me!</main>
 <section id="section"></section>
+<article id="article"></article>
 
 <script type=module>
-	import {h, render, Component, createPortal} from './index.js'
+import {h, render, Component, createPortal, createComment} from './index.js'
 
-	// console.log(createPortal(1, 'section', {}))
+	;(() => {
+		// render('World', 'main')
+		// render('Hello', 'main')
+		render(createPortal('Hello World', 'section', {class: 'foo'}), 'main')
+		render(createPortal('World Hello', 'article', {class: 'bar'}), 'main')
+		// render(null, 'main')
+	})();
 
-		;(() => {
-			// class Primary extends Component {
-			// 	componentWillUnmount() {
-			// 		return this.refs.heading.animate([{opacity: 1}, {opacity: 0}], {duration: 1500, fill: 'forwards'}).finished
-			// 	}
-			// }
+	;(() => {
+		class Primary extends Component {
+			componentWillUnmount() {
+				return this.refs.heading.animate([{opacity: 1}, {opacity: 0}], {duration: 1500, fill: 'forwards'}).finished
+			}
+		}
 
-			// render(h(Primary, h('h1', {ref: 'heading'}, 'Hello World')), 'main', (current) => {
-			// 	console.log(current.textContent)
-			// })
-
-			// render(null, 'main', (current) => {
-			// 	console.log(current.textContent)
-			// })
+		render(h(Primary, h('h1', {ref: 'heading'}, 'Hello World')), 'main', (current) => {
+			console.log(current.textContent)
 		})
 
-		;(() => {
-			class Primary extends Component {}
+		render(null, 'main', (current) => {
+			console.log(current.textContent)
+		})
+	});
 
-			const A = new Promise((r) => r('1'))
-			const B = new Promise((r) => {
-				setTimeout(r, 3000, '2')
-				// r('2')
-			})
+	;(() => {
+		class Primary extends Component {}
 
-			render(h('div', h(A, {timeout: 0}, 'Loading')), 'main', (current) => {
-				console.log(current.innerHTML)
-			})
+		const A = new Promise((r) => r('1'))
+		const B = new Promise((r) => {
+			setTimeout(r, 3000, '2')
+			// r('2')
+		})
 
-			console.log('-----')
+		render(h('div', h(A, {timeout: 0}, 'Loading')), 'main', (current) => {
+			console.log(current.innerHTML)
+		})
 
-			render(h('div', h(B, {timeout: 1200}, 'Loading')), 'main', (current) => {
-				console.log(current.innerHTML)
-			})
-		});
+		console.log('-----')
+
+		render(h('div', h(B, {timeout: 1200}, 'Loading')), 'main', (current) => {
+			console.log(current.innerHTML)
+		})
+	});
 </script>
 
 <script type=!module>

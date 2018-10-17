@@ -60,12 +60,22 @@ export function fragment (value, key) {
 
 /**
  * @param {*} value
- * @param {*} target
+ * @param {*} type
  * @param {*} props
  * @return {object}
  */
-export function portal (value, target, props) {
-	return struct(props && props.key, target, props, [root([value])], Enum.portal)
+export function portal (value, type, props) {
+	return struct(props && props.key, '#portal', null, [target(value, type, props)], Enum.portal)
+}
+
+/**
+ * @param {*} value
+ * @param {*} type
+ * @param {*} props
+ * @return {object}
+ */
+export function target (value, type, props) {
+	return struct(null, type, props, [root(value)], Enum.target)
 }
 
 /**
@@ -73,15 +83,15 @@ export function portal (value, target, props) {
  * @return {object}
  */
 export function root (value) {
-	return from(value, 0)
+	return from([value], 0)
 }
 
 /**
  * @param {object} value
- * @return {object}
+ * @return {object?}
  */
 export function resolve (value) {
-	return [root(value !== null && typeof value === 'object' && 'default' in value ? value.default : value), empty(Enum.key)]
+	return [from(value !== null && typeof value === 'object' && 'default' in value ? value.default : value, 0), empty(Enum.key)]
 }
 
 /**
@@ -92,34 +102,27 @@ export function resolve (value) {
 export function from (value, index) {
 	if (value != null) {
 		switch (typeof value) {
-			case 'boolean':
-				break
 			case 'number':
 			case 'string':
 				return text(value, Utility.hash(index))
+			case 'boolean':
+				return from(null, index)
+			case 'function':
+				break
 			default:
-				switch (value.constructor) {
-					case Enum.thenable:
-					case Enum.fragment:
-					case Enum.component:
-					case Enum.node:
-					case Enum.comment:
-						return value
-					case Enum.portal:
-						return fragment([empty(Utility.hash(Enum.key)), value], value.key)
-					case Utility.array:
-						return fragment(value.map(from), Utility.hash(index))
-					default:
-						if (Utility.iterable(value)) {
-							return fragment(Children.map(value, from), Utility.hash(index))
-						} else {
-							return create(value)
-						}
+				if (typeof value.constructor === 'number') {
+					return value
+				} else if (value.length > -1) {
+					return fragment(value.map(from), Utility.hash(index))
+				} else if (Utility.iterable(value)) {
+					return fragment(Children.map(value, from), Utility.hash(index))
 				}
 		}
+	} else {
+		return empty(Utility.hash(index))
 	}
 
-	return empty(Utility.hash(index))
+	return create(value)
 }
 
 /**
@@ -240,8 +243,8 @@ export function valid (element) {
  * @param {object} element
  * @return {object}
  */
-export function node (element) {
-	return element.constructor < Enum.node ? node(pick(element)) : element
+export function sibling (element) {
+	return element.constructor < Enum.target ? sibling(pick(element)) : element
 }
 
 /**
@@ -249,7 +252,7 @@ export function node (element) {
  * @return {object}
  */
 export function parent (element) {
-	return element.constructor < Enum.portal ? parent(get(element, Enum.parent)) : element
+	return element.constructor < Enum.target ? parent(get(element, Enum.parent)) : element
 }
 
 /**

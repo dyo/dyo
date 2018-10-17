@@ -28,11 +28,12 @@ export var state = 5
 export var thenable = 10
 export var fragment = 11
 export var component = 12
-export var portal = 13
-export var node = 14
-export var text = 15
-export var empty = 16
-export var comment = 17
+export var target = 13
+export var portal = 14
+export var node = 15
+export var text = 16
+export var empty = 17
+export var comment = 18
 
 // static identifiers
 export var defaultProps = 'defaultProps'

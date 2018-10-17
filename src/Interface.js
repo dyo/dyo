@@ -4,12 +4,12 @@ import * as Element from './Element.js'
 
 /**
  * @param {object} element
- * @param {number} origin
+ * @param {number} index
  * @return {object?}
  */
-export function create (element, origin) {
-	if (origin === Enum.search) {
-		return search(element, origin)
+export function create (element, index) {
+	if (index < Enum.create) {
+		return search(element, index)
 	}
 
 	switch (element.constructor) {
@@ -17,17 +17,19 @@ export function create (element, origin) {
 		case Enum.fragment:
 			return document.createDocumentFragment()
 		case Enum.node:
-			if (Element.get(element, Enum.context)) {
+			if (Element.has(element, Enum.context)) {
 				return document.createElementNS(Element.get(element, Enum.context), element.type)
 			} else {
 				return document.createElement(element.type)
 			}
 		case Enum.text:
-		case Enum.empty:
 			return document.createTextNode(element.children)
+		case Enum.portal:
+		case Enum.empty:
+			return document.createTextNode('')
 		case Enum.comment:
 			return document.createComment(element.children)
-		case Enum.portal:
+		case Enum.target:
 			return target(element.type)
 	}
 }
@@ -89,7 +91,7 @@ export function content (element, value) {
  * @return {object}
  */
 export function prepare (element, target) {
-	return target.textContent = '', target
+	return target.textContent = '', element
 }
 
 /**

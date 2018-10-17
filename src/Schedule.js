@@ -31,9 +31,7 @@ export function create () {
  */
 export function resolve (fiber, type, host, element, primary, secondary, callback) {
 	Utility.resolve(fiber.pending, function () {
-		if (Element.has(element, Enum.parent)) {
-			callback(fiber, type, host, element, primary, secondary)
-		}
+		callback(fiber, type, host, element, primary, secondary)
 	})
 }
 

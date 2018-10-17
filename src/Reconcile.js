@@ -47,8 +47,8 @@ export function resolve (fiber, host, parent, a, b, c, type) {
 export function replace (fiber, host, parent, a, b, c, idx) {
 	if (a.constructor === b.constructor) {
 		switch (a.constructor) {
-			case Enum.portal:
-				Schedule.commit(fiber, Enum.mount, host, Node.replace(a, b), a, null)
+			case Enum.target:
+				Schedule.commit(fiber, Enum.mount, a.type = b.type, Node.replace(a, object(a.props, a.props = {})), a, null)
 			case Enum.thenable:
 				return update(fiber, host, parent, a, b, c, idx)
 		}

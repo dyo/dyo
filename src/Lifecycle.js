@@ -61,7 +61,7 @@ export function event (element, value, callback, owner, props, state, context) {
  * @return {object}
  */
 export function render (owner, props, state, context) {
-	return Element.root(owner.render(props, state, context))
+	return Element.from(owner.render(props, state, context), 0)
 }
 
 /**

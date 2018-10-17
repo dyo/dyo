@@ -13,16 +13,16 @@ import * as Interface from './Interface.js'
  * @param {object} host
  * @param {object} parent
  * @param {object} element
- * @param {number} origin
+ * @param {number} index
  * @return {object}
  */
-export function resolve (fiber, host, parent, element, origin) {
+export function resolve (fiber, host, parent, element, index) {
 	try {
-		return Component.create(fiber, host, parent, element, origin)
+		return Component.create(fiber, host, parent, element, index)
 	} catch (error) {
 		if (Exception.resolve(fiber, host, element, error)) {
 			try {
-				return Element.put(element, create(fiber, host, parent, Element.empty(Enum.nan), origin))
+				return Element.put(element, create(fiber, host, parent, Element.empty(Enum.nan), index))
 			} finally {
 				if (!Element.has(host, Enum.parent)) {
 					Element.put(host, Element.pick(element))
@@ -34,14 +34,14 @@ export function resolve (fiber, host, parent, element, origin) {
 
 /**
  * @param {object} element
- * @param {object} snapshot
+ * @param {object} props
  * @return {object}
  */
-export function replace (element, snapshot) {
+export function replace (element, props) {
 	try {
-		Element.set(element, Enum.owner, Interface.create(snapshot, Enum.create))
+		Commit.props(element, props, Enum.create)
 	} finally {
-		element.type = snapshot.type
+		Element.set(element, Enum.owner, Interface.create(element, Enum.create))
 	}
 
 	return element
@@ -52,10 +52,10 @@ export function replace (element, snapshot) {
  * @param {object} host
  * @param {object} parent
  * @param {object} element
- * @param {number} origin
+ * @param {number} index
  * @return {object}
  */
-export function create (fiber, host, parent, element, origin) {
+export function create (fiber, host, parent, element, index) {
 	var constructor = element.constructor
 
 	Element.set(element, Enum.host, host)
@@ -63,28 +63,26 @@ export function create (fiber, host, parent, element, origin) {
 	try {
 		switch (constructor) {
 			case Enum.component:
-				return resolve(fiber, host, parent, element, origin)
+				return resolve(fiber, host, parent, element, index)
 			case Enum.node:
 				Element.set(element, Enum.context, Interface.context(element, Element.get(parent, Enum.context)))
 		}
 
-		if (!Element.set(element, Enum.owner, Interface.create(element, origin))) {
-			return create(fiber, host, parent, element, Enum.create)
-		}
+		Element.set(element, Enum.owner, Interface.create(element, index))
 
 		if (constructor < Enum.text) {
-			for (var i = 0, j = element.children, k = origin > -1 ? 1 : -1; i < j.length; ++i) {
-				create(fiber, host, element, j[i], k * (i + 1))
+			for (var i = 0, j = index > -1 ? 1 : -1, k = element.children; i < k.length; ++i) {
+				create(fiber, host, element, k[i], j * (i + 1))
 			}
 
 			if (constructor !== Enum.thenable) {
 				Commit.props(element, element.props, Enum.create)
 			} else {
-				Reconcile.update(fiber, host, parent, element, element, j, k * (origin - 1))
+				Reconcile.update(fiber, host, parent, element, element, j, k * (index - 1))
 			}
 		}
 
-		if (parent !== element) {
+		if (constructor !== Enum.target) {
 			Interface.append(parent, element)
 		}
 	} finally {
@@ -100,18 +98,17 @@ export function create (fiber, host, parent, element, origin) {
  * @return {object}
  */
 export function destroy (fiber, element) {
-	Element.set(element, Enum.parent, null)
-
 	switch (element.constructor) {
 		case Enum.component:
 			return Component.destroy(fiber, element)
-		case Enum.portal:
+		case Enum.target:
 			Schedule.commit(fiber, Enum.unmount, element, element, element, element)
 		case Enum.text:
 		case Enum.empty:
 		case Enum.comment:
 			break
 		case Enum.node:
+		case Enum.portal:
 			if (Element.has(element, Enum.ref)) {
 				Commit.refs(element)
 			}

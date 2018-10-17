@@ -29,13 +29,13 @@ export function render (element, target, callback) {
  * @param {*} element
  * @param {*?} target
  * @param {function?} callback
- * @param {number} origin
+ * @param {number} index
  */
-export function resolve (element, target, callback, origin) {
+export function resolve (element, target, callback, index) {
 	if (Registry.has(target)) {
-		dispatch(Registry.get(target), target, callback, [Element.root([element])])
+		dispatch(Registry.get(target), target, callback, [Element.root(element)])
 	} else {
-		dispatch(Registry.set(target, Element.portal(element, Interface.prepare(element, target))).get(target), target, callback, origin)
+		dispatch(Registry.set(target, Element.target(element, target)).get(target), target, callback, index)
 	}
 }
 
@@ -43,10 +43,10 @@ export function resolve (element, target, callback, origin) {
  * @param {*} element
  * @param {*?} target
  * @param {function?} callback
- * @param {number} origin
+ * @param {number} index
  */
-export function dispatch (element, target, callback, origin) {
-	Schedule.checkout(checkout, element, element, target, origin, callback)
+export function dispatch (element, target, callback, index) {
+	Schedule.checkout(checkout, element, element, target, index, callback)
 }
 
 /**
@@ -54,12 +54,13 @@ export function dispatch (element, target, callback, origin) {
  * @param {object} host
  * @param {obejct} parent
  * @param {object} element
- * @param {number} origin
+ * @param {object} primary
+ * @param {object} secondary
  */
 export function checkout (fiber, host, parent, primary, secondary) {
 	if (typeof secondary === 'object') {
 		Schedule.commit(fiber, Enum.children, host, parent, parent.children, secondary)
 	} else {
-		Node.create(fiber, host, parent, parent, secondary)
+		Node.create(fiber, host, parent, Interface.prepare(parent, primary), secondary)
 	}
 }

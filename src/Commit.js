@@ -10,17 +10,15 @@ import * as Interface from './Interface.js'
  * @param {object} children
  */
 export function unmount (parent, element, children) {
-	if (Element.has(parent, Enum.parent)) {
-		if (element === children) {
-			remove(parent, children)
-		} else if (Utility.thenable(Element.get(element, Enum.context))) {
-			Utility.resolve(Element.get(element, Enum.context), function () {
+	if (element !== children) {
+		if (Utility.thenable(Element.get(element, Enum.context))) {
+			return Utility.resolve(Element.get(element, Enum.context), function () {
 				unmount(parent, children, children)
 			})
-		} else {
-			remove(parent, children)
 		}
 	}
+
+	remove(Element.parent(parent), children)
 }
 
 /**
@@ -30,9 +28,9 @@ export function unmount (parent, element, children) {
  */
 export function mount (parent, element, sibling) {
 	if (sibling) {
-		insert(parent, element, sibling)
+		insert(Element.parent(parent), element, Element.sibling(sibling))
 	} else {
-		append(parent, element)
+		append(Element.parent(parent), element)
 	}
 }
 
@@ -41,12 +39,12 @@ export function mount (parent, element, sibling) {
  * @param {object} element
  */
 export function remove (parent, element) {
-	if (element.constructor < Enum.node) {
+	if (element.constructor < Enum.portal) {
 		element.children.forEach(function (element) {
 			remove(parent, element)
 		})
 	} else {
-		Interface.remove(Element.parent(parent), element)
+		Interface.remove(parent, element)
 	}
 }
 
@@ -55,12 +53,12 @@ export function remove (parent, element) {
  * @param {object} element
  */
 export function append (parent, element) {
-	if (element.constructor < Enum.node) {
+	if (element.constructor < Enum.portal) {
 		element.children.forEach(function (element) {
 			append(parent, element)
 		})
 	} else {
-		Interface.append(Element.parent(parent), element)
+		Interface.append(parent, element)
 	}
 }
 
@@ -70,12 +68,12 @@ export function append (parent, element) {
  * @param {object} sibling
  */
 export function insert (parent, element, sibling) {
-	if (element.constructor < Enum.node) {
+	if (element.constructor < Enum.portal) {
 		element.children.forEach(function (element) {
 			insert(parent, element, sibling)
 		})
 	} else {
-		Interface.insert(Element.parent(parent), element, Element.node(sibling))
+		Interface.insert(parent, element, sibling)
 	}
 }
 

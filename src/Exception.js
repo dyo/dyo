@@ -74,7 +74,7 @@ export function resolve (fiber, host, element, exception) {
  */
 export function propagate (fiber, host, element, exception, current) {
 	switch (current.constructor) {
-		case Enum.portal:
+		case Enum.target:
 			return report(exception)
 		case Enum.component:
 			if (current !== element) {
