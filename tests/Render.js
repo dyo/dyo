@@ -1,8 +1,8 @@
 import {h, render} from 'dyo'
 
-const target = document.createElement('div')
-
 describe('Render', () => {
+	const target = document.createElement('div')
+
 	it('should not render to an invalid target', () => {
 		assert.throws(() => {
 			render('hello', {}, (current) => {
@@ -351,18 +351,9 @@ describe('Render', () => {
 		})
 	})
 
-	it('should render to documentElement', () => {
-		const target = document.createElement('div')
-		const description = {configurable: true, value: document.documentElement}
-
-		try {
-			Object.defineProperty(document, 'documentElement', {...description, value: target})
-
-			render(1, undefined, (current) => {
-				assert.html(current, '1')
-			})
-		} finally {
-			Object.defineProperty(document, 'documentElement', description)
-		}
+	it('should render to implicit root target', () => {
+		render(1, undefined, (current) => {
+			assert.html(current, '1')
+		})
 	})
 })

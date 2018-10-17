@@ -71,8 +71,8 @@ export function create (fiber, host, parent, element, index) {
 		Element.set(element, Enum.owner, Interface.create(element, index))
 
 		if (constructor < Enum.text) {
-			for (var i = 0, j = index > -1 ? 1 : -1, k = element.children; i < k.length; ++i) {
-				create(fiber, host, element, k[i], j * (i + 1))
+			for (var i = 0, j = k = element.children, k = index > -1 ? 1 : -1; i < j.length; ++i) {
+				create(fiber, host, element, j[i], k * (i + 1))
 			}
 
 			if (constructor !== Enum.thenable) {
@@ -101,14 +101,13 @@ export function destroy (fiber, element) {
 	switch (element.constructor) {
 		case Enum.component:
 			return Component.destroy(fiber, element)
-		case Enum.target:
-			Schedule.commit(fiber, Enum.unmount, element, element, element, element)
 		case Enum.text:
 		case Enum.empty:
 		case Enum.comment:
 			break
+		case Enum.target:
+			Schedule.commit(fiber, Enum.unmount, element, element, element, element)
 		case Enum.node:
-		case Enum.portal:
 			if (Element.has(element, Enum.ref)) {
 				Commit.refs(element)
 			}
