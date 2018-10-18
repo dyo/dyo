@@ -149,7 +149,7 @@ export function update (fiber, host, element, snapshot, value) {
 	var parent = Element.get(element, Enum.parent)
 	var owner = Element.get(element, Enum.owner)
 	var context = Element.set(element, Enum.context, Element.get(host, Enum.context))
-	var props = snapshot.props
+	var props = element === snapshot ? owner.props : snapshot.props
 	var state = owner.state
 	var force = value === Enum.obj
 
@@ -159,8 +159,10 @@ export function update (fiber, host, element, snapshot, value) {
 
 	Assert.types(element, context, Enum.contextTypes)
 
-	if (typeof value === 'function') {
-		return checkout(fiber, host, element, owner, value(props, state, context))
+	if (element === snapshot) {
+		if (typeof value === 'function') {
+			return checkout(fiber, host, element, owner, value(props, state, context))
+		}
 	}
 
 	state = Utility.defaults(!force ? value : {}, state)

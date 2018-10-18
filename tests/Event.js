@@ -86,10 +86,8 @@ describe('Event', () => {
 		const refs = {}
 
 		render(h('button', {ref: refs, onClick: '', onMouseDown: null}), target, (current) => {
-			assert.doesNotThrow(() => {
-				refs.current.dispatchEvent(new Event('click'))
-				refs.current.dispatchEvent(new Event('mousedown'))
-			})
+			refs.current.dispatchEvent(new Event('click'))
+			refs.current.dispatchEvent(new Event('mousedown'))
 		})
 	})
 
@@ -137,10 +135,8 @@ describe('Event', () => {
 		})
 
 		render(h('button', {ref: refs}), target, (current) => {
-			assert.doesNotThrow(() => {
-				refs.current.dispatchEvent(new Event('click'))
-				assert.deepEqual(stack, [1])
-			})
+			refs.current.dispatchEvent(new Event('click'))
+			assert.deepEqual(stack, [1])
 		})
 	})
 

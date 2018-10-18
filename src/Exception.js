@@ -47,10 +47,18 @@ export var struct = Utility.extend(function (host, element, value) {
  */
 export function trace (host, element, value) {
 	if (host.constructor === Enum.target) {
-		return value + display(element)
+		return element.constructor === Enum.target ? value : value + display(element)
 	} else {
 		return trace(Element.get(host, Enum.host), element, display(host) + value)
 	}
+}
+
+/**
+ * @param {object} element
+ * @return {string}
+ */
+export function display (element) {
+	return '\tat ' + Element.display(element) + '\n'
 }
 
 /**
@@ -84,7 +92,7 @@ export function propagate (fiber, host, element, exception, current) {
 			}
 		default:
 			if (host === element) {
-				return propagate(fiber, host, element, exception, Element.get(host, Enum.host))
+				return propagate(fiber, host, element, exception, Element.get(current, Enum.host))
 			}
 	}
 
@@ -115,12 +123,4 @@ export function report (exception) {
 			Utility.report(exception.message)
 		}
 	}
-}
-
-/**
- * @param {object} element
- * @return {string}
- */
-export function display (element) {
-	return '\tat ' + Element.display(element) + '\n'
 }

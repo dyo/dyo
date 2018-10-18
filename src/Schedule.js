@@ -143,7 +143,7 @@ export function finalize (fiber, type, host, element, primary, secondary) {
 		dispatch(fiber, (k = j[i]).type, k.element, k.primary, k.secondary)
 	}
 
-	if (fiber.pending) {
+	if (fiber.pending || fiber.history.length) {
 		finalize(fiber, type, host, element, primary, secondary)
 	} else {
 		dispatch(fiber, --length, element, primary, secondary)

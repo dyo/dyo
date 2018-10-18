@@ -84,11 +84,9 @@
 <article id="article"></article>
 
 <script type=module>
-import {h, render, Component, createPortal, createComment} from './index.js'
+	import {h, render, Component, createPortal, createComment} from './index.js'
 
 	;(() => {
-		// render('World', 'main')
-		// render('Hello', 'main')
 		render(createPortal('Hello World', 'section', {class: 'foo'}), 'main')
 		render(createPortal('World Hello', 'article', {class: 'bar'}), 'main')
 		// render(null, 'main')

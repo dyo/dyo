@@ -27,26 +27,26 @@ export function render (element, target, callback) {
 
 /**
  * @param {*} element
- * @param {*?} target
+ * @param {*} target
  * @param {function?} callback
- * @param {number} index
+ * @param {*} value
  */
-export function resolve (element, target, callback, index) {
+export function resolve (element, target, callback, value) {
 	if (Registry.has(target)) {
 		dispatch(Registry.get(target), target, callback, [Element.root(element)])
 	} else {
-		dispatch(Registry.set(target, Element.target(element, target)).get(target), target, callback, index)
+		dispatch(Element.target(element, target), target, callback, value)
 	}
 }
 
 /**
  * @param {*} element
- * @param {*?} target
+ * @param {*} target
  * @param {function?} callback
- * @param {number} index
+ * @param {*} value
  */
-export function dispatch (element, target, callback, index) {
-	Schedule.checkout(checkout, element, element, target, index, callback)
+export function dispatch (element, target, callback, value) {
+	Schedule.checkout(checkout, element, element, target, value, callback)
 }
 
 /**
@@ -54,13 +54,17 @@ export function dispatch (element, target, callback, index) {
  * @param {object} host
  * @param {obejct} parent
  * @param {object} element
- * @param {object} primary
- * @param {object} secondary
+ * @param {object} target
+ * @param {*} value
  */
-export function checkout (fiber, host, parent, primary, secondary) {
-	if (typeof secondary === 'object') {
-		Schedule.commit(fiber, Enum.children, host, parent, parent.children, secondary)
+export function checkout (fiber, host, parent, target, value) {
+	if (typeof value === 'object') {
+		Schedule.commit(fiber, Enum.children, host, parent, parent.children, value)
 	} else {
-		Node.create(fiber, host, parent, Interface.prepare(parent, primary), secondary)
+		Node.create(fiber, host, parent, Interface.prepare(parent, target), value)
+
+		if (value === Enum.create) {
+			Registry.set(target, parent)
+		}
 	}
 }

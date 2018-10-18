@@ -71,7 +71,7 @@ export function create (fiber, host, parent, element, index) {
 		Element.set(element, Enum.owner, Interface.create(element, index))
 
 		if (constructor < Enum.text) {
-			for (var i = 0, j = k = element.children, k = index > -1 ? 1 : -1; i < j.length; ++i) {
+			for (var i = 0, j = element.children, k = index > -1 ? 1 : -1; i < j.length; ++i) {
 				create(fiber, host, element, j[i], k * (i + 1))
 			}
 

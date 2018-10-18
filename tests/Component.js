@@ -462,10 +462,8 @@ describe('Component', () => {
 			componentDidMount() { this.setState({}, 'should not throw') }
 		}
 
-		assert.doesNotThrow(() => {
-			render(h(Primary, 1), target, (current) => {
-				assert.html(target, '1')
-			})
+		render(h(Primary, 1), target, (current) => {
+			assert.html(target, '1')
 		})
 	})
 

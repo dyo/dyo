@@ -79,23 +79,7 @@ describe('Refs', () => {
 	it('should handle invalid refs', () => {
 		const target = document.createElement('div')
 
-		assert.doesNotThrow(() => {
-			render(h('div', {ref: 100}), target)
-			render(h('div', {ref: Symbol('')}), target)
-		})
-	})
-
-	it('should throw in refs', () => {
-		const target = document.createElement('div')
-		const error = console.error
-		const noop = console.error = () => {}
-
-		try {
-			assert.throws(() => {
-				render(h('div', {ref: () => { throw 'error!' }}), target)
-			}, 'error!')
-		} finally {
-			console.error = error
-		}
+		render(h('div', {ref: 100}), target)
+		render(h('div', {ref: Symbol('')}), target)
 	})
 })

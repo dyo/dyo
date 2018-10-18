@@ -3,14 +3,6 @@ import {h, render} from 'dyo'
 describe('Render', () => {
 	const target = document.createElement('div')
 
-	it('should not render to an invalid target', () => {
-		assert.throws(() => {
-			render('hello', {}, (current) => {
-				throw 'error!'
-			})
-		})
-	})
-
 	it('should render null', () => {
 		render(null, target, (current) => {
 			assert.html(current, '')
@@ -80,23 +72,8 @@ describe('Render', () => {
 	it('should not execute invalid render callback', () => {
 		const target = document.createElement('div')
 
-		assert.doesNotThrow(() => render(h('div', 1), target, 'not a function'))
-		assert.doesNotThrow(() => render(h('div', 2), target, null))
-	})
-
-	it('should throw in render callback', () => {
-		const target = document.createElement('div')
-		const error = console.error
-		const noop = console.error = () => {}
-
-		try {
-			assert.throws(() => render(h('div'), target, (current) => {
-				assert.html(current, '<div></div>')
-				throw 'error!'
-			}), 'error!')
-		} finally {
-			console.error = error
-		}
+		render(h('div', 1), target, 'not a function')
+		render(h('div', 2), target, null)
 	})
 
 	it('should render and update refs', () => {
