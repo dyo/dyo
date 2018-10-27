@@ -13,9 +13,9 @@ export function refs (element, value, owner) {
 		case 'function':
 			return value(owner)
 		case 'object':
-			return value.current = owner
+			return Utility.object(value).current = owner
 		case 'string':
-			return Element.get(Element.get(element, Enum.host), Enum.owner).refs[value] = owner
+			return Utility.object(element.host.owner.refs)[value] = owner
 	}
 }
 
@@ -92,13 +92,13 @@ export function resolve (element, owner, value, state, context, origin) {
 			case Enum.getDerivedState:
 				return Utility.assign(state, value)
 			case Enum.getChildContext:
-				return Element.set(element, Enum.context, Utility.defaults(value, context))
+				return element.context = Utility.defaults(value, context)
 			case Enum.componentWillUnmount:
-				return Element.set(element, Enum.context, value)
+				return element.context = value
 			case Enum.shouldComponentUpdate:
 				return value
 			case Enum.handleEvent:
-				if (element.constructor !== Enum.component) {
+				if (element.uid !== Enum.component) {
 					return
 				}
 			default:
@@ -117,5 +117,5 @@ export function resolve (element, owner, value, state, context, origin) {
  * @return {boolean}
  */
 export function has (owner, origin) {
-	return typeof owner[origin] === 'function'
+	return !!owner[origin]
 }

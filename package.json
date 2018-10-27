@@ -24,11 +24,12 @@
 		"nyc": "13.0.1",
 		"chai": "4.2.0",
 		"mocha": "5.2.0",
-		"coveralls": "3.0.2"
+		"coveralls": "3.0.2",
+		"cross-env": "5.2.0"
 	},
 	"scripts": {
 		"lint": "eslint ./src",
-		"test": "mocha --harmony --require esm scripts/tests.config.js --recursive tests",
+		"test": "nyc mocha --harmony --require esm scripts/tests.config.js --recursive tests",
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
 		"build": "rollup --config scripts/build.config.js",
 		"start": "npm run build -- --watch",
@@ -38,10 +39,8 @@
 	"nyc": {
 		"temp-directory": "./coverage/.nyc_output",
 		"exclude": [
-			"scripts/*",
-			"tests/*",
-			"pkg/*",
-			"src/*"
+			"scripts",
+			"tests"
 		],
 		"reporter": [
 			"lcov",
@@ -52,10 +51,9 @@
 	"module": "dist/dio.es.js",
 	"types": "",
 	"files": [
-		"./types",
-		"./dist",
-		"./src",
-		"./pkg"
+		"dist",
+		"src",
+		"pkg"
 	],
 	"unpkg": "",
 	"jsdelivr": ""

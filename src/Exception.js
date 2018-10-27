@@ -17,7 +17,7 @@ export var struct = Utility.extend(function (host, element, value) {
 	try {
 		this.error = value
 	} finally {
-		Registry.set(this, [host === element ? Element.get(host, Enum.host) : host, element, ''])
+		Registry.set(this, [host === element ? host.host : host, element, ''])
 	}
 }, {
 	/**
@@ -46,10 +46,10 @@ export var struct = Utility.extend(function (host, element, value) {
  * @return {string}
  */
 export function trace (host, element, value) {
-	if (host.constructor === Enum.target) {
-		return element.constructor === Enum.target ? value : value + display(element)
+	if (host.uid === Enum.target) {
+		return element.uid === Enum.target ? value : value + display(element)
 	} else {
-		return trace(Element.get(host, Enum.host), element, display(host) + value)
+		return trace(host.host, element, display(host) + value)
 	}
 }
 
@@ -81,18 +81,18 @@ export function resolve (fiber, host, element, exception) {
  * @return {boolean?}
  */
 export function propagate (fiber, host, element, exception, current) {
-	switch (current.constructor) {
+	switch (current.uid) {
 		case Enum.target:
 			return report(exception)
 		case Enum.component:
 			if (current !== element) {
-				if (recover(fiber, current, exception, Element.get(current, Enum.owner))) {
+				if (recover(fiber, current, exception, current.owner)) {
 					return true
 				}
 			}
 		default:
 			if (host === element) {
-				return propagate(fiber, host, element, exception, Element.get(current, Enum.host))
+				return propagate(fiber, host, element, exception, current.host)
 			}
 	}
 

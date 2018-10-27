@@ -23,11 +23,11 @@ describe('Children', () => {
 	})
 
 	it('should map children', () => {
-		assert.deepEqual(Children.map(null), undefined)
+		assert.deepEqual(Children.map(null), [])
 		assert.deepEqual(Children.map([null]), [])
-		assert.deepEqual(Children.map([1, [2, 3]], x => x+1), [2, 3, 4])
-		assert.deepEqual(Children.map(1, x => x+1), [2])
-		assert.deepEqual(Children.map('1', x => x+1), ['11'])
+		assert.deepEqual(Children.map([1, [2, 3]], x => x + 1), [2, 3, 4])
+		assert.deepEqual(Children.map(1, x => x + 1), [2])
+		assert.deepEqual(Children.map('1', x => x + 1), ['11'])
 		assert.deepEqual(Children.map(h('h1', '1'), x => x), [h('h1', '1')])
 	})
 
@@ -38,7 +38,7 @@ describe('Children', () => {
 	})
 
 	it('should filter children', () => {
-		assert.deepEqual(Children.filter(null), undefined)
+		assert.deepEqual(Children.filter(null), [])
 		assert.deepEqual(Children.filter([null]), [])
 		assert.deepEqual(Children.filter([1, [2, 3]], x => x > 1), [2, 3])
 		assert.deepEqual(Children.filter(1, x => x === 1), [1])
@@ -49,16 +49,18 @@ describe('Children', () => {
 	it('should only accept one child', () => {
 		assert.deepEqual(Children.only(h('h1', '1')), h('h1', '1'))
 		assert.throws(() => Children.only())
+		assert.throws(() => Children.only([]))
+		assert.throws(() => Children.only(2))
 	})
 
 	it('should find children', () => {
-		assert.deepEqual(Children.find(null), undefined)
+		assert.deepEqual(Children.find(null), null)
 		assert.deepEqual(Children.find([1, 2, 3], x => x === NaN), null)
-		assert.deepEqual(Children.find([1, [2, 3]], x => x === 3), 3, 'find([])')
-		assert.deepEqual(Children.find(1, x => x === 1), 1, 'find(number)')
-		assert.deepEqual(Children.find('1', x => x === '1'), '1', 'find(string)')
-		assert.deepEqual(Children.find(h('h1', '1'), x => x.type === 'h1'), h('h1', '1'), 'find(element)')
-		assert.deepEqual(Children.find([1, [2, 3]], x => x === 3), 3, 'find([])')
+		assert.deepEqual(Children.find([1, [2, 3]], x => x === 3), 3)
+		assert.deepEqual(Children.find(1, x => x === 1), 1)
+		assert.deepEqual(Children.find('1', x => x === '1'), '1')
+		assert.deepEqual(Children.find(h('h1', '1'), x => x.type === 'h1'), h('h1', '1'))
+		assert.deepEqual(Children.find([1, [2, 3]], x => x === 3), 3)
 	})
 
 	it('should forEach children', () => {

@@ -30,7 +30,7 @@ describe('Element', () => {
 	})
 
 	it('should create an element with children', () => {
-		assert.deepEqual(h('div', [1, 2], 3, h('h1')).children.length, 3)
+		assert.deepEqual(h('div', [1, 2], 3, h('h1')).children.length, 4)
 	})
 
 	it('should assign children to a component element', () => {
@@ -64,18 +64,18 @@ describe('Element', () => {
 	})
 
 	it('should assign array children', () => {
-		assert.lengthOf(h('h1', [1, 2]).children, 1)
+		assert.lengthOf(h('h1', [1, 2]).children, 2)
 	})
 
 	it('should assign nested array children', () => {
-		assert.lengthOf(h('h1', [1, 2, [3, 4]]).children, 1)
+		assert.lengthOf(h('h1', [1, 2, [3, 4]]).children, 2)
 	})
 
 	it('should assign multiple array children', () => {
-		assert.lengthOf(h('h1', [1, 2], [1, 2]).children, 2)
+		assert.lengthOf(h('h1', [1, 2], [1, 2]).children, 3)
 	})
 
 	it('should assign multiple nested array children', () => {
-		assert.lengthOf(h('h1', [1, 2, [3, 4]], [1, 2, [3, 4]]).children, 2)
+		assert.lengthOf(h('h1', [1, 2, [3, 4]], [1, 2, [3, 4]]).children, 3)
 	})
 })

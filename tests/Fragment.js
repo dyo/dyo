@@ -1,8 +1,8 @@
 import {h, Component, Fragment, render} from 'dyo'
 
-const target = document.createElement('div')
-
 describe('Fragment', () => {
+	const target = document.createElement('div')
+
 	it('should render a fragment', () => {
 		render([h('h1', {key: 1}, 1),], target, (current) => {
 			assert.html(current, '<h1>1</h1>')

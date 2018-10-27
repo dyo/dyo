@@ -137,7 +137,7 @@ export function hash (value) {
  * @param {string} message
  */
 export function invariant (message) {
-	throw Error(message)
+	throw new Error(message)
 }
 
 /**
@@ -190,13 +190,13 @@ export function has (value, key) {
 }
 
 /**
- * @param {function} constructor
+ * @param {function} value
  * @param {object} props
- * @param {object?} prototype
+ * @param {object} proto
  * @return {function}
  */
-export function extend (constructor, properties, prototype) {
-	return define(constructor, {prototype: {value: create(prototype || null, properties || {})}})
+export function extend (value, props, proto) {
+	return proto ? define(value, {prototype: {value: create(proto, props)}}) : define(value.prototype, props), value
 }
 
 /**

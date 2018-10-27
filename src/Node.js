@@ -24,7 +24,7 @@ export function resolve (fiber, host, parent, element, index) {
 			try {
 				return Element.put(element, create(fiber, host, parent, Element.empty(Enum.nan), index))
 			} finally {
-				if (!Element.has(host, Enum.parent)) {
+				if (!host.parent) {
 					Element.put(host, Element.pick(element))
 				}
 			}
@@ -41,7 +41,7 @@ export function replace (element, props) {
 	try {
 		Commit.props(element, props, Enum.create)
 	} finally {
-		Element.set(element, Enum.owner, Interface.create(element, Enum.create))
+		element.owner = Interface.create(element, Enum.create)
 	}
 
 	return element
@@ -56,37 +56,41 @@ export function replace (element, props) {
  * @return {object}
  */
 export function create (fiber, host, parent, element, index) {
-	var constructor = element.constructor
+	var uid = element.uid
 
-	Element.set(element, Enum.host, host)
+	element.host = host
 
 	try {
-		switch (constructor) {
+		switch (uid) {
 			case Enum.component:
 				return resolve(fiber, host, parent, element, index)
 			case Enum.node:
-				Element.set(element, Enum.context, Interface.context(element, Element.get(parent, Enum.context)))
+				element.context = Interface.context(element, parent.context)
 		}
 
-		Element.set(element, Enum.owner, Interface.create(element, index))
+		element.owner = Interface.create(element, index)
 
-		if (constructor < Enum.text) {
-			for (var i = 0, j = element.children, k = index > -1 ? 1 : -1; i < j.length; ++i) {
-				create(fiber, host, element, j[i], k * (i + 1))
+		if (uid < Enum.text) {
+			var sign = index > -1 ? 1 : -1
+			var props = element.props
+			var children = element.children
+
+			for (var i = 0; i < children.length; ++i) {
+				create(fiber, host, element, children[i], sign * (i + 1))
 			}
 
-			if (constructor !== Enum.thenable) {
-				Commit.props(element, element.props, Enum.create)
+			if (uid !== Enum.thenable) {
+				Commit.props(element, props, Enum.create)
 			} else {
-				Reconcile.update(fiber, host, parent, element, element, j, k * (index - 1))
+				Reconcile.update(fiber, host, parent, element, element, children, index)
 			}
 		}
 
-		if (constructor !== Enum.target) {
+		if (uid !== Enum.target) {
 			Interface.append(parent, element)
 		}
 	} finally {
-		Element.set(element, Enum.parent, parent)
+		element.parent = parent
 	}
 
 	return element
@@ -98,7 +102,7 @@ export function create (fiber, host, parent, element, index) {
  * @return {object}
  */
 export function destroy (fiber, element) {
-	switch (element.constructor) {
+	switch (element.uid) {
 		case Enum.component:
 			return Component.destroy(fiber, element)
 		case Enum.text:
@@ -108,12 +112,12 @@ export function destroy (fiber, element) {
 		case Enum.target:
 			Schedule.commit(fiber, Enum.unmount, element, element, element, element)
 		case Enum.node:
-			if (Element.has(element, Enum.ref)) {
+			if (element.ref !== null) {
 				Commit.refs(element)
 			}
 		default:
-			for (var i = 0, j = element.children; i < j.length; ++i) {
-				destroy(fiber, j[i])
+			for (var i = 0, children = element.children; i < children.length; ++i) {
+				destroy(fiber, children[i])
 			}
 	}
 

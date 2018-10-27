@@ -37,28 +37,43 @@ export var descriptors = {
  * @constructor
  */
 export var struct = Utility.extend(factory(), Utility.assign({
-	render: {
-		value: function (props) {
-			return props.children
-		}
-	}
+	/**
+	 * @type {function}
+	 */
+	render: {value: render}
 }, descriptors))
 
 /**
  * @constructor
  */
-export var pure = Utility.extend(factory(), {
+export var pure = Utility.extend(factory(), Utility.assign({
 	/**
-	 * @param {object} props
-	 * @param {object} state
-	 * @return {boolean}
+	 * @type {function}
 	 */
-	shouldComponentUpdate: {
-		value: function (props, state, context) {
-			return Utility.compare(this.props, props) || Utility.compare(this.state, state) || Utility.compare(this.context, context)
-		}
-	}
-}, struct.prototype)
+	render: {value: render},
+	/**
+	 * @type {function}
+	 */
+	shouldComponentUpdate: {value: compare}
+}, descriptors))
+
+/**
+ * @param {object} props
+ * @return {object}
+ */
+export function render (props) {
+	return props.children
+}
+
+/**
+ * @param {object} props
+ * @param {object} state
+ * @param {object} context
+ * @return {boolean}
+ */
+export function compare (props, state, context) {
+	return Utility.compare(this.props, props) || Utility.compare(this.state, state) || Utility.compare(this.context, context)
+}
 
 /**
  * @return {function}
@@ -78,10 +93,10 @@ export function factory () {
  */
 export function identity (constructor, prototype) {
 	if (prototype) {
-		if (typeof prototype.setState === 'function') {
+		if (prototype.setState) {
 			return constructor
-		} else if (typeof prototype.render === 'function') {
-			return Utility.define(prototype, descriptors), constructor
+		} else if (prototype.render) {
+			return Utility.extend(constructor, descriptors)
 		}
 	}
 
@@ -146,9 +161,9 @@ export function resolve (fiber, host, element, snapshot, value) {
  * @param {*} value
  */
 export function update (fiber, host, element, snapshot, value) {
-	var parent = Element.get(element, Enum.parent)
-	var owner = Element.get(element, Enum.owner)
-	var context = Element.set(element, Enum.context, Element.get(host, Enum.context))
+	var parent = element.parent
+	var owner = element.owner
+	var context = element.context = host.context
 	var props = element === snapshot ? owner.props : snapshot.props
 	var state = owner.state
 	var force = value === Enum.obj
@@ -207,8 +222,8 @@ export function update (fiber, host, element, snapshot, value) {
 export function create (fiber, host, parent, element, index) {
 	var type = identity(element.type, element.type.prototype)
 	var props = element.props
-	var context = Element.set(element, Enum.context, Element.get(host, Enum.context) || {})
-	var owner = Element.set(element, Enum.owner, new type(props, context))
+	var context = element.context = host.context || {}
+	var owner = element.owner = new type(props, context)
 	var state = owner.state || {}
 	var children = element
 
@@ -244,7 +259,7 @@ export function create (fiber, host, parent, element, index) {
  * @return {object}
  */
 export function destroy (fiber, element) {
-	var owner = Element.get(element, Enum.owner)
+	var owner = element.owner
 	var children = Element.pick(element)
 
 	if (Lifecycle.has(owner, Enum.componentWillUnmount)) {

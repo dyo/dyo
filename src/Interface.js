@@ -8,17 +8,17 @@ import * as Element from './Element.js'
  * @return {object?}
  */
 export function create (element, index) {
-	if (index < Enum.create) {
+	if (index < Enum.update) {
 		return search(element, index)
 	}
 
-	switch (element.constructor) {
+	switch (element.uid) {
 		case Enum.thenable:
 		case Enum.fragment:
 			return document.createDocumentFragment()
 		case Enum.node:
-			if (Element.has(element, Enum.context)) {
-				return document.createElementNS(Element.get(element, Enum.context), element.type)
+			if (element.context) {
+				return document.createElementNS(element.context, element.type)
 			} else {
 				return document.createElement(element.type)
 			}
@@ -57,7 +57,7 @@ export function target (value) {
  * @param {object} element
  */
 export function remove (parent, element) {
-	Element.get(parent, Enum.owner).removeChild(Element.get(element, Enum.owner))
+	parent.owner.removeChild(element.owner)
 }
 
 /**
@@ -65,7 +65,7 @@ export function remove (parent, element) {
  * @param {object} element
  */
 export function append (parent, element) {
-	Element.get(parent, Enum.owner).appendChild(Element.get(element, Enum.owner))
+	parent.owner.appendChild(element.owner)
 }
 
 /**
@@ -74,7 +74,7 @@ export function append (parent, element) {
  * @param {object} sibling
  */
 export function insert (parent, element, sibling) {
-	Element.get(parent, Enum.owner).insertBefore(Element.get(element, Enum.owner), Element.get(sibling, Enum.owner))
+	parent.owner.insertBefore(element.owner, sibling.owner)
 }
 
 /**
@@ -82,7 +82,7 @@ export function insert (parent, element, sibling) {
  * @param {(string|number)} value
  */
 export function content (element, value) {
-	Element.get(element, Enum.owner).nodeValue = value
+	element.owner.nodeValue = value
 }
 
 /**
@@ -113,23 +113,22 @@ export function context (element, namespace) {
 
 /**
  * @param {object} element
- * @param {object} props
- * @param {number} origin
+ * @param {object} value
+ * @param {boolean} origin
  */
-export function props (element, props, origin) {
-	switch (origin) {
-		case Enum.create:
-			switch (element.type) {
-				case 'input':
-					return Utility.assign({type: null, step: null, min: null, max: null}, props)
-				case 'select':
-					if (props.defaultValue != null || props.multiple) {
-						return Utility.assign({value: props.defaultValue}, props)
-					}
-			}
-		case Enum.update:
-			return props
+export function props (element, value, origin) {
+	if (origin) {
+		switch (element.type) {
+			case 'input':
+				return Utility.assign({type: null, step: null, min: null, max: null}, value)
+			case 'select':
+				if (value.defaultValue != null || value.multiple) {
+					return Utility.assign({value: value.defaultValue}, value)
+				}
+		}
 	}
+
+	return value
 }
 
 /**
@@ -137,9 +136,8 @@ export function props (element, props, origin) {
  * @param {string} name
  * @param {*} value
  * @param {string} namespace
- * @param {number} origin
  */
-export function update (element, name, value, namespace, origin) {
+export function update (element, name, value, namespace) {
 	switch (name) {
 		case 'style':
 			return style(element, name, value || false)
@@ -168,7 +166,7 @@ export function update (element, name, value, namespace, origin) {
 		case 'string':
 		case 'number':
 		case 'boolean':
-			if (namespace || !(name in Element.get(element, Enum.owner))) {
+			if (namespace || !(name in element.owner)) {
 				return attribute(element, name, value, '')
 			}
 		default:
@@ -181,7 +179,7 @@ export function update (element, name, value, namespace, origin) {
  * @param {object} value
  */
 export function event (element, event) {
-	return Element.get(element, Enum.state)[event.type]
+	return element.state[event.type]
 }
 
 /**
@@ -194,15 +192,14 @@ export function event (element, event) {
  * @param {string} value
  */
 function listen (element, name, value) {
-	if (!Element.get(element, Enum.state)) {
-		Element.set(element, Enum.state, {})
+	if (!element.state) {
+		element.state = {}
+	}
+	if (!element.state[name]) {
+		element.owner.addEventListener(name, element, false)
 	}
 
-	if (!Element.get(element, Enum.state)[name]) {
-		Element.get(element, Enum.owner).addEventListener(name, element, false)
-	}
-
-	Element.get(element, Enum.state)[name] = value
+	element.state[name] = value
 }
 
 /**
@@ -215,9 +212,9 @@ function property (element, name, value) {
 		case null:
 		case false:
 		case undefined:
-			return attribute(element, name, value, Element.get(element, Enum.owner)[name] = '')
+			return attribute(element, name, value, element.owner[name] = '')
 		default:
-			Element.get(element, Enum.owner)[name] = value
+			element.owner[name] = value
 	}
 }
 
@@ -233,17 +230,17 @@ function attribute (element, name, value, namespace) {
 		case false:
 		case undefined:
 			if (namespace) {
-				Element.get(element, Enum.owner).removeAttributeNS(namespace, name)
+				element.owner.removeAttributeNS(namespace, name)
 			}
 
-			return Element.get(element, Enum.owner).removeAttribute(name)
+			return element.owner.removeAttribute(name)
 		case true:
 			return attribute(element, name, '', namespace)
 		default:
 			if (!namespace) {
-				Element.get(element, Enum.owner).setAttribute(name, value)
+				element.owner.setAttribute(name, value)
 			} else {
-				Element.get(element, Enum.owner).setAttributeNS(namespace, name, value)
+				element.owner.setAttributeNS(namespace, name, value)
 			}
 	}
 }
@@ -257,9 +254,9 @@ function style (element, name, value) {
 	if (typeof value === 'object') {
 		for (var key in value) {
 			if (key.indexOf('-') === -1) {
-				Element.get(element, Enum.owner).style[key] = value[key] !== false && value[key] !== undefined ? value[key] : ''
+				element.owner.style[key] = value[key] !== false && value[key] !== undefined ? value[key] : ''
 			} else {
-				Element.get(element, Enum.owner).style.setProperty(key, value[key])
+				element.owner.style.setProperty(key, value[key])
 			}
 		}
 	} else {
@@ -274,18 +271,18 @@ function style (element, name, value) {
  * @param {Array} nodes
  */
 function html (element, name, value, nodes) {
-	if (Element.get(element, Enum.owner)[name]) {
+	if (element.owner[name]) {
 		element.children.forEach(function (element) {
-			nodes.push(Element.get(element, Enum.owner))
+			nodes.push(element.owner)
 		})
 	}
 
-	if (Element.get(element, Enum.owner)[name] = value) {
-		nodes.push.apply(nodes, Element.get(element, Enum.owner).childNodes)
+	if (element.owner[name] = value) {
+		nodes.push.apply(nodes, element.owner.childNodes)
 	}
 
 	nodes.forEach(function (node) {
-		Element.get(element, Enum.owner).appendChild(node)
+		element.owner.appendChild(node)
 	})
 }
 

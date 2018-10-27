@@ -5,30 +5,37 @@ import * as Assert from './Assert.js'
 import * as Event from './Event.js'
 
 /**
+ * @param {number} uid
  * @param {*} key
  * @param {*} type
  * @param {object} props
  * @param {object} children
- * @param {number} constructor
  */
-export function struct (key, type, props, children, constructor) {
-	return {
-		key: key,
-		type: type,
-		props: props,
-		children: children,
-		constructor: constructor,
-		handleEvent: Event.handle,
-		0: ''
-	}
-}
+export var struct = Utility.extend(function (uid, key, type, props, children) {
+	this.uid = uid
+	this.key = key
+	this.type = type
+	this.props = props
+	this.children = children
+	this.host = null
+	this.parent = null
+	this.context = null
+	this.owner = null
+	this.ref = null
+	this.state = null
+}, {
+	/**
+	 * @type {function}
+	 */
+	handleEvent: {value: Event.handle}
+})
 
 /**
  * @param {*} key
  * @return {object}
  */
 export function empty (key) {
-	return struct(key, '#empty', null, '', Enum.empty)
+	return new struct(Enum.empty, key, '#empty', null, '')
 }
 
 /**
@@ -37,7 +44,7 @@ export function empty (key) {
  * @return {object}
  */
 export function text (value, key) {
-	return struct(key, '#text', null, value, Enum.text)
+	return new struct(Enum.text, key, '#text', null, value)
 }
 
 /**
@@ -46,7 +53,7 @@ export function text (value, key) {
  * @return {object}
  */
 export function comment (value, key) {
-	return struct(key, '#comment', null, value, Enum.comment)
+	return new struct(Enum.comment, key, '#comment', null, value)
 }
 
 /**
@@ -55,7 +62,7 @@ export function comment (value, key) {
  * @return {object}
  */
 export function fragment (value, key) {
-	return struct(key, '#fragment', null, (value.push(empty(Enum.key)), value), Enum.fragment)
+	return new struct(Enum.fragment, key, '#fragment', null, (value.push(empty(Enum.key)), value))
 }
 
 /**
@@ -65,7 +72,7 @@ export function fragment (value, key) {
  * @return {object}
  */
 export function portal (value, type, props) {
-	return struct(props && props.key, '#portal', null, [target(value, type, props)], Enum.portal)
+	return new struct(Enum.portal, props && props.key, '#portal', null, [target(value, type, props)])
 }
 
 /**
@@ -75,7 +82,7 @@ export function portal (value, type, props) {
  * @return {object}
  */
 export function target (value, type, props) {
-	return struct(null, type, props, [root(value)], Enum.target)
+	return new struct(Enum.target, null, type, props, [root(value)])
 }
 
 /**
@@ -110,7 +117,7 @@ export function from (value, index) {
 			case 'function':
 				break
 			default:
-				if (typeof value.constructor === 'number') {
+				if (value.constructor === struct) {
 					return value
 				} else if (value.length > -1) {
 					return fragment(value.map(from), Utility.hash(index))
@@ -137,13 +144,13 @@ export function create (a, b) {
 	var length = arguments.length
 	var i = b == null || b.constructor === Utility.object ? 2 : 1
 	var size = length - i
-	var constructor = identity(a)
+	var uid = identity(a)
 	var type = a
 	var props = i === 2 && b || {}
 	var children = []
-	var element = struct(props.key, type, props, children, constructor)
+	var element = new struct(uid, props.key, type, props, children)
 
-	if (constructor === Enum.component) {
+	if (uid === Enum.component) {
 		if (size > 0) {
 			for (props.children = size === 1 ? arguments[i++] : children = []; i < length; ++i) {
 				children.push(arguments[i])
@@ -161,9 +168,8 @@ export function create (a, b) {
 				children[index] = from(arguments[i], index++)
 			}
 		}
-		if (constructor < Enum.node) {
-			children.push(empty(Enum.key))
-		}
+
+		children[index] = empty(Enum.key)
 	}
 
 	return element
@@ -198,8 +204,6 @@ export function display (value) {
 			return display(value[Enum.displayName] || value.name)
 		case 'object':
 			return display(value.type)
-		case 'number':
-			return display('Fragment')
 	}
 
 	return value
@@ -211,12 +215,10 @@ export function display (value) {
  * @return {object}
  */
 export function defaults (element, value) {
-	if (value) {
-		if (typeof value === 'function') {
-			defaults(element, value.call(element.type, element.props))
-		} else {
-			Utility.defaults(element.props, value)
-		}
+	if (typeof value === 'function') {
+		defaults(element, value.call(element.type, element.props))
+	} else {
+		Utility.defaults(element.props, value)
 	}
 
 	return element
@@ -236,15 +238,7 @@ export function clone (element) {
  * @return {boolean}
  */
 export function valid (element) {
-	return element != null && typeof element.constructor === 'number'
-}
-
-/**
- * @param {object} element
- * @return {object}
- */
-export function sibling (element) {
-	return element.constructor < Enum.target ? sibling(pick(element)) : element
+	return element != null && element.constructor === struct
 }
 
 /**
@@ -252,35 +246,15 @@ export function sibling (element) {
  * @return {object}
  */
 export function parent (element) {
-	return element.constructor < Enum.target ? parent(get(element, Enum.parent)) : element
+	return element.uid < Enum.target ? parent(element.parent) : element
 }
 
 /**
  * @param {object} element
- * @param {*} key
  * @return {object}
  */
-export function get (element, key) {
-	return element[key]
-}
-
-/**
- * @param {object} element
- * @param {*} key
- * @param {*} value
- * @return {object}
- */
-export function set (element, key, value) {
-	return element[key] = value
-}
-
-/**
- * @param {object} element
- * @param {*} key
- * @return {boolean}
- */
-export function has (element, key) {
-	return !!get(element, key)
+export function sibling (element) {
+	return element.uid < Enum.target ? sibling(pick(element)) : element
 }
 
 /**

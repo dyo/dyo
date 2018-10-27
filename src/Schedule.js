@@ -139,8 +139,11 @@ export function finalize (fiber, type, host, element, primary, secondary) {
 		return resolve(fiber, type, host, element, primary, secondary, finalize)
 	}
 
-	for (var i = 0, j = fiber.history, k = fiber.history = []; i < j.length; ++i) {
-		dispatch(fiber, (k = j[i]).type, k.element, k.primary, k.secondary)
+	var history = fiber.history
+	var current = fiber.history = []
+
+	for (var i = 0; i < history.length; ++i) {
+		dispatch(fiber, (current = history[i]).type, current.element, current.primary, current.secondary)
 	}
 
 	if (fiber.pending || fiber.history.length) {

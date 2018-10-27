@@ -11,8 +11,8 @@ import * as Interface from './Interface.js'
  */
 export function unmount (parent, element, children) {
 	if (element !== children) {
-		if (Utility.thenable(Element.get(element, Enum.context))) {
-			return Utility.resolve(Element.get(element, Enum.context), function () {
+		if (Utility.thenable(element.context)) {
+			return Utility.resolve(element.context, function () {
 				unmount(parent, children, children)
 			})
 		}
@@ -39,7 +39,7 @@ export function mount (parent, element, sibling) {
  * @param {object} element
  */
 export function remove (parent, element) {
-	if (element.constructor < Enum.portal) {
+	if (element.uid < Enum.portal) {
 		element.children.forEach(function (element) {
 			remove(parent, element)
 		})
@@ -53,7 +53,7 @@ export function remove (parent, element) {
  * @param {object} element
  */
 export function append (parent, element) {
-	if (element.constructor < Enum.portal) {
+	if (element.uid < Enum.portal) {
 		element.children.forEach(function (element) {
 			append(parent, element)
 		})
@@ -68,7 +68,7 @@ export function append (parent, element) {
  * @param {object} sibling
  */
 export function insert (parent, element, sibling) {
-	if (element.constructor < Enum.portal) {
+	if (element.uid < Enum.portal) {
 		element.children.forEach(function (element) {
 			insert(parent, element, sibling)
 		})
@@ -92,17 +92,17 @@ export function content (element, value) {
  */
 export function props (element, value, origin) {
 	if (value) {
-		update(element, Interface.props(element, value, origin), Element.get(element, Enum.context), origin)
+		update(element, Interface.props(element, value, origin), origin, element.context)
 	}
 }
 
 /**
  * @param {object} element
  * @param {object} value
- * @param {*} namespace
  * @param {number} origin
+ * @param {*} namespace
  */
-export function update (element, value, namespace, origin)  {
+export function update (element, value, origin, namespace)  {
 	for (var key in value) {
 		switch (key) {
 			case 'ref':
@@ -111,7 +111,7 @@ export function update (element, value, namespace, origin)  {
 			case 'children':
 				break
 			default:
-				Interface.update(element, key, value[key], namespace, origin)
+				Interface.update(element, key, value[key], namespace)
 		}
 	}
 }
@@ -124,10 +124,10 @@ export function update (element, value, namespace, origin)  {
 export function refs (element, value, origin) {
 	switch (origin) {
 		default:
-			Lifecycle.refs(element, Element.get(element, Enum.ref), null)
+			Lifecycle.refs(element, element.ref, null)
 		case Enum.create:
 			if (value) {
-				Lifecycle.refs(element, Element.set(element, Enum.ref, value), Element.get(element, Enum.owner))
+				Lifecycle.refs(element, element.ref = value, element.owner)
 			}
 	}
 }

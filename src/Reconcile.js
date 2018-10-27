@@ -16,9 +16,9 @@ import * as Schedule from './Schedule.js'
  * @param {*} c
  */
 export function resolve (fiber, host, parent, a, b, c, type) {
-	if (!Element.set(a, Enum.state, a === b)) {
+	if (!(a.state = a === b)) {
 		Utility.timeout(function () {
-			if (!Element.get(a, Enum.state)) {
+			if (!a.state) {
 				Schedule.forward(function (host, parent, a, b) {
 					Schedule.checkout(children, host, parent, c, b.children, null)
 				}, host, parent, a, b)
@@ -27,7 +27,7 @@ export function resolve (fiber, host, parent, a, b, c, type) {
 	}
 
 	Utility.resolve(Schedule.suspend(fiber, type), function (value) {
-		if (Element.set(a, Enum.state, a.type === type)) {
+		if (a.state = a.type === type) {
 			Schedule.resolve(fiber, Enum.children, host, parent, c, Element.resolve(value), Schedule.commit)
 		}
 	}, function (error) {
@@ -44,61 +44,35 @@ export function resolve (fiber, host, parent, a, b, c, type) {
  * @param {object} c
  * @param {number} idx
  */
-export function replace (fiber, host, parent, a, b, c, idx) {
-	if (a.constructor === b.constructor) {
-		switch (a.constructor) {
-			case Enum.target:
-				Schedule.commit(fiber, Enum.mount, a.type = b.type, Node.replace(a, object(a.props, a.props = {})), a, null)
-			case Enum.thenable:
-				return update(fiber, host, parent, a, b, c, idx)
-		}
-	}
-
-	type(fiber, host, parent, a, b, c, idx)
-}
-
-/**
- * @param {object} fiber
- * @param {object} host
- * @param {object} parent
- * @param {object} a
- * @param {object} b
- * @param {object} c
- * @param {number} idx
- */
 export function update (fiber, host, parent, a, b, c, idx) {
-	switch (a.constructor) {
-		case Enum.text:
-		case Enum.comment:
-			if (a.children !== b.children) {
-				Schedule.commit(fiber, Enum.content, host, a, a.children = b.children, a)
-			}
-		case Enum.empty:
-			return
-		case Enum.component:
-			return Component.resolve(fiber, host, a, b, {})
-		case Enum.thenable:
-			return resolve(fiber, host, parent, a, b, a.children, a.type = b.type)
-	}
-
-	children(fiber, host, a, a.children, b.children)
-	props(fiber, host, a, object(a.props, a.props = b.props))
-}
-
-/**
- * @param {object} fiber
- * @param {object} host
- * @param {object} parent
- * @param {object} a
- * @param {object} b
- * @param {object} c
- * @param {number} idx
- */
-export function element (fiber, host, parent, a, b, c, idx) {
 	if (a.type === b.type) {
-		update(fiber, host, parent, a, b, c, idx)
+		switch (a.uid) {
+			case Enum.text:
+			case Enum.comment:
+				if (a.children !== b.children) {
+					Schedule.commit(fiber, Enum.content, host, a, a.children = b.children, a)
+				}
+			case Enum.empty:
+				return
+			case Enum.component:
+				return Component.resolve(fiber, host, a, b, {})
+			case Enum.thenable:
+				return resolve(fiber, host, parent, a, b, a.children, a.type = b.type)
+		}
+
+		children(fiber, host, a, a.children, b.children)
+		props(fiber, host, a, object(a.props, a.props = b.props))
 	} else {
-		replace(fiber, host, parent, a, b, c, idx)
+		if (a.uid === b.uid) {
+			switch (a.uid) {
+				case Enum.target:
+					Schedule.commit(fiber, Enum.mount, a.type = b.type, Node.replace(a, object(a.props, a.props = {})), a, null)
+				case Enum.thenable:
+					return update(fiber, host, parent, a, b, c, idx)
+			}
+		}
+
+		type(fiber, host, parent, a, b, c, idx)
 	}
 }
 
@@ -112,7 +86,7 @@ export function element (fiber, host, parent, a, b, c, idx) {
  * @param {number} idx
  */
 export function type (fiber, host, parent, a, b, c, idx) {
-	Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, c[idx] = b, idx + 1), a)
+	Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, c[idx] = b, idx), a)
 	Schedule.commit(fiber, Enum.unmount, host, parent, a, Node.destroy(fiber, a))
 }
 
@@ -136,53 +110,67 @@ export function props (fiber, host, parent, a) {
  * @param {object} b
  */
 export function children (fiber, host, parent, a, b) {
-	var prev = parent
-	var next = parent
 	var alen = a.length
 	var blen = b.length
+	var aidx = 0
+	var bidx = 0
 	var aend = alen - 1
 	var bend = blen - 1
-	var min = bend > aend ? aend : bend
-	var max = bend > aend ? bend : aend
-	var idx = 0
-	var ptr = 0
+	var ahead = a[aidx]
+	var bhead = b[bidx]
+	var atail = a[aend]
+	var btail = b[bend]
 
-	// step 0, noop
-	if (max === -1) {
-		return
+	// step 1, prefix/suffix/affix
+	outer: while (true) {
+		// prefix(lr)
+		while (ahead.key === bhead.key) {
+			update(fiber, host, parent, ahead, bhead, a, aidx)
+		  if (++aidx > aend | ++bidx > bend) { break outer }
+		  ahead = a[aidx], bhead = b[bidx]
+		}
+		// suffix(rl)
+		while (atail.key === btail.key) {
+			update(fiber, host, parent, atail, btail, a, aend)
+		  if (aidx > --aend | bidx > --bend) { break outer }
+		  atail = a[aend], btail = b[bend]
+		}
+		// affix(rl)
+		if (atail.key === bhead.key) {
+			update(fiber, host, parent, atail, bhead, a, aidx)
+			Schedule.commit(fiber, Enum.mount, host, parent, atail, a[aidx])
+			a.splice(aidx, 0, (a.splice(aend, 1), atail))
+			atail = a[aend], ahead = a[++aidx], bhead = b[++bidx]
+		  continue
+		}
+		// affix(lr)
+		if (ahead.key === btail.key) {
+			update(fiber, host, parent, ahead, btail, a, aend)
+			Schedule.commit(fiber, Enum.mount, host, parent, ahead, a[aend + 1])
+			a.splice(aend, 0, (a.splice(aidx, 1), ahead))
+			ahead = a[aidx], atail = a[--aend], btail = b[--bend]
+		  continue
+		}
+		break
 	}
 
-	// step 1, prefix/suffix
-	if (min !== -1) {
-		outer: {
-			while ((prev = a[idx]).key === (next = b[idx]).key) {
-				element(fiber, host, parent, prev, next, a, idx)
-				if (++idx > min) { break outer }
-			}
-
-			while ((prev = a[aend]).key === (next = b[bend]).key) {
-				element(fiber, host, parent, a[max] = prev, next, a, bend)
-				if (--aend, --bend, --max, idx > --min) { break outer }
+	// step 2, mount/unmount/replace/sort
+	if (aidx > aend++) {
+		if (bidx <= bend++) {
+			while (bidx < bend--) {
+				Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, btail = b[bend], bend), a[aend])
+				a.splice(aidx, 0, btail)
 			}
 		}
-	}
-
-	// step 2, mount/unmount/sort
-	if (idx > aend++) {
-		if (idx <= bend++) {
-			if (bend < blen) do {
-				Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, a[--bend] = b[bend], bend + 1), a[bend + 1])
-			} while (idx < bend) else do {
-				Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, a[--bend] = b[bend], bend + 1), null)
-			} while (idx < bend)
+	} else if (bidx > bend++) {
+		while (aidx < aend--) {
+			Schedule.commit(fiber, Enum.unmount, host, parent, ahead = a[aend], Node.destroy(fiber, ahead))
+			a.splice(aend, 1)
 		}
-	} else if ((ptr = idx) > bend++) {
-		do {
-			Schedule.commit(fiber, Enum.unmount, host, parent, prev = a[idx++], Node.destroy(fiber, prev))
-		} while (idx < aend)
-		a.splice(ptr, aend - bend)
+	} else if ((aend - aidx) * (bend - bidx) === 1) {
+		type(fiber, host, parent, ahead, bhead, a, aidx)
 	} else {
-		sort(fiber, host, parent, a, b, idx, aend, bend)
+		sort(fiber, host, parent, a, b, aidx, aend, bend)
 	}
 }
 
@@ -192,52 +180,69 @@ export function children (fiber, host, parent, a, b) {
  * @param {object} parent
  * @param {object} a
  * @param {object} b
- * @param {number} idx
- * @param {number} aend
- * @param {number} bend
+ * @param {number} head
+ * @param {number} alen
+ * @param {number} blen
  */
-export function sort (fiber, host, parent, a, b, idx, aend, bend) {
-	var aidx = idx
-	var bidx = idx
-	var akey = {}
-	var bkey = {}
-	var move = 0
-	var post = bend
-	var node = parent
+export function sort (fiber, host, parent, a, b, head, alen, blen) {
+	var anode = parent
+	var bnode = parent
+	var aend = alen
+	var bend = blen
+	var aidx = alen
+	var bidx = blen
+	var apos = 0
+	var bpos = 0
+	var akey = 0
+	var bkey = 0
+	var post = 0
+	var amap = {}
+	var bmap = {}
+	var node = {}
 
-	// step 3, map
-	while (aidx < aend | bidx < bend) {
-		if (aidx < aend) { akey[a[aidx].key] = aidx++ }
-		if (bidx < bend) { bkey[b[bidx].key] = bidx++ }
+	// step 3, keys
+	while (aidx > head | bidx > head) {
+		if (aidx > head) { amap[akey = (anode = a[--aidx]).key] = aidx }
+		if (bidx > head) { bmap[bkey = (bnode = b[--bidx]).key] = bidx }
 	}
 
 	// step 4, sort
-	while (aidx > idx | bidx > idx) {
-		if (aidx > idx) {
-			if ((move = bkey[(node = a[--aidx]).key]) !== undefined) {
-				element(fiber, host, parent, node, b[move], a, aidx)
-
-				if (move < aidx & aidx !== 0) {
-					Schedule.commit(fiber, Enum.mount, host, parent, node, a[move])
-					a.splice(aidx++, 1)
-					a.splice(move, 0, node)
+	while (aidx < aend | bidx < bend) {
+		if ((akey = (anode = a[aidx]).key) !== (bkey = (bnode = b[bidx]).key)) {
+			if (aidx < aend) {
+				if (bmap[akey] == null) {
+					Schedule.commit(fiber, Enum.unmount, host, parent, anode, Node.destroy(fiber, anode))
+					a.splice((--aend, aidx), 1)
 					continue
 				}
-			} else {
-				Schedule.commit(fiber, Enum.unmount, host, parent, node, Node.destroy(fiber, node))
-				a.splice(aidx, 1)
-				if (--post) { continue }
+			}
+			if (bidx < bend) {
+				if (amap[bkey] == null) {
+					Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, bnode, aidx), anode)
+					a.splice((++aend, amap[bkey] = aidx), 0, bnode)
+					continue
+				}
+			}
+			if (aidx < aend) {
+				if ((apos = bmap[akey]) != null) {
+					if (anode !== a[apos]) {
+						if (akey !== b[aidx + 1].key) {
+							apos = apos < aend ? apos : aend - 1
+							a.splice(aidx, 1)
+							Schedule.commit(fiber, Enum.mount, host, parent, anode, a[apos])
+							a.splice(apos, 0, anode)
+
+							continue
+						} else {
+							aidx = aidx - 1
+						}
+					}
+				}
 			}
 		}
 
-		if (bidx > idx) {
-			if ((move = akey[(node = b[--bidx]).key]) === undefined) {
-				Schedule.commit(fiber, Enum.mount, host, parent, node = Node.create(fiber, host, parent, node, bidx + 1), a[post])
-				a.splice(post, 0, node)
-			} else {
-				post = move
-			}
-		}
+		aidx = aidx < aend ? aidx + 1 : aidx
+		bidx = bidx < bend ? bidx + 1 : bidx
 	}
 }
 

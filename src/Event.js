@@ -9,7 +9,7 @@ import * as Interface from './Interface.js'
  * @param {object} event
  */
 export function handle (event) {
-	resolve(Element.get(this, Enum.host), Interface.event(this, event), event)
+	resolve(this.host, Interface.event(this, event), event)
 }
 
 /**
@@ -18,7 +18,7 @@ export function handle (event) {
  * @param {object} event
  */
 export function resolve (element, callback, event) {
-	dispatch(element, callback, event, Element.get(element, Enum.owner))
+	dispatch(element, callback, event, element.owner)
 }
 
 /**
