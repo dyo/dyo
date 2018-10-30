@@ -341,40 +341,40 @@ describe('Reconcile', () => {
 		render(h(Target, [1, 2]), target, (current) => assert.html(current, '12'))
 	})
 
-	it('fuzz(6) shuffle(10) - shuffle(10)', () => {
-		Array.from({length: 6}, (v, i) => assert.rand(Array.from({length: 10}, (v, i) => i))).forEach((v, i) => {
+	it('fuzz(10) shuffle(20) - shuffle(20)', () => {
+		Array.from({length: 10}, (v, i) => assert.rand(Array.from({length: 20}, (v, i) => i))).forEach((v, i) => {
 			render(h('ul', v.map(v => h('li', {key: v}, v))), target, (current) => {
 				assert.html(current, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
 			})
 		})
 	})
 
-	it('fuzz(5) shuffle(20) - shuffle(20)', () => {
-		Array.from({length: 5}, (v, i) => assert.rand(Array.from({length: 20}, (v, i) => i))).forEach((v, i) => {
+	it('fuzz(10) shuffle(40) - shuffle(40)', () => {
+		Array.from({length: 10}, (v, i) => assert.rand(Array.from({length: 40}, (v, i) => i))).forEach((v, i) => {
 			render(h('ul', v.map(v => h('li', {key: v}, v))), target, (current) => {
 				assert.html(current, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
 			})
 		})
 	})
 
-	it('fuzz(4) shuffle(30) - shuffle(30)', () => {
-		Array.from({length: 4}, (v, i) => assert.rand(Array.from({length: 30}, (v, i) => i))).forEach((v, i) => {
+	it('fuzz(10) shuffle(60) - shuffle(60)', () => {
+		Array.from({length: 10}, (v, i) => assert.rand(Array.from({length: 60}, (v, i) => i))).forEach((v, i) => {
 			render(h('ul', v.map(v => h('li', {key: v}, v))), target, (current) => {
 				assert.html(current, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
 			})
 		})
 	})
 
-	it('fuzz(3) shuffle(40) - shuffle(40)', () => {
-		Array.from({length: 3}, (v, i) => assert.rand(Array.from({length: 40}, (v, i) => i))).forEach((v, i) => {
+	it('fuzz(10) shuffle(80) - shuffle(80)', () => {
+		Array.from({length: 10}, (v, i) => assert.rand(Array.from({length: 80}, (v, i) => i))).forEach((v, i) => {
 			render(h('ul', v.map(v => h('li', {key: v}, v))), target, (current) => {
 				assert.html(current, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
 			})
 		})
 	})
 
-	it('fuzz(2) shuffle(50) - shuffle(50)', () => {
-		Array.from({length: 2}, (v, i) => assert.rand(Array.from({length: 50}, (v, i) => i))).forEach((v, i) => {
+	it('fuzz(10) shuffle(100) - shuffle(100)', () => {
+		Array.from({length: 10}, (v, i) => assert.rand(Array.from({length: 100}, (v, i) => i))).forEach((v, i) => {
 			render(h('ul', v.map(v => h('li', {key: v}, v))), target, (current) => {
 				assert.html(current, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
 			})

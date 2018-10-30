@@ -1,41 +1,25 @@
 import {JSDOM} from 'jsdom'
 import {assert} from 'chai'
 
-const {assign} = Object
 const {window} = new JSDOM('<!doctype html>')
 const {document, location, history, Event} = window
+const {assign} = Object
 
-assign(global, {assert, window, document, location, history, Event})
-assign(assert, {html, json, spy, rand})
+const prng = ((seed, size, value = seed % size) => () => ((value = value * 16807 % size - 1) - 1) / size)(4022871197, 2147483647)
+const spyr = (from, key, to = []) => (((org) => from[key] = (...args) => { from[key] = org, to.push(...args) })(from[key]), to)
+const grep = (value) => value.replace(/[\n\t]|\s{2,}/g, '')
+const json = (actual, expected) => assert.equal(JSON.stringify(actual), JSON.stringify(expected))
+const html = (actual, expected) => assert.equal('innerHTML' in actual ? actual.innerHTML : grep(actual + ''), grep(expected))
 
-function spy (from, key, to = []) {
-	return ((org) => from[key] = (...args) => { from[key] = org, to.push(...args) })(from[key]), to
-}
-
-function grep (value) {
-	return value.replace(/[\n\t]|\s{2,}/g, '')
-}
-
-function json (actual, expected) {
-  return assert.equal(JSON.stringify(actual), JSON.stringify(expected))
-}
-
-function html (actual, expected) {
-	return assert.equal('innerHTML' in actual ? actual.innerHTML : grep(actual + ''), grep(expected))
-}
-
-function prng (value = 4022871197 % 2147483647) {
-	return () => ((value = value * 16807 % 2147483647 - 1) - 1) / 2147483647
-}
-
-function rand (value, array = value.slice(), length = array.length, random = prng()) {
+const rand = (value, array = value.slice(), length = array.length, index = 0) => {
   while (length) {
-    const index = Math.floor(random() * length--)
-    const value = array[length]
-
+    index = Math.floor(prng() * length)
+    value = array[--length]
     array[length] = array[index]
     array[index] = value
   }
-
   return array
 }
+
+assign(global, {assert, window, document, location, history, Event})
+assign(assert, {html, json, spyr, rand})

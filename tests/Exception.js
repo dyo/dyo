@@ -466,7 +466,7 @@ describe('Exception', () => {
 
 	it('should not catch exceptions', () => {
 		const target = document.createElement('div')
-		const stack = assert.spy(console, 'error')
+		const stack = assert.spyr(console, 'error')
 
 		assert.throws(() => {
 			render(function Primary () { throw 'error!' }, target)

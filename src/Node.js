@@ -35,13 +35,14 @@ export function resolve (fiber, host, parent, element, index) {
 /**
  * @param {object} element
  * @param {object} props
+ * @param {number} index
  * @return {object}
  */
-export function replace (element, props) {
+export function replace (element, props, index) {
 	try {
 		Commit.props(element, props, Enum.create)
 	} finally {
-		element.owner = Interface.create(element, Enum.create)
+		element.owner = Interface.create(element, index)
 	}
 
 	return element
@@ -78,7 +79,6 @@ export function create (fiber, host, parent, element, index) {
 			for (var i = 0; i < children.length; ++i) {
 				create(fiber, host, element, children[i], sign * (i + 1))
 			}
-
 			if (uid !== Enum.thenable) {
 				Commit.props(element, props, Enum.create)
 			} else {

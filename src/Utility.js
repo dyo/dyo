@@ -91,13 +91,15 @@ export var promise = typeof Promise === 'function' ? Promise : function (callbac
 		}
 	}
 
-	function then (callback) {
-		return promise(function (resolve) {
-			resolve.entries.push(callback, resolve)
-		})
+	try {
+		return assign(resolve, {then: function (callback) {
+			return promise(function (resolve) {
+				resolve.entries.push(callback, resolve)
+			})
+		}, entries: []})
+	} finally {
+		callback(resolve)
 	}
-
-	return assign(resolve, {then: then, entries: []}), callback(resolve)
 }
 
 /**

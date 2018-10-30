@@ -85,6 +85,7 @@
 
 <script type=module>
 	import {h, render, Component, Fragment, createPortal, createComment} from './index.js'
+	// import {h, render, Component, Fragment, createPortal, createComment} from 'https://unpkg.com/dio.js@9.1.1/dist/esm.js'
 
 	;(() => {
 		render(createPortal('Hello World', 'section', {class: 'foo'}), 'main')
@@ -127,6 +128,77 @@
 			console.log(current.innerHTML)
 		})
 	});
+
+	{
+		const target = document.querySelector('main')
+		const assert = {html: html, equal: (a, e) => console.assert(a === e)}
+
+		function grep (value) {
+			return value.replace(/[\n\t]|\s{2,}/g, '')
+		}
+
+		function html (actual, expected) {
+			return assert.equal('innerHTML' in actual ? actual.innerHTML : grep(actual + ''), grep(expected))
+		}
+
+		const stack = [16807, 4022871197, 2147483647]
+
+		function prng (value = stack[1] % stack[2]) {
+			return ((stack[1] = value * stack[0] % stack[2] - 1) - 1) / stack[2]
+		}
+
+		function rand (value, array = value.slice(), length = array.length) {
+		  while (length) {
+		    const index = Math.floor(prng() * length--)
+		    const value = array[length]
+
+		    array[length] = array[index]
+		    array[index] = value
+		  }
+
+		  return array
+		}
+
+		var a = [13,12,7,17,32,31,41,5,3,11,22,2,8,21,38,26,44,45,39,14,28,54,15,4,6,19,48,25,35,0,49,52,59,30,24,18,33,23,50,9,46,37,1,20,16,29,58,27,34,40,43,42,56,57,55,36,53,10,51,47]
+		var b = [30,1,33,13,12,35,10,20,23,9,43,11,59,37,50,38,0,56,29,53,14,3,40,18,2,19,5,44,7,28,25,46,31,54,55,6,39,27,26,16,47,21,49,24,58,36,4,17,52,48,34,22,42,8,51,32,57,41,15,45]
+
+		// var a = [7, 0, 1, 2, 3, 4, 5, 6]
+		// var b = [5, 1, 2, 3, 4, 0]
+
+		// var a = [7, 0, 1, 2, 3, 4, 5, 6]
+		// var b = [9, 5, 1, 2, 3, 4, 0]
+
+		// var a = [1,2,3,4,5]
+		// var b = [6,7,8,9,10]
+
+		// var a = [1, 2, 3, 4, 5, 6, 7, 8]
+		// var b = [1, 2, 6, 7, 8]
+
+		// var a = [1, 2, 6, 7, 8]
+		// var b = [1, 2, 3, 4, 5, 6, 7, 8]
+
+		var a = [1, 2, 3, 4, 5]
+		var b = [1, 2, 5, 6, 7]
+
+		var a = [2, 7, 8, 3, 4, 6, 9, 5, 0, 1]
+		var b = [0, 4, 6, 9, 5, 2, 8, 7, 3, 1]
+
+		// 2783469510
+		// 0469528731
+		//
+		// 0278346951
+		// 0469528731
+
+		console.time('render')
+		render(h('ul', a.map(v => h('li', {key: v}, v))), target)
+		render(h('ul', b.map(v => h('li', {key: v}, v))), target)
+		console.timeEnd('render')
+
+		var expected = target.innerHTML
+		var actual = `<ul>${b.map(v => `<li>${v}</li>`).join('')}</ul>`
+
+		console.log(actual === expected)
+	}
 </script>
 
 <script type=!module>
