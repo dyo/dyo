@@ -46,6 +46,23 @@ describe('Event', () => {
 			assert.html(current, `<button></button>`)
 		})
 	})
+
+	it('should not dispatch invalid event', () => {
+		const target = document.createElement('div')
+		const stack = []
+		const refs = {}
+
+		class Primary extends Component {
+			handleEvent(event) { stack.push(this.props) }
+			render() { return h('button', {ref: refs, onClick: {}})}
+		}
+
+		render(h(Primary, {props: 1}), target, (current) => {
+			refs.current.dispatchEvent(new Event('click'))
+			assert.html(current, `<button></button>`)
+		})
+	})
+
 	it('should dispatch invoke component events with (event, props, state, context) arguments', () => {
 		const target = document.createElement('div')
 		const stack = []

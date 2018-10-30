@@ -1,6 +1,26 @@
 import {h, Component, render} from 'dyo'
 
 describe('Refs', () => {
+	it('should (un)mount string refs', () => {
+		const target = document.createElement('div')
+		const refs = {}
+
+		class Primary extends Component {
+			render({children}) { return children }
+			componentDidMount() { refs.current = this.refs }
+		}
+
+		render(h(Primary, h('h1', {ref: 'heading'}, 1)), target, (current) => {
+			assert.html(current, '<h1>1</h1>')
+			assert.exists(refs.current.heading, ['heading'])
+		})
+
+		render(null, target, (current) => {
+			assert.html(current, '')
+			assert.notExists(refs.current.heading, [''])
+		})
+	})
+
 	it('should (un)mount object refs', () => {
 		const target = document.createElement('div')
 		const refs = {}

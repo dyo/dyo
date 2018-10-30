@@ -19,6 +19,23 @@ describe('Component', () => {
 		})
 	})
 
+	it('should replace a function Component', () => {
+		const target = document.createElement('div')
+		const stack = []
+
+		const Primary = function ({children}) { return children }
+		Primary.componentWillUnmount = () => stack.push('componentWillUnmount')
+
+		render(h(Primary, {key: 1}, 'Primary'), target, (current) => {
+			assert.html(current, 'Primary')
+		})
+
+		render(h(Primary, {key: 2}, 'Primary'), target, (current) => {
+			assert.html(current, 'Primary')
+			assert.deepEqual(stack, ['componentWillUnmount'])
+		})
+	})
+
 	it('should render an arrow function Component', () => {
 		const target = document.createElement('div')
 
@@ -189,6 +206,29 @@ describe('Component', () => {
 		})
 	})
 
+	it('should force update Component', () => {
+		const target = document.createElement('div')
+		const refs = {children: 1}
+
+		class Primary {
+			componentDidMount() { refs.current = this }
+			shouldComponentUpdate() { return false }
+			render() { return refs.children }
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '1')
+
+			refs.children = 2
+			refs.current.setState({}, () => {
+				assert.html(current, '1')
+				refs.current.forceUpdate(() => {
+					assert.html(current, '2')
+				})
+			})
+		})
+	})
+
 	it('should update PureComponent', () => {
 		const target = document.createElement('div')
 
@@ -198,6 +238,19 @@ describe('Component', () => {
 
 		render(h(Primary, {a: 1}, 1), target)
 		render(h(Primary, {a: 2}, 2), target, (current) => {
+			assert.html(current, '2')
+		})
+	})
+
+	it('should update PureComponent', () => {
+		const target = document.createElement('div')
+
+		class Primary extends PureComponent {
+			render({children}) { return children }
+		}
+
+		render(h(Primary, {a: 1}, 1), target)
+		render(h(Primary, {}, 2), target, (current) => {
 			assert.html(current, '2')
 		})
 	})

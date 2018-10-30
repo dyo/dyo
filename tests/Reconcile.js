@@ -31,9 +31,23 @@ describe('Reconcile', () => {
 		render(h(Target, [1, 2, 3, 4, 5, 6]), target, (current) => assert.html(current,  '123456'))
 	})
 
+	it('replace [3, 2, 4, 1] - [4, 1, 3, 2]', () => {
+		render(h(Fragment, h('li', {key: 3}, 3), h('li', {key: 2}, 2), h('li', {key: 4}, 4), h('li', {key: 1}, 1)), target, (current) => {
+			assert.html(current, '<li>3</li><li>2</li><li>4</li><li>1</li>')
+		})
+		render(h(Fragment, h('li', {key: 4}, -4), h('li', {key: 1}, -1), h('li', {key: 3}, -3), h('li', {key: 2}, -2)), target, (current) => {
+			assert.html(current, '<li>-4</li><li>-1</li><li>-3</li><li>-2</li>')
+		})
+	})
+
 	it('replace [1, 2, 3, 4, 5] - [6, 7, 8, 9, 10, 11]', () => {
 		render(h(Target, [1, 2, 3, 4, 5]), target, (current) => assert.html(current,  '12345'))
 		render(h(Target, [6, 7, 8, 9, 10, 11]), target, (current) => assert.html(current,  '67891011'))
+	})
+
+	it('replace [1, 2, 3, 4, 5] - [6, 7, 8, 9, 10]', () => {
+		render(h(Target, [1, 2, 3, 4, 5]), target, (current) => assert.html(current,  '12345'))
+		render(h(Target, [6, 7, 8, 9, 10]), target, (current) => assert.html(current,  '678910'))
 	})
 
 	it('reverse [1, 2] - [2, 1]', () => {

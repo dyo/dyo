@@ -61,6 +61,13 @@ describe('Children', () => {
 		assert.deepEqual(Children.find('1', x => x === '1'), '1')
 		assert.deepEqual(Children.find(h('h1', '1'), x => x.type === 'h1'), h('h1', '1'))
 		assert.deepEqual(Children.find([1, [2, 3]], x => x === 3), 3)
+		assert.deepEqual(Children.find({
+			[Symbol.iterator]: function* () {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}, x => x === 3), 3)
 	})
 
 	it('should forEach children', () => {
