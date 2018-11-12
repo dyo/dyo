@@ -1,7 +1,6 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
 import * as Schedule from './Schedule.js'
 
@@ -40,6 +39,28 @@ export var struct = Utility.extend(function (host, element, value) {
 })
 
 /**
+ * @param {object} exception
+ * @throws {*}
+ */
+export function report (exception) {
+	try {
+		throw exception.error
+	} finally {
+		if (exception.message = exception.toString()) {
+			Utility.report(exception.message)
+		}
+	}
+}
+
+/**
+ * @param {object} element
+ * @return {string}
+ */
+export function display (element) {
+	return '\tat ' + Element.display(element) + '\n'
+}
+
+/**
  * @param {object} host
  * @param {object} element
  * @param {string} value
@@ -54,11 +75,13 @@ export function trace (host, element, value) {
 }
 
 /**
+ * @param {object} host
  * @param {object} element
- * @return {string}
+ * @param {*} exception
+ * @return {object}
  */
-export function display (element) {
-	return '\tat ' + Element.display(element) + '\n'
+export function create (host, element, exception) {
+	return exception instanceof struct ? exception : new struct(host, element, exception)
 }
 
 /**
@@ -69,7 +92,7 @@ export function display (element) {
  * @return {boolean?}
  */
 export function resolve (fiber, host, element, exception) {
-	return propagate(fiber, host, element, exception instanceof struct ? exception : new struct(host, element, exception), host)
+	return propagate(fiber, host, element, create(host, element, exception), host)
 }
 
 /**
@@ -86,7 +109,7 @@ export function propagate (fiber, host, element, exception, current) {
 			return report(exception)
 		case Enum.component:
 			if (current !== element) {
-				if (recover(fiber, current, exception, current.owner)) {
+				if (recover(fiber, current, exception, current.instance)) {
 					return true
 				}
 			}
@@ -103,24 +126,10 @@ export function propagate (fiber, host, element, exception, current) {
  * @param {object} fiber
  * @param {object} element
  * @param {object} exception
- * @param {object} owner
+ * @param {object} instance
  */
-export function recover (fiber, element, exception, owner) {
-	if (Lifecycle.has(owner, Enum.componentDidCatch)) {
-		return !Schedule.callback(fiber, Enum.componentDidCatch, element, element, owner, exception.error, exception, exception)
-	}
-}
-
-/**
- * @param {object} exception
- * @throws {*}
- */
-export function report (exception) {
-	try {
-		throw exception.error
-	} finally {
-		if (exception.message = exception.toString()) {
-			Utility.report(exception.message)
-		}
+export function recover (fiber, element, exception, instance) {
+	if (Lifecycle.has(instance, Enum.componentDidCatch)) {
+		return Schedule.callback(fiber, element, instance, exception.error, exception, exception, Enum.componentDidCatch)
 	}
 }

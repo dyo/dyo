@@ -1,4 +1,7 @@
+import * as Utility from './Utility.js'
 import * as Element from './Element.js'
+
+export var development = Utility.environment() === 'development'
 
 /**
  * @param {object} element
@@ -6,8 +9,7 @@ import * as Element from './Element.js'
  * @param {string} origin
  */
 export function types (element, properties, origin) {
-	// TODO
-	if ('development' === 'development') {
+	if (development) {
 		validate(element, properties, element.type[origin], origin)
 	}
 }

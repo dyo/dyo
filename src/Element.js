@@ -17,12 +17,12 @@ export var struct = Utility.extend(function (uid, key, type, props, children) {
 	this.type = type
 	this.props = props
 	this.children = children
+	this.ref = null
 	this.host = null
+	this.owner = null
 	this.parent = null
 	this.context = null
-	this.owner = null
-	this.ref = null
-	this.state = null
+	this.instance = null
 }, {
 	/**
 	 * @type {function}
@@ -97,7 +97,7 @@ export function root (value) {
  * @param {object} value
  * @return {object?}
  */
-export function resolve (value) {
+export function children (value) {
 	return [from(value !== null && typeof value === 'object' && 'default' in value ? value.default : value, 0), empty(Enum.key)]
 }
 
@@ -109,8 +109,7 @@ export function resolve (value) {
 export function from (value, index) {
 	if (value != null) {
 		switch (typeof value) {
-			case 'number':
-			case 'string':
+			case 'number': case 'string':
 				return text(value, Utility.hash(index))
 			case 'boolean':
 				return from(null, index)
@@ -156,7 +155,6 @@ export function create (a, b) {
 				children.push(arguments[i])
 			}
 		}
-
 		if (type[Enum.defaultProps]) {
 			defaults(element, type[Enum.defaultProps])
 		}
@@ -238,7 +236,7 @@ export function clone (element) {
  * @return {boolean}
  */
 export function valid (element) {
-	return element != null && element.constructor === struct
+	return element instanceof struct
 }
 
 /**

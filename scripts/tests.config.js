@@ -1,15 +1,19 @@
 import {JSDOM} from 'jsdom'
 import {assert} from 'chai'
 
-const {window} = new JSDOM('<!doctype html>')
-const {document, location, history, Event} = window
 const {assign} = Object
+const {document, location, history, Event} = (new JSDOM('<!doctype html>')).window
 
 const prng = ((seed, size, value = seed % size) => () => ((value = value * 16807 % size - 1) - 1) / size)(4022871197, 2147483647)
 const spyr = (from, key, to = []) => (((org) => from[key] = (...args) => { from[key] = org, to.push(...args) })(from[key]), to)
 const grep = (value) => value.replace(/[\n\t]|\s{2,}/g, '')
 const json = (actual, expected) => assert.equal(JSON.stringify(actual), JSON.stringify(expected))
 const html = (actual, expected) => assert.equal('innerHTML' in actual ? actual.innerHTML : grep(actual + ''), grep(expected))
+
+const that = () => typeof globalThis == 'object' ? globalThis :
+	typeof global == 'object' ? global :
+		typeof window == 'object' ? window :
+			typeof self == 'object' ? self : Function('return this')()
 
 const rand = (value, array = value.slice(), length = array.length, index = 0) => {
   while (length) {
@@ -21,5 +25,5 @@ const rand = (value, array = value.slice(), length = array.length, index = 0) =>
   return array
 }
 
-assign(global, {assert, window, document, location, history, Event})
+assign(that(), {assert, document, location, history, Event, globalThis: that()})
 assign(assert, {html, json, spyr, rand})

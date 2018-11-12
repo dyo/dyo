@@ -97,17 +97,6 @@ describe('Event', () => {
 		})
 	})
 
-	it('should not dispatch invalid events', () => {
-		const target = document.createElement('div')
-		const stack = []
-		const refs = {}
-
-		render(h('button', {ref: refs, onClick: '', onMouseDown: null}), target, (current) => {
-			refs.current.dispatchEvent(new Event('click'))
-			refs.current.dispatchEvent(new Event('mousedown'))
-		})
-	})
-
 	it('should dispatch an array of valid events', () => {
 		const target = document.createElement('div')
 		const stack = []

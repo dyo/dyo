@@ -44,7 +44,7 @@ export function remove (parent, element) {
 			remove(parent, element)
 		})
 	} else {
-		Interface.remove(parent, element)
+		Interface.remove(parent.instance, element.instance)
 	}
 }
 
@@ -58,7 +58,7 @@ export function append (parent, element) {
 			append(parent, element)
 		})
 	} else {
-		Interface.append(parent, element)
+		Interface.append(parent.instance, element.instance)
 	}
 }
 
@@ -73,45 +73,44 @@ export function insert (parent, element, sibling) {
 			insert(parent, element, sibling)
 		})
 	} else {
-		Interface.insert(parent, element, sibling)
+		Interface.insert(parent.instance, element.instance, sibling.instance)
 	}
 }
 
 /**
+ * @param {object} parent
  * @param {object} element
  * @param {(string|number)} value
  */
-export function content (element, value) {
-	Interface.content(element, value)
+export function content (parent, element, value) {
+	Interface.content(element.instance, value)
 }
 
 /**
+ * @param {object} parent
  * @param {object} element
  * @param {object} value
- * @param {number} origin
  */
-export function props (element, value, origin) {
+export function props (parent, element, value) {
 	if (value) {
-		update(element, Interface.props(element, value, origin), origin, element.context)
+		set(element, value, element.instance)
 	}
 }
 
 /**
  * @param {object} element
  * @param {object} value
- * @param {number} origin
- * @param {*} namespace
+ * @param {object} instance
  */
-export function update (element, value, origin, namespace)  {
+export function set (element, value, instance)  {
 	for (var key in value) {
 		switch (key) {
 			case 'ref':
-				refs(element, value[key], origin)
+				ref(element, value[key], instance)
 			case 'key':
-			case 'children':
 				break
 			default:
-				Interface.update(element, key, value[key], namespace)
+				Interface.props(element, key, value[key], instance)
 		}
 	}
 }
@@ -119,15 +118,12 @@ export function update (element, value, origin, namespace)  {
 /**
  * @param {object} element
  * @param {*?} value
- * @param {number?} origin
+ * @param {object} instance
  */
-export function refs (element, value, origin) {
-	switch (origin) {
-		default:
-			Lifecycle.refs(element, element.ref, null)
-		case Enum.create:
-			if (value) {
-				Lifecycle.refs(element, element.ref = value, element.owner)
-			}
-	}
+export function ref (element, value, instance) {
+		Lifecycle.ref(element, element.ref, null)
+
+		if (value) {
+			Lifecycle.ref(element, element.ref = value, instance)
+		}
 }

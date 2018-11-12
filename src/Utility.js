@@ -32,12 +32,6 @@ export var array = Array
 export var object = Object
 
 /**
- * @param {*}
- * @return {obejct}
- */
-export var error = Error
-
-/**
  * @param {object}
  * @return {Array<string>}
  */
@@ -69,37 +63,18 @@ export var symbol = typeof Symbol === 'function' ? Symbol : random
 export var iterator = symbol.iterator || '@@iterator'
 
 /**
- * @constructor
+ * @return {object}
  */
-export var registry = typeof WeakMap === 'function' ? WeakMap : function () {
-	return {
-		key: symbol(),
-		has: function (key) { return has(key, this.key) },
-		get: function (key) { return key[this.key] },
-		set: function (key, value) { return key[this.key] = value, this }
-	}
+export function registry () {
+	return typeof WeakMap === 'function' ? new WeakMap() : weakmap()
 }
 
 /**
- * @constructor
  * @param {function} callback
+ * @return {object}
  */
-export var promise = typeof Promise === 'function' ? Promise : function (callback) {
-	function resolve (value) {
-		for (var i = 0, j = resolve.entries; i < j.length; i++) {
-			j[i](value)
-		}
-	}
-
-	try {
-		return assign(resolve, {then: function (callback) {
-			return promise(function (resolve) {
-				resolve.entries.push(callback, resolve)
-			})
-		}, entries: []})
-	} finally {
-		callback(resolve)
-	}
+export function publish (callback) {
+	return typeof Promise === 'function' ? new Promise(callback) : promise(callback)
 }
 
 /**
@@ -108,7 +83,7 @@ export var promise = typeof Promise === 'function' ? Promise : function (callbac
  * @return {number}
  */
 export function timeout (callback, duration) {
-	return setTimeout(callback, duration > 16 ? duration : 16)
+	return setTimeout(callback, duration | 0)
 }
 
 /**
@@ -123,7 +98,7 @@ export function request (callback) {
  * @return {object}
  */
 export function deadline () {
-	return new promise(request)
+	return publish(request)
 }
 
 /**
@@ -290,11 +265,62 @@ export function each (callback, value, index) {
  * @return {Promise?}
  */
 export function resolve (value, fulfilled, rejected) {
-	if (value) {
-		return value.then(function (value) {
-			return fetchable(value) ? resolve(value.json(), fulfilled, rejected) : fulfilled(value)
-		}, rejected)
-	} else {
-		return fulfilled(value)
+	return value.then(function (value) {
+		return fetchable(value) ? resolve(value.json(), fulfilled, rejected) : fulfilled(value)
+	}, rejected)
+}
+
+/**
+ * @param {function} callback
+ */
+export function promise (callback) {
+	function execute (value) {
+		try {
+			for (var i = 0, entries = execute.entries, value = execute.value = value; i < entries.length; i++) {
+				entries[i](value)
+			}
+		} finally {
+			execute.entries = []
+			execute.fulfill++
+		}
+	}
+
+	try {
+		return assign(execute, {then: function (callback) {
+			return promise(function (resolve) {
+				execute.entries.push(function (value) {
+					resolve(callback(value))
+				})
+
+				if (execute.fulfill) {
+					execute(execute.value)
+				}
+			})
+		}, entries: [], fulfill: 0})
+	} finally {
+		callback(execute)
+	}
+}
+
+/**
+ * @return {object}
+ */
+export function weakmap () {
+	return {
+		key: symbol(),
+		has: function (k) { return has(k, this.key) },
+		get: function (k) { return k[this.key] },
+		set: function (k, v) { return k[this.key] = v, this }
+	}
+}
+
+/**
+ * @return {string}
+ */
+export function environment () {
+	try {
+		return typeof process !== 'object' ? '' : typeof process.env !== 'object' ? process.env : process.env.NODE_ENV + ''
+	} catch (error) {
+		return ''
 	}
 }

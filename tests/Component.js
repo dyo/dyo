@@ -271,7 +271,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should not update PureComponent with NaN but update with -0/0', () => {
+	it('should use Object.is sementics for PureComponent updates', () => {
 		const target = document.createElement('div')
 		const stack = []
 
@@ -387,7 +387,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should not explicit setState(null)', () => {
+	it('should not render a explicit setState(null)', () => {
 		const target = document.createElement('div')
 		const stack = []
 
@@ -403,7 +403,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should not implicit setState(null)', () => {
+	it('should not render implicit setState(null)', () => {
 		const target = document.createElement('div')
 		const stack = []
 
@@ -430,8 +430,8 @@ describe('Component', () => {
 		}
 
 		render(h(Primary), target, (current) => {
-			assert.html(current, '2')
 			assert.deepEqual(stack, [{}, {value: 0}])
+			assert.html(current, '2')
 		})
 	})
 
@@ -601,6 +601,23 @@ describe('Component', () => {
 		})
 	})
 
+	it('should handle async implicit setState in lifecycles', () => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {
+			render(props, {children}) {
+				return children
+			}
+			componentDidMount(props) {
+				return {children: 'Hello'}
+			}
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, 'Hello')
+		})
+	})
+
 	it('should render a placeholder before async mount', () => {
 		const target = document.createElement('div')
 
@@ -619,65 +636,13 @@ describe('Component', () => {
 		class Primary extends Component {}
 
 		render(h(Primary, h(Promise.resolve(1), 'Loading')), target, (current) => {
-			assert.html(current, '1')
+			assert.html(current, '2')
 		})
 
 		assert.html(target, 'Loading')
 
 		render(2, target, (current) => {
 			assert.html(current, '2')
-		})
-	})
-return // TODO
-	it('should render an generator(async)', (done) => {
-		var target = document.createElement('div')
-		var stack = []
-
-		render(class {
-			async *render() {
-				stack.push('')
-
-				var first = yield 'Hello'
-
-				stack.push(first)
-
-				var second = yield 'Hello World'
-
-				stack.push(second)
-			}
-		}, target)
-
-		nextTick(() => {
-			assert.html(target, `Hello World`)
-			assert.deepEqual(stack, ['', 'Hello', 'Hello World'])
-			done()
-		}, 3)
-	})
-
-	it('should commit the most recent update when updating a generator', (done) => {
-		let target = document.createElement('div')
-
-		let wait = (value, time) => new Promise((resolve) => setTimeout(() => resolve(value), time))
-
-		let Foo = class {
-			async * render({children, loading, time}) {
-				yield loading
-				yield wait(children, time)
-			}
-		}
-
-		render(h(Foo, {children: 'Hello', loading: '...', time: 60}), target)
-		render(h(Foo, {children: 'World', loading: 'Loading!', time: 20}), target)
-
-		nextTick(() => {
-			assert.html(target, `Loading!`)
-
-			wait(100).then(() => {
-				nextTick(() => {
-					assert.html(target, `World`)
-					done()
-				})
-			})
 		})
 	})
 })

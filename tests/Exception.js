@@ -464,6 +464,20 @@ describe('Exception', () => {
 		})
 	})
 
+	it('should catch nested exceptions', () => {
+		const target = document.createElement('div')
+		const stack = []
+
+		class Primary extends Component { componentDidCatch(error) { stack.push(error) } }
+		class Secondary extends Component {}
+		class Tertiary extends Component { render() { throw 1 } }
+
+		render(h(Primary, h(Secondary, h(Tertiary))), target, (current) => {
+			assert.html(current, '')
+			assert.deepEqual(stack, [1])
+		})
+	})
+
 	it('should not catch exceptions', () => {
 		const target = document.createElement('div')
 		const stack = assert.spyr(console, 'error')

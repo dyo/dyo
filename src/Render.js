@@ -1,7 +1,7 @@
 import * as Enum from './Enum.js'
 import * as Element from './Element.js'
-import * as Node from './Node.js'
 import * as Reconcile from './Reconcile.js'
+import * as Node from './Node.js'
 import * as Interface from './Interface.js'
 import * as Schedule from './Schedule.js'
 
@@ -13,7 +13,7 @@ import Registry from './Registry.js'
  * @param {function?} callback
  */
 export function hydrate (element, target, callback) {
-	resolve(element, Interface.target(target), callback, Enum.search)
+	dispatch(element, Interface.target(target), callback, Enum.search)
 }
 
 /**
@@ -22,49 +22,41 @@ export function hydrate (element, target, callback) {
  * @param {function?} callback
  */
 export function render (element, target, callback) {
-	resolve(element, Interface.target(target), callback, Enum.create)
+	dispatch(element, Interface.target(target), callback, Enum.create)
 }
 
 /**
  * @param {*} element
  * @param {*} target
  * @param {function?} callback
- * @param {*} value
+ * @param {*} initial
  */
-export function resolve (element, target, callback, value) {
+export function dispatch (element, target, callback, initial) {
 	if (Registry.has(target)) {
-		dispatch(Registry.get(target), target, callback, [Element.root(element)])
+		Schedule.checkout(update, Registry.get(target), target, [Element.root(element)], callback)
 	} else {
-		dispatch(Element.target(element, target), target, callback, value)
+		Schedule.checkout(create, Element.target(element, target, Interface.clear(target)), target, initial, callback)
 	}
-}
-
-/**
- * @param {*} element
- * @param {*} target
- * @param {function?} callback
- * @param {*} value
- */
-export function dispatch (element, target, callback, value) {
-	Schedule.checkout(checkout, element, element, target, value, callback)
 }
 
 /**
  * @param {object} fiber
- * @param {object} host
- * @param {obejct} parent
- * @param {object} element
- * @param {object} target
- * @param {*} value
+ * @param {*} element
+ * @param {*} target
+ * @param {number} initial
  */
-export function checkout (fiber, host, parent, target, value) {
-	if (typeof value === 'object') {
-		Schedule.commit(fiber, Enum.children, host, parent, parent.children, value)
-	} else {
-		Node.create(fiber, host, parent, Interface.prepare(parent, target), value)
+export function create (fiber, element, target, initial) {
+	Node.create(fiber, element, element, element, initial)
+	Registry.set(target, element)
+}
 
-		if (value === Enum.create) {
-			Registry.set(target, parent)
-		}
-	}
+/**
+ * @param {object} fiber
+ * @param {*} element
+ * @param {*} target
+ * @param {function?} callback
+ * @param {object} children
+ */
+export function update (fiber, element, target, children) {
+	Reconcile.children(fiber, element, element, element.children, children)
 }

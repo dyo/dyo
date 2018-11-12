@@ -4,34 +4,39 @@ import * as Element from './Element.js'
 import * as Component from './Component.js'
 
 /**
- * @param {object} element
- * @param {*?} value
- * @param {object?} owner
+ * @param {string} instance
+ * @param {*} origin
+ * @return {boolean}
  */
-export function refs (element, value, owner) {
-	switch (typeof value) {
-		case 'function':
-			return value(owner)
-		case 'object':
-			return Utility.object(value).current = owner
-		case 'string':
-			return Utility.object(element.host.owner.refs)[value] = owner
-	}
+export function has (instance, origin) {
+	return !!instance[origin]
 }
 
 /**
  * @param {object} element
- * @param {*} owner
- * @param {*} value
+ * @param {*?} value
+ * @param {object?} instance
  */
-export function callback (element, owner, value) {
+export function ref (element, value, instance) {
 	if (value) {
 		switch (typeof value) {
 			case 'function':
-				return value.call(owner, owner)
+				return value(instance)
 			case 'object':
-				return invoke.apply(owner, value)
+				return Utility.object(value).current = instance
+			case 'string':
+				return Utility.object(element.host.instance.refs)[value] = instance
 		}
+	}
+}
+
+/**
+ * @param {*} value
+ * @param {object} instance
+ */
+export function callback (value, instance) {
+	if (typeof value === 'function') {
+		return instance ? value(instance) : value()
 	}
 }
 
@@ -39,54 +44,54 @@ export function callback (element, owner, value) {
  * @param {object} element
  * @param {object} value
  * @param {object} callback
- * @param {object} owner
+ * @param {object} instance
  * @param {object} props
  * @param {object} state
  * @param {object} context
  * @return {*}
  */
-export function event (element, value, callback, owner, props, state, context) {
+export function event (element, value, callback, instance, props, state, context) {
 	if (typeof callback === 'function') {
-		resolve(element, owner, callback.call(owner, value, props, state, context), state, context, Enum.handleEvent)
+		resolve(element, instance, callback.call(instance, value, props, state, context), state, context, Enum.handleEvent)
 	} else if (typeof callback[Enum.handleEvent] === 'function') {
-		resolve(element, owner, callback.handleEvent(value, props, state, context), state, context, Enum.handleEvent)
+		resolve(element, instance, callback.handleEvent(value, props, state, context), state, context, Enum.handleEvent)
 	}
 }
 
 /**
- * @param {object} owner
+ * @param {object} instance
  * @param {object} props
  * @param {object} state
  * @param {object} context
  * @return {object}
  */
-export function render (owner, props, state, context) {
-	return Element.from(owner.render(props, state, context), 0)
+export function render (instance, props, state, context) {
+	return Element.from(instance.render(props, state, context), 0)
 }
 
 /**
  * @param {object} element
- * @param {object} owner
+ * @param {object} instance
  * @param {object} props
  * @param {object} state
  * @param {object} context
  * @param {string} origin
  * @return {*}
  */
-export function invoke (element, owner, props, state, context, origin) {
-	return resolve(element, owner, owner[origin](props, state, context), state, context, origin)
+export function dispatch (element, instance, props, state, context, origin) {
+	return resolve(element, instance, instance[origin](props, state, context), state, context, origin)
 }
 
 /**
  * @param {object} element
- * @param {object} owner
+ * @param {object} instance
  * @param {object?} value
  * @param {object} state
  * @param {object} context
  * @param {string} origin
  * @return {*}
  */
-export function resolve (element, owner, value, state, context, origin) {
+export function resolve (element, instance, value, state, context, origin) {
 	if (value) {
 		switch (origin) {
 			case Enum.getDerivedState:
@@ -105,17 +110,8 @@ export function resolve (element, owner, value, state, context, origin) {
 				switch (typeof value) {
 					case 'object':
 					case 'function':
-						Component.dispatch(element, owner, value)
+						Component.dispatch(element, instance, value)
 				}
 		}
 	}
-}
-
-/**
- * @param {string} owner
- * @param {*} origin
- * @return {boolean}
- */
-export function has (owner, origin) {
-	return !!owner[origin]
 }
