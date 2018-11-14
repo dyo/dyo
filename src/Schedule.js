@@ -45,10 +45,9 @@ export function suspend (fiber, value) {
  * @param {*} secondary
  * @param {*} tertiary
  * @param {string} origin
- * @return {function}
  */
 export function callback (fiber, element, instance, primary, secondary, tertiary, origin) {
-	return fiber.callback = executor.bind(null, fiber, element, instance, primary, secondary, tertiary, origin, fiber.callback)
+	fiber.callback = executor.bind(null, fiber, element, instance, primary, secondary, tertiary, origin, fiber.callback)
 }
 
 /**

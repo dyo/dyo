@@ -3,86 +3,28 @@ import * as Enum from './Enum.js'
 import Registry from './Registry.js'
 
 /**
- * @param {object} fiber
  * @param {object} owner
- * @param {object} parent
- * @return {object}
- */
-export function iterator (fiber, owner, parent) {
-	return fiber.iterator = fiber.iterator || owner.createTreeWalker(parent)
-}
-
-/**
- * @param {object} fiber
- * @param {object} owner
- * @param {object} parent
- * @param {number} pid
  * @param {number} uid
  * @param {*} type
- * @param {object} props
  * @param {object} children
  * @param {*} context
  * @return {object}
  */
-export function create (fiber, owner, parent, pid, uid, type, props, children, context, index) {
-	if (index > Enum.search) {
-		switch (uid) {
-			case Enum.node:
-				return context ? owner.createElementNS(context, type) : owner.createElement(type)
-			case Enum.text:
-				return owner.createTextNode(children)
-			case Enum.comment:
-				return owner.createComment(children)
-			case Enum.portal: case Enum.empty:
-				return owner.createTextNode('')
-			case Enum.thenable: case Enum.fragment:
-				return owner.createDocumentFragment()
-			case Enum.target:
-				return target(type, owner)
-		}
-	} else {
-		return search(fiber, owner, parent, pid, uid, type, props, children, context, index, iterator(fiber, owner, parent))
+export function create (owner, uid, type, children, context) {
+	switch (uid) {
+		case Enum.node:
+			return context ? owner.createElementNS(context, type) : owner.createElement(type)
+		case Enum.text:
+			return owner.createTextNode(children)
+		case Enum.comment:
+			return owner.createComment(children)
+		case Enum.portal: case Enum.empty:
+			return owner.createTextNode('')
+		case Enum.thenable: case Enum.fragment:
+			return owner.createDocumentFragment()
+		case Enum.target:
+			return target(type, owner)
 	}
-}
-
-/**
- * @param {object} fiber
- * @param {object} owner
- * @param {object} parent
- * @param {number} pid
- * @param {number} uid
- * @param {*} type
- * @param {object} props
- * @param {object} children
- * @param {object} context
- * @param {object} index
- * @param {*} iterator
- * @return {object}
- */
-export function search (fiber, owner, parent, pid, uid, type, props, children, context, index, iterator) {
-	var length = children.length
-	var instance = iterator.nextNode()
-
-	while (instance = iterator.currentNode) {
-		if (type === instance.nodeName.toLowerCase()) {
-			if (uid > Enum.node) {
-				if (children !== instance.nodeValue) {
-					content(instance, children)
-				}
-			} else if (pid === Enum.target) {
-				parent.appendChild(instance)
-			}
-
-			return instance
-		} else if (uid > Enum.portal) {
-			iterator.nextSibling()
-			parent.removeChild(instance)
-		} else {
-			break
-		}
-	}
-
-	return create(fiber, owner, parent, pid, uid, type, props, children, context, -index, iterator)
 }
 
 /**

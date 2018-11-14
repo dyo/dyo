@@ -80,7 +80,7 @@ export function update (fiber, host, parent, a, b, c, idx) {
  * @param {number} idx
  */
 export function type (fiber, host, parent, a, b, c, idx) {
-	Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, c[idx] = b, idx), a)
+	Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, c[idx] = b), a)
 	Schedule.dispatch(fiber, Enum.unmount, host, parent, a, Node.destroy(fiber, a))
 }
 
@@ -156,7 +156,7 @@ export function children (fiber, host, parent, a, b) {
 			if (bidx <= bend) {
 				atail = a[aend + 1]
 				while (bidx <= bend) {
-					Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, btail = b[bidx], bidx), atail)
+					Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, btail = b[bidx]), atail)
 					a.splice(bidx++, 0, btail)
 				}
 			}
@@ -184,7 +184,7 @@ export function children (fiber, host, parent, a, b) {
 				Schedule.dispatch(fiber, Enum.unmount, host, parent, ahead, Node.destroy(fiber, ahead))
 				a.splice((ahead = a[aidx + 1], --delta, --aend, aidx), 1)
 			} else if (akeys[bhead.key] === undefined) {
-				Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, bhead, aidx), ahead)
+				Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, bhead), ahead)
 				a.splice((++delta, ++aend, aidx), 0, bhead)
 				ahead = a[++aidx], bhead = b[++bidx]
 			} else {

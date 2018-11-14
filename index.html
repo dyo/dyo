@@ -11,7 +11,7 @@
 		box-sizing: border-box;
 	}
 
-	body {
+	html {
 		margin: 0;
 		padding: calc(var(--pt)*4);
 		font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
@@ -56,7 +56,7 @@
 		stroke-dashoffset: 0;
 		-webkit-transform-origin: center;
 		transform-origin: center;
-    animation: dash-keyframe 1.3s ease-in-out infinite;
+		animation: dash-keyframe 1.3s ease-in-out infinite;
 	}
 
 	.spinner circle {
@@ -75,38 +75,33 @@
 		100% { stroke-dashoffset: 100; transform: rotate(450deg); }
 	}
 	@keyframes rotate-keyframe {
-	  0% { transform: rotate(0deg); }
-	  100% { transform: rotate(270deg); }
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(270deg); }
 	}
+
+main {
+	display: grid;
+	grid-template-columns: 200px 200px;
+}
 </style>
-<main id="main">Remove me!</main>
-<section id="section"></section>
-<article id="article"></article>
+
+<header id=c><h1>16,000 nodes</h1></header>
+<main>
+	<section id="a"></section>
+	<section id="b"></section>
+</main>
+
+<script>
+	window.process = {env: {NODE_ENV: 'development'}}
+</script>
 
 <script type=module>
 	import {h, render, Component, Fragment, createPortal, createComment} from './index.js'
-	// import {h, render, Component, Fragment, createPortal, createComment} from 'https://unpkg.com/dio.js@9.1.1/dist/esm.js'
 
 	;(() => {
 		render(createPortal('Hello World', 'section', {class: 'foo'}), 'main')
 		render(createPortal('World Hello', 'article', {class: 'bar'}), 'main')
 		// render(null, 'main')
-	});
-
-	;(() => {
-		class Primary extends Component {
-			componentWillUnmount() {
-				return this.refs.heading.animate([{opacity: 1}, {opacity: 0}], {duration: 1500, fill: 'forwards'}).finished
-			}
-		}
-
-		render(h(Primary, h('h1', {ref: 'heading'}, 'Hello World')), 'main', (current) => {
-			console.log(current.textContent)
-		})
-
-		render(null, 'main', (current) => {
-			console.log(current.textContent)
-		})
 	});
 
 	;(() => {
@@ -128,77 +123,146 @@
 			console.log(current.innerHTML)
 		})
 	});
+</script>
 
-	{
-		const target = document.querySelector('main')
-		const assert = {html: html, equal: (a, e) => console.assert(a === e)}
+<script type='module'>
+	import {h, render, Component} from './index.js'
 
-		function grep (value) {
-			return value.replace(/[\n\t]|\s{2,}/g, '')
-		}
+	// class Primary extends Component {
+	// 	componentDidMount() {
+	// 		// console.log('Primary - Mount', ...arguments)
+	// 	}
+	// 	componentDidUpdate() {
+	// 		// console.log('Primary - Update', ...arguments)
+	// 	}
+	// }
 
-		function html (actual, expected) {
-			return assert.equal('innerHTML' in actual ? actual.innerHTML : grep(actual + ''), grep(expected))
-		}
+	// class Secondary extends Component {
+	// 	static propTypes(props) {
+	// 		return {
+	// 			value: (props, key, display, type) => {
+	// 				console.log(props, key,  display, type)
+	// 				return type
+	// 			}
+	// 		}
+	// 	}
+	// 	constructor(...args) {
+	// 		super(...args)
+	// 		this.state = {value: 2}
+	// 	}
+	// 	componentDidMount() {
+	// 		// console.log('Secondary - Mount', ...arguments)
+	// 	}
+	// 	componentDidUpdate() {
+	// 		// console.log('Secondary - Update', ...arguments)
+	// 	}
+	// 	handleEvent() {
+	// 		return {value: 3}
+	// 	}
+	// 	render({children}) {
+	// 		return h('div',
+	// 			h('button', {onClick: this}, 'Select'),
+	// 			h('h1', {class: 'heading', style: {color: 'red', 'fontSize': '80px'}}, 'Hello'),
+	// 			h('select', {value: this.state.value},
+	// 				h('option', {value: 1}, 1),
+	// 				h('option', {value: 2}, 2),
+	// 				h('option', {value: 3}, 3)
+	// 			),
+	// 			children
+	// 		)
+	// 	}
+	// }
 
-		const stack = [16807, 4022871197, 2147483647]
+	// render(h(Primary, {}, h(Secondary, h(Promise.resolve('World'), 'Loading...'))), 'main', (e) => {
+	// 	console.log('mount', e)
+	// })
 
-		function prng (value = stack[1] % stack[2]) {
-			return ((stack[1] = value * stack[0] % stack[2] - 1) - 1) / stack[2]
-		}
+	// render(h(Primary, h(Secondary, h(Promise.resolve('Hello'), 'Loading...'))), 'main', (e) => {
+	// 	console.log('update', e)
+	// })
 
-		function rand (value, array = value.slice(), length = array.length) {
-		  while (length) {
-		    const index = Math.floor(prng() * length--)
-		    const value = array[length]
+	// render(h(Primary, h('h1', 'Hello World')), 'main')
 
-		    array[length] = array[index]
-		    array[index] = value
-		  }
 
-		  return array
-		}
 
-		var a = [13,12,7,17,32,31,41,5,3,11,22,2,8,21,38,26,44,45,39,14,28,54,15,4,6,19,48,25,35,0,49,52,59,30,24,18,33,23,50,9,46,37,1,20,16,29,58,27,34,40,43,42,56,57,55,36,53,10,51,47]
-		var b = [30,1,33,13,12,35,10,20,23,9,43,11,59,37,50,38,0,56,29,53,14,3,40,18,2,19,5,44,7,28,25,46,31,54,55,6,39,27,26,16,47,21,49,24,58,36,4,17,52,48,34,22,42,8,51,32,57,41,15,45]
 
-		// var a = [7, 0, 1, 2, 3, 4, 5, 6]
-		// var b = [5, 1, 2, 3, 4, 0]
+	// const assert = {deepEqual() {}}
 
-		// var a = [7, 0, 1, 2, 3, 4, 5, 6]
-		// var b = [9, 5, 1, 2, 3, 4, 0]
+	// const target = 'main'
+	// const stack = []
 
-		// var a = [1,2,3,4,5]
-		// var b = [6,7,8,9,10]
+	// class Primary extends Component {
+	// 	componentDidCatch(error) { stack.push.apply(stack, error) }
+	// }
 
-		// var a = [1, 2, 3, 4, 5, 6, 7, 8]
-		// var b = [1, 2, 6, 7, 8]
+	// class Secondary extends Component {
+	// 	render({children}) { return h(Tertiary, children) }
+	// }
 
-		// var a = [1, 2, 6, 7, 8]
-		// var b = [1, 2, 3, 4, 5, 6, 7, 8]
+	// class Tertiary extends Component {
+	// 	static propTypes() {
+	// 		return {
+	// 			children(props, name, display, type) {
+	// 				if (typeof props[name] !== 'number') {
+	// 					return [props, name, display, type]
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-		var a = [1, 2, 3, 4, 5]
-		var b = [1, 2, 5, 6, 7]
+	// render(h(Primary, h(Secondary, 'prop')), target, (current) => {
+	// 	assert.deepEqual(stack, [''])
+	// })
 
-		var a = [2, 7, 8, 3, 4, 6, 9, 5, 0, 1]
-		var b = [0, 4, 6, 9, 5, 2, 8, 7, 3, 1]
+	// console.log(stack)
+;(() => {
+  var a = document.querySelector('#a')
+  var b = document.querySelector('#b')
+  var c = document.querySelector('#c')
 
-		// 2783469510
-		// 0469528731
-		//
-		// 0278346951
-		// 0469528731
+  function append (parent) {
+    parent.textContent = ''
+    for (var i = 0; i < 1000; i++) {
+      var div = document.createElement('div')
+      var txt = div.appendChild(document.createTextNode(`Hello ${i}`))
+      parent.appendChild(div)
+    }
+  }
 
-		console.time('render')
-		render(h('ul', a.map(v => h('li', {key: v}, v))), target)
-		render(h('ul', b.map(v => h('li', {key: v}, v))), target)
-		console.timeEnd('render')
+  // 1 ops because hydration is never a "hot" operation
+  // since it happens at most once per page load
+  // both varients share a similar cb function
+  // that sets up the stage, simulating an initial server rendered stage.
+  function bench (name, cb, fn, ops = 1) {
+    var start = performance.now()
+    for (var i = 0; i < ops; i++) {
+      cb()
+      fn()
+    }
+    var end = performance.now()
+    var res = `<h4>${name}: ${(((end-start)/ops) | 0)} ms/ops</h4>`
+    c.innerHTML += res
+    console.log(res)
+  }
 
-		var expected = target.innerHTML
-		var actual = `<ul>${b.map(v => `<li>${v}</li>`).join('')}</ul>`
+  // simulates the minimum amount of work hydration needs to atleast do.
+  bench('hydrate', () => append(a), () => {
+    var treeWalker = document.createTreeWalker(a)
+    while(treeWalker.nextNode()) {
+      var current = treeWalker.currentNode
+      if (current.nodeName.toLowerCase() === '#text') {
+        if (current.nodeValue === '#') {
+          throw '!'
+        }
+      }
+    }
+  })
 
-		console.log(actual === expected)
-	}
+  bench('create', () => append(b), () => {
+    append(b)
+  })
+})()
 </script>
 
 <script type=!module>
@@ -297,10 +361,4 @@
 	}
 
 	render(h(Application, data.entries), 'section')
-</script>
-
-<script type=!module>
-	import {h, render, Component, Fragment, Children} from './index.js'
-
-	// render(h(Promise.resolve(h('h1', 'Hello World'))), 'section')
 </script>

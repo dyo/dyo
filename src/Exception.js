@@ -110,7 +110,7 @@ export function propagate (fiber, host, element, exception, current) {
 		case Enum.component:
 			if (current !== element) {
 				if (recover(fiber, current, exception, current.instance)) {
-					return true
+					return
 				}
 			}
 		default:
@@ -127,9 +127,10 @@ export function propagate (fiber, host, element, exception, current) {
  * @param {object} element
  * @param {object} exception
  * @param {object} instance
+ * @return {boolean?}
  */
 export function recover (fiber, element, exception, instance) {
 	if (Lifecycle.has(instance, Enum.componentDidCatch)) {
-		return Schedule.callback(fiber, element, instance, exception.error, exception, exception, Enum.componentDidCatch)
+		return !Schedule.callback(fiber, element, instance, exception.error, exception, exception, Enum.componentDidCatch)
 	}
 }

@@ -12,30 +12,20 @@ import Registry from './Registry.js'
  * @param {*?} target
  * @param {function?} callback
  */
-export function hydrate (element, target, callback) {
-	dispatch(element, Interface.target(target), callback, Enum.search)
-}
-
-/**
- * @param {*} element
- * @param {*?} target
- * @param {function?} callback
- */
 export function render (element, target, callback) {
-	dispatch(element, Interface.target(target), callback, Enum.create)
+	dispatch(element, Interface.target(target), callback)
 }
 
 /**
  * @param {*} element
  * @param {*} target
  * @param {function?} callback
- * @param {*} initial
  */
-export function dispatch (element, target, callback, initial) {
+export function dispatch (element, target, callback) {
 	if (Registry.has(target)) {
 		Schedule.checkout(update, Registry.get(target), target, [Element.root(element)], callback)
 	} else {
-		Schedule.checkout(create, Element.target(element, target, Interface.clear(target)), target, initial, callback)
+		Schedule.checkout(create, Element.target(element, target, Interface.clear(target)), target, target, callback)
 	}
 }
 
@@ -43,10 +33,10 @@ export function dispatch (element, target, callback, initial) {
  * @param {object} fiber
  * @param {*} element
  * @param {*} target
- * @param {number} initial
+ * @param {number} current
  */
-export function create (fiber, element, target, initial) {
-	Node.create(fiber, element, element, element, initial)
+export function create (fiber, element, target, current) {
+	Node.create(fiber, element, element, element)
 	Registry.set(target, element)
 }
 

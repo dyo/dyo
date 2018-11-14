@@ -32,6 +32,13 @@ export var array = Array
 export var object = Object
 
 /**
+ * @constructor
+ * @param {string}
+ * @return {boolean}
+ */
+export var hop = object.hasOwnProperty
+
+/**
  * @param {object}
  * @return {Array<string>}
  */
@@ -46,10 +53,17 @@ export var create = object.create
 
 /**
  * @param {(object|function)}
- * @param {object?} a
+ * @param {*}
  * @return {(object|function)}
  */
-export var define = object.defineProperties
+export var property = object.defineProperty
+
+/**
+ * @param {(object|function)}
+ * @param {object?}
+ * @return {(object|function)}
+ */
+export var properties = object.defineProperties
 
 /**
  * @param {string?}
@@ -79,19 +93,19 @@ export function publish (callback) {
 
 /**
  * @param {function} callback
+ * @return {number}
+ */
+export function request (callback) {
+	return typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) : setTimeout(callback, 16)
+}
+
+/**
+ * @param {function} callback
  * @param {number} duration
  * @return {number}
  */
 export function timeout (callback, duration) {
 	return setTimeout(callback, duration | 0)
-}
-
-/**
- * @param {function} callback
- * @return {number}
- */
-export function request (callback) {
-	return typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) : setTimeout(callback, 16)
 }
 
 /**
@@ -129,7 +143,7 @@ export function report (message) {
  * @return {boolean}
  */
 export function fetchable (value) {
-	return value && typeof value.blob === 'function' && typeof value.json === 'function'
+	return value != null && typeof value.blob === 'function' && typeof value.json === 'function'
 }
 
 /**
@@ -137,7 +151,7 @@ export function fetchable (value) {
  * @return {boolean}
  */
 export function thenable (value) {
-	return value && typeof value.then === 'function'
+	return value != null && typeof value.then === 'function'
 }
 
 /**
@@ -163,7 +177,7 @@ export function is (a, b) {
  * @return {boolean}
  */
 export function has (value, key) {
-	return object.hasOwnProperty.call(value, key)
+	return hop.call(value, key)
 }
 
 /**
@@ -173,7 +187,7 @@ export function has (value, key) {
  * @return {function}
  */
 export function extend (value, props, proto) {
-	return proto ? define(value, {prototype: {value: create(proto, props)}}) : define(value.prototype, props), value
+	return proto ? property(value, 'prototype', {value: create(proto, props)}) : properties(value.prototype, props), value
 }
 
 /**
@@ -241,12 +255,12 @@ export function each (callback, value, index) {
 						break
 					}
 				}
-			} else if (typeof value[iterator] === 'function') {
+			} else if (iterable(value)) {
 				for (var i = index, j = value[iterator](), k = j.next(); !k.done; ++i) {
-					if (each(callback, k.value, i + index) == null) {
-						k = j.next()
-					} else {
+					if (each(callback, k.value, i + index) != null) {
 						break
+					} else {
+						k = j.next()
 					}
 				}
 			} else {
@@ -273,32 +287,34 @@ export function resolve (value, fulfilled, rejected) {
 /**
  * @param {function} callback
  */
-export function promise (callback) {
+export function promise (executor) {
 	function execute (value) {
 		try {
 			for (var i = 0, entries = execute.entries, value = execute.value = value; i < entries.length; i++) {
 				entries[i](value)
 			}
 		} finally {
-			execute.entries = []
-			execute.fulfill++
+			execute.entries = execute.fulfill = []
 		}
 	}
 
 	try {
-		return assign(execute, {then: function (callback) {
-			return promise(function (resolve) {
-				execute.entries.push(function (value) {
-					resolve(callback(value))
+		return assign(execute, {then: function (executor) {
+			return promise(function (fulfill) {
+				execute.entries.push(function callback (value) {
+					if (thenable(value)) {
+						resolve(value, callback)
+					} else {
+						fulfill(executor(value))
+					}
 				})
-
 				if (execute.fulfill) {
 					execute(execute.value)
 				}
 			})
-		}, entries: [], fulfill: 0})
+		}, entries: [], fulfill: false})
 	} finally {
-		callback(execute)
+		executor(execute)
 	}
 }
 
@@ -310,7 +326,7 @@ export function weakmap () {
 		key: symbol(),
 		has: function (k) { return has(k, this.key) },
 		get: function (k) { return k[this.key] },
-		set: function (k, v) { return k[this.key] = v, this }
+		set: function (k, v) { return property(k, this.key, {value: v, configurable: true}), this }
 	}
 }
 
@@ -318,9 +334,5 @@ export function weakmap () {
  * @return {string}
  */
 export function environment () {
-	try {
-		return typeof process !== 'object' ? '' : typeof process.env !== 'object' ? process.env : process.env.NODE_ENV + ''
-	} catch (error) {
-		return ''
-	}
+	return typeof process !== 'object' ? '' : typeof process.env !== 'object' ? process.env : process.env.NODE_ENV + ''
 }

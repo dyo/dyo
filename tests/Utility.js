@@ -1,62 +1,42 @@
-import {registry, publish} from '../src/Utility.js'
-
 describe('Utility', () => {
-	it('should support Promise fallback', () => {
-		const promise = globalThis.Promise
+	const p = Promise, w = WeakMap, s = Symbol
+
+	before(() => (globalThis.Promise = '', globalThis.WeakMap = '', globalThis.Symbol = ''))
+	after(() => (globalThis.Promise = p, globalThis.WeakMap = w, globalThis.Symbol = s))
+
+	it('should support Promise fallback', async () => {
+		const {publish} = await import('../src/Utility.js')
+
 		const stack = []
 		const refs = {}
 
-		try {
-			globalThis.Promise = undefined
+		new publish((resolve) => resolve(10)).then(v => stack.push(v)).then(v => stack.push(v))
 
-			new publish((resolve) => resolve(10)).then(v => stack.push(v)).then(v => stack.push(v))
+		const value = new publish((resolve) => refs.current = resolve)
 
-			const value = new publish((resolve) => refs.current = resolve)
-
-			value.then(v => stack.push(v)).then(v => stack.push(v))
-			refs.current(20)
-		} finally {
-			globalThis.Promise = promise
-		}
+		value.then(v => stack.push(v)).then(v => stack.push(v))
+		refs.current(20)
 
 		assert.deepEqual(stack, [10, 1, 20, 3])
-		assert.equal(globalThis.Promise, promise)
 	})
 
-	it('should support WeakMap fallback', () => {
-		const weakmap = globalThis.WeakMap
+	it('should support WeakMap fallback', async () => {
+		const {registry} = await import('../src/Utility.js')
+
 		const stack = []
 		const refs = {}
 
-		try {
-			globalThis.WeakMap = undefined
-			refs.current = registry()
+		refs.current = registry()
 
-			stack.push(refs.current.set(refs, 10).get(refs), refs.current.has(refs))
-			stack.push(refs.current.get({}), refs.current.has({}))
-		} finally {
-			globalThis.WeakMap = weakmap
-		}
+		stack.push(refs.current.set(refs, 10).get(refs), refs.current.has(refs))
+		stack.push(refs.current.get({}), refs.current.has({}))
 
 		assert.deepEqual(stack, [10, true, undefined, false])
-		assert.equal(globalThis.WeakMap, weakmap)
 	})
 
-	it('should support Symbol.iterator fallback', async () => {
-		const symbol = globalThis.Symbol
-		const stack = []
+	it('should support @@iterator fallback', async () => {
+		const {iterator} = await import('../src/Utility.js')
 
-		try {
-			globalThis.Symbol = undefined
-
-			const {iterator} = await import('../src/Utility.js?')
-
-			stack.push(iterator)
-		} finally {
-			globalThis.Symbol = symbol
-		}
-
-		assert.deepEqual(stack, ['@@iterator'])
-		assert.equal(globalThis.Symbol, symbol)
+		assert.deepEqual([iterator], ['@@iterator'])
 	})
 })

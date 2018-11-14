@@ -542,7 +542,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should render and update an async class component', () => {
+	it('should render and update an async class component', (done) => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {
@@ -553,12 +553,12 @@ describe('Component', () => {
 			assert.html(target, '1')
 
 			render(h(Primary, 2), target, (current) => {
-				assert.html(target, '2')
+				done(assert.html(target, '2'))
 			})
 		})
 	})
 
-	it('should render and update an async function component', () => {
+	it('should render and update an async function component', (done) => {
 		const target = document.createElement('div')
 
 		const Primary = async function ({children}) { return children }
@@ -567,12 +567,12 @@ describe('Component', () => {
 			assert.html(target, '1')
 
 			render(h(Primary, 2), target, (current) => {
-				assert.html(target, '2')
+				done(assert.html(target, '2'))
 			})
 		})
 	})
 
-	it('should render an async imports defualt export', () => {
+	it('should render an async imports defualt export', (done) => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {
@@ -580,11 +580,11 @@ describe('Component', () => {
 		}
 
 		render(h(Primary, 1), target, (current) => {
-			assert.html(current, '1')
+			done(assert.html(current, '1'))
 		})
 	})
 
-	it('should async defer unmount', () => {
+	it('should async defer unmount', (done) => {
 		const target = document.createElement('div')
 		const refs = {}
 
@@ -597,46 +597,48 @@ describe('Component', () => {
 		})
 
 		render(null, target, (current) => {
-			refs.current.then(() => assert.html(current, ''))
+			refs.current.then(() => {
+				done(assert.html(current, ''))
+			})
 		})
 	})
 
-	it('should handle async implicit setState in lifecycles', () => {
+	it('should render async implicit setState', (done) => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {
 			render(props, {children}) {
 				return children
 			}
-			componentDidMount(props) {
+			async componentDidMount(props) {
 				return {children: 'Hello'}
 			}
 		}
 
 		render(h(Primary), target, (current) => {
-			assert.html(current, 'Hello')
+			done(assert.html(current, 'Hello'))
 		})
 	})
 
-	it('should render a placeholder before async mount', () => {
+	it('should render placeholder between async resolution', (done) => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {}
 
 		render(h(Primary, h(Promise.resolve(1), 'Loading')), target, (current) => {
-			assert.html(target, '1')
+			done(assert.html(target, '1'))
 		})
 
 		assert.html(target, 'Loading')
 	})
 
-	it('should handle concurrect updates', () => {
+	it('should short circuit async render', (done) => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {}
 
 		render(h(Primary, h(Promise.resolve(1), 'Loading')), target, (current) => {
-			assert.html(current, '2')
+			done(assert.html(current, '2'))
 		})
 
 		assert.html(target, 'Loading')
@@ -644,5 +646,39 @@ describe('Component', () => {
 		render(2, target, (current) => {
 			assert.html(current, '2')
 		})
+	})
+
+	it('should short circuit stale async render', (done) => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {}
+
+		render(h(Primary, h(Promise.resolve(1), 'Loading')), target, (current) => {
+			assert.html(current, 'Loading')
+		})
+
+		assert.html(target, 'Loading')
+
+		render(h(Primary, h(Promise.resolve(2), 'Loading')), target, (current) => {
+			done(assert.html(current, '2'))
+		})
+	})
+
+	it('should update after async render timeout', (done) => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {}
+
+		render(h(Primary, h(Promise.resolve('Initial'), '..')), target, () => {
+			assert.html(target, '..')
+		})
+
+		assert.html(target, '..')
+
+		render(h(Primary, h(new Promise((r) => setTimeout(r, 120, 'Update')), {timeout: 40}, '...')), target, (current) => {
+			done(assert.html(target, 'Update'))
+		})
+
+		setTimeout(() => assert.html(target, '...'), 60)
 	})
 })

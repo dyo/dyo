@@ -12,20 +12,17 @@ import * as Interface from './Interface.js'
  * @param {object} host
  * @param {object} parent
  * @param {object} element
- * @param {number} index
  * @return {object}
  */
-export function resolve (fiber, host, parent, element, index) {
+export function resolve (fiber, host, parent, element) {
 	try {
-		return Component.create(fiber, host, parent, element, index)
+		return Component.create(fiber, host, parent, element)
 	} catch (error) {
-		if (Exception.resolve(fiber, host, element, error)) {
-			try {
-				return Element.put(element, create(fiber, host, parent, Element.empty(Enum.nan), index))
-			} finally {
-				if (!host.parent) {
-					Element.put(host, Element.pick(element))
-				}
+		try {
+			return Element.put(element, create(fiber, host, parent, Element.empty(Exception.resolve(fiber, host, element, error))))
+		} finally {
+			if (!host.parent) {
+				Element.put(host, Element.pick(element))
 			}
 		}
 	}
@@ -36,29 +33,23 @@ export function resolve (fiber, host, parent, element, index) {
  * @param {object} host
  * @param {object} parent
  * @param {object} element
- * @param {number} index
  * @return {object}
  */
-export function create (fiber, host, parent, element, index) {
-	var abs = index > -1 ? 1 : -1
-	var pid = parent.uid
+export function create (fiber, host, parent, element) {
 	var uid = element.uid
 	var type = element.type
-	var props = element.props
 	var children = element.children
-	var instance = parent.instance
-	var context = parent.context
 	var owner = element.owner = parent.owner
 
 	try {
 		switch (element.host = host, uid) {
 			case Enum.component:
-				return resolve(fiber, host, parent, element, index)
+				return resolve(fiber, host, parent, element)
 			case Enum.node:
-				context = element.context = Interface.context(context, type)
+				var context = element.context = Interface.context(parent.context, type)
 		}
 
-		instance = element.instance = Interface.create(fiber, owner, instance, pid, uid, type, props, children, context, index)
+		var instance = element.instance = Interface.create(owner, uid, type, children, context)
 
 		switch (uid) {
 			case Enum.text: case Enum.empty: case Enum.comment:
@@ -67,12 +58,12 @@ export function create (fiber, host, parent, element, index) {
 				element.owner = Interface.owner(instance)
 			default:
 				for (var i = 0; i < children.length; ++i) {
-					create(fiber, host, element, children[i], abs * (i + 1))
+					create(fiber, host, element, children[i])
 				}
 				if (uid !== Enum.thenable) {
-					Commit.props(parent, element, props)
+					Commit.props(parent, element, element.props)
 				} else {
-					Reconcile.update(fiber, host, parent, element, element, children, index)
+					Reconcile.update(fiber, host, parent, element, element, children, i)
 				}
 		}
 

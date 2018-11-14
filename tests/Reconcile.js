@@ -2,6 +2,7 @@ import {h, Component, Fragment, render} from 'dyo'
 
 describe('Reconcile', () => {
 	const target = document.createElement('div')
+
 	class Target extends Component {
 		render ({children}) { return children.map(v => h(Fragment, {key: v}, v)) }
 	}

@@ -10,7 +10,7 @@ export var development = Utility.environment() === 'development'
  */
 export function types (element, properties, origin) {
 	if (development) {
-		validate(element, properties, element.type[origin], origin)
+		dispatch(element, properties, element.type[origin], origin)
 	}
 }
 
@@ -19,18 +19,27 @@ export function types (element, properties, origin) {
  * @param {object} properties
  * @param {object?} validators
  * @param {string} origin
- * @return {object}
  */
-export function validate (element, properties, validators, origin) {
+export function dispatch (element, properties, validators, origin) {
 	if (validators) {
 		if (typeof validators === 'function') {
-			validate(element, properties, validators.call(element.type, properties), origin)
+			dispatch(element, properties, validators.call(element.type, properties), origin)
 		} else {
-			for (var key in validators) {
-				if (key = validators[key](properties, key, Element.display(element), origin)) {
-					throw key
-				}
-			}
+			validate(Element.display(element), properties, validators, origin)
+		}
+	}
+}
+
+/**
+ * @param {string} element
+ * @param {object} properties
+ * @param {object?} validators
+ * @param {string} origin
+ */
+export function validate (element, properties, validators, origin) {
+	for (var key in validators) {
+		if (key = validators[key](properties, key, element, origin)) {
+			throw key
 		}
 	}
 }
