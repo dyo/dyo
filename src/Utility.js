@@ -1,9 +1,4 @@
 /**
- * @return {number}
- */
-export var now = Date.now
-
-/**
  * @type {object}
  */
 export var math = Math
@@ -12,12 +7,6 @@ export var math = Math
  * @return {number}
  */
 export var random = math.random
-
-/**
- * @param {number}
- * @return {number}
- */
-export var abs = math.abs
 
 /**
  * @constructor
@@ -85,34 +74,11 @@ export function registry () {
 
 /**
  * @param {function} callback
- * @return {object}
- */
-export function publish (callback) {
-	return typeof Promise === 'function' ? new Promise(callback) : promise(callback)
-}
-
-/**
- * @param {function} callback
- * @return {number}
- */
-export function request (callback) {
-	return typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) : setTimeout(callback, 16)
-}
-
-/**
- * @param {function} callback
  * @param {number} duration
  * @return {number}
  */
 export function timeout (callback, duration) {
 	return setTimeout(callback, duration | 0)
-}
-
-/**
- * @return {object}
- */
-export function deadline () {
-	return publish(request)
 }
 
 /**
@@ -138,7 +104,7 @@ export function report (message) {
 	console.error(message)
 }
 
-/*
+/**
  * @param {*} value
  * @return {boolean}
  */
@@ -209,13 +175,13 @@ export function assign (a, b) {
  * @return {object}
  */
 export function defaults (a, b) {
-  for (var key in b) {
-    if (a[key] === undefined) {
-      a[key] = b[key]
-    }
-  }
+	for (var key in b) {
+		if (a[key] === undefined) {
+			a[key] = b[key]
+		}
+	}
 
-  return a
+	return a
 }
 
 /**
@@ -282,40 +248,6 @@ export function resolve (value, fulfilled, rejected) {
 	return value.then(function (value) {
 		return fetchable(value) ? resolve(value.json(), fulfilled, rejected) : fulfilled(value)
 	}, rejected)
-}
-
-/**
- * @param {function} callback
- */
-export function promise (executor) {
-	function execute (value) {
-		try {
-			for (var i = 0, entries = execute.entries, value = execute.value = value; i < entries.length; i++) {
-				entries[i](value)
-			}
-		} finally {
-			execute.entries = execute.fulfill = []
-		}
-	}
-
-	try {
-		return assign(execute, {then: function (executor) {
-			return promise(function (fulfill) {
-				execute.entries.push(function callback (value) {
-					if (thenable(value)) {
-						resolve(value, callback)
-					} else {
-						fulfill(executor(value))
-					}
-				})
-				if (execute.fulfill) {
-					execute(execute.value)
-				}
-			})
-		}, entries: [], fulfill: false})
-	} finally {
-		executor(execute)
-	}
 }
 
 /**

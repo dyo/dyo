@@ -3,29 +3,24 @@ export var key = -(-1 >>> 0)
 export var nan = NaN
 export var obj = {}
 
-// commit identifiers
-export var event = -15
-export var props = -14
-export var mount = -13
-export var unmount = -12
-export var content = -11
-export var callback = -10
-
-// render identifiers
-export var search = -1
-export var update = 0
-export var create = 1
+// dispatch identifiers
+export var event = -6
+export var props = -5
+export var mount = -4
+export var unmount = -3
+export var content = -2
+export var callback = -1
 
 // element identifiers
-export var thenable = 10
-export var fragment = 11
-export var component = 12
-export var target = 13
-export var portal = 14
-export var node = 15
-export var text = 16
-export var empty = 17
-export var comment = 18
+export var thenable = 1
+export var fragment = 2
+export var component = 3
+export var target = 4
+export var portal = 5
+export var node = 6
+export var text = 7
+export var empty = 8
+export var comment = 9
 
 // static identifiers
 export var defaultProps = 'defaultProps'

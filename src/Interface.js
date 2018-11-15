@@ -16,10 +16,10 @@ export function create (owner, uid, type, children, context) {
 			return context ? owner.createElementNS(context, type) : owner.createElement(type)
 		case Enum.text:
 			return owner.createTextNode(children)
-		case Enum.comment:
-			return owner.createComment(children)
 		case Enum.portal: case Enum.empty:
 			return owner.createTextNode('')
+		case Enum.comment:
+			return owner.createComment(children)
 		case Enum.thenable: case Enum.fragment:
 			return owner.createDocumentFragment()
 		case Enum.target:
@@ -83,6 +83,14 @@ export function clear (parent) {
 
 /**
  * @param {object} parent
+ * @param {*} value
+ */
+export function content (parent, value) {
+	parent.nodeValue = value
+}
+
+/**
+ * @param {object} parent
  * @param {object} element
  */
 export function remove (parent, element) {
@@ -104,14 +112,6 @@ export function append (parent, element) {
  */
 export function insert (parent, element, sibling) {
 	parent.insertBefore(element, sibling)
-}
-
-/**
- * @param {object} parent
- * @param {*} value
- */
-export function content (parent, value) {
-	parent.nodeValue = value
 }
 
 /**

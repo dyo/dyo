@@ -74,197 +74,60 @@
 		50% { stroke-dashoffset: 50; transform: rotate(135deg); }
 		100% { stroke-dashoffset: 100; transform: rotate(450deg); }
 	}
+
 	@keyframes rotate-keyframe {
 		0% { transform: rotate(0deg); }
 		100% { transform: rotate(270deg); }
 	}
-
-main {
-	display: grid;
-	grid-template-columns: 200px 200px;
-}
 </style>
+<main></main>
+<script>window.process = {env: {NODE_ENV: 'development'}}</script>
 
-<header id=c><h1>16,000 nodes</h1></header>
-<main>
-	<section id="a"></section>
-	<section id="b"></section>
-</main>
-
-<script>
-	window.process = {env: {NODE_ENV: 'development'}}
+<script type='module'>
+import {h, render, Component} from './index.js'
 </script>
 
 <script type=module>
-	import {h, render, Component, Fragment, createPortal, createComment} from './index.js'
-
-	;(() => {
-		render(createPortal('Hello World', 'section', {class: 'foo'}), 'main')
-		render(createPortal('World Hello', 'article', {class: 'bar'}), 'main')
-		// render(null, 'main')
-	});
-
-	;(() => {
-		class Primary extends Component {}
-
-		const A = new Promise((r) => r('1'))
-		const B = new Promise((r) => {
-			setTimeout(r, 3000, '2')
-			// r('2')
-		})
-
-		render(h('div', h(A, {timeout: 0}, 'Loading')), 'main', (current) => {
-			console.log(current.innerHTML)
-		})
-
-		console.log('-----')
-
-		render(h('div', h(B, {timeout: 1200}, 'Loading')), 'main', (current) => {
-			console.log(current.innerHTML)
-		})
-	});
-</script>
-
-<script type='module'>
 	import {h, render, Component} from './index.js'
 
 	// class Primary extends Component {
-	// 	componentDidMount() {
-	// 		// console.log('Primary - Mount', ...arguments)
-	// 	}
-	// 	componentDidUpdate() {
-	// 		// console.log('Primary - Update', ...arguments)
-	// 	}
-	// }
-
-	// class Secondary extends Component {
-	// 	static propTypes(props) {
-	// 		return {
-	// 			value: (props, key, display, type) => {
-	// 				console.log(props, key,  display, type)
-	// 				return type
-	// 			}
-	// 		}
-	// 	}
-	// 	constructor(...args) {
-	// 		super(...args)
-	// 		this.state = {value: 2}
-	// 	}
-	// 	componentDidMount() {
-	// 		// console.log('Secondary - Mount', ...arguments)
-	// 	}
-	// 	componentDidUpdate() {
-	// 		// console.log('Secondary - Update', ...arguments)
-	// 	}
-	// 	handleEvent() {
-	// 		return {value: 3}
-	// 	}
-	// 	render({children}) {
-	// 		return h('div',
-	// 			h('button', {onClick: this}, 'Select'),
-	// 			h('h1', {class: 'heading', style: {color: 'red', 'fontSize': '80px'}}, 'Hello'),
-	// 			h('select', {value: this.state.value},
-	// 				h('option', {value: 1}, 1),
-	// 				h('option', {value: 2}, 2),
-	// 				h('option', {value: 3}, 3)
-	// 			),
-	// 			children
-	// 		)
+	// 	componentWillUnmount() {
+	// 		setTimeout(() => {
+	// 			this.setState({value: 'World'}, () => {
+	// 				console.log('done')
+	// 			})
+	// 		}, 100)
 	// 	}
 	// }
 
-	// render(h(Primary, {}, h(Secondary, h(Promise.resolve('World'), 'Loading...'))), 'main', (e) => {
-	// 	console.log('mount', e)
-	// })
+	// render(h(Primary, "Hello"), 'main')
+	// render(null, 'main')
 
-	// render(h(Primary, h(Secondary, h(Promise.resolve('Hello'), 'Loading...'))), 'main', (e) => {
-	// 	console.log('update', e)
-	// })
+	(async () => {
+		class Primary extends Component {
+			async componentDidMount() {
+				await this.setState(new Promise((r) => setTimeout(r, 200)))
+				console.log('setState done!')
+			}
+		}
 
-	// render(h(Primary, h('h1', 'Hello World')), 'main')
+		var value = render(h(Primary, 'Hello World'), 'main')
 
+		value.then((value) => {
+			console.log(1, value)
+		})
 
+		value.then((value) => {
+			console.log(2, value)
+		}).then((value) => {
+			console.log(3, value)
+		})
 
+		await value
 
-	// const assert = {deepEqual() {}}
-
-	// const target = 'main'
-	// const stack = []
-
-	// class Primary extends Component {
-	// 	componentDidCatch(error) { stack.push.apply(stack, error) }
-	// }
-
-	// class Secondary extends Component {
-	// 	render({children}) { return h(Tertiary, children) }
-	// }
-
-	// class Tertiary extends Component {
-	// 	static propTypes() {
-	// 		return {
-	// 			children(props, name, display, type) {
-	// 				if (typeof props[name] !== 'number') {
-	// 					return [props, name, display, type]
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// render(h(Primary, h(Secondary, 'prop')), target, (current) => {
-	// 	assert.deepEqual(stack, [''])
-	// })
-
-	// console.log(stack)
-;(() => {
-  var a = document.querySelector('#a')
-  var b = document.querySelector('#b')
-  var c = document.querySelector('#c')
-
-  function append (parent) {
-    parent.textContent = ''
-    for (var i = 0; i < 1000; i++) {
-      var div = document.createElement('div')
-      var txt = div.appendChild(document.createTextNode(`Hello ${i}`))
-      parent.appendChild(div)
-    }
-  }
-
-  // 1 ops because hydration is never a "hot" operation
-  // since it happens at most once per page load
-  // both varients share a similar cb function
-  // that sets up the stage, simulating an initial server rendered stage.
-  function bench (name, cb, fn, ops = 1) {
-    var start = performance.now()
-    for (var i = 0; i < ops; i++) {
-      cb()
-      fn()
-    }
-    var end = performance.now()
-    var res = `<h4>${name}: ${(((end-start)/ops) | 0)} ms/ops</h4>`
-    c.innerHTML += res
-    console.log(res)
-  }
-
-  // simulates the minimum amount of work hydration needs to atleast do.
-  bench('hydrate', () => append(a), () => {
-    var treeWalker = document.createTreeWalker(a)
-    while(treeWalker.nextNode()) {
-      var current = treeWalker.currentNode
-      if (current.nodeName.toLowerCase() === '#text') {
-        if (current.nodeValue === '#') {
-          throw '!'
-        }
-      }
-    }
-  })
-
-  bench('create', () => append(b), () => {
-    append(b)
-  })
-})()
+		console.log('render done!')
+	})()
 </script>
-
 <script type=!module>
 	import {h, render, Component, Fragment, Children} from './index.js'
 
@@ -282,16 +145,9 @@ main {
 			if (typeof Object(error).then === 'function') {
 				var resolved = false
 
-				setTimeout(() => {
-					if (!resolved) {
-						this.setState({children: h(LoadingSpinner, {hidden: false})})
-					}
-				}, 3100)
+				setTimeout(() => !resolved && this.setState({children: h(LoadingSpinner, {hidden: false})}), 3100)
 
-				error.then(() => {
-					resolved = true
-					this.setState({children: this.props.fallback})
-				})
+				return error.then(() => (resolved = true, this.setState({children: this.props.fallback})))
 			} else {
 				this.setState({children: h('h1', 'Failed!!')})
 			}
@@ -320,28 +176,21 @@ main {
 		}
 	}
 
-	var ref = (a) => console.log('ref', a)
-
 	class ListItem {
 		handleEvent() {
-			return () => {
-				return {loading: !this.state.loading}
-			}
+			this.setState({loading: !this.state.loading}, () => {
+				console.log('done!')
+			})
 		}
 		componentWillUnmount() {
 			console.log('componentWillUnmount - ListItem')
 		}
 		componentDidUpdate(props, state) {
 			console.log('componentDidUpdate - ListItem')
-			// throw 1
 			throw new Promise((resolve) => setTimeout(resolve, 3000))
-			return () => {
-				// throw Promise.resolve()
-				throw new Promise((resolve) => setTimeout(resolve, 3000))
-			}
 		}
 		render ({name, username}, {loading}) {
-			return h('li', {ref: ref, onClick: this.handleEvent},
+			return h('li', {onClick: this.handleEvent},
 				h('div', h('strong', name), h('small', username)),
 				h(ArrorIcon, {hidden: loading}),
 				h(LoadingSpinner, {hidden: !loading})
@@ -360,5 +209,5 @@ main {
 		}
 	}
 
-	render(h(Application, data.entries), 'section')
+	render(h(Application, data.entries), 'main')
 </script>

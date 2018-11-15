@@ -17,18 +17,20 @@ export var descriptors = {
 	/**
 	 * @param {object} state
 	 * @param {function} callback
+	 * @return {object}
 	 */
 	setState: {
 		value: function (state, callback) {
-			dispatch(Registry.get(this), this, state, callback)
+			return dispatch(Registry.get(this), this, state, callback)
 		}
 	},
 	/**
 	 * @param {function} callback
+	 * @return {object}
 	 */
 	forceUpdate: {
 		value: function (callback) {
-			this.setState(Enum.obj, callback)
+			return this.setState(Enum.obj, callback)
 		}
 	}
 }
@@ -111,9 +113,10 @@ export function identity (constructor, prototype) {
  * @param {object} element
  * @param {object} instance
  * @param {(object|function)?} value
+ * @return {object}
  */
 export function dispatch (element, instance, value, callback) {
-	Schedule.checkout(enqueue, element, instance, value, callback)
+	return Schedule.checkout(enqueue, element, instance, value, callback)
 }
 
 /**
@@ -124,10 +127,18 @@ export function dispatch (element, instance, value, callback) {
  */
 export function enqueue (fiber, element, instance, value) {
 	if (value) {
-		if (Utility.thenable(value)) {
-			Utility.resolve(Schedule.suspend(fiber, value), enqueue.bind(null, fiber, element, instance))
-		} else {
-			Schedule.dispatch(fiber, Enum.component, element, element, element, value)
+		if (fiber !== value) {
+			switch (typeof value) {
+				case 'function':
+				case 'object':
+					if (Element.active(element)) {
+						if (Utility.thenable(value)) {
+							Utility.resolve(Schedule.suspend(fiber, value), enqueue.bind(null, fiber, element, instance))
+						} else {
+							Schedule.dispatch(fiber, Enum.component, element, element, element, value)
+						}
+					}
+			}
 		}
 	}
 }
@@ -183,7 +194,7 @@ export function create (fiber, host, parent, element, index) {
 	children = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context)), index)
 
 	if (Lifecycle.has(instance, Enum.componentDidMount)) {
-		Schedule.callback(fiber, element, instance, props, state, context, Enum.componentDidMount)
+		Schedule.enqueue(fiber, element, instance, props, state, context, Enum.componentDidMount)
 	}
 
 	return children
@@ -243,7 +254,7 @@ export function update (fiber, host, element, snapshot, value) {
 	Reconcile.children(fiber, element, parent, element.children, [Lifecycle.render(instance, props, state, context)])
 
 	if (Lifecycle.has(instance, Enum.componentDidUpdate)) {
-		Schedule.callback(fiber, element, instance, _props, _state, _context, Enum.componentDidUpdate)
+		Schedule.enqueue(fiber, element, instance, _props, _state, _context, Enum.componentDidUpdate)
 	}
 }
 
@@ -254,11 +265,10 @@ export function update (fiber, host, element, snapshot, value) {
  */
 export function destroy (fiber, element) {
 	var instance = element.instance
-	var children = Element.pick(element)
 
 	if (Lifecycle.has(instance, Enum.componentWillUnmount)) {
 		Lifecycle.dispatch(element, instance, instance.props, instance.state, instance.context, Enum.componentWillUnmount)
 	}
 
-	return Node.destroy(fiber, children)
+	return Node.destroy(fiber, Element.pick(element))
 }

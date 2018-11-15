@@ -121,9 +121,9 @@ export function set (element, value, instance)  {
  * @param {object} instance
  */
 export function ref (element, value, instance) {
-		Lifecycle.ref(element, element.ref, null)
+	Lifecycle.ref(element, element.ref, null)
 
-		if (value) {
-			Lifecycle.ref(element, element.ref = value, instance)
-		}
+	if (value) {
+		Lifecycle.ref(element, element.ref = value, instance)
+	}
 }

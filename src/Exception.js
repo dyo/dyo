@@ -16,7 +16,7 @@ export var struct = Utility.extend(function (host, element, value) {
 	try {
 		this.error = value
 	} finally {
-		Registry.set(this, [host === element ? host.host : host, element, ''])
+		Registry.set(this, [host, element, ''])
 	}
 }, {
 	/**
@@ -46,9 +46,7 @@ export function report (exception) {
 	try {
 		throw exception.error
 	} finally {
-		if (exception.message = exception.toString()) {
-			Utility.report(exception.message)
-		}
+		Utility.report(exception.toString())
 	}
 }
 
@@ -68,7 +66,7 @@ export function display (element) {
  */
 export function trace (host, element, value) {
 	if (host.uid === Enum.target) {
-		return element.uid === Enum.target ? value : value + display(element)
+		return value + display(element)
 	} else {
 		return trace(host.host, element, display(host) + value)
 	}
@@ -81,7 +79,7 @@ export function trace (host, element, value) {
  * @return {object}
  */
 export function create (host, element, exception) {
-	return exception instanceof struct ? exception : new struct(host, element, exception)
+	return exception instanceof struct ? exception : new struct(host === element ? host.host : host, element, exception)
 }
 
 /**
@@ -131,6 +129,6 @@ export function propagate (fiber, host, element, exception, current) {
  */
 export function recover (fiber, element, exception, instance) {
 	if (Lifecycle.has(instance, Enum.componentDidCatch)) {
-		return !Schedule.callback(fiber, element, instance, exception.error, exception, exception, Enum.componentDidCatch)
+		return Schedule.enqueue(fiber, element, instance, exception.error, exception, exception, Enum.componentDidCatch)
 	}
 }

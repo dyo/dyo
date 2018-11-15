@@ -1,4 +1,3 @@
-import * as Enum from './Enum.js'
 import * as Element from './Element.js'
 import * as Reconcile from './Reconcile.js'
 import * as Node from './Node.js'
@@ -11,21 +10,23 @@ import Registry from './Registry.js'
  * @param {*} element
  * @param {*?} target
  * @param {function?} callback
+ * @return {object}
  */
 export function render (element, target, callback) {
-	dispatch(element, Interface.target(target), callback)
+	return dispatch(element, Interface.target(target), callback)
 }
 
 /**
  * @param {*} element
  * @param {*} target
  * @param {function?} callback
+ * @return {object}
  */
 export function dispatch (element, target, callback) {
 	if (Registry.has(target)) {
-		Schedule.checkout(update, Registry.get(target), target, [Element.root(element)], callback)
+		return Schedule.checkout(enqueue, Registry.get(target), target, [Element.root(element)], callback)
 	} else {
-		Schedule.checkout(create, Element.target(element, target, Interface.clear(target)), target, target, callback)
+		return Schedule.checkout(enqueue, Element.target(element, target, Interface.clear(target)), target, target, callback)
 	}
 }
 
@@ -33,9 +34,22 @@ export function dispatch (element, target, callback) {
  * @param {object} fiber
  * @param {*} element
  * @param {*} target
- * @param {number} current
+ * @param {*} current
  */
-export function create (fiber, element, target, current) {
+export function enqueue (fiber, element, target, current) {
+	if (current === target) {
+		create(fiber, element, current)
+	} else {
+		update(fiber, element, current)
+	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {*} element
+ * @param {*} target
+ */
+export function create (fiber, element, target) {
 	Node.create(fiber, element, element, element)
 	Registry.set(target, element)
 }
@@ -43,10 +57,8 @@ export function create (fiber, element, target, current) {
 /**
  * @param {object} fiber
  * @param {*} element
- * @param {*} target
- * @param {function?} callback
  * @param {object} children
  */
-export function update (fiber, element, target, children) {
+export function update (fiber, element, children) {
 	Reconcile.children(fiber, element, element, element.children, children)
 }

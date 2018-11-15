@@ -1,28 +1,12 @@
+import {registry} from '../src/Utility.js'
+
 describe('Utility', () => {
-	const p = Promise, w = WeakMap, s = Symbol
+	const pr = process, ev = process.env, pm = Promise, wm = WeakMap, sm = Symbol
 
 	before(() => (globalThis.Promise = '', globalThis.WeakMap = '', globalThis.Symbol = ''))
-	after(() => (globalThis.Promise = p, globalThis.WeakMap = w, globalThis.Symbol = s))
-
-	it('should support Promise fallback', async () => {
-		const {publish} = await import('../src/Utility.js')
-
-		const stack = []
-		const refs = {}
-
-		new publish((resolve) => resolve(10)).then(v => stack.push(v)).then(v => stack.push(v))
-
-		const value = new publish((resolve) => refs.current = resolve)
-
-		value.then(v => stack.push(v)).then(v => stack.push(v))
-		refs.current(20)
-
-		assert.deepEqual(stack, [10, 1, 20, 3])
-	})
+	after(() => (globalThis.Promise = pm, globalThis.WeakMap = wm, globalThis.Symbol = sm))
 
 	it('should support WeakMap fallback', async () => {
-		const {registry} = await import('../src/Utility.js')
-
 		const stack = []
 		const refs = {}
 
@@ -35,8 +19,25 @@ describe('Utility', () => {
 	})
 
 	it('should support @@iterator fallback', async () => {
-		const {iterator} = await import('../src/Utility.js')
+		const {iterator} = await import('../src/Utility.js?')
 
 		assert.deepEqual([iterator], ['@@iterator'])
+	})
+
+	it('should support process detection outside node', async () => {
+		const {environment} = await import('../src/Utility.js?')
+
+		try {
+			process.env = 'development'
+			assert.equal(environment(), 'development')
+			delete globalThis.process
+			assert.equal(environment(), '')
+		} finally {
+			globalThis.process = pr
+			process.env = ev
+		}
+
+		assert.equal(process, pr)
+		assert.equal(process.env, ev)
 	})
 })

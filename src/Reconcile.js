@@ -1,9 +1,21 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Component from './Component.js'
 import * as Node from './Node.js'
 import * as Schedule from './Schedule.js'
+
+/**
+ * @param {object} fiber
+ * @param {object} host
+ * @param {object} parent
+ * @param {object} a
+ * @param {object} b
+ */
+export function enqueue (fiber, host, parent, a, b) {
+	if (Element.active(a)) {
+		children(fiber, host, parent, a, b)
+	}
+}
 
 /**
  * @param {object} fiber
@@ -18,14 +30,14 @@ export function resolve (fiber, host, parent, a, b, c, type) {
 	if (!(a.context = a === b)) {
 		Utility.timeout(function () {
 			if (!a.context) {
-				children(fiber, host, parent, c, b.children)
+				enqueue(fiber, host, parent, c, b.children)
 			}
 		}, b.props.timeout)
 	}
 
 	Utility.resolve(Schedule.suspend(fiber, type), function (value) {
 		if (a.context = a.type === type) {
-			children(fiber, host, parent, c, Element.children(value))
+			enqueue(fiber, host, parent, c, Element.children(value))
 		}
 	})
 }
@@ -127,27 +139,27 @@ export function children (fiber, host, parent, a, b) {
 		outer: {
 			while (ahead.key === bhead.key) {
 				update(fiber, host, parent, ahead, bhead, a, aidx)
-			  if (++aidx > aend | ++bidx > bend) { break outer }
-			  ahead = a[aidx], bhead = b[bidx]
+				if (++aidx > aend | ++bidx > bend) { break outer }
+				ahead = a[aidx], bhead = b[bidx]
 			}
 			while (atail.key === btail.key) {
 				update(fiber, host, parent, atail, btail, a, aend)
-			  if (aidx > --aend | bidx > --bend) { break outer }
-			  atail = a[aend], btail = b[bend]
+				if (aidx > --aend | bidx > --bend) { break outer }
+				atail = a[aend], btail = b[bend]
 			}
 			if (atail.key === bhead.key) {
 				update(fiber, host, parent, atail, bhead, a, aidx)
 				Schedule.dispatch(fiber, Enum.mount, host, parent, atail, a[aidx])
 				a.splice(aidx, 0, (a.splice(aend, 1), ++delta, atail))
 				ahead = a[++aidx], bhead = b[++bidx], atail = a[aend]
-			  continue
+				continue
 			}
 			if (ahead.key === btail.key) {
 				update(fiber, host, parent, ahead, btail, a, aend)
 				Schedule.dispatch(fiber, Enum.mount, host, parent, ahead, a[aend + 1])
 				a.splice(aend, 0, (a.splice(aidx, 1), --delta, ahead))
 				atail = a[--aend], btail = b[--bend], ahead = a[aidx]
-			  continue
+				continue
 			}
 		}
 

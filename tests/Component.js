@@ -387,7 +387,23 @@ describe('Component', () => {
 		})
 	})
 
-	it('should not render a explicit setState(null)', () => {
+	it('should not render a non-object/function setState', () => {
+		const target = document.createElement('div')
+		const stack = []
+
+		class Primary extends Component {
+			getDerivedState() { return {value: 1} }
+			componentDidMount() { this.setState(true) }
+			render() { return stack.push(1), this.state.value }
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.lengthOf(stack, 1)
+			assert.html(target, '1')
+		})
+	})
+
+	it('should not render a null setState', () => {
 		const target = document.createElement('div')
 		const stack = []
 
@@ -403,7 +419,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should not render implicit setState(null)', () => {
+	it('should not render implicit null setState', () => {
 		const target = document.createElement('div')
 		const stack = []
 
@@ -572,7 +588,7 @@ describe('Component', () => {
 		})
 	})
 
-	it('should render an async imports defualt export', (done) => {
+	it('should render an async imports default export', (done) => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {
@@ -612,6 +628,23 @@ describe('Component', () => {
 			}
 			async componentDidMount(props) {
 				return {children: 'Hello'}
+			}
+		}
+
+		render(h(Primary), target, (current) => {
+			done(assert.html(current, 'Hello'))
+		})
+	})
+
+	it('should render async fetchable implicit setState', (done) => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {
+			render(props, {children}) {
+				return children
+			}
+			async componentDidMount(props) {
+				return {json: () => Promise.resolve({children: 'Hello'}), blob: () => {}}
 			}
 		}
 
@@ -676,9 +709,19 @@ describe('Component', () => {
 		assert.html(target, '..')
 
 		render(h(Primary, h(new Promise((r) => setTimeout(r, 120, 'Update')), {timeout: 40}, '...')), target, (current) => {
-			done(assert.html(target, 'Update'))
+			done(assert.html(current, 'Update'))
 		})
 
 		setTimeout(() => assert.html(target, '...'), 60)
+	})
+
+	it.skip('should render multiple async children', (done) => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {}
+
+		render(h(Primary, Promise.resolve('1'), Promise.resolve('2')), target, (current) => {
+			done(assert.html(current, '12'))
+		})
 	})
 })

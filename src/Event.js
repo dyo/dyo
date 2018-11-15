@@ -31,18 +31,17 @@ export function enqueue (fiber, element, event, callback) {
 		if (Utility.iterable(callback)) {
 			Utility.each(enqueue.bind(null, fiber, element, event), callback, 0)
 		} else {
-			Schedule.dispatch(fiber, Enum.event, element, event, callback, element.instance)
+			resolve(element, event, callback, element.instance)
 		}
 	}
 }
 
 /**
- * @param {object} fiber
  * @param {object} element
  * @param {object} event
  * @param {(function|object)} callback
  * @param {object} instance
  */
-export function resolve (fiber, element, event, callback, instance) {
+export function resolve (element, event, callback, instance) {
 	Lifecycle.event(element, event, callback, instance, instance.props, instance.state, instance.context)
 }

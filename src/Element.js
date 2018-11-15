@@ -5,6 +5,7 @@ import * as Assert from './Assert.js'
 import * as Event from './Event.js'
 
 /**
+ * @constructor
  * @param {number} uid
  * @param {*} key
  * @param {*} type
@@ -253,6 +254,14 @@ export function parent (element) {
  */
 export function sibling (element) {
 	return element.uid < Enum.target ? sibling(pick(element)) : element
+}
+
+/**
+ * @param {object} element
+ * @return {boolean}
+ */
+export function active (element) {
+	return element.parent !== null
 }
 
 /**

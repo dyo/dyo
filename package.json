@@ -18,10 +18,10 @@
 	"devDependencies": {
 		"dyo": "./",
 		"esm": "3.0.84",
-		"eslint": "5.6.1",
-		"rollup": "0.66.6",
+		"eslint": "5.9.0",
+		"rollup": "0.67.1",
 		"jsdom": "12.2.0",
-		"nyc": "13.0.1",
+		"nyc": "13.1.0",
 		"chai": "4.2.0",
 		"mocha": "5.2.0",
 		"coveralls": "3.0.2",
@@ -35,9 +35,11 @@
 		"start": "npm run build -- --watch",
 		"prepare": "npm run build",
 		"pretest": "npm run build",
-		"test": "nyc mocha --harmony --require esm scripts/tests.config.js --recursive tests",
-		"test-dev": "cross-env NODE_ENV=development npm test",
-		"test-prod": "cross-env NODE_ENV=production npm test"
+		"test": "nyc npm run test-all",
+		"test-all": "npm run test-dev && npm run test-prod",
+		"test-dev": "cross-env NODE_ENV=development npm run test-spec",
+		"test-prod": "cross-env NODE_ENV=production npm run test-spec",
+		"test-spec": "mocha --harmony --require esm scripts/tests.config.js --recursive tests"
 	},
 	"nyc": {
 		"temp-directory": "./coverage/.nyc_output",
@@ -49,9 +51,6 @@
 			"lcov",
 			"text"
 		]
-	},
-	"esm": {
-		"cache": false
 	},
 	"main": "./index.js",
 	"module": "dist/dio.es.js",

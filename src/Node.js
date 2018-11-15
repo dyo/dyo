@@ -38,7 +38,6 @@ export function resolve (fiber, host, parent, element) {
 export function create (fiber, host, parent, element) {
 	var uid = element.uid
 	var type = element.type
-	var children = element.children
 	var owner = element.owner = parent.owner
 
 	try {
@@ -49,6 +48,7 @@ export function create (fiber, host, parent, element) {
 				var context = element.context = Interface.context(parent.context, type)
 		}
 
+		var children = element.children
 		var instance = element.instance = Interface.create(owner, uid, type, children, context)
 
 		switch (uid) {
@@ -83,21 +83,25 @@ export function create (fiber, host, parent, element) {
  * @return {object}
  */
 export function destroy (fiber, element) {
-	switch (element.uid) {
-		case Enum.component:
-			return Component.destroy(fiber, element)
-		case Enum.text: case Enum.empty: case Enum.comment:
-			break
-		case Enum.target:
-			Schedule.dispatch(fiber, Enum.unmount, element, element, element, element)
-		case Enum.node:
-			if (element.ref !== null) {
-				Commit.ref(element)
-			}
-		default:
-			for (var i = 0, children = element.children; i < children.length; ++i) {
-				destroy(fiber, children[i])
-			}
+	try {
+		switch (element.uid) {
+			case Enum.component:
+				return Component.destroy(fiber, element)
+			case Enum.text: case Enum.empty: case Enum.comment:
+				break
+			case Enum.target:
+				Schedule.dispatch(fiber, Enum.unmount, element, element, element, element)
+			case Enum.node:
+				if (element.ref !== null) {
+					Commit.ref(element)
+				}
+			default:
+				for (var i = 0, children = element.children; i < children.length; ++i) {
+					destroy(fiber, children[i])
+				}
+		}
+	} finally {
+		element.parent = null
 	}
 
 	return element
