@@ -11,9 +11,9 @@ import * as Schedule from './Schedule.js'
  * @param {object} a
  * @param {object} b
  */
-export function enqueue (fiber, host, parent, a, b) {
+export function enqueue (fiber, host, parent, a, b, c) {
 	if (Element.active(a)) {
-		children(fiber, host, parent, a, b)
+		children(fiber, host, parent, b, c)
 	}
 }
 
@@ -30,14 +30,14 @@ export function resolve (fiber, host, parent, a, b, c, type) {
 	if (!(a.context = a === b)) {
 		Utility.timeout(function () {
 			if (!a.context) {
-				enqueue(fiber, host, parent, c, b.children)
+				enqueue(fiber, host, parent, a, c, b.children)
 			}
 		}, b.props.timeout)
 	}
 
 	Utility.resolve(Schedule.suspend(fiber, type), function (value) {
 		if (a.context = a.type === type) {
-			enqueue(fiber, host, parent, c, Element.children(value))
+			enqueue(fiber, host, parent, a, c, Element.children(value))
 		}
 	})
 }

@@ -81,52 +81,8 @@
 	}
 </style>
 <main></main>
-<script>window.process = {env: {NODE_ENV: 'development'}}</script>
-
 <script type='module'>
 import {h, render, Component} from './index.js'
-</script>
-
-<script type=module>
-	import {h, render, Component} from './index.js'
-
-	// class Primary extends Component {
-	// 	componentWillUnmount() {
-	// 		setTimeout(() => {
-	// 			this.setState({value: 'World'}, () => {
-	// 				console.log('done')
-	// 			})
-	// 		}, 100)
-	// 	}
-	// }
-
-	// render(h(Primary, "Hello"), 'main')
-	// render(null, 'main')
-
-	(async () => {
-		class Primary extends Component {
-			async componentDidMount() {
-				await this.setState(new Promise((r) => setTimeout(r, 200)))
-				console.log('setState done!')
-			}
-		}
-
-		var value = render(h(Primary, 'Hello World'), 'main')
-
-		value.then((value) => {
-			console.log(1, value)
-		})
-
-		value.then((value) => {
-			console.log(2, value)
-		}).then((value) => {
-			console.log(3, value)
-		})
-
-		await value
-
-		console.log('render done!')
-	})()
 </script>
 <script type=!module>
 	import {h, render, Component, Fragment, Children} from './index.js'

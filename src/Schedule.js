@@ -1,13 +1,11 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Component from './Component.js'
-import * as Event from './Event.js'
 import * as Commit from './Commit.js'
 import * as Lifecycle from './Lifecycle.js'
 import * as Exception from './Exception.js'
 
 export var frame = null
-export var stack = 0
 
 /**
  * @constructor
@@ -26,9 +24,7 @@ export var struct = Utility.extend(function () {
  * @return {void}
  */
 export function pop () {
-	if (--stack === 0) {
-		frame = null
-	}
+	frame = null
 }
 
 /**
@@ -36,14 +32,14 @@ export function pop () {
  * @return {object}
  */
 export function push (fiber) {
-	return ++stack, frame = fiber
+	return frame = fiber
 }
 
 /**
  * @param {function} value
  * @return {object}
  */
-export function then (value, v, b) {
+export function then (value) {
 	return this.archive = call.bind(null, this, value, this.archive), this
 }
 
@@ -116,7 +112,7 @@ export function suspend (fiber, value) {
  */
 export function receiver (fiber, value, callback, argument) {
 	try {
-		return callback.apply(null, [push(fiber)].concat(value)), argument
+		return callback.apply(null, [push(fiber)].concat(value, argument))
 	} finally {
 		pop()
 	}
@@ -181,8 +177,8 @@ export function finalize (fiber, primary, secondary) {
 		} finally {
 			finalize(fiber, primary, secondary)
 		}
-	} else if (typeof secondary === 'function') {
-		secondary(primary)
+	} else if (secondary) {
+		Lifecycle.callback(secondary, primary)
 	}
 }
 

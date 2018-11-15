@@ -36,7 +36,7 @@ export function ref (element, value, instance) {
  */
 export function callback (value, instance) {
 	if (typeof value === 'function') {
-		return instance ? value(instance) : value()
+		return value(instance)
 	}
 }
 

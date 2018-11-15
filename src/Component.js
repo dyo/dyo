@@ -127,18 +127,18 @@ export function dispatch (element, instance, value, callback) {
  */
 export function enqueue (fiber, element, instance, value) {
 	if (value) {
-		if (fiber !== value) {
-			switch (typeof value) {
-				case 'function':
-				case 'object':
-					if (Element.active(element)) {
-						if (Utility.thenable(value)) {
+		switch (typeof value) {
+			case 'function':
+			case 'object':
+				if (Element.active(element)) {
+					if (Utility.thenable(value)) {
+						if (fiber.constructor !== value.constructor) {
 							Utility.resolve(Schedule.suspend(fiber, value), enqueue.bind(null, fiber, element, instance))
-						} else {
-							Schedule.dispatch(fiber, Enum.component, element, element, element, value)
 						}
+					} else {
+						Schedule.dispatch(fiber, Enum.component, element, element, element, value)
 					}
-			}
+				}
 		}
 	}
 }

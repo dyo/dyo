@@ -623,12 +623,8 @@ describe('Component', () => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {
-			render(props, {children}) {
-				return children
-			}
-			async componentDidMount(props) {
-				return {children: 'Hello'}
-			}
+			render(props, {children}) { return children }
+			async componentDidMount(props) { return {children: 'Hello'} }
 		}
 
 		render(h(Primary), target, (current) => {
@@ -640,12 +636,8 @@ describe('Component', () => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {
-			render(props, {children}) {
-				return children
-			}
-			async componentDidMount(props) {
-				return {json: () => Promise.resolve({children: 'Hello'}), blob: () => {}}
-			}
+			render(props, {children}) { return children }
+			async componentDidMount(props) { return {json: () => Promise.resolve({children: 'Hello'}), blob: () => {}} }
 		}
 
 		render(h(Primary), target, (current) => {
@@ -715,7 +707,7 @@ describe('Component', () => {
 		setTimeout(() => assert.html(target, '...'), 60)
 	})
 
-	it.skip('should render multiple async children', (done) => {
+	it('should render multiple async children', (done) => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {}
@@ -723,5 +715,65 @@ describe('Component', () => {
 		render(h(Primary, Promise.resolve('1'), Promise.resolve('2')), target, (current) => {
 			done(assert.html(current, '12'))
 		})
+	})
+
+	it('should return thenable from render', (done) => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {}
+
+		render(h(Primary, Promise.resolve('1'), Promise.resolve('2')), target).then(() => assert.html(target, '12')).then(done)
+	})
+
+	it('should return thenable from setState', (done) => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {
+			componentDidMount() { this.setState(Promise.resolve({children: '1'})).then(() => assert.html(target, '1')).then(done) }
+			render(props, {children}) { return children }
+		}
+
+		render(h(Primary), target)
+
+		assert.html(target, '')
+	})
+
+	it('should not update from returned setState thenable', (done) => {
+		const target = document.createElement('div')
+		const stack = []
+
+		class Primary extends Component {
+			componentDidMount() { return this.setState() }
+			componentDidUpdate() { stack.push(false) }
+		}
+
+		render(h(Primary, "1"), target, (current) => {
+			done(assert.deepEqual(stack, []))
+		})
+	})
+
+	it('should not update unmounted component', (done) => {
+		const target = document.createElement('div')
+		const stack = []
+
+		class Primary extends Component {
+			componentWillUnmount() { setTimeout(() => { this.setState({value: '1'}), done(assert.deepEqual(stack, [])) }) }
+			componentDidUpdate() { stack.push(false) }
+		}
+
+		render(h(Primary, "1"), target, (current) => {
+			render(null, target)
+		})
+	})
+
+	it('should not update unmounted thenable', () => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {}
+
+		render(h(Primary, Promise.resolve('1')), target)
+		render(null, target)
+
+		assert.html(target, '')
 	})
 })

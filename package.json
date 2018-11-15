@@ -34,7 +34,7 @@
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
 		"start": "npm run build -- --watch",
 		"prepare": "npm run build",
-		"pretest": "npm run build",
+		"pretest": "npm run build && npm run lint",
 		"test": "nyc npm run test-all",
 		"test-all": "npm run test-dev && npm run test-prod",
 		"test-dev": "cross-env NODE_ENV=development npm run test-spec",
@@ -42,7 +42,7 @@
 		"test-spec": "mocha --harmony --require esm scripts/tests.config.js --recursive tests"
 	},
 	"nyc": {
-		"temp-directory": "./coverage/.nyc_output",
+		"temp-dir": "./coverage/.nyc_output",
 		"exclude": [
 			"scripts",
 			"tests"
@@ -51,6 +51,9 @@
 			"lcov",
 			"text"
 		]
+	},
+	"esm": {
+		"cache": false
 	},
 	"main": "./index.js",
 	"module": "dist/dio.es.js",

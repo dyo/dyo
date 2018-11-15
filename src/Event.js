@@ -1,4 +1,3 @@
-import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Lifecycle from './Lifecycle.js'
 import * as Schedule from './Schedule.js'
