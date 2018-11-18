@@ -11,9 +11,7 @@ cache:
     - node_modules
 install:
   - npm install
-  - npm run build
 script:
-  - npm run lint
   - npm test
 before_install:
   - |

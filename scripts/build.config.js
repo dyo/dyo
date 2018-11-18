@@ -1,7 +1,7 @@
 import pkg from '../package.json'
 import {terser} from "rollup-plugin-terser";
 
-const option = {
+const defaults = {
 	onwarn(warning, warn) {
 		switch (warning.code) {
 			case 'CIRCULAR_DEPENDENCY':
@@ -15,18 +15,20 @@ const option = {
 	input: 'index.js',
 }
 
+const options = {mangle: true, compress: false}
+
 /**
  * @type {object}
  */
 export default [
 	{
-		...option,
+		...defaults,
 		output: [{file: pkg.browser, format: 'umd', name: pkg.name, freeze: false, sourcemap: true}],
-		plugins: [terser()]
+		plugins: [terser(options)]
 	},
 	{
-		...option,
+		...defaults,
 		output: [{file: pkg.module, format: 'esm', name: pkg.name, freeze: false, sourcemap: true}],
-		plugins: [terser()]
+		plugins: [terser(options)]
 	}
 ]
