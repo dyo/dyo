@@ -57,7 +57,7 @@ describe('Exception', () => {
 		}
 
 		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['constructor', '\tat Primary\n\tat Secondary\n'])
+			assert.deepEqual(stack, ['constructor', '\tat Primary\n'])
 			assert.html(current, '')
 		})
 	})
@@ -484,6 +484,16 @@ describe('Exception', () => {
 
 		assert.throws(() => {
 			render(function Primary () { throw 'error!' }, target)
+		}, 'error!')
+		assert.deepEqual(stack, [])
+	})
+
+	it('should not catch nested exceptions', () => {
+		const target = document.createElement('div')
+		const stack = assert.spyr(console, 'error')
+
+		assert.throws(() => {
+			render(function Primary () { return function Secondary () { throw 'error!' } }, target)
 		}, 'error!')
 		assert.deepEqual(stack, ['\tat Primary\n'])
 	})

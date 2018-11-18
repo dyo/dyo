@@ -11,36 +11,36 @@ export function handle (event) {
 }
 
 /**
- * @param {object} element
+ * @param {object} host
  * @param {object} event
  * @param {*} callback
  */
-export function dispatch (element, event, callback) {
-	Schedule.checkout(enqueue, element, event, callback)
+export function dispatch (host, event, callback) {
+	Schedule.checkout(enqueue, host, event, callback)
 }
 
 /**
  * @param {object} fiber
- * @param {object} element
+ * @param {object} host
  * @param {object} event
  * @param {*} callback
  */
-export function enqueue (fiber, element, event, callback) {
+export function enqueue (fiber, host, event, callback) {
 	if (callback) {
 		if (Utility.iterable(callback)) {
-			Utility.each(enqueue.bind(null, fiber, element, event), callback, 0)
+			Utility.each(enqueue.bind(null, fiber, host, event), callback, 0, callback)
 		} else {
-			resolve(element, event, callback, element.instance)
+			resolve(host, event, callback, host.instance)
 		}
 	}
 }
 
 /**
- * @param {object} element
+ * @param {object} host
  * @param {object} event
  * @param {(function|object)} callback
  * @param {object} instance
  */
-export function resolve (element, event, callback, instance) {
-	Lifecycle.event(element, event, callback, instance, instance.props, instance.state, instance.context)
+export function resolve (host, event, callback, instance) {
+	Lifecycle.event(host, event, callback, instance, instance.props, instance.state, instance.context)
 }

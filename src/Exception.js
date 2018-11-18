@@ -9,14 +9,13 @@ import Registry from './Registry.js'
 /**
  * @constructor
  * @param {object} host
- * @param {object} element
  * @param {*} value
  */
-export var struct = Utility.extend(function (host, element, value) {
+export var struct = Utility.extend(function exception (host, value) {
 	try {
 		this.error = value
 	} finally {
-		Registry.set(this, [host, element, ''])
+		Registry.set(this, host)
 	}
 }, {
 	/**
@@ -33,53 +32,37 @@ export var struct = Utility.extend(function (host, element, value) {
 	 */
 	componentStack: {
 		get: function () {
-			return trace.apply(null, Registry.get(this))
+			return trace(Registry.get(this), '')
 		}
 	}
 })
 
 /**
- * @param {object} exception
- * @throws {*}
- */
-export function report (exception) {
-	try {
-		throw exception.error
-	} finally {
-		Utility.report(exception.toString())
-	}
-}
-
-/**
- * @param {object} element
- * @return {string}
- */
-export function display (element) {
-	return '\tat ' + Element.display(element) + '\n'
-}
-
-/**
  * @param {object} host
- * @param {object} element
  * @param {string} value
  * @return {string}
  */
-export function trace (host, element, value) {
-	if (host.uid === Enum.target) {
-		return value + display(element)
-	} else {
-		return trace(host.host, element, display(host) + value)
-	}
+export function trace (host, value) {
+	return host.uid === Enum.target ? value : trace(host.host, '\tat ' + Element.display(host) + '\n' + value)
 }
 
 /**
  * @param {object} host
- * @param {object} element
- * @param {*} exception
+ * @param {*} value
  * @return {object}
  */
-export function create (host, element, exception) {
-	return exception instanceof struct ? exception : new struct(host === element ? host.host : host, element, exception)
+export function create (host, value) {
+	return value instanceof struct ? value : new struct(host, value)
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} host
+ * @param {object} element
+ * @return {function}
+ */
+export function throws (fiber, host, element) {
+	return function (exception) { resolve(fiber, host, element, exception) }
 }
 
 /**
@@ -90,7 +73,7 @@ export function create (host, element, exception) {
  * @return {boolean?}
  */
 export function resolve (fiber, host, element, exception) {
-	return propagate(fiber, host, element, create(host, element, exception), host)
+	return propagate(fiber, host, element, create(host, exception), host)
 }
 
 /**
@@ -104,7 +87,13 @@ export function resolve (fiber, host, element, exception) {
 export function propagate (fiber, host, element, exception, current) {
 	switch (current.uid) {
 		case Enum.target:
-			return report(exception)
+			try {
+				throw exception.error
+			} finally {
+				if (exception.value = exception + '') {
+					Utility.report(exception.value)
+				}
+			}
 		case Enum.component:
 			if (current !== element) {
 				if (recover(fiber, current, exception, current.instance)) {

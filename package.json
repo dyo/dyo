@@ -1,7 +1,7 @@
 {
 	"name": "dyo",
-	"description": "A Library For Building User Interfaces.",
-	"version": "9.0.0",
+	"description": "Dyo is a JavaScript library for building user interfaces",
+	"version": "1.0.0",
 	"homepage": "https://github.com/thysultan/dio.js",
 	"license": "MIT",
 	"author": {
@@ -18,21 +18,21 @@
 	"devDependencies": {
 		"dyo": "./",
 		"esm": "3.0.84",
-		"eslint": "5.9.0",
-		"rollup": "0.67.1",
-		"jsdom": "12.2.0",
 		"nyc": "13.1.0",
 		"chai": "4.2.0",
 		"mocha": "5.2.0",
+		"jsdom": "12.2.0",
+		"eslint": "5.9.0",
 		"coveralls": "3.0.2",
-		"cross-env": "5.2.0"
+		"cross-env": "5.2.0",
+		"rollup-plugin-terser": "3.0.0",
+		"rollup": "0.67.3"
 	},
 	"scripts": {
 		"lint": "eslint ./src",
 		"build": "rollup --config scripts/build.config.js",
-		"spec": "",
-		"coverage": "nyc report --reporter=text-lcov | coveralls",
 		"start": "npm run build -- --watch",
+		"coverage": "nyc report --reporter=text-lcov | coveralls",
 		"prepare": "npm run build",
 		"pretest": "npm run build && npm run lint",
 		"test": "nyc npm run test-all",
@@ -55,14 +55,14 @@
 	"esm": {
 		"cache": false
 	},
-	"main": "./index.js",
-	"module": "dist/dio.es.js",
-	"types": "",
 	"files": [
 		"dist",
-		"src",
-		"pkg"
+		"pkg",
+		"src"
 	],
-	"unpkg": "",
-	"jsdelivr": ""
+	"main": "index.js",
+	"module": "./dist/dyo.esm.js",
+	"browser": "./dist/dyo.umd.js",
+	"unpkg": "./dist/dyo.umd.js",
+	"jsdelivr": "./dist/dyo.umd.js"
 }

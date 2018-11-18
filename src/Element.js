@@ -12,7 +12,7 @@ import * as Event from './Event.js'
  * @param {object} props
  * @param {object} children
  */
-export var struct = Utility.extend(function (uid, key, type, props, children) {
+export var struct = Utility.extend(function node (uid, key, type, props, children) {
 	this.uid = uid
 	this.key = key
 	this.type = type
@@ -22,7 +22,7 @@ export var struct = Utility.extend(function (uid, key, type, props, children) {
 	this.host = null
 	this.owner = null
 	this.parent = null
-	this.context = null
+	this.context = ''
 	this.instance = null
 }, {
 	/**
@@ -36,7 +36,7 @@ export var struct = Utility.extend(function (uid, key, type, props, children) {
  * @return {object}
  */
 export function empty (key) {
-	return new struct(Enum.empty, key, '#empty', null, '')
+	return new struct(Enum.empty, key, Enum.empty, null, '')
 }
 
 /**
@@ -45,7 +45,7 @@ export function empty (key) {
  * @return {object}
  */
 export function text (value, key) {
-	return new struct(Enum.text, key, '#text', null, value)
+	return new struct(Enum.text, key, Enum.text, null, value)
 }
 
 /**
@@ -54,7 +54,7 @@ export function text (value, key) {
  * @return {object}
  */
 export function comment (value, key) {
-	return new struct(Enum.comment, key, '#comment', null, value)
+	return new struct(Enum.comment, key, Enum.comment, null, value)
 }
 
 /**
@@ -63,7 +63,7 @@ export function comment (value, key) {
  * @return {object}
  */
 export function fragment (value, key) {
-	return new struct(Enum.fragment, key, '#fragment', null, (value.push(empty(Enum.key)), value))
+	return new struct(Enum.fragment, key, Enum.fragment, null, (value.push(empty(Enum.key)), value))
 }
 
 /**
@@ -73,7 +73,7 @@ export function fragment (value, key) {
  * @return {object}
  */
 export function portal (value, type, props) {
-	return new struct(Enum.portal, props && props.key, '#portal', null, [target(value, type, props)])
+	return new struct(Enum.portal, props && props.key, Enum.portal, null, [target(value, type, props)])
 }
 
 /**
@@ -90,30 +90,41 @@ export function target (value, type, props) {
  * @param {object} value
  * @return {object}
  */
-export function root (value) {
-	return from([value], 0)
+export function children (value) {
+	return [value, empty(Enum.key)]
 }
 
 /**
  * @param {object} value
- * @return {object?}
+ * @param {object} children
+ * @return {object}
  */
-export function children (value) {
-	return [from(value !== null && typeof value === 'object' && 'default' in value ? value.default : value, 0), empty(Enum.key)]
+export function root (value, children) {
+	return from([value], 0, children)
+}
+
+/**
+ * @param {object?} value
+ * @param {object} children
+ * @return {object}
+ */
+export function resolve (value, children) {
+	return from(value !== null && typeof value === 'object' && 'default' in value ? value.default : value, 0, children)
 }
 
 /**
  * @param {*} value
  * @param {number} index
+ * @param {object} children
  * @return {object}
  */
-export function from (value, index) {
+export function from (value, index, children) {
 	if (value != null) {
 		switch (typeof value) {
 			case 'number': case 'string':
 				return text(value, Utility.hash(index))
 			case 'boolean':
-				return from(null, index)
+				return from(null, index, children)
 			case 'function':
 				break
 			default:
@@ -164,7 +175,7 @@ export function create (a, b) {
 	} else {
 		if (size > 0) {
 			for (; i < length; ++i) {
-				children[index] = from(arguments[i], index++)
+				children[index] = from(arguments[i], index++, children)
 			}
 		}
 
@@ -185,12 +196,10 @@ export function identity (value) {
 		case 'number':
 			return Enum.fragment
 		case 'object':
-			if (Utility.thenable(value)) {
-				return Enum.thenable
-			}
+			return Enum.thenable
 	}
 
-	return Enum.node
+	return Enum.element
 }
 
 /**
@@ -237,7 +246,7 @@ export function clone (element) {
  * @return {boolean}
  */
 export function valid (element) {
-	return element instanceof struct
+	return element != null && element.constructor === struct
 }
 
 /**
@@ -254,14 +263,6 @@ export function parent (element) {
  */
 export function sibling (element) {
 	return element.uid < Enum.target ? sibling(pick(element)) : element
-}
-
-/**
- * @param {object} element
- * @return {boolean}
- */
-export function active (element) {
-	return element.parent !== null
 }
 
 /**

@@ -102,8 +102,8 @@ describe('Component', () => {
 				'getDerivedState',
 				'render',
 				'componentDidMount',
-				'getDerivedState',
 				'shouldComponentUpdate',
+				'getDerivedState',
 				'render',
 				'componentDidUpdate',
 				'componentWillUnmount'
@@ -129,8 +129,8 @@ describe('Component', () => {
 				'getDerivedState',
 				'render',
 				'componentDidMount',
-				'getDerivedState',
 				'shouldComponentUpdate',
+				'getDerivedState',
 				'render',
 				'componentDidUpdate',
 				'componentWillUnmount'
@@ -679,7 +679,7 @@ describe('Component', () => {
 		class Primary extends Component {}
 
 		render(h(Primary, h(Promise.resolve(1), 'Loading')), target, (current) => {
-			assert.html(current, 'Loading')
+			assert.html(current, '2')
 		})
 
 		assert.html(target, 'Loading')
@@ -722,20 +722,34 @@ describe('Component', () => {
 
 		class Primary extends Component {}
 
-		render(h(Primary, Promise.resolve('1'), Promise.resolve('2')), target).then(() => assert.html(target, '12')).then(done)
+		render(h(Primary, Promise.resolve('1'), Promise.resolve('2')), target).then(() => assert.html(target, '12')).then(() => done())
 	})
 
 	it('should return thenable from setState', (done) => {
 		const target = document.createElement('div')
 
 		class Primary extends Component {
-			componentDidMount() { this.setState(Promise.resolve({children: '1'})).then(() => assert.html(target, '1')).then(done) }
+			componentDidMount() { this.setState(Promise.resolve({children: '1'})).then(() => assert.html(target, '1')).then(() => done()) }
 			render(props, {children}) { return children }
 		}
 
 		render(h(Primary), target)
 
 		assert.html(target, '')
+	})
+
+	it('should not update from returned strictly equal state', (done) => {
+		const target = document.createElement('div')
+		const stack = []
+
+		class Primary extends Component {
+			componentDidMount() { return this.state }
+			componentDidUpdate() { stack.push(false) }
+		}
+
+		render(h(Primary, '1'), target, (current) => {
+			done(assert.deepEqual(stack, []))
+		})
 	})
 
 	it('should not update from returned setState thenable', (done) => {
@@ -747,7 +761,7 @@ describe('Component', () => {
 			componentDidUpdate() { stack.push(false) }
 		}
 
-		render(h(Primary, "1"), target, (current) => {
+		render(h(Primary, '1'), target, (current) => {
 			done(assert.deepEqual(stack, []))
 		})
 	})
@@ -761,7 +775,7 @@ describe('Component', () => {
 			componentDidUpdate() { stack.push(false) }
 		}
 
-		render(h(Primary, "1"), target, (current) => {
+		render(h(Primary, '1'), target, (current) => {
 			render(null, target)
 		})
 	})
@@ -775,5 +789,50 @@ describe('Component', () => {
 		render(null, target)
 
 		assert.html(target, '')
+	})
+
+	it('should not call async callbacks in the right order', (done) => {
+		const target = document.createElement('div')
+		const stack = []
+
+		class Primary extends Component {}
+
+		render(h(Primary, Promise.resolve('1')), target, (current) => {
+			return stack.push(0, current)
+		}).then((current) => {
+			return stack.push(1, current), new Promise((resolve) => setTimeout(() => resolve(stack.push(2)), 50))
+		}).then((current) => {
+			done(assert.deepEqual(stack, [0, current, 1, current, 2]))
+		})
+	})
+
+	it('should catch rejected promise states', (done) => {
+		const target = 'main'
+		const stack = []
+
+		class Primary extends Component {
+			componentDidCatch(error) { stack.push(error) }
+		}
+
+		class Secondary extends Component {
+			componentDidMount() { return new Promise((resolve, reject) => reject(1)) }
+		}
+
+		render(h(Primary, h(Secondary)), target, (current) => {
+			done(assert.deepEqual(stack, [1]))
+		})
+	})
+
+	it('should catch rejected promise elements', (done) => {
+		const target = 'main'
+		const stack = []
+
+		class Primary extends Component {
+			componentDidCatch(error) { stack.push(error) }
+		}
+
+		render(h(Primary, Promise.reject(1)), target, (current) => {
+			done(assert.deepEqual(stack, [1]))
+		})
 	})
 })

@@ -44,7 +44,7 @@ export function create (fiber, host, parent, element) {
 		switch (element.host = host, uid) {
 			case Enum.component:
 				return resolve(fiber, host, parent, element)
-			case Enum.node:
+			case Enum.element:
 				var context = element.context = Interface.context(parent.context, type)
 		}
 
@@ -55,7 +55,7 @@ export function create (fiber, host, parent, element) {
 			case Enum.text: case Enum.empty: case Enum.comment:
 				break
 			case Enum.target:
-				element.owner = Interface.owner(instance)
+				element.owner = Interface.from(instance)
 			default:
 				for (var i = 0; i < children.length; ++i) {
 					create(fiber, host, element, children[i])
@@ -91,7 +91,7 @@ export function destroy (fiber, element) {
 				break
 			case Enum.target:
 				Schedule.dispatch(fiber, Enum.unmount, element, element, element, element)
-			case Enum.node:
+			case Enum.element:
 				if (element.ref !== null) {
 					Commit.ref(element)
 				}
@@ -117,7 +117,7 @@ export function reparent (element, props, type) {
 	try {
 		Commit.props(element, element, props)
 	} finally {
-		element.owner = Interface.owner(element.instance = Interface.target(type, element.owner))
+		element.owner = Interface.from(element.instance = Interface.target(type, element.owner))
 	}
 
 	return element

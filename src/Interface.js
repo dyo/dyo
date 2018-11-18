@@ -12,7 +12,7 @@ import Registry from './Registry.js'
  */
 export function create (owner, uid, type, children, context) {
 	switch (uid) {
-		case Enum.node:
+		case Enum.element:
 			return context ? owner.createElementNS(context, type) : owner.createElement(type)
 		case Enum.text:
 			return owner.createTextNode(children)
@@ -44,7 +44,7 @@ export function target (value, owner) {
 			return target(owner, owner)
 		}
 	} else {
-		return target(value, document['@@document'] || document)
+		return target(value, from(document))
 	}
 }
 
@@ -52,8 +52,8 @@ export function target (value, owner) {
  * @param {object} value
  * @return {object}
  */
-export function owner (value) {
-	return value.ownerDocument
+export function from (value) {
+	return value.ownerDocument || value
 }
 
 /**
@@ -126,7 +126,7 @@ export function props (element, name, value, instance) {
 	} else {
 		switch (typeof value) {
 			case 'object': case 'function':
-				if (name.substr(0, 2) === 'on') {
+				if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110) {
 					return handler(element, name.substr(2).toLowerCase(), value, instance)
 				}
 		}

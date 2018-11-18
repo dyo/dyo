@@ -109,7 +109,7 @@ export function report (message) {
  * @return {boolean}
  */
 export function fetchable (value) {
-	return value != null && typeof value.blob === 'function' && typeof value.json === 'function'
+	return typeof value.blob === 'function' && typeof value.json === 'function'
 }
 
 /**
@@ -117,7 +117,7 @@ export function fetchable (value) {
  * @return {boolean}
  */
 export function thenable (value) {
-	return value != null && typeof value.then === 'function'
+	return typeof value.then === 'function'
 }
 
 /**
@@ -211,29 +211,30 @@ export function compare (a, b) {
  * @param {function} callback
  * @param {*?} value
  * @param {number} index
+ * @param {object} context
  */
-export function each (callback, value, index) {
+export function each (callback, value, index, context) {
 	if (value != null) {
 		if (typeof value === 'object') {
 			if (value.length > -1) {
 				for (var i = 0; i < value.length; ++i) {
-					if (each(callback, value[i], i + index) != null) {
+					if (each(callback, value[i], i + index, context) != null) {
 						break
 					}
 				}
 			} else if (iterable(value)) {
 				for (var i = index, j = value[iterator](), k = j.next(); !k.done; ++i) {
-					if (each(callback, k.value, i + index) != null) {
+					if (each(callback, k.value, i + index, context) != null) {
 						break
 					} else {
 						k = j.next()
 					}
 				}
 			} else {
-				return callback(value, index)
+				return callback(value, index, context)
 			}
 		} else {
-			return callback(value, index)
+			return callback(value, index, context)
 		}
 	}
 }
@@ -246,8 +247,15 @@ export function each (callback, value, index) {
  */
 export function resolve (value, fulfilled, rejected) {
 	return value.then(function (value) {
-		return fetchable(value) ? resolve(value.json(), fulfilled, rejected) : fulfilled(value)
+		return value && fetchable(value) ? resolve(value.json(), fulfilled, rejected) : fulfilled(value)
 	}, rejected)
+}
+
+/**
+ * @return {string}
+ */
+export function environment () {
+	return typeof process !== 'object' ? '' : typeof process.env !== 'object' ? process.env : process.env.NODE_ENV + ''
 }
 
 /**
@@ -260,11 +268,4 @@ export function weakmap () {
 		get: function (k) { return k[this.key] },
 		set: function (k, v) { return property(k, this.key, {value: v, configurable: true}), this }
 	}
-}
-
-/**
- * @return {string}
- */
-export function environment () {
-	return typeof process !== 'object' ? '' : typeof process.env !== 'object' ? process.env : process.env.NODE_ENV + ''
 }

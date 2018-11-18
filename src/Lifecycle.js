@@ -31,16 +31,6 @@ export function ref (element, value, instance) {
 }
 
 /**
- * @param {*} value
- * @param {object} instance
- */
-export function callback (value, instance) {
-	if (typeof value === 'function') {
-		return value(instance)
-	}
-}
-
-/**
  * @param {object} element
  * @param {object} value
  * @param {object} callback
@@ -63,10 +53,11 @@ export function event (element, value, callback, instance, props, state, context
  * @param {object} props
  * @param {object} state
  * @param {object} context
+ * @param {object} children
  * @return {object}
  */
-export function render (instance, props, state, context) {
-	return Element.from(instance.render(props, state, context), 0)
+export function render (instance, props, state, context, children) {
+	return Element.from(instance.render(props, state, context), 0, children)
 }
 
 /**

@@ -81,8 +81,183 @@
 	}
 </style>
 <main></main>
-<script type='module'>
-import {h, render, Component} from './index.js'
+<script src='./dist/dyo.umd.js'></script>
+<script type=module>
+	import * as dyo from './index.js'
+	// import * as dyo from './dist/dyo.esm.js'
+
+	const {h, render, Component} = dyo
+
+	;(() => {
+		var description = {
+			querySelector: that,
+			createElement: that,
+			createElementNS: that,
+			createComment: that,
+			createTextNode: that,
+			createDocumentFragment: that,
+			insertBefore: that,
+			appendChild: that,
+			removeChild: that,
+			addEventListener: noop,
+			setAttribute: noop,
+			removeAttribute: noop,
+			style: {setProperty: noop}
+		}
+
+		var owner = new (Object.defineProperty(function owner () {
+			this.nodeType = NaN
+			this.nodeValue = null
+			this.textContent = null
+			this.documentElement = this
+			this.ownerDocument = this
+		}, 'prototype', {value: description}))
+
+		function noop () {}
+
+		function that () { return this }
+
+		function kebab (str) {
+			return str.replace(/([A-Z])/, '-$1').toLowerCase()
+		}
+
+		function serialize (element) {
+			var type = element.type
+			var children = element.children
+
+			if (typeof children !== 'object') {
+				return type !== '#comment' ? children : '<!--' + children + '-->'
+			}
+
+			switch (typeof type) {
+				case 'string':
+					var props = properties(element.props, children)
+
+					switch (type) {
+						case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
+						case 'img': case 'col': case 'embed': case 'wbr': case 'track': case 'param':
+						case 'link': case 'input': case 'hr': case '!doctype':
+							return '<' + type + props + '>'
+					}
+
+					return '<' + type + props + '>' + children.map(serialize).join('') + '</' + type + '>'
+			}
+
+			return children.map(serialize).join('')
+		}
+
+		function properties (props, children) {
+			var payload = ''
+
+			for (var key in props) {
+				payload += property(key, props[key], props, children)
+			}
+
+			return payload
+		}
+
+		function property (name, value, props, children) {
+			switch (name) {
+				case 'innerHTML':
+					children.splice(0, children.length, h([], value))
+				case 'ref': case 'key':
+					return ''
+				case 'style':
+					if (typeof value !== 'string') {
+						value = style(value)
+					}
+			}
+
+			switch (value) {
+				case false: case null: case undefined:
+					return ''
+				case true:
+					value = name
+			}
+
+			switch (typeof value) {
+				case 'object': case 'function':
+					return ''
+			}
+
+			return ' ' + name + '="' + value + '"'
+		}
+
+		function style (value) {
+			var payload = ''
+
+			for (var key in value) {
+				payload += kebab(key) + ':' + value[key] + ';'
+			}
+
+			return payload
+		}
+
+		function header (value) {
+			if (typeof value === 'object') {
+				value['context-type'] = value['context-type'] || 'text/html'
+			}
+		}
+
+		function flush (value) {
+			if (typeof value.end === 'function') {
+				if (!value.finished) {
+					value.end()
+				}
+			}
+		}
+
+		function write (value) {
+			value.write(serialize(this))
+		}
+
+		function adopt (value) {
+			value.ownerDocument = owner, value.appendChild = value.removeChild = value.insertBefore = noop
+		}
+
+		function render(element, target, callback) {
+			if (target) {
+				if (typeof target.write === 'function') {
+					if (!target.ownerDocument) {
+						adopt(target.constructor.prototype)
+					}
+
+					try {
+						header(target.headers)
+					} finally {
+						return dyo.render(element, target, write).then(callback).then(flush)
+					}
+				}
+			}
+
+			return dyo.render(element, target, callback)
+		}
+
+		class Response {
+			get headers() { return this }
+			write(value) {
+				console.log(value)
+			}
+		}
+
+
+		const node = h('div',
+			h('img', {key: 1, ref: () => {}, onClick: () => {}, onLoad: {}, src: 'url'}),
+			h('h1', {
+				checked: true, disabled: false, class: 'title', style: {marginTop: '20px'},
+				tabIndex: 1, value: 'Hello', innerHTML: 'Inner HTML'
+			}),
+			'Hello', [' ', 'World']
+		)
+
+		const value = render(node, new Response, (current) => {
+			return console.log(1)
+		})
+
+		value.then((value) => {
+			console.log(2)
+		})
+	})();
 </script>
 <script type=!module>
 	import {h, render, Component, Fragment, Children} from './index.js'

@@ -29,7 +29,7 @@
 		"eol-last": ["error"],
 		"func-call-spacing": ["error", "never"],
 		"brace-style": ["error", "1tbs", { "allowSingleLine": true }],
-		"max-len": ["error", {"code": 140}],
+		"max-len": ["error", {"code": 160}],
 		"require-jsdoc": ["error", {"require": {"FunctionDeclaration": true}}],
 		"no-trailing-spaces": ["error", {"skipBlankLines": true}],
 		"no-constant-condition": ["off"]

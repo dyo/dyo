@@ -18,13 +18,13 @@ export function only (value) {
  * @return {number}
  */
 export function count (value) {
-	var length = 0
+	var children = {length: 0}
 
-	Utility.each(function () {
-		length++
-	}, value, 0)
+	Utility.each(function (value, index, children) {
+		children.length++
+	}, value, 0, children)
 
-	return length
+	return children.length
 }
 
 /**
@@ -35,11 +35,11 @@ export function count (value) {
 export function filter (value, callback) {
 	var children = []
 
-	Utility.each(function (v, i) {
-		if (callback(v, i)) {
-			children.push(v)
+	Utility.each(function (value, index, children) {
+		if (callback(value, index, children)) {
+			children.push(value)
 		}
-	}, value, 0)
+	}, value, 0, children)
 
 	return children
 }
@@ -50,15 +50,15 @@ export function filter (value, callback) {
  * @return {*?}
  */
 export function find (value, callback) {
-	var children = null
+	var children = {value: null}
 
-	Utility.each(function (v, i) {
-		if (callback(v, i)) {
-			return children = v
+	Utility.each(function (value, index) {
+		if (callback(value, index, children)) {
+			return children.value = value
 		}
 	}, value, 0)
 
-	return children
+	return children.value
 }
 
 /**
@@ -69,9 +69,9 @@ export function find (value, callback) {
 export function map (value, callback) {
 	var children = []
 
-	Utility.each(function (v, i) {
-		children.push(callback(v, i))
-	}, value, 0)
+	Utility.each(function (value, index, children) {
+		children.push(callback(value, index, children))
+	}, value, 0, children)
 
 	return children
 }
@@ -81,9 +81,9 @@ export function map (value, callback) {
  * @param {function} callback
  */
 export function each (value, callback) {
-	Utility.each(function (v, i) {
-		callback(v, i)
-	}, value, 0)
+	Utility.each(function (value, index, children) {
+		callback(value, index, children)
+	}, value, 0, [])
 }
 
 /**
@@ -93,9 +93,9 @@ export function each (value, callback) {
 export function array (value) {
 	var children = []
 
-	Utility.each(function (v) {
-		children.push(v)
-	}, value, 0)
+	Utility.each(function (value, index, children) {
+		children.push(value)
+	}, value, 0, children)
 
 	return children
 }

@@ -1,6 +1,7 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
+import * as Exception from './Exception.js'
 import * as Node from './Node.js'
 import * as Schedule from './Schedule.js'
 
@@ -12,7 +13,7 @@ import * as Schedule from './Schedule.js'
  * @param {object} b
  */
 export function enqueue (fiber, host, parent, a, b, c) {
-	if (Element.active(a)) {
+	if (a.parent !== null) {
 		children(fiber, host, parent, b, c)
 	}
 }
@@ -37,9 +38,9 @@ export function resolve (fiber, host, parent, a, b, c, type) {
 
 	Utility.resolve(Schedule.suspend(fiber, type), function (value) {
 		if (a.context = a.type === type) {
-			enqueue(fiber, host, parent, a, c, Element.children(value))
+			enqueue(fiber, host, parent, a, c, Element.children(Element.resolve(value, c)))
 		}
-	})
+	}, Exception.throws(fiber, host, parent))
 }
 
 /**
@@ -78,7 +79,7 @@ export function update (fiber, host, parent, a, b, c, idx) {
 			}
 		}
 
-		type(fiber, host, parent, a, b, c, idx)
+		replace(fiber, host, parent, a, b, c, idx)
 	}
 }
 
@@ -91,7 +92,7 @@ export function update (fiber, host, parent, a, b, c, idx) {
  * @param {object} c
  * @param {number} idx
  */
-export function type (fiber, host, parent, a, b, c, idx) {
+export function replace (fiber, host, parent, a, b, c, idx) {
 	Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, c[idx] = b), a)
 	Schedule.dispatch(fiber, Enum.unmount, host, parent, a, Node.destroy(fiber, a))
 }
@@ -178,7 +179,7 @@ export function children (fiber, host, parent, a, b) {
 				a.splice(aend--, 1)
 			}
 		} else if (((apos = aend + 1) - aidx) * ((bpos = bend + 1) - bidx) === 1) {
-			type(fiber, host, parent, ahead, bhead, a, aidx)
+			replace(fiber, host, parent, ahead, bhead, a, aidx)
 		} else {
 			// step 3, keymap/unmount(rl)/unmount(lr)/mount/move
 			if (akeys === bkeys) {
