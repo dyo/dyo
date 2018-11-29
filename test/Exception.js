@@ -1,4 +1,4 @@
-import {h, render, Component} from 'dyo'
+import {h, render, Component} from '../index.js'
 
 describe('Exception', () => {
 	it('should not render invalid elements', () => {
@@ -19,7 +19,7 @@ describe('Exception', () => {
 
 	it('should not render to an invalid target', () => {
 		assert.throws(() => {
-			render('hello', {}, (current) => {
+			render('hello', null, (current) => {
 				throw 'error!'
 			})
 		})

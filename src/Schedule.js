@@ -67,37 +67,25 @@ export function pending (fiber, value) {
 }
 
 /**
- * @param {object} fiber
- * @param {*} value
- * @return {object}
- */
-export function suspend (fiber, value) {
-	return fiber.pending ? resolve(fiber, [value], suspend) : fiber.pending = value, resolve(fiber, [], pending), value
-}
-
-/**
  * @param {*} fiber
  * @param {object} value
  * @param {function} callback
  * @return {object}
  */
-export function resolve (fiber, value, callback) {
-	return fiber.pending = Utility.resolve(fiber.pending, forward.bind(null, fiber, value, callback), pending.bind(null, fiber))
+export function resolve (fiber, value, fulfilled, rejected) {
+	return Utility.resolve(fiber.pending, forward.bind(fiber, fiber, value, fulfilled), forward.bind(fiber, fiber, value, rejected))
 }
 
 /**
  * @param {object} fiber
- * @param {object} value
- * @param {function} callback
- * @return {*}
+ * @param {*} value
+ * @return {object}
  */
-export function archive (fiber, value, callback) {
-	if (typeof callback === 'function') {
-		if (fiber.current = callback.call(fiber.element, value)) {
-			if (Utility.thenable(fiber.current)) {
-				return suspend(fiber, fiber.current)
-			}
-		}
+export function suspend (fiber, value, fulfilled, rejected) {
+	if (fiber.pending) {
+		return fiber.pending = resolve(fiber, [fiber, value, fulfilled, rejected], suspend, suspend)
+	} else {
+		return fiber.pending = value, fiber.pending = resolve(fiber, [], fulfilled, rejected)
 	}
 }
 
@@ -110,9 +98,25 @@ export function archive (fiber, value, callback) {
  */
 export function forward (fiber, value, callback, argument) {
 	try {
-		return callback.apply(fiber, [push(fiber)].concat(value, argument))
+		return callback.apply(push(fiber), value.length ? value : (pending(fiber, value).push(argument), value))
 	} finally {
 		pop()
+	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} value
+ * @param {function} callback
+ * @return {*}
+ */
+export function archive (fiber, value, callback) {
+	if (typeof callback === 'function') {
+		if (fiber.current = callback.call(fiber.element, value)) {
+			if (Utility.thenable(fiber.current)) {
+				suspend(fiber, fiber.current, archive, archive)
+			}
+		}
 	}
 }
 
@@ -127,7 +131,7 @@ export function forward (fiber, value, callback, argument) {
  * @param {function}
  */
 export function enqueue (fiber, element, instance, primary, secondary, tertiary, origin) {
-	return fiber.routine = dequeue.bind(null, fiber, element, instance, primary, secondary, tertiary, origin, fiber.routine)
+	return fiber.routine = dequeue.bind(fiber, fiber, element, instance, primary, secondary, tertiary, origin, fiber.routine)
 }
 
 /**
@@ -160,7 +164,7 @@ export function dequeue (fiber, element, instance, primary, secondary, tertiary,
  */
 export function finalize (fiber, primary, secondary) {
 	if (fiber.pending) {
-		resolve(fiber, [primary, secondary], finalize)
+		resolve(fiber, [fiber, primary, secondary], finalize, finalize)
 	} else if (fiber.routine) {
 		try {
 			routine(fiber, fiber.routine)

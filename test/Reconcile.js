@@ -1,4 +1,4 @@
-import {h, Component, Fragment, render} from 'dyo'
+import {h, Component, Fragment, render} from '../index.js'
 
 describe('Reconcile', () => {
 	const target = document.createElement('div')

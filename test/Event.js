@@ -1,4 +1,4 @@
-import {h, Component, render} from 'dyo'
+import {h, Component, render} from '../index.js'
 
 describe('Event', () => {
 	it('should dispatch event from element', () => {

@@ -1,0 +1,194 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Dyo - A JavaScript library for building user interfaces</title>
+	<link rel=stylesheet href=assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+</head>
+<body>
+	<a href=./ title=index class=logo>
+		<img src=assets/images/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=./>Index</a>
+			<a href=./introduction.html>Introduction</a>
+			<a href=./advanced.html>Advanced</a>
+			<a href=./api.html>API</a>
+			<a href=./examples.html>Examples</a>
+			<a href=https://github.com/dyo/dyo>GitHub</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Advanced</h1>
+
+		<h1>Table of Contents</h1>
+
+		<nav>
+			<ol>
+				<li><a href=#rendering>Rendering</a></li>
+				<li><a href=#components>Components</a></li>
+				<li><a href=#events>Events</a></li>
+				<li><a href=#implicit-state>Implicit setState</a></li>
+				<li><a href=#async-state>Async setState</a></li>
+				<li><a href=#async-unmount>Async componentWillUnmount</a></li>
+			</ol>
+		</nav>
+
+		<h1 id=rendering>Rendering</h1>
+
+		<p>
+			Dyo supports rendering with a vide variety of JavaScript Objects, these include.
+		</p>
+
+		<ol>
+			<li>Elements</li>
+			<li>Strings/Numbers</li>
+			<li>Null/Undefined</li>
+			<li>Functions/Classes</li>
+			<li>Fragments</li>
+			<li>Portals</li>
+			<li>Promises</li>
+			<li>Iterators/Generators/AsyncGenerators</li>
+			<li>CustomElements/WebComponents</li>
+		</ol>
+
+		<h1 id=components>Statefull Function Components</h1>
+
+		<p>
+			Function components can maintain state, lifecycles and string refs identical to their class counter parts.
+		</p>
+
+<pre><code>
+const User = (props, {name}, context) => {
+	return h('h1', name)
+}
+
+User.getDerivedState = (props) => {
+	return {name: 'Earth'}
+}
+</code></pre>
+
+		<p>
+			The difference between function and class components is in the syntax difference between JavaScript functions and classes.
+		</p>
+
+		<h1 id=events>Events</h1>
+
+		<p>
+			Events always maintain a <code>this</code> reference within the surrounding component. That is to say you do not need to bind your event handlers if you are not sending them as callbacks to other components.
+		</p>
+
+<pre><code>
+class User {
+	handleEvent(e, props, state, context) {
+		return {value: 'Fox'}
+	}
+	render(props, state, context) {
+		return h('input', {
+			value: state.value,
+			onInput: this.handleEvent
+		})
+	}
+}
+</code></pre>
+
+		<p>
+			Events supports multiple handlers and the <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListeners</a> interface.
+		</p>
+
+<pre><code>
+class User {
+	handleEvent(e, props, state, context) {
+		return {value: 'Fox'}
+	}
+	render(props, state, context) {
+		return h('input', {
+			value: state.value,
+			onInput: this,
+			onClick: [this, () => {}]
+		})
+	}
+}
+</code></pre>
+
+		<p>
+			<a href=#implicit-state>Implicit setState</a> compliments events, allowing us to design components in the following functional way while maintaining the benefits of statefull-components state.
+		</p>
+
+<pre><code>
+const User = (props, state, context) => {
+	return h('input', {
+		value: state.value,
+		onInput: handleEvent
+	})
+}
+
+const handleEvent = (e, props, state, context) => {
+	return {value: 'Fox'}
+}
+</code></pre>
+
+		<h1 id=implicit-state>Implicit setState</h1>
+
+		<p>
+			Implicit setState is a heuristic used to dispatch state updates without explicity calling <a href=./api/component.html#setState>setState</a>. This can be used in events lifecycle methods with the exception of <a href=./api/component.html#shouldComponentUpdate>shouldComponentUpdate</a> and <a href=./api/component.html#componentWillUnmount>componentWillUnmount</a>.
+		</p>
+
+<pre><code>
+const User = (props, state, context) => {
+	return h('h1', state.name)
+}
+
+User.componentDidMount = (props, state, context) => {
+	return {name: 'Wind'}
+}
+</code></pre>
+
+		<h1 id=async-state>async setState</h1>
+
+		<p>
+			The explicit and with association implicit setState interface support Promises that resolve to partial state update objects.
+		</p>
+
+		<p>
+			This compliments <a href=#implicit-state>implicit setState,</a> allowing the following functional patterns to emerge.
+		</p>
+
+<pre><code>
+const User = (props, state, context) => {
+	return h('h1', state.name)
+}
+
+User.componentDidMount = async (props, state, context) => {
+	return fetch('/user/john')
+}
+</code></pre>
+
+		<h1 id=async-unmount>Async componentWillUnmount</h1>
+
+		<p>
+			The <a href=../api/component.html#componentWillUnmount>componentWillUnmount</a> lifecycle doesn't support an implicit setState but it does support async unmounting to make it easier to manage outro animations for components.
+		</p>
+
+		<p>
+			That is to say if you return a Promise from <code>componentWillUnmount</code>, the component will stay in a transient state in which in doesn't exist in the virtual subtree but is kept alive in the host enviroment untill the Promise has resolved.
+		</p>
+
+<pre><code>
+const User = (props, state, context) => {
+	return h('h1', {ref: 'heading'}, state.name)
+}
+
+User.componentWillUnmount = async (props, state, context) => {
+	return this.refs.heading.animate({...}).finished
+}
+</code></pre>
+	</article>
+	<script src=./assets/javascript/index.js></script>
+</body>
+</html>

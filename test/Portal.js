@@ -1,4 +1,4 @@
-import {h, render, createPortal} from 'dyo'
+import {h, render, createPortal} from '../index.js'
 
 describe('Portal', () => {
 	const parent = document.documentElement.lastChild
@@ -126,8 +126,8 @@ describe('Portal', () => {
 		})
 	})
 
-	it('should render a portal to implicit root target', () => {
-		render(h('div', createPortal(h('h1', {key: 1}, 1))), target, (current) => {
+	it('should render a portal to document target', () => {
+		render(h('div', createPortal(h('h1', {key: 1}, 1), document)), 'main', (current) => {
 			assert.html(document.documentElement, '<head></head><body><main><div></div></main><aside></aside></body><h1>1</h1>')
 		})
 	})

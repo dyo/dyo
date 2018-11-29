@@ -66,11 +66,9 @@ export var symbol = typeof Symbol === 'function' ? Symbol : random
 export var iterator = symbol.iterator || '@@iterator'
 
 /**
- * @return {object}
+ * @type {(symbol|string)}
  */
-export function registry () {
-	return typeof WeakMap === 'function' ? new WeakMap() : weakmap()
-}
+export var asyncIterator = symbol.asyncIterator || '@@asyncIterator'
 
 /**
  * @param {function} callback
@@ -126,6 +124,14 @@ export function thenable (value) {
  */
 export function iterable (value) {
 	return typeof value[iterator] === 'function'
+}
+
+/**
+ * @param {object} value
+ * @param {boolean}
+ */
+export function asyncIterable (value) {
+	return typeof value[asyncIterator] === 'function'
 }
 
 /**
@@ -223,7 +229,7 @@ export function each (callback, value, index, context) {
 					}
 				}
 			} else if (iterable(value)) {
-				for (var i = index, j = value[iterator](), k = j.next(); !k.done; ++i) {
+				for (var i = index, j = sequence(value), k = j.next(); !k.done; ++i) {
 					if (each(callback, k.value, i + index, context) != null) {
 						break
 					} else {
@@ -237,6 +243,25 @@ export function each (callback, value, index, context) {
 			return callback(value, index, context)
 		}
 	}
+}
+
+/**
+ * @param {object} value
+ * @return {object}
+ */
+export function sequence (value) {
+	return typeof value.next === 'function' ? value : value[iterator]()
+}
+
+/**
+ * @param {*} value
+ * @return {Promise?}
+ */
+export function generator (value) {
+	return create(value, {
+		step: {value: sequence(value)},
+		then: {value: function (fulfilled, rejected) { return this.step.next().then(fulfilled, rejected) }},
+	})
 }
 
 /**
@@ -261,8 +286,8 @@ export function environment () {
 /**
  * @return {object}
  */
-export function weakmap () {
-	return {
+export function registry () {
+	return typeof WeakMap === 'function' ? new WeakMap() : {
 		key: symbol(),
 		has: function (k) { return has(k, this.key) },
 		get: function (k) { return k[this.key] },

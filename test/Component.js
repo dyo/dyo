@@ -1,6 +1,38 @@
-import {h, Component, PureComponent, render} from 'dyo'
+import {h, Component, PureComponent, render} from '../index.js'
 
 describe('Component', () => {
+	it('should render a render prop', () => {
+		const target = document.createElement('div')
+
+		render(h(Component, {value: 1}, (props) => props.value), target, (current) => {
+			assert.html(current, '1')
+		})
+
+		render(h(Component, {value: 2}, (props) => props.value), target, (current) => {
+			assert.html(current, '2')
+		})
+
+		render(h(PureComponent, {value: 1}, (props) => props.value), target, (current) => {
+			assert.html(current, '1')
+		})
+
+		render(h(PureComponent, {value: 2}, (props) => props.value), target, (current) => {
+			assert.html(current, '2')
+		})
+	})
+
+	it('should forward component refs', () => {
+		const target = document.createElement('div')
+		const stack = []
+
+		render(h(Component, {ref: (value) => stack.push(value)}, (props) => {
+			return props.ref('Primary')
+		}), target, (current) => {
+			assert.deepEqual(stack, ['Primary'])
+			assert.html(current, '1')
+		})
+	})
+
 	it('should forward component children', () => {
 		const target = document.createElement('div')
 
@@ -446,7 +478,7 @@ describe('Component', () => {
 		}
 
 		render(h(Primary), target, (current) => {
-			assert.deepEqual(stack, [{}, {value: 0}])
+			assert.deepEqual(stack, [{value: 0}, {value: 0}])
 			assert.html(current, '2')
 		})
 	})
@@ -713,7 +745,11 @@ describe('Component', () => {
 		class Primary extends Component {}
 
 		render(h(Primary, Promise.resolve('1'), Promise.resolve('2')), target, (current) => {
-			done(assert.html(current, '12'))
+			assert.html(current, '12')
+
+			render(Promise.resolve([h('div'), h('h1', '1')]), target, (current) => {
+				done(assert.html(current, '<div></div><h1>1</h1>'))
+			})
 		})
 	})
 
@@ -807,7 +843,7 @@ describe('Component', () => {
 	})
 
 	it('should catch rejected promise states', (done) => {
-		const target = 'main'
+		const target = document.createElement('div')
 		const stack = []
 
 		class Primary extends Component {
@@ -824,7 +860,7 @@ describe('Component', () => {
 	})
 
 	it('should catch rejected promise elements', (done) => {
-		const target = 'main'
+		const target = document.createElement('div')
 		const stack = []
 
 		class Primary extends Component {
@@ -833,6 +869,40 @@ describe('Component', () => {
 
 		render(h(Primary, Promise.reject(1)), target, (current) => {
 			done(assert.deepEqual(stack, [1]))
+		})
+	})
+
+	it('should render async generator', (done) => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {
+			async *render() {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}
+
+		render(h(Primary), target, (current) => {
+			done(assert.html(current, '3'))
+		})
+	})
+
+	it('should render async iterable', (done) => {
+		const target = document.createElement('div')
+
+		class Primary extends Component {
+			render() {
+				return async function * () {
+					yield 1
+					yield 2
+					yield 3
+				}
+			}
+		}
+
+		render(h(Primary), target, (current) => {
+			done(assert.html(current, '3'))
 		})
 	})
 })

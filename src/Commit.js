@@ -110,7 +110,7 @@ export function set (element, value, instance)  {
 			case 'key':
 				break
 			default:
-				Interface.props(element, key, value[key], instance)
+				Interface.props(key, value[key], instance, element)
 		}
 	}
 }

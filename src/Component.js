@@ -61,10 +61,12 @@ export var pure = Utility.extend(factory(), Utility.assign({
 
 /**
  * @param {object} props
+ * @param {object} state
+ * @param {object} context
  * @return {object}
  */
-export function render (props) {
-	return props.children
+export function render (props, state, context) {
+	return typeof props.children === 'function' ? props.children(props, state, context) : props.children
 }
 
 /**
@@ -81,11 +83,19 @@ export function compare (props, state, context) {
  * @return {function}
  */
 export function factory () {
-	return function constructor (props, context) {
+	return function constructor (props) {
 		this.props = props
-		this.state = {}
-		this.context = context
+		this.state = null
+		this.context = null
 	}
+}
+
+/**
+ * @param {function} constructor
+ * @return {function}
+ */
+export function from (constructor) {
+	return Utility.extend(factory(), descriptors, constructor.render = constructor)
 }
 
 /**
@@ -102,11 +112,7 @@ export function identity (constructor, prototype) {
 		}
 	}
 
-	if (!Registry.has(constructor)) {
-		Registry.set(constructor, Utility.extend(factory(), descriptors, constructor.render = constructor))
-	}
-
-	return Registry.get(constructor)
+	return Registry.get(constructor) || Registry.set(constructor, from(constructor)).get(constructor)
 }
 
 /**
@@ -137,7 +143,7 @@ export function enqueue (fiber, host, instance, value) {
 					if (!Utility.thenable(value)) {
 						Schedule.dispatch(fiber, Enum.component, host, host, host, value)
 					} else if (value.constructor !== fiber.constructor) {
-						Utility.resolve(Schedule.suspend(fiber, value), enqueue.bind(null, fiber, host, instance), Exception.throws(fiber, host, host))
+						Schedule.suspend(fiber, value, enqueue.bind(null, fiber, host, instance), Exception.throws(fiber, host, host))
 					}
 				}
 		}
@@ -164,14 +170,14 @@ export function resolve (fiber, host, element, snapshot, value) {
  * @param {object} host
  * @param {object} parent
  * @param {object} element
- * @param {object} index
  * @return {object}
  */
-export function create (fiber, host, parent, element, index) {
-	var type = identity(element.type, element.type.prototype)
+export function create (fiber, host, parent, element) {
+	var type = element.type
 	var props = element.props
 	var context = element.context = host.context = host.context || {}
-	var instance = element.instance = new type(props, context)
+	var constructor = identity(type, type.prototype)
+	var instance = element.instance = new constructor(props)
 	var state = instance.state || {}
 	var children = element.children
 	var snapshot = element
@@ -193,7 +199,7 @@ export function create (fiber, host, parent, element, index) {
 		Lifecycle.dispatch(element, instance, props, state, context, Enum.getChildContext)
 	}
 
-	snapshot = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context, children)), index)
+	snapshot = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context, children)))
 
 	if (Lifecycle.has(instance, Enum.componentDidMount)) {
 		Schedule.enqueue(fiber, element, instance, props, state, context, Enum.componentDidMount)
@@ -226,7 +232,7 @@ export function update (fiber, host, element, snapshot, value) {
 
 	if (element === snapshot) {
 		if (typeof value === 'function') {
-			return enqueue(fiber, element, instance, value(props, state, context))
+			return enqueue(fiber, element, instance, value(state))
 		} else if (!force) {
 			state = Utility.defaults(value, state)
 		}

@@ -1,8 +1,15 @@
-import {h, render} from 'dyo'
+import {h, render} from '../index.js'
 
 describe('Render', () => {
 	const target = document.createElement('div')
 	const refs = {}
+
+	it('should throw without a render target', () => {
+		assert.throws(() => render(null))
+		assert.throws(() => render(null, null))
+		assert.throws(() => render(null, undefined))
+		assert.throws(() => render(null, false))
+	})
 
 	it('should invoke render callback', () => {
 		render(null, target, (current) => {
@@ -89,10 +96,12 @@ describe('Render', () => {
 	it('should not render an null or undefined property', () => {
 		render(h('input', {value: undefined}, '0'), target, (current) => {
 			assert.html(current, '<input>', 'value')
+			assert.equal(current.firstChild.value, '')
 		})
 
-		render(h('a', {href: null}, '0'), target, (current) => {
-			assert.html(current, '<a>0</a>', 'href')
+		render(h('input', {value: null}, '0'), target, (current) => {
+			assert.html(current, '<input>', 'value')
+			assert.equal(current.firstChild.value, '')
 		})
 	})
 
@@ -106,15 +115,9 @@ describe('Render', () => {
 		})
 	})
 
-	it('should render width attribute', () => {
-		render(h('div', {width: '100px'}), target, (current) => {
-			assert.html(current, '<div width="100px"></div>')
-		})
-	})
-
 	it('should render img width attribute', () => {
-		render(h('img', {width: '100px'}), target, (current) => {
-			assert.html(current, '<img width="100px">')
+		render(h('img', {width: 100}), target, (current) => {
+			assert.html(current, '<img width="100">')
 		})
 	})
 
@@ -155,18 +158,22 @@ describe('Render', () => {
 	})
 
 	it('should render style strings', () => {
-		render(h('h1', {style: 'width:100px'}, '0'), target, (current) => {
-			assert.html(current, '<h1 style="width:100px">0</h1>')
+		render(h('h1', {style: 'width: 100px'}, '0'), target, (current) => {
+			assert.html(current, '<h1 style="width: 100px">0</h1>')
 		})
 	})
 
 	it('should remove undefined styles', () => {
-		render(h('div', {style: {color: 'red'}}), target, (current) => {
-			assert.html(current, '<div style="color: red;"></div>')
+		render(h('div', {style: null}), target, (current) => {
+			assert.html(current, `<div></div>`)
 		})
 
-		render(h('div', {style: {color: undefined}}), target, (current) => {
-			assert.html(current, `<div style=""></div>`)
+		render(h('div', {style: {background: 'red', color: 'red'}}), target, (current) => {
+			assert.html(current, '<div style="background: red; color: red;"></div>')
+		})
+
+		render(h('div', {style: {background: 'red', color: undefined}}), target, (current) => {
+			assert.html(current, `<div style="background: red;"></div>`)
 		})
 	})
 
@@ -221,21 +228,22 @@ describe('Render', () => {
 		})
 	})
 
-	it('should render vendor dash case styles', () => {
-		render(h('div', {style: {'-webkit-border-radius': '20px'}}), target, (current) => {
-			// TODO: JSDOM does not support style.setProperty(...) API, file a report.
-			// assert.equal(current.firstChild.style.getPropertyValue('-webkit-border-radius'), '20px')
+	it('should fail gracefully when trying to set readonly properties', () => {
+		render(h('h2', {ref: refs}), target, (current) => {
+			Object.defineProperty(refs.current, 'invalid', {set: () => { throw refs.current = true }})
+
+			render(h('h2', {ref: refs, invalid: true}), target, (current) => {
+				assert.html(current, '<h2 invalid="invalid"></h2>')
+				assert.deepEqual(refs, {current: true})
+			})
 		})
 	})
 
-	it('should fail gracefully when trying to set readonly properties', () => {
-		render(h('div', {ref: refs}), target, (current) => {
-			Object.defineProperty(refs.current, 'invalid', {set: () => { throw refs.current = true }})
-
-			render(h('div', {ref: refs, invalid: true}), target, (current) => {
-				assert.html(current, '<div invalid="invalid"></div>')
-				assert.deepEqual(refs, {current: true})
-			})
+	it('should render vendor dash case styles', () => {
+		render(h('h1', {ref: (value) => {
+			Object.defineProperty(value, 'style', {value: { setProperty(name, value) { this['borderRadius'] = value } }})
+		}, style: {'-webkit-border-radius': '20px'}}), target, (current) => {
+			assert.equal(current.firstChild.style.borderRadius, '20px')
 		})
 	})
 })

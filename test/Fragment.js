@@ -1,4 +1,4 @@
-import {h, Component, Fragment, render} from 'dyo'
+import {h, Component, Fragment, render} from '../index.js'
 
 describe('Fragment', () => {
 	const target = document.createElement('div')

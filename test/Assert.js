@@ -1,4 +1,4 @@
-import {h, render, Component} from 'dyo'
+import {h, render, Component} from '../index.js'
 
 const env = process.env.NODE_ENV
 

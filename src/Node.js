@@ -38,7 +38,6 @@ export function resolve (fiber, host, parent, element) {
 export function create (fiber, host, parent, element) {
 	var uid = element.uid
 	var type = element.type
-	var owner = element.owner = parent.owner
 
 	try {
 		switch (element.host = host, uid) {
@@ -49,10 +48,10 @@ export function create (fiber, host, parent, element) {
 		}
 
 		var children = element.children
-		var instance = element.instance = Interface.create(owner, uid, type, children, context)
+		var instance = element.instance = Interface.create(uid, type, children, context, element.owner = parent.owner)
 
 		switch (uid) {
-			case Enum.text: case Enum.empty: case Enum.comment:
+			case Enum.text: case Enum.empty:
 				break
 			case Enum.target:
 				element.owner = Interface.from(instance)
@@ -60,6 +59,7 @@ export function create (fiber, host, parent, element) {
 				for (var i = 0; i < children.length; ++i) {
 					create(fiber, host, element, children[i])
 				}
+
 				if (uid !== Enum.thenable) {
 					Commit.props(parent, element, element.props)
 				} else {
@@ -87,13 +87,13 @@ export function destroy (fiber, element) {
 		switch (element.uid) {
 			case Enum.component:
 				return Component.destroy(fiber, element)
-			case Enum.text: case Enum.empty: case Enum.comment:
+			case Enum.text: case Enum.empty:
 				break
 			case Enum.target:
 				Schedule.dispatch(fiber, Enum.unmount, element, element, element, element)
 			case Enum.element:
 				if (element.ref !== null) {
-					Commit.ref(element)
+					Commit.ref(element, null, null)
 				}
 			default:
 				for (var i = 0, children = element.children; i < children.length; ++i) {
@@ -110,14 +110,13 @@ export function destroy (fiber, element) {
 /**
  * @param {object} element
  * @param {object} props
- * @param {*} type
  * @return {object}
  */
-export function reparent (element, props, type) {
+export function reparent (element, props) {
 	try {
 		Commit.props(element, element, props)
 	} finally {
-		element.owner = Interface.from(element.instance = Interface.target(type, element.owner))
+		element.owner = Interface.from(element.instance = Interface.target(element.type, element.owner))
 	}
 
 	return element

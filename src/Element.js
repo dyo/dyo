@@ -12,7 +12,7 @@ import * as Event from './Event.js'
  * @param {object} props
  * @param {object} children
  */
-export var struct = Utility.extend(function node (uid, key, type, props, children) {
+export var struct = Utility.extend(function element (uid, key, type, props, children) {
 	this.uid = uid
 	this.key = key
 	this.type = type
@@ -46,15 +46,6 @@ export function empty (key) {
  */
 export function text (value, key) {
 	return new struct(Enum.text, key, Enum.text, null, value)
-}
-
-/**
- * @param {(number|string)} value
- * @param {*} key
- * @return {object}
- */
-export function comment (value, key) {
-	return new struct(Enum.comment, key, Enum.comment, null, value)
 }
 
 /**
@@ -119,25 +110,29 @@ export function resolve (value, children) {
  * @return {object}
  */
 export function from (value, index, children) {
-	if (value != null) {
-		switch (typeof value) {
-			case 'number': case 'string':
-				return text(value, Utility.hash(index))
-			case 'boolean':
-				return from(null, index, children)
-			case 'function':
-				break
-			default:
-				if (value.constructor === struct) {
-					return value
-				} else if (value.length > -1) {
-					return fragment(value.map(from), Utility.hash(index))
-				} else if (Utility.iterable(value)) {
-					return fragment(Children.map(value, from), Utility.hash(index))
-				}
-		}
-	} else {
+	if (value == null) {
 		return empty(Utility.hash(index))
+	}
+
+	switch (typeof value) {
+		case 'number': case 'string':
+			return text(value, Utility.hash(index))
+		case 'boolean':
+			return from(null, index, children)
+		case 'function':
+			break
+		default:
+			if (value.constructor === struct) {
+				return value
+			} else if (value.length > -1) {
+				return fragment(value.map(from), Utility.hash(index))
+			}
+	}
+
+	if (Utility.iterable(value)) {
+		return fragment(Children.map(value, from), Utility.hash(index))
+	} else if (Utility.asyncIterable(value)) {
+		return create(Utility.generator(value))
 	}
 
 	return create(value)
@@ -164,7 +159,7 @@ export function create (a, b) {
 	if (uid === Enum.component) {
 		if (size > 0) {
 			for (props.children = size === 1 ? arguments[i++] : children = []; i < length; ++i) {
-				children.push(arguments[i])
+				children[index++] = arguments[i]
 			}
 		}
 		if (type[Enum.defaultProps]) {

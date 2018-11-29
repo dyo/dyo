@@ -1,4 +1,4 @@
-import {h, createElement, cloneElement, isValidElement} from 'dyo'
+import {h, createElement, cloneElement, isValidElement} from '../index.js'
 
 describe('Element', () => {
 	it('should validate an element', () => {

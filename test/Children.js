@@ -1,4 +1,4 @@
-import {h, Children} from 'dyo'
+import {h, Children} from '../index.js'
 
 describe('Children', () => {
 	it('should convert toArray children', () => {

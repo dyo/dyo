@@ -12,9 +12,9 @@ import * as Schedule from './Schedule.js'
  * @param {object} a
  * @param {object} b
  */
-export function enqueue (fiber, host, parent, a, b, c) {
+export function enqueue (fiber, host, parent, a, b, c, type) {
 	if (a.parent !== null) {
-		children(fiber, host, parent, b, c)
+		children(fiber, host, parent, b, b === c ? Element.children(Element.resolve(type, c)) : type)
 	}
 }
 
@@ -26,19 +26,26 @@ export function enqueue (fiber, host, parent, a, b, c) {
  * @param {*} b
  * @param {*} c
  * @param {object} type
+ * @return {object}
  */
 export function resolve (fiber, host, parent, a, b, c, type) {
 	if (!(a.context = a === b)) {
 		Utility.timeout(function () {
 			if (!a.context) {
-				enqueue(fiber, host, parent, a, c, b.children)
+				enqueue(fiber, host, parent, a, c, [], b.children)
 			}
 		}, b.props.timeout)
 	}
 
-	Utility.resolve(Schedule.suspend(fiber, type), function (value) {
+	return Schedule.suspend(fiber, type, function (value) {
 		if (a.context = a.type === type) {
-			enqueue(fiber, host, parent, a, c, Element.children(Element.resolve(value, c)))
+			if (Utility.asyncIterable(type)) {
+				if (!value.done) {
+					return enqueue(fiber, host, parent, a, c, c, value.value), resolve(fiber, host, parent, a, b, c, type)
+				}
+			} else {
+				enqueue(fiber, host, parent, a, c, c, value)
+			}
 		}
 	}, Exception.throws(fiber, host, parent))
 }
@@ -55,7 +62,7 @@ export function resolve (fiber, host, parent, a, b, c, type) {
 export function update (fiber, host, parent, a, b, c, idx) {
 	if (a.type === b.type) {
 		switch (a.uid) {
-			case Enum.text: case Enum.comment:
+			case Enum.text:
 				if (a.children !== b.children) {
 					Schedule.dispatch(fiber, Enum.content, host, parent, a, a.children = b.children)
 				}
@@ -73,7 +80,7 @@ export function update (fiber, host, parent, a, b, c, idx) {
 		if (a.uid === b.uid) {
 			switch (a.type = b.type, a.uid) {
 				case Enum.target:
-					Schedule.dispatch(fiber, Enum.mount, host, Node.reparent(a, object(a.props, a.props = {}), b.type), a, a)
+					Schedule.dispatch(fiber, Enum.mount, host, Node.reparent(a, object(a.props, a.props = {})), a, a)
 				case Enum.thenable:
 					return update(fiber, host, parent, a, b, c, idx)
 			}
@@ -236,15 +243,15 @@ export function object (a, b) {
 		var next = b[key]
 
 		if (prev !== next) {
-			if (typeof next !== 'object' || typeof prev !== 'object') {
+			if (key !== 'style' || prev === null || next === null || typeof next !== 'object') {
 				diff[++size, key] = next
-			} else if (next === null || prev === null || (next = object(prev, next))) {
+			} else if (next = object(prev, next)) {
 				diff[++size, key] = next
 			}
 		}
 	}
 
-	if (size) {
+	if (size > 0) {
 		return diff
 	}
 }

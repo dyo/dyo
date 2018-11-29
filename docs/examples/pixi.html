@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<meta http-equiv=X-UA-Compatible content=IE=edge>
+		<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<title>Pixi</title>
+	</head>
+	<body></body>
+	<script src=../../dist/dyo.umd.js></script>
+	<script src=https://cdn.jsdelivr.net/npm/pixi.js@4.5.6/dist/pixi.min.js></script>
+	<script>
+		var app = new PIXI.Application(300, 300, {backgroundColor : 0x1099bb})
+
+		var PixiClient = dio.createFactory({
+			setProps: (element, name, value, xmlns) => {
+				switch (name) {
+					case 'anchor':
+						element.owner[name].x = value.x
+						element.owner[name].y = value.y
+						break
+					default:
+						element.owner[name] = value
+				}
+			},
+			getDocument: () => {
+				return app.stage
+			},
+			getInitialProps: (element, props) => {
+				return props
+			},
+			removeChild: () => {},
+			insertChild: (element, sibling, parent) => {
+				parent.owner.addChildAt(element.owner, parent.owner.getChildIndex(sibling.owner))
+			},
+			appendChild: (element, parent) => {
+				parent.owner.addChild(element.owner)
+			},
+			isValidTarget: (target) => {
+				return target && !!target.addChild
+			},
+			createElement: (element) => {
+				switch (element.type) {
+					case 'image':
+						return PIXI.Sprite.fromImage(element.props.src)
+				}
+			},
+			createText: (element) => {
+				return new PIXI.Text(element.children)
+			},
+			createEmpty: (element) => {
+				return new PIXI.Container()
+			}
+		})
+
+		document.body.appendChild(app.view)
+	</script>
+	<script>
+		var {h, render} = PixiClient
+		var bunny = 'http://pixijs.io/examples/required/assets/basics/bunny.png'
+
+		render([
+			'This is a PixiJS text',
+			h('image', {
+				src: bunny,
+				x: 100,
+				y: 100,
+				anchor: {x: 0.5, y: 0.5},
+				rotation: 0}
+			)
+		])
+
+		requestAnimationFrame(function loop (time) {
+			render([
+				'This is a PixiJS text',
+				h('image', {
+					src: bunny,
+					x: 100,
+					y: 100,
+					anchor: {x: 0.5, y: 0.5},
+					rotation: 0.1 * (time/16)
+				}),
+				h('image', {
+					src: bunny,
+					x: 200,
+					y: 200,
+					anchor: {x: 0.5, y: 0.5},
+					rotation: 0.1 * (time/16)
+				})
+			])
+			requestAnimationFrame(loop)
+		})
+	</script>
+</html>

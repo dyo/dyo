@@ -1,19 +1,34 @@
 {
 	"name": "dyo",
-	"description": "Dyo is a JavaScript library for building user interfaces",
-	"version": "1.0.0",
-	"homepage": "https://github.com/thysultan/dio.js",
+	"version": "0.0.0",
 	"license": "MIT",
-	"author": {
-		"name": "Sultan Tarimo",
-		"email": "sultantarimo@me.com"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/thysultan/dio.js"
-	},
-	"bugs": {
-		"url": "https://github.com/thysultan/dio.js/issues"
+	"description": "Dyo is a JavaScript library for building user interfaces",
+	"homepage": "https://github.com/dyo/dyo",
+	"author": "Sultan Tarimo <sultantarimo@me.com>",
+	"repository": "https://github.com/dyo/dyo",
+	"bugs": "https://github.com/dyo/dyo/issues",
+	"main": "dist/dyo.umd.js",
+	"module": "dist/dyo.esm.js",
+	"browser": "dist/dyo.umd.js",
+	"jsdelivr": "dist/dyo.umd.js",
+	"unpkg": "dist/dyo.umd.js",
+	"files": [
+		"**/index.js",
+		"**/dist/",
+		"**/src/"
+	],
+	"scripts": {
+		"lint": "eslint ./*src/",
+		"pretest": "npm run lint",
+		"test": "nyc npm run test-all",
+		"test-all": "npm run test-dev && npm run test-prod",
+		"test-dev": "cross-env NODE_ENV=development npm run test-spec",
+		"test-prod": "cross-env NODE_ENV=production npm run test-spec",
+		"test-spec": "mocha --harmony --require esm script/test.js --recursive test",
+		"coverage": "nyc report --reporter=text-lcov | coveralls",
+		"prepare": "npm run build",
+		"start": "npm run build -- . && npm run build -- server",
+		"build": "rollup --config script/build.js --configDir"
 	},
 	"devDependencies": {
 		"dyo": "./",
@@ -28,24 +43,12 @@
 		"rollup-plugin-terser": "3.0.0",
 		"rollup": "0.67.3"
 	},
-	"scripts": {
-		"lint": "eslint ./src",
-		"build": "rollup --config scripts/build.config.js",
-		"start": "npm run build -- --watch",
-		"coverage": "nyc report --reporter=text-lcov | coveralls",
-		"prepare": "npm run build",
-		"pretest": "npm run build && npm run lint",
-		"test": "nyc npm run test-all",
-		"test-all": "npm run test-dev && npm run test-prod",
-		"test-dev": "cross-env NODE_ENV=development npm run test-spec",
-		"test-prod": "cross-env NODE_ENV=production npm run test-spec",
-		"test-spec": "mocha --harmony --require esm scripts/tests.config.js --recursive tests"
-	},
 	"nyc": {
 		"temp-dir": "./coverage/.nyc_output",
 		"exclude": [
-			"scripts",
-			"tests"
+			"**/dist/",
+			"**/test/",
+			"**/script/"
 		],
 		"reporter": [
 			"lcov",
@@ -53,16 +56,7 @@
 		]
 	},
 	"esm": {
+		"cjs": true,
 		"cache": false
-	},
-	"files": [
-		"dist",
-		"pkg",
-		"src"
-	],
-	"main": "index.js",
-	"module": "./dist/dyo.esm.js",
-	"browser": "./dist/dyo.umd.js",
-	"unpkg": "./dist/dyo.umd.js",
-	"jsdelivr": "./dist/dyo.umd.js"
+	}
 }

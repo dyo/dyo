@@ -1,0 +1,9 @@
+{
+	"name": "dyo",
+	"version": "0.0.0",
+	"license": "MIT",
+	"main": "dist/dyo.umd.js",
+	"module": "dist/dyo.esm.js",
+	"browser": "dist/dyo.umd.js",
+	"private": true
+}

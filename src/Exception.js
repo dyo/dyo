@@ -12,11 +12,8 @@ import Registry from './Registry.js'
  * @param {*} value
  */
 export var struct = Utility.extend(function exception (host, value) {
-	try {
-		this.error = value
-	} finally {
-		Registry.set(this, host)
-	}
+	this.error = value
+	Registry.set(this, host)
 }, {
 	/**
 	 * @type {function}

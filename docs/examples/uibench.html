@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<meta http-equiv=x-ua-compatible content=ie=edge>
+		<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<title>UIBench</title>
+		<link rel=stylesheet href=https://localvoid.github.io/uibench-base/0.1.0/styles.css>
+		<script src=../../dist/dyo.umd.js></script>
+		<script src=https://localvoid.github.io/uibench-base/0.1.0/uibench.js></script>
+	</head>
+	<body>
+		<div id=root></div>
+
+		<script>
+			const {render, h} = dyo
+
+			class TableCell extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.text !== nextProps.text;
+				}
+
+				onClick(e) {
+					console.log('Clicked' + this.props.text);
+					e.stopPropagation();
+				}
+
+				render() {
+					return h('td', {className: 'TableCell', onClick: this.onClick}, this.props.text);
+				}
+			}
+
+			class TableRow extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const { data } = this.props;
+					const classes = (data.active) ? 'TableRow active' : 'TableRow';
+					const cells = data.props;
+					const length = cells.length;
+					const children = [];
+
+					for (var i = 0; i < length; i++) {
+		      		children[i] = h(TableCell, {key: i, text: cells[i]});
+				   }
+
+					return h('tr', {className: classes, 'data-id': data.id},
+						h(TableCell, {text: '#' + data.id}),
+						children
+					);
+				}
+			}
+
+			class Table extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const items = this.props.data.items;
+			    	const length = items.length;
+			    	const children = [];
+
+		    		for (var i = 0; i < length; i = i + 1) {
+		    			const item = items[i];
+							children[i] = h(TableRow, {key: item.id, data: item});
+		    		}
+
+			    	return h('table', {className: 'Table'}, h('tbody', children));
+				}
+			}
+
+			class AnimBox extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const { data } = this.props;
+		    	const time = data.time;
+	    		const style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+');';
+
+	    		return h('div', {className: 'AnimBox', 'data-id': data.id, style: style});
+				}
+			}
+
+			class Anim extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const items = this.props.data.items;
+		    	const length = items.length;
+	    		const children = [];
+
+	    		for (var i = 0; i < length; i = i + 1) {
+	    			const item = items[i];
+      			children[i] = h(AnimBox, {key: item.id, data: item});
+	    		}
+
+	    		return h('div', {className: 'Anim'}, children);
+				}
+			}
+
+			class TreeLeaf extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					return h('li', {className: 'TreeLeaf'}, this.props.data.id);
+				}
+			}
+
+			class TreeNode extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+			  	const { data } = this.props;
+					const length = data.children.length;
+					const children = [];
+
+					for (let i = 0; i < length; i++) {
+						const n = data.children[i];
+						if (n.container) {
+							children[i] = h(TreeNode, {key: n.id, data: n});
+						} else {
+							children[i] = h(TreeLeaf, {key: n.id, data: n});
+						}
+					}
+
+					return h('ul', {className: 'TreeNode'}, children);
+				}
+			}
+
+			class Tree extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					return h('div', {className: 'Tree'},
+						h(TreeNode, {data: this.props.data.root})
+					)
+				}
+			}
+
+			class Main extends dyo.Component {
+				shouldComponentUpdate(nextProps, nextState) {
+					return this.props.data !== nextProps.data;
+				}
+
+				render() {
+					const { data } = this.props;
+					const location = data.location;
+
+					var section;
+					if (location === 'table') {
+						section = h(Table, {data: data.table});
+					} else if (location === 'anim') {
+						section = h(Anim, {data: data.anim});
+					} else if (location === 'tree') {
+						section = h(Tree, {data: data.tree});
+					}
+
+					return h('div', {className: 'Main'}, section);
+				}
+			}
+
+			uibench.init('DIO');
+
+			document.addEventListener('DOMContentLoaded', function(e) {
+				const container = document.querySelector('#root');
+
+				uibench.run(
+					function(state) {
+						render(h(Main, {data: state}), container);
+					},
+					function(samples) {
+						render(h('pre', JSON.stringify(samples, null, 2)), container);
+					}
+				);
+			});
+		</script>
+	</body>
+</html>

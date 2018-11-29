@@ -13,7 +13,7 @@ import Registry from './Registry.js'
  * @return {object}
  */
 export function render (element, target, callback) {
-	return dispatch(element, Interface.target(target), callback)
+	return dispatch(element, Interface.target(target, undefined), callback)
 }
 
 /**

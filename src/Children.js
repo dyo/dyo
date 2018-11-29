@@ -9,7 +9,7 @@ export default {only: only, count: count, filter: filter, find: find, map: map, 
  * @return {object?}
  */
 export function only (value) {
-	return Element.valid(value) ? value : Utility.invariant('Expected to receive a single element!')
+	return Element.valid(value) ? value : Utility.invariant('Expected single element!')
 }
 
 /**

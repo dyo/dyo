@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Dyo - A JavaScript library for building user interfaces</title>
+	<link rel=stylesheet href=assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+</head>
+<body>
+	<a href=./ title=index class=logo>
+		<img src=assets/images/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=./>Index</a>
+			<a href=./introduction.html>Introduction</a>
+			<a href=./advanced.html>Advanced</a>
+			<a href=./api.html>API</a>
+			<a href=./examples.html>Examples</a>
+			<a href=https://github.com/dyo/dyo>GitHub</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Top-Level API</h1>
+
+		<h1 id=render>render</h1>
+
+		<p>The entry point of every application starts with the render function.</p>
+
+<pre><code>
+render(element, container, callback?: function): thenable
+</code></pre>
+
+		<h1 id=createElement>createElement</h1>
+
+		<p>Creates virtual elements that Dyo understands.</p>
+
+<pre><code>
+createElement(type, props?: object, ...children?: Array): object
+</code></pre>
+
+		<h1 id=cloneElement>cloneElement</h1>
+
+		<p>Properties are shallow merged while new children replace old.</p>
+
+<pre><code>
+cloneElement(element, props?: object, ...children?: Array): object
+</code></pre>
+
+		<h1 id=isValidElement>isValidElement</h1>
+
+		<p>Validates that the argument is a valid virtual element.</p>
+
+<pre><code>
+isValidElement(element: any): boolean
+</code></pre>
+
+		<h1 id=createPortal>createPortal</h1>
+
+		<p>Creates a virtual portal element that Dyo understands.</p>
+
+<pre><code>
+createPortal(children, container: string|object, props?: object): object
+</code></pre>
+
+		<h1 id=Component>Component</h1>
+
+		<p>The following is the base Component interface. This class is meant to be extended.</p>
+
+<pre><code>
+class Component {
+	constructor (props: object)
+	forceUpdate(callback?: function)
+	setState(state?: object, callback?: function)
+	render(props: object, state: object, context: object)
+}
+</code></pre>
+
+		<h1 id=PureComponent>PureComponent</h1>
+
+		<p>In a similar fashion the base PureComponent interface is identical to the Component interface. This interface is meant to be extended.</p>
+
+<pre><code>
+class PureComponent {
+	constructor (props: object)
+	forceUpdate(callback?: function)
+	setState(state?: object, callback?: function)
+	shouldComponentUpdate(props: object, state: object, context: object)
+	render(props: object, state: object, context: object)
+}
+</code></pre>
+
+		<h1 id=Children>Children</h1>
+
+		<p>The Children interface provides usefull helpers to use with the opaque <code>props.children</code> data structure.</p>
+
+		<h2 id=toArray>toArray</h2>
+
+		<p>Converts children to an array.</p>
+
+<pre><code>
+toArray(children: any): Array
+</code></pre>
+
+		<h2 id=forEach>forEach</h2>
+
+		<p>Iterates through all the children, calling the provided callback with each child.</p>
+
+<pre><code>
+forEach(children: any, callback: function)
+</code></pre>
+
+		<h2 id=map>map</h2>
+
+		<p>Iterates through all the children, calling the provided callback with each child, the result of which is added to the returned array.</p>
+
+<pre><code>
+map(children: any, callback: function): Array
+</code></pre>
+
+		<h2 id=only>only</h2>
+
+		<p>Throws if children is not a single child element, returns the element otherwise.</p>
+
+<pre><code>
+only(children: element): object
+</code></pre>
+
+		<h2 id=count>count</h2>
+
+		<p>Returns a count of the number of children.</p>
+
+<pre><code>
+count(children: any): number
+</code></pre>
+
+		<h2 id=filter>filter</h2>
+
+		<p>Filters through children using the provided callback as a comparator. The result is an array of children that pass the test.</p>
+
+<pre><code>
+filter(children: any, callback: function): Array
+</code></pre>
+
+		<h2 id=find>find</h2>
+
+		<p>Filters through children to find the first match signaled by the provided comparator callback.</p>
+
+<pre><code>
+find(children: any, callback: function): any
+</code></pre>
+	</article>
+	<script src=./assets/javascript/index.js></script>
+</body>
+</html>

@@ -25,5 +25,11 @@ const rand = (value, array = value.slice(), length = array.length, index = 0) =>
   return array
 }
 
-assign(that(), {assert, document, location, history, Event, globalThis: that()})
+class Writable {
+  constructor() { this.headers = {} }
+  write(value) { return this.innerHTML = value }
+}
+
+assign(that(), {assert, document, location, history, Event, globalThis: that(), Writable: Writable})
 assign(assert, {html, json, spyr, rand})
+

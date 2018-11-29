@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Dyo - A JavaScript library for building user interfaces</title>
+	<link rel=stylesheet href=assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+</head>
+<body>
+	<a href=./ title=index class=logo>
+		<img src=assets/images/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=./>Index</a>
+			<a href=./introduction.html>Introduction</a>
+			<a href=./advanced.html>Advanced</a>
+			<a href=./api.html>API</a>
+			<a href=./examples.html>Examples</a>
+			<a href=https://github.com/dyo/dyo>GitHub</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Component</h1>
+
+		<h1 id=class>Class</h1>
+
+<pre><code>
+class Default {  }
+class Default extends Component {  }
+class Pure extends PureComponent {  }
+</code></pre>
+
+		<h1 id=function>Function</h1>
+
+<pre><code>
+const Default = function () {  }
+const Arrow = () => {  }
+</code></pre>
+
+		<h1 id=generator>Generator</h1>
+
+<pre><code>
+class ClassGenerator {
+	*render() {
+		yield 1
+		yield 2
+		yield 3
+	}
+}
+
+function *FunctionGenerator () {
+	yield 1
+	yield 2
+	yield 3
+}
+</code></pre>
+
+		<h1 id=async-generator>Async Generator</h1>
+
+<pre><code>
+class ClassAsyncGenerator {
+	async *render() {
+		yield 1
+		yield 2
+		yield 3
+	}
+}
+
+async function *FunctionAsyncGenerator () {
+	yield 1
+	yield 2
+	yield 3
+}
+</code></pre>
+
+		<h1 id=element>Element</h1>
+
+<pre><code>
+h(
+	type: function
+	props?: Props
+	...children?: Children
+)
+</code></pre>
+
+		<h1 id=props>Props</h1>
+
+<pre><code>
+interface Props {
+	readonly [prop: string]: any
+	readonly children?: any
+}
+</code></pre>
+
+			<h2 id=children>Children</h2>
+
+<pre><code>
+type Children = any
+</code></pre>
+
+		<h1 id=state>State</h1>
+
+<pre><code>
+type State = Readonly&lt;object>
+</code></pre>
+
+		<h1 id=render>Render</h1>
+
+<pre><code>
+abstract render(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): any
+</code></pre>
+
+		<h1 id=setState>setState</h1>
+
+<pre><code>
+setState(
+	state: object|function|thenable
+	callback?: function
+): thenable
+</code></pre>
+
+		<h1 id=forceUpdate>forceUpdate</h1>
+
+<pre><code>
+forceUpdate(
+	callback?: function
+): thenable
+</code></pre>
+
+		<h1 id=getDerivedState>getDerivedState</h1>
+
+<pre><code>
+abstract getDerivedState(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): object?
+</code></pre>
+
+		<h1 id=getChildContext>getChildContext</h1>
+
+<pre><code>
+abstract getChildContext(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): object?
+</code></pre>
+
+		<h1 id=shouldComponentUpdate>shouldComponentUpdate</h1>
+
+<pre><code>
+abstract shouldComponentUpdate(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): boolean?
+</code></pre>
+
+		<h1 id=componentDidMount>componentDidMount</h1>
+
+<pre><code>
+abstract componentDidMount(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): object?
+</code></pre>
+
+		<h1 id=componentDidUpdate>componentDidUpdate</h1>
+
+<pre><code>
+abstract componentDidUpdate(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): object?
+</code></pre>
+
+		<h1 id=componentDidCatch>componentDidCatch</h1>
+
+<pre><code>
+abstract componentDidCatch(
+	error: any
+	exception: Exception
+): object?
+
+interface Exception {
+	error: any
+	componentStack: string
+}
+</code></pre>
+
+		<h1 id=componentWillUnmount>componentWillUnmount</h1>
+
+<pre><code>
+abstract componentWillUnmount(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): thenable?
+</code></pre>
+
+	</article>
+	<script src=./assets/javascript/index.js></script>
+</body>
+</html>

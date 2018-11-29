@@ -1,0 +1,353 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Dyo - A JavaScript library for building user interfaces</title>
+	<link rel=stylesheet href=assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+</head>
+<body>
+	<a href=./ title=index class=logo>
+		<img src=assets/images/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=./>Index</a>
+			<a href=./introduction.html>Introduction</a>
+			<a href=./advanced.html>Advanced</a>
+			<a href=./api.html>API</a>
+			<a href=./examples.html>Examples</a>
+			<a href=https://github.com/dyo/dyo>GitHub</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Introduction</h1>
+
+		<h1 id=installation>Installation</h1>
+
+		<p>Dyo can be sourced through the following CDN's.</p>
+
+		<ol>
+			<li><a href=https://unpkg.com/dyo>unpkg.com/dyo</a></li>
+			<li><a href=https://cdn.jsdelivr.net/npm/dyo>cdn.jsdelivr.net/npm/dyo</a></li>
+		</ol>
+
+<pre><code>
+&lt;script src="unpkg.com/dyo">&lt;/script>
+</code></pre>
+
+		<p>OR installed through NPM &mdash;</p>
+<pre><code>
+npm install dyo --save
+</code></pre>
+
+		<h1 id=getting-started>Getting Started</h1>
+
+		<p>
+			This <a href=../repl>Hello World</a> example can be used try out code you see in this introduction.
+		</p>
+
+<pre><code>
+import {h, render} from 'dyo'
+
+render(h('h1', 'Hello, world!'), 'main')
+</code></pre>
+
+		<p>This Hello World example should render a heading with the content 'Hello World!'.</p>
+
+		<h1 id=introducing-elements>Introducing Elements</h1>
+
+<pre><code>
+const element = h('h1', 'Hello World')
+</code></pre>
+		<p>
+			Elements are represented by JavaScript objects that describe what and how a particular element should look and behave.
+		</p>
+		<p>
+			Given what to render at any one point in time, the underlining reconciler takes care of mounting and updating these elements to reflect the current state of the interface.
+		</p>
+		<p>
+			Elements are composed of three distinct parts &mdash; type, props and children. These can be used to assign the desired behaviours and properties that we want our elements to assume.
+		</p>
+
+<pre><code>
+const element = h('h1', {class: 'red'}, 'Hello World')
+</code></pre>
+
+		<h1 id=components>Components</h1>
+
+		<p>Components are units that allow us to sub-divide an interface into independent, reusable pieces.</p>
+
+		<p>Conceptually, components are like JavaScript functions. They accept arbitrary arguments and return elements describing the look and behavior of the interface.</p>
+
+		<h2>Functions and Classes</h2>
+
+		<p>The first varient of a component is a JavaScript <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions>Function</a>.</p>
+<pre><code>
+function Welcome (props) {
+	return h('h1', 'Hello', props.name)
+}
+</code></pre>
+
+		<p>The second varient of a component is a <a href=https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes>JavaScript Class</a> that implements a render method.</p>
+
+<pre><code>
+class Welcome {
+	render(props) {
+		return h('h1', 'Hello', props.name)
+	}
+}
+</code></pre>
+
+		<p>Components accept <code>props</code>, <code>state</code> and <code>context</code> as arguments.</p>
+
+		<p>
+			For the most part function and class components are equivalent in what you can archive with them, and like their counter part(class components) function components can contain state.
+		</p>
+
+		<h2>Rendering a Component</h2>
+
+<pre><code>
+function Welcome(props) {
+	return h('h1', props.name)
+}
+
+render(h(Welcome, {name: 'World'}), 'main')
+</code></pre>
+
+		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments "props" to a component.</p>
+
+		<h1 id=lifecycles>Lifecycles</h1>
+
+		<p>
+			Lifecycles allow us to observe the different phases that a component unit goes through throughout the render process, and like state, function components can hold lifecycle methods.
+		</p>
+
+		<p>
+			When implementated lifecycles are invoked in certain stages of the components life.
+		</p>
+
+		<h2>Function Lifecycle</h2>
+
+<pre><code>
+function Welcome () {
+	return h('h1', props.name)
+}
+Welcome.componentDidMount = () => {}
+</code></pre>
+
+		<h2>Class Lifecycle</h2>
+
+<pre><code>
+class Welcome {
+	render(props) {
+		return h('h1', props.name)
+	}
+	componentDidMount() {}
+}
+</code></pre>
+
+		<hr>
+
+		<table>
+			<thead>
+				<tr>
+					<th>Lifecycle method</th>
+					<th>When it gets called</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>getDerivedState</code></td>
+					<td>Before mounting and when updating props</td>
+				</tr>
+				<tr>
+					<td><code>componentDidMount</code></td>
+					<td>After the component has mounted</td>
+				</tr>
+				<tr>
+					<td><code>shouldComponentUpdate</code></td>
+					<td>Before the component is updated</td>
+				</tr>
+				<tr>
+					<td><code>componentDidUpdate</code></td>
+					<td>After the component has updated</td>
+				</tr>
+				<tr>
+					<td><code>componentWillUnmount</code></td>
+					<td>Before the component is unmounted</td>
+				</tr>
+				<tr>
+					<td><code>componentDidCatch</code></td>
+					<td>When an exception is raised within the component</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<h1 id=events-and-state>Events &amp; State</h1>
+
+		<p>Events allow us to respond to behaviour.</p>
+
+<pre><code>
+class Input {
+	render() {
+		return [
+			h('input', {
+				type: 'text',
+				onInput: this.handleEvent
+			}),
+			h('h1', this.state.value)
+		]
+	}
+	handleEvent({target}) {
+		return {value: target.value}
+	}
+}
+
+render(h(Input), 'main')
+</code></pre>
+
+		<p>The example demonstrates how we might listen to events on an element and respond in kind.</p>
+
+		<p>In this particular example we update the value of our <code>&lt;h1></code> element to the value of the <code>&lt;input></code> element whenever an <code>input</code> event is dispatched.</p>
+
+		<h1 id=interoperability>Interoperability</h1>
+
+		<p>Refs are a machanisms used to assist with the interoperability of the host platform. They allow authors the ability to reference the host node interface that a virtual element generates.</p>
+
+		<h2>Function Refs</h2>
+
+<pre><code>
+class Welcome {
+	render(props) {
+		return h('h1', {
+			ref: (value) => this.current = value
+		}, props.name)
+	}
+	componentDidMount() {
+		console.log(this.current)
+	}
+}
+</code></pre>
+
+		<h2>Object Refs</h2>
+
+<pre><code>
+class Welcome {
+	render(props) {
+		return h('h1', {
+			ref: this
+		}, props.name)
+	}
+	componentDidMount() {
+		console.log(this.current)
+	}
+}
+</code></pre>
+
+		<h2>String Refs</h2>
+
+<pre><code>
+class Welcome {
+	render(props) {
+		return h('h1', {
+			ref: 'heading'
+		}, props.name)
+	}
+	componentDidMount() {
+		console.log(this.refs.heading)
+	}
+}
+</code></pre>
+
+		<p>
+			All refs call dispatched with the reference element when mounted, updated and with a <code>null</code> reference when unmounted.
+		</p>
+
+		<h1>Portals</h1>
+
+		<p>
+			Portals authors the ability to render some part of a components outside of itself while preserving the colocation relationship between it and its siblings.
+		</p>
+
+<pre><code>
+render(h('h1', {}, 'Go', createPortal('Forward', '#modal')), 'main')
+</code></pre>
+
+		<p>
+			In the example the following text <code>Welcome</code> will render in the defined main container, while the text
+			<code>Back</code> will render within the defined portal.
+		</p>
+
+
+		<h1 id=introducing-jsx>Introducing JSX</h1>
+
+		<p>
+			JSX is an optional syntax extension that enables you to write HTML tags interspersed with JavaScript.
+		</p>
+
+		<p>
+			It is not a requirement, but it may be more pleasing to use depending on your preferences.
+		</p>
+
+		<p>For example writing <code>h('h1', 'Hello')</code> as <code>&lt;h1>Hello&lt;/h1></code></p>
+
+		<h2>JSX Pragma</h2>
+
+		<p>A pragma <code>/* @jsx h */</code> is a comment that instructs the JSX compiler to use a function.</p>
+
+		<p>For example <code>h</code> as the calling function, in turn transforming <code>&lt;h1>Hello&lt;/h1></code> into <code>h('h1', null, 'Hello')</code></p>
+
+		<p>Most JSX compilers will support pragma comments but they are only scoped to the files they are defined. This might make for a sub-optimal experience depending on your preferences; But it is possible to define a project setup through Babel/Typescript.</p>
+
+		<h2>Setup</h2>
+
+		<p>
+			Babel &mdash;
+		</p>
+
+		<blockquote>
+			<a href=http://babeljs.io>Babel</a> is a JavaScript transpiler best known for its ability to turn ES6 (the next version of JavaScript) into code that runs in your browser (or on your server) today.
+		</blockquote>
+
+<pre><code>
+{
+	"plugins": [
+		["transform-react-jsx", {
+			"pragma": "dio.createElement",
+			"pragmaFrag": "dio.Fragment"
+		}]
+	]
+}
+</code></pre>
+
+		<p>
+			Typescript &mdash;
+		</p>
+
+		<blockquote>
+			<a href=https://www.typescriptlang.org>Typescript</a> is a typed superset of JavaScript that compiles to plain JavaScript.
+		</blockquote>
+
+<pre><code>
+{
+	"compilerOptions": {
+		"jsx": "React",
+		"jsxFactory": "dio.createElement"
+	}
+}
+</code></pre>
+
+		<h1>Moving Foward</h1>
+
+		<p>There are details we haven't gone into that hopefully the <a href=./api.html>API</a> and <a href=./advanced.html>Advanced</a> sections can help document.</p>
+
+		<p>At this point you can jump right into creating something with DIO, look at some <a href=./examples.html>Examples</a> or learn and contribute to DIO on <a href=https://github.com/dyo/dyo>GitHub</a>.</p>
+	</article>
+
+	<script src=./assets/javascript/index.js></script>
+</body>
+</html>

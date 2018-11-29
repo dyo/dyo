@@ -1,4 +1,4 @@
-import {h, Component, render} from 'dyo'
+import {h, Component, render} from '../index.js'
 
 describe('Refs', () => {
 	it('should (un)mount string refs', () => {

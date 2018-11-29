@@ -20,7 +20,6 @@ export var portal = 5
 export var element = 6
 export var text = 7
 export var empty = 8
-export var comment = 9
 
 // static identifiers
 export var defaultProps = 'defaultProps'

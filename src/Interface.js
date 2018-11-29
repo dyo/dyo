@@ -1,16 +1,41 @@
 import * as Enum from './Enum.js'
+import * as Utility from './Utility.js'
 
 import Registry from './Registry.js'
 
 /**
- * @param {object} owner
+ * @type {object}
+ */
+export var defaults = {
+	createElement: owner,
+	createElementNS: owner,
+	createTextNode: owner,
+	createDocumentFragment: owner,
+	removeChild: owner,
+	appendChild: owner,
+	insertBefore: owner,
+	addEventListener: owner,
+	setAttribute: owner,
+	removeAttribute: owner,
+	style: {setProperty: owner}
+}
+
+/**
+ * @return {*}
+ */
+export function owner () {
+	return this
+}
+
+/**
  * @param {number} uid
  * @param {*} type
  * @param {object} children
  * @param {*} context
  * @return {object}
+ * @param {object} owner
  */
-export function create (owner, uid, type, children, context) {
+export function create (uid, type, children, context, owner) {
 	switch (uid) {
 		case Enum.element:
 			return context ? owner.createElementNS(context, type) : owner.createElement(type)
@@ -18,8 +43,6 @@ export function create (owner, uid, type, children, context) {
 			return owner.createTextNode(children)
 		case Enum.portal: case Enum.empty:
 			return owner.createTextNode('')
-		case Enum.comment:
-			return owner.createComment(children)
 		case Enum.thenable: case Enum.fragment:
 			return owner.createDocumentFragment()
 		case Enum.target:
@@ -28,24 +51,31 @@ export function create (owner, uid, type, children, context) {
 }
 
 /**
- * @param {object} value
+ * @param {*} value
  * @param {object?} owner
  * @return {object}
  */
 export function target (value, owner) {
-	if (owner) {
-		if (value) {
-			if (typeof value === 'string') {
-				return target(owner.querySelector(value), owner)
-			} else {
-				return value.nodeType === owner.nodeType ? target(value.documentElement, owner) : value
+	if (value) {
+		if (typeof value === 'object') {
+			switch (value.ownerDocument) {
+				case undefined:
+					return owner === null ? value[0] || (value[0] = defaults) : value
+				case null:
+					return value.documentElement
+				default:
+					return value
 			}
+		} else if (owner) {
+			return target(owner.querySelector(value), owner)
+		} else if (typeof document === 'object') {
+			return target(value, document)
 		} else {
-			return target(owner, owner)
+			return target({}, owner)
 		}
-	} else {
-		return target(value, from(document))
 	}
+
+	Utility.invariant('Invalid target!')
 }
 
 /**
@@ -115,33 +145,31 @@ export function insert (parent, element, sibling) {
 }
 
 /**
- * @param {object} element
  * @param {string} name
  * @param {*} value
  * @param {object} instance
  */
-export function props (element, name, value, instance) {
+export function props (name, value, instance, handler) {
 	if (name === 'style') {
-		stylesheet(name, value || false, instance)
+		if (typeof value === 'object') {
+			if (value) {
+				return stylesheet(name, value, instance[name])
+			}
+		}
 	} else {
 		switch (typeof value) {
 			case 'object': case 'function':
 				if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110) {
-					return handler(element, name.substr(2).toLowerCase(), value, instance)
+					return events(name.substr(2).toLowerCase(), value, instance, handler)
 				}
 		}
 
 		if (name in instance) {
-			switch (name) {
-				case 'width': case 'height':
-					break
-				default:
-					return property(name, value, instance)
-			}
+			return property(name, value, instance)
 		}
-
-		attribute(name, value, instance)
 	}
+
+	attribute(name, value, instance)
 }
 
 /**
@@ -151,10 +179,14 @@ export function props (element, name, value, instance) {
  */
 export function property (name, value, instance) {
 	try {
-		switch (instance[name] = value) {
+		switch (value) {
 			case false: case null: case undefined:
-				return attribute(name, value, instance)
+				if (typeof instance[name] === 'string') {
+					return property(name, '', instance)
+				}
 		}
+
+		instance[name] = value
 	} catch (error) {
 		attribute(name, value, instance)
 	}
@@ -182,12 +214,8 @@ export function attribute (name, value, instance) {
  * @param {object} instance
  */
 export function stylesheet (name, value, instance) {
-	if (typeof value === 'object') {
-		for (var key in value) {
-			declaration(key, value[key], instance[name])
-		}
-	} else {
-		attribute(name, value, instance)
+	for (var key in value) {
+		declaration(key, value[key], instance)
 	}
 }
 
@@ -210,21 +238,23 @@ export function declaration (name, value, instance) {
 }
 
 /**
- * @param {object} element
  * @param {string} name
  * @param {string} value
  * @param {object} instance
+ * @param {object} handler
  */
-export function handler (element, name, value, instance) {
-	if (!Registry.has(instance)) {
-		Registry.set(instance, {})
+export function events (name, value, instance, handler) {
+	var handlers = Registry.get(instance)
+
+	if (!handlers) {
+		Registry.set(instance, handlers = {})
 	}
 
-	if (!Registry.get(instance)[name]) {
-		instance.addEventListener(name, element, false)
+	if (!handlers[name]) {
+		instance.addEventListener(name, handler, false)
 	}
 
-	Registry.get(instance)[name] = value
+	handlers[name] = value
 }
 
 /**
