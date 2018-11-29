@@ -26,7 +26,7 @@
 		"test-prod": "cross-env NODE_ENV=production npm run test-spec",
 		"test-spec": "mocha --harmony --require esm script/test.js --recursive test",
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
-		"prepare": "npm run build",
+		"prepare": "npm run start",
 		"start": "npm run build -- . && npm run build -- server",
 		"build": "rollup --config script/build.js --configDir"
 	},
