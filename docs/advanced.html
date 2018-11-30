@@ -8,6 +8,7 @@
 	<link rel=stylesheet href=assets/stylesheet/index.css>
 	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
 	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+	<script defer src=./assets/javascript/index.js></script>
 </head>
 <body>
 	<a href=./ title=index class=logo>
@@ -169,6 +170,8 @@ User.componentDidMount = async (props, state, context) => {
 }
 </code></pre>
 
+		<blockquote>Note: Dyo specifically auto-unwraps fetch-based promises to json.</blockquote>
+
 		<h1 id=async-unmount>Async componentWillUnmount</h1>
 
 		<p>
@@ -176,7 +179,7 @@ User.componentDidMount = async (props, state, context) => {
 		</p>
 
 		<p>
-			That is to say if you return a Promise from <code>componentWillUnmount</code>, the component will stay in a transient state in which in doesn't exist in the virtual subtree but is kept alive in the host enviroment untill the Promise has resolved.
+			That is to say if you return a promise from <code>componentWillUnmount</code>, the component will stay in a transient state in which in doesn't exist in the virtual subtree but is kept alive in the host enviroment untill the promise has resolved.
 		</p>
 
 <pre><code>
@@ -188,7 +191,29 @@ User.componentWillUnmount = async (props, state, context) => {
 	return this.refs.heading.animate({...}).finished
 }
 </code></pre>
+
+		<h1 id=server>Server</h1>
+
+		<p>Dyo provides a "generic" server renderer that supports async updates, async elements, async fetch, and all lifecycle methods.</p>
+
+		<p>The renderer effectively renderers into any writable stream with a <code>write</code> method, and auto ends the stream if the stream has a <code>end</code> method and the stream has not already ended.</p>
+
+		<p>The following writes <code>&lt;!doctype>&lt;html>&lt;h1>Hello&lt;/h1>&lt;/html></code> to the response.</p>
+
+<pre><code>
+import {http} from 'http'
+import {h, render} from 'dyo/server'
+
+http.createServer(function (request, response) {
+	render([
+		h('!doctype'), h('html', h('h1', 'Hello'))
+	], response, () => {
+		console.log('invoked before ending the response')
+	})
+}).listen(8080)
+</code></pre>
+
+		<p>This in effect makes it easier to re-use components both on the browser and server.</p>
 	</article>
-	<script src=./assets/javascript/index.js></script>
 </body>
 </html>

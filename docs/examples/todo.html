@@ -5,114 +5,115 @@
 		<meta http-equiv=X-UA-Compatible content=IE=edge>
 		<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<title>Todo App</title>
+		<script src=https://unpkg.com/dyo></script>
 	</head>
-	<body></body>
-	<script src=../../dist/dyo.umd.js></script>
-	<script>
-		var {render, h} = dyo
+	<body>
+		<script>
+			var {render, h} = dyo
 
-		class TodoApp {
-		  handleEvent(e, props, state) {
-		  	switch (e.type) {
-		  		case 'submit':
-		  			return this.setState(this.handleSubmit(state, e.preventDefault()))
-		  		default:
-		  			return this.setState(this.handleChange(props))
-		  	}
-		  }
-		  handleChange({id, done}) {
-		  	return {todos: this.state.todos.map(todo => (id === todo.id ? {...todo, done: !done} : todo))}
-		  }
-		  handleSubmit({value}) {
-		  	return value && {todos: this.state.todos.concat(this.getItemDescription(Math.random(), value, false))}
-		  }
-		  getItemDescription(id, value, done) {
-		  	return {id, value, done}
-		  }
-		  getDerivedState({todos}) {
-		    if (todos == null) {
-		    	return {
-		    		todos: [
-		    			this.getItemDescription(0, 'Learn JavaScript', false),
-		    			this.getItemDescription(1, 'Learn Reactive Programming', false),
-		    			this.getItemDescription(2, 'Build something awesome', true)
-		    	  ]
-		    	}
-		    }
-		  }
-		  render(props, {todos}) {
-		    return (
-		    	h('main', {
-		  			style: {
-		  				fontFamily: 'sans-serif',
-		  				background: '#eee',
-		  				padding: '20px'
-		  			}
-		  		},
-		  			h('h2', 'Todos:'),
-		    		h('ol',
-		    			todos.map((props) => (
-		    				h(Item, {...props, handleEvent: this})
-		    			))
-		    		),
-		    		h(Form, {handleEvent: this})
-		    	)
-		    )
-		  }
-		}
-
-		class Form {
-			handleEvent({target: {value}}) {
-				return {value}
+			class TodoApp {
+			  handleEvent(e, props, state) {
+			  	switch (e.type) {
+			  		case 'submit':
+			  			return this.setState(this.handleSubmit(state, e.preventDefault()))
+			  		default:
+			  			return this.setState(this.handleChange(props))
+			  	}
+			  }
+			  handleChange({id, done}) {
+			  	return {todos: this.state.todos.map(todo => (id === todo.id ? {...todo, done: !done} : todo))}
+			  }
+			  handleSubmit({value}) {
+			  	return value && {todos: this.state.todos.concat(this.getItemDescription(Math.random(), value, false))}
+			  }
+			  getItemDescription(id, value, done) {
+			  	return {id, value, done}
+			  }
+			  getDerivedState({todos}) {
+			    if (todos == null) {
+			    	return {
+			    		todos: [
+			    			this.getItemDescription(0, 'Learn JavaScript', false),
+			    			this.getItemDescription(1, 'Learn Reactive Programming', false),
+			    			this.getItemDescription(2, 'Build something awesome', true)
+			    	  ]
+			    	}
+			    }
+			  }
+			  render(props, {todos}) {
+			    return (
+			    	h('main', {
+			  			style: {
+			  				fontFamily: 'sans-serif',
+			  				background: '#eee',
+			  				padding: '20px'
+			  			}
+			  		},
+			  			h('h2', 'Todos:'),
+			    		h('ol',
+			    			todos.map((props) => (
+			    				h(Item, {...props, handleEvent: this})
+			    			))
+			    		),
+			    		h(Form, {handleEvent: this})
+			    	)
+			    )
+			  }
 			}
-			getDerivedState({value}) {
-				if (value == null) {
-					return {value: ''}
+
+			class Form {
+				handleEvent({target: {value}}) {
+					return {value}
 				}
-			}
-			render({handleEvent}, {value}) {
-				return (
-					h('form', {
-						onSubmit: [handleEvent, this]
-					},
-						h('input', {onInput: this, value: value}),
-						h('button', 'Add Todo')
-					)
-				)
-			}
-		}
-
-		class Item {
-			render({id, done, value, handleEvent}) {
-				return (
-					h('li', {
-						key: id,
-						style: {
-							margin: '8px 0',
-							textTransform: 'capitalize'
-						}
-					},
-						h('label',
-							h('input', {
-								type: 'checkbox',
-								checked: done,
-								style: {
-									marginRight: '5px'
-								},
-								onChange: handleEvent
-							}),
-							h('span', {
-								style: done && {
-									color: 'rgba(0,0,0,.3)',
-									textDecoration: 'line-through'
-								}
-							}, value)
+				getDerivedState({value}) {
+					if (value == null) {
+						return {value: ''}
+					}
+				}
+				render({handleEvent}, {value}) {
+					return (
+						h('form', {
+							onSubmit: [handleEvent, this]
+						},
+							h('input', {onInput: this, value: value}),
+							h('button', 'Add Todo')
 						)
 					)
-				)
+				}
 			}
-		}
 
-		render(TodoApp, document.body)
-	</script>
+			class Item {
+				render({id, done, value, handleEvent}) {
+					return (
+						h('li', {
+							key: id,
+							style: {
+								margin: '8px 0',
+								textTransform: 'capitalize'
+							}
+						},
+							h('label',
+								h('input', {
+									type: 'checkbox',
+									checked: done,
+									style: {
+										marginRight: '5px'
+									},
+									onChange: handleEvent
+								}),
+								h('span', {
+									style: done && {
+										color: 'rgba(0,0,0,.3)',
+										textDecoration: 'line-through'
+									}
+								}, value)
+							)
+						)
+					)
+				}
+			}
+
+			render(TodoApp, document.body)
+		</script>
+	</body>
 </html>

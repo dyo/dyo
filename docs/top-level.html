@@ -8,6 +8,7 @@
 	<link rel=stylesheet href=assets/stylesheet/index.css>
 	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
 	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+	<script defer src=./assets/javascript/index.js></script>
 </head>
 <body>
 	<a href=./ title=index class=logo>
@@ -31,7 +32,11 @@
 		<p>The entry point of every application starts with the render function.</p>
 
 <pre><code>
-render(element, container, callback?: function): thenable
+render(
+	element: object
+	container: string|object
+	callback?: function
+): thenable
 </code></pre>
 
 		<h1 id=createElement>createElement</h1>
@@ -39,7 +44,11 @@ render(element, container, callback?: function): thenable
 		<p>Creates virtual elements that Dyo understands.</p>
 
 <pre><code>
-createElement(type, props?: object, ...children?: Array): object
+createElement(
+	type: string|function|object
+	props?: object
+	...children?: any
+): object
 </code></pre>
 
 		<h1 id=cloneElement>cloneElement</h1>
@@ -47,7 +56,11 @@ createElement(type, props?: object, ...children?: Array): object
 		<p>Properties are shallow merged while new children replace old.</p>
 
 <pre><code>
-cloneElement(element, props?: object, ...children?: Array): object
+cloneElement(
+	element: object
+	props?: object
+	...children?: Array
+): object
 </code></pre>
 
 		<h1 id=isValidElement>isValidElement</h1>
@@ -55,7 +68,9 @@ cloneElement(element, props?: object, ...children?: Array): object
 		<p>Validates that the argument is a valid virtual element.</p>
 
 <pre><code>
-isValidElement(element: any): boolean
+isValidElement(
+	element: any
+): boolean
 </code></pre>
 
 		<h1 id=createPortal>createPortal</h1>
@@ -63,7 +78,11 @@ isValidElement(element: any): boolean
 		<p>Creates a virtual portal element that Dyo understands.</p>
 
 <pre><code>
-createPortal(children, container: string|object, props?: object): object
+createPortal(
+	children: object
+	container: string|object
+	props?: object
+): object
 </code></pre>
 
 		<h1 id=Component>Component</h1>
@@ -73,29 +92,29 @@ createPortal(children, container: string|object, props?: object): object
 <pre><code>
 class Component {
 	constructor (props: object)
-	forceUpdate(callback?: function)
-	setState(state?: object, callback?: function)
-	render(props: object, state: object, context: object)
+	forceUpdate(callback?: function): thenable
+	setState(state?: object|function, callback?: function): thenable
+	render(props: object, state: object, context: object): any
 }
 </code></pre>
 
 		<h1 id=PureComponent>PureComponent</h1>
 
-		<p>In a similar fashion the base PureComponent interface is identical to the Component interface. This interface is meant to be extended.</p>
+		<p>In a similar fashion the base PureComponent interface is almost identical to the Component interface. This interface is also meant to be extended.</p>
 
 <pre><code>
 class PureComponent {
 	constructor (props: object)
-	forceUpdate(callback?: function)
-	setState(state?: object, callback?: function)
-	shouldComponentUpdate(props: object, state: object, context: object)
-	render(props: object, state: object, context: object)
+	forceUpdate(callback?: function): thenable
+	setState(state?: object|function, callback?: function): thenable
+	render(props: object, state: object, context: object): any
+	shouldComponentUpdate(props: object, state: object, context: object): boolean?
 }
 </code></pre>
 
 		<h1 id=Children>Children</h1>
 
-		<p>The Children interface provides usefull helpers to use with the opaque <code>props.children</code> data structure.</p>
+		<p>The Children interface provides usefull helpers to use with the opaque "children prop": <code>props.children</code> data structure.</p>
 
 		<h2 id=toArray>toArray</h2>
 
@@ -153,6 +172,5 @@ filter(children: any, callback: function): Array
 find(children: any, callback: function): any
 </code></pre>
 	</article>
-	<script src=./assets/javascript/index.js></script>
 </body>
 </html>

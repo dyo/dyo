@@ -8,6 +8,7 @@
 	<link rel=stylesheet href=assets/stylesheet/index.css>
 	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
 	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+	<script defer src=./assets/javascript/index.js></script>
 </head>
 <body>
 	<a href=./ title=index class=logo>
@@ -26,16 +27,20 @@
 	<article>
 		<h1>Element</h1>
 
-		<p>Both provided <code>h</code> and <code>createElement</code> provide the same interface to create virutal elements that Dyo understands.</p>
+		<p>The <code>createElement</code> function provides an interface to create virtual elements that Dyo understands.</p>
 
 <pre><code>
-h(
+createElement(
 	type: Type
 	props?: Props
 	...children: [Children]
 )
+</code></pre>
 
-createElement(
+		<p>The <code>h</code> function: pronounced "hyperscript" provides an short alias to the <code>createElement</code> interface.</p>
+
+<pre><code>
+h(
 	type: Type
 	props?: Props
 	...children: [Children]
@@ -52,23 +57,21 @@ type Type = string|function|object
 h(
 	type: Type
 )
-
-createElement(
-	type: Type
-)
 </code></pre>
 
 		<h2 id=host>Host Element</h2>
+
+		<p>An element is called a host element when the type is typeof "string".</p>
 
 <pre><code>
 type Host = string
 
 h('h1')
-
-createElement('h1')
 </code></pre>
 
-		<h2 id=host>Component Element</h2>
+		<h2 id=component>Component Element</h2>
+
+		<p>An element is called a component element when the type is typeof "function".</p>
 
 <pre><code>
 type Component = function
@@ -76,20 +79,16 @@ type Component = function
 h(() => {
 	return createElement('h1')
 })
-
-createElement(() => {
-	return createElement('h1')
-})
 </code></pre>
 
-		<h2 id=host>Async Element</h2>
+		<h2 id=exotic>Async Element</h2>
+
+		<p>An element is called a exotic element when the type is typeof "object". The most common type of exotic element is async elements: When the type is a thenable.</p>
 
 <pre><code>
-type Async = Promise
+type Exotic = object
 
 h(Promise.resolve('Hello'))
-
-createElement(Promise.resolve('Hello'))
 </code></pre>
 
 		<h1 id=props>Props</h1>
@@ -106,11 +105,6 @@ h(
 	type: Type
 	props?: Props
 )
-
-createElement(
-	type: Type
-	props?: Props
-)
 </code></pre>
 
 			<h2 id=keys>Keys</h2>
@@ -119,10 +113,6 @@ createElement(
 type Key = string|number|symbol
 
 h(Type, {
-	key: 'heading'
-})
-
-createElement(Type, {
 	key: 'heading'
 })
 </code></pre>
@@ -139,20 +129,12 @@ type Ref = string|function|object
 h(Type, {
 	ref: 'heading'
 })
-
-createElement(Type, {
-	ref: 'heading'
-})
 </code></pre>
 
 				<h3 id=function>function</h3>
 
 <pre><code>
 h(Type, {
-	ref: (value: object) => {}
-})
-
-createElement(Type, {
 	ref: (value: object) => {}
 })
 </code></pre>
@@ -163,16 +145,12 @@ createElement(Type, {
 h(Type, {
 	ref: {current: value}
 })
-
-createElement(Type, {
-	ref: {current: value}
-})
 </code></pre>
 
 			<h2 id=events>Events</h2>
 
 <pre><code>
-type Handler = function|EventListener|Array
+type Handler = function|EventListener|Array&lt;function|EventListener>
 
 interface EventListener {
 	handleEvent(e) {}
@@ -215,14 +193,7 @@ h(
 	props?: Props
 	...children?: Children
 )
-
-createElement(
-	type: Type
-	props?: Props
-	...children?: Children
-)
 </code></pre>
 	</article>
-	<script src=./assets/javascript/index.js></script>
 </body>
 </html>

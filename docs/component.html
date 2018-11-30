@@ -8,6 +8,7 @@
 	<link rel=stylesheet href=assets/stylesheet/index.css>
 	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
 	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+	<script defer src=./assets/javascript/index.js></script>
 </head>
 <body>
 	<a href=./ title=index class=logo>
@@ -28,31 +29,39 @@
 
 		<h1 id=class>Class</h1>
 
+		<p>Dyo supports three flavours of classes, the last of which provides a default <a href=shouldComponentUpdate>shouldComponentUpdate</a> implementation that shallow compares props, state, and context in the event of an update.</p>
+
 <pre><code>
-class Default {  }
+class Default { render(props, state, context) {} }
 class Default extends Component {  }
 class Pure extends PureComponent {  }
+</code></pre>
+
+		<p>Both <code>PureComponent</code> and <code>Component</code> classes provide a default render method that return <code>props.children</code> and or invokes <code>props.children</code> with props, state, and context if the children prop is a function.</p>
+
+<pre><code>
+h(PureComponent, (props, state, context) => h('h1', 'Hello'))
 </code></pre>
 
 		<h1 id=function>Function</h1>
 
 <pre><code>
-const Default = function () {  }
-const Arrow = () => {  }
+const Default = function (props, state, context) {  }
+const Arrow = (props, state, context) => {  }
 </code></pre>
 
 		<h1 id=generator>Generator</h1>
 
 <pre><code>
 class ClassGenerator {
-	*render() {
+	*render(props, state, context) {
 		yield 1
 		yield 2
 		yield 3
 	}
 }
 
-function *FunctionGenerator () {
+function *FunctionGenerator (props, state, context) {
 	yield 1
 	yield 2
 	yield 3
@@ -63,14 +72,14 @@ function *FunctionGenerator () {
 
 <pre><code>
 class ClassAsyncGenerator {
-	async *render() {
+	async *render(props, state, context) {
 		yield 1
 		yield 2
 		yield 3
 	}
 }
 
-async function *FunctionAsyncGenerator () {
+async function *FunctionAsyncGenerator (props, state, context) {
 	yield 1
 	yield 2
 	yield 3
@@ -78,6 +87,8 @@ async function *FunctionAsyncGenerator () {
 </code></pre>
 
 		<h1 id=element>Element</h1>
+
+		<p>Component elements are elements with a function/class type.</p>
 
 <pre><code>
 h(
@@ -89,6 +100,8 @@ h(
 
 		<h1 id=props>Props</h1>
 
+		<p>Props passed to components elements are passed to the render method/function as the first argument and can be referenced from a class instance as <code>this.props</code>.</p>
+
 <pre><code>
 interface Props {
 	readonly [prop: string]: any
@@ -98,27 +111,31 @@ interface Props {
 
 			<h2 id=children>Children</h2>
 
+			<p>Children arguments passed to component elements are assigned to props as "children": <code>props.children</code>. The component children prop is an opaque data-structure; This means that the typeof value could vary, ranging from an array when the number of children are more than one, a primtive, function or object, when only one child is passed.</p>
+
 <pre><code>
 type Children = any
 </code></pre>
 
 		<h1 id=state>State</h1>
 
+		<p>The <a href=#setState>setState</a> method exists to allow updating the state object of a component. State is passed as the second argument to the render method/function of components and can be referenced from a class instance as <code>this.state</code>.</p>
+
+		<h1 id=context>Context</h1>
+
+		<p>Context is shared between multiple subtree components. The <a href=#getChildContext>getChildContext</a> lifecycle method is used to pass context down to child components. Context is passed as the second argument to render method/function of components and can be referenced from a class instance as <code>this.context</code>.</p>
+
+		<p></p>
+
 <pre><code>
 type State = Readonly&lt;object>
 </code></pre>
 
-		<h1 id=render>Render</h1>
-
-<pre><code>
-abstract render(
-	props: Readonly&lt;object>
-	state: Readonly&lt;object>
-	context: Readonly&lt;object>
-): any
-</code></pre>
-
 		<h1 id=setState>setState</h1>
+
+		<p>The <code>setState</code> method initiates a component update with the passed partial state to update it with. When the partial state object passed is a function, it is called with the current state. Thenables are awaited and the resolved non thenable value is used to update state. The update is not processed if the partial state object passed is neither of the above.</p>
+
+		<p>The second callback function argument is invoked when the update is complete. Alternatively this method returns a thenable that can be awaited to serve the same purpose as the callback argument</p>
 
 <pre><code>
 setState(
@@ -129,13 +146,31 @@ setState(
 
 		<h1 id=forceUpdate>forceUpdate</h1>
 
+		<p>The <code>forceUpdate</code> method is identical to <code>setState</code> with one key difference: <a href=shouldComponentUpdate>shouldComponentUpdate</a> is not invoked, effectively insuring that an update cannot be stopped by the invoking component.</p>
+
 <pre><code>
 forceUpdate(
 	callback?: function
 ): thenable
 </code></pre>
 
+		<h1 id=render>Render</h1>
+
+		<p>When using function components the render method is effectively the function itself. Unlike the <a href=#setState>setState</a> and <a href=#forceUpdate>forceUpdate</a> the render and all other lifecycle methods are meant to be implemented.</p>
+
+<pre><code>
+abstract render(
+	props: Readonly&lt;object>
+	state: Readonly&lt;object>
+	context: Readonly&lt;object>
+): any?
+</code></pre>
+
 		<h1 id=getDerivedState>getDerivedState</h1>
+
+		<p>This lifecycle method is called when the component initially mounts and when props change. When an object is returned this is used to update state;</p>
+
+		<blockquote>This state update is effectively merged within the same mount/update cycle and does not invoke a new "update" cycle.</blockquote>
 
 <pre><code>
 abstract getDerivedState(
@@ -147,6 +182,8 @@ abstract getDerivedState(
 
 		<h1 id=getChildContext>getChildContext</h1>
 
+		<p>This lifecycle is called when the component initially mounts and when the component updates. When an object is returned this is passed as the context object to all child components within its subtree.</p>
+
 <pre><code>
 abstract getChildContext(
 	props: Readonly&lt;object>
@@ -156,6 +193,8 @@ abstract getChildContext(
 </code></pre>
 
 		<h1 id=shouldComponentUpdate>shouldComponentUpdate</h1>
+
+		<p>This lifecycle is called before a component updates. The returned value is used to to determine whether to continue the update or not. This lifecycle method is not called when <a href=forceUpdate>forceUpdate</a> is used to update a component.</p>
 
 <pre><code>
 abstract shouldComponentUpdate(
@@ -167,6 +206,8 @@ abstract shouldComponentUpdate(
 
 		<h1 id=componentDidMount>componentDidMount</h1>
 
+		<p>This lifecycle method is called after a component has mounted. Side effects are safe in this method. If a components subtree has async dependencies this lifecycle will execute once all these dependencies have resolved. Any object returned from this method will be used as the value of an <a href=advanced.html#implicit-state>implicit setState</a>.</p>
+
 <pre><code>
 abstract componentDidMount(
 	props: Readonly&lt;object>
@@ -177,6 +218,8 @@ abstract componentDidMount(
 
 		<h1 id=componentDidUpdate>componentDidUpdate</h1>
 
+		<p>This lifecycle method is called after a component has updated. Side effects are safe in ths method. If a components subtree has async dependencies this lifecycle will execute once all these dependencies have resolved. Any object returned from this method will be used as the value of an <a href=advanced.html#implicit-state>implicit setState</a>.</p>
+
 <pre><code>
 abstract componentDidUpdate(
 	props: Readonly&lt;object>
@@ -186,6 +229,8 @@ abstract componentDidUpdate(
 </code></pre>
 
 		<h1 id=componentDidCatch>componentDidCatch</h1>
+
+		<p>This lifecycle method is called after an exception is raised. Side effects are safe in ths method. Any object returned from this method will be used as the value of an <a href=advanced.html#implicit-state>implicit setState</a>.</p>
 
 <pre><code>
 abstract componentDidCatch(
@@ -201,6 +246,8 @@ interface Exception {
 
 		<h1 id=componentWillUnmount>componentWillUnmount</h1>
 
+		<p>This lifecycle is called before a components is unmounted. Returning a promise/thenable from this method will delay the unmount until it has resolved.</p>
+
 <pre><code>
 abstract componentWillUnmount(
 	props: Readonly&lt;object>
@@ -210,6 +257,5 @@ abstract componentWillUnmount(
 </code></pre>
 
 	</article>
-	<script src=./assets/javascript/index.js></script>
 </body>
 </html>

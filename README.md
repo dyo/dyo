@@ -1,20 +1,20 @@
 # Dyo
 
-[![dio.js](https://dio.js.org/assets/images/logo.svg)](https://dyo.org)
+[![dio.js](https://dio.js.org/assets/images/logo.svg)](https://dyo.js.org)
 
 Dyo is a JavaScript library for building user interfaces.
 
 - ~6kb
 
-[![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/thysultan/dio.js/blob/master/LICENSE.md)
-[![npm](https://img.shields.io/npm/v/dio.js.svg?style=flat)](https://www.npmjs.com/package/dio.js)
-[![Build Status](https://travis-ci.org/thysultan/dio.js.svg)](https://travis-ci.org/thysultan/dio.js)
-[![Coverage Status](https://coveralls.io/repos/github/thysultan/dio.js/badge.svg)](https://coveralls.io/github/thysultan/dio.js)
+[![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/dyo/dyo/blob/master/LICENSE.md)
+[![npm](https://img.shields.io/npm/v/dyo.svg?style=flat)](https://www.npmjs.com/package/dyo)
+[![Build Status](https://travis-ci.org/dyo/dyo.svg)](https://travis-ci.org/dyo/dyo)
+[![Coverage Status](https://coveralls.io/repos/github/dyo/dyo/badge.svg)](https://coveralls.io/github/dyo/dyo)
 
 * **Light — weight** library with a small API surface that allows you to build simple and complex component based user interfaces.
 * **Declarative** Efficiently render just the right components in response to data, making your code more predictable and easier to reason about.
 
-[Learn how to use Dyo in your own project](https://dyo.org/getting-started.html).
+[Learn how to use Dyo in your own project](https://dyo.js.org/introduction.html).
 
 ## Installation
 
@@ -26,27 +26,27 @@ Dyo has been designed for forward facing gradual adoption:
 
 ## Documentation
 
-You can find the Dyo documentation [on the website](https://dyo.org/docs).
+You can find the Dyo documentation [on the website](https://dyo.js.org).
 
-Check out the [Getting Started](https://dyo.org/getting-started.html) page for a quick overview.
+Check out the [Getting Started](https://dyo.js.org/introduction.html) page for a quick overview.
 
 The documentation is divided into several sections:
 
-* [Introduction](https://dyo.org/introduction.html)
-* [API Reference](https://dyo.org/api.html)
-* [Advanced Guides](https://dyo.org/misc.html)
-* [Examples](https://dyo.org/examples.html)
+* [Introduction](https://dyo.js.org/introduction.html)
+* [API Reference](https://dyo.js.org/api.html)
+* [Advanced Guides](https://dyo.js.org/advanced.html)
+* [Examples](https://dyo.js.org/examples.html)
 
 You can improve it by sending pull requests to [this repository](https://github.com/dyo/dyo/docs).
 
 ## Examples
 
-You can find several examples [on the website](https://dyo.org). Here is the first one to get you started:
+You can find several examples [on the website](https://dyo.js.org). Here is the first one to get you started:
 
 ```js
-import {h, render} from 'unpkg.com/dyo'
+import {h, render, Component} from 'unpkg.com/dyo'
 
-class Hello extends dyo.Component {
+class Hello extends Component {
   render(props) {
   	return h('div', 'Hello ', props.name)
   }
@@ -75,7 +75,7 @@ Dyo is much alike React, so it's only natural that a comparison of the differenc
 
 #### Interfaces
 
-Dyo affords authors the ability to create custom renderer, the interface around this is implicit in contrast to React. You can find out more about custom renderers [on the website](https:/dyo.org/advanced.html#interface).
+Dyo affords authors the ability to create custom renderer, the interface around this is implicit in contrast to React.
 
 #### Re-parenting
 
@@ -92,13 +92,13 @@ Dyo treats promises(thenables) as first class values. This affords authors the a
 ```js
 render(h(Promise.resolve('Hello'), {timeout: 500}, 'Loading...'))
 
-class Hello extends dyo.Component {
+class Hello extends Component {
 	async handleEvent() {
 		return {name: 'World'}
 	}
 }
 
-class Hello extends dyo.Component {
+class Hello extends Component {
 	async componentWillUnmount() {
 		return this.refs.heading.animate([...], {...}).finished
 	}
@@ -112,13 +112,13 @@ In an async world, public interfaces like `render`, `setState` and `forceUpdate`
 ```js
 await render(h(Promise.resolve('Hello')))
 
-class extends dyo.Component {
+class extends Component {
 	async componentDidMount() {
 		await this.setState({...})
 	}
 }
 
-class extends dyo.Component {
+class extends Component {
 	async componentDidMount() {
 		await this.forceUpdate()
 	}
@@ -162,7 +162,7 @@ In contrast to React components that extend either `Component` or `PureComponent
 In addition to the iterator protocol, Dyo also supports the async iterator protocol, where every iteration is a step in the sequence of state transitions updates, modeled to afford authors the primitive to implement psuedo-synchronous designs from otherwise asynchronous application interfaces.
 
 ```js
-class Generator extends dyo.Component {
+class Generator extends Component {
 	async *render() {
 		yield 'Loading...'
 		const data = await fetch('./')

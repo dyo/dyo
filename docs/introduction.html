@@ -8,6 +8,7 @@
 	<link rel=stylesheet href=assets/stylesheet/index.css>
 	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
 	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+	<script defer src=./assets/javascript/index.js></script>
 </head>
 <body>
 	<a href=./ title=index class=logo>
@@ -47,16 +48,16 @@ npm install dyo --save
 		<h1 id=getting-started>Getting Started</h1>
 
 		<p>
-			This <a href=../repl>Hello World</a> example can be used try out code you see in this introduction.
+			The following is the "Hello World" example of Dyo.</p>
 		</p>
 
 <pre><code>
 import {h, render} from 'dyo'
 
-render(h('h1', 'Hello, world!'), 'main')
+render('Hello, world!', document)
 </code></pre>
 
-		<p>This Hello World example should render a heading with the content 'Hello World!'.</p>
+		<p>This example should render a heading with the content 'Hello World!' into the root of the document.</p>
 
 		<h1 id=introducing-elements>Introducing Elements</h1>
 
@@ -70,8 +71,10 @@ const element = h('h1', 'Hello World')
 			Given what to render at any one point in time, the underlining reconciler takes care of mounting and updating these elements to reflect the current state of the interface.
 		</p>
 		<p>
-			Elements are composed of three distinct parts &mdash; type, props and children. These can be used to assign the desired behaviours and properties that we want our elements to assume.
+			Elements are composed of three distinct parts &mdash; type, props and children. These can be used to assign desired behaviours and properties for elements to assume.
 		</p>
+
+		<p>In the following we describe an heading element with class attribute and the text content "Hello World".</p>
 
 <pre><code>
 const element = h('h1', {class: 'red'}, 'Hello World')
@@ -118,12 +121,12 @@ function Welcome(props) {
 render(h(Welcome, {name: 'World'}), 'main')
 </code></pre>
 
-		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments "props" to a component.</p>
+		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments "props" to component.</p>
 
 		<h1 id=lifecycles>Lifecycles</h1>
 
 		<p>
-			Lifecycles allow us to observe the different phases that a component unit goes through throughout the render process, and like state, function components can hold lifecycle methods.
+			Lifecycles allow us to observe the different phases that a component unit goes through throughout the render process, and like state, function components can define lifecycle methods.
 		</p>
 
 		<p>
@@ -216,7 +219,7 @@ render(h(Input), 'main')
 
 		<h1 id=interoperability>Interoperability</h1>
 
-		<p>Refs are a machanisms used to assist with the interoperability of the host platform. They allow authors the ability to reference the host node interface that a virtual element generates.</p>
+		<p>Refs are a machanism used to archive interoperability with the host platform. They allow authors the ability to reference the host node interface that a virtual element generates.</p>
 
 		<h2>Function Refs</h2>
 
@@ -264,13 +267,13 @@ class Welcome {
 </code></pre>
 
 		<p>
-			All refs call dispatched with the reference element when mounted, updated and with a <code>null</code> reference when unmounted.
+			All refs are dispatched with the reference element when mounted or updated and with a <code>null</code> reference when unmounted.
 		</p>
 
 		<h1>Portals</h1>
 
 		<p>
-			Portals authors the ability to render some part of a components outside of itself while preserving the colocation relationship between it and its siblings.
+			Portals give us the ability to render some part of a components outside of itself while preserving the co-location relationship between it and its siblings.
 		</p>
 
 <pre><code>
@@ -279,7 +282,7 @@ render(h('h1', {}, 'Go', createPortal('Forward', '#modal')), 'main')
 
 		<p>
 			In the example the following text <code>Welcome</code> will render in the defined main container, while the text
-			<code>Back</code> will render within the defined portal.
+			<code>Back</code> will render within the defined portal – an element with an id of "modal".
 		</p>
 
 
@@ -317,8 +320,8 @@ render(h('h1', {}, 'Go', createPortal('Forward', '#modal')), 'main')
 {
 	"plugins": [
 		["transform-react-jsx", {
-			"pragma": "dio.createElement",
-			"pragmaFrag": "dio.Fragment"
+			"pragma": "h",
+			"pragmaFrag": "Fragment"
 		}]
 	]
 }
@@ -336,7 +339,7 @@ render(h('h1', {}, 'Go', createPortal('Forward', '#modal')), 'main')
 {
 	"compilerOptions": {
 		"jsx": "React",
-		"jsxFactory": "dio.createElement"
+		"jsxFactory": "h"
 	}
 }
 </code></pre>
@@ -345,9 +348,7 @@ render(h('h1', {}, 'Go', createPortal('Forward', '#modal')), 'main')
 
 		<p>There are details we haven't gone into that hopefully the <a href=./api.html>API</a> and <a href=./advanced.html>Advanced</a> sections can help document.</p>
 
-		<p>At this point you can jump right into creating something with DIO, look at some <a href=./examples.html>Examples</a> or learn and contribute to DIO on <a href=https://github.com/dyo/dyo>GitHub</a>.</p>
+		<p>At this point you can jump right into creating something with Dyo, look at some <a href=./examples.html>Examples</a> or learn and contribute to Dyo on <a href=https://github.com/dyo/dyo>GitHub</a>.</p>
 	</article>
-
-	<script src=./assets/javascript/index.js></script>
 </body>
 </html>

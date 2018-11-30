@@ -1,6 +1,6 @@
 {
 	"name": "dyo",
-	"version": "0.0.0",
+	"version": "0.0.2",
 	"license": "MIT",
 	"description": "Dyo is a JavaScript library for building user interfaces",
 	"homepage": "https://github.com/dyo/dyo",
@@ -9,13 +9,11 @@
 	"bugs": "https://github.com/dyo/dyo/issues",
 	"main": "dist/dyo.umd.js",
 	"module": "dist/dyo.esm.js",
-	"browser": "dist/dyo.umd.js",
-	"jsdelivr": "dist/dyo.umd.js",
-	"unpkg": "dist/dyo.umd.js",
 	"files": [
-		"**/index.js",
-		"**/dist/",
-		"**/src/"
+		"index.js",
+		"dist/",
+		"src/",
+		"server/"
 	],
 	"scripts": {
 		"lint": "eslint ./*src/",
@@ -26,9 +24,10 @@
 		"test-prod": "cross-env NODE_ENV=production npm run test-spec",
 		"test-spec": "mocha --harmony --require esm script/test.js --recursive test",
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
-		"prepare": "npm run start",
+		"build": "rollup --config script/build.js --configDir",
 		"start": "npm run build -- . && npm run build -- server",
-		"build": "rollup --config script/build.js --configDir"
+		"prepare": "npm start",
+		"postversion": "git push && git push --tags"
 	},
 	"devDependencies": {
 		"dyo": "./",
