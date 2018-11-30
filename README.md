@@ -1,6 +1,6 @@
 # Dyo
 
-[![dio.js](https://dio.js.org/assets/images/logo.svg)](https://dyo.js.org)
+[![Dyo](https://dyo.js.org/assets/images/logo.svg)](https://dyo.js.org)
 
 Dyo is a JavaScript library for building user interfaces.
 
@@ -8,8 +8,8 @@ Dyo is a JavaScript library for building user interfaces.
 
 [![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/dyo/dyo/blob/master/LICENSE.md)
 [![npm](https://img.shields.io/npm/v/dyo.svg?style=flat)](https://www.npmjs.com/package/dyo)
-[![Build Status](https://travis-ci.org/dyo/dyo.svg)](https://travis-ci.org/dyo/dyo)
-[![Coverage Status](https://coveralls.io/repos/github/dyo/dyo/badge.svg)](https://coveralls.io/github/dyo/dyo)
+[![Build Status](https://travis-ci.com/dyo/dyo.svg?branch=master)](https://travis-ci.com/dyo/dyo)
+[![Coverage Status](https://coveralls.io/repos/github/dyo/dyo/badge.svg?branch=master)](https://coveralls.io/github/dyo/dyo)
 
 * **Light — weight** library with a small API surface that allows you to build simple and complex component based user interfaces.
 * **Declarative** Efficiently render just the right components in response to data, making your code more predictable and easier to reason about.
