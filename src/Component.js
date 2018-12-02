@@ -180,7 +180,6 @@ export function create (fiber, host, parent, element) {
 	var instance = element.instance = new constructor(props)
 	var state = instance.state || {}
 	var children = element.children
-	var snapshot = element
 
 	Assert.types(element, context, Enum.contextTypes)
 
@@ -199,7 +198,7 @@ export function create (fiber, host, parent, element) {
 		Lifecycle.dispatch(element, instance, props, state, context, Enum.getChildContext)
 	}
 
-	snapshot = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context, children)))
+	var snapshot = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context, children)))
 
 	if (Lifecycle.has(instance, Enum.componentDidMount)) {
 		Schedule.enqueue(fiber, element, instance, props, state, context, Enum.componentDidMount)

@@ -16,8 +16,8 @@
 		"server/"
 	],
 	"scripts": {
-		"lint": "eslint ./*src/",
-		"pretest": "npm run lint",
+		"lint": "eslint {./src,./server/src}/",
+		"pretest": "npm run lint && npm start",
 		"test": "nyc npm run test-all",
 		"test-all": "npm run test-dev && npm run test-prod",
 		"test-dev": "cross-env NODE_ENV=development npm run test-spec",

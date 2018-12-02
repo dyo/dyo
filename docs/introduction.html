@@ -47,12 +47,10 @@ npm install dyo --save
 
 		<h1 id=getting-started>Getting Started</h1>
 
-		<p>
-			The following is the "Hello World" example of Dyo.</p>
-		</p>
+		<p>The following is the "Hello World" example of Dyo.</p>
 
 <pre><code>
-import {h, render} from 'dyo'
+import {render} from 'dyo'
 
 render('Hello, world!', document)
 </code></pre>
@@ -64,17 +62,13 @@ render('Hello, world!', document)
 <pre><code>
 const element = h('h1', 'Hello World')
 </code></pre>
-		<p>
-			Elements are represented by JavaScript objects that describe what and how a particular element should look and behave.
-		</p>
-		<p>
-			Given what to render at any one point in time, the underlining reconciler takes care of mounting and updating these elements to reflect the current state of the interface.
-		</p>
-		<p>
-			Elements are composed of three distinct parts &mdash; type, props and children. These can be used to assign desired behaviours and properties for elements to assume.
-		</p>
+		<p>Elements are represented by JavaScript objects that describe what and how a particular element should look and behave.</p>
 
-		<p>In the following we describe an heading element with class attribute and the text content "Hello World".</p>
+		<p>Given what to render at any one point in time, Dyo takes care of mounting and updating these elements to reflect the current state of the interface.</p>
+
+		<p>Elements are composed of three distinct parts &mdash; <strong>type</strong>, <strong>props</strong> and <strong>children</strong>. These can be used to assign desired behaviours and properties for elements to assume.</p>
+
+		<p>In the following we describe a heading element with a class attribute and the text content <em>"Hello World"</em>.</p>
 
 <pre><code>
 const element = h('h1', {class: 'red'}, 'Hello World')
@@ -82,9 +76,9 @@ const element = h('h1', {class: 'red'}, 'Hello World')
 
 		<h1 id=components>Components</h1>
 
-		<p>Components are units that allow us to sub-divide an interface into independent, reusable pieces.</p>
+		<p>Components are independent, reusable building blocks of an interface.</p>
 
-		<p>Conceptually, components are like JavaScript functions. They accept arbitrary arguments and return elements describing the look and behavior of the interface.</p>
+		<p>Conceptually, components are like JavaScript functions. They accept arbitrary arguments and return elements describing the appearance and behavior of the interface.</p>
 
 		<h2>Functions and Classes</h2>
 
@@ -105,11 +99,9 @@ class Welcome {
 }
 </code></pre>
 
-		<p>Components accept <code>props</code>, <code>state</code> and <code>context</code> as arguments.</p>
+		<p>Components accept <strong>props</strong>, <strong>state</strong> and <strong>context</strong> as arguments.</p>
 
-		<p>
-			For the most part function and class components are equivalent in what you can archive with them, and like their counter part(class components) function components can contain state.
-		</p>
+		<p>Function and class components are equivalent in what can be archived with them.</p>
 
 		<h2>Rendering a Component</h2>
 
@@ -118,27 +110,24 @@ function Welcome(props) {
 	return h('h1', props.name)
 }
 
-render(h(Welcome, {name: 'World'}), 'main')
+render(h(Welcome, {name: 'World'}), document)
 </code></pre>
 
-		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments "props" to component.</p>
+		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments <em>"props"</em> to component.</p>
 
 		<h1 id=lifecycles>Lifecycles</h1>
 
-		<p>
-			Lifecycles allow us to observe the different phases that a component unit goes through throughout the render process, and like state, function components can define lifecycle methods.
-		</p>
+		<p>Lifecycle methods are methods that gets executed during the different phases of a component. When the component gets created, when the component updates, and when the component gets unmounted.</p>
 
-		<p>
-			When implementated lifecycles are invoked in certain stages of the components life.
-		</p>
+		<p>The following are examples of lifecycle methods on both <strong>function</strong> and <strong>class</strong> components.</p>
 
 		<h2>Function Lifecycle</h2>
 
 <pre><code>
-function Welcome () {
+function Welcome (props) {
 	return h('h1', props.name)
 }
+
 Welcome.componentDidMount = () => {}
 </code></pre>
 
@@ -152,6 +141,8 @@ class Welcome {
 	componentDidMount() {}
 }
 </code></pre>
+
+		<p>Each lifecycle method is called at a deterministic interval.</p>
 
 		<hr>
 
@@ -192,43 +183,40 @@ class Welcome {
 
 		<h1 id=events-and-state>Events &amp; State</h1>
 
-		<p>Events allow us to respond to behaviour.</p>
+		<p>Events form the interactive bridge between the user and interface.</p>
+
+		<p>The following example demonstrates this through a text input element and an <a href=https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/oninput>onInput</a> event that is dispatched when data is exchanged.</p>
 
 <pre><code>
 class Input {
 	render() {
-		return [
-			h('input', {
-				type: 'text',
-				onInput: this.handleEvent
-			}),
+		return h('form',
 			h('h1', this.state.value)
-		]
+			h('input', {type: 'text', onInput: this.handleEvent})
+		)
 	}
 	handleEvent({target}) {
 		return {value: target.value}
 	}
 }
 
-render(h(Input), 'main')
+render(h(Input), document)
 </code></pre>
 
-		<p>The example demonstrates how we might listen to events on an element and respond in kind.</p>
-
-		<p>In this particular example we update the value of our <code>&lt;h1></code> element to the value of the <code>&lt;input></code> element whenever an <code>input</code> event is dispatched.</p>
+		<p>The example creates a brdige between the value of the <code>&lt;h1></code> element and the value of the <code>&lt;input></code> element whenever an <code>input</code> event is dispatched.</p>
 
 		<h1 id=interoperability>Interoperability</h1>
 
-		<p>Refs are a machanism used to archive interoperability with the host platform. They allow authors the ability to reference the host node interface that a virtual element generates.</p>
+		<p>The <strong>ref</strong> prop plural: <em>refs</em>; allows authors the ability to retrieve a reference to the host node that a virtual element creates.</p>
+
+		<p>These come in three varients: <strong>function</strong>, <strong>object</strong> and <strong>string</strong> refs.</p>
 
 		<h2>Function Refs</h2>
 
 <pre><code>
 class Welcome {
 	render(props) {
-		return h('h1', {
-			ref: (value) => this.current = value
-		}, props.name)
+		return h('h1', {ref: (value) => this.current = value})
 	}
 	componentDidMount() {
 		console.log(this.current)
@@ -266,51 +254,37 @@ class Welcome {
 }
 </code></pre>
 
-		<p>
-			All refs are dispatched with the reference element when mounted or updated and with a <code>null</code> reference when unmounted.
-		</p>
+		<p>All refs are dispatched with the reference element when mounted or updated and with a <code>null</code> reference when unmounted or updated.</p>
 
 		<h1>Portals</h1>
 
-		<p>
-			Portals give us the ability to render some part of a components outside of itself while preserving the co-location relationship between it and its siblings.
-		</p>
+		<p>Portals provide a first-class interface to render children into a container that exists outside the surrounding elements hierarchy of the parent component.</p>
 
 <pre><code>
-render(h('h1', {}, 'Go', createPortal('Forward', '#modal')), 'main')
+render(h('h1', {}, 'A', createPortal('B', document.head)), document.body)
 </code></pre>
 
-		<p>
-			In the example the following text <code>Welcome</code> will render in the defined main container, while the text
-			<code>Back</code> will render within the defined portal – an element with an id of "modal".
-		</p>
-
+		<p>The following example demonstrates that we can both render the text element <em>"A"</em> into the defined documents body, while also defining that it has a child element <em>"B"</em> that renders into the head of the document.</p>
 
 		<h1 id=introducing-jsx>Introducing JSX</h1>
 
-		<p>
-			JSX is an optional syntax extension that enables you to write HTML tags interspersed with JavaScript.
-		</p>
+		<p>JSX is an optional syntax extension that enables you to write HTML tags interspersed with JavaScript.</p>
 
-		<p>
-			It is not a requirement, but it may be more pleasing to use depending on your preferences.
-		</p>
+		<p>It is not a requirement, but it may be more pleasing to use depending on your preferences.</p>
 
-		<p>For example writing <code>h('h1', 'Hello')</code> as <code>&lt;h1>Hello&lt;/h1></code></p>
+		<p>For example writing <code>h('h1', 'Hello')</code> as an html dialect: <code>&lt;h1>Hello&lt;/h1></code>.</p>
 
 		<h2>JSX Pragma</h2>
 
 		<p>A pragma <code>/* @jsx h */</code> is a comment that instructs the JSX compiler to use a function.</p>
 
-		<p>For example <code>h</code> as the calling function, in turn transforming <code>&lt;h1>Hello&lt;/h1></code> into <code>h('h1', null, 'Hello')</code></p>
+		<p>For example <code>h</code> as the calling function, in turn transforming <code>&lt;h1>Hello&lt;/h1></code> into <code>h('h1', null, 'Hello')</code>.</p>
 
-		<p>Most JSX compilers will support pragma comments but they are only scoped to the files they are defined. This might make for a sub-optimal experience depending on your preferences; But it is possible to define a project setup through Babel/Typescript.</p>
+		<p>Most JSX compilers will support pragma comments but they are only scoped to the files they are defined in. This might make for a sub-optimal experience depending on your preferences; But it is possible to define a project setup through Babel/Typescript.</p>
 
 		<h2>Setup</h2>
 
-		<p>
-			Babel &mdash;
-		</p>
+		<p>Babel &mdash;</p>
 
 		<blockquote>
 			<a href=http://babeljs.io>Babel</a> is a JavaScript transpiler best known for its ability to turn ES6 (the next version of JavaScript) into code that runs in your browser (or on your server) today.
@@ -327,9 +301,7 @@ render(h('h1', {}, 'Go', createPortal('Forward', '#modal')), 'main')
 }
 </code></pre>
 
-		<p>
-			Typescript &mdash;
-		</p>
+		<p>Typescript &mdash;</p>
 
 		<blockquote>
 			<a href=https://www.typescriptlang.org>Typescript</a> is a typed superset of JavaScript that compiles to plain JavaScript.

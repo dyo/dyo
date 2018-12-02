@@ -52,6 +52,8 @@ export function properties (props, children) {
  * @return {string}
  */
 export function property (name, value, props, children) {
+	var payload = value
+
 	switch (name) {
 		case 'innerHTML':
 			children.splice(0, children.length, Dyo.createElement([], value))
@@ -59,23 +61,23 @@ export function property (name, value, props, children) {
 			return ''
 		case 'style':
 			if (value !== null && typeof value === 'object') {
-				value = style(value)
+				payload = style(value)
 			}
 	}
 
-	switch (value) {
+	switch (payload) {
 		case false: case null: case undefined:
 			return ''
 		case true:
-			value = name
+			payload = name
 	}
 
-	switch (typeof value) {
+	switch (typeof payload) {
 		case 'object': case 'function':
 			return ''
 	}
 
-	return ' ' + name + '="' + value + '"'
+	return ' ' + name + '="' + payload + '"'
 }
 
 /**

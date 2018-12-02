@@ -57,17 +57,6 @@
 	)$'.replace(/\s/g, '')
 
 	var regex = new RegExp(keywords, 'g')
-	var font = selector + '{font:0.9em/1.618 Consolas, "Liberation Mono", Menlo, Courier, monospace;tab-size:2;}'
-	var style = [
-		'.syntax-word{color:#444}',
-		'.syntax-operator{color:#444}',
-		'.syntax-number{color:#1C00CF}',
-		'.syntax-regex{color:#C41A16}',
-		'.syntax-key{color:#AA0C91}',
-		'.syntax-string{color:#C41A16}',
-		'.syntax-comment{color:#007400}',
-		font
-	]
 
 	var tokenize = function (text) {
 		var stack = []
@@ -113,8 +102,6 @@
 			node.appendChild(span)
 		})
 	})
-
-	document.head.appendChild(document.createElement('style')).textContent = style.join('')
 }()
 
 !function () {

@@ -27,24 +27,9 @@
 	<article>
 		<h1>Advanced</h1>
 
-		<h1>Table of Contents</h1>
-
-		<nav>
-			<ol>
-				<li><a href=#rendering>Rendering</a></li>
-				<li><a href=#components>Components</a></li>
-				<li><a href=#events>Events</a></li>
-				<li><a href=#implicit-state>Implicit setState</a></li>
-				<li><a href=#async-state>Async setState</a></li>
-				<li><a href=#async-unmount>Async componentWillUnmount</a></li>
-			</ol>
-		</nav>
-
 		<h1 id=rendering>Rendering</h1>
 
-		<p>
-			Dyo supports rendering with a vide variety of JavaScript Objects, these include.
-		</p>
+		<p>Dyo supports rendering with a vide variety of JavaScript Objects, these include.</p>
 
 		<ol>
 			<li>Elements</li>
@@ -60,9 +45,7 @@
 
 		<h1 id=components>Statefull Function Components</h1>
 
-		<p>
-			Function components can maintain state, lifecycles and string refs identical to their class counter parts.
-		</p>
+		<p>Function components can maintain state, lifecycles and string refs in symmetry with the class varient.</p>
 
 <pre><code>
 const User = (props, {name}, context) => {
@@ -74,20 +57,16 @@ User.getDerivedState = (props) => {
 }
 </code></pre>
 
-		<p>
-			The difference between function and class components is in the syntax difference between JavaScript functions and classes.
-		</p>
+		<p>The difference between function and class components is in the syntax difference between JavaScript functions and classes.</p>
 
 		<h1 id=events>Events</h1>
 
-		<p>
-			Events always maintain a <code>this</code> reference within the surrounding component. That is to say you do not need to bind your event handlers if you are not sending them as callbacks to other components.
-		</p>
+		<p>The <strong>this</strong> reference in event handlers is a reference to the surrounding component.</p>
 
 <pre><code>
 class User {
 	handleEvent(e, props, state, context) {
-		return {value: 'Fox'}
+		assert(this instanceof User)
 	}
 	render(props, state, context) {
 		return h('input', {
@@ -98,14 +77,12 @@ class User {
 }
 </code></pre>
 
-		<p>
-			Events supports multiple handlers and the <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListeners</a> interface.
-		</p>
+		<p>Assigning multiple events handlers to a single event is supported in addition to event handlers that conform to the the <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListener</a> interface.</p>
 
 <pre><code>
 class User {
 	handleEvent(e, props, state, context) {
-		return {value: 'Fox'}
+		return {value: 'Earth'}
 	}
 	render(props, state, context) {
 		return h('input', {
@@ -117,28 +94,9 @@ class User {
 }
 </code></pre>
 
-		<p>
-			<a href=#implicit-state>Implicit setState</a> compliments events, allowing us to design components in the following functional way while maintaining the benefits of statefull-components state.
-		</p>
-
-<pre><code>
-const User = (props, state, context) => {
-	return h('input', {
-		value: state.value,
-		onInput: handleEvent
-	})
-}
-
-const handleEvent = (e, props, state, context) => {
-	return {value: 'Fox'}
-}
-</code></pre>
-
 		<h1 id=implicit-state>Implicit setState</h1>
 
-		<p>
-			Implicit setState is a heuristic used to dispatch state updates without explicity calling <a href=./api/component.html#setState>setState</a>. This can be used in events lifecycle methods with the exception of <a href=./api/component.html#shouldComponentUpdate>shouldComponentUpdate</a> and <a href=./api/component.html#componentWillUnmount>componentWillUnmount</a>.
-		</p>
+		<p>Implicit setState is a heuristic used to dispatch state updates without explicity calling <a href=component.html#setState>setState</a>. This can be used in events, and lifecycle methods with the exception of <a href=./api/component.html#shouldComponentUpdate>shouldComponentUpdate</a> and <a href=component.html#componentWillUnmount>componentWillUnmount</a>.</p>
 
 <pre><code>
 const User = (props, state, context) => {
@@ -152,13 +110,7 @@ User.componentDidMount = (props, state, context) => {
 
 		<h1 id=async-state>async setState</h1>
 
-		<p>
-			The explicit and with association implicit setState interface support Promises that resolve to partial state update objects.
-		</p>
-
-		<p>
-			This compliments <a href=#implicit-state>implicit setState,</a> allowing the following functional patterns to emerge.
-		</p>
+		<p>The setState interface: Both explicit and implicit &mdash; support aynsc state updates through promises or thenables that resolve to the desired partial state update object.</p>
 
 <pre><code>
 const User = (props, state, context) => {
@@ -170,17 +122,13 @@ User.componentDidMount = async (props, state, context) => {
 }
 </code></pre>
 
-		<blockquote>Note: Dyo specifically auto-unwraps fetch-based promises to json.</blockquote>
+		<blockquote>Note: Dyo auto-unwraps fetch-based promises to json.</blockquote>
 
 		<h1 id=async-unmount>Async componentWillUnmount</h1>
 
-		<p>
-			The <a href=../api/component.html#componentWillUnmount>componentWillUnmount</a> lifecycle doesn't support an implicit setState but it does support async unmounting to make it easier to manage outro animations for components.
-		</p>
+		<p>The <a href=../api/component.html#componentWillUnmount>componentWillUnmount</a> lifecycle provides an interface for defining an async unmount for the situation where it makes sense to manage outro animations.</p>
 
-		<p>
-			That is to say if you return a promise from <code>componentWillUnmount</code>, the component will stay in a transient state in which in doesn't exist in the virtual subtree but is kept alive in the host enviroment untill the promise has resolved.
-		</p>
+		<p>When a promise from <code>componentWillUnmount</code> is returned, the component is confined to transient state, it doesn't exist in the within its subtree but is never the less kept mounted to host document until the value has resolved.</p>
 
 <pre><code>
 const User = (props, state, context) => {
@@ -194,26 +142,41 @@ User.componentWillUnmount = async (props, state, context) => {
 
 		<h1 id=server>Server</h1>
 
-		<p>Dyo provides a "generic" server renderer that supports async updates, async elements, async fetch, and all lifecycle methods.</p>
+		<p>Dyo packages a server renderer without compromising support for async primitives.</p>
 
-		<p>The renderer effectively renderers into any writable stream with a <code>write</code> method, and auto ends the stream if the stream has a <code>end</code> method and the stream has not already ended.</p>
+		<p>This allows us to render into any writable stream.</p>
 
-		<p>The following writes <code>&lt;!doctype>&lt;html>&lt;h1>Hello&lt;/h1>&lt;/html></code> to the response.</p>
+		<p>The following <a href=https://nodejs.org>Node.js</a> example writes:
+
+<pre><code>
+	&lt;!doctype>&lt;html>&lt;h1>Hello&lt;/h1>&lt;/html>
+</code></pre>
+
+		<p>Into the writable stream &mdash; the response object.</p>
 
 <pre><code>
 import {http} from 'http'
 import {h, render} from 'dyo/server'
 
+class Hello {
+	render(props, state) {
+		return state.value
+	}
+	componentDidMount() {
+		return Promise.resolve({value: 'Hello'})
+	}
+}
+
 http.createServer(function (request, response) {
 	render([
-		h('!doctype'), h('html', h('h1', 'Hello'))
+		h('!doctype'), h('html', h('h1', h(Hello)))
 	], response, () => {
-		console.log('invoked before ending the response')
+		console.log('callback')
 	})
 }).listen(8080)
 </code></pre>
 
-		<p>This in effect makes it easier to re-use components both on the browser and server.</p>
+		<p>This in effect remove fricton there may have otherwise been with re-useing components on both the browser and server.</p>
 	</article>
 </body>
 </html>

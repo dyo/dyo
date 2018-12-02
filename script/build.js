@@ -1,6 +1,5 @@
 import {terser} from "rollup-plugin-terser"
 
-const [directory] = process.argv.slice(4)
 const options = {mangle: true, compress: false}
 const defaults = {
 	onwarn(warning, warn) {
