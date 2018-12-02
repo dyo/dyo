@@ -16,7 +16,7 @@
 		"server/"
 	],
 	"scripts": {
-		"lint": "eslint {./src,./server/src}/",
+		"lint": "eslint .",
 		"pretest": "npm run lint && npm start",
 		"test": "nyc npm run test-all",
 		"test-all": "npm run test-dev && npm run test-prod",
@@ -57,5 +57,43 @@
 	"esm": {
 		"cjs": true,
 		"cache": false
+	},
+	"eslintIgnore": ["script/", "test/", "dist/", "docs/"],
+	"eslintConfig": {
+		"env": {
+			"commonjs": true,
+			"browser": true,
+			"node": true,
+			"es6": true
+		},
+		"extends": "eslint:recommended",
+		"parserOptions": {
+			"ecmaVersion": 7,
+			"sourceType": "module",
+			"ecmaFeatures": {
+				"impliedStrict": true
+			}
+		},
+		"rules": {
+			"indent": ["error", "tab", {"SwitchCase": 1}],
+			"linebreak-style": ["error", "unix"],
+			"quotes": ["error", "single"],
+			"semi": ["error", "never"],
+			"no-cond-assign": ["off"],
+			"no-redeclare": ["off"],
+			"no-fallthrough": ["off"],
+			"no-console": ["off"],
+			"no-unsafe-finally": ["off"],
+			"no-param-reassign": ["error", {"props": false}],
+			"no-shadow-restricted-names": ["error"],
+			"no-whitespace-before-property": ["error"],
+			"eol-last": ["error"],
+			"func-call-spacing": ["error", "never"],
+			"brace-style": ["error", "1tbs", { "allowSingleLine": true }],
+			"max-len": ["error", {"code": 160}],
+			"require-jsdoc": ["error", {"require": {"FunctionDeclaration": true}}],
+			"no-trailing-spaces": ["error", {"skipBlankLines": true}],
+			"no-constant-condition": ["off"]
+		}
 	}
 }
