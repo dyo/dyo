@@ -4,12 +4,11 @@
 
 Dyo is a JavaScript library for building user interfaces.
 
-- ~6kb
-
-[![licence](https://img.shields.io/badge/licence-MIT-blue.svg?style=flat)](https://github.com/dyo/dyo/blob/master/LICENSE.md)
-[![npm](https://img.shields.io/npm/v/dyo.svg?style=flat)](https://www.npmjs.com/package/dyo)
-[![Build Status](https://travis-ci.com/dyo/dyo.svg?branch=master)](https://travis-ci.com/dyo/dyo)
-[![Coverage Status](https://coveralls.io/repos/github/dyo/dyo/badge.svg?branch=master)](https://coveralls.io/github/dyo/dyo)
+[![Build](https://travis-ci.com/dyo/dyo.svg?branch=master)](https://travis-ci.com/dyo/dyo)
+[![Coverage](https://coveralls.io/repos/github/dyo/dyo/badge.svg?branch=master)](https://coveralls.io/github/dyo/dyo)
+[![Size](https://badgen.net/bundlephobia/minzip/dyo)](https://bundlephobia.com/result?p=dyo)
+[![Licence](https://badgen.net/badge/license/MIT/blue)](https://github.com/dyo/dyo/blob/master/LICENSE.md)
+[![NPM](https://badgen.net/npm/v/dyo)](https://www.npmjs.com/package/dyo)
 
 * **Light — weight** library with a small API surface that allows you to build simple and complex component based user interfaces.
 * **Declarative** Efficiently render just the right components in response to data, making your code more predictable and easier to reason about.
@@ -18,11 +17,9 @@ Dyo is a JavaScript library for building user interfaces.
 
 ## Installation
 
-Dyo has been designed for forward facing gradual adoption:
-
-* Use a Direct Download `<script type=module src=dyo.js></script>`.
-* Use a CDN `<script src=unpkg.com/dyo></script>`.
-* Use NPM `npm install dyo --save`
+* Use a Direct Download: `<script type=module src=dyo.js></script>`.
+* Use a CDN: `<script src=unpkg.com/dyo></script>`.
+* Use NPM: `npm install dyo --save`
 
 ## Documentation
 
@@ -33,8 +30,8 @@ Check out the [Getting Started](https://dyo.js.org/introduction.html) page for a
 The documentation is divided into several sections:
 
 * [Introduction](https://dyo.js.org/introduction.html)
-* [API Reference](https://dyo.js.org/api.html)
 * [Advanced Guides](https://dyo.js.org/advanced.html)
+* [API Reference](https://dyo.js.org/api.html)
 * [Examples](https://dyo.js.org/examples.html)
 
 You can improve it by sending pull requests to [this repository](https://github.com/dyo/dyo/docs).
