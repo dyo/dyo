@@ -3,8 +3,7 @@ import * as Reconcile from './Reconcile.js'
 import * as Node from './Node.js'
 import * as Interface from './Interface.js'
 import * as Schedule from './Schedule.js'
-
-import Registry from './Registry.js'
+import * as Registry from './Registry.js'
 
 /**
  * @param {*} element
@@ -23,7 +22,7 @@ export function render (element, target, callback) {
  * @return {object}
  */
 export function dispatch (element, target, callback) {
-	if (Registry.has(target)) {
+	if (Registry.get(target)) {
 		return Schedule.checkout(enqueue, Registry.get(target), target, [Element.root(element)], callback)
 	} else {
 		return Schedule.checkout(enqueue, Element.target(element, target, Interface.clear(target)), target, target, callback)

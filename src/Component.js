@@ -7,8 +7,7 @@ import * as Exception from './Exception.js'
 import * as Node from './Node.js'
 import * as Reconcile from './Reconcile.js'
 import * as Schedule from './Schedule.js'
-
-import Registry from './Registry.js'
+import * as Registry from './Registry.js'
 
 /**
  * @type {object}
@@ -63,7 +62,7 @@ export var pure = Utility.extend(factory(), Utility.assign({
  * @param {object} props
  * @param {object} state
  * @param {object} context
- * @return {object}
+ * @return {object?}
  */
 export function render (props, state, context) {
 	return typeof props.children === 'function' ? props.children(props, state, context) : props.children
@@ -112,7 +111,7 @@ export function identity (constructor, prototype) {
 		}
 	}
 
-	return Registry.get(constructor) || Registry.set(constructor, from(constructor)).get(constructor)
+	return Registry.get(constructor) || Registry.set(constructor, from(constructor))
 }
 
 /**
@@ -173,6 +172,8 @@ export function resolve (fiber, host, element, snapshot, value) {
  * @return {object}
  */
 export function create (fiber, host, parent, element) {
+	// return Node.create(fiber, element, parent, Element.put(element, element.type(element.props)))
+
 	var type = element.type
 	var props = element.props
 	var context = element.context = host.context = host.context || {}

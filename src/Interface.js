@@ -1,7 +1,6 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
-
-import Registry from './Registry.js'
+import * as Registry from './Registry.js'
 
 /**
  * @type {object}
@@ -24,7 +23,7 @@ export var defaults = {
  * @return {*}
  */
 export function owner () {
-	return this
+	return defaults
 }
 
 /**

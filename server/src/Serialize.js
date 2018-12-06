@@ -25,7 +25,9 @@ export function flush (value) {
  * @param {object} value
  */
 export function write (value) {
-	value.write(Stringify.element(this))
+	if (typeof value.write === 'function') {
+		value.write(Stringify.element(this))
+	}
 }
 
 /**

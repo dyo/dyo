@@ -3,8 +3,7 @@ import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Lifecycle from './Lifecycle.js'
 import * as Schedule from './Schedule.js'
-
-import Registry from './Registry.js'
+import * as Registry from './Registry.js'
 
 /**
  * @constructor
