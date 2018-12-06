@@ -7,21 +7,6 @@
 	const {createElement: e} = React
 	const {renderToString} = ReactDOMServer
 
-	function FibReact ({n}) {
-		return n < 2 ? e('div', {},
-			e('h1', {className: n}, n + 0),
-			e('h1', {className: n}, n + 1),
-			e('h1', {className: n}, n + 2),
-			e('h1', {className: n}, n + 3),
-			e('h1', {className: n}, n + 4),
-			e('h1', {className: n}, n + 5),
-			e('h1', {className: n}, n + 6),
-			e('h1', {className: n}, n + 7),
-			e('h1', {className: n}, n + 8),
-			e('h1', {className: n}, n + 9),
-		) : e('div', {}, e('h1', {className: n - 1}, n - 2), e(FibReact, {n: n - 1}))
-	}
-
 	function FibDyo ({n}) {
 		return n < 2 ? h('div', {},
 			h('h1', {className: n}, n + 0),
