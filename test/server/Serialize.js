@@ -1,7 +1,15 @@
 import {h, render, Component} from '../../server/index.js'
 
 describe('Serialize', () => {
-	it('write to wrtiable', () => {
+	it('should not write to non-wrtiable', () => {
+		const target = {}
+
+		render('1', target, (current) => {
+			assert.html(current, '')
+		})
+	})
+
+	it('should write to wrtiable', () => {
 		const target = new Writable
 
 		render('1', target, (current) => {
@@ -9,7 +17,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should set headers', () => {
+	it('should set headers', () => {
 		const target = new Writable
 
 		render('1', target, (current) => {
@@ -17,7 +25,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should not set headers', () => {
+	it('should not set headers', () => {
 		const target = new Writable
 
 		delete target.headers
@@ -27,7 +35,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should end writable', () => {
+	it('should end writable', () => {
 		const target = new Writable
 		const stack = []
 
@@ -38,7 +46,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should end writable', () => {
+	it('should end writable', () => {
 		const target = new Writable
 		const stack = []
 
@@ -49,7 +57,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should invoke lifecycle methods', () => {
+	it('should invoke lifecycle methods', () => {
 		const target = new Writable
 		const stack = []
 
@@ -63,7 +71,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should invoke setState', () => {
+	it('should invoke setState', () => {
 		const target = new Writable
 		const stack = []
 
@@ -78,7 +86,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should invoke async setState', () => {
+	it('should invoke async setState', () => {
 		const target = new Writable
 		const stack = []
 
@@ -93,7 +101,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should invoke error boundaries', () => {
+	it('should invoke error boundaries', () => {
 		const target = new Writable
 		const stack = []
 
@@ -116,7 +124,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should recover from error boundaries', () => {
+	it('should recover from error boundaries', () => {
 		const target = new Writable
 		const stack = []
 
@@ -139,7 +147,7 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('it should recover from async error boundaries', () => {
+	it('should recover from async error boundaries', () => {
 		const target = new Writable
 		const stack = []
 

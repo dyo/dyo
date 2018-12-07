@@ -26,7 +26,7 @@ describe('Stringify', () => {
 
 		stack.forEach((type) => {
 			render(h(type), target, (current) => {
-				assert.html(current, `<${type}>`)
+				assert.html(current, `<${type}/>`)
 			})
 		})
 	})

@@ -282,15 +282,3 @@ export function resolve (value, fulfilled, rejected) {
 export function environment () {
 	return typeof process !== 'object' ? '' : typeof process.env !== 'object' ? process.env : process.env.NODE_ENV + ''
 }
-
-/**
- * @return {object}
- */
-export function registry () {
-	return typeof WeakMap === 'function' ? new WeakMap() : {
-		key: symbol(),
-		has: function (k) { return has(k, this.key) },
-		get: function (k) { return k[this.key] },
-		set: function (k, v) { return property(k, this.key, {value: v, configurable: true}), this }
-	}
-}

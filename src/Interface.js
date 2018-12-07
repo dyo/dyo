@@ -51,7 +51,7 @@ export function create (uid, type, children, context, owner) {
 
 /**
  * @param {*} value
- * @param {object?} owner
+ * @param {*?} owner
  * @return {object}
  */
 export function target (value, owner) {
@@ -59,7 +59,7 @@ export function target (value, owner) {
 		if (typeof value === 'object') {
 			switch (value.ownerDocument) {
 				case undefined:
-					return owner === null ? value[0] || (value[0] = defaults) : value
+					return owner !== null ? value : Registry.set(value, defaults)
 				case null:
 					return value.documentElement
 				default:
@@ -243,11 +243,7 @@ export function declaration (name, value, instance) {
  * @param {object} handler
  */
 export function events (name, value, instance, handler) {
-	var handlers = Registry.get(instance)
-
-	if (!handlers) {
-		Registry.set(instance, handlers = {})
-	}
+	var handlers = Registry.get(instance) || Registry.set(instance, {})
 
 	if (!handlers[name]) {
 		instance.addEventListener(name, handler, false)

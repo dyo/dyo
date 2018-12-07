@@ -90,28 +90,28 @@ export function factory () {
 }
 
 /**
- * @param {function} constructor
+ * @param {function} value
  * @return {function}
  */
-export function from (constructor) {
-	return Utility.extend(factory(), descriptors, constructor.render = constructor)
+export function from (value) {
+	return Utility.extend(factory(), descriptors, value.render = value)
 }
 
 /**
- * @param {function} constructor
+ * @param {function} value
  * @param {object?} prototype
  * @return {function}
  */
-export function identity (constructor, prototype) {
-	if (prototype) {
-		if (prototype.setState) {
-			return constructor
-		} else if (prototype.render) {
-			return Utility.extend(constructor, descriptors)
+export function identity (value, proto) {
+	if (proto) {
+		if (proto.setState) {
+			return value
+		} else if (proto.render) {
+			return Utility.extend(value, descriptors)
 		}
 	}
 
-	return Registry.get(constructor) || Registry.set(constructor, from(constructor))
+	return Registry.get(value) || Registry.set(value, from(value))
 }
 
 /**
@@ -172,8 +172,6 @@ export function resolve (fiber, host, element, snapshot, value) {
  * @return {object}
  */
 export function create (fiber, host, parent, element) {
-	// return Node.create(fiber, element, parent, Element.put(element, element.type(element.props)))
-
 	var type = element.type
 	var props = element.props
 	var context = element.context = host.context = host.context || {}
@@ -199,13 +197,13 @@ export function create (fiber, host, parent, element) {
 		Lifecycle.dispatch(element, instance, props, state, context, Enum.getChildContext)
 	}
 
-	var snapshot = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context, children)))
+	children = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context, children)))
 
 	if (Lifecycle.has(instance, Enum.componentDidMount)) {
 		Schedule.enqueue(fiber, element, instance, props, state, context, Enum.componentDidMount)
 	}
 
-	return snapshot
+	return children
 }
 
 /**

@@ -22,8 +22,10 @@ export function render (element, target, callback) {
  * @return {object}
  */
 export function dispatch (element, target, callback) {
-	if (Registry.get(target)) {
-		return Schedule.checkout(enqueue, Registry.get(target), target, [Element.root(element)], callback)
+	var parent = Registry.get(target)
+
+	if (parent) {
+		return Schedule.checkout(enqueue, parent, target, [Element.root(element)], callback)
 	} else {
 		return Schedule.checkout(enqueue, Element.target(element, target, Interface.clear(target)), target, target, callback)
 	}
@@ -49,8 +51,7 @@ export function enqueue (fiber, element, target, current) {
  * @param {*} target
  */
 export function create (fiber, element, target) {
-	Node.create(fiber, element, element, element)
-	Registry.set(target, element)
+	Registry.set(target, Node.create(fiber, element, element, element))
 }
 
 /**

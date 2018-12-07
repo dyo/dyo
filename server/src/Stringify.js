@@ -5,28 +5,42 @@ import * as Dyo from '../../index.js'
  * @return {string}
  */
 export function element (value) {
-	var type = value.type
 	var children = value.children
 
-	if (typeof children !== 'object') {
-		return children
-	}
+	if (typeof children === 'object') {
+		var type = value.type
 
-	switch (typeof type) {
-		case 'string':
+		if (typeof type === 'string') {
 			var props = properties(value.props, children)
 
 			switch (type) {
 				case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
 				case 'img': case 'col': case 'embed': case 'wbr': case 'track': case 'param':
 				case 'link': case 'input': case 'hr': case '!doctype':
-					return '<' + type + props + '>'
+					return '<' + type + props + '/>'
 			}
 
-			return '<' + type + props + '>' + children.map(element).join('') + '</' + type + '>'
+			return '<' + type + props + '>' + fragment(children) + '</' + type + '>'
+		}
+	} else {
+		return children
 	}
 
-	return children.map(element).join('')
+	return fragment(children)
+}
+
+/**
+ * @param {object} children
+ * @return {string}
+ */
+export function fragment (children) {
+	var payload = ''
+
+	for (var i = 0; i < children.length; i++) {
+		payload += element(children[i])
+	}
+
+	return payload
 }
 
 /**
@@ -38,7 +52,7 @@ export function properties (props, children) {
 	var payload = ''
 
 	for (var key in props) {
-		payload += property(key, props[key], props, children)
+		payload += property(key, props[key], children)
 	}
 
 	return payload
@@ -47,11 +61,10 @@ export function properties (props, children) {
 /**
  * @param {string} name
  * @param {*} value
- * @param {object} props
  * @param {object} children
  * @return {string}
  */
-export function property (name, value, props, children) {
+export function property (name, value, children) {
 	var payload = value
 
 	switch (name) {

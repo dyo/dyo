@@ -1,24 +1,17 @@
-import * as Utility from './Utility.js'
-
-export var weakmap = new WeakMap
-export var symbol = Symbol()
+import * as Enum from './Enum.js'
 
 /**
  * @param {object} key
  * @return {*}
  */
 export function get (key) {
-	return key[symbol]
-	// return weakmap.get(key)
+	return key[Enum.uid]
 }
 
 /**
  * @param {object} key
  * @param {*} value
- * @return {*}
  */
 export function set (key, value) {
-	return key[symbol] = value
-	// return weakmap.set(key, value), value
+	return key[Enum.uid] = value
 }
-

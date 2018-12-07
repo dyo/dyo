@@ -1,4 +1,7 @@
+import * as Utility from './Utility.js'
+
 // static values
+export var uid = Utility.symbol()
 export var key = -(-1 >>> 0)
 export var nan = NaN
 export var obj = {}

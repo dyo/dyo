@@ -11,7 +11,7 @@ const defaults = {
 		}
 	},
 	treeshake: {propertyReadSideEffects: false},
-	context: 'this',
+	context: 'this'
 }
 
 export default ({configDir}) => {

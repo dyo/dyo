@@ -8,7 +8,7 @@ const prng = ((seed, size, value = seed % size) => () => ((value = value * 16807
 const spyr = (from, key, to = []) => (((org) => from[key] = (...args) => { from[key] = org, to.push(...args) })(from[key]), to)
 const grep = (value) => value.replace(/[\n\t]|\s{2,}/g, '')
 const json = (actual, expected) => assert.equal(JSON.stringify(actual), JSON.stringify(expected))
-const html = (actual, expected) => assert.equal('innerHTML' in actual ? actual.innerHTML : grep(actual + ''), grep(expected))
+const html = (actual, expected) => assert.equal(actual.innerHTML || '', grep(expected))
 
 const that = () => typeof globalThis == 'object' ? globalThis :
 	typeof global == 'object' ? global :

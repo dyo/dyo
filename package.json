@@ -17,7 +17,7 @@
 	],
 	"scripts": {
 		"lint": "eslint .",
-		"pretest": "npm run lint && npm start",
+		"pretest": "npm run lint && npm run build-all",
 		"test": "nyc npm run test-all",
 		"test-all": "npm run test-dev && npm run test-prod",
 		"test-dev": "cross-env NODE_ENV=development npm run test-spec",
@@ -25,8 +25,8 @@
 		"test-spec": "mocha --harmony --require esm script/test.js --recursive test",
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
 		"build": "rollup --config script/build.js --configDir",
-		"start": "npm run build -- . && npm run build -- server",
-		"prepare": "npm start",
+		"build-all": "npm run build -- . && npm run build -- server",
+		"prepare": "npm run build-all",
 		"postversion": "git push && git push --tags"
 	},
 	"devDependencies": {
