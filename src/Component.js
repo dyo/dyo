@@ -97,13 +97,13 @@ export function factory () {
 export function identity (value, proto) {
 	if (proto) {
 		if (proto.setState) {
-			return Registry.set(value, value)
+			return value
 		} else if (proto.render) {
-			return Registry.set(value, Utility.extend(value, descriptors))
+			return Utility.extend(value, descriptors)
 		}
 	}
 
-	return Registry.set(value, Utility.extend(factory(), descriptors, value.render = value))
+	return Registry.get(value) || Registry.set(value, Utility.extend(factory(), descriptors, value.render = value))
 }
 
 /**
@@ -167,7 +167,7 @@ export function create (fiber, host, parent, element) {
 	var type = element.type
 	var props = element.props
 	var context = element.context = host.context = host.context || {}
-	var constructor = Registry.get(type) || identity(type, type.prototype)
+	var constructor = identity(type, type.prototype)
 	var instance = element.instance = new constructor(props)
 	var state = instance.state || {}
 	var children = element.children
