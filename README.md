@@ -127,7 +127,7 @@ class extends Component {
 Dyo affords authors the the ability to author events with an array of multiple event handlers and a chance to avoid the sometimes daunting relationship with the "this" keyword.
 
 ```js
-class Hello {
+class Hello extends Component {
 	handleSubmit(e, props, state, context) {
 		assert(this instanceof Hello)
 	}

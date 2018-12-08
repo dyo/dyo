@@ -36,8 +36,8 @@ describe('Stringify', () => {
 
 		render(h('div', {
 			onClick: {handleEvent: () => {}}, onload: () => {}, key: 0, ref: {}, foo: true, bar: false, style: {color: 'red'}
-		}, h('h1', {style: 'color: red;'}, 1)), target, (current) => {
-			assert.html(current, '<div foo="foo" style="color: red;"><h1 style="color: red;">1</h1></div>')
+		}, h('h1', {className: 'red', style: 'color: red;'}, 1)), target, (current) => {
+			assert.html(current, '<div foo="foo" style="color: red;"><h1 class="red" style="color: red;">1</h1></div>')
 		})
 	})
 

@@ -91,27 +91,19 @@ export function factory () {
 
 /**
  * @param {function} value
- * @return {function}
- */
-export function from (value) {
-	return Utility.extend(factory(), descriptors, value.render = value)
-}
-
-/**
- * @param {function} value
- * @param {object?} prototype
+ * @param {object?} proto
  * @return {function}
  */
 export function identity (value, proto) {
 	if (proto) {
 		if (proto.setState) {
-			return value
+			return Registry.set(value, value)
 		} else if (proto.render) {
-			return Utility.extend(value, descriptors)
+			return Registry.set(value, Utility.extend(value, descriptors))
 		}
 	}
 
-	return Registry.get(value) || Registry.set(value, from(value))
+	return Registry.set(value, Utility.extend(factory(), descriptors, value.render = value))
 }
 
 /**
@@ -175,7 +167,7 @@ export function create (fiber, host, parent, element) {
 	var type = element.type
 	var props = element.props
 	var context = element.context = host.context = host.context || {}
-	var constructor = identity(type, type.prototype)
+	var constructor = Registry.get(type) || identity(type, type.prototype)
 	var instance = element.instance = new constructor(props)
 	var state = instance.state || {}
 	var children = element.children
@@ -226,8 +218,6 @@ export function update (fiber, host, element, snapshot, value) {
 	var _state = state
 	var _context = instance.context
 
-	Assert.types(element, context, Enum.contextTypes)
-
 	if (element === snapshot) {
 		if (typeof value === 'function') {
 			return enqueue(fiber, element, instance, value(state))
@@ -235,6 +225,8 @@ export function update (fiber, host, element, snapshot, value) {
 			state = Utility.defaults(value, state)
 		}
 	}
+
+	Assert.types(element, context, Enum.contextTypes)
 
 	try {
 		if (Lifecycle.has(instance, Enum.shouldComponentUpdate)) {
@@ -251,7 +243,7 @@ export function update (fiber, host, element, snapshot, value) {
 			}
 		}
 
-		instance.props = element.props = props
+		instance.props = props
 		instance.state = state
 		instance.context = context
 	}
