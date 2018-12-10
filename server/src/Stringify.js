@@ -12,15 +12,18 @@ export function element (value) {
 
 		if (typeof type === 'string') {
 			var props = properties(value.props, children)
+			var payload = '<' + type + props + '>'
 
 			switch (type) {
 				case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
 				case 'img': case 'col': case 'embed': case 'wbr': case 'track': case 'param':
-				case 'link': case 'input': case 'hr': case '!doctype':
-					return '<' + type + props + '/>'
+				case 'link': case 'input': case 'hr':
+					return payload
+				case 'html':
+					payload = '<!doctype html>' + payload
 			}
 
-			return '<' + type + props + '>' + fragment(children) + '</' + type + '>'
+			return payload + fragment(children) + '</' + type + '>'
 		}
 	} else {
 		return children

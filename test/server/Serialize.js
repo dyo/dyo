@@ -17,46 +17,6 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('should set headers', () => {
-		const target = new Writable
-
-		render('1', target, (current) => {
-			assert.deepEqual(current.headers, {'content-type': 'text/html'})
-		})
-	})
-
-	it('should not set headers', () => {
-		const target = new Writable
-
-		delete target.headers
-
-		render('1', target, (current) => {
-			assert.deepEqual(current.headers, undefined)
-		})
-	})
-
-	it('should end writable', () => {
-		const target = new Writable
-		const stack = []
-
-		target.end = () => stack.push('end')
-
-		render('1', target).then((current) => {
-			assert.deepEqual(stack, ['end'])
-		})
-	})
-
-	it('should end writable', () => {
-		const target = new Writable
-		const stack = []
-
-		target.end = () => stack.push('end')
-
-		render('1', target, (current) => current.finished = true).then((current) => {
-			assert.deepEqual(stack, [])
-		})
-	})
-
 	it('should invoke lifecycle methods', () => {
 		const target = new Writable
 		const stack = []

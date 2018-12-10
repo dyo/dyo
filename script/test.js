@@ -26,8 +26,7 @@ const rand = (value, array = value.slice(), length = array.length, index = 0) =>
 }
 
 class Writable {
-  constructor() { this.headers = {} }
-  write(value) { return this.innerHTML = value }
+  end(value) { this.innerHTML = value }
 }
 
 assign(that(), {assert, document, location, history, Event, globalThis: that(), Writable: Writable})

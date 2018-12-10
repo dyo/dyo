@@ -17,16 +17,24 @@ describe('Stringify', () => {
 		})
 	})
 
+	it('should stringify html element', () => {
+		const target = new Writable
+
+		render(h('html', '1'), target, (current) => {
+			assert.html(current, '<!doctype html><html>1</html>')
+		})
+	})
+
 	it('should stringify void elements', () => {
 		const target = new Writable
 		const stack = [
 			'area', 'base', 'br', 'meta', 'source', 'keygen', 'img', 'col',
-			'embed', 'wbr', 'track', 'param', 'link', 'input', 'hr', '!doctype'
+			'embed', 'wbr', 'track', 'param', 'link', 'input', 'hr'
 		]
 
 		stack.forEach((type) => {
 			render(h(type), target, (current) => {
-				assert.html(current, `<${type}/>`)
+				assert.html(current, `<${type}>`)
 			})
 		})
 	})
