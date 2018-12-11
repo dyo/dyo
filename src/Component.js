@@ -166,7 +166,7 @@ export function resolve (fiber, host, element, snapshot, value) {
 export function create (fiber, host, parent, element) {
 	var type = element.type
 	var props = element.props
-	var context = element.context = host.context = host.context || {}
+	var context = element.context = host.context
 	var constructor = identity(type, type.prototype)
 	var instance = element.instance = new constructor(props)
 	var state = instance.state || {}

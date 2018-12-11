@@ -14,13 +14,11 @@ export function element (value) {
 			var props = properties(value.props, children)
 			var payload = '<' + type + props + '>'
 
-			switch (type) {
+			switch (type.toLowerCase()) {
 				case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
 				case 'img': case 'col': case 'embed': case 'wbr': case 'track': case 'param':
-				case 'link': case 'input': case 'hr':
+				case 'link': case 'input': case 'hr': case '!doctype html':
 					return payload
-				case 'html':
-					payload = '<!doctype html>' + payload
 			}
 
 			return payload + fragment(children) + '</' + type + '>'

@@ -17,11 +17,11 @@ describe('Stringify', () => {
 		})
 	})
 
-	it('should stringify html element', () => {
+	it('should stringify doctype', () => {
 		const target = new Writable
 
-		render(h('html', '1'), target, (current) => {
-			assert.html(current, '<!doctype html><html>1</html>')
+		render([h('!doctype html'), h('html', h('title', '1'))], target, (current) => {
+			assert.html(current, '<!doctype html><html><title>1</title></html>')
 		})
 	})
 
