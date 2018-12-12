@@ -217,29 +217,31 @@ export function compare (a, b) {
  * @param {function} callback
  * @param {*?} value
  * @param {number} index
+ * @param {object} context
+ * @return {*}
  */
-export function each (callback, value, index) {
+export function each (callback, value, index, context) {
 	if (value != null) {
 		if (typeof value === 'object') {
 			if (value.length > -1) {
 				for (var i = 0; i < value.length; ++i) {
-					if (each(callback, value[i], i + index) != null) {
+					if (each(callback, value[i], i + index, context) != null) {
 						break
 					}
 				}
 			} else if (iterable(value)) {
 				for (var i = index, j = sequence(value), k = j.next(); !k.done; ++i) {
-					if (each(callback, k.value, i + index) != null) {
+					if (each(callback, k.value, i + index, context) != null) {
 						break
 					} else {
 						k = j.next()
 					}
 				}
 			} else {
-				return callback(value, index)
+				return callback(value, index, context)
 			}
 		} else {
-			return callback(value, index)
+			return callback(value, index, context)
 		}
 	}
 }

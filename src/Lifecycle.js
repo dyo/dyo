@@ -56,7 +56,7 @@ export function event (element, value, callback, instance, props, state, context
  * @return {object}
  */
 export function render (instance, props, state, context) {
-	return Element.from(instance.render(props, state, context), 0)
+	return Element.from(instance.render(props, state, context), 0, null)
 }
 
 /**
