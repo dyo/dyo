@@ -28,7 +28,7 @@ export function dispatch (host, event, callback) {
 export function enqueue (fiber, host, event, callback) {
 	if (callback) {
 		if (Utility.iterable(callback)) {
-			Utility.each(enqueue.bind(null, fiber, host, event), callback, 0, callback)
+			Utility.each(enqueue.bind(null, fiber, host, event), callback, 0)
 		} else {
 			resolve(host, event, callback, host.instance)
 		}

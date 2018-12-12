@@ -1,6 +1,5 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
-import * as Children from './Children.js'
 import * as Assert from './Assert.js'
 import * as Event from './Event.js'
 
@@ -54,7 +53,7 @@ export function text (value, key) {
  * @return {object}
  */
 export function fragment (value, key) {
-	return new struct(Enum.fragment, key, Enum.fragment, null, (value.push(empty(Enum.key)), value))
+	return new struct(Enum.fragment, key, Enum.fragment, null, value)
 }
 
 /**
@@ -81,61 +80,72 @@ export function target (value, type, props) {
  * @param {object} value
  * @return {object}
  */
-export function children (value) {
-	return [value, empty(Enum.key)]
-}
-
-/**
- * @param {object} value
- * @param {object} children
- * @return {object}
- */
-export function root (value, children) {
-	return from([value], 0, children)
+export function root (value) {
+	return from([value], 0)
 }
 
 /**
  * @param {object?} value
- * @param {object} children
  * @return {object}
  */
-export function resolve (value, children) {
-	return from(value !== null && typeof value === 'object' && 'default' in value ? value.default : value, 0, children)
+export function resolve (value) {
+	return array([value !== null && typeof value === 'object' && 'default' in value ? value.default : value])
+}
+
+/**
+ * @param {object} value
+ * @return {object}
+ */
+export function array (value) {
+	var length = value.length
+
+	for (var i = 0; i < length; i++) {
+		value[i] = from(value[i], i)
+	}
+
+	return value[i] = empty(Enum.key), value
+}
+
+/**
+ * @param {object} value
+ * @return {object}
+ */
+export function iterator (value) {
+	var children = []
+
+	Utility.each(function (value, index) {
+		children[index] = from(value, index)
+	}, value, 0)
+
+	return children[children.length] = empty(Enum.key), children
 }
 
 /**
  * @param {*} value
  * @param {number} index
- * @param {object} children
  * @return {object}
  */
-export function from (value, index, children) {
-	if (value == null) {
-		return empty(Utility.hash(index))
+export function from (value, index) {
+	if (value != null) {
+		switch (typeof value) {
+			case 'number': case 'string':
+				return text(value, Utility.hash(index))
+			case 'object':
+				if (value.constructor === struct) {
+					return value
+				} else if (value.length > -1) {
+					return fragment(array(value), Utility.hash(index))
+				} else if (Utility.iterable(value)) {
+					return fragment(iterator(value), Utility.hash(index))
+				} else if (Utility.asyncIterable(value)) {
+					return create(Utility.generator(value))
+				}
+			case 'function':
+				return create(value)
+		}
 	}
 
-	switch (typeof value) {
-		case 'number': case 'string':
-			return text(value, Utility.hash(index))
-		case 'boolean':
-			return from(null, index, children)
-		case 'function':
-			break
-		default:
-			if (value.constructor === struct) {
-				return value
-			} else if (value.length > -1) {
-				return fragment(value.map(from), Utility.hash(index))
-			}
-	}
-
-	if (Utility.iterable(value)) {
-		return fragment(Children.map(value, from), Utility.hash(index))
-	} else if (Utility.asyncIterable(value)) {
-		return create(Utility.generator(value))
-	}
-
-	return create(value)
+	return empty(Utility.hash(index))
 }
 
 /**
@@ -170,7 +180,7 @@ export function create (a, b) {
 	} else {
 		if (size > 0) {
 			for (; i < length; ++i) {
-				children[index] = from(arguments[i], index++, children)
+				children[index] = from(arguments[i], index++)
 			}
 		}
 

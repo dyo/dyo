@@ -170,7 +170,6 @@ export function create (fiber, host, parent, element) {
 	var constructor = identity(type, type.prototype)
 	var instance = element.instance = new constructor(props)
 	var state = instance.state || {}
-	var children = element.children
 
 	Assert.types(element, context, Enum.contextTypes)
 
@@ -189,7 +188,7 @@ export function create (fiber, host, parent, element) {
 		Lifecycle.dispatch(element, instance, props, state, context, Enum.getChildContext)
 	}
 
-	children = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context, children)))
+	var children = Node.create(fiber, element, parent, Element.put(element, Lifecycle.render(instance, props, state, context)))
 
 	if (Lifecycle.has(instance, Enum.componentDidMount)) {
 		Schedule.enqueue(fiber, element, instance, props, state, context, Enum.componentDidMount)
@@ -252,7 +251,7 @@ export function update (fiber, host, element, snapshot, value) {
 		Lifecycle.dispatch(element, instance, props, state, context, Enum.getChildContext)
 	}
 
-	Reconcile.children(fiber, element, parent, children, [Lifecycle.render(instance, props, state, context, children)])
+	Reconcile.children(fiber, element, parent, children, [Lifecycle.render(instance, props, state, context)])
 
 	if (Lifecycle.has(instance, Enum.componentDidUpdate)) {
 		Schedule.enqueue(fiber, element, instance, _props, _state, _context, Enum.componentDidUpdate)

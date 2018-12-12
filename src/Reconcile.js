@@ -14,7 +14,7 @@ import * as Schedule from './Schedule.js'
  */
 export function enqueue (fiber, host, parent, a, b, c, type) {
 	if (a.parent !== null) {
-		children(fiber, host, parent, b, b === c ? Element.children(Element.resolve(type, c)) : type)
+		children(fiber, host, parent, b, b === c ? Element.resolve(type) : type)
 	}
 }
 
