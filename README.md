@@ -41,7 +41,7 @@ You can improve it by sending pull requests to [this repository](https://github.
 You can find several examples [on the website](https://dyo.js.org). Here is the first one to get you started:
 
 ```js
-import {h, render, Component} from 'unpkg.com/dyo'
+import {h, render, Component} from 'dyo'
 
 class Hello extends Component {
   render(props) {
