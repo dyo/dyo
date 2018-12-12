@@ -1,6 +1,6 @@
 {
 	"name": "dyo",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"license": "MIT",
 	"description": "Dyo is a JavaScript library for building user interfaces",
 	"homepage": "https://github.com/dyo/dyo",
@@ -58,7 +58,12 @@
 		"cjs": true,
 		"cache": false
 	},
-	"eslintIgnore": ["script/", "test/", "dist/", "docs/"],
+	"eslintIgnore": [
+		"script/",
+		"test/",
+		"dist/",
+		"docs/"
+	],
 	"eslintConfig": {
 		"env": {
 			"commonjs": true,
@@ -75,25 +80,89 @@
 			}
 		},
 		"rules": {
-			"indent": ["error", "tab", {"SwitchCase": 1}],
-			"linebreak-style": ["error", "unix"],
-			"quotes": ["error", "single"],
-			"semi": ["error", "never"],
-			"no-cond-assign": ["off"],
-			"no-redeclare": ["off"],
-			"no-fallthrough": ["off"],
-			"no-console": ["off"],
-			"no-unsafe-finally": ["off"],
-			"no-param-reassign": ["error", {"props": false}],
-			"no-shadow-restricted-names": ["error"],
-			"no-whitespace-before-property": ["error"],
-			"eol-last": ["error"],
-			"func-call-spacing": ["error", "never"],
-			"brace-style": ["error", "1tbs", { "allowSingleLine": true }],
-			"max-len": ["error", {"code": 160}],
-			"require-jsdoc": ["error", {"require": {"FunctionDeclaration": true}}],
-			"no-trailing-spaces": ["error", {"skipBlankLines": true}],
-			"no-constant-condition": ["off"]
+			"indent": [
+				"error",
+				"tab",
+				{
+					"SwitchCase": 1
+				}
+			],
+			"linebreak-style": [
+				"error",
+				"unix"
+			],
+			"quotes": [
+				"error",
+				"single"
+			],
+			"semi": [
+				"error",
+				"never"
+			],
+			"no-cond-assign": [
+				"off"
+			],
+			"no-redeclare": [
+				"off"
+			],
+			"no-fallthrough": [
+				"off"
+			],
+			"no-console": [
+				"off"
+			],
+			"no-unsafe-finally": [
+				"off"
+			],
+			"no-param-reassign": [
+				"error",
+				{
+					"props": false
+				}
+			],
+			"no-shadow-restricted-names": [
+				"error"
+			],
+			"no-whitespace-before-property": [
+				"error"
+			],
+			"eol-last": [
+				"error"
+			],
+			"func-call-spacing": [
+				"error",
+				"never"
+			],
+			"brace-style": [
+				"error",
+				"1tbs",
+				{
+					"allowSingleLine": true
+				}
+			],
+			"max-len": [
+				"error",
+				{
+					"code": 160
+				}
+			],
+			"require-jsdoc": [
+				"error",
+				{
+					"require": {
+						"FunctionDeclaration": true
+					}
+				}
+			],
+			"no-trailing-spaces": [
+				"error",
+				{
+					"skipBlankLines": true
+				}
+			],
+			"no-constant-condition": [
+				"off"
+			]
 		}
 	}
 }
