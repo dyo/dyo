@@ -27,7 +27,7 @@
 		"build": "rollup --config script/build.js --configDir",
 		"build-all": "npm run build -- . && npm run build -- server",
 		"prepare": "npm run build-all",
-		"postversion": "git push && git push --tags"
+		"postversion": "git push --follow-tags && npm publish"
 	},
 	"devDependencies": {
 		"dyo": "./",
