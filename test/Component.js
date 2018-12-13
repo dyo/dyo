@@ -637,7 +637,7 @@ describe('Component', () => {
 		const refs = {}
 
 		class Primary extends Component {
-			async componentWillUnmount() { return refs.current = Promise.resolve() }
+			componentWillUnmount() { return refs.current = Promise.resolve() }
 		}
 
 		render(h(Primary, 1), target, (current) => {

@@ -11,10 +11,10 @@ import * as Interface from './Interface.js'
  */
 export function unmount (parent, element, children) {
 	if (element !== children) {
-		if (Utility.thenable(element.context)) {
-			return Utility.resolve(element.context, function () {
-				unmount(parent, children, children)
-			})
+		if (element.context) {
+			if (Utility.thenable(element.context)) {
+				return Utility.resolve(element.context, unmount.bind(null, parent, children, children))
+			}
 		}
 	}
 
