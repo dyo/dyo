@@ -1,7 +1,7 @@
 import {JSDOM} from 'jsdom'
 import {assert} from 'chai'
 
-const {assign} = Object
+const {assign, defineProperty} = Object
 const {document, location, history, Event} = (new JSDOM('<!doctype html>')).window
 
 const prng = ((seed, size, value = seed % size) => () => ((value = value * 16807 % size - 1) - 1) / size)(4022871197, 2147483647)
@@ -26,7 +26,14 @@ const rand = (value, array = value.slice(), length = array.length, index = 0) =>
 }
 
 class Writable {
-  end(value) { this.innerHTML = value }
+  constructor(type) {
+    if (type === 'body') {
+      defineProperty(this, type, {set: this.write})
+    } else {
+      this[type || 'end'] = this.write
+    }
+  }
+  write(value) { this.innerHTML = value }
 }
 
 assign(that(), {assert, document, location, history, Event, globalThis: that(), Writable: Writable})

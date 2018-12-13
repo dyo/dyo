@@ -2,15 +2,6 @@ import * as Dyo from '../../index.js'
 import * as Stringify from './Stringify.js'
 
 /**
- * @param {object} value
- */
-export function flush (value) {
-	if (typeof value.end === 'function') {
-		value.end(Stringify.element(this))
-	}
-}
-
-/**
  * @param {object} element
  * @param {object} target
  * @param {function?} callback
@@ -18,4 +9,25 @@ export function flush (value) {
  */
 export function render (element, target, callback) {
 	return Dyo.render(element, target, flush).then(callback)
+}
+
+/**
+ * @param {object} value
+ */
+export function flush (target) {
+	write(target, Stringify.element(this))
+}
+
+/**
+ * @param {object} target
+ * @param {string} payload
+ */
+export function write (target, payload) {
+	if (typeof target.send === 'function') {
+		target.send(payload)
+	} else if (typeof target.end === 'function') {
+		target.end(payload)
+	} else if ('body' in target) {
+		target.body = payload
+	}
 }

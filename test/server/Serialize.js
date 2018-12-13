@@ -9,8 +9,24 @@ describe('Serialize', () => {
 		})
 	})
 
-	it('should write to wrtiable', () => {
-		const target = new Writable
+	it('should write to wrtiable(end)', () => {
+		const target = new Writable('end')
+
+		render('1', target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should write to wrtiable(send)', () => {
+		const target = new Writable('send')
+
+		render('1', target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should send to wrtiable(body)', () => {
+		const target = new Writable('body')
 
 		render('1', target, (current) => {
 			assert.html(current, '1')
