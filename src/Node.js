@@ -2,73 +2,55 @@ import * as Enum from './Enum.js'
 import * as Element from './Element.js'
 import * as Component from './Component.js'
 import * as Exception from './Exception.js'
-import * as Commit from './Commit.js'
+import * as Lifecycle from './Lifecycle.js'
 import * as Reconcile from './Reconcile.js'
-import * as Schedule from './Schedule.js'
 import * as Interface from './Interface.js'
+import * as Commit from './Commit.js'
 
 /**
  * @param {object} fiber
  * @param {object} host
  * @param {object} parent
  * @param {object} element
+ * @param {object} current
  * @return {object}
  */
-export function resolve (fiber, host, parent, element) {
-	try {
-		return Component.create(fiber, host, parent, element)
-	} catch (error) {
-		try {
-			return Element.put(element, create(fiber, host, parent, Element.empty(Exception.resolve(fiber, host, element, error))))
-		} finally {
-			if (!host.parent) {
-				Element.put(host, Element.pick(element))
-			}
-		}
-	}
-}
-
-/**
- * @param {object} fiber
- * @param {object} host
- * @param {object} parent
- * @param {object} element
- * @return {object}
- */
-export function create (fiber, host, parent, element) {
+export function create (fiber, host, parent, element, current) {
 	var uid = element.uid
-	var type = element.type
+	var children = element.children
 
 	try {
 		switch (element.host = host, uid) {
 			case Enum.component:
-				return resolve(fiber, host, parent, element)
+				try {
+					return create(fiber, element, parent, children[0] = Component.create(fiber, host, children[0] = element), current)
+				} catch (error) {
+					return create(fiber, host, parent, children[0] = Element.empty(Exception.dispatch(fiber, host, element, error)), current)
+				}
 			case Enum.element:
-				var context = element.context = Interface.context(parent.context, type)
+				var context = element.value = Interface.context(parent.value, element.type)
 		}
 
-		var children = element.children
-		var instance = element.instance = Interface.create(uid, type, children, context, element.owner = parent.owner)
+		var instance = element.ref = Interface.create(uid, element.type, children, context, element.owner = parent.owner)
 
 		switch (uid) {
 			case Enum.text: case Enum.empty:
 				break
 			case Enum.target:
-				element.owner = Interface.from(instance)
+				element.owner = Interface.owner(instance)
 			default:
 				for (var i = 0; i < children.length; ++i) {
-					create(fiber, host, element, children[i])
+					create(fiber, host, element, children[i], instance)
 				}
-
-				if (uid !== Enum.thenable) {
-					Commit.props(parent, element, element.props)
-				} else {
-					Reconcile.update(fiber, host, parent, element, element, children, i)
+				if (uid > Enum.component) {
+					Commit.properties(element, element.props, instance)
+				} else if (uid === Enum.thenable) {
+					Reconcile.update(fiber, host, parent, element, element, children, 0)
 				}
 		}
 
-		if (uid !== Enum.target) {
-			Interface.append(parent.instance, instance)
+		if (current !== null) {
+			Interface.append(current, instance)
 		}
 	} finally {
 		element.parent = parent
@@ -83,40 +65,24 @@ export function create (fiber, host, parent, element) {
  * @return {object}
  */
 export function destroy (fiber, element) {
-	try {
-		switch (element.uid) {
-			case Enum.component:
-				return Component.destroy(fiber, element)
-			case Enum.text: case Enum.empty:
-				break
-			case Enum.target:
-				Schedule.dispatch(fiber, Enum.unmount, element, element, element, element)
-			case Enum.element:
-				if (element.ref !== null) {
-					Commit.ref(element, null, null)
-				}
-			default:
-				for (var i = 0, children = element.children; i < children.length; ++i) {
-					destroy(fiber, children[i])
-				}
-		}
-	} finally {
-		element.parent = null
-	}
+	var uid = element.uid
+	var children = element.children
 
-	return element
-}
-
-/**
- * @param {object} element
- * @param {object} props
- * @return {object}
- */
-export function reparent (element, props) {
-	try {
-		Commit.props(element, element, props)
-	} finally {
-		element.owner = Interface.from(element.instance = Interface.target(element.type, element.owner))
+	switch (element.parent = null, uid) {
+		case Enum.text: case Enum.empty:
+			break
+		case Enum.component:
+			try {
+				return destroy(fiber, children[0])
+			} finally {
+				Lifecycle.defs(element)
+			}
+		case Enum.target:
+			return Commit.remove(element, element), element
+		default:
+			for (var i = 0; i < children.length; ++i) {
+				destroy(fiber, children[i])
+			}
 	}
 
 	return element

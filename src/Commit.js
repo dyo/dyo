@@ -1,8 +1,16 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Lifecycle from './Lifecycle.js'
 import * as Interface from './Interface.js'
+
+/**
+ * @param {object} parent
+ * @param {object} element
+ * @param {object} children
+ */
+export function enqueue (parent, element, children) {
+	Utility.resolve(element.ref, function () { unmount(parent, children, children) })
+}
 
 /**
  * @param {object} parent
@@ -11,10 +19,8 @@ import * as Interface from './Interface.js'
  */
 export function unmount (parent, element, children) {
 	if (element !== children) {
-		if (element.context) {
-			if (Utility.thenable(element.context)) {
-				return Utility.resolve(element.context, unmount.bind(null, parent, children, children))
-			}
+		if (element.ref.length !== 0) {
+			return enqueue(parent, element, children)
 		}
 	}
 
@@ -24,10 +30,10 @@ export function unmount (parent, element, children) {
 /**
  * @param {object} parent
  * @param {object} element
- * @param {object} sibling
+ * @param {object?} sibling
  */
 export function mount (parent, element, sibling) {
-	if (element !== sibling) {
+	if (sibling !== null) {
 		insert(Element.parent(parent), element, Element.sibling(sibling))
 	} else {
 		append(Element.parent(parent), element)
@@ -39,12 +45,20 @@ export function mount (parent, element, sibling) {
  * @param {object} element
  */
 export function remove (parent, element) {
-	if (element.uid < Enum.portal) {
-		element.children.forEach(function (element) {
-			remove(parent, element)
-		})
+	var uid = element.uid
+
+	if (uid < Enum.portal) {
+		var children = element.children
+
+		if (uid !== Enum.component) {
+			for (var i = 0; i < children.length; i++) {
+				remove(parent, children[i])
+			}
+		} else {
+			remove(parent, children[0])
+		}
 	} else {
-		Interface.remove(parent.instance, element.instance)
+		Interface.remove(parent.ref, element.ref)
 	}
 }
 
@@ -53,12 +67,20 @@ export function remove (parent, element) {
  * @param {object} element
  */
 export function append (parent, element) {
-	if (element.uid < Enum.portal) {
-		element.children.forEach(function (element) {
-			append(parent, element)
-		})
+	var uid = element.uid
+
+	if (uid < Enum.portal) {
+		var children = element.children
+
+		if (uid !== Enum.component) {
+			for (var i = 0; i < children.length; i++) {
+				append(parent, children[i])
+			}
+		} else {
+			append(parent, children[0])
+		}
 	} else {
-		Interface.append(parent.instance, element.instance)
+		Interface.append(parent.ref, element.ref)
 	}
 }
 
@@ -68,33 +90,45 @@ export function append (parent, element) {
  * @param {object} sibling
  */
 export function insert (parent, element, sibling) {
-	if (element.uid < Enum.portal) {
-		element.children.forEach(function (element) {
-			insert(parent, element, sibling)
-		})
+	var uid = element.uid
+
+	if (uid < Enum.portal) {
+		var children = element.children
+
+		if (uid !== Enum.component) {
+			for (var i = 0; i < children.length; i++) {
+				insert(parent, children[i], sibling)
+			}
+		} else {
+			insert(parent, children[0], sibling)
+		}
 	} else {
-		Interface.insert(parent.instance, element.instance, sibling.instance)
+		Interface.insert(parent.ref, element.ref, sibling.ref)
 	}
 }
 
 /**
  * @param {object} parent
+ * @param {object} element
+ */
+export function target (parent, element) {
+	element.ref = Interface.target(element.type, parent.owner), append(element, element)
+}
+
+/**
  * @param {object} element
  * @param {(string|number)} value
  */
-export function content (parent, element, value) {
-	Interface.content(element.instance, value)
+export function content (element, value) {
+	Interface.content(element.ref, value)
 }
 
 /**
- * @param {object} parent
  * @param {object} element
  * @param {object} value
  */
-export function props (parent, element, value) {
-	if (value) {
-		set(element, value, element.instance)
-	}
+export function props (element, value) {
+	properties(element, value, element.ref)
 }
 
 /**
@@ -102,28 +136,17 @@ export function props (parent, element, value) {
  * @param {object} value
  * @param {object} instance
  */
-export function set (element, value, instance)  {
-	for (var key in value) {
-		switch (key) {
-			case 'ref':
-				ref(element, value[key], instance)
-			case 'key':
-				break
-			default:
-				Interface.props(key, value[key], instance, element)
+export function properties (element, value, instance)  {
+	if (value) {
+		for (var key in value) {
+			switch (key) {
+				case 'ref':
+					value[key].current = instance
+				case 'key':
+					break
+				default:
+					Interface.props(key, value[key], instance, element)
+			}
 		}
-	}
-}
-
-/**
- * @param {object} element
- * @param {*?} value
- * @param {object} instance
- */
-export function ref (element, value, instance) {
-	Lifecycle.ref(element, element.ref, null)
-
-	if (value) {
-		Lifecycle.ref(element, element.ref = value, instance)
 	}
 }

@@ -1,14 +1,12 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
-import * as Children from './Children.js'
-import * as Assert from './Assert.js'
 import * as Event from './Event.js'
 
 /**
  * @constructor
  * @param {number} uid
- * @param {*} key
- * @param {*} type
+ * @param {(string|symbol)?} key
+ * @param {any} type
  * @param {object} props
  * @param {object} children
  */
@@ -22,45 +20,56 @@ export var struct = Utility.extend(function element (uid, key, type, props, chil
 	this.host = null
 	this.owner = null
 	this.parent = null
-	this.context = ''
-	this.instance = null
+	this.state = null
+	this.value = null
 }, {
-	/**
-	 * @type {function}
-	 */
 	handleEvent: {value: Event.handle}
 })
 
 /**
- * @param {*} key
+ * @param {number} value
+ * @return {number}
+ */
+export function key (value) {
+	return -(-(value + 1) >>> 0)
+}
+
+/**
  * @return {object}
  */
-export function empty (key) {
-	return new struct(Enum.empty, key, Enum.empty, null, '')
+export function top () {
+	return new struct(Enum.target, null, null, null, null)
+}
+
+/**
+ * @return {object}
+ */
+export function empty () {
+	return new struct(Enum.empty, Enum.key, null, null, '')
 }
 
 /**
  * @param {(number|string)} value
- * @param {*} key
+ * @param {number} index
  * @return {object}
  */
-export function text (value, key) {
-	return new struct(Enum.text, key, Enum.text, null, value)
+export function text (value, index) {
+	return new struct(Enum.text, key(index), Enum.text, null, value)
 }
 
 /**
- * @param {object} value
- * @param {*} key
+ * @param {object[]} value
+ * @param {fragment} index
  * @return {object}
  */
-export function fragment (value, key) {
-	return new struct(Enum.fragment, key, Enum.fragment, null, (value.push(empty(Enum.key)), value))
+export function fragment (value, index) {
+	return new struct(Enum.fragment, key(index), Enum.fragment, null, value)
 }
 
 /**
- * @param {*} value
- * @param {*} type
- * @param {*} props
+ * @param {any} value
+ * @param {object} type
+ * @param {{key}?} props
  * @return {object}
  */
 export function portal (value, type, props) {
@@ -68,9 +77,9 @@ export function portal (value, type, props) {
 }
 
 /**
- * @param {*} value
- * @param {*} type
- * @param {*} props
+ * @param {!any} value
+ * @param {object} type
+ * @param {object} props
  * @return {object}
  */
 export function target (value, type, props) {
@@ -78,58 +87,107 @@ export function target (value, type, props) {
 }
 
 /**
- * @param {object} value
+ * @param {any} value
  * @return {object}
  */
 export function root (value) {
-	return from([value], 0, null)
+	return from([value], 0, {})
 }
 
 /**
- * @param {object?} value
- * @return {object}
+ * @param {any} value
+ * @return {number}
  */
-export function resolve (value) {
-	return [from(value !== null && typeof value === 'object' && 'default' in value ? value.default : value, 0, null), empty(Enum.key)]
-}
-
-/**
- * @param {*} value
- * @param {number} index
- * @param {object} children
- * @return {object}
- */
-export function from (value, index, children) {
-	if (value != null) {
-		switch (typeof value) {
-			case 'number': case 'string':
-				return text(value, Utility.hash(index))
-			case 'object':
-				if (value.constructor === struct) {
-					return value
-				} else if (value.length > -1) {
-					return fragment(value.map(from), Utility.hash(index))
-				} else if (Utility.iterable(value)) {
-					return fragment(Children.map(value, from), Utility.hash(index))
-				} else if (Utility.asyncIterable(value)) {
-					return create(Utility.generator(value))
-				}
-			case 'function':
-				return create(value)
-			case 'boolean':
-				return from(null, index, children)
-		}
+export function identity (value) {
+	switch (typeof value) {
+		case 'function':
+			return Enum.component
+		case 'number':
+			return Enum.fragment
+		case 'object':
+			return Enum.thenable
 	}
 
-	return empty(Utility.hash(index))
+	return Enum.element
 }
 
 /**
- * @param {*} a
- * @param {(object|*)?} b
- * @param {...*?}
+ * @param {any} value
+ * @return {string}
+ */
+export function display (value) {
+	switch (typeof value) {
+		case 'function':
+			return display(value.displayName || value.name)
+		case 'object':
+			return display(value.type)
+	}
+
+	return value
+}
+
+/**
+ * @param {any} value
+ * @return {Promise}
+ */
+export function generator (value) {
+	return Utility.create(value, {
+		iter: {value: Utility.iterator(value)},
+		then: {value: function (fulfilled, rejected) { return this.iter.next().then(fulfilled, rejected) }},
+	})
+}
+
+/**
+ * @param {object} value
+ * @param {number} index
+ * @param {object} props
  * @return {object}
- * @public
+ */
+export function iterator (value, index, props) {
+	var length = 0, children = Utility.each(function (value, index, children) {
+		children[index] = from(value, length = index, props)
+	}, value, 0, 0, [])
+
+	return children[length + 1] = empty(), children
+}
+
+/**
+ * @param {any} value
+ * @param {number} index
+ * @param {object} props
+ * @return {object}
+ */
+export function from (value, index, props) {
+	switch (typeof value) {
+		case 'object':
+			if (value !== null) {
+				if (value.constructor === undefined) {
+					return value
+				} else if (value.length > -1) {
+					for (var i = 0; i < value.length; i++) {
+						value[i] = from(value[i], i, props)
+					}
+					return value[i] = empty(), fragment(value, key(index))
+				} else if (Utility.iterable(value)) {
+					return fragment(iterator(value, index, props), key(index))
+				} else if (Utility.asyncIterable(value)) {
+					return create(generator(value), props)
+				}
+			}
+		case 'boolean':
+			return text('', index)
+		case 'number': case 'string':
+			return text(value, index)
+		case 'function':
+			return create(value, props)
+	}
+}
+
+/**
+ * @param {(string|number|function|{then}} a
+ * @param {({key?,ref?}|object)?} b
+ * @param {...any?}
+ * @return {object}
  */
 export function create (a, b) {
 	var index = 0
@@ -148,54 +206,35 @@ export function create (a, b) {
 				children[index++] = arguments[i]
 			}
 		}
-		if (type[Enum.defaultProps]) {
-			defaults(element, type[Enum.defaultProps])
-		}
-
-		Assert.types(element, props, Enum.propTypes)
 	} else {
 		if (size > 0) {
 			for (; i < length; ++i) {
-				children[index] = from(arguments[i], index++, children)
+				children[index] = from(arguments[i], index++, props)
 			}
 		}
-
-		children[index] = empty(Enum.key)
+		if (uid !== Enum.element) {
+			children[index] = empty()
+		}
 	}
 
 	return element
 }
 
 /**
- * @param {*} value
- * @return {number}
+ * @param {any} element
+ * @return {boolean}
  */
-export function identity (value) {
-	switch (typeof value) {
-		case 'function':
-			return Enum.component
-		case 'number':
-			return Enum.fragment
-		case 'object':
-			return Enum.thenable
-	}
-
-	return Enum.element
+export function valid (element) {
+	return element !== null && element !== undefined && element.constructor === undefined
 }
 
 /**
- * @param {*} value
- * @return {string}
+ * @param {object} element
+ * @param {...any?}
+ * @return {object}
  */
-export function display (value) {
-	switch (typeof value) {
-		case 'function':
-			return display(value[Enum.displayName] || value.name)
-		case 'object':
-			return display(value.type)
-	}
-
-	return value
+export function clone (element) {
+	return defaults(create.apply(null, [element.type].concat([].slice.call(arguments, 1))), element.props)
 }
 
 /**
@@ -204,30 +243,7 @@ export function display (value) {
  * @return {object}
  */
 export function defaults (element, value) {
-	if (typeof value === 'function') {
-		defaults(element, value.call(element.type, element.props))
-	} else {
-		Utility.defaults(element.props, value)
-	}
-
-	return element
-}
-
-/**
- * @param {object} value
- * @param {...*?}
- * @return {object}
- */
-export function clone (element) {
-	return defaults(create.apply(null, [element.type].concat([].slice.call(arguments, 1))), element.props)
-}
-
-/**
- * @param {*} element
- * @return {boolean}
- */
-export function valid (element) {
-	return element != null && element.constructor === struct
+	return Utility.defaults(element.props, value), element
 }
 
 /**
@@ -243,22 +259,14 @@ export function parent (element) {
  * @return {object}
  */
 export function sibling (element) {
-	return element.uid < Enum.target ? sibling(pick(element)) : element
+	return element.uid < Enum.target ? sibling(element.children[0]) : element
 }
 
 /**
- * @param {object} element
+ * @param {object?} value
+ * @param {object} props
  * @return {object}
  */
-export function pick (element) {
-	return element.children[0]
-}
-
-/**
- * @param {object} element
- * @param {object} value
- * @return {object}
- */
-export function put (element, value) {
-	return element.children[0] = value
+export function resolve (value, props) {
+	return [from(value && 'default' in value ? value.default : value, 0, props), empty()]
 }

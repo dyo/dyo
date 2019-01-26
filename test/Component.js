@@ -726,17 +726,17 @@ describe('Component', () => {
 
 		class Primary extends Component {}
 
-		render(h(Primary, h(Promise.resolve('Initial'), '..')), target, () => {
-			assert.html(target, '..')
+		render(h(Primary, h(Promise.resolve('Initial'), '..')), target, (current) => {
+			assert.html(current, '..')
 		})
 
 		assert.html(target, '..')
 
-		render(h(Primary, h(new Promise((r) => setTimeout(r, 120, 'Update')), {timeout: 40}, '...')), target, (current) => {
+		render(h(Primary, h(new Promise((resolve) => setTimeout(resolve, 140, 'Update')), '...')), target, (current) => {
 			done(assert.html(current, 'Update'))
 		})
 
-		setTimeout(() => assert.html(target, '...'), 60)
+		setTimeout(() => assert.html(target, '...'), 120)
 	})
 
 	it('should render multiple async children', (done) => {
@@ -827,7 +827,7 @@ describe('Component', () => {
 		assert.html(target, '')
 	})
 
-	it('should not call async callbacks in the right order', (done) => {
+	it('should call async callbacks in the right order', (done) => {
 		const target = document.createElement('div')
 		const stack = []
 

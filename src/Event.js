@@ -1,46 +1,68 @@
-import * as Utility from './Utility.js'
-import * as Lifecycle from './Lifecycle.js'
+import * as Enum from './Enum.js'
+import * as Component from './Component.js'
+import * as Exception from './Exception.js'
 import * as Schedule from './Schedule.js'
-import * as Interface from './Interface.js'
 
 /**
- * @param {object} event
+ * @param {object} value
  */
-export function handle (event) {
-	dispatch(this.host, event, Interface.event(event, this.instance))
+export function handle (value) {
+	dispatch(this.host, value, this.state[value.type])
 }
 
 /**
- * @param {object} host
- * @param {object} event
- * @param {*} callback
+ * @param {object} element
+ * @param {object} value
+ * @param {(function|function[])} callback
  */
-export function dispatch (host, event, callback) {
-	Schedule.checkout(enqueue, host, event, callback)
+export function dispatch (element, value, callback) {
+	Schedule.checkout(resolve, element, value, callback, null)
 }
 
 /**
  * @param {object} fiber
- * @param {object} host
- * @param {object} event
- * @param {*} callback
+ * @param {object} element
+ * @param {object} value
+ * @param {(function|function[])} callback
  */
-export function enqueue (fiber, host, event, callback) {
-	if (callback) {
-		if (Utility.iterable(callback)) {
-			Utility.each(enqueue.bind(null, fiber, host, event), callback, 0, callback)
-		} else {
-			resolve(host, event, callback, host.instance)
+export function resolve (fiber, element, value, callback) {
+	element.value = false
+
+	try {
+		enqueue(fiber, element, value, callback, element.props, element.state)
+
+		if (element.value) {
+			Component.dispatch(element)
 		}
+	} catch (error) {
+		Exception.dispatch(fiber, element, element, error)
+	} finally {
+		element.value = null
 	}
 }
 
 /**
- * @param {object} host
- * @param {object} event
- * @param {(function|object)} callback
- * @param {object} instance
+ * @param {object} fiber
+ * @param {object} element
+ * @param {object} value
+ * @param {(function|function[])} callback
+ * @param {object} props
+ * @param {object?} state
  */
-export function resolve (host, event, callback, instance) {
-	Lifecycle.event(host, event, callback, instance, instance.props, instance.state, instance.context)
+export function enqueue (fiber, element, value, callback, props, state) {
+	if (callback) {
+		if (typeof callback === 'function') {
+			if (value = callback(value, props, state)) {
+				if (element.uid === Enum.component && typeof value === 'object' && typeof value.then !== 'function') {
+					for (var key in element.value = value) {
+						state[key] = value[key]
+					}
+				}
+			}
+		} else {
+			for (var i = 0; i < callback.length; i++) {
+				enqueue(fiber, element, value, callback[i], props, state)
+			}
+		}
+	}
 }

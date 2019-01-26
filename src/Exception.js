@@ -1,36 +1,19 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Lifecycle from './Lifecycle.js'
 import * as Schedule from './Schedule.js'
-import * as Registry from './Registry.js'
 
 /**
  * @constructor
+ * @param {any} error
  * @param {object} host
- * @param {*} value
  */
-export var struct = Utility.extend(function exception (host, value) {
-	this.error = value
-	Registry.set(this, host)
+export var struct = Utility.extend(function exception (error, host) {
+	this.error = error
+	this[Enum.identifier] = host
 }, {
-	/**
-	 * @type {function}
-	 * @return {string}
-	 */
-	toString: {
-		value: function () {
-			return this.componentStack
-		}
-	},
-	/**
-	 * @type {string}
-	 */
-	componentStack: {
-		get: function () {
-			return trace(Registry.get(this), '')
-		}
-	}
+	toString: {value: function () { return this.componentStack }},
+	componentStack: {get: function () { return Utility.define(this, 'componentStack', trace(this[Enum.identifier], '')) }, configurable: true}
 })
 
 /**
@@ -44,11 +27,11 @@ export function trace (host, value) {
 
 /**
  * @param {object} host
- * @param {*} value
- * @return {object}
+ * @param {object?} value
+ * @return {any}
  */
 export function create (host, value) {
-	return value instanceof struct ? value : new struct(host, value)
+	return value instanceof struct ? value : new struct(value, host)
 }
 
 /**
@@ -58,18 +41,18 @@ export function create (host, value) {
  * @return {function}
  */
 export function throws (fiber, host, element) {
-	return function (exception) { resolve(fiber, host, element, exception) }
+	return function (exception) { dispatch(fiber, host, element, exception) }
 }
 
 /**
  * @param {object} fiber
  * @param {object} host
  * @param {object} element
- * @param {*} exception
+ * @param {any} exception
  * @return {boolean?}
  */
-export function resolve (fiber, host, element, exception) {
-	return propagate(fiber, host, element, create(host, exception), host)
+export function dispatch (fiber, host, element, exception) {
+	return resolve(fiber, host, element, create(host, exception), host)
 }
 
 /**
@@ -78,28 +61,27 @@ export function resolve (fiber, host, element, exception) {
  * @param {object} element
  * @param {object} exception
  * @param {object} current
- * @return {boolean?}
  */
-export function propagate (fiber, host, element, exception, current) {
+export function resolve (fiber, host, element, exception, current) {
 	switch (current.uid) {
 		case Enum.target:
 			try {
 				throw exception.error
 			} finally {
-				if (exception.value = exception + '') {
-					Utility.report(exception.value)
-				}
+				Utility.report(exception + '')
 			}
 		case Enum.component:
 			if (current !== element) {
-				if (recover(fiber, current, exception, current.instance)) {
-					return
+				var callback = current.state[Enum.identifier]
+
+				if (callback) {
+					return enqueue(fiber, host, element, exception, current, callback)
 				}
 			}
-		default:
-			if (host === element) {
-				return propagate(fiber, host, element, exception, current.host)
-			}
+	}
+
+	if (host === element) {
+		return resolve(fiber, host, element, exception, current.host)
 	}
 
 	throw exception
@@ -107,13 +89,12 @@ export function propagate (fiber, host, element, exception, current) {
 
 /**
  * @param {object} fiber
+ * @param {object} host
  * @param {object} element
  * @param {object} exception
- * @param {object} instance
- * @return {boolean?}
+ * @param {object} current
+ * @param {function[][]} callback
  */
-export function recover (fiber, element, exception, instance) {
-	if (Lifecycle.has(instance, Enum.componentDidCatch)) {
-		return Schedule.enqueue(fiber, element, instance, exception.error, exception, exception, Enum.componentDidCatch)
-	}
+export function enqueue (fiber, host, element, exception, current, callback) {
+	Schedule.enqueue(fiber, Enum.callback, current, current, exception, callback)
 }

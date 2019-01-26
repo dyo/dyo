@@ -1,38 +1,37 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
-import * as Registry from './Registry.js'
 
 /**
  * @type {object}
  */
-export var defaults = {
-	createElement: owner,
-	createElementNS: owner,
-	createTextNode: owner,
-	createDocumentFragment: owner,
-	removeChild: owner,
-	appendChild: owner,
-	insertBefore: owner,
-	addEventListener: owner,
-	setAttribute: owner,
-	removeAttribute: owner,
-	style: {setProperty: owner}
+export var struct = {
+	createElement: self,
+	createElementNS: self,
+	createTextNode: self,
+	createDocumentFragment: self,
+	removeChild: self,
+	appendChild: self,
+	insertBefore: self,
+	addEventListener: self,
+	setAttribute: self,
+	removeAttribute: self,
+	style: {setProperty: self}
 }
 
 /**
- * @return {*}
+ * @return {object}
  */
-export function owner () {
-	return defaults
+export function self () {
+	return this
 }
 
 /**
  * @param {number} uid
- * @param {*} type
+ * @param {(string|number|object)} type
  * @param {object} children
- * @param {*} context
- * @return {object}
+ * @param {string?} context
  * @param {object} owner
+ * @return {object}
  */
 export function create (uid, type, children, context, owner) {
 	switch (uid) {
@@ -50,8 +49,8 @@ export function create (uid, type, children, context, owner) {
 }
 
 /**
- * @param {*} value
- * @param {*?} owner
+ * @param {object} value
+ * @param {object?} owner
  * @return {object}
  */
 export function target (value, owner) {
@@ -59,12 +58,12 @@ export function target (value, owner) {
 		if (typeof value === 'object') {
 			switch (value.ownerDocument) {
 				case undefined:
-					return owner !== null ? value : Registry.set(value, defaults)
+					return owner === undefined ? value : struct
 				case null:
 					return value.documentElement
-				default:
-					return value
 			}
+
+			return value
 		} else if (owner) {
 			return target(owner.querySelector(value), owner)
 		} else if (typeof document === 'object') {
@@ -74,40 +73,23 @@ export function target (value, owner) {
 		}
 	}
 
-	Utility.invariant('Invalid target!')
+	Utility.invarient('Invalid target!')
 }
 
 /**
  * @param {object} value
  * @return {object}
  */
-export function from (value) {
+export function owner (value) {
 	return value.ownerDocument || value
 }
 
 /**
- * @param {string} value
- * @param {object} type
- */
-export function context (value, type) {
-	switch (type) {
-		case 'svg':
-			return 'http://www.w3.org/2000/svg'
-		case 'math':
-			return 'http://www.w3.org/1998/Math/MathML'
-		case 'foreignObject':
-			return ''
-	}
-
-	return value
-}
-
-/**
  * @param {object} parent
- * @return {object}
+ * @return {void}
  */
 export function clear (parent) {
-	parent.textContent = ''
+	return parent.textContent = null
 }
 
 /**
@@ -144,22 +126,38 @@ export function insert (parent, element, sibling) {
 }
 
 /**
+ * @param {string} value
+ * @param {object} type
+ * @return {string}
+ */
+export function context (value, type) {
+	switch (type) {
+		case 'svg':
+			return 'http://www.w3.org/2000/svg'
+		case 'math':
+			return 'http://www.w3.org/1998/Math/MathML'
+		case 'foreignObject':
+			return ''
+	}
+
+	return value
+}
+
+/**
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {object} instance
  */
 export function props (name, value, instance, handler) {
 	if (name === 'style') {
 		if (typeof value === 'object') {
-			if (value) {
-				return stylesheet(name, value, instance[name])
-			}
+			return stylesheet(name, value, instance[name])
 		}
 	} else {
 		switch (typeof value) {
 			case 'object': case 'function':
-				if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110) {
-					return events(name.substr(2).toLowerCase(), value, instance, handler)
+				if (valid(name)) {
+					return event(name.substr(2).toLowerCase(), value, instance, handler, handler.state)
 				}
 		}
 
@@ -173,15 +171,18 @@ export function props (name, value, instance, handler) {
 
 /**
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {object} instance
  */
 export function property (name, value, instance) {
 	try {
 		switch (value) {
 			case false: case null: case undefined:
-				if (typeof instance[name] === 'string') {
-					return property(name, '', instance)
+				switch (typeof instance[name]) {
+					case 'string':
+						return property(name, '', instance)
+					case 'boolean':
+						return property(name, false, instance)
 				}
 		}
 
@@ -193,18 +194,22 @@ export function property (name, value, instance) {
 
 /**
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {object} instance
  */
 export function attribute (name, value, instance) {
-	switch (value) {
-		case true:
-			return attribute(name, name, instance)
-		case false: case null: case undefined:
-			return instance.removeAttribute(name)
-	}
+	try {
+		switch (value) {
+			case true:
+				return attribute(name, name, instance)
+			case false: case null: case undefined:
+				return instance.removeAttribute(name)
+		}
 
-	instance.setAttribute(name, value)
+		instance.setAttribute(name, value)
+	} finally {
+		return
+	}
 }
 
 /**
@@ -213,14 +218,16 @@ export function attribute (name, value, instance) {
  * @param {object} instance
  */
 export function stylesheet (name, value, instance) {
-	for (var key in value) {
-		declaration(key, value[key], instance)
+	if (value) {
+		for (var key in value) {
+			declaration(key, value[key], instance)
+		}
 	}
 }
 
 /**
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {object} instance
  */
 export function declaration (name, value, instance) {
@@ -241,21 +248,23 @@ export function declaration (name, value, instance) {
  * @param {string} value
  * @param {object} instance
  * @param {object} handler
+ * @param {object} handlers
  */
-export function events (name, value, instance, handler) {
-	var handlers = Registry.get(instance) || Registry.set(instance, {})
-
-	if (!handlers[name]) {
-		instance.addEventListener(name, handler, false)
+export function event (name, value, instance, handler, handlers) {
+	if (handlers) {
+		if (handlers[name] === undefined) {
+			instance.addEventListener(name, handler, false)
+		}
+		handlers[name] = value
+	} else {
+		event(name, value, instance, handler, handler.state = {})
 	}
-
-	handlers[name] = value
 }
 
 /**
- * @param {object} value
- * @param {object} instance
+ * @param {string} name
+ * @return {boolean}
  */
-export function event (value, instance) {
-	return Registry.get(instance)[value.type]
+export function valid (name) {
+	return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110
 }
