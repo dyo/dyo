@@ -22,6 +22,7 @@ export var struct = Utility.extend(function element (uid, key, type, props, chil
 	this.parent = null
 	this.state = null
 	this.value = null
+	this.context = null
 }, {
 	handleEvent: {value: Event.handle}
 })
@@ -32,13 +33,6 @@ export var struct = Utility.extend(function element (uid, key, type, props, chil
  */
 export function key (value) {
 	return -(-(value + 1) >>> 0)
-}
-
-/**
- * @return {object}
- */
-export function top () {
-	return new struct(Enum.target, null, null, null, null)
 }
 
 /**
@@ -161,6 +155,13 @@ export function from (value, index, props) {
 	switch (typeof value) {
 		case 'object':
 			if (value !== null) {
+				// using "value instanceof struct" improves perf
+				// but also means you can't use {h} from one render
+				// in another i.e import {h} from 'dyo'
+				// then render onto import {render} from 'server'
+				// This is very important for ismorphic apps.
+				// Alternetively we can use a hasOwnProperty that doesn't have
+				// as much of an effect on megamorphic cache misses.
 				if (value.constructor === undefined) {
 					return value
 				} else if (value.length > -1) {
@@ -174,13 +175,13 @@ export function from (value, index, props) {
 					return create(generator(value), props)
 				}
 			}
-		case 'boolean':
-			return text('', index)
-		case 'number': case 'string':
-			return text(value, index)
 		case 'function':
 			return create(value, props)
+		case 'number': case 'string':
+			return text(value, index)
 	}
+
+	return empty()
 }
 
 /**
@@ -192,7 +193,7 @@ export function from (value, index, props) {
 export function create (a, b) {
 	var index = 0
 	var length = arguments.length
-	var i = b == null || b.constructor === Utility.object ? 2 : 1
+	var i = b == null || b instanceof Utility.object ? 2 : 1
 	var size = length - i
 	var uid = identity(a)
 	var type = a

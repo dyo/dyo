@@ -1,3 +1,4 @@
+import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Exception from './Exception.js'
@@ -42,11 +43,13 @@ export function memo (children, callback) {
  */
 export function memoize (children, callback) {
 	return function (props, state) {
-		if (this.parent !== null && this.value === null && callback(this.props, props) === true) {
-			return this.children[0]
-		} else {
-			return children.call(this, props, state)
+		if (this.parent !== null) {
+			if (!this.value && callback(this.props, props)) {
+				return this.children[0]
+			}
 		}
+
+		return children.call(this, props, state)
 	}
 }
 
@@ -68,7 +71,7 @@ export function render (fiber, element, props, state) {
  * @return {object}
  */
 export function create (fiber, host, element) {
-	return element.owner = host.owner, element.ref = [], render(fiber, element, element.props, element.state = {})
+	return element.context = host.context, element.ref = [], render(fiber, element, element.props, element.state = {})
 }
 
 /**
@@ -110,13 +113,20 @@ export function resolve (fiber, element, props, children) {
 /**
  * @param {object} element
  * @param {any} value
+ * @param {function} callback
  */
-export function enqueue (element, value) {
-	if (!(element.value = value !== null)) {
-		try {
-			dispatch(element)
-		} finally {
-			element.value = null
+export function enqueue (element, value, callback) {
+	if (value === null) {
+		if (value = Schedule.peek()) {
+			Schedule.enqueue(value, Enum.callback, element, element, element, callback)
+		} else {
+			try {
+				return callback(element)
+			} finally {
+				element.value = null
+			}
 		}
 	}
+
+	element.value = element.value || element
 }

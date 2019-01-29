@@ -18,6 +18,7 @@ import * as Commit from './Commit.js'
 export function create (fiber, host, parent, element, current) {
 	var uid = element.uid
 	var children = element.children
+	var owner = element.owner = parent.owner
 
 	try {
 		switch (element.host = host, uid) {
@@ -28,10 +29,10 @@ export function create (fiber, host, parent, element, current) {
 					return create(fiber, host, parent, children[0] = Element.empty(Exception.dispatch(fiber, host, element, error)), current)
 				}
 			case Enum.element:
-				var context = element.value = Interface.context(parent.value, element.type)
+				var context = element.context = Interface.context(parent.context, element.type)
 		}
 
-		var instance = element.ref = Interface.create(uid, element.type, children, context, element.owner = parent.owner)
+		var instance = element.ref = Interface.create(uid, element.type, children, context, owner)
 
 		switch (uid) {
 			case Enum.text: case Enum.empty:

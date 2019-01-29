@@ -33,7 +33,7 @@ export function unmount (parent, element, children) {
  * @param {object?} sibling
  */
 export function mount (parent, element, sibling) {
-	if (sibling !== null) {
+	if (sibling) {
 		insert(Element.parent(parent), element, Element.sibling(sibling))
 	} else {
 		append(Element.parent(parent), element)

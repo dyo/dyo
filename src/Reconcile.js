@@ -78,11 +78,9 @@ export function replace (fiber, host, parent, element, snapshot, siblings, index
  * @param {number} index
  */
 export function update (fiber, host, parent, element, snapshot, siblings, index) {
-	// ***** DO MIND ME *****
-	// TODO uncomment once the setTimeout perf cliff is figured out
-	// if (element === snapshot) {
-	// 	return
-	// }
+	if (element === snapshot) {
+		return
+	}
 
 	var uid = snapshot.uid
 	var type = snapshot.type
@@ -199,7 +197,7 @@ export function children (fiber, host, parent, offset, a, b) {
 		} else if (((apos = aend + 1) - aidx) * ((bpos = bend + 1) - bidx) === 1) {
 			replace(fiber, host, parent, ahead, bhead, a, aidx)
 		} else {
-			// step 3, keymap/unmount(rl)/unmount(lr)/mount/move
+			// step 3, keymap/unmount(rl)/unmount(lr)/mount(rl)/move(rl/lr)
 			if (akeys === bkeys) {
 				akeys = {}, bkeys = {}, delta = 0
 				while (apos > aidx | bpos > bidx) {

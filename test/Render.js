@@ -1,6 +1,6 @@
 import {h, render} from '../index.js'
 
-describe('Render', () => {
+describe.only('Render', () => {
 	const target = document.createElement('div')
 	const refs = {}
 

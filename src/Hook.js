@@ -3,6 +3,7 @@ import * as Utility from './Utility.js'
 import * as Context from './Context.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
+import * as Interface from './Interface.js'
 import * as Schedule from './Schedule.js'
 
 /**
@@ -40,21 +41,19 @@ export function update (element, value, props, state) {
 
 /**
  * @param {object} element
- * @param {object} children
- * @param {any} value
  */
-export function dispatch (element, children, value) {
-	children[0] = typeof value !== 'function' ? value : value(children[0]), Component.enqueue(element, element.value)
+export function dispatch (element) {
+	Component.dispatch(element)
 }
 
 /**
  * @param {object} element
  * @param {object} children
  * @param {any} value
- * @return {any}
  */
-export function resolve (element, value) {
-	return typeof value !== 'function' ? value : value(element.props)
+export function resolve (element, children, value) {
+	children[0] = typeof value !== 'function' ? value : value(children[0])
+	Component.enqueue(element, element.value, dispatch)
 }
 
 /**
@@ -64,8 +63,13 @@ export function resolve (element, value) {
  */
 export function enqueue (callback, value, type) {
 	var fiber = Schedule.peek()
-	var caret = ++fiber.caret
 	var element = fiber.owner
+
+	if (Interface.environment(element.owner)) {
+		return
+	}
+
+	var caret = ++fiber.caret
 	var children = element.children
 	var length = children.length
 
@@ -81,10 +85,7 @@ export function enqueue (callback, value, type) {
 		Schedule.enqueue(fiber, type, element, element, children, callback)
 	} else {
 		Utility.timeout(function () {
-			// ***** DO MIND ME *****
-			// Doesn't matter what is do here the presence of this effectively turns all the wrong switches somewhere
-			// Why?
-			// Schedule.dispatch(fiber, Enum.callback, element, element, children, callback)
+			Schedule.dispatch(fiber, type, element, element, children, callback)
 		})
 	}
 }
@@ -95,8 +96,8 @@ export function enqueue (callback, value, type) {
  */
 export function memo (callback, value) {
 	var fiber = Schedule.peek()
-	var caret = ++fiber.caret
 	var element = fiber.owner
+	var caret = ++fiber.caret
 	var children = element.children
 	var length = children.length
 
@@ -115,13 +116,13 @@ export function memo (callback, value) {
  */
 export function state (value) {
 	var fiber = Schedule.peek()
-	var caret = ++fiber.caret
 	var element = fiber.owner
+	var caret = ++fiber.caret
 	var children = element.children
 	var length = children.length
 
 	return caret !== length ? children[caret] : children = children[caret] = [
-		resolve(element, value), function (value) { dispatch(element, children, value) }
+		typeof value !== 'function' ? value : value(element.props), function (value) { resolve(element, children, value) }
 	]
 }
 
@@ -131,18 +132,37 @@ export function state (value) {
  */
 export function context (value) {
 	var fiber = Schedule.peek()
-	var caret = ++fiber.caret
 	var element = fiber.owner
+	var caret = ++fiber.caret
 	var children = element.children
 	var length = children.length
 
 	var type = value.type
-	var context = element.owner
+	var context = element.context
 	var state = context ? context[type] : value
 
 	return caret !== length ? (children = children[caret], children[0] = state.value, children) : children[caret] = [
 		Context.resolve(element, state, context, type), function (value) { Context.dispatch(element, state, value, caret) }
 	]
+}
+
+/**
+ * @param {function} value
+ */
+export function boundary (value) {
+	var fiber = Schedule.peek()
+	var element = fiber.owner
+	var caret = ++fiber.caret
+	var children = element.children
+	var length = children.length
+	var state = element.state
+
+	if (caret === length) {
+		state = state[Enum.identifier] ? state[Enum.identifier] : state[Enum.identifier] = []
+		state[state.length] = children[caret] = [value]
+	} else {
+		children[caret][0] = value
+	}
 }
 
 /**
@@ -160,23 +180,3 @@ export function layout (callback, value) {
 export function effect (callback, value) {
 	enqueue(callback, value, -Enum.callback)
 }
-
-/**
- * @param {function} value
- */
-export function boundary (value) {
-	var fiber = Schedule.peek()
-	var caret = ++fiber.caret
-	var element = fiber.owner
-	var children = element.children
-	var length = children.length
-	var state = element.state
-
-	if (caret === length) {
-		state = state[Enum.identifier] ? state[Enum.identifier] : state[Enum.identifier] = []
-		state[state.length] = children[caret] = [value]
-	} else {
-		children[caret][0] = value
-	}
-}
-

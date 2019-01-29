@@ -21,40 +21,14 @@ export var struct = Utility.extend(function fiber (element, target) {
 	this.async = null
 	this.queue = []
 }, {
-	/**
-	 * @type {function}
-	 */
-	then: {value: then}
+	then: {value: function (value) { return finalize(this, this.target, value), this }}
 })
-
-/**
- * @return {void}
- */
-export function pop () {
-	return frame = null
-}
-
-/**
- * @param {object} fiber
- * @return {object}
- */
-export function push (fiber) {
-	return frame = fiber
-}
 
 /**
  * @return {object}
  */
 export function peek () {
 	return frame
-}
-
-/**
- * @param {function} value
- * @return {object}
- */
-export function then (value) {
-	return finalize(this, this.target, value), this
 }
 
 /**
@@ -65,7 +39,7 @@ export function then (value) {
  * @return {object}
  */
 export function resolve (fiber, value, fulfilled, rejected) {
-	return Utility.resolve(fiber.async, function () { forward(fiber, value, fulfilled) }, function () { forward(fiber, value, rejected) })
+	return Utility.resolve(fiber.async, forward.bind(null, fiber, value, fulfilled), forward.bind(null, fiber, value, rejected))
 }
 
 /**
@@ -92,9 +66,9 @@ export function promise (fiber, value, fulfilled, rejected) {
  */
 export function forward (fiber, value, callback, argument) {
 	try {
-		return callback.apply(push(fiber), value.length ? value : ((fiber.async = null, value).push(argument), value))
+		return callback.apply(frame = fiber, value.length ? value : ((fiber.async = null, value).push(argument), value))
 	} finally {
-		pop()
+		frame = null
 	}
 }
 
@@ -148,8 +122,6 @@ export function dispatch (fiber, type, element, a, b, c) {
 	switch (type) {
 		case Enum.component:
 			return Component.update(fiber, element, a, b, c)
-		case Enum.callback:
-			return Event.resolve(fiber, a, b, c)
 		case Enum.content:
 			return Commit.content(b, c)
 		case Enum.props:
@@ -160,6 +132,41 @@ export function dispatch (fiber, type, element, a, b, c) {
 			return Commit.unmount(a, b, c)
 		case Enum.target:
 			return Commit.target(a, b)
+	}
+
+	checkout(callback, a, b, c, null)
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} element
+ * @param {object} value
+ * @param {(function|function[])} callback
+ */
+export function callback (fiber, element, value, callback) {
+	Event.resolve(fiber, element, value, callback)
+}
+
+/**
+ * @param {function} executor
+ * @param {object} element
+ * @param {object} target
+ * @param {any} value
+ * @param {any} callback
+ * @return {object}
+ */
+export function checkout (executor, element, target, value, callback) {
+	var stack = frame
+	var fiber = stack ? stack : frame = new struct(element, target)
+
+	try {
+		return executor(fiber, element, target, value), fiber
+	} finally {
+		try {
+			finalize(fiber, target, callback)
+		} finally {
+			frame = stack
+		}
 	}
 }
 
@@ -180,37 +187,4 @@ export function finalize (fiber, target, callback) {
 	} else if (callback) {
 		archive(fiber, target, callback)
 	}
-}
-
-/**
- * @param {object} fiber
- * @param {function} callback
- * @param {object} element
- * @param {object} target
- * @param {any} a
- * @param {any} b
- * @return {object}
- */
-export function upstream (fiber, callback, element, target, a, b) {
-	try {
-		return callback(push(fiber), element, fiber.target = target, a), fiber
-	} finally {
-		try {
-			finalize(fiber, target, b)
-		} finally {
-			pop()
-		}
-	}
-}
-
-/**
- * @param {function} callback
- * @param {object} element
- * @param {object} target
- * @param {any} a
- * @param {any} b
- * @return {object}
- */
-export function checkout (callback, element, target, a, b) {
-	return upstream(frame ? frame : new struct(element, target), callback, element, target, a, b)
 }

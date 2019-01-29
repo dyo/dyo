@@ -83,15 +83,15 @@ export function extend (constructor, value) {
  * @return {number}
  */
 export function timeout (callback, duration) {
-	return setTimeout(callback, duration)
+	return setTimeout(callback, duration | 0)
 }
 
 /**
  * @throws {error<any>}
- * @param {any} value
+ * @param {any} message
  */
-export function invarient (value) {
-	throw new Error(value)
+export function panic (message) {
+	throw new TypeError(message)
 }
 
 /**
@@ -148,20 +148,16 @@ export function is (a, b) {
 /**
  * @param {object} a
  * @param {object} b
- * @return {object}
  */
 export function assign (a, b) {
 	for (var key in b) {
 		a[key] = b[key]
 	}
-
-	return a
 }
 
 /**
  * @param {object} a
  * @param {object} b
- * @return {object}
  */
 export function defaults (a, b) {
 	for (var key in b) {
@@ -169,8 +165,6 @@ export function defaults (a, b) {
 			a[key] = b[key]
 		}
 	}
-
-	return a
 }
 
 /**
@@ -183,7 +177,7 @@ export function defaults (a, b) {
  */
 export function each (callback, value, index, stack, arr) {
 	if (value !== null && typeof value === 'object') {
-		if (value.length === -1) {
+		if (value.length > -1) {
 			for (var i = 0; i < value.length; ++i) {
 				if (each(callback, value[i], index + i, stack + 1, arr) === true) {
 					break
@@ -208,7 +202,7 @@ export function each (callback, value, index, stack, arr) {
 }
 
 /**
- * @param {object?} value
+ * @param {(object|object[])?} value
  * @param {function} fulfilled
  * @param {function?} rejected
  * @return {object?}

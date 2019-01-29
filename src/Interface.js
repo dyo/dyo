@@ -26,6 +26,14 @@ export function self () {
 }
 
 /**
+ * @param {object} owner
+ * @return {boolean}
+ */
+export function environment (owner) {
+	return owner === struct
+}
+
+/**
  * @param {number} uid
  * @param {(string|number|object)} type
  * @param {object} children
@@ -73,7 +81,7 @@ export function target (value, owner) {
 		}
 	}
 
-	Utility.invarient('Invalid target!')
+	Utility.panic('Invalid target!')
 }
 
 /**
