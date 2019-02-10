@@ -72,7 +72,7 @@ export function property (name, value, children) {
 		case 'className':
 			return property('class', value, children)
 		case 'innerHTML':
-			children.splice(0, children.length, Dyo.createElement([], value))
+			children.splice(0, children.length, Dyo.createElement([], null, value))
 		case 'ref': case 'key':
 			return ''
 		case 'style':

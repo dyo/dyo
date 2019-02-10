@@ -16,16 +16,14 @@
 		"server/"
 	],
 	"scripts": {
-		"lint": "eslint .",
+		"lint": "eslint ./",
 		"pretest": "npm run lint && npm run build-all",
 		"test": "nyc npm run test-all",
-		"test-all": "npm run test-dev && npm run test-prod",
-		"test-dev": "cross-env NODE_ENV=development npm run test-spec",
-		"test-prod": "cross-env NODE_ENV=production npm run test-spec",
-		"test-spec": "mocha --harmony --require esm script/test.js --recursive test",
+		"test-all": "mocha --harmony --require esm script/test.js --recursive test",
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
-		"build": "rollup --config script/build.js --configDir",
-		"build-all": "npm run build -- . && npm run build -- server",
+		"build": "rollup --config script/build.js",
+		"build-server": "npm run build -- --configSrc ./server",
+		"build-all": "npm run build && npm run build-server",
 		"prepare": "npm run build-all",
 		"postversion": "git push --follow-tags && npm publish",
 		"release-major": "npm version major -m '%s'",
@@ -41,7 +39,6 @@
 		"jsdom": "12.2.0",
 		"eslint": "5.9.0",
 		"coveralls": "3.0.2",
-		"cross-env": "5.2.0",
 		"rollup-plugin-terser": "3.0.0",
 		"rollup": "0.67.3"
 	},
@@ -116,12 +113,6 @@
 			],
 			"no-unsafe-finally": [
 				"off"
-			],
-			"no-param-reassign": [
-				"error",
-				{
-					"props": false
-				}
 			],
 			"no-shadow-restricted-names": [
 				"error"

@@ -25,17 +25,14 @@ export function compare (prev, next) {
 
 /**
  * @param {object} element
- * @param {any[]} value
- * @param {object} props
- * @param {object} state
+ * @param {object} children
+ * @param {any} value
  */
-export function update (element, value, props, state) {
-	Lifecycle.defs(element)
-
-	var callback = value[1](value = value[0], props, state)
-
-	if (typeof callback === 'function') {
-		Lifecycle.refs(element, function () { return callback(value, props, state) })
+export function update (element, children, value) {
+	if (Utility.callable(value)) {
+		update(element, children, value(children[0]))
+	} else if (!Utility.is(children[0], children[0] = value)) {
+		Component.enqueue(element, element.value, dispatch)
 	}
 }
 
@@ -48,12 +45,11 @@ export function dispatch (element) {
 
 /**
  * @param {object} element
- * @param {object} children
- * @param {any} value
+ * @param {any?} value
+ * @return {any?}
  */
-export function resolve (element, children, value) {
-	children[0] = typeof value !== 'function' ? value : value(children[0])
-	Component.enqueue(element, element.value, dispatch)
+export function resolve (element, value) {
+	return Utility.callable(value) ? value(element.props) : value
 }
 
 /**
@@ -65,17 +61,16 @@ export function enqueue (callback, value, type) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 
-	if (Interface.environment(element.owner)) {
+	if (Interface.noop(element.owner)) {
 		return
 	}
 
-	var caret = ++fiber.caret
+	var index = ++fiber.index
 	var children = element.children
-	var length = children.length
 
-	if (caret === length) {
-		children = children[caret] = [value, callback, callback = function (value, props, state) { update(element, value, props, state) }]
-	} else if (compare((children = children[caret])[0], children[0] = value)) {
+	if (index === children.length) {
+		children = children[index] = [value, callback, callback = function (value) { dequeue(element, value[0], value[1]) }]
+	} else if (compare((children = children[index])[0], children[0] = value)) {
 		return
 	} else {
 		children[1] = callback, callback = children[2]
@@ -84,26 +79,51 @@ export function enqueue (callback, value, type) {
 	if (type === Enum.callback) {
 		Schedule.enqueue(fiber, type, element, element, children, callback)
 	} else {
-		Utility.timeout(function () {
-			Schedule.dispatch(fiber, type, element, element, children, callback)
-		})
+		Schedule.requeue(fiber, type, element, element, children, callback)
 	}
 }
 
 /**
+ * @param {object} element
+ * @param {any[]} value
+ * @param {(function)} callback
+ */
+export function dequeue (element, value, callback) {
+	Lifecycle.defs(element)
+
+	if (callback = callback(value)) {
+		if (Utility.callable(callback)) {
+			Lifecycle.refs(element, function () { return callback(value) })
+		}
+	}
+}
+
+/**
+ * @param {any?} value
+ * @return {any}
+ */
+export function ref (value) {
+	var fiber = Schedule.peek()
+	var element = fiber.owner
+	var index = ++fiber.index
+	var children = element.children
+
+	return index !== children.length ? children[index] : children[index] = {current: resolve(element, value)}
+}
+
+/**
  * @param {function} callback
- * @param {any[]?} value
+ * @param {any} value
  */
 export function memo (callback, value) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
-	var caret = ++fiber.caret
+	var index = ++fiber.index
 	var children = element.children
-	var length = children.length
 
-	if (caret === length) {
-		children = children[caret] = [value, value]
-	} else if (compare((children = children[caret])[0], children[0] = value)) {
+	if (index === children.length) {
+		children = children[index] = [value, value]
+	} else if (compare((children = children[index])[0], children[0] = value)) {
 		return children[1]
 	}
 
@@ -117,12 +137,11 @@ export function memo (callback, value) {
 export function state (value) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
-	var caret = ++fiber.caret
+	var index = ++fiber.index
 	var children = element.children
-	var length = children.length
 
-	return caret !== length ? children[caret] : children = children[caret] = [
-		typeof value !== 'function' ? value : value(element.props), function (value) { resolve(element, children, value) }
+	return index !== children.length ? children[index] : children = children[index] = [
+		resolve(element, value), function (value) { update(element, children, value) }
 	]
 }
 
@@ -130,38 +149,40 @@ export function state (value) {
  * @param {function} value
  * @return {any[any, function]}
  */
-export function context (value) {
+export function context (provider) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
-	var caret = ++fiber.caret
+	var index = ++fiber.index
 	var children = element.children
-	var length = children.length
-
-	var type = value.type
 	var context = element.context
-	var state = context ? context[type] : value
+	var type = provider.type
+	var state = Lifecycle.state(element)
 
-	return caret !== length ? (children = children[caret], children[0] = state.value, children) : children[caret] = [
-		Context.resolve(element, state, context, type), function (value) { Context.dispatch(element, state, value, caret) }
-	]
+	if (index === children.length) {
+		children = children[index] = Context.resolve(element, state, context, provider.value, type)
+	} else {
+		children = children[index], children[0] = state[type].value = context[type].value
+	}
+
+	return children
 }
 
 /**
- * @param {function} value
+ * @param {function} callback
  */
-export function boundary (value) {
+export function boundary (callback) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
-	var caret = ++fiber.caret
+	var index = ++fiber.index
 	var children = element.children
-	var length = children.length
-	var state = element.state
 
-	if (caret === length) {
-		state = state[Enum.identifier] ? state[Enum.identifier] : state[Enum.identifier] = []
-		state[state.length] = children[caret] = [value]
+	if (index === children.length) {
+		var state = Lifecycle.state(element)
+		var stack = state.stack ? state.stack : state.stack = []
+
+		children[index] = stack[stack.length] = [callback]
 	} else {
-		children[caret][0] = value
+		children[index][0] = callback
 	}
 }
 
@@ -179,4 +200,23 @@ export function layout (callback, value) {
  */
 export function effect (callback, value) {
 	enqueue(callback, value, -Enum.callback)
+}
+
+/**
+ * @param {function} callback
+ * @return {function}
+ */
+export function callback (callback) {
+	var fiber = Schedule.peek()
+	var element = fiber.owner
+	var index = ++fiber.index
+	var children = element.children
+
+	if (index === children.length) {
+		children = children[index] = [callback, function () { return children[0].apply(this, arguments) }]
+	} else {
+		children = children[index], children[0] = callback
+	}
+
+	return children[1]
 }

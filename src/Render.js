@@ -24,7 +24,7 @@ export function render (element, target, callback) {
 export function dispatch (element, target, callback) {
 	var parent = target[Enum.identifier]
 
-	if (parent) {
+	if (parent !== undefined) {
 		return Schedule.checkout(resolve, parent, target, [Element.root(element)], callback)
 	} else {
 		return Schedule.checkout(resolve, Element.target(element, target, Interface.clear(target)), target, target, callback)
@@ -39,7 +39,7 @@ export function dispatch (element, target, callback) {
  */
 export function resolve (fiber, element, target, value) {
 	if (value === target) {
-		target[Enum.identifier] = Node.create(fiber, element, element, element, null)
+		element.context = {}, target[Enum.identifier] = Node.create(fiber, element, element, element, null)
 	} else {
 		Reconcile.children(fiber, element, element, 0, element.children, value)
 	}

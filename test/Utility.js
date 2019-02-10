@@ -1,4 +1,4 @@
-describe.only('Utility', () => {
+describe('Utility', () => {
 	const Symbol = globalThis.Symbol
 
 	before(() => globalThis.Symbol = '')

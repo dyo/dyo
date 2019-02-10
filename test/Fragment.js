@@ -1,4 +1,4 @@
-import {h, Component, Fragment, render} from '../index.js'
+import {h, Fragment, render} from '../index.js'
 
 describe('Fragment', () => {
 	const target = document.createElement('div')
@@ -46,7 +46,7 @@ describe('Fragment', () => {
 	})
 
 	it('should replace a fragment', () => {
-		render(h('h2', 1), target, (current) => {
+		render(h('h2', {}, 1), target, (current) => {
 			assert.html(current, '<h2>1</h2>')
 		})
 	})
@@ -107,7 +107,7 @@ describe('Fragment', () => {
 	})
 
 	it('should render a fragment from a component', () => {
-		render(h(Component, [1, 2]), target, (current) => {
+		render(h(props => props.children, {}, [1, 2]), target, (current) => {
 			assert.html(current, '12')
 		})
 	})

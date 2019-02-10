@@ -1,4 +1,4 @@
-import {h, render, Component} from '../index.js'
+import {h, render} from '../index.js'
 
 describe('Interface', () => {
 	const document = globalThis.document
@@ -8,10 +8,7 @@ describe('Interface', () => {
 
 	it('should render to no-op interface', () => {
 		const target = {}
-
-		class Primary extends Component {
-			render() { return [h('h1', 'Hello World')] }
-		}
+		const Primary =  props => [h('h1', 'Hello World')]
 
 		assert.doesNotThrow(() => {
 			render(h(Primary), target, (current) => assert.equal(current, target))

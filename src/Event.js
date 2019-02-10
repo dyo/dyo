@@ -1,38 +1,37 @@
-import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Component from './Component.js'
 import * as Exception from './Exception.js'
 import * as Schedule from './Schedule.js'
 
 /**
- * @param {object} value
+ * @param {object} event
  */
-export function handle (value) {
-	dispatch(this.host, value, this.state[value.type])
+export function handle (event) {
+	dispatch(this.host, event, this.state[event.type])
 }
 
 /**
  * @param {object} element
- * @param {object} value
+ * @param {object} event
  * @param {(function|function[])} callback
  */
-export function dispatch (element, value, callback) {
-	Schedule.checkout(resolve, element, value, callback, null)
+export function dispatch (element, event, callback) {
+	Schedule.checkout(resolve, element, event, callback, undefined)
 }
 
 /**
  * @param {object} fiber
  * @param {object} element
- * @param {object} value
+ * @param {object} event
  * @param {(function|function[])} callback
  */
-export function resolve (fiber, element, value, callback) {
+export function resolve (fiber, element, event, callback) {
 	element.value = false
 
 	try {
-		enqueue(fiber, element, value, callback, element.props, element.state)
+		enqueue(fiber, element, event, callback)
 
-		if (element.value === element) {
+		if (element.value) {
 			Component.dispatch(element)
 		}
 	} catch (error) {
@@ -45,31 +44,19 @@ export function resolve (fiber, element, value, callback) {
 /**
  * @param {object} fiber
  * @param {object} element
- * @param {object} value
+ * @param {object} event
  * @param {(function|function[])} callback
- * @param {object} props
- * @param {object?} state
+ * @return {any?}
  */
-export function enqueue (fiber, element, value, callback, props, state) {
-	if (callback) {
-		if (typeof callback === 'function') {
-			if (value = callback(value, props, state)) {
-				if (element.uid === Enum.component) {
-					switch (typeof value) {
-						case 'function':
-							return enqueue(fiber, element, value, callback, props, state)
-						case 'object':
-							if (typeof value.then !== 'function') {
-								element.value = element, Utility.assign(state, value)
-							} else {
-								dequeue(fiber, element, value)
-							}
-					}
+export function enqueue (fiber, element, event, callback) {
+	if (Utility.callable(callback)) {
+		return callback(event)
+	} else if (callback) {
+		for (var i = 0, length = callback.length, value = event; i < length; i++) {
+			if ((value = enqueue(fiber, element, event, callback[i])) !== undefined) {
+				if (Utility.thenable(event = value)) {
+					dequeue(fiber, element, event, callback.slice(i + 1, i = length))
 				}
-			}
-		} else {
-			for (var i = 0; i < callback.length; i++) {
-				enqueue(fiber, element, value, callback[i], props, state)
 			}
 		}
 	}
@@ -78,17 +65,11 @@ export function enqueue (fiber, element, value, callback, props, state) {
 /**
  * @param {object} fiber
  * @param {object} element
- * @param {object} value
+ * @param {object} event
+ * @param {(function|function[])} callback
  */
-export function dequeue (fiber, element, value) {
-	// return Utility.resolve(value, function (value) {
-	// 	dispatch(element, value, function (value) {
-	// 		console.log('async', value)
-	// 		return value
-	// 	})
-	// })
-
-	Schedule.promise(fiber, value, function (value) {
-		resolve (fiber, element, value, function (value) { return value })
+export function dequeue (fiber, element, event, callback) {
+	Schedule.suspend(fiber, event, function (value) {
+		resolve(fiber, element, value, callback)
 	}, Exception.throws(fiber, element, element))
 }

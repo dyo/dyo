@@ -53,7 +53,7 @@ export function text (value, index) {
 
 /**
  * @param {object[]} value
- * @param {fragment} index
+ * @param {number} index
  * @return {object}
  */
 export function fragment (value, index) {
@@ -67,7 +67,7 @@ export function fragment (value, index) {
  * @return {object}
  */
 export function portal (value, type, props) {
-	return new struct(Enum.portal, props && props.key, Enum.portal, null, [target(value, type, props)])
+	return new struct(Enum.portal, props === undefined ? props = null : props.key, Enum.portal, null, [target(value, type, props)])
 }
 
 /**
@@ -85,7 +85,7 @@ export function target (value, type, props) {
  * @return {object}
  */
 export function root (value) {
-	return from([value], 0, {})
+	return from([value], 0, null)
 }
 
 /**
@@ -133,16 +133,16 @@ export function generator (value) {
 
 /**
  * @param {object} value
- * @param {number} index
+ * @param {number} length
  * @param {object} props
  * @return {object}
  */
-export function iterator (value, index, props) {
-	var length = 0, children = Utility.each(function (value, index, children) {
+export function iterator (value, length, props) {
+	Utility.each(function (value, index, children) {
 		children[index] = from(value, length = index, props)
-	}, value, 0, 0, [])
+	}, value, length, value = [])
 
-	return children[length + 1] = empty(), children
+	return value[length + 1] = empty(), value
 }
 
 /**
@@ -153,32 +153,27 @@ export function iterator (value, index, props) {
  */
 export function from (value, index, props) {
 	switch (typeof value) {
+		case 'number': case 'string':
+			return text(value, index)
+		case 'function':
+			return create(value, props)
 		case 'object':
 			if (value !== null) {
-				// using "value instanceof struct" improves perf
-				// but also means you can't use {h} from one render
-				// in another i.e import {h} from 'dyo'
-				// then render onto import {render} from 'server'
-				// This is very important for ismorphic apps.
-				// Alternetively we can use a hasOwnProperty that doesn't have
-				// as much of an effect on megamorphic cache misses.
 				if (value.constructor === undefined) {
 					return value
-				} else if (value.length > -1) {
+				} if (value.length > -1) {
 					for (var i = 0; i < value.length; i++) {
 						value[i] = from(value[i], i, props)
 					}
 					return value[i] = empty(), fragment(value, key(index))
 				} else if (Utility.iterable(value)) {
-					return fragment(iterator(value, index, props), key(index))
+					return fragment(iterator(value, 0, props), key(index))
 				} else if (Utility.asyncIterable(value)) {
 					return create(generator(value), props)
+				} else if (Utility.thenable(value)) {
+					return create(value, props)
 				}
 			}
-		case 'function':
-			return create(value, props)
-		case 'number': case 'string':
-			return text(value, index)
 	}
 
 	return empty()
@@ -191,15 +186,14 @@ export function from (value, index, props) {
  * @return {object}
  */
 export function create (a, b) {
+	var i = 2
 	var index = 0
 	var length = arguments.length
-	var i = b == null || b instanceof Utility.object ? 2 : 1
 	var size = length - i
 	var uid = identity(a)
-	var type = a
-	var props = i === 2 && b || {}
+	var props = b ? b : {}
 	var children = []
-	var element = new struct(uid, props.key, type, props, children)
+	var element = new struct(uid, b ? b.key : null, a, props, children)
 
 	if (uid === Enum.component) {
 		if (size > 0) {
@@ -248,6 +242,14 @@ export function defaults (element, value) {
 }
 
 /**
+ * @param  {object} element
+ * @return {boolean}
+ */
+export function active (element) {
+	return element.parent !== null
+}
+
+/**
  * @param {object} element
  * @return {object}
  */
@@ -269,5 +271,5 @@ export function sibling (element) {
  * @return {object}
  */
 export function resolve (value, props) {
-	return [from(value && 'default' in value ? value.default : value, 0, props), empty()]
+	return [from(typeof value === 'object' && value !== null && 'default' in value ? value.default : value, 0, props), empty()]
 }

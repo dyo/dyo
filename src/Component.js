@@ -17,6 +17,7 @@ export function compare (prev, next) {
 				return false
 			}
 		}
+
 		for (var key in next) {
 			if (!Utility.is(prev[key], next[key])) {
 				return false
@@ -29,11 +30,11 @@ export function compare (prev, next) {
 
 /**
  * @param {function} children
- * @param {function} callback
+ * @param {function?} callback
  * @return {function}
  */
 export function memo (children, callback) {
-	return memoize(children, callback || compare)
+	return memoize(children, callback !== undefined ? callback : compare)
 }
 
 /**
@@ -42,14 +43,14 @@ export function memo (children, callback) {
  * @return {function}
  */
 export function memoize (children, callback) {
-	return function (props, state) {
-		if (this.parent !== null) {
+	return function (props) {
+		if (Element.active(this)) {
 			if (!this.value && callback(this.props, props)) {
 				return this.children[0]
 			}
 		}
 
-		return children.call(this, props, state)
+		return children.call(this, props)
 	}
 }
 
@@ -57,11 +58,10 @@ export function memoize (children, callback) {
  * @param {object} fiber
  * @param {object} element
  * @param {object} props
- * @param {object} state
  * @return {object}
  */
-export function render (fiber, element, props, state) {
-	return fiber.owner = element, fiber.caret = 0, Element.from(element.type(props, state), 0, props)
+export function render (fiber, element, props) {
+	return fiber.owner = element, fiber.index = 0, Element.from(element.type(props), 0, props)
 }
 
 /**
@@ -71,7 +71,7 @@ export function render (fiber, element, props, state) {
  * @return {object}
  */
 export function create (fiber, host, element) {
-	return element.context = host.context, element.ref = [], render(fiber, element, element.props, element.state = {})
+	return element.context = host.context, render(fiber, element, element.props)
 }
 
 /**
@@ -83,7 +83,7 @@ export function create (fiber, host, element) {
  */
 export function update (fiber, host, element, props, children) {
 	try {
-		Reconcile.children(fiber, element, element.parent, children.length - 1, children, [render(fiber, element, props, element.state)])
+		Reconcile.children(fiber, element, element.parent, children.length - 1, children, [render(fiber, element, props)])
 	} catch (error) {
 		Exception.dispatch(fiber, host, element, error)
 	} finally {
@@ -96,7 +96,7 @@ export function update (fiber, host, element, props, children) {
  * @return {object}
  */
 export function dispatch (element) {
-	Schedule.checkout(resolve, element, element.props, element.children, null)
+	Schedule.checkout(resolve, element, element.props, element.children, undefined)
 }
 
 /**
@@ -105,7 +105,7 @@ export function dispatch (element) {
  * @param {object} value
  */
 export function resolve (fiber, element, props, children) {
-	if (element.parent !== null) {
+	if (Element.active(element)) {
 		update(fiber, element, element, props, children)
 	}
 }
@@ -118,15 +118,13 @@ export function resolve (fiber, element, props, children) {
 export function enqueue (element, value, callback) {
 	if (value === null) {
 		if (value = Schedule.peek()) {
-			Schedule.enqueue(value, Enum.callback, element, element, element, callback)
-		} else {
-			try {
-				return callback(element)
-			} finally {
-				element.value = null
+			if (element.value !== callback) {
+				Schedule.enqueue(value, Enum.callback, element, element, element, element.value = callback)
 			}
+		} else {
+			callback(element)
 		}
+	} else {
+		element.value = true
 	}
-
-	element.value = element.value || element
 }

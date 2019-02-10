@@ -1,27 +1,33 @@
+import * as Utility from './Utility.js'
+import * as Element from './Element.js'
+
 /**
  * @param {object} element
+ * @return {object}
  */
-export function defs (element) {
-	var ref = element.ref
-	var len = ref.length
-
-	if (len !== 0) {
-		for (var i = 0, value = element.ref = []; i < len; i++) {
-			if (value = ref[i]()) {
-				if (element.parent === null && typeof value.then === 'function') {
-					refs(element, value)
-				}
-			} else if (value === false) {
-				refs(element, ref[i])
-			}
-		}
-	}
+export function state (element) {
+	return element.state !== null ? element.state : element.state = {stack: null}
 }
 
 /**
  * @param {object} element
- * @param {any?} value
+ * @param {object} value
  */
 export function refs (element, value) {
-	element.ref.push(value)
+	element.ref !== null ? element.ref.push(value) : element.ref = [value]
+}
+
+/**
+ * @param {object} element
+ */
+export function defs (element) {
+	if (element.ref !== null) {
+		for (var i = 0, ref = element.ref, value = element.ref = null; i < ref.length; i++) {
+			if (value = ref[i]()) {
+				if (Element.active(element) && Utility.thenable(value)) {
+					refs(element, value)
+				}
+			}
+		}
+	}
 }

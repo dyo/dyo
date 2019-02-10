@@ -1,2 +1,4 @@
 export {render} from './src/Serialize.js'
-export {Children, Fragment, Component, PureComponent, isValidElement, cloneElement, createPortal, createElement, h} from '../index.js'
+export {memo, Fragment, Children} from '../index.js'
+export {createContext, createElement, createPortal, cloneElement, isValidElement, h} from '../index.js'
+export {useRef, useMemo, useCallback, useState, useContext, useEffect, useLayout, useBoundary}  from '../index.js'

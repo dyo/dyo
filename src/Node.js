@@ -17,6 +17,7 @@ import * as Commit from './Commit.js'
  */
 export function create (fiber, host, parent, element, current) {
 	var uid = element.uid
+	var type = element.type
 	var children = element.children
 	var owner = element.owner = parent.owner
 
@@ -29,10 +30,10 @@ export function create (fiber, host, parent, element, current) {
 					return create(fiber, host, parent, children[0] = Element.empty(Exception.dispatch(fiber, host, element, error)), current)
 				}
 			case Enum.element:
-				var context = element.context = Interface.context(parent.context, element.type)
+				var context = element.context = Interface.context(parent.context, type)
 		}
 
-		var instance = element.ref = Interface.create(uid, element.type, children, context, owner)
+		var instance = element.ref = Interface.create(uid, type, children, context, owner)
 
 		switch (uid) {
 			case Enum.text: case Enum.empty:
@@ -46,11 +47,11 @@ export function create (fiber, host, parent, element, current) {
 				if (uid > Enum.component) {
 					Commit.properties(element, element.props, instance)
 				} else if (uid === Enum.thenable) {
-					Reconcile.update(fiber, host, parent, element, element, children, 0)
+					Reconcile.resolve(fiber, host, parent, element, element, type, children, children)
 				}
 		}
 
-		if (current !== null) {
+		if (current !== null && uid !== Enum.target) {
 			Interface.append(current, instance)
 		}
 	} finally {
@@ -79,7 +80,7 @@ export function destroy (fiber, element) {
 				Lifecycle.defs(element)
 			}
 		case Enum.target:
-			return Commit.remove(element, element), element
+			Commit.remove(element, element)
 		default:
 			for (var i = 0; i < children.length; ++i) {
 				destroy(fiber, children[i])

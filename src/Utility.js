@@ -59,6 +59,34 @@ export var syncIterator = symbol.iterator || '@@iterator'
 export var asyncIterator = symbol.asyncIterator || '@@asyncIterator'
 
 /**
+ * @param {function}
+ * @return {object}
+ */
+export var promise = typeof Promise === 'function' ? Promise : function (c) { return new Promise(c) }
+
+/**
+ * @param {function}
+ * @param {number?}
+ */
+export var timer = typeof setTimeout === 'function' ? setTimeout : function (c, d) { return setTimeout(c, d) }
+
+/**
+ * @param {function} callback
+ * @param {number?} duration
+ * @return {number}
+ */
+export function timeout (callback, duration) {
+	return timer(callback, duration | 0)
+}
+
+/**
+ * @return {object}
+ */
+export function request () {
+	return new promise(timeout)
+}
+
+/**
  * @param {function} object
  * @param {(string|symbol)} key
  * @param {any} value
@@ -78,19 +106,10 @@ export function extend (constructor, value) {
 }
 
 /**
- * @param {function} callback
- * @param {number?} duration
- * @return {number}
- */
-export function timeout (callback, duration) {
-	return setTimeout(callback, duration | 0)
-}
-
-/**
  * @throws {error<any>}
  * @param {any} message
  */
-export function panic (message) {
+export function throws (message) {
 	throw new TypeError(message)
 }
 
@@ -104,11 +123,27 @@ export function report (value) {
 }
 
 /**
+ * @param {any} value
+ * @param {boolean}
+ */
+export function callable (value) {
+	return typeof value === 'function'
+}
+
+/**
+ * @param {any?} value
+ * @param {boolean}
+ */
+export function thenable (value) {
+	return value !== null && typeof value === 'object' && callable(value.then)
+}
+
+/**
  * @param {object} value
  * @param {boolean}
  */
 export function iterable (value) {
-	return typeof value[syncIterator] === 'function'
+	return callable(value[syncIterator])
 }
 
 /**
@@ -116,7 +151,7 @@ export function iterable (value) {
  * @param {boolean}
  */
 export function asyncIterable (value) {
-	return typeof value[asyncIterator] === 'function'
+	return callable(value[asyncIterator])
 }
 
 /**
@@ -124,7 +159,7 @@ export function asyncIterable (value) {
  * @return {object}
  */
 export function iterator (value) {
-	return typeof value.next === 'function' ? value : value[syncIterator]()
+	return callable(value.next) ? value : value[syncIterator]()
 }
 
 /**
@@ -149,16 +184,6 @@ export function is (a, b) {
  * @param {object} a
  * @param {object} b
  */
-export function assign (a, b) {
-	for (var key in b) {
-		a[key] = b[key]
-	}
-}
-
-/**
- * @param {object} a
- * @param {object} b
- */
 export function defaults (a, b) {
 	for (var key in b) {
 		if (a[key] === undefined) {
@@ -171,60 +196,59 @@ export function defaults (a, b) {
  * @param {function} callback
  * @param {any?} value
  * @param {number} index
- * @param {number} stack
- * @param {object} arr
+ * @param {any[]} array
  * @return {any}
  */
-export function each (callback, value, index, stack, arr) {
+export function each (callback, value, index, array) {
 	if (value !== null && typeof value === 'object') {
 		if (value.length > -1) {
 			for (var i = 0; i < value.length; ++i) {
-				if (each(callback, value[i], index + i, stack + 1, arr) === true) {
+				if (each(callback, value[i], index + i, array) === null) {
 					break
 				}
 			}
 		} else if (iterable(value)) {
-			for (var i = index, iter = iterator(value), next = iter.next(); !next.done; ++i) {
-				if (each(callback, next.value, index + i, stack + 1, arr) === true) {
+			for (var i = index, iter = iterator(value), next = iter.next(); !next.done; next = iter.next(++i)) {
+				if (each(callback, next.value, index + i, array) === null) {
 					break
-				} else {
-					next = iter.next()
 				}
 			}
 		} else {
-			next = callback(value, index, arr)
+			return callback(value, index, array)
 		}
 	} else {
-		next = callback(value, index, arr)
+		return callback(value, index, array)
 	}
-
-	return stack === 0 ? arr : next
 }
 
 /**
  * @param {(object|object[])?} value
- * @param {function} fulfilled
+ * @param {function} resolved
  * @param {function?} rejected
  * @return {object?}
  */
-export function resolve (value, fulfilled, rejected) {
+export function resolve (value, resolved, rejected) {
 	if (value) {
-		if (typeof value.then === 'function') {
+		if (thenable(value)) {
 			return value.then(function (value) {
-				if (value !== null && value !== undefined && typeof value.blob === 'function' && typeof value.json === 'function') {
-					return resolve(value.json(), fulfilled, rejected)
-				} else {
-					return fulfilled(value)
+				if (value === 'object' && value !== null) {
+					if (callable(value.json) && callable(value.blob)) {
+						return resolve(value.json(), resolved, rejected)
+					}
 				}
+
+				return resolved(value)
 			}, rejected)
 		} else {
-			for (var i = 0, done = [], length = value.length, callback; i < length; i++) {
-				resolve(value[i], callback = function (value) {
-					if (length === done.push(value)) {
-						fulfilled(done)
+			for (var i = 0, done = [], size = value.length, callback = null; i < size; i++) {
+				resolve(value[i], callback !== null ? callback : callback = function (value) {
+					if (size === done.push(value)) {
+						resolved(done)
 					}
 				}, callback)
 			}
 		}
+	} else {
+		resolved()
 	}
 }

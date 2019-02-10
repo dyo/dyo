@@ -1,7 +1,18 @@
 import * as Utility from './Utility.js'
-import * as Element from './Element.js'
 
-export default {each: each, count: count, map: map, find: find, filter: filter}
+export default {toArray: array, forEach: each, count: count, map: map, filter: filter, find: find}
+
+/**
+ * @param {any} value
+ * @return {any[]}
+ */
+export function array (value) {
+	Utility.each(function (value, index, array) {
+		array[index] = value
+	}, value, 0, value = [])
+
+	return value
+}
 
 /**
  * @param {any} value
@@ -9,7 +20,9 @@ export default {each: each, count: count, map: map, find: find, filter: filter}
  * @return {void}
  */
 export function each (value, callback) {
-	Utility.each(callback, value, 0, 0, [])
+	Utility.each(function (value, index, array) {
+		callback(value, index, array)
+	}, value, 0, [])
 }
 
 /**
@@ -17,11 +30,12 @@ export function each (value, callback) {
  * @return {number}
  */
 export function count (value) {
-	return Utility.each(function (value, index, children) {
+	Utility.each(function (value, index, children) {
 		children.value = index
-	}, value, 1, 0, {value: 0}).value
-}
+	}, value, 1, value = {value: 0})
 
+	return value.value
+}
 
 /**
  * @param {any} value
@@ -29,22 +43,11 @@ export function count (value) {
  * @return {object[]}
  */
 export function map (value, callback) {
-	return Utility.each(function (value, index, children) {
-		children[index] = callback(value, index, children)
-	}, value, 0, 0, [])
-}
+	Utility.each(function (value, index, array) {
+		array[index] = callback(value, index, array)
+	}, value, 0, value = [])
 
-/**
- * @param {any} value
- * @param {function} callback
- * @return {any?}
- */
-export function find (value, callback) {
-	return Utility.each(function (value, index, children) {
-		if (callback(value, index, children)) {
-			return children.value = value, true
-		}
-	}, value, 0, 0, {value: null}).value
+	return value
 }
 
 /**
@@ -53,9 +56,26 @@ export function find (value, callback) {
  * @return {object[]}
  */
 export function filter (value, callback) {
-	return Utility.each(function (value, index, children) {
-		if (callback(value, index, children)) {
-			children.push(value)
+	Utility.each(function (value, index, array) {
+		if (callback(value, index, array)) {
+			array.push(value)
 		}
-	}, value, 0, 0, [])
+	}, value, 0, value = [])
+
+	return value
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @return {any?}
+ */
+export function find (value, callback) {
+	Utility.each(function (value, index, object) {
+		if (callback(value, index, object)) {
+			return object.value = value, null
+		}
+	}, value, 0, value = {value: null})
+
+	return value.value
 }

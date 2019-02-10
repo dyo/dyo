@@ -10,10 +10,10 @@ import * as Schedule from './Schedule.js'
  */
 export var struct = Utility.extend(function exception (error, host) {
 	this.error = error
-	this[Enum.identifier] = host
+	this.host = host
 }, {
 	toString: {value: function () { return this.componentStack }},
-	componentStack: {get: function () { return Utility.define(this, 'componentStack', trace(this[Enum.identifier], '')) }, configurable: true}
+	componentStack: {get: function () { return Utility.define(this, 'componentStack', trace(this.host, '')) }, configurable: true}
 })
 
 /**
@@ -72,19 +72,19 @@ export function resolve (fiber, host, element, exception, current) {
 			}
 		case Enum.component:
 			if (current !== element) {
-				var callback = current.state[Enum.identifier]
-
-				if (callback) {
-					return enqueue(fiber, host, element, exception, current, callback)
+				if (current.state !== null) {
+					if (enqueue(fiber, host, element, exception, current, current.state.stack) !== null) {
+						return
+					}
 				}
 			}
 	}
 
-	if (host === element) {
-		return resolve(fiber, host, element, exception, current.host)
+	if (host !== element) {
+		throw exception
 	}
 
-	throw exception
+	resolve(fiber, host, element, exception, current.host)
 }
 
 /**
@@ -93,8 +93,9 @@ export function resolve (fiber, host, element, exception, current) {
  * @param {object} element
  * @param {object} exception
  * @param {object} current
- * @param {function[][]} callback
+ * @param {function[][]?} callback
+ * @return {void}
  */
 export function enqueue (fiber, host, element, exception, current, callback) {
-	Schedule.enqueue(fiber, Enum.callback, current, current, exception, callback)
+	return callback ? Schedule.enqueue(fiber, Enum.callback, current, current, exception, callback) : null
 }

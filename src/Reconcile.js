@@ -17,19 +17,19 @@ import * as Node from './Node.js'
  * @return {object}
  */
 export function resolve (fiber, host, parent, element, snapshot, type, a, b) {
-	if (!(element.state = element === snapshot)) {
+	if (element !== snapshot) {
 		Utility.timeout(function () {
-			if (!element.state) {
+			if (!element.value) {
 				enqueue(fiber, host, parent, element, snapshot, b, a, [])
 			}
 		}, Enum.timeout)
 	}
 
-	return Schedule.promise(fiber, type, function (value) {
-		if (element.state = element.type === value) {
-			if (Utility.asyncIterable(value)) {
+	return element.value = Schedule.suspend(fiber, type, function (value) {
+		if (element.value = element.type === type) {
+			if (Utility.asyncIterable(type)) {
 				if (!value.done) {
-					return enqueue(fiber, host, parent, element, snapshot, value.value, a, a), resolve(fiber, host, parent, element, snapshot, value, a, b)
+					return enqueue(fiber, host, parent, element, snapshot, value.value, a, a), resolve(fiber, host, parent, element, snapshot, type, a, b)
 				}
 			} else {
 				enqueue(fiber, host, parent, element, snapshot, value, a, a)
@@ -49,8 +49,8 @@ export function resolve (fiber, host, parent, element, snapshot, type, a, b) {
  * @param {object[]} b
  */
 export function enqueue (fiber, host, parent, element, snapshot, value, a, b) {
-	if (a.parent !== null) {
-		children(fiber, host, parent, 0, a, a === b ? Element.resolve(type, snapshot.props) : value)
+	if (Element.active(element)) {
+		children(fiber, host, parent, 0, a, a === b ? Element.resolve(value, snapshot.props) : value)
 	}
 }
 
@@ -106,7 +106,7 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 		children(fiber, host, element, 0, a, b)
 		props(fiber, host, parent, element, object(element.props, element.props = snapshot.props))
 	} else {
-		if (element.id === uid) {
+		if (element.uid === uid) {
 			switch (element.type = type, uid) {
 				case Enum.target:
 					Schedule.dispatch(fiber, Enum.props, host, element, element, object(element.props, element.props = {}))
@@ -136,7 +136,7 @@ export function children (fiber, host, parent, offset, a, b) {
 	var alen = a.length - offset
 	var blen = b.length
 
-	if (alen + alen === 0) {
+	if (alen + blen === 0) {
 		return
 	}
 
@@ -236,7 +236,7 @@ export function children (fiber, host, parent, offset, a, b) {
  * @param {object} b
  */
 export function props (fiber, host, parent, a, b) {
-	if (b) {
+	if (b !== null) {
 		Schedule.dispatch(fiber, Enum.props, host, parent, a, b)
 	}
 }
@@ -255,7 +255,7 @@ export function object (a, b) {
 	var diff = {}
 
 	for (var key in a) {
-		if (!Utility.has(b, key)) {
+		if (Utility.has(b, key) === false) {
 			diff[++size, key] = null
 		}
 	}
@@ -265,15 +265,13 @@ export function object (a, b) {
 		var next = b[key]
 
 		if (prev !== next) {
-			if (key !== 'style' || prev === null || next === null || typeof next !== 'object') {
+			if (key !== 'style' || typeof next !== 'object') {
 				diff[++size, key] = next
-			} else if (next = object(prev, next)) {
+			} else if (next = object(prev || {}, next || {})) {
 				diff[++size, key] = next
 			}
 		}
 	}
 
-	if (size > 0) {
-		return diff
-	}
+	return size > 0 ? diff : null
 }

@@ -1,4 +1,4 @@
-import {h, render, Component} from '../../server/index.js'
+import {h, render} from '../../server/index.js'
 
 describe('Stringify', () => {
 	it('should stringify text', () => {
@@ -12,7 +12,7 @@ describe('Stringify', () => {
 	it('should stringify element', () => {
 		const target = new Writable
 
-		render(h('h1', '1'), target, (current) => {
+		render(h('h1', {}, '1'), target, (current) => {
 			assert.html(current, '<h1>1</h1>')
 		})
 	})
@@ -20,7 +20,7 @@ describe('Stringify', () => {
 	it('should stringify doctype', () => {
 		const target = new Writable
 
-		render([h('!doctype html'), h('html', h('title', '1'))], target, (current) => {
+		render([h('!doctype html'), h('html', {}, h('title', {}, '1'))], target, (current) => {
 			assert.html(current, '<!doctype html><html><title>1</title></html>')
 		})
 	})
@@ -60,7 +60,7 @@ describe('Stringify', () => {
 	it('should stringify fragments', () => {
 		const target = new Writable
 
-		render([h('div'), h('h1', '1')], target, (current) => {
+		render([h('div'), h('h1', {}, '1')], target, (current) => {
 			assert.html(current, '<div></div><h1>1</h1>')
 		})
 	})
@@ -68,17 +68,16 @@ describe('Stringify', () => {
 	it('should stringify thenables', () => {
 		const target = new Writable
 
-		render(Promise.resolve([h('div'), h('h1', '1')]), target, (current) => {
+		render(Promise.resolve([h('div'), h('h1', {}, '1')]), target, (current) => {
 			assert.html(current, '<div></div><h1>1</h1>')
 		})
 	})
 
 	it('should stringify components', () => {
 		const target = new Writable
+		const Primary = props => props.children
 
-		class Primary extends Component {}
-
-		render(h(Primary, '1'), target, (current) => {
+		render(h(Primary, {}, '1'), target, (current) => {
 			assert.html(current, '1')
 		})
 	})

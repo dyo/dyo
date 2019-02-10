@@ -5,7 +5,6 @@ export var key = -(-1 >>> 0)
 export var identifier = Utility.symbol()
 
 // timestamps(ms)
-export var fps = 16
 export var timeout = 100
 
 // element identifiers

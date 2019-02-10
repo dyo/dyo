@@ -29,7 +29,7 @@ export function self () {
  * @param {object} owner
  * @return {boolean}
  */
-export function environment (owner) {
+export function noop (owner) {
 	return owner === struct
 }
 
@@ -81,7 +81,7 @@ export function target (value, owner) {
 		}
 	}
 
-	Utility.panic('Invalid target!')
+	Utility.throws('Invalid target!')
 }
 
 /**
@@ -263,6 +263,7 @@ export function event (name, value, instance, handler, handlers) {
 		if (handlers[name] === undefined) {
 			instance.addEventListener(name, handler, false)
 		}
+
 		handlers[name] = value
 	} else {
 		event(name, value, instance, handler, handler.state = {})

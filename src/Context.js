@@ -1,3 +1,4 @@
+import * as Element from './Element.js'
 import * as Utility from './Utility.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
@@ -7,11 +8,14 @@ import * as Lifecycle from './Lifecycle.js'
  * @return {object}
  */
 export function create (value) {
-	return Utility.properties(function context (props, state) {
-		if (this.parent === null) {
-			connect(this, state, this.context, context.type)
+	return Utility.properties(function context (props) {
+		if (Element.active(this)) {
+			connect(this.state = this.context = Utility.create(this.context), props.value, context.type)
+		} else {
+			this.state.value = props.value
 		}
-		return state.value = props.value, props.children
+
+		return props.children
 	}, {
 		type: {value: Utility.symbol()},
 		value: {value: value}
@@ -19,64 +23,49 @@ export function create (value) {
 }
 
 /**
- * @param {object} element
- * @param {object} state
- * @param {object?} context
+ * @param {object} context
+ * @param {any?} value
  * @param {symbol} type
+ * @return {object}
  */
-export function connect (element, state, context, type) {
-	context = element.context = Utility.create(context), context[type] = state, state.length = 0
-}
-
-/**
- * @param {object} element
- * @param {object} state
- * @param {any?} context
- * @param {number} type
- */
-export function dispatch (element, state, context, type) {
-	if (typeof state === 'object') {
-		if (Utility.is(state.value, state.value = typeof context !== 'function' ? context : context = context(state.value)) === false) {
-			enqueue(element, state, context, type)
-		}
-	}
+export function connect (context, value, type) {
+	return context[type] = {value: value, length: 0}
 }
 
 /**
  * @param {object} element
  * @param {object} state
  * @param {object?} context
+ * @param {any?} value
  * @param {symbol} type
  * @return {any}
  */
-export function resolve (element, state, context, type) {
-	if (context) {
-		if (context = context[type]) {
-			context[type = context.length++] = element, Lifecycle.refs(element, function () {
-				return element.parent === null ? context[type === context.length - 1 ? context.length = type : type] = null : false
-			})
+export function resolve (element, state, context, value, type) {
+	var length = 0
+	var callback = null
+
+	context = context[type] || connect(context, value, type)
+	state = state[type] = {value: value = context.value}
+
+	Lifecycle.refs(context[length = context.length++] = element, function () {
+		if (Element.active(element)) {
+			Lifecycle.refs(element)
+		} else {
+			context[length === context.length - 1 ? context.length = length : length] = null
 		}
-	}
+	})
 
-	return state.value
-}
-
-/**
- * @param {object} element
- * @param {object} state
- * @param {any?} context
- * @param {number} type
- */
-export function enqueue (element, state, context, type) {
-	if (typeof element.value !== 'function') {
-		Component.enqueue(element, null, element.value = function (element) {
-			for (var i = 0, length = state.length; i < length; i++) {
-				if (element = state[i]) {
-					if (Utility.is(element.children[type][0], state.value) === false) {
-						Component.dispatch(element)
+	return [value, function (value) {
+		if (!Utility.is(state.value, state.value = context.value = Utility.callable(value) ? value(state.value) : value)) {
+			Component.enqueue(element, null, callback ? callback : callback = function (element, current) {
+				for (var i = 0, length = context.length; i < length; i++) {
+					if ((element = context[i]) && (current = element.state[type])) {
+						if (!Utility.is(current.value, current.value = context.value)) {
+							Component.dispatch(element)
+						}
 					}
 				}
-			}
-		})
-	}
+			})
+		}
+	}]
 }

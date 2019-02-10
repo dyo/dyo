@@ -9,7 +9,11 @@ import * as Interface from './Interface.js'
  * @param {object} children
  */
 export function enqueue (parent, element, children) {
-	Utility.resolve(element.ref, function () { unmount(parent, children, children) })
+	Utility.resolve(element.ref, function () {
+		if (Element.active(parent)) {
+			unmount(parent, children, children)
+		}
+	})
 }
 
 /**
@@ -19,7 +23,7 @@ export function enqueue (parent, element, children) {
  */
 export function unmount (parent, element, children) {
 	if (element !== children) {
-		if (element.ref.length !== 0) {
+		if (element.ref !== null) {
 			return enqueue(parent, element, children)
 		}
 	}
@@ -33,7 +37,7 @@ export function unmount (parent, element, children) {
  * @param {object?} sibling
  */
 export function mount (parent, element, sibling) {
-	if (sibling) {
+	if (sibling !== undefined) {
 		insert(Element.parent(parent), element, Element.sibling(sibling))
 	} else {
 		append(Element.parent(parent), element)
@@ -137,7 +141,7 @@ export function props (element, value) {
  * @param {object} instance
  */
 export function properties (element, value, instance)  {
-	if (value) {
+	if (value !== null) {
 		for (var key in value) {
 			switch (key) {
 				case 'ref':
