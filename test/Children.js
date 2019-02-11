@@ -5,6 +5,13 @@ describe('Children', () => {
 		assert.equal(Children.count([]), 0)
 		assert.equal(Children.count([null]), 1)
 		assert.equal(Children.count([1, [2, 3]]), 3)
+		assert.equal(Children.count({
+			[Symbol.iterator]: function* () {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}), 3)
 	})
 
 	it('should find children', () => {
@@ -15,6 +22,13 @@ describe('Children', () => {
 		assert.equal(Children.find('1', x => x === '1'), '1')
 		assert.equal(Children.find([1, [2, 3]], x => x === 3), 3)
 		assert.deepEqual(Children.find(h('h1', '1'), x => x.type === 'h1'), h('h1', '1'))
+		assert.equal(Children.find({
+			[Symbol.iterator]: function* () {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}, x => x === 3), 3)
 	})
 
 	it('should map children', () => {
@@ -24,6 +38,13 @@ describe('Children', () => {
 		assert.deepEqual(Children.map(1, x => x + 1), [2])
 		assert.deepEqual(Children.map('1', x => x + 1), ['11'])
 		assert.deepEqual(Children.map(h('h1', '1'), x => x), [h('h1', '1')])
+		assert.deepEqual(Children.map({
+			[Symbol.iterator]: function* () {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}, x => x + 1), [2, 3, 4])
 	})
 
 	it('should filter children', () => {
@@ -33,6 +54,13 @@ describe('Children', () => {
 		assert.deepEqual(Children.filter(1, x => x === 1), [1])
 		assert.deepEqual(Children.filter('1', x => x !== '1'), [])
 		assert.deepEqual(Children.filter([h('h1', '1'), h('h2', '2')], x => x.type === 'h1'), [h('h1', '1')])
+		assert.deepEqual(Children.filter({
+			[Symbol.iterator]: function* () {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}, x => x > 1), [2, 3])
 	})
 
 	it('should forEach children', () => {
@@ -53,8 +81,17 @@ describe('Children', () => {
 		Children.forEach(null, x => current.value = x)
 		assert.deepEqual(current, {value: null})
 
-		Children.forEach([undefined], x => current.value = x)
-		assert.deepEqual(current, {value: undefined})
+		Children.forEach([0], x => current.value = x)
+		assert.deepEqual(current, {value: 0})
+
+		Children.forEach({
+			[Symbol.iterator]: function* () {
+				yield 1
+				yield 2
+				yield 3
+			}
+		}, x => current.value += x)
+		assert.deepEqual(current, {value: 6})
 	})
 
 	it('should convert toArray children', () => {

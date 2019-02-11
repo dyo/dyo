@@ -33,7 +33,7 @@ export function create (fiber, host, parent, element, current) {
 				var context = element.context = Interface.context(parent.context, type)
 		}
 
-		var instance = element.ref = Interface.create(uid, type, children, context, owner)
+		var instance = element.value = Interface.create(uid, type, children, context, owner)
 
 		switch (uid) {
 			case Enum.text: case Enum.empty:
@@ -77,7 +77,9 @@ export function destroy (fiber, element) {
 			try {
 				return destroy(fiber, children[0])
 			} finally {
-				Lifecycle.defs(element)
+				if (element.stack !== null) {
+					Lifecycle.destroy(element)
+				}
 			}
 		case Enum.target:
 			Commit.remove(element, element)

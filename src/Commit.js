@@ -9,11 +9,11 @@ import * as Interface from './Interface.js'
  * @param {object} children
  */
 export function enqueue (parent, element, children) {
-	Utility.resolve(element.ref, function () {
+	Utility.resolve(element.stack, function () {
 		if (Element.active(parent)) {
 			unmount(parent, children, children)
 		}
-	})
+	}, undefined)
 }
 
 /**
@@ -23,7 +23,7 @@ export function enqueue (parent, element, children) {
  */
 export function unmount (parent, element, children) {
 	if (element !== children) {
-		if (element.ref !== null) {
+		if (element.stack !== null) {
 			return enqueue(parent, element, children)
 		}
 	}
@@ -62,7 +62,7 @@ export function remove (parent, element) {
 			remove(parent, children[0])
 		}
 	} else {
-		Interface.remove(parent.ref, element.ref)
+		Interface.remove(parent.value, element.value)
 	}
 }
 
@@ -84,7 +84,7 @@ export function append (parent, element) {
 			append(parent, children[0])
 		}
 	} else {
-		Interface.append(parent.ref, element.ref)
+		Interface.append(parent.value, element.value)
 	}
 }
 
@@ -107,7 +107,7 @@ export function insert (parent, element, sibling) {
 			insert(parent, children[0], sibling)
 		}
 	} else {
-		Interface.insert(parent.ref, element.ref, sibling.ref)
+		Interface.insert(parent.value, element.value, sibling.value)
 	}
 }
 
@@ -116,7 +116,7 @@ export function insert (parent, element, sibling) {
  * @param {object} element
  */
 export function target (parent, element) {
-	element.ref = Interface.target(element.type, parent.owner), append(element, element)
+	element.value = Interface.target(element.type, parent.owner), append(element, element)
 }
 
 /**
@@ -124,7 +124,7 @@ export function target (parent, element) {
  * @param {(string|number)} value
  */
 export function content (element, value) {
-	Interface.content(element.ref, value)
+	Interface.content(element.value, value)
 }
 
 /**
@@ -132,7 +132,7 @@ export function content (element, value) {
  * @param {object} value
  */
 export function props (element, value) {
-	properties(element, value, element.ref)
+	properties(element, value, element.value)
 }
 
 /**

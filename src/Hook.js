@@ -60,40 +60,40 @@ export function resolve (element, value) {
 export function enqueue (callback, value, type) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
-
-	if (Interface.noop(element.owner)) {
-		return
-	}
-
 	var index = ++fiber.index
 	var children = element.children
 
-	if (index === children.length) {
-		children = children[index] = [value, callback, callback = function (value) { dequeue(element, value[0], value[1]) }]
-	} else if (compare((children = children[index])[0], children[0] = value)) {
-		return
-	} else {
-		children[1] = callback, callback = children[2]
-	}
+	if (element.owner !== Interface.peek()) {
+		if (index === children.length) {
+			children = children[index] = [value, callback, 0, callback = function (value) { dequeue(element, value) }]
+		} else if (compare((children = children[index])[0], children[0] = value)) {
+			return
+		} else {
+			children[1] = callback, callback = children[3]
+		}
 
-	if (type === Enum.callback) {
-		Schedule.enqueue(fiber, type, element, element, children, callback)
-	} else {
-		Schedule.requeue(fiber, type, element, element, children, callback)
+		if (type === Enum.callback) {
+			Schedule.enqueue(fiber, type, element, element, children, callback)
+		} else {
+			Schedule.requeue(fiber, type, element, element, children, callback)
+		}
 	}
 }
 
 /**
  * @param {object} element
  * @param {any[]} value
- * @param {(function)} callback
  */
-export function dequeue (element, value, callback) {
-	Lifecycle.defs(element)
+export function dequeue (element, value) {
+	var argument = value[0]
+	var callback = value[1]
+	var position = value[2]
 
-	if (callback = callback(value)) {
-		if (Utility.callable(callback)) {
-			Lifecycle.refs(element, function () { return callback(value) })
+	Lifecycle.dequeue(element, position)
+
+	if (Utility.callable(callback = callback(argument))) {
+		if (position = Lifecycle.enqueue(element, position, function () { return callback(argument) })) {
+			value[2] = position
 		}
 	}
 }
@@ -188,22 +188,6 @@ export function boundary (callback) {
 
 /**
  * @param {function} callback
- * @param {any[]?} value
- */
-export function layout (callback, value) {
-	enqueue(callback, value, Enum.callback)
-}
-
-/**
- * @param {function} callback
- * @param {any[]?} value
- */
-export function effect (callback, value) {
-	enqueue(callback, value, -Enum.callback)
-}
-
-/**
- * @param {function} callback
  * @return {function}
  */
 export function callback (callback) {
@@ -219,4 +203,20 @@ export function callback (callback) {
 	}
 
 	return children[1]
+}
+
+/**
+ * @param {function} callback
+ * @param {any[]?} value
+ */
+export function layout (callback, value) {
+	enqueue(callback, value, Enum.callback)
+}
+
+/**
+ * @param {function} callback
+ * @param {any[]?} value
+ */
+export function effect (callback, value) {
+	enqueue(callback, value, -Enum.callback)
 }

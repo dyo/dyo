@@ -26,7 +26,7 @@ export function dispatch (element, event, callback) {
  * @param {(function|function[])} callback
  */
 export function resolve (fiber, element, event, callback) {
-	element.value = false
+	element.value = undefined
 
 	try {
 		enqueue(fiber, element, event, callback)

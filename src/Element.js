@@ -16,13 +16,13 @@ export var struct = Utility.extend(function element (uid, key, type, props, chil
 	this.type = type
 	this.props = props
 	this.children = children
-	this.ref = null
 	this.host = null
-	this.owner = null
 	this.parent = null
-	this.state = null
-	this.value = null
 	this.context = null
+	this.value = null
+	this.owner = null
+	this.state = null
+	this.stack = null
 }, {
 	handleEvent: {value: Event.handle}
 })

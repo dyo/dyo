@@ -4,7 +4,7 @@ import * as Utility from './Utility.js'
 /**
  * @type {object}
  */
-export var struct = {
+export var frame = {
 	createElement: self,
 	createElementNS: self,
 	createTextNode: self,
@@ -26,11 +26,10 @@ export function self () {
 }
 
 /**
- * @param {object} owner
  * @return {boolean}
  */
-export function noop (owner) {
-	return owner === struct
+export function peek () {
+	return frame
 }
 
 /**
@@ -66,7 +65,7 @@ export function target (value, owner) {
 		if (typeof value === 'object') {
 			switch (value.ownerDocument) {
 				case undefined:
-					return owner === undefined ? value : struct
+					return owner === undefined ? value : frame
 				case null:
 					return value.documentElement
 			}

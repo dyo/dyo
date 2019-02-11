@@ -208,7 +208,7 @@ export function each (callback, value, index, array) {
 				}
 			}
 		} else if (iterable(value)) {
-			for (var i = index, iter = iterator(value), next = iter.next(); !next.done; next = iter.next(++i)) {
+			for (var i = 0, iter = iterator(value), next = iter.next(); !next.done; next = iter.next(++i)) {
 				if (each(callback, next.value, index + i, array) === null) {
 					break
 				}

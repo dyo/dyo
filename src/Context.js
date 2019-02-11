@@ -47,17 +47,13 @@ export function resolve (element, state, context, value, type) {
 	context = context[type] || connect(context, value, type)
 	state = state[type] = {value: value = context.value}
 
-	Lifecycle.refs(context[length = context.length++] = element, function () {
-		if (Element.active(element)) {
-			Lifecycle.refs(element)
-		} else {
-			context[length === context.length - 1 ? context.length = length : length] = null
-		}
+	Lifecycle.enqueue(context[length = context.length++] = element, 0, function () {
+		context[length === context.length - 1 ? context.length = length : length] = null
 	})
 
 	return [value, function (value) {
 		if (!Utility.is(state.value, state.value = context.value = Utility.callable(value) ? value(state.value) : value)) {
-			Component.enqueue(element, null, callback ? callback : callback = function (element, current) {
+			Component.enqueue(element, null, callback !== null ? callback : callback = function (element, current) {
 				for (var i = 0, length = context.length; i < length; i++) {
 					if ((element = context[i]) && (current = element.state[type])) {
 						if (!Utility.is(current.value, current.value = context.value)) {
