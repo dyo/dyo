@@ -1,7 +1,7 @@
 const keys = [
 	'render', 'memo', 'Fragment', 'Children',
 	'createContext', 'createElement', 'createPortal', 'cloneElement', 'isValidElement', 'h',
-	'useRef', 'useMemo', 'useCallback', 'useState', 'useContext', 'useEffect', 'useLayout', 'useBoundary'
+	'useRef', 'useMemo', 'useCallback', 'useState', 'useReducer', 'useContext', 'useEffect', 'useLayout', 'useBoundary'
 ]
 
 describe('Fixture', () => {

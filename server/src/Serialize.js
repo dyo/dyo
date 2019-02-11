@@ -23,11 +23,11 @@ export function flush (target) {
  * @param {string} payload
  */
 export function write (target, payload) {
-	if (typeof target.send === 'function') {
-		target.send(payload)
-	} else if (typeof target.end === 'function') {
+	if (typeof target.end === 'function') {
 		target.end(payload)
-	} else if ('body' in target) {
+	} else if (typeof target.send === 'function') {
+		target.send(payload)
+	} else {
 		target.body = payload
 	}
 }

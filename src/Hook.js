@@ -24,6 +24,15 @@ export function compare (prev, next) {
 }
 
 /**
+ * @param {any} state
+ * @param {any?} value
+ * @return {}
+ */
+export function reduce (state, value) {
+	return value
+}
+
+/**
  * @param {object} element
  * @param {object} children
  * @param {any} value
@@ -135,13 +144,21 @@ export function memo (callback, value) {
  * @return {any[any, function]}
  */
 export function state (value) {
+	return reducer(reduce, value)
+}
+
+/**
+ * @param {function} callback
+ * @return {any[any, function]}
+ */
+export function reducer (callback, value) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
 	var children = element.children
 
 	return index !== children.length ? children[index] : children = children[index] = [
-		resolve(element, value), function (value) { update(element, children, value) }
+		resolve(element, value), function (value) { update(element, children, callback(children[0], value)) }
 	]
 }
 
