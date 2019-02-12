@@ -22,7 +22,7 @@ describe('Exception', () => {
 		assert.throws(() => {
 			render(function Primary () { throw 'error!' }, target)
 		}, 'error!')
-		assert.deepEqual(stack, [])
+		assert.deepEqual(stack, ['Exception: error!\n'])
 	})
 
 	it('should not catch nested exceptions', () => {
@@ -32,7 +32,7 @@ describe('Exception', () => {
 		assert.throws(() => {
 			render(function Primary () { return function Secondary () { throw 'error!' } }, target)
 		}, 'error!')
-		assert.deepEqual(stack, ['\tat Primary\n'])
+		assert.deepEqual(stack, ['Exception: error!\n\tat <Primary>\n'])
 	})
 
 	it('should throw in render callback', () => {
