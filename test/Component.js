@@ -42,7 +42,7 @@ describe('Component', () => {
 
 		const Primary = memo(props => stack.push(props.children))
 
-		render(h(Primary, {}, '1'), target)
+		render(h(Primary, {value: 0}, '1'), target)
 		render(h(Primary, {}, '2'), target, (current) => {
 			assert.deepEqual(stack, ['1', '2'])
 			assert.html(current, '2')
@@ -53,9 +53,14 @@ describe('Component', () => {
 		const target = document.createElement('div')
 		const stack = []
 		const Primary = memo(props => stack.push(props.children))
+		const props = {}
 
 		render(h(Primary, {}, '1'), target)
-		render(h(Primary, {}, '1'), target, (current) => {
+		render(h(Primary, props, '1'), target, (current) => {
+			assert.deepEqual(stack, ['1'])
+			assert.html(current, '1')
+		})
+		render(h(Primary, props, '1'), target, (current) => {
 			assert.deepEqual(stack, ['1'])
 			assert.html(current, '1')
 		})

@@ -73,10 +73,8 @@ export function resolve (fiber, host, element, exception, current) {
 			}
 		case Enum.component:
 			if (current !== element) {
-				if (current.state !== null) {
-					if (enqueue(fiber, host, element, exception, current, current.state.stack) !== null) {
-						return
-					}
+				if (current.state !== null && enqueue(fiber, host, element, exception, current, current.state.stack) !== null) {
+					return
 				}
 			}
 	}

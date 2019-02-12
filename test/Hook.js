@@ -585,4 +585,72 @@ describe('Hook', () => {
 			})
 		})
 	})
+
+	describe('useBoundary', () => {
+		it('should use boundary hooks', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				useBoundary(exception => stack.push(1))
+
+				return props => { throw 0 }
+			}
+
+			render(h(Primary, {}), target, (current) => {
+				assert.html(current, '')
+				assert.deepEqual(stack, [1])
+			})
+		})
+
+		it('should use multiple boundary hooks', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				useBoundary(exception => stack.push(1))
+				useBoundary(exception => stack.push(2))
+
+				return props => { throw 0 }
+			}
+
+			render(h(Primary, {}, 0), target, (current) => {
+				assert.html(current, '')
+				assert.deepEqual(stack, [1, 2])
+			})
+		})
+
+		it('should throw in a boundary hook', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				useBoundary(exception => stack.push(1))
+				return props => {
+					useBoundary(exception => stack.push(2))
+					useBoundary(exception => { throw 3 })
+					useBoundary(exception => stack.push(4))
+
+					return props => { throw 0 }
+				}
+			}
+
+			render(h(Primary, ), target, (current) => {
+				assert.deepEqual(stack, [2, 1])
+			})
+		})
+
+		it('should provide an exception argument to boundary hooks', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				useBoundary(exception => {
+					stack.push(exception)
+				})
+
+				return props => { throw 0 }
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.deepEqual(stack, [{name: 'Exception', message: 0}])
+			})
+		})
+	})
 })
