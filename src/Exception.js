@@ -5,15 +5,16 @@ import * as Schedule from './Schedule.js'
 
 /**
  * @constructor
- * @param {any} error
  * @param {object} host
+ * @param {any} value
  */
-export var struct = Utility.extend(function exception (error, host) {
-	this.error = error
-	this.host = host
+export var struct = Utility.extend(function exception (host, value) {
+	this[Enum.identifier] = host
+	this.name = 'Exception'
+	this.message = value
 }, {
-	toString: {value: function () { return this.componentStack }},
-	componentStack: {get: function () { return Utility.define(this, 'componentStack', trace(this.host, '')) }, configurable: true}
+	toString: {value: function () { return this.name + ': ' + this.message + '\n' + this.stack }},
+	stack: {get: function () { return Utility.define(this, 'stack', trace(this[Enum.identifier], '')) }, configurable: true}
 })
 
 /**
@@ -22,7 +23,7 @@ export var struct = Utility.extend(function exception (error, host) {
  * @return {string}
  */
 export function trace (host, value) {
-	return host.uid === Enum.target ? value : trace(host.host, '\tat ' + Element.display(host) + '\n' + value)
+	return host.uid === Enum.target ? value : trace(host.host, '\tat <' + Element.display(host) + '>\n' + value)
 }
 
 /**
@@ -31,7 +32,7 @@ export function trace (host, value) {
  * @return {any}
  */
 export function create (host, value) {
-	return value instanceof struct ? value : new struct(value, host)
+	return value !== null && value !== undefined && value instanceof struct ? value : new struct(host, value)
 }
 
 /**
@@ -66,7 +67,7 @@ export function resolve (fiber, host, element, exception, current) {
 	switch (current.uid) {
 		case Enum.target:
 			try {
-				throw exception.error
+				throw exception.message
 			} finally {
 				Utility.report(exception + '')
 			}

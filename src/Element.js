@@ -117,7 +117,7 @@ export function display (value) {
 			return display(value.type)
 	}
 
-	return value
+	return value || 'anonymous'
 }
 
 /**

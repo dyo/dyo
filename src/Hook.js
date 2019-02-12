@@ -38,9 +38,7 @@ export function reduce (state, value) {
  * @param {any} value
  */
 export function update (element, children, value) {
-	if (Utility.callable(value)) {
-		update(element, children, value(children[0]))
-	} else if (!Utility.is(children[0], children[0] = value)) {
+	if (!Utility.is(children[0], children[0] = Utility.callable(value) ? value(children[0]) : value)) {
 		Component.enqueue(element, element.value, dispatch)
 	}
 }

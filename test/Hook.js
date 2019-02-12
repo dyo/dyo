@@ -1,7 +1,7 @@
 import {h, render} from '../index.js'
-import {useRef, useMemo, useCallback, useState, useContext, useEffect, useLayout, useBoundary} from '../index.js'
+import {useRef, useMemo, useCallback, useState, useReducer, useContext, useEffect, useLayout, useBoundary} from '../index.js'
 
-// TODO
+// TODO useContext, useBoundary
 describe('Hook', () => {
 	describe('useRef', () => {
 		it('should use a ref hook', () => {
@@ -185,10 +185,10 @@ describe('Hook', () => {
 		it('should use multiple state hooks', () => {
 			const target = document.createElement('div')
 			const Primary = props => {
-				const [state, setState] = useState(1)
-				const [value, setValue] = useState(2)
+				const [state1, setState1] = useState(1)
+				const [state2, setState2] = useState(2)
 
-				return state + value
+				return state1 + state2
 			}
 
 			render(h(Primary, {}, 0), target, (current) => {
@@ -266,12 +266,153 @@ describe('Hook', () => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = props => {
-				const [state, setState] = useState(0)
-				const [value, setValue] = useState(1)
+				const [state1, setState1] = useState(0)
+				const [state2, setState2] = useState(1)
+
+				stack.push(state1, state2)
+
+				return h('button', {onClick: [e => e.type, setState2, e => setState1(state => state + e)]}, state1, state2)
+			}
+
+			render(h(Primary, {}), target, (current) => {
+				assert.html(current, '<button>01</button>')
+				assert.deepEqual(stack, [0, 1])
+				current.firstChild.dispatchEvent(new Event('click'))
+				assert.deepEqual(stack, [0, 1, '0click', 'click'])
+			})
+		})
+	})
+
+	describe('useReducer', () => {
+		it('should use a reducer hook', () => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				const [state, dispatch] = useReducer((state, action) => action, 0)
+
+				return state
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.html(current, '0')
+			})
+		})
+
+		it('should use a reducer hooks function initializer', () => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				const [state, dispatch] = useReducer((state, action) => action, props => 0)
+
+				return state
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.html(current, '0')
+			})
+		})
+
+		it('should use a reducer hooks function initializer with props', () => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				const [state, dispatch] = useReducer((state, action) => action, props => props.children)
+
+				return state
+			}
+
+			render(h(Primary, {}, 0), target, (current) => {
+				assert.html(current, '0')
+			})
+		})
+
+		it('should use multiple reducer hooks', () => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				const [state1, dispatch1] = useReducer((state, action) => action, 1)
+				const [state2, dispatch2] = useReducer((state, action) => action, 2)
+
+				return state1 + state2
+			}
+
+			render(h(Primary, {}, 0), target, (current) => {
+				assert.html(current, '3')
+			})
+		})
+
+		it('should update a reducer hook within render', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [state, dispatch] = useReducer((state, action) => action, 0)
+
+				stack.push(state)
+
+				if (state === props.children) {
+					dispatch(1)
+					dispatch(2)
+				}
+
+				return state
+			}
+
+			render(h(Primary, {}, 0), target, (current) => {
+				assert.html(current, '2')
+				assert.deepEqual(stack, [0, 2])
+			})
+		})
+
+		it('should use previous reducer state to update a reducer hook within render', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [state, dispatch] = useReducer((state, action) => action, 0)
+
+				stack.push(state)
+
+				if (state === props.children) {
+					dispatch(state => state + 1)
+					dispatch(state => state + 1)
+				}
+
+				return state
+			}
+
+			render(h(Primary, {}, 0), target, (current) => {
+				assert.html(current, '2')
+				assert.deepEqual(stack, [0, 2])
+			})
+		})
+
+		it('should not update a SameValue state hook within render', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [state, dispatch] = useReducer((state, action) => action, 0)
+
+				stack.push(state)
+
+				if (state === props.children) {
+					dispatch(0)
+					dispatch(0)
+				}
+
+				return state
+			}
+
+			render(h(Primary, {}, 0), target, (current) => {
+				assert.html(current, '0')
+				assert.deepEqual(stack, [0])
+			})
+		})
+
+		it('should update multiple state hooks within events', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [state, dispatch1] = useReducer((state, action) => action, 0)
+				const [value, dispatch2] = useReducer((state, action) => action, 1)
 
 				stack.push(state, value)
 
-				return h('button', {onClick: [e => e.type, setValue, e => setState(state => state + e)]}, state, value)
+				return h('button', {onClick: [e => e.type, dispatch2, e => dispatch1(state => state + e)]}, state, value)
 			}
 
 			render(h(Primary, {}), target, (current) => {
