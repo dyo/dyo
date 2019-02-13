@@ -1,5 +1,4 @@
 import * as Enum from './Enum.js'
-import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Interface from './Interface.js'
 

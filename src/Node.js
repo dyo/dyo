@@ -1,5 +1,4 @@
 import * as Enum from './Enum.js'
-import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Component from './Component.js'
 import * as Exception from './Exception.js'
