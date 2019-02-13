@@ -62,11 +62,11 @@ export var asyncIterator = symbol.asyncIterator || '@@asyncIterator'
  * @param {function}
  * @return {object}
  */
-export var promise = typeof Promise === 'function' ? Promise : function (c) { return new Promise(c) }
+export var defer = typeof Promise === 'function' ? Promise : function (c) { return new Promise(c) }
 
 /**
  * @param {function}
- * @param {number?}
+ * @param {number}
  */
 export var timer = typeof setTimeout === 'function' ? setTimeout : function (c, d) { return setTimeout(c, d) }
 
@@ -83,7 +83,7 @@ export function timeout (callback, duration) {
  * @return {object}
  */
 export function request () {
-	return new promise(timeout)
+	return new defer(timeout)
 }
 
 /**
@@ -117,9 +117,7 @@ export function throws (message) {
  * @param {string} value
  */
 export function report (value) {
-	if (value) {
-		console.error(value)
-	}
+	console.error(value)
 }
 
 /**
@@ -240,13 +238,15 @@ export function resolve (value, resolved, rejected) {
 				return resolved(value)
 			}, rejected)
 		} else {
-			for (var i = 0, done = [], size = value.length, callback = null; i < size; i++) {
-				resolve(value[i], callback !== null ? callback : callback = function (value) {
-					if (size === done.push(value)) {
-						resolved(done)
-					}
-				}, callback)
-			}
+			return new defer(function (fulfill) {
+				for (var i = 0, done = [], size = value.length, callback = null; i < size; i++) {
+					resolve(value[i], callback !== null ? callback : callback = function (value) {
+						if (size === done.push(value)) {
+							fulfill(resolved(done))
+						}
+					}, callback)
+				}
+			})
 		}
 	} else {
 		resolved()

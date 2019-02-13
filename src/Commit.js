@@ -6,29 +6,11 @@ import * as Interface from './Interface.js'
 /**
  * @param {object} parent
  * @param {object} element
- * @param {object} children
  */
-export function enqueue (parent, element, children) {
-	Utility.resolve(element.stack, function () {
-		if (Element.active(parent)) {
-			unmount(parent, children, children)
-		}
-	}, undefined)
-}
-
-/**
- * @param {object} parent
- * @param {object} element
- * @param {object} children
- */
-export function unmount (parent, element, children) {
-	if (element !== children) {
-		if (element.stack !== null) {
-			return enqueue(parent, element, children)
-		}
+export function unmount (parent, element) {
+	if (element !== undefined) {
+		remove(Element.parent(parent), element)
 	}
-
-	remove(Element.parent(parent), children)
 }
 
 /**

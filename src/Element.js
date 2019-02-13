@@ -193,7 +193,7 @@ export function create (a, b) {
 	var uid = identity(a)
 	var props = b ? b : {}
 	var children = []
-	var element = new struct(uid, b ? b.key : null, a, props, children)
+	var element = new struct(uid, props.key, a, props, children)
 
 	if (uid === Enum.component) {
 		if (size > 0) {

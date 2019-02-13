@@ -44,16 +44,20 @@ export function dequeue (element, index) {
 
 /**
  * @param {object} element
+ * @return {object?}
  */
 export function destroy (element) {
+	var defer = null
 	var array = element.stack
 	var value = element.stack = null
 
 	for (var i = 0; i < array.length; i++) {
 		if (value = array[i]()) {
 			if (Utility.thenable(value)) {
-				enqueue(element, 0, value)
+				enqueue(element, 0, defer = value)
 			}
 		}
 	}
+
+	return defer
 }

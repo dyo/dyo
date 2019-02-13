@@ -9,8 +9,8 @@ import * as Lifecycle from './Lifecycle.js'
  */
 export function create (value) {
 	return Utility.properties(function context (props) {
-		if (Element.active(this)) {
-			connect(this.state = this.context = Utility.create(this.context), props.value, context.type)
+		if (!Element.active(this)) {
+			connect(this.state = this.context = Utility.create(this.context), context.type, props.value)
 		} else {
 			this.state.value = props.value
 		}
@@ -24,11 +24,11 @@ export function create (value) {
 
 /**
  * @param {object} context
- * @param {any?} value
  * @param {symbol} type
+ * @param {any?} value
  * @return {object}
  */
-export function connect (context, value, type) {
+export function connect (context, type, value) {
 	return context[type] = {value: value, length: 0}
 }
 
@@ -36,31 +36,45 @@ export function connect (context, value, type) {
  * @param {object} element
  * @param {object} state
  * @param {object?} context
- * @param {any?} value
  * @param {symbol} type
+ * @param {any?} value
+ */
+export function dispatch (element, state, context, type, value) {
+	for (var i = 0, length = context.length; i < length; i++) {
+		if ((element = context[i]) && (value = element.state[type])) {
+			if (!Utility.is(value.value, value.value = context.value) || value === state) {
+				try {
+					Component.dispatch(element.value = element)
+				} finally {
+					element.value = null
+				}
+			}
+		}
+	}
+}
+
+/**
+ * @param {object} element
+ * @param {object} state
+ * @param {object?} context
+ * @param {symbol} type
+ * @param {any?} value
  * @return {any}
  */
-export function resolve (element, state, context, value, type) {
+export function resolve (element, state, context, type, value) {
 	var length = 0
 	var callback = null
+	var provider = context[type] || connect(context, type, value)
+	var consumer = state[type] = {value: provider.value}
 
-	context = context[type] || connect(context, value, type)
-	state = state[type] = {value: value = context.value}
-
-	Lifecycle.enqueue(context[length = context.length++] = element, 0, function () {
-		context[length === context.length - 1 ? context.length = length : length] = null
+	Lifecycle.enqueue(provider[length = provider.length++] = element, 0, function () {
+		provider[length === provider.length - 1 ? provider.length = length : length] = null
 	})
 
-	return [value, function (value) {
-		if (!Utility.is(state.value, state.value = context.value = Utility.callable(value) ? value(state.value) : value)) {
-			Component.enqueue(element, null, callback !== null ? callback : callback = function (element, current) {
-				for (var i = 0, length = context.length; i < length; i++) {
-					if ((element = context[i]) && (current = element.state[type])) {
-						if (!Utility.is(current.value, current.value = context.value)) {
-							Component.dispatch(element)
-						}
-					}
-				}
+	return [consumer.value, function (value) {
+		if (!Utility.is(consumer.value, consumer.value = provider.value = Utility.callable(value) ? value(consumer.value) : value)) {
+			Component.enqueue(element, null, callback !== null ? callback : callback = function (element) {
+				dispatch(element, consumer, provider, type, value)
 			})
 		}
 	}]

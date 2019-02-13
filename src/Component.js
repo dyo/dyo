@@ -124,7 +124,7 @@ export function enqueue (element, value, callback) {
 		} else {
 			callback(element)
 		}
-	} else {
+	} else if (value === undefined) {
 		element.value = true
 	}
 }

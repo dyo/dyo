@@ -1,7 +1,6 @@
-import {h, render} from '../index.js'
+import {h, memo, render, createContext} from '../index.js'
 import {useRef, useMemo, useCallback, useState, useReducer, useContext, useEffect, useLayout, useBoundary} from '../index.js'
 
-// TODO useContext, useBoundary
 describe('Hook', () => {
 	describe('useRef', () => {
 		it('should use a ref hook', () => {
@@ -596,9 +595,11 @@ describe('Hook', () => {
 				return props => { throw 0 }
 			}
 
-			render(h(Primary, {}), target, (current) => {
-				assert.html(current, '')
-				assert.deepEqual(stack, [1])
+			assert.doesNotThrow(() => {
+				render(h(Primary, {}), target, (current) => {
+					assert.html(current, '')
+					assert.deepEqual(stack, [1])
+				})
 			})
 		})
 
@@ -612,13 +613,15 @@ describe('Hook', () => {
 				return props => { throw 0 }
 			}
 
-			render(h(Primary, {}, 0), target, (current) => {
-				assert.html(current, '')
-				assert.deepEqual(stack, [1, 2])
+			assert.doesNotThrow(() => {
+				render(h(Primary, {}, 0), target, (current) => {
+					assert.html(current, '')
+					assert.deepEqual(stack, [1, 2])
+				})
 			})
 		})
 
-		it('should throw in a boundary hook', () => {
+		it('should propagate exception in a boundary hook', () => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = props => {
@@ -632,8 +635,10 @@ describe('Hook', () => {
 				}
 			}
 
-			render(h(Primary, ), target, (current) => {
-				assert.deepEqual(stack, [2, 1])
+			assert.doesNotThrow(() => {
+				render(h(Primary, ), target, (current) => {
+					assert.deepEqual(stack, [2, 1])
+				})
 			})
 		})
 
@@ -641,15 +646,151 @@ describe('Hook', () => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = props => {
-				useBoundary(exception => {
-					stack.push(exception)
-				})
+				useBoundary(exception => stack.push(exception))
 
 				return props => { throw 0 }
 			}
 
-			render(h(Primary), target, (current) => {
+			assert.doesNotThrow(() => {
+				render(h(Primary), target, (current) => {
+					assert.deepEqual(stack, [{name: 'Exception', message: 0}])
+				})
+			})
+		})
+
+		it('should use boundary hooks within an update', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				useBoundary(exception => stack.push(exception))
+				return props.children
+			}
+			const Secondary = props => {
+				if (props.throw) {
+					throw 'error!'
+				}
+
+				return 'Preserve'
+			}
+
+			assert.doesNotThrow(() => {
+				render(h(Primary, {}, h(Secondary, {throw: false})), target)
+				render(h(Primary, {}, h(Secondary, {throw: true})), target)
+
+				assert.html(target, 'Preserve')
 				assert.deepEqual(stack, [{name: 'Exception', message: 0}])
+			}, 'error!')
+		})
+	})
+
+	describe('useContext', () => {
+		it('should use and update global context', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('white')
+			const Primary = memo(({children}) => {
+				const [theme, setTheme] = useContext(ThemeContext)
+
+				stack.push(theme)
+
+				return [h('button', {onClick: [e => setTheme(theme + '1'), e => setTheme(theme => theme + '2')]}, theme), children]
+			})
+
+			render([h(Primary, {}, props => h(Primary))], target, (current) => {
+				assert.deepEqual(stack, ['white', 'white'])
+				assert.html(current, '<button>white</button><button>white</button>')
+
+				current.firstChild.dispatchEvent(new Event('click'))
+				assert.deepEqual(stack, ['white', 'white', 'white12', 'white12'])
+				assert.html(current, '<button>white12</button><button>white12</button>')
+			})
+		})
+
+		it('should use and update local context', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('white')
+			const Primary = memo(({children}) => {
+				const [theme, setTheme] = useContext(ThemeContext)
+
+				stack.push(theme)
+
+				return [h('button', {onClick: [e => setTheme(theme + '1'), e => setTheme(theme => theme + '2')]}, theme), children]
+			})
+
+			render(h(ThemeContext, {value: 'black'}, h(Primary, {}, props => h(Primary))), target, (current) => {
+				assert.deepEqual(stack, ['black', 'black'])
+				assert.html(current, '<button>black</button><button>black</button>')
+
+				current.firstChild.dispatchEvent(new Event('click'))
+				assert.deepEqual(stack, ['black', 'black', 'black12', 'black12'])
+				assert.html(current, '<button>black12</button><button>black12</button>')
+			})
+		})
+
+		it('should use but not update global context', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('white')
+			const Primary = memo(({children}) => {
+				const [theme, setTheme] = useContext(ThemeContext)
+
+				stack.push(theme)
+
+				return [h('button', {onClick: [e => setTheme(theme => theme), e => setTheme(theme => theme)]}, theme), children]
+			})
+
+			render([h(Primary, {}, props => h(Primary))], target, (current) => {
+				assert.deepEqual(stack, ['white', 'white'])
+				assert.html(current, '<button>white</button><button>white</button>')
+
+				current.firstChild.dispatchEvent(new Event('click'))
+				assert.deepEqual(stack, ['white', 'white'])
+				assert.html(current, '<button>white</button><button>white</button>')
+			})
+		})
+
+		it('should use but not update local context', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('white')
+			const Primary = memo(({children}) => {
+				const [theme, setTheme] = useContext(ThemeContext)
+
+				stack.push(theme)
+
+				return [h('button', {onClick: [e => setTheme(theme => theme), e => setTheme(theme => theme)]}, theme), children]
+			})
+
+			render(h(ThemeContext, {value: 'black'}, h(Primary, {}, props => h(Primary))), target, (current) => {
+				assert.deepEqual(stack, ['black', 'black'])
+				assert.html(current, '<button>black</button><button>black</button>')
+
+				current.firstChild.dispatchEvent(new Event('click'))
+				assert.deepEqual(stack, ['black', 'black'])
+				assert.html(current, '<button>black</button><button>black</button>')
+			})
+		})
+
+		it('should use and unmount context', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('white')
+			const Primary = ({children}) => {
+				const [theme, setTheme] = useContext(ThemeContext)
+
+				stack.push(theme)
+
+				return [theme, children]
+			}
+
+			render(h(ThemeContext, {value: 'black'}, h(Primary, {}, props => h(Primary))), target, (current) => {
+				assert.deepEqual(stack, ['black', 'black'])
+				assert.html(current, 'blackblack')
+			})
+
+			render(null, target, (current) => {
+				assert.html(current, '')
 			})
 		})
 	})

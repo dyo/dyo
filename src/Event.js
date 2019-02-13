@@ -31,7 +31,7 @@ export function resolve (fiber, element, event, callback) {
 	try {
 		enqueue(fiber, element, event, callback)
 
-		if (element.value) {
+		if (element.value === true) {
 			Component.dispatch(element)
 		}
 	} catch (error) {

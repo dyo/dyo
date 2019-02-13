@@ -1,5 +1,6 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
+import * as Element from './Element.js'
 import * as Context from './Context.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
@@ -92,15 +93,17 @@ export function enqueue (callback, value, type) {
  * @param {any[]} value
  */
 export function dequeue (element, value) {
-	var argument = value[0]
-	var callback = value[1]
-	var position = value[2]
+	if (Element.active(element)) {
+		var argument = value[0]
+		var callback = value[1]
+		var position = value[2]
 
-	Lifecycle.dequeue(element, position)
+		Lifecycle.dequeue(element, position)
 
-	if (Utility.callable(callback = callback(argument))) {
-		if (position = Lifecycle.enqueue(element, position, function () { return callback(argument) })) {
-			value[2] = position
+		if (Utility.callable(callback = callback(argument))) {
+			if (position = Lifecycle.enqueue(element, position, function () { return callback(argument) })) {
+				value[2] = position
+			}
 		}
 	}
 }
@@ -174,7 +177,7 @@ export function context (provider) {
 	var state = Lifecycle.state(element)
 
 	if (index === children.length) {
-		children = children[index] = Context.resolve(element, state, context, provider.value, type)
+		children = children[index] = Context.resolve(element, state, context, type, provider.value)
 	} else {
 		children = children[index], children[0] = state[type].value = context[type].value
 	}

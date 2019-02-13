@@ -1,10 +1,12 @@
 import * as Enum from './Enum.js'
+import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Component from './Component.js'
 import * as Exception from './Exception.js'
 import * as Lifecycle from './Lifecycle.js'
 import * as Reconcile from './Reconcile.js'
 import * as Interface from './Interface.js'
+import * as Schedule from './Schedule.js'
 import * as Commit from './Commit.js'
 
 /**
@@ -63,31 +65,53 @@ export function create (fiber, host, parent, element, current) {
 
 /**
  * @param {object} fiber
+ * @param {object} parent
  * @param {object} element
+ * @param {object?} current
  * @return {object}
  */
-export function destroy (fiber, element) {
+export function destroy (fiber, parent, element, current) {
 	var uid = element.uid
 	var children = element.children
 
 	switch (element.parent = null, uid) {
-		case Enum.text: case Enum.empty:
-			break
 		case Enum.component:
 			try {
-				return destroy(fiber, children[0])
+				return destroy(fiber, parent, children[0], element)
 			} finally {
 				if (element.stack !== null) {
-					Lifecycle.destroy(element)
+					if (dequeue(fiber, parent, element, current) !== undefined) {
+						return
+					}
 				}
 			}
+		case Enum.text: case Enum.empty:
+			break
 		case Enum.target:
 			Commit.remove(element, element)
 		default:
 			for (var i = 0; i < children.length; ++i) {
-				destroy(fiber, children[i])
+				destroy(fiber, element, children[i], element)
 			}
 	}
 
 	return element
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} parent
+ * @param {object} element
+ * @param {object?} current
+ */
+export function dequeue (fiber, parent, element, current) {
+	if (Lifecycle.destroy(element) !== null) {
+		if (current === null) {
+			return Schedule.pending(fiber, element.stack, function () {
+				if (Element.active(parent)) {
+					Commit.unmount(parent, element, element)
+				}
+			})
+		}
+	}
 }

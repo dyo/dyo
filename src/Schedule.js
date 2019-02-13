@@ -68,6 +68,16 @@ export function request (fiber, target, callback) {
  * @param {object} fiber
  * @param {object} value
  * @param {function} resolved
+ * @return {object}
+ */
+export function pending (fiber, value, resolved) {
+	return suspend(fiber, Utility.resolve(value, resolved, undefined), function () {}, undefined)
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} value
+ * @param {function} resolved
  * @param {function} rejected
  * @return {object}
  */
@@ -170,7 +180,7 @@ export function dispatch (fiber, type, element, a, b, c) {
 		case Enum.mount:
 			return Commit.mount(a, b, c)
 		case Enum.unmount:
-			return Commit.unmount(a, b, c)
+			return Commit.unmount(a, c)
 		case Enum.target:
 			return Commit.target(a, b)
 	}
@@ -197,8 +207,7 @@ export function callback (fiber, element, value, callback) {
  * @return {object}
  */
 export function checkout (executor, element, target, value, callback) {
-	var stack = frame
-	var fiber = stack === null ? frame = new struct(element, target) : stack
+	var fiber = frame === null ? frame = new struct(element, target) : frame
 
 	try {
 		return executor(fiber, element, target, value), fiber
@@ -206,7 +215,7 @@ export function checkout (executor, element, target, value, callback) {
 		try {
 			finalize(fiber, target, callback)
 		} finally {
-			frame = stack
+			frame = null
 		}
 	}
 }
@@ -217,7 +226,9 @@ export function checkout (executor, element, target, value, callback) {
  * @param {function?} callback
  */
 export function finalize (fiber, target, callback) {
-	if (fiber.length !== 0) {
+	if (fiber.async !== null) {
+		resolve(fiber, fiber.async, finalize, finalize, [fiber, target, callback])
+	} else if (fiber.length !== 0) {
 		try {
 			dequeue(fiber, fiber.length, fiber.stack)
 		} finally {
@@ -225,8 +236,6 @@ export function finalize (fiber, target, callback) {
 		}
 	} else if (fiber.queued !== 0) {
 		request(fiber, target, callback)
-	} else if (fiber.async !== null) {
-		resolve(fiber, fiber.async, finalize, finalize, [fiber, target, callback])
 	} else if (callback !== undefined) {
 		archive(fiber, target, callback)
 	}

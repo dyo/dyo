@@ -65,7 +65,7 @@ export function enqueue (fiber, host, parent, element, snapshot, value, a, b) {
  */
 export function replace (fiber, host, parent, element, snapshot, siblings, index) {
 	Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, siblings[index] = snapshot, null), element)
-	Schedule.dispatch(fiber, Enum.unmount, host, parent, element, Node.destroy(fiber, element))
+	Schedule.dispatch(fiber, Enum.unmount, host, parent, element, Node.destroy(fiber, parent, element, null))
 }
 
 /**
@@ -191,7 +191,7 @@ export function children (fiber, host, parent, offset, a, b) {
 			}
 		} else if (bidx > bend) {
 			while (aidx <= aend) {
-				Schedule.dispatch(fiber, Enum.unmount, host, parent, ahead = a[aend], Node.destroy(fiber, ahead))
+				Schedule.dispatch(fiber, Enum.unmount, host, parent, ahead = a[aend], Node.destroy(fiber, parent, ahead, null))
 				a.splice(aend--, 1)
 			}
 		} else if (((apos = aend + 1) - aidx) * ((bpos = bend + 1) - bidx) === 1) {
@@ -207,10 +207,10 @@ export function children (fiber, host, parent, offset, a, b) {
 			}
 
 			if (bkeys[atail.key] === undefined) {
-				Schedule.dispatch(fiber, Enum.unmount, host, parent, atail, Node.destroy(fiber, atail))
+				Schedule.dispatch(fiber, Enum.unmount, host, parent, atail, Node.destroy(fiber, parent, atail, null))
 				a.splice((atail = aend > 0 ? a[aend - 1] : a[aend + 1], aend--), 1)
 			} else if (bkeys[ahead.key] === undefined) {
-				Schedule.dispatch(fiber, Enum.unmount, host, parent, ahead, Node.destroy(fiber, ahead))
+				Schedule.dispatch(fiber, Enum.unmount, host, parent, ahead, Node.destroy(fiber, parent, ahead, null))
 				a.splice((ahead = a[aidx + 1], --delta, --aend, aidx), 1)
 			} else if (akeys[bhead.key] === undefined) {
 				Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, bhead, null), ahead)
