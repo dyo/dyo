@@ -45,8 +45,10 @@ export function memo (children, callback) {
 export function memoize (children, callback) {
 	return function (props) {
 		if (Element.active(this)) {
-			if (!this.value && callback(this.props, props)) {
-				return this.children[0]
+			if (this.value === null) {
+				if (callback(this.props, props)) {
+					return this.children[0]
+				}
 			}
 		}
 
@@ -87,7 +89,7 @@ export function update (fiber, host, element, props, children) {
 	} catch (error) {
 		Exception.dispatch(fiber, host, element, error)
 	} finally {
-		element.props = props
+		element.value = null, element.props = props
 	}
 }
 
@@ -122,9 +124,18 @@ export function enqueue (element, value, callback) {
 				Schedule.enqueue(value, Enum.callback, element, element, element, element.value = callback)
 			}
 		} else {
-			callback(element)
+			dequeue(element)
 		}
-	} else if (value === undefined) {
-		element.value = true
+	}
+}
+
+/**
+ * @param {object} element
+ */
+export function dequeue (element) {
+	try {
+		dispatch(element.value = element)
+	} finally {
+		element.value = null
 	}
 }

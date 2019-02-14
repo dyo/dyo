@@ -5,7 +5,7 @@ import * as Event from './Event.js'
 /**
  * @constructor
  * @param {number} uid
- * @param {(string|symbol)?} key
+ * @param {any} key
  * @param {any} type
  * @param {object} props
  * @param {object} children
@@ -180,8 +180,8 @@ export function from (value, index, props) {
 }
 
 /**
- * @param {(string|number|function|{then}} a
- * @param {({key?,ref?}|object)?} b
+ * @param {(string|number|function|PromiseLike<any>} a
+ * @param {({key?,ref?})?} b
  * @param {...any?}
  * @return {object}
  */

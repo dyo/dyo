@@ -502,6 +502,22 @@ describe('Hook', () => {
 				})
 			})
 		})
+
+		it('should defer unmount from layout hook', () => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				useLayout(() => () => new Promise((resolve) => setTimeout(resolve, 100)))
+
+				return 'preserve'
+			}
+
+			render(h(Primary), target, (current) => {
+				render(null, current)
+				assert.html(current, 'preserve')
+			}).then((current) => {
+				assert.html(current, '')
+			})
+		})
 	})
 
 	describe('useEffect', () => {
@@ -581,6 +597,22 @@ describe('Hook', () => {
 						assert.deepEqual(stack, ['useEffect', 0, 'mount', 'useEffect', 0, 'unmount', 'useEffect', 1, 'mount', 'useEffect', 1, 'unmount'])
 					})
 				})
+			})
+		})
+
+		it('should defer unmount from effect hook', () => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				useEffect(() => () => new Promise((resolve) => setTimeout(resolve, 100)))
+
+				return 'preserve'
+			}
+
+			render(h(Primary), target, (current) => {
+				render(null, current)
+				assert.html(current, 'preserve')
+			}).then((current) => {
+				assert.html(current, '')
 			})
 		})
 	})

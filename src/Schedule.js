@@ -207,7 +207,8 @@ export function callback (fiber, element, value, callback) {
  * @return {object}
  */
 export function checkout (executor, element, target, value, callback) {
-	var fiber = frame === null ? frame = new struct(element, target) : frame
+	var stack = frame
+	var fiber = stack === null ? frame = new struct(element, target) : stack
 
 	try {
 		return executor(fiber, element, target, value), fiber
@@ -215,7 +216,7 @@ export function checkout (executor, element, target, value, callback) {
 		try {
 			finalize(fiber, target, callback)
 		} finally {
-			frame = null
+			frame = stack
 		}
 	}
 }

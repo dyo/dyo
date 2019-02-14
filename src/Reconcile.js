@@ -208,13 +208,13 @@ export function children (fiber, host, parent, offset, a, b) {
 
 			if (bkeys[atail.key] === undefined) {
 				Schedule.dispatch(fiber, Enum.unmount, host, parent, atail, Node.destroy(fiber, parent, atail, null))
-				a.splice((atail = aend > 0 ? a[aend - 1] : a[aend + 1], aend--), 1)
+				a.splice((atail = aend > 0 ? a[aend - 1] : a[aend + 1], --alen, aend--), 1)
 			} else if (bkeys[ahead.key] === undefined) {
 				Schedule.dispatch(fiber, Enum.unmount, host, parent, ahead, Node.destroy(fiber, parent, ahead, null))
-				a.splice((ahead = a[aidx + 1], --delta, --aend, aidx), 1)
+				a.splice((ahead = a[aidx + 1], --delta, --alen, --aend, aidx), 1)
 			} else if (akeys[bhead.key] === undefined) {
 				Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, bhead, null), ahead)
-				a.splice((++delta, ++aend, aidx), 0, bhead)
+				a.splice((++delta, ++alen, ++aend, aidx), 0, bhead)
 				ahead = a[++aidx], bhead = b[++bidx]
 			} else {
 				update(fiber, host, parent, amove = a[apos = (akeys[ahead.key] = akeys[bhead.key]) + delta], bhead, a, aidx)

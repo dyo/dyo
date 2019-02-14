@@ -1,5 +1,4 @@
 import * as Utility from './Utility.js'
-import * as Component from './Component.js'
 import * as Exception from './Exception.js'
 import * as Schedule from './Schedule.js'
 
@@ -26,18 +25,10 @@ export function dispatch (element, event, callback) {
  * @param {(function|function[])} callback
  */
 export function resolve (fiber, element, event, callback) {
-	element.value = undefined
-
 	try {
 		enqueue(fiber, element, event, callback)
-
-		if (element.value === true) {
-			Component.dispatch(element)
-		}
 	} catch (error) {
 		Exception.dispatch(fiber, element, element, error)
-	} finally {
-		element.value = null
 	}
 }
 

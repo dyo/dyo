@@ -48,7 +48,9 @@ export function update (element, children, value) {
  * @param {object} element
  */
 export function dispatch (element) {
-	Component.dispatch(element)
+	if (element.value !== null) {
+		Component.dispatch(element)
+	}
 }
 
 /**

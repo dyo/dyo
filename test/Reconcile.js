@@ -1,10 +1,13 @@
-import {h, Fragment, render} from '../index.js'
+import {h, render, Fragment} from '../index.js'
 
 describe('Reconcile', () => {
 	const target = document.createElement('div')
 
 	function Target ({children}) {
 		return children.map(v => h(Fragment, {key: v}, v))
+	}
+	function Single ({children}) {
+		return children
 	}
 
 	it('simple [] - [1]', () => {
@@ -325,7 +328,7 @@ describe('Reconcile', () => {
 		render(h(Target, {}, [0, 1, 2, 3, 4, 5]), target, (current) => assert.html(current, '012345'))
 		render(h(Target, {}, [1, 2, 3, 4, 5, 0]), target, (current) => assert.html(current, '123450'))
 	})
-// TODO
+
 	it('other [1, 5, 6] - [1, 2, 3, 4, 5, 6]', () => {
 		render(h(Target, {}, [1, 5, 6]), target, (current) => assert.html(current, '156'))
 		render(h(Target, {}, [1, 2, 3, 4, 5, 6]), target, (current) => assert.html(current, '123456'))
@@ -404,5 +407,15 @@ describe('Reconcile', () => {
 				assert.html(current, `<ul>${v.map(v => `<li>${v}</li>`).join('')}</ul>`)
 			})
 		})
+	})
+
+	it('reverse [1, 2] - [0, 1]', () => {
+		render(h('ul', {}, h(Single, {key: 1}, 1), h(Single, {key: 2}, 2)), target, (current) => assert.html(target, '<ul>12</ul>'))
+		render(h('ul', {}, h(Single, {key: 0}, 0), h(Single, {key: 1}, 1)), target, (current) => assert.html(current, '<ul>01</ul>'))
+	})
+
+	it('reverse [0, 1] - [1, 0]', () => {
+		render(h('ul', {}, h(Single, {key: 0}, 0), h(Single, {key: 1}, 1)), target, (current) => assert.html(current, '<ul>01</ul>'))
+		render(h('ul', {}, h(Single, {key: 1}, 1), h(Single, {key: 0}, 0)), target, (current) => assert.html(current, '<ul>10</ul>'))
 	})
 })

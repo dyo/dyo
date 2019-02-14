@@ -9,7 +9,7 @@ import * as Node from './Node.js'
  * @param {any} element
  * @param {object} target
  * @param {function?} callback
- * @return {object}
+ * @return {PromiseLike<object>}
  */
 export function render (element, target, callback) {
 	return dispatch(element, Interface.target(target, undefined), callback)
