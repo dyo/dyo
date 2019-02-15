@@ -10,18 +10,21 @@ export function element (value) {
 	if (typeof children === 'object') {
 		var type = value.type
 
-		if (typeof type === 'string') {
-			var props = properties(value.props, children)
-			var payload = '<' + type + props + '>'
+		switch (typeof type) {
+			case 'function':
+				return element(children[0])
+			case 'string':
+				var props = properties(value.props, children)
+				var payload = '<' + type + props + '>'
 
-			switch (type.toLowerCase()) {
-				case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
-				case 'img': case 'col': case 'embed': case 'wbr': case 'track': case 'param':
-				case 'link': case 'input': case 'hr': case '!doctype html':
-					return payload
-			}
+				switch (type.toLowerCase()) {
+					case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
+					case 'img': case 'col': case 'embed': case 'wbr': case 'track': case 'param':
+					case 'link': case 'input': case 'hr': case '!doctype html':
+						return payload
+				}
 
-			return payload + fragment(children) + '</' + type + '>'
+				return payload + fragment(children) + '</' + type + '>'
 		}
 	} else {
 		return children

@@ -220,35 +220,31 @@ export function each (callback, value, index, array) {
 }
 
 /**
- * @param {(object|object[])?} value
+ * @param {(PromiseLike<any>|PromiseLike<any>[])?} value
  * @param {function} resolved
  * @param {function?} rejected
- * @return {object?}
+ * @return {PromiseLike<any>}
  */
 export function resolve (value, resolved, rejected) {
-	if (value) {
-		if (thenable(value)) {
-			return value.then(function (value) {
-				if (value === 'object' && value !== null) {
-					if (callable(value.json) && callable(value.blob)) {
-						return resolve(value.json(), resolved, rejected)
-					}
+	if (thenable(value)) {
+		return value.then(function (value) {
+			if (value === 'object' && value !== null) {
+				if (callable(value.json) && callable(value.blob)) {
+					return resolve(value.json(), resolved, rejected)
 				}
+			}
 
-				return resolved(value)
-			}, rejected)
-		} else {
-			return new defer(function (fulfill) {
-				for (var i = 0, done = [], size = value.length, callback = null; i < size; i++) {
-					resolve(value[i], callback !== null ? callback : callback = function (value) {
-						if (size === done.push(value)) {
-							fulfill(resolved(done))
-						}
-					}, callback)
-				}
-			})
-		}
+			return resolved(value)
+		}, rejected)
 	} else {
-		resolved()
+		return new defer(function (fulfill) {
+			for (var i = 0, done = [], size = value.length, callback = null; i < size; i++) {
+				resolve(value[i], callback !== null ? callback : callback = function (value) {
+					if (size === done.push(value)) {
+						fulfill(resolved(done))
+					}
+				}, callback)
+			}
+		})
 	}
 }

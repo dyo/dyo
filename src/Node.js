@@ -88,6 +88,10 @@ export function destroy (fiber, parent, element, current) {
 			break
 		case Enum.target:
 			Commit.remove(element, element)
+		case Enum.element:
+			if (element.stack !== null) {
+				Commit.reference(element, element.stack, null)
+			}
 		default:
 			for (var i = 0; i < children.length; ++i) {
 				destroy(fiber, element, children[i], element)

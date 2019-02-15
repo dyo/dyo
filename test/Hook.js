@@ -76,6 +76,36 @@ describe('Hook', () => {
 				})
 			})
 		})
+
+		it('should update a ref hook', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const ref1 = useRef()
+				const ref2 = useRef()
+
+				useLayout(() => {
+					stack.push(!!ref1.current, !!ref2.current)
+				})
+
+				return h('h1', {ref: props.i === 1 ? ref1 : ref2}, props.i)
+			}
+
+			render(h(Primary, {i: 1}), target, (current) => {
+				assert.html(current, '<h1>1</h1>')
+				assert.deepEqual(stack, [true, false])
+			}).then((current) => {
+				render(h(Primary,  {i: 2}), target, (current) => {
+					assert.html(current, '<h1>2</h1>')
+					assert.deepEqual(stack, [true, false, false, true])
+				})
+			}).then((current) => {
+				render(null, target, (current) => {
+					assert.html(current, '')
+					assert.deepEqual(stack, [true, false, false, true])
+				})
+			})
+		})
 	})
 
 	describe('useMemo', () => {
@@ -278,6 +308,46 @@ describe('Hook', () => {
 				assert.deepEqual(stack, [0, 1])
 				current.firstChild.dispatchEvent(new Event('click'))
 				assert.deepEqual(stack, [0, 1, '0click', 'click'])
+			})
+		})
+
+		it('should update a state hook out of band', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [state, setState] = useState(1)
+				stack.push(state)
+				useLayout(e => setTimeout(() => setState(2)), [])
+				return state
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.html(current, '1')
+			}).then((current) => {
+				setTimeout(() => {
+					assert.html(current, '2')
+					done(assert.deepEqual(stack, [1, 2]))
+				})
+			})
+		})
+
+		it('should not update an unmounted component', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [state, setState] = useState(1)
+				stack.push(state)
+				useLayout(e => setTimeout(() => setState(2)), [])
+				return state
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.html(current, '1')
+				render(null, target)
+			}).then((current) => {
+				setTimeout(() => {
+					done(assert.deepEqual(stack, [1]))
+				})
 			})
 		})
 	})
@@ -521,7 +591,7 @@ describe('Hook', () => {
 	})
 
 	describe('useEffect', () => {
-		it('should use effect hook', () => {
+		it('should use effect hook', (done) => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = props => {
@@ -531,11 +601,11 @@ describe('Hook', () => {
 			}
 
 			render(h(Primary), target, (current) => {
-				assert.deepEqual(stack, ['useEffect'])
+				done(assert.deepEqual(stack, ['useEffect']))
 			})
 		})
 
-		it('should default to always update effect hook', () => {
+		it('should default to always update effect hook', (done) => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = props => {
@@ -548,12 +618,12 @@ describe('Hook', () => {
 				assert.deepEqual(stack, ['useEffect'])
 
 				render(h(Primary), target, (current) => {
-					assert.deepEqual(stack, ['useEffect', 'useEffect'])
+					done(assert.deepEqual(stack, ['useEffect', 'useEffect']))
 				})
 			})
 		})
 
-		it('should update effect hook when values change', () => {
+		it('should update effect hook when values change', (done) => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = props => {
@@ -569,13 +639,13 @@ describe('Hook', () => {
 					assert.deepEqual(stack, ['useEffect', undefined])
 
 					render(h(Primary, {value: 1}), target, (current) => {
-						assert.deepEqual(stack, ['useEffect', undefined, 'useEffect', 1])
+						done(assert.deepEqual(stack, ['useEffect', undefined, 'useEffect', 1]))
 					})
 				})
 			})
 		})
 
-		it('should unmount effect hook', () => {
+		it('should unmount effect hook', (done) => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = props => {
@@ -594,13 +664,15 @@ describe('Hook', () => {
 					assert.deepEqual(stack, ['useEffect', 0, 'mount', 'useEffect', 0, 'unmount', 'useEffect', 1, 'mount'])
 
 					render(null, target, (current) => {
-						assert.deepEqual(stack, ['useEffect', 0, 'mount', 'useEffect', 0, 'unmount', 'useEffect', 1, 'mount', 'useEffect', 1, 'unmount'])
+						done(assert.deepEqual(stack, [
+							'useEffect', 0, 'mount', 'useEffect', 0, 'unmount', 'useEffect', 1, 'mount', 'useEffect', 1, 'unmount'
+						]))
 					})
 				})
 			})
 		})
 
-		it('should defer unmount from effect hook', () => {
+		it('should defer unmount from effect hook', (done) => {
 			const target = document.createElement('div')
 			const Primary = props => {
 				useEffect(() => () => new Promise((resolve) => setTimeout(resolve, 100)))
@@ -612,8 +684,23 @@ describe('Hook', () => {
 				render(null, current)
 				assert.html(current, 'preserve')
 			}).then((current) => {
-				assert.html(current, '')
+				done(assert.html(current, ''))
 			})
+		})
+
+		it('should not invoke effect hook of unmount component', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				useEffect(() => {
+					stack.push('useLayout')
+				})
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.deepEqual(stack, [])
+			})
+			render(null, target)
 		})
 	})
 
@@ -823,6 +910,42 @@ describe('Hook', () => {
 
 			render(null, target, (current) => {
 				assert.html(current, '')
+			})
+		})
+
+		it('should not update unmounted context consumer', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('white')
+			const Primary = props => {
+				const [context, setContext] = useContext(ThemeContext)
+				useEffect(() => setContext('black'))
+				stack.push(context)
+				return context
+			}
+
+			render([h(Primary, {key: 0}), h(Primary, {key: 1}), h(Primary, {key: 2})], target, (current) => {
+				assert.html(current, 'blackblack')
+				assert.deepEqual(stack, ['white', 'white', 'white', 'white', 'white', 'black', 'black'])
+			}).then(() => done())
+
+			render([h(Primary, {key: 0}), h(Primary, {key: 2})], target)
+		})
+
+		it('should granular update context consumer', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('white')
+			const Primary = props => {
+				const [context, setContext] = useContext(ThemeContext)
+				useLayout(() => setContext('black'))
+				stack.push(context)
+				return [context, props.n === 0 ? h(Primary, {n: 1}) : null]
+			}
+
+			render(h(Primary, {n: 0}), target, (current) => {
+				assert.html(current, 'blackblack')
+				assert.deepEqual(stack, ['white', 'white', 'black', 'black'])
 			})
 		})
 	})

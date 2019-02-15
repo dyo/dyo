@@ -1,4 +1,4 @@
-import {h, render} from '../../server/index.js'
+import {h, render, useState, useEffect, useLayout} from '../../server/index.js'
 
 describe('Stringify', () => {
 	it('should stringify text', () => {
@@ -79,6 +79,46 @@ describe('Stringify', () => {
 
 		render(h(Primary, {}, '1'), target, (current) => {
 			assert.html(current, '1')
+		})
+	})
+
+	it('should use state hooks', () => {
+		const target = new Writable
+		const Primary = props => {
+			const [state, setState] = useState(props => props.children)
+			return state
+		}
+
+		render(h(Primary, {}, '1'), target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should not invoke layout hooks', () => {
+		const target = new Writable
+		const stack = []
+		const Primary = props => {
+			useLayout(() => stack.push('useLayout'))
+			return props.children
+		}
+
+		render(h(Primary, {}, '1'), target, (current) => {
+			assert.html(current, '1')
+			assert.deepEqual(stack, [])
+		})
+	})
+
+	it('should not invoke effect hooks', () => {
+		const target = new Writable
+		const stack = []
+		const Primary = props => {
+			useEffect(() => stack.push('useEffect'))
+			return props.children
+		}
+
+		render(h(Primary, {}, '1'), target, (current) => {
+			assert.html(current, '1')
+			assert.deepEqual(stack, [])
 		})
 	})
 })

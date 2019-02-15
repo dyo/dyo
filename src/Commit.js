@@ -126,12 +126,24 @@ export function properties (element, value, instance)  {
 		for (var key in value) {
 			switch (key) {
 				case 'ref':
-					value[key].current = instance
+					reference(element, element.stack, null)
+					reference(element, element.stack = value[key], instance)
 				case 'key':
 					break
 				default:
 					Interface.props(key, value[key], instance, element)
 			}
 		}
+	}
+}
+
+/**
+ * @param {object} element
+ * @param {object?} value
+ * @param {object?} instance
+ */
+export function reference (element, value, instance) {
+	if (value !== null) {
+		value.current = instance
 	}
 }
