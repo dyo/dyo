@@ -38,11 +38,10 @@ export function create (host, value) {
 /**
  * @param {object} fiber
  * @param {object} host
- * @param {object} element
  * @return {function}
  */
-export function throws (fiber, host, element) {
-	return function (exception) { dispatch(fiber, host, element, exception) }
+export function throws (fiber, host) {
+	return function (exception) { dispatch(fiber, host, host, exception) }
 }
 
 /**
@@ -50,10 +49,13 @@ export function throws (fiber, host, element) {
  * @param {object} host
  * @param {object} element
  * @param {any} exception
- * @return {boolean?}
  */
 export function dispatch (fiber, host, element, exception) {
-	return resolve(fiber, host, element, create(host, exception), host)
+	if (fiber.element !== null) {
+		resolve(fiber, host, element, create(host, exception), host)
+	} else {
+		Utility.throws(exception)
+	}
 }
 
 /**
@@ -66,21 +68,21 @@ export function dispatch (fiber, host, element, exception) {
 export function resolve (fiber, host, element, exception, current) {
 	switch (current.uid) {
 		case Enum.target:
+			fiber.element = null
+
 			try {
-				throw exception.message
+				Utility.throws(exception.message)
 			} finally {
 				Utility.report(exception + '')
 			}
 		case Enum.component:
 			if (current !== element) {
-				if (current.state !== null && enqueue(fiber, host, element, exception, current, current.state.stack) !== null) {
-					return
+				if (current.state !== null && current.state.stack !== null) {
+					return enqueue(fiber, host, element, exception, current, current.state.stack)
+				} else if (host !== element) {
+					Utility.throws(exception)
 				}
 			}
-	}
-
-	if (host !== element) {
-		throw exception
 	}
 
 	resolve(fiber, host, element, exception, current.host)
@@ -92,9 +94,8 @@ export function resolve (fiber, host, element, exception, current) {
  * @param {object} element
  * @param {object} exception
  * @param {object} current
- * @param {function[][]?} callback
- * @return {void}
+ * @param {function[][]} callback
  */
 export function enqueue (fiber, host, element, exception, current, callback) {
-	return callback ? Schedule.enqueue(fiber, Enum.callback, current, current, exception, callback) : null
+	Schedule.enqueue(fiber, Enum.callback, current, current, exception, callback)
 }

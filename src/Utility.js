@@ -1,4 +1,10 @@
 /**
+ * @constructor
+ * @param {any}
+ */
+export var error = Error
+
+/**
  * @type {object}
  */
 export var math = Math
@@ -106,11 +112,11 @@ export function extend (constructor, value) {
 }
 
 /**
- * @throws {error<any>}
- * @param {any} message
+ * @throws {any}
+ * @param {any} value
  */
-export function throws (message) {
-	throw new TypeError(message)
+export function throws (value) {
+	throw value
 }
 
 /**
@@ -228,7 +234,7 @@ export function each (callback, value, index, array) {
 export function resolve (value, resolved, rejected) {
 	if (thenable(value)) {
 		return value.then(function (value) {
-			if (value === 'object' && value !== null) {
+			if (typeof value === 'object' && value !== null) {
 				if (callable(value.json) && callable(value.blob)) {
 					return resolve(value.json(), resolved, rejected)
 				}

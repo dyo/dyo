@@ -41,7 +41,7 @@ export function resolve (fiber, element, event, callback) {
  */
 export function enqueue (fiber, element, event, callback) {
 	if (Utility.callable(callback)) {
-		return callback(event)
+		return callback.call(element, event)
 	} else if (callback) {
 		for (var i = 0, length = callback.length, value = event; i < length; i++) {
 			if ((value = enqueue(fiber, element, event, callback[i])) !== undefined) {
@@ -62,5 +62,5 @@ export function enqueue (fiber, element, event, callback) {
 export function dequeue (fiber, element, event, callback) {
 	Schedule.suspend(fiber, event, function (value) {
 		resolve(fiber, element, value, callback)
-	}, Exception.throws(fiber, element, element))
+	}, Exception.throws(fiber, element))
 }

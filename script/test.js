@@ -5,10 +5,12 @@ const {assign, defineProperty} = Object
 const {document, location, history, Event} = (new JSDOM('<!doctype html>')).window
 
 const prng = ((seed, size, value = seed % size) => () => ((value = value * 16807 % size - 1) - 1) / size)(4022871197, 2147483647)
-const spyr = (from, key, to = []) => (((org) => from[key] = (...args) => { from[key] = org, to.push(...args) })(from[key]), to)
 const grep = (value) => value.replace(/[\n\t]|\s{2,}/g, '')
 const json = (actual, expected) => assert.equal(JSON.stringify(actual), JSON.stringify(expected))
 const html = (actual, expected) => assert.equal(actual.innerHTML || '', grep(expected))
+const spyr = (from, key, to = [], fn = err => process.off('unhandledRejection', fn) ) => {
+  return ((org) => from[key] = (...args) => { process.on('unhandledRejection', fn), from[key] = org, to.push(...args) })(from[key]), to
+}
 
 const that = () => typeof globalThis == 'object' ? globalThis :
 	typeof global == 'object' ? global :
@@ -38,4 +40,3 @@ class Writable {
 
 assign(that(), {assert, document, location, history, Event, globalThis: that(), Writable: Writable})
 assign(assert, {html, json, spyr, rand})
-

@@ -80,7 +80,7 @@ export function target (value, owner) {
 		}
 	}
 
-	Utility.throws('Invalid target!')
+	Utility.throws(Utility.error('Invalid target'))
 }
 
 /**

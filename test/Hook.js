@@ -350,6 +350,36 @@ describe('Hook', () => {
 				})
 			})
 		})
+
+		it('should collapse commited state hook updates', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [state, setState] = useState(0)
+
+				stack.push('Primary', state)
+
+				return h(Secondary, {state, setState})
+			}
+
+			const Secondary = props => {
+				const [state, setState] = useState(0)
+
+				stack.push('Secondary', state)
+
+				useLayout(() => {
+					props.setState(1)
+					setState(2)
+				}, [])
+
+				return state + props.state
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.html(current, '3')
+				assert.deepEqual(stack, ['Primary', 0, 'Secondary', 0, 'Primary', 1, 'Secondary', 2])
+			})
+		})
 	})
 
 	describe('useReducer', () => {
@@ -576,7 +606,8 @@ describe('Hook', () => {
 		it('should defer unmount from layout hook', () => {
 			const target = document.createElement('div')
 			const Primary = props => {
-				useLayout(() => () => new Promise((resolve) => setTimeout(resolve, 100)))
+				useLayout(() => () => new Promise((resolve) => setTimeout(resolve, 10)))
+				useLayout(() => () => new Promise((resolve) => setTimeout(resolve, 10)))
 
 				return 'preserve'
 			}
@@ -586,6 +617,35 @@ describe('Hook', () => {
 				assert.html(current, 'preserve')
 			}).then((current) => {
 				assert.html(current, '')
+			})
+		})
+
+		it('should not defer unmount from layout hook', (done) => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				useLayout(() => () => Promise.resolve())
+				return props.children
+			}
+
+			render(h('div', {}, h(Primary, {}, 1)), target, (current) => {
+				render(null, target)
+				done(assert.html(target, ''))
+			})
+		})
+
+		it('should not resolve unmounted components deferred unmount from layout hook', (done) => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				useLayout(() => () => Promise.resolve())
+				return props.children
+			}
+
+			render(h('div', {}, h(Primary, {}, 1)), target, (current) => {
+				render(h('div', {}, null), target)
+				assert.html(target, '<div>1</div>')
+
+				render(null, target)
+				done(assert.html(target, ''))
 			})
 		})
 	})
@@ -799,6 +859,22 @@ describe('Hook', () => {
 				assert.html(target, 'Preserve')
 				assert.deepEqual(stack, [{name: 'Exception', message: 0}])
 			}, 'error!')
+		})
+
+		it('should catch errors raised from promise elements', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				useBoundary(exception => stack.push(exception))
+
+				return props => h(Promise.reject(0))
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.html(current, '')
+			}).then((current) => {
+				done(assert.deepEqual(stack, [{name: 'Exception', message: 0}]))
+			})
 		})
 	})
 

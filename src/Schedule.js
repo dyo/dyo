@@ -41,10 +41,12 @@ export function peek () {
  * @param {any?} callback
  */
 export function archive (fiber, target, callback) {
-	if (Utility.callable(callback)) {
-		finalize(fiber, target, callback.call(fiber.element, target))
-	} else if (Utility.thenable(callback)) {
-		suspend(fiber, callback, function (value) { finalize(fiber, target, value) }, undefined)
+	if (fiber.element !== null) {
+		if (Utility.callable(callback)) {
+			finalize(fiber, target, callback.call(fiber.element, target))
+		} else if (Utility.thenable(callback)) {
+			suspend(fiber, callback, function (value) { finalize(fiber, target, value) }, undefined)
+		}
 	}
 }
 
@@ -99,9 +101,9 @@ export function suspend (fiber, value, resolved, rejected) {
  */
 export function resolve (fiber, value, resolved, rejected, payload) {
 	return fiber.async = Utility.resolve(value, function (value) {
-		forward(fiber, value, resolved, payload)
+		return forward(fiber, value, resolved, payload)
 	}, function (value) {
-		forward(fiber, value, rejected, payload)
+		return forward(fiber, value, rejected, payload)
 	})
 }
 
@@ -118,7 +120,7 @@ export function forward (fiber, value, callback, payload) {
 	}
 
 	try {
-		return Utility.callable(callback) ? callback.apply(frame = fiber, payload) : Utility.throws(payload)
+		return Utility.callable(callback) ? callback.apply(frame = fiber, payload) : Utility.throws(value)
 	} finally {
 		frame = null
 	}
@@ -228,7 +230,7 @@ export function checkout (executor, element, target, value, callback) {
  */
 export function finalize (fiber, target, callback) {
 	if (fiber.async !== null) {
-		resolve(fiber, fiber.async, finalize, finalize, [fiber, target, callback])
+		resolve(fiber, fiber.async, finalize, undefined, [fiber, target, callback])
 	} else if (fiber.length !== 0) {
 		try {
 			dequeue(fiber, fiber.length, fiber.stack)

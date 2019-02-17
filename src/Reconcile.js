@@ -35,7 +35,7 @@ export function resolve (fiber, host, parent, element, snapshot, type, a, b) {
 				enqueue(fiber, host, parent, element, snapshot, value, a, a)
 			}
 		}
-	}, Exception.throws(fiber, host, parent))
+	}, Exception.throws(fiber, host))
 }
 
 /**
