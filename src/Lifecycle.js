@@ -24,22 +24,22 @@ export function stack (element) {
 export function enqueue (element, index, value) {
 	var array = stack(element)
 
-	if (index === 0) {
-		return array[index = array.length] = value, index + 1
-	} else {
-		return array[index - 1] = value, 0
-	}
+	array[index === 0 ? index = array.length : index + (index = -1)] = value
+
+	return index + 1
 }
 
 /**
  * @param {object} element
  * @param {number} index
- * @return {any?}
+ * @return {number}
  */
 export function dequeue (element, index) {
 	if (index !== 0) {
 		element.stack[index - 1]()
 	}
+
+	return index
 }
 
 /**

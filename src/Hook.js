@@ -40,16 +40,7 @@ export function reduce (state, value) {
  */
 export function update (element, children, value) {
 	if (!Utility.is(children[0], children[0] = Utility.callable(value) ? value(children[0]) : value)) {
-		Component.enqueue(element, element.value, dispatch)
-	}
-}
-
-/**
- * @param {object} element
- */
-export function dispatch (element) {
-	if (element.value !== null) {
-		Component.dispatch(element)
+		Component.request(element)
 	}
 }
 
@@ -63,11 +54,46 @@ export function resolve (element, value) {
 }
 
 /**
+ * @param {object} element
+ * @param {any[]} value
+ * @return {object?}
+ */
+export function enqueue (element, value) {
+	if (Element.active(element)) {
+		var argument = value[0]
+		var callback = value[1]
+		var position = value[2]
+
+		return dequeue(element, value, Lifecycle.dequeue(element, position), callback(argument), argument)
+	}
+}
+
+/**
+ * @param {object} element
+ * @param {any[]} value
+ * @param {number} index
+ * @param {(function|PromiseLike<any>)?} callback
+ * @param {any[]} argument
+ * @return {object?}
+ */
+export function dequeue (element, value, index, callback, argument) {
+	if (callback !== undefined) {
+		if (Utility.callable(callback)) {
+			if (index = Lifecycle.enqueue(element, index, function () { return callback(argument) })) {
+				value[2] = index
+			}
+		} else if (Utility.thenable(callback)) {
+			return Utility.resolve(callback, function (callback) { return dequeue(element, value, index, callback, argument) }, null)
+		}
+	}
+}
+
+/**
  * @param {function} callback
  * @param {any[]?} value
  * @param {number} type
  */
-export function enqueue (callback, value, type) {
+export function request (callback, value, type) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
@@ -75,7 +101,7 @@ export function enqueue (callback, value, type) {
 
 	if (element.owner !== Interface.peek()) {
 		if (index === children.length) {
-			children = children[index] = [value, callback, 0, callback = function (value) { dequeue(element, value) }]
+			children = children[index] = [value, callback, 0, callback = function (value) { return enqueue(element, value) }]
 		} else if (compare((children = children[index])[0], children[0] = value)) {
 			return
 		} else {
@@ -91,30 +117,10 @@ export function enqueue (callback, value, type) {
 }
 
 /**
- * @param {object} element
- * @param {any[]} value
- */
-export function dequeue (element, value) {
-	if (Element.active(element)) {
-		var argument = value[0]
-		var callback = value[1]
-		var position = value[2]
-
-		Lifecycle.dequeue(element, position)
-
-		if (Utility.callable(callback = callback(argument))) {
-			if (position = Lifecycle.enqueue(element, position, function () { return callback(argument) })) {
-				value[2] = position
-			}
-		}
-	}
-}
-
-/**
  * @param {any?} value
  * @return {any}
  */
-export function ref (value) {
+export function reference (value) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
@@ -127,7 +133,7 @@ export function ref (value) {
  * @param {function} callback
  * @param {any} value
  */
-export function memo (callback, value) {
+export function memoize (callback, value) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
@@ -230,7 +236,7 @@ export function callback (callback) {
  * @param {any[]?} value
  */
 export function layout (callback, value) {
-	enqueue(callback, value, Enum.callback)
+	request(callback, value, Enum.callback)
 }
 
 /**
@@ -238,5 +244,5 @@ export function layout (callback, value) {
  * @param {any[]?} value
  */
 export function effect (callback, value) {
-	enqueue(callback, value, -Enum.callback)
+	request(callback, value, -Enum.callback)
 }

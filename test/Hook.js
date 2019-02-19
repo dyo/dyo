@@ -300,7 +300,7 @@ describe('Hook', () => {
 
 				stack.push(state1, state2)
 
-				return h('button', {onClick: [e => e.type, setState2, e => setState1(state => state + e)]}, state1, state2)
+				return h('button', {onClick: [e => setState2(e.type), e => setState1(state => state + e.type)]}, state1, state2)
 			}
 
 			render(h(Primary, {}), target, (current) => {
@@ -378,6 +378,34 @@ describe('Hook', () => {
 			render(h(Primary), target, (current) => {
 				assert.html(current, '3')
 				assert.deepEqual(stack, ['Primary', 0, 'Secondary', 0, 'Primary', 1, 'Secondary', 2])
+			})
+		})
+
+		it('should batch out of band state updates from event', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [{children}, dispatch] = useState(props)
+
+				stack.push(children)
+
+				return h('button', {
+					onClick: [async event => {
+						await new Promise((resolve) => setTimeout(resolve))
+						dispatch({children: 'Hello'})
+						dispatch({children: 'Hello World'})
+					}]
+				}, children)
+			}
+
+			render(h(Primary, {}, 'Click Me'), target, (current) => {
+				assert.html(current, '<button>Click Me</button>')
+				current.firstChild.dispatchEvent(new Event('click'))
+			}).then((current) => {
+				assert.html(current, '<button>Hello World</button>')
+				render(null, target)
+				assert.html(current, '')
+				done(assert.deepEqual(stack, ['Click Me', 'Hello World']))
 			})
 		})
 	})
@@ -511,7 +539,7 @@ describe('Hook', () => {
 
 				stack.push(state, value)
 
-				return h('button', {onClick: [e => e.type, dispatch2, e => dispatch1(state => state + e)]}, state, value)
+				return h('button', {onClick: [e => dispatch2(e.type), e => dispatch1(state => state + e.type)]}, state, value)
 			}
 
 			render(h(Primary, {}), target, (current) => {
@@ -606,8 +634,8 @@ describe('Hook', () => {
 		it('should defer unmount from layout hook', () => {
 			const target = document.createElement('div')
 			const Primary = props => {
-				useLayout(() => () => new Promise((resolve) => setTimeout(resolve, 10)))
-				useLayout(() => () => new Promise((resolve) => setTimeout(resolve, 10)))
+				useLayout(() => () => new Promise((resolve) => setTimeout(resolve)))
+				useLayout(() => () => new Promise((resolve) => setTimeout(resolve)))
 
 				return 'preserve'
 			}
@@ -646,6 +674,32 @@ describe('Hook', () => {
 
 				render(null, target)
 				done(assert.html(target, ''))
+			})
+		})
+
+		it('should batch out of band updates from layout hook', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [{children}, dispatch] = useState(props)
+
+				stack.push(children)
+
+				useLayout(async props => {
+					await new Promise((resolve) => setTimeout(resolve))
+					dispatch({children: 'Hello'})
+					dispatch({children: 'Hello World'})
+					return () => stack.push('unmount')
+				}, [])
+
+				return h('button', {}, children)
+			}
+
+			render(h(Primary, {}, 'Click Me'), target, (current) => {
+				assert.html(current, '<button>Hello World</button>')
+				render(null, target)
+				assert.html(current, '')
+				done(assert.deepEqual(stack, ['Click Me', 'Hello World', 'unmount']))
 			})
 		})
 	})
@@ -735,7 +789,7 @@ describe('Hook', () => {
 		it('should defer unmount from effect hook', (done) => {
 			const target = document.createElement('div')
 			const Primary = props => {
-				useEffect(() => () => new Promise((resolve) => setTimeout(resolve, 100)))
+				useEffect(() => () => new Promise((resolve) => setTimeout(resolve)))
 
 				return 'preserve'
 			}
@@ -761,6 +815,32 @@ describe('Hook', () => {
 				assert.deepEqual(stack, [])
 			})
 			render(null, target)
+		})
+
+		it('should batch out of band updates from effect hook', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [{children}, dispatch] = useState(props)
+
+				stack.push(children)
+
+				useEffect(async props => {
+					await new Promise((resolve) => setTimeout(resolve))
+					dispatch({children: 'Hello'})
+					dispatch({children: 'Hello World'})
+					return () => stack.push('unmount')
+				}, [])
+
+				return h('button', {}, children)
+			}
+
+			render(h(Primary, {}, 'Click Me'), target, (current) => {
+				assert.html(current, '<button>Hello World</button>')
+				render(null, target)
+				assert.html(current, '')
+				done(assert.deepEqual(stack, ['Click Me', 'Hello World', 'unmount']))
+			})
 		})
 	})
 

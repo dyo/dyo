@@ -67,37 +67,25 @@ describe('Event', () => {
 		const target = document.createElement('div')
 		const stack = []
 
-		render(h('button', {onClick: [e => stack.push(e.type), e => stack.push(e)]}), target, (current) => {
+		render(h('button', {onClick: [e => stack.push(e.type), e => stack.push(e.type)]}), target, (current) => {
 			current.firstChild.dispatchEvent(new Event('click'))
-			assert.deepEqual(stack, ['click', 1])
+			assert.deepEqual(stack, ['click', 'click'])
 		})
 	})
 
-	it('should dispatch multiple chained async events', (done) => {
+	it('should dispatch multiple async events', (done) => {
 		const target = document.createElement('div')
 		const stack = []
 
 		render(h('button', {
-			onClick: [e => stack.push(e.type), e => Promise.resolve({json: () => Promise.resolve(e), blob: () => {}}), e => stack.push(e)]
+			onClick: [e => stack.push(e.type), e => Promise.resolve({
+				json: () => Promise.resolve().then(() => stack.push('resolve')), blob: () => {}
+			}), e => stack.push(e.type)]
 		}), target, (current) => {
 			current.firstChild.dispatchEvent(new Event('click'))
-			assert.deepEqual(stack, ['click'])
+			assert.deepEqual(stack, ['click', 'click'])
 		}).then((current) => {
-			done(assert.deepEqual(stack, ['click', 1]))
-		})
-	})
-
-	it('should dispatch multiple nested isolated async events', (done) => {
-		const target = document.createElement('div')
-		const stack = []
-
-		render(h('button', {
-			onClick: [e => stack.push(e.type), [e => Promise.resolve(e).then(e => stack.push(e))], e => stack.push(e)]
-		}), target, (current) => {
-			current.firstChild.dispatchEvent(new Event('click'))
-			assert.deepEqual(stack, ['click', 1])
-		}).then((current) => {
-			done(assert.deepEqual(stack, ['click', 1, 1]))
+			done(assert.deepEqual(stack, ['click', 'click', 'resolve']))
 		})
 	})
 })

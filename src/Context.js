@@ -43,7 +43,7 @@ export function dispatch (element, state, context, type, value) {
 	for (var i = 0, length = context.length; i < length; i++) {
 		if ((element = context[i]) && (value = element.state[type])) {
 			if (!Utility.is(value.value, value.value = context.value) || value === state) {
-				Component.dequeue(element)
+				Component.dispatch(element.value = element)
 			}
 		}
 	}

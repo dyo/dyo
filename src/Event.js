@@ -3,30 +3,30 @@ import * as Exception from './Exception.js'
 import * as Schedule from './Schedule.js'
 
 /**
- * @param {object} event
+ * @param {object} value
  */
-export function handle (event) {
-	dispatch(this.host, event, this.state[event.type])
+export function handle (value) {
+	dispatch(this.host, value, this.state[value.type])
 }
 
 /**
  * @param {object} element
- * @param {object} event
+ * @param {object} value
  * @param {(function|function[])} callback
  */
-export function dispatch (element, event, callback) {
-	Schedule.checkout(resolve, element, event, callback, undefined)
+export function dispatch (element, value, callback) {
+	Schedule.checkout(resolve, element, value, callback, undefined)
 }
 
 /**
  * @param {object} fiber
  * @param {object} element
- * @param {object} event
+ * @param {object} value
  * @param {(function|function[])} callback
  */
-export function resolve (fiber, element, event, callback) {
+export function resolve (fiber, element, value, callback) {
 	try {
-		enqueue(fiber, element, event, callback)
+		enqueue(fiber, element, value, callback)
 	} catch (error) {
 		Exception.dispatch(fiber, element, element, error)
 	}
@@ -35,20 +35,16 @@ export function resolve (fiber, element, event, callback) {
 /**
  * @param {object} fiber
  * @param {object} element
- * @param {object} event
+ * @param {object} value
  * @param {(function|function[])} callback
  * @return {any?}
  */
-export function enqueue (fiber, element, event, callback) {
+export function enqueue (fiber, element, value, callback) {
 	if (Utility.callable(callback)) {
-		return callback.call(element, event)
+		dequeue(fiber, element, callback.call(element, value, element.props))
 	} else if (callback) {
-		for (var i = 0, length = callback.length, value = event; i < length; i++) {
-			if ((value = enqueue(fiber, element, event, callback[i])) !== undefined) {
-				if (Utility.thenable(event = value)) {
-					dequeue(fiber, element, event, callback.slice(i + 1, i = length))
-				}
-			}
+		for (var i = 0; i < callback.length; i++) {
+			enqueue(fiber, element, value, callback[i])
 		}
 	}
 }
@@ -56,11 +52,12 @@ export function enqueue (fiber, element, event, callback) {
 /**
  * @param {object} fiber
  * @param {object} element
- * @param {object} event
- * @param {(function|function[])} callback
+ * @param {object} value
  */
-export function dequeue (fiber, element, event, callback) {
-	Schedule.suspend(fiber, event, function (value) {
-		resolve(fiber, element, value, callback)
-	}, Exception.throws(fiber, element))
+export function dequeue (fiber, element, value) {
+	if (value !== undefined) {
+		if (Utility.thenable(value)) {
+			Schedule.suspend(fiber, value, function () {}, Exception.throws(fiber, element))
+		}
+	}
 }

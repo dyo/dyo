@@ -1,5 +1,6 @@
 import {join} from 'path'
 import {terser} from "rollup-plugin-terser"
+import size from 'rollup-plugin-size'
 
 const options = {mangle: true, compress: false}
 const defaults = {
@@ -21,13 +22,13 @@ export default ({configSrc = './', configInput = join(configSrc, 'index.js')}) =
 			...defaults,
 			input: configInput,
 			output: [{file: join(configSrc, 'dist', 'dyo.umd.js'), format: 'umd', name: 'Dyo', freeze: false, sourcemap: true}],
-			plugins: [terser(options)]
+			plugins: [terser(options), size()]
 		},
 		{
 			...defaults,
 			input: configInput,
 			output: [{file: join(configSrc, 'dist', 'dyo.esm.js'), format: 'esm', name: 'Dyo', freeze: false, sourcemap: true}],
-			plugins: [terser(options)]
+			plugins: [terser(options), size()]
 		}
 	]
 }

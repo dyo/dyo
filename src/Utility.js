@@ -93,6 +93,15 @@ export function request () {
 }
 
 /**
+ * @param {function} callback
+ * @param {any} value
+ * @return {object}
+ */
+export function immediate (callback, value) {
+	return new defer(function (resolve) { resolve(value) }).then(callback)
+}
+
+/**
  * @param {function} object
  * @param {(string|symbol)} key
  * @param {any} value

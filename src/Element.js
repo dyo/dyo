@@ -19,10 +19,10 @@ export var struct = Utility.extend(function element (uid, key, type, props, chil
 	this.host = null
 	this.parent = null
 	this.context = null
-	this.value = null
 	this.owner = null
-	this.state = null
 	this.stack = null
+	this.state = null
+	this.value = null
 }, {
 	handleEvent: {value: Event.handle}
 })

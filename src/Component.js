@@ -124,7 +124,7 @@ export function enqueue (element, value, callback) {
 				Schedule.enqueue(value, Enum.callback, element, element, element, element.value = callback)
 			}
 		} else {
-			dequeue(element)
+			element.value = Utility.immediate(dequeue, element)
 		}
 	}
 }
@@ -133,9 +133,14 @@ export function enqueue (element, value, callback) {
  * @param {object} element
  */
 export function dequeue (element) {
-	try {
-		dispatch(element.value = element)
-	} finally {
-		element.value = null
+	if (element.value !== null) {
+		dispatch(element)
 	}
+}
+
+/**
+ * @param {object} element
+ */
+export function request (element) {
+	enqueue(element, element.value, dequeue)
 }
