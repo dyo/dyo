@@ -19,9 +19,9 @@ export var struct = Utility.extend(function fiber (element, target) {
 	this.target = target
 	this.length = 0
 	this.queued = 0
-	this.index = 0
-	this.queue = []
 	this.stack = []
+	this.queue = []
+	this.index = 0
 	this.owner = null
 	this.async = null
 }, {
@@ -36,6 +36,18 @@ export function peek () {
 }
 
 /**
+ * @param {number} type
+ * @param {[type]} element
+ * @param {any} a
+ * @param {any} b
+ * @param {any} c
+ * @return {object}
+ */
+export function create (type, element, a, b, c) {
+	return {type: type, element: element, a: a, b: b, c: c}
+}
+
+/**
  * @param {object} fiber
  * @param {object} target
  * @param {any?} callback
@@ -45,7 +57,7 @@ export function archive (fiber, target, callback) {
 		if (Utility.callable(callback)) {
 			finalize(fiber, target, callback.call(fiber.element, target))
 		} else if (Utility.thenable(callback)) {
-			suspend(fiber, callback, function (value) { finalize(fiber, target, value) }, undefined)
+			suspend(fiber, callback, function (value) { finalize(fiber, target, value) }, null)
 		}
 	}
 }
@@ -57,13 +69,11 @@ export function archive (fiber, target, callback) {
  */
 export function request (fiber, target, callback) {
 	suspend(fiber, Utility.request(), function () {
-		try {
-			fiber.length = fiber.queued, fiber.queued = 0
-			fiber.stack = fiber.queue, fiber.queue = []
-		} finally {
-			finalize(fiber, target, callback)
-		}
-	}, undefined)
+		fiber.length = fiber.queued, fiber.queued = 0
+		fiber.stack = fiber.queue, fiber.queue = []
+
+		finalize(fiber, target, callback)
+	}, null)
 }
 
 /**
@@ -73,7 +83,7 @@ export function request (fiber, target, callback) {
  * @return {object}
  */
 export function pending (fiber, value, resolved) {
-	return suspend(fiber, Utility.resolve(value, resolved, undefined), function () {}, undefined)
+	return suspend(fiber, Utility.resolve(value, resolved, null), Utility.noop, null)
 }
 
 /**
@@ -136,7 +146,7 @@ export function forward (fiber, value, callback, payload) {
  * @return {void}
  */
 export function requeue (fiber, type, element, a, b, c) {
-	fiber.queue[fiber.queued++] = {type: type, element: element, a: a, b: b, c: c}
+	fiber.queue[fiber.queued++] = create(type, element, a, b, c)
 }
 
 /**
@@ -149,7 +159,7 @@ export function requeue (fiber, type, element, a, b, c) {
  * @return {void}
  */
 export function enqueue (fiber, type, element, a, b, c) {
-	fiber.stack[fiber.length++] = {type: type, element: element, a: a, b: b, c: c}
+	fiber.stack[fiber.length++] = create(type, element, a, b, c)
 }
 
 /**
@@ -230,7 +240,7 @@ export function checkout (executor, element, target, value, callback) {
  */
 export function finalize (fiber, target, callback) {
 	if (fiber.async !== null) {
-		resolve(fiber, fiber.async, finalize, undefined, [fiber, target, callback])
+		resolve(fiber, fiber.async, finalize, null, [fiber, target, callback])
 	} else if (fiber.length !== 0) {
 		try {
 			dequeue(fiber, fiber.length, fiber.stack)

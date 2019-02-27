@@ -24,10 +24,22 @@ export function flush (target) {
  */
 export function write (target, payload) {
 	if (typeof target.end === 'function') {
-		target.end(payload)
+		header(target).end(payload, 'utf8')
 	} else if (typeof target.send === 'function') {
 		target.send(payload)
 	} else {
 		target.body = payload
+	}
+}
+
+/**
+ * @param {object} target
+ * @param {object}
+ */
+export function header (target) {
+	try {
+		target.setHeader('content-type', 'text/html; charset=utf-8')
+	} finally {
+		return target
 	}
 }

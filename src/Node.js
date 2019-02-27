@@ -14,6 +14,27 @@ import * as Commit from './Commit.js'
  * @param {object} parent
  * @param {object} element
  * @param {object} current
+ * @param {any[]} children
+ * @return {object}
+ */
+function resolve (fiber, host, parent, element, current, children) {
+	try {
+		return create(fiber, element, parent, children[0] = Component.create(fiber, host, children[0] = element), current)
+	} catch (error) {
+		try {
+			return element === children[0] ? create(fiber, host, parent, children[0] = Element.empty(), current) : children[0]
+		} finally {
+			Exception.dispatch(fiber, host, element, error)
+		}
+	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} host
+ * @param {object} parent
+ * @param {object} element
+ * @param {object} current
  * @return {object}
  */
 export function create (fiber, host, parent, element, current) {
@@ -25,11 +46,7 @@ export function create (fiber, host, parent, element, current) {
 	try {
 		switch (element.host = host, uid) {
 			case Enum.component:
-				try {
-					return create(fiber, element, parent, children[0] = Component.create(fiber, host, children[0] = element), current)
-				} catch (error) {
-					return create(fiber, host, parent, children[0] = Element.empty(Exception.dispatch(fiber, host, element, error)), current)
-				}
+				return resolve(fiber, host, parent, element, current, children)
 			case Enum.element:
 				var context = element.context = Interface.context(parent.context, type)
 		}

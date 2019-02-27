@@ -29,30 +29,30 @@ export function compare (prev, next) {
 }
 
 /**
- * @param {function} children
+ * @param {function} value
  * @param {function?} callback
  * @return {function}
  */
-export function memo (children, callback) {
-	return memoize(children, callback !== undefined ? callback : compare)
+export function memo (value, callback) {
+	return memoize(value, callback !== undefined ? callback : compare)
 }
 
 /**
- * @param {function} children
+ * @param {function} value
  * @param {function} callback
  * @return {function}
  */
-export function memoize (children, callback) {
+export function memoize (value, callback) {
 	return function (props) {
 		if (Element.active(this)) {
 			if (this.value === null) {
 				if (callback(this.props, props)) {
-					return this.children[0]
+					return Element.children(this)
 				}
 			}
 		}
 
-		return children.call(this, props)
+		return value.call(this, props)
 	}
 }
 
@@ -95,7 +95,6 @@ export function update (fiber, host, element, props, children) {
 
 /**
  * @param {object} element
- * @return {object}
  */
 export function dispatch (element) {
 	Schedule.checkout(resolve, element, element.props, element.children, undefined)
@@ -104,7 +103,8 @@ export function dispatch (element) {
 /**
  * @param {object} fiber
  * @param {object} element
- * @param {object} value
+ * @param {object} props
+ * @param {any[]} children
  */
 export function resolve (fiber, element, props, children) {
 	if (Element.active(element)) {

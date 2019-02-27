@@ -50,7 +50,7 @@ export function resolve (fiber, host, parent, element, snapshot, type, a, b) {
  */
 export function enqueue (fiber, host, parent, element, snapshot, value, a, b) {
 	if (Element.active(element)) {
-		children(fiber, host, parent, 0, a, a === b ? Element.resolve(value, snapshot.props) : value)
+		children(fiber, host, parent, 0, a, a === b ? [Element.resolve(value, snapshot.props), Element.empty()] : value)
 	}
 }
 

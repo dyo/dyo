@@ -1,5 +1,5 @@
 const keys = [
-	'render', 'memo', 'Fragment', 'Children',
+	'render', 'memo', 'lazy', 'Fragment', 'Children',
 	'createContext', 'createElement', 'createPortal', 'cloneElement', 'isValidElement', 'h',
 	'useRef', 'useMemo', 'useCallback', 'useState', 'useReducer', 'useContext', 'useEffect', 'useLayout', 'useBoundary'
 ]

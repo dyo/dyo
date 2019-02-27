@@ -262,7 +262,24 @@ export function parent (element) {
  * @return {object}
  */
 export function sibling (element) {
-	return element.uid < Enum.target ? sibling(element.children[0]) : element
+	return element.uid < Enum.target ? sibling(children(element)) : element
+}
+
+/**
+ * @param {object?} element
+ * @return {object[]}
+ */
+export function children (element) {
+	return element.children[0]
+}
+
+/**
+ * @param {object} element
+ * @param {object} value
+ * @return {object}
+ */
+export function reparent (element, value) {
+	return (value.parent = element).children[0] = value
 }
 
 /**
@@ -271,5 +288,5 @@ export function sibling (element) {
  * @return {object}
  */
 export function resolve (value, props) {
-	return [from(typeof value === 'object' && value !== null && 'default' in value ? value.default : value, 0, props), empty()]
+	return from(typeof value === 'object' && value !== null && 'default' in value ? value.default : value, 0, props)
 }

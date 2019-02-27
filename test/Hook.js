@@ -169,6 +169,26 @@ describe('Hook', () => {
 				})
 			})
 		})
+
+		it('should use a callback hook with arguments', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const value = useCallback((...args) => args, [0])
+
+				stack.push(value)
+
+				return
+			}
+
+			render(h(Primary), target, (current) => {
+				render(h(Primary), target, (current) => {
+					assert.equal(stack[0], stack[1])
+					assert.deepEqual(stack[0](1, 2), stack[1](1, 2))
+					assert.deepEqual(stack[0](1, 2), [1, 2, [0]])
+				})
+			})
+		})
 	})
 
 	describe('useState', () => {
@@ -849,6 +869,7 @@ describe('Hook', () => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = props => {
+				const [state, dispatch] = useState(0)
 				useBoundary(exception => stack.push(1))
 
 				return props => { throw 0 }
@@ -912,7 +933,7 @@ describe('Hook', () => {
 
 			assert.doesNotThrow(() => {
 				render(h(Primary), target, (current) => {
-					assert.deepEqual(stack, [{name: 'Exception', message: 0}])
+					assert.deepEqual(stack, [{name: 'Exception', message: 0, bubbles: false}])
 				})
 			})
 		})
@@ -932,13 +953,11 @@ describe('Hook', () => {
 				return 'Preserve'
 			}
 
-			assert.doesNotThrow(() => {
-				render(h(Primary, {}, h(Secondary, {throw: false})), target)
-				render(h(Primary, {}, h(Secondary, {throw: true})), target)
+			render(h(Primary, {}, h(Secondary, {throw: false})), target)
+			render(h(Primary, {}, h(Secondary, {throw: true})), target)
 
-				assert.html(target, 'Preserve')
-				assert.deepEqual(stack, [{name: 'Exception', message: 0}])
-			}, 'error!')
+			assert.html(target, 'Preserve')
+			assert.deepEqual(stack, [{name: 'Exception', message: 'error!', bubbles: false}])
 		})
 
 		it('should catch errors raised from promise elements', (done) => {
@@ -953,7 +972,7 @@ describe('Hook', () => {
 			render(h(Primary), target, (current) => {
 				assert.html(current, '')
 			}).then((current) => {
-				done(assert.deepEqual(stack, [{name: 'Exception', message: 0}]))
+				done(assert.deepEqual(stack, [{name: 'Exception', message: 0, bubbles: false}]))
 			})
 		})
 	})

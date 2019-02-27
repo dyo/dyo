@@ -5,11 +5,12 @@ import * as Utility from './Utility.js'
  * @return {object}
  */
 export function state (element) {
-	return element.state !== null ? element.state : element.state = {stack: null}
+	return element.state !== null ? element.state : element.state = {}
 }
 
 /**
- * @return {}
+ * @param {object} element
+ * @return {any[]}
  */
 export function stack (element) {
 	return element.stack !== null ? element.stack : element.stack = []

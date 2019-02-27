@@ -34,6 +34,17 @@ export function reduce (state, value) {
 }
 
 /**
+ * @param {function} callback
+ * @param {any?} value
+ * @param {any?} props
+ * @param {any[]?} state
+ * @return {any}
+ */
+export function forward (callback, value, props, state) {
+	return callback(value, props, state)
+}
+
+/**
  * @param {object} element
  * @param {object} children
  * @param {any} value
@@ -203,10 +214,7 @@ export function boundary (callback) {
 	var children = element.children
 
 	if (index === children.length) {
-		var state = Lifecycle.state(element)
-		var stack = state.stack ? state.stack : state.stack = []
-
-		children[index] = stack[stack.length] = [callback]
+		children[index] = [callback]
 	} else {
 		children[index][0] = callback
 	}
@@ -214,21 +222,22 @@ export function boundary (callback) {
 
 /**
  * @param {function} callback
+ * @param {any} value
  * @return {function}
  */
-export function callback (callback) {
+export function callback (callback, value) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [callback, function () { return children[0].apply(this, arguments) }]
+		children = children[index] = [callback, value, function (value, props) { return forward(children[0], value, props, children[1]) }]
 	} else {
-		children = children[index], children[0] = callback
+		children = children[index], children[0] = callback, children[1] = value
 	}
 
-	return children[1]
+	return children[2]
 }
 
 /**

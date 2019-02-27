@@ -73,16 +73,22 @@ export var defer = typeof Promise === 'function' ? Promise : function (c) { retu
 /**
  * @param {function}
  * @param {number}
+ * @return {number}
  */
 export var timer = typeof setTimeout === 'function' ? setTimeout : function (c, d) { return setTimeout(c, d) }
 
 /**
+ * @return {void}
+ */
+export function noop () {}
+
+/**
  * @param {function} callback
  * @param {number?} duration
- * @return {number}
+ * @return {void}
  */
 export function timeout (callback, duration) {
-	return timer(callback, duration | 0)
+	timer(callback, duration | 0)
 }
 
 /**
@@ -241,25 +247,29 @@ export function each (callback, value, index, array) {
  * @return {PromiseLike<any>}
  */
 export function resolve (value, resolved, rejected) {
-	if (thenable(value)) {
-		return value.then(function (value) {
-			if (typeof value === 'object' && value !== null) {
-				if (callable(value.json) && callable(value.blob)) {
-					return resolve(value.json(), resolved, rejected)
-				}
-			}
+	return thenable(value) ? value.then(resolved, rejected) : settled(value, resolved, rejected, [], 0)
+}
 
-			return resolved(value)
-		}, rejected)
-	} else {
-		return new defer(function (fulfill) {
-			for (var i = 0, done = [], size = value.length, callback = null; i < size; i++) {
-				resolve(value[i], callback !== null ? callback : callback = function (value) {
-					if (size === done.push(value)) {
-						fulfill(resolved(done))
+/**
+ * @param {PromiseLike<any>[]?} value
+ * @param {function} resolved
+ * @param {function?} rejected
+ * @param {any[]} fulfilled
+ * @param {number} position
+ * @return {PromiseLike<any>}
+ */
+export function settled (value, resolved, rejected, fulfilled, position) {
+	return new defer(function (fulfill) {
+		for (var i = position, length = value.length, callback = null; i < length; i++) {
+			resolve(value[i], callback !== null ? callback : callback = function () {
+				if (length === fulfilled.push(null)) {
+					if (length === value.length) {
+						fulfill(resolved())
+					} else {
+						settled(value, resolved, rejected, fulfilled, i)
 					}
-				}, callback)
-			}
-		})
-	}
+				}
+			}, callback)
+		}
+	})
 }

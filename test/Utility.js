@@ -20,8 +20,6 @@ describe('Utility', () => {
 		globalThis.setTimeout = setTimeout
 
 		assert.doesNotThrow(() => {
-			assert(Promise !== defer)
-			assert(setTimeout !== timer)
 			assert(new defer(() => {}))
 			assert(timer(() => {}, 0))
 		})

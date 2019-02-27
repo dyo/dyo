@@ -48,11 +48,11 @@ export function create (uid, type, children, context, owner) {
 			return owner.createTextNode(children)
 		case Enum.portal: case Enum.empty:
 			return owner.createTextNode('')
-		case Enum.thenable: case Enum.fragment:
-			return owner.createDocumentFragment()
 		case Enum.target:
 			return target(type, owner)
 	}
+
+	return owner.createDocumentFragment()
 }
 
 /**

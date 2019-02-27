@@ -78,9 +78,7 @@ describe('Event', () => {
 		const stack = []
 
 		render(h('button', {
-			onClick: [e => stack.push(e.type), e => Promise.resolve({
-				json: () => Promise.resolve().then(() => stack.push('resolve')), blob: () => {}
-			}), e => stack.push(e.type)]
+			onClick: [e => stack.push(e.type), e => Promise.resolve().then(() => stack.push('resolve')), e => stack.push(e.type)]
 		}), target, (current) => {
 			current.firstChild.dispatchEvent(new Event('click'))
 			assert.deepEqual(stack, ['click', 'click'])

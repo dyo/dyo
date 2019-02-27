@@ -2,6 +2,7 @@ import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Schedule from './Schedule.js'
+import * as Suspense from './Suspense.js'
 
 /**
  * @constructor
@@ -9,9 +10,10 @@ import * as Schedule from './Schedule.js'
  * @param {any} value
  */
 export var struct = Utility.extend(function exception (host, value) {
-	this[Enum.identifier] = host
 	this.name = 'Exception'
 	this.message = value
+	this.bubbles = Utility.thenable(value)
+	this[Enum.identifier] = host
 }, {
 	toString: {value: function () { return this.name + ': ' + this.message + '\n' + this.stack }},
 	stack: {get: function () { return Utility.define(this, 'stack', trace(this[Enum.identifier], '')) }, configurable: true}
@@ -27,6 +29,15 @@ export function trace (host, value) {
 }
 
 /**
+ * @param {object} fiber
+ * @param {object} host
+ * @return {function}
+ */
+export function throws (fiber, host) {
+	return function (exception) { dispatch(fiber, host, host, exception) }
+}
+
+/**
  * @param {object} host
  * @param {object?} value
  * @return {any}
@@ -37,11 +48,16 @@ export function create (host, value) {
 
 /**
  * @param {object} fiber
- * @param {object} host
- * @return {function}
+ * @param {object} export
  */
-export function throws (fiber, host) {
-	return function (exception) { dispatch(fiber, host, host, exception) }
+export function destroy (fiber, exception) {
+	fiber.element = null
+
+	try {
+		Utility.throws(exception.message)
+	} finally {
+		Utility.report(exception + '')
+	}
 }
 
 /**
@@ -51,11 +67,7 @@ export function throws (fiber, host) {
  * @param {any} exception
  */
 export function dispatch (fiber, host, element, exception) {
-	if (fiber.element !== null) {
-		resolve(fiber, host, element, create(host, exception), host)
-	} else {
-		Utility.throws(exception)
-	}
+	fiber.element !== null ? resolve(fiber, host, element, create(host, exception), host) : Utility.throws(exception)
 }
 
 /**
@@ -68,17 +80,11 @@ export function dispatch (fiber, host, element, exception) {
 export function resolve (fiber, host, element, exception, current) {
 	switch (current.uid) {
 		case Enum.target:
-			fiber.element = null
-
-			try {
-				Utility.throws(exception.message)
-			} finally {
-				Utility.report(exception + '')
-			}
+			return destroy(fiber, exception)
 		case Enum.component:
 			if (current !== element) {
-				if (current.state !== null && current.state.stack !== null) {
-					return enqueue(fiber, host, element, exception, current, current.state.stack)
+				if (enqueue(fiber, host, element, exception, current) !== null) {
+					return
 				} else if (host !== element) {
 					Utility.throws(exception)
 				}
@@ -94,8 +100,18 @@ export function resolve (fiber, host, element, exception, current) {
  * @param {object} element
  * @param {object} exception
  * @param {object} current
- * @param {function[][]} callback
+ * @return {void}
  */
-export function enqueue (fiber, host, element, exception, current, callback) {
-	Schedule.enqueue(fiber, Enum.callback, current, current, exception, callback)
+export function enqueue (fiber, host, element, exception, current) {
+	if (exception.bubbles) {
+		Suspense.dispatch(fiber, current, element, exception.message)
+	} else {
+		for (var i = 1, index = 0, value = null, callback = [], children = current.children; i < children.length; i++) {
+			if ((value = children[i]).length === 1) {
+				callback[index++] = value
+			}
+		}
+
+		return index === 0 ? null : Schedule.enqueue(fiber, Enum.callback, current, current, exception, callback)
+	}
 }
