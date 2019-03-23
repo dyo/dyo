@@ -4,14 +4,14 @@ import * as Event from './Event.js'
 
 /**
  * @constructor
- * @param {number} uid
+ * @param {number} identity
  * @param {any} key
  * @param {any} type
  * @param {object} props
  * @param {object} children
  */
-export var struct = Utility.extend(function element (uid, key, type, props, children) {
-	this.uid = uid
+export var struct = Utility.extend(function element (identity, key, type, props, children) {
+	this.identity = identity
 	this.key = key
 	this.type = type
 	this.props = props
@@ -20,9 +20,9 @@ export var struct = Utility.extend(function element (uid, key, type, props, chil
 	this.parent = null
 	this.context = null
 	this.owner = null
-	this.stack = null
-	this.state = null
 	this.value = null
+	this.state = null
+	this.stack = null
 }, {
 	handleEvent: {value: Event.handle}
 })
@@ -48,7 +48,7 @@ export function empty () {
  * @return {object}
  */
 export function text (value, index) {
-	return new struct(Enum.text, key(index), Enum.text, null, value)
+	return new struct(Enum.text, key(index), '', null, value)
 }
 
 /**
@@ -56,8 +56,8 @@ export function text (value, index) {
  * @param {number} index
  * @return {object}
  */
-export function fragment (value, index) {
-	return new struct(Enum.fragment, key(index), Enum.fragment, null, value)
+export function iterable (value, index) {
+	return new struct(Enum.iterable, key(index), null, null, value)
 }
 
 /**
@@ -67,7 +67,7 @@ export function fragment (value, index) {
  * @return {object}
  */
 export function portal (value, type, props) {
-	return new struct(Enum.portal, props === undefined ? props = null : props.key, Enum.portal, null, [target(value, type, props)])
+	return new struct(Enum.portal, props === undefined ? props = null : props.key, null, null, [target(value, type, props)])
 }
 
 /**
@@ -81,28 +81,18 @@ export function target (value, type, props) {
 }
 
 /**
+ * @return {object}
+ */
+export function offscreen () {
+	return new struct(Enum.element, null, Enum.offscreen, null, [])
+}
+
+/**
  * @param {any} value
  * @return {object}
  */
 export function root (value) {
 	return from([value], 0, null)
-}
-
-/**
- * @param {any} value
- * @return {number}
- */
-export function identity (value) {
-	switch (typeof value) {
-		case 'function':
-			return Enum.component
-		case 'number':
-			return Enum.fragment
-		case 'object':
-			return Enum.thenable
-	}
-
-	return Enum.element
 }
 
 /**
@@ -165,9 +155,9 @@ export function from (value, index, props) {
 					for (var i = 0; i < value.length; i++) {
 						value[i] = from(value[i], i, props)
 					}
-					return value[i] = empty(), fragment(value, key(index))
+					return value[i] = empty(), iterable(value, key(index))
 				} else if (Utility.iterable(value)) {
-					return fragment(iterator(value, 0, props), key(index))
+					return iterable(iterator(value, 0, props), key(index))
 				} else if (Utility.asyncIterable(value)) {
 					return create(generator(value), props)
 				} else if (Utility.thenable(value)) {
@@ -180,7 +170,7 @@ export function from (value, index, props) {
 }
 
 /**
- * @param {(string|number|function|PromiseLike<any>} a
+ * @param {(string|number|function|PromiseLike<any>?} a
  * @param {({key?,ref?})?} b
  * @param {...any?}
  * @return {object}
@@ -190,12 +180,23 @@ export function create (a, b) {
 	var index = 0
 	var length = arguments.length
 	var size = length - i
-	var uid = identity(a)
+	var identity = Enum.element
+	var type = a
 	var props = b ? b : {}
 	var children = []
-	var element = new struct(uid, props.key, a, props, children)
 
-	if (uid === Enum.component) {
+	switch (typeof type) {
+		case 'function':
+			identity = Enum.component
+			break
+		case 'object':
+			identity = type === Enum.fragment ? Enum.iterable : Enum.thenable
+			break
+	}
+
+	var element = new struct(identity, props.key, type, props, children)
+
+	if (identity === Enum.component) {
 		if (size > 0) {
 			for (props.children = size === 1 ? arguments[i++] : children = []; i < length; ++i) {
 				children[index++] = arguments[i]
@@ -207,7 +208,8 @@ export function create (a, b) {
 				children[index] = from(arguments[i], index++, props)
 			}
 		}
-		if (uid !== Enum.element) {
+
+		if (identity !== Enum.element) {
 			children[index] = empty()
 		}
 	}
@@ -254,7 +256,7 @@ export function active (element) {
  * @return {object}
  */
 export function parent (element) {
-	return element.uid < Enum.target ? parent(element.parent) : element
+	return element.identity < Enum.target ? parent(element.parent) : element
 }
 
 /**
@@ -262,7 +264,16 @@ export function parent (element) {
  * @return {object}
  */
 export function sibling (element) {
-	return element.uid < Enum.target ? sibling(children(element)) : element
+	return element.identity < Enum.target ? sibling(children(element)) : element
+}
+
+/**
+ * @param {object} element
+ * @param {object} value
+ * @return {object?}
+ */
+export function fallback (element) {
+	return element.identity === Enum.component ? from(element.props.fallback, 0, element.props) : null
 }
 
 /**

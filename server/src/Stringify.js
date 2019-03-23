@@ -14,8 +14,7 @@ export function element (value) {
 			case 'function':
 				return element(children[0])
 			case 'string':
-				var props = properties(value.props, children)
-				var payload = '<' + type + props + '>'
+				var payload = '<' + type + properties(value.props, children) + '>'
 
 				switch (type.toLowerCase()) {
 					case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
@@ -75,7 +74,7 @@ export function property (name, value, children) {
 		case 'className':
 			return property('class', value, children)
 		case 'innerHTML':
-			children.splice(0, children.length, Dyo.createElement([], null, value))
+			children.splice(0, children.length, Dyo.createElement(null, null, value))
 		case 'ref': case 'key':
 			return ''
 		case 'style':

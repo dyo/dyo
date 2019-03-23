@@ -1,6 +1,8 @@
 import * as Enum from './Enum.js'
+import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Interface from './Interface.js'
+import * as Schedule from './Schedule.js'
 
 /**
  * @param {object} parent
@@ -30,12 +32,12 @@ export function mount (parent, element, sibling) {
  * @param {object} element
  */
 export function remove (parent, element) {
-	var uid = element.uid
+	var identity = element.identity
 
-	if (uid < Enum.portal) {
+	if (identity < Enum.portal) {
 		var children = element.children
 
-		if (uid !== Enum.component) {
+		if (identity !== Enum.component) {
 			for (var i = 0; i < children.length; i++) {
 				remove(parent, children[i])
 			}
@@ -52,12 +54,12 @@ export function remove (parent, element) {
  * @param {object} element
  */
 export function append (parent, element) {
-	var uid = element.uid
+	var identity = element.identity
 
-	if (uid < Enum.portal) {
+	if (identity < Enum.portal) {
 		var children = element.children
 
-		if (uid !== Enum.component) {
+		if (identity !== Enum.component) {
 			for (var i = 0; i < children.length; i++) {
 				append(parent, children[i])
 			}
@@ -75,12 +77,12 @@ export function append (parent, element) {
  * @param {object} sibling
  */
 export function insert (parent, element, sibling) {
-	var uid = element.uid
+	var identity = element.identity
 
-	if (uid < Enum.portal) {
+	if (identity < Enum.portal) {
 		var children = element.children
 
-		if (uid !== Enum.component) {
+		if (identity !== Enum.component) {
 			for (var i = 0; i < children.length; i++) {
 				insert(parent, children[i], sibling)
 			}
@@ -93,10 +95,19 @@ export function insert (parent, element, sibling) {
 }
 
 /**
+ * @param {object} element
+ * @param {object?} value
+ * @param {object?} instance
+ */
+export function target (parent, element) {
+	Interface.append(parent.value, element.value)
+}
+
+/**
  * @param {object} parent
  * @param {object} element
  */
-export function target (parent, element) {
+export function portal (parent, element) {
 	element.value = Interface.target(element.type, parent.owner), append(element, element)
 }
 
@@ -126,12 +137,11 @@ export function properties (element, value, instance)  {
 		for (var key in value) {
 			switch (key) {
 				case 'ref':
-					reference(element, element.stack, null)
-					reference(element, element.stack = value[key], instance)
-				case 'key':
+					refs(element, value[key], instance)
+				case 'key': case 'children':
 					break
 				default:
-					Interface.props(key, value[key], instance, element)
+					Interface.properties(key, value[key], instance, element)
 			}
 		}
 	}
@@ -142,8 +152,35 @@ export function properties (element, value, instance)  {
  * @param {object?} value
  * @param {object?} instance
  */
+export function refs (element, value, instance) {
+	if (!Interface.noop(element)) {
+		reference(element, element.stack, null)
+		reference(element, element.stack = value, instance)
+	}
+}
+
+/**
+ * @param {object} element
+ * @param {object?} value
+ * @param {object?} instance
+ */
 export function reference (element, value, instance) {
 	if (value !== null) {
-		value.current = instance
+		if (Utility.callable(value)) {
+			callback(element, value, instance)
+		} else {
+			value.current = instance
+		}
 	}
+}
+
+/**
+ * @param {object} element
+ * @param {object} value
+ * @param {object?} instance
+ */
+export function callback (element, value, instance) {
+	Schedule.callback(element, value, function (value, props) {
+		return Utility.callable(value = value(instance, props)) ? element.stack = value : value
+	})
 }

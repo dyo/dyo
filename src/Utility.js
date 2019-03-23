@@ -68,43 +68,39 @@ export var asyncIterator = symbol.asyncIterator || '@@asyncIterator'
  * @param {function}
  * @return {object}
  */
-export var defer = typeof Promise === 'function' ? Promise : function (c) { return new Promise(c) }
+export var promise = typeof Promise === 'function' ? Promise : function (callback) { return new Promise(callback) }
 
 /**
- * @param {function}
- * @param {number}
- * @return {number}
- */
-export var timer = typeof setTimeout === 'function' ? setTimeout : function (c, d) { return setTimeout(c, d) }
-
-/**
- * @return {void}
- */
-export function noop () {}
-
-/**
- * @param {function} callback
- * @param {number?} duration
- * @return {void}
- */
-export function timeout (callback, duration) {
-	timer(callback, duration | 0)
-}
-
-/**
- * @return {object}
- */
-export function request () {
-	return new defer(timeout)
-}
-
-/**
- * @param {function} callback
  * @param {any} value
  * @return {object}
  */
-export function immediate (callback, value) {
-	return new defer(function (resolve) { resolve(value) }).then(callback)
+export function request (value) {
+	return new promise(function (resolve) { animation(function () { resolve(value) }) })
+}
+
+/**
+ * @param {function} callback
+ * @return {object}
+ */
+export function respond (callback) {
+	return request(callback).then(callback)
+}
+
+/**
+ * @param {function} callback
+ * @return {number}
+ */
+export function animation (callback) {
+	return typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) : setTimeout(callback, 16)
+}
+
+/**
+ * @param {function} callback
+ * @param {number} duration
+ * @return {number}
+ */
+export function timeout (callback, duration) {
+	return setTimeout(callback, duration)
 }
 
 /**
@@ -154,7 +150,7 @@ export function callable (value) {
  * @param {boolean}
  */
 export function thenable (value) {
-	return value !== null && typeof value === 'object' && callable(value.then)
+	return value !== undefined && value !== null && typeof value === 'object' && callable(value.then)
 }
 
 /**
@@ -182,12 +178,21 @@ export function iterator (value) {
 }
 
 /**
- * @param {object} value
+ * @param {object} object
  * @param {(string|number|symbol)} key
  * @return {boolean}
  */
-export function has (value, key) {
-	return hop.call(value, key)
+export function has (object, key) {
+	return hop.call(object, key)
+}
+
+/**
+ * @param {object} object
+ * @param {(symbol|string|number)} key
+ * @param {any} value
+ */
+export function set (object, key, value) {
+	return object[key] = value
 }
 
 /**
@@ -247,27 +252,22 @@ export function each (callback, value, index, array) {
  * @return {PromiseLike<any>}
  */
 export function resolve (value, resolved, rejected) {
-	return thenable(value) ? value.then(resolved, rejected) : settled(value, resolved, rejected, [], 0)
+	return thenable(value) ? value.then(resolved, rejected) : settled(value, resolved, rejected, 0)
 }
 
 /**
  * @param {PromiseLike<any>[]?} value
  * @param {function} resolved
  * @param {function?} rejected
- * @param {any[]} fulfilled
  * @param {number} position
  * @return {PromiseLike<any>}
  */
-export function settled (value, resolved, rejected, fulfilled, position) {
-	return new defer(function (fulfill) {
-		for (var i = position, length = value.length, callback = null; i < length; i++) {
+export function settled (value, resolved, rejected, position) {
+	return new promise(function (fulfill) {
+		for (var i = position, index = position, length = value.length, callback = null; i < length; i++) {
 			resolve(value[i], callback !== null ? callback : callback = function () {
-				if (length === fulfilled.push(null)) {
-					if (length === value.length) {
-						fulfill(resolved())
-					} else {
-						settled(value, resolved, rejected, fulfilled, i)
-					}
+				if (length === ++index) {
+					fulfill(length === value.length ? resolved() : settled(value, resolved, rejected, index))
 				}
 			}, callback)
 		}

@@ -1,9 +1,9 @@
-import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Exception from './Exception.js'
 import * as Reconcile from './Reconcile.js'
 import * as Schedule from './Schedule.js'
+import * as Event from './Event.js'
 
 /**
  * @param {object} prev
@@ -43,17 +43,26 @@ export function memo (value, callback) {
  * @return {function}
  */
 export function memoize (value, callback) {
-	return function (props) {
-		if (Element.active(this)) {
-			if (this.value === null) {
-				if (callback(this.props, props)) {
-					return Element.children(this)
-				}
+	return function (props) { return forward(value, callback, this, props) }
+}
+
+/**
+ * @param {function} value
+ * @param {function} callback
+ * @param {object} element
+ * @param {object} props
+ * @return {function}
+ */
+export function forward (value, callback, element, props) {
+	if (Element.active(element)) {
+		if (element.value === null) {
+			if (callback(element.props, props)) {
+				return Element.children(element)
 			}
 		}
-
-		return value.call(this, props)
 	}
+
+	return value.call(element, props)
 }
 
 /**
@@ -97,7 +106,7 @@ export function update (fiber, host, element, props, children) {
  * @param {object} element
  */
 export function dispatch (element) {
-	Schedule.checkout(resolve, element, element.props, element.children, undefined)
+	Schedule.checkout(resolve, element, element.props, element.children, null)
 }
 
 /**
@@ -119,18 +128,19 @@ export function resolve (fiber, element, props, children) {
  */
 export function enqueue (element, value, callback) {
 	if (value === null) {
-		if (value = Schedule.peek()) {
+		if (Schedule.peek() !== null) {
 			if (element.value !== callback) {
-				Schedule.enqueue(value, Enum.callback, element, element, element, element.value = callback)
+				Schedule.callback(element, element, element.value = callback)
 			}
 		} else {
-			element.value = Utility.immediate(dequeue, element)
+			element.value = Event.request(element, callback)
 		}
 	}
 }
 
 /**
  * @param {object} element
+ * @return {object?}
  */
 export function dequeue (element) {
 	if (element.value !== null) {

@@ -19,13 +19,11 @@ import * as Node from './Node.js'
 export function resolve (fiber, host, parent, element, snapshot, type, a, b) {
 	if (element !== snapshot) {
 		Utility.timeout(function () {
-			if (!element.value) {
-				enqueue(fiber, host, parent, element, snapshot, b, a, [])
-			}
-		}, Enum.timeout)
+			element.value = element.value ? null : enqueue(fiber, host, parent, element, snapshot, b, a, [])
+		}, Enum.network)
 	}
 
-	return element.value = Schedule.suspend(fiber, type, function (value) {
+	return Schedule.suspend(fiber, type, function (value) {
 		if (element.value = element.type === type) {
 			if (Utility.asyncIterable(type)) {
 				if (!value.done) {
@@ -64,8 +62,8 @@ export function enqueue (fiber, host, parent, element, snapshot, value, a, b) {
  * @param {number} index
  */
 export function replace (fiber, host, parent, element, snapshot, siblings, index) {
-	Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, siblings[index] = snapshot, null), element)
-	Schedule.dispatch(fiber, Enum.unmount, host, parent, element, Node.destroy(fiber, parent, element, null))
+	Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, siblings[index] = snapshot, null), element)
+	Schedule.commit(fiber, Enum.unmount, host, parent, element, Node.destroy(fiber, parent, element, null))
 }
 
 /**
@@ -82,22 +80,22 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 		return
 	}
 
-	var uid = snapshot.uid
+	var identity = snapshot.identity
 	var type = snapshot.type
 	var a = element.children
 	var b = snapshot.children
 
 	if (element.type === type) {
-		switch (uid) {
+		switch (identity) {
 			case Enum.text:
 				if (a !== b) {
-					Schedule.dispatch(fiber, Enum.content, host, parent, element, element.children = b)
+					Schedule.commit(fiber, Enum.content, host, parent, element, element.children = b)
 				}
 			case Enum.empty:
 				return
 			case Enum.component:
-				return Schedule.dispatch(fiber, Enum.component, host, element, snapshot.props, a)
-			case Enum.fragment:
+				return Schedule.commit(fiber, Enum.component, host, element, snapshot.props, a)
+			case Enum.iterable:
 				return children(fiber, host, element, 0, a, b)
 			case Enum.thenable:
 				return resolve(fiber, host, parent, element, snapshot, element.type = type, a, b)
@@ -106,11 +104,11 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 		children(fiber, host, element, 0, a, b)
 		props(fiber, host, parent, element, object(element.props, element.props = snapshot.props))
 	} else {
-		if (element.uid === uid) {
-			switch (element.type = type, uid) {
+		if (element.identity === identity) {
+			switch (element.type = type, identity) {
 				case Enum.target:
-					Schedule.dispatch(fiber, Enum.props, host, element, element, object(element.props, element.props = {}))
-					Schedule.dispatch(fiber, Enum.target, host, element, element, element)
+					Schedule.commit(fiber, Enum.props, host, element, element, object(element.props, element.props = {}))
+					Schedule.commit(fiber, Enum.portal, host, element, element, element)
 				case Enum.thenable:
 					return update(fiber, host, parent, element, snapshot, siblings, index)
 			}
@@ -152,7 +150,7 @@ export function children (fiber, host, parent, offset, a, b) {
 	var delta = 0
 
 	while (true) {
-		// step 1, prefix/suffix/affix(rl)/affix(lr)
+		// step 1, common prefix/suffix/affix(rl)/affix(lr)
 		outer: if (alen * blen !== 0) {
 			while (ahead.key === bhead.key) {
 				update(fiber, host, parent, ahead, bhead, a, aidx)
@@ -166,14 +164,14 @@ export function children (fiber, host, parent, offset, a, b) {
 			}
 			if (atail.key === bhead.key) {
 				update(fiber, host, parent, atail, bhead, a, aidx)
-				Schedule.dispatch(fiber, Enum.mount, host, parent, atail, a[aidx])
+				Schedule.commit(fiber, Enum.mount, host, parent, atail, a[aidx])
 				a.splice(aidx, 0, (a.splice(aend, 1), ++delta, atail))
 				ahead = a[++aidx], bhead = b[++bidx], atail = a[aend]
 				continue
 			}
 			if (ahead.key === btail.key) {
 				update(fiber, host, parent, ahead, btail, a, aend)
-				Schedule.dispatch(fiber, Enum.mount, host, parent, ahead, a[aend + 1])
+				Schedule.commit(fiber, Enum.mount, host, parent, ahead, a[aend + 1])
 				a.splice(aend, 0, (a.splice(aidx, 1), --delta, ahead))
 				atail = a[--aend], btail = b[--bend], ahead = a[aidx]
 				continue
@@ -185,13 +183,13 @@ export function children (fiber, host, parent, offset, a, b) {
 			if (bidx <= bend) {
 				atail = a[aend + 1]
 				while (bidx <= bend) {
-					Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, btail = b[bidx], null), atail)
+					Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, btail = b[bidx], null), atail)
 					a.splice(bidx++, 0, btail)
 				}
 			}
 		} else if (bidx > bend) {
 			while (aidx <= aend) {
-				Schedule.dispatch(fiber, Enum.unmount, host, parent, ahead = a[aend], Node.destroy(fiber, parent, ahead, null))
+				Schedule.commit(fiber, Enum.unmount, host, parent, ahead = a[aend], Node.destroy(fiber, parent, ahead, null))
 				a.splice(aend--, 1)
 			}
 		} else if (((apos = aend + 1) - aidx) * ((bpos = bend + 1) - bidx) === 1) {
@@ -207,19 +205,19 @@ export function children (fiber, host, parent, offset, a, b) {
 			}
 
 			if (bkeys[atail.key] === undefined) {
-				Schedule.dispatch(fiber, Enum.unmount, host, parent, atail, Node.destroy(fiber, parent, atail, null))
+				Schedule.commit(fiber, Enum.unmount, host, parent, atail, Node.destroy(fiber, parent, atail, null))
 				a.splice((atail = aend > 0 ? a[aend - 1] : a[aend + 1], --alen, aend--), 1)
 			} else if (bkeys[ahead.key] === undefined) {
-				Schedule.dispatch(fiber, Enum.unmount, host, parent, ahead, Node.destroy(fiber, parent, ahead, null))
+				Schedule.commit(fiber, Enum.unmount, host, parent, ahead, Node.destroy(fiber, parent, ahead, null))
 				a.splice((ahead = a[aidx + 1], --delta, --alen, --aend, aidx), 1)
 			} else if (akeys[bhead.key] === undefined) {
-				Schedule.dispatch(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, bhead, null), ahead)
+				Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, bhead, null), ahead)
 				a.splice((++delta, ++alen, ++aend, aidx), 0, bhead)
 				ahead = a[++aidx], bhead = b[++bidx]
 			} else {
 				update(fiber, host, parent, amove = a[apos = (akeys[ahead.key] = akeys[bhead.key]) + delta], bhead, a, aidx)
-				Schedule.dispatch(fiber, Enum.mount, host, parent, a[aidx] = amove, ahead)
-				Schedule.dispatch(fiber, Enum.mount, host, parent, a[apos] = ahead, a[apos + 1])
+				Schedule.commit(fiber, Enum.mount, host, parent, a[aidx] = amove, ahead)
+				Schedule.commit(fiber, Enum.mount, host, parent, a[apos] = ahead, a[apos + 1])
 				ahead = a[++aidx], bhead = b[++bidx]
 			}
 			continue
@@ -237,7 +235,7 @@ export function children (fiber, host, parent, offset, a, b) {
  */
 export function props (fiber, host, parent, a, b) {
 	if (b !== null) {
-		Schedule.dispatch(fiber, Enum.props, host, parent, a, b)
+		Schedule.commit(fiber, Enum.props, host, parent, a, b)
 	}
 }
 
@@ -248,14 +246,14 @@ export function props (fiber, host, parent, a, b) {
  */
 export function object (a, b) {
 	if (a === b) {
-		return
+		return null
 	}
 
 	var size = 0
 	var diff = {}
 
 	for (var key in a) {
-		if (Utility.has(b, key) === false) {
+		if (!Utility.has(b, key)) {
 			diff[++size, key] = null
 		}
 	}

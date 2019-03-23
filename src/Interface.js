@@ -2,21 +2,31 @@ import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 
 /**
+ * @constructor
+ */
+export var struct = Utility.extend(function document () {
+	this.nodeValue  = ''
+	this.textContent = null
+	this.ownerDocument = null
+	this.documentElement = this
+}, {
+	createElement: {value: self},
+	createElementNS: {value: self},
+	createTextNode: {value: self},
+	createDocumentFragment: {value: self},
+	removeChild: {value: self},
+	appendChild: {value: self},
+	insertBefore: {value: self},
+	addEventListener: {value: self},
+	setAttribute: {value: self},
+	removeAttribute: {value: self},
+	style: {value: {setProperty: self}}
+})
+
+/**
  * @type {object}
  */
-export var frame = {
-	createElement: self,
-	createElementNS: self,
-	createTextNode: self,
-	createDocumentFragment: self,
-	removeChild: self,
-	appendChild: self,
-	insertBefore: self,
-	addEventListener: self,
-	setAttribute: self,
-	removeAttribute: self,
-	style: {setProperty: self}
-}
+export var frame = new struct()
 
 /**
  * @return {object}
@@ -26,22 +36,23 @@ export function self () {
 }
 
 /**
+ * @param {object} handler
  * @return {boolean}
  */
-export function peek () {
-	return frame
+export function noop (handler) {
+	return frame === handler.owner
 }
 
 /**
- * @param {number} uid
+ * @param {number} identity
  * @param {(string|number|object)} type
  * @param {object} children
  * @param {string?} context
  * @param {object} owner
  * @return {object}
  */
-export function create (uid, type, children, context, owner) {
-	switch (uid) {
+export function create (identity, type, children, context, owner) {
+	switch (identity) {
 		case Enum.element:
 			return context ? owner.createElementNS(context, type) : owner.createElement(type)
 		case Enum.text:
@@ -76,7 +87,7 @@ export function target (value, owner) {
 		} else if (typeof document === 'object') {
 			return target(value, document)
 		} else {
-			return target({}, owner)
+			return frame
 		}
 	}
 
@@ -133,12 +144,12 @@ export function insert (parent, element, sibling) {
 }
 
 /**
+ * @param {object} name
  * @param {string} value
- * @param {object} type
  * @return {string}
  */
-export function context (value, type) {
-	switch (type) {
+export function context (name, value) {
+	switch (name) {
 		case 'svg':
 			return 'http://www.w3.org/2000/svg'
 		case 'math':
@@ -154,8 +165,9 @@ export function context (value, type) {
  * @param {string} name
  * @param {any} value
  * @param {object} instance
+ * @param {object} handler
  */
-export function props (name, value, instance, handler) {
+export function properties (name, value, instance, handler) {
 	if (name === 'style') {
 		if (typeof value === 'object') {
 			return stylesheet(name, value, instance[name])
@@ -189,7 +201,7 @@ export function property (name, value, instance) {
 					case 'string':
 						return property(name, '', instance)
 					case 'boolean':
-						return property(name, false, instance)
+						value = false
 				}
 		}
 
@@ -207,10 +219,10 @@ export function property (name, value, instance) {
 export function attribute (name, value, instance) {
 	try {
 		switch (value) {
-			case true:
-				return attribute(name, name, instance)
 			case false: case null: case undefined:
 				return instance.removeAttribute(name)
+			case true:
+				value = name
 		}
 
 		instance.setAttribute(name, value)

@@ -53,8 +53,10 @@ export function destroy (element) {
 	var value = element.stack = null
 
 	for (var i = 0; i < array.length; i++) {
-		if (Utility.thenable(value = array[i]())) {
-			enqueue(element, 0, defer = value)
+		if (Utility.callable(value = array[i])) {
+			if (Utility.thenable(value = value())) {
+				enqueue(element, 0, defer = value)
+			}
 		}
 	}
 

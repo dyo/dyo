@@ -12,7 +12,7 @@ import * as Node from './Node.js'
  * @return {PromiseLike<object>}
  */
 export function render (element, target, callback) {
-	return dispatch(element, Interface.target(target, undefined), callback)
+	return dispatch(element, Interface.target(target, undefined), callback === undefined ? null : callback)
 }
 
 /**

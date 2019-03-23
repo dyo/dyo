@@ -10,7 +10,7 @@ export var network = timeout * 10
 
 // element identifiers
 export var thenable = 1
-export var fragment = 2
+export var iterable = 2
 export var component = 3
 export var target = 4
 export var portal = 5
@@ -25,4 +25,10 @@ export var unmount = 13
 export var content = 14
 export var callback = 15
 
+// schedule identifiers
+export var respond = 0
+export var request = 1
+
+// container types
+export var fragment = null
 export var offscreen = 'noscript'

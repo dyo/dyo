@@ -25,7 +25,7 @@ export var struct = Utility.extend(function exception (host, value) {
  * @return {string}
  */
 export function trace (host, value) {
-	return host.uid === Enum.target ? value : trace(host.host, '\tat <' + Element.display(host) + '>\n' + value)
+	return host.identity === Enum.target ? value : trace(host.host, '\tat <' + Element.display(host) + '>\n' + value)
 }
 
 /**
@@ -78,7 +78,7 @@ export function dispatch (fiber, host, element, exception) {
  * @param {object} current
  */
 export function resolve (fiber, host, element, exception, current) {
-	switch (current.uid) {
+	switch (current.identity) {
 		case Enum.target:
 			return destroy(fiber, exception)
 		case Enum.component:
@@ -112,6 +112,6 @@ export function enqueue (fiber, host, element, exception, current) {
 			}
 		}
 
-		return index === 0 ? null : Schedule.enqueue(fiber, Enum.callback, current, current, exception, callback)
+		return index === 0 ? null : Schedule.callback(current, exception, callback)
 	}
 }

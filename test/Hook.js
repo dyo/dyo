@@ -337,17 +337,17 @@ describe('Hook', () => {
 			const Primary = props => {
 				const [state, setState] = useState(1)
 				stack.push(state)
-				useLayout(e => setTimeout(() => setState(2)), [])
+				useLayout(async e => {
+					await new Promise((resolve) => setTimeout(resolve, 20))
+					setState(v => v + 1)
+					setState(v => v + 1)
+				}, [])
 				return state
 			}
 
 			render(h(Primary), target, (current) => {
-				assert.html(current, '1')
-			}).then((current) => {
-				setTimeout(() => {
-					assert.html(current, '2')
-					done(assert.deepEqual(stack, [1, 2]))
-				})
+				assert.html(current, '3')
+				done(assert.deepEqual(stack, [1, 3]))
 			})
 		})
 
@@ -1122,6 +1122,98 @@ describe('Hook', () => {
 				assert.html(current, 'blackblack')
 				assert.deepEqual(stack, ['white', 'white', 'black', 'black'])
 			})
+		})
+
+		it('should subscribe to the same context within the same component multiple times', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('green')
+			const Primary = props => {
+				stack.push('Primary')
+
+				const [theme1, setTheme1] = useContext(ThemeContext)
+				setTheme1('red')
+
+				const [theme2, setTheme2] = useContext(ThemeContext)
+
+			  return h('div', {}, h(Secondary, {}, theme1))
+			}
+			const Secondary = props => {
+				stack.push('Secondary')
+
+				return props.children
+			}
+
+			render(h(Primary, {}), target, (current) => {
+				assert.html(current, '<div>red</div>')
+				assert.deepEqual(stack, ['Primary', 'Secondary', 'Primary', 'Secondary'])
+			})
+		})
+
+		it('should update context within render', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('green')
+			const Primary = props => {
+				stack.push('Primary')
+
+				const [theme1, setTheme1] = useContext(ThemeContext)
+				setTheme1('red')
+
+				const [theme2, setTheme2] = useContext(ThemeContext)
+				setTheme2('yellow')
+
+			  return h('div', {}, h(Secondary))
+			}
+			const Secondary = props => {
+				stack.push('Secondary')
+
+			  const [theme] = useContext(ThemeContext)
+
+			  return theme
+			}
+
+			render(h(Primary, {}, h(Secondary)), target, (current) => {
+				assert.html(current, '<div>yellow</div>')
+				assert.deepEqual(stack, ['Primary', 'Secondary', 'Primary', 'Secondary'])
+			})
+		})
+
+		it('should update context out of band', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const ThemeContext = createContext('red')
+			const Primary = props => {
+				stack.push('Primary')
+
+			  const [count, setCount] = useContext(ThemeContext)
+
+			  useEffect(() => new Promise((resolve) => {
+			  	setTimeout(() => resolve(setCount(count => count + '...')), 20)
+			  }), [])
+
+			  return h(Secondary)
+			}
+
+			const Secondary = memo(props => {
+				stack.push('Secondary')
+
+			  return h(Tertiary, {}, value => value)
+			})
+
+			const Tertiary = memo(props => {
+				stack.push('Tertiary')
+
+			  const [count] = useContext(ThemeContext)
+			  return props.children(count)
+			})
+
+			render(h(Primary), target, (current) => {
+				assert.html(target, 'red...')
+				done(assert.deepEqual(stack, ['Primary', 'Secondary', 'Tertiary', 'Primary', 'Tertiary']))
+			})
+
+			assert.html(target, 'red')
 		})
 	})
 })

@@ -27,6 +27,8 @@ const rand = (value, array = value.slice(), length = array.length, index = 0) =>
   return array
 }
 
+const requestAnimationFrame = (callback) => setTimeout(callback, 16)
+
 class Writable {
   constructor(type) {
     if (type === 'body') {
@@ -38,5 +40,5 @@ class Writable {
   write(value) { this.innerHTML = value }
 }
 
-assign(that(), {assert, document, location, history, Event, globalThis: that(), Writable: Writable})
+assign(that(), {assert, document, location, history, Event, Writable, requestAnimationFrame, globalThis: that()})
 assign(assert, {html, json, spyr, rand})

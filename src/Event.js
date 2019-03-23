@@ -15,7 +15,7 @@ export function handle (value) {
  * @param {(function|function[])} callback
  */
 export function dispatch (element, value, callback) {
-	Schedule.checkout(resolve, element, value, callback, undefined)
+	Schedule.checkout(resolve, element, value, callback, null)
 }
 
 /**
@@ -26,7 +26,7 @@ export function dispatch (element, value, callback) {
  */
 export function resolve (fiber, element, value, callback) {
 	try {
-		enqueue(fiber, element, value, callback)
+		enqueue(fiber, element, value, element.props, callback)
 	} catch (error) {
 		Exception.dispatch(fiber, element, element, error)
 	}
@@ -36,15 +36,18 @@ export function resolve (fiber, element, value, callback) {
  * @param {object} fiber
  * @param {object} element
  * @param {object} value
+ * @param {object} props
  * @param {(function|function[])} callback
  * @return {any?}
  */
-export function enqueue (fiber, element, value, callback) {
+export function enqueue (fiber, element, value, props, callback) {
 	if (Utility.callable(callback)) {
-		dequeue(fiber, element, callback.call(element, value, element.props))
+		if (Utility.thenable(value = callback(value, props))) {
+			dequeue(fiber, element, value)
+		}
 	} else if (callback) {
 		for (var i = 0; i < callback.length; i++) {
-			enqueue(fiber, element, value, callback[i])
+			enqueue(fiber, element, value, props, callback[i])
 		}
 	}
 }
@@ -55,9 +58,14 @@ export function enqueue (fiber, element, value, callback) {
  * @param {object} value
  */
 export function dequeue (fiber, element, value) {
-	if (value !== undefined) {
-		if (Utility.thenable(value)) {
-			Schedule.suspend(fiber, value, function () {}, Exception.throws(fiber, element))
-		}
-	}
+	Schedule.suspend(fiber, value, function () { return element.value }, Exception.throws(fiber, element))
+}
+
+/**
+ * @param {object} element
+ * @param {function} callback
+ * @return {object}
+ */
+export function request (element, callback) {
+	return Utility.respond(function () { return Schedule.checkout(function () { callback(element) }, element, element, element, null) })
 }

@@ -1,4 +1,3 @@
-import * as Element from './Element.js'
 import * as Utility from './Utility.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
@@ -8,42 +7,54 @@ import * as Lifecycle from './Lifecycle.js'
  * @return {object}
  */
 export function create (value) {
-	return Utility.properties(function context (props) {
-		if (!Element.active(this)) {
-			connect(this.state = this.context = Utility.create(this.context), context.type, props.value)
-		} else {
-			this.state.value = props.value
-		}
+	var context = function (props) { return forward(this, this.state, this.context, type, props) }
+	var type = context[0] = Utility.symbol()
 
-		return props.children
-	}, {
-		type: {value: Utility.symbol()},
-		value: {value: value}
-	})
+	return context[1] = value, context
 }
 
 /**
  * @param {object} context
  * @param {symbol} type
- * @param {any?} value
- * @return {object}
+ * @param {number} value
+ * @return {object?}
  */
-export function connect (context, type, value) {
-	return context[type] = {value: value, length: 0}
+export function destroy (context, type, value) {
+	context[value === context.length - 1 ? context.length = value : value] = null
 }
 
 /**
  * @param {object} element
- * @param {object} state
- * @param {object?} context
+ * @param {object?} current
+ * @param {object} context
+ * @param {symbol} type
+ * @param {object} value
+ * @return {object?}
+ */
+export function forward (element, current, context, type, value) {
+	if (current === null) {
+		context = element.context = element.state = Utility.create(context), context[type] = [value.value]
+	} else {
+		current[0] = value.value
+	}
+
+	return value.children
+}
+
+/**
+ * @param {object} element
+ * @param {any[]} current
+ * @param {any[]} context
  * @param {symbol} type
  * @param {any?} value
  */
-export function dispatch (element, state, context, type, value) {
-	for (var i = 0, length = context.length; i < length; i++) {
-		if ((element = context[i]) && (value = element.state[type])) {
-			if (!Utility.is(value.value, value.value = context.value) || value === state) {
-				Component.dispatch(element.value = element)
+export function dispatch (element, current, context, type, value) {
+	for (var i = 1; i < context.length; i++) {
+		if (element = context[i]) {
+			if (current === (value = Lifecycle.state(element)[type])) {
+				Component.dequeue(element)
+			} else if (!Utility.is(value[0], value[0] = context[0])) {
+				Component.dequeue(element.value = element)
 			}
 		}
 	}
@@ -51,27 +62,56 @@ export function dispatch (element, state, context, type, value) {
 
 /**
  * @param {object} element
- * @param {object} state
- * @param {object?} context
+ * @param {object} current
+ * @param {object} context
  * @param {symbol} type
  * @param {any?} value
- * @return {any}
+ * @return {any[]}
  */
-export function resolve (element, state, context, type, value) {
-	var length = 0
-	var callback = null
-	var provider = context[type] || connect(context, type, value)
-	var consumer = state[type] = {value: provider.value}
+export function resolve (element, current, context, type, value) {
+	var stack = context[type] || Utility.set(context, type, [value])
+	var state = current[type] || Utility.set(current, type, [stack[0], null, null])
 
-	Lifecycle.enqueue(provider[length = provider.length++] = element, 0, function () {
-		provider[length === provider.length - 1 ? provider.length = length : length] = null
+	return state[1] === null ? enqueue(element, state, stack, type, stack.length) : state
+}
+
+/**
+ * @param {object} element
+ * @param {any[]} current
+ * @param {any[]} context
+ * @param {symbol} type
+ * @param {any?} value
+ * @return {function}
+ */
+export function enqueue (element, current, context, type, value) {
+	Lifecycle.enqueue(context[value] = element, 0, function () { destroy(context, type, value) })
+
+	return current[1] = function (value) { dequeue(element, current, context, type, value) }, current
+}
+
+/**
+ * @param {object} element
+ * @param {any[]} current
+ * @param {any[]} context
+ * @param {symbol} type
+ * @param {any?} value
+ */
+export function dequeue (element, current, context, type, value) {
+	if (!Utility.is(current[0], current[0] = context[0] = Utility.callable(value) ? value(current[0]) : value)) {
+		request(element, current, context, type, value)
+	}
+}
+
+/**
+ * @param {object} element
+ * @param {any[]} current
+ * @param {any[]} context
+ * @param {symbol} type
+ * @param {any?} value
+ * @return {function}
+ */
+export function request (element, current, context, type, value) {
+	Component.enqueue(element, null, current[2] !== null ? current[2] : current[2] = function () {
+		dispatch(element, current, context, type, value)
 	})
-
-	return [consumer.value, function (value) {
-		if (!Utility.is(consumer.value, consumer.value = provider.value = Utility.callable(value) ? value(consumer.value) : value)) {
-			Component.enqueue(element, null, callback !== null ? callback : callback = function (element) {
-				dispatch(element, consumer, provider, type, value)
-			})
-		}
-	}]
 }

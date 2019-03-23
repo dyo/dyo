@@ -218,13 +218,13 @@ describe('Component', () => {
 
 		assert.html(target, '..')
 
-		render(h(Primary, {}, h(new Promise((resolve) => setTimeout(resolve, 140, 'Update')), {}, '...')), target, (current) => {
+		render(h(Primary, {}, h(new Promise((resolve) => setTimeout(resolve, 1040, 'Update')), {}, '...')), target, (current) => {
 			done(assert.html(current, 'Update'))
 		})
 
 		setTimeout(() => {
 			assert.html(target, '...')
-		}, 120)
+		}, 1020)
 	})
 
 	it('should render multiple async children', (done) => {
@@ -250,19 +250,6 @@ describe('Component', () => {
 		assert.html(target, '')
 	})
 
-	it('should render async generator component', (done) => {
-		const target = document.createElement('div')
-		const Primary = async function * () {
-			yield 1
-			yield 2
-			yield 3
-		}
-
-		render(h(Primary), target, (current) => {
-			done(assert.html(current, '3'))
-		})
-	})
-
 	it('should invoke async callbacks in the right order', (done) => {
 		const target = document.createElement('div')
 		const stack = []
@@ -274,6 +261,19 @@ describe('Component', () => {
 			return stack.push(1, current), new Promise((resolve) => setTimeout(() => resolve(stack.push(2)), 50))
 		}).then((current) => {
 			done(assert.deepEqual(stack, [0, current, 1, current, 2]))
+		})
+	})
+
+	it('should render async generator component', (done) => {
+		const target = document.createElement('div')
+		const Primary = async function * () {
+			yield 1
+			yield 2
+			yield 3
+		}
+
+		render(h(Primary), target, (current) => {
+			done(assert.html(current, '3'))
 		})
 	})
 })
