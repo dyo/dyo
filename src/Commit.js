@@ -95,20 +95,11 @@ export function insert (parent, element, sibling) {
 }
 
 /**
- * @param {object} element
- * @param {object?} value
- * @param {object?} instance
- */
-export function target (parent, element) {
-	Interface.append(parent.value, element.value)
-}
-
-/**
  * @param {object} parent
  * @param {object} element
  */
-export function portal (parent, element) {
-	element.value = Interface.target(element.type, parent.owner), append(element, element)
+export function target (parent, element) {
+	element.value = Interface.target(element.type, parent.owner)
 }
 
 /**
@@ -153,7 +144,7 @@ export function properties (element, value, instance)  {
  * @param {object?} instance
  */
 export function refs (element, value, instance) {
-	if (!Interface.noop(element)) {
+	if (element.owner !== null) {
 		reference(element, element.stack, null)
 		reference(element, element.stack = value, instance)
 	}

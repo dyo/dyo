@@ -106,22 +106,20 @@ export function dequeue (fiber, host, parent, element, children, callback, stack
 		}
 	}, callback)
 
-	if (fallback = Element.fallback(host)) {
+	if (host.identity === Enum.component ? fallback = Element.fallback(host, host.props) : false) {
 		Schedule.callback(host, Element.active(parent), callback = function (value) {
 			if (stack !== null) {
-				if (Element.active(parent)) {
-					if (value) {
-						Utility.timeout(callback, Enum.network)
-					} else {
-						try {
-							Node.create(fiber, host, parent, offscreen, null)
-							Node.create(fiber, host, parent, fallback, null)
-						} finally {
-							Schedule.commit(fiber, Enum.mount, host, offscreen, Element.reparent(offscreen, children[0]), undefined)
-							Schedule.commit(fiber, Enum.mount, host, parent, children[0] = offscreen, sibling = children[1])
-							Schedule.commit(fiber, Enum.mount, host, parent, children[1] = fallback, sibling)
-							Schedule.commit(fiber, Enum.unmount, host, parent, sibling, sibling)
-						}
+				if (value) {
+					Utility.timeout(callback, Enum.network)
+				} else if (Element.active(parent)) {
+					try {
+						Node.create(fiber, host, parent, offscreen, null)
+						Node.create(fiber, host, parent, fallback, null)
+					} finally {
+						Schedule.commit(fiber, Enum.mount, host, offscreen, Element.reparent(offscreen, children[0]), undefined)
+						Schedule.commit(fiber, Enum.mount, host, parent, children[0] = offscreen, sibling = children[1])
+						Schedule.commit(fiber, Enum.mount, host, parent, children[1] = fallback, sibling)
+						Schedule.commit(fiber, Enum.unmount, host, parent, sibling, sibling)
 					}
 				}
 			}

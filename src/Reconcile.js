@@ -62,8 +62,8 @@ export function enqueue (fiber, host, parent, element, snapshot, value, a, b) {
  * @param {number} index
  */
 export function replace (fiber, host, parent, element, snapshot, siblings, index) {
-	Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, siblings[index] = snapshot, null), element)
-	Schedule.commit(fiber, Enum.unmount, host, parent, element, Node.destroy(fiber, parent, element, null))
+	Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, snapshot, null), element)
+	Schedule.commit(fiber, Enum.unmount, siblings[index] = snapshot, parent, element, Node.destroy(fiber, parent, element, null))
 }
 
 /**
@@ -98,7 +98,7 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 			case Enum.iterable:
 				return children(fiber, host, element, 0, a, b)
 			case Enum.thenable:
-				return resolve(fiber, host, parent, element, snapshot, element.type = type, a, b)
+				return resolve(fiber, host, parent, element, snapshot, type, a, b)
 		}
 
 		children(fiber, host, element, 0, a, b)
@@ -107,8 +107,7 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 		if (element.identity === identity) {
 			switch (element.type = type, identity) {
 				case Enum.target:
-					Schedule.commit(fiber, Enum.props, host, element, element, object(element.props, element.props = {}))
-					Schedule.commit(fiber, Enum.portal, host, element, element, element)
+					Schedule.commit(fiber, Enum.mount, host, element, element, Schedule.commit(fiber, Enum.target, host, element, element, element))
 				case Enum.thenable:
 					return update(fiber, host, parent, element, snapshot, siblings, index)
 			}

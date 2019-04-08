@@ -33,7 +33,7 @@ export function destroy (context, type, value) {
  */
 export function forward (element, current, context, type, value) {
 	if (current === null) {
-		context = element.context = element.state = Utility.create(context), context[type] = [value.value]
+		element.state = (element.context = Utility.create(context))[type] = [value.value]
 	} else {
 		current[0] = value.value
 	}
@@ -69,8 +69,8 @@ export function dispatch (element, current, context, type, value) {
  * @return {any[]}
  */
 export function resolve (element, current, context, type, value) {
-	var stack = context[type] || Utility.set(context, type, [value])
-	var state = current[type] || Utility.set(current, type, [stack[0], null, null])
+	var stack = context[type] || (context[type] = [value])
+	var state = current[type] || (current[type] = [stack[0], null, null])
 
 	return state[1] === null ? enqueue(element, state, stack, type, stack.length) : state
 }

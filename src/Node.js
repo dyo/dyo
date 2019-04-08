@@ -30,27 +30,26 @@ export function create (fiber, host, parent, element, current) {
 				var context = element.context = Interface.context(type, parent.context)
 		}
 
-		var instance = element.value = Interface.create(identity, type, children, context, owner)
+		var instance = element.value = Interface.create(identity, type, children, context, owner !== null ? owner : Interface.peek())
 
-		switch (identity) {
-			case Enum.text: case Enum.empty:
-				break
-			case Enum.target:
-				return dispatch(fiber, host, parent, element, instance, children)
-			default:
+		if (identity !== Enum.target) {
+			if (identity < Enum.text) {
 				for (var i = 0; i < children.length; ++i) {
 					create(fiber, host, element, children[i], instance, element)
 				}
 
-				if (identity > Enum.component) {
+				if (identity === Enum.element) {
 					Commit.properties(element, element.props, instance)
 				} else if (identity === Enum.thenable) {
 					Reconcile.resolve(fiber, host, parent, element, element, type, children, children)
 				}
-		}
+			}
 
-		if (current !== null) {
-			Interface.append(current, instance)
+			if (current !== null) {
+				Interface.append(current, instance)
+			}
+		} else {
+			dispatch(fiber, host, parent, element, element.owner = Interface.owner(instance), children)
 		}
 	} finally {
 		element.parent = parent
@@ -76,7 +75,7 @@ export function destroy (fiber, parent, element, current) {
 				return destroy(fiber, parent, children[0], element)
 			} finally {
 				if (element.stack !== null) {
-					if (dequeue(fiber, parent, element, current) !== undefined) {
+					if (enqueue(fiber, parent, element, current)) {
 						return
 					}
 				}
@@ -105,6 +104,18 @@ export function destroy (fiber, parent, element, current) {
  * @param {object} element
  * @param {object} current
  * @param {object[]} children
+ */
+export function dispatch (fiber, host, parent, element, current, children) {
+	return Schedule.commit(fiber, Enum.mount, host, element, create(fiber, host, element, children[0], null), undefined)
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} host
+ * @param {object} parent
+ * @param {object} element
+ * @param {object} current
+ * @param {object[]} children
  * @return {object}
  */
 export function resolve (fiber, host, parent, element, current, children) {
@@ -121,45 +132,21 @@ export function resolve (fiber, host, parent, element, current, children) {
 
 /**
  * @param {object} fiber
- * @param {object} host
- * @param {object} parent
- * @param {object} element
- * @param {object} current
- * @param {object[]} children
- */
-export function dispatch (fiber, host, parent, element, current, children) {
-	element.owner = Interface.owner(current)
-
-	Schedule.commit(fiber, Enum.props, host, element, element, element.props)
-	Schedule.commit(fiber, Enum.target, host, element, create(fiber, host, element, children[0], null), element)
-
-	return element
-}
-
-/**
- * @param {object} fiber
- * @param {object} parent
- * @param {object} element
- * @param {object} current
- */
-export function enqueue (fiber, parent, element, current) {
-	return Schedule.pending(fiber, current, function () {
-		if (Element.active(parent)) {
-			Commit.unmount(parent, element, element)
-		}
-	})
-}
-
-/**
- * @param {object} fiber
  * @param {object} parent
  * @param {object} element
  * @param {object?} current
+ * @return {boolean}
+ */
+export function enqueue (fiber, parent, element, current) {
+	return Lifecycle.destroy(element) === null ? false : current === null ? !dequeue(fiber, parent, element, element.stack) : false
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} parent
+ * @param {object} element
+ * @param {object} current
  */
 export function dequeue (fiber, parent, element, current) {
-	if (Lifecycle.destroy(element) !== null) {
-		if (current === null) {
-			return enqueue(fiber, parent, element, element.stack)
-		}
-	}
+	Schedule.pending(fiber, current, function () { Element.active(parent) && Commit.unmount(parent, element, element) })
 }

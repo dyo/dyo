@@ -1,4 +1,5 @@
 import * as Enum from './Enum.js'
+import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Reconcile from './Reconcile.js'
 import * as Interface from './Interface.js'
@@ -19,15 +20,13 @@ export function render (element, target, callback) {
  * @param {any} element
  * @param {object} target
  * @param {function?} callback
- * @return {object}
+ * @return {PromiseLike<object>}
  */
 export function dispatch (element, target, callback) {
-	var parent = target[Enum.identifier]
-
-	if (parent !== undefined) {
-		return Schedule.checkout(resolve, parent, target, [Element.root(element)], callback)
+	if (Utility.has(target, Enum.identifier)) {
+		return Schedule.checkout(resolve, target[Enum.identifier], target, [Element.container(element)], callback)
 	} else {
-		return Schedule.checkout(resolve, Element.target(element, target, Interface.clear(target)), target, target, callback)
+		return Schedule.checkout(resolve, Element.target(element, target, Interface.initialize(target)), target, target, callback)
 	}
 }
 
@@ -38,7 +37,7 @@ export function dispatch (element, target, callback) {
  * @param {object} value
  */
 export function resolve (fiber, element, target, value) {
-	if (value === target) {
+	if (target === value) {
 		element.context = {}, target[Enum.identifier] = Node.create(fiber, element, element, element, null)
 	} else {
 		Reconcile.children(fiber, element, element, 0, element.children, value)

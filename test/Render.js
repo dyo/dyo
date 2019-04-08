@@ -4,11 +4,38 @@ describe('Render', () => {
 	const target = document.createElement('div')
 	const refs = {}
 
-	it('should throw without a render target', () => {
-		assert.throws(() => render(null))
-		assert.throws(() => render(null, null))
-		assert.throws(() => render(null, undefined))
-		assert.throws(() => render(null, false))
+	it('should throw when using invalid render targets', () => {
+		const {document} = globalThis
+
+		try {
+			globalThis.document = undefined
+			assert.throws(() => render(null, undefined))
+			assert.throws(() => render(null, null))
+			assert.throws(() => render(null, NaN))
+			assert.throws(() => render(null, 0))
+			assert.throws(() => render(null, true))
+			assert.throws(() => render(null, false))
+		} finally {
+			globalThis.document = document
+		}
+	})
+
+	it('should render to selector', () => {
+		render('Hello', 'body', (current) => {
+			assert.html(current, 'Hello')
+
+			render(null, 'body', (current) => {
+				assert.html(current, '')
+			})
+		})
+	})
+
+	it('should not throw when using invalid elements', () => {
+		const target = document.createElement('div')
+
+		assert.throws(() => {
+			render(h('!'), target)
+		})
 	})
 
 	it('should invoke render callback', () => {

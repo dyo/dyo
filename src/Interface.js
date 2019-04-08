@@ -5,11 +5,12 @@ import * as Utility from './Utility.js'
  * @constructor
  */
 export var struct = Utility.extend(function document () {
-	this.nodeValue  = ''
+	this.nodeValue = ''
 	this.textContent = null
-	this.ownerDocument = null
+	this.ownerDocument = undefined
 	this.documentElement = this
 }, {
+	querySelector: {value: self},
 	createElement: {value: self},
 	createElementNS: {value: self},
 	createTextNode: {value: self},
@@ -31,16 +32,15 @@ export var frame = new struct()
 /**
  * @return {object}
  */
-export function self () {
-	return this
+export function peek () {
+	return frame
 }
 
 /**
- * @param {object} handler
- * @return {boolean}
+ * @return {object}
  */
-export function noop (handler) {
-	return frame === handler.owner
+export function self () {
+	return this
 }
 
 /**
@@ -67,27 +67,17 @@ export function create (identity, type, children, context, owner) {
 }
 
 /**
- * @param {object} value
+ * @param {object?} value
  * @param {object?} owner
  * @return {object}
  */
 export function target (value, owner) {
-	if (value) {
-		if (typeof value === 'object') {
-			switch (value.ownerDocument) {
-				case undefined:
-					return owner === undefined ? value : frame
-				case null:
-					return value.documentElement
-			}
-
-			return value
-		} else if (owner) {
-			return target(owner.querySelector(value), owner)
-		} else if (typeof document === 'object') {
-			return target(value, document)
-		} else {
-			return frame
+	if (value !== null) {
+		switch (typeof value) {
+			case 'object':
+				return container(value, owner)
+			case 'string':
+				return selector(value, owner)
 		}
 	}
 
@@ -95,27 +85,44 @@ export function target (value, owner) {
 }
 
 /**
- * @param {object} value
+ * @param {object?} value
+ * @param {object?} owner
  * @return {object}
  */
+export function selector (value, owner) {
+	return owner ? target(owner.querySelector(value), owner) : selector(value, enviroment())
+}
+
+/**
+ * @param {object?} value
+ * @param {object?} owner
+ * @return {object}
+ */
+export function container (value, owner) {
+	return value.ownerDocument === undefined ? owner === undefined ? value : frame : value.documentElement || value
+}
+
+/**
+ * @return {object}
+ */
+export function enviroment () {
+	return typeof document === 'object' ? document : frame
+}
+
+/**
+ * @param {object} value
+ * @return {object?}
+ */
 export function owner (value) {
-	return value.ownerDocument || value
+	return value.ownerDocument || null
 }
 
 /**
  * @param {object} parent
  * @return {void}
  */
-export function clear (parent) {
+export function initialize (parent) {
 	return parent.textContent = null
-}
-
-/**
- * @param {object} parent
- * @param {*} value
- */
-export function content (parent, value) {
-	parent.nodeValue = value
 }
 
 /**
@@ -141,6 +148,14 @@ export function append (parent, element) {
  */
 export function insert (parent, element, sibling) {
 	parent.insertBefore(element, sibling)
+}
+
+/**
+ * @param {object} parent
+ * @param {any} value
+ */
+export function content (parent, value) {
+	parent.nodeValue = value
 }
 
 /**

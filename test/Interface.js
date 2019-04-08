@@ -1,18 +1,23 @@
 import {h, render} from '../index.js'
 
 describe('Interface', () => {
-	const document = globalThis.document
+	const {document} = globalThis
 
 	before(() => globalThis.document = undefined)
 	after(() => globalThis.document = document)
 
-	it('should render to no-op interface', () => {
+	it('should render to no-op object interface', () => {
 		const target = {}
 		const Primary =  props => [h('h1', 'Hello World')]
 
 		assert.doesNotThrow(() => {
 			render(h(Primary), target, (current) => assert.equal(current, target))
 		})
+	})
+
+	it('should render to no-op string interface', () => {
+		const target = {}
+		const Primary =  props => [h('h1', 'Hello World')]
 
 		assert.doesNotThrow(() => {
 			render(h(Primary), 'foo')

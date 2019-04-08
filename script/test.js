@@ -30,14 +30,9 @@ const rand = (value, array = value.slice(), length = array.length, index = 0) =>
 const requestAnimationFrame = (callback) => setTimeout(callback, 16)
 
 class Writable {
-  constructor(type) {
-    if (type === 'body') {
-      defineProperty(this, type, {set: this.write})
-    } else {
-      this[type || 'end'] = this.write
-    }
+  constructor(type = 'end', write = value => this.innerHTML = value) {
+    type === 'body' ? defineProperty(this, type, {set: write}) : this[type] = write
   }
-  write(value) { this.innerHTML = value }
 }
 
 assign(that(), {assert, document, location, history, Event, Writable, requestAnimationFrame, globalThis: that()})

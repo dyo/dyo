@@ -19,24 +19,24 @@ export function element (value) {
 				switch (type.toLowerCase()) {
 					case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
 					case 'img': case 'col': case 'embed': case 'wbr': case 'track': case 'param':
-					case 'link': case 'input': case 'hr': case '!doctype html':
+					case 'link': case 'input': case 'hr': case '!doctype':
 						return payload
 				}
 
-				return payload + fragment(children) + '</' + type + '>'
+				return payload + iterable(children) + '</' + type + '>'
 		}
 	} else {
 		return children
 	}
 
-	return fragment(children)
+	return iterable(children)
 }
 
 /**
  * @param {object} children
  * @return {string}
  */
-export function fragment (children) {
+export function iterable (children) {
 	var payload = ''
 
 	for (var i = 0; i < children.length; i++) {
@@ -87,7 +87,7 @@ export function property (name, value, children) {
 		case false: case null: case undefined:
 			return ''
 		case true:
-			payload = name
+			return ' ' + name
 	}
 
 	switch (typeof payload) {

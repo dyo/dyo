@@ -4,7 +4,6 @@ import * as Element from './Element.js'
 import * as Context from './Context.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
-import * as Interface from './Interface.js'
 import * as Schedule from './Schedule.js'
 
 /**
@@ -31,7 +30,7 @@ export function compare (prev, next) {
  * @return {any}
  */
 export function forward (current, value, props) {
-	return current[0](value, props, current[1])
+	return current[1] === undefined ? current[0](value, props) : current[0](current[1], value, props)
 }
 
 /**
@@ -107,7 +106,7 @@ export function request (callback, value, type) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 
-	if (Interface.noop(element)) {
+	if (element.owner === null) {
 		return
 	}
 
@@ -216,22 +215,6 @@ export function context (provider) {
 	}
 
 	return children
-}
-
-/**
- * @param {function} callback
- */
-export function boundary (callback) {
-	var fiber = Schedule.peek()
-	var element = fiber.owner
-	var index = ++fiber.index
-	var children = element.children
-
-	if (index === children.length) {
-		children[index] = [callback]
-	} else {
-		children[index][0] = callback
-	}
 }
 
 /**

@@ -186,8 +186,6 @@ export function dispatch (fiber, type, element, a, b, c) {
 			return Commit.mount(a, b, c)
 		case Enum.unmount:
 			return Commit.unmount(a, c)
-		case Enum.portal:
-			return Commit.portal(a, b)
 		case Enum.target:
 			return Commit.target(a, b)
 	}

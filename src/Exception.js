@@ -1,8 +1,8 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Schedule from './Schedule.js'
 import * as Suspense from './Suspense.js'
+import * as Component from './Component.js'
 
 /**
  * @constructor
@@ -10,13 +10,14 @@ import * as Suspense from './Suspense.js'
  * @param {any} value
  */
 export var struct = Utility.extend(function exception (host, value) {
-	this.name = 'Exception'
+	this[Enum.identifier] = host
 	this.message = value
 	this.bubbles = Utility.thenable(value)
-	this[Enum.identifier] = host
 }, {
-	toString: {value: function () { return this.name + ': ' + this.message + '\n' + this.stack }},
-	stack: {get: function () { return Utility.define(this, 'stack', trace(this[Enum.identifier], '')) }, configurable: true}
+	name: {value: 'Exception'},
+	type: {value: 'EXCEPTION'},
+	stack: {get: function () { return Utility.define(this, 'stack', display(this[Enum.identifier], '')) }, configurable: true},
+	toString: {value: function () { return this.name + ': ' + this.message + '\n' + this.stack }}
 })
 
 /**
@@ -24,8 +25,8 @@ export var struct = Utility.extend(function exception (host, value) {
  * @param {string} value
  * @return {string}
  */
-export function trace (host, value) {
-	return host.identity === Enum.target ? value : trace(host.host, '\tat <' + Element.display(host) + '>\n' + value)
+export function display (host, value) {
+	return host.identity === Enum.target ? value : display(host.host, '\tat <' + Element.display(host) + '>\n' + value)
 }
 
 /**
@@ -35,6 +36,24 @@ export function trace (host, value) {
  */
 export function throws (fiber, host) {
 	return function (exception) { dispatch(fiber, host, host, exception) }
+}
+
+/**
+ * @param {object} props
+ * @return {object}
+ */
+export function boundary (props) {
+	return forward(this, props, this.state)
+}
+
+/**
+ * @param {object} element
+ * @param {object} props
+ * @param {object} state
+ * @return {object}
+ */
+export function forward (element, props, state) {
+	return element.state = element, state === null || state === element ? props.children : state
 }
 
 /**
@@ -82,15 +101,28 @@ export function resolve (fiber, host, element, exception, current) {
 		case Enum.target:
 			return destroy(fiber, exception)
 		case Enum.component:
-			if (current !== element) {
-				if (enqueue(fiber, host, element, exception, current) !== null) {
-					return
+			if (element !== current) {
+				if (exception.bubbles) {
+					return request(fiber, host, element, exception, current)
+				} else if (current.state === current) {
+					return dequeue(fiber, host, element, exception, current)
 				} else if (host !== element) {
 					Utility.throws(exception)
 				}
 			}
 	}
 
+	enqueue(fiber, host, element, exception, current)
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} host
+ * @param {object} element
+ * @param {object} exception
+ * @param {object} current
+ */
+export function enqueue (fiber, host, element, exception, current) {
 	resolve(fiber, host, element, exception, current.host)
 }
 
@@ -100,18 +132,26 @@ export function resolve (fiber, host, element, exception, current) {
  * @param {object} element
  * @param {object} exception
  * @param {object} current
- * @return {void}
  */
-export function enqueue (fiber, host, element, exception, current) {
-	if (exception.bubbles) {
-		Suspense.dispatch(fiber, current, element, exception.message)
-	} else {
-		for (var i = 1, index = 0, value = null, callback = [], children = current.children; i < children.length; i++) {
-			if ((value = children[i]).length === 1) {
-				callback[index++] = value
-			}
+export function dequeue (fiber, host, element, exception, current) {
+	if (current.value === null) {
+		try {
+			current.state = Element.fallback(current, exception)
+		} finally {
+			Component.request(current)
 		}
-
-		return index === 0 ? null : Schedule.callback(current, exception, callback)
+	} else {
+		enqueue(fiber, host, element, exception, current)
 	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} host
+ * @param {object} element
+ * @param {object} exception
+ * @param {object} current
+ */
+export function request (fiber, host, element, exception, current) {
+	Suspense.dispatch(fiber, current, element, exception.message)
 }

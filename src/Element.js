@@ -63,21 +63,28 @@ export function iterable (value, index) {
 /**
  * @param {any} value
  * @param {object} type
- * @param {{key}?} props
+ * @param {(string|number|symbol)} key
  * @return {object}
  */
-export function portal (value, type, props) {
-	return new struct(Enum.portal, props === undefined ? props = null : props.key, null, null, [target(value, type, props)])
+export function portal (value, type, key) {
+	return new struct(Enum.portal, key, null, null, [target(value, type, null)])
 }
 
 /**
  * @param {!any} value
  * @param {object} type
- * @param {object} props
  * @return {object}
  */
-export function target (value, type, props) {
-	return new struct(Enum.target, null, type, props, [root(value)])
+export function target (value, type, key) {
+	return new struct(Enum.target, key, type, null, [container(value)])
+}
+
+/**
+ * @param {any} value
+ * @return {object}
+ */
+export function container (value) {
+	return new struct(Enum.iterable, null, null, null, [from(value, 0, null)])
 }
 
 /**
@@ -85,14 +92,6 @@ export function target (value, type, props) {
  */
 export function offscreen () {
 	return new struct(Enum.element, null, Enum.offscreen, null, [])
-}
-
-/**
- * @param {any} value
- * @return {object}
- */
-export function root (value) {
-	return from([value], 0, null)
 }
 
 /**
@@ -155,6 +154,7 @@ export function from (value, index, props) {
 					for (var i = 0; i < value.length; i++) {
 						value[i] = from(value[i], i, props)
 					}
+
 					return value[i] = empty(), iterable(value, key(index))
 				} else if (Utility.iterable(value)) {
 					return iterable(iterator(value, 0, props), key(index))
@@ -190,11 +190,11 @@ export function create (a, b) {
 			identity = Enum.component
 			break
 		case 'object':
-			identity = type === Enum.fragment ? Enum.iterable : Enum.thenable
+			identity = type === Enum.fragment ? Enum.fragment : Enum.thenable
 			break
 	}
 
-	var element = new struct(identity, props.key, type, props, children)
+	var element = new struct(identity, props.key, null, props, children)
 
 	if (identity === Enum.component) {
 		if (size > 0) {
@@ -214,7 +214,7 @@ export function create (a, b) {
 		}
 	}
 
-	return element
+	return element.type = type, element
 }
 
 /**
@@ -244,7 +244,7 @@ export function defaults (element, value) {
 }
 
 /**
- * @param  {object} element
+ * @param {object} element
  * @return {boolean}
  */
 export function active (element) {
@@ -268,20 +268,20 @@ export function sibling (element) {
 }
 
 /**
- * @param {object} element
- * @param {object} value
- * @return {object?}
- */
-export function fallback (element) {
-	return element.identity === Enum.component ? from(element.props.fallback, 0, element.props) : null
-}
-
-/**
  * @param {object?} element
  * @return {object[]}
  */
 export function children (element) {
 	return element.children[0]
+}
+
+/**
+ * @param {object} element
+ * @param {object} value
+ * @return {object?}
+ */
+export function fallback (element, value) {
+	return from(element.props.fallback, 0, value)
 }
 
 /**
@@ -294,10 +294,10 @@ export function reparent (element, value) {
 }
 
 /**
- * @param {object?} value
- * @param {object} props
+ * @param {object?} element
+ * @param {object} value
  * @return {object}
  */
-export function resolve (value, props) {
-	return from(typeof value === 'object' && value !== null && 'default' in value ? value.default : value, 0, props)
+export function resolve (element, value) {
+	return from(typeof element === 'object' && element !== null && 'default' in element ? element.default : element, 0, value)
 }

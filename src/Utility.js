@@ -187,15 +187,6 @@ export function has (object, key) {
 }
 
 /**
- * @param {object} object
- * @param {(symbol|string|number)} key
- * @param {any} value
- */
-export function set (object, key, value) {
-	return object[key] = value
-}
-
-/**
  * @param {any} a
  * @param {any} b
  * @return {boolean}

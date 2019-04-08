@@ -1,20 +1,6 @@
-import {h, render, useState, useLayout} from '../index.js'
+import {h, render, Boundary, useState, useReducer, useLayout} from '../index.js'
 
 describe('Exception', () => {
-	it('should not render invalid elements', () => {
-		const target = document.createElement('div')
-
-		assert.throws(() => {
-			render(h('!'), target)
-		})
-	})
-
-	it('should not render to an invalid target', () => {
-		assert.throws(() => {
-			render('hello')
-		})
-	})
-
 	it('should not catch exceptions', () => {
 		const target = document.createElement('div')
 		const stack = assert.spyr(console, 'error')
@@ -115,6 +101,94 @@ describe('Exception', () => {
 
 		stack.current.catch((error) => {
 			done(assert.deepEqual(stack, ['Exception: undefined\n\tat <Primary>\n']))
+		})
+	})
+
+	it('should use error boundary fallback in the event of an exception', () => {
+		const target = document.createElement('div')
+		const Primary = props => {
+			return h(Boundary, {fallback: props => JSON.stringify(props)}, h(Secondary))
+		}
+		const Secondary = props => {
+			throw 1
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '{"message":1,"bubbles":false}')
+		})
+	})
+
+	it('should use error boundary fallback array in the event of an exception', () => {
+		const target = document.createElement('div')
+		const stack = []
+		const Primary = props => {
+			return h(Boundary, {fallback: [props => stack.push(props), props => JSON.stringify(props)]}, h(props => { throw 1 }))
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '1{"message":1,"bubbles":false}')
+			assert.deepEqual(stack, [{message: 1, bubbles: false}])
+		})
+	})
+
+	it('should dispatch an error boundary action from render', () => {
+		const target = document.createElement('div')
+		const Primary = props => {
+			const [error, dispatch] = useReducer((state, action) => action.type === 'EXCEPTION' ? action : state, false)
+			return error ? JSON.stringify(error) : h(Boundary, {fallback: dispatch}, h(props => { throw 1 }))
+		}
+
+		render(h(Primary), target, (current) => {
+			current.firstChild.dispatchEvent(new Event('click'))
+		}).then((current) => {
+			assert.html(current, '{"message":1,"bubbles":false}')
+		})
+	})
+
+	it('should dispatch an error boundary action from event', () => {
+		const target = document.createElement('div')
+		const Primary = props => {
+			const [error, dispatch] = useReducer((state, action) => action.type === 'EXCEPTION' ? action : state, false)
+			return error ? JSON.stringify(error) : h(Boundary, {fallback: dispatch}, h(props => h('button', {onclick: e => { throw 1 }})))
+		}
+
+		render(h(Primary), target, (current) => {
+			current.firstChild.dispatchEvent(new Event('click'))
+		}).then((current) => {
+			assert.html(current, '{"message":1,"bubbles":false}')
+		})
+	})
+
+	it('should propagate exception within within a failed boundary fallback', () => {
+		const target = document.createElement('div')
+		const stack = []
+		const Primary = props => {
+			return h(Boundary, {fallback: props => stack.push(props)}, h(Secondary))
+		}
+		const Secondary = props => {
+			return h(Boundary, {fallback: props => { throw 2 }}, h(props => { throw 1 }))
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '1')
+			assert.deepEqual(stack, [{message: 2, bubbles: false}])
+		})
+	})
+
+	it('should catch errors raised from promise elements', (done) => {
+		const target = document.createElement('div')
+		const stack = []
+		const Primary = props => {
+			return h(Boundary, {fallback: props => stack.push(props)}, h(Secondary))
+		}
+		const Secondary = props => {
+			return h(Promise.reject(1))
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '1')
+		}).then((current) => {
+			done(assert.deepEqual(stack, [{message: 1, bubbles: false}]))
 		})
 	})
 })
