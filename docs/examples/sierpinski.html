@@ -8,14 +8,14 @@
     <script src=https://unpkg.com/dyo></script>
   </head>
   <body>
-    <div id=main></div>
-
+    <main></main>
     <style>
       html {width: 100%; height: 100%; overflow: hidden}
     </style>
-
     <script>
-      const {h, render} = dyo
+      const {h, memo, render, Fragment, useState, useEffect} = dyo
+      const start = performance.now()
+      const target = document.querySelector('main')
 
       const dotStyle = {
         position: 'absolute',
@@ -37,99 +37,67 @@
 
       const targetSize = 25
 
-      class Dot extends dyo.Component {
-        constructor() {
-          super();
-          this.state = { hover: false };
-        }
-        enter() {
-          this.setState({
-            hover: true
-          });
-        }
-        leave() {
-          this.setState({
-            hover: false
-          });
-        }
-        render() {
-          var props = this.props;
-          var s = props.size * 1.3;
-          var style = Object.assign({}, dotStyle, {
-            width: s + 'px',
-            height: s + 'px',
-            left: (props.x) + 'px',
-            top: (props.y) + 'px',
-            borderRadius: (s / 2) + 'px',
-            lineHeight: (s) + 'px',
-            background: this.state.hover ? '#ff0' : dotStyle.background
-          });
-          return (
-            h('div', {style: style, onMouseEnter: ()=>this.enter(), onMouseLeave: ()=>this.leave()},
-              this.state.hover ? '*' + props.text + '*' : props.text
-            )
-          );
-        }
+      const Dot = ({x, y, size, text}) => {
+        const [{hover}, setState] = useState({hover: false})
+        const s = size * 1.3
+
+        return (
+          h('div', {
+            style: {
+              ...dotStyle,
+              width: s + 'px',
+              height: s + 'px',
+              left: x + 'px',
+              top: y + 'px',
+              borderRadius: (s / 2) + 'px',
+              lineHeight: s + 'px',
+              background: hover ? '#ff0' : dotStyle.background
+            },
+            onMouseEnter: () => setState({hover: true}),
+            onMouseLeave: () => setState({hover: false})
+          },
+            hover ? '*' + text + '*' : text
+          )
+        )
       }
 
-      const SierpinskiTriangle = memo(({x, y, s, children}) => {
+      const Triangle = ({x, y, s, children}) => {
         if (s <= targetSize) {
           return h(Dot, {x: x - (targetSize / 2), y: y - (targetSize / 2), size: targetSize, text: children})
-        }
-        if (false) {
-          var e = performance.now()+0.8
-          while (performance.now() < e) {
-            // Artificially long execution time.
-          }
         }
 
         s /= 2
 
-        return h(Fragment,
-          h(SierpinskiTriangle, {x: x, y: y - (s / 2), s: s}, children),
-          h(SierpinskiTriangle, {x: x-s, y: y + (s / 2), s: s}, children),
-          h(SierpinskiTriangle, {x: x+s, y: y + (s / 2), s: s}, children)
+        return h(Fragment, {},
+          h(Triangle, {x: x, y: y - (s / 2), s: s}, children),
+          h(Triangle, {x: x - s, y: y + (s / 2), s: s}, children),
+          h(Triangle, {x: x + s, y: y + (s / 2), s: s}, children)
         )
-      }, (o, n) => o.x === n.x && o.y === n.y && o.s === n.s && o.children === n.children)
-
-      class ExampleApplication extends dyo.Component {
-        constructor() {
-          super();
-          this.state = { seconds: 0 }
-          this.tick = this.tick.bind(this)
-        }
-        componentDidMount() {
-          this.intervalID = setInterval(this.tick, 1000)
-        }
-        tick() {
-          this.setState(state => ({ seconds: (state.seconds % 10) + 1 }))
-        }
-        componentWillUnmount() {
-          clearInterval(this.intervalID)
-        }
-        render() {
-          const seconds = this.state.seconds;
-          const elapsed = this.props.elapsed;
-          const t = (elapsed / 200) % 10;
-          const scale = 1 + (t > 5 ? 10 - t : t) / 10;
-          const transform = 'scaleX(' + (scale / 2.1) + ') scaleY(0.7) translateZ(0.1px)';
-          return (
-            h('div', {style: Object.assign({}, containerStyle, {transform: transform})},
-              h('div',
-                h(SierpinskiTriangle, {x: 0, y: 0, s: 1000},
-                  this.state.seconds
-                )
-              )
-            )
-          )
-        }
       }
 
-      const start = new Date().getTime()
-      const main = document.getElementById('main')
+      const Main = ({elapsed}) => {
+        const [{seconds}, setState] = useState({seconds: 0})
 
-      requestAnimationFrame(function loop() {
-        render(h(ExampleApplication, {elapsed: new Date().getTime() - start}), main)
+        useEffect(() => {
+          const interval = setInterval(() => {
+            setState(state => ({seconds: (state.seconds % 10) + 1}))
+          }, 1000)
+
+          return () => {
+            clearInterval(interval)
+          }
+        }, [])
+
+        const t = (elapsed / 200) % 10
+        const scale = 1 + (t > 5 ? 10 - t : t) / 10
+
+        return h('div', {style: {...containerStyle, transform: 'scaleX(' + (scale / 2.1) + ') scaleY(0.7) translateZ(0.1px)'}},
+          h('div', {}, h(Triangle, {x: 0, y: 0, s: 1000}, seconds))
+        )
+      }
+
+      requestAnimationFrame(function update (now) {
+        render(h(Main, {elapsed: now - start}), document)
         requestAnimationFrame(update)
       })
     </script>

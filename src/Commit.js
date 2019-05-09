@@ -158,20 +158,9 @@ export function refs (element, value, instance) {
 export function reference (element, value, instance) {
 	if (value !== null) {
 		if (Utility.callable(value)) {
-			callback(element, value, instance)
+			Schedule.callback(element, instance, value)
 		} else {
 			value.current = instance
 		}
 	}
-}
-
-/**
- * @param {object} element
- * @param {object} value
- * @param {object?} instance
- */
-export function callback (element, value, instance) {
-	Schedule.callback(element, value, function (value, props) {
-		return Utility.callable(value = value(instance, props)) ? element.stack = value : value
-	})
 }

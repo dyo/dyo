@@ -77,7 +77,9 @@ export function replace (fiber, host, parent, element, snapshot, siblings, index
  */
 export function update (fiber, host, parent, element, snapshot, siblings, index) {
 	if (element === snapshot) {
-		return
+		if (Schedule.memo()) {
+			return
+		}
 	}
 
 	var identity = snapshot.identity

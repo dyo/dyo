@@ -19,7 +19,13 @@ export var struct = Utility.extend(function fiber (element, target) {
 	this.owner = null
 	this.async = null
 }, {
-	then: {value: function (value) { return finalize(this, this.target, value), this }}
+	/**
+	 * @param {function?} value
+	 * @return {PromiseLike<object>}
+	 */
+	then: {value: function (value) {
+		return finalize(this, this.target, value), this
+	}}
 })
 
 /**
@@ -32,6 +38,20 @@ export var frame = null
  */
 export function peek () {
 	return frame
+}
+
+/**
+ * @return {void}
+ */
+export function root () {
+	return frame.target = null
+}
+
+/**
+ * @return {boolean}
+ */
+export function memo () {
+	return frame.target !== null
 }
 
 /**

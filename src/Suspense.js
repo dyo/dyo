@@ -64,7 +64,7 @@ export function dispatch (fiber, host, element, message) {
 function resolve (fiber, host, parent, element, children, message) {
 	enqueue(fiber, host, parent, element, children, Utility.resolve(message, function (value) {
 		return message.current = value, Component.resolve(fiber, element, element.props, element.children), value
-	}, Exceptions.throws(fiber, element)), Lifecycle.stack(host))
+	}, Exceptions.throws(fiber, element)), Lifecycle.create(host))
 }
 
 /**

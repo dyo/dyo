@@ -1,4 +1,4 @@
-import {h, memo, render, createContext} from '../index.js'
+import {h, memo, render} from '../index.js'
 import {useRef, useMemo, useCallback, useState, useReducer, useContext, useEffect, useLayout} from '../index.js'
 
 describe('Hook', () => {
@@ -632,7 +632,7 @@ describe('Hook', () => {
 			const Primary = props => {
 				useLayout(([value]) => {
 					stack.push('useLayout', value, 'mount')
-					return ([value]) => {
+					return () => {
 						stack.push('useLayout', value, 'unmount')
 					}
 				}, [props.value])
@@ -785,7 +785,7 @@ describe('Hook', () => {
 			const Primary = props => {
 				useEffect(([value]) => {
 					stack.push('useEffect', value, 'mount')
-					return ([value]) => {
+					return () => {
 						stack.push('useEffect', value, 'unmount')
 					}
 				}, [props.value])
@@ -865,242 +865,137 @@ describe('Hook', () => {
 	})
 
 	describe('useContext', () => {
-		it('should use and update global context', () => {
+		it('should provide and consume context', () => {
 			const target = document.createElement('div')
 			const stack = []
-			const ThemeContext = createContext('white')
 			const Primary = memo(({children}) => {
-				const [theme, setTheme] = useContext(ThemeContext)
+				const [theme, setTheme] = useContext('red')
 
-				stack.push(theme)
+				stack.push('Primary', theme)
 
-				return [h('button', {onClick: [e => setTheme(theme + '1'), e => setTheme(theme => theme + '2')]}, theme), children]
-			})
+				return h('button', {onClick: [e => setTheme(theme + '!'), e => setTheme(theme => theme + '!')]}, theme, children)
+			}, (prev, next) => true)
 
-			render([h(Primary, {}, props => h(Primary))], target, (current) => {
-				assert.deepEqual(stack, ['white', 'white'])
-				assert.html(current, '<button>white</button><button>white</button>')
+			const Secondary = memo(() => {
+				const [theme, setTheme] = useContext(Primary)
+
+				stack.push('Secondary', theme)
+
+				return h('h1', {}, theme)
+			}, (prev, next) => true)
+
+			const Indirection = memo(({children}) => {
+				return children
+			}, (prev, next) => true)
+
+			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
+				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red'])
+				assert.html(current, '<button>red<h1>red</h1></button>')
 
 				current.firstChild.dispatchEvent(new Event('click'))
-				assert.deepEqual(stack, ['white', 'white', 'white12', 'white12'])
-				assert.html(current, '<button>white12</button><button>white12</button>')
-			})
-		})
-
-		it('should use and update local context', () => {
-			const target = document.createElement('div')
-			const stack = []
-			const ThemeContext = createContext('white')
-			const Primary = memo(({children}) => {
-				const [theme, setTheme] = useContext(ThemeContext)
-
-				stack.push(theme)
-
-				return [h('button', {onClick: [e => setTheme(theme + '1'), e => setTheme(theme => theme + '2')]}, theme), children]
-			})
-
-			render(h(ThemeContext, {value: 'black'}, h(Primary, {}, props => h(Primary))), target, (current) => {
-				assert.deepEqual(stack, ['black', 'black'])
-				assert.html(current, '<button>black</button><button>black</button>')
-
-				current.firstChild.dispatchEvent(new Event('click'))
-				assert.deepEqual(stack, ['black', 'black', 'black12', 'black12'])
-				assert.html(current, '<button>black12</button><button>black12</button>')
-			})
-		})
-
-		it('should use but not update global context', () => {
-			const target = document.createElement('div')
-			const stack = []
-			const ThemeContext = createContext('white')
-			const Primary = memo(({children}) => {
-				const [theme, setTheme] = useContext(ThemeContext)
-
-				stack.push(theme)
-
-				return [h('button', {onClick: [e => setTheme(theme => theme), e => setTheme(theme => theme)]}, theme), children]
-			})
-
-			render([h(Primary, {}, props => h(Primary))], target, (current) => {
-				assert.deepEqual(stack, ['white', 'white'])
-				assert.html(current, '<button>white</button><button>white</button>')
-
-				current.firstChild.dispatchEvent(new Event('click'))
-				assert.deepEqual(stack, ['white', 'white'])
-				assert.html(current, '<button>white</button><button>white</button>')
-			})
-		})
-
-		it('should use but not update local context', () => {
-			const target = document.createElement('div')
-			const stack = []
-			const ThemeContext = createContext('white')
-			const Primary = memo(({children}) => {
-				const [theme, setTheme] = useContext(ThemeContext)
-
-				stack.push(theme)
-
-				return [h('button', {onClick: [e => setTheme(theme => theme), e => setTheme(theme => theme)]}, theme), children]
-			})
-
-			render(h(ThemeContext, {value: 'black'}, h(Primary, {}, props => h(Primary))), target, (current) => {
-				assert.deepEqual(stack, ['black', 'black'])
-				assert.html(current, '<button>black</button><button>black</button>')
-
-				current.firstChild.dispatchEvent(new Event('click'))
-				assert.deepEqual(stack, ['black', 'black'])
-				assert.html(current, '<button>black</button><button>black</button>')
-			})
-		})
-
-		it('should use and unmount context', () => {
-			const target = document.createElement('div')
-			const stack = []
-			const ThemeContext = createContext('white')
-			const Primary = ({children}) => {
-				const [theme, setTheme] = useContext(ThemeContext)
-
-				stack.push(theme)
-
-				return [theme, children]
-			}
-
-			render(h(ThemeContext, {value: 'black'}, h(Primary, {}, props => h(Primary))), target, (current) => {
-				assert.deepEqual(stack, ['black', 'black'])
-				assert.html(current, 'blackblack')
-			})
-
-			render(null, target, (current) => {
-				assert.html(current, '')
-			})
-		})
-
-		it('should not update unmounted context consumer', (done) => {
-			const target = document.createElement('div')
-			const stack = []
-			const ThemeContext = createContext('white')
-			const Primary = props => {
-				const [context, setContext] = useContext(ThemeContext)
-				useEffect(() => setContext('black'))
-				stack.push(context)
-				return context
-			}
-
-			render([h(Primary, {key: 0}), h(Primary, {key: 1}), h(Primary, {key: 2})], target, (current) => {
-				assert.html(current, 'blackblack')
-				assert.deepEqual(stack, ['white', 'white', 'white', 'white', 'white', 'black', 'black'])
-			}).then(() => done())
-
-			render([h(Primary, {key: 0}), h(Primary, {key: 2})], target)
-		})
-
-		it('should granular update context consumer', () => {
-			const target = document.createElement('div')
-			const stack = []
-			const ThemeContext = createContext('white')
-			const Primary = props => {
-				const [context, setContext] = useContext(ThemeContext)
-				useLayout(() => setContext('black'))
-				stack.push(context)
-				return [context, props.n === 0 ? h(Primary, {n: 1}) : null]
-			}
-
-			render(h(Primary, {n: 0}), target, (current) => {
-				assert.html(current, 'blackblack')
-				assert.deepEqual(stack, ['white', 'white', 'black', 'black'])
-			})
-		})
-
-		it('should subscribe to the same context within the same component multiple times', () => {
-			const target = document.createElement('div')
-			const stack = []
-			const ThemeContext = createContext('green')
-			const Primary = props => {
-				stack.push('Primary')
-
-				const [theme1, setTheme1] = useContext(ThemeContext)
-				setTheme1('red')
-
-				const [theme2, setTheme2] = useContext(ThemeContext)
-
-			  return h('div', {}, h(Secondary, {}, theme1))
-			}
-			const Secondary = props => {
-				stack.push('Secondary')
-
-				return props.children
-			}
-
-			render(h(Primary, {}), target, (current) => {
-				assert.html(current, '<div>red</div>')
-				assert.deepEqual(stack, ['Primary', 'Secondary', 'Primary', 'Secondary'])
+				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red', 'Primary', 'red!!', 'Secondary', 'red!!'])
+				assert.html(current, '<button>red!!<h1>red!!</h1></button>')
 			})
 		})
 
 		it('should update context within render', () => {
 			const target = document.createElement('div')
 			const stack = []
-			const ThemeContext = createContext('green')
-			const Primary = props => {
-				stack.push('Primary')
+			const Primary = memo(({children}) => {
+				const [theme, setTheme] = useContext('red')
 
-				const [theme1, setTheme1] = useContext(ThemeContext)
-				setTheme1('red')
+				stack.push('Primary', theme)
 
-				const [theme2, setTheme2] = useContext(ThemeContext)
-				setTheme2('yellow')
+				return h('button', {}, theme, children)
+			}, (prev, next) => true)
 
-			  return h('div', {}, h(Secondary))
-			}
-			const Secondary = props => {
-				stack.push('Secondary')
+			const Secondary = memo(() => {
+				const [theme1, setTheme1] = useContext(Primary)
+				const [theme2, setTheme2] = useContext(Primary)
 
-			  const [theme] = useContext(ThemeContext)
+				stack.push('Secondary', theme1, theme2)
 
-			  return theme
-			}
+				setTheme1('red!')
+				setTheme2(theme => theme + '!')
 
-			render(h(Primary, {}, h(Secondary)), target, (current) => {
-				assert.html(current, '<div>yellow</div>')
-				assert.deepEqual(stack, ['Primary', 'Secondary', 'Primary', 'Secondary'])
+				return h('h1', {}, theme1, theme2)
+			}, (prev, next) => true)
+
+			const Indirection = memo(({children}) => {
+				return children
+			}, (prev, next) => true)
+
+			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
+				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red', 'red', 'Primary', 'red!!', 'Secondary', 'red!!', 'red!!'])
+				assert.html(current, '<button>red!!<h1>red!!red!!</h1></button>')
 			})
 		})
 
-		it('should update context out of band', (done) => {
+		it('should not update context', () => {
 			const target = document.createElement('div')
 			const stack = []
-			const ThemeContext = createContext('red')
-			const Primary = props => {
-				stack.push('Primary')
+			const Primary = memo(({children}) => {
+				const [theme, setTheme] = useContext('red')
 
-			  const [count, setCount] = useContext(ThemeContext)
+				stack.push('Primary', theme)
 
-			  useEffect(() => new Promise((resolve) => {
-			  	setTimeout(() => resolve(setCount(count => count + '...')), 20)
-			  }), [])
+				return h('button', {}, theme, children)
+			}, (prev, next) => true)
 
-			  return h(Secondary)
-			}
+			const Secondary = memo(() => {
+				const [theme, setTheme] = useContext(Primary)
 
-			const Secondary = memo(props => {
-				stack.push('Secondary')
+				stack.push('Secondary', theme)
 
-			  return h(Tertiary, {}, value => value)
+				setTheme('red')
+
+				return h('h1', {}, theme)
+			}, (prev, next) => true)
+
+			const Indirection = memo(({children}) => {
+				return children
+			}, (prev, next) => true)
+
+			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
+				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red'])
+				assert.html(current, '<button>red<h1>red</h1></button>')
 			})
+		})
 
-			const Tertiary = memo(props => {
-				stack.push('Tertiary')
+		it('should provide and consume more than one context', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = memo(({children}) => {
+				const [theme, setTheme] = useContext(props => 'red')
 
-			  const [count] = useContext(ThemeContext)
-			  return props.children(count)
+				stack.push('Primary', theme)
+
+				return children
+			}, (prev, next) => true)
+
+			const Secondary = memo(({children}) => {
+				const [theme, setTheme] = useContext(props => 'blue')
+
+				stack.push('Secondary', theme)
+
+				return children
+			}, (prev, next) => true)
+
+			const Indirection = memo(({children}) => {
+				return children
+			}, (prev, next) => true)
+
+			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, h(Secondary, {}, props => {
+				const [theme1, setTheme1] = useContext(Primary)
+				const [theme2, setTheme2] = useContext(Secondary)
+
+				stack.push('Consumer', theme1, theme2)
+
+				return [h('h1', {}, theme1), h('h1', {}, theme2)]
+			})))), target, (current) => {
+				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'blue', 'Consumer', 'red', 'blue'])
+				assert.html(current, '<h1>red</h1><h1>blue</h1>')
 			})
-
-			render(h(Primary), target, (current) => {
-				assert.html(target, 'red...')
-				done(assert.deepEqual(stack, ['Primary', 'Secondary', 'Tertiary', 'Primary', 'Tertiary']))
-			})
-
-			assert.html(target, 'red')
 		})
 	})
 })

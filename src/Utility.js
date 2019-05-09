@@ -1,10 +1,4 @@
 /**
- * @constructor
- * @param {any}
- */
-export var error = Error
-
-/**
  * @type {object}
  */
 export var math = Math
@@ -16,7 +10,20 @@ export var random = math.random
 
 /**
  * @constructor
- * @param {number}
+ * @param {object}
+ */
+export var array = Array
+
+/**
+ * @param {any}
+ * @return {boolean}
+ */
+export var isArray = Array.isArray
+
+/**
+ * @constructor
+ * @param {any}
+ * @return {object}
  */
 export var object = Object
 
@@ -139,6 +146,14 @@ export function report (value) {
 
 /**
  * @param {any} value
+ * @return {boolean}
+ */
+export function keyable (value) {
+	return value instanceof object
+}
+
+/**
+ * @param {any} value
  * @param {boolean}
  */
 export function callable (value) {
@@ -198,6 +213,7 @@ export function is (a, b) {
 /**
  * @param {object} a
  * @param {object} b
+ * @return {object}
  */
 export function defaults (a, b) {
 	for (var key in b) {

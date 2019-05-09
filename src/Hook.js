@@ -38,10 +38,8 @@ export function forward (current, value, props) {
  * @param {object} current
  * @param {any} value
  */
-export function update (element, current, value) {
-	if (!Utility.is(current[0], current[0] = Utility.callable(value) ? value(current[0]) : value)) {
-		Component.request(element)
-	}
+export function dispatch (element, current, value) {
+	resolve(element, current, current[2](current[0], value))
 }
 
 /**
@@ -49,50 +47,47 @@ export function update (element, current, value) {
  * @param {object} current
  * @param {any} value
  */
-export function dispatch (element, current, value) {
-	update(element, current, current[2](current[0], value))
-}
-
-/**
- * @param {object} element
- * @param {any?} value
- * @return {any?}
- */
-export function resolve (element, value) {
-	return Utility.callable(value) ? value(element.props) : value
-}
-
-/**
- * @param {object} element
- * @param {any[]} value
- * @return {object?}
- */
-export function enqueue (element, value) {
-	if (Element.active(element)) {
-		var argument = value[0]
-		var callback = value[1]
-		var position = value[2]
-
-		return dequeue(element, value, Lifecycle.dequeue(element, position), callback(argument), argument)
+export function resolve (element, current, value) {
+	if (!Utility.is(current[0], current[0] = Utility.callable(value) ? value(current[0]) : value)) {
+		Component.request(element)
 	}
 }
 
 /**
- * @param {object} element
- * @param {any[]} value
- * @param {number} index
- * @param {(function|PromiseLike<any>)?} callback
- * @param {any[]} argument
+ * @param {any[]} current
+ * @param {object} value
  * @return {object?}
  */
-export function dequeue (element, value, index, callback, argument) {
+export function enqueue (current, value) {
+	if (Element.active(current[0])) {
+		var callback = current[1]
+		var argument = current[2]
+		var position = current[3]
+		var children = Lifecycle.create(current[0])
+
+		if (position !== -1) {
+			children[position]()
+		}
+
+		return dequeue(current, value, children, callback(argument, value), argument, position)
+	}
+}
+
+/**
+ * @param {any[]} current
+ * @param {object} value
+ * @param {any[]} children
+ * @param {function?} callback
+ * @param {any[]} argument
+ * @param {number} position
+ * @return {object?}
+ */
+export function dequeue (current, value, children, callback, argument, position) {
 	if (callback !== undefined) {
 		if (Utility.callable(callback)) {
-			if (index = Lifecycle.enqueue(element, index, function () { return callback(argument) })) {
-				value[2] = index
-			}
+			children[position !== -1 ? position : current[3] = children.length] = callback
 		} else if (Utility.thenable(callback)) {
-			return Utility.resolve(callback, function (callback) { return dequeue(element, value, index, callback, argument) }, null)
+			return Utility.resolve(callback, function (callback) { return dequeue(current, value, children, callback, argument, position) }, null)
 		}
 	}
 }
@@ -114,14 +109,14 @@ export function request (callback, value, type) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [value, callback, 0, callback = function (value) { return enqueue(element, value) }]
-	} else if (compare((children = children[index])[0], children[0] = value)) {
+		children = children[index] = [element, callback, value, -1]
+	} else if (compare((children = children[index])[2], children[2] = value)) {
 		return
 	} else {
-		children[1] = callback, callback = children[3]
+		children[1] = callback
 	}
 
-	Schedule.enqueue(fiber, type, element, element, children, callback)
+	Schedule.enqueue(fiber, type, element, element, children, enqueue)
 }
 
 /**
@@ -134,7 +129,7 @@ export function reference (value) {
 	var index = ++fiber.index
 	var children = element.children
 
-	return index !== children.length ? children[index] : children[index] = {current: resolve(element, value)}
+	return index !== children.length ? children[index] : children[index] = {current: Lifecycle.resolve(element, value)}
 }
 
 /**
@@ -167,7 +162,7 @@ export function state (value) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [resolve(element, value), function (value) { update(element, children, value) }]
+		children = children[index] = [Lifecycle.resolve(element, value), function (value) { resolve(element, children, value) }]
 	} else {
 		children = children[index]
 	}
@@ -187,7 +182,7 @@ export function reducer (callback, value) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [resolve(element, value), function (value) { dispatch(element, children, value) }, callback]
+		children = children[index] = [Lifecycle.resolve(element, value), function (value) { dispatch(element, children, value) }, callback]
 	} else {
 		children = children[index], children[2] = callback
 	}
@@ -196,22 +191,19 @@ export function reducer (callback, value) {
 }
 
 /**
- * @param {function} value
+ * @param {any?} value
  * @return {any[any, function]}
  */
-export function context (provider) {
+export function context (value) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
 	var children = element.children
-	var context = element.context
-	var current = Lifecycle.state(element)
-	var type = provider[0]
 
 	if (index === children.length) {
-		children = children[index] = Context.resolve(element, current, context, type, provider[1])
+		children = children[index] = Context.consume(element, element.context, value, value)
 	} else {
-		children = children[index], children[0] = current[type][0] = context[type][0]
+		children = children[index]
 	}
 
 	return children

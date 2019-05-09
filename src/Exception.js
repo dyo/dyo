@@ -14,10 +14,26 @@ export var struct = Utility.extend(function exception (host, value) {
 	this.message = value
 	this.bubbles = Utility.thenable(value)
 }, {
+	/**
+	 * @type {string}
+	 */
 	name: {value: 'Exception'},
+	/**
+	 * @type {string}
+	 */
 	type: {value: 'EXCEPTION'},
-	stack: {get: function () { return Utility.define(this, 'stack', display(this[Enum.identifier], '')) }, configurable: true},
-	toString: {value: function () { return this.name + ': ' + this.message + '\n' + this.stack }}
+	/**
+	 * @return {string}
+	 */
+	stack: {configurable: true, get: function () {
+		return Utility.define(this, 'stack', display(this[Enum.identifier], ''))
+	}},
+	/**
+	 * @return {string}
+	 */
+	toString: {value: function () {
+		return this.name + ': ' + this.message + '\n' + this.stack
+	}}
 })
 
 /**

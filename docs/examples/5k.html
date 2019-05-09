@@ -8,20 +8,18 @@
 	<script src=https://unpkg.com/dyo></script>
 </head>
 <body>
-	<div id=main></div>
-
+	<main></main>
 	<style>
-		#main div {line-height: 0; font-size: 0; margin: 0;}
-		#main span {display: inline-block; width: 4px; height: 4px; margin: 0; padding: 0;}
+		main div {line-height: 0; font-size: 0; margin: 0;}
+		main span {display: inline-block; width: 4px; height: 4px; margin: 0; padding: 0;}
 	</style>
-
-	<script type=module>
-		const {h, render} = dyo
-
+	<script>
+		const {h, render, useState} = dyo
+		const target = document.querySelector('main')
 		const colorPicker = () => '#' + ((1 << 24) * Math.random() | 0).toString(16)
 
 		const drawGrid = (children, width, height) => {
-			for (var i = 0, wh = 4, yAxis = 0; yAxis <= height; yAxis += wh ) {
+			for (var i = 0, wh = 4, yAxis = 0; yAxis <= height; yAxis += wh) {
 		    for (var xAxis = 0; xAxis <= width; xAxis += wh) {
        		children[i++] = h(Pixel, {style: {background: colorPicker()}})
 		    }
@@ -29,19 +27,18 @@
 			return children
 		}
 
-		const Pixel = (props, state) => (
-			h('span', props)
-		)
+		const Pixel = (props) => {
+			const [state, setState] = useState(null)
+			return h('span', props)
+		}
 
-		const PixelShow = ({width, height}, state) => (
-			h('div', {style: {width: width + 'px', height: height + 'px', position: 'relative'}}, drawGrid([], width, height))
-		)
+		const Main = ({width, height}) => {
+			return h('div', {style: {width: width + 'px', height: height + 'px', position: 'relative'}}, drawGrid([], width, height))
+		}
 
-		const main = document.getElementById('main')
-
-		requestAnimationFrame(function loop () {
-			render(h(PixelShow, {width: 320, height: 320}), main)
-			requestAnimationFrame(loop)
+		requestAnimationFrame(function update () {
+			render(h(Main, {width: 320, height: 320}), target)
+			requestAnimationFrame(update)
 		})
 	</script>
 </body>

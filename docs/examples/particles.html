@@ -8,22 +8,23 @@
 	<script src=https://unpkg.com/dyo></script>
 </head>
 <body>
-	<div id=main></div>
-
+	<main></main>
 	<style>
 		body {overflow-x: hidden;}
-		#main {width: 100%;height: 100%;overflow: hidden;position: fixed;top: 0;left: 0;}
-		#main > div {width: 100%;height: 100%;position: relative;}
-		#main span {position: absolute;left: 0;top: 0;width: 3px;height: 3px;background-color: rgb(52,46,33);border-radius: 12px;opacity: 0.8;}
+		main {width: 100%;height: 100%;overflow: hidden;position: fixed;top: 0;left: 0;}
+		main > div {width: 100%;height: 100%;position: relative;}
+		main span {position: absolute;left: 0;top: 0;width: 5px;height: 5px;background-color: rgb(52,46,33);border-radius: 12px;opacity: 0.8;}
 	</style>
-
 	<script>
-		const {h, render} = dyo
+		const {h, render, useState} = dyo
+		const {innerWidth: width, innerHeight: height}  = window
 		const damping = 0.999
-		const width  = window.innerWidth
-		const height = window.innerHeight
+		const target = document.querySelector('main')
 
-		const Particle = ({x, y}, {state, x = state.oldX = Math.random() * width, y = state.oldY = Math.random() * height}) => {
+		const Particle = ({x, y}) => {
+			const [state, setState] = useState(({oldX = Math.random() * width, oldY = Math.random() * height}) => {
+				return {x: oldX, y: oldY, oldX, oldY}
+			})
 			const velocityX = (state.x - state.oldX) * damping
 			const velocityY = (state.y - state.oldY) * damping
 
@@ -43,20 +44,20 @@
 			return h('span', {style: {transform: 'translate3d('+ state.x + 'px,' + state.y + 'px, 0px)'}})
 		}
 
-		const handleMousemove = ({clientX: x, clientY: y}, props, state) => ({x, y})
+		const Particles = ({length}) => {
+			const [{x, y}, setState] = useState(() => ({x: width * 0.5, y: height * 0.5}))
+			const children = []
 
-		const Particles = ({length}, {x = width * 0.5, y = height * 0.5}) => {
-			for (var i = 0, children = []; i < length; i++) {
-				children[i] = h(Particle, {x: x, y: y})
+			for (var i = 0; i < length; i++) {
+				children[i] = h(Particle, {x, y})
 			}
-			return h('div', {onMouseMove: handleMousemove}, children)
+
+			return h('div', {onMouseMove: ({clientX: x, clientY: y}) => setState({x, y})}, children)
 		}
 
-		const main = document.getElementById('main')
-
-		requestAnimationFrame(function loop{
-			render(h(Particles, {length: 600}), container)
-			requestAnimationFrame(loop)
+		requestAnimationFrame(function update () {
+			render(h(Particles, {length: 600}), target)
+			requestAnimationFrame(update)
 		})
 	</script>
 </body>

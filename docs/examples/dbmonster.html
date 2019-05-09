@@ -9,8 +9,7 @@
 	<script src=https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js></script>
 </head>
 <body>
-	<div id=main></div>
-
+	<main></main>
 	<style>
 		body {color:#333;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857143;margin:0;}
 		label {display:inline-block;font-weight:700;margin-bottom:5px;}
@@ -39,7 +38,6 @@
 		.Query {position:relative;}
 		.Query:hover .popover {display:block;left:-100%;width:100%;}
 	</style>
-
 	<script>
 		const ENV = (function() {
 		  var first = true;
@@ -252,16 +250,16 @@
 		  };
 		})();
 	</script>
-
-	<script type=module>
+	<script>
 		const {h, render} = dyo
+		const target = document.querySelector('main')
 
-		const Main = ({data}, state) => (
-			h('div',
+		const Main = ({data}) => (
+			h('div', {},
 				h('table', {className: 'table table-striped latest-data'},
-					h('tbody',
+					h('tbody', {},
 						data.map(({dbname, lastSample}) => (
-							h('tr',
+							h('tr', {},
 								h('td', {className: 'dbname'}, dbname),
 								h('td', {className: 'query-count'},
 									h('span', {className: lastSample.countClassName}, lastSample.nbQueries)
@@ -282,20 +280,18 @@
 			)
 		)
 
-		const main = document.getElementById('main')
-
 		perfMonitor.startFPSMonitor()
 		perfMonitor.startMemMonitor()
-		perfMonitor.initProfiler("render")
+		perfMonitor.initProfiler('render')
 
-		requestAnimationFrame(function loop () {
+		requestAnimationFrame(function update () {
 			const data = ENV.generateData().toArray()
-			perfMonitor.startProfile("render")
+			perfMonitor.startProfile('render')
 
-			render(h(Monster, {data: data}), main)
+			render(h(Main, {data: data}), target)
 
-			perfMonitor.endProfile("render")
-			requestAnimationFrame(loop)
+			perfMonitor.endProfile('render')
+			requestAnimationFrame(update)
 		})
 	</script>
 </body>

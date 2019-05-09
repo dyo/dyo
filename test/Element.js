@@ -3,6 +3,8 @@ import {h, createElement, cloneElement, isValidElement} from '../index.js'
 describe('Element', () => {
 	it('should create an element', () => {
 		assert.deepEqual(h('h1', 'Hello World').type, 'h1')
+		assert.deepEqual(h('h1', 'Hello World').props, {})
+		assert.lengthOf(h('h1', 'Hello World').children, 1)
 	})
 
 	it('should create an element with a key', () => {

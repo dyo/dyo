@@ -34,7 +34,7 @@ export function compare (prev, next) {
  * @return {function}
  */
 export function memo (value, callback) {
-	return memoize(value, callback !== undefined ? callback : compare)
+	return memoize(value, Utility.callable(callback) ? callback : compare)
 }
 
 /**
@@ -43,7 +43,9 @@ export function memo (value, callback) {
  * @return {function}
  */
 export function memoize (value, callback) {
-	return function (props) { return forward(value, callback, this, props) }
+	return function (props) {
+		return forward(value, callback, this, props)
+	}
 }
 
 /**
@@ -56,13 +58,15 @@ export function memoize (value, callback) {
 export function forward (value, callback, element, props) {
 	if (Element.active(element)) {
 		if (element.value === null) {
-			if (callback(element.props, props)) {
-				return Element.children(element)
+			if (Schedule.memo()) {
+				if (callback(element.props, props)) {
+					return Element.children(element)
+				}
 			}
 		}
 	}
 
-	return value.call(element, props)
+	return value(props)
 }
 
 /**
@@ -140,7 +144,6 @@ export function enqueue (element, value, callback) {
 
 /**
  * @param {object} element
- * @return {object?}
  */
 export function dequeue (element) {
 	if (element.value !== null) {

@@ -140,6 +140,20 @@ export function iterator (value, length, props) {
  * @param {object} props
  * @return {object}
  */
+export function fragment (value, index, props) {
+	for (var i = 0; i < value.length; i++) {
+		value[i] = from(value[i], i, props)
+	}
+
+	return value[i] = empty(), iterable(value, key(index))
+}
+
+/**
+ * @param {any} value
+ * @param {number} index
+ * @param {object} props
+ * @return {object}
+ */
 export function from (value, index, props) {
 	switch (typeof value) {
 		case 'number': case 'string':
@@ -148,20 +162,18 @@ export function from (value, index, props) {
 			return create(value, props)
 		case 'object':
 			if (value !== null) {
-				if (value.constructor === undefined) {
-					return value
-				} if (value.length > -1) {
-					for (var i = 0; i < value.length; i++) {
-						value[i] = from(value[i], i, props)
+				if (Utility.keyable(value)) {
+					if (Utility.isArray(value)) {
+						return fragment(value, index, props)
+					} else if (Utility.iterable(value)) {
+						return iterable(iterator(value, 0, props), key(index))
+					} else if (Utility.asyncIterable(value)) {
+						return create(generator(value), props)
+					} else if (Utility.thenable(value)) {
+						return create(value, props)
 					}
-
-					return value[i] = empty(), iterable(value, key(index))
-				} else if (Utility.iterable(value)) {
-					return iterable(iterator(value, 0, props), key(index))
-				} else if (Utility.asyncIterable(value)) {
-					return create(generator(value), props)
-				} else if (Utility.thenable(value)) {
-					return create(value, props)
+				} else {
+					return value
 				}
 			}
 	}
@@ -176,13 +188,14 @@ export function from (value, index, props) {
  * @return {object}
  */
 export function create (a, b) {
-	var i = 2
 	var index = 0
 	var length = arguments.length
-	var size = length - i
+	var of = typeof b === 'object' && b !== null
+	var position = of ? 2 : 1
+	var size = length - position
 	var identity = Enum.element
 	var type = a
-	var props = b ? b : {}
+	var props = of ? b : {}
 	var children = []
 
 	switch (typeof type) {
@@ -190,7 +203,7 @@ export function create (a, b) {
 			identity = Enum.component
 			break
 		case 'object':
-			identity = type === Enum.fragment ? Enum.fragment : Enum.thenable
+			identity = type === Enum.fragment ? Enum.iterable : Enum.thenable
 			break
 	}
 
@@ -198,14 +211,14 @@ export function create (a, b) {
 
 	if (identity === Enum.component) {
 		if (size > 0) {
-			for (props.children = size === 1 ? arguments[i++] : children = []; i < length; ++i) {
-				children[index++] = arguments[i]
+			for (props.children = size === 1 ? arguments[position++] : children = []; position < length; ++position) {
+				children[index++] = arguments[position]
 			}
 		}
 	} else {
 		if (size > 0) {
-			for (; i < length; ++i) {
-				children[index] = from(arguments[i], index++, props)
+			for (; position < length; ++position) {
+				children[index] = from(arguments[position], index++, props)
 			}
 		}
 
@@ -218,20 +231,20 @@ export function create (a, b) {
 }
 
 /**
- * @param {any} element
- * @return {boolean}
- */
-export function valid (element) {
-	return element !== null && element !== undefined && element.constructor === undefined
-}
-
-/**
  * @param {object} element
  * @param {...any?}
  * @return {object}
  */
 export function clone (element) {
 	return defaults(create.apply(null, [element.type].concat([].slice.call(arguments, 1))), element.props)
+}
+
+/**
+ * @param {any} element
+ * @return {boolean}
+ */
+export function valid (element) {
+	return element !== null && element !== undefined && element.constructor === undefined
 }
 
 /**

@@ -27,80 +27,78 @@
 	<article>
 		<h1>Component</h1>
 
-		<h1 id=class>Class</h1>
-
-		<p>Dyo supports three flavours of classes, the last of which provides a default <a href=shouldComponentUpdate>shouldComponentUpdate</a> implementation that shallow compares props, state, and context in the event of an update.</p>
+		<p>Components are JavaScript functions. They accept arbitrary arguments as <a href=element.html#props>props</a> and return elements describing the appearance and behavior of the interface.</p></p>
 
 <pre><code>
-class Default { render(props, state, context) {} }
-class Default extends Component {  }
-class Pure extends PureComponent {  }
-</code></pre>
-
-		<p>Both <code>PureComponent</code> and <code>Component</code> classes provide a default render method that return <code>props.children</code> and or invokes <code>props.children</code> with props, state, and context if the children prop is a function.</p>
-
-<pre><code>
-h(PureComponent, (props, state, context) => h('h1', 'Hello'))
+function Example (props) {
+	return 'Hello'
+}
 </code></pre>
 
 		<h1 id=function>Function</h1>
 
+		<p>There are however different offerings that JavaScript affords when creating functions the first two of which are arrow and regular functions.</p>
+
 <pre><code>
-const Default = function (props, state, context) {  }
-const Arrow = (props, state, context) => {  }
+const Arrow = props => 'Hello'
+const Regular = function (props) { return 'Hello' }
 </code></pre>
 
-		<h1 id=generator>Generator</h1>
+		<h1 id=async-function>Async Function</h1>
+
+		<p>Async functions work much the same as regular function, with the exception that they involve promises:</p>
 
 <pre><code>
-class ClassGenerator {
-	*render(props, state, context) {
-		yield 1
-		yield 2
-		yield 3
-	}
+async function Example (props) {
+	return 'Hello'
 }
+</code></pre>
 
-function *FunctionGenerator (props, state, context) {
+		<p>The example returns a <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise>Promise</a> that resolves to the string "Hello". The reconciler can understand this and will render "Hello" once the Promise has resolved.</p>
+
+		<h1 id=generator>Generator Function</h1>
+
+		<p>JavaScript affords authors a syntax by which to create <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*">generator functions</a> that return an <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols>iterable</a>.</p>
+
+<pre><code>
+function* Example (props) {
 	yield 1
 	yield 2
 	yield 3
 }
 </code></pre>
 
-		<h1 id=async-generator>Async Generator</h1>
+		<p>The example function would render an array of numbers 1 to 3</p>
+
+		<h1 id=async-generator>Async Generator Function</h1>
+
+		<p>Async generators work much the same as regular iterators, with the exception that they involve promises:</p>
 
 <pre><code>
-class ClassAsyncGenerator {
-	async *render(props, state, context) {
-		yield 1
-		yield 2
-		yield 3
-	}
-}
-
-async function *FunctionAsyncGenerator (props, state, context) {
+async function *Example (props) {
 	yield 1
 	yield 2
 	yield 3
 }
 </code></pre>
+
+		<p>But unlike <a href=#generator>generator functions</a> would render the numbers 1 to 3 individually one after the other as opposed to – in an array all at once.</p>
 
 		<h1 id=element>Element</h1>
 
-		<p>Component elements are elements with a function/class type.</p>
+		<p>Component elements are elements with a <code>function</code> type.</p>
 
 <pre><code>
 h(
 	type: function
 	props?: Props
-	...children?: Children
+	...children?: any
 )
 </code></pre>
 
 		<h1 id=props>Props</h1>
 
-		<p>Props passed to components elements are passed to the render method/function as the first argument and can be referenced from a class instance as <code>this.props</code>.</p>
+		<p>Props passed to components elements are forwarded to the component function as "props".</p>
 
 <pre><code>
 interface Props {
@@ -111,151 +109,15 @@ interface Props {
 
 			<h2 id=children>Children</h2>
 
-			<p>Children arguments passed to component elements are assigned to props as "children": <code>props.children</code>. The component children prop is an opaque data-structure; This means that the typeof value could vary, ranging from an array when the number of children are more than one, a primtive, function or object, when only one child is passed.</p>
+			<p>Children arguments passed to component elements are assigned to props as "children": <code>props.children</code>. The component children prop is an opaque data-structure; This means that the typeof value could vary, ranging from an array when the number of children are more than one or a primtive, function or object, when a single child is passed.</p>
 
 <pre><code>
-type Children = any
+h(props => console.assert(props.children, 1), {}, 1)
 </code></pre>
 
-		<h1 id=state>State</h1>
+		<h1 id=state-lifecycle>State &amp; Lifecycle</h1>
 
-		<p>The <a href=#setState>setState</a> method exists to allow updating the state object of a component. State is passed as the second argument to the render method/function of components and can be referenced from a class instance as <code>this.state</code>.</p>
-
-		<h1 id=context>Context</h1>
-
-		<p>Context is shared between multiple subtree components. The <a href=#getChildContext>getChildContext</a> lifecycle method is used to pass context down to child components. Context is passed as the second argument to render method/function of components and can be referenced from a class instance as <code>this.context</code>.</p>
-
-		<p></p>
-
-<pre><code>
-type State = Readonly&lt;object>
-</code></pre>
-
-		<h1 id=setState>setState</h1>
-
-		<p>The <code>setState</code> method initiates a component update with the passed partial state to update it with. When the partial state object passed is a function, it is called with the current state. Thenables are awaited and the resolved non thenable value is used to update state. The update is not processed if the partial state object passed is neither of the above.</p>
-
-		<p>The second callback function argument is invoked when the update is complete. Alternatively this method returns a thenable that can be awaited to serve the same purpose as the callback argument</p>
-
-<pre><code>
-setState(
-	state: object|function|thenable
-	callback?: function
-): thenable
-</code></pre>
-
-		<h1 id=forceUpdate>forceUpdate</h1>
-
-		<p>The <code>forceUpdate</code> method is identical to <code>setState</code> with one key difference: <a href=shouldComponentUpdate>shouldComponentUpdate</a> is not invoked, effectively insuring that an update cannot be stopped by the invoking component.</p>
-
-<pre><code>
-forceUpdate(
-	callback?: function
-): thenable
-</code></pre>
-
-		<h1 id=render>Render</h1>
-
-		<p>When using function components the render method is effectively the function itself. Unlike the <a href=#setState>setState</a> and <a href=#forceUpdate>forceUpdate</a> the render and all other lifecycle methods are meant to be implemented.</p>
-
-<pre><code>
-abstract render(
-	props: Readonly&lt;object>
-	state: Readonly&lt;object>
-	context: Readonly&lt;object>
-): any?
-</code></pre>
-
-		<h1 id=getDerivedState>getDerivedState</h1>
-
-		<p>This lifecycle method is called when the component initially mounts and when props change. When an object is returned this is used to update state;</p>
-
-		<blockquote>This state update is effectively merged within the same mount/update cycle and does not invoke a new "update" cycle.</blockquote>
-
-<pre><code>
-abstract getDerivedState(
-	props: Readonly&lt;object>
-	state: Readonly&lt;object>
-	context: Readonly&lt;object>
-): object?
-</code></pre>
-
-		<h1 id=getChildContext>getChildContext</h1>
-
-		<p>This lifecycle is called when the component initially mounts and when the component updates. When an object is returned this is passed as the context object to all child components within its subtree.</p>
-
-<pre><code>
-abstract getChildContext(
-	props: Readonly&lt;object>
-	state: Readonly&lt;object>
-	context: Readonly&lt;object>
-): object?
-</code></pre>
-
-		<h1 id=shouldComponentUpdate>shouldComponentUpdate</h1>
-
-		<p>This lifecycle is called before a component updates. The returned value is used to to determine whether to continue the update or not. This lifecycle method is not called when <a href=forceUpdate>forceUpdate</a> is used to update a component.</p>
-
-<pre><code>
-abstract shouldComponentUpdate(
-	props: Readonly&lt;object>
-	state: Readonly&lt;object>
-	context: Readonly&lt;object>
-): boolean?
-</code></pre>
-
-		<h1 id=componentDidMount>componentDidMount</h1>
-
-		<p>This lifecycle method is called after a component has mounted. Side effects are safe in this method. If a components subtree has async dependencies this lifecycle will execute once all these dependencies have resolved. Any object returned from this method will be used as the value of an <a href=advanced.html#implicit-state>implicit setState</a>.</p>
-
-<pre><code>
-abstract componentDidMount(
-	props: Readonly&lt;object>
-	state: Readonly&lt;object>
-	context: Readonly&lt;object>
-): object?
-</code></pre>
-
-		<h1 id=componentDidUpdate>componentDidUpdate</h1>
-
-		<p>This lifecycle method is called after a component has updated. Side effects are safe in ths method. If a components subtree has async dependencies this lifecycle will execute once all these dependencies have resolved. Any object returned from this method will be used as the value of an <a href=advanced.html#implicit-state>implicit setState</a>.</p>
-
-<pre><code>
-abstract componentDidUpdate(
-	props: Readonly&lt;object>
-	state: Readonly&lt;object>
-	context: Readonly&lt;object>
-): object?
-</code></pre>
-
-		<h1 id=componentDidCatch>componentDidCatch</h1>
-
-		<p>This lifecycle method is called after an exception is raised. Side effects are safe in ths method. Any object returned from this method will be used as the value of an <a href=advanced.html#implicit-state>implicit setState</a>.</p>
-
-<pre><code>
-abstract componentDidCatch(
-	error: any
-	exception: Exception
-): object?
-
-interface Exception {
-	error: any
-	componentStack: string
-}
-</code></pre>
-
-		<h1 id=componentWillUnmount>componentWillUnmount</h1>
-
-		<p>This lifecycle is called before a components is unmounted. Returning a promise/thenable from this method will delay the unmount until it has resolved.</p>
-
-<pre><code>
-abstract componentWillUnmount(
-	props: Readonly&lt;object>
-	state: Readonly&lt;object>
-	context: Readonly&lt;object>
-): thenable?
-</code></pre>
-
+		<p>Through <a href=hooks.html>hooks</a> components can both keep persitant state and hook into a lifecycle system that is invoked at specific set times where applicable. These come in the form of hooks such <a href=hooks.html#useState>useState</a>, <a href=hooks.html#useEffect>useEffect</a> and <a href=hooks.html>more</a>.</p>
 	</article>
 </body>
 </html>

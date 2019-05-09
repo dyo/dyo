@@ -29,7 +29,7 @@
 
 		<h1 id=installation>Installation</h1>
 
-		<p>Dyo can be sourced through the following CDN's.</p>
+		<p>Through a CDN:</p>
 
 		<ol>
 			<li><a href=https://unpkg.com/dyo>unpkg.com/dyo</a></li>
@@ -55,16 +55,16 @@ import {render} from 'dyo'
 render('Hello, world!', document)
 </code></pre>
 
-		<p>This example should render a heading with the content 'Hello World!' into the root of the document.</p>
+		<p>This will render the text content 'Hello World!' into the root of the document.</p>
 
 		<h1 id=introducing-elements>Introducing Elements</h1>
 
 <pre><code>
-const element = h('h1', 'Hello World')
+const element = h('h1', {}, 'Hello World')
 </code></pre>
 		<p>Elements are represented by JavaScript objects that describe what and how a particular element should look and behave.</p>
 
-		<p>Given what to render at any one point in time, Dyo takes care of mounting and updating these elements to reflect the current state of the interface.</p>
+		<p>Given what to render at any one point in time, the reconciler takes care of mounting and updating these elements to reflect the current state of the interface.</p>
 
 		<p>Elements are composed of three distinct parts &mdash; <strong>type</strong>, <strong>props</strong> and <strong>children</strong>. These can be used to assign desired behaviours and properties for elements to assume.</p>
 
@@ -78,108 +78,77 @@ const element = h('h1', {class: 'red'}, 'Hello World')
 
 		<p>Components are independent, reusable building blocks of an interface.</p>
 
-		<p>Conceptually, components are like JavaScript functions. They accept arbitrary arguments and return elements describing the appearance and behavior of the interface.</p>
+		<p>Conceptually, components are JavaScript functions. They accept arbitrary arguments as <code>props</code> and return elements describing the appearance and behavior of the interface.</p>
 
-		<h2>Functions and Classes</h2>
-
-		<p>The first varient of a component is a JavaScript <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions>Function</a>.</p>
 <pre><code>
 function Welcome (props) {
-	return h('h1', 'Hello', props.name)
+	return h('h1', {}, 'Hello', props.name)
 }
 </code></pre>
-
-		<p>The second varient of a component is a <a href=https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes>JavaScript Class</a> that implements a render method.</p>
-
-<pre><code>
-class Welcome {
-	render(props) {
-		return h('h1', 'Hello', props.name)
-	}
-}
-</code></pre>
-
-		<p>Components accept <strong>props</strong>, <strong>state</strong> and <strong>context</strong> as arguments.</p>
-
-		<p>Function and class components are equivalent in what can be archived with them.</p>
 
 		<h2>Rendering a Component</h2>
 
 <pre><code>
 function Welcome(props) {
-	return h('h1', props.name)
+	return h('h1', {}, props.name)
 }
 
 render(h(Welcome, {name: 'World'}), document)
 </code></pre>
 
-		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments <em>"props"</em> to component.</p>
+		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments <em>"props"</em> to a component.</p>
 
-		<h1 id=lifecycles>Lifecycles</h1>
+		<h1 id=effects>Effects</h1>
 
-		<p>Lifecycle methods are methods that gets executed during the different phases of a component. When the component gets created, when the component updates, and when the component gets unmounted.</p>
-
-		<p>The following are examples of lifecycle methods on both <strong>function</strong> and <strong>class</strong> components.</p>
-
-		<h2>Function Lifecycle</h2>
+		<p>Effects lets you perform side effects within a component:</p>
 
 <pre><code>
+import {useEffect} from 'dyo'
+
 function Welcome (props) {
-	return h('h1', props.name)
-}
+  useEffect(() => {
+  	document.title = `Hello World`
+	})
 
-Welcome.componentDidMount = () => {}
-</code></pre>
-
-		<h2>Class Lifecycle</h2>
-
-<pre><code>
-class Welcome {
-	render(props) {
-		return h('h1', props.name)
-	}
-	componentDidMount() {}
+	return h('h1', {}, 'Hello World!')
 }
 </code></pre>
 
-		<p>Each lifecycle method is called at a deterministic interval.</p>
+		<p>There are two types of efffects – <a href="hooks.html#useEffect">useEffect</a> and <a href="hooks.html#useLayout">useLayout</a>.</p>
+
+		<p>Unlike <a href="hooks.html#useLayout">useLayout</a>, <a href="hooks.html#useEffect">useEffect</a> effects are scheduled with <a href=https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame>requestAnimationFrame</a>.</p>
 
 		<hr>
 
 		<table>
 			<thead>
 				<tr>
-					<th>Lifecycle method</th>
+					<th>Effect</th>
 					<th>When it gets called</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr>
-					<td><code>getDerivedState</code></td>
-					<td>Before mounting and when updating props</td>
+					<td><code>useEffect</code></td>
+					<td>Executed within the next requestAnimationFrame.</td>
 				</tr>
 				<tr>
-					<td><code>componentDidMount</code></td>
-					<td>After the component has mounted</td>
-				</tr>
-				<tr>
-					<td><code>shouldComponentUpdate</code></td>
-					<td>Before the component is updated</td>
-				</tr>
-				<tr>
-					<td><code>componentDidUpdate</code></td>
-					<td>After the component has updated</td>
-				</tr>
-				<tr>
-					<td><code>componentWillUnmount</code></td>
-					<td>Before the component is unmounted</td>
-				</tr>
-				<tr>
-					<td><code>componentDidCatch</code></td>
-					<td>When an exception is raised within the component</td>
+					<td><code>useLayout</code></td>
+					<td>Before yielding back to the host process.</td>
 				</tr>
 			</tbody>
 		</table>
+
+		<h1 id=state>State</h1>
+
+		<p>Like JavaScript functions components can accept arbitrary arguments as "props", but unlike functions components can also use and allocate persistant state, localized to that particular component.</p>
+
+<pre><code>
+function Welcome (props) {
+	const [state, setState] = useState('Hello World!')
+	return h(h1, {}, state)
+}
+</code></pre>
 
 		<h1 id=events-and-state>Events &amp; State</h1>
 
@@ -188,91 +157,62 @@ class Welcome {
 		<p>The following example demonstrates this through a text input element and an <a href=https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/oninput>onInput</a> event that is dispatched when data is exchanged.</p>
 
 <pre><code>
-class Input {
-	render() {
-		return h('form',
-			h('h1', this.state.value)
-			h('input', {type: 'text', onInput: this.handleEvent})
-		)
-	}
-	handleEvent({target}) {
-		return {value: target.value}
-	}
-}
+function Welcome (props) {
+	const [state, setState] = useState('')
 
-render(h(Input), document)
+	return h('form',
+		h('h1', {}, state)
+		h('input', {
+			type: 'text',
+			onInput: event => setState(event.target.value)
+		})
+	)
+}
 </code></pre>
 
-		<p>The example creates a brdige between the value of the <code>&lt;h1></code> element and the value of the <code>&lt;input></code> element whenever an <code>input</code> event is dispatched.</p>
+		<p>The example propagtes the value of the <code>&lt;input></code> element to the value of the <code>&lt;h1></code> element whenever an <code>input</code> event is dispatched.</p>
 
 		<h1 id=interoperability>Interoperability</h1>
 
-		<p>The <strong>ref</strong> prop plural: <em>refs</em>; allows authors the ability to retrieve a reference to the host node that a virtual element creates.</p>
+		<p>The <em>ref</em> prop plural: <a href=element.html#refs>refs</a>; allows authors the ability to retrieve a reference to the document node that a virtual element actualizes when it is mounted.</p>
 
-		<p>These come in three varients: <strong>function</strong>, <strong>object</strong> and <strong>string</strong> refs.</p>
+		<p>These come in two varients: <strong>function</strong>, and <strong>object</strong> refs.</p>
 
 		<h2>Function Refs</h2>
 
 <pre><code>
-class Welcome {
-	render(props) {
-		return h('h1', {ref: (value) => this.current = value})
-	}
-	componentDidMount() {
-		console.log(this.current)
-	}
+function Welcome (props) {
+	return h('h1', {ref: value => console.assert(value instanceof Node)})
 }
 </code></pre>
 
 		<h2>Object Refs</h2>
 
 <pre><code>
-class Welcome {
-	render(props) {
-		return h('h1', {
-			ref: this
-		}, props.name)
-	}
-	componentDidMount() {
-		console.log(this.current)
-	}
+function Welcome (props) {
+	return h('h1', {ref: {current: null}})
 }
 </code></pre>
 
-		<h2>String Refs</h2>
-
-<pre><code>
-class Welcome {
-	render(props) {
-		return h('h1', {
-			ref: 'heading'
-		}, props.name)
-	}
-	componentDidMount() {
-		console.log(this.refs.heading)
-	}
-}
-</code></pre>
-
-		<p>All refs are dispatched with the reference element when mounted or updated and with a <code>null</code> reference when unmounted or updated.</p>
+		<p>Where the later would have the objects <code>current</code> property populated with the reference to the node.</p>
 
 		<h1>Portals</h1>
 
-		<p>Portals provide a first-class interface to render children into a container that exists outside the surrounding elements hierarchy of the parent component.</p>
+		<p>Portals provide a first-class interface to render children into a container that exists outside the surrounding elements sibling hierarchy.</p>
 
 <pre><code>
 render(h('h1', {}, 'A', createPortal('B', document.head)), document.body)
 </code></pre>
 
-		<p>The following example demonstrates that we can both render the text element <em>"A"</em> into the defined documents body, while also defining that it has a child element <em>"B"</em> that renders into the head of the document.</p>
+		<p>The following example demonstrates that we can both render the heading element <em>"A"</em> into the documents "body", while also declaring that it has a child element <em>"B"</em> that is rendered into the document "head".</p>
 
 		<h1 id=introducing-jsx>Introducing JSX</h1>
 
-		<p>JSX is an optional syntax extension that enables you to write HTML tags interspersed with JavaScript.</p>
+		<p>JSX is an optional syntax extension that enables one to write HTML templates interspersed with JavaScript.</p>
 
 		<p>It is not a requirement, but it may be more pleasing to use depending on your preferences.</p>
 
-		<p>For example writing <code>h('h1', 'Hello')</code> as an html dialect: <code>&lt;h1>Hello&lt;/h1></code>.</p>
+		<p>For example writing <code>h('h1', {}, 'Hello')</code> as an html dialect: <code>&lt;h1>Hello&lt;/h1></code>.</p>
 
 		<h2>JSX Pragma</h2>
 
@@ -320,7 +260,7 @@ render(h('h1', {}, 'A', createPortal('B', document.head)), document.body)
 
 		<p>There are details we haven't gone into that hopefully the <a href=./api.html>API</a> and <a href=./advanced.html>Advanced</a> sections can help document.</p>
 
-		<p>At this point you can jump right into creating something with Dyo, look at some <a href=./examples.html>Examples</a> or learn and contribute to Dyo on <a href=https://github.com/dyo/dyo>GitHub</a>.</p>
+		<p>At this point you can jump right into creating something, look at some <a href=./examples.html>Examples</a> or learn and contribute on <a href=https://github.com/dyo/dyo>GitHub</a>.</p>
 	</article>
 </body>
 </html>

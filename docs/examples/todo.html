@@ -8,33 +8,59 @@
 		<script src=https://unpkg.com/dyo></script>
 	</head>
 	<body>
+		<main></main>
 		<script>
-			const {h, render} = Dyo
+			const {h, render, useReducer} = dyo
+			const target = document.querySelector('main')
 
-			const TodoApp = (props, {todos = []}) => (
-		  	h('main', {style: {fontFamily: 'sans-serif', background: '#eee', padding: '20px'}},
-					h('h2', 'Todos:'),
-		  		h('ol', todos.map(props => h(TodoItem, props))),
-		  		h('form', {onSubmit: event => (
-						props.value && {value: props.value = '', todos: todos.concat({key: Math.random(), done: event.preventDefault(), value: props.value})}
-					)}, h(FormInput, props), h('button', 'Add Todo'))
-		  	)
-		  )
+			const reducer = ({value = '', entries = []}, {type, payload}) => {
+				switch (type) {
+					case 'INPUT':
+						return {value: payload, entries: entries}
+					case 'SUBMIT':
+						return {value: '', entries: !value ? entries : entries.concat({active: false, key: Math.random(), value: payload})}
+					case 'DELETE':
+						return {value: '', entries: entries.filter(entry => entry.key !== payload)}
+					case 'ACTIVE':
+						return {value: '', entries: entries.map(entry => entry.key !== payload ? entry : {...entry, active: !entry.active})}
+				}
+			}
 
-		  const TodoItem = (props, {done = props.done, value = props.value}) => (
-		  	h('li', {style: {margin: '8px 0', textTransform: 'capitalize'}},
-		  		h('label',
-		  			h('input', {type: 'checkbox', checked: done, style: {marginRight: '5px'}, onInput: event => ({done: props.done = !done})}),
-		  			h('span', {style: done && {color: 'rgba(0,0,0,.3)', textDecoration: 'line-through'}}, value)
-		  		)
-		  	)
-		  )
+		  const Entry = ({key, value, active, dispatch}) => {
+		  	return (
+			  	h('li', {style: {margin: '8px 0', textTransform: 'capitalize'}},
+			  		h('label', {},
+			  			h('input', {type: 'checkbox', checked: active, style: {marginRight: '5px'}, onInput: event => {
+			  				dispatch({type: 'ACTIVE', payload: key})
+			  			}}),
+			  			h('span', {style: active ? {color: 'rgba(0,0,0,.3)', textDecoration: 'line-through'} : null}, value),
+			  			h('a', {
+			  				style: {color: 'red', marginLeft: '10px'}, onClick: event => dispatch({type: 'DELETE', payload: key})
+			  			}, '×')
+			  		)
+			  	)
+			  )
+		  }
 
-			const FormInput = (props, {value = props.value}) => (
-				h('input', {onInput: event => ({value: props.value = event.target.value}), value: value}),
-			)
+			const Main = (props) => {
+				const [{value, entries}, dispatch] = useReducer(reducer, {value: '', entries: []})
 
-			render(h(TodoApp), document)
+		  	return (
+			  	h('main', {style: {fontFamily: 'sans-serif', background: '#eee', padding: '20px'}},
+						h('h2', {}, 'Todos:'),
+			  		h('ol', {}, entries.map(props => h(Entry, {...props, dispatch}))),
+			  		h('form', {onSubmit: event => {
+			  			dispatch({type: 'SUBMIT', payload: value})
+			  			event.preventDefault()
+			  		}},
+			  			h('input', {value: value, onInput: event => dispatch({type: 'INPUT', payload: event.target.value})}),
+			  			h('button', {}, 'Add Todo')
+			  		)
+			  	)
+			  )
+			}
+
+			render(h(Main), target)
 		</script>
 	</body>
 </html>

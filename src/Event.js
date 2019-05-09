@@ -42,8 +42,12 @@ export function resolve (fiber, element, value, callback) {
  */
 export function enqueue (fiber, element, value, props, callback) {
 	if (Utility.callable(callback)) {
-		if (Utility.thenable(value = callback(value, props))) {
-			dequeue(fiber, element, value)
+		if (value = callback(value, props)) {
+			if (Utility.callable(value)) {
+				element.stack = value
+			} else if (Utility.thenable(value)) {
+				dequeue(fiber, element, value)
+			}
 		}
 	} else if (callback) {
 		for (var i = 0; i < callback.length; i++) {
