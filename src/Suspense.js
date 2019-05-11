@@ -13,7 +13,7 @@ import * as Node from './Node.js'
  */
 export function lazy (value) {
 	return function (props) {
-		return Utility.has(Utility.callable(value) ? value = value(props) : value, 'current') ? value.current : Utility.throws(value)
+		return Utility.has(Utility.callable(value) ? value = value(props) : value, 0) ? value[0] : Utility.throws(value)
 	}
 }
 
@@ -63,7 +63,13 @@ export function dispatch (fiber, host, element, message) {
  */
 function resolve (fiber, host, parent, element, children, message) {
 	enqueue(fiber, host, parent, element, children, Utility.resolve(message, function (value) {
-		return message.current = value, Component.resolve(fiber, element, element.props, element.children), value
+		try {
+			return message[0] = value
+		} finally {
+			Schedule.execute(fiber, element, function (fiber, element) {
+				Component.resolve(fiber, element, element.props, element.children)
+			})
+		}
 	}, Exceptions.throws(fiber, element)), Lifecycle.create(host))
 }
 

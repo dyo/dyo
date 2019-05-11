@@ -133,6 +133,21 @@ export function pending (fiber, value, resolved) {
 
 /**
  * @param {object} fiber
+ * @param {any} value
+ * @param {any} resolved
+ */
+export function execute (fiber, value, resolved) {
+	var stack = frame
+
+	try {
+		resolved(frame = fiber, value)
+	} finally {
+		frame = stack
+	}
+}
+
+/**
+ * @param {object} fiber
  * @param {object} value
  * @param {function} resolved
  * @param {function} rejected

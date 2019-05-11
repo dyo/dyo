@@ -102,7 +102,7 @@ function Example (props) {
 
 		<h1 id=useContext>useContext</h1>
 
-		<p>Accepts a context provider if the component is a consumer or a context value if the component is a provider and returns a tuple with the context value, and a function to propagate a context update.</p>
+		<p>Accepts a context provider if the component is a context consumer or a context value if the component is a context provider and returns a tuple with the context value, and a function to propagate a context update.</p>
 
 <pre><code>
 useContext(
@@ -131,6 +131,7 @@ function Consumer (props) {
 <pre><code>
 function Provider (props) {
 	const [context, dispatch] = useContext(0)
+
 	return props.children
 }
 
@@ -148,6 +149,79 @@ render(h(Provider, {}, h(Consumer)), document)
 </code></pre>
 
 		<p>Unlike props context is accessible from any number of layers deep within a tree as long as there is an ancestor provider. That is to say a <code>Consumer</code> need not be an "immediate" child of a provider.</p>
+
+		<h1 id=useResource>useResource</h1>
+
+		<p>Accepts a resource provider if the component is a consumer or a resource fetcher if the component is a resource provider and returns a tuple with the resource value, and a function to propagate a resource update.</p>
+
+<pre><code>
+useResource(
+	provider: function,
+	update?: function
+)
+</code></pre>
+
+		<p>Where "provider" would provide the initial resource value, and where "resource" is a single fetch function or union of two functions that serve as "fetch" and "update" functions that –</p>
+
+		<ol>
+			<li>Fetch the resource and or either</li>
+			<li>Update the resource.</li>
+		</ol>
+
+		<p>The second of which is optional.</p>
+
+<pre><code>
+function Provider (props) {
+	const [context, dispatch] = useContext(props => {
+		return fetch('reqres.in/api/users/2')
+	}, props => {
+		return fetch('reqres.in/api/users', {
+			method: 'POST',
+			body: JSON.stringify(props)
+		})
+	})
+}
+</code></pre>
+
+		<p>or a reference to the providing component.</p>
+
+<pre><code>
+function Consumer (props) {
+	const [context, dispatch] = useContext(Provider)
+}
+</code></pre>
+
+		<p>Putting this together in an example:</p>
+
+<pre><code>
+function Provider (props) {
+	const [context, dispatch] = useContext(props => {
+		return fetch('reqres.in/api/users/2')
+	}, props => {
+		return fetch('reqres.in/api/users', {
+			method: 'POST',
+			body: JSON.stringify(props)
+		})
+	})
+
+	return props.children
+}
+
+function Consumer (props) {
+	const [context, dispatch] = useContext(Provider)
+
+	return h('main', {},
+		h('h1', {}, 'count:', context),
+		h('button', {
+			onClick: event => dispatch({name: 'Snow'})
+		}, 'update'),
+	)
+}
+
+render(h(Provider, {}, h(Consumer)), document)
+</code></pre>
+
+		<p>Like context resources are accessible from any number of layers deep within a tree as long as there is an ancestor resource provider.</p>
 
 		<h1 id=useEffect>useEffect</h1>
 

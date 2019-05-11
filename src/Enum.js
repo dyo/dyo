@@ -6,7 +6,7 @@ export var identifier = Utility.symbol('identifier')
 
 // timestamps(ms)
 export var timeout = 100
-export var network = timeout * 10
+export var network = timeout * 6
 
 // element identifiers
 export var thenable = 1

@@ -2,6 +2,7 @@ import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Context from './Context.js'
+import * as Resource from './Resource.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
 import * as Schedule from './Schedule.js'
@@ -201,9 +202,29 @@ export function context (value) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = Context.consume(element, element.context, value, value)
+		children = children[index] = Context.forward(element, value)
 	} else {
 		children = children[index]
+	}
+
+	return children
+}
+
+/**
+ * @param {function} value
+ * @param {function?} callback
+ * @return {any[any, function]}
+ */
+export function resource (value, callback) {
+	var fiber = Schedule.peek()
+	var element = fiber.owner
+	var index = ++fiber.index
+	var children = element.children
+
+	if (index === children.length) {
+		Resource.forward(children = children[index] = Context.forward(element, value), value, callback)
+	} else {
+		Resource.resolve(children = children[index], value)
 	}
 
 	return children

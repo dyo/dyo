@@ -169,6 +169,14 @@ export function thenable (value) {
 }
 
 /**
+ * @param {any?} value
+ * @param {boolean}
+ */
+export function fetchable (value) {
+	return value !== undefined && value !== null && typeof value === 'object' && callable(value.json)
+}
+
+/**
  * @param {object} value
  * @param {boolean}
  */
@@ -259,7 +267,7 @@ export function each (callback, value, index, array) {
  * @return {PromiseLike<any>}
  */
 export function resolve (value, resolved, rejected) {
-	return thenable(value) ? value.then(resolved, rejected) : settled(value, resolved, rejected, 0)
+	return isArray(value) ? settled(value, resolved, rejected, 0) : value.then(resolved, rejected)
 }
 
 /**
