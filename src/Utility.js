@@ -10,6 +10,12 @@ export var random = math.random
 
 /**
  * @constructor
+ * @param {string}
+ */
+export var error = Error
+
+/**
+ * @constructor
  * @param {object}
  */
 export var array = Array
@@ -130,11 +136,19 @@ export function extend (constructor, value) {
 }
 
 /**
- * @throws {any}
  * @param {any} value
+ * @throws {any}
  */
 export function throws (value) {
 	throw value
+}
+
+/**
+ * @throws {any}
+ * @param {any} value
+ */
+export function errors (value) {
+	throws(new error(value))
 }
 
 /**

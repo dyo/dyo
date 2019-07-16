@@ -84,6 +84,7 @@ export function create (host, value) {
 /**
  * @param {object} fiber
  * @param {object} export
+ * @throws {any}
  */
 export function destroy (fiber, exception) {
 	fiber.element = null
@@ -152,7 +153,7 @@ export function enqueue (fiber, host, element, exception, current) {
 export function dequeue (fiber, host, element, exception, current) {
 	if (current.value === null) {
 		try {
-			current.state = Element.fallback(current, exception)
+			current.state = Element.fallback(exception, current)
 		} finally {
 			Component.request(current)
 		}

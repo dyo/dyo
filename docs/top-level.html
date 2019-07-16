@@ -97,26 +97,6 @@ interface isValidElement(
 const example = isValidElement(h('h1', {}, 'Hello'))
 </code></pre>
 
-		<h1 id=createPortal>createPortal</h1>
-
-		<p>Create a virtual snapshot of a portal element.</p>
-
-<pre><code>
-interface createPortal(
-	children: any
-	target: string|object
-	key?: any
-): object
-</code></pre>
-
-		<p>Returns a virtual snapshot describing a portal element. The target argument can optionally be a "selector". The <code>key</code> argument is also optional.</p>
-
-<pre><code>
-const example = createPortal(h('h1', {}, 'Hello'), 'main')
-</code></pre>
-
-		<p>The return value is itself a component function.</p>
-
 		<h1 id=Children>Children</h1>
 
 		<p>The Children interface provides usefull helpers to use with the opaque <code>props.children</code> data structure.</p>
@@ -185,9 +165,41 @@ interface find(
 ): any
 </code></pre>
 
+		<h1 id=Portal>Portal</h1>
+
+		<p>A virtual snapshot of a portal element.</p>
+
+		<p>The Portal is a type used to create virtual "portal" elements. Its children are rendered into the target provided.</p>
+
+<pre><code>
+interface Props(
+	target: string|object
+)
+</code></pre>
+
+		<p>When the portals target changes it's children are re-parented to the new target. The target argument can optionally be a "selector".</p>
+
+<pre><code>
+function Provider ({children}) {
+	return h(Portal, {target: 'main'}, ...children)
+}
+</code></pre>
+
+		<h1 id=Context>Context</h1>
+
+		<p>The Context is a type used to create virtual "context" elements. Its children independent of depth can access the provided context value through <a href=./hooks.html#useContext>useContext</a>.</p>
+
+<pre><code>
+function Provider ({children}) {
+	return h(Context, {value: any?}, ...children)
+}
+</code></pre>
+
+		<p>All consumers are updated when the context value itself changes during an update.</p>
+
 		<h1 id=Fragment>Fragment</h1>
 
-		<p>The Fragment component is a component type used to create virtual "fragment" elements. Its children are rendered without a wrapper element.</p>
+		<p>The Fragment is a type used to create virtual "fragment" elements. Its children are rendered without the need for wrapper elements.</p>
 
 <pre><code>
 const example = h(Fragment, {}, ...children)
@@ -195,7 +207,7 @@ const example = h(Fragment, {}, ...children)
 
 		<h1 id=Boundary>Boundary</h1>
 
-		<p>The Boundary component is a component used to create virtual error boundaries. It accepts a <code>fallback</code> prop that is used when it's decendents(children at any depth) raise an exception.</p>
+		<p>The Boundary is a type used to create virtual error boundaries. It accepts a <code>fallback</code> prop that is used when it's decendents(children at any depth) raise an exception.</p>
 
 <pre><code>
 interface Props {
@@ -212,7 +224,6 @@ interface Exception {
 	type: string
 }
 </code></pre>
-
 
 		<p>The exception object can optionally be used directly as a <a href="hooks.html#useReducer">reducers</a> dispatch payload.</p>
 

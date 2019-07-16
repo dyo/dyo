@@ -1,5 +1,4 @@
-import {h, lazy, render, Suspense} from '../index.js'
-import {useState, useEffect, useLayout} from '../index.js'
+import {h, lazy, render, Suspense, useState, useEffect, useLayout} from '../index.js'
 
 describe('Suspense', () => {
 	it('should suspend lazy loaded components suspense boundary', (done) => {

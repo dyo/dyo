@@ -1,6 +1,6 @@
 const keys = [
-	'render', 'memo', 'lazy', 'Suspense', 'Boundary', 'Fragment', 'Children',
-	'createElement', 'createPortal', 'cloneElement', 'isValidElement', 'h',
+	'render', 'memo', 'lazy', 'Suspense', 'Boundary', 'Portal', 'Context', 'Fragment', 'Children',
+	'createElement', 'cloneElement', 'isValidElement', 'h',
 	'useRef', 'useMemo', 'useCallback', 'useState', 'useReducer', 'useContext', 'useResource', 'useEffect', 'useLayout'
 ]
 

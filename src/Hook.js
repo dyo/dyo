@@ -2,10 +2,17 @@ import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Context from './Context.js'
-import * as Resource from './Resource.js'
 import * as Component from './Component.js'
 import * as Lifecycle from './Lifecycle.js'
 import * as Schedule from './Schedule.js'
+
+/**
+ * @param {any?} value
+ * @return {any}
+ */
+export function extract (value) {
+	return Utility.fetchable(value) ? value.json() : value
+}
 
 /**
  * @param {any[]} prev
@@ -25,22 +32,12 @@ export function compare (prev, next) {
 }
 
 /**
- * @param {any[]?} current
- * @param {any?} value
- * @param {any?} props
- * @return {any}
- */
-export function forward (current, value, props) {
-	return current[1] === undefined ? current[0](value, props) : current[0](current[1], value, props)
-}
-
-/**
  * @param {object} element
  * @param {object} current
  * @param {any} value
  */
 export function dispatch (element, current, value) {
-	resolve(element, current, current[2](current[0], value))
+	resolve(element, current, current[1](current[0][0], value))
 }
 
 /**
@@ -49,8 +46,8 @@ export function dispatch (element, current, value) {
  * @param {any} value
  */
 export function resolve (element, current, value) {
-	if (!Utility.is(current[0], current[0] = Utility.callable(value) ? value(current[0]) : value)) {
-		Component.request(element)
+	if (!Utility.is(current[0][0], Utility.callable(value) ? value = value(current[0][0]) : value)) {
+		current[0] = [value, current[0][1]], Component.request(element)
 	}
 }
 
@@ -88,7 +85,9 @@ export function dequeue (current, value, children, callback, argument, position)
 		if (Utility.callable(callback)) {
 			children[position !== -1 ? position : current[3] = children.length] = callback
 		} else if (Utility.thenable(callback)) {
-			return Utility.resolve(callback, function (callback) { return dequeue(current, value, children, callback, argument, position) }, null)
+			return Utility.resolve(callback, function (callback) {
+				return dequeue(current, value, children, callback, argument, position)
+			}, null)
 		}
 	}
 }
@@ -144,12 +143,12 @@ export function memoize (callback, value) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [value, value]
-	} else if (compare((children = children[index])[0], children[0] = value)) {
-		return children[1]
+		children = children[index] = [value, callback(value)]
+	} else if (!compare((children = children[index])[0], children[0] = value)) {
+		children[1] = callback(value)
 	}
 
-	return children[1] = callback(value)
+	return children[1]
 }
 
 /**
@@ -163,12 +162,12 @@ export function state (value) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [Lifecycle.resolve(element, value), function (value) { resolve(element, children, value) }]
+		children = children[index] = [[Lifecycle.resolve(element, value), function (value) { resolve(element, children, value) }]]
 	} else {
 		children = children[index]
 	}
 
-	return children
+	return children[0]
 }
 
 /**
@@ -183,12 +182,12 @@ export function reducer (callback, value) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [Lifecycle.resolve(element, value), function (value) { dispatch(element, children, value) }, callback]
+		children = children[index] = [[Lifecycle.resolve(element, value), function (value) { dispatch(element, children, value) }], callback]
 	} else {
-		children = children[index], children[2] = callback
+		children = children[index], children[1] = callback
 	}
 
-	return children
+	return children[0]
 }
 
 /**
@@ -202,52 +201,48 @@ export function context (value) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = Context.forward(element, value)
+		children = children[index] = Context.resolve(element, value)
 	} else {
 		children = children[index]
 	}
 
-	return children
+	return children[0]
 }
 
 /**
- * @param {function} value
  * @param {function?} callback
- * @return {any[any, function]}
+ * @return {any}
  */
-export function resource (value, callback) {
+export function resource (callback) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
 	var children = element.children
 
 	if (index === children.length) {
-		Resource.forward(children = children[index] = Context.forward(element, value), value, callback)
-	} else {
-		Resource.resolve(children = children[index], value)
+		Utility.throws(children[index] = Utility.resolve(Lifecycle.resolve(element, callback), extract, null))
 	}
 
-	return children
+	return children[index][0]
 }
 
 /**
  * @param {function} callback
- * @param {any} value
  * @return {function}
  */
-export function callback (callback, value) {
+export function callback (callback) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [callback, value, function (value, props) { return forward(children, value, props) }]
+		children = children[index] = [callback, function () { return children[0].apply(this, arguments) }]
 	} else {
-		children = children[index], children[0] = callback, children[1] = value
+		children = children[index], children[0] = callback
 	}
 
-	return children[2]
+	return children[1]
 }
 
 /**
@@ -265,3 +260,4 @@ export function layout (callback, value) {
 export function effect (callback, value) {
 	request(callback, value, Enum.request)
 }
+

@@ -41,17 +41,11 @@ export function peek () {
 }
 
 /**
- * @return {void}
+ * @param {boolean} type
+ * @return {any}
  */
-export function root () {
-	return frame.target = null
-}
-
-/**
- * @return {boolean}
- */
-export function memo () {
-	return frame.target !== null
+export function memo (type) {
+	return type ? frame.target !== frame : frame.target = frame
 }
 
 /**

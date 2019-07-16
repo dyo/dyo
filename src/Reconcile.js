@@ -48,7 +48,7 @@ export function resolve (fiber, host, parent, element, snapshot, type, a, b) {
  */
 export function enqueue (fiber, host, parent, element, snapshot, value, a, b) {
 	if (Element.active(element)) {
-		children(fiber, host, parent, 0, a, a === b ? [Element.resolve(value, snapshot.props), Element.empty()] : value)
+		children(fiber, host, parent, a, a === b ? [Element.resolve(value, snapshot.props), Element.empty()] : value, 0)
 	}
 }
 
@@ -77,7 +77,7 @@ export function replace (fiber, host, parent, element, snapshot, siblings, index
  */
 export function update (fiber, host, parent, element, snapshot, siblings, index) {
 	if (element === snapshot) {
-		if (Schedule.memo()) {
+		if (Schedule.memo(true)) {
 			return
 		}
 	}
@@ -98,12 +98,12 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 			case Enum.component:
 				return Schedule.commit(fiber, Enum.component, host, element, snapshot.props, a)
 			case Enum.iterable:
-				return children(fiber, host, element, 0, a, b)
+				return children(fiber, host, element, a, b, 0)
 			case Enum.thenable:
 				return resolve(fiber, host, parent, element, snapshot, type, a, b)
 		}
 
-		children(fiber, host, element, 0, a, b)
+		children(fiber, host, element, a, b, 0)
 		props(fiber, host, parent, element, object(element.props, element.props = snapshot.props))
 	} else {
 		if (element.identity === identity) {
@@ -123,11 +123,11 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
  * @param {object} fiber
  * @param {object} host
  * @param {object} parent
- * @param {number} offset
  * @param {object[]} a
  * @param {object[]} b
+ * @param {number} offset
  */
-export function children (fiber, host, parent, offset, a, b) {
+export function children (fiber, host, parent, a, b, offset) {
 	var apos = 0
 	var bpos = 0
 	var aidx = 0

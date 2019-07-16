@@ -62,12 +62,10 @@ export function iterable (value, index) {
 
 /**
  * @param {any} value
- * @param {object} type
- * @param {(string|number|symbol)} key
  * @return {object}
  */
-export function portal (value, type, key) {
-	return new struct(Enum.portal, key, null, null, [target(value, type, null)])
+export function container (value) {
+	return new struct(Enum.iterable, null, null, null, [from(value, 0, null)])
 }
 
 /**
@@ -80,11 +78,11 @@ export function target (value, type, key) {
 }
 
 /**
- * @param {any} value
+ * @param {object} value
  * @return {object}
  */
-export function container (value) {
-	return new struct(Enum.iterable, null, null, null, [from(value, 0, null)])
+export function portal (value) {
+	return new struct(Enum.portal, null, null, null, [target(value.children, value.target, null)])
 }
 
 /**
@@ -92,6 +90,15 @@ export function container (value) {
  */
 export function offscreen () {
 	return new struct(Enum.element, null, Enum.offscreen, null, [])
+}
+
+/**
+ * @param {object} value
+ * @param {object} element
+ * @return {object?}
+ */
+export function fallback (value, element) {
+	return new struct(Enum.fallback, null, null, null, [from(element.props.fallback, 0, value)])
 }
 
 /**
@@ -286,24 +293,6 @@ export function sibling (element) {
  */
 export function children (element) {
 	return element.children[0]
-}
-
-/**
- * @param {object} element
- * @param {object} value
- * @return {object?}
- */
-export function fallback (element, value) {
-	return from(element.props.fallback, 0, value)
-}
-
-/**
- * @param {object} element
- * @param {object} value
- * @return {object}
- */
-export function reparent (element, value) {
-	return (value.parent = element).children[0] = value
 }
 
 /**

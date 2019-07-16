@@ -5,7 +5,7 @@
 
 ### Added
 
-- `Suspense` and `Boundary` components.
+- `Suspense`, `Boundary`, `Context` and `Portal` components.
 
 - `memo` and `lazy` factories.
 
@@ -37,9 +37,14 @@ Better level of abstraction with a single source of entry with: `render`. The `d
 
 Added effects `useEffect` and `useLayout` to replace them all.
 
+- Removed `componentDidCatch` being replaced by a single `Boundary` component.
+
 - Removed `createFactory`, `createComment`.
 
-- Remove `Component`, `PureComponent` and class components in general.
+- Removed `Component`, `PureComponent` and class components in general.
+
+- Removed `createPortal` and `createContext` being replaced by `Portal` and `Context` components respectfully.
+
 
 ## 9.1.1 (19 July 2018)
 

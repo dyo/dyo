@@ -40,6 +40,6 @@ export function resolve (fiber, element, target, value) {
 	if (target === value) {
 		target[Enum.identifier] = Node.create(fiber, element, element, element, null)
 	} else {
-		Reconcile.children(fiber, element, element, 0, element.children, value)
+		Reconcile.children(fiber, element, element, element.children, value, 0)
 	}
 }

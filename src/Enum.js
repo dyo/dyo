@@ -9,6 +9,7 @@ export var timeout = 100
 export var network = timeout * 6
 
 // element identifiers
+export var fallback = 0
 export var thenable = 1
 export var iterable = 2
 export var component = 3

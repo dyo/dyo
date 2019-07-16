@@ -102,126 +102,83 @@ function Example (props) {
 
 		<h1 id=useContext>useContext</h1>
 
-		<p>Accepts a context provider if the component is a context consumer or a context value if the component is a context provider and returns a tuple with the context value, and a function to propagate a context update.</p>
+		<p>Accepts a context provider that supplies a context value through <a href=./top-level.html#Context>Context</a>.</p>
 
 <pre><code>
 useContext(
-	provider: function|any
+	provider: function
 )
 </code></pre>
 
-		<p>Where "provider" would provide the initial context value.</p>
+		<p>Where "provider" is the component that provides the context value.</p>
 
 <pre><code>
-function Provider (props) {
-	const [context, dispatch] = useContext(0)
+function Provider ({children}) {
+	return h(Context, {value: 0}, children)
 }
 </code></pre>
 
-		<p>or a reference to the providing component.</p>
+		<p>and "context" the current context value.</p>
 
 <pre><code>
 function Consumer (props) {
-	const [context, dispatch] = useContext(Provider)
+	const context = useContext(Provider)
 }
 </code></pre>
 
 		<p>Putting this together in an example:</p>
 
 <pre><code>
-function Provider (props) {
-	const [context, dispatch] = useContext(0)
-
-	return props.children
+function Provider ({children}) {
+	return h(Context, {value: 0}, children)
 }
 
 function Consumer (props) {
-	const [context, dispatch] = useContext(Provider)
+	const context = useContext(Provider)
 
-	return h('main', {},
-		h('h1', {}, 'count:', context),
-		h('button', {onClick: event => dispatch(value => value + 1)}, '+'),
-		h('button', {onClick: event => dispatch(value => value - 1)}, '-')
-	)
+	return h('main', {}, h('h1', {}, 'count:', context))
 }
 
 render(h(Provider, {}, h(Consumer)), document)
 </code></pre>
 
-		<p>Unlike props context is accessible from any number of layers deep within a tree as long as there is an ancestor provider. That is to say a <code>Consumer</code> need not be an "immediate" child of a provider.</p>
+		<p>Unlike props context is accessible from any number of layers deep within a tree as long as there is an ancestor provider. That is to say a <code>Consumer</code> need not be the "immediate" child of a provider.</p>
 
 		<h1 id=useResource>useResource</h1>
 
-		<p>Accepts a resource provider if the component is a consumer or a resource fetcher if the component is a resource provider and returns a tuple with the resource value, and a function to propagate a resource update.</p>
+		<p>Accepts a resource callback that returns a promise.</p>
 
 <pre><code>
 useResource(
-	provider: function,
-	update?: function
+	callback: function
 )
 </code></pre>
 
-		<p>Where "provider" would provide the initial resource value, and where "resource" is a single fetch function or union of two functions that serve as "fetch" and "update" functions that –</p>
-
-		<ol>
-			<li>Fetch the resource and or either</li>
-			<li>Update the resource.</li>
-		</ol>
-
-		<p>The second of which is optional.</p>
-
-<pre><code>
-function Provider (props) {
-	const [context, dispatch] = useContext(props => {
-		return fetch('reqres.in/api/users/2')
-	}, props => {
-		return fetch('reqres.in/api/users', {
-			method: 'POST',
-			body: JSON.stringify(props)
-		})
-	})
-}
-</code></pre>
-
-		<p>or a reference to the providing component.</p>
+		<p>Where "callback" would provide the promise that resolves to the resource value.</p>
 
 <pre><code>
 function Consumer (props) {
-	const [context, dispatch] = useContext(Provider)
+	const resource = useResource(props => {
+		return fetch('reqres.in/api/users/2')
+	})
 }
 </code></pre>
 
 		<p>Putting this together in an example:</p>
 
 <pre><code>
-function Provider (props) {
-	const [context, dispatch] = useContext(props => {
+function Consumer (props) {
+	const resource = useResource(props => {
 		return fetch('reqres.in/api/users/2')
-	}, props => {
-		return fetch('reqres.in/api/users', {
-			method: 'POST',
-			body: JSON.stringify(props)
-		})
 	})
 
-	return props.children
+	return JSON.stringify(resource, null, 2)
 }
 
-function Consumer (props) {
-	const [context, dispatch] = useContext(Provider)
-
-	return h('main', {},
-		h('h1', {}, 'count:', context),
-		h('button', {
-			onClick: event => dispatch({name: 'Snow'})
-		}, 'update'),
-	)
-}
-
-render(h(Provider, {}, h(Consumer)), document)
+render(h(Suspense, {}, h(Consumer)), document)
 </code></pre>
 
-		<p>Like context resources are accessible from any number of layers deep within a tree as long as there is an ancestor resource provider.</p>
+		<p>Both the <a href=#useResource>useResource</a> and <a href=#useContext>useContext</a> hooks can be employed in conjunction to afford access to a resource from any number of layers deep within a tree as long as there is an ancestor resource context provider.</p>
 
 		<h1 id=useEffect>useEffect</h1>
 
@@ -330,7 +287,11 @@ const memoized = useMemo(([a, b]) => compute(a, b), [a, b])
 const memorized = useMemo(() => compute(1, 2), [])
 </code></pre>
 
-		<p>Like effects if no dependencies array is provided, a new memorized value will be computed on every render.</p>
+		<p>Like effects if no dependencies array is provided, a new memorized value will be computed on every render, and like effects if dependencies are provided, then they are also accessible through the first tuple argument.</p>
+
+<pre><code>
+const memorized = useMemo(([a, b]) => compute(a, b), [a, b])
+</code></pre>
 
 		<h1 id=useCallback>useCallback</h1>
 
@@ -340,13 +301,7 @@ const memorized = useMemo(() => compute(1, 2), [])
 const callback = useCallback((...args) => compute(...args))
 </code></pre>
 
-		<p>Accepts a function and an optional array of arguments. A "stable" function is returned. If arguments are provided they are passed as the first argument to the function akin to <a href=https://en.wikipedia.org/wiki/Currying>currying</a>.</p>
-
-<pre><code>
-const callback = useCallback(([a], ...args) => compute(...args), [a])
-</code></pre>
-
-		<p>Unlike <a href=useMemo>useMemo</a> the returned function is guarenteed to be a "stable" function reference; The contents of the arguments array cannot invalidate this guarentee.</p>
+		<p>Unlike <a href=useMemo>useMemo</a> the returned function is guarenteed to always be a "stable" function reference.</p>
 	</article>
 </body>
 </html>

@@ -67,7 +67,7 @@ function resolve (fiber, host, parent, element, children, message) {
 			return message[0] = value
 		} finally {
 			Schedule.execute(fiber, element, function (fiber, element) {
-				Component.resolve(fiber, element, element.props, element.children)
+				Component.resolve(Schedule.memo(false), element, element.props, element.children)
 			})
 		}
 	}, Exceptions.throws(fiber, element)), Lifecycle.create(host))
@@ -84,7 +84,7 @@ function resolve (fiber, host, parent, element, children, message) {
  */
 export function enqueue (fiber, host, parent, element, children, message, stack) {
 	if (stack.push(message) === 1) {
-		dequeue(fiber, host, parent, element, children, null, stack, null, null, Element.offscreen())
+		dequeue(fiber, host, parent, parent, children, null, stack, null, null, Element.offscreen())
 	}
 }
 
@@ -104,28 +104,33 @@ export function dequeue (fiber, host, parent, element, children, callback, stack
 	Schedule.suspend(fiber, stack, function () {
 		if (sibling !== (stack = host.stack = null)) {
 			if (Element.active(parent)) {
-				Schedule.commit(fiber, Enum.mount, host, parent, children[1] = sibling, fallback)
-				Schedule.commit(fiber, Enum.mount, host, parent, Element.reparent(parent, Element.children(offscreen)), sibling)
-				Schedule.commit(fiber, Enum.unmount, host, parent, fallback, fallback)
-				Schedule.commit(fiber, Enum.unmount, host, parent, offscreen, offscreen)
+				try {
+					parent.identity = Enum.iterable
+					parent.value = null
+					children[1] = sibling
+				} finally {
+					Schedule.commit(fiber, Enum.mount, host, parent, parent, fallback)
+					Schedule.commit(fiber, Enum.unmount, host, parent, fallback, fallback)
+					Schedule.commit(fiber, Enum.unmount, host, parent, offscreen, offscreen)
+				}
 			}
 		}
 	}, callback)
 
-	if (host.identity === Enum.component ? fallback = Element.fallback(host, host.props) : false) {
+	if (host.identity === Enum.component ? fallback = Element.fallback(host.props, host) : false) {
 		Schedule.callback(host, Element.active(parent), callback = function (value) {
 			if (stack !== null) {
 				if (value) {
 					Utility.timeout(callback, Enum.network)
 				} else if (Element.active(parent)) {
 					try {
-						Node.create(fiber, host, parent, offscreen, null)
-						Node.create(fiber, host, parent, fallback, null)
+						Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, offscreen, null), sibling = children[1])
+						Schedule.commit(fiber, Enum.mount, Node.create(fiber, host, parent, fallback, null), parent, fallback, sibling)
+						Schedule.commit(fiber, Enum.mount, host, offscreen, parent, undefined)
 					} finally {
-						Schedule.commit(fiber, Enum.mount, host, offscreen, Element.reparent(offscreen, children[0]), undefined)
-						Schedule.commit(fiber, Enum.mount, host, parent, children[0] = offscreen, sibling = children[1])
-						Schedule.commit(fiber, Enum.mount, host, parent, children[1] = fallback, sibling)
-						Schedule.commit(fiber, Enum.unmount, host, parent, sibling, sibling)
+						parent.identity = Enum.element
+						parent.value = offscreen.value
+						children[1] = fallback
 					}
 				}
 			}

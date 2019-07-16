@@ -1,57 +1,57 @@
 import * as Utility from './Utility.js'
-import * as Component from './Component.js'
-import * as Lifecycle from './Lifecycle.js'
 import * as Schedule from './Schedule.js'
 
 /**
+ * @param {object} props
+ * @return {any}
+ */
+export function context (props) {
+	return dispatch(this, props.value, this.state), props.children
+}
+
+/**
+ * @param {any?} value
+ * @param {any[any]} context
+ */
+export function compare (value, context) {
+	return Utility.is(context[0], context[0] = value) ? null : Schedule.memo(false)
+}
+
+/**
  * @param {object} element
+ * @param {any} value
+ * @param {any[object]?} context
+ * @return {any}
+ */
+export function dispatch (element, value, context) {
+	return context === null ? enqueue(element, value) : compare(value, context)
+}
+
+/**
+ * @param {object} element
+ * @param {function} value
+ * @return {any}
+ */
+export function resolve (element, value) {
+	return Utility.isArray(value = value.prototype) ? element.context[value[0]] : Utility.errors('Invalid Provider!')
+}
+
+/**
+ * @param {object} element
+ * @param {any} value
+ * @return {any}
+ */
+export function enqueue (element, value) {
+	return dequeue(element, value, element.context = Utility.create(element.context), value = element.host.type)
+}
+
+/**
+ * @param {object} element
+ * @param {any} value
  * @param {object} context
- * @param {object} type
- * @param {any?} value
- * @return {[any, function]}
+ * @param {function} type
+ * @return {any}
  */
-export function create (element, context, type, value) {
-	return context[type[0]] = context = [value, function (value) {
-		if (!Utility.is(context[0], context[0] = Utility.callable(value) ? value(context[0]) : value)) {
-			Component.enqueue(element, null, dispatch)
-		}
-	}]
-}
-
-/**
- * @param {object} element
- * @param {any?} value
- */
-export function forward (element, value) {
-	return resolve(element, element.context, value, value)
-}
-
-/**
- * @param {object} element
- */
-export function dispatch (element) {
-	try {
-		Schedule.root()
-	} finally {
-		Component.dequeue(element)
-	}
-}
-
-/**
- * @param {object} element
- * @param {object} context
- * @param {any?} type
- * @param {any?} value
- * @return {[any, function]}
- */
-export function resolve (element, context, type, value) {
-	if (Utility.callable(value)) {
-		if (Utility.isArray(type = value.prototype)) {
-			return context[type[0]]
-		} else {
-			value = Lifecycle.resolve(element, value)
-		}
-	}
-
-	return create(element, element.context = Utility.create(context), element.type.prototype = [Utility.symbol()], value)
+export function dequeue (element, value, context, type) {
+	return element.state = context[(Utility.isArray(type.prototype) ? type.prototype : type.prototype = [Utility.symbol()])[0]] = [value]
 }

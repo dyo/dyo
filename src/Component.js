@@ -58,7 +58,7 @@ export function memoize (value, callback) {
 export function forward (value, callback, element, props) {
 	if (Element.active(element)) {
 		if (element.value === null) {
-			if (Schedule.memo()) {
+			if (Schedule.memo(true)) {
 				if (callback(element.props, props)) {
 					return Element.children(element)
 				}
@@ -98,7 +98,7 @@ export function create (fiber, host, element) {
  */
 export function update (fiber, host, element, props, children) {
 	try {
-		Reconcile.children(fiber, element, element.parent, children.length - 1, children, [render(fiber, element, props)])
+		Reconcile.children(fiber, element, element.parent, children, [render(fiber, element, props)], children.length - 1)
 	} catch (error) {
 		Exception.dispatch(fiber, host, element, error)
 	} finally {
@@ -133,9 +133,7 @@ export function resolve (fiber, element, props, children) {
 export function enqueue (element, value, callback) {
 	if (value === null) {
 		if (Schedule.peek() !== null) {
-			if (element.value !== callback) {
-				Schedule.callback(element, element, element.value = callback)
-			}
+			Schedule.callback(element, element, element.value = callback)
 		} else {
 			element.value = Event.request(element, callback)
 		}

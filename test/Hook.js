@@ -1,5 +1,5 @@
-import {h, memo, render} from '../index.js'
-import {useRef, useMemo, useCallback, useState, useReducer, useContext, useEffect, useLayout} from '../index.js'
+import {h, memo, render, Suspense, Context} from '../index.js'
+import {useRef, useMemo, useCallback, useState, useReducer, useContext, useResource, useEffect, useLayout} from '../index.js'
 
 describe('Hook', () => {
 	describe('useRef', () => {
@@ -166,26 +166,6 @@ describe('Hook', () => {
 				render(h(Primary), target, (current) => {
 					assert.equal(stack[0], stack[1])
 					assert.deepEqual(stack[0](1, 2), stack[1](1, 2))
-				})
-			})
-		})
-
-		it('should use a callback hook with arguments', () => {
-			const target = document.createElement('div')
-			const stack = []
-			const Primary = props => {
-				const value = useCallback((...args) => args, [0])
-
-				stack.push(value)
-
-				return
-			}
-
-			render(h(Primary), target, (current) => {
-				render(h(Primary), target, (current) => {
-					assert.equal(stack[0], stack[1])
-					assert.deepEqual(stack[0](1, 2), stack[1](1, 2))
-					assert.deepEqual(stack[0](1, 2), [[0], 1, 2])
 				})
 			})
 		})
@@ -869,11 +849,14 @@ describe('Hook', () => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = memo(({children}) => {
-				const [theme, setTheme] = useContext('red')
+				const state = useState('red')
+				const [theme, setTheme] = state
 
 				stack.push('Primary', theme)
 
-				return h('button', {onClick: [e => setTheme(theme + '!'), e => setTheme(theme => theme + '!')]}, theme, children)
+				return h(Context, {value: state}, h('button', {
+					onClick: [e => setTheme(theme + '!'), e => setTheme(theme => theme + '!')]
+				}, theme, children))
 			}, (prev, next) => true)
 
 			const Secondary = memo(() => {
@@ -902,11 +885,12 @@ describe('Hook', () => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = memo(({children}) => {
-				const [theme, setTheme] = useContext('red')
+				const state = useState('red')
+				const [theme, setTheme] = state
 
 				stack.push('Primary', theme)
 
-				return h('button', {}, theme, children)
+				return h(Context, {value: state}, h('button', {}, theme, children))
 			}, (prev, next) => true)
 
 			const Secondary = memo(() => {
@@ -935,19 +919,22 @@ describe('Hook', () => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = memo(({children}) => {
-				const [theme, setTheme] = useContext('red')
+				const state = useState('red')
+				const [theme, setTheme] = state
 
 				stack.push('Primary', theme)
 
-				return h('button', {}, theme, children)
+				useLayout(() => {
+					setTheme('red!')
+				}, [])
+
+				return h(Context, {value: 'red'}, h('button', {}, theme, children))
 			}, (prev, next) => true)
 
 			const Secondary = memo(() => {
-				const [theme, setTheme] = useContext(Primary)
+				const theme = useContext(Primary)
 
 				stack.push('Secondary', theme)
-
-				setTheme('red')
 
 				return h('h1', {}, theme)
 			}, (prev, next) => true)
@@ -957,8 +944,8 @@ describe('Hook', () => {
 			}, (prev, next) => true)
 
 			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
-				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red'])
-				assert.html(current, '<button>red<h1>red</h1></button>')
+				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red', 'Primary', 'red!'])
+				assert.html(current, '<button>red!<h1>red</h1></button>')
 			})
 		})
 
@@ -966,19 +953,21 @@ describe('Hook', () => {
 			const target = document.createElement('div')
 			const stack = []
 			const Primary = memo(({children}) => {
-				const [theme, setTheme] = useContext(props => 'red')
+				const state = useState(props => 'red')
+				const [theme, setTheme] = state
 
 				stack.push('Primary', theme)
 
-				return children
+				return h(Context, {value: state}, children)
 			}, (prev, next) => true)
 
 			const Secondary = memo(({children}) => {
-				const [theme, setTheme] = useContext(props => 'blue')
+				const state = useState(props => 'blue')
+				const [theme, setTheme] = state
 
 				stack.push('Secondary', theme)
 
-				return children
+				return h(Context, {value: state}, children)
 			}, (prev, next) => true)
 
 			const Indirection = memo(({children}) => {
@@ -995,6 +984,112 @@ describe('Hook', () => {
 			})))), target, (current) => {
 				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'blue', 'Consumer', 'red', 'blue'])
 				assert.html(current, '<h1>red</h1><h1>blue</h1>')
+			})
+		})
+
+		it('should not consume invalid context provider', () => {
+			const target = document.createElement('div')
+			const stack = assert.spyr(console, 'error')
+			const Primary = (({children}) => {
+				stack.push('Primary')
+
+				return h('button', {}, children)
+			})
+
+			const Secondary = (() => {
+				const theme = useContext(Primary)
+
+				stack.push('Secondary', theme)
+
+				return h('h1', {}, theme)
+			})
+
+			const Indirection = (({children}) => {
+				return children
+			})
+
+			assert.throws(() => {
+				render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target)
+			})
+
+			assert.deepEqual(stack, ['Primary', 'Exception: Error: Invalid Provider!\n\tat <Primary>\n\tat <Indirection>\n\tat <Indirection>\n'])
+		})
+
+		it('should provide multiple context', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = memo(({children}) => {
+				const state = useState('red')
+				const [theme, setTheme] = state
+
+				stack.push('Primary', theme)
+
+				return h(Context, {value: state}, h('button', {}, theme, children))
+			}, (prev, next) => true)
+
+			const Secondary = memo(() => {
+				const [theme, setTheme] = useContext(Primary)
+
+				stack.push('Secondary', theme)
+
+				return h('h1', {}, theme)
+			}, (prev, next) => true)
+
+			const Indirection = memo(({children}) => {
+				return children
+			}, (prev, next) => true)
+
+			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, h(Primary, {}, Secondary)))), target, (current) => {
+				assert.deepEqual(stack, ['Primary', 'red', 'Primary', 'red', 'Secondary', 'red'])
+				assert.html(current, '<button>red<button>red<h1>red</h1></button></button>')
+			})
+		})
+	})
+
+	describe('useResource', () => {
+		it('should provide and consume resource', (done) => {
+			const target = document.createElement('div')
+
+			const Provider = memo(({children}) => {
+				return h(Context, {
+					value: useResource(props => Promise.resolve('Hello'))
+				}, h('div', {}, children))
+			}, () => true)
+
+			const Consumer = memo(({children}) => {
+				const resource = useContext(Provider)
+				return h('button', {}, resource)
+			}, () => true)
+
+			const Indirection = memo(({children}) => {
+				return children
+			}, (prev, next) => true)
+
+			render(h(Suspense, {fallback: '...'}, h(Provider, {}, h(Indirection, {}, h(Consumer, {}, 'Hello World')))), target, (current) => {
+				done(assert.html(current, '<div><button>Hello</button></div>'))
+			})
+		})
+
+		it('should provide and consume json resource', (done) => {
+			const target = document.createElement('div')
+
+			const Provider = memo(({children}) => {
+				return h(Context, {
+					value: useResource(props => Promise.resolve({json() { return Promise.resolve('Hello') }}))
+				}, h('div', {}, children))
+			}, () => true)
+
+			const Consumer = memo(({children}) => {
+				const resource = useContext(Provider)
+				return h('button', {}, resource)
+			}, () => true)
+
+			const Indirection = memo(({children}) => {
+				return children
+			}, (prev, next) => true)
+
+			render(h(Suspense, {fallback: '...'}, h(Provider, {}, h(Indirection, {}, h(Consumer, {}, 'Hello World')))), target, (current) => {
+				done(assert.html(current, '<div><button>Hello</button></div>'))
 			})
 		})
 	})
