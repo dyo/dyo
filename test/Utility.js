@@ -10,13 +10,13 @@ describe('Utility', () => {
 	before(() => globalThis.requestAnimationFrame = ''), after(() => globalThis.requestAnimationFrame = requestAnimationFrame)
 
 	it('should support iterator fallbacks', async () => {
-		const {syncIterator, asyncIterator} = await import('../src/Utility.js?')
+		const {syncIterator, asyncIterator} = await import('../src/Utility.js?0')
 
 		assert.deepEqual([syncIterator, asyncIterator], ['@@iterator', '@@asyncIterator'])
 	})
 
 	it('should support deferred polyfill initialization', async () => {
-		const {promise, timeout, animation} = await import('../src/Utility.js?')
+		const {promise, timeout, animation} = await import('../src/Utility.js?1')
 
 		globalThis.Promise = Promise
 		globalThis.setTimeout = setTimeout
