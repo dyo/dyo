@@ -284,13 +284,13 @@ const memoized = useMemo(([a, b]) => compute(a, b), [a, b])
 		<p>An empty array may be used to signal a computation that should happen at most once in the lifecycle of a component.</p>
 
 <pre><code>
-const memorized = useMemo(() => compute(1, 2), [])
+const memoized = useMemo(() => compute(1, 2), [])
 </code></pre>
 
-		<p>Like effects if no dependencies array is provided, a new memorized value will be computed on every render, and like effects if dependencies are provided, then they are also accessible through the first tuple argument.</p>
+		<p>Like effects if no dependencies array is provided, a new memoized value will be computed on every render, and like effects if dependencies are provided, then they are also accessible through the first tuple argument.</p>
 
 <pre><code>
-const memorized = useMemo(([a, b]) => compute(a, b), [a, b])
+const memoized = useMemo(([a, b]) => compute(a, b), [a, b])
 </code></pre>
 
 		<h1 id=useCallback>useCallback</h1>

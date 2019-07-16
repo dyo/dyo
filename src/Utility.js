@@ -144,14 +144,6 @@ export function throws (value) {
 }
 
 /**
- * @throws {any}
- * @param {any} value
- */
-export function errors (value) {
-	throws(new error(value))
-}
-
-/**
  * @param {string} value
  */
 export function report (value) {

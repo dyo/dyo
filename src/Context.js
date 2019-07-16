@@ -33,7 +33,7 @@ export function dispatch (element, value, context) {
  * @return {any}
  */
 export function resolve (element, value) {
-	return Utility.isArray(value = value.prototype) ? element.context[value[0]] : Utility.errors('Invalid Provider!')
+	return Utility.isArray(value = value.prototype) ? element.context[value[0]] : [undefined]
 }
 
 /**
@@ -42,7 +42,7 @@ export function resolve (element, value) {
  * @return {any}
  */
 export function enqueue (element, value) {
-	return dequeue(element, value, element.context = Utility.create(element.context), value = element.host.type)
+	return dequeue(element, value, element.context = Utility.create(element.context), element.host.type)
 }
 
 /**

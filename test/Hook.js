@@ -997,7 +997,7 @@ describe('Hook', () => {
 			})
 
 			const Secondary = (() => {
-				const theme = useContext(Primary)
+				const theme = useContext(Primary) || 'default'
 
 				stack.push('Secondary', theme)
 
@@ -1008,11 +1008,10 @@ describe('Hook', () => {
 				return children
 			})
 
-			assert.throws(() => {
-				render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target)
+			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
+				assert.deepEqual(stack, ['Primary', 'Secondary', 'default'])
+				assert.html(current, '<button><h1>default</h1></button>')
 			})
-
-			assert.deepEqual(stack, ['Primary', 'Exception: Error: Invalid Provider!\n\tat <Primary>\n\tat <Indirection>\n\tat <Indirection>\n'])
 		})
 
 		it('should provide multiple context', () => {
