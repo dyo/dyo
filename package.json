@@ -1,6 +1,6 @@
 {
 	"name": "dyo",
-	"version": "0.3.0",
+	"version": "1.0.0",
 	"license": "MIT",
 	"description": "Dyo is a JavaScript library for building user interfaces",
 	"homepage": "https://github.com/dyo/dyo",
