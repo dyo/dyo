@@ -1,6 +1,6 @@
 {
 	"name": "dyo",
-	"version": "0.0.18",
+	"version": "1.0.0",
 	"license": "MIT",
 	"description": "Dyo is a JavaScript library for building user interfaces",
 	"homepage": "https://github.com/dyo/dyo",
@@ -16,34 +16,31 @@
 		"server/"
 	],
 	"scripts": {
-		"lint": "eslint .",
-		"pretest": "npm run lint && npm run build-all",
-		"test": "nyc npm run test-all",
-		"test-all": "npm run test-dev && npm run test-prod",
-		"test-dev": "cross-env NODE_ENV=development npm run test-spec",
-		"test-prod": "cross-env NODE_ENV=production npm run test-spec",
-		"test-spec": "mocha --harmony --require esm script/test.js --recursive test",
+		"lint": "eslint ./",
+		"pretest": "npm run lint && npm run build",
+		"test": "nyc npm run spec",
+		"spec": "mocha --harmony --require esm script/test.js --recursive test",
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
-		"build": "rollup --config script/build.js --configDir",
-		"build-all": "npm run build -- . && npm run build -- server",
-		"prepare": "npm run build-all",
+		"build": "npm run bundle -- --configSrc ./ && npm run bundle -- --configSrc ./server",
+		"bundle": "rollup --config script/build.js",
+		"prepare": "npm run build",
 		"postversion": "git push --follow-tags && npm publish",
 		"release-major": "npm version major -m '%s'",
 		"release-minor": "npm version minor -m '%s'",
 		"release-patch": "npm version patch -m '%s'"
 	},
 	"devDependencies": {
-		"dyo": "./",
-		"esm": "3.0.84",
-		"nyc": "13.1.0",
 		"chai": "4.2.0",
-		"mocha": "5.2.0",
-		"jsdom": "12.2.0",
-		"eslint": "5.9.0",
-		"coveralls": "3.0.2",
-		"cross-env": "5.2.0",
-		"rollup-plugin-terser": "3.0.0",
-		"rollup": "0.67.3"
+		"coveralls": "3.0.5",
+		"dyo": "./",
+		"eslint": "6.0.1",
+		"esm": "3.2.9",
+		"jsdom": "15.1.1",
+		"mocha": "6.1.4",
+		"nyc": "14.1.1",
+		"rollup": "1.17.0",
+		"rollup-plugin-terser": "5.1.1",
+		"rollup-plugin-size": "0.1.0"
 	},
 	"nyc": {
 		"temp-dir": "./coverage/.nyc_output",
@@ -116,12 +113,6 @@
 			],
 			"no-unsafe-finally": [
 				"off"
-			],
-			"no-param-reassign": [
-				"error",
-				{
-					"props": false
-				}
 			],
 			"no-shadow-restricted-names": [
 				"error"

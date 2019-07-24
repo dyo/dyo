@@ -10,182 +10,103 @@
 		<link rel=stylesheet href=https://localvoid.github.io/uibench-base/0.1.0/styles.css>
 	</head>
 	<body>
-		<div id=root></div>
-
+		<main></main>
 		<script>
-			const {render, h} = dyo
+			const {h, memo, render} = dyo
+			const target = document.querySelector('main')
 
-			class TableCell extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.text !== nextProps.text;
+			const TableCell = memo(({text}) => {
+				return h('td', {className: 'TableCell', onClick: (event, {text}) => {
+					console.log('Clicked' + text)
+					event.stopPropagation()
+				}}, text)
+			}, (prev, next) => prev.text === next.text)
+
+			const TableRow = memo (({data}) => {
+				const classes = data.active ? 'TableRow active' : 'TableRow'
+				const cells = data.props
+				const length = cells.length
+				const children = []
+
+				for (var i = 0; i < length; i++) {
+      		children[i] = h(TableCell, {key: i, text: cells[i]})
+			  }
+
+				return h('tr', {className: classes, 'data-id': data.id}, h(TableCell, {text: '#' + data.id}), children)
+			}, (prev, next) => prev.data === next.data)
+
+			const Table = memo(({data}) => {
+				const {items} = data
+	    	const {length} = items
+	    	const children = []
+
+    		for (var i = 0; i < length; i = i + 1) {
+    			const item = items[i]
+					children[i] = h(TableRow, {key: item.id, data: item})
+    		}
+
+	    	return h('table', {className: 'Table'}, h('tbody', {}, children))
+			}, (prev, next) => prev.data === next.data)
+
+			const AnimBox = memo(({data}) => {
+	    	const {time} = data
+    		const style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+')'
+
+    		return h('div', {className: 'AnimBox', 'data-id': data.id, style: style})
+			}, (prev, next) => prev.data === next.data)
+
+
+			const Anim = memo(({data}) => {
+				const {items} = data
+	    	const {length} = items
+    		const children = []
+
+    		for (var i = 0; i < length; i = i + 1) {
+    			const item = items[i]
+    			children[i] = h(AnimBox, {key: item.id, data: item})
+    		}
+
+    		return h('div', {className: 'Anim'}, children)
+			}, (prev, next) => prev.data === next.data)
+
+			const TreeLeaf = memo(({data}) => {
+    		return h('li', {className: 'TreeLeaf'}, data.id);
+			}, (prev, next) => prev.data === next.data)
+
+			const TreeNode = memo(({data}) => {
+				const {length} = data.children
+				const children = []
+
+				for (let i = 0; i < length; i++) {
+					const n = data.children[i]
+					children[i] = h(n.container ? TreeNode : TreeLeaf, {key: n.id, data: n})
 				}
 
-				onClick(e) {
-					console.log('Clicked' + this.props.text);
-					e.stopPropagation();
-				}
+				return h('ul', {className: 'TreeNode'}, children)
+			}, (prev, next) => prev.data === next.data)
 
-				render() {
-					return h('td', {className: 'TableCell', onClick: this.onClick}, this.props.text);
-				}
-			}
+			const Tree = memo(({data}) => {
+				return h('div', {className: 'Tree'},
+					h(TreeNode, {data: data.root})
+				)
+			}, (prev, next) => prev.data === next.data)
 
-			class TableRow extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.data !== nextProps.data;
-				}
+			const Main = memo(({data}) => {
+				const {location} = data
+				const props = {data: data[location]}
+				const section = h(location === 'table' ? Table : location === 'anim' ? Anim : Tree, props)
 
-				render() {
-					const { data } = this.props;
-					const classes = (data.active) ? 'TableRow active' : 'TableRow';
-					const cells = data.props;
-					const length = cells.length;
-					const children = [];
+				return h('div', {className: 'Main'}, section)
+			}, (prev, next) => prev.data === next.data)
 
-					for (var i = 0; i < length; i++) {
-		      		children[i] = h(TableCell, {key: i, text: cells[i]});
-				   }
+			uibench.init('Dyo')
 
-					return h('tr', {className: classes, 'data-id': data.id},
-						h(TableCell, {text: '#' + data.id}),
-						children
-					);
-				}
-			}
-
-			class Table extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.data !== nextProps.data;
-				}
-
-				render() {
-					const items = this.props.data.items;
-			    	const length = items.length;
-			    	const children = [];
-
-		    		for (var i = 0; i < length; i = i + 1) {
-		    			const item = items[i];
-							children[i] = h(TableRow, {key: item.id, data: item});
-		    		}
-
-			    	return h('table', {className: 'Table'}, h('tbody', children));
-				}
-			}
-
-			class AnimBox extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.data !== nextProps.data;
-				}
-
-				render() {
-					const { data } = this.props;
-		    	const time = data.time;
-	    		const style = 'border-radius:'+(time % 10)+'px;background:rgba(0,0,0,'+(0.5 + ((time % 10) / 10))+');';
-
-	    		return h('div', {className: 'AnimBox', 'data-id': data.id, style: style});
-				}
-			}
-
-			class Anim extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.data !== nextProps.data;
-				}
-
-				render() {
-					const items = this.props.data.items;
-		    	const length = items.length;
-	    		const children = [];
-
-	    		for (var i = 0; i < length; i = i + 1) {
-	    			const item = items[i];
-      			children[i] = h(AnimBox, {key: item.id, data: item});
-	    		}
-
-	    		return h('div', {className: 'Anim'}, children);
-				}
-			}
-
-			class TreeLeaf extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.data !== nextProps.data;
-				}
-
-				render() {
-					return h('li', {className: 'TreeLeaf'}, this.props.data.id);
-				}
-			}
-
-			class TreeNode extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.data !== nextProps.data;
-				}
-
-				render() {
-			  	const { data } = this.props;
-					const length = data.children.length;
-					const children = [];
-
-					for (let i = 0; i < length; i++) {
-						const n = data.children[i];
-						if (n.container) {
-							children[i] = h(TreeNode, {key: n.id, data: n});
-						} else {
-							children[i] = h(TreeLeaf, {key: n.id, data: n});
-						}
-					}
-
-					return h('ul', {className: 'TreeNode'}, children);
-				}
-			}
-
-			class Tree extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.data !== nextProps.data;
-				}
-
-				render() {
-					return h('div', {className: 'Tree'},
-						h(TreeNode, {data: this.props.data.root})
-					)
-				}
-			}
-
-			class Main extends dyo.Component {
-				shouldComponentUpdate(nextProps, nextState) {
-					return this.props.data !== nextProps.data;
-				}
-
-				render() {
-					const { data } = this.props;
-					const location = data.location;
-
-					var section;
-					if (location === 'table') {
-						section = h(Table, {data: data.table});
-					} else if (location === 'anim') {
-						section = h(Anim, {data: data.anim});
-					} else if (location === 'tree') {
-						section = h(Tree, {data: data.tree});
-					}
-
-					return h('div', {className: 'Main'}, section);
-				}
-			}
-
-			uibench.init('DIO');
-
-			document.addEventListener('DOMContentLoaded', function(e) {
-				const container = document.querySelector('#root');
-
+			document.addEventListener('DOMContentLoaded', () => {
 				uibench.run(
-					function(state) {
-						render(h(Main, {data: state}), container);
-					},
-					function(samples) {
-						render(h('pre', JSON.stringify(samples, null, 2)), container);
-					}
-				);
-			});
+					data => render(h(Main, {data}), target),
+					data => render(h('pre', {}, JSON.stringify(data, null, 2)), target)
+				)
+			})
 		</script>
 	</body>
 </html>

@@ -1,121 +1,128 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
-import * as Registry from './Registry.js'
+
+/**
+ * @constructor
+ */
+export var struct = Utility.extend(function document () {
+	this.nodeValue = ''
+	this.textContent = null
+	this.ownerDocument = undefined
+	this.documentElement = this
+}, {
+	querySelector: {value: self},
+	createElement: {value: self},
+	createElementNS: {value: self},
+	createTextNode: {value: self},
+	createDocumentFragment: {value: self},
+	removeChild: {value: self},
+	appendChild: {value: self},
+	insertBefore: {value: self},
+	addEventListener: {value: self},
+	setAttribute: {value: self},
+	removeAttribute: {value: self},
+	style: {value: {setProperty: self}}
+})
 
 /**
  * @type {object}
  */
-export var defaults = {
-	createElement: owner,
-	createElementNS: owner,
-	createTextNode: owner,
-	createDocumentFragment: owner,
-	removeChild: owner,
-	appendChild: owner,
-	insertBefore: owner,
-	addEventListener: owner,
-	setAttribute: owner,
-	removeAttribute: owner,
-	style: {setProperty: owner}
-}
+export var frame = new struct()
 
 /**
- * @return {*}
- */
-export function owner () {
-	return defaults
-}
-
-/**
- * @param {number} uid
- * @param {*} type
- * @param {object} children
- * @param {*} context
  * @return {object}
- * @param {object} owner
  */
-export function create (uid, type, children, context, owner) {
-	switch (uid) {
+export function peek () {
+	return frame
+}
+
+/**
+ * @return {object}
+ */
+export function self () {
+	return this
+}
+
+/**
+ * @param {number} identity
+ * @param {(string|number|object)} type
+ * @param {object} children
+ * @param {string?} context
+ * @param {object} owner
+ * @return {object}
+ */
+export function create (identity, type, children, context, owner) {
+	switch (identity) {
 		case Enum.element:
 			return context ? owner.createElementNS(context, type) : owner.createElement(type)
 		case Enum.text:
 			return owner.createTextNode(children)
 		case Enum.portal: case Enum.empty:
 			return owner.createTextNode('')
-		case Enum.thenable: case Enum.fragment:
-			return owner.createDocumentFragment()
 		case Enum.target:
 			return target(type, owner)
 	}
+
+	return owner.createDocumentFragment()
 }
 
 /**
- * @param {*} value
- * @param {*?} owner
+ * @param {object?} value
+ * @param {object?} owner
  * @return {object}
  */
 export function target (value, owner) {
-	if (value) {
-		if (typeof value === 'object') {
-			switch (value.ownerDocument) {
-				case undefined:
-					return owner !== null ? value : Registry.set(value, defaults)
-				case null:
-					return value.documentElement
-				default:
-					return value
-			}
-		} else if (owner) {
-			return target(owner.querySelector(value), owner)
-		} else if (typeof document === 'object') {
-			return target(value, document)
-		} else {
-			return target({}, owner)
+	if (value !== null) {
+		switch (typeof value) {
+			case 'object':
+				return container(value, owner)
+			case 'string':
+				return selector(value, owner)
 		}
 	}
 
-	Utility.invariant('Invalid target!')
+	Utility.throws(Utility.error('Invalid Target!'))
+}
+
+/**
+ * @param {object?} value
+ * @param {object?} owner
+ * @return {object}
+ */
+export function selector (value, owner) {
+	return owner ? target(owner.querySelector(value), owner) : selector(value, enviroment())
+}
+
+/**
+ * @param {object?} value
+ * @param {object?} owner
+ * @return {object}
+ */
+export function container (value, owner) {
+	return value.ownerDocument === undefined ? owner === undefined ? value : frame : value.documentElement || value
+}
+
+/**
+ * @return {object}
+ */
+export function enviroment () {
+	return typeof document === 'object' ? document : frame
 }
 
 /**
  * @param {object} value
- * @return {object}
+ * @return {object?}
  */
-export function from (value) {
-	return value.ownerDocument || value
-}
-
-/**
- * @param {string} value
- * @param {object} type
- */
-export function context (value, type) {
-	switch (type) {
-		case 'svg':
-			return 'http://www.w3.org/2000/svg'
-		case 'math':
-			return 'http://www.w3.org/1998/Math/MathML'
-		case 'foreignObject':
-			return ''
-	}
-
-	return value
+export function owner (value) {
+	return value.ownerDocument || null
 }
 
 /**
  * @param {object} parent
- * @return {object}
+ * @return {void}
  */
-export function clear (parent) {
-	parent.textContent = ''
-}
-
-/**
- * @param {object} parent
- * @param {*} value
- */
-export function content (parent, value) {
-	parent.nodeValue = value
+export function initialize (parent) {
+	return parent.textContent = null
 }
 
 /**
@@ -144,22 +151,47 @@ export function insert (parent, element, sibling) {
 }
 
 /**
- * @param {string} name
- * @param {*} value
- * @param {object} instance
+ * @param {object} parent
+ * @param {any} value
  */
-export function props (name, value, instance, handler) {
+export function content (parent, value) {
+	parent.nodeValue = value
+}
+
+/**
+ * @param {object} name
+ * @param {string} value
+ * @return {string}
+ */
+export function context (name, value) {
+	switch (name) {
+		case 'svg':
+			return 'http://www.w3.org/2000/svg'
+		case 'math':
+			return 'http://www.w3.org/1998/Math/MathML'
+		case 'foreignObject':
+			return ''
+	}
+
+	return value
+}
+
+/**
+ * @param {string} name
+ * @param {any} value
+ * @param {object} instance
+ * @param {object} handler
+ */
+export function properties (name, value, instance, handler) {
 	if (name === 'style') {
 		if (typeof value === 'object') {
-			if (value) {
-				return stylesheet(name, value, instance[name])
-			}
+			return stylesheet(name, value, instance[name])
 		}
 	} else {
 		switch (typeof value) {
 			case 'object': case 'function':
-				if (name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110) {
-					return events(name.substr(2).toLowerCase(), value, instance, handler)
+				if (valid(name)) {
+					return event(name.substr(2).toLowerCase(), value, instance, handler, handler.state)
 				}
 		}
 
@@ -173,15 +205,18 @@ export function props (name, value, instance, handler) {
 
 /**
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {object} instance
  */
 export function property (name, value, instance) {
 	try {
 		switch (value) {
 			case false: case null: case undefined:
-				if (typeof instance[name] === 'string') {
-					return property(name, '', instance)
+				switch (typeof instance[name]) {
+					case 'string':
+						return property(name, '', instance)
+					case 'boolean':
+						value = false
 				}
 		}
 
@@ -193,18 +228,22 @@ export function property (name, value, instance) {
 
 /**
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {object} instance
  */
 export function attribute (name, value, instance) {
-	switch (value) {
-		case true:
-			return attribute(name, name, instance)
-		case false: case null: case undefined:
-			return instance.removeAttribute(name)
-	}
+	try {
+		switch (value) {
+			case false: case null: case undefined:
+				return instance.removeAttribute(name)
+			case true:
+				value = name
+		}
 
-	instance.setAttribute(name, value)
+		instance.setAttribute(name, value)
+	} finally {
+		return
+	}
 }
 
 /**
@@ -213,14 +252,16 @@ export function attribute (name, value, instance) {
  * @param {object} instance
  */
 export function stylesheet (name, value, instance) {
-	for (var key in value) {
-		declaration(key, value[key], instance)
+	if (value) {
+		for (var key in value) {
+			declaration(key, value[key], instance)
+		}
 	}
 }
 
 /**
  * @param {string} name
- * @param {*} value
+ * @param {any} value
  * @param {object} instance
  */
 export function declaration (name, value, instance) {
@@ -241,21 +282,24 @@ export function declaration (name, value, instance) {
  * @param {string} value
  * @param {object} instance
  * @param {object} handler
+ * @param {object} handlers
  */
-export function events (name, value, instance, handler) {
-	var handlers = Registry.get(instance) || Registry.set(instance, {})
+export function event (name, value, instance, handler, handlers) {
+	if (handlers) {
+		if (handlers[name] === undefined) {
+			instance.addEventListener(name, handler, false)
+		}
 
-	if (!handlers[name]) {
-		instance.addEventListener(name, handler, false)
+		handlers[name] = value
+	} else {
+		event(name, value, instance, handler, handler.state = {})
 	}
-
-	handlers[name] = value
 }
 
 /**
- * @param {object} value
- * @param {object} instance
+ * @param {string} name
+ * @return {boolean}
  */
-export function event (value, instance) {
-	return Registry.get(instance)[value.type]
+export function valid (name) {
+	return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110
 }

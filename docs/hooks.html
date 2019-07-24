@@ -1,0 +1,309 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta http-equiv=X-UA-Compatible content=IE=edge>
+	<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Dyo - A JavaScript library for building user interfaces</title>
+	<link rel=stylesheet href=assets/stylesheet/index.css>
+	<link rel=icon type=image/png href=assets/images/favicon-large.png sizes=32x32>
+	<link rel=icon type=image/png href=assets/images/favicon-small.png sizes=16x16>
+	<script defer src=./assets/javascript/index.js></script>
+</head>
+<body>
+	<a href=./ title=index class=logo>
+		<img src=assets/images/logo.svg alt=logo>
+	</a>
+	<header>
+		<nav>
+			<a href=./>Index</a>
+			<a href=./introduction.html>Introduction</a>
+			<a href=./advanced.html>Advanced</a>
+			<a href=./api.html>API</a>
+			<a href=./examples.html>Examples</a>
+			<a href=https://github.com/dyo/dyo>GitHub</a>
+		</nav>
+	</header>
+	<article>
+		<h1>Hooks</h1>
+
+		<p>Hooks solve a wide variety of connected problems most of which boil down to – "a system for reusable stateful logic".</p>
+
+		<p>Hooks afford one to use or re-use state and hook into a powerfull and composable lifecycle system.</p>
+
+		<p>There are state hooks like <a href=#useState>useState</a> <a href=#useReducer>useReducer</a>, <a href=#useContext>useContext</a> and <a href=#useResource>useResource</a>, lifecycle hooks like <a href=#useEffect>useEffect</a> and <a href=#useLayout>useLayout</a> and additional primitive hooks like <a href=#useRef>useRef</a>, <a href=#useMemo>useMemo</a> and <a href=#useCallback>useCallback</a>.</p>
+
+		<h1 id=useState>useState</h1>
+
+		<p>Returns a tuple with a state value, and a function to update it, using the <code>value</code> as the initial state.</p>
+
+<pre><code>
+const [state, setState] = useState(value)
+</code></pre>
+
+		<p>When the initial <code>value</code> is a function this is invoked with props as an argument.</p>
+
+<pre><code>
+const [state, setState] = useState(props => props.value)
+</code></pre>
+
+		<p>The <code>setState</code> function accepts a new state value and enqueues an update of the component.</p>
+
+<pre><code>
+setState(newValue)
+</code></pre>
+
+		<p>However, new state functions are invoked with the value of the previous state value.</p>
+
+<pre><code>
+setState(prevValue => newValue)
+</code></pre>
+
+		<p>Putting this together in a single counter example:</p>
+
+<pre><code>
+function Example (props) {
+	const [state, setState] = useState(0)
+
+	return h('main', {},
+		h('h1', {}, 'count:', state),
+		h('button', {onClick: event => setState(value => value + 1)}, '+'),
+		h('button', {onClick: event => setState(value => value - 1)}, '-')
+	)
+}
+</code></pre>
+
+		<h1 id=useReducer>useReducer</h1>
+
+		<p>Returns a tuple with a state value, and a function to update it using a <code>reducer</code> – and a <code>value</code> as the initial state.</p>
+
+<pre><code>
+const [state, dispatch] = useReducer((state, action) => state, value)
+</code></pre>
+
+		<p>Putting this together in a single counter example:</p>
+
+<pre><code>
+function Example (props) {
+	const [state, dispatch] = useReducer((state, action) => {
+		switch (action.type) {
+			case 'increment': return state + 1
+			case 'decrement': return state - 1
+		}
+	}, props => props.value)
+
+	return h('main', {},
+		h('h1', {}, 'count:', state),
+		h('button', {onClick: event => dispatch({type: 'increment'})}, '+'),
+		h('button', {onClick: event => dispatch({type: 'decrement'})}, '-')
+	)
+}
+</code></pre>
+
+		<h1 id=useContext>useContext</h1>
+
+		<p>Accepts a context provider that supplies a context value through <a href=./top-level.html#Context>Context</a>.</p>
+
+<pre><code>
+useContext(
+	provider: function
+)
+</code></pre>
+
+		<p>Where "provider" is the component that provides the context value.</p>
+
+<pre><code>
+function Provider ({children}) {
+	return h(Context, {value: 0}, children)
+}
+</code></pre>
+
+		<p>and "context" the current context value.</p>
+
+<pre><code>
+function Consumer (props) {
+	const context = useContext(Provider)
+}
+</code></pre>
+
+		<p>Putting this together in an example:</p>
+
+<pre><code>
+function Provider ({children}) {
+	return h(Context, {value: 0}, children)
+}
+
+function Consumer (props) {
+	const context = useContext(Provider)
+
+	return h('main', {}, h('h1', {}, 'count:', context))
+}
+
+render(h(Provider, {}, h(Consumer)), document)
+</code></pre>
+
+		<p>Unlike props context is accessible from any number of layers deep within a tree as long as there is an ancestor provider. That is to say a <a href=./top-level.html#consumer>Consumer</a> need not be the "immediate" child of a provider.</p>
+
+		<h1 id=useResource>useResource</h1>
+
+		<p>Accepts a resource callback that returns a promise.</p>
+
+<pre><code>
+useResource(
+	callback: function
+)
+</code></pre>
+
+		<p>Where "callback" would provide the promise that resolves to the resource value.</p>
+
+<pre><code>
+function Consumer (props) {
+	const resource = useResource(props => {
+		return fetch('reqres.in/api/users/2')
+	})
+}
+</code></pre>
+
+		<p>Putting this together in an example:</p>
+
+<pre><code>
+function Consumer (props) {
+	const resource = useResource(props => {
+		return fetch('reqres.in/api/users/2')
+	})
+
+	return JSON.stringify(resource, null, 2)
+}
+
+render(h(Suspense, {}, h(Consumer)), document)
+</code></pre>
+
+		<p>Both the <a href=#useResource>useResource</a> and <a href=#useContext>useContext</a> hooks can be employed in conjunction to afford access to a resource from any number of layers deep within a tree as long as there is an ancestor resource context provider.</p>
+
+		<blockquote>Note that "useResource" expects a suspense boundary ancestor somewhere within the tree.</blockquote>
+
+		<h1 id=useEffect>useEffect</h1>
+
+		<p>Accepts a function that contains imperative, possibly effectful procedures.</p>
+
+<pre><code>
+useEffect(
+	callback: function,
+	dependencies?: Array&lt;any>
+)
+</code></pre>
+
+		<p>The use of effects spans multiple domains ranging from mutations, subscriptions, timers, logging, and other side effects that are not allowed inside the main body of a component.</p>
+
+<pre><code>
+function Example (props) {
+	useEffect(() => {
+		console.log('Hello')
+	})
+}
+</code></pre>
+
+		<p>The function passed to useEffect will run after a render is committed to the screen. An effect can return a function that is executed once the effect goes through a cleanup phase, which can happen when the component unmounts or before a new effect is deployed.</p>
+
+<pre><code>
+function Example (props) {
+	useEffect(() => {
+		console.log('Hello')
+
+		return () => {
+			console.log('Bye!')
+		}
+	}, [])
+}
+</code></pre>
+
+		<p>By default, effects run after every completed render, but you can choose to deploy an effect when certain values have changed, or choose to only hook into a components mount and unmount phases by using an empty array.<p>
+
+<pre><code>
+function Example (props) {
+	useEffect(([value]) => {
+		console.log(value)
+	}, [props.value])
+}
+</code></pre>
+
+		<h1 id=useLayout>useLayout</h1>
+
+		<p>The sibling hook of <a href=#useEffect>useEffect</a>. Accepts a function that contains imperative, possibly layout thrashing procedures.</p>
+
+<pre><code>
+useLayout(
+	callback: function,
+	dependencies?: Array<any>
+)
+</code></pre>
+
+		<p>Unlike <a href=useEffect>useEffect</a> "useLayout" fires synchronously after all user interface mutations. This can be used to read layout and synchronously re-render. Updates scheduled inside useLayout are flushed synchronously before layout paint.</p>
+
+<pre><code>
+function Example (props) {
+	useEffect(() => {
+		document.querySelector('*').forEach(current => {
+			current.style.marginLeft += '10px'
+		})
+	}, [])
+}
+</code></pre>
+
+		<h1 id=useRef>useRef</h1>
+
+		<p>Returns a mutable ref object whose <code>current</code> property is initialized to the passed argument. Optionally accepts a function that is invoked with "props" as an argument before intializing to its return value. The returned object is persisted for the lifetime of the component.</p>
+
+<pre><code>
+const value = useRef(props => props.value)
+</code></pre>
+
+		<p>An example use case in accessing child references imperatively:</p>
+
+<pre><code>
+function Example (props) {
+  const input = useRef(null)
+
+  return h('main', {},
+		h('input', {type: 'text', ref: input}),
+		h('button' {onClick: event => input.current.focus()}, 'Focus')
+ 	)
+}
+</code></pre>
+
+		<h1 id=useMemo>useMemo</h1>
+
+		<p>Returns a memoized value.</p>
+
+<pre><code>
+const memoized = useMemo(([a, b]) => compute(a, b), [a, b])
+</code></pre>
+
+		<p>Accepts a function and an array of dependencies. The function is invoked initally and when dependecies change.</p>
+
+		<p>This can serve as an optimization for expensive calculations.</p>
+
+		<p>An empty array may be used to signal a computation that should happen at most once in the lifecycle of a component.</p>
+
+<pre><code>
+const memoized = useMemo(() => compute(1, 2), [])
+</code></pre>
+
+		<p>Like effects if no dependencies array is provided, a new memoized value will be computed on every render, and like effects if dependencies are provided, then they are also accessible through the first tuple argument.</p>
+
+<pre><code>
+const memoized = useMemo(([a, b]) => compute(a, b), [a, b])
+</code></pre>
+
+		<h1 id=useCallback>useCallback</h1>
+
+		<p>Returns a stable memoized callback.</p>
+
+<pre><code>
+const callback = useCallback((...args) => compute(...args))
+</code></pre>
+
+		<p>Unlike <a href=useMemo>useMemo</a> the returned function is guarenteed to always be a "stable" function reference.</p>
+	</article>
+</body>
+</html>

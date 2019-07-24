@@ -1,491 +1,14 @@
-import {h, render, Component} from '../index.js'
+import {h, render, Boundary, useState, useReducer, useLayout} from '../index.js'
 
 describe('Exception', () => {
-	it('should not render invalid elements', () => {
-		const target = document.createElement('div')
-
-		assert.throws(() => {
-			render(h('div', {}, {}), target)
-		})
-
-		assert.throws(() => {
-			render(h({}), target)
-		})
-
-		assert.throws(() => {
-			render(h(Symbol()), target)
-		})
-	})
-
-	it('should not render to an invalid target', () => {
-		assert.throws(() => {
-			render('hello', null, (current) => {
-				throw 'error!'
-			})
-		})
-	})
-
-	it('should catch exceptions from invalid element type', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		render(h(Primary, h(Component, h('!'))), target, (current) => {
-			assert.lengthOf(stack, 1)
-			assert.html(current, '')
-		})
-
-		render(h(Primary, h(Component, h(Symbol()))), target, (current) => {
-			assert.lengthOf(stack, 2)
-			assert.html(current, '')
-		})
-	})
-
-	it('should invoke componentDidCatch on a exception with the right arguments', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error, {componentStack}) { stack.push(error, componentStack) }
-		}
-
-		class Secondary extends Component {
-			constructor() { throw 'constructor' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['constructor', '\tat Primary\n'])
-			assert.html(current, '')
-		})
-	})
-
-	it('should catch exceptions from constructor', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			constructor() { throw 'constructor' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['constructor'])
-			assert.html(current, '')
-		})
-	})
-
-	it('should catch exceptions from getDerivedState(mount)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			getDerivedState() { throw 'getDerivedState' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['getDerivedState'])
-			assert.html(current, '')
-		})
-	})
-
-	it('should catch exceptions from getChildContext(mount)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			getChildContext() { throw 'getChildContext' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['getChildContext'])
-			assert.html(current, '')
-		})
-	})
-
-	it('should catch exceptions from render(mount)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			render() { throw 'render' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['render'])
-			assert.html(current, '')
-		})
-	})
-
-	it('should catch exceptions from componentDidMount', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			componentDidMount() { throw 'componentDidMount' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['componentDidMount'])
-			assert.html(current, '1')
-		})
-	})
-
-	it('should catch exceptions from getDerivedState(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			getDerivedState(props) { if (props.children !== 1) { throw 'getDerivedState' } }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['getDerivedState'])
-			assert.html(current, '1')
-		})
-	})
-
-	it('should catch exceptions from shouldComponentUpdate(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			shouldComponentUpdate() { throw 'shouldComponentUpdate' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['shouldComponentUpdate'])
-			assert.html(current, '1')
-		})
-	})
-
-	it('should catch exceptions from getChildContext(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			getChildContext(props) { if (props.children !== 1) { throw 'getChildContext' } }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['getChildContext'])
-			assert.html(current, '1')
-		})
-	})
-
-	it('should catch exceptions from render(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			render(props) { if (props.children !== 1) { throw 'render' } else { return props.children } }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['render'])
-			assert.html(current, '1')
-		})
-	})
-
-	it('should catch exceptions from componentDidUpdate(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			componentDidUpdate(props) { throw 'componentDidUpdate' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['componentDidUpdate'])
-			assert.html(current, '1')
-		})
-	})
-
-	it('should catch exceptions from setState(function)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			componentDidMount() { this.setState(() => { throw 'setState(function)' }) }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['setState(function)'])
-			assert.html(target, '1')
-		})
-	})
-
-	it('should catch exceptions from setState(callback)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { stack.push(error) }
-		}
-
-		class Secondary extends Component {
-			componentDidMount() { this.setState({}, () => { throw 'setState(callback)' }) }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, ['setState(callback)'])
-			assert.html(target, '1')
-		})
-	})
-
-	it('should recover exceptions from getDerivedState(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { return stack.push(error), this.props = {children: 3} }
-		}
-
-		class Secondary extends Component {
-			getDerivedState(props) { if (props.children !== 1) { throw 'getDerivedState' } }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['getDerivedState'])
-			assert.html(current, '3')
-		})
-	})
-
-	it('should recover exceptions from shouldComponentUpdate(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { return stack.push(error), this.props = {children: 3} }
-		}
-
-		class Secondary extends Component {
-			shouldComponentUpdate() { throw 'shouldComponentUpdate' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['shouldComponentUpdate'])
-			assert.html(current, '3')
-		})
-	})
-
-	it('should recover exceptions from getChildContext(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { return stack.push(error), this.props = {children: 3} }
-		}
-
-		class Secondary extends Component {
-			getChildContext(props) { if (props.children !== 1) { throw 'getChildContext' } }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['getChildContext'])
-			assert.html(current, '3')
-		})
-	})
-
-	it('should recover exceptions from render(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { return stack.push(error), this.props = {children: 3} }
-		}
-
-		class Secondary extends Component {
-			render(props, state) { if (props.children !== 1) { throw 'render' } else { return props.children } }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['render'])
-			assert.html(current, '3')
-		})
-	})
-
-	it('should recover exceptions from componentDidUpdate(update)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { return stack.push(error), this.props = {children: 3} }
-		}
-
-		class Secondary extends Component {
-			componentDidUpdate() { throw 'componentDidUpdate' }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(current, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['componentDidUpdate'])
-			assert.html(current, '3')
-		})
-	})
-
-	it('should recover exceptions from setState(function)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { return stack.push(error), this.props = {children: 3} }
-		}
-
-		class Secondary extends Component {
-			componentDidUpdate() { this.setState(() => { throw 'setState(function)' }) }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(target, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['setState(function)'])
-			assert.html(target, '3')
-		})
-	})
-
-	it('should recover exceptions from setState(callback)', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component {
-			componentDidCatch(error) { return stack.push(error), this.props = {children: 3} }
-		}
-
-		class Secondary extends Component {
-			componentDidUpdate() { if (!this.state.value) { this.setState({value: 1}, () => { throw 'setState(callback)' }) } }
-		}
-
-		render(h(Primary, h(Secondary, 1)), target, (current) => {
-			assert.deepEqual(stack, [])
-			assert.html(target, '1')
-		})
-
-		render(h(Primary, h(Secondary, 2)), target, (current) => {
-			assert.deepEqual(stack, ['setState(callback)'])
-			assert.html(target, '3')
-		})
-	})
-
-	it('should catch nested exceptions', () => {
-		const target = document.createElement('div')
-		const stack = []
-
-		class Primary extends Component { componentDidCatch(error) { stack.push(error) } }
-		class Secondary extends Component {}
-		class Tertiary extends Component { render() { throw 1 } }
-
-		render(h(Primary, h(Secondary, h(Tertiary))), target, (current) => {
-			assert.html(current, '')
-			assert.deepEqual(stack, [1])
-		})
-	})
-
 	it('should not catch exceptions', () => {
 		const target = document.createElement('div')
 		const stack = assert.spyr(console, 'error')
 
 		assert.throws(() => {
-			render(function Primary () { throw 'error!' }, target)
+			render(function Primary () { throw 'error!' }, target, () => stack.push('error!'))
 		}, 'error!')
-		assert.deepEqual(stack, [])
+		assert.deepEqual(stack, ['Exception: error!\n'])
 	})
 
 	it('should not catch nested exceptions', () => {
@@ -495,22 +18,177 @@ describe('Exception', () => {
 		assert.throws(() => {
 			render(function Primary () { return function Secondary () { throw 'error!' } }, target)
 		}, 'error!')
-		assert.deepEqual(stack, ['\tat Primary\n'])
+		assert.deepEqual(stack, ['Exception: error!\n\tat <Primary>\n'])
 	})
 
-	it('should throw in refs', () => {
+	it('should not catch anonymous function names', () => {
 		const target = document.createElement('div')
+		const stack = assert.spyr(console, 'error')
 
 		assert.throws(() => {
-			render(h('div', {ref: () => { throw 'error!' }}), target)
+			render(props => props => { throw 'error!' }, target)
 		}, 'error!')
+		assert.deepEqual(stack, ['Exception: error!\n\tat <anonymous>\n'])
 	})
 
 	it('should throw in render callback', () => {
 		const target = document.createElement('div')
 
-		assert.throws(() => render(h('div'), target, (current) => {
-			throw 'error!'
-		}), 'error!')
+		assert.throws(() => {
+			render(h('div'), target, (current) => {
+				throw 'error!'
+			})
+		}, 'error!')
+	})
+
+	it('should throw within an update', () => {
+		const target = document.createElement('div')
+		const stack = assert.spyr(console, 'error')
+		const Primary = props => props.children
+		const Secondary = props => {
+			if (props.throw) {
+				throw 'error!'
+			}
+
+			return 'preserve'
+		}
+
+		render(h(Primary, {}, h(Secondary, {throw: false})), target)
+
+		assert.throws(() => {
+			render(h(Primary, {}, h(Secondary, {throw: true})), target)
+		}, 'error!')
+
+		assert.html(target, 'preserve')
+		assert.deepEqual(stack, ['Exception: error!\n\tat <Primary>\n'])
+	})
+
+	it('should throw within a state update', () => {
+		const target = document.createElement('div')
+		const stack = assert.spyr(console, 'error')
+		const Primary = props => props.children
+		const Secondary = props => {
+			const [error, setError] = useState(false)
+			useLayout(() => {
+				setError(true)
+			}, [])
+
+			if (error) {
+				throw 'error!'
+			}
+
+			return 'preserve'
+		}
+
+		assert.throws(() => {
+			render(h(Primary, {}, h(Secondary)), target)
+		}, 'error!')
+
+		assert.html(target, 'preserve')
+		assert.deepEqual(stack, ['Exception: error!\n\tat <Primary>\n\tat <Secondary>\n'])
+	})
+
+	it('should throw within promise', (done) => {
+		const target = document.createElement('div')
+		const stack = assert.spyr(console, 'error')
+		const Primary = props => {
+			return stack.current = Promise.reject()
+		}
+
+		render(h(Primary), target, () => {}).then((current) => {
+			stack.push('error')
+		})
+
+		stack.current.catch((error) => {
+			done(assert.deepEqual(stack, ['Exception: undefined\n\tat <Primary>\n']))
+		})
+	})
+
+	it('should use error boundary fallback in the event of an exception', () => {
+		const target = document.createElement('div')
+		const Primary = props => {
+			return h(Boundary, {fallback: props => JSON.stringify(props)}, h(Secondary))
+		}
+		const Secondary = props => {
+			throw 1
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '{"message":1,"bubbles":false}')
+		})
+	})
+
+	it('should use error boundary fallback array in the event of an exception', () => {
+		const target = document.createElement('div')
+		const stack = []
+		const Primary = props => {
+			return h(Boundary, {fallback: [props => stack.push(props), props => JSON.stringify(props)]}, h(props => { throw 1 }))
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '1{"message":1,"bubbles":false}')
+			assert.deepEqual(stack, [{message: 1, bubbles: false}])
+		})
+	})
+
+	it('should dispatch an error boundary action from render', () => {
+		const target = document.createElement('div')
+		const Primary = props => {
+			const [error, dispatch] = useReducer((state, action) => action.type === 'EXCEPTION' ? action : state, false)
+			return error ? JSON.stringify(error) : h(Boundary, {fallback: dispatch}, h(props => { throw 1 }))
+		}
+
+		render(h(Primary), target, (current) => {
+			current.firstChild.dispatchEvent(new Event('click'))
+		}).then((current) => {
+			assert.html(current, '{"message":1,"bubbles":false}')
+		})
+	})
+
+	it('should dispatch an error boundary action from event', () => {
+		const target = document.createElement('div')
+		const Primary = props => {
+			const [error, dispatch] = useReducer((state, action) => action.type === 'EXCEPTION' ? action : state, false)
+			return error ? JSON.stringify(error) : h(Boundary, {fallback: dispatch}, h(props => h('button', {onclick: e => { throw 1 }})))
+		}
+
+		render(h(Primary), target, (current) => {
+			current.firstChild.dispatchEvent(new Event('click'))
+		}).then((current) => {
+			assert.html(current, '{"message":1,"bubbles":false}')
+		})
+	})
+
+	it('should propagate exception within within a failed boundary fallback', () => {
+		const target = document.createElement('div')
+		const stack = []
+		const Primary = props => {
+			return h(Boundary, {fallback: props => stack.push(props)}, h(Secondary))
+		}
+		const Secondary = props => {
+			return h(Boundary, {fallback: props => { throw 2 }}, h(props => { throw 1 }))
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '1')
+			assert.deepEqual(stack, [{message: 2, bubbles: false}])
+		})
+	})
+
+	it('should catch errors raised from promise elements', (done) => {
+		const target = document.createElement('div')
+		const stack = []
+		const Primary = props => {
+			return h(Boundary, {fallback: props => stack.push(props)}, h(Secondary))
+		}
+		const Secondary = props => {
+			return h(Promise.reject(1))
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '1')
+		}).then((current) => {
+			done(assert.deepEqual(stack, [{message: 1, bubbles: false}]))
+		})
 	})
 })

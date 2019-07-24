@@ -1,101 +1,81 @@
 import * as Utility from './Utility.js'
-import * as Element from './Element.js'
 
-export default {only: only, count: count, filter: filter, find: find, map: map, forEach: each, toArray: array}
+export default {toArray: array, forEach: each, count: count, map: map, filter: filter, find: find}
 
 /**
- * @throws {Error} if not a single valid element
- * @param {*} value
- * @return {object?}
+ * @param {any} value
+ * @return {any[]}
  */
-export function only (value) {
-	return Element.valid(value) ? value : Utility.invariant('Expected single element!')
+export function array (value) {
+	Utility.each(function (value, index, array) {
+		array[index] = value
+	}, value, 0, value = [])
+
+	return value
 }
 
 /**
- * @memberof Children
- * @param {*} value
- * @return {number}
- */
-export function count (value) {
-	var children = {value: 0}
-
-	Utility.each(function (value, index, children) {
-		children.value = index
-	}, value, 1, children)
-
-	return children.value
-}
-
-/**
- * @param {*} value
+ * @param {any} value
  * @param {function} callback
- * @return {Array}
- */
-export function filter (value, callback) {
-	var children = []
-
-	Utility.each(function (value, index, children) {
-		if (callback(value, index, children)) {
-			children.push(value)
-		}
-	}, value, 0, children)
-
-	return children
-}
-
-/**
- * @param {*} value
- * @param {function} callback
- * @return {*?}
- */
-export function find (value, callback) {
-	var children = {value: null}
-
-	Utility.each(function (value, index, children) {
-		if (callback(value, index, children)) {
-			return children.value = value
-		}
-	}, value, 0, children)
-
-	return children.value
-}
-
-/**
- * @param {*} value
- * @param {function} callback
- * @return {Array}
- */
-export function map (value, callback) {
-	var children = []
-
-	Utility.each(function (value, index, children) {
-		children[index] = callback(value, index, children)
-	}, value, 0, children)
-
-	return children
-}
-
-/**
- * @param {*} value
- * @param {function} callback
+ * @return {void}
  */
 export function each (value, callback) {
-	Utility.each(function (value, index, children) {
-		callback(value, index, children)
+	Utility.each(function (value, index, array) {
+		callback(value, index, array)
 	}, value, 0, [])
 }
 
 /**
- * @param {*} value
- * @return {Array}
+ * @param {any} value
+ * @return {number}
  */
-export function array (value) {
-	var children = []
-
+export function count (value) {
 	Utility.each(function (value, index, children) {
-		children[index] = value
-	}, value, 0, children)
+		children.value = index
+	}, value, 1, value = {value: 0})
 
-	return children
+	return value.value
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @return {object[]}
+ */
+export function map (value, callback) {
+	Utility.each(function (value, index, array) {
+		array[index] = callback(value, index, array)
+	}, value, 0, value = [])
+
+	return value
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @return {object[]}
+ */
+export function filter (value, callback) {
+	Utility.each(function (value, index, array) {
+		if (callback(value, index, array)) {
+			array.push(value)
+		}
+	}, value, 0, value = [])
+
+	return value
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @return {any?}
+ */
+export function find (value, callback) {
+	Utility.each(function (value, index, object) {
+		if (callback(value, index, object)) {
+			return object.value = value, null
+		}
+	}, value, 0, value = {value: null})
+
+	return value.value
 }

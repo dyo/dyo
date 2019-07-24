@@ -4,18 +4,45 @@ describe('Render', () => {
 	const target = document.createElement('div')
 	const refs = {}
 
-	it('should throw without a render target', () => {
-		assert.throws(() => render(null))
-		assert.throws(() => render(null, null))
-		assert.throws(() => render(null, undefined))
-		assert.throws(() => render(null, false))
+	it('should throw when using invalid render targets', () => {
+		const {document} = globalThis
+
+		try {
+			globalThis.document = undefined
+			assert.throws(() => render(null, undefined))
+			assert.throws(() => render(null, null))
+			assert.throws(() => render(null, NaN))
+			assert.throws(() => render(null, 0))
+			assert.throws(() => render(null, true))
+			assert.throws(() => render(null, false))
+		} finally {
+			globalThis.document = document
+		}
+	})
+
+	it('should render to selector', () => {
+		render('Hello', 'body', (current) => {
+			assert.html(current, 'Hello')
+
+			render(null, 'body', (current) => {
+				assert.html(current, '')
+			})
+		})
+	})
+
+	it('should not throw when using invalid elements', () => {
+		const target = document.createElement('div')
+
+		assert.throws(() => {
+			render(h('!'), target)
+		})
 	})
 
 	it('should invoke render callback', () => {
-		render(null, target, (current) => {
-			refs.current = current.nodeName.toLowerCase()
+		render(null, target, ({nodeName}) => {
+			refs.current = nodeName.toLowerCase()
 		})
-		assert.deepEqual(refs, {current: 'div'})
+		assert.deepEqual(refs.current, 'div')
 	})
 
 	it('should render null', () => {
@@ -27,6 +54,12 @@ describe('Render', () => {
 	it('should render text', () => {
 		render('hello', target, (current) => {
 			assert.html(current, 'hello', 'render text')
+		})
+	})
+
+	it('should not render unknown objects', () => {
+		render({}, target, (current) => {
+			assert.html(current, '')
 		})
 	})
 
@@ -43,25 +76,25 @@ describe('Render', () => {
 	})
 
 	it('should render an array', () => {
-		render(() => [h('h1', 'Hello'), h('h1', 'World')], target, (current) => {
+		render(() => [h('h1', {}, 'Hello'), h('h1', {}, 'World')], target, (current) => {
 			assert.html(current, '<h1>Hello</h1><h1>World</h1>')
 		})
 	})
 
 	it('should render nested array children', () => {
-		render(h('div', 1, [2, 3, [4, 5]]), target, (current) => {
+		render(h('div', {}, 1, [2, 3, [4, 5]]), target, (current) => {
 			assert.html(current, `<div>12345</div>`)
 		})
 	})
 
 	it('should not render booleans', () => {
-		render(h('div', true, false), target, (current) => {
+		render(h('div', {}, true, false), target, (current) => {
 			assert.html(current, '<div></div>')
 		})
 	})
 
 	it('should render svg elements', () => {
-		render(h('svg', h('path')), target, (current) => {
+		render(h('svg', {}, h('path')), target, (current) => {
 			assert.html(current, `<svg><path></path></svg>`)
 			assert.equal(current.firstChild.namespaceURI, 'http://www.w3.org/2000/svg')
 			assert.equal(current.firstChild.firstChild.namespaceURI, 'http://www.w3.org/2000/svg')
@@ -76,7 +109,7 @@ describe('Render', () => {
 	})
 
 	it('should render foreignObject within svg', () => {
-		render(h('svg', h('foreignObject')), target, (current) => {
+		render(h('svg', {}, h('foreignObject')), target, (current) => {
 			assert.html(current, `<svg><foreignobject></foreignobject></svg>`)
 			assert.equal(current.firstChild.namespaceURI, 'http://www.w3.org/2000/svg')
 			assert.notEqual(current.firstChild.firstChild.namespaceURI, 'http://www.w3.org/2000/svg')
@@ -228,22 +261,37 @@ describe('Render', () => {
 		})
 	})
 
-	it('should fail gracefully when trying to set readonly properties', () => {
-		render(h('h2', {ref: refs}), target, (current) => {
-			Object.defineProperty(refs.current, 'invalid', {set: () => { throw refs.current = true }})
+	it('should remove/append styles', () => {
+		render(h('div', {style: null}), target, (current) => {
+			assert.equal(current.firstChild.style.textDecoration, '')
+		})
 
-			render(h('h2', {ref: refs, invalid: true}), target, (current) => {
-				assert.html(current, '<h2 invalid="invalid"></h2>')
-				assert.deepEqual(refs, {current: true})
+		render(h('div', {style: {'text-decoration': 'none'}}), target, (current) => {
+			assert.equal(current.firstChild.style.textDecoration, 'none')
+		})
+
+		render(h('div', {style: null}), target, (current) => {
+			assert.equal(current.firstChild.style.textDecoration, '')
+		})
+	})
+
+	it('should fail gracefully when trying to set readonly properties', () => {
+		render(h('h2', {}), target, ({firstChild}) => {
+			Object.defineProperty(firstChild, 'invalid', {set: () => { throw refs.value = true }})
+
+			render(h('h2', {invalid: true}), target, (current) => {
+				assert.equal(refs.value, true)
 			})
 		})
 	})
 
 	it('should render vendor dash case styles', () => {
-		render(h('h1', {ref: (value) => {
-			Object.defineProperty(value, 'style', {value: { setProperty(name, value) { this['borderRadius'] = value } }})
-		}, style: {'-webkit-border-radius': '20px'}}), target, (current) => {
-			assert.equal(current.firstChild.style.borderRadius, '20px')
+		render(h('h2', {}), target, ({firstChild}) => {
+			Object.defineProperty(firstChild, 'style', {value: { setProperty(name, value) { refs.current = value } }})
+
+			render(h('h2', {style: {'-webkit-border-radius': '20px'}}), target, (current) => {
+				assert.equal(refs.current, '20px')
+			})
 		})
 	})
 })

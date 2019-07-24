@@ -1,46 +1,75 @@
 import * as Utility from './Utility.js'
-import * as Lifecycle from './Lifecycle.js'
+import * as Exception from './Exception.js'
 import * as Schedule from './Schedule.js'
-import * as Interface from './Interface.js'
 
 /**
- * @param {object} event
+ * @param {object} value
  */
-export function handle (event) {
-	dispatch(this.host, event, Interface.event(event, this.instance))
+export function handle (value) {
+	dispatch(this.host, value, this.state[value.type])
 }
 
 /**
- * @param {object} host
- * @param {object} event
- * @param {*} callback
+ * @param {object} element
+ * @param {object} value
+ * @param {(function|function[])} callback
  */
-export function dispatch (host, event, callback) {
-	Schedule.checkout(enqueue, host, event, callback)
+export function dispatch (element, value, callback) {
+	Schedule.checkout(resolve, element, value, callback, null)
 }
 
 /**
  * @param {object} fiber
- * @param {object} host
- * @param {object} event
- * @param {*} callback
+ * @param {object} element
+ * @param {object} value
+ * @param {(function|function[])} callback
  */
-export function enqueue (fiber, host, event, callback) {
-	if (callback) {
-		if (Utility.iterable(callback)) {
-			Utility.each(enqueue.bind(null, fiber, host, event), callback, 0, callback)
-		} else {
-			resolve(host, event, callback, host.instance)
+export function resolve (fiber, element, value, callback) {
+	try {
+		enqueue(fiber, element, value, element.props, callback)
+	} catch (error) {
+		Exception.dispatch(fiber, element, element, error)
+	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} element
+ * @param {object} value
+ * @param {object} props
+ * @param {(function|function[])} callback
+ * @return {any?}
+ */
+export function enqueue (fiber, element, value, props, callback) {
+	if (Utility.callable(callback)) {
+		if (value = callback(value, props)) {
+			if (Utility.callable(value)) {
+				element.stack = value
+			} else if (Utility.thenable(value)) {
+				dequeue(fiber, element, value)
+			}
+		}
+	} else if (callback) {
+		for (var i = 0; i < callback.length; i++) {
+			enqueue(fiber, element, value, props, callback[i])
 		}
 	}
 }
 
 /**
- * @param {object} host
- * @param {object} event
- * @param {(function|object)} callback
- * @param {object} instance
+ * @param {object} fiber
+ * @param {object} element
+ * @param {object} value
  */
-export function resolve (host, event, callback, instance) {
-	Lifecycle.event(host, event, callback, instance, instance.props, instance.state, instance.context)
+export function dequeue (fiber, element, value) {
+	Schedule.suspend(fiber, value, function () { return element.value }, Exception.throws(fiber, element))
+}
+
+/**
+ * @param {object} element
+ * @param {function} callback
+ * @return {object}
+ */
+export function request (element, callback) {
+	return Utility.respond(function () { return Schedule.checkout(function () { callback(element) }, element, element, element, null) })
 }

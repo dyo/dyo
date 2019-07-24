@@ -8,26 +8,34 @@ import * as Stringify from './Stringify.js'
  * @return {object}
  */
 export function render (element, target, callback) {
-	return Dyo.render(element, target, flush).then(callback)
+	return Dyo.render(element, target, dispatch).then(callback)
 }
 
 /**
- * @param {object} value
+ * @param {object} target
  */
-export function flush (target) {
-	write(target, Stringify.element(this))
+export function dispatch (target) {
+	resolve(target, doctype(Stringify.element(this)))
 }
 
 /**
  * @param {object} target
  * @param {string} payload
  */
-export function write (target, payload) {
+export function resolve (target, payload) {
 	if (typeof target.send === 'function') {
 		target.send(payload)
 	} else if (typeof target.end === 'function') {
 		target.end(payload)
-	} else if ('body' in target) {
+	} else {
 		target.body = payload
 	}
+}
+
+/**
+ * @param {string} payload
+ * @return {string}
+ */
+export function doctype (payload) {
+	return payload.substring(0, 5) === '<html' ? '<!doctype html>' + payload : payload
 }

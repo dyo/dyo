@@ -9,8 +9,7 @@
 	<script src=https://localvoid.github.io/perf-monitor/0.1/perf-monitor.js></script>
 </head>
 <body>
-	<div id=root></div>
-
+	<main></main>
 	<style>
 		body {color:#333;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857143;margin:0;}
 		label {display:inline-block;font-weight:700;margin-bottom:5px;}
@@ -39,10 +38,8 @@
 		.Query {position:relative;}
 		.Query:hover .popover {display:block;left:-100%;width:100%;}
 	</style>
-
 	<script>
 		const ENV = (function() {
-
 		  var first = true;
 		  var counter = 0;
 		  var data;
@@ -253,64 +250,49 @@
 		  };
 		})();
 	</script>
-
 	<script>
-		const container = document.getElementById('root');
-		const {render, h} = dyo
+		const {h, render} = dyo
+		const target = document.querySelector('main')
 
-		function bootstrap () {
-			'use strict';
-
-			class Monster {
-				render () {
-					return (
-						h('div',
-							h('table', {className: 'table table-striped latest-data'},
-								h('tbody',
-									data.map(function (db) {
-										return h('tr',
-											h('td', {className: 'dbname'}, db.dbname),
-											h('td', {className: 'query-count'},
-												h('span', {className: db.lastSample.countClassName}, db.lastSample.nbQueries)
-											),
-											db.lastSample.topFiveQueries.map(function (query) {
-												return h('td', {className: query.elapsedClassName},
-													query.formatElapsed,
-													h('div', {className: 'popover left'},
-														h('div', {className: 'popover-content'}, query.query),
-														h('div', {className: 'arrow'}, null)
-													)
-												)
-											})
+		const Main = ({data}) => (
+			h('div', {},
+				h('table', {className: 'table table-striped latest-data'},
+					h('tbody', {},
+						data.map(({dbname, lastSample}) => (
+							h('tr', {},
+								h('td', {className: 'dbname'}, dbname),
+								h('td', {className: 'query-count'},
+									h('span', {className: lastSample.countClassName}, lastSample.nbQueries)
+								),
+								lastSample.topFiveQueries.map(({query, formatElapsed, elapsedClassName}) => (
+									h('td', {className: elapsedClassName},
+										formatElapsed,
+										h('div', {className: 'popover left'},
+											h('div', {className: 'popover-content'}, query),
+											h('div', {className: 'arrow'})
 										)
-									})
-								)
+									)
+								))
 							)
-						)
-					);
-				}
-			}
+						))
+					)
+				)
+			)
+		)
 
-			perfMonitor.startFPSMonitor()
-			perfMonitor.startMemMonitor()
-			perfMonitor.initProfiler("render");
+		perfMonitor.startFPSMonitor()
+		perfMonitor.startMemMonitor()
+		perfMonitor.initProfiler('render')
 
-			var data = [];
+		requestAnimationFrame(function update () {
+			const data = ENV.generateData().toArray()
+			perfMonitor.startProfile('render')
 
-			function loop() {
-				data = ENV.generateData().toArray();
-				perfMonitor.startProfile("render");
+			render(h(Main, {data: data}), target)
 
-				render(h(Monster), container);
-
-				perfMonitor.endProfile("render");
-				requestAnimationFrame(loop);
-			}
-
-			loop();
-		}
-
-		bootstrap();
+			perfMonitor.endProfile('render')
+			requestAnimationFrame(update)
+		})
 	</script>
 </body>
 </html>

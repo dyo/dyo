@@ -29,154 +29,99 @@
 
 		<h1 id=rendering>Rendering</h1>
 
-		<p>Dyo supports rendering with a vide variety of JavaScript Objects, these include.</p>
+		<p>Rendering supports a variety node <a href=element.html#type>types</a>, these include:</p>
 
 		<ol>
 			<li>Elements</li>
-			<li>Strings/Numbers</li>
-			<li>Null/Undefined</li>
-			<li>Functions/Classes</li>
 			<li>Fragments</li>
+			<li>Components(as functions)</li>
+			<li>Text(as strings/numbers)</li>
+			<li>Empty(as null/undefined/booleans)</li>
 			<li>Portals</li>
 			<li>Promises</li>
-			<li>Iterators/Generators/AsyncGenerators</li>
-			<li>CustomElements/WebComponents</li>
+			<li>Iterators/AsyncIterators</li>
 		</ol>
 
-		<h1 id=components>Statefull Function Components</h1>
+		<h1 id=events-arrays>Events Arrays</h1>
 
-		<p>Function components can maintain state, lifecycles and string refs in symmetry with class based components.</p>
+		<p>Assigning multiple events handlers to a single event.</p>
 
 <pre><code>
-const User = (props, {name}, context) => {
-	return h('h1', name)
-}
-
-User.getDerivedState = (props) => {
-	return {name: 'Earth'}
+function Example (props) {
+	return h('input', {
+		onClick: [event => {}, event => {}]
+	})
 }
 </code></pre>
 
-		<p>The difference between function and class components is in the syntax difference between JavaScript functions and classes.</p>
+		<h1 id=async-unmount>Async Unmount</h1>
 
-		<h1 id=events>Events</h1>
-
-		<p>The <strong>this</strong> reference in event handlers is a reference to the surrounding component.</p>
+		<p>Both <a href=hooks.html#useEffect>useEffect</a> and <a href=hooks.html#useLayout>useLayout</a> </a> effects are afforded an interface to implement delayed unmounting for use-cases such as unmount animations – when the cleanup function returns a <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise>Promise</a>:</p>
 
 <pre><code>
-class User {
-	handleEvent(e, props, state, context) {
-		assert(this instanceof User)
-	}
-	render(props, state, context) {
-		return h('input', {
-			value: state.value,
-			onInput: this.handleEvent
-		})
-	}
+function Example (props) => {
+	useLayout(() => {
+		return () => {
+			return props.current.animate({}).finished
+		}
+	}, [])
+	return h('h1', {ref: props}, state.name)
 }
 </code></pre>
 
-		<p>Assigning multiple events handlers to a single event is supported in addition to event handlers that conform to the the <a href=https://developer.mozilla.org/en/docs/Web/API/EventListener>EventListener</a> interface.</p>
+		<blockquote>Note: The <a href=https://developer.mozilla.org/en-US/docs/Web/API/Element/animate>Element.animate</a> returns an object with a <code>finished</code> Promise that is resolved once the animation has resolved.</blockquote>
+
+		<h1 id=props-argument>Props Argument</h1>
+
+		<p>Both <a href=introduction.html#effects>effects</a> and <a href=element.html#events>events</a> receive an optional second argument that is a reference to the components <a href=element.html#props>props</a> at that particular time.</p>
 
 <pre><code>
-class User {
-	handleEvent(e, props, state, context) {
-		return {value: 'Earth'}
-	}
-	render(props, state, context) {
-		return h('input', {
-			value: state.value,
-			onInput: this,
-			onClick: [this, () => {}]
-		})
-	}
+function Example (props) {
+	useEffect(([a, b], props) => {}, [a, b])
+
+	return h('button', {
+		onClick: (event, props) => {}
+	})
 }
 </code></pre>
 
-		<h1 id=implicit-state>Implicit setState</h1>
+		<h1 id=server-rendering>Server Rendering</h1>
 
-		<p>Implicit setState is a heuristic used to dispatch state updates without explicity calling <a href=component.html#setState>setState</a>. This can be used in events, and lifecycle methods with the exception of <a href=./api/component.html#shouldComponentUpdate>shouldComponentUpdate</a> and <a href=component.html#componentWillUnmount>componentWillUnmount</a>.</p>
-
-<pre><code>
-const User = (props, state, context) => {
-	return h('h1', state.name)
-}
-
-User.componentDidMount = (props, state, context) => {
-	return {name: 'Wind'}
-}
-</code></pre>
-
-		<h1 id=async-state>async setState</h1>
-
-		<p>The setState interface: Both explicit and implicit &mdash; support aynsc state updates through promises or thenables that resolve to the desired partial state update object.</p>
-
-<pre><code>
-const User = (props, state, context) => {
-	return h('h1', state.name)
-}
-
-User.componentDidMount = async (props, state, context) => {
-	return fetch('/user/john')
-}
-</code></pre>
-
-		<blockquote>Note: Dyo auto-unwraps fetch-based promises to json.</blockquote>
-
-		<h1 id=async-unmount>Async componentWillUnmount</h1>
-
-		<p>The <a href=../api/component.html#componentWillUnmount>componentWillUnmount</a> lifecycle provides an interface for defining an async unmount for the situation where it makes sense to manage outro animations.</p>
-
-		<p>When a promise from <code>componentWillUnmount</code> is returned, the component is confined to transient state, it doesn't exist in the within its subtree but is never the less kept mounted to host document until the value has resolved.</p>
-
-<pre><code>
-const User = (props, state, context) => {
-	return h('h1', {ref: 'heading'}, state.name)
-}
-
-User.componentWillUnmount = async (props, state, context) => {
-	return this.refs.heading.animate({...}).finished
-}
-</code></pre>
-
-		<h1 id=server>Server</h1>
-
-		<p>Dyo packages a server renderer without compromising support for async primitives.</p>
-
-		<p>This allows us to render into any writable stream.</p>
+		<p>The <code>dyo/server</code> renderer has support for async primitives including <a href=top-level.html#Suspense>Suspense</a> and friends(<a href=top-level.html#lazy>lazy</a>, <a href=hooks.html#useResource>useResource</a>).</p>
 
 		<p>The following <a href=https://nodejs.org>Node.js</a> example writes:
 
 <pre><code>
-	&lt;!doctype>&lt;html>&lt;h1>Hello&lt;/h1>&lt;/html>
+&lt;!doctype>
+&lt;html>
+	&lt;h1>Hello&lt;/h1>
+&lt;/html>
 </code></pre>
 
 		<p>Into the writable stream &mdash; the response object.</p>
 
 <pre><code>
-import {http} from 'http'
-import {h, render} from 'dyo/server'
+import {h} from 'dyo'
 
-class Hello {
-	render(props, state) {
-		return state.value
-	}
-	componentDidMount() {
-		return Promise.resolve({value: 'Hello'})
-	}
+function Example (props) {
+	return Promise.resolve(h('h1', {}, 'Hello'))
 }
 
-http.createServer(function (request, response) {
-	render([
-		h('!doctype'), h('html', h('h1', h(Hello)))
-	], response, () => {
-		console.log('callback')
-	})
+import {http} from 'http'
+import {render} from 'dyo/server'
+
+http.createServer((req, res) => {
+	return render(h('html', {}, h(Example)), res)
 }).listen(8080)
 </code></pre>
 
-		<p>This in effect remove fricton there may have otherwise been with re-useing components on both the browser and server.</p>
+		<p>The server renderer has built-in support to in addition render to response objects that share similarities to <a href=https://expressjs.com/>Express</a> with its <code>send(...)</code> method and or <a href=https://koajs.com>Koa</a> with its <code>body</code> setter style interface and does not specifically rely on <a href=https://nodejs.org>Node.js</a> as a runtime.</p>
+
+		<p>This in effect makes re-useing components in an <a href=https://en.wikipedia.org/wiki/Isomorphic_JavaScript>isomorphic</a> application less prone to the kind of friction posed with building isomorphic applications.</p>
+
+		<h1 id=custom-renderer>Custom renderers</h1>
+
+		<p>The <a href=#server-rendering>server renderer</a> is itself a custom renderer. Any container target could be delegated to a custom renderer if it implements the base interface needed to conform.</p>
 	</article>
 </body>
 </html>

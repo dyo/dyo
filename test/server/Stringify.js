@@ -1,4 +1,4 @@
-import {h, render, Component} from '../../server/index.js'
+import {h, render, useState, useEffect, useLayout} from '../../server/index.js'
 
 describe('Stringify', () => {
 	it('should stringify text', () => {
@@ -12,7 +12,7 @@ describe('Stringify', () => {
 	it('should stringify element', () => {
 		const target = new Writable
 
-		render(h('h1', '1'), target, (current) => {
+		render(h('h1', {}, '1'), target, (current) => {
 			assert.html(current, '<h1>1</h1>')
 		})
 	})
@@ -20,8 +20,16 @@ describe('Stringify', () => {
 	it('should stringify doctype', () => {
 		const target = new Writable
 
-		render([h('!doctype html'), h('html', h('title', '1'))], target, (current) => {
-			assert.html(current, '<!doctype html><html><title>1</title></html>')
+		render([h('!DocType', {html: true}), h('html', {}, h('title', {}, '1'))], target, (current) => {
+			assert.html(current, '<!DocType html><html><title>1</title></html>')
+		})
+	})
+
+	it('should prepend default doctype', () => {
+		const target = new Writable
+
+		render(h('html', {lang: 'en'}, h('title', {}, '1')), target, (current) => {
+			assert.html(current, '<!doctype html><html lang="en"><title>1</title></html>')
 		})
 	})
 
@@ -29,7 +37,7 @@ describe('Stringify', () => {
 		const target = new Writable
 		const stack = [
 			'area', 'base', 'br', 'meta', 'source', 'keygen', 'img', 'col',
-			'embed', 'wbr', 'track', 'param', 'link', 'input', 'hr'
+			'embed', 'wbr', 'track', 'param', 'link', 'input', 'hr', '!doctype'
 		]
 
 		stack.forEach((type) => {
@@ -45,7 +53,7 @@ describe('Stringify', () => {
 		render(h('div', {
 			onClick: {handleEvent: () => {}}, onload: () => {}, key: 0, ref: {}, foo: true, bar: false, style: {color: 'red'}
 		}, h('h1', {className: 'red', style: 'color: red;'}, 1)), target, (current) => {
-			assert.html(current, '<div foo="foo" style="color: red;"><h1 class="red" style="color: red;">1</h1></div>')
+			assert.html(current, '<div foo style="color: red;"><h1 class="red" style="color: red;">1</h1></div>')
 		})
 	})
 
@@ -60,7 +68,7 @@ describe('Stringify', () => {
 	it('should stringify fragments', () => {
 		const target = new Writable
 
-		render([h('div'), h('h1', '1')], target, (current) => {
+		render([h('div'), h('h1', {}, '1')], target, (current) => {
 			assert.html(current, '<div></div><h1>1</h1>')
 		})
 	})
@@ -68,18 +76,57 @@ describe('Stringify', () => {
 	it('should stringify thenables', () => {
 		const target = new Writable
 
-		render(Promise.resolve([h('div'), h('h1', '1')]), target, (current) => {
+		render(Promise.resolve([h('div'), h('h1', {}, '1')]), target, (current) => {
 			assert.html(current, '<div></div><h1>1</h1>')
 		})
 	})
 
 	it('should stringify components', () => {
 		const target = new Writable
+		const Primary = props => props.children
 
-		class Primary extends Component {}
-
-		render(h(Primary, '1'), target, (current) => {
+		render(h(Primary, {}, '1'), target, (current) => {
 			assert.html(current, '1')
+		})
+	})
+
+	it('should use state hooks', () => {
+		const target = new Writable
+		const Primary = props => {
+			const [state, setState] = useState(props => props.children)
+			return state
+		}
+
+		render(h(Primary, {}, '1'), target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should not invoke layout hooks', () => {
+		const target = new Writable
+		const stack = []
+		const Primary = props => {
+			useLayout(() => stack.push('useLayout'))
+			return props.children
+		}
+
+		render(h(Primary, {}, '1'), target, (current) => {
+			assert.html(current, '1')
+			assert.deepEqual(stack, [])
+		})
+	})
+
+	it('should not invoke effect hooks', (done) => {
+		const target = new Writable
+		const stack = []
+		const Primary = props => {
+			useEffect(() => stack.push('useEffect'))
+			return props.children
+		}
+
+		render(h(Primary, {}, '1'), target, (current) => {
+			assert.html(current, '1')
+			done(assert.deepEqual(stack, []))
 		})
 	})
 })

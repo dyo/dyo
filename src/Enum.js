@@ -1,22 +1,17 @@
 import * as Utility from './Utility.js'
 
 // static values
-export var uid = Utility.symbol()
 export var key = -(-1 >>> 0)
-export var nan = NaN
-export var obj = {}
+export var identifier = Utility.symbol('identifier')
 
-// dispatch identifiers
-export var event = -6
-export var props = -5
-export var mount = -4
-export var unmount = -3
-export var content = -2
-export var callback = -1
+// timestamps(ms)
+export var timeout = 100
+export var network = timeout * 6
 
 // element identifiers
+export var fallback = 0
 export var thenable = 1
-export var fragment = 2
+export var iterable = 2
 export var component = 3
 export var target = 4
 export var portal = 5
@@ -24,18 +19,17 @@ export var element = 6
 export var text = 7
 export var empty = 8
 
-// static identifiers
-export var defaultProps = 'defaultProps'
-export var displayName = 'displayName'
-export var propTypes = 'propTypes'
-export var contextTypes = 'contextTypes'
+// dispatch identifiers
+export var props = 11
+export var mount = 12
+export var unmount = 13
+export var content = 14
+export var callback = 15
 
-// lifecycles identifiers
-export var handleEvent = 'handleEvent'
-export var getDerivedState = 'getDerivedState'
-export var getChildContext = 'getChildContext'
-export var componentDidCatch = 'componentDidCatch'
-export var componentDidMount = 'componentDidMount'
-export var componentDidUpdate = 'componentDidUpdate'
-export var componentWillUnmount = 'componentWillUnmount'
-export var shouldComponentUpdate = 'shouldComponentUpdate'
+// schedule identifiers
+export var respond = 0
+export var request = 1
+
+// container types
+export var fragment = null
+export var offscreen = 'noscript'

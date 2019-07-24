@@ -1,105 +1,94 @@
-import {h, Component, render} from '../index.js'
+import {h, render} from '../index.js'
 
 describe('Refs', () => {
-	it('should (un)mount string refs', () => {
+	it('should use a object ref', () => {
 		const target = document.createElement('div')
 		const refs = {}
-
-		class Primary extends Component {
-			render({children}) { return children }
-			componentDidMount() { refs.current = this.refs }
+		const Primary = props => {
+			return h('h1', props, props.children)
 		}
 
-		render(h(Primary, h('h1', {ref: 'heading'}, 1)), target, (current) => {
-			assert.html(current, '<h1>1</h1>')
-			assert.exists(refs.current.heading, ['heading'])
-		})
-
-		render(null, target, (current) => {
-			assert.html(current, '')
-			assert.notExists(refs.current.heading, [''])
-		})
-	})
-
-	it('should (un)mount object refs', () => {
-		const target = document.createElement('div')
-		const refs = {}
-
-		render(h('h1', {ref: refs}, 1), target, (current) => {
-			assert.html(current, '<h1>1</h1>')
-			assert.html(refs.current, '1')
-		})
-
-		render(null, target, (current) => {
-			assert.equal(refs.current, null)
+		render(h(Primary, {ref: refs}, '0'), target, (current) => {
+			assert.html(current, '<h1>0</h1>')
+			assert.deepEqual(refs, {current: current.firstChild})
+		}).then(() => {
+			render(null, target, (current) => {
+				assert.deepEqual(refs, {current: null})
+			})
 		})
 	})
 
-	it('should (un)mount function refs', () => {
+	it('should update a object ref', () => {
 		const target = document.createElement('div')
 		const refs = {}
+		const Primary = props => {
+			return h('h1', props, props.children)
+		}
 
-		render(h('h1', {ref: (value) => refs.current = value}, 1), target, (current) => {
-			assert.html(current, '<h1>1</h1>')
-			assert.html(refs.current, '1')
-		})
-
-		render(null, target, (current) => {
-			assert.equal(refs.current, null)
+		render(h(Primary, {ref: refs}, '0'), target, (current) => {
+			assert.html(current, '<h1>0</h1>')
+			assert.deepEqual(refs, {current: current.firstChild})
+		}).then(() => {
+			render(h(Primary, {ref: {}}, '0'), target, (current) => {
+				assert.deepEqual(refs, {current: null})
+			})
 		})
 	})
 
-	it('should update refs', () => {
+	it('should use a function ref', () => {
 		const target = document.createElement('div')
 		const refs = {}
+		const Primary = props => {
+			return h('h1', props, props.children)
+		}
+
+		render(h(Primary, {ref: (current) => refs.current = current}, '0'), target, (current) => {
+			assert.html(current, '<h1>0</h1>')
+			assert.deepEqual(refs, {current: current.firstChild})
+		}).then(() => {
+			render(null, target, (current) => {
+				assert.deepEqual(refs, {current: null})
+			})
+		})
+	})
+
+	it('should update a function object ref', () => {
+		const target = document.createElement('div')
+		const refs = {}
+		const Primary = props => {
+			return h('h1', props, props.children)
+		}
+
+		render(h(Primary, {ref: refs}, '0'), target, (current) => {
+			assert.html(current, '<h1>0</h1>')
+			assert.deepEqual(refs, {current: current.firstChild})
+		}).then(() => {
+			render(h(Primary, {ref: (current) => refs.next = current}, '0'), target, (current) => {
+				assert.deepEqual(refs, {current: null, next: current.firstChild})
+			})
+		})
+	})
+
+	it('should use a mount/unmount function ref', () => {
+		const target = document.createElement('div')
 		const stack = []
-
-		render(h('h1', {ref: (value) => stack.push(refs.current = value)}, 1), target, (current) => {
-			assert.html(current, '<h1>1</h1>')
-			assert.html(refs.current, '1')
-		})
-
-		render(h('h1', {ref: (value) => stack.push(refs.current = value)}, 2), target, (current) => {
-			assert.html(current, '<h1>2</h1>')
-			assert.html(refs.current, '2')
-		})
-
-		render(null, target, (current) => {
-			assert.html(current, '')
-			assert.equal(refs.current, null)
-			assert.lengthOf(stack, 4)
-		})
-	})
-
-	it('should unmount null/undefined refs', () => {
-		const target = document.createElement('div')
 		const refs = {}
+		const Primary = props => {
+			return h('h1', props, props.children)
+		}
 
-		render(h('h1', {ref: (value) => refs.current = value}, 1), target, (current) => {
-			assert.html(current, '<h1>1</h1>')
-			assert.html(refs.current, '1')
+		render(h(Primary, {ref: (current) => {
+			stack.push(refs.current = current, 'mount')
+			return (current) => { stack.push(refs.current = current, 'unmount') }
+		}}, '0'), target, (current) => {
+			assert.html(current, '<h1>0</h1>')
+			assert.deepEqual(refs, {current: current.firstChild})
+			assert.deepEqual(stack, [current.firstChild, 'mount'])
+		}).then(() => {
+			render(null, target, (current) => {
+				assert.deepEqual(refs, {current: null})
+				assert.deepEqual(stack, [stack[0], stack[1], null, 'unmount'])
+			})
 		})
-
-		render(h('h1', {ref: undefined}, 2), target, (current) => {
-			assert.html(current, '<h1>2</h1>')
-			assert.equal(refs.current, null)
-		})
-
-		render(h('h1', {ref: (value) => refs.current = value}, 1), target, (current) => {
-			assert.html(current, '<h1>1</h1>')
-			assert.html(refs.current, '1')
-		})
-
-		render(h('h1', {ref: null}, 2), target, (current) => {
-			assert.html(current, '<h1>2</h1>')
-			assert.equal(refs.current, null)
-		})
-	})
-
-	it('should handle invalid refs', () => {
-		const target = document.createElement('div')
-
-		render(h('div', {ref: 100}), target)
-		render(h('div', {ref: Symbol('')}), target)
 	})
 })

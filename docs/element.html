@@ -27,36 +27,32 @@
 	<article>
 		<h1>Element</h1>
 
-		<p>The <code>createElement</code> function provides an interface to create virtual elements that Dyo understands.</p>
+		<p>The <code>createElement</code> function provides an function to create virtual elements that represent a snapshot of the interface in time.</p>
 
 <pre><code>
-createElement(
+interface createElement(
 	type: Type
 	props?: Props
-	...children: [Children]
-)
+	...children: any
+): object
 </code></pre>
 
-		<p>The <code>h</code> function: pronounced "hyperscript" provides a short alias to the <code>createElement</code> interface.</p>
+		<p>The <code>h</code> function: pronounced "hyperscript" provides an alias to <code>createElement</code> and vice-versa.</p>
 
 <pre><code>
-h(
+interface h(
 	type: Type
 	props?: Props
-	...children: [Children]
-)
+	...children: any
+): object
 </code></pre>
 
 		<h1 id=type>Type</h1>
 
-		<p>Dyo accepts a variety of different element types.</p>
+		<p>A variety of different element types are accepted as valid types.</p>
 
 <pre><code>
 type Type = string|function|object
-
-h(
-	type: Type
-)
 </code></pre>
 
 		<h2 id=host>Host Element</h2>
@@ -64,135 +60,115 @@ h(
 		<p>An element is called a host element when the type is typeof "string".</p>
 
 <pre><code>
-type Host = string
-
-h('h1')
+const example = h('h1')
 </code></pre>
 
 		<h2 id=component>Component Element</h2>
 
-		<p>An element is called a component element when the type is typeof "function".</p>
+		<p>An element is a component element when the type is typeof "function".</p>
 
 <pre><code>
-type Component = function
-
-h(() => {
-	return createElement('h1')
-})
+const example = h(props => h('h1'))
 </code></pre>
 
 		<h2 id=exotic>Exotic Element</h2>
 
-		<p>An element is called a exotic element when the type is typeof "object". The most common type of exotic element is async elements: When the type is a thenable.</p>
+		<p>An element is exotic when the type is typeof "object". An example of this is an async element; When the type is a thenable.</p>
 
 <pre><code>
-type Exotic = object
-
-h(Promise.resolve('Hello'))
+const example = h(Promise.resolve('Hello'))
 </code></pre>
 
 		<h1 id=props>Props</h1>
 
+		<p>Props represent properties delegated to an element.</p>
+
 <pre><code>
 interface Props {
-	[prop: string]: any
-	on[event: string]: Handler
-	key?: Key
-	ref?: Ref
-}
-
-h(
-	type: Type
-	props?: Props
-)
-</code></pre>
-
-			<h2 id=keys>Keys</h2>
-
-<pre><code>
-type Key = string|number|symbol
-
-h(Type, {
-	key: 'heading'
-})
-</code></pre>
-
-			<h2 id=refs>Refs</h2>
-
-<pre><code>
-type Ref = string|function|object
-</code></pre>
-
-				<h3 id=function>string</h3>
-
-<pre><code>
-h(Type, {
-	ref: 'heading'
-})
-</code></pre>
-
-				<h3 id=function>function</h3>
-
-<pre><code>
-h(Type, {
-	ref: (value: object) => {}
-})
-</code></pre>
-
-				<h3 id=object>object</h3>
-
-<pre><code>
-h(Type, {
-	ref: {current: value}
-})
-</code></pre>
-
-			<h2 id=events>Events</h2>
-
-<pre><code>
-type Handler = function|EventListener|Array&lt;function|EventListener>
-
-interface EventListener {
-	handleEvent(e) {}
+	key?: string|number|symbol
+	ref?: function|object
+	on[event: string]: EventListener
+	...[prop: string]: any
 }
 </code></pre>
 
-		<h2 id=event-function>Event Function</h1>
+		<p>Amoung a host elements "props" there are three special prop types: <a href=#keys>keys</a>, <a href=#refs>refs</a> and <a href=#events>events</a>.</p>
 
 <pre><code>
-h('button', {
-	onClick: (e) => {}
+const example = h('button', {
+	key: 'heading',
+	ref: ref => {},
+	onClick: event => {}
 })
 </code></pre>
 
-		<h2 id=event-listener>Event Listener</h1>
+		<h2 id=keys>Keys</h2>
 
 <pre><code>
-h('button', {
-	onClick: {
-		handleEvent: (e) => {}
+tyep Key = string|number|symbol
+</code></pre>
+
+		<h2 id=refs>Refs</h2>
+
+<pre><code>
+type Ref = function|object
+</code></pre>
+
+		<h3 id=function-refs>function refs</h3>
+
+<pre><code>
+const example = h('button', {
+	ref: (value: object?) => {}
+})
+</code></pre>
+
+		<p>Function refs can optionally return a cleanup "function" for when the ref is changed/unmount.</p>
+
+<pre><code>
+const example = h('button', {
+	ref: (value: object?) => {
+		console.assert(value instanceof Node)
+		return (value: object) => {}
 	}
 })
 </code></pre>
 
-		<h2 id=event-array>Event Array</h2>
+		<h3 id=object-refs>object refs</h3>
 
 <pre><code>
-h('button', {
-	onClick: [(e) => {}, (e) => {}]
+const example = h('button', {
+	ref: {current: value}
+})
+</code></pre>
+
+		<p>Where value is an object for example from <a href=./hooks.html#useRef>useRef</a></p>
+
+		<h2 id=events>Events</h2>
+
+<pre><code>
+type EventListener = function|Array&lt;function>
+</code></pre>
+
+		<h3 id=event-function>Event Function</h1>
+
+<pre><code>
+const example = h('button', {
+	onClick: event => {}
+})
+</code></pre>
+
+		<h3 id=event-array>Event Array</h2>
+
+<pre><code>
+const example = h('button', {
+	onClick: [event => {}, event => {}]
 })
 </code></pre>
 
 		<h1 id=children>Children</h1>
 
 <pre><code>
-type Children = function|string|number|element|iterable|thenable
-
-h(
-	type: Type
-	props?: Props
-	...children?: Children
-)
+type Children = function|string|number|iterable|thenable
 </code></pre>
 	</article>
 </body>

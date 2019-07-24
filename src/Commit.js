@@ -1,33 +1,26 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Lifecycle from './Lifecycle.js'
 import * as Interface from './Interface.js'
+import * as Schedule from './Schedule.js'
 
 /**
  * @param {object} parent
  * @param {object} element
- * @param {object} children
  */
-export function unmount (parent, element, children) {
-	if (element !== children) {
-		if (element.context) {
-			if (Utility.thenable(element.context)) {
-				return Utility.resolve(element.context, unmount.bind(null, parent, children, children))
-			}
-		}
+export function unmount (parent, element) {
+	if (element !== undefined) {
+		remove(Element.parent(parent), element)
 	}
-
-	remove(Element.parent(parent), children)
 }
 
 /**
  * @param {object} parent
  * @param {object} element
- * @param {object} sibling
+ * @param {object?} sibling
  */
 export function mount (parent, element, sibling) {
-	if (element !== sibling) {
+	if (sibling !== undefined) {
 		insert(Element.parent(parent), element, Element.sibling(sibling))
 	} else {
 		append(Element.parent(parent), element)
@@ -39,12 +32,20 @@ export function mount (parent, element, sibling) {
  * @param {object} element
  */
 export function remove (parent, element) {
-	if (element.uid < Enum.portal) {
-		element.children.forEach(function (element) {
-			remove(parent, element)
-		})
+	var identity = element.identity
+
+	if (identity < Enum.portal) {
+		var children = element.children
+
+		if (identity !== Enum.component) {
+			for (var i = 0; i < children.length; i++) {
+				remove(parent, children[i])
+			}
+		} else {
+			remove(parent, children[0])
+		}
 	} else {
-		Interface.remove(parent.instance, element.instance)
+		Interface.remove(parent.value, element.value)
 	}
 }
 
@@ -53,12 +54,20 @@ export function remove (parent, element) {
  * @param {object} element
  */
 export function append (parent, element) {
-	if (element.uid < Enum.portal) {
-		element.children.forEach(function (element) {
-			append(parent, element)
-		})
+	var identity = element.identity
+
+	if (identity < Enum.portal) {
+		var children = element.children
+
+		if (identity !== Enum.component) {
+			for (var i = 0; i < children.length; i++) {
+				append(parent, children[i])
+			}
+		} else {
+			append(parent, children[0])
+		}
 	} else {
-		Interface.append(parent.instance, element.instance)
+		Interface.append(parent.value, element.value)
 	}
 }
 
@@ -68,33 +77,45 @@ export function append (parent, element) {
  * @param {object} sibling
  */
 export function insert (parent, element, sibling) {
-	if (element.uid < Enum.portal) {
-		element.children.forEach(function (element) {
-			insert(parent, element, sibling)
-		})
+	var identity = element.identity
+
+	if (identity < Enum.portal) {
+		var children = element.children
+
+		if (identity !== Enum.component) {
+			for (var i = 0; i < children.length; i++) {
+				insert(parent, children[i], sibling)
+			}
+		} else {
+			insert(parent, children[0], sibling)
+		}
 	} else {
-		Interface.insert(parent.instance, element.instance, sibling.instance)
+		Interface.insert(parent.value, element.value, sibling.value)
 	}
 }
 
 /**
  * @param {object} parent
+ * @param {object} element
+ */
+export function target (parent, element) {
+	element.value = Interface.target(element.type, parent.owner)
+}
+
+/**
  * @param {object} element
  * @param {(string|number)} value
  */
-export function content (parent, element, value) {
-	Interface.content(element.instance, value)
+export function content (element, value) {
+	Interface.content(element.value, value)
 }
 
 /**
- * @param {object} parent
  * @param {object} element
  * @param {object} value
  */
-export function props (parent, element, value) {
-	if (value) {
-		set(element, value, element.instance)
-	}
+export function props (element, value) {
+	properties(element, value, element.value)
 }
 
 /**
@@ -102,28 +123,44 @@ export function props (parent, element, value) {
  * @param {object} value
  * @param {object} instance
  */
-export function set (element, value, instance)  {
-	for (var key in value) {
-		switch (key) {
-			case 'ref':
-				ref(element, value[key], instance)
-			case 'key':
-				break
-			default:
-				Interface.props(key, value[key], instance, element)
+export function properties (element, value, instance)  {
+	if (value !== null) {
+		for (var key in value) {
+			switch (key) {
+				case 'ref':
+					refs(element, value[key], instance)
+				case 'key': case 'children':
+					break
+				default:
+					Interface.properties(key, value[key], instance, element)
+			}
 		}
 	}
 }
 
 /**
  * @param {object} element
- * @param {*?} value
- * @param {object} instance
+ * @param {object?} value
+ * @param {object?} instance
  */
-export function ref (element, value, instance) {
-	Lifecycle.ref(element, element.ref, null)
+export function refs (element, value, instance) {
+	if (element.owner !== null) {
+		reference(element, element.stack, null)
+		reference(element, element.stack = value, instance)
+	}
+}
 
-	if (value) {
-		Lifecycle.ref(element, element.ref = value, instance)
+/**
+ * @param {object} element
+ * @param {object?} value
+ * @param {object?} instance
+ */
+export function reference (element, value, instance) {
+	if (value !== null) {
+		if (Utility.callable(value)) {
+			Schedule.callback(element, instance, value)
+		} else {
+			value.current = instance
+		}
 	}
 }

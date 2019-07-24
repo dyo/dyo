@@ -32,96 +32,83 @@
 		<p>The entry point of every application starts with the render function.</p>
 
 <pre><code>
-render(
-	element: object
-	container: string|object
+interface render(
+	element: any
+	target: string|object
 	callback?: function
 ): thenable
 </code></pre>
 
-		<h1 id=createElement>createElement</h1>
-
-		<p>Creates virtual elements that Dyo understands.</p>
+		<p>The function returns a <a href=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise>PromiseLike</a> "thenable" object that is resolved once rendering has succesfully completed; The callback argument is optional and serves a similar purpose.</p>
 
 <pre><code>
-createElement(
+await render('Hello', document)
+</code></pre>
+
+		<h1 id=createElement>createElement</h1>
+
+		<p>Create a virtual element also known as a snapshot.</p>
+
+<pre><code>
+interface createElement(
 	type: string|function|object
 	props?: object
 	...children?: any
 ): object
 </code></pre>
 
-		<h1 id=cloneElement>cloneElement</h1>
-
-		<p>Properties are shallow merged while new children replace old.</p>
+		<p>The return value is the snapshot of an element that describes the state of the user interface at the time. The <code>h</code> function serves as an alias to <code>createElement</code> and vice-versa.</p>
 
 <pre><code>
-cloneElement(
+const example = h('h1', {}, 'Hello')
+</code></pre>
+
+		<h1 id=cloneElement>cloneElement</h1>
+
+		<p>Clone a virtual element, properties are shallow merged while new children replace old.</p>
+
+<pre><code>
+interface cloneElement(
 	element: object
 	props?: object
-	...children?: Array
+	...children?: any
 ): object
+</code></pre>
+
+		<p>The return value is itself a virtual element.</p>
+
+<pre><code>
+const example = cloneElement(h('h1', {}, 'Hello'), {}, 'World')
 </code></pre>
 
 		<h1 id=isValidElement>isValidElement</h1>
 
-		<p>Validates that the argument is a valid virtual element.</p>
+		<p>Validate that the argument is of a valid virtual element.</p>
 
 <pre><code>
-isValidElement(
+interface isValidElement(
 	element: any
 ): boolean
 </code></pre>
 
-		<h1 id=createPortal>createPortal</h1>
-
-		<p>Creates a virtual portal element that Dyo understands.</p>
+		<p>The return value indicates with a <code>boolean</code> whether the argument is a virtual element.</p>
 
 <pre><code>
-createPortal(
-	children: object
-	container: string|object
-	props?: object
-): object
-</code></pre>
-
-		<h1 id=Component>Component</h1>
-
-		<p>The following is the base Component interface. This class is meant to be extended.</p>
-
-<pre><code>
-class Component {
-	constructor (props: object)
-	forceUpdate(callback?: function): thenable
-	setState(state?: object|function, callback?: function): thenable
-	render(props: object, state: object, context: object): any
-}
-</code></pre>
-
-		<h1 id=PureComponent>PureComponent</h1>
-
-		<p>In a similar fashion the base PureComponent interface is almost identical to the Component interface. This interface is also meant to be extended.</p>
-
-<pre><code>
-class PureComponent {
-	constructor (props: object)
-	forceUpdate(callback?: function): thenable
-	setState(state?: object|function, callback?: function): thenable
-	render(props: object, state: object, context: object): any
-	shouldComponentUpdate(props: object, state: object, context: object): boolean?
-}
+const example = isValidElement(h('h1', {}, 'Hello'))
 </code></pre>
 
 		<h1 id=Children>Children</h1>
 
-		<p>The Children interface provides usefull helpers to use with the opaque "children prop": <code>props.children</code> data structure.</p>
+		<p>The Children interface provides usefull helpers to use with the opaque <code>props.children</code> data structure.</p>
 
 		<h2 id=toArray>toArray</h2>
 
 		<p>Converts children to an array.</p>
 
 <pre><code>
-toArray(children: any): Array
+interface toArray(
+	children: any
+): Array&lt;any>
 </code></pre>
 
 		<h2 id=forEach>forEach</h2>
@@ -129,23 +116,21 @@ toArray(children: any): Array
 		<p>Iterates through all the children, calling the provided callback with each child.</p>
 
 <pre><code>
-forEach(children: any, callback: function)
+interface forEach(
+	children: any
+	callback: function
+): void
 </code></pre>
 
 		<h2 id=map>map</h2>
 
-		<p>Iterates through all the children, calling the provided callback with each child, the result of which is added to the returned array.</p>
+		<p>Iterates through all the children, calling the provided callback with each child, the result of which is allocated in the resulting array.</p>
 
 <pre><code>
-map(children: any, callback: function): Array
-</code></pre>
-
-		<h2 id=only>only</h2>
-
-		<p>Throws if children is not a single child element, returns the element otherwise.</p>
-
-<pre><code>
-only(children: element): object
+interface map(
+	children: any
+	callback: function
+): Array&lt;any>
 </code></pre>
 
 		<h2 id=count>count</h2>
@@ -153,15 +138,20 @@ only(children: element): object
 		<p>Returns a count of the number of children.</p>
 
 <pre><code>
-count(children: any): number
+interface count(
+	children: any
+): number
 </code></pre>
 
 		<h2 id=filter>filter</h2>
 
-		<p>Filters through children using the provided callback as a comparator. The result is an array of children that pass the test.</p>
+		<p>Filters through children using the provided callback as a comparator. The result is an array of children that have passed the test.</p>
 
 <pre><code>
-filter(children: any, callback: function): Array
+interface filter(
+	children: any
+	callback: function
+): Array&lt;any>
 </code></pre>
 
 		<h2 id=find>find</h2>
@@ -169,8 +159,148 @@ filter(children: any, callback: function): Array
 		<p>Filters through children to find the first match signaled by the provided comparator callback.</p>
 
 <pre><code>
-find(children: any, callback: function): any
+interface find(
+	children: any
+	callback: function
+): any
 </code></pre>
+
+		<h1 id=Portal>Portal</h1>
+
+		<p>A type representative of a portal element.</p>
+
+		<p>The "Portal" is a type used to create virtual "portal" elements. Its children are rendered into the <code>target</code> prop provided.</p>
+
+<pre><code>
+interface Props(
+	target: string|object
+)
+</code></pre>
+
+		<p>When the portals target changes it's children are re-parented to the new target. The target argument is optionally a "selector".</p>
+
+<pre><code>
+function Provider ({children}) {
+	return h(Portal, {target: 'main'}, ...children)
+}
+</code></pre>
+
+		<h1 id=Context>Context</h1>
+
+		<p>A type representative of a context element, used to create virtual "context" elements. Its children independent of depth can access the provided context value through <a href=./hooks.html#useContext>useContext</a>.</p>
+
+<pre><code>
+function Provider ({children}) {
+	return h(Context, {value: any?}, ...children)
+}
+</code></pre>
+
+		<blockquote id=consumer><em>"Consumer"</em> is term used to group any decendent component that makes use of the context value.</blockquote>
+
+		<p>All consumers are updated when the context value itself changes during an update.</p>
+
+		<h1 id=Fragment>Fragment</h1>
+
+		<p>The Fragment is a host type used to create virtual "fragment" elements. Its children are rendered without the need for wrapper elements.</p>
+
+<pre><code>
+const example = h(Fragment, {}, ...children)
+</code></pre>
+
+		<h1 id=Boundary>Boundary</h1>
+
+		<p>The Boundary is a componente type used to designate virtual error boundaries. It accepts a <code>fallback</code> prop that is used when it's decendents raise an exception.</p>
+
+<pre><code>
+interface Props {
+	fallback: any
+}
+</code></pre>
+
+		<p>When its <code>fallback</code> prop is a function it recievies the "Exception" object as props.
+
+<pre><code>
+interface Exception {
+	message: string
+	stack: string
+	type: string
+}
+</code></pre>
+
+		<p>The exception object can optionally be used directly as a <a href="hooks.html#useReducer">reducers</a> dispatch payload.</p>
+
+<pre><code>
+const example = h(Boundary, {
+	fallback: error => JSON.stringify(error)
+}, ...children)
+</code></pre>
+
+		<h1 id=Suspense>Suspense</h1>
+
+		<p>The Suspense component is used to create virtual suspense boundary. It accepts a <code>fallback</code> prop that is used when any of its decendents raise a suspend signal(thrown thenable) which in turn transitions it into a suspended state.</p>
+
+<pre><code>
+interface Props {
+	fallback: any
+}
+</code></pre>
+
+		<p>The boundary is resumed once all its decendents have settled.</p>
+
+<pre><code>
+const example = h(Suspense, {
+	fallback: 'Loading...'
+}, ...children)
+</code></pre>
+
+		<p>Related <a href=#lazy>lazy</a> and <a href=hooks.html#useResource>useResource</a> work in conjunction with suspense boundaries.</p>
+
+		<h1 id=lazy>Lazy</h1>
+
+		<p>Defines a component that is loaded dynamically.</p>
+
+<pre><code>
+interface lazy (
+	render: () => thenable
+): function
+</code></pre>
+
+		<p>This can reduce the size of a bundle payload when loading components that aren’t used during the initial render.</p>
+
+<pre><code>
+const Example = lazy(() => import('./Example.js'))
+</code></pre>
+
+		<p>The return value is itself a component function.</p>
+
+		<h1 id=memo>memo</h1>
+
+		<p>When a component renders the same result given the same props, wrapping it in memo to memoize the result can come with some performance benefits where applicable.</p>
+
+		<blockquote>"memo" is short for <a href=https://en.wikipedia.org/wiki/Memoization>memoization</a>.</blockquote>
+
+<pre><code>
+interface memo (
+	render: function => any
+	compare?: function => boolean
+): function
+</code></pre>
+
+		<p>By default memo will shallow compare props.<p>
+
+<pre><code>
+const Example = memo(props => 'Hello')
+</code></pre>
+
+		<p>To control the comparison, provide a custom comparison function as the second optional argument.</p>
+
+<pre><code>
+const Example = memo(props => 'Hello', (prev, next) => true)
+</code></pre>
+
+		<p>The comparison function returns a <code>true</code> when the memorize values are equal</p>
+
+		<p>The return value is itself a component function.</p>
 	</article>
 </body>
 </html>

@@ -1,29 +1,30 @@
 describe('Utility', () => {
-	const pr = process, ev = process.env, pm = Promise, wm = WeakMap, sm = Symbol
+	const Symbol = globalThis.Symbol
+	const Promise = globalThis.Promise
+	const setTimeout = globalThis.setTimeout
+	const requestAnimationFrame = globalThis.requestAnimationFrame
 
-	before(() => (globalThis.Promise = '', globalThis.WeakMap = '', globalThis.Symbol = ''))
-	after(() => (globalThis.Promise = pm, globalThis.WeakMap = wm, globalThis.Symbol = sm))
+	before(() => globalThis.Symbol = ''), after(() => globalThis.Symbol = Symbol)
+	before(() => globalThis.Promise = ''), after(() => globalThis.Promise = Promise)
+	before(() => globalThis.setTimeout = ''), after(() => globalThis.setTimeout = setTimeout)
+	before(() => globalThis.requestAnimationFrame = ''), after(() => globalThis.requestAnimationFrame = requestAnimationFrame)
 
-	it('should support @@iterator fallback', async () => {
-		const {iterator} = await import('../src/Utility.js?')
+	it('should support iterator fallbacks', async () => {
+		const {syncIterator, asyncIterator} = await import('../src/Utility.js?0')
 
-		assert.equal(iterator, '@@iterator')
+		assert.deepEqual([syncIterator, asyncIterator], ['@@iterator', '@@asyncIterator'])
 	})
 
-	it('should support process detection outside node', async () => {
-		const {environment} = await import('../src/Utility.js?')
+	it('should support deferred polyfill initialization', async () => {
+		const {promise, timeout, animation} = await import('../src/Utility.js?1')
 
-		try {
-			process.env = 'development'
-			assert.equal(environment(), 'development')
-			delete globalThis.process
-			assert.equal(environment(), '')
-		} finally {
-			globalThis.process = pr
-			process.env = ev
-		}
+		globalThis.Promise = Promise
+		globalThis.setTimeout = setTimeout
 
-		assert.equal(process, pr)
-		assert.equal(process.env, ev)
+		assert.doesNotThrow(() => {
+			assert(new promise(() => {}))
+			assert(timeout(() => {}, 0))
+			assert(animation(() => {}))
+		})
 	})
 })

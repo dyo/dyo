@@ -2,231 +2,298 @@ import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Component from './Component.js'
 import * as Commit from './Commit.js'
-import * as Lifecycle from './Lifecycle.js'
-import * as Exception from './Exception.js'
-
-export var frame = null
+import * as Event from './Event.js'
 
 /**
  * @constructor
  * @param {object} element
- * @param {object} primary
+ * @param {object} target
  */
-export var struct = Utility.extend(function fiber (element, primary) {
+export var struct = Utility.extend(function fiber (element, target) {
 	this.element = element
-	this.primary = primary
-	this.current = null
-	this.pending = null
-	this.routine = null
+	this.target = target
+	this.length = 0
+	this.index = 0
+	this.stack = []
+	this.queue = null
+	this.owner = null
+	this.async = null
 }, {
 	/**
-	 * @type {function}
+	 * @param {function?} value
+	 * @return {PromiseLike<object>}
 	 */
-	then: {value: then}
+	then: {value: function (value) {
+		return finalize(this, this.target, value), this
+	}}
 })
 
 /**
- * @return {void}
+ * @type {object?}
  */
-export function pop () {
-	frame = null
-}
+export var frame = null
 
 /**
- * @param {object} fiber
  * @return {object}
  */
-export function push (fiber) {
-	return frame = fiber
+export function peek () {
+	return frame
 }
 
 /**
- * @param {function} value
+ * @param {boolean} type
+ * @return {any}
+ */
+export function memo (type) {
+	return type ? frame.target !== frame : frame.target = frame
+}
+
+/**
+ * @param {number} type
+ * @param {object} element
+ * @param {any} a
+ * @param {any} b
+ * @param {any} c
  * @return {object}
  */
-export function then (value) {
-	return finalize(this, this.primary, value), this
+export function create (type, element, a, b, c) {
+	return {type: type, element: element, a: a, b: b, c: c}
 }
 
 /**
- * @param {object} fiber
- * @param {function} value
- * @return {*}
- */
-export function routine (fiber, value) {
-	return fiber.routine = null, value()
-}
-
-/**
- * @param {object} fiber
- * @param {*} value
- * @return {*}
- */
-export function pending (fiber, value) {
-	return fiber.pending = null, value
-}
-
-/**
- * @param {*} fiber
- * @param {object} value
- * @param {function} callback
+ * @param {function} executor
+ * @param {object} element
+ * @param {object} target
+ * @param {any} value
+ * @param {any} callback
  * @return {object}
  */
-export function resolve (fiber, value, fulfilled, rejected) {
-	return Utility.resolve(fiber.pending, forward.bind(fiber, fiber, value, fulfilled), forward.bind(fiber, fiber, value, rejected))
-}
+export function checkout (executor, element, target, value, callback) {
+	var stack = frame
+	var fiber = stack === null ? frame = new struct(element, target) : stack
 
-/**
- * @param {object} fiber
- * @param {*} value
- * @return {object}
- */
-export function suspend (fiber, value, fulfilled, rejected) {
-	if (fiber.pending) {
-		return fiber.pending = resolve(fiber, [fiber, value, fulfilled, rejected], suspend, suspend)
-	} else {
-		return fiber.pending = value, fiber.pending = resolve(fiber, [], fulfilled, rejected)
-	}
-}
-
-/**
- * @param {object} fiber
- * @param {object} value
- * @param {function} callback
- * @param {*} argument
- * @return {*}
- */
-export function forward (fiber, value, callback, argument) {
 	try {
-		return callback.apply(push(fiber), value.length ? value : (pending(fiber, value).push(argument), value))
+		return executor(fiber, element, target, value), fiber
 	} finally {
-		pop()
-	}
-}
-
-/**
- * @param {object} fiber
- * @param {object} value
- * @param {function} callback
- * @return {*}
- */
-export function archive (fiber, value, callback) {
-	if (typeof callback === 'function') {
-		if (fiber.current = callback.call(fiber.element, value)) {
-			if (Utility.thenable(fiber.current)) {
-				suspend(fiber, fiber.current, archive, archive)
-			}
+		try {
+			finalize(fiber, target, callback)
+		} finally {
+			frame = stack
 		}
 	}
 }
 
 /**
  * @param {object} fiber
- * @param {object} element
- * @param {object} instance
- * @param {*} primary
- * @param {*} secondary
- * @param {*} tertiary
- * @param {string} origin
- * @param {function}
- */
-export function enqueue (fiber, element, instance, primary, secondary, tertiary, origin) {
-	return fiber.routine = dequeue.bind(fiber, fiber, element, instance, primary, secondary, tertiary, origin, fiber.routine)
-}
-
-/**
- * @param {object} fiber
- * @param {object} element
- * @param {object} instance
- * @param {*} element
- * @param {*} primary
- * @param {*} secondary
- * @param {string} origin
+ * @param {object} target
  * @param {function?} callback
  */
-export function dequeue (fiber, element, instance, primary, secondary, tertiary, origin, callback) {
-	if (callback) {
-		callback()
-	}
-
-	try {
-		Lifecycle.dispatch(element, instance, primary, secondary, tertiary, origin)
-	} catch (error) {
-		Exception.resolve(fiber, element, element, error)
+export function finalize (fiber, target, callback) {
+	if (fiber.length !== 0) {
+		dequeue(fiber, target, callback, fiber.stack, fiber.length)
+	} else if (fiber.async !== null) {
+		resolve(fiber, fiber.async, finalize, null, [fiber, target, callback])
+	} else if (fiber.queue !== null) {
+		respond(fiber, target, callback)
+	} else if (callback !== null) {
+		archive(fiber, target, callback)
 	}
 }
 
 /**
  * @param {object} fiber
- * @param {object} element
- * @param {object} primary
- * @param {*} secondary
+ * @param {object} target
+ * @param {any?} callback
  */
-export function finalize (fiber, primary, secondary) {
-	if (fiber.pending) {
-		resolve(fiber, [fiber, primary, secondary], finalize, finalize)
-	} else if (fiber.routine) {
-		try {
-			routine(fiber, fiber.routine)
-		} finally {
-			finalize(fiber, primary, secondary)
+export function archive (fiber, target, callback) {
+	if (fiber.element !== null) {
+		if (Utility.callable(callback)) {
+			finalize(fiber, target, callback.call(fiber.element, target))
+		} else if (Utility.thenable(callback)) {
+			suspend(fiber, callback, function (value) { finalize(fiber, target, value) }, null)
 		}
-	} else if (secondary) {
-		archive(fiber, primary, secondary)
 	}
 }
 
 /**
- * @param {function} initialize
- * @param {object} element
- * @param {*} primary
- * @param {*} secondary
- * @param {*} tertiary
+ * @param {object} fiber
+ * @param {object} value
+ * @param {function} resolved
  * @return {object}
  */
-export function upstream (fiber, callback, element, primary, secondary, tertiary) {
+export function pending (fiber, value, resolved) {
+	return suspend(fiber, Utility.resolve(value, resolved, null), undefined, null)
+}
+
+/**
+ * @param {object} fiber
+ * @param {any} value
+ * @param {any} resolved
+ */
+export function execute (fiber, value, resolved) {
+	var stack = frame
+
 	try {
-		return callback(fiber, element, primary, secondary), fiber
+		resolved(frame = fiber, value)
 	} finally {
+		frame = stack
+	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} value
+ * @param {function} resolved
+ * @param {function} rejected
+ * @return {object}
+ */
+export function suspend (fiber, value, resolved, rejected) {
+	if (fiber.async !== null) {
+		return resolve(fiber, fiber.async, suspend, rejected, [fiber, value, resolved, rejected])
+	} else {
+		return resolve(fiber, value, resolved, rejected, null)
+	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {any?} value
+ * @param {function} callback
+ * @param {any[]} payload
+ * @return {any?}
+ */
+export function forward (fiber, value, callback, payload) {
+	var argument = payload === null ? [value, fiber.async = null] : payload
+
+	if (callback !== undefined) {
 		try {
-			finalize(push(fiber), primary, tertiary)
+			return Utility.callable(callback) ? callback.apply(frame = fiber, argument) : Utility.throws(value)
 		} finally {
-			pop()
+			frame = null
 		}
 	}
 }
 
 /**
- * @param {function} callback
  * @param {object} element
- * @param {*} primary
- * @param {*} secondary
- * @param {*} tertiary
- * @return {object}
+ * @param {any?} target
+ * @param {function} callback
  */
-export function checkout (callback, element, primary, secondary, tertiary) {
-	return upstream(frame || new struct(element, primary), callback, element, primary, secondary, tertiary)
+export function callback (element, target, callback) {
+	frame.stack[frame.length++] = create(Enum.callback, element, element, target, callback)
 }
 
 /**
  * @param {object} fiber
  * @param {number} type
  * @param {object} element
- * @param {*} current
- * @param {*} primary
- * @param {*} secondary
+ * @param {any} a
+ * @param {any} b
+ * @param {any} c
  */
-export function dispatch (fiber, type, element, primary, secondary, tertiary) {
+export function commit (fiber, type, element, a, b, c) {
+	dispatch(fiber, type, element, a, b, c)
+}
+
+/**
+ * @param {object} fiber
+ * @param {number} type
+ * @param {object} element
+ * @param {any} a
+ * @param {any} b
+ * @param {any} c
+ */
+export function dispatch (fiber, type, element, a, b, c) {
 	switch (type) {
 		case Enum.component:
-			return Component.resolve(fiber, element, primary, secondary, tertiary)
+			return Component.update(fiber, element, a, b, c)
 		case Enum.content:
-			return Commit.content(primary, secondary, tertiary)
-		case Enum.unmount:
-			return Commit.unmount(primary, secondary, tertiary)
-		case Enum.mount:
-			return Commit.mount(primary, secondary, tertiary)
+			return Commit.content(b, c)
 		case Enum.props:
-			return Commit.props(primary, secondary, tertiary)
+			return Commit.props(b, c)
+		case Enum.mount:
+			return Commit.mount(a, b, c)
+		case Enum.unmount:
+			return Commit.unmount(a, c)
+		case Enum.target:
+			return Commit.target(a, b)
+	}
+
+	Event.resolve(fiber, a, b, c)
+}
+
+/**
+ * @param {any} fiber
+ * @param {object} value
+ * @param {function} resolved
+ * @param {function} rejected
+ * @param {any[]} payload
+ * @return {object}
+ */
+export function resolve (fiber, value, resolved, rejected, payload) {
+	return fiber.async = Utility.resolve(value, function (value) {
+		return forward(fiber, value, resolved, payload)
+	}, function (value) {
+		return forward(fiber, value, rejected, payload)
+	})
+}
+
+/**
+ * @param {object} fiber
+ * @param {number} type
+ * @param {object} element
+ * @param {any} a
+ * @param {any} b
+ * @param {any} c
+ */
+export function enqueue (fiber, type, element, a, b, c) {
+	(fiber.queue !== null ? fiber.queue : fiber.queue = [[], []])[type].push(create(type, element, a, b, c))
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} target
+ * @param {function?} callback
+ * @param {object[]} stack
+ * @param {number} length
+ */
+export function dequeue (fiber, target, callback, stack, length) {
+	var value = null
+
+	try {
+		for (var i = fiber.length = 0; i < length; i++) {
+			dispatch(fiber, (value = stack[i]).type, value.element, value.a, value.b, value.c)
+		}
+	} finally {
+		finalize(fiber, target, callback)
+	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} target
+ * @param {function?} callback
+ * @param {object[]} value
+ */
+export function request (fiber, target, callback, value) {
+	suspend(fiber, value, function (value) { dequeue(fiber, target, callback, value, value.length) })
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} target
+ * @param {function?} callback
+ */
+export function respond (fiber, target, callback) {
+	var queue = fiber.queue
+	var stack = fiber.queue = null
+	var value = (stack = queue[Enum.request]).length !== 0 ? Utility.request(stack) : null
+	var index = (stack = queue[Enum.respond]).length
+
+	if (index !== 0) {
+		dequeue(fiber, target, value === null ? callback : null, stack, index)
+	}
+	if (value !== null) {
+		request(fiber, target, callback, value)
 	}
 }

@@ -1,64 +1,45 @@
+import * as Enum from './Enum.js'
+import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Reconcile from './Reconcile.js'
-import * as Node from './Node.js'
 import * as Interface from './Interface.js'
 import * as Schedule from './Schedule.js'
-import * as Registry from './Registry.js'
+import * as Node from './Node.js'
 
 /**
- * @param {*} element
- * @param {*?} target
+ * @param {any} element
+ * @param {object} target
  * @param {function?} callback
- * @return {object}
+ * @return {PromiseLike<object>}
  */
 export function render (element, target, callback) {
-	return dispatch(element, Interface.target(target, undefined), callback)
+	return dispatch(element, Interface.target(target, undefined), callback === undefined ? null : callback)
 }
 
 /**
- * @param {*} element
- * @param {*} target
+ * @param {any} element
+ * @param {object} target
  * @param {function?} callback
- * @return {object}
+ * @return {PromiseLike<object>}
  */
 export function dispatch (element, target, callback) {
-	var parent = Registry.get(target)
-
-	if (parent) {
-		return Schedule.checkout(enqueue, parent, target, [Element.root(element)], callback)
+	if (Utility.has(target, Enum.identifier)) {
+		return Schedule.checkout(resolve, target[Enum.identifier], target, [Element.container(element)], callback)
 	} else {
-		return Schedule.checkout(enqueue, Element.target(element, target, Interface.clear(target)), target, target, callback)
+		return Schedule.checkout(resolve, Element.target(element, target, Interface.initialize(target)), target, target, callback)
 	}
 }
 
 /**
  * @param {object} fiber
- * @param {*} element
- * @param {*} target
- * @param {*} current
+ * @param {object} element
+ * @param {object} target
+ * @param {object} value
  */
-export function enqueue (fiber, element, target, current) {
-	if (current === target) {
-		create(fiber, element, current)
+export function resolve (fiber, element, target, value) {
+	if (target === value) {
+		target[Enum.identifier] = Node.create(fiber, element, element, element, null)
 	} else {
-		update(fiber, element, current)
+		Reconcile.children(fiber, element, element, element.children, value, 0)
 	}
-}
-
-/**
- * @param {object} fiber
- * @param {*} element
- * @param {*} target
- */
-export function create (fiber, element, target) {
-	Registry.set(target, Node.create(fiber, element, element, element))
-}
-
-/**
- * @param {object} fiber
- * @param {*} element
- * @param {object} children
- */
-export function update (fiber, element, children) {
-	Reconcile.children(fiber, element, element, element.children, children)
 }

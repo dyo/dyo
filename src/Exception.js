@@ -1,36 +1,39 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Lifecycle from './Lifecycle.js'
-import * as Schedule from './Schedule.js'
-import * as Registry from './Registry.js'
+import * as Suspense from './Suspense.js'
+import * as Component from './Component.js'
 
 /**
  * @constructor
  * @param {object} host
- * @param {*} value
+ * @param {any} value
  */
 export var struct = Utility.extend(function exception (host, value) {
-	this.error = value
-	Registry.set(this, host)
+	this[Enum.identifier] = host
+	this.message = value
+	this.bubbles = Utility.thenable(value)
 }, {
-	/**
-	 * @type {function}
-	 * @return {string}
-	 */
-	toString: {
-		value: function () {
-			return this.componentStack
-		}
-	},
 	/**
 	 * @type {string}
 	 */
-	componentStack: {
-		get: function () {
-			return trace(Registry.get(this), '')
-		}
-	}
+	name: {value: 'Exception'},
+	/**
+	 * @type {string}
+	 */
+	type: {value: 'EXCEPTION'},
+	/**
+	 * @return {string}
+	 */
+	stack: {configurable: true, get: function () {
+		return Utility.define(this, 'stack', display(this[Enum.identifier], ''))
+	}},
+	/**
+	 * @return {string}
+	 */
+	toString: {value: function () {
+		return this.name + ': ' + this.message + '\n' + this.stack
+	}}
 })
 
 /**
@@ -38,38 +41,69 @@ export var struct = Utility.extend(function exception (host, value) {
  * @param {string} value
  * @return {string}
  */
-export function trace (host, value) {
-	return host.uid === Enum.target ? value : trace(host.host, '\tat ' + Element.display(host) + '\n' + value)
-}
-
-/**
- * @param {object} host
- * @param {*} value
- * @return {object}
- */
-export function create (host, value) {
-	return value instanceof struct ? value : new struct(host, value)
+export function display (host, value) {
+	return host.identity === Enum.target ? value : display(host.host, '\tat <' + Element.display(host) + '>\n' + value)
 }
 
 /**
  * @param {object} fiber
  * @param {object} host
- * @param {object} element
  * @return {function}
  */
-export function throws (fiber, host, element) {
-	return function (exception) { resolve(fiber, host, element, exception) }
+export function throws (fiber, host) {
+	return function (exception) { dispatch(fiber, host, host, exception) }
+}
+
+/**
+ * @param {object} props
+ * @return {object}
+ */
+export function boundary (props) {
+	return forward(this, props, this.state)
+}
+
+/**
+ * @param {object} element
+ * @param {object} props
+ * @param {object} state
+ * @return {object}
+ */
+export function forward (element, props, state) {
+	return element.state = element, state === null || state === element ? props.children : state
+}
+
+/**
+ * @param {object} host
+ * @param {object?} value
+ * @return {any}
+ */
+export function create (host, value) {
+	return value !== null && value !== undefined && value instanceof struct ? value : new struct(host, value)
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} export
+ * @throws {any}
+ */
+export function destroy (fiber, exception) {
+	fiber.element = null
+
+	try {
+		Utility.throws(exception.message)
+	} finally {
+		Utility.report(exception + '')
+	}
 }
 
 /**
  * @param {object} fiber
  * @param {object} host
  * @param {object} element
- * @param {*} exception
- * @return {boolean?}
+ * @param {any} exception
  */
-export function resolve (fiber, host, element, exception) {
-	return propagate(fiber, host, element, create(host, exception), host)
+export function dispatch (fiber, host, element, exception) {
+	fiber.element !== null ? resolve(fiber, host, element, create(host, exception), host) : Utility.throws(exception)
 }
 
 /**
@@ -78,42 +112,63 @@ export function resolve (fiber, host, element, exception) {
  * @param {object} element
  * @param {object} exception
  * @param {object} current
- * @return {boolean?}
  */
-export function propagate (fiber, host, element, exception, current) {
-	switch (current.uid) {
+export function resolve (fiber, host, element, exception, current) {
+	switch (current.identity) {
 		case Enum.target:
-			try {
-				throw exception.error
-			} finally {
-				if (exception.value = exception + '') {
-					Utility.report(exception.value)
-				}
-			}
+			return destroy(fiber, exception)
 		case Enum.component:
-			if (current !== element) {
-				if (recover(fiber, current, exception, current.instance)) {
-					return
+			if (element !== current) {
+				if (exception.bubbles) {
+					return request(fiber, host, element, exception, current)
+				} else if (current.state === current) {
+					return dequeue(fiber, host, element, exception, current)
+				} else if (host !== element) {
+					Utility.throws(exception)
 				}
-			}
-		default:
-			if (host === element) {
-				return propagate(fiber, host, element, exception, current.host)
 			}
 	}
 
-	throw exception
+	enqueue(fiber, host, element, exception, current)
 }
 
 /**
  * @param {object} fiber
+ * @param {object} host
  * @param {object} element
  * @param {object} exception
- * @param {object} instance
- * @return {boolean?}
+ * @param {object} current
  */
-export function recover (fiber, element, exception, instance) {
-	if (Lifecycle.has(instance, Enum.componentDidCatch)) {
-		return Schedule.enqueue(fiber, element, instance, exception.error, exception, exception, Enum.componentDidCatch)
+export function enqueue (fiber, host, element, exception, current) {
+	resolve(fiber, host, element, exception, current.host)
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} host
+ * @param {object} element
+ * @param {object} exception
+ * @param {object} current
+ */
+export function dequeue (fiber, host, element, exception, current) {
+	if (current.value === null) {
+		try {
+			current.state = Element.fallback(exception, current)
+		} finally {
+			Component.request(current)
+		}
+	} else {
+		enqueue(fiber, host, element, exception, current)
 	}
+}
+
+/**
+ * @param {object} fiber
+ * @param {object} host
+ * @param {object} element
+ * @param {object} exception
+ * @param {object} current
+ */
+export function request (fiber, host, element, exception, current) {
+	Suspense.dispatch(fiber, current, element, exception.message)
 }
