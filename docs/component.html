@@ -44,6 +44,8 @@ const Arrow = props => 'Hello'
 const Regular = function (props) { return 'Hello' }
 </code></pre>
 
+		<p>Both of which will create a component that render the text content "Hello".</p>
+
 		<h1 id=async-function>Async Function</h1>
 
 		<p>Async functions work much the same as regular function, with the exception that they involve promises:</p>
@@ -68,7 +70,7 @@ function* Example (props) {
 }
 </code></pre>
 
-		<p>The example function would render an array of numbers 1 to 3</p>
+		<p>The example function as a component would render an array of numbers 1 to 3.</p>
 
 		<h1 id=async-generator>Async Generator Function</h1>
 
@@ -109,15 +111,15 @@ interface Props {
 
 			<h2 id=children>Children</h2>
 
-			<p>Children arguments passed to component elements are assigned to props as "children": <code>props.children</code>. The component children prop is an opaque data-structure; This means that the typeof value could vary, ranging from an array when the number of children are more than one or a primtive, function or object, when a single child is passed.</p>
+			<p>Children arguments passed to component elements are assigned to props as "children": <code>props.children</code>. The component children prop is an opaque data-structure; This means that the "typeof" value could vary, ranging from an array when the number of children are more than one or a primtive, function or object, when a single child is passed.</p>
 
 <pre><code>
-h(props => console.assert(props.children, 1), {}, 1)
+h(props => console.assert(props.children === 1), {}, 1)
 </code></pre>
 
 		<h1 id=state-lifecycle>State &amp; Lifecycle</h1>
 
-		<p>Through <a href=hooks.html>hooks</a> components can both keep persitant state and hook into a lifecycle system that is invoked at specific set times where applicable. These come in the form of hooks such <a href=hooks.html#useState>useState</a>, <a href=hooks.html#useEffect>useEffect</a> and <a href=hooks.html>more</a>.</p>
+		<p>Through <a href=hooks.html>hooks</a> components can both keep persitant state and hook into a lifecycle system that is invoked at specific set times where applicable. These come in the form of hooks such as <a href=hooks.html#useState>useState</a>, <a href=hooks.html#useEffect>useEffect</a> and <a href=hooks.html>more</a>.</p>
 	</article>
 </body>
 </html>

@@ -27,7 +27,7 @@
 	<article>
 		<h1>Element</h1>
 
-		<p>The <code>createElement</code> function provides an function to create virtual elements that represent a snapshot of the interface.</p>
+		<p>The <code>createElement</code> function provides an function to create virtual elements that represent a snapshot of the interface in time.</p>
 
 <pre><code>
 interface createElement(
@@ -37,7 +37,7 @@ interface createElement(
 ): object
 </code></pre>
 
-		<p>The <code>h</code> function: pronounced "hyperscript" provides a short alias to <code>createElement</code>.</p>
+		<p>The <code>h</code> function: pronounced "hyperscript" provides an alias to <code>createElement</code> and vice-versa.</p>
 
 <pre><code>
 interface h(
@@ -88,7 +88,7 @@ interface Props {
 	key?: string|number|symbol
 	ref?: function|object
 	on[event: string]: EventListener
-	[prop: string]: any
+	...[prop: string]: any
 }
 </code></pre>
 
@@ -117,18 +117,31 @@ type Ref = function|object
 		<h3 id=function-refs>function refs</h3>
 
 <pre><code>
-const Example = h('button', {
-	ref: (value: object) => {}
+const example = h('button', {
+	ref: (value: object?) => {}
+})
+</code></pre>
+
+		<p>Function refs can optionally return a cleanup "function" for when the ref is changed/unmount.</p>
+
+<pre><code>
+const example = h('button', {
+	ref: (value: object?) => {
+		console.assert(value instanceof Node)
+		return (value: object) => {}
+	}
 })
 </code></pre>
 
 		<h3 id=object-refs>object refs</h3>
 
 <pre><code>
-const Example = h('button', {
+const example = h('button', {
 	ref: {current: value}
 })
 </code></pre>
+
+		<p>Where value is an object for example from <a href=./hooks.html#useRef>useRef</a></p>
 
 		<h2 id=events>Events</h2>
 
@@ -139,7 +152,7 @@ type EventListener = function|Array&lt;function>
 		<h3 id=event-function>Event Function</h1>
 
 <pre><code>
-const Example = h('button', {
+const example = h('button', {
 	onClick: event => {}
 })
 </code></pre>
@@ -147,7 +160,7 @@ const Example = h('button', {
 		<h3 id=event-array>Event Array</h2>
 
 <pre><code>
-const Example = h('button', {
+const example = h('button', {
 	onClick: [event => {}, event => {}]
 })
 </code></pre>

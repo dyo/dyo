@@ -47,7 +47,7 @@ await render('Hello', document)
 
 		<h1 id=createElement>createElement</h1>
 
-		<p>Create a virtual snapshot.</p>
+		<p>Create a virtual element also known as a snapshot.</p>
 
 <pre><code>
 interface createElement(
@@ -57,7 +57,7 @@ interface createElement(
 ): object
 </code></pre>
 
-		<p>The return value is a virtual snapshot of an element that describes the state of the user interface. The <code>h</code> function serves as an alias to <code>createElement</code> and vice-versa.</p>
+		<p>The return value is the snapshot of an element that describes the state of the user interface at the time. The <code>h</code> function serves as an alias to <code>createElement</code> and vice-versa.</p>
 
 <pre><code>
 const example = h('h1', {}, 'Hello')
@@ -108,7 +108,7 @@ const example = isValidElement(h('h1', {}, 'Hello'))
 <pre><code>
 interface toArray(
 	children: any
-): Array
+): Array&lt;any>
 </code></pre>
 
 		<h2 id=forEach>forEach</h2>
@@ -130,7 +130,7 @@ interface forEach(
 interface map(
 	children: any
 	callback: function
-): Array
+): Array&lt;any>
 </code></pre>
 
 		<h2 id=count>count</h2>
@@ -151,7 +151,7 @@ interface count(
 interface filter(
 	children: any
 	callback: function
-): Array
+): Array&lt;any>
 </code></pre>
 
 		<h2 id=find>find</h2>
@@ -167,9 +167,9 @@ interface find(
 
 		<h1 id=Portal>Portal</h1>
 
-		<p>A virtual snapshot of a portal element.</p>
+		<p>A type representative of a portal element.</p>
 
-		<p>The Portal is a type used to create virtual "portal" elements. Its children are rendered into the target provided.</p>
+		<p>The "Portal" is a type used to create virtual "portal" elements. Its children are rendered into the <code>target</code> prop provided.</p>
 
 <pre><code>
 interface Props(
@@ -177,7 +177,7 @@ interface Props(
 )
 </code></pre>
 
-		<p>When the portals target changes it's children are re-parented to the new target. The target argument can optionally be a "selector".</p>
+		<p>When the portals target changes it's children are re-parented to the new target. The target argument is optionally a "selector".</p>
 
 <pre><code>
 function Provider ({children}) {
@@ -187,7 +187,7 @@ function Provider ({children}) {
 
 		<h1 id=Context>Context</h1>
 
-		<p>The Context is a type used to create virtual "context" elements. Its children independent of depth can access the provided context value through <a href=./hooks.html#useContext>useContext</a>.</p>
+		<p>A type representative of a context element, used to create virtual "context" elements. Its children independent of depth can access the provided context value through <a href=./hooks.html#useContext>useContext</a>.</p>
 
 <pre><code>
 function Provider ({children}) {
@@ -195,11 +195,13 @@ function Provider ({children}) {
 }
 </code></pre>
 
+		<blockquote id=consumer><em>"Consumer"</em> is term used to group any decendent component that makes use of the context value.</blockquote>
+
 		<p>All consumers are updated when the context value itself changes during an update.</p>
 
 		<h1 id=Fragment>Fragment</h1>
 
-		<p>The Fragment is a type used to create virtual "fragment" elements. Its children are rendered without the need for wrapper elements.</p>
+		<p>The Fragment is a host type used to create virtual "fragment" elements. Its children are rendered without the need for wrapper elements.</p>
 
 <pre><code>
 const example = h(Fragment, {}, ...children)
@@ -207,7 +209,7 @@ const example = h(Fragment, {}, ...children)
 
 		<h1 id=Boundary>Boundary</h1>
 
-		<p>The Boundary is a type used to create virtual error boundaries. It accepts a <code>fallback</code> prop that is used when it's decendents(children at any depth) raise an exception.</p>
+		<p>The Boundary is a componente type used to designate virtual error boundaries. It accepts a <code>fallback</code> prop that is used when it's decendents raise an exception.</p>
 
 <pre><code>
 interface Props {
@@ -215,7 +217,7 @@ interface Props {
 }
 </code></pre>
 
-		<p>When its <code>fallback</code> prop is a function it recievies the exception object as props.
+		<p>When its <code>fallback</code> prop is a function it recievies the "Exception" object as props.
 
 <pre><code>
 interface Exception {
@@ -228,14 +230,14 @@ interface Exception {
 		<p>The exception object can optionally be used directly as a <a href="hooks.html#useReducer">reducers</a> dispatch payload.</p>
 
 <pre><code>
-const Example = h(Boundary, {
-	fallback: props => JSON.stringify(props)
+const example = h(Boundary, {
+	fallback: error => JSON.stringify(error)
 }, ...children)
 </code></pre>
 
 		<h1 id=Suspense>Suspense</h1>
 
-		<p>The Suspense component is a component used to create virtual suspense boundaries. It accepts a <code>fallback</code> prop that is used when any of its decendents(children at any depth) raise a suspend signal(thrown thenable) which in turn transitions it into a suspended state.</p>
+		<p>The Suspense component is used to create virtual suspense boundary. It accepts a <code>fallback</code> prop that is used when any of its decendents raise a suspend signal(thrown thenable) which in turn transitions it into a suspended state.</p>
 
 <pre><code>
 interface Props {
@@ -246,7 +248,7 @@ interface Props {
 		<p>The boundary is resumed once all its decendents have settled.</p>
 
 <pre><code>
-const Example = h(Suspense, {
+const example = h(Suspense, {
 	fallback: 'Loading...'
 }, ...children)
 </code></pre>
@@ -255,7 +257,7 @@ const Example = h(Suspense, {
 
 		<h1 id=lazy>Lazy</h1>
 
-		<p>Define a component that is loaded dynamically.</p>
+		<p>Defines a component that is loaded dynamically.</p>
 
 <pre><code>
 interface lazy (
@@ -274,6 +276,8 @@ const Example = lazy(() => import('./Example.js'))
 		<h1 id=memo>memo</h1>
 
 		<p>When a component renders the same result given the same props, wrapping it in memo to memoize the result can come with some performance benefits where applicable.</p>
+
+		<blockquote>"memo" is short for <a href=https://en.wikipedia.org/wiki/Memoization>memoization</a>.</blockquote>
 
 <pre><code>
 interface memo (

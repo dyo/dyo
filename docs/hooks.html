@@ -29,9 +29,9 @@
 
 		<p>Hooks solve a wide variety of connected problems most of which boil down to – "a system for reusable stateful logic".</p>
 
-		<p>Hooks afford one to use or re-use state and hook into a powerfull yet composable lifecycle system.</p>
+		<p>Hooks afford one to use or re-use state and hook into a powerfull and composable lifecycle system.</p>
 
-		<p>There are state hooks like <a href=#useState>useState</a> <a href=#useReducer>useReducer</a> and <a href=#useContext>useContext</a>, lifecycle hooks like <a href=#useEffect>useEffect</a> and <a href=#useLayout>useLayout</a> and additional primitive hooks like <a href=#useRef>useRef</a>, <a href=#useMemo>useMemo</a> and <a href=#useCallback>useCallback</a>.</p>
+		<p>There are state hooks like <a href=#useState>useState</a> <a href=#useReducer>useReducer</a>, <a href=#useContext>useContext</a> and <a href=#useResource>useResource</a>, lifecycle hooks like <a href=#useEffect>useEffect</a> and <a href=#useLayout>useLayout</a> and additional primitive hooks like <a href=#useRef>useRef</a>, <a href=#useMemo>useMemo</a> and <a href=#useCallback>useCallback</a>.</p>
 
 		<h1 id=useState>useState</h1>
 
@@ -53,7 +53,7 @@ const [state, setState] = useState(props => props.value)
 setState(newValue)
 </code></pre>
 
-		<p>However new state functions are invoked with the value of the previous state value.</p>
+		<p>However, new state functions are invoked with the value of the previous state value.</p>
 
 <pre><code>
 setState(prevValue => newValue)
@@ -142,7 +142,7 @@ function Consumer (props) {
 render(h(Provider, {}, h(Consumer)), document)
 </code></pre>
 
-		<p>Unlike props context is accessible from any number of layers deep within a tree as long as there is an ancestor provider. That is to say a <code>Consumer</code> need not be the "immediate" child of a provider.</p>
+		<p>Unlike props context is accessible from any number of layers deep within a tree as long as there is an ancestor provider. That is to say a <a href=./top-level.html#consumer>Consumer</a> need not be the "immediate" child of a provider.</p>
 
 		<h1 id=useResource>useResource</h1>
 
@@ -179,6 +179,8 @@ render(h(Suspense, {}, h(Consumer)), document)
 </code></pre>
 
 		<p>Both the <a href=#useResource>useResource</a> and <a href=#useContext>useContext</a> hooks can be employed in conjunction to afford access to a resource from any number of layers deep within a tree as long as there is an ancestor resource context provider.</p>
+
+		<blockquote>Note that "useResource" expects a suspense boundary ancestor somewhere within the tree.</blockquote>
 
 		<h1 id=useEffect>useEffect</h1>
 

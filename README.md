@@ -10,9 +10,6 @@ A JavaScript library for building user interfaces.
 [![Licence](https://badgen.net/badge/license/MIT/blue)](https://github.com/dyo/dyo/blob/master/LICENSE.md)
 [![NPM](https://badgen.net/npm/v/dyo)](https://www.npmjs.com/package/dyo)
 
-* **Light — weight** library with a small composable API surface that allows you to build simple and complex component based user interfaces.
-* **Declarative** Efficiently renders just the right components in response to data, making your code more predictable and easier to reason about.
-
 ## Installation
 
 * Use a Direct Download: `<script src=dyo.js></script>`.
@@ -28,8 +25,8 @@ See the [Getting Started](https://dyo.js.org/introduction.html) page for a quick
 The documentation is divided into several sections:
 
 * [Introduction](https://dyo.js.org/introduction.html)
-* [Advanced Guides](https://dyo.js.org/advanced.html)
 * [API Reference](https://dyo.js.org/api.html)
+* [Advanced Guides](https://dyo.js.org/advanced.html)
 * [Examples](https://dyo.js.org/examples.html)
 
 You can improve it by sending pull requests to [this repository](https://github.com/dyo/dyo/docs).
@@ -45,18 +42,10 @@ function Example (props) {
 	return h('h1', {}, 'Hello ', props.name)
 }
 
-render(h(Hello, {name: 'World'}), 'body')
+render(h(Example, {name: 'World'}), 'body')
 ```
 
 This will render a heading element with the text content "Hello World" into the specified target(the body element).
-
-## Features
-
-The following is an overview of the features afforded.
-
-1. **rendering** (Components, Fragments, Portals, Promises).
-1. **components** (Functions, Generators, AsyncGenerators).
-1. **custom renderer interface** and more.
 
 ## Comparison
 
@@ -64,7 +53,16 @@ The library is much alike React, so it's only natural that a comparison of the d
 
 #### Re-parenting
 
-The `createPortal` interface supports string selectors. This presents an array of different possibilities with regards to isomorphic target references.
+The `Portal` component supports string selectors as targets. This presents an array of different possibilities with regards to isomorphic target references.
+
+```js
+
+function Example (props) {
+	return h(Portal, {target: 'main'}, 'Hello')
+}
+
+render(h(Example), 'body')
+```
 
 In addition to this – re-parenting is baked into portals. That is when a portals container is changed, instead of unmounting its contents and re-mounting them to the newly designated container we can instead move its contents without replaying destruction unmount operations that may discard valuable interface and component state.
 
@@ -112,6 +110,38 @@ async function* Example (props) {
 	const data = await fetch('./')
 	yield h('pre', JSON.stringify(data))
 }
+```
+
+##### Resources
+
+In addition to other [hooks](https://dyo.js.org/hooks.html), a resource allocation hook that can be used to fetch and cache resources.
+
+```js
+function Example (props) {
+	const resource = useResource(props => fetch('https://reqres.in/api/users'))
+	return h('pre', {}, JSON.stringify(resource))
+}
+```
+
+##### Async Server Rendering
+
+Server side rendering supports the plethora of async primitives supported.
+
+```js
+import {h, useResource} from 'dyo'
+
+function Example (props) {
+	const resource = useResource(props => fetch('https://reqres.in/api/users'))
+	
+	return h('pre', {}, JSON.stringify(resource))
+}
+
+import {http} from 'http'
+import {render} from 'dyo/server'
+
+http.createServer((request, response) => {
+	return render(h('html', {}, h(Example)), response)
+}).listen(8080)
 ```
 
 ### License

@@ -39,17 +39,17 @@
 		de(bugger|cimal|clare|f(ault|er)?|\
 		init|l(egate|ete)?)|\
 		do|double|\
-		e(cho|ls?if|lse(if)?|nd|nsure|num|vent|x(cept|ec|p(licit|ort)|te(nds|nsion|rn)))|\
+		e(cho|ls?if|lse(if)?|nd|nsure|num|x(cept|ec|p(licit|ort)|te(nds|nsion|rn)))|\
 		f(allthrough|alse|inal(ly)?|ixed|loat|or(each)?|riend|rom|unc(tion)?)|\
 		global|goto|guard|\
 		i(f|mp(lements|licit|ort)|n(it|clude(_once)?|line|out|stanceof|t(erface|ernal)?)?|s)|\
 		l(ambda|et|ock|ong)|m(odule|utable)|\
 		NaN|\
-		n(amespace|ative|ext|ew|il|ot|ull)|\
+		n(amespace|ative|ext|ew|il|ot|ull|umber)|\
 		o(bject|perator|r|ut|verride)|\
 		p(ackage|arams|rivate|rotected|rotocol|ublic)|\
-		r(aise|e(adonly|do|f|gister|peat|quire(_once)?|scue|strict|try|turn))|\
-		s(byte|ealed|elf|hort|igned|izeof|tatic|tring|truct|ubscript|uper|ynchronized|witch)|\
+		r(aise|e(adonly|do|gister|peat|quire(_once)?|scue|strict|try|turn))|\
+		s(byte|ealed|elf|hort|igned|izeof|tatic|tring|truct|ubscript|uper|ynchronized|witch|ymbol)|\
 		t(emplate|hen|his|hrows?|ransient|rue|ry|ype(alias|def|id|name|of))|\
 		u(n(checked|def(ined)?|\ion|less|signed|til)|se|sing)|\
 		v(ar|irtual|oid|olatile)|\

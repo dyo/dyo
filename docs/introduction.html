@@ -96,7 +96,7 @@ function Welcome(props) {
 render(h(Welcome, {name: 'World'}), document)
 </code></pre>
 
-		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments <em>"props"</em> to a component.</p>
+		<p>The example demonstrates that like elements we can render components and pass arbitrary arguments <em>"props"</em> to a component similar to how might do the same for a function.</p>
 
 		<h1 id=effects>Effects</h1>
 
@@ -174,7 +174,7 @@ function Welcome (props) {
 
 		<h1 id=interoperability>Interoperability</h1>
 
-		<p>The <em>ref</em> prop plural: <a href=element.html#refs>refs</a>; allows authors the ability to retrieve a reference to the document node that a virtual element actualizes when it is mounted.</p>
+		<p>The <em>ref</em> prop plural: <a href=element.html#refs>refs</a>; allows authors the ability to retrieve a reference to the document node that a "virtual" element actualizes when it is mounted.</p>
 
 		<p>These come in two varients: <strong>function</strong>, and <strong>object</strong> refs.</p>
 
@@ -190,21 +190,17 @@ function Welcome (props) {
 
 <pre><code>
 function Welcome (props) {
-	return h('h1', {ref: {current: null}})
+	const reference = useRef()
+
+	useLayout(() => {
+		console.assert(reference.current instanceof Node)
+	})
+
+	return h('h1', {ref: reference})
 }
 </code></pre>
 
 		<p>Where the later would have the objects <code>current</code> property populated with the reference to the node.</p>
-
-		<h1>Portals</h1>
-
-		<p>Portals provide a first-class interface to render children into a container that exists outside the surrounding elements sibling hierarchy.</p>
-
-<pre><code>
-render(h('h1', {}, 'A', createPortal('B', document.head)), document.body)
-</code></pre>
-
-		<p>The following example demonstrates that we can both render the heading element <em>"A"</em> into the documents "body", while also declaring that it has a child element <em>"B"</em> that is rendered into the document "head".</p>
 
 		<h1 id=introducing-jsx>Introducing JSX</h1>
 
