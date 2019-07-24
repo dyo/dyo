@@ -1,4 +1,4 @@
-## 1.0.0 (Unreleased)
+## 1.0.0 (25 July 2019)
 
 - Change package name "dio.js" to "dyo".
 - Move repo to organization. [github.com/dyo/dyo](https://github.com/dyo/dyo)
