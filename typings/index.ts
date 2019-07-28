@@ -4,8 +4,9 @@ import {
 } from 'dyo'
 
 {
-function Provider({value, children}: {value: string, children: any}) {
-  return h(Context, {value: 'value'}, children)
+function Provider({value, children}: {value: string, children: any}): Context<number> {
+  const node = h(Context, { value: 'value' }, children)
+  return node
 }
 
 const value = useContext(Provider)

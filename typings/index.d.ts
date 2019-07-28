@@ -30,7 +30,7 @@ declare namespace dyo {
 	interface Attributes {key?: Key}
 	interface Handler<Event, Props = {}> {(event: Event, props?: Props): any}
 	interface Exception<Value> {name: string, type: string, stack: string, message: Value}
-	interface Component<Props = {}> { (props: Properties<Props>): Node }
+	interface Component<Props = {}> {(props: Properties<Props>): Node}
 	interface Context<Value> extends Component<{value: Value, children: Collection}> {}
 
 	function useRef<Ref, Props = {}> (value: Ref | ((props: Props) => Ref)): RefObject<Ref>;
@@ -46,6 +46,7 @@ declare namespace dyo {
 	function useResource<Value, Props = {}> (callback: (props: Props) => PromiseLike<Value> | PromiseLike<Response>): Value
 	function useContext<Value>(context: Context<Value>): Value
 	// function useContext<Value extends Component>(context: Value): Pick<Pick<ReturnType<Value>, 'props'>, 'value'>
+	// how do we pick 'value' from props of the return value of the context provider 
 
 	function isValidElement (value: object): boolean
 	function cloneElement (value: Interface, props?: any, ...children: Collection[]): Interface
@@ -55,7 +56,9 @@ declare namespace dyo {
 	function createElement<Props> (type: Component<Props>, props?: Attributes & Props | null, ...children: Collection[]): Interface<Props>
 
 	function h<Props extends (JSX.HTMLAttributes & JSX.SVGAttributes & Record<string, any> | null)> (type: string, props?: Props, ...children: Collection[]): Interface<Props>
-	function h<Props> (type: Component<Props>, props?: Attributes & Props | null, ...children: Collection[]): Interface<Props>
+	function h<Props>(type: Component<Props>, props?: Attributes & Props | null, ...children: Collection[]): Interface<Props>
+	// function h<Type extends Component<Props>, Props> (type: Type, props?: Attributes & Props | null, ...children: Collection[]): Type<any>
+	// when type is a function how do we type the return signature to type<Props>
 
 	function Portal (props: {target: string | Target, children?: Collection}): Node
 	function Context (props: {value: any, children?: Collection}): Node
