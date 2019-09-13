@@ -80,4 +80,12 @@ describe('Element', () => {
 		assert.deepEqual(h('h1', {}, '').props, {})
 		assert.deepEqual(h('h1', {}, () => {}).props, {})
 	})
+
+	it('should assign children props for components', () => {
+		assert.deepEqual(h(() => {}, null, 1).props.children, 1)
+		assert.deepEqual(h(() => {}, null, 1, 2).props.children, [1, 2])
+
+		assert.deepEqual(h(() => {}, {}, 1).props.children, 1)
+		assert.deepEqual(h(() => {}, {}, 1, 2).props.children, [1, 2])
+	})
 })

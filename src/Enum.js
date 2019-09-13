@@ -1,8 +1,8 @@
 import * as Utility from './Utility.js'
 
 // static values
-export var key = -(-1 >>> 0)
-export var identifier = Utility.symbol('identifier')
+export var hash = -(-1 >>> 0)
+export var identifier = Utility.identifier('identifier')
 
 // timestamps(ms)
 export var timeout = 100

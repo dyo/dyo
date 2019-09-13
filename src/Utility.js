@@ -68,6 +68,12 @@ export var hop = object.hasOwnProperty
 export var symbol = typeof Symbol === 'function' ? Symbol : random
 
 /**
+ * @param {string} value
+ * @return {(symbol|number)}
+ */
+export var identifier = symbol.for || symbol
+
+/**
  * @type {(symbol|string)}
  */
 export var syncIterator = symbol.iterator || '@@iterator'
@@ -245,8 +251,8 @@ export function defaults (a, b) {
  * @return {any}
  */
 export function each (callback, value, index, array) {
-	if (value !== null && typeof value === 'object') {
-		if (value.length > -1) {
+	if (keyable(value)) {
+		if (isArray(value)) {
 			for (var i = 0; i < value.length; ++i) {
 				if (each(callback, value[i], index + i, array) === null) {
 					break

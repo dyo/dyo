@@ -909,9 +909,9 @@ describe('Hook', () => {
 				return children
 			}, (prev, next) => true)
 
-			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
+			render(h(Primary, {}, h(Indirection, {}, h('div', {}, h(Indirection, {}, Secondary)))), target, (current) => {
 				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red', 'red', 'Primary', 'red!!', 'Secondary', 'red!!', 'red!!'])
-				assert.html(current, '<button>red!!<h1>red!!red!!</h1></button>')
+				assert.html(current, '<button>red!!<div><h1>red!!red!!</h1></div></button>')
 			})
 		})
 
@@ -1008,10 +1008,11 @@ describe('Hook', () => {
 				return children
 			})
 
-			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
-				assert.deepEqual(stack, ['Primary', 'Secondary', 'default'])
-				assert.html(current, '<button><h1>default</h1></button>')
+			assert.throws(() => {
+				render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target)
 			})
+
+			assert.html(target, '')
 		})
 
 		it('should provide multiple context', () => {
@@ -1041,6 +1042,40 @@ describe('Hook', () => {
 			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, h(Primary, {}, Secondary)))), target, (current) => {
 				assert.deepEqual(stack, ['Primary', 'red', 'Primary', 'red', 'Secondary', 'red'])
 				assert.html(current, '<button>red<button>red<h1>red</h1></button></button>')
+			})
+		})
+
+		it('should async update context', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Indirection = memo(props => {
+				return props.children
+			}, () => true)
+			const Provider = props => {
+				return h(Context, {value: props.value}, props.children)
+			}
+			const Consumer = props => {
+				return useContext(Provider)
+			}
+
+			const Primary = props => {
+				const [state, dispatch] = useState(0)
+
+				useEffect(async () => {
+					await new Promise(resolve => setTimeout(resolve, 0))
+					dispatch(state => state + 1)
+				}, [])
+
+				return h(Provider, {value: state}, h(Secondary, {value: 1}))
+			}
+
+			const Secondary = memo(props => {
+				return h('div', {}, stack.push(props), h(Indirection, {}, h(Consumer)))
+			}, () => true)
+
+			render(h(Primary), target, (current) => {
+				assert.html(current, '<div>11</div>')
+				assert.deepEqual(stack, [{value: 1}])
 			})
 		})
 	})

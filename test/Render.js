@@ -63,7 +63,7 @@ describe('Render', () => {
 		})
 	})
 
-	it('should render an iteratable', () => {
+	it('should render an iterable', () => {
 		render(h('div', {}, {
 			[Symbol.iterator]: function* () {
 				yield 1

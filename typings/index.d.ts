@@ -2,17 +2,14 @@ export = dyo
 export as namespace dyo
 
 declare namespace dyo {
-	type Key = string | number | any
-	type Type = Component | PromiseLike<Node> | string | null
-	type Target = Element | Document | ShadowRoot | DocumentFragment
+	type Key = string | number | symbol
+	type Type = Component | PromiseLike<any> | string | null
+	type Collection = any[] | any
+	type Properties<Props> = Readonly<Props & Attributes & {ref?: Ref, [props: string]: any}>
 
-	type Node<Props = any> = Interface<Props> | object | string | number | boolean | null | undefined | void
-	type Collection = Node[] | Node
-	type Properties<Props, RefType = any> = Readonly<Props & Attributes & {children?: Collection; ref?: Ref<RefType>, [props: string]: any}>
-
-	type Ref<Value> = RefObject<Value> | RefCallback<Value>
-	type RefObject<Value> = {current: Value | null }
-	type RefCallback<Value> = (value: Value | null) => void
+	type Ref<Value = any> = RefObject<Value> | RefCallback<Value>
+	type RefObject<Value> = {current: Value}
+	type RefCallback<Value> = (value: Value) => () => void | void
 
 	type SetStateAction<State> = State | ((state: State) => State)
 	type Dispatch<Action> = (value: Action) => void
@@ -26,14 +23,14 @@ declare namespace dyo {
 
 	type DependencyList = ReadonlyArray<any>
 
-	interface Interface<Props = {}> {type: Type, props: Props & {children: Collection}, ref: Ref<any> | null, key: Key}
+	interface Interface<Props = {}> {key: Key, type: Type, props: Props, children: Collection}
 	interface Attributes {key?: Key}
 	interface Handler<Event, Props = {}> {(event: Event, props?: Props): any}
 	interface Exception<Value> {name: string, type: string, stack: string, message: Value}
-	interface Component<Props = {}> {(props: Properties<Props>): Node}
+	interface Component<Props = {}> { (props: Properties<Props & {children: Collection}>): Collection}
 	interface Context<Value> extends Component<{value: Value, children: Collection}> {}
 
-	function useRef<Ref, Props = {}> (value: Ref | ((props: Props) => Ref)): RefObject<Ref>;
+	function useRef<Ref, Props = {}> (value: Ref | ((props: Props) => Ref)): RefObject<Ref>
 	function useState<State, Props = {}> (state: State | ((props: Props) => State)): [State, Dispatch<SetStateAction<State>>]
 	function useReducer<Reduce extends Reducer<State, any>, State = any> (reducer: Reduce, state: State & ReducerState<Reduce>): [ReducerState<Reduce>, Dispatch<ReducerAction<Reduce>>]
 
@@ -44,36 +41,35 @@ declare namespace dyo {
 	function useEffect<Dependency extends DependencyList, Props = {}> (callback: EffectCallback<Dependency, Props>, deps?: Dependency): void
 
 	function useResource<Value, Props = {}> (callback: (props: Props) => PromiseLike<Value> | PromiseLike<Response>): Value
-	function useContext<Value>(context: Context<Value>): Value
-	// function useContext<Value extends Component>(context: Value): Pick<Pick<ReturnType<Value>, 'props'>, 'value'>
-	// how do we pick 'value' from props of the return value of the context provider 
+	function useContext<Value extends Component>(context: Value): ReturnType<Value>['props']['value']
 
-	function isValidElement (value: object): boolean
-	function cloneElement (value: Interface, props?: any, ...children: Collection[]): Interface
-	function render (value: any, target: string | Target, callback?: (target: Target) => any): PromiseLike<Target>
+	function cloneElement<Props>(value: Interface, props?: Props, ...children: Collection): Interface<Props>
+	function isValidElement<Props>(object: object): object is Interface<Props>
 
-	function createElement<Props extends (JSX.HTMLAttributes & JSX.SVGAttributes & Record<string, any> | null)> (type: string, props?: Props, ...children: Collection[]): Interface<Props>
-	function createElement<Props> (type: Component<Props>, props?: Attributes & Props | null, ...children: Collection[]): Interface<Props>
+	function render<Target extends Node>(value: any, target: string | Target, callback?: (target: Target) => any): PromiseLike<Target>
 
-	function h<Props extends (JSX.HTMLAttributes & JSX.SVGAttributes & Record<string, any> | null)> (type: string, props?: Props, ...children: Collection[]): Interface<Props>
-	function h<Props>(type: Component<Props>, props?: Attributes & Props | null, ...children: Collection[]): Interface<Props>
-	// function h<Type extends Component<Props>, Props> (type: Type, props?: Attributes & Props | null, ...children: Collection[]): Type<any>
-	// when type is a function how do we type the return signature to type<Props>
+	function createElement<Props extends (JSX.HTMLAttributes & JSX.SVGAttributes & Record<string, any> | null)> (type: string, props?: Props, ...children: Collection): Interface<Props>
+	function createElement<Type extends Component<Props>, Props> (type: Type, props?: Attributes & Props | null, ...children: Collection): Interface<Props>
 
-	function Portal (props: {target: string | Target, children?: Collection}): Node
-	function Context (props: {value: any, children?: Collection}): Node
-	function Boundary (props: {fallback: any, children?: Collection}): Node
-	function Suspense (props: {fallback: any, children?: Collection}): Node
-	function Fragment (props: {children?: Collection}): Node
+	function h<Props extends (JSX.HTMLAttributes & JSX.SVGAttributes & Record<string, any> | null)> (type: string, props?: Props, ...children: Collection): Interface<Props>
+	function h<Type extends Component<Props>, Props>(type: Type, props?: Attributes & Props | null, ...children: Collection): Interface<Props>
+
+	function Portal<Props extends {target: string | object, children?: Collection}>(props: Props): Interface<Props>
+	function Context<Props extends {value: any, children?: Collection}> (props: Props): Interface<Props>
+	function Boundary<Props extends {fallback: any, children?: Collection}> (props: Props): Interface<Props>
+	function Suspense<Props extends {fallback: any, children?: Collection}> (props: Props): Interface<Props>
+	function Fragment<Props extends {children?: Collection}> (props: Props): Interface<Props>
 
 	function memo<Type extends Component<any>> (render: Type, compare?: (prev: Readonly<object>, next: Readonly<object>) => boolean): Type
 	function lazy<Type extends Component<any>> (render: () => PromiseLike<{default: Type}>): Type
 
 	const Children: {
-		map<Type, Node> (children: Node | Node[], callback: (child: Node, index: number) => Type): Type[]
-		forEach<Node>(children: Node | Node[], callback: (child: Node, index: number) => void): void
 		count(children: any): number
-		toArray<Node>(children: Node | Node[]): Node[]
+		find<Child>(children: Child | Child[], callback: (Child: Child, index: number) => boolean): Child
+		filter<Child>(children: Child | Child[], callback: (Child: Child, index: number) => boolean): Child[]
+		map<Child>(children: Child | Child[], callback: (child: Child, index: number) => Child): Child[]
+		toArray<Child>(children: Child | Child[]): Child[]
+		forEach<Child>(children: Child | Child[], callback: (child: Child, index: number) => void): void
 	}
 }
 
@@ -736,5 +732,3 @@ declare global {
 		}
 	}
 }
-
-

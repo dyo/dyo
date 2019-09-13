@@ -41,14 +41,6 @@ export function peek () {
 }
 
 /**
- * @param {boolean} type
- * @return {any}
- */
-export function memo (type) {
-	return type ? frame.target !== frame : frame.target = frame
-}
-
-/**
  * @param {number} type
  * @param {object} element
  * @param {any} a

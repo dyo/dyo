@@ -67,7 +67,7 @@ function resolve (fiber, host, parent, element, children, message) {
 			return message[0] = value
 		} finally {
 			Schedule.execute(fiber, element, function (fiber, element) {
-				Component.resolve(Schedule.memo(false), element, element.props, element.children)
+				Component.resolve(fiber, element.value = element, element.props, element.children)
 			})
 		}
 	}, Exceptions.throws(fiber, element)), Lifecycle.create(host))

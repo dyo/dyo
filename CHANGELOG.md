@@ -1,3 +1,10 @@
+## 1.0.1 (Unreleased)
+
+- Add typings for TypeScript.
+- Fixes [#102](https://github.com/dyo/dyo/issues/102).
+- Fixes [#101](https://github.com/dyo/dyo/issues/101).
+- Fixes [#100](https://github.com/dyo/dyo/issues/100).
+
 ## 1.0.0 (25 July 2019)
 
 - Change package name "dio.js" to "dyo".
