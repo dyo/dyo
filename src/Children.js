@@ -7,11 +7,7 @@ export default {toArray: array, forEach: each, count: count, map: map, filter: f
  * @return {any[]}
  */
 export function array (value) {
-	Utility.each(function (value, index, array) {
-		array[index] = value
-	}, value, 0, value = [])
-
-	return value
+	return Utility.each(value, null, value = [], pusher), value
 }
 
 /**
@@ -20,9 +16,7 @@ export function array (value) {
  * @return {void}
  */
 export function each (value, callback) {
-	Utility.each(function (value, index, array) {
-		callback(value, index, array)
-	}, value, 0, [])
+	return Utility.each(value, callback, {length: 0}, caller)
 }
 
 /**
@@ -30,39 +24,25 @@ export function each (value, callback) {
  * @return {number}
  */
 export function count (value) {
-	Utility.each(function (value, index, children) {
-		children.value = index
-	}, value, 1, value = {value: 0})
-
-	return value.value
+	return Utility.each(value, null, value = {length: 0}, counter), value.length
 }
 
 /**
  * @param {any} value
  * @param {function} callback
- * @return {object[]}
+ * @return {any[]}
  */
 export function map (value, callback) {
-	Utility.each(function (value, index, array) {
-		array[index] = callback(value, index, array)
-	}, value, 0, value = [])
-
-	return value
+	return Utility.each(value, callback, value = [], mapper), value
 }
 
 /**
  * @param {any} value
  * @param {function} callback
- * @return {object[]}
+ * @return {any[]}
  */
 export function filter (value, callback) {
-	Utility.each(function (value, index, array) {
-		if (callback(value, index, array)) {
-			array.push(value)
-		}
-	}, value, 0, value = [])
-
-	return value
+	return Utility.each(value, callback, value = [], filterer), value
 }
 
 /**
@@ -71,11 +51,75 @@ export function filter (value, callback) {
  * @return {any?}
  */
 export function find (value, callback) {
-	Utility.each(function (value, index, object) {
-		if (callback(value, index, object)) {
-			return object.value = value, null
-		}
-	}, value, 0, value = {value: null})
+	return Utility.each(value, callback, value = {value: null}, finder), value.value
+}
 
-	return value.value
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @param {any[]} children
+ */
+export function pusher (value, callback, children) {
+	children.push(value)
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @param {any[]} children
+ */
+export function caller (value, callback, children) {
+	callback(value, counter(value, callback, children), children)
+}
+
+/**
+ * @param {any} value
+ * @param {any?} callback
+ * @param {any[]} children
+ * @return {number}
+ */
+export function counter (value, callback, children) {
+	return children.length++
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @param {any[]} children
+ */
+export function mapper (value, callback, children) {
+	pusher(execute(value, callback, children), callback, children)
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @param {any[]} children
+ */
+export function filterer (value, callback, children) {
+	if (execute(value, callback, children)) {
+		pusher(value, callback, children)
+	}
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @param {any[]} children
+ * @return {void?}
+ */
+export function finder (value, callback, children) {
+	if (execute(value, callback, children)) {
+		return children.value = value, null
+	}
+}
+
+/**
+ * @param {any} value
+ * @param {function} callback
+ * @param {any[]} children
+ * @return {any}
+ */
+export function execute (value, callback, children) {
+	return callback(value, children.length, children)
 }

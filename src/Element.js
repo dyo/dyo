@@ -1,6 +1,7 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Event from './Event.js'
+import * as Children from './Children.js'
 
 /**
  * @constructor
@@ -31,7 +32,7 @@ export var struct = Utility.extend(function element (identity, key, type, props,
  * @param {number} value
  * @return {number}
  */
-export function key (value) {
+export function hash (value) {
 	return -(-(value + 1) >>> 0)
 }
 
@@ -39,7 +40,7 @@ export function key (value) {
  * @return {object}
  */
 export function empty () {
-	return new struct(Enum.empty, Enum.key, null, null, '')
+	return new struct(Enum.empty, Enum.hash, null, null, '')
 }
 
 /**
@@ -48,7 +49,16 @@ export function empty () {
  * @return {object}
  */
 export function text (value, index) {
-	return new struct(Enum.text, key(index), '', null, value)
+	return new struct(Enum.text, hash(index), '', null, value)
+}
+
+/**
+ * @param {PromiseLike<any>} value
+ * @param {number} index
+ * @return {object}
+ */
+export function thenable (value, index) {
+	return new struct(Enum.thenable, hash(index), value, null, [empty()])
 }
 
 /**
@@ -57,7 +67,7 @@ export function text (value, index) {
  * @return {object}
  */
 export function iterable (value, index) {
-	return new struct(Enum.iterable, key(index), null, null, value)
+	return new struct(Enum.iterable, hash(index), null, null, value)
 }
 
 /**
@@ -118,41 +128,23 @@ export function display (value) {
 
 /**
  * @param {any} value
+ * @param {number} index
  * @return {Promise}
  */
-export function generator (value) {
-	return Utility.create(value, {
+export function generator (value, index) {
+	return thenable(Utility.create(value, {
 		iter: {value: Utility.iterator(value)},
 		then: {value: function (fulfilled, rejected) { return this.iter.next().then(fulfilled, rejected) }},
-	})
-}
-
-/**
- * @param {object} value
- * @param {number} length
- * @param {object} props
- * @return {object}
- */
-export function iterator (value, length, props) {
-	Utility.each(function (value, index, children) {
-		children[index] = from(value, length = index, props)
-	}, value, length, value = [])
-
-	return value[length + 1] = empty(), value
+	}), index)
 }
 
 /**
  * @param {any} value
  * @param {number} index
- * @param {object} props
  * @return {object}
  */
-export function fragment (value, index, props) {
-	for (var i = 0; i < value.length; i++) {
-		value[i] = from(value[i], i, props)
-	}
-
-	return value[i] = empty(), iterable(value, key(index))
+export function fragment (value, index) {
+	return value[value.length] = empty(), iterable(value, hash(index))
 }
 
 /**
@@ -171,13 +163,13 @@ export function from (value, index, props) {
 			if (value !== null) {
 				if (Utility.keyable(value)) {
 					if (Utility.isArray(value)) {
-						return fragment(value, index, props)
+						return fragment(value, index)
 					} else if (Utility.iterable(value)) {
-						return iterable(iterator(value, 0, props), key(index))
+						return fragment(Children.array(value), index)
 					} else if (Utility.asyncIterable(value)) {
-						return create(generator(value), props)
+						return generator(value, index)
 					} else if (Utility.thenable(value)) {
-						return create(value, props)
+						return thenable(value, index)
 					}
 				} else {
 					return value
@@ -189,50 +181,40 @@ export function from (value, index, props) {
 }
 
 /**
- * @param {(string|number|function|PromiseLike<any>?} a
- * @param {({key?,ref?})?} b
+ * @param {(string|number|function|PromiseLike<any>?} type
+ * @param {({key?,ref?})?} config
  * @param {...any?}
  * @return {object}
  */
-export function create (a, b) {
+export function create (type, props) {
 	var index = 0
 	var length = arguments.length
-	var of = typeof b === 'object' && b !== null
+	var of = typeof props === 'object'
 	var position = of ? 2 : 1
 	var size = length - position
 	var identity = Enum.element
-	var type = a
-	var props = of ? b : {}
+	var properties = of ? props || {} : {}
 	var children = []
 
+	if (size > 0) {
+		for (; position < length; ++position) {
+			children[index++] = arguments[position]
+		}
+	}
+
 	switch (typeof type) {
+		case 'object':
+			identity = type === Enum.fragment ? Enum.iterable : Enum.thenable, children[index] = empty()
+			break
 		case 'function':
 			identity = Enum.component
-			break
-		case 'object':
-			identity = type === Enum.fragment ? Enum.iterable : Enum.thenable
-			break
+
+			if (size > 0) {
+				properties.children = size > 1 ? children : children[0]
+			}
 	}
 
-	var element = new struct(identity, props.key, null, props, children)
-
-	if (identity === Enum.component) {
-		if (size > 0) {
-			for (props.children = size === 1 ? arguments[position++] : children = []; position < length; ++position) {
-				children[index++] = arguments[position]
-			}
-		}
-	} else {
-		if (size > 0) {
-			for (; position < length; ++position) {
-				children[index] = from(arguments[position], index++, props)
-			}
-		}
-
-		if (identity !== Enum.element) {
-			children[index] = empty()
-		}
-	}
+	var element = new struct(identity, properties.key, null, properties, children)
 
 	return element.type = type, element
 }

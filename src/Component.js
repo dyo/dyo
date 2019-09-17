@@ -58,10 +58,8 @@ export function memoize (value, callback) {
 export function forward (value, callback, element, props) {
 	if (Element.active(element)) {
 		if (element.value === null) {
-			if (Schedule.memo(true)) {
-				if (callback(element.props, props)) {
-					return Element.children(element)
-				}
+			if (callback(element.props, props)) {
+				return Element.children(element)
 			}
 		}
 	}

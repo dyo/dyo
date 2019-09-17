@@ -18,24 +18,24 @@ import * as Commit from './Commit.js'
  */
 export function create (fiber, host, parent, element, current) {
 	var identity = element.identity
-	var type = element.type
-	var children = element.children
 	var owner = element.owner = parent.owner
+	var type = element.type
 
 	try {
 		switch (element.host = host, identity) {
 			case Enum.component:
-				return resolve(fiber, host, parent, element, current, children)
+				return resolve(fiber, host, parent, element, current, element.children = [element])
 			case Enum.element:
 				var context = element.context = Interface.context(type, parent.context)
 		}
 
+		var children = element.children
 		var instance = element.value = Interface.create(identity, type, children, context, owner !== null ? owner : Interface.peek())
 
 		if (identity !== Enum.target) {
 			if (identity < Enum.text) {
 				for (var i = 0; i < children.length; ++i) {
-					create(fiber, host, element, children[i], instance, element)
+					create(fiber, host, element, children[i] = Element.from(children[i], i, null), instance, element)
 				}
 
 				if (identity === Enum.element) {
@@ -85,8 +85,10 @@ export function destroy (fiber, parent, element, current) {
 
 			try {
 				switch (identity) {
-					case Enum.fallback: case Enum.target:
-						return Schedule.commit(fiber, Enum.unmount, element, identity === Enum.target ? element : parent.parent, element, element)
+					case Enum.fallback:
+						return Schedule.commit(fiber, Enum.unmount, element, current ? current.parent : element, element, element)
+					case Enum.target:
+						return Schedule.commit(fiber, Enum.unmount, element, element, element, element)
 					case Enum.element:
 						if (element.stack !== null) {
 							Commit.refs(element, null, null)
@@ -128,7 +130,7 @@ export function dispatch (fiber, host, parent, element, current, children) {
  */
 export function resolve (fiber, host, parent, element, current, children) {
 	try {
-		return create(fiber, element, parent, children[0] = Component.create(fiber, host, children[0] = element), current)
+		return create(fiber, element, parent, children[0] = Component.create(fiber, host, element), current)
 	} catch (error) {
 		try {
 			return element === children[0] ? create(fiber, host, parent, children[0] = Element.empty(), current) : children[0]

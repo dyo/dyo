@@ -1,5 +1,3 @@
-import * as Dyo from '../../index.js'
-
 /**
  * @param {object} value
  * @return {string}
@@ -74,7 +72,7 @@ export function property (name, value, children) {
 		case 'className':
 			return property('class', value, children)
 		case 'innerHTML':
-			children.splice(0, children.length, Dyo.createElement(null, null, value))
+			children.splice(0, children.length, {children: value})
 		case 'ref': case 'key':
 			return ''
 		case 'style':

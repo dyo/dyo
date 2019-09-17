@@ -113,8 +113,8 @@ describe('Exception', () => {
 			throw 1
 		}
 
-		render(h(Primary), target, (current) => {
-			assert.html(current, '{"message":1,"bubbles":false}')
+		render(h('div', {}, h(Primary)), target, (current) => {
+			assert.html(current, '<div>{"message":1,"bubbles":false}</div>')
 		})
 	})
 
@@ -122,12 +122,11 @@ describe('Exception', () => {
 		const target = document.createElement('div')
 		const stack = []
 		const Primary = props => {
-			return h(Boundary, {fallback: [props => stack.push(props), props => JSON.stringify(props)]}, h(props => { throw 1 }))
+			return h(Boundary, {fallback: props => JSON.stringify(props)}, h(props => { throw 1 }))
 		}
 
-		render(h(Primary), target, (current) => {
-			assert.html(current, '1{"message":1,"bubbles":false}')
-			assert.deepEqual(stack, [{message: 1, bubbles: false}])
+		render(h('div', {}, h(Primary)), target, (current) => {
+			assert.html(current, '<div>{"message":1,"bubbles":false}</div>')
 		})
 	})
 
@@ -138,10 +137,10 @@ describe('Exception', () => {
 			return error ? JSON.stringify(error) : h(Boundary, {fallback: dispatch}, h(props => { throw 1 }))
 		}
 
-		render(h(Primary), target, (current) => {
+		render(h('div', {}, h(Primary)), target, (current) => {
 			current.firstChild.dispatchEvent(new Event('click'))
 		}).then((current) => {
-			assert.html(current, '{"message":1,"bubbles":false}')
+			assert.html(current, '<div>{"message":1,"bubbles":false}</div>')
 		})
 	})
 
@@ -189,6 +188,22 @@ describe('Exception', () => {
 			assert.html(current, '1')
 		}).then((current) => {
 			done(assert.deepEqual(stack, [{message: 1, bubbles: false}]))
+		})
+	})
+
+	it('should recover from error boundary in the event of an exception', () => {
+		const target = document.createElement('div')
+		const Primary = props => {
+			const [error, dispatch] = useState('')
+
+			return h(Boundary, {fallback: error => dispatch(error.message)}, error ? error : h(Secondary))
+		}
+		const Secondary = props => {
+			throw 1
+		}
+
+		render(h('div', {}, h(Primary)), target, (current) => {
+			assert.html(current, '<div>1</div>')
 		})
 	})
 })
