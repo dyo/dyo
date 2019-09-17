@@ -244,31 +244,31 @@ export function defaults (a, b) {
 }
 
 /**
- * @param {function} callback
  * @param {any?} value
- * @param {number} index
- * @param {any[]} array
+ * @param {any} a
+ * @param {any} b
+ * @param {function} callback
  * @return {any}
  */
-export function each (callback, value, index, array) {
+export function each (value, a, b, callback) {
 	if (keyable(value)) {
 		if (isArray(value)) {
 			for (var i = 0; i < value.length; ++i) {
-				if (each(callback, value[i], index + i, array) === null) {
+				if (each(value[i], a, b, callback) === null) {
 					break
 				}
 			}
 		} else if (iterable(value)) {
 			for (var i = 0, iter = iterator(value), next = iter.next(); !next.done; next = iter.next(++i)) {
-				if (each(callback, next.value, index + i, array) === null) {
+				if (each(next.value, a, b, callback) === null) {
 					break
 				}
 			}
 		} else {
-			return callback(value, index, array)
+			return callback(value, a, b)
 		}
 	} else {
-		return callback(value, index, array)
+		return callback(value, a, b)
 	}
 }
 

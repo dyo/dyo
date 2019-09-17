@@ -86,9 +86,7 @@ export function destroy (fiber, parent, element, current) {
 			try {
 				switch (identity) {
 					case Enum.fallback:
-						if (current !== null) {
-							return Schedule.commit(fiber, Enum.unmount, element, current.parent, element, element)
-						}
+						return Schedule.commit(fiber, Enum.unmount, element, current ? current.parent : element, element, element)
 					case Enum.target:
 						return Schedule.commit(fiber, Enum.unmount, element, element, element, element)
 					case Enum.element:

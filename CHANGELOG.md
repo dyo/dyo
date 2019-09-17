@@ -1,6 +1,7 @@
 ## 1.0.1 (Unreleased)
 
 - Add typings for TypeScript.
+- Fixes [#103](https://github.com/dyo/dyo/issues/102).
 - Fixes [#102](https://github.com/dyo/dyo/issues/102).
 - Fixes [#101](https://github.com/dyo/dyo/issues/101).
 - Fixes [#100](https://github.com/dyo/dyo/issues/100).
