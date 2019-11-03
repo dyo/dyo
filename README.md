@@ -49,7 +49,7 @@ This will render a heading element with the text content "Hello World" into the 
 
 ## Comparison
 
-The library is much alike React, so it's only natural that a comparison of the differences is in order; Which if succesfull might manage to highlight why it exists.
+The library is much alike React, so it's only natural that a comparison of the differences is in order; Which if successful might manage to highlight why it exists.
 
 #### Re-parenting
 
@@ -80,7 +80,7 @@ function Example (props) {
 		// out of band updates in here
 		// are also batched
 		return async () => {
-			// delays unmount untill the animation
+			// delays unmount until the animation
 			// has completed
 			return props.current.animate({}).finished
 		}
@@ -100,7 +100,7 @@ console.log('Done')
 
 ##### Async Generators
 
-In addition to the iterator protocol, supports for the async iterator protocol is baked in – every iteration is a step in the sequence of state transitions, modeled to afford authors the primitive to implement psuedo-synchronous designs from otherwise asynchronous application interfaces.
+In addition to the iterator protocol, supports for the async iterator protocol is baked in – every iteration is a step in the sequence of state transitions, modeled to afford authors the primitive to implement pseudo-synchronous designs from otherwise asynchronous application interfaces.
 
 The following would first render `Loading...` fetch the resource `./` then render the stringified response.
 
