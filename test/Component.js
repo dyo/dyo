@@ -255,12 +255,12 @@ describe('Component', () => {
 		const stack = []
 		const Primary = props => props.children
 
-		render(h(Primary, {}, Promise.resolve('1')), target, (current) => {
-			return stack.push(0, current)
-		}).then((current) => {
-			return stack.push(1, current), new Promise((resolve) => setTimeout(() => resolve(stack.push(2)), 50))
-		}).then((current) => {
-			done(assert.deepEqual(stack, [0, current, 1, current, 2]))
+		render(h(Primary, {}, Promise.resolve('1')), target, () => {
+			return stack.push(0)
+		}).then(() => {
+			return stack.push(1), new Promise((resolve) => setTimeout(() => resolve(stack.push(2)), 50))
+		}).then(() => {
+			done(assert.deepEqual(stack, [0, 1, 2]))
 		})
 	})
 

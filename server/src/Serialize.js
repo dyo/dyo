@@ -8,7 +8,12 @@ import * as Stringify from './Stringify.js'
  * @return {object}
  */
 export function render (element, target, callback) {
-	return Dyo.render(element, target, dispatch).then(callback)
+	return Dyo.render(element, target, function (target) {
+		dispatch.call(this, target)
+		if (callback) {
+			callback(target)
+		}
+	})
 }
 
 /**

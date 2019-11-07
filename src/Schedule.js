@@ -23,8 +23,10 @@ export var struct = Utility.extend(function fiber (element, target) {
 	 * @param {function?} value
 	 * @return {PromiseLike<object>}
 	 */
-	then: {value: function (value) {
-		return finalize(this, this.target, value), this
+	then: {value: function (success, failure) {
+		return (this.async || Promise.resolve(null)).then(() =>
+			new Promise((resolve) => finalize(this, this.target, resolve))
+		).then(success, failure)
 	}}
 })
 

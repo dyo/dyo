@@ -294,4 +294,12 @@ describe('Render', () => {
 			})
 		})
 	})
+
+	it('should propagate error to promise', (done) => {
+		render(h(Promise.reject(new Error('xxx'))), target)
+		.then((() => done(new Error('Expected failure'))), (err) => {
+			assert.equal(err.message, 'xxx')
+			done()
+		})
+	})
 })
