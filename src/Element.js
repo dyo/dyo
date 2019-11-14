@@ -133,8 +133,14 @@ export function display (value) {
  */
 export function generator (value, index) {
 	return thenable(Utility.create(value, {
+		prev: {writable: true},
 		iter: {value: Utility.iterator(value)},
-		then: {value: function (fulfilled, rejected) { return this.iter.next().then(fulfilled, rejected) }},
+		then: {value: function (fulfilled, rejected) {
+			return this.iter.next(this.prev).then((result) => {
+				this.prev = result.value
+				return fulfilled(result)
+			}, rejected)
+		}},
 	}), index)
 }
 
@@ -148,12 +154,23 @@ export function fragment (value, index) {
 }
 
 /**
+ * @param {object} iter
+ * @return {object}
+ */
+export function resolveAsyncIterable (iter) {
+	return (async function* () {
+		yield await (yield* iter)
+	})()
+}
+
+/**
  * @param {any} value
  * @param {number} index
  * @param {object} props
+ * @param {(string|number|function|PromiseLike<any>?} type
  * @return {object}
  */
-export function from (value, index, props) {
+export function from (value, index, props, type) {
 	switch (typeof value) {
 		case 'number': case 'string':
 			return text(value, index)
@@ -165,9 +182,18 @@ export function from (value, index, props) {
 					if (Utility.isArray(value)) {
 						return fragment(value, index)
 					} else if (Utility.iterable(value)) {
-						return fragment(Children.array(value), index)
+						if (typeof type === 'function') {
+							return generator(resolveAsyncIterable(value), index)
+						} else {
+							return fragment(Children.array(value), index)
+						}
 					} else if (Utility.asyncIterable(value)) {
-						return generator(value, index)
+						if (typeof type === 'function') {
+							return generator(resolveAsyncIterable(value), index)
+						}
+						else {
+							return generator(value, index)
+						}
 					} else if (Utility.thenable(value)) {
 						return thenable(value, index)
 					}

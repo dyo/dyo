@@ -74,7 +74,7 @@ export function forward (value, callback, element, props) {
  * @return {object}
  */
 export function render (fiber, element, props) {
-	return fiber.owner = element, fiber.index = 0, Element.from(element.type(props), 0, props)
+	return fiber.owner = element, fiber.index = 0, Element.from(element.type(props), 0, props, element.type)
 }
 
 /**
