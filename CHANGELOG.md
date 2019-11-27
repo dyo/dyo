@@ -1,4 +1,13 @@
-## 1.0.1 (Unreleased)
+## 2.0.0 (Unreleased)
+
+- Add optional dependencies array argument for `useResource` hook.
+- When components are oure adjust the reconciler to take a shorter path to reconcile when changing from one to the next.
+- Better align the default dependencies for `useMemo` and `useCallback`.
+- Merge `/server` into main package (breaking).
+- Remove async generators (breaking).
+
+
+## 1.0.1 (3 November 2019)
 
 - Add typings for TypeScript.
 - Fixes [#103](https://github.com/dyo/dyo/issues/102).

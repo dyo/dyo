@@ -1,7 +1,56 @@
-import {h, render, useState, useEffect, useLayout} from '../../server/index.js'
+import {h, render, useState, useEffect, useLayout, useResource, Suspense} from '../index.js'
 
-describe('Stringify', () => {
-	it('should stringify text', () => {
+describe('Serialize', () => {
+	it('should write to non-wrtiable', () => {
+		const target = {}
+
+		render('1', target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should write to wrtiable(end)', () => {
+		const target = new Writable('end')
+
+		render('1', target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should write to wrtiable(write)', () => {
+		const target = new Writable('write')
+
+		render('1', target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should write to wrtiable(send)', () => {
+		const target = new Writable('send')
+
+		render('1', target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should send to wrtiable(body)', () => {
+		const target = new Writable('body')
+
+		render('1', target, (current) => {
+			assert.html(current, '1')
+		})
+	})
+
+	it('should invoke render callback', () => {
+		const target = new Writable('body')
+		const stack = []
+
+		render('1', target, (current) => stack.push(true))
+
+		assert.deepEqual(stack, [true])
+	})
+
+	it('should serialize text', () => {
 		const target = new Writable
 
 		render('1', target, (current) => {
@@ -9,19 +58,11 @@ describe('Stringify', () => {
 		})
 	})
 
-	it('should stringify element', () => {
+	it('should serialize element', () => {
 		const target = new Writable
 
 		render(h('h1', {}, '1'), target, (current) => {
 			assert.html(current, '<h1>1</h1>')
-		})
-	})
-
-	it('should stringify doctype', () => {
-		const target = new Writable
-
-		render([h('!DocType', {html: true}), h('html', {}, h('title', {}, '1'))], target, (current) => {
-			assert.html(current, '<!DocType html><html><title>1</title></html>')
 		})
 	})
 
@@ -33,12 +74,9 @@ describe('Stringify', () => {
 		})
 	})
 
-	it('should stringify void elements', () => {
+	it('should serialize void elements', () => {
 		const target = new Writable
-		const stack = [
-			'area', 'base', 'br', 'meta', 'source', 'keygen', 'img', 'col',
-			'embed', 'wbr', 'track', 'param', 'link', 'input', 'hr', '!doctype'
-		]
+		const stack = ['area','base','br','meta','source','keygen','img','col','embed','wbr','track','param','link','input','hr','!doctype']
 
 		stack.forEach((type) => {
 			render(h(type), target, (current) => {
@@ -47,7 +85,7 @@ describe('Stringify', () => {
 		})
 	})
 
-	it('should stringify attributes', () => {
+	it('should serialize attributes', () => {
 		const target = new Writable
 
 		render(h('div', {
@@ -57,7 +95,7 @@ describe('Stringify', () => {
 		})
 	})
 
-	it('should stringify innerHTML', () => {
+	it('should serialize innerHTML', () => {
 		const target = new Writable
 
 		render(h('div', {innerHTML: '<h1>1</h1>'}), target, (current) => {
@@ -65,7 +103,7 @@ describe('Stringify', () => {
 		})
 	})
 
-	it('should stringify fragments', () => {
+	it('should serialize fragments', () => {
 		const target = new Writable
 
 		render([h('div'), h('h1', {}, '1')], target, (current) => {
@@ -73,15 +111,7 @@ describe('Stringify', () => {
 		})
 	})
 
-	it('should stringify thenables', () => {
-		const target = new Writable
-
-		render(Promise.resolve([h('div'), h('h1', {}, '1')]), target, (current) => {
-			assert.html(current, '<div></div><h1>1</h1>')
-		})
-	})
-
-	it('should stringify components', () => {
+	it('should serialize components', () => {
 		const target = new Writable
 		const Primary = props => props.children
 
@@ -127,6 +157,29 @@ describe('Stringify', () => {
 		render(h(Primary, {}, '1'), target, (current) => {
 			assert.html(current, '1')
 			done(assert.deepEqual(stack, []))
+		})
+	})
+
+	it('should use a resource', () => {
+		const target = new Writable
+	  const Primary = props => {
+	    return h('div', {}, h(Secondary))
+	  }
+
+	  const Secondary = props => {
+	    return h('div', {}, useResource(() => Promise.resolve('x')))
+	  }
+
+	  render(h(props => h(Suspense, target, h(Primary))), {}, (current) => {
+	    assert.html(current, '<div><div>x</div></div>')
+	  })
+	})
+
+	it('should serialize async component', () => {
+		const target = new Writable
+
+		render(props => Promise.resolve([h('div'), h('h1', {}, '1')]), target, (current) => {
+			assert.html(current, '<div></div><h1>1</h1>')
 		})
 	})
 })

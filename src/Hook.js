@@ -11,7 +11,7 @@ import * as Schedule from './Schedule.js'
  * @return {any}
  */
 export function extract (value) {
-	return Utility.fetchable(value) ? value.json() : value
+	return Utility.fetchable(value) ? value.json() : Utility.extract(value)
 }
 
 /**
@@ -20,15 +20,13 @@ export function extract (value) {
  * @return {boolean}
  */
 export function compare (prev, next) {
-	if (prev !== next) {
-		for (var i = 0; i < prev.length; i++) {
-			if (!Utility.is(prev[i], next[i])) {
-				return false
-			}
+	for (var i = 0; i < prev.length; i++) {
+		if (!Utility.is(prev[i], next[i])) {
+			return false
 		}
 	}
 
-	return !!prev
+	return true
 }
 
 /**
@@ -109,8 +107,8 @@ export function request (callback, value, type) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [element, callback, value, -1]
-	} else if (compare((children = children[index])[2], children[2] = value)) {
+		children = children[index] = [element, callback, value || [{}], -1]
+	} else if (compare((children = children[index])[2], children[2] = value || [{}])) {
 		return
 	} else {
 		children[1] = callback
@@ -143,9 +141,29 @@ export function memoize (callback, value) {
 	var children = element.children
 
 	if (index === children.length) {
-		children = children[index] = [value, callback(value)]
-	} else if (!compare((children = children[index])[0], children[0] = value)) {
+		children = children[index] = [value || [], callback(value)]
+	} else if (!compare((children = children[index])[0], children[0] = value || [])) {
 		children[1] = callback(value)
+	}
+
+	return children[1]
+}
+
+/**
+ * @param {function} callback
+ * @param {any[]?} value
+ * @return {function}
+ */
+export function callback (callback, value) {
+	var fiber = Schedule.peek()
+	var element = fiber.owner
+	var index = ++fiber.index
+	var children = element.children
+
+	if (index === children.length) {
+		children = children[index] = [value || [], callback]
+	} else if (!compare((children = children[index])[0], children[0] = value || [])) {
+		children[1] = callback
 	}
 
 	return children[1]
@@ -211,38 +229,22 @@ export function context (value) {
 
 /**
  * @param {function?} callback
+ * @param {any[]?} value
  * @return {any}
  */
-export function resource (callback) {
+export function resource (callback, value) {
 	var fiber = Schedule.peek()
 	var element = fiber.owner
 	var index = ++fiber.index
 	var children = element.children
 
 	if (index === children.length) {
-		Utility.throws(children[index] = Utility.resolve(Lifecycle.resolve(element, callback), extract, null))
+		children = children[index] = [value || [], callback]
+	} else if (compare((children = children[index])[0], children[0] = value || [])) {
+		return children[1][0]
 	}
 
-	return children[index][0]
-}
-
-/**
- * @param {function} callback
- * @return {function}
- */
-export function callback (callback) {
-	var fiber = Schedule.peek()
-	var element = fiber.owner
-	var index = ++fiber.index
-	var children = element.children
-
-	if (index === children.length) {
-		children = children[index] = [callback, function () { return children[0].apply(this, arguments) }]
-	} else {
-		children = children[index], children[0] = callback
-	}
-
-	return children[1]
+	Utility.throws(children[1] = Utility.resolve(callback(children[0], element.props), extract, null))
 }
 
 /**
@@ -260,4 +262,3 @@ export function layout (callback, value) {
 export function effect (callback, value) {
 	request(callback, value, Enum.request)
 }
-

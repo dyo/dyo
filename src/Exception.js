@@ -3,6 +3,7 @@ import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Suspense from './Suspense.js'
 import * as Component from './Component.js'
+import * as Schedule from './Schedule.js'
 
 /**
  * @constructor
@@ -34,7 +35,7 @@ export var struct = Utility.extend(function exception (host, value) {
 	toString: {value: function () {
 		return this.name + ': ' + this.message + '\n' + this.stack
 	}}
-})
+}, {})
 
 /**
  * @param {object} host
@@ -83,16 +84,18 @@ export function create (host, value) {
 
 /**
  * @param {object} fiber
- * @param {object} export
+ * @param {object} exception
  * @throws {any}
  */
 export function destroy (fiber, exception) {
-	fiber.element = null
+	if (fiber.error === null) {
+		Utility.report(exception + '')
+	}
 
 	try {
 		Utility.throws(exception.message)
 	} finally {
-		Utility.report(exception + '')
+		fiber.element = null
 	}
 }
 
@@ -155,7 +158,9 @@ export function dequeue (fiber, host, element, exception, current) {
 		try {
 			current.state = Element.fallback(exception, current)
 		} finally {
-			Component.request(current)
+			Schedule.execute(fiber, current, function (fiber, current) {
+				Component.request(current)
+			})
 		}
 	} else {
 		enqueue(fiber, host, element, exception, current)

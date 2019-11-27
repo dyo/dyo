@@ -34,8 +34,8 @@ declare namespace dyo {
 	function useState<State, Props = {}> (state: State | ((props: Props) => State)): [State, Dispatch<SetStateAction<State>>]
 	function useReducer<Reduce extends Reducer<State, any>, State = any> (reducer: Reduce, state: State & ReducerState<Reduce>): [ReducerState<Reduce>, Dispatch<ReducerAction<Reduce>>]
 
-	function useCallback<Value extends (...args: any[]) => any> (callback: Value): Value
-	function useMemo<Dependency extends DependencyList, Value = any> (factory: MemoCallback<Dependency, Value>, deps?: Dependency): Value
+	function useCallback<Value extends (...args: any[]) => any, Dependency extends DependencyList> (callback: Value, deps?: Dependency): Value
+	function useMemo<Dependency extends DependencyList, Value = any> (callback: MemoCallback<Dependency, Value>, deps?: Dependency): Value
 
 	function useLayout<Dependency extends DependencyList, Props = {}> (callback: EffectCallback<Dependency, Props>, deps?: Dependency): void
 	function useEffect<Dependency extends DependencyList, Props = {}> (callback: EffectCallback<Dependency, Props>, deps?: Dependency): void

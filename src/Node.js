@@ -3,7 +3,6 @@ import * as Element from './Element.js'
 import * as Component from './Component.js'
 import * as Exception from './Exception.js'
 import * as Lifecycle from './Lifecycle.js'
-import * as Reconcile from './Reconcile.js'
 import * as Interface from './Interface.js'
 import * as Schedule from './Schedule.js'
 import * as Commit from './Commit.js'
@@ -39,9 +38,7 @@ export function create (fiber, host, parent, element, current) {
 				}
 
 				if (identity === Enum.element) {
-					Commit.properties(element, element.props, instance)
-				} else if (identity === Enum.thenable) {
-					Reconcile.resolve(fiber, host, parent, element, element, type, children, children)
+					Commit.properties(element, element.props, instance, false)
 				}
 			}
 
@@ -148,7 +145,13 @@ export function resolve (fiber, host, parent, element, current, children) {
  * @return {boolean}
  */
 export function enqueue (fiber, parent, element, current) {
-	return Lifecycle.destroy(element) === null ? false : current === null ? !dequeue(fiber, parent, element, element.stack) : false
+	if (Lifecycle.destroy(element) !== null) {
+		if (current === null) {
+			return !dequeue(fiber, parent, element, element.stack)
+		}
+	}
+
+	return false
 }
 
 /**
@@ -158,5 +161,7 @@ export function enqueue (fiber, parent, element, current) {
  * @param {object} current
  */
 export function dequeue (fiber, parent, element, current) {
-	Schedule.pending(fiber, current, function () { Element.active(parent) && Commit.unmount(parent, element, element) })
+	Schedule.suspend(fiber, current, function () {
+		Element.active(parent) && Commit.unmount(parent, element, element)
+	}, null)
 }

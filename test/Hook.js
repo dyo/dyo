@@ -129,6 +129,26 @@ describe('Hook', () => {
 			})
 		})
 
+		it('should not update a memo hook', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const value = useMemo(() => stack.push(1))
+
+				return value
+			}
+
+			render(h(Primary), target, (current) => {
+				assert.html(current, '1')
+				assert.deepEqual(stack, [1])
+
+				render(h(Primary), target, (current) => {
+					assert.html(current, '1')
+					assert.deepEqual(stack, [1])
+				})
+			})
+		})
+
 		it('should use and update a memo hook', () => {
 			const target = document.createElement('div')
 			const stack = []
@@ -165,6 +185,25 @@ describe('Hook', () => {
 			render(h(Primary), target, (current) => {
 				render(h(Primary), target, (current) => {
 					assert.equal(stack[0], stack[1])
+					assert.deepEqual(stack[0](1, 2), stack[1](1, 2))
+				})
+			})
+		})
+
+		it('should update a callback hook', () => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const value = useCallback((...args) => args, [stack.length])
+
+				stack.push(value)
+
+				return
+			}
+
+			render(h(Primary), target, (current) => {
+				render(h(Primary), target, (current) => {
+					assert.notEqual(stack[0], stack[1])
 					assert.deepEqual(stack[0](1, 2), stack[1](1, 2))
 				})
 			})
@@ -606,6 +645,32 @@ describe('Hook', () => {
 			})
 		})
 
+		it('should batch out of band updates from layout hook', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [{children}, dispatch] = useState(props)
+
+				stack.push(children)
+
+				useLayout(async props => {
+					await new Promise((resolve) => setTimeout(resolve))
+					dispatch({children: 'Hello'})
+					dispatch({children: 'Hello World'})
+					return () => stack.push('unmount')
+				}, [])
+
+				return h('button', {}, children)
+			}
+
+			render(h(Primary, {}, 'Click Me'), target, (current) => {
+				assert.html(current, '<button>Hello World</button>')
+				render(null, target)
+				assert.html(current, '')
+				done(assert.deepEqual(stack, ['Click Me', 'Hello World', 'unmount']))
+			})
+		})
+
 		it('should unmount layout hook', () => {
 			const target = document.createElement('div')
 			const stack = []
@@ -631,36 +696,6 @@ describe('Hook', () => {
 			})
 		})
 
-		it('should defer unmount from layout hook', () => {
-			const target = document.createElement('div')
-			const Primary = props => {
-				useLayout(() => () => new Promise((resolve) => setTimeout(resolve)))
-				useLayout(() => () => new Promise((resolve) => setTimeout(resolve)))
-
-				return 'preserve'
-			}
-
-			render(h(Primary), target, (current) => {
-				render(null, current)
-				assert.html(current, 'preserve')
-			}).then((current) => {
-				assert.html(current, '')
-			})
-		})
-
-		it('should not defer unmount from layout hook', (done) => {
-			const target = document.createElement('div')
-			const Primary = props => {
-				useLayout(() => () => Promise.resolve())
-				return props.children
-			}
-
-			render(h('div', {}, h(Primary, {}, 1)), target, (current) => {
-				render(null, target)
-				done(assert.html(target, ''))
-			})
-		})
-
 		it('should not resolve unmounted components deferred unmount from layout hook', (done) => {
 			const target = document.createElement('div')
 			const Primary = props => {
@@ -677,29 +712,50 @@ describe('Hook', () => {
 			})
 		})
 
-		it('should batch out of band updates from layout hook', (done) => {
+		it('should async unmount from layout hook', () => {
 			const target = document.createElement('div')
-			const stack = []
 			const Primary = props => {
-				const [{children}, dispatch] = useState(props)
+				useLayout(() => () => new Promise((resolve) => setTimeout(resolve)))
+				useLayout(() => () => new Promise((resolve) => setTimeout(resolve)))
 
-				stack.push(children)
-
-				useLayout(async props => {
-					await new Promise((resolve) => setTimeout(resolve))
-					dispatch({children: 'Hello'})
-					dispatch({children: 'Hello World'})
-					return () => stack.push('unmount')
-				}, [])
-
-				return h('button', {}, children)
+				return 'preserve'
 			}
 
-			render(h(Primary, {}, 'Click Me'), target, (current) => {
-				assert.html(current, '<button>Hello World</button>')
-				render(null, target)
+			render(h(Primary), target, (current) => {
+				render(null, current)
+				assert.html(current, 'preserve')
+			}).then((current) => {
 				assert.html(current, '')
-				done(assert.deepEqual(stack, ['Click Me', 'Hello World', 'unmount']))
+			})
+		})
+
+		it('should not async unmount from layout hook', (done) => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				useLayout(() => () => Promise.resolve())
+				return props.children
+			}
+
+			render(h('div', {}, h(Primary, {}, 1)), target, (current) => {
+				render(null, target)
+				done(assert.html(target, ''))
+			})
+		})
+
+		it('should throw in async unmount layout hook', (done) => {
+			const target = document.createElement('div')
+			const Primary = props => {
+				useLayout(() => () => new Promise((resolve, reject) => setTimeout(reject, 0, 'x')))
+
+				return 'preserve'
+			}
+
+			render(h(Primary), target, (current) => {
+				render(null, current)
+				assert.html(current, 'preserve')
+			}).then(null, (current) => {
+				assert.html(target, 'preserve')
+				done(assert.equal(current, 'x'))
 			})
 		})
 	})
@@ -759,6 +815,32 @@ describe('Hook', () => {
 			})
 		})
 
+		it('should batch out of band updates from effect hook', (done) => {
+			const target = document.createElement('div')
+			const stack = []
+			const Primary = props => {
+				const [{children}, dispatch] = useState(props)
+
+				stack.push(children)
+
+				useEffect(async props => {
+					await new Promise((resolve) => setTimeout(resolve))
+					dispatch({children: 'Hello'})
+					dispatch({children: 'Hello World'})
+					return () => stack.push('unmount')
+				}, [])
+
+				return h('button', {}, children)
+			}
+
+			render(h(Primary, {}, 'Click Me'), target, (current) => {
+				assert.html(current, '<button>Hello World</button>')
+				render(null, target)
+				assert.html(current, '')
+				done(assert.deepEqual(stack, ['Click Me', 'Hello World', 'unmount']))
+			})
+		})
+
 		it('should unmount effect hook', (done) => {
 			const target = document.createElement('div')
 			const stack = []
@@ -786,22 +868,6 @@ describe('Hook', () => {
 			})
 		})
 
-		it('should defer unmount from effect hook', (done) => {
-			const target = document.createElement('div')
-			const Primary = props => {
-				useEffect(() => () => new Promise((resolve) => setTimeout(resolve)))
-
-				return 'preserve'
-			}
-
-			render(h(Primary), target, (current) => {
-				render(null, current)
-				assert.html(current, 'preserve')
-			}).then((current) => {
-				done(assert.html(current, ''))
-			})
-		})
-
 		it('should not invoke effect hook of unmount component', () => {
 			const target = document.createElement('div')
 			const stack = []
@@ -817,29 +883,19 @@ describe('Hook', () => {
 			render(null, target)
 		})
 
-		it('should batch out of band updates from effect hook', (done) => {
+		it('should async unmount from effect hook', (done) => {
 			const target = document.createElement('div')
-			const stack = []
 			const Primary = props => {
-				const [{children}, dispatch] = useState(props)
+				useEffect(() => () => new Promise((resolve) => setTimeout(resolve)))
 
-				stack.push(children)
-
-				useEffect(async props => {
-					await new Promise((resolve) => setTimeout(resolve))
-					dispatch({children: 'Hello'})
-					dispatch({children: 'Hello World'})
-					return () => stack.push('unmount')
-				}, [])
-
-				return h('button', {}, children)
+				return 'preserve'
 			}
 
-			render(h(Primary, {}, 'Click Me'), target, (current) => {
-				assert.html(current, '<button>Hello World</button>')
-				render(null, target)
-				assert.html(current, '')
-				done(assert.deepEqual(stack, ['Click Me', 'Hello World', 'unmount']))
+			render(h(Primary), target, (current) => {
+				render(null, current)
+				assert.html(current, 'preserve')
+			}).then((current) => {
+				done(assert.html(current, ''))
 			})
 		})
 	})
@@ -857,7 +913,7 @@ describe('Hook', () => {
 				return h(Context, {value: state}, h('button', {
 					onClick: [e => setTheme(theme + '!'), e => setTheme(theme => theme + '!')]
 				}, theme, children))
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Secondary = memo(() => {
 				const [theme, setTheme] = useContext(Primary)
@@ -865,11 +921,11 @@ describe('Hook', () => {
 				stack.push('Secondary', theme)
 
 				return h('h1', {}, theme)
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Indirection = memo(({children}) => {
 				return children
-			}, (prev, next) => true)
+			}, () => true)
 
 			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
 				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red'])
@@ -891,7 +947,7 @@ describe('Hook', () => {
 				stack.push('Primary', theme)
 
 				return h(Context, {value: state}, h('button', {}, theme, children))
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Secondary = memo(() => {
 				const [theme1, setTheme1] = useContext(Primary)
@@ -903,11 +959,11 @@ describe('Hook', () => {
 				setTheme2(theme => theme + '!')
 
 				return h('h1', {}, theme1, theme2)
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Indirection = memo(({children}) => {
 				return children
-			}, (prev, next) => true)
+			}, () => true)
 
 			render(h(Primary, {}, h(Indirection, {}, h('div', {}, h(Indirection, {}, Secondary)))), target, (current) => {
 				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red', 'red', 'Primary', 'red!!', 'Secondary', 'red!!', 'red!!'])
@@ -929,7 +985,7 @@ describe('Hook', () => {
 				}, [])
 
 				return h(Context, {value: 'red'}, h('button', {}, theme, children))
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Secondary = memo(() => {
 				const theme = useContext(Primary)
@@ -937,11 +993,11 @@ describe('Hook', () => {
 				stack.push('Secondary', theme)
 
 				return h('h1', {}, theme)
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Indirection = memo(({children}) => {
 				return children
-			}, (prev, next) => true)
+			}, () => true)
 
 			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, Secondary))), target, (current) => {
 				assert.deepEqual(stack, ['Primary', 'red', 'Secondary', 'red', 'Primary', 'red!'])
@@ -959,7 +1015,7 @@ describe('Hook', () => {
 				stack.push('Primary', theme)
 
 				return h(Context, {value: state}, children)
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Secondary = memo(({children}) => {
 				const state = useState(props => 'blue')
@@ -968,11 +1024,11 @@ describe('Hook', () => {
 				stack.push('Secondary', theme)
 
 				return h(Context, {value: state}, children)
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Indirection = memo(({children}) => {
 				return children
-			}, (prev, next) => true)
+			}, () => true)
 
 			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, h(Secondary, {}, props => {
 				const [theme1, setTheme1] = useContext(Primary)
@@ -1025,7 +1081,7 @@ describe('Hook', () => {
 				stack.push('Primary', theme)
 
 				return h(Context, {value: state}, h('button', {}, theme, children))
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Secondary = memo(() => {
 				const [theme, setTheme] = useContext(Primary)
@@ -1033,11 +1089,11 @@ describe('Hook', () => {
 				stack.push('Secondary', theme)
 
 				return h('h1', {}, theme)
-			}, (prev, next) => true)
+			}, () => true)
 
 			const Indirection = memo(({children}) => {
 				return children
-			}, (prev, next) => true)
+			}, () => true)
 
 			render(h(Primary, {}, h(Indirection, {}, h(Indirection, {}, h(Primary, {}, Secondary)))), target, (current) => {
 				assert.deepEqual(stack, ['Primary', 'red', 'Primary', 'red', 'Secondary', 'red'])
@@ -1086,7 +1142,7 @@ describe('Hook', () => {
 
 			const Provider = memo(({children}) => {
 				return h(Context, {
-					value: useResource(props => Promise.resolve('Hello'))
+					value: useResource(() => Promise.resolve('Hello'))
 				}, h('div', {}, children))
 			}, () => true)
 
@@ -1097,7 +1153,7 @@ describe('Hook', () => {
 
 			const Indirection = memo(({children}) => {
 				return children
-			}, (prev, next) => true)
+			}, () => true)
 
 			render(h(Suspense, {fallback: '...'}, h(Provider, {}, h(Indirection, {}, h(Consumer, {}, 'Hello World')))), target, (current) => {
 				done(assert.html(current, '<div><button>Hello</button></div>'))
@@ -1109,7 +1165,7 @@ describe('Hook', () => {
 
 			const Provider = memo(({children}) => {
 				return h(Context, {
-					value: useResource(props => Promise.resolve({json() { return Promise.resolve('Hello') }}))
+					value: useResource(() => Promise.resolve({json() { return Promise.resolve('Hello') }}))
 				}, h('div', {}, children))
 			}, () => true)
 
@@ -1120,10 +1176,37 @@ describe('Hook', () => {
 
 			const Indirection = memo(({children}) => {
 				return children
-			}, (prev, next) => true)
+			}, () => true)
 
 			render(h(Suspense, {fallback: '...'}, h(Provider, {}, h(Indirection, {}, h(Consumer, {}, 'Hello World')))), target, (current) => {
 				done(assert.html(current, '<div><button>Hello</button></div>'))
+			})
+		})
+
+		it('should provide and consume updated resource', (done) => {
+			const target = document.createElement('div')
+
+			const Provider = memo(({children, value}) => {
+				return h(Context, {
+					value: useResource(([value]) => Promise.resolve(value), [value])
+				}, h('div', {}, children))
+			}, () => false)
+
+			const Consumer = memo(({children}) => {
+				const resource = useContext(Provider)
+				return h('button', {}, resource)
+			}, () => true)
+
+			const Indirection = memo(({children}) => {
+				return children
+			}, () => true)
+
+			render(h(Suspense, {fallback: '...'}, h(Provider, {value: 'Hello'}, h(Indirection, {}, h(Consumer, {}, 'Hello World')))), target, (current) => {
+				assert.html(current, '<div><button>Hello</button></div>')
+
+				render(h(Suspense, {fallback: '...'}, h(Provider, {value: 'World'}, h(Indirection, {}, h(Consumer, {}, 'Hello World')))), target, (current) => {
+					done(assert.html(current, '<div><button>World</button></div>'))
+				})
 			})
 		})
 	})

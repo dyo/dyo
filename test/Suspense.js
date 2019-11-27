@@ -236,7 +236,7 @@ describe('Suspense', () => {
 		assert.deepEqual(stack, ['Secondary'])
 	})
 
-	it('should defer and batch a suspensed boundaries updates', (done) => {
+	it('should defer and batch a suspense boundary updates', (done) => {
 		const target = document.createElement('div')
 		const stack = []
 		const Lazy = lazy(() => {
@@ -268,5 +268,100 @@ describe('Suspense', () => {
 		render([h(Primary), h('p', {}, 'Updated')], target, (current) => {
 			assert.html(target, '<p>Tertiary</p>3<p>Updated</p>')
 		})
+	})
+
+	it('should render and update an async component', (done) => {
+		const target = document.createElement('div')
+		const Primary = async function (props) { return props.children }
+
+		render(h(Primary, {}, 1), target, (current) => {
+			assert.html(current, '1')
+
+			render(h(Primary, {}, 2), target, (current) => {
+				done(assert.html(current, '2'))
+			})
+		})
+	})
+
+	it('should render and update an async component import', (done) => {
+		const target = document.createElement('div')
+		const Primary = async function (props) { return {default: props.children} }
+
+		render(h(Primary, {}, 1), target, (current) => {
+			assert.html(current, '1')
+
+			render(h(Primary, {}, 2), target, (current) => {
+				done(assert.html(current, '2'))
+			})
+		})
+	})
+
+	it('should pass props to async import', (done) => {
+		const target = document.createElement('div')
+		const Primary = props => props.children
+
+		render(h(props => Promise.resolve({default: Primary}), {children: 1}), target, (current) => {
+			done(assert.html(current, '1'))
+		})
+	})
+
+	it('should render multiple async children', (done) => {
+		const target = document.createElement('div')
+		const Primary = props => props.children
+
+		render(h(Primary, {}, Promise.resolve('1'), Promise.resolve('2')), target, (current) => {
+			assert.html(current, '12')
+
+			render(h(Primary, {}, Promise.resolve([h('div'), h('h1', {}, '1')])), target, (current) => {
+				done(assert.html(current, '<div></div><h1>1</h1>'))
+			})
+		})
+	})
+
+	it('should not update unmounted async children', () => {
+		const target = document.createElement('div')
+		const Primary = props => props.children
+
+		render(h(Primary, {}, Promise.resolve('1')), target)
+		render(null, target)
+
+		assert.html(target, '')
+	})
+
+	it('should render cached lazy components', (done) => {
+	  const target = document.createElement('div')
+	  const Primary = props => new Promise(resolve => setTimeout(resolve, 600, {default: props => `Primary ${props.value}`}))
+	  const Secondary = props => new Promise(resolve => setTimeout(resolve, 700, {default: props => `Secondary ${props.value}`}))
+
+	  render(h(Suspense, {fallback: 'Load!'}, h(Primary, {value: 'World!'})), target, (current) => {
+	    assert.html(current, 'Primary World!')
+
+	    render(h(Suspense, {fallback: 'Load!'}, h(Secondary, {value: 'Earth!'})), target, (current) => {
+	      assert.html(current, 'Secondary Earth!')
+
+	      render(h(Suspense, {fallback: 'Load!'}, h(Primary, {value: 'World!'})), target, (current) => {
+	        done(assert.html(current, 'Primary World!'))
+	      })
+	    })
+	  })
+
+	  assert.html(target, '<noscript></noscript>Load!')
+	})
+
+	it('should use an async render callback', (done) => {
+	  const target = document.createElement('div')
+	  const stack = []
+	  const Primary = props => Promise.resolve(1)
+
+	  render(h(Primary), target, async (current) => {
+	    stack.push(1)
+	    await new Promise(resolve => setTimeout(resolve, 100))
+	    stack.push(2)
+	  }).then((current) => {
+	    stack.push(3)
+	  }).then((current) => {
+	  	assert.html(current, '1')
+	    done(assert.deepEqual(stack, [1, 2, 3]))
+	  })
 	})
 })

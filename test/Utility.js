@@ -10,9 +10,9 @@ describe('Utility', () => {
 	before(() => globalThis.requestAnimationFrame = ''), after(() => globalThis.requestAnimationFrame = requestAnimationFrame)
 
 	it('should support iterator fallbacks', async () => {
-		const {syncIterator, asyncIterator} = await import('../src/Utility.js?0')
+		const {iterator} = await import('../src/Utility.js?0')
 
-		assert.deepEqual([syncIterator, asyncIterator], ['@@iterator', '@@asyncIterator'])
+		assert.deepEqual([iterator], ['@@iterator'])
 	})
 
 	it('should support deferred polyfill initialization', async () => {

@@ -115,15 +115,16 @@ export function content (element, value) {
  * @param {object} value
  */
 export function props (element, value) {
-	properties(element, value, element.value)
+	properties(element, value, element.value, true)
 }
 
 /**
  * @param {object} element
  * @param {object} value
  * @param {object} instance
+ * @param {boolean} active
  */
-export function properties (element, value, instance)  {
+export function properties (element, value, instance, active)  {
 	if (value !== null) {
 		for (var key in value) {
 			switch (key) {
@@ -132,7 +133,7 @@ export function properties (element, value, instance)  {
 				case 'key': case 'children':
 					break
 				default:
-					Interface.properties(key, value[key], instance, element)
+					Interface.properties(key, value[key], instance, element, active)
 			}
 		}
 	}

@@ -73,7 +73,7 @@ In co-ordination with custom renderers, portals afford the opportunity to create
 Promises(or thenables) are first class values. This affords authors the ability to render promises, directly await promises within effects and events, and delay unmounting.
 
 ```js
-render(h(Promise.resolve('Hello'), {}, 'Loading...'))
+render(props => Promise.resolve('Hello'), 'body')
 
 function Example (props) {
 	useEffect(async () => {
@@ -93,23 +93,7 @@ function Example (props) {
 In an async world, public interfaces like `render` are not guaranteed to complete synchronously if a subtree happens to have async dependencies within it. A consequence of this will see more use cases for the optional `callback` arguments that this function accepts – in much the same way authors are afforded the ability to await on this central routine.
 
 ```js
-await render(h(Promise.resolve('Hello')))
-
-console.log('Done')
-```
-
-##### Async Generators
-
-In addition to the iterator protocol, supports for the async iterator protocol is baked in – every iteration is a step in the sequence of state transitions, modeled to afford authors the primitive to implement pseudo-synchronous designs from otherwise asynchronous application interfaces.
-
-The following would first render `Loading...` fetch the resource `./` then render the stringified response.
-
-```js
-async function* Example (props) {
-	yield 'Loading...'
-	const data = await fetch('./')
-	yield h('pre', JSON.stringify(data))
-}
+await render(props => Promise.resolve('Hello'), 'body')
 ```
 
 ##### Resources
@@ -128,16 +112,13 @@ function Example (props) {
 Server side rendering supports the plethora of async primitives supported.
 
 ```js
-import {h, useResource} from 'dyo'
+import {http} from 'http'
+import {h, render, useResource} from 'dyo'
 
 function Example (props) {
 	const resource = useResource(props => fetch('https://reqres.in/api/users'))
-	
 	return h('pre', {}, JSON.stringify(resource))
 }
-
-import {http} from 'http'
-import {render} from 'dyo/server'
 
 http.createServer((request, response) => {
 	return render(h('html', {}, h(Example)), response)

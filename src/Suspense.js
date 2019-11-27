@@ -22,7 +22,7 @@ export function lazy (value) {
  * @return {object}
  */
 export function find (element) {
-	return element.identity !== Enum.component || element.owner === null ? element : find(element.host)
+	return element.identity !== Enum.component || element.owner === undefined ? element : find(element.host)
 }
 
 /**
@@ -40,7 +40,7 @@ export function suspense (props) {
  * @return {object}
  */
 export function forward (element, props, stack) {
-	return stack === null ? [props.children, element.owner = null] : request(element, stack)
+	return stack === null ? [props.children, element.owner = undefined] : request(element, stack)
 }
 
 /**
@@ -64,7 +64,7 @@ export function dispatch (fiber, host, element, message) {
 function resolve (fiber, host, parent, element, children, message) {
 	enqueue(fiber, host, parent, element, children, Utility.resolve(message, function (value) {
 		try {
-			return message[0] = value
+			return message[0] = Utility.extract(value)
 		} finally {
 			Schedule.execute(fiber, element, function (fiber, element) {
 				Component.resolve(fiber, element.value = element, element.props, element.children)

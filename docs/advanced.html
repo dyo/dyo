@@ -39,7 +39,7 @@
 			<li>Empty(as null/undefined/booleans)</li>
 			<li>Portals</li>
 			<li>Promises</li>
-			<li>Iterators/AsyncIterators</li>
+			<li>Iterators</li>
 		</ol>
 
 		<h1 id=events-arrays>Events Arrays</h1>
@@ -101,21 +101,23 @@ function Example (props) {
 		<p>Into the writable stream &mdash; the response object.</p>
 
 <pre><code>
-import {h} from 'dyo'
+import {http} from 'http'
+import {h, render} from 'dyo/server'
 
 function Example (props) {
 	return Promise.resolve(h('h1', {}, 'Hello'))
 }
-
-import {http} from 'http'
-import {render} from 'dyo/server'
 
 http.createServer((req, res) => {
 	return render(h('html', {}, h(Example)), res)
 }).listen(8080)
 </code></pre>
 
-		<p>The server renderer has built-in support to in addition render to response objects that share similarities to <a href=https://expressjs.com/>Express</a> with its <code>send(...)</code> method and or <a href=https://koajs.com>Koa</a> with its <code>body</code> setter style interface and does not specifically rely on <a href=https://nodejs.org>Node.js</a> as a runtime.</p>
+		<p>The server renderer has built-in support to in addition render to response objects that share similarities to <a href=https://expressjs.com/>Express</a> with its <code>send(...)</code> method <a href=https://koajs.com>Koa</a> with its <code>body</code> setter style interface and does not specifically rely on <a href=https://nodejs.org>Node.js</a> as a runtime.</p>
+
+<pre><code>
+const html = await render(h('html', {}, h(Example)), {})
+</code></pre>
 
 		<p>This in effect makes re-useing components in an <a href=https://en.wikipedia.org/wiki/Isomorphic_JavaScript>isomorphic</a> application less prone to the kind of friction posed with building isomorphic applications.</p>
 

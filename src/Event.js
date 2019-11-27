@@ -62,7 +62,9 @@ export function enqueue (fiber, element, value, props, callback) {
  * @param {object} value
  */
 export function dequeue (fiber, element, value) {
-	Schedule.suspend(fiber, value, function () { return element.value }, Exception.throws(fiber, element))
+	Schedule.suspend(fiber, value, function () {
+		return element.value
+	}, Exception.throws(fiber, element))
 }
 
 /**
@@ -71,5 +73,9 @@ export function dequeue (fiber, element, value) {
  * @return {object}
  */
 export function request (element, callback) {
-	return Utility.respond(function () { return Schedule.checkout(function () { callback(element) }, element, element, element, null) })
+	return Utility.respond(function () {
+		return Schedule.checkout(function () {
+			callback(element)
+		}, element, element, element, null)
+	})
 }

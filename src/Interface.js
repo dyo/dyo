@@ -22,7 +22,7 @@ export var struct = Utility.extend(function document () {
 	setAttribute: {value: self},
 	removeAttribute: {value: self},
 	style: {value: {setProperty: self}}
-})
+}, null)
 
 /**
  * @type {object}
@@ -181,8 +181,9 @@ export function context (name, value) {
  * @param {any} value
  * @param {object} instance
  * @param {object} handler
+ * @param {boolean} active
  */
-export function properties (name, value, instance, handler) {
+export function properties (name, value, instance, handler, active) {
 	if (name === 'style') {
 		if (typeof value === 'object') {
 			return stylesheet(name, value, instance[name])
@@ -196,7 +197,7 @@ export function properties (name, value, instance, handler) {
 		}
 
 		if (name in instance) {
-			return property(name, value, instance)
+			return property(name, value, instance, active)
 		}
 	}
 
@@ -208,18 +209,24 @@ export function properties (name, value, instance, handler) {
  * @param {any} value
  * @param {object} instance
  */
-export function property (name, value, instance) {
-	try {
-		switch (value) {
-			case false: case null: case undefined:
-				switch (typeof instance[name]) {
-					case 'string':
-						return property(name, '', instance)
-					case 'boolean':
-						value = false
-				}
-		}
+export function property (name, value, instance, active) {
+	switch (value) {
+		case false: case null: case undefined:
+			switch (typeof instance[name]) {
+				case 'string':
+					return property(name, '', instance, active)
+				case 'boolean':
+					value = false
+			}
+	}
 
+	if (active) {
+		if (value === instance[name]) {
+			return
+		}
+	}
+
+	try {
 		instance[name] = value
 	} catch (error) {
 		attribute(name, value, instance)

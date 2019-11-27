@@ -2,6 +2,7 @@ import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Event from './Event.js'
 import * as Children from './Children.js'
+import * as Suspense from './Suspense.js'
 
 /**
  * @constructor
@@ -26,7 +27,7 @@ export var struct = Utility.extend(function element (identity, key, type, props,
 	this.stack = null
 }, {
 	handleEvent: {value: Event.handle}
-})
+}, null)
 
 /**
  * @param {number} value
@@ -50,15 +51,6 @@ export function empty () {
  */
 export function text (value, index) {
 	return new struct(Enum.text, hash(index), '', null, value)
-}
-
-/**
- * @param {PromiseLike<any>} value
- * @param {number} index
- * @return {object}
- */
-export function thenable (value, index) {
-	return new struct(Enum.thenable, hash(index), value, null, [empty()])
 }
 
 /**
@@ -129,18 +121,6 @@ export function display (value) {
 /**
  * @param {any} value
  * @param {number} index
- * @return {Promise}
- */
-export function generator (value, index) {
-	return thenable(Utility.create(value, {
-		iter: {value: Utility.iterator(value)},
-		then: {value: function (fulfilled, rejected) { return this.iter.next().then(fulfilled, rejected) }},
-	}), index)
-}
-
-/**
- * @param {any} value
- * @param {number} index
  * @return {object}
  */
 export function fragment (value, index) {
@@ -162,14 +142,12 @@ export function from (value, index, props) {
 		case 'object':
 			if (value !== null) {
 				if (Utility.keyable(value)) {
-					if (Utility.isArray(value)) {
+					if (Utility.indexable(value)) {
 						return fragment(value, index)
 					} else if (Utility.iterable(value)) {
 						return fragment(Children.array(value), index)
-					} else if (Utility.asyncIterable(value)) {
-						return generator(value, index)
 					} else if (Utility.thenable(value)) {
-						return thenable(value, index)
+						return create(Suspense.lazy(value), props)
 					}
 				} else {
 					return value
@@ -182,7 +160,7 @@ export function from (value, index, props) {
 
 /**
  * @param {(string|number|function|PromiseLike<any>?} type
- * @param {({key?,ref?})?} config
+ * @param {({key?,ref?})?} props
  * @param {...any?}
  * @return {object}
  */
@@ -204,7 +182,7 @@ export function create (type, props) {
 
 	switch (typeof type) {
 		case 'object':
-			identity = type === Enum.fragment ? Enum.iterable : Enum.thenable, children[index] = empty()
+			identity = Enum.iterable, children[index] = empty()
 			break
 		case 'function':
 			identity = Enum.component
@@ -275,13 +253,4 @@ export function sibling (element) {
  */
 export function children (element) {
 	return element.children[0]
-}
-
-/**
- * @param {object?} element
- * @param {object} value
- * @return {object}
- */
-export function resolve (element, value) {
-	return from(typeof element === 'object' && element !== null && 'default' in element ? element.default : element, 0, value)
 }

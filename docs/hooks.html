@@ -150,15 +150,16 @@ render(h(Provider, {}, h(Consumer)), document)
 
 <pre><code>
 useResource(
-	callback: function
+	callback: function,
+	dependencies?: Array&lt;any>
 )
 </code></pre>
 
-		<p>Where "callback" would provide the promise that resolves to the resource value.</p>
+		<p>Where "callback" would provide the promise that resolves to the resource value, and "dependencies" is an optional array listing the values the resource depends on, insuring that when the values change the resource fetch is replayed. By default no dependencies indicates that the resource has no dependencies, resulting on only one fetch through the life of the resource bucket.</p>
 
 <pre><code>
 function Consumer (props) {
-	const resource = useResource(props => {
+	const resource = useResource(([]) => {
 		return fetch('reqres.in/api/users/2')
 	})
 }
@@ -167,10 +168,10 @@ function Consumer (props) {
 		<p>Putting this together in an example:</p>
 
 <pre><code>
-function Consumer (props) {
-	const resource = useResource(props => {
-		return fetch('reqres.in/api/users/2')
-	})
+function Consumer ({page}) {
+	const resource = useResource(([page]) => {
+		return fetch('reqres.in/api/users/' + page)
+	}, [page])
 
 	return JSON.stringify(resource, null, 2)
 }
@@ -180,7 +181,7 @@ render(h(Suspense, {}, h(Consumer)), document)
 
 		<p>Both the <a href=#useResource>useResource</a> and <a href=#useContext>useContext</a> hooks can be employed in conjunction to afford access to a resource from any number of layers deep within a tree as long as there is an ancestor resource context provider.</p>
 
-		<blockquote>Note that "useResource" expects a suspense boundary ancestor somewhere within the tree.</blockquote>
+		<blockquote>Note that "useResource" optimally expects a suspense boundary ancestor somewhere within the tree.</blockquote>
 
 		<h1 id=useEffect>useEffect</h1>
 
@@ -199,7 +200,7 @@ useEffect(
 function Example (props) {
 	useEffect(() => {
 		console.log('Hello')
-	})
+	}, [{}])
 }
 </code></pre>
 
@@ -289,21 +290,21 @@ const memoized = useMemo(([a, b]) => compute(a, b), [a, b])
 const memoized = useMemo(() => compute(1, 2), [])
 </code></pre>
 
-		<p>Like effects if no dependencies array is provided, a new memoized value will be computed on every render, and like effects if dependencies are provided, then they are also accessible through the first tuple argument.</p>
+		<p>The same can be said if no dependencies array is provided, it is treated as an empty dependencies array.</p>
 
 <pre><code>
-const memoized = useMemo(([a, b]) => compute(a, b), [a, b])
+useMemo(() => compute(1, 2)) === useMemo(() => compute(1, 2), [])
 </code></pre>
 
 		<h1 id=useCallback>useCallback</h1>
 
-		<p>Returns a stable memoized callback.</p>
+		<p>Returns a memoized callback.</p>
 
 <pre><code>
-const callback = useCallback((...args) => compute(...args))
+const callback = useCallback(([...args]) => compute(...args), [...args])
 </code></pre>
 
-		<p>Unlike <a href=useMemo>useMemo</a> the returned function is guarenteed to always be a "stable" function reference.</p>
+		<p>Like <a href=useMemo>useMemo</a> not providing the dependencies array acts like it would if an empty array was provided.</p>
 	</article>
 </body>
 </html>

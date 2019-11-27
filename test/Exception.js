@@ -8,6 +8,7 @@ describe('Exception', () => {
 		assert.throws(() => {
 			render(function Primary () { throw 'error!' }, target, () => stack.push('error!'))
 		}, 'error!')
+
 		assert.deepEqual(stack, ['Exception: error!\n'])
 	})
 
@@ -18,6 +19,7 @@ describe('Exception', () => {
 		assert.throws(() => {
 			render(function Primary () { return function Secondary () { throw 'error!' } }, target)
 		}, 'error!')
+
 		assert.deepEqual(stack, ['Exception: error!\n\tat <Primary>\n'])
 	})
 
@@ -28,6 +30,7 @@ describe('Exception', () => {
 		assert.throws(() => {
 			render(props => props => { throw 'error!' }, target)
 		}, 'error!')
+
 		assert.deepEqual(stack, ['Exception: error!\n\tat <anonymous>\n'])
 	})
 
@@ -86,22 +89,6 @@ describe('Exception', () => {
 
 		assert.html(target, 'preserve')
 		assert.deepEqual(stack, ['Exception: error!\n\tat <Primary>\n\tat <Secondary>\n'])
-	})
-
-	it('should throw within promise', (done) => {
-		const target = document.createElement('div')
-		const stack = assert.spyr(console, 'error')
-		const Primary = props => {
-			return stack.current = Promise.reject()
-		}
-
-		render(h(Primary), target, () => {}).then((current) => {
-			stack.push('error')
-		})
-
-		stack.current.catch((error) => {
-			done(assert.deepEqual(stack, ['Exception: undefined\n\tat <Primary>\n']))
-		})
 	})
 
 	it('should use error boundary fallback in the event of an exception', () => {
@@ -174,23 +161,6 @@ describe('Exception', () => {
 		})
 	})
 
-	it('should catch errors raised from promise elements', (done) => {
-		const target = document.createElement('div')
-		const stack = []
-		const Primary = props => {
-			return h(Boundary, {fallback: props => stack.push(props)}, h(Secondary))
-		}
-		const Secondary = props => {
-			return h(Promise.reject(1))
-		}
-
-		render(h(Primary), target, (current) => {
-			assert.html(current, '1')
-		}).then((current) => {
-			done(assert.deepEqual(stack, [{message: 1, bubbles: false}]))
-		})
-	})
-
 	it('should recover from error boundary in the event of an exception', () => {
 		const target = document.createElement('div')
 		const Primary = props => {
@@ -205,5 +175,64 @@ describe('Exception', () => {
 		render(h('div', {}, h(Primary)), target, (current) => {
 			assert.html(current, '<div>1</div>')
 		})
+	})
+
+	it('should throw within promise', (done) => {
+		const target = document.createElement('div')
+		const stack = assert.spyr(console, 'error')
+		const Primary = props => {
+			return stack.current = Promise.reject(1)
+		}
+
+		render(h(Primary), target, () => {}).then((current) => {
+			stack.push('error')
+		})
+
+		stack.current.catch((error) => {
+		  done(assert.deepEqual(stack, ['Exception: 1\n\tat <Primary>\n\tat <anonymous>\n']))
+		})
+	})
+
+	it('should catch errors raised from promise elements', (done) => {
+		const target = document.createElement('div')
+		const stack = []
+		const Primary = props => {
+			return h(Boundary, {fallback: props => stack.push(props)}, h(Secondary))
+		}
+		const Secondary = props => {
+			return Promise.reject(1)
+		}
+
+		render(h(Primary), target, (current) => {
+			assert.html(current, '1')
+		}).then((current) => {
+			done(assert.deepEqual(stack, [{message: 1, bubbles: false}]))
+		})
+	})
+
+	it('should async catch exceptions', (done) => {
+	  const target = document.createElement('div')
+		const stack = assert.spyr(console, 'error')
+	  const Primary = props => {
+	    return h('div', {}, Promise.reject('x'))
+	  }
+
+	  render(h(Primary), target).then(null, (current) => {
+	    done(assert.equal(current, 'x'))
+	  })
+	})
+
+	it('should not async catch exceptions', (done) => {
+	  const target = document.createElement('div')
+		const stack = assert.spyr(console, 'error')
+	  const Primary = props => {
+	    return h('div', {}, Promise.resolve('x'))
+	  }
+
+	  render(h(Primary), target).then((current) => {
+	    done(assert.html(current, '<div>x</div>'))
+	  }, (current) => {
+	    assert.fail()
+	  })
 	})
 })
