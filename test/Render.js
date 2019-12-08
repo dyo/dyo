@@ -277,7 +277,7 @@ describe('Render', () => {
 
 	it('should fail gracefully when trying to set readonly properties', () => {
 		render(h('h2', {}), target, ({firstChild}) => {
-			Object.defineProperty(firstChild, 'invalid', {set: () => { throw refs.value = true }})
+			Object.defineProperty(firstChild, 'invalid', {get: () => '', set: () => { throw refs.value = true }})
 
 			render(h('h2', {invalid: true}), target, (current) => {
 				assert.equal(refs.value, true)
@@ -291,6 +291,16 @@ describe('Render', () => {
 
 			render(h('h2', {style: {'-webkit-border-radius': '20px'}}), target, (current) => {
 				assert.equal(refs.current, '20px')
+			})
+		})
+	})
+
+	it('should not update properties when synchronized with same rendered counterpart', () => {
+		render(h('h2', {}), target, ({firstChild}) => {
+			Object.defineProperty(firstChild, 'valid', {get: () => true, set: () => { throw refs.value = false }})
+
+			render(h('h2', {valid: true}), target, (current) => {
+				assert.equal(refs.value, true)
 			})
 		})
 	})

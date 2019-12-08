@@ -296,7 +296,7 @@ export function request (fiber, target, callback, value) {
 export function respond (fiber, target, callback) {
 	var queue = fiber.queue
 	var stack = fiber.queue = null
-	var value = (stack = queue[Enum.request]).length !== 0 ? Utility.request(stack) : null
+	var value = (stack = queue[Enum.request]).length !== 0 ? Utility.respond(stack) : null
 	var index = (stack = queue[Enum.respond]).length
 
 	if (index !== 0) {

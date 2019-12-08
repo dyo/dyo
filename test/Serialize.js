@@ -1,4 +1,4 @@
-import {h, render, useState, useEffect, useLayout, useResource, Suspense} from '../index.js'
+import {h, render, useState, useEffect, useLayout, useResource, Suspense, Portal} from '../index.js'
 
 describe('Serialize', () => {
 	it('should write to non-wrtiable', () => {
@@ -180,6 +180,14 @@ describe('Serialize', () => {
 
 		render(props => Promise.resolve([h('div'), h('h1', {}, '1')]), target, (current) => {
 			assert.html(current, '<div></div><h1>1</h1>')
+		})
+	})
+
+	it('should serialize portal', () => {
+		const target = new Writable
+
+		render(h('div', {}, h(Portal, {}, h('h1', {}, 1))), target, (current) => {
+			assert.html(current, '<div><noscript><h1>1</h1></noscript></div>')
 		})
 	})
 })

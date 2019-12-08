@@ -73,7 +73,7 @@ export function dequeue (fiber, element, value) {
  * @return {object}
  */
 export function request (element, callback) {
-	return Utility.respond(function () {
+	return Utility.resolve(Promise.resolve(element), function (element) {
 		return Schedule.checkout(function () {
 			callback(element)
 		}, element, element, element, null)

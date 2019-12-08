@@ -1,7 +1,8 @@
 ## 2.0.0 (Unreleased)
 
 - Add optional dependencies array argument for `useResource` hook.
-- When components are oure adjust the reconciler to take a shorter path to reconcile when changing from one to the next.
+- Support portal props, for example h(Portal, {class: 'home'})
+- Support string ref callbacks, for example `h('video', {ref: pause ? 'pause' : 'play'})`
 - Better align the default dependencies for `useMemo` and `useCallback`.
 - Merge `/server` into main package (breaking).
 - Remove async generators (breaking).

@@ -131,28 +131,4 @@ describe('Component', () => {
 			assert.html(current, '12')
 		})
 	})
-
-	it('should update pure component', () => {
-		const target = document.createElement('div')
-
-		render(props => h('h1', {}, 1), target, (current) => {
-			assert.html(current, '<h1>1</h1>')
-
-			render(props => h('h1', {}, 2), target, (current) => {
-				assert.html(current, '<h1>2</h1>')
-			})
-		})
-	})
-
-	it('should replace impure component', () => {
-		const target = document.createElement('div')
-
-		render(props => useMemo(() => h('h1', {}, 1)), target, (current) => {
-			assert.html(current, '<h1>1</h1>')
-
-			render(props => h('h1', {}, 2), target, (current) => {
-				assert.html(current, '<h1>2</h1>')
-			})
-		})
-	})
 })

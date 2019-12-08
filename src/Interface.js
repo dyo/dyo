@@ -130,7 +130,11 @@ export function initialize (parent) {
  * @param {object} element
  */
 export function remove (parent, element) {
-	parent.removeChild(element)
+	try {
+		parent.removeChild(element)
+	} finally {
+		return
+	}
 }
 
 /**
@@ -180,56 +184,60 @@ export function context (name, value) {
  * @param {string} name
  * @param {any} value
  * @param {object} instance
- * @param {object} handler
+ * @param {object} current
  * @param {boolean} active
  */
-export function properties (name, value, instance, handler, active) {
+export function properties (name, value, instance, current, active) {
 	if (name === 'style') {
 		if (typeof value === 'object') {
-			return stylesheet(name, value, instance[name])
+			stylesheet(name, value, instance[name])
+		} else {
+			attribute(name, value, instance)
 		}
 	} else {
 		switch (typeof value) {
 			case 'object': case 'function':
 				if (valid(name)) {
-					return event(name.substr(2).toLowerCase(), value, instance, handler, handler.state)
+					return event(name.substr(2).toLowerCase(), value, instance, current, current.state ? current.state : current.state = {})
 				}
 		}
 
-		if (name in instance) {
-			return property(name, value, instance, active)
-		}
+		property(name, value, instance, instance[name], active)
 	}
-
-	attribute(name, value, instance)
 }
 
 /**
  * @param {string} name
  * @param {any} value
  * @param {object} instance
+ * @param {any} current
+ * @param {boolean} active
  */
-export function property (name, value, instance, active) {
-	switch (value) {
-		case false: case null: case undefined:
-			switch (typeof instance[name]) {
-				case 'string':
-					return property(name, '', instance, active)
-				case 'boolean':
-					value = false
-			}
-	}
-
-	if (active) {
-		if (value === instance[name]) {
-			return
-		}
-	}
-
-	try {
-		instance[name] = value
-	} catch (error) {
+export function property (name, value, instance, current, active) {
+	if (current === undefined) {
 		attribute(name, value, instance)
+	} else {
+		switch (value) {
+			case false: case null: case undefined:
+				switch (typeof current) {
+					case 'string':
+						return property(name, '', instance, active)
+					case 'boolean':
+						value = false
+				}
+		}
+
+		if (active) {
+			if (value === current) {
+				return
+			}
+		}
+
+		try {
+			instance[name] = value
+		} catch (error) {
+			attribute(name, value, instance)
+		}
 	}
 }
 
@@ -259,7 +267,7 @@ export function attribute (name, value, instance) {
  * @param {object} instance
  */
 export function stylesheet (name, value, instance) {
-	if (value) {
+	if (value !== null) {
 		for (var key in value) {
 			declaration(key, value[key], instance)
 		}
@@ -274,7 +282,7 @@ export function stylesheet (name, value, instance) {
 export function declaration (name, value, instance) {
 	switch (value) {
 		case false: case null: case undefined:
-			return declaration(name, '', instance)
+			value = ''
 	}
 
 	if (name in instance) {
@@ -288,18 +296,18 @@ export function declaration (name, value, instance) {
  * @param {string} name
  * @param {string} value
  * @param {object} instance
- * @param {object} handler
- * @param {object} handlers
+ * @param {object} current
+ * @param {object} state
  */
-export function event (name, value, instance, handler, handlers) {
-	if (handlers) {
-		if (handlers[name] === undefined) {
-			instance.addEventListener(name, handler, false)
+export function event (name, value, instance, current, state) {
+	try {
+		if (state[name] == null) {
+			instance.addEventListener(name, current, false)
+		} else if (value == null) {
+			instance.removeEventListener(name, current, false)
 		}
-
-		handlers[name] = value
-	} else {
-		event(name, value, instance, handler, handler.state = {})
+	} finally {
+		return state[name] = value
 	}
 }
 
@@ -309,4 +317,12 @@ export function event (name, value, instance, handler, handlers) {
  */
 export function valid (name) {
 	return name.charCodeAt(0) === 111 && name.charCodeAt(1) === 110
+}
+
+/**
+ * @param {string} name
+ * @return {function}
+ */
+export function callback (name) {
+	return function (instance) { instance[name]() }
 }

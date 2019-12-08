@@ -88,24 +88,8 @@ export var promise = typeof Promise === 'function' ? Promise : function (callbac
  * @param {function} callback
  * @return {object}
  */
-export function request (value) {
-	return new promise(function (resolve) { animation(function () { resolve(value) }) })
-}
-
-/**
- * @param {function} callback
- * @return {object}
- */
-export function respond (callback) {
-	return request(callback).then(callback)
-}
-
-/**
- * @param {function} callback
- * @return {number}
- */
-export function animation (callback) {
-	return typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) : setTimeout(callback, 16)
+export function respond (value) {
+	return new promise(function (resolve) { timeout(function () { resolve(value) }, 16) })
 }
 
 /**

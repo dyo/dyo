@@ -130,7 +130,7 @@ export function properties (element, value, instance, active)  {
 			switch (key) {
 				case 'ref':
 					refs(element, value[key], instance)
-				case 'key': case 'children':
+				case 'key': case 'target': case 'children':
 					break
 				default:
 					Interface.properties(key, value[key], instance, element, active)
@@ -160,8 +160,10 @@ export function reference (element, value, instance) {
 	if (value !== null) {
 		if (Utility.callable(value)) {
 			Schedule.callback(element, instance, value)
-		} else {
+		} else if (Utility.keyable(value)) {
 			value.current = instance
+		} else if (instance !== null && typeof value === 'string') {
+			Schedule.callback(element, instance, Interface.callback(value))
 		}
 	}
 }

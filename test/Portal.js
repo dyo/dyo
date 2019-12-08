@@ -115,4 +115,44 @@ describe('Portal', () => {
 			assert.equal(current.children[1], refs)
 		})
 	})
+
+	it('should render and remove properties on portal target', () => {
+		render(h('div', {}, h(Portal, {key: 1, target: portal, class: 'abc'},
+			h('h1', {key: 1}, 1)
+		)), target, (current) => {
+			assert.html(parent, '<main><div></div></main><aside class="abc"><h1>1</h1></aside>')
+
+			render(null, target, (current) => {
+				assert.html(parent, '<main></main><aside></aside>')
+			})
+		})
+	})
+
+	it('should render and remove events on portal target', () => {
+		const stack = []
+
+		render(h('div', {}, h(Portal, {key: 1, target: portal, onClick: e => stack.push(e.type)},
+			h('h1', {key: 1}, 1)
+		)), target, (current) => {
+			assert.html(parent, '<main><div></div></main><aside><h1>1</h1></aside>')
+			portal.dispatchEvent(new Event('click'))
+			assert.deepEqual(stack, ['click'])
+
+			render(null, target, (current) => {
+				assert.html(parent, '<main></main><aside></aside>')
+				portal.dispatchEvent(new Event('click'))
+				assert.deepEqual(stack, ['click'])
+			})
+		})
+	})
+
+	it('should render a portal to default target', () => {
+		render(h('div', {}, h(Portal, {target: 'html'}, h('h1', {}, 1))), target, (current) => {
+			assert.html(document.documentElement, '<head></head><body><main><div></div></main><aside></aside></body><h1>1</h1>')
+
+			render(null, target, (current) => {
+				assert.html(document.documentElement, '<head></head><body><main></main><aside></aside></body>')
+			})
+		})
+	})
 })

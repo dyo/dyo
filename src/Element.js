@@ -71,12 +71,22 @@ export function container (value) {
 }
 
 /**
- * @param {!any} value
- * @param {object} type
+ * @param {function} type
+ * @param {object?} props
  * @return {object}
  */
-export function target (value, type, key) {
-	return new struct(Enum.target, key, type, null, [container(value)])
+export function component (type, props) {
+	return new struct(Enum.component, Enum.identifier, type, props, [])
+}
+
+/**
+ * @param {!any} value
+ * @param {object} type
+ * @param {object?} props
+ * @return {object}
+ */
+export function target (value, type, props) {
+	return new struct(Enum.target, Enum.identifier, type, props, [container(value)])
 }
 
 /**
@@ -84,7 +94,7 @@ export function target (value, type, key) {
  * @return {object}
  */
 export function portal (value) {
-	return new struct(Enum.portal, null, null, null, [target(value.children, value.target, null)])
+	return new struct(Enum.portal, null, null, null, [target(value.children, value.target || ':root', value)])
 }
 
 /**
@@ -147,7 +157,7 @@ export function from (value, index, props) {
 					} else if (Utility.iterable(value)) {
 						return fragment(Children.array(value), index)
 					} else if (Utility.thenable(value)) {
-						return create(Suspense.lazy(value), props)
+						return component(Suspense.lazy(value), props)
 					}
 				} else {
 					return value

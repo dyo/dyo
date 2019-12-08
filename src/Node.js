@@ -3,6 +3,7 @@ import * as Element from './Element.js'
 import * as Component from './Component.js'
 import * as Exception from './Exception.js'
 import * as Lifecycle from './Lifecycle.js'
+import * as Reconcile from './Reconcile.js'
 import * as Interface from './Interface.js'
 import * as Schedule from './Schedule.js'
 import * as Commit from './Commit.js'
@@ -85,7 +86,9 @@ export function destroy (fiber, parent, element, current) {
 					case Enum.fallback:
 						return Schedule.commit(fiber, Enum.unmount, element, current ? current.parent : element, element, element)
 					case Enum.target:
-						return Schedule.commit(fiber, Enum.unmount, element, element, element, element)
+						Schedule.commit(fiber, Enum.props, element, element, element, Reconcile.object(element.props, {}))
+						Schedule.commit(fiber, Enum.unmount, element, element, element, element)
+						return
 					case Enum.element:
 						if (element.stack !== null) {
 							Commit.refs(element, null, null)
@@ -113,7 +116,8 @@ export function destroy (fiber, parent, element, current) {
  * @param {object[]} children
  */
 export function dispatch (fiber, host, parent, element, current, children) {
-	return Schedule.commit(fiber, Enum.mount, host, element, create(fiber, host, element, children[0], null), undefined)
+	Schedule.commit(fiber, Enum.props, host, element, element, element.props)
+	Schedule.commit(fiber, Enum.mount, host, element, create(fiber, host, element, children[0], null), undefined)
 }
 
 /**

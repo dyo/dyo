@@ -67,7 +67,7 @@ describe('Event', () => {
 		const target = document.createElement('div')
 		const stack = []
 
-		render(h('button', {onClick: [e => stack.push(e.type), e => stack.push(e.type)]}), target, (current) => {
+		render(h('button', {onClick: [e => stack.push(e.type), null, e => stack.push(e.type)]}), target, (current) => {
 			current.firstChild.dispatchEvent(new Event('click'))
 			assert.deepEqual(stack, ['click', 'click'])
 		})

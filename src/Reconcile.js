@@ -82,10 +82,11 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 		if (element.identity === identity) {
 			switch (element.type = type, identity) {
 				case Enum.target:
+					Schedule.commit(fiber, Enum.props, host, parent, element, object(element.props, {}))
 					Schedule.commit(fiber, Enum.mount, host, element, element, Schedule.commit(fiber, Enum.target, host, element, element, element))
 				case Enum.component:
-					if (a.length === 1) {
-						return update(fiber, host, parent, element, snapshot, element.props = snapshot.props, index)
+					if (element.key === Enum.identifier) {
+						return update(fiber, host, parent, element, snapshot, siblings, index)
 					}
 			}
 		}
