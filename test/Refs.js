@@ -92,17 +92,20 @@ describe('Refs', () => {
 		})
 	})
 
-	it('should execute element string ref callback', async () => {
+	it('should execute element string ref callback', () => {
 		const target = document.createElement('div')
 		const stack = []
 
-		const {firstChild} = await render(h('input', {}), target)
-		firstChild.callback = () => stack.push(true)
+		render(h('input', {}), target, ({firstChild}) => {
+			firstChild.callback = () => stack.push(true)
 
-		await render(h('input', {ref: 'callback'}), target)
-		assert.deepEqual(stack, [true])
+			render(h('input', {ref: 'callback'}), target, (current) => {
+				assert.deepEqual(stack, [true])
 
-		await render(h('input', {}), target)
-		assert.html(target, '<input>')
+				render(h('input', {}), target, (current) => {
+					assert.html(target, '<input>')
+				})
+			})
+		})
 	})
 })

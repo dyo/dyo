@@ -85,11 +85,27 @@ export var iterator = symbol.iterator || '@@iterator'
 export var promise = typeof Promise === 'function' ? Promise : function (callback) { return new Promise(callback) }
 
 /**
+ * @param {any} value
+ * @return {PromiseLike<any>}
+ */
+export function immediate (value) {
+	return new promise(function (resolve) { resolve(value) })
+}
+
+/**
  * @param {function} callback
  * @return {object}
  */
 export function respond (value) {
-	return new promise(function (resolve) { timeout(function () { resolve(value) }, 16) })
+	return new promise(function (resolve) { request(function () { resolve(value) }, 16) })
+}
+
+/**
+ * @param {function} callback
+ * @return {number}
+ */
+export function request (callback) {
+	return requestAnimationFrame(callback)
 }
 
 /**

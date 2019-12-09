@@ -16,14 +16,16 @@ describe('Utility', () => {
 	})
 
 	it('should support deferred polyfill initialization', async () => {
-		const {promise, timeout} = await import('../src/Utility.js?1')
+		const {promise, timeout, request} = await import('../src/Utility.js?1')
 
 		globalThis.Promise = Promise
 		globalThis.setTimeout = setTimeout
+		globalThis.requestAnimationFrame = requestAnimationFrame
 
 		assert.doesNotThrow(() => {
 			assert(new promise(() => {}))
 			assert(timeout(() => {}, 0))
+			assert(request(() => {}, 0))
 		})
 	})
 })

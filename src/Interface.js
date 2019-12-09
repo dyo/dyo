@@ -307,7 +307,7 @@ export function event (name, value, instance, current, state) {
 			instance.removeEventListener(name, current, false)
 		}
 	} finally {
-		return state[name] = value
+		state[name] = value
 	}
 }
 
