@@ -25,7 +25,7 @@ describe('Utility', () => {
 		assert.doesNotThrow(() => {
 			assert(new promise(() => {}))
 			assert(timeout(() => {}, 0))
-			assert(request(() => {}, 0))
+			assert(request(() => {}))
 		})
 	})
 })

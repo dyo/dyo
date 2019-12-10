@@ -130,11 +130,7 @@ export function initialize (parent) {
  * @param {object} element
  */
 export function remove (parent, element) {
-	try {
-		parent.removeChild(element)
-	} finally {
-		return
-	}
+	parent.removeChild(element)
 }
 
 /**
@@ -247,18 +243,14 @@ export function property (name, value, instance, current, active) {
  * @param {object} instance
  */
 export function attribute (name, value, instance) {
-	try {
-		switch (value) {
-			case false: case null: case undefined:
-				return instance.removeAttribute(name)
-			case true:
-				value = name
-		}
-
-		instance.setAttribute(name, value)
-	} finally {
-		return
+	switch (value) {
+		case false: case null: case undefined:
+			return instance.removeAttribute(name)
+		case true:
+			value = name
 	}
+
+	instance.setAttribute(name, value)
 }
 
 /**

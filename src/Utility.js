@@ -97,7 +97,7 @@ export function immediate (value) {
  * @return {object}
  */
 export function respond (value) {
-	return new promise(function (resolve) { request(function () { resolve(value) }, 16) })
+	return new promise(function (resolve) { request(function () { resolve(value) }) })
 }
 
 /**

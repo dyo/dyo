@@ -34,16 +34,16 @@
 	},
 	"devDependencies": {
 		"chai": "4.2.0",
-		"coveralls": "3.0.5",
+		"coveralls": "3.0.9",
 		"dyo": "./",
-		"eslint": "6.0.1",
+		"eslint": "6.7.2",
 		"esm": "3.2.9",
-		"jsdom": "15.1.1",
-		"mocha": "6.1.4",
+		"jsdom": "15.2.1",
+		"mocha": "6.2.2",
 		"nyc": "14.1.1",
-		"rollup": "1.21.4",
+		"rollup": "1.27.9",
 		"rollup-plugin-terser": "5.1.2",
-		"rollup-plugin-size": "0.1.0"
+		"rollup-plugin-size": "0.2.1"
 	},
 	"nyc": {
 		"temp-dir": "./coverage/.nyc_output",
