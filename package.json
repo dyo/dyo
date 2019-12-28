@@ -7,14 +7,15 @@
 	"author": "Sultan Tarimo <sultantarimo@me.com>",
 	"repository": "https://github.com/dyo/dyo",
 	"bugs": "https://github.com/dyo/dyo/issues",
+	"type": "module",
 	"main": "dist/dyo.umd.js",
 	"module": "dist/dyo.esm.js",
+	"exports": "./index.js",
 	"typings": "typings/index.d.ts",
 	"files": [
 		"index.js",
 		"dist/",
 		"src/",
-		"server/",
 		"typings/"
 	],
 	"scripts": {
@@ -23,7 +24,7 @@
 		"test": "nyc npm run spec",
 		"spec": "mocha --harmony --require esm script/test.js --recursive test",
 		"coverage": "nyc report --reporter=text-lcov | coveralls",
-		"build": "npm run bundle -- --configSrc ./ && npm run bundle -- --configSrc ./server",
+		"build": "npm run bundle -- --configSrc ./",
 		"bundle": "rollup --config script/build.js",
 		"prepare": "npm run build",
 		"postversion": "git push --follow-tags && npm publish",
@@ -33,16 +34,16 @@
 	},
 	"devDependencies": {
 		"chai": "4.2.0",
-		"coveralls": "3.0.5",
+		"coveralls": "3.0.9",
 		"dyo": "./",
-		"eslint": "6.0.1",
+		"eslint": "6.7.2",
 		"esm": "3.2.9",
-		"jsdom": "15.1.1",
-		"mocha": "6.1.4",
+		"jsdom": "15.2.1",
+		"mocha": "6.2.2",
 		"nyc": "14.1.1",
-		"rollup": "1.17.0",
-		"rollup-plugin-terser": "5.1.1",
-		"rollup-plugin-size": "0.1.0"
+		"rollup": "1.27.9",
+		"rollup-plugin-terser": "5.1.2",
+		"rollup-plugin-size": "0.2.1"
 	},
 	"nyc": {
 		"temp-dir": "./coverage/.nyc_output",

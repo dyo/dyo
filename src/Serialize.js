@@ -1,44 +1,67 @@
+import * as Enum from './Enum.js'
+import * as Element from './Element.js'
+import * as Utility from './Utility.js'
+
+/**
+ * @param {object} target
+ * @param {string} payload
+ */
+export function serialize (target, payload) {
+	if (Utility.callable(target.send)) {
+		target.send(payload)
+	} else if (Utility.callable(target.end)) {
+		target.end(payload)
+	} else if (Utility.callable(target.write)) {
+		target.write(payload)
+	} else {
+		target.body = payload
+	}
+}
+
 /**
  * @param {object} value
  * @return {string}
  */
-export function element (value) {
+export function stringify (value) {
+	var identity = value.identity
 	var children = value.children
 
-	if (typeof children === 'object') {
-		var type = value.type
-
-		switch (typeof type) {
-			case 'function':
-				return element(children[0])
-			case 'string':
+	if (identity < Enum.text) {
+		switch (identity) {
+			case Enum.portal:
+				return '<' + Enum.offscreen + '>' + stringify(children[0]) + '</' + Enum.offscreen + '>'
+			case Enum.component:
+				return stringify(children[0])
+			case Enum.element:
+				var type = value.type
 				var payload = '<' + type + properties(value.props, children) + '>'
 
 				switch (type.toLowerCase()) {
-					case 'area': case 'base': case 'br': case 'meta': case 'source': case 'keygen':
-					case 'img': case 'col': case 'embed': case 'wbr': case 'track': case 'param':
-					case 'link': case 'input': case 'hr': case '!doctype':
+					case 'br': case 'hr': case 'area': case 'base': case 'meta': case 'source': case 'keygen': case 'input':
+					case 'img': case 'col': case 'wbr': case 'track': case 'param': case 'embed': case 'link': case '!doctype':
 						return payload
+					case 'html':
+						payload = '<!doctype html>' + payload
 				}
 
 				return payload + iterable(children) + '</' + type + '>'
 		}
-	} else {
-		return children
+
+		return iterable(children)
 	}
 
-	return iterable(children)
+	return children
 }
 
 /**
- * @param {object} children
+ * @param {any[]} children
  * @return {string}
  */
 export function iterable (children) {
 	var payload = ''
 
 	for (var i = 0; i < children.length; i++) {
-		payload += element(children[i])
+		payload += stringify(children[i])
 	}
 
 	return payload
@@ -46,7 +69,7 @@ export function iterable (children) {
 
 /**
  * @param {object} props
- * @param {object} children
+ * @param {any[]} children
  * @return {string}
  */
 export function properties (props, children) {
@@ -62,7 +85,7 @@ export function properties (props, children) {
 /**
  * @param {string} name
  * @param {*} value
- * @param {object} children
+ * @param {any[]} children
  * @return {string}
  */
 export function property (name, value, children) {
@@ -72,12 +95,12 @@ export function property (name, value, children) {
 		case 'className':
 			return property('class', value, children)
 		case 'innerHTML':
-			children.splice(0, children.length, {children: value})
-		case 'ref': case 'key':
+			children.splice(0, children.length, Element.text(value, 0))
+		case 'ref': case 'key': case 'children':
 			return ''
 		case 'style':
 			if (value !== null && typeof value === 'object') {
-				payload = style(value)
+				payload = stylesheet(value)
 			}
 	}
 
@@ -100,7 +123,7 @@ export function property (name, value, children) {
  * @param {object} value
  * @return {string}
  */
-export function style (value) {
+export function stylesheet (value) {
 	var payload = ''
 
 	for (var key in value) {

@@ -1,7 +1,6 @@
 import * as Enum from './Enum.js'
 import * as Utility from './Utility.js'
 import * as Element from './Element.js'
-import * as Exception from './Exception.js'
 import * as Schedule from './Schedule.js'
 import * as Node from './Node.js'
 
@@ -29,53 +28,6 @@ export function context (fiber, host, parent, element, identity, children, index
 				}
 			}
 		}
-	}
-}
-
-/**
- * @param {object} fiber
- * @param {object} host
- * @param {any} parent
- * @param {object} element
- * @param {object} snapshot
- * @param {object} type
- * @param {object[]} a
- * @param {object[]} b
- * @return {object}
- */
-export function resolve (fiber, host, parent, element, snapshot, type, a, b) {
-	if (element !== snapshot) {
-		Utility.timeout(function () {
-			element.value = element.value ? null : enqueue(fiber, host, parent, element, snapshot, b, a, [])
-		}, Enum.network)
-	}
-
-	return Schedule.suspend(fiber, type, function (value) {
-		if (element.value = element.type === type) {
-			if (Utility.asyncIterable(type)) {
-				if (!value.done) {
-					return enqueue(fiber, host, parent, element, snapshot, value.value, a, a), resolve(fiber, host, parent, element, snapshot, type, a, b)
-				}
-			} else {
-				enqueue(fiber, host, parent, element, snapshot, value, a, a)
-			}
-		}
-	}, Exception.throws(fiber, host))
-}
-
-/**
- * @param {object} fiber
- * @param {object} host
- * @param {object} parent
- * @param {object} element
- * @param {object} snapshot
- * @param {(object|object[])} value
- * @param {object[]} a
- * @param {object[]} b
- */
-export function enqueue (fiber, host, parent, element, snapshot, value, a, b) {
-	if (Element.active(element)) {
-		children(fiber, host, parent, a, a === b ? [Element.resolve(value, snapshot.props), Element.empty()] : value, 0)
 	}
 }
 
@@ -122,8 +74,6 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 				return Schedule.commit(fiber, Enum.component, host, element, snapshot.props, a)
 			case Enum.iterable:
 				return children(fiber, host, element, a, b, 0)
-			case Enum.thenable:
-				return resolve(fiber, host, parent, element, snapshot, type, a, b)
 		}
 
 		children(fiber, host, element, a, b, 0)
@@ -132,9 +82,12 @@ export function update (fiber, host, parent, element, snapshot, siblings, index)
 		if (element.identity === identity) {
 			switch (element.type = type, identity) {
 				case Enum.target:
+					Schedule.commit(fiber, Enum.props, host, parent, element, object(element.props, {}))
 					Schedule.commit(fiber, Enum.mount, host, element, element, Schedule.commit(fiber, Enum.target, host, element, element, element))
-				case Enum.thenable:
-					return update(fiber, host, parent, element, snapshot, siblings, index)
+				case Enum.component:
+					if (element.key === Enum.identifier) {
+						return update(fiber, host, parent, element, snapshot, siblings, index)
+					}
 			}
 		}
 

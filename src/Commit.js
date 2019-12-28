@@ -115,24 +115,25 @@ export function content (element, value) {
  * @param {object} value
  */
 export function props (element, value) {
-	properties(element, value, element.value)
+	properties(element, value, element.value, true)
 }
 
 /**
  * @param {object} element
  * @param {object} value
  * @param {object} instance
+ * @param {boolean} active
  */
-export function properties (element, value, instance)  {
+export function properties (element, value, instance, active)  {
 	if (value !== null) {
 		for (var key in value) {
 			switch (key) {
 				case 'ref':
 					refs(element, value[key], instance)
-				case 'key': case 'children':
+				case 'key': case 'target': case 'children':
 					break
 				default:
-					Interface.properties(key, value[key], instance, element)
+					Interface.properties(key, value[key], instance, element, active)
 			}
 		}
 	}
@@ -159,8 +160,10 @@ export function reference (element, value, instance) {
 	if (value !== null) {
 		if (Utility.callable(value)) {
 			Schedule.callback(element, instance, value)
-		} else {
+		} else if (Utility.keyable(value)) {
 			value.current = instance
+		} else if (instance !== null && typeof value === 'string') {
+			Schedule.callback(element, instance, Interface.callback(value))
 		}
 	}
 }

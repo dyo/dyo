@@ -24,7 +24,7 @@ export function dispatch (element, value, context) {
  * @return {any[]}
  */
 export function resolve (element, value) {
-	if (Utility.isArray(value = value.prototype)) {
+	if (Utility.indexable(value = value.prototype)) {
 		return element.state = element.context[value[0]]
 	} else {
 		Utility.throws(Utility.error('Invalid Provider!'))
@@ -46,5 +46,5 @@ export function enqueue (element, value) {
  * @param {function} type
  */
 export function dequeue (element, value, context, type) {
-	element.state = context[(Utility.isArray(type.prototype) ? type.prototype : type.prototype = [Utility.symbol(), false])[0]] = [value]
+	element.state = context[(Utility.indexable(type.prototype) ? type.prototype : type.prototype = [Utility.symbol(), false])[0]] = [value]
 }

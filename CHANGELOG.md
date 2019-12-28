@@ -1,4 +1,16 @@
-## 1.0.1 (Unreleased)
+## 2.0.0 (28 December 2019)
+
+- Support new Node v13 esm export/import.
+- Default to `:root` element when target is omitted from portal/ render container.
+- Add optional dependencies array argument for `useResource` hook.
+- Support portal props, for example h(Portal, {class: 'home'})
+- Support string ref callbacks, for example `h('video', {ref: pause ? 'pause' : 'play'})`
+- Better align the default dependencies for `useMemo` and `useCallback`.
+- Merge `/server` into main package (breaking).
+- Remove async generators (breaking).
+
+
+## 1.0.1 (3 November 2019)
 
 - Add typings for TypeScript.
 - Fixes [#103](https://github.com/dyo/dyo/issues/102).

@@ -9,15 +9,13 @@ export var timeout = 100
 export var network = timeout * 6
 
 // element identifiers
-export var fallback = 0
-export var thenable = 1
-export var iterable = 2
-export var component = 3
-export var target = 4
-export var portal = 5
-export var element = 6
-export var text = 7
-export var empty = 8
+export var iterable = 1
+export var component = 2
+export var target = 3
+export var portal = 4
+export var element = 5
+export var text = 6
+export var empty = 7
 
 // dispatch identifiers
 export var props = 11

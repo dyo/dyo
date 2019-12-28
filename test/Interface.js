@@ -8,10 +8,10 @@ describe('Interface', () => {
 
 	it('should render to no-op object interface', () => {
 		const target = {}
-		const Primary =  props => [h('h1', 'Hello World')]
+		const Primary = props => [h('h1', 'Hello World')]
 
 		assert.doesNotThrow(() => {
-			render(h(Primary), target, (current) => assert.equal(current, target))
+			render(h(Primary), target, (current) => assert.html(current, '<h1>Hello World</h1>'))
 		})
 	})
 

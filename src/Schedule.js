@@ -3,6 +3,7 @@ import * as Utility from './Utility.js'
 import * as Component from './Component.js'
 import * as Commit from './Commit.js'
 import * as Event from './Event.js'
+import * as Serialize from './Serialize.js'
 
 /**
  * @constructor
@@ -18,15 +19,17 @@ export var struct = Utility.extend(function fiber (element, target) {
 	this.queue = null
 	this.owner = null
 	this.async = null
+	this.error = null
 }, {
 	/**
-	 * @param {function?} value
+	 * @param {function?} resolve
+	 * @param {function?} reject
 	 * @return {PromiseLike<object>}
 	 */
-	then: {value: function (value) {
-		return finalize(this, this.target, value), this
+	then: {value: function (resolved, rejected) {
+		return then(this, resolved, rejected), this
 	}}
-})
+}, null)
 
 /**
  * @type {object?}
@@ -34,7 +37,20 @@ export var struct = Utility.extend(function fiber (element, target) {
 export var frame = null
 
 /**
- * @return {object}
+ * @param {object} fiber
+ * @param {function?} resolve
+ * @param {function?} reject
+ */
+export function then (fiber, resolved, rejected) {
+	if (fiber.async !== null) {
+		resolve(fiber, null, then, Utility.callable(rejected) ? fiber.error = rejected : null, [fiber, resolved, rejected], true)
+	} else {
+		finalize(fiber, fiber.target, resolved)
+	}
+}
+
+/**
+ * @return {object?}
  */
 export function peek () {
 	return frame
@@ -78,13 +94,13 @@ export function checkout (executor, element, target, value, callback) {
 /**
  * @param {object} fiber
  * @param {object} target
- * @param {function?} callback
+ * @param {any} callback
  */
 export function finalize (fiber, target, callback) {
 	if (fiber.length !== 0) {
 		dequeue(fiber, target, callback, fiber.stack, fiber.length)
 	} else if (fiber.async !== null) {
-		resolve(fiber, fiber.async, finalize, null, [fiber, target, callback])
+		resolve(fiber, null, finalize, null, [fiber, target, callback], true)
 	} else if (fiber.queue !== null) {
 		respond(fiber, target, callback)
 	} else if (callback !== null) {
@@ -95,26 +111,20 @@ export function finalize (fiber, target, callback) {
 /**
  * @param {object} fiber
  * @param {object} target
- * @param {any?} callback
+ * @param {any} callback
  */
 export function archive (fiber, target, callback) {
 	if (fiber.element !== null) {
+		if (Utility.serializable(target)) {
+			Serialize.serialize(target, fiber.target = Serialize.stringify(fiber.element))
+		}
+
 		if (Utility.callable(callback)) {
-			finalize(fiber, target, callback.call(fiber.element, target))
+			finalize(fiber, target, callback(fiber.target))
 		} else if (Utility.thenable(callback)) {
-			suspend(fiber, callback, function (value) { finalize(fiber, target, value) }, null)
+			resolve(fiber, callback, finalize, null, [fiber, target, null], null)
 		}
 	}
-}
-
-/**
- * @param {object} fiber
- * @param {object} value
- * @param {function} resolved
- * @return {object}
- */
-export function pending (fiber, value, resolved) {
-	return suspend(fiber, Utility.resolve(value, resolved, null), undefined, null)
 }
 
 /**
@@ -141,9 +151,9 @@ export function execute (fiber, value, resolved) {
  */
 export function suspend (fiber, value, resolved, rejected) {
 	if (fiber.async !== null) {
-		return resolve(fiber, fiber.async, suspend, rejected, [fiber, value, resolved, rejected])
+		return resolve(fiber, null, suspend, null, [fiber, value, resolved, rejected], true)
 	} else {
-		return resolve(fiber, value, resolved, rejected, null)
+		return resolve(fiber, value, resolved, rejected, null, false)
 	}
 }
 
@@ -154,15 +164,22 @@ export function suspend (fiber, value, resolved, rejected) {
  * @param {any[]} payload
  * @return {any?}
  */
-export function forward (fiber, value, callback, payload) {
-	var argument = payload === null ? [value, fiber.async = null] : payload
+export function forward (fiber, value, callback, payload, active) {
+	switch (active) {
+		case null:
+			payload[2] = value
+		case false:
+			fiber.async = null
+	}
 
-	if (callback !== undefined) {
+	if (Utility.callable(callback)) {
 		try {
-			return Utility.callable(callback) ? callback.apply(frame = fiber, argument) : Utility.throws(value)
+			return callback.apply(frame = fiber, payload === null ? [value] : payload)
 		} finally {
 			frame = null
 		}
+	} else {
+		Utility.throws(value)
 	}
 }
 
@@ -172,7 +189,11 @@ export function forward (fiber, value, callback, payload) {
  * @param {function} callback
  */
 export function callback (element, target, callback) {
-	frame.stack[frame.length++] = create(Enum.callback, element, element, target, callback)
+	if (target === null) {
+		dispatch(frame, Enum.callback, element, element, target, callback)
+	} else {
+		frame.stack[frame.length++] = create(Enum.callback, element, element, target, callback)
+	}
 }
 
 /**
@@ -222,11 +243,11 @@ export function dispatch (fiber, type, element, a, b, c) {
  * @param {any[]} payload
  * @return {object}
  */
-export function resolve (fiber, value, resolved, rejected, payload) {
-	return fiber.async = Utility.resolve(value, function (value) {
-		return forward(fiber, value, resolved, payload)
+export function resolve (fiber, value, resolved, rejected, payload, active) {
+	return fiber.async = Utility.resolve(value ? value : fiber.async, function (value) {
+		return forward(fiber, value, resolved, payload, active)
 	}, function (value) {
-		return forward(fiber, value, rejected, payload)
+		return forward(fiber, value, rejected, null, false)
 	})
 }
 
@@ -268,7 +289,7 @@ export function dequeue (fiber, target, callback, stack, length) {
  * @param {object[]} value
  */
 export function request (fiber, target, callback, value) {
-	suspend(fiber, value, function (value) { dequeue(fiber, target, callback, value, value.length) })
+	suspend(fiber, value, function (value) { dequeue(fiber, target, callback, value, value.length) }, null)
 }
 
 /**
@@ -279,12 +300,13 @@ export function request (fiber, target, callback, value) {
 export function respond (fiber, target, callback) {
 	var queue = fiber.queue
 	var stack = fiber.queue = null
-	var value = (stack = queue[Enum.request]).length !== 0 ? Utility.request(stack) : null
+	var value = (stack = queue[Enum.request]).length !== 0 ? Utility.respond(stack) : null
 	var index = (stack = queue[Enum.respond]).length
 
 	if (index !== 0) {
 		dequeue(fiber, target, value === null ? callback : null, stack, index)
 	}
+
 	if (value !== null) {
 		request(fiber, target, callback, value)
 	}

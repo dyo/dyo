@@ -1,5 +1,0 @@
-{
-	"name": "dyo/server",
-	"main": "dist/dyo.umd.js",
-	"module": "dist/dyo.esm.js"
-}

@@ -13,7 +13,7 @@ import * as Node from './Node.js'
  * @return {PromiseLike<object>}
  */
 export function render (element, target, callback) {
-	return dispatch(element, Interface.target(target, undefined), callback === undefined ? null : callback)
+	return dispatch(element, Interface.target(target, undefined), callback || undefined)
 }
 
 /**
@@ -38,7 +38,7 @@ export function dispatch (element, target, callback) {
  */
 export function resolve (fiber, element, target, value) {
 	if (target === value) {
-		target[Enum.identifier] = Node.create(fiber, element, element, element, null)
+		Interface.register(Node.create(fiber, element, element, element, null), target)
 	} else {
 		Reconcile.children(fiber, element, element, element.children, value, 0)
 	}
