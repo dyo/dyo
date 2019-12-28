@@ -10,7 +10,7 @@
 	"type": "module",
 	"main": "dist/dyo.umd.js",
 	"module": "dist/dyo.esm.js",
-	"exports": "dist/dyo.esm.js",
+	"exports": "./index.js",
 	"typings": "typings/index.d.ts",
 	"files": [
 		"index.js",

@@ -189,7 +189,11 @@ export function forward (fiber, value, callback, payload, active) {
  * @param {function} callback
  */
 export function callback (element, target, callback) {
-	frame.stack[frame.length++] = create(Enum.callback, element, element, target, callback)
+	if (target === null) {
+		dispatch(frame, Enum.callback, element, element, target, callback)
+	} else {
+		frame.stack[frame.length++] = create(Enum.callback, element, element, target, callback)
+	}
 }
 
 /**

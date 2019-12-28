@@ -76,8 +76,10 @@ export function target (value, owner) {
 		switch (typeof value) {
 			case 'object':
 				return container(value, owner)
+			case 'undefined':
+				return target(':root', owner)
 			case 'string':
-				return selector(value, owner)
+				return selector(value, owner || enviroment())
 		}
 	}
 
@@ -90,7 +92,7 @@ export function target (value, owner) {
  * @return {object}
  */
 export function selector (value, owner) {
-	return owner ? target(owner.querySelector(value), owner) : selector(value, enviroment())
+	return target(owner.querySelector(value), owner)
 }
 
 /**
@@ -119,7 +121,14 @@ export function owner (value) {
 
 /**
  * @param {object} parent
- * @return {void}
+ * @param {object} target
+ */
+export function register (parent, target) {
+	return frame === target ? null : target[Enum.identifier] = parent
+}
+
+/**
+ * @param {object} parent
  */
 export function initialize (parent) {
 	return parent.textContent = null

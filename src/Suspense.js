@@ -101,24 +101,22 @@ export function enqueue (fiber, host, parent, element, children, message, stack)
  * @param {object?} offscreen
  */
 export function dequeue (fiber, host, parent, element, children, callback, stack, sibling, fallback, offscreen) {
-	Schedule.suspend(fiber, stack, function () {
-		if (sibling !== (stack = host.stack = null)) {
-			if (Element.active(parent)) {
-				try {
-					parent.identity = Enum.iterable
-					parent.value = null
-					children[1] = sibling
-				} finally {
-					Schedule.commit(fiber, Enum.mount, host, parent, parent, fallback)
-					Schedule.commit(fiber, Enum.unmount, host, parent, fallback, fallback)
-					Schedule.commit(fiber, Enum.unmount, host, parent, offscreen, offscreen)
-				}
+	Schedule.suspend(fiber, stack, parent.stack = function () {
+		if (sibling !== (stack = host.stack = parent.stack = null)) {
+			try {
+				children[1] = sibling
+				parent.value = sibling = null
+				parent.identity = Enum.iterable
+			} finally {
+				Schedule.commit(fiber, Enum.mount, host, parent, parent, fallback)
+				Schedule.commit(fiber, Enum.unmount, host, parent, fallback, fallback)
+				Schedule.commit(fiber, Enum.unmount, host, parent, offscreen, offscreen)
 			}
 		}
 	}, callback)
 
-	if (host.identity === Enum.component ? fallback = Element.fallback(host.props, host) : false) {
-		Schedule.callback(host, Element.active(parent), callback = function (value) {
+	if (host.identity === Enum.component) {
+		Schedule.callback(fallback = Element.fallback(host.props, host), Element.active(parent), callback = function (value) {
 			if (stack !== null) {
 				if (value) {
 					Utility.timeout(callback, Enum.network)
@@ -128,9 +126,9 @@ export function dequeue (fiber, host, parent, element, children, callback, stack
 						Schedule.commit(fiber, Enum.mount, Node.create(fiber, host, parent, fallback, null), parent, fallback, sibling)
 						Schedule.commit(fiber, Enum.mount, host, offscreen, parent, undefined)
 					} finally {
-						parent.identity = Enum.element
-						parent.value = offscreen.value
 						children[1] = fallback
+						parent.value = offscreen.value
+						parent.identity = Enum.element
 					}
 				}
 			}

@@ -1,5 +1,7 @@
-## 2.0.0 (Unreleased)
+## 2.0.0 (28 December 2019)
 
+- Support new Node v13 esm export/import.
+- Default to `:root` element when target is omitted from portal/ render container.
 - Add optional dependencies array argument for `useResource` hook.
 - Support portal props, for example h(Portal, {class: 'home'})
 - Support string ref callbacks, for example `h('video', {ref: pause ? 'pause' : 'play'})`

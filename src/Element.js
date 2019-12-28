@@ -94,7 +94,7 @@ export function target (value, type, props) {
  * @return {object}
  */
 export function portal (value) {
-	return new struct(Enum.portal, null, null, null, [target(value.children, value.target || ':root', value)])
+	return new struct(Enum.portal, null, null, null, [target(value.children, value.target, value)])
 }
 
 /**
@@ -110,7 +110,7 @@ export function offscreen () {
  * @return {object?}
  */
 export function fallback (value, element) {
-	return new struct(Enum.fallback, null, null, null, [from(element.props.fallback, 0, value)])
+	return from(element.props.fallback, 0, value)
 }
 
 /**

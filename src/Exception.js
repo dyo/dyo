@@ -158,9 +158,7 @@ export function dequeue (fiber, host, element, exception, current) {
 		try {
 			current.state = Element.fallback(exception, current)
 		} finally {
-			Schedule.execute(fiber, current, function (fiber, current) {
-				Component.request(current)
-			})
+			Schedule.execute(fiber, current, function (fiber, current) { Component.request(current) })
 		}
 	} else {
 		enqueue(fiber, host, element, exception, current)

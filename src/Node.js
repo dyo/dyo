@@ -65,39 +65,33 @@ export function create (fiber, host, parent, element, current) {
  */
 export function destroy (fiber, parent, element, current) {
 	var identity = element.identity
-	var children = element.children
 
 	try {
 		if (identity < Enum.text) {
-			if (identity === Enum.component) {
-				try {
-					return destroy(fiber, parent, children[0], element)
-				} finally {
-					if (element.stack !== null) {
-						if (enqueue(fiber, parent, element, current)) {
-							return
+			var children = element.children
+
+			switch (identity) {
+				case Enum.component:
+					try {
+						return destroy(fiber, parent, children[0], element)
+					} finally {
+						if (element.stack !== null) {
+							if (enqueue(fiber, parent, element, current)) {
+								return
+							}
 						}
 					}
-				}
-			}
-
-			try {
-				switch (identity) {
-					case Enum.fallback:
-						return Schedule.commit(fiber, Enum.unmount, element, current ? current.parent : element, element, element)
-					case Enum.target:
-						Schedule.commit(fiber, Enum.props, element, element, element, Reconcile.object(element.props, {}))
-						Schedule.commit(fiber, Enum.unmount, element, element, element, element)
-						return
-					case Enum.element:
-						if (element.stack !== null) {
-							Commit.refs(element, null, null)
-						}
-				}
-			} finally {
-				for (var i = 0; i < children.length; ++i) {
-					destroy(fiber, element, children[i], element)
-				}
+				case Enum.target:
+					Schedule.commit(fiber, Enum.props, element, element, element, Reconcile.object(element.props, {}))
+					Schedule.commit(fiber, Enum.unmount, element, element, element, element)
+				case Enum.element:
+					if (element.stack !== null) {
+						Commit.refs(element, null, null)
+					}
+				default:
+					for (var i = 0; i < children.length; ++i) {
+						destroy(fiber, element, children[i], element)
+					}
 			}
 		}
 	} finally {

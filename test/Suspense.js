@@ -112,7 +112,7 @@ describe('Suspense', () => {
 		}
 		const Secondary = props => {
 			useLayout(() => stack.push('useLayout'), [])
-			useLayout(() => stack.push('useEffect'), [])
+			useEffect(() => stack.push('useEffect'), [])
 			return stack.push('Secondary')
 		}
 

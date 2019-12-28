@@ -9,7 +9,6 @@ describe('Render', () => {
 
 		try {
 			globalThis.document = undefined
-			assert.throws(() => render(null, undefined))
 			assert.throws(() => render(null, null))
 			assert.throws(() => render(null, NaN))
 			assert.throws(() => render(null, 0))
