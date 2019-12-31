@@ -1,5 +1,4 @@
 import * as Enum from './Enum.js'
-import * as Utility from './Utility.js'
 import * as Element from './Element.js'
 import * as Interface from './Interface.js'
 import * as Schedule from './Schedule.js'
@@ -158,12 +157,10 @@ export function refs (element, value, instance) {
  */
 export function reference (element, value, instance) {
 	if (value !== null) {
-		if (Utility.callable(value)) {
-			Schedule.callback(element, instance, value)
-		} else if (Utility.keyable(value)) {
-			value.current = instance
-		} else if (instance !== null && typeof value === 'string') {
-			Schedule.callback(element, instance, Interface.callback(value))
+		switch (typeof value) {
+			case 'string': return instance && Schedule.callback(element, instance, Interface.callback(value))
+			case 'function': return Schedule.callback(element, instance, value)
+			case 'object': value.current = instance
 		}
 	}
 }

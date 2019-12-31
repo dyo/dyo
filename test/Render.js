@@ -300,8 +300,35 @@ describe('Render', () => {
 			Object.defineProperty(firstChild, 'valid', {get: () => true, set: () => { throw refs.value = false }})
 
 			render(h('h2', {valid: true}), target, (current) => {
-				assert.equal(refs.value, true)
+				assert.notEqual(refs.value, false)
 			})
 		})
+	})
+
+	it('should not mutate user array', () => {
+		render(h(props => h('h2', {}, refs.current = [0])), target, (current) => {
+			assert.html(current, '<h2>0</h2>')
+			assert.deepEqual(refs.current, [0])
+		})
+	})
+
+	it('should handle alternating between innerHTML', () => {
+		render(h('div', {innerHTML: 'x'}), target)
+		assert.html(target, '<div>x</div>')
+
+		render(h('div', {}, ['y']), target)
+		assert.html(target, '<div>y</div>')
+
+		render(h('div', {innerHTML: 'x'}), target)
+		assert.html(target, '<div>x</div>')
+
+		render(h('div', {}, ['y']), target)
+		assert.html(target, '<div>y</div>')
+
+		render(h('div', {innerHTML: 'x'}, ['y']), target)
+		assert.html(target, '<div>x</div>')
+
+		render(h('div', {}, ['y']), target)
+		assert.html(target, '<div>y</div>')
 	})
 })

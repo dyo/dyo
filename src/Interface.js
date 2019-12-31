@@ -193,22 +193,21 @@ export function context (name, value) {
  * @param {boolean} active
  */
 export function properties (name, value, instance, current, active) {
-	if (name === 'style') {
-		if (typeof value === 'object') {
-			stylesheet(name, value, instance[name])
-		} else {
-			attribute(name, value, instance)
-		}
-	} else {
-		switch (typeof value) {
-			case 'object': case 'function':
-				if (valid(name)) {
-					return event(name.substr(2).toLowerCase(), value, instance, current, current.state ? current.state : current.state = {})
-				}
-		}
-
-		property(name, value, instance, instance[name], active)
+	switch (name) {
+		case 'style':
+			return typeof value === 'object' ? stylesheet(name, value, instance[name]) : attribute(name, value, instance)
+		case 'innerHTML':
+			current.key += value
 	}
+
+	switch (typeof value) {
+		case 'object': case 'function':
+			if (valid(name)) {
+				return event(name.substr(2).toLowerCase(), value, instance, current, current.state ? current.state : current.state = {})
+			}
+	}
+
+	property(name, value, instance, instance[name], active)
 }
 
 /**

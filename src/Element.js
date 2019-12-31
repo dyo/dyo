@@ -134,7 +134,7 @@ export function display (value) {
  * @return {object}
  */
 export function fragment (value, index) {
-	return value[value.length] = empty(), iterable(value, hash(index))
+	return value[value.length] = null, iterable(value, hash(index))
 }
 
 /**
@@ -151,9 +151,9 @@ export function from (value, index, props) {
 			return create(value, props)
 		case 'object':
 			if (value !== null) {
-				if (Utility.keyable(value)) {
+				if (value instanceof Utility.object) {
 					if (Utility.indexable(value)) {
-						return fragment(value, index)
+						return fragment(value.slice(), index)
 					} else if (Utility.iterable(value)) {
 						return fragment(Children.array(value), index)
 					} else if (Utility.thenable(value)) {
@@ -177,12 +177,12 @@ export function from (value, index, props) {
 export function create (type, props) {
 	var index = 0
 	var length = arguments.length
-	var of = typeof props === 'object'
+	var of = props === null || props instanceof Utility.object
 	var position = of ? 2 : 1
 	var size = length - position
 	var identity = Enum.element
 	var properties = of ? props || {} : {}
-	var children = []
+	var children = new Utility.array(size)
 
 	if (size > 0) {
 		for (; position < length; ++position) {
@@ -192,7 +192,7 @@ export function create (type, props) {
 
 	switch (typeof type) {
 		case 'object':
-			identity = Enum.iterable, children[index] = empty()
+			identity = Enum.iterable, children[index] = null
 			break
 		case 'function':
 			identity = Enum.component

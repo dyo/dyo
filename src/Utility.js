@@ -159,14 +159,6 @@ export function report (value) {
 
 /**
  * @param {any} value
- * @return {boolean}
- */
-export function keyable (value) {
-	return value instanceof object
-}
-
-/**
- * @param {any} value
  * @param {boolean}
  */
 export function callable (value) {
@@ -252,7 +244,7 @@ export function extract (value) {
  * @return {any}
  */
 export function each (value, a, b, callback) {
-	if (keyable(value)) {
+	if (value instanceof object) {
 		if (indexable(value)) {
 			for (var i = 0; i < value.length; ++i) {
 				if (each(value[i], a, b, callback) === null) {
