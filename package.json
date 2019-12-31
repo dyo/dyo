@@ -23,7 +23,6 @@
 		"pretest": "npm run lint && npm run build",
 		"test": "nyc npm run spec",
 		"spec": "mocha --harmony --require esm script/test.js --recursive test",
-		"coverage": "nyc report --reporter=text-lcov | coveralls",
 		"build": "npm run bundle -- --configSrc ./",
 		"bundle": "rollup --config script/build.js",
 		"prepare": "npm run build",
@@ -34,7 +33,6 @@
 	},
 	"devDependencies": {
 		"chai": "4.2.0",
-		"coveralls": "3.0.9",
 		"dyo": "./",
 		"eslint": "6.7.2",
 		"esm": "3.2.9",
