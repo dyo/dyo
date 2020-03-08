@@ -18,6 +18,7 @@ import * as Commit from './Commit.js'
  */
 export function create (fiber, host, parent, element, current) {
 	var identity = element.identity
+	var context = parent.context
 	var owner = element.owner = parent.owner
 	var type = element.type
 
@@ -26,7 +27,9 @@ export function create (fiber, host, parent, element, current) {
 			case Enum.component:
 				return resolve(fiber, host, parent, element, current, element.children = [element])
 			case Enum.element:
-				var context = element.context = Interface.context(type, parent.context)
+				context = Interface.context(type, context)
+			case Enum.iterable:
+				element.context = context
 		}
 
 		var children = element.children
