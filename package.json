@@ -22,9 +22,8 @@
 		"lint": "eslint ./",
 		"pretest": "npm run lint && npm run build",
 		"test": "nyc npm run spec",
-		"spec": "mocha --harmony --require esm script/test.js --recursive test",
-		"build": "npm run bundle -- --configSrc ./",
-		"bundle": "rollup --config script/build.js",
+		"spec": "mocha --harmony --require esm script/setup.js --recursive test",
+		"build": "rollup --config script/build.js --configSrc ./",
 		"prepare": "npm run build",
 		"postversion": "git push --follow-tags && npm publish",
 		"release-major": "npm version major -m '%s'",
@@ -32,15 +31,15 @@
 		"release-patch": "npm version patch -m '%s'"
 	},
 	"devDependencies": {
-		"chai": "4.2.0",
 		"dyo": "./",
-		"eslint": "6.7.2",
-		"esm": "3.2.9",
+		"chai": "4.2.0",
+		"eslint": "6.8.0",
+		"esm": "3.2.25",
 		"jsdom": "15.2.1",
-		"mocha": "6.2.2",
-		"nyc": "14.1.1",
-		"rollup": "1.27.9",
-		"rollup-plugin-terser": "5.1.2",
+		"mocha": "7.0.0",
+		"nyc": "15.0.0",
+		"rollup": "1.28.0",
+		"rollup-plugin-terser": "5.1.3",
 		"rollup-plugin-size": "0.2.1"
 	},
 	"nyc": {
@@ -133,12 +132,6 @@
 				"1tbs",
 				{
 					"allowSingleLine": true
-				}
-			],
-			"max-len": [
-				"error",
-				{
-					"code": 160
 				}
 			],
 			"require-jsdoc": [

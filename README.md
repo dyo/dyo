@@ -4,7 +4,6 @@
 
 A JavaScript library for building user interfaces.
 
-[![Build](https://travis-ci.com/dyo/dyo.svg?branch=master)](https://travis-ci.com/dyo/dyo)
 [![Coverage](https://coveralls.io/repos/github/dyo/dyo/badge.svg?branch=master)](https://coveralls.io/github/dyo/dyo)
 [![Size](https://badgen.net/bundlephobia/minzip/dyo)](https://bundlephobia.com/result?p=dyo)
 [![Licence](https://badgen.net/badge/license/MIT/blue)](https://github.com/dyo/dyo/blob/master/LICENSE.md)
@@ -12,8 +11,8 @@ A JavaScript library for building user interfaces.
 
 ## Installation
 
-* Use a Direct Download: `<script src=dyo.js></script>`.
-* Use a CDN: `<script src=unpkg.com/dyo></script>`.
+* Use a Direct Download: `<script src=dyo.js></script>`
+* Use a CDN: `<script src=unpkg.com/dyo></script>`
 * Use NPM: `npm install dyo --save`
 
 ## Documentation

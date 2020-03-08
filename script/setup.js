@@ -1,5 +1,6 @@
 import {JSDOM} from 'jsdom'
 import {assert} from 'chai'
+import {describe, test} from 'mocha'
 
 const {assign, defineProperty} = Object
 const {document, location, history, Event} = (new JSDOM('<!doctype html>')).window
@@ -35,5 +36,5 @@ class Writable {
   }
 }
 
-assign(that(), {assert, document, location, history, Event, Writable, requestAnimationFrame, globalThis: that()})
+assign(that(), {assert, describe, test, document, Event, Writable, requestAnimationFrame, globalThis: that()})
 assign(assert, {html, json, spyr, rand})
