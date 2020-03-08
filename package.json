@@ -25,7 +25,7 @@
 		"spec": "mocha --harmony --require esm script/setup.js --recursive test",
 		"build": "rollup --config script/build.js --configSrc ./",
 		"prepare": "npm run build",
-		"postversion": "git push --follow-tags && npm publish",
+		"postversion": "npm publish && git push --follow-tags",
 		"release-major": "npm version major -m '%s'",
 		"release-minor": "npm version minor -m '%s'",
 		"release-patch": "npm version patch -m '%s'"
