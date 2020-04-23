@@ -28,7 +28,7 @@ The documentation is divided into several sections:
 * [Advanced Guides](https://dyo.js.org/advanced.html)
 * [Examples](https://dyo.js.org/examples.html)
 
-You can improve it by sending pull requests to [this repository](https://github.com/dyo/dyo/docs).
+You can improve it by sending pull requests to [this repository](https://github.com/dyo/dyo/tree/master/docs).
 
 ## Examples
 
