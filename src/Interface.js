@@ -219,29 +219,31 @@ export function properties (name, value, instance, current, active) {
  */
 export function property (name, value, instance, current, active) {
 	if (current === undefined) {
-		attribute(name, value, instance)
-	} else {
-		switch (value) {
-			case false: case null: case undefined:
-				switch (typeof current) {
-					case 'string':
-						return property(name, '', instance, active)
-					case 'boolean':
-						value = false
-				}
+		if (!(name in instance)) {
+			return attribute(name, value, instance)
 		}
+	}
 
-		if (active) {
-			if (value === current) {
-				return
+	switch (value) {
+		case false: case null: case undefined:
+			switch (typeof current) {
+				case 'string':
+					return property(name, '', instance, active)
+				case 'boolean':
+					value = false
 			}
-		}
+	}
 
-		try {
-			instance[name] = value
-		} catch (error) {
-			attribute(name, value, instance)
+	if (active) {
+		if (value === current) {
+			return
 		}
+	}
+
+	try {
+		instance[name] = value
+	} catch (error) {
+		attribute(name, value, instance)
 	}
 }
 

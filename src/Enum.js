@@ -6,7 +6,7 @@ export var identifier = Utility.identifier('identifier')
 
 // timestamps(ms)
 export var timeout = 100
-export var network = timeout * 6
+export var network = 100
 
 // element identifiers
 export var iterable = 1

@@ -305,6 +305,16 @@ describe('Render', () => {
 		})
 	})
 
+	it('should update properties that exist but are undefined', () => {
+		render(h('h2', {}), target, ({firstChild}) => {
+			Object.defineProperty(firstChild, 'undef', {get: () => undefined, set: (value) => { refs.undef = value }})
+
+			render(h('h2', {undef: true}), target, (current) => {
+				assert.deepEqual(refs.undef, true)
+			})
+		})
+	})
+
 	it('should not mutate user array', () => {
 		render(h(props => h('h2', {}, refs.current = [0])), target, (current) => {
 			assert.html(current, '<h2>0</h2>')

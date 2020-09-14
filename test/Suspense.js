@@ -46,7 +46,7 @@ describe('Suspense', () => {
 		const Primary = props => {
 			const [state, setState] = useState(false)
 			useLayout(() => setState(true), [])
-			return h(Suspense, {fallback: 'Loading'}, state && h(Lazy), h(Secondary))
+			return h(Suspense, {timeout: 10, fallback: 'Loading'}, state && h(Lazy), h(Secondary))
 		}
 		const Secondary = props => {
 			useEffect(() => stack.push('useEffect'), [])
@@ -172,9 +172,9 @@ describe('Suspense', () => {
 		const stack = []
 		const Lazy = lazy(() => {
 			return new Promise(resolve => {
-				setTimeout(resolve, 200, lazy(() => {
+				setTimeout(resolve, 50, lazy(() => {
 					return new Promise(resolve => {
-						setTimeout(resolve, 800, props => h('p', {}, 'Tertiary'))
+						setTimeout(resolve, 200, props => h('p', {}, 'Tertiary'))
 					})
 				}))
 			})
@@ -203,7 +203,7 @@ describe('Suspense', () => {
 				assert.html(target, '')
 				assert.deepEqual(stack, ['Secondary', 'useLayout', 'Secondary'])
 			})
-		}, 200)
+		}, 50)
 	})
 
 	it('should suspend lazy loaded components outside of a suspense boundary', (done) => {
@@ -330,8 +330,8 @@ describe('Suspense', () => {
 
 	it('should render cached lazy components', (done) => {
 	  const target = document.createElement('div')
-	  const Primary = props => new Promise(resolve => setTimeout(resolve, 600, {default: props => `Primary ${props.value}`}))
-	  const Secondary = props => new Promise(resolve => setTimeout(resolve, 700, {default: props => `Secondary ${props.value}`}))
+	  const Primary = props => new Promise(resolve => setTimeout(resolve, 100, {default: props => `Primary ${props.value}`}))
+	  const Secondary = props => new Promise(resolve => setTimeout(resolve, 200, {default: props => `Secondary ${props.value}`}))
 
 	  render(h(Suspense, {fallback: 'Load!'}, h(Primary, {value: 'World!'})), target, (current) => {
 	    assert.html(current, 'Primary World!')
@@ -355,7 +355,7 @@ describe('Suspense', () => {
 
 	  render(h(Primary), target, async (current) => {
 	    stack.push(1)
-	    await new Promise(resolve => setTimeout(resolve, 100))
+	    await new Promise(resolve => setTimeout(resolve, 50))
 	    stack.push(2)
 	  }).then((current) => {
 	    stack.push(3)

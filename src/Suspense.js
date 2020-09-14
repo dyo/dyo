@@ -116,10 +116,10 @@ export function dequeue (fiber, host, parent, element, children, callback, stack
 	}, callback)
 
 	if (host.identity === Enum.component) {
-		Schedule.callback(fallback = Element.fallback(host.props, host), Element.active(parent), callback = function (value) {
+		Schedule.callback(fallback = Element.fallback(element = host.props, host), Element.active(parent), callback = function (value) {
 			if (stack !== null) {
 				if (value) {
-					Utility.timeout(callback, Enum.network)
+					Utility.timeout(callback, element.timeout || Enum.network)
 				} else if (Element.active(parent)) {
 					try {
 						Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, offscreen, null), sibling = children[1])
