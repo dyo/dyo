@@ -253,6 +253,14 @@ export function parent (element) {
  * @param {object} element
  * @return {object}
  */
+export function preparent (element) {
+	return element.identity < Enum.target || element.state == Enum.offscreen ? preparent(element.parent) : element
+}
+
+/**
+ * @param {object} element
+ * @return {object}
+ */
 export function sibling (element) {
 	return element.identity < Enum.target ? sibling(children(element)) : element
 }

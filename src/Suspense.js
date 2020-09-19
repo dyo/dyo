@@ -106,10 +106,11 @@ export function dequeue (fiber, host, parent, element, children, callback, stack
 			try {
 				children[1] = sibling
 				parent.value = sibling = null
+				parent.state = sibling
 				parent.identity = Enum.iterable
 			} finally {
-				Schedule.commit(fiber, Enum.mount, host, parent, parent, fallback)
-				Schedule.commit(fiber, Enum.unmount, host, parent, fallback, fallback)
+				Schedule.commit(fiber, Enum.mount, host, element = Element.preparent(parent), parent, fallback)
+				Schedule.commit(fiber, Enum.unmount, host, element, fallback, fallback)
 				Schedule.commit(fiber, Enum.unmount, host, parent, offscreen, offscreen)
 			}
 		}
@@ -128,6 +129,7 @@ export function dequeue (fiber, host, parent, element, children, callback, stack
 					} finally {
 						children[1] = fallback
 						parent.value = offscreen.value
+						parent.state = Enum.offscreen
 						parent.identity = Enum.element
 					}
 				}

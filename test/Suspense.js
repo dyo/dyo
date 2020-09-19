@@ -1,4 +1,4 @@
-import {h, lazy, render, Suspense, useState, useEffect, useLayout} from '../index.js'
+import {h, lazy, render, Suspense, useState, useEffect, useLayout, useResource} from '../index.js'
 
 describe('Suspense', () => {
 	it('should suspend lazy loaded components suspense boundary', (done) => {
@@ -363,5 +363,27 @@ describe('Suspense', () => {
 	  	assert.html(current, '1')
 	    done(assert.deepEqual(stack, [1, 2, 3]))
 	  })
+	})
+
+	it('should suspend semi-nested resources', (done) => {
+		const target = document.createElement('div')
+		const stack = [0]
+
+		const Secondary = props => {
+		  const value = useResource(() => new Promise((resolve) => setTimeout(() => resolve(stack[0]++), props.delay)), [])
+		  return h('div', {}, 'Random number:', value, h('button', {}, 'Load number'))
+		}
+		const Primary = props => {
+		  return (
+		    h(Suspense, {fallback: 'Loading outer'},
+		      h(Suspense, {fallback: 'Loading inner'}, h(Secondary, {delay: 40})),
+		      h(Secondary, {delay: 60})
+		    )
+		  )
+		}
+
+		render(h(Primary), target, (current) => {
+			done(assert.html(target, `<div>Random number:0<button>Load number</button></div><div>Random number:1<button>Load number</button></div>`))
+		})
 	})
 })
