@@ -98,13 +98,6 @@ export function portal (value) {
 }
 
 /**
- * @return {object}
- */
-export function offscreen () {
-	return new struct(Enum.element, null, Enum.offscreen, null, [])
-}
-
-/**
  * @param {object} value
  * @param {object} element
  * @return {object?}
@@ -247,14 +240,6 @@ export function active (element) {
  */
 export function parent (element) {
 	return element.identity < Enum.target ? parent(element.parent) : element
-}
-
-/**
- * @param {object} element
- * @return {object}
- */
-export function preparent (element) {
-	return element.identity < Enum.target || element.state == Enum.offscreen ? preparent(element.parent) : element
 }
 
 /**

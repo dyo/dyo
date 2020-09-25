@@ -36,12 +36,15 @@ export function remove (parent, element) {
 	if (identity < Enum.portal) {
 		var children = element.children
 
-		if (identity !== Enum.component) {
-			for (var i = 0; i < children.length; i++) {
-				remove(parent, children[i])
-			}
-		} else {
-			remove(parent, children[0])
+		switch (identity) {
+			case Enum.component:
+				remove(parent, children[0])
+			case Enum.offscreen:
+				return
+			default:
+				for (var i = 0; i < children.length; i++) {
+					remove(parent, children[i])
+				}
 		}
 	} else {
 		Interface.remove(parent.value, element.value)
@@ -58,12 +61,15 @@ export function append (parent, element) {
 	if (identity < Enum.portal) {
 		var children = element.children
 
-		if (identity !== Enum.component) {
-			for (var i = 0; i < children.length; i++) {
-				append(parent, children[i])
-			}
-		} else {
-			append(parent, children[0])
+		switch (identity) {
+			case Enum.component:
+				append(parent, children[0])
+			case Enum.offscreen:
+				return
+			default:
+				for (var i = 0; i < children.length; i++) {
+					append(parent, children[i])
+				}
 		}
 	} else {
 		Interface.append(parent.value, element.value)
@@ -81,12 +87,15 @@ export function insert (parent, element, sibling) {
 	if (identity < Enum.portal) {
 		var children = element.children
 
-		if (identity !== Enum.component) {
-			for (var i = 0; i < children.length; i++) {
-				insert(parent, children[i], sibling)
-			}
-		} else {
-			insert(parent, children[0], sibling)
+		switch (identity) {
+			case Enum.component:
+				insert(parent, children[0], sibling)
+			case Enum.offscreen:
+				return
+			default:
+				for (var i = 0; i < children.length; i++) {
+					insert(parent, children[i], sibling)
+				}
 		}
 	} else {
 		Interface.insert(parent.value, element.value, sibling.value)

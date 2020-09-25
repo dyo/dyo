@@ -29,7 +29,7 @@ export function stringify (value) {
 	if (identity < Enum.text) {
 		switch (identity) {
 			case Enum.portal:
-				return '<' + Enum.offscreen + '>' + stringify(children[0]) + '</' + Enum.offscreen + '>'
+				return '<noscript>' + stringify(children[0]) + '</noscript>'
 			case Enum.component:
 				return stringify(children[0])
 			case Enum.element:

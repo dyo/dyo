@@ -5,6 +5,7 @@ import * as Component from './Component.js'
 import * as Exceptions from './Exception.js'
 import * as Lifecycle from './Lifecycle.js'
 import * as Schedule from './Schedule.js'
+import * as Commit from './Commit.js'
 import * as Node from './Node.js'
 
 /**
@@ -40,7 +41,7 @@ export function suspense (props) {
  * @return {object}
  */
 export function forward (element, props, stack) {
-	return stack === null ? [props.children, element.owner = undefined] : request(element, stack)
+	return stack === null ? [element.owner = undefined, Element.fragment([props.children], 0)] : request(element, stack)
 }
 
 /**
@@ -84,7 +85,7 @@ function resolve (fiber, host, parent, element, children, message) {
  */
 export function enqueue (fiber, host, parent, element, children, message, stack) {
 	if (stack.push(message) === 1) {
-		dequeue(fiber, host, parent, parent, children, null, stack, null, null, Element.offscreen())
+		dequeue(fiber, host, parent, children[1], children, null, stack, children[0], null)
 	}
 }
 
@@ -100,37 +101,32 @@ export function enqueue (fiber, host, parent, element, children, message, stack)
  * @param {object?} fallback
  * @param {object?} offscreen
  */
-export function dequeue (fiber, host, parent, element, children, callback, stack, sibling, fallback, offscreen) {
-	Schedule.suspend(fiber, stack, parent.stack = function () {
-		if (sibling !== (stack = host.stack = parent.stack = null)) {
-			try {
-				children[1] = sibling
-				parent.value = sibling = null
-				parent.state = sibling
-				parent.identity = Enum.iterable
-			} finally {
-				Schedule.commit(fiber, Enum.mount, host, element = Element.preparent(parent), parent, fallback)
-				Schedule.commit(fiber, Enum.unmount, host, element, fallback, fallback)
-				Schedule.commit(fiber, Enum.unmount, host, parent, offscreen, offscreen)
+export function dequeue (fiber, host, parent, element, children, callback, stack, sibling, fallback) {
+	Schedule.suspend(fiber, Utility.resolve(stack, function () {
+		if (fallback !== (stack = null)) {
+			if (Element.active(parent)) {
+				try {
+					element.identity = Enum.iterable
+				} finally {
+					Schedule.commit(fiber, Enum.mount, host, parent, children[0] = sibling, fallback)
+					Schedule.commit(fiber, Enum.mount, host, parent, element, sibling)
+					Schedule.commit(fiber, Enum.unmount, host, parent, element, fallback)
+				}
 			}
 		}
-	}, callback)
+	}), function () { host.stack = null }, null)
 
 	if (host.identity === Enum.component) {
-		Schedule.callback(fallback = Element.fallback(element = host.props, host), Element.active(parent), callback = function (value) {
+		Schedule.callback(host, Element.active(parent), callback = function (value) {
 			if (stack !== null) {
 				if (value) {
-					Utility.timeout(callback, element.timeout || Enum.network)
+					Utility.timeout(callback, host.props.timeout || Enum.network)
 				} else if (Element.active(parent)) {
 					try {
-						Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, offscreen, null), sibling = children[1])
-						Schedule.commit(fiber, Enum.mount, Node.create(fiber, host, parent, fallback, null), parent, fallback, sibling)
-						Schedule.commit(fiber, Enum.mount, host, offscreen, parent, undefined)
+						Schedule.commit(fiber, Enum.mount, host, parent, Node.create(fiber, host, parent, fallback = children[0] = Element.fallback(host.props, host), null), sibling)
+						Schedule.commit(fiber, Enum.unmount, host, parent, Commit.append(element, element), sibling)
 					} finally {
-						children[1] = fallback
-						parent.value = offscreen.value
-						parent.state = Enum.offscreen
-						parent.identity = Enum.element
+						element.identity = Enum.offscreen
 					}
 				}
 			}

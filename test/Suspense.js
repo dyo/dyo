@@ -27,7 +27,7 @@ describe('Suspense', () => {
 			done(assert.deepEqual(stack, ['Secondary', 'useLayout', 'useEffect']))
 		})
 
-		assert.html(target, '<noscript>1</noscript>Loading<p>Sibling</p>')
+		assert.html(target, 'Loading<p>Sibling</p>')
 		assert.deepEqual(stack, ['Secondary'])
 	})
 
@@ -121,7 +121,7 @@ describe('Suspense', () => {
 			done(assert.deepEqual(stack, ['Secondary']))
 		})
 
-		assert.html(target, '<noscript>1</noscript>Loading<p>Sibling</p>')
+		assert.html(target, 'Loading<p>Sibling</p>')
 		assert.deepEqual(stack, ['Secondary'])
 
 		render(null, target, (current) => {
@@ -258,15 +258,15 @@ describe('Suspense', () => {
 		}
 
 		render([h(Primary), h('p', {}, 'Sibling')], target, (current) => {
-			assert.html(target, '<p>Tertiary</p>3<p>Updated</p>')
-			done(assert.deepEqual(stack, ['Secondary', 'useLayout', 'Secondary', 'useEffect']))
+			assert.html(target, '<p>Tertiary</p>2<p>Updated</p>')
+			done(assert.deepEqual(stack, ['Secondary', 'Secondary', 'useLayout', 'useEffect']))
 		})
 
-		assert.html(target, '<noscript>1</noscript>Loading<p>Sibling</p>')
+		assert.html(target, 'Loading<p>Sibling</p>')
 		assert.deepEqual(stack, ['Secondary'])
 
 		render([h(Primary), h('p', {}, 'Updated')], target, (current) => {
-			assert.html(target, '<p>Tertiary</p>3<p>Updated</p>')
+			assert.html(target, '<p>Tertiary</p>2<p>Updated</p>')
 		})
 	})
 
@@ -345,7 +345,7 @@ describe('Suspense', () => {
 	    })
 	  })
 
-	  assert.html(target, '<noscript></noscript>Load!')
+	  assert.html(target, 'Load!')
 	})
 
 	it('should use an async render callback', (done) => {
@@ -367,23 +367,24 @@ describe('Suspense', () => {
 
 	it('should suspend semi-nested resources', (done) => {
 		const target = document.createElement('div')
-		const stack = [0]
 
 		const Secondary = props => {
-		  const value = useResource(() => new Promise((resolve) => setTimeout(() => resolve(stack[0]++), props.delay)), [])
+		  const value = useResource(() => new Promise((resolve) => setTimeout(() => resolve(props.delay), props.delay)), [])
 		  return h('div', {}, 'Random number:', value, h('button', {}, 'Load number'))
 		}
 		const Primary = props => {
-		  return (
-		    h(Suspense, {fallback: 'Loading outer'},
-		      h(Suspense, {fallback: 'Loading inner'}, h(Secondary, {delay: 40})),
-		      h(Secondary, {delay: 60})
-		    )
-		  )
+		  return h(Suspense, {fallback: 'Loading outer'},
+	      h(Suspense, {fallback: 'Loading inner'}, h(Secondary, {delay: 120})),
+	      h('hr'),
+	      h(Secondary, {delay: 60})
+	    )
 		}
 
 		render(h(Primary), target, (current) => {
-			done(assert.html(target, `<div>Random number:0<button>Load number</button></div><div>Random number:1<button>Load number</button></div>`))
+			done(assert.html(target, `<div>Random number:120<button>Load number</button></div><hr><div>Random number:60<button>Load number</button></div>`))
 		})
+
+		assert.html(target, `Loading outer`)
+		setTimeout(() => assert.html(target, `Loading inner<hr><div>Random number:60<button>Load number</button></div>`), 80)
 	})
 })

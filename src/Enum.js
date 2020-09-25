@@ -12,10 +12,11 @@ export var network = 100
 export var iterable = 1
 export var component = 2
 export var target = 3
-export var portal = 4
-export var element = 5
-export var text = 6
-export var empty = 7
+export var offscreen = 4
+export var portal = 5
+export var element = 6
+export var text = 7
+export var empty = 8
 
 // dispatch identifiers
 export var props = 11
@@ -30,4 +31,3 @@ export var request = 1
 
 // container types
 export var fragment = null
-export var offscreen = 'noscript'
