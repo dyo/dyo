@@ -103,7 +103,7 @@ export function enqueue (fiber, host, parent, element, children, message, stack)
  */
 export function dequeue (fiber, host, parent, element, children, callback, stack, sibling, fallback) {
 	Schedule.suspend(fiber, Utility.resolve(stack, function () {
-		if (fallback !== (stack = null)) {
+		if (fallback !== (stack = host.stack = null)) {
 			if (Element.active(parent)) {
 				try {
 					element.identity = Enum.iterable
@@ -114,7 +114,7 @@ export function dequeue (fiber, host, parent, element, children, callback, stack
 				}
 			}
 		}
-	}), function () { host.stack = null }, null)
+	}), function () {}, null)
 
 	if (host.identity === Enum.component) {
 		Schedule.callback(host, Element.active(parent), callback = function (value) {
