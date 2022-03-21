@@ -8,149 +8,33 @@
 	"repository": "https://github.com/dyo/dyo",
 	"bugs": "https://github.com/dyo/dyo/issues",
 	"type": "module",
-	"main": "dist/dyo.umd.js",
-	"module": "dist/dyo.esm.js",
-	"exports": "./index.js",
-	"typings": "typings/index.d.ts",
-	"files": [
-		"index.js",
-		"dist/",
-		"src/",
-		"typings/"
-	],
+	"main": "./dyo.js",
+	"module": "./dyo.js",
+	"exports": "./dyo.js",
+	"typings": "types/typescript.d.ts",
+	"files": ["dyo.js", "types/"],
 	"scripts": {
-		"lint": "eslint ./",
-		"pretest": "npm run lint && npm run build",
-		"test": "nyc npm run spec",
-		"spec": "mocha --harmony --require esm script/setup.js --recursive test",
-		"build": "rollup --config script/build.js --configSrc ./",
-		"prepare": "npm run build",
+		"test": "nyc mocha --harmony --require esm tools/tests.js --recursive test",
 		"postversion": "npm publish && git push --follow-tags",
 		"release-major": "npm version major -m '%s'",
 		"release-minor": "npm version minor -m '%s'",
 		"release-patch": "npm version patch -m '%s'"
 	},
 	"devDependencies": {
-		"dyo": "./",
-		"chai": "4.2.0",
-		"eslint": "6.8.0",
-		"esm": "3.2.9",
-		"jsdom": "15.2.1",
-		"mocha": "7.1.0",
-		"nyc": "15.0.0",
-		"rollup": "2.0.2",
-		"rollup-plugin-terser": "5.2.0",
-		"rollup-plugin-size": "0.2.2"
+		"dyo": "./dyo.js",
+		"esm": "3.2.25",
+		"nyc": "15.1.0",
+		"chai": "4.3.4",
+		"mocha": "9.1.4",
+		"jsdom": "19.0.0"
 	},
 	"nyc": {
-		"temp-dir": "./coverage/.nyc_output",
-		"exclude": [
-			"**/dist/",
-			"**/test/",
-			"**/script/"
-		],
-		"reporter": [
-			"lcov",
-			"text"
-		]
+		"exclude": ["**/docs/", "**/tests/", "**/tools/"],
+		"reporter": ["lcov", "text"],
+		"temp-dir": "./coverage/.nyc_output"
 	},
 	"esm": {
 		"cjs": true,
 		"cache": false
-	},
-	"eslintIgnore": [
-		"script/",
-		"test/",
-		"dist/",
-		"docs/"
-	],
-	"eslintConfig": {
-		"env": {
-			"commonjs": true,
-			"browser": true,
-			"node": true,
-			"es6": true
-		},
-		"extends": "eslint:recommended",
-		"parserOptions": {
-			"ecmaVersion": 7,
-			"sourceType": "module",
-			"ecmaFeatures": {
-				"impliedStrict": true
-			}
-		},
-		"rules": {
-			"indent": [
-				"error",
-				"tab",
-				{
-					"SwitchCase": 1
-				}
-			],
-			"linebreak-style": [
-				"error",
-				"unix"
-			],
-			"quotes": [
-				"error",
-				"single"
-			],
-			"semi": [
-				"error",
-				"never"
-			],
-			"no-cond-assign": [
-				"off"
-			],
-			"no-redeclare": [
-				"off"
-			],
-			"no-fallthrough": [
-				"off"
-			],
-			"no-console": [
-				"off"
-			],
-			"no-unsafe-finally": [
-				"off"
-			],
-			"no-shadow-restricted-names": [
-				"error"
-			],
-			"no-whitespace-before-property": [
-				"error"
-			],
-			"eol-last": [
-				"error"
-			],
-			"func-call-spacing": [
-				"error",
-				"never"
-			],
-			"brace-style": [
-				"error",
-				"1tbs",
-				{
-					"allowSingleLine": true
-				}
-			],
-			"require-jsdoc": [
-				"error",
-				{
-					"require": {
-						"FunctionDeclaration": true
-					}
-				}
-			],
-			"no-trailing-spaces": [
-				"error",
-				{
-					"skipBlankLines": true
-				}
-			],
-			"no-constant-condition": [
-				"off"
-			]
-		}
 	}
 }
