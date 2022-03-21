@@ -5,10 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [11.4.0]
+        node-version: [17.4.0]
     steps:
     - name: checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: setup ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
@@ -17,8 +17,3 @@ jobs:
       run: |
         npm install
         npm test
-    - name: report
-      uses: coverallsapp/github-action@v1.0.1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ./coverage/lcov.info

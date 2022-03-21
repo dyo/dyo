@@ -2,12 +2,7 @@
 
 [![Dyo](https://dyo.js.org/assets/images/logo.svg)](https://dyo.js.org)
 
-A JavaScript library for building user interfaces.
-
-[![Coverage](https://coveralls.io/repos/github/dyo/dyo/badge.svg?branch=master)](https://coveralls.io/github/dyo/dyo)
-[![Size](https://badgen.net/bundlephobia/minzip/dyo)](https://bundlephobia.com/result?p=dyo)
-[![Licence](https://badgen.net/badge/license/MIT/blue)](https://github.com/dyo/dyo/blob/master/LICENSE.md)
-[![NPM](https://badgen.net/npm/v/dyo)](https://www.npmjs.com/package/dyo)
+A declarative 6kb JavaScript library for building user interfaces.
 
 ## Installation
 

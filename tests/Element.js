@@ -7,16 +7,12 @@ describe('Element', () => {
 		assert.lengthOf(h('h1', 'Hello World').children, 1)
 	})
 
-	it('should create an element with a key', () => {
-		assert.deepEqual(h('h1', {key: 'bar'}).key, 'bar')
-	})
-
 	it('should create an element with children', () => {
 		assert.deepEqual(h('div', {}, [1, 2], 3, h('h1')).children.length, 3)
 	})
 
 	it('should assign children to a component element', () => {
-		assert.deepEqual(h(() => {}, {}, 1, 2).props.children, [1, 2])
+		assert.deepEqual(h(() => {}, {}, [1, 2]).props.children, [1, 2])
 	})
 
 	it('should assign opaque children to a component element', () => {
@@ -65,10 +61,7 @@ describe('Element', () => {
 	it('should clone an element', () => {
 		assert.deepEqual(cloneElement(h('h1', {className: 'head'})).props, {className: 'head'})
 		assert.deepEqual(cloneElement(h('h1', {className: 'head'}), {className: 'change'}).props, {className: 'change'})
-		assert.deepEqual(cloneElement(h('h1', {ref: 'ref'})).props, {ref: 'ref'})
 		assert.deepEqual(cloneElement(h('h1', {xmlns: 'xmlns'})).props, {xmlns: 'xmlns'})
-		assert.deepEqual(cloneElement(h('h1', {key: 'key'})).props, {key: 'key'})
-		assert.deepEqual(cloneElement(h(() => {}, {ref: 'ref'}, 1, 2)).props, {ref: 'ref', children: [1, 2]})
 	})
 
 	it('should not assign non-props object', () => {
