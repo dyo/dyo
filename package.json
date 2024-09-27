@@ -38,7 +38,7 @@
 		"jsdom": "15.2.1",
 		"mocha": "7.1.0",
 		"nyc": "15.0.0",
-		"rollup": "2.0.2",
+		"rollup": "2.79.2",
 		"rollup-plugin-terser": "5.2.0",
 		"rollup-plugin-size": "0.2.2"
 	},
